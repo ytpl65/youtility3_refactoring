@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  
+  {# BEGIN PAGEL LEVEL FONTS & ICONS START #}
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Poppins:300,400,500,600,700" />
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+  {# END PAGEL LEVEL FONTS & ICONS END #}
+  
+  {# BEGIN GLOBAL STYLESHEETS BUNDLE (used by all pages) #}
+  <link href="{{ static('assets/plugins/global/plugins.bundle.css') }}" rel="stylesheet" type="text/css" />
+  <link href="{{ static('assets/css/style.bundle.css') }}" rel="stylesheet" type="text/css" />
+  {# END GLOBAL STYLESHEETS BUNDLE (used by all pages) #}
+
+  {# BEGIN PAGE LEVEL STYLESHEETS #}  
+  {% block head %}
+  {% endblock head %}
+  {# END PAGE LEVEL STYLESHEETS #}
+
+</head>
+
+<body id="kt_body"
+  class="header-fixed header-tablet-and-mobile-fixed toolbar-enabled toolbar-fixed toolbar-tablet-and-mobile-fixed aside-enabled aside-fixed"
+  style="--kt-toolbar-height:55px;--kt-toolbar-height-tablet-and-mobile:55px">
+  {% block body %}
+  {% endblock body %}
+
+
+  {# BEGIN  GLOBAL JS BUNDLE (used by all pages) #}
+  <script src="{{ static('assets/plugins/global/plugins.bundle.js') }}"></script>
+  <script src="{{ static('assets/js/scripts.bundle.js') }}"></script>
+  {# END  GLOBAL JS BUNDLE (used by all pages) #}
+
+  
+  {# BEGIN PAGE LEVEL SCRIPTS #}  
+  {% block script %}
+  {% endblock script %}
+  {# END PAGE LEVEL SCRIPTS #}
+</body>
+
+</html>

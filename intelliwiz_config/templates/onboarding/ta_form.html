@@ -1,0 +1,30 @@
+{% extends "layout.html" %}
+
+{% block head %}
+
+{% endblock head %}
+
+
+{% block page_actions %}
+
+{% endblock page_actions %}
+
+{% block pagebody_container %}
+<!----BEGIN FORM BODY---->
+<div class="card">
+  <form  class="card-body" method="post">
+    <!---------------------------CSRFMIDDLEWARE TOKEN---------------------->
+    <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
+    {{ ta_form.as_table() }}
+
+    <div class="mt-4">
+      <input type="submit"  class="btn btn-primary btn-sm" value="Save">
+      <a href="" class="btn btn-secondary btn-sm" onclick="document.getElementById('ta_form').reset()">Clear Form</a>
+    </div>
+  </form>
+</div>
+<!------END FORM BODY----->
+
+
+
+{% endblock pagebody_container %}
