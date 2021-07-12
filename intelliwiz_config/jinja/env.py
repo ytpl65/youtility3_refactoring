@@ -1,6 +1,7 @@
 from jinja2.environment import Environment
 from django.contrib.staticfiles.storage import staticfiles_storage
 from django.urls import reverse
+from django.contrib import messages
 
 
 def debug(info):
@@ -12,4 +13,5 @@ class JinjaEnvironment(Environment):
         self.globals['static']  = staticfiles_storage.url
         self.globals['url'] = reverse
         self.filters["debug"] = debug
+        self.globals['messages'] = messages.get_messages
     
