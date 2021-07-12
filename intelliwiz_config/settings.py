@@ -38,6 +38,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     #third_party_apps
+    'debug_toolbar',
     'django_extensions',
     'import_export',
 

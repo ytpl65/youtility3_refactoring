@@ -19,6 +19,8 @@ def peoplejson():
 
 #people table
 class People(AbstractBaseUser, PermissionsMixin, TenantAwareModel):
+    GENDER_CHOICES= [('M', 'Male'), ('F', 'Female'), ('O', 'Others')]
+    
     peopleimg     = models.ImageField(_("peopleimg"), upload_to=upload_peopleimg, default="master/people/default.png", null=True, blank=True)
     peopleid      = models.BigIntegerField(_('peopleid'), primary_key=True)
     peoplecode    = models.CharField(_("peoplecode"), max_length=50)
@@ -40,7 +42,7 @@ class People(AbstractBaseUser, PermissionsMixin, TenantAwareModel):
     mdtz          = models.DateTimeField(_("mdtz"), auto_now=True)
     email         = models.EmailField(_("email"), max_length=254)
     mobno         = models.CharField(_("mobno"), max_length=13)
-    gender        = models.BooleanField(_("gender"))
+    gender        = models.BooleanField(_("gender"), choices=GENDER_CHOICES,)
     dateofbirth   = models.DateField(_("dob"))
     dateofjoin    = models.DateField(_("doj"))
     dateofreport  = models.DateField(_("dor"), null=True, blank=True)
