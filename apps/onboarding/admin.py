@@ -17,5 +17,5 @@ class BtAdmin(admin.ModelAdmin):
     fields = ('btid','bucode', 'buname', 'butype', 'parent', 'gpslocation',
                 'iswarehouse', 'enable', 'bu_preferences')
     exclude = ['bupath']
-    list_display = ('bucode', 'buname', 'butype', 'parent', 'bupath')
+    list_display = ('bucode', 'buname', 'butype', 'parent')
     list_display_links = ('bucode',)
