@@ -16,10 +16,12 @@ class TypeAssistForm(forms.ModelForm):
     
     class Meta:
         model  = TypeAssist
-        fields = ['tacode', 'taname']
+        fields = ['tacode', 'taname', 'tatype', 'parent']
         labels = {
             'tacode': "Code",
-            'taname': "Name"
+            'taname': "Name",
+            'tatype':'Type',
+            'parent':'Parent'
         }
     
     def __init__(self, *args, **kwargs):
