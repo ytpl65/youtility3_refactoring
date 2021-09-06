@@ -1,0 +1,49 @@
+{% extends "layout.html" %}
+
+{% block pagebody_container %}
+<!--BEGIN CARD-->
+<div class="card">
+    <!-- BEGIN CARD-BODY-->
+    <div class="card-body">
+        <!--BEGIN CARD-HEADER-->
+        <div class="card-header d-flex justify-content-md-between">
+            <h4 class="card-title">{% block form_title %}
+            
+            {% endblock form_title %}
+                <span class="svg-icon svg-icon-2">
+                    <span class="material-icons h-19px" style="vertical-align: middle; font-size: 19px;">
+                        {% block card_icon %}
+                          list_alt
+                        {% endblock card_icon %}
+                    </span>
+                </span>
+            </h4>
+            
+                {% block nonfield_errors %}
+                
+                {% endblock nonfield_errors %}
+            
+            
+            {% block form_msgs %}
+            
+            {% endblock form_msgs %}
+            
+            <!--keep empty-->
+            <div></div>
+        </div>
+        <!--END CARD-HEADER-->
+        {% block form %}
+        
+        {% endblock form %}
+        {% block formpage_actions %}
+        
+        {% endblock formpage_actions %}
+        {% block extras %}
+        
+        {% endblock extras %}
+    </div>
+    <!--END CARD-BODY-->
+</div>
+<!--END CARD-->
+{% endblock pagebody_container %}
+

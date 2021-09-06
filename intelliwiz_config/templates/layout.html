@@ -1,5 +1,125 @@
 {% extends "base.html" %}
 
+<!------------------------------------------------ BEGIN MACROS ------------------------------------------------------->
+  <!-------------------- BEGIN PAGINATOR MACRO ------------------------->
+  {% macro paginator(list) %}
+  <div class="d-flex justify-content-end">
+    <ul class="pagination">
+      {% if list.has_previous %}
+      <li class="page-item"><a class="page-link" href="?page={{ list.previous_page_number }}">&laquo;</a>
+      </li>
+      {% else %}
+      <li class="disabled"><span>&laquo;</span></li>
+      {% endif %}
+
+      {% for i in list.paginator.page_range %}
+      {% if list.number == i %}
+      <li class="active page-item" aria-current="page"><a href="#" class="page-link">{{ i }} </a></li>
+      {% else %}
+      <li class="page-item"><a class="page-link" href="?page={{ i }}">{{ i }}</a></li>
+      {% endif %}
+      {% endfor %}
+
+      {% if list.has_next %}
+      <li class="page-item"><a class="page-link" href="?page={{ list.next_page_number }}">&raquo;</a></li>
+      {% else %}
+      <li class="disabled page-item"><span>&raquo;</span></li>
+      {% endif %}
+    </ul>
+  </div>
+  {% endmacro %}
+  <!------------------- END PAGINATOR MACRO ------------------------>
+
+  <!------------------ BEGIN FORM CREATE MACRO ----------------------->
+  {% macro form_create(form_id) %}
+  <div class="d-flex align-items-center py-1">
+    <div id="form_actions">
+      <!--Save Button-->
+      <button type="submit" form="{{ form_id }}" id="savebtn" class="btn btn-sm  btn-primary rounded-1">Save It!<span class="svg-icon svg-icon-2">
+					<span class="material-icons h-19px" style="vertical-align: middle; font-size: 19px;">
+						save
+					</span></span></button>
+      <!--Clear Button-->
+      <a href="" class="btn btn-sm btn-secondary rounded-1"
+        onclick="document.getElementById('{{ form_id }}').reset()">Clear<span class="svg-icon svg-icon-2">
+					<span class="material-icons h-19px" style="vertical-align: middle; font-size: 19px;">
+						clear
+					</span></span></a>
+    </div>
+  </div>
+  {% endmacro %}
+   <!------------------ END FORM CREATE MACRO ----------------------->
+  
+   <!------------------ BEGIN FORM UPDATE MACRO ----------------------->
+  {% macro form_update(form_id) %}
+
+    <div class="d-flex align-items-center py-1">
+      <div id="form_actions">
+        <!--Save Button-->
+        <button type="submit" form="{{ form_id }}" class="btn btn-sm  btn-primary rounded-1">Save<span class="svg-icon svg-icon-2">
+					<span class="material-icons h-19px" style="vertical-align: middle; font-size: 19px;">
+						save
+					</span></span></button>
+        <!--Clear Button-->
+        <a href="" class="btn btn-sm  btn-secondary rounded-1"
+          onclick="document.getElementById('{{ form_id }}').reset()">Clear<span class="svg-icon svg-icon-2">
+					<span class="material-icons h-19px" style="vertical-align: middle; font-size: 19px;">
+						clear
+					</span></span></a>
+        
+        <button id="btn_del" type="button" data-bs-toggle="modal" data-bs-target="#{{ kwargs['popup_id'] }}" 
+        class="btn btn-sm  btn-danger rounded-1">Delete<span class="svg-icon svg-icon-2">
+					<span class="material-icons h-19px" style="vertical-align: middle; font-size: 19px;">
+						delete
+					</span></span></button>
+      </div>
+      
+    </div>
+  {% endmacro %}
+  <!------------------ END FORM UPDATE MACRO ----------------------->
+  
+   <!------------------ BEGIN FORM ADD MACRO ----------------------->
+  {% macro form_add(url_path) %}
+    <div class="d-flex align-items-center py-1">
+      <div id="form_actions">
+        <a href="{{ url(url_path) }}" class="btn btn-sm rounded-1" style="background-color:#189D54; color:white;">Add New <span class="svg-icon svg-icon-2">
+					<span class="material-icons h-19px" style="vertical-align: middle; font-size: 19px;">
+						create
+					</span></span></a>
+      </div>
+    </div>
+  {% endmacro %}
+  <!---------------- END FORM ADD MACRO ------------------>
+
+  <!--------------- BEGIN POP-UP DELETE_ALERT MACRO ---------------->
+    {% macro popup_alert(path, id) %}
+
+    <!-- Modal -->
+    <div class="modal fade" id="{{ kwargs['popup_id'] }}" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="exampleModalLabel">{{ kwargs['title'] }}</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            {% block popup_body %}
+            
+            {% endblock popup_body %}
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">No Go back</button>
+            <a href="{{ url(path, args=[id]) }}" class="btn btn-sm  btn-danger rounded-1">Yes I'm Sure</a>
+          </div>
+        </div>
+      </div>
+    </div>
+    {% endmacro %}
+  <!--------------- END POP-UP DELETE_ALERT MACRO ------------------>
+
+<!------------------------------------------------ END MACROS ------------------------------------------------------->
+
+
 {# =========HEAD START=========== #}
 {% block head %}
 
@@ -23,8 +143,8 @@
       <div class="aside-logo flex-column-auto" id="kt_aside_logo">
         {# BEGIN LOGO #}
         <a href="index.html">
-          <img alt="Logo" src="{{ static('assets/media/logos/simple-cyan.png') }}"
-            class="h-25px ml-3 mt-3 logo w-160px">
+          <img alt="Logo" src="{{static('assets/media/images/logo-transparent.png')}}"
+            class="h-50px ml-3 mt-3 logo w-160px">
         </a>
         {# END LOGO #}
         {# BEGIN ASIDE TOGGLER #}
@@ -79,7 +199,8 @@
       <!--begin::header-->
       <div id="kt_header" style="" class="header align-items-stretch h-65px">
         <!--begin::Container-->
-        <div class="container-fluid d-flex align-items-stretch justify-content-between" style="border-bottom: 1px solid #7e7e7e3d;">
+        <div class="container-fluid d-flex align-items-stretch justify-content-between"
+          style="border-bottom: 1px solid #7e7e7e3d;">
           <!--begin::Aside mobile toggle-->
           <div class="d-flex align-items-center d-lg-none ms-n3 me-1" title="Show aside menu">
             <div class="btn btn-icon btn-active-light-primary w-30px h-30px w-md-40px h-md-40px"
@@ -124,12 +245,13 @@
                         person
                       </span>
                     </span>
-                    <b class="mt-5 text-dark">YTPL Admin</b>
+                    
+                    <b class="mt-5 text-dark">{% if request.user.is_authenticated %}{{ request.user }}{% endif %}</b>
                   </a>
                   <ul class="dropdown-menu" aria-labelledby="user-info">
                     <li><a class="dropdown-item" href="#">Change Password</a></li>
                     <li><a class="dropdown-item" href="#">Switch Site</a></li>
-                    <li><a class="dropdown-item" href="#">Log Out</a></li>
+                    <li><a class="dropdown-item" href="{{ url('logout') }}">Log Out</a></li>
                   </ul>
                 </div>
 
@@ -144,23 +266,19 @@
       <!--begin::Content-->
       <div class="content d-flex flex-column flex-column-fluid" id="kt_content">
         <!--begin::toolbar-->
-        <div class="toolbar h-40px" id="kt_toolbar">
+        <div class="toolbar h-50px" id="kt_toolbar">
           <!--begin::Container-->
           <div id="kt_toolbar_container" class="container-fluid d-flex flex-stack">
             <!--begin::Page title-->
+            <ol class="breadcrumb breadcrumb-dot text-muted fs-6 fw-bold">
             {% block pagebreadcumb %}
-            <ol class="breadcrumb text-muted fs-6 fw-bold">
-              <li class="breadcrumb-item pe-3"><a href="#" class="pe-3">Link1</a></li>
-              <li class="breadcrumb-item pe-3"><a href="#" class="pe-3">Link2</a></li>
-              <li class="breadcrumb-item px-3 text-muted">Link3</li>
-            </ol>
+              <li class="breadcrumb-item pe-3"><a href="{{ url('home') }}" class="pe-3">Home</a></li>
             {% endblock pagebreadcumb %}
+            </ol>
             <!--begin::actions-->
-            <div class="d-flex align-items-center py-1">
-              {% block page_actions %}
-            
-              {% endblock page_actions %}
-            </div>
+            {% block page_actions %}
+
+            {% endblock page_actions %}
             <!--end::actions-->
             <!--end::Page title-->
           </div>
@@ -170,12 +288,13 @@
         <!--begin Post-->
         <div class="post d-flex flex-column-fluid" id="kt_post">
           {% block pagebody_container_fluid %}
-          
+
           {% endblock pagebody_container_fluid %}
           <!---BEGIN CONTAINER-->
-          <div id="kt_content_container" class="container">
+          <div id="kt_content_container" class="container-fluid">
             {% block pagebody_container %}
-            
+
+
             {% endblock pagebody_container %}
           </div>
           <!--END CONTAINER -->
@@ -208,8 +327,7 @@
 <!-- END wrapper -->
 
 <!-- bundle -->
-{% block script %}
-{% endblock script %}
+
 
 <!-- end demo js-->
 {% endblock body %}

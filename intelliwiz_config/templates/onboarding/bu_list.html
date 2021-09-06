@@ -1,0 +1,108 @@
+{% extends "base_list.html" %}
+
+<!---- BEGIN CARD TITLE ------>
+{% block card_title %}
+Buisiness Units
+{% endblock card_title %}
+<!----- END CARD TITLE -------->
+
+<!----------- BEGIN PAGE BREADCUMBS ----------->
+{% block pagebreadcumb %}
+{{ super() }}
+<li class="breadcrumb-item pe-3"><a href="{{ url('onboarding:bu_list') }}" class="pe-3">Bu List</a></li>
+{% endblock pagebreadcumb %}
+<!----------- END PAGE BREADCUMBS ------------->
+
+
+
+<!-------- BEGIN PAGE ACTIONS ---------->
+{% block page_actions %}
+{{ form_add('onboarding:bu_form') }}
+{% endblock page_actions %}
+<!-------- END PAGE ACTIONS ------------->
+
+<!------------------ BEGIN BU TABLE ------------------------->
+{% block table %}
+<div class="table-responsive">
+	<table id="bt_table" class="table gy-3" style="width:100%">
+		<thead class="fw-bold fs-6">
+			<th>Code</th>
+			<th>Name</th>
+			<th>Type</th>
+			<th>Enable</th>
+			<th>Belongs To</th>
+			<th>Site Type</th>
+		</thead>
+		<!------- BEGIN TABLE FILTER FIELDS ------>
+		<thead id="filter_row">
+		<form action="" id='bt_filter' method='get'>
+			{% for field in bt_filter %}
+			<th>
+				<input type="text" 
+				id="{{ field.auto_id }}" 
+				name="{{ field.name }}" 
+				placeholder ="Search {{ field.label }}">
+			</th>
+			{% endfor %}
+		</form>
+		</thead>	
+		<!------- END TABLE FILTER FIELDS ------>
+		
+		<!----------- BEGIN TABLE ROWS ----------->
+		{% for bt in bt_list %}
+		<tr>
+			<td><a href="{{ url('onboarding:bu_update', args=[bt['btid']]) }}">{{ bt['bucode'] }}</a></td>
+			<td>{{ bt['buname'] }}</td>
+			<td>{{ bt['identifier__tacode'] }}</td>
+			<td>{{ bt['enable'] }}</td>
+			<td>{{ bt['parent__bucode'] }}</td>
+			<td>{{ bt['butype__tacode'] }}</td>
+		</tr>
+		{% endfor %}
+		<!----------- END TABLE ROWS ------------->
+		
+	</table>
+</div>
+{% if bt_list and bt_list.has_other_pages %}
+<!-- BEGIN PAGINATOIN -->
+{{ paginator(bt_list) }}
+<!-- END PAGINATOIN ---->
+{% endif %}
+
+{% endblock table %}
+<!------------------ END BU TABLE --------------------------->
+
+<!--------- BEGIN EXTRA SCRIPTS ----------------------------->
+{% block extra_scripts %}
+<script>
+	$(document).ready(function () {
+		$("input").keypress(function(event) {
+			if (event.which == 13) {
+				event.preventDefault();
+				$("#bt_filter").submit();
+			}
+		});
+
+		//BEGIN DATATABLE INITIALIZATION
+		var table = $('#bt_table').DataTable({
+			orderCellsTop: true,
+			fixedHeader: true,
+			paging: false,
+			scrollCollapse: true,
+			sDom: '<>'
+		})
+		//END DATATABLE INITIALIZATION
+
+		//BEGIN STYLING DATATABLE
+		$("th > input").addClass('form-control')
+		$("th > input").css('height', '35px')
+		var styles = {
+			"border-bottom": "none",
+			"background-color": "#f1f4f7"
+		}
+		$('#bt_table thead tr:eq(1)').css(styles)
+		//END STYLING DATATABLE
+	});
+</script>
+{% endblock extra_scripts %}
+<!-------- END EXTRA SCRIPTS ------------------------------->

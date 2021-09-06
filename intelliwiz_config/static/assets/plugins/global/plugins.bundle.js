@@ -18415,7 +18415,8 @@ S2.define('select2/defaults',[
     this.defaults = {
       amdLanguageBase: './i18n/',
       autocomplete: 'off',
-      closeOnSelect: true,
+	  //mycode
+      closeOnSelect: false,
       debug: false,
       dropdownAutoWidth: false,
       escapeMarkup: Utils.escapeMarkup,

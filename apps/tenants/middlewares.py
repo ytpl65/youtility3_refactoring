@@ -17,7 +17,7 @@ class TenantMiddleware:
 
 
 def get_current_db_name():
-    return getattr(THREAD_LOCAL, 'DB', None)
+    return getattr(THREAD_LOCAL, 'DB', "default")
 
 
 def set_db_for_router(db):
@@ -42,9 +42,7 @@ class TenantDbRouter:
         return db
     
     def db_for_write(self, model, **hints):
-        db = self._multi_db()
-        print(f"DB FOR WRITE {db}")
-        return db
+        return self.db_for_read(model, **hints)
     
     def allow_relation(self, obj1, obj2, **hints):
         return True

@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login</title>
+    <!-- BEGIN PAGEL LEVEL FONTS & ICONS START -->
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Poppins:300,400,500,600,700" />
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <!-- END PAGEL LEVEL FONTS & ICONS END -->
+    <link href="{{ static('assets/plugins/global/plugins.bundle.css') }}" rel="stylesheet" type="text/css" />
+    <link href="{{ static('assets/css/style.bundle.css') }}" rel="stylesheet" type="text/css" />
+    <link rel="shortcut icon" type="image/jpg" href="{{ static('assets/media/images/favicon.ico') }}" />
+    <style>
+        html {
+            justify-content: center;
+            display: flex;
+            margin-top: 5%;
+            background-color: none;
+
+        }
+        input{
+            ;
+        }
+
+
+        #loginbody {
+            justify-content: center;
+            background-color: rgba(255, 253, 253, 0.87);
+            border:1px solid #eaeced;
+            width: 450px;
+            height: 420px;
+            display: flex;
+            align-items: center;
+            /*border: 1px solid #eaeced;*/
+            border-radius: 5px;
+            font-family: 'Poppins', sans-serif;
+            /*box-shadow: 0 0 25px rgba(0, 0, 0, 0.25);
+            transition: box-shadow .4s ease;*/
+        }
+
+        
+        #id_username,
+        #id_password,
+        ::placeholder {
+            font-size: 14px;
+            padding-left: 10px;
+        }
+
+
+
+        
+        #id_username,
+        #id_password {
+            margin: 2%;
+            height: 45px;
+            box-sizing: border-box;
+            border-radius: 5px;
+            border-style: solid;
+            border-width: 1px;
+            border-color:#9da3a6;
+        }
+
+        .fields {
+            width: 100%;
+            padding: 0;
+
+        }
+
+        form {
+            margin: 0;
+            padding: 10px;
+        }
+
+        .signinbtn {
+            box-sizing: border-box;
+            width: 100%;
+            min-height: 24px;
+            padding: 13px;
+            display: flex;
+            background-color: #008fba;
+            color: #fff;
+            box-shadow: none;
+            border-radius: 6px !important;
+            border: none;
+            cursor: pointer;
+            transition: background-color .5s ease;
+            padding-inline:2%
+
+
+        }
+
+        .signinbtn:hover {
+            background-color: #47ad44;
+        }
+
+        .sign_in {
+            padding: 11px;
+            width: 100%;
+            margin-top: 18px;
+            border: none;
+            text-decoration: none;
+            transition: background-color .4s ease-out;
+            -webkit-box-shadow: none;
+            -moz-box-shadow: none;
+            box-shadow: none;
+            padding: 0
+        }
+        .signinbtn {
+            text-align: center;
+            text-align-last:center;
+            padding-bottom: 10px;
+            font-size: 16px;
+            height: 44px;
+        }
+
+        .site_logo img {
+            width: 200px;
+            height: 60px;
+            border-radius: 6px;
+            margin-bottom: 10px;
+            position: relative;
+            top:-8px
+        }
+
+        .loginerr {
+            background: none;
+            border: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .loginerr>p {
+            margin: 0;
+            padding: 0;
+            font-size: small;
+        }
+
+        .copyright {
+            text-align: center;
+            margin: 0 auto 30px 0;
+            padding: 10px;
+            color: #7a8ca5;
+            font-size: 13px;
+            text-decoration: none;
+            margin: 0;
+            margin-top: 5px;
+
+        }
+
+        #loginbody>form:nth-child(2) {
+            width: 395px;
+        }
+
+        #eye {
+            float: right;
+            margin-top: -35px;
+            position: relative;
+            z-index: 11;
+            cursor: pointer;
+            align-content: end;
+            display: flex;
+            justify-content: end;
+            margin-right: 20px;
+            color: #979491;
+        }
+        .alert.alert-danger.loginerr {
+            background-color:#ffe0e0;
+            border: 1px solid;
+            padding: 2%;
+            text-transform: capitalize;
+            margin-inline: 2%;
+        }
+    </style>
+
+</head>
+
+<body>
+    <!------------------------------------------------- BEGIN BODY ----------------------------------------------------->
+    <div class="login_body d-flex flex-column" id="loginbody">
+        <div class="site_logo"><img class="dlogo" src="{{static('assets/media/images/logo-transparent.png')}}" alt="">
+        </div>
+        <!----------------------------- BEGIN FORM ------------------------------>
+        <form action="" method='post'>
+            <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
+
+            <!------------BEGIN NON FIELD ERRORS -------------------->
+            {% if loginform.non_field_errors() %}
+            {% for error in loginform.non_field_errors() %}
+            <div class="alert alert-danger loginerr">{{error}}</div>
+            {% endfor %}
+            {% endif %}
+            <!------------END NON FIELD ERRORS -------------------->
+
+            <div class="fields d-flex flex-column m-0">
+                {% for field in loginform %}
+                {% for error in field.errors %}
+                <!--FOR FIELDS ERROR IN FORM-->
+                <div class="alert alert-danger loginerr">{{error}}</div>
+                {% endfor %}
+                <!--FIELDS IN FORM-->
+    
+                {{ field }}
+                {% if loop.index == 2 %}
+                <span class="svg-icon svg-icon-2" id="p-viewer">
+                    <span class="material-icons h-19px" id="eye" style="vertical-align: middle; font-size: 19px;">
+                        visibility
+                    </span></span>
+                {% endif %}
+                {% endfor %}
+                <!--------------------- BEGIN SIGN IN BUTTON --------------->
+                <div class="sign_in">
+                    <input class="signinbtn" type="submit" value="LOG IN" />
+                </div>
+                <!--------------------- END SIGN IN BUTTON --------------->
+            </div>
+        </form>
+        <!----------------------------- END FORM ------------------------------>
+        <div class="copyright"> <span id="copyRightYear">2021</span> © Youtility Technologies Pvt. Ltd. </div>
+    </div>
+    <!-------------------------------------------- END BODY ---------------------------------------------------------------->
+
+    <script src="{{ static('assets/plugins/global/plugins.bundle.js') }}"></script>
+    <script src="{{ static('assets/js/scripts.bundle.js') }}"></script>
+    <script>
+        const togglePassword = document.querySelector('#eye');
+        const password = document.querySelector('#id_password');
+
+        togglePassword.addEventListener('click', function (e) {
+            // toggle the type attribute
+            const type = password.getAttribute('type') === 'password' ? 'text' : 'password';
+            password.setAttribute('type', type);
+            // toggle the eye / eye slash icon
+            var x = document.getElementById("eye");
+            if (x.innerHTML === "visibility") {
+                x.innerHTML = "visibility_off";
+            } else {
+                x.innerHTML = "visibility";
+            }
+        });
+    </script>
+
+</body>
+
+</html>

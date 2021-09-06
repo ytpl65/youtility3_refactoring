@@ -38,7 +38,7 @@ body {
   font-size: 1rem;
   font-weight: 400;
   line-height: 1.5;
-  color: #181C32;
+  color: #6c757d;
   background-color: #F7F9FC;
   -webkit-text-size-adjust: 100%;
   -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
@@ -2441,7 +2441,7 @@ progress {
   color: #181C32;
   background-color: #ffffff;
   background-clip: padding-box;
-  border: 1px solid #E4E6EF;
+  border: 1px solid #ced4da;
   appearance: none;
   border-radius: 0.475rem;
   box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.075);
@@ -3254,7 +3254,7 @@ textarea.form-control-lg {
 
 .btn-primary {
   color: #000000;
-  background-color: #009EF7;
+  background-color: #25729e;
   border-color: #009EF7;
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.15), 0 1px 1px rgba(0, 0, 0, 0.075);
 }
@@ -4636,10 +4636,11 @@ textarea.form-control-lg {
 }
 
 .card-header {
-  padding: 0.5rem 1rem;
-  margin-bottom: 0;
+  /*padding: 0.5rem 1rem;*/
+  padding: 0;
+  margin-bottom: 2rem;
   background-color: #ffffff;
-  border-bottom: 1px solid #EFF2F5;
+  border-bottom: 0px solid #EFF2F5;
 }
 .card-header:first-child {
   border-radius: calc(0.475rem - 1px) calc(0.475rem - 1px) 0 0;
@@ -37628,7 +37629,7 @@ a:hover {
 .btn.btn-primary {
   color: #FFFFFF;
   border-color: #009EF7;
-  background-color: #009EF7;
+  background-color: rgb(46, 99, 138);
 }
 .btn.btn-primary i {
   color: #FFFFFF;
@@ -40223,7 +40224,7 @@ code:not([class*=language-]) {
   background-color: #EFF2F5;
 }
 .form-check.form-check-solid .form-check-input:checked {
-  background-color: #009EF7;
+  background-color: rgb(46, 99, 138);
 }
 .form-check.form-check-solid .form-check-input[type=radio], .form-check.form-check-solid .form-check-input[type=radio]:active, .form-check.form-check-solid .form-check-input[type=radio]:focus {
   background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8'%3e%3ccircle r='2' fill='%23FFFFFF'/%3e%3c/svg%3e");
@@ -47249,7 +47250,7 @@ body a:focus {
 body {
   display: flex;
   flex-direction: column;
-  color: #181C32;
+  color: #707478;
 }
 
 router-outlet {
@@ -47855,4 +47856,81 @@ canvas {
 #kt_footer {
   background-color: #293042;
   height: 50px;
+} height: 50px;
+}
+/*mycode*/
+.col-form-label{
+  padding-top: calc(.25rem + 1px);
+  padding-bottom: calc(.25rem + 1px);
+  margin-bottom: 0;
+  font-size: inherit;
+  line-height: 1.625;
+}
+
+.image-input {
+  position: relative;
+  display: inline-block;
+  border-radius: 0.475rem;
+  background-repeat: no-repeat;
+  background-size: cover;
+}
+.image-input:not(.image-input-empty) {
+  background-image: none !important;
+}
+.image-input .image-input-wrapper {
+  width: 120px;
+  height: 120px;
+  border-radius: 0.475rem;
+  background-repeat: no-repeat;
+  background-size: cover;
+}
+.image-input [data-kt-image-input-action=change] {
+  cursor: pointer;
+  position: absolute;
+  right: -10px;
+  top: -10px;
+}
+.image-input [data-kt-image-input-action=change] input {
+  width: 0 !important;
+  height: 0 !important;
+  overflow: hidden;
+  opacity: 0;
+}
+.image-input [data-kt-image-input-action=cancel],
+.image-input [data-kt-image-input-action=remove] {
+  position: absolute;
+  right: -10px;
+  bottom: -5px;
+}
+.image-input [data-kt-image-input-action=cancel] {
+  display: none;
+}
+.image-input.image-input-changed [data-kt-image-input-action=cancel] {
+  display: flex;
+}
+.image-input.image-input-changed [data-kt-image-input-action=remove] {
+  display: none;
+}
+.image-input.image-input-empty [data-kt-image-input-action=remove],
+.image-input.image-input-empty [data-kt-image-input-action=cancel] {
+  display: none;
+}
+.image-input.image-input-circle {
+  border-radius: 50%;
+}
+.image-input.image-input-circle .image-input-wrapper {
+  border-radius: 50%;
+}
+.image-input.image-input-circle [data-kt-image-input-action=change] {
+  right: 5px;
+  top: 5px;
+}
+.image-input.image-input-circle [data-kt-image-input-action=cancel],
+.image-input.image-input-circle [data-kt-image-input-action=remove] {
+  right: 5px;
+  bottom: 5px;
+}
+.image-input.image-input-outline .image-input-wrapper {
+  border: 3px solid #ffffff;
+  box-shadow: 0 0.5rem 1.5rem 0.5rem rgba(0, 0, 0, 0.075);
 }

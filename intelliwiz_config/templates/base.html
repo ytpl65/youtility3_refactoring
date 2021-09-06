@@ -5,40 +5,129 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   
-  {# BEGIN PAGEL LEVEL FONTS & ICONS START #}
+  <!-- BEGIN PAGEL LEVEL FONTS & ICONS START -->
   <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Poppins:300,400,500,600,700" />
   <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
-  {# END PAGEL LEVEL FONTS & ICONS END #}
+  <!-- END PAGEL LEVEL FONTS & ICONS END -->
   
-  {# BEGIN GLOBAL STYLESHEETS BUNDLE (used by all pages) #}
+  <!-- BEGIN GLOBAL STYLESHEETS BUNDLE (used by all pages) -->
   <link href="{{ static('assets/plugins/global/plugins.bundle.css') }}" rel="stylesheet" type="text/css" />
   <link href="{{ static('assets/css/style.bundle.css') }}" rel="stylesheet" type="text/css" />
-  {# END GLOBAL STYLESHEETS BUNDLE (used by all pages) #}
+  <link href="{{ static('assets/css/global_level.css') }}" rel="stylesheet" type="text/css" />
+  <link rel="shortcut icon" type="image/jpg" href="{{ static('assets/media/images/favicon.ico') }}"/>
+  <!-- END GLOBAL STYLESHEETS BUNDLE (used by all pages) -->
 
-  {# BEGIN PAGE LEVEL STYLESHEETS #}  
+  <!-- BEGIN PAGE LEVEL STYLESHEETS -->  
+
   {% block head %}
+
   {% endblock head %}
-  {# END PAGE LEVEL STYLESHEETS #}
+  
+  {% block extra_css %}
+  
+  {% endblock extra_css %}
+  <!-- END PAGE LEVEL STYLESHEETS -->
+  <title>
+   {% block title %}
+  
+  {% endblock title %}
+  </title>
 
 </head>
-
+  {% block popup_alerts %}
+  
+  {% endblock popup_alerts %}
 <body id="kt_body"
   class="header-fixed header-tablet-and-mobile-fixed toolbar-enabled toolbar-fixed toolbar-tablet-and-mobile-fixed aside-enabled aside-fixed"
   style="--kt-toolbar-height:55px;--kt-toolbar-height-tablet-and-mobile:55px">
+ 
   {% block body %}
+  
   {% endblock body %}
 
 
-  {# BEGIN  GLOBAL JS BUNDLE (used by all pages) #}
+  <!-- BEGIN  GLOBAL JS BUNDLE (used by all pages) -->
   <script src="{{ static('assets/plugins/global/plugins.bundle.js') }}"></script>
   <script src="{{ static('assets/js/scripts.bundle.js') }}"></script>
-  {# END  GLOBAL JS BUNDLE (used by all pages) #}
-
-  
-  {# BEGIN PAGE LEVEL SCRIPTS #}  
+  <!-- END  GLOBAL JS BUNDLE (used by all pages) -->
+  <!-- BEGIN PAGE LEVEL SCRIPTS -->  
   {% block script %}
+  <script src="{{ static('assets/js/custom.js') }}"></script>
   {% endblock script %}
-  {# END PAGE LEVEL SCRIPTS #}
+  
+  <!-- END PAGE LEVEL SCRIPTS -->
+
+  <!-- BEGIN GLOBAL CUSTOM SCRIPTS -->
+  <script>
+
+    $(document).ready(function() {
+      //adds styles to non-field-errors
+      
+      $("#alert_msg").fadeTo(2000, 500).slideUp(500, function(){
+      $("#alert_msg").slideUp(700);
+    });
+    })
+    //ADD CLASSES TO LABEL TAGS
+    $('label').addClass("col-form-label col-md-2 col-sm-2 text-sm-right")
+    
+    //REMOVE CLASSES FOR CHECKBOXES WHICH ARE ADDED BY DEFAULT.
+    $('.booleans label').removeClass("col-md-2 col-sm-2")
+    
+    //REMOVE FORM-CONTROL CLASS FOR SELEC TAGS
+    $('select').removeClass("form-control")
+    
+    //ADD CLASSES TO CHECKBOXES
+    $(".booleans").addClass("form-check form-switch form-check-custom form-check-solid")
+
+
+    //const data = JSON.parse({{ request.session }})
+
+    //hide all menu's on start
+    //tojson filter converts python datatypes to json datatypes.
+    const people_webcaps  =  {{ request.session['people_webcaps'] | tojson }}
+    const people_mobcaps  =  {{ request.session['people_mobcaps'] | tojson }}
+    const people_repcaps  =  {{ request.session['people_reportcaps'] | tojson }}
+    const people_portcaps =  {{ request.session['people_portletcaps'] | tojson }}
+    const client_webcaps  =  {{ request.session['client_webcaps'] | tojson }}
+    const client_mobcaps  =  {{ request.session['client_mobcaps'] | tojson }}
+    const client_repcaps  =  {{ request.session['client_reportcaps'] | tojson }}
+    const client_portcaps =  {{ request.session['client_portletcaps'] | tojson }}
+    const is_superadmin   =  {{ request.session['is_superadmin'] | tojson }}
+
+    
+
+
+    function handle_rendering_of_menus(){
+      console.log('called')
+      if(is_superadmin){
+        $('.menu-item').show()
+      }else {
+          caps = people_webcaps.length == 0 ? client_webcaps : people_webcaps
+          console.log(caps)
+          for(var i=0; i < caps.length; i++){
+            parent = caps[i][0]
+            childs = caps[i][1]
+            parent = parent.replace(' ', '_')
+            parent_id = '#'.concat(parent.toLowerCase())
+            $(parent_id).show()
+            for(var j=0; j<childs.length; j++){
+              child = childs[j][0]
+              child_id = '#'.concat(child.toLowerCase())
+              $(child_id).show()
+            }
+
+          }
+      }
+    }
+    handle_rendering_of_menus();
+    
+  </script>
+  <!-- END GLOBAL CUSTOM SCRIPTS -->
+
+  {% block extra_scripts %}
+  
+  
+  {% endblock extra_scripts %}
 </body>
 
 </html>

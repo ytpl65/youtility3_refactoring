@@ -1,0 +1,7 @@
+[
+  "apps/peoples/tests/test_models.py::test_people_create",
+  "apps/peoples/tests/test_views.py::test_sayhello",
+  "apps/peoples/tests/test_views.py::test_sayhii",
+  "apps/peoples/tests/test_views.py::test_signin",
+  "apps/peoples/tests/test_views.py::test_signin2"
+]

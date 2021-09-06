@@ -14,8 +14,8 @@ class TypeAssistAdmin(admin.ModelAdmin):
 
 @admin.register(Bt)
 class BtAdmin(admin.ModelAdmin):
-    fields = ('btid','bucode', 'buname', 'butype', 'parent', 'gpslocation',
+    fields = ('bucode', 'buname', 'butype', 'parent', 'gpslocation', 'identifier',
                 'iswarehouse', 'enable', 'bu_preferences')
     exclude = ['bupath']
-    list_display = ('bucode', 'buname', 'butype', 'parent')
+    list_display = ('bucode', 'buname', 'butype', 'parent', 'butree')
     list_display_links = ('bucode',)

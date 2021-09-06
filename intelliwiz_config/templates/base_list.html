@@ -1,0 +1,46 @@
+{% extends "layout.html" %}
+
+{% block head %}
+<link rel="stylesheet" href="{{ static('assets/plugins/custom/datatables/datatables.min.css') }}" type="text/css">
+{% endblock head %}
+
+{% block page_actions %}
+<a href=""></a>
+{% endblock page_actions %}
+
+
+{% block pagebody_container %}
+
+<div class="card">
+    <!-- BEGIN CARD-BODY-->
+    <div class="card-body border">
+        <!--BEGIN CARD-HEADER-->
+        <div class="card-header">
+            <div class="row">
+                <h4 class="card-title col-md-6">{% block card_title %}
+                    {% endblock card_title %}
+                    <span class="svg-icon svg-icon-2">
+                        <span class="material-icons h-19px" style="vertical-align: middle; font-size: 19px;">
+                            {% block card_icon %}
+                            table_view
+                            {% endblock card_icon %}
+                        </span>
+                    </span>
+                </h4>
+            </div>
+
+        </div>
+        <!--END CARD-HEADER-->
+        {% block table %}
+
+        {% endblock table %}
+
+    </div>
+    <!--END CARD-BODY-->
+</div>
+{% endblock pagebody_container %}
+
+{% block script %}
+<script type="text/javascript" src="{{ static('assets/plugins/custom/datatables/datatables.min.js') }}"></script>
+
+{% endblock script %}

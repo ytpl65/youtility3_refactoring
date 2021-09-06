@@ -12,6 +12,7 @@ https://docs.djangoproject.com/en/3.2/ref/settings/
 
 from pathlib import Path
 import os
+from django.http import request
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -21,11 +22,13 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = 'django-insecure-z8zcu0*td9qe$nuh*ly-mpwt&x@h%0+so$hc$lp)g_1x+#0l9_'
+SECRET_SALT = "ijsafifd343433jffd"
+ENCRYPT_KEY = 'I618zPOcrQ3zB5XasmuLXazlGZUn-dK5anHXSvKs4dM='
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['.localhost', '.youtility.local']
+ALLOWED_HOSTS = ['.localhost', '.youtility.local', 'barfi.youtility.in', '127.0.0.1']
 
 
 # Application definition
@@ -41,8 +44,9 @@ INSTALLED_APPS = [
     'debug_toolbar',
     'django_extensions',
     'import_export',
+    'django_filters',
 
-
+    #local apps
     'apps.peoples',
     'apps.onboarding',
     'apps.tenants',
@@ -102,6 +106,9 @@ WSGI_APPLICATION = 'intelliwiz_config.wsgi.application'
 # https://docs.djangoproject.com/en/3.2/ref/settings/#databases
 
 #multi database configuration.
+'''
+NOTE: Client bucode should match the database alias name.
+'''
 DATABASES = {
     'default': {
         'ENGINE':   'django.db.backends.postgresql_psycopg2',
@@ -119,22 +126,6 @@ DATABASES = {
         'HOST':     '192.168.1.254',
         'PORT':     '5432',
     },
-    'capgemini':{
-        'ENGINE':   'django.db.backends.postgresql_psycopg2',
-        'USER':     'youtilitydba',
-        'NAME':     'capgemini',
-        'PASSWORD': '!!sysadmin!!',
-        'HOST':     '192.168.1.254',
-        'PORT':     '5432',
-    },
-    # 'dell':{
-    #     'ENGINE':   'django.db.backends.postgresql_psycopg2',
-    #     'USER':     'youtilitydba',
-    #     'NAME':     'dell',
-    #     'PASSWORD': '!!sysadmin!!',
-    #     'HOST':     '192.168.1.254',
-    #     'PORT':     '5432',
-    # },
     'icici':{
         'ENGINE':   'django.db.backends.postgresql_psycopg2',
         'USER':     'youtilitydba',
@@ -144,6 +135,20 @@ DATABASES = {
         'PORT':     '5432',
     }
 }
+
+CACHES = {
+    "default": {
+        "BACKEND": "django_redis.cache.RedisCache",
+        "LOCATION": "redis://127.0.0.1:6379/1",
+        "OPTIONS": {
+            "CLIENT_CLASS": "django_redis.client.DefaultClient",
+        },
+       "KEY_PREFIX": "youtility4"
+    }
+}
+
+# Cache time to live is 15 minutes.
+CACHE_TTL = 60 * 5
 
 # Password validation
 # https://docs.djangoproject.com/en/3.2/ref/settings/#auth-password-validators
@@ -169,11 +174,11 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = 'en-us'
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = 'Asia/Kolkata'
 
 USE_I18N = True
 
-USE_L10N = True
+USE_L10N = False
 
 USE_TZ = True
 
@@ -188,9 +193,87 @@ STATICFILES_DIRS = [os.path.join(BASE_DIR, 'intelliwiz_config/static')]
 # https://docs.djangoproject.com/en/3.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
-AUTH_USER_MODEL = 'peoples.People'
+
 DATABASE_ROUTERS = ['apps.tenants.middlewares.TenantDbRouter']
 
 # Media Files
 MEDIA_ROOT = os.path.join(os.path.expanduser('~'),'youtility4_media')
 MEDIA_URL = '/youtility4_media/'
+DATE_FORMAT = "d M Y"
+
+# Static files (CSS, JavaScript, Images)
+# https://docs.djangoproject.com/en/3.2/howto/static-files/
+
+STATIC_URL = '/static/'
+STATICFILES_DIRS = [os.path.join(BASE_DIR, 'intelliwiz_config/static')]
+
+# Default primary key field type
+# https://docs.djangoproject.com/en/3.2/ref/settings/#default-auto-field
+
+DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+DATABASE_ROUTERS = ['apps.tenants.middlewares.TenantDbRouter']
+
+# Media Files
+
+INTERNAL_IPS = [
+    # ...
+    '127.0.0.1',
+    # ...
+]
+
+
+AUTH_USER_MODEL = 'peoples.People'
+AUTHENTICATION_BACKENDS = ('apps.peoples.backends.MultiAuthentcationBackend',
+'django.contrib.auth.backends.ModelBackend')
+
+
+
+import logging.config
+LOGGING_CONFIG = None
+LOGGING_CONFIG_ = { 
+    'version': 1,
+    'disable_existing_loggers': True,
+    'formatters': { 
+        'coloured': { 
+            '()': 'colorlog.ColoredFormatter',
+            'format': '%(log_color)s %(asctime)s [%(levelname)s] %(name)s:  from method: %(funcName)s()   %(message)s '
+        },
+    },
+    'handlers': { 
+        'default': { 
+            #'level': 'INFO',
+            'formatter': 'coloured',
+            'class': 'logging.StreamHandler',
+            'stream': 'ext://sys.stdout',  # Default is stderr
+        },
+    },
+    'loggers': { 
+        '': {  # root logger
+            'handlers': ['default'],
+            'level': 'WARNING',
+            'propagate': False
+        },
+        'django': { 
+            'handlers': ['default'],
+            'level': 'INFO',
+            'propagate': False
+        },
+        '__main__': {  # if __name__ == '__main__'
+            'handlers': ['default'],
+            'level': 'DEBUG',
+            'propagate': False
+        },
+    } 
+}
+logging.config.dictConfig(LOGGING_CONFIG_)
+
+LOGIN_URL = 'login'
+
+SESSION_ENGINE = 'django.contrib.sessions.backends.cached_db'
+# Close the session when user closes the browser
+SESSION_EXPIRE_AT_BROWSER_CLOSE = False
+SESSION_COOKIE_AGE = 30 * 60  # set just 10 seconds to test
+SESSION_SAVE_EVERY_REQUEST = True
+
+

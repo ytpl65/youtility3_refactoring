@@ -1,0 +1,349 @@
+{% extends "base_form.html" %}
+
+<!---- BEGIN PAGE TITLE ---->
+{% block title %}
+People Form
+{% endblock title %}
+<!---- END PAGE TITLE ----->
+
+<!-------------------------- BEGIN PAGE BREADCUMB ----------------------->
+{% block pagebreadcumb %}
+{{ super() }}
+<li class="breadcrumb-item pe-3"><a href="{{ url('peoples:people_list') }}" class="pe-3">People List</a></li>
+<li class="breadcrumb-item pe-3"><a href="javascript:void(0)" class="pe-3">People Form</a></li>
+{% endblock pagebreadcumb %}
+<!-------------------------- END PAGE BREADCUMB ------------------------->
+
+
+<!-------------  BEGIN POP-UPS CODE -------------->
+{% block popup_alerts %}
+	{% if edit is defined %}
+	<!-- to delete an instance with popup_alert pass the delete_url_name, instance_id, popup_title, popup_id -->
+		{{ popup_alert('peoples:people_delete', peopleform.instance.peopleid, title="Delete", popup_id="delete_alert") }}
+
+		{% block popup_body %}
+			<h4>Are you sure, you want to delete this?</h4>
+		{% endblock popup_body %}
+	{% endif %}
+{% endblock popup_alerts %}
+<!-------------  END POP-UPS CODE -------------->
+
+
+<!------ BEGIN FORM TITLE ------->
+{% block form_title %}
+People
+{% endblock form_title %}
+<!------ END FORM TITLE -------->
+
+<!--------- BEGIN NON FIELD ERRORS -------->
+{% block nonfield_errors %}
+	{% if peopleform.non_field_errors() %}
+	<div id="non_field_error" class="alert alert-danger" style="width: 73%;">
+		{% for error in peopleform.non_field_errors() %}
+		{{ error }}
+		{% endfor %}
+        <button type="button" class="btn-close flt-right" data-bs-dismiss="alert" aria-label="Close"></button>
+	</div>
+	{% endif %}
+    {% if pref_form.non_field_errors() %}
+	<div id="non_field_error" class="alert alert-danger" style="width: 73%;">
+		{% for error in pref_form.non_field_errors() %}
+		{{ error }}
+		{% endfor %}
+        <button type="button" class="btn-close flt-right" data-bs-dismiss="alert" aria-label="Close"></button>
+	</div>
+	{% endif %}
+{% endblock nonfield_errors %}
+<!---------- END NON FIELD ERRORS --------->
+
+
+<!----------- BEGIN FORM MESSGES --------------->
+{% block form_msgs %}
+	{% for msg in get_msgs(request) %}
+	<div class="alert {% if msg.tags %} {{ msg.tags }} {% endif %} " id="alert_msg" style="width:73%; ">
+		{{ msg }}
+		<button type="button" class="btn-close flt-right" data-bs-dismiss="alert" aria-label="Close"></button>
+	</div>
+	{% endfor %}
+{% endblock form_msgs %}
+<!----------- END FORM MESSGES ----------------->
+
+
+<!-------------- BEGIN FORM ------------------->
+{% block form %}
+		<form action="" method="post" id="id_peopleform" enctype="multipart/form-data">
+            <!---------------------------CSRF MIDDLEWARE TOKEN---------------------->
+            <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
+            <!--BEGIN FIRST ROW-->
+            <div class="mb-3 row g-3 gx-6">
+                <!--BEGIN FIRST COLUMN-->
+                <div class="col-md-10">
+                    <!--BEGIN INNER ROW-->
+                    <div class="row g-3 gx-6 ">
+                        {% for field in peopleform -%}
+                        {%- if field.widget_type != 'checkbox' and field.name not in ['peopletype', 'dateofjoin', 'department', 
+                                                                      'dateofreport', 'reportto', 'designation', 'peopleimg']%}
+                        <!--LABEL FIELD-->
+                        {%- if loop.index <5 %}
+                        {{ field.label_tag() }}
+                        <!--INPUT GROUP-->
+                        <div class="col-md-4">
+                            {{ field }}
+                            <!--HELP TEXT-->
+                            {% if field.help_text %}
+                            <small>{{ field.help_text }}</small>
+                            {% endif %}
+                            <!----- BEGIN ERROR FIELD  ------->
+                            {{ field.errors }}
+                            <!----- END ERROR FIELD  ------->
+                        </div>
+                        {% else %}
+
+
+                        <!--LABEL FIELD-->
+                        {{ field.label_tag() }}
+                        <!--INPUT GROUP-->
+                        <div class="col-md-4">
+                            {{ field }}
+                            <!--HELP TEXT-->
+                            {% if field.help_text %}
+                            <small>{{ field.help_text }}</small>
+                            {%- endif %}
+                            <!----- BEGIN ERROR FIELD  ------->
+					        {{ field.errors }}
+					        <!----- END ERROR FIELD  ------->
+                        </div>
+                        {%- endif %}
+                        {%- endif %}
+
+                        {%- endfor %}
+                        <!------------Checkboxes Rendering Last --------------------->
+                        <div class="booleans col-md-6 d-flex justify-content-sm-start mt-5">
+                            <label for={{ peopleform.isenable.id_for_label }}
+                                class="form-check-label bool col-form-label me-5 text-sm-right">{{ peopleform.isenable.label }}
+                                &nbsp{{ peopleform.isenable }}</label>
+                            <label for={{ pref_form.blacklist.id_for_label }}
+                                class="form-check-label bool col-form-label me-5 text-sm-right">{{ pref_form.blacklist.label }}
+                                &nbsp{{ pref_form.blacklist }}</label>
+                        </div>
+                    </div>
+                    <!--END INNER ROW-->
+                </div>
+                <!--END FIRST COLUMN-->
+                <!--BEGIN IMAGE INPUT-->
+                <div class="col-md-2">
+
+
+                    <!--begin::Image input-->
+                    <div class="image-input image-input-empty" data-kt-image-input="true" style="background-image: url({{ static('assets/media/images/blank.png') }})">
+                        <!--begin::Image preview wrapper-->
+                        <div class="image-input-wrapper w-125px h-125px"></div>
+                        <!--end::Image preview wrapper-->
+
+                        <!--begin::Edit button-->
+                        <label class="btn btn-icon btn-circle btn-active-color-primary w-25px h-25px bg-white shadow"
+                            data-kt-image-input-action="change"
+                            data-bs-toggle="tooltip"
+                            data-bs-dismiss="click"
+                            title="Change avatar">
+                            <span class="svg-icon svg-icon-1">
+                                <span class="material-icons align-middle dark fs-5">
+                                    edit
+                                </span>
+                            </span>
+
+                            <!--begin::Inputs-->
+                            <input type="file" name="{{ peopleform.peopleimg.html_name }}" accept=".png, .jpg, .jpeg" />
+                            <input type="hidden" name="avatar_remove" />
+                            <!--end::Inputs-->
+                        </label>
+                        <!--end::Edit button-->
+
+                        <!--begin::Cancel button-->
+                        <span class="btn btn-icon btn-circle btn-active-color-primary w-25px h-25px bg-white shadow"
+                            data-kt-image-input-action="cancel"
+                            data-bs-toggle="tooltip"
+                            data-bs-dismiss="click"
+                            title="Cancel avatar">
+                            <span class="svg-icon svg-icon-1">
+                                <span class="material-icons align-middle dark fs-5">
+                                    clear
+                                </span>
+                            </span>
+                        </span>
+                        <!--end::Cancel button-->
+
+                        <!--begin::Remove button-->
+                        <span class="btn btn-icon btn-circle btn-active-color-primary w-25px h-25px bg-white shadow"
+                            data-kt-image-input-action="remove"
+                            data-bs-toggle="tooltip"
+                            data-bs-dismiss="click"
+                            title="Remove avatar">
+                            <i class="bi bi-x fs-2"></i>
+                        </span>
+                        <!--end::Remove button-->
+                    </div>
+                    <!--end::Image input-->
+                </div>
+                <!--END IMAGE INPUT-->
+            </div>
+            <!--END FIRST ROW-->
+            <div class="mb-4 row">
+                <section class="my-6">
+                    <h4>Work Information</h4>
+                    <hr>
+                    <div class="mb-3 row g-3 gx-6">
+                        {% for field in peopleform -%}
+                        {%- if field.widget_type != 'checkbox' and field.name in ['peopletype', 'dateofjoin', 'department', 'dateofreport', 'reportto', 'designation'] %}
+                        <!--LABEL FIELD-->
+                        {%- if loop.index <4 %}
+                        {{ field.label_tag() }}
+                        <!--INPUT GROUP-->
+                        <div class="col-md-4">
+                            {{ field }}
+                            <!--HELP TEXT-->
+                            {%- if field.help_text %}
+                            <small>{{ field.help_text }}</small>
+                            {%- endif %}
+                            <!----- BEGIN ERROR FIELD  ------->
+                            {{ field.errors }}
+                            <!----- END ERROR FIELD  ------->
+                        </div>
+                        {% else %}
+
+
+                        <!--LABEL FIELD-->
+                        {{ field.label_tag() }}
+                        <!--INPUT GROUP-->
+                        <div class="col-md-4">
+                            {{ field }}
+                            <!--HELP TEXT-->
+                            {%- if field.help_text %}
+                            <small>{{ field.help_text }}</small>
+                            {%- endif %}
+                            <!----- BEGIN ERROR FIELD  ------->
+                            {{ field.errors }}
+                            <!----- END ERROR FIELD  ------->
+                        </div>
+                        {%- endif %}
+                        {%- endif %}
+
+                        {%- endfor %}
+
+                    </div>
+                </section>
+            </div>
+            <div class="mb-4 row">
+                <section class="mb-6">
+                    <h4>Capability Information</h4>
+                    <hr>
+                    <div class="mb-3 row g-3 gx-6">
+                        {% for field in pref_form -%}
+                        {%- if field.widget_type != 'checkbox' and field.name in ['mobilecapability', 'webcapability', 'reportcapability', 'portletcapability'] %}
+                        <!--LABEL FIELD-->
+                        {%- if loop.index <4 %}
+                        {{ field.label_tag() }}
+                        <!--INPUT GROUP-->
+                        <div class="col-md-4">
+                            {{ field }}
+                            <!--HELP TEXT-->
+                            {%- if field.help_text %}
+                            <small>{{ field.help_text }}</small>
+                            {%- endif %}
+                            <!----- BEGIN ERROR FIELD  ------->
+                            {{ field.errors }}
+                            <!----- END ERROR FIELD  ------->
+                        </div>
+                        {% else %}
+
+
+                        <!--LABEL FIELD-->
+                        {{ field.label_tag() }}
+                        <!--INPUT GROUP-->
+                        <div class="col-md-4">
+                            {{ field }}
+                            <!--HELP TEXT-->
+                            {%- if field.help_text %}
+                            <small>{{ field.help_text }}</small>
+                            {%- endif %}
+                            <!----- BEGIN ERROR FIELD  ------->
+                            {{ field.errors }}
+                            <!----- END ERROR FIELD  ------->
+                        </div>
+                        {%- endif %}
+                        {%-endif %}
+
+                        {%- endfor %}
+
+                    </div>
+                </section>
+            </div>
+
+            <div class="mb-4 row">
+                <section class="mb-6">
+                    <h4>Site Group And Template Information</h4>
+                    <hr>
+                    <div class="mb-3 row g-3 gx-6">
+                        {{ pref_form.assignsitegroup.label_tag() }}
+                        <div class="col-md-4">
+                            {{ pref_form.assignsitegroup }}
+                            <!--HELP TEXT-->
+                            {%- if pref_form.assignsitegroup.help_text %}
+                            <small>{{ pref_form.assignsitegroup.help_text }}</small>
+                            {%- endif %}
+                            <!--ERROR FIELD-->
+                            {{ pref_form.assignsitegroup.errors }}
+                        </div>
+                        {{ pref_form.tempincludes.label_tag() }}
+                        <div class="col-md-4">
+                            {{ pref_form.tempincludes }}
+                            <!--HELP TEXT-->
+                            {%- if pref_form.tempincludes.help_text %}
+                            <small>{{ pref_form.tempincludes.help_text }}</small>
+                            {%- endif %}
+                            <!--ERROR FIELD-->
+                            {{ pref_form.tempincludes.errors }}
+                        </div>
+                        <div class="booleans col-md-6 d-flex justify-content-sm-between mt-5">
+                            {% for checkbox_field in pref_form %}
+                            {% if checkbox_field.widget_type=='checkbox'  and checkbox_field.name in ['showalltemplates', 'showtemplatebasedonfilter'] %}
+                            <label for={{ checkbox_field.id_for_label }}
+                                class="form-check-label bool col-form-label me-5 text-sm-right">{{ checkbox_field }}
+                                &nbsp{{ checkbox_field.label }}</label>
+                            {% endif %}
+                            {% endfor %}
+                        </div>
+                    </div>
+                </section>
+            </div>
+        </form>
+{% endblock form %}
+<!------------- END FORM ---------------------->
+
+
+<!------------------- BEGIN FORM PAGE ACTIONS --------------->
+{% block page_actions %}
+{% if edit is defined %}
+    {{ form_update('id_peopleform', popup_id="delete_alert") }}
+{% else %}
+    {{ form_create('id_peopleform') }}
+{% endif %}
+{% endblock page_actions %}
+<!------------------- END FORM PAGE ACTIONS --------------->
+
+
+{% block extra_scripts %}
+<script>
+    //ADD CALENDER TO DATE FIELDS WITH FLAT-PICKR PLUGIN
+    $("#id_dateofbirth").flatpickr({dateFormat:'d M Y'})
+    $("#id_dateofjoin").flatpickr({dateFormat:'d M Y'})
+    $("#id_dateofreport").flatpickr({dateFormat:'d M Y'})
+
+    $(document).ready(function () {
+        //hide the delete button when instance is not saved yet.
+        if ('{{peopleform.instance.peopleid}}' == ('None' || "")) {
+            $("#btn_del").hide()
+        }
+    })
+</script>
+{% endblock extra_scripts %} 

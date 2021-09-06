@@ -1,11 +1,100 @@
-{% extends "layout.html" %}
+{% extends "base_list.html" %}
 
-{% block head %}
+<!---- BEGIN CARD TITLE ------>
+{% block card_title %}
+TypeAssist's
+{% endblock card_title %}
+<!----- END CARD TITLE -------->
 
-{% endblock head %}
+<!----------- BEGIN PAGE BREADCUMBS ----------->
+{% block pagebreadcumb %}
+{{ super() }}
+<li class="breadcrumb-item pe-3"><a href="javascript:void(0)" class="pe-3">TypeAssist List</a></li>
+{% endblock pagebreadcumb %}
+<!----------- END PAGE BREADCUMBS ------------->
 
-{% block pagebody_container_fluid %}
-<div>
-    {{ ta_list.as_table() }}
+<!-------- BEGIN PAGE ACTIONS ---------->
+{% block page_actions %}
+{{ form_add('onboarding:ta_form') }}
+{% endblock page_actions %}
+<!-------- END PAGE ACTIONS ------------>
+
+<!------------------ BEGIN BU TABLE ------------------------->
+{% block table %}
+<div class="table-responsive">
+    <!------------------ BEGIN TABLE --------------------->
+    <table id="ta_table" class="table gy-2" style="width:100%">
+        <thead class="fw-bold fs-6">
+            <th>Code</th>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Belongs To</th>
+        </thead>
+		<!---------- BEGIN TABLE FILTER FIELDS --------->
+		<thead id="filter_row">
+		<form action="" id='ta_filter' method='get'>
+			{% for field in ta_filter %}
+			<th>
+				<input type="text" 
+				id="{{ field.auto_id }}" 
+				name="{{ field.name }}" 
+				placeholder ="Search {{ field.label }}">
+			</th>
+			{% endfor %}
+		</form>
+		</thead>
+		<!---------- END TABLE FILTER FIELDS --------->
+        {% for ta in ta_list %}
+        <tr>
+            <td><a href="{{ url('onboarding:ta_update', args=[ta['taid']]) }}">{{ ta['tacode'] }}</a></td>
+            <td>{{ ta['taname'] }}</td>
+            <td>{{ ta['tatype'] }}</td>
+            <td>{{ ta['parent__tacode'] }}</td>
+        </tr>
+        {% endfor %}
+		
+    </table>
+    <!------------------ END TABLE --------------------->
 </div>
-{% endblock pagebody_container_fluid %}
+
+
+{% if ta_list and ta_list.has_other_pages %}
+<!-- BEGIN PAGINATOIN -->
+{{ paginator(ta_list) }}
+<!-- END PAGINATOIN ---->
+{% endif %}
+
+{% endblock table %}
+<!------------------ END BU TABLE --------------------------->
+
+<!--------- BEGIN EXTRA SCRIPTS ----------------------------->
+{% block extra_scripts %}
+<script>
+   $(document).ready(function () {
+		$("input").keypress(function(event) {
+			if (event.which == 13) {
+				event.preventDefault();
+				$("#ta_filter").submit();
+			}
+		});
+		var table = $('#ta_table').DataTable({
+			orderCellsTop: true,
+			responsive: true,
+			fixedHeader: true,
+			paging: false,
+			scrollCollapse: true,
+			sDom: '<>'
+		})
+		//BEGIN STYLING DATATABLE
+		$("th > input").addClass('form-control')
+		$("th > input").css('height', '35px')
+		var styles = {
+			"border-bottom":"none",
+			"background-color":"#f1f4f7"
+		}
+		$('#ta_table thead tr:eq(1)').css(styles)
+		//END STYLING DATATABLE
+	});
+</script>
+{% endblock extra_scripts %}
+<!-------- END EXTRA SCRIPTS ------------------------------->

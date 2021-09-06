@@ -1,0 +1,102 @@
+{% extends "base_list.html" %}
+
+<!---- BEGIN CARD TITLE ------>
+{% block card_title %}
+Client Lists
+{% endblock card_title %}
+<!---- END CARD TITLE -------->
+
+<!----------- BEGIN PAGE BREADCUMBS ----------->
+{% block pagebreadcumb %}
+{{ super() }}
+<li class="breadcrumb-item pe-3"><a href="javascript:void(0)" class="pe-3">Client List</a></li>
+{% endblock pagebreadcumb %}
+<!----------- END PAGE BREADCUMBS ------------->
+
+<!-------- BEGIN PAGE ACTIONS ---------->
+{% block page_actions %}
+ {{ form_add('onboarding:client_form') }}
+{% endblock page_actions %}
+<!-------- END PAGE ACTIONS ------------->
+
+<!------------------ BEGIN CLIENT TABLE ------------------------->
+{% block table %}
+<div class="table-responsive">
+    <table id="client_table" class="table gy-3" style="width:100%">
+        <thead class="fw-bold fs-6">
+            <th>Code</th>
+            <th>Name</th>
+            <th>Enable</th>
+            <th>Web Capability</th>
+            <th>Mobile Capability</th>
+            <th>Report Capability</th>
+        </thead>
+		<!---------- BEGIN TABLE FILTER FIELDS --------->
+		<thead id="filter_row">
+		<form action="" id='client_filter' method='get'>
+			{% for field in client_filter %}
+			<th>
+				<input type="text" 
+				id="{{ field.auto_id }}" 
+				name="{{ field.name }}" 
+				placeholder ="Search {{ field.label }}">
+			</th>
+			{% endfor %}
+		</form>
+		</thead>
+		<!---------- END TABLE FILTER FIELDS --------->
+        {% for client in client_list %}
+        <tr>
+            <td><a href="{{ url('onboarding:client_update', args=[client['btid']]) }}">{{ client['bucode'] }}</a></td>
+            <td>{{ client['buname'] }}</td>
+            <td>{{ client['enable'] }}</td>
+            <td>{{ client['bu_preferences__webcapability'] }}</td>
+            <td>{{ client['bu_preferences__mobilecapability'] }}</td>
+            <td>{{ client['bu_preferences__reportcapability'] }}</td>
+        </tr>
+        {% endfor %}
+		
+    </table>
+</div>
+{% if client_list and client_list.has_other_pages %}
+        <!------ BEGIN PAGINATOIN ----->
+		{{ paginator(client_list) }}
+		<!----- END PAGINATOIN -------->
+    {% endif %}
+{% endblock table %}
+<!------------------ END CLIENT TABLE --------------------------->
+
+<!--------- BEGIN EXTRA SCRIPTS ------>
+{% block extra_scripts %}
+<script>
+	$(document).ready(function () {
+		$("input").keypress(function(event) {
+			if (event.which == 13) {
+				event.preventDefault();
+				$("#client_filter").submit();
+			}
+		});
+
+		//BEGIN DATATABLE INITIALIZATION
+		var table = $('#client_table').DataTable({
+			orderCellsTop: true,
+			fixedHeader: true,
+			paging: false,
+			scrollCollapse: true,
+			sDom:'<>'
+		})
+		//END DATATABLE INITIALIZATION
+
+		//BEGIN STYLING DATATABLE
+		$("th > input").addClass('form-control')
+		$("th > input").css('height', '35px')
+		var styles = {
+			"border-bottom": "none",
+			"background-color": "#f1f4f7"
+		}
+		$('#client_table thead tr:eq(1)').css(styles)
+		//END STYLING DATATABLE
+	});
+</script>
+{% endblock extra_scripts %}
+<!-------- END EXTRA SCRIPTS --------->

@@ -1,14 +1,14 @@
 from django.contrib import admin
-from .models import People, PeopleEventlog, Pgroup, Pgbelonging
+from .models import People, PeopleEventlog, Pgroup, Pgbelonging, Capability
 # Register your models here.
 
 @admin.register(People)
 class PeopleAdmin(admin.ModelAdmin):
     fields = ['peoplecode', 'peoplename', 'loginid', 'designation', 'department', 'mobno', 'email',
-                    'reportto', 'dateofjoin', 'dateofreport', 'dateofbirth','gender', 'peopletype', 'isenable', 'isadmin', 'people_extras']
+                    'reportto', 'dateofjoin', 'dateofreport', 'dateofbirth','gender', 'peopletype', 'isenable', 'isadmin', 'people_extras', 'clientid']
     
     list_display = ['peopleid','peoplecode', 'peoplename', 'loginid', 'designation', 'mobno', 'email',
-                    'reportto', 'dateofjoin', 'gender', 'peopletype', 'isenable', 'isadmin']
+                    'reportto', 'dateofjoin', 'gender', 'peopletype', 'isenable', 'isadmin', 'clientid']
     
     list_display_links = ['peoplecode', 'peoplename']
 
@@ -30,3 +30,7 @@ class PgbelongingAdmin(admin.ModelAdmin):
 @admin.register(PeopleEventlog)
 class PeopleEventlogAdmin(admin.ModelAdmin):
     fields = ['pelogid', 'peopleid', 'peventtype']
+
+@admin.register(Capability)
+class CapabilityAdmin(admin.ModelAdmin):
+    fields = ['capscode', 'capsname', 'cfor', 'parent']

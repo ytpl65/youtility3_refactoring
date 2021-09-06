@@ -1,0 +1,94 @@
+.menu-item.menu-accordion.show {
+    border-left: 4px solid #489edb;
+}
+
+table{
+    width: 100%;
+    border: 11px solid red;
+    padding: 5px;
+}
+thead {
+    border-bottom: 2px solid    #9899ac;
+    color: #707478;
+    font-weight: bolder
+}
+
+tr:nth-child(even) {
+    /* background: rgba(216, 216, 216, 0.274) */
+    background-color: #f1f4f7;
+}
+
+input.form-control {
+    color: #495057;
+}
+
+select {
+    border: 1px solid #ced4da;
+}
+
+/*Disable pointer events when sidebar minimized*/
+body[data-kt-aside-minimize="on"]>.menu-item {
+    pointer-events: none;
+    cursor: default;
+}
+
+/* for form buttons */
+.w-87px {
+    width: 87px;
+}
+
+.w-96px {
+    width: 96px;
+}
+.uppercase{
+    text-transform: uppercase;
+}
+.errorlist{
+    list-style: none;
+    padding: 0px;
+}
+.errorlist > li{
+    color:red;
+	font-size: 15px;
+}
+#alert_msg, #non_field_error{
+    letter-spacing: .1rem;
+}
+.float-right{
+    float: right;
+}
+.breadcrumb > li > a {
+	color: #707478;
+}
+.breadcrumb > li:not(:last-child) > a:hover{
+	color: #01adf3;
+}
+.breadcrumb > li:last-child{
+    pointer-events: none;
+}
+.flt-right{
+    float: right;
+}
+#srchbtn{
+    position: relative;
+    background: none;
+    border: none;
+    
+}
+#col-category{
+    border: none;
+    border-radius: 0%;
+    border-right: 1px solid #ced4da;
+    columns: red;
+    
+}
+#searchinp{
+    border: none;
+}
+.searchwrapper{
+    border-radius: 2%;
+    border: 1px solid #ced4da;
+}
+input[type='checkbox']{
+    background-color: rgb(46, 99, 138);
+}
