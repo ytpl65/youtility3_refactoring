@@ -1,16 +1,22 @@
 from django.contrib import admin
-from . models import TypeAssist
+from import_export import resources
+from import_export.admin import ImportExportModelAdmin
+from .forms import (BtForm, TypeAssistForm, BuPrefForm, SitePeopleForm,
+ContractDetailForm, ContractForm)
+from . models import TypeAssist, Bt 
 
-# Register your models here.
-from .models import TypeAssist, Bt
-# Register your models here.
+class TypeAssistResource(resources.ModelResource):
+    model = TypeAssist
+    import_id_fields = ('taid',)
+    fields = ('taid', 'tacode', 'taname', 'parent')
 
 @admin.register(TypeAssist)
-class TypeAssistAdmin(admin.ModelAdmin):
+class TypeAssistAdmin(ImportExportModelAdmin):
+    resource_class = TypeAssistResource
     fields = ('tacode', 'taname', 'tatype', 'parent', 'buid',)
     list_display = ('tacode', 'taname', 'tatype', 'parent',)
     list_display_links = ('tacode',)
-    
+
 
 @admin.register(Bt)
 class BtAdmin(admin.ModelAdmin):
