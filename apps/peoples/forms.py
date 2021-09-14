@@ -1,4 +1,3 @@
-from apps.peoples.utils import get_caps_choices
 from django import forms
 from .models import Capability, People, PeopleEventlog, Pgbelonging, Pgroup
 from apps.onboarding.models import Bt
@@ -381,6 +380,7 @@ class PeopleExtrasForm(forms.Form):
             self.fields['portletcapability'].choices = session['people_reportcaps'] or session['client_reportcaps']
             self.fields['reportcapability'].choices  = session['people_portletcaps'] or session['client_portletcaps']
         else:
+            from .utils import get_caps_choices
             self.fields['webcapability'].choices     = get_caps_choices(cfor='WEB')
             self.fields['mobilecapability'].choices  = get_caps_choices(cfor='MOB')
             self.fields['portletcapability'].choices = get_caps_choices(cfor='REPORT')

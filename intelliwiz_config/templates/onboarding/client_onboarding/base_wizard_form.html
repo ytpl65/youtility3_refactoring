@@ -1,0 +1,29 @@
+{% extends "base_form.html" %}
+
+
+{% block head %}
+{{ wizard.form.media }}
+{% endblock head %}
+
+{% block non_field_errors %}
+    {{ wizard.form.errors }}
+    {{ wizard.form.non_field_errors}}
+{% endblock non_field_errors %}
+
+{% block form %}
+
+<form action="" method="post">
+    <!-------------------------- CSRF MIDDLEWARE TOKEN --------------------->
+	<input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
+    <!-- Wizard management form necessary -->
+    {{ wizard.management_form }}
+    {% block custom_form %}
+    
+    {% endblock custom_form %}
+    {% if wizard.steps.prev %}
+    <button name="wizard_goto_step" type="submit" value="{{ wizard.steps.first }}">First Step</button>
+    <button name="wizard_goto_step" type="submit" value="{{ wizard.steps.prev }}">Previous Step</button>
+    {% endif %}
+</form>
+
+{% endblock form %}

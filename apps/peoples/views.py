@@ -58,6 +58,7 @@ class SignIn(View):
                     if people:
                         login(request, people)
                         save_user_session(request, request.user)
+                        print(request.session['people_webcaps'])
                         logger.info("User logged in {}".format(
                             request.user.peoplecode))
                         response = redirect('/dashboard')

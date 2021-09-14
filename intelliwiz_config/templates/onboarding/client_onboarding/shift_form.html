@@ -1,0 +1,59 @@
+{% extends "onboarding/client_onboarding/base_wizard_form.html" %}
+
+
+<!----------- BEGIN FORM MESSGES --------------->
+{% block form_msgs %}
+	{% for msg in get_msgs(request) %}
+	<div class="alert {% if msg.tags %} {{ msg.tags }} {% endif %} " id="alert_msg" style="width:73%; ">
+		{{ msg }}
+		<button type="button" class="btn-close flt-right" data-bs-dismiss="alert" aria-label="Close"></button>
+	</div>
+	{% endfor %}
+    <p>Step {{ wizard.steps.step1 }} of {{ wizard.steps.count }}</p>
+
+{% endblock form_msgs %}
+<!----------- END FORM MESSGES ----------------->
+
+
+{% block form_title %}
+Create Shift
+{% endblock form_title %}
+
+
+<!-------------- BEGIN FORM ------------------->
+{% block custom_form %}
+		<div class="mb-3 row g-3 gx-6">
+			<!--BUCODE-->
+			{{ wizard.form.shiftname.label_tag() }}
+			<div class="col-md-4">
+				{{ wizard.form.shiftname }}
+			</div>
+			<!--BUNAME-->
+			{{ wizard.form.starttime.label_tag() }}
+			<div class="col-md-4">
+				{{ wizard.form.starttime }}
+			</div>
+			<!--PARENT-->
+			{{ wizard.form.captchafreq.label_tag() }}
+			<div class="col-md-4">
+				{{ wizard.form.captchafreq }}
+			</div>
+			<!--BUTYPE-->
+			{{ wizard.form.endtime.label_tag() }}
+			<div class="col-md-4">
+				{{ wizard.form.endtime }}
+			</div>
+		</div>
+		<input type="submit" value="Next">
+{% endblock custom_form %}
+<!------------- END FORM ---------------------->
+
+{% block extra_scripts %}
+<script>
+	$('#id_shift_form-starttime, #id_shift_form-endtime').flatpickr({
+	enableTime: true,
+    noCalendar: true,
+    dateFormat: "H:i"
+	})
+</script>
+{% endblock extra_scripts %}

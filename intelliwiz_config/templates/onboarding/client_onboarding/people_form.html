@@ -1,0 +1,282 @@
+{% extends "base_form.html" %}
+
+<!---- BEGIN PAGE TITLE ---->
+{% block title %}
+Client Onboarding
+{% endblock title %}
+<!---- END PAGE TITLE ----->
+
+
+{% block head %}
+{{ wizard.form.media }}
+{% endblock head %}
+
+
+<!------ BEGIN FORM TITLE ------->
+{% block form_title %}
+Create People
+{% endblock form_title %}
+<!------ END FORM TITLE -------->
+
+
+
+<!----------- BEGIN FORM MESSGES --------------->
+{% block form_msgs %}
+    <p>Step {{ wizard.steps.step1 }} of {{ wizard.steps.count }}</p>
+	{% for msg in get_msgs(request) %}
+	<div class="alert {% if msg.tags %} {{ msg.tags }} {% endif %} " id="alert_msg" style="width:73%;">
+		{{ msg }}
+		<button type="button" class="btn-close flt-right" data-bs-dismiss="alert" aria-label="Close"></button>
+	</div>
+	{% endfor %}
+{% endblock form_msgs %}
+<!----------- END FORM MESSGES ----------------->
+
+
+<!-------------- BEGIN FORM ------------------->
+{% block custom_form %}
+
+            <!--BEGIN FIRST ROW-->
+            <div class="mb-3 row g-3 gx-6">
+                <!--BEGIN FIRST COLUMN-->
+                <div class="col-md-10">
+                    <!--BEGIN INNER ROW-->
+                    <div class="row g-3 gx-6 ">
+                        <!--peoplecode-->
+                        {{ wizard.form.peoplecode.label_tag() }}
+                        <div class="col-md-4">
+                            {{ wizard.form.peoplecode }}
+                        </div>
+
+                        <!--peoplename-->
+                        {{ wizard.form.peoplename.label_tag() }}
+                        <div class="col-md-4">
+                            {{ wizard.form.peoplename }}
+                        </div>
+                        
+                        <!--loginid-->
+                        {{ wizard.form.loginid.label_tag() }}
+                        <div class="col-md-4">
+                            {{ wizard.form.loginid }}
+                        </div>
+
+                        <!--email-->
+                        {{ wizard.form.email.label_tag() }}
+                        <div class="col-md-4">
+                            {{ wizard.form.email }}
+                        </div>
+                        
+                        <!--mobno-->
+                        {{ wizard.form.mobno.label_tag() }}
+                        <div class="col-md-4">
+                            {{ wizard.form.mobno }}
+                        </div>
+
+                        <!--gender-->
+                        {{ wizard.form.gender.label_tag() }}
+                        <div class="col-md-4">
+                            {{ wizard.form.gender }}
+                        </div>
+                        
+                        <!--dateofbirth-->
+                        {{ wizard.form.dateofbirth.label_tag() }}
+                        <div class="col-md-4">
+                            {{ wizard.form.dateofbirth }}
+                        </div>
+
+                        <!--deviceid-->
+                        {{ wizard.form.deviceid.label_tag() }}
+                        <div class="col-md-4">
+                            {{ wizard.form.deviceid }}
+                        </div>
+
+                        <!------------Checkboxes Rendering Last --------------------->
+                        <div class="booleans col-md-6 d-flex justify-content-sm-start mt-5">
+                            <label for={{ wizard.form.isenable.id_for_label }}
+                                class="form-check-label bool col-form-label me-5 text-sm-right">{{ wizard.form.isenable.label }}
+                                &nbsp{{ wizard.form.isenable }}</label>
+                            <label for={{ wizard.form.blacklist.id_for_label }}
+                                class="form-check-label bool col-form-label me-5 text-sm-right">{{ wizard.form.blacklist.label }}
+                                &nbsp{{ wizard.form.blacklist }}</label>
+                        </div>
+                    </div>
+                    <!--END INNER ROW-->
+                </div>
+                <!--END FIRST COLUMN-->
+                <!--BEGIN IMAGE INPUT-->
+                <div class="col-md-2">
+
+
+                    <!--begin::Image input-->
+                    <div class="image-input image-input-empty" data-kt-image-input="true" style="background-image: url({{ static('assets/media/images/blank.png') }})">
+                        <!--begin::Image preview wrapper-->
+                        <div class="image-input-wrapper w-125px h-125px"></div>
+                        <!--end::Image preview wrapper-->
+
+                        <!--begin::Edit button-->
+                        <label class="btn btn-icon btn-circle btn-active-color-primary w-25px h-25px bg-white shadow"
+                            data-kt-image-input-action="change"
+                            data-bs-toggle="tooltip"
+                            data-bs-dismiss="click"
+                            title="Change avatar">
+                            <span class="svg-icon svg-icon-1">
+                                <span class="material-icons align-middle dark fs-5">
+                                    edit
+                                </span>
+                            </span>
+
+                            <!--begin::Inputs-->
+                            <input type="file" name="{{ peopleform.peopleimg.html_name }}" accept=".png, .jpg, .jpeg" />
+                            <input type="hidden" name="avatar_remove" />
+                            <!--end::Inputs-->
+                        </label>
+                        <!--end::Edit button-->
+
+                        <!--begin::Cancel button-->
+                        <span class="btn btn-icon btn-circle btn-active-color-primary w-25px h-25px bg-white shadow"
+                            data-kt-image-input-action="cancel"
+                            data-bs-toggle="tooltip"
+                            data-bs-dismiss="click"
+                            title="Cancel avatar">
+                            <span class="svg-icon svg-icon-1">
+                                <span class="material-icons align-middle dark fs-5">
+                                    clear
+                                </span>
+                            </span>
+                        </span>
+                        <!--end::Cancel button-->
+
+                        <!--begin::Remove button-->
+                        <span class="btn btn-icon btn-circle btn-active-color-primary w-25px h-25px bg-white shadow"
+                            data-kt-image-input-action="remove"
+                            data-bs-toggle="tooltip"
+                            data-bs-dismiss="click"
+                            title="Remove avatar">
+                            <i class="bi bi-x fs-2"></i>
+                        </span>
+                        <!--end::Remove button-->
+                    </div>
+                    <!--end::Image input-->
+                </div>
+                <!--END IMAGE INPUT-->
+            </div>
+            <!--END FIRST ROW-->
+            <div class="mb-4 row">
+                <section class="my-6">
+                    <h4>Work Information</h4>
+                    <hr>
+                    <div class="mb-3 row g-3 gx-6">
+                        <!--peopletype-->
+                        {{ wizard.form.peopletype.label_tag() }}
+                        <div class="col-md-4">
+                            {{ wizard.form.peopletype }}
+                        </div>
+                       
+                        <!--dateofjoin-->
+                        {{ wizard.form.dateofjoin.label_tag() }}
+                        <div class="col-md-4">
+                            {{ wizard.form.dateofjoin }}
+                        </div>
+                       
+                        <!--department-->
+                        {{ wizard.form.department.label_tag() }}
+                        <div class="col-md-4">
+                            {{ wizard.form.department }}
+                        </div>
+                       
+                        <!--designation-->
+                        {{ wizard.form.designation.label_tag() }}
+                        <div class="col-md-4">
+                            {{ wizard.form.designation }}
+                        </div>
+                       
+                        <!--dateofreport-->
+                        {{ wizard.form.dateofreport.label_tag() }}
+                        <div class="col-md-4">
+                            {{ wizard.form.dateofreport }}
+                        </div>
+                       
+                        <!--reportto-->
+                        {{ wizard.form.reportto.label_tag() }}
+                        <div class="col-md-4">
+                            {{ wizard.form.reportto }}
+                        </div>
+                    </div>
+                </section>
+            </div>
+            <div class="mb-4 row">
+                <section class="mb-6">
+                    <h4>Capability Information</h4>
+                    <hr>
+                    <div class="mb-3 row g-3 gx-6">
+                        <!--webcapability-->
+                        {{ wizard.form.webcapability.label_tag() }}
+                        <div class="col-md-4">
+                            {{ wizard.form.webcapability }}
+                        </div>
+                        <!--mobilecapability-->
+                        {{ wizard.form.mobilecapability.label_tag() }}
+                        <div class="col-md-4">
+                            {{ wizard.form.mobilecapability }}
+                        </div>
+                        <!--portletcapability-->
+                        {{ wizard.form.portletcapability.label_tag() }}
+                        <div class="col-md-4">
+                            {{ wizard.form.portletcapability }}
+                        </div>
+                        <!--reportcapability-->
+                        {{ wizard.form.reportcapability.label_tag() }}
+                        <div class="col-md-4">
+                            {{ wizard.form.reportcapability }}
+                        </div>
+                    </div>
+                </section>
+            </div>
+
+            <div class="mb-4 row">
+                <section class="mb-6">
+                    <h4>Site Group And Template Information</h4>
+                    <hr>
+                    <div class="mb-3 row g-3 gx-6">
+                        <!--assignsitegroup-->
+                        {{ wizard.form.assignsitegroup.label_tag() }}
+                        <div class="col-md-4">
+                            {{ wizard.form.assignsitegroup }}
+                        </div>
+                        <!--tempincludes-->
+                        {{ wizard.form.tempincludes.label_tag() }}
+                        <div class="col-md-4">
+                            {{ wizard.form.tempincludes }}
+                        </div>
+                        <!------------Checkboxes Rendering Last --------------------->
+                        <div class="booleans col-md-6 d-flex justify-content-sm-start mt-5">
+                            <label for={{ wizard.form.showalltemplates.id_for_label }}
+                                class="form-check-label bool col-form-label me-5 text-sm-right">{{ wizard.form.showalltemplates.label }}
+                                &nbsp{{ wizard.form.showalltemplates }}</label>
+                            <label for={{ wizard.form.showtemplatesbasedonfilter.id_for_label }}
+                                class="form-check-label bool col-form-label me-5 text-sm-right">{{ wizard.form.showtemplatesbasedonfilter.label }}
+                                &nbsp{{ wizard.form.showtemplatesbasedonfilter }}</label>
+                        </div>
+                    </div>
+                </section>
+            </div>
+{% endblock custom_form %}
+<!------------- END FORM ---------------------->
+
+
+{% block extra_scripts %}
+<script>
+    //ADD CALENDER TO DATE FIELDS WITH FLAT-PICKR PLUGIN
+    $("#id_dateofbirth").flatpickr({dateFormat:'d M Y'})
+    $("#id_dateofjoin").flatpickr({dateFormat:'d M Y'})
+    $("#id_dateofreport").flatpickr({dateFormat:'d M Y'})
+
+    $(document).ready(function () {
+        //hide the delete button when instance is not saved yet.
+        if ('{{people_form.instance.peopleid}}' == ('None' || "")) {
+            $("#btn_del").hide()
+        }
+    })
+</script>
+{% endblock extra_scripts %} 
+

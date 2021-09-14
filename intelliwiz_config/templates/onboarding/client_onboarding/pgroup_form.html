@@ -1,0 +1,66 @@
+{% extends "base_form.html" %}
+
+{% block head %}
+{{ wizard.form.media }}
+{% endblock head %}
+
+
+{% block extras %}
+        {% if wizard.steps.prev %}
+        <button name="wizard_goto_step" type="submit" value="{{ wizard.steps.first }}">First Step</button>
+        <button name="wizard_goto_step" type="submit" value="{{ wizard.steps.prev }}">Prev Step</button>
+        {% endif %}
+{% endblock extras %}
+
+
+<!----------- BEGIN FORM MESSGES --------------->
+{% block form_msgs %}
+    <p>Step {{ wizard.steps.step1 }} of {{ wizard.steps.count }}</p>
+
+	{% for msg in get_msgs(request) %}
+	<div class="alert {% if msg.tags %} {{ msg.tags }} {% endif %} " id="alert_msg" style="width:73%; ">
+		{{ msg }}
+		<button type="button" class="btn-close flt-right" data-bs-dismiss="alert" aria-label="Close"></button>
+	</div>
+	{% endfor %}
+    
+{% endblock form_msgs %}
+<!----------- END FORM MESSGES ----------------->
+
+
+<!------ BEGIN FORM TITLE ------->
+{% block form_title %}
+Create People group
+{% endblock form_title %}
+<!------ END FORM TITLE -------->
+
+{% block custom_form %}
+        <!--groupname-->
+        {{ wizard.form.groupname.label_tag() }}
+        <div class="col-md-4">
+            {{ wizard.form.groupname }}
+        </div>
+        <!----------- Checkboxes Rendering Last --------------------->
+        <div class="booleans col-md-4 d-flex justify-content-sm-between mt-5">
+            <label for={{ wizard.form.enable.id_for_label }}
+                class="form-check-label bool col-form-label me-5 text-sm-right">{{ wizard.form.enable }}
+                &nbsp{{ wizard.form.enable.label }}</label>
+        </div>
+    </div>
+    <input type="submit" value='Submit'/>
+{% endblock custom_form %}
+
+{% block extra_scripts %}
+<script>
+$('#id_starttime').flatpicker(
+    enableTime: true,
+    noCalendar: true,
+    dateFormat: "H:i",
+)
+$('#id_endtime').flatpicker(
+    enableTime: true,
+    noCalendar: true,
+    dateFormat: "H:i",
+)
+</script>
+{% endblock extra_scripts %}
