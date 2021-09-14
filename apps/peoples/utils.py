@@ -148,15 +148,23 @@ def save_user_session(request, people):
     from apps.onboarding.models import Bt
     from apps.tenants.models import Tenant
     try:
-        logger.info('saving user session ...')
-        clientcode = get_client_from_hostname(request)
-        client = Bt.objects.get(bucode=clientcode.upper())
-        tenant = Tenant.objects.get(subdomain_prefix=clientcode)
-        request.session['tenantid'] = tenant.id
-        request.session['clientid'] = client.btid
-        request.session['is_superadmin'] = True if people.peoplecode == 'SUPERADMIN' else False
-        # get cap choices and save in session data
-        get_caps_choices(client=client, session=request.session, people=people)
+        if people.is_superuser == True:
+            request.session['is_superadmin'] = True
+            session = request.session
+            session['people_webcaps'] = session['client_webcaps'] = session['people_mobcaps'] = \
+            session['people_reportcaps'] = session['people_portletcaps'] = session['client_mobcaps'] = \
+            session['client_reportcaps'] = session['client_portletcaps'] = False
+            logger.info(request.session['is_superadmin'])
+        else:
+            logger.info('saving user session ...')
+            clientcode = get_client_from_hostname(request)
+            client = Bt.objects.get(bucode=clientcode.upper())
+            tenant = Tenant.objects.get(subdomain_prefix=clientcode)
+            request.session['tenantid'] = tenant.id
+            request.session['clientid'] = client.btid
+            request.session['is_superadmin'] = True if people.peoplecode == 'SUPERADMIN' else False
+            # get cap choices and save in session data
+            get_caps_choices(client=client, session=request.session, people=people)
     except ObjectDoesNotExist:
         logger.error('object not found...', exc_info=True)
         raise
@@ -164,7 +172,6 @@ def save_user_session(request, people):
         logger.critical('something went wrong...', exc_info=True)
         raise
     else:
-        del clientcode, client, tenant
         logger.info("user and client info saved in session DONE")
 
 

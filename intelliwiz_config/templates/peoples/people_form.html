@@ -197,17 +197,31 @@ People
                         {%- if field.widget_type != 'checkbox' and field.name in ['peopletype', 'dateofjoin', 'department', 'dateofreport', 'reportto', 'designation'] %}
                         <!--LABEL FIELD-->
                         {%- if loop.index <4 %}
-                        {{ field.label_tag() }}
+                        {{ field.label_tag() }} 
                         <!--INPUT GROUP-->
                         <div class="col-md-4">
-                            {{ field }}
-                            <!--HELP TEXT-->
-                            {%- if field.help_text %}
-                            <small>{{ field.help_text }}</small>
-                            {%- endif %}
-                            <!----- BEGIN ERROR FIELD  ------->
-                            {{ field.errors }}
-                            <!----- END ERROR FIELD  ------->
+                            <button type="button" class="btn btn-primary">Primary</button>
+                            {% if (field.name == 'peopletype') %}
+                                
+                                <div>{{ field }} </div>
+                                
+                                <!--HELP TEXT-->
+                                {%- if field.help_text %}
+                                <small>{{ field.help_text }}</small>
+                                {%- endif %}
+                                <!----- BEGIN ERROR FIELD  ------->
+                                {{ field.errors }}
+                                <!----- END ERROR FIELD  ------->
+                            {% else %}
+                                {{ field }}
+                                <!--HELP TEXT-->
+                                {%- if field.help_text %}
+                                <small>{{ field.help_text }}</small>
+                                {%- endif %}
+                                <!----- BEGIN ERROR FIELD  ------->
+                                {{ field.errors }}
+                                <!----- END ERROR FIELD  ------->
+                            {% endif %}
                         </div>
                         {% else %}
 

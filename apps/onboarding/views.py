@@ -1,9 +1,6 @@
 import logging
-from django.db.models.expressions import RawSQL
-from django.http import response
 from django.shortcuts import  redirect, render
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.utils.decorators import method_decorator
 from django.core.paginator import Paginator , EmptyPage, PageNotAnInteger
 from django.views import View
 from django.db.models import Q
@@ -12,8 +9,7 @@ from django.views.decorators.cache import cache_page
 from django.core.cache.backends.base import DEFAULT_TIMEOUT
 from django.conf import settings
 from icecream import ic
-from django.core.exceptions import (ValidationError, EmptyResultSet, 
-ObjectDoesNotExist)
+from django.core.exceptions import (EmptyResultSet)
 from django.db.models import RestrictedError
 
 from .models import SitePeople, TypeAssist, Bt
@@ -202,9 +198,10 @@ class DeleteTypeassist(LoginRequiredMixin, View):
             response = render(request, self.template_path, context=cxt)
         return response
 
+#-------------------- END TypeAssist View Classes --------------------#
 
 
-#========================== Begin Bt View Classes ============================#
+#-------------------- Begin Bt View Classes --------------------#
 
 #create Bt instance.
 class CreateBt(LoginRequiredMixin, View):
@@ -386,10 +383,11 @@ class DeleteBt(LoginRequiredMixin, View):
             response = render(request, self.template_path, context=cxt)
         return response
 
-#========================== End Bt View Classes ============================#
+#-------------------- END Bt View Classes --------------------#
 
 
-#========================== Begin Site-people View Classes ============================#
+#-------------------- Begin SitePeople View Classes --------------------#
+
 class CreateSitePeople(LoginRequiredMixin, View):
     template_path = 'onboarding/sitepeople_form.html'
     form_class = SitePeopleForm
@@ -568,7 +566,10 @@ class DeleteSitePeople(LoginRequiredMixin, View):
         return response
 
 
-#========================== End Site-people View Classes ============================#
+#-------------------- END SitePeople View Classes --------------------#
+
+#-------------------- Begin Client View Classes --------------------#
+
 class CreateClient(View):
     form_class = BtForm
     json_form = ClentForm
@@ -594,11 +595,12 @@ class CreateClient(View):
         try:
             if form.is_valid() and jsonform.is_valid():
                 logger.info('ClientBt Form is valid')
-                from .utils import save_json_from_bu_prefsform
+                from .utils import save_json_from_bu_prefsform, create_tenant
                 bt = form.save(commit=False)
                 if save_json_from_bu_prefsform(bt, jsonform):
                     bt = save_userinfo(bt, request.user, request.session)
                     bt.save()
+                    create_tenant(bt.buname, bt.bucode)
                     logger.info('ClientBt Form saved')
                     messages.success(request, "Success record saved successfully!", "alert-success")
                     response =  redirect('onboarding:client_form')
@@ -714,7 +716,7 @@ class UpdateClient(LoginRequiredMixin, View):
 
     def post(self, request, *args, **kwargs):
         logger.info('ClientForm Form submitted')
-        from .utils import save_json_from_bu_prefsform
+        from .utils import save_json_from_bu_prefsform, create_tenant
         try:
             pk, response = kwargs.get('pk'), None
             client = self.model.objects.get(btid=pk)
@@ -722,12 +724,14 @@ class UpdateClient(LoginRequiredMixin, View):
             jsonform = self.json_form(request.POST)
             if form.is_valid() and jsonform.is_valid():
                 logger.info('ClientForm Form is valid')
+                create_tenant(form.data['buname'],form.data['bucode'])
                 client = form.save(commit=False)
                 if save_json_from_bu_prefsform(client, jsonform):
                     client = save_userinfo(client, request.user, request.session)
                     client.save()
                     logger.info('ClientForm Form saved')
-                    messages.success(request, "Success record saved successfully!", "alert alert-success")
+                    messages.success(request, "Success record saved successfully!", 
+                    "alert alert-success")
                     response =  redirect('onboarding:client_form')
             else:
                 logger.info('ClientForm is not valid')
@@ -779,3 +783,39 @@ class DeleteClient(LoginRequiredMixin, View):
             cxt = {'clientform':form, 'clientprefsform':get_bt_prefform(bt), 'edit':True}
             response = render(request, self.template_path, context=cxt)
         return response
+
+#-------------------- END Client View Classes ------------------------------#
+
+#---------------------------- BEGIN client onboarding ---------------------------#
+from formtools.wizard.views import SessionWizardView
+from apps.onboarding.forms import BtForm, ShiftForm
+from apps.peoples.forms import PeopleForm, PgroupForm
+from django.core.files.storage import FileSystemStorage
+from apps.peoples.utils import upload_peopleimg
+
+FORMS = [("site_form", BtForm),
+        ("shift_form", ShiftForm),
+        ('people_form', PeopleForm),
+        ('pgroup_form', PgroupForm)
+]
+
+TEMPLATES = {
+    'site_form':'onboarding/client_onboarding/site_form.html',
+    'shift_form': 'onboarding/client_onboarding/shift_form.html',
+    'people_form': 'onboarding/client_onboarding/people_form.html',
+    'pgroup_form': 'onboarding/client_onboarding/pgroup_form.html',
+}
+
+
+class ClientOnboardingWizard(SessionWizardView):
+    file_storage = FileSystemStorage(location=upload_peopleimg)
+    
+    def get_template_names(self):
+        return [TEMPLATES[self.steps.current]]
+    
+    def done(self, form_list, **kwargs):
+        return render(self.request, 'done.html', {
+            'form_data': [form.cleaned_data for form in form_list],
+        })
+
+#---------------------------- END client onboarding   ---------------------------#

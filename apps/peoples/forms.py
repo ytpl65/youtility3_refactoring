@@ -374,10 +374,11 @@ class PeopleExtrasForm(forms.Form):
     def __init__(self, *args, **kwargs):
         session = kwargs.pop('session')
         super(PeopleExtrasForm, self).__init__(*args, **kwargs)
-        self.fields['webcapability'].choices     = session['people_webcaps'] or session['client_webcaps']
-        self.fields['mobilecapability'].choices  = session['people_mobcaps'] or session['client_mobcaps']
-        self.fields['portletcapability'].choices = session['people_reportcaps'] or session['client_reportcaps']
-        self.fields['reportcapability'].choices  = session['people_portletcaps'] or session['client_portletcaps']
+        if not (session['is_superadmin']):
+            self.fields['webcapability'].choices     = session['people_webcaps'] or session['client_webcaps']
+            self.fields['mobilecapability'].choices  = session['people_mobcaps'] or session['client_mobcaps']
+            self.fields['portletcapability'].choices = session['people_reportcaps'] or session['client_reportcaps']
+            self.fields['reportcapability'].choices  = session['people_portletcaps'] or session['client_portletcaps']
         for visible in self.visible_fields():
             if visible.widget_type not in ['file', 'checkbox', 'clearablefile', 'select', 'selectmultiple']:
                 visible.field.widget.attrs['class'] = 'form-control'
@@ -399,3 +400,7 @@ class PeopleExtrasForm(forms.Form):
         return result
 
 #============= END PEOPLE_EXTRAS FORM ====================#
+
+
+class OnboardingPeopleForm(PeopleForm, PeopleExtrasForm):
+    pass

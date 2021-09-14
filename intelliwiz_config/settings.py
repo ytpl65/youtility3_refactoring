@@ -45,6 +45,7 @@ INSTALLED_APPS = [
     'django_extensions',
     'import_export',
     'django_filters',
+    'formtools',
 
     #local apps
     'apps.peoples',

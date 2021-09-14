@@ -104,9 +104,11 @@ class CreatePeople(LoginRequiredMixin, View):
 
     def get(self, request, *args, **kwargs):
         logger.info('Create People view')
+        from apps.onboarding.forms import TypeAssistForm
         peopleform = PeopleForm()
         peopleprefsform = PeopleExtrasForm(session=request.session)
-        cxt = {'peopleform': peopleform, 'pref_form': peopleprefsform}
+        cxt = {'peopleform': peopleform, 
+        'pref_form': peopleprefsform, 'ta_form':TypeAssistForm()}
         return render(request, self.template_path, context=cxt)
 
     def post(self, request, *args, **kwargs):

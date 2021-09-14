@@ -84,15 +84,21 @@
 
     //hide all menu's on start
     //tojson filter converts python datatypes to json datatypes.
-    const people_webcaps  =  {{ request.session['people_webcaps'] | tojson }}
-    const people_mobcaps  =  {{ request.session['people_mobcaps'] | tojson }}
-    const people_repcaps  =  {{ request.session['people_reportcaps'] | tojson }}
-    const people_portcaps =  {{ request.session['people_portletcaps'] | tojson }}
-    const client_webcaps  =  {{ request.session['client_webcaps'] | tojson }}
-    const client_mobcaps  =  {{ request.session['client_mobcaps'] | tojson }}
-    const client_repcaps  =  {{ request.session['client_reportcaps'] | tojson }}
-    const client_portcaps =  {{ request.session['client_portletcaps'] | tojson }}
     const is_superadmin   =  {{ request.session['is_superadmin'] | tojson }}
+    console.log("im outside")
+    if(is_superadmin){}
+    else{
+      console.log("im inside")
+      const people_webcaps  =  {{ request.session['people_webcaps'] | tojson }}
+      const people_mobcaps  =  {{ request.session['people_mobcaps'] | tojson }}
+      const people_repcaps  =  {{ request.session['people_reportcaps'] | tojson }}
+      const people_portcaps =  {{ request.session['people_portletcaps'] | tojson }}
+      const client_webcaps  =  {{ request.session['client_webcaps'] | tojson }}
+      const client_mobcaps  =  {{ request.session['client_mobcaps'] | tojson }}
+      const client_repcaps  =  {{ request.session['client_reportcaps'] | tojson }}
+      const client_portcaps =  {{ request.session['client_portletcaps'] | tojson }}
+    }
+    
 
     
 
