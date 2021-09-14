@@ -1,3 +1,4 @@
+from apps.peoples.utils import get_caps_choices
 from django import forms
 from .models import Capability, People, PeopleEventlog, Pgbelonging, Pgroup
 from apps.onboarding.models import Bt
@@ -379,6 +380,11 @@ class PeopleExtrasForm(forms.Form):
             self.fields['mobilecapability'].choices  = session['people_mobcaps'] or session['client_mobcaps']
             self.fields['portletcapability'].choices = session['people_reportcaps'] or session['client_reportcaps']
             self.fields['reportcapability'].choices  = session['people_portletcaps'] or session['client_portletcaps']
+        else:
+            self.fields['webcapability'].choices     = get_caps_choices(cfor='WEB')
+            self.fields['mobilecapability'].choices  = get_caps_choices(cfor='MOB')
+            self.fields['portletcapability'].choices = get_caps_choices(cfor='REPORT')
+            self.fields['reportcapability'].choices  = get_caps_choices(cfor='PORTLET')
         for visible in self.visible_fields():
             if visible.widget_type not in ['file', 'checkbox', 'clearablefile', 'select', 'selectmultiple']:
                 visible.field.widget.attrs['class'] = 'form-control'
