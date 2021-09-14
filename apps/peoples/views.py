@@ -126,7 +126,8 @@ class CreatePeople(LoginRequiredMixin, View):
                 if save_jsonform(peoplepref_form, people):
                     people = save_userinfo(
                         people, request.user, request.session)
-                    people.peopleimg = request.FILES['peopleimg']
+                    people.peopleimg = request.FILES.get('peopleimg', 
+                    'master/people/blank.png')
                     people.save()
                     logger.info('People Form saved... DONE')
                     messages.success(request, "Success record saved DONE!",
