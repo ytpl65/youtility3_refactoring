@@ -1,4 +1,4 @@
-{% extends "base_form.html" %}
+{% extends "onboarding/client_onboarding/base_wizard_form.html" %}
 
 <!---- BEGIN PAGE TITLE ---->
 {% block title %}
@@ -271,12 +271,6 @@ Create People
     $("#id_dateofjoin").flatpickr({dateFormat:'d M Y'})
     $("#id_dateofreport").flatpickr({dateFormat:'d M Y'})
 
-    $(document).ready(function () {
-        //hide the delete button when instance is not saved yet.
-        if ('{{people_form.instance.peopleid}}' == ('None' || "")) {
-            $("#btn_del").hide()
-        }
-    })
 </script>
 {% endblock extra_scripts %} 
 

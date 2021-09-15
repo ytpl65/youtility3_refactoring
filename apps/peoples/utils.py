@@ -277,6 +277,14 @@ def get_caps_choices(client=None, cfor=None,  session=None, people=None):
             'capabilities info saved in session for people and client... DONE')
 
 
+def save_user_paswd(user):
+    logger.info('Password is created by system... DONE')
+    paswd = user.loginid + '@' + user.peoplecode
+    user.set_password(paswd)
+    
+
+
+
 # def decrypt(txt):
 #     from django.conf import settings
 #     from cryptography.fernet import Fernet

@@ -16,7 +16,7 @@ class LoginForm(forms.Form):
                 label = 'Username')
     
     password  = forms.CharField(
-                max_length = 15,
+                max_length = 25,
                 required   = True,
                 widget     = forms.PasswordInput(attrs={"placeholder": 'Enter Password', 
                             'autocomplete': 'off',
@@ -346,11 +346,6 @@ class CapabilityForm(forms.ModelForm):
 #============= BEGIN PEOPLE_EXTRAS FORM ====================#
 
 class PeopleExtrasForm(forms.Form):
-    # WEBCAPABILITY_CHOICES = [('T', 'TASk'),('Tr', 'TOUR'),('A', 'ASSET')]
-    # REPCAPABILITY_CHOICES = [('T', 'TASk'),('Tr', 'TOUR'),('A', 'ASSET')]
-    # MOBCAPABILITY_CHOICES = [('T', 'TASk'),('Tr', 'TOUR'),('A', 'ASSET')]
-    # PORTLETCAPABILITY_CHOICES = [('T', 'TASk'),('Tr', 'TOUR'),('A', 'ASSET')]
-    #from .utils import get_capchoices
 
     labels = {'mob':'Mobile Capability', 'port':'Portlet Capability', 
             'report':'Report Capability', 'web':'Web Capability'}
@@ -409,4 +404,6 @@ class PeopleExtrasForm(forms.Form):
 
 
 class OnboardingPeopleForm(PeopleForm, PeopleExtrasForm):
-    pass
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)

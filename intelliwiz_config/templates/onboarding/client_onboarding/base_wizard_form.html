@@ -21,8 +21,8 @@
     
     {% endblock custom_form %}
     {% if wizard.steps.prev %}
-    <button name="wizard_goto_step" type="submit" value="{{ wizard.steps.first }}">First Step</button>
-    <button name="wizard_goto_step" type="submit" value="{{ wizard.steps.prev }}">Previous Step</button>
+    <button name="wizard_goto_step" formnovalidate="formnovalidate" type="submit" value="{{ wizard.steps.first }}">First Step</button>
+    <button name="wizard_goto_step" formnovalidate="formnovalidate"  type="submit" value="{{ wizard.steps.prev }}">Previous Step</button>
     {% endif %}
 </form>
 

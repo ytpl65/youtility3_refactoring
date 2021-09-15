@@ -789,13 +789,13 @@ class DeleteClient(LoginRequiredMixin, View):
 #---------------------------- BEGIN client onboarding ---------------------------#
 from formtools.wizard.views import SessionWizardView
 from apps.onboarding.forms import BtForm, ShiftForm
-from apps.peoples.forms import PeopleForm, PgroupForm
+from apps.peoples.forms import OnboardingPeopleForm, PgroupForm
 from django.core.files.storage import FileSystemStorage
 from apps.peoples.utils import upload_peopleimg
 
 FORMS = [("site_form", BtForm),
         ("shift_form", ShiftForm),
-        ('people_form', PeopleForm),
+        ('people_form', OnboardingPeopleForm),
         ('pgroup_form', PgroupForm)
 ]
 

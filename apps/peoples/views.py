@@ -99,6 +99,31 @@ class SignOut(View):
         return response
 
 
+class ChangePeoplePassword(LoginRequiredMixin, View):
+    template_path = 'peoples/people_form.html'
+    form_class = PeopleForm
+    json_form = PeopleExtrasForm
+    model = People
+
+    def post(self,request, *args, **kwargs):
+        from django.contrib.auth.forms import SetPasswordForm
+        from django.http import JsonResponse
+        id, response = request.POST.get('people'), None
+        people = People.objects.get(peopleid = id)
+        print(request.POST)
+        form =  SetPasswordForm(people, request.POST)
+        if form.is_valid():
+            form.save()
+            response = JsonResponse({'res':'Password is changed successfully!',
+            'status':200})
+        else:
+            response = JsonResponse({'res':form.errors,
+            'status':500})
+        return response
+
+            
+    
+
 # @method_decorator(login_required, name='dispatch')
 class CreatePeople(LoginRequiredMixin, View):
     template_path = 'peoples/people_form.html'
@@ -114,7 +139,7 @@ class CreatePeople(LoginRequiredMixin, View):
 
     def post(self, request, *args, **kwargs):
         logger.info('Create People form submiited')
-        from .utils import save_jsonform
+        from .utils import save_jsonform, save_user_paswd
         response = None
         peopleform = PeopleForm(request.POST, request.FILES)
         peoplepref_form = PeopleExtrasForm(
@@ -129,6 +154,7 @@ class CreatePeople(LoginRequiredMixin, View):
                         people, request.user, request.session)
                     people.peopleimg = request.FILES.get('peopleimg', 
                     'master/people/blank.png')
+                    save_user_paswd(people)
                     people.save()
                     logger.info('People Form saved... DONE')
                     messages.success(request, "Success record saved DONE!",

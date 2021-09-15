@@ -19,11 +19,29 @@ People Form
 {% block popup_alerts %}
 	{% if edit is defined %}
 	<!-- to delete an instance with popup_alert pass the delete_url_name, instance_id, popup_title, popup_id -->
-		{{ popup_alert('peoples:people_delete', peopleform.instance.peopleid, title="Delete", popup_id="delete_alert") }}
-
-		{% block popup_body %}
-			<h4>Are you sure, you want to delete this?</h4>
-		{% endblock popup_body %}
+        {% call popup_alert('peoples:people_delete', peopleform.instance.peopleid, title="Delete", popup_id="delete_alert") %}
+        <h4>Are you sure, you want to delete this?</h4>
+        {% endcall %}
+		
+        {% call password_change(popup_id = 'paswd_change_alert', title = 'Change Password', form_id = "passwordChangeForm") %}
+            <form id="passwordChangeForm" action="" method="post">
+                <!---------------------------CSRF MIDDLEWARE TOKEN---------------------->
+                <input type="hidden" name="csrfmiddlewaretoken" value = "{{ csrf_token }}">
+                <input type="hidden" name="people" value = "{{ peopleform.instance.peopleid }}">
+                <div class="row g-3">
+                    <div class="col-md-3" ><label >Password:</label></div>
+                    <div class="col-md-9">
+                        <input type="password" class="form-control" name='new_password1'>
+                        <div class="password_fields" for="new_password1"></div>
+                    </div>
+                    <div class="col-md-3" ><label>Confirm Password:</label></div>
+                    <div class="col-md-9" >
+                        <input type="password" class="form-control" name='new_password2'>
+                        <div id= "password_error" class="password_fields" for="new_password2"></div>
+                    </div>
+                </div>
+            </form>
+		{% endcall %}
 	{% endif %}
 {% endblock popup_alerts %}
 <!-------------  END POP-UPS CODE -------------->
@@ -53,6 +71,7 @@ People
         <button type="button" class="btn-close flt-right" data-bs-dismiss="alert" aria-label="Close"></button>
 	</div>
 	{% endif %}
+    
 {% endblock nonfield_errors %}
 <!---------- END NON FIELD ERRORS --------->
 
@@ -125,6 +144,13 @@ People
                             <label for={{ pref_form.blacklist.id_for_label }}
                                 class="form-check-label bool col-form-label me-5 text-sm-right">{{ pref_form.blacklist.label }}
                                 &nbsp{{ pref_form.blacklist }}</label>
+                            {% if edit is defined %}
+                                <button type="button" class="btn btn-sm  btn-primary rounded-1" data-bs-target = '#paswd_change_alert' data-bs-toggle = "modal">Change Password
+                                <span class="svg-icon svg-icon-2">
+                                <span class="material-icons h-19px" style="vertical-align: middle; font-size: 19px;">
+                                    lock
+                                </span></span></button>
+                            {% endif %}
                         </div>
                     </div>
                     <!--END INNER ROW-->
@@ -353,11 +379,40 @@ People
     $("#id_dateofjoin").flatpickr({dateFormat:'d M Y'})
     $("#id_dateofreport").flatpickr({dateFormat:'d M Y'})
 
-    $(document).ready(function () {
+    $(document).ready(function (){
         //hide the delete button when instance is not saved yet.
         if ('{{peopleform.instance.peopleid}}' == ('None' || "")) {
             $("#btn_del").hide()
         }
+
+        $('#passwordChangeForm').on('submit', function(e){
+            console.log('triggered')
+            e.preventDefault();
+            $.ajax({
+                type:'POST',
+                url:"{{ url('peoples:people_change_paswd') }}",
+                data:$('#passwordChangeForm').serialize(),
+                success:function(data, status, xhr){
+                    console.log(data)
+                    $('#password_msgs').html("")
+                   if(data['status']==500){
+                    let error_field = $('#password_error');
+                    let errors = data['res']['new_password2'].map(
+                        error => {
+                        let li = document.createElement('li');
+                        li.textContent = error
+                        $(li).css('color', 'red')
+                        return li;}
+                    );
+                    error_field.html("");  
+                    error_field.append(...errors)
+                   }else{
+                       $('#paswd_change_alert').modal('hide')
+                   }
+
+                }
+            })
+        })
     })
 </script>
 {% endblock extra_scripts %} 

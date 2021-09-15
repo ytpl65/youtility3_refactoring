@@ -19,11 +19,9 @@ Capability Form
 {% block popup_alerts %}
 	{% if edit is defined %}
 	<!-- to delete an instance with popup_alert pass the delete_url_name, instance_id, popup_title, popup_id -->
-		{{ popup_alert('peoples:cap_delete', cap_form.instance.capsid, title="Delete", popup_id="delete_alert") }}
-
-		{% block popup_body %}
+		{% call popup_alert('peoples:cap_delete', cap_form.instance.capsid, title="Delete", popup_id="delete_alert") %}
 			<strong>Are you sure, you want to delete this?</strong>
-		{% endblock popup_body %}
+		{% endcall %}
 	{% endif %}
 {% endblock popup_alerts %}
 <!-------------  END POP-UPS CODE --------------->

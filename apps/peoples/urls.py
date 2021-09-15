@@ -5,10 +5,11 @@ from django.conf import settings
 from django.conf.urls.static import static
 app_name = 'peoples'
 urlpatterns = [
-    path('people_form/',              views.CreatePeople.as_view(),    name='people_form'),
-    path('people_list/',              views.RetrievePeoples.as_view(), name='people_list'),
-    path('people_form/<str:pk>/',     views.UpdatePeople.as_view(),    name='people_update'),
-    path('people_form/del/<str:pk>/', views.DeletePeople.as_view(),    name='people_delete'),
+    path('people_form/',              views.CreatePeople.as_view(),         name='people_form'),
+    path('people_list/',              views.RetrievePeoples.as_view(),      name='people_list'),
+    path('people_form/<str:pk>/',     views.UpdatePeople.as_view(),         name='people_update'),
+    path('people_form/del/<str:pk>/', views.DeletePeople.as_view(),         name='people_delete'),
+    path('peole_form/change_paswd/',  views.ChangePeoplePassword.as_view(), name='people_change_paswd'),
     
     path('pgroup_form/',              views.CreatePgroup.as_view(),    name='pgroup_form'),
     path('pgroup_list/',              views.RetrivePgroups.as_view(),  name='pgroup_list'),

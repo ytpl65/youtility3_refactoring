@@ -6,7 +6,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   
   <!-- BEGIN PAGEL LEVEL FONTS & ICONS START -->
+  <link rel="preconnect" href="https://fonts.gstatic.com">
   <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Poppins:300,400,500,600,700" />
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined" rel="stylesheet">
   <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
   <!-- END PAGEL LEVEL FONTS & ICONS END -->
   
@@ -34,9 +36,7 @@
   </title>
 
 </head>
-  {% block popup_alerts %}
-  
-  {% endblock popup_alerts %}
+
 <body id="kt_body"
   class="header-fixed header-tablet-and-mobile-fixed toolbar-enabled toolbar-fixed toolbar-tablet-and-mobile-fixed aside-enabled aside-fixed"
   style="--kt-toolbar-height:55px;--kt-toolbar-height-tablet-and-mobile:55px">
@@ -150,5 +150,7 @@
   
   {% endblock extra_scripts %}
 </body>
-
+  {% block popup_alerts %}
+  
+  {% endblock popup_alerts %}
 </html>
