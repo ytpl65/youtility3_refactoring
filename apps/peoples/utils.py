@@ -104,8 +104,10 @@ def save_userinfo(instance, user, session):
                 cdtz = instance.cdtz.replace(microsecond=0)
                 if mdtz > cdtz:
                     instance.muser = user
+                    instance.save()
                 elif mdtz == cdtz:
                     instance.cuser = instance.muser = user
+                    instance.save()
                 else:
                     return redirect('/')
             logging.info('user info saved... DONE')
@@ -141,12 +143,28 @@ def validate_mobileno(val):
         raise
 
 
-def save_user_session(request, people):
-    '''save user info in session'''
+def save_tenant_client_info(request):
     from apps.tenants.utils import get_client_from_hostname
-    from django.core.exceptions import ObjectDoesNotExist
     from apps.onboarding.models import Bt
     from apps.tenants.models import Tenant
+    try:
+        logger.info('saving tenant & client info...')
+        clientcode = get_client_from_hostname(request)
+        client = Bt.objects.get(bucode=clientcode.upper())
+        tenant = Tenant.objects.get(subdomain_prefix=clientcode)
+        request.session['tenantid'] = tenant.id
+        request.session['clientid'] = client.btid
+        logger.info('saving tenant & client info...DONE')
+    except:
+        raise
+    else:
+        return client
+
+
+def save_user_session(request, people):
+    '''save user info in session'''
+    from django.core.exceptions import ObjectDoesNotExist
+    
     try:
         if people.is_superuser == True:
             request.session['is_superadmin'] = True
@@ -155,13 +173,9 @@ def save_user_session(request, people):
             session['people_reportcaps'] = session['people_portletcaps'] = session['client_mobcaps'] = \
             session['client_reportcaps'] = session['client_portletcaps'] = False
             logger.info(request.session['is_superadmin'])
+            save_tenant_client_info(request)
         else:
-            logger.info('saving user session ...')
-            clientcode = get_client_from_hostname(request)
-            client = Bt.objects.get(bucode=clientcode.upper())
-            tenant = Tenant.objects.get(subdomain_prefix=clientcode)
-            request.session['tenantid'] = tenant.id
-            request.session['clientid'] = client.btid
+            client = save_tenant_client_info(request)
             request.session['is_superadmin'] = True if people.peoplecode == 'SUPERADMIN' else False
             # get cap choices and save in session data
             get_caps_choices(client=client, session=request.session, people=people)
@@ -283,6 +297,13 @@ def save_user_paswd(user):
     user.set_password(paswd)
     
 
+def display_user_session_info(session):
+    from pprint import pp
+    from icecream import ic
+    pp('Following user data saved in sesion\n')
+    for key, value in session.items():
+        pp('session info:{} => {}'.format(key, value))
+    
 
 
 # def decrypt(txt):

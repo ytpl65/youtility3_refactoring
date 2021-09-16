@@ -21,7 +21,7 @@ def tenant_db_from_request(request):
     hostname = hostname_from_request(request)
     print(f"Hostname from Request:{hostname}")
     tenants_map = get_tenants_map()
-    return tenants_map.get(hostname)
+    return tenants_map.get(hostname, 'default')
 
 
 def get_client_from_hostname(request):

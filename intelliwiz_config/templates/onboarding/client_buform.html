@@ -113,6 +113,18 @@ Client
                 {{ clientform.buname.errors }}
                 <!----- END ERROR FIELD  ------->
             </div>
+            
+            {{ clientform.parent.label_tag() }}
+            <div class="col-md-4 col-sm-4">
+                {{ clientform.parent }}
+                <!--HELP TEXT-->
+                {% if clientform.parent.help_text %}
+                <small>{{ clientform.parent.help_text }}</small>
+                {% endif %}
+                <!----- BEGIN ERROR FIELD  ------->
+                {{ clientform.parent.errors }}
+                <!----- END ERROR FIELD  ------->
+            </div>
             {% for field in clientprefsform %}
                 {% if field.name in ['validimei', 'validip', 'reliveronpeoplecount',
                                     'pvideolength'] %}
@@ -172,7 +184,7 @@ Client
             {{ clientprefsform.reportcapability }}
         </div>
         <div class="col-md-3 col-sm-3">
-            <h4>Poertlet Capability</h4>
+            <h4>Portlet Capability</h4>
             <!---- PORTLET CAPABILITY FIELD --->
             {{ clientprefsform.portletcapability }}
         </div>

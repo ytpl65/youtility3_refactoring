@@ -1,6 +1,6 @@
 from icecream import ic
 from django.contrib.auth import authenticate, login, logout
-from django.core.exceptions import ValidationError, EmptyResultSet
+from django.core.exceptions import  EmptyResultSet
 from django.http import response
 from django.shortcuts import redirect, render
 from django.views import View
@@ -16,7 +16,6 @@ from .forms import CapabilityForm, PgroupForm, PeopleForm, PeopleExtrasForm, Log
 logger = logging.getLogger('django')
 
 # Create your views here.
-
 #========================== Begin People View Classes ===========================#
 
 
@@ -38,7 +37,7 @@ class SignIn(View):
         return render(request, self.template_path, context={'loginform': form})
 
     def post(self, request, *args, **kwargs):
-        from .utils import save_user_session
+        from .utils import save_user_session, display_user_session_info
         form, response = LoginForm(request.POST), None
         logger.info('form submitted')
         try:
@@ -58,7 +57,7 @@ class SignIn(View):
                     if people:
                         login(request, people)
                         save_user_session(request, request.user)
-                        print(request.session['people_webcaps'])
+                        display_user_session_info(request.session)
                         logger.info("User logged in {}".format(
                             request.user.peoplecode))
                         response = redirect('/dashboard')
@@ -86,8 +85,6 @@ class SignOut(View):
     def get(self, request, *args, **kwargs):
         response = None
         try:
-            for key, value in request.session.items():
-                print('{} => {}'.format(key, value))
             logout(request)
             logger.info("User logged out DONE!")
             response = redirect("/")
@@ -110,7 +107,6 @@ class ChangePeoplePassword(LoginRequiredMixin, View):
         from django.http import JsonResponse
         id, response = request.POST.get('people'), None
         people = People.objects.get(peopleid = id)
-        print(request.POST)
         form =  SetPasswordForm(people, request.POST)
         if form.is_valid():
             form.save()
@@ -150,12 +146,12 @@ class CreatePeople(LoginRequiredMixin, View):
                 people = peopleform.save(commit=False)
                 ic(dir(people))
                 if save_jsonform(peoplepref_form, people):
+                    people.save()
                     people = save_userinfo(
                         people, request.user, request.session)
                     people.peopleimg = request.FILES.get('peopleimg', 
                     'master/people/blank.png')
                     save_user_paswd(people)
-                    people.save()
                     logger.info('People Form saved... DONE')
                     messages.success(request, "Success record saved DONE!",
                                      "alert alert-success")
@@ -350,8 +346,8 @@ class CreatePgroup(LoginRequiredMixin, View):
             if form.is_valid():
                 logger.info('Pgroup Form is valid')
                 pg = form.save(commit=False)
-                pg = save_userinfo(pg, request.user, request.session)
                 pg.save()
+                pg = save_userinfo(pg, request.user, request.session)
                 logger.info('Pgroup Form saved')
                 messages.success(request, "Success record saved successfully!",
                                  "alert alert-success")
@@ -529,8 +525,8 @@ class CreateCapability(LoginRequiredMixin, View):
             if form.is_valid():
                 logger.info('CapabilityForm Form is valid')
                 cap = form.save(commit=False)
-                cap = save_userinfo(cap, request.user, request.session)
                 cap.save()
+                cap = save_userinfo(cap, request.user, request.session)
                 logger.info('CapabilityForm Form saved')
                 messages.success(request, "Success record saved successfully!",
                                  "alert alert-success")
@@ -675,7 +671,7 @@ class DeleteCapability(LoginRequiredMixin, View):
                 response = redirect('peoples:cap_form')
         except self.model.DoesNotExist:
             logger.warn('Unable to delete, object does not exist')
-            messages.error(request, 'Client does not exist',
+            messages.error(request, 'Capability does not exist',
                            "alert alert-danger")
             response = redirect('peoples:cap_form')
         except RestrictedError:

@@ -92,6 +92,7 @@ class People(AbstractBaseUser, PermissionsMixin, TenantAwareModel, BaseModel):
             models.UniqueConstraint(fields=['loginid', 'peoplecode', 'siteid'], name='peolple_logind_peoplecode_siteid_uk'),
             models.UniqueConstraint(fields=['peoplecode', 'siteid'], name='people_peoplecode_siteid'),
             models.UniqueConstraint(fields=['loginid', 'siteid'], name='people_loginid_siteid_uk'),
+            models.UniqueConstraint(fields=['loginid'], name='people_loginid_uk'),
         ]
     
 

@@ -19,6 +19,19 @@ Create People
 <!------ END FORM TITLE -------->
 
 
+<!--------- BEGIN NON FIELD ERRORS -------->
+{% block nonfield_errors %}
+	{% if wizard.form.non_field_errors() %}
+	<div id="non_field_error" class="alert alert-danger" style="width: 73%;">
+		{% for error in wizard.form.non_field_errors() %}
+		{{ error }}
+		{% endfor %}
+		<button type="button" class="btn-close flt-right" data-bs-dismiss="alert" aria-label="Close"></button>
+	</div>
+	{% endif %}
+{% endblock nonfield_errors %}
+<!---------- END NON FIELD ERRORS --------->
+
 
 <!----------- BEGIN FORM MESSGES --------------->
 {% block form_msgs %}
@@ -35,10 +48,7 @@ Create People
 
 <!-------------- BEGIN FORM ------------------->
 {% block custom_form %}
-
-            <!--BEGIN FIRST ROW-->
             <div class="mb-3 row g-3 gx-6">
-                <!--BEGIN FIRST COLUMN-->
                 <div class="col-md-10">
                     <!--BEGIN INNER ROW-->
                     <div class="row g-3 gx-6 ">
@@ -46,59 +56,69 @@ Create People
                         {{ wizard.form.peoplecode.label_tag() }}
                         <div class="col-md-4">
                             {{ wizard.form.peoplecode }}
+                            {{ wizard.form.peoplecode.errors }}
                         </div>
 
                         <!--peoplename-->
                         {{ wizard.form.peoplename.label_tag() }}
                         <div class="col-md-4">
                             {{ wizard.form.peoplename }}
+                            {{ wizard.form.peoplename.errors }}
                         </div>
                         
                         <!--loginid-->
                         {{ wizard.form.loginid.label_tag() }}
                         <div class="col-md-4">
                             {{ wizard.form.loginid }}
+                            {{ wizard.form.loginid.errors }}
                         </div>
 
                         <!--email-->
                         {{ wizard.form.email.label_tag() }}
                         <div class="col-md-4">
                             {{ wizard.form.email }}
+                            {{ wizard.form.email.errors }}
                         </div>
                         
                         <!--mobno-->
                         {{ wizard.form.mobno.label_tag() }}
                         <div class="col-md-4">
                             {{ wizard.form.mobno }}
+                            {{ wizard.form.mobno.errors }}
                         </div>
 
                         <!--gender-->
                         {{ wizard.form.gender.label_tag() }}
                         <div class="col-md-4">
                             {{ wizard.form.gender }}
+                            {{ wizard.form.gender.errors }}
                         </div>
                         
                         <!--dateofbirth-->
                         {{ wizard.form.dateofbirth.label_tag() }}
                         <div class="col-md-4">
                             {{ wizard.form.dateofbirth }}
+                            {{ wizard.form.dateofbirth.errors }}
                         </div>
 
                         <!--deviceid-->
                         {{ wizard.form.deviceid.label_tag() }}
                         <div class="col-md-4">
                             {{ wizard.form.deviceid }}
+                            {{ wizard.form.deviceid.errors }}
                         </div>
 
-                        <!------------Checkboxes Rendering Last --------------------->
+                       <!------------ BEGIN CHECKBOXES  --------------------->
                         <div class="booleans col-md-6 d-flex justify-content-sm-start mt-5">
                             <label for={{ wizard.form.isenable.id_for_label }}
                                 class="form-check-label bool col-form-label me-5 text-sm-right">{{ wizard.form.isenable.label }}
                                 &nbsp{{ wizard.form.isenable }}</label>
+                            
                             <label for={{ wizard.form.blacklist.id_for_label }}
                                 class="form-check-label bool col-form-label me-5 text-sm-right">{{ wizard.form.blacklist.label }}
                                 &nbsp{{ wizard.form.blacklist }}</label>
                         </div>
+                        <!-------------- END CHECKBOXES  ------------------>
                     </div>
                     <!--END INNER ROW-->
                 </div>
@@ -170,36 +190,42 @@ Create People
                         {{ wizard.form.peopletype.label_tag() }}
                         <div class="col-md-4">
                             {{ wizard.form.peopletype }}
+                            {{ wizard.form.peopletype.errors }}
                         </div>
                        
                         <!--dateofjoin-->
                         {{ wizard.form.dateofjoin.label_tag() }}
                         <div class="col-md-4">
                             {{ wizard.form.dateofjoin }}
+                            {{ wizard.form.dateofjoin.errors }}
                         </div>
                        
                         <!--department-->
                         {{ wizard.form.department.label_tag() }}
                         <div class="col-md-4">
                             {{ wizard.form.department }}
+                            {{ wizard.form.department.errors }}
                         </div>
                        
                         <!--designation-->
                         {{ wizard.form.designation.label_tag() }}
                         <div class="col-md-4">
                             {{ wizard.form.designation }}
+                            {{ wizard.form.designation.errors }}
                         </div>
                        
                         <!--dateofreport-->
                         {{ wizard.form.dateofreport.label_tag() }}
                         <div class="col-md-4">
                             {{ wizard.form.dateofreport }}
+                            {{ wizard.form.dateofreport.errors }}
                         </div>
                        
                         <!--reportto-->
                         {{ wizard.form.reportto.label_tag() }}
                         <div class="col-md-4">
                             {{ wizard.form.reportto }}
+                            {{ wizard.form.reportto.errors }}
                         </div>
                     </div>
                 </section>
@@ -213,21 +239,25 @@ Create People
                         {{ wizard.form.webcapability.label_tag() }}
                         <div class="col-md-4">
                             {{ wizard.form.webcapability }}
+                            {{ wizard.form.webcapability.errors }}
                         </div>
                         <!--mobilecapability-->
                         {{ wizard.form.mobilecapability.label_tag() }}
                         <div class="col-md-4">
                             {{ wizard.form.mobilecapability }}
+                            {{ wizard.form.mobilecapability.errors }}
                         </div>
                         <!--portletcapability-->
                         {{ wizard.form.portletcapability.label_tag() }}
                         <div class="col-md-4">
                             {{ wizard.form.portletcapability }}
+                            {{ wizard.form.portletcapability.errors }}
                         </div>
                         <!--reportcapability-->
                         {{ wizard.form.reportcapability.label_tag() }}
                         <div class="col-md-4">
                             {{ wizard.form.reportcapability }}
+                            {{ wizard.form.reportcapability.errors }}
                         </div>
                     </div>
                 </section>
@@ -242,13 +272,15 @@ Create People
                         {{ wizard.form.assignsitegroup.label_tag() }}
                         <div class="col-md-4">
                             {{ wizard.form.assignsitegroup }}
+                            {{ wizard.form.assignsitegroup.errors }}
                         </div>
                         <!--tempincludes-->
                         {{ wizard.form.tempincludes.label_tag() }}
                         <div class="col-md-4">
                             {{ wizard.form.tempincludes }}
+                            {{ wizard.form.tempincludes.errors }}
                         </div>
-                        <!------------Checkboxes Rendering Last --------------------->
+                        <!------------ BEGIN CHECKBOXES  --------------------->
                         <div class="booleans col-md-6 d-flex justify-content-sm-start mt-5">
                             <label for={{ wizard.form.showalltemplates.id_for_label }}
                                 class="form-check-label bool col-form-label me-5 text-sm-right">{{ wizard.form.showalltemplates.label }}
@@ -257,6 +289,7 @@ Create People
                                 class="form-check-label bool col-form-label me-5 text-sm-right">{{ wizard.form.showtemplatesbasedonfilter.label }}
                                 &nbsp{{ wizard.form.showtemplatesbasedonfilter }}</label>
                         </div>
+                        <!------------ END CHECKBOXES  --------------------->
                     </div>
                 </section>
             </div>

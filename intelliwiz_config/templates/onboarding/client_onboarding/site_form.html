@@ -8,58 +8,100 @@
 		<button type="button" class="btn-close flt-right" data-bs-dismiss="alert" aria-label="Close"></button>
 	</div>
 	{% endfor %}
-    <p>Step {{ wizard.steps.step1 }} of {{ wizard.steps.count }}</p>
 
 {% endblock form_msgs %}
 <!----------- END FORM MESSGES ----------------->
 
+<!-----BEGIN FORM TITLE ----->
 {% block form_title %}
 Create Site
 {% endblock form_title %}
 
+
+<!-----END FORM TITLE  ----->
+
+<!--------- BEGIN NON FIELD ERRORS -------->
+{% block nonfield_errors %}
+	{% if wizard.form.non_field_errors() %}
+	<div id="non_field_error" class="alert alert-danger" style="width: 73%;">
+		{% for error in wizard.form.non_field_errors() %}
+		{{ error }}
+		{% endfor %}
+		<button type="button" class="btn-close flt-right" data-bs-dismiss="alert" aria-label="Close"></button>
+	</div>
+	{% endif %}
+{% endblock nonfield_errors %}
+<!---------- END NON FIELD ERRORS --------->
+
 <!-------------- BEGIN FORM ------------------->
 {% block custom_form %}
+		<!-------------- BEGIN FORM FIELDS ----------->
 		<div class="mb-3 row g-3 gx-6">
 			<!--BUCODE-->
 			{{ wizard.form.bucode.label_tag() }}
 			<div class="col-md-4">
 				{{ wizard.form.bucode }}
+				{{ wizard.form.bucode.errors }}
 			</div>
 			<!--BUNAME-->
 			{{ wizard.form.buname.label_tag() }}
 			<div class="col-md-4">
 				{{ wizard.form.buname }}
+				{{ wizard.form.buname.errors }}
 			</div>
 			<!--PARENT-->
 			{{ wizard.form.parent.label_tag() }}
 			<div class="col-md-4">
 				{{ wizard.form.parent }}
+				{{ wizard.form.parent.errors }}
 			</div>
 			<!--BUTYPE-->
 			{{ wizard.form.butype.label_tag() }}
 			<div class="col-md-4">
 				{{ wizard.form.butype }}
+				{{ wizard.form.butype.errors }}
 			</div>
 			<!--GPS LOCATION-->
 			{{ wizard.form.gpslocation.label_tag() }}
 			<div class="col-md-4">
 				{{ wizard.form.gpslocation }}
+				{{ wizard.form.gpslocation.errors }}
 			</div>
+			
+			<!--------------------- BEGIN CHECKBOXES -------------------------->
 			<div class="booleans col-md-6 d-flex justify-content-sm-between mt-5">
+				
 				<label for="{{ wizard.form.iswarehouse.id_for_label }}"
 				class="form-check-label bool col-form-label me-5 text-sm-right">
 				{{ wizard.form.iswarehouse }} &nbsp; {{ wizard.form.iswarehouse.label }} </label>
+				
 				<label for="{{ wizard.form.is_serviceprovider.id_for_label }}"
 				class="form-check-label bool col-form-label me-5 text-sm-right">
 				{{ wizard.form.is_serviceprovider }} &nbsp; {{ wizard.form.is_serviceprovider.label }} </label>
+				
 				<label for="{{ wizard.form.isvendor.id_for_label }}"
 				class="form-check-label bool col-form-label me-5 text-sm-right">
 				{{ wizard.form.isvendor }} &nbsp; {{ wizard.form.isvendor.label }} </label>
+				
 				<label for="{{ wizard.form.enable.id_for_label }}"
 				class="form-check-label bool col-form-label me-5 text-sm-right">
 				{{ wizard.form.enable }} &nbsp; {{ wizard.form.enable.label }} </label>
 			</div>
+			<!--------------------- END CHECKBOXES -------------------------->
+		
 		</div>
+		<!-------------- END FORM FIELDS -------------->
+		<!----- FORM SUBMIT BUTTON ----->
 		<input type="submit" value="Next">
 {% endblock custom_form %}
 <!------------- END FORM ---------------------->
+
+<!------------------BEGIN WIZARD STEP COUNT ------------------->
+{% block extras %}
+<div class="step_count d-flex justify-content-end">
+<h4>
+[ Step {{ wizard.steps.step1 }} of {{ wizard.steps.count }} ]
+</h4>
+</div>
+{% endblock extras %}
+<!------------------END WIZARD STEP COUNT --------------------->

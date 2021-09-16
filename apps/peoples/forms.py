@@ -88,7 +88,7 @@ class PeopleForm(forms.ModelForm):
                         label      = "Code")
     email         = forms.EmailField(max_length=100,
                     widget = forms.TextInput(attrs={'placeholder':'Enter email address'}))
-
+    loginid       = forms.CharField(max_length=30, required=True)
 
     class Meta:
         model  = People
@@ -401,9 +401,3 @@ class PeopleExtrasForm(forms.Form):
         return result
 
 #============= END PEOPLE_EXTRAS FORM ====================#
-
-
-class OnboardingPeopleForm(PeopleForm, PeopleExtrasForm):
-    
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)

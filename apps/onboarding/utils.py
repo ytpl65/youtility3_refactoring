@@ -129,7 +129,7 @@ def create_bt_tree(bucode, butype, instance, parent=None):
             update_children_tree(instance, bucode, butype.tacode)
             instance.butree = f'{butype.tacode} :: {bucode}'
     # Branch Nodes
-        if instance.butree != (parent.butree + ' > ' + bucode):
+        elif instance.butree != (parent.butree + ' > ' + bucode):
             update_children_tree(instance, bucode, butype.tacode)
             instance.butree = ""
             instance.butree += f"{parent.butree} > {butype.tacode} :: {bucode}"
