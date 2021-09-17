@@ -320,7 +320,7 @@ class DeletePeople(LoginRequiredMixin, View):
             messages.error(
                 request, 'Unable to delete, due to dependencies', "alert alert-danger")
             cxt = {'peopleform': form,
-                   'pref_form': get_people_prefform(people), 'edit': True}
+                   'pref_form': get_people_prefform(people, request.session), 'edit': True}
             response = render(request, self.template_path, context=cxt)
         return response
 #=========================== End People View Classes ==============================#
