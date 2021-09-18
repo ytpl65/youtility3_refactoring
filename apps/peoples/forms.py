@@ -147,10 +147,11 @@ class PeopleForm(forms.ModelForm):
             if dob == doj:
                 raise forms.ValidationError(self.error_msg['invalid_dates'])
             elif dob > doj:
+                print(dob, doj)
                 raise forms.ValidationError(self.error_msg['invalid_dates2'])
             elif dob > dor:
                 raise forms.ValidationError(self.error_msg['invalid_dates3'])
-    
+            
     
     #For field level validation define functions like clean_<func name>.
     def clean_peoplecode(self):

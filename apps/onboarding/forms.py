@@ -146,20 +146,20 @@ class BtForm(forms.ModelForm):
 
     
     def clean(self):
-        super(BtForm, self).clean()
+        cleaned_data = super().clean()
         from .utils import create_bt_tree
-        
-        parent= self.cleaned_data.get('parent')
-        bucode = self.cleaned_data.get('bucode')
-        butype = self.cleaned_data.get('butype')
+        parent= cleaned_data.get('parent')
+        bucode = cleaned_data.get('bucode')
+        butype = cleaned_data.get('butype')
         instance = self.instance
-        ic(bucode)
-        create_bt_tree(bucode, butype, instance, parent)
+        if bucode and butype and parent:
+            create_bt_tree(bucode, butype, instance, parent)
         
         
     
     def clean_bucode(self):
         import re
+        ic(self.cleaned_data)
         value = self.cleaned_data.get('bucode')
         if value:
             regex = "^[a-zA-Z0-9\-_]*$"

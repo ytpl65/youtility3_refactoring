@@ -9,7 +9,6 @@
 		<button type="button" class="btn-close flt-right" data-bs-dismiss="alert" aria-label="Close"></button>
 	</div>
 	{% endfor %}
-    <p>Step {{ wizard.steps.step1 }} of {{ wizard.steps.count }}</p>
 
 {% endblock form_msgs %}
 <!----------- END FORM MESSGES ----------------->
@@ -23,23 +22,39 @@ Create Shift
 <!-------------- BEGIN FORM ------------------->
 {% block custom_form %}
 		<div class="mb-3 row g-3 gx-6">
-			<!--BUCODE-->
-			{{ wizard.form.shiftname.label_tag() }}
+			<!--SHIFTNAME-->
+			<label class="required col-form-label col-md-2 col-sm-2 text-sm-right" for="id_shift_form-shiftname">Shift Name:
+				<span class="material-icons-outlined h-19px" style="vertical-align: middle; font-size: 19px;">
+                        info
+                </span>
+			</label>
 			<div class="col-md-4">
 				{{ wizard.form.shiftname }}
 			</div>
-			<!--BUNAME-->
-			{{ wizard.form.starttime.label_tag() }}
+			<!--STARTTIME-->
+			<label class="required col-form-label col-md-2 col-sm-2 text-sm-right" for="id_shift_form-starttime">Start Time:
+			<span class="material-icons-outlined h-19px" style="vertical-align: middle; font-size: 19px;">
+                        info
+                </span>
+			</label>
 			<div class="col-md-4">
 				{{ wizard.form.starttime }}
 			</div>
-			<!--PARENT-->
-			{{ wizard.form.captchafreq.label_tag() }}
+			<!--CAPCTCHA FREQUENCY-->
+			<label class="required col-form-label col-md-2 col-sm-2 text-sm-right" for="id_shift_form-captchafreq">Captchafreq:
+			<span class="material-icons-outlined h-19px" style="vertical-align: middle; font-size: 19px;">
+                        info
+                </span>
+			</label>
 			<div class="col-md-4">
 				{{ wizard.form.captchafreq }}
 			</div>
-			<!--BUTYPE-->
-			{{ wizard.form.endtime.label_tag() }}
+			<!--ENDTIME-->
+			<label class="required col-form-label col-md-2 col-sm-2 text-sm-right" for="id_shift_form-endtime">End Time:
+			<span class="material-icons-outlined h-19px" style="vertical-align: middle; font-size: 19px;">
+                        info
+                </span>
+			</label>
 			<div class="col-md-4">
 				{{ wizard.form.endtime }}
 			</div>

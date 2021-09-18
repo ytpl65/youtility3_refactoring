@@ -795,16 +795,16 @@ from apps.peoples.utils import upload_peopleimg
 
 FORMS = [("site_form", BtForm),
         ("shift_form", ShiftForm),
-        ('peopleprefs_form', PeopleExtrasForm),
         ('people_form', PeopleForm),
-        ('pgroup_form', PgroupForm)
+        ('peoplecaps_form', PeopleExtrasForm),
+        ('pgroup_form', PgroupForm),
 ]
 
 TEMPLATES = {
     'site_form':'onboarding/client_onboarding/site_form.html',
     'shift_form': 'onboarding/client_onboarding/shift_form.html',
-    'peopleprefs_form': 'onboarding/client_onboarding/people_form.html',
     'people_form': 'onboarding/client_onboarding/people_form.html',
+    'peoplecaps_form': 'onboarding/client_onboarding/ob_peoplecaps_form.html',
     'pgroup_form': 'onboarding/client_onboarding/pgroup_form.html',
 }
 
@@ -821,10 +821,12 @@ class ClientOnboardingWizard(SessionWizardView):
         })
     
     def get_form_initial(self, step):
-        super().get_form_initial(step)
-        from apps.tenants.utils import get_client_from_hostname
-        clientcode = get_client_from_hostname(self.request)
-        client = Bt.objects.get(bucode=clientcode.upper())
-        return self.initial_dict.get(0, {'parent':client})
+        return super().get_form_initial(step)
+    
+    def get_form_kwargs(self, step):
+        kwargs = super(ClientOnboardingWizard, self).get_form_kwargs(step)
+        if step in ('peoplecaps_form', 'sitegrp_temp_form'):
+            kwargs['session'] = self.request.session
+        return kwargs
 
 #---------------------------- END client onboarding   ---------------------------#

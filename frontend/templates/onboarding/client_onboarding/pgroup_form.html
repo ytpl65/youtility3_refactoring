@@ -1,21 +1,8 @@
-{% extends "base_form.html" %}
-
-{% block head %}
-{{ wizard.form.media }}
-{% endblock head %}
-
-
-{% block extras %}
-        {% if wizard.steps.prev %}
-        <button name="wizard_goto_step" type="submit" value="{{ wizard.steps.first }}">First Step</button>
-        <button name="wizard_goto_step" type="submit" value="{{ wizard.steps.prev }}">Prev Step</button>
-        {% endif %}
-{% endblock extras %}
+{% extends "onboarding/client_onboarding/base_wizard_form.html" %}
 
 
 <!----------- BEGIN FORM MESSGES --------------->
 {% block form_msgs %}
-    <p>Step {{ wizard.steps.step1 }} of {{ wizard.steps.count }}</p>
 
 	{% for msg in get_msgs(request) %}
 	<div class="alert {% if msg.tags %} {{ msg.tags }} {% endif %} " id="alert_msg" style="width:73%; ">
@@ -61,21 +48,7 @@ Create People group
                 class="form-check-label bool col-form-label me-5 text-sm-right">{{ wizard.form.enable }}
                 &nbsp{{ wizard.form.enable.label }}</label>
         </div>
-    </div>
     <input type="submit" value='Submit'/>
 {% endblock custom_form %}
 
-{% block extra_scripts %}
-<script>
-$('#id_starttime').flatpicker(
-    enableTime: true,
-    noCalendar: true,
-    dateFormat: "H:i",
-)
-$('#id_endtime').flatpicker(
-    enableTime: true,
-    noCalendar: true,
-    dateFormat: "H:i",
-)
-</script>
-{% endblock extra_scripts %}
+

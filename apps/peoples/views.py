@@ -123,22 +123,23 @@ class ChangePeoplePassword(LoginRequiredMixin, View):
 # @method_decorator(login_required, name='dispatch')
 class CreatePeople(LoginRequiredMixin, View):
     template_path = 'peoples/people_form.html'
+    jsonform = PeopleExtrasForm
+    form = PeopleForm
 
     def get(self, request, *args, **kwargs):
         logger.info('Create People view')
         from apps.onboarding.forms import TypeAssistForm
-        peopleform = PeopleForm()
-        peopleprefsform = PeopleExtrasForm(session=request.session)
-        cxt = {'peopleform': peopleform, 
-        'pref_form': peopleprefsform, 'ta_form':TypeAssistForm()}
+        cxt = {'peopleform': self.form(), 
+        'pref_form': self.jsonform(session=request.session),
+        'ta_form':TypeAssistForm()}
         return render(request, self.template_path, context=cxt)
 
     def post(self, request, *args, **kwargs):
         logger.info('Create People form submiited')
         from .utils import save_jsonform, save_user_paswd
         response = None
-        peopleform = PeopleForm(request.POST, request.FILES)
-        peoplepref_form = PeopleExtrasForm(
+        peopleform = self.form(request.POST, request.FILES)
+        peoplepref_form = self.jsonform(
             request.POST, session=request.session)  # a json form for json data
         try:
             if peoplepref_form.is_valid() and peopleform.is_valid():

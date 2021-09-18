@@ -38,31 +38,51 @@ Create Site
 		<!-------------- BEGIN FORM FIELDS ----------->
 		<div class="mb-3 row g-3 gx-6">
 			<!--BUCODE-->
-			{{ wizard.form.bucode.label_tag() }}
+			<label class="required col-form-label col-md-2 col-sm-2 text-sm-right" for="id_site_form-bucode">Code:
+				<span class="material-icons-outlined h-19px" style="vertical-align: middle; font-size: 19px;">
+					info
+				</span>
+			</label>
 			<div class="col-md-4">
 				{{ wizard.form.bucode }}
 				{{ wizard.form.bucode.errors }}
 			</div>
 			<!--BUNAME-->
-			{{ wizard.form.buname.label_tag() }}
+			<label class="required col-form-label col-md-2 col-sm-2 text-sm-right" for="id_site_form-buname">Name:
+				<span class="material-icons-outlined h-19px" style="vertical-align: middle; font-size: 19px;">
+					info
+				</span>
+			</label>
 			<div class="col-md-4">
 				{{ wizard.form.buname }}
 				{{ wizard.form.buname.errors }}
 			</div>
 			<!--PARENT-->
-			{{ wizard.form.parent.label_tag() }}
+			<label class="required col-form-label col-md-2 col-sm-2 text-sm-right" for="id_site_form-parent">Belongs to:
+				<span class="material-icons-outlined h-19px" style="vertical-align: middle; font-size: 19px;">
+					info
+				</span>
+			</label>
 			<div class="col-md-4">
 				{{ wizard.form.parent }}
 				{{ wizard.form.parent.errors }}
 			</div>
 			<!--BUTYPE-->
-			{{ wizard.form.butype.label_tag() }}
+			<label for="id_site_form-butype" class="col-form-label col-md-2 col-sm-2 text-sm-right">Type:
+				<span class="material-icons-outlined h-19px" style="vertical-align: middle; font-size: 19px;">
+					info
+				</span>
+			</label>
 			<div class="col-md-4">
 				{{ wizard.form.butype }}
 				{{ wizard.form.butype.errors }}
 			</div>
 			<!--GPS LOCATION-->
-			{{ wizard.form.gpslocation.label_tag() }}
+			<label for="id_site_form-gpslocation" class="col-form-label col-md-2 col-sm-2 text-sm-right">GPS Location:
+				<span class="material-icons-outlined h-19px" style="vertical-align: middle; font-size: 19px;">
+					info
+				</span>
+			</label>
 			<div class="col-md-4">
 				{{ wizard.form.gpslocation }}
 				{{ wizard.form.gpslocation.errors }}
@@ -73,35 +93,42 @@ Create Site
 				
 				<label for="{{ wizard.form.iswarehouse.id_for_label }}"
 				class="form-check-label bool col-form-label me-5 text-sm-right">
-				{{ wizard.form.iswarehouse }} &nbsp; {{ wizard.form.iswarehouse.label }} </label>
+				{{ wizard.form.iswarehouse }} &nbsp; {{ wizard.form.iswarehouse.label }} 
+				<span class="material-icons-outlined h-19px" style="vertical-align: middle; font-size: 19px;">
+					info
+				</span>
+				</label>
 				
 				<label for="{{ wizard.form.is_serviceprovider.id_for_label }}"
 				class="form-check-label bool col-form-label me-5 text-sm-right">
-				{{ wizard.form.is_serviceprovider }} &nbsp; {{ wizard.form.is_serviceprovider.label }} </label>
+				{{ wizard.form.is_serviceprovider }} &nbsp; {{ wizard.form.is_serviceprovider.label }}
+				<span class="material-icons-outlined h-19px" style="vertical-align: middle; font-size: 19px;">
+					info
+				</span>
+				 </label>
 				
 				<label for="{{ wizard.form.isvendor.id_for_label }}"
 				class="form-check-label bool col-form-label me-5 text-sm-right">
-				{{ wizard.form.isvendor }} &nbsp; {{ wizard.form.isvendor.label }} </label>
+				{{ wizard.form.isvendor }} &nbsp; {{ wizard.form.isvendor.label }} 
+				<span class="material-icons-outlined h-19px" style="vertical-align: middle; font-size: 19px;">
+					info
+				</span>
+				</label>
 				
 				<label for="{{ wizard.form.enable.id_for_label }}"
 				class="form-check-label bool col-form-label me-5 text-sm-right">
-				{{ wizard.form.enable }} &nbsp; {{ wizard.form.enable.label }} </label>
+				{{ wizard.form.enable }} &nbsp; {{ wizard.form.enable.label }} 
+				<span class="material-icons-outlined h-19px" style="vertical-align: middle; font-size: 19px;">
+					info
+				</span>
+				</label>
 			</div>
 			<!--------------------- END CHECKBOXES -------------------------->
 		
 		</div>
 		<!-------------- END FORM FIELDS -------------->
 		<!----- FORM SUBMIT BUTTON ----->
-		<input type="submit" value="Next">
+		<input type="submit"  formnovalidate="formnovalidate" value="Next">
 {% endblock custom_form %}
 <!------------- END FORM ---------------------->
 
-<!------------------BEGIN WIZARD STEP COUNT ------------------->
-{% block extras %}
-<div class="step_count d-flex justify-content-end">
-<h4>
-[ Step {{ wizard.steps.step1 }} of {{ wizard.steps.count }} ]
-</h4>
-</div>
-{% endblock extras %}
-<!------------------END WIZARD STEP COUNT --------------------->
