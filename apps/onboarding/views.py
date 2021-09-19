@@ -1,9 +1,6 @@
 import logging
-from django.db.models.expressions import RawSQL
-from django.http import response
 from django.shortcuts import  redirect, render
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.utils.decorators import method_decorator
 from django.core.paginator import Paginator , EmptyPage, PageNotAnInteger
 from django.views import View
 from django.db.models import Q
@@ -12,8 +9,7 @@ from django.views.decorators.cache import cache_page
 from django.core.cache.backends.base import DEFAULT_TIMEOUT
 from django.conf import settings
 from icecream import ic
-from django.core.exceptions import (ValidationError, EmptyResultSet, 
-ObjectDoesNotExist)
+from django.core.exceptions import (EmptyResultSet)
 from django.db.models import RestrictedError
 
 from .models import SitePeople, TypeAssist, Bt
@@ -42,8 +38,8 @@ class CreateTypeassist(LoginRequiredMixin, View):
             if form.is_valid():
                 logger.info('TypeAssistForm Form is valid')
                 ta = form.save(commit=False)
-                ta = save_userinfo(ta, request.user, request.session)
                 ta.save()
+                save_userinfo(ta, request.user, request.session)
                 logger.info('TypeAssistForm Form saved')
                 messages.success(request, "Success record saved successfully!",
                                  "alert alert-success")
@@ -182,14 +178,14 @@ class DeleteTypeassist(LoginRequiredMixin, View):
         ic(pk)
         try:
             if pk:
-                ta = self.model.objects.get(tacode=pk)
+                ta = self.model.objects.get(taid=pk)
                 form = self.form_class(instance = ta)
                 ta.delete()
                 logger.info('TypeAssist object deleted')
                 response = redirect('onboarding:ta_list')
         except self.model.DoesNotExist:
             logger.warn('Unable to delete, object does not exist')
-            messages.error(request, 'Client does not exist', "alert alert-danger")
+            messages.error(request, 'TypeAssist does not exist', "alert alert-danger")
             response = redirect('onboarding:ta_form')
         except RestrictedError:
             logger.warn('Unable to delete, due to dependencies')
@@ -202,9 +198,10 @@ class DeleteTypeassist(LoginRequiredMixin, View):
             response = render(request, self.template_path, context=cxt)
         return response
 
+#-------------------- END TypeAssist View Classes --------------------#
 
 
-#========================== Begin Bt View Classes ============================#
+#-------------------- Begin Bt View Classes --------------------#
 
 #create Bt instance.
 class CreateBt(LoginRequiredMixin, View):
@@ -225,8 +222,8 @@ class CreateBt(LoginRequiredMixin, View):
             if form.is_valid():
                 logger.info('BtForm Form is valid')
                 bt = form.save(commit=False)
-                bt = save_userinfo(bt, request.user, request.session)
                 bt.save()
+                save_userinfo(bt, request.user, request.session)
                 logger.info('BtForm Form saved')
                 messages.success(request, "Success record saved successfully!",
                  "alert-success")
@@ -386,10 +383,11 @@ class DeleteBt(LoginRequiredMixin, View):
             response = render(request, self.template_path, context=cxt)
         return response
 
-#========================== End Bt View Classes ============================#
+#-------------------- END Bt View Classes --------------------#
 
 
-#========================== Begin Site-people View Classes ============================#
+#-------------------- Begin SitePeople View Classes --------------------#
+
 class CreateSitePeople(LoginRequiredMixin, View):
     template_path = 'onboarding/sitepeople_form.html'
     form_class = SitePeopleForm
@@ -408,8 +406,8 @@ class CreateSitePeople(LoginRequiredMixin, View):
             if form.is_valid():
                 logger.info('SitePeopleForm Form is valid')
                 sp = form.save(commit=False)
-                sp = save_userinfo(sp, request.user, request.session)
                 sp.save()
+                save_userinfo(sp, request.user, request.session)
                 logger.info('SitePeopleForm Form saved')
                 messages.success(request, "Success record saved successfully!", "alert-success")
                 response = redirect('onboarding:sitepeople_form')
@@ -568,7 +566,10 @@ class DeleteSitePeople(LoginRequiredMixin, View):
         return response
 
 
-#========================== End Site-people View Classes ============================#
+#-------------------- END SitePeople View Classes --------------------#
+
+#-------------------- Begin Client View Classes --------------------#
+
 class CreateClient(View):
     form_class = BtForm
     json_form = ClentForm
@@ -594,11 +595,12 @@ class CreateClient(View):
         try:
             if form.is_valid() and jsonform.is_valid():
                 logger.info('ClientBt Form is valid')
-                from .utils import save_json_from_bu_prefsform
+                from .utils import save_json_from_bu_prefsform, create_tenant
                 bt = form.save(commit=False)
                 if save_json_from_bu_prefsform(bt, jsonform):
-                    bt = save_userinfo(bt, request.user, request.session)
                     bt.save()
+                    bt = save_userinfo(bt, request.user, request.session)
+                    create_tenant(bt.buname, bt.bucode)
                     logger.info('ClientBt Form saved')
                     messages.success(request, "Success record saved successfully!", "alert-success")
                     response =  redirect('onboarding:client_form')
@@ -714,7 +716,7 @@ class UpdateClient(LoginRequiredMixin, View):
 
     def post(self, request, *args, **kwargs):
         logger.info('ClientForm Form submitted')
-        from .utils import save_json_from_bu_prefsform
+        from .utils import save_json_from_bu_prefsform, create_tenant
         try:
             pk, response = kwargs.get('pk'), None
             client = self.model.objects.get(btid=pk)
@@ -722,15 +724,17 @@ class UpdateClient(LoginRequiredMixin, View):
             jsonform = self.json_form(request.POST)
             if form.is_valid() and jsonform.is_valid():
                 logger.info('ClientForm Form is valid')
+                create_tenant(form.data['buname'],form.data['bucode'])
                 client = form.save(commit=False)
                 if save_json_from_bu_prefsform(client, jsonform):
                     client = save_userinfo(client, request.user, request.session)
                     client.save()
                     logger.info('ClientForm Form saved')
-                    messages.success(request, "Success record saved successfully!", "alert alert-success")
+                    messages.success(request, "Success record saved successfully!", 
+                    "alert alert-success")
                     response =  redirect('onboarding:client_form')
             else:
-                logger.info('ClientForm is not valid')
+                logger.warn('ClientForm is not valid\n Following are the form errors: %s\n%s'%(form.errors, jsonform.errors) )
                 cxt = {'clientform':form, 'clientprefsform':jsonform, 'edit':True}
                 response =  render(request, self.template_path, context=cxt)
         except self.model.DoesNotExist:
@@ -779,3 +783,50 @@ class DeleteClient(LoginRequiredMixin, View):
             cxt = {'clientform':form, 'clientprefsform':get_bt_prefform(bt), 'edit':True}
             response = render(request, self.template_path, context=cxt)
         return response
+
+#-------------------- END Client View Classes ------------------------------#
+
+#---------------------------- BEGIN client onboarding ---------------------------#
+from formtools.wizard.views import SessionWizardView
+from apps.onboarding.forms import BtForm, ShiftForm
+from apps.peoples.forms import PeopleForm, PeopleExtrasForm, PgroupForm
+from django.core.files.storage import FileSystemStorage
+from apps.peoples.utils import upload_peopleimg
+
+FORMS = [("site_form", BtForm),
+        ("shift_form", ShiftForm),
+        ('people_form', PeopleForm),
+        ('peoplecaps_form', PeopleExtrasForm),
+        ('pgroup_form', PgroupForm),
+]
+
+TEMPLATES = {
+    'site_form':'onboarding/client_onboarding/site_form.html',
+    'shift_form': 'onboarding/client_onboarding/shift_form.html',
+    'people_form': 'onboarding/client_onboarding/people_form.html',
+    'peoplecaps_form': 'onboarding/client_onboarding/ob_peoplecaps_form.html',
+    'pgroup_form': 'onboarding/client_onboarding/pgroup_form.html',
+}
+
+
+class ClientOnboardingWizard(SessionWizardView):
+    file_storage = FileSystemStorage(location=upload_peopleimg)
+    
+    def get_template_names(self):
+        return [TEMPLATES[self.steps.current]]
+    
+    def done(self, form_list, **kwargs):
+        return render(self.request, 'done.html', {
+            'form_data': [form.cleaned_data for form in form_list],
+        })
+    
+    def get_form_initial(self, step):
+        return super().get_form_initial(step)
+    
+    def get_form_kwargs(self, step):
+        kwargs = super(ClientOnboardingWizard, self).get_form_kwargs(step)
+        if step in ('peoplecaps_form', 'sitegrp_temp_form'):
+            kwargs['session'] = self.request.session
+        return kwargs
+
+#---------------------------- END client onboarding   ---------------------------#

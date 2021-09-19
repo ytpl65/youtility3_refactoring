@@ -25,11 +25,9 @@ Client Form
 {% block popup_alerts %}
 	{% if edit is defined %}
 	<!-- to delete an instance with popup_alert pass the delete_url_name, instance_id, popup_title, popup_id -->
-		{{ popup_alert('onboarding:client_delete', clientform.instance.btid, title="Delete", popup_id="delete_alert") }}
-
-		{% block popup_body %}
+		{% call popup_alert('onboarding:client_delete', clientform.instance.btid, title="Delete", popup_id="delete_alert") %}
 			<h4>Are you sure, you want to delete this?</h4>
-		{% endblock popup_body %}
+		{% endcall %}
 	{% endif %}
 {% endblock popup_alerts %}
 <!-------------  END POP-UPS CODE --------------> 
@@ -115,6 +113,18 @@ Client
                 {{ clientform.buname.errors }}
                 <!----- END ERROR FIELD  ------->
             </div>
+            
+            {{ clientform.parent.label_tag() }}
+            <div class="col-md-4 col-sm-4">
+                {{ clientform.parent }}
+                <!--HELP TEXT-->
+                {% if clientform.parent.help_text %}
+                <small>{{ clientform.parent.help_text }}</small>
+                {% endif %}
+                <!----- BEGIN ERROR FIELD  ------->
+                {{ clientform.parent.errors }}
+                <!----- END ERROR FIELD  ------->
+            </div>
             {% for field in clientprefsform %}
                 {% if field.name in ['validimei', 'validip', 'reliveronpeoplecount',
                                     'pvideolength'] %}
@@ -174,7 +184,7 @@ Client
             {{ clientprefsform.reportcapability }}
         </div>
         <div class="col-md-3 col-sm-3">
-            <h4>Poertlet Capability</h4>
+            <h4>Portlet Capability</h4>
             <!---- PORTLET CAPABILITY FIELD --->
             {{ clientprefsform.portletcapability }}
         </div>

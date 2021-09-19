@@ -1,6 +1,6 @@
 from icecream import ic
 from django.contrib.auth import authenticate, login, logout
-from django.core.exceptions import ValidationError, EmptyResultSet
+from django.core.exceptions import  EmptyResultSet
 from django.http import response
 from django.shortcuts import redirect, render
 from django.views import View
@@ -16,7 +16,6 @@ from .forms import CapabilityForm, PgroupForm, PeopleForm, PeopleExtrasForm, Log
 logger = logging.getLogger('django')
 
 # Create your views here.
-
 #========================== Begin People View Classes ===========================#
 
 
@@ -38,7 +37,7 @@ class SignIn(View):
         return render(request, self.template_path, context={'loginform': form})
 
     def post(self, request, *args, **kwargs):
-        from .utils import save_user_session
+        from .utils import save_user_session, display_user_session_info
         form, response = LoginForm(request.POST), None
         logger.info('form submitted')
         try:
@@ -58,6 +57,7 @@ class SignIn(View):
                     if people:
                         login(request, people)
                         save_user_session(request, request.user)
+                        display_user_session_info(request.session)
                         logger.info("User logged in {}".format(
                             request.user.peoplecode))
                         response = redirect('/dashboard')
@@ -85,8 +85,6 @@ class SignOut(View):
     def get(self, request, *args, **kwargs):
         response = None
         try:
-            for key, value in request.session.items():
-                print('{} => {}'.format(key, value))
             logout(request)
             logger.info("User logged out DONE!")
             response = redirect("/")
@@ -98,23 +96,50 @@ class SignOut(View):
         return response
 
 
+class ChangePeoplePassword(LoginRequiredMixin, View):
+    template_path = 'peoples/people_form.html'
+    form_class = PeopleForm
+    json_form = PeopleExtrasForm
+    model = People
+
+    def post(self,request, *args, **kwargs):
+        from django.contrib.auth.forms import SetPasswordForm
+        from django.http import JsonResponse
+        id, response = request.POST.get('people'), None
+        people = People.objects.get(peopleid = id)
+        form =  SetPasswordForm(people, request.POST)
+        if form.is_valid():
+            form.save()
+            response = JsonResponse({'res':'Password is changed successfully!',
+            'status':200})
+        else:
+            response = JsonResponse({'res':form.errors,
+            'status':500})
+        return response
+
+            
+    
+
 # @method_decorator(login_required, name='dispatch')
 class CreatePeople(LoginRequiredMixin, View):
     template_path = 'peoples/people_form.html'
+    jsonform = PeopleExtrasForm
+    form = PeopleForm
 
     def get(self, request, *args, **kwargs):
         logger.info('Create People view')
-        peopleform = PeopleForm()
-        peopleprefsform = PeopleExtrasForm(session=request.session)
-        cxt = {'peopleform': peopleform, 'pref_form': peopleprefsform}
+        from apps.onboarding.forms import TypeAssistForm
+        cxt = {'peopleform': self.form(), 
+        'pref_form': self.jsonform(session=request.session),
+        'ta_form':TypeAssistForm()}
         return render(request, self.template_path, context=cxt)
 
     def post(self, request, *args, **kwargs):
         logger.info('Create People form submiited')
-        from .utils import save_jsonform
+        from .utils import save_jsonform, save_user_paswd
         response = None
-        peopleform = PeopleForm(request.POST, request.FILES)
-        peoplepref_form = PeopleExtrasForm(
+        peopleform = self.form(request.POST, request.FILES)
+        peoplepref_form = self.jsonform(
             request.POST, session=request.session)  # a json form for json data
         try:
             if peoplepref_form.is_valid() and peopleform.is_valid():
@@ -122,10 +147,12 @@ class CreatePeople(LoginRequiredMixin, View):
                 people = peopleform.save(commit=False)
                 ic(dir(people))
                 if save_jsonform(peoplepref_form, people):
+                    people.save()
                     people = save_userinfo(
                         people, request.user, request.session)
-                    people.peopleimg = request.FILES['peopleimg']
-                    people.save()
+                    people.peopleimg = request.FILES.get('peopleimg', 
+                    'master/people/blank.png')
+                    save_user_paswd(people)
                     logger.info('People Form saved... DONE')
                     messages.success(request, "Success record saved DONE!",
                                      "alert alert-success")
@@ -294,7 +321,7 @@ class DeletePeople(LoginRequiredMixin, View):
             messages.error(
                 request, 'Unable to delete, due to dependencies', "alert alert-danger")
             cxt = {'peopleform': form,
-                   'pref_form': get_people_prefform(people), 'edit': True}
+                   'pref_form': get_people_prefform(people, request.session), 'edit': True}
             response = render(request, self.template_path, context=cxt)
         return response
 #=========================== End People View Classes ==============================#
@@ -320,8 +347,8 @@ class CreatePgroup(LoginRequiredMixin, View):
             if form.is_valid():
                 logger.info('Pgroup Form is valid')
                 pg = form.save(commit=False)
-                pg = save_userinfo(pg, request.user, request.session)
                 pg.save()
+                pg = save_userinfo(pg, request.user, request.session)
                 logger.info('Pgroup Form saved')
                 messages.success(request, "Success record saved successfully!",
                                  "alert alert-success")
@@ -499,8 +526,8 @@ class CreateCapability(LoginRequiredMixin, View):
             if form.is_valid():
                 logger.info('CapabilityForm Form is valid')
                 cap = form.save(commit=False)
-                cap = save_userinfo(cap, request.user, request.session)
                 cap.save()
+                cap = save_userinfo(cap, request.user, request.session)
                 logger.info('CapabilityForm Form saved')
                 messages.success(request, "Success record saved successfully!",
                                  "alert alert-success")
@@ -645,7 +672,7 @@ class DeleteCapability(LoginRequiredMixin, View):
                 response = redirect('peoples:cap_form')
         except self.model.DoesNotExist:
             logger.warn('Unable to delete, object does not exist')
-            messages.error(request, 'Client does not exist',
+            messages.error(request, 'Capability does not exist',
                            "alert alert-danger")
             response = redirect('peoples:cap_form')
         except RestrictedError:

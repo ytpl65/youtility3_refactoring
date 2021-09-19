@@ -1,47 +1,46 @@
-
 {% extends "base_form.html" %}
 
 <!---- BEGIN PAGE TITLE ---->
 {% block title %}
-TypeAssist Form
+People Group Form
 {% endblock title %}
 <!---- END PAGE TITLE ----->
 
 
+{% block head %} {% endblock head %}
 <!-------------------------- BEGIN PAGE BREADCUMB ----------------------->
 {% block pagebreadcumb %}
 {{ super() }}
-<li class="breadcrumb-item pe-3"><a href="{{ url('onboarding:ta_list') }}" class="pe-3">TypeAssist List</a></li>
-<li class="breadcrumb-item pe-3"><a href="javascript:void(0)" class="pe-3">TypeAssist Form</a></li>
+<li class="breadcrumb-item pe-3"><a href="{{ url('peoples:pgroup_list') }}" class="pe-3">Pgroup List</a></li>
+<li class="breadcrumb-item pe-3"><a href="javascript:void(0)" class="pe-3">Pgroup Form</a></li>
 {% endblock pagebreadcumb %}
 <!-------------------------- END PAGE BREADCUMB ------------------------->
 
-<!-------------  BEGIN POP-UPS CODE ------------->
+
+<!-------------  BEGIN POP-UPS CODE -------------->
 {% block popup_alerts %}
 	{% if edit is defined %}
 	<!-- to delete an instance with popup_alert pass the delete_url_name, instance_id, popup_title, popup_id -->
-		{{ popup_alert('onboarding:ta_delete', ta_form.instance.taid, title="Delete", popup_id="delete_alert") }}
-
-		{% block popup_body %}
+		{% call popup_alert('peoples:pgroup_delete', pgroup_form.instance.groupid, title="Delete", popup_id="delete_alert") %}
 			<h4>Are you sure, you want to delete this?</h4>
-		{% endblock popup_body %}
+		{% endcall %}
 	{% endif %}
 {% endblock popup_alerts %}
-<!-------------  END POP-UPS CODE --------------->
+<!-------------  END POP-UPS CODE -------------->
 
 
 <!------ BEGIN FORM TITLE ------->
 {% block form_title %}
-Type Assist
+People group
 {% endblock form_title %}
 <!------ END FORM TITLE -------->
 
 
-<!--------- BEGIN NON FIELD ERRORS -------->
+<!-------- BEGIN NON FIELD ERRORS -------->
 {% block nonfield_errors %}
-	{% if ta_form.non_field_errors() %}
+    {% if pgroup_form.non_field_errors() %}
 	<div id="non_field_error" class="alert alert-danger" style="width: 73%;">
-		{% for error in ta_form.non_field_errors() %}
+		{% for error in pgroup_form.non_field_errors() %}
 		{{ error }}
 		{% endfor %}
 		<button type="button" class="btn-close flt-right" data-bs-dismiss="alert" aria-label="Close"></button>
@@ -51,7 +50,7 @@ Type Assist
 <!---------- END NON FIELD ERRORS --------->
 
 
-<!----------- BEGIN FORM MESSGES --------------->
+<!----------- BEGIN FORM MESSGES -------------->
 {% block form_msgs %}
 	{% for msg in get_msgs(request) %}
 	<div class="alert {% if msg.tags %} {{ msg.tags }} {% endif %} " id="alert_msg" style="width:73%; ">
@@ -65,39 +64,39 @@ Type Assist
 
 <!-------------- BEGIN FORM ------------------->
 {% block form %}
-		<form action="" method="post" id="id_taform">
-			<!---------------------- CSRF-MIDDLEWARE TOKEN ---------------------->
+    <form action="" method='post' id="id_pgroupform">
+        <div class="mb-3 row">
+           <!---------------------------CSRF MIDDLEWARE TOKEN---------------------->
 			<input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
-
-			{% for field in ta_form %}
-			<div class="mb-3 row">
-				<!--LABEL FIELD-->
-				{{ field.label_tag() }}
-				<!--INPUT GROUP-->
-				<div class="col-md-10">
-					{{ field }}
-					<!--HELP TEXT-->
-					{% if field.help_text %}
-					<small>{{ field.help_text }}</small>
-					{% endif %}
-					<!--ERROR FIELD-->
-					{{ field.errors }}
-				</div>
-			</div>
-			{% endfor %}
-		</form>
+            
+            {{ pgroup_form.groupname.label_tag() }}
+            <div class="input-group col-md-6">
+                {{ pgroup_form.groupname }}
+                {% if pgroup_form.groupname.help_text %}
+                    <small>{{ pgroup_form.groupname.help_text }}</small>
+                {% endif %}
+                {{ pgroup_form.errors }}
+            </div>
+            <!----------- Checkboxes Rendering Last --------------------->
+            <div class="booleans col-md-4 d-flex justify-content-sm-between mt-5">
+                <label for={{ pgroup_form.enable.id_for_label }}
+                    class="form-check-label bool col-form-label me-5 text-sm-right">{{ pgroup_form.enable }}
+                    &nbsp{{ pgroup_form.enable.label }}</label>
+            </div>
+        </div>
+    </form>
 {% endblock form %}
 <!------------- END FORM ---------------------->
 
 
-<!------------------- BEGIN FORM PAGE ACTIONS --------------->
-{% block formpage_actions %}
+<!------------------ BEGIN FORM PAGE ACTIONS --------------->
+{% block page_actions %}
 {% if edit is defined %}
-    {{ form_update('id_taform', popup_id="delete_alert") }}
+    {{ form_update('id_pgroupform', popup_id="delete_alert") }}
 {% else %}
-    {{ form_create('id_taform') }}
+    {{ form_create('id_pgroupform') }}
 {% endif %}
-{% endblock formpage_actions %}
+{% endblock page_actions %}
 <!------------------- END FORM PAGE ACTIONS --------------->
 
 
@@ -106,7 +105,7 @@ Type Assist
 <script>
 $(document).ready(function(){
 	//hide the delete button when instance is not saved yet.
-	if('{{ta_form.instance.tacode}}'==('None' || "")){
+	if('{{ pgroup_form.instance.groupid }}'==('None' || "")){
 		$("#btn_del").hide()
 	}
 })

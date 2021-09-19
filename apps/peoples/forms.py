@@ -16,7 +16,7 @@ class LoginForm(forms.Form):
                 label = 'Username')
     
     password  = forms.CharField(
-                max_length = 15,
+                max_length = 25,
                 required   = True,
                 widget     = forms.PasswordInput(attrs={"placeholder": 'Enter Password', 
                             'autocomplete': 'off',
@@ -88,7 +88,7 @@ class PeopleForm(forms.ModelForm):
                         label      = "Code")
     email         = forms.EmailField(max_length=100,
                     widget = forms.TextInput(attrs={'placeholder':'Enter email address'}))
-
+    loginid       = forms.CharField(max_length=30, required=True)
 
     class Meta:
         model  = People
@@ -147,10 +147,11 @@ class PeopleForm(forms.ModelForm):
             if dob == doj:
                 raise forms.ValidationError(self.error_msg['invalid_dates'])
             elif dob > doj:
+                print(dob, doj)
                 raise forms.ValidationError(self.error_msg['invalid_dates2'])
             elif dob > dor:
                 raise forms.ValidationError(self.error_msg['invalid_dates3'])
-    
+            
     
     #For field level validation define functions like clean_<func name>.
     def clean_peoplecode(self):
@@ -346,11 +347,6 @@ class CapabilityForm(forms.ModelForm):
 #============= BEGIN PEOPLE_EXTRAS FORM ====================#
 
 class PeopleExtrasForm(forms.Form):
-    # WEBCAPABILITY_CHOICES = [('T', 'TASk'),('Tr', 'TOUR'),('A', 'ASSET')]
-    # REPCAPABILITY_CHOICES = [('T', 'TASk'),('Tr', 'TOUR'),('A', 'ASSET')]
-    # MOBCAPABILITY_CHOICES = [('T', 'TASk'),('Tr', 'TOUR'),('A', 'ASSET')]
-    # PORTLETCAPABILITY_CHOICES = [('T', 'TASk'),('Tr', 'TOUR'),('A', 'ASSET')]
-    #from .utils import get_capchoices
 
     labels = {'mob':'Mobile Capability', 'port':'Portlet Capability', 
             'report':'Report Capability', 'web':'Web Capability'}
@@ -374,10 +370,17 @@ class PeopleExtrasForm(forms.Form):
     def __init__(self, *args, **kwargs):
         session = kwargs.pop('session')
         super(PeopleExtrasForm, self).__init__(*args, **kwargs)
-        self.fields['webcapability'].choices     = session['people_webcaps'] or session['client_webcaps']
-        self.fields['mobilecapability'].choices  = session['people_mobcaps'] or session['client_mobcaps']
-        self.fields['portletcapability'].choices = session['people_reportcaps'] or session['client_reportcaps']
-        self.fields['reportcapability'].choices  = session['people_portletcaps'] or session['client_portletcaps']
+        if not (session['is_superadmin']):
+            self.fields['webcapability'].choices     = session['people_webcaps'] or session['client_webcaps']
+            self.fields['mobilecapability'].choices  = session['people_mobcaps'] or session['client_mobcaps']
+            self.fields['portletcapability'].choices = session['people_reportcaps'] or session['client_reportcaps']
+            self.fields['reportcapability'].choices  = session['people_portletcaps'] or session['client_portletcaps']
+        else:
+            from .utils import get_caps_choices
+            self.fields['webcapability'].choices     = get_caps_choices(cfor='WEB')
+            self.fields['mobilecapability'].choices  = get_caps_choices(cfor='MOB')
+            self.fields['portletcapability'].choices = get_caps_choices(cfor='REPORT')
+            self.fields['reportcapability'].choices  = get_caps_choices(cfor='PORTLET')
         for visible in self.visible_fields():
             if visible.widget_type not in ['file', 'checkbox', 'clearablefile', 'select', 'selectmultiple']:
                 visible.field.widget.attrs['class'] = 'form-control'

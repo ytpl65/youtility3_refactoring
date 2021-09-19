@@ -1,5 +1,6 @@
 from django.contrib import admin
 from .models import People, PeopleEventlog, Pgroup, Pgbelonging, Capability
+from import_export import resources
 # Register your models here.
 
 @admin.register(People)
@@ -34,3 +35,4 @@ class PeopleEventlogAdmin(admin.ModelAdmin):
 @admin.register(Capability)
 class CapabilityAdmin(admin.ModelAdmin):
     fields = ['capscode', 'capsname', 'cfor', 'parent']
+

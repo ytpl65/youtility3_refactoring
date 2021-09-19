@@ -81,7 +81,7 @@ class People(AbstractBaseUser, PermissionsMixin, TenantAwareModel, BaseModel):
 
     objects=PeopleManager()
     USERNAME_FIELD = 'loginid'
-    REQUIRED_FIELDS = ['peoplecode', 'peopleid', 'peoplename', 'gender',
+    REQUIRED_FIELDS = ['peoplecode',  'peoplename', 'gender',
                      'dateofbirth', 'dateofjoin', 'mobno', 'email']
 
 
@@ -92,15 +92,9 @@ class People(AbstractBaseUser, PermissionsMixin, TenantAwareModel, BaseModel):
             models.UniqueConstraint(fields=['loginid', 'peoplecode', 'siteid'], name='peolple_logind_peoplecode_siteid_uk'),
             models.UniqueConstraint(fields=['peoplecode', 'siteid'], name='people_peoplecode_siteid'),
             models.UniqueConstraint(fields=['loginid', 'siteid'], name='people_loginid_siteid_uk'),
+            models.UniqueConstraint(fields=['loginid'], name='people_loginid_uk'),
         ]
     
-    def save(self, *args, **kwargs):
-        if not self.password or self.password == "":
-            logger.warn('%s password not found hence using loginid as password'%self.peoplename)
-            self.password = self.loginid
-        self.set_password(self.password)
-        logging.info('%s password is set!'%(self.peoplename))
-        super(People, self).save(*args, **kwargs)
 
 
     def __str__(self) -> str:

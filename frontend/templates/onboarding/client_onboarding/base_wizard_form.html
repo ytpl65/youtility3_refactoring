@@ -1,0 +1,50 @@
+{% extends "base_form.html" %}
+
+
+{% block head %}
+{{ wizard.form.media }}
+{% endblock head %}
+
+<!---- BEGIN PAGE TITLE ---->
+{% block title %}
+Client Onboarding
+{% endblock title %}
+<!---- END PAGE TITLE ----->
+
+{% block non_field_errors %}
+    {{ wizard.form.errors }}
+    {{ wizard.form.non_field_errors}}
+{% endblock non_field_errors %}
+
+{% block form %}
+
+<form action="" method="post">
+    <!-------------------------- CSRF MIDDLEWARE TOKEN --------------------->
+	<input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
+    <!-- Wizard management form necessary -->
+    {{ wizard.management_form }}
+    {% block custom_form %}
+    
+    {% endblock custom_form %}
+    {% if wizard.steps.prev %}
+    
+    {% block forms_navigators %}
+    <button name="wizard_goto_step" formnovalidate="formnovalidate" type="submit" value="{{ wizard.steps.first }}">First Step</button>
+    <button name="wizard_goto_step" formnovalidate="formnovalidate"  type="submit" value="{{ wizard.steps.prev }}">Previous Step</button>
+    {% endblock forms_navigators %}
+    
+    {% endif %}
+</form>
+
+{% endblock form %}
+
+
+<!------------------BEGIN WIZARD STEP COUNT ------------------->
+{% block extras %}
+<div class="step_count d-flex justify-content-end">
+<h4>
+[ Step {{ wizard.steps.step1 }} of {{ wizard.steps.count }} ]
+</h4>
+</div>
+{% endblock extras %}
+<!------------------END WIZARD STEP COUNT --------------------->

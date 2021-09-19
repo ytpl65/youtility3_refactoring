@@ -6,7 +6,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   
   <!-- BEGIN PAGEL LEVEL FONTS & ICONS START -->
+  <link rel="preconnect" href="https://fonts.gstatic.com">
   <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Poppins:300,400,500,600,700" />
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined" rel="stylesheet">
   <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
   <!-- END PAGEL LEVEL FONTS & ICONS END -->
   
@@ -34,9 +36,7 @@
   </title>
 
 </head>
-  {% block popup_alerts %}
-  
-  {% endblock popup_alerts %}
+
 <body id="kt_body"
   class="header-fixed header-tablet-and-mobile-fixed toolbar-enabled toolbar-fixed toolbar-tablet-and-mobile-fixed aside-enabled aside-fixed"
   style="--kt-toolbar-height:55px;--kt-toolbar-height-tablet-and-mobile:55px">
@@ -84,15 +84,30 @@
 
     //hide all menu's on start
     //tojson filter converts python datatypes to json datatypes.
-    const people_webcaps  =  {{ request.session['people_webcaps'] | tojson }}
-    const people_mobcaps  =  {{ request.session['people_mobcaps'] | tojson }}
-    const people_repcaps  =  {{ request.session['people_reportcaps'] | tojson }}
-    const people_portcaps =  {{ request.session['people_portletcaps'] | tojson }}
-    const client_webcaps  =  {{ request.session['client_webcaps'] | tojson }}
-    const client_mobcaps  =  {{ request.session['client_mobcaps'] | tojson }}
-    const client_repcaps  =  {{ request.session['client_reportcaps'] | tojson }}
-    const client_portcaps =  {{ request.session['client_portletcaps'] | tojson }}
     const is_superadmin   =  {{ request.session['is_superadmin'] | tojson }}
+    var people_webcaps = []
+    var people_mobcaps = []
+    var people_repcaps = []
+    var people_portcaps = []
+    var client_webcaps = []
+    var client_mobcaps = []
+    var client_repcaps = []
+    var client_portcaps = []
+    
+    console.log("im outside")
+    if(is_superadmin){}
+    else{
+      console.log("im inside")
+      people_webcaps  =  {{ request.session['people_webcaps'] | tojson }}
+      people_mobcaps  =  {{ request.session['people_mobcaps'] | tojson }}
+      people_repcaps  =  {{ request.session['people_reportcaps'] | tojson }}
+      people_portcaps =  {{ request.session['people_portletcaps'] | tojson }}
+      client_webcaps  =  {{ request.session['client_webcaps'] | tojson }}
+      client_mobcaps  =  {{ request.session['client_mobcaps'] | tojson }}
+      client_repcaps  =  {{ request.session['client_reportcaps'] | tojson }}
+      client_portcaps =  {{ request.session['client_portletcaps'] | tojson }}
+    } 
+    
 
     
 
@@ -102,17 +117,23 @@
       if(is_superadmin){
         $('.menu-item').show()
       }else {
-          caps = people_webcaps.length == 0 ? client_webcaps : people_webcaps
-          console.log(caps)
+          caps = people_webcaps.length != 0 ? people_webcaps : client_webcaps
+          console.log(people_webcaps.length)
+          console.log(caps.length)
           for(var i=0; i < caps.length; i++){
             parent = caps[i][0]
             childs = caps[i][1]
             parent = parent.replace(' ', '_')
             parent_id = '#'.concat(parent.toLowerCase())
+            console.log('parent', parent_id)
             $(parent_id).show()
+            //items within parent
+            parent_items = parent_id + ' .menu-item'
+            $(parent_items).hide()
             for(var j=0; j<childs.length; j++){
               child = childs[j][0]
               child_id = '#'.concat(child.toLowerCase())
+              console.log('child', child_id)
               $(child_id).show()
             }
 
@@ -129,5 +150,7 @@
   
   {% endblock extra_scripts %}
 </body>
-
+  {% block popup_alerts %}
+  
+  {% endblock popup_alerts %}
 </html>

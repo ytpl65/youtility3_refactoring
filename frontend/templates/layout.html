@@ -93,7 +93,6 @@
 
   <!--------------- BEGIN POP-UP DELETE_ALERT MACRO ---------------->
     {% macro popup_alert(path, id) %}
-
     <!-- Modal -->
     <div class="modal fade" id="{{ kwargs['popup_id'] }}" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
       <div class="modal-dialog">
@@ -103,13 +102,32 @@
             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
           </div>
           <div class="modal-body">
-            {% block popup_body %}
-            
-            {% endblock popup_body %}
+            {{ caller() }}
           </div>
           <div class="modal-footer">
             <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">No Go back</button>
             <a href="{{ url(path, args=[id]) }}" class="btn btn-sm  btn-danger rounded-1">Yes I'm Sure</a>
+          </div>
+        </div>
+      </div>
+    </div>
+    {% endmacro %}
+
+    {% macro password_change() %}
+      <!-- Modal -->
+    <div class="modal fade" id="{{ kwargs['popup_id'] }}" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="exampleModalLabel">{{ kwargs['title'] }}</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            {{ caller() }}
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Cancel</button>
+            <input form = "{{ kwargs['form_id'] }}" type="submit" value="Set Password" class="btn btn-sm btn-primary" />
           </div>
         </div>
       </div>

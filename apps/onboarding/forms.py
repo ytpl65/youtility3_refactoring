@@ -83,7 +83,7 @@ class TypeAssistForm(forms.ModelForm):
 
     
 
-class BtForm(forms.ModelForm):
+class BtForm(forms.ModelForm):  
     required_css_class = "required"
     error_msg = {
         'invalid_bucode'  : 'Spaces are not allowed in [Code]',
@@ -91,7 +91,7 @@ class BtForm(forms.ModelForm):
         'invalid_bucode3' : "[Invalid code] Code should not endwith '.' ",
         'invalid_latlng'  : "Please enter a correct gps coordinates."
     }
-    
+    parent = forms.ModelChoiceField(label='Belongs to', required=True, queryset=Bt.objects.all())
     class Meta:
         model  = Bt
         fields = ['bucode', 'buname', 'parent', 'butype', 'gpslocation',
@@ -102,7 +102,6 @@ class BtForm(forms.ModelForm):
             'bucode'             : 'Code',
             'buname'             : 'Name',
             'butype'             : 'Type',
-            'parent'             : 'Belongs To',
             'iswarehouse'        : 'Warehouse',
             'gpslocation'        : 'GPS Location',
             'isenable'           : 'Enable',
@@ -147,20 +146,20 @@ class BtForm(forms.ModelForm):
 
     
     def clean(self):
-        super(BtForm, self).clean()
+        cleaned_data = super().clean()
         from .utils import create_bt_tree
-        
-        parent= self.cleaned_data.get('parent')
-        bucode = self.cleaned_data.get('bucode')
-        butype = self.cleaned_data.get('butype')
+        parent= cleaned_data.get('parent')
+        bucode = cleaned_data.get('bucode')
+        butype = cleaned_data.get('butype')
         instance = self.instance
-        ic(bucode)
-        create_bt_tree(bucode, butype, instance, parent)
+        if bucode and butype and parent:
+            create_bt_tree(bucode, butype, instance, parent)
         
         
     
     def clean_bucode(self):
         import re
+        ic(self.cleaned_data)
         value = self.cleaned_data.get('bucode')
         if value:
             regex = "^[a-zA-Z0-9\-_]*$"

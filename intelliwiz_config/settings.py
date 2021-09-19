@@ -45,6 +45,7 @@ INSTALLED_APPS = [
     'django_extensions',
     'import_export',
     'django_filters',
+    'formtools',
 
     #local apps
     'apps.peoples',
@@ -65,7 +66,7 @@ MIDDLEWARE = [
 ]
 
 ROOT_URLCONF = 'intelliwiz_config.urls'
-JINJA_TEMPLATES = os.path.join(BASE_DIR, 'intelliwiz_config/templates')
+JINJA_TEMPLATES = os.path.join(BASE_DIR, 'frontend/templates')
 import jinja2
 TEMPLATES = [
     {
@@ -205,7 +206,7 @@ DATE_FORMAT = "d M Y"
 # https://docs.djangoproject.com/en/3.2/howto/static-files/
 
 STATIC_URL = '/static/'
-STATICFILES_DIRS = [os.path.join(BASE_DIR, 'intelliwiz_config/static')]
+STATICFILES_DIRS = [os.path.join(BASE_DIR, 'frontend/static')]
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/3.2/ref/settings/#default-auto-field
