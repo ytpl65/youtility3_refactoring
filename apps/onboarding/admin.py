@@ -4,13 +4,6 @@ from import_export.admin import ImportExportModelAdmin
 from .forms import (BtForm, TypeAssistForm, BuPrefForm, SitePeopleForm,
 ContractDetailForm, ContractForm)
 from . models import TypeAssist, Bt 
-<<<<<<< HEAD
-
-class TypeAssistResource(resources.ModelResource):
-    model = TypeAssist
-    import_id_fields = ('taid',)
-    fields = ('taid', 'tacode', 'taname', 'parent')
-=======
 
 class TypeAssistResource(resources.ModelResource):
     model = TypeAssist
@@ -20,7 +13,6 @@ class TypeAssistResource(resources.ModelResource):
     import_id_fields = ('taid', 'tacode', 'taname', 'parent', 'tatype')   
     #fields = ('taid', 'tacode', 'taname', 'parent', 'tatype')   
 
->>>>>>> 2a6630e5db63f4d43871c0904a0c63d2a6dfe88b
 
 @admin.register(TypeAssist)
 class TypeAssistAdmin(ImportExportModelAdmin):
