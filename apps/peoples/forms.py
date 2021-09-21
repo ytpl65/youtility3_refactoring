@@ -95,7 +95,7 @@ class PeopleForm(forms.ModelForm):
         fields = ['peoplename', 'peoplecode',  'peopleimg',  'mobno',      'email', 
                 'loginid',      'dateofbirth', 'isenable',   'deviceid',   'gender',
                 'peopletype',   'dateofjoin',  'department', 'dateofreport', 
-                'designation',  'reportto', ]
+                'designation',  'reportto', 'shift']
         labels = {
             'peoplename':'Name',       'loginid'    :'Login Id',         'email'       :'Email',
             'peopletype':'People Type', 'reportto'  :'Report to',        'designation':'Designation',

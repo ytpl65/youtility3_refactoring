@@ -596,12 +596,14 @@ class CreateClient(View):
         try:
             if form.is_valid() and jsonform.is_valid():
                 logger.info('ClientBt Form is valid')
-                from .utils import save_json_from_bu_prefsform, create_tenant
+                from .utils import (save_json_from_bu_prefsform, create_tenant,
+                create_default_admin_for_client)
                 bt = form.save(commit=False)
                 if save_json_from_bu_prefsform(bt, jsonform):
+                    create_tenant(bt.buname, bt.bucode)
+                    create_default_admin_for_client(bt)
                     bt.save()
                     bt = save_userinfo(bt, request.user, request.session)
-                    create_tenant(bt.buname, bt.bucode)
                     logger.info('ClientBt Form saved')
                     messages.success(request, "Success record saved successfully!", "alert-success")
                     response =  redirect('onboarding:client_form')
@@ -824,8 +826,8 @@ class ClientOnboardingWizard(SessionWizardView):
         self.process_pgroup_form(form_list[4])
         return HttpResponse("wizard saved successfully")
     
-    def get_form_initial(self, step):
-        return super().get_form_initial(step)
+    def get_form_instance(self, step):
+        return self.instance_dict.get('shift_form', None)
     
     def get_form_kwargs(self, step):
         kwargs = super(ClientOnboardingWizard, self).get_form_kwargs(step)

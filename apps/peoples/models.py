@@ -64,6 +64,7 @@ class People(AbstractBaseUser, PermissionsMixin, TenantAwareModel, BaseModel):
     isadmin       = models.BooleanField(_("isadmin"), default=False)
     is_staff      = models.BooleanField(_('staff status'),default=False)
     isenable      = models.BooleanField(_("isactive"), default=True)
+    shift         = models.ForeignKey('onboarding.Shift', null=True, blank=True, on_delete=models.RESTRICT, related_name='onboarding_shift')
     department    = models.ForeignKey("onboarding.TypeAssist", null=True, blank=True, on_delete=models.RESTRICT, related_name='people_departments')
     designation   = models.ForeignKey("onboarding.TypeAssist", null=True, blank=True, on_delete=models.RESTRICT, related_name='people_designations')
     peopletype    = models.ForeignKey("onboarding.TypeAssist", null=True, blank=True, on_delete=models.RESTRICT, related_name='people_types')

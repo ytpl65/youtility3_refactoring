@@ -22,7 +22,7 @@ class TypeAssistForm(forms.ModelForm):
         'invalid_code2': "[Invalid code] Only ('-', '_') special characters are allowed",
         'invalid_code3': "[Invalid code] Code should not endwith '.' ",
     }
-    tatype = forms.ModelChoiceField(queryset=TypeAssist.objects.filter(parent__tacode='NONE'))
+    tatype = forms.ChoiceField(required=True)
     
     class Meta:
         model  = TypeAssist
@@ -42,6 +42,8 @@ class TypeAssistForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         """Initializes form"""
         super(TypeAssistForm, self).__init__(*args, **kwargs)
+        from .utils import get_tatype_choices
+        self.fields['tatype'].choices = get_tatype_choices()
         for visible in self.visible_fields():
             if visible.widget_type not in ['file', 'checkbox', 'clearablefile', 'select']:
                 visible.field.widget.attrs['class'] = 'form-control'

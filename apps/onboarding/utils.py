@@ -1,4 +1,5 @@
 # save json datafield of Bt table
+from django.utils.translation import deactivate_all
 from icecream import ic
 import logging
 logger = logging.getLogger('django')
@@ -121,21 +122,62 @@ def get_bt_prefform(bt):
 
 def create_bt_tree(bucode, butype, instance, parent=None):
     # None Entry
-    if bucode == 'NONE':
-        return
-    # Root Node
-    if parent:
-        if bucode != 'NONE' and parent.bucode == 'NONE':
-            update_children_tree(instance, bucode, butype.tacode)
-            instance.butree = f'{butype.tacode} :: {bucode}'
-    # Branch Nodes
-        elif instance.butree != (parent.butree + ' > ' + bucode):
-            update_children_tree(instance, bucode, butype.tacode)
-            instance.butree = ""
-            instance.butree += f"{parent.butree} > {butype.tacode} :: {bucode}"
+    try:
+        logger.info('Creating BT tree for %s STARTED'%(instance.bucode))
+        if bucode == 'NONE':
+            return
+        # Root Node
+        if parent:
+            if bucode != 'NONE' and parent.bucode == 'NONE':
+                update_children_tree(instance, bucode, butype.tacode)
+                instance.butree = f'{butype.tacode} :: {bucode}'
+        # Branch Nodes
+            elif instance.butree != (parent.butree + ' > ' + bucode):
+                update_children_tree(instance, bucode, butype.tacode)
+                instance.butree = ""
+                instance.butree += f"{parent.butree} > {butype.tacode} :: {bucode}"
+    except Exception:
+        logger.error('Something went wrong while creating Bt tree for instance %s'%(instance.bucode),
+         exc_info=True)
+        raise
+    else:
+        logger.info('BU Tree created for instance %s... DONE'%(instance.bucode))
+
 
 def create_tenant(buname, bucode):
     #create_tenant for every client
     from apps.tenants.models import Tenant
-    _,_ = Tenant.objects.update_or_create(tenantname = buname, subdomain_prefix = bucode.lower())
+    try:
+        logger.info('Creating corresponding tenant for client %s ...STARTED'%(bucode))
+        _,_ = Tenant.objects.update_or_create(tenantname = buname, subdomain_prefix = bucode.lower())
+    except Exception:
+        logger.error('Something went wrong while creating tenant for the client %s'%(bucode), 
+        exc_info=True)
+        raise
+    else:
+        logger.info('Corresponding tenant created for client %s ...DONE'%(bucode))
+
+
+def create_default_admin_for_client(client):
+    from apps.peoples.models import People
+    from datetime import date
+    peoplecode = client.bucode + '_DEFAULT_ADMIN'
+    peoplename = client.bucode + ' Default Admin'
+    dob = doj = date.today()
+    mobno = '+913851286222'
+    email = client.bucode + '@youtility.in'
+    try:
+        logger.info('Creating default user for the client: %s ...STARTED'%(client.bucode))
+        
+        People.object.create(peoplecode = peoplecode,
+        peoplename = peoplename, dateofbirth = dob, 
+        dateofjoin = doj, mobno = mobno, email = email, 
+        isadmin = True)
+        logger.info('Default user-admin created for the client... DONE')
+    except Exception:
+        logger.error("Something went wrong while creating default user-admin for client... FAILED", exc_info=True) 
+        raise
+
+
+
     

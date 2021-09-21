@@ -110,32 +110,32 @@ WSGI_APPLICATION = 'intelliwiz_config.wsgi.application'
 '''
 NOTE: Client bucode should match the database alias name.
 '''
-# youtility_dbs = {
-#     'default': {
-#         'ENGINE':   'django.db.backends.postgresql_psycopg2',
-#         'USER':     'youtilitydba',
-#         'NAME':     'intelliwiz_django',
-#         'PASSWORD': '!!sysadmin!!',
-#         'HOST':     '192.168.1.254',
-#         'PORT':     '5432',
-#     },
-#     'sps':{
-#         'ENGINE':   'django.db.backends.postgresql_psycopg2',
-#         'USER':     'youtilitydba',
-#         'NAME':     'sps',
-#         'PASSWORD': '!!sysadmin!!',
-#         'HOST':     '192.168.1.254',
-#         'PORT':     '5432',
-#     },
-#     'icici':{
-#         'ENGINE':   'django.db.backends.postgresql_psycopg2',
-#         'USER':     'youtilitydba',
-#         'NAME':     'icici',
-#         'PASSWORD': '!!sysadmin!!',
-#         'HOST':     '192.168.1.254',
-#         'PORT':     '5432',
-#     }
-# }
+youtility_dbs = {
+    'default': {
+        'ENGINE':   'django.db.backends.postgresql_psycopg2',
+        'USER':     'youtilitydba',
+        'NAME':     'intelliwiz_django',
+        'PASSWORD': '!!sysadmin!!',
+        'HOST':     '192.168.1.254',
+        'PORT':     '5432',
+    },
+    'sps':{
+        'ENGINE':   'django.db.backends.postgresql_psycopg2',
+        'USER':     'youtilitydba',
+        'NAME':     'sps',
+        'PASSWORD': '!!sysadmin!!',
+        'HOST':     '192.168.1.254',
+        'PORT':     '5432',
+    },
+    'icici':{
+        'ENGINE':   'django.db.backends.postgresql_psycopg2',
+        'USER':     'youtilitydba',
+        'NAME':     'icici',
+        'PASSWORD': '!!sysadmin!!',
+        'HOST':     '192.168.1.254',
+        'PORT':     '5432',
+    }
+}
 
 
 
@@ -167,7 +167,7 @@ home_local_dbs = {
 }
 
 
-DATABASES = home_local_dbs
+DATABASES = youtility_dbs
 
 CACHES = {
     "default": {
