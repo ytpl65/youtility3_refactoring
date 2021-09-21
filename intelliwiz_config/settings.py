@@ -110,32 +110,64 @@ WSGI_APPLICATION = 'intelliwiz_config.wsgi.application'
 '''
 NOTE: Client bucode should match the database alias name.
 '''
-DATABASES = {
+# youtility_dbs = {
+#     'default': {
+#         'ENGINE':   'django.db.backends.postgresql_psycopg2',
+#         'USER':     'youtilitydba',
+#         'NAME':     'intelliwiz_django',
+#         'PASSWORD': '!!sysadmin!!',
+#         'HOST':     '192.168.1.254',
+#         'PORT':     '5432',
+#     },
+#     'sps':{
+#         'ENGINE':   'django.db.backends.postgresql_psycopg2',
+#         'USER':     'youtilitydba',
+#         'NAME':     'sps',
+#         'PASSWORD': '!!sysadmin!!',
+#         'HOST':     '192.168.1.254',
+#         'PORT':     '5432',
+#     },
+#     'icici':{
+#         'ENGINE':   'django.db.backends.postgresql_psycopg2',
+#         'USER':     'youtilitydba',
+#         'NAME':     'icici',
+#         'PASSWORD': '!!sysadmin!!',
+#         'HOST':     '192.168.1.254',
+#         'PORT':     '5432',
+#     }
+# }
+
+
+
+home_local_dbs = {
     'default': {
         'ENGINE':   'django.db.backends.postgresql_psycopg2',
         'USER':     'youtilitydba',
         'NAME':     'intelliwiz_django',
-        'PASSWORD': '!!sysadmin!!',
-        'HOST':     '192.168.1.254',
-        'PORT':     '5432',
+        'PASSWORD': 'root',
+        'HOST':     'localhost',
+        'PORT':     '',
     },
     'sps':{
         'ENGINE':   'django.db.backends.postgresql_psycopg2',
         'USER':     'youtilitydba',
         'NAME':     'sps',
-        'PASSWORD': '!!sysadmin!!',
-        'HOST':     '192.168.1.254',
-        'PORT':     '5432',
+        'PASSWORD': 'root',
+        'HOST':     'localhost',
+        'PORT':     '',
     },
     'icici':{
         'ENGINE':   'django.db.backends.postgresql_psycopg2',
         'USER':     'youtilitydba',
         'NAME':     'icici',
-        'PASSWORD': '!!sysadmin!!',
-        'HOST':     '192.168.1.254',
-        'PORT':     '5432',
+        'PASSWORD': 'root',
+        'HOST':     'localhost',
+        'PORT':     '',
     }
 }
+
+
+DATABASES = home_local_dbs
 
 CACHES = {
     "default": {

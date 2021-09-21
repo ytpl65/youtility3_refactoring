@@ -152,7 +152,7 @@ class BtForm(forms.ModelForm):
         bucode = cleaned_data.get('bucode')
         butype = cleaned_data.get('butype')
         instance = self.instance
-        if bucode and butype and parent:
+        if bucode and butype and parent and instance:
             create_bt_tree(bucode, butype, instance, parent)
         
         

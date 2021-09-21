@@ -9,8 +9,8 @@ class TypeAssistResource(resources.ModelResource):
     model = TypeAssist
     skip_unchanged = True
     report_skipped = True
-    exclude = ('id')
-    import_id_fields = ('taid', 'tacode', 'taname', 'parent', 'tatype')   
+    exclude = ('id',)
+    import_id_fields = ('taid', 'tacode', 'taname', 'parent', 'tatype',)   
     #fields = ('taid', 'tacode', 'taname', 'parent', 'tatype')   
 
 
@@ -25,7 +25,7 @@ class TypeAssistAdmin(ImportExportModelAdmin):
 @admin.register(Bt)
 class BtAdmin(admin.ModelAdmin):
     fields = ('bucode', 'buname', 'butype', 'parent', 'gpslocation', 'identifier',
-                'iswarehouse', 'enable', 'bu_preferences')
+                'iswarehouse', 'enable', 'bu_preferences', 'butree')
     exclude = ['bupath']
     list_display = ('bucode', 'buname', 'butype', 'parent', 'butree')
     list_display_links = ('bucode',)

@@ -150,14 +150,7 @@ class Pgbelonging(BaseModel, TenantAwareModel):
 
 
 ############## Capability Table ###############
-class Capability(BaseModel, TenantAwareModel):  
-    CFOR_CHOICES = [('WEB', 'WEB'), ('PORTLET', 'PORTLET'), ('REPORT', 'REPORT'), ('MOB', 'MOB')]
-    capsid      = models.AutoField(primary_key=True, auto_created=True, editable=False)
-    capscode    = models.CharField(_('caps'), max_length=50)
-    capsname    = models.CharField(_('includes'), max_length=1000, default = None, blank=True, null=True)
-    parent      = models.ForeignKey('self', on_delete=models.RESTRICT, db_column='parent', null=True, blank=True, related_name='children')
-    cfor        = models.CharField(_('cfor'), max_length=10, default='WEB', choices=CFOR_CHOICES)
-    clientid    = models.ForeignKey('onboarding.Bt',  null=True, blank=True, on_delete = models.RESTRICT, db_column='clientid')
+ 
 
     objects = CapabilityManager()
     

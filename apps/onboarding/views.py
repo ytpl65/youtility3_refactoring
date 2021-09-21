@@ -1,4 +1,5 @@
 import logging
+from django.http.response import HttpResponse
 from django.shortcuts import  redirect, render
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.paginator import Paginator , EmptyPage, PageNotAnInteger
@@ -13,7 +14,7 @@ from django.core.exceptions import (EmptyResultSet)
 from django.db.models import RestrictedError
 
 from .models import SitePeople, TypeAssist, Bt
-from apps.peoples.utils import  save_userinfo
+from apps.peoples.utils import  save_user_paswd, save_userinfo
 from .forms import  BtForm,  ClentForm, SitePeopleForm, TypeAssistForm
 
 CACHE_TTL = getattr(settings, 'CACHE_TTL', DEFAULT_TIMEOUT)
@@ -793,7 +794,7 @@ from apps.peoples.forms import PeopleForm, PeopleExtrasForm, PgroupForm
 from django.core.files.storage import FileSystemStorage
 from apps.peoples.utils import upload_peopleimg
 
-FORMS = [("site_form", BtForm),
+FORMS = [("bt_form", BtForm),
         ("shift_form", ShiftForm),
         ('people_form', PeopleForm),
         ('peoplecaps_form', PeopleExtrasForm),
@@ -801,11 +802,11 @@ FORMS = [("site_form", BtForm),
 ]
 
 TEMPLATES = {
-    'site_form':'onboarding/client_onboarding/site_form.html',
-    'shift_form': 'onboarding/client_onboarding/shift_form.html',
-    'people_form': 'onboarding/client_onboarding/people_form.html',
+    'bt_form':'onboarding/client_onboarding/ob_bt_form.html',
+    'shift_form': 'onboarding/client_onboarding/ob_shift_form.html',
+    'people_form': 'onboarding/client_onboarding/ob_people_form.html',
     'peoplecaps_form': 'onboarding/client_onboarding/ob_peoplecaps_form.html',
-    'pgroup_form': 'onboarding/client_onboarding/pgroup_form.html',
+    'pgroup_form': 'onboarding/client_onboarding/ob_pgroup_form.html',
 }
 
 
@@ -816,9 +817,12 @@ class ClientOnboardingWizard(SessionWizardView):
         return [TEMPLATES[self.steps.current]]
     
     def done(self, form_list, **kwargs):
-        return render(self.request, 'done.html', {
-            'form_data': [form.cleaned_data for form in form_list],
-        })
+        self.process_bt_form(form_list[0])
+        self.process_shift_form(form_list[1])
+        people = self.process_people_form(form_list[2])
+        self.process_peoplecaps_form(form_list[3], people)
+        self.process_pgroup_form(form_list[4])
+        return HttpResponse("wizard saved successfully")
     
     def get_form_initial(self, step):
         return super().get_form_initial(step)
@@ -828,5 +832,34 @@ class ClientOnboardingWizard(SessionWizardView):
         if step in ('peoplecaps_form', 'sitegrp_temp_form'):
             kwargs['session'] = self.request.session
         return kwargs
+    
+    #-------------------- begin user-defined methods --------------------#
+    
+    def process_bt_form(self, form):
+        bt = form.save(commit=True)
+        save_userinfo(bt, self.request.user, self.request.session)
+
+    def process_shift_form(self, form):
+        shift = form.save(commit=True)
+        save_userinfo(shift, self.request.user, self.request.session)
+    
+    def process_people_form(self, form):
+        people = form.save(commit=False)
+        return people
+    
+    def process_peoplecaps_form(self, form, people):
+        from apps.peoples.utils import save_jsonform
+        save_jsonform(form, people)
+        people.save()
+        save_userinfo(people, self.request.user, self.request.session)
+        save_user_paswd(people)
+    
+    def process_pgroup_form(self, form):
+        pgroup = form.save(commit=True)
+        save_userinfo(pgroup, self.request.user, self.request.session)
+    
+    #-------------------- end user-defined methods --------------------#
+
+
 
 #---------------------------- END client onboarding   ---------------------------#

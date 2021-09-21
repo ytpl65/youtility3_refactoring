@@ -24,7 +24,8 @@ Create Shift
 		<div class="mb-3 row g-3 gx-6">
 			<!--SHIFTNAME-->
 			<label class="required col-form-label col-md-2 col-sm-2 text-sm-right" for="id_shift_form-shiftname">Shift Name:
-				<span class="material-icons-outlined h-19px" style="vertical-align: middle; font-size: 19px;">
+				<span class="material-icons-outlined h-19px" style="vertical-align: middle; font-size: 19px;" data-bs-toggle="tooltip" data-bs-custom-class="tooltip-dark" data-bs-placement="top"
+				title = "Display name of the shift">
                         info
                 </span>
 			</label>
@@ -33,7 +34,8 @@ Create Shift
 			</div>
 			<!--STARTTIME-->
 			<label class="required col-form-label col-md-2 col-sm-2 text-sm-right" for="id_shift_form-starttime">Start Time:
-			<span class="material-icons-outlined h-19px" style="vertical-align: middle; font-size: 19px;">
+			<span class="material-icons-outlined h-19px" style="vertical-align: middle; font-size: 19px;" data-bs-toggle="tooltip" data-bs-custom-class="tooltip-dark" data-bs-placement="top"
+			title = "Enter starttime of shift">
                         info
                 </span>
 			</label>
@@ -42,7 +44,8 @@ Create Shift
 			</div>
 			<!--CAPCTCHA FREQUENCY-->
 			<label class="required col-form-label col-md-2 col-sm-2 text-sm-right" for="id_shift_form-captchafreq">Captchafreq:
-			<span class="material-icons-outlined h-19px" style="vertical-align: middle; font-size: 19px;">
+			<span class="material-icons-outlined h-19px" style="vertical-align: middle; font-size: 19px;" data-bs-toggle="tooltip" data-bs-custom-class="tooltip-dark" data-bs-placement="top"
+			title = "">
                         info
                 </span>
 			</label>
@@ -51,7 +54,8 @@ Create Shift
 			</div>
 			<!--ENDTIME-->
 			<label class="required col-form-label col-md-2 col-sm-2 text-sm-right" for="id_shift_form-endtime">End Time:
-			<span class="material-icons-outlined h-19px" style="vertical-align: middle; font-size: 19px;">
+			<span class="material-icons-outlined h-19px" style="vertical-align: middle; font-size: 19px;" data-bs-toggle="tooltip" data-bs-custom-class="tooltip-dark" data-bs-placement="top"
+			title = "Enter endtime of shift">
                         info
                 </span>
 			</label>
@@ -59,7 +63,7 @@ Create Shift
 				{{ wizard.form.endtime }}
 			</div>
 		</div>
-		<input type="submit" value="Next">
+		<input type="submit" class="btn btn-sm btn-success" style="background-color:#189D54;" value="Next">
 {% endblock custom_form %}
 <!------------- END FORM ---------------------->
 

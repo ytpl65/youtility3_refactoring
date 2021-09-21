@@ -38,7 +38,12 @@ Create People group
 
 {% block custom_form %}
         <!--groupname-->
-        {{ wizard.form.groupname.label_tag() }}
+        <label class="required col-form-label col-md-2 col-sm-2 text-sm-right" for="id_pgroup_form-groupname">Code:
+			<span class="material-icons-outlined h-19px" data-bs-toggle="tooltip" data-bs-custom-class="tooltip-dark" data-bs-placement="top" style="vertical-align: middle; font-size: 19px;"
+			title="Give the name to the group you want to create." >
+			info
+			</span>
+		</label>
         <div class="col-md-4">
             {{ wizard.form.groupname }}
         </div>
@@ -48,7 +53,7 @@ Create People group
                 class="form-check-label bool col-form-label me-5 text-sm-right">{{ wizard.form.enable }}
                 &nbsp{{ wizard.form.enable.label }}</label>
         </div>
-    <input type="submit" value='Submit'/>
+    <input type="submit" value='Submit' class="btn btn-sm btn-success"/>
 {% endblock custom_form %}
 
 
