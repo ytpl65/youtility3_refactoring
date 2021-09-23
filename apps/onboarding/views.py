@@ -13,7 +13,7 @@ from icecream import ic
 from django.core.exceptions import (EmptyResultSet)
 from django.db.models import RestrictedError
 
-from .models import SitePeople, TypeAssist, Bt
+from .models import Shift, SitePeople, TypeAssist, Bt
 from apps.peoples.utils import  save_user_paswd, save_userinfo
 from .forms import  BtForm,  ClentForm, SitePeopleForm, TypeAssistForm
 
@@ -385,6 +385,191 @@ class DeleteBt(LoginRequiredMixin, View):
         return response
 
 #-------------------- END Bt View Classes --------------------#
+
+
+# #-------------------- Begin Shift View Classes --------------------#
+# class CreateShift(LoginRequiredMixin, View):
+#     template_path = 'onboarding/ta_form.html'
+#     form_class = ShiftForm
+    
+#     def get(self, request, *args, **kwargs):
+#         """Returns shift form on html"""
+#         logger.info('create typeassist view...')
+#         cxt = {'shift_form':self.form_class()}
+#         if request.session.get('wizard'):
+#             cxt.update({'wizard':True})
+#         return render(request, self.template_path, context=cxt)
+
+#     def post(self, request, *args, **kwargs):
+#         """Handles creation of shidt instance."""
+#         logger.info('create typeassist form submiited for saving...')
+#         response, form = None, self.form_class(request.POST)
+#         try:
+#             if form.is_valid():
+#                 logger.info('ShiftForm Form is valid')
+#                 ta = form.save(commit=False)
+#                 ta.save()
+#                 save_userinfo(ta, request.user, request.session)
+#                 logger.info('ShiftForm Form saved')
+#                 messages.success(request, "Success record saved successfully!",
+#                                  "alert alert-success")
+#                 if request.session.get('wizard'):
+#                     response = redirect('peoples:people_form')
+#                 else: response = redirect('onboarding:ta_form')
+#             else:
+#                 logger.info('Form is not valid')
+#                 cxt = {'shift_form':form, 'edit':True}
+#                 response = render(request, self.template_path, context=cxt)
+#         except Exception:
+#             logger.critical("something went wrong...", exc_info=True)
+#             messages.error(request, "[ERROR] Something went wrong",
+#              "alert alert-danger")
+#             cxt = {'shift_form':form, 'edit':True}
+#             response = render(request, self.template_path, context=cxt)
+#         return response
+        
+            
+# #@method_decorator(cache_page(CACHE_TTL), name='dispatch')
+# class RetrieveShift(LoginRequiredMixin, View):
+#     template_path = 'onboarding/ta_list.html'
+#     related       = ['parent', 'buid', 'cuser', 'muser']
+#     fields        = ['taid', 'tatype', 'parent__tacode','tacode', 'taname']
+#     model         = Shift
+    
+    
+#     def get(self, request, *args, **kwargs):
+#         '''returns the paginated results from db'''
+#         response = None
+#         try:
+#             objects = self.model.objects.select_related(*self.related
+#             ).values(*self.fields)
+#             logger.info('Shift objects retrieved from db')
+#             cxt   = self.paginate_results(request, objects)
+#             logger.info('Results paginated')
+#             response = render(request, self.template_path, context=cxt)
+#         except EmptyResultSet:
+#             response = render(request, self.template_path, context=cxt)
+#             messages.error(request, 'List view not found',
+#             'alert alert-danger')
+#         except Exception:
+#             logger.critical('something went wrong...', exc_info=True)
+#             messages.error(request, 'Something went wrong',
+#             "alert alert-danger")
+#             response = redirect('/dashboard')
+#         return response
+        
+
+#     def paginate_results(self, request, objects):
+#         '''paginate the results'''
+#         logger.info('Pagination Start')
+#         from .filters import TypeAssistFilter
+#         if request.GET:
+#             objects = TypeAssistFilter(request.GET, queryset = objects).qs
+#         filterform = TypeAssistFilter().form
+#         page      = request.GET.get('page', 1)
+#         paginator = Paginator(objects, 25)
+#         try:
+#             ta_list = paginator.page(page)
+#         except PageNotAnInteger:
+#             ta_list = paginator.page(1)
+#         except EmptyPage:
+#             ta_list = paginator.page(paginator.num_pages)
+#         cxt = {'ta_list':ta_list, 'ta_filter':filterform}
+#         return cxt
+
+
+# class UpdateShift(LoginRequiredMixin,View):
+#     template_path = 'onboarding/ta_form.html'
+#     form_class = ShiftForm
+#     model = Shift
+    
+#     def get(self, request, *args, **kwargs):
+#         response = None
+#         try:
+#             logger.info('Update shift view')
+#             pk = kwargs.get('pk')
+#             shift = self.model.objects.select_related().get(shiftid=pk)
+#             logger.info('object retrieved {}'.format(shift))
+#             form = self.form_class(instance=shift)
+#             response = render(request, self.template_path,  context={'shift_form':form, 'edit':True})
+#         except self.model.DoesNotExist:
+#             messages.error(request, 'Unable to edit object not found',
+#             'alert alert-danger')
+#             response = redirect('onboarding:shift_form')
+#         except Exception:
+#             logger.critical('something went wrong', exc_info=True)
+#             messages.error(request, 'Something went wrong',
+#             'alert alert-danger' )
+#             response = redirect('onboarding:shift_form')
+#         return response
+
+    
+#     def post(self, request, *args, **kwargs):
+#         logger.info('Shift Form submitted')
+#         response = None
+#         try:
+#             pk   = kwargs.get('pk')
+#             shift   = self.model.objects.select_related().get(shiftid=pk)
+#             form = self.form_class(request.POST, instance=shift)
+#             if form.is_valid():
+#                 logger.info('ShiftForm form is valid..')
+#                 shift = form.save(commit=False)
+#                 shift = save_userinfo(shift, request.user, request.session)
+#                 shift.save()
+#                 logger.info('ShiftForm Form saved')
+#                 messages.success(request, "Success record saved successfully!",
+#                  "alert-success")
+#                 response = redirect('onboarding:shift_form')
+#             else:
+#                 logger.info('form is not valid...')
+#                 response = render(request, self.template_path, context={'ta_form':form, 'edit':True})
+#         except self.model.DoesNotExist:
+#             logger.error('Object does not exist', exc_info=True)
+#             messages.error(request, "Object does not exist",
+#             "alert alert-danger")
+#             cxt = {'ta_form':form, 'edit':True}
+#             response = render(request, self.template_path, context=cxt)
+#         except Exception:
+#             logger.critical("something went wrong...", exc_info=True)
+#             messages.error(request, "[ERROR] Something went wrong",
+#             "alert alert-danger")
+#             cxt = {'ta_form':form, 'edit':True}
+#             response = render(request, self.template_path, context=cxt)
+#         return response
+
+
+
+# class DeleteShift(LoginRequiredMixin, View):
+#     form_class = TypeAssistForm
+#     template_path = 'onboarding/ta_form.html'
+#     model = TypeAssist
+
+#     def get(self, request, *args, **kwargs):
+#         """Handles deletion of object"""
+#         pk, response = kwargs.get('pk', None), None
+#         ic(pk)
+#         try:
+#             if pk:
+#                 shift = self.model.objects.get(shiftid=pk)
+#                 form = self.form_class(instance = shift)
+#                 shift.delete()
+#                 logger.info('Shift object deleted')
+#                 response = redirect('onboarding:ta_list')
+#         except self.model.DoesNotExist:
+#             logger.warn('Unable to delete, object does not exist')
+#             messages.error(request, 'Shift does not exist', "alert alert-danger")
+#             response = redirect('onboarding:ta_form')
+#         except RestrictedError:
+#             logger.warn('Unable to delete, due to dependencies')
+#             messages.error(request, 'Unable to delete, due to dependencies', "alert alert-danger")
+#             cxt = {'shift_form':form, 'edit':True}
+#             response = render(request, self.template_path, context=cxt)
+#         except Exception:
+#             messages.error(request, '[ERROR] Something went wrong', "alert alert-danger")
+#             cxt = {'shift_form':form, 'edit':True}
+#             response = render(request, self.template_path, context=cxt)
+#         return response
+# #-------------------- END Shift View Classes --------------------#
 
 
 #-------------------- Begin SitePeople View Classes --------------------#
