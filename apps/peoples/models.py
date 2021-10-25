@@ -16,11 +16,23 @@ logger = logging.getLogger('django')
 
 
 def peoplejson():
-    j = {"andriodversion": "",     "appversion": "",    "mobilecapability": [],             "portletcapability": [],
-         "reportcapability": [],   "webcapability": [], "loacationtracking": False,         "capturemlog": False,
-         "showalltemplates": False,"debug": False,      "showtemplatebasedonfilter": False, "blacklist": False,
-         "assignsitegroup": "",    "tempincludes": "",  "mlogsendsto": ""}
-    return j
+    return {
+        "andriodversion": "",
+        "appversion": "",
+        "mobilecapability": [],
+        "portletcapability": [],
+        "reportcapability": [],
+        "webcapability": [],
+        "loacationtracking": False,
+        "capturemlog": False,
+        "showalltemplates": False,
+        "debug": False,
+        "showtemplatebasedonfilter": False,
+        "blacklist": False,
+        "assignsitegroup": "",
+        "tempincludes": "",
+        "mlogsendsto": "",
+    }
 
 
 
@@ -29,13 +41,13 @@ class SecureString(CharField):
     
     def from_db_value(self, value, expression, connection):
         from .utils import decrypt
-        if not value == "":
+        if value != "":
             return value
             #return decrypt(value)
     
     def get_prep_value(self, value):
         from .utils import encrypt
-        if not value=="":
+        if value != "":
             return value
             #return encrypt(value)
         
@@ -57,7 +69,6 @@ class People(AbstractBaseUser, PermissionsMixin, TenantAwareModel, BaseModel):
     GENDER_CHOICES= [('M', 'Male'), ('F', 'Female')]
     
     peopleimg     = models.ImageField(_("peopleimg"), upload_to=upload_peopleimg, default="master/people/blank.png", null=True, blank=True)
-    peopleid      = models.BigAutoField(_('peopleid'), primary_key=True, auto_created=True, editable=False)
     peoplecode    = models.CharField(_("peoplecode"), max_length=50)
     peoplename    = models.CharField(_("peoplename"), max_length=120)
     loginid       = models.CharField(_("loginid"), max_length=50, unique=True, null=True, blank=True)
@@ -78,7 +89,7 @@ class People(AbstractBaseUser, PermissionsMixin, TenantAwareModel, BaseModel):
     dateofbirth   = models.DateField(_("dob"))
     dateofjoin    = models.DateField(_("doj"))
     dateofreport  = models.DateField(_("dor"), null=True, blank=True)
-    people_extras = models.JSONField(_("people_extras"), default = peoplejson,blank=True, encoder=DjangoJSONEncoder)
+    people_extras = models.JSONField(_("people_extras"), default = peoplejson, blank=True, encoder=DjangoJSONEncoder)
 
     objects=PeopleManager()
     USERNAME_FIELD = 'loginid'
@@ -105,7 +116,6 @@ class People(AbstractBaseUser, PermissionsMixin, TenantAwareModel, BaseModel):
 
 ############## Pgroup Table ###############
 class Pgroup(BaseModel, TenantAwareModel):
-    groupid    = models.BigAutoField(_('groupid'), primary_key=True, auto_created=True, editable=False)
     groupname  = models.CharField(_('groupname'), max_length=250)
     enable     = models.BooleanField(_('enable'), default = True)
     identifier = models.ForeignKey('onboarding.TypeAssist', null=True, blank=True, on_delete = models.RESTRICT, db_column='identifier', related_name="pgroup_idfs")
@@ -129,7 +139,6 @@ class Pgroup(BaseModel, TenantAwareModel):
 
 ############## Pgbelonging Table ###############
 class Pgbelonging(BaseModel, TenantAwareModel):
-    pgbid       = models.BigAutoField(primary_key=True, auto_created=True, editable=False)
     groupid     = models.ForeignKey('Pgroup', null=True, blank=True, on_delete = models.RESTRICT, db_column='groupid', related_name="pgbelongs_grps")
     peopleid    = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True, on_delete = models.RESTRICT,  db_column='peopleid', related_name="pgbelongs_peoples")
     isgrouplead = models.BooleanField(_('isgrouplead'), default = False)
@@ -146,16 +155,15 @@ class Pgbelonging(BaseModel, TenantAwareModel):
         
     
     def __str__(self) -> str:
-        return self.groupid
+        return self.id
 
 
 
 ############## Capability Table ###############
 class Capability(BaseModel, TenantAwareModel):  
     CFOR_CHOICES = [('WEB', 'WEB'), ('PORTLET', 'PORTLET'), ('REPORT', 'REPORT'), ('MOB', 'MOB')]
-    capsid      = models.AutoField(primary_key=True, auto_created=True, editable=False)
     capscode    = models.CharField(_('caps'), max_length=50)
-    capsname    = models.CharField(_('includes'), max_length=1000, default = None, blank=True, null=True)
+    capsname    = models.CharField(_('capsname'), max_length=1000, default = None, blank=True, null=True)
     parent      = models.ForeignKey('self', on_delete=models.RESTRICT, db_column='parent', null=True, blank=True, related_name='children')
     cfor        = models.CharField(_('cfor'), max_length=10, default='WEB', choices=CFOR_CHOICES)
     clientid    = models.ForeignKey('onboarding.Bt',  null=True, blank=True, on_delete = models.RESTRICT, db_column='clientid')
@@ -197,13 +205,11 @@ class Capability(BaseModel, TenantAwareModel):
                     or one of its' children as parent.")
 
 def peventlog_json():
-    j={'photorecognitionthreshold':None, 'photorecognitionscore':None, 
+    return {'photorecognitionthreshold':None, 'photorecognitionscore':None, 
     'photorecognitiontimestamp':None, 'photorecognitionserviceresponse':None}
-    return j
 
 ############## PeopleEventlog Table ###############
 class PeopleEventlog(BaseModel, TenantAwareModel):
-    pelogid         = models.BigAutoField(_('pelogid'), primary_key=True, auto_created=True, editable=False)
     peopleid        = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True, on_delete = models.RESTRICT, db_column='peopleid')
     peventtype      = models.ForeignKey("onboarding.TypeAssist", null=True, blank=True, on_delete = models.RESTRICT, db_column='peventtype', related_name='eventypes')
     punchstatus     = models.ForeignKey("onboarding.TypeAssist", null=True, blank=True, on_delete = models.RESTRICT, db_column='punchstatus', related_name='statustypes')

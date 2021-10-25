@@ -7,30 +7,25 @@ from icecream import ic
 class PeopleManager(BaseUserManager):
     use_in_migrations =  True
    
-    def _create_user(self, loginid, password=None, **extra_fields):
-        """
-        Creates and saves a User with the given email and password.
-        """
+    def create_user(self, loginid, password=None, **extra_fields):
         if not loginid:
-            raise ValueError('The given loginid must be set')
-        user = self.model(loginid=loginid, **extra_fields)
+            raise ValueError("Login id is required for any user!")
+        user = self.model(loginid = loginid, **extra_fields)
+        user.set_password(password)
         user.save(using=self._db)
         return user
-    
-    def create_user(self, loginid, password=None, **extra_fields):
-        extra_fields.setdefault('is_superuser', False)
-        return self._create_user(loginid, password, **extra_fields)
 
     
     def create_superuser(self, loginid, password=None, **extra_fields):
-        extra_fields.setdefault('is_superuser', True)
-        extra_fields.setdefault('is_staff', True)
-        extra_fields.setdefault('isadmin', True)
+        if password is None:
+            raise TypeError("Super users must have a password.")
+        user = self.create_user(loginid, password, **extra_fields)
+        user.is_superuser = True
+        user.is_staff = True
+        user.isadmin = True
+        user.save(using=self._db)
+        return user
 
-        if extra_fields.get('is_superuser') is not True:
-            raise ValueError('Superuser must have is_superuser=True.')
-
-        return self._create_user(loginid, password, **extra_fields)
 
 
 class CapabilityManager(models.Manager):

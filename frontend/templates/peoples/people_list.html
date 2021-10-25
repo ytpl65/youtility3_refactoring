@@ -46,7 +46,7 @@ People Lists
 		<!---------- END TABLE FILTER FIELDS --------->
         {% for people in people_list %}
         <tr>
-            <td><a href="{{ url('peoples:people_update', args=[people['peopleid']]) }}">{{ people['peoplecode'] }}</a></td>
+            <td><a href="{{ url('peoples:people_update', args=[people['id']]) }}">{{ people['peoplecode'] }}</a></td>
             <td>{{ people['peoplename'] }}</td>
             <td>{{ people['peopletype__tacode'] }}</td>
             <td>{{ people['siteid__bucode'] }}</td>

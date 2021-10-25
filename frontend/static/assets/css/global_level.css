@@ -2,11 +2,6 @@
     border-left: 4px solid #489edb;
 }
 
-table{
-    width: 100%;
-    border: 11px solid red;
-    padding: 5px;
-}
 thead {
     border-bottom: 2px solid    #9899ac;
     color: #707478;
@@ -91,4 +86,14 @@ body[data-kt-aside-minimize="on"]>.menu-item {
 }
 input[type='checkbox']{
     background-color: rgb(46, 99, 138);
+}
+
+.primary-col{
+    color: #2e638a;
+}
+.title-col{
+    color: #3f414c;
+}
+.select2-container--bootstrap5 .select2-selection--single .select2-selection__rendered {
+    color: #495057;
 }

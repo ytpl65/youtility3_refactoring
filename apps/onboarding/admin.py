@@ -1,31 +1,73 @@
 from django.contrib import admin
-from import_export import resources
+from import_export import resources, fields
+from import_export import widgets as wg
 from import_export.admin import ImportExportModelAdmin
+
+from apps.peoples import models as pm
 from .forms import (BtForm, TypeAssistForm, BuPrefForm, SitePeopleForm,
-ContractDetailForm, ContractForm)
-from . models import TypeAssist, Bt 
-
-class TypeAssistResource(resources.ModelResource):
-    model = TypeAssist
-    skip_unchanged = True
-    report_skipped = True
-    exclude = ('id',)
-    import_id_fields = ('taid', 'tacode', 'taname', 'parent', 'tatype',)   
-    #fields = ('taid', 'tacode', 'taname', 'parent', 'tatype')   
+                    ContractDetailForm, ContractForm)
+from . models import TypeAssist, Bt
 
 
-@admin.register(TypeAssist)
-class TypeAssistAdmin(ImportExportModelAdmin):
-    resource_class = TypeAssistResource
-    fields = ('tacode', 'taname', 'tatype', 'parent', 'buid',)
-    list_display = ('tacode', 'taname', 'tatype', 'parent',)
-    list_display_links = ('tacode',)
+class TaResource(resources.ModelResource):
+    cuser = fields.Field(
+        column_name='cuser',
+        attribute='cuser',
+        widget=wg.ForeignKeyWidget(pm.People, 'peoplecode'))
+    
+    muser = fields.Field(
+        column_name='muser',
+        attribute='muser',
+        widget=wg.ForeignKeyWidget(pm.People, 'peoplecode'))
+    
+    class Meta:
+        model = TypeAssist
+        skip_unchanged = True
+        import_id_fields = ('id',)
+        report_skipped = True
+        fields = ('id', 'taname', 'tacode','tatype', 'parent', 'cuser', 'muser',)
+
+from import_export.admin import ImportExportModelAdmin
+
+class TaAdmin(ImportExportModelAdmin):
+    resource_class = TaResource
+    list_display = ('id', 'tacode', 'tatype', 'parent', 'cdtz', 'mdtz', 'cuser', 'muser')
+
+admin.site.register(TypeAssist, TaAdmin)
+
+
+
+
+class BtResource(resources.ModelResource):
+    cuser = fields.Field(
+        column_name='cuser',
+        attribute='cuser',
+        widget=wg.ForeignKeyWidget(pm.People, 'peoplecode'))
+    
+    muser = fields.Field(
+        column_name='muser',
+        attribute='muser',
+        widget=wg.ForeignKeyWidget(pm.People, 'peoplecode'))
+
+
+    class Meta:
+        model = Bt
+        skip_unchanged = True
+        import_id_fields = ('id',)
+        report_skipped = True
+        fields = ('id', 'buname', 'bucode','butype', 'identifier', 'parent', 'cuser', 'muser',)
+
+
 
 
 @admin.register(Bt)
-class BtAdmin(admin.ModelAdmin):
-    fields = ('bucode', 'buname', 'butype', 'parent', 'gpslocation', 'identifier',
-                'iswarehouse', 'enable', 'bu_preferences', 'butree')
+class BtAdmin(ImportExportModelAdmin):
+    form = BtForm
+    resource_class  = BtResource
+    fields = ('bucode',  'buname', 'butype', 'parent', 'gpslocation', 'identifier',
+              'iswarehouse', 'enable', 'bu_preferences')
     exclude = ['bupath']
-    list_display = ('bucode', 'buname', 'butype', 'parent', 'butree')
+    list_display = ('bucode', 'id', 'buname', 'butype', 'identifier','parent', 'butree')
     list_display_links = ('bucode',)
+
+

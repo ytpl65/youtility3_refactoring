@@ -161,7 +161,7 @@
       </div>
     </div>
   </div>
-  <div data-kt-menu-trigger="click" id="workflow" class="menu-item menu-accordion" style="display:none;">
+  <div data-kt-menu-trigger="click" id="Workflow" class="menu-item menu-accordion" style="display:none;">
     <span class="menu-link">
       <span class="menu-icon">
         <!--begin::Svg Icon | path: icons/duotone/Communication/Group.svg-->
@@ -184,7 +184,7 @@
           <span class="menu-title">WorkFlow Template</span>
         </a>
       </div>
-      <div class="menu-item" id="workflow">
+      <div class="menu-item" id="work_flow">
         <a class="menu-link" href="apps/customers/list.html">
           <span class="menu-bullet">
             <span class="bullet bullet-dot"></span>
@@ -721,7 +721,7 @@
           <span class="menu-arrow"></span>
         </span>
         <div class="menu-sub menu-sub-accordion" kt-hidden-height="116" style="display: none; overflow: hidden;">
-          <div class="menu-item" id="kpi_report">
+          <div class="menu-item" id="configkpi_report">
             <a class="menu-link" href="apps/customers/getting-started.html">
               <span class="menu-bullet">
                 <span class="bullet bullet-dot"></span>
@@ -853,8 +853,8 @@
               <span class="menu-title">People</span>
             </a>
           </div>
-          <div class="menu-item" id="client_onboarding">
-            <a class="menu-link" href="{{ url('onboarding:client_onboarding') }}">
+          <div class="menu-item"   id="client_onboarding">
+            <a class="menu-link" id="onboarding_wizard" href="">
               <span class="menu-bullet">
                 <span class="bullet bullet-dot"></span>
               </span>
@@ -897,7 +897,7 @@
         </a>
       </div>
       <div class="menu-item" id="shift">
-        <a class="menu-link" href="apps/customers/getting-started.html">
+        <a class="menu-link" href="{{ url('onboarding:shift_form') }}">
           <span class="menu-bullet">
             <span class="bullet bullet-dot"></span>
           </span>
@@ -1134,7 +1134,7 @@
         </a>
       </div>
       <div class="menu-item" id="sp_typeassist">
-        <a class="menu-link" href="apps/customers/view.html">
+        <a class="menu-link" href="{{ url('onboarding:superta_form') }}">
           <span class="menu-bullet">
             <span class="bullet bullet-dot"></span>
           </span>

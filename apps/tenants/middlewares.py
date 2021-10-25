@@ -12,8 +12,7 @@ class TenantMiddleware:
         db = tenant_db_from_request(request)
         print(f"Database:{db}")
         setattr(THREAD_LOCAL, "DB", db)
-        response = self.get_response(request)
-        return response
+        return self.get_response(request)
 
 
 def get_current_db_name():
@@ -37,9 +36,7 @@ class TenantDbRouter:
             return 'default'
 
     def db_for_read(self, model, **hints):
-        db = self._multi_db()
-        print(f"DB FOR READ {db}")
-        return db
+        return self._multi_db()
     
     def db_for_write(self, model, **hints):
         return self.db_for_read(model, **hints)

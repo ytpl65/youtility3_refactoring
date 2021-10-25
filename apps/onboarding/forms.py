@@ -1,72 +1,57 @@
 #from standard library
 
 #from django core
-from apps.onboarding.utils import get_webcaps_choices
 from django import forms
-from django.forms import widgets
+from django.db.models.query_utils import Q
 from django.utils.translation import gettext_lazy as _
 
 #from thirdparty apps and packages
 from icecream import ic
-
+from django_select2 import forms as s2forms
 #from this project
-from apps.onboarding.models import Bt, Contract, ContractDetail, Shift, SitePeople, TypeAssist
-
+import apps.onboarding.models as obm #onboarding-models
+import apps.onboarding.utils as ob_utils #onboarding-utils
 
 #========================================= BEGIN MODEL FORMS ======================================#
 
-class TypeAssistForm(forms.ModelForm): 
-    required_css_class = "required"
+class SuperTypeAssistForm(forms.ModelForm):
+    equired_css_class = "required"
     error_msg = {
-        'invalid_code' : "Spaces are not allowed in [Code]",
+        'invalid_code' : "(Spaces are not allowed in [Code]",
         'invalid_code2': "[Invalid code] Only ('-', '_') special characters are allowed",
         'invalid_code3': "[Invalid code] Code should not endwith '.' ",
     }
-    tatype = forms.ChoiceField(required=True)
-    
+    tatype = forms.CharField(required=True, label="Type")
     class Meta:
-        model  = TypeAssist
+        model  = obm.TypeAssist
         fields = ['tacode' ,'taname',  'parent', 'tatype']
         labels = {
                 'tacode': 'Code',
                 'tatype': 'Type',
                 'taname': 'Name',
-                'parent': 'Parent'}
-        widgets =  {
-            'tacode':forms.TextInput(
-                attrs={'placeholder':"Code", 'style':"  text-transform: uppercase;"}
-                ),
-            'taname':forms.TextInput(attrs={'placeholder':"Enter name"})}
+                'parent': 'Belongs to'}
+        widgets = {
+            'parent':s2forms.Select2Widget,
+            'tacode':forms.TextInput(attrs={'placeholder':'Enter code without space and special characters'}),
+            'taname':forms.TextInput(attrs={'placeholder':"Enter name"}),
+            'tatype':forms.TextInput(attrs={'placeholder':"Enter type"})}
+        
 
-    
     def __init__(self, *args, **kwargs):
         """Initializes form"""
-        super(TypeAssistForm, self).__init__(*args, **kwargs)
-        from .utils import get_tatype_choices
-        self.fields['tatype'].choices = get_tatype_choices()
-        for visible in self.visible_fields():
-            if visible.widget_type not in ['file', 'checkbox', 'clearablefile', 'select']:
-                visible.field.widget.attrs['class'] = 'form-control'
-            elif visible.widget_type == 'checkbox':
-                 visible.field.widget.attrs['class'] = 'form-check-input h-20px w-30px'
-            elif visible.widget_type == 'select':
-                visible.field.widget.attrs['class']            = 'form-select'
-                visible.field.widget.attrs['data-control']     = 'select2'
-                visible.field.widget.attrs['data-placeholder'] = 'Select an option'
+        super(SuperTypeAssistForm, self).__init__(*args, **kwargs)
+        self.fields['tatype'].choices = ob_utils.get_tatype_choices()
+        ob_utils.initailize_form_fields(self)
 
     
     def is_valid(self) -> bool:
-        """Add class to invalid fields"""
+
         result = super().is_valid()
-        # loop on *all* fields if key '__all__' found else only on errors:
-        for x in (self.fields if '__all__' in self.errors else self.errors):
-            attrs = self.fields[x].widget.attrs
-            attrs.update({'class': attrs.get('class', '') + ' is-invalid'})
+        ob_utils.apply_error_classes(self)
         return result
 
     def clean_tatype(self):
-        val = self.cleaned_data.get('tatype')
-        return val
+        return self.cleaned_data.get('tatype')
     
     def clean_tacode(self):
         import re
@@ -83,7 +68,28 @@ class TypeAssistForm(forms.ModelForm):
         val = self.cleaned_data.get('taname')
         if val: return val.upper()
 
+
+class TypeAssistForm(SuperTypeAssistForm): 
     
+    tatype = forms.ChoiceField(required=True, label='Type', widget=s2forms.Select2Widget)
+    def __init__(self, *args, **kwargs):
+        """Initializes form"""
+        super(SuperTypeAssistForm, self).__init__(*args, **kwargs)
+        self.fields['tatype'].choices = ob_utils.get_tatype_choices()
+        ob_utils.initailize_form_fields(self)
+
+    class Meta(SuperTypeAssistForm.Meta):
+        fields =  ['tacode' ,'taname', 'tatype']
+    
+    def is_valid(self) -> bool:
+        result = super().is_valid()
+        ob_utils.apply_error_classes(self)
+        return result
+    
+
+
+
+
 
 class BtForm(forms.ModelForm):  
     required_css_class = "required"
@@ -93,9 +99,9 @@ class BtForm(forms.ModelForm):
         'invalid_bucode3' : "[Invalid code] Code should not endwith '.' ",
         'invalid_latlng'  : "Please enter a correct gps coordinates."
     }
-    parent = forms.ModelChoiceField(label='Belongs to', required=True, queryset=Bt.objects.all())
+    parent = forms.ModelChoiceField(label='Belongs to', required=True, widget=s2forms.Select2Widget, queryset=obm.Bt.objects.all())
     class Meta:
-        model  = Bt
+        model  = obm.Bt
         fields = ['bucode', 'buname', 'parent', 'butype', 'gpslocation',
                 'iswarehouse', 'is_serviceprovider', 'isvendor', 'enable',
                 'gpsenable', 'skipsiteaudit', 'enablesleepingguard', 'deviceevent']
@@ -116,35 +122,24 @@ class BtForm(forms.ModelForm):
         }
         
         widgets = { 
-            'bucode'      : forms.TextInput(attrs={'style':'text-transform:uppercase;', 'placeholder':'Code'}),
+            'bucode'      : forms.TextInput(attrs={'style':'text-transform:uppercase;', 'placeholder':'Enter text without space & special characters'}),
             'buname'      : forms.TextInput(attrs={'placeholder':'Name'}),
-            'butype'      : forms.Select(attrs={'placeholder':'Type'}),
+            'butype'      : s2forms.Select2Widget,
             'gpslocation' : forms.TextInput(attrs={'placeholder':'GPS Location'}),}    
     
     
     def __init__(self, *args, **kwargs):
         """Initializes form"""
         super(BtForm, self).__init__(*args, **kwargs)
-        for visible in self.visible_fields():
-            if visible.widget_type not in ['file', 'checkbox', 'clearablefile', 'select', 'selectmultiple']:
-                visible.field.widget.attrs['class'] = 'form-control'
-            elif visible.widget_type == 'checkbox':
-                 visible.field.widget.attrs['class'] = 'form-check-input h-20px w-30px'
-            elif visible.widget_type in ['select', 'selectmultiple']:
-                visible.field.widget.attrs['class']            = 'form-select'
-                visible.field.widget.attrs['data-control']     = 'select2'
-                visible.field.widget.attrs['data-placeholder'] = 'Select an Option'
-                visible.field.widget.attrs['data-allow-clear'] = 'true'
+        ob_utils.initailize_form_fields(self)
     
     
     def is_valid(self) -> bool:
         """Add class to invalid fields"""
         result = super().is_valid()
-        # loop on *all* fields if key '__all__' found else only on errors:
-        for x in (self.fields if '__all__' in self.errors else self.errors):
-            attrs = self.fields[x].widget.attrs
-            attrs.update({'class': attrs.get('class', '') + ' is-invalid'})
+        ob_utils.apply_error_classes(self)
         return result
+        
 
     
     def clean(self):
@@ -152,10 +147,10 @@ class BtForm(forms.ModelForm):
         from .utils import create_bt_tree
         parent= cleaned_data.get('parent')
         bucode = cleaned_data.get('bucode')
-        butype = cleaned_data.get('butype')
+        identifier = cleaned_data.get('identifier')
         instance = self.instance
-        if bucode and butype and parent and instance:
-            create_bt_tree(bucode, butype, instance, parent)
+        if bucode and identifier and instance:
+            create_bt_tree(bucode, identifier, instance, parent)
         
         
     
@@ -193,9 +188,10 @@ class ShiftForm(forms.ModelForm):
         'invalid_code' : "Spaces are not allowed in [Code]",
         'invalid_code2': "[Invalid code] Only ('-', '_') special characters are allowed",
         'invalid_code3': "[Invalid code] Code should not endwith '.' ",
+        'max_hrs_exceed':"Maximum hours in a shift cannot be greater than 12hrs"
     }
     class Meta:
-        model = Shift
+        model = obm.Shift
         fields = ['shiftname', 'starttime', 'endtime', 'captchafreq']
         labels={
             'shiftname':'Shift Name',
@@ -210,15 +206,22 @@ class ShiftForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         """Initializes form"""
         super(ShiftForm, self).__init__(*args, **kwargs)
-        for visible in self.visible_fields():
-            if visible.widget_type not in ['file', 'checkbox', 'clearablefile', 'select', 'selectmultiple']:
-                visible.field.widget.attrs['class'] = 'form-control'
+        ob_utils.initailize_form_fields(self)
 
     def clean_shiftname(self):
         val = self.cleaned_data.get('shiftname')
         if val: return val.upper()
 
-            
+    def clean(self):
+        import datetime as dt
+        cleaned_data = super().clean()
+        st = cleaned_data.get('starttime')
+        et = cleaned_data.get('endtime')
+        exit = dt.datetime.combine(dt.date.today(), et)
+        enter = dt.datetime.combine(dt.date.today(), st)
+        total_hrs = exit - enter
+        if total_hrs > dt.timedelta(hours=12):
+            raise forms.ValidationError(self.error_msg['max_hrs_exceed'])            
 
 
 class SitePeopleForm(forms.ModelForm):
@@ -229,7 +232,7 @@ class SitePeopleForm(forms.ModelForm):
         'invalid_code3': "[Invalid code] Code should not endwith '.' ",
     }
     class Meta:
-        model=SitePeople
+        model=obm.SitePeople
         fields = ['contract_id', 'peopleid', 'worktype', 'shift',
                  'reportto', 'webcapability', 'mobilecapability',
                 'reportcapability', 'fromdt', 'uptodt', 'siteowner',
@@ -239,59 +242,32 @@ class SitePeopleForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         """Initializes form"""
         super(SitePeopleForm, self).__init__(*args, **kwargs)
-        for visible in self.visible_fields():
-            if visible.widget_type not in ['file', 'checkbox', 'clearablefile', 'select', 'selectmultiple']:
-                visible.field.widget.attrs['class'] = 'form-control'
-            elif visible.widget_type == 'checkbox':
-                 visible.field.widget.attrs['class'] = 'form-check-input h-20px w-30px'
-            elif visible.widget_type in ['select', 'selectmultiple']:
-                visible.field.widget.attrs['class']            = 'form-select'
-                visible.field.widget.attrs['data-control']     = 'select2'
-                visible.field.widget.attrs['data-placeholder'] = 'Select an Option'
-                visible.field.widget.attrs['data-allow-clear'] = 'true'
+        ob_utils.initailize_form_fields(self)
 
 
 
 class ContractForm(forms.ModelForm):
     class Meta:
-        model=Contract
+        model=obm.Contract
         fields = []
     
     
     def __init__(self, *args, **kwargs):
         """Initializes form"""
         super(ContractForm, self).__init__(*args, **kwargs)
-        for visible in self.visible_fields():
-            if visible.widget_type not in ['file', 'checkbox', 'clearablefile', 'select', 'selectmultiple']:
-                visible.field.widget.attrs['class'] = 'form-control'
-            elif visible.widget_type == 'checkbox':
-                 visible.field.widget.attrs['class'] = 'form-check-input h-20px w-30px'
-            elif visible.widget_type in ['select', 'selectmultiple']:
-                visible.field.widget.attrs['class']            = 'form-select'
-                visible.field.widget.attrs['data-control']     = 'select2'
-                visible.field.widget.attrs['data-placeholder'] = 'Select an Option'
-                visible.field.widget.attrs['data-allow-clear'] = 'true'
+        ob_utils.initailize_form_fields(self)
 
 
 
 class ContractDetailForm(forms.ModelForm):
     class Meta:
-        model=ContractDetail
+        model=obm.ContractDetail
         fields = []
     
     def __init__(self, *args, **kwargs):
         """Initializes form"""
         super(ContractDetailForm, self).__init__(*args, **kwargs)
-        for visible in self.visible_fields():
-            if visible.widget_type not in ['file', 'checkbox', 'clearablefile', 'select', 'selectmultiple']:
-                visible.field.widget.attrs['class'] = 'form-control'
-            elif visible.widget_type == 'checkbox':
-                 visible.field.widget.attrs['class'] = 'form-check-input h-20px w-30px'
-            elif visible.widget_type in ['select', 'selectmultiple']:
-                visible.field.widget.attrs['class']            = 'form-select'
-                visible.field.widget.attrs['data-control']     = 'select2'
-                visible.field.widget.attrs['data-placeholder'] = 'Select an Option'
-                visible.field.widget.attrs['data-allow-clear'] = 'true'
+        ob_utils.initailize_form_fields(self)
 
 
 #========================================== END MODEL FORMS =======================================#
@@ -302,10 +278,10 @@ class BuPrefForm(forms.Form):
     required_css_class = "required"
     from .utils import get_webcaps_choices
     
-    mobilecapability        = forms.MultipleChoiceField(required=False, label="Mobile Capability")
-    webcapability           = forms.MultipleChoiceField(required=False, label="Web Capability")
-    reportcapability        = forms.MultipleChoiceField(required=False, label="Report Capability")
-    portletcapability       = forms.MultipleChoiceField(required=False, label="Portlet Capability")
+    mobilecapability        = forms.MultipleChoiceField(required=False, label="Mobile Capability", widget=s2forms.Select2MultipleWidget)
+    webcapability           = forms.MultipleChoiceField(required=False, label="Web Capability", widget=s2forms.Select2MultipleWidget)
+    reportcapability        = forms.MultipleChoiceField(required=False, label="Report Capability", widget=s2forms.Select2MultipleWidget)
+    portletcapability       = forms.MultipleChoiceField(required=False, label="Portlet Capability", widget=s2forms.Select2MultipleWidget)
     validimei                = forms.CharField(max_length=15, required=False,label="IMEI No.")
     validip                  = forms.CharField(max_length=15, required=False, label="IP Address")
     usereliver               = forms.BooleanField(initial=False, required=False, label="Reliver needed?")
@@ -325,16 +301,7 @@ class BuPrefForm(forms.Form):
     def __init__(self, *args, **kwargs):
         """Initializes form"""
         super(BuPrefForm, self).__init__(*args, **kwargs)
-        for visible in self.visible_fields():
-            if visible.widget_type not in ['file', 'checkbox', 'clearablefile', 'select', 'selectmultiple']:
-                visible.field.widget.attrs['class'] = 'form-control'
-            elif visible.widget_type == 'checkbox':
-                 visible.field.widget.attrs['class'] = 'form-check-input h-20px w-30px'
-            elif visible.widget_type in ['select', 'selectmultiple']:
-                visible.field.widget.attrs['class'] = 'form-select'
-                visible.field.widget.attrs['data-control'] = 'select2'
-                visible.field.widget.attrs['data-placeholder'] = 'Select an option'
-                visible.field.widget.attrs['data-allow-clear'] = 'true'
+        ob_utils.initailize_form_fields(self)
 
 
     def is_valid(self) -> bool:
@@ -355,30 +322,19 @@ class ClentForm(BuPrefForm):
     def __init__(self, *args, **kwargs):
         """Initializes form"""
         super(BuPrefForm, self).__init__(*args, **kwargs)
+        ob_utils.initailize_form_fields(self)
         from apps.peoples.utils import get_caps_choices
         self.fields['webcapability'].choices = get_caps_choices(cfor='WEB')
         self.fields['mobilecapability'].choices = get_caps_choices(cfor='MOB')
         self.fields['reportcapability'].choices = get_caps_choices(cfor='REPORT')
         self.fields['portletcapability'].choices = get_caps_choices(cfor='PORTLET')
-        for visible in self.visible_fields():
-            if visible.widget_type not in ['file', 'checkbox', 'clearablefile', 'select', 'selectmultiple']:
-                visible.field.widget.attrs['class'] = 'form-control'
-            elif visible.widget_type == 'checkbox':
-                visible.field.widget.attrs['class'] = 'form-check-input h-20px w-30px'
-            elif visible.widget_type in ['select', 'selectmultiple']:
-                visible.field.widget.attrs['class'] = 'form-select'
-                visible.field.widget.attrs['data-control'] = 'select2'
-                visible.field.widget.attrs['data-placeholder'] = 'Select an option'
-                visible.field.widget.attrs['data-allow-clear'] = 'true'
+        
 
 
     def is_valid(self) -> bool:
         """Add class to invalid fields"""
         result = super().is_valid()
-        # loop on *all* fields if key '__all__' found else only on errors:
-        for x in (self.fields if '__all__' in self.errors else self.errors):
-            attrs = self.fields[x].widget.attrs
-            attrs.update({'class': attrs.get('class', '') + ' is-invalid'})
+        ob_utils.apply_error_classes(self)
         return result
 
 #========================================== END JSON FORMS =======================================#

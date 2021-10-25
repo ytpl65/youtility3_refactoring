@@ -1,8 +1,14 @@
 {% extends "layout.html" %}
 
-{% block head %}
-<link rel="stylesheet" href="{{ static('assets/plugins/custom/datatables/datatables.min.css') }}" type="text/css">
-{% endblock head %}
+
+
+
+<!----FOR BASE_LEVEL ---->
+{% block base_head %}
+<link rel="stylesheet" href="{{ static('assets/plugins/custom/jqGrid/jquery-ui.min.css') }}" type="text/css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/free-jqgrid/4.14.0/css/ui.jqgrid.min.css">
+{% endblock base_head %}
+<!----END FOR BASE_LEVEL ---->
 
 {% block page_actions %}
 <a href=""></a>
@@ -40,7 +46,9 @@
 </div>
 {% endblock pagebody_container %}
 
-{% block script %}
-<script type="text/javascript" src="{{ static('assets/plugins/custom/datatables/datatables.min.js') }}"></script>
+{% block base_script %}
+{{ super() }}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/free-jqgrid/4.14.0/jquery.jqgrid.min.js"></script>
+{# <script type="text/javascript" src="{{ static('assets/plugins/custom/jqGrid/jquery.jqGrid.map.js') }}"></script> #}
+{% endblock base_script %}
 
-{% endblock script %}

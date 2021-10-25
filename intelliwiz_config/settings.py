@@ -42,10 +42,10 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     #third_party_apps
     'debug_toolbar',
-    'django_extensions',
     'import_export',
+    'django_extensions',
+    "django_select2",
     'django_filters',
-    'formtools',
 
     #local apps
     'apps.peoples',
@@ -177,8 +177,21 @@ CACHES = {
             "CLIENT_CLASS": "django_redis.client.DefaultClient",
         },
        "KEY_PREFIX": "youtility4"
+    },
+    "select2": {
+        "BACKEND": "django_redis.cache.RedisCache",
+        "LOCATION": "redis://127.0.0.1:6379/2",
+        "OPTIONS": {
+            "CLIENT_CLASS": "django_redis.client.DefaultClient",
+        },
+       "KEY_PREFIX": "select2"
     }
 }
+
+SELECT2_CACHE_BACKEND = 'select2'
+SELECT2_JS = ""
+SELECT2_CSS = ""
+SELECT2_I18N_PATH = 'assets/plugins/custom/select2-4.x/js/i18n'
 
 # Cache time to live is 15 minutes.
 CACHE_TTL = 60 * 5
@@ -308,5 +321,9 @@ SESSION_ENGINE = 'django.contrib.sessions.backends.cached_db'
 SESSION_EXPIRE_AT_BROWSER_CLOSE = False
 SESSION_COOKIE_AGE = 30 * 60  # set just 10 seconds to test
 SESSION_SAVE_EVERY_REQUEST = True
+IMPORT_EXPORT_USE_TRANSACTIONS = True
+
+
+
 
 

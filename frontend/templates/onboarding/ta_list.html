@@ -15,20 +15,22 @@ TypeAssist's
 
 <!-------- BEGIN PAGE ACTIONS ---------->
 {% block page_actions %}
-{{ form_add('onboarding:ta_form') }}
+{% set url = 'onboarding:superta_form' if superta else 'onboarding:ta_form'%}
+{{ form_add(url) }}
 {% endblock page_actions %}
 <!-------- END PAGE ACTIONS ------------>
 
 <!------------------ BEGIN BU TABLE ------------------------->
 {% block table %}
 <div class="table-responsive">
-    <!------------------ BEGIN TABLE --------------------->
+    {# <!------------------ BEGIN TABLE --------------------->
     <table id="ta_table" class="table gy-2" style="width:100%">
         <thead class="fw-bold fs-6">
             <th>Code</th>
             <th>Name</th>
             <th>Type</th>
             <th>Belongs To</th>
+            <th>Created By</th>
         </thead>
 		<!---------- BEGIN TABLE FILTER FIELDS --------->
 		<thead id="filter_row">
@@ -46,15 +48,17 @@ TypeAssist's
 		<!---------- END TABLE FILTER FIELDS --------->
         {% for ta in ta_list %}
         <tr>
-            <td><a href="{{ url('onboarding:ta_update', args=[ta['taid']]) }}">{{ ta['tacode'] }}</a></td>
+            <td><a href="{{ url('onboarding:ta_update', args=[ta['id']]) }}">{{ ta['tacode'] }}</a></td>
             <td>{{ ta['taname'] }}</td>
             <td>{{ ta['tatype'] }}</td>
             <td>{{ ta['parent__tacode'] }}</td>
+            <td>{{ ta['cuser__peoplecode'] }}</td>
         </tr>
         {% endfor %}
-		
     </table>
-    <!------------------ END TABLE --------------------->
+    <!------------------ END TABLE ---------------------> #}
+	<table id="ta_table"></table>
+	<div id="ta_pager"></div>
 </div>
 
 
@@ -77,14 +81,15 @@ TypeAssist's
 				$("#ta_filter").submit();
 			}
 		});
-		var table = $('#ta_table').DataTable({
-			orderCellsTop: true,
-			responsive: true,
-			fixedHeader: true,
-			paging: false,
-			scrollCollapse: true,
-			sDom: '<>'
-		})
+		//var table = $('#ta_table').DataTable({
+		//	orderCellsTop: true,
+		//	responsive: true,
+		//	fixedHeader: true,
+		//	paging: false,
+		//	scrollCollapse: true,
+		//	sDom: '<>'
+		//})
+		
 		//BEGIN STYLING DATATABLE
 		$("th > input").addClass('form-control')
 		$("th > input").css('height', '35px')
@@ -94,6 +99,36 @@ TypeAssist's
 		}
 		$('#ta_table thead tr:eq(1)').css(styles)
 		//END STYLING DATATABLE
+
+		$("#ta_table").jqGrid({
+			datatype:"json",
+			url:"{{ url('onboarding:ta_jq') }}",
+			colModel:[
+				{name:"tacode", label:"Name"},
+				{name:"tacode", label:"Code"},
+				{name:"tatype", label:"Type"},
+				{name:"Parent", label:"Belongs To"}
+			],
+			pager:"#ta_pager",
+			sortname:"tacode",
+			viewrecords: true,
+			sortorder: "asc",
+			caption:"TypeAssist's",
+			rowNum:10,
+   			rowList:[10,20,30],
+			loadComplete:function() {
+				$("#ta_table").setGridParam({datatype:'local'})
+			},
+			onPaging:function(pgBtn) {
+				$("#ta_table").setGridParam({datatype:'json'})
+			}
+		})
+		//pagination
+		$("#ta_table").jqGrid('navGrid', '#ta_pager',{
+			edit:false,
+			del:false,
+			add:false
+		})
 	});
 </script>
 {% endblock extra_scripts %}

@@ -1,8 +1,11 @@
 from django.conf import settings
 from django.urls import path
+from django.urls.conf import include
 from apps.peoples import views
 from django.conf import settings
 from django.conf.urls.static import static
+from apps.onboarding.wizard_urls import wizard_url_patterns2
+from apps.onboarding import wizard_views
 app_name = 'peoples'
 urlpatterns = [
     path('people_form/',              views.CreatePeople.as_view(),         name='people_form'),
@@ -19,7 +22,10 @@ urlpatterns = [
     path('cap_form/',              views.CreateCapability.as_view(),    name='cap_form'),
     path('cap_list/',              views.RetriveCapability.as_view(),   name='cap_list'),
     path('cap_form/<str:pk>',      views.UpdateCapability.as_view(),    name='cap_update'),
-    path('cap_form/del/<str:pk>',  views.DeleteCapability.as_view(),    name='cap_delete'),]
+    path('cap_form/del/<str:pk>',  views.DeleteCapability.as_view(),    name='cap_delete'),
+    
+    path('wizard/', include(wizard_url_patterns2)),
+    ]
 
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

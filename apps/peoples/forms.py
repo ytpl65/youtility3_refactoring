@@ -1,9 +1,11 @@
 from django import forms
-from .models import Capability, People, PeopleEventlog, Pgbelonging, Pgroup
-from apps.onboarding.models import Bt
+import apps.peoples.models as pm #people-models
+import apps.onboarding.models as om #onboarding-models
 from django.core.validators import RegexValidator
 from icecream import ic
+from django_select2 import forms as s2forms
 from django.db.models import Q
+import apps.onboarding.utils as ob_utils #onboarding-utils
 
 #============= BEGIN LOGIN FORM ====================#
 
@@ -19,8 +21,7 @@ class LoginForm(forms.Form):
                 max_length = 25,
                 required   = True,
                 widget     = forms.PasswordInput(attrs={"placeholder": 'Enter Password', 
-                            'autocomplete': 'off',
-                            'data-toggle': 'password'}),
+                            'autocomplete': 'off','data-toggle': 'password'}),
                 label = 'Password')
 
     
@@ -38,18 +39,20 @@ class LoginForm(forms.Form):
             elif re.match(mobile_regex, val):
                 validate_mobileno(val)
             else:
-                user = People.objects.filter(loginid__exact=val)
+                user = pm.People.objects.filter(loginid__exact=val)
                 ic(user)
                 if not user.exists():
                     raise forms.ValidationError("[Access Denied] Invalid user details")
             return val
     
+    
+    def is_valid(self) -> bool:
+        """Add class to invalid fields"""
+        result = super().is_valid()
+        ob_utils.apply_error_classes(self)
+        return result 
+    
 
-
-
-#=================- END LOGIN FORM ==================#
-
-#============= BEGIN PEOPLE FORM ====================#
 
 class PeopleForm(forms.ModelForm):
     required_css_class  = "required"
@@ -80,18 +83,18 @@ class PeopleForm(forms.ModelForm):
     peoplecode    = forms.CharField(
                         max_length = 20,
                         required   = True,
-                        help_text  ='Enter text not including any spaces',
                         widget     = forms.TextInput(
                                     attrs={'style':'text-transform:uppercase;',
-                                            'placeholder':'Enter people code'}),
+                                            'placeholder':'Enter text not including any spaces'}),
                         validators = [alpha_special],
                         label      = "Code")
     email         = forms.EmailField(max_length=100,
                     widget = forms.TextInput(attrs={'placeholder':'Enter email address'}))
-    loginid       = forms.CharField(max_length=30, required=True)
+    loginid       = forms.CharField(max_length=30, required=True,
+                    widget=forms.TextInput(attrs={'placeholder':'Enter text not including any spaces'}))
 
     class Meta:
-        model  = People
+        model  = pm.People
         fields = ['peoplename', 'peoplecode',  'peopleimg',  'mobno',      'email', 
                 'loginid',      'dateofbirth', 'isenable',   'deviceid',   'gender',
                 'peopletype',   'dateofjoin',  'department', 'dateofreport', 
@@ -104,38 +107,35 @@ class PeopleForm(forms.ModelForm):
             'deviceid':'Device Id' }
         
         widgets = {
-            'mobno'     : forms.TextInput(attrs={'placeholder':'Enter mobile number'}), 
+            'mobno'     : forms.TextInput(attrs={'placeholder':'Eg:- +91XXXXXXXXXX, +44XXXXXXXXX'}), 
             'peoplename': forms.TextInput(attrs={'placeholder':'Enter people name'}),
-            'loginid'   : forms.TextInput(attrs={'placeholder':'Enter login id'}),
+            'loginid'   : forms.TextInput(attrs={'placeholder':'Enter text not including any spaces'}),
             'dateofbirth':forms.DateInput(format='%d %b %Y'),
             'dateofjoin':forms.DateInput(format='%d %b %Y'),
-            'dateofreport':forms.DateInput(format='%d %b %Y')
+            'dateofreport':forms.DateInput(format='%d %b %Y'),
+            'peopletype':s2forms.Select2Widget,
+            'shift':s2forms.Select2Widget,
+            'gender':s2forms.Select2Widget,
+            'department':s2forms.Select2Widget,
+            'designation':s2forms.Select2Widget,
+            'reportto':s2forms.Select2Widget,
         }
     
     def __init__(self, *args, **kwargs):
         """Initializes form add atttibutes and classes here."""
-        
         super(PeopleForm, self).__init__(*args, **kwargs)
-        self.fields['mobno'].help_text = 'Eg:- +91XXXXXXXXXX, +44XXXXXXXXX'
-        self.fields['loginid'].help_text = 'Enter text not including any spaces'
-        for visible in self.visible_fields():
-            if visible.widget_type not in ['file', 'checkbox', 'clearablefile', 'select']:
-                visible.field.widget.attrs['class'] = 'form-control'
-            elif visible.widget_type == 'checkbox':
-                 visible.field.widget.attrs['class'] = 'form-check-input h-20px w-30px'
-            elif visible.widget_type == 'select':
-                visible.field.widget.attrs['class']            = 'form-select'
-                visible.field.widget.attrs['data-control']     = 'select2'
-                visible.field.widget.attrs['data-placeholder'] = 'Select an option'
+        self.fields['peopletype'].queryset = om.TypeAssist.objects.filter(tatype="PEOPLE_TYPE")
+        self.fields['department'].queryset = om.TypeAssist.objects.filter(tatype="DEPARTMENT")
+        self.fields['designation'].queryset = om.TypeAssist.objects.filter(tatype="DESINGATION")
+        self.fields['shift'].queryset = om.TypeAssist.objects.filter(tatype="SHIFT_TYPE")
+        ob_utils.initailize_form_fields(self)
+
 
     def is_valid(self) -> bool:
         """Add class to invalid fields"""
         result = super().is_valid()
-        # loop on *all* fields if key '__all__' found else only on errors:
-        for x in (self.fields if '__all__' in self.errors else self.errors):
-            attrs = self.fields[x].widget.attrs
-            attrs.update({'class': attrs.get('class', '') + ' is-invalid'})
-        return result        
+        ob_utils.apply_error_classes(self)
+        return result      
     
     def clean(self):
         from datetime import datetime
@@ -157,8 +157,8 @@ class PeopleForm(forms.ModelForm):
     def clean_peoplecode(self):
         import re
         value = self.cleaned_data.get('peoplecode')
-        regex = "^[a-zA-Z0-9\-_]*$"
         if value:
+            regex = "^[a-zA-Z0-9\-_]*$"
             if " " in value: raise forms.ValidationError(self.error_msg['invalid_code'])
             elif  not re.match(regex, value):
                 raise forms.ValidationError(self.error_msg['invalid_code2'])
@@ -196,10 +196,7 @@ class PeopleForm(forms.ModelForm):
                 raise forms.ValidationError(self.error_msg['invalid_mobno2'])
             return mobno
 
-#============= END PEOPLE FORM ====================#
 
-
-#============= BEGIN PGROUP FORM ====================#
 
 class PgroupForm(forms.ModelForm):
     required_css_class = "required"
@@ -210,7 +207,7 @@ class PgroupForm(forms.ModelForm):
     }
 
     class Meta:
-        model  = Pgroup
+        model  = pm.Pgroup
         fields = ['groupname', 'enable']
         labels = {
             'groupname': 'Name',
@@ -224,23 +221,12 @@ class PgroupForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super(PgroupForm, self).__init__(*args, **kwargs)
-        for visible in self.visible_fields():
-            if visible.widget_type not in ['file', 'checkbox', 'clearablefile', 'select']:
-                visible.field.widget.attrs['class'] = 'form-control'
-            elif visible.widget_type == 'checkbox':
-                 visible.field.widget.attrs['class'] = 'form-check-input h-20px w-30px'
-            elif visible.widget_type == 'select':
-                visible.field.widget.attrs['class']            = 'form-select'
-                visible.field.widget.attrs['data-control']     = 'select2'
-                visible.field.widget.attrs['data-placeholder'] = 'Select an Option'
+        ob_utils.initailize_form_fields(self)
 
     def is_valid(self) -> bool:
         """Add class to invalid fields"""
         result = super().is_valid()
-        # loop on *all* fields if key '__all__' found else only on errors:
-        for x in (self.fields if '__all__' in self.errors else self.errors):
-            attrs = self.fields[x].widget.attrs
-            attrs.update({'class': attrs.get('class', '') + ' is-invalid'})
+        ob_utils.apply_error_classes(self)
         return result
     
     def clean_groupname(self):
@@ -248,11 +234,12 @@ class PgroupForm(forms.ModelForm):
         if val: return val.upper()
 
 
+
 class PgbelongingForm(forms.ModelForm):
     required_css_class = "required"
 
     class Meta:
-        model  = Pgbelonging
+        model  = pm.Pgbelonging
         fields = ['isgrouplead']
         labels = {
             'isgrouplead':'Group Lead'
@@ -260,23 +247,14 @@ class PgbelongingForm(forms.ModelForm):
     
     def __init__(self, *args, **kwargs):
         super(PgbelongingForm, self).__init__(*args, **kwargs)
-        for visible in self.visible_fields():
-            visible.field.widget.attrs['class'] = 'form-control'      
+        ob_utils.initailize_form_fields(self)  
 
     def is_valid(self) -> bool:
         """Add class to invalid fields"""
         result = super().is_valid()
-        # loop on *all* fields if key '__all__' found else only on errors:
-        for x in (self.fields if '__all__' in self.errors else self.errors):
-            attrs = self.fields[x].widget.attrs
-            attrs.update({'class': attrs.get('class', '') + ' is-invalid'})
+        ob_utils.apply_error_classes(self)
         return result
 
-
-#============= BEGIN PGROUP FORM ====================#
-
-
-#============= BEGIN CAPABILITY FORM ====================#
 
 class CapabilityForm(forms.ModelForm):
     required_css_class = "required"
@@ -285,10 +263,10 @@ class CapabilityForm(forms.ModelForm):
         'invalid_code2': "Only these '-', '_' special characters are allowed in code",
         'invalid_code3': "Code's should not be endswith '.' ",
     }
-    parent = forms.ModelChoiceField(queryset=Capability.objects.filter(Q(parent__capscode = 'NONE') | Q(capscode='NONE')),
+    parent = forms.ModelChoiceField(queryset=pm.Capability.objects.filter(Q(parent__capscode = 'NONE') | Q(capscode='NONE')),
     label='Belongs to')
     class Meta:
-        model  = Capability
+        model  = pm.Capability
         fields = ['capscode', 'capsname', 'parent', 'cfor']
         labels = {
             'capscode' :'Code',
@@ -303,16 +281,7 @@ class CapabilityForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super(CapabilityForm, self).__init__(*args, **kwargs)
-        for visible in self.visible_fields():
-            if visible.widget_type not in ['file', 'checkbox', 'clearablefile', 'select', 'selectmultiple']:
-                    visible.field.widget.attrs['class'] = 'form-control'
-            elif visible.widget_type == 'checkbox':
-                visible.field.widget.attrs['class'] = 'form-check-input h-20px w-30px'
-            elif visible.widget_type in ['select', 'selectmultiple']:
-                visible.field.widget.attrs['class']            = 'form-select'
-                visible.field.widget.attrs['data-control']     = 'select2'
-                visible.field.widget.attrs['data-placeholder'] = 'Select an option'
-                visible.field.widget.attrs['data-allow-clear'] = 'true'
+        ob_utils.initailize_form_fields(self)
     
     def clean_capscode(self):
         import re
@@ -335,16 +304,10 @@ class CapabilityForm(forms.ModelForm):
     def is_valid(self) -> bool:
         """Add class to invalid fields"""
         result = super().is_valid()
-        # loop on *all* fields if key '__all__' found else only on errors:
-        for x in (self.fields if '__all__' in self.errors else self.errors):
-            attrs = self.fields[x].widget.attrs
-            attrs.update({'class': attrs.get('class', '') + ' is-invalid'})
+        ob_utils.apply_error_classes(self)
         return result
 
-#============= BEGIN CAPABILITY FORM ====================#
 
-
-#============= BEGIN PEOPLE_EXTRAS FORM ====================#
 
 class PeopleExtrasForm(forms.Form):
 
@@ -353,10 +316,10 @@ class PeopleExtrasForm(forms.Form):
     
     andriodversion            = forms.CharField(max_length=2, required=False, label='Andriod Version')
     appversion                = forms.CharField(max_length=8, required=False, label='App Version')
-    mobilecapability          = forms.MultipleChoiceField(required=False, label=labels['mob'])
-    portletcapability         = forms.MultipleChoiceField(required=False, label=labels['port'])
-    reportcapability          = forms.MultipleChoiceField(required=False, label=labels['report'])
-    webcapability             = forms.MultipleChoiceField(required=False, label=labels['web'])
+    mobilecapability          = forms.MultipleChoiceField(required=False, label=labels['mob'], widget=s2forms.Select2MultipleWidget)
+    portletcapability         = forms.MultipleChoiceField(required=False, label=labels['port'], widget=s2forms.Select2MultipleWidget)
+    reportcapability          = forms.MultipleChoiceField(required=False, label=labels['report'], widget=s2forms.Select2MultipleWidget)
+    webcapability             = forms.MultipleChoiceField(required=False, label=labels['web'], widget=s2forms.Select2MultipleWidget)
     loacationtracking         = forms.BooleanField(initial=False,required=False)
     capturemlog               = forms.BooleanField(initial=False, required=False)
     showalltemplates          = forms.BooleanField(initial=False, required=False, label="Show all Templates ")
@@ -376,29 +339,33 @@ class PeopleExtrasForm(forms.Form):
             self.fields['portletcapability'].choices = session['people_reportcaps'] or session['client_reportcaps']
             self.fields['reportcapability'].choices  = session['people_portletcaps'] or session['client_portletcaps']
         else:
+            #if superadmin is logged in
             from .utils import get_caps_choices
             self.fields['webcapability'].choices     = get_caps_choices(cfor='WEB')
             self.fields['mobilecapability'].choices  = get_caps_choices(cfor='MOB')
             self.fields['portletcapability'].choices = get_caps_choices(cfor='REPORT')
             self.fields['reportcapability'].choices  = get_caps_choices(cfor='PORTLET')
-        for visible in self.visible_fields():
-            if visible.widget_type not in ['file', 'checkbox', 'clearablefile', 'select', 'selectmultiple']:
-                visible.field.widget.attrs['class'] = 'form-control'
-            elif visible.widget_type == 'checkbox':
-                 visible.field.widget.attrs['class'] = 'form-check-input h-20px w-30px'
-            elif visible.widget_type in ['select', 'selectmultiple']:
-                visible.field.widget.attrs['class']            = 'form-select'
-                visible.field.widget.attrs['data-control']     = 'select2'
-                visible.field.widget.attrs['data-placeholder'] = 'Select an option'
-                visible.field.widget.attrs['data-allow-clear'] = 'true'
+        ob_utils.initailize_form_fields(self)
 
     def is_valid(self) -> bool:
         """Add class to invalid fields"""
         result = super().is_valid()
-        # loop on *all* fields if key '__all__' found else only on errors:
-        for x in (self.fields if '__all__' in self.errors else self.errors):
-            attrs = self.fields[x].widget.attrs
-            attrs.update({'class': attrs.get('class', '') + ' is-invalid'})
+        ob_utils.apply_error_classes(self)
         return result
 
-#============= END PEOPLE_EXTRAS FORM ====================#
+
+
+class PeopleGrpAllocation(forms.Form):
+    people = forms.MultipleChoiceField(required=True)
+    is_grouplead = forms.BooleanField(required=False, initial=False)
+
+    def __init__(self, *args, **kwargs):
+        request = kwargs.pop('request')
+        super(PeopleGrpAllocation, self).__init__(*args, **kwargs)
+        ob_utils.initailize_form_fields(self)
+
+    def is_valid(self) -> bool:
+        """Add class to invalid fields"""
+        result = super().is_valid()
+        ob_utils.apply_error_classes(self)
+        return result 

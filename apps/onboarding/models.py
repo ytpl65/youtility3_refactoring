@@ -1,4 +1,5 @@
 from django.conf import settings
+from django.contrib.auth import default_app_config
 from django.db.models import constraints
 from apps.tenants.models import TenantAwareModel
 from django.db import models
@@ -36,17 +37,27 @@ class HeirarchyModel(models.Model):
 
 
 def bu_defaults():
-    j = {"mobilecapability":[],
-        "validimei": "",        "webcapability":[],        "portletcapability":[],   
-        "validip": "",          "reliveronpeoplecount": 0, "reportcapability":[], 
-        "usereliver": False,    "pvideolength": 10,        "guardstrenth":0,
-        "malestrength":0,       "femalestrength":0,        "siteclosetime":"",
-        "tag":"",               "siteopentime":"",         "nearbyemergencycontacts":""}
-    return j
+    return {
+        "mobilecapability": [],
+        "validimei": "",
+        "webcapability": [],
+        "portletcapability": [],
+        "validip": "",
+        "reliveronpeoplecount": 0,
+        "reportcapability": [],
+        "usereliver": False,
+        "pvideolength": 10,
+        "guardstrenth": 0,
+        "malestrength": 0,
+        "femalestrength": 0,
+        "siteclosetime": "",
+        "tag": "",
+        "siteopentime": "",
+        "nearbyemergencycontacts": "",
+    }
 
 
 class Bt(BaseModel, TenantAwareModel, HeirarchyModel):
-    btid                = models.BigAutoField(_('btid'), primary_key=True, auto_created=True, editable=False)
     bucode              = models.CharField(_('bucode'), max_length=15)
     bu_preferences      = models.JSONField(_('bu_preferences'), null=False, default=bu_defaults,  encoder=DjangoJSONEncoder, blank=True)
     identifier          = models.ForeignKey('TypeAssist', null = True, blank=True, on_delete = models.RESTRICT, db_column="identifier", related_name="bu_idfs")
@@ -83,7 +94,6 @@ class Bt(BaseModel, TenantAwareModel, HeirarchyModel):
 
 
 class Contract(BaseModel, TenantAwareModel):
-    contractid         = models.BigAutoField(primary_key=True, unique=True, auto_created=True, editable=False)
     buid               = models.ForeignKey('Bt', null=True, on_delete=models.RESTRICT,db_column="buid", related_name='contract_buid')
     customerid         = models.ForeignKey('Bt', null=True, on_delete=models.RESTRICT, db_column="customerid", related_name='contract_customer')
     contractname       = models.CharField(max_length=50)
@@ -109,7 +119,6 @@ class Contract(BaseModel, TenantAwareModel):
 
 
 class ContractDetail(BaseModel, TenantAwareModel):
-    contractdetailid = models.BigAutoField(primary_key=True, unique=True, auto_created=True, editable=False)
     contractid       = models.ForeignKey('Contract', null=True, on_delete=models.RESTRICT, db_column='contractid', related_name="cd_contract")
     worktype         = models.ForeignKey('TypeAssist', null=True, on_delete=models.RESTRICT, db_column='worktype', related_name="cd_worktype")
     quantity         = models.IntegerField()
@@ -123,15 +132,14 @@ class ContractDetail(BaseModel, TenantAwareModel):
                                     name='qty_gte_0_ck')]
             
     def __str__(self):
-        return self.contractid
+        return self.contractid.contractname
 
 
 
 class Shift(BaseModel, TenantAwareModel):
-    shiftid              = models.BigAutoField(primary_key=True, unique=True, auto_created=True, editable=False)
     buid                 = models.ForeignKey('Bt', null=True, on_delete=models.RESTRICT, db_column="buid", related_name="shift_buid")
     shiftname            = models.CharField(max_length=50)
-    shiftduration        = models.IntegerField()
+    shiftduration        = models.IntegerField(null=True)
     starttime            = models.TimeField()
     endtime              = models.TimeField()
     nightshift_appicable = models.BooleanField(default=True)
@@ -143,12 +151,11 @@ class Shift(BaseModel, TenantAwareModel):
         get_latest_by = ['mdtz', 'cdtz']
 
     def __str__(self):
-        return self.shiftcode
+        return self.shiftname
 
 
 
 class SitePeople(BaseModel, TenantAwareModel):
-    sitepeopleid        = models.BigAutoField(primary_key=True, unique=True, auto_created=True, editable=False)
     buid                = models.ForeignKey('Bt', null=True, on_delete=models.RESTRICT, db_column="buid", related_name="sp_buid")
     peopleid            = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, on_delete=models.RESTRICT, db_column="peopleid", related_name="sp_people")
     reportto            = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, on_delete=models.RESTRICT, db_column="reportto", related_name="sp_reportto")
@@ -179,12 +186,11 @@ class SitePeople(BaseModel, TenantAwareModel):
         get_latest_by       = ["mdtz", 'cdtz']
 
     def __str__(self):
-        return self.peopleid
+        return self.peopleid.peoplecode
 
 
 class TypeAssist(BaseModel, TenantAwareModel, HeirarchyModel):
-    taid   = models.AutoField(primary_key=True, auto_created=True, editable=False)
-    tacode = models.CharField(_("tacode"), max_length=50)
+    tacode = models.CharField(_("tacode"), max_length=50, unique=True)
     taname = models.CharField(_("taname"), max_length=100)
     tatype = models.CharField(_("tatype"), max_length=100)
     parent = models.ForeignKey("self", null=True, blank=True, on_delete=models.RESTRICT, related_name='children')
@@ -192,9 +198,33 @@ class TypeAssist(BaseModel, TenantAwareModel, HeirarchyModel):
 
     class Meta(BaseModel.Meta):
         db_table = 'typeassist'
-        constraints = [
-            models.UniqueConstraint(fields=['tacode'], name='ta_tacode_uk')
-        ]
+
 
     def __str__(self):
         return self.tacode
+
+def wizard_default():
+    return {'wizard_data':{}}
+
+
+def formData_default():
+    return {'form_id':{}}
+
+
+class WizardDraft(models.Model):
+    createdby = models.OneToOneField(settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.CASCADE, related_name="created_by")
+    cdtz = models.DateTimeField( auto_now_add = True, auto_now=False)
+    mdtz = models.DateTimeField(auto_now=True)
+    buid = models.ForeignKey("Bt", null=True, blank=True, on_delete=models.CASCADE, related_name='wiz_buids')
+    wizard_data = models.JSONField(null=True, default=wizard_default,  encoder=DjangoJSONEncoder, blank=True)
+    form_data = models.JSONField(null=True, default=formData_default,  encoder=DjangoJSONEncoder, blank=True)
+
+    class Meta:
+        db_table = 'wizard_draft'
+        constraints = [
+            models.UniqueConstraint(fields=['createdby', 'id'], name="draft_per_user")
+        ]
+        get_latest_by = ['mdtz']
+
+    def __str__(self):
+        return f"{self.id}--{self.createdby.peoplecode}"

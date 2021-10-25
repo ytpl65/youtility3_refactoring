@@ -35,23 +35,21 @@ Buisiness Units
 		</thead>
 		<!------- BEGIN TABLE FILTER FIELDS ------>
 		<thead id="filter_row">
-		<form action="" id='bt_filter' method='get'>
-			{% for field in bt_filter %}
-			<th>
-				<input type="text" 
-				id="{{ field.auto_id }}" 
-				name="{{ field.name }}" 
-				placeholder ="Search {{ field.label }}">
-			</th>
-			{% endfor %}
-		</form>
-		</thead>	
+			<form action="" id='bt_filter' method='get'>
+				{% for field in bt_filter %}
+				<th>
+					<input type="text" id="{{ field.auto_id }}" name="{{ field.name }}"
+						placeholder="Search {{ field.label }}">
+				</th>
+				{% endfor %}
+			</form>
+		</thead>
 		<!------- END TABLE FILTER FIELDS ------>
-		
+
 		<!----------- BEGIN TABLE ROWS ----------->
 		{% for bt in bt_list %}
 		<tr>
-			<td><a href="{{ url('onboarding:bu_update', args=[bt['btid']]) }}">{{ bt['bucode'] }}</a></td>
+			<td><a href="{{ url('onboarding:bu_update', args=[bt['id']]) }}">{{ bt['bucode'] }}</a></td>
 			<td>{{ bt['buname'] }}</td>
 			<td>{{ bt['identifier__tacode'] }}</td>
 			<td>{{ bt['enable'] }}</td>
@@ -60,7 +58,7 @@ Buisiness Units
 		</tr>
 		{% endfor %}
 		<!----------- END TABLE ROWS ------------->
-		
+
 	</table>
 </div>
 {% if bt_list and bt_list.has_other_pages %}
@@ -76,7 +74,7 @@ Buisiness Units
 {% block extra_scripts %}
 <script>
 	$(document).ready(function () {
-		$("input").keypress(function(event) {
+		$("input").keypress(function (event) {
 			if (event.which == 13) {
 				event.preventDefault();
 				$("#bt_filter").submit();

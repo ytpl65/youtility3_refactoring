@@ -47,7 +47,7 @@ Client Lists
 		<!---------- END TABLE FILTER FIELDS --------->
         {% for client in client_list %}
         <tr>
-            <td><a href="{{ url('onboarding:client_update', args=[client['btid']]) }}">{{ client['bucode'] }}</a></td>
+            <td><a href="{{ url('onboarding:client_update', args=[client['id']]) }}">{{ client['bucode'] }}</a></td>
             <td>{{ client['buname'] }}</td>
             <td>{{ client['enable'] }}</td>
             <td>{{ client['bu_preferences__webcapability'] }}</td>

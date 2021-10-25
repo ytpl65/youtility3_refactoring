@@ -23,39 +23,37 @@ Capability's
 <!------------------ BEGIN SITEPEOPLE TABLE ------------------------->
 {% block table %}
 <div class="table-responsive">
-    <!------------------ BEGIN TABLE --------------------->
-    <table id="sitepeople_table" class="table gy-2" style="width:100%">
-        <thead class="fw-bold fs-6">
-            <th>Code</th>
-            <th>Name</th>
-            <th>Capability for</th>
-            <th>Belongs To</th>
-        </thead>
+	<!------------------ BEGIN TABLE --------------------->
+	<table id="sitepeople_table" class="table gy-2" style="width:100%">
+		<thead class="fw-bold fs-6">
+			<th>Code</th>
+			<th>Name</th>
+			<th>Capability for</th>
+			<th>Belongs To</th>
+		</thead>
 		<!---------- BEGIN TABLE FILTER FIELDS --------->
 		<thead id="filter_row">
-		<form action="" id='sitepeople_filter' method='get'>
-			{% for field in sitepeople_filter %}
-			<th>
-				<input type="text" 
-				id="{{ field.auto_id }}" 
-				name="{{ field.name }}" 
-				placeholder ="Search {{ field.label }}">
-			</th>
-			{% endfor %}
-		</form>
+			<form action="" id='sitepeople_filter' method='get'>
+				{% for field in sitepeople_filter %}
+				<th>
+					<input type="text" id="{{ field.auto_id }}" name="{{ field.name }}"
+						placeholder="Search {{ field.label }}">
+				</th>
+				{% endfor %}
+			</form>
 		</thead>
 		<!---------- END TABLE FILTER FIELDS --------->
-        {% for sp in sitepeople_list %}
-        <tr>
-            <td><a href="{{ url('onboarding:sitepeople_update', args=[sp['sitepeopleid']]) }}">{{ sp['capscode'] }}</a></td>
-            <td>{{ cap['capsname'] }}</td>
-            <td>{{ cap['cfor'] }}</td>
-            <td>{{ cap['parent__capscode'] }}</td>
-        </tr>
-        {% endfor %}
-		
-    </table>
-    <!------------------ END TABLE --------------------->
+		{% for sp in sitepeople_list %}
+		<tr>
+			<td><a href="{{ url('onboarding:sitepeople_update', args=[sp['id']]) }}">{{ sp['capscode'] }}</a></td>
+			<td>{{ cap['capsname'] }}</td>
+			<td>{{ cap['cfor'] }}</td>
+			<td>{{ cap['parent__capscode'] }}</td>
+		</tr>
+		{% endfor %}
+
+	</table>
+	<!------------------ END TABLE --------------------->
 </div>
 
 
@@ -72,8 +70,8 @@ Capability's
 <!--------- BEGIN EXTRA SCRIPTS ----------------------------->
 {% block extra_scripts %}
 <script>
-   $(document).ready(function () {
-		$("input").keypress(function(event) {
+	$(document).ready(function () {
+		$("input").keypress(function (event) {
 			if (event.which == 13) {
 				event.preventDefault();
 				$("#sitepeople_filter").submit();
@@ -91,8 +89,8 @@ Capability's
 		$("th > input").addClass('form-control')
 		$("th > input").css('height', '35px')
 		var styles = {
-			"border-bottom":"none",
-			"background-color":"#f1f4f7"
+			"border-bottom": "none",
+			"background-color": "#f1f4f7"
 		}
 		$('#sitepeople_table thead tr:eq(1)').css(styles)
 		//END STYLING DATATABLE

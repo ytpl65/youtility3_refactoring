@@ -1,13 +1,14 @@
 from icecream import ic
 from django.contrib.auth import authenticate, login, logout
-from django.core.exceptions import  EmptyResultSet
+from django.core.exceptions import EmptyResultSet
 from django.http import response
 from django.shortcuts import redirect, render
 from django.views import View
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 import logging
-
+import apps.peoples.forms as pf  # people forms
+import apps.onboarding.forms as obf  # onboarding-modes
 from django.contrib import messages
 from django.db.models import RestrictedError
 from .models import Capability, Pgroup, People
@@ -47,32 +48,31 @@ class SignIn(View):
                 form.add_error(None, self.error_msgs['invalid-cookies'])
                 cxt = {'loginform': form}
                 response = render(request, self.template_path, context=cxt)
-            else:
-                if form.is_valid():
-                    logger.info('Signin form is valid')
-                    loginid = form.cleaned_data.get('username')
-                    password = form.cleaned_data.get('password')
-                    people = authenticate(
-                        request, username=loginid, password=password)
-                    if people:
-                        login(request, people)
-                        save_user_session(request, request.user)
-                        display_user_session_info(request.session)
-                        logger.info("User logged in {}".format(
-                            request.user.peoplecode))
-                        response = redirect('/dashboard')
-                    else:
-                        logger.warn(
-                            self.error_msgs['auth-error'] % (loginid, '********'))
-                        form.add_error(
-                            None, self.error_msgs['invalid-details'])
-                        cxt = {'loginform': form}
-                        response = render(
-                            request, self.template_path, context=cxt)
+            elif form.is_valid():
+                logger.info('Signin form is valid')
+                loginid = form.cleaned_data.get('username')
+                password = form.cleaned_data.get('password')
+                people = authenticate(
+                    request, username=loginid, password=password)
+                if people:
+                    login(request, people)
+                    save_user_session(request, request.user)
+                    display_user_session_info(request.session)
+                    logger.info("User logged in {}".format(
+                        request.user.peoplecode))
+                    response = redirect('/dashboard')
                 else:
-                    logger.warn(self.error_msgs['invalid-form'])
+                    logger.warn(
+                        self.error_msgs['auth-error'] % (loginid, '********'))
+                    form.add_error(
+                        None, self.error_msgs['invalid-details'])
                     cxt = {'loginform': form}
-                    response = render(request, self.template_path, context=cxt)
+                    response = render(
+                        request, self.template_path, context=cxt)
+            else:
+                logger.warn(self.error_msgs['invalid-form'])
+                cxt = {'loginform': form}
+                response = render(request, self.template_path, context=cxt)
         except Exception:
             logger.critical(self.error_msgs['critical-error'], exc_info=True)
             form.add_error(None, self.error_msgs['critical-error'])
@@ -102,43 +102,41 @@ class ChangePeoplePassword(LoginRequiredMixin, View):
     json_form = PeopleExtrasForm
     model = People
 
-    def post(self,request, *args, **kwargs):
+    def post(self, request, *args, **kwargs):
         from django.contrib.auth.forms import SetPasswordForm
         from django.http import JsonResponse
         id, response = request.POST.get('people'), None
-        people = People.objects.get(peopleid = id)
-        form =  SetPasswordForm(people, request.POST)
+        people = People.objects.get(id=id)
+        form = SetPasswordForm(people, request.POST)
         if form.is_valid():
             form.save()
-            response = JsonResponse({'res':'Password is changed successfully!',
-            'status':200})
+            response = JsonResponse({'res': 'Password is changed successfully!',
+                                     'status': 200})
         else:
-            response = JsonResponse({'res':form.errors,
-            'status':500})
+            response = JsonResponse({'res': form.errors,
+                                     'status': 500})
         return response
 
-            
-    
 
 # @method_decorator(login_required, name='dispatch')
 class CreatePeople(LoginRequiredMixin, View):
     template_path = 'peoples/people_form.html'
     jsonform = PeopleExtrasForm
-    form = PeopleForm
+    form_class = PeopleForm
 
     def get(self, request, *args, **kwargs):
         logger.info('Create People view')
         from apps.onboarding.forms import TypeAssistForm
-        cxt = {'peopleform': self.form(), 
-        'pref_form': self.jsonform(session=request.session),
-        'ta_form':TypeAssistForm()}
+        cxt = {'peopleform': self.form_class(),
+               'pref_form': self.jsonform(session=request.session),
+               'ta_form': TypeAssistForm(auto_id=False)}
         return render(request, self.template_path, context=cxt)
 
     def post(self, request, *args, **kwargs):
         logger.info('Create People form submiited')
         from .utils import save_jsonform, save_user_paswd
         response = None
-        peopleform = self.form(request.POST, request.FILES)
+        peopleform = self.form_class(request.POST, request.FILES)
         peoplepref_form = self.jsonform(
             request.POST, session=request.session)  # a json form for json data
         try:
@@ -150,8 +148,8 @@ class CreatePeople(LoginRequiredMixin, View):
                     people.save()
                     people = save_userinfo(
                         people, request.user, request.session)
-                    people.peopleimg = request.FILES.get('peopleimg', 
-                    'master/people/blank.png')
+                    people.peopleimg = request.FILES.get('peopleimg',
+                                                         'master/people/blank.png')
                     save_user_paswd(people)
                     logger.info('People Form saved... DONE')
                     messages.success(request, "Success record saved DONE!",
@@ -160,14 +158,16 @@ class CreatePeople(LoginRequiredMixin, View):
             else:
                 logger.info('Form is not valid')
                 cxt = {'peopleform': peopleform,
-                       'pref_form': peoplepref_form, 'edit': True}
+                       'pref_form': peoplepref_form,
+                       'edit': True, 'ta_form': obf.TypeAssistForm(auto_id=False)}
                 response = render(request, self.template_path, context=cxt)
         except Exception:
             logger.critical("something went wrong...", exc_info=True)
             messages.error(request, "[ERROR] Something went wrong",
                            "alert alert-danger")
             cxt = {'peopleform': peopleform,
-                   'pref_form': peoplepref_form, 'edit': True}
+                   'pref_form': peoplepref_form,
+                   'edit': True, 'ta_form': obf.TypeAssistForm(auto_id=False)}
             response = render(request, self.template_path, context=cxt)
         return response
 
@@ -176,7 +176,7 @@ class RetrievePeoples(LoginRequiredMixin, View):
     template_path = 'peoples/people_list.html'
 
     related = ['peopletype', 'siteid']
-    fields = ['peopleid', 'peoplecode', 'peoplename', 'peopletype__tacode', 'siteid__bucode',
+    fields = ['id', 'peoplecode', 'peoplename', 'peopletype__tacode', 'siteid__bucode',
               'isadmin']
     model = People
 
@@ -217,8 +217,7 @@ class RetrievePeoples(LoginRequiredMixin, View):
             people_list = paginator.page(1)
         except EmptyPage:
             people_list = paginator.page(paginator.num_pages)
-        cxt = {'people_list': people_list, 'people_filter': filterform}
-        return cxt
+        return {'people_list': people_list, 'people_filter': filterform}
 
 
 # update People instance
@@ -234,10 +233,12 @@ class UpdatePeople(LoginRequiredMixin, View):
         try:
             from .utils import get_people_prefform
             pk = kwargs.get('pk')
-            people = self.model.objects.get(peopleid=pk)
+            people = self.model.objects.get(id=pk)
             logger.info('object retrieved {}'.format(people))
             form = self.form_class(instance=people)
-            cxt = {'peopleform': form, 'pref_form': get_people_prefform(people, request.session),
+            cxt = {'peopleform': form,
+                   'pref_form': get_people_prefform(people, request.session),
+                   'ta_form': obf.TypeAssistForm(auto_id=False),
                    'edit': True}
             response = render(request, self.template_path, context=cxt)
         except self.model.DoesNotExist:
@@ -256,7 +257,7 @@ class UpdatePeople(LoginRequiredMixin, View):
         from .utils import save_jsonform
         try:
             pk, response = kwargs.get('pk'), None
-            people = self.model.objects.get(peopleid=pk)
+            people = self.model.objects.get(id=pk)
             form = self.form_class(
                 request.POST, request.FILES, instance=people)
             jsonform = self.json_form(request.POST, session=request.session)
@@ -274,19 +275,24 @@ class UpdatePeople(LoginRequiredMixin, View):
                     response = redirect('peoples:people_form')
             else:
                 logger.info('Form is not valid')
-                cxt = {'peopleform': form, 'pref_form': jsonform, 'edit': True}
+                cxt = {'peopleform': form,
+                       'pref_form': jsonform,
+                       'edit': True,
+                       'ta_form': obf.TypeAssistForm(auto_id=False)}
                 response = render(request, self.template_path, context=cxt)
         except self.model.DoesNotExist:
             logger.error('Object does not exist', exc_info=True)
             messages.error(request, "Object does not exist",
                            "alert alert-danger")
-            cxt = {'peopleform': form, 'pref_form': jsonform, 'edit': True}
+            cxt = {'peopleform': form, 'pref_form': jsonform,
+                   'edit': True, 'ta_form': obf.TypeAssistForm(auto_id=False)}
             response = render(request, self.template_path, context=cxt)
         except Exception:
             logger.critical("something went wrong...", exc_info=True)
             messages.error(request, "[ERROR] Something went wrong",
                            "alert alert-danger")
-            cxt = {'peopleform': form, 'pref_form': jsonform, 'edit': True}
+            cxt = {'peopleform': form, 'pref_form': jsonform, 'edit': True,
+                   'ta_form': obf.TypeAssistForm(auto_id=False)}
             response = render(request, self.template_path, context=cxt)
         return response
 
@@ -303,7 +309,7 @@ class DeletePeople(LoginRequiredMixin, View):
         pk, response = kwargs.get('pk', None), None
         try:
             if pk:
-                people = self.model.objects.get(peopleid=pk)
+                people = self.model.objects.get(id=pk)
                 logger.info('deleting people %s ...' % people.peoplecode)
                 form = self.form_class(instance=people)
                 people.delete()
@@ -315,13 +321,14 @@ class DeletePeople(LoginRequiredMixin, View):
             logger.error('Unable to delete, object does not exist')
             messages.error(request, 'Client does not exist',
                            "alert alert-danger")
-            response = redirect('onboarding:client_form')
+            response = redirect('peoples:people_form')
         except RestrictedError:
             logger.error('Unable to delete, due to dependencies')
             messages.error(
                 request, 'Unable to delete, due to dependencies', "alert alert-danger")
             cxt = {'peopleform': form,
-                   'pref_form': get_people_prefform(people, request.session), 'edit': True}
+                   'pref_form': get_people_prefform(people, request.session),
+                   'edit': True, 'ta_form': obf.TypeAssistForm(auto_id=False)}
             response = render(request, self.template_path, context=cxt)
         return response
 #=========================== End People View Classes ==============================#
@@ -368,7 +375,7 @@ class CreatePgroup(LoginRequiredMixin, View):
 
 class RetrivePgroups(LoginRequiredMixin, View):
     template_path = 'peoples/pgroup_list.html'
-    fields = ['groupid', 'groupname', 'enable']
+    fields = ['id', 'groupname', 'enable']
     model = Pgroup
 
     def get(self, request, *args, **kwargs):
@@ -406,13 +413,13 @@ class RetrivePgroups(LoginRequiredMixin, View):
             pgroup_list = paginator.page(1)
         except EmptyPage:
             pgroup_list = paginator.page(paginator.num_pages)
-        cxt = {'pgroup_list': pgroup_list, 'pg_filter': filterform}
-        return cxt
+        return {'pgroup_list': pgroup_list, 'pg_filter': filterform}
 
 
 class UpdatePgroup(LoginRequiredMixin, View):
     template_path = 'peoples/pgroup_form.html'
     form_class = PgroupForm
+    form_class2 = pf.PeopleGrpAllocation
     model = Pgroup
 
     def get(self, request, *args, **kwargs):
@@ -420,11 +427,14 @@ class UpdatePgroup(LoginRequiredMixin, View):
         response = None
         try:
             pk = kwargs.get('pk')
-            pg = self.model.objects.get(groupid=pk)
+            pg = self.model.objects.get(id=pk)
             logger.info('object retrieved {}'.format(pg))
             form = self.form_class(instance=pg)
             response = render(request, self.template_path,  context={
-                              'pgroup_form': form, 'edit': True})
+                'pgroup_form': form,
+                'peoplevspgroup_form': self.form_class2(request=request),
+                'edit': True})
+            assert (False, response)
         except self.model.DoesNotExist:
             messages.error(request, 'Unable to edit object not found',
                            'alert alert-danger')
@@ -441,7 +451,7 @@ class UpdatePgroup(LoginRequiredMixin, View):
         response = None
         try:
             pk = kwargs.get('pk')
-            pg = self.model.objects.get(groupid=pk)
+            pg = self.model.objects.get(id=pk)
             form = self.form_class(request.POST, instance=pg)
             if form.is_valid():
                 logger.info('PgroupForm Form is valid')
@@ -480,7 +490,7 @@ class DeletePgroup(LoginRequiredMixin, View):
         pk, response = kwargs.get('pk', None), None
         try:
             if pk:
-                pg = self.model.objects.get(groupid=pk)
+                pg = self.model.objects.get(id=pk)
                 form = self.form_class(instance=pg)
                 pg.delete()
                 logger.info('Pgroup object deleted')
@@ -547,7 +557,7 @@ class CreateCapability(LoginRequiredMixin, View):
 
 class RetriveCapability(LoginRequiredMixin, View):
     template_path = 'peoples/capability_list.html'
-    fields = ['capsid', 'capscode', 'capsname', 'cfor', 'parent__capscode']
+    fields = ['id', 'capscode', 'capsname', 'cfor', 'parent__capscode']
     model = Capability
 
     def get(self, request, *args, **kwargs):
@@ -588,8 +598,7 @@ class RetriveCapability(LoginRequiredMixin, View):
             cap_list = paginator.page(1)
         except EmptyPage:
             cap_list = paginator.page(paginator.num_pages)
-        cxt = {'cap_list': cap_list, 'cap_filter': filterform}
-        return cxt
+        return {'cap_list': cap_list, 'cap_filter': filterform}
 
 
 class UpdateCapability(LoginRequiredMixin, View):
@@ -602,7 +611,7 @@ class UpdateCapability(LoginRequiredMixin, View):
         response = None
         try:
             pk = kwargs.get('pk')
-            cap = self.model.objects.get(capsid=pk)
+            cap = self.model.objects.get(id=pk)
             logger.info('object retrieved {}'.format(cap))
             form = self.form_class(instance=cap)
             cxt = {'cap_form': form, 'edit': True}
@@ -623,7 +632,7 @@ class UpdateCapability(LoginRequiredMixin, View):
         response = None
         try:
             pk = kwargs.get('pk')
-            cap = self.model.objects.get(capsid=pk)
+            cap = self.model.objects.get(id=pk)
             form = self.form_class(request.POST, instance=cap)
             if form.is_valid():
                 logger.info('CapabilityForm Form is valid')
@@ -663,7 +672,7 @@ class DeleteCapability(LoginRequiredMixin, View):
         pk, response = kwargs.get('pk', None), None
         try:
             if pk:
-                cap = self.model.objects.get(capsid=pk)
+                cap = self.model.objects.get(id=pk)
                 form = self.form_class(instance=cap)
                 cap.delete()
                 logger.info('Capability object deleted')

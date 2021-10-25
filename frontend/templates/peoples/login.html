@@ -178,11 +178,11 @@
 
 <body>
     <!------------------------------------------------- BEGIN BODY ----------------------------------------------------->
-    <div class="login_body d-flex flex-column" id="loginbody">
+    <div class="login_body d-flex flex-column flex-sm-column" id="loginbody">
         <div class="site_logo"><img class="dlogo" src="{{static('assets/media/images/logo-transparent.png')}}" alt="">
         </div>
         <!----------------------------- BEGIN FORM ------------------------------>
-        <form action="" method='post'>
+        <form action="" method='post' class="col-12 col-sm-6 col-md-4">
             <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
 
             <!------------BEGIN NON FIELD ERRORS -------------------->

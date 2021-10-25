@@ -47,7 +47,7 @@ Capability's
 		<!---------- END TABLE FILTER FIELDS --------->
         {% for cap in cap_list %}
         <tr>
-            <td><a href="{{ url('peoples:cap_update', args=[cap['capsid']]) }}">{{ cap['capscode'] }}</a></td>
+            <td><a href="{{ url('peoples:cap_update', args=[cap['id']]) }}">{{ cap['capscode'] }}</a></td>
             <td>{{ cap['capsname'] }}</td>
             <td>{{ cap['cfor'] }}</td>
             <td>{{ cap['parent__capscode'] }}</td>

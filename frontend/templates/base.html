@@ -16,32 +16,46 @@
   <link href="{{ static('assets/plugins/global/plugins.bundle.css') }}" rel="stylesheet" type="text/css" />
   <link href="{{ static('assets/css/style.bundle.css') }}" rel="stylesheet" type="text/css" />
   <link href="{{ static('assets/css/global_level.css') }}" rel="stylesheet" type="text/css" />
+  <link
+    rel="stylesheet"
+    href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
   <link rel="shortcut icon" type="image/jpg" href="{{ static('assets/media/images/favicon.ico') }}"/>
+
   <!-- END GLOBAL STYLESHEETS BUNDLE (used by all pages) -->
 
   <!-- BEGIN PAGE LEVEL STYLESHEETS -->  
 
-  {% block head %}
 
-  {% endblock head %}
+<!----FOR BASE_LEVEL ---->
+  {%- block base_head -%}
+
+  {% endblock base_head %}
+<!----END FOR BASE_LEVEL ---->
   
-  {% block extra_css %}
-  
-  {% endblock extra_css %}
+
   <!-- END PAGE LEVEL STYLESHEETS -->
   <title>
-   {% block title %}
+   {%- block title -%}
   
   {% endblock title %}
   </title>
 
+  {%- block wizard_head -%}
+  
+  {% endblock wizard_head %}
+<!--PAGE LEVEL --->
+{%- block extra_css -%}
+
+{% endblock extra_css %}
+<!----END FOR PAGE_LEVEL ---->
 </head>
 
 <body id="kt_body"
   class="header-fixed header-tablet-and-mobile-fixed toolbar-enabled toolbar-fixed toolbar-tablet-and-mobile-fixed aside-enabled aside-fixed"
-  style="--kt-toolbar-height:55px;--kt-toolbar-height-tablet-and-mobile:55px">
- 
-  {% block body %}
+  style="--kt-toolbar-height:55px;--kt-toolbar-height-tablet-and-mobile:55px" data-kt-aside-minimize = 'on'>
+ <img src="{{ static('assets/media/images/loading.gif') }}" id="loader" style="display:none" alt="">
+  <input type="hidden" id="urlname" data-url = ''>
+  {%- block body -%}
   
   {% endblock body %}
 
@@ -50,107 +64,89 @@
   <script src="{{ static('assets/plugins/global/plugins.bundle.js') }}"></script>
   <script src="{{ static('assets/js/scripts.bundle.js') }}"></script>
   <!-- END  GLOBAL JS BUNDLE (used by all pages) -->
-  <!-- BEGIN PAGE LEVEL SCRIPTS -->  
-  {% block script %}
-  <script src="{{ static('assets/js/custom.js') }}"></script>
-  {% endblock script %}
-  
-  <!-- END PAGE LEVEL SCRIPTS -->
 
-  <!-- BEGIN GLOBAL CUSTOM SCRIPTS -->
+<script>
+  // tojson filter converts python datatypes to json datatypes.
+  var   session            = {{ dict(request.session) |default ("") | tojson }}
+  const newWizardUrl       = "{{ url('onboarding:wizard_view') }}"
+  const deleteWizardUrl    = "{{ url('onboarding:wizard_delete') }}"
+  const WizardViewUrl      = "{{ url('onboarding:wizard_view') }}"
+  const saveAsDraftUrl     = "{{ url('onboarding:save_asdraft') }}"
+  const deleteFromDraftUrl = "{{ url('onboarding:delete_from_draft') }}"
+</script>
+<!-- BEGIN GLOBAL-CUSTOM-FILE LEVEL SCRIPTS --> 
+ <script src="{{ static('assets/js/custom.js') }}"></script>
+<!-- END GLOBAL-CUSTOM-FILE LEVEL SCRIPTS -->
+
+  <!-- BEGIN GLOBAL-INLINE CUSTOM SCRIPTS -->
   <script>
-
-    $(document).ready(function() {
-      //adds styles to non-field-errors
-      
-      $("#alert_msg").fadeTo(2000, 500).slideUp(500, function(){
-      $("#alert_msg").slideUp(700);
-    });
-    })
-    //ADD CLASSES TO LABEL TAGS
-    $('label').addClass("col-form-label col-md-2 col-sm-2 text-sm-right")
+    /*=================================
+    to load script before dom-load write
+    them outside of "$(document).ready()"
+    ==================================*/
     
-    //REMOVE CLASSES FOR CHECKBOXES WHICH ARE ADDED BY DEFAULT.
+    // add classes to label tags.
+    $('label').addClass("col-form-label col-md-2 col-sm-2 text-sm-right") 
+    
+    // remove classes for checkboxes which are added by default. 
     $('.booleans label').removeClass("col-md-2 col-sm-2")
     
-    //REMOVE FORM-CONTROL CLASS FOR SELEC TAGS
-    $('select').removeClass("form-control")
+    // remove form-control for select tags.
+    $('select').removeClass("form-control") 
     
-    //ADD CLASSES TO CHECKBOXES
-    $(".booleans").addClass("form-check form-switch form-check-custom form-check-solid")
+    // add classes to checkboxes.
+    $(".booleans").addClass("form-check form-switch form-check-custom form-check-solid") 
 
+    //sets closeonSelect to false for multiple-select fields
+    $("[multiple]").select2({
+			closeOnSelect:false 
+		})
+ 
+    // handles rendering of sidebar menus based on user capabilities stored in sessiion.
+    handle_rendering_of_menus(session); 
 
-    //const data = JSON.parse({{ request.session }})
-
-    //hide all menu's on start
-    //tojson filter converts python datatypes to json datatypes.
-    const is_superadmin   =  {{ request.session['is_superadmin'] | tojson }}
-    var people_webcaps = []
-    var people_mobcaps = []
-    var people_repcaps = []
-    var people_portcaps = []
-    var client_webcaps = []
-    var client_mobcaps = []
-    var client_repcaps = []
-    var client_portcaps = []
-    
-    console.log("im outside")
-    if(is_superadmin){}
-    else{
-      console.log("im inside")
-      people_webcaps  =  {{ request.session['people_webcaps'] | tojson }}
-      people_mobcaps  =  {{ request.session['people_mobcaps'] | tojson }}
-      people_repcaps  =  {{ request.session['people_reportcaps'] | tojson }}
-      people_portcaps =  {{ request.session['people_portletcaps'] | tojson }}
-      client_webcaps  =  {{ request.session['client_webcaps'] | tojson }}
-      client_mobcaps  =  {{ request.session['client_mobcaps'] | tojson }}
-      client_repcaps  =  {{ request.session['client_reportcaps'] | tojson }}
-      client_portcaps =  {{ request.session['client_portletcaps'] | tojson }}
-    } 
+    // create environment for onboarding wizard.
+    make_env_for_wizard(session);
     
 
+    /*============================
+    to load scripts after dom-load write
+    them under "$(document).ready()"
+    ==============================*/
     
+    $(document).ready(function() {
+      //adds styles to non-field-errors
+      $("#alert_msg").fadeTo(2000, 500).slideUp(500, function(){
+        $("#alert_msg").slideUp(700);
+      })
+      //container padding-top 0 for wizard
+      $('#kt_content').addClass('pt-1')
+          
+      //controls wizard steps-bar
+      stepper_controller(session);
 
-
-    function handle_rendering_of_menus(){
-      console.log('called')
-      if(is_superadmin){
-        $('.menu-item').show()
-      }else {
-          caps = people_webcaps.length != 0 ? people_webcaps : client_webcaps
-          console.log(people_webcaps.length)
-          console.log(caps.length)
-          for(var i=0; i < caps.length; i++){
-            parent = caps[i][0]
-            childs = caps[i][1]
-            parent = parent.replace(' ', '_')
-            parent_id = '#'.concat(parent.toLowerCase())
-            console.log('parent', parent_id)
-            $(parent_id).show()
-            //items within parent
-            parent_items = parent_id + ' .menu-item'
-            $(parent_items).hide()
-            for(var j=0; j<childs.length; j++){
-              child = childs[j][0]
-              child_id = '#'.concat(child.toLowerCase())
-              console.log('child', child_id)
-              $(child_id).show()
-            }
-
-          }
-      }
-    }
-    handle_rendering_of_menus();
-    
+    })
   </script>
-  <!-- END GLOBAL CUSTOM SCRIPTS -->
+  <!-- END GLOBAL-INLINE CUSTOM SCRIPTS -->
+  
 
-  {% block extra_scripts %}
-  
-  
+
+
+  <!-- BEGIN BASE LEVEL SCRIPTS FOR BASE PAGES -->  
+  {%- block base_script -%}
+
+  {% endblock base_script %}
+  <!-- END BASE LEVEL SCRIPTS FOR BASE PAGES-->
+
+<!-------- BEGIN SCRIPTS FOR NON-BASE PAGES ------->
+  {%- block extra_scripts -%}
   {% endblock extra_scripts %}
+  <!-------- END SCRIPTS FOR NON-BASE PAGES ------->
 </body>
-  {% block popup_alerts %}
+<!---BEGIN POP-UP/MODAL'S CODE HERE--->
+  {%- block popup_alerts -%}
   
   {% endblock popup_alerts %}
+<!---END POP-UP/MODAL'S CODE HERE--->
 </html>
+

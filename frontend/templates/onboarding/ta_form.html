@@ -1,4 +1,3 @@
-
 {% extends "base_form.html" %}
 
 <!---- BEGIN PAGE TITLE ---->
@@ -7,6 +6,9 @@ TypeAssist Form
 {% endblock title %}
 <!---- END PAGE TITLE ----->
 
+{% block extra_css %}
+{{ ta_form.media.css }}
+{% endblock extra_css %}
 
 <!-------------------------- BEGIN PAGE BREADCUMB ----------------------->
 {% block pagebreadcumb %}
@@ -18,12 +20,20 @@ TypeAssist Form
 
 <!-------------  BEGIN POP-UPS CODE ------------->
 {% block popup_alerts %}
-	{% if edit is defined %}
-	<!-- to delete an instance with popup_alert pass the delete_url_name, instance_id, popup_title, popup_id -->
-		{% call popup_alert('onboarding:ta_delete', ta_form.instance.taid, title="Delete", popup_id="delete_alert") %}
-			<h4>Are you sure, you want to delete this?</h4>
-		{% endcall %}
-	{% endif %}
+{{ super()  }}
+{% if edit is defined %}
+<!-- to delete an instance with popup_alert pass the delete_url_name, instance_id, popup_title, popup_id -->
+{% call general_popup(title="Delete", popup_id="delete_alert") %}
+<div class="modal-body">
+	<h4>Are you sure, you want to delete this?</h4>
+</div>
+<div class="modal-footer">
+	<button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">No Go back</button>
+	<a href="{{ url('onboarding:ta_delete', args=[ta_form.instance.id]) }}" class="btn btn-sm  btn-danger rounded-1">Yes
+		I'm Sure</a>
+</div>
+{% endcall %}
+{% endif %}
 {% endblock popup_alerts %}
 <!-------------  END POP-UPS CODE --------------->
 
@@ -37,53 +47,47 @@ Type Assist
 
 <!--------- BEGIN NON FIELD ERRORS -------->
 {% block nonfield_errors %}
-	{% if ta_form.non_field_errors() %}
-	<div id="non_field_error" class="alert alert-danger" style="width: 73%;">
-		{% for error in ta_form.non_field_errors() %}
-		{{ error }}
-		{% endfor %}
-		<button type="button" class="btn-close flt-right" data-bs-dismiss="alert" aria-label="Close"></button>
-	</div>
-	{% endif %}
+{% if ta_form.non_field_errors() %}
+<div id="non_field_error" class="alert alert-danger" style="width: 73%;">
+	{% for error in ta_form.non_field_errors() %}
+	{{ error }}
+	{% endfor %}
+	<button type="button" class="btn-close flt-right" data-bs-dismiss="alert" aria-label="Close"></button>
+</div>
+{% endif %}
 {% endblock nonfield_errors %}
 <!---------- END NON FIELD ERRORS --------->
 
 
-<!----------- BEGIN FORM MESSGES --------------->
-{% block form_msgs %}
-	{% for msg in get_msgs(request) %}
-	<div class="alert {% if msg.tags %} {{ msg.tags }} {% endif %} " id="alert_msg" style="width:73%; ">
-		{{ msg }}
-		<button type="button" class="btn-close flt-right" data-bs-dismiss="alert" aria-label="Close"></button>
-	</div>
-	{% endfor %}
-{% endblock form_msgs %}
-<!----------- END FORM MESSGES ----------------->
 
 
 <!-------------- BEGIN FORM ------------------->
-{% block form %}
-		<form action="" method="post" id="id_taform">
-			<!---------------------- CSRF-MIDDLEWARE TOKEN ---------------------->
-			<input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
+{% macro typeassist_form() %}
+<form action="" method="post" id="id_taform">
+	<!---------------------- CSRF-MIDDLEWARE TOKEN ---------------------->
+	<input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
 
-			{% for field in ta_form %}
-			<div class="mb-3 row">
-				<!--LABEL FIELD-->
-				{{ field.label_tag() }}
-				<!--INPUT GROUP-->
-				<div class="col-md-10">
-					{{ field }}
-					<!--HELP TEXT-->
-					{% if field.help_text %}
-					<small>{{ field.help_text }}</small>
-					{% endif %}
-					<!--ERROR FIELD-->
-					{{ field.errors }}
-				</div>
-			</div>
-			{% endfor %}
-		</form>
+	{% for field in ta_form %}
+	<div class="mb-3 row">
+		<!--LABEL FIELD-->
+		<label class="col-md-2">{{ field.label }}</label>
+		<!--INPUT GROUP-->
+		<div class="col-md-10">
+			{{ field }}
+			<!--HELP TEXT-->
+			{% if field.help_text %}
+			<small>{{ field.help_text }}</small>
+			{% endif %}
+			<!--ERROR FIELD-->
+			{{ field.errors }}
+		</div>
+	</div>
+	{% endfor %}
+</form>
+{% endmacro %}
+
+{% block form %}
+{{ typeassist_form() }}
 {% endblock form %}
 <!------------- END FORM ---------------------->
 
@@ -91,9 +95,9 @@ Type Assist
 <!------------------- BEGIN FORM PAGE ACTIONS --------------->
 {% block formpage_actions %}
 {% if edit is defined %}
-    {{ form_update('id_taform', popup_id="delete_alert") }}
+{{ form_update('id_taform', popup_id="delete_alert") }}
 {% else %}
-    {{ form_create('id_taform') }}
+{{ form_create('id_taform') }}
 {% endif %}
 {% endblock formpage_actions %}
 <!------------------- END FORM PAGE ACTIONS --------------->
@@ -101,13 +105,14 @@ Type Assist
 
 <!--------------- BEGIN PAGE-LEVEL EXTRA SCRIPTS --------------->
 {% block extra_scripts %}
+{{ ta_form.media.js }}
 <script>
-$(document).ready(function(){
-	//hide the delete button when instance is not saved yet.
-	if('{{ta_form.instance.tacode}}'==('None' || "")){
-		$("#btn_del").hide()
-	}
-})
+	$(document).ready(function () {
+		//hide the delete button when instance is not saved yet.
+		if ('{{ta_form.instance.tacode}}' == ('None' || "")) {
+			$("#btn_del").hide()
+		}
+	})
 </script>
 {% endblock extra_scripts %}
 <!--------------- END PAGE-LEVEL EXTRA SCRIPTS --------------->

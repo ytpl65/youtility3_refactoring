@@ -25,7 +25,8 @@ urlpatterns = [
     path('logout/', SignOut.as_view(), name='logout'),
     path('dashboard/', TemplateView.as_view(template_name='layout.html'), name='home'),
     path('admin/', admin.site.urls),
-    path('__debug__/', include(debug_toolbar.urls)),
+    path('__debug__/', include(debug_toolbar.urls)), #shoul use when debug=True
+    path('select2/', include('django_select2.urls')),
     path('onboarding/', include('apps.onboarding.urls')),
     path('peoples/', include('apps.peoples.urls')),
 ]

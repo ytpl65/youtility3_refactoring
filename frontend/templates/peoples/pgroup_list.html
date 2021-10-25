@@ -43,7 +43,7 @@ Pgroup Lists
 		<!---------- END TABLE FILTER FIELDS --------->
         {% for pgroup in pgroup_list %}
         <tr>
-            <td><a href="{{ url('peoples:pgroup_update', args=[pgroup['groupid']]) }}">{{ pgroup['groupname'] }}</a></td>
+            <td><a href="{{ url('peoples:pgroup_update', args=[pgroup['id']]) }}">{{ pgroup['groupname'] }}</a></td>
             <td>{{ pgroup['enable'] }}</td>
         </tr>
         {% endfor %}
