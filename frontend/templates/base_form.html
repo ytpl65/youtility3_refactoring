@@ -142,32 +142,44 @@ on top of form -->
         {%- block formpage_actions -%}
             {% if  request.session['wizard_data'] is defined %}
                 <div class="d-flex justify-content-md-start py-2">
-                        {% set wd = request.session['wizard_data'] %}
-                        <!---SAVE FORM BTN ---->
-                        <input type="submit" value="Save Form" id="save_wizard_form" class="me-2 btn btn-sm  btn-primary rounded-1" form="{{ wd['formid'] }}">
-                        {% if wd['prev_url'] != "" %}
-                            {% set PREV_URL = url(wd['prev_url'], args=[wd['prev_inst']]) if wd['prev_inst'] else url(wd['prev_url']) %}
-                            <!---PREVIOUS FORM BTN ---->
-                            <a href="{{ PREV_URL }}" class="me-2 btn btn-sm btn-primary rounded-1">Previous Step</a>
-                        {% endif %}
-                        
-                        {% set NEXT_URL = url(wd['next_url'], args=[wd['next_inst']]) if wd['next_inst'] else url(wd['next_url']) %}
-                        <!---NEXT FORM BTN ---->
-                        <a href="{{ NEXT_URL }}" class="me-2 btn btn-sm btn-primary rounded-1" id="next_btn">Next Step</a>
-                        
-                        {% if edit is defined %}
-                            <!---ADD-MORE FORM BTN ---->
-                            <a href="{{ url(wd['current_url']) }}" class="mx-2 btn btn-sm btn-primary rounded-1">Add More</a>
-                            <!---DELETE FORM BTN ---->
-                            <a href="{{ url(wd['del_url'], args=[wd['current_inst']]) }}" id="delete_form" class="mx-2 btn btn-sm btn-danger rounded-1">Delete</a>
-                        {% endif %}
+                    {% set wd = request.session['wizard_data'] %}
+                    <!---SAVE FORM BTN ---->
+                    <button type="submit" class="me-2 btn btn-sm  btn-primary rounded-1" data-bs-toggle="tooltip"
+                        data-bs-placement="top" data-bs-dimiss="click"
+                        title="submit form before proceeding to next step" id="save_wizard_form"
+                        form="{{ wd['formid'] }}">Submit Form <i class="fas fa-cloud-upload-alt"></i></button>
+                    {% if edit is defined %}
+                        <!---ADD-MORE FORM BTN ---->
+                        <a href="{{ url(wd['current_url']) }}"  data-bs-toggle="tooltip"
+                        data-bs-placement="top" data-bs-dimiss="click" title="create more entries"
+                        class="mx-2 btn btn-sm btn-primary rounded-1">Add More <i
+                                class="fas fa-plus"></i></a>
+                        <!---DELETE FORM BTN ---->
+                        <a href="{{ url(wd['del_url'], args=[wd['current_inst']]) }}" id="delete_form" data-bs-toggle="tooltip"
+                        data-bs-placement="top" data-bs-dimiss="click" title="delete this entry"
+                            class="mx-2 btn btn-sm btn-danger rounded-1">Delete <i class="fas fa-trash-alt"></i></a>
+                    {% endif %}
                 </div>
-
-                
                 <div class="d-flex justify-content-md-end py-1">
+                    {% if wd['prev_url'] != "" %}
+                    {% set PREV_URL = url(wd['prev_url'], args=[wd['prev_inst']]) if wd['prev_inst'] else url(wd['prev_url']) %}
+                        <!---PREVIOUS FORM BTN ---->
+                        <a href="{{ PREV_URL }}" class="me-2 btn btn-sm btn-primary rounded-1" data-bs-toggle="tooltip"
+                        data-bs-placement="top" data-bs-dimiss="click" title="proceed to previous step"><i
+                                class="fas fa-backward"></i> Previous Step</a>
+                    {% endif %}
+
+                    {% set NEXT_URL = url(wd['next_url'], args=[wd['next_inst']]) if wd['next_inst'] else url(wd['next_url']) %}
+                        <!---NEXT FORM BTN ---->
+                        <a href="{{ NEXT_URL }}" class="me-2 btn btn-sm btn-primary rounded-1" id="next_btn"
+                            data-bs-toggle="tooltip" data-bs-placement="top" title="proceed to next step">Next Step <i
+                                class="fas fa-forward"></i></a>
+
                     {% set wd = request.session['wizard_data'] %}
                     {% if not wd['wizard_completed'] %}
-                        <button type="button" id="id_quitwizard" class="btn btn-sm btn-danger">Quit Wizard</button>
+                        <button type="button" id="id_quitwizard" class="btn btn-sm btn-danger" data-bs-toggle="tooltip"
+                            data-bs-dimiss="click" data-bs-placement="top" title="delete the wizard and its data">Quit
+                            Wizard <i class="fas fa-trash-alt"></i></button>
                     {% endif %}
                 </div>
             {% endif %}

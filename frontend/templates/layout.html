@@ -36,16 +36,10 @@
   <div id="form_actions">
     <!--Save Button-->
     <button type="submit" form="{{ form_id }}" onclick="document.getElementById('loader').style.display='block'"
-      id="savebtn" class="btn btn-sm  btn-primary rounded-1">Save It!<span class="svg-icon svg-icon-2">
-        <span class="material-icons h-19px" style="vertical-align: middle; font-size: 19px;">
-          save
-        </span></span></button>
+      id="savebtn" class="btn btn-sm  btn-primary rounded-1">Save It!<i class="fas fa-cloud-upload-alt"></i></button>
     <!--Clear Button-->
     <a href="" class="btn btn-sm btn-secondary rounded-1"
-      onclick="document.getElementById('{{ form_id }}').reset()">Clear<span class="svg-icon svg-icon-2">
-        <span class="material-icons h-19px" style="vertical-align: middle; font-size: 19px;">
-          clear
-        </span></span></a>
+      onclick="document.getElementById('{{ form_id }}').reset()">Clear<i class="fas fa-times-circle"></i></a>
   </div>
 </div>
 {% endmacro %}
@@ -57,23 +51,13 @@
 <div class="d-flex align-items-center py-1">
   <div id="form_actions">
     <!--Save Button-->
-    <button type="submit" form="{{ form_id }}" class="btn btn-sm  btn-primary rounded-1">Save<span
-        class="svg-icon svg-icon-2">
-        <span class="material-icons h-19px" style="vertical-align: middle; font-size: 19px;">
-          save
-        </span></span></button>
+    <button type="submit" form="{{ form_id }}" class="btn btn-sm  btn-primary rounded-1">Save<i class="fas fa-cloud-upload-alt"></i></button>
     <!--Clear Button-->
     <a href="" class="btn btn-sm  btn-secondary rounded-1"
-      onclick="document.getElementById('{{ form_id }}').reset()">Clear<span class="svg-icon svg-icon-2">
-        <span class="material-icons h-19px" style="vertical-align: middle; font-size: 19px;">
-          clear
-        </span></span></a>
+      onclick="document.getElementById('{{ form_id }}').reset()">Clear<i class="fas fa-times-circle"></i></a>
 
     <button id="btn_del" type="button" data-bs-toggle="modal" data-bs-target="#{{ kwargs['popup_id'] }}"
-      class="btn btn-sm  btn-danger rounded-1">Delete<span class="svg-icon svg-icon-2">
-        <span class="material-icons h-19px" style="vertical-align: middle; font-size: 19px;">
-          delete
-        </span></span></button>
+      class="btn btn-sm  btn-danger rounded-1">Delete<i class="fas fa-trash-alt"></i></button>
   </div>
 </div>
 {% endmacro %}
@@ -85,9 +69,7 @@
   <div id="form_actions">
     <a href="{{ url(url_path) }}" class="btn btn-sm rounded-1" style="background-color:#189D54; color:white;">Add New
       <span class="svg-icon svg-icon-2">
-        <span class="material-icons h-19px" style="vertical-align: middle; font-size: 19px;">
-          create
-        </span></span></a>
+       <i class="fas fa-plus text-white"></i></a>
   </div>
 </div>
 {% endmacro %}
