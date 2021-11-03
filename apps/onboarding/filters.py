@@ -19,7 +19,7 @@ class BtFilter(django_filters.FilterSet):
     butype     = django_filters.CharFilter(field_name='butype__tacode', lookup_expr='icontains', label='Site Type')
     identifier = django_filters.CharFilter(field_name='identifier__tacode', lookup_expr='icontains', label='Type')
     parent     = django_filters.CharFilter(field_name='parent__bucode', lookup_expr='icontains', label='Belongs to')
-    enable     = django_filters.CharFilter(field_name='Enable', lookup_expr='icontains', label="Enable")
+    enable     = django_filters.CharFilter(field_name='enable', lookup_expr='icontains', label="Enable")
     
     class Meta:
         model=TypeAssist
