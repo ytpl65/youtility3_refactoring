@@ -22,7 +22,7 @@ Pgroup Lists
 <!------------------ BEGIN PEOPLE TABLE ------------------------->
 {% block table %}
 <div class="table-responsive">
-    <table id="pgroup_table" class="table gy-3" style="width:100%">
+    <table id="pgroup_table" class="display cell-border" style="width:100%">
         <thead class="fw-bold fs-6">
             <th>Name</th>
             <th>Enable</th>
@@ -76,7 +76,9 @@ Pgroup Lists
 			fixedHeader: true,
 			paging: false,
 			scrollCollapse: true,
-			sDom: '<>'
+			language: {
+				searchPlaceholder: "Search local"
+			}
 		})
 		//END DATATABLE INITIALIZATION
 

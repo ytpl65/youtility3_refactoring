@@ -21,43 +21,40 @@ Client Lists
 
 <!------------------ BEGIN CLIENT TABLE ------------------------->
 {% block table %}
-<div class="table-responsive">
-    <table id="client_table" class="table gy-3" style="width:100%">
-        <thead class="fw-bold fs-6">
-            <th>Code</th>
-            <th>Name</th>
-            <th>Enable</th>
-            <th>Web Capability</th>
-            <th>Mobile Capability</th>
-            <th>Report Capability</th>
-        </thead>
-		<!---------- BEGIN TABLE FILTER FIELDS --------->
-		<thead id="filter_row">
-		<form action="" id='client_filter' method='get'>
-			{% for field in client_filter %}
-			<th>
-				<input type="text" 
-				id="{{ field.auto_id }}" 
-				name="{{ field.name }}" 
-				placeholder ="Search {{ field.label }}">
-			</th>
-			{% endfor %}
-		</form>
-		</thead>
-		<!---------- END TABLE FILTER FIELDS --------->
-        {% for client in client_list %}
-        <tr>
-            <td><a href="{{ url('onboarding:client_update', args=[client['id']]) }}">{{ client['bucode'] }}</a></td>
-            <td>{{ client['buname'] }}</td>
-            <td>{{ client['enable'] }}</td>
-            <td>{{ client['bu_preferences__webcapability'] }}</td>
-            <td>{{ client['bu_preferences__mobilecapability'] }}</td>
-            <td>{{ client['bu_preferences__reportcapability'] }}</td>
-        </tr>
-        {% endfor %}
-		
-    </table>
-</div>
+<table id="client_table" class="display cell-border stripe hover" style="width:100%">
+	<thead class="fw-bold fs-6">
+		<th>Code</th>
+		<th>Name</th>
+		<th>Enable</th>
+		<th>Web Capability</th>
+		<th>Mobile Capability</th>
+		<th>Report Capability</th>
+	</thead>
+	<!---------- BEGIN TABLE FILTER FIELDS --------->
+	<thead id="filter_row">
+	<form action="" id='client_filter' method='get'>
+		{% for field in client_filter %}
+		<th>
+			<input type="text" 
+			id="{{ field.auto_id }}" 
+			name="{{ field.name }}" 
+			placeholder ="Search {{ field.label }}">
+		</th>
+		{% endfor %}
+	</form>
+	</thead>
+	<!---------- END TABLE FILTER FIELDS --------->
+	{% for client in client_list %}
+	<tr>
+		<td><a href="{{ url('onboarding:client_update', args=[client['id']]) }}">{{ client['bucode'] }}</a></td>
+		<td>{{ client['buname'] }}</td>
+		<td>{{ client['enable'] }}</td>
+		<td>{{ client['bu_preferences__webcapability'] }}</td>
+		<td>{{ client['bu_preferences__mobilecapability'] }}</td>
+		<td>{{ client['bu_preferences__reportcapability'] }}</td>
+	</tr>
+	{% endfor %}
+</table>
 {% if client_list and client_list.has_other_pages %}
         <!------ BEGIN PAGINATOIN ----->
 		{{ paginator(client_list) }}
@@ -83,7 +80,8 @@ Client Lists
 			fixedHeader: true,
 			paging: false,
 			scrollCollapse: true,
-			sDom:'<>'
+			sDom:'<>',
+			
 		})
 		//END DATATABLE INITIALIZATION
 

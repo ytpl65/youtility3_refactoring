@@ -4,9 +4,9 @@ from import_export import widgets as wg
 from import_export.admin import ImportExportModelAdmin
 
 from apps.peoples import models as pm
-from .forms import (BtForm, TypeAssistForm, BuPrefForm, SitePeopleForm,
+from .forms import (BtForm, ShiftForm, TypeAssistForm, BuPrefForm, SitePeopleForm,
                     ContractDetailForm, ContractForm)
-from . models import TypeAssist, Bt
+from . models import Shift, TypeAssist, Bt
 
 
 class TaResource(resources.ModelResource):
@@ -60,6 +60,8 @@ class BtResource(resources.ModelResource):
 
 
 
+
+
 @admin.register(Bt)
 class BtAdmin(ImportExportModelAdmin):
     form = BtForm
@@ -69,5 +71,12 @@ class BtAdmin(ImportExportModelAdmin):
     exclude = ['bupath']
     list_display = ('bucode', 'id', 'buname', 'butype', 'identifier','parent', 'butree')
     list_display_links = ('bucode',)
+
+@admin.register(Shift)
+class ShiftAdmin(admin.ModelAdmin):
+    form = ShiftForm
+    fields = ('buid', 'shiftname', 'shiftduration', 'starttime', 'endtime', 'nightshift_appicable', 'captchafreq')
+    list_display =('buid', 'shiftname', 'shiftduration', 'starttime', 'endtime', 'nightshift_appicable')
+    list_display_links = ('shiftname',)
 
 

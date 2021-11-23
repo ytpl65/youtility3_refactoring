@@ -35,11 +35,13 @@ class CreateTypeassist(LoginRequiredMixin, View):
         logger.info('create typeassist view...')
         urlname = resolve(request.path_info).url_name
         logger.info(f"url {urlname}")
-        cxt = {'ta_form': self.form_class()}
+
         if 'super' in urlname:
             cxt = {'superta_form': self.form_class2()}
             return render(request, self.template_path2, context=cxt)
-        return render(request, self.template_path, context=cxt)
+        else:
+            cxt = {'ta_form': self.form_class()}
+            return render(request, self.template_path, context=cxt)
 
     def post(self, request, *args, **kwargs):
         """Handles creation of typeassist instance."""
@@ -76,7 +78,8 @@ class CreateTypeassist(LoginRequiredMixin, View):
         return redirect('onboarding:ta_form')
 
     def handle_exception(self, request, form, url):
-        logger.critical("something went wrong...", exc_info=True)
+        logger.critical(
+            "something went wrong please follow the traceback to fix it... ", exc_info=True)
         messages.error(request, "[ERROR] Something went wrong",
                        "alert alert-danger")
         cxt = {'ta_form': form, 'edit': True}
@@ -110,7 +113,8 @@ class RetrieveTypeassists(LoginRequiredMixin, View):
             messages.error(request, 'List view not found',
                            'alert alert-danger')
         except Exception:
-            logger.critical('something went wrong...', exc_info=True)
+            logger.critical(
+                'something went wrong please follow the traceback to fix it... ', exc_info=True)
             messages.error(request, 'Something went wrong',
                            "alert alert-danger")
             response = redirect('/dashboard')
@@ -152,17 +156,15 @@ def test_ta_grid(request):
     count = objects.count()
     total_pages = math.ceil(count/int(limit)) if count else 0
     page = min(int(page), total_pages)
-    start = int(limit) * page -int(limit)
+    start = int(limit) * page - int(limit)
     response['page'] = page
     response['total'] = total_pages
     response['records'] = count
     rows = []
     for i in range(objects.count()):
-        response.setdefault("rows", []).append( objects[i])
+        response.setdefault("rows", []).append(objects[i])
     return JsonResponse(response)
-    
 
-    
 
 class UpdateTypeassist(LoginRequiredMixin, View):
     template_path = 'onboarding/ta_form.html'
@@ -239,7 +241,8 @@ class UpdateTypeassist(LoginRequiredMixin, View):
         return redirect('onboarding:ta_form')
 
     def handle_exception(self, request, form, url):
-        logger.critical("something went wrong...", exc_info=True)
+        logger.critical(
+            "something went wrong please follow the traceback to fix it... ", exc_info=True)
         messages.error(request, "[ERROR] Something went wrong",
                        "alert alert-danger")
         cxt = {'ta_form': form, 'edit': True}
@@ -329,7 +332,8 @@ class CreateBt(LoginRequiredMixin, View):
                        'ta_form': obforms.TypeAssistForm(auto_id=False)}
                 response = render(request, self.template_path, context=cxt)
         except Exception:
-            logger.critical("something went wrong...", exc_info=True)
+            logger.critical(
+                "something went wrong please follow the traceback to fix it... ", exc_info=True)
             messages.error(request, "[ERROR] Something went wrong",
                            "alert alert-danger")
             cxt = {'buform': form, 'edit': True,
@@ -342,7 +346,7 @@ class CreateBt(LoginRequiredMixin, View):
 class RetrieveBt(LoginRequiredMixin, View):
     template_path = 'onboarding/bu_list.html'
     related = ['parent', 'identifier', 'butype']
-    fields = ['id', 'bucode', 'buname', 'identifier__tacode',
+    fields = ['id', 'bucode', 'buname', 'butree', 'identifier__tacode',
               'enable', 'parent__bucode', 'butype__tacode']
     model = Bt
 
@@ -362,7 +366,8 @@ class RetrieveBt(LoginRequiredMixin, View):
             messages.error(request, 'List view not found',
                            'alert alert-danger')
         except Exception:
-            logger.critical('something went wrong...', exc_info=True)
+            logger.critical(
+                'something went wrong please follow the traceback to fix it... ', exc_info=True)
             messages.error(request, 'Something went wrong',
                            "alert alert-danger")
             response = redirect('/dashboard')
@@ -440,7 +445,8 @@ class UpdateBt(LoginRequiredMixin, View):
                    'ta_form': obforms.TypeAssistForm(auto_id=False)}
             response = render(request, self.template_path, context=cxt)
         except Exception:
-            logger.critical("something went wrong...", exc_info=True)
+            logger.critical(
+                "something went wrong please follow the traceback to fix it... ", exc_info=True)
             messages.error(request, "[ERROR] Something went wrong",
                            "alert alert-danger")
             cxt = {'buform': form, 'edit': True,
@@ -506,9 +512,11 @@ class CreateShift(LoginRequiredMixin, View):
         logger.info('create shift form submiited for saving...')
         response, form = None, self.form_class(request.POST)
         try:
+            print("form data", form.data)
             if form.is_valid():
                 logger.info('ShiftForm Form is valid')
                 shift = form.save(commit=False)
+                shift.buid_id = int(request.session['siteid'])
                 shift.save()
                 save_userinfo(shift, request.user, request.session)
                 logger.info('ShiftForm Form saved')
@@ -520,7 +528,8 @@ class CreateShift(LoginRequiredMixin, View):
                 cxt = {'shift_form': form, 'edit': True}
                 response = render(request, self.template_path, context=cxt)
         except Exception:
-            logger.critical("something went wrong...", exc_info=True)
+            logger.critical(
+                "something went wrong please follow the traceback to fix it... ", exc_info=True)
             messages.error(request, "[ERROR] Something went wrong",
                            "alert alert-danger")
             cxt = {'shift_form': form, 'edit': True}
@@ -549,7 +558,8 @@ class RetrieveShift(LoginRequiredMixin, View):
             messages.error(request, 'List view not found',
                            'alert alert-danger')
         except Exception:
-            logger.critical('something went wrong...', exc_info=True)
+            logger.critical(
+                'something went wrong please follow the traceback to fix it... ', exc_info=True)
             messages.error(request, 'Something went wrong',
                            "alert alert-danger")
             response = redirect('/dashboard')
@@ -609,6 +619,7 @@ class UpdateShift(LoginRequiredMixin, View):
             if form.is_valid():
                 logger.info('ShiftForm form is valid..')
                 shift = form.save(commit=False)
+                shift.buid_id = int(request.session['siteid'])
                 shift = save_userinfo(shift, request.user, request.session)
                 shift.save()
                 logger.info('ShiftForm Form saved')
@@ -626,7 +637,8 @@ class UpdateShift(LoginRequiredMixin, View):
             cxt = {'shift_form': form, 'edit': True}
             response = render(request, self.template_path, context=cxt)
         except Exception:
-            logger.critical("something went wrong...", exc_info=True)
+            logger.critical(
+                "something went wrong please follow the traceback to fix it... ", exc_info=True)
             messages.error(request, "[ERROR] Something went wrong",
                            "alert alert-danger")
             cxt = {'shift_form': form, 'edit': True}
@@ -701,7 +713,8 @@ class CreateSitePeople(LoginRequiredMixin, View):
                 cxt = {'sitepeople_form': form, 'edit': True}
                 response = render(request, self.template_path, context=cxt)
         except Exception:
-            logger.critical('something went wrong...', exc_info=True)
+            logger.critical(
+                'something went wrong please follow the traceback to fix it... ', exc_info=True)
             messages.error(request, "[ERROR] Something went wrong",
                            "alert alert-danger")
             cxt = {'sitepeople_form': form, 'edit': True}
@@ -733,7 +746,8 @@ class RetrieveSitePeople(LoginRequiredMixin, View):
             messages.error(request, 'List view not found',
                            'alert alert-danger')
         except Exception:
-            logger.critical('something went wrong...', exc_info=True)
+            logger.critical(
+                'something went wrong please follow the traceback to fix it... ', exc_info=True)
             messages.error(request, 'Something went wrong',
                            "alert alert-danger")
             response = redirect('/dashboard')
@@ -809,7 +823,8 @@ class UpdateSitePeople(LoginRequiredMixin, View):
             cxt = {'sitepeople_form': form, 'edit': True}
             response = render(request, self.template_path, context=cxt)
         except Exception:
-            logger.critical("something went wrong...", exc_info=True)
+            logger.critical(
+                "something went wrong please follow the traceback to fix it... ", exc_info=True)
             messages.error(request, "[ERROR] Something went wrong",
                            "alert alert-danger")
             cxt = {'sitepeople_form': form, 'edit': True}
@@ -888,7 +903,7 @@ class CreateClient(View):
                 bt = form.save(commit=False)
                 if save_json_from_bu_prefsform(bt, jsonform):
                     create_tenant(bt.buname, bt.bucode)
-                    create_default_admin_for_client(bt)
+                    # create_default_admin_for_client(bt)
                     bt.save()
                     bt = save_userinfo(bt, request.user, request.session)
                     logger.info('ClientBt Form saved')
@@ -902,7 +917,8 @@ class CreateClient(View):
                        'ta_form': obforms.TypeAssistForm(auto_id=False)}
                 response = render(request, self.template_path, context=cxt)
         except Exception:
-            logger.critical("something went wrong...", exc_info=True)
+            logger.critical(
+                "something went wrong please follow the traceback to fix it... ", exc_info=True)
             messages.error(request, "[ERROR] Something went wrong",
                            "alert alert-danger")
             cxt = {'clientform': form, 'clientprefsform': jsonform, 'edit': True,
@@ -951,7 +967,8 @@ class RetriveClients(LoginRequiredMixin, View):
             messages.error(request, 'List view not found',
                            'alert alert-danger')
         except Exception:
-            logger.critical('something went wrong...', exc_info=True)
+            logger.critical(
+                'something went wrong please follow the traceback to fix it... ', exc_info=True)
             messages.error(request, 'Something went wrong',
                            "alert alert-danger")
             response = redirect('/dashboard')
@@ -1007,11 +1024,11 @@ class UpdateClient(LoginRequiredMixin, View):
     def post(self, request, *args, **kwargs):
         logger.info('ClientForm Form submitted')
         from .utils import save_json_from_bu_prefsform, create_tenant
+        pk, response = kwargs.get('pk'), None
+        client = self.model.objects.get(id=pk)
+        form = self.form_class(request.POST, instance=client)
+        jsonform = self.json_form(request.POST)
         try:
-            pk, response = kwargs.get('pk'), None
-            client = self.model.objects.get(id=pk)
-            form = self.form_class(request.POST, instance=client)
-            jsonform = self.json_form(request.POST)
             if form.is_valid() and jsonform.is_valid():
                 logger.info('ClientForm Form is valid')
                 create_tenant(form.data['buname'], form.data['bucode'])
@@ -1038,7 +1055,8 @@ class UpdateClient(LoginRequiredMixin, View):
                    'ta_form': obforms.TypeAssistForm(auto_id=False)}
             response = render(request, self.template_path, context=cxt)
         except Exception:
-            logger.critical("something went wrong...", exc_info=True)
+            logger.critical(
+                "something went wrong please follow the traceback to fix it... ", exc_info=True)
             messages.error(request, "[ERROR] Something went wrong",
                            "alert alert-danger")
             cxt = {'clientform': form, 'clientprefsform': jsonform, 'edit': True,
@@ -1091,7 +1109,9 @@ def handle_pop_forms(request):
         'ta_form': obforms.TypeAssistForm,
     }
     form = form_dict[form_name](request.POST)
+    ic(request.POST)
     if not form.is_valid():
+        ic(form.errors)
         return JsonResponse({'saved': False, 'errors': form.errors})
     ta = form.save(commit=False)
     t = TypeAssist.objects.filter(tacode=ta.tacode)

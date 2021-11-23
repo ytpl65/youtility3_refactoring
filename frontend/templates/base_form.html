@@ -1,7 +1,5 @@
 {% extends "layout.html" %}
 
-
-
 {%- block pagebody_container -%}
 
 {%- block wizard_head -%}
@@ -17,7 +15,7 @@
 {%- block upside_card -%}
     <!-------------------BEGIN LABELS OF WIZARD STEPS -------------------->
     {% set labels_of_wizard = ({1:'Buisiness Unit', 2:'Shift', 3:'People',
-                                 4:'People Group', 5:'Prevew Submissions'}) %}
+                                4:'People Group', 5:'Prevew Submissions'}) %}
     <!-------------------END LABELS OF WIZARD STEPS --------------------->
     {% set session = request.session %}
 
@@ -114,7 +112,6 @@ on top of form -->
                     </div>
                 {% endfor %}
             {% endblock form_msgs %}
-
             <!----------- END FORM MESSGES ----------------->
 
             <!--keep empty-->
@@ -141,46 +138,56 @@ on top of form -->
         ---------------------------------------------->
         {%- block formpage_actions -%}
             {% if  request.session['wizard_data'] is defined %}
-                <div class="d-flex justify-content-md-start py-2">
+                <br>
+                <div class="d-flex">
                     {% set wd = request.session['wizard_data'] %}
-                    <!---SAVE FORM BTN ---->
-                    <button type="submit" class="me-2 btn btn-sm  btn-primary rounded-1" data-bs-toggle="tooltip"
-                        data-bs-placement="top" data-bs-dimiss="click"
-                        title="submit form before proceeding to next step" id="save_wizard_form"
-                        form="{{ wd['formid'] }}">Submit Form <i class="fas fa-cloud-upload-alt"></i></button>
-                    {% if edit is defined %}
-                        <!---ADD-MORE FORM BTN ---->
-                        <a href="{{ url(wd['current_url']) }}"  data-bs-toggle="tooltip"
-                        data-bs-placement="top" data-bs-dimiss="click" title="create more entries"
-                        class="mx-2 btn btn-sm btn-primary rounded-1">Add More <i
-                                class="fas fa-plus"></i></a>
-                        <!---DELETE FORM BTN ---->
-                        <a href="{{ url(wd['del_url'], args=[wd['current_inst']]) }}" id="delete_form" data-bs-toggle="tooltip"
-                        data-bs-placement="top" data-bs-dimiss="click" title="delete this entry"
-                            class="mx-2 btn btn-sm btn-danger rounded-1">Delete <i class="fas fa-trash-alt"></i></a>
-                    {% endif %}
-                </div>
-                <div class="d-flex justify-content-md-end py-1">
-                    {% if wd['prev_url'] != "" %}
-                    {% set PREV_URL = url(wd['prev_url'], args=[wd['prev_inst']]) if wd['prev_inst'] else url(wd['prev_url']) %}
-                        <!---PREVIOUS FORM BTN ---->
-                        <a href="{{ PREV_URL }}" class="me-2 btn btn-sm btn-primary rounded-1" data-bs-toggle="tooltip"
-                        data-bs-placement="top" data-bs-dimiss="click" title="proceed to previous step"><i
-                                class="fas fa-backward"></i> Previous Step</a>
-                    {% endif %}
+                    <div class="order-1 ms-auto py-2">
+                        {% if wd['prev_url'] != "" %}
+                        {% set PREV_URL = url(wd['prev_url'], args=[wd['prev_inst']]) if wd['prev_inst'] else url(wd['prev_url']) %}
+                            <!---PREVIOUS FORM BTN ---->
+                            <a href="{{ PREV_URL }}" class="btn btn-sm btn-primary rounded-1" data-bs-toggle="tooltip"
+                            data-bs-placement="top" data-bs-dimiss="click" title="proceed to previous step"><i class="fas fa-backward"></i>Previous</a>
+                        {% endif %}
 
-                    {% set NEXT_URL = url(wd['next_url'], args=[wd['next_inst']]) if wd['next_inst'] else url(wd['next_url']) %}
-                        <!---NEXT FORM BTN ---->
-                        <a href="{{ NEXT_URL }}" class="me-2 btn btn-sm btn-primary rounded-1" id="next_btn"
-                            data-bs-toggle="tooltip" data-bs-placement="top" title="proceed to next step">Next Step <i
-                                class="fas fa-forward"></i></a>
+                        {% set NEXT_URL = url(wd['next_url'], args=[wd['next_inst']]) if wd['next_inst'] else url(wd['next_url']) %}
+                            <!---NEXT FORM BTN ---->
+                            <a href="{{ NEXT_URL }}" class="btn btn-sm btn-primary rounded-1" id="next_btn"
+                                data-bs-toggle="tooltip" data-bs-placement="top" title="proceed to next step">Next <i
+                                    class="fas fa-forward"></i></a>
 
-                    {% set wd = request.session['wizard_data'] %}
-                    {% if not wd['wizard_completed'] %}
-                        <button type="button" id="id_quitwizard" class="btn btn-sm btn-danger" data-bs-toggle="tooltip"
-                            data-bs-dimiss="click" data-bs-placement="top" title="delete the wizard and its data">Quit
-                            Wizard <i class="fas fa-trash-alt"></i></button>
-                    {% endif %}
+                        {% set wd = request.session['wizard_data'] %}
+                        {% if not wd['wizard_completed'] %}
+                            <button type="button" id="id_quitwizard" class="btn btn-sm btn-danger" data-bs-toggle="tooltip"
+                                data-bs-dimiss="click" data-bs-placement="top" title="delete the wizard and its data">Quit
+                                Wizard <i class="fas fa-trash-alt"></i></button>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="py-2">
+                        {% set wd = request.session['wizard_data'] %}
+                        <!---SAVE FORM BTN ---->
+                        <button type="submit" class="btn btn-sm  btn-success rounded-1" data-bs-toggle="tooltip"
+                            data-bs-placement="top" data-bs-dimiss="click"
+                            title="submit form before proceeding to next step" id="save_wizard_form"
+                            form="{{ wd['formid'] }}">Submit <i class="fas fa-cloud-upload-alt"></i></button>
+                        <!---SKIP FORM BTN ---->
+                        {% set NEXT_URL = url(wd['next_url'], args=[wd['next_inst']]) if wd['next_inst'] else url(wd['next_url']) %}
+                       <a href="{{ NEXT_URL }}"  data-bs-toggle="tooltip"
+                            data-bs-placement="top" data-bs-dimiss="click" title="skip this step"
+                            class="btn btn-sm btn-secondary rounded-1">Skip <i class="fas fa-ban"></i></a>
+                        
+                        {% if  wd['current_inst'] != None and edit is defined %}
+                            <!---ADD-MORE FORM BTN ---->
+                            <a href="{{ url(wd['current_url']) }}"  data-bs-toggle="tooltip"
+                            data-bs-placement="top" data-bs-dimiss="click" title="create more entries"
+                            class="btn btn-sm btn-primary rounded-1">Add More <i
+                                    class="fas fa-plus"></i></a>
+                            <!---DELETE FORM BTN ---->
+                            <a href="{{ url(wd['del_url'], args=[wd['current_inst']]) }}" id="delete_form" data-bs-toggle="tooltip"
+                            data-bs-placement="top" data-bs-dimiss="click" title="delete this entry"
+                                class="btn btn-sm btn-danger rounded-1">Delete <i class="fas fa-trash-alt"></i></a>
+                        {% endif %}
+                    </div>
                 </div>
             {% endif %}
         {% endblock formpage_actions %}
@@ -190,21 +197,7 @@ on top of form -->
         ------------------------------------------------>
 
         
-        <!------------------------------------------
-        BEGIN FOR DEVELOPMENT, LATER WILL BE DELETED
-        --------------------------------------------->
-        {%- if  request.session['wizard_data'] is defined -%}
-            <hr>
-            <h3>Wizard Data</h3>
-            <hr>
-            {% set wd = request.session['wizard_data'] %}
-            {% for k, v in wd.items() %}
-            <h4>{{ k }}&nbsp{{ v }}</h4>
-            {% endfor %}
-        {% endif %}
-        <!------------------------------------------
-        END FOR DEVELOPMENT, LATER WILL BE DELETED
-        --------------------------------------------->
+        
 
         <!------------------------------
         BEGIN To Render something 
@@ -217,6 +210,93 @@ on top of form -->
         END To Render something 
         below form, use this block 
         --------------------------------->
+        <!----------------------------------------
+        ONBOARDING WIZARD TIMELINE START
+        -----------------------------------------> 
+        {%- if  request.session['wizard_data'] is defined -%}
+        <hr>
+            <div class="row">
+                <div class="col-md-3 card card-bordered border-2 border-secondary">
+                    <div class="card-body">
+                        <h5 class="card-titile" style="color:#3a3b40de">Buisiness Views</h5>
+                        <h6>
+                        <ol>
+                        {% for bu in request.session['wizard_data']['timeline_data']['buids'] %}
+                            <a href="{{ url('onboarding:wiz_bu_update', args=[bu['id']]) }}">
+                            <li>Code: {{ bu['bucode'] }}, Name: {{ bu['buname'] }}</li></a>
+                        {% endfor %}
+                        </ol>
+                        </h6>
+                    </div>
+                </div>
+                <div class="col-md-3 card card-bordered border-2 border-secondary">
+                    <div class="card-body">
+                        <h5 class="card-titile" style="color:#3a3b40de">Shifts</h5>    
+                        <h6>
+                        <ol>
+                        {% for shift in request.session['wizard_data']['timeline_data']['shiftids'] %}
+                            <a href="{{ url('onboarding:wiz_shift_update', args=[shift['id']]) }}">
+                                <li>
+                                Name: {{ shift['shiftname'] }}
+                                </li>
+                            </a>
+                        {% endfor %}
+                        </ol>
+                        </h6>
+                    </div>
+                </div>
+                <div class="col-md-3 card card-bordered border-2 border-secondary">
+                    <div class="card-body">
+                        <h5 class="card-titile" style="color:#3a3b40de">People</h5>
+                        <h6>
+                        <ol>
+                        {% for people in request.session['wizard_data']['timeline_data']['peopleids'] %}
+                            <a href="{{ url('peoples:wiz_people_update', args=[people['id']]) }}">
+                                <li>Code: {{ people['peoplecode'] }}, Login Id: {{ people['loginid'] }}</li>
+                            </a>
+                        {% endfor %}
+                        </ol>
+                        </h6>
+                    </div>
+                </div>
+                <div class="col-md-3 card card-bordered border-2 border-secondary">
+                    <div class="card-body">
+                        <h5 class="card-titile" style="color:#3a3b40de" >Groups</h5>
+                        <h6>
+                        <ol>
+                        {% for pg in request.session['wizard_data']['timeline_data']['pgroupids'] %}
+                            <a href="{{ url('peoples:wiz_pgroup_update', args=[pg['id']]) }}">
+                                <li>Name: {{ pg['groupname'] }}</li>
+                            </a>
+                        {% endfor %}
+                        </ol>
+                        </h6>
+                    </div>
+                </div>
+            </div>
+        <hr>
+
+        {% endif %}
+        <!----------------------------------------
+        ONBOARDING WIZARD TIMELINE END
+        -----------------------------------------> 
+        
+        
+        <!------------------------------------------
+        BEGIN FOR DEVELOPMENT, LATER WILL BE DELETED
+        --------------------------------------------->
+        {%- if  request.session['wizard_data'] is defined -%}
+            <hr>
+            <h3>Wizard Data For Dev. Purpose</h3>
+            <hr>
+            {% set wd = request.session['wizard_data'] %}
+            {% for k, v in wd.items() %}
+            <h4>{{ k }}&nbsp{{ v }}</h4>
+            {% endfor %}
+        {% endif %}
+        <!------------------------------------------
+        END FOR DEVELOPMENT, LATER WILL BE DELETED
+        --------------------------------------------->
     </div>
     <!--END CARD-BODY-->
 </div>

@@ -2,6 +2,7 @@
 
 #from django core
 from django import forms
+from django.db.models.expressions import F
 from django.db.models.query_utils import Q
 from django.utils.translation import gettext_lazy as _
 
@@ -10,7 +11,8 @@ from icecream import ic
 from django_select2 import forms as s2forms
 #from this project
 import apps.onboarding.models as obm #onboarding-models
-import apps.onboarding.utils as ob_utils #onboarding-utils
+import apps.onboarding.utils as ob_utils
+from apps.peoples.models import Capability #onboarding-utils
 
 #========================================= BEGIN MODEL FORMS ======================================#
 
@@ -32,7 +34,7 @@ class SuperTypeAssistForm(forms.ModelForm):
                 'parent': 'Belongs to'}
         widgets = {
             'parent':s2forms.Select2Widget,
-            'tacode':forms.TextInput(attrs={'placeholder':'Enter code without space and special characters'}),
+            'tacode':forms.TextInput(attrs={'placeholder':'Enter code without space and special characters', 'style':"text-transform: uppercase;"}),
             'taname':forms.TextInput(attrs={'placeholder':"Enter name"}),
             'tatype':forms.TextInput(attrs={'placeholder':"Enter type"})}
         
@@ -40,7 +42,7 @@ class SuperTypeAssistForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         """Initializes form"""
         super(SuperTypeAssistForm, self).__init__(*args, **kwargs)
-        self.fields['tatype'].choices = ob_utils.get_tatype_choices()
+        self.fields['parent'].queryset = ob_utils.get_tatype_choices(superadmin=True)
         ob_utils.initailize_form_fields(self)
 
     
@@ -71,11 +73,12 @@ class SuperTypeAssistForm(forms.ModelForm):
 
 class TypeAssistForm(SuperTypeAssistForm): 
     
-    tatype = forms.ChoiceField(required=True, label='Type', widget=s2forms.Select2Widget)
+    tatype = forms.ModelChoiceField(required=True, label='Type', widget=s2forms.Select2Widget, queryset=None)
+    
     def __init__(self, *args, **kwargs):
         """Initializes form"""
         super(SuperTypeAssistForm, self).__init__(*args, **kwargs)
-        self.fields['tatype'].choices = ob_utils.get_tatype_choices()
+        self.fields['tatype'].queryset = ob_utils.get_tatype_choices()
         ob_utils.initailize_form_fields(self)
 
     class Meta(SuperTypeAssistForm.Meta):
@@ -102,14 +105,15 @@ class BtForm(forms.ModelForm):
     parent = forms.ModelChoiceField(label='Belongs to', required=True, widget=s2forms.Select2Widget, queryset=obm.Bt.objects.all())
     class Meta:
         model  = obm.Bt
-        fields = ['bucode', 'buname', 'parent', 'butype', 'gpslocation',
+        fields = ['bucode', 'buname', 'parent', 'butype', 'gpslocation', 'identifier',
                 'iswarehouse', 'is_serviceprovider', 'isvendor', 'enable',
                 'gpsenable', 'skipsiteaudit', 'enablesleepingguard', 'deviceevent']
         
         labels = {
             'bucode'             : 'Code',
             'buname'             : 'Name',
-            'butype'             : 'Type',
+            'butype'             : 'Site Type',
+            'identifier'         : 'Type',
             'iswarehouse'        : 'Warehouse',
             'gpslocation'        : 'GPS Location',
             'isenable'           : 'Enable',
@@ -124,6 +128,7 @@ class BtForm(forms.ModelForm):
         widgets = { 
             'bucode'      : forms.TextInput(attrs={'style':'text-transform:uppercase;', 'placeholder':'Enter text without space & special characters'}),
             'buname'      : forms.TextInput(attrs={'placeholder':'Name'}),
+            'identifier'      : s2forms.Select2Widget,
             'butype'      : s2forms.Select2Widget,
             'gpslocation' : forms.TextInput(attrs={'placeholder':'GPS Location'}),}    
     
@@ -131,6 +136,9 @@ class BtForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         """Initializes form"""
         super(BtForm, self).__init__(*args, **kwargs)
+        self.fields['identifier'].queryset = obm.TypeAssist.objects.filter(tatype="BU_IDENTIFIER")
+        self.fields['identifier'].widget.attrs = {'required':True}
+        self.fields['butype'].queryset = obm.TypeAssist.objects.filter(tatype="SITE_TYPE")
         ob_utils.initailize_form_fields(self)
     
     
@@ -149,6 +157,7 @@ class BtForm(forms.ModelForm):
         bucode = cleaned_data.get('bucode')
         identifier = cleaned_data.get('identifier')
         instance = self.instance
+        ic(bucode, identifier, instance)
         if bucode and identifier and instance:
             create_bt_tree(bucode, identifier, instance, parent)
         
@@ -188,11 +197,15 @@ class ShiftForm(forms.ModelForm):
         'invalid_code' : "Spaces are not allowed in [Code]",
         'invalid_code2': "[Invalid code] Only ('-', '_') special characters are allowed",
         'invalid_code3': "[Invalid code] Code should not endwith '.' ",
-        'max_hrs_exceed':"Maximum hours in a shift cannot be greater than 12hrs"
+        'max_hrs_exceed':"Maximum hours in a shift cannot be greater than 12hrs",
+        "min_hrs_required":"Minimum hours of a shift should be atleast 5hrs"
     }
+    shiftduration = forms.CharField(widget=forms.TextInput(attrs={'readonly':True}), required=False)
+    
     class Meta:
         model = obm.Shift
-        fields = ['shiftname', 'starttime', 'endtime', 'captchafreq']
+        fields = ['shiftname', 'starttime', 'endtime', 
+        'nightshift_appicable', 'shiftduration', 'captchafreq']
         labels={
             'shiftname':'Shift Name',
             'starttime': 'Start Time',
@@ -200,28 +213,42 @@ class ShiftForm(forms.ModelForm):
             'capcthafreq':'Captcha Frequency'
         }
         widgets ={
-            'shiftname':forms.TextInput(attrs={'placeholder':"Enter shift name"})            
+            'shiftname':forms.TextInput(attrs={'placeholder':"Enter shift name"}),
+            'nightshift_appicable':forms.CheckboxInput(attrs={'onclick':"return false"})
         }
      
     def __init__(self, *args, **kwargs):
         """Initializes form"""
         super(ShiftForm, self).__init__(*args, **kwargs)
+        self.fields['nightshift_appicable'].initial = False
         ob_utils.initailize_form_fields(self)
 
     def clean_shiftname(self):
         val = self.cleaned_data.get('shiftname')
         if val: return val.upper()
+    
+    def clean_shiftduration(self):
+        val = self.cleaned_data.get('shiftduration')
+        if val:
+            h, m = val.split(', ')
+            hrs = int(h.replace("Hrs", ""))
+            mins = int(m.replace("min", ""))
+            if hrs > 12:
+                raise forms.ValidationError(self.error_msg['max_hrs_exceed'])
+            elif hrs < 5:
+                raise forms.ValidationError(self.error_msg['min_hrs_required'])
+            return hrs*60+mins
+    
+    def is_valid(self) -> bool:
+        """Add class to invalid fields"""
+        result = super().is_valid()
+        # loop on *all* fields if key '__all__' found else only on errors:
+        for x in (self.fields if '__all__' in self.errors else self.errors):
+            attrs = self.fields[x].widget.attrs
+            attrs.update({'class': attrs.get('class', '') + ' is-invalid'})
+        return result
 
-    def clean(self):
-        import datetime as dt
-        cleaned_data = super().clean()
-        st = cleaned_data.get('starttime')
-        et = cleaned_data.get('endtime')
-        exit = dt.datetime.combine(dt.date.today(), et)
-        enter = dt.datetime.combine(dt.date.today(), st)
-        total_hrs = exit - enter
-        if total_hrs > dt.timedelta(hours=12):
-            raise forms.ValidationError(self.error_msg['max_hrs_exceed'])            
+
 
 
 class SitePeopleForm(forms.ModelForm):

@@ -24,7 +24,7 @@ Buisiness Units
 <!------------------ BEGIN BU TABLE ------------------------->
 {% block table %}
 <div class="table-responsive">
-	<table id="bt_table" class="table gy-3" style="width:100%">
+	<table id="bt_table" class="display cell-border" style="width:100%">
 		<thead class="fw-bold fs-6">
 			<th>Code</th>
 			<th>Name</th>
@@ -32,6 +32,7 @@ Buisiness Units
 			<th>Enable</th>
 			<th>Belongs To</th>
 			<th>Site Type</th>
+			<th>Reporting Structure</th>
 		</thead>
 		<!------- BEGIN TABLE FILTER FIELDS ------>
 		<thead id="filter_row">
@@ -55,6 +56,7 @@ Buisiness Units
 			<td>{{ bt['enable'] }}</td>
 			<td>{{ bt['parent__bucode'] }}</td>
 			<td>{{ bt['butype__tacode'] }}</td>
+			<td>{{ bt['butree'] }}</td>
 		</tr>
 		{% endfor %}
 		<!----------- END TABLE ROWS ------------->
@@ -87,7 +89,9 @@ Buisiness Units
 			fixedHeader: true,
 			paging: false,
 			scrollCollapse: true,
-			sDom: '<>'
+			language: {
+				searchPlaceholder: "Search local"
+			}
 		})
 		//END DATATABLE INITIALIZATION
 

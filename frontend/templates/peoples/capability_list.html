@@ -2,7 +2,7 @@
 
 <!---- BEGIN CARD TITLE ------>
 {% block card_title %}
-Capability's
+Capabilities
 {% endblock card_title %}
 <!----- END CARD TITLE -------->
 
@@ -15,16 +15,15 @@ Capability's
 
 <!-------- BEGIN PAGE ACTIONS ---------->
 {% block page_actions %}
-{{ form_add('peoples:cap_form') }}
+{{ form_addnew('peoples:capability') }}
 {% endblock page_actions %}
 <!-------- END PAGE ACTIONS ------------>
 
 
 <!------------------ BEGIN BU TABLE ------------------------->
 {% block table %}
-<div class="table-responsive">
     <!------------------ BEGIN TABLE --------------------->
-    <table id="cap_table" class="table gy-2" style="width:100%">
+    <table id="cap_table" class="display cell-border" style="width:100%">
         <thead class="fw-bold fs-6">
             <th>Code</th>
             <th>Name</th>
@@ -34,6 +33,7 @@ Capability's
 		<!---------- BEGIN TABLE FILTER FIELDS --------->
 		<thead id="filter_row">
 		<form action="" id='cap_filter' method='get'>
+			<input type="hidden" name="search_term" value="true">
 			{% for field in cap_filter %}
 			<th>
 				<input type="text" 
@@ -47,7 +47,8 @@ Capability's
 		<!---------- END TABLE FILTER FIELDS --------->
         {% for cap in cap_list %}
         <tr>
-            <td><a href="{{ url('peoples:cap_update', args=[cap['id']]) }}">{{ cap['capscode'] }}</a></td>
+			<!--"{{ url('peoples:cap_update', args=[cap['id']]) }}"-->
+            <td><a href="{{ url('peoples:capability') }}?id={{ cap['id'] }}">{{ cap['capscode'] }}</a></td>
             <td>{{ cap['capsname'] }}</td>
             <td>{{ cap['cfor'] }}</td>
             <td>{{ cap['parent__capscode'] }}</td>
@@ -56,7 +57,6 @@ Capability's
 		
     </table>
     <!------------------ END TABLE --------------------->
-</div>
 
 
 {% if cap_list and cap_list.has_other_pages %}
@@ -74,7 +74,7 @@ Capability's
    $(document).ready(function () {
 		$("input").keypress(function(event) {
 			if (event.which == 13) {
-				event.preventDefault();
+			event.preventDefault();
 				$("#cap_filter").submit();
 			}
 		});
@@ -84,7 +84,14 @@ Capability's
 			fixedHeader: true,
 			paging: false,
 			scrollCollapse: true,
-			sDom: '<>'
+			ordering:false,
+            scrollY: '55vh',
+            scrollCollapse: true,
+            scrollX: true,
+			language: {
+				searchPlaceholder: "Search on page"
+			},
+			"ordering": false
 		})
 		//BEGIN STYLING DATATABLE
 		$("th > input").addClass('form-control')

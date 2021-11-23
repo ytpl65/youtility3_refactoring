@@ -1,0 +1,41 @@
+<form action="" method="post" id="id_capform">
+	<div class="modal-header border-0">
+		<h4 class="modal-title ch4" id="exampleModalLabel">Create Capability</h4>
+		<button type="button" class="btn-sm btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+	</div>
+	<div class="modal-body" id="partial">
+		<div class="alert alert-danger alert-dismissible fade show" id="nonfield_errors"role="alert" style="display:none">
+			<strong>Error</strong> <span></span>
+			<button type="button" class="btn-sm btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+		</div>
+
+		{% for field in cap_form %}
+		<div class="mb-3 row">
+			<!--LABEL FIELD-->
+			{{ field.label_tag() }}
+			<!--INPUT GROUP -->
+			{{ field }}
+			<!-- ERROR FIELD -->
+			{{ field.errors }}
+		</div>
+		{% endfor %}
+	</div>
+	
+	<div class="modal-footer border-0">
+		<button type="button" class="btn btn-sm btn-secondary closeit" data-bs-dismiss="modal">Close</button>
+		{% if cap_form.instance.capscode %}
+		<button type="submit" id="submit" class="btn btn-sm btn-primary">Update&nbsp;<i class="fas fa-cloud-upload-alt"></i></button>
+		<button type="button" onclick="deleteCapability(this)" data-id="{{ cap_form.instance.id }}" id="deleteCap" class="btn btn-sm btn-danger">Delete&nbsp;<i class="fas fa-trash-alt"></i></button>
+		{% else %}
+		<button type="submit" class="btn btn-sm btn-primary">Add&nbsp;<i class="fas fa-cloud-upload-alt"></i></button>
+		{% endif %}
+		
+	</div>
+
+</form>
+
+<script>
+$("#modal-cap").find("select").select2({
+		dropdownParent: $('#modal-cap')
+    })
+</script>

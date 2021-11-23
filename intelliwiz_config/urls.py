@@ -18,12 +18,13 @@ from django.conf import settings
 from django.urls import path, include
 from django.conf.urls.static import static
 from django.views.generic import TemplateView
+from django.contrib.auth.decorators import login_required
 from apps.peoples.views import SignIn, SignOut
 import debug_toolbar
 urlpatterns = [
     path('', SignIn.as_view(), name='login'),
     path('logout/', SignOut.as_view(), name='logout'),
-    path('dashboard/', TemplateView.as_view(template_name='layout.html'), name='home'),
+    path('dashboard/', login_required(TemplateView.as_view(template_name='base_ajax.html')), name='home'),
     path('admin/', admin.site.urls),
     path('__debug__/', include(debug_toolbar.urls)), #shoul use when debug=True
     path('select2/', include('django_select2.urls')),

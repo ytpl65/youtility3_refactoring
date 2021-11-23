@@ -6,6 +6,11 @@ Capability Form
 {% endblock title %}
 <!---- END PAGE TITLE ----->
 
+
+{% block extra_css %}
+{{ cap_form.media.css }}
+{% endblock extra_css %}
+
 <!-------------------------- BEGIN PAGE BREADCUMB ----------------------->
 {% block pagebreadcumb %}
 {{ super() }}
@@ -26,7 +31,7 @@ Capability Form
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">No Go back</button>
-                <a href="{{ url('peoples:cap_delete', args=[cap_form.instance.id]) }}" class="btn btn-sm  btn-danger rounded-1">Yes I'm Sure</a>
+                <a href="{{ url('peoples:capability') }}?action=delete&id={{ cap_form.instance.id }}" id="delete_cap" class="btn btn-sm  btn-danger rounded-1">Yes I'm Sure</a>
             </div>
         {% endcall %}
 	{% endif %}
@@ -59,7 +64,7 @@ Capability Form
 {% block form %}
 <form action="" method="post" id="id_capform">
 	<!---------------------- CSRF-MIDDLEWARE TOKEN ---------------------->
-	<input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
+	{# <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}"> #}
 	{% for field in cap_form %}
 	<div class="mb-3 row">
 		<!--LABEL FIELD-->
@@ -80,8 +85,7 @@ Capability Form
 {% endblock form %}
 <!------------- END FORM ---------------------->
 
-
-<!------------------- BEGIN FORM PAGE ACTIONS --------------->
+<!------------------- BEGIN FORM PAGE ACTIONS ------------>
 {% block formpage_actions %}
 {% if edit is defined %}
 {{ form_update('id_capform', popup_id="delete_alert") }}
@@ -94,12 +98,23 @@ Capability Form
 
 <!--------------- BEGIN PAGE-LEVEL EXTRA SCRIPTS --------------->
 {% block extra_scripts %}
+{{ cap_form.media.js }}
 <script>
 	$(document).ready(function () {
 		//hide the delete button when instance is not saved yet.
 		if ('{{cap_form.instance.capscode}}' == ('None' || "")) {
 			$("#btn_del").hide()
 		}
+		
+		//submit ajax form
+		$("#savebtn, #form_update").click((e) => {
+			console.log(`jquery version ${$().jquery}`)
+			e.preventDefault();
+			const params = {url:"{{ url('peoples:capability') }}", type:"post"}
+			const payload = {formData:$("#id_capform").serialize(), csrfmiddlewaretoken: '{{ csrf_token }}'}
+			submit_ajax_form_post(params, payload)	
+		})
+		
 	})
 </script>
 {% endblock extra_scripts %}

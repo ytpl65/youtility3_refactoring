@@ -18,36 +18,36 @@
 
 <!-------------  BEGIN POP-UPS CODE -------------->
 {% block popup_alerts %}
-{{ super() }}
-{% if edit is defined %}
-<!-- to delete an instance with popup_alert pass the delete_url_name, instance_	id, popup_title, popup_id -->
-{% call general_popup(title="Delete",popup_id="delete_alert") %}
-<div class="modal-body">
-	<h4>Are you sure, you want to delete this?</h4>
-</div>
-<div class="modal-footer">
-	<button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">No Go back</button>
-	<a href="{{ url('onboarding:bu_delete', args=[buform.instance.id]) }}"
-		class="btn btn-sm  btn-danger rounded-1">Yes I'm Sure</a>
-</div>
-{% endcall %}
-{% endif %}
+	{{ super() }}
+	{% if edit is defined %}
+	<!-- to delete an instance with popup_alert pass the delete_url_name, instance_	id, popup_title, popup_id -->
+		{% call general_popup(title="Delete",popup_id="delete_alert") %}
+		<div class="modal-body">
+			<h4>Are you sure, you want to delete this?</h4>
+		</div>
+		<div class="modal-footer">
+			<button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">No Go back</button>
+			<a href="{{ url('onboarding:bu_delete', args=[buform.instance.id]) }}"
+				class="btn btn-sm  btn-danger rounded-1">Yes I'm Sure</a>
+		</div>
+		{% endcall %}
+	{% endif %}
 
-<!------------- typeassist popup for onclick + icon ---------------------->
-{% call general_popup(title='Create TypeAssist', popup_id = "typeassist_popup") %}
-<form action="" method="post" id="pop_ta_form">
-	<div class="modal-body">
-		<input type="hidden" name="form_name" , value="ta_form">
-		{% if ta_form is defined %}
-		{{ typeassist_form() }}
-		{% endif %}
-	</div>
-	<div class="modal-footer">
-		<button type="button" class="btn btn-sm  btn-secondary rounded-1" data-bs-dismiss="modal">Close</button>
-		<input type="submit" class="btn btn-sm  btn-primary rounded-1" value="Sumbit" form="pop_ta_form" />
-	</div>
-</form>
-{% endcall %}
+	<!------------- typeassist popup for onclick + icon ---------------------->
+	{% call general_popup(title='Create TypeAssist', popup_id = "butype_ta_popup") %}
+	<form action="" method="post" id="butype_ta_form">
+		<div class="modal-body">
+			<input type="hidden" name="form_name" , value="ta_form">
+			{% if ta_form is defined %}
+			{{ typeassist_form() }}
+			{% endif %}
+		</div>
+		<div class="modal-footer">
+			<button type="button" class="btn btn-sm  btn-secondary rounded-1" onclick="document.getElementById('butype_ta_form').reset()" data-bs-dismiss="modal">Close</button>
+			<input type="submit" class="btn btn-sm  btn-primary rounded-1"  value="Sumbit" form="butype_ta_form" />
+		</div>
+	</form>
+	{% endcall %}
 {% endblock popup_alerts %}
 <!------------------------  END POP-UPS CODE ----------------------------->
 
@@ -59,7 +59,7 @@
 
 <!------ BEGIN FORM TITLE ------->
 {% block form_title %}
-Buisiness-Unit
+Buisiness-View
 {% endblock form_title %}
 <!------ END FORM TITLE -------->
 
@@ -98,6 +98,7 @@ Buisiness-Unit
 			{{ buform.bucode }}
 			{{ buform.bucode.errors }}
 		</div>
+		
 		<!--BUNAME-->
 		<label class="required col-form-label col-md-2 col-sm-2 text-sm-right" for="id_buname">Name:
 			<span class="material-icons-outlined h-19px" data-bs-toggle="tooltip" data-bs-custom-class="tooltip"
@@ -122,8 +123,9 @@ Buisiness-Unit
 			{{ buform.parent }}
 			{{ buform.parent.errors }}
 		</div>
-		<!--BUTYPE-->
-		<label for="id_butype" class="col-form-label col-md-2 col-sm-2 text-sm-right">Type:
+		
+		<!--BU IDENTIFIER-->
+		<label for="id_identifier" class="col-form-label col-md-2 col-sm-2 text-sm-right">Type:
 			<span class="material-icons-outlined h-19px" data-bs-toggle="tooltip" data-bs-custom-class="tooltip"
 				data-bs-placement="top" style="vertical-align: middle; font-size: 19px;"
 				title="Butype specfies the type of this buisiness unit">
@@ -132,8 +134,22 @@ Buisiness-Unit
 		</label>
 		<div class="col-md-4">
 			<div class="d-flex flex-row">
+				{{ buform.identifier }}
+			</div>
+			{{ buform.identifier.errors }}
+		</div>
+		<!--SITE TYPE-->
+		<label for="id_butype" style="display:none;" class="col-form-label col-md-2 col-sm-2 text-sm-right site_type">Site Type:
+			<span class="material-icons-outlined h-19px" data-bs-toggle="tooltip" data-bs-custom-class="tooltip"
+				data-bs-placement="top" style="vertical-align: middle; font-size: 19px;"
+				title="Butype specfies the type of this buisiness unit">
+				info
+			</span>
+		</label>
+		<div class="col-md-4 site_type" style="display:none;">
+			<div class="d-flex flex-row">
 				{{ buform.butype }}
-				<a href="" type="button" data-bs-toggle="modal" data-bs-target="#typeassist_popup"><span
+				<a href="" type="button" data-bs-toggle="modal" data-bs-target="#butype_ta_popup"><span
 						style="font-size: 24px;" data-bs-toggle="tooltip" data-bs-placement="left"
 						title="If you haven't found an option in selection menu, then create one from here"
 						class="material-icons-outlined mt-3 ps-2 primary-col">
@@ -236,21 +252,46 @@ Buisiness-Unit
 		}
 
 		// submit the popup-taform for validation and saving in db.
-		$('#pop_ta_form').on('submit', sumit_popup_form({
+		$('#butype_ta_form').on('submit', sumit_popup_form({
 			'url': "{{ url('onboarding:ta_popup') }}",
-			'form': "#pop_ta_form",
+			'form': "#butype_ta_form",
 			'field': "#id_butype",
-			'modal': "#typeassist_popup"
-		}))
+			'modal': "#butype_ta_popup",
+			'default':$("#butype_ta_popup select option:contains('SITE_TYPE')").val()
 
+		}))
+		
+		//for select2 search work in bootstrap modals
+		$("#typeassist_popup").find("select[name=tatype]").select2({
+            dropdownParent: $('#typeassist_popup')
+        })
+		
+		$("#butype_ta_popup").find("select[name=tatype]").select2({
+            dropdownParent: $('#butype_ta_popup')
+        })
+		
 		//closeOnSelect set true 
 		$('#id_parent, #id_butype').select2({
 			closeOnSelect: true
 		})
+		
 		//hide next btn if instance is not saved yet
 		if (session['wizard_data'] && session['wizard_data']['buids'].length == 0) {
 			$('#next_btn').hide()
 		}
+		//show butype when user opts to site
+		$('#id_identifier').on('change', function() {
+			var list = ['SITE', 'Site']
+			var data = $("#id_identifier option:selected").text();
+			if(list.includes(data)){
+				$(".site_type").show();
+			}else{$(".site_type").hide();}
+		})
+		//pre-select options for pop-up ta forms
+		$("#butype_ta_popup select[name='tatype']").val($("#butype_ta_popup select option:contains('SITE_TYPE')").val()).change().prop('disabled', true)
+
+
+
 	})
 </script>
 {% endblock extra_scripts %}

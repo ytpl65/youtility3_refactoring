@@ -1,17 +1,22 @@
+@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400&display=swap');
+html * {
+    font-family: 'Roboto', sans-serif;
+}
 .menu-item.menu-accordion.show {
     border-left: 4px solid #489edb;
 }
-
-thead {
-    border-bottom: 2px solid    #9899ac;
-    color: #707478;
-    font-weight: bolder
+th {
+    border-top: 1px solid #dddddd;
+    border-bottom: 1px solid #dddddd;
+    border-right: 1px solid #dddddd;
+    color:#65595d;  
+  }
+   
+th:first-child {
+    border-left: 1px solid #dddddd;
 }
 
-tr:nth-child(even) {
-    /* background: rgba(216, 216, 216, 0.274) */
-    background-color: #f1f4f7;
-}
+td {word-wrap: break-word}
 
 input.form-control {
     color: #495057;
@@ -42,7 +47,7 @@ body[data-kt-aside-minimize="on"]>.menu-item {
     list-style: none;
     padding: 0px;
 }
-.errorlist > li{
+.errorlist > li, p.errors{
     color:red;
 	font-size: 15px;
 }
@@ -96,4 +101,22 @@ input[type='checkbox']{
 }
 .select2-container--bootstrap5 .select2-selection--single .select2-selection__rendered {
     color: #495057;
+}
+thead > tr {
+    height: 60px;
+}
+
+h6 > ol > li {
+    color: #3F4254;
+}
+.flatpickr-time > .time24hr{
+    border: 2px solid #3F4254;
+}
+.ch4{
+    color:#3a3b40de;
+}
+
+
+body{
+    overflow: auto;
 }

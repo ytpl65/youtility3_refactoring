@@ -36,5 +36,5 @@ urlpatterns = [
     path('client_form/del/<str:pk>', views.DeleteClient.as_view() ,   name='client_delete'),
     path('client_form/get_caps/',    views.get_caps,                  name="get_caps"),
     path('wizard/',                 include(wizard_url_patterns1)),
-    path('del/ta/', views.handle_pop_forms, name="ta_popup")
+    path('pop-up/ta/', views.handle_pop_forms, name="ta_popup")
 ]

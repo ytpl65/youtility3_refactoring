@@ -1,4 +1,7 @@
+from re import search
 from django import forms
+from django.db import  transaction
+
 import apps.peoples.models as pm #people-models
 import apps.onboarding.models as om #onboarding-models
 from django.core.validators import RegexValidator
@@ -6,6 +9,8 @@ from icecream import ic
 from django_select2 import forms as s2forms
 from django.db.models import Q
 import apps.onboarding.utils as ob_utils #onboarding-utils
+import apps.peoples.utils as pp_utils
+from apps.tenants.models import Tenant #onboarding-utils
 
 #============= BEGIN LOGIN FORM ====================#
 
@@ -70,7 +75,7 @@ class PeopleForm(forms.ModelForm):
     
     #defines field rendering order
     field_order   = ['peoplecode',  'peoplename', 'loginid',     'email',
-                    'mobno',        'gender',     'dateofbirth', 'isenable',
+                    'mobno',        'gender',     'dateofbirth', 'enable',
                     'peopletype',   'dateofjoin', 'department',  'designation',
                     'dateofreport', 'reportto',   'deviceid']
     
@@ -96,15 +101,15 @@ class PeopleForm(forms.ModelForm):
     class Meta:
         model  = pm.People
         fields = ['peoplename', 'peoplecode',  'peopleimg',  'mobno',      'email', 
-                'loginid',      'dateofbirth', 'isenable',   'deviceid',   'gender',
+                'loginid',      'dateofbirth', 'enable',   'deviceid',   'gender',
                 'peopletype',   'dateofjoin',  'department', 'dateofreport', 
-                'designation',  'reportto', 'shift']
+                'designation',  'reportto', 'shift', 'siteid', 'isadmin']
         labels = {
             'peoplename':'Name',       'loginid'    :'Login Id',         'email'       :'Email',
             'peopletype':'People Type', 'reportto'  :'Report to',        'designation':'Designation',
-            'gender'    :'Gender',     'dateofbirth':'Date of Birth',    'isenable'    :'Enable',         
+            'gender'    :'Gender',     'dateofbirth':'Date of Birth',    'enable'    :'Enable',         
             'department':'Department', 'dateofjoin' : 'Date of Joining', 'dateofreport':'Date of Release',
-            'deviceid':'Device Id' }
+            'deviceid':'Device Id' , 'siteid':"Site", 'isadmin':"Is Admin"}
         
         widgets = {
             'mobno'     : forms.TextInput(attrs={'placeholder':'Eg:- +91XXXXXXXXXX, +44XXXXXXXXX'}), 
@@ -119,6 +124,7 @@ class PeopleForm(forms.ModelForm):
             'department':s2forms.Select2Widget,
             'designation':s2forms.Select2Widget,
             'reportto':s2forms.Select2Widget,
+            'siteid':s2forms.Select2Widget,
         }
     
     def __init__(self, *args, **kwargs):
@@ -127,7 +133,7 @@ class PeopleForm(forms.ModelForm):
         self.fields['peopletype'].queryset = om.TypeAssist.objects.filter(tatype="PEOPLE_TYPE")
         self.fields['department'].queryset = om.TypeAssist.objects.filter(tatype="DEPARTMENT")
         self.fields['designation'].queryset = om.TypeAssist.objects.filter(tatype="DESINGATION")
-        self.fields['shift'].queryset = om.TypeAssist.objects.filter(tatype="SHIFT_TYPE")
+        self.fields['shift'].queryset = om.Shift.objects.all()
         ob_utils.initailize_form_fields(self)
 
 
@@ -205,7 +211,7 @@ class PgroupForm(forms.ModelForm):
         'invalid_code2': "[Invalid code] Only ('-', '_') special characters are allowed",
         'invalid_code3': "[Invalid code] Code should not endwith '.' ",
     }
-
+    peoples = forms.MultipleChoiceField(required=True, widget=s2forms.Select2MultipleWidget, label="Select People")
     class Meta:
         model  = pm.Pgroup
         fields = ['groupname', 'enable']
@@ -220,8 +226,14 @@ class PgroupForm(forms.ModelForm):
         }
 
     def __init__(self, *args, **kwargs):
+        self.request = kwargs.pop('request')
         super(PgroupForm, self).__init__(*args, **kwargs)
         ob_utils.initailize_form_fields(self)
+        site = self.request.user.siteid.bucode if self.request.user.siteid else ""
+        self.fields['peoples'].choices = pm.People.objects.select_related(
+            'siteid').filter( isadmin=False).values_list(
+            'id', 'peoplename')
+
 
     def is_valid(self) -> bool:
         """Add class to invalid fields"""
@@ -264,7 +276,7 @@ class CapabilityForm(forms.ModelForm):
         'invalid_code3': "Code's should not be endswith '.' ",
     }
     parent = forms.ModelChoiceField(queryset=pm.Capability.objects.filter(Q(parent__capscode = 'NONE') | Q(capscode='NONE')),
-    label='Belongs to')
+    label='Belongs to', widget=s2forms.Select2Widget)
     class Meta:
         model  = pm.Capability
         fields = ['capscode', 'capsname', 'parent', 'cfor']
@@ -277,7 +289,9 @@ class CapabilityForm(forms.ModelForm):
             'capscode':forms.TextInput(
                 attrs={'placeholder':"Code", 'style':"  text-transform: uppercase;"}
                 ),
-            'capsname':forms.TextInput(attrs={'placeholder':"Enter name"})}
+            'capsname':forms.TextInput(attrs={'placeholder':"Enter name"}),
+            'cfor':s2forms.Select2Widget}
+            
 
     def __init__(self, *args, **kwargs):
         super(CapabilityForm, self).__init__(*args, **kwargs)
@@ -326,8 +340,8 @@ class PeopleExtrasForm(forms.Form):
     debug                     = forms.BooleanField(initial=False, required=False)
     showtemplatebasedonfilter = forms.BooleanField(initial= False, required=False, label="Display site wise templates")
     blacklist                 = forms.BooleanField(initial=False, required=False)
-    assignsitegroup           = forms.ChoiceField(required=False, label="Site Group")
-    tempincludes              = forms.ChoiceField(required=False, label="Template")
+    assignsitegroup           = forms.ChoiceField(required=False, label="Site Group", widget=s2forms.Select2Widget)
+    tempincludes              = forms.ChoiceField(required=False, label="Template", widget=s2forms.Select2Widget)
     mlogsendsto               = forms.CharField(max_length=25, required=False)
 
     def __init__(self, *args, **kwargs):
@@ -356,16 +370,65 @@ class PeopleExtrasForm(forms.Form):
 
 
 class PeopleGrpAllocation(forms.Form):
-    people = forms.MultipleChoiceField(required=True)
+    people = forms.ChoiceField(required=True, widget=s2forms.Select2Widget)
     is_grouplead = forms.BooleanField(required=False, initial=False)
 
     def __init__(self, *args, **kwargs):
         request = kwargs.pop('request')
         super(PeopleGrpAllocation, self).__init__(*args, **kwargs)
         ob_utils.initailize_form_fields(self)
+        site = request.user.siteid.bucode if request.user.siteid else ""
+        self.fields['people'].choices = pm.People.objects.select_related(
+            'siteid').filter(
+            siteid__bucode = site).values_list(
+            'id', 'peoplename')
 
     def is_valid(self) -> bool:
         """Add class to invalid fields"""
+        result = super().is_valid()
+        ob_utils.apply_error_classes(self)
+        return result 
+
+
+class AttendanceForm(forms.ModelForm):
+    required_css_class = "required"
+
+    class Meta:
+        model = pm.PeopleEventlog
+        fields = ['peopleid', 'punch_intime', 'punch_outtime', 'datefor',
+         'peventtype', 'verifiedby', 'facerecognition', 'remarks']
+        labels = {
+            'peopleid':'People',
+            'punch_intime':'In Time',
+            'punch_outtime':'Out Time',
+            'datefor':'For Date',
+            'peventtype':'Attendance Type',
+            'verifiedby':'Verified By',
+            'facerecognition':'Enable FaceRecognition',
+            'remarks':"Remark"
+        }
+        widgets = {
+            'peopleid': s2forms.ModelSelect2Widget(
+                model=pm.People, search_fields =  ['peoplename__icontains','peoplecode__icontains']
+            ),
+            'verifiedby': s2forms.ModelSelect2Widget(
+                model = pm.People, search_fields = ['peoplename__icontains','peoplecode__icontains']
+            )
+        }
+
+
+    def __init__(self, *args, **kwargs):
+        super(AttendanceForm, self).__init__(*args, **kwargs)
+        ob_utils.initailize_form_fields(self)
+        self.fields['datefor'].required = True
+        self.fields['punch_intime'].required = True
+        self.fields['punch_outtime'].required = True
+        self.fields['verifiedby'].required = True
+        self.fields['peopleid'].required = True
+        self.fields['peventtype'].required = True
+
+    def is_valid(self) -> bool:
+        """Adds 'is-invalid' class to invalid fields"""
         result = super().is_valid()
         ob_utils.apply_error_classes(self)
         return result 

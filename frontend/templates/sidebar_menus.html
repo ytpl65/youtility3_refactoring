@@ -143,8 +143,8 @@
       <span class="menu-arrow"></span>
     </span>
     <div class="menu-sub menu-sub-accordion" kt-hidden-height="116" style="display: none; overflow: hidden;">
-      <div class="menu-item">
-        <a class="menu-link" id="raise_ticket" href="apps/customers/getting-started.html">
+      <div class="menu-item" id="raise_ticket">
+        <a class="menu-link" href="apps/customers/getting-started.html">
           <span class="menu-bullet">
             <span class="bullet bullet-dot"></span>
           </span>
@@ -161,7 +161,7 @@
       </div>
     </div>
   </div>
-  <div data-kt-menu-trigger="click" id="Workflow" class="menu-item menu-accordion" style="display:none;">
+  <div data-kt-menu-trigger="click" id="menu_workflow" class="menu-item menu-accordion" style="display:none;">
     <span class="menu-link">
       <span class="menu-icon">
         <!--begin::Svg Icon | path: icons/duotone/Communication/Group.svg-->
@@ -184,7 +184,7 @@
           <span class="menu-title">WorkFlow Template</span>
         </a>
       </div>
-      <div class="menu-item" id="work_flow">
+      <div class="menu-item" id="workflow">
         <a class="menu-link" href="apps/customers/list.html">
           <span class="menu-bullet">
             <span class="bullet bullet-dot"></span>
@@ -260,7 +260,7 @@
       </div>
     </div>
   </div>
-  <div data-kt-menu-trigger="click" id="kpi_reports" class="menu-item menu-accordion" style="display:none;">
+  <div data-kt-menu-trigger="click" id="kpi_report_menu" class="menu-item menu-accordion" style="display:none;">
     <span class="menu-link">
       <span class="menu-icon">
         <!--begin::Svg Icon | path: icons/duotone/Communication/Group.svg-->
@@ -283,7 +283,6 @@
           <span class="menu-title">KPI Report</span>
         </a>
       </div>
-
     </div>
   </div>
   <div data-kt-menu-trigger="click" id="workpermits" class="menu-item menu-accordion" style="display:none;">
@@ -390,7 +389,7 @@
           <span class="menu-title">CCTV Events</span>
         </a>
       </div>
-      <div data-kt-menu-trigger="click" id="mobile_user_timeline" class="menu-item menu-accordion"
+      <div data-kt-menu-trigger="click" id="tracking_mobile_user_timeline" class="menu-item menu-accordion"
         style="display:none;">
         <span class="menu-link">
           <span class="menu-title">Mobile User TimeLine</span>
@@ -486,7 +485,7 @@
       <span class="menu-arrow"></span>
     </span>
     <div class="menu-sub menu-sub-accordion" kt-hidden-height="116" style="display: none; overflow: hidden;">
-      <div data-kt-menu-trigger="click" class="menu-item menu-accordion" style="display:none;" id="configtask">
+      <div data-kt-menu-trigger="click" class="menu-item menu-accordion" style="display:none;" id="config_task">
         <span class="menu-link">
           <span class="menu-icon">
             <!--begin::Svg Icon | path: icons/duotone/Communication/Group.svg-->
@@ -539,7 +538,7 @@
               <span class="menu-title">Building Services Assets</span>
             </a>
           </div>
-          <div class="menu-item" id="menu_task_assetaudit">
+          <div class="menu-item" id="task_assetaudit">
             <a class="menu-link" href="apps/customers/getting-started.html">
               <span class="menu-bullet">
                 <span class="bullet bullet-dot"></span>
@@ -581,7 +580,7 @@
           </div>
         </div>
       </div>
-      <div data-kt-menu-trigger="click" class="menu-item menu-accordion" style="display:none;" id="asset_maintainance">
+      <div data-kt-menu-trigger="click" class="menu-item menu-accordion" style="display:none;" id="config_asset_maintainance">
         <span class="menu-link">
           <span class="menu-icon">
             <!--begin::Svg Icon | path: icons/duotone/Communication/Group.svg-->
@@ -797,7 +796,7 @@
           </div>
         </div>
       </div>
-      <div data-kt-menu-trigger="click" class="menu-item menu-accordion" style="display:none;" id="geofence_config">
+      <div data-kt-menu-trigger="click" class="menu-item menu-accordion" style="display:none;" id="config_geofence_config">
         <span class="menu-link">
           <span class="menu-icon">
             <!--begin::Svg Icon | path: icons/duotone/Communication/Group.svg-->
@@ -822,7 +821,7 @@
           </div>
         </div>
       </div>
-      <div data-kt-menu-trigger="click" class="menu-item menu-accordion" style="display:none;" id="company_setup">
+      <div data-kt-menu-trigger="click" class="menu-item menu-accordion" style="display:none;" id="config_company_setup">
         <span class="menu-link">
           <span class="menu-icon">
             <!--begin::Svg Icon | path: icons/duotone/Communication/Group.svg-->
@@ -944,7 +943,7 @@
           <span class="menu-title">Import/Export</span>
         </a>
       </div>
-      <div data-kt-menu-trigger="click" class="menu-item menu-accordion" style="display:none;" id="bulk_update">
+      <div data-kt-menu-trigger="click" class="menu-item menu-accordion" style="display:none;" id="admin_bulk_update">
         <span class="menu-link">
           <span class="menu-icon">
             <!--begin::Svg Icon | path: icons/duotone/Communication/Group.svg-->
@@ -1118,11 +1117,19 @@
     </span>
     <div class="menu-sub menu-sub-accordion" kt-hidden-height="116" style="display: none; overflow: hidden;">
       <div class="menu-item" id="capability">
-        <a class="menu-link" href="{{ url('peoples:cap_list') }}">
+        <a class="menu-link" href="{{ url('peoples:cap_list') }}?action=list">
           <span class="menu-bullet">
             <span class="bullet bullet-dot"></span>
           </span>
           <span class="menu-title">Capability</span>
+        </a>
+      </div>
+      <div class="menu-item" id="Capability">
+        <a class="menu-link" href="{{ url('peoples:capability') }}?action=list">
+          <span class="menu-bullet">
+            <span class="bullet bullet-dot"></span>
+          </span>
+          <span class="menu-title">Capability (Alpha)</span>
         </a>
       </div>
       <div class="menu-item" id="client">

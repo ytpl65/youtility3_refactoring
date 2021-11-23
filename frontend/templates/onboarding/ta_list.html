@@ -22,9 +22,8 @@ TypeAssist's
 
 <!------------------ BEGIN BU TABLE ------------------------->
 {% block table %}
-<div class="table-responsive">
-    {# <!------------------ BEGIN TABLE --------------------->
-    <table id="ta_table" class="table gy-2" style="width:100%">
+    <!------------------ BEGIN TABLE --------------------->
+    <table id="ta_table" class="display cell-border" style="width:100%">
         <thead class="fw-bold fs-6">
             <th>Code</th>
             <th>Name</th>
@@ -40,7 +39,8 @@ TypeAssist's
 				<input type="text" 
 				id="{{ field.auto_id }}" 
 				name="{{ field.name }}" 
-				placeholder ="Search {{ field.label }}">
+				placeholder ="Search {{ field.label }}"
+				class="rounded-0">
 			</th>
 			{% endfor %}
 		</form>
@@ -56,10 +56,7 @@ TypeAssist's
         </tr>
         {% endfor %}
     </table>
-    <!------------------ END TABLE ---------------------> #}
-	<table id="ta_table"></table>
-	<div id="ta_pager"></div>
-</div>
+    <!------------------ END TABLE --------------------->
 
 
 {% if ta_list and ta_list.has_other_pages %}
@@ -81,14 +78,16 @@ TypeAssist's
 				$("#ta_filter").submit();
 			}
 		});
-		//var table = $('#ta_table').DataTable({
-		//	orderCellsTop: true,
-		//	responsive: true,
-		//	fixedHeader: true,
-		//	paging: false,
-		//	scrollCollapse: true,
-		//	sDom: '<>'
-		//})
+		var table = $('#ta_table').DataTable({
+			orderCellsTop: true,
+			responsive: true,
+			fixedHeader: true,
+			paging: false,
+			scrollCollapse: true,
+			language: {
+				searchPlaceholder: "Search local"
+			}
+		})
 		
 		//BEGIN STYLING DATATABLE
 		$("th > input").addClass('form-control')
@@ -99,36 +98,6 @@ TypeAssist's
 		}
 		$('#ta_table thead tr:eq(1)').css(styles)
 		//END STYLING DATATABLE
-
-		$("#ta_table").jqGrid({
-			datatype:"json",
-			url:"{{ url('onboarding:ta_jq') }}",
-			colModel:[
-				{name:"tacode", label:"Name"},
-				{name:"tacode", label:"Code"},
-				{name:"tatype", label:"Type"},
-				{name:"Parent", label:"Belongs To"}
-			],
-			pager:"#ta_pager",
-			sortname:"tacode",
-			viewrecords: true,
-			sortorder: "asc",
-			caption:"TypeAssist's",
-			rowNum:10,
-   			rowList:[10,20,30],
-			loadComplete:function() {
-				$("#ta_table").setGridParam({datatype:'local'})
-			},
-			onPaging:function(pgBtn) {
-				$("#ta_table").setGridParam({datatype:'json'})
-			}
-		})
-		//pagination
-		$("#ta_table").jqGrid('navGrid', '#ta_pager',{
-			edit:false,
-			del:false,
-			add:false
-		})
 	});
 </script>
 {% endblock extra_scripts %}

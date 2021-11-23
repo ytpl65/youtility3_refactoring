@@ -3,21 +3,21 @@
 <!------------------------------------------------ BEGIN MACROS ------------------------------------------------------->
 <!-------------------- BEGIN PAGINATOR MACRO ------------------------->
 {% macro paginator(list) %}
-<div class="d-flex justify-content-end">
+<div class="d-flex justify-content-end cell-border">
   <ul class="pagination">
     {% if list.has_previous %}
     <li class="page-item"><a class="page-link" href="?page={{ list.previous_page_number }}">&laquo;</a>
     </li>
     {% else %}
-    <li class="disabled"><span>&laquo;</span></li>
+      <li class="disabled"><span>&laquo;</span></li>
     {% endif %}
 
     {% for i in list.paginator.page_range %}
-    {% if list.number == i %}
-    <li class="active page-item" aria-current="page"><a href="#" class="page-link">{{ i }} </a></li>
-    {% else %}
-    <li class="page-item"><a class="page-link" href="?page={{ i }}">{{ i }}</a></li>
-    {% endif %}
+      {% if list.number == i %}
+        <li class="active page-item" aria-current="page"><a href="#" class="page-link">{{ i }} </a></li>
+      {% else %}
+        <li class="page-item"><a class="page-link" href="?page={{ i }}&action=list">{{ i }}</a></li>
+      {% endif %}
     {% endfor %}
 
     {% if list.has_next %}
@@ -35,11 +35,11 @@
 <div class="d-flex align-items-center py-1">
   <div id="form_actions">
     <!--Save Button-->
-    <button type="submit" form="{{ form_id }}" onclick="document.getElementById('loader').style.display='block'"
-      id="savebtn" class="btn btn-sm  btn-primary rounded-1">Save It!<i class="fas fa-cloud-upload-alt"></i></button>
+    <button type="submit" form="{{ form_id }}"
+      id="savebtn" class="btn btn-sm  btn-primary rounded-1">Save It!&nbsp;<i class="fas fa-cloud-upload-alt"></i></button>
     <!--Clear Button-->
     <a href="" class="btn btn-sm btn-secondary rounded-1"
-      onclick="document.getElementById('{{ form_id }}').reset()">Clear<i class="fas fa-times-circle"></i></a>
+      onclick="document.getElementById('{{ form_id }}').reset()">Clear&nbsp;<i class="fas fa-times-circle"></i></a>
   </div>
 </div>
 {% endmacro %}
@@ -47,17 +47,16 @@
 
 <!------------------ BEGIN FORM UPDATE MACRO ----------------------->
 {% macro form_update(form_id) %}
-
 <div class="d-flex align-items-center py-1">
   <div id="form_actions">
     <!--Save Button-->
-    <button type="submit" form="{{ form_id }}" class="btn btn-sm  btn-primary rounded-1">Save<i class="fas fa-cloud-upload-alt"></i></button>
+    <button type="submit" form="{{ form_id }}" id="form_update" class="btn btn-sm  btn-primary rounded-1">Save&nbsp;<i class="fas fa-cloud-upload-alt"></i></button>
     <!--Clear Button-->
     <a href="" class="btn btn-sm  btn-secondary rounded-1"
-      onclick="document.getElementById('{{ form_id }}').reset()">Clear<i class="fas fa-times-circle"></i></a>
+      onclick="document.getElementById('{{ form_id }}').reset()">Clear&nbsp;<i class="fas fa-times-circle"></i></a>
 
     <button id="btn_del" type="button" data-bs-toggle="modal" data-bs-target="#{{ kwargs['popup_id'] }}"
-      class="btn btn-sm  btn-danger rounded-1">Delete<i class="fas fa-trash-alt"></i></button>
+      class="btn btn-sm btn-danger rounded-1">Delete&nbsp;<i class="fas fa-trash-alt"></i></button>
   </div>
 </div>
 {% endmacro %}
@@ -68,6 +67,15 @@
 <div class="d-flex align-items-center py-1">
   <div id="form_actions">
     <a href="{{ url(url_path) }}" class="btn btn-sm rounded-1" style="background-color:#189D54; color:white;">Add New
+      <span class="svg-icon svg-icon-2">
+       <i class="fas fa-plus text-white"></i></a>
+  </div>
+</div>
+{% endmacro %}
+{% macro form_addnew(url_path) %}
+<div class="d-flex align-items-center py-1">
+  <div id="form_actions">
+    <a href="{{ url(url_path) }}?action=form" class="btn btn-sm rounded-1" style="background-color:#189D54; color:white;">Add New
       <span class="svg-icon svg-icon-2">
        <i class="fas fa-plus text-white"></i></a>
   </div>

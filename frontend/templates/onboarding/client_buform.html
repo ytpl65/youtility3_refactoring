@@ -90,10 +90,10 @@ Client
     <!-------------------------- CSRF MIDDLEWARE TOKEN --------------------->
     <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
     <div class="mb-3 row g-3 gx-6">
-        {{ clientform.butype.label_tag() }}
+        {{ clientform.identifier.label_tag() }}
         <div class="col-md-4 col-sm-4">
             <div class="d-flex flex-row">
-                {{ clientform.butype }}
+                {{ clientform.identifier }}
                 <a href="" type="button" data-bs-toggle="modal" data-bs-target="#butype_popup"><span
                         style="font-size: 24px;" data-bs-toggle="tooltip" data-bs-placement="left"
                         title="If you haven't found an option in selection menu, then create one from here"
@@ -102,7 +102,7 @@ Client
                     </span></a>
             </div>
             <!----- BEGIN ERROR FIELD  ------->
-            {{ clientform.butype.errors }}
+            {{ clientform.identifier.errors }}
             <!----- END ERROR FIELD  ------->
         </div>
         {{ clientform.bucode.label_tag() }}
@@ -220,7 +220,6 @@ Client
 
 
 {% block extra_scripts %}
-<script src="{{ static('assets/js/onboarding/client_buform.js') }}" type="text/javascript"></script>
 {{ clientform.media.js }}
 <script>
     $(document).ready(function () {
@@ -239,9 +238,18 @@ Client
         $('#pop_butype_form').on('submit', sumit_popup_form({
             'url': "{{ url('onboarding:ta_popup') }}",
             'form': "#pop_butype_form",
-            'field': "#id_butype",
+            'field': "#id_identifier",
             'modal': "#butype_popup"
         }))
+        //for select2 search work in bootstrap modals
+        $("#pop_butype_form").find("select[name=tatype]").select2({
+            dropdownParent: $('#pop_butype_form')
+        })
+        //sets closeonSelect to false for multiple-select fields
+        $("[multiple]").select2({
+            closeOnSelect:false 
+        })
+       
     })
 </script>
 {% endblock extra_scripts %}

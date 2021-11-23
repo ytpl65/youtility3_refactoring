@@ -5,6 +5,10 @@
 Preview Submissions
 {% endblock card_title %}
 
+{% block card_icon %}
+
+{% endblock card_icon %}
+
 
 
 {% block wizard_head %}
@@ -21,6 +25,9 @@ Preview Submissions
     h6 {
         color: #2e638b;
     }
+    .ml-1{
+        margin-left:10px;
+    }
 </style>
 {% endblock wizard_head %}
 
@@ -31,17 +38,17 @@ Preview Submissions
         {% set buids = wizard_subs['buids'] %}
         <h6>Step-1 Buisiness Unit</h6>
         <table class="table table-striped" id="bu_table">
-            <thead>
-                <th>#</th>
-                <th>Code</th>
-                <th>Name</th>
-                <th>Type</th>
-                <th>Belongs To</th>
+            <thead class="ml-1">
+                <th scope="col">#</th>
+                <th scope="col">Code</th>
+                <th scope="col">Name</th>
+                <th scope="col">Type</th>
+                <th scope="col">Belongs To</th>
             </thead>
             <tbody>
                 {% for bu in buids %}
-                <tr>
-                    <td>{{ loop.index }}</td>
+                <tr class="ms-1">
+                    <td scope="row">{{ loop.index }}</td>
                     <td><a href="#">{{ bu['bucode'] }}</a></td>
                     <td>{{ bu['buname'] }}</td>
                     <td>{{ bu['butype__taname'] }}</td>
@@ -56,15 +63,15 @@ Preview Submissions
         <h6>Step-2 Shift</h6>
         <table class="table table-striped" id="shift_table">
             <thead>
-                <th>#</th>
-                <th>Name</th>
-                <th>Start Time</th>
-                <th>End Time</th>
+                <th scope="col">#</th>
+                <th scope="col">Name</th>
+                <th scope="col">Start Time</th>
+                <th scope="col">End Time</th>
             </thead>
             <tbody>
                 {% for shift in wizard_subs['shiftids'] %}
                 <tr>
-                    <td>{{ loop.index }}</td>
+                    <td scope="row">{{ loop.index }}</td>
                     <td>{{ shift['shiftname'] }}</td>
                     <td>{{ shift['starttime'] }}</td>
                     <td>{{ shift['endtime'] }}</td>
@@ -79,17 +86,19 @@ Preview Submissions
     <div class="table-responsive col-md-6 col-sm-6">
         <h6>Step-3 People</h6>
         <table class="table table-striped" id="people_table">
-            <thead>
-                <th>#</th>
-                <th>Code</th>
-                <th>Name</th>
-                <th>Type</th>
-                <th>Login Id</th>
+            <thead class="px-1">
+            <tr>
+                <th scope="col">#</th>
+                <th scope="col">Code</th>
+                <th scope="col">Name</th>
+                <th scope="col">Type</th>
+                <th scope="col">Login Id</th>
+            </tr>
             </thead>
             <tbody>
                 {% for people in wizard_subs['peopleids'] %}
                 <tr>
-                    <td>{{ loop.index }}</td>
+                    <td scope="row">{{ loop.index }}</td>
                     <td>{{ people['peoplecode'] }}</td>
                     <td>{{ people['peoplename'] }}</td>
                     <td>{{ people['peopletype__taname'] }}</td>
@@ -104,13 +113,13 @@ Preview Submissions
         <h6>Step-4 Pgroup</h6>
         <table class="table table-striped" id="pgroup_table">
             <thead>
-                <th>#</th>
-                <th>Name</th>
+                <th scope="col">#</th>
+                <th scope="col">Name</th>
             </thead>
             <tbody>
                 {% for pg in wizard_subs['pgroupids'] %}
                 <tr>
-                    <td>{{ loop.index }}</td>
+                    <td scope="row">{{ loop.index }}</td>
                     <td>{{ pg['groupname'] }}</td>
                 </tr>
                 {% endfor %}
@@ -188,17 +197,25 @@ Preview Submissions
         //saveWizard with swal(sweetalert)
         $("#saveWizard").click(function(){
             Swal.fire({
-            text:"Wizard has been successfully submitted!",
-            icon:'success',
-            confirmButtonText: "Ok, got it!",
-            buttonsStyling: false,
-            customClass: {
-                        confirmButton: "btn btn-primary"
-            }
-            }).then(function(){
-                window.location = "{{ url('onboarding:saveWizard') }}"
-            });
+                title:"Are you sure?",
+                text: "You won't be able to revert this!",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#3085d6',
+                cancelButtonColor: '#d33',
+                confirmButtonText: 'Yes, save it!'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                     Swal.fire(
+                        'Saved!',
+                        'Your data has been saved.',
+                        'success'
+                    ).then(() => {
+                        window.location = "{{ url('onboarding:saveWizard') }}"
+                    })
+                }
             })
+        })
     });
 </script>
 {% endblock extra_scripts %}

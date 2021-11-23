@@ -1,4 +1,5 @@
 from django.db.models import CharField
+from django.urls import reverse
 from django.conf import settings
 from django.db import models
 from django.conf import settings
@@ -54,8 +55,8 @@ class SecureString(CharField):
    
 ### Base Model, ALl other models inherit this model properties ###
 class BaseModel(models.Model):
-    cuser = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True, on_delete = models.RESTRICT, db_column="cuser", related_name="%(class)s_cusers")
-    muser = models.ForeignKey(settings.AUTH_USER_MODEL,  null = True, blank=True, on_delete = models.RESTRICT, db_column="muser", related_name="%(class)s_musers")
+    cuser = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True, on_delete = models.RESTRICT, related_name="%(class)s_cusers")
+    muser = models.ForeignKey(settings.AUTH_USER_MODEL,  null = True, blank=True, on_delete = models.RESTRICT,related_name="%(class)s_musers")
     cdtz  = models.DateTimeField(_('cdtz'), auto_now_add = True, auto_now=False)
     mdtz  = models.DateTimeField(_('mdtz'), auto_now = True)
 
@@ -69,27 +70,27 @@ class People(AbstractBaseUser, PermissionsMixin, TenantAwareModel, BaseModel):
     GENDER_CHOICES= [('M', 'Male'), ('F', 'Female')]
     
     peopleimg     = models.ImageField(_("peopleimg"), upload_to=upload_peopleimg, default="master/people/blank.png", null=True, blank=True)
-    peoplecode    = models.CharField(_("peoplecode"), max_length=50)
-    peoplename    = models.CharField(_("peoplename"), max_length=120)
-    loginid       = models.CharField(_("loginid"), max_length=50, unique=True, null=True, blank=True)
-    isadmin       = models.BooleanField(_("isadmin"), default=False)
+    peoplecode    = models.CharField(_("Code"), max_length=50)
+    peoplename    = models.CharField(_("Name"), max_length=120)
+    loginid       = models.CharField(_("Login Id"), max_length=50, unique=True, null=True, blank=True)
+    isadmin       = models.BooleanField(_("Is Admin"), default=False)
     is_staff      = models.BooleanField(_('staff status'),default=False)
-    isenable      = models.BooleanField(_("isactive"), default=True)
+    enable        = models.BooleanField(_("Enable"), default=True)
     shift         = models.ForeignKey('onboarding.Shift', null=True, blank=True, on_delete=models.RESTRICT, related_name='onboarding_shift')
     department    = models.ForeignKey("onboarding.TypeAssist", null=True, blank=True, on_delete=models.RESTRICT, related_name='people_departments')
     designation   = models.ForeignKey("onboarding.TypeAssist", null=True, blank=True, on_delete=models.RESTRICT, related_name='people_designations')
-    peopletype    = models.ForeignKey("onboarding.TypeAssist", null=True, blank=True, on_delete=models.RESTRICT, related_name='people_types')
+    peopletype    = models.ForeignKey("onboarding.TypeAssist", verbose_name="People Type", null=True, blank=True, on_delete=models.RESTRICT, related_name='people_types')
     clientid      = models.ForeignKey("onboarding.Bt",  null=True, blank=True, on_delete=models.RESTRICT, related_name='people_clientids')
     siteid        = models.ForeignKey("onboarding.Bt",  null=True, blank=True, on_delete=models.RESTRICT, related_name='people_siteids')
-    reportto      = models.ForeignKey("self", null=True, blank=True, on_delete=models.RESTRICT, related_name='children')
-    deviceid      = models.CharField(_("deviceid"), max_length=50, default='-1')
-    email         = SecureString(_("email"), max_length=254, unique=True)
-    mobno         = SecureString(_("mobno"), max_length=254, unique=True)
-    gender        = models.CharField(_("gender"), choices=GENDER_CHOICES, max_length=15, null=True)
-    dateofbirth   = models.DateField(_("dob"))
-    dateofjoin    = models.DateField(_("doj"))
-    dateofreport  = models.DateField(_("dor"), null=True, blank=True)
-    people_extras = models.JSONField(_("people_extras"), default = peoplejson, blank=True, encoder=DjangoJSONEncoder)
+    reportto      = models.ForeignKey("self", null=True, blank=True, on_delete=models.RESTRICT, related_name='children', verbose_name='Report to')
+    deviceid      = models.CharField(_("Device Id"), max_length=50, default='-1')
+    email         = SecureString(_("Email"), max_length=254, unique=True)
+    mobno         = SecureString(_("Mob No"), max_length=254, unique=True)
+    gender        = models.CharField(_("Gender"), choices=GENDER_CHOICES, max_length=15, null=True)
+    dateofbirth   = models.DateField(_("Date of Birth"))
+    dateofjoin    = models.DateField(_("Date of Join"))
+    dateofreport  = models.DateField(_("Date of Report"), null=True, blank=True)
+    people_extras = models.JSONField(_("people_extras"), default = peoplejson, blank=True, encoder=DjangoJSONEncoder)   
 
     objects=PeopleManager()
     USERNAME_FIELD = 'loginid'
@@ -112,15 +113,18 @@ class People(AbstractBaseUser, PermissionsMixin, TenantAwareModel, BaseModel):
     def __str__(self) -> str:
         return self.peoplecode
 
+    def get_absolute_wizard_url(self):
+        return reverse("peoples:wiz_people_update", kwargs={"pk": self.pk})
+
 
 
 ############## Pgroup Table ###############
 class Pgroup(BaseModel, TenantAwareModel):
-    groupname  = models.CharField(_('groupname'), max_length=250)
-    enable     = models.BooleanField(_('enable'), default = True)
-    identifier = models.ForeignKey('onboarding.TypeAssist', null=True, blank=True, on_delete = models.RESTRICT, db_column='identifier', related_name="pgroup_idfs")
-    siteid     = models.ForeignKey("onboarding.Bt",null=True, blank=True, on_delete = models.RESTRICT, db_column='buid', related_name='pgroup_siteids')
-    clientid   = models.ForeignKey('onboarding.Bt', null=True, blank=True, on_delete = models.RESTRICT, db_column='clientid', related_name='pgroup_clientids')
+    groupname  = models.CharField(_('Name'), max_length=250)
+    enable     = models.BooleanField(_('Enable'), default = True)
+    identifier = models.ForeignKey('onboarding.TypeAssist', null=True, blank=True, on_delete = models.RESTRICT, related_name="pgroup_idfs")
+    siteid     = models.ForeignKey("onboarding.Bt",null=True, blank=True, on_delete = models.RESTRICT, related_name='pgroup_siteids')
+    clientid   = models.ForeignKey('onboarding.Bt', null=True, blank=True, on_delete = models.RESTRICT, related_name='pgroup_clientids')
     
     class Meta(BaseModel.Meta):
         db_table = 'pgroup'
@@ -134,17 +138,20 @@ class Pgroup(BaseModel, TenantAwareModel):
 
     def __str__(self) -> str:
         return self.groupname
+    
+    def get_absolute_wizard_url(self):
+        return reverse("peoples:wiz_pgropup_update", kwargs={"pk": self.pk})
 
 
 
 ############## Pgbelonging Table ###############
 class Pgbelonging(BaseModel, TenantAwareModel):
-    groupid     = models.ForeignKey('Pgroup', null=True, blank=True, on_delete = models.RESTRICT, db_column='groupid', related_name="pgbelongs_grps")
-    peopleid    = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True, on_delete = models.RESTRICT,  db_column='peopleid', related_name="pgbelongs_peoples")
-    isgrouplead = models.BooleanField(_('isgrouplead'), default = False)
-    assignsites = models.ForeignKey('onboarding.Bt', null=True,  blank=True, on_delete = models.RESTRICT, db_column='assignsites', related_name="pgbelongs_assignsites")
-    siteid      = models.ForeignKey("onboarding.Bt",null=True, blank=True, on_delete = models.RESTRICT, db_column='buid', related_name='pgbelonging_sites')
-    clientid    = models.ForeignKey('onboarding.Bt', null=True, blank=True, on_delete = models.RESTRICT, db_column='clientid', related_name='pgbelonging_clients')
+    groupid     = models.ForeignKey('Pgroup', null=True, blank=True, on_delete = models.RESTRICT, related_name="pgbelongs_grps")
+    peopleid    = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True, on_delete = models.RESTRICT,  related_name="pgbelongs_peoples")
+    isgrouplead = models.BooleanField(_('Group Lead'), default = False)
+    assignsites = models.ForeignKey('onboarding.Bt', null=True,  blank=True, on_delete = models.RESTRICT, related_name="pgbelongs_assignsites")
+    siteid      = models.ForeignKey("onboarding.Bt",null=True, blank=True, on_delete = models.RESTRICT,  related_name='pgbelonging_sites')
+    clientid    = models.ForeignKey('onboarding.Bt', null=True, blank=True, on_delete = models.RESTRICT, related_name='pgbelonging_clients')
     
     class Meta(BaseModel.Meta):
         db_table = 'pgbelonging'
@@ -155,18 +162,19 @@ class Pgbelonging(BaseModel, TenantAwareModel):
         
     
     def __str__(self) -> str:
-        return self.id
+        return str(self.id)
 
 
 
 ############## Capability Table ###############
 class Capability(BaseModel, TenantAwareModel):  
     CFOR_CHOICES = [('WEB', 'WEB'), ('PORTLET', 'PORTLET'), ('REPORT', 'REPORT'), ('MOB', 'MOB')]
-    capscode    = models.CharField(_('caps'), max_length=50)
-    capsname    = models.CharField(_('capsname'), max_length=1000, default = None, blank=True, null=True)
-    parent      = models.ForeignKey('self', on_delete=models.RESTRICT, db_column='parent', null=True, blank=True, related_name='children')
-    cfor        = models.CharField(_('cfor'), max_length=10, default='WEB', choices=CFOR_CHOICES)
-    clientid    = models.ForeignKey('onboarding.Bt',  null=True, blank=True, on_delete = models.RESTRICT, db_column='clientid')
+    capscode    = models.CharField(_('Code'), max_length=50)
+    capsname    = models.CharField(_('Capability'), max_length=1000, default = None, blank=True, null=True)
+    parent      = models.ForeignKey('self', on_delete=models.RESTRICT,  null=True, blank=True, related_name='children', verbose_name="Belongs_to")
+    cfor        = models.CharField(_('Capability_for'), max_length=10, default='WEB', choices=CFOR_CHOICES,)
+    clientid    = models.ForeignKey('onboarding.Bt',  null=True, blank=True, on_delete = models.RESTRICT)
+    enable      = models.BooleanField(_('Enable'), default=True)
 
     objects = CapabilityManager()
     
@@ -180,6 +188,9 @@ class Capability(BaseModel, TenantAwareModel):
 
     def __str__(self) -> str:
         return self.capsname
+    
+    def get_absolute_url(self):
+        return reverse("peoples:cap_update", kwargs={"pk": self.pk})
     
     def get_all_children(self):
         children = [self]
@@ -205,32 +216,40 @@ class Capability(BaseModel, TenantAwareModel):
                     or one of its' children as parent.")
 
 def peventlog_json():
-    return {'photorecognitionthreshold':None, 'photorecognitionscore':None, 
-    'photorecognitiontimestamp':None, 'photorecognitionserviceresponse':None}
+    return {'fr_threshold':None, 'fr_score':None, 
+    'fr_timestamp':None, 'fr_service_resp':None, 'other_location': ""}
 
 ############## PeopleEventlog Table ###############
 class PeopleEventlog(BaseModel, TenantAwareModel):
-    peopleid        = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True, on_delete = models.RESTRICT, db_column='peopleid')
-    peventtype      = models.ForeignKey("onboarding.TypeAssist", null=True, blank=True, on_delete = models.RESTRICT, db_column='peventtype', related_name='eventypes')
-    punchstatus     = models.ForeignKey("onboarding.TypeAssist", null=True, blank=True, on_delete = models.RESTRICT, db_column='punchstatus', related_name='statustypes')
-    verifiedby      = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True, on_delete = models.RESTRICT, db_column='verifiedby', related_name='verifiedpeoples')
-    buid            = models.ForeignKey("onboarding.Bt", null=True, blank=True, on_delete = models.RESTRICT, db_column='buid')
-    transportmode   = models.ForeignKey("onboarding.TypeAssist", null=True, blank=True, on_delete = models.RESTRICT, db_column='transportmode', related_name='transportmodetypes')
-    clientid        = models.ForeignKey("onboarding.Bt",  null=True, blank=True, on_delete = models.RESTRICT, db_column='clientid', related_name='clientids')
-    siteid          = models.ForeignKey("onboarding.Bt",  null=True, blank=True, on_delete = models.RESTRICT, db_column='siteid', related_name='siteids')
-    accuracy        = models.IntegerField(_("accuracy"), null=True, blank=True)
-    deviceid        = models.CharField(_("deviceid"), max_length=50, null=True, blank=True)
-    datetime        = models.DateTimeField(_("datetime"), auto_now=False, auto_now_add=False)
-    gpslocation     = models.CharField(_("gpslocation"), max_length=50, default='0.0,0.0')
-    facerecognition = models.BooleanField(_("facerecognition"), default=False)
+    EVENTTYPE_CHOICES = [('MARK', 'Mark'),('SELF', 'Self'), ('SITE', 'Site'), ('CONVEYANCE', 'Conveyance')]
+    TRANSPORTMODE_CHOICES = [('BICYCLE', 'Bicycle'), ('MOTORCYCLE', 'MotorCycle'), ('RICKSHAW', 'Rickshaw'), ('BUS', 'Bus'),
+                            ('TRAIN', 'Train'), ('FLITE', 'Flite'), ('BOAT', 'Boat or Ship')]
+
+
+    peopleid        = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True, on_delete = models.RESTRICT, verbose_name='People')
+    clientid        = models.ForeignKey("onboarding.Bt",  null=True, blank=True, on_delete = models.RESTRICT, related_name='clientids')
+    siteid          = models.ForeignKey("onboarding.Bt",  null=True, blank=True, on_delete = models.RESTRICT, related_name='siteids')
+    shift           = models.ForeignKey('onboarding.Shift', null=True, blank=True, on_delete=models.RESTRICT)
+    verifiedby      = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True, on_delete = models.RESTRICT, related_name='verifiedpeoples', verbose_name='Verified By')
+    gfid            = models.ForeignKey('onboarding.GeofenceMaster',null=True, blank=True, on_delete=models.RESTRICT )
+    peventtype      = models.CharField(choices = EVENTTYPE_CHOICES, max_length=100, verbose_name='Attendance Type', null=True)
+    transportmode   = models.CharField(choices = TRANSPORTMODE_CHOICES, max_length=100, verbose_name='Transport Mode', null=True)
+    punch_intime    = models.DateTimeField(null=True)
+    punch_outtime   = models.DateTimeField(null=True)
+    datefor         = models.DateField(_("Date"), null=True)
+    distance        = models.IntegerField(_("Distance"), null=True, blank=True)
+    duration        = models.IntegerField(_("Duration"), null=True, blank=True)
+    ctzoffset       = models.IntegerField(_("ctzoffset"), null=True, default=0, blank=True)
     expamt          = models.IntegerField(_("exampt"), null=True, blank=True)
     duration        = models.IntegerField(_("duration"), null=True, blank=True)
-    reference       = models.CharField(_("reference"),null=True, max_length=50, blank=True)
+    accuracy        = models.IntegerField(_("accuracy"), null=True, blank=True)
+    deviceid        = models.CharField(_("deviceid"), max_length=50, null=True, blank=True)
+    gpslocation_in  = models.CharField(_("GPS-In"), max_length=50, default='0.0,0.0')
+    gpslocation_out = models.CharField(_("GPS-Out"), max_length=50, default='0.0,0.0')
     remarks         = models.CharField(_("remarks"),null=True, max_length=500, blank=True)
-    distance        = models.IntegerField(_("distance"), null=True, blank=True)
-    ctzoffset       = models.IntegerField(_("ctzoffset"), null=True, default=0, blank=True)
-    otherlocation   = models.CharField(_("otherlocation"), null=True, max_length=200, blank=True)
+    facerecognition = models.BooleanField(_("Enable Face-Recognition"), default=True)
     peventlogextras = models.JSONField(_("peventlogextras"), encoder=DjangoJSONEncoder, default=peventlog_json)
+
 
 
     class Meta:

@@ -15,17 +15,17 @@ from apps.onboarding.admin import TaResource
 @admin.register(People)
 class PeopleAdmin(admin.ModelAdmin):
     fields = ['peoplecode', 'peoplename', 'loginid', 'designation', 'department', 'mobno', 'email',
-              'reportto', 'dateofjoin', 'dateofreport', 'dateofbirth', 'gender', 'peopletype', 'isenable', 'isadmin', 'people_extras', 'clientid']
+              'reportto', 'dateofjoin', 'dateofreport', 'dateofbirth', 'gender', 'peopletype', 'enable', 'isadmin','shift', 'people_extras', 'clientid']
 
     list_display = ['id', 'peoplecode', 'peoplename', 'loginid', 'designation', 'mobno', 'email',
-                    'reportto', 'dateofjoin', 'gender', 'peopletype', 'isenable', 'isadmin', 'clientid']
+                    'reportto', 'dateofjoin', 'gender', 'peopletype', 'enable', 'isadmin', 'clientid', 'shift']
 
     list_display_links = ['peoplecode', 'peoplename']
 
 
 @admin.register(Pgroup)
 class PgroupAdmin(admin.ModelAdmin):
-    fields = ['id', 'groupname', 'enable',
+    fields = ['groupname', 'enable',
               'identifier', 'clientid', 'siteid']
     list_display = ['id', 'groupname',
                     'enable', 'identifier', 'clientid', 'siteid']
@@ -69,7 +69,7 @@ class CapabilityResource(resources.ModelResource):
 class CapabilityAdmin(ImportExportModelAdmin):
     resource_class      = CapabilityResource
     fields              = ['capscode', 'capsname', 'cfor', 'parent']
-    list_display        = ['capscode', 'capsname', 'cfor', 'parent',
+    list_display        = ['capscode', 'capsname', 'enable', 'cfor', 'parent',
                         'cdtz', 'mdtz', 'cuser', 'muser']
     list_display_links  = ['capscode', 'capsname']
 

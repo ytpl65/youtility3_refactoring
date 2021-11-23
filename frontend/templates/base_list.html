@@ -1,12 +1,8 @@
 {% extends "layout.html" %}
 
-
-
-
 <!----FOR BASE_LEVEL ---->
 {% block base_head %}
-<link rel="stylesheet" href="{{ static('assets/plugins/custom/jqGrid/jquery-ui.min.css') }}" type="text/css">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/free-jqgrid/4.14.0/css/ui.jqgrid.min.css">
+<link rel="stylesheet" href="https://cdn.datatables.net/1.11.3/css/jquery.dataTables.min.css" type="text/css">
 {% endblock base_head %}
 <!----END FOR BASE_LEVEL ---->
 
@@ -19,27 +15,23 @@
 
 <div class="card">
     <!-- BEGIN CARD-BODY-->
-    <div class="card-body border">
+    <div class="card-body border pt-0">
         <!--BEGIN CARD-HEADER-->
-        <div class="card-header">
-            <div class="row">
-                <h4 class="card-title col-md-6">{% block card_title %}
+        <div class="card-header ps-0 mb-0 d-flex justify-content-md-between"
+        style="border: 0;">
+                <h4 class="card-title ch4">
+                    {% block card_title %}
                     {% endblock card_title %}
-                    <span class="svg-icon svg-icon-2">
-                        <span class="material-icons h-19px" style="vertical-align: middle; font-size: 19px;">
-                            {% block card_icon %}
-                            table_view
-                            {% endblock card_icon %}
-                        </span>
-                    </span>
+                &nbsp;<i class="fas fa-th-list fa-sm"></i>
                 </h4>
-            </div>
-
         </div>
         <!--END CARD-HEADER-->
+        <div class="table-responsive">
         {% block table %}
 
         {% endblock table %}
+        </div>
+
 
     </div>
     <!--END CARD-BODY-->
@@ -48,7 +40,12 @@
 
 {% block base_script %}
 {{ super() }}
-<script src="https://cdnjs.cloudflare.com/ajax/libs/free-jqgrid/4.14.0/jquery.jqgrid.min.js"></script>
-{# <script type="text/javascript" src="{{ static('assets/plugins/custom/jqGrid/jquery.jqGrid.map.js') }}"></script> #}
+<script type="text/javascript" src="https://cdn.datatables.net/1.11.3/js/jquery.dataTables.min.js"></script>
+<script type="text/javascript" src="https://cdn.datatables.net/buttons/2.0.1/js/dataTables.buttons.min.js"></script>
+<script>
+$(document).ready(() => {
+    $("th > input").css("border-radius", 0)
+})
+</script>
 {% endblock base_script %}
 

@@ -1,11 +1,9 @@
 from django.urls import path
 from apps.onboarding import wizard_views
-from apps.onboarding.wizard_views import FORMS, delete_from_draft
 '''If you made any changes in url names here,
 change at update_wizard_steps function. '''
 
 wizard_url_patterns1 = [
-    path('client_onboarding/',wizard_views.ClientOnboardingWizard.as_view(FORMS),  name='client_onboarding'),
     path('',          wizard_views.WizardView.as_view(),  name='wizard_view'),
     path('wizard_del/',       wizard_views.WizardDelete.as_view(),  name='wizard_delete'),
 

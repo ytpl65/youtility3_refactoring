@@ -1,0 +1,233 @@
+{% extends "base_list.html" %}
+
+
+<!---- BEGIN CARD TITLE ------>
+{% block card_title %}
+Capability List
+{% endblock card_title %}
+<!----- END CARD TITLE -------->
+
+<!------------------------------------ BEGIN PAGE BREADCUMBS ------------------------------------>
+{% block pagebreadcumb %}
+{{ super() }}
+<li class="breadcrumb-item pe-3"><a href="javascript:void(0)" class="pe-3">Capability List</a></li>
+{% endblock pagebreadcumb %}
+<!------------------------------------- END PAGE BREADCUMBS ------------------------------------->
+
+
+<!-------------------------------------------- BEGIN BU TABLE ------------------------------------------->
+{% block table %}
+    <!------------------ BEGIN TABLE --------------------->
+    <table id="cap_table" class="display cell-border" style="width:100%">
+        <thead class="fw-bold fs-6">
+            <th>Code</th>
+            <th>Name</th>
+            <th>Capability for</th>
+            <th>Belongs To</th>
+        </thead>
+		<!---------- BEGIN TABLE FILTER FIELDS --------->
+		<thead id="filter_row">
+		<form action="" id='cap_filter' method='get'>
+			<input type="hidden" name="search_term" value="true">
+			{% for field in cap_filter %}
+			<th>
+				<input type="text" 
+				id="{{ field.auto_id }}" 
+				name="{{ field.name }}" 
+				placeholder ="Search {{ field.label }}">
+			</th>
+			{% endfor %}
+		</form>
+		</thead>
+		<!---------- END TABLE FILTER FIELDS --------->
+		<tbody>
+			{% for cap in cap_list %}
+			<tr>
+				<!--"{{ url('peoples:cap_update', args=[cap['id']]) }}"-->
+				<td><a href="" class="cap-link" data-id="{{ cap['id'] }}" data-rowid ={{ loop.index0 }}>{{ cap['capscode'] }}</a></td>
+				<td>{{ cap['capsname'] }}</td>
+				<td>{{ cap['cfor'] }}</td>
+				<td>{{ cap['parent__capscode'] }}</td>
+			</tr>
+			{% endfor %}
+		</tbody>
+    </table>
+    <!------------------ END TABLE --------------------->
+{% if cap_list and cap_list.has_other_pages %}
+<!-- BEGIN PAGINATOIN -->
+{{ paginator(cap_list) }}
+<!-- END PAGINATOIN ---->
+{% endif %}
+
+{% endblock table %}
+<!------------------ --------------------------END BU TABLE ------------------------------------------------->
+
+
+{% block popup_alerts %}
+<!-- THE MODAL WE WILL BE USING -->
+<div class="modal animate__animated animate__zoomIn" tabindex="-1" aria-hidden="true"  aria-labelledby="exampleModalLabel" data-bs-backdrop="static" id="modal-cap">
+	<div class="modal-dialog modal-dialog-centered">
+		<div class="modal-content" id="cap_content">
+		</div>
+	</div>
+</div>
+{% endblock popup_alerts %}
+
+<!--------- BEGIN EXTRA SCRIPTS ----------------------------->
+{% block extra_scripts %}
+<script>
+	var table= null;
+	$(document).ready(function () {
+		new ClipboardJS('.btn-copy');
+		$("input").keypress(function(event) {
+			if (event.which == 13) {
+				event.preventDefault();
+				$("#cap_filter").submit();
+			}
+		});
+        //beforeSend of capability ajax request 
+        function capBeforeSend(){
+            $("#modal-cap").modal("show");
+        }
+		//datatable initialization
+        table = $('#cap_table').DataTable({
+			//orderCellsTop: true,
+			responsive: true,
+			fixedHeader: true,
+			paging: false,
+			lengthChange: false,
+			language: {
+				searchPlaceholder: "Search on page"
+			},
+            dom:'Bfrtip',
+            ordering:false,
+            scrollCollapse: true,
+			buttons:[
+				{
+					text:"Add New Capability &nbsp;<i class='fas fa-plus ch4'></i></a>",
+					className:"btn btn-sm btn-secondary",
+					//action for add_new_button 
+					action: function(e, dt, node, config){
+                        const params = {
+                            modal_id    : "#modal-cap",
+                            url         : "{{ url('peoples:capability') }}?action=form",
+                            beforeSend  : capBeforeSend }
+						submit_ajax_form_get(params).done((data, status, xhr) => {
+                            $("#modal-cap .modal-content").html(data.html_form)
+                        })
+					}
+				}
+			]
+		})
+
+		//BEGIN STYLING DATATABLE
+		$("th > input").addClass('form-control')
+		$("th > input").css('height', '35px')
+		var styles = {
+			"border-bottom":"none",
+			"background-color":"#f1f4f7"
+		}
+		
+		$('#cap_table thead tr:eq(1)').css(styles)
+		//END STYLING DATATABLE
+		
+		//add row to the table
+		const addRow = (data) => {
+			table.row.add($(`<tr>
+			<td><a href="${data.url}">${data.capscode}</a></td>
+			<td>${data.capsname}</td>
+			<td>${data.cfor}</td>
+			<td>${data.parent__capscode}</td>
+			</tr>`)).draw();
+			console.log("rowadded")
+		}
+		
+		//submit form
+		$('#modal-cap').on('submit', '#id_capform', function(e) {
+			var form = $(this);
+			e.preventDefault()
+			const params = { url:"{{ url('peoples:capability') }}" }//capability view
+			const payLoad = {formData:form.serialize(), csrfmiddlewaretoken: '{{ csrf_token }}'}//payload for post request
+			submit_ajax_form_post(params, payLoad).done((data, status, xhr) => { //function to submit post request
+				console.log("data ", data)
+				$("#modal-cap").modal("hide"); 
+				Swal.fire(
+				'Capability created',
+				`Capability with this code <strong>${data.code}</strong> has been saved successfully`,
+				'success'
+				)
+			})
+		})
+
+		//update row (form-view)
+		$("a.cap-link").click((e) => {
+			e.preventDefault();
+			var id = $(e.currentTarget).attr('data-id');
+			var rowid = $(e.currentTarget).attr('data-rowid');
+			$("#cap_content").attr('data-rowid', rowid)
+			console.log("id ", id)
+			console.log("table ", table)
+			const params = {
+				modal_id    : "#modal-cap",
+				url         : `{{ url('peoples:capability') }}?id=${id}`,
+				beforeSend  : capBeforeSend }
+			submit_ajax_form_get(params).done((data, status, xhr) => {
+				$("#modal-cap .modal-content").html(data.html_form)
+			})
+		})
+	}); //END document.ready()
+
+	//delete ajax request
+	function isCapDeleted(id){
+		console.log("id ", id)
+		const params = {url:`{{ url('peoples:capability') }}?action=delete&id=${id}`}
+		submit_ajax_form_get(params).done((data, status, xhr) => {
+			if(!xhr.status === 200){
+				return false
+			}
+			return true
+		})
+	}
+
+
+	//delete capability 
+	function deleteCapability(elemt){
+	var id = $(elemt).attr("data-id");
+	Swal.fire({
+			title:"Delete Capability",
+			text:"Are you sure you want to delete this capability",
+			icon:"warning",
+			showCancelButton: true,
+			confirmButtonText: 'Yes, delete it!'
+		}).then((result) => {
+			if(result.isConfirmed){
+				status = isCapDeleted(id)
+				console.log("status ", status)
+				if(status){
+					Swal.fire({
+					icon: 'success',
+					title: 'Deleted successfully',
+					showConfirmButton: false,
+					timer: 1500
+					})
+					$("#modal-cap").modal("hide")
+					//delete row from table
+					row_index = parseInt($("#cap_content").attr('data-rowid'))
+					console.log(row_index, "row index")
+					table.row(row_index).remove().draw();
+
+				}else{
+					Swal.fire({
+					icon: 'warning',
+					title: 'Something went wrong',
+					showConfirmButton: false,
+					timer: 1500
+					})
+				}
+			}
+		})
+	}
+
+</script>
+{% endblock extra_scripts %}
+<!-------- END EXTRA SCRIPTS ------------------------------->

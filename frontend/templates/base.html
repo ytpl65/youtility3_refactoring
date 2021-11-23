@@ -15,6 +15,7 @@
   <!-- BEGIN GLOBAL STYLESHEETS BUNDLE (used by all pages) -->
   <link href="{{ static('assets/plugins/global/plugins.bundle.css') }}" rel="stylesheet" type="text/css" />
   <link href="{{ static('assets/css/style.bundle.css') }}" rel="stylesheet" type="text/css" />
+  <link href="{{ static('assets/plugins/custom/jquery-ui/jquery-ui.min.css') }}" rel="stylesheet" type="text/css" />
   <link href="{{ static('assets/css/global_level.css') }}" rel="stylesheet" type="text/css" />
   <link
     rel="stylesheet"
@@ -53,7 +54,6 @@
 <body id="kt_body"
   class="header-fixed header-tablet-and-mobile-fixed toolbar-enabled toolbar-fixed toolbar-tablet-and-mobile-fixed aside-enabled aside-fixed"
   style="--kt-toolbar-height:55px;--kt-toolbar-height-tablet-and-mobile:55px" data-kt-aside-minimize = 'on'>
- <img src="{{ static('assets/media/images/loading.gif') }}" id="loader" style="display:none" alt="">
   <input type="hidden" id="urlname" data-url = ''>
   {%- block body -%}
   
@@ -63,6 +63,7 @@
   <!-- BEGIN  GLOBAL JS BUNDLE (used by all pages) -->
   <script src="{{ static('assets/plugins/global/plugins.bundle.js') }}"></script>
   <script src="{{ static('assets/js/scripts.bundle.js') }}"></script>
+  <script src="{{ static('assets/plugins/custom/jquery-ui/jquery-ui.min.js') }}"></script>
   <!-- END  GLOBAL JS BUNDLE (used by all pages) -->
 
 <script>
@@ -73,6 +74,19 @@
   const WizardViewUrl      = "{{ url('onboarding:wizard_view') }}"
   const saveAsDraftUrl     = "{{ url('onboarding:save_asdraft') }}"
   const deleteFromDraftUrl = "{{ url('onboarding:delete_from_draft') }}"
+  var target = document.querySelector("body")
+  var blockUI = new KTBlockUI(target, {
+    message:"<div class='blockui-message'><span class='spinner-border text-primary'></span> Loading...</div>",
+  });
+  function startBlockUi(){
+    blockUI.block();
+  }
+  
+  function endBlockUi(){
+    if (blockUI.isBlocked()) {
+        blockUI.release();
+    } 
+  }
 </script>
 <!-- BEGIN GLOBAL-CUSTOM-FILE LEVEL SCRIPTS --> 
  <script src="{{ static('assets/js/custom.js') }}"></script>
@@ -87,6 +101,8 @@
     
     // add classes to label tags.
     $('label').addClass("col-form-label col-md-2 col-sm-2 text-sm-right") 
+
+    $('body').removeClass('modal-open');
     
     // remove classes for checkboxes which are added by default. 
     $('.booleans label').removeClass("col-md-2 col-sm-2")
@@ -101,6 +117,10 @@
     $("[multiple]").select2({
 			closeOnSelect:false 
 		})
+
+    $('.closeit').click(function () {
+    $('body').removeClass('modal-open');
+    });
  
     // handles rendering of sidebar menus based on user capabilities stored in sessiion.
     handle_rendering_of_menus(session); 
@@ -124,6 +144,12 @@
           
       //controls wizard steps-bar
       stepper_controller(session);
+
+      //sets closeonSelect to false for multiple-select fields
+      $("[multiple]").select2({
+          closeOnSelect:false 
+      })
+
 
     })
   </script>

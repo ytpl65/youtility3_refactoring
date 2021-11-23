@@ -28,7 +28,7 @@ ENCRYPT_KEY = 'I618zPOcrQ3zB5XasmuLXazlGZUn-dK5anHXSvKs4dM='
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['.localhost', '.youtility.local', 'barfi.youtility.in', '127.0.0.1']
+ALLOWED_HOSTS = ['.localhost', '.youtility.local', 'barfi.youtility.in', '127.0.0.1', 'icici.youtility.local']
 
 
 # Application definition
@@ -42,15 +42,18 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     #third_party_apps
     'debug_toolbar',
+    'widget_tweaks',
     'import_export',
     'django_extensions',
     "django_select2",
     'django_filters',
+    #'attendance',
 
     #local apps
     'apps.peoples',
     'apps.onboarding',
     'apps.tenants',
+    'apps.attendance',
 ]
 
 MIDDLEWARE = [
@@ -232,15 +235,9 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/3.2/howto/static-files/
 
-STATIC_URL = '/static/'
-STATICFILES_DIRS = [os.path.join(BASE_DIR, 'intelliwiz_config/static')]
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/3.2/ref/settings/#default-auto-field
-
-DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
-
-DATABASE_ROUTERS = ['apps.tenants.middlewares.TenantDbRouter']
 
 # Media Files
 MEDIA_ROOT = os.path.join(os.path.expanduser('~'),'youtility4_media')
@@ -319,11 +316,11 @@ LOGIN_URL = 'login'
 SESSION_ENGINE = 'django.contrib.sessions.backends.cached_db'
 # Close the session when user closes the browser
 SESSION_EXPIRE_AT_BROWSER_CLOSE = False
-SESSION_COOKIE_AGE = 30 * 60  # set just 10 seconds to test
+SESSION_COOKIE_AGE =  60*60  # set just 10 seconds to test
 SESSION_SAVE_EVERY_REQUEST = True
 IMPORT_EXPORT_USE_TRANSACTIONS = True
 
-
+SHELL_PLUS_PRINT_SQL = True
 
 
 

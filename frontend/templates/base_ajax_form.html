@@ -1,0 +1,75 @@
+<!------------------ BEGIN FORM CREATE MACRO ----------------------->
+{% macro form_create(form_id) %}
+<div class="d-flex align-items-center py-1">
+    <div id="form_actions">
+        <!--Save Button-->
+        <button type="submit" form="{{ form_id }}" id="savebtn" class="btn btn-sm  btn-primary rounded-1">Save
+            It!&nbsp;<i class="fas fa-cloud-upload-alt"></i></button>
+        <!--Clear Button-->
+        <a href="" class="btn btn-sm btn-secondary rounded-1"
+            onclick="document.getElementById('{{ form_id }}').reset()">Clear&nbsp;<i
+                class="fas fa-times-circle"></i></a>
+    </div>
+</div>
+{% endmacro %}
+<!------------------ END FORM CREATE MACRO ----------------------->
+
+<!------------------ BEGIN FORM UPDATE MACRO ----------------------->
+{% macro form_update(form_id) %}
+<div class="d-flex align-items-center py-1">
+    <div id="form_actions">
+        <!--Update Button-->
+        <button type="submit" form="{{ form_id }}" id="form_update"
+            class="btn btn-sm  btn-primary rounded-1">Update&nbsp;<i class="fas fa-cloud-upload-alt"></i></button>
+
+        <button id="btn_del" type="button" data-bs-toggle="modal" data-bs-target="#{{ kwargs['popup_id'] }}"
+            class="btn btn-sm  btn-danger rounded-1">Delete&nbsp;<i class="fas fa-trash-alt"></i></button>
+    </div>
+</div>
+{% endmacro %}
+<!------------------ END FORM UPDATE MACRO ----------------------->
+
+{% macro general_popup() %}
+<div class="modal fade" id="{{ kwargs['popup_id'] }}" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1"
+		aria-labelledby="staticBackdropLabel" aria-hidden="true">
+		<div class="modal-dialog modal-dialog-centered">
+			<div class="modal-content">
+				<div class="modal-header">
+					<h5 class="modal-title" id="staticBackdropLabel" style="color:#3a3b40de">{{ kwargs['title'] }}</h5>
+					<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+				</div>
+        {{ caller() }}<!--define modal-body, modal-footer classes -->
+			</div>
+		</div>
+	</div>
+{% endmacro %}
+
+
+<div class="menu_bar">
+{% block tab_grp %}
+
+{% endblock tab_grp %}
+</div>
+
+
+
+<div class="container_content">
+    <div class="card">
+        <div class="card-header">
+            <h4 class="card-title">
+                {% block form_title %}
+                
+                {% endblock form_title %}
+            </h4>
+            <div class="card-body">
+                {% block form %}
+                
+                {% endblock form %}
+
+                {% block form_actions %}
+                
+                {% endblock form_actions %}
+            </div>
+        </div>
+    </div>
+</div>

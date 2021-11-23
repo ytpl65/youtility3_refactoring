@@ -2,6 +2,8 @@ from jinja2.environment import Environment
 from django.contrib.staticfiles.storage import staticfiles_storage
 from django.urls import reverse
 from django.contrib import messages
+from widget_tweaks.templatetags import widget_tweaks as wt
+
 
 
 def debug(info):
@@ -18,4 +20,5 @@ class JinjaEnvironment(Environment):
         self.globals['url'] = reverse
         self.filters["debug"] = debug
         self.globals['get_msgs'] = messages.get_messages
-    
+        self.filters['add_class']  = wt.add_class   
+        self.filters['set_attr']  = wt.set_attr   

@@ -1,3 +1,10 @@
+//ajax start and ajaxStop events
+$(document).on({
+  ajaxStart: function(){ startBlockUi(); },
+  ajaxStop: function() { endBlockUi(); } 
+})
+
+
 //creating environment for wizard
 function make_env_for_wizard(session) {
   const wizard = session["wizard_data"];
@@ -16,22 +23,34 @@ function make_env_for_wizard(session) {
   });
 }
 
+const  first_show_parent = (id) => {
+  $(id).show()
+}
+
+
 function handle_rendering_of_menus(session) {
-  console.log("called");
+  const exceptions = {
+    'config':"#configuration", 'admin':"#admin" 
+  }
   if (session["is_superadmin"]) {
     //show every item if superadmin
     $(".menu-item").show();
   } else {
     //show menu-item based on user or client capabilites
-    caps =
-      session["people_webcaps.length"] != 0
-        ? session["people_webcaps"]
-        : session["client_webcaps"];
+    caps = session["is_admin"] ? session['client_webcaps'] : session['people_webcaps']; 
     console.log(session["people_webcaps"].length);
-    console.log(caps.length);
+    console.log("caps length ",caps.length);
+    console.log("caps ", caps);
     for (var i = 0; i < caps.length; i++) {
       parent = caps[i][0];
       childs = caps[i][1];
+      console.log("parent", parent)
+      console.log("childs", childs)
+      if(parent.startsWith("CONFIG_")){
+        first_show_parent(exceptions['config'])
+      }else if(parent.startsWith('ADMIN_')){
+        first_show_parent(exceptions['admin'])
+      }
       parent = parent.replace(" ", "_");
       //creating 'id'
       parent_id = "#".concat(parent.toLowerCase());
@@ -51,6 +70,7 @@ function handle_rendering_of_menus(session) {
   }
 }
 
+
 function stepper_controller(session) {
   if (session["wizard_data"]) {
     all_steps_except_last_one = $(
@@ -60,23 +80,168 @@ function stepper_controller(session) {
   }
 }
 
+function handle_alerts_msgs(msg, alertype){
+  $("#alert_msg").show()
+  $("#alert_msg > button").show()
+  $("#alert_msg").removeAttr('class')
+  $("#alert_msg").addClass(alertype)
+  $(".prepended").remove()
+  $("#alert_msg").prepend("<span class='prepended'>" + msg +"</span>")
+  if(alertype.includes("success")){
+    $("#alert_msg").fadeTo(2000, 500).slideUp(500, function(){
+      $("#alert_msg").slideUp(700);
+    })
+  }
+  
+}
+
+function display_non_field_errors(errors){
+  console.log("displaying non field errors")
+  let i=0
+  for(let key in errors['__all__']){
+    console.log(errors.__all__[key])
+    console.log(error[key])
+    i++;
+    msg = "<p class='errors'>" + errors.__all__[key] + "</p>"
+    $('.modal-body').prepend(msg)  
+  }
+}
+
 function display_form_errors(errors) {
   /*display errors on respective fields*/
   for (let key in errors) {
     if (errors.hasOwnProperty(key)) {
-      error = "<p>" + errors[key] + "</p>";
-      field = "input[name='" + key + "']";
+      if(errors.hasOwnProperty("__all__")){
+        display_non_field_errors(errors)
+      }
+      error = "<p class='errors'>" + errors[key] + "</p>";
+      field = "[name='" + key + "']";
       console.log("fields", field);
-      $(field).next("p").remove();
-      $(error).insertAfter(field);
-      $(field).next("p").css("color", "red");
+      if($(field).length == 0){
+        handle_alerts_msgs(error, "alert alert-danger")
+      }else{
+        handle_alerts_msgs("Please resolve the following errors!", "alert alert-danger")
+        $(field).addClass("is-invalid")
+        $('p.errors').remove();
+        $(error).insertAfter(field);
+        const styles = {"color":"red", "font-size":"15px"}
+        $(field).next("p").css(styles);
+      }
     }
   }
 }
 
+function display_non_field_errors(errors){
+  var errstr = ""
+  var brtag = "<br>"
+  for(let i=0; i< errors.length; i++){
+    if(!i=== errors.length -1){
+      var msg = errors[i] + brtag
+    }else{
+      var msg = errors[i]
+    }
+    errstr += msg 
+  }
+  console.log(errstr)
+  $("#nonfield_errors").show()
+  $("#nonfield_errors > span").text(errstr)
+}
+
+
+function display_modelform_errors(errors){
+  //non field errors
+  if(errors.hasOwnProperty("__all__")){
+    display_non_field_errors(errors.__all__)
+  }
+  //field errors
+  for(let key in errors){
+    error = "<p class='errors'>" + errors[key] + "</p>";
+    lookup = "[name='" + key + "']";
+    field = $(".modal-body").find(lookup)
+    $(field).addClass("is-invalid")
+    $('p.errors').remove();
+    $(error).insertAfter(field);
+  }
+
+}
+
+// function submit_ajax_form_post(params, payload){
+//   return $.ajax({
+//     url:params['url'],
+//     type:"post",
+//     data:payload
+//   }).fail((xhr, status, error) =>{
+//     console.log(xhr)
+//     console.log(status)
+//     console.log(error)
+//     display_form_errors(xhr.responseJSON.errors)
+//   }).done((data, status, xhr) => {
+//     console.log(data)
+//     console.log(status)
+//     console.log(xhr)
+//     handle_alerts_msgs(data.success, "alert alert-success")
+
+//   })
+// }
+
+function submit_ajax_form_post(params, payload){
+  return $.ajax({
+    url:params['url'],
+    type:"post",
+    data:payload
+  }).fail((xhr, status, error) =>{
+    console.log(xhr)
+    console.log(status)
+    console.log(error)
+    display_modelform_errors(xhr.responseJSON.errors)
+  })
+}
+
+
+function submit_ajax_form_get(params){
+  return $.ajax({
+    url:params['url'],
+    type:"get",
+    beforeSend:params['beforeSend'],
+  }).fail((xhr, status, error) =>{
+    console.log(xhr)
+    console.log(status)
+    console.log(error)
+    //display_form_errors(xhr.responseJSON.errors)
+  })
+}
+
+function submit_ajax_form_delete(params){
+  return $.ajax({
+    url:params['url'],
+    type:"get",
+  }).fail((xhr, status, error) =>{
+    console.log(xhr)
+    console.log(status)
+    console.log(error)
+    display_form_errors(xhr.responseJSON.errors)
+  }).done((data, status, xhr) => {
+      //hide modal
+      $(params.modal_id).modal('hide');
+      $(params.formid).html(data.html)
+    console.log(data)
+    console.log(status)
+    console.log(xhr)
+    handle_alerts_msgs(data.success, "alert alert-success")
+
+  })
+}
+
+
+
 function auto_select_the_newly_created(field_id, data) {
   console.log("called");
   console.log(data);
+  //remove errors text if there are any
+  if($(".input-grp > p").length>0){
+    $(".input-grp .form-control, .input-grp select").removeClass("is-invalid")
+    $(".input-grp > p").remove()
+  }
   // Set the value, creating a new option if necessary
   if ($(field_id).find("option[value='" + data.id + "']").length) {
     $(field_id).val(data.id).trigger("change");
@@ -91,7 +256,7 @@ function auto_select_the_newly_created(field_id, data) {
 function sumit_popup_form(param) {
   $(param["form"]).on("submit", function (e) {
     e.preventDefault();
-    console.log("triggered");
+    $("form select[name='tatype']").prop("disabled", false)
     $.ajax({
       type: "POST",
       url: param["url"],
@@ -160,11 +325,11 @@ const get_the_wizard = (response) => {
   console.log("wizard continued from previous stage");
 };
 
-const saveAsDraft = (quit = false, callback) => {
+const saveAsDraft = (toquit = false, callback) => {
   $.ajax({
     url: saveAsDraftUrl,
     type: "get",
-    data: { quit: quit },
+    data: { "quit": toquit },
     success: function (res) {
       callback(res);
     },
@@ -243,7 +408,7 @@ $(document).ready(() => {
 
   $("#save_wizard_form").click(() => {
     console.log("save_wizard_form is clicked ...");
-    saveAsDraft((res) => {
+    saveAsDraft(false, (res) => {
       if (res.saved) {
         console.log(`Draft wizard is ${res.status}`);
       } else {
