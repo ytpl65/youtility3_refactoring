@@ -3,13 +3,13 @@
 <!------------------------------------------------ BEGIN MACROS ------------------------------------------------------->
 <!-------------------- BEGIN PAGINATOR MACRO ------------------------->
 {% macro paginator(list) %}
-<div class="d-flex justify-content-end cell-border">
+<div class="d-flex justify-content-end cell-border my-2">
   <ul class="pagination">
-    {% if list.has_previous %}
-    <li class="page-item"><a class="page-link" href="?page={{ list.previous_page_number }}">&laquo;</a>
+    {% if list.has_previous() %}
+    <li class="page-item"><a class="page-link" href="?page={{ list.previous_page_number() }}&action=list">Prev</a>
     </li>
     {% else %}
-      <li class="disabled"><span>&laquo;</span></li>
+      <li class="page-item disabled"><span class="page-link">Previous</span></li>
     {% endif %}
 
     {% for i in list.paginator.page_range %}
@@ -20,10 +20,10 @@
       {% endif %}
     {% endfor %}
 
-    {% if list.has_next %}
-    <li class="page-item"><a class="page-link" href="?page={{ list.next_page_number }}">&raquo;</a></li>
+    {% if list.has_next() %}
+    <li class="page-item"><a class="page-link" href="?page={{ list.next_page_number() }}&action=list">Next</a></li>
     {% else %}
-    <li class="disabled page-item"><span>&raquo;</span></li>
+    <li class="disabled page-item"><span class="page-link">Next</span></li>
     {% endif %}
   </ul>
 </div>
@@ -295,7 +295,7 @@
           <div></div>
           <!--end::Copyright-->
           <div class="page-footer-inner text-light"> <span id="copyRightYear ">2021 © Powered by</span>
-            <a target="_blank" href="http://www.youtility.in">Youtility Technologies Pvt. Ltd. </a>
+            <a target="_blank" class="text-primary" href="http://www.youtility.in">Youtility Technologies Pvt. Ltd. </a>
           </div>
         </div>
         <!--end::Container-->
