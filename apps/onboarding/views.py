@@ -516,7 +516,7 @@ class CreateShift(LoginRequiredMixin, View):
             if form.is_valid():
                 logger.info('ShiftForm Form is valid')
                 shift = form.save(commit=False)
-                shift.buid_id = int(request.session['siteid'])
+                shift.buid_id = int(request.session['clientid'])
                 shift.save()
                 save_userinfo(shift, request.user, request.session)
                 logger.info('ShiftForm Form saved')
@@ -619,7 +619,7 @@ class UpdateShift(LoginRequiredMixin, View):
             if form.is_valid():
                 logger.info('ShiftForm form is valid..')
                 shift = form.save(commit=False)
-                shift.buid_id = int(request.session['siteid'])
+                shift.buid_id = int(request.session['clientid'])
                 shift = save_userinfo(shift, request.user, request.session)
                 shift.save()
                 logger.info('ShiftForm Form saved')

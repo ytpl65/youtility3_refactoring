@@ -19,6 +19,8 @@ from django.urls import path, include
 from django.conf.urls.static import static
 from django.views.generic import TemplateView
 from django.contrib.auth.decorators import login_required
+from django_email_verification import urls as email_urls  # include the urls
+
 from apps.peoples.views import SignIn, SignOut
 import debug_toolbar
 urlpatterns = [
@@ -26,10 +28,12 @@ urlpatterns = [
     path('logout/', SignOut.as_view(), name='logout'),
     path('dashboard/', login_required(TemplateView.as_view(template_name='base_ajax.html')), name='home'),
     path('admin/', admin.site.urls),
+     path('email-verify/', include(email_urls)),
     path('__debug__/', include(debug_toolbar.urls)), #shoul use when debug=True
     path('select2/', include('django_select2.urls')),
     path('onboarding/', include('apps.onboarding.urls')),
     path('peoples/', include('apps.peoples.urls')),
+    path('', include('apps.attendance.urls')),
 ]
 
 if settings.DEBUG:

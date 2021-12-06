@@ -6,10 +6,12 @@
 <div class="d-flex justify-content-end cell-border my-2">
   <ul class="pagination">
     {% if list.has_previous() %}
-    <li class="page-item"><a class="page-link" href="?page={{ list.previous_page_number() }}&action=list">Prev</a>
+    <li class="page-item"><a class="page-link" href="?page=1">&laquo; First</a>
+    </li>
+    <li class="page-item"><a class="page-link" href="?page={{ list.previous_page_number() }}&action=list">&laquo; Prev</a>
     </li>
     {% else %}
-      <li class="page-item disabled"><span class="page-link">Previous</span></li>
+      <li class="page-item disabled"><span class="page-link">&laquo; Prev</span></li>
     {% endif %}
 
     {% for i in list.paginator.page_range %}
@@ -21,9 +23,10 @@
     {% endfor %}
 
     {% if list.has_next() %}
-    <li class="page-item"><a class="page-link" href="?page={{ list.next_page_number() }}&action=list">Next</a></li>
+    <li class="page-item"><a class="page-link" href="?page={{ list.next_page_number() }}&action=list">&raquo; Next</a></li>
+    <li class="page-item"><a class="page-link" href="?page={{ list.paginator.num_pages }}&action=list">&raquo; Last</a></li>
     {% else %}
-    <li class="disabled page-item"><span class="page-link">Next</span></li>
+    <li class="disabled page-item"><span class="page-link">&raquo; Next</span></li>
     {% endif %}
   </ul>
 </div>

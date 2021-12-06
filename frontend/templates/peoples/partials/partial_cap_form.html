@@ -1,6 +1,9 @@
+{% extends "partial_base.html" %}
+
+{% block body %}
 <form action="" method="post" id="id_capform">
 	<div class="modal-header border-0">
-		<h4 class="modal-title ch4" id="exampleModalLabel">Create Capability</h4>
+		<h3 class="modal-title modal-heading" id="exampleModalLabel">Create Capability <i class="fas fa-poll-h fa-sm ch4"></i></h3>
 		<button type="button" class="btn-sm btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
 	</div>
 	<div class="modal-body" id="partial">
@@ -22,20 +25,23 @@
 	</div>
 	
 	<div class="modal-footer border-0">
-		<button type="button" class="btn btn-sm btn-secondary closeit" data-bs-dismiss="modal">Close</button>
+		<button type="button" class="btn btn-sm btn-secondary btn-hover-scale" data-bs-dismiss="modal">Close <i class="fas fa-times"></i></button>
 		{% if cap_form.instance.capscode %}
-		<button type="submit" id="submit" class="btn btn-sm btn-primary">Update&nbsp;<i class="fas fa-cloud-upload-alt"></i></button>
-		<button type="button" onclick="deleteCapability(this)" data-id="{{ cap_form.instance.id }}" id="deleteCap" class="btn btn-sm btn-danger">Delete&nbsp;<i class="fas fa-trash-alt"></i></button>
+		<button type="submit" id="submit" class="btn btn-sm btn-primary btn-hover-scale">Update&nbsp;<i class="fas fa-cloud-upload-alt"></i></button>
+		<button type="button" onclick="deleteCapability(this)" data-id="{{ cap_form.instance.id }}" id="deleteCap" class="btn btn-sm btn-hover-scale btn-danger">Delete&nbsp;<i class="fas fa-trash-alt"></i></button>
 		{% else %}
-		<button type="submit" class="btn btn-sm btn-primary">Add&nbsp;<i class="fas fa-cloud-upload-alt"></i></button>
+		<button type="submit" class="btn btn-sm btn-primary btn-hover-scale">Add&nbsp;<i class="fas fa-cloud-upload-alt"></i></button>
 		{% endif %}
-		
 	</div>
-
 </form>
+{% endblock body %}
 
+
+
+{% block js %}
 <script>
 $("#modal-cap").find("select").select2({
 		dropdownParent: $('#modal-cap')
     })
 </script>
+{% endblock js %}

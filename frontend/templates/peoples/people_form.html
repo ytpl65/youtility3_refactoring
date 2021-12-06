@@ -325,7 +325,7 @@ People
                 <div class="booleans col-md-6 d-flex justify-content-sm-start mt-5">
                     <!--ENABLE CHECKBOX -->
                     <label for=id_isenable class="form-check-label bool col-form-label me-5 text-sm-right">Enable
-                        &nbsp {{ peopleform.isenable }}</label>
+                        &nbsp {{ peopleform.enable }}</label>
                      <!--BLACKLIST CHECKBOX -->
                     <label for=id_blacklist class="form-check-label bool col-form-label me-5 text-sm-right">Blacklist
                         &nbsp{{ pref_form.blacklist }}</label>
@@ -351,7 +351,7 @@ People
 
             <!--begin::Image input-->
             <div class="image-input image-input-empty" data-kt-image-input="true"
-                style="background-image: url(/static/assets/media/images/blank.png)">
+                style="background-image: url({% if peopleform.instance %} {{ peopleform.instance.peopleimg.url }} {% else %} '/static/assets/media/images/blank.png' {% endif %})">
                 <!--begin::Image preview wrapper-->
                 <div class="image-input-wrapper w-125px h-125px"></div>
                 <!--end::Image preview wrapper-->

@@ -95,24 +95,13 @@ function handle_alerts_msgs(msg, alertype){
   
 }
 
-function display_non_field_errors(errors){
-  console.log("displaying non field errors")
-  let i=0
-  for(let key in errors['__all__']){
-    console.log(errors.__all__[key])
-    console.log(error[key])
-    i++;
-    msg = "<p class='errors'>" + errors.__all__[key] + "</p>"
-    $('.modal-body').prepend(msg)  
-  }
-}
 
 function display_form_errors(errors) {
   /*display errors on respective fields*/
   for (let key in errors) {
     if (errors.hasOwnProperty(key)) {
       if(errors.hasOwnProperty("__all__")){
-        display_non_field_errors(errors)
+        display_non_field_errors(errors)//non-field errors
       }
       error = "<p class='errors'>" + errors[key] + "</p>";
       field = "[name='" + key + "']";
@@ -129,6 +118,35 @@ function display_form_errors(errors) {
       }
     }
   }
+}
+// ====== BEGIN single page CRUD ajax functions ======= //
+function show_error_alert(msg, title=""){
+  heading = title!=="" ? title : "Error"
+  Swal.fire(
+    heading,
+    msg,
+    'error'
+  )
+}
+
+
+function show_successful_delete_alert(){
+  Swal.fire({
+    icon: 'success',
+    title: 'Deleted successfully',
+    showConfirmButton: false,
+    timer: 1500
+  })
+}
+
+function show_alert_before_delete(data){
+ return Swal.fire({
+      title:`Delete ${data}`,
+      text:`Are you sure you want to delete this ${data.toLowerCase()}`,
+      icon:"warning",
+      showCancelButton: true,
+      confirmButtonText: 'Yes, delete it!'
+    })
 }
 
 function display_non_field_errors(errors){
@@ -165,26 +183,8 @@ function display_modelform_errors(errors){
 
 }
 
-// function submit_ajax_form_post(params, payload){
-//   return $.ajax({
-//     url:params['url'],
-//     type:"post",
-//     data:payload
-//   }).fail((xhr, status, error) =>{
-//     console.log(xhr)
-//     console.log(status)
-//     console.log(error)
-//     display_form_errors(xhr.responseJSON.errors)
-//   }).done((data, status, xhr) => {
-//     console.log(data)
-//     console.log(status)
-//     console.log(xhr)
-//     handle_alerts_msgs(data.success, "alert alert-success")
 
-//   })
-// }
-
-function submit_ajax_form_post(params, payload){
+function fire_ajax_form_post(params, payload){
   return $.ajax({
     url:params['url'],
     type:"post",
@@ -193,25 +193,24 @@ function submit_ajax_form_post(params, payload){
     console.log(xhr)
     console.log(status)
     console.log(error)
+    if(params.modal === true){
     display_modelform_errors(xhr.responseJSON.errors)
+    }else{
+      display_form_errors(xhr.responseJSON.errors)
+    }
   })
 }
 
 
-function submit_ajax_form_get(params){
+function fire_ajax_get(params){
   return $.ajax({
     url:params['url'],
     type:"get",
     beforeSend:params['beforeSend'],
-  }).fail((xhr, status, error) =>{
-    console.log(xhr)
-    console.log(status)
-    console.log(error)
-    //display_form_errors(xhr.responseJSON.errors)
   })
 }
 
-function submit_ajax_form_delete(params){
+function request_ajax_form_delete(params){
   return $.ajax({
     url:params['url'],
     type:"get",
@@ -232,6 +231,7 @@ function submit_ajax_form_delete(params){
   })
 }
 
+// ====== END single page CRUD ajax functions =======  //
 
 
 function auto_select_the_newly_created(field_id, data) {
@@ -370,6 +370,22 @@ const wizardDeletedFromDraft = {
   showDenyButton: false,
   showCancelButton: false,
 };
+
+const alert_before_attendance = () => {
+  return Swal.fire({
+    title:"Attendance Capture",
+    icon:"warning",
+    html:`<p>Attendance will be captured, please follow the instructions before proceed further.</p><br>
+      <span class="text-danger">1.Scan your QR code.<br>
+      2.For face capture, please align your face properly, improper alignment will affect the face recognition</span>`,
+    showCancelButton: true,
+    confirmButtonText: "Proceed",
+    denyButtonText: "Cancel",
+  })
+}
+
+
+//=============================== DOCUMENT READY =============================//
 $(document).ready(() => {
   $("#client_onboarding").click((e) => {
     console.log("menu clicked");
@@ -443,3 +459,4 @@ $(document).ready(() => {
     });
   });
 });
+//=============================== END DOCUMENT READY =============================//

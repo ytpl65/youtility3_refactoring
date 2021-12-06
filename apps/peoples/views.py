@@ -20,6 +20,7 @@ from django.contrib import messages
 from django.db.models import RestrictedError
 from .models import Capability, Pgroup, People
 from .utils import save_userinfo, save_pgroupbelonging
+import apps.peoples.utils as putils
 from .forms import CapabilityForm, PgroupForm, PeopleForm, PeopleExtrasForm, LoginForm
 logger = logging.getLogger('django')
 
@@ -143,6 +144,8 @@ class CreatePeople(LoginRequiredMixin, View):
     def post(self, request, *args, **kwargs):
         logger.info('Create People form submiited')
         from .utils import save_jsonform, save_user_paswd
+        from django_email_verification import send_email
+
         response = None
         peopleform = self.form_class(request.POST, request.FILES)
         peoplepref_form = self.jsonform(
@@ -159,6 +162,7 @@ class CreatePeople(LoginRequiredMixin, View):
                     people.peopleimg = request.FILES.get('peopleimg',
                                                          'master/people/blank.png')
                     save_user_paswd(people)
+                    send_email(people, request)
                     logger.info('People Form saved... DONE')
                     messages.success(request, "Success record saved DONE!",
                                      "alert alert-success")
@@ -366,11 +370,11 @@ class CreatePgroup(LoginRequiredMixin, View):
             if form.is_valid():
                 logger.info('Pgroup Form is valid')
                 pg = form.save(commit=False)
-                pg.identifier = TypeAssist.objects.get_or_create(
-                    tacode="PEOPLE_GROUP",taname="People Group", defaults={'tatype':"NONE", "parent":"NONE"})
+                pg.identifier, _ = TypeAssist.objects.get_or_create(
+                    tacode="PEOPLE_GROUP",taname="People Group", defaults={'tacode':"NONE", "parent_id":1})
                 pg.save()
-                save_pgroupbelonging(pg, request)
                 pg = save_userinfo(pg, request.user, request.session)
+                save_pgroupbelonging(pg, request)
                 logger.info('Pgroup Form saved')
                 messages.success(request, "Success record saved successfully!",
                                  "alert alert-success")
@@ -725,126 +729,7 @@ class DeleteCapability(LoginRequiredMixin, View):
 def delete_master(request, params):
     pass
 
-def render_form(request, params, cxt):
-    logger.info("%s", cxt['msg'])
-    html = render_to_string(params['template_form'], cxt, request)
-    data = {"html_form":html}
-    return rp.JsonResponse(data, status=200)
 
-
-def handle_DoesNotExist(request):
-    data = {'error': 'Unable to edit object not found'}
-    logger.error("%s", data['error'], exc_info=True)
-    messages.error(request, data['error'], 'alert-danger')
-    return rp.JsonResponse(data, status=404)
-
-
-def handle_Exception(request, force_return=None):
-    data = {'error': 'Something went wrong'}
-    logger.critical(data['error'], exc_info=True)
-    messages.error(request, data['error'], 'alert-danger')
-    if force_return:
-        return force_return
-    return rp.JsonResponse(data, status=404)
-
-
-def handle_RestrictedError(request, F, form):
-    data = {'error': "Unable to delete, due to dependencies"}
-    logger.warn("%s", data['error'], exc_info=True)
-    messages.error(request, data['error'], "alert-danger")
-    return rp.JsonResponse(data, status=404)
-
-
-def handle_EmptyResultSet(request, params, cxt):
-    logger.warn('empty objects retrieved', exc_info=True)
-    messages.error(request, 'List view not found',
-                   'alert-danger')
-    return render(request, params['template_list'], cxt)
-
-
-def render_form_for_update(request, params, form, cxt={}):
-    logger.info("render form for update")
-    try:
-        pk = int(request.GET.get('id'))
-        print("pk ", pk)
-        obj = params['model'].objects.get(id=pk)
-        logger.info("object retrieved '{}'".format(obj))
-        F = params['form_class'](instance=obj)
-        C = {form: F, 'edit': True}
-        C.update(cxt)
-        html = render_to_string(params['template_form'], C, request)
-        data = {'html_form':html}
-        return rp.JsonResponse(data, status=200)
-    except params['model'].DoesNotExist:
-        return handle_DoesNotExist(request)
-    except Exception:
-        return handle_Exception(request)
-
-
-def render_form_for_delete(request, params, master):
-    logger.info("render form for delete")
-    try:
-        pk  = request.GET.get('id')
-        obj = params['model'].objects.get(id=pk)
-        F   = params['form_class'](instance=obj)
-        if master:
-            obj.enable = False
-            obj.save()
-        else: obj.delete()
-        return rp.JsonResponse({}, status=200)
-    except params['model'].DoesNotExist:
-        return handle_DoesNotExist(request)
-    except RestrictedError:
-        return handle_RestrictedError(request, F)
-    except Exception:
-        return handle_Exception(request, params)
-
-
-def render_grid(request, params, msg, lookup={}):
-    logger.info("render grid")
-    try:
-        logger.info("%s", msg)
-        objs = params['model'].objects.select_related(
-            *params['related']).filter(**lookup).values(*params['fields'])
-        logger.info("objects retreived from database")
-        logger.info("Pagination Starts")
-        cxt = paginate_results(request, objs, params)
-        logger.info("Pagination Ends")
-        resp = render(request, params['template_list'], context=cxt)
-    except EmptyResultSet:
-        resp = handle_EmptyResultSet(request, params, cxt)
-    except Exception:
-        resp = handle_Exception(request, redirect('/dashboard'))
-    return resp
-
-
-def paginate_results(request, objs, params):
-    logger.info('paginate results')
-    if request.GET:
-        objs = params['filter'](request.GET, queryset=objs).qs
-    filterform = params['filter']().form
-    page = request.GET.get('page', 1)
-    paginator = Paginator(objs, 15)
-    try:
-        li = paginator.page(page)
-    except PageNotAnInteger:
-        li = paginator.page(1)
-    except EmptyPage:
-        li = paginator.page(paginator.num_pages)
-    return {params['list']: li, params['filt_name']: filterform}
-
-
-def get_instance_for_update(postdata, params, msg):
-    logger.info("%s", msg)
-    pk = int(postdata.get('pk'))
-    obj = params['model'].objects.get(id=pk)
-    logger.info("object retrieved '{}'".format(obj))
-    return params['form_class'](instance=obj)
-
-
-def handle_invalid_form(request, params, cxt):
-    logger.info("form is not valid")
-    return rp.JsonResponse(cxt, status=404)
 
 
 class Capability(View):
@@ -868,21 +753,21 @@ class Capability(View):
             d = {'list': "cap_list", 'filt_name': "cap_filter"}
             self.params.update(d)
             lookup = {'enable': True}
-            resp = render_grid(request, self.params, "capability_view", lookup)
+            resp = putils.render_grid(request, self.params, "capability_view", lookup)
         
         # return cap_form empty
         elif R.get('action', None) == 'form':
             cxt = {'cap_form': self.params['form_class'](),
-                   'msg': "create capability requested"}
-            resp = render_form(request, self.params, cxt)
+                 'msg': "create capability requested"}
+            resp = putils.render_form(request, self.params, cxt)
         
         # handle delete request
         elif R.get('action', None) == "delete" and R.get('id', None):
             print(f'resp={resp}')
-            resp = render_form_for_delete(request, self.params, True)
+            resp = putils.render_form_for_delete(request, self.params, True)
         # return form with instance
         elif R.get('id', None):
-            resp = render_form_for_update(request, self.params, "cap_form")
+            resp = putils.render_form_for_update(request, self.params, "cap_form")
         print(f'return resp={resp}')
         return resp
 
@@ -892,26 +777,30 @@ class Capability(View):
         try:
             print(request.POST)
             data = QueryDict(request.POST['formData'])
-            if data.get('pk', None):
+            pk = request.POST.get('pk', None)
+            print(pk, type(pk))
+            if pk:
                 msg = "capability_view"
-                form = get_instance_for_update(data, self.params, msg)
+                form = putils.get_instance_for_update(data, self.params, msg, int(pk))
+                print(form.data)
             else:
                 form = self.params['form_class'](data)
             if form.is_valid():
                 resp = self.handle_valid_form(form, request)
             else:
                 cxt = {'errors': form.errors}
-                resp = handle_invalid_form(request, self.params, cxt)
+                resp = putils.handle_invalid_form(request, self.params, cxt)
         except Exception:
-            resp = handle_Exception(request)
+            resp = putils.handle_Exception(request)
         return resp
 
     def handle_valid_form(self, form, request):
         logger.info('capability form is valid')
         import json
         cap = form.save()
-        save_userinfo(cap, request.user, request.session)
+        putils.save_userinfo(cap, request.user, request.session)
         logger.info("capability form saved")
         data = {'success': "Record has been saved successfully", 
-        'code':cap.capscode}
+        'code':cap.capscode, 'name':cap.capsname, 'cfor':cap.cfor, 
+        'parent':cap.parent.capscode}
         return rp.JsonResponse(data, status=200)

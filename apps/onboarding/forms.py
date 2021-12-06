@@ -33,7 +33,7 @@ class SuperTypeAssistForm(forms.ModelForm):
                 'taname': 'Name',
                 'parent': 'Belongs to'}
         widgets = {
-            'parent':s2forms.Select2Widget,
+            'parent':s2forms.ModelSelect2Widget(model = obm.TypeAssist, search_fields =  ['taname__icontains','tacode__icontains']),
             'tacode':forms.TextInput(attrs={'placeholder':'Enter code without space and special characters', 'style':"text-transform: uppercase;"}),
             'taname':forms.TextInput(attrs={'placeholder':"Enter name"}),
             'tatype':forms.TextInput(attrs={'placeholder':"Enter type"})}
@@ -66,11 +66,6 @@ class SuperTypeAssistForm(forms.ModelForm):
             raise forms.ValidationError(self.error_msg['invalid_code3'])
         return value.upper()
     
-    def clean_taname(self):
-        val = self.cleaned_data.get('taname')
-        if val: return val.upper()
-
-
 class TypeAssistForm(SuperTypeAssistForm): 
     
     tatype = forms.ModelChoiceField(required=True, label='Type', widget=s2forms.Select2Widget, queryset=None)
@@ -89,9 +84,6 @@ class TypeAssistForm(SuperTypeAssistForm):
         ob_utils.apply_error_classes(self)
         return result
     
-
-
-
 
 
 class BtForm(forms.ModelForm):  

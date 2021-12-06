@@ -4,6 +4,7 @@ from django.db import  transaction
 
 import apps.peoples.models as pm #people-models
 import apps.onboarding.models as om #onboarding-models
+import apps.attendance.models as atdm #attendance-models
 from django.core.validators import RegexValidator
 from icecream import ic
 from django_select2 import forms as s2forms
@@ -241,10 +242,6 @@ class PgroupForm(forms.ModelForm):
         ob_utils.apply_error_classes(self)
         return result
     
-    def clean_groupname(self):
-        val = self.cleaned_data.get('groupname')
-        if val: return val.upper()
-
 
 
 class PgbelongingForm(forms.ModelForm):
@@ -389,46 +386,3 @@ class PeopleGrpAllocation(forms.Form):
         ob_utils.apply_error_classes(self)
         return result 
 
-
-class AttendanceForm(forms.ModelForm):
-    required_css_class = "required"
-
-    class Meta:
-        model = pm.PeopleEventlog
-        fields = ['peopleid', 'punch_intime', 'punch_outtime', 'datefor',
-         'peventtype', 'verifiedby', 'facerecognition', 'remarks']
-        labels = {
-            'peopleid':'People',
-            'punch_intime':'In Time',
-            'punch_outtime':'Out Time',
-            'datefor':'For Date',
-            'peventtype':'Attendance Type',
-            'verifiedby':'Verified By',
-            'facerecognition':'Enable FaceRecognition',
-            'remarks':"Remark"
-        }
-        widgets = {
-            'peopleid': s2forms.ModelSelect2Widget(
-                model=pm.People, search_fields =  ['peoplename__icontains','peoplecode__icontains']
-            ),
-            'verifiedby': s2forms.ModelSelect2Widget(
-                model = pm.People, search_fields = ['peoplename__icontains','peoplecode__icontains']
-            )
-        }
-
-
-    def __init__(self, *args, **kwargs):
-        super(AttendanceForm, self).__init__(*args, **kwargs)
-        ob_utils.initailize_form_fields(self)
-        self.fields['datefor'].required = True
-        self.fields['punch_intime'].required = True
-        self.fields['punch_outtime'].required = True
-        self.fields['verifiedby'].required = True
-        self.fields['peopleid'].required = True
-        self.fields['peventtype'].required = True
-
-    def is_valid(self) -> bool:
-        """Adds 'is-invalid' class to invalid fields"""
-        result = super().is_valid()
-        ob_utils.apply_error_classes(self)
-        return result 

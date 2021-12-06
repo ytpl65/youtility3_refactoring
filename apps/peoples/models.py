@@ -1,4 +1,5 @@
 from django.db.models import CharField
+from django.db.models.fields import BooleanField
 from django.urls import reverse
 from django.conf import settings
 from django.db import models
@@ -75,6 +76,7 @@ class People(AbstractBaseUser, PermissionsMixin, TenantAwareModel, BaseModel):
     loginid       = models.CharField(_("Login Id"), max_length=50, unique=True, null=True, blank=True)
     isadmin       = models.BooleanField(_("Is Admin"), default=False)
     is_staff      = models.BooleanField(_('staff status'),default=False)
+    is_verified   = models.BooleanField(_("Is Active"), default=False)
     enable        = models.BooleanField(_("Enable"), default=True)
     shift         = models.ForeignKey('onboarding.Shift', null=True, blank=True, on_delete=models.RESTRICT, related_name='onboarding_shift')
     department    = models.ForeignKey("onboarding.TypeAssist", null=True, blank=True, on_delete=models.RESTRICT, related_name='people_departments')
@@ -84,18 +86,18 @@ class People(AbstractBaseUser, PermissionsMixin, TenantAwareModel, BaseModel):
     siteid        = models.ForeignKey("onboarding.Bt",  null=True, blank=True, on_delete=models.RESTRICT, related_name='people_siteids')
     reportto      = models.ForeignKey("self", null=True, blank=True, on_delete=models.RESTRICT, related_name='children', verbose_name='Report to')
     deviceid      = models.CharField(_("Device Id"), max_length=50, default='-1')
-    email         = SecureString(_("Email"), max_length=254, unique=True)
-    mobno         = SecureString(_("Mob No"), max_length=254, unique=True)
+    email         = SecureString(_("Email"), max_length=254)
+    mobno         = SecureString(_("Mob No"), max_length=254, null=True)
     gender        = models.CharField(_("Gender"), choices=GENDER_CHOICES, max_length=15, null=True)
     dateofbirth   = models.DateField(_("Date of Birth"))
     dateofjoin    = models.DateField(_("Date of Join"))
     dateofreport  = models.DateField(_("Date of Report"), null=True, blank=True)
-    people_extras = models.JSONField(_("people_extras"), default = peoplejson, blank=True, encoder=DjangoJSONEncoder)   
+    people_extras = models.JSONField(_("people_extras"), default = peoplejson, blank=True, encoder=DjangoJSONEncoder)
 
     objects=PeopleManager()
     USERNAME_FIELD = 'loginid'
-    REQUIRED_FIELDS = ['peoplecode',  'peoplename', 'dateofbirth',
-                      'dateofjoin', 'mobno', 'email']
+    REQUIRED_FIELDS = ['peoplecode',  'peoplename', 'dateofbirth'
+                      'dateofjoin', 'email']
 
 
 
@@ -106,6 +108,7 @@ class People(AbstractBaseUser, PermissionsMixin, TenantAwareModel, BaseModel):
             models.UniqueConstraint(fields=['peoplecode', 'siteid'], name='people_peoplecode_siteid'),
             models.UniqueConstraint(fields=['loginid', 'siteid'], name='people_loginid_siteid_uk'),
             models.UniqueConstraint(fields=['loginid'], name='people_loginid_uk'),
+            models.UniqueConstraint(fields=['loginid', 'mobno', 'email'], name='loginid_mobno_email_uk'),
         ]
     
 
@@ -214,47 +217,3 @@ class Capability(BaseModel, TenantAwareModel):
         if self.parent in self.get_all_children():
             raise ValidationError("A capability cannot have itself \
                     or one of its' children as parent.")
-
-def peventlog_json():
-    return {'fr_threshold':None, 'fr_score':None, 
-    'fr_timestamp':None, 'fr_service_resp':None, 'other_location': ""}
-
-############## PeopleEventlog Table ###############
-class PeopleEventlog(BaseModel, TenantAwareModel):
-    EVENTTYPE_CHOICES = [('MARK', 'Mark'),('SELF', 'Self'), ('SITE', 'Site'), ('CONVEYANCE', 'Conveyance')]
-    TRANSPORTMODE_CHOICES = [('BICYCLE', 'Bicycle'), ('MOTORCYCLE', 'MotorCycle'), ('RICKSHAW', 'Rickshaw'), ('BUS', 'Bus'),
-                            ('TRAIN', 'Train'), ('FLITE', 'Flite'), ('BOAT', 'Boat or Ship')]
-
-
-    peopleid        = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True, on_delete = models.RESTRICT, verbose_name='People')
-    clientid        = models.ForeignKey("onboarding.Bt",  null=True, blank=True, on_delete = models.RESTRICT, related_name='clientids')
-    siteid          = models.ForeignKey("onboarding.Bt",  null=True, blank=True, on_delete = models.RESTRICT, related_name='siteids')
-    shift           = models.ForeignKey('onboarding.Shift', null=True, blank=True, on_delete=models.RESTRICT)
-    verifiedby      = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True, on_delete = models.RESTRICT, related_name='verifiedpeoples', verbose_name='Verified By')
-    gfid            = models.ForeignKey('onboarding.GeofenceMaster',null=True, blank=True, on_delete=models.RESTRICT )
-    peventtype      = models.CharField(choices = EVENTTYPE_CHOICES, max_length=100, verbose_name='Attendance Type', null=True)
-    transportmode   = models.CharField(choices = TRANSPORTMODE_CHOICES, max_length=100, verbose_name='Transport Mode', null=True)
-    punch_intime    = models.DateTimeField(null=True)
-    punch_outtime   = models.DateTimeField(null=True)
-    datefor         = models.DateField(_("Date"), null=True)
-    distance        = models.IntegerField(_("Distance"), null=True, blank=True)
-    duration        = models.IntegerField(_("Duration"), null=True, blank=True)
-    ctzoffset       = models.IntegerField(_("ctzoffset"), null=True, default=0, blank=True)
-    expamt          = models.IntegerField(_("exampt"), null=True, blank=True)
-    duration        = models.IntegerField(_("duration"), null=True, blank=True)
-    accuracy        = models.IntegerField(_("accuracy"), null=True, blank=True)
-    deviceid        = models.CharField(_("deviceid"), max_length=50, null=True, blank=True)
-    gpslocation_in  = models.CharField(_("GPS-In"), max_length=50, default='0.0,0.0')
-    gpslocation_out = models.CharField(_("GPS-Out"), max_length=50, default='0.0,0.0')
-    remarks         = models.CharField(_("remarks"),null=True, max_length=500, blank=True)
-    facerecognition = models.BooleanField(_("Enable Face-Recognition"), default=True)
-    peventlogextras = models.JSONField(_("peventlogextras"), encoder=DjangoJSONEncoder, default=peventlog_json)
-
-
-
-    class Meta:
-        db_table='peopleeventlog'
-        get_latest_by = ['mdtz']
-
-    def __str__(self) -> str:
-        return self.peventtype

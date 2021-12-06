@@ -1,5 +1,6 @@
 from django.contrib import admin
-from .models import People, PeopleEventlog, Pgroup, Pgbelonging, Capability
+from .models import People,  Pgroup, Pgbelonging, Capability
+from apps.attendance import models as atdm
 from import_export import resources
 from import_export.admin import ImportExportModelAdmin
 from import_export import resources, fields
@@ -15,7 +16,7 @@ from apps.onboarding.admin import TaResource
 @admin.register(People)
 class PeopleAdmin(admin.ModelAdmin):
     fields = ['peoplecode', 'peoplename', 'loginid', 'designation', 'department', 'mobno', 'email',
-              'reportto', 'dateofjoin', 'dateofreport', 'dateofbirth', 'gender', 'peopletype', 'enable', 'isadmin','shift', 'people_extras', 'clientid']
+              'reportto', 'dateofjoin', 'dateofreport', 'dateofbirth', 'gender', 'peopletype', 'enable', 'isadmin','siteid', 'shift', 'people_extras', 'clientid']
 
     list_display = ['id', 'peoplecode', 'peoplename', 'loginid', 'designation', 'mobno', 'email',
                     'reportto', 'dateofjoin', 'gender', 'peopletype', 'enable', 'isadmin', 'clientid', 'shift']
@@ -39,11 +40,6 @@ class PgbelongingAdmin(admin.ModelAdmin):
     list_display = ['id', 'groupid', 'peopleid',
                     'isgrouplead', 'assignsites', 'siteid']
     list_display_links = ['groupid', 'peopleid']
-
-
-@admin.register(PeopleEventlog)
-class PeopleEventlogAdmin(admin.ModelAdmin):
-    fields = ['id', 'peopleid', 'peventtype']
 
 
 class CapabilityResource(resources.ModelResource):

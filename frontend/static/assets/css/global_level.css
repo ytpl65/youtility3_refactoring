@@ -120,3 +120,20 @@ h6 > ol > li {
 body{
     overflow: auto;
 }
+li.page-item{
+    z-index: 0;
+}
+div#kt_footer {
+    position: fixed;
+    height: 50px;
+    bottom: 0px;
+    left: 0px;
+    right: 0px;
+    margin-bottom: 0px;
+}
+
+.modal-heading{
+    font-weight: 500;
+    font-size: 1.275rem;
+    color: #181C32;
+}

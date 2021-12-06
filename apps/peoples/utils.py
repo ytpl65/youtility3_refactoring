@@ -1,7 +1,14 @@
 from functools import cache
 import logging
 import re
-from django.forms.utils import pretty_name
+from typing import Mapping
+from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
+from django.core.exceptions import EmptyResultSet
+from django.db.models import RestrictedError
+from django.contrib import messages
+from django.template.loader import render_to_string
+from django.shortcuts import redirect, render
+from django.http import response as rp
 from apps.peoples import models as pm
 from apps.tenants.models import Tenant
 from django.db import transaction
@@ -97,10 +104,8 @@ def save_cuser_muser(instance, user):
         cdtz = instance.cdtz.replace(microsecond=0)
         if mdtz > cdtz:
             instance.muser = user
-            instance.save()
         elif mdtz == cdtz:
             instance.cuser = instance.muser = user
-            instance.save()
     return instance
 
 
@@ -164,13 +169,15 @@ def validate_mobileno(val):
 
 
 def save_tenant_client_info(request):
-    from apps.tenants.utils import get_client_from_hostname
+    from apps.tenants.utils import  hostname_from_request, get_tenants_map
     from apps.onboarding.models import Bt
     from apps.tenants.models import Tenant
     try:
         logger.info('saving tenant & client info into the session...STARTED')
-        clientcode = get_client_from_hostname(request)
-        print(clientcode)
+        hostname = hostname_from_request(request)
+        clientcodeMap = get_tenants_map()
+        clientcode = clientcodeMap.get(hostname)
+        request.session['hostname'] = hostname
         client = Bt.objects.get(bucode=clientcode.upper())
         tenant = Tenant.objects.get(subdomain_prefix=clientcode)
         request.session['tenantid'] = tenant.id
@@ -438,7 +445,8 @@ def save_pgroupbelonging(pg, request):
                         tenant=tenant,
                         siteid=site
                     )
-                    request.session['wizard_data']['pgbids'].append(pgb.id)
+                    if request.session.get('wizard_data'):
+                        request.session['wizard_data']['pgbids'].append(pgb.id)
                     save_cuser_muser(pgb, request.user)
         except Exception:
             dbg("saving pgbelonging for pgroup %s FAILED" % (pg))
@@ -463,3 +471,123 @@ def save_pgroupbelonging(pg, request):
 
 def cache_it(key, val, time):
     cache.set(key, val, time)
+
+def render_form(request, params, cxt):
+    logger.info("%s", cxt['msg'])
+    html = render_to_string(params['template_form'], cxt, request)
+    data = {"html_form":html}
+    return rp.JsonResponse(data, status=200)
+
+
+def handle_DoesNotExist(request):
+    data = {'error': 'Unable to edit object not found'}
+    logger.error("%s", data['error'], exc_info=True)
+    messages.error(request, data['error'], 'alert-danger')
+    return rp.JsonResponse(data, status=404)
+
+
+def handle_Exception(request, force_return=None):
+    data = {'error': 'Something went wrong'}
+    logger.critical(data['error'], exc_info=True)
+    messages.error(request, data['error'], 'alert-danger')
+    if force_return:
+        return force_return
+    return rp.JsonResponse(data, status=404)
+
+
+def handle_RestrictedError(request, F, form):
+    data = {'error': "Unable to delete, due to dependencies"}
+    logger.warn("%s", data['error'], exc_info=True)
+    messages.error(request, data['error'], "alert-danger")
+    return rp.JsonResponse(data, status=404)
+
+
+def handle_EmptyResultSet(request, params, cxt):
+    logger.warn('empty objects retrieved', exc_info=True)
+    messages.error(request, 'List view not found',
+                   'alert-danger')
+    return render(request, params['template_list'], cxt)
+
+
+def render_form_for_update(request, params, form, cxt={}):
+    logger.info("render form for update")
+    try:
+        pk = int(request.GET.get('id'))
+        print("pk ", pk)
+        obj = params['model'].objects.get(id=pk)
+        logger.info("object retrieved '{}'".format(obj))
+        F = params['form_class'](instance=obj)
+        C = {form: F, 'edit': True}
+        C.update(cxt)
+        html = render_to_string(params['template_form'], C, request)
+        data = {'html_form':html}
+        return rp.JsonResponse(data, status=200)
+    except params['model'].DoesNotExist:
+        return handle_DoesNotExist(request)
+    except Exception:
+        return handle_Exception(request)
+
+
+def render_form_for_delete(request, params, master=False):
+    logger.info("render form for delete")
+    try:
+        pk  = request.GET.get('id')
+        obj = params['model'].objects.get(id=pk)
+        F   = params['form_class'](instance=obj)
+        if master:
+            obj.enable = False
+            obj.save()
+        else: obj.delete()
+        return rp.JsonResponse({}, status=200)
+    except params['model'].DoesNotExist:
+        return handle_DoesNotExist(request)
+    except RestrictedError:
+        return handle_RestrictedError(request, F)
+    except Exception:
+        return handle_Exception(request, params)
+
+
+def render_grid(request, params, msg, lookup={}):
+    logger.info("render grid")
+    try:
+        logger.info("%s", msg)
+        objs = params['model'].objects.select_related(
+            *params['related']).filter(**lookup).values(*params['fields'])
+        logger.info("objects retreived from database")
+        logger.info("Pagination Starts")
+        cxt = paginate_results(request, objs, params)
+        logger.info("Pagination Ends")
+        resp = render(request, params['template_list'], context=cxt)
+    except EmptyResultSet:
+        resp = handle_EmptyResultSet(request, params, cxt)
+    except Exception:
+        resp = handle_Exception(request, redirect('/dashboard'))
+    return resp
+
+
+def paginate_results(request, objs, params):
+    logger.info('paginate results')
+    if request.GET:
+        objs = params['filter'](request.GET, queryset=objs).qs
+    filterform = params['filter']().form
+    page = request.GET.get('page', 1)
+    paginator = Paginator(objs, 15)
+    try:
+        li = paginator.page(page)
+    except PageNotAnInteger:
+        li = paginator.page(1)
+    except EmptyPage:
+        li = paginator.page(paginator.num_pages)
+    return {params['list']: li, params['filt_name']: filterform}
+
+
+def get_instance_for_update(postdata, params, msg, pk):
+    logger.info("%s", msg)
+    obj = params['model'].objects.get(id=pk)
+    logger.info("object retrieved '{}'".format(obj))
+    return params['form_class'](postdata, instance=obj)
+
+
+def handle_invalid_form(request, params, cxt):
+    logger.info("form is not valid")
+    return rp.JsonResponse(cxt, status=404)

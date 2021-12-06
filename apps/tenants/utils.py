@@ -6,7 +6,8 @@ def get_tenants_map():
         'sps.youtility.local'       :'sps',
         'capgemini.youtility.local' :'capgemini',
         'dell.youtility.local'      :'dell',
-        'icici.youtility.local'     :'icici'
+        'icicibank.youtility.local' :'icicibank',
+        'barfi.youtility.in'        :'icicibank'
     }
 
 # RETURN HOSTNAME FROM REQUEST 
@@ -26,5 +27,6 @@ def tenant_db_from_request(request):
 
 def get_client_from_hostname(request):
     hostname = hostname_from_request(request)
+    print(hostname)
     return hostname.split('.')[0]
 

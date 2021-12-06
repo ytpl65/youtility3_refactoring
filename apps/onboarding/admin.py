@@ -25,7 +25,7 @@ class TaResource(resources.ModelResource):
         skip_unchanged = True
         import_id_fields = ('id',)
         report_skipped = True
-        fields = ('id', 'taname', 'tacode','tatype', 'parent', 'cuser', 'muser',)
+        fields = ('id', 'taname', 'tacode','tatype', 'cuser', 'muser',)
 
 from import_export.admin import ImportExportModelAdmin
 
@@ -60,12 +60,10 @@ class BtResource(resources.ModelResource):
 
 
 
-
-
 @admin.register(Bt)
 class BtAdmin(ImportExportModelAdmin):
-    form = BtForm
     resource_class  = BtResource
+    form = BtForm
     fields = ('bucode',  'buname', 'butype', 'parent', 'gpslocation', 'identifier',
               'iswarehouse', 'enable', 'bu_preferences')
     exclude = ['bupath']

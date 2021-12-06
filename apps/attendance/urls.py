@@ -1,0 +1,10 @@
+from django.urls import path
+from django.urls.conf import include
+from apps.attendance import views
+
+app_name = 'attendance'
+urlpatterns = [
+    path('attendance/', views.Attendance.as_view(), name='attendance_view'),
+    path('markAttendance/', views.face_recognition, name='markAttendance'),
+    path('opencam/', views.face_recognition2, name='webcam')
+]

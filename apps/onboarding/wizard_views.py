@@ -135,7 +135,9 @@ class WizardDelete(LoginRequiredMixin, View):
 
 # STEP-1 BTFORM-VIEW
 class WizardBt(views.CreateBt):
+    form_class = obforms.BtForm
     model = ob.Bt
+    template_path = 'onboarding/bu_form.html'
     wizard_data = {
         'current_ids': 'buids',
         'next_ids': 'shiftids',
@@ -191,6 +193,7 @@ class WizardBt(views.CreateBt):
             res = res = ob_utils.handle_other_exception(
                 request, form, 'buform', self.template_path)
         return res
+
 
     def process_valid_form(self, form, request, update):
         try:

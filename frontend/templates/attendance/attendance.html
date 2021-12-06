@@ -1,0 +1,304 @@
+{% extends "base_list.html" %}
+
+<!---- BEGIN CARD TITLE ------>
+{% block card_title %}
+Attendance
+{% endblock card_title %}
+<!----- END CARD TITLE -------->
+
+<!------------------------------------ BEGIN PAGE BREADCUMBS ------------------------------------>
+{% block pagebreadcumb %}
+{{ super() }}
+<li class="breadcrumb-item pe-3"><a href="javascript:void(0)" class="pe-3">Attendance</a></li>
+{% endblock pagebreadcumb %}
+<!------------------------------------- END PAGE BREADCUMBS ------------------------------------->
+
+{% block table %}
+<button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modal-open-cam">
+Open Camera
+</button>
+<!--------------------------BEGIN TABLE------------------------------>
+<table id="attd_table" class="display cell-border" style="width:100%">
+    <thead class="fw-bold fs-6">
+        <th>Type</th>
+        <th>Site Name</th>
+        <th>People</th>
+        <th>Face Recognition</th>
+        <th>Verified By</th>
+        <th>Date For</th>
+        <th>In Time</th>
+        <th>Out Time</th>
+    </thead>
+    <!---------- BEGIN TABLE FILTER FIELDS --------->
+    <thead id="filter_row">
+        <form action="" method="get" id="attd_filter">
+            <input type="hidden" name="search_term" value="true">
+            {% for field in attd_filter %}
+            <th>
+                {{ field }}
+            </th>
+            {% endfor %}
+        </form>
+    </thead>
+    <!---------- END TABLE FILTER FIELDS --------->
+    <tbody>
+        {% for attd in attd_list %}
+        <tr>
+            <td><a href="" class="attd-link" data-id="{{ attd['id'] }}"
+            data-rowid={{ loop.index0 }}>{{ attd['peventtype'] }}</a></td>
+            <td>{{ attd['siteid__buname'] }}</td>
+            <td>{{ attd['peopleid__peoplename'] }}</td>
+            <td>{{ attd['facerecognition'] }}</td>
+            <td>{{ attd['verifiedby__peoplename'] }}</td>
+            <td>{{ attd['datefor'].strftime('%d-%b-%Y') }}</td>
+            <td>{{ attd['punch_intime'].strftime('%d-%b-%Y, %H:%M') }}</td>
+            <td>{{ attd['punch_outtime'].strftime('%d-%b-%Y, %H:%M') }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+<!--------------------------END TABLE------------------------------>
+
+{% if attd_list and attd_list.has_other_pages %}
+<!-- BEGIN PAGINATOIN -->
+{{ paginator(attd_list) }}
+<!-- END PAGINATOIN ---->
+{% endif %}
+{% endblock table %}
+
+{% block popup_alerts %}
+<!-- THE MODAL WE WILL BE USING -->
+<div class="modal animate__animated animate__zoomIn" aria-hidden="true" tabindex="-1"
+    aria-labelledby="exampleModalLabel" data-bs-backdrop="static" id="modal-attd">
+    <div class="modal-dialog modal-dialog-centered modal-xl">
+        <div class="modal-content" id="attd_content">
+        </div>
+    </div>
+</div>
+<!-- Attendance Capture -->
+<div class="modal animate__animated animate__zoomIn" aria-hidden="true" tabindex="-1"
+    aria-labelledby="exampleModalLabel" data-bs-backdrop="static" id="modal-open-cam">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content" id="fr_content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="exampleModalLabel">Scan QR</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+            
+                <img id="open_cam" src="{{ url('attendance:webcam') }}">
+            </div>
+             <div class="modal-footer">
+                <button  type="button"class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock popup_alerts %}
+
+<!--------- BEGIN EXTRA SCRIPTS ----------------------------->
+{% block extra_scripts %}
+<script>
+    var table = null;
+    $(document).ready(function () {
+        new ClipboardJS('btn-copy')
+        //filter will search on enter key
+        $("input").keypress(function (event) {
+            if (event.which == 13) { //enter key
+                event.preventDefault();
+                $("#cap_filter").submit();
+            }
+        });
+
+        //beforeSend of capability ajax request 
+        function attdBeforeSend() {
+            $("#modal-attd").modal("show");
+        }
+        //datatable initialization
+        table = $('#attd_table').DataTable({
+            responsive: true,
+            fixedHeader: true,
+            paging: false,
+            language: {
+                searchPlaceholder: "Search on page"
+            },
+            dom: "<'row'" +
+                "<'col-sm-6 d-flex align-items-center justify-conten-start'B>" +
+                "<'col-sm-6 d-flex align-items-center justify-content-end'f>" +
+                ">" +
+
+                "<'table-responsive'tr>",
+            ordering: false,
+            scrollCollapse: true,
+                buttons: [
+                {
+                    text: "Add New Attendance &nbsp;<i class='fas fa-plus ch4'></i>",
+                    className: "btn btn-sm btn-light-primary btn-hover-rise",
+                    //action for add_new_button
+                    action: function (e, dt, node, config) {
+                        const params = {
+                            modal_id: "#modal-attd",
+                            url: "{{ url('attendance:attendance_view') }}?action=form",
+                            beforeSend: attdBeforeSend}
+                        fire_ajax_get(params)
+                        .done((data, status, xhr) => {
+                            $("#modal-attd .modal-content").html(data.html_form)
+                        })
+                        .fail((xhr, status, error) => {
+                                show_error_alert('Something went wrong!')
+                        })
+                    }}, 
+                {
+                    text:"Take Attendance <i class='fas fa-camera ch4'></i>",
+                    className:"btn btn-sm btn-light-dark btn-hover-rise take-attd"
+                }
+
+            ]
+        })
+        //BEGIN STYLING DATATABLE
+        $("th > input").addClass('form-control')
+        $("th > input").css('height', '35px')
+        var styles = {
+            "border-bottom": "none",
+            "background-color": "#f1f4f7"
+        }
+
+        $('#attd_table thead tr:eq(1)').css(styles)
+
+        //submit form
+		$('#modal-attd').on('submit', '#attd_form', function(e) {
+			var form = $(this);
+			e.preventDefault()
+			const params   = { url:"{{ url('attendance:attendance_view') }}", modal:true }                     //attendance view
+			const formtype = $("#attd_content").attr('data-form')                                  //form-type (create/update)
+			const id       = $("#attd_content").attr('data-id')                                    //form instance id
+			var   payLoad  = {formData:form.serialize(), csrfmiddlewaretoken: '{{ csrf_token }}'}  //payload for post request
+			var   status   = 'created'
+            if(formtype === 'update'){
+				var newPayLoad = {...payLoad, 'pk':id}
+				payLoad    = newPayLoad
+				status     = 'updated'
+			}
+			fire_ajax_form_post(params, payLoad)
+			.done((data, status, xhr) => { //function to submit post request
+				$("#modal-attd").modal("hide");
+				Swal.fire(
+				`Attendance ${status}`,
+				`Attendance with this type <strong>"${data.type}"</strong> has been ${status} successfully`,
+				'success'
+				)
+			})
+		})
+
+        //update row (form-view)
+		$("a.attd-link").click((e) => {
+			e.preventDefault();
+			var id    = $(e.currentTarget).attr('data-id');
+			var rowid = $(e.currentTarget).attr('data-rowid');
+			$("#attd_content").attr('data-rowid', rowid)
+			$("#attd_content").attr('data-id', id)
+			const params = {
+				modal_id    : "#modal-attd",
+				url         : `{{ url('attendance:attendance_view') }}?id=${id}`,
+				beforeSend  : attdBeforeSend }
+			fire_ajax_get(params)
+			.done((data, status, xhr) => {
+				$("#attd_content").attr('data-form', 'update')
+				$("#modal-attd .modal-content").html(data.html_form)
+			})
+			.fail((xhr, status, error) => {
+				show_error_alert('Something went wrong!') //defined in custom.js
+			})
+		})
+
+        // add classes to checkboxes.
+        $(".booleans").addClass("form-check form-switch form-check-custom form-check-solid") 
+
+        //datatime widget
+        $("#id_punch_intime, #id_punch_outtime").flatpickr({
+            enableTime: true,
+            dateFormat: "Y-m-d H:i",
+        });
+
+        //date widget
+        $("#id_datefor").flatpickr({
+            dateFormat:'d M Y'
+        });
+        
+        //take attendance
+        $(".take-attd").click(() => {
+            alert_before_attendance().then((result) => {
+                if(result.isConfirmed){
+                    //openCamera to take attendance
+                    const params = {url:"{{ url('attendance:markAttendance') }}?detectQR=true"}
+                    fire_ajax_get(params)
+                    .done((data, status, xhr) => {
+                        console.log("data", data)
+                        Swal.fire({
+                            title: data.title,
+                            text: data.message,
+                            icon: 'success',
+                            showConfirmButton: false,
+                            timer:3000})
+                        const params = {url:`{{ url('attendance:markAttendance') }}?detectFace=true&code=${data.decoded}`}
+                        setTimeout(
+                            fire_ajax_get(params)
+                            .done((data, status, xhr) => {
+                                console.log("request succeed")
+                                console.log("hello world")
+                            })
+                            .fail((xhr, status, error) => {
+                                console.log("request failed")
+                                console.log("data", xhr)
+                            }), 3000);
+                    })
+                    .fail((xhr, status, error) => {
+                        if(xhr.responseJSON.hasOwnProperty('message')){
+                            show_error_alert(xhr.responseJSON.message, title=xhr.responseJSON.title)
+                        }
+                    })
+                }
+            })
+        })
+
+    })//END document.ready()
+
+    //deleted ajax request
+    function isAttendanceDeleted(id){
+		const params = {url:`{{ url('attendance:attendance_view') }}?action=delete&id=${id}`}
+		fire_ajax_get(params)
+		.done((data, status, xhr) => {
+			if(!xhr.status === 200){
+				return false
+			}
+			return true
+		})
+		.fail((xhr, status, error) => {
+			show_error_alert('Something went wrong!') //defined in custom.js
+            return false
+		})
+	}
+
+    //delete attendance
+    function deleteAttendance(elemt){
+        var id  = $(elemt).attr("data-id");
+        show_alert_before_delete("Attendance")
+        .then((result) => {
+            if(result.isConfirmed){ //delete requested by user
+				status = isAttendanceDeleted(id) //fire's ajax request
+				if(status){
+					show_successful_delete_alert() //defined in customjs
+					$("#modal-attd").modal("hide")
+					//delete row from table
+					row_index = parseInt($("#attd_content").attr('data-rowid'))
+					table.row(row_index).remove().draw();
+				}else{
+					show_error_alert('Something went wrong!');
+				}
+			}
+        })
+    }
+
+    
+</script>
+{% endblock extra_scripts %}

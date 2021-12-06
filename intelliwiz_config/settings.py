@@ -28,7 +28,7 @@ ENCRYPT_KEY = 'I618zPOcrQ3zB5XasmuLXazlGZUn-dK5anHXSvKs4dM='
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['.localhost', '.youtility.local', 'barfi.youtility.in', '127.0.0.1', 'icici.youtility.local']
+ALLOWED_HOSTS = ['.localhost', '.youtility.local', 'barfi.youtility.in', '127.0.0.1', 'icicibank.youtility.local']
 
 
 # Application definition
@@ -41,6 +41,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     #third_party_apps
+    'django_email_verification',
     'debug_toolbar',
     'widget_tweaks',
     'import_export',
@@ -54,6 +55,10 @@ INSTALLED_APPS = [
     'apps.onboarding',
     'apps.tenants',
     'apps.attendance',
+    
+    #third-party apps
+    'django_cleanup.apps.CleanupConfig'
+
 ]
 
 MIDDLEWARE = [
@@ -130,7 +135,7 @@ youtility_dbs = {
         'HOST':     '192.168.1.254',
         'PORT':     '5432',
     },
-    'icici':{
+    'icicibank':{
         'ENGINE':   'django.db.backends.postgresql_psycopg2',
         'USER':     'youtilitydba',
         'NAME':     'icici',
@@ -159,7 +164,7 @@ home_local_dbs = {
         'HOST':     'localhost',
         'PORT':     '',
     },
-    'icici':{
+    'icicibank':{
         'ENGINE':   'django.db.backends.postgresql_psycopg2',
         'USER':     'youtilitydba',
         'NAME':     'icici',
@@ -323,4 +328,25 @@ IMPORT_EXPORT_USE_TRANSACTIONS = True
 SHELL_PLUS_PRINT_SQL = True
 
 
+#Email Verification settings
+def verified_callback(user):
+    user.is_active = True
 
+
+EMAIL_VERIFIED_CALLBACK = verified_callback
+EMAIL_FROM_ADDRESS = 'snvnrock@gmail.com'
+EMAIL_MAIL_SUBJECT = 'Confirm your email'
+EMAIL_MAIL_HTML = 'email.html'
+EMAIL_MAIL_PLAIN = 'mail_body.txt'
+EMAIL_TOKEN_LIFE = 60 * 60
+EMAIL_PAGE_TEMPLATE = 'email_verify.html'
+EMAIL_PAGE_DOMAIN = 'http://%s:8004/'
+EMAIL_MULTI_USER = True  # optional (defaults to False)
+
+# For Django Email Backend
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 587
+EMAIL_HOST_USER = 'snvnrock@gmail.com'
+EMAIL_HOST_PASSWORD = '8007008467N'  # os.environ['password_key'] suggested
+EMAIL_USE_TLS = True
