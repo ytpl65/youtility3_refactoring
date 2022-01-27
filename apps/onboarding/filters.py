@@ -6,12 +6,11 @@ class TypeAssistFilter(django_filters.FilterSet):
     tacode = django_filters.CharFilter(field_name='tacode', lookup_expr='icontains', label='Code')
     tatype = django_filters.CharFilter(field_name='tatype', lookup_expr='icontains', label='Type')
     taname = django_filters.CharFilter(field_name='taname', lookup_expr='icontains', label='Name')
-    parent = django_filters.CharFilter(field_name='parent__tacode', lookup_expr='icontains', label='Belongs to')
     cuser = django_filters.CharFilter(field_name='cuser__peoplecode', lookup_expr='icontains', label='Created By')
     
     class Meta:
         model=TypeAssist
-        fields = ['tacode', 'taname', 'tatype', 'parent', 'cuser']
+        fields = ['tacode', 'taname', 'tatype',  'cuser']
         
 class BtFilter(django_filters.FilterSet):
     bucode     = django_filters.CharFilter(field_name='bucode', lookup_expr='icontains', label='Code')

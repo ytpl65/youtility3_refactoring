@@ -110,12 +110,20 @@
       <span class="menu-arrow"></span>
     </span>
     <div class="menu-sub menu-sub-accordion" kt-hidden-height="116" style="display: none; overflow: hidden;">
-      <div class="menu-item" id="tour">
+      <div class="menu-item" id="internaltour">
+        <a class="menu-link" href="{{ url('schedhuler:retrieve_internaltours') }}">
+          <span class="menu-bullet">
+            <span class="bullet bullet-dot"></span>
+          </span>
+          <span class="menu-title">Internal Tours</span>
+        </a>
+      </div>
+      <div class="menu-item" id="externaltour">
         <a class="menu-link" href="apps/customers/getting-started.html">
           <span class="menu-bullet">
             <span class="bullet bullet-dot"></span>
           </span>
-          <span class="menu-title">Tour</span>
+          <span class="menu-title">External Tours</span>
         </a>
       </div>
       <div class="menu-item" id="adhoc_tour">
@@ -620,7 +628,7 @@
         </span>
         <div class="menu-sub menu-sub-accordion" kt-hidden-height="116" style="display: none; overflow: hidden;">
           <div class="menu-item" id="tour_checkpoint">
-            <a class="menu-link" href="apps/customers/getting-started.html">
+            <a class="menu-link" href="{{ url('activity:checkpoint') }}?action=list">
               <span class="menu-bullet">
                 <span class="bullet bullet-dot"></span>
               </span>
@@ -628,19 +636,27 @@
             </a>
           </div>
           <div class="menu-item" id="tour_checklist">
-            <a class="menu-link" href="apps/customers/getting-started.html">
+            <a class="menu-link" href="{{ url('activity:checklist') }}?action=list">
               <span class="menu-bullet">
                 <span class="bullet bullet-dot"></span>
               </span>
-              <span class="menu-title">CheckList</span>
+              <span class="menu-title">Checklist</span>
             </a>
           </div>
           <div class="menu-item" id="tour_schedhule_tour">
-            <a class="menu-link" href="apps/customers/getting-started.html">
+            <a class="menu-link" href="{{ url('schedhuler:retrieve_tours') }}">
               <span class="menu-bullet">
                 <span class="bullet bullet-dot"></span>
               </span>
-              <span class="menu-title">Schedhule TOur</span>
+              <span class="menu-title">Schedule Internal Tour</span>
+            </a>
+          </div>
+          <div class="menu-item" id="tour_routeplan">
+            <a class="menu-link" href="{{ url('schedhuler:retrieve_externaltours') }}">
+              <span class="menu-bullet">
+                <span class="bullet bullet-dot"></span>
+              </span>
+              <span class="menu-title">Schedule External Tour</span>
             </a>
           </div>
         </div>
@@ -888,7 +904,7 @@
         </a>
       </div>
       <div class="menu-item" id="question">
-        <a class="menu-link" href="apps/customers/getting-started.html">
+        <a class="menu-link" href="{{ url('activity:question') }}?action=list">
           <span class="menu-bullet">
             <span class="bullet bullet-dot"></span>
           </span>

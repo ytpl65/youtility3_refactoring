@@ -1,6 +1,9 @@
+from datetime import date
 from functools import cache
 import logging
+from django.db.models import Q
 import re
+from django.core.cache import cache
 from typing import Mapping
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.core.exceptions import EmptyResultSet
@@ -9,10 +12,13 @@ from django.contrib import messages
 from django.template.loader import render_to_string
 from django.shortcuts import redirect, render
 from django.http import response as rp
+from pprint import pformat
 from apps.peoples import models as pm
 from apps.tenants.models import Tenant
 from django.db import transaction
+from django_email_verification import send_email
 logger = logging.getLogger('__main__')
+
 dbg = logging.getLogger('__main__').debug
 
 
@@ -106,33 +112,35 @@ def save_cuser_muser(instance, user):
             instance.muser = user
         elif mdtz == cdtz:
             instance.cuser = instance.muser = user
+        logger.info("saving cuser muser info saved ...DONE")
     return instance
 
 
-def save_clientid_tenantid(instance, user, session):
-    from apps.tenants.models import Tenant
-    from apps.onboarding.models import Bt
+def save_clientid_tenantid(instance, user, session, clientid=None, buid=None):
 
     tenantid = session.get('tenantid')
-    clientid = session.get('clientid')
-    client = Bt.objects.get(id=clientid)
-    tenant = Tenant.objects.get(id=tenantid)
-    instance.tenant = tenant
-    instance.clientid = client
+    if not(clientid and buid):
+        clientid = session.get('clientid')
+        buid = session.get('buid')
+    instance.tenant_id = tenantid
+    instance.clientid_id = clientid
+    instance.buid_id = buid
+    logger.info("client info saved...DONE")
     return instance
 
 
-def save_userinfo(instance, user, session):
+
+def save_userinfo(instance, user, session,clientid=None, buid=None):
     """saves user's related info('cuser', 'muser', 'clientid', 'tenantid')
     from request and session"""
-    from django.shortcuts import redirect
     from django.core.exceptions import ObjectDoesNotExist
     if user.is_authenticated:
         try:
             msg = "saving user and client info for the instance have been created"
             logger.info(msg + " STARTED")
-            instance = save_clientid_tenantid(instance, user, session)
+            instance = save_clientid_tenantid(instance, user, session, clientid, buid)
             instance = save_cuser_muser(instance, user)
+            instance.save()
             logger.info(msg + " DONE")
         except (KeyError, ObjectDoesNotExist):
             instance.tenant = None
@@ -169,7 +177,7 @@ def validate_mobileno(val):
 
 
 def save_tenant_client_info(request):
-    from apps.tenants.utils import  hostname_from_request, get_tenants_map
+    from apps.tenants.utils import hostname_from_request, get_tenants_map
     from apps.onboarding.models import Bt
     from apps.tenants.models import Tenant
     try:
@@ -182,7 +190,7 @@ def save_tenant_client_info(request):
         tenant = Tenant.objects.get(subdomain_prefix=clientcode)
         request.session['tenantid'] = tenant.id
         request.session['clientid'] = client.id
-        request.session['siteid'] = request.user.siteid.id
+        request.session['buid'] = request.user.buid.id
         logger.info('saving tenant & client info into the session...DONE')
     except:
         raise
@@ -311,8 +319,8 @@ def get_cap_choices_for_clientform(caps, cfor):
     choices, temp = [], []
     logger.debug('collecting caps choices for client form...')
     for i in range(1, len(caps)):
-        if caps[i].depth in [3,2]:
-            #print(caps[i].depth)
+        if caps[i].depth in [3, 2]:
+            # print(caps[i].depth)
             if caps[i-1].depth == 3 and caps[i].depth == 2 and caps[i-1].cfor == cfor:
                 choices.append(get_choice(temp))
                 temp = []
@@ -357,8 +365,8 @@ def get_caps_choices(client=None, cfor=None,  session=None, people=None):
     from django.core.cache import cache
     from icecream import ic
     caps = Capability.objects.raw(query['get_web_caps_for_client'])
-    #for cap in caps:
-        #print(f'Code {cap.capscode} Depth {cap.depth}')
+    # for cap in caps:
+    #print(f'Code {cap.capscode} Depth {cap.depth}')
     try:
         caps = cache.get('caps')
         if caps:
@@ -380,6 +388,8 @@ def get_caps_choices(client=None, cfor=None,  session=None, people=None):
             people, caps, session, client)
 
 # TODO Rename this here and in `get_caps_choices`
+
+
 def save_caps_inside_session_for_people_client(people, caps, session, client):
     logger.debug(
         'saving capabilities info inside session for people and client...')
@@ -419,9 +429,9 @@ def display_user_session_info(session):
 
 
 def get_choices_for_peoplevsgrp(request):
-    site = request.user.siteid
+    site = request.user.buid
     return pm.People.objects.filter(
-        siteid__btid=site.btid).values_list(
+        buid__btid=site.btid).values_list(
             'peopleid', 'peoplename')
 
 
@@ -430,7 +440,7 @@ def save_pgroupbelonging(pg, request):
     from apps.onboarding.models import Bt
     peoples = request.POST.getlist('peoples')
     client = Bt.objects.get(id=int(request.session['clientid']))
-    site = Bt.objects.get(id=int(request.session['siteid']))
+    site = Bt.objects.get(id=int(request.session['buid']))
     tenant = Tenant.objects.get(id=int(request.session['tenantid']))
     if peoples:
         try:
@@ -443,7 +453,7 @@ def save_pgroupbelonging(pg, request):
                         peopleid=people,
                         clientid=client,
                         tenant=tenant,
-                        siteid=site
+                        buid=site
                     )
                     if request.session.get('wizard_data'):
                         request.session['wizard_data']['pgbids'].append(pgb.id)
@@ -469,13 +479,25 @@ def save_pgroupbelonging(pg, request):
 #     return encrypted_text
 
 
-def cache_it(key, val, time):
+def cache_it(key, val, time = 1*60):
     cache.set(key, val, time)
+    logger.info('saved in cache %s'%(pformat(val)))
+
+
+def get_from_cache(key):
+    data = cache.get(key)
+    if data:
+        logger.info('Got from cache %s'%(key))
+        return data
+    else:
+        logger.info('Not found in cache')
+        return None
+
 
 def render_form(request, params, cxt):
     logger.info("%s", cxt['msg'])
     html = render_to_string(params['template_form'], cxt, request)
-    data = {"html_form":html}
+    data = {"html_form": html}
     return rp.JsonResponse(data, status=200)
 
 
@@ -495,7 +517,7 @@ def handle_Exception(request, force_return=None):
     return rp.JsonResponse(data, status=404)
 
 
-def handle_RestrictedError(request, F, form):
+def handle_RestrictedError(request):
     data = {'error': "Unable to delete, due to dependencies"}
     logger.warn("%s", data['error'], exc_info=True)
     messages.error(request, data['error'], "alert-danger")
@@ -509,18 +531,22 @@ def handle_EmptyResultSet(request, params, cxt):
     return render(request, params['template_list'], cxt)
 
 
-def render_form_for_update(request, params, form, cxt={}):
+def handle_intergrity_error(name):
+    msg = 'The %s record of with these values is already exisit!' % (name)
+    logger.info(msg, exc_info=True)
+    return rp.JsonResponse({'errors': msg}, status=404)
+
+
+def render_form_for_update(request, params, formname, obj, extra_cxt={}):
     logger.info("render form for update")
     try:
-        pk = int(request.GET.get('id'))
-        print("pk ", pk)
-        obj = params['model'].objects.get(id=pk)
         logger.info("object retrieved '{}'".format(obj))
-        F = params['form_class'](instance=obj)
-        C = {form: F, 'edit': True}
-        C.update(cxt)
+        F = params['form_class'](
+            instance=obj, request=request, **params['form_initials'])
+        C = {formname: F, 'edit': True}
+        C.update(extra_cxt)
         html = render_to_string(params['template_form'], C, request)
-        data = {'html_form':html}
+        data = {'html_form': html}
         return rp.JsonResponse(data, status=200)
     except params['model'].DoesNotExist:
         return handle_DoesNotExist(request)
@@ -531,30 +557,28 @@ def render_form_for_update(request, params, form, cxt={}):
 def render_form_for_delete(request, params, master=False):
     logger.info("render form for delete")
     try:
-        pk  = request.GET.get('id')
+        pk = request.GET.get('id')
         obj = params['model'].objects.get(id=pk)
-        F   = params['form_class'](instance=obj)
         if master:
             obj.enable = False
             obj.save()
-        else: obj.delete()
+        else:
+            obj.delete()
         return rp.JsonResponse({}, status=200)
     except params['model'].DoesNotExist:
         return handle_DoesNotExist(request)
     except RestrictedError:
-        return handle_RestrictedError(request, F)
+        return handle_RestrictedError(request)
     except Exception:
         return handle_Exception(request, params)
 
 
-def render_grid(request, params, msg, lookup={}):
+def render_grid(request, params, msg, objs):
     logger.info("render grid")
     try:
         logger.info("%s", msg)
-        objs = params['model'].objects.select_related(
-            *params['related']).filter(**lookup).values(*params['fields'])
         logger.info("objects retreived from database")
-        logger.info("Pagination Starts")
+        logger.info("Pagination Starts"if objs else "")
         cxt = paginate_results(request, objs, params)
         logger.info("Pagination Ends")
         resp = render(request, params['template_list'], context=cxt)
@@ -591,3 +615,79 @@ def get_instance_for_update(postdata, params, msg, pk):
 def handle_invalid_form(request, params, cxt):
     logger.info("form is not valid")
     return rp.JsonResponse(cxt, status=404)
+
+
+def get_model_obj(pk, request, params):
+    try:
+        obj = params['model'].objects.get(id=pk)
+    except params['model'].DoesNotExist:
+        return handle_DoesNotExist(request)
+    else:
+        logger.info("object retrieved '{}'".format(obj))
+        return obj
+
+
+def local_to_utc(data, offset, mobile_web):
+    from datetime import datetime, timedelta
+    import pytz
+    from django.utils.timezone import utc
+    dateFormatMobile = "%Y-%m-%d %H:%M:%S"
+    dateFormatWeb = "%d-%b-%Y %H:%M"
+    format = dateFormatWeb if mobile_web == "web" else dateFormatMobile
+    if isinstance(data, dict):
+        try:
+            for k, v in data.items():
+                local_dt = datetime.strptime(v, format)
+                dt_utc = local_dt.astimezone(pytz.UTC).replace(microsecond=0)
+                data[k] = dt_utc.strftime(format)
+        except Exception:
+            logger.error("datetime parsing ERROR", exc_info=True)
+            raise
+        else:
+            return data
+    elif isinstance(data, list):
+        try:
+            newdata = []
+            for dt in data:
+                local_dt = datetime.strptime(dt, format)
+                dt_utc = local_dt.astimezone(pytz.UTC).replace(microsecond=0)
+                dt = dt_utc.strftime(format)
+                newdata.append(dt)
+            pass
+        except Exception:
+            logger.error("datetime parsing ERROR", exc_info=True)
+            raise
+        else:
+            return newdata
+
+
+def get_or_create_none_people():
+    obj, _ = pm.People.objects.filter(Q(peoplecode='NONE') | Q(peoplename='NONE')).get_or_create(
+        peoplecode='NONE',
+        defaults={
+            'peoplecode': 'NONE', 'peoplename': 'NONE',
+            'email': "none@youtility.in", 'dateofbirth': '1111-1-1',
+            'dateofjoin': "1111-1-1",
+        }
+    )
+    return obj
+
+
+def get_or_create_none_pgroup():
+    obj, _ = pm.Pgroup.objects.get_or_create(
+        groupname='NONE',
+        defaults={
+            'groupname': "NONE"
+        }
+    )
+    return obj
+
+
+def get_or_create_none_cap():
+    obj, _ = pm.Capability.objects.filter(Q(capscode='NONE')).get_or_create(
+        capscode='NONE',
+        defaults={
+            'capscode': "NONE", 'capsname': 'NONE',
+        }
+    )
+    return obj

@@ -1,0 +1,226 @@
+{% extends "base_list.html" %}
+
+{% block card_title %}
+People List
+{% endblock card_title %}
+
+
+{% block pagebreadcumb %}
+{{ super() }}
+<li class="breadcrumb-item pe-3"><a href="javascript:void(0)" class="pe-3">People List</a></li>
+{% endblock pagebreadcumb %}
+
+
+<!------------------ BEGIN PEOPLE TABLE ------------------------->
+{% block table %}
+<div class="table-responsive">
+    <table id="people_table" class="display cell-border" style="width:100%">
+        <thead class="fw-bold fs-6">
+            <th>Code</th>
+            <th>Name</th>
+            <th>People Type</th>
+            <th>People Bt Code</th>
+            <th>Is Admin</th>
+        </thead>
+        <!---------- BEGIN TABLE FILTER FIELDS --------->
+        <thead id="filter_row">
+            <form action="" id='people_filter' method='get'>
+                {% for field in people_filter %}
+                <th>
+                    <input type="text" id="{{ field.auto_id }}" name="{{ field.name }}"
+                        placeholder="Search {{ field.label }}">
+                </th>
+                {% endfor %}
+            </form>
+        </thead>
+        <!---------- END TABLE FILTER FIELDS --------->
+        {% for people in people_list %}
+        <tr>
+            <td>{{ people['peoplecode'] }}</td>
+            <td><a href="{{ url('peoples:people_update', args=[people['id']]) }}">
+                    {{ people['peoplename'] }}
+                </a>
+            </td>
+            <td>{{ people['peopletype__tacode'] }}</td>
+            <td>{{ people['buid__bucode'] }}</td>
+            <td>{{ people['isadmin'] }}</td>
+        </tr>
+        {% endfor %}
+
+    </table>
+</div>
+{% if people_list and people_list.has_other_pages %}
+<!------ BEGIN PAGINATOIN ----->
+{{ paginator(people_list) }}
+<!----- END PAGINATOIN -------->
+{% endif %}
+{% endblock table %}
+<!------------------ END PEOPLE TABLE --------------------------->
+
+{% block popup_alerts %}
+<!-- THE MODAL WE WILL BE USING -->
+<div class="modal animate__animated animate__zoomIn" tabindex="-1" aria-hidden="true"
+    aria-labelledby="exampleModalLabel" data-bs-backdrop="static" id="modal-people">
+    <div class="modal-dialog modal-dialog-centered modal-fullscreen">
+        <div class="modal-content" id="people_content">
+        </div>
+    </div>
+</div>
+{% endblock popup_alerts %}
+
+
+<!--------- BEGIN EXTRA SCRIPTS ------>
+{% block extra_scripts %}
+<script>
+    $(document).ready(function () {
+        $("input").keypress(function (event) {
+            if (event.which == 13) {
+                event.preventDefault();
+                $("#people_filter").submit();
+            }
+        });
+        //beforeSend of People ajax request 
+        function peopleBeforeSend(){
+            $("#modal-people").modal("show");
+        }
+        //BEGIN DATATABLE INITIALIZATION
+        var table = $('#people_table').DataTable({
+            orderCellsTop: true,
+            fixedHeader: true,
+            paging: false,
+            scrollCollapse: true,
+            language: {
+                searchPlaceholder: "Search on Page"
+            },
+            dom:"<'row'" +
+                "<'col-sm-6 d-flex align-items-center justify-conten-start'f>" +
+                "<'col-sm-6 d-flex align-items-center justify-content-end'B>" +
+                ">" +
+
+                "<'table-responsive'tr>",
+            ordering:false,
+            scrollCollapse: true,
+            buttons:[
+				{
+					text:"Add New People &nbsp;<i class='fas fa-plus ch4'></i></a>",
+					className:"btn btn-sm btn-light-primary btn-hover-rise",
+					//action for add_new_button 
+					action: function(e, dt, node, config){
+                        const params = {
+                            modal_id    : "#modal-people",
+                            url         : "{{ url('peoples:people') }}?action=form",
+                            beforeSend  : peopleBeforeSend }
+						fire_ajax_get(params)
+						.done((data, status, xhr) => {
+							$("#people_content").attr('data-form', 'create')
+                            $("#modal-people .modal-content").html(data.html_form)
+                        })
+						.fail((xhr, status, error) => {
+							show_error_alert("Something went wrong!")
+						})
+					}
+				}
+			]
+        })
+        //END DATATABLE INITIALIZATION
+
+        //BEGIN STYLING DATATABLE
+        $("th > input").addClass('form-control')
+        $("th > input").css('height', '35px')
+        var styles = {
+            "border-bottom": "none",
+            "background-color": "#f1f4f7"
+        }
+        $('#people_table thead tr:eq(1)').css(styles)
+        //END STYLING DATATABLE
+
+        //submit form
+		$('#modal-people').on('submit', '#id_capform', function(e) {
+			var form = $(this);
+			e.preventDefault()
+			const params = { url:"{{ url('peoples:people') }}", modal:true } //People view
+			const formtype = $("#people_content").attr('data-form') //form-type (create/update)
+			const id = $("#people_content").attr('data-id') //form instance id
+			var payLoad = {formData:form.serialize(), csrfmiddlewaretoken: '{{ csrf_token }}'}//payload for post request
+			if(formtype === 'update'){
+				var newPayLoad = {...payLoad, 'pk':id}
+				payLoad = newPayLoad
+			}
+			fire_ajax_form_post(params, payLoad)
+			.done((data, status, xhr) => { //function to submit post request
+				console.log("data ", data)
+				$("#modal-people").modal("hide");
+				Swal.fire(
+				'People saved',
+				`People with this code <strong>${data.code}</strong> has been saved successfully`,
+				'success'
+				)
+			})
+		})
+
+		//update row (form-view)
+		$("a.cap-link").click((e) => {
+			e.preventDefault();
+			var id = $(e.currentTarget).attr('data-id');
+			var rowid = $(e.currentTarget).attr('data-rowid');
+			$("#people_content").attr('data-rowid', rowid)
+			$("#people_content").attr('data-id', id)
+			console.log("id ", id)
+			console.log("table ", table)
+			const params = {
+				modal_id    : "#modal-people",
+				url         : `{{ url('peoples:people') }}?id=${id}`,
+				beforeSend  : capBeforeSend }
+			fire_ajax_get(params)
+			.done((data, status, xhr) => {
+				$("#people_content").attr('data-form', 'update')
+				$("#modal-people .modal-content").html(data.html_form)
+			})
+			.fail((xhr, status, error) => {
+				show_error_alert('Something went wrong!') //defined in custom.js
+			})
+		})
+    }); //END document.ready
+
+    //delete ajax request 
+	function isCapDeleted(id){ 
+		console.log("id ", id)
+		const params = {url:`{{ url('peoples:people') }}?action=delete&id=${id}`}
+		fire_ajax_get(params)
+		.done((data, status, xhr) => {
+			if(!xhr.status === 200){
+				return false
+			}
+			return true
+		})
+		.fail((xhr, status, error) => {
+			show_error_alert('Something went wrong!') //defined in custom.js
+			return false
+		})
+	}
+
+
+	//delete People 
+	function deletePeople(elemt){
+		var id = $(elemt).attr("data-id");
+		show_alert_before_delete('People')
+		.then((result) => {
+			if(result.isConfirmed){ //delete requested by user
+				status = isCapDeleted(id) //fire's request
+				console.log("status ", status)
+				if(status){
+					show_successful_delete_alert() //defined in customjs
+					$("#modal-people").modal("hide")
+					//delete row from table
+					row_index = parseInt($("#people_content").attr('data-rowid'))
+					console.log(row_index, "row index")
+					table.row(row_index).remove().draw();
+				}else{
+					show_error_alert('Something went wrong!');
+				}
+			}
+		})
+	}
+</script>
+{% endblock extra_scripts %}
+<!-------- END EXTRA SCRIPTS --------->

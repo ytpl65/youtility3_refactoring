@@ -17,32 +17,29 @@ from apps.peoples.models import Capability #onboarding-utils
 #========================================= BEGIN MODEL FORMS ======================================#
 
 class SuperTypeAssistForm(forms.ModelForm):
-    equired_css_class = "required"
+    required_css_class = "required"
     error_msg = {
         'invalid_code' : "(Spaces are not allowed in [Code]",
         'invalid_code2': "[Invalid code] Only ('-', '_') special characters are allowed",
         'invalid_code3': "[Invalid code] Code should not endwith '.' ",
     }
-    tatype = forms.CharField(required=True, label="Type")
     class Meta:
         model  = obm.TypeAssist
-        fields = ['tacode' ,'taname',  'parent', 'tatype']
+        fields = ['tacode' ,'taname', 'tatype']
         labels = {
                 'tacode': 'Code',
-                'tatype': 'Type',
                 'taname': 'Name',
-                'parent': 'Belongs to'}
+                'tatype': 'Type'}
         widgets = {
-            'parent':s2forms.ModelSelect2Widget(model = obm.TypeAssist, search_fields =  ['taname__icontains','tacode__icontains']),
+            'tatype':s2forms.ModelSelect2Widget(model = obm.TypeAssist, search_fields =  ['taname__icontains','tacode__icontains']),
             'tacode':forms.TextInput(attrs={'placeholder':'Enter code without space and special characters', 'style':"text-transform: uppercase;"}),
             'taname':forms.TextInput(attrs={'placeholder':"Enter name"}),
-            'tatype':forms.TextInput(attrs={'placeholder':"Enter type"})}
+            }
         
 
     def __init__(self, *args, **kwargs):
         """Initializes form"""
         super(SuperTypeAssistForm, self).__init__(*args, **kwargs)
-        self.fields['parent'].queryset = ob_utils.get_tatype_choices(superadmin=True)
         ob_utils.initailize_form_fields(self)
 
     
@@ -67,17 +64,17 @@ class SuperTypeAssistForm(forms.ModelForm):
         return value.upper()
     
 class TypeAssistForm(SuperTypeAssistForm): 
+    required_css_class = "required"
     
-    tatype = forms.ModelChoiceField(required=True, label='Type', widget=s2forms.Select2Widget, queryset=None)
     
     def __init__(self, *args, **kwargs):
         """Initializes form"""
         super(SuperTypeAssistForm, self).__init__(*args, **kwargs)
-        self.fields['tatype'].queryset = ob_utils.get_tatype_choices()
         ob_utils.initailize_form_fields(self)
 
     class Meta(SuperTypeAssistForm.Meta):
         fields =  ['tacode' ,'taname', 'tatype']
+        widgets = {'tatype':s2forms.ModelSelect2Widget(model = obm.TypeAssist, search_fields =  ['taname__icontains','tacode__icontains'])}
     
     def is_valid(self) -> bool:
         result = super().is_valid()
@@ -128,9 +125,9 @@ class BtForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         """Initializes form"""
         super(BtForm, self).__init__(*args, **kwargs)
-        self.fields['identifier'].queryset = obm.TypeAssist.objects.filter(tatype="BU_IDENTIFIER")
+        self.fields['identifier'].queryset = obm.TypeAssist.objects.filter(tatype__tacode="BUIDENTIFIER")
         self.fields['identifier'].widget.attrs = {'required':True}
-        self.fields['butype'].queryset = obm.TypeAssist.objects.filter(tatype="SITE_TYPE")
+        self.fields['butype'].queryset = obm.TypeAssist.objects.filter(tatype__tacode="SITE_TYPE")
         ob_utils.initailize_form_fields(self)
     
     

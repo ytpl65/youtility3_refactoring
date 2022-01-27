@@ -1,0 +1,138 @@
+{% extends "base_list.html" %}
+
+
+<!---- BEGIN CARD TITLE ------>
+{% block card_title %}
+Schedhuled External Tour List
+{% endblock card_title %}
+<!----- END CARD TITLE -------->
+
+<!-- 
+VARIABLE DEFINITIONS FOR DEVELOPERS
+ext_schdtour_filter = 'External ScheduleTour Filter',
+ext_schdtour_list = 'External ScheduleTour List',
+-->
+
+
+<!------------------------------------ BEGIN PAGE BREADCUMBS ------------------------------------>
+{% block pagebreadcumb %}
+{{ super() }}
+<li class="breadcrumb-item pe-3"><a href="javascript:void(0)" class="pe-3">Scheduled External Tour List</a></li>
+{% endblock pagebreadcumb %}
+<!------------------------------------- END PAGE BREADCUMBS ------------------------------------->
+
+
+<!-------------------------------------------- BEGIN Schedhuled External Tour TABLE ------------------------------------------->
+{% block table %}
+<table id="ext_schdtour_table" class="display cell-border" style="width:100%">
+    <thead class="fw-bold fs-6">
+        <th>Name</th>
+        <th>BV</th>
+        <th>People/Group</th>
+        <th>From</th>
+        <th>To</th>
+        <th>Duration</th>
+        <th>Grace Time</th>
+        <th>Exp. Time</th>
+    </thead>
+    <!---------- BEGIN TABLE FILTER FIELDS --------->
+	<thead id="filter_row">
+    <form action="" id='ext_schdtour_filter' method='get'>
+    {% for field in ext_schdtour_filter %}
+        <th>
+            <input type="text" 
+            id="{{ field.auto_id }}" 
+            name="{{ field.name }}" 
+            placeholder ="Search {{ field.label }}">
+		</th>
+    {% endfor %}
+    </form>
+    </thead>
+    <!---------- END TABLE FILTER FIELDS --------->
+    <tbody>
+        {% for tour in ext_schdtour_list %}
+        <tr>
+            <td><a href="{{ url('schedhuler:update_externaltour', args=[tour['id']]) }}">{{ tour['jobname'] }}</a></td>
+            <td><a href="{{ url('schedhuler:update_externaltour', args=[tour['id']]) }}">{{ tour['jobname'] }}</a></td>
+            <td>{{ tour['peopleid__peoplename'] or tour['groupid__groupname'] }} </td>
+            <td>{{ tour['from_date'] |to_local }}</td>
+            <td>{{ tour['upto_date'] |to_local }}</td>
+            <td>{{ tour['planduration'] }}</td>
+            <td>{{ tour['gracetime'] }}</td>
+            <td>{{ tour['expirytime'] }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+{% if ext_schdtour_list and ext_schdtour_list.has_other_pages %}
+<!-- BEGIN PAGINATOIN -->
+{{ paginator(ext_schdtour_list) }}
+<!-- END PAGINATOIN ---->
+{% endif %}
+{% endblock table %}
+<!-------------------------------------------- END Schedhuled External Tour TABLE ------------------------------------------->
+
+
+<!--------- BEGIN EXTRA SCRIPTS ----------------------------->
+{% block extra_scripts %}
+<script>
+	var table           = null;
+	const formFilter      = "#ext_schdtour_filter"
+	const table_id        = "#ext_schdtour_table"
+
+    $(document).ready(function (){
+        $("input").keypress(function(event) {
+			if (event.which == 13) {
+				event.preventDefault();
+				$(formFilter).submit();
+			}
+		});
+        //datatable initialization
+        table = $(table_id).DataTable({
+			//orderCellsTop: true,
+			responsive: true,
+			fixedHeader: true,
+			paging: false,
+			lengthChange: false,
+			language: {
+				searchPlaceholder: "Search on page"
+			},
+            dom:"<'row'" +
+                "<'col-sm-6 d-flex align-items-center justify-conten-start'f>" +
+                "<'col-sm-6 d-flex align-items-center justify-content-end'B>" +
+                ">" +
+
+                "<'table-responsive'tr>",
+            ordering:false,
+            scrollCollapse: true,
+            buttons:[
+				{
+					text:`Schedule Tour &nbsp;<i class='fas fa-plus ch4'></i></a>`,
+					className:"btn btn-sm btn-light-primary btn-hover-rise",
+					//action for add_new_button 
+					action: function(e, dt, node, config){
+                        //This will send the page to the location specified
+        				window.location.href = "{{ url('schedhuler:create_externaltour') }}";
+					}
+				}
+			]
+        
+        })
+
+        //BEGIN STYLING DATATABLE
+		$("th > input").addClass('form-control')
+		$("th > input").css('height', '35px')
+		var styles = {
+			"border-bottom":"none",
+			"background-color":"#f1f4f7"
+		}
+
+        $(`${table_id} thead tr:eq(1)`).css(styles)
+		//END STYLING DATATABLE
+
+
+    })
+
+</script>
+{% endblock extra_scripts %}

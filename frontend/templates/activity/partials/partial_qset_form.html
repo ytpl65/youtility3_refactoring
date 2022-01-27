@@ -1,0 +1,768 @@
+{% extends "partial_base.html" %}
+
+{% block head %}
+{{ qset_form.media.css }}
+{% endblock head %}
+
+{% block body %}
+
+<div class="modal-header border-0">
+    <h3 class="modal-title modal-heading" id="exampleModalLabel">Create Question Set <i
+            class="fas fa-poll-h fa-sm ch4"></i></h3>
+    <button type="button" class="btn-sm btn-close modal-close-control" aria-label="Close"></button>
+</div>
+<div class="modal-body" id="partial">
+    <form action="" method="post" id="id_qsetform">
+        <div class="alert alert-danger alert-dismissible fade show" id="nonfield_errors" role="alert"
+            style="display:none">
+            <strong>Error</strong> <span></span>
+            <button type="button" class="btn-sm btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        <!--============================== QuestionSet FORM FIELDS START =============================-->
+        <div class="row mb-3 gy-3">
+            <!--Qusetion Set Name Start-->
+            <label for="{{ qset_form.qset_name.id_for_label }}" class="required col-md-1 col-sm-1">Name:</label>
+            <div class="col-md-11 col-sm-11">
+                {{ qset_form.qset_name }}
+                {{ qset_form.qset_name.errors }}
+            </div>
+            <!--Qusetion Set Name End-->
+
+            <!--Checkpoint Start-->
+            <label for="{{ qset_form.assetincludes.id_for_label }}"
+                class="required col-md-1 col-sm-1">Checkpoints:</label>
+            <div class="col-md-11 col-sm-11">
+                {{ qset_form.assetincludes }}
+                {{ qset_form.assetincludes.errors }}
+            </div>
+            <!--Checkpoint End-->
+
+            <!-- Parent Start -->
+            <label for="{{ qset_form.parent.id_for_label }}" class="required col-md-1 col-sm-1">Parent:</label>
+            <div class="col-md-7 col-sm-7">
+                {{ qset_form.parent }}
+                {{ qset_form.parent.errors }}
+            </div>
+            <!-- Parent End -->
+
+            <!-- Enable Start -->
+            <div class="booleans col-md-4 col-sm-4 d-flex justify-content-sm-between mt-5
+            form-check form-switch form-check-custom form-check-solid">
+                <label for="{{ qset_form.enable.id_for_label }}"
+                    class="form-check-label bool col-form-label me-5 text-sm-right">
+                    {{ qset_form.enable.label }}: &nbsp; {{ qset_form.enable }}
+                </label>
+            </div>
+            <!-- Enable End -->
+
+            <!--QuestionSet Type Start-->
+            {{ qset_form.type }}
+            <!--QuestionSet Type End-->
+        </div>
+    </form>
+
+
+    <!--============================== QuestionSet FORM FIELDS END ============================-->
+
+
+    <!--============================== QuestionSet FORM FIELDS END ============================-->
+    {# {% if qset_form.instance.id %} #}
+    <div class="accordion" id="assign_questions">
+        <div class="accordion-item">
+            <!--begin::Header-->
+            <h4 class="accordion-header modal-heading" id="assign_questions_heading">
+                <button class="accordion-button bg-secondary moda-heading fs-5 text-grey bg-opacity-50" type="button"
+                    data-bs-toggle="collapse" data-bs-target="#assign_questions_body" aria-expanded="true"
+                    aria-controls="assign_questions_body">
+                    Assign Questions To The Question Set
+                </button>
+            </h4>
+            <!--end::Header-->
+
+            <!--begin::Body-->
+            <form action="" method="post" id="qsetbng_form">
+                <div id="assign_questions_body" aria-labelledby="assign_questions_heading"
+                    class=" ps-10 {% if qset_form.instance.id %} {% else %} collapse {% endif %}"
+                    data-bs-parent="#assign_questions">
+                    <br>
+                    <div class="row fv-row mb-3 gy-2">
+                        <!--Qusetion Set Belonging Serial No Start-->
+                        <label for="{{ qsetbng.slno.id_for_label }}" class="required col-md-1 col-sm-1">Serial
+                            No:</label>
+                        <div class="col-md-2 col-sm-2">
+                            {{ qsetbng.slno }}
+                            {{ qsetbng.slno.errors }}
+                        </div>
+                        <!--Qusetion Set Belonging Serial No End-->
+
+
+                        <!--Qusetion Set Belonging Question Start-->
+                        <label for="{{ qsetbng.quesid.id_for_label }}"
+                            class="required col-md-1 col-sm-1">Question:</label>
+                        <div class="col-md-8 col-sm-8">
+                            {{ qsetbng.quesid }}
+                            {{ qsetbng.quesid.errors }}
+                        </div>
+                        <!--Qusetion Set Belonging Question End-->
+
+
+                        <!--Qusetion Set Belonging Question Type Start-->
+                        <label for="{{ qsetbng.answertype.id_for_label }}" class="required col-md-1 col-sm-1">Question
+                            Type:</label>
+                        <div class="col-md-8 col-sm-8">
+                            {{ qsetbng.answertype }}
+                            {{ qsetbng.answertype.errors }}
+                        </div>
+                        <!--Qusetion Set Belonging Question Type End-->
+
+
+
+                        <!--Qusetion Set Belonging Is Mandatory Start-->
+                        <div class="booleans col-md-2 col-sm-2 d-flex justify-content-sm-between mt-5
+                            form-check form-switch form-check-custom form-check-solid">
+                            <label for="{{ qsetbng.ismandatory.id_for_label }}"
+                                class="form-check-label bool col-form-label me-5 text-sm-right">
+                                {{ qsetbng.ismandatory.label }}: &nbsp; {{ qsetbng.ismandatory }}
+                            </label>
+                        </div>
+                        <!--Qusetion Set Belonging Is Mandatory End-->
+                    </div>
+                    <div class="row mb-3 fv-row gy3 optionGrp">
+                        {{ qsetbng.options.label_tag() }}
+                        <div class="col-md-5 col-sm-8">
+                            {{ qsetbng.options }}
+                            {{ qsetbng.options.errors }}
+                        </div>
+                        {{ qsetbng.alerton.label_tag() }}
+                        <div class="col-md-5 col-sm-8">
+                            {{ qsetbng.alerton }}
+                            {{ qsetbng.alerton.errors }}
+                        </div>
+                    </div>
+                    <div class="row mb-3 gy-3  fv-row numeric">
+                        {{ qsetbng.min.label_tag() }}
+                        <div class="col-md-2 col-sm-2">
+                            {{ qsetbng.min }}
+                            {{ qsetbng.min.errors }}
+                        </div>
+                        {{ qsetbng.max.label_tag() }}
+                        <div class="col-md-2 col-sm-2">
+                            {{ qsetbng.max }}
+                            {{ qsetbng.max.errors }}
+                        </div>
+                        {{ qsetbng.alertbelow.label_tag() }}
+                        <div class="col-md-2 col-sm-2">
+                            {{ qsetbng.alertbelow }}
+                            {{ qsetbng.alertbelow.errors }}
+                        </div>
+                        {{ qsetbng.alertabove.label_tag() }}
+                        <div class="col-md-2 col-sm-2">
+                            {{ qsetbng.alertabove }}
+                            {{ qsetbng.alertabove.errors }}
+                        </div>
+                    </div>
+                    <div class="d-flex justify-content-end">
+                        <button type="submit" id="addQuestion" form="qsetbng_form"
+                            class="btn btn-sm btn-secondary btn-hover-scale">
+                            Add&nbsp;<i class="fa fa-plus" aria-hidden="true"></i>
+                        </button>
+
+                        <button type="button" id="resetQsetB" style="display:none;"
+                            class="btn ms-2 btn-sm btn-primary btn-hover-scale">
+                            Reset&nbsp;<i class="fas fa-times"></i>
+                        </button>
+                        <button type="button" id="deleteQuestion" style="display:none;" form="qsetbng_form"
+                            class="ms-2 btn btn-sm btn-danger btn-hover-scale">
+                            Delete&nbsp;<i class="fa fa-plus" aria-hidden="true"></i>
+                        </button>
+                    </div>
+                    <hr>
+                    <h4 class="modal-heading">List of Assigned Questions</h4>
+                    <div class="table-responsive">
+                        <table id="assigned_ques_table" class="display cell-border" style="width:100%">
+                            <thead>
+                                <th>#</th>
+                                <th>Question</th>
+                                <th>QuestionId</th>
+                                <th>Type</th>
+                                <th>Min</th>
+                                <th>Max</th>
+                                <th>Option</th>
+                                <th>Alert On</th>
+                                <th>Mandatory</th>
+                            </thead>
+                            <tbody>
+                                {% if questions is defined %}
+                                {% for question in questions %}
+                                <tr>
+                                    <td>{{ question['slno'] }}</td>
+                                    <td>{{ question["quesid__ques_name"] }}</td>
+                                    <td>{{ question["quesid__id"] }}</td>
+                                    <td>{{ question["answertype"] }}</td>
+                                    <td>{{ question["min"] }}</td>
+                                    <td>{{ question["max"] }}</td>
+                                    <td>{{ question["options"] }}</td>
+                                    <td>{{ question["alerton"] | string }} </td>
+                                    <td>{{ question["ismandatory"] }}</td>
+                                </tr>
+                                {% endfor %}
+                                {% else %}
+                                {% endif %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <!--end::Body-->
+            </form>
+        </div>
+    </div>
+    {# {% endif %} #}
+
+    <!--============================== QuestionSet FORM FIELDS END ============================-->
+</div>
+
+
+<div class="modal-footer border-0 pt-0">
+    <button type="button" class="btn btn-sm btn-secondary modal-close-control btn-hover-scale">
+        Close <i class="fas fa-times"></i>
+    </button>
+    {% if qset_form.instance.id %}
+    <button type="submit" id="submit" form="id_qsetform" class="btn btn-sm btn-primary btn-hover-scale">
+        Update&nbsp;<i class="fas fa-cloud-upload-alt"></i>
+    </button>
+
+    <button type="button" onclick="deleteQset(this)" data-id="{{ qset_form.instance.id }}" id="deleteAttd"
+        class="btn btn-sm btn-danger btn-hover-scale">
+        Delete&nbsp;<i class="fas fa-trash-alt"></i>
+    </button>
+    {% else %}
+    <button type="submit" form="id_qsetform" class="btn btn-sm btn-primary btn-hover-scale">
+        Save&nbsp;<i class="fas fa-cloud-upload-alt"></i>
+    </button>
+    {% endif %}
+</div>
+{% endblock body %}
+
+
+{% block js %}
+{{ qset_form.media.js }}
+<script>
+    //$('.optionGrp').hide()
+    $('form').find("label").addClass("col-md-1 col-sm-1")
+    var optionTag = null
+    var table = null
+    var slno = 0
+
+    //return selected value of a field
+    function getSelectedValue(id) {
+        var data = $(id).select2('data')[0]
+        if (typeof data !== 'undefined') {
+            return data.text
+        }
+        return "NONE"
+    }
+
+    //on changing the question field of questionform
+    //select the readonly questypes field 
+    function assignQuesType(text) {
+        $("#id_answertype").val(text)
+    }
+
+    //check options field is valid before submit
+    function validate_optionsField() {
+        var options = $("#id_options").val() !== "" ? JSON.parse($("#id_options").val()) : ""
+        if (options.length > 0) {
+            return true
+        } else {
+            var errors = {
+                "options": "At least 2 options should be selected"
+            }
+            display_modelform_errors(errors)
+        }
+    }
+
+    //check alerton field is valid before submit
+    function validate_alertonField() {
+        var options = $("#id_options").val() !== "" ? JSON.parse($("#id_options").val()) : ""
+        if (options.length > 0) {
+            var alerton = typeof $("id_alerton").val() !== "undefined" ? $("#id_alerton").val() : ""
+            if (alerton.length > 0) {
+                return true
+            } else {
+                var errors = {
+                    "alerton": "Please provide for the options you created"
+                }
+                display_modelform_errors(errors)
+            }
+
+        }
+    }
+
+    //collect qsetblng data for insertion in 
+    //table -> "List of Assigned Questions"
+    function get_question_formdata() {
+        console.log("Getting question formdata ")
+        var formData = {}
+
+        formData['id_slno'] = $("#id_slno").val()
+        formData['id_questypes'] = $("#id_answertype").val()
+        console.log("check ", $("#id_alerton").val())
+        formData['id_alerton'] = typeof $("#id_alerton").val() !== "undefined" ? $("#id_alerton").val() : ""
+        formData['id_alertbelow'] = $("#id_alertbelow").val()
+        formData['id_alertabove'] = $("#id_alertabove").val()
+        formData['id_min'] = $("#id_min").val()
+        formData['id_max'] = $("#id_max").val()
+        formData['id_ismandatory'] = $("#id_ismandatory").is(":checked")
+        formData['id_quesid'] = getSelectedValue("#id_quesid")
+        formData['question_id'] = $("#id_quesid").val()
+        console.log("check ", $("#id_options").val())
+        formData['id_options'] = $("#id_options").val() !== "" ? JSON.parse($("#id_options").val()) : ""
+        //formData['id_quesid']      = getSelectedValue("#id_quesid")
+
+        $("#id_alerton").empty();
+        console.log("formData", formData)
+        return formData
+    }
+
+    //clean the form data before inserting it into
+    //"List of Assigned Questions"
+    function cleanData(data) {
+        //clean options
+        console.log('cleanData started')
+        if (data.id_options !== "") {
+            options = []
+            data.id_options.forEach((ele) => {
+                options.push(ele.value)
+            })
+            data.id_options = JSON.stringify(options)
+        }
+        //clean question
+        if (data.id_quesid !== "NONE") {
+            data.id_quesid = data.id_quesid.split(" | ")[0]
+        }
+
+        //clean alerton
+        data.id_alerton = data.id_alerton !== "" ? JSON.stringify(data.id_alerton) : ""
+        data.id_ismandatory = data.id_ismandatory === true ? "True" : "False"
+
+        //according to questypes clean data
+        if (data.id_questypes === "NUMERIC") {
+            data = adjust_above_below(data, for_table = true)
+            data.id_options = ""
+        } else if (data.id_questypes !== "NUMERIC" && data.id_questypes !== "DROPDOWN") {
+            data.id_min = data.id_max = '0.0'
+            data.id_alerton = []
+        }
+        console.log("cleaned Data", data)
+        return data
+    }
+
+    function adjust_above_below(data, for_table = false) {
+        console.log("adjust_above_below", data)
+        console.log(data.id_alertbelow, data.id_alertabove)
+        if (typeof data.id_alertbelow !== "undefined" || typeof data.id_alertabove !== "undefined" && for_table) {
+            data.id_alerton = `<${data.id_alertbelow}, >${data.id_alertabove}`
+            return data
+        } else if (data.includes(">") || data.includes("<") ||
+            data.includes("&lt;") || data.includes("&gt;") && !for_table) {
+            var nums = data.split(", ")
+            $("#id_alertbelow").val(parseFloat(nums[0].replace(/[^0-9\.]+/g, "")))
+            $("#id_alertabove").val(parseFloat(nums[1].replace(/[^0-9\.]+/g, "")))
+        }
+    }
+
+    //reset's all data inside the questionform
+    function resetForm(tag_field) {
+        $("#qsetbng_form").trigger("reset")
+        $('#id_quesid, #id_answertype, #id_alerton').val(null).trigger('change');
+        $("#id_alerton").empty()
+        tag_field.removeAllTags()
+    }
+
+    //updates options in options field of questionform
+    function update_options_field(data, optionTag) {
+        optionTag.removeAllTags()
+        console.log($("#id_options").val() !== "" ? JSON.parse(data) : "")
+        optionTag.addTags(data !== "" ? JSON.parse(data) : "")
+    }
+
+    function update_qsetblng_form(data, optionTag, fortable = false) {
+        $("#id_slno").val(parseInt(data[0]))
+        $("select[name='quesid']").val($(`select option:contains(${data[1]})`).val()).change()
+        $("#id_answertype").val(data[3])
+        $("#id_min").val(data[4])
+        $("#id_max").val(data[5])
+        update_options_field(data[6], optionTag)
+        initialize_alerton_field(data[6], data[7], data[3], cleaned = true)
+        data[8] = data[8] === "True" ? true : false
+        $("#id_ismandatory").attr("checked", data[8])
+        adjust_above_below(data[7], fortable)
+        $("#resetQsetB").show()
+        console.log("while updating", data.id_alertbelow, data.id_alertabove)
+        //$("#id_alertbelow").val(data.id_alertbelow)
+        //$("#id_alertabove").val(data.id_alertabove)
+
+    }
+
+    //adjust form
+    function adjustForm(table) {
+        var lastrow = table.row(table.rows().count() - 1).data();
+        $("#id_slno").val(parseInt(lastrow[0]) + 1)
+    }
+
+    //checks duplicates before inserting into 
+    //datatable -> "List of Assigned Questions" 
+    function check_for_duplicates(table, dataToInsert) {
+        console.log("check_for_duplicates [start]")
+        var tableData = table.rows().data().toArray();
+        console.log(tableData)
+        for (var row in tableData) {
+            if (tableData[row][1] === dataToInsert[1]) {
+                return true
+            }
+        }
+        return false
+    }
+    //process the valid form
+    function processValidForm() {
+        console.log("processing valid form")
+        data = get_question_formdata()
+        console.log("Getting question formdata [END]")
+        data = cleanData(data)
+        console.log('cleanData started [ENDED]')
+        var slno = data.id_slno
+        rowdata = [
+            data.id_slno, data.id_quesid, data.question_id, data.id_questypes, data.id_min,
+            data.id_max, data.id_options, data.id_alerton, data.id_ismandatory
+        ]
+        table.row('.toupdate').remove().draw(false);
+        console.log(typeof table)
+        isduplicate = check_for_duplicates(table, rowdata)
+        console.log("check_for_duplicates [start]")
+        console.log("Is Duplicated ", isduplicate)
+        if (!isduplicate) {
+            table.row.add(rowdata).draw()
+            //setSlno(parseInt(slno) + 1)
+            resetForm(optionTag)
+            //adjustForm(table)
+            $("#deleteQuestion").hide();
+        } else {
+            let heading = "Duplicate Record"
+            let msg = "This type ('Question and QuestionType') record is already exist"
+            show_error_alert(msg, heading)
+        }
+    }
+
+    function deleteQuestionRequest(question, questypes, qsetid) {
+        const params = {
+            'quesname': question,
+            'url': `{{ url('activity:delete_qsb') }}?quesname=${question}&questypes=${questypes}&qsetid=${qsetid}`,
+            'beforeSend': function () {}
+        }
+        fire_ajax_get(params)
+            .done((data, status, xhr) => {
+                show_successful_delete_alert()
+            })
+            .fail((xhr, status, error) => {
+                show_error_alert('Something went wrong!')
+            })
+    }
+    function addRemoveClass(ele){
+        if ($(ele).hasClass('selected')) {
+            $(ele).removeClass('selected');
+        } else {
+            table.$('tr.selected').removeClass('selected');
+            $(ele).addClass('selected');
+        }
+    }
+
+    function checkQsetWoQuestions(table) {
+
+        rows = table.rows().data().toArray()
+        return rows.length < 1 //returns true if qset w/o questions else false
+    }
+
+    function questionsWoQuestionSetAlert() {
+        console.log("fired already")
+        return show_error_alert(
+            'You have not submitted any Questions yet, for this Question Set.',
+            title = "QuestionSet Without Questions"
+        )
+    }
+
+    function warnFormCLoseAlert() {
+        return Swal.fire({
+            title: `Close Form`,
+            text: `Do you really want to close the form, you won't be able to revert it!`,
+            icon: "question",
+            showCancelButton: true,
+            confirmButtonText: 'Yes, close it!'
+        })
+    }
+
+    function setSlno(no){
+        $("#id_slno").val(no)
+    }
+
+    function getSlnoFromTable(){
+        var lastrow = table.row(table.rows().count() - 1).data();
+        const slno = lastrow.length > 0 ? parseInt(lastrow[0]) + 1 : {};
+        return slno
+    }
+
+    function adjustSlnoInTable(){
+        console.log("rows adjsuting")
+        var tableData = table.rows().data().toArray();
+        table.rows().remove().draw();
+        var seq = 0
+        for (var row in tableData) {
+            seq++
+            tableData[row][0] = seq
+        }
+        table.rows.add(tableData).draw()
+        console.log("rows adjusted")
+    }
+
+    //Autoadjust slno
+    function adjustSlno(slno, table, reset) {
+        if (reset) {
+            var tableData = table.rows().data().toArray()
+            var seq = 0
+            for (var row in tableData) {
+                seq++
+                tableData[row][0] = seq
+            }
+            table.rows.add(tableData).draw()
+        } else if ('{{ qset_form.instance.id }}' !== ('None' || "")) {
+            //update row
+            var lastrow = table.row(table.rows().count() - 1).data();
+            slno = lastrow.length > 0 ? parseInt(lastrow[0]) + 1 : ++slno;
+            $("#id_slno").val(slno)
+
+        } else {
+            //create row
+            ++slno;
+            $("#id_slno").val(slno)
+            $("#id_slno").prop("readonly", true)
+        }
+    }
+
+
+
+
+    $(document).ready(() => { //DOCUMENT.READY START
+        // Initialize Tagify components
+        var input1 = document.querySelector("#id_options");
+        optionTag = new Tagify(input1);
+
+        //remove class to label which was added from above
+        $('.booleans label').removeClass('col-md-1 col-sm-1')
+
+        //specifying dropdown-parent for select2 to work
+        $('.django-select2').select2({
+            dropdownParent: $('#modal-qset')
+        })
+
+        $(".form-select[multiple]").djangoSelect2({
+            closeOnSelect: false,
+            dropdownParent: $('#modal-qset')
+        })
+
+
+        $(".modal").removeAttr("tabindex");
+
+        //Qset Belonging ("List of Assigned Questions")
+        // Datatable configuration 
+        table = $('#assigned_ques_table').DataTable({
+            responsive: true,
+            fixedHeader: true,
+            paging: false,
+            lengthChange: false,
+            order: [
+                [0, "asc"]
+            ],
+            ordering: false,
+            scrollCollapse: true,
+            sDom: "",
+            ordering: true,
+            columnDefs: [{
+                    "width": "5%",
+                    "targets": 0
+                },
+                {
+                    "width": "5%",
+                    "targets": 8
+                },
+                {
+                    orderable: false,
+                    targets: [1, 2, 3, 4, 5, 6, 7, 8]
+                },
+                {
+                    "targets": [2],
+                    "visible": false,
+                    "searchable": false
+                },
+
+            ],
+
+
+        })
+
+        //on selecting the question from question form show/hide
+        //the fields group of class "optionGroup" and "numeric"
+        $("#id_quesid.form-select").on("change", function () {
+            var _selectedText = getSelectedValue("#id_quesid");
+            var selected = _selectedText.split(" | ")[1]
+            if (typeof selected !== 'undefined') {
+                assignQuesType(selected)
+                showHideFields(selected)
+            }
+        })
+
+        //on adding/removing options in 
+        //question-form trigger following events
+        optionTag
+            .on('add', function (e) {
+                populateAlertOn(e.detail.data.value)
+            })
+            .on('remove', function (e) {
+                console.log(e.detail.data.value)
+                removeElmtFromAlertOn(e.detail.data.value)
+            })
+
+        //on submitting the questionset-blng form populate the table
+        // "List of Assigned Questions"
+        $('#qsetbng_form').on('submit', function (e) {
+            e.preventDefault()
+            if ($("#id_answertype").val() === 'NUMERIC') {
+                if (qsetbng_form_validator) {
+                    qsetbng_form_validator.validate().then(function (status) {
+                        if (status === 'Valid') {
+                            processValidForm()
+                            console.log("processing valid form [END]")
+                        }
+                    })
+                }
+            } else {
+                processValidForm()
+                console.log("processing valid form [END]")
+            }
+        });
+
+        //on click on table row populate the above question form for update
+        $("#assigned_ques_table tbody").on("click", 'tr', function () {
+            show_alert_before_update("Question").then((result) => {
+                if (result.isConfirmed) {
+                    addRemoveClass(this)
+                    console.log(table.row('.selected').data())
+                    update_qsetblng_form(table.row('.selected').data(), optionTag, fortable =
+                        false)
+                    $(this).addClass('toupdate');
+                    $("#deleteQuestion").show()
+                }else if(result.isDenied){
+                    //delete checkpoint request
+                    addRemoveClass(this)
+                    console.log("delete initiated")
+                    if ('{{ qset_form.instance.id }}' !== ('None' || "")) {
+                        data = table.row('.selected').data()
+                        console.log(data)
+                        deleteQuestionRequest(data[1], data[3], "{{ qset_form.instance.id }}")
+                    }table.row('.selected').remove().draw();
+                    adjustSlnoInTable()
+                    setSlno(getSlnoFromTable())
+                }
+            })
+        })
+
+        //on click delete-btn of questionform delete the row from the datatable
+        $("#deleteQuestion").on('click', function () {
+            if ('{{ qset_form.instance.id }}' !== ('None' || "")) {
+                console.log('{{ qset_form.instance.id }}')
+                data = table.row('.toupdate').data()
+                console.log("%%%%%%%%%%%%%%%", data, data[1])
+                deleteQuestionRequest(data[1], data[3], "{{ qset_form.instance.id }}")
+            }
+            table.row('.toupdate').remove().draw();
+            adjustSlnoInTable()
+            //setSlno(getSlnoFromTable())
+
+            $("#deleteQuestion").hide()
+            $("#qsetbng_form").trigger("reset")
+            resetForm(optionTag)
+
+        })
+
+        $(".modal-close-control").on("click", function () {
+            if ('{{ qset_form.instance.id }}' !== ('None' || "")) {
+                if (checkQsetWoQuestions(table)) {
+                    questionsWoQuestionSetAlert()
+                } else {
+                    warnFormCLoseAlert()
+                        .then((result) => {
+                            if (result.isConfirmed) {
+                                $(modal_id).modal('hide')
+                            }
+                        })
+                }
+            } else {
+                warnFormCLoseAlert()
+                    .then((result) => {
+                        if (result.isConfirmed) {
+                            $(modal_id).modal('hide')
+                        }
+                    })
+            }
+        })
+
+        $("#resetQsetB").click(() => {
+            resetForm(optionTag);
+            $(this).hide()
+        })
+
+        //submit form
+        $(formid).on("submit", function (e) {
+            if (checkQsetWoQuestions(table)) {
+                e.preventDefault();
+                questionsWoQuestionSetAlert()
+            } else {
+                var form = $(this);
+                e.preventDefault()
+                const params = {
+                    url: urlname,
+                    modal: true
+                } //checklist view
+                const formtype = $(modalcontent_id).attr('data-form') //form-type (create/update)
+                const id = $(modalcontent_id).attr('data-id') //form instance id
+                var payLoad = {
+                    formData: form.serialize(),
+                    asssigned_questions: JSON.stringify(table.rows().data().toArray()),
+                    csrfmiddlewaretoken: '{{ csrf_token }}'
+                } //payload for post request
+                if (formtype === 'update') {
+                    var newPayLoad = {
+                        ...payLoad,
+                        'pk': id
+                    }
+                    payLoad = newPayLoad
+                }
+                debugger
+                fire_ajax_form_post(params, payLoad)
+                    .done((data, status, xhr) => { //function to submit post request
+                        console.log("data ", data)
+                        $(modal_id).modal("hide");
+                        Swal.fire(
+                            `${viewname} saved`,
+                            `${viewname} with this name <strong>${data.name}</strong> has been saved successfully`,
+                            'success'
+                        ).then(function () {
+                            location.reload();
+                        })
+                    })
+            }
+        })
+
+        //adjustSlno(slno, table, reset=false)
+
+    }) //DOCUMENT.READY END
+</script>
+{% endblock js %}

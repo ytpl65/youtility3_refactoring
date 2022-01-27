@@ -28,7 +28,6 @@ TypeAssist's
             <th>Code</th>
             <th>Name</th>
             <th>Type</th>
-            <th>Belongs To</th>
             <th>Created By</th>
         </thead>
 		<!---------- BEGIN TABLE FILTER FIELDS --------->
@@ -50,8 +49,7 @@ TypeAssist's
         <tr>
             <td><a href="{{ url('onboarding:ta_update', args=[ta['id']]) }}">{{ ta['tacode'] }}</a></td>
             <td>{{ ta['taname'] }}</td>
-            <td>{{ ta['tatype'] }}</td>
-            <td>{{ ta['parent__tacode'] }}</td>
+            <td>{{ ta['tatype__tacode'] }}</td>
             <td>{{ ta['cuser__peoplecode'] }}</td>
         </tr>
         {% endfor %}

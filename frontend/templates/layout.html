@@ -6,7 +6,7 @@
 <div class="d-flex justify-content-end cell-border my-2">
   <ul class="pagination">
     {% if list.has_previous() %}
-    <li class="page-item"><a class="page-link" href="?page=1">&laquo; First</a>
+    <li class="page-item"><a class="page-link" href="?page=1&action=list">&laquo; First</a>
     </li>
     <li class="page-item"><a class="page-link" href="?page={{ list.previous_page_number() }}&action=list">&laquo; Prev</a>
     </li>
@@ -90,7 +90,7 @@
 {% macro general_popup() %}
 <div class="modal fade" id="{{ kwargs['popup_id'] }}" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1"
 		aria-labelledby="staticBackdropLabel" aria-hidden="true">
-		<div class="modal-dialog modal-dialog-centered">
+		<div class="modal-dialog modal-dialog-centered {{ kwargs.get('modal_size', '') }}">
 			<div class="modal-content">
 				<div class="modal-header">
 					<h5 class="modal-title" id="staticBackdropLabel" style="color:#3a3b40de">{{ kwargs['title'] }}</h5>
@@ -262,9 +262,10 @@
               {% endblock pagebreadcumb %}
             </ol>
             <!--begin::actions-->
-            {% block page_actions %}
 
-            {% endblock page_actions %}
+            {# {% block ajax_page_actions %}
+            
+            {% endblock ajax_page_actions %} #}
             <!--end::actions-->
             <!--end::Page title-->
           </div>

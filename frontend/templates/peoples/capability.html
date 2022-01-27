@@ -76,21 +76,30 @@ Capability List
 <!--------- BEGIN EXTRA SCRIPTS ----------------------------->
 {% block extra_scripts %}
 <script>
-	var table= null;
+	var table             = null;
+	const modal_id        = "#modal-cap"
+	const modalcontent_id = "#cap_content"
+	const formFilter      = "#cap_filter"
+	const table_id        = "#cap_table"
+	const formid          = "#id_capform"
+	const urlname         = "{{ url('peoples:capability') }}"
+	const viewname        = "Capability"
+	const rowlink         = "a.cap-link"
+	
 	$(document).ready(function () {
 		new ClipboardJS('.btn-copy');
 		$("input").keypress(function(event) {
 			if (event.which == 13) {
 				event.preventDefault();
-				$("#cap_filter").submit();
+				$(formFilter).submit();
 			}
 		});
         //beforeSend of capability ajax request 
         function capBeforeSend(){
-            $("#modal-cap").modal("show");
+            $(modal_id).modal("show");
         }
 		//datatable initialization
-        table = $('#cap_table').DataTable({
+        table = $(table_id).DataTable({
 			//orderCellsTop: true,
 			responsive: true,
 			fixedHeader: true,
@@ -100,8 +109,8 @@ Capability List
 				searchPlaceholder: "Search on page"
 			},
             dom:"<'row'" +
-                "<'col-sm-6 d-flex align-items-center justify-conten-start'B>" +
-                "<'col-sm-6 d-flex align-items-center justify-content-end'f>" +
+                "<'col-sm-6 d-flex align-items-center justify-conten-start'f>" +
+                "<'col-sm-6 d-flex align-items-center justify-content-end'B>" +
                 ">" +
 
                 "<'table-responsive'tr>",
@@ -109,18 +118,18 @@ Capability List
             scrollCollapse: true,
 			buttons:[
 				{
-					text:"Add New Capability &nbsp;<i class='fas fa-plus ch4'></i></a>",
+					text:`Add New ${viewname} &nbsp;<i class='fas fa-plus ch4'></i></a>`,
 					className:"btn btn-sm btn-light-primary btn-hover-rise",
 					//action for add_new_button 
 					action: function(e, dt, node, config){
                         const params = {
-                            modal_id    : "#modal-cap",
-                            url         : "{{ url('peoples:capability') }}?action=form",
-                            beforeSend  : capBeforeSend }
+                            'modal_id'    : modal_id,
+                            'url'         : `${urlname}?action=form`,
+                            'beforeSend'  : capBeforeSend }
 						fire_ajax_get(params)
 						.done((data, status, xhr) => {
-							$("#cap_content").attr('data-form', 'create')
-                            $("#modal-cap .modal-content").html(data.html_form)
+							$(modalcontent_id).attr('data-form', 'create')
+                            $(`${modal_id} .modal-content`).html(data.html_form)
                         })
 						.fail((xhr, status, error) => {
 							show_error_alert("Something went wrong!")
@@ -138,7 +147,7 @@ Capability List
 			"background-color":"#f1f4f7"
 		}
 		
-		$('#cap_table thead tr:eq(1)').css(styles)
+		$(`${table_id} thead tr:eq(1)`).css(styles)
 		//END STYLING DATATABLE
 
         //add row to the table
@@ -164,12 +173,12 @@ Capability List
 		}
 		
 		//submit form
-		$('#modal-cap').on('submit', '#id_capform', function(e) {
+		$(modal_id).on('submit', formid, function(e) {
 			var form = $(this);
 			e.preventDefault()
-			const params = { url:"{{ url('peoples:capability') }}", modal:true } //capability view
-			const formtype = $("#cap_content").attr('data-form') //form-type (create/update)
-			const id = $("#cap_content").attr('data-id') //form instance id
+			const params = { url:urlname, modal:true } //capability view
+			const formtype = $(modalcontent_id).attr('data-form') //form-type (create/update)
+			const id = $(modalcontent_id).attr('data-id') //form instance id
 			var payLoad = {formData:form.serialize(), csrfmiddlewaretoken: '{{ csrf_token }}'}//payload for post request
 			if(formtype === 'update'){
 				var newPayLoad = {...payLoad, 'pk':id}
@@ -178,32 +187,32 @@ Capability List
 			fire_ajax_form_post(params, payLoad)
 			.done((data, status, xhr) => { //function to submit post request
 				console.log("data ", data)
-				$("#modal-cap").modal("hide");
+				$(modal_id).modal("hide");
 				Swal.fire(
-				'Capability saved',
-				`Capability with this code <strong>${data.code}</strong> has been saved successfully`,
+				`${viewname} saved`,
+				`${viewname} with this code <strong>${data.code}</strong> has been saved successfully`,
 				'success'
 				)
 			})
 		})
 
 		//update row (form-view)
-		$("a.cap-link").click((e) => {
+		$(rowlink).click((e) => {
 			e.preventDefault();
 			var id = $(e.currentTarget).attr('data-id');
 			var rowid = $(e.currentTarget).attr('data-rowid');
-			$("#cap_content").attr('data-rowid', rowid)
-			$("#cap_content").attr('data-id', id)
+			$(modalcontent_id).attr('data-rowid', rowid)
+			$(modalcontent_id).attr('data-id', id)
 			console.log("id ", id)
 			console.log("table ", table)
 			const params = {
-				modal_id    : "#modal-cap",
-				url         : `{{ url('peoples:capability') }}?id=${id}`,
-				beforeSend  : capBeforeSend }
+				'modal_id'    : modal_id,
+				'url'         : `${urlname}?id=${id}`,
+				'beforeSend'  : capBeforeSend }
 			fire_ajax_get(params)
 			.done((data, status, xhr) => {
-				$("#cap_content").attr('data-form', 'update')
-				$("#modal-cap .modal-content").html(data.html_form)
+				$(modalcontent_id).attr('data-form', 'update')
+				$(`${modal_id} .modal-content`).html(data.html_form)
 			})
 			.fail((xhr, status, error) => {
 				show_error_alert('Something went wrong!') //defined in custom.js
@@ -214,7 +223,7 @@ Capability List
 	//delete ajax request 
 	function isCapDeleted(id){ 
 		console.log("id ", id)
-		const params = {url:`{{ url('peoples:capability') }}?action=delete&id=${id}`}
+		const params = {url:`${urlname}?action=delete&id=${id}`}
 		fire_ajax_get(params)
 		.done((data, status, xhr) => {
 			if(!xhr.status === 200){
@@ -232,16 +241,16 @@ Capability List
 	//delete capability 
 	function deleteCapability(elemt){
 		var id = $(elemt).attr("data-id");
-		show_alert_before_delete('Capability')
+		show_alert_before_delete(viewname)
 		.then((result) => {
 			if(result.isConfirmed){ //delete requested by user
 				status = isCapDeleted(id) //fire's request
 				console.log("status ", status)
 				if(status){
 					show_successful_delete_alert() //defined in customjs
-					$("#modal-cap").modal("hide")
+					$(modal_id).modal("hide")
 					//delete row from table
-					row_index = parseInt($("#cap_content").attr('data-rowid'))
+					row_index = parseInt($(modalcontent_id).attr('data-rowid'))
 					console.log(row_index, "row index")
 					table.row(row_index).remove().draw();
 				}else{

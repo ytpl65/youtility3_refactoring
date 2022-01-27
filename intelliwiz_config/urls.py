@@ -26,14 +26,18 @@ import debug_toolbar
 urlpatterns = [
     path('', SignIn.as_view(), name='login'),
     path('logout/', SignOut.as_view(), name='logout'),
-    path('dashboard/', login_required(TemplateView.as_view(template_name='base_ajax.html')), name='home'),
+    path('dashboard/', login_required(TemplateView.as_view(template_name='layout.html')), name='home'),
     path('admin/', admin.site.urls),
-     path('email-verify/', include(email_urls)),
-    path('__debug__/', include(debug_toolbar.urls)), #shoul use when debug=True
-    path('select2/', include('django_select2.urls')),
     path('onboarding/', include('apps.onboarding.urls')),
     path('peoples/', include('apps.peoples.urls')),
     path('', include('apps.attendance.urls')),
+    path('activity/', include('apps.activity.urls')),
+    path('schedhule/', include('apps.schedhuler.urls')),
+    #third-party urls
+    path('email-verify/', include(email_urls)),
+    path('__debug__/', include(debug_toolbar.urls)), #shoul use when debug=True
+    path('select2/', include('django_select2.urls')),
+
 ]
 
 if settings.DEBUG:

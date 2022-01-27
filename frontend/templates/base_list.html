@@ -2,13 +2,10 @@
 
 <!----FOR BASE_LEVEL ---->
 {% block base_head %}
-<link rel="stylesheet" href="https://cdn.datatables.net/1.11.3/css/jquery.dataTables.min.css" type="text/css">
+<link  href="{{ static('assets/plugins/custom/DataTables/datatables.min.css') }}" rel="stylesheet" type="text/css"/>
 {% endblock base_head %}
 <!----END FOR BASE_LEVEL ---->
 
-{% block page_actions %}
-<a href=""></a>
-{% endblock page_actions %}
 
 
 {% block pagebody_container %}
@@ -24,6 +21,12 @@
                     {% endblock card_title %}
                 &nbsp;<i class="fas fa-th-list ch4 fa-sm"></i>
                 </h4>
+                <!--keep empty -->
+                <div></div>
+
+                {% block page_actions %}
+                
+                {% endblock page_actions %}
         </div>
         <!--END CARD-HEADER-->
         {% block table %}
@@ -38,8 +41,7 @@
 
 {% block base_script %}
 {{ super() }}
-<script type="text/javascript" src="https://cdn.datatables.net/1.11.3/js/jquery.dataTables.min.js"></script>
-<script type="text/javascript" src="https://cdn.datatables.net/buttons/2.0.1/js/dataTables.buttons.min.js"></script>
+<script src="{{ static('assets/plugins/custom/DataTables/datatables.min.js') }}" type="text/javascript"></script>
 <script>
 $(document).ready(() => {
     $("th > input").css("border-radius", 0)

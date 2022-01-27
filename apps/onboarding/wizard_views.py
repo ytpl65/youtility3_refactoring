@@ -25,45 +25,47 @@ log = logging.getLogger('django')
 dbg = logging.getLogger('__main__').debug
 
 
-
-
 class WizardView(LoginRequiredMixin, View):
     wizard_steps = {
         'buform': 1,
         'shiftform': 2,
         'peopleform': 3,
         'pgroupform': 4,
-        'final_step': 5 
-    } # if you want to add more, add before final_step
+        'final_step': 5
+    }  # if you want to add more, add before final_step
 
     def get(self, request, *args, **kwargs):
         '''set wizard variables and call the first formview.'''
         import json
         # getdata = json.loads(request.GET)
-        draft, res = self.check_user_has_unsaved_wizards(request),None
+        draft, res = self.check_user_has_unsaved_wizards(request), None
 
-        if draft:#drafts continued
+        if draft:  # drafts continued
             request.session['wizard_data'] = draft.wizard_data['wizard_data']
             log.info("wizard_data is loaded from the draft into the session")
-            #print(request.session['wizard_data'])
+            # print(request.session['wizard_data'])
             if request.GET.get('denied'):
-                 log.info("user denied to open the saved draft, so the draft will be deleted")
-                 res = self.delete_from_draft(request)#draft denied by user
+                log.info(
+                    "user denied to open the saved draft, so the draft will be deleted")
+                res = self.delete_from_draft(request)  # draft denied by user
             else:
-                url, pk  = self.get_appropriate_stage_from_draft(request)
+                url, pk = self.get_appropriate_stage_from_draft(request)
                 print(f"url={url} pk={pk}")
                 if pk:
-                    res = JsonResponse({'url':reverse(url, args=[pk]), 'draft':True})
+                    res = JsonResponse(
+                        {'url': reverse(url, args=[pk]), 'draft': True})
                 else:
-                    res = JsonResponse({'url':reverse(url), 'inst':False, 'draft':True})
+                    res = JsonResponse(
+                        {'url': reverse(url), 'inst': False, 'draft': True})
         else:
-            res = self.open_new_wizard(request, False)#no drafts
+            res = self.open_new_wizard(request, False)  # no drafts
         return res
 
     def check_user_has_unsaved_wizards(self, request):
         user, res = request.user, None
         try:
-            res = ob.WizardDraft.objects.get(createdby__peoplecode = user.peoplecode)
+            res = ob.WizardDraft.objects.get(
+                createdby__peoplecode=user.peoplecode)
         except ob.WizardDraft.DoesNotExist:
             log.info("user doesn't have any unsaved drafts")
             res = False
@@ -83,17 +85,19 @@ class WizardView(LoginRequiredMixin, View):
         log.info("getting the new wizard from start")
         request.session['wizard_data'] = {
             'wizard_completed': False,
-            'buids': [], 'pgroupids': [], 'peopleids': [], 'shiftids': [], 'pgbids':[],
-            #timeline data are ids except taids, make sure you add all ids in timeline data
-            'timeline_data' : {'buids': [], 'pgroupids': [], 'peopleids': [], 'shiftids': []},
+            'buids': [], 'pgroupids': [], 'peopleids': [], 'shiftids': [], 'pgbids': [],
+            # timeline data are ids except taids, make sure you add all ids in timeline data
+            'timeline_data': {'buids': [], 'pgroupids': [], 'peopleids': [], 'shiftids': []},
             'taids': [], 'wizard': True, 'count': len(self.wizard_steps), 'current_step': 0,
             'steps': self.wizard_steps
         }
         if not denied:
             return JsonResponse(
-                {'url': reverse('onboarding:wiz_bu_form'), 'draft': False, 'denied': denied}
+                {'url': reverse('onboarding:wiz_bu_form'),
+                 'draft': False, 'denied': denied}
             )
-        data = {'url':reverse('onboarding:wiz_bu_form'), 'draft':True,'isgranted':True }
+        data = {'url': reverse('onboarding:wiz_bu_form'),
+                'draft': True, 'isgranted': True}
         return JsonResponse(data)
 
     def delete_from_draft(self, request):
@@ -101,10 +105,9 @@ class WizardView(LoginRequiredMixin, View):
             dbg("deleting wizard_data from request.session and from the draft as well")
             del request.session['wizard_data']
             user = request.user
-            ob.WizardDraft.objects.get(createdby__peoplecode = user.peoplecode).delete()
+            ob.WizardDraft.objects.get(
+                createdby__peoplecode=user.peoplecode).delete()
         return self.open_new_wizard(request, True)
-
-    
 
 
 class WizardDelete(LoginRequiredMixin, View):
@@ -114,7 +117,8 @@ class WizardDelete(LoginRequiredMixin, View):
 
         if not request.session['wizard_data']['wizard_completed']:
             wizard_data = request.session['wizard_data']
-            ob_utils.delete_unsaved_objects(ob.TypeAssist, wizard_data['taids'])
+            ob_utils.delete_unsaved_objects(
+                ob.TypeAssist, wizard_data['taids'])
             ob_utils.delete_unsaved_objects(ob.Bt, wizard_data['buids'])
             ob_utils.delete_unsaved_objects(ob.Shift, wizard_data['shiftids'])
             ob_utils.delete_unsaved_objects(People, wizard_data['peopleids'])
@@ -122,12 +126,11 @@ class WizardDelete(LoginRequiredMixin, View):
         dbg("deleting wizard_data from session")
         del request.session['wizard_data']
         return scts.redirect('home')
-    
+
     def delete_pgroups(self, Pgroup, ids):
         for i in range(len(ids)):
             pg = Pgroup.objects.get(pk=ids[i])
             pg.enable = False
-
 
 
 # Helper Methods
@@ -193,7 +196,6 @@ class WizardBt(views.CreateBt):
             res = res = ob_utils.handle_other_exception(
                 request, form, 'buform', self.template_path)
         return res
-
 
     def process_valid_form(self, form, request, update):
         try:
@@ -287,9 +289,8 @@ class WizardShift(views.CreateShift):
         try:
             res = None
             log.info('step-2 is valid')
-            shift = form.save(commit=False)
-            shift.buid_id = request.session['siteid']
-            shift.save()
+            shift = form.save()
+            shift.buid_id = request.session['buid']
             ob_utils.save_msg(request)
             self.wizard_data['instance_id'] = shift.id
             people_utils.save_userinfo(shift, request.user, request.session)
@@ -454,7 +455,8 @@ class WizardPgroup(people_views.CreatePgroup):
             form = self.form_class(request.POST, request=request)
             if pk:
                 pg = self.model.objects.get(id=pk)
-                form = self.form_class(request.POST, instance=pg, request=request)
+                form = self.form_class(
+                    request.POST, instance=pg, request=request)
                 update = True
                 log.info('onboarding wizard step-4 pgroup retrieved')
             if form.is_valid():
@@ -492,8 +494,9 @@ class WizardPgroup(people_views.CreatePgroup):
         try:
             pg = self.model.objects.get(id=pk)
             peoples = pm.Pgbelonging.objects.filter(
-            groupid=pg).values_list('peopleid', flat=True)
-            form = self.form_class(instance=pg, initial = {'peoples':list(peoples)}, request=request)
+                groupid=pg).values_list('peopleid', flat=True)
+            form = self.form_class(instance=pg, initial={
+                                   'peoples': list(peoples)}, request=request)
             cxt = {'pgroup_form': form, 'edit': True}
             res = scts.render(request, self.template_path, context=cxt)
         except self.model.DoesNotExist:
@@ -512,14 +515,19 @@ class WizardPgroup(people_views.CreatePgroup):
             pg.enable = False
             msg.info(request, "Record deleted successfully", "alert-success")
             request.session['wizard_data']['pgroupids'].remove(int(pk))
-            dbg('item returned from get_index_for_deletion is %s'%ob_utils.get_index_for_deletion({'id':pk}, request, 'pgroupids'))
-            request.session['wizard_data']['timeline_data']['pgroupids'].pop(ob_utils.get_index_for_deletion({'id':pk}, request, 'pgroupids'))
+            dbg('item returned from get_index_for_deletion is %s' %
+                ob_utils.get_index_for_deletion({'id': pk}, request, 'pgroupids'))
+            request.session['wizard_data']['timeline_data']['pgroupids'].pop(
+                ob_utils.get_index_for_deletion({'id': pk}, request, 'pgroupids'))
             res = scts.redirect('peoples:wiz_pgroup_form')
         except self.model.DoesNotExist:
-            res = ob_utils.handle_does_not_exist(request, 'peoples:wiz_pgroup_form')        
+            res = ob_utils.handle_does_not_exist(
+                request, 'peoples:wiz_pgroup_form')
         return res
 
 # Final step (preview wizard)
+
+
 class WizardPreview(LoginRequiredMixin, View):
     wizard_submissions = {
         'buids': [], 'shiftids': [], 'peopleids': [],
@@ -558,6 +566,7 @@ class WizardPreview(LoginRequiredMixin, View):
                 pk__in=sd['wizard_data'][ids]).values(*fields[ids])
             self.wizard_submissions[ids] = data
 
+
 @login_required
 def save_wizard(request):
     log.info("deleting wizard_data from session and redirecting user to home")
@@ -575,26 +584,26 @@ def save_as_draft(request):
     bu = ob.Bt.objects.get(pk=session['clientid'])
     wd = session['wizard_data']
     _, created = ob.WizardDraft.objects.update_or_create(
-        createdby = user, buid = bu,
-        defaults = {'wizard_data': {'wizard_data':wd}})
+        createdby=user, buid=bu,
+        defaults={'wizard_data': {'wizard_data': wd}})
     status = 'created' if created else 'updated'
     log.info(f"wizard draft {status}")
     if request.GET.get('quit') == "true":
         del request.session['wizard_data']
         dbg("wizard_data deleted from the session")
-    return JsonResponse({'saved':True, 'status':status})
+    return JsonResponse({'saved': True, 'status': status})
+
 
 @login_required
 def delete_from_draft(request):
     if request.method == 'GET':
         try:
             ob.WizardDraft.objects.get(
-                createdby__peoplecode = request.user.peoplecode).delete()
+                createdby__peoplecode=request.user.peoplecode).delete()
             log.info("wizard_data deleted from the draft")
         except ob.WizardDraft.DoesNotExist:
             status = "already deleted or no draft to delete."
             log.info("unable to delete wizard_data from draft... DoesNotExist")
         else:
             status = 'deleted'
-        return JsonResponse({'status':status})
-        
+        return JsonResponse({'status': status})

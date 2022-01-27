@@ -1,4 +1,8 @@
+import numpy as np
+from pyzbar.pyzbar import decode
+import apps.attendance.attd_capture as attd
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.db.utils import IntegrityError
 import apps.attendance.forms as atf
 import apps.attendance.models as atdm
 from .filters import AttendanceFilter
@@ -12,25 +16,23 @@ from django.views.decorators import gzip
 from django.http import StreamingHttpResponse
 import logging
 logger = logging.getLogger('django')
-import apps.attendance.attd_capture as attd
-from pyzbar.pyzbar import decode
-import numpy as np
-import logging
 log = logging.getLogger('__main__')
 # Create your views here.
+
+
 class Attendance(LoginRequiredMixin, View):
     params = {
-        'form_class'    : atf.AttendanceForm,
-        'template_form' : 'attendance/partials/partial_attendance_form.html',
-        'template_list' : 'attendance/attendance.html',
-        'partial_form'  : 'attendance/partials/partial_attendance_form.html',
-        'partial_list'  : 'attendance/partials/partial_attendance_list.html',
-        'related'       : ['peopleid', 'clientid', 'siteid', 'verifiedby', 'gfid'],
-        'model'         : atdm.PeopleEventlog,
-        'filter'        : AttendanceFilter,
-        'fields'        : ['id', 'peopleid__peoplename', 'verifiedby__peoplename', 'peventtype', 'siteid__buname', 'datefor',
-                        'punch_intime', 'punch_outtime', 'facerecognition', 'gpslocation_in', 'gpslocation_out', 'shift__shiftname']}
-    
+        'form_class': atf.AttendanceForm,
+        'template_form': 'attendance/partials/partial_attendance_form.html',
+        'template_list': 'attendance/attendance.html',
+        'partial_form': 'attendance/partials/partial_attendance_form.html',
+        'partial_list': 'attendance/partials/partial_attendance_list.html',
+        'related': ['peopleid', 'clientid', 'buid', 'verifiedby', 'gfid'],
+        'model': atdm.PeopleEventlog,
+        'filter': AttendanceFilter,
+        'fields': ['id', 'peopleid__peoplename', 'verifiedby__peoplename', 'peventtype', 'buid__buname', 'datefor',
+                   'punch_intime', 'punch_outtime', 'facerecognition', 'gpslocation_in', 'gpslocation_out', 'shift__shiftname']}
+
     def get(self, request, *args, **kwargs):
         R, resp = request.GET, None
 
@@ -38,24 +40,27 @@ class Attendance(LoginRequiredMixin, View):
         if R.get('action', None) == 'list' or R.get('search_term'):
             d = {'list': "attd_list", 'filt_name': "attd_filter"}
             self.params.update(d)
-            resp = putils.render_grid(request, self.params, "attendance_view")
-        
+            objs = self.params['model'].objects.select_related(
+                *self.params['related']).values(*self.params['fields'])
+            resp = putils.render_grid(
+                request, self.params, "attendance_view", objs)
+
         # return attemdance_form empty
         elif R.get('action', None) == 'form':
             cxt = {'attd_form': self.params['form_class'](),
                    'msg': "create attendance requested"}
             resp = putils.render_form(request, self.params, cxt)
-        
+
         # handle delete request
         elif R.get('action', None) == "delete" and R.get('id', None):
             print(f'resp={resp}')
             resp = putils.render_form_for_delete(request, self.params)
         # return form with instance
         elif R.get('id', None):
-            resp = putils.render_form_for_update(request, self.params, "attd_form")
+            resp = putils.render_form_for_update(
+                request, self.params, "attd_form")
         print(f'return resp={resp}')
         return resp
-    
 
     def post(self, request, *args, **kwargs):
         resp = None
@@ -65,7 +70,8 @@ class Attendance(LoginRequiredMixin, View):
             pk = request.POST.get('pk', None)
             if pk:
                 msg = "attendance_view"
-                form = putils.get_instance_for_update(data, self.params, msg, int(pk))
+                form = putils.get_instance_for_update(
+                    data, self.params, msg, int(pk))
             else:
                 form = self.params['form_class'](data)
             if form.is_valid():
@@ -77,19 +83,19 @@ class Attendance(LoginRequiredMixin, View):
             resp = putils.handle_Exception(request)
         return resp
 
-    
     def handle_valid_form(self, form, request):
         logger.info('attendance form is valid')
-        import json
-        attd = form.save()
-        putils.save_userinfo(attd, request.user, request.session)
-        logger.info("attendance form saved")
-        data = {'success': "Record has been saved successfully", 
-        'type':attd.peventtype}
-        return rp.JsonResponse(data, status=200)
+        try:
+            import json
+            attd = form.save()
+            putils.save_userinfo(attd, request.user, request.session)
+            logger.info("attendance form saved")
+            data = {'success': "Record has been saved successfully",
+                    'type': attd.peventtype}
+            return rp.JsonResponse(data, status=200)
+        except IntegrityError:
+            return putils.handle_intergrity_error('Attendance')
 
-
-            
 
 def face_recognition(request):
     log.debug("face_recognition view initaited")
@@ -102,10 +108,10 @@ def face_recognition(request):
         import numpy as np
         from django.conf.urls.static import static
         import time
-        
+
         if request.GET.get('detectQR'):
             log.debug("request for qr detection")
-            #QRcode detection
+            # QRcode detection
             res = attd.detect_QR(cv2, decode, np, time)
         elif request.GET.get('detectFace'):
             log.debug("request for fr detection")
@@ -137,7 +143,7 @@ class VideoCamera(object):
             detected = self.decode_qr(self.frame)
             if detected:
                 self.__del__()
-            
+
     def decode_qr(self, img):
         log.debug("trying to detect qr")
         for barcode in decode(img):
@@ -145,13 +151,14 @@ class VideoCamera(object):
             code = barcode.data.decode('utf-8')
             print(code)
             pts = np.array([barcode.polygon], np.int32)
-            pts = pts.reshape((-1,1,2))
+            pts = pts.reshape((-1, 1, 2))
             cv2.polylines(img, [pts], True, [0, 255, 0], 3)
             pts2 = barcode.rect
             cv2.putText(img, code, (pts2[0], pts2[1]), cv2.FONT_HERSHEY_COMPLEX,
-                0.9, (255,0,0), 2)
+                        0.9, (255, 0, 0), 2)
             log.debug("QR is detected")
             return True
+
 
 def gen(camera):
     while True:
@@ -160,12 +167,10 @@ def gen(camera):
               b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n\r\n')
 
 
-
-
 @gzip.gzip_page
 def face_recognition2(request):
     try:
-        cam = VideoCamera()
+        #cam = VideoCamera()
         return StreamingHttpResponse(gen(cam), content_type="multipart/x-mixed-replace;boundary=frame")
     except:  # This is bad! replace it with proper handling
         pass

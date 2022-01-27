@@ -314,10 +314,10 @@ People
                 <label class="required" for="id_dateofjoin">Site</label>
                 <!--INPUT GROUP-->
                 <div class="col-md-4">
-                    {{ peopleform.siteid }}
+                    {{ peopleform.buid }}
                     <!--HELP TEXT-->
                     <!----- BEGIN ERROR FIELD  ------->
-                    {{ peopleform.siteid.errors }}
+                    {{ peopleform.buid.errors }}
                     <!----- END ERROR FIELD  ------->
                 </div>
                 <!--LABEL FIELD-->
@@ -690,7 +690,7 @@ People
 
         //ADD CALENDER TO DATE FIELDS WITH FLAT-PICKR PLUGIN
         $("#id_dateofbirth, #id_dateofjoin, #id_dateofreport").flatpickr({
-            dateFormat: 'd M Y'
+            dateFormat: 'd-M-Y'
         })
 
         //Add More Details toggle

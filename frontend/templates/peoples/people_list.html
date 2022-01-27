@@ -27,7 +27,7 @@ People Lists
             <th>Code</th>
             <th>Name</th>
             <th>People Type</th>
-            <th>People Bt Code</th>
+            <th>Site</th>
             <th>Is Admin</th>
         </thead>
 		<!---------- BEGIN TABLE FILTER FIELDS --------->
@@ -49,7 +49,7 @@ People Lists
             <td>{{ people['peoplecode'] }}</td>
             <td><a href="{{ url('peoples:people_update', args=[people['id']]) }}">{{ people['peoplename'] }}</a></td>
             <td>{{ people['peopletype__tacode'] }}</td>
-            <td>{{ people['siteid__bucode'] }}</td>
+            <td>{{ people['buid__bucode'] }}</td>
             <td>{{ people['isadmin'] }}</td>
         </tr>
         {% endfor %}

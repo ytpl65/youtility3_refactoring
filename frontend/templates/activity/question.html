@@ -1,0 +1,244 @@
+{% extends "base_list.html" %}
+
+{% block card_title %}
+Question List
+{% endblock card_title %}
+
+{% block pagebreadcumb %}
+{{ super() }}
+<li class="breadcrumb-item pe-3"><a href="javascript:void(0)" class="pe-3">People List</a></li>
+{% endblock pagebreadcumb %}
+
+{% block table %}
+<table id="ques_table" class="display cell-border" style="width:100%">
+	<thead class="fw-bold fs-6">
+		<th>Name</th>
+		<th>Type</th>
+		<th>Unit</th>
+		<th>Is WorkFlow</th>
+	</thead>
+	<!---------- BEGIN TABLE FILTER FIELDS --------->
+	<thead id="filter_row">
+		<form action="" id='ques_filter' method='get'>
+			{% for field in ques_filter %}
+			<th>
+				<input type="text" id="{{ field.auto_id }}" name="{{ field.name }}"
+					placeholder="Search {{ field.label }}">
+			</th>
+			{% endfor %}
+		</form>
+	</thead>
+	<!---------- END TABLE FILTER FIELDS --------->
+	<!---------- END TABLE FILTER FIELDS --------->
+	<tbody>
+		{% for ques in ques_list %}
+		<tr>
+			<td>{{ ques['ques_name'] }}</td>
+			<td><a href="" class="ques-link" data-id="{{ ques['id'] }}" data-rowid ={{ loop.index0 }}>{{ ques['answertype'] }}</a></td>
+			</td>
+			<td>{{ ques['unit__tacode'] }}</td>
+			<td>{{ ques['isworkflow'] }}</td>
+		</tr>
+		{% endfor %}
+	</tbody>
+</table>
+<!------------------ END TABLE --------------------->
+
+{% if ques_list and ques_list.has_other_pages %}
+<!-- BEGIN PAGINATOIN -->
+{{ paginator(ques_list) }}
+<!-- END PAGINATOIN ---->
+{% endif %}
+
+{% endblock table %}
+<!-------------------------------------------END BU TABLE ------------------------------------------------->
+
+
+{% block popup_alerts %}
+<!-- THE MODAL WE WILL BE USING animate__animated animate__zoomIn -->
+<div class="modal"  tabindex="-1" aria-hidden="true" aria-labelledby="exampleModalLabel" data-bs-backdrop="static" id="modal-ques">
+	<div class="modal-dialog modal-dialog-centered modal-xl">
+		<div class="modal-content" id="ques_content">
+		</div>
+	</div>
+</div>
+{% endblock popup_alerts %}
+
+
+{% block extra_scripts %}
+<script>
+	var   table           = null;
+	const modal_id        = "#modal-ques"
+	const modalcontent_id = "#ques_content"
+	const formFilter      = "#ques_filter"
+	const table_id        = "#ques_table"
+	const formid          = "#id_quesform"
+	const urlname         = "{{ url('activity:question') }}"
+	const viewname        = "Question"
+	const rowlink         = "a.ques-link"
+	
+	$(document).ready(function () {
+		//on enter search query
+		$("input").keypress(function (event) {
+			if (event.which == 13) {
+				event.preventDefault();
+				$("#ques_filter").submit();
+			}
+		});
+		//beforeSend of question ajax request 
+		function quesBeforeSend() {
+			$(modal_id).modal("show");
+		}
+		//datatable initialization
+		table = $(table_id).DataTable({
+			//orderCellsTop: true,
+			responsive: true,
+			fixedHeader: true,
+			paging: false,
+			lengthChange: false,
+			language: {
+				searchPlaceholder: "Search on page"
+			},
+			dom: "<'row'" +
+				"<'col-sm-6 d-flex align-items-center justify-conten-start'f>" +
+				"<'col-sm-6 d-flex align-items-center justify-content-end'B>" +
+				">" +
+
+				"<'table-responsive'tr>",
+			ordering: false,
+			scrollCollapse: true,
+			buttons: [{
+				text: `Add New ${viewname} &nbsp;<i class='fas fa-plus ch4'></i></a>`,
+				className: "btn btn-sm btn-light-primary btn-hover-rise",
+				//action for add_new_button 
+				action: function (e, dt, node, config) {
+					const params = {
+						'modal_id': modal_id,
+						'url': `${urlname}?action=form`,
+						'beforeSend': quesBeforeSend
+					}
+					fire_ajax_get(params)
+						.done((data, status, xhr) => {
+							$(modalcontent_id).attr('data-form', 'create')
+							$(`${modal_id} .modal-content`).html(data.html_form)
+							$(modal_id).modal("show");
+						})
+						.fail((xhr, status, error) => {
+							show_error_alert("Something went wrong!")
+						})
+				}
+			}]
+		}) //END DATATABLE CONFIGURATION
+
+		//BEGIN STYLING DATATABLE
+		$("th > input").addClass('form-control')
+		$("th > input").css('height', '35px')
+		var styles = {
+			"border-bottom": "none",
+			"background-color": "#f1f4f7"
+		}
+
+		$(`${table_id} thead tr:eq(1)`).css(styles)
+
+		
+		//update row (form-view)
+		$(rowlink).click((e) => {
+			e.preventDefault();
+			var id = $(e.currentTarget).attr('data-id');
+			var rowid = $(e.currentTarget).attr('data-rowid');
+			$(modalcontent_id).attr('data-rowid', rowid)
+			$(modalcontent_id).attr('data-id', id)
+			console.log("id ", id)
+			console.log("table ", table)
+			const params = {
+				'modal_id': modal_id,
+				'url': `${urlname}?id=${id}`,
+				beforeSend: quesBeforeSend
+			}
+			fire_ajax_get(params)
+			.done((data, status, xhr) => {
+				$(modalcontent_id).attr('data-form', 'update')
+				$(`${modal_id} .modal-content`).html(data.html_form)
+			})
+			.fail((xhr, status, error) => {
+				show_error_alert('Something went wrong!') //defined in custom.js
+			})
+		})
+		//submit form
+		$(modal_id).on('submit', formid, function(e) {
+			console.log("worked...")
+			var form = $(this);
+			e.preventDefault()
+			const params = { url:urlname, modal:true } //capability view
+			const formtype = $(modalcontent_id).attr('data-form') //form-type (create/update)
+			const id = $(modalcontent_id).attr('data-id') //form instance id
+			var payLoad = {formData:form.serialize(), csrfmiddlewaretoken: '{{ csrf_token }}'}//payload for post request
+			if(formtype === 'update'){
+				var newPayLoad = {...payLoad, 'pk':id}
+				payLoad = newPayLoad
+			}
+			fire_ajax_form_post(params, payLoad)
+			.done((data, status, xhr) => { //function to submit post request
+				console.log("data ", data)
+				$("#modal-ques").modal("hide");
+				Swal.fire(
+				`${viewname} saved`,
+				`${viewname} with this name <strong>${data.name}</strong> has been saved successfully`,
+				'success'
+				).then(function() {
+					location.reload();
+				})
+			})
+		})
+	}) //END DOCUMENT.READY
+
+	
+
+	//delete ajax request 
+	function isQuesDeleted(id) {
+		console.log("id ", id)
+		const params = {
+			url: `${urlname}?action=delete&id=${id}`
+		}
+		fire_ajax_get(params)
+			.done((data, status, xhr) => {
+				if (!xhr.status === 200) {
+					return false
+				}
+				return true
+			})
+			.fail((xhr, status, error) => {
+				show_error_alert('Something went wrong!') //defined in custom.js
+				return false
+			})
+	}
+
+	//delete question 
+	function deleteQuestion(elemt) {
+		var id = $(elemt).attr("data-id");
+		show_alert_before_delete('Question')
+			.then((result) => {
+				if (result.isConfirmed) { //delete requested by user
+					status = isQuesDeleted(id) //fire's request
+					console.log("status ", status)
+					if (status) {
+							Swal.fire({
+							icon: 'success',
+							title: 'Deleted successfully',
+							showConfirmButton: false,
+						})						 //defined in customjs
+						.then(function() {
+							location.reload();
+						})
+						//delete row from table
+						row_index = parseInt($("#ques_content").attr('data-rowid'))
+						console.log(row_index, "row index")
+						table.row(row_index).remove().draw();
+					} else {
+						show_error_alert('Something went wrong!');
+					}
+				}
+			})
+	}
+</script>
+{% endblock extra_scripts %}

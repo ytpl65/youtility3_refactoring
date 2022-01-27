@@ -77,7 +77,7 @@ on top of form -->
                 {% endif %}
                 {%- block form_title -%}
 
-                {% endblock form_title %}
+                {% endblock form_title %}&nbsp;
                 <!--END To Reder form-title -->
 
                 <span class="svg-icon svg-icon-2">
@@ -91,6 +91,14 @@ on top of form -->
                         adjacent to the form-title-->
                     </span>
                 </span>
+                <!--BEGIN To custom the icon 
+                 adjacent to the form-title-->
+                 {% block custom_title %}
+                 
+                 {% endblock custom_title %}
+                <!--END To custom the icon 
+                 adjacent to the form-title-->
+
 
             </h4>
 
@@ -115,7 +123,14 @@ on top of form -->
             <!----------- END FORM MESSGES ----------------->
 
             <!--keep empty-->
-            <div></div>
+            <div>
+            {% block ajax_page_actions %}
+            
+            {% endblock ajax_page_actions %}
+            {% block page_actions %}
+
+            {% endblock page_actions %}
+            </div>
         </div>
         <!--END CARD-HEADER-->
 

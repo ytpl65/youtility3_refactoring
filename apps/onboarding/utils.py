@@ -1,15 +1,19 @@
 # save json datafield of Bt table
+from datetime import tzinfo
 import re
 import django
 from django.db.models.deletion import RestrictedError
+from django.http.response import JsonResponse
 from icecream import ic
+from django.conf import settings
 import django.shortcuts as scts
+from django.db.models import Q
 import django.contrib.messages as msg
 
 
 import logging
 
-from apps.onboarding.models import Bt
+from apps.onboarding.models import Bt, TypeAssist
 logger = logging.getLogger('django')
 dbg = logging.getLogger('__main__').debug
 
@@ -60,7 +64,7 @@ def get_tatype_choices(superadmin=False):
     if superadmin:
         return TypeAssist.objects.all()
     return TypeAssist.objects.filter(
-        Q(tatype='NONE') & ~Q(tacode='NONE') & ~Q(tacode='BU_IDENTIFIER'))
+        Q(tatype__tacode='NONE') & ~Q(tacode='NONE') & ~Q(tacode='BU_IDENTIFIER'))
 
 
 def update_children_tree(instance, newcode, newtype):
@@ -398,7 +402,7 @@ def save_msg(request):
 
 def initailize_form_fields(form):
     for visible in form.visible_fields():
-        if visible.widget_type not in ['file', 'checkbox', 'clearablefile', 'select', 'selectmultiple']:
+        if visible.widget_type not in ['file', 'checkbox', 'radioselect', 'clearablefile', 'select', 'selectmultiple']:
             visible.field.widget.attrs['class'] = 'form-control'
         if visible.widget_type == 'checkbox':
             visible.field.widget.attrs['class'] = 'form-check-input h-20px w-30px'
@@ -413,3 +417,28 @@ def apply_error_classes(form):
     for x in (form.fields if '__all__' in form.errors else form.errors):
         attrs = form.fields[x].widget.attrs
         attrs.update({'class': attrs.get('class', '') + ' is-invalid'})
+
+def to_utc( date):
+    import pytz
+    from django.utils.timezone import get_current_timezone
+    dt_utc = date.astimezone(pytz.utc).replace(microsecond=0, tzinfo=pytz.utc)
+    return dt_utc
+
+def get_or_create_none_bv():
+    obj, _ = Bt.objects.filter(Q(bucode='NONE') | Q(buname='NONE')).get_or_create(
+        bucode='NONE',
+        defaults={
+            'bucode':"NONE", 'buname':"NONE"
+        }
+    )
+    return obj
+
+
+def get_or_create_none_typeassist():
+    obj, _ = TypeAssist.objects.filter(Q(tacode='NONE') | Q(taname='NONE')).get_or_create(
+        tacode='NONE',
+        defaults={
+            'tacode':"NONE", 'taname':"NONE", 
+        }
+    )
+    return obj

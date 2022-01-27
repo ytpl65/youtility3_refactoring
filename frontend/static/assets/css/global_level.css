@@ -137,3 +137,40 @@ div#kt_footer {
     font-size: 1.275rem;
     color: #181C32;
 }
+
+.modal-80{
+    width: 80%!important;
+}
+
+input{
+    height: 36px;
+}
+.form-select{
+    line-height: 1.1rem;
+}
+.tagify__tag-text{
+    color: rgba(0, 0, 0, 0.822);
+    font-size: 1.0rem;
+}
+
+.dataTableLayout {
+    table-layout:fixed;
+    width:100%;
+}
+
+table.dataTable > thead .sorting_asc:after, 
+table.dataTable > thead .sorting_desc:after {
+    background : none;
+}
+
+.form-check-input[type="radio"]{
+    width: 1.5rem;
+    height: 1.5rem;
+}
+.flatpickr-day.today{
+    background: #d7efff;
+}
+
+.my-shadow{
+    box-shadow:0 0.1rem 1rem 0.5rem rgba(0, 0, 0, 0.05) !important
+}

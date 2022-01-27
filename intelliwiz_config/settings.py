@@ -41,6 +41,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     #third_party_apps
+    'django_apscheduler',
     'django_email_verification',
     'debug_toolbar',
     'widget_tweaks',
@@ -55,6 +56,8 @@ INSTALLED_APPS = [
     'apps.onboarding',
     'apps.tenants',
     'apps.attendance',
+    'apps.activity',
+    'apps.schedhuler',
     
     #third-party apps
     'django_cleanup.apps.CleanupConfig'
@@ -142,7 +145,8 @@ youtility_dbs = {
         'PASSWORD': '!!sysadmin!!',
         'HOST':     '192.168.1.254',
         'PORT':     '5432',
-    }
+    },
+
 }
 
 
@@ -248,7 +252,14 @@ USE_TZ = True
 MEDIA_ROOT = os.path.join(os.path.expanduser('~'),'youtility4_media')
 MEDIA_URL = '/youtility4_media/'
 DATE_FORMAT = "d M Y"
-
+DATETIME_INPUT_FORMATS = [
+    '%d-%b-%Y %H:%M'#22-May-1998 13:01
+]
+DATE_INPUT_FORMATS = [
+    '%d-%b-%Y'
+]
+APSCHEDULER_DATETIME_FORMAT = "N j, Y, f:s a"
+APSCHEDULER_RUN_NOW_TIMEOUT = 25 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/3.2/howto/static-files/
 
@@ -285,14 +296,14 @@ LOGGING_CONFIG_ = {
     'formatters': { 
         'coloured': { 
             '()': 'colorlog.ColoredFormatter',
-            'format': '%(log_color)s %(asctime)s [%(levelname)s] %(name)s:  from method: %(funcName)s()   %(message)s '
+            'format': '%(log_color)s %(asctime)s  %(levelname)-10s  from method: %(funcName)-32s  << %(message)s >>'
         },
-    },
-    'handlers': { 
+    }, 
+    'handlers': {
         'default': { 
             #'level': 'INFO',
             'formatter': 'coloured',
-            'class': 'logging.StreamHandler',
+            'class': 'logging.StreamHandler', 
             'stream': 'ext://sys.stdout',  # Default is stderr
         },
     },
@@ -300,7 +311,7 @@ LOGGING_CONFIG_ = {
         '': {  # root logger
             'handlers': ['default'],
             'level': 'WARNING',
-            'propagate': False
+            'propagate': False 
         },
         'django': { 
             'handlers': ['default'],
@@ -330,7 +341,7 @@ SHELL_PLUS_PRINT_SQL = True
 
 #Email Verification settings
 def verified_callback(user):
-    user.is_active = True
+    user.is_verified = True
 
 
 EMAIL_VERIFIED_CALLBACK = verified_callback
@@ -350,3 +361,6 @@ EMAIL_PORT = 587
 EMAIL_HOST_USER = 'snvnrock@gmail.com'
 EMAIL_HOST_PASSWORD = '8007008467N'  # os.environ['password_key'] suggested
 EMAIL_USE_TLS = True
+
+#django-taggit config.
+TAGGIT_CASE_INSENSITIVE = True

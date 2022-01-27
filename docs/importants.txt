@@ -1,0 +1,13 @@
+NONE ENTRIES SHOULD BE PRESENT IN FOLLOWING TABLES:
+
+1. People
+2. Capability
+3. QuestionSet
+4. Job
+5. Asset
+6. Jobneed
+7. Bt
+8. TypeAssist
+
+
+

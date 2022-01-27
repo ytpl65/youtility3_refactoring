@@ -14,9 +14,6 @@ Attendance
 <!------------------------------------- END PAGE BREADCUMBS ------------------------------------->
 
 {% block table %}
-<button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modal-open-cam">
-Open Camera
-</button>
 <!--------------------------BEGIN TABLE------------------------------>
 <table id="attd_table" class="display cell-border" style="width:100%">
     <thead class="fw-bold fs-6">
@@ -46,7 +43,7 @@ Open Camera
         <tr>
             <td><a href="" class="attd-link" data-id="{{ attd['id'] }}"
             data-rowid={{ loop.index0 }}>{{ attd['peventtype'] }}</a></td>
-            <td>{{ attd['siteid__buname'] }}</td>
+            <td>{{ attd['buid__buname'] }}</td>
             <td>{{ attd['peopleid__peoplename'] }}</td>
             <td>{{ attd['facerecognition'] }}</td>
             <td>{{ attd['verifiedby__peoplename'] }}</td>
@@ -75,7 +72,7 @@ Open Camera
         </div>
     </div>
 </div>
-<!-- Attendance Capture -->
+<!-- Attendance Capture 
 <div class="modal animate__animated animate__zoomIn" aria-hidden="true" tabindex="-1"
     aria-labelledby="exampleModalLabel" data-bs-backdrop="static" id="modal-open-cam">
     <div class="modal-dialog modal-dialog-centered modal-lg">
@@ -93,7 +90,7 @@ Open Camera
             </div>
         </div>
     </div>
-</div>
+</div>-->
 {% endblock popup_alerts %}
 
 <!--------- BEGIN EXTRA SCRIPTS ----------------------------->
@@ -123,8 +120,8 @@ Open Camera
                 searchPlaceholder: "Search on page"
             },
             dom: "<'row'" +
-                "<'col-sm-6 d-flex align-items-center justify-conten-start'B>" +
-                "<'col-sm-6 d-flex align-items-center justify-content-end'f>" +
+                "<'col-sm-6 d-flex align-items-center justify-conten-start'f>" +
+                "<'col-sm-6 d-flex align-items-center justify-content-end'B>" +
                 ">" +
 
                 "<'table-responsive'tr>",
@@ -148,10 +145,6 @@ Open Camera
                                 show_error_alert('Something went wrong!')
                         })
                     }}, 
-                {
-                    text:"Take Attendance <i class='fas fa-camera ch4'></i>",
-                    className:"btn btn-sm btn-light-dark btn-hover-rise take-attd"
-                }
 
             ]
         })
@@ -167,6 +160,7 @@ Open Camera
 
         //submit form
 		$('#modal-attd').on('submit', '#attd_form', function(e) {
+            console.log("submitted")
 			var form = $(this);
 			e.preventDefault()
 			const params   = { url:"{{ url('attendance:attendance_view') }}", modal:true }                     //attendance view
@@ -226,7 +220,7 @@ Open Camera
         });
         
         //take attendance
-        $(".take-attd").click(() => {
+        /*$(".take-attd").click(() => {
             alert_before_attendance().then((result) => {
                 if(result.isConfirmed){
                     //openCamera to take attendance
@@ -259,7 +253,7 @@ Open Camera
                     })
                 }
             })
-        })
+        })*/
 
     })//END document.ready()
 

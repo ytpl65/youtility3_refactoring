@@ -2,8 +2,12 @@
 $(document).on({
   ajaxStart: function(){ startBlockUi(); },
   ajaxStop: function() { endBlockUi(); } 
+  
 })
 
+// $(window).load(function () {
+//   endBlockUi();
+// })
 
 //creating environment for wizard
 function make_env_for_wizard(session) {
@@ -27,6 +31,68 @@ const  first_show_parent = (id) => {
   $(id).show()
 }
 
+//removes required attr from field specified.
+function removeRequiredAttr(cls){
+  if(cls === "numeric"){
+      $("#id_min, #id_max").prop("required", false)
+      $("#id_options, #id_alerton").prop("required", true)
+      $("label[for='id_options'], label[for='id_alerton']").addClass("required")
+      
+      console.log("numeric are not required")
+  }else if(cls === 'optionGrp'){
+      $("#id_options, #id_alerton").prop("required", false)
+      $("#id_options").prev().prop("required",false)
+      $("#id_min, #id_max").prop("required", true)
+      $("label[for='id_min'], label[for='id_max']").addClass("required")
+      console.log("optionGRp is not required")
+  }else{
+    $("#id_options, #id_alerton, #id_min, #id_max").prop("required", false)
+    console.log("all are not required")
+  }
+}
+
+function showHideFields(selected){
+    if(typeof selected!=="undefined"){
+    var selectedText = selected.toUpperCase();
+    if(selectedText.toUpperCase() === 'NUMERIC'){
+        $(".numeric").show()
+        $('.optionGrp').hide()
+        removeRequiredAttr('optionGrp')
+    }else if((selectedText === "DROPDOWN") || (selectedText === "RADIOGROUP" || (selectedText === "CHECKBOX"))){
+        $('.optionGrp').show()
+        $(".numeric").hide()
+        removeRequiredAttr('numeric')
+    }else{
+        $(".numeric").hide()
+        $('.optionGrp').hide()
+        removeRequiredAttr('')
+
+    }
+  }
+}
+
+function populateAlertOn(txt){
+  var data = {
+      id:txt,
+      text:txt}
+  var newOption = new Option(data.text, data.id, false, false);
+  $('#id_alerton').append(newOption).trigger('change');
+}
+
+function removeElmtFromAlertOn(txt){
+  if(txt!==""){
+  $(`#id_alerton option[value=${txt}]`).remove();}
+}
+
+function init_alerton(){
+
+  $("#id_alerton").select2({
+      placeholder: 'Select an option',
+      closeOnSelect:false,
+      allowClear:true,
+      multiple:true
+  })
+}
 
 function handle_rendering_of_menus(session) {
   const exceptions = {
@@ -139,14 +205,58 @@ function show_successful_delete_alert(){
   })
 }
 
+function show_warning(msg){
+  if(msg){
+    return Swal.fire({
+      icon:'warning',
+      title:msg,
+      showConfirmButton:false,
+      timer:1000,
+    })
+  }
+}
+
 function show_alert_before_delete(data){
  return Swal.fire({
       title:`Delete ${data}`,
-      text:`Are you sure you want to delete this ${data.toLowerCase()}`,
+      html:`Are you sure you want to delete this <b>${data.toLowerCase()}</b>`,
       icon:"warning",
       showCancelButton: true,
       confirmButtonText: 'Yes, delete it!'
     })
+}
+
+function show_alert_before_update(data){
+  return Swal.fire({
+    title:`Upadate/Delete ${data}`,
+    html:`Are you sure you want to update this record`,
+    icon:'warning',
+    showCancelButton:true,
+    showDenyButton:true,
+    denyButtonText: `Delete`,
+    confirmButtonText:"Yes Update"
+  })
+}
+
+function submit_form_alert(){
+  return Swal.fire({
+    title:"Submit Form?",
+    icon:"question",
+    showCancelButton:true,
+    confirmButtonText:"Yes, Submit"
+  })
+}
+
+function show_alert_before_update_jn(data){
+  return Swal.fire({
+    title:`Upadate/Delete ${data}`,
+    html:`Are you sure you want to update this record<br>OR<br><a id="jnd>View Details</a>`,
+    icon:'warning',
+    showCancelButton:true,
+    showDenyButton:true,
+    denyButtonText: `Delete`,
+    confirmButtonText:"Yes Update"
+  })
 }
 
 function display_non_field_errors(errors){
@@ -167,19 +277,31 @@ function display_non_field_errors(errors){
 
 
 function display_modelform_errors(errors){
+  $('p.errors').remove();
   //non field errors
-  if(errors.hasOwnProperty("__all__")){
+  if(errors.hasOwnProperty("__all__") || (errors instanceof String)){
     display_non_field_errors(errors.__all__)
-  }
+  }else if (errors instanceof String){
+    display_non_field_errors(errors)
+  }else{
   //field errors
   for(let key in errors){
     error = "<p class='errors'>" + errors[key] + "</p>";
     lookup = "[name='" + key + "']";
     field = $(".modal-body").find(lookup)
-    $(field).addClass("is-invalid")
-    $('p.errors').remove();
-    $(error).insertAfter(field);
-  }
+    if($(field).is("select") === true){
+      $(field).next().find(".select2-selection").addClass("is-invalid")
+      var tag = $(field).next()
+      $(error).insertAfter(tag);
+    }else if(key === 'options'){
+      var tag = $(field).prev()
+      $(erros).insertAfter(tag)
+    }
+    else{
+      $(field).addClass("is-invalid")
+      $(error).insertAfter(field);
+    }
+  }}
 
 }
 
@@ -206,7 +328,7 @@ function fire_ajax_get(params){
   return $.ajax({
     url:params['url'],
     type:"get",
-    beforeSend:params['beforeSend'],
+    beforeSend:params['beforeSend'](),
   })
 }
 
@@ -384,6 +506,92 @@ const alert_before_attendance = () => {
   })
 }
 
+function performIntersection(arr1, arr2){
+  const intersectionResult = arr1.filter(x => arr2.indexOf(x) !== -1);
+  return intersectionResult;
+}
+
+function load_alerton_field(optionsData, selected){
+  console.log(optionsData.length, optionsData)
+  $("#id_alerton").empty();
+  for(let i=0; i<optionsData.length; i++){
+      var data = {id:optionsData[i], text:optionsData[i]}
+      var opt  = new Option(data.text, data.id, false, false)
+      $('#id_alerton').append(opt).trigger('change');
+      console.log(i, opt)
+  }
+  $('#id_alerton').val(selected).trigger('change');
+}
+
+
+function initialize_alerton_field(_optionsData, alertonData, questype, cleaned){
+    console.log(_optionsData, alertonData)
+    _optionsData = _optionsData.length ? JSON.parse(_optionsData) : ""
+    optionsData  = []
+    if(!cleaned && _optionsData !== ""){
+      _optionsData.forEach((item) => {
+      optionsData.push(item.value.toUpperCase())
+  })
+  console.log("not cleaned")}else{optionsData = _optionsData
+  console.log("cleaned")}
+    console.log(optionsData, alertonData)
+    if(optionsData.length && alertonData.length){
+    let selected = performIntersection(optionsData, alertonData)
+    console.log(selected)
+    load_alerton_field(optionsData, selected)
+    }
+  
+}
+
+function column_filtering(targets){
+  return function () {
+    var api = this.api();
+
+    // For each column
+    api
+        .columns(targets)
+        .eq(0)
+        .each(function (colIdx) {
+            // Set the header cell to contain the input element
+            var cell = $('.filters th').eq(
+                $(api.column(colIdx).header()).index()
+            );
+            var title = $(cell).text();
+            $(cell).html('<input type="text" style="width:100%" placeholder="' + title + '" />');
+
+            // On every keypress in this input
+            $(
+                'input',
+                $('.filters th').eq($(api.column(colIdx).header()).index())
+            )
+                .off('keyup change')
+                .on('keyup change', function (e) {
+                    e.stopPropagation();
+
+                    // Get the search value
+                    $(this).attr('title', $(this).val());
+                    var regexr = '({search})'; //$(this).parents('th').find('select').val();
+
+                    var cursorPosition = this.selectionStart;
+                    // Search the column for that value
+                    api
+                        .column(colIdx)
+                        .search(
+                            this.value != ''
+                                ? regexr.replace('{search}', '(((' + this.value + ')))')
+                                : '',
+                            this.value != '',
+                            this.value == ''
+                        )
+                        .draw();
+
+                    $(this)
+                        .focus()[0]
+                        .setSelectionRange(cursorPosition, cursorPosition);
+                });
+        });
+}
+}
 
 //=============================== DOCUMENT READY =============================//
 $(document).ready(() => {

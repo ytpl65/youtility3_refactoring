@@ -94,7 +94,7 @@ class CreateTypeassist(LoginRequiredMixin, View):
 class RetrieveTypeassists(LoginRequiredMixin, View):
     template_path = 'onboarding/ta_list.html'
     related = ['parent', 'id', 'cuser', 'muser']
-    fields = ['id', 'tatype', 'parent__tacode', 'tacode',
+    fields = ['id', 'tatype__tacode', 'tacode',
               'taname', 'cuser__peoplecode']
     model = TypeAssist
 
@@ -102,11 +102,12 @@ class RetrieveTypeassists(LoginRequiredMixin, View):
         '''returns the paginated results from db'''
         response = None
         try:
-            objects = self.model.objects.select_related(*self.related
-                                                        ).values(*self.fields)
-            logger.info('TypeAssist objects retrieved from db')
+            objects = self.model.objects.select_related(
+                *self.related).filter(~Q(tacode='NONE')).values(*self.fields)
+            logger.info('TypeAssist objects %s retrieved from db' %
+                        (len(objects)) if objects else "No Records!")
             cxt = self.paginate_results(request, objects)
-            logger.info('Results paginated')
+            logger.info('Results paginated' if objects else "")
             response = render(request, self.template_path, context=cxt)
         except EmptyResultSet:
             response = render(request, self.template_path, context=cxt)
@@ -122,7 +123,7 @@ class RetrieveTypeassists(LoginRequiredMixin, View):
 
     def paginate_results(self, request, objects):
         '''paginate the results'''
-        logger.info('Pagination Start')
+        logger.info('Pagination Start' if objects else "")
         from .filters import TypeAssistFilter
         if request.GET:
             objects = TypeAssistFilter(request.GET, queryset=objects).qs
@@ -230,9 +231,8 @@ class UpdateTypeassist(LoginRequiredMixin, View):
 
     def handle_valid_form(self, form, request, super=False):
         logger.info('TypeAssistForm form is valid..')
-        ta = form.save(commit=False)
+        ta = form.save()
         ta = save_userinfo(ta, request.user, request.session)
-        ta.save()
         logger.info('TypeAssistForm Form saved')
         messages.success(request, "Success record saved successfully!",
                          "alert-success")
@@ -357,9 +357,10 @@ class RetrieveBt(LoginRequiredMixin, View):
             logger.info('Retrieve Bt view')
             objects = self.model.objects.select_related(*self.related
                                                         ).values(*self.fields)
-            logger.info('Bt objects retrieved from db')
+            logger.info('Bt objects %s retrieved from db' %
+                        (len(objects)) if objects else "No Records!")
             cxt = self.paginate_results(request, objects)
-            logger.info('Results paginated')
+            logger.info('Results paginated'if objects else "")
             response = render(request, self.template_path, context=cxt)
         except EmptyResultSet:
             response = redirect('/dashboard')
@@ -375,7 +376,7 @@ class RetrieveBt(LoginRequiredMixin, View):
 
     def paginate_results(self, request, objects):
         '''paginate the results'''
-        logger.info('Pagination Start')
+        logger.info('Pagination Start'if objects else "")
         from .filters import BtFilter
         if request.GET:
             objects = BtFilter(request.GET, queryset=objects).qs
@@ -426,9 +427,8 @@ class UpdateBt(LoginRequiredMixin, View):
             form = self.form_class(request.POST, instance=bt)
             if form.is_valid():
                 logger.info('BtForm Form is valid')
-                bt = form.save(commit=False)
+                bt = form.save()
                 bt = save_userinfo(bt, request.user, request.session)
-                bt.save()
                 logger.info('BtForm Form saved')
                 messages.success(request, "Success record saved successfully!",
                                  "alert-success")
@@ -515,9 +515,8 @@ class CreateShift(LoginRequiredMixin, View):
             print("form data", form.data)
             if form.is_valid():
                 logger.info('ShiftForm Form is valid')
-                shift = form.save(commit=False)
+                shift = form.save()
                 shift.buid_id = int(request.session['clientid'])
-                shift.save()
                 save_userinfo(shift, request.user, request.session)
                 logger.info('ShiftForm Form saved')
                 messages.success(request, "Success record saved successfully!",
@@ -549,9 +548,10 @@ class RetrieveShift(LoginRequiredMixin, View):
         try:
             objects = self.model.objects.select_related(*self.related
                                                         ).values(*self.fields)
-            logger.info('Shift objects retrieved from db')
+            logger.info('Shift objects %s retrieved from db' %
+                        (len(objects)) if objects else "No Records!")
             cxt = self.paginate_results(request, objects)
-            logger.info('Results paginated')
+            logger.info('Results paginated'if objects else "")
             response = render(request, self.template_path, context=cxt)
         except EmptyResultSet:
             response = render(request, self.template_path, context=cxt)
@@ -567,7 +567,7 @@ class RetrieveShift(LoginRequiredMixin, View):
 
     def paginate_results(self, request, objects):
         '''paginate the results'''
-        logger.info('Pagination Start')
+        logger.info('Pagination Start'if objects else "")
         from .filters import ShiftFlter
         if request.GET:
             objects = ShiftFlter(request.GET, queryset=objects).qs
@@ -618,10 +618,9 @@ class UpdateShift(LoginRequiredMixin, View):
             form = self.form_class(request.POST, instance=shift)
             if form.is_valid():
                 logger.info('ShiftForm form is valid..')
-                shift = form.save(commit=False)
+                shift = form.save()
                 shift.buid_id = int(request.session['clientid'])
                 shift = save_userinfo(shift, request.user, request.session)
-                shift.save()
                 logger.info('ShiftForm Form saved')
                 messages.success(request, "Success record saved successfully!",
                                  "alert-success")
@@ -701,8 +700,7 @@ class CreateSitePeople(LoginRequiredMixin, View):
         try:
             if form.is_valid():
                 logger.info('SitePeopleForm Form is valid')
-                sp = form.save(commit=False)
-                sp.save()
+                sp = form.save()
                 save_userinfo(sp, request.user, request.session)
                 logger.info('SitePeopleForm Form saved')
                 messages.success(
@@ -737,9 +735,10 @@ class RetrieveSitePeople(LoginRequiredMixin, View):
             logger.info('Retrieve SitePeoples view')
             objects = self.model.objects.select_related(*self.related
                                                         ).values(*self.fields)
-            logger.info('SitePeople objects retrieved from db')
+            logger.info('SitePeople objects %s retrieved from db' %
+                        (len(objects)) if objects else "No Records!")
             cxt = self.paginate_results(request, objects)
-            logger.info('Results paginated')
+            logger.info('Results paginated'if objects else "")
             response = render(request, self.template_path, context=cxt)
         except EmptyResultSet:
             response = redirect('/dashboard')
@@ -755,7 +754,7 @@ class RetrieveSitePeople(LoginRequiredMixin, View):
 
     def paginate_results(self, request, objects):
         '''paginate the results'''
-        logger.info('Pagination Start')
+        logger.info('Pagination Start'if objects else "")
         from .filters import BtFilter
         if request.GET:
             objects = BtFilter(request.GET, queryset=objects).qs
@@ -805,9 +804,8 @@ class UpdateSitePeople(LoginRequiredMixin, View):
             form = self.form_class(request.POST, instance=sp)
             if form.is_valid():
                 logger.info('SitePeopleForm Form is valid')
-                sp = form.save(commit=False)
+                sp = form.save()
                 sp = save_userinfo(sp, request.user, request.session)
-                sp.save()
                 logger.info('SitePeopleForm Form saved')
                 messages.success(
                     request, "Success record saved successfully!", "alert-success")
@@ -890,7 +888,7 @@ class CreateClient(View):
         return render(request, self.template_path, context=cxt)
 
     def post(self, request, *args, **kwargs):
-        from .utils import save_json_from_bu_prefsform
+        from .utils import save_json_from_bu_prefsform, get_or_create_none_bv
         logger.info('Create ClientBt form submiited')
         response = None
         form = self.form_class(request.POST)
@@ -901,6 +899,7 @@ class CreateClient(View):
                 from .utils import (save_json_from_bu_prefsform, create_tenant,
                                     create_default_admin_for_client)
                 bt = form.save(commit=False)
+                bt.parent = get_or_create_none_bv()
                 if save_json_from_bu_prefsform(bt, jsonform):
                     create_tenant(bt.buname, bt.bucode)
                     # create_default_admin_for_client(bt)
@@ -958,9 +957,10 @@ class RetriveClients(LoginRequiredMixin, View):
         try:
             logger.info('Retrieve Client view')
             objects = self.model.objects.values(*self.fields)
-            logger.info('Cleint objects retrieved from db')
+            logger.info('Cleint objects %s retrieved from db' %
+                        (len(objects)) if objects else "No Records!")
             cxt = self.paginate_results(request, objects)
-            logger.info('Results paginated')
+            logger.info('Results paginated'if objects else "")
             response = render(request, self.template_path, context=cxt)
         except EmptyResultSet:
             response = redirect('/dashboad')
@@ -976,7 +976,7 @@ class RetriveClients(LoginRequiredMixin, View):
 
     def paginate_results(self, request, objects):
         '''paginate the results'''
-        logger.info('Pagination Start')
+        logger.info('Pagination Start'if objects else "")
         from .filters import ClientFiler
         if request.GET:
             objects = ClientFiler(request.GET, queryset=objects).qs
@@ -1034,9 +1034,9 @@ class UpdateClient(LoginRequiredMixin, View):
                 create_tenant(form.data['buname'], form.data['bucode'])
                 client = form.save(commit=False)
                 if save_json_from_bu_prefsform(client, jsonform):
+                    client.save()
                     client = save_userinfo(
                         client, request.user, request.session)
-                    client.save()
                     logger.info('ClientForm Form saved')
                     messages.success(request, "Success record saved successfully!",
                                      "alert alert-success")
