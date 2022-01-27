@@ -4,6 +4,7 @@
 <link  href="{{ static('assets/plugins/custom/DataTables/datatables.min.css') }}" rel="stylesheet" type="text/css"/>
 <link rel="stylesheet" href="{{ static('assets/css/jqCron.css') }}" type="text/css">
 {{ schdexternaltourform.media.css }}
+{{ editsiteform.media.css }}
 <style>
 table.dataTable.compact tbody td.select-checkbox::before,
 table.dataTable.compact tbody th.select-checkbox::before{
@@ -160,6 +161,7 @@ Schedhule External-Tour&nbsp;<i class="fa fa-clock fs-4 text-primary" aria-hidde
 {% endblock form %}
 
 {% block extras %}
+{{ editsiteform.as_p() }}
 <div id="RouteCreation">
     <div class="row mb-3 card card-flush my-shadow p-4" id="TourInfo">
         <table width="100%" class="card-body">
@@ -300,7 +302,6 @@ Schedhule External-Tour&nbsp;<i class="fa fa-clock fs-4 text-primary" aria-hidde
 {% block popup_alerts %}
     {% call general_popup(popup_id = "cron_scheduler", title="Cron Scheduler", modal_size='modal-lg') %}
         <div class="modal-body">
-
             <div class="row">
                 <div class="col-md-12">
                     <div class="portlet-body form">
@@ -374,6 +375,7 @@ Schedhule External-Tour&nbsp;<i class="fa fa-clock fs-4 text-primary" aria-hidde
 
 {% block extra_scripts %}
 {{ schdexternaltourform.media.js }}
+{{ editsiteform.media.js }}
 <script src="{{ static('assets/plugins/custom/DataTables/datatables.min.js') }}" type="text/javascript"></script>
 <script src="{{ static('assets/js/jqCron.js') }}"></script>
 <script src="{{ static('assets/js/jqCron.en.js') }}"></script>
@@ -483,7 +485,7 @@ Schedhule External-Tour&nbsp;<i class="fa fa-clock fs-4 text-primary" aria-hidde
         $('.django-select2').djangoSelect2();
         
         //select2 on-modal config
-        $('#edit_assigned_site #id_checklist').select2({
+        $('#edit_assigned_site #id_checklist').djangoSelect2({
             dropdownParent: $('#edit_assigned_site')
         })
         
