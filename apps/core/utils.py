@@ -1,0 +1,679 @@
+'''
+DEFINE FUNCTIONS AND CLASSES WERE CAN BE USED GLOBALLY.
+'''
+import django.shortcuts as scts
+from django.contrib import messages as msg
+from django.template.loader import render_to_string
+from django.http import response as rp
+import apps.peoples.utils as putils
+from pprint import pformat
+from apps.peoples import models as pm
+import logging
+from apps.onboarding.models import  Bt, TypeAssist
+import apps.activity.models as am
+from django.db.models import Q
+logger = logging.getLogger('__main__')
+dbg = logging.getLogger('__main__').debug
+
+
+def cache_it(key, val, time = 1*60):
+    from django.core.cache import cache
+    cache.set(key, val, time)
+    logger.info('saved in cache %s'%(pformat(val)))
+
+
+def get_from_cache(key):
+    from django.core.cache import cache
+    data = cache.get(key)
+    if data:
+        logger.info('Got from cache %s'%(key))
+        return data
+    else:
+        logger.info('Not found in cache')
+        return None
+
+
+def render_form(request, params, cxt):
+    logger.info("%s", cxt['msg'])
+    html = render_to_string(params['template_form'], cxt, request)
+    data = {"html_form": html}
+    return rp.JsonResponse(data, status=200)
+
+
+def handle_DoesNotExist(request):
+    data = {'error': 'Unable to edit object not found'}
+    logger.error("%s", data['error'], exc_info=True)
+    msg.error(request, data['error'], 'alert-danger')
+    return rp.JsonResponse(data, status=404)
+
+
+def handle_Exception(request, force_return=None):
+    data = {'error': 'Something went wrong'}
+    logger.critical(data['error'], exc_info=True)
+    msg.error(request, data['error'], 'alert-danger')
+    if force_return:
+        return force_return
+    return rp.JsonResponse(data, status=404)
+
+
+def handle_RestrictedError(request):
+    data = {'error': "Unable to delete, due to dependencies"}
+    logger.warn("%s", data['error'], exc_info=True)
+    msg.error(request, data['error'], "alert-danger")
+    return rp.JsonResponse(data, status=404)
+
+
+def handle_EmptyResultSet(request, params, cxt):
+    logger.warn('empty objects retrieved', exc_info=True)
+    msg.error(request, 'List view not found',
+                   'alert-danger')
+    return scts.render(request, params['template_list'], cxt)
+
+
+def handle_intergrity_error(name):
+    msg = 'The %s record of with these values is already exisit!' % (name)
+    logger.info(msg, exc_info=True)
+    return rp.JsonResponse({'errors': msg}, status=404)
+
+
+def render_form_for_update(request, params, formname, obj, extra_cxt={}):
+    logger.info("render form for update")
+    try:
+        logger.info("object retrieved '{}'".format(obj))
+        F = params['form_class'](
+            instance=obj, request=request, **params['form_initials'])
+        C = {formname: F, 'edit': True}
+        C.update(extra_cxt)
+        html = render_to_string(params['template_form'], C, request)
+        data = {'html_form': html}
+        return rp.JsonResponse(data, status=200)
+    except params['model'].DoesNotExist:
+        return handle_DoesNotExist(request)
+    except Exception:
+        return handle_Exception(request)
+
+
+def render_form_for_delete(request, params, master=False):
+    logger.info("render form for delete")
+    from django.db.models import RestrictedError
+    try:
+        pk = request.GET.get('id')
+        obj = params['model'].objects.get(id=pk)
+        if master:
+            obj.enable = False
+            obj.save()
+        else:
+            obj.delete()
+        return rp.JsonResponse({}, status=200)
+    except params['model'].DoesNotExist:
+        return handle_DoesNotExist(request)
+    except RestrictedError:
+        return handle_RestrictedError(request)
+    except Exception:
+        return handle_Exception(request, params)
+
+
+def render_grid(request, params, msg, objs):
+    from django.core.exceptions import EmptyResultSet
+    logger.info("render grid")
+    try:
+        logger.info("%s", msg)
+        logger.info("objects retreived from database")
+        logger.info("Pagination Starts"if objs else "")
+        cxt = paginate_results(request, objs, params)
+        logger.info("Pagination Ends")
+        resp = scts.render(request, params['template_list'], context=cxt)
+    except EmptyResultSet:
+        resp = handle_EmptyResultSet(request, params, cxt)
+    except Exception:
+        resp = handle_Exception(request, scts.redirect('/dashboard'))
+    return resp
+
+
+def paginate_results(request, objs, params):
+    from django.core.paginator import (Paginator,
+     EmptyPage, PageNotAnInteger)
+
+    logger.info('paginate results')
+    if request.GET:
+        objs = params['filter'](request.GET, queryset=objs).qs
+    filterform = params['filter']().form
+    page = request.GET.get('page', 1)
+    paginator = Paginator(objs, 15)
+    try:
+        li = paginator.page(page)
+    except PageNotAnInteger:
+        li = paginator.page(1)
+    except EmptyPage:
+        li = paginator.page(paginator.num_pages)
+    return {params['list']: li, params['filt_name']: filterform}
+
+
+def get_instance_for_update(postdata, params, msg, pk):
+    logger.info("%s", msg)
+    obj = params['model'].objects.get(id=pk)
+    logger.info("object retrieved '{}'".format(obj))
+    return params['form_class'](postdata, instance=obj)
+
+
+def handle_invalid_form(request, params, cxt):
+    logger.info("form is not valid")
+    return rp.JsonResponse(cxt, status=404)
+
+
+def get_model_obj(pk, request, params):
+    try:
+        obj = params['model'].objects.get(id=pk)
+    except params['model'].DoesNotExist:
+        return handle_DoesNotExist(request)
+    else:
+        logger.info("object retrieved '{}'".format(obj))
+        return obj
+
+
+def local_to_utc(data, offset, mobile_web):
+    from datetime import datetime, timedelta
+    import pytz
+    from django.utils.timezone import utc
+    dateFormatMobile = "%Y-%m-%d %H:%M:%S"
+    dateFormatWeb = "%d-%b-%Y %H:%M"
+    format = dateFormatWeb if mobile_web == "web" else dateFormatMobile
+    if isinstance(data, dict):
+        try:
+            for k, v in data.items():
+                local_dt = datetime.strptime(v, format)
+                dt_utc = local_dt.astimezone(pytz.UTC).replace(microsecond=0)
+                data[k] = dt_utc.strftime(format)
+        except Exception:
+            logger.error("datetime parsing ERROR", exc_info=True)
+            raise
+        else:
+            return data
+    elif isinstance(data, list):
+        try:
+            newdata = []
+            for dt in data:
+                local_dt = datetime.strptime(dt, format)
+                dt_utc = local_dt.astimezone(pytz.UTC).replace(microsecond=0)
+                dt = dt_utc.strftime(format)
+                newdata.append(dt)
+        except Exception:
+            logger.error("datetime parsing ERROR", exc_info=True)
+            raise
+        else:
+            return newdata
+
+
+def get_or_create_none_people(using=None):
+    obj, _ = pm.People.objects.filter(Q(peoplecode='NONE') | Q(peoplename='NONE')).get_or_create(
+        peoplecode='NONE',
+        defaults={
+            'peoplecode': 'NONE', 'peoplename': 'NONE',
+            'email': "none@youtility.in", 'dateofbirth': '1111-1-1',
+            'dateofjoin': "1111-1-1",
+        }
+    )
+    return obj
+
+
+def get_or_create_none_pgroup():
+    obj, _ = pm.Pgroup.objects.get_or_create(
+        groupname='NONE',
+        defaults={
+            'groupname': "NONE"
+        }
+    )
+    return obj
+
+
+def get_or_create_none_cap():
+    obj, _ = pm.Capability.objects.filter(Q(capscode='NONE')).get_or_create(
+        capscode='NONE',
+        defaults={
+            'capscode': "NONE", 'capsname': 'NONE',
+        }
+    )
+    return obj
+
+def encrypt(data: bytes) -> bytes:
+    import zlib
+    from base64 import urlsafe_b64encode as b64e, urlsafe_b64decode as b64d
+    data = bytes(data, 'utf-8')
+    return b64e(zlib.compress(data, 9))
+
+
+def decrypt(obscured: bytes) -> bytes:
+    import zlib
+    from base64 import urlsafe_b64encode as b64e, urlsafe_b64decode as b64d
+    byte_val = zlib.decompress(b64d(obscured))
+    return byte_val.decode('utf-8')
+
+def save_user_session(request, people):
+    '''save user info in session'''
+    from django.core.exceptions import ObjectDoesNotExist
+    from django.conf import settings
+
+    try:
+        logger.info('saving user data into the session ... STARTED')
+        if people.is_superuser == True:
+            request.session['is_superadmin'] = True
+            session = request.session
+            session['people_webcaps'] = session['client_webcaps'] = session['people_mobcaps'] = \
+                session['people_reportcaps'] = session['people_portletcaps'] = session['client_mobcaps'] = \
+                session['client_reportcaps'] = session['client_portletcaps'] = False
+            logger.info(request.session['is_superadmin'])
+            putils.save_tenant_client_info(request)
+        else:
+            client = putils.save_tenant_client_info(request)
+            request.session['is_superadmin'] = people.peoplecode == 'SUPERADMIN'
+            request.session['is_admin'] = people.isadmin
+            # get cap choices and save in session data
+            putils.get_caps_choices(
+                client=client, session=request.session, people=people)
+            logger.info('saving user data into the session ... DONE')
+        request.session['google_maps_secret_key'] = settings.GOOGLE_MAP_SECRET_KEY
+    except ObjectDoesNotExist:
+        logger.error('object not found...', exc_info=True)
+        raise
+    except Exception:
+        logger.critical(
+            'something went wrong please follow the traceback to fix it... ', exc_info=True)
+        raise
+
+
+
+def update_timeline_data(ids, request, update=False):
+    # sourcery skip: hoist-statement-from-if, remove-pass-body
+    import apps.onboarding.models as ob
+    import apps.peoples.models as pm
+    steps = {'taids': ob.TypeAssist, 'buids': ob.Bt, 'shiftids': ob.Shift,
+             'peopleids': pm.People, 'pgroupids': pm.Pgroup}
+    fields = {'buids': ['id', 'bucode', 'buname'],
+              'taids': ['tacode', 'taname', 'tatype'],
+              'peopleids': ['id', 'peoplecode', 'loginid'],
+              'shiftids': ['id', 'shiftname'],
+              'pgroupids': ['id', 'groupname']}
+    data = steps[ids].objects.filter(
+        pk__in=request.session['wizard_data'][ids]).values(*fields[ids])
+    if not update:
+        request.session['wizard_data']['timeline_data'][ids] = list(data)
+    else:
+        request.session['wizard_data']['timeline_data'][ids].pop()
+        request.session['wizard_data']['timeline_data'][ids] = list(data)
+
+
+def process_wizard_form(request, wizard_data, update=False, instance=None):
+    logger.info('processing wizard started...', )
+    dbg('wizard_Data submitted by the view \n%s' % wizard_data)
+    wiz_session, resp = request.session['wizard_data'], None
+    if not wizard_data['last_form']:
+        logger.info('wizard its NOT last form')
+        if not update:
+            logger.info('processing wizard not an update form')
+            wiz_session[wizard_data['current_ids']].append(
+                wizard_data['instance_id'])
+            request.session['wizard_data'].update(wiz_session)
+            update_timeline_data(wizard_data['current_ids'], request, False)
+            resp = scts.redirect(wizard_data['current_url'])
+        else:
+            resp = update_wizard_form(wizard_data, wiz_session, request)
+            update_timeline_data(wizard_data['current_ids'], request, True)
+    else:
+        resp = scts.redirect('onboarding:wizard_view')
+    return resp
+
+
+def update_wizard_form(wizard_data, wiz_session, request):
+    # sourcery skip: lift-return-into-if, remove-unnecessary-else
+    resp = None
+    logger.info('processing wizard is an update form')
+    if wizard_data['instance_id'] not in wiz_session[wizard_data['current_ids']]:
+        wiz_session[wizard_data['current_ids']].append(
+            wizard_data['instance_id'])
+    if wiz_session.get(wizard_data['next_ids']):
+        resp = scts.redirect(
+            wizard_data['next_update_url'], pk=wiz_session[wizard_data['next_ids']][-1])
+    else:
+        request.session['wizard_data'].update(wiz_session)
+        resp = scts.redirect(wizard_data['current_url'])
+    dbg("response from update_wizard_form %s" % (resp))
+    return resp
+
+
+
+
+def handle_other_exception(request, form, form_name, template, jsonform="", jsonform_name=""):
+    logger.critical(
+        "something went wrong please follow the traceback to fix it... ", exc_info=True)
+    msg.error(request, "[ERROR] Something went wrong",
+              "alert-danger")
+    cxt = {form_name: form, 'edit': True, jsonform_name: jsonform}
+    return scts.render(request, template, context=cxt)
+
+
+def handle_does_not_exist(request, url):
+    logger.error('Object does not exist', exc_info=True)
+    msg.error(request, "Object does not exist",
+              "alert-danger")
+    return scts.redirect(url)
+
+
+def get_index_for_deletion(lookup, request, ids):
+    id = lookup['id']
+    data = request.session['wizard_data']['timeline_data'][ids]
+    for idx, item in enumerate(data):
+        if item['id'] == int(id):
+            print("idx going to be deleted %s" % (idx))
+            return idx
+
+
+def delete_object(request, model, lookup, ids, temp,
+                  form, url, form_name, jsonformname=None, jsonform=None):
+    """called when individual form request for deletion"""
+    from django.db.models import RestrictedError
+    try:
+        logger.info('Request for object delete...')
+        res, obj = None, model.objects.get(**lookup)
+        form = form(instance=obj)
+        obj.delete()
+        msg.success(request, "Entry has been deleted successfully",
+                    'alert-success')
+        request.session['wizard_data'][ids].remove(int(lookup['id']))
+        request.session['wizard_data']['timeline_data'][ids].pop(
+            get_index_for_deletion(lookup, request, ids))
+        logger.info('Object deleted')
+        res = scts.redirect(url)
+    except model.DoesNotExist:
+        logger.error('Unable to delete, object does not exist')
+        msg.error(request, 'Client does not exist', "alert alert-danger")
+        res = scts.redirect(url)
+    except RestrictedError:
+        logger.warn('Unable to delete, duw to dependencies')
+        msg.error(request, 'Unable to delete, duw to dependencies')
+        cxt = {form_name: form, jsonformname: jsonform, 'edit': True}
+        res = scts.render(request, temp, context=cxt)
+    except Exception:
+        msg.error(request, '[ERROR] Something went wrong',
+                  "alert alert-danger")
+        cxt = {form_name: form, jsonformname: jsonform, 'edit': True}
+        res = scts.render(request, temp, context=cxt)
+    return res
+
+
+def delete_unsaved_objects(model, ids):
+    if ids:
+        try:
+            logger.info(
+                'Found unsaved objects in session going to be deleted...')
+            model.objects.filter(pk__in=ids).delete()
+        except:
+            raise
+        else:
+            logger.info('Unsaved objects are deleted...DONE')
+
+
+def update_prev_step(step_url, request):
+    url, ids = step_url
+    session = request.session['wizard_data']
+    instance = session.get(ids)[-1] if session.get(ids) else None
+    new_url = url.replace('form', 'update') if instance and (
+        'update' not in url) else url
+    request.session['wizard_data'].update(
+        {'prev_inst': instance,
+         'prev_url': new_url})
+
+
+def update_next_step(step_url, request):
+    url, ids = step_url
+    session = request.session['wizard_data']
+    instance = session.get(ids)[-1] if session.get(ids) else None
+    new_url = url.replace('form', 'update') if instance and (
+        'update' not in url) else url
+    request.session['wizard_data'].update(
+        {'next_inst': instance,
+         'next_url': new_url})
+
+
+def update_other_info(step, request, current, formid, pk):
+    url, ids = step[current]
+    session = request.session['wizard_data']
+    session['current_step'] = session['steps'][current]
+    session['current_url'] = url
+    session['final_url'] = step['final_step'][0]
+    session['formid'] = formid
+    session['del_url'] = url.replace('form', 'delete')
+    session['current_inst'] = pk
+
+
+def update_wizard_steps(request, current, prev, next, formid, pk):
+    '''Updates wizard next, current, prev, final urls'''
+    step_urls = {
+        'buform': ('onboarding:wiz_bu_form', 'buids'),
+        'shiftform': ('onboarding:wiz_shift_form', 'shiftids'),
+        'peopleform': ('peoples:wiz_people_form', 'peopleids'),
+        'pgroupform': ('peoples:wiz_pgroup_form', 'pgroupids'),
+        'final_step': ('onboarding:wizard_preview', '')}
+    # update prev step
+    update_prev_step(step_urls.get(prev, ("", "")), request)
+    # update next step
+    update_next_step(step_urls.get(next, ("", "")), request)
+    # update other info
+    update_other_info(step_urls, request, current, formid, pk)
+
+
+def save_msg(request):
+    '''Displays a success message'''
+    return msg.success(request, 'Entry has been saved successfully!', 'alert-success')
+
+
+def initailize_form_fields(form):
+    for visible in form.visible_fields():
+        if visible.widget_type not in ['file', 'checkbox', 'radioselect', 'clearablefile', 'select', 'selectmultiple']:
+            visible.field.widget.attrs['class'] = 'form-control'
+        if visible.widget_type == 'checkbox':
+            visible.field.widget.attrs['class'] = 'form-check-input h-20px w-30px'
+        if visible.widget_type in ['select2', 'modelselect2', 'select2multiple']:
+            visible.field.widget.attrs['class'] = 'form-select'
+            visible.field.widget.attrs['data-placeholder'] = 'Select an option'
+            visible.field.widget.attrs['data-allow-clear'] = 'true'
+
+
+def apply_error_classes(form):
+    # loop on *all* fields if key '__all__' found else only on errors:
+    for x in (form.fields if '__all__' in form.errors else form.errors):
+        attrs = form.fields[x].widget.attrs
+        attrs.update({'class': attrs.get('class', '') + ' is-invalid'})
+
+def to_utc( date):
+    import pytz
+    return date.astimezone(pytz.utc).replace(microsecond=0, tzinfo=pytz.utc)
+
+# MAPPING OF HOSTNAME:DATABASE ALIAS NAME 
+def get_tenants_map():
+    return {
+        'sps.youtility.local'       :'sps',
+        'capgemini.youtility.local' :'capgemini',
+        'dell.youtility.local'      :'dell',
+        'icicibank.youtility.local' :'icicibank',
+        'barfi.youtility.in'        :'icicibank'
+    }
+
+# RETURN HOSTNAME FROM REQUEST 
+def hostname_from_request(request):
+    # split on `:` to remove port
+    hostname = request.get_host().split(':')[0].lower()
+    return hostname
+
+
+def get_or_create_none_bv():
+    obj, _ = Bt.objects.filter(Q(bucode='NONE') | Q(buname='NONE')).get_or_create(
+        bucode='NONE',
+        defaults={
+            'bucode':"NONE", 'buname':"NONE"
+        }
+    )
+    return obj
+
+
+def get_or_create_none_typeassist():
+    obj, _ = TypeAssist.objects.filter(Q(tacode='NONE') | Q(taname='NONE')).get_or_create(
+        tacode='NONE',
+        defaults={
+            'tacode':"NONE", 'taname':"NONE", 
+        }
+    )
+    return obj
+
+# RETURNS DB ALIAS FROM REQUEST
+def tenant_db_from_request(request):
+    hostname = hostname_from_request(request)
+    print(f"Hostname from Request:{hostname}")
+    tenants_map = get_tenants_map()
+    return tenants_map.get(hostname, 'default')
+
+
+def get_client_from_hostname(request):
+    hostname = hostname_from_request(request)
+    print(hostname)
+    return hostname.split('.')[0]
+
+   
+def get_or_create_none_job():
+    from datetime import datetime, timezone
+    date = datetime(1970,1,1,00,00,00).replace(tzinfo=timezone.utc)
+    obj, _ = am.Job.objects.filter(Q(jobname='NONE') | Q(jobname='None')).get_or_create(
+        jobname = 'NONE',
+        defaults={
+            'jobname'     : 'NONE',    'jobdesc'        : 'NONE',
+            'from_date'   : date,      'upto_date'      : date,
+            'cron'        : "no_cron", 'lastgeneratedon': date,
+            'planduration': 0,         'expirytime'     : 0,
+            'gracetime'   : 0,         'priority'       : 'LOW',
+            'slno'        : -1,        'scantype'       : 'SKIP'
+        }
+    )
+    return obj
+
+
+def get_or_create_none_jobneed():
+    from datetime import datetime, timezone
+    date = datetime(1970,1,1,00,00,00).replace(tzinfo=timezone.utc)
+    obj, _ = am.Jobneed.objects.filter(Q(jobdesc = 'NONE')).get_or_create(
+        defaults={
+            'jobdesc'          : "NONE", 'plandatetime': date,
+            'expirydatetime'   : date,   'gracetime'   : 0,
+            'recievedon_server': date,   'slno'        : -1,
+            'scantype'         : "NONE"
+        }
+    )
+    return obj
+
+
+def get_or_create_none_qset():
+    obj, _ = am.QuestionSet.objects.filter(
+        Q(qset_name = 'NONE') | Q(qset_name = 'None')).get_or_create(
+        qset_name = 'NONE',
+        defaults={
+            'qset_name':"NONE"}
+    )
+    return obj
+
+def get_or_create_none_question():
+    obj, _ = am.Question.objects.filter(
+        Q(ques_name = 'NONE')).get_or_create(
+        ques_name = 'NONE',
+        defaults = {
+            'ques_name':"NONE"}
+    )
+    return obj
+
+
+def get_or_create_none_qsetblng():
+    obj, _ = am.QuestionSetBelonging.objects.filter(
+        Q(slno = 999)| Q(answertype = 'NUMERIC')).get_or_create(
+        slno = 999,
+        defaults = {
+            'qsetid'     : get_or_create_none_qset(),
+            'quesid'     : get_or_create_none_question(),
+            'answertype' : 'NUMERIC',
+            'ismandatory': False}
+    )
+    return obj
+
+def get_or_create_none_asset():
+    obj, _ = am.Asset.objects.filter(
+        Q(assetcode = 'NONE') | Q(assetname='NONE')).get_or_create(
+        assetcode = 'NONE',
+        defaults={
+            'assetcode'    : "NONE", 'assetname' : 'NONE',
+            'iscritical'   : False,  'identifier': 'NONE',
+            'runningstatus': 'SCRAPPED'
+        }
+    )
+    return obj
+
+
+def create_none_entries(db):
+    '''
+    Creates None entries in self relationship models.
+    '''
+    from apps.tenants.middlewares import set_db_for_router
+    try:
+        set_db_for_router(db)
+    except ValueError:
+        print("Database with this alias not exist operation can't be performed")
+    else:
+        print(f"Creating None entries for {db}")
+        import apps.peoples.utils as putils
+        import apps.onboarding.utils as outils
+        import apps.schedhuler.utils as sutils
+        get_or_create_none_typeassist()
+        get_or_create_none_people()
+        get_or_create_none_bv()
+        get_or_create_none_cap()
+        get_or_create_none_pgroup()
+        get_or_create_none_job()
+        get_or_create_none_jobneed()
+        get_or_create_none_qset()
+        print("Successfully created none entries for 'TypeAssist', 'People', 'Bv',\
+         'Capability', 'Pgroup', 'Job', 'Jobneed', 'QuestionSet")
+    
+def create_super_admin(db):
+    from apps.tenants.middlewares import set_db_for_router
+    try:
+        set_db_for_router(db)
+    except ValueError:
+        print("Database with this alias not exist operation can't be performed")
+    else:
+        print(f"Creating SuperUser for {db}")
+        from apps.peoples.models import People
+        print("please provide required fields in this order single space separated\n")
+        print("loginid  password  peoplecode  peoplename  dateofbirth  dateofjoin  email")
+        inputs = input().split(" ")
+        if len(inputs) == 7:
+            user = People.objects.create_superuser(
+                loginid     = inputs[0],
+                password    = inputs[1],
+                peoplecode  = inputs[2],
+                peoplename  = inputs[3],
+                dateofbirth = inputs[4],
+                dateofjoin  = inputs[5],
+                email       = inputs[6],
+            )
+            print(f"Operation Successfull!\n Superuser with this loginid {user.loginid} is created")
+        else:
+            raise ValueError("Please provide all fields!")
+
+import threading
+THREAD_LOCAL = threading.local()
+
+def get_current_db_name():
+    return getattr(THREAD_LOCAL, 'DB', "default")
+
+
+def set_db_for_router(db):
+    from django.conf import settings
+    dbs = settings.DATABASES
+    if db not in dbs:
+        raise ValueError("Database with this alias not exist!")
+    setattr(THREAD_LOCAL, "DB", db)

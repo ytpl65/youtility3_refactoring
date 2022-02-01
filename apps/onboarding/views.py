@@ -1,4 +1,3 @@
-from apps.onboarding.utils import process_wizard_form
 import logging
 from django.http.response import JsonResponse
 from django.shortcuts import redirect, render
@@ -7,15 +6,14 @@ from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.views import View
 from django.db.models import Q
 from django.contrib import messages
-from django.views.decorators.cache import cache_page
 from django.core.cache.backends.base import DEFAULT_TIMEOUT
-from django.conf import settings, urls
+from django.conf import settings
 from icecream import ic
 from django.core.exceptions import (EmptyResultSet)
 from django.db.models import RestrictedError
 from django.urls import resolve
 from .models import Shift, SitePeople, TypeAssist, Bt
-from apps.peoples.utils import save_user_paswd, save_userinfo
+from apps.peoples.utils import  save_userinfo
 import apps.onboarding.forms as obforms
 
 CACHE_TTL = getattr(settings, 'CACHE_TTL', DEFAULT_TIMEOUT)

@@ -1,7 +1,7 @@
 import apps.schedhuler.utils as sutils
 import apps.peoples.utils as putils
 from django.db.models import Q
-from apps.tenants.middlewares import get_current_db_name
+import apps.core.utils 
 import apps.schedhuler.filters as sdf
 from django.http import HttpRequest, QueryDict
 from pprint import pformat
@@ -136,7 +136,7 @@ class CreateSchedhuleTour(LoginRequiredMixin, View):
             log.info("new guard tour submitted following is the form-data:\n%s\n" %
                      (pformat(form.data)))
         try:
-            with transaction.atomic(using=get_current_db_name()):
+            with transaction.atomic(using=utils.get_current_db_name()):
                 if form.is_valid():
                     response = self.process_valid_schd_tourform(request, form)
                 else:

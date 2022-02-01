@@ -1,3 +1,5 @@
+import logging
+log = logging.getLogger('__main__')
 from multiprocessing.spawn import import_main_path
 from django.contrib import admin
 from .models import People,  Pgroup, Pgbelonging, Capability
@@ -8,6 +10,14 @@ from import_export import widgets as wg
 from apps.peoples import models as pm
 from apps.onboarding import models as om
 from apps.onboarding.admin import BaseFieldSet1, BaseFieldSet2
+import apps.peoples.utils as putils
+
+
+def save_people_passwd(user):
+    log.info('Password is created by system... DONE')
+    paswd = user.loginid + '@' + 'youtility'
+    user.set_password(paswd)
+
 
 
 # Register your models here.
@@ -55,7 +65,7 @@ class PeopleResource(resources.ModelResource, BaseFieldSet2):
     def before_save_instance(self, instance, using_transactions, dry_run):
         super().before_save_instance(instance, using_transactions, dry_run)
         instance.peoplecode = instance.peoplecode.upper()
-        instance.set_password(f'{instance.loginid}_paswd')
+        save_people_passwd(instance)
 
 
 @admin.register(People)

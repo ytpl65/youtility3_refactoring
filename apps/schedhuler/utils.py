@@ -1,20 +1,18 @@
-import dataclasses
 from django.db.models import Q
 import apps.activity.models as am
-from apps.tenants.middlewares import get_current_db_name
 from django.core.exceptions import EmptyResultSet
 from django.db import transaction
 from logging import getLogger
 from pprint import pformat
 import apps.peoples.utils as putils
-import apps.onboarding.utils as obutils
+from apps.core import utils
 from datetime import datetime, timezone, timedelta
 log = getLogger('__main__')
 
 def create_job(jobs=None):
     startdtz = enddtz = msg = None
     F, d = {}, []
-    with transaction.atomic(using=get_current_db_name()):
+    with transaction.atomic(using=utils.get_current_db_name()):
         if not jobs:
             jobs = am.Job.objects.filter(
                 ~Q(jobname='NONE'),
@@ -234,14 +232,14 @@ def handle_list_of_datetimes(dateFormatMobile, dateFormatWeb, data, tzoffset,
 
 def insert_into_jn_and_jnd(job, DT):
     log.info("insert_into_jn_and_jnd() [ start ]")
-    NONE_JN  = get_or_create_none_jobneed()
-    NONE_JB  = get_or_create_none_job()
-    NONE_P   = putils.get_or_create_none_people()
-    NONE_QSB = get_or_create_none_qsetblng()
     status   = None
     if len(DT) > 0:
         try:
             from django.utils.timezone import get_current_timezone
+            NONE_JN  = utils.get_or_create_none_jobneed()
+            NONE_JB  = utils.get_or_create_none_job()
+            NONE_P   = putils.get_or_create_none_people()
+            NONE_QSB = utils.get_or_create_none_qsetblng()
             tz = get_current_timezone()
             crontype = job.identifier
             jobstatus = 'ASSIGNED',
@@ -327,7 +325,7 @@ def insert_update_jobneeddetails(jnid, job, parent=False):
                     qsetid_id=job.qsetid_id).order_by(
                         'slno').values_list(named=True)
         else:
-            qsb = get_or_create_none_qsetblng()
+            qsb = utils.get_or_create_none_qsetblng()
         if not qsb:
             log.error("No Checklist Found failed to schedhule job",
                       exc_info=True)
@@ -453,80 +451,6 @@ def job_fields(job, checkpoint, external=False):
         data['jobname']    = checkpoint['jobname']
         data['other_info'] = jsonData
     return data
-    
-def get_or_create_none_job():
-    from datetime import datetime, timezone
-    date = datetime(1970,1,1,00,00,00).replace(tzinfo=timezone.utc)
-    obj, _ = am.Job.objects.filter(Q(jobname='NONE') | Q(jobname='None')).get_or_create(
-        jobname = 'NONE',
-        defaults={
-            'jobname'     : 'NONE',    'jobdesc'        : 'NONE',
-            'from_date'   : date,      'upto_date'      : date,
-            'cron'        : "no_cron", 'lastgeneratedon': date,
-            'planduration': 0,         'expirytime'     : 0,
-            'gracetime'   : 0,         'priority'       : 'LOW',
-            'slno'        : -1,        'scantype'       : 'SKIP'
-        }
-    )
-    return obj
-
-
-def get_or_create_none_jobneed():
-    from datetime import datetime, timezone
-    date = datetime(1970,1,1,00,00,00).replace(tzinfo=timezone.utc)
-    obj, _ = am.Jobneed.objects.filter(Q(jobdesc = 'NONE')).get_or_create(
-        defaults={
-            'jobdesc'          : "NONE", 'plandatetime': date,
-            'expirydatetime'   : date,   'gracetime'   : 0,
-            'recievedon_server': date,   'slno'        : -1,
-            'scantype'         : "NONE"
-        }
-    )
-    return obj
-
-
-def get_or_create_none_qset():
-    obj, _ = am.QuestionSet.objects.filter(
-        Q(qset_name = 'NONE') | Q(qset_name = 'None')).get_or_create(
-        qset_name = 'NONE',
-        defaults={
-            'qset_name':"NONE"}
-    )
-    return obj
-
-def get_or_create_none_question():
-    obj, _ = am.Question.objects.filter(
-        Q(ques_name = 'NONE')).get_or_create(
-        ques_name = 'NONE',
-        defaults = {
-            'ques_name':"NONE"}
-    )
-    return obj
-
-
-def get_or_create_none_qsetblng():
-    obj, _ = am.QuestionSetBelonging.objects.filter(
-        Q(slno = 999)| Q(answertype = 'NUMERIC')).get_or_create(
-        slno = 999,
-        defaults = {
-            'qsetid'     : get_or_create_none_qset(),
-            'quesid'     : get_or_create_none_question(),
-            'answertype' : 'NUMERIC',
-            'ismandatory': False}
-    )
-    return obj
-
-def get_or_create_none_asset():
-    obj, _ = am.Asset.objects.filter(
-        Q(assetcode = 'NONE') | Q(assetname='NONE')).get_or_create(
-        assetcode = 'NONE',
-        defaults={
-            'assetcode'    : "NONE", 'assetname' : 'NONE',
-            'iscritical'   : False,  'identifier': 'NONE',
-            'runningstatus': 'SCRAPPED'
-        }
-    )
-    return obj
 
 def to_local(val):
     from django.utils.timezone import get_current_timezone

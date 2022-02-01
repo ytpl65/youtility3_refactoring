@@ -1,12 +1,13 @@
 from django.contrib import admin
 from import_export import resources, fields
 from import_export import widgets as wg
+import apps.tenants.models as tm
 from import_export.admin import ImportExportModelAdmin
-
 from apps.peoples import models as pm
 from .forms import (BtForm, ShiftForm, TypeAssistForm, BuPrefForm, SitePeopleForm,
                     ContractDetailForm, ContractForm)
 import apps.onboarding.models as om
+
 
 
 class BaseFieldSet1():
@@ -27,6 +28,13 @@ class BaseFieldSet1():
         attribute='buid',
         widget=wg.ForeignKeyWidget(om.Bt, 'bucode'),
         saves_null_values=True)
+
+    tenant_id = fields.Field(
+        column_name='tenant_id',
+        attribute='tenant_id',
+        widget=wg.ForeignKeyWidget(tm.TenantAwareModel, 'id'),
+        saves_null_values=True
+    )
 
 
 class BaseFieldSet2():
@@ -53,13 +61,19 @@ class BaseFieldSet2():
         widget=wg.ForeignKeyWidget(om.Bt, 'bucode'),
         saves_null_values=True
     )
+    tenant_id = fields.Field(
+        column_name='tenant_id',
+        attribute='tenant_id',
+        widget=wg.ForeignKeyWidget(tm.TenantAwareModel, 'tenant'),
+        saves_null_values=True
+    )
 
 
 class TaResource(resources.ModelResource, BaseFieldSet1):
 
-    parent = fields.Field(
-        column_name='parent',
-        attribute='parent',
+    tatype = fields.Field(
+        column_name='tatype',
+        attribute='tatype',
         widget=wg.ForeignKeyWidget(om.TypeAssist, 'tacode'),
         saves_null_values=True
     )

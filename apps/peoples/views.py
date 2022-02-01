@@ -1,18 +1,15 @@
 from django.db.utils import IntegrityError
 from django.http.request import QueryDict
-from django.urls.base import reverse
 from django.db.models import Q
 from icecream import ic
 from django.contrib.auth import authenticate, login, logout
 from django.core.exceptions import EmptyResultSet
 from django.http import response as rp
-from django.template.loader import render_to_string
 from django.shortcuts import redirect, render
 from django.views import View
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 import logging
-from django.core import serializers as ss
 from apps.onboarding.models import TypeAssist
 from apps.peoples.filters import CapabilityFilter
 import apps.peoples.filters as pft
@@ -22,7 +19,7 @@ import apps.onboarding.forms as obf  # onboarding-modes
 from django.contrib import messages
 from django.db.models import RestrictedError
 from .models import Capability, Pgroup, People
-from .utils import handle_intergrity_error, save_userinfo, save_pgroupbelonging
+from .utils import save_userinfo, save_pgroupbelonging
 import apps.peoples.utils as putils
 from .forms import CapabilityForm, PgroupForm, PeopleForm, PeopleExtrasForm, LoginForm
 logger = logging.getLogger('django')
@@ -805,6 +802,7 @@ class Capability(View):
 
     def handle_valid_form(self, form, request):
         logger.info('capability form is valid')
+        from apps.core.utils import handle_intergrity_error
         try:
             cap = form.save()
             putils.save_userinfo(cap, request.user, request.session)
@@ -898,6 +896,7 @@ class People(View):
 
     def handle_valid_form(self, form, jsonform, request):
         logger.info('people form is valid')
+        from apps.core.utils import handle_intergrity_error
         try:
             people = form.save()
             if putils.save_jsonform(jsonform, people):

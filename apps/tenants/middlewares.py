@@ -1,8 +1,5 @@
-import threading
-from django.db import connections
-from .utils import tenant_db_from_request
+from apps.core.utils import tenant_db_from_request, THREAD_LOCAL
 
-THREAD_LOCAL = threading.local()
 
 class TenantMiddleware:
     def __init__(self, get_response):
@@ -15,12 +12,6 @@ class TenantMiddleware:
         return self.get_response(request)
 
 
-def get_current_db_name():
-    return getattr(THREAD_LOCAL, 'DB', "default")
-
-
-def set_db_for_router(db):
-    setattr(THREAD_LOCAL, "DB", db)
 
 
 class TenantDbRouter:

@@ -1,5 +1,4 @@
 from django.db.models import CharField
-from django.db.models.fields import BooleanField
 from django.urls import reverse
 from django.conf import settings
 from django.db import models
@@ -9,7 +8,6 @@ from django.core.serializers.json import DjangoJSONEncoder
 from django.contrib.auth.base_user import AbstractBaseUser
 from django.contrib.auth.models import PermissionsMixin
 from .managers import PeopleManager, CapabilityManager
-from .utils import upload_peopleimg
 from apps.tenants.models import TenantAwareModel
 import logging
 logger = logging.getLogger('django')
@@ -37,18 +35,37 @@ def peoplejson():
         "user_type": ""
     }
 
+def upload_peopleimg(instance, filename):
+    try:
+        logger.info('uploading peopleimg...')
+        from os.path import join
+
+        peoplecode = instance.peoplecode
+        full_filename = peoplecode + "__" + filename
+        foldertype = 'people'
+        basedir = fyear = fmonth = None
+        basedir = "master"
+        filepath = join(basedir, foldertype, full_filename)
+        filepath = str(filepath).lower()
+        fullpath = filepath
+    except Exception:
+        logger.error(
+            'upload_peopleimg(instance, filename)... FAILED', exc_info=True)
+    else:
+        logger.info('people image uploaded... DONE')
+        return fullpath
 
 class SecureString(CharField):
     """Custom Encrypted Field"""
 
     def from_db_value(self, value, expression, connection):
-        from .utils import decrypt
+        #from .utils import decrypt
         if value != "":
             return value
             # return decrypt(value)
 
     def get_prep_value(self, value):
-        from .utils import encrypt
+        #from .utils import encrypt
         if value != "":
             return value
             # return encrypt(value)

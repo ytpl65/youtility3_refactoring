@@ -106,8 +106,8 @@ class QuestionSet(BaseModel, TenantAwareModel):
                 name='name_type_parent_type_clientid_buid_uk'
             ),
             models.CheckConstraint(
-                check=models.Q(seqno__gte=0),
-                name='seqno_gte_0_ck')
+                check=models.Q(slno__gte=0),
+                name='slno_gte_0_ck')
         ]
 
     def __str__(self) -> str:
