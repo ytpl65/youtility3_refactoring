@@ -263,7 +263,7 @@
     }
 
     //on changing the question field of questionform
-    //select the readonly questypes field 
+    //select the readonly answertype field 
     function assignQuesType(text) {
         $("#id_answertype").val(text)
     }
@@ -305,7 +305,7 @@
         var formData = {}
 
         formData['id_slno'] = $("#id_slno").val()
-        formData['id_questypes'] = $("#id_answertype").val()
+        formData['id_answertype'] = $("#id_answertype").val()
         console.log("check ", $("#id_alerton").val())
         formData['id_alerton'] = typeof $("#id_alerton").val() !== "undefined" ? $("#id_alerton").val() : ""
         formData['id_alertbelow'] = $("#id_alertbelow").val()
@@ -345,11 +345,11 @@
         data.id_alerton = data.id_alerton !== "" ? JSON.stringify(data.id_alerton) : ""
         data.id_ismandatory = data.id_ismandatory === true ? "True" : "False"
 
-        //according to questypes clean data
-        if (data.id_questypes === "NUMERIC") {
+        //according to answertype clean data
+        if (data.id_answertype === "NUMERIC") {
             data = adjust_above_below(data, for_table = true)
             data.id_options = ""
-        } else if (data.id_questypes !== "NUMERIC" && data.id_questypes !== "DROPDOWN") {
+        } else if (data.id_answertype !== "NUMERIC" && data.id_answertype !== "DROPDOWN") {
             data.id_min = data.id_max = '0.0'
             data.id_alerton = []
         }
@@ -432,7 +432,7 @@
         console.log('cleanData started [ENDED]')
         var slno = data.id_slno
         rowdata = [
-            data.id_slno, data.id_quesid, data.question_id, data.id_questypes, data.id_min,
+            data.id_slno, data.id_quesid, data.question_id, data.id_answertype, data.id_min,
             data.id_max, data.id_options, data.id_alerton, data.id_ismandatory
         ]
         table.row('.toupdate').remove().draw(false);
@@ -453,10 +453,10 @@
         }
     }
 
-    function deleteQuestionRequest(question, questypes, qsetid) {
+    function deleteQuestionRequest(question, answertype, qsetid) {
         const params = {
             'quesname': question,
-            'url': `{{ url('activity:delete_qsb') }}?quesname=${question}&questypes=${questypes}&qsetid=${qsetid}`,
+            'url': `{{ url('activity:delete_qsb') }}?quesname=${question}&answertype=${answertype}&qsetid=${qsetid}`,
             'beforeSend': function () {}
         }
         fire_ajax_get(params)

@@ -119,12 +119,13 @@ def save_cuser_muser(instance, user):
 def save_clientid_tenantid(instance, user, session, clientid=None, buid=None):
 
     tenantid = session.get('tenantid')
-    if not(clientid and buid):
-        clientid = session.get('clientid')
+    if buid is None:
         buid = session.get('buid')
-    instance.tenant_id = tenantid
+    elif clientid is None:
+        clientid = session.get('clientid')
+    instance.tenant_id   = tenantid
     instance.clientid_id = clientid
-    instance.buid_id = buid
+    instance.buid_id     = buid
     logger.info("client info saved...DONE")
     return instance
 
@@ -201,6 +202,7 @@ def save_tenant_client_info(request):
 def save_user_session(request, people):
     '''save user info in session'''
     from django.core.exceptions import ObjectDoesNotExist
+    from django.conf import settings
 
     try:
         logger.info('saving user data into the session ... STARTED')
@@ -220,6 +222,7 @@ def save_user_session(request, people):
             get_caps_choices(
                 client=client, session=request.session, people=people)
             logger.info('saving user data into the session ... DONE')
+        request.session['google_maps_secret_key'] = settings.GOOGLE_MAP_SECRET_KEY
     except ObjectDoesNotExist:
         logger.error('object not found...', exc_info=True)
         raise

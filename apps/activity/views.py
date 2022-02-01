@@ -227,13 +227,13 @@ def deleteQSB(request):
         status = None
         try:
             quesname = request.GET.get('quesname')
-            questypes = request.GET.get('questypes')
+            answertype = request.GET.get('answertype')
             qsetid = request.GET.get('qsetid')
             print("%%%%%%%%%%%", dict(request.GET))
             logger.info("request for delete QSB '%s' start"%(quesname))
             am.QuestionSetBelonging.objects.get(
                 quesid__ques_name = quesname,
-                questypes = questypes,
+                answertype = answertype,
                 qsetid_id = qsetid).delete()
             statuscode=200
             logger.info("Delete request executed successfully")

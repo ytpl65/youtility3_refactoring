@@ -429,21 +429,30 @@ def insert_into_jn_for_child(job, params, r):
 
 
 
-def job_fields(job, checkpoint):
-    return { 
-        'jobname'     : job.jobname,        'jobdesc'        : job.jobdesc,
-        'cron'        : job.cron,           'identifier'     : job.identifier,
-        'expirytime'  : int(checkpoint[5]), 'lastgeneratedon': job.lastgeneratedon,
-        'priority'    : job.priority,       'qsetid_id'      : checkpoint[3],
-        'groupid_id'  : job.groupid_id,     'gfid'           : job.gfid_id,
-        'endtime'     : job.endtime,        'ticket_category': job.ticket_category,
-        'from_date'   : job.from_date,      'upto_date'      : job.upto_date,
-        'planduration': job.planduration,   'gracetime'      : job.gracetime,
-        'assetid_id'  : checkpoint[1],      'frequency'      : job.frequency,
-        'peopleid_id' : job.peopleid_id,    'starttime'      : job.starttime,
-        'parent_id'   : job.id,             'slno'           : checkpoint[0],
+def job_fields(job, checkpoint, external=False):
+    data =  { 
+        'jobname'     : job.jobname,                   'jobdesc'        : job.jobdesc,
+        'cron'        : job.cron,                      'identifier'     : job.identifier,
+        'expirytime'  : int(checkpoint['expirytime']), 'lastgeneratedon': job.lastgeneratedon,
+        'priority'    : job.priority,                  'qsetid_id'      : checkpoint['qsetid'],
+        'groupid_id'  : job.groupid_id,                'gfid'           : job.gfid_id,
+        'endtime'     : job.endtime,                   'ticket_category': job.ticket_category,
+        'from_date'   : job.from_date,                 'upto_date'      : job.upto_date,
+        'planduration': job.planduration,              'gracetime'      : job.gracetime,
+        'assetid_id'  : checkpoint['assetid'],         'frequency'      : job.frequency,
+        'peopleid_id' : job.peopleid_id,               'starttime'      : job.starttime,
+        'parent_id'   : job.id,                        'slno'           : checkpoint['slno'],
         'scantype'    : job.scantype,
     }
+    if external:
+        jsonData = {
+            'distance'      : checkpoint['distance'],
+            'breaktime'     : checkpoint['breaktime'],
+            'is_randomized' : checkpoint['israndom'],
+            'tour_frequency': checkpoint['routeFreq']}
+        data['jobname']    = checkpoint['jobname']
+        data['other_info'] = jsonData
+    return data
     
 def get_or_create_none_job():
     from datetime import datetime, timezone

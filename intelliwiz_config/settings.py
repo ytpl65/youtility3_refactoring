@@ -10,6 +10,7 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/3.2/ref/settings/
 """
 
+
 from pathlib import Path
 import os
 from django.http import request
@@ -41,7 +42,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     #third_party_apps
-    'django_apscheduler',
+    #'django_apscheduler',
     'django_email_verification',
     'debug_toolbar',
     'widget_tweaks',
@@ -49,7 +50,6 @@ INSTALLED_APPS = [
     'django_extensions',
     "django_select2",
     'django_filters',
-    #'attendance',
 
     #local apps
     'apps.peoples',
@@ -58,7 +58,7 @@ INSTALLED_APPS = [
     'apps.attendance',
     'apps.activity',
     'apps.schedhuler',
-    
+
     #third-party apps
     'django_cleanup.apps.CleanupConfig'
 
@@ -90,9 +90,9 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
-               
+
             ],
-            
+
         },
     },
     #jinja2 configuration
@@ -133,7 +133,7 @@ youtility_dbs = {
     'sps':{
         'ENGINE':   'django.db.backends.postgresql_psycopg2',
         'USER':     'youtilitydba',
-        'NAME':     'sps',
+        'NAME':     'sps_django',
         'PASSWORD': '!!sysadmin!!',
         'HOST':     '192.168.1.254',
         'PORT':     '5432',
@@ -141,7 +141,7 @@ youtility_dbs = {
     'icicibank':{
         'ENGINE':   'django.db.backends.postgresql_psycopg2',
         'USER':     'youtilitydba',
-        'NAME':     'icici',
+        'NAME':     'icici_django',
         'PASSWORD': '!!sysadmin!!',
         'HOST':     '192.168.1.254',
         'PORT':     '5432',
@@ -163,7 +163,7 @@ home_local_dbs = {
     'sps':{
         'ENGINE':   'django.db.backends.postgresql_psycopg2',
         'USER':     'youtilitydba',
-        'NAME':     'sps',
+        'NAME':     'sps_django',
         'PASSWORD': 'root',
         'HOST':     'localhost',
         'PORT':     '',
@@ -171,7 +171,7 @@ home_local_dbs = {
     'icicibank':{
         'ENGINE':   'django.db.backends.postgresql_psycopg2',
         'USER':     'youtilitydba',
-        'NAME':     'icici',
+        'NAME':     'icici_django',
         'PASSWORD': 'root',
         'HOST':     'localhost',
         'PORT':     '',
@@ -259,7 +259,7 @@ DATE_INPUT_FORMATS = [
     '%d-%b-%Y'
 ]
 APSCHEDULER_DATETIME_FORMAT = "N j, Y, f:s a"
-APSCHEDULER_RUN_NOW_TIMEOUT = 25 
+APSCHEDULER_RUN_NOW_TIMEOUT = 25
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/3.2/howto/static-files/
 
@@ -332,7 +332,7 @@ LOGIN_URL = 'login'
 SESSION_ENGINE = 'django.contrib.sessions.backends.cached_db'
 # Close the session when user closes the browser
 SESSION_EXPIRE_AT_BROWSER_CLOSE = False
-SESSION_COOKIE_AGE =  60*60  # set just 10 seconds to test
+SESSION_COOKIE_AGE = 60**2
 SESSION_SAVE_EVERY_REQUEST = True
 IMPORT_EXPORT_USE_TRANSACTIONS = True
 
@@ -364,3 +364,5 @@ EMAIL_USE_TLS = True
 
 #django-taggit config.
 TAGGIT_CASE_INSENSITIVE = True
+
+GOOGLE_MAP_SECRET_KEY = 'AIzaSyC3PUZCB7u2PiV8whHeAshweOPIK_d690o'

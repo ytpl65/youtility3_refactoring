@@ -189,9 +189,10 @@ class EditAssignedSiteForm(forms.Form):
     checklist = forms.ChoiceField(
         widget = s2forms.Select2Widget,
         label  = "Checklist", required = True,
-        choices = am.QuestionSet.objects.all().values_list('id', 'qset_name')
+        choices = []
     )
 
     def __init__(self, *args, **kwargs):
         super(EditAssignedSiteForm, self).__init__(*args, **kwargs)
+        self.fields['checklist'].choices = am.QuestionSet.objects.all().values_list('id', 'qset_name')
         ob_utils.initailize_form_fields(self)

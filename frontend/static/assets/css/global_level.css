@@ -1,6 +1,7 @@
 @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400&display=swap');
 html * {
     font-family: 'Roboto', sans-serif;
+    font-weight: 400;
 }
 .menu-item.menu-accordion.show {
     border-left: 4px solid #489edb;

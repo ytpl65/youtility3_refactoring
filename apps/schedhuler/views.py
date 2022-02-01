@@ -3,7 +3,7 @@ import apps.peoples.utils as putils
 from django.db.models import Q
 from apps.tenants.middlewares import get_current_db_name
 import apps.schedhuler.filters as sdf
-from django.http import QueryDict
+from django.http import HttpRequest, QueryDict
 from pprint import pformat
 import apps.onboarding.models as om
 import apps.activity.models as am
@@ -102,7 +102,7 @@ class SchedhuleTour(LoginRequiredMixin, View):
 
 
 class CreateSchedhuleTour(LoginRequiredMixin, View):
-    template_path = 'schedhuler/schd_tourform.html'
+    template_path = 'schedhuler/schd_internaltour_form.html'
     form_class    = scd_forms.SchdInternalTourForm
     subform       = scd_forms.SchdChildInternalTourForm
     model         = am.Job
@@ -200,10 +200,15 @@ class CreateSchedhuleTour(LoginRequiredMixin, View):
                  (len(checkpoints)))
         try:
             for cp in checkpoints:
+                cp['expirytime'] = cp[5]
+                cp['assetid']    = cp[1]
+                cp['qsetid']     = cp[3]
+                cp['slno']       = cp[0]
                 checkpoint, created = self.model.objects.update_or_create(
                     parent_id  = job.id,
-                    assetid_id = cp[1],
-                    qsetid_id  = cp[3],
+                    assetid_id = cp['assetid'],
+                    qsetid_id  = cp['qsetid'],
+                    
                     defaults   = sutils.job_fields(job, cp)
                 )
                 checkpoint.save()
@@ -500,6 +505,7 @@ class CreateExternalTourSchdTour(LoginRequiredMixin, View):
         cxt = {'schdexternaltourform': self.form_class(
             request=request, initial=self.initial),
                'editsiteform':self.subform()}
+        print("$$44444", self.subform().as_p().split('\n'))
         return render(request, self.template_path, context=cxt)
 
     def post(self, request, *args, **kwargs):
@@ -549,6 +555,7 @@ class CreateExternalTourSchdTour(LoginRequiredMixin, View):
             job.parent  = sutils.get_or_create_none_job()
             job.assetid = sutils.get_or_create_none_asset()
             job.save()
+            print("%%%%%%%%%5",  form.data, form.data.get('buid'))
             job = putils.save_userinfo(job, request.user, request.session,
             buid = form.data.get('buid'))
             log.info('external tour  and its checkpoints saved success...')
@@ -699,3 +706,63 @@ def run_internal_tour_scheduler(request):
         "%s run_guardtour_scheduler initiated [END] %s" % (padd, padd))
     del padd
     return resp
+
+
+def get_cron_datetime(request):
+    if request.method != 'GET':
+        return Http404
+
+    log.info("get_cron_datetime [start]")
+    cron = request.GET.get('cron')
+    log.info("get_cron_datetime cron:%s"%(cron))
+    cronDateTime= itr= None
+    startdtz= datetime.now()
+    enddtz= datetime.now() + timedelta(days=1)
+    DT, res= [], None
+    try:
+        from croniter import croniter
+        itr= croniter(cron, startdtz)
+        while True:
+            cronDateTime = itr.get_next(datetime)
+            if cronDateTime < enddtz:
+                DT.append(cronDateTime)
+            else: break
+        res = rp.JsonResponse({'rows':DT}, status=200)
+    except Exception as ex:
+        msg = "croniter bad cron error"
+        log.error(msg, exc_info=True)
+        res = rp.JsonResponse({'errors':msg}, status=404)
+    return res
+
+
+def save_assigned_sites_for_externaltour(request):
+    if request.method=='POST':
+        log.info("save_assigned_sites_for_externaltour [start+]")
+        formData = QueryDict(request.POST.get('formData'))
+        parentJobId = request.POST.get('pk')
+        with transaction.atomic(using=get_current_db_name()):
+            save_sites_in_job(request, parentJobId)
+
+
+def save_sites_in_job(request, parentid):
+    try:
+        checkpoints = json.loads(request.POST.get('assignedSites'))
+        job = am.Job.objects.get(id = parentid)
+        for cp in checkpoints:
+            am.Job.objects.update_or_create(
+                parent_id  = job.id,
+                assetid_id = cp['assetid'],
+                qsetid_id  = cp['qsetid'],
+                breaktime  = cp['breaktime'],
+
+                defaults=sutils.job_fields(job, cp, external=True)
+            )
+    except am.Job.DoesNotExist:
+        msg = 'Parent job not found failed to save assigned sites!'
+        log.error("%s"%(msg), exc_info=True)
+        raise
+    except Exception:
+        log.critical("something went wrong!", exc_info=True)
+        raise
+    
+    

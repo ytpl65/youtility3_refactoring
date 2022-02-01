@@ -134,7 +134,7 @@
         //on change answertype field
         $("#id_answertype.form-select").on("change", function(){
             var selected = getQuesTypeValue("#id_answertype");
-            //shows and hides according to questypes
+            //shows and hides according to answertype
             showHideFields(selected)
         } )
 
@@ -148,7 +148,7 @@
         })
 
         var initial_selected = $("#id_answertype.form-select").select2('data')[0].text
-        //shows and hides according to questypes
+        //shows and hides according to answertype
         showHideFields(initial_selected)
         if($("#id_options").val().length){
             initialize_alerton_field($("#id_options").val(), $("#hidden_alerton").val(), cleaned=false)
