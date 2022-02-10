@@ -1,8 +1,9 @@
 {% extends "base_list.html" %}
 
+
 <!---- BEGIN CARD TITLE ------>
 {% block card_title %}
-Checklist List
+{{ label }} List
 {% endblock card_title %}
 <!----- END CARD TITLE -------->
 
@@ -10,7 +11,7 @@ Checklist List
 <!------------------------------------ BEGIN PAGE BREADCUMBS ------------------------------------>
 {% block pagebreadcumb %}
 {{ super() }}
-<li class="breadcrumb-item pe-3"><a href="javascript:void(0)" class="pe-3">Checklist List</a></li>
+<li class="breadcrumb-item pe-3"><a href="javascript:void(0)" class="pe-3">{{ label }} List</a></li>
 {% endblock pagebreadcumb %}
 <!------------------------------------- END PAGE BREADCUMBS ------------------------------------->
 
@@ -18,15 +19,20 @@ Checklist List
 <!-------------------------------------------- BEGIN BU TABLE ------------------------------------------->
 {% block table %}
     <!------------------ BEGIN TABLE --------------------->
-    <table id="qset_table" class="display cell-border" style="width:100%">
+    <table id="checkpoint_table" class="display cell-border" style="width:100%">
         <thead class="fw-bold fs-6">
+            <th>Code</th>
             <th>Name</th>
+            <th>Belongs to</th>
+            <th>Status</th>
+            <th>Enable</th>
+            <th>GPS Location</th>
         </thead>
 		<!---------- BEGIN TABLE FILTER FIELDS --------->
 		<thead id="filter_row">
-		<form action="" id='qset_filter' method='get'>
+		<form action="" id='master_asset_filter' method='get'>
 			<input type="hidden" name="search_term" value="true">
-			{% for field in qset_filter %}
+			{% for field in master_asset_filter %}
 			<th>
 				<input type="text" 
 				id="{{ field.auto_id }}" 
@@ -38,17 +44,22 @@ Checklist List
 		</thead>
 		<!---------- END TABLE FILTER FIELDS --------->
 		<tbody>
-			{% for qset in qset_list %}
+			{% for cp in master_assetlist %}
 			<tr>
-				<td><a href="" class="qset-link" data-id="{{ qset['id'] }}" data-rowid ={{ loop.index0 }}>{{ qset['qset_name'] }}</a></td>
+				<td><a href="" class="cp-link" data-id="{{ cp['id'] }}" data-rowid ={{ loop.index0 }}>{{ cp['assetcode'] }}</a></td>
+				<td>{{ cp['assetname'] }}</td>
+				<td>{{ cp['parent__assetcode'] }}</td>
+				<td>{{ cp['runningstatus'] }}</td>
+				<td>{{ cp['enable'] }}</td>
+				<td>{{ cp['gpslocation'] }}</td>
 			</tr>
 			{% endfor %}
 		</tbody>
     </table>
     <!------------------ END TABLE --------------------->
-{% if qset_list and qset_list.has_other_pages %}
+{% if master_assetlist and master_assetlist.has_other_pages %}
 <!-- BEGIN PAGINATOIN -->
-{{ paginator(qset_list) }}
+{{ paginator(master_assetlist) }}
 <!-- END PAGINATOIN ---->
 {% endif %}
 
@@ -56,11 +67,12 @@ Checklist List
 <!------------------ --------------------------END BU TABLE ------------------------------------------------->
 
 
+
 {% block popup_alerts %}
 <!-- THE MODAL WE WILL BE USING -->
-<div class="modal" tabindex="-1" aria-hidden="true"  aria-labelledby="exampleModalLabel" data-bs-keyboard="false" data-bs-backdrop="static" id="modal-qset">
+<div class="modal animate__animated animate__zoomIn" tabindex="-1" aria-hidden="true"  aria-labelledby="exampleModalLabel" data-bs-backdrop="static" id="modal-checkpoint">
 	<div class="modal-dialog modal-dialog-centered modal-xl">
-		<div class="modal-content" id="qset_content">
+		<div class="modal-content" id="checkpoint_content">
 		</div>
 	</div>
 </div>
@@ -71,15 +83,14 @@ Checklist List
 {% block extra_scripts %}
 <script>
 	var table           = null;
-	const modal_id        = "#modal-qset"
-	const modalcontent_id = "#qset_content"
-	const formFilter      = "#qset_filter"
-	const table_id        = "#qset_table"
-	const formTable       =  "#assigned_ques_table"
-	const formid          = "#id_qsetform"
-	const urlname         = "{{ url('activity:checklist') }}"
-	const viewname        = "Question Set"
-	const rowlink         = "a.qset-link"
+	const modal_id        = "#modal-checkpoint"
+	const modalcontent_id = "#checkpoint_content"
+	const formFilter      = "#master_asset_filter"
+	const table_id        = "#checkpoint_table"
+	const formid          = "#id_checkpointform"
+	const urlname         = "{{ label }}" == 'Smartplace' ? "{{ url('activity:smartplace') }}" : "{{ url('activity:checkpoint') }}"
+	const viewname        = "{{ label }}"
+	const rowlink         = "a.cp-link"
 	
 	$(document).ready(function () {
 		new ClipboardJS('.btn-copy');
@@ -90,7 +101,7 @@ Checklist List
 			}
 		});
         //beforeSend of capability ajax request 
-        function qsetBeforeSend(){
+        function checkpointBeforeSend(){
             $(modal_id).modal("show");
         }
 		//datatable initialization
@@ -120,7 +131,7 @@ Checklist List
                         const params = {
                             'modal_id'    : modal_id,
                             'url'         : `${urlname}?action=form`,
-                            'beforeSend'  : qsetBeforeSend }
+                            'beforeSend'  : checkpointBeforeSend }
 						fire_ajax_get(params)
 						.done((data, status, xhr) => {
 							$(modalcontent_id).attr('data-form', 'create')
@@ -167,7 +178,31 @@ Checklist List
 			)
 		}
 		
-		
+		//submit form
+		$(modal_id).on('submit', formid, function(e) {
+			var form = $(this);
+			e.preventDefault()
+			const params = { url:urlname, modal:true } //capability view
+			const formtype = $(modalcontent_id).attr('data-form') //form-type (create/update)
+			const id = $(modalcontent_id).attr('data-id') //form instance id
+			var payLoad = {formData:form.serialize(), csrfmiddlewaretoken: '{{ csrf_token }}'}//payload for post request
+			if(formtype === 'update'){
+				var newPayLoad = {...payLoad, 'pk':id}
+				payLoad = newPayLoad
+			}
+			fire_ajax_form_post(params, payLoad)
+			.done((data, status, xhr) => { //function to submit post request
+				console.log("data ", data)
+				$(modal_id).modal("hide");
+				Swal.fire(
+				`${viewname} saved`,
+				`${viewname} with this code <strong>${data.code}</strong> has been saved successfully`,
+				'success'
+				).then(() => {
+					location.reload()
+				})
+			})
+		})
 
 		//update row (form-view)
 		$(rowlink).click((e) => {
@@ -181,7 +216,7 @@ Checklist List
 			const params = {
 				'modal_id'    : modal_id,
 				'url'         : `${urlname}?id=${id}`,
-				'beforeSend'  : qsetBeforeSend }
+				'beforeSend'  : checkpointBeforeSend }
 			fire_ajax_get(params)
 			.done((data, status, xhr) => {
 				$(modalcontent_id).attr('data-form', 'update')
@@ -194,7 +229,7 @@ Checklist List
 	}); //END document.ready()
 
 	//delete ajax request 
-	function isQsetDeleted(id){ 
+	function isCheckpointDeleted(id){ 
 		console.log("id ", id)
 		const params = {url:`${urlname}?action=delete&id=${id}`}
 		fire_ajax_get(params)
@@ -211,13 +246,13 @@ Checklist List
 	}
 
 
-	//delete questionset 
-	function deleteQset(elemt){
+	//delete capability 
+	function deleteCheckpoint(elemt){
 		var id = $(elemt).attr("data-id");
 		show_alert_before_delete(viewname)
 		.then((result) => {
 			if(result.isConfirmed){ //delete requested by user
-				status = isQsetDeleted(id) //fire's request
+				status = isCheckpointDeleted(id) //fire's request
 				console.log("status ", status)
 				if(status){
 					show_successful_delete_alert() //defined in customjs

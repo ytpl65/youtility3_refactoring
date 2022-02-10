@@ -5,14 +5,13 @@ from django import forms
 from django.db.models.expressions import F
 from django.db.models.query_utils import Q
 from django.utils.translation import gettext_lazy as _
-
+from apps.core import utils
 #from thirdparty apps and packages
 from icecream import ic
 from django_select2 import forms as s2forms
 #from this project
 import apps.onboarding.models as obm #onboarding-models
-import apps.onboarding.utils as ob_utils
-from apps.peoples.models import Capability #onboarding-utils
+from apps.peoples import models as pm #onboarding-utils
 
 #========================================= BEGIN MODEL FORMS ======================================#
 
@@ -40,13 +39,13 @@ class SuperTypeAssistForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         """Initializes form"""
         super(SuperTypeAssistForm, self).__init__(*args, **kwargs)
-        ob_utils.initailize_form_fields(self)
+        utils.initailize_form_fields(self)
 
     
     def is_valid(self) -> bool:
 
         result = super().is_valid()
-        ob_utils.apply_error_classes(self)
+        utils.apply_error_classes(self)
         return result
 
     def clean_tatype(self):
@@ -70,7 +69,7 @@ class TypeAssistForm(SuperTypeAssistForm):
     def __init__(self, *args, **kwargs):
         """Initializes form"""
         super(SuperTypeAssistForm, self).__init__(*args, **kwargs)
-        ob_utils.initailize_form_fields(self)
+        utils.initailize_form_fields(self)
 
     class Meta(SuperTypeAssistForm.Meta):
         fields =  ['tacode' ,'taname', 'tatype']
@@ -78,7 +77,7 @@ class TypeAssistForm(SuperTypeAssistForm):
     
     def is_valid(self) -> bool:
         result = super().is_valid()
-        ob_utils.apply_error_classes(self)
+        utils.apply_error_classes(self)
         return result
     
 
@@ -128,13 +127,13 @@ class BtForm(forms.ModelForm):
         self.fields['identifier'].queryset = obm.TypeAssist.objects.filter(tatype__tacode="BUIDENTIFIER")
         self.fields['identifier'].widget.attrs = {'required':True}
         self.fields['butype'].queryset = obm.TypeAssist.objects.filter(tatype__tacode="SITE_TYPE")
-        ob_utils.initailize_form_fields(self)
+        utils.initailize_form_fields(self)
     
     
     def is_valid(self) -> bool:
         """Add class to invalid fields"""
         result = super().is_valid()
-        ob_utils.apply_error_classes(self)
+        utils.apply_error_classes(self)
         return result
         
 
@@ -155,8 +154,7 @@ class BtForm(forms.ModelForm):
     def clean_bucode(self):
         import re
         ic(self.cleaned_data)
-        value = self.cleaned_data.get('bucode')
-        if value:
+        if value := self.cleaned_data.get('bucode'):
             regex = "^[a-zA-Z0-9\-_]*$"
             if " " in value: raise forms.ValidationError(self.error_msg['invalid_bucode'])
             elif  not re.match(regex, value):
@@ -167,16 +165,15 @@ class BtForm(forms.ModelForm):
     
     def clean_gpslocation(self):
         import re
-        gps = self.cleaned_data.get('gpslocation')
-        if gps:
+        if gps := self.cleaned_data.get('gpslocation'):
             regex = '^([-+]?)([\d]{1,2})(((\.)(\d+)(,)))(\s*)(([-+]?)([\d]{1,3})((\.)(\d+))?)$'
             if not re.match(regex, gps):
                 raise forms.ValidationError(self.error_msg['invalid_latlng'])
             return gps
 
     def clean_buname(self):
-        val = self.cleaned_data.get('buname')
-        if val: return val.upper()
+        if val := self.cleaned_data.get('buname'):
+            return val.upper()
 
 
 
@@ -210,15 +207,14 @@ class ShiftForm(forms.ModelForm):
         """Initializes form"""
         super(ShiftForm, self).__init__(*args, **kwargs)
         self.fields['nightshift_appicable'].initial = False
-        ob_utils.initailize_form_fields(self)
+        utils.initailize_form_fields(self)
 
     def clean_shiftname(self):
-        val = self.cleaned_data.get('shiftname')
-        if val: return val.upper()
+        if val := self.cleaned_data.get('shiftname'):
+            return val.upper()
     
     def clean_shiftduration(self):
-        val = self.cleaned_data.get('shiftduration')
-        if val:
+        if val := self.cleaned_data.get('shiftduration'):
             h, m = val.split(', ')
             hrs = int(h.replace("Hrs", ""))
             mins = int(m.replace("min", ""))
@@ -258,7 +254,7 @@ class SitePeopleForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         """Initializes form"""
         super(SitePeopleForm, self).__init__(*args, **kwargs)
-        ob_utils.initailize_form_fields(self)
+        utils.initailize_form_fields(self)
 
 
 
@@ -271,7 +267,7 @@ class ContractForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         """Initializes form"""
         super(ContractForm, self).__init__(*args, **kwargs)
-        ob_utils.initailize_form_fields(self)
+        utils.initailize_form_fields(self)
 
 
 
@@ -283,7 +279,7 @@ class ContractDetailForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         """Initializes form"""
         super(ContractDetailForm, self).__init__(*args, **kwargs)
-        ob_utils.initailize_form_fields(self)
+        utils.initailize_form_fields(self)
 
 
 #========================================== END MODEL FORMS =======================================#
@@ -317,7 +313,7 @@ class BuPrefForm(forms.Form):
     def __init__(self, *args, **kwargs):
         """Initializes form"""
         super(BuPrefForm, self).__init__(*args, **kwargs)
-        ob_utils.initailize_form_fields(self)
+        utils.initailize_form_fields(self)
 
 
     def is_valid(self) -> bool:
@@ -338,19 +334,19 @@ class ClentForm(BuPrefForm):
     def __init__(self, *args, **kwargs):
         """Initializes form"""
         super(BuPrefForm, self).__init__(*args, **kwargs)
-        ob_utils.initailize_form_fields(self)
+        utils.initailize_form_fields(self)
         from apps.peoples.utils import get_caps_choices
-        self.fields['webcapability'].choices = get_caps_choices(cfor='WEB')
-        self.fields['mobilecapability'].choices = get_caps_choices(cfor='MOB')
-        self.fields['reportcapability'].choices = get_caps_choices(cfor='REPORT')
-        self.fields['portletcapability'].choices = get_caps_choices(cfor='PORTLET')
+        self.fields['webcapability'].choices = get_caps_choices(cfor=pm.Capability.Cfor.WEB)
+        self.fields['mobilecapability'].choices = get_caps_choices(cfor=pm.Capability.Cfor.MOB)
+        self.fields['reportcapability'].choices = get_caps_choices(cfor=pm.Capability.Cfor.REPORT)
+        self.fields['portletcapability'].choices = get_caps_choices(cfor=pm.Capability.Cfor.PORTLET)
         
 
 
     def is_valid(self) -> bool:
         """Add class to invalid fields"""
         result = super().is_valid()
-        ob_utils.apply_error_classes(self)
+        utils.apply_error_classes(self)
         return result
 
 #========================================== END JSON FORMS =======================================#

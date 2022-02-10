@@ -85,7 +85,9 @@ class BaseModel(models.Model):
 
 ############## People Table ###############
 class People(AbstractBaseUser, PermissionsMixin, TenantAwareModel, BaseModel):
-    GENDER_CHOICES = [('M', 'Male'), ('F', 'Female')]
+    class Gender(models.TextChoices):
+        M = ('M', 'Male')
+        F = ('F', 'Female')
 
     peopleimg     = models.ImageField(_("peopleimg"), upload_to=upload_peopleimg, default="master/people/blank.png", null=True, blank=True)
     peoplecode    = models.CharField(_("Code"), max_length=50)
@@ -105,7 +107,7 @@ class People(AbstractBaseUser, PermissionsMixin, TenantAwareModel, BaseModel):
     deviceid      = models.CharField(_("Device Id"), max_length=50, default='-1')
     email         = SecureString(_("Email"), max_length=254)
     mobno         = SecureString(_("Mob No"), max_length=254, null=True)
-    gender        = models.CharField(_("Gender"), choices=GENDER_CHOICES, max_length=15, null=True)
+    gender        = models.CharField(_("Gender"), choices=Gender.choices, max_length=15, null=True)
     dateofbirth   = models.DateField(_("Date of Birth"))
     dateofjoin    = models.DateField(_("Date of Join"))
     dateofreport  = models.DateField(_("Date of Report"), null=True, blank=True)
@@ -189,13 +191,16 @@ class Pgbelonging(BaseModel, TenantAwareModel):
 
 ############## Capability Table ###############
 class Capability(BaseModel, TenantAwareModel):
-    CFOR_CHOICES = [('WEB', 'WEB'), ('PORTLET', 'PORTLET'),
-                    ('REPORT', 'REPORT'), ('MOB', 'MOB')]
+    class Cfor(models.TextChoices):
+        WEB     = ('WEB', 'WEB')
+        PORTLET = ('PORTLET', 'PORTLET')
+        REPORT  = ('REPORT', 'REPORT')
+        MOB     = ('MOB', 'MOB')
     
     capscode = models.CharField(_('Code'), max_length=50)
     capsname = models.CharField(_('Capability'), max_length=1000, default=None, blank=True, null=True)
     parent   = models.ForeignKey('self', on_delete=models.RESTRICT,  null=True, blank=True, related_name='children', verbose_name="Belongs_to")
-    cfor     = models.CharField(_('Capability_for'), max_length=10, default='WEB', choices=CFOR_CHOICES,)
+    cfor     = models.CharField(_('Capability_for'), max_length=10, default='WEB', choices=Cfor.choices)
     clientid = models.ForeignKey('onboarding.Bt',  null=True, blank=True, on_delete=models.RESTRICT)
     enable   = models.BooleanField(_('Enable'), default=True)
 

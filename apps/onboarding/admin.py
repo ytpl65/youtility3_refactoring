@@ -10,17 +10,17 @@ import apps.onboarding.models as om
 
 
 
-class BaseFieldSet1():
+class BaseFieldSet1:
     cuser = fields.Field(
         column_name='cuser',
         attribute='cuser',
-        widget=wg.ForeignKeyWidget(pm.People, 'peoplecode'),
+        widget=wg.ForeignKeyWidget(pm.People, field = 'peoplecode'),
         saves_null_values=True)
 
     muser = fields.Field(
         column_name='muser',
         attribute='muser',
-        widget=wg.ForeignKeyWidget(pm.People, 'peoplecode'),
+        widget=wg.ForeignKeyWidget(pm.People, field = 'peoplecode'),
         saves_null_values=True)
 
     buid = fields.Field(
@@ -37,7 +37,7 @@ class BaseFieldSet1():
     )
 
 
-class BaseFieldSet2():
+class BaseFieldSet2:
     cuser = fields.Field(
         column_name='cuser',
         attribute='cuser',
@@ -64,19 +64,30 @@ class BaseFieldSet2():
     tenant_id = fields.Field(
         column_name='tenant_id',
         attribute='tenant_id',
-        widget=wg.ForeignKeyWidget(tm.TenantAwareModel, 'tenant'),
+        widget=wg.ForeignKeyWidget(tm.TenantAwareModel, 'id'),
         saves_null_values=True
     )
 
 
-class TaResource(resources.ModelResource, BaseFieldSet1):
+class TaResource(resources.ModelResource):
 
     tatype = fields.Field(
-        column_name='tatype',
-        attribute='tatype',
-        widget=wg.ForeignKeyWidget(om.TypeAssist, 'tacode'),
-        saves_null_values=True
+        column_name       = 'tatype',
+        attribute         = 'tatype',
+        widget            = wg.ForeignKeyWidget(om.TypeAssist, 'tacode'),
+        saves_null_values = True
     )
+    cuser = fields.Field(
+        column_name='cuser',
+        attribute='cuser',
+        widget=wg.ForeignKeyWidget(pm.People, 'peoplecode'),
+        saves_null_values=True)
+
+    muser = fields.Field(
+        column_name='muser',
+        attribute='muser',
+        widget=wg.ForeignKeyWidget(pm.People, 'peoplecode'),
+        saves_null_values=True)
 
     class Meta:
         model = om.TypeAssist
@@ -84,7 +95,7 @@ class TaResource(resources.ModelResource, BaseFieldSet1):
         import_id_fields = ('id',)
         report_skipped = True
         clean_model_instances = True
-        fields = ('id', 'taname', 'tacode', 'tatype', 'cuser', 'muser')
+        fields = ('id', 'taname', 'tacode', 'tatype', 'cuser', 'muser', 'tenant_id',)
 
     def before_save_instance(self, instance, using_transactions, dry_run):
         super().before_save_instance(instance, using_transactions, dry_run)
@@ -93,7 +104,7 @@ class TaResource(resources.ModelResource, BaseFieldSet1):
 
 class TaAdmin(ImportExportModelAdmin):
     resource_class = TaResource
-    list_display = ('id', 'tacode', 'tatype', 'cdtz', 'mdtz', 'cuser', 'muser')
+    list_display = ('id', 'tacode', 'tatype', 'mdtz', 'taname' )
 
 
 admin.site.register(om.TypeAssist, TaAdmin)
@@ -128,7 +139,6 @@ class BtResource(resources.ModelResource, BaseFieldSet1):
 @admin.register(om.Bt)
 class BtAdmin(ImportExportModelAdmin):
     resource_class = BtResource
-    form = BtForm
     fields = ('bucode',  'buname', 'butype', 'parent', 'gpslocation', 'identifier',
               'iswarehouse', 'enable', 'bu_preferences')
     exclude = ['bupath']

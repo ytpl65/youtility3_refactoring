@@ -16,22 +16,20 @@ def peventlog_json():
 
 
 class PeopleEventlog(BaseModel, TenantAwareModel):
-    EVENTTYPE_CHOICES = [
-        ('MARK', 'Mark'),
-        ('SELF', 'Self'),
-        ('SITE', 'Site'),
-        ('CONVEYANCE', 'Conveyance')
-    ]
+    class EventType(models.TextChoices):
+        MARK       = ('MARK', 'Mark')
+        SELF       = ('SELF', 'Self')
+        SITE       = ('SITE', 'Site')
+        CONVEYANCE = ('CONVEYANCE', 'Conveyance')
     
-    TRANSPORTMODE_CHOICES   = [
-        ('BICYCLE', 'Bicycle'),
-        ('MOTORCYCLE', 'MotorCycle'),
-        ('RICKSHAW', 'Rickshaw'),
-        ('BUS', 'Bus'),
-        ('TRAIN', 'Train'),
-        ('FLITE', 'Flite'),
-        ('BOAT', 'Boat or Ship')
-    ]
+    class TransportMode(models.TextChoices):
+        BICYCLE    = ('BICYCLE', 'Bicycle')
+        MOTORCYCLE = ('MOTORCYCLE', 'MotorCycle')
+        RICKSHAW   = ('RICKSHAW', 'Rickshaw')
+        BUS        = ('BUS', 'Bus')
+        TRAIN      = ('TRAIN', 'Train')
+        FLITE      = ('FLITE', 'Flite')
+        BOAT       = ('BOAT', 'Boat or Ship')
     
 
     peopleid        = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.RESTRICT, verbose_name='People')
@@ -40,8 +38,8 @@ class PeopleEventlog(BaseModel, TenantAwareModel):
     shift           = models.ForeignKey('onboarding.Shift', null=True, blank=True, on_delete=models.RESTRICT)
     verifiedby      = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True,       on_delete=models.RESTRICT, related_name='verifiedpeoples', verbose_name='Verified By')
     gfid            = models.ForeignKey('onboarding.GeofenceMaster', null=True, blank=True, on_delete=models.RESTRICT)
-    peventtype      = models.CharField(choices=EVENTTYPE_CHOICES, max_length=100, verbose_name='Attendance Type', null=True)
-    transportmode   = models.CharField(choices=TRANSPORTMODE_CHOICES, max_length=100, verbose_name='Transport Mode', null=True)
+    peventtype      = models.CharField(choices=EventType.choices, max_length=100, verbose_name='Attendance Type', null=True)
+    transportmode   = models.CharField(choices=TransportMode.choices, max_length=100, verbose_name='Transport Mode', null=True)
     punch_intime    = models.DateTimeField(null=True)
     punch_outtime   = models.DateTimeField(null=True)
     datefor         = models.DateField(_("Date"), null=True)

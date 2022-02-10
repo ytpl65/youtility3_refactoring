@@ -1,0 +1,254 @@
+{% extends "base_form.html" %}
+
+{% block extra_css %}
+{{ taskformjobneed.media.css }}
+<link rel="stylesheet" href="https://cdn.datatables.net/1.11.3/css/jquery.dataTables.min.css" type="text/css">
+{% endblock extra_css %}
+
+
+<!-------------------------- BEGIN PAGE BREADCUMB ----------------------->
+{% block pagebreadcumb %}
+<!--will call parent contents -->
+{{ super() }}
+<li class="breadcrumb-item pe-3"><a href="{{ url('schedhuler:retrieve_tasks_jobneed') }}" class="pe-3">Tasks</a></li>
+<li class="breadcrumb-item pe-3"><a href="javascript:void(0)" class="pe-3">Task Form</a></li>
+{% endblock pagebreadcumb %}
+<!-------------------------- END PAGE BREADCUMB ------------------------->
+
+
+<!------ BEGIN FORM TITLE ------->
+{% block form_title %}
+Task
+{% endblock form_title %}
+<!------ END FORM TITLE -------->
+
+
+
+<!--------- BEGIN NON FIELD ERRORS -------->
+{% block nonfield_errors %}
+{% if taskformjobneed.non_field_errors() %}
+<div id="non_field_error" class="alert alert-danger" style="width: 73%;">
+    {% for error in taskformjobneed.non_field_errors()[::-1] %}
+    <strong>Error</strong> <span>{{ error }}</span>
+    {% endfor %}
+    <button type="button" class="btn-close flt-right" data-bs-dismiss="alert" aria-label="Close"></button>
+</div>
+{% endif %}
+{% endblock nonfield_errors %}
+<!---------- END NON FIELD ERRORS --------->
+
+
+{% block form %}
+<form action="" method="post" id="taskformjobneed">
+    <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
+    <div class="row mb-3 gy-3">
+        <div class="col-md-2">
+            <label for={{ taskformjobneed.jobdesc.id_for_label }}
+                class="required">{{ taskformjobneed.jobdesc.label }}:</label>
+        </div>
+        <div class="col-md-4">
+            {{ taskformjobneed.jobdesc }}
+            {{ taskformjobneed.jobdesc.errors }}
+        </div>
+        <div class="col-md-2">
+            <label for={{ taskformjobneed.plandatetime.id_for_label }}
+                class="required">{{ taskformjobneed.plandatetime.label }}:</label>
+        </div>
+        <div class="col-md-4">
+            {{ taskformjobneed.plandatetime }}
+            {{ taskformjobneed.plandatetime.errors }}
+        </div>
+    </div>
+    <div class="row mb-3 gy-3">
+        <div class="col-md-2">
+            <label class="required">Assign to:</label>
+        </div>
+        <div class="col-md-4">
+            <div class="form-check form-check-inline">
+                <input type="radio" class="form-check-input" name={{ taskformjobneed.assign_to.name }}
+                    id="{{ taskformjobneed.assign_to.auto_id }}1" value="PEOPLE" checked
+                    onchange="showHideSelectField('PEOPLE')">
+                <label class="form-check-label" for="{{ taskformjobneed.assign_to.auto_id }}">People</label>
+            </div>
+            <div class="form-check form-check-inline">
+                <input type="radio" class="form-check-input" name={{ taskformjobneed.assign_to.name }}
+                    id="{{ taskformjobneed.assign_to.auto_id }}2" value="GROUP" onchange="showHideSelectField('GROUP')">
+                <label class="form-check-label" for="{{ taskformjobneed.assign_to.auto_id }}">Group</label>
+            </div>
+        </div>
+
+        <!-- ASSIGN TO PEOPLE --->
+        <div class="col-md-2">
+            <label for={{ taskformjobneed.expirydatetime.id_for_label }} class="">{{ taskformjobneed.expirydatetime.label }}:</label>
+        </div>
+        <div class="col-md-4">
+            {{ taskformjobneed.expirydatetime }}
+            {{ taskformjobneed.expirydatetime.errors }}
+        </div>
+    </div>
+    <div class="row mb-3 gy-3">
+        <!-- ASSIGN TO PEOPLE --->
+        <div class="col-md-2 peopleid">
+            <label for={{ taskformjobneed.peopleid.id_for_label }} class="">{{ taskformjobneed.peopleid.label }}:</label>
+        </div>
+        <div class="col-md-4 peopleid">
+            {{ taskformjobneed.peopleid }}
+            {{ taskformjobneed.peopleid.errors }}
+        </div>
+        <!-- ASSIGN TO GROUP --->
+        <div class="col-md-2 groupid">
+            <label for={{ taskformjobneed.groupid.id_for_label }} class="">{{ taskformjobneed.groupid.label }}:</label>
+        </div>
+        <div class="col-md-4 groupid">
+            {{ taskformjobneed.groupid }}
+            {{ taskformjobneed.groupid.errors }}
+        </div>
+        <!-- ASSIGN TO GROUP --->
+        <div class="col-md-2">
+            <label for={{ taskformjobneed.gracetime.id_for_label }} class="">{{ taskformjobneed.gracetime.label }}:</label>
+        </div>
+        <div class="col-md-4">
+            {{ taskformjobneed.gracetime }}
+            {{ taskformjobneed.gracetime.errors }}
+        </div>
+    </div>
+    <div class="row mb-3 gy-3">
+        <div class="col-md-2">
+            <label for={{ taskformjobneed.jobstatus.id_for_label }} class="">{{ taskformjobneed.jobstatus.label }}:</label>
+        </div>
+        <div class="col-md-4">
+            {{ taskformjobneed.jobstatus }}
+            {{ taskformjobneed.jobstatus.errors }}
+        </div>
+        <div class="col-md-2">
+            <label for={{ taskformjobneed.starttime.id_for_label }} class="">{{ taskformjobneed.starttime.label }}:</label>
+        </div>
+        <div class="col-md-4">
+            {{ taskformjobneed.starttime }}
+            {{ taskformjobneed.starttime.errors }}
+        </div>
+    </div>
+    <div class="row mb-3 gy-3">
+        <div class="col-md-2">
+            <label for={{ taskformjobneed.assetid.id_for_label }} class="">{{ taskformjobneed.assetid.label }}:</label>
+        </div>
+        <div class="col-md-4">
+            {{ taskformjobneed.assetid }}
+            {{ taskformjobneed.assetid.errors }}
+        </div>
+        <div class="col-md-2">
+            <label for={{ taskformjobneed.endtime.id_for_label }} class="">End Time:</label>
+        </div>
+        <div class="col-md-4">
+            {{ taskformjobneed.endtime }}
+            {{ taskformjobneed.endtime.errors }}
+        </div>
+    </div>
+    <div class="row mb-3 gy-3">
+        <div class="col-md-2">
+            <label for={{ taskformjobneed.qsetid.id_for_label }} class="">{{ taskformjobneed.qsetid.label }}:</label>
+        </div>
+        <div class="col-md-4">
+            {{ taskformjobneed.qsetid }}
+            {{ taskformjobneed.qsetid.errors }}
+        </div>
+        <div class="col-md-2">
+            <label for={{ taskformjobneed.performed_by.id_for_label }} class="">{{ taskformjobneed.performed_by.label }}:</label>
+        </div>
+        <div class="col-md-4">
+            {{ taskformjobneed.performed_by }}
+            {{ taskformjobneed.performed_by.errors }}
+        </div>
+    </div>
+    <div class="row mb-3 gy-3">
+        <div class="col-md-2">
+            <label for={{ taskformjobneed.priority.id_for_label }} class="">{{ taskformjobneed.priority.label }}:</label>
+        </div>
+        <div class="col-md-4">
+            {{ taskformjobneed.priority }}
+            {{ taskformjobneed.priority.errors }}
+        </div>
+        <div class="col-md-2">
+            <label for={{ taskformjobneed.ticket_category.id_for_label }} class="">{{ taskformjobneed.ticket_category.label }}:</label>
+        </div>
+        <div class="col-md-4">
+            {{ taskformjobneed.ticket_category }}
+            {{ taskformjobneed.ticket_category.errors }}
+        </div>
+    </div>
+    <div class="row mb-3 gy-3">
+        <div class="col-md-2">
+            <label for={{ taskformjobneed.scantype.id_for_label }} class="">{{ taskformjobneed.scantype.label }}:</label>
+        </div>
+        <div class="col-md-4">
+            {{ taskformjobneed.scantype }}
+            {{ taskformjobneed.scantype.errors }}
+        </div>
+        <div class="col-md-2">
+            <label for={{ taskformjobneed.gpslocation.id_for_label }} class="">{{ taskformjobneed.gpslocation.label }}:</label>
+        </div>
+        <div class="col-md-4">
+            {{ taskformjobneed.gpslocation }}
+            {{ taskformjobneed.gpslocation.errors }}
+        </div>
+    </div>
+</form>
+{% endblock form %}
+
+
+{% block ajax_page_actions %}
+<div class="form-actions">
+    {% if taskformjobneed.instance.jobstatus == "('ASSIGNED',)" %}
+        {% if taskformjobneed.instance.id %}
+        <button type="button" id="submitInternalTour" form="taskformjobneed" class="btn btn-sm btn-primary btn-hover-scale">
+        Update Tour
+        </button>
+        <button type="button" onclick="deleteMainJob(this)" data-id="{{ taskformjobneed.instance.id }}" id="deleteAttd"
+            class="btn btn-sm btn-danger btn-hover-scale">
+            Delete&nbsp;<i class="fas fa-trash-alt"></i>
+        </button>
+        {% else %}
+            <button type="submit" form="taskformjobneed" class="btn btn-sm btn-primary btn-hover-scale">
+                Save Tour&nbsp;<i class="fas fa-cloud-upload-alt"></i>
+            </button>
+        {% endif %}
+    {% endif %}
+</div>
+{% endblock ajax_page_actions %}
+
+{% block extra_scripts %}
+{{ taskformjobneed.media.js }}
+
+
+<script>
+    function showHideSelectField(val) {
+        if (val == "PEOPLE") {
+            //$("#aatopdiv").show();
+            $(".peopleid").show();
+            $(".groupid").hide();
+        }else {
+            //$("#aatopdiv").hide();
+            $(".groupid").show();
+            $(".peopleid").hide();
+        }
+    }
+    $(document).ready(() => {
+        //assignto toggle
+        if ('{{ taskformjobneed.instance.id }}' == ('None' || "")) {
+            showHideSelectField('PEOPLE')
+        }else{
+            var assignto = '{{ taskformjobneed.instance.peopleid }}' == ('None' || "") ? "GROUP" :"PEOPLE"
+            showHideSelectField(assignto)
+        }
+        //datetime widget configurations
+        $("#id_plandatetime, #id_expirydatetime").flatpickr({
+            enableTime: true,
+            time_24hr: true,
+            dateFormat: 'd-M-Y H:S'
+        })
+
+
+    })
+</script>
+
+{% endblock extra_scripts %}

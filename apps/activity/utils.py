@@ -16,6 +16,14 @@ def get_assetincludes_choices():
                 'assetname', Value(" ("), 'assetcode', Value(")")))
     return qset.values_list('id', 'checkpoint')
 
+def get_assetsmartplace_choices():
+    qset = av.Asset.objects.filter(
+         ~Q(assetcode='NONE') & Q(identifier='SMARTPLACE') | Q(identifier='ASSET'), enable=True).select_related(
+            'parent').annotate(
+            checkpoint = Concat(
+                'assetname', Value(" ("), 'assetcode', Value(")")))
+    return qset.values_list('id', 'checkpoint')
+
 
 
 def initialize_alerton_field(val, choices=False):

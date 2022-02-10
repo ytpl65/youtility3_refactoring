@@ -14,29 +14,29 @@ from django.db import models
 
 # Create your models here.
 class Question(BaseModel, TenantAwareModel):
-    ANSWER_TYPES = [
-        ('CHECKBOX', 'Checkbox'),
-        ('DATE', 'Date'),
-        ('DROPDOWN', 'Dropdown'),
-        ("EMAILID", "Email Id"),
-        ("MULTILINE", "Multiline"),
-        ("NUMERIC", "Numeric"),
-        ("SIGNATURE", "Signature"),
-        ("SINGLELINE", "Single Line"),
-        ("TIME", "Time"),
-        ("RATING", "Rating"),
-        ("BACKCAMERA", "Back Camera"),
-        ("FRONTCAMERA", "Front Camera"),
-        ("PEOPLELIST", "People List"),
-        ("SITELIST", "Site List"),
-    ]
+    
+    class AnswerType(models.TextChoices):
+        CHECKBOX    = "CHECKBOX"   , _('Checkbox') 
+        DATE        = "DATE"       , _('Date')
+        DROPDOWN    = "DROPDOWN"   , _('Dropdown')
+        EMAILID     = "EMAILID"    , _("Email Id")
+        MULTILINE   = "MULTILINE"  , _("Multiline")
+        NUMERIC     = "NUMERIC"    , _("Numeric")
+        SIGNATURE   = "SIGNATURE"  , _("Signature")
+        SINGLELINE  = "SINGLELINE" , _("Single Line")
+        TIME        = "TIME"       , _("Time")
+        RATING      = "RATING"     , _("Rating")
+        BACKCAMERA  = "BACKCAMERA" , _("Back Camera")
+        FRONTCAMERA = "FRONTCAMERA", _("Front Camera")
+        PEOPLELIST  = "PEOPLELIST" , _("People List")
+        SITELIST    = "SITELIST"   , _("Site List")
 
     ques_name  = models.CharField(_("Question Name"), max_length=200)
     options    = models.TextField(_('Options'), max_length=2000, null=True)
     min        = models.DecimalField(_("Min"), null=True, blank=True, max_digits=18, decimal_places=2, default=0.00)
     max        = models.DecimalField( _('Max'), null=True, blank=True, max_digits=18, decimal_places=2, default=0.00)
     alerton    = models.CharField(_("Alert on"), max_length=300, null=True)
-    answertype = models.CharField(verbose_name=_("Type"), choices=ANSWER_TYPES, default="NUMERIC", max_length=55)  # type in previous
+    answertype = models.CharField(verbose_name=_("Type"), choices=AnswerType.choices, default="NUMERIC", max_length=55)  # type in previous
     unit       = models.ForeignKey("onboarding.TypeAssist", verbose_name=_( "Unit"), on_delete=models.RESTRICT, related_name="unit_types", null=True, blank=True)
     clientid   = models.ForeignKey("onboarding.Bt", verbose_name=_("Client"), on_delete=models.RESTRICT, null=True, blank=True)
     isworkflow = models.BooleanField(_("Is WorkFlow"), default=False)
@@ -69,18 +69,17 @@ def site_type_includes():
 
 
 class QuestionSet(BaseModel, TenantAwareModel):
-    QSET_TYPES_CHOICES = [
-        ('CHECKLIST', 'Checklist'),
-        ('INCIDENTREPORTTEMPLATE', 'Incident Report Template'),
-        ('SITEREPORTTEMPLATE', 'Site Report Template'),
-        ('WORKPERMITTEMPLATE', 'Work Permit Template'),
-        ('KPITEMPLATE', 'Kpi Template'),
-        ('SCRAPPEDTEMPLATE', 'Scrapped Template'),
-        ('ASSETAUDIT', 'Asset Audit'),
-        ('MAINTENANCETEMPLATE', 'Maintenance Template'),
-        ('ASSETMAINTENANCE', 'Asset Maintenance'),
-        ('QUESTIONSET', 'Question Set'),
-    ]
+    class Type(models.TextChoices):
+        CHECKLIST              = "CHECKLIST"             , _('Checklist')
+        INCIDENTREPORTTEMPLATE = "INCIDENTREPORTTEMPLATE", _('Incident Report Template')
+        SITEREPORTTEMPLATE     = "SITEREPORTTEMPLATE"    , _('Site Report Template')
+        WORKPERMITTEMPLATE     = "WORKPERMITTEMPLATE"    , _('Work Permit Template')
+        KPITEMPLATE            = "KPITEMPLATE"           , _('Kpi Template')
+        SCRAPPEDTEMPLATE       = "SCRAPPEDTEMPLATE"      , _('Scrapped Template')
+        ASSETAUDIT             = "ASSETAUDIT"            , _('Asset Audit')
+        MAINTENANCETEMPLATE    = "MAINTENANCETEMPLATE"   , _('Maintenance Template')
+        ASSETMAINTENANCE       = "ASSETMAINTENANCE"      , _('Asset Maintenance')
+        QUESTIONSET            = "QUESTIONSET"           , _('Question Set')
 
     qset_name          = models.CharField(_("QuestionSet Name"), max_length=200)
     assetid            = models.ForeignKey( "activity.Asset", on_delete=models.RESTRICT, null=True, blank=False)
@@ -89,7 +88,7 @@ class QuestionSet(BaseModel, TenantAwareModel):
     buincludes         = models.TextField(null=True, blank=True)
     slno               = models.SmallIntegerField(_("SL No."), default=1)
     parent             = models.ForeignKey("self", verbose_name=_("Belongs To"), on_delete=models.RESTRICT, null=True, blank=True)
-    type               = models.CharField( _("Question Set Type"), choices=QSET_TYPES_CHOICES, null=True, max_length=50)
+    type               = models.CharField( _("Question Set Type"), choices=Type.choices, null=True, max_length=50)
     buid               = models.ForeignKey("onboarding.Bt", verbose_name=_("Site"), on_delete=models.RESTRICT, related_name='qset_buids', null=True, blank=True)
     clientid           = models.ForeignKey("onboarding.Bt", verbose_name=_("Client"), on_delete=models.RESTRICT, related_name='qset_clientids', null=True, blank=True)
     site_grp_includes  = models.JSONField(_('Site Groups'), default=site_grp_includes, encoder=DjangoJSONEncoder, blank=True, null=True)
@@ -121,28 +120,27 @@ def alertmails_sendto():
 
 
 class QuestionSetBelonging(BaseModel, TenantAwareModel):
-    ANSWER_TYPES = [
-        ('CHECKBOX', 'Checkbox'),
-        ('DATE', 'Date'),
-        ('DROPDOWN', 'Dropdown'),
-        ("EMAILID", "Email Id"),
-        ("MULTILINE", "Multiline"),
-        ("NUMERIC", "Numeric"),
-        ("SIGNATURE", "Signature"),
-        ("SINGLELINE", "Single Line"),
-        ("TIME", "Time"),
-        ("RATING", "Rating"),
-        ("BACKCAMERA", "Back Camera"),
-        ("FRONTCAMERA", "Front Camera"),
-        ("PEOPLELIST", "People List"),
-        ("SITELIST", "Site List"),
-    ]
+    class AnswerType(models.TextChoices):
+        CHECKBOX    = "CHECKBOX"   , _('Checkbox')
+        DATE        = "DATE"       , _('Date')
+        DROPDOWN    = "DROPDOWN"   , _('Dropdown')
+        EMAILID     = "EMAILID"    , _("Email Id")
+        MULTILINE   = "MULTILINE"  , _("Multiline")
+        NUMERIC     = "NUMERIC"    , _("Numeric")
+        SIGNATURE   = "SIGNATURE"  , _("Signature")
+        SINGLELINE  = "SINGLELINE" , _("Single Line")
+        TIME        = "TIME"       , _("Time")
+        RATING      = "RATING"     , _("Rating")
+        BACKCAMERA  = "BACKCAMERA" , _("Back Camera")
+        FRONTCAMERA = "FRONTCAMERA", _("Front Camera")
+        PEOPLELIST  = "PEOPLELIST" , _("People List")
+        SITELIST    = "SITELIST"   , _("Site List")
 
     ismandatory       = models.BooleanField(_("Is Manadatory"))
     slno              = models.SmallIntegerField(_("Seq No."))
     qsetid            = models.ForeignKey("activity.QuestionSet", verbose_name=_("Question Set"), on_delete=models.RESTRICT, null=True, blank=True)
     quesid            = models.ForeignKey("activity.Question", verbose_name=_("Question"), null=True, blank=False,  on_delete=models.RESTRICT)
-    answertype        = models.CharField(_("Question Type"), max_length=50, choices=ANSWER_TYPES)
+    answertype        = models.CharField(_("Question Type"), max_length=50, choices=AnswerType.choices)
     max               = models.DecimalField(_("Max"), null=True, max_digits=18, decimal_places=2, default=0.00)
     min               = models.DecimalField(_("Min"), null=True, max_digits=18, decimal_places=2, default=0.00)
     alerton           = models.CharField(_("Alert on"), null=True, blank=True, max_length=300)
@@ -177,52 +175,52 @@ def other_info():
 
 
 class Job(BaseModel, TenantAwareModel):
-    JOB_TYPES = [
-        ('TASK', 'Task'),
-        ('TICKET', 'Ticket'),
-        ('INTERNALTOUR', 'Internal Tour'),
-        ('EXTERNALTOUR', 'External Tour'),
-        ('PPM', 'PPM'),
-        ('OTHER', 'Other'),
-    ]
+    class Identifier(models.TextChoices):
+        TASK             = ('TASK', 'Task')
+        TICKET           = ('TICKET', 'Ticket')
+        INTERNALTOUR     = ('INTERNALTOUR', 'Internal Tour')
+        EXTERNALTOUR     = ('EXTERNALTOUR', 'External Tour')
+        PPM              = ('PPM', 'PPM')
+        OTHER            = ('OTHER', 'Other')
+        SITEREPORT       = ("SITEREPORT","Site Report")
+        INCIDENTREPORT   = ('INCIDENTREPORT', "Incident Report")
+        ASSETLOG         = ("ASSETLOG",	"Asset Log")
+        ASSETMAINTENANCE = ("ASSETMAINTENANCE",	"Asset Maintenance")
 
-    PRIORITY_CHOICES = [
-        ('HIGH', 'High'),
-        ('LOW', 'Low'),
-        ('MEDIUM', 'Medium'),
-    ]
+    class Priority(models.TextChoices):
+        HIGH   = "HIGH" , _('High')
+        LOW    = "LOW"  , _('Low')
+        MEDIUM = "MEDIU", _('Medium')
 
-    SCANTYPE_CHOICES = [
-        ('QR', 'QR'),
-        ('NFC', 'NFC'),
-        ('SKIP', 'Skip'),
-        ('ENTERED', 'Entered'),
-    ]
+    class Scantype(models.TextChoices):
+        QR      = "QR"     , _('QR')
+        NFC     = "NFC"    , _('NFC')
+        SKIP    = "SKIP"   , _('Skip')
+        ENTERED = "ENTERED", _('Entered')
 
-    FREQUENCYCHOICES = [
-        ('NONE', 'None'),
-        ("DAILY", 	"Daily"),
-        ("WEEKLY",	"Weekly"),
-        ("MONTHLY", 	"Monthly"),
-        ("BIMONTHLY", 	"Bimonthly"),
-        ("QUARTERLY", 	"Quarterly"),
-        ("HALFYEARLY", 	"Half Yearly"),
-        ("YEARLY", 	"Yearly"),
-        ("FORTNIGHTLY", "Fort Nightly")
-    ]
+    class Frequency(models.TextChoices):
+        NONE        = "NONE"       , _('None')
+        DAILY       = "DAILY"      , _("Daily")
+        WEEKLY      = "WEEKLY"     , _("Weekly")
+        MONTHLY     = "MONTHLY"    , _("Monthly")
+        BIMONTHLY   = "BIMONTHLY"  , _("Bimonthly")
+        QUARTERLY   = "QUARTERLY"  , _("Quarterly")
+        HALFYEARLY  = "HALFYEARLY" , _("Half Yearly")
+        YEARLY      = "YEARLY"     , _("Yearly")
+        FORTNIGHTLY = "FORTNIGHTLY", _("Fort Nightly")
 
     jobname         = models.CharField(_("Name"), max_length=100)
     jobdesc         = models.CharField(_("Description"), max_length=500)
     from_date       = models.DateTimeField( _("From date"), auto_now=False, auto_now_add=False)
     upto_date       = models.DateTimeField( _("To date"), auto_now=False, auto_now_add=False)
     cron            = models.CharField(_("Cron Exp."), max_length=200)
-    identifier      = models.CharField(_("Job Type"), max_length=100, choices=JOB_TYPES, null=True)
+    identifier      = models.CharField(_("Job Type"), max_length=100, choices=Identifier.choices, null=True)
     planduration    = models.IntegerField(_("Plan duration (min)"))
     gracetime       = models.IntegerField(_("Grace Time"))
     expirytime      = models.IntegerField(_("Expiry Time"))
     lastgeneratedon = models.DateTimeField(_("Last generatedon"), auto_now=False, auto_now_add=True)
     assetid         = models.ForeignKey("activity.Asset", verbose_name=_("Asset"), on_delete=models.RESTRICT, null=True, blank=True)
-    priority        = models.CharField(_("Priority"), max_length=100, choices=PRIORITY_CHOICES)
+    priority        = models.CharField(_("Priority"), max_length=100, choices=Priority.choices)
     qsetid          = models.ForeignKey("activity.QuestionSet", verbose_name=_("QuestionSet"), on_delete=models.RESTRICT, null=True, blank=True)
     peopleid        = models.ForeignKey('peoples.People', verbose_name=_( "Aggresive auto-assign to People"), on_delete=models.RESTRICT, null=True, blank=True, related_name='job_aaatops')
     groupid         = models.ForeignKey("peoples.Pgroup", verbose_name=_("Group"), on_delete=models.RESTRICT, null=True, blank=True)
@@ -235,8 +233,8 @@ class Job(BaseModel, TenantAwareModel):
     starttime       = models.TimeField(_("Start time"), auto_now=False, auto_now_add=False, null=True)
     endtime         = models.TimeField(_("End time"), auto_now=False, auto_now_add=False, null=True)
     ticket_category = models.ForeignKey("onboarding.TypeAssist", verbose_name=_("Ticket Category"), on_delete=models.RESTRICT, null=True, blank=True, related_name="job_tktcategories")
-    scantype        = models.CharField(_("Scan Type"), max_length=50, choices=SCANTYPE_CHOICES)
-    frequency       = models.CharField(verbose_name=_("Frequency type"), null=True, max_length=55, choices=FREQUENCYCHOICES)
+    scantype        = models.CharField(_("Scan Type"), max_length=50, choices=Scantype.choices)
+    frequency       = models.CharField(verbose_name=_("Frequency type"), null=True, max_length=55, choices=Frequency.choices)
     ctzoffset       = models.CharField(_("TZ_Offset"), max_length = 55, null=True, blank=True)
     other_info      = models.JSONField(_("Other info"), default=other_info, blank=True, encoder=DjangoJSONEncoder)
 
@@ -292,19 +290,18 @@ def asset_json():
 
 
 class Asset(BaseModel, TenantAwareModel):
-    ASSET_IDENTIFIERS = [
-        ("NONE", "None"),
-        ("ASSET", "Asset"),
-        ("CHECKPOINT", "Checkpoint"),
-        ("LOCATION", "Location"),
-        ("SMARTPLACE", "Smartplace"),
-    ]
-    ASSETRUNNING_STATUS = [
-        ("MAINTENANCE", "Maintenance"),
-        ("STANDBY", "Standby"),
-        ("WORKING", "Working"),
-        ("SCRAPPED", "Scrapped"),
-    ]
+    class Identifier(models.TextChoices):
+       NONE       = ("NONE", "None")
+       ASSET      = ("ASSET", "Asset")
+       CHECKPOINT = ("CHECKPOINT", "Checkpoint")
+       LOCATION   = ("LOCATION", "Location")
+       SMARTPLACE = ("SMARTPLACE", "Smartplace")
+       
+    class RunningStatus(models.TextChoices):
+        MAINTENANCE = ("MAINTENANCE", "Maintenance")
+        STANDBY     = ("STANDBY", "Standby")
+        WORKING     = ("WORKING", "Working")
+        SCRAPPED    = ("SCRAPPED", "Scrapped")
 
     assetcode     = models.CharField(_("Asset Code"), max_length=50)
     assetname     = models.CharField(_("Asset Name"), max_length=250)
@@ -312,12 +309,11 @@ class Asset(BaseModel, TenantAwareModel):
     iscritical    = models.BooleanField(_("Is Critical"))
     gpslocation   = models.CharField(_("Gps Location"), max_length=50, default="0.0,0.0")
     parent        = models.ForeignKey("self", verbose_name=_( "Belongs to"), on_delete = models.RESTRICT, null=True, blank=True)
-    identifier    = models.CharField( _('Asset Identifier'), choices=ASSET_IDENTIFIERS, max_length=55)
-    runningstatus = models.CharField(_('Running Status'), choices=ASSETRUNNING_STATUS, max_length=55)
+    identifier    = models.CharField( _('Asset Identifier'), choices=Identifier.choices, max_length=55)
+    runningstatus = models.CharField(_('Running Status'), choices=RunningStatus.choices, max_length=55)
     type          = models.ForeignKey("onboarding.TypeAssist", verbose_name=_("Type"), on_delete = models.RESTRICT, null=True, blank=True, related_name='asset_types')
     clientid      = models.ForeignKey("onboarding.Bt", verbose_name=_("Client"), on_delete = models.RESTRICT, null=True, blank=True, related_name='asset_clientids')
     buid          = models.ForeignKey("onboarding.Bt", verbose_name=_("Site"), on_delete = models.RESTRICT, null=True, blank=True, related_name='asset_buids')
-    category      = models.ForeignKey("onboarding.TypeAssist", verbose_name=_("Category"), null = True, blank=True, on_delete=models.RESTRICT, related_name='asset_categories')
     category      = models.ForeignKey("onboarding.TypeAssist", verbose_name=_("Category"), null = True, blank=True, on_delete=models.RESTRICT, related_name='asset_categories')
     subcategory   = models.ForeignKey("onboarding.TypeAssist", verbose_name=_("Sub Category"), null = True, blank=True, on_delete=models.RESTRICT, related_name='asset_subcategories')
     brand         = models.ForeignKey("onboarding.TypeAssist", verbose_name=_("Brand"), null = True, blank=True, on_delete=models.RESTRICT, related_name='asset_brands')
@@ -336,51 +332,69 @@ class Asset(BaseModel, TenantAwareModel):
 
 
 class Jobneed(BaseModel, TenantAwareModel):
-    PRIORITY_CHOICES = [
-        ('HIGH', 'High'),
-        ('LOW', 'Low'),
-        ('MEDIUM', 'Medium'),
-    ]
+    class Priority(models.TextChoices):
+        HIGH   = ('HIGH', 'High')
+        LOW    = ('LOW', 'Low')
+        MEDIUM = ('MEDIUM', 'Medium')
 
-    JOB_IDENTIFIERS = [
-        ('TASK', 'Task'),
-        ('TICKET', 'Ticket'),
-        ('Tour', 'Tour'),
-        ('PPM', 'PPM'),
-        ('OTHER', 'Other'),
-    ]
 
-    SCANTYPE_CHOICES = [
-        ('NONE', 'None'),
-        ('QR', 'QR'),
-        ('NFC', 'NFC'),
-        ('SKIP', 'Skip'),
-        ('ENTERED', 'Entered'),
-    ]
-    JOBSTATUSCHOICES = [
-        ('ASSIGNED', 'Assigned'),
-        ('AUTOCLOSED', 'Auto Closed'),
-        ('COMPLETED', 'Completed'),
-        ('INPROGRESS', 'Inprogress'),
-        ('PARTIALLYCOMPLETED', 'Partially Completed')
-    ]
+    class Identifier(models.TextChoices):
+        TASK             = ('TASK', 'Task')
+        TICKET           = ('TICKET', 'Ticket')
+        INTERNALTOUR     = ('INTERNALTOUR', 'Internal Tour')
+        EXTERNALTOUR     = ('EXTERNALTOUR', 'External Tour')
+        PPM              = ('PPM', 'PPM')
+        OTHER            = ('OTHER', 'Other')
+        SITEREPORT       = ("SITEREPORT","Site Report")
+        INCIDENTREPORT   = ('INCIDENTREPORT', "Incident Report")
+        ASSETLOG         = ("ASSETLOG",	"Asset Log")
+        ASSETMAINTENANCE = ("ASSETMAINTENANCE",	"Asset Maintenance")
 
-    JOBTYPECHOICES = [
-        ('SCHEDULE', 'Schedule'),
-        ('ADHOC', 'Adhoc')
-    ]
-    FREQUENCYCHOICES = [
-        ('NONE','None'),
-        ("DAILY","Daily"),
-        ("WEEKLY","Weekly"),
-        ("MONTHLY", "Monthly"),
-        ("BIMONTHLY","Bimonthly"),
-        ("QUARTERLY","Quarterly"),
-        ("HALFYEARLY","Half Yearly"),
-        ("YEARLY", "Yearly"),
-        ("FORTNIGHTLY", "Fort Nightly")
-    ]
 
+    class Scantype(models.TextChoices):
+        NONE    = ('NONE', 'None')
+        QR      = ('QR', 'QR')
+        NFC     = ('NFC', 'NFC')
+        SKIP    = ('SKIP', 'Skip')
+        ENTERED = ('ENTERED', 'Entered')
+    
+    
+    class JobStatus(models.TextChoices):
+        ASSIGNED           = ('ASSIGNED', 'Assigned')
+        AUTOCLOSED         = ('AUTOCLOSED', 'Auto Closed')
+        COMPLETED          = ('COMPLETED', 'Completed')
+        INPROGRESS         = ('INPROGRESS', 'Inprogress')
+        PARTIALLYCOMPLETED = ('PARTIALLYCOMPLETED', 'Partially Completed')
+        RESOLVED           = ("RESOLVED",  "Resolved")
+        OPEN               = ("OPEN",      "Open")
+        CANCELLED          = ("CANCELLED", "Cancelled")
+        ESCALATED          = ("ESCALATED", "Escalated")
+        NEW                = ("NEW",       "New")
+        MAINTENANCE        = ("MAINTENANCE", "Maintenance")
+        STANDBY            = ("STANDBY", "Standby")
+        WORKING            = ("WORKING", "Working")
+        SCRAPPED           = ("SCRAPPED", "Scrapped")
+
+    
+
+    
+    class JobType(models.TextChoices):
+        SCHEDULE = ('SCHEDULE', 'Schedule')
+        ADHOC    = ('ADHOC', 'Adhoc')
+    
+
+    
+    class Frequency(models.TextChoices):
+        NONE        = ('NONE','None')
+        DAILY       = ("DAILY","Daily")
+        WEEKLY      = ("WEEKLY","Weekly")
+        MONTHLY     = ("MONTHLY", "Monthly")
+        BIMONTHLY   = ("BIMONTHLY","Bimonthly")
+        QUARTERLY   = ("QUARTERLY","Quarterly")
+        HALFYEARLY  = ("HALFYEARLY","Half Yearly")
+        YEARLY      = ("YEARLY", "Yearly")
+        FORTNIGHTLY = ("FORTNIGHTLY", "Fort Nightly")
+ 
     jobdesc             = models.CharField(_("Job Description"), max_length=200)
     plandatetime        = models.DateTimeField(_("Plan date time"), auto_now=False, auto_now_add=False)
     expirydatetime      = models.DateTimeField(_("Expiry date time"), auto_now=False, auto_now_add=False)
@@ -391,17 +405,17 @@ class Jobneed(BaseModel, TenantAwareModel):
     gpslocation         = models.CharField(_("Gps Location"), default='0.0,0.0', max_length=50)
     remarks             = models.CharField(_("Remark"), max_length=200, null=True, blank=True)
     assetid             = models.ForeignKey("activity.Asset", verbose_name=_("Asset"), on_delete= models.RESTRICT, null=True, blank=True, related_name='jobneed_assets')
-    frequency           = models.CharField(verbose_name=_("Frequency type"), null       = True, max_length=55, choices=FREQUENCYCHOICES)
+    frequency           = models.CharField(verbose_name=_("Frequency type"), null       = True, max_length=55, choices=Frequency.choices)
     jobid               = models.ForeignKey("activity.Job", verbose_name=_("Job"), on_delete  = models.RESTRICT, null=True, blank=True, related_name='jobs')
-    jobstatus           = models.CharField('Job Status', choices         = JOBSTATUSCHOICES, max_length=60, null=True)
-    jobtype             = models.CharField(_("Job Type"), max_length=50, choices=JOBTYPECHOICES, null=True)
+    jobstatus           = models.CharField('Job Status', choices         = JobStatus.choices, max_length=60, null=True)
+    jobtype             = models.CharField(_("Job Type"), max_length=50, choices=JobType.choices, null=True)
     performed_by        = models.ForeignKey("peoples.People", verbose_name=_("Performed by"), on_delete = models.RESTRICT, null=True, blank=True, related_name='jobneed_performedby')
-    priority            = models.CharField(_("Priority"), max_length=50, choices=PRIORITY_CHOICES)
+    priority            = models.CharField(_("Priority"), max_length=50, choices=Priority.choices)
     qsetid              = models.ForeignKey("activity.QuestionSet", verbose_name=_("QuestionSet"), on_delete  = models.RESTRICT, null=True, blank=True)
-    scantype            = models.CharField(_("Scan type"), max_length=50, choices=SCANTYPE_CHOICES)
+    scantype            = models.CharField(_("Scan type"), max_length=50, choices=Scantype.choices)
     peopleid            = models.ForeignKey("peoples.People", verbose_name=_("People"), on_delete = models.RESTRICT,  null=True, blank=True)
     groupid             = models.ForeignKey("peoples.Pgroup", verbose_name=_("Group"), on_delete= models.RESTRICT,  null=True, blank=True)
-    identifier          = models.CharField(_("Jobneed Type"), max_length=50, choices=JOB_IDENTIFIERS, null=True)
+    identifier          = models.CharField(_("Jobneed Type"), max_length=50, choices=Identifier.choices, null=True)
     parent              = models.ForeignKey("self", verbose_name=_("Belongs to"),  on_delete  = models.RESTRICT,  null=True, blank=True)
     alerts              = models.BooleanField(_("Alerts"), default=False, null=True)
     ticketno            = models.IntegerField(_("Ticket No"), default=0)
@@ -429,25 +443,25 @@ class Jobneed(BaseModel, TenantAwareModel):
 
 
 class JobneedDetails(BaseModel, TenantAwareModel):
-    ANSWER_TYPES = [
-        ('CHECKBOX', 'Checkbox'),
-        ('DATE', 'Date'),
-        ('DROPDOWN', 'Dropdown'),
-        ("EMAILID", "Email Id"),
-        ("MULTILINE", "Multiline"),
-        ("NUMERIC", "Numeric"),
-        ("SIGNATURE", "Signature"),
-        ("SINGLELINE", "Single Line"),
-        ("TIME", "Time"),
-        ("RATING", "Rating"),
-        ("BACKCAMERA", "Back Camera"),
-        ("FRONTCAMERA", "Front Camera"),
-        ("PEOPLELIST", "People List"),
-        ("SITELIST", "Site List"),
-    ]
+    class AnswerType(models.TextChoices):
+        CHECKBOX    = ('CHECKBOX', 'Checkbox')
+        DATE        = ('DATE', 'Date')
+        DROPDOWN    = ('DROPDOWN', 'Dropdown')
+        EMAILID     = ("EMAILID", "Email Id")
+        MULTILINE   = ("MULTILINE", "Multiline")
+        NUMERIC     = ("NUMERIC", "Numeric")
+        SIGNATURE   = ("SIGNATURE", "Signature")
+        SINGLELINE  = ("SINGLELINE", "Single Line")
+        TIME        = ("TIME", "Time")
+        RATING      = ("RATING", "Rating")
+        BACKCAMERA  = ("BACKCAMERA", "Back Camera")
+        FRONTCAMERA = ("FRONTCAMERA", "Front Camera")
+        PEOPLELIST  = ("PEOPLELIST", "People List")
+        SITELIST    = ("SITELIST", "Site List")
+    
     slno         = models.SmallIntegerField(_("SL No."))
     quesid       = models.ForeignKey("activity.Question", verbose_name=_("Question"),  null=True, blank=True, on_delete=models.RESTRICT)
-    answertype   = models.CharField(_("Answer Type"), max_length=50, choices=ANSWER_TYPES, null=True)
+    answertype   = models.CharField(_("Answer Type"), max_length=50, choices=AnswerType.choices, null=True)
     answer       = models.CharField(_("Answer"), max_length=250, default="")
     options      = models.CharField( _("Option"), max_length=200, null=True, blank=True)
     min          = models.DecimalField(_("Min"), max_digits=18,  decimal_places=4, null=True)

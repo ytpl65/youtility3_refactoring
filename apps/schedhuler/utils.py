@@ -2,38 +2,50 @@ from django.db.models import Q
 import apps.activity.models as am
 from django.core.exceptions import EmptyResultSet
 from django.db import transaction
+from django.http import Http404, response as rp
 from logging import getLogger
 from pprint import pformat
-import apps.peoples.utils as putils
 from apps.core import utils
 from datetime import datetime, timezone, timedelta
 log = getLogger('__main__')
 
 def create_job(jobs=None):
-    startdtz = enddtz = msg = None
+    startdtz = enddtz = msg = resp = None
     F, d = {}, []
+    
+    from django.utils.timezone import get_current_timezone
+    tzoffset     = get_current_timezone().utcoffset(datetime.utcnow()).seconds // 60
     with transaction.atomic(using=utils.get_current_db_name()):
         if not jobs:
             jobs = am.Job.objects.filter(
                 ~Q(jobname='NONE'),
-                ~Q(assetid__runningstatus='SCRAPPED'),
+                ~Q(assetid__runningstatus=am.Asset.RunningStatus.SCRAPPED),
                 parent_id=1,
             ).select_related(
                 "assetid", "groupid",
                 "cuser", "muser", "qsetid", "peopleid",
             ).values_list(named=True)
+        
         if not jobs:
             msg = "No jobs found schedhuling terminated"
+            resp = rp.JsonResponse("%s"%(msg), status=404)
             log.warn("%s" % (msg), exc_info=True)
             raise EmptyResultSet
         total_jobs = len(jobs)
+        
         if total_jobs > 0 or jobs != None:
             log.info("processing jobs started found:= '%s' jobs" % (len(jobs)))
             for idx, job in enumerate(jobs):
-                startdtz, enddtz = calculate_startdtz_enddtz(job)
-                DT, is_cron = get_datetime_list(job.cron, startdtz, enddtz)
+                startdtz, enddtz = calculate_startdtz_enddtz(job, tzoffset)
+                log.debug(
+                    "Jobs to be schedhuled from startdatetime %s to enddatetime %s"%(startdtz, enddtz)
+                )
+                DT, is_cron, resp = get_datetime_list(job.cron, startdtz, enddtz, resp)
+                log.debug(
+                    "Jobneed will going to create for all this datetimes\n %s"%(pformat(DT))
+                )
                 F[str(job.id)] = is_cron
-                status = insert_into_jn_and_jnd(job, DT)
+                status, resp = insert_into_jn_and_jnd(job, DT, tzoffset, resp)
                 d.append({
                     "jobid"   : job.id,
                     "jobname" : job.jobname,
@@ -47,6 +59,7 @@ def create_job(jobs=None):
                          (pformat(F)))
             log.info("createJob()[end-] [%s of %s] parent job:= %s | jobid:= %s | cron:= %s" %
                      (idx, (total_jobs - 1), job.jobname, job.id, job.cron))
+    return resp
 
 
 def display_jobs_date_info(cdtz, mdtz, from_date, upto_date, ldtz):
@@ -61,15 +74,27 @@ def display_jobs_date_info(cdtz, mdtz, from_date, upto_date, ldtz):
     
 
 
-def calculate_startdtz_enddtz(job):
+def calculate_startdtz_enddtz(job, tzoffset):
+    """
+    this function determines or calculates what is 
+    the plandatetime & expirydatetime of a job for next 2 days or upto
+    upto_date.
+    """
+    
     log.info("calculating startdtz, enddtz for jobid:= [%s]" % (job.id))
-    tzoffset     = job.ctzoffset 
+    
     cdtz         = job.cdtz.replace(microsecond=0) + timedelta(minutes=tzoffset)
     mdtz         = job.mdtz.replace(microsecond=0)  + timedelta(minutes=tzoffset)
     vfrom        = job.from_date.replace(microsecond=0)  + timedelta(minutes=tzoffset)
     vupto        = job.upto_date.replace(microsecond=0) + timedelta(minutes=tzoffset)
     ldtz         = job.lastgeneratedon.replace(microsecond=0) + timedelta(minutes=tzoffset)
-    display_jobs_date_info(cdtz, mdtz, vfrom, vupto, ldtz)
+    # tzoffset     = job.ctzoffset 
+    # cdtz         = job.cdtz.replace(microsecond=0) 
+    # mdtz         = job.mdtz.replace(microsecond=0)  
+    # vfrom        = job.from_date.replace(microsecond=0)  
+    # vupto        = job.upto_date.replace(microsecond=0) 
+    # ldtz         = job.lastgeneratedon.replace(microsecond=0) 
+    # display_jobs_date_info(cdtz, mdtz, vfrom, vupto, ldtz)
     current_date= datetime.utcnow().replace(tzinfo=timezone.utc).replace(microsecond=0)
     current_date= current_date + timedelta(minutes= tzoffset)
 
@@ -91,11 +116,14 @@ def calculate_startdtz_enddtz(job):
 
 
 
-def get_datetime_list(cron_exp, startdtz, enddtz):
+def get_datetime_list(cron_exp, startdtz, enddtz, resp):
     """
-    calculates datetime_list for all jobs
-    upon given starttime and endtime.
+        this function calculates and returns array of next starttime
+        for every day upto enddatetime based on given cron expression.
+        Eg: 
+        returning all starttime's from 1/01/20xx --> 3/01/20xx based on cron exp.
     """
+    
     log.info("get_datetime_list(cron_exp, startdtz, enddtz) [start]")
     log.info("getting datetime list for cron:=%s, starttime:= '%s' and endtime:= '%s'" % (
         cron_exp, startdtz, enddtz))
@@ -117,6 +145,7 @@ def get_datetime_list(cron_exp, startdtz, enddtz):
             Exception: [cronexp:= %s]croniter bad cron error:= %s'
             % (cron_exp, str(ex))
         )
+        resp = rp.JsonResponse({"errors":"Bad Cron Error"}, status = 404)
         isValidCron = False
         log.error(
             'get_datetime_list(cron_exp, startdtz, enddtz) ERROR:', exc_info=True)
@@ -125,7 +154,7 @@ def get_datetime_list(cron_exp, startdtz, enddtz):
         log.info('Datetime list calculated are as follows:= %s' %
                  (pformat(DT, compact=True)))
     log.info("get_datetime_list(cron_exp, startdtz, enddtz) [end]")
-    return DT, isValidCron
+    return DT, isValidCron, resp
 
 
 def dt_local_to_utc(tzoffset, data, mob_or_web):
@@ -165,8 +194,7 @@ def handle_dict_of_datetimes(dateFormatMobile, dateFormatWeb, data, tzoffset,
         ):
             dtlist= re.findall(dateRegexWeb, value)
             dateFormate= dateFormatWeb
-        dtlist= list(set(dtlist))
-        if dtlist:
+        if dtlist := list(set(dtlist)):
             log.info("dt_local_to_utc got all date: %s"%dtlist)
             try:
                 tzoffset= int(tzoffset)
@@ -174,13 +202,12 @@ def handle_dict_of_datetimes(dateFormatMobile, dateFormatWeb, data, tzoffset,
                     udt= cdt= None
                     try:
                         udt = (
-                            datetime.datetime.strptime(
+                            datetime.strptime(
                                 str(item_), dateFormate
                             )
                             .replace(tzinfo=timezone.utc)
                             .replace(microsecond=0)
                         )
-
                         cdt= udt - timedelta(minutes= tzoffset)
                         data[key] = str(data[key]).replace(str(item_), str(cdt))
                     except Exception as ex:
@@ -206,8 +233,7 @@ def handle_list_of_datetimes(dateFormatMobile, dateFormatWeb, data, tzoffset,
     ):
         dtlist= re.findall(dateRegexWeb, data)
         dateFormate= dateFormatWeb
-    dtlist= list(set(dtlist))
-    if dtlist:
+    if dtlist := list(set(dtlist)):
         log.info("got all date %s"%(dtlist))
         try:
             tzoffset= int(tzoffset)
@@ -215,7 +241,7 @@ def handle_list_of_datetimes(dateFormatMobile, dateFormatWeb, data, tzoffset,
                 udt= cdt= None
                 try:
                     udt = (
-                        datetime.datetime.strptime(str(item), dateFormate)
+                        datetime.strptime(str(item), dateFormate)
                         .replace(tzinfo=timezone.utc)
                         .replace(microsecond=0)
                     )
@@ -230,20 +256,21 @@ def handle_list_of_datetimes(dateFormatMobile, dateFormatWeb, data, tzoffset,
             raise
 
 
-def insert_into_jn_and_jnd(job, DT):
+def insert_into_jn_and_jnd(job, DT, tzoffset, resp):
+    """
+        calculates expirydatetime for every dt in 'DT' list and
+        inserts into jobneed and jobneed-details for all dates
+        in 'DT' list.
+    """
     log.info("insert_into_jn_and_jnd() [ start ]")
     status   = None
     if len(DT) > 0:
         try:
-            from django.utils.timezone import get_current_timezone
             NONE_JN  = utils.get_or_create_none_jobneed()
-            NONE_JB  = utils.get_or_create_none_job()
-            NONE_P   = putils.get_or_create_none_people()
-            NONE_QSB = utils.get_or_create_none_qsetblng()
-            tz = get_current_timezone()
+            NONE_P   = utils.get_or_create_none_people()
             crontype = job.identifier
-            jobstatus = 'ASSIGNED',
-            jobtype = 'SCHEDULE',
+            jobstatus = am.Jobneed.JobStatus.ASSIGNED,
+            jobtype = am.Jobneed.JobType.SCHEDULE,
             jobdesc = f'{job.jobname} :: {job.jobdesc}'
             asset = am.Asset.objects.get(id=job.assetid_id)
             multiplication_factor = asset.asset_json['mult_factor']
@@ -252,19 +279,26 @@ def insert_into_jn_and_jnd(job, DT):
 
             mins = job.planduration + job.expirytime + job.gracetime
             peopleid = job.peopleid_id
-            params   = {'jobstatus':jobstatus, 'jobtype':jobtype,
-                        'm_factor':multiplication_factor, 'peopleid':peopleid,
-                        'NONE_P':NONE_P, 'jobdesc':jobdesc, 'NONE_JN':NONE_JN}
+            params   = {
+                'jobstatus':jobstatus, 'jobtype':jobtype,
+                'm_factor':multiplication_factor, 'peopleid':peopleid,
+                'NONE_P':NONE_P, 'jobdesc':jobdesc, 'NONE_JN':NONE_JN}
             for dt in DT:
-                dtstr = dt_local_to_utc(job.ctzoffset, str(dt.strftime("%d-%b-%Y %H:%M")), "cron")
-                dt   = datetime.strptime(dtstr[:16], "%Y-%m-%d %H:%M")
+                dtstr = dt_local_to_utc(tzoffset, str(dt.strftime("%d-%b-%Y %H:%M")), "cron")
+                dt   = datetime.strptime(dtstr[:16], "%d-%b-%Y %H:%M")
+                #dt = dt.strftime("%Y-%m-%d %H:%M")
+                #dt = datetime.strptime(dt, '%Y-%m-%d %H:%M').replace(tzinfo=timezone.utc)
                 pdtz = params['pdtz'] = dt
                 edtz = params['edtz'] = dt + timedelta(minutes=mins)
+                log.debug(
+                    'pdtz:=%s edtz:=%s'%(pdtz, edtz)
+                )
                 jn = insert_into_jn_for_parent(job, params)
-                insert_update_jobneeddetails(jn.id, job, parent=True)
+                isparent = crontype in (am.Job.Identifier.INTERNALTOUR, am.Job.Identifier.EXTERNALTOUR)
+                insert_update_jobneeddetails(jn.id, job, parent=isparent)
                 if isinstance(jn, am.Jobneed):
                     log.info("createJob() parent jobneedid:= %s" % (jn.id))
-                    if crontype == 'INTERNALTOUR':
+                    if crontype in (am.Job.Identifier.INTERNALTOUR, am.Job.Identifier.EXTERNALTOUR):
                         edtz = create_child_tasks(
                             job, pdtz, peopleid, jn.id, jobstatus, jobtype)
                         if edtz is not None:
@@ -277,11 +311,13 @@ def insert_into_jn_and_jnd(job, DT):
         except Exception as ex:
             status = 'failed'
             log.error('insert_into_jn_and_jnd() ERROR', exc_info=True)
+            resp = rp.JsonResponse({
+                "errors":"Failed to schedule jobs"}, status=404)
             raise ex
         else:
             status = "success"
         log.info("insert_into_jn_and_jnd() [ End ]")
-        return status
+        return status, resp
 
 
 def insert_into_jn_for_parent(job, params):
@@ -291,7 +327,7 @@ def insert_into_jn_for_parent(job, params):
             jobdesc        = params['jobdesc'], plandatetime       = params['pdtz'],
             expirydatetime = params['edtz'],    gracetime          = job.gracetime,
             assetid_id     = job.assetid_id,    qsetid_id          = job.qsetid_id,
-            aatop_id       = job.aatop_id,      peopleid_id        = params['peopleid'],
+            ctzoffset      = job.ctzoffset,     peopleid_id        = params['peopleid'],
             groupid_id     = job.groupid_id,    frequency          = 'NONE',
             priority       = job.priority,      jobstatus          = params['jobstatus'],
             performed_by   = params['NONE_P'],  jobtype            = params['jobtype'],
@@ -300,7 +336,7 @@ def insert_into_jn_for_parent(job, params):
             buid_id        = job.buid_id,       ticket_category_id = job.ticket_category_id,
             gpslocation    = '0.0,0.0',         remarks            = '',
             slno           = 0,                 mult_factor        = params['m_factor'],
-            clientid_id    = job.clientid_id,   ctzoffset          = job.ctzoffset,
+            clientid_id    = job.clientid_id,
         )
     except Exception:
         raise
@@ -360,7 +396,7 @@ def insert_into_jnd(qsb, job, jnid):
 def create_child_tasks(job, _pdtz, _peopleid, jnid, _jobstatus, _jobtype):
     try:
         prev_edtz = None
-        NONE_P = putils.get_or_create_none_people()
+        NONE_P = utils.get_or_create_none_people()
         from django.utils.timezone import get_current_timezone
         tz = get_current_timezone()
         mins = pdtz = edtz = None
@@ -479,10 +515,9 @@ def delete_from_jobneed(parentjobid, checkpointId, checklistId):
 def update_lastgeneratedon(job, pdtz):
     try:
         log.info('update_lastgeneratedon [start]')
-        rec = am.Job.objects.filter(id=job.id).update(
+        if rec := am.Job.objects.filter(id=job.id).update(
             lastgeneratedon=pdtz
-        )
-        if rec:
+        ):
             log.info("after lastgenreatedon:=%s" % (pdtz))
         log.info('update_lastgeneratedon [end]')
     except Exception:

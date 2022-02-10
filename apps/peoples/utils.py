@@ -74,7 +74,7 @@ def save_clientid_tenantid(instance, user, session, clientid=None, buid=None):
     tenantid = session.get('tenantid')
     if buid is None:
         buid = session.get('buid')
-    elif clientid is None:
+    if clientid is None:
         clientid = session.get('clientid')
     instance.tenant_id   = tenantid
     instance.clientid_id = clientid
@@ -131,7 +131,7 @@ def validate_mobileno(val):
 
 
 def save_tenant_client_info(request):
-    from apps.tenants.utils import hostname_from_request, get_tenants_map
+    from apps.core.utils import hostname_from_request, get_tenants_map
     from apps.onboarding.models import Bt
     from apps.tenants.models import Tenant
     try:

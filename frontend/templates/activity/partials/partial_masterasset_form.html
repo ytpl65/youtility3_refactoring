@@ -2,14 +2,14 @@
 
 
 {% block head %}
-{{ checkpoint_form.media.css }}
+{{ master_assetform.media.css }}
 {% endblock head %}
 
 
 {% block body %}
 <form action="" method="post" id="id_checkpointform">
     <div class="modal-header border-0">
-        <h3 class="modal-title modal-heading" id="exampleModalLabel">Create Checkpoint <i
+        <h3 class="modal-title modal-heading" id="exampleModalLabel">Create {{ label }} <i
                 class="fas fa-poll-h fa-sm ch4"></i></h3>
         <button type="button" class="btn-sm btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
     </div>
@@ -23,57 +23,57 @@
         <!--============================== FORM FIELDS START =============================-->
         <div class="row mb-3 gy-3">
             <!--CHeckpoint Name Start-->
-            <label for="{{ checkpoint_form.assetname.id_for_label }}" class="required col-md-1">Name:</label>
+            <label for="{{ master_assetform.assetname.id_for_label }}" class="required col-md-1">Name:</label>
             <div class="col-md-11">
-                {{ checkpoint_form.assetname }}
-                {{ checkpoint_form.assetname.errors }}
+                {{ master_assetform.assetname }}
+                {{ master_assetform.assetname.errors }}
             </div>
             <!--CHeckpoint Name End-->
             
             <!--CHeckpoint Code Start-->
-            <label for="{{ checkpoint_form.assetcode.id_for_label }}" class="required col-md-1">Code:</label>
+            <label for="{{ master_assetform.assetcode.id_for_label }}" class="required col-md-1">Code:</label>
             <div class="col-md-11">
-                {{ checkpoint_form.assetcode }}
-                {{ checkpoint_form.assetcode.errors }}
+                {{ master_assetform.assetcode }}
+                {{ master_assetform.assetcode.errors }}
             </div>
             <!--CHeckpoint Code End-->
             
             <!--Running Status Start-->
-            <label for="{{ checkpoint_form.runningstatus.id_for_label }}" class="required col-md-1">Status:</label>
+            <label for="{{ master_assetform.runningstatus.id_for_label }}" class="required col-md-1">Status:</label>
             <div class="col-md-5">
-                {{ checkpoint_form.runningstatus }}
-                {{ checkpoint_form.runningstatus.errors }}
+                {{ master_assetform.runningstatus }}
+                {{ master_assetform.runningstatus.errors }}
             </div>
             <!--Running Status End-->
             
             <!--Type Start-->
-            <label for="{{ checkpoint_form.type.id_for_label }}" class="required col-md-1">Type:</label>
+            <label for="{{ master_assetform.type.id_for_label }}" class="required col-md-1">Type:</label>
             <div class="col-md-5">
-                {{ checkpoint_form.type }}
-                {{ checkpoint_form.type.errors }}
+                {{ master_assetform.type }}
+                {{ master_assetform.type.errors }}
             </div>
             <!--Type End-->
             
             <!--Belongs To Start-->
-            <label for="{{ checkpoint_form.parent.id_for_label }}" class="required col-md-1">Belongs To:</label>
+            <label for="{{ master_assetform.parent.id_for_label }}" class="required col-md-1">Belongs To:</label>
             <div class="col-md-5">
-                {{ checkpoint_form.parent }}
-                {{ checkpoint_form.parent.errors }}
+                {{ master_assetform.parent }}
+                {{ master_assetform.parent.errors }}
             </div>
             <!--Belongs To End-->
             
             <!--GPS Location Start-->
-            <label for="{{ checkpoint_form.gpslocation.id_for_label }}" class="required col-md-1">GPS:</label>
+            <label for="{{ master_assetform.gpslocation.id_for_label }}" class="required col-md-1">GPS:</label>
             <div class="col-md-5">
-                {{ checkpoint_form.gpslocation }}
-                {{ checkpoint_form.gpslocation.errors }}
+                {{ master_assetform.gpslocation }}
+                {{ master_assetform.gpslocation.errors }}
             </div>
             <!--GPS Location End-->
             
             <!--Asset Identifier Start-->
 
-            {{ checkpoint_form.identifier }}
-            {{ checkpoint_form.identifier.errors }}
+            {{ master_assetform.identifier }}
+            {{ master_assetform.identifier.errors }}
 
             <!--Asset Identifier End-->
 
@@ -81,9 +81,9 @@
             <!-- Critical Start -->
             <div class="booleans col-md-3 d-flex justify-content-sm-between mt-5
             form-check form-switch form-check-custom form-check-solid">
-                <label for="{{ checkpoint_form.iscritical.id_for_label }}"
+                <label for="{{ master_assetform.iscritical.id_for_label }}"
                     class="form-check-label bool col-form-label me-5 text-sm-right">
-                    {{ checkpoint_form.iscritical.label }}: &nbsp; {{ checkpoint_form.iscritical }}
+                    {{ master_assetform.iscritical.label }}: &nbsp; {{ master_assetform.iscritical }}
                 </label>
             </div>
             <!-- Critical End -->
@@ -91,9 +91,9 @@
             <!-- Enable Start -->
             <div class="booleans col-md-2 d-flex justify-content-sm-between mt-5
             form-check form-switch form-check-custom form-check-solid">
-                <label for="{{ checkpoint_form.enable.id_for_label }}"
+                <label for="{{ master_assetform.enable.id_for_label }}"
                     class="form-check-label bool col-form-label me-5 text-sm-right">
-                    {{ checkpoint_form.enable.label }}: &nbsp; {{ checkpoint_form.enable }}
+                    {{ master_assetform.enable.label }}: &nbsp; {{ master_assetform.enable }}
                 </label>
             </div>
             <!-- Enable End -->
@@ -108,13 +108,13 @@
          data-bs-dismiss="modal">
             Close <i class="fas fa-times"></i>
         </button>
-        {% if checkpoint_form.instance.id %}
+        {% if master_assetform.instance.id %}
             <button type="submit" id="submit" class="btn btn-sm btn-primary btn-hover-scale">
                 Update&nbsp;<i class="fas fa-cloud-upload-alt"></i>
             </button>
             
             <button type="button" onclick="deleteCheckpoint(this)"
-             data-id="{{ checkpoint_form.instance.id }}" id="deleteCp"
+             data-id="{{ master_assetform.instance.id }}" id="deleteCp"
                 class="btn btn-sm btn-danger btn-hover-scale">
                 Delete&nbsp;<i class="fas fa-trash-alt"></i>
             </button>
@@ -129,12 +129,12 @@
 
 
 {% block js %}
-{{ checkpoint_form.media.js }}
+
+{{ master_assetform.media.js }}
 <script>
 
     //$('.optionGrp').hide()
     $('form').find("label").addClass("col-md-1")
-
     $(document).ready(() => {
         //remove class to label which was added from above
         $('.booleans label').removeClass('col-md-1')

@@ -20,6 +20,7 @@ from django.contrib import messages
 from django.db.models import RestrictedError
 from .models import Capability, Pgroup, People
 from .utils import save_userinfo, save_pgroupbelonging
+from apps.core import utils
 import apps.peoples.utils as putils
 from .forms import CapabilityForm, PgroupForm, PeopleForm, PeopleExtrasForm, LoginForm
 logger = logging.getLogger('django')
@@ -46,7 +47,7 @@ class SignIn(View):
         return render(request, self.template_path, context={'loginform': form})
 
     def post(self, request, *args, **kwargs):
-        from .utils import save_user_session, display_user_session_info
+        from .utils import  display_user_session_info
         form, response = LoginForm(request.POST), None
         logger.info('form submitted')
         try:
@@ -64,7 +65,7 @@ class SignIn(View):
                     request, username=loginid, password=password)
                 if people:
                     login(request, people)
-                    save_user_session(request, request.user)
+                    utils.save_user_session(request, request.user)
                     display_user_session_info(request.session)
                     logger.info("User logged in {}".format(
                         request.user.peoplecode))
@@ -756,23 +757,23 @@ class Capability(View):
                 *self.params['related']).filter(
                     ~Q(capscode='NONE'), enable=True
             ).values(*self.params['fields'])
-            resp = putils.render_grid(
+            resp = utils.render_grid(
                 request, self.params, "capability_view", objs)
 
         # return cap_form empty
         elif R.get('action', None) == 'form':
             cxt = {'cap_form': self.params['form_class'](request=request),
                    'msg': "create capability requested"}
-            resp = putils.render_form(request, self.params, cxt)
+            resp = utils.render_form(request, self.params, cxt)
 
         # handle delete request
         elif R.get('action', None) == "delete" and R.get('id', None):
             print(f'resp={resp}')
-            resp = putils.render_form_for_delete(request, self.params, True)
+            resp = utils.render_form_for_delete(request, self.params, True)
         # return form with instance
         elif R.get('id', None):
             obj = putils.get_model_obj(int(R['id']), request, self.params)
-            resp = putils.render_form_for_update(
+            resp = utils.render_form_for_update(
                 request, self.params, "cap_form", obj)
         print(f'return resp={resp}')
         return resp
@@ -795,7 +796,7 @@ class Capability(View):
                 resp = self.handle_valid_form(form, request)
             else:
                 cxt = {'errors': form.errors}
-                resp = putils.handle_invalid_form(request, self.params, cxt)
+                resp = utils.handle_invalid_form(request, self.params, cxt)
         except Exception:
             resp = putils.handle_Exception(request)
         return resp
@@ -841,7 +842,7 @@ class People(View):
                 *self.params['related']).filter(
                     ~Q(peoplecode='NONE'), enable=True
             ).values(*self.params['fields'])
-            resp = putils.render_grid(
+            resp = utils.render_grid(
                 request, self.params, "people_view", objs)
 
         # return cap_form empty
@@ -850,19 +851,19 @@ class People(View):
                    'pref_form': self.params['json_form'](session=request.session),
                    'ta_form': obf.TypeAssistForm(auto_id=False),
                    'msg': "create people requested"}
-            resp = putils.render_form(request, self.params, cxt)
+            resp = utils.render_form(request, self.params, cxt)
 
         # handle delete request
         elif R.get('action', None) == "delete" and R.get('id', None):
             print(f'resp={resp}')
-            resp = putils.render_form_for_delete(request, self.params, True)
+            resp = utils.render_form_for_delete(request, self.params, True)
         # return form with instance
         elif R.get('id', None):
             from .utils import get_people_prefform
             people = putils.get_model_obj(R['id'], request, self.params)
             cxt = {'pref_form': get_people_prefform(people, request.session),
                    'ta_form': obf.TypeAssistForm(auto_id=False)}
-            resp = putils.render_form_for_update(
+            resp = utils.render_form_for_update(
                 request, self.params, 'peopleform', people, cxt)
         print(f'return resp={resp}')
         return resp
@@ -889,7 +890,7 @@ class People(View):
                 resp = self.handle_valid_form(form, jsonform, request)
             else:
                 cxt = {'errors': form.errors}
-                resp = putils.handle_invalid_form(request, self.params, cxt)
+                resp = utils.handle_invalid_form(request, self.params, cxt)
         except Exception:
             resp = putils.handle_Exception(request)
         return resp

@@ -1,13 +1,13 @@
 {% extends "partial_base.html" %}
 
 {% block head %}
-{{ qset_form.media.css }}
+{{ masterqset_form.media.css }}
 {% endblock head %}
 
 {% block body %}
 
 <div class="modal-header border-0">
-    <h3 class="modal-title modal-heading" id="exampleModalLabel">Create Question Set <i
+    <h3 class="modal-title modal-heading" id="exampleModalLabel">Create {{ label }} <i
             class="fas fa-poll-h fa-sm ch4"></i></h3>
     <button type="button" class="btn-sm btn-close modal-close-control" aria-label="Close"></button>
 </div>
@@ -21,42 +21,42 @@
         <!--============================== QuestionSet FORM FIELDS START =============================-->
         <div class="row mb-3 gy-3">
             <!--Qusetion Set Name Start-->
-            <label for="{{ qset_form.qset_name.id_for_label }}" class="required col-md-1 col-sm-1">Name:</label>
+            <label for="{{ masterqset_form.qset_name.id_for_label }}" class="required col-md-1 col-sm-1">Name:</label>
             <div class="col-md-11 col-sm-11">
-                {{ qset_form.qset_name }}
-                {{ qset_form.qset_name.errors }}
+                {{ masterqset_form.qset_name }}
+                {{ masterqset_form.qset_name.errors }}
             </div>
             <!--Qusetion Set Name End-->
 
             <!--Checkpoint Start-->
-            <label for="{{ qset_form.assetincludes.id_for_label }}"
-                class="required col-md-1 col-sm-1">Checkpoints:</label>
-            <div class="col-md-11 col-sm-11">
-                {{ qset_form.assetincludes }}
-                {{ qset_form.assetincludes.errors }}
+            <label for="{{ masterqset_form.assetincludes.id_for_label }}"
+                class="required col-md-2 col-sm-2">{% if label == 'Checklist' %}Checkpoints{% else %} Asset/Smartplace{% endif %}:</label>
+            <div class="col-md-10 col-sm-10">
+                {{ masterqset_form.assetincludes }}
+                {{ masterqset_form.assetincludes.errors }}
             </div>
             <!--Checkpoint End-->
 
             <!-- Parent Start -->
-            <label for="{{ qset_form.parent.id_for_label }}" class="required col-md-1 col-sm-1">Parent:</label>
+            <label for="{{ masterqset_form.parent.id_for_label }}" class="required col-md-1 col-sm-1">Parent:</label>
             <div class="col-md-7 col-sm-7">
-                {{ qset_form.parent }}
-                {{ qset_form.parent.errors }}
+                {{ masterqset_form.parent }}
+                {{ masterqset_form.parent.errors }}
             </div>
             <!-- Parent End -->
 
             <!-- Enable Start -->
             <div class="booleans col-md-4 col-sm-4 d-flex justify-content-sm-between mt-5
             form-check form-switch form-check-custom form-check-solid">
-                <label for="{{ qset_form.enable.id_for_label }}"
+                <label for="{{ masterqset_form.enable.id_for_label }}"
                     class="form-check-label bool col-form-label me-5 text-sm-right">
-                    {{ qset_form.enable.label }}: &nbsp; {{ qset_form.enable }}
+                    {{ masterqset_form.enable.label }}: &nbsp; {{ masterqset_form.enable }}
                 </label>
             </div>
             <!-- Enable End -->
 
             <!--QuestionSet Type Start-->
-            {{ qset_form.type }}
+            {{ masterqset_form.type }}
             <!--QuestionSet Type End-->
         </div>
     </form>
@@ -66,7 +66,7 @@
 
 
     <!--============================== QuestionSet FORM FIELDS END ============================-->
-    {# {% if qset_form.instance.id %} #}
+    {# {% if masterqset_form.instance.id %} #}
     <div class="accordion" id="assign_questions">
         <div class="accordion-item">
             <!--begin::Header-->
@@ -82,24 +82,15 @@
             <!--begin::Body-->
             <form action="" method="post" id="qsetbng_form">
                 <div id="assign_questions_body" aria-labelledby="assign_questions_heading"
-                    class=" ps-10 {% if qset_form.instance.id %} {% else %} collapse {% endif %}"
+                    class=" ps-10 {% if masterqset_form.instance.id %} {% else %} collapse {% endif %}"
                     data-bs-parent="#assign_questions">
                     <br>
                     <div class="row fv-row mb-3 gy-2">
-                        <!--Qusetion Set Belonging Serial No Start-->
-                        <label for="{{ qsetbng.slno.id_for_label }}" class="required col-md-1 col-sm-1">Serial
-                            No:</label>
-                        <div class="col-md-2 col-sm-2">
-                            {{ qsetbng.slno }}
-                            {{ qsetbng.slno.errors }}
-                        </div>
-                        <!--Qusetion Set Belonging Serial No End-->
-
 
                         <!--Qusetion Set Belonging Question Start-->
                         <label for="{{ qsetbng.quesid.id_for_label }}"
-                            class="required col-md-1 col-sm-1">Question:</label>
-                        <div class="col-md-8 col-sm-8">
+                            class="required col-md-2 col-sm-2">Question:</label>
+                        <div class="col-md-10 col-sm-10">
                             {{ qsetbng.quesid }}
                             {{ qsetbng.quesid.errors }}
                         </div>
@@ -226,12 +217,12 @@
     <button type="button" class="btn btn-sm btn-secondary modal-close-control btn-hover-scale">
         Close <i class="fas fa-times"></i>
     </button>
-    {% if qset_form.instance.id %}
+    {% if masterqset_form.instance.id %}
     <button type="submit" id="submit" form="id_qsetform" class="btn btn-sm btn-primary btn-hover-scale">
         Update&nbsp;<i class="fas fa-cloud-upload-alt"></i>
     </button>
 
-    <button type="button" onclick="deleteQset(this)" data-id="{{ qset_form.instance.id }}" id="deleteAttd"
+    <button type="button" onclick="deleteQset(this)" data-id="{{ masterqset_form.instance.id }}" id="deleteAttd"
         class="btn btn-sm btn-danger btn-hover-scale">
         Delete&nbsp;<i class="fas fa-trash-alt"></i>
     </button>
@@ -245,7 +236,8 @@
 
 
 {% block js %}
-{{ qset_form.media.js }}
+{{ masterqset_form.media.js }}
+<script src="{{ static('assets/js/formValidations.js') }}"></script>
 <script>
     //$('.optionGrp').hide()
     $('form').find("label").addClass("col-md-1 col-sm-1")
@@ -404,12 +396,6 @@
 
     }
 
-    //adjust form
-    function adjustForm(table) {
-        var lastrow = table.row(table.rows().count() - 1).data();
-        $("#id_slno").val(parseInt(lastrow[0]) + 1)
-    }
-
     //checks duplicates before inserting into 
     //datatable -> "List of Assigned Questions" 
     function check_for_duplicates(table, dataToInsert) {
@@ -430,9 +416,8 @@
         console.log("Getting question formdata [END]")
         data = cleanData(data)
         console.log('cleanData started [ENDED]')
-        var slno = data.id_slno
         rowdata = [
-            data.id_slno, data.id_quesid, data.question_id, data.id_answertype, data.id_min,
+            -1, data.id_quesid, data.question_id, data.id_answertype, data.id_min,
             data.id_max, data.id_options, data.id_alerton, data.id_ismandatory
         ]
         table.row('.toupdate').remove().draw(false);
@@ -442,9 +427,7 @@
         console.log("Is Duplicated ", isduplicate)
         if (!isduplicate) {
             table.row.add(rowdata).draw()
-            //setSlno(parseInt(slno) + 1)
             resetForm(optionTag)
-            //adjustForm(table)
             $("#deleteQuestion").hide();
         } else {
             let heading = "Duplicate Record"
@@ -500,10 +483,6 @@
         })
     }
 
-    function setSlno(no){
-        $("#id_slno").val(no)
-    }
-
     function getSlnoFromTable(){
         var lastrow = table.row(table.rows().count() - 1).data();
         const slno = lastrow.length > 0 ? parseInt(lastrow[0]) + 1 : {};
@@ -533,16 +512,16 @@
                 tableData[row][0] = seq
             }
             table.rows.add(tableData).draw()
-        } else if ('{{ qset_form.instance.id }}' !== ('None' || "")) {
+        } else if ('{{ masterqset_form.instance.id }}' !== ('None' || "")) {
             //update row
             var lastrow = table.row(table.rows().count() - 1).data();
             slno = lastrow.length > 0 ? parseInt(lastrow[0]) + 1 : ++slno;
-            $("#id_slno").val(slno)
+            
 
         } else {
             //create row
             ++slno;
-            $("#id_slno").val(slno)
+            
             $("#id_slno").prop("readonly", true)
         }
     }
@@ -575,13 +554,13 @@
         // Datatable configuration 
         table = $('#assigned_ques_table').DataTable({
             responsive: true,
+            rowReorder: true,
             fixedHeader: true,
             paging: false,
             lengthChange: false,
             order: [
                 [0, "asc"]
             ],
-            ordering: false,
             scrollCollapse: true,
             sDom: "",
             ordering: true,
@@ -639,12 +618,14 @@
                     qsetbng_form_validator.validate().then(function (status) {
                         if (status === 'Valid') {
                             processValidForm()
+                            adjustSlnoInTable()
                             console.log("processing valid form [END]")
                         }
                     })
                 }
             } else {
                 processValidForm()
+                adjustSlnoInTable()
                 console.log("processing valid form [END]")
             }
         });
@@ -662,29 +643,29 @@
                 }else if(result.isDenied){
                     //delete checkpoint request
                     addRemoveClass(this)
+                    const isDeleted = false
                     console.log("delete initiated")
-                    if ('{{ qset_form.instance.id }}' !== ('None' || "")) {
+                    if ('{{ masterqset_form.instance.id }}' !== ('None' || "")) {
                         data = table.row('.selected').data()
                         console.log(data)
-                        deleteQuestionRequest(data[1], data[3], "{{ qset_form.instance.id }}")
-                    }table.row('.selected').remove().draw();
-                    adjustSlnoInTable()
-                    setSlno(getSlnoFromTable())
+                        isDeleted = deleteQuestionRequest(data[1], data[3], "{{ masterqset_form.instance.id }}")
+                    }if(isDeleted){
+                        table.row('.selected').remove().draw();
+                        adjustSlnoInTable()
+                    }
                 }
             })
         })
 
         //on click delete-btn of questionform delete the row from the datatable
         $("#deleteQuestion").on('click', function () {
-            if ('{{ qset_form.instance.id }}' !== ('None' || "")) {
-                console.log('{{ qset_form.instance.id }}')
+            if ('{{ masterqset_form.instance.id }}' !== ('None' || "")) {
+                console.log('{{ masterqset_form.instance.id }}')
                 data = table.row('.toupdate').data()
-                console.log("%%%%%%%%%%%%%%%", data, data[1])
-                deleteQuestionRequest(data[1], data[3], "{{ qset_form.instance.id }}")
+                deleteQuestionRequest(data[1], data[3], "{{ masterqset_form.instance.id }}")
             }
             table.row('.toupdate').remove().draw();
             adjustSlnoInTable()
-            //setSlno(getSlnoFromTable())
 
             $("#deleteQuestion").hide()
             $("#qsetbng_form").trigger("reset")
@@ -693,7 +674,7 @@
         })
 
         $(".modal-close-control").on("click", function () {
-            if ('{{ qset_form.instance.id }}' !== ('None' || "")) {
+            if ('{{ masterqset_form.instance.id }}' !== ('None' || "")) {
                 if (checkQsetWoQuestions(table)) {
                     questionsWoQuestionSetAlert()
                 } else {
@@ -705,12 +686,15 @@
                         })
                 }
             } else {
-                warnFormCLoseAlert()
+                if("{{ masterqset_form.is_bound }}" == "True" || table.rows().count() > 0 ){
+                    warnFormCLoseAlert()
                     .then((result) => {
                         if (result.isConfirmed) {
                             $(modal_id).modal('hide')
                         }
                     })
+                }else{$(modal_id).modal('hide')}
+                
             }
         })
 

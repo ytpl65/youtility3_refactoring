@@ -24,8 +24,7 @@ def cache_it(key, val, time = 1*60):
 
 def get_from_cache(key):
     from django.core.cache import cache
-    data = cache.get(key)
-    if data:
+    if data := cache.get(key):
         logger.info('Got from cache %s'%(key))
         return data
     else:
@@ -81,7 +80,7 @@ def render_form_for_update(request, params, formname, obj, extra_cxt={}):
     try:
         logger.info("object retrieved '{}'".format(obj))
         F = params['form_class'](
-            instance=obj, request=request, **params['form_initials'])
+            instance=obj, request=request, initial = params['form_initials'])
         C = {formname: F, 'edit': True}
         C.update(extra_cxt)
         html = render_to_string(params['template_form'], C, request)
@@ -113,15 +112,19 @@ def render_form_for_delete(request, params, master=False):
         return handle_Exception(request, params)
 
 
-def render_grid(request, params, msg, objs):
+def render_grid(request, params, msg, objs, extra_cxt = None):
+    if extra_cxt is None:
+        extra_cxt = {}
+    
     from django.core.exceptions import EmptyResultSet
     logger.info("render grid")
     try:
         logger.info("%s", msg)
-        logger.info("objects retreived from database")
+        logger.info('objects %s retrieved from db'%len(objs) if objs else "No Records!")
         logger.info("Pagination Starts"if objs else "")
         cxt = paginate_results(request, objs, params)
-        logger.info("Pagination Ends")
+        logger.info("Pagination Ends" if objs else "")
+        if extra_cxt: cxt.update(extra_cxt)
         resp = scts.render(request, params['template_list'], context=cxt)
     except EmptyResultSet:
         resp = handle_EmptyResultSet(request, params, cxt)
@@ -134,7 +137,7 @@ def paginate_results(request, objs, params):
     from django.core.paginator import (Paginator,
      EmptyPage, PageNotAnInteger)
 
-    logger.info('paginate results')
+    logger.info('paginate results'if objs else "")
     if request.GET:
         objs = params['filter'](request.GET, queryset=objs).qs
     filterform = params['filter']().form
@@ -210,7 +213,7 @@ def get_or_create_none_people(using=None):
         defaults={
             'peoplecode': 'NONE', 'peoplename': 'NONE',
             'email': "none@youtility.in", 'dateofbirth': '1111-1-1',
-            'dateofjoin': "1111-1-1",
+            'dateofjoin': "1111-1-1", 'id':-1
         }
     )
     return obj
@@ -220,7 +223,7 @@ def get_or_create_none_pgroup():
     obj, _ = pm.Pgroup.objects.get_or_create(
         groupname='NONE',
         defaults={
-            'groupname': "NONE"
+            'groupname': "NONE", 'id':-1
         }
     )
     return obj
@@ -230,7 +233,7 @@ def get_or_create_none_cap():
     obj, _ = pm.Capability.objects.filter(Q(capscode='NONE')).get_or_create(
         capscode='NONE',
         defaults={
-            'capscode': "NONE", 'capsname': 'NONE',
+            'capscode': "NONE", 'capsname': 'NONE', 'id':-1
         }
     )
     return obj
@@ -469,11 +472,11 @@ def save_msg(request):
 def initailize_form_fields(form):
     for visible in form.visible_fields():
         if visible.widget_type not in ['file', 'checkbox', 'radioselect', 'clearablefile', 'select', 'selectmultiple']:
-            visible.field.widget.attrs['class'] = 'form-control'
+            visible.field.widget.attrs['class'] = 'form-control form-control-solid'
         if visible.widget_type == 'checkbox':
             visible.field.widget.attrs['class'] = 'form-check-input h-20px w-30px'
         if visible.widget_type in ['select2', 'modelselect2', 'select2multiple']:
-            visible.field.widget.attrs['class'] = 'form-select'
+            visible.field.widget.attrs['class'] = 'form-select form-select-solid'
             visible.field.widget.attrs['data-placeholder'] = 'Select an option'
             visible.field.widget.attrs['data-allow-clear'] = 'true'
 
@@ -500,16 +503,14 @@ def get_tenants_map():
 
 # RETURN HOSTNAME FROM REQUEST 
 def hostname_from_request(request):
-    # split on `:` to remove port
-    hostname = request.get_host().split(':')[0].lower()
-    return hostname
+    return request.get_host().split(':')[0].lower()
 
 
 def get_or_create_none_bv():
     obj, _ = Bt.objects.filter(Q(bucode='NONE') | Q(buname='NONE')).get_or_create(
         bucode='NONE',
         defaults={
-            'bucode':"NONE", 'buname':"NONE"
+            'bucode':"NONE", 'buname':"NONE",'id':-1
         }
     )
     return obj
@@ -519,7 +520,7 @@ def get_or_create_none_typeassist():
     obj, _ = TypeAssist.objects.filter(Q(tacode='NONE') | Q(taname='NONE')).get_or_create(
         tacode='NONE',
         defaults={
-            'tacode':"NONE", 'taname':"NONE", 
+            'tacode':"NONE", 'taname':"NONE",'id':-1
         }
     )
     return obj
@@ -549,7 +550,8 @@ def get_or_create_none_job():
             'cron'        : "no_cron", 'lastgeneratedon': date,
             'planduration': 0,         'expirytime'     : 0,
             'gracetime'   : 0,         'priority'       : 'LOW',
-            'slno'        : -1,        'scantype'       : 'SKIP'
+            'slno'        : -1,        'scantype'       : 'SKIP',
+            'id':-1
         }
     )
     return obj
@@ -563,7 +565,7 @@ def get_or_create_none_jobneed():
             'jobdesc'          : "NONE", 'plandatetime': date,
             'expirydatetime'   : date,   'gracetime'   : 0,
             'recievedon_server': date,   'slno'        : -1,
-            'scantype'         : "NONE"
+            'scantype'         : "NONE", 'id':-1
         }
     )
     return obj
@@ -574,7 +576,7 @@ def get_or_create_none_qset():
         Q(qset_name = 'NONE') | Q(qset_name = 'None')).get_or_create(
         qset_name = 'NONE',
         defaults={
-            'qset_name':"NONE"}
+            'qset_name':"NONE", 'id':-1}
     )
     return obj
 
@@ -583,7 +585,7 @@ def get_or_create_none_question():
         Q(ques_name = 'NONE')).get_or_create(
         ques_name = 'NONE',
         defaults = {
-            'ques_name':"NONE"}
+            'ques_name':"NONE", 'id':-1}
     )
     return obj
 
@@ -595,7 +597,7 @@ def get_or_create_none_qsetblng():
         defaults = {
             'qsetid'     : get_or_create_none_qset(),
             'quesid'     : get_or_create_none_question(),
-            'answertype' : 'NUMERIC',
+            'answertype' : 'NUMERIC', 'id':-1, 
             'ismandatory': False}
     )
     return obj
@@ -607,7 +609,7 @@ def get_or_create_none_asset():
         defaults={
             'assetcode'    : "NONE", 'assetname' : 'NONE',
             'iscritical'   : False,  'identifier': 'NONE',
-            'runningstatus': 'SCRAPPED'
+            'runningstatus': 'SCRAPPED', 'id':-1
         }
     )
     return obj
@@ -617,16 +619,12 @@ def create_none_entries(db):
     '''
     Creates None entries in self relationship models.
     '''
-    from apps.tenants.middlewares import set_db_for_router
     try:
         set_db_for_router(db)
     except ValueError:
         print("Database with this alias not exist operation can't be performed")
     else:
         print(f"Creating None entries for {db}")
-        import apps.peoples.utils as putils
-        import apps.onboarding.utils as outils
-        import apps.schedhuler.utils as sutils
         get_or_create_none_typeassist()
         get_or_create_none_people()
         get_or_create_none_bv()
@@ -636,10 +634,9 @@ def create_none_entries(db):
         get_or_create_none_jobneed()
         get_or_create_none_qset()
         print("Successfully created none entries for 'TypeAssist', 'People', 'Bv',\
-         'Capability', 'Pgroup', 'Job', 'Jobneed', 'QuestionSet")
+         \'Capability', 'Pgroup', 'Job', 'Jobneed', 'QuestionSet")
     
 def create_super_admin(db):
-    from apps.tenants.middlewares import set_db_for_router
     try:
         set_db_for_router(db)
     except ValueError:
@@ -675,5 +672,12 @@ def set_db_for_router(db):
     from django.conf import settings
     dbs = settings.DATABASES
     if db not in dbs:
+        print('raised')
         raise ValueError("Database with this alias not exist!")
     setattr(THREAD_LOCAL, "DB", db)
+    
+def display_post_data(post_data):
+    logger.info(
+        "\n%s"%(pformat(post_data, compact=True))
+    )
+    

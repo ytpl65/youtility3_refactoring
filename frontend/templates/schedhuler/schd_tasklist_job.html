@@ -3,31 +3,26 @@
 
 <!---- BEGIN CARD TITLE ------>
 {% block card_title %}
-Schedhuled External Tour List
+Schedhuled Tasks
 {% endblock card_title %}
 <!----- END CARD TITLE -------->
-
-<!-- 
-VARIABLE DEFINITIONS FOR DEVELOPERS
-ext_schdtour_filter = 'External ScheduleTour Filter',
-ext_schdtour_list = 'External ScheduleTour List',
--->
 
 
 <!------------------------------------ BEGIN PAGE BREADCUMBS ------------------------------------>
 {% block pagebreadcumb %}
 {{ super() }}
-<li class="breadcrumb-item pe-3"><a href="javascript:void(0)" class="pe-3">Scheduled External Tour List</a></li>
+<li class="breadcrumb-item pe-3"><a href="javascript:void(0)" class="pe-3">Scheduled Tasks</a></li>
 {% endblock pagebreadcumb %}
 <!------------------------------------- END PAGE BREADCUMBS ------------------------------------->
 
 
 <!-------------------------------------------- BEGIN Schedhuled External Tour TABLE ------------------------------------------->
 {% block table %}
-<table id="ext_schdtour_table" class="display cell-border" style="width:100%">
+<table id="schd_task_table" class="display cell-border compact hover" style="width:100%">
     <thead class="fw-bold fs-6">
         <th>Name</th>
-        <th>BV</th>
+        <th>Asset</th>
+        <th>Question Set</th>
         <th>People/Group</th>
         <th>From</th>
         <th>To</th>
@@ -37,8 +32,8 @@ ext_schdtour_list = 'External ScheduleTour List',
     </thead>
     <!---------- BEGIN TABLE FILTER FIELDS --------->
 	<thead id="filter_row">
-    <form action="" id='ext_schdtour_filter' method='get'>
-    {% for field in ext_schdtour_filter %}
+    <form action="" id='schd_task_filter' method='get'>
+    {% for field in schd_task_filter %}
         <th>
             <input type="text" 
             id="{{ field.auto_id }}" 
@@ -50,10 +45,11 @@ ext_schdtour_list = 'External ScheduleTour List',
     </thead>
     <!---------- END TABLE FILTER FIELDS --------->
     <tbody>
-        {% for tour in ext_schdtour_list %}
+        {% for tour in schd_task_list %}
         <tr>
-            <td><a href="{{ url('schedhuler:update_externaltour', args=[tour['id']]) }}">{{ tour['jobname'] }}</a></td>
-            <td><a href="{{ url('schedhuler:update_externaltour', args=[tour['id']]) }}">{{ tour['jobname'] }}</a></td>
+            <td><a href="{{ url('schedhuler:update_task', args=[tour['id']]) }}">{{ tour['jobname'] }}</a></td>
+            <td>{{ tour['assetid__assetname'] }}</td>
+            <td>{{ tour['qsetid__qset_name'] }} </td>
             <td>{{ tour['peopleid__peoplename'] or tour['groupid__groupname'] }} </td>
             <td>{{ tour['from_date'] |to_local }}</td>
             <td>{{ tour['upto_date'] |to_local }}</td>
@@ -65,9 +61,9 @@ ext_schdtour_list = 'External ScheduleTour List',
     </tbody>
 </table>
 
-{% if ext_schdtour_list and ext_schdtour_list.has_other_pages %}
+{% if schd_task_list and schd_task_list.has_other_pages %}
 <!-- BEGIN PAGINATOIN -->
-{{ paginator(ext_schdtour_list) }}
+{{ paginator(schd_task_list) }}
 <!-- END PAGINATOIN ---->
 {% endif %}
 {% endblock table %}
@@ -77,9 +73,9 @@ ext_schdtour_list = 'External ScheduleTour List',
 <!--------- BEGIN EXTRA SCRIPTS ----------------------------->
 {% block extra_scripts %}
 <script>
-	var table           = null;
-	const formFilter      = "#ext_schdtour_filter"
-	const table_id        = "#ext_schdtour_table"
+	var table             = null;
+	const formFilter      = "#schd_task_filter"
+	const table_id        = "#schd_task_table"
 
     $(document).ready(function (){
         $("input").keypress(function(event) {
@@ -113,7 +109,7 @@ ext_schdtour_list = 'External ScheduleTour List',
 					//action for add_new_button 
 					action: function(e, dt, node, config){
                         //This will send the page to the location specified
-        				window.location.href = "{{ url('schedhuler:create_externaltour') }}";
+        				window.location.href = "{{ url('schedhuler:create_task') }}";
 					}
 				}
 			]

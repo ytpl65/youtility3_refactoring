@@ -1,7 +1,8 @@
+from random import lognormvariate
 import apps.schedhuler.utils as sutils
 import apps.peoples.utils as putils
 from django.db.models import Q
-import apps.core.utils 
+from apps.core import  utils 
 import apps.schedhuler.filters as sdf
 from django.http import HttpRequest, QueryDict
 from pprint import pformat
@@ -11,7 +12,7 @@ from django.views import View
 from django.contrib import messages
 from django.shortcuts import redirect, render
 from django.core.exceptions import EmptyResultSet
-from datetime import datetime, time, timedelta, timezone
+from datetime import datetime, time, timedelta, timezone, date
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db import transaction
 from django.shortcuts import render
@@ -26,91 +27,17 @@ log = logging.getLogger('__main__')
 # Create your views here.
 
 
-class SchedhuleTour(LoginRequiredMixin, View):
-    params = {
-        'form_class'    : scd_forms.SchdInternalTourForm,
-        'template_form' : 'schedhuler/partials/partial_schd_tourform.html',
-        'template_list' : 'schedhuler/schedule_tour.html',
-        'partial_form'  : 'schedhuler/partials/partial_schd_tourform.html',
-        'partial_list'  : 'peoples/partials/partial_people_list.html',
-        'related'       : ['groupid', 'peopleid'],
-        'model'         : am.Job,
-        'filter'        : sdf.SchdTourFilter,
-        'fields'        : ['jobname', 'peopleid', 'groupid', 'from_date', 'upto_date',
-                            'planduration', 'gracetime', 'expirytime'],
-        'form_initials' : {'initial': {}}
-    }
 
-    def get(self, request, *args, **kwargs):
-        R, resp = request.GET, None
-
-        # return qset_list data
-        if R.get('action', None) == 'list' or R.get('search_term'):
-            d = {'list': "schdtour_list", 'filt_name': "schdtour_filter"}
-            self.params.update(d)
-            objs = self.params['model'].objects.select_related(
-                *self.params['related']).filter(
-                    ~Q(jobname='NONE')
-            ).values(*self.params['fields'])
-            resp = putils.render_grid(
-                request, self.params, "schedhuled_tour_view", objs)
-
-        # return questionset_form empty
-        elif R.get('action', None) == 'form':
-            cxt = {'schdtourform': self.params['form_class'](request=request),
-                   'childtour_form'   : scd_forms.SchdChildInternalTourForm(),
-                   'msg'              : "create schedhule tour requested"}
-            resp = putils.render_form(request, self.params, cxt)
-
-        # handle delete request
-        elif R.get('action', None) == "delete" and R.get('id', None):
-            print(f'resp={resp}')
-            resp = putils.render_form_for_delete(request, self.params, True)
-
-        # return form with instance
-        elif R.get('id', None):
-            questions = self.get_questions_for_form(int(R['id']))
-            cxt = {'childtour_form': scd_forms.SchdChildInternalTourForm(),
-                   "questions": questions}
-            obj = putils.get_model_obj(int(R['id']), request, self.params)
-            resp = putils.render_form_for_update(
-                request, self.params, 'schdtourform', obj, cxt)
-        print(f'return resp={resp}')
-        return resp
-
-    def post(self, request, *args, **kwargs):
-        resp = None
-        try:
-            log.debug(pformat(request.POST))
-            data = QueryDict(request.POST['formData'])
-            pk = request.POST.get('pk', None)
-            if pk:
-                msg = "schedhuled_tour_view"
-                form = putils.get_instance_for_update(
-                    data, self.params, msg, int(pk))
-                log.debug(pformat(form.data, width=41, compact=True))
-            else:
-                form = self.params['form_class'](data, request=request)
-            if form.is_valid():
-                resp = self.handle_valid_form(form, request)
-            else:
-                cxt = {'errors': form.errors}
-                resp = putils.handle_invalid_form(request, self.params, cxt)
-        except Exception:
-            resp = putils.handle_Exception(request)
-        return resp
-
-
-class CreateSchedhuleTour(LoginRequiredMixin, View):
-    template_path = 'schedhuler/schd_internaltour_form.html'
-    form_class    = scd_forms.SchdInternalTourForm
-    subform       = scd_forms.SchdChildInternalTourForm
+class Schd_I_TourFormJob(LoginRequiredMixin, View):
+    template_path = 'schedhuler/schd_i_tourform_job.html'
+    form_class    = scd_forms.Schd_I_TourJobForm
+    subform       = scd_forms.SchdChild_I_TourJobForm
     model         = am.Job
     initial       = {
         'starttime'   : time(00, 00, 00),
         'endtime'     : time(00, 00, 00),
         'expirytime'  : 0,
-        'identifier'  : 'INTERNALTOUR'
+        'identifier'  : am.Job.Identifier.INTERNALTOUR
     }
 
     def get(self, request, *args, **kwargs):
@@ -123,10 +50,8 @@ class CreateSchedhuleTour(LoginRequiredMixin, View):
         """Handles creation of Pgroup instance."""
         log.info('Guard Tour form submitted')
         data = QueryDict(request.POST['formData'])
-        pk = request.POST.get('pk', None)
-        response = None
-        if pk:
-            obj = putils.get_model_obj(pk, request, {'model': self.model})
+        if pk := request.POST.get('pk', None):
+            obj = utils.get_model_obj(pk, request, {'model': self.model})
             form = self.form_class(
                 instance=obj, data=data, initial=self.initial)
             log.info("retrieved existing guard tour jobname:= '%s'" %
@@ -135,6 +60,7 @@ class CreateSchedhuleTour(LoginRequiredMixin, View):
             form = self.form_class(data=data, initial=self.initial)
             log.info("new guard tour submitted following is the form-data:\n%s\n" %
                      (pformat(form.data)))
+        response = None
         try:
             with transaction.atomic(using=utils.get_current_db_name()):
                 if form.is_valid():
@@ -156,7 +82,7 @@ class CreateSchedhuleTour(LoginRequiredMixin, View):
             assigned_checkpoints = json.loads(
                 request.POST.get("asssigned_checkpoints"))
             job         = form.save(commit=False)
-            job.parent  = sutils.get_or_create_none_job()
+            job.parent  = utils.get_or_create_none_job()
             job.assetid = sutils.get_or_create_none_asset()
             job.qsetid  = sutils.get_or_create_none_qset()
             job.save()
@@ -224,7 +150,7 @@ class CreateSchedhuleTour(LoginRequiredMixin, View):
             log.info("inserting checkpoints finished...")
 
 
-class UpdateSchdhuledTour(CreateSchedhuleTour, LoginRequiredMixin, View):
+class Update_I_TourFormJob(Schd_I_TourFormJob, LoginRequiredMixin, View):
 
     def get(self, request, *args, **kwargs):
         log.info('Update Schedhule Tour form view')
@@ -273,9 +199,9 @@ class UpdateSchdhuledTour(CreateSchedhuleTour, LoginRequiredMixin, View):
         return checkpoints
 
 
-class RetriveSchedhuledTours(LoginRequiredMixin, View):
+class Retrive_I_ToursJob(LoginRequiredMixin, View):
     model = am.Job
-    template_path = 'schedhuler/schedhuled_tours.html'
+    template_path = 'schedhuler/schd_i_tourlist_job.html'
     fields = ['jobname', 'peopleid__peoplename', 'groupid__groupname', 'from_date', 'upto_date',
               'planduration', 'gracetime', 'expirytime', 'id']
     related = ['groupid', 'peopleid']
@@ -353,9 +279,9 @@ def deleteChekpointFromTour(request):
 
 
 
-class RetriveInternalTours(LoginRequiredMixin, View):
+class Retrive_I_ToursJobneed(LoginRequiredMixin, View):
     model = am.Jobneed
-    template_path = 'schedhuler/internaltour_list.html'
+    template_path = 'schedhuler/i_tourlist_jobneed.html'
     fields    = ['jobdesc', 'peopleid__peoplename', 'groupid__groupname', 'id',
               'plandatetime', 'expirydatetime', 'jobstatus', 'gracetime', 'performed_by__peoplename',]
     related   = ['groupid',  'ticket_category', 'assetid', 'clientid',
@@ -364,6 +290,7 @@ class RetriveInternalTours(LoginRequiredMixin, View):
     def get(self, request, *args, **kwargs):
         '''returns jobneed (internal-tours) from db'''
         response, session = None, request.session
+        
         try:
             log.info('Retrieve internal tours(jobneed) view')
             dt = datetime.now(tz=timezone.utc) - timedelta(days=10)
@@ -377,6 +304,7 @@ class RetriveInternalTours(LoginRequiredMixin, View):
             cxt = self.paginate_results(request, objects)
             log.info('Results paginated' if objects else "")
             response = render(request, self.template_path, context=cxt)
+        
         except EmptyResultSet:
             log.warning('empty objects retrieved', exc_info=True)
             response = render(request, self.template_path, context=cxt)
@@ -394,11 +322,13 @@ class RetriveInternalTours(LoginRequiredMixin, View):
         '''paginate the results'''
         log.info('Pagination Start' if objects else "")
         from .filters import InternalTourFilter
+        
         if request.GET:
             objects = InternalTourFilter(request.GET, queryset=objects).qs
         filterform = InternalTourFilter().form
         page = request.GET.get('page', 1)
         paginator = Paginator(objects, 25)
+        
         try:
             tour_list = paginator.page(page)
         except PageNotAnInteger:
@@ -408,19 +338,20 @@ class RetriveInternalTours(LoginRequiredMixin, View):
         return {'tour_list': tour_list, 'tour_filter': filterform}
 
 
-class GetInternalTour(LoginRequiredMixin, View):
+class Get_I_TourJobneed(LoginRequiredMixin, View):
     model         = am.Jobneed
-    template_path = 'schedhuler/internaltour_form.html'
-    form_class    = scd_forms.InternalTourForm
-    subform       = scd_forms.ChildInternalTourForm
+    template_path = 'schedhuler/i_tourform_jobneed.html'
+    form_class    = scd_forms.I_TourFormJobneed
+    subform       = scd_forms.Child_I_TourFormJobneed
     initial       = {
-        'identifier'    : 'INTERNALTOUR',
-        'frequency'     : 'NONE'
+        'identifier': am.Jobneed.Identifier.INTERNALTOUR,
+        'frequency' : am.Jobneed.Frequency.NONE
     }
 
     def get(self, request, *args, **kwargs):
         log.info("retrieving internal tour datasource[jobneed]")
         parent_jobneedid, response = kwargs.get('pk'), None
+        
         try:
             obj = self.model.objects.get(id=parent_jobneedid)
             form = self.form_class(instance=obj, initial=self.initial)
@@ -429,9 +360,11 @@ class GetInternalTour(LoginRequiredMixin, View):
             cxt = {'internaltourform': form, 'child_internaltour': self.subform(prefix='child'), 'edit': True,
                    'checkpoints': checkpoints}
             response = render(request, self.template_path, context=cxt)
+        
         except self.model.DoesNotExist:
             log.error('object does not exist', exc_info=True)
             response = redirect('schedhuler:retrieve_internaltours')
+        
         except Exception:
             log.critical('something went wron', exc_info=True)
             response = redirect('schedhuler:retrieve_internaltours')
@@ -443,6 +376,7 @@ class GetInternalTour(LoginRequiredMixin, View):
     def get_checkpoints(self, obj):
         log.info("getting checkpoints for the internal tour [start]")
         checkpoints = None
+        
         try:
             checkpoints = self.model.objects.select_related(
                 'parent', 'assetid', 'qsetid', 'groupid',
@@ -452,9 +386,11 @@ class GetInternalTour(LoginRequiredMixin, View):
                 'assetid__assetname', 'assetid__id', 'qsetid__id',
                 'qsetid__qset_name', 'plandatetime', 'expirydatetime',
                 'gracetime', 'slno', 'jobstatus', 'id').order_by('slno')
+        
         except Exception:
             log.critical("something went wrong", exc_info=True)
             raise
+        
         else:
             log.info("checkpoints retrieved returned success")
         return checkpoints
@@ -483,19 +419,19 @@ def add_cp_internal_tour(request):  # jobneed
             resp = rp.JsonResponse({"errors": msg}, status=200)
 
 
-class CreateExternalTourSchdTour(LoginRequiredMixin, View):
+class Schd_E_TourFormJob(LoginRequiredMixin, View):
     model         = am.Job
-    form_class    = scd_forms.ExternalSchdTourForm
+    form_class    = scd_forms.Schd_E_TourJobForm
     subform       = scd_forms.EditAssignedSiteForm
-    template_path = 'schedhuler/schd_external_tourform.html'
+    template_path = 'schedhuler/schd_e_tourform_job.html'
     initial       = {
         'slno'        : -1,
-        'scantype'    : 'QR',
-        'frequency'   : 'NONE',
-        'identifier'  : "EXTERNALTOUR",
+        'scantype'    : am.Job.Scantype.QR,
+        'frequency'   : am.Job.Frequency.NONE,
+        'identifier'  : am.Job.Identifier.EXTERNALTOUR,
         'starttime'   : time(00, 00, 00),
         'endtime'     : time(00, 00, 00),
-        'priority'    : 'HIGH',
+        'priority'    : am.Job.Priority.HIGH,
         'expirytime'  : 0
         }
 
@@ -512,10 +448,8 @@ class CreateExternalTourSchdTour(LoginRequiredMixin, View):
         """Handles creation of Pgroup instance."""
         log.info('External Tour form submitted')
         formData = QueryDict(request.POST.get('formData'))
-        pk       = request.POST.get('pk', None)
-        response = None
-        if pk:
-            obj = putils.get_model_obj(pk, request, {'model': self.model})
+        if pk := request.POST.get('pk', None):
+            obj = utils.get_model_obj(pk, request, {'model': self.model})
             form = self.form_class(
                 instance=obj, data=formData, initial=self.initial)
             log.info("retrieved existing guard tour jobname:= '%s'" %
@@ -524,8 +458,9 @@ class CreateExternalTourSchdTour(LoginRequiredMixin, View):
             form = self.form_class(data=formData, initial=self.initial)
             log.info("new guard tour submitted following is the form-data:\n%s\n" %
                      (pformat(form.data)))
+        response = None
         try:
-            with transaction.atomic(using=get_current_db_name()):
+            with transaction.atomic(using=utils.get_current_db_name()):
                 if form.is_valid():
                     response = self.process_valid_schd_tourform(request, form)
                 else:
@@ -552,7 +487,7 @@ class CreateExternalTourSchdTour(LoginRequiredMixin, View):
         log.info("external tour form processing/saving [ START ]")
         try:
             job         = form.save(commit=False)
-            job.parent  = sutils.get_or_create_none_job()
+            job.parent  = utils.get_or_create_none_job()
             job.assetid = sutils.get_or_create_none_asset()
             job.save()
             print("%%%%%%%%%5",  form.data, form.data.get('buid'))
@@ -575,7 +510,7 @@ class CreateExternalTourSchdTour(LoginRequiredMixin, View):
 
 
 
-class UpdateExternalSchdhuledTour(CreateExternalTourSchdTour, LoginRequiredMixin, View):
+class Update_E_TourFormJob(Schd_E_TourFormJob, LoginRequiredMixin, View):
 
     def get(self, request, *args, **kwargs):
         log.info('Update External Schedhule Tour form view')
@@ -624,9 +559,9 @@ class UpdateExternalSchdhuledTour(CreateExternalTourSchdTour, LoginRequiredMixin
 
 
 
-class RetriveExternalSchedhuledTours(LoginRequiredMixin, View):
+class Retrive_E_ToursJob(LoginRequiredMixin, View):
     model = am.Job
-    template_path = 'schedhuler/scheduled_externaltours.html'
+    template_path = 'schedhuler/schd_e_tourlist_job.html'
     fields = ['jobname', 'peopleid__peoplename', 'groupid__groupname',
               'from_date', 'upto_date',
               'planduration', 'gracetime', 'expirytime', 'id', 'buid__buname']
@@ -684,24 +619,25 @@ def run_internal_tour_scheduler(request):
     log.info(
         "%s run_guardtour_scheduler initiated [START] %s" % (padd, padd))
     jobid, resp = request.POST.get('jobid'), None
-    jobs = am.Job.objects.filter(
-        id=jobid).select_related(
-            "assetid", "groupid", "frequency",
-            "cuser", "muser", "qsetid", "peopleid").values_list(named=True)
-    if not jobs:
+    if (
+        jobs := am.Job.objects.filter(id=jobid)
+        .select_related(
+            "assetid",
+            "groupid",
+            "frequency",
+            "cuser",
+            "muser",
+            "qsetid",
+            "peopleid",
+        )
+        .values_list(named=True)
+    ):
+        log.info("%s create_job(jobs) %s" % (padd, padd))
+        resp = sutils.create_job(jobs)
+    else:
         msg = "Job not found unable to schedhule"
         log.error("%s" % (msg), exc_info=True)
         resp = rp.JsonResponse({"errors": msg}, status=404)
-    else:
-        try:
-            log.info("%s create_job(jobs) %s" % (padd, padd))
-            sutils.create_job(jobs)
-            log.info("%s create_job(jobs) %s" % (padd, padd))
-            resp = rp.JsonResponse({"msg": "success"}, status=200)
-        except Exception:
-            msg = "Unable to schedule job, something went wrong!"
-            log.error("%s" % (msg), exc_info=True)
-            resp = rp.JsonResponse({"errors": msg}, status=404)
     log.info(
         "%s run_guardtour_scheduler initiated [END] %s" % (padd, padd))
     del padd
@@ -740,7 +676,7 @@ def save_assigned_sites_for_externaltour(request):
         log.info("save_assigned_sites_for_externaltour [start+]")
         formData = QueryDict(request.POST.get('formData'))
         parentJobId = request.POST.get('pk')
-        with transaction.atomic(using=get_current_db_name()):
+        with transaction.atomic(using=utils.get_current_db_name()):
             save_sites_in_job(request, parentJobId)
 
 
@@ -766,3 +702,411 @@ def save_sites_in_job(request, parentid):
         raise
     
     
+
+class SchdTaskFormJob(LoginRequiredMixin, View):
+    template_path = 'schedhuler/schd_taskform_job.html'
+    form_class    = scd_forms.SchdTaskFormJob
+    model         = am.Job
+    initial       = {
+        'starttime'   : time(00, 00, 00),
+        'endtime'     : time(00, 00, 00),
+        'from_date'   : datetime.combine(date.today(), time(00, 00, 00)),
+        'upto_date'   : datetime.combine(date.today(), time(23, 00, 00)) + timedelta(days=2),
+        'expirytime'  : 0,
+        'identifier'  : am.Job.Identifier.TASK,
+        'frequency'   : am.Job.Frequency.NONE,
+        'scantype'    : am.Job.Scantype.QR,
+        'priority'    : am.Job.Priority.LOW,
+        'planduration': 5,
+        'gracetime'   : 5,
+        'expirytime'  : 5
+    }
+
+    def get(self, request, *args, **kwargs):
+        log.info('create task to schedule is requested')
+        cxt = {
+            'schdtaskform':self.form_class(initial = self.initial)
+        }
+        return render(request, self.template_path, context=cxt)
+
+    def post(self, request, *args, **kwargs):
+        log.info('Task form submitted')
+        data = QueryDict(request.POST['formData'])
+        utils.display_post_data(data)
+        if pk := request.POST.get('pk', None):
+            obj = utils.get_model_obj(pk, request, {'model': self.model})
+            form = self.form_class(
+                instance=obj, data=data, initial = self.initial)
+            log.info("retrieved existing task whose jobname:= '%s'" %
+                     (obj.jobname))
+        else:
+            form = self.form_class(data=data, initial=self.initial)
+            log.info("new task submitted following is the form-data:\n%s\n" %
+                     (pformat(form.data)))
+        response = None
+        try:
+            with transaction.atomic(using=utils.get_current_db_name()):
+                if form.is_valid():
+                    response = self.process_valid_schd_taskform(request, form)
+                else:
+                    response = self.process_invalid_schd_taskform(
+                        form)
+        except Exception:
+            log.critical(
+                "failed to process form, something went wrong", exc_info=True)
+            response = rp.JsonResponse(
+                {'errors': 'Failed to process form, something went wrong'}, status=404)
+        return response
+
+    def process_valid_schd_taskform(self, request, form):
+        resp = None
+        log.info("task form processing/saving [ START ]")
+        try:
+            job         = form.save(commit=False)
+            job.parent  = utils.get_or_create_none_job()
+            job.save()
+            job = putils.save_userinfo(job, request.user, request.session)
+            log.info('task form saved success...')
+        except Exception as ex:
+            log.critical("task form is processing failed", exc_info=True)
+            resp = rp.JsonResponse(
+                {'error': "saving schd_taskform failed..."}, status=404)
+            raise ex
+        else:
+            log.info("task form is processed successfully")
+            resp = rp.JsonResponse({'jobname': job.jobname,
+                'url': reverse("schedhuler:update_task", args=[job.id])},
+                status=200)
+        log.info("task form processing/saving [ END ]")
+        return resp
+
+    def process_invalid_schd_taskform(self, form):
+        log.info(
+            "processing invalidt task form sending errors to the client [ START ]")
+        cxt = {"errors": form.errors}
+        log.info(
+            "processing invalidt task form sending errors to the client [ END ]")
+        return rp.JsonResponse(cxt, status=404)
+
+
+
+class RetriveSchdTasksJob(LoginRequiredMixin, View):
+    model = am.Job
+    template_path = 'schedhuler/schd_tasklist_job.html'
+    fields = ['jobname', 'peopleid__peoplename', 'groupid__groupname',
+              'from_date', 'upto_date', 'qsetid__qset_name', 'assetid__assetname',
+              'planduration', 'gracetime', 'expirytime', 'id']
+    related = ['groupid', 'peopleid', 'assetid']
+    
+    def get(self, request, *args, **kwargs):
+        '''returns the paginated results from db'''
+        response = None
+        try:
+            log.info('Retrieve Tasks view')
+            objects = self.model.objects.select_related(
+                *self.related).filter(
+                    ~Q(jobname='NONE'), parent__jobname='NONE', identifier="TASK"
+            ).values(*self.fields).order_by('-cdtz')
+            log.info('Tasks objects %s retrieved from db'%len(objects) if objects else "No Records!")
+            cxt = self.paginate_results(request, objects)
+            log.info('Results paginated'if objects else "")
+            response = render(request, self.template_path, context=cxt)
+        except EmptyResultSet:
+            log.warning('empty objects retrieved', exc_info=True)
+            response = render(request, self.template_path, context=cxt)
+            messages.error(request, 'List view not found',
+                           'alert alert-danger')
+        except Exception:
+            log.critical(
+                'something went wrong', exc_info=True)
+            messages.error(request, 'Something went wrong',
+                           "alert alert-danger")
+            response = redirect('/dashboard')
+        return response
+
+    def paginate_results(self, request, objects):
+        '''paginate the results'''
+        log.info('Pagination Start'if objects else "")
+        from .filters import SchdTaskFilter
+        if request.GET:
+            objects = SchdTaskFilter(request.GET, queryset=objects).qs
+        filterform = SchdTaskFilter().form
+        page = request.GET.get('page', 1)
+        paginator = Paginator(objects, 25)
+        try:
+            schdtour_list = paginator.page(page)
+        except PageNotAnInteger:
+            schdtour_list = paginator.page(1)
+        except EmptyPage:
+            schdtour_list = paginator.page(paginator.num_pages)
+        return {'schd_task_list': schdtour_list, 'schd_task_filter': filterform}
+
+
+class UpdateSchdTaskJob(SchdTaskFormJob):
+    def get(self, request, *args, **kwargs):
+        log.info('Update task form view')
+        try:
+            pk = kwargs.get('pk')
+            obj = self.model.objects.get(id=pk)
+            log.info('object retrieved {}'.format(obj))
+            form        = self.form_class(instance=obj)
+            cxt         = {'schdtaskform': form, 'edit': True}
+                        
+            response = render(request, self.template_path,  context=cxt)
+        except self.model.DoesNotExist:
+            messages.error(request, 'Unable to edit object not found',
+                           'alert alert-danger')
+            response = redirect('schedhuler:create_tour')
+        except Exception:
+            log.critical('something went wrong', exc_info=True)
+            messages.error(request, 'Something went wrong',
+                           'alert alert-danger')
+            response = redirect('schedhuler:create_task')
+        return response
+    
+
+class RetrieveTasksJobneed(LoginRequiredMixin, View):
+    model         = am.Jobneed
+    template_path = 'schedhuler/tasklist_jobneed.html'
+
+    fields  = [
+        'jobdesc', 'peopleid__peoplename', 'groupid__groupname', 'id',
+        'plandatetime', 'expirydatetime', 'jobstatus', 'gracetime',
+        'performed_by__peoplename', 'assetid__assetname', 'qsetid__qset_name'
+    ]
+    related = [
+        'groupid',  'ticket_category', 'assetid', 'clientid',
+        'frequency', 'jobid', 'qsetid', 'peopleid', 'parent', 'buid' 
+    ]
+
+    def get(self, request, *args, **kwargs):
+        '''returns jobneed (tasks) from db'''
+        response, session = None, request.session
+        
+        try:
+            log.info('Retrieve tasks(jobneed) view')
+            dt      = datetime.now(tz=timezone.utc) - timedelta(days=10)
+            objects = self.model.objects.select_related(
+                *self.related).filter(
+                Q(buid_id=session['buid']) & Q(parent__jobdesc='NONE')
+                & ~Q(jobdesc='NONE')       & Q(plandatetime__gte=dt)
+                & Q(identifier = 'TASK')
+            ).values(*self.fields).order_by('-plandatetime')
+            log.info('tasks objects %s retrieved from db' %
+                     (len(objects)) if objects else "No Records!")
+            cxt = self.paginate_results(request, objects)
+            log.info('Results paginated' if objects else "")
+            response = render(request, self.template_path, context=cxt)
+        
+        except EmptyResultSet:
+            log.warning('no objects found', exc_info=True)
+            response = render(request, self.template_path, context=cxt)
+            messages.error(request, 'List view not found',
+                           'alert alert-danger')
+        except Exception:
+            log.critical(
+                'something went wrong', exc_info=True)
+            messages.error(request, 'Something went wrong',
+                           "alert alert-danger")
+            response = redirect('/dashboard')
+        return response
+
+    def paginate_results(self, request, objects):
+        '''paginate the results'''
+        log.info('Pagination Start' if objects else "")
+        from .filters import TaskListJobneedFilter
+        
+        if request.GET:
+            objects = TaskListJobneedFilter(request.GET, queryset=objects).qs
+        filterform = TaskListJobneedFilter().form
+        page = request.GET.get('page', 1)
+        paginator = Paginator(objects, 25)
+        
+        try:
+            tour_list = paginator.page(page)
+        except PageNotAnInteger:
+            tour_list = paginator.page(1)
+        except EmptyPage:
+            tour_list = paginator.page(paginator.num_pages)
+        return {'task_list': tour_list, 'task_filter': filterform}
+
+
+class GetTaskFormJobneed(LoginRequiredMixin, View):
+    model         = am.Jobneed
+    template_path = 'schedhuler/taskform_jobneed.html'
+    form_class    = scd_forms.TaskFormJobneed
+    initial       = {
+        'identifier'    : am.Jobneed.Identifier.TASK,
+        'frequency'     : am.Jobneed.Frequency.NONE
+    }
+
+    def get(self, request, *args, **kwargs):
+        log.info("retrieving task datasource[jobneed]")
+        parent_jobneedid, response = kwargs.get('pk'), None
+        
+        try:
+            obj = self.model.objects.get(id=parent_jobneedid)
+            form = self.form_class(instance=obj)
+            ic(form.data)
+            log.info("object retrieved %s" % (obj.jobdesc))
+            cxt = {'taskformjobneed': form, 'edit': True}
+            response = render(request, self.template_path, context=cxt)
+        
+        except self.model.DoesNotExist:
+            log.error('object does not exist', exc_info=True)
+            response = redirect('schedhuler:retrieve_tasksjobneed')
+        
+        except Exception:
+            log.critical('something went wron', exc_info=True)
+            response = redirect('schedhuler:retrieve_tasksjobneed')
+        return response
+
+    def post(self, request, *args, **kwargs):
+        log.info("saving tasks datasource[jobneed]")
+
+
+
+
+class Ticket(LoginRequiredMixin, View):
+    model = am.Jobneed
+    form_class = scd_forms.TicketForm
+    template_path = 'schedhuler/ticket_form.html'
+    initial = {
+        'starttime'  : datetime.utcnow().replace(microsecond=0),
+        'endtime'    : datetime.utcnow().replace(microsecond=0),
+        'frequency'  : am.Jobneed.Frequency.NONE,
+        'gpslocation': '0.0,0.0',
+        'scantype'   : am.Jobneed.Scantype.NONE,
+        'jobstatus'  : am.Jobneed.JobStatus.NEW,
+        'priority'   : am.Jobneed.Priority.MEDIUM,
+    }
+    
+    def get(self, request, *args, **kwargs):
+        log.info('create ticket requested!')
+        if request.GET.get('delete_ticket'):
+            self.delete_ticket(self, request)
+        cxt = {
+            'ticketform':self.form_class(initial = self.initial)
+        }
+        return render(request, self.template_path, context=cxt)
+
+    def post(self, request, *args, **kwargs):
+        log.info('ticket form submitted!')
+        data = QueryDict(request.POST['formData'])
+        utils.display_post_data(data)
+        if pk := request.POST.get('pk', None):
+            obj = utils.get_model_obj(pk, request, {'model': self.model})
+            form = self.form_class(
+                instance=obj, data=data, initial = self.initial)
+            log.info("retrieved existing ticket whose ticketno:= '%s'" %
+                     (obj.ticketno))
+        else:
+            form = self.form_class(data=data, initial=self.initial)
+            log.info("new ticket submitted following is the form-data:\n%s\n" %
+                     (pformat(form.data)))
+        response = None
+        try:
+            with transaction.atomic(using=utils.get_current_db_name()):
+                if form.is_valid():
+                    response = self.process_valid_form(request, form)
+                else:
+                    response = self.process_invalid_form(
+                        form)
+        except Exception:
+            log.critical(
+                "failed to process form, something went wrong", exc_info=True)
+            response = rp.JsonResponse(
+                {'errors': 'Failed to process form, something went wrong'}, status=404)
+        return response
+    
+    def process_valid_form(request, form):
+        resp = None
+        try:
+            ticket             = form.save(commit=False)
+            ticket.qsetid      = utils.get_or_create_none_qset()
+            ticket.performedby = utils.get_or_create_none_people()
+            ticket.groupid     = utils.get_or_create_none_pgroup()
+            ticket.parent      = utils.get_or_create_none_jobneed()
+            ticket.jobid       = utils.get_or_create_none_job()
+            ticket.save()
+            ticket = putils.save_userinfo(ticket, request.user)
+        except Exception as ex:
+            log.critical("ticket form is processing failed", exc_info=True)
+            resp = rp.JsonResponse(
+                {'error': "saving schd_taskform failed..."}, status=404)
+            raise ex
+        else:
+            log.info("ticket form is processed successfully")
+            resp = rp.JsonResponse({'jobdesc': ticket.jobdesc,
+                'url': reverse("schedhuler:update_ticket", args=[ticket.id])},
+                status=200)
+        log.info("ticket form processing/saving [ END ]")
+        return resp
+    
+    def process_invalid_form(self, form):
+        log.info(
+            "processing invalidt ticket form sending errors to the client [ START ]")
+        cxt = {"errors": form.errors}
+        log.info(
+            "processing invalidt ticket form sending errors to the client [ END ]")
+        return rp.JsonResponse(cxt, status=404)
+    
+
+    def delete_ticket(self, request):
+        pass
+    
+
+class RetriveTickets(LoginRequiredMixin, View):
+    model = am.Jobneed
+    template_path = 'schedhuler/ticket_list.html'
+    fields = [
+        'cdtz', 'ticketno', 'buid__buname', 'groupid__groupname',
+        'jobdesc', 'peopleid__peoplename',  'performed_by__peoplename',
+        'ticket_category__taname', 'expirydatetime', 'jobstatus', 'priority',
+        'cuser__peoplename', 'id']
+    related = [
+        'groupid', 'peopleid', 'cuser',
+        'performedby', 'buid', 'ticket_category']
+    
+    def get(self, request, *args, **kwargs):
+        '''returns the paginated results from db'''
+        response = None
+        try:
+            log.info('Retrieve Ticket view')
+            objects = self.model.objects.select_related(
+                *self.related).filter(
+                    ~Q(jobdesc='NONE'), parent__jobdesc='NONE', identifier='TICKET'
+            ).values(*self.fields).order_by('-cdtz')
+            log.info('Ticket objects %s retrieved from db'%len(objects) if objects else "No Records!")
+            cxt = self.paginate_results(request, objects)
+            log.info('Results paginated'if objects else "")
+            response = render(request, self.template_path, context=cxt)
+        except EmptyResultSet:
+            log.warning('empty objects retrieved', exc_info=True)
+            response = render(request, self.template_path, context=cxt)
+            messages.error(request, 'List view not found',
+                           'alert alert-danger')
+        except Exception:
+            log.critical(
+                'something went wrong', exc_info=True)
+            messages.error(request, 'Something went wrong',
+                           "alert alert-danger")
+            response = redirect('/dashboard')
+        return response
+
+    def paginate_results(self, request, objects):
+        '''paginate the results'''
+        log.info('Pagination Start'if objects else "")
+        from .filters import TicketListFilter
+        if request.GET:
+            objects = TicketListFilter(request.GET, queryset=objects).qs
+        filterform = TicketListFilter().form
+        page = request.GET.get('page', 1)
+        paginator = Paginator(objects, 25)
+        try:
+            ticket_list = paginator.page(page)
+        except PageNotAnInteger:
+            ticket_list = paginator.page(1)
+        except EmptyPage:
+            ticket_list = paginator.page(paginator.num_pages)
+        return {'ticket_list': ticket_list, 'ticket_filter': filterform}

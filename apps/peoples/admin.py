@@ -1,4 +1,5 @@
 import logging
+
 log = logging.getLogger('__main__')
 from multiprocessing.spawn import import_main_path
 from django.contrib import admin
@@ -13,10 +14,13 @@ from apps.onboarding.admin import BaseFieldSet1, BaseFieldSet2
 import apps.peoples.utils as putils
 
 
-def save_people_passwd(user):
+def save_people_passwd( user):
     log.info('Password is created by system... DONE')
     paswd = user.loginid + '@' + 'youtility'
     user.set_password(paswd)
+    
+def save_other_stuff(request, user):
+    user.cuser.id = user.muser.id = request.session('_auth_user_id')
 
 
 
@@ -50,7 +54,35 @@ class PeopleResource(resources.ModelResource, BaseFieldSet2):
     dateofbirth = fields.Field(
         column_name='dateofbirth',
         attribute='dateofbirth',
-        widget=wg.DateWidget(format='%d-%b-%Y')
+        widget=wg.DateWidget()
+    )
+    dateofjoin = fields.Field(
+        column_name='dateofjoin',
+        attribute='dateofjoin',
+        widget=wg.DateWidget()
+    )
+    cuser = fields.Field(
+        column_name='cuser',
+        attribute='cuser',
+        widget=wg.ForeignKeyWidget(pm.People, 'peoplecode'),
+        saves_null_values=True)
+
+    muser = fields.Field(
+        column_name='muser',
+        attribute='muser',
+        widget=wg.ForeignKeyWidget(pm.People, 'peoplecode'),
+        saves_null_values=True)
+    
+    clientid = fields.Field(
+        column_name='clientid',
+        attribute='clientid',
+        widget=wg.ForeignKeyWidget(om.Bt, 'bucode')
+    )
+    buid = fields.Field(
+        column_name='buid',
+        attribute='buid',
+        widget=wg.ForeignKeyWidget(om.Bt, 'bucode'),
+        saves_null_values=True
     )
 
     class Meta:
@@ -60,12 +92,15 @@ class PeopleResource(resources.ModelResource, BaseFieldSet2):
         import_id_fields = ('id',)
         fields = ['id', 'peoplecode', 'peoplename', 'loginid', 'designation', 'department', 'mobno', 'email',
                   'buid', 'dateofjoin', 'dateofreport', 'dateofbirth', 'gender', 'peopletype', 'enable',
-                  'isadmin', 'buid', 'shift', 'clientid']
+                  'isadmin', 'shift', 'clientid', 'cuser', 'muser']
 
     def before_save_instance(self, instance, using_transactions, dry_run):
         super().before_save_instance(instance, using_transactions, dry_run)
         instance.peoplecode = instance.peoplecode.upper()
         save_people_passwd(instance)
+       # save_other_stuff(self.request, instance)
+        
+    
 
 
 @admin.register(People)
@@ -73,10 +108,10 @@ class PeopleAdmin(ImportExportModelAdmin):
     resource_class = PeopleResource
     fields = ['peoplecode', 'peoplename', 'loginid', 'designation', 'department', 'mobno', 'email',
               'buid', 'dateofjoin', 'dateofreport', 'dateofbirth', 'gender', 'peopletype', 'enable',
-              'isadmin', 'shift', 'people_extras', 'clientid']
+              'isadmin', 'shift', 'people_extras', 'clientid', ]
 
-    list_display = ['id', 'peoplecode', 'peoplename', 'loginid', 'designation', 'mobno', 'email',
-                    'reportto', 'dateofjoin', 'gender', 'peopletype', 'enable', 'isadmin', 'clientid', 'shift']
+    list_display = ['id', 'peoplecode', 'peoplename', 'loginid',  'mobno', 'email','password',
+                     'gender', 'peopletype', 'isadmin', 'clientid', 'shift']
 
     list_display_links = ['peoplecode', 'peoplename']
 

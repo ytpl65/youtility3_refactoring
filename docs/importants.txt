@@ -11,3 +11,25 @@ NONE ENTRIES SHOULD BE PRESENT IN FOLLOWING TABLES:
 
 
 
+JAVASCRIPT ERRORS AND SOLUTIONS
+1.TypeError: [x] is null
+    Developer will get this is that they are trying to assign an event handler to a DOM element, 
+    but the DOM element hasn't been created yet.
+    To handle this, you need to introduce a delay before your JavaScript is executed,
+    like putting it inside a function that isn't called until the browser has "executed" all of the HTML and fires the event "DOM ready."
+
+    With raw JavaScript, use window.onload:
+
+    window.onload=function() {
+        /*your code here*
+        /*var date = document.getElementById("date");
+        /*alert(date);
+    }
+
+    With jQuery, use document ready:
+
+    $(document).ready(function() {
+        /*your code here*
+        /*var date = document.getElementById("date");
+        /*alert(date);
+    });

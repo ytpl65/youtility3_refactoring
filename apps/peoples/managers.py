@@ -31,18 +31,20 @@ class PeopleManager(BaseUserManager):
 
 class CapabilityManager(models.Manager):
     use_in_migrations = True
-
+    from apps.peoples import models as pm
     def get_webparentdata(self):
-        return self.filter(cfor='WEB', parent__capscode='NONE')
+        return self.filter(cfor= self.pm.Capability.Cfor.WEB, parent__capscode='NONE')
+        
     
     def get_mobparentdata(self):
-        return self.filter(cfor='MOB', parent__capscode='NONE')
+        
+        return self.filter(cfor = self.pm.Capability.Cfor.MOB, parent__capscode='NONE')
     
     def get_repparentdata(self):
-        return self.filter(cfor='REPORT', parent__capscode='NONE')
+        return self.filter(cfor=self.pm.Capability.Cfor.REPORT, parent__capscode='NONE')
     
     def get_portletparentdata(self):
-        return self.filter(cfor='PORTLET', parent__capscode='NONE')
+        return self.filter(cfor=self.pm.Capability.Cfor.PORTLET, parent__capscode='NONE')
     
     def get_child_data(self, parent, cfor):
         if not parent:

@@ -567,6 +567,7 @@ Schedhule Tour
         if ('{{schdtourform.instance.id}}' == ('None' || "")) {
             $("#btn_del").hide()
         }
+        //toggle peopleid and groupid field based on radio button value
         if ('{{schdtourform.instance.id}}' == ('None' || "")) {
             showHideSelectField('PEOPLE')
         }else{
@@ -703,12 +704,14 @@ Schedhule Tour
             })
         })
         
+        //after cron set hide the modal
         $("#btnSetCron").click(function(){
             var cron_val= $("#cron_selected_val").val();
             $("#id_cron").val(cron_val);
             $('#cron_scheduler').modal('hide');
         });
 
+        //show cron editor on bootstrap modal
         $("#cron_selector").click(function(){
             var old_cron_val= $("#id_cron").val();
             $('#cron_selected_val').val(old_cron_val);

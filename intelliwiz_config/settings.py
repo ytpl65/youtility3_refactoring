@@ -366,3 +366,7 @@ EMAIL_USE_TLS = True
 TAGGIT_CASE_INSENSITIVE = True
 
 GOOGLE_MAP_SECRET_KEY = 'AIzaSyC3PUZCB7u2PiV8whHeAshweOPIK_d690o'
+GRAPH_MODELS = {
+  'all_applications': True,
+  'group_models': True,
+}

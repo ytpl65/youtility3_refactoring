@@ -13,7 +13,7 @@ class QuestionFilter(django_filters.FilterSet):
 
 
 
-class ChecklistFilter(django_filters.FilterSet):
+class MasterQsetFilter(django_filters.FilterSet):
     qset_name   = django_filters.CharFilter(field_name='qset_name', lookup_expr='icontains', label='Name')
     
     class Meta:
@@ -21,7 +21,7 @@ class ChecklistFilter(django_filters.FilterSet):
         fields = ['qset_name']
         
 
-class CheckpointFilter(django_filters.FilterSet):
+class MasterAssetFilter(django_filters.FilterSet):
     assetcode   = django_filters.CharFilter(field_name='assetcode', lookup_expr='icontains', label='Code')
     assetname = django_filters.CharFilter(field_name='assetname', lookup_expr='icontains', label='Name')
     parent       = django_filters.CharFilter(field_name='parent__assetcode', lookup_expr='icontains', label='Belongs To')

@@ -164,23 +164,23 @@ function handle_alerts_msgs(msg, alertype){
 
 function display_form_errors(errors) {
   /*display errors on respective fields*/
+  console.log("started")
+  $('p.errors').remove();
   for (let key in errors) {
     if (errors.hasOwnProperty(key)) {
       if(errors.hasOwnProperty("__all__")){
         display_non_field_errors(errors)//non-field errors
       }
-      error = "<p class='errors'>" + errors[key] + "</p>";
-      field = "[name='" + key + "']";
-      console.log("fields", field);
-      if($(field).length == 0){
-        handle_alerts_msgs(error, "alert alert-danger")
-      }else{
+      let error = "<p class='errors'>" + errors[key] + "</p>";
+      let field = "[name='" + key + "']";
+      if($(field).is(":visible")){
         handle_alerts_msgs("Please resolve the following errors!", "alert alert-danger")
         $(field).addClass("is-invalid")
-        $('p.errors').remove();
         $(error).insertAfter(field);
-        const styles = {"color":"red", "font-size":"15px"}
-        $(field).next("p").css(styles);
+        console.log("inserted")
+        $(field).next("p").css(
+          {"color":"red", "font-size":"15px"}
+          );
       }
     }
   }
