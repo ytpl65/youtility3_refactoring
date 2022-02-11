@@ -16,7 +16,7 @@ var d2PolyLine= undefined;
 
 function spreadColNames(){
     return [
-        { "name" : "buid",        "targets" : 1 },
+        { "name" : "bu",        "targets" : 1 },
         { "name" : "buname",      "targets" : 2 },
         { "name" : "gpslocation", "targets" : 3 },
         { "name" : "distance",    "targets" : 6 },
@@ -24,7 +24,7 @@ function spreadColNames(){
         { "name" : "breaktime",   "targets" : 8 },
         { "name" : "expirytime",  "targets" : 9 },
         { "name" : "qset_name",   "targets" : 10},
-        { "name" : "qsetid",      "targets" : 11},
+        { "name" : "qset",      "targets" : 11},
         { "name" : "starttime",   "targets" : 4 },
         { "name" : "endtime",     "targets" : 5 }
     ]
@@ -374,10 +374,10 @@ function getSitesData(params){
     for(let i = 0; i<sitesData.length; i++){
         var obj = {}
         obj['slno'] = i
-        obj['assetid'] = sitesData['1']
+        obj['asset'] = sitesData['1']
         obj['jobname'] = `${$("#id_jobname").val()} - ${i} - ${sitesData['2']}`
         obj['expirytime'] = sitesData['9']
-        obj['qsetid'] = sitesData['11']
+        obj['qset'] = sitesData['11']
         obj['distance'] = sitesData['6']
         obj['duration'] = sitesData['7']
         obj['breaktime'] = sitesData['8']

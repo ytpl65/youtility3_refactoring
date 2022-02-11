@@ -62,7 +62,7 @@ class Schd_I_TourJobForm(JobForm):
     
     def clean(self):
         super().clean()
-        self.instance.jobdesc = f'{self.instance.buid.buname} - {self.instance.jobname}'
+        self.instance.jobdesc = f'{self.instance.bu.buname} - {self.instance.jobname}'
     
 
 
@@ -73,7 +73,7 @@ class SchdChild_I_TourJobForm(JobForm): #job
 
 
     class Meta(JobForm.Meta):
-        fields =['qsetid', 'peopleid', 'assetid', 'expirytime', 'slno']
+        fields =['qset', 'people', 'asset', 'expirytime', 'slno']
     
     def __init__(self, *args, **kwargs):
         super(SchdChild_I_TourJobForm, self).__init__(*args, **kwargs)
@@ -103,8 +103,8 @@ class I_TourFormJobneed(JobNeedForm): #jobneed
         self.fields['starttime'].widget.attrs       = {"disabled":"disabled"}
         self.fields['endtime'].widget.attrs         = {"disabled":"disabled"}
         self.fields['performed_by'].widget.attrs    = {"disabled":"disabled"}
-        self.fields['qsetid'].label = 'QuestionSet'
-        self.fields['assetid'].label = 'Asset/Smartplace'
+        self.fields['qset'].label = 'QuestionSet'
+        self.fields['asset'].label = 'Asset/Smartplace'
         self.fields['ticket_category'].queryset     = ob.TypeAssist.objects.filter(tatype__tacode="TICKETCATEGORY")
         utils.initailize_form_fields(self)
 
@@ -140,7 +140,7 @@ class I_TourFormJobneed(JobNeedForm): #jobneed
     
 class Child_I_TourFormJobneed(JobNeedForm):#jobneed
     class Meta(JobNeedForm.Meta):
-        fields =['qsetid', 'assetid', 'plandatetime', 'expirydatetime', 'gracetime']
+        fields =['qset', 'asset', 'plandatetime', 'expirydatetime', 'gracetime']
         
     def __init__(self, *args, **kwargs):
         super(Child_I_TourFormJobneed, self).__init__(*args, **kwargs)
@@ -156,8 +156,8 @@ class TaskFormJobneed(I_TourFormJobneed):
         utils.initailize_form_fields(self)
         if not self.instance.id:
             ic('iside')
-            self.fields['assetid'].queryset = am.Asset.objects.filter(identifier__in = ['Asset', 'Smartplace'])
-            self.fields['qsetid'].queryset = am.QuestionSet.objects.filter(type = ['QUESTIONSET'])
+            self.fields['asset'].queryset = am.Asset.objects.filter(identifier__in = ['Asset', 'Smartplace'])
+            self.fields['qset'].queryset = am.QuestionSet.objects.filter(type = ['QUESTIONSET'])
         
 
 
@@ -166,7 +166,7 @@ class Schd_E_TourJobForm(JobForm):
     timeInChoices = [('MIN', 'Min'),('HRS', 'Hours')]
     
     class Meta(JobForm.Meta):
-        JobForm.Meta.labels.update({'buid':'Cluster'})
+        JobForm.Meta.labels.update({'bu':'Cluster'})
         exclude = ['jobdesc']
 
     def __init__(self, *args, **kwargs):
@@ -269,7 +269,7 @@ class TicketForm(JobNeedForm):
             self.fields['jobstatus'].widget.attrs = {'disabled':'readonly'}
             self.fields['ticketno'].widget.attrs  = {'disabled':'disabled', 'readonly':'readonly'}
         self.fields['cuser'].required = False
-        self.fields['assetid'].label = 'Location'
+        self.fields['asset'].label = 'Location'
         self.fields['ticket_category'].queryset     = ob.TypeAssist.objects.filter(tatype__tacode="TICKETCATEGORY")
         utils.initailize_form_fields(self)
         

@@ -101,8 +101,8 @@ class People(AbstractBaseUser, PermissionsMixin, TenantAwareModel, BaseModel):
     department    = models.ForeignKey("onboarding.TypeAssist", null=True, blank=True,on_delete=models.RESTRICT, related_name='people_departments')
     designation   = models.ForeignKey("onboarding.TypeAssist", null=True, blank=True,on_delete=models.RESTRICT, related_name='people_designations')
     peopletype    = models.ForeignKey("onboarding.TypeAssist", verbose_name="People Type",null=True, blank=True, on_delete=models.RESTRICT, related_name='people_types')
-    clientid      = models.ForeignKey("onboarding.Bt",  null=True, blank=True, on_delete=models.RESTRICT, related_name='people_clientids')
-    buid          = models.ForeignKey("onboarding.Bt",  null=True, blank=True,on_delete=models.RESTRICT, related_name='people_buids')
+    client      = models.ForeignKey("onboarding.Bt",  null=True, blank=True, on_delete=models.RESTRICT, related_name='people_clients')
+    bu          = models.ForeignKey("onboarding.Bt",  null=True, blank=True,on_delete=models.RESTRICT, related_name='people_bus')
     reportto      = models.ForeignKey("self", null=True, blank=True, on_delete=models.RESTRICT, related_name='children', verbose_name='Report to')
     deviceid      = models.CharField(_("Device Id"), max_length=50, default='-1')
     email         = SecureString(_("Email"), max_length=254)
@@ -122,11 +122,11 @@ class People(AbstractBaseUser, PermissionsMixin, TenantAwareModel, BaseModel):
         db_table = 'people'
         constraints = [
             models.UniqueConstraint(
-                fields=['loginid', 'peoplecode', 'buid'], name='peolple_logind_peoplecode_buid_uk'),
+                fields=['loginid', 'peoplecode', 'bu'], name='peolple_logind_peoplecode_bu_uk'),
             models.UniqueConstraint(
-                fields=['peoplecode', 'buid'], name='people_peoplecode_buid'),
+                fields=['peoplecode', 'bu'], name='people_peoplecode_bu'),
             models.UniqueConstraint(
-                fields=['loginid', 'buid'], name='people_loginid_buid_uk'),
+                fields=['loginid', 'bu'], name='people_loginid_bu_uk'),
             models.UniqueConstraint(
                 fields=['loginid'], name='people_loginid_uk'),
             models.UniqueConstraint(
@@ -145,18 +145,18 @@ class Pgroup(BaseModel, TenantAwareModel):
     groupname  = models.CharField(_('Name'), max_length=250)
     enable     = models.BooleanField(_('Enable'), default=True)
     identifier = models.ForeignKey('onboarding.TypeAssist', null=True, blank=True, on_delete=models.RESTRICT, related_name="pgroup_idfs")
-    buid       = models.ForeignKey("onboarding.Bt", null=True, blank=True, on_delete=models.RESTRICT, related_name='pgroup_buids')
-    clientid   = models.ForeignKey('onboarding.Bt', null=True, blank=True, on_delete=models.RESTRICT, related_name='pgroup_clientids')
+    bu       = models.ForeignKey("onboarding.Bt", null=True, blank=True, on_delete=models.RESTRICT, related_name='pgroup_bus')
+    client   = models.ForeignKey('onboarding.Bt', null=True, blank=True, on_delete=models.RESTRICT, related_name='pgroup_clients')
 
     class Meta(BaseModel.Meta):
         db_table = 'pgroup'
         constraints = [
             models.UniqueConstraint(
                 fields=['groupname', 'identifier'],
-                name='pgroup_groupname_buid_clientid_identifier_key'),
+                name='pgroup_groupname_bu_client_identifier_key'),
             models.UniqueConstraint(
                 fields=['groupname', 'identifier'],
-                name='pgroup_groupname_buid_identifier_key')
+                name='pgroup_groupname_bu_identifier_key')
         ]
         get_latest_by = ["mdtz", 'cdtz']
 
@@ -169,19 +169,19 @@ class Pgroup(BaseModel, TenantAwareModel):
 
 ############## Pgbelonging Table ###############
 class Pgbelonging(BaseModel, TenantAwareModel):
-    groupid     = models.ForeignKey('Pgroup', null=True, blank=True, on_delete=models.RESTRICT, related_name="pgbelongs_grps")
-    peopleid    = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.RESTRICT,  related_name="pgbelongs_peoples")
+    pgroup     = models.ForeignKey('Pgroup', null=True, blank=True, on_delete=models.RESTRICT, related_name="pgbelongs_grps")
+    people    = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.RESTRICT,  related_name="pgbelongs_peoples")
     isgrouplead = models.BooleanField(_('Group Lead'), default=False)
     assignsites = models.ForeignKey('onboarding.Bt', null=True,  blank=True, on_delete=models.RESTRICT, related_name="pgbelongs_assignsites")
-    buid        = models.ForeignKey("onboarding.Bt", null=True, blank=True, on_delete=models.RESTRICT,  related_name='pgbelonging_sites')
-    clientid    = models.ForeignKey('onboarding.Bt', null=True, blank=True, on_delete=models.RESTRICT, related_name='pgbelonging_clients')
+    bu        = models.ForeignKey("onboarding.Bt", null=True, blank=True, on_delete=models.RESTRICT,  related_name='pgbelonging_sites')
+    client    = models.ForeignKey('onboarding.Bt', null=True, blank=True, on_delete=models.RESTRICT, related_name='pgbelonging_clients')
 
     class Meta(BaseModel.Meta):
         db_table = 'pgbelonging'
         constraints = [
             models.UniqueConstraint(
-                fields=['groupid', 'peopleid', 'assignsites'],
-                name='pgbelonging_groupid_peopleid_buid_assignsites_clientid')
+                fields=['pgroup', 'people', 'assignsites'],
+                name='pgbelonging_pgroup_people_bu_assignsites_client')
         ]
         get_latest_by = ["mdtz", 'cdtz']
 
@@ -201,7 +201,7 @@ class Capability(BaseModel, TenantAwareModel):
     capsname = models.CharField(_('Capability'), max_length=1000, default=None, blank=True, null=True)
     parent   = models.ForeignKey('self', on_delete=models.RESTRICT,  null=True, blank=True, related_name='children', verbose_name="Belongs_to")
     cfor     = models.CharField(_('Capability_for'), max_length=10, default='WEB', choices=Cfor.choices)
-    clientid = models.ForeignKey('onboarding.Bt',  null=True, blank=True, on_delete=models.RESTRICT)
+    client = models.ForeignKey('onboarding.Bt',  null=True, blank=True, on_delete=models.RESTRICT)
     enable   = models.BooleanField(_('Enable'), default=True)
 
     objects = CapabilityManager()

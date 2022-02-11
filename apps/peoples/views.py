@@ -61,10 +61,15 @@ class SignIn(View):
                 logger.info('Signin form is valid')
                 loginid = form.cleaned_data.get('username')
                 password = form.cleaned_data.get('password')
-                people = authenticate(
-                    request, username=loginid, password=password)
-                if people:
+                if people := authenticate(
+                    request, username=loginid, password=password
+                ):
                     login(request, people)
+                    logger.info(
+                        'Login Successfull for people "%s" with loginid "%s" client "%s" site "%s"'%(
+                            people.peoplename, people.loginid, people.client.buname, people.bu.buname
+                        )
+                    )
                     utils.save_user_session(request, request.user)
                     display_user_session_info(request.session)
                     logger.info("User logged in {}".format(
@@ -189,8 +194,8 @@ class CreatePeople(LoginRequiredMixin, View):
 class RetrievePeoples(LoginRequiredMixin, View):
     template_path = 'peoples/people_list.html'
 
-    related = ['peopletype', 'buid']
-    fields = ['id', 'peoplecode', 'peoplename', 'peopletype__tacode', 'buid__bucode',
+    related = ['peopletype', 'bu']
+    fields = ['id', 'peoplecode', 'peoplename', 'peopletype__tacode', 'bu__bucode',
               'isadmin']
     model = People
 
@@ -453,7 +458,7 @@ class UpdatePgroup(LoginRequiredMixin, View):
             pg = self.model.objects.get(id=pk)
             logger.info('object retrieved {}'.format(pg))
             peoples = pm.Pgbelonging.objects.filter(
-                groupid=pg).values_list('peopleid', flat=True)
+                pgroup=pg).values_list('people', flat=True)
             print(f"peoples {peoples}")
             form = self.form_class(instance=pg, initial={
                                    'peoples': list(peoples)}, request=request)
@@ -824,10 +829,10 @@ class People(View):
         'template_list': 'peoples/people.html',
         'partial_form': 'peoples/partials/partial_people_form.html',
         'partial_list': 'peoples/partials/partial_people_list.html',
-        'related': ['peopletype', 'buid'],
+        'related': ['peopletype', 'bu'],
         'model': pm.People,
         'filter': pft.PeopleFilter,
-        'fields': ['id', 'peoplecode', 'peoplename', 'peopletype__tacode', 'buid__bucode',
+        'fields': ['id', 'peoplecode', 'peoplename', 'peopletype__tacode', 'bu__bucode',
                    'isadmin'],
         'form_initials': {'initial': {}}}
 

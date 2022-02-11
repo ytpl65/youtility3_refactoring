@@ -184,7 +184,7 @@ People group
                 $("#btn_del").hide()
             }
             //hide next btn if instance is not saved yet
-            if(session['wizard_data'] && session['wizard_data']['pgroupids'].length == 0){
+            if(session['wizard_data'] && session['wizard_data']['ppgroups'].length == 0){
                 $('#next_btn').hide()
             }
             var table = $('#people_allocation_table').DataTable({

@@ -101,8 +101,8 @@ class Bt(BaseModel, TenantAwareModel, HeirarchyModel):
 
 
 class Contract(BaseModel, TenantAwareModel):
-    buid               = models.ForeignKey('Bt', null=True, on_delete=models.RESTRICT,  related_name='contract_buid', verbose_name='Site')
-    customerid         = models.ForeignKey('Bt', null=True, on_delete=models.RESTRICT, related_name='contract_customer', verbose_name='Customer')
+    bu               = models.ForeignKey('Bt', null=True, on_delete=models.RESTRICT,  related_name='contract_bu', verbose_name='Site')
+    customer         = models.ForeignKey('Bt', null=True, on_delete=models.RESTRICT, related_name='contract_customer', verbose_name='Customer')
     contractname       = models.CharField(max_length=50)
     contract_startdate = models.DateField(null=True)
     contract_enddate   = models.DateField(null=True)
@@ -115,8 +115,8 @@ class Contract(BaseModel, TenantAwareModel):
         db_table = 'contract'
         constraints = [
             models.UniqueConstraint(
-                fields=['contractname', 'revno', 'buid'],
-                name='cname_revno_buid_uk'),
+                fields=['contractname', 'revno', 'bu'],
+                name='cname_revno_bu_uk'),
             models.CheckConstraint(
                 check=models.Q(revno__gte=0),
                 name='revno_gte_0_ck')]
@@ -127,7 +127,7 @@ class Contract(BaseModel, TenantAwareModel):
 
 
 class ContractDetail(BaseModel, TenantAwareModel):
-    contractid  = models.ForeignKey('Contract', null=True, on_delete=models.RESTRICT, related_name="cd_contract", verbose_name='Contract')
+    contract  = models.ForeignKey('Contract', null=True, on_delete=models.RESTRICT, related_name="cd_contract", verbose_name='Contract')
     worktype    = models.ForeignKey('TypeAssist', null=True, on_delete=models.RESTRICT, related_name="cd_worktype", verbose_name='Work Type')
     quantity    = models.IntegerField()
     cdstartdate = models.DateTimeField(null=True)
@@ -141,11 +141,11 @@ class ContractDetail(BaseModel, TenantAwareModel):
                 name='qty_gte_0_ck')]
 
     def __str__(self):
-        return self.contractid.contractname
+        return self.contract.contractname
 
 
 class Shift(BaseModel, TenantAwareModel):
-    buid                 = models.ForeignKey('Bt', null=True, on_delete=models.RESTRICT,related_name="shift_buid", verbose_name='Site')
+    bu                   = models.ForeignKey('Bt', null=True, on_delete=models.RESTRICT,related_name="shift_bu", verbose_name='Site')
     shiftname            = models.CharField(max_length=50, verbose_name="Name")
     shiftduration        = models.IntegerField(null=True, verbose_name="Shift Duration")
     starttime            = models.TimeField(verbose_name="Start time")
@@ -157,7 +157,7 @@ class Shift(BaseModel, TenantAwareModel):
     class Meta(BaseModel.Meta):
         db_table = 'shift'
         constraints = [models.UniqueConstraint(
-            fields=['shiftname', 'buid'], name='shiftname_buid_uk')]
+            fields=['shiftname', 'bu'], name='shiftname_bu_uk')]
         get_latest_by = ['mdtz', 'cdtz']
 
     def __str__(self):
@@ -168,13 +168,13 @@ class Shift(BaseModel, TenantAwareModel):
 
 
 class SitePeople(BaseModel, TenantAwareModel):
-    buid                = models.ForeignKey('Bt', null=True, on_delete=models.RESTRICT, related_name="sp_buid")
-    peopleid            = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, on_delete=models.RESTRICT,  related_name="sp_people")
+    bu                  = models.ForeignKey('Bt', null=True, on_delete=models.RESTRICT, related_name="sp_bu")
+    people              = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, on_delete=models.RESTRICT,  related_name="sp_people")
     reportto            = models.ForeignKey(settings.AUTH_USER_MODEL, null=True,on_delete=models.RESTRICT,  related_name="sp_reportto")
     shift               = models.ForeignKey('Shift', null=True, on_delete=models.RESTRICT, related_name="sp_shift")
     worktype            = models.ForeignKey('TypeAssist', null=True, on_delete=models.RESTRICT,  related_name="sp_worktype")
-    contract_id         = models.ForeignKey('Contract', null=True, on_delete=models.RESTRICT, related_name="sp_contractid")
-    contractdetailid    = models.ForeignKey('ContractDetail', null=True, on_delete=models.RESTRICT, related_name="sp_contractdetail")
+    contract            = models.ForeignKey('Contract', null=True, on_delete=models.RESTRICT, related_name="sp_contract")
+    contractdetail      = models.ForeignKey('ContractDetail', null=True, on_delete=models.RESTRICT, related_name="sp_contractdetail")
     fromdt              = models.DateField()
     uptodt              = models.DateField()
     siteowner           = models.BooleanField(default=False)
@@ -193,19 +193,19 @@ class SitePeople(BaseModel, TenantAwareModel):
     class Meta(BaseModel.Meta):
         db_table = 'sitepeople'
         constraints = [
-            models.UniqueConstraint(fields=['peopleid', 'buid', 'posting_revision', 'contract_id', 'slno'],
-                                    name='people_buid_postrev_contr_slno_uk')]
+            models.UniqueConstraint(fields=['people', 'bu', 'posting_revision', 'contract', 'slno'],
+                                    name='people_bu_postrev_contr_slno_uk')]
         get_latest_by = ["mdtz", 'cdtz']
 
     def __str__(self):
-        return self.peopleid.peoplecode
+        return self.people.peoplecode
 
 
 class TypeAssist(BaseModel, TenantAwareModel):
     tacode = models.CharField(_("tacode"), max_length=50, unique=True)
     taname = models.CharField(_("taname"), max_length=100)
     tatype = models.ForeignKey( "self", null=True, blank=True, on_delete=models.RESTRICT, related_name='children')
-    buid   = models.ForeignKey("Bt", null=True, blank=True, on_delete=models.RESTRICT, related_name='ta_buids')
+    bu   = models.ForeignKey("Bt", null=True, blank=True, on_delete=models.RESTRICT, related_name='ta_bus')
 
     class Meta(BaseModel.Meta):
         db_table = 'typeassist'
@@ -252,7 +252,7 @@ class WizardDraft(models.Model):
     createdby   = models.OneToOneField(settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.CASCADE, related_name="created_by")
     cdtz        = models.DateTimeField(auto_now_add=True, auto_now=False)
     mdtz        = models.DateTimeField(auto_now=True)
-    buid        = models.ForeignKey("Bt", null=True, blank=True,on_delete=models.CASCADE, related_name='wiz_buids')
+    bu          = models.ForeignKey("Bt", null=True, blank=True,on_delete=models.CASCADE, related_name='wiz_bus')
     wizard_data = models.JSONField(null=True, default=wizard_default,  encoder=DjangoJSONEncoder, blank=True)
     form_data   = models.JSONField( null=True, default=formData_default,  encoder=DjangoJSONEncoder, blank=True)
 
@@ -275,15 +275,15 @@ class GeofenceMaster(BaseModel):
     geofence      = models.TextField(_("GeoFence"))
     alerttogroup  = models.ForeignKey("peoples.Pgroup", verbose_name=_( "Alert to Group"), on_delete=models.RESTRICT)
     alerttopeople = models.ForeignKey("peoples.People", verbose_name=_(""), on_delete=models.RESTRICT)
-    clientid      = models.ForeignKey("onboarding.Bt", verbose_name=_("Client"), on_delete=models.RESTRICT, related_name="for_clients")
-    buid          = models.ForeignKey("onboarding.Bt", verbose_name=_( "Site"), on_delete=models.RESTRICT, related_name='for_sites')
+    client        = models.ForeignKey("onboarding.Bt", verbose_name=_("Client"), on_delete=models.RESTRICT, related_name="for_clients")
+    bu            = models.ForeignKey("onboarding.Bt", verbose_name=_( "Site"), on_delete=models.RESTRICT, related_name='for_sites')
     enable        = models.BooleanField(_("Enable"), default=True)
 
     class Meta(BaseModel.Meta):
         db_table = 'geofencemaster'
         constraints = [
             models.UniqueConstraint(
-                fields=['gfcode', 'buid'], name='gfcode_buid_uk')
+                fields=['gfcode', 'bu'], name='gfcode_bu_uk')
         ]
         get_latest_by = ['mdtz']
 

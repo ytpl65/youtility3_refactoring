@@ -38,7 +38,7 @@ class Question(BaseModel, TenantAwareModel):
     alerton    = models.CharField(_("Alert on"), max_length=300, null=True)
     answertype = models.CharField(verbose_name=_("Type"), choices=AnswerType.choices, default="NUMERIC", max_length=55)  # type in previous
     unit       = models.ForeignKey("onboarding.TypeAssist", verbose_name=_( "Unit"), on_delete=models.RESTRICT, related_name="unit_types", null=True, blank=True)
-    clientid   = models.ForeignKey("onboarding.Bt", verbose_name=_("Client"), on_delete=models.RESTRICT, null=True, blank=True)
+    client     = models.ForeignKey("onboarding.Bt", verbose_name=_("Client"), on_delete=models.RESTRICT, null=True, blank=True)
     isworkflow = models.BooleanField(_("Is WorkFlow"), default=False)
     enable     = models.BooleanField(_("Enable"), default=True)
     category   = models.ForeignKey("onboarding.TypeAssist", verbose_name=_("Category"), on_delete=models.RESTRICT, related_name='category_types', null=True, blank=True)
@@ -48,7 +48,7 @@ class Question(BaseModel, TenantAwareModel):
         verbose_name = 'Question'
         verbose_name_plural = 'Questions'
         constraints = [models.UniqueConstraint(
-            fields=['ques_name', 'answertype', 'clientid'], name='ques_name_type_clientid_uk')]
+            fields=['ques_name', 'answertype', 'client'], name='ques_name_type_client_uk')]
 
     def __str__(self) -> str:
         return f"{self.ques_name} | {self.answertype}"
@@ -82,15 +82,15 @@ class QuestionSet(BaseModel, TenantAwareModel):
         QUESTIONSET            = "QUESTIONSET"           , _('Question Set')
 
     qset_name          = models.CharField(_("QuestionSet Name"), max_length=200)
-    assetid            = models.ForeignKey( "activity.Asset", on_delete=models.RESTRICT, null=True, blank=False)
+    asset              = models.ForeignKey( "activity.Asset", on_delete=models.RESTRICT, null=True, blank=False)
     enable             = models.BooleanField(_("Enable"), default=True)
     assetincludes      = models.TextField(null=True, blank=True)
     buincludes         = models.TextField(null=True, blank=True)
     slno               = models.SmallIntegerField(_("SL No."), default=1)
     parent             = models.ForeignKey("self", verbose_name=_("Belongs To"), on_delete=models.RESTRICT, null=True, blank=True)
     type               = models.CharField( _("Question Set Type"), choices=Type.choices, null=True, max_length=50)
-    buid               = models.ForeignKey("onboarding.Bt", verbose_name=_("Site"), on_delete=models.RESTRICT, related_name='qset_buids', null=True, blank=True)
-    clientid           = models.ForeignKey("onboarding.Bt", verbose_name=_("Client"), on_delete=models.RESTRICT, related_name='qset_clientids', null=True, blank=True)
+    bu                 = models.ForeignKey("onboarding.Bt", verbose_name=_("Site"), on_delete=models.RESTRICT, related_name='qset_bus', null=True, blank=True)
+    client             = models.ForeignKey("onboarding.Bt", verbose_name=_("Client"), on_delete=models.RESTRICT, related_name='qset_clients', null=True, blank=True)
     site_grp_includes  = models.JSONField(_('Site Groups'), default=site_grp_includes, encoder=DjangoJSONEncoder, blank=True, null=True)
     site_type_includes = models.JSONField(_("Site Types"), default=site_type_includes, encoder=DjangoJSONEncoder, blank=True, null=True)
     url                = models.CharField(_("Url"), max_length=250, null=True, blank=True)
@@ -101,8 +101,8 @@ class QuestionSet(BaseModel, TenantAwareModel):
         verbose_name_plural = 'QuestionSets'
         constraints         = [
             models.UniqueConstraint(
-                fields=['qset_name', 'parent', 'type', 'clientid', 'buid'],
-                name='name_type_parent_type_clientid_buid_uk'
+                fields=['qset_name', 'parent', 'type', 'client', 'bu'],
+                name='name_type_parent_type_client_bu_uk'
             ),
             models.CheckConstraint(
                 check=models.Q(slno__gte=0),
@@ -138,17 +138,17 @@ class QuestionSetBelonging(BaseModel, TenantAwareModel):
 
     ismandatory       = models.BooleanField(_("Is Manadatory"))
     slno              = models.SmallIntegerField(_("Seq No."))
-    qsetid            = models.ForeignKey("activity.QuestionSet", verbose_name=_("Question Set"), on_delete=models.RESTRICT, null=True, blank=True)
-    quesid            = models.ForeignKey("activity.Question", verbose_name=_("Question"), null=True, blank=False,  on_delete=models.RESTRICT)
+    qset              = models.ForeignKey("activity.QuestionSet", verbose_name=_("Question Set"), on_delete=models.RESTRICT, null=True, blank=True)
+    question          = models.ForeignKey("activity.Question", verbose_name=_("Question"), null=True, blank=False,  on_delete=models.RESTRICT)
     answertype        = models.CharField(_("Question Type"), max_length=50, choices=AnswerType.choices)
     max               = models.DecimalField(_("Max"), null=True, max_digits=18, decimal_places=2, default=0.00)
     min               = models.DecimalField(_("Min"), null=True, max_digits=18, decimal_places=2, default=0.00)
     alerton           = models.CharField(_("Alert on"), null=True, blank=True, max_length=300)
     options           = models.CharField(_("Option"), max_length=200, null=True, blank=True)
-    clientid          = models.ForeignKey("onboarding.Bt", verbose_name=_("Client"), on_delete=models.RESTRICT, null=True, blank=True, related_name='qsetbelong_clientid')
+    client            = models.ForeignKey("onboarding.Bt", verbose_name=_("Client"), on_delete=models.RESTRICT, null=True, blank=True, related_name='qsetbelong_client')
     alertmails_sendto = models.JSONField( _("Alert mails send to"), encoder=DjangoJSONEncoder, default=alertmails_sendto)
-    buid              = models.ForeignKey("onboarding.Bt", verbose_name=_("Site"), on_delete=models.RESTRICT, null=True, blank=True, related_name='qsetbelong_buid')
-    clientid          = models.ForeignKey("onboarding.Bt", verbose_name=_("Client"), on_delete=models.RESTRICT, null=True, blank=True, related_name='qsetbelong_clientid')
+    bu                = models.ForeignKey("onboarding.Bt", verbose_name=_("Site"), on_delete=models.RESTRICT, null=True, blank=True, related_name='qsetbelong_bu')
+    client            = models.ForeignKey("onboarding.Bt", verbose_name=_("Client"), on_delete=models.RESTRICT, null=True, blank=True, related_name='qsetbelong_client')
 
     class Meta(BaseModel.Meta):
         db_table            = 'questionsetbelonging'
@@ -156,8 +156,8 @@ class QuestionSetBelonging(BaseModel, TenantAwareModel):
         verbose_name_plural = 'QuestionSetBelongings'
         constraints         = [
             models.UniqueConstraint(
-                fields=['qsetid', 'quesid', 'clientid', 'buid'],
-                name='qsetid_quesid_clientid_buid_uk'
+                fields=['qset', 'question', 'client', 'bu'],
+                name='qset_question_client_bu_uk'
             )
         ]
 
@@ -219,16 +219,16 @@ class Job(BaseModel, TenantAwareModel):
     gracetime       = models.IntegerField(_("Grace Time"))
     expirytime      = models.IntegerField(_("Expiry Time"))
     lastgeneratedon = models.DateTimeField(_("Last generatedon"), auto_now=False, auto_now_add=True)
-    assetid         = models.ForeignKey("activity.Asset", verbose_name=_("Asset"), on_delete=models.RESTRICT, null=True, blank=True)
+    asset           = models.ForeignKey("activity.Asset", verbose_name=_("Asset"), on_delete=models.RESTRICT, null=True, blank=True)
     priority        = models.CharField(_("Priority"), max_length=100, choices=Priority.choices)
-    qsetid          = models.ForeignKey("activity.QuestionSet", verbose_name=_("QuestionSet"), on_delete=models.RESTRICT, null=True, blank=True)
-    peopleid        = models.ForeignKey('peoples.People', verbose_name=_( "Aggresive auto-assign to People"), on_delete=models.RESTRICT, null=True, blank=True, related_name='job_aaatops')
-    groupid         = models.ForeignKey("peoples.Pgroup", verbose_name=_("Group"), on_delete=models.RESTRICT, null=True, blank=True)
-    gfid            = models.ForeignKey("onboarding.GeofenceMaster", verbose_name=_("Geofence"), on_delete=models.RESTRICT, null=True, blank=True)
+    qset            = models.ForeignKey("activity.QuestionSet", verbose_name=_("QuestionSet"), on_delete=models.RESTRICT, null=True, blank=True)
+    people          = models.ForeignKey('peoples.People', verbose_name=_( "Aggresive auto-assign to People"), on_delete=models.RESTRICT, null=True, blank=True, related_name='job_aaatops')
+    pgroup          = models.ForeignKey("peoples.Pgroup", verbose_name=_("Group"), on_delete=models.RESTRICT, null=True, blank=True)
+    geofence        = models.ForeignKey("onboarding.GeofenceMaster", verbose_name=_("Geofence"), on_delete=models.RESTRICT, null=True, blank=True)
     parent          = models.ForeignKey("self", verbose_name=_("Belongs to"), on_delete=models.RESTRICT, null=True, blank=True)
     slno            = models.SmallIntegerField(_("Serial No."))
-    clientid        = models.ForeignKey("onboarding.Bt", verbose_name=_("Client"), on_delete=models.RESTRICT, related_name='job_clientids', null=True, blank=True)
-    buid            = models.ForeignKey("onboarding.Bt", verbose_name=_("Site"), on_delete=models.RESTRICT, related_name='job_buids', null=True, blank=True)
+    client          = models.ForeignKey("onboarding.Bt", verbose_name=_("Client"), on_delete=models.RESTRICT, related_name='job_clients', null=True, blank=True)
+    bu              = models.ForeignKey("onboarding.Bt", verbose_name=_("Site"), on_delete=models.RESTRICT, related_name='job_bus', null=True, blank=True)
     shift           = models.ForeignKey("onboarding.Shift", verbose_name=_("Shift"), on_delete=models.RESTRICT, null=True, related_name="job_shifts")
     starttime       = models.TimeField(_("Start time"), auto_now=False, auto_now_add=False, null=True)
     endtime         = models.TimeField(_("End time"), auto_now=False, auto_now_add=False, null=True)
@@ -244,9 +244,9 @@ class Job(BaseModel, TenantAwareModel):
         verbose_name_plural = 'Jobs'
         constraints         = [
             models.UniqueConstraint(
-                fields=['jobname', 'assetid',
-                        'qsetid', 'parent', 'identifier'],
-                name='jobname_assetid_qset_id_parent_identifier_uk'
+                fields=['jobname', 'asset',
+                        'qset', 'parent', 'identifier'],
+                name='jobname_asset_qset_id_parent_identifier_uk'
             ),
             models.CheckConstraint(
                 check=models.Q(gracetime__gte=0),
@@ -312,8 +312,8 @@ class Asset(BaseModel, TenantAwareModel):
     identifier    = models.CharField( _('Asset Identifier'), choices=Identifier.choices, max_length=55)
     runningstatus = models.CharField(_('Running Status'), choices=RunningStatus.choices, max_length=55)
     type          = models.ForeignKey("onboarding.TypeAssist", verbose_name=_("Type"), on_delete = models.RESTRICT, null=True, blank=True, related_name='asset_types')
-    clientid      = models.ForeignKey("onboarding.Bt", verbose_name=_("Client"), on_delete = models.RESTRICT, null=True, blank=True, related_name='asset_clientids')
-    buid          = models.ForeignKey("onboarding.Bt", verbose_name=_("Site"), on_delete = models.RESTRICT, null=True, blank=True, related_name='asset_buids')
+    client        = models.ForeignKey("onboarding.Bt", verbose_name=_("Client"), on_delete = models.RESTRICT, null=True, blank=True, related_name='asset_clients')
+    bu            = models.ForeignKey("onboarding.Bt", verbose_name=_("Site"), on_delete = models.RESTRICT, null=True, blank=True, related_name='asset_bus')
     category      = models.ForeignKey("onboarding.TypeAssist", verbose_name=_("Category"), null = True, blank=True, on_delete=models.RESTRICT, related_name='asset_categories')
     subcategory   = models.ForeignKey("onboarding.TypeAssist", verbose_name=_("Sub Category"), null = True, blank=True, on_delete=models.RESTRICT, related_name='asset_subcategories')
     brand         = models.ForeignKey("onboarding.TypeAssist", verbose_name=_("Brand"), null = True, blank=True, on_delete=models.RESTRICT, related_name='asset_brands')
@@ -395,40 +395,40 @@ class Jobneed(BaseModel, TenantAwareModel):
         YEARLY      = ("YEARLY", "Yearly")
         FORTNIGHTLY = ("FORTNIGHTLY", "Fort Nightly")
  
-    jobdesc             = models.CharField(_("Job Description"), max_length=200)
-    plandatetime        = models.DateTimeField(_("Plan date time"), auto_now=False, auto_now_add=False)
-    expirydatetime      = models.DateTimeField(_("Expiry date time"), auto_now=False, auto_now_add=False)
-    gracetime           = models.IntegerField(_("Grace time"))
-    recievedon_server   = models.DateTimeField(_("Recived on server"), auto_now=False, auto_now_add=True)
-    starttime           = models.DateTimeField( _("Start time"), auto_now=False, auto_now_add=False, null=True)
-    endtime             = models.DateTimeField(_("Start time"), auto_now=False, auto_now_add=False, null=True)
-    gpslocation         = models.CharField(_("Gps Location"), default='0.0,0.0', max_length=50)
-    remarks             = models.CharField(_("Remark"), max_length=200, null=True, blank=True)
-    assetid             = models.ForeignKey("activity.Asset", verbose_name=_("Asset"), on_delete= models.RESTRICT, null=True, blank=True, related_name='jobneed_assets')
-    frequency           = models.CharField(verbose_name=_("Frequency type"), null       = True, max_length=55, choices=Frequency.choices)
-    jobid               = models.ForeignKey("activity.Job", verbose_name=_("Job"), on_delete  = models.RESTRICT, null=True, blank=True, related_name='jobs')
-    jobstatus           = models.CharField('Job Status', choices         = JobStatus.choices, max_length=60, null=True)
-    jobtype             = models.CharField(_("Job Type"), max_length=50, choices=JobType.choices, null=True)
-    performed_by        = models.ForeignKey("peoples.People", verbose_name=_("Performed by"), on_delete = models.RESTRICT, null=True, blank=True, related_name='jobneed_performedby')
-    priority            = models.CharField(_("Priority"), max_length=50, choices=Priority.choices)
-    qsetid              = models.ForeignKey("activity.QuestionSet", verbose_name=_("QuestionSet"), on_delete  = models.RESTRICT, null=True, blank=True)
-    scantype            = models.CharField(_("Scan type"), max_length=50, choices=Scantype.choices)
-    peopleid            = models.ForeignKey("peoples.People", verbose_name=_("People"), on_delete = models.RESTRICT,  null=True, blank=True)
-    groupid             = models.ForeignKey("peoples.Pgroup", verbose_name=_("Group"), on_delete= models.RESTRICT,  null=True, blank=True)
-    identifier          = models.CharField(_("Jobneed Type"), max_length=50, choices=Identifier.choices, null=True)
-    parent              = models.ForeignKey("self", verbose_name=_("Belongs to"),  on_delete  = models.RESTRICT,  null=True, blank=True)
-    alerts              = models.BooleanField(_("Alerts"), default=False, null=True)
-    ticketno            = models.IntegerField(_("Ticket No"), default=0)
-    slno                = models.SmallIntegerField(_("Sl No."))
-    clientid            = models.ForeignKey("onboarding.Bt", verbose_name=_("Client"), on_delete= models.RESTRICT, null=True, blank=True, related_name='jobneed_clientids')
-    buid                = models.ForeignKey("onboarding.Bt", verbose_name=_("Site"), on_delete = models.RESTRICT, null=True, blank=True, related_name='jobneedf_buids')
-    ticket_category     = models.ForeignKey("onboarding.TypeAssist", verbose_name=_("Ticket Category"), null      = True, blank=True, on_delete=models.RESTRICT)
-    othersite           = models.CharField(_("Other Site"), max_length=100, default=None, null=True)
-    mult_factor         = models.DecimalField(_("Multiplication Factor"), default=1, max_digits=10, decimal_places=6)
-    raisedby            = models.CharField(_("Raised by"), max_length=55, default="", null=True)
-    raisedtktflag       = models.BooleanField(_("RaiseTicketFlag"), default=False, null=True)
-    other_info          = models.JSONField(_("Other info"), default=other_info, blank=True, encoder=DjangoJSONEncoder)
-    ctzoffset           = models.IntegerField(_("TZ_Offset"),  null=True, blank=True)
+    jobdesc           = models.CharField(_("Job Description"), max_length=200)
+    plandatetime      = models.DateTimeField(_("Plan date time"), auto_now=False, auto_now_add=False)
+    expirydatetime    = models.DateTimeField(_("Expiry date time"), auto_now=False, auto_now_add=False)
+    gracetime         = models.IntegerField(_("Grace time"))
+    recievedon_server = models.DateTimeField(_("Recived on server"), auto_now=False, auto_now_add=True)
+    starttime         = models.DateTimeField( _("Start time"), auto_now=False, auto_now_add=False, null=True)
+    endtime           = models.DateTimeField(_("Start time"), auto_now=False, auto_now_add=False, null=True)
+    gpslocation       = models.CharField(_("Gps Location"), default='0.0,0.0', max_length=50)
+    remarks           = models.CharField(_("Remark"), max_length=200, null=True, blank=True)
+    asset             = models.ForeignKey("activity.Asset", verbose_name=_("Asset"), on_delete= models.RESTRICT, null=True, blank=True, related_name='jobneed_assets')
+    frequency         = models.CharField(verbose_name=_("Frequency type"), null       = True, max_length=55, choices=Frequency.choices)
+    job               = models.ForeignKey("activity.Job", verbose_name=_("Job"), on_delete  = models.RESTRICT, null=True, blank=True, related_name='jobs')
+    jobstatus         = models.CharField('Job Status', choices = JobStatus.choices, max_length=60, null=True)
+    jobtype           = models.CharField(_("Job Type"), max_length=50, choices=JobType.choices, null=True)
+    performed_by      = models.ForeignKey("peoples.People", verbose_name=_("Performed by"), on_delete = models.RESTRICT, null=True, blank=True, related_name='jobneed_performedby')
+    priority          = models.CharField(_("Priority"), max_length=50, choices=Priority.choices)
+    qset              = models.ForeignKey("activity.QuestionSet", verbose_name=_("QuestionSet"), on_delete  = models.RESTRICT, null=True, blank=True)
+    scantype          = models.CharField(_("Scan type"), max_length=50, choices=Scantype.choices)
+    people            = models.ForeignKey("peoples.People", verbose_name=_("People"), on_delete = models.RESTRICT,  null=True, blank=True)
+    pgroup            = models.ForeignKey("peoples.Pgroup", verbose_name=_("Group"), on_delete= models.RESTRICT,  null=True, blank=True)
+    identifier        = models.CharField(_("Jobneed Type"), max_length=50, choices=Identifier.choices, null=True)
+    parent            = models.ForeignKey("self", verbose_name=_("Belongs to"),  on_delete  = models.RESTRICT,  null=True, blank=True)
+    alerts            = models.BooleanField(_("Alerts"), default=False, null=True)
+    ticketno          = models.IntegerField(_("Ticket No"), default=0)
+    slno              = models.SmallIntegerField(_("Sl No."))
+    client            = models.ForeignKey("onboarding.Bt", verbose_name=_("Client"), on_delete= models.RESTRICT, null=True, blank=True, related_name='jobneed_clients')
+    bu                = models.ForeignKey("onboarding.Bt", verbose_name=_("Site"), on_delete = models.RESTRICT, null=True, blank=True, related_name='jobneedf_bus')
+    ticket_category   = models.ForeignKey("onboarding.TypeAssist", verbose_name=_("Ticket Category"), null= True, blank=True, on_delete=models.RESTRICT)
+    othersite         = models.CharField(_("Other Site"), max_length=100, default=None, null=True)
+    mult_factor       = models.DecimalField(_("Multiplication Factor"), default=1, max_digits=10, decimal_places=6)
+    raisedby          = models.CharField(_("Raised by"), max_length=55, default="", null=True)
+    raisedtktflag     = models.BooleanField(_("RaiseTicketFlag"), default=False, null=True)
+    other_info        = models.JSONField(_("Other info"), default=other_info, blank=True, encoder=DjangoJSONEncoder)
+    ctzoffset         = models.IntegerField(_("TZ_Offset"),  null=True, blank=True)
 
     class Meta(BaseModel.Meta):
         db_table            = 'jobneed'
@@ -460,7 +460,7 @@ class JobneedDetails(BaseModel, TenantAwareModel):
         SITELIST    = ("SITELIST", "Site List")
     
     slno         = models.SmallIntegerField(_("SL No."))
-    quesid       = models.ForeignKey("activity.Question", verbose_name=_("Question"),  null=True, blank=True, on_delete=models.RESTRICT)
+    question     = models.ForeignKey("activity.Question", verbose_name=_("Question"),  null=True, blank=True, on_delete=models.RESTRICT)
     answertype   = models.CharField(_("Answer Type"), max_length=50, choices=AnswerType.choices, null=True)
     answer       = models.CharField(_("Answer"), max_length=250, default="")
     options      = models.CharField( _("Option"), max_length=200, null=True, blank=True)
@@ -468,7 +468,7 @@ class JobneedDetails(BaseModel, TenantAwareModel):
     max          = models.DecimalField(_("Max"), max_digits=18, decimal_places=4, null=True)
     alerton      = models.CharField( _("Alert On"), null=True, blank=True, max_length=50)
     is_mandatory = models.BooleanField(_("Is Mandatory"), default=False)
-    jobneedid    = models.ForeignKey("activity.Jobneed", verbose_name=_( "Jobneed"), null=True, blank=True, on_delete=models.RESTRICT)
+    jobneed      = models.ForeignKey("activity.Jobneed", verbose_name=_( "Jobneed"), null=True, blank=True, on_delete=models.RESTRICT)
     alerts       = models.BooleanField(_("Alerts"), default=False)
 
     class Meta(BaseModel.Meta):

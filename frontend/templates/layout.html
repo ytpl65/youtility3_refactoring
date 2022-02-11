@@ -103,6 +103,12 @@
 {% endmacro %}
 <!--------------- END POP-UP DELETE_ALERT MACRO ------------------>
 
+
+{% macro reset_form_btn() %}
+<div class="d-flex justify-content-end">
+ <button type="button" class="btn btn-secondary btn-sm btn-hover-scale" onclick="location.reload();$('{{ kwargs['id'] }}').trigger('reset')">Reset Form</button>
+</div>
+{% endmacro %}
 <!------------------------------------------------ END MACROS ------------------------------------------------------->
 
 

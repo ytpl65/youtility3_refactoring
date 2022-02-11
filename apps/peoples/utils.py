@@ -69,36 +69,36 @@ def save_cuser_muser(instance, user):
     return instance
 
 
-def save_clientid_tenantid(instance, user, session, clientid=None, buid=None):
+def save_client_tenantid(instance, user, session, client=None, bu=None):
 
     tenantid = session.get('tenantid')
-    if buid is None:
-        buid = session.get('buid')
-    if clientid is None:
-        clientid = session.get('clientid')
+    if bu is None:
+        bu = session.get('bu_id')
+    if client is None:
+        client = session.get('client_id')
     instance.tenant_id   = tenantid
-    instance.clientid_id = clientid
-    instance.buid_id     = buid
+    instance.client_id = client
+    instance.bu_id     = bu
     logger.info("client info saved...DONE")
     return instance
 
 
 
-def save_userinfo(instance, user, session,clientid=None, buid=None):
-    """saves user's related info('cuser', 'muser', 'clientid', 'tenantid')
+def save_userinfo(instance, user, session,client=None, bu=None):
+    """saves user's related info('cuser', 'muser', 'client', 'tenantid')
     from request and session"""
     from django.core.exceptions import ObjectDoesNotExist
     if user.is_authenticated:
         try:
             msg = "saving user and client info for the instance have been created"
-            logger.info(msg + " STARTED")
-            instance = save_clientid_tenantid(instance, user, session, clientid, buid)
+            logger.info(f'{msg} STARTED')
+            instance = save_client_tenantid(instance, user, session, client, bu)
             instance = save_cuser_muser(instance, user)
             instance.save()
-            logger.info(msg + " DONE")
+            logger.info(f'{msg} DONE')
         except (KeyError, ObjectDoesNotExist):
             instance.tenant = None
-            instance.clientid = None
+            instance.client = None
         except Exception:
             logger.critical("something went wrong !!!", exc_info=True)
             raise
@@ -143,8 +143,8 @@ def save_tenant_client_info(request):
         client = Bt.objects.get(bucode=clientcode.upper())
         tenant = Tenant.objects.get(subdomain_prefix=clientcode)
         request.session['tenantid'] = tenant.id
-        request.session['clientid'] = client.id
-        request.session['buid'] = request.user.buid.id
+        request.session['client_id'] = client.id
+        request.session['bu_id'] = request.user.bu.id
         logger.info('saving tenant & client info into the session...DONE')
     except:
         raise
@@ -333,18 +333,18 @@ def display_user_session_info(session):
 
 
 def get_choices_for_peoplevsgrp(request):
-    site = request.user.buid
+    site = request.user.bu
     return pm.People.objects.filter(
-        buid__btid=site.btid).values_list(
-            'peopleid', 'peoplename')
+        bu__btid=site.btid).values_list(
+            'people', 'peoplename')
 
 
 def save_pgroupbelonging(pg, request):
     dbg("saving pgbelonging for pgroup %s" % (pg))
     from apps.onboarding.models import Bt
     peoples = request.POST.getlist('peoples')
-    client = Bt.objects.get(id=int(request.session['clientid']))
-    site = Bt.objects.get(id=int(request.session['buid']))
+    client = Bt.objects.get(id=int(request.session['client_id']))
+    site = Bt.objects.get(id=int(request.session['bu_id']))
     tenant = Tenant.objects.get(id=int(request.session['tenantid']))
     if peoples:
         try:
@@ -353,11 +353,11 @@ def save_pgroupbelonging(pg, request):
                 for i in range(len(peoples)):
                     people = pm.People.objects.get(id=int(peoples[i]))
                     pgb = pm.Pgbelonging.objects.create(
-                        groupid=pg,
-                        peopleid=people,
-                        clientid=client,
+                        pgroup=pg,
+                        people=people,
+                        client=client,
                         tenant=tenant,
-                        buid=site
+                        bu=site
                     )
                     if request.session.get('wizard_data'):
                         request.session['wizard_data']['pgbids'].append(pgb.id)

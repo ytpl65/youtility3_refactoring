@@ -66,12 +66,12 @@ Schedhule External-Tour&nbsp;<i class="fa fa-clock fs-4 text-primary" aria-hidde
     
     <div class="row mb-3 gy-3">
         <div class="col-md-1">
-            <label for={{ schdexternaltourform.buid.id_for_label }}
-                class="required">{{ schdexternaltourform.buid.label }}:</label>
+            <label for={{ schdexternaltourform.bu.id_for_label }}
+                class="required">{{ schdexternaltourform.bu.label }}:</label>
         </div>
         <div class="col-md-5">
-            {{ schdexternaltourform.buid }}
-            {{ schdexternaltourform.buid.errors }}
+            {{ schdexternaltourform.bu }}
+            {{ schdexternaltourform.bu.errors }}
         </div>
         <div class="col-md-1">
             <label for={{ schdexternaltourform.planduration.id_for_label }}
@@ -122,12 +122,12 @@ Schedhule External-Tour&nbsp;<i class="fa fa-clock fs-4 text-primary" aria-hidde
     </div>
     <div class="row mb-3 gy-3">
         <div class="col-md-1">
-            <label for={{ schdexternaltourform.peopleid.id_for_label }}
-            class="required">{{ schdexternaltourform.peopleid.label }}:</label>
+            <label for={{ schdexternaltourform.people.id_for_label }}
+            class="required">{{ schdexternaltourform.people.label }}:</label>
         </div>
         <div class="col-md-5">
-            {{ schdexternaltourform.peopleid }}
-            {{ schdexternaltourform.peopleid.errors }}
+            {{ schdexternaltourform.people }}
+            {{ schdexternaltourform.people.errors }}
         </div>
         <div class="col-md-1">
             <label for={{ schdexternaltourform.from_date.id_for_label }}
@@ -140,12 +140,12 @@ Schedhule External-Tour&nbsp;<i class="fa fa-clock fs-4 text-primary" aria-hidde
     </div>
     <div class="row mb-3 gy-3">
         <div class="col-md-1">
-            <label for={{ schdexternaltourform.qsetid.id_for_label }}
-            class="required">{{ schdexternaltourform.qsetid.label }}:</label>
+            <label for={{ schdexternaltourform.qset.id_for_label }}
+            class="required">{{ schdexternaltourform.qset.label }}:</label>
         </div>
         <div class="col-md-5">
-            {{ schdexternaltourform.qsetid }}
-            {{ schdexternaltourform.qsetid.errors }}
+            {{ schdexternaltourform.qset }}
+            {{ schdexternaltourform.qset.errors }}
         </div>
         <div class="col-md-1">
             <label for={{ schdexternaltourform.upto_date.id_for_label }}
@@ -234,7 +234,7 @@ Schedhule External-Tour&nbsp;<i class="fa fa-clock fs-4 text-primary" aria-hidde
                                     <td></td><!--8-->
                                     <td></td><!--9-->
                                     <td>{{ qsetname }}</td><!--10-->
-                                    <td>{{ qsetid }}</td><!--11-->
+                                    <td>{{ qset }}</td><!--11-->
                                 </tr>
                                 {% endfor %}
                             {% endif %}
@@ -557,7 +557,7 @@ $(document).ready(() => { //DOCUMENT.READY START[+]
         }).then((result) => {
             if(result.isConfirmed){
                 const params = {url:"{{ url('schedhuler:runJob') }}"}
-                var payLoad = {jobid:'{{ schdexternaltourform.instance.id }}',
+                var payLoad = {job:'{{ schdexternaltourform.instance.id }}',
                  csrfmiddlewaretoken: '{{ csrf_token }}'}
                 fire_ajax_form_post(params, payLoad)
                 .done((data, status, xhr) => {

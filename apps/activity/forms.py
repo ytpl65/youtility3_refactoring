@@ -103,7 +103,7 @@ class QuestionForm(forms.ModelForm):
                 am.Question.objects.get(
                     ques_name__exact=self.instance.ques_name,
                     answertype__iexact=self.instance.answertype,
-                    clientid_id__exact=self.request.session['clientid'])
+                    client_id__exact=self.request.session['client_id'])
                 msg = 'This type of Question is already exist!'
                 raise forms.ValidationError(
                     message=msg, code="unique_constraint")
@@ -146,11 +146,11 @@ class QsetBelongingForm(forms.ModelForm):
 
     class Meta:
         model = am.QuestionSetBelonging
-        fields = ['slno', 'qsetid', 'quesid', 'answertype', 'min', 'max',
+        fields = ['slno', 'qset', 'question', 'answertype', 'min', 'max',
                   'alerton', 'options', 'ismandatory']
         widgets = {
             'answertype': forms.TextInput(attrs={'readonly': 'readonly'}),
-            'quesid'    : s2forms.Select2Widget,
+            'question'    : s2forms.Select2Widget,
             'alerton'   : s2forms.Select2MultipleWidget,
             'options'   : forms.Textarea(attrs={'rows': 3, 'cols': 40}),
         }
@@ -204,7 +204,7 @@ class QsetBelongingForm(forms.ModelForm):
                 am.Question.objects.get(
                     ques_name__exact   = self.instance.ques_name,
                     answertype__iexact = self.instance.answertype,
-                    clientid_id__exact = self.request.session['clientid'])
+                    client_id__exact = self.request.session['client_id'])
                 msg = 'This type of Question is already exist!'
                 raise forms.ValidationError(
                     message=msg, code="unique_constraint")
@@ -437,39 +437,39 @@ class JobForm(forms.ModelForm):
         model = am.Job
         fields = ['jobname', 'jobdesc', 'from_date', 'upto_date', 'cron',
                     'identifier', 'planduration', 'gracetime', 'expirytime',
-                    'assetid', 'priority', 'qsetid', 'groupid', 'gfid', 'parent',
-                    'parent', 'slno', 'clientid', 'buid', 'starttime', 'endtime','ctzoffset',
-                    'frequency',  'scantype', 'ticket_category', 'peopleid', 'shift']
+                    'asset', 'priority', 'qset', 'pgroup', 'geofence', 'parent',
+                    'parent', 'slno', 'client', 'bu', 'starttime', 'endtime','ctzoffset',
+                    'frequency',  'scantype', 'ticket_category', 'people', 'shift']
 
         labels = {
             'jobname'   : 'Name',         'jobdesc'     : 'Description',     'from_date'      : 'Valid From',
             'upto_date' : 'Valid To',     'cron'        : 'Cron Expression', 'ticket_category': 'Ticket Catgory',
             'grace_time': 'Grace Time',   'planduration': 'Plan Duration',   'scan_type'      : 'Scan Type',
-            'priority'  : 'Priority',     'peopleid'    : 'People',          'groupid'        : 'Group',          
-            'qset_id'   : 'Question Set', 'shift'       : "Shift",           'assetid'        : 'Asset',
+            'priority'  : 'Priority',     'people'    : 'People',          'pgroup'        : 'Group',          
+            'qset_id'   : 'Question Set', 'shift'       : "Shift",           'asset'        : 'Asset',
         }
 
         widgets = {
             'ticket_category'   : s2forms.Select2Widget,
             'scantype'          : s2forms.Select2Widget,
             'shift'             : s2forms.Select2Widget,
-            'groupid'           : s2forms.Select2Widget,
-            'assetid'           : s2forms.Select2Widget,
+            'pgroup'           : s2forms.Select2Widget,
+            'asset'           : s2forms.Select2Widget,
             'priority'          : s2forms.Select2Widget,
             'ctzoffset'         : forms.HiddenInput(),
             'jobdesc'           : forms.Textarea(attrs={'rows': 1, 'cols': 40}),
             'from_date'         : forms.DateTimeInput,
             'upto_date'         : forms.DateTimeInput,
             'ctzoffset'         : forms.NumberInput(attrs={"style":"display:none;"}),
-            'qsetid'            : s2forms.ModelSelect2Widget(
+            'qset'            : s2forms.ModelSelect2Widget(
                 model = am.QuestionSet, 
                 search_fields = ['qset_name__icontains'],
                 max_results=10),
-            'peopleid'          : s2forms.ModelSelect2Widget(
+            'people'          : s2forms.ModelSelect2Widget(
                 model = pm.People,
                 search_fields   = ['peoplecode__icontains', 'peoplecode__icontains'],
                 max_results     = 10),
-            'buid'              : s2forms.ModelSelect2Widget(
+            'bu'              : s2forms.ModelSelect2Widget(
                 model = om.Bt,
                 search_fields   = ['buname__icontains', 'bucode__icontains'],
                 max_results     = 10),
@@ -496,23 +496,23 @@ class JobForm(forms.ModelForm):
     def clean(self):
         cd = super().clean()
         ic('cleaned')
-        self.instance.jobdesc = f'{cd.get("buid")} - {cd.get("jobname")}'
+        self.instance.jobdesc = f'{cd.get("bu")} - {cd.get("jobname")}'
 
 
 class JobNeedForm(forms.ModelForm):
     class Meta:
         model = am.Jobneed
-        fields = ['identifier', 'frequency', 'parent', 'jobdesc', 'assetid', 'ticket_category',
-                  'qsetid',  'peopleid', 'groupid', 'priority', 'scantype', 'ticketno',
+        fields = ['identifier', 'frequency', 'parent', 'jobdesc', 'asset', 'ticket_category',
+                  'qset',  'people', 'pgroup', 'priority', 'scantype', 'ticketno',
                   'jobstatus', 'plandatetime', 'expirydatetime', 'gracetime', 'starttime',
                   'endtime', 'performed_by', 'gpslocation', 'cuser', 'raisedby', 'remarks']
         widgets = {
             'ticket_category': s2forms.Select2Widget,
             'scantype'       : s2forms.Select2Widget,
-            'groupid'        : s2forms.Select2Widget,
-            'peopleid'       : s2forms.Select2Widget,
-            'qsetid'         : s2forms.ModelSelect2Widget(model=am.QuestionSet, search_fields = ['qset_name__icontains']),
-            'assetid'        : s2forms.ModelSelect2Widget(model=am.Asset, search_fields = ['assetname__icontains']),
+            'pgroup'        : s2forms.Select2Widget,
+            'people'       : s2forms.Select2Widget,
+            'qset'         : s2forms.ModelSelect2Widget(model=am.QuestionSet, search_fields = ['qset_name__icontains']),
+            'asset'        : s2forms.ModelSelect2Widget(model=am.Asset, search_fields = ['assetname__icontains']),
             'priority'       : s2forms.Select2Widget,
             'jobdesc'        : forms.Textarea(attrs={'rows': 1, 'cols': 40}),
             'remarks'        : forms.Textarea(attrs={'rows': 2, 'cols': 40}),

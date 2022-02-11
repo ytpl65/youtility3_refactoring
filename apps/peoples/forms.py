@@ -104,13 +104,13 @@ class PeopleForm(forms.ModelForm):
         fields = ['peoplename', 'peoplecode',  'peopleimg',  'mobno',      'email',
                   'loginid',      'dateofbirth', 'enable',   'deviceid',   'gender',
                   'peopletype',   'dateofjoin',  'department', 'dateofreport',
-                  'designation',  'reportto', 'shift', 'buid', 'isadmin']
+                  'designation',  'reportto', 'shift', 'bu', 'isadmin']
         labels = {
             'peoplename': 'Name',        'loginid'    : 'Login Id',        'email'       : 'Email',
             'peopletype': 'People Type', 'reportto'   : 'Report to',       'designation' : 'Designation',
             'gender'    : 'Gender',      'dateofbirth': 'Date of Birth',   'enable'      : 'Enable',
             'department': 'Department',  'dateofjoin' : 'Date of Joining', 'dateofreport': 'Date of Release',
-            'deviceid'  : 'Device Id',   'buid'       : "Site",            'isadmin'     : "Is Admin"}
+            'deviceid'  : 'Device Id',   'bu'       : "Site",            'isadmin'     : "Is Admin"}
 
         widgets = {
             'mobno'       : forms.TextInput(attrs={'placeholder': 'Eg:- +91XXXXXXXXXX, +44XXXXXXXXX'}),
@@ -125,7 +125,7 @@ class PeopleForm(forms.ModelForm):
             'department'  : s2forms.Select2Widget,
             'designation' : s2forms.Select2Widget,
             'reportto'    : s2forms.Select2Widget,
-            'buid'        : s2forms.Select2Widget,
+            'bu'        : s2forms.Select2Widget,
         }
 
     def __init__(self, *args, **kwargs):
@@ -235,9 +235,9 @@ class PgroupForm(forms.ModelForm):
         self.request = kwargs.pop('request')
         super(PgroupForm, self).__init__(*args, **kwargs)
         utils.initailize_form_fields(self)
-        site = self.request.user.buid.bucode if self.request.user.buid else ""
+        site = self.request.user.bu.bucode if self.request.user.bu else ""
         self.fields['peoples'].choices = pm.People.objects.select_related(
-            'buid').filter(isadmin=False).values_list(
+            'bu').filter(isadmin=False).values_list(
             'id', 'peoplename')
 
     def is_valid(self) -> bool:
@@ -377,10 +377,10 @@ class PeopleGrpAllocation(forms.Form):
         request = kwargs.pop('request')
         super(PeopleGrpAllocation, self).__init__(*args, **kwargs)
         utils.initailize_form_fields(self)
-        site = request.user.buid.bucode if request.user.buid else ""
+        site = request.user.bu.bucode if request.user.bu else ""
         self.fields['people'].choices = pm.People.objects.select_related(
-            'buid').filter(
-            buid__bucode=site).values_list(
+            'bu').filter(
+            bu__bucode=site).values_list(
             'id', 'peoplename')
 
     def is_valid(self) -> bool:

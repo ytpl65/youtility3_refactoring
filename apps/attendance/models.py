@@ -32,12 +32,12 @@ class PeopleEventlog(BaseModel, TenantAwareModel):
         BOAT       = ('BOAT', 'Boat or Ship')
     
 
-    peopleid        = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.RESTRICT, verbose_name='People')
-    clientid        = models.ForeignKey("onboarding.Bt",  null=True, blank=True, on_delete=models.RESTRICT, related_name='clientids')
-    buid            = models.ForeignKey("onboarding.Bt",  null=True, blank=True, on_delete=models.RESTRICT, related_name='buids')
+    people          = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.RESTRICT, verbose_name='People')
+    client          = models.ForeignKey("onboarding.Bt",  null=True, blank=True, on_delete=models.RESTRICT, related_name='clients')
+    bu              = models.ForeignKey("onboarding.Bt",  null=True, blank=True, on_delete=models.RESTRICT, related_name='bus')
     shift           = models.ForeignKey('onboarding.Shift', null=True, blank=True, on_delete=models.RESTRICT)
     verifiedby      = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True,       on_delete=models.RESTRICT, related_name='verifiedpeoples', verbose_name='Verified By')
-    gfid            = models.ForeignKey('onboarding.GeofenceMaster', null=True, blank=True, on_delete=models.RESTRICT)
+    geofence        = models.ForeignKey('onboarding.GeofenceMaster', null=True, blank=True, on_delete=models.RESTRICT)
     peventtype      = models.CharField(choices=EventType.choices, max_length=100, verbose_name='Attendance Type', null=True)
     transportmode   = models.CharField(choices=TransportMode.choices, max_length=100, verbose_name='Transport Mode', null=True)
     punch_intime    = models.DateTimeField(null=True)

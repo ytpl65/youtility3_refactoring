@@ -86,20 +86,20 @@ Internal Tour
     </div>
     <div class="row mb-3 gy-3">
         <!-- ASSIGN TO PEOPLE --->
-        <div class="col-md-2 peopleid">
-            <label for={{ internaltourform.peopleid.id_for_label }} class="">{{ internaltourform.peopleid.label }}:</label>
+        <div class="col-md-2 people">
+            <label for={{ internaltourform.people.id_for_label }} class="">{{ internaltourform.people.label }}:</label>
         </div>
-        <div class="col-md-4 peopleid">
-            {{ internaltourform.peopleid }}
-            {{ internaltourform.peopleid.errors }}
+        <div class="col-md-4 people">
+            {{ internaltourform.people }}
+            {{ internaltourform.people.errors }}
         </div>
         <!-- ASSIGN TO GROUP --->
-        <div class="col-md-2 groupid">
-            <label for={{ internaltourform.groupid.id_for_label }} class="">{{ internaltourform.groupid.label }}:</label>
+        <div class="col-md-2 pgroup">
+            <label for={{ internaltourform.pgroup.id_for_label }} class="">{{ internaltourform.pgroup.label }}:</label>
         </div>
-        <div class="col-md-4 groupid">
-            {{ internaltourform.groupid }}
-            {{ internaltourform.groupid.errors }}
+        <div class="col-md-4 pgroup">
+            {{ internaltourform.pgroup }}
+            {{ internaltourform.pgroup.errors }}
         </div>
         <!-- ASSIGN TO GROUP --->
         <div class="col-md-2">
@@ -203,10 +203,10 @@ Internal Tour
                     <td>{{ checkpoint['slno'] }}</td>
                     <td>{{ checkpoint['plandatetime']| to_local }}</td>
                     <td>{{ checkpoint['expirydatetime']| to_local }}</td>
-                    <td>{{ checkpoint['assetid__id'] }}</td>
-                    <td>{{ checkpoint['assetid__assetname'] }}</td>
-                    <td>{{ checkpoint['qsetid__id'] }}</td>
-                    <td>{{ checkpoint['qsetid__qset_name'] }}</td>
+                    <td>{{ checkpoint['asset__id'] }}</td>
+                    <td>{{ checkpoint['asset__assetname'] }}</td>
+                    <td>{{ checkpoint['qset__id'] }}</td>
+                    <td>{{ checkpoint['qset__qset_name'] }}</td>
                     <td>{{ checkpoint['gracetime'] }}</td>
                     <td>{{ checkpoint['jobstatus'] }}</td>
                     <td>{{ checkpoint['id'] }}</td>
@@ -260,22 +260,22 @@ Internal Tour
             </div>
             <div class="row mb-3 gy-3">
                 <div class="col-md-2">
-                    <label for="{{ child_internaltour.assetid.id_for_label }}"
-                    class="required">{{ child_internaltour.assetid.label }}</label>
+                    <label for="{{ child_internaltour.asset.id_for_label }}"
+                    class="required">{{ child_internaltour.asset.label }}</label>
                 </div>
                 <div class="col-md-10">
-                    {{ child_internaltour.assetid }}
-                    {{ child_internaltour.assetid.errors }}
+                    {{ child_internaltour.asset }}
+                    {{ child_internaltour.asset.errors }}
                 </div>
             </div>
             <div class="row mb-3 gy-3">
                 <div class="col-md-2">
-                    <label for="{{ child_internaltour.qsetid.id_for_label }}"
-                    class="required">{{ child_internaltour.qsetid.label }}</label>
+                    <label for="{{ child_internaltour.qset.id_for_label }}"
+                    class="required">{{ child_internaltour.qset.label }}</label>
                 </div>
                 <div class="col-md-10">
-                    {{ child_internaltour.qsetid }}
-                    {{ child_internaltour.qsetid.errors }}
+                    {{ child_internaltour.qset }}
+                    {{ child_internaltour.qset.errors }}
                 </div>
             </div>
             <div class="row mb-3 gy-3">
@@ -343,12 +343,12 @@ Internal Tour
     function showHideSelectField(val) {
         if (val == "PEOPLE") {
             //$("#aatopdiv").show();
-            $(".peopleid").show();
-            $(".groupid").hide();
+            $(".people").show();
+            $(".pgroup").hide();
         }else {
             //$("#aatopdiv").hide();
-            $(".groupid").show();
-            $(".peopleid").hide();
+            $(".pgroup").show();
+            $(".people").hide();
         }
     }
 
@@ -363,15 +363,15 @@ Internal Tour
 
     function getCheckpointFormdata(){
         const formData = {}
-        formData['qsetid_id'] = $("#id_child-qsetid").val()
-        formData['assetid_id'] = $("#id_child-assetid").val()
+        formData['qset_id'] = $("#id_child-qset").val()
+        formData['asset_id'] = $("#id_child-asset").val()
         formData['expirytime'] = $("#id_child-expirytime").val()
         formData['plandatetime'] = $("#id_child-plandatetime").val()
         formData['expirydatetime'] = $("#id_child-expirydatetime").val()
         formData['gracetime'] = $("#id_child-gracetime").val()
         formData['jobstatus'] = "{{ internaltourform.instance.jobstatus }}"
-        formData['qsetid'] = getSelectedValue("#id_child-qsetid")
-        formData['assetid'] = getSelectedValue("#id_child-assetid").split(" ")[0]
+        formData['qset'] = getSelectedValue("#id_child-qset")
+        formData['asset'] = getSelectedValue("#id_child-asset").split(" ")[0]
         return formData
     }
 
@@ -402,8 +402,8 @@ Internal Tour
 
     function processValidForm() {
         data = getCheckpointFormdata();
-        rowdata = [-1, data.plandatetime, data.expirydatetime, data.assetid_id, 
-                data.assetid, data.qsetid_id, data.qsetid, data.gracetime, data.jobstatus]
+        rowdata = [-1, data.plandatetime, data.expirydatetime, data.asset_id, 
+                data.asset, data.qset_id, data.qset, data.gracetime, data.jobstatus]
         table.row('.toupdate').remove().draw(false);
         isduplicate = check_for_duplicates(table, rowdata)
         if (!isduplicate) {
@@ -421,7 +421,7 @@ Internal Tour
 
     function resetForm() {
         $("#id_child-expirydatetime, #id_child-plandatetime, #id_child-gracetime").val("")
-        $("#id_child-qsetid, #id_child-assetid").val(null).trigger('change');
+        $("#id_child-qset, #id_child-asset").val(null).trigger('change');
     }
     function addRemoveClass(ele){
         if ($(ele).hasClass('selected')) {
@@ -435,8 +435,8 @@ Internal Tour
     }
 
     function update_checkpoint_form(data, fortable = false) {
-        $("#child-form-modal #id_child-assetid").val(data[3]).change()
-        $("#child-form-modal #id_child-qsetid").val(data[5]).change()
+        $("#child-form-modal #id_child-asset").val(data[3]).change()
+        $("#child-form-modal #id_child-qset").val(data[5]).change()
         $("#child-form-modal #id_child-expirydatetime").val(data[2])
         $("#child-form-modal #id_child-plandatetime").val(data[1])
         $("#child-form-modal #id_child-gracetime").val(data[7])
@@ -445,7 +445,7 @@ Internal Tour
     function deleteCheckpointRequest(checpointid, checklistid, parentid) {
         var deleted = false
         const params = {
-            'url': `{{ url('schedhuler:delete_checkpointTour') }}?checkpointid=${checpointid}&checklistid=${checklistid}&jobid=${parentid}&datasource=jobneed`,
+            'url': `{{ url('schedhuler:delete_checkpointTour') }}?checkpointid=${checpointid}&checklistid=${checklistid}&job=${parentid}&datasource=jobneed`,
             'beforeSend': function () {}
         }
         fire_ajax_get(params)
@@ -467,7 +467,7 @@ Internal Tour
         if ('{{internaltourform.instance.id}}' == ('None' || "")) {
             showHideSelectField('PEOPLE')
         }else{
-            var assignto = '{{internaltourform.instance.peopleid}}' == ('None' || "") ? "GROUP" :"PEOPLE"
+            var assignto = '{{internaltourform.instance.people}}' == ('None' || "") ? "GROUP" :"PEOPLE"
             showHideSelectField(assignto)
         }
         //datatable configurations

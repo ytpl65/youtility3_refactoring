@@ -245,7 +245,7 @@ class SitePeopleForm(forms.ModelForm):
     }
     class Meta:
         model=obm.SitePeople
-        fields = ['contract_id', 'peopleid', 'worktype', 'shift',
+        fields = ['contract', 'people', 'worktype', 'shift',
                  'reportto', 'webcapability', 'mobilecapability',
                 'reportcapability', 'fromdt', 'uptodt', 'siteowner',
                 'enable', 'enablesleepingguard']

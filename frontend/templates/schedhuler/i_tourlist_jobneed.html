@@ -53,7 +53,7 @@ Tour List
             <td><a href="{{ url('schedhuler:internaltour', args=[tour['id']]) }}">{{ tour['plandatetime'] | to_local }}</a></td>
             <td><a href="{{ url('schedhuler:internaltour', args=[tour['id']]) }}">{{ tour['jobdesc'] }}</a></td>
             <td>{{ tour['jobstatus']  }}</td>
-            <td>{{ tour['peopleid__peoplename'] + " [People]" or tour['groupid__groupname']+ " [Group]" }}</td>
+            <td>{{ tour['people__peoplename'] + " [People]" or tour['pgroup__groupname']+ " [Group]" }}</td>
             <td>{{ tour['performed_by__peoplename'] }}</td>
             <td>{{ tour['gracetime'] }} Min</td>
             <td>{{ tour['expirydatetime'] | to_local }}</td>

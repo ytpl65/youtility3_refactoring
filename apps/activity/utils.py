@@ -87,17 +87,17 @@ def insert_questions_to_qsetblng(assigned_questions, model, fields, request):
             for ques in assigned_questions:
                 log.info("%s saving question %s for QuestionSet %s [started]"%(" "*8,ques[1], fields['qset_name']))
                 qsetbng, created = model.objects.update_or_create(
-                    quesid_id = ques[2], qsetid_id = fields['qsetid'], clientid_id = fields['clientid'],
+                    question_id = ques[2], qset_id = fields['qset'], client_id = fields['client'],
                     defaults = { 
                     "slno"       : ques[0],
-                    "quesid_id"   : ques[2],
+                    "question_id"   : ques[2],
                     "answertype"   : ques[3],
                     "min"         : float(ques[4]),
                     "max"         : float(ques[5]),
                     "options"     : ques[6],
                     "alerton"     : ques[7],
                     "ismandatory" : ques[8],
-                    "qsetid_id"   : fields['qsetid']}
+                    "qset_id"   : fields['qset']}
                 )
                 qsetbng.save()
                 log.debug("%s, %s, %s, %s"%(qsetbng.cuser, qsetbng.muser, qsetbng.cdtz, qsetbng.mdtz))

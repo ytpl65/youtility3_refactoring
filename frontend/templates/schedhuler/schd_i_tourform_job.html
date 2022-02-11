@@ -85,20 +85,20 @@ Schedhule Tour
         </div>
 
         <!-- ASSIGN TO PEOPLE --->
-        <div class="col-md-2 peopleid">
-            <label for={{ schdtourform.peopleid.id_for_label }} class="">{{ schdtourform.peopleid.label }}:</label>
+        <div class="col-md-2 people">
+            <label for={{ schdtourform.people.id_for_label }} class="">{{ schdtourform.people.label }}:</label>
         </div>
-        <div class="col-md-4 peopleid">
-            {{ schdtourform.peopleid }}
-            {{ schdtourform.peopleid.errors }}
+        <div class="col-md-4 people">
+            {{ schdtourform.people }}
+            {{ schdtourform.people.errors }}
         </div>
         <!-- ASSIGN TO GROUP --->
-        <div class="col-md-2 groupid">
-            <label for={{ schdtourform.groupid.id_for_label }} class="">{{ schdtourform.groupid.label }}:</label>
+        <div class="col-md-2 pgroup">
+            <label for={{ schdtourform.pgroup.id_for_label }} class="">{{ schdtourform.pgroup.label }}:</label>
         </div>
-        <div class="col-md-4 groupid">
-            {{ schdtourform.groupid }}
-            {{ schdtourform.groupid.errors }}
+        <div class="col-md-4 pgroup">
+            {{ schdtourform.pgroup }}
+            {{ schdtourform.pgroup.errors }}
         </div>
     </div>
     <div class="row mb-3 gy-3">
@@ -208,22 +208,22 @@ Schedhule Tour
             <form action="" id="createchildjob_form" method="post">
                 <div class="row mb-3 gy-3">
                     <div class="col-md-1">
-                        <label for="{{ childtour_form.assetid.id_for_label }}"
-                            class="required">{{ childtour_form.assetid.label }}:</label>
+                        <label for="{{ childtour_form.asset.id_for_label }}"
+                            class="required">{{ childtour_form.asset.label }}:</label>
                     </div>
                     <div class="col-md-5">
-                        {{ childtour_form.assetid }}
-                        {{ childtour_form.assetid.errors }}
+                        {{ childtour_form.asset }}
+                        {{ childtour_form.asset.errors }}
                     </div>
                     
                     <div class="col-md-1">
-                        <label for="{{ childtour_form.qsetid.id_for_label }}"
-                            class="required">{{ childtour_form.qsetid.label }}:</label>
+                        <label for="{{ childtour_form.qset.id_for_label }}"
+                            class="required">{{ childtour_form.qset.label }}:</label>
                     </div>
 
                     <div class="col-md-5">
-                        {{ childtour_form.qsetid }}
-                        {{ childtour_form.qsetid.errors }}
+                        {{ childtour_form.qset }}
+                        {{ childtour_form.qset.errors }}
                     </div>
                 </div>
                 <div class="row mb-3 gy-3">
@@ -272,10 +272,10 @@ Schedhule Tour
                                     {% for checkpoint in checkpoints %}
                                     <tr>
                                         <td>{{ checkpoint['slno'] }}</td>
-                                        <td>{{ checkpoint['assetid__id'] }}</td>
-                                        <td>{{ checkpoint['assetid__assetname'] }}</td>
-                                        <td>{{ checkpoint['qsetid__id'] }}</td>
-                                        <td>{{ checkpoint['qsetid__qset_name'] }}</td>
+                                        <td>{{ checkpoint['asset__id'] }}</td>
+                                        <td>{{ checkpoint['asset__assetname'] }}</td>
+                                        <td>{{ checkpoint['qset__id'] }}</td>
+                                        <td>{{ checkpoint['qset__qset_name'] }}</td>
                                         <td>{{ checkpoint['expirytime'] }}</td>
                                     </tr>
                                     {% endfor %}
@@ -357,12 +357,12 @@ Schedhule Tour
     function showHideSelectField(val) {
         if (val == "PEOPLE") {
             //$("#aatopdiv").show();
-            $(".peopleid").show();
-            $(".groupid").hide();
+            $(".people").show();
+            $(".pgroup").hide();
         } else {
             //$("#aatopdiv").hide();
-            $(".groupid").show();
-            $(".peopleid").hide();
+            $(".pgroup").show();
+            $(".people").hide();
         }
     }
     //return selected value of a field
@@ -380,11 +380,11 @@ Schedhule Tour
         console.log("Getting question formdata ")
         var formData = {}
         formData['slno'] = $("#createchildjob_form #id_slno").val()
-        formData['qsetid_id'] = $("#createchildjob_form #id_qsetid").val()
-        formData['assetid_id'] = $("#createchildjob_form #id_assetid").val()
+        formData['qset_id'] = $("#createchildjob_form #id_qset").val()
+        formData['asset_id'] = $("#createchildjob_form #id_asset").val()
         formData['expirytime'] = $("#createchildjob_form #id_expirytime").val()
-        formData['qsetid'] = getSelectedValue("#createchildjob_form #id_qsetid")
-        formData['assetid'] = getSelectedValue("#createchildjob_form #id_assetid")
+        formData['qset'] = getSelectedValue("#createchildjob_form #id_qset")
+        formData['asset'] = getSelectedValue("#createchildjob_form #id_asset")
 
         console.log("formData", formData)
         return formData
@@ -392,12 +392,12 @@ Schedhule Tour
 
     function resetForm() {
         $("#createchildjob_form #id_expirytime").val("")
-        $("#createchildjob_form #id_qsetid, #createchildjob_form #id_assetid").val(null).trigger('change');
+        $("#createchildjob_form #id_qset, #createchildjob_form #id_asset").val(null).trigger('change');
     }
 
     function processValidForm() {
         data = getCheckpointFormdata();
-        rowdata = [-1, data.assetid_id, data.assetid, data.qsetid_id, data.qsetid, data.expirytime]
+        rowdata = [-1, data.asset_id, data.asset, data.qset_id, data.qset, data.expirytime]
         table.row('.toupdate').remove().draw(false);
         isduplicate = check_for_duplicates(table, rowdata)
         if (!isduplicate) {
@@ -448,8 +448,8 @@ Schedhule Tour
 
     function update_checkpoint_form(data, fortable = false) {
         $("#createchildjob_form #id_slno").val(parseInt(data[0]))
-        $("#createchildjob_form #id_assetid").val(data[1]).change()
-        $("#createchildjob_form #id_qsetid").val(data[3]).change()
+        $("#createchildjob_form #id_asset").val(data[1]).change()
+        $("#createchildjob_form #id_qset").val(data[3]).change()
         $("#createchildjob_form #id_expirytime").val(data[5])
         console.log("while updating", data.id_alertbelow, data.id_alertabove)
         $('#resetMiddleForm').show()
@@ -457,10 +457,10 @@ Schedhule Tour
 
     }
 
-    function deleteCheckpointRequest(checpointid, checklistid, jobid) {
+    function deleteCheckpointRequest(checpointid, checklistid, job) {
         var deleted = false
         const params = {
-            'url': `{{ url('schedhuler:delete_checkpointTour') }}?checkpointid=${checpointid}&checklistid=${checklistid}&jobid=${jobid}&datasource=job`,
+            'url': `{{ url('schedhuler:delete_checkpointTour') }}?checkpointid=${checpointid}&checklistid=${checklistid}&job=${job}&datasource=job`,
             'beforeSend': function () {}
         }
         fire_ajax_get(params)
@@ -567,11 +567,11 @@ Schedhule Tour
         if ('{{schdtourform.instance.id}}' == ('None' || "")) {
             $("#btn_del").hide()
         }
-        //toggle peopleid and groupid field based on radio button value
+        //toggle people and pgroup field based on radio button value
         if ('{{schdtourform.instance.id}}' == ('None' || "")) {
             showHideSelectField('PEOPLE')
         }else{
-            var assignto = '{{schdtourform.instance.peopleid}}' == ('None' || "") ? "GROUP" :"PEOPLE"
+            var assignto = '{{schdtourform.instance.people}}' == ('None' || "") ? "GROUP" :"PEOPLE"
             showHideSelectField(assignto)
         }
         //ADD CALENDER TO DATE FIELDS WITH FLAT-PICKR PLUGIN
@@ -682,7 +682,7 @@ Schedhule Tour
             }).then((result) => {
                 if(result.isConfirmed){
                     const params = {url:"{{ url('schedhuler:runJob') }}"}
-                    var payLoad = {jobid:'{{ schdtourform.instance.id }}', csrfmiddlewaretoken: '{{ csrf_token }}'}
+                    var payLoad = {job:'{{ schdtourform.instance.id }}', csrfmiddlewaretoken: '{{ csrf_token }}'}
                     fire_ajax_form_post(params, payLoad)
                     .done((data, status, xhr) => {
                         Swal.fire({

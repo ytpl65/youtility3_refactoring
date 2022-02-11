@@ -43,8 +43,8 @@ Attendance
         <tr>
             <td><a href="" class="attd-link" data-id="{{ attd['id'] }}"
             data-rowid={{ loop.index0 }}>{{ attd['peventtype'] }}</a></td>
-            <td>{{ attd['buid__buname'] }}</td>
-            <td>{{ attd['peopleid__peoplename'] }}</td>
+            <td>{{ attd['bu__buname'] }}</td>
+            <td>{{ attd['people__peoplename'] }}</td>
             <td>{{ attd['facerecognition'] }}</td>
             <td>{{ attd['verifiedby__peoplename'] }}</td>
             <td>{{ attd['datefor'].strftime('%d-%b-%Y') }}</td>

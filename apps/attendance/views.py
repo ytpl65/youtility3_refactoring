@@ -15,6 +15,7 @@ import cv2
 from django.views.decorators import gzip
 from django.http import StreamingHttpResponse
 import logging
+from apps.core import utils
 logger = logging.getLogger('django')
 log = logging.getLogger('__main__')
 # Create your views here.
@@ -27,10 +28,10 @@ class Attendance(LoginRequiredMixin, View):
         'template_list': 'attendance/attendance.html',
         'partial_form': 'attendance/partials/partial_attendance_form.html',
         'partial_list': 'attendance/partials/partial_attendance_list.html',
-        'related': ['peopleid', 'clientid', 'buid', 'verifiedby', 'gfid'],
+        'related': ['people', 'client', 'bu', 'verifiedby', 'geofence'],
         'model': atdm.PeopleEventlog,
         'filter': AttendanceFilter,
-        'fields': ['id', 'peopleid__peoplename', 'verifiedby__peoplename', 'peventtype', 'buid__buname', 'datefor',
+        'fields': ['id', 'people__peoplename', 'verifiedby__peoplename', 'peventtype', 'bu__buname', 'datefor',
                    'punch_intime', 'punch_outtime', 'facerecognition', 'gpslocation_in', 'gpslocation_out', 'shift__shiftname']}
 
     def get(self, request, *args, **kwargs):
@@ -42,22 +43,22 @@ class Attendance(LoginRequiredMixin, View):
             self.params.update(d)
             objs = self.params['model'].objects.select_related(
                 *self.params['related']).values(*self.params['fields'])
-            resp = putils.render_grid(
+            resp = utils.render_grid(
                 request, self.params, "attendance_view", objs)
 
         # return attemdance_form empty
         elif R.get('action', None) == 'form':
             cxt = {'attd_form': self.params['form_class'](),
                    'msg': "create attendance requested"}
-            resp = putils.render_form(request, self.params, cxt)
+            resp = utils.render_form(request, self.params, cxt)
 
         # handle delete request
         elif R.get('action', None) == "delete" and R.get('id', None):
             print(f'resp={resp}')
-            resp = putils.render_form_for_delete(request, self.params)
+            resp = utils.render_form_for_delete(request, self.params)
         # return form with instance
         elif R.get('id', None):
-            resp = putils.render_form_for_update(
+            resp = utils.render_form_for_update(
                 request, self.params, "attd_form")
         print(f'return resp={resp}')
         return resp
@@ -67,10 +68,9 @@ class Attendance(LoginRequiredMixin, View):
         try:
             print(request.POST)
             data = QueryDict(request.POST['formData'])
-            pk = request.POST.get('pk', None)
-            if pk:
+            if pk := request.POST.get('pk', None):
                 msg = "attendance_view"
-                form = putils.get_instance_for_update(
+                form = utils.get_instance_for_update(
                     data, self.params, msg, int(pk))
             else:
                 form = self.params['form_class'](data)
@@ -78,9 +78,9 @@ class Attendance(LoginRequiredMixin, View):
                 resp = self.handle_valid_form(form, request)
             else:
                 cxt = {'errors': form.errors}
-                resp = putils.handle_invalid_form(request, self.params, cxt)
+                resp = utils.handle_invalid_form(request, self.params, cxt)
         except Exception:
-            resp = putils.handle_Exception(request)
+            resp = utils.handle_Exception(request)
         return resp
 
     def handle_valid_form(self, form, request):
@@ -102,20 +102,18 @@ def face_recognition(request):
     res = None
     if request.method == 'POST':
         return
-    else:
-        import cv2
-        from pyzbar.pyzbar import decode
-        import numpy as np
-        from django.conf.urls.static import static
-        import time
+    import cv2
+    from pyzbar.pyzbar import decode
+    import numpy as np
+    import time
 
-        if request.GET.get('detectQR'):
-            log.debug("request for qr detection")
-            # QRcode detection
-            res = attd.detect_QR(cv2, decode, np, time)
-        elif request.GET.get('detectFace'):
-            log.debug("request for fr detection")
-            res = attd.recognize_face(cv2, np, time, request.GET.get('code'))
+    if request.GET.get('detectQR'):
+        log.debug("request for qr detection")
+        # QRcode detection
+        res = attd.detect_QR(cv2, decode, np, time)
+    elif request.GET.get('detectFace'):
+        log.debug("request for fr detection")
+        res = attd.recognize_face(cv2, np, time, request.GET.get('code'))
     return res
 
 
@@ -140,8 +138,7 @@ class VideoCamera(object):
     def update(self):
         while True:
             (self.grabbed, self.frame) = self.video.read()
-            detected = self.decode_qr(self.frame)
-            if detected:
+            if detected := self.decode_qr(self.frame):
                 self.__del__()
 
     def decode_qr(self, img):

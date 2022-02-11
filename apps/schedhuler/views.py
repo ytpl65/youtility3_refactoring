@@ -83,8 +83,8 @@ class Schd_I_TourFormJob(LoginRequiredMixin, View):
                 request.POST.get("asssigned_checkpoints"))
             job         = form.save(commit=False)
             job.parent  = utils.get_or_create_none_job()
-            job.assetid = sutils.get_or_create_none_asset()
-            job.qsetid  = sutils.get_or_create_none_qset()
+            job.asset = sutils.get_or_create_none_asset()
+            job.qset  = sutils.get_or_create_none_qset()
             job.save()
             job = putils.save_userinfo(job, request.user, request.session)
             self.save_checpoints_for_tour(assigned_checkpoints, job, request)
@@ -127,13 +127,13 @@ class Schd_I_TourFormJob(LoginRequiredMixin, View):
         try:
             for cp in checkpoints:
                 cp['expirytime'] = cp[5]
-                cp['assetid']    = cp[1]
-                cp['qsetid']     = cp[3]
+                cp['asset']    = cp[1]
+                cp['qset']     = cp[3]
                 cp['slno']       = cp[0]
                 checkpoint, created = self.model.objects.update_or_create(
                     parent_id  = job.id,
-                    assetid_id = cp['assetid'],
-                    qsetid_id  = cp['qsetid'],
+                    asset_id = cp['asset'],
+                    qset_id  = cp['qset'],
                     
                     defaults   = sutils.job_fields(job, cp)
                 )
@@ -181,14 +181,14 @@ class Update_I_TourFormJob(Schd_I_TourFormJob, LoginRequiredMixin, View):
         checkpoints = None
         try:
             checkpoints = self.model.objects.select_related(
-                'parent', 'assetid', 'qsetid', 'groupid',
-                'peopleid',
+                'parent', 'asset', 'qset', 'pgroup',
+                'people',
             ).filter(parent_id=obj.id).values(
                 'slno',
-                'assetid__assetname',
-                'assetid__id',
-                'qsetid__qset_name',
-                'qsetid__id',
+                'asset__assetname',
+                'asset__id',
+                'qset__qset_name',
+                'qset__id',
                 'expirytime',
                 'id')
         except Exception:
@@ -202,9 +202,9 @@ class Update_I_TourFormJob(Schd_I_TourFormJob, LoginRequiredMixin, View):
 class Retrive_I_ToursJob(LoginRequiredMixin, View):
     model = am.Job
     template_path = 'schedhuler/schd_i_tourlist_job.html'
-    fields = ['jobname', 'peopleid__peoplename', 'groupid__groupname', 'from_date', 'upto_date',
+    fields = ['jobname', 'people__peoplename', 'pgroup__groupname', 'from_date', 'upto_date',
               'planduration', 'gracetime', 'expirytime', 'id']
-    related = ['groupid', 'peopleid']
+    related = ['pgroup', 'people']
 
     def get(self, request, *args, **kwargs):
         '''returns the paginated results from db'''
@@ -258,14 +258,14 @@ def deleteChekpointFromTour(request):
     datasource = request.GET.get('datasource')
     checkpointid = request.GET.get('checkpointid')
     checklistid = request.GET.get('checklistid')
-    jobid = request.GET.get('jobid')
+    job = request.GET.get('job')
     statuscode, msg = 404, ""
     try:
         if datasource == 'job':
-            sutils.delete_from_job(jobid, checkpointid, checklistid)
+            sutils.delete_from_job(job, checkpointid, checklistid)
             statuscode, msg = 200, "Success"
         elif datasource == "jobneed":
-            sutils.delete_from_jobneed(jobid, checkpointid, checklistid)
+            sutils.delete_from_jobneed(job, checkpointid, checklistid)
             statuscode, msg = 200, "Success"
     except RestrictedError:
         msg = "Unable to delete, due to its dependencies on other data!"
@@ -282,10 +282,10 @@ def deleteChekpointFromTour(request):
 class Retrive_I_ToursJobneed(LoginRequiredMixin, View):
     model = am.Jobneed
     template_path = 'schedhuler/i_tourlist_jobneed.html'
-    fields    = ['jobdesc', 'peopleid__peoplename', 'groupid__groupname', 'id',
+    fields    = ['jobdesc', 'people__peoplename', 'pgroup__groupname', 'id',
               'plandatetime', 'expirydatetime', 'jobstatus', 'gracetime', 'performed_by__peoplename',]
-    related   = ['groupid',  'ticket_category', 'assetid', 'clientid',
-               'frequency', 'jobid', 'qsetid', 'peopleid', 'parent', 'buid']
+    related   = ['pgroup',  'ticket_category', 'asset', 'client',
+               'frequency', 'job', 'qset', 'people', 'parent', 'bu']
 
     def get(self, request, *args, **kwargs):
         '''returns jobneed (internal-tours) from db'''
@@ -296,7 +296,7 @@ class Retrive_I_ToursJobneed(LoginRequiredMixin, View):
             dt = datetime.now(tz=timezone.utc) - timedelta(days=10)
             objects = self.model.objects.select_related(
                 *self.related).filter(
-                    Q(buid_id=session['buid']) & Q(parent__jobdesc='NONE')
+                    Q(bu_id=session['bu_id']) & Q(parent__jobdesc='NONE')
                     & ~Q(jobdesc='NONE') & Q(plandatetime__gte=dt)
             ).values(*self.fields).order_by('-plandatetime')
             log.info('Internal Tours objects %s retrieved from db' %
@@ -350,10 +350,10 @@ class Get_I_TourJobneed(LoginRequiredMixin, View):
 
     def get(self, request, *args, **kwargs):
         log.info("retrieving internal tour datasource[jobneed]")
-        parent_jobneedid, response = kwargs.get('pk'), None
+        parent_jobneed, response = kwargs.get('pk'), None
         
         try:
-            obj = self.model.objects.get(id=parent_jobneedid)
+            obj = self.model.objects.get(id=parent_jobneed)
             form = self.form_class(instance=obj, initial=self.initial)
             log.info("object retrieved %s" % (obj.jobdesc))
             checkpoints = self.get_checkpoints(obj=obj)
@@ -379,12 +379,12 @@ class Get_I_TourJobneed(LoginRequiredMixin, View):
         
         try:
             checkpoints = self.model.objects.select_related(
-                'parent', 'assetid', 'qsetid', 'groupid',
-                'peopleid', 'jobid', 'clientid', 'buid',
+                'parent', 'asset', 'qset', 'pgroup',
+                'people', 'job', 'client', 'bu',
                 'ticket_category'
             ).filter(parent_id=obj.id).values(
-                'assetid__assetname', 'assetid__id', 'qsetid__id',
-                'qsetid__qset_name', 'plandatetime', 'expirydatetime',
+                'asset__assetname', 'asset__id', 'qset__id',
+                'qset__qset_name', 'plandatetime', 'expirydatetime',
                 'gracetime', 'slno', 'jobstatus', 'id').order_by('slno')
         
         except Exception:
@@ -405,7 +405,7 @@ def add_cp_internal_tour(request):  # jobneed
             parent = am.Jobneed.objects.get(id=parentid)
             data  = {'jobdesc' : parent.jobdesc, 'recievedon_server': parent.recievedon_server,
                     'starttime': parent.starttime, 'endtime': parent.endtime, 'gpslocation': parent.gpslocation,
-                    'remarks'  : parent.remarks, 'frequency': parent.frequency, 'jobid': parent.jobid,
+                    'remarks'  : parent.remarks, 'frequency': parent.frequency, 'job': parent.job,
                     'jobstatus': parent.jobstatus, 'jobtype': parent.jobtype, 'performed_by': parent.performed_by,
                     'priority' : ""}
             form = scd_forms.ChildInternalTourForm(data=formData)
@@ -488,11 +488,11 @@ class Schd_E_TourFormJob(LoginRequiredMixin, View):
         try:
             job         = form.save(commit=False)
             job.parent  = utils.get_or_create_none_job()
-            job.assetid = sutils.get_or_create_none_asset()
+            job.asset = sutils.get_or_create_none_asset()
             job.save()
-            print("%%%%%%%%%5",  form.data, form.data.get('buid'))
+            print("%%%%%%%%%5",  form.data, form.data.get('bu'))
             job = putils.save_userinfo(job, request.user, request.session,
-            buid = form.data.get('buid'))
+            bu = form.data.get('bu'))
             log.info('external tour  and its checkpoints saved success...')
         except Exception as ex:
             log.critical(
@@ -524,9 +524,9 @@ class Update_E_TourFormJob(Schd_E_TourFormJob, LoginRequiredMixin, View):
             cxt         = {'schdexternaltourform': form, 'edit': True,
                         'editsiteform':self.subform(),
                         'checkpoints': checkpoints,
-                        'qsetname':obj.qsetid.qset_name,
-                        'qsetid':obj.qsetid.id}
-            log.debug("qsetname %s qsetid %s"%(obj.qsetid.qset_name, obj.qsetid.id))
+                        'qsetname':obj.qset.qset_name,
+                        'qset':obj.qset.id}
+            log.debug("qsetname %s qset %s"%(obj.qset.qset_name, obj.qset.id))
             response = render(request, self.template_path,  context=cxt)
         except self.model.DoesNotExist:
             messages.error(request, 'Unable to edit object not found',
@@ -545,7 +545,7 @@ class Update_E_TourFormJob(Schd_E_TourFormJob, LoginRequiredMixin, View):
         try:
             checkpoints = om.Bt.objects.select_related(
                 'identifier', 'butype', 'parent'
-            ).filter(parent_id=obj.buid_id).values(
+            ).filter(parent_id=obj.bu_id).values(
                 'buname', 'id', 'bucode', 'gpslocation',
             )
         except Exception:
@@ -562,10 +562,10 @@ class Update_E_TourFormJob(Schd_E_TourFormJob, LoginRequiredMixin, View):
 class Retrive_E_ToursJob(LoginRequiredMixin, View):
     model = am.Job
     template_path = 'schedhuler/schd_e_tourlist_job.html'
-    fields = ['jobname', 'peopleid__peoplename', 'groupid__groupname',
+    fields = ['jobname', 'people__peoplename', 'pgroup__groupname',
               'from_date', 'upto_date',
-              'planduration', 'gracetime', 'expirytime', 'id', 'buid__buname']
-    related = ['groupid', 'peopleid']
+              'planduration', 'gracetime', 'expirytime', 'id', 'bu__buname']
+    related = ['pgroup', 'people']
 
     def get(self, request, *args, **kwargs):
         '''returns the paginated results from db'''
@@ -618,17 +618,17 @@ def run_internal_tour_scheduler(request):
     padd = "#"*10
     log.info(
         "%s run_guardtour_scheduler initiated [START] %s" % (padd, padd))
-    jobid, resp = request.POST.get('jobid'), None
+    job, resp = request.POST.get('job'), None
     if (
-        jobs := am.Job.objects.filter(id=jobid)
+        jobs := am.Job.objects.filter(id=job)
         .select_related(
-            "assetid",
-            "groupid",
+            "asset",
+            "pgroup",
             "frequency",
             "cuser",
             "muser",
-            "qsetid",
-            "peopleid",
+            "qset",
+            "people",
         )
         .values_list(named=True)
     ):
@@ -641,6 +641,7 @@ def run_internal_tour_scheduler(request):
     log.info(
         "%s run_guardtour_scheduler initiated [END] %s" % (padd, padd))
     del padd
+    ic("resp in run_internal_tour_scheduler()", resp)
     return resp
 
 
@@ -687,8 +688,8 @@ def save_sites_in_job(request, parentid):
         for cp in checkpoints:
             am.Job.objects.update_or_create(
                 parent_id  = job.id,
-                assetid_id = cp['assetid'],
-                qsetid_id  = cp['qsetid'],
+                asset_id = cp['asset'],
+                qset_id  = cp['qset'],
                 breaktime  = cp['breaktime'],
 
                 defaults=sutils.job_fields(job, cp, external=True)
@@ -771,7 +772,7 @@ class SchdTaskFormJob(LoginRequiredMixin, View):
             log.critical("task form is processing failed", exc_info=True)
             resp = rp.JsonResponse(
                 {'error': "saving schd_taskform failed..."}, status=404)
-            raise ex
+            raise ex from ex
         else:
             log.info("task form is processed successfully")
             resp = rp.JsonResponse({'jobname': job.jobname,
@@ -793,10 +794,10 @@ class SchdTaskFormJob(LoginRequiredMixin, View):
 class RetriveSchdTasksJob(LoginRequiredMixin, View):
     model = am.Job
     template_path = 'schedhuler/schd_tasklist_job.html'
-    fields = ['jobname', 'peopleid__peoplename', 'groupid__groupname',
-              'from_date', 'upto_date', 'qsetid__qset_name', 'assetid__assetname',
+    fields = ['jobname', 'people__peoplename', 'pgroup__groupname',
+              'from_date', 'upto_date', 'qset__qset_name', 'asset__assetname',
               'planduration', 'gracetime', 'expirytime', 'id']
-    related = ['groupid', 'peopleid', 'assetid']
+    related = ['pgroup', 'people', 'asset']
     
     def get(self, request, *args, **kwargs):
         '''returns the paginated results from db'''
@@ -870,13 +871,13 @@ class RetrieveTasksJobneed(LoginRequiredMixin, View):
     template_path = 'schedhuler/tasklist_jobneed.html'
 
     fields  = [
-        'jobdesc', 'peopleid__peoplename', 'groupid__groupname', 'id',
+        'jobdesc', 'people__peoplename', 'pgroup__groupname', 'id',
         'plandatetime', 'expirydatetime', 'jobstatus', 'gracetime',
-        'performed_by__peoplename', 'assetid__assetname', 'qsetid__qset_name'
+        'performed_by__peoplename', 'asset__assetname', 'qset__qset_name'
     ]
     related = [
-        'groupid',  'ticket_category', 'assetid', 'clientid',
-        'frequency', 'jobid', 'qsetid', 'peopleid', 'parent', 'buid' 
+        'pgroup',  'ticket_category', 'asset', 'client',
+        'frequency', 'job', 'qset', 'people', 'parent', 'bu' 
     ]
 
     def get(self, request, *args, **kwargs):
@@ -888,9 +889,9 @@ class RetrieveTasksJobneed(LoginRequiredMixin, View):
             dt      = datetime.now(tz=timezone.utc) - timedelta(days=10)
             objects = self.model.objects.select_related(
                 *self.related).filter(
-                Q(buid_id=session['buid']) & Q(parent__jobdesc='NONE')
-                & ~Q(jobdesc='NONE')       & Q(plandatetime__gte=dt)
-                & Q(identifier = 'TASK')
+                Q(bu_id=session['bu_id']),  ~Q(parent__jobdesc='NONE')
+                , ~Q(jobdesc='NONE') , Q(plandatetime__gte=dt)
+                ,Q(identifier = am.Jobneed.Identifier.TASK)
             ).values(*self.fields).order_by('-plandatetime')
             log.info('tasks objects %s retrieved from db' %
                      (len(objects)) if objects else "No Records!")
@@ -942,10 +943,10 @@ class GetTaskFormJobneed(LoginRequiredMixin, View):
 
     def get(self, request, *args, **kwargs):
         log.info("retrieving task datasource[jobneed]")
-        parent_jobneedid, response = kwargs.get('pk'), None
+        parent_jobneed, response = kwargs.get('pk'), None
         
         try:
-            obj = self.model.objects.get(id=parent_jobneedid)
+            obj = self.model.objects.get(id=parent_jobneed)
             form = self.form_class(instance=obj)
             ic(form.data)
             log.info("object retrieved %s" % (obj.jobdesc))
@@ -1023,11 +1024,11 @@ class Ticket(LoginRequiredMixin, View):
         resp = None
         try:
             ticket             = form.save(commit=False)
-            ticket.qsetid      = utils.get_or_create_none_qset()
+            ticket.qset      = utils.get_or_create_none_qset()
             ticket.performedby = utils.get_or_create_none_people()
-            ticket.groupid     = utils.get_or_create_none_pgroup()
+            ticket.pgroup     = utils.get_or_create_none_pgroup()
             ticket.parent      = utils.get_or_create_none_jobneed()
-            ticket.jobid       = utils.get_or_create_none_job()
+            ticket.job       = utils.get_or_create_none_job()
             ticket.save()
             ticket = putils.save_userinfo(ticket, request.user)
         except Exception as ex:
@@ -1060,13 +1061,13 @@ class RetriveTickets(LoginRequiredMixin, View):
     model = am.Jobneed
     template_path = 'schedhuler/ticket_list.html'
     fields = [
-        'cdtz', 'ticketno', 'buid__buname', 'groupid__groupname',
-        'jobdesc', 'peopleid__peoplename',  'performed_by__peoplename',
+        'cdtz', 'ticketno', 'bu__buname', 'pgroup__groupname',
+        'jobdesc', 'people__peoplename',  'performed_by__peoplename',
         'ticket_category__taname', 'expirydatetime', 'jobstatus', 'priority',
         'cuser__peoplename', 'id']
     related = [
-        'groupid', 'peopleid', 'cuser',
-        'performedby', 'buid', 'ticket_category']
+        'pgroup', 'people', 'cuser',
+        'performedby', 'bu', 'ticket_category']
     
     def get(self, request, *args, **kwargs):
         '''returns the paginated results from db'''

@@ -73,14 +73,14 @@ class PeopleResource(resources.ModelResource, BaseFieldSet2):
         widget=wg.ForeignKeyWidget(pm.People, 'peoplecode'),
         saves_null_values=True)
     
-    clientid = fields.Field(
-        column_name='clientid',
-        attribute='clientid',
+    client = fields.Field(
+        column_name='client',
+        attribute='client',
         widget=wg.ForeignKeyWidget(om.Bt, 'bucode')
     )
-    buid = fields.Field(
-        column_name='buid',
-        attribute='buid',
+    bu = fields.Field(
+        column_name='bu',
+        attribute='bu',
         widget=wg.ForeignKeyWidget(om.Bt, 'bucode'),
         saves_null_values=True
     )
@@ -91,8 +91,8 @@ class PeopleResource(resources.ModelResource, BaseFieldSet2):
         report_skipped = True
         import_id_fields = ('id',)
         fields = ['id', 'peoplecode', 'peoplename', 'loginid', 'designation', 'department', 'mobno', 'email',
-                  'buid', 'dateofjoin', 'dateofreport', 'dateofbirth', 'gender', 'peopletype', 'enable',
-                  'isadmin', 'shift', 'clientid', 'cuser', 'muser']
+                  'bu', 'dateofjoin', 'dateofreport', 'dateofbirth', 'gender', 'peopletype', 'enable',
+                  'isadmin', 'shift', 'client', 'cuser', 'muser']
 
     def before_save_instance(self, instance, using_transactions, dry_run):
         super().before_save_instance(instance, using_transactions, dry_run)
@@ -107,11 +107,11 @@ class PeopleResource(resources.ModelResource, BaseFieldSet2):
 class PeopleAdmin(ImportExportModelAdmin):
     resource_class = PeopleResource
     fields = ['peoplecode', 'peoplename', 'loginid', 'designation', 'department', 'mobno', 'email',
-              'buid', 'dateofjoin', 'dateofreport', 'dateofbirth', 'gender', 'peopletype', 'enable',
-              'isadmin', 'shift', 'people_extras', 'clientid', ]
+              'bu', 'dateofjoin', 'dateofreport', 'dateofbirth', 'gender', 'peopletype', 'enable',
+              'isadmin', 'shift', 'people_extras', 'client', ]
 
     list_display = ['id', 'peoplecode', 'peoplename', 'loginid',  'mobno', 'email','password',
-                     'gender', 'peopletype', 'isadmin', 'clientid', 'shift']
+                     'gender', 'peopletype', 'isadmin', 'client', 'shift']
 
     list_display_links = ['peoplecode', 'peoplename']
 
@@ -129,28 +129,28 @@ class PgroupResource(resources.ModelResource, BaseFieldSet2):
         skip_unchanged = True
         report_skipped = True
         fields = ['groupname', 'enable', 'identifier',
-                  'buid', 'clientid', 'cuser', 'muser']
+                  'bu', 'client', 'cuser', 'muser']
 
 
 @admin.register(Pgroup)
 class PgroupAdmin(ImportExportModelAdmin):
     resource_class = PgroupResource
     fields = ['groupname', 'enable',
-              'identifier', 'clientid', 'buid']
+              'identifier', 'client', 'bu']
     list_display = ['id', 'groupname',
-                    'enable', 'identifier', 'clientid', 'buid']
+                    'enable', 'identifier', 'client', 'bu']
     list_display_links = ['groupname', 'enable', 'identifier']
 
 
 class PgbelongingResource(resources.ModelResource, BaseFieldSet2):
-    groupid = fields.Field(
-        column_name='groupid',
-        attribute='groupid',
+    pgroup = fields.Field(
+        column_name='pgroup',
+        attribute='pgroup',
         widget=wg.ForeignKeyWidget(pm.Pgroup, 'groupname')
     )
-    peopleid = fields.Field(
-        column_name='peopleid',
-        attribute='peopleid',
+    people = fields.Field(
+        column_name='people',
+        attribute='people',
         widget=wg.ForeignKeyWidget(pm.People, 'peoplecode')
     )
 
@@ -158,18 +158,18 @@ class PgbelongingResource(resources.ModelResource, BaseFieldSet2):
         model = pm.Pgbelonging
         skip_unchanged = True
         report_skipped = True
-        fields = ['groupid', 'peopleid', 'isgrouplead',
-                  'assignsites', 'clientid', 'buid', 'cuser', 'muser']
+        fields = ['pgroup', 'people', 'isgrouplead',
+                  'assignsites', 'client', 'bu', 'cuser', 'muser']
 
 
 @admin.register(Pgbelonging)
 class PgbelongingAdmin(ImportExportModelAdmin):
     resource_class = PgbelongingResource
-    fields = ['id', 'groupid', 'peopleid',
-              'isgrouplead', 'assignsites', 'buid', 'clientid']
-    list_display = ['id', 'groupid', 'peopleid',
-                    'isgrouplead', 'assignsites', 'buid']
-    list_display_links = ['groupid', 'peopleid']
+    fields = ['id', 'pgroup', 'people',
+              'isgrouplead', 'assignsites', 'bu', 'client']
+    list_display = ['id', 'pgroup', 'people',
+                    'isgrouplead', 'assignsites', 'bu']
+    list_display_links = ['pgroup', 'people']
 
 
 class CapabilityResource(resources.ModelResource, BaseFieldSet2):

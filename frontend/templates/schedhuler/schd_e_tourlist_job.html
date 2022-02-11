@@ -53,8 +53,8 @@ ext_schdtour_list = 'External ScheduleTour List',
         {% for tour in ext_schdtour_list %}
         <tr>
             <td><a href="{{ url('schedhuler:update_externaltour', args=[tour['id']]) }}">{{ tour['jobname'] }}</a></td>
-            <td><a href="{{ url('schedhuler:update_externaltour', args=[tour['id']]) }}">{{ tour['buid__buname'] }}</a></td>
-            <td>{{ tour['peopleid__peoplename'] or tour['groupid__groupname'] }} </td>
+            <td><a href="{{ url('schedhuler:update_externaltour', args=[tour['id']]) }}">{{ tour['bu__buname'] }}</a></td>
+            <td>{{ tour['people__peoplename'] or tour['pgroup__groupname'] }} </td>
             <td>{{ tour['from_date'] |to_local }}</td>
             <td>{{ tour['upto_date'] |to_local }}</td>
             <td>{{ tour['planduration'] }}</td>

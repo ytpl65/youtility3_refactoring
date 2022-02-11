@@ -10,10 +10,10 @@ class AttendanceFilter(django_filters.FilterSet):
     EVENTTYPE_CHOICES = [('MARK', 'Mark'), ('SELF', 'Self'),
                          ('SITE', 'Site'), ('CONVEYANCE', 'Conveyance')]
 
-    peopleid = django_filters.CharFilter(field_name='peopleid__peoplename', lookup_expr='icontains',
-                                         label='People', widget=forms.TextInput(attrs={'id': 'peopleid'}))
-    buid = django_filters.CharFilter(
-        field_name='buid__buname', lookup_expr='icontains', label='Site')
+    people = django_filters.CharFilter(field_name='people__peoplename', lookup_expr='icontains',
+                                         label='People', widget=forms.TextInput(attrs={'id': 'people'}))
+    bu = django_filters.CharFilter(
+        field_name='bu__buname', lookup_expr='icontains', label='Site')
     peventtype = django_filters.CharFilter(
         field_name='peventtype', lookup_expr="icontains", label='Type',)
     facerecognition = django_filters.CharFilter(
@@ -29,5 +29,5 @@ class AttendanceFilter(django_filters.FilterSet):
 
     class Meta:
         model = atdm.PeopleEventlog
-        fields = ['peventtype', 'buid', 'peopleid',  'facerecognition',
+        fields = ['peventtype', 'bu', 'people',  'facerecognition',
                   'verifiedby', 'datefor', 'punch_intime', 'punch_outtime']

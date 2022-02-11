@@ -88,20 +88,20 @@ Task
     </div>
     <div class="row mb-3 gy-3">
         <!-- ASSIGN TO PEOPLE --->
-        <div class="col-md-2 peopleid">
-            <label for={{ taskformjobneed.peopleid.id_for_label }} class="">{{ taskformjobneed.peopleid.label }}:</label>
+        <div class="col-md-2 people">
+            <label for={{ taskformjobneed.people.id_for_label }} class="">{{ taskformjobneed.people.label }}:</label>
         </div>
-        <div class="col-md-4 peopleid">
-            {{ taskformjobneed.peopleid }}
-            {{ taskformjobneed.peopleid.errors }}
+        <div class="col-md-4 people">
+            {{ taskformjobneed.people }}
+            {{ taskformjobneed.people.errors }}
         </div>
         <!-- ASSIGN TO GROUP --->
-        <div class="col-md-2 groupid">
-            <label for={{ taskformjobneed.groupid.id_for_label }} class="">{{ taskformjobneed.groupid.label }}:</label>
+        <div class="col-md-2 pgroup">
+            <label for={{ taskformjobneed.pgroup.id_for_label }} class="">{{ taskformjobneed.pgroup.label }}:</label>
         </div>
-        <div class="col-md-4 groupid">
-            {{ taskformjobneed.groupid }}
-            {{ taskformjobneed.groupid.errors }}
+        <div class="col-md-4 pgroup">
+            {{ taskformjobneed.pgroup }}
+            {{ taskformjobneed.pgroup.errors }}
         </div>
         <!-- ASSIGN TO GROUP --->
         <div class="col-md-2">
@@ -130,11 +130,11 @@ Task
     </div>
     <div class="row mb-3 gy-3">
         <div class="col-md-2">
-            <label for={{ taskformjobneed.assetid.id_for_label }} class="">{{ taskformjobneed.assetid.label }}:</label>
+            <label for={{ taskformjobneed.asset.id_for_label }} class="">{{ taskformjobneed.asset.label }}:</label>
         </div>
         <div class="col-md-4">
-            {{ taskformjobneed.assetid }}
-            {{ taskformjobneed.assetid.errors }}
+            {{ taskformjobneed.asset }}
+            {{ taskformjobneed.asset.errors }}
         </div>
         <div class="col-md-2">
             <label for={{ taskformjobneed.endtime.id_for_label }} class="">End Time:</label>
@@ -146,11 +146,11 @@ Task
     </div>
     <div class="row mb-3 gy-3">
         <div class="col-md-2">
-            <label for={{ taskformjobneed.qsetid.id_for_label }} class="">{{ taskformjobneed.qsetid.label }}:</label>
+            <label for={{ taskformjobneed.qset.id_for_label }} class="">{{ taskformjobneed.qset.label }}:</label>
         </div>
         <div class="col-md-4">
-            {{ taskformjobneed.qsetid }}
-            {{ taskformjobneed.qsetid.errors }}
+            {{ taskformjobneed.qset }}
+            {{ taskformjobneed.qset.errors }}
         </div>
         <div class="col-md-2">
             <label for={{ taskformjobneed.performed_by.id_for_label }} class="">{{ taskformjobneed.performed_by.label }}:</label>
@@ -224,12 +224,12 @@ Task
     function showHideSelectField(val) {
         if (val == "PEOPLE") {
             //$("#aatopdiv").show();
-            $(".peopleid").show();
-            $(".groupid").hide();
+            $(".people").show();
+            $(".pgroup").hide();
         }else {
             //$("#aatopdiv").hide();
-            $(".groupid").show();
-            $(".peopleid").hide();
+            $(".pgroup").show();
+            $(".people").hide();
         }
     }
     $(document).ready(() => {
@@ -237,7 +237,7 @@ Task
         if ('{{ taskformjobneed.instance.id }}' == ('None' || "")) {
             showHideSelectField('PEOPLE')
         }else{
-            var assignto = '{{ taskformjobneed.instance.peopleid }}' == ('None' || "") ? "GROUP" :"PEOPLE"
+            var assignto = '{{ taskformjobneed.instance.people }}' == ('None' || "") ? "GROUP" :"PEOPLE"
             showHideSelectField(assignto)
         }
         //datetime widget configurations

@@ -314,10 +314,10 @@ People
                 <label class="required" for="id_dateofjoin">Site</label>
                 <!--INPUT GROUP-->
                 <div class="col-md-4">
-                    {{ peopleform.buid }}
+                    {{ peopleform.bu }}
                     <!--HELP TEXT-->
                     <!----- BEGIN ERROR FIELD  ------->
-                    {{ peopleform.buid.errors }}
+                    {{ peopleform.bu.errors }}
                     <!----- END ERROR FIELD  ------->
                 </div>
                 <!--LABEL FIELD-->
@@ -660,7 +660,7 @@ People
         })
 
         //hide next btn if instance is not saved yet
-        if (session['wizard_data'] && session['wizard_data']['peopleids'].length == 0) {
+        if (session['wizard_data'] && session['wizard_data']['peoples'].length == 0) {
             $('#next_btn').hide()
         }
 

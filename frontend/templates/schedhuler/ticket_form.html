@@ -77,12 +77,12 @@ Ticket
         
         <!--LOCATION-->
         <div class="col-md-2">
-            <label for={{ ticketform.assetid.id_for_label }}
-                class="">{{ ticketform.assetid.label }}:</label>
+            <label for={{ ticketform.asset.id_for_label }}
+                class="">{{ ticketform.asset.label }}:</label>
         </div>
         <div class="col-md-4">
-            {{ ticketform.assetid }}
-            {{ ticketform.assetid.errors }}
+            {{ ticketform.asset }}
+            {{ ticketform.asset.errors }}
         </div>
 
         <!--ASSIGNTO-->
@@ -116,12 +116,12 @@ Ticket
 
         <!--PEOPLE-->
         <div class="col-md-2">
-            <label for={{ ticketform.peopleid.id_for_label }}
-                class="required">{{ ticketform.peopleid.label }}:</label>
+            <label for={{ ticketform.people.id_for_label }}
+                class="required">{{ ticketform.people.label }}:</label>
         </div>
         <div class="col-md-4">
-            {{ ticketform.peopleid }}
-            {{ ticketform.peopleid.errors }}
+            {{ ticketform.people }}
+            {{ ticketform.people.errors }}
         </div>
         
        <!--RAISED BY-->
@@ -225,21 +225,21 @@ Ticket
     function showHideSelectField(val) {
         if (val == "PEOPLE") {
             //$("#aatopdiv").show();
-            $(".peopleid").show();
-            $(".groupid").hide();
+            $(".people").show();
+            $(".pgroup").hide();
         } else {
             //$("#aatopdiv").hide();
-            $(".groupid").show();
-            $(".peopleid").hide();
+            $(".pgroup").show();
+            $(".people").hide();
         }
     }
 
     $(document).ready(function(){
-        //toggle peopleid and groupid field based on radio button value
+        //toggle people and pgroup field based on radio button value
         if ('{{ticketform.instance.id}}' == ('None' || "")) {
             showHideSelectField('PEOPLE')
         }else{
-            var assignto = '{{ticketform.instance.peopleid}}' == ('None' || "") ? "GROUP" :"PEOPLE"
+            var assignto = '{{ticketform.instance.people}}' == ('None' || "") ? "GROUP" :"PEOPLE"
             showHideSelectField(assignto)
         }
 

@@ -6,7 +6,7 @@ import django_filters.widgets as wg
 import django_select2.forms as s2forms
 
 def assigned_to_qs(queryset, name, value):
-        return queryset.filter(Q(aaatop__peoplename__icontains=value) | Q(groupid__groupname__icontains=value))
+        return queryset.filter(Q(aaatop__peoplename__icontains=value) | Q(pgroup__groupname__icontains=value))
     
 ###################### JOB FILTER #########################
 class JobFilter(dfs.FilterSet):
@@ -15,9 +15,9 @@ class JobFilter(dfs.FilterSet):
         fields = [
             'jobname',    'jobdesc',      'from_date',       'upto_date',  'cron',
             'identifier', 'planduration', 'gracetime',       'expirytime', 'parent',
-            'assetid',    'priority',     'qsetid',          'groupid',    'gfid', 
-            'parent',     'slno',         'clientid',        'buid',       'starttime', 
-            'frequency',  'scantype',     'ticket_category', 'peopleid',   'shift',
+            'asset',    'priority',     'qset',          'pgroup',    'geofence', 
+            'parent',     'slno',         'client',        'bu',       'starttime', 
+            'frequency',  'scantype',     'ticket_category', 'people',   'shift',
             'endtime',    'ctzoffset',    
         ]
         
@@ -26,11 +26,11 @@ class JobneedFilter(dfs.FilterSet):
     class Meta:
         model = am.Jobneed
         fields = [
-            'identifier', 'frequency',    'parent',         'jobdesc',   'assetid', 'ticket_category',
-            'qsetid',     'peopleid',     'groupid',        'priority',  'scantype', 'ticketno',
+            'identifier', 'frequency',    'parent',         'jobdesc',   'asset', 'ticket_category',
+            'qset',     'people',     'pgroup',        'priority',  'scantype', 'ticketno',
             'jobstatus',  'plandatetime', 'expirydatetime', 'gracetime', 'starttime', 'cdtz',
             'endtime',    'performed_by', 'gpslocation',    'cuser',     'muser',     'raisedby',
-            'buid',              
+            'bu',              
         ]
     
     
@@ -44,22 +44,22 @@ class SchdTourFilter(JobFilter):
     upto_date    = dfs.DateTimeFilter(field_name='upto_date', lookup_expr='icontains', label='To')
     
     class Meta(JobFilter.Meta):
-        exclude = ['endtime','cron','clientid','ticket_category','parent','slno','frequency','groupid','starttime','buid',
-                   'priority','ctzoffset','gfid','identifier','peopleid','shift','jobdesc','scantype','assignedto']
+        exclude = ['endtime','cron','client','ticket_category','parent','slno','frequency','pgroup','starttime','bu',
+                   'priority','ctzoffset','geofence','identifier','people','shift','jobdesc','scantype','assignedto']
 
 
 class SchdExtTourFilter(SchdTourFilter):
-    buid = dfs.CharFilter(field_name='buid__buname', lookup_expr='icontains', label= "BV")
+    bu = dfs.CharFilter(field_name='bu__buname', lookup_expr='icontains', label= "BV")
     
     class Meta(SchdTourFilter.Meta):
-        fields = ['jobname',  'buid', 'assignedto', 'planduration', 'expirytime', 'gracetime', 'from_date', 'upto_date']
-        exclude = ['assetid']
+        fields = ['jobname',  'bu', 'assignedto', 'planduration', 'expirytime', 'gracetime', 'from_date', 'upto_date']
+        exclude = ['asset']
 
 
 class SchdTaskFilter(SchdTourFilter):
-    assetid        = dfs.CharFilter(field_name='asset__assetname', lookup_expr='icontains', label= "Asset")
+    asset        = dfs.CharFilter(field_name='asset__assetname', lookup_expr='icontains', label= "Asset")
     class Meta(SchdTourFilter.Meta):
-        fields = ['jobname',  'assetid', 'qsetid', 'assignedto', 'planduration', 'expirytime', 'gracetime', 'from_date', 'upto_date']
+        fields = ['jobname',  'asset', 'qset', 'assignedto', 'planduration', 'expirytime', 'gracetime', 'from_date', 'upto_date']
         
         
 class InternalTourFilter(dfs.FilterSet):
@@ -96,9 +96,9 @@ class InternalTourFilter(dfs.FilterSet):
 
 
 class TaskListJobneedFilter(InternalTourFilter):
-    assetid = dfs.CharFilter(field_name='assetid__assetname', lookup_expr='icontains', label='Asset/Smartplace')
-    qsetid = dfs.CharFilter(field_name='qsetid__qset_name', lookup_expr='icontains', label='QuestionSetz')
-    buid = dfs.CharFilter(field_name= 'buid__buname', lookup_expr='icontains')
+    asset = dfs.CharFilter(field_name='asset__assetname', lookup_expr='icontains', label='Asset/Smartplace')
+    qset = dfs.CharFilter(field_name='qset__qset_name', lookup_expr='icontains', label='QuestionSetz')
+    bu = dfs.CharFilter(field_name= 'bu__buname', lookup_expr='icontains')
     jobdesc = dfs.CharFilter(field_name='jobdesc', lookup_expr='icontains', label='Description')
 
 
@@ -120,7 +120,7 @@ class TicketListFilter(JobneedFilter):
     
     
     class Meta(JobneedFilter.Meta):
-        fields = ['cdtz', 'cuser', 'ticketno', 'buid', 'assignedto', 'performed_by', 'ticket_category', 'jobstatus']
+        fields = ['cdtz', 'cuser', 'ticketno', 'bu', 'assignedto', 'performed_by', 'ticket_category', 'jobstatus']
         
     def __init__(self, *args, **kwargs):
         super(TicketListFilter, self).__init__(*args, **kwargs)

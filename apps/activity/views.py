@@ -178,12 +178,12 @@ class MasterQuestionSet(LoginRequiredMixin, View):
             resp = utils.handle_Exception(request)
         return resp
 
-    def get_questions_for_form(self, qsetid):
+    def get_questions_for_form(self, qset):
         try:
             questions = list(am.QuestionSetBelonging.objects.select_related(
-            "quesid").filter(qsetid_id = qsetid).values(
+            "question").filter(qset_id = qset).values(
                 'ismandatory', 'slno', 'max', 'min', 'alerton',
-                'options', 'quesid__ques_name','answertype', 'quesid__id'
+                'options', 'question__ques_name','answertype', 'question__id'
             ))
         except Exception:
             logger.critical("Something went wrong", exc_info=True)
@@ -289,7 +289,7 @@ class Checklist(MasterQuestionSet):
             qset = form.save()
             putils.save_userinfo(qset, request.user, request.session)
             logger.info('%s form is valid'%(self.view_of))
-            fields = {'qsetid':qset.id, 'qset_name':qset.qset_name, 'clientid':qset.clientid_id}
+            fields = {'qset':qset.id, 'qset_name':qset.qset_name, 'client':qset.client_id}
             self.save_qset_belonging(request, assigned_questions, fields)
             data = {'success': "Record has been saved successfully", 
             'type':qset.type, 'name':qset.qset_name, 'id':qset.id
@@ -302,7 +302,7 @@ class Checklist(MasterQuestionSet):
         try:
             logger.info("saving QuestoinSet Belonging [started]")
             logger.info("%s saving QuestoinSet Belonging found %s questions"%(" "*4, len(assigned_questions)))
-            logger.debug(f"\nassigned_questoins, {pformat(assigned_questions, depth=1, width=60)}, qsetid {fields['qsetid']}")
+            logger.debug(f"\nassigned_questoins, {pformat(assigned_questions, depth=1, width=60)}, qset {fields['qset']}")
             av_utils.insert_questions_to_qsetblng(assigned_questions, am.QuestionSetBelonging, fields, request)
             logger.info("saving QuestionSet Belongin [Ended]")
         except Exception:
@@ -330,7 +330,7 @@ class QuestionSet(MasterQuestionSet):
             qset = form.save()
             putils.save_userinfo(qset, request.user, request.session)
             logger.info('%s form is valid'%(self.view_of))
-            fields = {'qsetid':qset.id, 'qset_name':qset.qset_name, 'clientid':qset.clientid_id}
+            fields = {'qset':qset.id, 'qset_name':qset.qset_name, 'client':qset.client_id}
             self.save_qset_belonging(request, assigned_questions, fields)
             data = {'success': "Record has been saved successfully", 
             'type':qset.type, 'name':qset.qset_name, 'id':qset.id
@@ -343,7 +343,7 @@ class QuestionSet(MasterQuestionSet):
         try:
             logger.info("saving QuestoinSet Belonging [started]")
             logger.info("%s saving QuestoinSet Belonging found %s questions"%(" "*4, len(assigned_questions)))
-            logger.debug(f"\nassigned_questoins, {pformat(assigned_questions, depth=1, width=60)}, qsetid {fields['qsetid']}")
+            logger.debug(f"\nassigned_questoins, {pformat(assigned_questions, depth=1, width=60)}, qset {fields['qset']}")
             av_utils.insert_questions_to_qsetblng(assigned_questions, am.QuestionSetBelonging, fields, request)
             logger.info("saving QuestionSet Belongin [Ended]")
         except Exception:
@@ -364,12 +364,12 @@ def deleteQSB(request):
     try:
         quesname = request.GET.get('quesname')
         answertype = request.GET.get('answertype')
-        qsetid = request.GET.get('qsetid')
+        qset = request.GET.get('qset')
         logger.info("request for delete QSB '%s' start"%(quesname))
         am.QuestionSetBelonging.objects.get(
-            quesid__ques_name = quesname,
+            question__ques_name = quesname,
             answertype = answertype,
-            qsetid_id = qsetid).delete()
+            qset_id = qset).delete()
         statuscode=200
         logger.info("Delete request executed successfully")
     except Exception:

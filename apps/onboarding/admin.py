@@ -23,9 +23,9 @@ class BaseFieldSet1:
         widget=wg.ForeignKeyWidget(pm.People, field = 'peoplecode'),
         saves_null_values=True)
 
-    buid = fields.Field(
-        column_name='buid',
-        attribute='buid',
+    bu = fields.Field(
+        column_name='bu',
+        attribute='bu',
         widget=wg.ForeignKeyWidget(om.Bt, 'bucode'),
         saves_null_values=True)
 
@@ -50,14 +50,14 @@ class BaseFieldSet2:
         widget=wg.ForeignKeyWidget(pm.People, 'peoplecode'),
         saves_null_values=True)
 
-    clientid = fields.Field(
-        column_name='clientid',
-        attribute='clientid',
+    client = fields.Field(
+        column_name='client',
+        attribute='client',
         widget=wg.ForeignKeyWidget(om.Bt, 'bucode')
     )
-    buid = fields.Field(
-        column_name='buid',
-        attribute='buid',
+    bu = fields.Field(
+        column_name='bu',
+        attribute='bu',
         widget=wg.ForeignKeyWidget(om.Bt, 'bucode'),
         saves_null_values=True
     )
@@ -111,7 +111,7 @@ admin.site.register(om.TypeAssist, TaAdmin)
 
 
 class BtResource(resources.ModelResource, BaseFieldSet1):
-    buid = None
+    bu = None
     parent = fields.Field(
         column_name='parent',
         attribute='parent',
@@ -155,25 +155,25 @@ class ShiftResource(resources.ModelResource, BaseFieldSet1):
         import_id_fields = ('id',)
         report_skipped = True
         fields = ('id', 'shiftname', 'shiftduration', 'starttime', 'cuser'
-                  'endtime', 'nightshift_appicable', 'enable', 'muser', 'buid')
+                  'endtime', 'nightshift_appicable', 'enable', 'muser', 'bu')
 
 
 @admin.register(om.Shift)
 class ShiftAdmin(ImportExportModelAdmin):
     resource_class = ShiftResource
     form = ShiftForm
-    fields = ('buid', 'shiftname', 'shiftduration', 'starttime',
+    fields = ('bu', 'shiftname', 'shiftduration', 'starttime',
               'endtime', 'nightshift_appicable', 'captchafreq')
-    list_display = ('buid', 'shiftname', 'shiftduration',
+    list_display = ('bu', 'shiftname', 'shiftduration',
                     'starttime', 'endtime', 'nightshift_appicable')
     list_display_links = ('shiftname',)
 
 
 class SitePeopleResource(resources.ModelResource, BaseFieldSet1):
 
-    peopleid = fields.Field(
-        column_name='peopleid',
-        attribute='peopleid',
+    people = fields.Field(
+        column_name='people',
+        attribute='people',
         widget=wg.ForeignKeyWidget(pm.People, 'peoplecode')
     )
     reportto = fields.Field(
@@ -190,14 +190,14 @@ class SitePeopleResource(resources.ModelResource, BaseFieldSet1):
         attribute='worktype',
         widget=wg.ForeignKeyWidget(om.TypeAssist, 'tacode')
     )
-    contract_id = fields.Field(
-        column_name='contract_id',
-        attribute='contract_id',
+    contract = fields.Field(
+        column_name='contract',
+        attribute='contract',
         widget=wg.ForeignKeyWidget(om.Contract, 'contractname'))
 
-    contractdetailid = fields.Field(
-        column_name='contractdetailid',
-        attribute='contractdetailid',
+    contractdetail = fields.Field(
+        column_name='contractdetail',
+        attribute='contractdetail',
         widget=wg.ForeignKeyWidget(om.ContractDetail, 'pk'))
 
     class Meta:

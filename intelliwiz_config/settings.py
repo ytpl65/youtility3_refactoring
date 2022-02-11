@@ -29,7 +29,7 @@ ENCRYPT_KEY = 'I618zPOcrQ3zB5XasmuLXazlGZUn-dK5anHXSvKs4dM='
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['.localhost', '.youtility.local', 'barfi.youtility.in', '127.0.0.1', 'icicibank.youtility.local']
+ALLOWED_HOSTS = ['.localhost', '.youtility.local', 'barfi.youtility.in', '127.0.0.1', '.youtility.local']
 
 
 # Application definition

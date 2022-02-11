@@ -27,6 +27,16 @@ function make_env_for_wizard(session) {
   });
 }
 
+function alertuser_to_saveform(styles=""){
+  Swal.fire({
+    title:"Form Modified",
+    html:`<p style="font-size:${styles.fs};color:${styles.cl}">Form is modified please save/update it first!</p>`,
+    icon:"warning",
+    color:"red"
+
+  })
+}
+
 const  first_show_parent = (id) => {
   $(id).show()
 }

@@ -48,9 +48,9 @@ Schedhuled Tasks
         {% for tour in schd_task_list %}
         <tr>
             <td><a href="{{ url('schedhuler:update_task', args=[tour['id']]) }}">{{ tour['jobname'] }}</a></td>
-            <td>{{ tour['assetid__assetname'] }}</td>
-            <td>{{ tour['qsetid__qset_name'] }} </td>
-            <td>{{ tour['peopleid__peoplename'] or tour['groupid__groupname'] }} </td>
+            <td>{{ tour['asset__assetname'] }}</td>
+            <td>{{ tour['qset__qset_name'] }} </td>
+            <td>{{ tour['people__peoplename'] or tour['pgroup__groupname'] }} </td>
             <td>{{ tour['from_date'] |to_local }}</td>
             <td>{{ tour['upto_date'] |to_local }}</td>
             <td>{{ tour['planduration'] }}</td>

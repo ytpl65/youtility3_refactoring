@@ -88,11 +88,11 @@
                     <div class="row fv-row mb-3 gy-2">
 
                         <!--Qusetion Set Belonging Question Start-->
-                        <label for="{{ qsetbng.quesid.id_for_label }}"
+                        <label for="{{ qsetbng.question.id_for_label }}"
                             class="required col-md-2 col-sm-2">Question:</label>
                         <div class="col-md-10 col-sm-10">
-                            {{ qsetbng.quesid }}
-                            {{ qsetbng.quesid.errors }}
+                            {{ qsetbng.question }}
+                            {{ qsetbng.question.errors }}
                         </div>
                         <!--Qusetion Set Belonging Question End-->
 
@@ -187,8 +187,8 @@
                                 {% for question in questions %}
                                 <tr>
                                     <td>{{ question['slno'] }}</td>
-                                    <td>{{ question["quesid__ques_name"] }}</td>
-                                    <td>{{ question["quesid__id"] }}</td>
+                                    <td>{{ question["question__ques_name"] }}</td>
+                                    <td>{{ question["question__id"] }}</td>
                                     <td>{{ question["answertype"] }}</td>
                                     <td>{{ question["min"] }}</td>
                                     <td>{{ question["max"] }}</td>
@@ -305,11 +305,11 @@
         formData['id_min'] = $("#id_min").val()
         formData['id_max'] = $("#id_max").val()
         formData['id_ismandatory'] = $("#id_ismandatory").is(":checked")
-        formData['id_quesid'] = getSelectedValue("#id_quesid")
-        formData['question_id'] = $("#id_quesid").val()
+        formData['id_question'] = getSelectedValue("#id_question")
+        formData['question_id'] = $("#id_question").val()
         console.log("check ", $("#id_options").val())
         formData['id_options'] = $("#id_options").val() !== "" ? JSON.parse($("#id_options").val()) : ""
-        //formData['id_quesid']      = getSelectedValue("#id_quesid")
+        //formData['id_question']      = getSelectedValue("#id_question")
 
         $("#id_alerton").empty();
         console.log("formData", formData)
@@ -329,8 +329,8 @@
             data.id_options = JSON.stringify(options)
         }
         //clean question
-        if (data.id_quesid !== "NONE") {
-            data.id_quesid = data.id_quesid.split(" | ")[0]
+        if (data.id_question !== "NONE") {
+            data.id_question = data.id_question.split(" | ")[0]
         }
 
         //clean alerton
@@ -366,7 +366,7 @@
     //reset's all data inside the questionform
     function resetForm(tag_field) {
         $("#qsetbng_form").trigger("reset")
-        $('#id_quesid, #id_answertype, #id_alerton').val(null).trigger('change');
+        $('#id_question, #id_answertype, #id_alerton').val(null).trigger('change');
         $("#id_alerton").empty()
         tag_field.removeAllTags()
     }
@@ -380,7 +380,7 @@
 
     function update_qsetblng_form(data, optionTag, fortable = false) {
         $("#id_slno").val(parseInt(data[0]))
-        $("select[name='quesid']").val($(`select option:contains(${data[1]})`).val()).change()
+        $("select[name='question']").val($(`select option:contains(${data[1]})`).val()).change()
         $("#id_answertype").val(data[3])
         $("#id_min").val(data[4])
         $("#id_max").val(data[5])
@@ -417,7 +417,7 @@
         data = cleanData(data)
         console.log('cleanData started [ENDED]')
         rowdata = [
-            -1, data.id_quesid, data.question_id, data.id_answertype, data.id_min,
+            -1, data.id_question, data.question_id, data.id_answertype, data.id_min,
             data.id_max, data.id_options, data.id_alerton, data.id_ismandatory
         ]
         table.row('.toupdate').remove().draw(false);
@@ -436,10 +436,10 @@
         }
     }
 
-    function deleteQuestionRequest(question, answertype, qsetid) {
+    function deleteQuestionRequest(question, answertype, qset) {
         const params = {
             'quesname': question,
-            'url': `{{ url('activity:delete_qsb') }}?quesname=${question}&answertype=${answertype}&qsetid=${qsetid}`,
+            'url': `{{ url('activity:delete_qsb') }}?quesname=${question}&answertype=${answertype}&qset=${qset}`,
             'beforeSend': function () {}
         }
         fire_ajax_get(params)
@@ -589,8 +589,8 @@
 
         //on selecting the question from question form show/hide
         //the fields group of class "optionGroup" and "numeric"
-        $("#id_quesid.form-select").on("change", function () {
-            var _selectedText = getSelectedValue("#id_quesid");
+        $("#id_question.form-select").on("change", function () {
+            var _selectedText = getSelectedValue("#id_question");
             var selected = _selectedText.split(" | ")[1]
             if (typeof selected !== 'undefined') {
                 assignQuesType(selected)

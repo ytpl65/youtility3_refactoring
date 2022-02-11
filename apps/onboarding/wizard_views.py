@@ -290,7 +290,7 @@ class WizardShift(views.CreateShift):
             res = None
             log.info('step-2 is valid')
             shift = form.save()
-            shift.buid_id = request.session['buid']
+            shift.bu_id = request.session['bu_id']
             ob_utils.save_msg(request)
             self.wizard_data['instance_id'] = shift.id
             people_utils.save_userinfo(shift, request.user, request.session)
@@ -494,7 +494,7 @@ class WizardPgroup(people_views.CreatePgroup):
         try:
             pg = self.model.objects.get(id=pk)
             peoples = pm.Pgbelonging.objects.filter(
-                groupid=pg).values_list('peopleid', flat=True)
+                pgroup=pg).values_list('people', flat=True)
             form = self.form_class(instance=pg, initial={
                                    'peoples': list(peoples)}, request=request)
             cxt = {'pgroup_form': form, 'edit': True}
@@ -581,10 +581,10 @@ def save_as_draft(request):
     if request.method != 'GET':
         return
     user, session = request.user, request.session
-    bu = ob.Bt.objects.get(pk=session['clientid'])
+    bu = ob.Bt.objects.get(pk=session['client_id'])
     wd = session['wizard_data']
     _, created = ob.WizardDraft.objects.update_or_create(
-        createdby=user, buid=bu,
+        createdby=user, bu=bu,
         defaults={'wizard_data': {'wizard_data': wd}})
     status = 'created' if created else 'updated'
     log.info(f"wizard draft {status}")

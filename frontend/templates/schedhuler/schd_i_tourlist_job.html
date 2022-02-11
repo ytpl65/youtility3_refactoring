@@ -48,7 +48,7 @@ Schedhuled Tour List
         {% for tour in schdtour_list %}
         <tr>
             <td><a href="{{ url('schedhuler:update_tour', args=[tour['id']]) }}">{{ tour['jobname'] }}</a></td>
-            <td>{{ tour['peopleid__peoplename'] or tour['groupid__groupname'] }} </td>
+            <td>{{ tour['people__peoplename'] or tour['pgroup__groupname'] }} </td>
             <td>{{ tour['from_date'] |to_local }}</td>
             <td>{{ tour['upto_date'] |to_local }}</td>
             <td>{{ tour['planduration'] }}</td>

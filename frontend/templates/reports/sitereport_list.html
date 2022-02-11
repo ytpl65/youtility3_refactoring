@@ -1,0 +1,140 @@
+{% extends "base_list.html" %}
+
+
+<!---- BEGIN CARD TITLE ------>
+{% block card_title %}
+Site Report List
+{% endblock card_title %}
+<!----- END CARD TITLE -------->
+
+{% block extra_css %}
+{% endblock extra_css %}
+
+<!------------------------------------ BEGIN PAGE BREADCUMBS ------------------------------------>
+{% block pagebreadcumb %}
+{{ super() }}
+<li class="breadcrumb-item pe-3"><a href="javascript:void(0)" class="pe-3">Site Report List</a></li>
+{% endblock pagebreadcumb %}
+<!------------------------------------- END PAGE BREADCUMBS ------------------------------------->
+
+
+<!-------------------------------------------- BEGIN TABLE ------------------------------------------->
+{% block table %}
+<table id="sitereport_table" class="display cell-border" style="width:100%">
+    <thead class="fw-bold fs-6">
+        <th>Id</th>
+        <th>Plan Datetime</th>
+        <th>Site Report</th>
+        <th>Surveyor</th>
+        <th>Site Name</th>
+        <th>Status</th>
+        <th>Gps Location</th>
+        <th>Distance</th>
+        <th>Remarks</th>
+        <th>Action</th>
+    </thead>
+    <!---------- BEGIN TABLE FILTER FIELDS --------->
+	<thead id="filter_row">
+    <form action="" id='sitereport_filter' method='get'>
+        <th></th>
+    {% for field in tour_filter %}
+        <th>
+            {% if field.name == 'plandatetime' %}
+                <input type="text" name="plandatetime_min" placeholder="YYYY/MM/DD" class="form-control" id="id_plandatetime_0" style="border-radius: 0px; height: 35px; display:none">
+                <input type="text" name="plandatetime_max" placeholder="YYYY/MM/DD" class="form-control" id="id_plandatetime_1" style="border-radius: 0px; height: 35px; display:none">
+                <input class="form-control input active" id="custom_plandatetime" placeholder="Pick Range" type="text" readonly="readonly">
+            {% else %}
+            {{ field }}
+            {% endif %}
+		</th>
+    {% endfor %}
+    <th></th>
+    </form>
+    </thead>
+    <!---------- END TABLE FILTER FIELDS --------->
+    <tbody>
+        {% for report in sitereport_list %}
+        <tr>
+            <td>{{ report['id'] }}</td>
+            <td>{{ report['plandatetime'] }}</td>
+            <td><a href="{{ url('schedhuler:update_ticket', args=[report['id']]) }}">{{ report['jobdesc']  }}</a></td>
+            <td>{{ report['peoplename']  }}</td>
+            <td>{{ report['buname'] }}</td>
+            <td>{{ report['jobstatusname'] or report['pgroup__groupname'] }}</td>
+            <td>{{ report['gpslocation'] }}</td>
+            <td>{{ report['distance'] }}</td>
+            <td>{{ report['remarks'] }}</td>
+            <td></td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+{% if ticket_list and ticket_list.has_other_pages %}
+<!-- BEGIN PAGINATOIN -->
+{{ paginator(ticket_list) }}
+<!-- END PAGINATOIN ---->
+{% endif %}
+{% endblock table %}
+<!-------------------------------------------- END TABLE ------------------------------------------->
+
+
+{% block extra_scripts %}
+<script>
+var table = null;
+const formFilter = '#sitereport_filter'
+const table_id = "#sitereport_table"
+    $(document).ready(function (){
+        $("input").keypress(function(event) {
+			if (event.which == 13) {
+				event.preventDefault();
+				$(formFilter).submit();
+			}
+		});
+        
+        //datatable initialization
+        table = $(table_id).DataTable({
+			//orderCellsTop: true,
+			responsive: true,
+			fixedHeader: true,
+			paging: false,
+			lengthChange: false,
+			language: {
+				searchPlaceholder: "Search on page"
+			},
+            dom:"<'row'" +
+                "<'col-sm-6 d-flex align-items-center justify-conten-start'f>" +
+                "<'col-sm-6 d-flex align-items-center justify-content-end'B>" +
+                ">" +
+
+                "<'table-responsive'tr>",
+            columnDefs:[
+                {
+                    visible:false,
+                    targets:0,
+                    searchable:false
+                },
+                {
+                    data:null;
+                    orderable:false,
+                    searchable:false,
+                    defaultContent:""
+                    targets:9
+                }
+            ]
+        })
+        //BEGIN STYLING DATATABLE
+		$("th > input").addClass('form-control')
+		$("th > input").css('height', '35px')
+        var styles = {
+			"border-bottom":"none",
+			"background-color":"#f1f4f7"
+		}
+        $(`${table_id} thead tr:eq(1)`).css(styles)
+
+
+
+    })
+
+</script>
+{% endblock extra_scripts %}

@@ -209,7 +209,7 @@ def local_to_utc(data, offset, mobile_web):
 
 def get_or_create_none_people(using=None):
     obj, _ = pm.People.objects.filter(Q(peoplecode='NONE') | Q(peoplename='NONE')).get_or_create(
-        peoplecode='NONE',
+        id = -1,
         defaults={
             'peoplecode': 'NONE', 'peoplename': 'NONE',
             'email': "none@youtility.in", 'dateofbirth': '1111-1-1',
@@ -221,7 +221,7 @@ def get_or_create_none_people(using=None):
 
 def get_or_create_none_pgroup():
     obj, _ = pm.Pgroup.objects.get_or_create(
-        groupname='NONE',
+        id = -1,
         defaults={
             'groupname': "NONE", 'id':-1
         }
@@ -230,8 +230,8 @@ def get_or_create_none_pgroup():
 
 
 def get_or_create_none_cap():
-    obj, _ = pm.Capability.objects.filter(Q(capscode='NONE')).get_or_create(
-        capscode='NONE',
+    obj, _ = pm.Capability.objects.get_or_create(
+        id = -1,
         defaults={
             'capscode': "NONE", 'capsname': 'NONE', 'id':-1
         }
@@ -487,9 +487,19 @@ def apply_error_classes(form):
         attrs = form.fields[x].widget.attrs
         attrs.update({'class': attrs.get('class', '') + ' is-invalid'})
 
-def to_utc( date):
+def to_utc( date, format=None):
     import pytz
-    return date.astimezone(pytz.utc).replace(microsecond=0, tzinfo=pytz.utc)
+    if isinstance(date, list) and date:
+        dtlist = []
+        for dt in date:
+            dt = dt.astimezone(pytz.utc).replace(microsecond=0, tzinfo=pytz.utc)
+            dtlist.append(dt)
+        return dtlist
+    else:
+        dt = date.astimezone(pytz.utc).replace(microsecond=0, tzinfo=pytz.utc)
+        if format:
+            dt.strftime(format)
+        return dt
 
 # MAPPING OF HOSTNAME:DATABASE ALIAS NAME 
 def get_tenants_map():
@@ -507,8 +517,8 @@ def hostname_from_request(request):
 
 
 def get_or_create_none_bv():
-    obj, _ = Bt.objects.filter(Q(bucode='NONE') | Q(buname='NONE')).get_or_create(
-        bucode='NONE',
+    obj, _ = Bt.objects.get_or_create(
+        id = -1,
         defaults={
             'bucode':"NONE", 'buname':"NONE",'id':-1
         }
@@ -517,8 +527,8 @@ def get_or_create_none_bv():
 
 
 def get_or_create_none_typeassist():
-    obj, _ = TypeAssist.objects.filter(Q(tacode='NONE') | Q(taname='NONE')).get_or_create(
-        tacode='NONE',
+    obj, _ = TypeAssist.objects.get_or_create(
+        id = -1,
         defaults={
             'tacode':"NONE", 'taname':"NONE",'id':-1
         }
@@ -542,8 +552,8 @@ def get_client_from_hostname(request):
 def get_or_create_none_job():
     from datetime import datetime, timezone
     date = datetime(1970,1,1,00,00,00).replace(tzinfo=timezone.utc)
-    obj, _ = am.Job.objects.filter(Q(jobname='NONE') | Q(jobname='None')).get_or_create(
-        jobname = 'NONE',
+    obj, _ = am.Job.objects.get_or_create(
+        id = -1,
         defaults={
             'jobname'     : 'NONE',    'jobdesc'        : 'NONE',
             'from_date'   : date,      'upto_date'      : date,
@@ -560,7 +570,8 @@ def get_or_create_none_job():
 def get_or_create_none_jobneed():
     from datetime import datetime, timezone
     date = datetime(1970,1,1,00,00,00).replace(tzinfo=timezone.utc)
-    obj, _ = am.Jobneed.objects.filter(Q(jobdesc = 'NONE')).get_or_create(
+    obj, _ = am.Jobneed.objects.get_or_create(
+        id = -1,
         defaults={
             'jobdesc'          : "NONE", 'plandatetime': date,
             'expirydatetime'   : date,   'gracetime'   : 0,
@@ -572,18 +583,16 @@ def get_or_create_none_jobneed():
 
 
 def get_or_create_none_qset():
-    obj, _ = am.QuestionSet.objects.filter(
-        Q(qset_name = 'NONE') | Q(qset_name = 'None')).get_or_create(
-        qset_name = 'NONE',
+    obj, _ = am.QuestionSet.objects.get_or_create(
+        id = -1,
         defaults={
             'qset_name':"NONE", 'id':-1}
     )
     return obj
 
 def get_or_create_none_question():
-    obj, _ = am.Question.objects.filter(
-        Q(ques_name = 'NONE')).get_or_create(
-        ques_name = 'NONE',
+    obj, _ = am.Question.objects.get_or_create(
+        id = -1,
         defaults = {
             'ques_name':"NONE", 'id':-1}
     )
@@ -591,21 +600,19 @@ def get_or_create_none_question():
 
 
 def get_or_create_none_qsetblng():
-    obj, _ = am.QuestionSetBelonging.objects.filter(
-        Q(slno = 999)| Q(answertype = 'NUMERIC')).get_or_create(
-        slno = 999,
+    obj, _ = am.QuestionSetBelonging.objects.get_or_create(
+        id = -1,
         defaults = {
-            'qsetid'     : get_or_create_none_qset(),
-            'quesid'     : get_or_create_none_question(),
+            'qset'     : get_or_create_none_qset(),
+            'question'     : get_or_create_none_question(),
             'answertype' : 'NUMERIC', 'id':-1, 
-            'ismandatory': False}
+            'ismandatory': False, 'slno':-1}
     )
     return obj
 
 def get_or_create_none_asset():
-    obj, _ = am.Asset.objects.filter(
-        Q(assetcode = 'NONE') | Q(assetname='NONE')).get_or_create(
-        assetcode = 'NONE',
+    obj, _ = am.Asset.objects.get_or_create(
+        id = '-1',
         defaults={
             'assetcode'    : "NONE", 'assetname' : 'NONE',
             'iscritical'   : False,  'identifier': 'NONE',

@@ -99,12 +99,12 @@ Schedhule Task
         
         <!--ASSET-->
         <div class="col-md-2">
-            <label for={{ schdtaskform.assetid.id_for_label }}
-                class="required">{{ schdtaskform.assetid.label }}:</label>
+            <label for={{ schdtaskform.asset.id_for_label }}
+                class="required">{{ schdtaskform.asset.label }}:</label>
         </div>
         <div class="col-md-4">
-            {{ schdtaskform.assetid }}
-            {{ schdtaskform.assetid.errors }}
+            {{ schdtaskform.asset }}
+            {{ schdtaskform.asset.errors }}
         </div>
         
         <!--EXPIRYTIME-->
@@ -122,12 +122,12 @@ Schedhule Task
         
         <!--QUESTIONSET-->
         <div class="col-md-2">
-            <label for={{ schdtaskform.qsetid.id_for_label }}
-                class=" required">{{ schdtaskform.qsetid.label }}:</label>
+            <label for={{ schdtaskform.qset.id_for_label }}
+                class=" required">{{ schdtaskform.qset.label }}:</label>
         </div>
         <div class="col-md-4">
-            {{ schdtaskform.qsetid }}
-            {{ schdtaskform.qsetid.errors }}
+            {{ schdtaskform.qset }}
+            {{ schdtaskform.qset.errors }}
         </div>
         
         <!--CRON-->
@@ -175,22 +175,22 @@ Schedhule Task
         
 
         <!--PEOPLEID-->
-        <div class="col-md-2 peopleid">
-            <label for={{ schdtaskform.peopleid.id_for_label }}
-                class="required">{{ schdtaskform.peopleid.label }}:</label>
+        <div class="col-md-2 people">
+            <label for={{ schdtaskform.people.id_for_label }}
+                class="required">{{ schdtaskform.people.label }}:</label>
         </div>
-        <div class="col-md-4 peopleid">
-            {{ schdtaskform.peopleid }}
-            {{ schdtaskform.peopleid.errors }}
+        <div class="col-md-4 people">
+            {{ schdtaskform.people }}
+            {{ schdtaskform.people.errors }}
         </div>
 
         <!-- ASSIGN TO GROUP --->
-        <div class="col-md-2 groupid">
-            <label for={{ schdtaskform.groupid.id_for_label }} class="">{{ schdtaskform.groupid.label }}:</label>
+        <div class="col-md-2 pgroup">
+            <label for={{ schdtaskform.pgroup.id_for_label }} class="">{{ schdtaskform.pgroup.label }}:</label>
         </div>
-        <div class="col-md-4 groupid">
-            {{ schdtaskform.groupid }}
-            {{ schdtaskform.groupid.errors }}
+        <div class="col-md-4 pgroup">
+            {{ schdtaskform.pgroup }}
+            {{ schdtaskform.pgroup.errors }}
         </div>
         
         
@@ -235,7 +235,9 @@ Schedhule Task
             {{ schdtaskform.ticket_category.errors }}
         </div>
     </div>
-</form><br><br>
+</form>
+{{ reset_form_btn(id="#schdtaskform") }}
+<br><br>
 
 {% endblock form %}
 
@@ -298,21 +300,23 @@ Schedhule Task
     function showHideSelectField(val) {
         if (val == "PEOPLE") {
             //$("#aatopdiv").show();
-            $(".peopleid").show();
-            $(".groupid").hide();
+            $(".people").show();
+            $(".pgroup").hide();
         } else {
             //$("#aatopdiv").hide();
-            $(".groupid").show();
-            $(".peopleid").hide();
+            $(".pgroup").show();
+            $(".people").hide();
         }
     }
+    var formSaved = false;
 
     $(document).ready(function(){
-        //toggle peopleid and groupid field based on radio button value
+        formSaved=true
+        //toggle people and pgroup field based on radio button value
         if ('{{schdtaskform.instance.id}}' == ('None' || "")) {
             showHideSelectField('PEOPLE')
         }else{
-            var assignto = '{{schdtaskform.instance.peopleid}}' == ('None' || "") ? "GROUP" :"PEOPLE"
+            var assignto = '{{schdtaskform.instance.people}}' == ('None' || "") ? "GROUP" :"PEOPLE"
             showHideSelectField(assignto)
         }
 
@@ -392,6 +396,7 @@ Schedhule Task
                             `Task Form with this name <strong>${data.jobname}</strong> has been saved successfully`,
                             'success'
                         ).then(function () {
+                            formSaved = true
                             window.location.replace(data.url);
                         })
                     })
@@ -406,39 +411,47 @@ Schedhule Task
             })
         })
 
+        $("#schdtaskform").change(() => {
+            formSaved = false;
+        })
+
         //RUN-JOB SCHEDULER DEFINITION
         $("#runScheduler").click(function() {
-            Swal.fire({
-                title:"Are you sure?",
-                text:"Run Task Scheduler, you won't be able to revert this!",
-                icon:"warning",
-                showCancelButton:true,
-                confirmButtonText:"Schedule it!"
-            }).then((result) => {
-                if(result.isConfirmed){
-                    const params = {url:"{{ url('schedhuler:runJob') }}"}
-                    var payLoad = {jobid:'{{ schdtaskform.instance.id }}',
-                    csrfmiddlewaretoken: '{{ csrf_token }}'}
-                    fire_ajax_form_post(params, payLoad)
-                    .done((data, status, xhr) => {
-                        Swal.fire({
-                            showConfirmButton:false,
-                            timer:1500,
-                            icon:'success',
-                            title:"Task schedhuled successfully!"
+            if(!formSaved){
+                alertuser_to_saveform({fs:"17px", cl:"red"})
+            }else{
+                Swal.fire({
+                    title:"Are you sure?",
+                    text:"Run Task Scheduler, you won't be able to revert this!",
+                    icon:"warning",
+                    showCancelButton:true,
+                    confirmButtonText:"Schedule it!"
+                }).then((result) => {
+                    if(result.isConfirmed){
+                        const params = {url:"{{ url('schedhuler:runJob') }}"}
+                        var payLoad = {job:'{{ schdtaskform.instance.id }}',
+                        csrfmiddlewaretoken: '{{ csrf_token }}'}
+                        fire_ajax_form_post(params, payLoad)
+                        .done((data, status, xhr) => {
+                            Swal.fire({
+                                showConfirmButton:false,
+                                timer:1500,
+                                icon:'success',
+                                title:data['msg']
+                            })
+                            $('#lblIsRTour').html('No');
                         })
-                        $('#lblIsRTour').html('No');
-                    })
-                    .fail((xhr, status, error) => {
-                        Swal.fire({
-                            showConfirmButton:false,
-                            icon:"error",
-                            timer:1500,
-                            title:"Failed to schedhule!"
+                        .fail((xhr, status, error) => {
+                            Swal.fire({
+                                showConfirmButton:false,
+                                icon:"error",
+                                timer:1500,
+                                title:"Failed to schedhule!"
+                            })
                         })
-                    })
-                }
-            })
+                    }
+                })
+            }
         })
     })
 </script>

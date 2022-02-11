@@ -49,7 +49,7 @@ People Lists
             <td>{{ people['peoplecode'] }}</td>
             <td><a href="{{ url('peoples:people_update', args=[people['id']]) }}">{{ people['peoplename'] }}</a></td>
             <td>{{ people['peopletype__tacode'] }}</td>
-            <td>{{ people['buid__bucode'] }}</td>
+            <td>{{ people['bu__bucode'] }}</td>
             <td>{{ people['isadmin'] }}</td>
         </tr>
         {% endfor %}

@@ -53,9 +53,9 @@ Ticket List
             <td><a href="{{ url('schedhuler:update_ticket', args=[ticket['id']]) }}">{{ ticket['cdtz'] }}</a></td>
             <td>{{ ticket['cuser__peoplename'] }} </td>
             <td>{{ ticket['ticketno']  }}</td>
-            <td>{{ ticket['buid__buname']  }}</td>
+            <td>{{ ticket['bu__buname']  }}</td>
             <td>{{ ticket['jobdesc'] }}</td>
-            <td>{{ ticket['peopleid__peoplename'] or ticket['groupid__groupname'] }}</td>
+            <td>{{ ticket['people__peoplename'] or ticket['pgroup__groupname'] }}</td>
             <td>{{ ticket['performed_by__peoplename'] }}</td>
             <td>{{ ticket['ticket_category__taname'] }}</td>
             <td>{{ ticket['jobstatus'] }}</td>

@@ -9,10 +9,10 @@ class AttendanceForm(forms.ModelForm):
 
     class Meta:
         model = atdm.PeopleEventlog
-        fields = ['peopleid', 'punch_intime', 'punch_outtime', 'datefor',
+        fields = ['people', 'punch_intime', 'punch_outtime', 'datefor',
          'peventtype', 'verifiedby', 'remarks','shift', 'facerecognition']
         labels = {
-            'peopleid'        : 'People',
+            'people'        : 'People',
             'punch_intime'    : 'In Time',
             'punch_outtime'   : 'Out Time',
             'datefor'         : 'For Date',
@@ -21,7 +21,7 @@ class AttendanceForm(forms.ModelForm):
             'facerecognition' : 'Enable FaceRecognition',
             'remarks'         : "Remark"}
         widgets = {
-            'peopleid'    : s2forms.ModelSelect2Widget(
+            'people'    : s2forms.ModelSelect2Widget(
                 model     = pm.People, search_fields =  ['peoplename__icontains','peoplecode__icontains']
             ),
             'verifiedby'  : s2forms.ModelSelect2Widget(
@@ -39,7 +39,7 @@ class AttendanceForm(forms.ModelForm):
         self.fields['punch_intime'].required  = True
         self.fields['punch_outtime'].required = True
         self.fields['verifiedby'].required    = True
-        self.fields['peopleid'].required      = True
+        self.fields['people'].required      = True
         self.fields['peventtype'].required    = True
         self.fields['shift'].initial          = 1
 

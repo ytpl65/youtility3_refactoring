@@ -142,7 +142,6 @@ class RetrieveTypeassists(LoginRequiredMixin, View):
 
 def test_ta_grid(request):
     import math
-    response = {}
     fields = ['id', 'tatype', 'parent__tacode', 'tacode',
               'taname', 'cuser__peoplecode']
     if request.method == 'POST':
@@ -156,9 +155,7 @@ def test_ta_grid(request):
     total_pages = math.ceil(count/int(limit)) if count else 0
     page = min(int(page), total_pages)
     start = int(limit) * page - int(limit)
-    response['page'] = page
-    response['total'] = total_pages
-    response['records'] = count
+    response = {'page': page, 'total': total_pages, 'records': count}
     rows = []
     for i in range(objects.count()):
         response.setdefault("rows", []).append(objects[i])
@@ -514,7 +511,7 @@ class CreateShift(LoginRequiredMixin, View):
             if form.is_valid():
                 logger.info('ShiftForm Form is valid')
                 shift = form.save()
-                shift.buid_id = int(request.session['clientid'])
+                shift.bu_id = int(request.session['client_id'])
                 save_userinfo(shift, request.user, request.session)
                 logger.info('ShiftForm Form saved')
                 messages.success(request, "Success record saved successfully!",
@@ -617,7 +614,7 @@ class UpdateShift(LoginRequiredMixin, View):
             if form.is_valid():
                 logger.info('ShiftForm form is valid..')
                 shift = form.save()
-                shift.buid_id = int(request.session['clientid'])
+                shift.bu_id = int(request.session['client_id'])
                 shift = save_userinfo(shift, request.user, request.session)
                 logger.info('ShiftForm Form saved')
                 messages.success(request, "Success record saved successfully!",
@@ -937,8 +934,7 @@ def get_caps(request):  # sourcery skip: extract-method
         childs = []
         for i in selected_parents:
             child = Capability.objects.get_child_data(i, cfor)
-            for j in child:
-                childs.append({'capscode': j.capscode})
+            childs.extend({'capscode': j.capscode} for j in child)
         logger.info('childs = [] {}'.format(childs))
         return JsonResponse(data=childs, safe=False)
 
