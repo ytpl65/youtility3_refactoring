@@ -203,8 +203,8 @@ class PeopleForm(forms.ModelForm):
                 if not pn.is_valid_number(no):
                     raise forms.ValidationError(
                         self.error_msg['invalid_mobno2'])
-            except NumberParseException:
-                raise forms.ValidationError(self.error_msg['invalid_mobno2'])
+            except NumberParseException as e:
+                raise forms.ValidationError(self.error_msg['invalid_mobno2']) from e
             return mobno
 
 
@@ -216,19 +216,25 @@ class PgroupForm(forms.ModelForm):
         'invalid_code3': "[Invalid code] Code should not endwith '.' ",
     }
     peoples = forms.MultipleChoiceField(
-        required=True, widget=s2forms.Select2MultipleWidget, label="Select People")
+        required=True,
+        widget=s2forms.ModelSelect2MultipleWidget(
+            attrs={'name':'peoples'},
+            model=pm.People,
+            search_fields = ['peoplecode__icontains', 'peoplename__icontains']),
+        label="Select People")
 
     class Meta:
         model = pm.Pgroup
-        fields = ['groupname', 'enable']
+        fields = ['groupname', 'enable', 'identifier']
         labels = {
             'groupname': 'Name',
             'enable': 'Enable'
         }
         widgets = {
-            'groupname': forms.TimeInput(attrs={
+            'groupname': forms.TextInput(attrs={
                 'placeholder': "Enter People Group Name"
-            })
+            }),
+            'identifier':forms.TextInput(attrs = {"style":"display:none"})
         }
 
     def __init__(self, *args, **kwargs):
@@ -236,6 +242,7 @@ class PgroupForm(forms.ModelForm):
         super(PgroupForm, self).__init__(*args, **kwargs)
         utils.initailize_form_fields(self)
         site = self.request.user.bu.bucode if self.request.user.bu else ""
+        self.fields['identifier'].initial = om.TypeAssist.objects.get(tacode='PEOPLEGROUP')
         self.fields['peoples'].choices = pm.People.objects.select_related(
             'bu').filter(isadmin=False).values_list(
             'id', 'peoplename')
@@ -245,6 +252,10 @@ class PgroupForm(forms.ModelForm):
         result = super().is_valid()
         utils.apply_error_classes(self)
         return result
+    
+
+class SiteGroup(PgroupForm):
+    pass
 
 
 class PgbelongingForm(forms.ModelForm):

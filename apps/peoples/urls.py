@@ -24,6 +24,7 @@ urlpatterns = [
         path('cap_form/del/<str:pk>',  views.DeleteCapability.as_view(),    name='cap_delete'),
         
         path('capability/',  views.Capability.as_view(),    name='capability'),
+        path('peoplegroup/',  views.Pgroup.as_view(),    name='peoplegroup'),
         path('people/',  views.People.as_view(),    name='people'),
         
         path('wizard/', include(wizard_url_patterns2)),

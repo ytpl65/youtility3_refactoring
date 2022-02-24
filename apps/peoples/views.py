@@ -378,7 +378,8 @@ class CreatePgroup(LoginRequiredMixin, View):
                 logger.info('Pgroup Form is valid')
                 pg = form.save()
                 pg.identifier, _ = TypeAssist.objects.get_or_create(
-                    tacode="PEOPLE_GROUP", taname="People Group", defaults={'tacode': "NONE", "parent_id": 1})
+                    tacode="PEOPLE_GROUP", taname="People Group",
+                    defaults={'tacode': "PEOPLEGROUP", 'taname':"People Group", 'tatype_id': -1})
                 pg = save_userinfo(pg, request.user, request.session)
                 save_pgroupbelonging(pg, request)
                 logger.info('Pgroup Form saved')
@@ -777,7 +778,7 @@ class Capability(View):
             resp = utils.render_form_for_delete(request, self.params, True)
         # return form with instance
         elif R.get('id', None):
-            obj = putils.get_model_obj(int(R['id']), request, self.params)
+            obj = utils.get_model_obj(int(R['id']), request, self.params)
             resp = utils.render_form_for_update(
                 request, self.params, "cap_form", obj)
         print(f'return resp={resp}')
@@ -792,7 +793,7 @@ class Capability(View):
             print(pk, type(pk))
             if pk:
                 msg = "capability_view"
-                form = putils.get_instance_for_update(
+                form = utils.get_instance_for_update(
                     data, self.params, msg, int(pk))
                 print(form.data)
             else:
@@ -803,7 +804,7 @@ class Capability(View):
                 cxt = {'errors': form.errors}
                 resp = utils.handle_invalid_form(request, self.params, cxt)
         except Exception:
-            resp = putils.handle_Exception(request)
+            resp = utils.handle_Exception(request)
         return resp
 
     def handle_valid_form(self, form, request):
@@ -915,3 +916,91 @@ class People(View):
             return rp.JsonResponse(data, status=200)
         except IntegrityError:
             return handle_intergrity_error('People')
+
+
+class Pgroup(LoginRequiredMixin, View):
+    params = {
+        'form_class':pf.PgroupForm,
+        'template_form': 'peoples/partials/partial_pgroup_form.html',
+        'template_list': 'peoples/pgroup.html',
+        'partial_form': 'peoples/partials/partial_pgroup_form.html',
+        'related': ['identifier'],
+        'model': pm.Pgroup,
+        'filter': pft.PgroupFilter,
+        'fields': ['id', 'groupname', 'enable'],
+        'form_initials':{}
+    }
+    
+    def get(self, request, *args, **kwargs):
+        R, resp = request.GET, None
+
+        # return list data
+        if R.get('action', None) == 'list' or R.get('search_term'):
+            d = {'list': "pgroup_list", 'filt_name': "pgroup_filter"}
+            self.params.update(d)
+            objs = self.params['model'].objects.select_related(
+                *self.params['related']).filter(
+                    ~Q(id=-1), enable=True
+            ).values(*self.params['fields']).order_by('-mdtz')
+            resp = utils.render_grid(
+                request, self.params, "pgroup_view", objs)
+
+        # return form empty
+        elif R.get('action', None) == 'form':
+            cxt = {'pgroup_form': self.params['form_class'](request=request),
+                   'msg': "create people group requested"}
+            resp = utils.render_form(request, self.params, cxt)
+
+        # handle delete request
+        elif R.get('action', None) == "delete" and R.get('id', None):
+            print(f'resp={resp}')
+            resp = utils.render_form_for_delete(request, self.params, True)
+        # return form with instance
+        elif R.get('id', None):
+            obj = utils.get_model_obj(int(R['id']), request, self.params)
+            peoples = pm.Pgbelonging.objects.filter(
+                pgroup=obj).values_list('people', flat=True)
+            ic(peoples)
+            self.params.update(
+                {'form_initials':{'peoples':list(peoples)}})
+            resp = utils.render_form_for_update(
+                request, self.params, "pgroup_form", obj)
+        print(f'return resp={resp}')
+        return resp
+
+    def post(self, request, *args, **kwargs):
+        resp = None
+        try:
+            print(request.POST)
+            data = QueryDict(request.POST['formData'])
+            pk = request.POST.get('pk', None)
+            print(pk, type(pk))
+            if pk:
+                msg = "pgroup_view"
+                form = utils.get_instance_for_update(
+                    data, self.params, msg, int(pk), kwargs = {'request':request})
+                print(form.data)
+            else:
+                form = self.params['form_class'](data, request=request)
+            if form.is_valid():
+                resp = self.handle_valid_form(form, request)
+            else:
+                cxt = {'errors': form.errors}
+                resp = utils.handle_invalid_form(request, self.params, cxt)
+        except Exception:
+            resp = utils.handle_Exception(request)
+        return resp
+
+    def handle_valid_form(self, form, request):
+        logger.info('pgroup form is valid')
+        from apps.core.utils import handle_intergrity_error
+        try:
+            pg = form.save()
+            putils.save_userinfo(pg, request.user, request.session)
+            save_pgroupbelonging(pg, request)
+            logger.info("people group form saved")
+            data = {'success': "Record has been saved successfully",
+                    'msg': pg.groupname}
+            return rp.JsonResponse(data, status=200)
+        except IntegrityError:
+            return handle_intergrity_error("Pgroup")
