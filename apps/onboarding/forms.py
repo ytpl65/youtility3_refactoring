@@ -30,7 +30,7 @@ class SuperTypeAssistForm(forms.ModelForm):
                 'taname': 'Name',
                 'tatype': 'Type'}
         widgets = {
-            'tatype':s2forms.ModelSelect2Widget(model = obm.TypeAssist, search_fields =  ['taname__icontains','tacode__icontains']),
+            'tatype':s2forms.Select2Widget,
             'tacode':forms.TextInput(attrs={'placeholder':'Enter code without space and special characters', 'style':"text-transform: uppercase;"}),
             'taname':forms.TextInput(attrs={'placeholder':"Enter name"}),
             }
@@ -38,6 +38,7 @@ class SuperTypeAssistForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         """Initializes form"""
+        self.request = kwargs.pop('request', None)
         super(SuperTypeAssistForm, self).__init__(*args, **kwargs)
         utils.initailize_form_fields(self)
 
@@ -68,12 +69,10 @@ class TypeAssistForm(SuperTypeAssistForm):
     
     def __init__(self, *args, **kwargs):
         """Initializes form"""
-        super(SuperTypeAssistForm, self).__init__(*args, **kwargs)
+        self.request = kwargs.pop('request', None)
+        super(TypeAssistForm, self).__init__(*args, **kwargs)
         utils.initailize_form_fields(self)
 
-    class Meta(SuperTypeAssistForm.Meta):
-        fields =  ['tacode' ,'taname', 'tatype']
-        widgets = {'tatype':s2forms.ModelSelect2Widget(model = obm.TypeAssist, search_fields =  ['taname__icontains','tacode__icontains'])}
     
     def is_valid(self) -> bool:
         result = super().is_valid()
@@ -124,9 +123,9 @@ class BtForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         """Initializes form"""
         super(BtForm, self).__init__(*args, **kwargs)
-        self.fields['identifier'].queryset = obm.TypeAssist.objects.filter(tatype__tacode="BUIDENTIFIER")
+        self.fields['identifier'].queryset = obm.TypeAssist.objects.filter(tatype__tacode="BVIDENTIFIER")
         self.fields['identifier'].widget.attrs = {'required':True}
-        self.fields['butype'].queryset = obm.TypeAssist.objects.filter(tatype__tacode="SITE_TYPE")
+        self.fields['butype'].queryset = obm.TypeAssist.objects.filter(tatype__tacode="SITETYPE")
         utils.initailize_form_fields(self)
     
     

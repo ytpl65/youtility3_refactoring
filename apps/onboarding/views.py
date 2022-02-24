@@ -6,15 +6,21 @@ from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.views import View
 from django.db.models import Q
 from django.contrib import messages
+from django.http import response as rp
 from django.core.cache.backends.base import DEFAULT_TIMEOUT
+from django.db.utils import IntegrityError
 from django.conf import settings
 from icecream import ic
 from django.core.exceptions import (EmptyResultSet)
 from django.db.models import RestrictedError
+from django.http.request import QueryDict
+from django.core import serializers
 from django.urls import resolve
 from .models import Shift, SitePeople, TypeAssist, Bt
 from apps.peoples.utils import  save_userinfo
 import apps.onboarding.forms as obforms
+import apps.peoples.utils as putils
+from apps.core import utils
 
 CACHE_TTL = getattr(settings, 'CACHE_TTL', DEFAULT_TIMEOUT)
 logger = logging.getLogger('django')
@@ -305,6 +311,7 @@ class CreateBt(LoginRequiredMixin, View):
         logger.info('create bt view...')
         cxt = {'buform': self.form_class(),
                'ta_form': obforms.TypeAssistForm(auto_id=False)}
+        ic(cxt['buform'].as_p().split('\n'))
         return render(request, self.template_path, context=cxt)
 
     def post(self, request, *args, **kwargs):
@@ -1121,3 +1128,112 @@ def handle_pop_forms(request):
 
 
 #---------------------------- END client onboarding   ---------------------------#
+
+
+
+class MasterTypeAssist(LoginRequiredMixin, View):
+    from .filters import TypeAssistFilter
+    params = {
+        'form_class': '',
+        'template_form': 'onboarding/partials/partial_ta_form.html',
+        'template_list': 'onboarding/typeassist.html',
+        'partial_form': 'onboarding/partials/partial_ta_form.html',
+        'related': ['parent',  'cuser', 'muser'],
+        'model': TypeAssist,
+        'filter': TypeAssistFilter,
+        'fields': ['id', 'tatype__tacode', 'tacode',
+              'taname', 'cuser__peoplecode'],
+        'form_initials': {} }
+    lookup = {}
+
+    def get(self, request, *args, **kwargs):
+        R, resp = request.GET, None
+
+        # first load the template
+        if R.get('template'): return render(request, self.params['template_list'])
+        #then load the table with objects
+        if R.get('action', None) == 'list' or R.get('search_term'):
+            d = {'list': "ta_list", 'filt_name': "ta_filter"}
+            self.params.update(d)
+            objs = self.params['model'].objects.select_related(
+                *self.params['related']).filter(
+                    ~Q(tacode='NONE'),  **self.lookup
+            ).values(*self.params['fields'])
+            count = objs.count()
+            logger.info('Typeassist objects %s retrieved from db' %(count or "No Records!"))
+            if count:
+                objects, filtered = utils.get_paginated_results(
+                    R, objs, count, self.params['fields'], self.params['related'], self.params['model'])
+                logger.info('Results paginated'if count else "")
+
+            resp = rp.JsonResponse(data = {
+                'draw':R['draw'], 'recordsTotal':count,
+                'data' : list(objects), 
+                'recordsFiltered': filtered
+            }, status=200, safe=False)
+
+        # return cap_form empty for creation
+        elif R.get('action', None) == 'form':
+            cxt = {'ta_form': self.params['form_class'](request=request),
+                   'msg': "create typeassist requested"}
+            resp = utils.render_form(request, self.params, cxt)
+
+        # handle delete request
+        elif R.get('action', None) == "delete" and R.get('id', None):
+            print(f'resp={resp}')
+            resp = utils.render_form_for_delete(request, self.params, False)
+        # return form with instance for update
+        elif R.get('id', None):
+            obj = utils.get_model_obj(int(R['id']), request, self.params)
+            resp = utils.render_form_for_update(
+                request, self.params, "ta_form", obj)
+        print(f'return resp={resp}')
+        return resp
+
+    def post(self, request, *args, **kwargs):
+        resp = None
+        try:
+            print(request.POST)
+            data = QueryDict(request.POST['formData'])
+            pk = request.POST.get('pk', None)
+            print(pk, type(pk))
+            if pk:
+                msg = "typeassist_view"
+                form = utils.get_instance_for_update(
+                    data, self.params, msg, int(pk))
+                print(form.data)
+            else:
+                form = self.params['form_class'](data, request=request)
+            if form.is_valid():
+                resp = self.handle_valid_form(form, request)
+            else:
+                cxt = {'errors': form.errors}
+                resp = utils.handle_invalid_form(request, self.params, cxt)
+        except Exception:
+            resp = utils.handle_Exception(request)
+        return resp
+
+    def handle_valid_form(self, form, request):
+        logger.info('typeassist form is valid')
+        from apps.core.utils import handle_intergrity_error
+        try:
+            ta = form.save()
+            putils.save_userinfo(ta, request.user, request.session)
+            logger.info("typeassist form saved")
+            data = {'msg': f"{ta.tacode}", }
+            return rp.JsonResponse(data, status=200)
+        except IntegrityError:
+            return handle_intergrity_error("TypeAssist")
+
+
+
+class SuperTypeAssist(MasterTypeAssist):
+    params = MasterTypeAssist.params
+    lookup = MasterTypeAssist.lookup
+    lookup = {'cuser__peoplecode':'SUPERADMIN'}
+    params.update({'form_class':obforms.SuperTypeAssistForm})
+
+class TypeAssistAjax(MasterTypeAssist):
+    params = MasterTypeAssist.params
+    params.update({'form_class':obforms.TypeAssistForm})
+    pass

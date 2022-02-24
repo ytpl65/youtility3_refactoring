@@ -245,6 +245,14 @@ Buisiness-View
 {% block extra_scripts %}
 {{ buform.media.js }}
 <script>
+	function showHideBuType(){
+		//on load check butype is site
+		var data = $("#id_identifier option:selected").text();
+		var list = ['SITE', 'Site (SITE)', 'Site']
+		if(list.includes(data)){
+				$(".site_type").show();
+		}else{$(".site_type").hide();}
+	}
 	$(document).ready(function () {
 		//hide the delete button when instance is not saved yet.
 		if ('{{buform.instance.id}}' == 'None') {
@@ -257,7 +265,7 @@ Buisiness-View
 			'form': "#butype_ta_form",
 			'field': "#id_butype",
 			'modal': "#butype_ta_popup",
-			'default':$("#butype_ta_popup select option:contains('SITE_TYPE')").val()
+			'default':$("#butype_ta_popup select option:contains('SITETYPE')").val()
 
 		}))
 		
@@ -281,16 +289,16 @@ Buisiness-View
 		}
 		//show butype when user opts to site
 		$('#id_identifier').on('change', function() {
-			var list = ['SITE', 'Site']
-			var data = $("#id_identifier option:selected").text();
-			if(list.includes(data)){
-				$(".site_type").show();
-			}else{$(".site_type").hide();}
+			console.log("changed")
+			showHideBuType()
 		})
 		//pre-select options for pop-up ta forms
-		$("#butype_ta_popup select[name='tatype']").val($("#butype_ta_popup select option:contains('SITE_TYPE')").val()).change().prop('disabled', true)
+		$("#butype_ta_popup select[name='tatype']").val($("#butype_ta_popup select option:contains('SITETYPE')").val()).change()
+		$("#butype_ta_popup select[name='tatype']").select2({disabled:'readonly'})
 
-
+		//on load check
+		showHideBuType();
+		
 	})
 </script>
 {% endblock extra_scripts %}
