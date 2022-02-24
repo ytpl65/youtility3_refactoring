@@ -251,7 +251,7 @@
     </span>
     <div class="menu-sub menu-sub-accordion" kt-hidden-height="116" style="display: none; overflow: hidden;">
       <div class="menu-item" id="site_report">
-        <a class="menu-link" href="apps/customers/getting-started.html">
+        <a class="menu-link" href="{{ url('reports:sitereport_list') }}?template=true">
           <span class="menu-bullet">
             <span class="bullet bullet-dot"></span>
           </span>
@@ -563,7 +563,7 @@
             </a>
           </div>
           <div class="menu-item" id="task_ticket_escalation">
-            <a class="menu-link" href="apps/customers/getting-started.html">
+            <a class="menu-link" href="{{ url('activity:esc_list') }}?template=true">
               <span class="menu-bullet">
                 <span class="bullet bullet-dot"></span>
               </span>
@@ -678,7 +678,7 @@
         </span>
         <div class="menu-sub menu-sub-accordion" kt-hidden-height="116" style="display: none; overflow: hidden;">
           <div class="menu-item" id="incident_report_template">
-            <a class="menu-link" href="apps/customers/getting-started.html">
+            <a class="menu-link" href="{{ url('reports:incidentreport_template_list') }}?template=true">
               <span class="menu-bullet">
                 <span class="bullet bullet-dot"></span>
               </span>
@@ -703,7 +703,7 @@
         </span>
         <div class="menu-sub menu-sub-accordion" kt-hidden-height="116" style="display: none; overflow: hidden;">
           <div class="menu-item" id="site_report_template">
-            <a class="menu-link" href="apps/customers/getting-started.html">
+            <a class="menu-link" href="{{ url('reports:sitereport_template_list') }}?template=true">
               <span class="menu-bullet">
                 <span class="bullet bullet-dot"></span>
               </span>
@@ -896,7 +896,7 @@
     </span>
     <div class="menu-sub menu-sub-accordion" kt-hidden-height="116" style="display: none; overflow: hidden;">
       <div class="menu-item" id="typeassist">
-        <a class="menu-link" href="{{ url('onboarding:ta_list') }}">
+        <a class="menu-link" href="{{ url('onboarding:typeassist') }}?template=true">
           <span class="menu-bullet">
             <span class="bullet bullet-dot"></span>
           </span>
@@ -928,7 +928,7 @@
         </a>
       </div>
       <div class="menu-item" id="people_group">
-        <a class="menu-link" href="{{ url('peoples:pgroup_list') }}">
+        <a class="menu-link" href="{{ url('peoples:peoplegroup') }}?action=list">
           <span class="menu-bullet">
             <span class="bullet bullet-dot"></span>
           </span>
@@ -1157,7 +1157,7 @@
         </a>
       </div>
       <div class="menu-item" id="sp_typeassist">
-        <a class="menu-link" href="{{ url('onboarding:superta_form') }}">
+        <a class="menu-link" href="{{ url('onboarding:super_typeassist') }}?action=list">
           <span class="menu-bullet">
             <span class="bullet bullet-dot"></span>
           </span>
