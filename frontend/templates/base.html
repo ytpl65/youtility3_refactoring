@@ -16,7 +16,6 @@
   <link href="{{ static('assets/plugins/global/plugins.bundle.css') }}" rel="stylesheet" type="text/css" />
   <link href="{{ static('assets/css/style.bundle.css') }}" rel="stylesheet" type="text/css" />
   <link href="{{ static('assets/plugins/custom/jquery-ui/jquery-ui.min.css') }}" rel="stylesheet" type="text/css" />
-  <link href="{{ static('assets/css/global_level.css') }}" rel="stylesheet" type="text/css" />
   <link
     rel="stylesheet"
     href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
@@ -49,6 +48,7 @@
 
 {% endblock extra_css %}
 <!----END FOR PAGE_LEVEL ---->
+<link href="{{ static('assets/css/global_level.css') }}" rel="stylesheet" type="text/css" />
 </head>
 
 <body id="kt_body"
@@ -113,10 +113,7 @@
     // add classes to checkboxes.
     $(".booleans").addClass("form-check form-switch form-check-custom form-check-solid") 
 
-    //sets closeonSelect to false for multiple-select fields
-    $("[multiple]").select2({
-			closeOnSelect:false 
-		})
+
 
     $('.closeit').click(function () {
     $('body').removeClass('modal-open');
@@ -149,8 +146,6 @@
       $("[multiple]").select2({
           closeOnSelect:false 
       })
-
-
     })
   </script>
   <!-- END GLOBAL-INLINE CUSTOM SCRIPTS -->

@@ -61,7 +61,7 @@ def get_tatype_choices(superadmin=False):
 
 def update_children_tree(instance, newcode, newtype):
     """Updates tree of child bu tree's"""
-    from apps.onboarding.raw_queries import query
+    from apps.core.raw_queries import query
     try:
         childs = Bt.objects.raw(query['get_childrens_of_bt']%(instance.id))
         ic(childs)
@@ -101,7 +101,7 @@ def get_webcaps_choices():  # sourcery skip: merge-list-append
     '''Populates parent data in parent-multi-select field'''
     from apps.peoples.models import Capability
     from django.db.models import Q
-    from .raw_queries import query
+    from ..core.raw_queries import query
     parent_menus = Capability.objects.raw(query['get_web_caps_for_client'])
     for i in parent_menus:
         print(f'depth: {i.depth} tacode {i.tacode} path {i.path}')

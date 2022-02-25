@@ -69,12 +69,7 @@ on top of form -->
         <!--BEGIN CARD-HEADER-->
         <div class="card-header ps-0 d-flex justify-content-md-between" style="border: 0;">
             <h4 class="card-title" style="color:#3a3b40de">
-                <!--BEGIN To Reder form-title -->
-                {% if edit is defined %}
-                <strong>Update or Delete&nbsp;</strong>
-                {% else %}
-                <strong>Create&nbsp;</strong>
-                {% endif %}
+
                 {%- block form_title -%}
 
                 {% endblock form_title %}&nbsp;
@@ -335,7 +330,9 @@ on top of form -->
 
 
 {% block base_script %}
+<script>
 
+</script>
 {% endblock base_script %}
 <!-------- Begin For Page Level ------->
   {%- block extra_scripts -%}
