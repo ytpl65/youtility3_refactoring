@@ -3,7 +3,6 @@ from pprint import pformat
 from django.shortcuts import render
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.views.generic.base import View
-from pytest import Instance
 from apps.activity  import models as am
 from apps.onboarding  import models as om
 from apps.peoples import utils as putils
