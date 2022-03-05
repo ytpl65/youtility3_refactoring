@@ -41,9 +41,8 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'graphene_django',
     #third_party_apps
-    #'django_apscheduler',
+    'graphene_django',
     'django_email_verification',
     'debug_toolbar',
     'import_export',
