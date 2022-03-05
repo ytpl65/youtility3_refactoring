@@ -45,7 +45,6 @@ django-select2==7.7.3
 django-shortcuts==1.6
 django-taggit==2.0.0
 django-widget-tweaks==1.4.9
-dlib==19.22.1
 enforce==0.3.4
 entrypoints==0.3
 et-xmlfile==1.1.0
@@ -95,7 +94,6 @@ nest-asyncio==1.5.1
 numpy==1.21.4
 oauthlib==3.1.1
 odfpy==1.4.1
-opencv-python==4.5.4.60
 openpyxl==3.0.7
 opt-einsum==3.3.0
 packaging==21.0
