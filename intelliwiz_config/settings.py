@@ -273,8 +273,6 @@ DATETIME_INPUT_FORMATS = [
 DATE_INPUT_FORMATS = [
     '%d-%b-%Y'
 ]
-APSCHEDULER_DATETIME_FORMAT = "N j, Y, f:s a"
-APSCHEDULER_RUN_NOW_TIMEOUT = 25
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/3.2/howto/static-files/
 
