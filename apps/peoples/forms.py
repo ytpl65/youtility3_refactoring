@@ -110,7 +110,7 @@ class PeopleForm(forms.ModelForm):
             'peopletype': 'People Type', 'reportto'   : 'Report to',       'designation' : 'Designation',
             'gender'    : 'Gender',      'dateofbirth': 'Date of Birth',   'enable'      : 'Enable',
             'department': 'Department',  'dateofjoin' : 'Date of Joining', 'dateofreport': 'Date of Release',
-            'deviceid'  : 'Device Id',   'bu'       : "Site",            'isadmin'     : "Is Admin"}
+            'deviceid'  : 'Device Id',   'bu'         : "Site",            'isadmin'     : "Is Admin"}
 
         widgets = {
             'mobno'       : forms.TextInput(attrs={'placeholder': 'Eg:- +91XXXXXXXXXX, +44XXXXXXXXX'}),
@@ -125,7 +125,7 @@ class PeopleForm(forms.ModelForm):
             'department'  : s2forms.Select2Widget,
             'designation' : s2forms.Select2Widget,
             'reportto'    : s2forms.Select2Widget,
-            'bu'        : s2forms.Select2Widget,
+            'bu'          : s2forms.Select2Widget,
         }
 
     def __init__(self, *args, **kwargs):
@@ -217,10 +217,7 @@ class PgroupForm(forms.ModelForm):
     }
     peoples = forms.MultipleChoiceField(
         required=True,
-        widget=s2forms.ModelSelect2MultipleWidget(
-            attrs={'name':'peoples'},
-            model=pm.People,
-            search_fields = ['peoplecode__icontains', 'peoplename__icontains']),
+        widget=s2forms.Select2MultipleWidget,
         label="Select People")
 
     class Meta:
@@ -237,6 +234,30 @@ class PgroupForm(forms.ModelForm):
             'identifier':forms.TextInput(attrs = {"style":"display:none"})
         }
 
+    def is_valid(self) -> bool:
+        """Add class to invalid fields"""
+        result = super().is_valid()
+        utils.apply_error_classes(self)
+        return result
+    
+    def clean_peoples(self):
+        if val:=self.request.POST.get('peoples'):
+            print(val)
+
+
+class SiteGroupForm(PgroupForm):
+    peoples=None
+    
+    def __init__(self, *args, **kwargs):
+        self.request = kwargs.pop('request')
+        super(PgroupForm, self).__init__(*args, **kwargs)
+        utils.initailize_form_fields(self)
+        site = self.request.user.bu.bucode if self.request.user.bu else ""
+        self.fields['identifier'].initial = om.TypeAssist.objects.get(tacode='PEOPLEGROUP')
+
+
+
+class PeopleGroupForm(PgroupForm):
     def __init__(self, *args, **kwargs):
         self.request = kwargs.pop('request')
         super(PgroupForm, self).__init__(*args, **kwargs)
@@ -244,18 +265,8 @@ class PgroupForm(forms.ModelForm):
         site = self.request.user.bu.bucode if self.request.user.bu else ""
         self.fields['identifier'].initial = om.TypeAssist.objects.get(tacode='PEOPLEGROUP')
         self.fields['peoples'].choices = pm.People.objects.select_related(
-            'bu').filter(isadmin=False).values_list(
+            'bu').filter(~Q(peoplecode='NONE'), isadmin=False).values_list(
             'id', 'peoplename')
-
-    def is_valid(self) -> bool:
-        """Add class to invalid fields"""
-        result = super().is_valid()
-        utils.apply_error_classes(self)
-        return result
-    
-
-class SiteGroup(PgroupForm):
-    pass
 
 
 class PgbelongingForm(forms.ModelForm):

@@ -26,6 +26,7 @@ class PeopleManager(BaseUserManager):
         user.is_verified = True
         user.save(using=self._db)
         return user
+    
 
 
 

@@ -29,7 +29,7 @@ class JobneedFilter(dfs.FilterSet):
             'identifier', 'frequency',    'parent',         'jobdesc',   'asset', 'ticket_category',
             'qset',     'people',     'pgroup',        'priority',  'scantype', 'ticketno',
             'jobstatus',  'plandatetime', 'expirydatetime', 'gracetime', 'starttime', 'cdtz',
-            'endtime',    'performed_by', 'gpslocation',    'cuser',     'muser',     'raisedby',
+            'endtime',    'performed_by',   'cuser',     'muser',     'raisedby',
             'bu',              
         ]
     
@@ -96,9 +96,9 @@ class InternalTourFilter(dfs.FilterSet):
 
 
 class TaskListJobneedFilter(InternalTourFilter):
-    asset = dfs.CharFilter(field_name='asset__assetname', lookup_expr='icontains', label='Asset/Smartplace')
-    qset = dfs.CharFilter(field_name='qset__qset_name', lookup_expr='icontains', label='QuestionSetz')
-    bu = dfs.CharFilter(field_name= 'bu__buname', lookup_expr='icontains')
+    asset   = dfs.CharFilter(field_name='asset__assetname', lookup_expr='icontains', label='Asset/Smartplace')
+    qset    = dfs.CharFilter(field_name='qset__qset_name', lookup_expr='icontains', label='QuestionSetz')
+    bu      = dfs.CharFilter(field_name= 'bu__buname', lookup_expr='icontains')
     jobdesc = dfs.CharFilter(field_name='jobdesc', lookup_expr='icontains', label='Description')
 
 

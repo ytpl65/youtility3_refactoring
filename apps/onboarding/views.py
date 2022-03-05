@@ -1151,7 +1151,7 @@ class MasterTypeAssist(LoginRequiredMixin, View):
 
         # first load the template
         if R.get('template'): return render(request, self.params['template_list'])
-        #then load the table with objects
+        #then load the table with objects for table_view
         if R.get('action', None) == 'list' or R.get('search_term'):
             d = {'list': "ta_list", 'filt_name': "ta_filter"}
             self.params.update(d)

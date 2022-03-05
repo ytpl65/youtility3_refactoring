@@ -48,3 +48,21 @@ class AttendanceForm(forms.ModelForm):
         result = super().is_valid()
         ob_utils.apply_error_classes(self)
         return result 
+    
+class ConveyanceForm(forms.ModelForm):
+    required_css_class = "required"
+    class Meta:
+        model=atdm.PeopleEventlog
+        fields = ['people', 'transportmodes', 'expamt', 'duration', 'distance', 'punch_intime',
+                  'punch_outtime', 'startlocation', 'endlocation']
+    
+    def __ini__(self, *args, **kwargs):
+        super(ConveyanceForm, self).__init__(*args, **kwargs)
+        ob_utils.initailize_form_fields(self)
+    
+    
+    def is_valid(self) -> bool:
+        """Adds 'is-invalid' class to invalid fields"""
+        result = super().is_valid()
+        ob_utils.apply_error_classes(self)
+        return result 

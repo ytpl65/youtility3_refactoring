@@ -109,34 +109,44 @@ function handle_rendering_of_menus(session) {
     'config':"#configuration", 'admin':"#admin" 
   }
   if (session["is_superadmin"]) {
-    //show every item if superadmin
+    //show every item if user is superadmin
     $(".menu-item").show();
   } else {
-    //show menu-item based on user or client capabilites
+    /*====show menu-item based on user or client capabilites====*/
+
+    //if user is admin show client webcaps else people webcaps
     caps = session["is_admin"] ? session['client_webcaps'] : session['people_webcaps']; 
-    console.log(session["people_webcaps"].length);
-    console.log("caps length ",caps.length);
-    console.log("caps ", caps);
+    //console.log(session["people_webcaps"].length);
+    //console.log("caps length ",caps.length);
+    //console.log("caps ", caps);
+
+    //for every cap
     for (var i = 0; i < caps.length; i++) {
       parent = caps[i][0];
       childs = caps[i][1];
       console.log("parent", parent)
       console.log("childs", childs)
+      
       if(parent.startsWith("CONFIG_")){
         first_show_parent(exceptions['config'])
       }else if(parent.startsWith('ADMIN_')){
         first_show_parent(exceptions['admin'])
       }
+
+      //replace spaces with underscores if there any...
       parent = parent.replace(" ", "_");
-      //creating 'id'
+      //creating parent id
       parent_id = "#".concat(parent.toLowerCase());
       console.log("parent", parent_id);
+      //first show the parent
       $(parent_id).show();
-      //sub-items within parent
+      
+      //first hide all sub-items within parent
       parent_items = parent_id + " .menu-item";
       $(parent_items).hide();
+
+      //then showing every child assigned inside that parent
       for (var j = 0; j < childs.length; j++) {
-        //showing every child inside the parent
         child = childs[j][0];
         child_id = "#".concat(child.toLowerCase());
         console.log("child", child_id);
@@ -210,6 +220,15 @@ function show_successful_delete_alert(){
   Swal.fire({
     icon: 'success',
     title: 'Deleted successfully',
+    showConfirmButton: false,
+    timer: 1500
+  })
+}
+
+function show_successful_save_alert(update=false){
+  Swal.fire({
+    icon: 'success',
+    title: update ? 'Updated successfully!' : 'Saved Successfully!',
     showConfirmButton: false,
     timer: 1500
   })
@@ -325,10 +344,12 @@ function fire_ajax_form_post(params, payload){
     console.log(xhr)
     console.log(status)
     console.log(error)
-    if(params.modal === true){
-    display_modelform_errors(xhr.responseJSON.errors)
-    }else{
-      display_form_errors(xhr.responseJSON.errors)
+    if(typeof(xhr.responseJSON.errors) === 'object'){
+      if(params.modal === true){
+        display_modelform_errors(xhr.responseJSON.errors)
+        }else{
+          display_form_errors(xhr.responseJSON.errors)
+        }
     }
   })
 }

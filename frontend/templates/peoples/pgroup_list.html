@@ -13,16 +13,11 @@ Pgroup Lists
 {% endblock pagebreadcumb %}
 <!----------- END PAGE BREADCUMBS ------------->
 
-<!-------- BEGIN PAGE ACTIONS ---------->
-{% block page_actions %}
- {{ form_add('peoples:pgroup_form') }}
-{% endblock page_actions %}
-<!-------- END PAGE ACTIONS ------------->
 
 <!------------------ BEGIN PEOPLE TABLE ------------------------->
 {% block table %}
 <div class="table-responsive">
-    <table id="pgroup_table" class="display cell-border" style="width:100%">
+    <table id="pgroup_table" class="display compact cell-border" style="width:100%">
         <thead class="fw-bold fs-6">
             <th>Name</th>
             <th>Enable</th>
@@ -43,7 +38,7 @@ Pgroup Lists
 		<!---------- END TABLE FILTER FIELDS --------->
         {% for pgroup in pgroup_list %}
         <tr>
-            <td><a href="{{ url('peoples:pgroup_update', args=[pgroup['id']]) }}">{{ pgroup['groupname'] }}</a></td>
+            <td><a class="pg-link" data-id="{{ pgroup['id'] }}" data-rowid ={{ loop.index0 }} href="#">{{ pgroup['groupname'] }}</a></td>
             <td>{{ pgroup['enable'] }}</td>
         </tr>
         {% endfor %}
@@ -78,7 +73,23 @@ Pgroup Lists
 			scrollCollapse: true,
 			language: {
 				searchPlaceholder: "Search local"
-			}
+			},
+			dom:"<'row'" +
+                "<'col-sm-6 d-flex align-items-center justify-conten-start'f>" +
+                "<'col-sm-6 d-flex align-items-center justify-content-end'B>" +
+                ">" +
+
+                "<'table-responsive'tr>",
+			buttons:[
+				{
+					text:`Add New &nbsp;<i class='fas fa-plus ch4'></i></a>`,
+					className:'btn btn-sm btn-success btn-hover-rise',
+					action: function(e, dt, node, config){
+        				window.location.href = "{{ url('peoples:pgroup_form') }}";
+					}
+				}
+			]
+
 		})
 		//END DATATABLE INITIALIZATION
 

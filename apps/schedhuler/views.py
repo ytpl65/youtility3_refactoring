@@ -15,7 +15,6 @@ from django.core.exceptions import EmptyResultSet
 from datetime import datetime, time, timedelta, timezone, date
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db import transaction
-from django.shortcuts import render
 import apps.schedhuler.forms as scd_forms
 from django.http import Http404, response as rp
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger

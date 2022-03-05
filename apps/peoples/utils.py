@@ -1,4 +1,6 @@
 import logging
+
+from django.http import QueryDict
 from apps.peoples import models as pm
 from apps.tenants.models import Tenant
 from django.db import transaction
@@ -286,7 +288,7 @@ def get_caps_choices(client=None, cfor=None,  session=None, people=None):
     '''get choices for capability clientform 
         or save choices in session'''
     from apps.peoples.models import Capability
-    from apps.onboarding.raw_queries import query
+    from apps.core.raw_queries import query
     from django.core.cache import cache
     from icecream import ic
     caps = Capability.objects.raw(query['get_web_caps_for_client'])
@@ -342,7 +344,8 @@ def get_choices_for_peoplevsgrp(request):
 def save_pgroupbelonging(pg, request):
     dbg("saving pgbelonging for pgroup %s" % (pg))
     from apps.onboarding.models import Bt
-    peoples = request.POST.getlist('peoples')
+    peoples = request.POST.getlist('peoples[]')
+    ic(peoples)
     client = Bt.objects.get(id=int(request.session['client_id']))
     site = Bt.objects.get(id=int(request.session['bu_id']))
     tenant = Tenant.objects.get(id=int(request.session['tenantid']))

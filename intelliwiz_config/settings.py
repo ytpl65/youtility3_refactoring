@@ -29,7 +29,7 @@ ENCRYPT_KEY = 'I618zPOcrQ3zB5XasmuLXazlGZUn-dK5anHXSvKs4dM='
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['.localhost', '.youtility.local', 'barfi.youtility.in', '127.0.0.1', '.youtility.local']
+ALLOWED_HOSTS = ['.localhost', '.youtility.local', 'barfi.youtility.in', '127.0.0.1']
 
 
 # Application definition
@@ -41,15 +41,16 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'graphene_django',
     #third_party_apps
     #'django_apscheduler',
     'django_email_verification',
     'debug_toolbar',
-    'widget_tweaks',
     'import_export',
     'django_extensions',
     "django_select2",
     'django_filters',
+    'django.contrib.gis',
 
     #local apps
     'apps.peoples',
@@ -58,11 +59,16 @@ INSTALLED_APPS = [
     'apps.attendance',
     'apps.activity',
     'apps.schedhuler',
+    'apps.reports',
 
     #third-party apps
     'django_cleanup.apps.CleanupConfig'
 
 ]
+
+GRAPHENE = {
+    "SCHEMA": "api.schema.schema"
+}
 
 MIDDLEWARE = [
     'apps.tenants.middlewares.TenantMiddleware', #custom middleware
@@ -123,7 +129,7 @@ NOTE: Client bucode should match the database alias name.
 '''
 youtility_dbs = {
     'default': {
-        'ENGINE':   'django.db.backends.postgresql_psycopg2',
+        'ENGINE':   'django.contrib.gis.db.backends.postgis',
         'USER':     'youtilitydba',
         'NAME':     'intelliwiz_django',
         'PASSWORD': '!!sysadmin!!',
@@ -131,7 +137,7 @@ youtility_dbs = {
         'PORT':     '5432',
     },
     'sps':{
-        'ENGINE':   'django.db.backends.postgresql_psycopg2',
+        'ENGINE':   'django.contrib.gis.db.backends.postgis',
         'USER':     'youtilitydba',
         'NAME':     'sps_django',
         'PASSWORD': '!!sysadmin!!',
@@ -139,13 +145,21 @@ youtility_dbs = {
         'PORT':     '5432',
     },
     'icicibank':{
-        'ENGINE':   'django.db.backends.postgresql_psycopg2',
+        'ENGINE':   'django.contrib.gis.db.backends.postgis',
         'USER':     'youtilitydba',
         'NAME':     'icici_django',
         'PASSWORD': '!!sysadmin!!',
         'HOST':     '192.168.1.254',
         'PORT':     '5432',
     },
+    'gis_db':{
+        'ENGINE':   'django.contrib.gis.db.backends.postgis',
+        'USER':     'youtility33',
+        'NAME':     'icici_django_gis',
+        'PASSWORD': 'adminpassword',
+        'HOST':     'localhost',
+        'PORT':     '',
+    }
 
 }
 
@@ -153,7 +167,7 @@ youtility_dbs = {
 
 home_local_dbs = {
     'default': {
-        'ENGINE':   'django.db.backends.postgresql_psycopg2',
+        'ENGINE':   'django.contrib.gis.db.backends.postgis',
         'USER':     'youtilitydba',
         'NAME':     'intelliwiz_django',
         'PASSWORD': 'root',
@@ -161,7 +175,7 @@ home_local_dbs = {
         'PORT':     '',
     },
     'sps':{
-        'ENGINE':   'django.db.backends.postgresql_psycopg2',
+        'ENGINE':   'django.contrib.gis.db.backends.postgis',
         'USER':     'youtilitydba',
         'NAME':     'sps_django',
         'PASSWORD': 'root',
@@ -169,13 +183,14 @@ home_local_dbs = {
         'PORT':     '',
     },
     'icicibank':{
-        'ENGINE':   'django.db.backends.postgresql_psycopg2',
+        'ENGINE':   'django.contrib.gis.db.backends.postgis',
         'USER':     'youtilitydba',
         'NAME':     'icici_django',
         'PASSWORD': 'root',
         'HOST':     'localhost',
         'PORT':     '',
     }
+    
 }
 
 
@@ -269,7 +284,7 @@ STATICFILES_DIRS = [os.path.join(BASE_DIR, 'frontend/static')]
 # Default primary key field type
 # https://docs.djangoproject.com/en/3.2/ref/settings/#default-auto-field
 
-DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+DEFAULT_AUTO_FIELD = 'django.db.models.AutoField'
 
 DATABASE_ROUTERS = ['apps.tenants.middlewares.TenantDbRouter']
 
@@ -322,7 +337,7 @@ LOGGING_CONFIG_ = {
             'handlers': ['default'],
             'level': 'DEBUG',
             'propagate': False
-        },
+        },                 
     } 
 }
 logging.config.dictConfig(LOGGING_CONFIG_)

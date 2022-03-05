@@ -94,10 +94,10 @@ People group
 <!-------------- BEGIN FORM ------------------->
 {% block form %}
 <form action="" method='post' id="id_pgroupform">
-    <div class="mb-3 row">
+    <div class="mb-3 row gy-3">
         <!---------------------------CSRF MIDDLEWARE TOKEN---------------------->
         <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
-
+        {{ pgroup_form.identifier }}
         {{ pgroup_form.groupname.label_tag() }}
         <div class="input-group col-md-6">
             {{ pgroup_form.groupname }}

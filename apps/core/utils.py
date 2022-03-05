@@ -5,6 +5,8 @@ import django.shortcuts as scts
 from django.contrib import messages as msg
 from django.template.loader import render_to_string
 from django.http import response as rp
+from flask import request
+from pyrsistent import v
 import apps.peoples.utils as putils
 from pprint import pformat
 from apps.peoples import models as pm
@@ -40,23 +42,23 @@ def render_form(request, params, cxt):
 
 
 def handle_DoesNotExist(request):
-    data = {'error': 'Unable to edit object not found'}
+    data = {'errors': 'Unable to edit object not found'}
     logger.error("%s", data['error'], exc_info=True)
     msg.error(request, data['error'], 'alert-danger')
     return rp.JsonResponse(data, status=404)
 
 
 def handle_Exception(request, force_return=None):
-    data = {'error': 'Something went wrong'}
-    logger.critical(data['error'], exc_info=True)
-    msg.error(request, data['error'], 'alert-danger')
+    data = {'errors': 'Something went wrong'}
+    logger.critical(data['errors'], exc_info=True)
+    msg.error(request, data['errors'], 'alert-danger')
     if force_return:
         return force_return
     return rp.JsonResponse(data, status=404)
 
 
 def handle_RestrictedError(request):
-    data = {'error': "Unable to delete, due to dependencies"}
+    data = {'errors': "Unable to delete, due to dependencies"}
     logger.warn("%s", data['error'], exc_info=True)
     msg.error(request, data['error'], "alert-danger")
     return rp.JsonResponse(data, status=404)
@@ -81,6 +83,7 @@ def render_form_for_update(request, params, formname, obj, extra_cxt={}):
         logger.info("object retrieved '{}'".format(obj))
         F = params['form_class'](
             instance=obj, request=request, initial = params['form_initials'])
+        ic(F.as_p().split('\n'))
         C = {formname: F, 'edit': True}
         C.update(extra_cxt)
         html = render_to_string(params['template_form'], C, request)
@@ -152,11 +155,11 @@ def paginate_results(request, objs, params):
     return {params['list']: li, params['filt_name']: filterform}
 
 
-def get_instance_for_update(postdata, params, msg, pk):
+def get_instance_for_update(postdata, params, msg, pk, kwargs={}):
     logger.info("%s", msg)
     obj = params['model'].objects.get(id=pk)
     logger.info("object retrieved '{}'".format(obj))
-    return params['form_class'](postdata, instance=obj)
+    return params['form_class'](postdata, instance=obj, **kwargs)
 
 
 def handle_invalid_form(request, params, cxt):
@@ -471,14 +474,13 @@ def save_msg(request):
 
 def initailize_form_fields(form):
     for visible in form.visible_fields():
-        if visible.widget_type not in ['file', 'checkbox', 'radioselect', 'clearablefile', 'select', 'selectmultiple']:
+        if visible.widget_type in ['text','textarea','datetime','time', 'number', 'email', 'decimal']:
             visible.field.widget.attrs['class'] = 'form-control form-control-solid'
-        if visible.widget_type == 'checkbox':
-            visible.field.widget.attrs['class'] = 'form-check-input h-20px w-30px'
-        if visible.widget_type in ['select2', 'modelselect2', 'select2multiple']:
+        elif visible.widget_type in ['radio', 'checkbox']:
+            visible.field.widget.attrs['class'] = 'form-check-input'
+        elif visible.widget_type in ['select2', 'select', 'select2multiple', 'modelselect2', 'modelselect2multiple']:
             visible.field.widget.attrs['class'] = 'form-select form-select-solid'
-            visible.field.widget.attrs['data-placeholder'] = 'Select an option'
-            visible.field.widget.attrs['data-allow-clear'] = 'true'
+        
 
 
 def apply_error_classes(form):
@@ -688,3 +690,92 @@ def display_post_data(post_data):
         "\n%s"%(pformat(post_data, compact=True))
     )
     
+def format_data(objects):
+    columns, rows, data = objects[0].keys(), {}, {}
+    for i, d in enumerate(objects):
+        for c in columns:
+            rows[i][c] = "" if rows[i][c] is None else str(rows[i][c])
+            del c
+        del i, d
+    data['rows'] = rows
+    return data
+    
+def getFilters():
+    return {
+        "eq": "__iexact", "lt": "__lt",        "le": "__lte",
+        "gt": "__gt",     "ge": "__gte",       "bw": "__istartswith",
+        "in": "__in",     "ew": "__iendswith", "cn": "__icontains",
+        "bt": "__range"}
+    
+def searchValue(objects, fields, related, model,  ST):
+    q_objs = Q()
+    for field in fields:
+        q_objs |= get_filter(field, 'contains', ST)
+    return model.objects.filter(
+        q_objs).select_related(
+            *related).values(*fields)
+    
+    
+def get_filter(field_name, filter_condition, filter_value):
+    # thanks to the below post
+    # https://stackoverflow.com/questions/310732/in-django-how-does-one-filter-a-queryset-with-dynamic-field-lookups
+    # the idea to this below logic is very similar to that in the above mentioned post
+    if filter_condition.strip() == "contains":
+        kwargs = {
+            '{0}__icontains'.format(field_name): filter_value
+        }
+        return Q(**kwargs)
+
+    if filter_condition.strip() == "not_equal":
+        kwargs = {
+            '{0}__iexact'.format(field_name): filter_value
+        }
+        return ~Q(**kwargs)
+
+    if filter_condition.strip() == "starts_with":
+        kwargs = {
+            '{0}__istartswith'.format(field_name): filter_value
+        }
+        return Q(**kwargs)
+    if filter_condition.strip() == "equal":
+        kwargs = {
+            '{0}__iexact'.format(field_name): filter_value
+        }
+        return Q(**kwargs)
+
+    if filter_condition.strip() == "not_equal":
+        kwargs = {
+            '{0}__iexact'.format(field_name): filter_value
+        }
+        return ~Q(**kwargs)
+
+
+def get_paginated_results(requestData, objects, count,
+fields, related, model):
+        '''paginate the results'''
+        logger.info('Pagination Start'if count else "")
+        if not requestData.get('draw'):
+            return {'data':[]}
+        if requestData['search[value]']!= "":
+            objects =  searchValue(
+                objects, fields, related, model, requestData["search[value]"])
+            filtered = objects.count()
+        else:
+            filtered = count
+        length, start = int(requestData['length']), int(requestData['start'])
+        return objects[start:start+length], filtered
+    
+
+def PD(data=None, post=None, get=None, instance=None, cleaned=None):
+    """
+    Prints Data (DD)
+    """
+    if post: logger.debug(f"POST data recived from client: {pformat(post, compact=True)}\n")
+    elif get: logger.debug(f"GET data recived from client: {pformat(get, compact=True)}\n")
+    elif cleaned: logger.debug(f"CLEANED data after processing {pformat(cleaned, compact=True)}\n")
+    elif instance: logger.debug(f"INSTANCE data recived from DB {pformat(instance, compact=True)}\n")
+    else: logger.debug(f"{pformat(data, compact=True)}\n")
+
+        
+        
+        

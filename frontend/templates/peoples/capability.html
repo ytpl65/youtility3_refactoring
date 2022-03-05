@@ -18,7 +18,7 @@ Capability List
 <!-------------------------------------------- BEGIN BU TABLE ------------------------------------------->
 {% block table %}
     <!------------------ BEGIN TABLE --------------------->
-    <table id="cap_table" class="display cell-border" style="width:100%">
+    <table id="cap_table" class="display compact cell-border" style="width:100%">
         <thead class="fw-bold fs-6">
             <th>Code</th>
             <th>Name</th>
@@ -106,7 +106,9 @@ Capability List
 			paging: false,
 			lengthChange: false,
 			language: {
-				searchPlaceholder: "Search on page"
+				searchPlaceholder: "Search...",
+				search:"_INPUT_",
+				processing:"Getting Data"
 			},
             dom:"<'row'" +
                 "<'col-sm-6 d-flex align-items-center justify-conten-start'f>" +
@@ -192,7 +194,9 @@ Capability List
 				`${viewname} saved`,
 				`${viewname} with this code <strong>${data.code}</strong> has been saved successfully`,
 				'success'
-				)
+				).then(function(){
+					location.reload()
+				})
 			})
 		})
 

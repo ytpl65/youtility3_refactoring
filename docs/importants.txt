@@ -1,4 +1,4 @@
-NONE ENTRIES SHOULD BE PRESENT IN FOLLOWING TABLES:
+###################### NONE ENTRIES SHOULD BE PRESENT IN FOLLOWING TABLES: ######################
 
 1. People
 2. Capability
@@ -11,7 +11,7 @@ NONE ENTRIES SHOULD BE PRESENT IN FOLLOWING TABLES:
 
 
 
-JAVASCRIPT ERRORS AND SOLUTIONS
+###################### JAVASCRIPT ERRORS AND FIXES ######################
 1.TypeError: [x] is null
     Developer will get this is that they are trying to assign an event handler to a DOM element, 
     but the DOM element hasn't been created yet.
@@ -33,3 +33,10 @@ JAVASCRIPT ERRORS AND SOLUTIONS
         /*var date = document.getElementById("date");
         /*alert(date);
     });
+
+
+###################### CUSTOM CHANGES IN FOLLOWING FILES: ######################
+
+###################### INSTALLING PROJECT ON A DEVICE PROCEDURE ######################
+
+###################### BEST PRACTICES ######################

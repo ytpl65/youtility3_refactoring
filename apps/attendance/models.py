@@ -3,6 +3,7 @@ from apps.tenants.models import TenantAwareModel
 from django.db import models
 from django.conf import settings
 from django.core.serializers.json import DjangoJSONEncoder
+from django.contrib.gis.db.models import LineStringField
 from django.utils.translation import gettext_lazy as _
 
 # Create your models here.
@@ -39,7 +40,7 @@ class PeopleEventlog(BaseModel, TenantAwareModel):
     verifiedby      = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True,       on_delete=models.RESTRICT, related_name='verifiedpeoples', verbose_name='Verified By')
     geofence        = models.ForeignKey('onboarding.GeofenceMaster', null=True, blank=True, on_delete=models.RESTRICT)
     peventtype      = models.CharField(choices=EventType.choices, max_length=100, verbose_name='Attendance Type', null=True)
-    transportmode   = models.CharField(choices=TransportMode.choices, max_length=100, verbose_name='Transport Mode', null=True)
+    transportmodes  = models.TextField(max_length=500, null=True)
     punch_intime    = models.DateTimeField(null=True)
     punch_outtime   = models.DateTimeField(null=True)
     datefor         = models.DateField(_("Date"), null=True)
@@ -49,8 +50,8 @@ class PeopleEventlog(BaseModel, TenantAwareModel):
     duration        = models.IntegerField(_("duration"), null=True, blank=True)
     accuracy        = models.IntegerField(_("accuracy"), null=True, blank=True)
     deviceid        = models.CharField(_("deviceid"), max_length=50, null=True, blank=True)
-    gpslocation_in  = models.CharField(_("GPS-In"), max_length=50, default='0.0,0.0')
-    gpslocation_out = models.CharField(_("GPS-Out"), max_length=50, default='0.0,0.0')
+    startlocation  = LineStringField(_("GPS-In"), null=True)
+    endlocation    = LineStringField(_("GPS-Out"), null=True)
     remarks         = models.CharField(_("remarks"), null=True, max_length=500, blank=True)
     facerecognition = models.BooleanField(_("Enable Face-Recognition"), default=True)
     peventlogextras = models.JSONField(_("peventlogextras"), encoder=DjangoJSONEncoder, default=peventlog_json)

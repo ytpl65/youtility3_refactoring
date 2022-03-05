@@ -1,0 +1,304 @@
+{% extends "base_form.html" %}
+
+
+{% block extra_css %}
+{{ reporttemp_form.media.css }}
+<link  href="{{ static('assets/plugins/custom/DataTables/datatables.min.css') }}" rel="stylesheet" type="text/css"/>
+<link  href="{{ static('assets/plugins/custom/Editor-2.0.6/css/editor.dataTables.css') }}" rel="stylesheet" type="text/css"/>
+{% endblock extra_css %}
+
+<!-------------------------- BEGIN PAGE BREADCUMB ----------------------->
+{% block pagebreadcumb %}
+<!--will call parent contents -->
+{{ super() }}
+<li class="breadcrumb-item pe-3"><a href="{{ url('reports:sitereport_template_list') }}?template=true" class="pe-3">Site Report Templates</a></li>
+<li class="breadcrumb-item pe-3"><a href="javascript:void(0)" class="pe-3">Site Report Template Form</a></li>
+{% endblock pagebreadcumb %}
+<!-------------------------- END PAGE BREADCUMB ------------------------->
+
+
+<!------ BEGIN FORM TITLE ------->
+{% block form_title %}
+Site Report Template
+{% endblock form_title %}
+<!------ END FORM TITLE -------->
+
+
+<!--------- BEGIN NON FIELD ERRORS -------->
+{% block nonfield_errors %}
+    {% if reporttemp_form.non_field_errors() %}
+    <div id="non_field_error" class="alert alert-danger" style="width: 73%;">
+        {% for error in reporttemp_form.non_field_errors()[::-1] %}
+        <strong>Error</strong> <span>{{ error }}</span>
+        {% endfor %}
+        <button type="button" class="btn-close flt-right" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+    {% endif %}
+{% endblock nonfield_errors %}
+<!---------- END NON FIELD ERRORS --------->
+
+
+{% block form %}
+<form action="" method="post" id="sitereportTemplateForm" url="{{ url('reports:sitereport_template_form') }}">
+    {{ reporttemp_form.type }}
+    <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
+    <input type="hidden" name="pk" id="pk" value="">
+    <div class="row gy-3">
+    <!--FIELDS -->
+    {% for field in reporttemp_form %}
+        {% if(field.widget_type != 'checkbox' and field.name != 'type' ) %}
+            <div class="col-sm-2">
+                {{ field.label_tag() }}
+            </div>
+            <div class="col-sm-4">
+            {{ field }}
+            </div>
+        {% elif field.widget_type == 'checkbox' %}
+            <div class="col-sm-auto">
+                <div class="form-check form-switch form-check-custom form-check-solid">
+                {{ field }}
+                <label for="{{ field.id_for_label }}" class="form-check-label">{{ field.label }}</label>
+            </div>
+            </div>
+        {% endif %}
+    {% endfor %}
+    </div>
+</form>
+
+
+{% endblock form %}
+
+
+{% block ajax_page_actions %}
+<div class="form-actions">
+    {% if reporttemp_form.instance.id %}
+    <button type="submit" id="submitTour" form="sitereportTemplateForm" class="btn btn-sm btn-primary btn-hover-scale">
+        Update &nbsp;<i class="fas fa-cloud-upload-alt"></i>
+    </button>
+
+    <button type="button" onclick="deleteMainJob(this)" data-id="{{ reporttemp_form.instance.id }}" id="deleteAttd"
+        class="btn btn-sm btn-danger btn-hover-scale">
+        Delete&nbsp;<i class="fas fa-trash-alt"></i>
+    </button>
+    {% else %}
+    <button type="submit" form="sitereportTemplateForm" class="btn btn-sm btn-primary btn-hover-scale">
+        Save &nbsp;<i class="fas fa-cloud-upload-alt"></i>
+    </button>
+    {% endif %}
+</div>
+{% endblock ajax_page_actions %}
+
+{% block extras %}
+<br><br><br>
+<div class="report_section">
+<div class="row mb-3 card">
+    <div class="card-header">
+        <div class="card-title">List Of Report Section</div>
+    </div>
+    <div class="card-body">
+        <table id="tabSitereports" class="display cell-border compact">
+            <thead>
+            <tr>
+            <th></th>
+            <th>Id</th>
+            <th>Asset</th>
+            <th>SNo.</th>
+            <th>Section</th>
+            </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+        <div tabindex="-1" id="jqGridSiteReportPager"></div>
+    </div>
+</div>
+</div>
+{% endblock extras %}
+
+{% block extra_scripts %}
+{{ reporttemp_form.media.js }}
+<script src="{{ static('assets/plugins/custom/DataTables/datatables.min.js') }}" type="text/javascript"></script>
+<script src="{{ static('assets/plugins/custom/Editor-2.0.6/js/dataTables.editor.js') }}" type="text/javascript"></script>
+<script>
+    var tab_parent = null;
+    var _pkid = null;
+    var editor; 
+    $(document).ready(function(){
+        $("[multiple]").djangoSelect2({
+          closeOnSelect:false 
+      })
+        function getFormData(id){
+            return {
+                'buincludes'        : $("#id_buincludes").val(),
+                'site_grp_includes' : $("#id_site_grp_includes").val(),
+                'qset_name'         : $("#id_qset_name").val(),
+                'site_type_includes': $("#id_site_type_includes").val(),
+                'enable'            : $("#id_enable").is(":checked"),
+                'showto_allsites'   : $("#id_showto_allsites").is(":checked"),
+                'type'   : $("#id_type").val()
+            }
+        }
+
+        if('{{ reporttemp_form.instance.id }}'  !== "None"){
+            var pk = '{{ reporttemp_form.instance.id}}'
+            $("#pk").val(pk)
+             _pkid = pk }
+        
+        var table = $("#tabSitereports").DataTable({
+            ajax:{
+                url:"{{ url('reports:sitereport_template_form') }}?get_reports=true",
+                data:{'parent_id' : _pkid}
+            },
+            responsive: true,
+            serverSide:true,
+            processing    : true,
+			fixedHeader: true,
+            columnDefs:[
+                {targets:[4], orderable:false},
+                {targets:[1,2], orderable:false, visible:false, searchable:false}
+            ],
+            searching:false,
+            paging:false,
+            columns     : [
+                {
+                    "className":      'details-control',
+                    "orderable":      false,
+                    "data":           null,
+                    "defaultContent": ''
+                },
+                { "data": "id" },
+                { "data": "asset_id" },
+                { "data": "slno" },
+                { "data": "qset_name" },
+            ],
+            order:[[2, 'asc']],
+            initComplete: function () {
+                init = false;
+            },
+            createdRow: function ( row, data, index ) {
+                if (data.extn === '') {
+                    var td = $(row).find("td:first");
+                    td.removeClass( 'details-control' );
+                }
+            },
+            rowCallback: function ( row, data, index ) {
+            console.log(row)
+           }
+        })
+        
+            // Add event listener for opening and closing first level childdetails
+            $('#tabSitereports tbody').on('click', 'td.details-control', function () {
+                var tr = $(this).closest('tr');
+                var row = table.row( tr );
+                var rowData = row.data();
+                var paraneRowPk = rowData[1]
+
+                //get index to use for child table ID
+                var index = row.index();
+                if ( row.child.isShown() ) {
+                    // This row is already open - close it
+                    row.child.hide();
+                    tr.removeClass('shown');
+                }else{
+                    //open this row
+                    row.child( 
+                    `<table class="child_table" id = "child_details ${index}" cellpadding="5" cellspacing="0" border="0" style="padding-left:50px;">
+                    </table>`).show();
+                    
+                    var child_table = $("#child_details" + index ).DataTable({
+                        ajax:"{{ url('reports:srqsetbelonging') }}",
+                        serverSide:true,
+                        processing: true,
+                        searching:false,
+                        paging:false,
+                        columnDefs:[
+                            {name:'id', targets:0, title:"", visible:false},
+                            {name:'slno', title:"SNo.", targets:1},
+                            {name:'question__ques_name', title:"Question", targets:2},
+                            {name:'answertype', title:"Question Type", targets:3},
+                            {name:'min', title:"Min", targets:4},
+                            {name:'max', title:"Max", targets:5},
+                            {name:'options', title:"Options", targets:6},
+                            {name:'alerton', title:"Alert On", targets:7},
+                            {name:'ismandatory', title:"Mandatory", targets:8},
+                            {name:'alertmailsendto', title:"Mail Send to", targets:8},
+                            {name:'question_id', title:"", targets:9, visible:false},
+                            {name:'alertbelow', title:"Alert Below", targets:10, visible:false},
+                            {name:'alertabove', title:"Alert Above", targets:11, visible:false},
+                        ],
+                        columns:[
+                            {data:'slno'}, 
+                            {data:'question__ques_name'}, 
+                            {data:'answertype'}, 
+                            {data:'min'}, 
+                            {data:'max'}, 
+                            {data:'options'}, 
+                            {data:'alerton'}, 
+                            {data:'alertmailsendto'}, 
+                            {data:'question_id'}, 
+                            {data:'alertbelow'}, 
+                            {data:'alertabove'}, 
+                        ],
+                        buttons: [
+                            { extend: "create", editor: editor },
+                            { extend: "edit",   editor: editor },
+                            { extend: "remove", editor: editor }
+                        ],
+                        order:[[1, 'asc']],
+                        destroy:true,
+                        scrollY:'100px'
+                    })
+
+                    editor = new $.fn.dataTable.Editor({
+                                ajax:"",
+                                table:"#child_details"+index,
+                                template:"#customForm",
+                                fields:[
+                                    {label:'SNo', name:"slno"},
+                                    {label:'Question', name:"question__ques_name"},
+                                    {label:'Question Type', name:"answertype"},
+                                    {label:'Min', name:"min"},
+                                    {label:'Max', name:"max"},
+                                    {label:'Alerton', name:"alerton"},
+                                    {label:'Alert Above', name:"alertabove"},
+                                    {label:'Alert Below', name:"alertabove"},
+                                    {label:'Mails Send to', name:"alertmailsendto"},
+                                    {label:'Options', name:"options"},
+                                ]
+                            })
+                    tr.addClass('shown');
+                }
+            })
+        
+        //on submit form post request
+        $("#sitereportTemplateForm").submit((e) => {
+            e.preventDefault()
+            var form = $(this);
+            const params   = { url: $(form).attr("action"), modal: false }
+            var   payLoad  = $("#sitereportTemplateForm").serialize()
+            console.log('payLoad', payLoad)
+            
+            fire_ajax_form_post(params, payLoad)
+            .done((data, status, xhr) => {
+                Swal.fire(
+                    `Sitereport template saved`,
+                    `Sitereport template with this name <strong>${data.msg}</strong> has been saved successfully`,
+                    'success'
+                ).then(function () {
+                    formSaved = true
+                    window.location.replace(data.url + `?id=${data.id}&template=true`);
+                })
+            })
+            .fail((xhr, status, error) => {
+                console.log(xhr, typeof(xhr.responseJSON.errors))
+                if(typeof(xhr.responseJSON.errors) === 'string'){
+                    show_error_alert(xhr.responseJSON.errors, "Failed to save!")
+                }else{}
+                
+            })
+        })
+        
+        
+    })
+</script>
+
+{% endblock extra_scripts %}

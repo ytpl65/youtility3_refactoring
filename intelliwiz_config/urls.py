@@ -18,10 +18,12 @@ from django.conf import settings
 from django.urls import path, include
 from django.conf.urls.static import static
 from django.views.generic import TemplateView
+from django.views.decorators.csrf import csrf_exempt
 from django.contrib.auth.decorators import login_required
 from django_email_verification import urls as email_urls  # include the urls
 
 from apps.peoples.views import SignIn, SignOut
+from graphene_django.views import GraphQLView
 import debug_toolbar
 urlpatterns = [
     path('', SignIn.as_view(), name='login'),
@@ -33,10 +35,12 @@ urlpatterns = [
     path('', include('apps.attendance.urls')),
     path('activity/', include('apps.activity.urls')),
     path('schedhule/', include('apps.schedhuler.urls')),
+    path('reports/', include('apps.reports.urls')),
     #third-party urls
     path('email-verify/', include(email_urls)),
     path('__debug__/', include(debug_toolbar.urls)), #shoul use when debug=True
     path('select2/', include('django_select2.urls')),
+    path("graphql", csrf_exempt(GraphQLView.as_view(graphiql=True))),
 
 ]
 

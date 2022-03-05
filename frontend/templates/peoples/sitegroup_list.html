@@ -1,0 +1,58 @@
+{% extends 'base_list.html' %}
+
+<!----------- BEGIN PAGE BREADCUMBS ----------->
+{% block pagebreadcumb %}
+{{ super() }}
+<li class="breadcrumb-item pe-3"><a href="javascript:void(0)" class="pe-3">Peoples List</a></li>
+{% endblock pagebreadcumb %}
+<!----------- END PAGE BREADCUMBS ------------->
+
+
+
+
+{% block table %}
+<table id="tabSitegroup"></table>
+{% endblock table %}
+
+{% block extra_scripts %}
+<script>
+    $(document).ready(() => {
+        table = $("#tabSitegroup").DataTable({
+            ajax:{
+                url:"{{ url('peoples:sitegroup') }}?action=list"
+            },
+            serverSide:true,
+            processing:true,
+            fixedHeader:true,
+            language:{
+                search: "_INPUT_",
+                searchPlaceholder:'Search...',
+                processing:"processing"
+            },
+            lengthMenu: [[10, 20, 30], [10, 20, 30]],
+            dom       : `<'row' <'col-sm-6 d-flex justify-content-start'f> <'col-sm-6 d-flex justify-content-end'B> >rt<'row'
+			             <'col-sm-6'l> <'col-sm-6'p><'col-sm-12 d-flex justify-content-center'i>>`,
+            columns     : [
+                { data: "id", visible:false, searchable:false },
+                { 
+                    data: "groupname",
+                    render:function(data, type, row, meta){
+                        return `<a href=${formUrl}?id=${row['id']}>${data}</a>`
+                    },
+                    title:"Group Name" 
+                },
+                {data:'enable', title:'Enable'}
+            ],
+            buttons:[
+                {
+                    text:'Add New',
+                    className:"btn btn-sm btn-light-primary",
+                    action:function(e, dt, node, config){
+                        location.href = '{{ url("peoples:sitegroup") }}?action=form'
+                    }
+                }
+            ]
+        })
+    })
+</script>
+{% endblock extra_scripts %}

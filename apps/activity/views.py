@@ -6,6 +6,8 @@ from django.views.generic.base import View
 from django.urls import resolve
 import apps.activity.models as am
 from pprint import pformat
+from django.core.exceptions import EmptyResultSet
+from django.shortcuts import redirect, render
 from django.db.models import Q
 from django.db import IntegrityError
 import apps.activity.filters as aft
@@ -14,9 +16,12 @@ import apps.peoples.utils as putils
 import apps.core.utils as utils
 import apps.activity.utils as av_utils
 import apps.onboarding.forms as obf
+from django.contrib import messages
 from django.http import Http404, QueryDict
+from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 import logging
 logger = logging.getLogger('__main__')
+log = logger
 from django.http import response as rp
 
 
@@ -277,10 +282,14 @@ class Checklist(MasterQuestionSet):
     label             = MasterQuestionSet.label
     params.update({
         'form_class'    : af.ChecklistForm,
+        'form_initials':{
+            'type':am.QuestionSet.Type.CHECKLIST
+        }
     })
     list_grid_lookups = {'enable':True, 'type':'CHECKLIST'}
     view_of = 'checklist'
     label = 'Checklist'
+    
     
     def handle_valid_form(self, form, request):
         logger.info('%s form is valid'%(self.view_of))
@@ -439,3 +448,40 @@ class Smartplace(MasterAsset):
             return rp.JsonResponse(data, status=200)
         except IntegrityError:
             return utils.handle_intergrity_error('Smartplace')
+
+
+
+class RetriveEscList(LoginRequiredMixin, View):
+    model = am.EscalationMatrix
+    fields = ['id', 'esctemplate__taname', 'cdtz']
+    template_path = 'activity/escalation_list.html'
+    related = ['esctemplate']
+    
+    def get(self, request, *args, **kwargs):
+        resp, requestData = None, request.GET
+        if requestData.get('template'):
+            return render(request, self.template_path)
+        try:
+            log.info('Retrieve Escalation view')
+            objects = self.model.objects.select_related(
+                *self.related).filter().values(*self.fields).order_by('-cdtz')
+            count = objects.count()
+            log.info('Escalation objects %s retrieved from db' %(count or "No Records!"))
+            if count:
+                objects, filtered = utils.get_paginated_results(
+                    requestData, objects, count, self.fields, self.related, self.model)
+                log.info('Results paginated'if count else "")
+            filtered = count
+            resp = rp.JsonResponse(data = {
+                'draw':requestData['draw'], 'recordsTotal':count, 'data' : list(objects), 
+                'recordsFiltered': filtered
+            }, status=200)
+        except Exception:
+            log.critical(
+                'something went wrong', exc_info=True)
+            messages.error(request, 'Something went wrong',
+                           "alert alert-danger")
+            resp = redirect('/dashboard')
+        return resp
+
+            

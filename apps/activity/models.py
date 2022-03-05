@@ -1,3 +1,5 @@
+from calendar import c
+from email.policy import default
 from enum import Flag
 from django.core.exceptions import RequestAborted
 from django.db import models, migrations
@@ -6,11 +8,17 @@ from django.db.models.fields import BLANK_CHOICE_DASH, TimeField, files
 from apps.peoples.models import BaseModel
 from django.utils.translation import gettext_lazy as _
 from django.core.serializers.json import DjangoJSONEncoder
+from django.contrib.gis.db.models import PointField
 from apps.tenants.models import TenantAwareModel
 from django.conf import settings
 from taggit.managers import TaggableManager
 from django.db import models
-
+from datetime import datetime
+from django.contrib.gis.db.models import PointField
+from django.utils import timezone
+from apps.activity.managers import(
+    QuestionSetManager
+)
 
 # Create your models here.
 class Question(BaseModel, TenantAwareModel):
@@ -95,6 +103,8 @@ class QuestionSet(BaseModel, TenantAwareModel):
     site_type_includes = models.JSONField(_("Site Types"), default=site_type_includes, encoder=DjangoJSONEncoder, blank=True, null=True)
     url                = models.CharField(_("Url"), max_length=250, null=True, blank=True)
 
+    objects = QuestionSetManager()
+    
     class Meta(BaseModel.Meta):
         db_table            = 'questionset'
         verbose_name        = 'QuestionSet'
@@ -111,7 +121,6 @@ class QuestionSet(BaseModel, TenantAwareModel):
 
     def __str__(self) -> str:
         return self.qset_name
-
 
 def alertmails_sendto():
     return {
@@ -301,13 +310,13 @@ class Asset(BaseModel, TenantAwareModel):
         MAINTENANCE = ("MAINTENANCE", "Maintenance")
         STANDBY     = ("STANDBY", "Standby")
         WORKING     = ("WORKING", "Working")
-        SCRAPPED    = ("SCRAPPED", "Scrapped")
+        SCRAPPED    = ("SCRAPPED", "Scrapped")   
 
     assetcode     = models.CharField(_("Asset Code"), max_length=50)
     assetname     = models.CharField(_("Asset Name"), max_length=250)
     enable        = models.BooleanField(_("Enable"), default=True)
     iscritical    = models.BooleanField(_("Is Critical"))
-    gpslocation   = models.CharField(_("Gps Location"), max_length=50, default="0.0,0.0")
+    gpslocation   = PointField(_('GPS Location'), null=True)
     parent        = models.ForeignKey("self", verbose_name=_( "Belongs to"), on_delete = models.RESTRICT, null=True, blank=True)
     identifier    = models.CharField( _('Asset Identifier'), choices=Identifier.choices, max_length=55)
     runningstatus = models.CharField(_('Running Status'), choices=RunningStatus.choices, max_length=55)
@@ -402,7 +411,7 @@ class Jobneed(BaseModel, TenantAwareModel):
     recievedon_server = models.DateTimeField(_("Recived on server"), auto_now=False, auto_now_add=True)
     starttime         = models.DateTimeField( _("Start time"), auto_now=False, auto_now_add=False, null=True)
     endtime           = models.DateTimeField(_("Start time"), auto_now=False, auto_now_add=False, null=True)
-    gpslocation       = models.CharField(_("Gps Location"), default='0.0,0.0', max_length=50)
+    gpslocation       = PointField(_('GPS Location'),null=True)
     remarks           = models.CharField(_("Remark"), max_length=200, null=True, blank=True)
     asset             = models.ForeignKey("activity.Asset", verbose_name=_("Asset"), on_delete= models.RESTRICT, null=True, blank=True, related_name='jobneed_assets')
     frequency         = models.CharField(verbose_name=_("Frequency type"), null       = True, max_length=55, choices=Frequency.choices)
@@ -474,3 +483,148 @@ class JobneedDetails(BaseModel, TenantAwareModel):
     class Meta(BaseModel.Meta):
         db_table     = 'jobneed_details'
         verbose_name = 'JobneedDetails'
+
+
+class Attachment(BaseModel, TenantAwareModel):
+    class AttachmentType(models.TextChoices):
+        NONE  = ('NONE', 'NONE')
+        ATMT  = ("ATTACHMENT","Attachment")
+        REPLY = ("REPLY", "Reply")
+        SIGN  = ("SIGN",  "SIGN")
+    
+    filepath       = models.CharField(max_length=100, null=True, blank=True)
+    filename       = models.ImageField(null=True, blank=True)
+    ownername      = models.ForeignKey("onboarding.Typeassist", on_delete=models.RESTRICT, null=True, blank=True)
+    owner          = models.IntegerField(default = -1)
+    bu             = models.ForeignKey("onboarding.Bt", null=True,blank=True, on_delete=models.RESTRICT)
+    datetime       = models.DateTimeField(editable=True, default=datetime.utcnow)
+    attachmenttype = models.CharField(choices = AttachmentType.choices, max_length=55, default=AttachmentType.NONE)
+    gpslocation    = PointField(_('GPS Location'),null=True)
+
+    class Meta(BaseModel.Meta):
+        db_table = 'attachment'
+        get_latest_by = ["mdtz", 'cdtz']
+
+    def __str__(self):
+        return self.filename.name
+    
+
+def tickethistory():
+    return {
+        'history':[]
+    }
+
+class Device(BaseModel, TenantAwareModel):
+    devicecode    = models.CharField(max_length=50)
+    devicename    = models.CharField(max_length=50)
+    belongsTo     = models.ForeignKey('self', null=True, blank=True, on_delete=models.RESTRICT)
+    enable        = models.BooleanField(default=True)
+    runningStatus = models.ForeignKey("onboarding.TypeAssist", null=True, blank=True, on_delete=models.RESTRICT,related_name='device_status')
+    devicetype    = models.ForeignKey("onboarding.TypeAssist", null=True, blank=True, on_delete=models.RESTRICT, related_name='device_types')
+    devicedesc    = models.CharField(null=True, max_length=50)
+    ipaddress     = models.CharField(null=True , blank=True, max_length=100)
+    bu            = models.ForeignKey("onboarding.Bt", null=True,blank=True, on_delete=models.RESTRICT)
+
+    class Meta(BaseModel.Meta):
+        db_table = 'device'
+        get_latest_by = ["mdtz", 'cdtz']
+
+    def __str__(self):
+        return self.devicecode
+
+
+class Event(BaseModel, TenantAwareModel):
+    eventdesc     = models.CharField(max_length=250, null=True, blank=True)
+    device      = models.ForeignKey("activity.Device", null=True, blank=True, on_delete=models.RESTRICT, related_name='event_device')
+    eventdatetime = models.DateTimeField(default=timezone.now)
+    eventtype     = models.ForeignKey("onboarding.TypeAssist", null=True, blank=True, on_delete=models.RESTRICT, related_name='event_types')
+    category      = models.IntegerField(null=True, blank=True)
+    source        = models.CharField(max_length=100, null=True, blank=True)
+    note          = models.CharField(max_length=100, null=True, blank=True)
+    starttime     = models.DateTimeField(editable=True, null=True, blank=True)
+    endtime       = models.DateTimeField(editable=True, null=True, blank=True)
+    bu         = models.ForeignKey("onboarding.Bt", null=True,blank=True, on_delete=models.RESTRICT)
+
+    class Meta(BaseModel.Meta):
+        db_table = 'event'
+        get_latest_by = ["cdtz", 'mdtz']
+
+    def __str__(self):
+        return self.eventdesc
+    
+def ticket_defaults():
+    return {"statusjbdata":[]}
+
+class Ticket(BaseModel, TenantAwareModel):
+    class Priority(models.TextChoices):
+        HIGH   = ('HIGH', 'High')
+        LOW    = ('LOW', 'Low')
+        MEDIUM = ('MEDIUM', 'Medium')
+    
+    class Status(models.TextChoices):
+        NEW       = ('NEW','New')
+        CANCEL    = ('CANCEL','Cancel')
+        CLOSE     = ('CLOSE','Close')
+        ESCALATED = ('ESCALATED','Escalated' )
+        ASSIGNED  = ('ASSIGNED','Assigned' )
+
+    class TicketSource(models.TextChoices):
+        SYSTEMGENERATED = ('SYSTEMGENERATED', 'System Generated')
+        USERDEFINED     = ('USERDEFINED', 'User Defined')
+
+
+    ticketno           = models.IntegerField(null=True,blank=True)   
+    ticketdesc         = models.CharField(max_length=250)
+    assignedtopeople   = models.ForeignKey('peoples.People', null=True, blank=True, on_delete=models.RESTRICT, related_name="ticket_people")
+    assignedtogroup    = models.ForeignKey('peoples.Pgroup', null=True, blank=True, on_delete=models.RESTRICT, related_name="ticket_grps")
+    comments           = models.CharField(max_length=250, null=True)
+    bu                 = models.ForeignKey("onboarding.Bt", null=True,blank=True, on_delete=models.RESTRICT)
+    priority           = models.CharField(_("Priority"), max_length=50, choices=Priority.choices, null=True, blank=True)
+    escalationtemplate = models.CharField(max_length=30, null=True, blank=True)
+    modifieddatetime   = models.DateTimeField(default=timezone.now)
+    level              = models.IntegerField(default=0)
+    status             = models.CharField(_("Status"), max_length=50, choices=Status.choices,null=True, blank=True)
+    performedby        = models.ForeignKey('peoples.People', null=True, blank=True, on_delete=models.RESTRICT, related_name="ticket_performedby")
+    ticketlog          = models.JSONField(null=True,  encoder=DjangoJSONEncoder, blank=True, default=ticket_defaults)
+    event              = models.ForeignKey("activity.Event", null=True,blank=True, on_delete=models.RESTRICT)
+    isescalated        = models.BooleanField(default=True)
+    ticketsource       = models.CharField(max_length=50, choices=TicketSource.choices, null=True, blank=True)
+
+    class Meta(BaseModel.Meta):
+            db_table      = 'ticket'
+            get_latest_by = ["cdtz", 'mdtz']
+            constraints         = [
+                models.UniqueConstraint(
+                    fields=['bu', 'ticketno'],
+                    name='bu_ticketno_uk'
+                )
+            ]
+
+    def __str__(self):
+        return self.ticketdesc
+
+
+
+
+class EscalationMatrix(BaseModel, TenantAwareModel):
+    class Frequency(models.TextChoices):
+        MINUTE = ('MINUTE', 'MINUTE')
+        HOUR   = ('HOUR', 'HOUR')
+        DAY    = ('DAY', 'DAY')
+        WEEK   = ('WEEK', 'WEEK')
+    
+    body           = models.CharField(max_length=500, null=True)
+    level          = models.IntegerField(null=True, blank=True)
+    frequency      = models.CharField(max_length=10, default='DAY', choices=Frequency.choices)
+    frequencyvalue = models.IntegerField(null=True, blank=True)
+    assignedfor    = models.CharField(max_length=50)
+    assignedperson = models.ForeignKey('peoples.People', null=True, blank=True, on_delete=models.RESTRICT, related_name="escalation_people")
+    assignedgroup  = models.ForeignKey('peoples.Pgroup', null=True, blank=True, on_delete=models.RESTRICT, related_name="escalation_grps")
+    bu             = models.ForeignKey("onboarding.Bt", null=True,blank=True, on_delete=models.RESTRICT)
+    escalationtemplate = models.CharField(max_length=30)
+    notify         = models.TextField(blank=True, null=True)
+    bu             = models.ForeignKey("onboarding.Bt", null=True,blank=True, on_delete=models.RESTRICT)
+
+    class Meta(BaseModel.Meta):
+        db_table = 'escalationmatrix'
+        get_latest_by = ["mdtz", 'cdtz']

@@ -41,7 +41,7 @@ def upload_peopleimg(instance, filename):
         from os.path import join
 
         peoplecode = instance.peoplecode
-        full_filename = peoplecode + "__" + filename
+        full_filename = f'{peoplecode}__{filename}'
         foldertype = 'people'
         basedir = fyear = fmonth = None
         basedir = "master"
@@ -101,9 +101,9 @@ class People(AbstractBaseUser, PermissionsMixin, TenantAwareModel, BaseModel):
     department    = models.ForeignKey("onboarding.TypeAssist", null=True, blank=True,on_delete=models.RESTRICT, related_name='people_departments')
     designation   = models.ForeignKey("onboarding.TypeAssist", null=True, blank=True,on_delete=models.RESTRICT, related_name='people_designations')
     peopletype    = models.ForeignKey("onboarding.TypeAssist", verbose_name="People Type",null=True, blank=True, on_delete=models.RESTRICT, related_name='people_types')
-    client      = models.ForeignKey("onboarding.Bt",  null=True, blank=True, on_delete=models.RESTRICT, related_name='people_clients')
-    bu          = models.ForeignKey("onboarding.Bt",  null=True, blank=True,on_delete=models.RESTRICT, related_name='people_bus')
-    reportto      = models.ForeignKey("self", null=True, blank=True, on_delete=models.RESTRICT, related_name='children', verbose_name='Report to')
+    client        = models.ForeignKey("onboarding.Bt",  null=True, blank=True, on_delete=models.RESTRICT, related_name='people_clients')
+    bu            = models.ForeignKey("onboarding.Bt",  null=True, blank=True,on_delete=models.RESTRICT, related_name='people_bus')
+    reportto         = models.ForeignKey("self", null=True, blank=True, on_delete=models.RESTRICT, related_name='children', verbose_name='Report to')
     deviceid      = models.CharField(_("Device Id"), max_length=50, default='-1')
     email         = SecureString(_("Email"), max_length=254)
     mobno         = SecureString(_("Mob No"), max_length=254, null=True)

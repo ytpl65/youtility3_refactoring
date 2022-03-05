@@ -20,7 +20,7 @@ Site Report List
 
 <!-------------------------------------------- BEGIN TABLE ------------------------------------------->
 {% block table %}
-<table id="sitereport_table" class="display cell-border" style="width:100%">
+<table id="sitereport_table" class="display compact cell-border" style="width:100%">
     <thead class="fw-bold fs-6">
         <th>Id</th>
         <th>Plan Datetime</th>
@@ -33,107 +33,94 @@ Site Report List
         <th>Remarks</th>
         <th>Action</th>
     </thead>
-    <!---------- BEGIN TABLE FILTER FIELDS --------->
-	<thead id="filter_row">
-    <form action="" id='sitereport_filter' method='get'>
-        <th></th>
-    {% for field in tour_filter %}
-        <th>
-            {% if field.name == 'plandatetime' %}
-                <input type="text" name="plandatetime_min" placeholder="YYYY/MM/DD" class="form-control" id="id_plandatetime_0" style="border-radius: 0px; height: 35px; display:none">
-                <input type="text" name="plandatetime_max" placeholder="YYYY/MM/DD" class="form-control" id="id_plandatetime_1" style="border-radius: 0px; height: 35px; display:none">
-                <input class="form-control input active" id="custom_plandatetime" placeholder="Pick Range" type="text" readonly="readonly">
-            {% else %}
-            {{ field }}
-            {% endif %}
-		</th>
-    {% endfor %}
-    <th></th>
-    </form>
-    </thead>
-    <!---------- END TABLE FILTER FIELDS --------->
     <tbody>
-        {% for report in sitereport_list %}
-        <tr>
-            <td>{{ report['id'] }}</td>
-            <td>{{ report['plandatetime'] }}</td>
-            <td><a href="{{ url('schedhuler:update_ticket', args=[report['id']]) }}">{{ report['jobdesc']  }}</a></td>
-            <td>{{ report['peoplename']  }}</td>
-            <td>{{ report['buname'] }}</td>
-            <td>{{ report['jobstatusname'] or report['pgroup__groupname'] }}</td>
-            <td>{{ report['gpslocation'] }}</td>
-            <td>{{ report['distance'] }}</td>
-            <td>{{ report['remarks'] }}</td>
-            <td></td>
-        </tr>
-        {% endfor %}
     </tbody>
 </table>
 
-{% if ticket_list and ticket_list.has_other_pages %}
-<!-- BEGIN PAGINATOIN -->
-{{ paginator(ticket_list) }}
-<!-- END PAGINATOIN ---->
-{% endif %}
 {% endblock table %}
 <!-------------------------------------------- END TABLE ------------------------------------------->
 
 
 {% block extra_scripts %}
 <script>
-var table = null;
+var   table      = null;
 const formFilter = '#sitereport_filter'
-const table_id = "#sitereport_table"
+const table_id   = "#sitereport_table"
+
+    function submitFormFilter(){
+        $(formFilter).submit()
+    }
+    function setPlanDatetime(val1, val2){
+        $("#id_plandatetime_0").val(val1)
+        $("#id_plandatetime_1").val(val2)
+    }
     $(document).ready(function (){
         $("input").keypress(function(event) {
 			if (event.which == 13) {
 				event.preventDefault();
-				$(formFilter).submit();
+				submitFormFilter()
 			}
 		});
+        $("#custom_plandatetime").flatpickr({
+            altInput: true,
+            altFormat: "Y-M-d",
+            dateFormat: "Y/m/d",
+            mode: "range",
+            onChange: function(selectedDates, dateStr, instance){
+                if(selectedDates.length > 1){
+                    dates = dateStr.split(" to ")
+                    setPlanDatetime(dates[0], dates[1])
+                }
+            }
+        });
         
         //datatable initialization
         table = $(table_id).DataTable({
-			//orderCellsTop: true,
+            ajax:{
+                url:"{{ url('reports:sitereport_list') }}",
+                dataSrc:"sitereport_list"
+            },
 			responsive: true,
+            serverSide:true,
+            processing    : true,
+            responsive    : true,
 			fixedHeader: true,
-			paging: false,
-			lengthChange: false,
 			language: {
-				searchPlaceholder: "Search on page"
-			},
-            dom:"<'row'" +
-                "<'col-sm-6 d-flex align-items-center justify-conten-start'f>" +
-                "<'col-sm-6 d-flex align-items-center justify-content-end'B>" +
-                ">" +
-
-                "<'table-responsive'tr>",
+                search:"_INPUT_",
+                searchPlaceholder: "Search...",
+                processing:"Getting Data"},
+            search      : {return: true},
+            lengthMenu: [[10, 20, 30], [10, 20, 30]],
+            dom:`<'row' <'col-sm-6 d-flex justify-content-start'f> <'col-sm-6 d-flex justify-content-end'B> >rt<'row' <'col-sm-6'l> <'col-sm-6'p><'col-sm-12 d-flex justify-content-center'i>>`,
             columnDefs:[
                 {
-                    visible:false,
-                    targets:0,
-                    searchable:false
+                    visible   : false,
+                    targets   : [0, 9],
+                    searchable: false
                 },
                 {
-                    data:null;
-                    orderable:false,
-                    searchable:false,
-                    defaultContent:""
-                    targets:9
+                    data          : null,
+                    orderable     : false,
+                    searchable    : false,
+                    defaultContent: "",
+                    targets       : 9
                 }
-            ]
+            ],
+            columns     : [
+                { "data": "id" },
+                { "data": "plandatetime" },
+                { "data": "jobdesc" },
+                { "data": "peoplename" },
+                { "data": "buname" },
+                { "data": "jobdesc" },
+                { "data": "jobstatusname" },
+                { "data": "gpslocation" },
+                { "data": "distance" },
+                { "data": "remarks" },
+            ],
+            buttons:[]
         })
-        //BEGIN STYLING DATATABLE
-		$("th > input").addClass('form-control')
-		$("th > input").css('height', '35px')
-        var styles = {
-			"border-bottom":"none",
-			"background-color":"#f1f4f7"
-		}
-        $(`${table_id} thead tr:eq(1)`).css(styles)
-
-
-
+        $('.btn').removeClass('dt-button')
     })
 
 </script>

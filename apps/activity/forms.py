@@ -522,3 +522,50 @@ class JobNeedForm(forms.ModelForm):
         label = {
             'endtime':'End Time'
         }
+
+
+class TicketForm(forms.ModelForm):
+    class Meta:
+        model = am.Ticket
+        fields = ['ticketno','ticketdesc', 'assignedtopeople',
+                  'assignedtogroup', 'priority','status', 'performedby', 'comments','ticketlog']
+        labels = {
+            'ticketno'  :'Ticket No',
+            'ticketdesc': 'Description',
+            'assignedtopeople': 'People',
+            'assignedtogroup': 'Group',
+            'priority': 'Priority',
+            'status': 'Status',
+            'performedby': 'Performed By',
+            'comments': 'comments',
+            'ticketlog':'ticketlog'
+        }
+
+    def __init__(self, *args, **kwargs):
+        super(TicketForm, self).__init__(*args, **kwargs)
+        self.fields["status"].queryset=om.TypeAssist.objects.filter(Q(tatype__tacode='TICKETSTATUS') )
+        self.fields["priority"].queryset=om.TypeAssist.objects.filter(tatype__tacode='PRIORITY')
+        utils.initailize_form_fields(self)
+        
+        
+# create a ModelForm
+class EscalationForm(forms.ModelForm):
+    # specify the name of model to use
+    class Meta:
+        model = am.EscalationMatrix
+        fields = ['level', 'assignedfor',  'assignedperson',
+                  'assignedgroup', 'frequency', 'frequencyvalue', 'body']
+        labels = {
+            'level': 'Level',
+            'assignedfor': 'Assigned To',
+            'assignedperson': 'People',
+            'assignedgroup': 'Group',
+            'frequency': 'Frequency',
+            'frequencyvalue': 'Value',
+            'body': 'Body',
+        }
+
+    def __init__(self, *args, **kwargs):
+        super(EscalationForm, self).__init__(*args, **kwargs)
+        utils.initailize_form_fields(self)
+

@@ -1,12 +1,12 @@
 from django.conf import settings
 from django.urls import reverse
-from django.contrib.auth import default_app_config
-from django.db.models import constraints
 from apps.tenants.models import TenantAwareModel
+from django.contrib.gis.db.models import PolygonField
 from django.db import models
 from .managers import BtManager
 from django.core.serializers.json import DjangoJSONEncoder
 from django.utils.translation import gettext_lazy as _
+from django.contrib.gis.db.models import PointField
 from apps.peoples.models import BaseModel
 # Create your models here.
 
@@ -78,7 +78,7 @@ class Bt(BaseModel, TenantAwareModel, HeirarchyModel):
     siincludes          = models.TextField(_("Site Inclides"), default="")
     deviceevent         = models.BooleanField(_("Device Event"), default=False)
     pdist               = models.FloatField(_("pdist"), default=0.0, blank=True, null=True)
-    gpslocation         = models.CharField(_("GPS Location"), max_length=50, blank=True, default="0.0,0.0", null=True)
+    gpslocation         = PointField(_('GPS Location'),null=True)
     isvendor            = models.BooleanField(_("Is Vendor"), default=False)
     is_serviceprovider  = models.BooleanField(_("Is ServiceProvider"), default=False)
 
@@ -272,7 +272,7 @@ class GeofenceMaster(BaseModel):
     gfcode        = models.CharField(_("Code"), max_length=100)
     gfname        = models.CharField(_("Name"), max_length=100)
     alerttext     = models.CharField(_("Alert Text"), max_length=100)
-    geofence      = models.TextField(_("GeoFence"))
+    geofence      = PolygonField(_("GeoFence"))
     alerttogroup  = models.ForeignKey("peoples.Pgroup", verbose_name=_( "Alert to Group"), on_delete=models.RESTRICT)
     alerttopeople = models.ForeignKey("peoples.People", verbose_name=_(""), on_delete=models.RESTRICT)
     client        = models.ForeignKey("onboarding.Bt", verbose_name=_("Client"), on_delete=models.RESTRICT, related_name="for_clients")

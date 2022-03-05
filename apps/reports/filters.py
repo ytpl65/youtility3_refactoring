@@ -1,6 +1,6 @@
 from attr import fields
 import django_filters as dfs
-from apps.activity.models import Jobneed
+from apps.activity.models import Jobneed, QuestionSet
 import django_filters.widgets as wg
 from django_select2 import forms as s2forms
 
@@ -40,3 +40,11 @@ class SiteReportListFilter(dfs.FilterSet):
                 visible.field.widget.attrs['class'] = 'form-select'
                 visible.field.widget.attrs['data-placeholder'] = 'Select an option'
                 visible.field.widget.attrs['data-allow-clear'] = 'true'
+                
+
+class MasterReportTemplateFilter(dfs.FilterSet):
+    qset_name = dfs.CharFilter(field_name='qset_name', lookup_expr='qset_name__icontains', label='Site Report')
+    enable = None
+    class Meta:
+        model=QuestionSet
+        fields = ('qset_name', 'enable')
