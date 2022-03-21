@@ -1,4 +1,5 @@
 import logging
+from django.forms import model_to_dict
 from django.http.response import JsonResponse
 from django.shortcuts import redirect, render
 from django.contrib.auth.mixins import LoginRequiredMixin
@@ -24,279 +25,6 @@ from apps.core import utils
 
 CACHE_TTL = getattr(settings, 'CACHE_TTL', DEFAULT_TIMEOUT)
 logger = logging.getLogger('django')
-
-#-------------------- Begin TypeAssist View Classes --------------------#
-
-
-class CreateTypeassist(LoginRequiredMixin, View):
-    template_path = 'onboarding/ta_form.html'
-    template_path2 = 'onboarding/super_ta.html'
-    form_class = obforms.TypeAssistForm
-    form_class2 = obforms.SuperTypeAssistForm
-
-    def get(self, request, *args, **kwargs):
-        """Returns typeassist form on html"""
-        logger.info('create typeassist view...')
-        urlname = resolve(request.path_info).url_name
-        logger.info(f"url {urlname}")
-
-        if 'super' in urlname:
-            cxt = {'superta_form': self.form_class2()}
-            return render(request, self.template_path2, context=cxt)
-        else:
-            cxt = {'ta_form': self.form_class()}
-            return render(request, self.template_path, context=cxt)
-
-    def post(self, request, *args, **kwargs):
-        """Handles creation of typeassist instance."""
-        logger.info('create typeassist form submiited for saving...')
-        urlname = resolve(request.path_info).url_name
-        taform = self.form_class2 if 'super' in urlname else self.form_class
-        response, form = None, taform(request.POST)
-        try:
-            if form.is_valid():
-                super = 'super' in urlname
-                response = self.handle_valid_form(form, request, super)
-            else:
-                logger.info('Form is not valid')
-                cxt = {'ta_form': form, 'edit': True}
-                temp = self.template_path
-                if 'super' in urlname:
-                    cxt = {'superta_form': form, 'edit': True}
-                    temp = self.template_path2
-                response = render(request, temp, context=cxt)
-        except Exception:
-            response = self.handle_exception(request, form, urlname)
-        return response
-
-    def handle_valid_form(self, form, request, super=False):
-        logger.info('TypeAssistForm Form is valid')
-        ta = form.save(commit=False)
-        ta.save()
-        save_userinfo(ta, request.user, request.session)
-        logger.info('TypeAssistForm Form saved')
-        messages.success(request, "Success record saved successfully!",
-                         "alert alert-success")
-        if super:
-            return redirect('onboarding:superta_form')
-        return redirect('onboarding:ta_form')
-
-    def handle_exception(self, request, form, url):
-        logger.critical(
-            "something went wrong please follow the traceback to fix it... ", exc_info=True)
-        messages.error(request, "[ERROR] Something went wrong",
-                       "alert alert-danger")
-        cxt = {'ta_form': form, 'edit': True}
-        temp = self.template_path
-        if 'super' in url:
-            cxt = {'superta_form': form, 'edit': True}
-            temp = self.template_path2
-        return render(request, temp, context=cxt)
-
-
-# @method_decorator(cache_page(CACHE_TTL), name='dispatch')
-class RetrieveTypeassists(LoginRequiredMixin, View):
-    template_path = 'onboarding/ta_list.html'
-    related = ['parent', 'id', 'cuser', 'muser']
-    fields = ['id', 'tatype__tacode', 'tacode',
-              'taname', 'cuser__peoplecode']
-    model = TypeAssist
-
-    def get(self, request, *args, **kwargs):
-        '''returns the paginated results from db'''
-        response = None
-        try:
-            objects = self.model.objects.select_related(
-                *self.related).filter(~Q(tacode='NONE')).values(*self.fields)
-            logger.info('TypeAssist objects %s retrieved from db' %
-                        (len(objects)) if objects else "No Records!")
-            cxt = self.paginate_results(request, objects)
-            logger.info('Results paginated' if objects else "")
-            response = render(request, self.template_path, context=cxt)
-        except EmptyResultSet:
-            response = render(request, self.template_path, context=cxt)
-            messages.error(request, 'List view not found',
-                           'alert alert-danger')
-        except Exception:
-            logger.critical(
-                'something went wrong please follow the traceback to fix it... ', exc_info=True)
-            messages.error(request, 'Something went wrong',
-                           "alert alert-danger")
-            response = redirect('/dashboard')
-        return response
-
-    def paginate_results(self, request, objects):
-        '''paginate the results'''
-        logger.info('Pagination Start' if objects else "")
-        from .filters import TypeAssistFilter
-        if request.GET:
-            objects = TypeAssistFilter(request.GET, queryset=objects).qs
-        filterform = TypeAssistFilter().form
-        page = request.GET.get('page', 1)
-        paginator = Paginator(objects, 25)
-        try:
-            ta_list = paginator.page(page)
-        except PageNotAnInteger:
-            ta_list = paginator.page(1)
-        except EmptyPage:
-            ta_list = paginator.page(paginator.num_pages)
-        url = resolve(request.path_info).url_name
-        logger.info(f"url---------{url}-----")
-        super = 'super' in url
-        return {'ta_list': ta_list, 'ta_filter': filterform, 'superta': super}
-
-
-def test_ta_grid(request):
-    import math
-    fields = ['id', 'tatype', 'parent__tacode', 'tacode',
-              'taname', 'cuser__peoplecode']
-    if request.method == 'POST':
-        return
-    page = request.GET.get('page')
-    limit = request.GET.get('rows')
-    sidx = request.GET.get('sidx', 1)
-    sord = request.GET.get('sord')
-    objects = TypeAssist.objects.select_related().values(*fields)
-    count = objects.count()
-    total_pages = math.ceil(count/int(limit)) if count else 0
-    page = min(int(page), total_pages)
-    start = int(limit) * page - int(limit)
-    response = {'page': page, 'total': total_pages, 'records': count}
-    rows = []
-    for i in range(objects.count()):
-        response.setdefault("rows", []).append(objects[i])
-    return JsonResponse(response)
-
-
-class UpdateTypeassist(LoginRequiredMixin, View):
-    template_path = 'onboarding/ta_form.html'
-    template_path2 = 'onboarding/super_ta.html'
-    form_class = obforms.TypeAssistForm
-    form_class2 = obforms.SuperTypeAssistForm
-    model = TypeAssist
-
-    def get(self, request, *args, **kwargs):
-        response = None
-        url = resolve(request.path_info).url_name
-        try:
-            logger.info('Update typeassist view')
-            pk = kwargs.get('pk')
-            ta = self.model.objects.select_related().get(id=pk)
-            logger.info('object retrieved {}'.format(ta))
-            cxt = {'ta_form': self.form_class(instance=ta), 'edit': True}
-            response = render(request, self.template_path,  context=cxt)
-            if 'super' in url:
-                cxt = {'superta_form': self.form_class2(
-                    instance=ta), 'edit': True}
-                response = render(request, self.template_path2, context=cxt)
-        except self.model.DoesNotExist:
-            messages.error(request, 'Unable to edit object not found',
-                           'alert alert-danger')
-            response = redirect('onboarding:ta_form')
-            if 'super' in url:
-                response = redirect('onboarding:superta_form')
-        except Exception:
-            logger.critical('something went wrong', exc_info=True)
-            messages.error(request, 'Something went wrong',
-                           'alert alert-danger')
-            response = redirect('onboarding:ta_form')
-            if 'super' in url:
-                response = redirect('onboarding:superta_form')
-        return response
-
-    def post(self, request, *args, **kwargs):
-        logger.info('TypeAssistForm Form submitted')
-        response = None
-        try:
-            pk = kwargs.get('pk')
-            ta = self.model.objects.select_related().get(id=pk)
-            url = resolve(request.path_info).url_name
-            taform = self.form_class2 if 'super' in url else self.form_class
-            form = taform(request.POST, instance=ta)
-            if form.is_valid():
-                super = 'super' in url
-                response = self.handle_valid_form(form, request, super)
-            else:
-                logger.info('form is not valid...')
-                response = render(request, self.template_path, context={
-                                  'ta_form': form, 'edit': True})
-        except self.model.DoesNotExist:
-            logger.error('Object does not exist', exc_info=True)
-            messages.error(request, "Object does not exist",
-                           "alert alert-danger")
-            cxt = {'ta_form': form, 'edit': True}
-            response = render(request, self.template_path, context=cxt)
-        except Exception:
-            response = self.handle_exception(request, form, url)
-        return response
-
-    def handle_valid_form(self, form, request, super=False):
-        logger.info('TypeAssistForm form is valid..')
-        ta = form.save()
-        ta = save_userinfo(ta, request.user, request.session)
-        logger.info('TypeAssistForm Form saved')
-        messages.success(request, "Success record saved successfully!",
-                         "alert-success")
-        if super:
-            return redirect('onboarding:superta_form')
-        return redirect('onboarding:ta_form')
-
-    def handle_exception(self, request, form, url):
-        logger.critical(
-            "something went wrong please follow the traceback to fix it... ", exc_info=True)
-        messages.error(request, "[ERROR] Something went wrong",
-                       "alert alert-danger")
-        cxt = {'ta_form': form, 'edit': True}
-        temp = self.template_path
-        if 'super' in url:
-            cxt = {'superta_form': form, 'edit': True}
-            temp = self.template_path2
-        return render(request, temp, context=cxt)
-
-
-class DeleteTypeassist(LoginRequiredMixin, View):
-    form_class = obforms.TypeAssistForm
-    form_class2 = obforms.SuperTypeAssistForm
-    template_path = 'onboarding/ta_form.html'
-    template_path2 = 'onboarding/super_ta.html'
-    model = TypeAssist
-
-    def get(self, request, *args, **kwargs):
-        """Handles deletion of object"""
-        pk, response = kwargs.get('pk', None), None
-        ic(pk)
-        url = resolve(request.path_info).url_name
-        try:
-            if pk:
-                ta = self.model.objects.get(id=pk)
-                taform = self.form_class2 if 'super' in url else self.form_class
-                form = taform(instance=ta)
-                ta.delete()
-                logger.info('TypeAssist object deleted')
-                response = redirect('onboarding:ta_list')
-        except self.model.DoesNotExist:
-            logger.warn('Unable to delete, object does not exist')
-            messages.error(request, 'TypeAssist does not exist',
-                           "alert alert-danger")
-            response = redirect('onboarding:ta_form')
-            if 'super' in url:
-                response = redirect('onboarding:superta_form')
-        except RestrictedError:
-            logger.warn('Unable to delete, due to dependencies')
-            messages.error(
-                request, 'Unable to delete, due to dependencies', "alert alert-danger")
-            cxt = {'ta_form': form, 'edit': True}
-            response = render(request, self.template_path, context=cxt)
-            if 'super' in url:
-                response = redirect('onboarding:superta_form')
-        except Exception:
-            messages.error(
-                request, '[ERROR] Something went wrong', "alert alert-danger")
-            cxt = {'ta_form': form, 'edit': True}
-            response = render(request, self.template_path, context=cxt)
-        return response
-
-#-------------------- END TypeAssist View Classes --------------------#
 
 
 #-------------------- Begin Bt View Classes --------------------#
@@ -1220,7 +948,8 @@ class MasterTypeAssist(LoginRequiredMixin, View):
             ta = form.save()
             putils.save_userinfo(ta, request.user, request.session)
             logger.info("typeassist form saved")
-            data = {'msg': f"{ta.tacode}", }
+            data = {'msg': f"{ta.tacode}",
+            'row': TypeAssist.objects.values(*self.params['fields']).get(id=ta.id) }
             return rp.JsonResponse(data, status=200)
         except IntegrityError:
             return handle_intergrity_error("TypeAssist")
@@ -1237,3 +966,93 @@ class TypeAssistAjax(MasterTypeAssist):
     params = MasterTypeAssist.params
     params.update({'form_class':obforms.TypeAssistForm})
     pass
+
+
+class Shift(LoginRequiredMixin, View):
+    params = {
+        'form_class': obforms.ShiftForm,
+        'template_form': 'onboarding/partials/partial_shiftform.html',
+        'template_list': 'onboarding/shift.html',
+        'related': ['parent',  'cuser', 'muser'],
+        'model': Shift,
+        'fields': ['id', 'shiftname', 'starttime', 'endtime', 'nightshift_appicable'],
+        'form_initials': {} }
+
+    def get(self, request, *args, **kwargs):
+        R, resp = request.GET, None
+
+        # first load the template
+        if R.get('template'): return render(request, self.params['template_list'])
+        #then load the table with objects for table_view
+        if R.get('action', None) == 'list' or R.get('search_term'):
+            objs = self.params['model'].objects.select_related(
+                *self.params['related']).filter(
+                    enable=True,
+            ).values(*self.params['fields'])
+            count = objs.count()
+            logger.info('Shift objects %s retrieved from db' %(count or "No Records!"))
+            if count:
+                objects, filtered = utils.get_paginated_results(
+                    R, objs, count, self.params['fields'], self.params['related'], self.params['model'])
+                logger.info('Results paginated'if count else "")
+
+            resp = rp.JsonResponse(data = {
+                'draw':R['draw'], 'recordsTotal':count,
+                'data' : list(objects), 
+                'recordsFiltered': filtered
+            }, status=200, safe=False)
+
+        # return cap_form empty for creation
+        elif R.get('action', None) == 'form':
+            cxt = {'shift_form': self.params['form_class'](request=request),
+                   'msg': "create shift requested"}
+            resp = utils.render_form(request, self.params, cxt)
+
+        # handle delete request
+        elif R.get('action', None) == "delete" and R.get('id', None):
+            print(f'resp={resp}')
+            resp = utils.render_form_for_delete(request, self.params, False)
+        # return form with instance for update
+        elif R.get('id', None):
+            obj = utils.get_model_obj(int(R['id']), request, self.params)
+            resp = utils.render_form_for_update(
+                request, self.params, "shift_form", obj)
+        print(f'return resp={resp}')
+        return resp
+
+    def post(self, request, *args, **kwargs):
+        resp = None
+        try:
+            print(request.POST)
+            data = QueryDict(request.POST['formData'])
+            pk = request.POST.get('pk', None)
+            print(pk, type(pk))
+            if pk:
+                msg = "shift_view"
+                form = utils.get_instance_for_update(
+                    data, self.params, msg, int(pk))
+                print(form.data)
+            else:
+                form = self.params['form_class'](data, request=request)
+            if form.is_valid():
+                resp = self.handle_valid_form(form, request)
+            else:
+                cxt = {'errors': form.errors}
+                resp = utils.handle_invalid_form(request, self.params, cxt)
+        except Exception:
+            resp = utils.handle_Exception(request)
+        return resp
+
+    def handle_valid_form(self, form, request):
+        logger.info('shift form is valid')
+        from apps.core.utils import handle_intergrity_error
+        try:
+            shift = form.save()
+            shift.bu_id = int(request.session['client_id'])
+            putils.save_userinfo(shift, request.user, request.session)
+            logger.info("shift form saved")
+            data = {'msg': f"{shift.shiftname}",
+            'row': Shift.objects.values(*self.params['fields']).get(id=shift.id) }
+            return rp.JsonResponse(data, status=200)
+        except IntegrityError:
+            return handle_intergrity_error("Shift")

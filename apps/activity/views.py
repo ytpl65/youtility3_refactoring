@@ -1,6 +1,5 @@
 import json
 from django.contrib.auth.mixins import LoginRequiredMixin
-from graphviz import view
 import psycopg2.errors as pg_errs
 from django.views.generic.base import View
 from django.urls import resolve

@@ -487,7 +487,7 @@ class Schd_E_TourFormJob(LoginRequiredMixin, View):
         try:
             job         = form.save(commit=False)
             job.parent  = utils.get_or_create_none_job()
-            job.asset = sutils.get_or_create_none_asset()
+            job.asset = utils.get_or_create_none_asset()
             job.save()
             print("%%%%%%%%%5",  form.data, form.data.get('bu'))
             job = putils.save_userinfo(job, request.user, request.session,

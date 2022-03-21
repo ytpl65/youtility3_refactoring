@@ -41,15 +41,17 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django.contrib.gis',
     #third_party_apps
     'graphene_django',
+    'graphene_gis',
     'django_email_verification',
     'debug_toolbar',
     'import_export',
     'django_extensions',
     "django_select2",
     'django_filters',
-    'django.contrib.gis',
+    
 
     #local apps
     'apps.peoples',
@@ -64,10 +66,6 @@ INSTALLED_APPS = [
     'django_cleanup.apps.CleanupConfig'
 
 ]
-
-GRAPHENE = {
-    "SCHEMA": "api.schema.schema"
-}
 
 MIDDLEWARE = [
     'apps.tenants.middlewares.TenantMiddleware', #custom middleware
@@ -135,14 +133,7 @@ youtility_dbs = {
         'HOST':     '192.168.1.254',
         'PORT':     '5432',
     },
-    'sps':{
-        'ENGINE':   'django.contrib.gis.db.backends.postgis',
-        'USER':     'youtilitydba',
-        'NAME':     'sps_django',
-        'PASSWORD': '!!sysadmin!!',
-        'HOST':     '192.168.1.254',
-        'PORT':     '5432',
-    },
+
     'icicibank':{
         'ENGINE':   'django.contrib.gis.db.backends.postgis',
         'USER':     'youtilitydba',
@@ -151,14 +142,14 @@ youtility_dbs = {
         'HOST':     '192.168.1.254',
         'PORT':     '5432',
     },
-    'gis_db':{
-        'ENGINE':   'django.contrib.gis.db.backends.postgis',
-        'USER':     'youtility33',
-        'NAME':     'icici_django_gis',
-        'PASSWORD': 'adminpassword',
-        'HOST':     'localhost',
-        'PORT':     '',
-    }
+    # 'gis_db':{
+    #     'ENGINE':   'django.contrib.gis.db.backends.postgis',
+    #     'USER':     'youtility33',
+    #     'NAME':     'icici_django_gis',
+    #     'PASSWORD': 'adminpassword',
+    #     'HOST':     'localhost',
+    #     'PORT':     '',
+    # }
 
 }
 
@@ -194,6 +185,14 @@ home_local_dbs = {
 
 
 DATABASES = youtility_dbs
+GRAPHENE = {
+    # ...
+    "ATOMIC_MUTATIONS": True,
+    "SCHEMA": "api.schema.schema",
+    'MIDDLEWARE': [
+        'graphene_django.debug.DjangoDebugMiddleware',
+    ]
+}
 
 CACHES = {
     "default": {
@@ -267,10 +266,12 @@ MEDIA_ROOT = os.path.join(os.path.expanduser('~'),'youtility4_media')
 MEDIA_URL = '/youtility4_media/'
 DATE_FORMAT = "d M Y"
 DATETIME_INPUT_FORMATS = [
-    '%d-%b-%Y %H:%M'#22-May-1998 13:01
+    '%d-%b-%Y %H:%M:%S',   #22-May-1998 13:01
+   "%Y-%m-%d %H:%M:%S"     #1998-05-18 13:01:00
 ]
 DATE_INPUT_FORMATS = [
-    '%d-%b-%Y'
+    '%d-%b-%Y',
+    "%Y-%m-%d"
 ]
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/3.2/howto/static-files/

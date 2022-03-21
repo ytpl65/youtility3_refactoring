@@ -4,7 +4,7 @@ from django.http import QueryDict
 from apps.peoples import models as pm
 from apps.tenants.models import Tenant
 from django.db import transaction
-from apps.core import utils
+from apps.peoples import utils as putils
 logger = logging.getLogger('__main__')
 
 dbg = logging.getLogger('__main__').debug
@@ -201,26 +201,50 @@ def save_tenant_client_info(request):
 # this will return choices for heirarchical choices for select2 dropdowns
 
 
-# def make_choices(caps_assigned, caps):
-#     choices, parent_menus,  tmp = [], [], []
-#     logger.info('making choices started ...')
-#     for i in range(1, len(caps)):
-#         if caps[i].capscode in caps_assigned and caps[i].depth == 3:
-#             tmp.append(caps[i])
-#         if tmp and caps[i].depth == 2 and caps[i-1].depth == 3:
-#             choice, menucode = get_choice(tmp, queryset=True)
-#             print(choice, menucode)
-#             parent_menus.append(menucode)
-#             choices.append(choice)
-#             tmp = []
-#         if i == (len(caps)-1) and choices:
-#             choice, menucode = get_choice(tmp, queryset=True)
-#             print(choice, menucode)
-#             parent_menus.append(menucode)
-#             choices.append(choice)
-#     if choices:
-#         logger.debug('choices are made and returned... DONE')
-#     return choices, parent_menus
+
+def save_caps_inside_session_for_people_client(people, caps, session, client):
+    logger.debug(
+        'saving capabilities info inside session for people and client...')
+    session['people_webcaps'] = make_choices(
+        people.people_extras['webcapability'], caps)
+    session['people_mobcaps'] = make_choices(
+        people.people_extras['mobilecapability'], caps)
+    session['people_reportcaps'] = make_choices(
+        people.people_extras['reportcapability'], caps)
+    session['people_portletcaps'] = make_choices(
+        people.people_extras['portletcapability'], caps)
+    session['client_webcaps'] = make_choices(
+        client.bu_preferences['webcapability'], caps)
+    session['client_mobcaps'] = make_choices(
+        client.bu_preferences['mobilecapability'], caps)
+    session['client_reportcaps'] = make_choices(
+        client.bu_preferences['reportcapability'], caps)
+    session['client_portletcaps'] = make_choices(
+        client.bu_preferences['portletcapability'], caps)
+    logger.debug(
+        'capabilities info saved in session for people and client... DONE')
+
+def make_choices(caps_assigned, caps):
+    choices, parent_menus,  tmp = [], [], []
+    logger.info('making choices started ...')
+    for i in range(1, len(caps)):
+        if caps[i].capscode in caps_assigned and caps[i].depth == 3:
+            tmp.append(caps[i])
+        if tmp and caps[i].depth == 2 and caps[i-1].depth == 3:
+            choice, menucode = get_choice(tmp, queryset=True)
+            print(choice, menucode)
+            parent_menus.append(menucode)
+            choices.append(choice)
+            tmp = []
+        if i == (len(caps)-1) and choices:
+            choice, menucode = get_choice(tmp, queryset=True)
+            print(choice, menucode)
+            parent_menus.append(menucode)
+            choices.append(choice)
+    if choices:
+        logger.debug('choices are made and returned... DONE')
+    return choices, parent_menus
+
 
 def get_choice(li, queryset=False):
     '''return tuple for making choices
@@ -239,6 +263,7 @@ def get_choice(li, queryset=False):
 
     tuple(t[1])
     return t
+
 
 
 def get_cap_choices_for_clientform(caps, cfor):
@@ -311,7 +336,7 @@ def get_caps_choices(client=None, cfor=None,  session=None, people=None):
         return get_cap_choices_for_clientform(caps, cfor)
 
     elif session and people and client:
-        utils.save_caps_inside_session_for_people_client(
+        putils.save_caps_inside_session_for_people_client(
             people, caps, session, client)
 
 # TODO Rename this here and in `get_caps_choices`

@@ -108,10 +108,10 @@ class PeopleAdmin(ImportExportModelAdmin):
     resource_class = PeopleResource
     fields = ['peoplecode', 'peoplename', 'loginid', 'designation', 'department', 'mobno', 'email',
               'bu', 'dateofjoin', 'dateofreport', 'dateofbirth', 'gender', 'peopletype', 'enable',
-              'isadmin', 'shift', 'people_extras', 'client', ]
+              'isadmin', 'people_extras', 'client', ]
 
     list_display = ['id', 'peoplecode', 'peoplename', 'loginid',  'mobno', 'email','password',
-                     'gender', 'peopletype', 'isadmin', 'client', 'shift']
+                     'gender', 'peopletype', 'isadmin', 'client']
 
     list_display_links = ['peoplecode', 'peoplename']
 

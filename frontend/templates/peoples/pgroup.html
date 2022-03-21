@@ -79,7 +79,7 @@ People Group Lists
 		//datatable initialization
         table = $(table_id).DataTable({
 			ajax:{
-				url:'{{ url("peoples:peoplegroup") }}?action=list'
+				url:`${urlname}?action=list`
 			},
 			serverSide : true,
 			processing : true,

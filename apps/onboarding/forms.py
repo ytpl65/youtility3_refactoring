@@ -79,6 +79,13 @@ class TypeAssistForm(SuperTypeAssistForm):
         utils.apply_error_classes(self)
         return result
     
+    def clean_tacode(self):
+        super().clean_tacode()
+        if val:= self.cleaned_data.get('tacode'):
+            if len(val)>15: raise forms.ValidationError("Max Length reached!!")
+        return val
+                
+    
 
 
 class BtForm(forms.ModelForm):  
@@ -204,6 +211,7 @@ class ShiftForm(forms.ModelForm):
      
     def __init__(self, *args, **kwargs):
         """Initializes form"""
+        self.request = kwargs.pop('request', None)
         super(ShiftForm, self).__init__(*args, **kwargs)
         self.fields['nightshift_appicable'].initial = False
         utils.initailize_form_fields(self)

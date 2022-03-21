@@ -25,7 +25,7 @@ urlpatterns = [
         
         path('capability/',  views.Capability.as_view(),    name='capability'),
         path('peoplegroup/',  views.PeopleGroup.as_view(),    name='peoplegroup'),
-        path('sitegroup/',  views.SiteGroup.as_view(),    name='sitegroup'),
+        #path('sitegroup/',  views.SiteGroup.as_view(),    name='sitegroup'),
         path('people/',  views.People.as_view(),    name='people'),
         
         path('wizard/', include(wizard_url_patterns2)),

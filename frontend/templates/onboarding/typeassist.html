@@ -163,13 +163,9 @@ TypeAssist List
 			.done((data, status, xhr) => { //function to submit post request
 				console.log("data ", data)
 				$(modal_id).modal("hide");
-				Swal.fire(
-				`${viewname} saved`,
-				`${viewname} with this code <strong>${data.code}</strong> has been saved successfully`,
-				'success'
-				).then(function(){
-					location.reload()
-				})
+				table.row.add(data.row).draw()
+				var isupdated = formtype === 'update' ? true : false
+				show_successful_save_alert(update=isupdated)
 			})
 		})
 
@@ -230,8 +226,8 @@ TypeAssist List
 					$(modal_id).modal("hide")
 					//delete row from table
 					row_index = parseInt($(modalcontent_id).attr('data-rowid'))
-					console.log(row_index, "row index")
-					table.row(row_index).remove().draw();
+					table.search().ajax.reload()
+					console.log("table reloaded")
 				}else{
 					show_error_alert('Something went wrong!');
 				}

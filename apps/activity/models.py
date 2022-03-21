@@ -316,7 +316,7 @@ class Asset(BaseModel, TenantAwareModel):
     assetname     = models.CharField(_("Asset Name"), max_length=250)
     enable        = models.BooleanField(_("Enable"), default=True)
     iscritical    = models.BooleanField(_("Is Critical"))
-    gpslocation   = PointField(_('GPS Location'), null=True)
+    gpslocation   = PointField(_('GPS Location'), null=True, geography=True, srid=4326)
     parent        = models.ForeignKey("self", verbose_name=_( "Belongs to"), on_delete = models.RESTRICT, null=True, blank=True)
     identifier    = models.CharField( _('Asset Identifier'), choices=Identifier.choices, max_length=55)
     runningstatus = models.CharField(_('Running Status'), choices=RunningStatus.choices, max_length=55)
@@ -411,7 +411,7 @@ class Jobneed(BaseModel, TenantAwareModel):
     recievedon_server = models.DateTimeField(_("Recived on server"), auto_now=False, auto_now_add=True)
     starttime         = models.DateTimeField( _("Start time"), auto_now=False, auto_now_add=False, null=True)
     endtime           = models.DateTimeField(_("Start time"), auto_now=False, auto_now_add=False, null=True)
-    gpslocation       = PointField(_('GPS Location'),null=True)
+    gpslocation       = PointField(_('GPS Location'),null=True, geography=True, srid=4326)
     remarks           = models.CharField(_("Remark"), max_length=200, null=True, blank=True)
     asset             = models.ForeignKey("activity.Asset", verbose_name=_("Asset"), on_delete= models.RESTRICT, null=True, blank=True, related_name='jobneed_assets')
     frequency         = models.CharField(verbose_name=_("Frequency type"), null       = True, max_length=55, choices=Frequency.choices)
@@ -499,7 +499,7 @@ class Attachment(BaseModel, TenantAwareModel):
     bu             = models.ForeignKey("onboarding.Bt", null=True,blank=True, on_delete=models.RESTRICT)
     datetime       = models.DateTimeField(editable=True, default=datetime.utcnow)
     attachmenttype = models.CharField(choices = AttachmentType.choices, max_length=55, default=AttachmentType.NONE)
-    gpslocation    = PointField(_('GPS Location'),null=True)
+    gpslocation    = PointField(_('GPS Location'),null=True, geography=True, srid=4326)
 
     class Meta(BaseModel.Meta):
         db_table = 'attachment'

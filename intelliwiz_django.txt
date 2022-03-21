@@ -14,13 +14,11 @@ blessings==1.7
 bpython==0.22.1
 cachetools==4.2.4
 certifi==2021.10.8
-cffi==1.14.6
 charset-normalizer==2.0.8
 click==8.0.3
 colorama==0.4.4
 colorlog==6.4.1
 croniter==1.1.0
-cryptography==3.4.7
 curtsies==0.3.10
 cwcwidth==0.1.6
 cycler==0.11.0
@@ -58,6 +56,7 @@ google-auth-oauthlib==0.4.6
 google-pasta==0.2.0
 graphene==2.1.9
 graphene-django==2.15.0
+graphene-gis==0.0.7
 graphql-core==2.3.2
 graphql-relay==2.0.1
 graphviz==0.17
@@ -105,7 +104,7 @@ prometheus-client==0.12.0
 promise==2.3
 prompt-toolkit==3.0.20
 protobuf==3.19.1
-psycopg2==2.8.6
+psycopg2-binary
 ptyprocess==0.7.0
 py==1.10.0
 pyasn1==0.4.8

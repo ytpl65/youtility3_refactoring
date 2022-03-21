@@ -21,7 +21,10 @@ table.dataTable.cell-border tbody td {
  border-right:1px solid #a9a9b7;
 }
 tr.odd td {
-    background-color:#f5f8fa;
+    background-color:#F3F6F8 ;
+   }
+tr.even td {
+    background-color:#F3F6F8 ;
    }
 thead th {
 background-color:#1e1e2d;
@@ -178,7 +181,10 @@ div#kt_footer {
 }
 
 input{
-    height: 36px;
+    height: 3.2rem;
+}
+th > input{
+    height: 2.1rem;
 }
 .form-select{
     line-height: 1.1rem;

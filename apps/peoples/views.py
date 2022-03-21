@@ -754,7 +754,10 @@ class Capability(View):
         'form_initials': {'initial': {}}}
 
     def get(self, request, *args, **kwargs):
-        R, resp = request.GET, None
+        R, resp, objects, filtered = request.GET, None, [], 0
+        
+        # first load the template
+        if R.get('template'): return render(request, self.params['template_list'])
 
         # return cap_list data
         if R.get('action', None) == 'list' or R.get('search_term'):
@@ -766,7 +769,20 @@ class Capability(View):
             ).values(*self.params['fields'])
             resp = utils.render_grid(
                 request, self.params, "capability_view", objs)
+            count = objs.count()
+            logger.info('Pgroup objects %s retrieved from db' %(count or "No Records!"))
+            
+            if count:
+                objects, filtered = utils.get_paginated_results(
+                    R, objs, count, self.params['fields'], self.params['related'], self.params['model'])
+                logger.info('Results paginated'if count else "")
 
+            resp = rp.JsonResponse(data = {
+                'draw':R['draw'], 'recordsTotal':count,
+                'data' : list(objects), 
+                'recordsFiltered': filtered
+            }, status=200, safe=False)
+        
         # return cap_form empty
         elif R.get('action', None) == 'form':
             cxt = {'cap_form': self.params['form_class'](request=request),
@@ -777,6 +793,7 @@ class Capability(View):
         elif R.get('action', None) == "delete" and R.get('id', None):
             print(f'resp={resp}')
             resp = utils.render_form_for_delete(request, self.params, True)
+        
         # return form with instance
         elif R.get('id', None):
             obj = utils.get_model_obj(int(R['id']), request, self.params)
@@ -797,6 +814,7 @@ class Capability(View):
                 form = utils.get_instance_for_update(
                     data, self.params, msg, int(pk))
                 print(form.data)
+            
             else:
                 form = self.params['form_class'](data, request=request)
             if form.is_valid():
@@ -804,6 +822,7 @@ class Capability(View):
             else:
                 cxt = {'errors': form.errors}
                 resp = utils.handle_invalid_form(request, self.params, cxt)
+        
         except Exception:
             resp = utils.handle_Exception(request)
         return resp
@@ -811,13 +830,14 @@ class Capability(View):
     def handle_valid_form(self, form, request):
         logger.info('capability form is valid')
         from apps.core.utils import handle_intergrity_error
+        
         try:
             cap = form.save()
             putils.save_userinfo(cap, request.user, request.session)
             logger.info("capability form saved")
             data = {'success': "Record has been saved successfully",
-                    'code': cap.capscode, 'name': cap.capsname, 'cfor': cap.cfor,
-                    'parent': cap.parent.capscode}
+                    'row':pm.Capability.objects.values(
+                        *self.params['fields'].get(id = cap.id))}
             return rp.JsonResponse(data, status=200)
         except IntegrityError:
             return handle_intergrity_error("Capability")
@@ -961,6 +981,7 @@ class PeopleGroup(LoginRequiredMixin, View):
 
         # return form empty
         elif R.get('action', None) == 'form':
+            ic('fksnfksnfkjsdkjfsjdfkamsdfkmaskf')
             cxt = {'pgroup_form': self.params['form_class'](request=request),
                    'msg': "create people group requested"}
             resp = utils.render_form(request, self.params, cxt)
@@ -1022,66 +1043,67 @@ class PeopleGroup(LoginRequiredMixin, View):
             return handle_intergrity_error("Pgroup")
         
 
-class SiteGroup(PeopleGroup):
-    params = PeopleGroup.params
-    params.update({
-        'form_class':pf.SiteGroupForm,
-        'template_form':'peoples/sitegroup.html',
-        'template_list':'peoples/sitegroup_list.html',
-    })
+# class SiteGroup(PeopleGroup):
+#     params = PeopleGroup.params
+#     params.update({
+#         'form_class':pf.SiteGroupForm,
+#         'template_form':'peoples/sitegroup.html',
+#         'template_list':'peoples/sitegroup_list.html',
+#     })
     
-    def get(self, request, *args, **kwargs):
-        R, resp, objects, filtered = request.GET, None, [], 0
-        # first load the template
-        if R.get('template'): return render(request, self.params['template_list'])
+#     def get(self, request, *args, **kwargs):
+#         R, resp, objects, filtered = request.GET, None, [], 0
+#         # first load the template
+#         print("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%")
+#         if R.get('template'): return render(request, self.params['template_list'])
         
-        #for list view of group
-        if R.get('action') == 'list':
-            objs = self.params['model'].objects.select_related(
-                *self.params['related']).filter(
-                    ~Q(id=-1), enable=True, identifier__tacode='SITEGROUP'
-            ).values(*self.params['fields']).order_by('-mdtz')
+#         #for list view of group
+#         if R.get('action') == 'list':
+#             objs = self.params['model'].objects.select_related(
+#                 *self.params['related']).filter(
+#                     ~Q(id=-1), enable=True, identifier__tacode='SITEGROUP'
+#             ).values(*self.params['fields']).order_by('-mdtz')
             
-            count = objs.count()
-            logger.info('Pgroup objects %s retrieved from db' %(count or "No Records!"))
+#             count = objs.count()
+#             logger.info('Pgroup objects %s retrieved from db' %(count or "No Records!"))
             
-            if count:
-                objects, filtered = utils.get_paginated_results(
-                    R, objs, count, self.params['fields'], self.params['related'], self.params['model'])
-                logger.info('Results paginated'if count else "")
+#             if count:
+#                 objects, filtered = utils.get_paginated_results(
+#                     R, objs, count, self.params['fields'], self.params['related'], self.params['model'])
+#                 logger.info('Results paginated'if count else "")
 
-            resp = rp.JsonResponse(data = {
-                'draw':R['draw'], 'recordsTotal':count,
-                'data' : list(objects), 
-                'recordsFiltered': filtered
-            }, status=200, safe=False)
-            return resp
+#             resp = rp.JsonResponse(data = {
+#                 'draw':R['draw'], 'recordsTotal':count,
+#                 'data' : list(objects), 
+#                 'recordsFiltered': filtered
+#             }, status=200, safe=False)
+#             return resp
         
-        #to populate all sites table
-        elif R.get('action', None) == 'allsites':
-            resp = self.get_allsites()
-            return resp
+#         #to populate all sites table
+#         elif R.get('action', None) == 'allsites':
+#             resp = self.get_allsites()
+#             return resp
         
-        #form without instance to create new data
-        elif R.get('action', None) == 'form':
-            options = self.get_options()
-            cxt = {'sitegrpform': self.params['form_class'](request=request),
-                   'msg': "create site group requested"}
-            return render(request, self.params['template_form'], context=cxt)
+#         #form without instance to create new data
+#         elif R.get('action', None) == 'form':
+#             options = self.get_options()
+#             cxt = {'sitegrpform': self.params['form_class'](request=request),
+#                    'msg': "create site group requested"}
+#             return render(request, self.params['template_form'], context=cxt)
         
-        #form with instance to load existing data
-        elif R.get('id', None):
-            obj = utils.get_model_obj(int(R['id']), request, self.params)
-            sites = pm.Pgbelonging.objects.filter(
-                pgroup=obj).values_list('assignsites', flat=True)
-            ic(sites)
-            resp = utils.render_form_for_update(
-                request, self.params, "pgroup_form", obj, {'assignedsites':sites})
-            return resp
+#         #form with instance to load existing data
+#         elif R.get('id', None):
+#             obj = utils.get_model_obj(int(R['id']), request, self.params)
+#             sites = pm.Pgbelonging.objects.filter(
+#                 pgroup=obj).values_list('assignsites', flat=True)
+#             ic(sites)
+#             resp = utils.render_form_for_update(
+#                 request, self.params, "pgroup_form", obj, {'assignedsites':sites})
+#             return resp
         
     
     
-    def get_allsites(self, request):
+#     def get_allsites(self, request):
         R , objects, filtered = request.GET, [], 0
         
         

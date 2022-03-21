@@ -5,8 +5,6 @@ import django.shortcuts as scts
 from django.contrib import messages as msg
 from django.template.loader import render_to_string
 from django.http import response as rp
-from flask import request
-from pyrsistent import v
 import apps.peoples.utils as putils
 from pprint import pformat
 from apps.peoples import models as pm
@@ -308,6 +306,8 @@ def update_timeline_data(ids, request, update=False):
         request.session['wizard_data']['timeline_data'][ids] = list(data)
 
 
+
+
 def process_wizard_form(request, wizard_data, update=False, instance=None):
     logger.info('processing wizard started...', )
     dbg('wizard_Data submitted by the view \n%s' % wizard_data)
@@ -480,6 +480,9 @@ def initailize_form_fields(form):
             visible.field.widget.attrs['class'] = 'form-check-input'
         elif visible.widget_type in ['select2', 'select', 'select2multiple', 'modelselect2', 'modelselect2multiple']:
             visible.field.widget.attrs['class'] = 'form-select form-select-solid'
+            visible.field.widget.attrs['data-control'] = 'select2'
+            visible.field.widget.attrs['data-placeholder'] = 'Select an option'
+            visible.field.widget.attrs['data-allow-clear'] = 'true'
         
 
 
@@ -530,7 +533,7 @@ def get_or_create_none_bv():
 
 def get_or_create_none_typeassist():
     obj, _ = TypeAssist.objects.get_or_create(
-        id = -1,
+        Q(id = -1) | Q(tacode='NONE'),
         defaults={
             'tacode':"NONE", 'taname':"NONE",'id':-1
         }

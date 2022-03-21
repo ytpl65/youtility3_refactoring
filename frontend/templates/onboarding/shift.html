@@ -3,121 +3,95 @@
 
 <!---- BEGIN CARD TITLE ------>
 {% block card_title %}
-Capability List
+Shift List
 {% endblock card_title %}
 <!----- END CARD TITLE -------->
 
 <!------------------------------------ BEGIN PAGE BREADCUMBS ------------------------------------>
 {% block pagebreadcumb %}
 {{ super() }}
-<li class="breadcrumb-item pe-3"><a href="javascript:void(0)" class="pe-3">Capability List</a></li>
+<li class="breadcrumb-item pe-3"><a href="javascript:void(0)" class="pe-3">Shift List</a></li>
 {% endblock pagebreadcumb %}
 <!------------------------------------- END PAGE BREADCUMBS ------------------------------------->
 
 
-<!-------------------------------------------- BEGIN BU TABLE ------------------------------------------->
 {% block table %}
-    <!------------------ BEGIN TABLE --------------------->
-    <table id="cap_table" class="display compact cell-border" style="width:100%">
-        <thead class="fw-bold fs-6">
-            <th>Code</th>
-            <th>Name</th>
-            <th>Capability for</th>
-            <th>Belongs To</th>
-        </thead>
-
-    </table>
-    <!------------------ END TABLE --------------------->
-
+<table id="shift_table" class="display cell-bordered compact hover" style="width:100%"></table>
 {% endblock table %}
-<!------------------ --------------------------END BU TABLE ------------------------------------------------->
 
 
 {% block popup_alerts %}
 <!-- THE MODAL WE WILL BE USING -->
-<div class="modal animate__animated animate__zoomIn" tabindex="-1" aria-hidden="true"  aria-labelledby="exampleModalLabel" data-bs-backdrop="static" id="modal-cap">
-	<div class="modal-dialog modal-dialog-centered modal-lg">
-		<div class="modal-content" id="cap_content">
+<div class="modal animate__animated animate__zoomIn" tabindex="-1" aria-hidden="true"  aria-labelledby="exampleModalLabel" data-bs-backdrop="static" id="modal-shift">
+	<div class="modal-dialog modal-dialog-centered modal-xl">
+		<div class="modal-content" id="shift_content">
 		</div>
 	</div>
 </div>
 {% endblock popup_alerts %}
 
+
+
 <!--------- BEGIN EXTRA SCRIPTS ----------------------------->
 {% block extra_scripts %}
 <script>
 	var table             = null;
-	const modal_id        = "#modal-cap"
-	const modalcontent_id = "#cap_content"
-	const formFilter      = "#cap_filter"
-	const table_id        = "#cap_table"
-	const formid          = "#id_capform"
-	const urlname         = "{{ url('peoples:capability') }}"
-	const viewname        = "Capability"
-	const rowlink         = "a.cap-link"
+	const modal_id        = "#modal-shift"
+	const modalcontent_id = "#shift_content"
+	const table_id        = "#shift_table"
+	const formid          = "#id_shiftform"
+	const urlname         = "{{ url('onboarding:shift') }}"
+	const viewname        = "Shift"
+	const rowlink         = "a.shift-link"
 	
 	$(document).ready(function () {
-		new ClipboardJS('.btn-copy');
-		$("input").keypress(function(event) {
-			if (event.which == 13) {
-				event.preventDefault();
-				$(formFilter).submit();
-			}
-		});
+
         //beforeSend of capability ajax request 
-        function capBeforeSend(){
+        function ShiftBeforeSend(){
             $(modal_id).modal("show");
         }
-		//datatable initialization
+		////datatable initialization
         table = $(table_id).DataTable({
-			//orderCellsTop: true,
 			ajax: {
-                url    : '{{ url("peoples:capability") }}?action=list',
+                url    : '{{ url("onboarding:shift") }}?action=list',
             },
 			serverSide : true,
 			processing : true,
 			responsive : true,
 			fixedHeader: true,
-			search    : {return: true},
-			lengthMenu: [[10, 20, 30], [10, 20, 30]],
-			language: {
-				searchPlaceholder: "Search...",
-				search:"_INPUT_",
-				processing:"Getting Data"
-			},
-            dom:"<'row'" +
-                "<'col-sm-6 d-flex align-items-center justify-conten-start'f>" +
-                "<'col-sm-6 d-flex align-items-center justify-content-end'B>" +
-                ">" +
-
-                "<'table-responsive'tr>",
-            ordering:false,
-            scrollCollapse: true,
+			language   : {
+                search           : "_INPUT_",
+                searchPlaceholder: "Search ..",
+				processing:"Getting Data"},
+            search    : {return: true},
+            lengthMenu: [[10, 20, 30], [10, 20, 30]],
+            dom       : `<'row' <'col-sm-6 d-flex justify-content-start'f> <'col-sm-6 d-flex justify-content-end'B> >rt<'row'
+			 <'col-sm-6'l> <'col-sm-6'p><'col-sm-12 d-flex justify-content-center'i>>`,
 			columns     : [
-                { "data": "capscode" },
-                { "data": "capsname" },
-                { "data": "cfor" },
-                { "data": "parent__capscode" },
+                { "data": "id", 'visible':false, 'searchable':false, 'orderable':false},
+                { "data": "shiftname" , 'title':'Name',
+                    'render':function(data, type, row, meta){
+                        return `<a href="#" class="shift-link" data-id=${row['id']} data-rowid=${meta.row}>${data}</a>`
+                    }
+                },
+                { "data": "starttime", 'title':'Start'},
+                { "data": "endtime", 'title':'End' },
+                { "data": "nightshift_appicable", 'title':'Night Shift',
+                    'render': function(data, type, row, meta){
+                        return data === true ? "True": "False"
+                    } 
+                },
             ],
-			columnDefs:[
-				{
-					targets: 1,
-					data   : 'tacode',
-					render : function ( data, type, row, meta ) {
-						return `<a href="#" class="cap-link" data-id=${row['id']} data-rowid=${meta.row}>${data}</a>`
-					}
-				}
-			],
 			buttons:[
 				{
-					text:`Add New ${viewname} &nbsp;<i class='fas fa-plus ch4'></i></a>`,
-					className:"btn btn-sm btn-light-primary btn-hover-rise",
+					text     : `Add New &nbsp;<i class='fas fa-plus ch4'></i></a>`,
+					className: "btn btn-sm btn-light-primary",
 					//action for add_new_button 
 					action: function(e, dt, node, config){
                         const params = {
-                            'modal_id'    : modal_id,
-                            'url'         : `${urlname}?action=form`,
-                            'beforeSend'  : capBeforeSend }
+                            'modal_id'  : modal_id,
+                            'url'       : `${urlname}?action=form`,
+                            'beforeSend': ShiftBeforeSend }
 						fire_ajax_get(params)
 						.done((data, status, xhr) => {
 							$(modalcontent_id).attr('data-form', 'create')
@@ -130,7 +104,10 @@ Capability List
 				}
 			]
 		})
+		$('.btn').removeClass('dt-button')
+		
 
+		//END STYLING DATATABLE
 
 		
 		//submit form
@@ -149,18 +126,15 @@ Capability List
 			.done((data, status, xhr) => { //function to submit post request
 				console.log("data ", data)
 				$(modal_id).modal("hide");
-				Swal.fire(
-				`${viewname} saved`,
-				`${viewname} with this code <strong>${data.code}</strong> has been saved successfully`,
-				'success'
-				).then(function(){
-					location.reload()
-				})
+				table.row.add(data.row).draw()
+				var isupdated = formtype === 'update' ? true : false
+				show_successful_save_alert(update=isupdated)
 			})
 		})
 
 		//update row (form-view)
-		$('tbody').click(rowlink, (e) => {
+		$("tbody").click(rowlink,  (e) => {
+			console.log(e)
 			e.preventDefault();
 			var id = $(e.originalEvent.originalTarget).attr('data-id');
 			var rowid = $(e.originalEvent.originalTarget).attr('data-rowid');
@@ -172,7 +146,7 @@ Capability List
 			const params = {
 				'modal_id'    : modal_id,
 				'url'         : `${urlname}?id=${id}`,
-				'beforeSend'  : capBeforeSend }
+				'beforeSend'  : ShiftBeforeSend }
 			fire_ajax_get(params)
 			.done((data, status, xhr) => {
 				$(modalcontent_id).attr('data-form', 'update')
@@ -185,9 +159,9 @@ Capability List
 	}); //END document.ready()
 
 	//delete ajax request 
-	function isCapDeleted(id){ 
+	function isShiftDeleted(id){ 
 		console.log("id ", id)
-		const params = {url:`${urlname}?action=delete&id=${id}`}
+		const params = {url:`${urlname}?action=delete&id=${id}`, 'beforeSend':function () {}}
 		fire_ajax_get(params)
 		.done((data, status, xhr) => {
 			if(!xhr.status === 200){
@@ -203,12 +177,12 @@ Capability List
 
 
 	//delete capability 
-	function deleteCapability(elemt){
+	function deleteShift(elemt){
 		var id = $(elemt).attr("data-id");
 		show_alert_before_delete(viewname)
 		.then((result) => {
 			if(result.isConfirmed){ //delete requested by user
-				status = isCapDeleted(id) //fire's request
+				status = isShiftDeleted(id) //fire's request
 				console.log("status ", status)
 				if(status){
 					show_successful_delete_alert() //defined in customjs
@@ -216,7 +190,7 @@ Capability List
 					//delete row from table
 					row_index = parseInt($(modalcontent_id).attr('data-rowid'))
 					console.log(row_index, "row index")
-					table.row(row_index).remove().draw();
+					table.row(row_index).remove().draw(false);
 				}else{
 					show_error_alert('Something went wrong!');
 				}

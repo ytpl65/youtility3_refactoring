@@ -1,9 +1,5 @@
 ################## Activity app - Forms ###################
-from asyncio.log import logger
-from re import A
 from django import forms
-from django.forms import widgets
-from flask import request
 import apps.activity.models as am
 import apps.onboarding.models as om
 import apps.peoples.models as pm
@@ -469,10 +465,7 @@ class JobForm(forms.ModelForm):
                 model = pm.People,
                 search_fields   = ['peoplecode__icontains', 'peoplecode__icontains'],
                 max_results     = 10),
-            'bu'              : s2forms.ModelSelect2Widget(
-                model = om.Bt,
-                search_fields   = ['buname__icontains', 'bucode__icontains'],
-                max_results     = 10),
+            'bu'              : s2forms.Select2Widget,
         }
     
     def clean_from_date(self):
