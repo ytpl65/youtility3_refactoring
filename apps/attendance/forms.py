@@ -1,10 +1,13 @@
-from datetime import datetime, timezone
+from datetime import datetime, timezone, tzinfo
+import re
+from xmlrpc.client import TRANSPORT_ERROR
 from django import forms
 from django_select2 import forms as s2forms
 from apps.core import utils
 from django.contrib.gis.geos import GEOSGeometry
 import apps.attendance.models as atdm
 import apps.peoples.models as pm
+from django.utils.timezone import get_current_timezone as ctz
 
 class AttendanceForm(forms.ModelForm):
     required_css_class = "required"
@@ -53,7 +56,7 @@ class AttendanceForm(forms.ModelForm):
     
 def clean_geometry(val):
     try:
-        val = GEOSGeometry(val)
+        val = GEOSGeometry(val, srid=4326)
     except ValueError:
         raise forms.ValidationError('lat lng string input unrecognized!')
     else: return val
@@ -110,3 +113,32 @@ class TrackingForm(forms.ModelForm):
         if val := self.cleaned_data.get('gpslocation'):
             val = clean_geometry(val)
         return val
+    
+#this form is used by graphql    
+class InsertPeopleEventlog(forms.ModelForm):
+    cdtz          = forms.CharField(max_length=55, required=True)
+    mdtz          = forms.CharField(max_length=55, required=True)
+    startlocation = forms.CharField(max_length=100, required=True)
+    endlocation   = forms.CharField(max_length=100, required=False)
+    
+    class Meta:
+        model = atdm.PeopleEventlog
+        fields = [
+            'transportmodes', 'accuracy', 'datefor', 
+            'deviceid', 'shift', 'people', 'client', 'bu', 
+            'expamt', 'duration', 'remarks', 'distance', 
+            'cuser', 'muser', 'startlocation', 'endlocation'
+        ]
+        
+    def clean_startlocation(self):
+        if val := self.cleaned_data.get('startlocation'):
+            val = clean_geometry(val)
+        return val 
+
+    def clean_cdtz(self):
+        if val:=self.cleaned_data.get('cdtz'):
+            return datetime.strptime(val, "%Y-%m-%d %H:%M:%S").replace(tzinfo=ctz())
+            
+    def clean_mdtz(self):
+        if val:= self.cleaned_data.get('mdtz'):
+            return datetime.strptime(val, "%Y-%m-%d %H:%M:%S").replace(tzinfo=ctz())

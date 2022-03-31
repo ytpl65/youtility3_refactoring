@@ -120,7 +120,6 @@ class PeopleForm(forms.ModelForm):
             'dateofjoin'  : forms.DateInput,
             'dateofreport': forms.DateInput,
             'peopletype'  : s2forms.Select2Widget,
-            'shift'       : s2forms.Select2Widget,
             'gender'      : s2forms.Select2Widget,
             'department'  : s2forms.Select2Widget,
             'designation' : s2forms.Select2Widget,
@@ -140,7 +139,6 @@ class PeopleForm(forms.ModelForm):
         self.fields['dateofbirth'].input_formats  = settings.DATE_INPUT_FORMATS
         self.fields['dateofreport'].input_formats = settings.DATE_INPUT_FORMATS
         self.fields['dateofjoin'].input_formats   = settings.DATE_INPUT_FORMATS
-        self.fields['shift'].queryset             = om.Shift.objects.all()
         utils.initailize_form_fields(self)
 
     def is_valid(self) -> bool:
@@ -222,13 +220,13 @@ class PgroupForm(forms.ModelForm):
 
     class Meta:
         model = pm.Pgroup
-        fields = ['groupname', 'enable', 'identifier']
+        fields = ['name', 'enable', 'identifier']
         labels = {
-            'groupname': 'Name',
+            'name': 'Name',
             'enable': 'Enable'
         }
         widgets = {
-            'groupname': forms.TextInput(attrs={
+            'name': forms.TextInput(attrs={
                 'placeholder': "Enter People Group Name"
             }),
             'identifier':forms.TextInput(attrs = {"style":"display:none"})

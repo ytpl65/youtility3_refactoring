@@ -74,12 +74,14 @@
   const WizardViewUrl      = "{{ url('onboarding:wizard_view') }}"
   const saveAsDraftUrl     = "{{ url('onboarding:save_asdraft') }}"
   const deleteFromDraftUrl = "{{ url('onboarding:delete_from_draft') }}"
+  var dontBlock = false;
   var target = document.querySelector("body")
   var blockUI = new KTBlockUI(target, {
     message:"<div class='blockui-message'><span class='spinner-border text-primary'></span</div>",
   });
   function startBlockUi(){
-    blockUI.block();
+    if(!dontBlock)
+      blockUI.block();
   }
   
   function endBlockUi(){

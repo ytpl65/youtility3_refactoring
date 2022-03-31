@@ -136,7 +136,7 @@ class MasterReportForm(View, LoginRequiredMixin):
     def post(self, request, *args, **kwargs):
         """Handles creation of Pgroup instance."""
         log.info('%s form submitted'%self.viewname)
-        R = QueryDict(request.POST)
+        R, create = QueryDict(request.POST), True
         utils.PD(post=R)
         response = None
         #process already existing data for update
@@ -144,6 +144,7 @@ class MasterReportForm(View, LoginRequiredMixin):
             obj = utils.get_model_obj(pk, request, {'model': self.model})
             form = self.form_class(
                 request=request, instance=obj, data=request.POST)
+            create=False
             log.info("retrieved existing %s template:= '%s'" %
                      (obj.qset_name, obj.id))
         
@@ -156,7 +157,7 @@ class MasterReportForm(View, LoginRequiredMixin):
         #check for validation
         try:
             if form.is_valid():
-                response = self.process_valid_form(request, form)
+                response = self.process_valid_form(request, form, create)
             else:
                 response = self.process_invalid_form(form)
         except Exception:
@@ -166,7 +167,7 @@ class MasterReportForm(View, LoginRequiredMixin):
                 {'errors': 'Failed to process form, something went wrong'}, status=404)
         return response
 
-    def process_valid_form(self, request, form):
+    def process_valid_form(self, request, form, create):
         resp = None
         log.info("guard tour form processing/saving [ START ]")
         import json
@@ -178,7 +179,7 @@ class MasterReportForm(View, LoginRequiredMixin):
             report.site_type_includes = json.dumps(request.POST.getlist('site_type_includes', []))
             report.parent_id  = -1
             report.save()
-            report = putils.save_userinfo(report, request.user, request.session)
+            report = putils.save_userinfo(report, request.user, request.session, create=create)
             log.debug("report saved:%s"%(report.qset_name))
         except Exception as ex:
             log.critical("%s form is failed to process"%self.viewname, exc_info=True)

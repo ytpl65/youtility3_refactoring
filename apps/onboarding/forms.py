@@ -146,14 +146,14 @@ class BtForm(forms.ModelForm):
     
     def clean(self):
         cleaned_data = super().clean()
-        from .utils import create_bt_tree
+        from .utils import create_bv_reportting_heirarchy
+        newcode = cleaned_data.get('bucode')
+        newtype = cleaned_data.get('identifier')
         parent= cleaned_data.get('parent')
-        bucode = cleaned_data.get('bucode')
-        identifier = cleaned_data.get('identifier')
         instance = self.instance
-        ic(bucode, identifier, instance)
-        if bucode and identifier and instance:
-            create_bt_tree(bucode, identifier, instance, parent)
+        ic(newcode, newtype, instance)
+        if newcode and newtype and instance:
+            create_bv_reportting_heirarchy(instance, newcode, newtype, parent)
         
         
     

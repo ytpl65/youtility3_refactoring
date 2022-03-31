@@ -59,12 +59,14 @@ def get_tatype_choices(superadmin=False):
         Q(tatype__tacode='NONE') & ~Q(tacode='NONE') & ~Q(tacode='BU_IDENTIFIER'))
 
 
-def update_children_tree(instance, newcode, newtype):
+def update_children_tree(instance, newcode, newtype, whole=False):
     """Updates tree of child bu tree's"""
     from apps.core.raw_queries import query
     try:
-        childs = Bt.objects.raw(query['get_childrens_of_bt']%(instance.id))
-        ic(childs)
+        if not whole:
+            childs = Bt.objects.raw(query['get_childrens_of_bt']%(instance.id))
+            ic(childs)
+        else: childs = Bt.objects.exclude(id=-1)
         if len(childs) > 1:
             prev_code = instance.bucode
             prev_type = instance.identifier.tacode
@@ -170,6 +172,30 @@ def create_bt_tree(bucode, indentifier, instance, parent=None):
         logger.info('BU Tree created for instance %s... DONE' %
                     (instance.bucode))
 
+
+def create_bv_reportting_heirarchy(instance, newcode, newtype, parent):
+    if instance.id != None:
+        dbg("Updating the reporting heirarchy!")
+        #update bu tree
+        if instance.bucode != "NONE" and instance.parent.bucode == 'NONE':
+            dbg("Updating heirarchy of the Root Node")
+            update_children_tree(instance, newcode, newtype.tacode)
+        else:
+            dbg("Updating heirarchy of branch Node")
+            update_children_tree(instance, newcode, newtype.tacode, whole=True)
+        pass
+    else:
+        dbg("Creating the reporting heirarchy!")
+        #create bu tree
+        if instance.bucode != "NONE" and parent.bucode == 'NONE':
+            #Root Node
+            dbg("Creating heirarchy of the Root Node")
+            instance.butree = f'{newtype.tacode} :: {newcode}'
+        elif instance.butree != (parent.butree + ' > ' + newcode):
+            #Non Root Node
+            dbg("Creating heirarchy of branch Node")
+            instance.butree += f"{parent.butree} > {newtype.tacode} :: {newcode}"
+        
 
 def create_tenant(buname, bucode):
     # create_tenant for every client

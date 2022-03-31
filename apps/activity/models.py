@@ -481,7 +481,7 @@ class JobneedDetails(BaseModel, TenantAwareModel):
     alerts       = models.BooleanField(_("Alerts"), default=False)
 
     class Meta(BaseModel.Meta):
-        db_table     = 'jobneed_details'
+        db_table     = 'jobneeddetails'
         verbose_name = 'JobneedDetails'
 
 

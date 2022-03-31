@@ -1,4 +1,5 @@
 from random import lognormvariate
+from xmlrpc.client import TRANSPORT_ERROR
 import apps.schedhuler.utils as sutils
 import apps.peoples.utils as putils
 from django.db.models import Q
@@ -48,13 +49,14 @@ class Schd_I_TourFormJob(LoginRequiredMixin, View):
     def post(self, request, *args, **kwargs):
         """Handles creation of Pgroup instance."""
         log.info('Guard Tour form submitted')
-        data = QueryDict(request.POST['formData'])
+        data, create = QueryDict(request.POST['formData']), True
         if pk := request.POST.get('pk', None):
             obj = utils.get_model_obj(pk, request, {'model': self.model})
             form = self.form_class(
                 instance=obj, data=data, initial=self.initial)
             log.info("retrieved existing guard tour jobname:= '%s'" %
                      (obj.jobname))
+            create=False
         else:
             form = self.form_class(data=data, initial=self.initial)
             log.info("new guard tour submitted following is the form-data:\n%s\n" %
@@ -63,7 +65,7 @@ class Schd_I_TourFormJob(LoginRequiredMixin, View):
         try:
             with transaction.atomic(using=utils.get_current_db_name()):
                 if form.is_valid():
-                    response = self.process_valid_schd_tourform(request, form)
+                    response = self.process_valid_schd_tourform(request, form, create)
                 else:
                     response = self.process_invalid_schd_tourform(
                         form, self.subform, request, self.template_path)
@@ -74,18 +76,18 @@ class Schd_I_TourFormJob(LoginRequiredMixin, View):
                 {'errors': 'Failed to process form, something went wrong'}, status=404)
         return response
 
-    def process_valid_schd_tourform(self, request, form):
+    def process_valid_schd_tourform(self, request, form, create):
         resp = None
         log.info("guard tour form processing/saving [ START ]")
         try:
             assigned_checkpoints = json.loads(
                 request.POST.get("asssigned_checkpoints"))
             job         = form.save(commit=False)
-            job.parent  = utils.get_or_create_none_job()
-            job.asset = sutils.get_or_create_none_asset()
-            job.qset  = sutils.get_or_create_none_qset()
+            job.parent_id  = -1
+            job.asset_id = -1
+            job.qset_id  = -1
             job.save()
-            job = putils.save_userinfo(job, request.user, request.session)
+            job = putils.save_userinfo(job, request.user, request.session, create=create)
             self.save_checpoints_for_tour(assigned_checkpoints, job, request)
             log.info('guard tour  and its checkpoints saved success...')
         except Exception as ex:
@@ -140,7 +142,7 @@ class Schd_I_TourFormJob(LoginRequiredMixin, View):
                 status = "CREATED" if created else "UPDATED"
                 log.info("\nsaving checkpoint:= '%s' for JOB:= '%s' with expirytime:= '%s'  %s\n" % (
                     cp[2],  job.jobname, cp[5], status))
-                putils.save_userinfo(checkpoint, request.user, request.session)
+                putils.save_userinfo(checkpoint, request.user, request.session, create=created)
         except Exception as ex:
             log.critical(
                 "failed to insert checkpoints, something went wrong", exc_info=True)
@@ -201,7 +203,7 @@ class Update_I_TourFormJob(Schd_I_TourFormJob, LoginRequiredMixin, View):
 class Retrive_I_ToursJob(LoginRequiredMixin, View):
     model = am.Job
     template_path = 'schedhuler/schd_i_tourlist_job.html'
-    fields = ['jobname', 'people__peoplename', 'pgroup__groupname', 'from_date', 'upto_date',
+    fields = ['jobname', 'people__peoplename', 'pgroup__name', 'from_date', 'upto_date',
               'planduration', 'gracetime', 'expirytime', 'id']
     related = ['pgroup', 'people']
 
@@ -281,7 +283,7 @@ def deleteChekpointFromTour(request):
 class Retrive_I_ToursJobneed(LoginRequiredMixin, View):
     model = am.Jobneed
     template_path = 'schedhuler/i_tourlist_jobneed.html'
-    fields    = ['jobdesc', 'people__peoplename', 'pgroup__groupname', 'id',
+    fields    = ['jobdesc', 'people__peoplename', 'pgroup__name', 'id',
               'plandatetime', 'expirydatetime', 'jobstatus', 'gracetime', 'performed_by__peoplename',]
     related   = ['pgroup',  'ticket_category', 'asset', 'client',
                'frequency', 'job', 'qset', 'people', 'parent', 'bu']
@@ -446,13 +448,14 @@ class Schd_E_TourFormJob(LoginRequiredMixin, View):
     def post(self, request, *args, **kwargs):
         """Handles creation of Pgroup instance."""
         log.info('External Tour form submitted')
-        formData = QueryDict(request.POST.get('formData'))
+        formData, create = QueryDict(request.POST.get('formData')), True
         if pk := request.POST.get('pk', None):
             obj = utils.get_model_obj(pk, request, {'model': self.model})
             form = self.form_class(
                 instance=obj, data=formData, initial=self.initial)
             log.info("retrieved existing guard tour jobname:= '%s'" %
                      (obj.jobname))
+            create=False
         else:
             form = self.form_class(data=formData, initial=self.initial)
             log.info("new guard tour submitted following is the form-data:\n%s\n" %
@@ -461,7 +464,7 @@ class Schd_E_TourFormJob(LoginRequiredMixin, View):
         try:
             with transaction.atomic(using=utils.get_current_db_name()):
                 if form.is_valid():
-                    response = self.process_valid_schd_tourform(request, form)
+                    response = self.process_valid_schd_tourform(request, form, create)
                 else:
                     response = self.process_invalid_schd_tourform(form)
         except Exception:
@@ -481,17 +484,17 @@ class Schd_E_TourFormJob(LoginRequiredMixin, View):
         return rp.JsonResponse(cxt, status=404)
 
 
-    def process_valid_schd_tourform(self, request, form):
+    def process_valid_schd_tourform(self, request, form, create):
         resp = None
         log.info("external tour form processing/saving [ START ]")
         try:
             job         = form.save(commit=False)
-            job.parent  = utils.get_or_create_none_job()
-            job.asset = utils.get_or_create_none_asset()
+            job.parent_id  = -1
+            job.asset_id = -1
             job.save()
             print("%%%%%%%%%5",  form.data, form.data.get('bu'))
             job = putils.save_userinfo(job, request.user, request.session,
-            bu = form.data.get('bu'))
+            bu = form.data.get('bu'), create=create)
             log.info('external tour  and its checkpoints saved success...')
         except Exception as ex:
             log.critical(
@@ -561,7 +564,7 @@ class Update_E_TourFormJob(Schd_E_TourFormJob, LoginRequiredMixin, View):
 class Retrive_E_ToursJob(LoginRequiredMixin, View):
     model = am.Job
     template_path = 'schedhuler/schd_e_tourlist_job.html'
-    fields = ['jobname', 'people__peoplename', 'pgroup__groupname',
+    fields = ['jobname', 'people__peoplename', 'pgroup__name',
               'from_date', 'upto_date',
               'planduration', 'gracetime', 'expirytime', 'id', 'bu__buname']
     related = ['pgroup', 'people']
@@ -731,7 +734,7 @@ class SchdTaskFormJob(LoginRequiredMixin, View):
 
     def post(self, request, *args, **kwargs):
         log.info('Task form submitted')
-        data = QueryDict(request.POST['formData'])
+        data, create = QueryDict(request.POST['formData']), True
         utils.display_post_data(data)
         if pk := request.POST.get('pk', None):
             obj = utils.get_model_obj(pk, request, {'model': self.model})
@@ -739,6 +742,7 @@ class SchdTaskFormJob(LoginRequiredMixin, View):
                 instance=obj, data=data, initial = self.initial)
             log.info("retrieved existing task whose jobname:= '%s'" %
                      (obj.jobname))
+            create=Fase
         else:
             form = self.form_class(data=data, initial=self.initial)
             log.info("new task submitted following is the form-data:\n%s\n" %
@@ -747,7 +751,7 @@ class SchdTaskFormJob(LoginRequiredMixin, View):
         try:
             with transaction.atomic(using=utils.get_current_db_name()):
                 if form.is_valid():
-                    response = self.process_valid_schd_taskform(request, form)
+                    response = self.process_valid_schd_taskform(request, form, create)
                 else:
                     response = self.process_invalid_schd_taskform(
                         form)
@@ -758,14 +762,14 @@ class SchdTaskFormJob(LoginRequiredMixin, View):
                 {'errors': 'Failed to process form, something went wrong'}, status=404)
         return response
 
-    def process_valid_schd_taskform(self, request, form):
+    def process_valid_schd_taskform(self, request, form, create):
         resp = None
         log.info("task form processing/saving [ START ]")
         try:
             job         = form.save(commit=False)
-            job.parent  = utils.get_or_create_none_job()
+            job.parent_id  = -1
             job.save()
-            job = putils.save_userinfo(job, request.user, request.session)
+            job = putils.save_userinfo(job, request.user, request.session, create=create)
             log.info('task form saved success...')
         except Exception as ex:
             log.critical("task form is processing failed", exc_info=True)
@@ -793,7 +797,7 @@ class SchdTaskFormJob(LoginRequiredMixin, View):
 class RetriveSchdTasksJob(LoginRequiredMixin, View):
     model = am.Job
     template_path = 'schedhuler/schd_tasklist_job.html'
-    fields = ['jobname', 'people__peoplename', 'pgroup__groupname',
+    fields = ['jobname', 'people__peoplename', 'pgroup__name',
               'from_date', 'upto_date', 'qset__qset_name', 'asset__assetname',
               'planduration', 'gracetime', 'expirytime', 'id']
     related = ['pgroup', 'people', 'asset']
@@ -870,7 +874,7 @@ class RetrieveTasksJobneed(LoginRequiredMixin, View):
     template_path = 'schedhuler/tasklist_jobneed.html'
 
     fields  = [
-        'jobdesc', 'people__peoplename', 'pgroup__groupname', 'id',
+        'jobdesc', 'people__peoplename', 'pgroup__name', 'id',
         'plandatetime', 'expirydatetime', 'jobstatus', 'gracetime',
         'performed_by__peoplename', 'asset__assetname', 'qset__qset_name'
     ]
@@ -992,7 +996,7 @@ class Ticket(LoginRequiredMixin, View):
 
     def post(self, request, *args, **kwargs):
         log.info('ticket form submitted!')
-        data = QueryDict(request.POST['formData'])
+        data, create = QueryDict(request.POST['formData']), True
         utils.display_post_data(data)
         if pk := request.POST.get('pk', None):
             obj = utils.get_model_obj(pk, request, {'model': self.model})
@@ -1000,6 +1004,7 @@ class Ticket(LoginRequiredMixin, View):
                 instance=obj, data=data, initial = self.initial)
             log.info("retrieved existing ticket whose ticketno:= '%s'" %
                      (obj.ticketno))
+            create=False
         else:
             form = self.form_class(data=data, initial=self.initial)
             log.info("new ticket submitted following is the form-data:\n%s\n" %
@@ -1008,7 +1013,7 @@ class Ticket(LoginRequiredMixin, View):
         try:
             with transaction.atomic(using=utils.get_current_db_name()):
                 if form.is_valid():
-                    response = self.process_valid_form(request, form)
+                    response = self.process_valid_form(request, form, create)
                 else:
                     response = self.process_invalid_form(
                         form)
@@ -1019,17 +1024,17 @@ class Ticket(LoginRequiredMixin, View):
                 {'errors': 'Failed to process form, something went wrong'}, status=404)
         return response
     
-    def process_valid_form(request, form):
+    def process_valid_form(request, form, create):
         resp = None
         try:
             ticket             = form.save(commit=False)
-            ticket.qset      = utils.get_or_create_none_qset()
-            ticket.performedby = utils.get_or_create_none_people()
-            ticket.pgroup     = utils.get_or_create_none_pgroup()
-            ticket.parent      = utils.get_or_create_none_jobneed()
-            ticket.job       = utils.get_or_create_none_job()
+            ticket.qset_id      = -1
+            ticket.performedby_id = -1
+            ticket.pgroup_id     = -1
+            ticket.parent_id      = -1
+            ticket.job_id       = -1
             ticket.save()
-            ticket = putils.save_userinfo(ticket, request.user)
+            ticket = putils.save_userinfo(ticket, request.user, create=create)
         except Exception as ex:
             log.critical("ticket form is processing failed", exc_info=True)
             resp = rp.JsonResponse(
@@ -1060,7 +1065,7 @@ class RetriveTickets(LoginRequiredMixin, View):
     model = am.Jobneed
     template_path = 'schedhuler/ticket_list.html'
     fields = [
-        'cdtz', 'ticketno', 'bu__buname', 'pgroup__groupname',
+        'cdtz', 'ticketno', 'bu__buname', 'pgroup__name',
         'jobdesc', 'people__peoplename',  'performed_by__peoplename',
         'ticket_category__taname', 'expirydatetime', 'jobstatus', 'priority',
         'cuser__peoplename', 'id']

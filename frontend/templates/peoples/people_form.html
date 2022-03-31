@@ -1,5 +1,5 @@
 {% extends "base_form.html" %}
-{% from "onboarding/ta_form.html" import typeassist_form with context %}
+{% from "onboarding/partials/partial_ta_form.html" import typeassist_form with context %}
 
 <!---- BEGIN PAGE TITLE ---->
 {% block title %}
@@ -265,17 +265,6 @@ People
                 <!--LABEL FIELD-->
 
 
-                <!--LABEL FIELD-->
-                <label for="id_shift">Shift:</label>
-                <!--INPUT GROUP-->
-                <div class="col-md-4">
-                    {{ peopleform.shift }}
-                    <!--HELP TEXT-->
-
-                    <!----- BEGIN ERROR FIELD  ------->
-                    {{ peopleform.shift.errors }}
-                    <!----- END ERROR FIELD  ------->
-                </div>
 
                 <!--LABEL FIELD-->
                 <label for="id_peopletype">People Type:</label>
@@ -322,7 +311,7 @@ People
                 </div>
                 <!--LABEL FIELD-->
                 <!------------Checkboxes Rendering Last --------------------->
-                <div class="booleans col-md-6 d-flex justify-content-sm-start mt-5">
+                <div class="booleans col-md-6 d-flex justify-content-sm-between mt-5">
                     <!--ENABLE CHECKBOX -->
                     <label for=id_isenable class="form-check-label bool col-form-label me-5 text-sm-right">Enable
                         &nbsp {{ peopleform.enable }}</label>

@@ -60,7 +60,7 @@ class Attendance(LoginRequiredMixin, View):
         return resp
 
     def post(self, request, *args, **kwargs):
-        resp = None
+        resp, create = None, True
         try:
             print(request.POST)
             data = QueryDict(request.POST['formData'])
@@ -68,10 +68,11 @@ class Attendance(LoginRequiredMixin, View):
                 msg = "attendance_view"
                 form = utils.get_instance_for_update(
                     data, self.params, msg, int(pk))
+                create=False
             else:
                 form = self.params['form_class'](data)
             if form.is_valid():
-                resp = self.handle_valid_form(form, request)
+                resp = self.handle_valid_form(form, request, create)
             else:
                 cxt = {'errors': form.errors}
                 resp = utils.handle_invalid_form(request, self.params, cxt)
@@ -79,12 +80,12 @@ class Attendance(LoginRequiredMixin, View):
             resp = utils.handle_Exception(request)
         return resp
 
-    def handle_valid_form(self, form, request):
+    def handle_valid_form(self, form, request, create):
         logger.info('attendance form is valid')
         try:
             import json
             attd = form.save()
-            putils.save_userinfo(attd, request.user, request.session)
+            putils.save_userinfo(attd, request.user, request.session, create)
             logger.info("attendance form saved")
             data = {'success': "Record has been saved successfully",
                     'type': attd.peventtype}
@@ -158,19 +159,19 @@ class Conveyance(LoginRequiredMixin, View):
     
     
     def post(self, request, *args, **kwargs):
-        resp=None
+        resp, create=None, True
         try:
             #convert queryparams to python datatypes
             data = QueryDict(request.POST['formData'])
             if pk := data.get('pk', None):
                 msg = 'conveyance_view'
                 form = utils.get_instance_for_update(
-                    data, self.params, msg, int(pk)
-                )
+                    data, self.params, msg, int(pk))
+                create=False
             else:
                 form = self.params['form_class'](data, request=request)
             if form.is_valid():
-                resp = self.handle_valid_form(form, request)
+                resp = self.handle_valid_form(form, request, create)
             else:
                 cxt = {'errors': form.errors}
                 resp = utils.handle_invalid_form(request, self.params, cxt)
@@ -179,12 +180,12 @@ class Conveyance(LoginRequiredMixin, View):
         return resp
 
 
-    def handle_valid_form(self, form, request):
+    def handle_valid_form(self, form, request, create):
         logger.info('conveyance form is valid')
         from apps.core.utils import handle_intergrity_error
         try:
             ta = form.save()
-            putils.save_userinfo(ta, request.user, request.session)
+            putils.save_userinfo(ta, request.user, request.session, create=create)
             logger.info("conveyance form saved")
             data = {'row': model_to_dict(ta) }
             return rp.JsonResponse(data, status=200)

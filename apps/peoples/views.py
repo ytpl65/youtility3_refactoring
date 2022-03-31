@@ -1,3 +1,4 @@
+from asyncio import FastChildWatcher, create_task
 from django.db.utils import IntegrityError
 from django.forms import model_to_dict
 from django.http.request import QueryDict
@@ -170,6 +171,7 @@ class CreatePeople(LoginRequiredMixin, View):
                                                          'master/people/blank.png')
                     save_user_paswd(people)
                     send_email(people, request)
+                    utils.register_newuser_token()
                     logger.info('People Form saved... DONE')
                     messages.success(request, "Success record saved DONE!",
                                      "alert alert-success")
@@ -290,7 +292,7 @@ class UpdatePeople(LoginRequiredMixin, View):
                         'peopleimg', 'master/people/blank.png')
                     people.save()
                     people = save_userinfo(
-                        people, request.user, request.session)
+                        people, request.user, request.session, create=False)
                     logger.info('PeopleForm Form saved')
                     messages.success(request, "Success record updated successfully!",
                                      "alert alert-success")
@@ -487,7 +489,7 @@ class UpdatePgroup(LoginRequiredMixin, View):
             if form.is_valid():
                 logger.info('PgroupForm Form is valid')
                 pg = form.save(commit=True)
-                pg = save_userinfo(pg, request.user, request.session)
+                pg = save_userinfo(pg, request.user, request.session, create=False)
                 save_pgroupbelonging(pg, request)
                 logger.info('PgroupForm Form saved')
                 messages.success(request, "Success record saved successfully!",
@@ -672,7 +674,7 @@ class UpdateCapability(LoginRequiredMixin, View):
             if form.is_valid():
                 logger.info('CapabilityForm Form is valid')
                 cap = form.save()
-                cap = save_userinfo(cap, request.user, request.session)
+                cap = save_userinfo(cap, request.user, request.session, create=False)
                 messages.success(request, "Success record saved successfully!",
                                  "alert-success")
                 response = redirect('peoples:cap_form')
@@ -803,14 +805,14 @@ class Capability(View):
         return resp
 
     def post(self, request, *args, **kwargs):
-        resp = None
+        resp, create = None, True
         try:
             print(request.POST)
             data = QueryDict(request.POST['formData'])
             pk = request.POST.get('pk', None)
             print(pk, type(pk))
             if pk:
-                msg = "capability_view"
+                msg, create = "capability_view", False
                 form = utils.get_instance_for_update(
                     data, self.params, msg, int(pk))
                 print(form.data)
@@ -818,7 +820,7 @@ class Capability(View):
             else:
                 form = self.params['form_class'](data, request=request)
             if form.is_valid():
-                resp = self.handle_valid_form(form, request)
+                resp = self.handle_valid_form(form, request, create)
             else:
                 cxt = {'errors': form.errors}
                 resp = utils.handle_invalid_form(request, self.params, cxt)
@@ -827,17 +829,17 @@ class Capability(View):
             resp = utils.handle_Exception(request)
         return resp
 
-    def handle_valid_form(self, form, request):
+    def handle_valid_form(self, form, request, create):
         logger.info('capability form is valid')
         from apps.core.utils import handle_intergrity_error
         
         try:
             cap = form.save()
-            putils.save_userinfo(cap, request.user, request.session)
+            putils.save_userinfo(cap, request.user, request.session, create=create)
             logger.info("capability form saved")
             data = {'success': "Record has been saved successfully",
                     'row':pm.Capability.objects.values(
-                        *self.params['fields'].get(id = cap.id))}
+                        *self.params['fields']).get(id = cap.id)}
             return rp.JsonResponse(data, status=200)
         except IntegrityError:
             return handle_intergrity_error("Capability")
@@ -896,25 +898,25 @@ class People(View):
         return resp
 
     def post(self, request, *args, **kwargs):
-        resp = None
+        resp, create = None, True
         try:
             print(request.POST)
             data = QueryDict(request.POST['formData'])
             pk = request.POST.get('pk', None)
             print(pk, type(pk))
             if pk:
-                msg = "people_view"
+                msg, create = "people_view", False
                 people = putils.get_model_obj(pk, request,  self.params)
                 form = self.params['form_class'](data, instance=people)
                 jsonform = self.params['json_form'](
                     data, session=request.session)
-                print(form.data)
+                create = False
             else:
                 form = self.params['form_class'](data)
                 jsonform = self.params['json_form'](
                     data, session=request.session)
             if form.is_valid() and jsonform.is_valid():
-                resp = self.handle_valid_form(form, jsonform, request)
+                resp = self.handle_valid_form(form, jsonform, request, create)
             else:
                 cxt = {'errors': form.errors}
                 resp = utils.handle_invalid_form(request, self.params, cxt)
@@ -922,14 +924,14 @@ class People(View):
             resp = putils.handle_Exception(request)
         return resp
 
-    def handle_valid_form(self, form, jsonform, request):
+    def handle_valid_form(self, form, jsonform, request ,create):
         logger.info('people form is valid')
         from apps.core.utils import handle_intergrity_error
         try:
             people = form.save()
             if putils.save_jsonform(jsonform, people):
                 people = putils.save_userinfo(
-                    people, request.user, request.session)
+                    people, request.user, request.session, create=create)
                 putils.send_email(people, request)
                 logger.info("people form saved")
             data = {'success': "Record has been saved successfully",
@@ -947,7 +949,7 @@ class PeopleGroup(LoginRequiredMixin, View):
         'partial_form' : 'peoples/partials/partial_pgroup_form.html',
         'related'      : ['identifier'],
         'model'        : pm.Pgroup,
-        'fields'       : ['id', 'groupname', 'enable'],
+        'fields'       : ['id', 'name', 'enable'],
         'form_initials': {}
     }
     
@@ -1005,7 +1007,7 @@ class PeopleGroup(LoginRequiredMixin, View):
         return resp
 
     def post(self, request, *args, **kwargs):
-        resp = None
+        resp, create = None, True
         try:
             print(request.POST)
             data = QueryDict(request.POST['formData'])
@@ -1015,12 +1017,12 @@ class PeopleGroup(LoginRequiredMixin, View):
                 msg = "pgroup_view"
                 form = utils.get_instance_for_update(
                     data, self.params, msg, int(pk), kwargs = {'request':request})
-                print(form.data)
+                create= False
             else:
                 form = self.params['form_class'](data, request=request)
             
             if form.is_valid():
-                resp = self.handle_valid_form(form, request)
+                resp = self.handle_valid_form(form, request, create)
             else:
                 cxt = {'errors': form.errors}
                 resp = utils.handle_invalid_form(request, self.params, cxt)
@@ -1028,16 +1030,16 @@ class PeopleGroup(LoginRequiredMixin, View):
             resp = utils.handle_Exception(request)
         return resp
 
-    def handle_valid_form(self, form, request):
+    def handle_valid_form(self, form, request, create):
         logger.info('pgroup form is valid')
         from apps.core.utils import handle_intergrity_error
         try:
             pg = form.save(commit=False)
-            putils.save_userinfo(pg, request.user, request.session)
+            putils.save_userinfo(pg, request.user, request.session, create=create)
             save_pgroupbelonging(pg, request)
             logger.info("people group form saved")
             data = {'success': "Record has been saved successfully",
-                    'msg': pg.groupname, 'row':model_to_dict(pg)}
+                    'msg': pg.name, 'row':model_to_dict(pg)}
             return rp.JsonResponse(data, status=200)
         except IntegrityError:
             return handle_intergrity_error("Pgroup")

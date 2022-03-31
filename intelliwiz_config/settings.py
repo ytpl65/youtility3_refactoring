@@ -51,6 +51,7 @@ INSTALLED_APPS = [
     'django_extensions',
     "django_select2",
     'django_filters',
+    "graphql_jwt.refresh_token.apps.RefreshTokenConfig",
     
 
     #local apps
@@ -128,7 +129,7 @@ youtility_dbs = {
     'default': {
         'ENGINE':   'django.contrib.gis.db.backends.postgis',
         'USER':     'youtilitydba',
-        'NAME':     'intelliwiz_django',
+        'NAME':     'sps_django',
         'PASSWORD': '!!sysadmin!!',
         'HOST':     '192.168.1.254',
         'PORT':     '5432',
@@ -185,14 +186,9 @@ home_local_dbs = {
 
 
 DATABASES = youtility_dbs
-GRAPHENE = {
-    # ...
-    "ATOMIC_MUTATIONS": True,
-    "SCHEMA": "api.schema.schema",
-    'MIDDLEWARE': [
-        'graphene_django.debug.DjangoDebugMiddleware',
-    ]
-}
+
+
+
 
 CACHES = {
     "default": {
@@ -271,7 +267,10 @@ DATETIME_INPUT_FORMATS = [
 ]
 DATE_INPUT_FORMATS = [
     '%d-%b-%Y',
-    "%Y-%m-%d"
+    '%d/%b/%Y',
+    '%d/%m/%Y',
+    "%Y-%m-%d",
+    "%Y/%m/%d"
 ]
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/3.2/howto/static-files/
@@ -297,8 +296,25 @@ INTERNAL_IPS = [
 
 AUTH_USER_MODEL = 'peoples.People'
 AUTHENTICATION_BACKENDS = ('apps.peoples.backends.MultiAuthentcationBackend',
-'django.contrib.auth.backends.ModelBackend')
+'django.contrib.auth.backends.ModelBackend', "graphql_jwt.backends.JSONWebTokenBackend",)
+GRAPHENE = {
+    # ...
+    "ATOMIC_MUTATIONS": True,
+    "SCHEMA": "api.schema.schema",
+    'MIDDLEWARE': [
+        'graphene_django.debug.DjangoDebugMiddleware',
+        "graphql_jwt.middleware.JSONWebTokenMiddleware",
+    ]
+}
 
+from datetime import timedelta
+GRAPHQL_JWT = {
+    "JWT_VERIFY_EXPIRATION": True,
+    "JWT_EXPIRATION_DELTA": timedelta(minutes=7*24*60),
+    "JWT_REFRESH_EXPIRATION_DELTA": timedelta(days=7),
+    # optional
+    "JWT_LONG_RUNNING_REFRESH_TOKEN": True,
+}
 
 
 import logging.config
@@ -368,7 +384,9 @@ EMAIL_PAGE_DOMAIN = 'http://%s:8004/'
 EMAIL_MULTI_USER = True  # optional (defaults to False)
 
 # For Django Email Backend
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+#EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+DEFAULT_FROM_EMAIL = "snvnrock@gmail.com"
 EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
 EMAIL_HOST_USER = 'snvnrock@gmail.com'

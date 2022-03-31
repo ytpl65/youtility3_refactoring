@@ -3,21 +3,8 @@
 {% block head %}
 {{ ta_form.media.css }}
 {% endblock head %}
-
-
-{% block body %}
-<form action="" method="post" id="id_taform">
-	<div class="modal-header border-0">
-		<h3 class="modal-title modal-heading" id="exampleModalLabel">Create TypeAssist <i class="fas fa-poll-h fa-sm ch4"></i></h3>
-		<button type="button" class="btn-sm btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-	</div>
-	<div class="modal-body" id="partial">
-		<div class="alert alert-danger alert-dismissible fade show" id="nonfield_errors"role="alert" style="display:none">
-			<strong>Error</strong> <span></span>
-			<button type="button" class="btn-sm btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-		</div>
-
-		{% for field in ta_form %}
+{% macro typeassist_form() %}
+{% for field in ta_form %}
 			<div class="mb-3 row">
 				<!--LABEL FIELD-->
 				<label class="col-md-2">{{ field.label }}</label>
@@ -33,6 +20,20 @@
 				</div>
 			</div>
 		{% endfor %}
+{% endmacro %}
+{% block body %}
+<form action="" method="post" id="id_taform">
+	<div class="modal-header border-0">
+		<h3 class="modal-title modal-heading" id="exampleModalLabel">Create TypeAssist <i class="fas fa-poll-h fa-sm ch4"></i></h3>
+		<button type="button" class="btn-sm btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+	</div>
+	<div class="modal-body" id="partial">
+		<div class="alert alert-danger alert-dismissible fade show" id="nonfield_errors"role="alert" style="display:none">
+			<strong>Error</strong> <span></span>
+			<button type="button" class="btn-sm btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+		</div>
+
+		{{ typeassist_form() }}
 	</div>
 </form>
 	

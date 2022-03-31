@@ -4,3 +4,11 @@ my_project_visualized.png
 docs/importants.txt
 .gitignore
 docs/importants.txt
+!frontend/static/assets/js/custom.js
+!frontend/static/assets/js/onboarding
+frontend/static/assets/js/
+!frontend/static/assets/css/global_level.css
+frontend/static/assets/css/
+frontend/static/assets/media
+frontend/static/assets/plugins
+testMobRepo

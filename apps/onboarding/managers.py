@@ -6,33 +6,10 @@ import apps.peoples.models as pm
 
 class BtManager(models.Manager):
     use_in_migrations = True
-
-    def get_bu_list(self, clientid, butype=None):
-        '''
-        returns sites/zones/branches/...on given clientid
-        '''
-        if not butype and clientid:
-            if (
-                qset := self.filter(~Q(butype__tacode='CLIENT') & Q(parent_id=clientid))
-                .values_list('id', flat=True)
-                .order_by('butype')
-            ):
-                result = map(str, qset)
-                return ','.join(result)
-        elif clientid:
-            if (
-                qset := self.filter(Q(butype=butype) & Q(parent_id=clientid))
-                .values_list('id', flat=True)
-                .distinct()
-                .order_by('bucode')
-            ):
-                return ','.join(list(qset))
-        else: return 
-    
     def get_people_bu_list(self, people):
-        '''
-        return bu list [ids...] assigned to people
-        '''
+        """
+        Returns all BU's assigned to people
+        """
         if people and people.people_extras['assignsitegroup']:
             import json
             if assigned_sites := json.loads(
@@ -47,6 +24,33 @@ class BtManager(models.Manager):
                 ):
                     return ','.join(list(qset))
             return ""
+
         
-    def get_bu_list_ids(self, clientid):
-        return list_str.split(',') if (list_str := self.get_bu_list(clientid)) else []
+    def get_bu_list_ids(self, clientid, type='array'):
+        """
+        Returns all BU's on given client_id
+        """
+        rtype = 'bigint[]' if type == "array" else 'jsonb'
+        qset = self.raw(
+            f"select fn_get_bulist({clientid}, true, false, {type}::text, null::{rtype}) as id;")
+        return qset[0].id if qset else None
+    
+        
+    def find_site(self, clientid, sitecode):
+        """
+        Finds site on given client_id and site_id
+        """
+        qset = self.filter(
+            Q(identifier__tacode = 'SITE') & Q(bucode = sitecode) 
+            & ~Q(parent__id = -1) & Q(id__in = self.get_bu_list_ids(clientid))
+        )
+        return qset[0] if qset else  None
+    
+    
+    def get_sitelist_web(self, clientid, peopleid):
+        """
+        Return sitelist assigned to peopleid
+        considering whether people is admin or not.
+        """
+        qset = self.raw(f"select fn_get_siteslist_web({clientid}, {peopleid})")
+        return qset if qset else None

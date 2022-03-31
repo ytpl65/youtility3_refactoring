@@ -1,4 +1,5 @@
 #---------------------------- BEGIN client onboarding ---------------------------#
+from venv import create
 from django.http.response import JsonResponse
 from django.views.generic.base import RedirectView
 from django.http.request import QueryDict
@@ -203,7 +204,7 @@ class WizardBt(views.CreateBt):
             bt = form.save(commit=True)
             ob_utils.save_msg(request)
             self.wizard_data['instance_id'] = bt.id
-            people_utils.save_userinfo(bt, request.user, request.session)
+            people_utils.save_userinfo(bt, request.user, request.session, create=not update)
             res = ob_utils.process_wizard_form(
                 request, self.wizard_data, update)
         except:
@@ -293,7 +294,7 @@ class WizardShift(views.CreateShift):
             shift.bu_id = request.session['bu_id']
             ob_utils.save_msg(request)
             self.wizard_data['instance_id'] = shift.id
-            people_utils.save_userinfo(shift, request.user, request.session)
+            people_utils.save_userinfo(shift, request.user, request.session, create=not update)
             res = ob_utils.process_wizard_form(
                 request, self.wizard_data, update)
         except:
@@ -384,7 +385,7 @@ class WizardPeople(people_views.CreatePeople):
                 people.save()
                 ob_utils.save_msg(request)
                 people = people_utils.save_userinfo(
-                    people, request.user, request.session)
+                    people, request.user, request.session, create=not update)
                 self.wizard_data['instance_id'] = people.id
             res = ob_utils.process_wizard_form(
                 request, self.wizard_data, update)
@@ -478,7 +479,7 @@ class WizardPgroup(people_views.CreatePgroup):
     def process_valid_form(self, form, request, update):
         try:
             res, pg = None, form.save(commit=True)
-            people_utils.save_userinfo(pg, request.user, request.session)
+            people_utils.save_userinfo(pg, request.user, request.session, create=not update)
             people_utils.save_pgroupbelonging(pg=pg, request=request)
             ob_utils.save_msg(request)
             self.wizard_data['instance_id'] = pg.id
@@ -560,7 +561,7 @@ class WizardPreview(LoginRequiredMixin, View):
                       'taids': ['tacode', 'taname', 'tatype', 'parent__taname'],
                       'peopleids': ['peoplecode', 'peoplename', 'peopletype__taname', 'loginid'],
                       'shiftids': ['shiftname', 'starttime', 'endtime'],
-                      'pgroupids': ['groupname']}
+                      'pgroupids': ['name']}
 
             data = model.objects.filter(
                 pk__in=sd['wizard_data'][ids]).values(*fields[ids])

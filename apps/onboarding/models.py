@@ -67,7 +67,7 @@ class Bt(BaseModel, TenantAwareModel, HeirarchyModel):
     bu_preferences      = models.JSONField(_('bu_preferences'), null=True, default=bu_defaults,  encoder=DjangoJSONEncoder, blank=True)
     identifier          = models.ForeignKey('TypeAssist', null=True, blank=True, on_delete=models.RESTRICT, related_name="bu_idfs", verbose_name='Identifier')
     buname              = models.CharField(_('Name'), max_length=200)
-    butree              = models.CharField(_('Bu Path'), null=True, blank=True, max_length=300)
+    butree              = models.CharField(_('Bu Path'), null=True, blank=True, max_length=300, default="")
     butype              = models.ForeignKey('TypeAssist', on_delete=models.RESTRICT,  null=True, blank=True,  related_name="bu_butypes", verbose_name="Type")
     parent              = models.ForeignKey('self', null=True, blank=True, on_delete=models.RESTRICT, related_name="children", verbose_name="Belongs To")
     enable              = models.BooleanField(_("Enable"), default=True)
@@ -78,7 +78,7 @@ class Bt(BaseModel, TenantAwareModel, HeirarchyModel):
     siincludes          = models.TextField(_("Site Inclides"), default="")
     deviceevent         = models.BooleanField(_("Device Event"), default=False)
     pdist               = models.FloatField(_("pdist"), default=0.0, blank=True, null=True)
-    gpslocation         = PointField(_('GPS Location'),null=True, geography=True, srid=4326)
+    gpslocation         = PointField(_('GPS Location'),null=True, blank=True, geography=True, srid=4326)
     isvendor            = models.BooleanField(_("Is Vendor"), default=False)
     is_serviceprovider  = models.BooleanField(_("Is ServiceProvider"), default=False)
 
@@ -205,8 +205,9 @@ class TypeAssist(BaseModel, TenantAwareModel):
     tacode = models.CharField(_("tacode"), max_length=50, unique=True)
     taname = models.CharField(_("taname"), max_length=100)
     tatype = models.ForeignKey( "self", null=True, blank=True, on_delete=models.RESTRICT, related_name='children')
-    bu   = models.ForeignKey("Bt", null=True, blank=True, on_delete=models.RESTRICT, related_name='ta_bus')
-
+    bu     = models.ForeignKey("Bt", null=True, blank=True, on_delete=models.RESTRICT, related_name='ta_bus')
+    client = models.ForeignKey("onboarding.Bt",  null=True, blank=True, on_delete=models.RESTRICT, related_name='ta_clients')
+    
     class Meta(BaseModel.Meta):
         db_table = 'typeassist'
 
@@ -257,7 +258,7 @@ class WizardDraft(models.Model):
     form_data   = models.JSONField( null=True, default=formData_default,  encoder=DjangoJSONEncoder, blank=True)
 
     class Meta:
-        db_table = 'wizard_draft'
+        db_table = 'wizarddraft'
         constraints = [
             models.UniqueConstraint(
                 fields=['createdby', 'id'], name="draft_per_user")

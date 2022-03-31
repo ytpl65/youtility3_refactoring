@@ -7,69 +7,47 @@ from apps.peoples import models as pm
 from .forms import (BtForm, ShiftForm, TypeAssistForm, BuPrefForm, SitePeopleForm,
                     ContractDetailForm, ContractForm)
 import apps.onboarding.models as om
-
+from apps.core import utils
 
 
 class BaseFieldSet1:
-    cuser = fields.Field(
-        column_name='cuser',
-        attribute='cuser',
-        widget=wg.ForeignKeyWidget(pm.People, field = 'peoplecode'),
-        saves_null_values=True)
-
-    muser = fields.Field(
-        column_name='muser',
-        attribute='muser',
-        widget=wg.ForeignKeyWidget(pm.People, field = 'peoplecode'),
-        saves_null_values=True)
-
     bu = fields.Field(
         column_name='bu',
         attribute='bu',
         widget=wg.ForeignKeyWidget(om.Bt, 'bucode'),
         saves_null_values=True)
 
-    tenant_id = fields.Field(
-        column_name='tenant_id',
-        attribute='tenant_id',
-        widget=wg.ForeignKeyWidget(tm.TenantAwareModel, 'id'),
+    tenant = fields.Field(
+        column_name='tenant',
+        attribute='tenant',
+        widget=wg.ForeignKeyWidget(tm.TenantAwareModel, 'tenantname'),
         saves_null_values=True
     )
 
 
-class BaseFieldSet2:
-    cuser = fields.Field(
-        column_name='cuser',
-        attribute='cuser',
-        widget=wg.ForeignKeyWidget(pm.People, 'peoplecode'),
-        saves_null_values=True)
-
-    muser = fields.Field(
-        column_name='muser',
-        attribute='muser',
-        widget=wg.ForeignKeyWidget(pm.People, 'peoplecode'),
-        saves_null_values=True)
-
+class BaseFieldSet2(object):
     client = fields.Field(
         column_name='client',
         attribute='client',
-        widget=wg.ForeignKeyWidget(om.Bt, 'bucode')
+        widget=wg.ForeignKeyWidget(om.Bt, 'bucode'),
+        default='NONE'
     )
     bu = fields.Field(
         column_name='bu',
         attribute='bu',
         widget=wg.ForeignKeyWidget(om.Bt, 'bucode'),
-        saves_null_values=True
+        saves_null_values=True,
+        default='NONE'
     )
-    tenant_id = fields.Field(
-        column_name='tenant_id',
-        attribute='tenant_id',
-        widget=wg.ForeignKeyWidget(tm.TenantAwareModel, 'id'),
+    tenant = fields.Field(
+        column_name='tenant',
+        attribute='tenant',
+        widget=wg.ForeignKeyWidget(tm.TenantAwareModel, 'tenantname'),
         saves_null_values=True
     )
 
 
-class TaResource(resources.ModelResource):
+class TaResource(BaseFieldSet2, resources.ModelResource ):
 
     tatype = fields.Field(
         column_name       = 'tatype',
@@ -77,37 +55,36 @@ class TaResource(resources.ModelResource):
         widget            = wg.ForeignKeyWidget(om.TypeAssist, 'tacode'),
         saves_null_values = True
     )
-    cuser = fields.Field(
-        column_name='cuser',
-        attribute='cuser',
-        widget=wg.ForeignKeyWidget(pm.People, 'peoplecode'),
-        saves_null_values=True)
-
-    muser = fields.Field(
-        column_name='muser',
-        attribute='muser',
-        widget=wg.ForeignKeyWidget(pm.People, 'peoplecode'),
-        saves_null_values=True)
-
+    
     class Meta:
         model = om.TypeAssist
         skip_unchanged = True
         import_id_fields = ('id',)
         report_skipped = True
-        clean_model_instances = True
-        fields = ('id', 'taname', 'tacode', 'tatype', 'cuser', 'muser', 'tenant_id',)
-
+        fields = ('id', 'taname', 'tacode', 'tatype', 'tenant', 'bu', 'client')
+    
+    
+    def __init__(self, *args, **kwargs):
+        self.request = kwargs.pop('request', None)
+        super(TaResource, self).__init__(*args, **kwargs)
+    
+    
     def before_save_instance(self, instance, using_transactions, dry_run):
-        super().before_save_instance(instance, using_transactions, dry_run)
         instance.tacode = instance.tacode.upper()
+        utils.save_common_stuff(self.request, instance)
 
 
+
+@admin.register(om.TypeAssist)
 class TaAdmin(ImportExportModelAdmin):
     resource_class = TaResource
-    list_display = ('id', 'tacode', 'tatype', 'mdtz', 'taname' )
+    list_display = (
+        'id', 'tacode', 'tatype', 'mdtz', 'taname',
+        'cuser', 'muser', 'cdtz', 'bu', 'client' )
+    
+    def get_resource_kwargs(self, request, *args, **kwargs):
+        return {'request': request}
 
-
-admin.site.register(om.TypeAssist, TaAdmin)
 
 
 class BtResource(resources.ModelResource, BaseFieldSet1):
@@ -132,8 +109,9 @@ class BtResource(resources.ModelResource, BaseFieldSet1):
         skip_unchanged = True
         import_id_fields = ('id',)
         report_skipped = True
-        fields = ('id', 'buname', 'bucode', 'butype',
-                  'identifier', 'parent', 'cuser', 'muser',)
+        fields = (
+            'id', 'buname', 'bucode', 'butype',
+            'identifier', 'parent', 'tenant',)
 
 
 @admin.register(om.Bt)

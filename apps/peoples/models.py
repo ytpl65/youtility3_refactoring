@@ -1,3 +1,4 @@
+from django.contrib.auth.models import Group
 from django.db.models import CharField
 from django.urls import reverse
 from django.conf import settings
@@ -10,6 +11,7 @@ from django.contrib.auth.models import PermissionsMixin
 from .managers import PeopleManager, CapabilityManager
 from apps.tenants.models import TenantAwareModel
 import logging
+from django.utils import timezone
 logger = logging.getLogger('django')
 
 # Create your models here.
@@ -70,13 +72,17 @@ class SecureString(CharField):
             return value
             # return encrypt(value)
 
+def now():
+    return timezone.now().replace(microsecond=0)
+
 
 ### Base Model, ALl other models inherit this model properties ###
 class BaseModel(models.Model):
     cuser = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.RESTRICT, related_name="%(class)s_cusers")
     muser = models.ForeignKey(settings.AUTH_USER_MODEL,  null=True, blank=True,on_delete=models.RESTRICT, related_name="%(class)s_musers")
-    cdtz  = models.DateTimeField(_('cdtz'), auto_now_add=True, auto_now=False)
-    mdtz  = models.DateTimeField(_('mdtz'), auto_now=True)
+    cdtz  = models.DateTimeField(_('cdtz'), default=now)
+    mdtz  = models.DateTimeField(_('mdtz'), null=True)
+    tzoffset = models.IntegerField(_("TimeZone"), default=-1)
 
     class Meta:
         abstract = True
@@ -114,7 +120,7 @@ class People(AbstractBaseUser, PermissionsMixin, TenantAwareModel, BaseModel):
 
     objects = PeopleManager()
     USERNAME_FIELD = 'loginid'
-    REQUIRED_FIELDS = ['peoplecode',  'peoplename', 'dateofbirth'
+    REQUIRED_FIELDS = ['peoplecode',  'peoplename', 'dateofbirth',
                        'dateofjoin', 'email']
 
     class Meta:
@@ -140,7 +146,7 @@ class People(AbstractBaseUser, PermissionsMixin, TenantAwareModel, BaseModel):
 
 
 ############## Pgroup Table ###############
-class Pgroup(BaseModel, TenantAwareModel):
+class Pgroup(Group, BaseModel, TenantAwareModel):
     groupname  = models.CharField(_('Name'), max_length=250)
     enable     = models.BooleanField(_('Enable'), default=True)
     identifier = models.ForeignKey('onboarding.TypeAssist', null=True, blank=True, on_delete=models.RESTRICT, related_name="pgroup_idfs")

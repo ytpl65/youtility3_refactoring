@@ -71,17 +71,18 @@ class Question(LoginRequiredMixin, View):
         return resp
     
     def post(self, request, *args, **kwargs):
-        resp = None
+        resp, create = None, True
         try:
             data = QueryDict(request.POST['formData'])
             if pk := request.POST.get('pk', None):
                 msg = "question_view"
                 ques = utils.get_model_obj(pk, request, self.params)
                 form = self.params['form_class'](data, instance=ques, request=request)
+                create=False
             else:
                 form = self.params['form_class'](data, request=request)
             if form.is_valid():
-                resp = self.handle_valid_form(form,  request)
+                resp = self.handle_valid_form(form,  request, create)
             else:
                 cxt = {'errors': form.errors}
                 resp = utils.handle_invalid_form(request, self.params, cxt)
@@ -89,12 +90,12 @@ class Question(LoginRequiredMixin, View):
             resp = utils.handle_Exception(request)
         return resp
     
-    def handle_valid_form(self, form,  request):
+    def handle_valid_form(self, form,  request, create):
         logger.info('ques form is valid')
         ques = None
         try:
             ques = form.save()
-            ques = putils.save_userinfo(ques, request.user, request.session)
+            ques = putils.save_userinfo(ques, request.user, request.session, create=create)
             logger.info("question form saved")
             data = {'success': "Record has been saved successfully", 
             'name':ques.ques_name, 'type':ques.answertype, 'unit':ques.unit.tacode}
@@ -163,7 +164,7 @@ class MasterQuestionSet(LoginRequiredMixin, View):
 
 
     def post(self, request, *args, **kwargs):
-        resp = None
+        resp, create = None, True
         try:
             logger.debug(pformat(request.POST))
             data = QueryDict(request.POST['formData'])
@@ -171,10 +172,11 @@ class MasterQuestionSet(LoginRequiredMixin, View):
                 msg = self.view_of
                 form = utils.get_instance_for_update(data, self.params, msg, int(pk))
                 logger.debug(pformat(form.data, width=41, compact=True))
+                create=False
             else:
                 form = self.params['form_class'](data, request=request)
             if form.is_valid():
-                resp = self.handle_valid_form(form, request)
+                resp = self.handle_valid_form(form, request, create)
             else:
                 cxt = {'errors': form.errors}
                 resp = utils.handle_invalid_form(request, self.params, cxt)
@@ -195,7 +197,7 @@ class MasterQuestionSet(LoginRequiredMixin, View):
         else:
             return questions
 
-    def handle_valid_form(form, request):
+    def handle_valid_form(form, request, create):
         pass
 
         
@@ -251,16 +253,17 @@ class MasterAsset(LoginRequiredMixin, View):
 
 
     def post(self, request, *args, **kwargs):
-        resp = None
+        resp, create = None, False
         try:
             data = QueryDict(request.POST['formData'])
             if pk := request.POST.get('pk', None):
                 msg = f'{self.label}_view'
                 form = utils.get_instance_for_update(data, self.params, msg, int(pk))
+                create=False
             else:
                 form = self.params['form_class'](data, request=request)
             if form.is_valid():
-                resp = self.handle_valid_form(form, request)
+                resp = self.handle_valid_form(form, request, create)
             else:
                 cxt = {'errors': form.errors}
                 resp = utils.handle_invalid_form(request, self.params, cxt)
@@ -268,7 +271,7 @@ class MasterAsset(LoginRequiredMixin, View):
             resp = utils.handle_Exception(request)
         return resp
     
-    def handle_valid_form(self, form, request):
+    def handle_valid_form(self, form, request, create):
        pass
 
 
@@ -290,12 +293,12 @@ class Checklist(MasterQuestionSet):
     label = 'Checklist'
     
     
-    def handle_valid_form(self, form, request):
+    def handle_valid_form(self, form, request, create):
         logger.info('%s form is valid'%(self.view_of))
         try:
             assigned_questions = json.loads(request.POST.get("asssigned_questions"))
             qset = form.save()
-            putils.save_userinfo(qset, request.user, request.session)
+            putils.save_userinfo(qset, request.user, request.session, create=create)
             logger.info('%s form is valid'%(self.view_of))
             fields = {'qset':qset.id, 'qset_name':qset.qset_name, 'client':qset.client_id}
             self.save_qset_belonging(request, assigned_questions, fields)
@@ -331,12 +334,12 @@ class QuestionSet(MasterQuestionSet):
     view_of = 'questionset'
     label = 'Question Set'
     
-    def handle_valid_form(self, form, request):
+    def handle_valid_form(self, form, request, create):
         logger.info('%s form is valid'%(self.view_of))
         try:
             assigned_questions = json.loads(request.POST.get("asssigned_questions"))
             qset = form.save()
-            putils.save_userinfo(qset, request.user, request.session)
+            putils.save_userinfo(qset, request.user, request.session, create=create)
             logger.info('%s form is valid'%(self.view_of))
             fields = {'qset':qset.id, 'qset_name':qset.qset_name, 'client':qset.client_id}
             self.save_qset_belonging(request, assigned_questions, fields)
@@ -405,11 +408,11 @@ class Checkpoint(MasterAsset):
     view_of = 'checkpoint'
     label = 'Checkpoint'
     
-    def handle_valid_form(self, form, request):
+    def handle_valid_form(self, form, request, create):
         logger.info('checkpoint form is valid')
         try:
             cp = form.save()
-            putils.save_userinfo(cp, request.user, request.session)
+            putils.save_userinfo(cp, request.user, request.session, create=create)
             logger.info("checkpoint form saved")
             data = {'success': "Record has been saved successfully", 
             'code':cp.assetcode, 'id':cp.id
@@ -435,11 +438,11 @@ class Smartplace(MasterAsset):
     view_of           = 'smartplace'
     label             = 'Smartplace'
 
-    def handle_valid_form(self, form, request):
+    def handle_valid_form(self, form, request, create):
         logger.info('smarplace form is valid')
         try:
             cp = form.save()
-            putils.save_userinfo(cp, request.user, request.session)
+            putils.save_userinfo(cp, request.user, request.session, create=create)
             logger.info("smartplace form saved")
             data = {'success': "Record has been saved successfully", 
             'code':cp.assetcode, 'id':cp.id

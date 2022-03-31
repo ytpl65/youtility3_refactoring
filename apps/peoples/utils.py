@@ -59,16 +59,15 @@ def get_people_prefform(people, session):
         return PeopleExtrasForm(data=d, session=session)
 
 
-def save_cuser_muser(instance, user):
-    if instance.mdtz and instance.cdtz:
-        mdtz = instance.mdtz.replace(microsecond=0)
-        cdtz = instance.cdtz.replace(microsecond=0)
-        if mdtz > cdtz:
-            instance.muser = user
-        elif mdtz == cdtz:
-            instance.cuser = instance.muser = user
-        logger.info("saving cuser muser info saved ...DONE")
+def save_cuser_muser(instance, user, create):
+    from django.utils import timezone
+    if instance.mdtz:
+        instance.muser = user
+    else:
+        instance.cuser = instance.muser = user
+    instance.mdtz = timezone.now().replace(microsecond=0)
     return instance
+
 
 
 def save_client_tenantid(instance, user, session, client=None, bu=None):
@@ -86,7 +85,7 @@ def save_client_tenantid(instance, user, session, client=None, bu=None):
 
 
 
-def save_userinfo(instance, user, session,client=None, bu=None):
+def save_userinfo(instance, user, session,client=None, bu=None, create=True):
     """saves user's related info('cuser', 'muser', 'client', 'tenantid')
     from request and session"""
     from django.core.exceptions import ObjectDoesNotExist
@@ -95,7 +94,7 @@ def save_userinfo(instance, user, session,client=None, bu=None):
             msg = "saving user and client info for the instance have been created"
             logger.info(f'{msg} STARTED')
             instance = save_client_tenantid(instance, user, session, client, bu)
-            instance = save_cuser_muser(instance, user)
+            instance = save_cuser_muser(instance, user, create)
             instance.save()
             logger.info(f'{msg} DONE')
         except (KeyError, ObjectDoesNotExist):
@@ -143,7 +142,7 @@ def save_tenant_client_info(request):
         clientcode = clientcodeMap.get(hostname)
         request.session['hostname'] = hostname
         client = Bt.objects.get(bucode=clientcode.upper())
-        tenant = Tenant.objects.get(subdomain_prefix=clientcode)
+        tenant = Tenant.objects.get(id=client.tenant.id)    
         request.session['tenantid'] = tenant.id
         request.session['client_id'] = client.id
         request.session['bu_id'] = request.user.bu.id
@@ -346,7 +345,7 @@ def get_caps_choices(client=None, cfor=None,  session=None, people=None):
 
 def save_user_paswd(user):
     logger.info('Password is created by system... DONE')
-    paswd = user.loginid + '@' + 'youtility'
+    paswd = f'{user.loginid}@youtility'
     user.set_password(paswd)
     user.save()
 
@@ -356,7 +355,7 @@ def display_user_session_info(session):
     from icecream import ic
     pp('Following user data saved in sesion\n')
     for key, value in session.items():
-        pp('session info:{} => {}'.format(key, value))
+        pp(f'session info:{key} => {value}')
 
 
 def get_choices_for_peoplevsgrp(request):

@@ -9,7 +9,8 @@ import apps.peoples.utils as putils
 from pprint import pformat
 from apps.peoples import models as pm
 import logging
-from apps.onboarding.models import  Bt, TypeAssist
+from apps.onboarding.models import  (
+    Bt, TypeAssist)
 import apps.activity.models as am
 from django.db.models import Q
 logger = logging.getLogger('__main__')
@@ -81,7 +82,6 @@ def render_form_for_update(request, params, formname, obj, extra_cxt={}):
         logger.info("object retrieved '{}'".format(obj))
         F = params['form_class'](
             instance=obj, request=request, initial = params['form_initials'])
-        ic(F.as_p().split('\n'))
         C = {formname: F, 'edit': True}
         C.update(extra_cxt)
         html = render_to_string(params['template_form'], C, request)
@@ -296,7 +296,7 @@ def update_timeline_data(ids, request, update=False):
               'taids': ['tacode', 'taname', 'tatype'],
               'peopleids': ['id', 'peoplecode', 'loginid'],
               'shiftids': ['id', 'shiftname'],
-              'pgroupids': ['id', 'groupname']}
+              'pgroupids': ['id', 'name']}
     data = steps[ids].objects.filter(
         pk__in=request.session['wizard_data'][ids]).values(*fields[ids])
     if not update:
@@ -525,7 +525,7 @@ def get_or_create_none_bv():
     obj, _ = Bt.objects.get_or_create(
         id = -1,
         defaults={
-            'bucode':"NONE", 'buname':"NONE",'id':-1
+            'bucode':"NONE", 'buname':"NONE",'id':-1, 
         }
     )
     return obj
@@ -533,7 +533,7 @@ def get_or_create_none_bv():
 
 def get_or_create_none_typeassist():
     obj, _ = TypeAssist.objects.get_or_create(
-        Q(id = -1) | Q(tacode='NONE'),
+        id=-1,
         defaults={
             'tacode':"NONE", 'taname':"NONE",'id':-1
         }
@@ -685,7 +685,7 @@ def set_db_for_router(db):
     dbs = settings.DATABASES
     if db not in dbs:
         print('raised')
-        raise ValueError("Database with this alias not exist!")
+        raise NameError("Database with this alias not exist!")
     setattr(THREAD_LOCAL, "DB", db)
     
 def display_post_data(post_data):
@@ -782,3 +782,56 @@ def PD(data=None, post=None, get=None, instance=None, cleaned=None):
         
         
         
+def register_newuser_token(user, clientUrl):
+    if not user.email or not user.loginid:
+        return False, None
+    import requests
+    from django.conf import settings
+    domain = 'local'if settings.DEBUG else 'in'
+    endpoint = f"http://{clientUrl}.youtility.{domain}"
+    query = """
+        mutation { 
+            register(
+                email:%s,
+                loginid:%s,
+                password1:%s,
+                password2:%s,
+            ){
+                success,
+                errors,
+                token,
+                refreshToken
+            }
+        }
+    """%(user.email, user.loginid, user.password, user.password)
+    
+    res = requests.post(endpoint, json={"query":query})
+    if res.status_code == 200:
+        return True, res
+    return False, None
+
+
+def clean_record(record):
+    from django.contrib.gis.geos import GEOSGeometry
+    
+    for k,v in record.items():
+        if k in ['gpslocation', 'startlocation', 'endlocation']:
+            record[k] = GEOSGeometry(v, srid=4326)
+            
+            
+def save_common_stuff(request, instance):
+    from django.utils import timezone
+    if instance.mdtz:
+        instance.muser_id = request.session.get(
+            '_auth_user_id', -1)
+    else:
+        instance.muser_id = instance.cuser_id = request.session.get('_auth_user_id', -1)
+    instance.mdtz = timezone.now().replace(microsecond=0)
+    
+
+def create_tenant_with_alias(db):
+    from apps.tenants.models import Tenant
+    Tenant.objects.create(
+        tenantname = db.upper(), 
+        subdomain_prefix = db
+    )

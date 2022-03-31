@@ -37,8 +37,8 @@ class PeopleEventlog(BaseModel, TenantAwareModel):
     geofence        = models.ForeignKey('onboarding.GeofenceMaster', null=True, blank=True, on_delete=models.RESTRICT)
     peventtype      = models.ForeignKey('onboarding.TypeAssist', null=True, blank=True, on_delete=models.RESTRICT)
     transportmodes  = models.TextField(max_length=500, null=True, blank=True)
-    punchintime    = models.DateTimeField(null=True, blank=True, auto_now_add=True, editable=True)
-    punchouttime   = models.DateTimeField(null=True, blank=True, auto_now = True)
+    punchintime     = models.DateTimeField(null=True, blank=True, auto_now_add=True, editable=True)
+    punchouttime    = models.DateTimeField(null=True, blank=True, auto_now = True)
     datefor         = models.DateField(_("Date"), null=True)
     distance        = models.IntegerField(_("Distance"), null=True, blank=True)
     duration        = models.IntegerField(_("Duration"), null=True, blank=True)
@@ -46,15 +46,15 @@ class PeopleEventlog(BaseModel, TenantAwareModel):
     duration        = models.IntegerField(_("duration"), null=True, blank=True)
     accuracy        = models.IntegerField(_("accuracy"), null=True, blank=True)
     deviceid        = models.CharField(_("deviceid"), max_length=50, null=True, blank=True)
-    startlocation  = PointField(_("GPS-In"), null=True, geography=True, srid=4326)
-    endlocation    = PointField(_("GPS-Out"), null=True, geography=True, blank=True, srid=4326)
-    journeypath    = LineStringField(geography=True, null=True)
+    startlocation   = PointField(_("GPS-In"), null=True, geography=True, srid=4326)
+    endlocation     = PointField(_("GPS-Out"), null=True, geography=True, blank=True, srid=4326)
+    journeypath     = LineStringField(geography=True, null=True)
     remarks         = models.CharField(_("remarks"), null=True, max_length=500, blank=True)
     facerecognition = models.BooleanField(_("Enable Face-Recognition"), default=True)
     peventlogextras = models.JSONField(_("peventlogextras"), encoder=DjangoJSONEncoder, default=peventlog_json)
 
     class Meta(BaseModel.Meta):
-        db_table = 'people_eventlog'
+        db_table = 'peopleeventlog'
 
 #temporary table
 class Tracking(models.Model):

@@ -1,55 +1,52 @@
+from django.utils import timezone
+import apps.peoples.utils as putils
+import apps.core.utils as utils
+from apps.onboarding.admin import BaseFieldSet1, BaseFieldSet2
+from apps.onboarding import models as om
+from apps.peoples import models as pm
+from import_export import widgets as wg
+from import_export import resources, fields
+from import_export.admin import ImportExportModelAdmin
+from import_export import resources
+from .models import People,  Pgroup, Pgbelonging, Capability
+from django.contrib import admin
+from multiprocessing.spawn import import_main_path
 import logging
 
 log = logging.getLogger('__main__')
-from multiprocessing.spawn import import_main_path
-from django.contrib import admin
-from .models import People,  Pgroup, Pgbelonging, Capability
-from import_export import resources
-from import_export.admin import ImportExportModelAdmin
-from import_export import resources, fields
-from import_export import widgets as wg
-from apps.peoples import models as pm
-from apps.onboarding import models as om
-from apps.onboarding.admin import BaseFieldSet1, BaseFieldSet2
-import apps.peoples.utils as putils
 
 
-def save_people_passwd( user):
+def save_people_passwd(user):
     log.info('Password is created by system... DONE')
-    paswd = user.loginid + '@' + 'youtility'
+    paswd = f'{user.loginid}@youtility'
     user.set_password(paswd)
-    
-def save_other_stuff(request, user):
-    user.cuser.id = user.muser.id = request.session('_auth_user_id')
 
 
-
-# Register your models here.
+# Register your models here
 class PeopleResource(resources.ModelResource, BaseFieldSet2):
-    shift = fields.Field(
-        column_name='shift',
-        attribute='shift',
-        widget=wg.ForeignKeyWidget(om.Shift, 'shiftname')
-    )
     department = fields.Field(
         column_name='department',
         attribute='department',
-        widget=wg.ForeignKeyWidget(om.TypeAssist, 'tacode')
+        widget=wg.ForeignKeyWidget(om.TypeAssist, 'tacode'),
+        default='NONE'
     )
     designation = fields.Field(
         column_name='designation',
         attribute='designation',
-        widget=wg.ForeignKeyWidget(om.TypeAssist, 'tacode')
+        widget=wg.ForeignKeyWidget(om.TypeAssist, 'tacode'),
+        default='NONE'
     )
     peopletype = fields.Field(
         column_name='peopletype',
         attribute='peopletype',
-        widget=wg.ForeignKeyWidget(om.TypeAssist, 'tacode')
+        widget=wg.ForeignKeyWidget(om.TypeAssist, 'tacode'),
+        default='NONE'
     )
     reportto = fields.Field(
         column_name='reportto',
         attribute='reportto',
-        widget=wg.ForeignKeyWidget(pm.People, 'peoplecode')
+        widget=wg.ForeignKeyWidget(pm.People, 'peoplecode'),
+        default='NONE'
     )
     dateofbirth = fields.Field(
         column_name='dateofbirth',
@@ -61,28 +58,19 @@ class PeopleResource(resources.ModelResource, BaseFieldSet2):
         attribute='dateofjoin',
         widget=wg.DateWidget()
     )
-    cuser = fields.Field(
-        column_name='cuser',
-        attribute='cuser',
-        widget=wg.ForeignKeyWidget(pm.People, 'peoplecode'),
-        saves_null_values=True)
 
-    muser = fields.Field(
-        column_name='muser',
-        attribute='muser',
-        widget=wg.ForeignKeyWidget(pm.People, 'peoplecode'),
-        saves_null_values=True)
-    
     client = fields.Field(
         column_name='client',
         attribute='client',
-        widget=wg.ForeignKeyWidget(om.Bt, 'bucode')
+        widget=wg.ForeignKeyWidget(om.Bt, 'bucode'),
+        default='NONE'
     )
     bu = fields.Field(
         column_name='bu',
         attribute='bu',
         widget=wg.ForeignKeyWidget(om.Bt, 'bucode'),
-        saves_null_values=True
+        saves_null_values=True,
+        default='NONE'
     )
 
     class Meta:
@@ -90,17 +78,19 @@ class PeopleResource(resources.ModelResource, BaseFieldSet2):
         skip_unchanged = True
         report_skipped = True
         import_id_fields = ('id',)
-        fields = ['id', 'peoplecode', 'peoplename', 'loginid', 'designation', 'department', 'mobno', 'email',
-                  'bu', 'dateofjoin', 'dateofreport', 'dateofbirth', 'gender', 'peopletype', 'enable',
-                  'isadmin', 'shift', 'client', 'cuser', 'muser']
+        fields = [
+            'id', 'peoplecode', 'peoplename', 'loginid', 'designation', 'department', 'mobno', 'email',
+            'bu', 'dateofjoin', 'dateofreport', 'dateofbirth', 'gender', 'peopletype', 'enable',
+            'isadmin', 'client', 'cdtz', 'mdtz']
+
+    def __init__(self, *args, **kwargs):
+        self.request = kwargs.pop('request', None)
+        super(PeopleResource, self).__init__(*args, **kwargs)
 
     def before_save_instance(self, instance, using_transactions, dry_run):
-        super().before_save_instance(instance, using_transactions, dry_run)
         instance.peoplecode = instance.peoplecode.upper()
+        utils.save_common_stuff(self.request, instance)
         save_people_passwd(instance)
-       # save_other_stuff(self.request, instance)
-        
-    
 
 
 @admin.register(People)
@@ -110,10 +100,13 @@ class PeopleAdmin(ImportExportModelAdmin):
               'bu', 'dateofjoin', 'dateofreport', 'dateofbirth', 'gender', 'peopletype', 'enable',
               'isadmin', 'people_extras', 'client', ]
 
-    list_display = ['id', 'peoplecode', 'peoplename', 'loginid',  'mobno', 'email','password',
-                     'gender', 'peopletype', 'isadmin', 'client']
+    list_display = ['id', 'peoplecode', 'peoplename', 'loginid',  'mobno', 'email', 'password',
+                    'gender', 'peopletype', 'isadmin', 'client', 'cuser', 'muser', 'cdtz', 'mdtz']
 
     list_display_links = ['peoplecode', 'peoplename']
+
+    def get_resource_kwargs(self, request, *args, **kwargs):
+        return {'request': request}
 
 
 class PgroupResource(resources.ModelResource, BaseFieldSet2):
@@ -128,25 +121,25 @@ class PgroupResource(resources.ModelResource, BaseFieldSet2):
         model = pm.Pgroup
         skip_unchanged = True
         report_skipped = True
-        fields = ['groupname', 'enable', 'identifier',
+        fields = ['name', 'enable', 'identifier',
                   'bu', 'client', 'cuser', 'muser']
 
 
 @admin.register(Pgroup)
 class PgroupAdmin(ImportExportModelAdmin):
     resource_class = PgroupResource
-    fields = ['groupname', 'enable',
+    fields = ['name', 'enable',
               'identifier', 'client', 'bu']
-    list_display = ['id', 'groupname',
+    list_display = ['id', 'name',
                     'enable', 'identifier', 'client', 'bu']
-    list_display_links = ['groupname', 'enable', 'identifier']
+    list_display_links = ['name', 'enable', 'identifier']
 
 
 class PgbelongingResource(resources.ModelResource, BaseFieldSet2):
     pgroup = fields.Field(
         column_name='pgroup',
         attribute='pgroup',
-        widget=wg.ForeignKeyWidget(pm.Pgroup, 'groupname')
+        widget=wg.ForeignKeyWidget(pm.Pgroup, 'name')
     )
     people = fields.Field(
         column_name='people',

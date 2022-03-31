@@ -1,6 +1,4 @@
-from tokenize import String
 from django.core.management.base import BaseCommand
-
 from apps.core import utils
 
 
@@ -13,11 +11,16 @@ class Command(BaseCommand):
     
     
     def handle(self, *args, **options):
+        from apps.onboarding.models import TypeAssist
         try:
             db = options['db'][0]
             utils.set_db_for_router(db)
-        except Exception:
+            isexists = TypeAssist.objects.exists()
+            if isexists: raise ValueError
+        except NameError:
             self.stdout.write(self.style.WARNING("Database with this alias '%s' not exist operation can't be performed"%(db)))
+        except ValueError:
+            self.stdout.write(self.style.ERROR('Database with this alias "%s" is not empty so cannot create -1 extries operation terminated!'%(db)))
         else:
             utils.get_or_create_none_typeassist()
             utils.get_or_create_none_people()

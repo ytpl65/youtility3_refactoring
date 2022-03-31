@@ -158,7 +158,7 @@ class UpdateBt(LoginRequiredMixin, View):
             if form.is_valid():
                 logger.info('BtForm Form is valid')
                 bt = form.save()
-                bt = save_userinfo(bt, request.user, request.session)
+                bt = save_userinfo(bt, request.user, request.session, create=False)
                 logger.info('BtForm Form saved')
                 messages.success(request, "Success record saved successfully!",
                                  "alert-success")
@@ -350,7 +350,7 @@ class UpdateShift(LoginRequiredMixin, View):
                 logger.info('ShiftForm form is valid..')
                 shift = form.save()
                 shift.bu_id = int(request.session['client_id'])
-                shift = save_userinfo(shift, request.user, request.session)
+                shift = save_userinfo(shift, request.user, request.session, create=False)
                 logger.info('ShiftForm Form saved')
                 messages.success(request, "Success record saved successfully!",
                                  "alert-success")
@@ -535,7 +535,7 @@ class UpdateSitePeople(LoginRequiredMixin, View):
             if form.is_valid():
                 logger.info('SitePeopleForm Form is valid')
                 sp = form.save()
-                sp = save_userinfo(sp, request.user, request.session)
+                sp = save_userinfo(sp, request.user, request.session, create=False)
                 logger.info('SitePeopleForm Form saved')
                 messages.success(
                     request, "Success record saved successfully!", "alert-success")
@@ -765,7 +765,7 @@ class UpdateClient(LoginRequiredMixin, View):
                 if save_json_from_bu_prefsform(client, jsonform):
                     client.save()
                     client = save_userinfo(
-                        client, request.user, request.session)
+                        client, request.user, request.session, create=False)
                     logger.info('ClientForm Form saved')
                     messages.success(request, "Success record saved successfully!",
                                      "alert alert-success")
@@ -919,7 +919,7 @@ class MasterTypeAssist(LoginRequiredMixin, View):
         return resp
 
     def post(self, request, *args, **kwargs):
-        resp = None
+        resp , create= None, True
         try:
             print(request.POST)
             data = QueryDict(request.POST['formData'])
@@ -930,10 +930,11 @@ class MasterTypeAssist(LoginRequiredMixin, View):
                 form = utils.get_instance_for_update(
                     data, self.params, msg, int(pk))
                 print(form.data)
+                create=False
             else:
                 form = self.params['form_class'](data, request=request)
             if form.is_valid():
-                resp = self.handle_valid_form(form, request)
+                resp = self.handle_valid_form(form, request, create)
             else:
                 cxt = {'errors': form.errors}
                 resp = utils.handle_invalid_form(request, self.params, cxt)
@@ -941,12 +942,12 @@ class MasterTypeAssist(LoginRequiredMixin, View):
             resp = utils.handle_Exception(request)
         return resp
 
-    def handle_valid_form(self, form, request):
+    def handle_valid_form(self, form, request, create):
         logger.info('typeassist form is valid')
         from apps.core.utils import handle_intergrity_error
         try:
             ta = form.save()
-            putils.save_userinfo(ta, request.user, request.session)
+            putils.save_userinfo(ta, request.user, request.session, create=create)
             logger.info("typeassist form saved")
             data = {'msg': f"{ta.tacode}",
             'row': TypeAssist.objects.values(*self.params['fields']).get(id=ta.id) }
@@ -1021,7 +1022,7 @@ class Shift(LoginRequiredMixin, View):
         return resp
 
     def post(self, request, *args, **kwargs):
-        resp = None
+        resp, create = None, True
         try:
             print(request.POST)
             data = QueryDict(request.POST['formData'])
@@ -1031,11 +1032,11 @@ class Shift(LoginRequiredMixin, View):
                 msg = "shift_view"
                 form = utils.get_instance_for_update(
                     data, self.params, msg, int(pk))
-                print(form.data)
+                create=False
             else:
                 form = self.params['form_class'](data, request=request)
             if form.is_valid():
-                resp = self.handle_valid_form(form, request)
+                resp = self.handle_valid_form(form, request, create)
             else:
                 cxt = {'errors': form.errors}
                 resp = utils.handle_invalid_form(request, self.params, cxt)
@@ -1043,13 +1044,13 @@ class Shift(LoginRequiredMixin, View):
             resp = utils.handle_Exception(request)
         return resp
 
-    def handle_valid_form(self, form, request):
+    def handle_valid_form(self, form, request, create):
         logger.info('shift form is valid')
         from apps.core.utils import handle_intergrity_error
         try:
             shift = form.save()
             shift.bu_id = int(request.session['client_id'])
-            putils.save_userinfo(shift, request.user, request.session)
+            putils.save_userinfo(shift, request.user, request.session, create=create)
             logger.info("shift form saved")
             data = {'msg': f"{shift.shiftname}",
             'row': Shift.objects.values(*self.params['fields']).get(id=shift.id) }
