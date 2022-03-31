@@ -84,27 +84,26 @@ def auth_check(info, authinput, uclientip=None):
 
 def authenticate_user(input, request, msg, returnUser):
     loginid = input.loginid
-    clientcode, sitecode = input.sitecode.split('.')
     password = input.password
     deviceid = input.deviceid
 
     from graphql import GraphQLError
     from apps.peoples.models import People
     from django.contrib.auth import authenticate
-
-    userdata = People.objects.get_people_from_creds(loginid, clientcode)
-    valid_imeis = userdata.client.bu_preferences["validimei"].replace(" ", "").split(",")
+    
     user = authenticate(request, username = loginid, password = password)
+    valid_imeis = user.client.bu_preferences["validimei"].replace(" ", "").split(",")
+    
 
-    if userdata and not user:
+    if not user:
         raise GraphQLError(msg.WRONGCREDS)
-    if deviceid == '-1' or userdata.deviceid == '-1':
-        if all([userdata.client.enable, userdata.enable, userdata.is_verified]):
+    if deviceid != '-1' and user.deviceid == '-1':
+        if all([user.client.enable, user.enable, user.is_verified]):
             return returnUser(user, request), user
         else:
             raise GraphQLError(msg.NOCLIENTPEOPLE)
     if deviceid not in valid_imeis:
         raise GraphQLError(msg.NOTREGISTERED)
-    if deviceid != userdata.deviceid:
+    if deviceid != user.deviceid:
         raise GraphQLError(msg.MULTIDEVICES)
     return returnUser(user, request), user

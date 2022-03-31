@@ -295,8 +295,9 @@ INTERNAL_IPS = [
 
 
 AUTH_USER_MODEL = 'peoples.People'
-AUTHENTICATION_BACKENDS = ('apps.peoples.backends.MultiAuthentcationBackend',
-'django.contrib.auth.backends.ModelBackend', "graphql_jwt.backends.JSONWebTokenBackend",)
+AUTHENTICATION_BACKENDS = ["graphql_jwt.backends.JSONWebTokenBackend",
+'apps.peoples.backends.MultiAuthentcationBackend',
+'django.contrib.auth.backends.ModelBackend']
 GRAPHENE = {
     # ...
     "ATOMIC_MUTATIONS": True,

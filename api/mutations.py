@@ -214,9 +214,10 @@ class LogoutUser(graphene.Mutation):
     status = graphene.Int(default_value = 404)
     msg    = graphene.String(default_value = "Failed")
 
-    
+    @classmethod
     @login_required
-    def mutate(self, info):
+    def mutate(cls, root,info):
+        print("Hello world")
         updated = People.objects.reset_deviceid(info.context.user.id)
         if updated: status, msg = 200, "Success"
         return LogoutUser(status=status, msg=msg)

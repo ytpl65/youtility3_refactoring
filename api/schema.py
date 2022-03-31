@@ -5,7 +5,7 @@ from graphql_jwt.decorators import login_required
 from graphene_django.debug import DjangoDebug
 from .mutations import (
   PELogMutation, TrackingMutation,  AddTaMutation,  InsertRecord,
-  LoginUser, LogoutUser
+  LoginUser, LogoutUser, UpdateRecord
 )
 from .types import (
     PELogType, PeopleType, TrackingType, TestGeoType
@@ -26,6 +26,7 @@ class Mutation(graphene.ObjectType):
     #create_GEOS       = TestGeoMutation.Field()
     create_typeassist  = AddTaMutation.Field()
     insert_record      = InsertRecord.Field()
+    update_record      = UpdateRecord.Field()
 
 class Query(MeQuery, graphene.ObjectType):
     PELog_by_id = graphene.Field(PELogType, id = graphene.Int())
@@ -33,6 +34,7 @@ class Query(MeQuery, graphene.ObjectType):
     testcases   = graphene.List(TestGeoType)
     viewer      = graphene.Field(PeopleType)
     '''query-resolutions'''
+    
     @staticmethod
     def resolve_PELog_by_id(self, info, id):
         return PeopleEventlog.objects.get(
@@ -44,7 +46,7 @@ class Query(MeQuery, graphene.ObjectType):
     def resole_testcases(self, info):
         objs = TestGeo.objects.all()
         return list(objs)
-
+    
     @login_required
     def resolve_viewer(self, info, **kwargs):
         return info.context.user

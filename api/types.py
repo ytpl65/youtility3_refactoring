@@ -33,7 +33,6 @@ class PeopleType(DjangoObjectType):
 
      
 class AuthInput(graphene.InputObjectType):
-    sitecode    = graphene.String(required=True)
     loginid     = graphene.String(required=True)
     password    = graphene.String(required=True)
     deviceid    = graphene.String(required=True)

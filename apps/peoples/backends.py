@@ -14,6 +14,8 @@ class MultiAuthentcationBackend(BaseBackend):
     
         result = None
         try:
+            
+            ic(username, password, request.user)
             user = People.objects.get(
                Q(loginid = username) | Q(email=username) | Q(mobno=username))
             ic(user)
