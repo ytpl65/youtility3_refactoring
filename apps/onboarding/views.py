@@ -1,5 +1,7 @@
 import logging
 from django.forms import model_to_dict
+from django.views.decorators.cache import cache_page
+from django.utils.decorators import method_decorator
 from django.http.response import JsonResponse
 from django.shortcuts import redirect, render
 from django.contrib.auth.mixins import LoginRequiredMixin
@@ -22,7 +24,7 @@ from apps.peoples.utils import  save_userinfo
 import apps.onboarding.forms as obforms
 import apps.peoples.utils as putils
 from apps.core import utils
-
+from pprint import pformat
 CACHE_TTL = getattr(settings, 'CACHE_TTL', DEFAULT_TIMEOUT)
 logger = logging.getLogger('django')
 
@@ -87,8 +89,12 @@ class RetrieveBt(LoginRequiredMixin, View):
             logger.info('Retrieve Bt view')
             objects = self.model.objects.select_related(*self.related
                                                         ).values(*self.fields)
-            logger.info('Bt objects %s retrieved from db' %
-                        (len(objects)) if objects else "No Records!")
+            logger.info(
+                f'Bt objects {len(objects)} retrieved from db'
+                if objects
+                else "No Records!"
+            )
+
             cxt = self.paginate_results(request, objects)
             logger.info('Results paginated'if objects else "")
             response = render(request, self.template_path, context=cxt)
@@ -134,7 +140,7 @@ class UpdateBt(LoginRequiredMixin, View):
             logger.info('Update Bt view')
             pk = kwargs.get('pk')
             bt = self.model.objects.get(id=pk)
-            logger.info('object retrieved {}'.format(bt))
+            logger.info(f'object retrieved {bt}')
             form = self.form_class(instance=bt)
             cxt = {'buform': form, 'edit': True,
                    'ta_form': obforms.TypeAssistForm(auto_id=False)}
@@ -278,8 +284,12 @@ class RetrieveShift(LoginRequiredMixin, View):
         try:
             objects = self.model.objects.select_related(*self.related
                                                         ).values(*self.fields)
-            logger.info('Shift objects %s retrieved from db' %
-                        (len(objects)) if objects else "No Records!")
+            logger.info(
+                f'Shift objects {len(objects)} retrieved from db'
+                if objects
+                else "No Records!"
+            )
+
             cxt = self.paginate_results(request, objects)
             logger.info('Results paginated'if objects else "")
             response = render(request, self.template_path, context=cxt)
@@ -324,7 +334,7 @@ class UpdateShift(LoginRequiredMixin, View):
             logger.info('Update shift view')
             pk = kwargs.get('pk')
             shift = self.model.objects.select_related().get(id=pk)
-            logger.info('object retrieved {}'.format(shift))
+            logger.info(f'object retrieved {shift}')
             form = self.form_class(instance=shift)
             response = render(request, self.template_path,  context={
                               'shift_form': form, 'edit': True})
@@ -465,8 +475,12 @@ class RetrieveSitePeople(LoginRequiredMixin, View):
             logger.info('Retrieve SitePeoples view')
             objects = self.model.objects.select_related(*self.related
                                                         ).values(*self.fields)
-            logger.info('SitePeople objects %s retrieved from db' %
-                        (len(objects)) if objects else "No Records!")
+            logger.info(
+                f'SitePeople objects {len(objects)} retrieved from db'
+                if objects
+                else "No Records!"
+            )
+
             cxt = self.paginate_results(request, objects)
             logger.info('Results paginated'if objects else "")
             response = render(request, self.template_path, context=cxt)
@@ -512,7 +526,7 @@ class UpdateSitePeople(LoginRequiredMixin, View):
         try:
             pk = kwargs.get('pk')
             sp = self.model.objects.get(id=pk)
-            logger.info('object retrieved {}'.format(sp))
+            logger.info(f'object retrieved {sp}')
             form = self.form_class(instance=sp)
             response = render(request, self.template_path, context={
                               'sitepeople_form': form, 'edit': True})
@@ -659,9 +673,9 @@ class CreateClient(View):
 def get_caps(request):  # sourcery skip: extract-method
     logger.info('get_caps requested')
     selected_parents = request.GET.getlist('webparents[]')
-    logger.info('selected_parents {}'.format(selected_parents))
+    logger.info(f'selected_parents {selected_parents}')
     cfor = request.GET.get('cfor')
-    logger.info('cfor {}'.format(cfor))
+    logger.info(f'cfor {cfor}')
     if selected_parents:
         from apps.peoples.models import Capability
         from django.http import JsonResponse
@@ -670,7 +684,7 @@ def get_caps(request):  # sourcery skip: extract-method
         for i in selected_parents:
             child = Capability.objects.get_child_data(i, cfor)
             childs.extend({'capscode': j.capscode} for j in child)
-        logger.info('childs = [] {}'.format(childs))
+        logger.info(f'childs = [] {childs}')
         return JsonResponse(data=childs, safe=False)
 
 
@@ -686,8 +700,12 @@ class RetriveClients(LoginRequiredMixin, View):
         try:
             logger.info('Retrieve Client view')
             objects = self.model.objects.values(*self.fields)
-            logger.info('Cleint objects %s retrieved from db' %
-                        (len(objects)) if objects else "No Records!")
+            logger.info(
+                f'Cleint objects {len(objects)} retrieved from db'
+                if objects
+                else "No Records!"
+            )
+
             cxt = self.paginate_results(request, objects)
             logger.info('Results paginated'if objects else "")
             response = render(request, self.template_path, context=cxt)
@@ -734,7 +752,7 @@ class UpdateClient(LoginRequiredMixin, View):
             from .utils import get_bt_prefform
             pk = kwargs.get('pk')
             bt = self.model.objects.select_related('butype').get(id=pk)
-            logger.info('object retrieved {}'.format(bt))
+            logger.info(f'object retrieved {bt}')
             form = self.form_class(instance=bt)
             cxt = {'clientform': form, 'clientprefsform': get_bt_prefform(bt), 'edit': True,
                    'ta_form': obforms.TypeAssistForm(auto_id=False)}
@@ -844,7 +862,7 @@ def handle_pop_forms(request):
         return JsonResponse({'saved': False, 'errors': form.errors})
     ta = form.save(commit=False)
     t = TypeAssist.objects.filter(tacode=ta.tacode)
-    ta = form.save(commit=True) if not len(t) else t[0]
+    ta = t[0] if len(t) else form.save(commit=True)
     save_userinfo(ta, request.user, request.session)
     if request.session.get('wizard_data'):
         request.session['wizard_data']['taids'].append(ta.id)
@@ -858,7 +876,7 @@ def handle_pop_forms(request):
 #---------------------------- END client onboarding   ---------------------------#
 
 
-
+@method_decorator(cache_page(60*3), name='dispatch')
 class MasterTypeAssist(LoginRequiredMixin, View):
     from .filters import TypeAssistFilter
     params = {
@@ -869,14 +887,14 @@ class MasterTypeAssist(LoginRequiredMixin, View):
         'related': ['parent',  'cuser', 'muser'],
         'model': TypeAssist,
         'filter': TypeAssistFilter,
-        'fields': ['id', 'tatype__tacode', 'tacode',
-              'taname', 'cuser__peoplecode'],
+        'fields': ['id', 'tacode',
+              'taname', 'tatype__tacode', 'cuser__peoplecode'],
         'form_initials': {} }
     lookup = {}
 
     def get(self, request, *args, **kwargs):
         R, resp = request.GET, None
-
+        ic(R)
         # first load the template
         if R.get('template'): return render(request, self.params['template_list'])
         #then load the table with objects for table_view
@@ -888,7 +906,8 @@ class MasterTypeAssist(LoginRequiredMixin, View):
                     ~Q(tacode='NONE'),  **self.lookup
             ).values(*self.params['fields'])
             count = objs.count()
-            logger.info('Typeassist objects %s retrieved from db' %(count or "No Records!"))
+            logger.info(f'Typeassist objects {count or "No Records!"} retrieved from db')
+            utils.printsql(objs)
             if count:
                 objects, filtered = utils.get_paginated_results(
                     R, objs, count, self.params['fields'], self.params['related'], self.params['model'])
@@ -900,17 +919,14 @@ class MasterTypeAssist(LoginRequiredMixin, View):
                 'recordsFiltered': filtered
             }, status=200, safe=False)
 
-        # return cap_form empty for creation
         elif R.get('action', None) == 'form':
             cxt = {'ta_form': self.params['form_class'](request=request),
                    'msg': "create typeassist requested"}
             resp = utils.render_form(request, self.params, cxt)
 
-        # handle delete request
         elif R.get('action', None) == "delete" and R.get('id', None):
             print(f'resp={resp}')
             resp = utils.render_form_for_delete(request, self.params, False)
-        # return form with instance for update
         elif R.get('id', None):
             obj = utils.get_model_obj(int(R['id']), request, self.params)
             resp = utils.render_form_for_update(
@@ -976,7 +992,7 @@ class Shift(LoginRequiredMixin, View):
         'template_list': 'onboarding/shift.html',
         'related': ['parent',  'cuser', 'muser'],
         'model': Shift,
-        'fields': ['id', 'shiftname', 'starttime', 'endtime', 'nightshift_appicable'],
+        'fields': ['id', 'shiftname', 'starttime', 'endtime', 'nightshiftappicable'],
         'form_initials': {} }
 
     def get(self, request, *args, **kwargs):
@@ -991,7 +1007,7 @@ class Shift(LoginRequiredMixin, View):
                     enable=True,
             ).values(*self.params['fields'])
             count = objs.count()
-            logger.info('Shift objects %s retrieved from db' %(count or "No Records!"))
+            logger.info(f'Shift objects {count or "No Records!"} retrieved from db')
             if count:
                 objects, filtered = utils.get_paginated_results(
                     R, objs, count, self.params['fields'], self.params['related'], self.params['model'])
@@ -1003,17 +1019,14 @@ class Shift(LoginRequiredMixin, View):
                 'recordsFiltered': filtered
             }, status=200, safe=False)
 
-        # return cap_form empty for creation
         elif R.get('action', None) == 'form':
             cxt = {'shift_form': self.params['form_class'](request=request),
                    'msg': "create shift requested"}
             resp = utils.render_form(request, self.params, cxt)
 
-        # handle delete request
         elif R.get('action', None) == "delete" and R.get('id', None):
             print(f'resp={resp}')
             resp = utils.render_form_for_delete(request, self.params, False)
-        # return form with instance for update
         elif R.get('id', None):
             obj = utils.get_model_obj(int(R['id']), request, self.params)
             resp = utils.render_form_for_update(
@@ -1057,3 +1070,34 @@ class Shift(LoginRequiredMixin, View):
             return rp.JsonResponse(data, status=200)
         except IntegrityError:
             return handle_intergrity_error("Shift")
+
+
+
+class EditorTa(View):
+    template = 'onboarding/testEditorTa.html'
+    fields = ['id', 'tacode', 'taname', 'tatype__tacode', 'cuser__peoplecode']
+    model = TypeAssist
+    related = ['cuser', 'tatype']
+    
+    def get(self, request, *args, **kwargs):
+        R = request.GET
+        if R.get('template'): return render(request, self.template)
+    def post(self, request, *args, **kwargs):
+        R = request.POST
+        ic(pformat(request.POST, compact=True))
+        objs = self.model.objects.select_related(
+                *self.related).filter(
+            ).values(*self.fields)
+        count = objs.count()
+        logger.info(f'Shift objects {count or "No Records!"} retrieved from db')
+        if count:
+            objects, filtered = utils.get_paginated_results(
+                R, objs, count, self.fields, self.related, self.model)
+            logger.info('Results paginated'if count else "")
+        return JsonResponse(
+            data = {
+            'draw':R['draw'], 'recordsTotal':count,
+            'data' : list(objects), 
+            'recordsFiltered': filtered}, status = 200
+        )
+

@@ -25,25 +25,25 @@ class Schd_I_TourJobForm(JobForm):
         """Initializes form add atttibutes and classes here."""
         self.request = kwargs.pop('request', None)
         super(Schd_I_TourJobForm, self).__init__(*args, **kwargs)
-        self.fields['from_date'].input_formats  = settings.DATETIME_INPUT_FORMATS
-        self.fields['upto_date'].input_formats  = settings.DATETIME_INPUT_FORMATS
+        self.fields['fromdate'].input_formats  = settings.DATETIME_INPUT_FORMATS
+        self.fields['uptodate'].input_formats  = settings.DATETIME_INPUT_FORMATS
         self.fields['identifier'].widget.attrs  = {"style":"display:none"}
         self.fields['expirytime'].widget.attrs  = {"style":"display:none"}
         self.fields['starttime'].widget.attrs   = {"style":"display:none"}
         self.fields['endtime'].widget.attrs     = {"style":"display:none"}
         self.fields['frequency'].widget.attrs   = {"style":"display:none"}
-        self.fields['ticket_category'].queryset = ob.TypeAssist.objects.filter(tatype__tacode="TICKETCATEGORY")
+        self.fields['ticketcategory'].queryset = ob.TypeAssist.objects.filter(tatype__tacode="TICKETCATEGORY")
         utils.initailize_form_fields(self)
         
 
     
     def clean_from_date(self):
-        if val := self.cleaned_data.get('from_date'):
+        if val := self.cleaned_data.get('fromdate'):
             val =  ob_utils.to_utc(val)
             return val
     
     def clean_upto_date(self):
-        if val := self.cleaned_data.get('upto_date'):
+        if val := self.cleaned_data.get('uptodate'):
             val =  ob_utils.to_utc(val)
             return val
 
@@ -102,10 +102,10 @@ class I_TourFormJobneed(JobNeedForm): #jobneed
         self.fields['identifier'].widget.attrs      = {"style":"display:none"}
         self.fields['starttime'].widget.attrs       = {"disabled":"disabled"}
         self.fields['endtime'].widget.attrs         = {"disabled":"disabled"}
-        self.fields['performed_by'].widget.attrs    = {"disabled":"disabled"}
+        self.fields['performedby'].widget.attrs    = {"disabled":"disabled"}
         self.fields['qset'].label = 'QuestionSet'
         self.fields['asset'].label = 'Asset/Smartplace'
-        self.fields['ticket_category'].queryset     = ob.TypeAssist.objects.filter(tatype__tacode="TICKETCATEGORY")
+        self.fields['ticketcategory'].queryset     = ob.TypeAssist.objects.filter(tatype__tacode="TICKETCATEGORY")
         utils.initailize_form_fields(self)
 
     def is_valid(self) -> bool:
@@ -172,9 +172,9 @@ class Schd_E_TourJobForm(JobForm):
     def __init__(self, *args, **kwargs):
         self.request = kwargs.pop('request', None)
         super(Schd_E_TourJobForm, self).__init__(*args, **kwargs)
-        self.fields['from_date'].input_formats = settings.DATETIME_INPUT_FORMATS
-        self.fields['upto_date'].input_formats = settings.DATETIME_INPUT_FORMATS
-        self.fields['ticket_category'].initial = ob.TypeAssist.objects.get(tacode='AUTOCLOSE')
+        self.fields['fromdate'].input_formats = settings.DATETIME_INPUT_FORMATS
+        self.fields['uptodate'].input_formats = settings.DATETIME_INPUT_FORMATS
+        self.fields['ticketcategory'].initial = ob.TypeAssist.objects.get(tacode='AUTOCLOSE')
         utils.initailize_form_fields(self)
         
         
@@ -192,7 +192,7 @@ class EditAssignedSiteForm(forms.Form):
 
     def __init__(self, *args, **kwargs):
         super(EditAssignedSiteForm, self).__init__(*args, **kwargs)
-        self.fields['checklist'].choices = am.QuestionSet.objects.all().values_list('id', 'qset_name')
+        self.fields['checklist'].choices = am.QuestionSet.objects.all().values_list('id', 'qsetname')
         utils.initailize_form_fields(self)
 
 
@@ -211,8 +211,8 @@ class SchdTaskFormJob(JobForm):
 
     def __init__(self, *args, **kwargs):
         super(SchdTaskFormJob, self).__init__(*args, **kwargs)
-        self.fields['from_date'].input_formats  = settings.DATETIME_INPUT_FORMATS
-        self.fields['upto_date'].input_formats  = settings.DATETIME_INPUT_FORMATS
+        self.fields['fromdate'].input_formats  = settings.DATETIME_INPUT_FORMATS
+        self.fields['uptodate'].input_formats  = settings.DATETIME_INPUT_FORMATS
         self.fields['jobdesc'].required         = False
         self.fields['identifier'].widget.attrs  = {"style":"display:none"}
         self.fields['starttime'].widget.attrs   = {"style":"display:none"}
@@ -220,7 +220,7 @@ class SchdTaskFormJob(JobForm):
         self.fields['frequency'].widget.attrs   = {"style":"display:none"}
         self.fields['expirytime'].label         = 'Grace Time After'
         self.fields['gracetime'].label          = 'Grace Time Before'
-        self.fields['ticket_category'].queryset = ob.TypeAssist.objects.filter(tatype__tacode="TICKETCATEGORY")
+        self.fields['ticketcategory'].queryset = ob.TypeAssist.objects.filter(tatype__tacode="TICKETCATEGORY")
         utils.initailize_form_fields(self)
         
     def clean(self):
@@ -270,7 +270,7 @@ class TicketForm(JobNeedForm):
             self.fields['ticketno'].widget.attrs  = {'disabled':'disabled', 'readonly':'readonly'}
         self.fields['cuser'].required = False
         self.fields['asset'].label = 'Location'
-        self.fields['ticket_category'].queryset     = ob.TypeAssist.objects.filter(tatype__tacode="TICKETCATEGORY")
+        self.fields['ticketcategory'].queryset     = ob.TypeAssist.objects.filter(tatype__tacode="TICKETCATEGORY")
         utils.initailize_form_fields(self)
         
     def is_valid(self) -> bool:

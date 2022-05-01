@@ -25,6 +25,7 @@ urlpatterns = [
     path('typeassist/', views.TypeAssistAjax.as_view(), name="typeassist"),
     path('super_typeassist/', views.SuperTypeAssist.as_view(), name="super_typeassist"),
     path('shift/', views.Shift.as_view(), name="shift"),
+    path('editor/', views.EditorTa.as_view(), name="editortypeassist"),
 
 
 ]

@@ -1,6 +1,6 @@
 <div
   class="menu menu-column menu-title-gray-800 menu-state-title-primary menu-state-icon-primary menu-state-bullet-primary menu-arrow-gray-500"
-  id="#kt_aside_menu" data-kt-menu="true">
+  id="kt_aside_menu" data-kt-menu="true">
   <div data-kt-menu-trigger="click" id="dashboards" class="menu-item menu-accordion" style="display:none;">
     <span class="menu-link">
       <span class="menu-icon">
@@ -903,6 +903,14 @@
           <span class="menu-title">Type Assit</span>
         </a>
       </div>
+      <div class="menu-item" id="editortypeassist">
+        <a class="menu-link" href="{{ url('onboarding:editortypeassist') }}?template=true">
+          <span class="menu-bullet">
+            <span class="bullet bullet-dot"></span>
+          </span>
+          <span class="menu-title">Type Assit Editor</span>
+        </a>
+      </div>
       <div class="menu-item" id="question">
         <a class="menu-link" href="{{ url('activity:question') }}?action=list">
           <span class="menu-bullet">
@@ -936,7 +944,7 @@
         </a>
       </div>
       <div class="menu-item" id="sitegroup">
-        <a class="menu-link" href="#"-->>
+        <a class="menu-link" href="{{ url('peoples:sitegroup') }}?template=true">
           <span class="menu-bullet">
             <span class="bullet bullet-dot"></span>
           </span>

@@ -59,7 +59,7 @@ def get_people_prefform(people, session):
         return PeopleExtrasForm(data=d, session=session)
 
 
-def save_cuser_muser(instance, user, create):
+def save_cuser_muser(instance, user, create=None):
     from django.utils import timezone
     if instance.mdtz:
         instance.muser = user
@@ -94,7 +94,7 @@ def save_userinfo(instance, user, session,client=None, bu=None, create=True):
             msg = "saving user and client info for the instance have been created"
             logger.info(f'{msg} STARTED')
             instance = save_client_tenantid(instance, user, session, client, bu)
-            instance = save_cuser_muser(instance, user, create)
+            instance = save_cuser_muser(instance, user)
             instance.save()
             logger.info(f'{msg} DONE')
         except (KeyError, ObjectDoesNotExist):
@@ -213,13 +213,13 @@ def save_caps_inside_session_for_people_client(people, caps, session, client):
     session['people_portletcaps'] = make_choices(
         people.people_extras['portletcapability'], caps)
     session['client_webcaps'] = make_choices(
-        client.bu_preferences['webcapability'], caps)
+        client.bupreferences['webcapability'], caps)
     session['client_mobcaps'] = make_choices(
-        client.bu_preferences['mobilecapability'], caps)
+        client.bupreferences['mobilecapability'], caps)
     session['client_reportcaps'] = make_choices(
-        client.bu_preferences['reportcapability'], caps)
+        client.bupreferences['reportcapability'], caps)
     session['client_portletcaps'] = make_choices(
-        client.bu_preferences['portletcapability'], caps)
+        client.bupreferences['portletcapability'], caps)
     logger.debug(
         'capabilities info saved in session for people and client... DONE')
 
@@ -319,6 +319,9 @@ def get_caps_choices(client=None, cfor=None,  session=None, people=None):
     # for cap in caps:
     #print(f'Code {cap.capscode} Depth {cap.depth}')
     try:
+        if cfor == Capability.Cfor.MOB:
+            return Capability.objects.select_related(
+                'parent').filter(cfor=cfor).values_list('capscode', 'capsname')
         caps = cache.get('caps')
         if caps:
             logger.debug('got caps from cache...')

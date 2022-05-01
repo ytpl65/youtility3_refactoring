@@ -96,17 +96,32 @@ class PeopleResource(resources.ModelResource, BaseFieldSet2):
 @admin.register(People)
 class PeopleAdmin(ImportExportModelAdmin):
     resource_class = PeopleResource
-    fields = ['peoplecode', 'peoplename', 'loginid', 'designation', 'department', 'mobno', 'email',
-              'bu', 'dateofjoin', 'dateofreport', 'dateofbirth', 'gender', 'peopletype', 'enable',
-              'isadmin', 'people_extras', 'client', ]
 
     list_display = ['id', 'peoplecode', 'peoplename', 'loginid',  'mobno', 'email', 'password',
                     'gender', 'peopletype', 'isadmin', 'client', 'cuser', 'muser', 'cdtz', 'mdtz']
 
     list_display_links = ['peoplecode', 'peoplename']
+    add_fieldsets = (
+        (None, {
+            'classes': ('wide',),
+            'fields': ('loginid', 'password1', 'password2'),
+        }),
+    )
+    fieldsets = (
+        ('Create/Update People', {'fields':['peoplecode', 'peoplename', 'loginid',  'mobno', 'email',
+              'bu', 'dateofjoin', 'dateofbirth', 'gender',  'enable', 'tenant',
+              'isadmin', 'client']}),
+        ('Add/Remove Permissions', {
+            'fields': ('is_staff', 'is_superuser', 'groups', 'user_permissions'),
+        })
+    )
 
     def get_resource_kwargs(self, request, *args, **kwargs):
         return {'request': request}
+
+    def get_queryset(self, request):
+        return pm.People.objects.select_related(
+            'peopletype', 'cuser', 'muser', 'client', 'bu').all()
 
 
 class PgroupResource(resources.ModelResource, BaseFieldSet2):
@@ -128,11 +143,11 @@ class PgroupResource(resources.ModelResource, BaseFieldSet2):
 @admin.register(Pgroup)
 class PgroupAdmin(ImportExportModelAdmin):
     resource_class = PgroupResource
-    fields = ['name', 'enable',
+    fields = ['groupname', 'enable',
               'identifier', 'client', 'bu']
-    list_display = ['id', 'name',
+    list_display = ['id', 'groupname',
                     'enable', 'identifier', 'client', 'bu']
-    list_display_links = ['name', 'enable', 'identifier']
+    list_display_links = ['groupname', 'enable', 'identifier']
 
 
 class PgbelongingResource(resources.ModelResource, BaseFieldSet2):
@@ -175,15 +190,24 @@ class CapabilityResource(resources.ModelResource, BaseFieldSet2):
     class Meta:
         model = Capability
         skip_unchanged = True
+        import_id_fields = ('id', 'capscode', 'cfor',)
         report_skipped = True
-        fields = ('id', 'capscode',  'capsname', 'cfor',
-                  'parent', 'cuser', 'muser')
+        fields = ('id', 'capscode',  'capsname', 'cfor', 
+                  'parent', 'cuser', 'muser', 'client', 'bu', 'tenant')
+
+
+
+    def __init__(self, *args, **kwargs):
+        self.request = kwargs.pop('request', None)
+        super(CapabilityResource, self).__init__(*args, **kwargs)
 
     def before_save_instance(self, instance, using_transactions, dry_run):
-        super().before_save_instance(instance, using_transactions, dry_run)
         instance.capscode = instance.capscode.upper()
-
-
+        utils.save_common_stuff(self.request, instance)
+    
+    
+    
+    
 @admin.register(Capability)
 class CapabilityAdmin(ImportExportModelAdmin):
     resource_class = CapabilityResource
@@ -192,6 +216,12 @@ class CapabilityAdmin(ImportExportModelAdmin):
                     'cdtz', 'mdtz', 'cuser', 'muser']
     list_display_links = ['capscode', 'capsname']
 
+
+    
+    def get_resource_kwargs(self, request, *args, **kwargs):
+        return {'request': request}
+
     def get_queryset(self, request):
-        print(super(CapabilityAdmin, self).get_queryset(request))
-        return super(CapabilityAdmin, self).get_queryset(request).select_related('cuser', 'muser')
+        return pm.Capability.objects.select_related(
+            'parent', 'cuser', 'muser').all()
+

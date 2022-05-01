@@ -56,8 +56,8 @@ Ticket List
             <td>{{ ticket['bu__buname']  }}</td>
             <td>{{ ticket['jobdesc'] }}</td>
             <td>{{ ticket['people__peoplename'] or ticket['pgroup__groupname'] }}</td>
-            <td>{{ ticket['performed_by__peoplename'] }}</td>
-            <td>{{ ticket['ticket_category__taname'] }}</td>
+            <td>{{ ticket['performedby__peoplename'] }}</td>
+            <td>{{ ticket['ticketcategory__taname'] }}</td>
             <td>{{ ticket['jobstatus'] }}</td>
             <td>{{ ticket['priority'] }}</td>
         </tr>

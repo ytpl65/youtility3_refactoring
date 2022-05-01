@@ -10,7 +10,8 @@
 <form action="" method="post" id="id_checkpointform">
     <div class="modal-header border-0">
         <h3 class="modal-title modal-heading" id="exampleModalLabel">Create {{ label }} <i
-                class="fas fa-poll-h fa-sm ch4"></i></h3>
+                class="fas fa-poll-h fa-sm ch4"></i>
+                </h3>
         <button type="button" class="btn-sm btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
     </div>
     <div class="modal-body" id="partial">
@@ -65,8 +66,12 @@
             <!--GPS Location Start-->
             <label for="{{ master_assetform.gpslocation.id_for_label }}" class="required col-md-1">GPS:</label>
             <div class="col-md-5">
-                {{ master_assetform.gpslocation }}
-                {{ master_assetform.gpslocation.errors }}
+                <div class="input-group">
+                    <input type="text" class="form-control" name="GPS">
+                    <button class="btn btn-primary" type="button" id="button-addon2"><i class="fas fa-map-marker-alt"></i></button>
+                </div>
+                {# {{ master_assetform.gpslocation }}
+                {{ master_assetform.gpslocation.errors }} #}
             </div>
             <!--GPS Location End-->
             
@@ -126,6 +131,20 @@
     </div>
 </form>
 {% endblock body %}
+
+{% block popup_alerts %}
+{% call general_popup(popup_id = 'select_addr', title = 'Select Address') %}
+<div class="modal-body">
+<div class="row">
+{{ master_assetform.gpslocation }}
+</div>
+</div>
+<div class="modal-footer">
+
+</div>
+{% endcall %}
+{% endblock  popup_alerts %}
+
 
 
 {% block js %}

@@ -10,3 +10,4 @@ frontend/static/assets/css/
 !frontend/static/assets/js/local
 frontend/static/assets/media
 frontend/static/assets/plugins
+.env

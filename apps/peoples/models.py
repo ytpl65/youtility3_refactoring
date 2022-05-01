@@ -8,7 +8,7 @@ from django.utils.translation import gettext_lazy as _
 from django.core.serializers.json import DjangoJSONEncoder
 from django.contrib.auth.base_user import AbstractBaseUser
 from django.contrib.auth.models import PermissionsMixin
-from .managers import PeopleManager, CapabilityManager
+from .managers import PeopleManager, CapabilityManager, PgblngManager, PgroupManager
 from apps.tenants.models import TenantAwareModel
 import logging
 from django.utils import timezone
@@ -43,7 +43,8 @@ def upload_peopleimg(instance, filename):
         from os.path import join
 
         peoplecode = instance.peoplecode
-        full_filename = f'{peoplecode}__{filename}'
+        peoplename = instance.peoplename.replace(" ", "_")
+        full_filename = f'{peoplecode}_{peoplename}__{filename}'
         foldertype = 'people'
         basedir = fyear = fmonth = None
         basedir = "master"
@@ -82,7 +83,7 @@ class BaseModel(models.Model):
     muser = models.ForeignKey(settings.AUTH_USER_MODEL,  null=True, blank=True,on_delete=models.RESTRICT, related_name="%(class)s_musers")
     cdtz  = models.DateTimeField(_('cdtz'), default=now)
     mdtz  = models.DateTimeField(_('mdtz'), null=True)
-    tzoffset = models.IntegerField(_("TimeZone"), default=-1)
+    ctzoffset = models.IntegerField(_("TimeZone"), default=-1)
 
     class Meta:
         abstract = True
@@ -94,14 +95,14 @@ class People(AbstractBaseUser, PermissionsMixin, TenantAwareModel, BaseModel):
     class Gender(models.TextChoices):
         M = ('M', 'Male')
         F = ('F', 'Female')
-
+    #id= models.BigIntegerField(_("Id"), primary_key=True)
     peopleimg     = models.ImageField(_("peopleimg"), upload_to=upload_peopleimg, default="master/people/blank.png", null=True, blank=True)
     peoplecode    = models.CharField(_("Code"), max_length=50)
     peoplename    = models.CharField(_("Name"), max_length=120)
     loginid       = models.CharField(_("Login Id"), max_length=50, unique=True, null=True, blank=True)
     isadmin       = models.BooleanField(_("Is Admin"), default=False)
     is_staff      = models.BooleanField(_('staff status'), default=False)
-    is_verified   = models.BooleanField(_("Is Active"), default=False)
+    isverified   = models.BooleanField(_("Is Active"), default=False)
     enable        = models.BooleanField(_("Enable"), default=True)
     department    = models.ForeignKey("onboarding.TypeAssist", null=True, blank=True,on_delete=models.RESTRICT, related_name='people_departments')
     designation   = models.ForeignKey("onboarding.TypeAssist", null=True, blank=True,on_delete=models.RESTRICT, related_name='people_designations')
@@ -146,13 +147,23 @@ class People(AbstractBaseUser, PermissionsMixin, TenantAwareModel, BaseModel):
 
 
 ############## Pgroup Table ###############
-class Pgroup(Group, BaseModel, TenantAwareModel):
+class PermissionGroup(Group):
+    class Meta:
+        db_table = 'permissiongroup'
+        verbose_name = _('permissiongroup')
+        verbose_name_plural = _('permissiongroups')
+
+
+class Pgroup(BaseModel, TenantAwareModel):
+    #id= models.BigIntegerField(_("Groupid"), primary_key=True, auto_created=)
     groupname  = models.CharField(_('Name'), max_length=250)
     enable     = models.BooleanField(_('Enable'), default=True)
     identifier = models.ForeignKey('onboarding.TypeAssist', null=True, blank=True, on_delete=models.RESTRICT, related_name="pgroup_idfs")
     bu       = models.ForeignKey("onboarding.Bt", null=True, blank=True, on_delete=models.RESTRICT, related_name='pgroup_bus')
     client   = models.ForeignKey('onboarding.Bt', null=True, blank=True, on_delete=models.RESTRICT, related_name='pgroup_clients')
 
+    objects = PgroupManager()
+    
     class Meta(BaseModel.Meta):
         db_table = 'pgroup'
         constraints = [
@@ -174,13 +185,16 @@ class Pgroup(Group, BaseModel, TenantAwareModel):
 
 ############## Pgbelonging Table ###############
 class Pgbelonging(BaseModel, TenantAwareModel):
-    pgroup     = models.ForeignKey('Pgroup', null=True, blank=True, on_delete=models.RESTRICT, related_name="pgbelongs_grps")
-    people    = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.RESTRICT,  related_name="pgbelongs_peoples")
+    #id      = models.BigIntegerField(_("Pgbid"), primary_key=True)
+    pgroup      = models.ForeignKey('Pgroup', null=True, blank=True, on_delete=models.RESTRICT, related_name="pgbelongs_grps")
+    people      = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.RESTRICT,  related_name="pgbelongs_peoples")
     isgrouplead = models.BooleanField(_('Group Lead'), default=False)
     assignsites = models.ForeignKey('onboarding.Bt', null=True,  blank=True, on_delete=models.RESTRICT, related_name="pgbelongs_assignsites")
-    bu        = models.ForeignKey("onboarding.Bt", null=True, blank=True, on_delete=models.RESTRICT,  related_name='pgbelonging_sites')
-    client    = models.ForeignKey('onboarding.Bt', null=True, blank=True, on_delete=models.RESTRICT, related_name='pgbelonging_clients')
-
+    bu          = models.ForeignKey("onboarding.Bt", null=True, blank=True, on_delete=models.RESTRICT,  related_name='pgbelonging_sites')
+    client      = models.ForeignKey('onboarding.Bt', null=True, blank=True, on_delete=models.RESTRICT, related_name='pgbelonging_clients')
+    
+    objects = PgblngManager()
+    
     class Meta(BaseModel.Meta):
         db_table = 'pgbelonging'
         constraints = [
@@ -202,11 +216,12 @@ class Capability(BaseModel, TenantAwareModel):
         REPORT  = ('REPORT', 'REPORT')
         MOB     = ('MOB', 'MOB')
     
+    #id   = models.BigIntegerField(_(" Cap Id"), primary_key=True)
     capscode = models.CharField(_('Code'), max_length=50)
     capsname = models.CharField(_('Capability'), max_length=1000, default=None, blank=True, null=True)
     parent   = models.ForeignKey('self', on_delete=models.RESTRICT,  null=True, blank=True, related_name='children', verbose_name="Belongs_to")
     cfor     = models.CharField(_('Capability_for'), max_length=10, default='WEB', choices=Cfor.choices)
-    client = models.ForeignKey('onboarding.Bt',  null=True, blank=True, on_delete=models.RESTRICT)
+    client   = models.ForeignKey('onboarding.Bt',  null=True, blank=True, on_delete=models.RESTRICT)
     enable   = models.BooleanField(_('Enable'), default=True)
 
     objects = CapabilityManager()

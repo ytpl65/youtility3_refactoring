@@ -4,35 +4,39 @@ from graphql_auth.schema import  MeQuery
 from graphql_jwt.decorators import login_required
 from graphene_django.debug import DjangoDebug
 from .mutations import (
-  PELogMutation, TrackingMutation,  AddTaMutation,  InsertRecord,
-  LoginUser, LogoutUser, UpdateRecord
+  InsertRecord,
+  LoginUser, LogoutUser,
+  ReportMutation,  TaskTourUpdate
 )
 from .types import (
-    PELogType, PeopleType, TrackingType, TestGeoType
+    PELogType, PeopleType, TrackingType, TestGeoType, TyType
 )
 from apps.attendance.models import (
     PeopleEventlog, Tracking, TestGeo
 )
+from .querys import Query as ApiQuery
+from apps.onboarding.models import TypeAssist
 
 class Mutation(graphene.ObjectType):
-    token_auth    = LoginUser.Field()
-    logout_user   = LogoutUser.Field()
-    verify_token  = graphql_jwt.Verify.Field()
-    refresh_token = graphql_jwt.Refresh.Field()
-    revoke_token  = graphql_jwt.Revoke.Field()
-
-    create_peopleevent = PELogMutation.Field()
-    create_tracking    = TrackingMutation.Field()
-    #create_GEOS       = TestGeoMutation.Field()
-    create_typeassist  = AddTaMutation.Field()
+    token_auth         = LoginUser.Field()
+    logout_user        = LogoutUser.Field()
     insert_record      = InsertRecord.Field()
-    update_record      = UpdateRecord.Field()
+    #update_record      = UpdateRecord.Field()
+    #create_peopleevent = PELogMutation.Field()
+    #create_tracking    = TrackingMutation.Field()
+    #create_GEOS       = TestGeoMutation.Field()
+    #create_typeassist  = AddTaMutation.Field()
+    update_task_tour = TaskTourUpdate.Field()
+    #template_report = TemplateReport.Field()
+    #testJsonFile = TestJsonMutation.Field()
+    upload_report = ReportMutation.Field()
 
-class Query(MeQuery, graphene.ObjectType):
+
+class Query(MeQuery, ApiQuery,  graphene.ObjectType):
     PELog_by_id = graphene.Field(PELogType, id = graphene.Int())
     trackings   = graphene.List(TrackingType)
     testcases   = graphene.List(TestGeoType)
-    viewer      = graphene.Field(PeopleType)
+    viewer      = graphene.String()
     '''query-resolutions'''
     
     @staticmethod
@@ -49,8 +53,7 @@ class Query(MeQuery, graphene.ObjectType):
     
     @login_required
     def resolve_viewer(self, info, **kwargs):
-        return info.context.user
-
+        return  "validtoken" if info.context.user.is_authenticated else "tokenexpired"
 
 
 

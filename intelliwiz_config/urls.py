@@ -23,7 +23,7 @@ from django.contrib.auth.decorators import login_required
 from django_email_verification import urls as email_urls  # include the urls
 
 from apps.peoples.views import SignIn, SignOut
-from graphene_django.views import GraphQLView
+from graphene_file_upload.django import FileUploadGraphQLView
 import debug_toolbar
 urlpatterns = [
     path('', SignIn.as_view(), name='login'),
@@ -40,7 +40,8 @@ urlpatterns = [
     path('email-verify/', include(email_urls)),
     path('__debug__/', include(debug_toolbar.urls)), #shoul use when debug=True
     path('select2/', include('django_select2.urls')),
-    path("graphql", csrf_exempt(GraphQLView.as_view(graphiql=True))),
+    path("graphql", csrf_exempt(FileUploadGraphQLView.as_view(graphiql=True))),
+    path('api/', include('apps.service.urls'))
 
 ]
 

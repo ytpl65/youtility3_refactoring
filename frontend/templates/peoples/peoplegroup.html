@@ -82,16 +82,14 @@ People Group Lists
 				url:`${urlname}?action=list`
 			},
 			serverSide : true,
-			processing : true,
 			responsive : true,
 			fixedHeader: true,
-			language   : {
-                search           : "_INPUT_",
-                searchPlaceholder: "Search ..",
-				processing:"Processing"},
+			search    : {return: true},
             dom       : `<'row' <'col-sm-6 d-flex justify-content-start'f> <'col-sm-6 d-flex justify-content-end'B> >rt<'row'
 			 <'col-sm-6'l> <'col-sm-6'p><'col-sm-12 d-flex justify-content-center'i>>`,
-            ordering:false,
+            search    : {return: true},
+			lengthMenu: [[10, 20, 30], [10, 20, 30]],	
+			ordering:false,
             scrollCollapse: true,
 			columns:[
 				{

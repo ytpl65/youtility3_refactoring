@@ -85,7 +85,8 @@ def insert_questions_to_qsetblng(assigned_questions, model, fields, request):
     try:
         with transaction.atomic():
             for ques in assigned_questions:
-                log.info("%s saving question %s for QuestionSet %s [started]"%(" "*8,ques[1], fields['qset_name']))
+                log.info(f"""{" " * 8} saving question {ques[1]} for QuestionSet {fields['qsetname']} [started]""")
+
                 qsetbng, created = model.objects.update_or_create(
                     question_id = ques[2], qset_id = fields['qset'], client_id = fields['client'],
                     defaults = { 
@@ -100,9 +101,10 @@ def insert_questions_to_qsetblng(assigned_questions, model, fields, request):
                     "qset_id"   : fields['qset']}
                 )
                 qsetbng.save()
-                log.debug("%s, %s, %s, %s"%(qsetbng.cuser, qsetbng.muser, qsetbng.cdtz, qsetbng.mdtz))
+                log.debug(f"{qsetbng.cuser}, {qsetbng.muser}, {qsetbng.cdtz}, {qsetbng.mdtz}")
                 putils.save_userinfo(qsetbng, request.user, request.session)
-                log.debug("%s %s question %s for QuestionSet %s [ended]"%(" "*8, created, ques[1], fields['qset_name']))
+                log.debug(f"""{" " * 8} {created} question {ques[1]} for QuestionSet {fields['qsetname']} [ended]""")
+
     except Exception:
         log.critical("something went wrong", exc_info=True)
         raise

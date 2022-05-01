@@ -12,11 +12,11 @@ dbg = logging.getLogger('__main__').debug
 
 def save_json_from_bu_prefsform(bt, buprefsform):
     try:
-        for k, _ in bt.bu_preferences.items():
+        for k, _ in bt.bupreferences.items():
             if k in ('validimei', 'validip', 'reliveronpeoplecount',
                      'pvideolength', 'usereliver', 'webcapability', 'mobilecapability',
                      'reportcapability', 'portletcapability'):
-                bt.bu_preferences[k] = buprefsform.cleaned_data.get(k)
+                bt.bupreferences[k] = buprefsform.cleaned_data.get(k)
     except Exception:
         logger.error("save json from buprefsform... FAILED", exc_info=True)
         return False
@@ -31,7 +31,7 @@ def get_bu_prefform(bt):
     try:
         d = {
             k: v
-            for k, v in bt.bu_preferences.items()
+            for k, v in bt.bupreferences.items()
             if k
             in (
                 'validimei',
@@ -63,25 +63,24 @@ def update_children_tree(instance, newcode, newtype, whole=False):
     """Updates tree of child bu tree's"""
     from apps.core.raw_queries import query
     try:
-        if not whole:
-            childs = Bt.objects.raw(query['get_childrens_of_bt']%(instance.id))
-            ic(childs)
-        else: childs = Bt.objects.exclude(id=-1)
+        childs = Bt.objects.get_bu_list_ids(instance.id)
         if len(childs) > 1:
-            prev_code = instance.bucode
-            prev_type = instance.identifier.tacode
+            childs = Bt.objects.filter(id__in = childs)
+            print(childs)
             for bt in childs:
-                tree = bt.butree
-                treepart = prev_type + ' :: ' + prev_code
-                newtreepart = newtype + ' :: ' + newcode
-                ic(treepart)
+                
+                oldtree = bt.butree
+                oldtreepart = f'{bt.identifier.tacode} :: {bt.bucode}'
+                ic(oldtree)
+                ic(oldtreepart)
+                newtreepart = f'{newtype} :: {newcode}'
                 ic(newtreepart)
-                ic("before", tree)
-                if tree and treepart in tree:
-                    newtree = tree.replace(treepart, newtreepart)
+                ic(oldtreepart in oldtree)
+                if oldtree and oldtreepart != newtreepart:
+                    newtree = oldtree.replace(oldtreepart, newtreepart)
                     bt.butree = newtree
                     bt.save()
-                    ic('after', bt.butree)
+                    
     except Exception:
         logger.error(
             "update_children_tree(instance, newcode, newtype)... FAILED", exc_info=True)
@@ -125,7 +124,7 @@ def get_bt_prefform(bt):
         from .forms import ClentForm
         d = {
             k: v
-            for k, v in bt.bu_preferences.items()
+            for k, v in bt.bupreferences.items()
             if k
             in [
                 'validimei',
@@ -177,7 +176,7 @@ def create_bv_reportting_heirarchy(instance, newcode, newtype, parent):
     if instance.id != None:
         dbg("Updating the reporting heirarchy!")
         #update bu tree
-        if instance.bucode != "NONE" and instance.parent.bucode == 'NONE':
+        if instance.bucode != None and instance.parent.bucode is None:
             dbg("Updating heirarchy of the Root Node")
             update_children_tree(instance, newcode, newtype.tacode)
         else:
@@ -187,7 +186,7 @@ def create_bv_reportting_heirarchy(instance, newcode, newtype, parent):
     else:
         dbg("Creating the reporting heirarchy!")
         #create bu tree
-        if instance.bucode != "NONE" and parent.bucode == 'NONE':
+        if instance.bucode != "NONE" and parent is None:
             #Root Node
             dbg("Creating heirarchy of the Root Node")
             instance.butree = f'{newtype.tacode} :: {newcode}'

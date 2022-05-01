@@ -65,7 +65,7 @@ class RetriveSiteReports(LoginRequiredMixin, View):
 class MasterReportTemplateList(View, LoginRequiredMixin):
     model         = am.QuestionSet
     template_path = None
-    fields        = ['id', 'qset_name', 'enable']
+    fields        = ['id', 'qsetname', 'enable']
     type          = None
     
     def get(self, request, *args, **kwargs):
@@ -76,7 +76,7 @@ class MasterReportTemplateList(View, LoginRequiredMixin):
         try:
             objects = am.QuestionSet.objects.filter(
                 type='SITEREPORTTEMPLATE'
-            ).values('id', 'qset_name', 'enable')
+            ).values('id', 'qsetname', 'enable')
             count = objects.count()
             if count:
                 log.info('Site report template objects %s retrieved from db' % (count or "No Records!"))
@@ -146,7 +146,7 @@ class MasterReportForm(View, LoginRequiredMixin):
                 request=request, instance=obj, data=request.POST)
             create=False
             log.info("retrieved existing %s template:= '%s'" %
-                     (obj.qset_name, obj.id))
+                     (obj.qsetname, obj.id))
         
         #process new data for creation
         else:
@@ -180,7 +180,7 @@ class MasterReportForm(View, LoginRequiredMixin):
             report.parent_id  = -1
             report.save()
             report = putils.save_userinfo(report, request.user, request.session, create=create)
-            log.debug("report saved:%s"%(report.qset_name))
+            log.debug("report saved:%s"%(report.qsetname))
         except Exception as ex:
             log.critical("%s form is failed to process"%self.viewname, exc_info=True)
             resp = rp.JsonResponse(
@@ -188,7 +188,7 @@ class MasterReportForm(View, LoginRequiredMixin):
             raise ex
         else:
             log.info("%s template form is processed successfully"%self.viewname)
-            resp = rp.JsonResponse({'msg': report.qset_name,
+            resp = rp.JsonResponse({'msg': report.qsetname,
                 'url': reverse("reports:sitereport_template_form"),
                 'id':report.id},
                 status=200)
@@ -209,7 +209,7 @@ class MasterReportForm(View, LoginRequiredMixin):
         if parent := R.get('parent_id'):
             qset = self.model.objects.filter(  
                 parent_id = parent
-            ).values('id', 'qset_name', 'asset_id', 'slno')
+            ).values('id', 'qsetname', 'asset_id', 'slno')
             count = qset.count()
         logger.info('site reports found for the parent with id %s'%R['id'] if qset else "Not found any reports")
         resp = {
@@ -227,7 +227,7 @@ class MasterReportBelonging(LoginRequiredMixin, View):
             objs = self.model.objects.filter(
                 parent = int(R['parent'])
             ).values(
-                'id', 'qset_name', 'asset_id', 'enable', 'seqno', 'parent',
+                'id', 'qsetname', 'asset_id', 'enable', 'seqno', 'parent',
                 'type', 'bu_id', 'buincludes', 'assetincludes', 'site_grp_includes',
                 'site_type_includes'
             )

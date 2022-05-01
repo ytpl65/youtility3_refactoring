@@ -51,8 +51,8 @@ Schedhuled Tasks
             <td>{{ tour['asset__assetname'] }}</td>
             <td>{{ tour['qset__qset_name'] }} </td>
             <td>{{ tour['people__peoplename'] or tour['pgroup__groupname'] }} </td>
-            <td>{{ tour['from_date'] |to_local }}</td>
-            <td>{{ tour['upto_date'] |to_local }}</td>
+            <td>{{ tour['fromdate'] |to_local }}</td>
+            <td>{{ tour['uptodate'] |to_local }}</td>
             <td>{{ tour['planduration'] }}</td>
             <td>{{ tour['gracetime'] }}</td>
             <td>{{ tour['expirytime'] }}</td>

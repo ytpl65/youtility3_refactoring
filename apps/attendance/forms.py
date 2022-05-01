@@ -106,7 +106,7 @@ class TrackingForm(forms.ModelForm):
     gpslocation = forms.CharField(max_length=200, required=True)
     class Meta:
         model = atdm.Tracking
-        fields = ['deviceid', 'gpslocation', 'reference', 'recieveddate', 
+        fields = ['deviceid', 'gpslocation', 'recieveddate', 
                   'people', 'transportmode','amount', 'identifier']
         
     def clean_gpslocation(self):

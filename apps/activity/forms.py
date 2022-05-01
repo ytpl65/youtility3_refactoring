@@ -20,10 +20,10 @@ class QuestionForm(forms.ModelForm):
 
     class Meta:
         model = am.Question
-        fields = ['ques_name', 'answertype', 'alerton', 'isworkflow',
+        fields = ['quesname', 'answertype', 'alerton', 'isworkflow',
                   'unit', 'category', 'options', 'isworkflow', 'min', 'max']
         labels = {
-            'ques_name' : 'Name',
+            'quesname' : 'Name',
             'answertype': 'Type',
             'unit'      : 'Unit',
             'category'  : 'Category',
@@ -97,7 +97,7 @@ class QuestionForm(forms.ModelForm):
         if not self.instance.id:
             try:
                 am.Question.objects.get(
-                    ques_name__exact=self.instance.ques_name,
+                    quesname__exact=self.instance.quesname,
                     answertype__iexact=self.instance.answertype,
                     client_id__exact=self.request.session['client_id'])
                 msg = 'This type of Question is already exist!'
@@ -116,11 +116,11 @@ class MasterQsetForm(forms.ModelForm):
 
     class Meta:
         model = am.QuestionSet
-        fields = ['qset_name', 'parent', 'enable', 'assetincludes', 'type']
+        fields = ['qsetname', 'parent', 'enable', 'assetincludes', 'type']
 
         labels = {
             'parent': 'Parent',
-            'qset_name': 'Name', }
+            'qsetname': 'Name', }
         widgets = {
             'parent': s2forms.Select2Widget()
         }
@@ -142,7 +142,7 @@ class QsetBelongingForm(forms.ModelForm):
 
     class Meta:
         model = am.QuestionSetBelonging
-        fields = ['slno', 'qset', 'question', 'answertype', 'min', 'max',
+        fields = ['seqno', 'qset', 'question', 'answertype', 'min', 'max',
                   'alerton', 'options', 'ismandatory']
         widgets = {
             'answertype': forms.TextInput(attrs={'readonly': 'readonly'}),
@@ -198,7 +198,7 @@ class QsetBelongingForm(forms.ModelForm):
         if not self.instance.id:
             try:
                 am.Question.objects.get(
-                    ques_name__exact   = self.instance.ques_name,
+                    ques_name__exact   = self.instance.quesname,
                     answertype__iexact = self.instance.answertype,
                     client_id__exact = self.request.session['client_id'])
                 msg = 'This type of Question is already exist!'
@@ -431,22 +431,22 @@ class JobForm(forms.ModelForm):
 
     class Meta:
         model = am.Job
-        fields = ['jobname', 'jobdesc', 'from_date', 'upto_date', 'cron',
+        fields = ['jobname', 'jobdesc', 'fromdate', 'uptodate', 'cron',
                     'identifier', 'planduration', 'gracetime', 'expirytime',
                     'asset', 'priority', 'qset', 'pgroup', 'geofence', 'parent',
                     'parent', 'slno', 'client', 'bu', 'starttime', 'endtime','ctzoffset',
-                    'frequency',  'scantype', 'ticket_category', 'people', 'shift']
+                    'frequency',  'scantype', 'ticketcategory', 'people', 'shift']
 
         labels = {
-            'jobname'   : 'Name',         'jobdesc'     : 'Description',     'from_date'      : 'Valid From',
-            'upto_date' : 'Valid To',     'cron'        : 'Cron Expression', 'ticket_category': 'Ticket Catgory',
+            'jobname'   : 'Name',         'jobdesc'     : 'Description',     'fromdate'      : 'Valid From',
+            'uptodate' : 'Valid To',     'cron'        : 'Cron Expression', 'ticketcategory': 'Ticket Catgory',
             'grace_time': 'Grace Time',   'planduration': 'Plan Duration',   'scan_type'      : 'Scan Type',
             'priority'  : 'Priority',     'people'    : 'People',          'pgroup'        : 'Group',          
             'qset_id'   : 'Question Set', 'shift'       : "Shift",           'asset'        : 'Asset',
         }
 
         widgets = {
-            'ticket_category'   : s2forms.Select2Widget,
+            'ticketcategory'   : s2forms.Select2Widget,
             'scantype'          : s2forms.Select2Widget,
             'shift'             : s2forms.Select2Widget,
             'pgroup'           : s2forms.Select2Widget,
@@ -454,8 +454,8 @@ class JobForm(forms.ModelForm):
             'priority'          : s2forms.Select2Widget,
             'ctzoffset'         : forms.HiddenInput(),
             'jobdesc'           : forms.Textarea(attrs={'rows': 1, 'cols': 40}),
-            'from_date'         : forms.DateTimeInput,
-            'upto_date'         : forms.DateTimeInput,
+            'fromdate'         : forms.DateTimeInput,
+            'uptodate'         : forms.DateTimeInput,
             'ctzoffset'         : forms.NumberInput(attrs={"style":"display:none;"}),
             'qset'            : s2forms.ModelSelect2Widget(
                 model = am.QuestionSet, 
@@ -469,11 +469,11 @@ class JobForm(forms.ModelForm):
         }
     
     def clean_from_date(self):
-        if val := self.cleaned_data.get('from_date'):
+        if val := self.cleaned_data.get('fromdate'):
             return self._extracted_from_clean_upto_date_3(val)
     
     def clean_upto_date(self):
-        if val := self.cleaned_data.get('upto_date'):
+        if val := self.cleaned_data.get('uptodate'):
             return self._extracted_from_clean_upto_date_3(val)
 
     # TODO Rename this here and in `clean_from_date` and `clean_upto_date`
@@ -495,12 +495,12 @@ class JobForm(forms.ModelForm):
 class JobNeedForm(forms.ModelForm):
     class Meta:
         model = am.Jobneed
-        fields = ['identifier', 'frequency', 'parent', 'jobdesc', 'asset', 'ticket_category',
-                  'qset',  'people', 'pgroup', 'priority', 'scantype', 'ticketno',
+        fields = ['identifier', 'frequency', 'parent', 'jobdesc', 'asset', 'ticketcategory',
+                  'qset',  'people', 'pgroup', 'priority', 'scantype',
                   'jobstatus', 'plandatetime', 'expirydatetime', 'gracetime', 'starttime',
-                  'endtime', 'performed_by', 'gpslocation', 'cuser', 'raisedby', 'remarks']
+                  'endtime', 'performedby', 'gpslocation', 'cuser', 'raisedby', 'remarks']
         widgets = {
-            'ticket_category': s2forms.Select2Widget,
+            'ticketcategory': s2forms.Select2Widget,
             'scantype'       : s2forms.Select2Widget,
             'pgroup'        : s2forms.Select2Widget,
             'people'       : s2forms.Select2Widget,
@@ -510,7 +510,7 @@ class JobNeedForm(forms.ModelForm):
             'jobdesc'        : forms.Textarea(attrs={'rows': 1, 'cols': 40}),
             'remarks'        : forms.Textarea(attrs={'rows': 2, 'cols': 40}),
             'jobstatus'      : s2forms.Select2Widget,
-            'performed_by'   : s2forms.Select2Widget
+            'performedby'   : s2forms.Select2Widget
         }
         label = {
             'endtime':'End Time'

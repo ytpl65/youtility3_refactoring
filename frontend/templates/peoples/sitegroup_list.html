@@ -3,7 +3,7 @@
 <!----------- BEGIN PAGE BREADCUMBS ----------->
 {% block pagebreadcumb %}
 {{ super() }}
-<li class="breadcrumb-item pe-3"><a href="javascript:void(0)" class="pe-3">Peoples List</a></li>
+<li class="breadcrumb-item pe-3"><a href="javascript:void(0)" class="pe-3">Site Groups</a></li>
 {% endblock pagebreadcumb %}
 <!----------- END PAGE BREADCUMBS ------------->
 
@@ -22,13 +22,8 @@
                 url:"{{ url('peoples:sitegroup') }}?action=list"
             },
             serverSide:true,
-            processing:true,
             fixedHeader:true,
-            language:{
-                search: "_INPUT_",
-                searchPlaceholder:'Search...',
-                processing:"processing"
-            },
+            search    : {return: true},
             lengthMenu: [[10, 20, 30], [10, 20, 30]],
             dom       : `<'row' <'col-sm-6 d-flex justify-content-start'f> <'col-sm-6 d-flex justify-content-end'B> >rt<'row'
 			             <'col-sm-6'l> <'col-sm-6'p><'col-sm-12 d-flex justify-content-center'i>>`,

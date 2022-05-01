@@ -11,11 +11,8 @@ class MultiAuthentcationBackend(BaseBackend):
         '''authenticates user for login credentials'''
         ic("inside new authentication")
         from .models import People
-    
         result = None
         try:
-            
-            ic(username, password, request.user)
             user = People.objects.get(
                Q(loginid = username) | Q(email=username) | Q(mobno=username))
             ic(user)

@@ -64,12 +64,12 @@ def create_job(jobs=None):
     return resp
 
 
-def display_jobs_date_info(cdtz, mdtz, from_date, upto_date, ldtz):
+def display_jobs_date_info(cdtz, mdtz, fromdate, uptodate, ldtz):
     padd = "#"*8
     log.info("%s display_jobs_date_info [start] %s" % (padd, padd))
     log.info("created-on:= [%s] modified-on:=[%s]" % (cdtz, mdtz))
     log.info("valid-from:= [%s] valid-upto:=[%s]" %
-             (from_date, upto_date))
+             (fromdate, uptodate))
     log.info("before lastgeneratedon:= [%s]" % (ldtz))
     log.info("%s display_jobs_date_info [end] %s" % (padd, padd))
     del padd
@@ -83,21 +83,21 @@ def calculate_startdtz_enddtz(job, tzoffset, tz):
     """
     this function determines or calculates what is 
     the plandatetime & expirydatetime of a job for next 2 days or upto
-    upto_date.
+    uptodate.
     """
     
     log.info("calculating startdtz, enddtz for job:= [%s]" % (job.id))
     
     cdtz         = job.cdtz.replace(microsecond=0, tzinfo=tz) + timedelta(minutes=tzoffset)
     mdtz         = job.mdtz.replace(microsecond=0, tzinfo=tz)  + timedelta(minutes=tzoffset)
-    vfrom        = job.from_date.replace(microsecond=0, tzinfo=tz)  + timedelta(minutes=tzoffset)
-    vupto        = job.upto_date.replace(microsecond=0, tzinfo=tz) + timedelta(minutes=tzoffset)
+    vfrom        = job.fromdate.replace(microsecond=0, tzinfo=tz)  + timedelta(minutes=tzoffset)
+    vupto        = job.uptodate.replace(microsecond=0, tzinfo=tz) + timedelta(minutes=tzoffset)
     ldtz         = job.lastgeneratedon.replace(microsecond=0, tzinfo=tz) + timedelta(minutes=tzoffset)
     # tzoffset     = job.ctzoffset 
     # cdtz         = job.cdtz.replace(microsecond=0) 
     # mdtz         = job.mdtz.replace(microsecond=0)  
-    # vfrom        = job.from_date.replace(microsecond=0)  
-    # vupto        = job.upto_date.replace(microsecond=0) 
+    # vfrom        = job.fromdate.replace(microsecond=0)  
+    # vupto        = job.uptodate.replace(microsecond=0) 
     # ldtz         = job.lastgeneratedon.replace(microsecond=0) 
     # display_jobs_date_info(cdtz, mdtz, vfrom, vupto, ldtz)
     current_date= datetime.utcnow().replace(tzinfo=timezone.utc).replace(microsecond=0)
@@ -279,7 +279,7 @@ def insert_into_jn_and_jnd(job, DT, tzoffset, resp):
             jobtype = am.Jobneed.JobType.SCHEDULE,
             jobdesc = f'{job.jobname} :: {job.jobdesc}'
             asset = am.Asset.objects.get(id=job.asset_id)
-            multiplication_factor = asset.asset_json['mult_factor']
+            multiplication_factor = asset.asset_json['multifactor']
             mins = pdtz = edtz = people = jnid = None
             parent = people = -1
 
@@ -336,12 +336,12 @@ def insert_into_jn_for_parent(job, params):
             ctzoffset      = job.ctzoffset,     people_id        = params['people'],
             pgroup_id     = job.pgroup_id,    frequency          = 'NONE',
             priority       = job.priority,      jobstatus          = params['jobstatus'],
-            performed_by   = params['NONE_P'],  jobtype            = params['jobtype'],
+            performedby   = params['NONE_P'],  jobtype            = params['jobtype'],
             scantype       = job.scantype,      identifier         = job.identifier,
             cuser_id       = job.cuser_id,      muser_id           = job.muser_id,
-            bu_id        = job.bu_id,       ticket_category_id = job.ticket_category_id,
+            bu_id        = job.bu_id,       ticketcategory_id = job.ticketcategory_id,
             gpslocation    = '0.0,0.0',         remarks            = '',
-            slno           = 0,                 mult_factor        = params['m_factor'],
+            slno           = 0,                 multifactor        = params['m_factor'],
             client_id    = job.client_id,
         )
     except Exception:
@@ -418,7 +418,7 @@ def create_child_tasks(job, _pdtz, _people, jnid, _jobstatus, _jobtype):
             log.info("create_child_tasks() [%s] child job:= %s | job:= %s | cron:= %s" % (
                 idx, r.jobname, r.id, r.cron))
             asset = am.Asset.objects.get(id=r.asset_id)
-            params['m_factor'] = asset.asset_json['mult_factor']
+            params['m_factor'] = asset.asset_json['multifactor']
             _assetname = asset.assetname
 
             mins = job.planduration + r.expirytime + job.gracetime
@@ -457,10 +457,10 @@ def insert_into_jn_for_child(job, params, r):
             client_id    = r.client_id,      jobtype            = params['_jobtype'],
             scantype       = job.scantype,       identifier         = job.identifier,
             cuser_id       = r.cuser_id,         muser_id           = r.muser_id,
-            bu_id        = r.bu_id,          ticket_category_id = r.ticket_category_id,
+            bu_id        = r.bu_id,          ticketcategory_id = r.ticketcategory_id,
             gpslocation    = '0.0,0.0',          remarks            = '',
-            slno           = params['idx'],      mult_factor        = params['m_factor'],
-            performed_by   = params['NONE_P'],   ctzoffset         =  r.ctzoffset
+            slno           = params['idx'],      multifactor        = params['m_factor'],
+            performedby   = params['NONE_P'],   ctzoffset         =  r.ctzoffset
             )
     except Exception:
         raise
@@ -476,8 +476,8 @@ def job_fields(job, checkpoint, external=False):
         'expirytime'  : int(checkpoint['expirytime']), 'lastgeneratedon': job.lastgeneratedon,
         'priority'    : job.priority,                  'qset_id'      : checkpoint['qset'],
         'pgroup_id'  : job.pgroup_id,                'geofence'           : job.geofence_id,
-        'endtime'     : job.endtime,                   'ticket_category': job.ticket_category,
-        'from_date'   : job.from_date,                 'upto_date'      : job.upto_date,
+        'endtime'     : job.endtime,                   'ticketcategory': job.ticketcategory,
+        'fromdate'   : job.fromdate,                 'uptodate'      : job.uptodate,
         'planduration': job.planduration,              'gracetime'      : job.gracetime,
         'asset_id'  : checkpoint['asset'],         'frequency'      : job.frequency,
         'people_id' : job.people_id,               'starttime'      : job.starttime,

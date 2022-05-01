@@ -2,23 +2,23 @@ import django_filters
 import apps.activity.models as am
 
 class QuestionFilter(django_filters.FilterSet):
-    ques_name   = django_filters.CharFilter(field_name='ques_name', lookup_expr='icontains', label='Name')
+    quesname   = django_filters.CharFilter(field_name='quesname', lookup_expr='icontains', label='Name')
     answertype = django_filters.CharFilter(field_name='answertype', lookup_expr='icontains', label='Type')
     unit       = django_filters.CharFilter(field_name='unit__tacode', lookup_expr='icontains', label='Unit')
     isworkflow = django_filters.CharFilter(field_name='isworkflow', lookup_expr='icontains', label='Is WorkFlow')
     
     class Meta:
         model = am.Question
-        fields = ['ques_name', 'answertype', 'unit', 'isworkflow']
+        fields = ['quesname', 'answertype', 'unit', 'isworkflow']
 
 
 
 class MasterQsetFilter(django_filters.FilterSet):
-    qset_name   = django_filters.CharFilter(field_name='qset_name', lookup_expr='icontains', label='Name')
+    qsetname   = django_filters.CharFilter(field_name='qsetname', lookup_expr='icontains', label='Name')
     
     class Meta:
         model = am.QuestionSet
-        fields = ['qset_name']
+        fields = ['qsetname']
         
 
 class MasterAssetFilter(django_filters.FilterSet):

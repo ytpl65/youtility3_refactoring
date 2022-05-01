@@ -45,6 +45,8 @@ class BaseFieldSet2(object):
         widget=wg.ForeignKeyWidget(tm.TenantAwareModel, 'tenantname'),
         saves_null_values=True
     )
+    
+
 
 
 class TaResource(BaseFieldSet2, resources.ModelResource ):
@@ -59,7 +61,7 @@ class TaResource(BaseFieldSet2, resources.ModelResource ):
     class Meta:
         model = om.TypeAssist
         skip_unchanged = True
-        import_id_fields = ('id',)
+        import_id_fields = ('id','tacode')
         report_skipped = True
         fields = ('id', 'taname', 'tacode', 'tatype', 'tenant', 'bu', 'client')
     
@@ -73,6 +75,10 @@ class TaResource(BaseFieldSet2, resources.ModelResource ):
         instance.tacode = instance.tacode.upper()
         utils.save_common_stuff(self.request, instance)
 
+    def get_queryset():
+        return om.TypeAssist.objects.select_related(
+            'tatype', 'tenant', 'bu', 'client'
+        ).all()
 
 
 @admin.register(om.TypeAssist)
@@ -85,6 +91,9 @@ class TaAdmin(ImportExportModelAdmin):
     def get_resource_kwargs(self, request, *args, **kwargs):
         return {'request': request}
 
+    def get_queryset(self, request):
+        return om.TypeAssist.objects.select_related(
+            'tatype', 'cuser', 'muser', 'bu', 'client', 'tenant').all()
 
 
 class BtResource(resources.ModelResource, BaseFieldSet1):
@@ -98,6 +107,11 @@ class BtResource(resources.ModelResource, BaseFieldSet1):
         column_name='butype',
         attribute='butype',
         widget=wg.ForeignKeyWidget(om.TypeAssist, 'tacode'))
+    
+    tenant = fields.Field(
+        column_name='tenant',
+        attribute='tenant',
+        widget=wg.ForeignKeyWidget(tm.Tenant, 'tenantname'))
 
     identifier = fields.Field(
         column_name='identifier',
@@ -107,24 +121,46 @@ class BtResource(resources.ModelResource, BaseFieldSet1):
     class Meta:
         model = om.Bt
         skip_unchanged = True
-        import_id_fields = ('id',)
+        import_id_fields = ('id', 'bucode')
         report_skipped = True
         fields = (
-            'id', 'buname', 'bucode', 'butype',
-            'identifier', 'parent', 'tenant',)
+            'id', 'buname', 'bucode', 'butype__tacode',
+            'identifier__tacode', 'parent__bucode', 'tenant__tenantname',)
+
+    def __init__(self, *args, **kwargs):
+        self.request = kwargs.pop('request', None)
+        super(BtResource, self).__init__(*args, **kwargs)
+
+    def before_save_instance(self, instance, using_transactions, dry_run):
+        instance.bucode = instance.bucode.upper()
+        utils.save_common_stuff(self.request, instance)
 
 
+    def get_queryset(self):
+        return om.Bt.objects.select_related(
+            'identifier', 'parent', 'butype',
+            'tenant', 
+        ).all()
+    
+    
 @admin.register(om.Bt)
 class BtAdmin(ImportExportModelAdmin):
     resource_class = BtResource
     fields = ('bucode',  'buname', 'butype', 'parent', 'gpslocation', 'identifier',
-              'iswarehouse', 'enable', 'bu_preferences')
+              'iswarehouse', 'enable', 'bupreferences')
     exclude = ['bupath']
     list_display = ('bucode', 'id', 'buname', 'butype',
                     'identifier', 'parent', 'butree')
     list_display_links = ('bucode',)
+    form = BtForm
 
+    def get_resource_kwargs(self, request, *args, **kwargs):
+        return {'request': request}
 
+    def get_queryset(self, request):
+        return om.Bt.objects.select_related('butype', 'identifier', 'parent').all()
+    
+    
 class ShiftResource(resources.ModelResource, BaseFieldSet1):
 
     class Meta:
@@ -133,7 +169,7 @@ class ShiftResource(resources.ModelResource, BaseFieldSet1):
         import_id_fields = ('id',)
         report_skipped = True
         fields = ('id', 'shiftname', 'shiftduration', 'starttime', 'cuser'
-                  'endtime', 'nightshift_appicable', 'enable', 'muser', 'bu')
+                  'endtime', 'nightshiftappicable', 'enable', 'muser', 'bu')
 
 
 @admin.register(om.Shift)
@@ -141,9 +177,9 @@ class ShiftAdmin(ImportExportModelAdmin):
     resource_class = ShiftResource
     form = ShiftForm
     fields = ('bu', 'shiftname', 'shiftduration', 'starttime',
-              'endtime', 'nightshift_appicable', 'captchafreq')
+              'endtime', 'nightshiftappicable', 'captchafreq')
     list_display = ('bu', 'shiftname', 'shiftduration',
-                    'starttime', 'endtime', 'nightshift_appicable')
+                    'starttime', 'endtime', 'nightshiftappicable')
     list_display_links = ('shiftname',)
 
 
@@ -184,6 +220,6 @@ class SitePeopleResource(resources.ModelResource, BaseFieldSet1):
         import_id_fields = ('id',)
         report_skipped = True
         fields = ('id', 'fromdt', 'uptodt', 'siteowner', 'slno', 'reportcapability',
-                  'posting_revision', 'nightshift_appicable', 'webcapability',
+                  'posting_revision', 'nightshiftappicable', 'webcapability',
                   'reportcapability', 'mobilecapability', 'enable', ' emergencycontact',
                   'ackdate', 'isreliver', 'checkpost', 'enablesleepingguard')

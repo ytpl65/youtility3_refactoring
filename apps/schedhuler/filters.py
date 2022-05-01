@@ -13,11 +13,11 @@ class JobFilter(dfs.FilterSet):
     class Meta:
         model  = am.Job
         fields = [
-            'jobname',    'jobdesc',      'from_date',       'upto_date',  'cron',
+            'jobname',    'jobdesc',      'fromdate',       'uptodate',  'cron',
             'identifier', 'planduration', 'gracetime',       'expirytime', 'parent',
             'asset',    'priority',     'qset',          'pgroup',    'geofence', 
             'parent',     'slno',         'client',        'bu',       'starttime', 
-            'frequency',  'scantype',     'ticket_category', 'people',   'shift',
+            'frequency',  'scantype',     'ticketcategory', 'people',   'shift',
             'endtime',    'ctzoffset',    
         ]
         
@@ -26,10 +26,10 @@ class JobneedFilter(dfs.FilterSet):
     class Meta:
         model = am.Jobneed
         fields = [
-            'identifier', 'frequency',    'parent',         'jobdesc',   'asset', 'ticket_category',
-            'qset',     'people',     'pgroup',        'priority',  'scantype', 'ticketno',
+            'identifier', 'frequency',    'parent',         'jobdesc',   'asset', 'ticketcategory',
+            'qset',     'people',     'pgroup',        'priority',  'scantype',
             'jobstatus',  'plandatetime', 'expirydatetime', 'gracetime', 'starttime', 'cdtz',
-            'endtime',    'performed_by',   'cuser',     'muser',     'raisedby',
+            'endtime',    'performedby',   'cuser',     'muser',     'raisedby',
             'bu',              
         ]
     
@@ -40,11 +40,11 @@ class SchdTourFilter(JobFilter):
     planduration = dfs.CharFilter(field_name='planduration', lookup_expr='icontains', label='Duration')
     expirytime   = dfs.CharFilter(field_name='expirytime', lookup_expr='icontains', label='Exp Time')
     gracetime    = dfs.CharFilter(field_name='gracetime', lookup_expr='icontains', label='Grace Time')
-    from_date    = dfs.DateTimeFilter(field_name='from_date', lookup_expr='icontains', label='From')
-    upto_date    = dfs.DateTimeFilter(field_name='upto_date', lookup_expr='icontains', label='To')
+    fromdate    = dfs.DateTimeFilter(field_name='fromdate', lookup_expr='icontains', label='From')
+    uptodate    = dfs.DateTimeFilter(field_name='uptodate', lookup_expr='icontains', label='To')
     
     class Meta(JobFilter.Meta):
-        exclude = ['endtime','cron','client','ticket_category','parent','slno','frequency','pgroup','starttime','bu',
+        exclude = ['endtime','cron','client','ticketcategory','parent','slno','frequency','pgroup','starttime','bu',
                    'priority','ctzoffset','geofence','identifier','people','shift','jobdesc','scantype','assignedto']
 
 
@@ -52,14 +52,14 @@ class SchdExtTourFilter(SchdTourFilter):
     bu = dfs.CharFilter(field_name='bu__buname', lookup_expr='icontains', label= "BV")
     
     class Meta(SchdTourFilter.Meta):
-        fields = ['jobname',  'bu', 'assignedto', 'planduration', 'expirytime', 'gracetime', 'from_date', 'upto_date']
+        fields = ['jobname',  'bu', 'assignedto', 'planduration', 'expirytime', 'gracetime', 'fromdate', 'uptodate']
         exclude = ['asset']
 
 
 class SchdTaskFilter(SchdTourFilter):
     asset        = dfs.CharFilter(field_name='asset__assetname', lookup_expr='icontains', label= "Asset")
     class Meta(SchdTourFilter.Meta):
-        fields = ['jobname',  'asset', 'qset', 'assignedto', 'planduration', 'expirytime', 'gracetime', 'from_date', 'upto_date']
+        fields = ['jobname',  'asset', 'qset', 'assignedto', 'planduration', 'expirytime', 'gracetime', 'fromdate', 'uptodate']
         
         
 class InternalTourFilter(dfs.FilterSet):
@@ -75,12 +75,12 @@ class InternalTourFilter(dfs.FilterSet):
     jobstatus      = dfs.ChoiceFilter(field_name='jobstatus', choices = JOBSTATUSCHOICES, label="Stauts", widget = s2forms.Select2Widget)
     assignedto     = dfs.CharFilter( method=assigned_to_qs, label='People/Group')
     gracetime      = dfs.CharFilter(field_name='gracetime', lookup_expr='icontains', label='Grace Time')
-    performed_by   = dfs.CharFilter(field_name='performed_by', lookup_expr='icontains', label='Performed By')
+    performedby   = dfs.CharFilter(field_name='performedby', lookup_expr='icontains', label='Performed By')
     expirydatetime = dfs.DateTimeFilter(field_name='expirydatetime', label="Exp. Datetime")
     
     class Meta:
         model = am.Jobneed
-        fields = [ 'plandatetime', 'jobdesc', 'jobstatus', 'assignedto', 'gracetime', 'performed_by', 'expirydatetime']
+        fields = [ 'plandatetime', 'jobdesc', 'jobstatus', 'assignedto', 'gracetime', 'performedby', 'expirydatetime']
 
     def __init__(self, *args, **kwargs):
         super(InternalTourFilter, self).__init__(*args, **kwargs)
@@ -113,14 +113,14 @@ class TicketListFilter(JobneedFilter):
     cdtz            = dfs.DateTimeFilter(field_name='cdtz', lookup_expr='contains')
     ticketno        = dfs.NumberFilter(field_name='ticketno', lookup_expr='contains')
     assignedto      = dfs.CharFilter(method=assigned_to_qs, label='People/Group')
-    performed_by    = dfs.CharFilter(field_name='performed_by__peoplename', lookup_expr='icontains')
-    ticket_category = dfs.CharFilter(field_name='ticket_category__taname', lookup_expr='icontains')
+    performedby    = dfs.CharFilter(field_name='performedby__peoplename', lookup_expr='icontains')
+    ticketcategory = dfs.CharFilter(field_name='ticketcategory__taname', lookup_expr='icontains')
     jobstatus       = dfs.ChoiceFilter(field_name='jobstatus', choices = TICKETSTATUS, label="Stauts", widget = s2forms.Select2Widget)
     cuser           = dfs.CharFilter(field_name='cuser__peoplename', lookup_expr='icontains')
     
     
     class Meta(JobneedFilter.Meta):
-        fields = ['cdtz', 'cuser', 'ticketno', 'bu', 'assignedto', 'performed_by', 'ticket_category', 'jobstatus']
+        fields = ['cdtz', 'cuser', 'ticketno', 'bu', 'assignedto', 'performedby', 'ticketcategory', 'jobstatus']
         
     def __init__(self, *args, **kwargs):
         super(TicketListFilter, self).__init__(*args, **kwargs)

@@ -7,7 +7,7 @@ class Messages:
     AUTHSUCCESS    = "Authentication Successfull"
     NOSITE         = "Unable to find site!"
     INACTIVE       = "Inactive client or people"
-    NOCLIENTPEOPLE = "Unable to find client or People"
+    NOCLIENTPEOPLE = "Unable to find client or People or User/Client are not verified"
     MULTIDEVICES   = "Cannot login on multiple devices, Please logout from the other device"
     WRONGCREDS     = "Incorrect Username or Password"
     NOTREGISTERED  = "Device Not Registered"
@@ -54,14 +54,14 @@ def auth_check(info, authinput, uclientip=None):
     else:
         if isAuth:
             allowAccess = isValidDevice = isUniqueDevice = True
-            people_validips = user.client.bu_preferences['validip']
-            people_validimeis = user.client.bu_preferences["validimei"].replace(" ", "").split(",")
+            people_validips = user.client.bupreferences['validip']
+            people_validimeis = user.client.bupreferences["validimei"].replace(" ", "").split(",")
             
             if people_validips is not None and len(people_validips.replace(" ", "")) > 0:
                 clientIpList = people_validips.replace(" ", "").split(",")
                 if uclientip is not None and uclientip not in clientIpList:
                     allowAccess = isAuth =False
-            if user.deviceid == '-1' or authinput.deviceid == '-1': allowAccess=True
+            if user.deviceid == '-1' or authinput.deviceid == user.deviceid : allowAccess=True
             else:
                 if authinput.deviceid not in people_validimeis: isValidDevice=False
                 if user.deviceid != authinput.deviceid:
@@ -92,13 +92,14 @@ def authenticate_user(input, request, msg, returnUser):
     from django.contrib.auth import authenticate
     
     user = authenticate(request, username = loginid, password = password)
-    valid_imeis = user.client.bu_preferences["validimei"].replace(" ", "").split(",")
+    if not user: raise GraphQLError(msg.WRONGCREDS)
+    valid_imeis = user.client.bupreferences["validimei"].replace(" ", "").split(",")
     
 
     if not user:
         raise GraphQLError(msg.WRONGCREDS)
     if deviceid != '-1' and user.deviceid == '-1':
-        if all([user.client.enable, user.enable, user.is_verified]):
+        if all([user.client.enable, user.enable, user.isverified]):
             return returnUser(user, request), user
         else:
             raise GraphQLError(msg.NOCLIENTPEOPLE)

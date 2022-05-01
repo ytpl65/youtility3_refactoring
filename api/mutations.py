@@ -1,60 +1,33 @@
-from urllib import request
 import graphene
-from graphene_django import DjangoObjectType
-from django.db import transaction
-from django.db.utils import IntegrityError
-from graphene_gis.scalars import LineStringScalar, PointScalar, PolygonScalar
 from  graphql_jwt.shortcuts import get_token, get_payload
 from graphql_jwt.decorators import login_required
-from django.contrib.gis.geos import GEOSGeometry
-from graphql_jwt import ObtainJSONWebToken
 from graphene.types.generic import GenericScalar
-from django.contrib.gis.geos import(
-    Point, LineString, Polygon
-)
+from numpy import outer
+from pydantic import ValidationError
 from graphql import GraphQLError
-
-from graphene_django.forms.mutation import DjangoModelFormMutation
+from api import utils as apiutils
 from django.utils import timezone
-from zmq import MECHANISM
+from api import tasks
+import api
 
-from apps.activity.models import Jobneed
 from apps.peoples.models import People
-from .types import (
-    PELogType, TrackingType, PeopleType, RowInput, RowOutput, AuthInput
-)
-from apps.attendance.models import (
-     PeopleEventlog, Tracking, TestGeo
-)
-from apps.attendance.forms import (
-    InsertPeopleEventlog, TrackingForm 
-)
-from apps.onboarding.models import TypeAssist
-from apps.onboarding.forms import TypeAssistForm
-from apps.core import utils
-from .auth import Messages as AM
+from api import types as ty
+from graphene_file_upload.scalars import Upload
 
-class BaseReturnType:
-    user = graphene.Field(PeopleType)
-    status = graphene.Int()
-    msg = graphene.String()
 
-class Messages(AM):
-    INSERT_SUCCESS = "Inserted Successfully!"
-    INSERT_FAILED = "Failed to insert!"
-    WRONG_OPERATION = "Wrong operation 'id' is passed during insertion!"
-    DBERROR = "Integrity Error!"
+from logging import getLogger
+import traceback as tb
+log = getLogger('__main__')
+
+
+
     
 
-def get_model(tablename):
-    match tablename:
-        case "peopleeventlog":
-            return PeopleEventlog
-        case 'jobneed':
-            return Jobneed
-        case _:
-            return None
-        
+
+    
+    
+    
+
 
 
 
@@ -62,133 +35,430 @@ def get_model(tablename):
 
 ########################### END GLOBAL INSERT RECORD ##############################
 
-class InsertRecord(graphene.Mutation):
-    output = graphene.Field(RowOutput)
-    class Arguments:
-        input = RowInput(required = True)
+
+
+
+
+
+# class InsertRecord(graphene.Mutation):
+#     """
+#     Inserts new record in the specified table.
+#     """
+#     output = graphene.Field(ty.ServiceOutputType)
+#     class Arguments:
+#         input = ty.RowInput(required = True)
 
     
-    @classmethod
-    @login_required
-    def mutate(cls, root, info, input):
-        model, id = get_model(input.tablename.lower()), None
-        if not model or len(input.columns) != len(input.values):
-            raise GraphQLError(Messages.INSERT_FAILED)
+#     @classmethod
+#     @login_required
+#     def mutate(cls, root, info, input):
+#         log.info(f"{Messages.START} insertRecord --")
+#         log.debug(f'input.columns {input.columns}')
+#         log.debug(f'input.values {input.values}')
+#         log.debug(f'input.tablename {input.tablename}')
 
-        try:
-            if 'id' in input.columns:
-                raise ValueError
-            instance = cls.create_record(model, input)
-            msg = Messages.INSERT_SUCCESS
-            output = RowOutput(msg = msg, id = instance.id)
-            return InsertRecord(output=output)
-        except ValueError as e:
-            raise Exception(Messages.WRONG_OPERATION) from e
-        except IntegrityError as e:
-            raise Exception(f'{Messages.DBERROR} {e}') from e
-        except Exception as e:
-            raise Exception(f'{Messages.INSERT_FAILED} {e}') from e
+#         model, Form  = get_model_or_form(input.tablename.lower())
+        
+#         if not model or len(input.columns) != len(input.values):
+#             raise GraphQLError(Messages.IMPROPER_DATA)
+#         try:
+#             if instance := cls.create_record(model, Form, input):
+#                 msg = Messages.INSERT_SUCCESS
+#                 output = ty.ServiceOutputType(msg = msg, returnid = instance.id)
+#                 log.info(f"{pformat(output)}")
+#                 log.info(f'{Messages.END} insert record ++')
+#                 return InsertRecord(output=output)
+
+#         except IntegrityError as e:
+#             log.error(e, exc_info=True)
+#             output = ty.ServiceOutputType(
+#                 msg = Messages.
+#             )
+        
+#         except Exception as e:
+#             log.error(e, exc_info=True)
+#             raise Exception(f'{Messages.INSERT_FAILED} {e}') from e
             
 
-    @classmethod
-    def create_record(cls, model, input):
-        """
-        Insert record in specified table
-        """
-        record = dict(zip(input.columns, input.values))
-        record = utils.clean_record(record)
-        with transaction.atomic():
-            return model.objects.create(**record)
-
-
-
-class UpdateRecord(graphene.Mutation):
-    output = graphene.Field(RowOutput)
-    class Arguments:
-        input = RowInput(required=True)
+#     @classmethod
+#     def create_record(cls, model, F, input):
+#         """
+#         Insert record in specified table
+#         """
+#         record = utils.get_record_from_input(input)
+#         log.info(f"record: {pformat(record)}")
+#         record = clean_record(record)
         
-    def mutate(cls, root, info, input):
-        model = get_model(input.table)
+#         with transaction.atomic(using=utils.get_current_db_name()):
+#             log.info(f'record after cleaning {pformat(record)}')
+#             return model.objects.create(**record)
 
 
 
+# class UpdateRecord(graphene.Mutation):
+#     """
+#     Updates the existing record 'id' field is must
+#     in ty.RowInput.
+#     """
+#     output = graphene.Field(RowOutput)
+#     class Arguments:
+#         input = ty.RowInput(required=True)
+        
+#     @login_required
+#     @classmethod
+#     def mutate(cls, root, info, input):
+#         model, Form  = get_model_or_form(input.tablename.lower())
+#         ic(len(input.columns) != len(input.values))
+#         ic(model)
+#         if not model or len(input.columns) != len(input.values):
+#             raise GraphQLError(Messages.IMPROPER_DATA)
+#         try:
+#             if instance := cls.update_record(model, Form, input):
+#                 msg = Messages.INSERT_SUCCESS
+#                 output = RowOutput(msg = msg, id = instance.id)
+#                 return UpdateRecord(output=output)
+#         except IntegrityError as e:
+#             log.error(e, exc_info=True)
+#             raise Exception(f'{Messages.DBERROR} {e}') from e
+#         except Exception as e:
+#             log.error(e, exc_info=True)
+#             raise Exception(f'{Messages.UPDATE_FAILED} {e}') from e
+        
+    
+#     @classmethod
+#     def update_record(cls, model, F, input):
+#         """
+#         Update record from the table
+#         """
+#         record = utils.get_record_from_input(input)
+#         form = F(data = record)
+#         with transaction.atomic(using=utils.get_current_db_name()):
+#             if form.is_valid():
+#                 ic(form.data)
+#                 model.objects.filter(
+#                     id = record['id']).update(**form.data)
+#                 return model.objects.get(id=record['id'])
 
 
 ######################### START PEOPLEEVENTLOG MUTATION #########################
-class PELogMutation(DjangoModelFormMutation, BaseReturnType):
-    output = graphene.Field(PELogType)
+# class PELogMutation(DjangoModelFormMutation, BaseReturnType):
+#     output = graphene.Field(PELogType)
     
-    class Meta:
-        form_class = InsertPeopleEventlog
-        return_field_name = 'output'
+#     class Meta:
+#         form_class = InsertPeopleEventlog
+#         return_field_name = 'output'
 
-    @classmethod
-    def perform_mutate(cls, form, info):
-        obj = form.save(commit=True)
-        obj.cdtz = form.data['cdtz']
-        obj.mdtz = form.data['mdtz']
-        obj.save()
-        kwargs = {
-            'output':obj, 'user':info.context.user
-            }
-        return cls(errors=[], **kwargs)
+#     @classmethod
+#     def perform_mutate(cls, form, info):
+#         obj = form.save(commit=True)
+#         obj.cdtz = form.data['cdtz']
+#         obj.mdtz = form.data['mdtz']
+#         obj.save()
+#         kwargs = {
+#             'output':obj, 'user':info.context.user
+#             }
+#         return cls(errors=[], **kwargs)
 ######################### END PEOPLEEVENTLOG MUTATION #########################
 
 
 
 ######################### START TRACKING MUTATION #########################
-class TrackingMutation(DjangoModelFormMutation):
-    TrackingType = graphene.Field(TrackingType)
+# class TrackingMutation(DjangoModelFormMutation):
+#     TrackingType = graphene.Field(TrackingType)
     
-    class Meta:
-        model             = Tracking
-        form_class        = TrackingForm
-        return_field_name = 'output'
+#     class Meta:
+#         model             = Tracking
+#         form_class        = TrackingForm
+#         return_field_name = 'output'
 ######################### END TRACKING MUTATION #########################
 
         
 ######################### START TYPEASSIST MUTATION #########################
-class TaType(DjangoObjectType): 
-    class Meta:
-        model=TypeAssist
-        fields = ['tacode', 'taname',]
-        
-        
-class AddTaMutation(DjangoModelFormMutation):
-    input = graphene.Field(TaType)
+# class AddTaMutation(DjangoModelFormMutation):
+#     input = graphene.Field(TyType)
     
-    class Meta:
-        form_class=TypeAssistForm
-        return_field_name = 'output'
+#     class Meta:
+#         form_class=TypeAssistForm
+#         return_field_name = 'output'
     
-    @classmethod
-    def perform_mutate(cls, form, info):
-        obj = form.save()
-        kwargs = {cls._meta.return_field_name: obj, 'typeassist':obj}
-        return cls(errors=[], **kwargs)
+#     @classmethod
+#     def perform_mutate(cls, form, info):
+#         obj = form.save()
+#         kwargs = {cls._meta.return_field_name: obj, 'typeassist':obj}
+#         return cls(errors=[], **kwargs)
 ######################### END TYPEASSIST MUTATION #########################
 
 
 ######################### START AUTHENTICATION #########################
 
+
+# class TaskTourUpdate(graphene.Mutation):
+#     """
+#     Update Task, Tour fields.
+#     like 'cdtz', 'mdtz', 'jobstatus', 'performedby' etc
+#     """
+#     output = graphene.Field(RowOutput)
+#     class Arguments:
+#         input = TaskTourUpdateInput(required=True)
+    
+#     @classmethod
+#     @login_required
+#     def mutate(cls, root, info, input):
+#         from apps.activity.models import Jobneed, JobneedDetails
+#         if len(input.columns) != len(input.values):
+#             raise GraphQLError(Messages.IMPROPER_DATA)
+#         try:
+#             if updated:= cls.update_record(input, Jobneed, JobneedDetails):
+#                 msg = Messages.UPDATE_SUCCESS
+#                 output = RowOutput(msg=msg, id = input.jobneedid)
+#                 return TaskTourUpdate(output=output)
+        
+#         except IntegrityError as e:
+#             log.error(e, exc_info=True)
+#             raise Exception(f'{Messages.DBERROR} {e}') from e
+        
+#         except Exception as e:
+#             log.error(e, exc_info=True)
+#             raise Exception(f'{Messages.UPDATE_FAILED} {e}') from e
+    
+#     @classmethod    
+#     def update_record(cls, input, Jn, Jnd):
+#         alerttype = 'OBSERVATION'
+#         record = utils.get_record_from_input(input)
+#         record = clean_record(record)
+#         with transaction.atomic(using=utils.get_current_db_name()):
+#             isJnUpdated = Jn.objects.filter(
+#                 id = input.jobneedid).update(**record)
+#             isJndUpdated = cls.update_jobneeddetails(input, Jnd)
+#             if isJnUpdated and  isJndUpdated:
+#                 utils.alert_email(input.jobneedid, alerttype)
+#                 #TODO send observation email
+#                 #TODO send deviation mail
+#                 return True
+
+                
+    
+#     @classmethod
+#     def update_jobneeddetails(cls, input, Jnd):
+#         if input.jobneeddetails:
+#             updated=0
+#             for detail in input.jobneeddetails:
+#                 detail = eval(detail)
+#                 record = clean_record(detail)
+#                 updated = Jnd.objects.filter(id = detail['id']).update(**record)
+#             if len(input.jobneeddetails) == updated: return True
+                
+
+# def perform_template_report_mutation(input, model):
+#     parent = insert_parent(input, model)
+#     insert_child_and_details(input, model, parent)
+#     return parent
+
+
+# class TemplateReport(graphene.Mutation):
+#     output = graphene.Field(RowOutput)
+    
+#     class Arguments:
+#         input = TemplateReportInput(required=True)
+    
+#     @classmethod
+#     @login_required
+#     def mutate(cls, root, info, input):
+#         from apps.activity.models import Jobneed
+        
+#         if input.childs and len(input.childs)>0:
+#             try:
+#                 with transaction.atomic(using=utils.get_current_db_name()):
+#                     parent = perform_template_report_mutation(input, Jobneed)
+#                     #TODO send email for report
+#                     output = RowOutput(id = parent.id, msg = Messages.INSERT_SUCCESS)
+#                     return TemplateReport(output=output)
+#             except Exception as e:
+#                 log.error(e, exc_info=True)
+#                 raise Exception(f'{Messages.INSERT_FAILED} << {e} >>') from e
+#         else:
+#             return TemplateReport(output=RowOutput(id = None, msg = Messages.NOT_INTIATED ))
+    
+    
+# def insert_parent(input, model):
+#     print(pformat(input, compact=True))
+#     record = utils.get_record_from_input(input)
+#     ic('parent record', record)
+#     try:
+#         if len(input.childs) > 0:
+#             record.pop('qset_id', None)
+#             return model.objects.create(qset_id = input.questionsetid, **record)
+#         else: raise Exception(Messages.NODETAILS)
+#     except Exception:
+#         raise
+
+# def insert_child_and_details(input, model, parent):
+#     import json
+#     from apps.activity.models import JobneedDetails
+#     try:
+#         childs = input.childs
+#         ic(childs)
+#         for child in childs:
+#             details = child.pop('details')
+#             ic(child)
+#             child = eval(child)
+#             child = clean_record(child)
+#             ic("record jobneed ", child)
+#             details = clean_record(details)
+#             ic("record details", details)
+#             child = model.objects.create(
+#                 parent_id = parent.id, **child  
+#             )
+#             for detail in details:
+#                 JobneedDetails.objects.create(
+#                     jobneed_id = child.id, **detail)
+#     except Exception:
+#         raise
+        
+        
+# class UploadAttachment(graphene.Mutation):
+#     """
+#     Upload attachment.
+#     """
+#     output = graphene.Field(RowOutput)
+    
+#     class Arguments:
+#         input = graphene.Field(AttachmentInput)
+    
+#     @login_required
+#     @classmethod
+#     def mutate(cls, root, info, input):  
+#         try:
+#             with transaction.atomic(using=utils.get_current_db_name()):
+#                 files = cls.write_file_to_dir(input)
+#                 cls.perform_query(input, files[1])
+#         except Exception as e:
+#             log.error(e, exc_info=True)
+#             raise Exception(f'{Messages.UPLOAD_FAILED} {e}') from e
+    
+#     @classmethod
+#     def perform_query(cls, input, files):
+#         from apps.attendance.models import PeopleEventlog
+#         #TODO perform query coming from mobile
+#         if people_att := PeopleEventlog.objects.get(id = input.pelogid):
+#             from apps.onboarding.models import TypeAssist
+#             from apps.activity.models import Attachment
+
+#             attachmentid   = cls.execute_query(cls, input)
+#             ownertype      = TypeAssist.objects.get(tatype__tacode = 'OWNER', tacode='PEOPLE')
+#             attachmenttype = TypeAssist.objects.get(tacode ='ATTACHMENT')
+#             if people_pic := Attachment.objects.get_people_pic(
+#                 ownertype.id, attachmenttype.id, people_att.id):
+#                 people_pic.default_image_path = f'{files[0]}{people_pic.default_image_path}'
+#                 try:
+#                     fr_results = utils.fr(people_pic.default_image_path, files[1])
+#                     PeopleEventlog.objects.filter(id = input.pelogid).update(
+#                         peventlogextras__fr_threshold = fr_results[2],
+#                         peventlogextras__face_recognition = fr_results[1],
+#                         peventlogextras__serverresponse = fr_results[0]
+#                     )
+#                 except Exception:
+#                     log.error("ERROR Failed to recognize face ", exc_info=True)
+#         else:
+#             raise Exception(Messages.NOTFOUND)
+  
+
+
+# def process_adhoc_mutation(input):
+#     try:
+#         if input.assetid == 1:
+#             bu_data = Bt.objects.filter(id = input.buid, bucode = input.remarks)[0]
+#             input.siteid = bu_data.id
+#         schedule_task = Jobneed.objects.get_schedule_for_adhoc(
+#             input.plandatetime, input.buid, input.peopleid, input.assetid, input.qsetid)
+#         if len(schedule_task) > 0:
+#             jnid = schedule_task[0].jobneedid
+#             record = utils.get_record_from_input(input)
+#             record.update({'people_id':input.people_id})
+#             record = clean_record(record)
+#             Jobneed.objects.filter(id = jnid).update(**record)
+#             schedule_task_details = JobneedDetails.objects.select_related('jobneed', 'job' 'question').filter(jobneed_id = jnid).values()
+#             for jnd, dtl in itertools.product(schedule_task_details, input.jobneeddetails):
+#                 dtl = clean_record(eval(dtl))
+#                 if jnd['question_id'] == dtl['question_id']:
+#                     JobneedDetails.objects.update_ans_muser(dtl['answer'], input.people_id, dtl['mdtz'], jnid)
+#         else:
+#             record = utils.get_record_from_input(input)
+#             record.update({'qset_id':input.qset_id, 'jobdesc':input.jobdesc})
+#             record = clean_record(record)
+#             jnid = Jobneed.objects.create(**record)
+#             for dtl in input.jobneeddetails:
+#                 dtl = clean_record(eval(dtl))
+    
+#     except Exception as e:
+#         raise
+
+
+
+# class Adhoc(graphene.Mutation):
+#     """
+#     Adhoc task/tours are inserted
+#     """
+#     output = graphene.Field(RowOutput)
+    
+#     class Arguments:
+#         input = AdhocInputType(required=True)
+        
+#     @classmethod
+#     def mutate(cls, root, info, input):
+#         try:
+#             with transaction.atomic(using=utils.get_current_db_name()):
+#                 process_adhoc_mutation(input)
+#         except Exception as e:
+#             raise Exception(f'{Messages.ADHOCFAILED} {e}') from e
+                
+        
+# class TestJsonMutation(graphene.Mutation):
+#     """
+#     test
+#     """
+#     output = graphene.Field(RowOutput)
+    
+#     class Arguments:
+#         file = Upload(required=True)
+        
+#     @classmethod
+#     def mutate(cls, root, info, file):
+#         try:
+#             import codecs
+#             import json
+#             import gzip
+#             ic(file, type(file), file.size)
+#             reader = codecs.getreader("utf-8")
+#             with gzip.open(file, 'rb') as f: 
+#                 # list all the contents of the zip file
+#                 ic(json.loads(f.read().decode('utf-8')) , file.size)
+#             return TestJsonMutation(output = RowOutput(msg = "Json data red successfully",  id=None))
+#         except Exception as e:
+#             raise GraphQLError(e) from e
+
+
 class LoginUser(graphene.Mutation):
-    """Authenticates user before log in"""
-    token = graphene.String()
-    user = graphene.Field(PeopleType)
+    """
+    Authenticates user before log in
+    """
+    token   = graphene.String()
+    user    = graphene.Field(ty.PeopleType)
     payload = GenericScalar()
-    msg = graphene.String()
+    msg     = graphene.String()
     
     class Arguments:
-        input =  AuthInput(required=True)
+        input =  ty.AuthInput(required=True)
     
     @classmethod
     def mutate(cls, root, info, input):
         try:
             from .auth import authenticate_user
-            output, user = authenticate_user(input, info.context,  Messages(), cls.returnUser)
+            output, user = authenticate_user(input, info.context,  apiutils.Messages(), cls.returnUser)
             cls.updateDeviceId(user, input)
             return output
         except Exception as exc:
+            log.error(exc, exc_info=True)
             raise GraphQLError(exc) from exc
             
     
@@ -221,12 +491,98 @@ class LogoutUser(graphene.Mutation):
         updated = People.objects.reset_deviceid(info.context.user.id)
         if updated: status, msg = 200, "Success"
         return LogoutUser(status=status, msg=msg)
-                
-        
-            
-        
-        
+
+
+
+class TaskTourUpdate(graphene.Mutation):
+    """
+    Update Task, Tour fields.
+    like 'cdtz', 'mdtz', 'jobstatus', 'performedby' etc
+    """
+    output = graphene.Field(ty.ServiceOutputType)
+    class Arguments:
+        file = Upload()
+         
+    @classmethod
+    def mutate(cls, root, info, file):
+        output = tasks.perform_tasktourupdate.delay(file, info.context)
+        return TaskTourUpdate(output=output)
+
+
+class InsertRecord(graphene.Mutation):
+    """
+    Inserts new record in the specified table.
+    """
+    output = graphene.Field(ty.ServiceOutputType)
     
+    class Arguments:
+        file = Upload(required=True)
+        tablename = graphene.String()
+    
+    @classmethod    
+    def mutate(cls, root, info, file, tablename):
+        output = tasks.perform_insertrecord.delay(file, tablename, info.context)
+        return InsertRecord(output = output)
+
+
+
+class ReportMutation(graphene.Mutation):
+    output = graphene.Field(ty.ServiceOutputType)
+
+    class Arguments:
+        file = Upload(required=True)
+
+        
+    @classmethod
+    def mutate(cls, root, info, file):
+        output = tasks.perform_reportmutation(file)
+        return ReportMutation(output=output)
+            
+            
+class UploadAttMutaion(graphene.Mutation):
+    ouput = graphene.Field(ty.ServiceOutputType)
+    
+    class Arguments:
+        input = ty.UploadAttType()
+        
+    @classmethod
+    def mutate(cls,root, info, file):
+        output = tasks.perform_uploadattachment(input)
+        return UploadAttMutaion(output=output)
+            
+            
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
         

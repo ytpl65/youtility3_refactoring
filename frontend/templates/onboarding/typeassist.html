@@ -70,13 +70,13 @@ TypeAssist List
                 url    : '{{ url("onboarding:typeassist") }}?action=list',
             },
 			serverSide : true,
-			processing : true,
+			//processing : true,
 			responsive : true,
 			fixedHeader: true,
-			language   : {
-                search           : "_INPUT_",
-                searchPlaceholder: "Search ..",
-				processing:"Getting Data"},
+			//language   : {
+            //    search           : "_INPUT_",
+            //    searchPlaceholder: "Search ..",
+			//	processing:"Getting Data"},
             search    : {return: true},
             lengthMenu: [[10, 20, 30], [10, 20, 30]],
             dom       : `<'row' <'col-sm-6 d-flex justify-content-start'f> <'col-sm-6 d-flex justify-content-end'B> >rt<'row'
@@ -175,6 +175,7 @@ TypeAssist List
 			e.preventDefault();
 			var id = $(e.originalEvent.originalTarget).attr('data-id');
 			var rowid = $(e.originalEvent.originalTarget).attr('data-rowid');
+			debugger;
 			if (!(id && rowid)){ return }
 			$(modalcontent_id).attr('data-rowid', rowid)
 			$(modalcontent_id).attr('data-id', id)

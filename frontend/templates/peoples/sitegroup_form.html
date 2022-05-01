@@ -15,8 +15,8 @@ Site Group
 {% block pagebreadcumb %}
 <!--will call parent contents -->
 {{ super() }}
-<li class="breadcrumb-item pe-3"><a href="{{ url('schedhuler:retrieve_externaltours') }}" class="pe-3">Schedhuled Tours</a></li>
-<li class="breadcrumb-item pe-3"><a href="javascript:void(0)" class="pe-3">External-Tour Form</a></li>
+<li class="breadcrumb-item pe-3"><a href="{{ url('peoples:sitegroup') }}?template=true" class="pe-3">Site Groups</a></li>
+<li class="breadcrumb-item pe-3"><a href="javascript:void(0)" class="pe-3">Site Group Form</a></li>
 {% endblock pagebreadcumb %}
 <!-------------------------- END PAGE BREADCUMB ------------------------->
 
@@ -78,7 +78,7 @@ Site Group
         </div>
     </div>
     <div class="card-body">
-        <table id="all_sites" class="display cel-border compact hover nowrap">
+        <table id="all_sites" class="display cell-border compact hover nowrap">
         </table>
     </div>
 </div>
@@ -107,35 +107,31 @@ Site Group
 
     $(document).ready(() => {
         tabAllsites = $("#all_sites").DataTable({
-            /*ajax:{
+            ajax:{
                 url:"{{ url('peoples:sitegroup') }}?action=allsites",
                 data:{
                     'pk':$("#id_pk").val(),
-                    'selected_butype':$("#custom_butype").val()
+                    'selected_butype':$("#custom_butype").val(),
+                    'fields':['buname', 'parent__buname', 'identifier__tacode']
                 }
-            },*/
-            //serverSide:true,
-            processing:true,
+            },
+            serverSide:true,
             responsive:true,
             fixedHeader:true,
-            language   : {
-                search           : "_INPUT_",
-                searchPlaceholder: "Search ..",
-				processing:"Getting Data"},
             search    : {return: true},
-            lengthMenu: [[40, 50, 60], [40, 50, 60]],
-            order:[[1, 'asc']],
+            lengthMenu: [[10, 20, 30], [10, 20, 30]],
+            ordering: false,
             columns:[
                 {data:'id', visible:false, orderable:false, defaultContent:""},
                 {data:'buname', title:"Site Name"},
                 {data:"parent__buname", title:"Belongs to"},
-                {data:'butype', title:"Type"}
+                {data:'identifier__tacode', title:"Type"},
             ],
-            dom :  `<'row' <'col-sm-6'<'dtToolbar'>> <'col-sm-6 d-flex justify-content-end'f>><'row' <'col-sm-12'rtip>>`,
+            dom :  `<'row' <'col-sm-6'<'dtToolbar'>> <'col-sm-6 d-flex justify-content-end'f>><'row' <'col-sm-12'rtlp>>`,
             buttons:[]
 
         })
-        $("div.dtToolbar").html(`<select name="choice" id="custom_butype"><option value="null" selected>------------------</option></select>`);
+        $("div.dtToolbar").html(`<select name="choice" id="custom_butype" style="width:50%" class="form-select form-select-solid"><option value="null" selected>------------------</option></select>`);
         
         //ON CLICK GRAB SELECTED AND POPULATE RIGHT TABLE
         $("#btn_assign_sites").click(() => {
@@ -169,6 +165,11 @@ Site Group
             buttons:[]
         })
 
+        //reduce size of search bar
+        $('.dataTables_wrapper .dataTables_filter input[type="search"]').css(
+           { 'width': '250px'}
+        )
+        
         //ON CLICK TRASH ICON REMOVE ROW
         $('#assigned_sites').on('click', '.remove', function () {
             var row = $(this).parents('tr');

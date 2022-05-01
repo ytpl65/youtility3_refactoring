@@ -33,7 +33,7 @@ Question List
 	<tbody>
 		{% for ques in ques_list %}
 		<tr>
-			<td>{{ ques['ques_name'] }}</td>
+			<td>{{ ques['quesname'] }}</td>
 			<td><a href="" class="ques-link" data-id="{{ ques['id'] }}" data-rowid ={{ loop.index0 }}>{{ ques['answertype'] }}</a></td>
 			</td>
 			<td>{{ ques['unit__tacode'] }}</td>

@@ -1,6 +1,7 @@
 #from standard library
 
 #from django core
+from attr import Factory
 from django import forms
 from django.db.models.expressions import F
 from django.db.models.query_utils import Q
@@ -82,7 +83,8 @@ class TypeAssistForm(SuperTypeAssistForm):
     def clean_tacode(self):
         super().clean_tacode()
         if val:= self.cleaned_data.get('tacode'):
-            if len(val)>15: raise forms.ValidationError("Max Length reached!!")
+            val = val.upper()
+            if len(val)>25: raise forms.ValidationError("Max Length reached!!")
         return val
                 
     
@@ -96,11 +98,11 @@ class BtForm(forms.ModelForm):
         'invalid_bucode3' : "[Invalid code] Code should not endwith '.' ",
         'invalid_latlng'  : "Please enter a correct gps coordinates."
     }
-    parent = forms.ModelChoiceField(label='Belongs to', required=True, widget=s2forms.Select2Widget, queryset=obm.Bt.objects.all())
+    parent = forms.ModelChoiceField(label='Belongs to', required=False, widget=s2forms.Select2Widget, queryset=obm.Bt.objects.all())
     class Meta:
         model  = obm.Bt
         fields = ['bucode', 'buname', 'parent', 'butype', 'gpslocation', 'identifier',
-                'iswarehouse', 'is_serviceprovider', 'isvendor', 'enable',
+                'iswarehouse', 'isserviceprovider', 'isvendor', 'enable',
                 'gpsenable', 'skipsiteaudit', 'enablesleepingguard', 'deviceevent']
         
         labels = {
@@ -112,7 +114,7 @@ class BtForm(forms.ModelForm):
             'gpslocation'        : 'GPS Location',
             'isenable'           : 'Enable',
             'isvendor'           : 'Vendor',
-            'is_serviceprovider' : 'Service Provider',
+            'isserviceprovider' : 'Service Provider',
             'gpsenable'          : 'GPS Enable', 
             'skipsiteaudit'      : 'Skip Site Audit',
             'enablesleepingguard': 'Enable Sleeping Guard',
@@ -152,7 +154,9 @@ class BtForm(forms.ModelForm):
         parent= cleaned_data.get('parent')
         instance = self.instance
         ic(newcode, newtype, instance)
+        ic(instance.bucode)
         if newcode and newtype and instance:
+            ic(newcode)
             create_bv_reportting_heirarchy(instance, newcode, newtype, parent)
         
         
@@ -197,7 +201,7 @@ class ShiftForm(forms.ModelForm):
     class Meta:
         model = obm.Shift
         fields = ['shiftname', 'starttime', 'endtime', 
-        'nightshift_appicable', 'shiftduration', 'captchafreq']
+        'nightshiftappicable', 'shiftduration', 'captchafreq']
         labels={
             'shiftname':'Shift Name',
             'starttime': 'Start Time',
@@ -206,14 +210,14 @@ class ShiftForm(forms.ModelForm):
         }
         widgets ={
             'shiftname':forms.TextInput(attrs={'placeholder':"Enter shift name"}),
-            'nightshift_appicable':forms.CheckboxInput(attrs={'onclick':"return false"})
+            'nightshiftappicable':forms.CheckboxInput(attrs={'onclick':"return false"})
         }
      
     def __init__(self, *args, **kwargs):
         """Initializes form"""
         self.request = kwargs.pop('request', None)
         super(ShiftForm, self).__init__(*args, **kwargs)
-        self.fields['nightshift_appicable'].initial = False
+        self.fields['nightshiftappicable'].initial = False
         utils.initailize_form_fields(self)
 
     def clean_shiftname(self):

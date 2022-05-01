@@ -1,32 +1,36 @@
 '''
 DEFINE FUNCTIONS AND CLASSES WERE CAN BE USED GLOBALLY.
 '''
+import threading
+from PIL import ImageFile
+import os.path
+import numpy as np
+import json
 import django.shortcuts as scts
 from django.contrib import messages as msg
 from django.template.loader import render_to_string
-from django.http import response as rp
+from django.http import JsonResponse, response as rp
 import apps.peoples.utils as putils
 from pprint import pformat
 from apps.peoples import models as pm
 import logging
-from apps.onboarding.models import  (
-    Bt, TypeAssist)
+import apps.onboarding.models as om
 import apps.activity.models as am
 from django.db.models import Q
 logger = logging.getLogger('__main__')
 dbg = logging.getLogger('__main__').debug
 
 
-def cache_it(key, val, time = 1*60):
+def cache_it(key, val, time=1*60):
     from django.core.cache import cache
     cache.set(key, val, time)
-    logger.info('saved in cache %s'%(pformat(val)))
+    logger.info(f'saved in cache {pformat(val)}')
 
 
 def get_from_cache(key):
     from django.core.cache import cache
     if data := cache.get(key):
-        logger.info('Got from cache %s'%(key))
+        logger.info(f'Got from cache {key}')
         return data
     else:
         logger.info('Not found in cache')
@@ -66,22 +70,24 @@ def handle_RestrictedError(request):
 def handle_EmptyResultSet(request, params, cxt):
     logger.warn('empty objects retrieved', exc_info=True)
     msg.error(request, 'List view not found',
-                   'alert-danger')
+              'alert-danger')
     return scts.render(request, params['template_list'], cxt)
 
 
 def handle_intergrity_error(name):
-    msg = 'The %s record of with these values is already exisit!' % (name)
+    msg = f'The {name} record of with these values is already exisit!'
     logger.info(msg, exc_info=True)
     return rp.JsonResponse({'errors': msg}, status=404)
 
 
-def render_form_for_update(request, params, formname, obj, extra_cxt={}):
+def render_form_for_update(request, params, formname, obj, extra_cxt=None):
+    if extra_cxt is None:
+        extra_cxt = {}
     logger.info("render form for update")
     try:
-        logger.info("object retrieved '{}'".format(obj))
+        logger.info(f"object retrieved '{obj}'")
         F = params['form_class'](
-            instance=obj, request=request, initial = params['form_initials'])
+            instance=obj, request=request, initial=params['form_initials'])
         C = {formname: F, 'edit': True}
         C.update(extra_cxt)
         html = render_to_string(params['template_form'], C, request)
@@ -113,19 +119,23 @@ def render_form_for_delete(request, params, master=False):
         return handle_Exception(request, params)
 
 
-def render_grid(request, params, msg, objs, extra_cxt = None):
+def render_grid(request, params, msg, objs, extra_cxt=None):
     if extra_cxt is None:
         extra_cxt = {}
-    
+
     from django.core.exceptions import EmptyResultSet
     logger.info("render grid")
     try:
         logger.info("%s", msg)
-        logger.info('objects %s retrieved from db'%len(objs) if objs else "No Records!")
+        logger.info(
+            f'objects {len(objs)} retrieved from db' if objs else "No Records!"
+        )
+
         logger.info("Pagination Starts"if objs else "")
         cxt = paginate_results(request, objs, params)
         logger.info("Pagination Ends" if objs else "")
-        if extra_cxt: cxt.update(extra_cxt)
+        if extra_cxt:
+            cxt.update(extra_cxt)
         resp = scts.render(request, params['template_list'], context=cxt)
     except EmptyResultSet:
         resp = handle_EmptyResultSet(request, params, cxt)
@@ -136,7 +146,7 @@ def render_grid(request, params, msg, objs, extra_cxt = None):
 
 def paginate_results(request, objs, params):
     from django.core.paginator import (Paginator,
-     EmptyPage, PageNotAnInteger)
+                                       EmptyPage, PageNotAnInteger)
 
     logger.info('paginate results'if objs else "")
     if request.GET:
@@ -153,10 +163,12 @@ def paginate_results(request, objs, params):
     return {params['list']: li, params['filt_name']: filterform}
 
 
-def get_instance_for_update(postdata, params, msg, pk, kwargs={}):
+def get_instance_for_update(postdata, params, msg, pk, kwargs=None):
+    if kwargs is None:
+        kwargs = {}
     logger.info("%s", msg)
     obj = params['model'].objects.get(id=pk)
-    logger.info("object retrieved '{}'".format(obj))
+    logger.info(f"object retrieved '{obj}'")
     return params['form_class'](postdata, instance=obj, **kwargs)
 
 
@@ -171,11 +183,12 @@ def get_model_obj(pk, request, params):
     except params['model'].DoesNotExist:
         return handle_DoesNotExist(request)
     else:
-        logger.info("object retrieved '{}'".format(obj))
+        logger.info(f"object retrieved '{obj}'")
         return obj
 
 
 def local_to_utc(data, offset, mobile_web):
+    # sourcery skip: avoid-builtin-shadow
     from datetime import datetime, timedelta
     import pytz
     from django.utils.timezone import utc
@@ -210,11 +223,11 @@ def local_to_utc(data, offset, mobile_web):
 
 def get_or_create_none_people(using=None):
     obj, _ = pm.People.objects.filter(Q(peoplecode='NONE') | Q(peoplename='NONE')).get_or_create(
-        id = -1,
+        id=1,
         defaults={
             'peoplecode': 'NONE', 'peoplename': 'NONE',
             'email': "none@youtility.in", 'dateofbirth': '1111-1-1',
-            'dateofjoin': "1111-1-1", 'id':-1
+            'dateofjoin': "1111-1-1", 'id': 1
         }
     )
     return obj
@@ -222,9 +235,9 @@ def get_or_create_none_people(using=None):
 
 def get_or_create_none_pgroup():
     obj, _ = pm.Pgroup.objects.get_or_create(
-        id = -1,
+        id=1,
         defaults={
-            'groupname': "NONE", 'id':-1
+            'groupname': "NONE", 'id': 1
         }
     )
     return obj
@@ -232,12 +245,13 @@ def get_or_create_none_pgroup():
 
 def get_or_create_none_cap():
     obj, _ = pm.Capability.objects.get_or_create(
-        id = -1,
+        id=1,
         defaults={
-            'capscode': "NONE", 'capsname': 'NONE', 'id':-1
+            'capscode': "NONE", 'capsname': 'NONE', 'id': 1
         }
     )
     return obj
+
 
 def encrypt(data: bytes) -> bytes:
     import zlib
@@ -251,6 +265,7 @@ def decrypt(obscured: bytes) -> bytes:
     from base64 import urlsafe_b64encode as b64e, urlsafe_b64decode as b64d
     byte_val = zlib.decompress(b64d(obscured))
     return byte_val.decode('utf-8')
+
 
 def save_user_session(request, people):
     '''save user info in session'''
@@ -285,7 +300,6 @@ def save_user_session(request, people):
         raise
 
 
-
 def update_timeline_data(ids, request, update=False):
     # sourcery skip: hoist-statement-from-if, remove-pass-body
     import apps.onboarding.models as ob
@@ -304,8 +318,6 @@ def update_timeline_data(ids, request, update=False):
     else:
         request.session['wizard_data']['timeline_data'][ids].pop()
         request.session['wizard_data']['timeline_data'][ids] = list(data)
-
-
 
 
 def process_wizard_form(request, wizard_data, update=False, instance=None):
@@ -342,10 +354,8 @@ def update_wizard_form(wizard_data, wiz_session, request):
     else:
         request.session['wizard_data'].update(wiz_session)
         resp = scts.redirect(wizard_data['current_url'])
-    dbg("response from update_wizard_form %s" % (resp))
+    dbg(f"response from update_wizard_form {resp}")
     return resp
-
-
 
 
 def handle_other_exception(request, form, form_name, template, jsonform="", jsonform_name=""):
@@ -369,7 +379,7 @@ def get_index_for_deletion(lookup, request, ids):
     data = request.session['wizard_data']['timeline_data'][ids]
     for idx, item in enumerate(data):
         if item['id'] == int(id):
-            print("idx going to be deleted %s" % (idx))
+            print(f"idx going to be deleted {idx}")
             return idx
 
 
@@ -474,8 +484,8 @@ def save_msg(request):
 
 def initailize_form_fields(form):
     for visible in form.visible_fields():
-        if visible.widget_type in ['text','textarea','datetime','time', 'number', 'email', 'decimal']:
-            visible.field.widget.attrs['class'] = 'form-control form-control-solid'
+        if visible.widget_type in ['text', 'textarea', 'datetime', 'time', 'number', 'email', 'decimal']:
+            visible.field.widget.attrs['class'] = 'form-control'
         elif visible.widget_type in ['radio', 'checkbox']:
             visible.field.widget.attrs['class'] = 'form-check-input'
         elif visible.widget_type in ['select2', 'select', 'select2multiple', 'modelselect2', 'modelselect2multiple']:
@@ -483,7 +493,6 @@ def initailize_form_fields(form):
             visible.field.widget.attrs['data-control'] = 'select2'
             visible.field.widget.attrs['data-placeholder'] = 'Select an option'
             visible.field.widget.attrs['data-allow-clear'] = 'true'
-        
 
 
 def apply_error_classes(form):
@@ -492,12 +501,14 @@ def apply_error_classes(form):
         attrs = form.fields[x].widget.attrs
         attrs.update({'class': attrs.get('class', '') + ' is-invalid'})
 
-def to_utc( date, format=None):
+
+def to_utc(date, format=None):
     import pytz
     if isinstance(date, list) and date:
         dtlist = []
         for dt in date:
-            dt = dt.astimezone(pytz.utc).replace(microsecond=0, tzinfo=pytz.utc)
+            dt = dt.astimezone(pytz.utc).replace(
+                microsecond=0, tzinfo=pytz.utc)
             dtlist.append(dt)
         return dtlist
     else:
@@ -506,41 +517,47 @@ def to_utc( date, format=None):
             dt.strftime(format)
         return dt
 
-# MAPPING OF HOSTNAME:DATABASE ALIAS NAME 
+# MAPPING OF HOSTNAME:DATABASE ALIAS NAME
+
+
 def get_tenants_map():
     return {
-        'sps.youtility.local'       :'sps',
-        'capgemini.youtility.local' :'capgemini',
-        'dell.youtility.local'      :'dell',
-        'icicibank.youtility.local' :'icicibank',
-        'barfi.youtility.in'        :'icicibank'
+        'sps.youtility.local': 'sps',
+        'capgemini.youtility.local': 'capgemini',
+        'dell.youtility.local': 'dell',
+        'icicibank.youtility.local': 'icicibank',
+        'barfi.youtility.in': 'icicibank'
     }
 
-# RETURN HOSTNAME FROM REQUEST 
+# RETURN HOSTNAME FROM REQUEST
+
+
 def hostname_from_request(request):
     return request.get_host().split(':')[0].lower()
 
 
 def get_or_create_none_bv():
-    obj, _ = Bt.objects.get_or_create(
-        id = -1,
+    obj, _ = om.Bt.objects.get_or_create(
+        id=1,
         defaults={
-            'bucode':"NONE", 'buname':"NONE",'id':-1, 
+            'bucode': "NONE", 'buname': "NONE", 'id': 1,
         }
     )
     return obj
 
 
 def get_or_create_none_typeassist():
-    obj, _ = TypeAssist.objects.get_or_create(
-        id=-1,
+    obj, _ = om.TypeAssist.objects.get_or_create(
+        id=1,
         defaults={
-            'tacode':"NONE", 'taname':"NONE",'id':-1
+            'tacode': "NONE", 'taname': "NONE", 'id': 1
         }
     )
     return obj
 
 # RETURNS DB ALIAS FROM REQUEST
+
+
 def tenant_db_from_request(request):
     hostname = hostname_from_request(request)
     print(f"Hostname from Request:{hostname}")
@@ -553,20 +570,20 @@ def get_client_from_hostname(request):
     print(hostname)
     return hostname.split('.')[0]
 
-   
+
 def get_or_create_none_job():
     from datetime import datetime, timezone
-    date = datetime(1970,1,1,00,00,00).replace(tzinfo=timezone.utc)
+    date = datetime(1970, 1, 1, 00, 00, 00).replace(tzinfo=timezone.utc)
     obj, _ = am.Job.objects.get_or_create(
-        id = -1,
+        id=1,
         defaults={
-            'jobname'     : 'NONE',    'jobdesc'        : 'NONE',
-            'from_date'   : date,      'upto_date'      : date,
-            'cron'        : "no_cron", 'lastgeneratedon': date,
-            'planduration': 0,         'expirytime'     : 0,
-            'gracetime'   : 0,         'priority'       : 'LOW',
-            'slno'        : -1,        'scantype'       : 'SKIP',
-            'id':-1
+            'jobname': 'NONE',    'jobdesc': 'NONE',
+            'fromdate': date,      'uptodate': date,
+            'cron': "no_cron", 'lastgeneratedon': date,
+            'planduration': 0,         'expirytime': 0,
+            'gracetime': 0,         'priority': 'LOW',
+            'slno': -1,        'scantype': 'SKIP',
+            'id': 1
         }
     )
     return obj
@@ -574,14 +591,14 @@ def get_or_create_none_job():
 
 def get_or_create_none_jobneed():
     from datetime import datetime, timezone
-    date = datetime(1970,1,1,00,00,00).replace(tzinfo=timezone.utc)
+    date = datetime(1970, 1, 1, 00, 00, 00).replace(tzinfo=timezone.utc)
     obj, _ = am.Jobneed.objects.get_or_create(
-        id = -1,
+        id=1,
         defaults={
-            'jobdesc'          : "NONE", 'plandatetime': date,
-            'expirydatetime'   : date,   'gracetime'   : 0,
-            'recievedon_server': date,   'slno'        : -1,
-            'scantype'         : "NONE", 'id':-1
+            'jobdesc': "NONE", 'plandatetime': date,
+            'expirydatetime': date,   'gracetime': 0,
+            'receivedonserver': date,   'slno': -1,
+            'scantype': "NONE", 'id': 1
         }
     )
     return obj
@@ -589,39 +606,41 @@ def get_or_create_none_jobneed():
 
 def get_or_create_none_qset():
     obj, _ = am.QuestionSet.objects.get_or_create(
-        id = -1,
+        id=1,
         defaults={
-            'qset_name':"NONE", 'id':-1}
+            'qsetname': "NONE", 'id': 1}
     )
     return obj
 
+
 def get_or_create_none_question():
     obj, _ = am.Question.objects.get_or_create(
-        id = -1,
-        defaults = {
-            'ques_name':"NONE", 'id':-1}
+        id=1,
+        defaults={
+            'quesname': "NONE", 'id': 1}
     )
     return obj
 
 
 def get_or_create_none_qsetblng():
     obj, _ = am.QuestionSetBelonging.objects.get_or_create(
-        id = -1,
-        defaults = {
-            'qset'     : get_or_create_none_qset(),
-            'question'     : get_or_create_none_question(),
-            'answertype' : 'NUMERIC', 'id':-1, 
-            'ismandatory': False, 'slno':-1}
+        id=1,
+        defaults={
+            'qset': get_or_create_none_qset(),
+            'question': get_or_create_none_question(),
+            'answertype': 'NUMERIC', 'id': 1,
+            'ismandatory': False, 'slno': -1}
     )
     return obj
 
+
 def get_or_create_none_asset():
     obj, _ = am.Asset.objects.get_or_create(
-        id = '-1',
+        id=1,
         defaults={
-            'assetcode'    : "NONE", 'assetname' : 'NONE',
-            'iscritical'   : False,  'identifier': 'NONE',
-            'runningstatus': 'SCRAPPED', 'id':-1
+            'assetcode': "NONE", 'assetname': 'NONE',
+            'iscritical': False,  'identifier': 'NONE',
+            'runningstatus': 'SCRAPPED', 'id': 1
         }
     )
     return obj
@@ -647,7 +666,8 @@ def create_none_entries(db):
         get_or_create_none_qset()
         print("Successfully created none entries for 'TypeAssist', 'People', 'Bv',\
          \'Capability', 'Pgroup', 'Job', 'Jobneed', 'QuestionSet")
-    
+
+
 def create_super_admin(db):
     try:
         set_db_for_router(db)
@@ -661,20 +681,22 @@ def create_super_admin(db):
         inputs = input().split(" ")
         if len(inputs) == 7:
             user = People.objects.create_superuser(
-                loginid     = inputs[0],
-                password    = inputs[1],
-                peoplecode  = inputs[2],
-                peoplename  = inputs[3],
-                dateofbirth = inputs[4],
-                dateofjoin  = inputs[5],
-                email       = inputs[6],
+                loginid=inputs[0],
+                password=inputs[1],
+                peoplecode=inputs[2],
+                peoplename=inputs[3],
+                dateofbirth=inputs[4],
+                dateofjoin=inputs[5],
+                email=inputs[6],
             )
-            print(f"Operation Successfull!\n Superuser with this loginid {user.loginid} is created")
+            print(
+                f"Operation Successfull!\n Superuser with this loginid {user.loginid} is created")
         else:
             raise ValueError("Please provide all fields!")
 
-import threading
+
 THREAD_LOCAL = threading.local()
+
 
 def get_current_db_name():
     return getattr(THREAD_LOCAL, 'DB', "default")
@@ -687,12 +709,14 @@ def set_db_for_router(db):
         print('raised')
         raise NameError("Database with this alias not exist!")
     setattr(THREAD_LOCAL, "DB", db)
-    
+
+
 def display_post_data(post_data):
     logger.info(
-        "\n%s"%(pformat(post_data, compact=True))
+        "\n%s" % (pformat(post_data, compact=True))
     )
-    
+
+
 def format_data(objects):
     columns, rows, data = objects[0].keys(), {}, {}
     for i, d in enumerate(objects):
@@ -702,14 +726,16 @@ def format_data(objects):
         del i, d
     data['rows'] = rows
     return data
-    
+
+
 def getFilters():
     return {
         "eq": "__iexact", "lt": "__lt",        "le": "__lte",
         "gt": "__gt",     "ge": "__gte",       "bw": "__istartswith",
         "in": "__in",     "ew": "__iendswith", "cn": "__icontains",
         "bt": "__range"}
-    
+
+
 def searchValue(objects, fields, related, model,  ST):
     q_objs = Q()
     for field in fields:
@@ -717,8 +743,15 @@ def searchValue(objects, fields, related, model,  ST):
     return model.objects.filter(
         q_objs).select_related(
             *related).values(*fields)
-    
-    
+
+
+def searchValue2(fields,  ST):
+    q_objs = Q()
+    for field in fields:
+        q_objs |= get_filter(field, 'contains', ST)
+    return q_objs
+
+
 def get_filter(field_name, filter_condition, filter_value):
     # thanks to the below post
     # https://stackoverflow.com/questions/310732/in-django-how-does-one-filter-a-queryset-with-dynamic-field-lookups
@@ -754,34 +787,61 @@ def get_filter(field_name, filter_condition, filter_value):
 
 
 def get_paginated_results(requestData, objects, count,
-fields, related, model):
-        '''paginate the results'''
-        logger.info('Pagination Start'if count else "")
-        if not requestData.get('draw'):
-            return {'data':[]}
-        if requestData['search[value]']!= "":
-            objects =  searchValue(
-                objects, fields, related, model, requestData["search[value]"])
-            filtered = objects.count()
-        else:
-            filtered = count
-        length, start = int(requestData['length']), int(requestData['start'])
-        return objects[start:start+length], filtered
+                          fields, related, model):
+    '''paginate the results'''
     
+    
+    logger.info('Pagination Start'if count else "")
+    if not requestData.get('draw'):
+        return {'data': []}
+    if requestData['search[value]'] != "":
+        objects = searchValue(
+            objects, fields, related, model, requestData["search[value]"])
+        filtered = objects.count()
+    else:
+        filtered = count
+    length, start = int(requestData['length']), int(requestData['start'])
+    return objects[start:start+length], filtered
+
+
+def get_paginated_results2(objs, count, params, R):
+    filtered = 0
+    if count:
+        logger.info('Pagination Start'if count else "")
+        if R['serch[value]'] != "":
+            objects = searchValue2(objs, params['fields'], params['related'], R['search[value]'])
+            filtered = objects.count()
+        else: filtered=count
+        length, start = int(R['length']), int(R['start'])
+        objects = objects[start:start+length]
+    return JsonResponse(data = {
+        'draw':R['draw'],
+        'data':list(objects),
+        'recordsFiltered':filtered,
+        'recordsTotal':count
+    })
+        
 
 def PD(data=None, post=None, get=None, instance=None, cleaned=None):
     """
     Prints Data (DD)
     """
-    if post: logger.debug(f"POST data recived from client: {pformat(post, compact=True)}\n")
-    elif get: logger.debug(f"GET data recived from client: {pformat(get, compact=True)}\n")
-    elif cleaned: logger.debug(f"CLEANED data after processing {pformat(cleaned, compact=True)}\n")
-    elif instance: logger.debug(f"INSTANCE data recived from DB {pformat(instance, compact=True)}\n")
-    else: logger.debug(f"{pformat(data, compact=True)}\n")
+    if post:
+        logger.debug(
+            f"POST data recived from client: {pformat(post, compact=True)}\n")
+    elif get:
+        logger.debug(
+            f"GET data recived from client: {pformat(get, compact=True)}\n")
+    elif cleaned:
+        logger.debug(
+            f"CLEANED data after processing {pformat(cleaned, compact=True)}\n")
+    elif instance:
+        logger.debug(
+            f"INSTANCE data recived from DB {pformat(instance, compact=True)}\n")
+    else:
+        logger.debug(f"{pformat(data, compact=True)}\n")
 
-        
-        
-        
+
 def register_newuser_token(user, clientUrl):
     if not user.email or not user.loginid:
         return False, None
@@ -803,35 +863,134 @@ def register_newuser_token(user, clientUrl):
                 refreshToken
             }
         }
-    """%(user.email, user.loginid, user.password, user.password)
-    
-    res = requests.post(endpoint, json={"query":query})
+    """ % (user.email, user.loginid, user.password, user.password)
+
+    res = requests.post(endpoint, json={"query": query})
     if res.status_code == 200:
         return True, res
     return False, None
 
 
 def clean_record(record):
-    from django.contrib.gis.geos import GEOSGeometry
     
-    for k,v in record.items():
+    from django.contrib.gis.geos import GEOSGeometry
+
+    for k, v in record.items():
         if k in ['gpslocation', 'startlocation', 'endlocation']:
-            record[k] = GEOSGeometry(v, srid=4326)
-            
-            
+            ic(v, type(v))
+            v = v.split(',')
+            ic(v)
+            p = f'POINT({v[1]} {v[0]})'
+            ic(p)
+            record[k] = GEOSGeometry(p, srid=4326)
+    return record
+
+
 def save_common_stuff(request, instance):
     from django.utils import timezone
     if instance.mdtz:
         instance.muser_id = request.session.get(
             '_auth_user_id', -1)
     else:
-        instance.muser_id = instance.cuser_id = request.session.get('_auth_user_id', -1)
+        instance.muser_id = instance.cuser_id = request.session.get(
+            '_auth_user_id', -1)
     instance.mdtz = timezone.now().replace(microsecond=0)
-    
+
 
 def create_tenant_with_alias(db):
     from apps.tenants.models import Tenant
     Tenant.objects.create(
-        tenantname = db.upper(), 
-        subdomain_prefix = db
+        tenantname=db.upper(),
+        subdomain_prefix=db
     )
+
+
+def get_record_from_input(input):
+    import json
+    try:
+        ic(input.values)
+        values = eval(json.dumps(input.values))
+        ic(values)
+        return dict(zip(input.columns, values))
+    except Exception:
+        raise
+
+
+#import face_recognition
+
+# GLOBAL
+ImageFile.LOAD_TRUNCATED_IMAGES = True
+
+
+def fr(imagePath1, imagePath2):
+
+    result = msg = None
+    image1 = image2 = None
+    status = False
+    try:
+        if os.path.exists(imagePath1):
+            image1 = face_recognition.load_image_file(imagePath1)
+
+            if os.path.exists(imagePath2):
+                image2 = face_recognition.load_image_file(imagePath2)
+
+                # Image Path1 Encoding
+                #after_image1_encoding= face_recognition.face_encodings(image1)[0]
+                after_image1_encoding = face_recognition.face_encodings(image1)
+                after_image1_encoding = after_image1_encoding[0] if len(
+                    after_image1_encoding) > 0 else None
+                #storyline(A, "python_fr.fr() after_image1_encoding: %s", after_image1_encoding)
+
+                # Image Path2 Encoding
+                #after_image2_encoding= face_recognition.face_encodings(image2)[0]
+                after_image2_encoding = face_recognition.face_encodings(image2)
+                after_image2_encoding = after_image2_encoding[0] if len(
+                    after_image2_encoding) > 0 else None
+                #storyline(A, "python_fr.fr() after_image2_encoding: %s", after_image2_encoding)
+
+                if (after_image1_encoding is not None and after_image2_encoding is not None):
+                    result = face_recognition.compare_faces(
+                        [after_image1_encoding], after_image2_encoding, tolerance=0.5)
+                    status = result[0]
+                    msg = f'Face recognition {"success." if status else "failed."}'
+                else:
+                    msg = "Face recognition failed."
+            else:
+                msg = "Unable to find image to be matched."
+        else:
+            msg = "Default people image not found. Please upload default image for people and try again."
+    except Exception as e:
+        logger.error(
+            f"Face Recongition of {imagePath1} {imagePath2}", exc_info=True)
+        raise Exception
+    del image1, image2
+    return status, msg
+
+
+def alert_observation(pk, event):
+    
+    
+    pass
+
+
+
+def alert_email(pk, event):
+    if event == 'OBSERVATION': alert_observation(pk, event)
+
+
+def printsql(objs):
+    from django.core.exceptions import EmptyResultSet
+    try:
+        print('SQL QUERY:\n', objs.query.__str__())
+    except EmptyResultSet:
+        print("NO SQL") 
+        
+
+def get_select_output(objs):
+    if not objs:
+        return None, 0, "No records"
+    import json
+    records = json.dumps(list(objs), default=str)
+    count = objs.count()
+    msg = f'Total {count} records fetched successfully!'
+    return records, count, msg

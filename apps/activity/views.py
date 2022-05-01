@@ -36,8 +36,8 @@ class Question(LoginRequiredMixin, View):
         'related'       : ['unit'],
         'model'         : am.Question,
         'filter'        : aft.QuestionFilter,
-        'fields'        : ['id', 'ques_name', 'answertype', 'isworkflow', 'unit__tacode',],
-        'form_initials' : {'initial':{}}
+        'fields'        : ['id', 'quesname', 'answertype', 'isworkflow', 'unit__tacode',],
+        'form_initials' : {'initial':{''}}
     }
     
     def get(self, request, *args, **kwargs):
@@ -98,7 +98,7 @@ class Question(LoginRequiredMixin, View):
             ques = putils.save_userinfo(ques, request.user, request.session, create=create)
             logger.info("question form saved")
             data = {'success': "Record has been saved successfully", 
-            'name':ques.ques_name, 'type':ques.answertype, 'unit':ques.unit.tacode}
+            'name':ques.quesname, 'type':ques.answertype, 'unit':ques.unit.tacode}
             logger.debug(data)
             return rp.JsonResponse(data, status=200)
         except (IntegrityError, pg_errs.UniqueViolation):
@@ -115,7 +115,7 @@ class MasterQuestionSet(LoginRequiredMixin, View):
         'related'       : ['unit'],
         'model'         : am.QuestionSet,
         'filter'        : aft.MasterQsetFilter,
-        'fields'        : ['qset_name', 'type', 'id'],
+        'fields'        : ['qsetname', 'type', 'id'],
         'form_initials' : {}
     }
     list_grid_lookups = label = None
@@ -131,7 +131,7 @@ class MasterQuestionSet(LoginRequiredMixin, View):
             self.params.update(d)
             objs = self.params['model'].objects.select_related(
                 *self.params['related']).filter(
-                    ~Q(qset_name='NONE'), **self.list_grid_lookups
+                    ~Q(qsetname='NONE'), **self.list_grid_lookups
                 ).values(*self.params['fields'])
             resp   = utils.render_grid(request, self.params, 
             "questionset_view", objs, extra_cxt={'label':self.label})
@@ -300,10 +300,10 @@ class Checklist(MasterQuestionSet):
             qset = form.save()
             putils.save_userinfo(qset, request.user, request.session, create=create)
             logger.info('%s form is valid'%(self.view_of))
-            fields = {'qset':qset.id, 'qset_name':qset.qset_name, 'client':qset.client_id}
+            fields = {'qset':qset.id, 'qsetname':qset.qsetname, 'client':qset.client_id}
             self.save_qset_belonging(request, assigned_questions, fields)
             data = {'success': "Record has been saved successfully", 
-            'type':qset.type, 'name':qset.qset_name, 'id':qset.id
+            'type':qset.type, 'name':qset.qsetname, 'id':qset.id
             }
             return rp.JsonResponse(data, status=200)
         except IntegrityError:
@@ -341,10 +341,10 @@ class QuestionSet(MasterQuestionSet):
             qset = form.save()
             putils.save_userinfo(qset, request.user, request.session, create=create)
             logger.info('%s form is valid'%(self.view_of))
-            fields = {'qset':qset.id, 'qset_name':qset.qset_name, 'client':qset.client_id}
+            fields = {'qset':qset.id, 'qsetname':qset.qsetname, 'client':qset.client_id}
             self.save_qset_belonging(request, assigned_questions, fields)
             data = {'success': "Record has been saved successfully", 
-            'type':qset.type, 'name':qset.qset_name, 'id':qset.id
+            'type':qset.type, 'name':qset.qsetname, 'id':qset.id
             }
             return rp.JsonResponse(data, status=200)
         except IntegrityError:

@@ -43,8 +43,8 @@ class SiteReportListFilter(dfs.FilterSet):
                 
 
 class MasterReportTemplateFilter(dfs.FilterSet):
-    qset_name = dfs.CharFilter(field_name='qset_name', lookup_expr='qset_name__icontains', label='Site Report')
+    qsetname = dfs.CharFilter(field_name='qsetname', lookup_expr='qset_name__icontains', label='Site Report')
     enable = None
     class Meta:
         model=QuestionSet
-        fields = ('qset_name', 'enable')
+        fields = ('qsetname', 'enable')

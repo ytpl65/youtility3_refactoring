@@ -54,7 +54,7 @@ Task List
             <td><a href="{{ url('schedhuler:update_task_jobneed', args=[task['id']]) }}">{{ task['jobdesc'] }}</a></td>
             <td>{{ task['jobstatus']  }}</td>
             <td>{{ task['people__peoplename'] + " [People]" or task['pgroup__groupname']+ " [Group]" }}</td>
-            <td>{{ task['performed_by__peoplename'] }}</td>
+            <td>{{ task['performedby__peoplename'] }}</td>
             <td>{{ task['asset__assetname'] }}</td>
             <td>{{ task['qset__qset_name'] }}</td>
             <td>{{ task['gracetime'] }} Min</td>

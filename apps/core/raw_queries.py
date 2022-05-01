@@ -33,7 +33,7 @@ query = {
                                     AS depth, (p.path || '->' || c.id::TEXT) as path, c.parent_id as top_parent, slno as pseqno, c.bu_id FROM nodes_cte AS p, jobneed AS
                                     c  WHERE c.identifier='SITEREPORT' AND c.parent_id = p.id )
                                     SELECT DISTINCT jobneed.jobdesc, jobneed.pseqno, jnd.slno as cseqno, jnd.question_id, jnd.answertype, jnd.min, jnd.max, jnd.options,
-                                    jnd.answer, jnd.alerton, jnd.is_mandatory, q.ques_name, q.answertype FROM nodes_cte as jobneed 
+                                    jnd.answer, jnd.alerton, jnd.ismandatory, q.quesname, q.answertype FROM nodes_cte as jobneed 
                                     LEFT JOIN jobneed_details as jnd ON jnd.jobneed_id=jobneed.id 
                                     LEFT JOIN question q ON jnd.question_id=q.id where jnd.answertype='Question Type' AND jobneed.parent_id <> -1 
                                     ORDER BY pseqno asc, jobdesc asc, pseqno, cseqno asc

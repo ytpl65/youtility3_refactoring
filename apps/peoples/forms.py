@@ -220,13 +220,13 @@ class PgroupForm(forms.ModelForm):
 
     class Meta:
         model = pm.Pgroup
-        fields = ['name', 'enable', 'identifier']
+        fields = ['groupname', 'enable', 'identifier']
         labels = {
             'name': 'Name',
             'enable': 'Enable'
         }
         widgets = {
-            'name': forms.TextInput(attrs={
+            'groupname': forms.TextInput(attrs={
                 'placeholder': "Enter People Group Name"
             }),
             'identifier':forms.TextInput(attrs = {"style":"display:none"})

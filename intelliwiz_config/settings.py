@@ -13,7 +13,8 @@ https://docs.djangoproject.com/en/3.2/ref/settings/
 
 from pathlib import Path
 import os
-from django.http import request
+from dotenv import load_dotenv
+load_dotenv()  # loads the configs from .env
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -22,9 +23,9 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/3.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-z8zcu0*td9qe$nuh*ly-mpwt&x@h%0+so$hc$lp)g_1x+#0l9_'
-SECRET_SALT = "ijsafifd343433jffd"
-ENCRYPT_KEY = 'I618zPOcrQ3zB5XasmuLXazlGZUn-dK5anHXSvKs4dM='
+SECRET_KEY = str(os.getenv('SECRET_KEY'))
+SECRET_SALT = str(os.getenv('SECRET_SALT'))
+ENCRYPT_KEY = str(os.getenv('ENCRYPT_KEY'))
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -52,6 +53,7 @@ INSTALLED_APPS = [
     "django_select2",
     'django_filters',
     "graphql_jwt.refresh_token.apps.RefreshTokenConfig",
+    'rest_framework',
     
 
     #local apps
@@ -62,6 +64,7 @@ INSTALLED_APPS = [
     'apps.activity',
     'apps.schedhuler',
     'apps.reports',
+    'apps.service',
 
     #third-party apps
     'django_cleanup.apps.CleanupConfig'
@@ -122,36 +125,39 @@ WSGI_APPLICATION = 'intelliwiz_config.wsgi.application'
 # https://docs.djangoproject.com/en/3.2/ref/settings/#databases
 
 #multi database configuration.
+DBUSER = str(os.getenv('DBUSER'))
+DBPASWD = str(os.getenv('DBPASWD'))
+DBHOST = str(os.getenv('DBHOST'))
 '''
 NOTE: Client bucode should match the database alias name.
 '''
 youtility_dbs = {
     'default': {
         'ENGINE':   'django.contrib.gis.db.backends.postgis',
-        'USER':     'youtilitydba',
+        'USER':     DBUSER,
         'NAME':     'sps_django',
-        'PASSWORD': '!!sysadmin!!',
-        'HOST':     '192.168.1.254',
+        'PASSWORD': DBPASWD,
+        'HOST':     DBHOST,
         'PORT':     '5432',
     },
 
     'icicibank':{
         'ENGINE':   'django.contrib.gis.db.backends.postgis',
-        'USER':     'youtilitydba',
+        'USER':     DBUSER,
         'NAME':     'icici_django',
-        'PASSWORD': '!!sysadmin!!',
-        'HOST':     '192.168.1.254',
+        'PASSWORD': DBPASWD,
+        'HOST':     DBHOST,
         'PORT':     '5432',
     },
-    # 'gis_db':{
+    # 'icicibank':{
     #     'ENGINE':   'django.contrib.gis.db.backends.postgis',
-    #     'USER':     'youtility33',
-    #     'NAME':     'icici_django_gis',
-    #     'PASSWORD': 'adminpassword',
-    #     'HOST':     'localhost',
-    #     'PORT':     '',
+    #     'USER':     'postgres',
+    #     'NAME':     'icici_django',
+    #     'PASSWORD': 'iOuMGLC8gksayExB',
+    #     'HOST':     '34.121.145.44',
+    #     'PORT':     '5432',
     # }
-
+    
 }
 
 
@@ -209,6 +215,11 @@ CACHES = {
     }
 }
 
+CELERY_BROKER_URL = str(os.getenv('CELERY_BROKER_URL'))
+CELERY_CACHE_BACKEND = str(os.getenv('CELERY_CACHE_BACKEND'))
+CELERY_RESULT_BACKEND = str(os.getenv('CELERY_RESULT_BACKEND'))
+
+
 SELECT2_CACHE_BACKEND = 'select2'
 SELECT2_JS = ""
 SELECT2_CSS = ""
@@ -260,7 +271,6 @@ USE_TZ = True
 # Media Files
 MEDIA_ROOT = os.path.join(os.path.expanduser('~'),'youtility4_media')
 MEDIA_URL = '/youtility4_media/'
-DATE_FORMAT = "d M Y"
 DATETIME_INPUT_FORMATS = [
     '%d-%b-%Y %H:%M:%S',   #22-May-1998 13:01
    "%Y-%m-%d %H:%M:%S"     #1998-05-18 13:01:00
@@ -281,7 +291,7 @@ STATICFILES_DIRS = [os.path.join(BASE_DIR, 'frontend/static')]
 # Default primary key field type
 # https://docs.djangoproject.com/en/3.2/ref/settings/#default-auto-field
 
-DEFAULT_AUTO_FIELD = 'django.db.models.AutoField'
+DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 DATABASE_ROUTERS = ['apps.tenants.middlewares.TenantDbRouter']
 
@@ -371,7 +381,7 @@ SHELL_PLUS_PRINT_SQL = True
 
 #Email Verification settings
 def verified_callback(user):
-    user.is_verified = True
+    user.isverified = True
 
 
 EMAIL_VERIFIED_CALLBACK = verified_callback
@@ -390,15 +400,22 @@ EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 DEFAULT_FROM_EMAIL = "snvnrock@gmail.com"
 EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
-EMAIL_HOST_USER = 'snvnrock@gmail.com'
-EMAIL_HOST_PASSWORD = '8007008467N'  # os.environ['password_key'] suggested
+EMAIL_HOST_USER = str(os.getenv('EMAIL_HOST_USER'))
+EMAIL_HOST_PASSWORD = str(os.getenv('EMAIL_HOST_PASSWORD')) # os.environ['password_key'] suggested
 EMAIL_USE_TLS = True
 
 #django-taggit config.
 TAGGIT_CASE_INSENSITIVE = True
 
-GOOGLE_MAP_SECRET_KEY = 'AIzaSyC3PUZCB7u2PiV8whHeAshweOPIK_d690o'
+GOOGLE_MAP_SECRET_KEY =str(os.getenv('GOOGLE_MAP_SECRET_KEY'))
 GRAPH_MODELS = {
   'all_applications': True,
   'group_models': True,
 }
+
+
+# REST_FRAMEWORK = {
+# 'DEFAULT_PERMISSION_CLASSES': (
+#     'rest_framework.permissions.IsAuthenticated',
+# )
+# }

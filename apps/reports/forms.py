@@ -22,7 +22,7 @@ class MasterReportTemplate(forms.ModelForm):
     class Meta:
         model = am.QuestionSet
         fields = [
-            'type',  'qset_name', 'buincludes', 'site_grp_includes', 
+            'type',  'qsetname', 'buincludes', 'site_grp_includes', 
             'site_type_includes', 'enable']
 
         

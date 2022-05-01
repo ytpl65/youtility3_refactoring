@@ -60,7 +60,7 @@ Schedhule External-Tour&nbsp;<i class="fa fa-clock fs-4 text-primary" aria-hidde
         {{ schdexternaltourform.scantype }}
         {{ schdexternaltourform.expirytime }}
         {{ schdexternaltourform.frequency }}
-        {{ schdexternaltourform.ticket_category }}
+        {{ schdexternaltourform.ticketcategory }}
         {{ schdexternaltourform.slno }}
     </div>
     
@@ -130,12 +130,12 @@ Schedhule External-Tour&nbsp;<i class="fa fa-clock fs-4 text-primary" aria-hidde
             {{ schdexternaltourform.people.errors }}
         </div>
         <div class="col-md-1">
-            <label for={{ schdexternaltourform.from_date.id_for_label }}
-            class="required">{{ schdexternaltourform.from_date.label }}:</label>
+            <label for={{ schdexternaltourform.fromdate.id_for_label }}
+            class="required">{{ schdexternaltourform.fromdate.label }}:</label>
         </div>
         <div class="col-md-5">
-            {{ schdexternaltourform.from_date }}
-            {{ schdexternaltourform.from_date.errors }}
+            {{ schdexternaltourform.fromdate }}
+            {{ schdexternaltourform.fromdate.errors }}
         </div>
     </div>
     <div class="row mb-3 gy-3">
@@ -148,12 +148,12 @@ Schedhule External-Tour&nbsp;<i class="fa fa-clock fs-4 text-primary" aria-hidde
             {{ schdexternaltourform.qset.errors }}
         </div>
         <div class="col-md-1">
-            <label for={{ schdexternaltourform.upto_date.id_for_label }}
-            class="required">{{ schdexternaltourform.upto_date.label }}:</label>
+            <label for={{ schdexternaltourform.uptodate.id_for_label }}
+            class="required">{{ schdexternaltourform.uptodate.label }}:</label>
         </div>
         <div class="col-md-5">
-            {{ schdexternaltourform.upto_date }}
-            {{ schdexternaltourform.upto_date.errors }}
+            {{ schdexternaltourform.uptodate }}
+            {{ schdexternaltourform.uptodate.errors }}
         </div>
     </div>
 </form>
