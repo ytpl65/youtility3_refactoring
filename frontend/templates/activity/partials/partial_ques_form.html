@@ -21,22 +21,22 @@
         <input type="hidden", value='{{ ques_form.instance.alerton }}' id="hidden_alerton">
         <!--============================== FORM FIELDS START =============================-->
         <div class="row mb-3 gy-3">
-            <label for={{ ques_form.quesname.id_for_label }} class="col-md-1">{{ ques_form.quesname.label }}:</label>
+            <label for={{ ques_form.quesname.id_for_label }} class="col-md-1 required">{{ ques_form.quesname.label }}:</label>
             <div class="col-md-11">
                 {{ ques_form.quesname }}
                 {{ ques_form.quesname.errors }}
             </div>
-            <label for={{ ques_form.answertype.id_for_label }} class="col-md-1">{{ ques_form.answertype.label }}:</label>
+            <label for={{ ques_form.answertype.id_for_label }} class="col-md-1 required">{{ ques_form.answertype.label }}:</label>
             <div class="col-md-5">
                 {{ ques_form.answertype }}
                 {{ ques_form.answertype.errors }}
             </div>
-            <label for={{ ques_form.unit.id_for_label }} class="col-md-1">{{ ques_form.unit.label }}:</label>
+            <label for={{ ques_form.unit.id_for_label }} class="col-md-1 required">{{ ques_form.unit.label }}:</label>
             <div class="col-md-5">
                 {{ ques_form.unit }}
                 {{ ques_form.unit.errors }}
             </div>
-           <label for={{ ques_form.category.id_for_label }} class="col-md-1">{{ ques_form.category.label }}:</label>
+           <label for={{ ques_form.category.id_for_label }} class="col-md-1 required">{{ ques_form.category.label }}:</label>
             <div class="col-md-5">
                 {{ ques_form.category }}
                 {{ ques_form.category.errors }}

@@ -222,13 +222,12 @@ class ChecklistForm(MasterQsetForm):
         self.fields['assetincludes'].label = 'Checkpoints'
         self.fields['type'].widget.attrs   = {"style": "display:none;"}
         if self.instance.id:
-            self.fields['assetincludes'].initial = json.loads(
-                self.instance.assetincludes)
+            self.fields['assetincludes'].initial = self.instance.assetincludes.split(',')
         utils.initailize_form_fields(self)
 
     def clean_assetincludes(self):
         if val := self.cleaned_data.get('assetincludes'):
-            return json.dumps(val)
+            return json.dumps(val).replace('"', "").replace("[", "").replace("]", "")
 
 
 class QuestionSetForm(MasterQsetForm):
@@ -252,8 +251,8 @@ class QuestionSetForm(MasterQsetForm):
 
     def clean_assetincludes(self):
         if val := self.cleaned_data.get('assetincludes'):
-            return json.dumps(val)
-
+            val = json.dumps(val).replace('"', "").replace("[", "").replace("]", "")
+        return val
 
 
 class AssetForm(forms.ModelForm):
@@ -281,17 +280,19 @@ class AssetForm(forms.ModelForm):
     supplier       = forms.CharField(required=False, max_length=50)
     meter          = forms.ChoiceField(choices=[], required=False, initial='NONE', label='Meter')
     model          = forms.CharField(label='Model', required=False, max_length=100)
+    gpslocation    = forms.CharField(label = 'GPS Location', required=True, initial='0.0,0.0')
 
     class Meta:
         model = am.Asset
         fields = ['assetcode', 'assetname', 'enable', 'runningstatus', 'type', 'parent',
-                  'gpslocation', 'iscritical', 'category', 'subcategory', 'identifier',
-                  'capacity', 'unit', 'brand', ]
+                   'iscritical', 'category', 'subcategory', 'identifier',
+                  'capacity', 'unit', 'brand']
 
         widgets = {
             'runningstatus': s2forms.Select2Widget,
             'type'         : s2forms.Select2Widget,
-            'parent'       : s2forms.Select2Widget
+            'parent'       : s2forms.Select2Widget,
+            'assetcode'    : forms.TextInput(attrs={'style':'text-transform:uppercase;', 'placeholder':'Enter text without space & special characters'})
         }
 
     def __init__(self, *args, **kwargs):
@@ -434,7 +435,7 @@ class JobForm(forms.ModelForm):
         fields = ['jobname', 'jobdesc', 'fromdate', 'uptodate', 'cron',
                     'identifier', 'planduration', 'gracetime', 'expirytime',
                     'asset', 'priority', 'qset', 'pgroup', 'geofence', 'parent',
-                    'parent', 'slno', 'client', 'bu', 'starttime', 'endtime','ctzoffset',
+                    'parent', 'seqno', 'client', 'bu', 'starttime', 'endtime','ctzoffset',
                     'frequency',  'scantype', 'ticketcategory', 'people', 'shift']
 
         labels = {
@@ -459,7 +460,7 @@ class JobForm(forms.ModelForm):
             'ctzoffset'         : forms.NumberInput(attrs={"style":"display:none;"}),
             'qset'            : s2forms.ModelSelect2Widget(
                 model = am.QuestionSet, 
-                search_fields = ['qset_name__icontains'],
+                search_fields = ['qsetname__icontains'],
                 max_results=10),
             'people'          : s2forms.ModelSelect2Widget(
                 model = pm.People,

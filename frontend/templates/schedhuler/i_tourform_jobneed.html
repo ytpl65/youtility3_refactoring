@@ -200,7 +200,7 @@ Internal Tour
                 {% if checkpoints is defined %}
                 {% for checkpoint in checkpoints %}
                 <tr>
-                    <td>{{ checkpoint['slno'] }}</td>
+                    <td>{{ checkpoint['seqno'] }}</td>
                     <td>{{ checkpoint['plandatetime']| to_local }}</td>
                     <td>{{ checkpoint['expirydatetime']| to_local }}</td>
                     <td>{{ checkpoint['asset__id'] }}</td>

@@ -27,59 +27,40 @@ def LogOutUser(response, request):
                 deviceid = -1
             )
         ic(request.user)
+        
+        
             
-def auth_check(info, authinput, uclientip=None):
+def auth_check(info, input, returnUser, uclientip=None):
     from django.contrib.auth import authenticate
-    from django.forms import model_to_dict
+    from graphql import GraphQLError
     from apps.peoples.models import People
-    import json
-    clientcode, sitecode = authinput.sitecode.split('.')
-    resp = {'msg':"", 'user':None, 'isauthenticated':False}
-    isAuth = True
     try:
-        user = People.objects.get(
-            client__bucode = clientcode, 
-            loginid = authinput.loginid
-        )
         user = authenticate(
             info.context,
-            username=authinput.loginid,
-            password=authinput.password)
+            username=input.loginid,
+            password=input.password)
         if not user: raise ValueError
-    
-    except People.DoesNotExist:
-        resp['msg'] = Messages.NOCLIENTPEOPLE
-    except ValueError:
-        resp['msg'] = Messages.WRONGCREDS
+    except ValueError as e:
+        raise GraphQLError(Messages.WRONGCREDS) from e
     else:
-        if isAuth:
-            allowAccess = isValidDevice = isUniqueDevice = True
-            people_validips = user.client.bupreferences['validip']
-            people_validimeis = user.client.bupreferences["validimei"].replace(" ", "").split(",")
-            
-            if people_validips is not None and len(people_validips.replace(" ", "")) > 0:
-                clientIpList = people_validips.replace(" ", "").split(",")
-                if uclientip is not None and uclientip not in clientIpList:
-                    allowAccess = isAuth =False
-            if user.deviceid == '-1' or authinput.deviceid == user.deviceid : allowAccess=True
+        allowAccess = isValidDevice = isUniqueDevice = True
+        people_validips = user.client.bupreferences['validip']
+        people_validimeis = user.client.bupreferences["validimei"].replace(" ", "").split(",")
+
+        if people_validips is not None and len(people_validips.replace(" ", "")) > 0:
+            clientIpList = people_validips.replace(" ", "").split(",")
+            if uclientip is not None and uclientip not in clientIpList:
+                allowAccess = isAuth =False
+        if user.deviceid == '-1' or input.deviceid == user.deviceid: allowAccess=True
+        else:
+            if input.deviceid not in people_validimeis: isValidDevice=False
+            allowAccess = isAuth =False
+            raise GraphQLError(Messages.MULTIDEVICES)
+        if allowAccess:
+            if user.client.enable and user.enable:
+                return returnUser(user, info.context), user
             else:
-                if authinput.deviceid not in people_validimeis: isValidDevice=False
-                if user.deviceid != authinput.deviceid:
-                    resp['msg'] = Messages.MULTIDEVICES
-                    allowAccess = isAuth =False
-                if not isValidDevice:
-                    resp['msg'] = Messages.NOTREGISTERED
-                    allowAccess = isAuth =False
-            if allowAccess:
-                if not user.client.enable or not user.enable:
-                    resp['msg'] = Messages.NOCLIENTPEOPLE
-                else:
-                    resp['isauthenticated'] = True
-                    resp['user'] = user
-                    resp['msg'] = Messages.AUTHSUCCESS
-                    resp['authinput'] = authinput
-        
-    return resp
+                raise GraphQLError(Messages.NOCLIENTPEOPLE)
 
 
 def authenticate_user(input, request, msg, returnUser):

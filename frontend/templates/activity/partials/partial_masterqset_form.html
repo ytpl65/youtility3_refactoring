@@ -186,8 +186,8 @@
                                 {% if questions is defined %}
                                 {% for question in questions %}
                                 <tr>
-                                    <td>{{ question['slno'] }}</td>
-                                    <td>{{ question["question__ques_name"] }}</td>
+                                    <td>{{ question['seqno'] }}</td>
+                                    <td>{{ question["question__quesname"] }}</td>
                                     <td>{{ question["question__id"] }}</td>
                                     <td>{{ question["answertype"] }}</td>
                                     <td>{{ question["min"] }}</td>
@@ -243,7 +243,7 @@
     $('form').find("label").addClass("col-md-1 col-sm-1")
     var optionTag = null
     var table = null
-    var slno = 0
+    var seqno = 0
 
     //return selected value of a field
     function getSelectedValue(id) {
@@ -322,11 +322,13 @@
         //clean options
         console.log('cleanData started')
         if (data.id_options !== "") {
-            options = []
+            var options = []
             data.id_options.forEach((ele) => {
                 options.push(ele.value)
             })
-            data.id_options = JSON.stringify(options)
+            options = JSON.stringify(options)
+            options = options.replace("[", "").replace("]", "")
+            data.id_options = options
         }
         //clean question
         if (data.id_question !== "NONE") {
@@ -334,7 +336,7 @@
         }
 
         //clean alerton
-        data.id_alerton = data.id_alerton !== "" ? JSON.stringify(data.id_alerton) : ""
+        data.id_alerton = data.id_alerton !== "" ? JSON.stringify(data.id_alerton).replace("[", "").replace("]", "") : ""
         data.id_ismandatory = data.id_ismandatory === true ? "True" : "False"
 
         //according to answertype clean data
@@ -375,7 +377,7 @@
     function update_options_field(data, optionTag) {
         optionTag.removeAllTags()
         console.log($("#id_options").val() !== "" ? JSON.parse(data) : "")
-        optionTag.addTags(data !== "" ? JSON.parse(data) : "")
+        optionTag.addTags(data !== "" ? data.split(",") : "")
     }
 
     function update_qsetblng_form(data, optionTag, fortable = false) {
@@ -485,8 +487,8 @@
 
     function getSlnoFromTable(){
         var lastrow = table.row(table.rows().count() - 1).data();
-        const slno = lastrow.length > 0 ? parseInt(lastrow[0]) + 1 : {};
-        return slno
+        const seqno = lastrow.length > 0 ? parseInt(lastrow[0]) + 1 : {};
+        return seqno
     }
 
     function adjustSlnoInTable(){
@@ -502,8 +504,8 @@
         console.log("rows adjusted")
     }
 
-    //Autoadjust slno
-    function adjustSlno(slno, table, reset) {
+    //Autoadjust seqno
+    function adjustSlno(seqno, table, reset) {
         if (reset) {
             var tableData = table.rows().data().toArray()
             var seq = 0
@@ -515,12 +517,12 @@
         } else if ('{{ masterqset_form.instance.id }}' !== ('None' || "")) {
             //update row
             var lastrow = table.row(table.rows().count() - 1).data();
-            slno = lastrow.length > 0 ? parseInt(lastrow[0]) + 1 : ++slno;
+            seqno = lastrow.length > 0 ? parseInt(lastrow[0]) + 1 : ++seqno;
             
 
         } else {
             //create row
-            ++slno;
+            ++seqno;
             
             $("#id_slno").prop("readonly", true)
         }
@@ -529,7 +531,8 @@
 
 
 
-    $(document).ready(() => { //DOCUMENT.READY START
+    $(document).ready(() => {
+        //DOCUMENT.READY START
         // Initialize Tagify components
         var input1 = document.querySelector("#id_options");
         optionTag = new Tagify(input1);
@@ -734,18 +737,13 @@
                     .done((data, status, xhr) => { //function to submit post request
                         console.log("data ", data)
                         $(modal_id).modal("hide");
-                        Swal.fire(
-                            `${viewname} saved`,
-                            `${viewname} with this name <strong>${data.name}</strong> has been saved successfully`,
-                            'success'
-                        ).then(function () {
-                            location.reload();
-                        })
+                        var isupdated = formtype === 'update' ? true : false
+				        show_successful_save_alert(update=isupdated)
                     })
             }
         })
 
-        //adjustSlno(slno, table, reset=false)
+        //adjustSlno(seqno, table, reset=false)
 
     }) //DOCUMENT.READY END
 </script>

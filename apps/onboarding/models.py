@@ -180,7 +180,7 @@ class SitePeople(BaseModel, TenantAwareModel):
     fromdt              = models.DateField()
     uptodt              = models.DateField()
     siteowner           = models.BooleanField(default=False)
-    slno                = models.IntegerField(default=1)
+    seqno                = models.IntegerField(default=1)
     posting_revision    = models.IntegerField(default=1)
     webcapability       = models.CharField(null=True, max_length=1000)
     mobilecapability    = models.CharField(null=True, max_length=1000)
@@ -195,7 +195,7 @@ class SitePeople(BaseModel, TenantAwareModel):
     class Meta(BaseModel.Meta):
         db_table = 'sitepeople'
         constraints = [
-            models.UniqueConstraint(fields=['people', 'bu', 'posting_revision', 'contract', 'slno'],
+            models.UniqueConstraint(fields=['people', 'bu', 'posting_revision', 'contract', 'seqno'],
                                     name='people_bu_postrev_contr_slno_uk')]
         get_latest_by = ["mdtz", 'cdtz']
 

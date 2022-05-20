@@ -16,7 +16,7 @@ class JobFilter(dfs.FilterSet):
             'jobname',    'jobdesc',      'fromdate',       'uptodate',  'cron',
             'identifier', 'planduration', 'gracetime',       'expirytime', 'parent',
             'asset',    'priority',     'qset',          'pgroup',    'geofence', 
-            'parent',     'slno',         'client',        'bu',       'starttime', 
+            'parent',     'seqno',         'client',        'bu',       'starttime', 
             'frequency',  'scantype',     'ticketcategory', 'people',   'shift',
             'endtime',    'ctzoffset',    
         ]
@@ -44,7 +44,7 @@ class SchdTourFilter(JobFilter):
     uptodate    = dfs.DateTimeFilter(field_name='uptodate', lookup_expr='icontains', label='To')
     
     class Meta(JobFilter.Meta):
-        exclude = ['endtime','cron','client','ticketcategory','parent','slno','frequency','pgroup','starttime','bu',
+        exclude = ['endtime','cron','client','ticketcategory','parent','seqno','frequency','pgroup','starttime','bu',
                    'priority','ctzoffset','geofence','identifier','people','shift','jobdesc','scantype','assignedto']
 
 

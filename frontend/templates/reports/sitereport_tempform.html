@@ -64,8 +64,6 @@ Site Report Template
     {% endfor %}
     </div>
 </form>
-
-
 {% endblock form %}
 
 
@@ -101,8 +99,6 @@ Site Report Template
             <tr>
             <th></th>
             <th>Id</th>
-            <th>Asset</th>
-            <th>SNo.</th>
             <th>Section</th>
             </tr>
             </thead>
@@ -118,6 +114,7 @@ Site Report Template
 {{ reporttemp_form.media.js }}
 <script src="{{ static('assets/plugins/custom/DataTables/datatables.min.js') }}" type="text/javascript"></script>
 <script src="{{ static('assets/plugins/custom/Editor-2.0.6/js/dataTables.editor.js') }}" type="text/javascript"></script>
+<script src="{{ static('assets/plugins/custom/Editor-2.0.6/js/editor.select2.js') }}" type="text/javascript"></script>
 <script>
     var tab_parent = null;
     var _pkid = null;
@@ -138,57 +135,63 @@ Site Report Template
             }
         }
 
+        sectionEditor = new $.fn.dataTable.Editor({
+                    ajax:"",
+                    table:"#tabSitereports",
+                    fields:[
+                        {label:'Section', name:"qsetname"},
+                    ]
+                })
+
         if('{{ reporttemp_form.instance.id }}'  !== "None"){
             var pk = '{{ reporttemp_form.instance.id}}'
             $("#pk").val(pk)
              _pkid = pk }
         
-        var table = $("#tabSitereports").DataTable({
+        var tableSection = $("#tabSitereports").DataTable({
             ajax:{
                 url:"{{ url('reports:sitereport_template_form') }}?get_reports=true",
                 data:{'parent_id' : _pkid}
             },
             responsive: true,
-            serverSide:true,
-            processing    : true,
 			fixedHeader: true,
-            columnDefs:[
-                {targets:[4], orderable:false},
-                {targets:[1,2], orderable:false, visible:false, searchable:false}
-            ],
             searching:false,
+            ordering:false,
             paging:false,
+             dom:`<'row' <'col-sm-6 d-flex justify-content-start'f> <'col-sm-6 d-flex justify-content-end'B> >rt<'row'
+			 <'col-sm-6'l> <'col-sm-6'p><'col-sm-12 d-flex justify-content-center'i>>`,
             columns     : [
-                {
-                    "className":      'details-control',
-                    "orderable":      false,
-                    "data":           null,
-                    "defaultContent": ''
-                },
-                { "data": "id" },
-                { "data": "asset_id" },
-                { "data": "slno" },
+                {"className": 'details-control', "orderable": false,"data": null,"defaultContent": '', "width":'5%'},
+                { "data": "id", visible:false, orderable:false, defaultContent:"" },
                 { "data": "qsetname" },
             ],
             order:[[2, 'asc']],
             initComplete: function () {
-                init = false;
-            },
-            createdRow: function ( row, data, index ) {
-                if (data.extn === '') {
-                    var td = $(row).find("td:first");
-                    td.removeClass( 'details-control' );
-                }
-            },
-            rowCallback: function ( row, data, index ) {
-            console.log(row)
-           }
+          init = false;
+        },
+          createdRow: function ( row, data, index ) {
+            if (data.extn === '') {
+              var td = $(row).find("td:first");
+              td.removeClass( 'details-control' );
+            }
+           },
+          rowCallback: function ( row, data, index ) {
+            //console.log('rowCallback');
+           },
+           buttons:[
+				{ extend: "create", editor: sectionEditor, className:"btn btn-secondary", text:"Add New Section" },
+			]
+        })
+
+
+        sectionEditor.on('create', function(e, json, data, id){
+            console.log(data, json, id)
         })
         
             // Add event listener for opening and closing first level childdetails
             $('#tabSitereports tbody').on('click', 'td.details-control', function () {
                 var tr = $(this).closest('tr');
-                var row = table.row( tr );
+                var row = tableSection.row( tr );
                 var rowData = row.data();
                 var paraneRowPk = rowData[1]
 
@@ -201,70 +204,59 @@ Site Report Template
                 }else{
                     //open this row
                     row.child( 
-                    `<table class="child_table" id = "child_details ${index}" cellpadding="5" cellspacing="0" border="0" style="padding-left:50px;">
-                    </table>`).show();
+                    '<table class="child_table" id = "child_details' + index + '" cellpadding="5" cellspacing="0" border="0" style="padding-left:50px;">'+
+               '<thead><tr><th>Question</th><th>Type</th><th>Min</th><th>Max</th><th>Options</th><th>Alert On</th><th>Alert Mail Sends To</th><th></th><th>Alert Above</th><th>Alert Below</th></tr></thead><tbody>' +
+                '</tbody></table><div id="childtoolbar' + index + '"></div>').show();
                     
+                    var editor = new $.fn.dataTable.Editor({
+                                table:"#child_details"+index,
+                                //template:"#customForm",
+                                fields:[
+                                    {label:'Question', name:"question__quesname", type:"select"},
+                                    {label:'Question Type', name:"answertype"},
+                                    {label:'Min', name:"min", attr:{type:'number'}},
+                                    {label:'Max', name:"max", attr:{type:'number'}},
+                                    {label:'Alerton', name:"alerton"},
+                                    {label:'Alert Above', name:"alertabove", attr:{type:'number'}},
+                                    {label:'Alert Below', name:"alertabelow", attr:{type:'number'}},
+                                    {label:'Mails Send to', name:"alertmailsendto"},
+                                    {label:'Options', name:"options"},
+                                ]
+                            })
+
+
                     var child_table = $("#child_details" + index ).DataTable({
-                        ajax:"{{ url('reports:srqsetbelonging') }}",
-                        serverSide:true,
-                        processing: true,
-                        searching:false,
                         paging:false,
-                        columnDefs:[
-                            {name:'id', targets:0, title:"", visible:false},
-                            {name:'slno', title:"SNo.", targets:1},
-                            {name:'question__ques_name', title:"Question", targets:2},
-                            {name:'answertype', title:"Question Type", targets:3},
-                            {name:'min', title:"Min", targets:4},
-                            {name:'max', title:"Max", targets:5},
-                            {name:'options', title:"Options", targets:6},
-                            {name:'alerton', title:"Alert On", targets:7},
-                            {name:'ismandatory', title:"Mandatory", targets:8},
-                            {name:'alertmailsendto', title:"Mail Send to", targets:8},
-                            {name:'question_id', title:"", targets:9, visible:false},
-                            {name:'alertbelow', title:"Alert Below", targets:10, visible:false},
-                            {name:'alertabove', title:"Alert Above", targets:11, visible:false},
-                        ],
+                        searching:false,
+                        ordering:false,
                         columns:[
-                            {data:'slno'}, 
-                            {data:'question__ques_name'}, 
+                            {data:'question__quesname', width:"25%"}, 
                             {data:'answertype'}, 
-                            {data:'min'}, 
-                            {data:'max'}, 
+                            {data:'min', width:"4%"}, 
+                            {data:'max', width:"4%"},
                             {data:'options'}, 
-                            {data:'alerton'}, 
-                            {data:'alertmailsendto'}, 
-                            {data:'question_id'}, 
-                            {data:'alertbelow'}, 
-                            {data:'alertabove'}, 
+                            {data:'alerton', width:"4%"},
+                            {data:'alertmailsendto', width:"10%"},
+                            {data:'question_id', visible:false},
+                            {data:'alertbelow'},
+                            {data:'alertabove'},
                         ],
+                        dom:'rtB',
                         buttons: [
-                            { extend: "create", editor: editor },
-                            { extend: "edit",   editor: editor },
-                            { extend: "remove", editor: editor }
+                            { extend: "create", editor: editor, text:'<i class="fas fa-plus"></i>', className:'btn btn-sm btn-dark'},
+                            { extend: "edit",   editor: editor, className:'btn btn-sm btn-dark',text:'<i class="fas fa-pen"></i>' },
+                            { extend: "remove", editor: editor, className:'btn btn-sm btn-dark',text:'<i class="fas fa-trash"></i>' }
                         ],
                         order:[[1, 'asc']],
                         destroy:true,
                         scrollY:'100px'
                     })
 
-                    editor = new $.fn.dataTable.Editor({
-                                ajax:"",
-                                table:"#child_details"+index,
-                                template:"#customForm",
-                                fields:[
-                                    {label:'SNo', name:"slno"},
-                                    {label:'Question', name:"question__ques_name"},
-                                    {label:'Question Type', name:"answertype"},
-                                    {label:'Min', name:"min"},
-                                    {label:'Max', name:"max"},
-                                    {label:'Alerton', name:"alerton"},
-                                    {label:'Alert Above', name:"alertabove"},
-                                    {label:'Alert Below', name:"alertabove"},
-                                    {label:'Mails Send to', name:"alertmailsendto"},
-                                    {label:'Options', name:"options"},
-                                ]
-                            })
+                    editor.on('open', function(e, mode, action){
+                        var input1 = document.querySelector("#DTE_Field_options");
+                        console.log(input1, "&777777")
+                        optionTag = new Tagify(input1);
+                    })  
                     tr.addClass('shown');
                 }
             })
@@ -296,6 +288,7 @@ Site Report Template
                 
             })
         })
+        
         
         
     })

@@ -64,23 +64,26 @@ def update_children_tree(instance, newcode, newtype, whole=False):
     from apps.core.raw_queries import query
     try:
         childs = Bt.objects.get_bu_list_ids(instance.id)
+        ic(instance.id, childs)
+        ic(instance.bucode, newcode)
         if len(childs) > 1:
-            childs = Bt.objects.filter(id__in = childs)
+            childs = Bt.objects.filter(id__in = childs).order_by('id')
             print(childs)
             for bt in childs:
-                
-                oldtree = bt.butree
-                oldtreepart = f'{bt.identifier.tacode} :: {bt.bucode}'
-                ic(oldtree)
-                ic(oldtreepart)
+                oldtree = instance.butree
+                oldtreepart = f'{instance.identifier.tacode} :: {instance.bucode}'
                 newtreepart = f'{newtype} :: {newcode}'
-                ic(newtreepart)
-                ic(oldtreepart in oldtree)
-                if oldtree and oldtreepart != newtreepart:
-                    newtree = oldtree.replace(oldtreepart, newtreepart)
+
+
+                if oldtree == oldtreepart:
+                    ic('saved')
+                    instance.butree = newtreepart
+                    instance.save()
+                elif oldtree and oldtreepart != newtreepart:
+                    newtree = bt.butree.replace(oldtreepart, newtreepart)
                     bt.butree = newtree
                     bt.save()
-                    
+                    ic(bt.bucode)
     except Exception:
         logger.error(
             "update_children_tree(instance, newcode, newtype)... FAILED", exc_info=True)
@@ -150,7 +153,7 @@ def create_bt_tree(bucode, indentifier, instance, parent=None):
     # sourcery skip: remove-redundant-if
     # None Entry
     try:
-        logger.info('Creating BT tree for %s STARTED' % (instance.bucode))
+        logger.info(f'Creating BT tree for {instance.bucode} STARTED')
         if bucode == 'NONE':
             return
         # Root Node
@@ -164,8 +167,8 @@ def create_bt_tree(bucode, indentifier, instance, parent=None):
                 instance.butree = ""
                 instance.butree += f"{parent.butree} > {indentifier.tacode} :: {bucode}"
     except Exception:
-        logger.error('Something went wrong while creating Bt tree for instance %s' % (instance.bucode),
-                     exc_info=True)
+        logger.error(f'Something went wrong while creating Bt tree for instance {instance.bucode}', exc_info=True)
+
         raise
     else:
         logger.info('BU Tree created for instance %s... DONE' %
@@ -173,27 +176,28 @@ def create_bt_tree(bucode, indentifier, instance, parent=None):
 
 
 def create_bv_reportting_heirarchy(instance, newcode, newtype, parent):
-    if instance.id != None:
+    if instance.id is None:
+        dbg("Creating the reporting heirarchy!")
+        #create bu tree
+        ic(instance.bucode, parent, newcode, newtype)
+        if instance.bucode != "NONE" and parent.bucode == 'NONE':
+            #Root Node
+            dbg("Creating heirarchy of the Root Node")
+            instance.butree = f'{newtype.tacode} :: {newcode}'
+        elif instance.butree != f'{parent.butree} > {newtype.tacode} :: {newcode}':
+            #Non Root Node
+            dbg("Creating heirarchy of branch Node")
+            instance.butree += f"{parent.butree} > {newtype.tacode} :: {newcode}"
+
+    else:
         dbg("Updating the reporting heirarchy!")
         #update bu tree
-        if instance.bucode != None and instance.parent.bucode is None:
+        if instance.bucode not in(None, 'NONE') and instance.parent.bucode in (None, 'NONE'):
             dbg("Updating heirarchy of the Root Node")
             update_children_tree(instance, newcode, newtype.tacode)
         else:
             dbg("Updating heirarchy of branch Node")
-            update_children_tree(instance, newcode, newtype.tacode, whole=True)
-        pass
-    else:
-        dbg("Creating the reporting heirarchy!")
-        #create bu tree
-        if instance.bucode != "NONE" and parent is None:
-            #Root Node
-            dbg("Creating heirarchy of the Root Node")
-            instance.butree = f'{newtype.tacode} :: {newcode}'
-        elif instance.butree != (parent.butree + ' > ' + newcode):
-            #Non Root Node
-            dbg("Creating heirarchy of branch Node")
-            instance.butree += f"{parent.butree} > {newtype.tacode} :: {newcode}"
+            update_children_tree(instance, newcode, newtype.tacode)
         
 
 def create_tenant(buname, bucode):

@@ -22,21 +22,6 @@
         <thead class="fw-bold fs-6">
             <th>Name</th>
         </thead>
-		<!---------- BEGIN TABLE FILTER FIELDS --------->
-		<thead id="filter_row">
-		<form action="" id='qset_filter' method='get'>
-			<input type="hidden" name="search_term" value="true">
-			{% for field in qset_filter %}
-			<th>
-				<input type="text" 
-				id="{{ field.auto_id }}" 
-				name="{{ field.name }}" 
-				placeholder ="Search {{ field.label }}">
-			</th>
-			{% endfor %}
-		</form>
-		</thead>
-		<!---------- END TABLE FILTER FIELDS --------->
 		<tbody>
 			{% for qset in qset_list %}
 			<tr>
@@ -196,7 +181,7 @@
 	//delete ajax request 
 	function isQsetDeleted(id){ 
 		console.log("id ", id)
-		const params = {url:`${urlname}?action=delete&id=${id}`}
+		const params = {url:`${urlname}?action=delete&id=${id}`, beforeSend:function(){}}
 		fire_ajax_get(params)
 		.done((data, status, xhr) => {
 			if(!xhr.status === 200){

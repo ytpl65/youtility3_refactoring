@@ -210,7 +210,7 @@ class TestJsonInput(graphene.InputObjectType):
 class ServiceOutputType(graphene.ObjectType):
     rc        = graphene.Int(default_value=0)
     msg       = graphene.String()
-    returnid  = graphene.Int(default_value=None)
+    recordcount  = graphene.Int()
     traceback = graphene.String(default_value = 'NA')
 
 
@@ -312,13 +312,14 @@ class Scantype(str, Enum):
 
 
 
+
 class DetailsSchema(BaseModel):
     answer: str = 'NA'
     answertype: AnswerType
     uuid: str
     jobneed_id: int
     parent_id: int
-    slno: int
+    seqno: int
     question_id: int
     options: str
     min: float
@@ -332,7 +333,7 @@ class ChildSchema(BaseModel):
     details: List[DetailsSchema]
     jobdesc: str
     qset_id: int
-    slno: int
+    seqno: int
     
     @validator('jobdesc', allow_reuse=True)
     def to_title_case(cls, v):
@@ -417,11 +418,14 @@ class SelectOutputType(graphene.ObjectType):
     records = graphene.JSONString()
     
 
-class UploadAttType(graphene.ObjectType):
-    columns  = graphene.String()
-    values   = graphene.String()
-    image    = Upload()
-    path = graphene.String(required=False)
-    pelogid  = graphene.Int()
-    peopleid = graphene.Int()
-    filename = graphene.String()
+class UploadAttType(graphene.InputObjectType):
+    # columns  = graphene.String()
+    # values   = graphene.String()
+    # image    = Upload()
+    # path = graphene.String(required=False)
+    # pelogid  = graphene.Int()
+    # peopleid = graphene.Int()
+    # filename = graphene.String()
+    record = graphene.JSONString(required=True)
+    tablname = graphene.String(required=True)
+    file = Upload() 

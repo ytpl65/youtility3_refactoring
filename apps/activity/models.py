@@ -2,18 +2,11 @@ from calendar import c
 from doctest import FAIL_FAST
 import uuid
 from email.policy import default
-from enum import Flag
-from django.core.exceptions import RequestAborted
-from django.db import models, migrations
-from django.db.models import base, constraints
-from django.db.models.fields import BLANK_CHOICE_DASH, TimeField, files
 from apps.peoples.models import BaseModel
 from django.utils.translation import gettext_lazy as _
 from django.core.serializers.json import DjangoJSONEncoder
-from django.contrib.gis.db.models import PointField
 from apps.tenants.models import TenantAwareModel
 from django.conf import settings
-from taggit.managers import TaggableManager
 from django.db import models
 from datetime import datetime
 from django.contrib.gis.db.models import PointField
@@ -36,8 +29,6 @@ class Question(BaseModel, TenantAwareModel):
         SINGLELINE  = "SINGLELINE" , _("Single Line")
         TIME        = "TIME"       , _("Time")
         RATING      = "RATING"     , _("Rating")
-        BACKCAMERA  = "BACKCAMERA" , _("Back Camera")
-        FRONTCAMERA = "FRONTCAMERA", _("Front Camera")
         PEOPLELIST  = "PEOPLELIST" , _("People List")
         SITELIST    = "SITELIST"   , _("Site List")
 
@@ -96,7 +87,6 @@ class QuestionSet(BaseModel, TenantAwareModel):
     
     #id            = models.BigIntegerField(primary_key=True)
     qsetname           = models.CharField(_("QuestionSet Name"), max_length=200)
-    asset              = models.ForeignKey( "activity.Asset", on_delete=models.RESTRICT, null=True, blank=False)
     enable             = models.BooleanField(_("Enable"), default=True)
     assetincludes      = models.TextField(null=True, blank=True)
     buincludes         = models.TextField(null=True, blank=True)
@@ -189,6 +179,7 @@ def other_info():
         'is_randomized': False,
         'distance': None,
         'breaktime': 0,
+        'deviation':False
     }
 
 
@@ -246,7 +237,7 @@ class Job(BaseModel, TenantAwareModel):
     pgroup          = models.ForeignKey("peoples.Pgroup", verbose_name=_("Group"), on_delete=models.RESTRICT, null=True, blank=True)
     geofence        = models.ForeignKey("onboarding.GeofenceMaster", verbose_name=_("Geofence"), on_delete=models.RESTRICT, null=True, blank=True)
     parent          = models.ForeignKey("self", verbose_name=_("Belongs to"), on_delete=models.RESTRICT, null=True, blank=True)
-    slno            = models.SmallIntegerField(_("Serial No."))
+    seqno            = models.SmallIntegerField(_("Serial No."))
     client          = models.ForeignKey("onboarding.Bt", verbose_name=_("Client"), on_delete=models.RESTRICT, related_name='job_clients', null=True, blank=True)
     bu              = models.ForeignKey("onboarding.Bt", verbose_name=_("Site"), on_delete=models.RESTRICT, related_name='job_bus', null=True, blank=True)
     shift           = models.ForeignKey("onboarding.Shift", verbose_name=_("Shift"), on_delete=models.RESTRICT, null=True, related_name="job_shifts")
@@ -323,7 +314,7 @@ class Asset(BaseModel, TenantAwareModel):
         WORKING     = ("WORKING", "Working")
         SCRAPPED    = ("SCRAPPED", "Scrapped")   
     
-    #id      = models.BigIntegerField(primary_key=True)
+    uuid          = models.UUIDField(unique=True, editable=True, blank=True, default=uuid.uuid4)
     assetcode     = models.CharField(_("Asset Code"), max_length=50)
     assetname     = models.CharField(_("Asset Name"), max_length=250)
     enable        = models.BooleanField(_("Enable"), default=True)
@@ -340,7 +331,7 @@ class Asset(BaseModel, TenantAwareModel):
     brand         = models.ForeignKey("onboarding.TypeAssist", verbose_name=_("Brand"), null = True, blank=True, on_delete=models.RESTRICT, related_name='asset_brands')
     unit          = models.ForeignKey("onboarding.TypeAssist", verbose_name=_("Unit"), null = True, blank=True, on_delete=models.RESTRICT, related_name='asset_units')
     capacity      = models.DecimalField(_("Capacity"), default=0.0, max_digits=18, decimal_places=2)
-    serv_prov     = models.ForeignKey("onboarding.Bt", verbose_name=_( "Client"), on_delete = models.RESTRICT, null=True, related_name='asset_serv_providers')
+    servprov     = models.ForeignKey("onboarding.Bt", verbose_name=_( "Client"), on_delete = models.RESTRICT, null=True, related_name='asset_serv_providers')
     asset_json    = models.JSONField( encoder = DjangoJSONEncoder, blank=True, null=True, default=asset_json)
 
     objects = AssetManager()
@@ -517,7 +508,7 @@ class Attachment(BaseModel, TenantAwareModel):
     filepath       = models.CharField(max_length=100, null=True, blank=True)
     filename       = models.ImageField(null=True, blank=True)
     ownername      = models.ForeignKey("onboarding.Typeassist", on_delete=models.RESTRICT, null=True, blank=True)
-    owner          = models.IntegerField(default = -1)
+    owner          = models.CharField(null= True, max_length=255)
     bu             = models.ForeignKey("onboarding.Bt", null=True,blank=True, on_delete=models.RESTRICT)
     datetime       = models.DateTimeField(editable=True, default=datetime.utcnow)
     attachmenttype = models.CharField(choices = AttachmentType.choices, max_length=55, default=AttachmentType.NONE)

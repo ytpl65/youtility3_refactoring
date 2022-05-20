@@ -13,21 +13,25 @@ class PELManager(models.Manager):
             people_id = peopleid, datefor__gte = datetime.date() - timedelta(days=7))
         return qset or self.none()
     
-    def get_people_attachment(self, pelogid):
+    def get_people_attachment(self, pelogid, db=None):
         return self.raw(
             """
-            SELECT peopleeventlog.people_id, peopleeventlog.id
-            FROM peopleeventlog
+            SELECT peopleeventlog.people_id, peopleeventlog.id, peopleeventlog.uuid
+            FROM icici_django.peopleeventlog
             INNER JOIN typeassist ON typeassist.id= peopleeventlog.peventtype_id AND typeassist.tacode IN ('MARK', 'SELF', 'TAKE', 'AUDIT')
-            LEFT JOIN attachment ON attachment.owner= peopleeventlog.id
+            LEFT JOIN attachment ON attachment.owner= peopleeventlog.uuid::text
             WHERE 1=1
                 AND attachment.filename NOT iLIKE '%%.csv' AND attachment.filename NOT iLIKE '%%.txt'
                 AND attachment.filename NOT iLIKE '%%.mp4' AND attachment.filename NOT iLIKE '%%.3gp'
-                AND peopleeventlog.id= %s
+                AND peopleeventlog.uuid= %s
             """,params=[pelogid]
         )[0] or self.none()
     
-    def update_fr_results(self, result, id, peopleid):
+    def update_fr_results(self, result, id, peopleid, db):
         return self.filter(
             id=id
-        ).update(peventlogextras = result, people_id = peopleid)
+        ).using(db).update(peventlogextras = result, people_id = peopleid)
+        
+    
+    def get_people_attachment(self, pelogid, db):
+        pass

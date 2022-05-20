@@ -4,6 +4,7 @@ from datetime import time
 from xml.etree.ElementTree import TreeBuilder
 from attr import fields
 from django.conf import settings
+from matplotlib import widgets
 from apps.activity.forms import JobForm, JobNeedForm
 from django import forms
 from django.utils.timezone import utc
@@ -73,11 +74,11 @@ class SchdChild_I_TourJobForm(JobForm): #job
 
 
     class Meta(JobForm.Meta):
-        fields =['qset', 'people', 'asset', 'expirytime', 'slno']
+        fields =['qset', 'people', 'asset', 'expirytime', 'seqno']
     
     def __init__(self, *args, **kwargs):
         super(SchdChild_I_TourJobForm, self).__init__(*args, **kwargs)
-        self.fields['slno'].widget.attrs = {'readonly':True}
+        self.fields['seqno'].widget.attrs = {'readonly':True}
         utils.initailize_form_fields(self)
 
 
@@ -208,6 +209,12 @@ class SchdTaskFormJob(JobForm):
    
     class Meta(JobForm.Meta):
         exclude = ['shift']
+        JobForm.Meta.widgets.update({
+            'identifier':forms.TextInput(attrs={'style':'display:none;'}),
+            'starttime':forms.TextInput(attrs={'style':'display:none;'}),
+            'endtime':forms.TextInput(attrs={'style':'display:none;'}),
+            'frequency':forms.TextInput(attrs={'style':'display:none;'}),
+        })
 
     def __init__(self, *args, **kwargs):
         super(SchdTaskFormJob, self).__init__(*args, **kwargs)

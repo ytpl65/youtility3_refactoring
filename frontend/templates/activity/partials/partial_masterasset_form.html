@@ -67,7 +67,8 @@
             <label for="{{ master_assetform.gpslocation.id_for_label }}" class="required col-md-1">GPS:</label>
             <div class="col-md-5">
                 <div class="input-group">
-                    <input type="text" class="form-control" name="GPS">
+                    {{ master_assetform.gpslocation }}
+                {{ master_assetform.gpslocation.errors }}
                     <button class="btn btn-primary" type="button" id="button-addon2"><i class="fas fa-map-marker-alt"></i></button>
                 </div>
                 {# {{ master_assetform.gpslocation }}

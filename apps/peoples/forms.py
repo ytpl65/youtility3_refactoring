@@ -250,8 +250,7 @@ class SiteGroupForm(PgroupForm):
         self.request = kwargs.pop('request')
         super(PgroupForm, self).__init__(*args, **kwargs)
         utils.initailize_form_fields(self)
-        site = self.request.user.bu.bucode if self.request.user.bu else ""
-        self.fields['identifier'].initial = om.TypeAssist.objects.get(tacode='PEOPLEGROUP')
+        self.fields['identifier'].initial = om.TypeAssist.objects.get(tacode='SITEGROUP')
 
 
 

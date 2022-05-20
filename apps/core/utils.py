@@ -582,7 +582,7 @@ def get_or_create_none_job():
             'cron': "no_cron", 'lastgeneratedon': date,
             'planduration': 0,         'expirytime': 0,
             'gracetime': 0,         'priority': 'LOW',
-            'slno': -1,        'scantype': 'SKIP',
+            'seqno': -1,        'scantype': 'SKIP',
             'id': 1
         }
     )
@@ -597,7 +597,7 @@ def get_or_create_none_jobneed():
         defaults={
             'jobdesc': "NONE", 'plandatetime': date,
             'expirydatetime': date,   'gracetime': 0,
-            'receivedonserver': date,   'slno': -1,
+            'receivedonserver': date,   'seqno': -1,
             'scantype': "NONE", 'id': 1
         }
     )
@@ -629,7 +629,7 @@ def get_or_create_none_qsetblng():
             'qset': get_or_create_none_qset(),
             'question': get_or_create_none_question(),
             'answertype': 'NUMERIC', 'id': 1,
-            'ismandatory': False, 'slno': -1}
+            'ismandatory': False, 'seqno': -1}
     )
     return obj
 
@@ -994,3 +994,30 @@ def get_select_output(objs):
     count = objs.count()
     msg = f'Total {count} records fetched successfully!'
     return records, count, msg
+
+
+def get_qobjs_dir_fields_start_length(R):
+    qobjs=None
+    if R.get('search[value]'):
+        qobjs = searchValue2(R.getlist('fields[]'), R['search[value]'])
+        
+    orderby, fields = R.getlist('order[0][column]'), R.getlist('fields[]')
+    orderby  =  [orderby] if not isinstance(orderby, list) else orderby
+    length, start = int(R['length']), int(R['start'])
+    
+    for order in orderby:
+        if order:
+            ic(f'columns[{order}][data]')
+            key = R[f'columns[{order}][data]']
+            dir = f"-{key}" if R['order[0][dir]'] == 'desc' else f"{key}"
+        else:
+            dir = "-mdtz"
+    if not orderby: dir = "-mdtz"
+    return qobjs, dir,  fields, length, start
+
+
+class Error(Exception):
+    pass
+
+class NoDataInTheFileError(Error):
+    pass

@@ -1,4 +1,5 @@
 import logging
+from time import time
 
 from django.http import QueryDict
 from apps.peoples import models as pm
@@ -61,11 +62,13 @@ def get_people_prefform(people, session):
 
 def save_cuser_muser(instance, user, create=None):
     from django.utils import timezone
-    if instance.mdtz:
+    if instance.cuser is not None:
+        ic('updated')
         instance.muser = user
+        instance.mdtz = timezone.now().replace(microsecond=0)
     else:
+        ic('created')
         instance.cuser = instance.muser = user
-    instance.mdtz = timezone.now().replace(microsecond=0)
     return instance
 
 
@@ -378,20 +381,19 @@ def save_pgroupbelonging(pg, request):
     tenant = Tenant.objects.get(id=int(request.session['tenantid']))
     if peoples:
         try:
-            with transaction.atomic():
-                print('request>POST', dict(request.POST), peoples)
-                for i in range(len(peoples)):
-                    people = pm.People.objects.get(id=int(peoples[i]))
-                    pgb = pm.Pgbelonging.objects.create(
-                        pgroup=pg,
-                        people=people,
-                        client=client,
-                        tenant=tenant,
-                        bu=site
-                    )
-                    if request.session.get('wizard_data'):
-                        request.session['wizard_data']['pgbids'].append(pgb.id)
-                    save_cuser_muser(pgb, request.user)
+            print('request>POST', dict(request.POST), peoples)
+            for i in range(len(peoples)):
+                people = pm.People.objects.get(id=int(peoples[i]))
+                pgb = pm.Pgbelonging.objects.create(
+                    pgroup=pg,
+                    people=people,
+                    client=client,
+                    tenant=tenant,
+                    bu=site
+                )
+                if request.session.get('wizard_data'):
+                    request.session['wizard_data']['pgbids'].append(pgb.id)
+                save_cuser_muser(pgb, request.user)
         except Exception:
             dbg("saving pgbelonging for pgroup %s FAILED" % (pg))
             raise

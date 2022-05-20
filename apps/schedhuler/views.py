@@ -130,7 +130,7 @@ class Schd_I_TourFormJob(LoginRequiredMixin, View):
                 cp['expirytime'] = cp[5]
                 cp['asset']    = cp[1]
                 cp['qset']     = cp[3]
-                cp['slno']       = cp[0]
+                cp['seqno']       = cp[0]
                 checkpoint, created = self.model.objects.update_or_create(
                     parent_id  = job.id,
                     asset_id = cp['asset'],
@@ -185,7 +185,7 @@ class Update_I_TourFormJob(Schd_I_TourFormJob, LoginRequiredMixin, View):
                 'parent', 'asset', 'qset', 'pgroup',
                 'people',
             ).filter(parent_id=obj.id).values(
-                'slno',
+                'seqno',
                 'asset__assetname',
                 'asset__id',
                 'qset__qset_name',
@@ -386,7 +386,7 @@ class Get_I_TourJobneed(LoginRequiredMixin, View):
             ).filter(parent_id=obj.id).values(
                 'asset__assetname', 'asset__id', 'qset__id',
                 'qset__qset_name', 'plandatetime', 'expirydatetime',
-                'gracetime', 'slno', 'jobstatus', 'id').order_by('slno')
+                'gracetime', 'seqno', 'jobstatus', 'id').order_by('seqno')
         
         except Exception:
             log.critical("something went wrong", exc_info=True)
@@ -426,7 +426,7 @@ class Schd_E_TourFormJob(LoginRequiredMixin, View):
     subform       = scd_forms.EditAssignedSiteForm
     template_path = 'schedhuler/schd_e_tourform_job.html'
     initial       = {
-        'slno'        : -1,
+        'seqno'        : -1,
         'scantype'    : am.Job.Scantype.QR,
         'frequency'   : am.Job.Frequency.NONE,
         'identifier'  : am.Job.Identifier.EXTERNALTOUR,
@@ -798,7 +798,7 @@ class RetriveSchdTasksJob(LoginRequiredMixin, View):
     model = am.Job
     template_path = 'schedhuler/schd_tasklist_job.html'
     fields = ['jobname', 'people__peoplename', 'pgroup__name',
-              'fromdate', 'uptodate', 'qset__qset_name', 'asset__assetname',
+              'fromdate', 'uptodate', 'qset__qsetname', 'asset__assetname',
               'planduration', 'gracetime', 'expirytime', 'id']
     related = ['pgroup', 'people', 'asset']
     

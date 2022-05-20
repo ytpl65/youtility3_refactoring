@@ -2,7 +2,7 @@ from xmlrpc.client import UNSUPPORTED_ENCODING
 from django.contrib.auth.base_user import BaseUserManager
 from django.db import models
 from django.conf import settings
-from django.db.models import Q
+from django.db.models import Q, F
 from django.utils.translation import ugettext_lazy as _
 from icecream import ic
 
@@ -100,6 +100,13 @@ class PgblngManager(models.Manager):
                 mdtz__gte = mdtz, people_id = peopleid, bu_id = buid).values(*self.fields)
         return qset or self.none()
     
+    def get_assigned_sitesto_sitegrp(self, id):
+        qset = self.select_related('pgroup').filter(pgroup_id = id).annotate(
+            buname = F('assignsites__buname'),
+            buid = F('assignsites__id'),
+        ).values('buname', 'buid')
+        return qset or self.none()
+    
 
 
 class PgroupManager(models.Manager):
@@ -134,3 +141,22 @@ class PgroupManager(models.Manager):
                 identifier__tacode = "PEOPLEGROUP").values(
                     *self.fields)
         return qset or None
+
+
+    def list_view_sitegrp(self, R):
+        from apps.core import utils
+        qobjs, dir,  fields, length, start = utils.get_qobjs_dir_fields_start_length(R)
+        qset = self.filter(
+            ~Q(groupname = 'NONE'), 
+            enable=True,
+            identifier__tacode = 'SITEGROUP',
+        ).select_related('identifier').values(*fields).order_by(dir)
+
+        total = qset.count()
+        if qobjs:
+            filteredqset = qset.filter(qobjs)
+            fcount = filteredqset.count()
+            filteredqset = filteredqset[start:start+length]
+            return total, fcount, filteredqset
+        qset = qset[start:start+length]
+        return total, total, qset

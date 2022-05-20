@@ -16,10 +16,15 @@
 
 {% block extra_scripts %}
 <script>
+
+    var formUrl = "{{ url('peoples:sitegroup') }}"
     $(document).ready(() => {
         table = $("#tabSitegroup").DataTable({
             ajax:{
-                url:"{{ url('peoples:sitegroup') }}?action=list"
+                url:"{{ url('peoples:sitegroup') }}?action=list",
+                data:function(d){
+                    d.fields = ['id', 'groupname', 'enable']
+                }
             },
             serverSide:true,
             fixedHeader:true,
@@ -27,8 +32,8 @@
             lengthMenu: [[10, 20, 30], [10, 20, 30]],
             dom       : `<'row' <'col-sm-6 d-flex justify-content-start'f> <'col-sm-6 d-flex justify-content-end'B> >rt<'row'
 			             <'col-sm-6'l> <'col-sm-6'p><'col-sm-12 d-flex justify-content-center'i>>`,
-            columns     : [
-                { data: "id", visible:false, searchable:false },
+            columns   : [
+                { data: "id", visible:false, searchable:false, orderable:false },
                 { 
                     data: "groupname",
                     render:function(data, type, row, meta){
@@ -36,7 +41,7 @@
                     },
                     title:"Group Name" 
                 },
-                {data:'enable', title:'Enable'}
+                {data:'enable', title:'Enable', orderable:false}
             ],
             buttons:[
                 {

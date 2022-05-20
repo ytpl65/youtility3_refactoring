@@ -311,7 +311,7 @@ AUTHENTICATION_BACKENDS = ["graphql_jwt.backends.JSONWebTokenBackend",
 GRAPHENE = {
     # ...
     "ATOMIC_MUTATIONS": True,
-    "SCHEMA": "api.schema.schema",
+    "SCHEMA": "apps.service.schema.schema",
     'MIDDLEWARE': [
         'graphene_django.debug.DjangoDebugMiddleware',
         "graphql_jwt.middleware.JSONWebTokenMiddleware",
@@ -395,8 +395,8 @@ EMAIL_PAGE_DOMAIN = 'http://%s:8004/'
 EMAIL_MULTI_USER = True  # optional (defaults to False)
 
 # For Django Email Backend
-#EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+#EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 DEFAULT_FROM_EMAIL = "snvnrock@gmail.com"
 EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587

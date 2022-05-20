@@ -6,7 +6,8 @@ from graphene_django.debug import DjangoDebug
 from .mutations import (
   InsertRecord,
   LoginUser, LogoutUser,
-  ReportMutation,  TaskTourUpdate
+  ReportMutation,  TaskTourUpdate,
+  UploadAttMutaion, SyncMutation
 )
 from .types import (
     PELogType, PeopleType, TrackingType, TestGeoType, TyType
@@ -17,19 +18,22 @@ from apps.attendance.models import (
 from .querys import Query as ApiQuery
 from apps.onboarding.models import TypeAssist
 
+
 class Mutation(graphene.ObjectType):
-    token_auth         = LoginUser.Field()
-    logout_user        = LogoutUser.Field()
-    insert_record      = InsertRecord.Field()
+    token_auth          = LoginUser.Field()
+    logout_user         = LogoutUser.Field()
+    insert_record       = InsertRecord.Field()
     #update_record      = UpdateRecord.Field()
     #create_peopleevent = PELogMutation.Field()
     #create_tracking    = TrackingMutation.Field()
-    #create_GEOS       = TestGeoMutation.Field()
+    #create_GEOS        = TestGeoMutation.Field()
     #create_typeassist  = AddTaMutation.Field()
-    update_task_tour = TaskTourUpdate.Field()
-    #template_report = TemplateReport.Field()
-    #testJsonFile = TestJsonMutation.Field()
-    upload_report = ReportMutation.Field()
+    update_task_tour    = TaskTourUpdate.Field()
+    #template_report    = TemplateReport.Field()
+    #testJsonFile       = TestJsonMutation.Field()
+    upload_report       = ReportMutation.Field()
+    upload_attachment   = UploadAttMutaion.Field()
+    sync_upload         = SyncMutation.Field()
 
 
 class Query(MeQuery, ApiQuery,  graphene.ObjectType):
@@ -54,17 +58,6 @@ class Query(MeQuery, ApiQuery,  graphene.ObjectType):
     @login_required
     def resolve_viewer(self, info, **kwargs):
         return  "validtoken" if info.context.user.is_authenticated else "tokenexpired"
-
-
-
-
-
-
-
-
-
-
-
 
 
 

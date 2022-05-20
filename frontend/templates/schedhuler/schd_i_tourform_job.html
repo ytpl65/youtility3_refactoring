@@ -46,7 +46,7 @@ Schedhule Tour
     {{ schdtourform.starttime }}
     {{ schdtourform.endtime }}
     {{ schdtourform.ctzoffset }}
-    <input type="hidden" name="{{ schdtourform.slno.name }}" id="{{ schdtourform.slno.auto_id }}" value="1">
+    <input type="hidden" name="{{ schdtourform.seqno.name }}" id="{{ schdtourform.seqno.auto_id }}" value="1">
     <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
     <div class="row mb-3 gy-3">
         <div class="col-md-2">
@@ -271,7 +271,7 @@ Schedhule Tour
                                     {% if checkpoints is defined %}
                                     {% for checkpoint in checkpoints %}
                                     <tr>
-                                        <td>{{ checkpoint['slno'] }}</td>
+                                        <td>{{ checkpoint['seqno'] }}</td>
                                         <td>{{ checkpoint['asset__id'] }}</td>
                                         <td>{{ checkpoint['asset__assetname'] }}</td>
                                         <td>{{ checkpoint['qset__id'] }}</td>
@@ -379,7 +379,7 @@ Schedhule Tour
     function getCheckpointFormdata() {
         console.log("Getting question formdata ")
         var formData = {}
-        formData['slno'] = $("#createchildjob_form #id_slno").val()
+        formData['seqno'] = $("#createchildjob_form #id_slno").val()
         formData['qset_id'] = $("#createchildjob_form #id_qset").val()
         formData['asset_id'] = $("#createchildjob_form #id_asset").val()
         formData['expirytime'] = $("#createchildjob_form #id_expirytime").val()

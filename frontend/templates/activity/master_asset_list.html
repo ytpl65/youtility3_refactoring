@@ -28,7 +28,7 @@
             <th>Enable</th>
             <th>GPS Location</th>
         </thead>
-		<!---------- BEGIN TABLE FILTER FIELDS --------->
+		{# <!---------- BEGIN TABLE FILTER FIELDS --------->
 		<thead id="filter_row">
 		<form action="" id='master_asset_filter' method='get'>
 			<input type="hidden" name="search_term" value="true">
@@ -42,7 +42,7 @@
 			{% endfor %}
 		</form>
 		</thead>
-		<!---------- END TABLE FILTER FIELDS --------->
+		<!---------- END TABLE FILTER FIELDS ---------> #}
 		<tbody>
 			{% for cp in master_assetlist %}
 			<tr>

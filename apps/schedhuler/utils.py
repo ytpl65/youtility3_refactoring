@@ -341,7 +341,7 @@ def insert_into_jn_for_parent(job, params):
             cuser_id       = job.cuser_id,      muser_id           = job.muser_id,
             bu_id        = job.bu_id,       ticketcategory_id = job.ticketcategory_id,
             gpslocation    = '0.0,0.0',         remarks            = '',
-            slno           = 0,                 multifactor        = params['m_factor'],
+            seqno           = 0,                 multifactor        = params['m_factor'],
             client_id    = job.client_id,
         )
     except Exception:
@@ -365,7 +365,7 @@ def insert_update_jobneeddetails(jnid, job, parent=False):
             qsb = am.QuestionSetBelonging.objects.select_related(
                 'question').filter(
                     qset_id=job.qset_id).order_by(
-                        'slno').values_list(named=True)
+                        'seqno').values_list(named=True)
         else:
             qsb = utils.get_or_create_none_qsetblng()
         if not qsb:
@@ -387,7 +387,7 @@ def insert_into_jnd(qsb, job, jnid):
         if not isinstance(qsb, am.QuestionSetBelonging):
             qsb = qsb[0]
         am.JobneedDetails.objects.create(
-            slno       = qsb.slno,       question_id    = qsb.question_id,
+            seqno       = qsb.seqno,       question_id    = qsb.question_id,
             answertype = qsb.answertype, max          = qsb.max,
             min        = qsb.min,        alerton      = qsb.alerton,
             options    = qsb.options,    jobneed_id = jnid,
@@ -408,7 +408,7 @@ def create_child_tasks(job, _pdtz, _people, jnid, _jobstatus, _jobtype):
         mins = pdtz = edtz = None
         R = am.Job.objects.filter(
             parent_id=job.id).order_by(
-                'slno').values_list(named=True)
+                'seqno').values_list(named=True)
         log.info("create_child_tasks() total child job:=%s" % (len(R)))
         prev_edtz = _pdtz
         params = {'_jobdesc':"", 'jnid':jnid, 'pdtz':None, 'edtz':None,
@@ -459,7 +459,7 @@ def insert_into_jn_for_child(job, params, r):
             cuser_id       = r.cuser_id,         muser_id           = r.muser_id,
             bu_id        = r.bu_id,          ticketcategory_id = r.ticketcategory_id,
             gpslocation    = '0.0,0.0',          remarks            = '',
-            slno           = params['idx'],      multifactor        = params['m_factor'],
+            seqno           = params['idx'],      multifactor        = params['m_factor'],
             performedby   = params['NONE_P'],   ctzoffset         =  r.ctzoffset
             )
     except Exception:
@@ -481,7 +481,7 @@ def job_fields(job, checkpoint, external=False):
         'planduration': job.planduration,              'gracetime'      : job.gracetime,
         'asset_id'  : checkpoint['asset'],         'frequency'      : job.frequency,
         'people_id' : job.people_id,               'starttime'      : job.starttime,
-        'parent_id'   : job.id,                        'slno'           : checkpoint['slno'],
+        'parent_id'   : job.id,                        'seqno'           : checkpoint['seqno'],
         'scantype'    : job.scantype,
     }
     if external:

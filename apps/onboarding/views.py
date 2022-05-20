@@ -41,7 +41,6 @@ class CreateBt(LoginRequiredMixin, View):
         logger.info('create bt view...')
         cxt = {'buform': self.form_class(),
                'ta_form': obforms.TypeAssistForm(auto_id=False)}
-        ic(cxt['buform'].as_p().split('\n'))
         return render(request, self.template_path, context=cxt)
 
     def post(self, request, *args, **kwargs):
@@ -86,27 +85,30 @@ class RetrieveBt(LoginRequiredMixin, View):
         '''returns the paginated results from db'''
         response = None
         try:
-            logger.info('Retrieve Bt view')
-            objects = self.model.objects.select_related(*self.related
-                                                        ).values(*self.fields)
-            logger.info(
-                f'Bt objects {len(objects)} retrieved from db'
-                if objects
-                else "No Records!"
-            )
+            if request.GET.get('template'): return render(request, self.template_path)
+            if request.GET.get('action', None) == 'list':
+                logger.info('Retrieve Bt view')
+                objects = self.model.objects.select_related(
+                    *self.related
+                    ).values(*self.fields)
+                logger.info(
+                    f'Bt objects {len(objects)} retrieved from db'
+                    if objects
+                    else "No Records!"
+                )
 
-            cxt = self.paginate_results(request, objects)
-            logger.info('Results paginated'if objects else "")
-            response = render(request, self.template_path, context=cxt)
+                cxt = self.paginate_results(request, objects)
+                logger.info('Results paginated'if objects else "")
+                response = rp.JsonResponse(data = {'data':list(objects)})
         except EmptyResultSet:
             response = redirect('/dashboard')
             messages.error(request, 'List view not found',
-                           'alert alert-danger')
+                        'alert alert-danger')
         except Exception:
             logger.critical(
                 'something went wrong please follow the traceback to fix it... ', exc_info=True)
             messages.error(request, 'Something went wrong',
-                           "alert alert-danger")
+                        "alert alert-danger")
             response = redirect('/dashboard')
         return response
 
@@ -876,7 +878,7 @@ def handle_pop_forms(request):
 #---------------------------- END client onboarding   ---------------------------#
 
 
-@method_decorator(cache_page(60*3), name='dispatch')
+@method_decorator(cache_page(40), name='dispatch')
 class MasterTypeAssist(LoginRequiredMixin, View):
     from .filters import TypeAssistFilter
     params = {
@@ -899,25 +901,11 @@ class MasterTypeAssist(LoginRequiredMixin, View):
         if R.get('template'): return render(request, self.params['template_list'])
         #then load the table with objects for table_view
         if R.get('action', None) == 'list' or R.get('search_term'):
-            d = {'list': "ta_list", 'filt_name': "ta_filter"}
-            self.params.update(d)
             objs = self.params['model'].objects.select_related(
-                *self.params['related']).filter(
-                    ~Q(tacode='NONE'),  **self.lookup
-            ).values(*self.params['fields'])
-            count = objs.count()
-            logger.info(f'Typeassist objects {count or "No Records!"} retrieved from db')
-            utils.printsql(objs)
-            if count:
-                objects, filtered = utils.get_paginated_results(
-                    R, objs, count, self.params['fields'], self.params['related'], self.params['model'])
-                logger.info('Results paginated'if count else "")
-
-            resp = rp.JsonResponse(data = {
-                'draw':R['draw'], 'recordsTotal':count,
-                'data' : list(objects), 
-                'recordsFiltered': filtered
-            }, status=200, safe=False)
+                 *self.params['related']).filter(
+                     ~Q(tacode='NONE'),  **self.lookup
+             ).values(*self.params['fields'])
+            return  rp.JsonResponse(data = {'data':list(objs)})
 
         elif R.get('action', None) == 'form':
             cxt = {'ta_form': self.params['form_class'](request=request),
@@ -936,6 +924,7 @@ class MasterTypeAssist(LoginRequiredMixin, View):
 
     def post(self, request, *args, **kwargs):
         resp , create= None, True
+        R = request.POST
         try:
             print(request.POST)
             data = QueryDict(request.POST['formData'])

@@ -17,18 +17,6 @@ Question List
 		<th>Unit</th>
 		<th>Is WorkFlow</th>
 	</thead>
-	<!---------- BEGIN TABLE FILTER FIELDS --------->
-	<thead id="filter_row">
-		<form action="" id='ques_filter' method='get'>
-			{% for field in ques_filter %}
-			<th>
-				<input type="text" id="{{ field.auto_id }}" name="{{ field.name }}"
-					placeholder="Search {{ field.label }}">
-			</th>
-			{% endfor %}
-		</form>
-	</thead>
-	<!---------- END TABLE FILTER FIELDS --------->
 	<!---------- END TABLE FILTER FIELDS --------->
 	<tbody>
 		{% for ques in ques_list %}

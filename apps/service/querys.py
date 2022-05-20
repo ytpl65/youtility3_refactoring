@@ -66,10 +66,7 @@ class Query(graphene.ObjectType):
     
     
     def resolve_get_assetdetails(self, info, mdtz, buid):
-        import json
-        data =  Asset.objects.get_assetdetails(mdtz, buid)
-        records, count, msg = utils.get_select_output(data)
-        return SelectOutputType(nrows = count, records = records,msg = msg)
+        return get_assetdetails(mdtz, buid)
     
     
     def resolve_get_jobneedmodifiedafter(self, info, peopleid, buid):
@@ -160,5 +157,11 @@ def get_db_rows(sql, args=None):
     count = len(data)
     return SelectOutputType(records=data_json, msg=msg, nrows = count)
 
+
 def get_jobneedmodifiedafter(peopleid, siteid):
     return get_db_rows("select * from fun_getjobneed(%s, %s)", args=[peopleid, siteid])
+
+
+
+def get_assetdetails(mdtz, buid):
+    return get_db_rows("select * from fn_getassetdetails(%s, %s)", args=[mdtz, buid])

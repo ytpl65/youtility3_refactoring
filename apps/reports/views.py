@@ -209,12 +209,11 @@ class MasterReportForm(View, LoginRequiredMixin):
         if parent := R.get('parent_id'):
             qset = self.model.objects.filter(  
                 parent_id = parent
-            ).values('id', 'qsetname', 'asset_id', 'slno')
+            ).values('id', 'qsetname', 'asset_id', 'seqno')
             count = qset.count()
         logger.info('site reports found for the parent with id %s'%R['id'] if qset else "Not found any reports")
         resp = {
-            'recordsTotal':count, 'recordsFiltered':count,
-            'draw':R['draw'], 'data':list(qset)
+            'data':list(qset)
         }
         return JsonResponse(data=resp, status=200)
 

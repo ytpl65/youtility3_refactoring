@@ -1,4 +1,5 @@
 from django.db.utils import IntegrityError
+from django.db import transaction
 from django.forms import model_to_dict
 from django.http.request import QueryDict
 from django.db.models import Q
@@ -19,7 +20,7 @@ import apps.peoples.models as pm  # people models
 import apps.onboarding.forms as obf  # onboarding-modes
 from django.contrib import messages
 from django.db.models import RestrictedError
-from .models import Capability, Pgroup, People
+from .models import Capability, Pgbelonging, Pgroup, People
 from .utils import save_userinfo, save_pgroupbelonging
 from apps.core import utils
 import apps.peoples.utils as putils
@@ -988,8 +989,9 @@ class PeopleGroup(LoginRequiredMixin, View):
 
         # handle delete request
         elif R.get('action', None) == "delete" and R.get('id', None):
-            print(f'resp={resp}')
-            resp = utils.render_form_for_delete(request, self.params, True)
+            obj=utils.get_model_obj(R['id'])
+            pm.Pgbelonging.objects.filter(pgroup = obj).delete()
+            resp = utils.render_form_for_delete(request, self.params, False)
         
         # return form with instance
         elif R.get('id', None):
@@ -1062,42 +1064,40 @@ class SiteGroup(View, LoginRequiredMixin):
         
         #for list view of group
         if R.get('action') == 'list':
-            ic(R)
-            fields, related, model = self.params['fields'], self.params['related'], self.params['model']
-            orderby = int(R['order[0][column]'])
-            dir = R['order[0][dir]']
-            
-            fields, related, model = self.params['fields'], self.params['related'], self.params['model']
-            if R.get('search[value]', None):
-                qobjs = utils.searchValue2(fields, R['search[value]'])
-                objs = model.objects.listview(
-                    request, fields, related, fields[orderby], dir, qobjs)
-            else:
-                objs = model.objects.listview(
-                    request, fields, related, fields[orderby], dir)
-            count = objs.count()
-            length, start = int(R['length']), int(R['start'])
-            objs = objs[start:start+length]
-            logger.info('Pgroup objects %s retrieved from db' %(count or "No Records!"))
+            total, filtered, objs = pm.Pgroup.objects.list_view_sitegrp(R)
+            logger.info('SiteGroup objects %s retrieved from db' %(total or "No Records!"))
             utils.printsql(objs)
             resp = rp.JsonResponse(data = { 
                 'draw':R['draw'],
                 'data':list(objs),
                 'recordsFiltered':filtered,
-                'recordsTotal':count
+                'recordsTotal':total
             })
             return resp
         
         #to populate all sites table
         elif R.get('action', None) == 'allsites':
             from apps.onboarding.models import Bt
-            total, filtered, objs, idfs  = Bt.objects.get_bus_idfs(R)
+            #total, filtered, objs, idfs  = Bt.objects.get_bus_idfs(R, R['sel_butype'])
+            objs, idfs  = Bt.objects.get_bus_idfs(R, R['sel_butype'])
+            # resp = rp.JsonResponse(data = {
+            #     'draw':R['draw'],
+            #     'data':list(objs),
+            #     'recordsFiltered':filtered,
+            #     'recordsTotal':total,
+            #     'idfs':list(idfs)
+            # })
             resp = rp.JsonResponse(data = {
-                'draw':R['draw'],
                 'data':list(objs),
-                'recordsFiltered':filtered,
-                'recordsTotal':total,
-                'idfs':idfs
+                'idfs':list(idfs)
+            })
+            return resp
+        
+        elif R.get('action') == "loadSites":
+            data = Pgbelonging.objects.get_assigned_sitesto_sitegrp(R['id'])
+            ic(data)
+            resp = rp.JsonResponse(data = {
+                'assigned_sites':list(data),
             })
             return resp
         
@@ -1108,17 +1108,83 @@ class SiteGroup(View, LoginRequiredMixin):
                    'msg': "create site group requested"}
             return render(request, self.params['template_form'], context=cxt)
         
+        
         #form with instance to load existing data
         elif R.get('id', None):
             obj = utils.get_model_obj(int(R['id']), request, self.params)
             sites = pm.Pgbelonging.objects.filter(
                 pgroup=obj).values_list('assignsites', flat=True)
             ic(sites)
-            resp = utils.render_form_for_update(
-                request, self.params, "pgroup_form", obj, {'assignedsites':sites})
+            cxt = {'sitegrpform': self.params['form_class'](request=request, instance = obj),
+                   'assignedsites': sites}
+            resp = render(request, self.params['template_form'], context=cxt)
             return resp
         
+        
+        # handle delete request
+        elif R.get('action', None) == "delete" and R.get('id', None):
+            obj=utils.get_model_obj(R['id'])
+            pm.Pgbelonging.objects.filter(pgroup = obj).delete()
+            resp = utils.render_form_for_delete(request, self.params, False)
+        
     
+    def post(self, request, *args, **kwargs):
+        import json
+        data = QueryDict(request.POST['formData'])
+        assignedSites = json.loads(request.POST['assignedSites'])
+        pk = request.POST.get('pk', None)
+        try:
+
+            if pk:
+                msg = "pgroup_view"
+                form = utils.get_instance_for_update(
+                    data, self.params, msg, int(pk), kwargs = {'request':request})
+                create= False
+            else:
+                form = self.params['form_class'](data, request=request)
+            
+            if form.is_valid():
+                resp = self.handle_valid_form(form, assignedSites, request)
+            else:
+                cxt = {'errors': form.errors}
+                resp = utils.handle_invalid_form(request, self.params, cxt)    
+        except Exception:
+            resp = utils.handle_Exception(request)
+        return resp
+
+
+    def handle_valid_form(self, form, assignedSites, request):
+        logger.info('pgroup form is valid')
+        from apps.core.utils import handle_intergrity_error
+        try:
+            with transaction.atomic(using=utils.get_current_db_name()):
+                pg = form.save(commit=False)
+                putils.save_userinfo(pg, request.user, request.session)
+                self.save_assignedSites(pg, assignedSites, request)
+                logger.info("people group form saved")
+                data = {'success': "Record has been saved successfully",
+                        'msg': pg.groupname, 'row':model_to_dict(pg)}
+                return rp.JsonResponse(data, status=200)
+        except IntegrityError:
+            return handle_intergrity_error("Pgroup")
+
+    def save_assignedSites(self, pg, sitesArray, request):
+        S = request.session
+        try:
+            for site in sitesArray:
+                pgb = pm.Pgbelonging(
+                    pgroup = pg,
+                    people_id = 1,
+                    assignsites_id = site['buid'],
+                    client_id = S['client_id'],
+                    bu_id = S['bu_id'],
+                    tenant_id = S['tenantid']
+                )
+                putils.save_userinfo(pgb, request.user, request.session)
+        except Exception as e:
+            raise
+
+
 
         
         

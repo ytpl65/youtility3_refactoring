@@ -1,3 +1,4 @@
+from django.http import response as rp
 import json
 from django.contrib.auth.mixins import LoginRequiredMixin
 import psycopg2.errors as pg_errs
@@ -16,30 +17,31 @@ import apps.core.utils as utils
 import apps.activity.utils as av_utils
 import apps.onboarding.forms as obf
 from django.contrib import messages
+from django.db import transaction
 from django.http import Http404, QueryDict
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 import logging
 logger = logging.getLogger('__main__')
 log = logger
-from django.http import response as rp
-
 
 
 # Create your views here.
 class Question(LoginRequiredMixin, View):
     params = {
-        'form_class'    : af.QuestionForm,
-        'template_form' : 'activity/partials/partial_ques_form.html',
-        'template_list' : 'activity/question.html',
-        'partial_form'  : 'peoples/partials/partial_ques_form.html',
-        'partial_list'  : 'peoples/partials/partial_people_list.html',
-        'related'       : ['unit'],
-        'model'         : am.Question,
-        'filter'        : aft.QuestionFilter,
-        'fields'        : ['id', 'quesname', 'answertype', 'isworkflow', 'unit__tacode',],
-        'form_initials' : {'initial':{''}}
+        'form_class': af.QuestionForm,
+        'template_form': 'activity/partials/partial_ques_form.html',
+        'template_list': 'activity/question.html',
+        'partial_form': 'peoples/partials/partial_ques_form.html',
+        'partial_list': 'peoples/partials/partial_people_list.html',
+        'related': ['unit'],
+        'model': am.Question,
+        'filter': aft.QuestionFilter,
+        'fields': ['id', 'quesname', 'answertype', 'isworkflow', 'unit__tacode', ],
+        'form_initials': {
+            'answertype':am.Question.AnswerType.DROPDOWN,
+            'category':1, 'unit':1}
     }
-    
+
     def get(self, request, *args, **kwargs):
         R, resp = request.GET, None
 
@@ -49,17 +51,18 @@ class Question(LoginRequiredMixin, View):
             self.params.update(d)
             objs = self.params['model'].objects.select_related(
                 *self.params['related']).filter(
-                   enable=True
-                ).values(*self.params['fields'])
-            resp   = utils.render_grid(request, self.params, "question_view", objs)
-        
+                enable=True
+            ).values(*self.params['fields'])
+            resp = utils.render_grid(
+                request, self.params, "question_view", objs)
+
         # return cap_form empty
         elif R.get('action', None) == 'form':
-            cxt = {'ques_form': self.params['form_class'](request = request),
-                    'ta_form' : obf.TypeAssistForm(auto_id=False),
-                    'msg'     : "create question requested"}
+            cxt = {'ques_form': self.params['form_class'](request=request, initial=self.params['form_initials']),
+                   'ta_form': obf.TypeAssistForm(auto_id=False),
+                   'msg': "create question requested"}
             resp = utils.render_form(request, self.params, cxt)
-        
+
         # handle delete request
         elif R.get('action', None) == "delete" and R.get('id', None):
             resp = utils.render_form_for_delete(request, self.params, True)
@@ -67,9 +70,10 @@ class Question(LoginRequiredMixin, View):
         elif R.get('id', None):
             obj = utils.get_model_obj(int(R['id']), request, self.params)
             cxt = {'ta_form': obf.TypeAssistForm(auto_id=False)}
-            resp = utils.render_form_for_update(request, self.params, 'ques_form',obj, cxt)
+            resp = utils.render_form_for_update(
+                request, self.params, 'ques_form', obj, cxt)
         return resp
-    
+
     def post(self, request, *args, **kwargs):
         resp, create = None, True
         try:
@@ -77,8 +81,9 @@ class Question(LoginRequiredMixin, View):
             if pk := request.POST.get('pk', None):
                 msg = "question_view"
                 ques = utils.get_model_obj(pk, request, self.params)
-                form = self.params['form_class'](data, instance=ques, request=request)
-                create=False
+                form = self.params['form_class'](
+                    data, instance=ques, request=request)
+                create = False
             else:
                 form = self.params['form_class'](data, request=request)
             if form.is_valid():
@@ -89,38 +94,38 @@ class Question(LoginRequiredMixin, View):
         except Exception:
             resp = utils.handle_Exception(request)
         return resp
-    
+
     def handle_valid_form(self, form,  request, create):
         logger.info('ques form is valid')
         ques = None
         try:
             ques = form.save()
-            ques = putils.save_userinfo(ques, request.user, request.session, create=create)
+            ques = putils.save_userinfo(
+                ques, request.user, request.session, create=create)
             logger.info("question form saved")
-            data = {'success': "Record has been saved successfully", 
-            'name':ques.quesname, 'type':ques.answertype, 'unit':ques.unit.tacode}
+            data = {'success': "Record has been saved successfully",
+                    'name': ques.quesname, 'type': ques.answertype, 'unit': ques.unit.tacode}
             logger.debug(data)
             return rp.JsonResponse(data, status=200)
         except (IntegrityError, pg_errs.UniqueViolation):
             return utils.handle_intergrity_error('Question')
 
-            
+
 class MasterQuestionSet(LoginRequiredMixin, View):
     params = {
-        'form_class'    : None,
-        'template_form' : 'activity/partials/partial_masterqset_form.html',
-        'template_list' : 'activity/master_qset_list.html',
-        'partial_form'  : 'peoples/partials/partial_masterqset_form.html',
-        'partial_list'  : 'peoples/partials/master_qset_list.html',
-        'related'       : ['unit'],
-        'model'         : am.QuestionSet,
-        'filter'        : aft.MasterQsetFilter,
-        'fields'        : ['qsetname', 'type', 'id'],
-        'form_initials' : {}
+        'form_class': None,
+        'template_form': 'activity/partials/partial_masterqset_form.html',
+        'template_list': 'activity/master_qset_list.html',
+        'partial_form': 'peoples/partials/partial_masterqset_form.html',
+        'partial_list': 'peoples/partials/master_qset_list.html',
+        'related': ['unit'],
+        'model': am.QuestionSet,
+        'filter': aft.MasterQsetFilter,
+        'fields': ['qsetname', 'type', 'id'],
+        'form_initials': {}
     }
     list_grid_lookups = label = None
     view_of = ''
-
 
     def get(self, request, *args, **kwargs):
         R, resp = request.GET, None
@@ -132,36 +137,39 @@ class MasterQuestionSet(LoginRequiredMixin, View):
             objs = self.params['model'].objects.select_related(
                 *self.params['related']).filter(
                     ~Q(qsetname='NONE'), **self.list_grid_lookups
-                ).values(*self.params['fields'])
-            resp   = utils.render_grid(request, self.params, 
-            "questionset_view", objs, extra_cxt={'label':self.label})
+            ).values(*self.params['fields'])
+            resp = utils.render_grid(request, self.params,
+                                     "questionset_view", objs, extra_cxt={'label': self.label})
 
         # return questionset_form empty
         elif R.get('action', None) == 'form':
-            self.params['form_initials'].update({'parent':utils.get_or_create_none_qset().id})
+            self.params['form_initials'].update(
+                {'parent': utils.get_or_create_none_qset().id})
             cxt = {
-            'masterqset_form' : self.params['form_class'](
-                        request=request, 
-                        initial=self.params['form_initials']),
-            'qsetbng' : af.QsetBelongingForm(initial={'ismandatory':True}),
-            'label'   :self.label,
-            'msg'     : f"create {self.view_of} requested"}
+                'masterqset_form': self.params['form_class'](
+                    request=request,
+                    initial=self.params['form_initials']),
+                'qsetbng': af.QsetBelongingForm(initial={'ismandatory': True}),
+                'label': self.label,
+                'msg': f"create {self.view_of} requested"}
+            ic(cxt['masterqset_form'].as_p())
             resp = utils.render_form(request, self.params, cxt)
 
         # handle delete request
         elif R.get('action', None) == "delete" and R.get('id', None):
             resp = utils.render_form_for_delete(request, self.params, True)
-            
+
         # return form with instance
         elif R.get('id', None):
             questions = self.get_questions_for_form(int(R['id']))
-            cxt = {'qsetbng':af.QsetBelongingForm(), "questions":questions, 'label':self.label}
+            cxt = {'qsetbng': af.QsetBelongingForm(), "questions": questions,
+                   'label': self.label}
             obj = utils.get_model_obj(int(R['id']), request, self.params)
             self.params['form_initials'] = {
-                'assetincludes':json.loads(obj.assetincludes) if obj.assetincludes else ""}
-            resp = utils.render_form_for_update(request, self.params, 'masterqset_form',obj, cxt)
+                'assetincludes': obj.assetincludes.split(', ') if obj.assetincludes else []}
+            resp = utils.render_form_for_update(
+                request, self.params, 'masterqset_form', obj, cxt)
         return resp
-
 
     def post(self, request, *args, **kwargs):
         resp, create = None, True
@@ -170,9 +178,10 @@ class MasterQuestionSet(LoginRequiredMixin, View):
             data = QueryDict(request.POST['formData'])
             if pk := request.POST.get('pk', None):
                 msg = self.view_of
-                form = utils.get_instance_for_update(data, self.params, msg, int(pk))
+                form = utils.get_instance_for_update(
+                    data, self.params, msg, int(pk))
                 logger.debug(pformat(form.data, width=41, compact=True))
-                create=False
+                create = False
             else:
                 form = self.params['form_class'](data, request=request)
             if form.is_valid():
@@ -187,9 +196,9 @@ class MasterQuestionSet(LoginRequiredMixin, View):
     def get_questions_for_form(self, qset):
         try:
             questions = list(am.QuestionSetBelonging.objects.select_related(
-            "question").filter(qset_id = qset).values(
-                'ismandatory', 'slno', 'max', 'min', 'alerton',
-                'options', 'question__ques_name','answertype', 'question__id'
+                "question").filter(qset_id=qset).values(
+                'ismandatory', 'seqno', 'max', 'min', 'alerton',
+                'options', 'question__quesname', 'answertype', 'question__id'
             ))
         except Exception:
             logger.critical("Something went wrong", exc_info=True)
@@ -200,20 +209,20 @@ class MasterQuestionSet(LoginRequiredMixin, View):
     def handle_valid_form(form, request, create):
         pass
 
-        
+
 class MasterAsset(LoginRequiredMixin, View):
     params = {
-        'form_class'    :None,
-        'template_form' : 'activity/partials/partial_masterasset_form.html',
-        'template_list' : 'activity/master_asset_list.html',
-        'partial_form'  : 'peoples/partials/partial_masterasset_form.html',
-        'partial_list'  : 'peoples/partials/master_asset_list.html',
-        'related'       : ['parent', 'type'],
-        'model'         : am.Asset,
-        'filter'        : aft.MasterAssetFilter,
-        'fields'        : ['assetname', 'assetcode', 'runningstatus',
-                         'parent__assetcode','gpslocation', 'id', 'enable'],
-        'form_initials' : {}
+        'form_class': None,
+        'template_form': 'activity/partials/partial_masterasset_form.html',
+        'template_list': 'activity/master_asset_list.html',
+        'partial_form': 'peoples/partials/partial_masterasset_form.html',
+        'partial_list': 'peoples/partials/master_asset_list.html',
+        'related': ['parent', 'type'],
+        'model': am.Asset,
+        'filter': aft.MasterAssetFilter,
+        'fields': ['assetname', 'assetcode', 'runningstatus',
+                   'parent__assetcode', 'gpslocation', 'id', 'enable'],
+        'form_initials': {}
     }
     list_grid_lookups = {}
     view_of = label = None
@@ -225,32 +234,32 @@ class MasterAsset(LoginRequiredMixin, View):
         if R.get('action', None) == 'list' or R.get('search_term'):
             d = {'list': "master_assetlist", 'filt_name': "master_asset_filter"}
             self.params.update(d)
-            objs =self.params['model'].objects.select_related(
+            objs = self.params['model'].objects.select_related(
                 *self.params['related']).filter(
                     **self.list_grid_lookups).values(*self.params['fields'])
-            resp   = utils.render_grid(request, self.params, self.view_of, 
-            objs, extra_cxt={'label':self.label})
-        
+            resp = utils.render_grid(request, self.params, self.view_of,
+                                     objs, extra_cxt={'label': self.label})
+
         # return questionset_form empty
         elif R.get('action', None) == 'form':
             self.params['form_initials'].update({
-                'type':utils.get_or_create_none_typeassist().id,
-                'parent':utils.get_or_create_none_asset().id})
+                'type': utils.get_or_create_none_typeassist().id,
+                'parent': utils.get_or_create_none_asset().id})
             cxt = {'master_assetform': self.params['form_class'](request=request, initial=self.params['form_initials']),
-                'msg'     : f"create {self.label} requested",
-                'label':self.label}
+                   'msg': f"create {self.label} requested",
+                   'label': self.label}
             resp = utils.render_form(request, self.params, cxt)
-        
+
         # handle delete request
         elif R.get('action', None) == "delete" and R.get('id', None):
             resp = utils.render_form_for_delete(request, self.params, True)
         # return form with instance
         elif R.get('id', None):
             obj = utils.get_model_obj(int(R['id']), request, self.params)
-            cxt = {'label':self.label}
-            resp = utils.render_form_for_update(request, self.params, 'master_assetform', obj, extra_cxt=cxt)
+            cxt = {'label': self.label}
+            resp = utils.render_form_for_update(
+                request, self.params, 'master_assetform', obj, extra_cxt=cxt)
         return resp
-
 
     def post(self, request, *args, **kwargs):
         resp, create = None, False
@@ -258,8 +267,9 @@ class MasterAsset(LoginRequiredMixin, View):
             data = QueryDict(request.POST['formData'])
             if pk := request.POST.get('pk', None):
                 msg = f'{self.label}_view'
-                form = utils.get_instance_for_update(data, self.params, msg, int(pk))
-                create=False
+                form = utils.get_instance_for_update(
+                    data, self.params, msg, int(pk))
+                create = False
             else:
                 form = self.params['form_class'](data, request=request)
             if form.is_valid():
@@ -270,101 +280,111 @@ class MasterAsset(LoginRequiredMixin, View):
         except Exception:
             resp = utils.handle_Exception(request)
         return resp
-    
+
     def handle_valid_form(self, form, request, create):
-       pass
-
-
+        pass
 
 
 class Checklist(MasterQuestionSet):
-    params            = MasterQuestionSet.params
+    params = MasterQuestionSet.params
     list_grid_lookups = MasterQuestionSet.list_grid_lookups
-    view_of           = MasterQuestionSet.view_of
-    label             = MasterQuestionSet.label
+    view_of = MasterQuestionSet.view_of
+    label = MasterQuestionSet.label
     params.update({
-        'form_class'    : af.ChecklistForm,
-        'form_initials':{
-            'type':am.QuestionSet.Type.CHECKLIST
+        'form_class': af.ChecklistForm,
+        'form_initials': {
+            'type': am.QuestionSet.Type.CHECKLIST
         }
     })
-    list_grid_lookups = {'enable':True, 'type':'CHECKLIST'}
+    list_grid_lookups = {'enable': True, 'type': 'CHECKLIST'}
     view_of = 'checklist'
     label = 'Checklist'
-    
-    
+
     def handle_valid_form(self, form, request, create):
-        logger.info('%s form is valid'%(self.view_of))
+        logger.info('%s form is valid' % (self.view_of))
         try:
-            assigned_questions = json.loads(request.POST.get("asssigned_questions"))
+            assigned_questions = json.loads(
+                request.POST.get("asssigned_questions"))
             qset = form.save()
-            putils.save_userinfo(qset, request.user, request.session, create=create)
-            logger.info('%s form is valid'%(self.view_of))
-            fields = {'qset':qset.id, 'qsetname':qset.qsetname, 'client':qset.client_id}
+            putils.save_userinfo(qset, request.user,
+                                 request.session, create=create)
+            logger.info('%s form is valid' % (self.view_of))
+            fields = {'qset': qset.id, 'qsetname': qset.qsetname,
+                      'client': qset.client_id}
             self.save_qset_belonging(request, assigned_questions, fields)
-            data = {'success': "Record has been saved successfully", 
-            'type':qset.type, 'name':qset.qsetname, 'id':qset.id
-            }
+            data = {'success': "Record has been saved successfully",
+                    'type': qset.type, 'name': qset.qsetname, 'id': qset.id
+                    }
             return rp.JsonResponse(data, status=200)
         except IntegrityError:
             return utils.handle_intergrity_error('Question Set')
-    
+
     def save_qset_belonging(self, request, assigned_questions, fields):
         try:
             logger.info("saving QuestoinSet Belonging [started]")
-            logger.info("%s saving QuestoinSet Belonging found %s questions"%(" "*4, len(assigned_questions)))
-            logger.debug(f"\nassigned_questoins, {pformat(assigned_questions, depth=1, width=60)}, qset {fields['qset']}")
-            av_utils.insert_questions_to_qsetblng(assigned_questions, am.QuestionSetBelonging, fields, request)
+            logger.info("%s saving QuestoinSet Belonging found %s questions" % (
+                " "*4, len(assigned_questions)))
+            logger.debug(
+                f"\nassigned_questoins, {pformat(assigned_questions, depth=1, width=60)}, qset {fields['qset']}")
+            av_utils.insert_questions_to_qsetblng(
+                assigned_questions, am.QuestionSetBelonging, fields, request)
             logger.info("saving QuestionSet Belongin [Ended]")
         except Exception:
             logger.critical("Something went wrong", exc_info=True)
             raise
-
 
 
 class QuestionSet(MasterQuestionSet):
-    params            = MasterQuestionSet.params
+    params = MasterQuestionSet.params
     list_grid_lookups = MasterQuestionSet.list_grid_lookups
-    view_of           = MasterQuestionSet.view_of
-    label             = MasterQuestionSet.label
+    view_of = MasterQuestionSet.view_of
+    label = MasterQuestionSet.label
     params.update({
-        'form_class'    : af.QuestionSetForm,
+        'form_class': af.QuestionSetForm,
+        'form_initials': {
+            'type': am.QuestionSet.Type.QUESTIONSET
+        }
     })
-    list_grid_lookups = {'enable':True, 'type':'QUESTIONSET'}
+    list_grid_lookups = {'enable': True, 'type': 'QUESTIONSET'}
     view_of = 'questionset'
     label = 'Question Set'
-    
+
     def handle_valid_form(self, form, request, create):
-        logger.info('%s form is valid'%(self.view_of))
+        logger.info(f'{self.view_of} form is valid')
         try:
-            assigned_questions = json.loads(request.POST.get("asssigned_questions"))
-            qset = form.save()
-            putils.save_userinfo(qset, request.user, request.session, create=create)
-            logger.info('%s form is valid'%(self.view_of))
-            fields = {'qset':qset.id, 'qsetname':qset.qsetname, 'client':qset.client_id}
-            self.save_qset_belonging(request, assigned_questions, fields)
-            data = {'success': "Record has been saved successfully", 
-            'type':qset.type, 'name':qset.qsetname, 'id':qset.id
-            }
-            return rp.JsonResponse(data, status=200)
+            with transaction.atomic(using=utils.get_current_db_name()):
+                assigned_questions = json.loads(
+                    request.POST.get("asssigned_questions"))
+                qset = form.save()
+                putils.save_userinfo(qset, request.user,
+                                    request.session, create=create)
+                logger.info(f'{self.view_of} form is valid')
+                fields = {'qset': qset.id, 'qsetname': qset.qsetname,
+                        'client': qset.client_id}
+                self.save_qset_belonging(request, assigned_questions, fields)
+                data = {'success': "Record has been saved successfully",
+                        'type': qset.type, 'name': qset.qsetname, 'id': qset.id
+                        }
+                return rp.JsonResponse(data, status=200)
         except IntegrityError:
             return utils.handle_intergrity_error('Question Set')
-    
+        except Exception:
+            logger.critical("Something went wrong", exc_info=True)
+            raise
+
     def save_qset_belonging(self, request, assigned_questions, fields):
         try:
             logger.info("saving QuestoinSet Belonging [started]")
-            logger.info("%s saving QuestoinSet Belonging found %s questions"%(" "*4, len(assigned_questions)))
-            logger.debug(f"\nassigned_questoins, {pformat(assigned_questions, depth=1, width=60)}, qset {fields['qset']}")
-            av_utils.insert_questions_to_qsetblng(assigned_questions, am.QuestionSetBelonging, fields, request)
+            logger.info(f'{" " * 4} saving QuestoinSet Belonging found {len(assigned_questions)} questions')
+
+            logger.debug(
+                f"\nassigned_questoins, {pformat(assigned_questions, depth=1, width=60)}, qset {fields['qset']}")
+            av_utils.insert_questions_to_qsetblng(
+                assigned_questions, am.QuestionSetBelonging, fields, request)
             logger.info("saving QuestionSet Belongin [Ended]")
         except Exception:
             logger.critical("Something went wrong", exc_info=True)
             raise
-            
-            
-
-
-
 
 
 def deleteQSB(request):
@@ -376,81 +396,80 @@ def deleteQSB(request):
         quesname = request.GET.get('quesname')
         answertype = request.GET.get('answertype')
         qset = request.GET.get('qset')
-        logger.info("request for delete QSB '%s' start"%(quesname))
+        logger.info("request for delete QSB '%s' start" % (quesname))
         am.QuestionSetBelonging.objects.get(
-            question__ques_name = quesname,
-            answertype = answertype,
-            qset_id = qset).delete()
-        statuscode=200
+            question__quesname=quesname,
+            answertype=answertype,
+            qset_id=qset).delete()
+        statuscode = 200
         logger.info("Delete request executed successfully")
     except Exception:
         logger.critical("something went wrong", exc_info=True)
         statuscode = 404
         raise
     status = "success" if statuscode == 200 else "failed"
-    data = {"status":status}
+    data = {"status": status}
     return rp.JsonResponse(data, status=statuscode)
-        
-        
-        
+
+
 class Checkpoint(MasterAsset):
-    params            = MasterAsset.params
-    label             = MasterAsset.label
-    view_of           = MasterAsset.view_of
+    params = MasterAsset.params
+    label = MasterAsset.label
+    view_of = MasterAsset.view_of
     list_grid_lookups = MasterAsset.list_grid_lookups
     params.update({
-        'form_class':af.CheckpointForm,
-        'form_initials':{'runningstatus':'WORKING',
-        'identifier':'CHECKPOINT',
-        'iscritical'    : False, 'enable':True}
+        'form_class': af.CheckpointForm,
+        'form_initials': {'runningstatus': 'WORKING',
+                          'identifier': 'CHECKPOINT',
+                          'iscritical': False, 'enable': True}
     })
-    list_grid_lookups = {'enable':True, 'identifier':'CHECKPOINT'}
+    list_grid_lookups = {'enable': True, 'identifier': 'CHECKPOINT'}
     view_of = 'checkpoint'
     label = 'Checkpoint'
-    
+
     def handle_valid_form(self, form, request, create):
         logger.info('checkpoint form is valid')
         try:
             cp = form.save()
-            putils.save_userinfo(cp, request.user, request.session, create=create)
+            putils.save_userinfo(
+                cp, request.user, request.session, create=create)
             logger.info("checkpoint form saved")
-            data = {'success': "Record has been saved successfully", 
-            'code':cp.assetcode, 'id':cp.id
-        }
+            data = {'success': "Record has been saved successfully",
+                    'code': cp.assetcode, 'id': cp.id
+                    }
             return rp.JsonResponse(data, status=200)
         except IntegrityError:
             return utils.handle_intergrity_error('Checkpoint')
 
 
-
 class Smartplace(MasterAsset):
-    params            = MasterAsset.params
-    label             = MasterAsset.label
-    view_of           = MasterAsset.view_of
+    params = MasterAsset.params
+    label = MasterAsset.label
+    view_of = MasterAsset.view_of
     list_grid_lookups = MasterAsset.params
     params.update({
-        'form_class'    : af.SmartPlaceForm,
-        'form_initials' : {'identifier':'SMARTPLACE',
-        'runningstatus':'WORKING',
-        'iscritical'    : False, 'enable':True}
+        'form_class': af.SmartPlaceForm,
+        'form_initials': {'identifier': 'SMARTPLACE',
+                          'runningstatus': 'WORKING',
+                          'iscritical': False, 'enable': True}
     })
-    list_grid_lookups = {'enable':True, 'identifier':'SMARTPLACE'}
-    view_of           = 'smartplace'
-    label             = 'Smartplace'
+    list_grid_lookups = {'enable': True, 'identifier': 'SMARTPLACE'}
+    view_of = 'smartplace'
+    label = 'Smartplace'
 
     def handle_valid_form(self, form, request, create):
         logger.info('smarplace form is valid')
         try:
             cp = form.save()
-            putils.save_userinfo(cp, request.user, request.session, create=create)
+            putils.save_userinfo(
+                cp, request.user, request.session, create=create)
             logger.info("smartplace form saved")
-            data = {'success': "Record has been saved successfully", 
-            'code':cp.assetcode, 'id':cp.id
-        }
+            data = {'success': "Record has been saved successfully",
+                    'code': cp.assetcode, 'id': cp.id
+                    }
             return rp.JsonResponse(data, status=200)
         except IntegrityError:
             return utils.handle_intergrity_error('Smartplace')
-
 
 
 class RetriveEscList(LoginRequiredMixin, View):
@@ -458,7 +477,7 @@ class RetriveEscList(LoginRequiredMixin, View):
     fields = ['id', 'esctemplate__taname', 'cdtz']
     template_path = 'activity/escalation_list.html'
     related = ['esctemplate']
-    
+
     def get(self, request, *args, **kwargs):
         resp, requestData = None, request.GET
         if requestData.get('template'):
@@ -468,14 +487,15 @@ class RetriveEscList(LoginRequiredMixin, View):
             objects = self.model.objects.select_related(
                 *self.related).filter().values(*self.fields).order_by('-cdtz')
             count = objects.count()
-            log.info('Escalation objects %s retrieved from db' %(count or "No Records!"))
+            log.info('Escalation objects %s retrieved from db' %
+                     (count or "No Records!"))
             if count:
                 objects, filtered = utils.get_paginated_results(
                     requestData, objects, count, self.fields, self.related, self.model)
                 log.info('Results paginated'if count else "")
             filtered = count
-            resp = rp.JsonResponse(data = {
-                'draw':requestData['draw'], 'recordsTotal':count, 'data' : list(objects), 
+            resp = rp.JsonResponse(data={
+                'draw': requestData['draw'], 'recordsTotal': count, 'data': list(objects),
                 'recordsFiltered': filtered
             }, status=200)
         except Exception:
@@ -485,5 +505,3 @@ class RetriveEscList(LoginRequiredMixin, View):
                            "alert alert-danger")
             resp = redirect('/dashboard')
         return resp
-
-            

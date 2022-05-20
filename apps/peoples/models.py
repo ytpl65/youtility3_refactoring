@@ -3,7 +3,7 @@ from django.db.models import CharField
 from django.urls import reverse
 from django.conf import settings
 from django.db import models
-from django.conf import settings
+import uuid
 from django.utils.translation import gettext_lazy as _
 from django.core.serializers.json import DjangoJSONEncoder
 from django.contrib.auth.base_user import AbstractBaseUser
@@ -82,7 +82,7 @@ class BaseModel(models.Model):
     cuser = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.RESTRICT, related_name="%(class)s_cusers")
     muser = models.ForeignKey(settings.AUTH_USER_MODEL,  null=True, blank=True,on_delete=models.RESTRICT, related_name="%(class)s_musers")
     cdtz  = models.DateTimeField(_('cdtz'), default=now)
-    mdtz  = models.DateTimeField(_('mdtz'), null=True)
+    mdtz  = models.DateTimeField(_('mdtz'), default=now)
     ctzoffset = models.IntegerField(_("TimeZone"), default=-1)
 
     class Meta:
@@ -95,14 +95,14 @@ class People(AbstractBaseUser, PermissionsMixin, TenantAwareModel, BaseModel):
     class Gender(models.TextChoices):
         M = ('M', 'Male')
         F = ('F', 'Female')
-    #id= models.BigIntegerField(_("Id"), primary_key=True)
+    uuid          = models.UUIDField(unique=True, editable=True, blank=True, default=uuid.uuid4, null=True)
     peopleimg     = models.ImageField(_("peopleimg"), upload_to=upload_peopleimg, default="master/people/blank.png", null=True, blank=True)
     peoplecode    = models.CharField(_("Code"), max_length=50)
     peoplename    = models.CharField(_("Name"), max_length=120)
     loginid       = models.CharField(_("Login Id"), max_length=50, unique=True, null=True, blank=True)
     isadmin       = models.BooleanField(_("Is Admin"), default=False)
     is_staff      = models.BooleanField(_('staff status'), default=False)
-    isverified   = models.BooleanField(_("Is Active"), default=False)
+    isverified    = models.BooleanField(_("Is Active"), default=False)
     enable        = models.BooleanField(_("Enable"), default=True)
     department    = models.ForeignKey("onboarding.TypeAssist", null=True, blank=True,on_delete=models.RESTRICT, related_name='people_departments')
     designation   = models.ForeignKey("onboarding.TypeAssist", null=True, blank=True,on_delete=models.RESTRICT, related_name='people_designations')

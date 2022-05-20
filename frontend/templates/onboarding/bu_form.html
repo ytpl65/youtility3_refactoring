@@ -10,7 +10,7 @@
 {% block pagebreadcumb %}
 <!--will call parent contents -->
 {{ super() }}
-<li class="breadcrumb-item pe-3"><a href="{{ url('onboarding:bu_list') }}" class="pe-3">Bu List</a></li>
+<li class="breadcrumb-item pe-3"><a href="{{ url('onboarding:bu_list') }}?template=true" class="pe-3">Bu List</a></li>
 <li class="breadcrumb-item pe-3"><a href="javascript:void(0)" class="pe-3">Bu Form</a></li>
 {% endblock pagebreadcumb %}
 <!-------------------------- END PAGE BREADCUMB ------------------------->
@@ -125,7 +125,7 @@ Buisiness-View
 		</div>
 		
 		<!--BU IDENTIFIER-->
-		<label for="id_identifier" class="col-form-label col-md-2 col-sm-2 text-sm-right">Type:
+		<label for="id_identifier" class="required col-form-label col-md-2 col-sm-2 text-sm-right">Type:
 			<span class="material-icons-outlined h-19px" data-bs-toggle="tooltip" data-bs-custom-class="tooltip"
 				data-bs-placement="top" style="vertical-align: middle; font-size: 19px;"
 				title="Butype specfies the type of this buisiness unit">

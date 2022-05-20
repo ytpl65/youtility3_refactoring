@@ -22,9 +22,8 @@ Site Group
 
 {% block form %}
 <form action="{{ url('peoples:sitegroup') }}" method="post" id="sitegrp_form">
-    <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}"> 
     <input type="hidden" name="pk" id="id_pk"value="{{ sitegrpform.instance.id }}">
-    <input type="hidden" name="{{ sitegrpform.identifier.name }}" value ="{{ sitegrpform.identifier.value }}", id="{{ sitegrpform.auto_id }}">
+    {{ sitegrpform.identifier }}
 
     <div class="row mb-3 gy-3">
         <div class="col-sm-2">
@@ -51,7 +50,7 @@ Site Group
             Update&nbsp;<i class="fas fa-cloud-upload-alt"></i>
         </button>
 
-        <button type="button" onclick="deleteMainJob(this)" data-id="{{ sitegrpform.instance.id }}" id="deleteAttd"
+        <button type="button" onclick="isSiteGrpDeleted({{ sitegrpform.instance.id }})" data-id="{{ sitegrpform.instance.id }}" id="deleteAttd"
             class="btn btn-sm btn-danger btn-hover-scale">
             Delete&nbsp;<i class="fas fa-trash-alt"></i>
         </button>
@@ -71,13 +70,15 @@ Site Group
         <h3 class="card-title">
             All Sites&nbsp;<i class="fas fa-layer-group ch4"></i>
         </h3>
-        <div class="card-toolbar">
+        <div class="card-toolbar me-3">
+            <select name="choice" id="custom_butype" style="width:50%" class="form-select form-select-solid"></select>
             <button type="button" id="btn_assign_sites" class="btn btn-sm btn-secondary btn-hover-scale">
                 Assign&nbsp;<i class="fas fa-arrow-right"></i>
             </button>
         </div>
     </div>
     <div class="card-body">
+        
         <table id="all_sites" class="display cell-border compact hover nowrap">
         </table>
     </div>
@@ -104,40 +105,114 @@ Site Group
     var tabAssigned_sites;
     var isSitesAssigned;
     var submitUrl;
+    var all_sites_response;
+    var current_sel_butype = 'CITY';
+    var urlname = "{{ url('peoples:sitegroup') }}"
+
+    //populate_buidentifiers
+    function populate_buidentifier(resp, id){
+        var idfs = resp['idfs']
+        for(let i=0; i<idfs.length; i++){
+            if($(id).find("option[value='" + idfs[i]['identifier__tacode'] + "']").length){}
+            else{
+            var newOption = new Option(idfs[i]['identifier__tacode'], idfs[i]['identifier__tacode'], false, false);
+            $(id).append(newOption).trigger('change')
+            }
+        }
+        $(id).val(current_sel_butype);
+        $(id).trigger('change');
+    }
+
+    //delete ajax request 
+	function isSiteGrpDeleted(id){ 
+		const params = {url:`${urlname}?action=delete&id=${id}`, 'beforeSend':function () {}}
+		fire_ajax_get(params)
+		.done((data, status, xhr) => {
+			if(!xhr.status === 200){
+				return false
+			}
+			return true
+		})
+		.fail((xhr, status, error) => {
+			show_error_alert('Something went wrong!') //defined in custom.js
+			return false
+		})
+	}
+
+
+    function loadAssignedSitesIfThereAny(table, id){
+        const params = {url:`${urlname}?action=loadSites&id=${id}`, 'beforeSend':function(){}}
+        fire_ajax_get(params)
+        .done((data, status, xhr) => {
+            if(xhr.status === 200){
+                console.log(data['assigned_sites'])
+				table.rows.add(data['assigned_sites']).draw()
+			}
+        })
+        
+    }
+
+
+    
+
 
     $(document).ready(() => {
+
         tabAllsites = $("#all_sites").DataTable({
             ajax:{
                 url:"{{ url('peoples:sitegroup') }}?action=allsites",
-                data:{
-                    'pk':$("#id_pk").val(),
-                    'selected_butype':$("#custom_butype").val(),
-                    'fields':['buname', 'parent__buname', 'identifier__tacode']
+                data:function ( d ) {
+                    d.sel_butype = current_sel_butype;
+                    d.fields = ['buid', 'buname', 'parent__buname', 'identifier__tacode'];
+                    d.pk = $("#id_pk").val();
+                },
+                dataSrc:function(resp){
+                    console.log(resp, typeof resp)
+                    populate_buidentifier(resp, '#custom_butype');
+                    return resp['data']
                 }
             },
-            serverSide:true,
             responsive:true,
             fixedHeader:true,
-            search    : {return: true},
-            lengthMenu: [[10, 20, 30], [10, 20, 30]],
             ordering: false,
+            deferRender: true,
             columns:[
-                {data:'id', visible:false, orderable:false, defaultContent:""},
+                {data:null, defaultContent: '', orderable:true, className:'select-checkbox', width:"2%"},
+                {data:'buid', visible:false, orderable:false, defaultContent:""},
                 {data:'buname', title:"Site Name"},
                 {data:"parent__buname", title:"Belongs to"},
                 {data:'identifier__tacode', title:"Type"},
             ],
-            dom :  `<'row' <'col-sm-6'<'dtToolbar'>> <'col-sm-6 d-flex justify-content-end'f>><'row' <'col-sm-12'rtlp>>`,
+            select: {
+                style:    'multi',
+                selector: 'tr'
+            },
+            dom :  `<'row' <'col-sm-12 d-flex justify-content-start'f> ><'row' <'col-sm-12'rtlp>>`,
             buttons:[]
 
         })
-        $("div.dtToolbar").html(`<select name="choice" id="custom_butype" style="width:50%" class="form-select form-select-solid"><option value="null" selected>------------------</option></select>`);
+        $("div.dtToolbar").html(``);
         
+        //populate dropdown field
+        $("#custom_butype").change(()=>{
+            var butype = $("#custom_butype").val()
+            if(butype!=current_sel_butype){
+                current_sel_butype = butype
+                tabAllsites.ajax.reload()
+            }
+            
+        })
+        
+        
+        
+        //populate_buidentifier(tabAllsites, '#custom_butype');
+
+
         //ON CLICK GRAB SELECTED AND POPULATE RIGHT TABLE
         $("#btn_assign_sites").click(() => {
-            var assigned_sites = tabAllsites.rows({'selected':true}).data().toArray()
+            var selected_sites = tabAllsites.rows({'selected':true}).data().toArray()
             tabAssigned_sites.rows().remove().draw()
-            tabAssigned_sites.rows.add(assigned_sites).draw()
+            tabAssigned_sites.rows.add(selected_sites).draw()
         })
 
         tabAssigned_sites = $("#assigned_sites").DataTable({
@@ -146,7 +221,9 @@ Site Group
             dom:"rt",
             order: [[ 1, 'asc' ]],
             columns:[
-                {data:'id', visible:false, orderable:false},
+                {data:'buid', visible:false, orderable:false, defaultContent:"", render:function(data, type, full, meta){
+                    return data == undefined ? "" :data
+                }},
                 {data:'buname', title:'Site Name'},
                 {data:function(row, type, val, meta){
                         if(row['13'] != null){
@@ -159,17 +236,16 @@ Site Group
                 orderable:false,
                 className:"remove text-center",
                 targets:12,
-                width:"5%"},
-                {data:'id', visible:false, orderable:false}
+                width:"5%"}
             ],
             buttons:[]
         })
 
         //reduce size of search bar
-        $('.dataTables_wrapper .dataTables_filter input[type="search"]').css(
-           { 'width': '250px'}
-        )
         
+        if("{{ sitegrpform.instance.id }}" != 'None'){
+            loadAssignedSitesIfThereAny(tabAssigned_sites, "{{ sitegrpform.instance.id }}")
+        }
         //ON CLICK TRASH ICON REMOVE ROW
         $('#assigned_sites').on('click', '.remove', function () {
             var row = $(this).parents('tr');
@@ -178,7 +254,7 @@ Site Group
                 table.row($(row).prev('tr')).remove().draw();
             }
             else{
-                asgdsites_table
+                tabAssigned_sites
                     .row($(this).parents('tr'))
                     .remove()
                 .draw();
@@ -191,22 +267,30 @@ Site Group
 		$("#sitegrp_form").on('submit', function(e) {
 			var form = $(this);
 			e.preventDefault()
-            if(!isSitesAssigned){ Swal.fire({
+            if(tabAssigned_sites.data().length){ Swal.fire({
                 title:'Sites Not Assigned!',
                 text:"Do you forget to assign sites!",
                 icon:'warning',
                 timer:2000
             })}
 			
-            const params = { url:urlname, modal:false } 
-			var payLoad = form.serialize()//payload for post request
+            const params = { url:"{{ url('peoples:sitegroup') }}", modal:false } 
+			var payLoad =  {'formData':form.serialize(), csrfmiddlewaretoken: '{{ csrf_token }}', 'assignedSites': JSON.stringify(tabAssigned_sites.rows().data().toArray())}
             var isupdate = $("#id_pk")!=="" ?  true : false
-			fire_ajax_form_post(params, payLoad)
+            Swal.fire({
+            title:"Submit?",
+            text:"This will allocate the selected sites to the Sites group being created!",
+            icon:'question',
+            showCancelButton: true,
+            confirmButtonText: 'Submit'
+            }).then((res) => {
+                fire_ajax_form_post(params, payLoad)
 			.done((data, status, xhr) => { //function to submit post request
-				console.log("data ", data)
                 //addResultToTable(data.row)
-				show_successful_save_alert(isupdate)
+				    (isupdate)
 			})
+            } )
+			
 		})
 
 

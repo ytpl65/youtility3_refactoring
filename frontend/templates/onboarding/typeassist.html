@@ -64,23 +64,12 @@ TypeAssist List
         function TaBeforeSend(){
             $(modal_id).modal("show");
         }
-		////datatable initialization
-        table = $(table_id).DataTable({
-			ajax: {
-                url    : '{{ url("onboarding:typeassist") }}?action=list',
-            },
-			serverSide : true,
-			//processing : true,
-			responsive : true,
-			fixedHeader: true,
-			//language   : {
-            //    search           : "_INPUT_",
-            //    searchPlaceholder: "Search ..",
-			//	processing:"Getting Data"},
-            search    : {return: true},
-            lengthMenu: [[10, 20, 30], [10, 20, 30]],
-            dom       : `<'row' <'col-sm-6 d-flex justify-content-start'f> <'col-sm-6 d-flex justify-content-end'B> >rt<'row'
-			 <'col-sm-6'l> <'col-sm-6'p><'col-sm-12 d-flex justify-content-center'i>>`,
+		
+		
+		table = $(table_id).DataTable({
+			ajax:{
+				url:'{{ url("onboarding:typeassist") }}?action=list',
+			},
 			columns     : [
                 { "data": "id" },
                 { "data": "tacode" },
@@ -88,6 +77,8 @@ TypeAssist List
                 { "data": "tatype__tacode" },
                 { "data": "cuser__peoplecode" },
             ],
+			deferRender: true,
+			responsive : true,
 			columnDefs:[
 				{targets:0, visible:false, searchable:false, orderable:false},
 				{
@@ -98,6 +89,8 @@ TypeAssist List
 					}
 				}
 			],
+			 dom       : `<'row' <'col-sm-6 d-flex justify-content-start'f> <'col-sm-6 d-flex justify-content-end'B> >rt<'row'
+			 <'col-sm-6'l> <'col-sm-6'p><'col-sm-12 d-flex justify-content-center'i>>`,
 			buttons:[
 				{
 					text     : `Add New &nbsp;<i class='fas fa-plus ch4'></i></a>`,
@@ -120,6 +113,7 @@ TypeAssist List
 				}
 			]
 		})
+		
 		$('.btn').removeClass('dt-button')
 		
 

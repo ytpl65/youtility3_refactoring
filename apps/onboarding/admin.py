@@ -75,10 +75,6 @@ class TaResource(BaseFieldSet2, resources.ModelResource ):
         instance.tacode = instance.tacode.upper()
         utils.save_common_stuff(self.request, instance)
 
-    def get_queryset():
-        return om.TypeAssist.objects.select_related(
-            'tatype', 'tenant', 'bu', 'client'
-        ).all()
 
 
 @admin.register(om.TypeAssist)
@@ -219,7 +215,7 @@ class SitePeopleResource(resources.ModelResource, BaseFieldSet1):
         skip_unchanged = True
         import_id_fields = ('id',)
         report_skipped = True
-        fields = ('id', 'fromdt', 'uptodt', 'siteowner', 'slno', 'reportcapability',
+        fields = ('id', 'fromdt', 'uptodt', 'siteowner', 'seqno', 'reportcapability',
                   'posting_revision', 'nightshiftappicable', 'webcapability',
                   'reportcapability', 'mobilecapability', 'enable', ' emergencycontact',
                   'ackdate', 'isreliver', 'checkpost', 'enablesleepingguard')

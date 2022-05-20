@@ -66,6 +66,7 @@ class PeopleEventlog(BaseModel, TenantAwareModel):
     class Meta(BaseModel.Meta):
         db_table = 'peopleeventlog'
 
+
 #temporary table
 class Tracking(models.Model):
     #id= models.BigIntegerField(primary_key=True)
@@ -80,7 +81,9 @@ class Tracking(models.Model):
     
     class Meta:
         db_table = 'tracking'
-    
+
+        
+        
 class TestGeo(models.Model):
     #id= models.BigIntegerField(primary_key=True)
     code = models.CharField(max_length=15)
