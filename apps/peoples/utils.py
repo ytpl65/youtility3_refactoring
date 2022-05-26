@@ -324,7 +324,7 @@ def get_caps_choices(client=None, cfor=None,  session=None, people=None):
     try:
         if cfor == Capability.Cfor.MOB:
             return Capability.objects.select_related(
-                'parent').filter(cfor=cfor).values_list('capscode', 'capsname')
+                'parent').filter(cfor=cfor, enable=True).values_list('capscode', 'capsname')
         caps = cache.get('caps')
         if caps:
             logger.debug('got caps from cache...')

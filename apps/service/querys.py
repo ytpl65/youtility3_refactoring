@@ -1,9 +1,12 @@
 from typing import Type
 from charset_normalizer import from_path
 import graphene
+from pyparsing import counted_array
 from apps.core import utils
 from django.db import connections
 from collections import namedtuple
+from logging import getLogger
+log = getLogger('__main__')
 from apps.activity.models import Asset, Jobneed, JobneedDetails, Question, QuestionSet, QuestionSetBelonging
 from apps.peoples.models import Pgbelonging, Pgroup, People
 from .types import (PeopleType,QSetType, QuestionType, QSetBlngType,PgBlngType,
@@ -55,51 +58,64 @@ class Query(graphene.ObjectType):
     
 
     def resolve_tadata(self, info, keys, **kwargs):
+        log.info('request for typeassist data...')
         data = TypeAssist.objects.values(*keys)
         records, count, msg = utils.get_select_output(data)
+        log.info(f'{count} objects returned...')
         return SelectOutputType(nrows = count, ncols = len(keys), records = records,msg = msg)
         
     
     def resolve_tabyid(self, info, id):
+        log.info('request for typeassist data...')
         ta = TypeAssist.objects.raw(f"select * from typeassist where id = {id}")
         return ta[0] if ta else None
     
     
     def resolve_get_assetdetails(self, info, mdtz, buid):
+        log.info('request for assetdetails data...')
         return get_assetdetails(mdtz, buid)
     
     
     def resolve_get_jobneedmodifiedafter(self, info, peopleid, buid):
+        log.info('request for jobneed-modified-after data...')
         return get_jobneedmodifiedafter(peopleid, buid)
 
 
     def resolve_get_jndmodifiedafter(self, info, mdtz, jobneedids):
+        log.info('request for jndmodifiedafter data...')
         data = JobneedDetails.objects.get_jndmodifiedafter(mdtz, jobneedids)
         records, count, msg = utils.get_select_output(data)
+        log.info(f'{count} objects returned...')
         return SelectOutputType(nrows = count, records = records,msg = msg)
     
     
     def resolve_get_typeassistmodifiedafter(self, info, mdtz, clientid):
+        log.info('request for typeassist-modified-after data...')
         from datetime import datetime
         mdtzinput = datetime.strptime(mdtz, "%Y-%m-%d %H:%M:%S")
         ic(mdtzinput)
         data = TypeAssist.objects.get_typeassist_modified_after(mdtzinput, clientid)
         records, count, msg = utils.get_select_output(data)
+        log.info(f'{count} objects returned...')
         return SelectOutputType(nrows = count, records = records,msg = msg)
     
     def resolve_get_peoplemodifiedafter(self, info, mdtz, buid):
+        log.info('request for people-modified-after data...')
         from datetime import datetime
         mdtzinput = datetime.strptime(mdtz, "%Y-%m-%d %H:%M:%S")
         data = People.objects.get_people_modified_after(mdtzinput, buid)
         records, count, msg = utils.get_select_output(data)
+        log.info(f'{count} objects returned...')
         return SelectOutputType(nrows = count, records = records,msg = msg)
         
         
     def resolve_get_groupsmodifiedafter(self, info, mdtz, buid):
+        log.info('request for groups-modified-after data...')
         from datetime import datetime
         mdtzinput = datetime.strptime(mdtz, "%Y-%m-%d %H:%M:%S")
         data = Pgroup.objects.get_groups_modified_after(mdtzinput, buid)
         records, count, msg = utils.get_select_output(data)
+        log.info(f'{count} objects returned...')
         return SelectOutputType(nrows = count, records = records,msg = msg)
         
         
@@ -108,31 +124,38 @@ class Query(graphene.ObjectType):
         mdtzinput = datetime.strptime(mdtz, "%Y-%m-%d %H:%M:%S")
         data =  Question.objects.get_questions_modified_after(mdtz)
         records, count, msg = utils.get_select_output(data)
+        log.info(f'{count} objects returned...')
         return SelectOutputType(nrows = count, records = records,msg = msg)
     
     
     def resolve_get_qsetmodifiedafter(self, info, mdtz, buid):
+        log.info('request for qset-modified-after data...')
         from datetime import datetime
         mdtzinput = datetime.strptime(mdtz, "%Y-%m-%d %H:%M:%S")
         data = QuestionSet.objects.get_qset_modified_after(mdtzinput, buid)
         records, count, msg = utils.get_select_output(data)
+        log.info(f'{count} objects returned...')
         return SelectOutputType(nrows = count, records = records,msg = msg)
         
     
     
     def resolve_get_qsetbelongingmodifiedafter(self, info, mdtz, buid):
+        log.info('request for qsetbelonging-modified-after data...')
         from datetime import datetime
         mdtzinput = datetime.strptime(mdtz, "%Y-%m-%d %H:%M:%S")
         data = QuestionSetBelonging.objects.get_modified_after(mdtzinput, buid)
         records, count, msg = utils.get_select_output(data)
+        log.info(f'{count} objects returned...')
         return SelectOutputType(nrows = count, records = records,msg = msg)
     
     
     def resolve_get_pgbelongingmodifiedafter(self, info, mdtz, buid, peopleid):
+        log.info('request for pgbelonging-modified-after data...')
         from datetime import datetime
         mdtzinput = datetime.strptime(mdtz, "%Y-%m-%d %H:%M:%S")
         data = Pgbelonging.objects.get_modified_after(mdtzinput, peopleid, buid)
         records, count, msg = utils.get_select_output(data)
+        log.info(f'{count} objects returned...')
         return SelectOutputType(nrows = count, records = records,msg = msg)
     
     
@@ -155,13 +178,16 @@ def get_db_rows(sql, args=None):
     data_json = json.dumps(data, default=str)
     msg = f"Total {len(data)} records fetched successfully!"
     count = len(data)
+    log.info(f'{count} objects returned...')
     return SelectOutputType(records=data_json, msg=msg, nrows = count)
 
 
 def get_jobneedmodifiedafter(peopleid, siteid):
+    log.info('request for jobneed-modified-after data...')
     return get_db_rows("select * from fun_getjobneed(%s, %s)", args=[peopleid, siteid])
 
 
 
 def get_assetdetails(mdtz, buid):
+    log.info('request for assetdetails-modified-after data...')
     return get_db_rows("select * from fn_getassetdetails(%s, %s)", args=[mdtz, buid])

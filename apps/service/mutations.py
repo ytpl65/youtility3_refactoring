@@ -557,13 +557,12 @@ class UploadAttMutaion(graphene.Mutation):
     
     class Arguments:
         record = graphene.JSONString(required=True)
-        tablename = graphene.String(required=True)
         file = Upload(required=True) 
         biodata = graphene.JSONString(required=True)
         
     @classmethod
-    def mutate(cls,root, info, file, tablename, record, biodata):
-        output = sutils.perform_uploadattachment( file, tablename, record, biodata)
+    def mutate(cls,root, info, file,  record, biodata):
+        output = sutils.perform_uploadattachment( file, record, biodata)
         return UploadAttMutaion(output = output)
             
 
@@ -595,13 +594,16 @@ class SyncMutation(graphene.Mutation):
         log.info("sync now mutation is running")
         import zipfile
         from apps.service import tasks
+        import os
+        home = os.path.expanduser('~')
         try:
             db = get_current_db_name()
             with zipfile.ZipFile(file) as zip:
+                zip.extractall(home)
                 for file in zip.filelist:
                     with zip.open(file) as f:
                         data = tasks.get_json_data(f)
-                        ic(data)
+                        raise ValueError
                         tasks.call_service_based_on_filename(data, file.filename, db=db)
             return SyncMutation(rc=0)
         except Exception:

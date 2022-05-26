@@ -4,7 +4,7 @@ from graphql_auth.schema import  MeQuery
 from graphql_jwt.decorators import login_required
 from graphene_django.debug import DjangoDebug
 from .mutations import (
-  InsertRecord,
+  InsertRecord, AdhocMutation,
   LoginUser, LogoutUser,
   ReportMutation,  TaskTourUpdate,
   UploadAttMutaion, SyncMutation
@@ -34,6 +34,7 @@ class Mutation(graphene.ObjectType):
     upload_report       = ReportMutation.Field()
     upload_attachment   = UploadAttMutaion.Field()
     sync_upload         = SyncMutation.Field()
+    adhoc_record      = AdhocMutation.Field()
 
 
 class Query(MeQuery, ApiQuery,  graphene.ObjectType):

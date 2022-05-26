@@ -5,6 +5,7 @@ def clean_point_field(val):
     
     from django.contrib.gis.geos import GEOSGeometry
     try:
+        if not val: return val
         if 'SRID' not in val:
             lat, lng = val.split(',')
             return GEOSGeometry(f'SRID=4326;POINT({lng} {lat})')

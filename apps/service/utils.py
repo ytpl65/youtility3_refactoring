@@ -35,6 +35,9 @@ def write_file_to_dir(filebuffer, uploadedfile):
 
 
 
+from this import d
+from cv2 import trace
+from pandas import json_normalize
 from .tasks import Messages
 from .tasks import (
     get_json_data, get_model_or_form,
@@ -52,14 +55,14 @@ from apps.activity.models import (Job, Jobneed, JobneedDetails, Attachment, Asse
 import traceback as tb
 
 
-def insertrecord_for_att(record, tablename):
+def insertrecord(record, tablename):
     try:
         if model := get_model_or_form(tablename):
             record = clean_record(record)
-            obj = model.objects.create(**record)
-            return obj.id
+            return model.objects.create(**record)
         raise GraphQLError(Messages.IMPROPER_DATA)
     except Exception as e:
+        log.error("something went wrong", exc_info=True)
         raise e
 
 
@@ -73,7 +76,7 @@ def update_record(details, jobneed, Jn, Jnd):
         with transaction.atomic(using=utils.get_current_db_name()):
             instance = Jn.objects.get(uuid = record['uuid'])
             jn_parent_serializer = sz.JobneedSerializer(data=record, instance=instance)
-            if jn_parent_serializer.is_valid(): 
+            if jn_parent_serializer.is_valid():
                 isJnUpdated = jn_parent_serializer.save()
             else: log.error(f"something went wrong!\n{jn_parent_serializer.errors} ", exc_info=True )
             isJndUpdated = update_jobneeddetails(details, Jnd)
@@ -240,39 +243,105 @@ def perform_reportmutation(file):
 
 
 
-def perform_adhocmutation(file):
+def perform_adhocmutation(file):  # sourcery skip: remove-empty-nested-block, remove-redundant-if, remove-redundant-pass
     rc, recordcount, traceback, msg= 0, 0, 'NA', ""
-    
     try:
-        if data:= get_json_data(file):
-            for record in data:
-                details = record.pop('details')
-                jobneedrecord = record
-                with transaction.atomic(using = utils.get_current_db_name()):
-                    if jobneedrecord['asset_id']==1:
-                        #then it should be NEA
-                        assetobjs = Asset.objects.filter(bu_id = jobneedrecord['bu_id'],
-                                          assetcode = jobneedrecord['remarks'],
-                                          )
-                        jobneedrecord['asset_id']= 1 if assetobjs.count() !=1 else assetobjs[0].id
-        else:
+        if not (data := get_json_data(file)):
             raise utils.NoDataInTheFileError
-            
+
+        db = utils.get_current_db_name()
+        log.info(f"{len(data)} Number of records found in the file")
+        for record in data:
+            details = record.pop('details')
+            jobneedrecord = record
+            ic(details)
+            ic(jobneedrecord)
+
+            with transaction.atomic(using = db):
+                if jobneedrecord['asset_id']==1:
+                    #then it should be NEA
+                    assetobjs = Asset.objects.filter(bu_id = jobneedrecord['bu_id'],
+                                    assetcode = jobneedrecord['remarks'])
+                    jobneedrecord['asset_id']= 1 if assetobjs.count() !=1 else assetobjs[0].id
+                sqlQuery = "select * from fn_get_schedule_for_adhoc(%s, %s, %s, %s, %s)"
+                args = [jobneedrecord['plandatetime'], jobneedrecord['bu_id'], jobneedrecord['people_id'], jobneedrecord['asset_id'], jobneedrecord['qset_id']]
+                scheduletask = utils.runrawsql(sqlQuery, args, db=db)
+
+                #have to update to scheduled task
+                if(len(scheduletask) > 0):
+                    rc, traceback, msg, recordcount = update_adhoc_record(scheduletask, jobneedrecord, details)
+                #have to insert/create to adhoc task
+                else:
+                    rc, traceback, msg, recordcount = insert_adhoc_record(jobneedrecord, details)
+                if jobneedrecord['attachmentcount'] == 0:
+                    #TODO send_email for ADHOC 
+                    pass
+            #TODO send_email for Observation
+                    
     except utils.NoDataInTheFileError as e:
         rc, traceback = 1, tb.format_exc()
+        log.error('No data in the file error', exc_info=True)
+        raise
     except Exception as e:
-        pass
+        rc, traceback = 1, tb.format_exc()
+        log.error('something went wrong', exc_info=True)
     return ServiceOutputType(rc=rc, recordcount = recordcount, msg = msg, traceback = traceback)
     
 
+
+def update_adhoc_record(scheduletask, jobneedrecord, details):
+    rc, recordcount, traceback, msg= 0, 0, 'NA', ""
+    jnid = scheduletask[0]['jobneedid']
+    recordcount+=1
+    obj = Jobneed.objects.get(id = jnid)
+    jobneedrecord.update({'performedby_id': jobneedrecord['people_id']})
+    record = clean_record(jobneedrecord)
+    jnsz = sz.JobneedSerializer(instance=obj,data=record)
+    if jnsz.is_valid(): 
+        isJnUpdated = jnsz.save()
+    else:
+        rc, traceback, msg = 1, jnsz.errors, 'Operation Failed'
+    
+    JND = JobneedDetails.objects.filter(jobneed_id = jnid).values()
+    for jnd in JND:
+        for dtl in details:
+            if jnd['question_id'] == dtl['question_id']:
+                obj = JobneedDetails.objects.get(uuid = dtl['uuid'])
+                record = clean_record(dtl)
+                jndsz = sz.JndSerializers(instance=obj, data = record)
+                if jndsz.is_valid():
+                    jndsz.save()
+    recordcount+=1
+    msg = "Scheduled Record (ADHOC) updated successfully!"
+    return rc, traceback, msg, recordcount
         
+        
+def insert_adhoc_record(jobneedrecord, details):
+    rc, recordcount, traceback, msg= 0, 0, 'NA', ""
+    record = clean_record(jobneedrecord)
+    jnsz = sz.JobneedSerializer(data = record)
+    
+    if jnsz.is_valid():
+        jninstance = jnsz.save()
+        for dtl in details:
+            dtl.update({'jobneed_id':jninstance.id})
+            record = clean_record(dtl)
+            jndsz = sz.JndSerializers(data = record)
+            if jndsz.is_valid():
+                jndsz.save()
+        msg = "Record (ADHOC) inserted successfully!"
+        recordcount+=1
+    else:
+        rc, traceback = 1, jnsz.errors
+    return rc, traceback, msg, recordcount
 
 
-def perform_uploadattachment(file, tablename, record, biodata):
+def perform_uploadattachment(file,  record, biodata):
     rc, traceback, resp = 0,  'NA', 0
     recordcount = msg=None
     #ic(file, tablename, record, type(record), biodata, type(biodata))
     try:
+        log.info("perform_uploadattachment [start+]")
         import os
         
         file_buffer = file
@@ -285,15 +354,18 @@ def perform_uploadattachment(file, tablename, record, biodata):
         filepath = home_dir + path
         uploadfile = f'{filepath}/{filename}'
         db = utils.get_current_db_name()
+        log.info(f"file_buffer {file_buffer} pelogid {pelogid} peopleid {peopleid} path {path} home_dir {home_dir} filepath {filepath} uploadfile {uploadfile}")
         with transaction.atomic(using=db):
             iscreated = get_or_create_dir(filepath)
             log.info(f'filepath is {iscreated}')
             write_file_to_dir(file_buffer, uploadfile)
-            resp = insertrecord_for_att(record, tablename)
+            obj = insertrecord(record, 'attachment')
+            send_alert_mails_if_any(obj)
             rc, traceback, msg = 0, tb.format_exc(), Messages.UPLOAD_SUCCESS
             recordcount = 1
-        from .tasks import perform_facerecognition
-        results = perform_facerecognition.delay(pelogid, peopleid, resp, home_dir, uploadfile, db)
+        
+        from .tasks import perform_facerecognition_bgt
+        results = perform_facerecognition_bgt.delay(pelogid, peopleid, obj.owner, home_dir, uploadfile, db)
         log.warn(f"face recognition status {results.state}")
     except Exception as e:
         rc, traceback, msg = 1, tb.format_exc(), Messages.UPLOAD_FAILED
@@ -305,6 +377,13 @@ def getEmails(R):
     pass
 
 
+def getjobneedrecord():
+    pass
+
+
+def send_alert_mails_if_any(attdata):
+    getjobneedrecord()
+    pass
 
 
 def alert_observation(pk):

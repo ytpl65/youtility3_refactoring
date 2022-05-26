@@ -497,7 +497,7 @@ class JobNeedForm(forms.ModelForm):
     class Meta:
         model = am.Jobneed
         fields = ['identifier', 'frequency', 'parent', 'jobdesc', 'asset', 'ticketcategory',
-                  'qset',  'people', 'pgroup', 'priority', 'scantype',
+                  'qset',  'people', 'pgroup', 'priority', 'scantype','multifactor',
                   'jobstatus', 'plandatetime', 'expirydatetime', 'gracetime', 'starttime',
                   'endtime', 'performedby', 'gpslocation', 'cuser', 'raisedby', 'remarks']
         widgets = {
@@ -511,11 +511,42 @@ class JobNeedForm(forms.ModelForm):
             'jobdesc'        : forms.Textarea(attrs={'rows': 1, 'cols': 40}),
             'remarks'        : forms.Textarea(attrs={'rows': 2, 'cols': 40}),
             'jobstatus'      : s2forms.Select2Widget,
-            'performedby'   : s2forms.Select2Widget
+            'performedby'   : s2forms.Select2Widget,
+            'gpslocation':forms.TextInput
         }
         label = {
             'endtime':'End Time'
         }
+
+
+class AdhocTaskForm(JobNeedForm):
+    ASSIGNTO_CHOICES   = [('PEOPLE', 'People'), ('GROUP', 'Group')]
+    assign_to          = forms.ChoiceField(choices=ASSIGNTO_CHOICES, initial="PEOPLE")
+    class Meta(JobNeedForm.Meta):
+        labels = {
+            'asset':'Asset/SmartPlace',
+            'starttime':'Start Time',
+            'plandatetime':'Plan DateTime',
+            'expirydatetime':'Expity DateTime',
+            'endtime':'End Time',
+            'gracetime':'Grace Time',
+            'jobstatus':'Task Status',
+            'scantype':'ScanType',
+            'gpslocation':'GPS Location',
+            'ticketcategory':'Ticket Category',
+            'performedby':'Performed By',
+            'people':'People',
+            'qset':'Question Set',
+        }
+    
+    def __init__(self, *args, **kwargs):
+        """Initializes form add atttibutes and classes here."""
+        from django.conf import settings
+        self.request = kwargs.pop('request', None)
+        super(AdhocTaskForm, self).__init__(*args, **kwargs)
+        self.fields['plandatetime'].input_formats  = settings.DATETIME_INPUT_FORMATS
+        self.fields['expirydatetime'].input_formats  = settings.DATETIME_INPUT_FORMATS
+        utils.initailize_form_fields(self)
 
 
 class TicketForm(forms.ModelForm):

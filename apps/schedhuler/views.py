@@ -874,7 +874,7 @@ class RetrieveTasksJobneed(LoginRequiredMixin, View):
     template_path = 'schedhuler/tasklist_jobneed.html'
 
     fields  = [
-        'jobdesc', 'people__peoplename', 'pgroup__name', 'id',
+        'jobdesc', 'people__peoplename', 'pgroup__groupname', 'id',
         'plandatetime', 'expirydatetime', 'jobstatus', 'gracetime',
         'performedby__peoplename', 'asset__assetname', 'qset__qset_name'
     ]

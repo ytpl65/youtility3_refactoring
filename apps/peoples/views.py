@@ -768,20 +768,8 @@ class Capability(View):
                 *self.params['related']).filter(
                     ~Q(capscode='NONE'), enable=True
             ).values(*self.params['fields'])
-            resp = utils.render_grid(
-                request, self.params, "capability_view", objs)
-            count = objs.count()
-            logger.info('Pgroup objects %s retrieved from db' %(count or "No Records!"))
-            
-            if count:
-                objects, filtered = utils.get_paginated_results(
-                    R, objs, count, self.params['fields'], self.params['related'], self.params['model'])
-                logger.info('Results paginated'if count else "")
-
             resp = rp.JsonResponse(data = {
-                'draw':R['draw'], 'recordsTotal':count,
-                'data' : list(objects), 
-                'recordsFiltered': filtered
+                'data' : list(objs)
             }, status=200, safe=False)
         
         # return cap_form empty
@@ -844,7 +832,7 @@ class Capability(View):
             return handle_intergrity_error("Capability")
 
 
-class People(View):
+class PeopleView(View):
     params = {
         'form_class': pf.PeopleForm,
         'json_form': pf.PeopleExtrasForm,
@@ -954,7 +942,6 @@ class PeopleGroup(LoginRequiredMixin, View):
     
     def get(self, request, *args, **kwargs):
         R, resp, objects, filtered = request.GET, None, [], 0
-        
         # first load the template
         if R.get('template'): return render(request, self.params['template_list'])
         

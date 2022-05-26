@@ -179,7 +179,8 @@ def other_info():
         'is_randomized': False,
         'distance': None,
         'breaktime': 0,
-        'deviation':False
+        'deviation':False,
+        
     }
 
 
@@ -434,7 +435,7 @@ class Jobneed(BaseModel, TenantAwareModel):
     identifier       = models.CharField(_("Jobneed Type"), max_length=50, choices=Identifier.choices, null=True)
     parent           = models.ForeignKey("self", verbose_name=_("Belongs to"),  on_delete  = models.RESTRICT,  null=True, blank=True)
     alerts           = models.BooleanField(_("Alerts"), default=False, null=True)
-    seqno             = models.SmallIntegerField(_("Sl No."))
+    seqno            = models.SmallIntegerField(_("Sl No."))
     client           = models.ForeignKey("onboarding.Bt", verbose_name=_("Client"), on_delete= models.RESTRICT, null=True, blank=True, related_name='jobneed_clients')
     bu               = models.ForeignKey("onboarding.Bt", verbose_name=_("Site"), on_delete = models.RESTRICT, null=True, blank=True, related_name='jobneedf_bus')
     ticketcategory   = models.ForeignKey("onboarding.TypeAssist", verbose_name=_("Ticket Category"), null= True, blank=True, on_delete=models.RESTRICT)
@@ -442,6 +443,8 @@ class Jobneed(BaseModel, TenantAwareModel):
     multifactor      = models.DecimalField(_("Multiplication Factor"), default=1, max_digits=10, decimal_places=6)
     raisedby         = models.CharField(_("Raised by"), max_length=55, default="", null=True)
     raisedtktflag    = models.BooleanField(_("RaiseTicketFlag"), default=False, null=True)
+    ismailsent       = models.BooleanField(_('Is Mail Sent'), default= False)
+    attachmentcount         = models.IntegerField(_('Attachment Count'), default=0)
     other_info       = models.JSONField(_("Other info"), default=other_info, blank=True, encoder=DjangoJSONEncoder)
 
     objects = JobneedManager()
@@ -489,6 +492,7 @@ class JobneedDetails(BaseModel, TenantAwareModel):
     ismandatory = models.BooleanField(_("Is Mandatory"), default=True)
     jobneed     = models.ForeignKey("activity.Jobneed", verbose_name=_( "Jobneed"), null=True, blank=True, on_delete=models.RESTRICT)
     alerts      = models.BooleanField(_("Alerts"), default=False)
+    attachmentcount    = models.IntegerField(_('Attachment count'), default=0)
 
     objects = JobneedDetailsManager()
     
@@ -647,3 +651,26 @@ class EscalationMatrix(BaseModel, TenantAwareModel):
     class Meta(BaseModel.Meta):
         db_table = 'escalationmatrix'
         get_latest_by = ["mdtz", 'cdtz']
+        
+
+class DeviceEventlog(BaseModel, models.Model):
+    class DeviceEvent(models.TextChoices):
+        AIRPLANEMODEON    = ('AIRPLANEMODEON', 'Airplanemode On')
+        AIRPLANEMODEOFF   = ('AIRPLANEMODEOFF', 'Airplanemode Off')
+        PHONESWITCHEDON   = ('PHONESWITCHEDON', 'PhoneSwitched On')
+        PHONESWITCHEDOFF  = ('PHONESWITCHEDOFF', 'PhoneSwitched Off')
+        GPSSWITCHEDON     = ('GPSSWITCHEDON', 'Gps Switched On')
+        GPSSWITCHEDOFF    = ('GPSSWITCHEDOFF', 'Gps Switched Off')
+        WIFIENABLE        = ('WIFIENABLE', 'WIFI Enable')
+        WIFIDISABLE       = ('WIFIDISABLE', 'WIFI Disable')
+        MOBILEDATAENABLE  = ('MOBILEDATAENABLE', 'MobileData Enable')
+        MOBILEDATADISABLE = ('MOBILEDATADISABLE', 'MobileData Disable')
+
+    deviceid    = models.CharField(_("Device Id"), max_length=55)
+    deviceevent = models.CharField(_("Device Event"), max_length=50, choices=DeviceEvent.choices)
+    bu          = models.ForeignKey("onboarding.Bt", null=True,blank=True, on_delete=models.RESTRICT)
+    client      = models.ForeignKey("onboarding.Bt", verbose_name=_("Client"), on_delete= models.RESTRICT, null=True, blank=True, related_name='deviveevents_clients')
+    receivedon  = models.DateTimeField(_("Received On"), auto_now=False, auto_now_add=True)
+    people      = models.ForeignKey('peoples.People', null=True, blank=True, on_delete=models.RESTRICT, related_name="deviceevent_people")
+    stepcount   = models.CharField(max_length=55, default='NONE')
+    

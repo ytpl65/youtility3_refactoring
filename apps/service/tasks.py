@@ -1,9 +1,7 @@
 from graphql import GraphQLError
-from matplotlib import docstring
-from pandas import ExcelWriter
 from apps.service import serializers as sz
 from apps.attendance.models import PeopleEventlog
-from apps.activity.models import (Jobneed, JobneedDetails, Attachment)
+from apps.activity.models import (Jobneed, JobneedDetails, Attachment, Asset)
 from django.db.utils import IntegrityError
 from django.db import transaction
 from .auth import Messages as AM
@@ -25,9 +23,11 @@ def get_model_or_form(tablename):
             return  Jobneed
         case 'attachment':
             return  Attachment
+        case 'jobneeddetails':
+            return  JobneedDetails
         case _:
             return None
-        
+
 
 def get_or_create_dir(path):
     try:
@@ -50,9 +50,9 @@ def write_file_to_dir(filebuffer, uploadedfile):
     except Exception:
         raise
 
-    
-    
-    
+
+
+
 class Messages(AM):
     INSERT_SUCCESS  = "Inserted Successfully!"
     UPDATE_SUCCESS  = "Updated Successfully!"
@@ -105,6 +105,9 @@ def call_service_based_on_filename(data, filename, db='default'):
         case 'uploadReport.gz':
             log.info("calling uploadReport.gz")
             return perform_reportmutation_bgt.delay(data, db=db)
+        case 'adhocRecord.gz':
+            log.info("calling adhocRecord.gz")
+            return perform_adhocmutation_bgt.delay(data, db=db)
         
 
 
@@ -343,3 +346,110 @@ def save_parent_childs(sz, jn_parent_serializer, child, M, db):
     except Exception:
         log.error("something went wrong",exc_info=True)
         raise
+
+
+@app.task(bind=True, default_retry_delay=300, max_retries=5)
+def perform_facerecognition_bgt(self, pelogid, peopleid, ownerid, home_dir, uploadfile, db='default'):
+    from apps.activity.models import Attachment
+    from apps.attendance.models import PeopleEventlog
+    from django.db import transaction
+    from apps.core import utils
+    
+    log.info("perform_facerecognition ...start [+]")
+    log.info(f'parameters are {pelogid} {peopleid} {ownerid} {type(ownerid)} {home_dir} {uploadfile}')
+    try:
+        with transaction.atomic(using=utils.get_current_db_name()):
+            if pelogid!=1:
+                if ATT := Attachment.objects.get_attachment_record(ownerid, db):
+                    if PEOPLE_ATT := PeopleEventlog.objects.get_people_attachment(pelogid, db):
+                        if PEOPLE_PIC := Attachment.objects.get_people_pic(ATT.ownername_id, PEOPLE_ATT.uuid, db):
+                            default_image_path = PEOPLE_PIC.default_img_path
+                            default_image_path = home_dir + default_image_path
+                            from deepface import DeepFace
+                            fr_results = DeepFace.verify(img1_path = default_image_path, img2_path = uploadfile)
+                            PeopleEventlog.objects.update_fr_results(fr_results, pelogid, peopleid, db)
+    except ValueError as v:
+        log.error("face recogntion failed", exc_info=True)
+    except Exception as e:
+        log.error("something went wrong!", exc_info=True)
+        self.retry(e)
+        raise
+    
+
+@app.task(bind=True, default_retry_delay=300, max_retries=5)
+def perform_adhocmutation_bgt(self, data, db='default'):
+    rc, recordcount, traceback, msg= 0, 0, 'NA', ""
+    try:
+        log.info("perform_adhocmutation_bgt [start]")
+        for record in data:
+            details = record.pop('details')
+            jobneedrecord = record
+            log.info(f"details {details}")
+            log.info(f'jobneedrecord {jobneedrecord}')
+
+            with transaction.atomic(using = db):
+                utils.set_db_for_router(db)
+                if jobneedrecord['asset_id']==1:
+                    #then it should be NEA
+                    assetobjs = Asset.objects.filter(bu_id = jobneedrecord['bu_id'],
+                                    assetcode = jobneedrecord['remarks'])
+                    jobneedrecord['asset_id']= 1 if assetobjs.count() !=1 else assetobjs[0].id
+                sqlQuery = "select * from fn_get_schedule_for_adhoc(%s, %s, %s, %s, %s)"
+                args = [jobneedrecord['plandatetime'], jobneedrecord['bu_id'], jobneedrecord['people_id'], jobneedrecord['asset_id'], jobneedrecord['qset_id']]
+                scheduletask = utils.runrawsql(sqlQuery, args, db=db)
+
+                #have to update to scheduled task
+                if(len(scheduletask) > 0):
+                    jnid = scheduletask[0]['jobneedid']
+                    recordcount+=1
+                    obj = Jobneed.objects.get(id = jnid)
+                    jobneedrecord.update({'performedby_id': jobneedrecord['people_id']})
+                    record = clean_record(jobneedrecord)
+                    jnsz = sz.JobneedSerializer(instance=obj,data=record)
+                    if jnsz.is_valid(): 
+                        isJnUpdated = jnsz.save()
+                    else:
+                        rc, traceback, msg = 1, jnsz.errors, 'Operation Failed'
+                    
+                    JND = JobneedDetails.objects.filter(jobneed_id = jnid).values()
+                    for jnd in JND:
+                        for dtl in details:
+                            if jnd['question_id'] == dtl['question_id']:
+                                obj = JobneedDetails.objects.get(uuid = dtl['uuid'])
+                                record = clean_record(dtl)
+                                jndsz = sz.JndSerializers(instance=obj, data = record)
+                                if jndsz.is_valid():
+                                    jndsz.save()
+                    msg = "Scheduled Record (ADHOC) updated successfully!"
+                
+                #have to insert/create to adhoc task
+                else:
+                    record = clean_record(jobneedrecord)
+                    jnsz = sz.JobneedSerializer(data = record)
+                    
+                    if jnsz.is_valid():
+                        jninstance = jnsz.save()
+                        log.debug(f'jninstance.is {jninstance.id}')
+                        for dtl in details:
+                            dtl.update({'jobneed_id':jninstance.id})
+                            record = clean_record(dtl)
+                            jndsz = sz.JndSerializers(data = record)
+                            if jndsz.is_valid():
+                                jndsz.save()
+                        msg = "Record (ADHOC) inserted successfully!"
+                    else:
+                        rc, traceback = 1, jnsz.errors
+                    if jobneedrecord['attachmentcount'] == 0:
+                        #TODO send_email for ADHOC 
+                        pass
+                log.info(f'rc:{rc}, msg:{msg}, traceback:{traceback}, returncount:{recordcount}')
+            #TODO send_email for Observation
+                    
+    except utils.NoDataInTheFileError as e:
+        rc, traceback = 1, tb.format_exc()
+        log.error('something went wrong', exc_info=True)
+        raise
+    except Exception as e:
+        rc, traceback = 1, tb.format_exc()
+        log.error('something went wrong', exc_info=True)
+    return ServiceOutputType(rc=rc, recordcount = recordcount, msg = msg, traceback = traceback)

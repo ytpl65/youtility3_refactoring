@@ -955,7 +955,7 @@ class MasterTypeAssist(LoginRequiredMixin, View):
             putils.save_userinfo(ta, request.user, request.session, create=create)
             logger.info("typeassist form saved")
             data = {'msg': f"{ta.tacode}",
-            'row': TypeAssist.objects.values(*self.params['fields']).get(id=ta.id) }
+            'row': TypeAssist.objects.values(*self.params['fields']).get(id=ta.id)}
             return rp.JsonResponse(data, status=200)
         except IntegrityError:
             return handle_intergrity_error("TypeAssist")

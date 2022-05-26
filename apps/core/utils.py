@@ -1016,6 +1016,31 @@ def get_qobjs_dir_fields_start_length(R):
     return qobjs, dir,  fields, length, start
 
 
+def runrawsql(sql, args=None, db='default', named=False):
+    "Runs raw sql return namedtup[le or dict type results"
+    from django.db import connections
+    cursor = connections[db].cursor()
+    cursor.execute(sql, args)
+    return namedtuplefetchall(cursor) if named else dictfetchall(cursor)
+    
+    
+def namedtuplefetchall(cursor):
+    from collections import namedtuple
+    "Return all rows from a cursor as a namedtuple"
+    desc = cursor.description
+    nt_result = namedtuple('Result', [col[0] for col in desc])
+    return [nt_result(*row) for row in cursor.fetchall()]
+
+
+def dictfetchall(cursor):
+    "Return all rows from a cursor as a dict"
+    columns = [col[0] for col in cursor.description]
+    return [
+        dict(zip(columns, row))
+        for row in cursor.fetchall()
+    ]
+
+
 class Error(Exception):
     pass
 

@@ -74,11 +74,9 @@ Capability List
 			ajax: {
                 url    : '{{ url("peoples:capability") }}?action=list',
             },
-			serverSide : true,
-			processing : true,
+			deferRender: true,
 			responsive : true,
 			fixedHeader: true,
-			search    : {return: true},
 			lengthMenu: [[10, 20, 30], [10, 20, 30]],
 			language: {
 				searchPlaceholder: "Search...",
@@ -145,13 +143,9 @@ Capability List
 			.done((data, status, xhr) => { //function to submit post request
 				console.log("data ", data)
 				$(modal_id).modal("hide");
-				Swal.fire(
-				`${viewname} saved`,
-				`${viewname} with this code <strong>${data.code}</strong> has been saved successfully`,
-				'success'
-				).then(function(){
-					location.reload()
-				})
+				table.row.add(data.row).draw()
+				var isupdated = formtype === 'update' ? true : false
+				show_successful_save_alert(update=isupdated)
 			})
 		})
 
@@ -182,8 +176,7 @@ Capability List
 
 	//delete ajax request 
 	function isCapDeleted(id){ 
-		console.log("id ", id)
-		const params = {url:`${urlname}?action=delete&id=${id}`}
+		const params = {url:`${urlname}?action=delete&id=${id}`, 'beforeSend':function () {}}
 		fire_ajax_get(params)
 		.done((data, status, xhr) => {
 			if(!xhr.status === 200){

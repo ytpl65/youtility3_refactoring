@@ -148,7 +148,7 @@ class AttachmentManager(models.Manager):
             ~Q(filename__endswith = '.3gp'),
             ownername__tacode = 'PEOPLEEVENTLOG',
             attachmenttype = 'ATTACHMENT', 
-            id = id
+            owner = id
             ).using(db)
         print("qset values@@@@@@@@@@@@@@@@", qset)
         return qset or self.none()
@@ -173,8 +173,8 @@ class AssetManager(models.Manager):
             *self.related
         ).values(*self.fields) or self.none()
     
-    def get_asset_vs_qset(self):
-        pass
+    def get_schedule_task_for_adhoc(self, params):
+        qset = self.raw("select * from fn_get_schedule_for_adho")
     
     
     
