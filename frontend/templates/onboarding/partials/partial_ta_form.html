@@ -20,9 +20,11 @@
 				</div>
 			</div>
 		{% endfor %}
+		<input type="hidden" name="{{ ta_form.ctzoffset.name }}" id = "{{ ta_form.ctzoffset.auto_id }}" value="-1">
 {% endmacro %}
 {% block body %}
 <form action="" method="post" id="id_taform">
+	<input type="hidden" name="pk" id="pk" value="{{ ta_form.instance.pk }}">
 	<div class="modal-header border-0">
 		<h3 class="modal-title modal-heading" id="exampleModalLabel">Create TypeAssist <i class="fas fa-poll-h fa-sm ch4"></i></h3>
 		<button type="button" class="btn-sm btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
@@ -54,6 +56,9 @@
 {{ ta_form.media.js }}
 <script>
 $(document).ready(() => {
+	//set ctzoffset
+  	$("#id_ctzoffset").val(-new Date().getTimezoneOffset())
+	
 	$("#modal-ta").find("select").djangoSelect2({
 		dropdownParent: $('#modal-ta')
     })

@@ -201,6 +201,15 @@ class Update_I_TourFormJob(Schd_I_TourFormJob, LoginRequiredMixin, View):
 
 
 class Retrive_I_ToursJob(LoginRequiredMixin, View):
+    params = {
+        'model'        : am.Job,
+        'template_path': 'schedhuler/schd_i_tourlist_job.html',
+        'fields'       : ['jobname', 'people__peoplename', 'pgroup__groupname', 'fromdate', 'uptodate',
+                        'planduration', 'gracetime', 'expirytime', 'id'],
+        'related': ['pgroup', 'people']
+    }
+    
+    
     model = am.Job
     template_path = 'schedhuler/schd_i_tourlist_job.html'
     fields = ['jobname', 'people__peoplename', 'pgroup__groupname', 'fromdate', 'uptodate',
@@ -216,8 +225,8 @@ class Retrive_I_ToursJob(LoginRequiredMixin, View):
                 *self.related).filter(
                     ~Q(jobname='NONE'), parent__jobname='NONE'
             ).values(*self.fields).order_by('-cdtz')
-            log.info('Schedhuled Tours objects %s retrieved from db' %
-                     (len(objects)) if objects else "No Records!")
+            log.info(f'Schedhuled Tours objects {len(objects)} retrieved from db' if objects else "No Records!")
+
             cxt = self.paginate_results(request, objects)
             log.info('Results paginated'if objects else "")
             response = render(request, self.template_path, context=cxt)
@@ -564,7 +573,7 @@ class Update_E_TourFormJob(Schd_E_TourFormJob, LoginRequiredMixin, View):
 class Retrive_E_ToursJob(LoginRequiredMixin, View):
     model = am.Job
     template_path = 'schedhuler/schd_e_tourlist_job.html'
-    fields = ['jobname', 'people__peoplename', 'pgroup__name',
+    fields = ['jobname', 'people__peoplename', 'pgroup__groupname',
               'fromdate', 'uptodate',
               'planduration', 'gracetime', 'expirytime', 'id', 'bu__buname']
     related = ['pgroup', 'people']
@@ -742,7 +751,6 @@ class SchdTaskFormJob(LoginRequiredMixin, View):
                 instance=obj, data=data, initial = self.initial)
             log.info("retrieved existing task whose jobname:= '%s'" %
                      (obj.jobname))
-            create=Fase
         else:
             form = self.form_class(data=data, initial=self.initial)
             log.info("new task submitted following is the form-data:\n%s\n" %
@@ -751,7 +759,7 @@ class SchdTaskFormJob(LoginRequiredMixin, View):
         try:
             with transaction.atomic(using=utils.get_current_db_name()):
                 if form.is_valid():
-                    response = self.process_valid_schd_taskform(request, form, create)
+                    response = self.process_valid_schd_taskform(request, form)
                 else:
                     response = self.process_invalid_schd_taskform(
                         form)
@@ -762,14 +770,14 @@ class SchdTaskFormJob(LoginRequiredMixin, View):
                 {'errors': 'Failed to process form, something went wrong'}, status=404)
         return response
 
-    def process_valid_schd_taskform(self, request, form, create):
+    def process_valid_schd_taskform(self, request, form):
         resp = None
         log.info("task form processing/saving [ START ]")
         try:
             job         = form.save(commit=False)
-            job.parent_id  = -1
+            job.parent_id  = 1
             job.save()
-            job = putils.save_userinfo(job, request.user, request.session, create=create)
+            job = putils.save_userinfo(job, request.user, request.session)
             log.info('task form saved success...')
         except Exception as ex:
             log.critical("task form is processing failed", exc_info=True)
@@ -797,27 +805,30 @@ class SchdTaskFormJob(LoginRequiredMixin, View):
 class RetriveSchdTasksJob(LoginRequiredMixin, View):
     model = am.Job
     template_path = 'schedhuler/schd_tasklist_job.html'
-    fields = ['jobname', 'people__peoplename', 'pgroup__name',
+    fields = ['jobname', 'people__peoplename', 'pgroup__groupname',
               'fromdate', 'uptodate', 'qset__qsetname', 'asset__assetname',
               'planduration', 'gracetime', 'expirytime', 'id']
     related = ['pgroup', 'people', 'asset']
     
     def get(self, request, *args, **kwargs):
         '''returns the paginated results from db'''
-        response = None
+        R, resp = request.GET, None
         try:
-            log.info('Retrieve Tasks view')
-            objects = self.model.objects.select_related(
-                *self.related).filter(
-                    ~Q(jobname='NONE'), parent__jobname='NONE', identifier="TASK"
-            ).values(*self.fields).order_by('-cdtz')
-            log.info('Tasks objects %s retrieved from db'%len(objects) if objects else "No Records!")
-            cxt = self.paginate_results(request, objects)
-            log.info('Results paginated'if objects else "")
-            response = render(request, self.template_path, context=cxt)
+            # first load the template
+            if R.get('template'): return render(request, self.template_path)
+            
+            #then load the table with objects for table_view
+            if R.get('action') == 'list':
+                log.info('Retrieve Tasks view')
+                objects = self.model.objects.select_related(
+                    *self.related).filter(
+                        ~Q(jobname='NONE'), parent__jobname='NONE', identifier="TASK"
+                ).values(*self.fields).order_by('-cdtz')
+                log.info(f'Tasks objects {len(objects)} retrieved from db' if objects else "No Records!")
+                response = rp.JsonResponse(data = {'data':list(objects)})
         except EmptyResultSet:
             log.warning('empty objects retrieved', exc_info=True)
-            response = render(request, self.template_path, context=cxt)
+            response = render(request, self.template_path)
             messages.error(request, 'List view not found',
                            'alert alert-danger')
         except Exception:
@@ -852,10 +863,10 @@ class UpdateSchdTaskJob(SchdTaskFormJob):
         try:
             pk = kwargs.get('pk')
             obj = self.model.objects.get(id=pk)
-            log.info('object retrieved {}'.format(obj))
+            log.info(f'object retrieved {obj}')
             form        = self.form_class(instance=obj)
             cxt         = {'schdtaskform': form, 'edit': True}
-                        
+
             response = render(request, self.template_path,  context=cxt)
         except self.model.DoesNotExist:
             messages.error(request, 'Unable to edit object not found',
@@ -876,7 +887,7 @@ class RetrieveTasksJobneed(LoginRequiredMixin, View):
     fields  = [
         'jobdesc', 'people__peoplename', 'pgroup__groupname', 'id',
         'plandatetime', 'expirydatetime', 'jobstatus', 'gracetime',
-        'performedby__peoplename', 'asset__assetname', 'qset__qset_name'
+        'performedby__peoplename', 'asset__assetname', 'qset__qsetname'
     ]
     related = [
         'pgroup',  'ticketcategory', 'asset', 'client',
@@ -1115,3 +1126,92 @@ class RetriveTickets(LoginRequiredMixin, View):
         except EmptyPage:
             ticket_list = paginator.page(paginator.num_pages)
         return {'ticket_list': ticket_list, 'ticket_filter': filterform}
+    
+    
+
+class JobneedTours(LoginRequiredMixin, View):
+    params = {
+        'model'        : am.Jobneed,
+        'template_path': 'schedhuler/i_tourlist_jobneed.html',
+        'fields'       : ['jobdesc', 'people__peoplename', 'pgroup__groupname', 'id',
+            'plandatetime', 'expirydatetime', 'jobstatus', 'gracetime', 'performedby__peoplename'],
+        'related': ['pgroup',  'ticketcategory', 'asset', 'client',
+               'frequency', 'job', 'qset', 'people', 'parent', 'bu']
+    }
+    
+    def get(self, request, *args, **kwargs):
+        R = request.GET
+        
+        # first load the template
+        if R.get('template'): return render(request, self.params['template_path'])
+        
+        #then load the table with objects for table_view
+        if R.get('action', None) == 'list' or R.get('search_term'):
+            dt = datetime.now(tz=timezone.utc) - timedelta(days=10)
+            objs = self.params['model'].objects.select_related(
+                *self.related).filter(
+                    Q(bu_id=request.session.get('bu_id', 1)) & Q(parent__jobdesc='NONE')
+                    & ~Q(jobdesc='NONE') & Q(plandatetime__gte=dt)
+            ).values(*self.fields).order_by('-plandatetime')
+            resp = rp.JsonResponse(data = {'data':list(objs)})
+        return resp
+    
+
+
+class JobneedTasks(LoginRequiredMixin, View):
+    params = {
+        'model'        : am.Jobneed,
+        'template_path':  'schedhuler/tasklist_jobneed.html',
+        'fields'       : [
+                    'jobdesc', 'people__peoplename', 'pgroup__groupname', 'id',
+                    'plandatetime', 'expirydatetime', 'jobstatus', 'gracetime',
+                    'performedby__peoplename', 'asset__assetname', 'qset__qsetname'],
+        'related': [
+                'pgroup',  'ticketcategory', 'asset', 'client',
+                'frequency', 'job', 'qset', 'people', 'parent', 'bu']
+    }
+    
+    def get(self, request, *args, **kwargs):
+        R = request.GET
+        
+        # first load the template
+        if R.get('template'): return render(request, self.params['template_path'])
+        
+        #then load the table with objects for table_view
+        if R.get('action', None) == 'list' or R.get('search_term'):
+            dt = datetime.now(tz=timezone.utc) - timedelta(days=10)
+            objs = self.params['model'].objects.select_related(
+                *self.related).filter(
+                Q(bu_id=request.session.get('bu_id', 1)),  ~Q(parent__jobdesc='NONE')
+                , ~Q(jobdesc='NONE') , Q(plandatetime__gte=dt)
+                ,Q(identifier = am.Jobneed.Identifier.TASK)
+            ).values(*self.fields).order_by('-plandatetime')
+            resp = rp.JsonResponse(data = {'data':list(objs)})
+        return resp
+    
+
+
+class SchdTasks(LoginRequiredMixin, View):
+    params={
+        'model'        : am.Job,
+        'template_path': 'schedhuler/schd_tasklist_job.html',
+        'fields'       : ['jobname', 'people__peoplename', 'pgroup__groupname',
+                        'fromdate', 'uptodate', 'qset__qsetname', 'asset__assetname',
+                        'planduration', 'gracetime', 'expirytime', 'id', 'ctzoffset'],
+        'related'      : ['pgroup', 'people', 'asset']
+    }
+    
+    def get(self, request, *args, **kwargs):
+        R = request.GET
+        # first load the template
+        if R.get('template'): return render(request, self.params['template_path'])
+        
+        #then load the table with objects for table_view
+        if R.get('action') == 'list':
+            log.info('Retrieve Tasks view')
+            objects = self.params['model'].objects.select_related(
+                *self.params['related']).filter(
+                    ~Q(jobname='NONE'), parent__jobname='NONE', identifier="TASK"
+            ).values(*self.params['fields']).order_by('-cdtz')
+            log.info(f'Tasks objects {len(objects)} retrieved from db' if objects else "No Records!")
+            return rp.JsonResponse(data = {'data':list(objects)})

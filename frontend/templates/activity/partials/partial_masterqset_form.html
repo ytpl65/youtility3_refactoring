@@ -13,6 +13,8 @@
 </div>
 <div class="modal-body" id="partial">
     <form action="" method="post" id="id_qsetform">
+    <input type="hidden" name="pk" id="pk">
+    <input type="hidden" name="{{ masterqset_form.ctzoffset.name }}" id = "{{ masterqset_form.ctzoffset.auto_id }}" value="-1">
         <div class="alert alert-danger alert-dismissible fade show" id="nonfield_errors" role="alert"
             style="display:none">
             <strong>Error</strong> <span></span>
@@ -247,6 +249,9 @@
 
 
     $(document).ready(() => {
+        //set ctzoffset
+        $("#id_ctzoffset").val(-new Date().getTimezoneOffset())
+
         //DOCUMENT.READY START
         // Initialize Tagify components
         var input1 = document.querySelector("#id_options");
@@ -434,27 +439,30 @@
                     modal: true
                 } //checklist view
                 const formtype = $(modalcontent_id).attr('data-form') //form-type (create/update)
-                const id = $(modalcontent_id).attr('data-id') //form instance id
+                const id = $("#pk").val() //form instance id
                 var payLoad = {
                     formData: form.serialize(),
                     asssigned_questions: JSON.stringify(table.rows().data().toArray()),
                     csrfmiddlewaretoken: '{{ csrf_token }}'
                 } //payload for post request
-                if (formtype === 'update') {
+                if (id != 'None') {
                     var newPayLoad = {
                         ...payLoad,
                         'pk': id
                     }
                     payLoad = newPayLoad
                 }
-                debugger
                 fire_ajax_form_post(params, payLoad)
-                    .done((data, status, xhr) => { //function to submit post request
-                        console.log("data ", data)
-                        $(modal_id).modal("hide");
-                        var isupdated = formtype === 'update' ? true : false
-				        show_successful_save_alert(update=isupdated)
-                    })
+                .done((data, status, xhr) => { //function to submit post request
+                    console.log("data ", data)
+                    $(modal_id).modal("hide");
+                    if(id!=='None'){
+                        Qsettable.row('.selected').data(data.row).draw()
+                    }else{
+                        Qsettable.row.add(data.row).draw()
+                    }
+                    show_successful_save_alert(update= id != 'None' ? true : false)
+                })
             }
         })
 

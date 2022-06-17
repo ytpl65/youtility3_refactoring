@@ -25,7 +25,7 @@ People Form
 
 
 
-<!------ BEGIN FORM TITLE ------->
+<!------ BEGIN FORM TITLE ------>
 {% block form_title %}
 Adhoc Task
 {% endblock form_title %}
@@ -33,6 +33,7 @@ Adhoc Task
 
 
 {% block form %}
+<input type="hidden" name="{{ adhoctaskform.ctzoffset.name }}" id = "{{ adhoctaskform.ctzoffset.auto_id }}" value="-1">
 <div class="row">
     <div class="col-md-6">
         <div class="input-group mb-3">
@@ -230,7 +231,6 @@ Adhoc Task
             </tbody>
         </table>
     </div>
-
 </div>
 {% endblock extras %}
 
@@ -250,6 +250,9 @@ Adhoc Task
         }
     }
 $(document).ready(function () {
+    //set ctzoffset
+  	$("#id_ctzoffset").val(-new Date().getTimezoneOffset())
+    
     $('#taskdetails').DataTable({
         responsive:true,
         dom       : `<'row' <'col-sm-6 d-flex justify-content-start'f> <'col-sm-6 d-flex justify-content-end'B> >rt<'row'

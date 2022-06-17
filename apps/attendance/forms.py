@@ -1,6 +1,3 @@
-from datetime import datetime, timezone, tzinfo
-import re
-from xmlrpc.client import TRANSPORT_ERROR
 from django import forms
 from django_select2 import forms as s2forms
 from apps.core import utils
@@ -14,7 +11,7 @@ class AttendanceForm(forms.ModelForm):
 
     class Meta:
         model = atdm.PeopleEventlog
-        fields = ['people', 'datefor',
+        fields = ['people', 'datefor', 'ctzoffset',
          'peventtype', 'verifiedby', 'remarks','shift', 'facerecognition']
         labels = {
             'people'        : 'People',
@@ -57,25 +54,49 @@ class AttendanceForm(forms.ModelForm):
 def clean_geometry(val):
     try:
         val = GEOSGeometry(val, srid=4326)
-    except ValueError:
-        raise forms.ValidationError('lat lng string input unrecognized!')
+    except ValueError as e:
+        raise forms.ValidationError('lat lng string input unrecognized!') from e
     else: return val
 
 
 class ConveyanceForm(forms.ModelForm):
     required_css_class = "required"
+    transportmodes = forms.MultipleChoiceField(
+        choices=atdm.PeopleEventlog.TransportMode.choices,
+        required=True,
+        widget=s2forms.Select2MultipleWidget,
+        label='Transport Modes')
+    
     class Meta:
         model=atdm.PeopleEventlog
-        fields = ['people', 'transportmodes', 'expamt', 'duration', 'distance', 'startlocation', 'endlocation']
+        fields = ['people', 'transportmodes', 'expamt', 'duration', 'ctzoffset',
+                  'distance', 'startlocation', 'endlocation', 'punchintime', 'punchouttime']
+        widgets = {
+            'startlocation':forms.TextInput(),
+            'endlocation':forms.TextInput(),
+            'transportmodes':s2forms.Select2MultipleWidget}
+        labels = {
+            'expamt':'Expense Amount',
+            'transportmodes': 'Transport Modes',
+            'startlocation':'Start Location',
+            'endlocation':'End Location',
+            'punchintime':'Start Time',
+            'punchouttime':'End Time',
+            'distance':'Distance'}
+        
 
     
-    def __ini__(self, *args, **kwargs):
+    def __init__(self, *args, **kwargs):
+        self.request = kwargs.pop('request', None)
         super(ConveyanceForm, self).__init__(*args, **kwargs)
+        utils.initailize_form_fields(self)
         for visible in self.visible_fields():
             if visible.name in ['startlocation', 'endlocation', 'expamt', 'transportmodes']:
                 visible.required = False
-        utils.initailize_form_fields(self)
-    
+        
+    def clean(self):
+        super(ConveyanceForm, self).clean()
+        ic(self.cleaned_data)
     
     def is_valid(self) -> bool:
         """Adds 'is-invalid' class to invalid fields"""
@@ -85,9 +106,8 @@ class ConveyanceForm(forms.ModelForm):
     
     def clean_startlocation(self):
         if val := self.cleaned_data.get('startlocation'):
-            print("%%%%%%%%%%%%%%%%%55", val)
             val = clean_geometry(val)
-        return val    
+        return val
     
     def clean_endlocation(self):
         if val := self.cleaned_data.get('endlocation'):
@@ -106,39 +126,11 @@ class TrackingForm(forms.ModelForm):
     gpslocation = forms.CharField(max_length=200, required=True)
     class Meta:
         model = atdm.Tracking
-        fields = ['deviceid', 'gpslocation', 'recieveddate', 
-                  'people', 'transportmode','amount', 'identifier']
+        fields = ['deviceid', 'gpslocation', 'receiveddate', 
+                  'people', 'transportmode']
         
     def clean_gpslocation(self):
         if val := self.cleaned_data.get('gpslocation'):
             val = clean_geometry(val)
         return val
     
-#this form is used by graphql    
-class InsertPeopleEventlog(forms.ModelForm):
-    cdtz          = forms.CharField(max_length=55, required=True)
-    mdtz          = forms.CharField(max_length=55, required=True)
-    startlocation = forms.CharField(max_length=100, required=True)
-    endlocation   = forms.CharField(max_length=100, required=False)
-    
-    class Meta:
-        model = atdm.PeopleEventlog
-        fields = [
-            'transportmodes', 'accuracy', 'datefor', 
-            'deviceid', 'shift', 'people', 'client', 'bu', 
-            'expamt', 'duration', 'remarks', 'distance', 
-            'cuser', 'muser', 'startlocation', 'endlocation'
-        ]
-        
-    def clean_startlocation(self):
-        if val := self.cleaned_data.get('startlocation'):
-            val = clean_geometry(val)
-        return val 
-
-    def clean_cdtz(self):
-        if val:=self.cleaned_data.get('cdtz'):
-            return datetime.strptime(val, "%Y-%m-%d %H:%M:%S").replace(tzinfo=ctz())
-            
-    def clean_mdtz(self):
-        if val:= self.cleaned_data.get('mdtz'):
-            return datetime.strptime(val, "%Y-%m-%d %H:%M:%S").replace(tzinfo=ctz())

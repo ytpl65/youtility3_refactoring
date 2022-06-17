@@ -65,7 +65,27 @@ class BtManager(models.Manager):
         rtype = 'bigint[]'
         qset_json = self.raw(
             f"select fn_get_bulist({clientid}, true, true, 'array'::text, null::{rtype}) as id;")
-        return json.loads(qset_json[0].id if qset_json else '{}')  
+        return json.loads(qset_json[0].id if qset_json else '{}')
+    
+    def getsitelist(self, clientid, peopleid):
+        #check if people is admin or not
+        try:
+            p = pm.People.objects.get(id = peopleid)
+        except pm.People.DoesNotExist:
+            return self.none()
+        else:
+            if p.isadmin:
+                bulist = self.get_bu_list_ids(clientid)
+                bus = self.filter(id__in = bulist)
+                qset = bus.annotate(bu_id = F('id')).filter(identifier__tacode = 'SITE').values(
+                    'bu_id', 'bucode', 'butype_id', 'enable', 'cdtz', 'mdtz', 'skipsiteaudit',
+                     'buname', 'cuser_id', 'muser_id', 'identifier_id'
+                )
+                return qset or self.none()
+            else:   
+                pass
+    
+    
     
 
     def get_bus_idfs(self, R, idf=None):
@@ -124,3 +144,37 @@ class TypeAssistManager(models.Manager):
             ~Q(id=1) & Q(mdtz__gte = mdtz) & Q(client_id__in = [clientid])
         ).values(*self.fields)
         return qset or None
+    
+
+
+class GeofenceManager(models.Manager):
+    use_in_migrations: True
+    fields = ['id', 'cdtz',  'mdtz', 'ctzoffset', 'gfcode', 'gfname', 'alerttext', 'geofencecoords', 
+              'enable',  'alerttogroup_id', 'alerttopeople_id', 'bu_id', 'client_id', 'cuser_id', 'muser_id']
+    related = ['cuser', 'muser', 'bu', 'client']
+    
+    def get_geofence_list(self, fields, related, session):
+        qset = self.select_related(*related).filter(
+            ~Q(gfcode='NONE'), enable=True, client_id=session['client_id'],
+        ).values(*fields)
+        return qset or self.none()
+    
+    def get_geofence_json(self, pk):
+        from django.contrib.gis.db.models.functions import AsGeoJSON
+        obj = self.annotate(geofencejson = AsGeoJSON('geofence')).get(id = pk).geofencejson
+        obj = utils.getformatedjson(jsondata = obj, rettype=str)
+        return obj or self.none()
+    
+    def get_gfs_for_siteids(self, siteids):
+        from django.contrib.gis.db.models.functions import AsGeoJSON
+        import json
+        if qset := self.annotate(geofencecoords=AsGeoJSON('geofence')).select_related(*self.related).filter(bu_id__in=siteids).values(*self.fields):
+            geofencestring = ""
+            for obj in qset:
+                geodict = json.loads(obj['geofencecoords'])
+                for lng, lat in  geodict['coordinates'][0]:
+                    geofencestring+=f'{lat},{lng}|'
+                obj['geofencecoords'] = geofencestring
+            return qset
+        return self.none()
+    

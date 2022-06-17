@@ -173,9 +173,7 @@ def perform_attachment_upload(request):
         A['rc'] = 0
         if pelogid!=1:
             if ATT := Attachment.objects.get_attachment_record(resp.data['returnid']):
-                ic("len(ATT) > 0:")
                 if PEOPLE_ATT := PeopleEventlog.objects.get_people_attachment(pelogid):
-                    ic("if (len(PEOPLE_ATT)>0):")
                     ic(ATT.ownername_id, PEOPLE_ATT.people_id)
                     if PEOPLE_PIC := Attachment.objects.get_people_pic(ATT.ownername_id, PEOPLE_ATT.people_id):
                         default_image_path = PEOPLE_PIC.default_img_path

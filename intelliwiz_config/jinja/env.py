@@ -14,6 +14,8 @@ def to_local(val):
     from django.utils.timezone import get_current_timezone
     return val.astimezone(get_current_timezone()).strftime('%d-%b-%Y %H:%M')
 
+
+
 class JinjaEnvironment(Environment):
     keep_trailing_newline=True,  # newline-terminate generated files
     lstrip_blocks=True,  # so can indent control flow tags

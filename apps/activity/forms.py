@@ -21,7 +21,7 @@ class QuestionForm(forms.ModelForm):
     class Meta:
         model = am.Question
         fields = ['quesname', 'answertype', 'alerton', 'isworkflow',
-                  'unit', 'category', 'options', 'isworkflow', 'min', 'max']
+                  'unit', 'category', 'options', 'isworkflow', 'min', 'max', 'ctzoffset']
         labels = {
             'quesname' : 'Name',
             'answertype': 'Type',
@@ -116,7 +116,7 @@ class MasterQsetForm(forms.ModelForm):
 
     class Meta:
         model = am.QuestionSet
-        fields = ['qsetname', 'parent', 'enable', 'assetincludes', 'type']
+        fields = ['qsetname', 'parent', 'enable', 'assetincludes', 'type', 'ctzoffset']
 
         labels = {
             'parent': 'Parent',
@@ -143,7 +143,7 @@ class QsetBelongingForm(forms.ModelForm):
     class Meta:
         model = am.QuestionSetBelonging
         fields = ['seqno', 'qset', 'question', 'answertype', 'min', 'max',
-                  'alerton', 'options', 'ismandatory']
+                  'alerton', 'options', 'ismandatory', 'ctzoffset']
         widgets = {
             'answertype': forms.TextInput(attrs={'readonly': 'readonly'}),
             'question'    : s2forms.Select2Widget,
@@ -225,9 +225,6 @@ class ChecklistForm(MasterQsetForm):
             self.fields['assetincludes'].initial = self.instance.assetincludes.split(',')
         utils.initailize_form_fields(self)
 
-    def clean_assetincludes(self):
-        if val := self.cleaned_data.get('assetincludes'):
-            return json.dumps(val).replace('"', "").replace("[", "").replace("]", "")
 
 
 class QuestionSetForm(MasterQsetForm):
@@ -249,10 +246,7 @@ class QuestionSetForm(MasterQsetForm):
         #         self.instance.assetincludes)
         utils.initailize_form_fields(self)
 
-    def clean_assetincludes(self):
-        if val := self.cleaned_data.get('assetincludes'):
-            val = json.dumps(val).replace('"', "").replace("[", "").replace("]", "")
-        return val
+
 
 
 class AssetForm(forms.ModelForm):
@@ -286,7 +280,7 @@ class AssetForm(forms.ModelForm):
         model = am.Asset
         fields = ['assetcode', 'assetname', 'enable', 'runningstatus', 'type', 'parent',
                    'iscritical', 'category', 'subcategory', 'identifier',
-                  'capacity', 'unit', 'brand']
+                  'capacity', 'unit', 'brand', 'ctzoffset']
 
         widgets = {
             'runningstatus': s2forms.Select2Widget,
@@ -461,11 +455,11 @@ class JobForm(forms.ModelForm):
             'qset'            : s2forms.ModelSelect2Widget(
                 model = am.QuestionSet, 
                 search_fields = ['qsetname__icontains'],
-                max_results=10),
+                max_results=20),
             'people'          : s2forms.ModelSelect2Widget(
                 model = pm.People,
                 search_fields   = ['peoplecode__icontains', 'peoplecode__icontains'],
-                max_results     = 10),
+                max_results     = 20),
             'bu'              : s2forms.Select2Widget,
         }
     
@@ -499,7 +493,7 @@ class JobNeedForm(forms.ModelForm):
         fields = ['identifier', 'frequency', 'parent', 'jobdesc', 'asset', 'ticketcategory',
                   'qset',  'people', 'pgroup', 'priority', 'scantype','multifactor',
                   'jobstatus', 'plandatetime', 'expirydatetime', 'gracetime', 'starttime',
-                  'endtime', 'performedby', 'gpslocation', 'cuser', 'raisedby', 'remarks']
+                  'endtime', 'performedby', 'gpslocation', 'cuser', 'raisedby', 'remarks', 'ctzoffset']
         widgets = {
             'ticketcategory': s2forms.Select2Widget,
             'scantype'       : s2forms.Select2Widget,
@@ -578,7 +572,7 @@ class EscalationForm(forms.ModelForm):
     # specify the name of model to use
     class Meta:
         model = am.EscalationMatrix
-        fields = ['level', 'assignedfor',  'assignedperson',
+        fields = ['level', 'assignedfor',  'assignedperson','ctzoffset',
                   'assignedgroup', 'frequency', 'frequencyvalue', 'body']
         labels = {
             'level': 'Level',

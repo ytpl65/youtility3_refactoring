@@ -8,6 +8,7 @@
 
 {% block body %}
 <form action="" method="post" id="id_checkpointform">
+<input type="hidden" name="{{ master_assetform.ctzoffset.name }}" id = "{{ master_assetform.ctzoffset.auto_id }}" value="-1">
     <div class="modal-header border-0">
         <h3 class="modal-title modal-heading" id="exampleModalLabel">Create {{ label }} <i
                 class="fas fa-poll-h fa-sm ch4"></i>
@@ -152,7 +153,9 @@
 
 {{ master_assetform.media.js }}
 <script>
-
+    //set ctzoffset
+  	$("#id_ctzoffset").val(-new Date().getTimezoneOffset())
+    
     //$('.optionGrp').hide()
     $('form').find("label").addClass("col-md-1")
     $(document).ready(() => {

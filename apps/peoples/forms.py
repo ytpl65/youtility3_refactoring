@@ -1,19 +1,13 @@
-from re import search
 from django import forms
 from django.conf import settings
 
 import apps.peoples.models as pm  # people-models
 import apps.onboarding.models as om  # onboarding-models
-import apps.attendance.models as atdm  # attendance-models
 from django.core.validators import RegexValidator
 from icecream import ic
 from django_select2 import forms as s2forms
 from django.db.models import Q
 from apps.core import utils
-import apps.onboarding.utils as ob_utils  # onboarding-utils
-import apps.core.utils as utils  # onboarding-utils
-import apps.peoples.utils as pp_utils
-from apps.tenants.models import Tenant  # onboarding-utils
 
 #============= BEGIN LOGIN FORM ====================#
 
@@ -104,7 +98,7 @@ class PeopleForm(forms.ModelForm):
         fields = ['peoplename', 'peoplecode',  'peopleimg',  'mobno',      'email',
                   'loginid',      'dateofbirth', 'enable',   'deviceid',   'gender',
                   'peopletype',   'dateofjoin',  'department', 'dateofreport',
-                  'designation',  'reportto',   'bu', 'isadmin']
+                  'designation',  'reportto',   'bu', 'isadmin', 'ctzoffset']
         labels = {
             'peoplename': 'Name',        'loginid'    : 'Login Id',        'email'       : 'Email',
             'peopletype': 'People Type', 'reportto'   : 'Report to',       'designation' : 'Designation',
@@ -357,13 +351,15 @@ class PeopleExtrasForm(forms.Form):
     debug                     = forms.BooleanField(initial=False, required=False)
     showtemplatebasedonfilter = forms.BooleanField(initial=False, required=False, label="Display site wise templates")
     blacklist                 = forms.BooleanField(initial=False, required=False)
-    assignsitegroup           = forms.ChoiceField(required=False, label="Site Group", widget=s2forms.Select2Widget)
-    tempincludes              = forms.ChoiceField(required=False, label="Template", widget=s2forms.Select2Widget)
+    assignsitegroup           = forms.MultipleChoiceField(required=False, label="Site Group", widget=s2forms.Select2MultipleWidget)
+    tempincludes              = forms.MultipleChoiceField(required=False, label="Template", widget=s2forms.Select2MultipleWidget)
     mlogsendsto               = forms.CharField(max_length=25, required=False)
 
     def __init__(self, *args, **kwargs):
         session = kwargs.pop('session')
         super(PeopleExtrasForm, self).__init__(*args, **kwargs)
+        self.fields['assignsitegroup'].choices = pm.Pgroup.objects.get_assignedsitegroup_forclient(session['client_id'])
+        self.fields['tempincludes'].choices = pm.Pgroup.objects.get_assignedsitegroup_forclient(session['client_id'])
         if not (session['is_superadmin']):
             self.fields['webcapability'].choices     = session['people_webcaps'] or session['client_webcaps']
             self.fields['mobilecapability'].choices  = session['people_mobcaps'] or session['client_mobcaps']
@@ -386,6 +382,8 @@ class PeopleExtrasForm(forms.Form):
         result = super().is_valid()
         utils.apply_error_classes(self)
         return result
+    
+        
 
 
 class PeopleGrpAllocation(forms.Form):

@@ -113,7 +113,7 @@ class MasterReportForm(View, LoginRequiredMixin):
             if not R.get('id'):
                 log.info("create a %s form requested"%self.viewname)
                 cxt = {'reporttemp_form': self.form_class(request=request, initial=self.initial),
-                       'qsetbng':self.subform(auto_id=False)}
+                       'qsetbng':self.subform()}
                 return render(request, self.template_path, context=cxt)
             
             #return for with instance loaded
@@ -125,7 +125,7 @@ class MasterReportForm(View, LoginRequiredMixin):
                     'buincludes': [8,6],
                 })
                 form = self.form_class(instance = obj, initial=self.initial, request=request)
-                cxt = {'reporttemp_form':form, 'qsetbng':self.subform(auto_id=False)}
+                cxt = {'reporttemp_form':form, 'qsetbng':self.subform()}
                 return render(request, self.template_path, context=cxt)
         
         #return reports for list view

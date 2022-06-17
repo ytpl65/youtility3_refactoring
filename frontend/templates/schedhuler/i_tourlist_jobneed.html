@@ -21,7 +21,7 @@ Tour List
 <!-------------------------------------------- BEGIN Schedhuled Tour TABLE ------------------------------------------->
 {% block table %}
 <table id="internaltour_table" class="display compact cell-border" style="width:100%">
-    <thead class="fw-bold fs-6">
+    {# <thead class="fw-bold fs-6">
         <th>Plan Datetime</th>
         <th>Description</th>
         <th>Status</th>
@@ -59,14 +59,14 @@ Tour List
             <td>{{ tour['expirydatetime'] | to_local }}</td>
         </tr>
         {% endfor %}
-    </tbody>
+    </tbody> #}
 </table>
-
+{# 
 {% if tour_list and tour_list.has_other_pages %}
 <!-- BEGIN PAGINATOIN -->
 {{ paginator(tour_list) }}
 <!-- END PAGINATOIN ---->
-{% endif %}
+{% endif %} #}
 {% endblock table %}
 
 {% block extra_scripts %}
@@ -75,6 +75,7 @@ Tour List
     var table = null;
     const formFilter = '#internaltour_filter'
     const table_id = '#internaltour_table'
+    const urlname = "{{ url('schedhuler:jobneedtours') }}"
 
 
     function submitFormFilter(){
@@ -108,20 +109,32 @@ Tour List
         //datatable initialization
         table = $(table_id).DataTable({
 			//orderCellsTop: true,
-			responsive: true,
-			fixedHeader: true,
-			paging: false,
-			lengthChange: false,
-			language: {
-				searchPlaceholder: "Search on page"
-			},
-            dom:"<'row'" +
-                "<'col-sm-6 d-flex align-items-center justify-conten-start'B>" +
-                "<'col-sm-6 d-flex align-items-center justify-content-end'f>" +
-                ">" +
-
-                "<'table-responsive'tr>",
+			deferRender: true,
+			responsive : true,  
+            dom:`<'row' <'col-sm-6 d-flex justify-content-start'f> <'col-sm-6 d-flex justify-content-end'B> >rt<'row'
+			 <'col-sm-6'l> <'col-sm-6'p><'col-sm-12 d-flex justify-content-center'i>>`,
             //ordering:false,
+            columns:[
+                {data:'id'},
+                {data:'plandatetime', title:"Plan Duration"},
+                {data:'jobdesc', title:'Description'},
+                {data:'jobstatus', title:'Status'},
+                {title:'People/Group'},
+                {data:'performedby__peoplename', title:'Performed By'},
+                {data:'gracetime', title:"Grace Time"},
+                {data:'expirydatetime', title:"Expiry Datetime"}
+            ],
+            columnDefs:[
+                {targets:0, data:'id', visible:false, searchable:false},
+                {targets:1, data:'plandatetime', render:function(data, type, row, meta){
+                    return `<a href="${urlname}?id=${row['id']}">${data}</a>`
+                }},
+                {targets:4, render:function(data, type, row, meta){
+                    let peoplename = row['people__peoplename']
+                    let groupname = row['pgroup__groupname']
+                    return peoplename ? typeof peoplename == 'undefined' : groupname 
+                }}
+            ],
             scrollCollapse: true,
             buttons:[
 				{

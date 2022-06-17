@@ -1,10 +1,7 @@
-from cProfile import label
-from attr import attr
 from django import forms
 from apps.activity import models as am
 from apps.onboarding import models as om
 from apps.peoples import models as pm
-import json
 from apps.peoples.models import(
     Pgroup
 )
@@ -23,7 +20,7 @@ class MasterReportTemplate(forms.ModelForm):
         model = am.QuestionSet
         fields = [
             'type',  'qsetname', 'buincludes', 'site_grp_includes', 
-            'site_type_includes', 'enable']
+            'site_type_includes', 'enable', 'ctzoffset']
 
         
 class SiteReportTemplate(MasterReportTemplate):

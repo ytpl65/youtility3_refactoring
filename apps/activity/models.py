@@ -14,6 +14,8 @@ from django.utils import timezone
 from apps.activity.managers import(
     AssetManager, AttachmentManager, JobneedDetailsManager, QsetBlngManager, QuestionManager, QuestionSetManager, JobneedManager
 )
+from django.contrib.postgres.fields import ArrayField
+
 
 # Create your models here.
 class Question(BaseModel, TenantAwareModel):
@@ -88,8 +90,8 @@ class QuestionSet(BaseModel, TenantAwareModel):
     #id            = models.BigIntegerField(primary_key=True)
     qsetname           = models.CharField(_("QuestionSet Name"), max_length=200)
     enable             = models.BooleanField(_("Enable"), default=True)
-    assetincludes      = models.TextField(null=True, blank=True)
-    buincludes         = models.TextField(null=True, blank=True)
+    assetincludes      = ArrayField(models.CharField(max_length=50, blank=True), null=True, blank=True, verbose_name= _("Asset Includes"))
+    buincludes         = ArrayField(models.CharField(max_length=50, blank=True), null=True, blank=True, verbose_name= _("Bu Includes"))
     seqno               = models.SmallIntegerField(_("SL No."), default=1)
     parent             = models.ForeignKey("self", verbose_name=_("Belongs To"), on_delete=models.RESTRICT, null=True, blank=True)
     type               = models.CharField( _("Question Set Type"), choices=Type.choices, null=True, max_length=50)
@@ -180,7 +182,6 @@ def other_info():
         'distance': None,
         'breaktime': 0,
         'deviation':False,
-        
     }
 
 
@@ -196,6 +197,7 @@ class Job(BaseModel, TenantAwareModel):
         INCIDENTREPORT   = ('INCIDENTREPORT', "Incident Report")
         ASSETLOG         = ("ASSETLOG",	"Asset Log")
         ASSETMAINTENANCE = ("ASSETMAINTENANCE",	"Asset Maintenance")
+        GEOFENCE         = ('GEOFENCE', 'Geofence')
 
     class Priority(models.TextChoices):
         HIGH   = "HIGH" , _('High')
@@ -238,7 +240,7 @@ class Job(BaseModel, TenantAwareModel):
     pgroup          = models.ForeignKey("peoples.Pgroup", verbose_name=_("Group"), on_delete=models.RESTRICT, null=True, blank=True)
     geofence        = models.ForeignKey("onboarding.GeofenceMaster", verbose_name=_("Geofence"), on_delete=models.RESTRICT, null=True, blank=True)
     parent          = models.ForeignKey("self", verbose_name=_("Belongs to"), on_delete=models.RESTRICT, null=True, blank=True)
-    seqno            = models.SmallIntegerField(_("Serial No."))
+    seqno           = models.SmallIntegerField(_("Serial No."))
     client          = models.ForeignKey("onboarding.Bt", verbose_name=_("Client"), on_delete=models.RESTRICT, related_name='job_clients', null=True, blank=True)
     bu              = models.ForeignKey("onboarding.Bt", verbose_name=_("Site"), on_delete=models.RESTRICT, related_name='job_bus', null=True, blank=True)
     shift           = models.ForeignKey("onboarding.Shift", verbose_name=_("Shift"), on_delete=models.RESTRICT, null=True, related_name="job_shifts")
@@ -332,7 +334,7 @@ class Asset(BaseModel, TenantAwareModel):
     brand         = models.ForeignKey("onboarding.TypeAssist", verbose_name=_("Brand"), null = True, blank=True, on_delete=models.RESTRICT, related_name='asset_brands')
     unit          = models.ForeignKey("onboarding.TypeAssist", verbose_name=_("Unit"), null = True, blank=True, on_delete=models.RESTRICT, related_name='asset_units')
     capacity      = models.DecimalField(_("Capacity"), default=0.0, max_digits=18, decimal_places=2)
-    servprov     = models.ForeignKey("onboarding.Bt", verbose_name=_( "Client"), on_delete = models.RESTRICT, null=True, related_name='asset_serv_providers')
+    servprov      = models.ForeignKey("onboarding.Bt", verbose_name=_( "Client"), on_delete = models.RESTRICT, null=True, related_name='asset_serv_providers')
     asset_json    = models.JSONField( encoder = DjangoJSONEncoder, blank=True, null=True, default=asset_json)
 
     objects = AssetManager()
@@ -444,7 +446,7 @@ class Jobneed(BaseModel, TenantAwareModel):
     raisedby         = models.CharField(_("Raised by"), max_length=55, default="", null=True)
     raisedtktflag    = models.BooleanField(_("RaiseTicketFlag"), default=False, null=True)
     ismailsent       = models.BooleanField(_('Is Mail Sent'), default= False)
-    attachmentcount         = models.IntegerField(_('Attachment Count'), default=0)
+    attachmentcount  = models.IntegerField(_('Attachment Count'), default=0)
     other_info       = models.JSONField(_("Other info"), default=other_info, blank=True, encoder=DjangoJSONEncoder)
 
     objects = JobneedManager()
@@ -674,3 +676,7 @@ class DeviceEventlog(BaseModel, models.Model):
     people      = models.ForeignKey('peoples.People', null=True, blank=True, on_delete=models.RESTRICT, related_name="deviceevent_people")
     stepcount   = models.CharField(max_length=55, default='NONE')
     
+    
+    class Meta(BaseModel.Meta):
+        db_table = 'deviceeventlog'
+        get_latest_by = ["mdtz", 'cdtz']

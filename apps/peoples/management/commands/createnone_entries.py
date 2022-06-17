@@ -29,6 +29,7 @@ class Command(BaseCommand):
                 utils.get_or_create_none_jobneed()
                 utils.get_or_create_none_qset()
                 utils.get_or_create_none_asset()
+                utils.get_or_create_none_tenant()
                 utils.get_or_create_none_question()
                 utils.get_or_create_none_qsetblng()
                 self.stdout.write(self.style.SUCCESS('Successfully created none entries in "%s" '%db))

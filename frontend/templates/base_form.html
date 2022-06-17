@@ -61,6 +61,11 @@ on top of form -->
 
 <!--END To Render something
 on top of form -->
+{% block fullpage %}
+
+{% endblock fullpage %}
+
+
 
 <!--BEGIN CARD-->
 <div class="card">
@@ -106,16 +111,6 @@ on top of form -->
             of form use this block-->
 
 
-            <!----------- BEGIN FORM MESSGES --------------->
-            {%- block form_msgs -%}
-                {% for msg in get_msgs(request) %}
-                    <div class="alert {% if msg.tags %} {{ msg.tags }} {% endif %} " id="alert_msg" style="width:73%; ">
-                        {{ msg }}
-                        <button type="button" class="btn-close flt-right" data-bs-dismiss="alert" aria-label="Close"></button>
-                    </div>
-                {% endfor %}
-            {% endblock form_msgs %}
-            <!----------- END FORM MESSGES ----------------->
 
             <!--keep empty-->
             <div>

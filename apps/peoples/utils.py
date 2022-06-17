@@ -63,11 +63,9 @@ def get_people_prefform(people, session):
 def save_cuser_muser(instance, user, create=None):
     from django.utils import timezone
     if instance.cuser is not None:
-        ic('updated')
         instance.muser = user
         instance.mdtz = timezone.now().replace(microsecond=0)
     else:
-        ic('created')
         instance.cuser = instance.muser = user
     return instance
 

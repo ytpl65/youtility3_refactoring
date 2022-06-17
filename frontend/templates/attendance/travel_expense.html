@@ -16,8 +16,8 @@ Conveyance List
 
 
 {% block table %}
-<table id="conveyance_table" class="display compact cell-border rounded" style="width:100%">
-
+<table id="conveyance_table"  class="display cell-border compact hover" style="width:100%">
+    <thead  class="fw-bold fs-6"></thead>
 </table>
 {% endblock table %}
 
@@ -40,7 +40,7 @@ aria-labelledby="exampleModalLabel" data-bs-backdrop="static" id="modal-te">
 	const table_id        = "#conveyance_table"
 	const formid          = "#id_teform"
 	const urlname         = "{{ url('attendance:conveyance') }}"
-	const viewname        = "Conveyancew"
+	const viewname        = "Conveyance"
 	const rowlink         = "a.te-link"
 
 $(document).ready(() => {
@@ -48,50 +48,72 @@ $(document).ready(() => {
     function TaBeforeSend(){
         $(modal_id).modal("show");
     }
+    var formUrl = "{{ url('attendance:conveyance') }}"
     ////datatable initialization
     table = $(table_id).DataTable({
         ajax:{
-            url:"{{ url('attendance:conveyance') }}?action=list"
+            url:"{{ url('attendance:conveyance') }}?action=list",
+            data:function(d){
+                d.fields = ['id', 'bu__buname', 'people__peoplename', 'people__peoplecode',
+                    'bu__bucode', 'punchintime', 'punchouttime', 'transportmodes', 'distance',
+                'duration', 'expamt', 'ctzoffset']
+                }
         },
         responsive:true,
-        serverSide:true,
-        fixedHeader:true,
-        lengthChange:false,
-        language:{
-            search:"_INPUT_",
-            searchPlaceholder:"Search...",
-            processing:"Getting Data",
-        },
-        search: {return: true},
+        deferRender: true,
         lengthMenu:[[20, 30, 40],[20, 30, 40]],
         dom:`<'row' <'col-sm-6 d-flex justify-content-start'f> <'col-sm-6 d-flex justify-content-end'B> >rt<'row' <'col-sm-6'l> <'col-sm-6'p><'col-sm-12 d-flex justify-content-center'i>>`,
         columns:[
-            {visible:false, data:'id', searchable:false, orderable:false},
-            {data:'buname', title:'Site Name', render:function ( data, type, row, meta ) {
-                return `<p data-bs-custom-class="popover-dark" data-bs-toggle="popover" 
-                data-bs-placement="right" title="Code"  
-                data-bs-content=${data['bucode']}>${data['buname']}</p>`;
+            {visible:false, data:'id', searchable:false, orderable:false, defaultContent:""},
+            {data:'bu__buname', title:'Site Name', render:function ( data, type, row, meta ) {
+                return `<p data-placement="top" data-toggle="tooltip"  
+                data-bs-placement="right"  class="pe-auto"
+                title=${row['bu__bucode']}>${row['bu__buname']}</p>`;
             }},
-            {data:'peoplename', title:'People', render:function ( data, type, row, meta ) {
-                return `<p data-bs-custom-class="popover-dark" data-bs-toggle="popover" 
-                data-bs-placement="right" title="Code"  
-                data-bs-content=${data['peoplecode']}>${data['peoplename']}</p>`;
+            {data:'people__peoplename', title:'People', render:function ( data, type, row, meta ) {
+                return `<a href=${formUrl}?id=${row['id']}>${data}</a>`
             }},
-            {data:'peoplecode', visible:false, searchable:false, orderable:false },
-            {data:'bucode', visible:false, searchable:false, orderable:false },
-            {data:'punch_intime', title:'Start Time' },
-            {data:'punch_outtime', title:'End Time' },
-            {data:'transportmode', title:'Transport Mode' },
+            {data:'people__peoplecode', visible:false, searchable:false, orderable:false },
+            {data:'bu__bucode', visible:false, searchable:false, orderable:false },
+            {data:'punchintime', title:'Start Time', render:function(data, type, row, meta){
+                if(type === "sort" || type === "type"){
+                    return data;
+                }
+                //return data
+                if(data){
+                    let datetime = moment(data, 'YYYY-MM-DDTHH:mm:ss').add(row['ctzoffset'], 'm').format("DD-MMM-YYYY HH:mm")
+                    return data ? datetime : '-';
+                }return data
+                
+            } },
+            {data:'punchouttime', title:'End Time', render:function(data,type,row,meta){
+                if(type === "sort" || type === "type"){
+                    return data ? data: '-';
+                }
+                if(data){
+                    let datetime = moment(data, 'YYYY-MM-DDTHH:mm:ss').add(row['ctzoffset'], 'm').format("DD-MMM-YYYY HH:mm")
+                    return data ? datetime : '-';
+                }return data
+            } },
+            {data:'transportmodes', title:'Transport Modes' },
             {data:'distance', title:'Distance' },
             {data:'duration', title:'Duration' },
             {data:'expamt', title:'Amount' },
         ],
-        columnDefs:[{
-            targets:[5,6, 7],
-            orderable:false,
-        }],
-        buttons:[]
+        //columnDefs:[{
+        //    targets:[5,6, 7],
+        //    orderable:false,
+        //}],
+        buttons:[{
+            text:'Add New',
+            className:'btn btn-sm btn-light-primary',
+            action:function(e, dt, node, config){
+                location.href = "{{ url('attendance:conveyance') }}?action=form"
+            }
+        }]
     })
+
+    $('.btn').removeClass('dt-button')
 
     //submit form
     $(modal_id).on('submit', formid, function(e) {
@@ -119,66 +141,6 @@ $(document).ready(() => {
         })
     })
 
-    //update row (form-view)
-    $("tbody").click(rowlink,  (e) => {
-        console.log(e)
-        e.preventDefault();
-        var id = $(e.originalEvent.originalTarget).attr('data-id');
-        var rowid = $(e.originalEvent.originalTarget).attr('data-rowid');
-        if (!(id && rowid)){ return }
-        $(modalcontent_id).attr('data-rowid', rowid)
-        $(modalcontent_id).attr('data-id', id)
-        console.log("id ", id)
-        console.log("table ", table)
-        const params = {
-            'modal_id'    : modal_id,
-            'url'         : `${urlname}?id=${id}`,
-            'beforeSend'  : TaBeforeSend }
-        fire_ajax_get(params)
-        .done((data, status, xhr) => {
-            $(modalcontent_id).attr('data-form', 'update')
-            $(`${modal_id} .modal-content`).html(data.html_form)
-        })
-        .fail((xhr, status, error) => {
-            show_error_alert('Something went wrong!') //defined in custom.js
-        })
-    })
 })
-    //delete ajax request 
-	function isTeDeleted(id){ 
-		console.log("id ", id)
-		const params = {url:`${urlname}?action=delete&id=${id}`, 'beforeSend':function () {}}
-		fire_ajax_get(params)
-		.done((data, status, xhr) => {
-			if(!xhr.status === 200){
-				return false
-			}
-			return true
-		})
-		.fail((xhr, status, error) => {
-			show_error_alert('Something went wrong!') //defined in custom.js
-			return false
-		})
-	}
-    function deleteTe(elemt){
-		var id = $(elemt).attr("data-id");
-		show_alert_before_delete(viewname)
-		.then((result) => {
-			if(result.isConfirmed){ //delete requested by user
-				status = isTaDeleted(id) //fire's request
-				console.log("status ", status)
-				if(status){
-					show_successful_delete_alert() //defined in customjs
-					$(modal_id).modal("hide")
-					//delete row from table
-					row_index = parseInt($(modalcontent_id).attr('data-rowid'))
-					console.log(row_index, "row index")
-					table.row(row_index).remove().draw();
-				}else{
-					show_error_alert('Something went wrong!');
-				}
-			}
-		})
-	}
 </script>
 {% endblock extra_scripts %}

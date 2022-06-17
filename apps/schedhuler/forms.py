@@ -1,19 +1,11 @@
-from cProfile import label
-from calendar import c
-from datetime import time
-from xml.etree.ElementTree import TreeBuilder
-from attr import fields
 from django.conf import settings
-from matplotlib import widgets
 from apps.activity.forms import JobForm, JobNeedForm
 from django import forms
-from django.utils.timezone import utc
 import apps.onboarding.utils as ob_utils
 from apps.core import utils
 from django_select2 import forms as s2forms
 import apps.activity.models as am
 import apps.onboarding.models as ob
-import pytz
 
 class Schd_I_TourJobForm(JobForm):
     ASSIGNTO_CHOICES   = [('PEOPLE', 'People'), ('GROUP', 'Group')]
@@ -175,7 +167,7 @@ class Schd_E_TourJobForm(JobForm):
         super(Schd_E_TourJobForm, self).__init__(*args, **kwargs)
         self.fields['fromdate'].input_formats = settings.DATETIME_INPUT_FORMATS
         self.fields['uptodate'].input_formats = settings.DATETIME_INPUT_FORMATS
-        self.fields['ticketcategory'].initial = ob.TypeAssist.objects.get(tacode='AUTOCLOSE')
+        self.fields['ticketcategory'].initial = ob.TypeAssist.objects.get(tacode='AUTOCLOSED')
         utils.initailize_form_fields(self)
         
         
@@ -220,13 +212,13 @@ class SchdTaskFormJob(JobForm):
         super(SchdTaskFormJob, self).__init__(*args, **kwargs)
         self.fields['fromdate'].input_formats  = settings.DATETIME_INPUT_FORMATS
         self.fields['uptodate'].input_formats  = settings.DATETIME_INPUT_FORMATS
-        self.fields['jobdesc'].required         = False
-        self.fields['identifier'].widget.attrs  = {"style":"display:none"}
-        self.fields['starttime'].widget.attrs   = {"style":"display:none"}
-        self.fields['endtime'].widget.attrs     = {"style":"display:none"}
-        self.fields['frequency'].widget.attrs   = {"style":"display:none"}
-        self.fields['expirytime'].label         = 'Grace Time After'
-        self.fields['gracetime'].label          = 'Grace Time Before'
+        self.fields['jobdesc'].required        = False
+        self.fields['identifier'].widget.attrs = {"style":"display:none"}
+        self.fields['starttime'].widget.attrs  = {"style":"display:none"}
+        self.fields['endtime'].widget.attrs    = {"style":"display:none"}
+        self.fields['frequency'].widget.attrs  = {"style":"display:none"}
+        self.fields['expirytime'].label        = 'Grace Time After'
+        self.fields['gracetime'].label         = 'Grace Time Before'
         self.fields['ticketcategory'].queryset = ob.TypeAssist.objects.filter(tatype__tacode="TICKETCATEGORY")
         utils.initailize_form_fields(self)
         

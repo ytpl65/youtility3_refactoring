@@ -52,6 +52,7 @@ Schedhule External-Tour&nbsp;<i class="fa fa-clock fs-4 text-primary" aria-hidde
 {% block form %}
 <form action="" method="post" id="id_schdexternaltourform">
     <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
+    <input type="hidden" name="{{ schdexternaltourform.ctzoffset.name }}" id = "{{ schdexternaltourform.ctzoffset.auto_id }}" value="-1">
     <div class="default-hidden d-none">
         {{ schdexternaltourform.identifier }}
         {{ schdexternaltourform.priority }}
@@ -420,6 +421,8 @@ var asgdsites_table    = null;
 
 
 $(document).ready(() => { //DOCUMENT.READY START[+]
+    //set ctzoffset
+  	$("#id_ctzoffset").val(-new Date().getTimezoneOffset())
     //ALL SITES TABLE CONFIGURATION
     $('#all-sites thead tr')
     .clone(true)

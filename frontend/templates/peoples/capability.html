@@ -25,7 +25,7 @@ Capability List
             <th>Capability for</th>
             <th>Belongs To</th>
         </thead>
-
+		<tbody></tbody>
     </table>
     <!------------------ END TABLE --------------------->
 
@@ -77,23 +77,20 @@ Capability List
 			deferRender: true,
 			responsive : true,
 			fixedHeader: true,
-			lengthMenu: [[10, 20, 30], [10, 20, 30]],
-			language: {
-				searchPlaceholder: "Search...",
-				search:"_INPUT_",
-				processing:"Getting Data"
-			},
             dom:`<'row' <'col-sm-6 d-flex justify-content-start'f> <'col-sm-6 d-flex justify-content-end'B> >rt<'row'
 			 <'col-sm-6'l> <'col-sm-6'p><'col-sm-12 d-flex justify-content-center'i>>`,
             ordering:false,
             scrollCollapse: true,
 			columns     : [
+				{'data':'id'},
                 { "data": "capscode" },
                 { "data": "capsname" },
                 { "data": "cfor" },
                 { "data": "parent__capscode" },
             ],
 			columnDefs:[
+				{targets:0, data: "id", visible:false, searchable:false, orderable:false },
+
 				{
 					targets: 1,
 					data   : 'tacode',
@@ -114,7 +111,6 @@ Capability List
                             'beforeSend'  : capBeforeSend }
 						fire_ajax_get(params)
 						.done((data, status, xhr) => {
-							$(modalcontent_id).attr('data-form', 'create')
                             $(`${modal_id} .modal-content`).html(data.html_form)
                         })
 						.fail((xhr, status, error) => {
@@ -132,10 +128,9 @@ Capability List
 			var form = $(this);
 			e.preventDefault()
 			const params = { url:urlname, modal:true } //capability view
-			const formtype = $(modalcontent_id).attr('data-form') //form-type (create/update)
-			const id = $(modalcontent_id).attr('data-id') //form instance id
+			const id = $("#pk").val() //form instance id
 			var payLoad = {formData:form.serialize(), csrfmiddlewaretoken: '{{ csrf_token }}'}//payload for post request
-			if(formtype === 'update'){
+			if(id != 'None'){
 				var newPayLoad = {...payLoad, 'pk':id}
 				payLoad = newPayLoad
 			}
@@ -143,22 +138,27 @@ Capability List
 			.done((data, status, xhr) => { //function to submit post request
 				console.log("data ", data)
 				$(modal_id).modal("hide");
-				table.row.add(data.row).draw()
-				var isupdated = formtype === 'update' ? true : false
+				if(id!=='None'){
+					table.row('.selected').data(data.row).draw()
+				}else{
+					table.row.add(data.row).draw()
+				}
 				show_successful_save_alert(update=isupdated)
 			})
 		})
 
 		//update row (form-view)
-		$('tbody').click(rowlink, (e) => {
+		$("#cap_table tbody").on('click', 'tr', function(e) {
+			if ($(this).hasClass('selected')) {
+				$(this).removeClass('selected');
+			} else {
+				table.$('tr.selected').removeClass('selected');
+				$(this).addClass('selected');
+			}
+			var d = table.row( this ).data();
 			e.preventDefault();
-			var id = $(e.originalEvent.originalTarget).attr('data-id');
-			var rowid = $(e.originalEvent.originalTarget).attr('data-rowid');
-			if (!(id && rowid)){ return }
-			$(modalcontent_id).attr('data-rowid', rowid)
-			$(modalcontent_id).attr('data-id', id)
-			console.log("id ", id)
-			console.log("table ", table)
+			var id = d.id
+			if (!(id)){ return }
 			const params = {
 				'modal_id'    : modal_id,
 				'url'         : `${urlname}?id=${id}`,

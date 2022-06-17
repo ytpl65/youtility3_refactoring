@@ -10,7 +10,7 @@
 {% block pagebreadcumb %}
 <!--will call parent contents -->
 {{ super() }}
-<li class="breadcrumb-item pe-3"><a href="{{ url('schedhuler:retrieve_tasks') }}" class="pe-3">Schedhuled Tasks</a></li>
+<li class="breadcrumb-item pe-3"><a href="{{ url('schedhuler:jobschdtasks') }}?template=true" class="pe-3">Schedhuled Tasks</a></li>
 <li class="breadcrumb-item pe-3"><a href="javascript:void(0)" class="pe-3">Schedhule Task Form</a></li>
 {% endblock pagebreadcumb %}
 <!-------------------------- END PAGE BREADCUMB ------------------------->
@@ -39,6 +39,7 @@ Schedhule Task
 
 {% block form %}
 <form action="{{ url('schedhuler:create_task') }}" method="post" id="schdtaskform">
+<input type="hidden" name="{{ schdtaskform.ctzoffset.name }}" id = "{{ schdtaskform.ctzoffset.auto_id }}" value="-1">
         {{ schdtaskform.identifier }}
         {{ schdtaskform.starttime }}
         {{ schdtaskform.frequency }}
@@ -291,7 +292,7 @@ Schedhule Task
 {% block extra_scripts %}
 {{ schdtaskform.media.js }}
 <script src="{{ static('assets/js/jqCron.js') }}"></script>
-<script src="{{ static('assets/js/jqCron.en.js') }}"></script>
+{# <script src="{{ static('assets/js/jqCron.en.js') }}"></script> #}
 
 <script>
     // add classes to label tags.
@@ -311,6 +312,8 @@ Schedhule Task
     var formSaved = false;
 
     $(document).ready(function(){
+        //set ctzoffset
+  	    $("#id_ctzoffset").val(-new Date().getTimezoneOffset())
         formSaved=true
         //toggle people and pgroup field based on radio button value
         if ('{{schdtaskform.instance.id}}' == ('None' || "")) {
@@ -368,9 +371,10 @@ Schedhule Task
                             }
                         }
                     });
+                    
                 });
             }
-            $('#cron_scheduler').modal('show');
+            //$('#cron_scheduler').modal('show');
         });
 
 

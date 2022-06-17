@@ -65,6 +65,7 @@ Capability Form
 <form action="" method="post" id="id_capform">
 	<!---------------------- CSRF-MIDDLEWARE TOKEN ---------------------->
 	{# <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}"> #}
+	<input type="hidden" name="{{ cap_form.ctzoffset.name }}" id = "{{ cap_form.ctzoffset.auto_id }}" value="-1">
 	{% for field in cap_form %}
 	<div class="mb-3 row">
 		<!--LABEL FIELD-->
@@ -101,6 +102,8 @@ Capability Form
 {{ cap_form.media.js }}
 <script>
 	$(document).ready(function () {
+		 //set ctzoffset
+  		$("#id_ctzoffset").val(-new Date().getTimezoneOffset())
 		//hide the delete button when instance is not saved yet.
 		if ('{{cap_form.instance.capscode}}' == ('None' || "")) {
 			$("#btn_del").hide()

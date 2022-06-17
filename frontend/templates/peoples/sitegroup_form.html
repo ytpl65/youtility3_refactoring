@@ -23,6 +23,7 @@ Site Group
 {% block form %}
 <form action="{{ url('peoples:sitegroup') }}" method="post" id="sitegrp_form">
     <input type="hidden" name="pk" id="id_pk"value="{{ sitegrpform.instance.id }}">
+    <input type="hidden" name="{{ sitegrpform.ctzoffset.name }}" id = "{{ sitegrpform.ctzoffset.auto_id }}" value="-1">
     {{ sitegrpform.identifier }}
 
     <div class="row mb-3 gy-3">
@@ -157,6 +158,8 @@ Site Group
 
 
     $(document).ready(() => {
+        //set ctzoffset
+        $("#id_ctzoffset").val(-new Date().getTimezoneOffset())
 
         tabAllsites = $("#all_sites").DataTable({
             ajax:{
@@ -244,6 +247,7 @@ Site Group
         //reduce size of search bar
         
         if("{{ sitegrpform.instance.id }}" != 'None'){
+            console.log('checkig...')
             loadAssignedSitesIfThereAny(tabAssigned_sites, "{{ sitegrpform.instance.id }}")
         }
         //ON CLICK TRASH ICON REMOVE ROW
@@ -276,7 +280,7 @@ Site Group
 			
             const params = { url:"{{ url('peoples:sitegroup') }}", modal:false } 
 			var payLoad =  {'formData':form.serialize(), csrfmiddlewaretoken: '{{ csrf_token }}', 'assignedSites': JSON.stringify(tabAssigned_sites.rows().data().toArray())}
-            var isupdate = $("#id_pk")!=="" ?  true : false
+            var isupdate = $("#id_pk")!=="" ?  false : true
             Swal.fire({
             title:"Submit?",
             text:"This will allocate the selected sites to the Sites group being created!",
@@ -286,8 +290,7 @@ Site Group
             }).then((res) => {
                 fire_ajax_form_post(params, payLoad)
 			.done((data, status, xhr) => { //function to submit post request
-                //addResultToTable(data.row)
-				    (isupdate)
+				show_successful_save_alert(update=isupdate)
 			})
             } )
 			
@@ -295,5 +298,27 @@ Site Group
 
 
     })
+
+    //delete sitegroup 
+	function deleteSiteGroup(elemt){
+		var id = $("#id_pk").val()
+		show_alert_before_delete('Site Group')
+		.then((result) => {
+			if(result.isConfirmed){ //delete requested by user
+				status = isSiteGrpDeleted(id) //fire's request
+				console.log("status ", status)
+				if(status){
+					show_successful_delete_alert() //defined in customjs
+					$(modal_id).modal("hide")
+					//delete row from table
+					row_index = parseInt($(modalcontent_id).attr('data-rowid'))
+					table.search().ajax.reload()
+					console.log("table reloaded")
+				}else{
+					show_error_alert('Something went wrong!');
+				}
+			}
+		})
+	}
 </script>
 {% endblock extra_scripts %}

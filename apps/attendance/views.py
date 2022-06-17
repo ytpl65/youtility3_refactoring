@@ -1,6 +1,7 @@
 from django.forms import model_to_dict
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db.utils import IntegrityError
+from django.test import TransactionTestCase
 import apps.attendance.forms as atf
 import apps.attendance.models as atdm
 from .filters import AttendanceFilter
@@ -10,6 +11,7 @@ from django.http.request import QueryDict
 from django.db.models import Q
 from django.shortcuts import  render
 from django.http import response as rp
+from django.db import transaction
 import logging
 from apps.core import utils
 logger = logging.getLogger('django')
@@ -28,7 +30,7 @@ class Attendance(LoginRequiredMixin, View):
         'model': atdm.PeopleEventlog,
         'filter': AttendanceFilter,
         'fields': ['id', 'people__peoplename', 'verifiedby__peoplename', 'peventtype', 'bu__buname', 'datefor',
-                   'punch_intime', 'punch_outtime', 'facerecognition', 'gpslocation_in', 'gpslocation_out', 'shift__shiftname']}
+                   'punchintime', 'punchouttime', 'facerecognition', 'startlocation', 'endlocation', 'shift__shiftname']}
 
     def get(self, request, *args, **kwargs):
         R, resp = request.GET, None
@@ -100,16 +102,14 @@ class Conveyance(LoginRequiredMixin, View):
     model=atdm.PeopleEventlog,
     params = {
         'fields': [
-                'punch_intime', 'punch_outtime', 'bu__buname', 
-                'bu__bucode', 'people__peoplename', 'people__peoplecode',
-                'transportmodes', 'distance', 'duration', 'expamt'],
+            'punch_intime', 'punch_outtime', 'bu__buname', 
+            'bu__bucode', 'people__peoplename', 'people__peoplecode',
+            'transportmodes', 'distance', 'duration', 'expamt'],
         'template_list': 'attendance/travel_expense.html',
-        'template_form': 'attendance/travel_expenseform.html',
+        'template_form': 'attendance/travel_expense_form.html',
         'related'      : ['bu', 'people'],
         'model'        : atdm.PeopleEventlog,
-       'form_class':atf.ConveyanceForm
-    
-    }
+       'form_class':atf.ConveyanceForm}
     
     
     def get(self, request, *args, **kwargs):
@@ -120,30 +120,15 @@ class Conveyance(LoginRequiredMixin, View):
         
         #then load the table with objects for table_view
         if R.get('action', None) == 'list' or R.get('search_term'):
-            objs = self.params['model'].objects.select_related(
-                *self.params['related']).filter(
-                   peventtype = atdm.PeopleEventlog.EventType.CONVEYANCE,
-            ).values(*self.params['fields'])
-            count = objs.count()
-            
-            logger.info('Conveyance objects %s retrieved from db' %(count or "No Records!"))
-            if count:
-                objects, filtered = utils.get_paginated_results(
-                    R, objs, count, self.params['fields'], self.params['related'], self.params['model'])
-                logger.info('Results paginated'if count else "")
-
-            resp = rp.JsonResponse(data = {
-                'draw'           : R['draw'],
-                'recordsTotal'   : count,
-                'data'           : list(objects),
-                'recordsFiltered': filtered
-            }, status=200, safe=False)
+            objs = self.params['model'].objects.get_lastmonth_conveyance(R)
+            ic(utils.printsql(objs))
+            resp = rp.JsonResponse(data = {'data':list(objs)})
         
         # return cap_form empty for creation
         elif R.get('action', None) == 'form':
-            cxt = {'conveyance_form': self.params['form_class'](request=request),
+            cxt = {'conveyanceform': self.params['form_class'](),
                    'msg': "create conveyance requested"}
-            resp = utils.render_form(request, self.params, cxt)
+            resp =render(request, self.params['template_form'], context=cxt)
         
         # handle delete request
         elif R.get('action', None) == "delete" and R.get('id', None):
@@ -153,8 +138,14 @@ class Conveyance(LoginRequiredMixin, View):
         # return form with instance for update
         elif R.get('id', None):
             obj = utils.get_model_obj(int(R['id']), request, self.params)
-            resp = utils.render_form_for_update(
-                request, self.params, "ta_form", obj)
+            cxt = {'conveyanceform':self.params['form_class'](request=request, instance=obj),
+                    'edit':True}
+            resp = render(request, self.params['template_form'], context=cxt)
+        
+        #return journey path of instance
+        elif R.get('action') == 'getpath':
+            data = atdm.PeopleEventlog.objects.getjourneycoords(R['conid'])
+            resp = rp.JsonResponse(data = {'obj':list(data)}, status=200)
         return resp
     
     
@@ -170,6 +161,7 @@ class Conveyance(LoginRequiredMixin, View):
                 create=False
             else:
                 form = self.params['form_class'](data, request=request)
+            ic(form.data)
             if form.is_valid():
                 resp = self.handle_valid_form(form, request, create)
             else:
@@ -184,11 +176,11 @@ class Conveyance(LoginRequiredMixin, View):
         logger.info('conveyance form is valid')
         from apps.core.utils import handle_intergrity_error
         try:
-            ta = form.save()
-            putils.save_userinfo(ta, request.user, request.session, create=create)
-            logger.info("conveyance form saved")
-            data = {'row': model_to_dict(ta) }
-            return rp.JsonResponse(data, status=200)
+            with transaction.atomic(using=utils.get_current_db_name()):
+                cy = form.save()
+                putils.save_userinfo(cy, request.user, request.session, create=create)
+                logger.info("conveyance form saved")
+                return rp.JsonResponse(data={'pk':cy.id}, status=200)
         except IntegrityError:
             return handle_intergrity_error("conveyance")
     

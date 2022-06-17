@@ -1,0 +1,718 @@
+{% extends "layout.html" %}
+
+{% block extra_css %}
+<link  href="{{ static('assets/plugins/custom/DataTables/datatables.min.css') }}" rel="stylesheet" type="text/css"/>
+{# {{ geofenceform.media.css }} #}
+<style>
+  #description {
+    font-family: Roboto;
+    font-size: 15px;
+    font-weight: 300;
+  }
+
+  #infowindow-content .title {
+    font-weight: bold;
+  }
+
+  #infowindow-content {
+    display: none;
+  }
+
+  #map #infowindow-content {
+    display: inline;
+  }
+  #map{
+    position: fixed !important; 
+    height: 80% !important;
+    width: 92% !important;
+  }
+
+  .pac-card {
+    background-color: #fff;
+    border: 0;
+    border-radius: 2px;
+    box-shadow: 0 1px 4px -1px rgba(0, 0, 0, 0.3);
+    margin: 10px;
+    padding: 0 0.5em;
+    font: 400 18px Roboto, Arial, sans-serif;
+    overflow: hidden;
+    font-family: Roboto;
+    padding: 0;
+  }
+
+  #pac-container {
+    padding-bottom: 12px;
+    margin-right: 12px;
+  }
+
+  .pac-controls {
+    display: inline-block;
+    padding: 5px 11px;
+  }
+
+  .pac-controls label {
+    font-family: Roboto;
+    font-size: 13px;
+    font-weight: 300;
+  }
+
+  .pac-container, .pac-item{
+    z-index: 2147483647 !important;
+  }
+
+  #pac-input {
+    background-color: #fff;
+    font-family: Roboto;
+    font-size: 15px;
+    font-weight: 300;
+    margin-left: 12px;
+    padding: 0 11px 0 13px;
+    text-overflow: ellipsis;
+    width: 400px;
+  }
+
+  #pac-input:focus {
+    border-color: #4d90fe;
+  }
+
+  #title {
+    color: #fff;
+    background-color: #4d90fe;
+    font-size: 25px;
+    font-weight: 500;
+    padding: 6px 12px;
+  }
+
+  #target {
+    width: 345px;
+  }
+</style>
+{% endblock extra_css %}
+
+
+{# {% block form_title %}
+GeoFence
+{% endblock form_title %} #}
+
+
+<!-------------------------- BEGIN PAGE BREADCUMB ----------------------->
+{% block pagebreadcumb %}
+<!--will call parent contents -->
+{{ super() }}
+<li class="breadcrumb-item pe-3"><a href="{{ url('onboarding:geofence') }}?template=true" class="pe-3">GeoFence List</a></li>
+<li class="breadcrumb-item pe-3"><a href="javascript:void(0)" class="pe-3">GeoFence Form</a></li>
+{% endblock pagebreadcumb %}
+<!-------------------------- END PAGE BREADCUMB ------------------------->
+
+
+{% block pagebody_container %}
+<!---Start Drawer --->
+<div id="geofence_form_drawer"
+  data-kt-drawer="true"
+  data-kt-drawer-activate="true" 
+  data-kt-drawer-toggle="#togglemapform" 
+  data-kt-drawer-close="#closeform"
+  data-kt-drawer-direction="start"
+  data-kt-drawer-width="700px">
+  <div class="card w-100 rounded-0">
+    <div class="card-header">
+      <div class="card-title">
+        <div class="d-flex justify-content-center flex-column me-3">
+          <p class="fs-4 fw-bolder text-gray-900 text-hover-primary me-1 lh-1">Conveyance Form</p>
+        </div>
+      </div>
+      <div class="card-toolbar">
+        <button class="btn btn-icon btn-active-color-primary" id="closeForm"><i class="fas fa-times"></i></button>
+      </div>
+    </div>
+
+    <form  action="{{ url('onboarding:geofence') }}" method="post" id="geofence_form" class="card-body">
+      <input type="text" name="pk" id="pk" style="display:none;">
+      <input type="hidden" name="{{ geofenceform.ctzoffset.name }}" id = "{{ geofenceform.ctzoffset.auto_id }}" value="-1">
+      <div class="input-group mb-3">
+          <div class="col-md-3">
+              {{ geofenceform.gfcode.label_tag() }}
+          </div>
+          <div class="col-md-9">
+              {{ geofenceform.gfcode }}
+          </div>
+      </div>
+      <div class="input-group mb-3">
+          <div class="col-md-3">
+              {{ geofenceform.gfname.label_tag() }}
+          </div>
+          <div class="col-md-9">
+              {{ geofenceform.gfname }}
+          </div>
+      </div>
+      <div class="input-group mb-3">
+          <div class="col-md-3">
+              {{ geofenceform.alerttopeople.label_tag() }}
+          </div>
+          <div class="col-md-9">
+              {{ geofenceform.alerttopeople }}
+          </div>
+      </div>
+      <div class="input-group mb-3">
+          <div class="col-md-3">
+              {{ geofenceform.alerttogroup.label_tag() }}
+          </div>
+          <div class="col-md-9">
+              {{ geofenceform.alerttogroup }}
+          </div>
+      </div>
+      <div class="input-group mb-3">
+          <div class="col-md-3">
+              {{ geofenceform.alerttext.label_tag() }}
+          </div>
+          <div class="col-md-9">
+              {{ geofenceform.alerttext }}
+          </div>
+      </div>
+      <div class="input-group mb-3">
+          <div class="booleans d-flex justify-content-sm-between mt-5
+              form-check form-switch form-check-custom form-check-solid">
+              <label for="{{ geofenceform.enable.id_for_label }}"
+                  class="form-check-label bool col-form-label me-5 text-sm-right">
+                  {{ geofenceform.enable.label }}: &nbsp; {{ geofenceform.enable }}
+              </label>
+          </div>
+      </div>
+      <br><br>
+      {% if geofenceform.instance.gfcode %}
+        <button type="submit" id="submit" form="geofence_form" class="btn btn-sm btn-primary btn-hover-scale">Update&nbsp;<i class="fas fa-cloud-upload-alt"></i></button>
+        <button type="button" onclick="deleteTa(this)" data-id="{{ geofenceform.instance.id }}" id="deleteCap" class="btn btn-sm btn-hover-scale btn-danger">Delete&nbsp;<i class="fas fa-trash-alt"></i></button>
+      {% else %}
+        <button type="submit" form="geofence_form" class="btn btn-sm btn-primary btn-hover-scale">Submit&nbsp;<i class="fas fa-cloud-upload-alt"></i></button>
+      {% endif %}
+      {# <div class="input-group mb-3">
+          <div class="col-md-4">
+              <p>Create GeoFence with Radius</p>
+          </div>
+          <input type="number" min='0', max='100', class="me-3" id = "gf_radius" name="gf_radius" style="width:15%">
+          <a href="#" id="btnCreateGF" class="btn btn-link btn-color-dark btn-active-color-primary me-5 mb-2"><u>Create GeoFence</u></a>
+          <a href="#" id="btnClearGF" onclick="clearGeoFence()" class="btn btn-link btn-color-dark btn-active-color-primary me-5 mb-2"><u>Clear GeoFence</u></a>
+      </div> #}
+
+    </form>
+      
+    {# <input type="text" name="pk" id="pk" style="display:none;">
+      <div class="row">
+          <div class="col-md-6">
+              <div class="input-group mb-3">
+                  <div class="col-md-4">
+                      {{ geofenceform.gfcode.label_tag() }}
+                  </div>
+                  <div class="col-md-8">
+                      {{ geofenceform.gfcode }}
+                  </div>
+              </div>
+              <div class="input-group mb-3">
+                  <div class="col-md-4">
+                      {{ geofenceform.gfname.label_tag() }}
+                  </div>
+                  <div class="col-md-8">
+                      {{ geofenceform.gfname }}
+                  </div>
+              </div>
+              <div class="input-group mb-3">
+                  <div class="booleans d-flex justify-content-sm-between mt-5
+                      form-check form-switch form-check-custom form-check-solid">
+                      <label for="{{ geofenceform.enable.id_for_label }}"
+                          class="form-check-label bool col-form-label me-5 text-sm-right">
+                          {{ geofenceform.enable.label }}: &nbsp; {{ geofenceform.enable }}
+                      </label>
+                  </div>
+              </div>
+          </div>
+          <div class="col-md-6">
+              <div class="input-group mb-3">
+                  <div class="col-md-4">
+                      {{ geofenceform.alerttopeople.label_tag() }}
+                  </div>
+                  <div class="col-md-8">
+                      {{ geofenceform.alerttopeople }}
+                  </div>
+              </div>
+              <div class="input-group mb-3">
+                  <div class="col-md-4">
+                      {{ geofenceform.alerttogroup.label_tag() }}
+                  </div>
+                  <div class="col-md-8">
+                      {{ geofenceform.alerttogroup }}
+                  </div>
+              </div>
+              <div class="input-group mb-3">
+                  <div class="col-md-4">
+                      {{ geofenceform.alerttext.label_tag() }}
+                  </div>
+                  <div class="col-md-8">
+                      {{ geofenceform.alerttext }}
+                  </div>
+              </div>
+              <div class="input-group mb-3">
+                  <div class="col-md-4">
+                      <p>Create GeoFence with Radius</p>
+                  </div>
+                  <input type="number" min='0', max='100', class="me-3" id = "gf_radius" name="gf_radius" style="width:15%">
+                  <a href="#" id="btnCreateGF" class="btn btn-link btn-color-dark btn-active-color-primary me-5 mb-2"><u>Create GeoFence</u></a>
+                  <a href="#" id="btnClearGF" onclick="clearGeoFence()" class="btn btn-link btn-color-dark btn-active-color-primary me-5 mb-2"><u>Clear GeoFence</u></a>
+              </div>
+          </div>
+      </div> #}
+  </div>
+</div>
+
+<!---Start Google Maps -->
+  <div class="card">
+    <div class="card-body">
+      <div id="map"></div>
+    </div>
+  </div>
+<!---End Google Maps -->
+
+<!-- End Drawer --->
+{% endblock pagebody_container %}
+
+
+
+{% block extra_scripts %}
+{{ geofenceform.media.js }}
+<script
+      src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDVbA53nxHKUOHdyIqnVPD01aOlTitfVO0&callback=initAutocomplete&libraries=places&v=weekly"
+      defer
+    ></script>
+<script>
+var service;
+var map;
+var userMarker;
+var infowindow;
+var lastRadius;
+var lastPoint;
+var GEOFENCE;
+
+function clearAllMarkers(markers){
+  // Clear out the old markers.
+  markers.forEach((marker) => {
+    marker.setMap(null);
+  });
+}
+
+
+function createGeoFence(){
+  if(typeof userMarker == 'undefined'){
+    showToastMsg("Please select a point on a map to create a geofence!", 'error')
+    
+  }
+  else{
+    var radius = $("#gf_radius").val()
+    let latitude = userMarker.getPosition().lat()
+    let longitude = userMarker.getPosition().lng()
+    var latlng = `${latitude},${longitude}`
+
+    data = {lat:latitude, lng:longitude, radii:radius, action:'drawgeofence'}
+    const params = {data:data, beforeSend:function(){}, url:"{{ url('onboarding:geofence') }}?action=drawgeofence"}
+    
+    if(typeof latlng!= 'undefined' && lastPoint === latlng && lastRadius === radius){
+      showToastMsg("Geofence is already created for this radius..", 'error')
+    }else{
+      lastRadius = radius
+      lastPoint = latlng
+      fire_ajax_get(params)
+      .fail((xhr, status, error) => {
+        showToastMsg(xhr.responseJSON.errors, 'error')
+        lastRadius=null
+      })
+      .done((data, status, xhr) => {
+        drawGeofenceOnMap(data)
+        showToastMsg('Geofence created successfully!', 'success')
+      })
+    }
+  }
+}
+
+
+function clearGeoFence(){
+
+
+}
+
+function placeMarker(location) {
+  if ( userMarker ) {
+    userMarker.setPosition(location);
+  } else {
+    userMarker = new google.maps.Marker({
+      position: location,
+      map: map,
+      icon:'http://maps.google.com/mapfiles/ms/icons/blue-dot.png'
+    });
+  }
+}
+
+
+function drawGeofenceOnMap(data, dynamicZoom=false){
+  // Construct the polygon.
+  console.log(data)
+  if(GEOFENCE){
+    GEOFENCE.setMap(null)
+  }
+  GEOFENCE = new google.maps.Polygon({
+    paths: data.geojson,
+    strokeColor: "#20abc4",
+    strokeOpacity: 0.8,
+    strokeWeight: 2,
+    fillColor: "#a3ecf9",
+    fillOpacity: 0.35,
+    draggable: true,
+  });
+  
+  GEOFENCE.getMap()
+  if(dynamicZoom === true){
+    var bounds = new google.maps.LatLngBounds()
+    GEOFENCE.getPath().forEach(function(element,index){bounds.extend(element)})
+    map.fitBounds(bounds)
+  }
+  GEOFENCE.setMap(map)
+}
+
+function clearGeoFence(){
+  if(GEOFENCE){
+    lastRadius=null
+    GEOFENCE.setMap(null)
+  }
+}
+
+function getGeofenceData(GEOFENCE){
+  var geojson = []
+  const vertices = GEOFENCE.getPath()
+  
+  // Iterate over the vertices.
+  for (let i = 0; i < vertices.getLength(); i++) {
+    const xy = vertices.getAt(i);
+   geojson.push({
+      lat:xy.lat(), lng:xy.lng()
+    })
+  }
+
+  return JSON.stringify(geojson)
+}
+
+function createNewGeoFence(){
+ location.href = '{{ url("onboarding:geofence") }}?action=form'
+}
+
+
+function initAutocomplete() {
+  map = new google.maps.Map(document.getElementById("map"), {
+    center: { lat: 21.7679, lng: 78.8718 },
+    zoom: 6,
+    mapTypeId: "roadmap",
+    mapTypeControl: true,
+    mapTypeControlOptions: {
+      style: google.maps.MapTypeControlStyle.HORIZONTAL_BAR,
+      position: google.maps.ControlPosition.BOTTOM_LEFT,
+    },
+
+  });
+
+
+  //create geofence button
+  const createGFBtn = document.createElement('button')
+  createGFBtn.id = 'btnCreateGF'
+  createGFBtn.textContent = "Create Geofence"
+  createGFBtn.className = "btn btn-secondary rounded-pill ms-2 mb-2"
+  createGFBtn.title = "Click to create the Geofence";
+
+
+  //clear geofence button
+  const clearGFBtn = document.createElement('button')
+  clearGFBtn.id = 'btnClearGF'
+  clearGFBtn.textContent = "Clear Geofence"
+  clearGFBtn.className = "btn btn-secondary rounded-pill ms-2 mb-2"
+  clearGFBtn.title = "Click to clear the Geofence";
+
+
+  //create new geofence
+  const createNewBtn =  document.createElement('button')
+  createNewBtn.id = 'btnCreateNew'
+  createNewBtn.textContent = "Create New"
+  createNewBtn.className = "btn btn-secondary rounded-pill ms-2"
+  createNewBtn.title = "Click to create a new geofence from start";
+
+
+
+  //search-radius-form controls
+  const controlDiv = document.createElement('DIV');
+  controlDiv.id = "search_rad_controls";
+
+
+  //edit-form button
+  const editFormBtn = document.createElement('button')
+  editFormBtn.id = 'togglemapform'
+  editFormBtn.textContent = 'Edit Form'
+  editFormBtn.className = "btn btn-secondary rounded-pill ms-2"
+
+
+  // Create the search box and link it to the UI element.
+  const controlInput = document.createElement('input');
+  controlInput.id = "pac-input";
+  controlInput.className = "controls mt-2 rounded-pill"
+  controlInput.placeholder = 'Search any keyword..'
+
+
+  //Create a number input element
+  const radiusInput = document.createElement('input')
+  radiusInput.id = 'gf_radius'
+  radiusInput.type = 'number'
+  radiusInput.min = '0'
+  radiusInput.max = '100'
+  radiusInput.className = "ms-2 rounded-end"
+  radiusInput.placeholder = "Enter Radius"
+
+
+  // Append everything to the wrapper div
+  controlDiv.appendChild(editFormBtn);
+  controlDiv.appendChild(controlInput);
+  controlDiv.appendChild(radiusInput);
+
+  const clearGFbtn = document.createElement('button')
+  clearGFbtn.html = ""
+
+  map.controls[google.maps.ControlPosition.TOP_LEFT].push(controlDiv);
+
+
+  //positionize the create geofence controller
+  google.maps.event.addDomListener(createGFBtn, 'click', createGeoFence);
+  map.controls[google.maps.ControlPosition.LEFT_CENTER].push(createGFBtn);
+  
+
+  //positionize the create geofence controller
+  google.maps.event.addDomListener(clearGFBtn, 'click', clearGeoFence);
+  map.controls[google.maps.ControlPosition.LEFT_CENTER].push(clearGFBtn);
+  
+
+  google.maps.event.addDomListener(createNewBtn, 'click', createNewGeoFence);
+  map.controls[google.maps.ControlPosition.LEFT_CENTER].push(createNewBtn);
+  
+  
+  const searchBox = new google.maps.places.SearchBox(controlInput);
+
+  infoWindow = new google.maps.InfoWindow();
+
+  const locationButton = document.createElement("button");
+
+  locationButton.textContent = "Pan to Current Location";
+  locationButton.classList.add("custom-map-control-button");
+  map.controls[google.maps.ControlPosition.TOP_CENTER].push(locationButton);
+  
+    locationButton.addEventListener("click", () => {  
+    // Try HTML5 geolocation.
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const pos = {
+            lat: position.coords.latitude,
+            lng: position.coords.longitude,
+          };
+
+          infoWindow.setPosition(pos);
+          infoWindow.setContent("Location found.");
+          infoWindow.open(map);
+          map.setCenter(pos);
+        },
+        () => {
+          handleLocationError(true, infoWindow, map.getCenter());
+        }
+      );
+    } else {
+      // Browser doesn't support Geolocation
+      handleLocationError(false, infoWindow, map.getCenter());
+    }
+  });
+  // Bias the SearchBox results towards current map's viewport.
+  map.addListener("bounds_changed", () => {
+    searchBox.setBounds(map.getBounds());
+  });
+
+  let markers = [];
+
+  // Listen for the event fired when the user selects a prediction and retrieve
+  // more details for that place.
+  searchBox.addListener("places_changed", () => {
+    const places = searchBox.getPlaces();
+
+    if (places.length == 0) {
+      return;
+    }
+
+    // Clear out the old markers.
+    clearAllMarkers(markers)
+    markers = [];
+
+    // For each place, get the icon, name and location.
+    const bounds = new google.maps.LatLngBounds();
+
+    places.forEach((place) => {
+      if (!place.geometry || !place.geometry.location) {
+        console.log("Returned place contains no geometry");
+        return;
+      }
+
+      const icon = {
+        url: place.icon,
+        size: new google.maps.Size(71, 71),
+        origin: new google.maps.Point(0, 0),
+        anchor: new google.maps.Point(17, 34),
+        scaledSize: new google.maps.Size(25, 25),
+      };
+      
+      let marker = new google.maps.Marker({
+          map,
+          icon,
+          title: place.name,
+          position: place.geometry.location,
+          animation:google.maps.Animation.DROP
+        })
+      
+      // Create a marker for each place.
+      markers.push(
+        marker
+      );
+
+      //on click marker zoom in
+      marker.addListener("click", () => {
+        map.setZoom(17);
+        map.setCenter(marker.getPosition());
+      });
+
+      if (place.geometry.viewport) {
+        // Only geocodes have viewport.
+        bounds.union(place.geometry.viewport);
+      } else {
+        bounds.extend(place.geometry.location);
+      }
+    });
+    map.fitBounds(bounds);
+    
+    
+    
+
+
+  });
+  //place marker when user clicks on map
+  google.maps.event.addListener(map, 'click', function(event) {
+    clearAllMarkers(markers)
+    placeMarker(event.latLng);
+  });
+}
+function handleLocationError(browserHasGeolocation, infoWindow, pos) {
+  infoWindow.setPosition(pos);
+  infoWindow.setContent(
+    browserHasGeolocation
+      ? "Error: The Geolocation service failed."
+      : "Error: Your browser doesn't support geolocation."
+  );
+  infoWindow.open(map);
+}
+
+
+
+window.initAutocomplete = initAutocomplete;
+$(document).ready(() => {
+  //set ctzoffset
+  $("#id_ctzoffset").val(-new Date().getTimezoneOffset())
+    $("#btnCreateGF").click(() => {
+
+      if(typeof userMarker == 'undefined'){
+        showToastMsg("Please select a point on a map to create a geofence!", 'error')
+        
+      }
+      else{
+        var radius = $("#gf_radius").val()
+        let latitude = userMarker.getPosition().lat()
+        let longitude = userMarker.getPosition().lng()
+        var latlng = `${latitude},${longitude}`
+
+        data = {lat:latitude, lng:longitude, radii:radius, action:'drawgeofence'}
+        const params = {data:data, beforeSend:function(){}, url:"{{ url('onboarding:geofence') }}?action=drawgeofence"}
+        
+        if(typeof latlng!= 'undefined' && lastPoint === latlng && lastRadius === radius){
+          showToastMsg("Geofence is already created for this radius..", 'error')
+        }else{
+          lastRadius = radius
+          lastPoint = latlng
+          fire_ajax_get(params)
+          .fail((xhr, status, error) => {
+            showToastMsg(xhr.responseJSON.errors, 'error')
+            lastRadius=null
+          })
+          .done((data, status, xhr) => {
+            drawGeofenceOnMap(data)
+            showToastMsg('Geofence created successfully!', 'success')
+          })
+        }
+      }
+    })
+
+
+    //submit form
+    $("#geofence_form").on('submit', (e) => {
+      e.preventDefault()
+      if(typeof GEOFENCE != 'undefined'){
+        const params = {
+          url:"{{ url('onboarding:geofence') }}",
+          modal:false
+        }
+        var payLoad = {
+          formData:$("#geofence_form").serialize(),
+          csrfmiddlewaretoken:'{{ csrf_token }}',
+          geofence:getGeofenceData(GEOFENCE)
+        }
+        
+        var isupdate = $("#pk")=="None" ?  false : true
+        if(isupdate === true){
+          var newPayLoad = {...payLoad, 'pk':$("#pk").val()}
+          payLoad = newPayLoad
+        }
+
+        Swal.fire({
+          title:'Submit',
+          text:"Make sure your geofence is created properly",
+          icon:'question',
+          showCancelButton:true,
+          confirmButtonText:'Yes save it!'
+        }).then((res) => {
+          fire_ajax_form_post(params, payLoad)
+          .done((data, status, xhr) => {
+            console.log(isupdate)
+            show_successful_save_alert(update=false)
+            location.href = `{{ url("onboarding:geofence") }}?id=${data['pk']}`
+          })
+        })
+      }else{
+        show_error_alert(
+          msg="Geofence is not set yet!",
+          title="No Geofence found!"
+        )
+      }
+    })
+
+    //on click cross icon drawer close
+    $("#closeForm").click(() => {
+      var drawerElement = document.querySelector("#geofence_form_drawer");
+      var drawer = KTDrawer.getInstance(drawerElement);
+      drawer.hide();
+    })
+
+    var geofencejson = {{ geofencejson |default ("") | tojson }}
+    if(geofencejson != ""){
+      var geofencedata = JSON.parse(geofencejson)
+      drawGeofenceOnMap({'geojson':geofencedata}, true)
+    }
+    
+
+})
+
+
+</script>
+{% endblock extra_scripts %}

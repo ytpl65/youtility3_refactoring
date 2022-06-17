@@ -19,22 +19,24 @@ logger = logging.getLogger('django')
 
 def peoplejson():
     return {
-        "andriodversion": "",
-        "appversion": "",
-        "mobilecapability": [],
-        "portletcapability": [],
-        "reportcapability": [],
-        "webcapability": [],
-        "loacationtracking": False,
-        "capturemlog": False,
-        "showalltemplates": False,
-        "debug": False,
+        "andriodversion"           : "",
+        "appversion"               : "",
+        "mobilecapability"         : [],
+        "portletcapability"        : [],
+        "reportcapability"         : [],
+        "webcapability"            : [],
+        "loacationtracking"        : False,
+        "capturemlog"              : False,
+        "showalltemplates"         : False,
+        "debug"                    : False,
         "showtemplatebasedonfilter": False,
-        "blacklist": False,
-        "assignsitegroup": "",
-        "tempincludes": "",
-        "mlogsendsto": "",
-        "user_type": ""
+        "blacklist"                : False,
+        "assignsitegroup"          : [],
+        "tempincludes"             : [],
+        "mlogsendsto"              : "",
+        "user_type"                : "",
+        "secondaryemails"          : [],
+        'secondarymobno'           : []
     }
 
 def upload_peopleimg(instance, filename):

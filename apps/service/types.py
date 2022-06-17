@@ -83,6 +83,10 @@ class PeopleType(DjangoObjectType):
         model = People
         fields = '__all__'
         
+class VerifyClientOutput(graphene.ObjectType):
+    rc        = graphene.Int(default_value=0)
+    msg       = graphene.String()
+    url = graphene.String(default_value = "")
         
 class LoginResponseType(DjangoObjectType):
     tenantid = graphene.Int()

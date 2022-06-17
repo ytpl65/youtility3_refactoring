@@ -17,6 +17,8 @@ import logging
 import apps.onboarding.models as om
 import apps.activity.models as am
 from django.db.models import Q
+
+from apps.tenants.models import Tenant
 logger = logging.getLogger('__main__')
 dbg = logging.getLogger('__main__').debug
 
@@ -485,7 +487,7 @@ def save_msg(request):
 def initailize_form_fields(form):
     for visible in form.visible_fields():
         if visible.widget_type in ['text', 'textarea', 'datetime', 'time', 'number', 'email', 'decimal']:
-            visible.field.widget.attrs['class'] = 'form-control'
+            visible.field.widget.attrs['class'] = 'form-control form-control-solid'
         elif visible.widget_type in ['radio', 'checkbox']:
             visible.field.widget.attrs['class'] = 'form-check-input'
         elif visible.widget_type in ['select2', 'select', 'select2multiple', 'modelselect2', 'modelselect2multiple']:
@@ -522,11 +524,13 @@ def to_utc(date, format=None):
 
 def get_tenants_map():
     return {
+        'intelliwiz.youtility.local':'default',
         'sps.youtility.local': 'sps',
         'capgemini.youtility.local': 'capgemini',
         'dell.youtility.local': 'dell',
         'icicibank.youtility.local': 'icicibank',
-        'barfi.youtility.in': 'icicibank'
+        'barfi.youtility.in': 'icicibank',
+        'intelliwiz.youtility.in': 'default'
     }
 
 # RETURN HOSTNAME FROM REQUEST
@@ -570,6 +574,9 @@ def get_client_from_hostname(request):
     print(hostname)
     return hostname.split('.')[0]
 
+
+def get_or_create_none_tenant():
+    return Tenant.objects.get_or_create(id=1, defaults={'tenantname': 'Intelliwiz', 'subdomain_prefix': 'intelliwiz'})
 
 def get_or_create_none_job():
     from datetime import datetime, timezone
@@ -707,7 +714,7 @@ def set_db_for_router(db):
     dbs = settings.DATABASES
     if db not in dbs:
         print('raised')
-        raise NameError("Database with this alias not exist!")
+        raise NoDbError("Database with this alias not exist!")
     setattr(THREAD_LOCAL, "DB", db)
 
 
@@ -1040,9 +1047,35 @@ def dictfetchall(cursor):
         for row in cursor.fetchall()
     ]
 
+def getformatedjson(geofence=None, jsondata=None, rettype=dict):
+    import json
+    data = jsondata or geofence.geojson
+    geodict = json.loads(data)
+    result = [{'lat': lat, 'lng': lng} for lng, lat in geodict['coordinates'][0]]
+    return result if rettype == dict else json.dumps(result)
+    
+
 
 class Error(Exception):
     pass
 
 class NoDataInTheFileError(Error):
     pass
+
+class FileSizeMisMatchError(Error):
+    pass
+
+class TotalRecordsMisMatchError(Error):
+    pass
+
+
+class NoDbError(Error):
+    pass
+
+
+def getawaredatetime(dt, offset):
+    from datetime import datetime, timedelta, timezone
+    tz = timezone(timedelta(minutes=int(offset)))
+    val = dt.replace("+00:00", "")
+    val = datetime.strptime(val, "%Y-%m-%d %H:%M:%S")
+    return val.replace(tzinfo=tz, microsecond=0)

@@ -25,7 +25,7 @@ class SuperTypeAssistForm(forms.ModelForm):
     }
     class Meta:
         model  = obm.TypeAssist
-        fields = ['tacode' ,'taname', 'tatype']
+        fields = ['tacode' ,'taname', 'tatype', 'ctzoffset']
         labels = {
                 'tacode': 'Code',
                 'taname': 'Name',
@@ -102,7 +102,7 @@ class BtForm(forms.ModelForm):
     class Meta:
         model  = obm.Bt
         fields = ['bucode', 'buname', 'parent', 'butype', 'gpslocation', 'identifier',
-                'iswarehouse', 'isserviceprovider', 'isvendor', 'enable',
+                'iswarehouse', 'isserviceprovider', 'isvendor', 'enable','ctzoffset',
                 'gpsenable', 'skipsiteaudit', 'enablesleepingguard', 'deviceevent']
         
         labels = {
@@ -200,7 +200,7 @@ class ShiftForm(forms.ModelForm):
     
     class Meta:
         model = obm.Shift
-        fields = ['shiftname', 'starttime', 'endtime', 
+        fields = ['shiftname', 'starttime', 'endtime', 'ctzoffset',
         'nightshiftappicable', 'shiftduration', 'captchafreq']
         labels={
             'shiftname':'Shift Name',
@@ -259,7 +259,7 @@ class SitePeopleForm(forms.ModelForm):
         fields = ['contract', 'people', 'worktype', 'shift',
                  'reportto', 'webcapability', 'mobilecapability',
                 'reportcapability', 'fromdt', 'uptodt', 'siteowner',
-                'enable', 'enablesleepingguard']
+                'enable', 'enablesleepingguard', 'ctzoffset']
         
     
     def __init__(self, *args, **kwargs):
@@ -293,6 +293,28 @@ class ContractDetailForm(forms.ModelForm):
         utils.initailize_form_fields(self)
 
 
+
+class GeoFenceForm(forms.ModelForm):
+    class Meta:
+        model = obm.GeofenceMaster
+        fields = ['gfcode', 'gfname', 'alerttopeople',
+                  'alerttogroup', 'alerttext', 'enable', 'ctzoffset']
+        labels = {
+            'gfcode':'Code', 'gfname':'Name', 'alerttopeople':'Alert to People',
+            'alerttogroup':'Alert to Group', 'alerttext':'Alert Text'
+        }
+        widgets = {
+            'gfcode':forms.TextInput(attrs={'style':'text-transform:uppercase;', 'placeholder':'Enter text without space & special characters'})
+        }
+        
+    def __init__(self, *args, **kwargs):
+        self.request = kwargs.pop('request', None)
+        super(GeoFenceForm, self).__init__(*args, **kwargs)
+        utils.initailize_form_fields(self)
+
+    
+    def clean_gfcode(self):
+        return val.upper() if (val := self.cleaned_data.get('gfcode')) else val
 #========================================== END MODEL FORMS =======================================#
 
 

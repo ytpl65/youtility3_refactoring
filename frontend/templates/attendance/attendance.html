@@ -48,8 +48,8 @@ Attendance
             <td>{{ attd['facerecognition'] }}</td>
             <td>{{ attd['verifiedby__peoplename'] }}</td>
             <td>{{ attd['datefor'].strftime('%d-%b-%Y') }}</td>
-            <td>{{ attd['punch_intime'].strftime('%d-%b-%Y, %H:%M') }}</td>
-            <td>{{ attd['punch_outtime'].strftime('%d-%b-%Y, %H:%M') }}</td>
+            <td>{{ attd['punchintime'].strftime('%d-%b-%Y, %H:%M') }}</td>
+            <td>{{ attd['punchouttime'].strftime('%d-%b-%Y, %H:%M') }}</td>
         </tr>
         {% endfor %}
     </tbody>

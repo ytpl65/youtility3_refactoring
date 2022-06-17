@@ -1,5 +1,4 @@
 import logging
-from django.forms import model_to_dict
 from django.views.decorators.cache import cache_page
 from django.utils.decorators import method_decorator
 from django.http.response import JsonResponse
@@ -9,7 +8,7 @@ from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.views import View
 from django.db.models import Q
 from django.contrib import messages
-from django.http import response as rp
+from django.http import Http404, response as rp
 from django.core.cache.backends.base import DEFAULT_TIMEOUT
 from django.db.utils import IntegrityError
 from django.conf import settings
@@ -17,12 +16,12 @@ from icecream import ic
 from django.core.exceptions import (EmptyResultSet)
 from django.db.models import RestrictedError
 from django.http.request import QueryDict
-from django.core import serializers
-from django.urls import resolve
-from .models import Shift, SitePeople, TypeAssist, Bt
+from pydantic import Json
+from .models import Shift, SitePeople, TypeAssist, Bt, GeofenceMaster
 from apps.peoples.utils import  save_userinfo
 import apps.onboarding.forms as obforms
 import apps.peoples.utils as putils
+from django.db import transaction
 from apps.core import utils
 from pprint import pformat
 CACHE_TTL = getattr(settings, 'CACHE_TTL', DEFAULT_TIMEOUT)
@@ -900,7 +899,7 @@ class MasterTypeAssist(LoginRequiredMixin, View):
         # first load the template
         if R.get('template'): return render(request, self.params['template_list'])
         #then load the table with objects for table_view
-        if R.get('action', None) == 'list' or R.get('search_term'):
+        if R.get('action') == 'list':
             objs = self.params['model'].objects.select_related(
                  *self.params['related']).filter(
                      ~Q(tacode='NONE'),  **self.lookup
@@ -1043,6 +1042,7 @@ class Shift(LoginRequiredMixin, View):
                 cxt = {'errors': form.errors}
                 resp = utils.handle_invalid_form(request, self.params, cxt)
         except Exception:
+            logger.error("SHIFT saving error!", exc_info=True)
             resp = utils.handle_Exception(request)
         return resp
 
@@ -1090,3 +1090,113 @@ class EditorTa(View):
             'recordsFiltered': filtered}, status = 200
         )
 
+
+
+class GeoFence(LoginRequiredMixin, View):
+    params = {
+        'form_class':obforms.GeoFenceForm,
+        'template_list':'onboarding/geofence_list.html',
+        'template_form':'onboarding/geofence_form.html',
+        'fields': ['id', 'gfcode',
+              'gfname', 'alerttogroup__groupname', 'alerttopeople__peoplename'],
+        'related':['alerttogroup', 'alerttopeople'],
+        'model':GeofenceMaster
+    }
+    
+    def get(self, request, *args, **kwargs):
+        R = request.GET
+        params = self.params
+        # first load the template
+        if R.get('template'): return render(request, self.params['template_list'])
+        
+        #then load the table with objects for table_view
+        if R.get('action', None) == 'list' or R.get('search_term'):
+            objs = self.params['model'].objects.get_geofence_list(params['fields'], params['related'], request.session)
+            return  rp.JsonResponse(data = {'data':list(objs)})
+        
+        elif R.get('action', None) == 'form':
+            cxt = {'geofenceform':self.params['form_class']()}
+            return render(request, self.params['template_form'], context=cxt)
+        
+        elif R.get('action') == 'drawgeofence':
+            return get_geofence_from_point_radii(R)
+        
+        elif R.get('id', None):
+            obj = utils.get_model_obj(int(R['id']), request, self.params)
+            cxt = {'geofenceform':self.params['form_class'](request=request, instance=obj),
+                    'edit':True,
+                'geofencejson': GeofenceMaster.objects.get_geofence_json(pk=obj.id)}
+            return render(request, self.params['template_form'], context=cxt)
+    
+    
+    def post(self, request, *args, **kwargs):
+        resp=None
+        try:
+            data = QueryDict(request.POST['formData'])
+            geofence = request.POST['geofence']
+            ic('geofence form data', data)
+            ic(geofence)
+            if pk := request.POST.get('pk', None):
+                msg = "geofence_view"
+                form = utils.get_instance_for_update(
+                data, self.params, msg, int(pk))
+            else:
+                form = self.params['form_class'](data, request=request)
+            if form.is_valid():
+                resp = self.handle_valid_form(form, request, geofence)
+            else:
+                cxt = {'errors': form.errors}
+                resp = utils.handle_invalid_form(request, self.params, cxt)
+        except Exception:
+            logger.error('GEOFENCE saving error!', exc_info=True)
+            resp = utils.handle_Exception(request)
+        return resp
+    
+    
+    def handle_valid_form(self, form, request, geofence):
+        logger.info('geofence form is valid')
+        from apps.core.utils import handle_intergrity_error
+        try:
+            with transaction.atomic(using=utils.get_current_db_name()):
+                gf = form.save()
+                self.save_geofence_field(gf, geofence)
+                gf = putils.save_userinfo(gf, request.user, request.session)
+                logger.info("geofence form saved")
+                return JsonResponse(data={'pk':gf.id}, status=200)
+        except IntegrityError:
+            return handle_intergrity_error("GeoFence")
+        
+    
+    def save_geofence_field(self, gf, geofence):
+        try:
+            from django.contrib.gis.geos import LinearRing, Polygon
+            import json
+            geofencedata = json.loads(geofence)
+            ic(geofencedata)
+            ic(type(geofencedata))
+            coords = [(i['lng'], i['lat']) for i in geofencedata]
+            ic(coords)
+            pg = Polygon(LinearRing(coords, srid=4326), srid=4326)
+            gf.geofence = pg
+            gf.save()
+        except Exception:
+            logger.error('geofence polygon field saving error', exc_info=True)
+            raise
+
+
+
+def get_geofence_from_point_radii(R):
+    try:
+        lat, lng, radii = R.get('lat'), R.get('lng'), R.get('radii')
+        if all([lat, lng, radii]):
+            from django.contrib.gis import geos
+            point = geos.Point(float(lng),float(lat), srid=4326)
+            point.transform(3857)
+            geofence = point.buffer(int(radii))
+            geofence.transform(4326)
+            return rp.JsonResponse(data={'geojson':utils.getformatedjson(geofence)}, status=200)
+        else:
+            return rp.JsonResponse(data={'errors':"Invalid data provided unable to compute geofence!"}, status=404)
+    except Exception:
+        logger.error("something went wrong while computing geofence..", exc_info=True)
+        return rp.JsonResponse(data={'errors':'something went wrong while computing geofence!'}, status=404)

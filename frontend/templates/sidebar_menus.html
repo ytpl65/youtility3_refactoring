@@ -56,7 +56,7 @@
     </span>
     <div class="menu-sub menu-sub-accordion" kt-hidden-height="116" style="display: none; overflow: hidden;">
       <div class="menu-item" id="task">
-        <a class="menu-link" href="{{ url('schedhuler:retrieve_tasks_jobneed') }}">
+        <a class="menu-link" href="{{ url('schedhuler:jobneedtasks') }}?template=true">
           <span class="menu-bullet">
             <span class="bullet bullet-dot"></span>
           </span>
@@ -111,7 +111,7 @@
     </span>
     <div class="menu-sub menu-sub-accordion" kt-hidden-height="116" style="display: none; overflow: hidden;">
       <div class="menu-item" id="internaltour">
-        <a class="menu-link" href="{{ url('schedhuler:retrieve_internaltours') }}">
+        <a class="menu-link" href="{{ url('schedhuler:jobneedtours') }}?template=true">
           <span class="menu-bullet">
             <span class="bullet bullet-dot"></span>
           </span>
@@ -334,7 +334,7 @@
     </span>
     <div class="menu-sub menu-sub-accordion" kt-hidden-height="116" style="display: none; overflow: hidden;">
       <div class="menu-item" id="geofencetracking">
-        <a class="menu-link" href="apps/customers/getting-started.html">
+        <a class="menu-link" href="#">
           <span class="menu-bullet">
             <span class="bullet bullet-dot"></span>
           </span>
@@ -531,7 +531,7 @@
             </a>
           </div>
           <div class="menu-item" id="task_questionset">
-            <a class="menu-link" href="{{ url('activity:questionset') }}?action=list">
+            <a class="menu-link" href="{{ url('activity:questionset') }}?template=true">
               <span class="menu-bullet">
                 <span class="bullet bullet-dot"></span>
               </span>
@@ -555,7 +555,7 @@
             </a>
           </div>
           <div class="menu-item" id="task_scheduletask">
-            <a class="menu-link" href="{{ url('schedhuler:create_task') }}">
+            <a class="menu-link" href="{{ url('schedhuler:jobschdtasks') }}?template=true">
               <span class="menu-bullet">
                 <span class="bullet bullet-dot"></span>
               </span>
@@ -636,7 +636,7 @@
             </a>
           </div>
           <div class="menu-item" id="tourchecklist">
-            <a class="menu-link" href="{{ url('activity:checklist') }}?action=list">
+            <a class="menu-link" href="{{ url('activity:checklist') }}?template=true">
               <span class="menu-bullet">
                 <span class="bullet bullet-dot"></span>
               </span>
@@ -828,7 +828,7 @@
         </span>
         <div class="menu-sub menu-sub-accordion" kt-hidden-height="116" style="display: none; overflow: hidden;">
           <div class="menu-item" id="geofence">
-            <a class="menu-link" href="apps/customers/getting-started.html">
+            <a class="menu-link" href="{{ url('onboarding:geofence') }}?template=true">
               <span class="menu-bullet">
                 <span class="bullet bullet-dot"></span>
               </span>
@@ -869,7 +869,7 @@
             </a>
           </div>
           <div class="menu-item"   id="clientonboarding">
-            <a class="menu-link" id="onboardingwizard" href="">
+            <a class="menu-link" id="onboardingwizard" href="#">
               <span class="menu-bullet">
                 <span class="bullet bullet-dot"></span>
               </span>

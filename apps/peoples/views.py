@@ -947,25 +947,11 @@ class PeopleGroup(LoginRequiredMixin, View):
         
         # return list data
         if R.get('action', None) == 'list' or R.get('search_term'):
-            d = {'list': "pgroup_list"}
-            self.params.update(d)
             objs = self.params['model'].objects.select_related(
-                *self.params['related']).filter(
+                 *self.params['related']).filter(
                     ~Q(id=-1), enable=True, identifier__tacode='PEOPLEGROUP'
             ).values(*self.params['fields']).order_by('-mdtz')
-            count = objs.count()
-            logger.info('Pgroup objects %s retrieved from db' %(count or "No Records!"))
-            
-            if count:
-                objects, filtered = utils.get_paginated_results(
-                    R, objs, count, self.params['fields'], self.params['related'], self.params['model'])
-                logger.info('Results paginated'if count else "")
-
-            resp = rp.JsonResponse(data = {
-                'draw':R['draw'], 'recordsTotal':count,
-                'data' : list(objects), 
-                'recordsFiltered': filtered
-            }, status=200, safe=False)
+            return  rp.JsonResponse(data = {'data':list(objs)})
 
         # return form empty
         elif R.get('action', None) == 'form':
@@ -976,7 +962,7 @@ class PeopleGroup(LoginRequiredMixin, View):
 
         # handle delete request
         elif R.get('action', None) == "delete" and R.get('id', None):
-            obj=utils.get_model_obj(R['id'])
+            obj=utils.get_model_obj(R['id'], request, self.params)
             pm.Pgbelonging.objects.filter(pgroup = obj).delete()
             resp = utils.render_form_for_delete(request, self.params, False)
         
@@ -1025,8 +1011,7 @@ class PeopleGroup(LoginRequiredMixin, View):
             putils.save_userinfo(pg, request.user, request.session, create=create)
             save_pgroupbelonging(pg, request)
             logger.info("people group form saved")
-            data = {'success': "Record has been saved successfully",
-                    'msg': pg.groupname, 'row':model_to_dict(pg)}
+            data = {'row': Pgroup.objects.values(*self.params['fields']).get(id=pg.id)}
             return rp.JsonResponse(data, status=200)
         except IntegrityError:
             return handle_intergrity_error("Pgroup")
@@ -1065,15 +1050,8 @@ class SiteGroup(View, LoginRequiredMixin):
         #to populate all sites table
         elif R.get('action', None) == 'allsites':
             from apps.onboarding.models import Bt
-            #total, filtered, objs, idfs  = Bt.objects.get_bus_idfs(R, R['sel_butype'])
             objs, idfs  = Bt.objects.get_bus_idfs(R, R['sel_butype'])
-            # resp = rp.JsonResponse(data = {
-            #     'draw':R['draw'],
-            #     'data':list(objs),
-            #     'recordsFiltered':filtered,
-            #     'recordsTotal':total,
-            #     'idfs':list(idfs)
-            # })
+
             resp = rp.JsonResponse(data = {
                 'data':list(objs),
                 'idfs':list(idfs)
@@ -1082,7 +1060,7 @@ class SiteGroup(View, LoginRequiredMixin):
         
         elif R.get('action') == "loadSites":
             data = Pgbelonging.objects.get_assigned_sitesto_sitegrp(R['id'])
-            ic(data)
+            print(data)
             resp = rp.JsonResponse(data = {
                 'assigned_sites':list(data),
             })
@@ -1107,12 +1085,13 @@ class SiteGroup(View, LoginRequiredMixin):
             resp = render(request, self.params['template_form'], context=cxt)
             return resp
         
-        
         # handle delete request
         elif R.get('action', None) == "delete" and R.get('id', None):
+            ic('here')
             obj=utils.get_model_obj(R['id'])
+            print(obj)
             pm.Pgbelonging.objects.filter(pgroup = obj).delete()
-            resp = utils.render_form_for_delete(request, self.params, False)
+            return utils.render_form_for_delete(request, self.params, False)
         
     
     def post(self, request, *args, **kwargs):
@@ -1121,7 +1100,6 @@ class SiteGroup(View, LoginRequiredMixin):
         assignedSites = json.loads(request.POST['assignedSites'])
         pk = request.POST.get('pk', None)
         try:
-
             if pk:
                 msg = "pgroup_view"
                 form = utils.get_instance_for_update(
@@ -1160,12 +1138,12 @@ class SiteGroup(View, LoginRequiredMixin):
         try:
             for site in sitesArray:
                 pgb = pm.Pgbelonging(
-                    pgroup = pg,
-                    people_id = 1,
+                    pgroup         = pg,
+                    people_id      = 1,
                     assignsites_id = site['buid'],
-                    client_id = S['client_id'],
-                    bu_id = S['bu_id'],
-                    tenant_id = S['tenantid']
+                    client_id      = S['client_id'],
+                    bu_id          = S['bu_id'],
+                    tenant_id      = S['tenantid']
                 )
                 putils.save_userinfo(pgb, request.user, request.session)
         except Exception as e:

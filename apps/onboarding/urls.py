@@ -27,5 +27,7 @@ urlpatterns = [
     path('shift/', views.Shift.as_view(), name="shift"),
     path('editor/', views.EditorTa.as_view(), name="editortypeassist"),
 
+    
+    path('geofence/', views.GeoFence.as_view(), name='geofence')
 
 ]

@@ -27,9 +27,11 @@ def clean_text(val):
 def clean_datetimes(val, offset):
     from datetime import datetime, timedelta, timezone
     tz = timezone(timedelta(minutes=int(offset)))
-    val = val.replace("+00:00", "")
-    val = datetime.strptime(val, "%Y-%m-%d %H:%M:%S")
-    return val.replace(tzinfo=tz, microsecond=0)
+    if val:
+        val = val.replace("+00:00", "")
+        val = datetime.strptime(val, "%Y-%m-%d %H:%M:%S")
+        return val.replace(tzinfo=tz, microsecond=0)
+    return val
 
 
 def clean_date(val):

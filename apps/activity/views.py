@@ -28,18 +28,18 @@ log = logger
 # Create your views here.
 class Question(LoginRequiredMixin, View):
     params = {
-        'form_class': af.QuestionForm,
+        'form_class'   : af.QuestionForm,
         'template_form': 'activity/partials/partial_ques_form.html',
         'template_list': 'activity/question.html',
-        'partial_form': 'peoples/partials/partial_ques_form.html',
-        'partial_list': 'peoples/partials/partial_people_list.html',
-        'related': ['unit'],
-        'model': am.Question,
-        'filter': aft.QuestionFilter,
-        'fields': ['id', 'quesname', 'answertype', 'isworkflow', 'unit__tacode', ],
+        'partial_form' : 'peoples/partials/partial_ques_form.html',
+        'partial_list' : 'peoples/partials/partial_people_list.html',
+        'related'      : ['unit'],
+        'model'        : am.Question,
+        'filter'       : aft.QuestionFilter,
+        'fields'       : ['id', 'quesname', 'answertype', 'isworkflow', 'unit__tacode', ],
         'form_initials': {
-            'answertype':am.Question.AnswerType.DROPDOWN,
-            'category':1, 'unit':1}
+        'answertype'   : am.Question.AnswerType.DROPDOWN,
+        'category'     : 1,                               'unit': 1}
     }
 
     def get(self, request, *args, **kwargs):
@@ -113,15 +113,15 @@ class Question(LoginRequiredMixin, View):
 
 class MasterQuestionSet(LoginRequiredMixin, View):
     params = {
-        'form_class': None,
+        'form_class'   : None,
         'template_form': 'activity/partials/partial_masterqset_form.html',
         'template_list': 'activity/master_qset_list.html',
-        'partial_form': 'peoples/partials/partial_masterqset_form.html',
-        'partial_list': 'peoples/partials/master_qset_list.html',
-        'related': ['unit'],
-        'model': am.QuestionSet,
-        'filter': aft.MasterQsetFilter,
-        'fields': ['qsetname', 'type', 'id'],
+        'partial_form' : 'peoples/partials/partial_masterqset_form.html',
+        'partial_list' : 'peoples/partials/master_qset_list.html',
+        'related'      : ['unit'],
+        'model'        : am.QuestionSet,
+        'filter'       : aft.MasterQsetFilter,
+        'fields'       : ['qsetname', 'type', 'id'],
         'form_initials': {}
     }
     list_grid_lookups = label = None
@@ -130,16 +130,17 @@ class MasterQuestionSet(LoginRequiredMixin, View):
     def get(self, request, *args, **kwargs):
         R, resp = request.GET, None
         urlname = resolve(request.path_info).url_name
+        # first load the template
+        if R.get('template'): return render(request, self.params['template_list'], context={'label':self.label})
         # return qset_list data
         if R.get('action', None) == 'list' or R.get('search_term'):
-            d = {'list': "qset_list", 'filt_name': "qset_filter"}
-            self.params.update(d)
             objs = self.params['model'].objects.select_related(
                 *self.params['related']).filter(
                     ~Q(qsetname='NONE'), **self.list_grid_lookups
             ).values(*self.params['fields'])
             resp = utils.render_grid(request, self.params,
                                      "questionset_view", objs, extra_cxt={'label': self.label})
+            return  rp.JsonResponse(data = {'data':list(objs)})
 
         # return questionset_form empty
         elif R.get('action', None) == 'form':
@@ -166,7 +167,7 @@ class MasterQuestionSet(LoginRequiredMixin, View):
                    'label': self.label}
             obj = utils.get_model_obj(int(R['id']), request, self.params)
             self.params['form_initials'] = {
-                'assetincludes': obj.assetincludes.split(', ') if obj.assetincludes else []}
+                'assetincludes': obj.assetincludes}
             resp = utils.render_form_for_update(
                 request, self.params, 'masterqset_form', obj, cxt)
         return resp
@@ -313,7 +314,7 @@ class Checklist(MasterQuestionSet):
                       'client': qset.client_id}
             self.save_qset_belonging(request, assigned_questions, fields)
             data = {'success': "Record has been saved successfully",
-                    'type': qset.type, 'name': qset.qsetname, 'id': qset.id
+                    'row':{'qsetname':qset.qsetname, 'id':qset.id}
                     }
             return rp.JsonResponse(data, status=200)
         except IntegrityError:
@@ -363,7 +364,7 @@ class QuestionSet(MasterQuestionSet):
                         'client': qset.client_id}
                 self.save_qset_belonging(request, assigned_questions, fields)
                 data = {'success': "Record has been saved successfully",
-                        'type': qset.type, 'name': qset.qsetname, 'id': qset.id
+                        'row':{'qsetname':qset.qsetname, 'id':qset.id}
                         }
                 return rp.JsonResponse(data, status=200)
         except IntegrityError:
@@ -510,14 +511,15 @@ class RetriveEscList(LoginRequiredMixin, View):
 
 class AdhocRecord(LoginRequiredMixin, View):
     params = {
-        'form_class': af.AdhocTaskForm,
+        'form_class'   : af.AdhocTaskForm,
         'template_form': 'activity/adhoc_jobneed_taskform.html',
         'template_list': 'activity/adhoc_jobneed_task.html',
-        'related': ['performedby', 'qset', 'asset'],
-        'model': am.Jobneed,
-        'fields': ['id', 'plandatetime', 'jobdesc', 'performedby__peoplename', 'jobstatus',
+        'related'      : ['performedby', 'qset', 'asset'],
+        'model'        : am.Jobneed,
+        'fields'       : ['id', 'plandatetime', 'jobdesc', 'performedby__peoplename', 'jobstatus',
                    'qset__qsetname', 'asset__assetname'],
-        'form_initials': {} }
+        'form_initials': {},
+        'idf'          : ''}
     
     def get(self, request, *args, **kwargs):
         R, resp = request.GET, None
@@ -529,13 +531,20 @@ class AdhocRecord(LoginRequiredMixin, View):
         
         #then load the table with objects for table_view
         if R.get('action', None) == 'list' or R.get('search_term'):
-            objs = self.params['model'].objects.select_related(
-                 *self.params['related']).filter(
-                    identifier = 'TASK', jobtype='ADHOC', plandatetime__date__gte = (now - timedelta(days=7)).date()
-             ).values(*self.params['fields'])
-            return  rp.JsonResponse(data = {'data':list(objs)})
+            total, filtered, objs = self.params['model'].objects.get_adhoctasks_listview(R, self.params['idf'])
+            return  rp.JsonResponse(data = {
+                'draw':R['draw'],
+                'data':list(objs),
+                'recordsFiltered':filtered,
+                'recordsTotal':total,
+            }, safe=False)
         
         elif R.get('action', None) == 'form':
             cxt = {'adhoctaskform': self.params['form_class'](request=request),
                    'msg': "create adhoc task requested"}
             return render(request, self.params['template_form'], context=cxt)
+        
+
+
+        
+    

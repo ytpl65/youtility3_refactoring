@@ -81,16 +81,10 @@ People Group Lists
 			ajax:{
 				url:`${urlname}?action=list`
 			},
-			serverSide : true,
+			deferRender: true,
 			responsive : true,
-			fixedHeader: true,
-			search    : {return: true},
             dom       : `<'row' <'col-sm-6 d-flex justify-content-start'f> <'col-sm-6 d-flex justify-content-end'B> >rt<'row'
 			 <'col-sm-6'l> <'col-sm-6'p><'col-sm-12 d-flex justify-content-center'i>>`,
-            search    : {return: true},
-			lengthMenu: [[10, 20, 30], [10, 20, 30]],	
-			ordering:false,
-            scrollCollapse: true,
 			columns:[
 				{
 					data:"groupname",
@@ -113,7 +107,6 @@ People Group Lists
 							'beforeSend'  : BeforeSend }
 						fire_ajax_get(params)
 						.done((data, status, xhr) => {
-							$(modalcontent_id).attr('data-form', 'create')
                             $(`${modal_id} .modal-content`).html(data.html_form)
                         })
 						.fail((xhr, status, error) => {
@@ -125,74 +118,45 @@ People Group Lists
 		})
 		$('.btn').removeClass('dt-button')
 
-		//BEGIN STYLING DATATABLE
-		$("th > input").addClass('form-control')
-		$("th > input").css('height', '35px')
-		var styles = {
-			"border-bottom":"none",
-			"background-color":"#f1f4f7"
-		}
-		
-		$(`${table_id} thead tr:eq(1)`).css(styles)
-		//END STYLING DATATABLE
 
-        //add row to the table
-		const addRow = (data) => {
-			table.row.add($(`<tr>
-			<td><a href="${data.url}">${data.capscode}</a></td>
-			<td>${data.capsname}</td>
-			<td>${data.cfor}</td>
-			<td>${data.parent}</td>
-			</tr>`)).draw();
-			console.log("rowadded")
-		}
-
-		const updateRow = (data, rowid) => {
-			table.row(rowid).data(
-			`<tr>
-			<td><a href="${data.url}">${data.capscode}</a></td>
-			<td>${data.capsname}</td>
-			<td>${data.cfor}</td>
-			<td>${data.parent}</td>
-			</tr>`
-			)
-		}
 		
 		//submit form
 		$(modal_id).on('submit', formid, function(e) {
 			var form = $(this);
 			e.preventDefault()
 			const params = { url:urlname, modal:true } //capability view
-			const formtype = $(modalcontent_id).attr('data-form') //form-type (create/update)
-			const id = $(modalcontent_id).attr('data-id') //form instance id
+			const id = $("#pk").val() //form instance id
 			var payLoad = {formData:form.serialize(), peoples:$("#id_peoples").val(),  csrfmiddlewaretoken: '{{ csrf_token }}'}//payload for post request
-			if(formtype === 'update'){
+			if(id != 'None'){
 				var newPayLoad = {...payLoad, 'pk':id}
 				payLoad = newPayLoad
 			}
 			
 			fire_ajax_form_post(params, payLoad)
 			.done((data, status, xhr) => { //function to submit post request
-				console.log("data ", data)
-				addResultToTable(data.row)
 				$(modal_id).modal("hide");
-				var isupdated = formtype === 'update' ? true : false
-				show_successful_save_alert(update=isupdated)
+				if(id!=='None'){
+					table.row('.selected').data(data.row).draw()
+				}else{
+					table.row.add(data.row).draw()
+				}
+				show_successful_save_alert(update= id != 'None' ? true : false)
 			})
 		})
 
 		//update row (form-view)
-		$('tbody').click(rowlink,  (e) => {
-			e.preventDefault();
+		$('#pgroup_table tbody').on('click', 'tr', function(e){
+			if ($(this).hasClass('selected')) {
+				$(this).removeClass('selected');
+			} else {
+				table.$('tr.selected').removeClass('selected');
+				$(this).addClass('selected');
+			}
 			
-			var id = $(e.originalEvent.originalTarget).attr('data-id');
-			var rowid = $(e.originalEvent.originalTarget).attr('data-rowid');
-			console.log(id, rowid)
-			if (!(id && rowid)){ return }
-			$(modalcontent_id).attr('data-rowid', rowid)
-			$(modalcontent_id).attr('data-id', id)
-			console.log("id ", id)
-			console.log("table ", table)
+			var d = table.row( this ).data();
+			e.preventDefault();
+			var id = d.id
+			if (!(id)){ return }
 			const params = {
 				'modal_id'    : modal_id,
 				'url'         : `${urlname}?id=${id}`,

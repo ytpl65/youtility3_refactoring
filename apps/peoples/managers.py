@@ -58,7 +58,16 @@ class PeopleManager(BaseUserManager):
                 ~Q(id=1), bu_id = siteid, mdtz__gte = mdtz).values(*self.fields)
         return qset or self.none()
     
+    def get_emergencycontacts(self, siteid, clientid):
+        "returns mobnos of people with given assigned siteid"
+        qset = self.filter(bu_id = siteid, client_id = clientid).values_list('mobno', flat=True)
+        return qset or self.none()
     
+    
+    def get_emergencyemails(self, siteid, clientid):
+        "returns emails of people with given assigned siteid"
+        qset = self.filter(bu_id = siteid, client_id = clientid).values_list('email', flat=True)
+        return qset or self.none()
     
 
 
@@ -105,7 +114,9 @@ class PgblngManager(models.Manager):
             buname = F('assignsites__buname'),
             buid = F('assignsites__id'),
         ).values('buname', 'buid')
+        ic(qset)
         return qset or self.none()
+    
     
 
 
@@ -160,3 +171,11 @@ class PgroupManager(models.Manager):
             return total, fcount, filteredqset
         qset = qset[start:start+length]
         return total, total, qset
+    
+    def get_assignedsitegroup_forclient(self, clientid):
+        qset = self.filter(
+            client_id = clientid,
+            identifier__tacode = 'SITEGROUP'
+            ).values_list('id', 'groupname')
+        return qset or self.none()
+        

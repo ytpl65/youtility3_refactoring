@@ -20,23 +20,12 @@
     <!------------------ BEGIN TABLE --------------------->
 	<table id="qset_table" class="display compact cell-border" style="width:100%">
         <thead class="fw-bold fs-6">
+            <th>ID</th>
             <th>Name</th>
         </thead>
-		<tbody>
-			{% for qset in qset_list %}
-			<tr>
-				<td><a href="" class="qset-link" data-id="{{ qset['id'] }}" data-rowid ={{ loop.index0 }}>{{ qset['qsetname'] }}</a></td>
-			</tr>
-			{% endfor %}
-		</tbody>
+		<tbody></tbody>
     </table>
     <!------------------ END TABLE --------------------->
-{% if qset_list and qset_list.has_other_pages %}
-<!-- BEGIN PAGINATOIN -->
-{{ paginator(qset_list) }}
-<!-- END PAGINATOIN ---->
-{% endif %}
-
 {% endblock table %}
 <!------------------ --------------------------END BU TABLE ------------------------------------------------->
 
@@ -55,7 +44,7 @@
 <!--------- BEGIN EXTRA SCRIPTS ----------------------------->
 {% block extra_scripts %}
 <script>
-	var table             = null;
+	var Qsettable             = null;
 	const modal_id        = "#modal-qset"
 	const modalcontent_id = "#qset_content"
 	const formFilter      = "#qset_filter"
@@ -79,23 +68,28 @@
             $(modal_id).modal("show");
         }
 		//datatable initialization
-        table = $(table_id).DataTable({
+        Qsettable = $(table_id).DataTable({
 			//orderCellsTop: true,
-			responsive: true,
-			fixedHeader: true,
-			paging: false,
-			lengthChange: false,
-			language: {
-				searchPlaceholder: "Search on page"
+			ajax:{
+				url:"{{ url('activity:questionset') }}?action=list"
 			},
-            dom:"<'row'" +
-                "<'col-sm-6 d-flex align-items-center justify-conten-start'f>" +
-                "<'col-sm-6 d-flex align-items-center justify-content-end'B>" +
-                ">" +
-
-                "<'table-responsive'tr>",
-            ordering:false,
-            scrollCollapse: true,
+            deferRender: true,
+			responsive : true,
+			columns:[
+				{data:'id'},
+				{data:'qsetname'},
+			],
+			dom       : `<'row' <'col-sm-6 d-flex justify-content-start'f> <'col-sm-6 d-flex justify-content-end'B> >rt<'row'
+			 <'col-sm-6'l> <'col-sm-6'p><'col-sm-12 d-flex justify-content-center'i>>`,
+			columnDefs:[
+				{targets:0, data: "id", visible:false, searchable:false, orderable:false },
+				{
+					targets: 1,
+					data   : 'qsetname',
+					render : function ( data, type, row, meta ) {
+						return `<a href="#" class="ta-link" data-id=${row['id']} data-rowid=${meta.row}>${data}</a>`
+					}
+				}],
 			buttons:[
 				{
 					text:`Add New ${viewname} &nbsp;<i class='fas fa-plus ch4'></i></a>`,
@@ -110,6 +104,7 @@
 						.done((data, status, xhr) => {
 							$(modalcontent_id).attr('data-form', 'create')
                             $(`${modal_id} .modal-content`).html(data.html_form)
+							$('#id_assetincludes').val(null).trigger('change');
                         })
 						.fail((xhr, status, error) => {
 							show_error_alert("Something went wrong!")
@@ -119,50 +114,21 @@
 			]
 		})
 
-		//BEGIN STYLING DATATABLE
-		$("th > input").addClass('form-control')
-		$("th > input").css('height', '35px')
-		var styles = {
-			"border-bottom":"none",
-			"background-color":"#f1f4f7"
-		}
-		
-		$(`${table_id} thead tr:eq(1)`).css(styles)
-		//END STYLING DATATABLE
 
-        //add row to the table
-		const addRow = (data) => {
-			table.row.add($(`<tr>
-			<td><a href="${data.url}">${data.capscode}</a></td>
-			<td>${data.capsname}</td>
-			<td>${data.cfor}</td>
-			<td>${data.parent}</td>
-			</tr>`)).draw();
-			console.log("rowadded")
-		}
-
-		const updateRow = (data, rowid) => {
-			table.row(rowid).data(
-			`<tr>
-			<td><a href="${data.url}">${data.capscode}</a></td>
-			<td>${data.capsname}</td>
-			<td>${data.cfor}</td>
-			<td>${data.parent}</td>
-			</tr>`
-			)
-		}
-		
 		
 
 		//update row (form-view)
-		$(rowlink).click((e) => {
+		$("#qset_table tbody").on('click', 'tr', function (e) {
+			if ($(this).hasClass('selected')) {
+				$(this).removeClass('selected');
+			} else {
+				Qsettable.$('tr.selected').removeClass('selected');
+				$(this).addClass('selected');
+			}
+			var d = Qsettable.row( this ).data();
 			e.preventDefault();
-			var id = $(e.currentTarget).attr('data-id');
-			var rowid = $(e.currentTarget).attr('data-rowid');
-			$(modalcontent_id).attr('data-rowid', rowid)
-			$(modalcontent_id).attr('data-id', id)
-			console.log("id ", id)
-			console.log("table ", table)
+			var id = d.id
+			if (!(id)){ return }
 			const params = {
 				'modal_id'    : modal_id,
 				'url'         : `${urlname}?id=${id}`,
@@ -207,10 +173,7 @@
 				if(status){
 					show_successful_delete_alert() //defined in customjs
 					$(modal_id).modal("hide")
-					//delete row from table
-					row_index = parseInt($(modalcontent_id).attr('data-rowid'))
-					console.log(row_index, "row index")
-					table.row(row_index).remove().draw();
+					Qsettable.row('.selected').remove().draw();
 				}else{
 					show_error_alert('Something went wrong!');
 				}

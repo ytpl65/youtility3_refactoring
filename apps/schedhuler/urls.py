@@ -24,4 +24,11 @@ urlpatterns = [
     path('internal-tour/add/',                 views.add_cp_internal_tour,                 name='add_checkpoint'),#jobneed
     path('runJob/',                            views.run_internal_tour_scheduler,          name='runJob'),
     path('getCronDateTime/',                   views.get_cron_datetime,                    name='getCronDateTime'),
+
+    #SINGLE VIEW CRUD
+    path('jobneedtours/', views.JobneedTours.as_view(), name='jobneedtours'),
+    path('jobneedtasks/', views.JobneedTasks.as_view(), name='jobneedtasks'),
+    path('jobschdtasks/', views.SchdTasks.as_view(), name='jobschdtasks')
+
+
 ]

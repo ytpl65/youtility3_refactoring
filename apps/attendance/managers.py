@@ -1,7 +1,7 @@
 from datetime import timedelta
-import imp
+import re
 from django.db import models
-from apps.activity.models import Attachment
+from apps.core import utils
 Q = models.Q
 class PELManager(models.Manager):
     use_in_migrations = True
@@ -35,3 +35,31 @@ class PELManager(models.Manager):
     
     def get_people_attachment(self, pelogid, db):
         pass
+    
+    
+    def get_lastmonth_conveyance(self, R):
+        from datetime import datetime
+        now = datetime.now()
+        qset = self.select_related('bu', 'people').filter(
+                peventtype__tacode = 'CONVEYANCE',
+                punchintime__date__gte = (now - timedelta(days=30)).date()
+            ).exclude(endlocation__isnull=True).values(*R.getlist('fields[]'))
+        return qset or self.none()
+
+
+    def getjourneycoords(self, id):
+        from django.contrib.gis.db.models.functions import AsGeoJSON
+        import json
+        qset = self.annotate(
+            path = AsGeoJSON('journeypath')).filter(
+                id = id).values('path', 'punchintime', 'punchouttime', 'deviceid', 'expamt', 'accuracy',
+                    'people__peoplename', 'people__peoplecode', 'distance', 'duration', 'transportmodes')
+        for obj in qset:
+            ic(obj['path'])
+            geodict = json.loads(obj['path'])
+            coords = [{'lat':lat, 'lng':lng} for lng, lat in geodict['coordinates']]
+            obj['path'] = coords
+            coords = []
+        return qset or self.none()
+        
+        

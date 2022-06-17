@@ -5,8 +5,9 @@ from django.db.models.functions import Concat
 from django.db.models import CharField, Value as V
 from django.db.models import Q, F
 from datetime import date, datetime, timedelta
-
+from apps.core import utils
 from apps.peoples.models import People
+
 class QuestionSetManager(models.Manager):
     use_in_migrations = True
     fields = ['id', 'cuser_id', 'muser_id', 'ctzoffset', 'bu_id', 'client_id', 'cdtz', 'mdtz',
@@ -121,7 +122,23 @@ class JobneedManager(models.Manager):
         return qset or self.none()
     
     
-
+    def get_adhoctasks_listview(self, R, task=True):
+        idf = 'TASK' if task else 'TOUR'
+        qobjs, dir,  fields, length, start = utils.get_qobjs_dir_fields_start_length(R)
+        from datetime import datetime
+        now = datetime.now()
+        qset = self.select_related(
+                 'performedby', 'qset', 'asset').filter(
+                    identifier = idf, jobtype='ADHOC', plandatetime__date__gte = (now - timedelta(days=7)).date()
+             ).values(*fields).order_by(dir)
+        total = qset.count()
+        if qobjs:
+            filteredqset = qset.filter(qobjs)
+            fcount = filteredqset.count()
+            filteredqset = filteredqset[start:start+length]
+            return total, fcount, filteredqset
+        qset = qset[start:start+length]
+        return total, total, qset
 
 
 class AttachmentManager(models.Manager):
@@ -234,3 +251,20 @@ class QsetBlngManager(models.Manager):
 class TicketManager(models.Manager):
     use_in_migrations = True
    
+
+
+class JobManager(models.Manager):
+    use_in_migrations: True
+    
+    
+    def getgeofence(self, peopleid, siteid):
+        from django.contrib.gis.db.models.functions import AsGeoJSON
+        qset = self.filter(
+            people_id = peopleid, bu_id = siteid, identifier='GEOFENCE').select_related(
+                'geofence', 
+            ).annotate(
+                geofencejson = AsGeoJSON('geofence')).values(
+                    'geofence__id', 'geofence__gfcode', 'people_id', 'fromdate',
+                    'geofence__gfname', 'geofencejson', 'enable', 'uptodate', 'identifier',
+                    'starttime', 'endtime', 'bu_id', 'asset_id')
+        return qset or self.none()

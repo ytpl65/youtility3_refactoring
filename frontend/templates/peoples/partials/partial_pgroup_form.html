@@ -7,6 +7,8 @@
 
 {% block body %}
 <form action="" method='post' id="id_pgroupform">
+	<input type="hidden" name="pk" id="pk" value="{{ pgroup_form.instance.pk }}">
+    <input type="hidden" name="{{ pgroup_form.ctzoffset.name }}" id = "{{ pgroup_form.ctzoffset.auto_id }}" value="-1">
 	<div class="modal-header border-0">
 		<h3 class="modal-title modal-heading" id="exampleModalLabel">Create Pgroup <i class="fas fa-poll-h fa-sm ch4"></i></h3>
 		<button type="button" class="btn-sm btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
@@ -62,7 +64,10 @@
     // add classes to checkboxes.
     $(".booleans").addClass("form-check form-switch form-check-custom form-check-solid") 
 $(document).ready(() => {
-	$("#modal-pgroup").find("select").select2({
+    //set ctzoffset
+    $("#id_ctzoffset").val(-new Date().getTimezoneOffset())
+	
+    $("#modal-pgroup").find("select").select2({
 		dropdownParent: $('#modal-pgroup')
     })
     $("[multiple]").djangoSelect2({

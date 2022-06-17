@@ -34,6 +34,10 @@ $(document).ready(function(){
 table = $("#adhoc_tasks").DataTable({
     ajax:{
         url:'{{ url("activity:adhoctasks") }}?action=list',
+        data:function(d){
+                    d.fields = ['id', 'plandatetime', 'jobdesc', 'qset__qsetname',
+                     'performedby__peoplename', 'jobstatus', 'asset__assetname']
+                }
     },
     columns     : [
         { "data": "id", visible:false },
@@ -44,6 +48,10 @@ table = $("#adhoc_tasks").DataTable({
         { "data": "asset__assetname", title:'Asset/Smartplace'},
         { "data": "qset__qsetname", title:'Question Set'},
     ],
+    serverSide:true,
+    fixedHeader:true,
+    search    : {return: true},
+    lengthMenu: [[10, 20, 30], [10, 20, 30]],
     columnDefs:[
         {targets:2, data:'jobdesc',
         render:function(data, type, row, meta){
@@ -53,7 +61,6 @@ table = $("#adhoc_tasks").DataTable({
     ],
     dom:`<'row' <'col-sm-6 d-flex justify-content-start'f> <'col-sm-6 d-flex justify-content-end'B> >rt<'row'
 			 <'col-sm-6'l> <'col-sm-6'p><'col-sm-12 d-flex justify-content-center'i>>`,
-    deferRender: true,
     responsive : true,
     buttons:[
         {

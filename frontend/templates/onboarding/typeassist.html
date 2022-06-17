@@ -25,6 +25,7 @@ TypeAssist List
             <th>Type</th>
             <th>Created By</th>
         </thead>
+		<tbody></tbody>
 		<!---------- END TABLE FILTER FIELDS --------->
         
     </table>
@@ -80,7 +81,7 @@ TypeAssist List
 			deferRender: true,
 			responsive : true,
 			columnDefs:[
-				{targets:0, visible:false, searchable:false, orderable:false},
+				{targets:0, data: "id", visible:false, searchable:false, orderable:false },
 				{
 					targets: 1,
 					data   : 'tacode',
@@ -89,7 +90,7 @@ TypeAssist List
 					}
 				}
 			],
-			 dom       : `<'row' <'col-sm-6 d-flex justify-content-start'f> <'col-sm-6 d-flex justify-content-end'B> >rt<'row'
+			dom       : `<'row' <'col-sm-6 d-flex justify-content-start'f> <'col-sm-6 d-flex justify-content-end'B> >rt<'row'
 			 <'col-sm-6'l> <'col-sm-6'p><'col-sm-12 d-flex justify-content-center'i>>`,
 			buttons:[
 				{
@@ -103,7 +104,6 @@ TypeAssist List
                             'beforeSend': TaBeforeSend }
 						fire_ajax_get(params)
 						.done((data, status, xhr) => {
-							$(modalcontent_id).attr('data-form', 'create')
                             $(`${modal_id} .modal-content`).html(data.html_form)
                         })
 						.fail((xhr, status, error) => {
@@ -119,62 +119,43 @@ TypeAssist List
 
 		//END STYLING DATATABLE
 
-        //add row to the table
-		const addRow = (data) => {
-			table.row.add($(`<tr>
-			<td><a href="${data.url}">${data.capscode}</a></td>
-			<td>${data.capsname}</td>
-			<td>${data.cfor}</td>
-			<td>${data.parent}</td>
-			</tr>`)).draw();
-			console.log("rowadded")
-		}
 
-		const updateRow = (data, rowid) => {
-			table.row(rowid).data(
-                `<tr>
-                <td><a href="${data.url}">${data.capscode}</a></td>
-                <td>${data.capsname}</td>
-                <td>${data.cfor}</td>
-                <td>${data.parent}</td>
-                </tr>`
-			)
-		}
 		
 		//submit form
 		$(modal_id).on('submit', formid, function(e) {
 			var form = $(this);
 			e.preventDefault()
 			const params = { url:urlname, modal:true } //capability view
-			const formtype = $(modalcontent_id).attr('data-form') //form-type (create/update)
-			const id = $(modalcontent_id).attr('data-id') //form instance id
+			const id = $("#pk").val() //form instance id
 			var payLoad = {formData:form.serialize(), csrfmiddlewaretoken: '{{ csrf_token }}'}//payload for post request
-			if(formtype === 'update'){
+			if(id != 'None'){
 				var newPayLoad = {...payLoad, 'pk':id}
 				payLoad = newPayLoad
 			}
 			fire_ajax_form_post(params, payLoad)
 			.done((data, status, xhr) => { //function to submit post request
-				console.log("data ", data)
 				$(modal_id).modal("hide");
-				table.row.add(data.row).draw()
-				var isupdated = formtype === 'update' ? true : false
-				show_successful_save_alert(update=isupdated)
+				if(id!=='None'){
+					table.row('.selected').data(data.row).draw()
+				}else{
+					table.row.add(data.row).draw()
+				}
+				show_successful_save_alert(update= id != 'None' ? true : false)
 			})
 		})
 
 		//update row (form-view)
-		$("tbody").click(rowlink,  (e) => {
-			console.log(e)
+		$("#ta_table tbody").on('click', 'tr', function (e) {
+			if ($(this).hasClass('selected')) {
+				$(this).removeClass('selected');
+			} else {
+				table.$('tr.selected').removeClass('selected');
+				$(this).addClass('selected');
+			}
+			var d = table.row( this ).data();
 			e.preventDefault();
-			var id = $(e.originalEvent.originalTarget).attr('data-id');
-			var rowid = $(e.originalEvent.originalTarget).attr('data-rowid');
-			debugger;
-			if (!(id && rowid)){ return }
-			$(modalcontent_id).attr('data-rowid', rowid)
-			$(modalcontent_id).attr('data-id', id)
-			console.log("id ", id)
-			console.log("table ", table)
+			var id = d.id
+			if (!(id)){ return }
 			const params = {
 				'modal_id'    : modal_id,
 				'url'         : `${urlname}?id=${id}`,
@@ -208,7 +189,7 @@ TypeAssist List
 	}
 
 
-	//delete capability 
+	//delete typeassist 
 	function deleteTa(elemt){
 		var id = $(elemt).attr("data-id");
 		show_alert_before_delete(viewname)
@@ -220,9 +201,7 @@ TypeAssist List
 					show_successful_delete_alert() //defined in customjs
 					$(modal_id).modal("hide")
 					//delete row from table
-					row_index = parseInt($(modalcontent_id).attr('data-rowid'))
-					table.search().ajax.reload()
-					console.log("table reloaded")
+					table.row('.selected').remove().draw()
 				}else{
 					show_error_alert('Something went wrong!');
 				}

@@ -7,6 +7,8 @@ from django.core.serializers.json import DjangoJSONEncoder
 from django.contrib.gis.db.models import LineStringField, PointField, PolygonField
 from django.utils.translation import gettext_lazy as _
 from .managers import PELManager
+from django.contrib.postgres.fields import ArrayField
+
 
 # Create your models here.
 
@@ -28,13 +30,15 @@ class PeopleEventlog(BaseModel, TenantAwareModel):
 
     
     class TransportMode(models.TextChoices):
-        BICYCLE    = ('BICYCLE', 'Bicycle')
-        MOTORCYCLE = ('MOTORCYCLE', 'MotorCycle')
-        RICKSHAW   = ('RICKSHAW', 'Rickshaw')
-        BUS        = ('BUS', 'Bus')
-        TRAIN      = ('TRAIN', 'Train')
-        FLITE      = ('FLITE', 'Flite')
-        BOAT       = ('BOAT', 'Boat or Ship')
+        BIKE     = ('BIKE', 'Bike')
+        RICKSHAW = ('RICKSHAW', 'Rickshaw')
+        BUS      = ('BUS', 'Bus')
+        TRAIN    = ('TRAIN', 'Train')
+        PLANE    = ('PLANE', 'Plane')
+        BOAT     = ('BOAT', 'Boat or Ship')
+        NONE     = ('NONE', 'NONE')
+        CAR      = ('CAR', 'Car')
+        CAB      = ('CAB', 'Cab')
     
     #id          = models.BigIntegerField(primary_key=True)
     uuid            = models.UUIDField(unique=True, editable=True, blank=True, default=uuid.uuid4)
@@ -45,14 +49,14 @@ class PeopleEventlog(BaseModel, TenantAwareModel):
     verifiedby      = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.RESTRICT, related_name='verifiedpeoples', verbose_name='Verified By')
     geofence        = models.ForeignKey('onboarding.GeofenceMaster', null=True, blank=True, on_delete=models.RESTRICT)
     peventtype      = models.ForeignKey('onboarding.TypeAssist', null=True, blank=True, on_delete=models.RESTRICT)
-    transportmodes  = models.TextField(max_length=500, null=True, blank=True)
+    transportmodes  = ArrayField(models.CharField(max_length=50, blank=True, choices=TransportMode.choices), default=list)
     punchintime     = models.DateTimeField(_('In'), null=True)
     punchouttime    = models.DateTimeField(_('Out'), null=True)
     datefor         = models.DateField(_("Date"), null=True)
-    distance        = models.IntegerField(_("Distance"), null=True, blank=True)
+    distance        = models.FloatField(_("Distance"), null=True, blank=True)
     duration        = models.IntegerField(_("Duration"), null=True, blank=True)
     expamt          = models.FloatField(_("exampt"), default=0.0  ,null=True, blank=True)
-    accuracy        = models.IntegerField(_("accuracy"), null=True, blank=True)
+    accuracy        = models.FloatField(_("accuracy"), null=True, blank=True)
     deviceid        = models.CharField(_("deviceid"), max_length=50, null=True, blank=True)
     startlocation   = PointField(_("GPS-In"), null=True, geography=True, srid=4326)
     endlocation     = PointField(_("GPS-Out"), null=True, geography=True, blank=True, srid=4326)
@@ -60,6 +64,8 @@ class PeopleEventlog(BaseModel, TenantAwareModel):
     remarks         = models.CharField(_("remarks"), null=True, max_length=500, blank=True)
     facerecognition = models.BooleanField(_("Enable Face-Recognition"), default=True)
     peventlogextras = models.JSONField(_("peventlogextras"), encoder=DjangoJSONEncoder, default=peventlog_json)
+    otherlocation   = models.CharField(_("Other Location"), max_length=50)
+    reference       = models.CharField('Reference', max_length=55, null=True)
 
     objects = PELManager()
 
@@ -69,15 +75,22 @@ class PeopleEventlog(BaseModel, TenantAwareModel):
 
 #temporary table
 class Tracking(models.Model):
-    #id= models.BigIntegerField(primary_key=True)
+    class Identifier(models.TextChoices):
+        NONE = ('NONE', 'None')
+        CONVEYANCE  = ('CONVEYANCE', 'Conveyance')
+        EXTERNALTOUR = ('EXTERNALTOUR', 'External Tour')
+        SITEVISIT = ('SITEVISIT', 'Site Visit')
+    
+    #id           = models.BigIntegerField(primary_key=True)
     uuid          = models.UUIDField(unique=True, editable=True, blank=True, default=uuid.uuid4)
     deviceid      = models.CharField(max_length=40)
     gpslocation   = PointField(geography=True, srid=4326)
-    recieveddate  = models.DateTimeField(editable=True, null=True)
+    receiveddate  = models.DateTimeField(editable=True, null=True)
     people        = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.RESTRICT, verbose_name='People')
     transportmode = models.CharField(max_length=55)
-    amount        = models.FloatField(default=0.0)
-    identifier    = models.ForeignKey('onboarding.TypeAssist', null=True, blank=True, on_delete=models.RESTRICT) 
+    reference     = models.CharField(max_length=255, default=None)
+    identifier    = models.CharField(max_length=55, choices=Identifier.choices, default=Identifier.NONE)
+    
     
     class Meta:
         db_table = 'tracking'

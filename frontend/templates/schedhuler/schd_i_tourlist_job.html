@@ -21,7 +21,7 @@ Schedhuled Tour List
 <!-------------------------------------------- BEGIN Schedhuled Tour TABLE ------------------------------------------->
 {% block table %}
 <table id="schdtour_table" class="display compact cell-border" style="width:100%">
-    <thead class="fw-bold fs-6">
+    {# <thead class="fw-bold fs-6">
         <th>Name</th>
         <th>People/Group</th>
         <th>From</th>
@@ -56,7 +56,7 @@ Schedhuled Tour List
             <td>{{ tour['expirytime'] }}</td>
         </tr>
         {% endfor %}
-    </tbody>
+    </tbody> #}
 </table>
 
 {% if schdtour_list and schdtour_list.has_other_pages %}
@@ -84,32 +84,39 @@ Schedhuled Tour List
 	const formFilter      = "#schdtour_filter"
 	const table_id        = "#schdtour_table"
 	const formid          = "#id_schdtourform"
+    const urlname = "{{ url('schedhuler:jobneedtours') }}"
 
     $(document).ready(function (){
-        $("input").keypress(function(event) {
-			if (event.which == 13) {
-				event.preventDefault();
-				$(formFilter).submit();
-			}
-		});
         //datatable initialization
         table = $(table_id).DataTable({
 			//orderCellsTop: true,
-			responsive: true,
-			fixedHeader: true,
-			paging: false,
-			lengthChange: false,
-			language: {
-				searchPlaceholder: "Search on page"
-			},
-            dom:"<'row'" +
-                "<'col-sm-6 d-flex align-items-center justify-conten-start'f>" +
-                "<'col-sm-6 d-flex align-items-center justify-content-end'B>" +
-                ">" +
-
-                "<'table-responsive'tr>",
-            ordering:false,
-            scrollCollapse: true,
+			deferRender: true,
+			responsive : true,
+            dom:`<'row' <'col-sm-6 d-flex justify-content-start'f> <'col-sm-6 d-flex justify-content-end'B> >rt<'row'
+			 <'col-sm-6'l> <'col-sm-6'p><'col-sm-12 d-flex justify-content-center'i>>`,
+            columns:[
+                {data:'id'},
+                {data:'jobname', title:"Name"},
+                {title:'People/Group'},
+                {title:'From', data:'fromdate'},
+                {title:'To', data:'uptodate'},
+                {title:'Duration', data:'planduration'},
+                {title:'Gracetime', data:'gracetime'},
+                {title:'Exp. Time', data:'expirydatetime'},
+            ],
+            columnDefs:[
+                {targets:0, data:'id', visible:false, searchable:false},
+                {
+                    targets:1, data:'jobname', render: function (data, type, row, meta){
+                        return `<a href="${urlname}?id=${row['id']}">${data}</a>`
+                    }
+                },
+                {targets:2, render:function(data, type, row, meta){
+                    let peoplename = row['people__peoplename']
+                    let groupname = row['pgroup__groupname']
+                    return peoplename ? typeof peoplename == 'undefined' : groupname 
+                }}
+            ],
             buttons:[
 				{
 					text:`Schedule Tour &nbsp;<i class='fas fa-plus ch4'></i></a>`,

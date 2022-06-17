@@ -39,6 +39,7 @@ Internal Tour
 {% block form %}
 <form action="" method="post" id="internaltourform">
     <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
+    <input type="hidden" name="{{ internaltourform.ctzoffset.name }}" id = "{{ internaltourform.ctzoffset.auto_id }}" value="-1">
     <div class="row mb-3 gy-3">
         <div class="col-md-2">
             <label for={{ internaltourform.jobdesc.id_for_label }}
@@ -463,6 +464,8 @@ Internal Tour
 
 
     $(document).ready(() => { 
+        //set ctzoffset
+  	    $("#id_ctzoffset").val(-new Date().getTimezoneOffset())
         //assignto toggle
         if ('{{internaltourform.instance.id}}' == ('None' || "")) {
             showHideSelectField('PEOPLE')

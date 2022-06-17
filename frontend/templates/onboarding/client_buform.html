@@ -89,6 +89,7 @@ Client
 <form action="" method='post' id="id_clientform">
     <!-------------------------- CSRF MIDDLEWARE TOKEN --------------------->
     <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
+    <input type="hidden" name="{{ clientform.ctzoffset.name }}" id = "{{ clientform.ctzoffset.auto_id }}" value="-1">
     <div class="mb-3 row g-3 gx-6">
         {{ clientform.identifier.label_tag() }}
         <div class="col-md-4 col-sm-4">
@@ -223,6 +224,9 @@ Client
 {{ clientform.media.js }}
 <script>
     $(document).ready(function () {
+        //set ctzoffset
+  	    $("#id_ctzoffset").val(-new Date().getTimezoneOffset())
+        
         //add form attribute to fields which are outside form element
         $("#id_webcapability").attr("form", "id_clientform")
         $("#id_reportcapability").attr("form", "id_clientform")

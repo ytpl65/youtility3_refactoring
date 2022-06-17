@@ -7,7 +7,7 @@ from .mutations import (
   InsertRecord, AdhocMutation,
   LoginUser, LogoutUser,
   ReportMutation,  TaskTourUpdate,
-  UploadAttMutaion, SyncMutation
+  UploadAttMutaion, SyncMutation, InsertJsonMutation
 )
 from .types import (
     PELogType, PeopleType, TrackingType, TestGeoType, TyType
@@ -35,6 +35,7 @@ class Mutation(graphene.ObjectType):
     upload_attachment   = UploadAttMutaion.Field()
     sync_upload         = SyncMutation.Field()
     adhoc_record      = AdhocMutation.Field()
+    insert_json      = InsertJsonMutation.Field()
 
 
 class Query(MeQuery, ApiQuery,  graphene.ObjectType):

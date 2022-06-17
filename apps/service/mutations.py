@@ -1,9 +1,12 @@
+from cv2 import trace
 import graphene
 from  graphql_jwt.shortcuts import get_token, get_payload
 from graphql_jwt.decorators import login_required
 from graphene.types.generic import GenericScalar
 from graphql import GraphQLError
+from numpy import rec
 from apps.service import utils as sutils
+from apps.core import utils as cutils
 from django.utils import timezone
 from . import tasks
 
@@ -440,7 +443,7 @@ class LoginUser(graphene.Mutation):
     Authenticates user before log in
     """
     token   = graphene.String()
-    user    = graphene.Field(ty.PeopleType)
+    user    = graphene.JSONString()
     payload = GenericScalar()
     msg     = graphene.String()
     shiftid = graphene.Int()
@@ -468,6 +471,7 @@ class LoginUser(graphene.Mutation):
         user.save()
         token = get_token(user)
         log.info(f"user logged in successfully! {user.peoplename}")
+        user = cls.get_user_json(user)
         return LoginUser(token=token, user=user, payload = get_payload(token, request))
     
     
@@ -475,6 +479,39 @@ class LoginUser(graphene.Mutation):
     def updateDeviceId(cls, user, input):
         People.objects.update_deviceid(input.deviceid, user.id)
 
+
+    @classmethod
+    def get_user_json(cls, user):
+        from django.db.models import F
+        import json
+        
+        emergencycontacts = People.objects.get_emergencycontacts(user.bu_id, user.client_id)
+        emergencyemails = People.objects.get_emergencyemails(user.bu_id, user.client_id)
+        
+        qset = People.objects.annotate(
+            loggername          = F('peoplename'),
+            mobilecapability    = F('people_extras__mobilecapability'),
+            pvideolength        = F('bu__bupreferences__pvideolength'),
+            enablesleepingguard = F('bu__enablesleepingguard'),
+            skipsiteaudit       = F('bu__skipsiteaudit'),
+            deviceevent         = F('bu__deviceevent'),
+            isgpsenable         = F('bu__gpsenable'),
+            clientcode          = F('client__bucode'),
+            clientname          = F('client__buname'),
+            clientenable        = F('client__enable'),
+            sitecode            = F('bu__bucode'),
+            sitename            = F('bu__buname'),
+            ).values(
+            'loggername',  'mobilecapability',
+            'enablesleepingguard',
+            'skipsiteaudit', 'deviceevent', 'pvideolength',
+            'client_id', 'bu_id', 'mobno', 'email', 'isverified',
+            'deviceid', 'id', 'enable', 'isadmin', 'peoplecode',
+            'tenant_id', 'loginid', 'clientcode', 'clientname', 'sitecode',
+            'sitename', 'clientenable', 'isgpsenable').get(id=user.id)
+        qset.update({'emergencycontacts': list(emergencycontacts), 'emergencyemails':list(emergencyemails)})
+        return  json.dumps(qset)
+        
 
 
     
@@ -579,6 +616,35 @@ class AdhocMutation(graphene.Mutation):
 
 
 
+class InsertJsonMutation(graphene.Mutation):
+    output = graphene.Field(ty.ServiceOutputType)
+    
+    class Arguments:
+        jsondata = graphene.JSONString(required=True)
+        tablename = graphene.String(required=True)
+        
+    @classmethod
+    def mutate(cls, root, info, jsondata, tablename):
+        # sourcery skip: instance-method-first-arg-name
+        from .tasks import insertrecord_from_tablename
+        from apps.core.utils import get_current_db_name
+        import json
+        log.info('insert jsondata mutations start[+]')
+        rc, traceback, resp, recordcount = 0,  'NA', 0, 0
+        msg = ""
+        try:
+            db = get_current_db_name()
+            insertrecord_from_tablename(jsondata, tablename, db)
+            recordcount, msg = 1, 'Inserted Successfully'
+        except Exception as e:
+            log.error('something went wrong', exc_info=True)
+            msg, rc, traceback = 'Insert Failed!',1, tb.format_exc()
+        output = ty.ServiceOutputType(rc=rc, recordcount = recordcount, msg = msg, traceback = traceback)
+        return InsertJsonMutation(output=output)
+
+        
+
+
 class SyncMutation(graphene.Mutation):
     rc = graphene.Int()
     
@@ -594,21 +660,30 @@ class SyncMutation(graphene.Mutation):
         log.info("sync now mutation is running")
         import zipfile
         from apps.service import tasks
-        import os
-        home = os.path.expanduser('~')
         try:
             db = get_current_db_name()
             with zipfile.ZipFile(file) as zip:
-                zip.extractall(home)
+                zipsize = TR = 0
                 for file in zip.filelist:
+                    zipsize+=file.file_size
+                    log.info(f'filename: {file.filename} and size: {file.file_size}')
                     with zip.open(file) as f:
                         data = tasks.get_json_data(f)
-                        raise ValueError
+                        #raise ValueError
+                        TR+=len(data)
                         tasks.call_service_based_on_filename(data, file.filename, db=db)
-            return SyncMutation(rc=0)
+                        ic(data)
+                if filesize!=zipsize:
+                    log.error(f"file size is not matched with the actual zipfile {filesize} x {zipsize}")
+                    raise cutils.FileSizeMisMatchError
+                if TR!=totalrecords:
+                    log.error(f"totalrecords is not matched with th actual totalrecords after extraction... {totalrecords} x {TR}")
+                    raise cutils.TotalRecordsMisMatchError
         except Exception:
             log.error("something went wrong!", exc_info=True)
             return SyncMutation(rc=1)
+        else:
+            return SyncMutation(rc=0)
 
 
 

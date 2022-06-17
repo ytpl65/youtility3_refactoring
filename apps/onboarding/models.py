@@ -3,10 +3,11 @@ from django.urls import reverse
 from apps.tenants.models import TenantAwareModel
 from django.contrib.gis.db.models import PolygonField
 from django.db import models
-from .managers import BtManager, TypeAssistManager
+from .managers import BtManager, TypeAssistManager, GeofenceManager
 from django.core.serializers.json import DjangoJSONEncoder
 from django.utils.translation import gettext_lazy as _
 from django.contrib.gis.db.models import PointField
+from django.contrib.postgres.fields import ArrayField
 from apps.peoples.models import BaseModel
 # Create your models here.
 
@@ -41,22 +42,22 @@ class HeirarchyModel(models.Model):
 
 def bu_defaults():
     return {
-        "mobilecapability": [],
-        "validimei": "",
-        "webcapability": [],
-        "portletcapability": [],
-        "validip": "",
-        "reliveronpeoplecount": 0,
-        "reportcapability": [],
-        "usereliver": False,
-        "pvideolength": 10,
-        "guardstrenth": 0,
-        "malestrength": 0,
-        "femalestrength": 0,
-        "siteclosetime": "",
-        "tag": "",
-        "siteopentime": "",
-        "nearbyemergencycontacts": "",
+        "mobilecapability"       : [],
+        "validimei"              : "",
+        "webcapability"          : [],
+        "portletcapability"      : [],
+        "validip"                : "",
+        "reliveronpeoplecount"   : 0,
+        "reportcapability"       : [],
+        "usereliver"             : False,
+        "pvideolength"           : 10,
+        "guardstrenth"           : 0,
+        "malestrength"           : 0,
+        "femalestrength"         : 0,
+        "siteclosetime"          : "",
+        "tag"                    : "",
+        "siteopentime"           : "",
+        "nearbyemergencycontacts": [],
     }
 
 
@@ -75,7 +76,7 @@ class Bt(BaseModel, TenantAwareModel, HeirarchyModel):
     gpsenable           = models.BooleanField(_("GPS Enable"), default=False)
     enablesleepingguard = models.BooleanField(_("Enable SleepingGuard"), default=False)
     skipsiteaudit       = models.BooleanField(_("Skip SiteAudit"), default=False)
-    siincludes          = models.TextField(_("Site Inclides"), default="")
+    siincludes          = ArrayField(models.CharField(max_length=50, blank=True), verbose_name= _("Site Inclides"), null=True, blank=True)
     deviceevent         = models.BooleanField(_("Device Event"), default=False)
     pdist               = models.FloatField(_("pdist"), default=0.0, blank=True, null=True)
     gpslocation         = PointField(_('GPS Location'),null=True, blank=True, geography=True, srid=4326)
@@ -263,6 +264,7 @@ class WizardDraft(models.Model):
     wizard_data = models.JSONField(null=True, default=wizard_default,  encoder=DjangoJSONEncoder, blank=True)
     formdata   = models.JSONField( null=True, default=formData_default,  encoder=DjangoJSONEncoder, blank=True)
 
+    
     class Meta:
         db_table = 'wizarddraft'
         constraints = [
@@ -287,6 +289,8 @@ class GeofenceMaster(BaseModel):
     bu            = models.ForeignKey("onboarding.Bt", null=True, verbose_name=_( "Site"), on_delete=models.RESTRICT, related_name='for_sites')
     enable        = models.BooleanField(_("Enable"), default=True)
 
+    objects = GeofenceManager()
+    
     class Meta(BaseModel.Meta):
         db_table = 'geofencemaster'
         constraints = [

@@ -35,9 +35,9 @@ def write_file_to_dir(filebuffer, uploadedfile):
 
 
 
-from this import d
-from cv2 import trace
-from pandas import json_normalize
+from pprint import pformat
+
+from matplotlib.pyplot import table
 from .tasks import Messages
 from .tasks import (
     get_json_data, get_model_or_form,
@@ -59,8 +59,18 @@ def insertrecord(record, tablename):
     try:
         if model := get_model_or_form(tablename):
             record = clean_record(record)
-            return model.objects.create(**record)
-        raise GraphQLError(Messages.IMPROPER_DATA)
+            ic(record)
+        
+            log.info(f'record after cleaning\n {pformat(record)}')
+            obj = model.objects.get(uuid = record['uuid'])
+            model.objects.filter(uuid = obj.uuid).update(**record)
+            log.info("record is already exist so updating it now..")
+            ic("updating")
+            return model.objects.get(uuid = record['uuid'])
+    except model.DoesNotExist:
+        ic("creating")
+        log.info("record is not exist so creating new one..")
+        return model.objects.create(**record)
     except Exception as e:
         log.error("something went wrong", exc_info=True)
         raise e
@@ -190,18 +200,31 @@ def perform_insertrecord(file, request=None, filebased=True):
     log.info('perform_insertrecord [start]')
     rc, recordcount, traceback= 0, 0, 'NA'
     instance = None
-    from pprint import pformat
     try:
         data = get_json_data(file) if filebased else [file]
         #ic(data)
         try:
             with transaction.atomic(using=utils.get_current_db_name()):
+                
                 for record in data:
                     tablename = record.pop('tablename')
-                    model = get_model_or_form(tablename)
-                    record = clean_record(record)
-                    log.info(f'record after cleaning {pformat(record)}')
-                    instance = model.objects.create(**record)
+                    ic(tablename)
+                    obj = insertrecord(record, tablename)
+                    ic(obj)
+                    allconditions = [
+                        hasattr(obj, 'peventtype'), hasattr(obj, 'endlocation'), 
+                        hasattr(obj, 'punchintime'), hasattr(obj, 'punchouttime')]
+                    
+                    if all(allconditions) and all([tablename == 'peopleeventlog',
+                            obj.peventtype.tacode in ('CONVEYANCE','AUDIT'),
+                            obj.endlocation,obj.punchouttime, obj.punchintime]):
+                        log.info("save line string is started")
+                        save_linestring_and_update_pelrecord(obj)
+                        
+                    # model = get_model_or_form(tablename)
+                     
+                    # log.info(f'record after cleaning {pformat(record)}')
+                    # instance = model.objects.create(**record)
                     recordcount+=1
         except Exception:
             raise
@@ -212,6 +235,27 @@ def perform_insertrecord(file, request=None, filebased=True):
         msg, rc, traceback = Messages.INSERT_FAILED, 1, tb.format_exc()
     return  ServiceOutputType(rc=rc, recordcount = recordcount, msg = msg, traceback = traceback)
 
+
+def save_linestring_and_update_pelrecord(obj):
+    from apps.attendance.models import Tracking
+    from django.contrib.gis.geos import LineString
+    try:
+        
+        bet_objs = Tracking.objects.filter(reference=obj.uuid)
+        line = [[coord for coord in obj.gpslocation] for obj in bet_objs]
+        ls = LineString(line, srid = 4326)
+        #transform spherical mercator projection system
+        ls.transform(3857)
+        d = round(ls.length / 1000)
+        obj.distance = d
+        ls.transform(4326)
+        obj.journeypath = ls
+        obj.save()
+        log.info("save linestring is saved..")
+    except Exception as e:
+        log.info('ERROR while saving line string', exc_info=True)
+        raise
+    
 
 
 def perform_reportmutation(file):

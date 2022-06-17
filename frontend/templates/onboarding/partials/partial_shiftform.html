@@ -6,6 +6,7 @@
 
 {% block body %}
 <form action="" method="post" id="id_shiftform">
+    <input type="hidden" name="{{ shift_form.ctzoffset.name }}" id = "{{ shift_form.ctzoffset.auto_id }}" value="-1">
     <div class="modal-header border-0">
         <h3 class="modal-title modal-heading" id="exampleModalLabel">Create Shift <i
                 class="fas fa-poll-h fa-sm ch4"></i></h3>
@@ -123,6 +124,8 @@
     }
 
     $(document).ready(function () {
+        //set ctzoffset
+  	    $("#id_ctzoffset").val(-new Date().getTimezoneOffset())
         //hide the delete button when instance is not saved yet.
         if ('{{shift_form.instance.id}}' == 'None') {
             $("#btn_del").hide()
