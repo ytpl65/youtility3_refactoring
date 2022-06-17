@@ -1,5 +1,4 @@
 *.pyc
-docs
 my_project_visualized.png
 docs/importants.txt
 .gitignore
