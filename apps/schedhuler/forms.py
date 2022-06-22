@@ -146,6 +146,7 @@ class TaskFormJobneed(I_TourFormJobneed):
     
     def __init__(self, *args, **kwargs):
         super(TaskFormJobneed, self).__init__(*args, **kwargs)
+        self.fields['jobdesc'].required = True
         utils.initailize_form_fields(self)
         if not self.instance.id:
             ic('iside')
@@ -209,6 +210,7 @@ class SchdTaskFormJob(JobForm):
         })
 
     def __init__(self, *args, **kwargs):
+        self.request = kwargs.pop('request')
         super(SchdTaskFormJob, self).__init__(*args, **kwargs)
         self.fields['fromdate'].input_formats  = settings.DATETIME_INPUT_FORMATS
         self.fields['uptodate'].input_formats  = settings.DATETIME_INPUT_FORMATS

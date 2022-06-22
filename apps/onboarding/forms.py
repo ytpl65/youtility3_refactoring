@@ -383,3 +383,21 @@ class ClentForm(BuPrefForm):
         return result
 
 #========================================== END JSON FORMS =======================================#
+
+
+class ImportForm(forms.Form):
+    TABLECHOICES = [
+        ('PEOPLES', 'Peoples'),
+        ('BU', 'Buisiness Units'),
+        ('SHIFTS', 'Shifts'),
+        ('ASSETS', 'Assets'),
+        ('QUESTIONS', 'Questions'),
+        ('PEOPLEGROUPS', 'People Groups'),
+        ('SITEGROUPS', 'Site Groups'),
+        ('TYPEASSISTS', 'TypeAssists'),
+    ]
+    
+    
+    importfile = forms.FileField(required=True, label='Import')
+    table = forms.ChoiceField(required=True, choices=TABLECHOICES, label='Select Type of Data')
+    

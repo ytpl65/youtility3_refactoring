@@ -627,8 +627,7 @@ def run_internal_tour_scheduler(request):
     if request.method != 'POST' or request.POST is None:
         return Http404
     padd = "#"*10
-    log.info(
-        "%s run_guardtour_scheduler initiated [START] %s" % (padd, padd))
+    log.info(f"{padd} run_guardtour_scheduler initiated [START] {padd}")
     job, resp = request.POST.get('job'), None
     if (
         jobs := am.Job.objects.filter(id=job)
@@ -643,14 +642,13 @@ def run_internal_tour_scheduler(request):
         )
         .values_list(named=True)
     ):
-        log.info("%s create_job(jobs) %s" % (padd, padd))
+        log.info(f"{padd} create_job(jobs) {padd}")
         resp = sutils.create_job(jobs)
     else:
         msg = "Job not found unable to schedhule"
-        log.error("%s" % (msg), exc_info=True)
+        log.error(f"{msg}", exc_info=True)
         resp = rp.JsonResponse({"errors": msg}, status=404)
-    log.info(
-        "%s run_guardtour_scheduler initiated [END] %s" % (padd, padd))
+    log.info(f"{padd} run_guardtour_scheduler initiated [END] {padd}")
     del padd
     ic("resp in run_internal_tour_scheduler()", resp)
     return resp
@@ -662,7 +660,7 @@ def get_cron_datetime(request):
 
     log.info("get_cron_datetime [start]")
     cron = request.GET.get('cron')
-    log.info("get_cron_datetime cron:%s"%(cron))
+    log.info(f"get_cron_datetime cron:{cron}")
     cronDateTime= itr= None
     startdtz= datetime.now()
     enddtz= datetime.now() + timedelta(days=1)
@@ -1181,11 +1179,10 @@ class JobneedTasks(LoginRequiredMixin, View):
         if R.get('action', None) == 'list' or R.get('search_term'):
             dt = datetime.now(tz=timezone.utc) - timedelta(days=10)
             objs = self.params['model'].objects.select_related(
-                *self.related).filter(
-                Q(bu_id=request.session.get('bu_id', 1)),  ~Q(parent__jobdesc='NONE')
-                , ~Q(jobdesc='NONE') , Q(plandatetime__gte=dt)
+                *self.params['related']).filter(
+                Q(bu_id=request.session.get('bu_id', 1)) , Q(plandatetime__gte=dt)
                 ,Q(identifier = am.Jobneed.Identifier.TASK)
-            ).values(*self.fields).order_by('-plandatetime')
+            ).values(*self.params['fields']).order_by('-plandatetime')
             resp = rp.JsonResponse(data = {'data':list(objs)})
         return resp
     
@@ -1198,7 +1195,23 @@ class SchdTasks(LoginRequiredMixin, View):
         'fields'       : ['jobname', 'people__peoplename', 'pgroup__groupname',
                         'fromdate', 'uptodate', 'qset__qsetname', 'asset__assetname',
                         'planduration', 'gracetime', 'expirytime', 'id', 'ctzoffset'],
-        'related'      : ['pgroup', 'people', 'asset']
+        'related'      : ['pgroup', 'people', 'asset'],
+        'form_class': scd_forms.SchdTaskFormJob,
+        'template_form': 'schedhuler/schd_taskform_job.html',
+        'initial': {
+                'starttime'   : time(00, 00, 00),
+                'endtime'     : time(00, 00, 00),
+                'fromdate'   : datetime.combine(date.today(), time(00, 00, 00)),
+                'uptodate'   : datetime.combine(date.today(), time(23, 00, 00)) + timedelta(days=2),
+                'expirytime'  : 0,
+                'identifier'  : am.Job.Identifier.TASK,
+                'frequency'   : am.Job.Frequency.NONE,
+                'scantype'    : am.Job.Scantype.QR,
+                'priority'    : am.Job.Priority.LOW,
+                'planduration': 5,
+                'gracetime'   : 5,
+                'expirytime'  : 5
+            }
     }
     
     def get(self, request, *args, **kwargs):
@@ -1215,3 +1228,83 @@ class SchdTasks(LoginRequiredMixin, View):
             ).values(*self.params['fields']).order_by('-cdtz')
             log.info(f'Tasks objects {len(objects)} retrieved from db' if objects else "No Records!")
             return rp.JsonResponse(data = {'data':list(objects)})
+        
+        #load form with instance
+        elif R.get('id'):
+            obj = utils.get_model_obj(int(R['id']), request, self.params)
+            cxt = {'schdtaskform':self.params['form_class'](request=request, instance=obj),
+                    'edit':True}
+            return render(request, self.params['template_form'], context=cxt)
+        
+        #return empty form
+        elif R.get('action') == 'form':
+            cxt = {
+            'schdtaskform':self.params['form_class'](initial = self.params['initial'], request=request)
+            }
+            return render(request, self.params['template_form'], context=cxt)
+        
+        elif R.get('runscheduler'):
+            #run job scheduler
+            pass
+    
+    def post(self, request, *args, **kwargs):
+        R = request.POST
+        
+        log.info('Task form submitted')
+        data, create = QueryDict(R['formData']), True
+        utils.display_post_data(data)
+        if pk := R.get('pk', None):
+            obj = utils.get_model_obj(pk, request, {'model': self.params['model']})
+            form = self.params['form_class'](
+                instance=obj, data=data, request=request)
+            log.info("retrieved existing task whose jobname:= '%s'" %
+                     (obj.jobname))
+        else:
+            form = self.params['form_class'](data=data, request=request)
+            log.info("new task submitted following is the form-data:\n%s\n" %
+                     (pformat(form.data)))
+        response = None
+        try:
+            with transaction.atomic(using=utils.get_current_db_name()):
+                if form.is_valid():
+                    response = self.process_valid_schd_taskform(request, form)
+                else:
+                    response = self.process_invalid_schd_taskform(
+                        form)
+        except Exception:
+            log.critical(
+                "failed to process form, something went wrong", exc_info=True)
+            response = rp.JsonResponse(
+                {'errors': 'Failed to process form, something went wrong'}, status=404)
+        return response
+
+    def process_valid_schd_taskform(self, request, form):
+        resp = None
+        log.info("task form processing/saving [ START ]")
+        try:
+            job         = form.save(commit=False)
+            job.parent_id  = 1
+            job.save()
+            job = putils.save_userinfo(job, request.user, request.session)
+            log.info('task form saved success...')
+        except Exception as ex:
+            log.critical("task form is processing failed", exc_info=True)
+            resp = rp.JsonResponse(
+                {'error': "saving schd_taskform failed..."}, status=404)
+            raise ex from ex
+        else:
+            log.info("task form is processed successfully")
+            resp = rp.JsonResponse({'jobname': job.jobname,
+                'url': f'{reverse("schedhuler:jobschdtasks")}?id={job.id}'},
+                status=200)
+        log.info("task form processing/saving [ END ]")
+        return resp
+
+    def process_invalid_schd_taskform(self, form):
+        log.info(
+            "processing invalidt task form sending errors to the client [ START ]")
+        cxt = {"errors": form.errors}
+        log.info(
+            "processing invalidt task form sending errors to the client [ END ]")
+        return rp.JsonResponse(cxt, status=404)
+        

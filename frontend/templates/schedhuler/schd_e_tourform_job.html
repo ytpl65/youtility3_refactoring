@@ -115,7 +115,7 @@ Schedhule External-Tour&nbsp;<i class="fa fa-clock fs-4 text-primary" aria-hidde
         </div>
         <div class="col-md-5 d-flex">
             <input type="text" name="{{ schdexternaltourform.cron.name }}" value="{{ schdexternaltourform.cron.value() }}" id="id_cron" readonly required class="form-control" maxlength="250" />
-            <a  class="btn btn-circle btn-icon-only btn-default " id="cron_selector">
+            <a  class="btn btn-circle btn-icon-only btn-default" id="cron_selector">
                 <i class="fa fa-clock fs-4 text-primary" aria-hidden="true"></i>
             </a>
             {{ schdexternaltourform.cron.errors }}
@@ -407,7 +407,7 @@ Schedhule External-Tour&nbsp;<i class="fa fa-clock fs-4 text-primary" aria-hidde
     var _fduration   = '--';
     var _fdistance   = '--';
 </script>
-<script type="text/javascript" src="https://maps.googleapis.com/maps/api/js?key={{ request.session.google_maps_secret_key }}&libraries=places"></script>
+<script type="text/javascript" src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDVbA53nxHKUOHdyIqnVPD01aOlTitfVO0&libraries=places"></script>
 <script src="{{ static('assets/js/overlapping_marker_spiderfier.js') }}" type="text/javascript"></script>
 <script src="{{ static('assets/js/schd_ext_tour_form.js') }}" type="text/javascript"></script>
 <script>

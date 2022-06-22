@@ -91,7 +91,7 @@ def render_form_for_update(request, params, formname, obj, extra_cxt=None):
         F = params['form_class'](
             instance=obj, request=request, initial=params['form_initials'])
         C = {formname: F, 'edit': True}
-        C.update(extra_cxt)
+
         html = render_to_string(params['template_form'], C, request)
         data = {'html_form': html}
         return rp.JsonResponse(data, status=200)

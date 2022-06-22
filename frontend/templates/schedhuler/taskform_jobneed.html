@@ -38,6 +38,7 @@ Task
 <!---------- END NON FIELD ERRORS --------->
 
 
+<!------------- BEGIN FORM ------------------------------>
 {% block form %}
 <form action="" method="post" id="taskformjobneed">
     <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
@@ -194,6 +195,7 @@ Task
     </div>
 </form>
 {% endblock form %}
+<!------------- END FORM ------------------------------>
 
 
 {% block ajax_page_actions %}

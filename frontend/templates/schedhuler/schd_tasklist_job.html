@@ -20,15 +20,6 @@ Schedhuled Tasks
 {% block table %}
 <table id="schd_task_table" class="display cell-border compact hover" style="width:100%">
     <thead class="fw-bold fs-6">
-        <th>Name</th>
-        <th>Asset</th>
-        <th>Question Set</th>
-        <th>People/Group</th>
-        <th>From</th>
-        <th>To</th>
-        <th>Duration</th>
-        <th>Grace Time</th>
-        <th>Exp. Time</th>
     </thead>
     <tbody></tbody>
 </table>
@@ -40,35 +31,23 @@ Schedhuled Tasks
 {% block extra_scripts %}
 <script>
 	var table        = null;
-	const table_id   = "#schd_task_table"
+	//const table_id   = "#schd_task_table"
     const formUrl    = "{{ url('schedhuler:jobschdtasks') }}"
 
     $(document).ready(function (){
-        //convert to local
-        function convert_to_local(type, data){
-            if(type === "sort" || type === "type"){
-                return data ? data: '-';
-            }
-            if(data){
-                let datetime = moment(data, 'YYYY-MM-DDTHH:mm:ss').add(row['ctzoffset'], 'm').format("DD-MMM-YYYY HH:mm")
-                return data ? datetime : '-';
-            }return data
-        }
-
         //datatable initialization
-        table = $(table_id).DataTable({
+        table = $("#schd_task_table").DataTable({
             ajax:{
                 url:"{{ url('schedhuler:jobschdtasks') }}?action=list"
             },
-			//orderCellsTop: true,
 			responsive: true,
             deferRender: true,
             columns:[
                 {data:'id', visible:false, searchable:false},
                 {data:'jobname', title:"Name"},
                 {data:'asset__assetname', title:"Asset"},
-                {data:'qset__qset_name', title:'Question Set'},
-                {title:'People/Group'},
+                {data:'qset__qsetname', title:'Question Set'},
+                {title:'People/Group', data:null},
                 {data:'fromdate', title:"From"},
                 {data:'uptodate', title:'To'},
                 {data:'planduration', title:'Duration'},
@@ -79,13 +58,21 @@ Schedhuled Tasks
 			 <'col-sm-6'l> <'col-sm-6'p><'col-sm-12 d-flex justify-content-center'i>>`,
             columnDefs:[
                 {data:'fromdate', targets: 5, render:function(data, type, row, meta){
-                    return convert_to_local(type, data)
+                    return convert_to_local(type, data, row)
                 }},
                 {data:'uptodate',   targets: 6, render:function(data, type, row, meta){
-                    return convert_to_local(type, data)
+                    return convert_to_local(type, data, row)
                 }},
                 {data:'jobname', targets: 1, render:function(data, type, row, meta){
                     return `<a href="${formUrl}?id=${row['id']}">${data}</a>`
+                }},
+                {targets:4, render:function(data, type, row, meta){
+                    let peoplename = row['people__peoplename']
+                    let groupname = row['pgroup__groupname']
+                    return peoplename ?  peoplename : groupname
+                }},
+                {targets:[7,8,9], render:function(data, type, row, meta){
+                    return `${data} mins`
                 }}
             ],
             buttons:[
@@ -94,7 +81,7 @@ Schedhuled Tasks
 					className:"btn btn-sm btn-light-primary btn-hover-rise",
 					//action for add_new_button 
 					action: function(e, dt, node, config){
-        				window.location.href = "{{ url('schedhuler:create_task') }}";
+        				window.location.href = "{{ url('schedhuler:jobschdtasks') }}?action=form";
 					}
 				}
 			]

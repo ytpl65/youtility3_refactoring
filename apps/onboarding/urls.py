@@ -28,6 +28,7 @@ urlpatterns = [
     path('editor/', views.EditorTa.as_view(), name="editortypeassist"),
 
     
-    path('geofence/', views.GeoFence.as_view(), name='geofence')
+    path('geofence/', views.GeoFence.as_view(), name='geofence'),
+    path('import/', views.ImportFile.as_view(), name="import")
 
 ]

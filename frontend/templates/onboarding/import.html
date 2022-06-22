@@ -1,0 +1,32 @@
+{% extends "base_form.html" %}
+
+
+{% block extra_css %}
+{{ importform.media.css }}
+{% endblock extra_css %}
+
+<!-------------------------- BEGIN PAGE BREADCUMB ----------------------->
+{% block pagebreadcumb %}
+<!--will call parent contents -->
+{{ super() }}
+<li class="breadcrumb-item pe-3"><a href="{{ url('home') }}?template=true" class="pe-3">Home</a></li>
+<li class="breadcrumb-item pe-3"><a href="javascript:void(0)" class="pe-3">Import Export</a></li>
+{% endblock pagebreadcumb %}
+<!-------------------------- END PAGE BREADCUMB ------------------------->
+
+
+<!------ BEGIN FORM TITLE ------->
+{% block form_title %}
+Import Data
+{% endblock form_title %}
+<!------ END FORM TITLE -------->   
+
+
+{% block form %}
+<form action="" method="post">
+    <input type="hidden"  name="csrfmiddlewaretoken" value="{{ csrf_token }}">
+    <div class="row mb-3">
+        {{ importfile. }}
+    </div>
+</form>
+{% endblock form %}

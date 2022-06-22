@@ -1,3 +1,4 @@
+from distutils.log import Log
 import logging
 from django.views.decorators.cache import cache_page
 from django.utils.decorators import method_decorator
@@ -1200,3 +1201,18 @@ def get_geofence_from_point_radii(R):
     except Exception:
         logger.error("something went wrong while computing geofence..", exc_info=True)
         return rp.JsonResponse(data={'errors':'something went wrong while computing geofence!'}, status=404)
+
+
+
+class ImportFile(LoginRequiredMixin, View):
+    params = {
+       'template_form':'onboarding/import.html',
+       'form_class':obforms.ImportForm
+    }
+    
+    def get(self, request, *args, **kwargs):
+        R = request.GET
+        print(R)
+        if R.get('action') == 'form':
+            cxt = {'importform':self.params['form_class']()}
+            return render(request, self.params['template_form'], context=cxt)

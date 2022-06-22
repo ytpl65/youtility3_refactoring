@@ -295,14 +295,12 @@ def insert_into_jn_and_jnd(job, DT, tzoffset, resp):
                 dt = datetime.strptime(dt, '%Y-%m-%d %H:%M').replace(tzinfo=timezone.utc)
                 pdtz = params['pdtz'] = dt
                 edtz = params['edtz'] = dt + timedelta(minutes=mins)
-                log.debug(
-                    'pdtz:=%s edtz:=%s'%(pdtz, edtz)
-                )
+                log.debug(f'pdtz:={pdtz} edtz:={edtz}')
                 jn = insert_into_jn_for_parent(job, params)
                 isparent = crontype in (am.Job.Identifier.INTERNALTOUR, am.Job.Identifier.EXTERNALTOUR)
                 insert_update_jobneeddetails(jn.id, job, parent=isparent)
                 if isinstance(jn, am.Jobneed):
-                    log.info("createJob() parent jobneed:= %s" % (jn.id))
+                    log.info(f"createJob() parent jobneed:= {jn.id}")
                     if crontype in (am.Job.Identifier.INTERNALTOUR, am.Job.Identifier.EXTERNALTOUR):
                         edtz = create_child_tasks(
                             job, pdtz, people, jn.id, jobstatus, jobtype)
@@ -321,7 +319,8 @@ def insert_into_jn_and_jnd(job, DT, tzoffset, resp):
             raise ex from ex
         else:
             status = "success"
-            resp = rp.JsonResponse({'msg':'%s tasks scheduled successfully!'%(len(DT))}, status=200)
+            resp = rp.JsonResponse({'msg': f'{len(DT)} tasks scheduled successfully!'}, status=200)
+
         log.info("insert_into_jn_and_jnd() [ End ]")
         return status, resp
 
@@ -340,7 +339,7 @@ def insert_into_jn_for_parent(job, params):
             scantype       = job.scantype,      identifier         = job.identifier,
             cuser_id       = job.cuser_id,      muser_id           = job.muser_id,
             bu_id        = job.bu_id,       ticketcategory_id = job.ticketcategory_id,
-            gpslocation    = '0.0,0.0',         remarks            = '',
+            gpslocation = 'SRID=4326;POINT(0.0 0.0)',         remarks            = '',
             seqno           = 0,                 multifactor        = params['m_factor'],
             client_id    = job.client_id,
         )
@@ -409,14 +408,14 @@ def create_child_tasks(job, _pdtz, _people, jnid, _jobstatus, _jobtype):
         R = am.Job.objects.filter(
             parent_id=job.id).order_by(
                 'seqno').values_list(named=True)
-        log.info("create_child_tasks() total child job:=%s" % (len(R)))
+        log.info(f"create_child_tasks() total child job:={len(R)}")
         prev_edtz = _pdtz
         params = {'_jobdesc':"", 'jnid':jnid, 'pdtz':None, 'edtz':None,
                   '_people':_people, '_jobstatus':_jobstatus, '_jobtype':_jobtype,
                   'm_factor':None, 'idx':None, 'NONE_P':NONE_P}
         for idx, r in enumerate(R):
-            log.info("create_child_tasks() [%s] child job:= %s | job:= %s | cron:= %s" % (
-                idx, r.jobname, r.id, r.cron))
+            log.info(f"create_child_tasks() [{idx}] child job:= {r.jobname} | job:= {r.id} | cron:= {r.cron}")
+
             asset = am.Asset.objects.get(id=r.asset_id)
             params['m_factor'] = asset.asset_json['multifactor']
             _assetname = asset.assetname
@@ -447,20 +446,20 @@ def create_child_tasks(job, _pdtz, _people, jnid, _jobstatus, _jobtype):
 def insert_into_jn_for_child(job, params, r):
     try:
         jn = am.Jobneed.objects.create(
-            job_id       = job.id,             parent_id          = params['jnid'],
-            jobdesc        = params['_jobdesc'], plandatetime       = params['pdtz'],
-            expirydatetime = params['edtz'],     gracetime          = job.gracetime,
-            asset_id     = r.asset_id,       qset_id          = r.qset_id,
-            aatop_id       = r.aatop_id,         people_id        = params['_people'],
-            pgroup_id     = job.pgroup_id,     frequency          = 'NONE',
-            priority       = r.priority,         jobstatus          = params['_jobstatus'],
-            client_id    = r.client_id,      jobtype            = params['_jobtype'],
-            scantype       = job.scantype,       identifier         = job.identifier,
-            cuser_id       = r.cuser_id,         muser_id           = r.muser_id,
-            bu_id        = r.bu_id,          ticketcategory_id = r.ticketcategory_id,
-            gpslocation    = '0.0,0.0',          remarks            = '',
-            seqno           = params['idx'],      multifactor        = params['m_factor'],
-            performedby   = params['NONE_P'],   ctzoffset         =  r.ctzoffset
+                job_id       = job.id,             parent_id          = params['jnid'],
+                jobdesc        = params['_jobdesc'], plandatetime       = params['pdtz'],
+                expirydatetime = params['edtz'],     gracetime          = job.gracetime,
+                asset_id     = r.asset_id,       qset_id          = r.qset_id,
+                aatop_id       = r.aatop_id,         people_id        = params['_people'],
+                pgroup_id     = job.pgroup_id,     frequency          = 'NONE',
+                priority       = r.priority,         jobstatus          = params['_jobstatus'],
+                client_id    = r.client_id,      jobtype            = params['_jobtype'],
+                scantype       = job.scantype,       identifier         = job.identifier,
+                cuser_id       = r.cuser_id,         muser_id           = r.muser_id,
+                bu_id        = r.bu_id,          ticketcategory_id = r.ticketcategory_id,
+                gpslocation    = 'SRID=4326;POINT(0.0 0.0)',          remarks            = '',
+                seqno           = params['idx'],      multifactor        = params['m_factor'],
+                performedby   = params['NONE_P'],   ctzoffset         =  r.ctzoffset
             )
     except Exception:
         raise
@@ -524,7 +523,7 @@ def update_lastgeneratedon(job, pdtz):
         if rec := am.Job.objects.filter(id=job.id).update(
             lastgeneratedon=pdtz
         ):
-            log.info("after lastgenreatedon:=%s" % (pdtz))
+            log.info(f"after lastgenreatedon:={pdtz}")
         log.info('update_lastgeneratedon [end]')
     except Exception:
         raise

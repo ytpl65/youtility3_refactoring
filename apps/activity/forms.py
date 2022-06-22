@@ -496,16 +496,16 @@ class JobNeedForm(forms.ModelForm):
                   'endtime', 'performedby', 'gpslocation', 'cuser', 'raisedby', 'remarks', 'ctzoffset']
         widgets = {
             'ticketcategory': s2forms.Select2Widget,
-            'scantype'       : s2forms.Select2Widget,
-            'pgroup'        : s2forms.Select2Widget,
-            'people'       : s2forms.Select2Widget,
-            'qset'         : s2forms.ModelSelect2Widget(model=am.QuestionSet, search_fields = ['qset_name__icontains']),
-            'asset'        : s2forms.ModelSelect2Widget(model=am.Asset, search_fields = ['assetname__icontains']),
-            'priority'       : s2forms.Select2Widget,
-            'jobdesc'        : forms.Textarea(attrs={'rows': 1, 'cols': 40}),
-            'remarks'        : forms.Textarea(attrs={'rows': 2, 'cols': 40}),
-            'jobstatus'      : s2forms.Select2Widget,
-            'performedby'   : s2forms.Select2Widget,
+            'scantype' : s2forms.Select2Widget,
+            'pgroup'      : s2forms.Select2Widget,
+            'people'      : s2forms.Select2Widget,
+            'qset'        : s2forms.ModelSelect2Widget(model=am.QuestionSet, search_fields = ['qset_name__icontains']),
+            'asset'       : s2forms.ModelSelect2Widget(model=am.Asset, search_fields = ['assetname__icontains']),
+            'priority'    : s2forms.Select2Widget,
+            'jobdesc'     : forms.Textarea(attrs={'rows': 1, 'cols': 40}),
+            'remarks'     : forms.Textarea(attrs={'rows': 2, 'cols': 40}),
+            'jobstatus'   : s2forms.Select2Widget,
+            'performedby' : s2forms.Select2Widget,
             'gpslocation':forms.TextInput
         }
         label = {

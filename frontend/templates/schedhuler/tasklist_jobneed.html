@@ -112,6 +112,9 @@ Task List
         });
         //datatable initialization
         table = $(table_id).DataTable({
+            ajax:{
+                url:`${urlname}?action=list`
+            },
 			deferRender: true,
 			responsive : true,
             dom:`<'row' <'col-sm-6 d-flex justify-content-start'f> <'col-sm-6 d-flex justify-content-end'B> >rt<'row'
@@ -134,7 +137,7 @@ Task List
                 {targets:4, render:function(data, type, row, meta){
                     let peoplename = row['people__peoplename']
                     let groupname = row['pgroup__groupname']
-                    return peoplename ? typeof peoplename == 'undefined' : groupname 
+                    return peoplename ?  peoplename : groupname
                 }}
             ],
             buttons:[
