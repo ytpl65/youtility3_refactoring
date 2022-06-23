@@ -165,7 +165,7 @@ class CreatePeople(LoginRequiredMixin, View):
                 if save_jsonform(peoplepref_form, people):
                     people.save()
                     people = save_userinfo(
-                        people, request.user, request.session)
+                        people, request.user, request.session, bu = people.bu_id)
                     people.peopleimg = request.FILES.get('peopleimg',
                                                          'master/people/blank.png')
                     save_user_paswd(people)
