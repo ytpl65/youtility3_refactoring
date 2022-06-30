@@ -5,7 +5,7 @@ import apps.peoples.utils as putils
 from django.db.models import Q
 from apps.core import  utils 
 import apps.schedhuler.filters as sdf
-from django.http import HttpRequest, QueryDict
+from django.http import  QueryDict
 from pprint import pformat
 import apps.onboarding.models as om
 import apps.activity.models as am
@@ -37,7 +37,12 @@ class Schd_I_TourFormJob(LoginRequiredMixin, View):
         'starttime'   : time(00, 00, 00),
         'endtime'     : time(00, 00, 00),
         'expirytime'  : 0,
-        'identifier'  : am.Job.Identifier.INTERNALTOUR
+        'identifier'  :am.Job.Identifier.INTERNALTOUR,
+        'priority'    :am.Job.Priority.LOW,
+        'scantype'    :am.Job.Scantype.QR,
+        'gracetime'   : 5,
+        'fromdate'   : datetime.combine(date.today(), time(00, 00, 00)),
+        'uptodate'   : datetime.combine(date.today(), time(23, 00, 00)) + timedelta(days=2),
     }
 
     def get(self, request, *args, **kwargs):
@@ -53,12 +58,12 @@ class Schd_I_TourFormJob(LoginRequiredMixin, View):
         if pk := request.POST.get('pk', None):
             obj = utils.get_model_obj(pk, request, {'model': self.model})
             form = self.form_class(
-                instance=obj, data=data, initial=self.initial)
+                instance=obj, data=data, initial=self.initial, request=request)
             log.info("retrieved existing guard tour jobname:= '%s'" %
                      (obj.jobname))
             create=False
         else:
-            form = self.form_class(data=data, initial=self.initial)
+            form = self.form_class(data=data, initial=self.initial, request=request)
             log.info("new guard tour submitted following is the form-data:\n%s\n" %
                      (pformat(form.data)))
         response = None
@@ -67,8 +72,7 @@ class Schd_I_TourFormJob(LoginRequiredMixin, View):
                 if form.is_valid():
                     response = self.process_valid_schd_tourform(request, form, create)
                 else:
-                    response = self.process_invalid_schd_tourform(
-                        form, self.subform, request, self.template_path)
+                    response = self.process_invalid_schd_tourform(form)
         except Exception:
             log.critical(
                 "failed to process form, something went wrong", exc_info=True)
@@ -80,16 +84,17 @@ class Schd_I_TourFormJob(LoginRequiredMixin, View):
         resp = None
         log.info("guard tour form processing/saving [ START ]")
         try:
-            assigned_checkpoints = json.loads(
+            with transaction.atomic(using=utils.get_current_db_name()):
+                assigned_checkpoints = json.loads(
                 request.POST.get("asssigned_checkpoints"))
-            job         = form.save(commit=False)
-            job.parent_id  = -1
-            job.asset_id = -1
-            job.qset_id  = -1
-            job.save()
-            job = putils.save_userinfo(job, request.user, request.session, create=create)
-            self.save_checpoints_for_tour(assigned_checkpoints, job, request)
-            log.info('guard tour  and its checkpoints saved success...')
+                job         = form.save(commit=False)
+                job.parent_id  = -1
+                job.asset_id = -1
+                job.qset_id  = -1
+                job.save()
+                job = putils.save_userinfo(job, request.user, request.session, create=create)
+                self.save_checpoints_for_tour(assigned_checkpoints, job, request)
+                log.info('guard tour  and its checkpoints saved success...')
         except Exception as ex:
             log.critical("guard tour form is processing failed", exc_info=True)
             resp = rp.JsonResponse(
@@ -125,16 +130,18 @@ class Schd_I_TourFormJob(LoginRequiredMixin, View):
         log.info("inserting checkpoints started...")
         log.info("inserting checkpoints found %s checkpoints" %
                  (len(checkpoints)))
+        log.debug(checkpoints)
+        CP = {}
         try:
             for cp in checkpoints:
-                cp['expirytime'] = cp[5]
-                cp['asset']    = cp[1]
-                cp['qset']     = cp[3]
-                cp['seqno']       = cp[0]
+                CP['expirytime'] = cp[5]
+                CP['asset']    = cp[1]
+                CP['qset']     = cp[3]
+                CP['seqno']       = cp[0]
                 checkpoint, created = self.model.objects.update_or_create(
                     parent_id  = job.id,
-                    asset_id = cp['asset'],
-                    qset_id  = cp['qset'],
+                    asset_id = CP['asset'],
+                    qset_id  = CP['qset'],
                     
                     defaults   = sutils.job_fields(job, cp)
                 )
@@ -425,7 +432,7 @@ def add_cp_internal_tour(request):  # jobneed
             resp = rp.JsonResponse({'errors': msg}, status=404)
         except Exception:
             msg = "Something went wrong!"
-            log.critical("%s" % (msg), exc_info=True)
+            log.critical(f"{msg}", exc_info=True)
             resp = rp.JsonResponse({"errors": msg}, status=200)
 
 
@@ -1163,10 +1170,13 @@ class JobneedTasks(LoginRequiredMixin, View):
         'fields'       : [
                     'jobdesc', 'people__peoplename', 'pgroup__groupname', 'id',
                     'plandatetime', 'expirydatetime', 'jobstatus', 'gracetime',
-                    'performedby__peoplename', 'asset__assetname', 'qset__qsetname'],
+                    'performedby__peoplename', 'asset__assetname', 'qset__qsetname',
+                    'ctzoffset'],
         'related': [
                 'pgroup',  'ticketcategory', 'asset', 'client',
-                'frequency', 'job', 'qset', 'people', 'parent', 'bu']
+                'frequency', 'job', 'qset', 'people', 'parent', 'bu'],
+        'template_form':'schedhuler/taskform_jobneed.html',
+        'form_class':scd_forms.TaskFormJobneed
     }
     
     def get(self, request, *args, **kwargs):
@@ -1177,14 +1187,18 @@ class JobneedTasks(LoginRequiredMixin, View):
         
         #then load the table with objects for table_view
         if R.get('action', None) == 'list' or R.get('search_term'):
-            dt = datetime.now(tz=timezone.utc) - timedelta(days=10)
-            objs = self.params['model'].objects.select_related(
-                *self.params['related']).filter(
-                Q(bu_id=request.session.get('bu_id', 1)) , Q(plandatetime__gte=dt)
-                ,Q(identifier = am.Jobneed.Identifier.TASK)
-            ).values(*self.params['fields']).order_by('-plandatetime')
+            p = self.params
+            objs = self.params['model'].objects.get_last10days_jobneedtasks(
+                p['related'], p['fields'], request.session)
             resp = rp.JsonResponse(data = {'data':list(objs)})
-        return resp
+            return resp
+    
+        #load form with instance
+        elif R.get('id'):
+            obj = utils.get_model_obj(int(R['id']), request, self.params)
+            cxt = {'taskformjobneed':self.params['form_class'](request=request, instance=obj),
+                    'edit':True}
+            return render(request, self.params['template_form'], context=cxt)
     
 
 
@@ -1308,3 +1322,6 @@ class SchdTasks(LoginRequiredMixin, View):
             "processing invalidt task form sending errors to the client [ END ]")
         return rp.JsonResponse(cxt, status=404)
         
+
+
+

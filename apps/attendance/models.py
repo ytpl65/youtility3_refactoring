@@ -49,7 +49,7 @@ class PeopleEventlog(BaseModel, TenantAwareModel):
     verifiedby      = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.RESTRICT, related_name='verifiedpeoples', verbose_name='Verified By')
     geofence        = models.ForeignKey('onboarding.GeofenceMaster', null=True, blank=True, on_delete=models.RESTRICT)
     peventtype      = models.ForeignKey('onboarding.TypeAssist', null=True, blank=True, on_delete=models.RESTRICT)
-    transportmodes  = ArrayField(models.CharField(max_length=50, blank=True, choices=TransportMode.choices), default=list)
+    transportmodes  = ArrayField(models.CharField(max_length=50, blank=True, choices=TransportMode.choices, default=TransportMode.NONE.value), default=list)
     punchintime     = models.DateTimeField(_('In'), null=True)
     punchouttime    = models.DateTimeField(_('Out'), null=True)
     datefor         = models.DateField(_("Date"), null=True)
@@ -64,7 +64,7 @@ class PeopleEventlog(BaseModel, TenantAwareModel):
     remarks         = models.CharField(_("remarks"), null=True, max_length=500, blank=True)
     facerecognition = models.BooleanField(_("Enable Face-Recognition"), default=True)
     peventlogextras = models.JSONField(_("peventlogextras"), encoder=DjangoJSONEncoder, default=peventlog_json)
-    otherlocation   = models.CharField(_("Other Location"), max_length=50)
+    otherlocation   = models.CharField(_("Other Location"), max_length=50, default=None)
     reference       = models.CharField('Reference', max_length=55, null=True)
 
     objects = PELManager()
@@ -89,7 +89,7 @@ class Tracking(models.Model):
     people        = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.RESTRICT, verbose_name='People')
     transportmode = models.CharField(max_length=55)
     reference     = models.CharField(max_length=255, default=None)
-    identifier    = models.CharField(max_length=55, choices=Identifier.choices, default=Identifier.NONE)
+    identifier    = models.CharField(max_length=55, choices=Identifier.choices, default=Identifier.NONE.value)
     
     
     class Meta:

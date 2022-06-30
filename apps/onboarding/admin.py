@@ -49,8 +49,26 @@ class BaseFieldSet2(object):
 
 
 
-class TaResource(BaseFieldSet2, resources.ModelResource ):
-
+class TaResource(resources.ModelResource ):
+    client = fields.Field(
+        column_name='client',
+        attribute='client',
+        widget=wg.ForeignKeyWidget(om.Bt, 'bucode'),
+        default='NONE'
+    )
+    bu = fields.Field(
+        column_name='bu',
+        attribute='bu',
+        widget=wg.ForeignKeyWidget(om.Bt, 'bucode'),
+        saves_null_values=True,
+        default='NONE'
+    )
+    tenant = fields.Field(
+        column_name='tenant',
+        attribute='tenant',
+        widget=wg.ForeignKeyWidget(tm.TenantAwareModel, 'tenantname'),
+        saves_null_values=True
+    )
     tatype = fields.Field(
         column_name       = 'tatype',
         attribute         = 'tatype',
@@ -67,13 +85,17 @@ class TaResource(BaseFieldSet2, resources.ModelResource ):
     
     
     def __init__(self, *args, **kwargs):
+        self.is_superuser = kwargs.pop('is_superuser', None)
         self.request = kwargs.pop('request', None)
         super(TaResource, self).__init__(*args, **kwargs)
     
     
     def before_save_instance(self, instance, using_transactions, dry_run):
         instance.tacode = instance.tacode.upper()
-        utils.save_common_stuff(self.request, instance)
+        utils.save_common_stuff(self.request, instance, self.is_superuser)
+
+    def skip_row(self, instance, original):
+        return True if om.TypeAssist.objects.filter(tacode=instance.tacode).exists() else False
 
 
 

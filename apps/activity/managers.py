@@ -1,12 +1,10 @@
 from mmap import MADV_RANDOM
-import re
 from django.db import models
 from django.db.models.functions import Concat
 from django.db.models import CharField, Value as V
 from django.db.models import Q, F
-from datetime import date, datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from apps.core import utils
-from apps.peoples.models import People
 
 class QuestionSetManager(models.Manager):
     use_in_migrations = True
@@ -52,7 +50,7 @@ class JobneedManager(models.Manager):
 
     def get_jobneedmodifiedafter(self, mdtz, peopleid, siteid):
         from datetime import datetime
-        mdtzinput = datetime.strptime(mdtz, "%Y-%m-%d %H:%M:%S")
+        mdtzinput = mdtz if (isinstance(mdtz, datetime)) else datetime.strptime(mdtz, "%Y-%m-%d %H:%M:%S")
         return self.raw(f"select * from fn_getjobneedmodifiedafter('{mdtzinput}', {peopleid}, {siteid}) as id") or self.none()
         
     
@@ -140,6 +138,15 @@ class JobneedManager(models.Manager):
         qset = qset[start:start+length]
         return total, total, qset
 
+
+    def get_last10days_jobneedtasks(self, related, fields, session):
+        dt  = datetime.now(tz=timezone.utc) - timedelta(days=10)
+        qobjs = self.select_related(*related).filter(
+            bu_id = session['bu_id'],
+            plandatetime__gte = dt,
+            identifier = 'TASK'
+        ).exclude(parent__jobdesc = 'NONE', jobdesc = 'NONE').values(*fields).order_by('-plandatetime')
+        return qobjs or self.none()
 
 class AttachmentManager(models.Manager):
     use_in_migrations = True

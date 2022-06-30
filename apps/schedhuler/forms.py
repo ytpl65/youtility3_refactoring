@@ -12,7 +12,14 @@ class Schd_I_TourJobForm(JobForm):
     assign_to          = forms.ChoiceField(choices=ASSIGNTO_CHOICES, initial="PEOPLE")
     required_css_class = "required"
     
-
+    class Meta(JobForm.Meta):
+        exclude = ['shift']
+        JobForm.Meta.widgets.update({
+            'identifier':forms.TextInput(attrs={'style':'display:none;'}),
+            'starttime':forms.TextInput(attrs={'style':'display:none;'}),
+            'endtime':forms.TextInput(attrs={'style':'display:none;'}),
+            'frequency':forms.TextInput(attrs={'style':'display:none;'}),
+        })
 
     def __init__(self, *args, **kwargs):
         """Initializes form add atttibutes and classes here."""
@@ -40,13 +47,11 @@ class Schd_I_TourJobForm(JobForm):
             val =  ob_utils.to_utc(val)
             return val
 
-    def clean_frequency(self):
-        return 'NONE'
     
     def is_valid(self) -> bool:
         """Add class to invalid fields"""
         result = super(Schd_I_TourJobForm, self).is_valid()
-        ob_utils.apply_error_classes(self)
+        utils.apply_error_classes(self)
         return result 
     
         
@@ -55,7 +60,8 @@ class Schd_I_TourJobForm(JobForm):
     
     def clean(self):
         super().clean()
-        self.instance.jobdesc = f'{self.instance.bu.buname} - {self.instance.jobname}'
+        bu = ob.Bt.objects.get(id = self.request.session['bu_id'])
+        self.instance.jobdesc = f'{bu.buname} - {self.instance.jobname}'
     
 
 
@@ -142,7 +148,6 @@ class Child_I_TourFormJobneed(JobNeedForm):#jobneed
         
 
 class TaskFormJobneed(I_TourFormJobneed):
-
     
     def __init__(self, *args, **kwargs):
         super(TaskFormJobneed, self).__init__(*args, **kwargs)

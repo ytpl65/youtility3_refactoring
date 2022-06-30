@@ -60,7 +60,7 @@ class PeopleManager(BaseUserManager):
     
     def get_emergencycontacts(self, siteid, clientid):
         "returns mobnos of people with given assigned siteid"
-        qset = self.filter(bu_id = siteid, client_id = clientid).values_list('mobno', flat=True)
+        qset = self.filter(bu_id = siteid, client_id = clientid).values_list('mobno', flat=True).exclude(mobno = None)
         return qset or self.none()
     
     

@@ -398,6 +398,10 @@ class ImportForm(forms.Form):
     ]
     
     
-    importfile = forms.FileField(required=True, label='Import')
-    table = forms.ChoiceField(required=True, choices=TABLECHOICES, label='Select Type of Data')
+    importfile = forms.FileField(required=True, label='Import File', max_length=50, allow_empty_file=False)
+    table = forms.ChoiceField(required=True, choices=TABLECHOICES, label='Select Type of Data', initial='TYPEASSISTS')
     
+    def __init__(self, *args, **kwargs):
+        """Initializes form"""
+        super(ImportForm, self).__init__(*args, **kwargs)
+        utils.initailize_form_fields(self)

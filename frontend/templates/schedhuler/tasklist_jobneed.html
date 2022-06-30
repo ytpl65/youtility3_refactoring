@@ -121,10 +121,10 @@ Task List
 			 <'col-sm-6'l> <'col-sm-6'p><'col-sm-12 d-flex justify-content-center'i>>`,
             columns:[
                 {data:'id'},
-                {data:'plandatetime', title:"Plan Duration"},
+                {data:'plandatetime', title:"Plan Datetime"},
                 {data:'jobdesc', title:'Description'},
                 {data:'jobstatus', title:'Status'},
-                {title:'People/Group'},
+                {title:'People/Group', data:null},
                 {data:'performedby__peoplename', title:'Performed By'},
                 {data:'gracetime', title:"Grace Time"},
                 {data:'expirydatetime', title:"Expiry Datetime"}
@@ -132,12 +132,18 @@ Task List
             columnDefs:[
                 {targets:0, data:'id', visible:false, searchable:false},
                 {targets:1, data:'plandatetime', render:function(data, type, row, meta){
-                    return `<a href="${urlname}?id=${row['id']}">${data}</a>`
+                    return `<a href="${urlname}?id=${row['id']}">${convert_to_local(type, data, row)}</a>`
                 }},
                 {targets:4, render:function(data, type, row, meta){
                     let peoplename = row['people__peoplename']
                     let groupname = row['pgroup__groupname']
                     return peoplename ?  peoplename : groupname
+                }},
+                {targets:[1,7], render:function(data, type, row, meta){
+                    return convert_to_local(type, data, row)
+                }},
+                {targets:6, render:function(data, type, row, meta){
+                    return `${data} mins`
                 }}
             ],
             buttons:[

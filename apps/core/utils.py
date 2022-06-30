@@ -524,13 +524,14 @@ def to_utc(date, format=None):
 
 def get_tenants_map():
     return {
-        'intelliwiz.youtility.local':'default',
-        'sps.youtility.local': 'sps',
-        'capgemini.youtility.local': 'capgemini',
-        'dell.youtility.local': 'dell',
-        'icicibank.youtility.local': 'icicibank',
-        'barfi.youtility.in': 'icicibank',
-        'intelliwiz.youtility.in': 'default'
+        'intelliwiz.youtility.local': 'intelliwiz_django',
+        'sps.youtility.local'       : 'sps',
+        'capgemini.youtility.local' : 'capgemini',
+        'dell.youtility.local'      : 'dell',
+        'icicibank.youtility.local' : 'intelliwiz_django',
+        'barfi.youtility.in'        : 'icicibank',
+        'intelliwiz.youtility.in'   : 'default',
+        'testdb.youtility.local'    : 'testDB'
     }
 
 # RETURN HOSTNAME FROM REQUEST
@@ -551,13 +552,13 @@ def get_or_create_none_bv():
 
 
 def get_or_create_none_typeassist():
-    obj, _ = om.TypeAssist.objects.get_or_create(
+    obj, iscreated = om.TypeAssist.objects.get_or_create(
         id=1,
         defaults={
             'tacode': "NONE", 'taname': "NONE", 'id': 1
         }
     )
-    return obj
+    return obj, iscreated
 
 # RETURNS DB ALIAS FROM REQUEST
 
@@ -595,6 +596,16 @@ def get_or_create_none_job():
     )
     return obj
 
+
+def get_or_create_none_gf():
+    obj, _ = om.GeofenceMaster.objects.get_or_create(
+        id=1,
+        defaults = {
+            'gfcode':'NONE', 'gfname':'NONE',
+            'alerttext':'NONE', 'enable':False
+        }
+    )
+    return obj
 
 def get_or_create_none_jobneed():
     from datetime import datetime, timezone
@@ -653,17 +664,14 @@ def get_or_create_none_asset():
     return obj
 
 
-def create_none_entries(db):
+def create_none_entries(self):
     '''
     Creates None entries in self relationship models.
     '''
     try:
-        set_db_for_router(db)
-    except ValueError:
-        print("Database with this alias not exist operation can't be performed")
-    else:
-        print(f"Creating None entries for {db}")
-        get_or_create_none_typeassist()
+        db = get_current_db_name()
+        _, iscreated = get_or_create_none_typeassist()
+        if not iscreated: return
         get_or_create_none_people()
         get_or_create_none_bv()
         get_or_create_none_cap()
@@ -671,8 +679,16 @@ def create_none_entries(db):
         get_or_create_none_job()
         get_or_create_none_jobneed()
         get_or_create_none_qset()
-        print("Successfully created none entries for 'TypeAssist', 'People', 'Bv',\
-         \'Capability', 'Pgroup', 'Job', 'Jobneed', 'QuestionSet")
+        get_or_create_none_asset()
+        get_or_create_none_tenant()
+        get_or_create_none_question()
+        get_or_create_none_qsetblng()
+        get_or_create_none_gf()
+        logger.debug(f"NONE entries are successfully inserted...{pformat(ok(self))}")
+    except Exception as e:
+        logger.error('create none entries', exc_info=True)
+        raise
+
 
 
 def create_super_admin(db):
@@ -696,8 +712,7 @@ def create_super_admin(db):
                 dateofjoin=inputs[5],
                 email=inputs[6],
             )
-            print(
-                f"Operation Successfull!\n Superuser with this loginid {user.loginid} is created")
+            print(f"Operation Successfull!\n Superuser with this loginid {user.loginid} is created")
         else:
             raise ValueError("Please provide all fields!")
 
@@ -719,9 +734,7 @@ def set_db_for_router(db):
 
 
 def display_post_data(post_data):
-    logger.info(
-        "\n%s" % (pformat(post_data, compact=True))
-    )
+    logger.info("\n%s" % (pformat(post_data, compact=True)))
 
 
 def format_data(objects):
@@ -893,15 +906,15 @@ def clean_record(record):
     return record
 
 
-def save_common_stuff(request, instance):
+def save_common_stuff(request, instance, is_superuser=False):
     from django.utils import timezone
-    if instance.mdtz:
-        instance.muser_id = request.session.get(
-            '_auth_user_id', -1)
+    userid =  1 if is_superuser else request.user.id
+    if instance.cuser is not None:
+        instance.muser_id = userid
+        instance.mdtz = timezone.now().replace(microsecond=0)
     else:
-        instance.muser_id = instance.cuser_id = request.session.get(
-            '_auth_user_id', -1)
-    instance.mdtz = timezone.now().replace(microsecond=0)
+        instance.cuser_id = instance.muser_id = userid
+    return instance
 
 
 def create_tenant_with_alias(db):
@@ -1072,6 +1085,9 @@ class TotalRecordsMisMatchError(Error):
 class NoDbError(Error):
     pass
 
+class RecordsAlreadyExist(Error):
+    pass
+
 
 def getawaredatetime(dt, offset):
     from datetime import datetime, timedelta, timezone
@@ -1079,3 +1095,9 @@ def getawaredatetime(dt, offset):
     val = dt.replace("+00:00", "")
     val = datetime.strptime(val, "%Y-%m-%d %H:%M:%S")
     return val.replace(tzinfo=tz, microsecond=0)
+
+def ok(self):
+    self.stdout.write(self.style.SUCCESS("DONE"))
+
+def failed(self):
+    self.stdout.write(self.style.ERROR("FAILED"))

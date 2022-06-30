@@ -18,6 +18,7 @@ from apps.service.serializers import Messages
 from apps.core.utils import get_current_db_name
 from logging import getLogger
 
+
 log = getLogger('__main__')
 # Create your views here.
 A = {'rc':0, 'reason':'OK', 'msg':None, 'errors':None, 'returnid':None}

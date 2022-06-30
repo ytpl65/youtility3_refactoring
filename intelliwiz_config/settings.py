@@ -30,7 +30,7 @@ ENCRYPT_KEY = str(os.getenv('ENCRYPT_KEY'))
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['.localhost', '.youtility.local', 'barfi.youtility.in', '127.0.0.1', 'intelliwiz.youtility.in']
+ALLOWED_HOSTS = ['.localhost', '.youtility.local', 'barfi.youtility.in', '127.0.0.1', 'intelliwiz.youtility.in', 'testdb.youtility.local']
 
 
 # Application definition
@@ -132,7 +132,7 @@ DBHOST = str(os.getenv('DBHOST'))
 NOTE: Client bucode should match the database alias name.
 '''
 youtility_dbs = {
-    'default': {
+    ''''default': {
         'ENGINE':   'django.contrib.gis.db.backends.postgis',
         'USER':     DBUSER,
         'NAME':     'sps_django',
@@ -149,15 +149,30 @@ youtility_dbs = {
         'HOST':     DBHOST,
         'PORT':     '5432',
     },
-    # 'icicibank':{
-    #     'ENGINE':   'django.contrib.gis.db.backends.postgis',
-    #     'USER':     'postgres',
-    #     'NAME':     'icici_django',
-    #     'PASSWORD': 'iOuMGLC8gksayExB',
-    #     'HOST':     '34.121.145.44',
-    #     'PORT':     '5432',
-    # }
-    
+    'testDB2':{
+        'ENGINE':   'django.contrib.gis.db.backends.postgis',
+        'USER':     DBUSER,
+        'NAME':     'testDB2',
+        'PASSWORD': DBPASWD,
+        'HOST':     DBHOST,
+        'PORT':     '5432',
+    },
+    'newTest':{
+        'ENGINE':   'django.contrib.gis.db.backends.postgis',
+        'USER':     DBUSER,
+        'NAME':     'newTest',
+        'PASSWORD': DBPASWD,
+        'HOST':     DBHOST,
+        'PORT':     '5432',
+    },'''
+    'default':{
+        'ENGINE':   'django.contrib.gis.db.backends.postgis',
+        'USER':     'navin',
+        'NAME':     'intelliwiz_django',
+        'PASSWORD': 'admin',
+        'HOST':     'localhost',
+        'PORT':     '',
+    }
 }
 
 
@@ -179,10 +194,10 @@ home_local_dbs = {
         'HOST':     'localhost',
         'PORT':     '',
     },
-    'icicibank':{
+    'intelliwiz_django':{
         'ENGINE':   'django.contrib.gis.db.backends.postgis',
         'USER':     'youtilitydba',
-        'NAME':     'icici_django',
+        'NAME':     'intelliwiz_django',
         'PASSWORD': 'root',
         'HOST':     'localhost',
         'PORT':     '',
@@ -191,8 +206,17 @@ home_local_dbs = {
 }
 
 
-DATABASES = youtility_dbs
-
+#DATABASES = youtility_dbs
+DATABASES = {
+        'default':{
+            'ENGINE':   'django.contrib.gis.db.backends.postgis',
+            'USER':     'navin',
+            'NAME':     'intelliwiz_django',
+            'PASSWORD': 'admin',
+            'HOST':     'localhost',
+            'PORT':     '',
+        }
+    } 
 
 
 
@@ -370,12 +394,13 @@ logging.config.dictConfig(LOGGING_CONFIG_)
 LOGIN_URL = 'login'
 
 SESSION_ENGINE = 'django.contrib.sessions.backends.cached_db'
+SESSION_COOKIE_SECURE = False
 # Close the session when user closes the browser
 SESSION_EXPIRE_AT_BROWSER_CLOSE = False
 SESSION_COOKIE_AGE = 60**2
 SESSION_SAVE_EVERY_REQUEST = True
-IMPORT_EXPORT_USE_TRANSACTIONS = True
 
+IMPORT_EXPORT_USE_TRANSACTIONS = True
 SHELL_PLUS_PRINT_SQL = True
 
 

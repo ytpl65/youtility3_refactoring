@@ -1,4 +1,4 @@
-from distutils.log import Log
+from distutils.log import Log, error
 import logging
 from django.views.decorators.cache import cache_page
 from django.utils.decorators import method_decorator
@@ -9,7 +9,7 @@ from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.views import View
 from django.db.models import Q
 from django.contrib import messages
-from django.http import Http404, response as rp
+from django.http import Http404, HttpResponse, response as rp
 from django.core.cache.backends.base import DEFAULT_TIMEOUT
 from django.db.utils import IntegrityError
 from django.conf import settings
@@ -18,6 +18,7 @@ from django.core.exceptions import (EmptyResultSet)
 from django.db.models import RestrictedError
 from django.http.request import QueryDict
 from pydantic import Json
+from pytest import param
 from .models import Shift, SitePeople, TypeAssist, Bt, GeofenceMaster
 from apps.peoples.utils import  save_userinfo
 import apps.onboarding.forms as obforms
@@ -1216,3 +1217,38 @@ class ImportFile(LoginRequiredMixin, View):
         if R.get('action') == 'form':
             cxt = {'importform':self.params['form_class']()}
             return render(request, self.params['template_form'], context=cxt)
+        
+        
+    def post(self, request, *args, **kwargs):
+        from tablib import Dataset
+        from .admin import TaResource
+        import json
+        utils.set_db_for_router('testDB2')
+        ic(request.POST)
+        form = obforms.ImportForm(request.POST, request.FILES)
+        if form.is_valid():
+            file = request.FILES['importfile']
+            default_types = Dataset().load(file)
+            res = TaResource(is_superuser=True)
+            res = res.import_data(dataset=default_types, dry_run=False, raise_errors=False, collect_failed_rows=True, use_transactions=False)
+            columns = [
+                { "data": "rowno", 'title':'Row No'},
+                { "data": "tacode", 'title':'Code'},
+                { "data": "taname", 'title':'Name' },
+                { "data": "tatype__tacode" , 'title':'Type'},
+                { "data": "cuser__peoplecode", 'title':'Created By'}
+            ]
+            columns = json.dumps(columns)
+            data = []
+            for rowerr in res.row_errors():
+                for err in rowerr[1]:
+                    d = dict(err.row).update({'rowno':rowerr[0]})
+                    data.append(d)
+            data = json.dumps(data)
+            cxt = {'columns':columns, 'data':data, 'importform':self.params['form_class']()}
+            return render(request, self.params['template_form'], context=cxt)
+
+                    
+        else:
+            ic(form.errors)
+            

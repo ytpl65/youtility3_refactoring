@@ -43,11 +43,11 @@ Site Report Template
 <input type="hidden" name="{{ reporttemp_form.ctzoffset.name }}" id = "{{ reporttemp_form.ctzoffset.auto_id }}" value="-1">
     {{ reporttemp_form.type }}
     <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
-    <input type="hidden" name="pk" id="pk" value="">
+    <input type="hidden" name="pk" id="pk" value="{{ reporttemp_form.instance.pk }}">
     <div class="row gy-3">
     <!--FIELDS -->
     {% for field in reporttemp_form %}
-        {% if(field.widget_type != 'checkbox' and field.name != 'type' ) %}
+        {% if(field.widget_type != 'checkbox' and field.name not in ['type', 'ctzoffset'])  %}
             <div class="col-sm-2">
                 {{ field.label_tag() }}
             </div>
@@ -89,9 +89,9 @@ Site Report Template
 
 {% block extras %}
 <br><br><br>
-<div class="report_section">
+<div class="report_section ">
 <div class="row mb-3">
-    <div class="col-sm-3 card card-bordered border border-2">
+    <div class="col-sm-3 card card-bordered border border-2 d-none">
         <div class="card-header mb-0">
             <div class="card-title">Question Form</div>
             <div class="card-toolbar">
@@ -151,19 +151,12 @@ Site Report Template
         </div>
     </div>
 
-    <div class="col-sm-9 card">
+    <div class="col-sm-12 card">
         <div class="card-header">
             <div class="card-title">List Of Report Section</div>
         </div>
         <div class="card-body">
-            <table id="tabSitereports" class="display cell-border compact">
-                <thead>
-                <tr>
-                <th></th>
-                <th>Id</th>
-                <th>Section</th>
-                </tr>
-                </thead>
+            <table id="tabSitereports" class="display compact">
                 <tbody></tbody>
             </table>
             <div tabindex="-1" id="jqGridSiteReportPager"></div>
@@ -189,9 +182,13 @@ Site Report Template
         //set ctzoffset
   	    $("#id_ctzoffset").val(-new Date().getTimezoneOffset())
         
+
+        //select2 multiple
         $("[multiple]").djangoSelect2({
             closeOnSelect:false
         })
+
+        //tagifying the options field
         var input1 = document.querySelector("#id_options");
         optionTag = new Tagify(input1);
 
@@ -208,15 +205,20 @@ Site Report Template
 
         //on submitting the questionset-blng form populate the table
         // "List of Assigned Questions"
-       /* $('#qsetbng_form').on('submit', function (e) {
+        $('#qsetbng_form').on('submit', function (e) {
             e.preventDefault()
             if ($("#id_answertype").val() === 'NUMERIC') {
                 if (qsetbng_form_validator) {
                     qsetbng_form_validator.validate().then(function (status) {
                         if (status === 'Valid') {
-                            processValidForm()
-                            adjustSlnoInTable()
-                            console.log("processing valid form [END]")
+                            get_question_formdata()
+                            data = cleanData(data)
+                            Swal.fire(
+                            'Added!',
+                            'You clicked the button!',
+                            'success'
+                            )
+                            
                         }
                     })
                 }
@@ -225,7 +227,7 @@ Site Report Template
                 adjustSlnoInTable()
                 console.log("processing valid form [END]")
             }
-        });*/
+        });
 
 
         //on selecting the question from question form show/hide
@@ -238,7 +240,8 @@ Site Report Template
                 showHideFields(selected)
             }
         })
-
+        
+        //get main (upper) form data
         function getFormData(id){
             return {
                 'buincludes'        : $("#id_buincludes").val(),
@@ -250,7 +253,9 @@ Site Report Template
                 'type'   : $("#id_type").val()
             }
         }
+        
 
+        //editor section table
         sectionEditor = new $.fn.dataTable.Editor({
             table:"#tabSitereports",
             fields:[
@@ -258,11 +263,24 @@ Site Report Template
             ]
         });
 
-        if('{{ reporttemp_form.instance.id }}'  !== "None"){
-            var pk = '{{ reporttemp_form.instance.id}}'
-            $("#pk").val(pk)
-             _pkid = pk }
-        
+        // Activate an inline edit on click of a table cell
+        $('#tabSitereports').on( 'click', 'tbody td.row-edit', function (e) {
+            sectionEditor.inline( tableSection.cells(this.parentNode, '*').nodes(), {
+                submitTrigger: -2,
+                submitHtml: '<i class="fas fa-play text-primary"></i>'
+            } );
+        } );
+
+          // Delete row
+        $('#tabSitereports').on( 'click', 'tbody td.row-remove', function (e) {
+            sectionEditor.remove( this.parentNode, {
+                title: 'Delete record',
+                message: 'Are you sure you wish to delete this record?',
+                buttons: 'Delete'
+            } );
+        } );
+
+        //datatable configuration tabSiteReports       
         var tableSection = $("#tabSitereports").DataTable({
             ajax:{
                 url:"{{ url('reports:sitereport_template_form') }}?get_reports=true",
@@ -276,103 +294,51 @@ Site Report Template
             dom:`<'row' <'col-sm-6 d-flex justify-content-start'f> <'col-sm-6 d-flex justify-content-end'B> >rt<'row'
             <'col-sm-6'l> <'col-sm-6'p><'col-sm-12 d-flex justify-content-center'i>>`,
             columns     : [
-                {"className": 'details-control', "orderable": false,"data": null,"defaultContent": '', "width":'5%'},
-                { "data": "id", visible:false, orderable:false, defaultContent:"" },
-                { "data": "qsetname" },
+                {className: 'details-control', "orderable": false,data: null,defaultContent: '', width:'5%'},
+                { data: "id", visible:false, orderable:false, defaultContent:"" },
+                { data: "qsetname" ,title:'Section'},
+                {
+                    data: null,
+                    defaultContent: '<i class="fas fa-pencil-alt text-primary"></i>',
+                    className: 'row-edit dt-center',
+                    orderable: false,
+                    width:'5%'
+                },
+                {
+                    data: null,
+                    defaultContent: '<i class="fas fa-trash-alt text-primary"></i>',
+                    className: 'row-remove dt-center',
+                    orderable: false,
+                    width:'5%'
+                },
             ],
             order:[[2, 'asc']],
+            initComplete: function () {
+            init = false;
+            },
+            createdRow: function ( row, data, index ) {
+                if (data.extn === '') {
+                  var td = $(row).find("td:first");
+                  td.removeClass( 'details-control' );
+                }
+               },
+            rowCallback: function ( row, data, index ) {
+            //console.log('rowCallback');
+            },
             buttons:[
-				{ extend: "create", editor: sectionEditor, className:"btn btn-secondary", text:"Add New Section" },
+            {
+                extend: "createInline",
+                editor: sectionEditor,
+                formOptions: {
+                    submitTrigger: -2,
+                    submitHtml: '<i class="fa fa-play text-primary"/>'
+                },
+                text:'Add New Section'
+            }
 			]
         })
 
 
-        //sectionEditor.on('create', function(e, json, data, id){
-        //    console.log(data, json, id)
-        //})
-        
-            // Add event listener for opening and closing first level childdetails
-            $('#tabSitereports tbody').on('click', 'td.details-control', function () {
-                var tr = $(this).closest('tr');
-                var row = tableSection.row( tr );
-                var rowData = row.data();
-                var paraneRowPk = rowData[1]
-
-                //get index to use for child table ID
-                var index = row.index();
-                if ( row.child.isShown() ) {
-                    // This row is already open - close it
-                    row.child.hide();
-                    tr.removeClass('shown');
-                }else{
-                    //open this row
-                    row.child( 
-                    '<table class="child_table" id = "child_details' + index + '" cellpadding="5" cellspacing="0" border="0" style="padding-left:50px;">'+
-                    '<thead><tr><th>Question</th><th>Type</th><th>Min</th><th>Max</th><th>Options</th><th>Alert On</th><th>Alert Mail Sends To</th><th></th><th>Alert Above</th><th>Alert Below</th></tr></thead><tbody>' +
-                        '</tbody></table><div id="childtoolbar' + index + '"></div>').show();
-                    
-                    
-                    /*editor = new $.fn.dataTable.Editor({
-                                table:"#child_details"+index,
-                                //template:"#customForm",
-                                fields:[
-                                    {label:'Question', name:"question__quesname", type:"select2",  "options": [
-                                        { "label": "1 (highest)", "value": "1" },
-                                        { "label": "2",           "value": "2" },
-                                        { "label": "3",           "value": "3" },
-                                        { "label": "4",           "value": "4" },
-                                        { "label": "5 (lowest)",  "value": "5" }
-                                    ]},
-                                    {label:'Question Type', name:"answertype"},
-                                    {label:'Min', name:"min", attr:{type:'number'}},
-                                    {label:'Max', name:"max", attr:{type:'number'}},
-                                    {label:'Alerton', name:"alerton"},
-                                    {label:'Alert Above', name:"alertabove", attr:{type:'number'}},
-                                    {label:'Alert Below', name:"alertabelow", attr:{type:'number'}},
-                                    {label:'Mails Send to', name:"alertmailsendto"},
-                                    {label:'Options', name:"options"},
-                                ]
-                            })
-
-
-                    
-
-                    editor.on('open', function(e, mode, action){
-                        var input1 = document.querySelector("#DTE_Field_options");
-                        console.log(input1, "&777777")
-                        optionTag = new Tagify(input1);
-                    })  
-                    tr.addClass('shown');
-                    
-                    var child_table = $("#child_details" + index ).DataTable({
-                        paging:false,
-                        searching:false,
-                        ordering:false,
-                        columns:[
-                            {data:'question__quesname', width:"25%"}, 
-                            {data:'answertype'}, 
-                            {data:'min', width:"4%"}, 
-                            {data:'max', width:"4%"},
-                            {data:'options'}, 
-                            {data:'alerton', width:"4%"},
-                            {data:'alertmailsendto', width:"10%"},
-                            {data:'question_id', visible:false},
-                            {data:'alertbelow'},
-                            {data:'alertabove'},
-                        ],
-                        dom:'rtB',
-                        buttons: [
-                            { extend: "create", editor: editor, text:'<i class="fas fa-plus"></i>', className:'btn btn-sm btn-dark'},
-                            { extend: "edit",   editor: editor, className:'btn btn-sm btn-dark',text:'<i class="fas fa-pen"></i>' },
-                            { extend: "remove", editor: editor, className:'btn btn-sm btn-dark',text:'<i class="fas fa-trash"></i>' }
-                        ],
-                        order:[[1, 'asc']],
-                        destroy:true,
-                        scrollY:'100px'
-                    })*/
-
-                }
-            })
         
         //on submit form post request
         $("#sitereportTemplateForm").submit((e) => {
@@ -401,8 +367,129 @@ Site Report Template
                 
             })
         })
+
+        // Add event listener for opening and closing details
+        /*$('#tabSitereports tbody').on('click', 'td.details-control', function () {
+            var tr = $(this).closest('tr');
+            var row = table.row(tr);
+    
+            if (row.child.isShown()) {
+                // This row is already open - close it
+                row.child.hide();
+                tr.removeClass('shown');
+            } else {
+                // Open this row
+                row.child(format(row.data())).show();
+                tr.addClass('shown');
+            }
+        });*/
+
         
+
+        // Add event listener for opening and closing first level childdetails
+        $('#tabSitereports tbody').on('click', 'td.details-control', function () {
+            var tr = $(this).closest('tr');
+            var row = tableSection.row( tr );
+            var rowData = row.data();
         
+            //get index to use for child table ID
+            var index = row.index();
+            console.log(index);
+    
+            if ( row.child.isShown() ) {
+                // This row is already open - close it
+                row.child.hide();
+                tr.removeClass('shown');
+            }
+            else {
+                // Open this row
+                row.child( 
+                '<table class="child_table" id = "child_details' + index + '" cellpadding="5" cellspacing="0" border="0" style="padding-left:50px;">'+
+                '<tbody>' +
+                    '</tbody></table>').show();
+                    
+                    //CHILD EDITOR
+                    questioneditor = new $.fn.dataTable.Editor({
+                        table:"#child_details" + index,
+                        fields:[
+                            {label:'Question', name:"question_id"},
+                            //{label:'Type', name:"answertype"},
+                            //{label:'Min', name:"min"},
+                            //{label:'Max', name:"max"},
+                            //{label:'Options', name:"options"},
+                            //{label:'Alert Below', name:"alertbelow"},
+                            //{label:'Alert Above', name:"alertabove"},
+                        ]
+                    });
+
+                    // Activate an inline edit on click of a table cell
+                    $(`#child_details${index}`).on( 'click', 'tbody td.row-edit', function (e) {
+                        questioneditor.inline( childTable.cells(this.parentNode, '*').nodes(), {
+                            submitTrigger: -2,
+                            submitHtml: '<i class="fas fa-play text-primary"></i>'
+                        } );
+                    } );
+
+                    // Delete row
+                    $(`#child_details${index}`).on( 'click', 'tbody td.row-remove', function (e) {
+                        questioneditor.remove( this.parentNode, {
+                            title: 'Delete record',
+                            message: 'Are you sure you wish to delete this record?',
+                            buttons: 'Delete'
+                        } );
+                    } );
+
+
+            
+            var childTable = $('#child_details' + index).DataTable({
+            searching:false,
+            ordering:false,
+            paging:false,
+            dom       : `<'row' <'col-sm-6 d-flex justify-content-start'f> <'col-sm-6 d-flex justify-content-end'B> >rt<'row'
+            <'col-sm-6'l> <'col-sm-6'p><'col-sm-12 d-flex justify-content-center'i>>`,
+            columns: [
+                { "data": "id" , 'visible':false, 'data':null},
+                { "data": "seqno", 'title':'Sl No', 'visible':false , data:null},
+                { "data": "question_id", 'title':'Question'},
+                //{ "data": "answertype", 'title':'Type' },
+                //{ "data": "min", 'title':'Min' },
+                //{ "data": "max" , 'title':'Max'},
+                //{ "data": "options", 'title':'Options' },
+                //{ "data": "alertabove", 'title':'Alert Above' },
+                //{ "data": "alertbelow" , 'title':'Alert Below'},
+                {
+                    data: null,
+                    defaultContent: '<i class="fas fa-pencil-alt text-primary"></i>',
+                    className: 'row-edit dt-center',
+                    orderable: false,
+                    width:'5%'
+                },
+                {
+                    data: null,
+                    defaultContent: '<i class="fas fa-trash-alt text-primary"></i>',
+                    className: 'row-remove dt-center',
+                    orderable: false,
+                    width:'5%'
+                },
+
+            ],
+            buttons:[
+            {
+                extend: "createInline",
+                editor: questioneditor,
+                formOptions: {
+                    submitTrigger: -2,
+                    submitHtml: '<i class="fa fa-play text-primary"/>'
+                },
+                text:'<i class="fas fa-plus"></i>'
+            }
+            ],
+                scrollY: '100px'
+            });
+                tr.addClass('shown');
+            }
+        
+        })
         
     })
 </script>

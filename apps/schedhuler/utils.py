@@ -66,12 +66,11 @@ def create_job(jobs=None):
 
 def display_jobs_date_info(cdtz, mdtz, fromdate, uptodate, ldtz):
     padd = "#"*8
-    log.info("%s display_jobs_date_info [start] %s" % (padd, padd))
-    log.info("created-on:= [%s] modified-on:=[%s]" % (cdtz, mdtz))
-    log.info("valid-from:= [%s] valid-upto:=[%s]" %
-             (fromdate, uptodate))
-    log.info("before lastgeneratedon:= [%s]" % (ldtz))
-    log.info("%s display_jobs_date_info [end] %s" % (padd, padd))
+    log.info(f"{padd} display_jobs_date_info [start] {padd}")
+    log.info(f"created-on:= [{cdtz}] modified-on:=[{mdtz}]")
+    log.info(f"valid-from:= [{fromdate}] valid-upto:=[{uptodate}]")
+    log.info(f"before lastgeneratedon:= [{ldtz}]")
+    log.info(f"{padd} display_jobs_date_info [end] {padd}")
     del padd
 
 def get_readable_dates(dt_list):
@@ -272,11 +271,12 @@ def insert_into_jn_and_jnd(job, DT, tzoffset, resp):
     status   = None
     if len(DT) > 0:
         try:
+            #required variables
             NONE_JN  = utils.get_or_create_none_jobneed()
             NONE_P   = utils.get_or_create_none_people()
             crontype = job.identifier
-            jobstatus = am.Jobneed.JobStatus.ASSIGNED,
-            jobtype = am.Jobneed.JobType.SCHEDULE,
+            jobstatus = am.Jobneed.JobStatus.ASSIGNED.upper(),
+            jobtype = am.Jobneed.JobType.SCHEDULE.upper(),
             jobdesc = f'{job.jobname} :: {job.jobdesc}'
             asset = am.Asset.objects.get(id=job.asset_id)
             multiplication_factor = asset.asset_json['multifactor']
@@ -290,6 +290,7 @@ def insert_into_jn_and_jnd(job, DT, tzoffset, resp):
                 'm_factor':multiplication_factor, 'people':people,
                 'NONE_P':NONE_P, 'jobdesc':jobdesc, 'NONE_JN':NONE_JN}
             DT = utils.to_utc(DT)
+            
             for dt in DT:
                 dt = dt.strftime("%Y-%m-%d %H:%M")
                 dt = datetime.strptime(dt, '%Y-%m-%d %H:%M').replace(tzinfo=timezone.utc)
@@ -297,11 +298,11 @@ def insert_into_jn_and_jnd(job, DT, tzoffset, resp):
                 edtz = params['edtz'] = dt + timedelta(minutes=mins)
                 log.debug(f'pdtz:={pdtz} edtz:={edtz}')
                 jn = insert_into_jn_for_parent(job, params)
-                isparent = crontype in (am.Job.Identifier.INTERNALTOUR, am.Job.Identifier.EXTERNALTOUR)
+                isparent = crontype in (am.Job.Identifier.INTERNALTOUR.upper(), am.Job.Identifier.EXTERNALTOUR.upper())
                 insert_update_jobneeddetails(jn.id, job, parent=isparent)
                 if isinstance(jn, am.Jobneed):
                     log.info(f"createJob() parent jobneed:= {jn.id}")
-                    if crontype in (am.Job.Identifier.INTERNALTOUR, am.Job.Identifier.EXTERNALTOUR):
+                    if crontype in (am.Job.Identifier.INTERNALTOUR.upper(), am.Job.Identifier.EXTERNALTOUR.upper()):
                         edtz = create_child_tasks(
                             job, pdtz, people, jn.id, jobstatus, jobtype)
                         if edtz is not None:

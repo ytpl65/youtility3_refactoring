@@ -44,7 +44,6 @@ Schedhule Task
         {{ schdtaskform.starttime }}
         {{ schdtaskform.frequency }}
         {{ schdtaskform.endtime }}
-        {{ schdtaskform.ctzoffset }}
 
     <input type="hidden" name="{{ schdtaskform.seqno.name }}" id="{{ schdtaskform.seqno.auto_id }}" value="1">
     <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
@@ -77,7 +76,7 @@ Schedhule Task
         <!--JOBDESCRIPTION-->
         <div class="col-md-2">
             <label for={{ schdtaskform.jobdesc.id_for_label }}
-                class="">{{ schdtaskform.jobdesc.label }}:</label>
+                class="required">{{ schdtaskform.jobdesc.label }}:</label>
         </div>
         <div class="col-md-4">
             {{ schdtaskform.jobdesc }}
@@ -329,11 +328,13 @@ Schedhule Task
         }
 
         //ADD CALENDER TO DATE FIELDS WITH FLAT-PICKR PLUGIN
-        $("#id_from_date, #id_upto_date").flatpickr({
+        /*$("#id_from_date, #id_upto_date").flatpickr({
             enableTime: true,
             time_24hr: true,
             dateFormat: 'd-M-Y H:S'
-        })
+        })*/
+
+        initDatetimes("#id_from_date, #id_upto_date");
 
         //after cron set hide the modal
         $("#btnSetCron").click(function(){

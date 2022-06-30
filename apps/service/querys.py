@@ -26,7 +26,8 @@ class Query(graphene.ObjectType):
     
     get_jobneedmodifiedafter = graphene.Field(SelectOutputType,
                                              peopleid = graphene.Int(required=True),
-                                             buid = graphene.Int(required=True))
+                                             buid = graphene.Int(required=True),
+                                             clientid = graphene.Int(required=True))
     
     get_jndmodifiedafter = graphene.Field(SelectOutputType,
                                          mdtz = graphene.String(required=True),
@@ -99,9 +100,9 @@ class Query(graphene.ObjectType):
         return get_assetdetails(mdtz, buid)
     
     
-    def resolve_get_jobneedmodifiedafter(self, info, peopleid, buid):
+    def resolve_get_jobneedmodifiedafter(self, info, peopleid, buid, clientid):
         log.info('request for jobneed-modified-after data...')
-        return get_jobneedmodifiedafter(peopleid, buid)
+        return get_jobneedmodifiedafter(peopleid, buid, clientid)
 
 
     def resolve_get_jndmodifiedafter(self, info, mdtz, ctzoffset, jobneedids):
@@ -229,9 +230,9 @@ def get_db_rows(sql, args=None):
     return SelectOutputType(records=data_json, msg=msg, nrows = count)
 
 
-def get_jobneedmodifiedafter(peopleid, siteid):
+def get_jobneedmodifiedafter(peopleid, siteid, clientid):
     log.info('request for jobneed-modified-after data...')
-    return get_db_rows("select * from fun_getjobneed(%s, %s)", args=[peopleid, siteid])
+    return get_db_rows("select * from fun_getjobneed(%s, %s)", args=[peopleid, siteid, clientid])
 
 
 

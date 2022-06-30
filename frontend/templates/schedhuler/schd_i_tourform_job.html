@@ -41,11 +41,12 @@ Schedhule Tour
 
 {% block form %}
 <form action="" method="post" id="id_schdtourform">
+<input type="hidden" name="{{ schdtourform.ctzoffset.name }}" id = "{{ schdtourform.ctzoffset.auto_id }}" value="-1">
     {{ schdtourform.identifier }}
+    {{ schdtourform.frequency }}
     {{ schdtourform.expirytime }}
     {{ schdtourform.starttime }}
     {{ schdtourform.endtime }}
-    {{ schdtourform.ctzoffset }}
     <input type="hidden" name="{{ schdtourform.seqno.name }}" id="{{ schdtourform.seqno.auto_id }}" value="1">
     <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
     <div class="row mb-3 gy-3">
@@ -59,7 +60,7 @@ Schedhule Tour
         </div>
         <div class="col-md-2">
             <label for={{ schdtourform.jobdesc.id_for_label }}
-                class=" required">{{ schdtourform.jobdesc.label }}:</label>
+                class="required">{{ schdtourform.jobdesc.label }}:</label>
         </div>
         <div class="col-md-4">
             {{ schdtourform.jobdesc }}
@@ -526,10 +527,8 @@ Schedhule Tour
 
 
     $(document).ready(() => {
-        //SET CTZOFFSET ON LOAD
-        var offset = new Date().getTimezoneOffset();
-        $("#id_ctzoffset").val(offset)
-        console.log($("#id_ctzoffset").val())
+        //set ctzoffset
+  	    $("#id_ctzoffset").val(-new Date().getTimezoneOffset())
         //Checkpoints & Checklist Mapping 
         // Datatable configuration 
         table = $('#checkpoints_tour').DataTable({
@@ -573,13 +572,7 @@ Schedhule Tour
         }else{
             var assignto = '{{schdtourform.instance.people}}' == ('None' || "") ? "GROUP" :"PEOPLE"
             showHideSelectField(assignto)
-        }
-        //ADD CALENDER TO DATE FIELDS WITH FLAT-PICKR PLUGIN
-        $("#id_from_date, #id_upto_date").flatpickr({
-            enableTime: true,
-            time_24hr: true,
-            dateFormat: 'd-M-Y H:S'
-        })
+        }       
 
         $("#resetMiddleForm").click(() => {
             resetForm();
@@ -748,6 +741,14 @@ Schedhule Tour
         if(!$("#checkpoints_tour tbody tr").hasClass("selected")){
             resetForm()
         }
+
+        //Add Calendar To Date Fields
+        $("#id_from_date, #id_upto_date").flatpickr({
+            enableTime: true,
+            time_24hr: true,
+            dateFormat: 'd-M-Y H:S'
+        })
+        debugger;
     })
 </script>
 {% endblock extra_scripts %}
