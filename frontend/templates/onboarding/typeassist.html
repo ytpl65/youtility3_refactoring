@@ -18,16 +18,6 @@ TypeAssist List
 {% block table %}
     <!------------------ BEGIN TABLE --------------------->
     <table id="ta_table" class="display cell-border compact hover" style="width:100%">
-        <thead class="fw-bold fs-6">
-            <th>Id</th>
-            <th>Code</th>
-            <th>Name</th>
-            <th>Type</th>
-            <th>Created By</th>
-        </thead>
-		<tbody></tbody>
-		<!---------- END TABLE FILTER FIELDS --------->
-        
     </table>
     <!------------------ END TABLE --------------------->
 
@@ -73,10 +63,10 @@ TypeAssist List
 			},
 			columns     : [
                 { "data": "id" },
-                { "data": "tacode" },
-                { "data": "taname" },
-                { "data": "tatype__tacode" },
-                { "data": "cuser__peoplecode" },
+                { "data": "tacode", title:"Code" },
+                { "data": "taname", title:'Name' },
+                { "data": "tatype__tacode", title:'Type' },
+                { "data": "cuser__peoplecode", title: 'Created by' },
             ],
 			deferRender: true,
 			responsive : true,
@@ -90,7 +80,7 @@ TypeAssist List
 					}
 				}
 			],
-			dom       : `<'row' <'col-sm-6 d-flex justify-content-start'f> <'col-sm-6 d-flex justify-content-end'B> >rt<'row'
+			dom       :`<'row' <'col-sm-6 d-flex justify-content-start'f> <'col-sm-6 d-flex justify-content-end'B> >rt<'row'
 			 <'col-sm-6'l> <'col-sm-6'p><'col-sm-12 d-flex justify-content-center'i>>`,
 			buttons:[
 				{

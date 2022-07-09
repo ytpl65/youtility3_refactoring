@@ -12,7 +12,7 @@ from datetime import datetime
 from django.contrib.gis.db.models import PointField
 from django.utils import timezone
 from apps.activity.managers import(
-    AssetManager, AttachmentManager, JobneedDetailsManager, QsetBlngManager, QuestionManager, QuestionSetManager, JobneedManager
+    AssetManager, AttachmentManager, JobManager, JobneedDetailsManager, QsetBlngManager, QuestionManager, QuestionSetManager, JobneedManager
 )
 from django.contrib.postgres.fields import ArrayField
 
@@ -251,6 +251,8 @@ class Job(BaseModel, TenantAwareModel):
     frequency       = models.CharField(verbose_name=_("Frequency type"), null=True, max_length=55, choices=Frequency.choices, default=Frequency.NONE.value)
     other_info      = models.JSONField(_("Other info"), default=other_info, blank=True, encoder=DjangoJSONEncoder)
 
+    objects = JobManager()
+    
     class Meta(BaseModel.Meta):
         db_table            = 'job'
         verbose_name        = 'Job'
@@ -322,7 +324,7 @@ class Asset(BaseModel, TenantAwareModel):
     assetname     = models.CharField(_("Asset Name"), max_length=250)
     enable        = models.BooleanField(_("Enable"), default=True)
     iscritical    = models.BooleanField(_("Is Critical"))
-    gpslocation   = PointField(_('GPS Location'), null=True, geography=True, srid=4326)
+    gpslocation   = PointField(_('GPS Location'), null=True, geography=True, srid=4326, default=[])
     parent        = models.ForeignKey("self", verbose_name=_( "Belongs to"), on_delete = models.RESTRICT, null=True, blank=True)
     identifier    = models.CharField( _('Asset Identifier'), choices=Identifier.choices, max_length=55, default=Identifier.NONE.value)
     runningstatus = models.CharField(_('Running Status'), choices=RunningStatus.choices, max_length=55)

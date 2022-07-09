@@ -618,7 +618,7 @@ class DeleteSitePeople(LoginRequiredMixin, View):
 
 #-------------------- Begin Client View Classes --------------------#
 
-class CreateClient(View):
+class CreateClient(LoginRequiredMixin, View):
     form_class = obforms.BtForm
     json_form = obforms.ClentForm
     template_path = 'onboarding/client_buform.html'
@@ -628,7 +628,7 @@ class CreateClient(View):
         """Returns Bt form on html"""
         logger.info('Create ClientBt view')
 
-        cxt = {'clientform': self.form_class(),
+        cxt = {'clientform': self.form_class(client=True),
                'clientprefsform': self.json_form(),
                'ta_form': obforms.TypeAssistForm(auto_id=False)
                }
@@ -1064,7 +1064,7 @@ class Shift(LoginRequiredMixin, View):
 
 
 
-class EditorTa(View):
+class EditorTa(LoginRequiredMixin, View):
     template = 'onboarding/testEditorTa.html'
     fields = ['id', 'tacode', 'taname', 'tatype__tacode', 'cuser__peoplecode']
     model = TypeAssist
@@ -1207,37 +1207,31 @@ def get_geofence_from_point_radii(R):
 
 class ImportFile(LoginRequiredMixin, View):
     params = {
-       'template_form':'onboarding/import.html',
+       'template_form':'onboarding/',
        'form_class':obforms.ImportForm
     }
     
     def get(self, request, *args, **kwargs):
         R = request.GET
-        print(R)
-        if R.get('action') == 'form':
-            cxt = {'importform':self.params['form_class']()}
-            return render(request, self.params['template_form'], context=cxt)
+        match(R.get('model')):
+            case "typeassist":
+                return render(request, f"{self.params['template_form']}/ta_imp_exp.html")
         
         
     def post(self, request, *args, **kwargs):
         from tablib import Dataset
         from .admin import TaResource
         import json
-        utils.set_db_for_router('testDB2')
+        #utils.set_db_for_router('testDB2')
         ic(request.POST)
         form = obforms.ImportForm(request.POST, request.FILES)
         if form.is_valid():
             file = request.FILES['importfile']
             default_types = Dataset().load(file)
             res = TaResource(is_superuser=True)
-            res = res.import_data(dataset=default_types, dry_run=False, raise_errors=False, collect_failed_rows=True, use_transactions=False)
-            columns = [
-                { "data": "rowno", 'title':'Row No'},
-                { "data": "tacode", 'title':'Code'},
-                { "data": "taname", 'title':'Name' },
-                { "data": "tatype__tacode" , 'title':'Type'},
-                { "data": "cuser__peoplecode", 'title':'Created By'}
-            ]
+            res = res.import_data(
+                dataset=default_types, dry_run=False, raise_errors=False,
+                collect_failed_rows=True, use_transactions=False)
             columns = json.dumps(columns)
             data = []
             for rowerr in res.row_errors():

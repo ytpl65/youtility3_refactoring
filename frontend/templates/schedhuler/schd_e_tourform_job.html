@@ -543,12 +543,12 @@ $(document).ready(() => { //DOCUMENT.READY START[+]
     })
     
     //ADD CALENDER TO DATE FIELDS WITH FLAT-PICKR PLUGIN
-    $("#id_from_date, #id_upto_date").flatpickr({
+    $("#id_fromdate, #id_uptodate").flatpickr({
         enableTime: true,
         time_24hr: true,
-        dateFormat: 'd-M-Y H:S'
+        dateFormat: 'd-M-Y H:i'
     })
-    
+
     //RUN-JOB SCHEDULER DEFINITION
     $("#runScheduler").click(function() {
         Swal.fire({

@@ -487,7 +487,7 @@ def save_msg(request):
 def initailize_form_fields(form):
     for visible in form.visible_fields():
         if visible.widget_type in ['text', 'textarea', 'datetime', 'time', 'number', 'email', 'decimal']:
-            visible.field.widget.attrs['class'] = 'form-control form-control-solid'
+            visible.field.widget.attrs['class'] = 'form-control'
         elif visible.widget_type in ['radio', 'checkbox']:
             visible.field.widget.attrs['class'] = 'form-check-input'
         elif visible.widget_type in ['select2', 'select', 'select2multiple', 'modelselect2', 'modelselect2multiple']:
@@ -528,7 +528,7 @@ def get_tenants_map():
         'sps.youtility.local'       : 'sps',
         'capgemini.youtility.local' : 'capgemini',
         'dell.youtility.local'      : 'dell',
-        'icicibank.youtility.local' : 'intelliwiz_django',
+        'icicibank.youtility.local' : 'icicibank',
         'barfi.youtility.in'        : 'icicibank',
         'intelliwiz.youtility.in'   : 'default',
         'testdb.youtility.local'    : 'testDB'

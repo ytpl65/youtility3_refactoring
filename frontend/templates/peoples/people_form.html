@@ -126,23 +126,10 @@ People
 
 <!--------- BEGIN NON FIELD ERRORS -------->
 {% block nonfield_errors %}
-{% if peopleform.non_field_errors() %}
-<div id="non_field_error" class="alert alert-danger" style="width: 73%;">
-    {% for error in peopleform.non_field_errors() %}
-    {{ error }}
-    {% endfor %}
-    <button type="button" class="btn-close flt-right" data-bs-dismiss="alert" aria-label="Close"></button>
+<div class="alert alert-danger alert-dismissible fade show" id="nonfield_errors"role="alert" style="display:none">
+    <strong>Error</strong> <span></span>
+    <button type="button" class="btn-sm btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
 </div>
-{% endif %}
-{% if pref_form.non_field_errors() %}
-<div id="non_field_error" class="alert alert-danger" style="width: 73%;">
-    {% for error in pref_form.non_field_errors() %}
-    {{ error }}
-    {% endfor %}
-    <button type="button" class="btn-close flt-right" data-bs-dismiss="alert" aria-label="Close"></button>
-</div>
-{% endif %}
-
 {% endblock nonfield_errors %}
 <!---------- END NON FIELD ERRORS --------->
 
@@ -687,6 +674,7 @@ People
         $("#id_dateofbirth, #id_dateofjoin, #id_dateofreport").flatpickr({
             dateFormat: 'd-M-Y'
         })
+        
         $("#id_dateofbirth, #id_dateofjoin, #id_dateofreport").addClass("form-control")
 
         //Add More Details toggle
@@ -695,6 +683,7 @@ People
                 return text === "Add more info" ? "Hide more info" : "Add more info";
             })
         })
+        
         //for select2 search work in bootstrap modals
         $("#department_popup").find("select[name=tatype]").select2({
             dropdownParent: $('#department_popup')
@@ -727,6 +716,46 @@ People
         $("[multiple]").select2({
             closeOnSelect:false 
         })
+
+        //on form submit
+        $("#id_peopleform").on('submit', function(e){
+            var form = $(this)
+            e.preventDefault()
+            const params = {url:"{{ url('peoples:people') }}", modal:false}
+            const id = "{{ peopleform.instance.id }}"
+            var payLoad = {formData:form.serialize(), csrfmiddlewaretoken: '{{ csrf_token }}'}//payload for post request
+            if(id != 'None'){
+				var newPayLoad = {...payLoad, 'pk':id}
+				payLoad = newPayLoad
+			}
+			fire_ajax_form_post(params, payLoad)
+			.done((data, status, xhr) => { //function to submit post request
+                show_successful_save_alert(update= id != 'None' ? true : false)
+				location.href = `{{ url('peoples:people') }}?id=${data['pk']}`
+			})
+        })
+
+        //on delete form
+        function deletePeople(elemt){
+            var id = "{{ peopleform.instance.id }}"
+            show_alert_before_delete('People')
+            .then((result) => {
+                if(result.isConfirmed){ //delete requested by user
+                    status = isSiteGrpDeleted(id) //fire's request
+                    console.log("status ", status)
+                    if(status){
+                        show_successful_delete_alert() //defined in customjs
+                        $(modal_id).modal("hide")
+                        //delete row from table
+                        row_index = parseInt($(modalcontent_id).attr('data-rowid'))
+                        table.search().ajax.reload()
+                        console.log("table reloaded")
+                    }else{
+                        show_error_alert('Something went wrong!');
+                    }
+                }
+            })
+        }
     })
 </script>
 {% endblock extra_scripts %}

@@ -67,20 +67,22 @@ Capability Form
 	{# <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}"> #}
 	<input type="hidden" name="{{ cap_form.ctzoffset.name }}" id = "{{ cap_form.ctzoffset.auto_id }}" value="-1">
 	{% for field in cap_form %}
-	<div class="mb-3 row">
-		<!--LABEL FIELD-->
-		{{ field.label_tag() }}
-		<!--INPUT GROUP -->
-		<div class="col-md-10">
-			{{ field }}
-			<!--HELP TEXT -->
-			{% if field.help_text %}
-			<small>{{ field.help_text }}</small>
-			{% endif %}
-			<!-- ERROR FIELD -->
-			{{ field.errors }}
+	{% if field.name not in ['ctzoffset'] %}
+		<div class="mb-3 row">
+			<!--LABEL FIELD-->
+			{{ field.label_tag() }}
+			<!--INPUT GROUP -->
+			<div class="col-md-10">
+				{{ field }}
+				<!--HELP TEXT -->
+				{% if field.help_text %}
+				<small>{{ field.help_text }}</small>
+				{% endif %}
+				<!-- ERROR FIELD -->
+				{{ field.errors }}
+			</div>
 		</div>
-	</div>
+	{% endif %}
 	{% endfor %}
 </form>
 {% endblock form %}

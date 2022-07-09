@@ -1,0 +1,54 @@
+{% extends "base_form.html" %}
+
+{% block extra_css %}
+<link  href="{{ static('assets/plugins/custom/DataTables/datatables.min.css') }}" rel="stylesheet" type="text/css"/>
+{% endblock extra_css %}
+
+
+{% block pagebreadcumb %}
+{{ super() }}
+<li class="breadcrumb-item pe-3"><a href="{{ url('home') }}?template=true" class="pe-3">Home</a></li>
+<li class="breadcrumb-item pe-3"><a href="javascript:void(0)" class="pe-3">TypeAssist Import</a></li>
+{% endblock pagebreadcumb %}
+
+
+<!------ BEGIN FORM TITLE ------->
+{% block form_title %}
+Import TypeAssist
+{% endblock form_title %}
+<!------ END FORM TITLE -------->   
+
+
+{% block form %}
+<div class="row">
+    <table id='typeassist_model'></table>
+</div>
+{% endblock form %}
+
+
+{% block extra_scripts %}
+<script src="{{ static('assets/plugins/custom/DataTables/datatables.min.js') }}" type="text/javascript"></script>
+<script>
+    $(document).ready(function(){
+        $("#typeassist_model").DataTable({
+            columns:[
+                {data:'tacode', title:'Code'},
+                {data:'taname', title:'Name'},
+                {data:'tatype', title:'Type'},
+                {data:'bu', title:'Site'},
+                {data:'client', title:'Client'},
+            ],
+            deferRender:true,
+            responsive:true,
+            dom:`<'row' >rt<'row'>`,
+            ordering:false,
+            buttons:[
+                {
+                    
+                }
+            ]
+        })
+    })
+
+</script>
+{% endblock extra_scripts %}

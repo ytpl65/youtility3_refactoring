@@ -131,9 +131,10 @@ class BtForm(forms.ModelForm):
     
     def __init__(self, *args, **kwargs):
         """Initializes form"""
+        self.client = kwargs.pop('client', False)
         super(BtForm, self).__init__(*args, **kwargs)
-        self.fields['identifier'].queryset = obm.TypeAssist.objects.filter(tatype__tacode="BVIDENTIFIER")
-        self.fields['identifier'].widget.attrs = {'required':True}
+        self.fields['identifier'].queryset = obm.TypeAssist.objects.filter(Q(tacode='CLIENT') if self.client else Q(tatype__tacode="BVIDENTIFIER"))
+        self.fields['identifier'].required= True
         self.fields['butype'].queryset = obm.TypeAssist.objects.filter(tatype__tacode="SITETYPE")
         utils.initailize_form_fields(self)
     
@@ -332,8 +333,8 @@ class BuPrefForm(forms.Form):
     usereliver               = forms.BooleanField(initial=False, required=False, label="Reliver needed?")
     malestrength             = forms.IntegerField(initial=0, label="Male Strength")
     femalestrength           = forms.IntegerField(initial=0, label="Female Strength")
-    reliveronpeoplecount     = forms.IntegerField(initial=0)
-    pvideolength             = forms.IntegerField(initial="10", label='Panic video length (sec)')
+    reliveronpeoplecount     = forms.IntegerField(initial=0, label="Reliver On People Count")
+    pvideolength             = forms.IntegerField(initial="10", label='Panic Video Length (sec)')
     guardstrenth             = forms.IntegerField(initial=0)
     siteclosetime            = forms.TimeField(label="Site Close Time", required=False)
     tag                      = forms.CharField(max_length=200, required=False)
@@ -366,7 +367,7 @@ class ClentForm(BuPrefForm):
 
     def __init__(self, *args, **kwargs):
         """Initializes form"""
-        super(BuPrefForm, self).__init__(*args, **kwargs)
+        super(ClentForm, self).__init__(*args, **kwargs)
         utils.initailize_form_fields(self)
         from apps.peoples.utils import get_caps_choices
         self.fields['webcapability'].choices = get_caps_choices(cfor=pm.Capability.Cfor.WEB)

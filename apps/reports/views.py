@@ -62,7 +62,7 @@ class RetriveSiteReports(LoginRequiredMixin, View):
 
 
 
-class MasterReportTemplateList(View, LoginRequiredMixin):
+class MasterReportTemplateList(LoginRequiredMixin, View):
     model         = am.QuestionSet
     template_path = None
     fields        = ['id', 'qsetname', 'enable']
@@ -95,7 +95,7 @@ class MasterReportTemplateList(View, LoginRequiredMixin):
 
 
 
-class MasterReportForm(View, LoginRequiredMixin):
+class MasterReportForm(LoginRequiredMixin, View):
     template_path = None
     form_class    = None
     subform       = QsetBelongingForm

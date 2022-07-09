@@ -28,7 +28,8 @@ urlpatterns = [
     #SINGLE VIEW CRUD
     path('jobneedtours/', views.JobneedTours.as_view(), name='jobneedtours'),
     path('jobneedtasks/', views.JobneedTasks.as_view(), name='jobneedtasks'),
-    path('jobschdtasks/', views.SchdTasks.as_view(), name='jobschdtasks')
+    path('jobschdtasks/', views.SchdTasks.as_view(), name='jobschdtasks'),
+    path('schedule-internal-tour', views.InternalTourScheduling.as_view(), name='schd_internal_tour')
 
 
 ]

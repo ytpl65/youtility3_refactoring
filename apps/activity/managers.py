@@ -51,7 +51,7 @@ class JobneedManager(models.Manager):
     def get_jobneedmodifiedafter(self, mdtz, peopleid, siteid):
         from datetime import datetime
         mdtzinput = mdtz if (isinstance(mdtz, datetime)) else datetime.strptime(mdtz, "%Y-%m-%d %H:%M:%S")
-        return self.raw(f"select * from fn_getjobneedmodifiedafter('{mdtzinput}', {peopleid}, {siteid}) as id") or self.none()
+        return self.raw("select * from fn_getjobneedmodifiedafter('%s', %s, %s) as id", [mdtzinput, peopleid, siteid]) or self.none()
         
     
     def get_jobneed_observation(self, pk):
@@ -62,7 +62,7 @@ class JobneedManager(models.Manager):
     
     
     def get_jobneed_for_report(self,pk):
-        qset = self.raw(
+        qset = self.raw(    
             """
             SELECT jn.identifier, jn.peoplecode, jn.peoplename, jn.jobdesc, jn.plandatetime,
                 jn.ctzoffset, jn.buname, jn.people_id, jn.pgroup_id, jn.bu_id, jn.cuser_id, jn.muser_id,
@@ -78,7 +78,7 @@ class JobneedManager(models.Manager):
                 INNER JOIN people p      ON jn.people_id= p.id
                 WHERE jn.alerts=TRUE AND jn.id= %s
             )jn
-            """, pk)
+            """, [pk])
         return qset or self.none()
     
     def get_hdata_for_report(self, pk):
@@ -100,7 +100,7 @@ class JobneedManager(models.Manager):
         LEFT JOIN jobneeddetails as jnd ON jnd.jobneed_id=jobneedid
         LEFT JOIN question q ON jnd.question_id=q.id
         LEFT JOIN questionsetbelonging qsb ON qsb.question_id=q.id
-        WHERE jobneed.parent_id <> -1  ORDER BY pseqno asc, jobdesc asc, pseqno, cseqno asc""", pk)
+        WHERE jobneed.parent_id <> -1  ORDER BY pseqno asc, jobdesc asc, pseqno, cseqno asc""", [pk])
         return qset or self.none()
         
     def get_deviation_jn(self, pk):
@@ -115,7 +115,7 @@ class JobneedManager(models.Manager):
             LEFT JOIN asset  ON jobneed.asset_id=asset.id
             LEFT JOIN people ON jobneed.performedby_id= people.id
             WHERE jobneed.other_info -> 'deviation' = true AND jobneed.parent_id != -1 AND jobneed.id = %s
-            """, params=pk
+            """, [pk]
         )
         return qset or self.none()
     
@@ -274,4 +274,10 @@ class JobManager(models.Manager):
                     'geofence__id', 'geofence__gfcode', 'people_id', 'fromdate',
                     'geofence__gfname', 'geofencejson', 'enable', 'uptodate', 'identifier',
                     'starttime', 'endtime', 'bu_id', 'asset_id')
+        return qset or self.none()
+    
+    def get_scheduled_internal_tours(self, related, fields):
+        qset = self.select_related(*related).filter(
+            parent__jobname='NONE', parent_id=1
+        ).values(*fields).order_by('-cdtz')
         return qset or self.none()

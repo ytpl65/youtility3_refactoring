@@ -49,7 +49,7 @@ Import Data
                     {{ importform.importfile }}
                 </div>
             </div>
-            <button type="submit"  class="btn btn-sm btn-secondary" form= "id_import_form">Import Data</button>
+            <button type="button"  class="btn btn-sm btn-secondary" form="id_import_form">Import Data</button>
         </form>
     </div>
     
@@ -57,7 +57,7 @@ Import Data
     
     <div class="col-md-7">
         <table id="import_data_table">
-
+            <thead></thead>
         </table>
     </div>
 </div>
@@ -72,41 +72,16 @@ Import Data
     const DATA = {{ data |default ("[]") | tojson }}
     
     $(document).ready(function (){
-        
-        //file data
-        var fd = new FormData();
-        fd.append('table', $("#id_table").val())
-        const input = document.querySelector('#id_importfile');
-        fd.append('importfile', input.files[0]);
-        //fd.append('importfile', $('#importfile')[0].files)
-
-        //DataTable configuration
-        $("#import_data_table").DataTable({
-            data       : JSON.parse(DATA),
-            columns    : JSON.parse(_columns),
-            deferRender: true,
-            responsive : true,
-            dom        : `<'row' <'col-sm-6 d-flex justify-content-start'f> <'col-sm-6 d-flex justify-content-end'B> >rt<'row'
-                <'col-sm-6'l> <'col-sm-6'p><'col-sm-12 d-flex justify-content-center'i>>`,
-        })
-
-        /*//submit form with data-file
-        $("#id_import_form").on('submit', (e) => {
-            //e.preventDefault()
-
-            //file data
+        //submit form with data-file
+        $("#id_import_form").click(() => {
             var fd = new FormData();
             fd.append('table', $("#id_table").val())
-            const input = document.querySelector('#id_importfile');
-            fd.append('importfile', input.files[0]);
+            const input = $('#id_importfile')[0].files[0] //document.querySelector('#id_importfile');
+            fd.append('importfile', input);
             fd.append('csrfmiddlewaretoken', '{{ csrf_token }}');
-            //fd.append('importfile', $('#importfile')[0].files)
             
             
-            const params = {
-                url: "{{ url('onboarding:import') }}",
-                modal:false,
-            }
+            const params = { url: "{{ url('onboarding:import') }}", modal:false}
             const payLoad = {formData: fd, csrfmiddlewaretoken:'{{ csrf_token }}'}
             
             Swal.fire({
@@ -116,24 +91,40 @@ Import Data
                 showCancelButton:true,
                 confirmButtonText:'Yes Upload it!'
             }).then((res) => {
-                /*$.ajax({
+                $.ajax({
                     url        : params.url,
                     data       : fd,
-                    //contentType: false,
-                    //processData: false,
+                    contentType: false,
+                    processData: false,
                     type: 'POST',
-                    method:'post',
                     success:function(res){
                         console.log(res)
+                    },
+                    error:function(xhr,status,error){
+                        console.log(error)
                     }
                 })
-                fetch(params.url, {
-                    method:'POST',
-                    body:fd,
-                }).then(res => {
-                    console.log(res.json())
-                })
-            })*/
+            })
         })
+        
+        if ($.fn.DataTable.isDataTable( '#import_data_table' ) ) {
+            table = $('#import_data_table').DataTable();
+            table.destroy();
+            $('#import_data_table').empty();
+        }
+        
+        //DataTable configuration
+        $("#import_data_table").DataTable({
+            data       : JSON.parse(DATA),
+            columns    : JSON.parse(_columns),
+            deferRender: true,
+            ordering:false,
+            responsive : true,
+            dom        : `<'row' >rt<'row'>`,
+            columnDefs:[
+                {targets:0, visible:false, defaultContent:null}
+            ]
+        })
+    })
 </script>
 {% endblock extra_scripts %}

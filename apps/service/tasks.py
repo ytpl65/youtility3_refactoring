@@ -1,5 +1,4 @@
 from graphql import GraphQLError
-from matplotlib.pyplot import table
 from apps.service import serializers as sz
 from apps.attendance.models import PeopleEventlog
 from apps.activity.models import (Jobneed, JobneedDetails, Attachment, Asset, DeviceEventlog, Ticket)

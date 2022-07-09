@@ -1,19 +1,12 @@
-# sourcery skip: avoid-builtin-shadow
-from ast import Assert
-from email.policy import default
-import traceback
-from graphene_django import DjangoListField
 from graphene_django.types import DjangoObjectType
 from typing import List
 from graphene_gis.converter import gis_converter
 import graphene
 from djantic import ModelSchema
-from pydantic import BaseModel, ValidationError, validator
-from graphene_gis.scalars import LineStringScalar, PointScalar, PolygonScalar
+from pydantic import BaseModel,  validator
+from graphene_gis.scalars import  PointScalar
 from datetime import datetime
 from enum import Enum
-import traceback
-from requests import request
 from apps.attendance.models import (
     PeopleEventlog, Tracking, TestGeo
 )

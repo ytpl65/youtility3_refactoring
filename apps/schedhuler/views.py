@@ -158,7 +158,7 @@ class Schd_I_TourFormJob(LoginRequiredMixin, View):
             log.info("inserting checkpoints finished...")
 
 
-class Update_I_TourFormJob(Schd_I_TourFormJob, LoginRequiredMixin, View):
+class Update_I_TourFormJob(Schd_I_TourFormJob, View):
 
     def get(self, request, *args, **kwargs):
         log.info('Update Schedhule Tour form view')
@@ -505,8 +505,8 @@ class Schd_E_TourFormJob(LoginRequiredMixin, View):
         log.info("external tour form processing/saving [ START ]")
         try:
             job         = form.save(commit=False)
-            job.parent_id  = -1
-            job.asset_id = -1
+            job.parent_id  = 1
+            job.asset_id = 1
             job.save()
             print("%%%%%%%%%5",  form.data, form.data.get('bu'))
             job = putils.save_userinfo(job, request.user, request.session,
@@ -1322,6 +1322,81 @@ class SchdTasks(LoginRequiredMixin, View):
             "processing invalidt task form sending errors to the client [ END ]")
         return rp.JsonResponse(cxt, status=404)
         
+        
+        
+class InternalTourScheduling(LoginRequiredMixin, View):
+    params = {
+        'model'        : am.Job,
+        'template_form': 'schedhuler/schd_i_tourform_job.html',
+        'template_list': 'schedhuler/schd_i_tourlist_job.html',
+        'form_class'   : scd_forms.Schd_I_TourJobForm,
+        'subform'      : scd_forms.SchdChild_I_TourJobForm,
+        'model'        : am.Job,
+        'related'      : ['pgroup', 'people'],
+        'initial'      : {
+            'starttime' : time(00, 00, 00),
+            'endtime'   : time(00, 00, 00),
+            'expirytime': 0,
+            'identifier': am.Job.Identifier.INTERNALTOUR,
+            'priority'  : am.Job.Priority.LOW,
+            'scantype'  : am.Job.Scantype.QR,
+            'gracetime' : 5,
+            'planduration' : 5,
+            'fromdate'  : datetime.combine(date.today(), time(00, 00, 00)),
+            'uptodate'  : datetime.combine(date.today(), time(23, 00, 00)) + timedelta(days=2),
+        },
+        'fields'       : ['id', 'jobname', 'people__peoplename', 'pgroup__groupname', 'fromdate', 'uptodate',
+                        'planduration', 'gracetime', 'expirytime']
+    }
+    
+    
+    def get(self, request, *args, **kwargs):
+        R, P = request.GET, self.params
+        #return template
+        if R.get('template') == 'true':
+            return render(request, P['template_list'])
+        
+        match R.get('action'):
+            case "list":
+                objs = P['model'].objects.get_scheduled_internal_tours(
+                    P['related'], P['fields']
+                )
+                return rp.JsonResponse({'data':list(objs)}, status=200)
+            case 'form':
+                cxt = {'schdtourform':P['form_class'](request=request, initial=P['initial']),
+                       'childtour_form':P['json_form']()}
+                return render(request, P['template_form'], cxt)
+            
 
+    def post(self, request, *args, **kwargs):
+        R, P = request.GET, self.params
+        pk, data = request.POST.get('pk', None), request.POST.get('formData')
+        assignedSites = json.loads(request.POST['assignedSites'])
+        try:
+            if pk:
+                msg = 'internal scheduler tour'
+                form = utils.get_instance_for_update(
+                    data, P, msg, int(pk), kwargs = {'request':request})
+            else:
+                form = P['form_class'](data, request=request)
+            if form.is_valid():
+                resp = self.handle_valid_form(form, assignedSites, request)
+            else:
+                cxt = {'errors': form.errors}
+                resp = utils.handle_invalid_form(request, self.params, cxt)
+        except Exception:
+            resp = utils.handle_Exception(request)
+        return resp
+    
+    
+    def handle_valid_form(self, form, assigned_sites,  request):
+        data = request.POST.get('formData')
+        with transaction.atomic(using=utils.get_current_db_name()):
+            assigned_checkpoints = json.loads(data.get('assigned_checkpoints'))
+            job = form.save(commit=False)
+            job.parent_id = job.asset_id = job.qset_id = 1
+            job.save()
+            job = putils.save_userinfo(job, request.user, request.session)
+            self.save_checpoints_for_tour(assigned_checkpoints, job, request)
 
-
+    #def save_checpoints_for_tour(self, checkpoints)

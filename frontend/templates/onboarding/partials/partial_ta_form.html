@@ -4,24 +4,21 @@
 {{ ta_form.media.css }}
 {% endblock head %}
 {% macro typeassist_form() %}
-{% for field in ta_form %}
-			<div class="mb-3 row">
-				<!--LABEL FIELD-->
-				<label class="col-md-2">{{ field.label }}</label>
-				<!--INPUT GROUP-->
-				<div class="col-md-10 input-grp">
-					{{ field }}
-					<!--HELP TEXT-->
-					{% if field.help_text %}
-					<small>{{ field.help_text }}</small>
-					{% endif %}
-					<!--ERROR FIELD-->
-					{{ field.errors }}
-				</div>
-			</div>
-		{% endfor %}
-		<input type="hidden" name="{{ ta_form.ctzoffset.name }}" id = "{{ ta_form.ctzoffset.auto_id }}" value="-1">
+	<input type="hidden" name="{{ ta_form.ctzoffset.name }}" id = "{{ ta_form.ctzoffset.auto_id }}" value="-1">
+	<div class="row mb-3">
+	{{ ta_form.tacode.label_tag() }}
+	{{ ta_form.tacode }}
+	</div>
+	<div class="row mb-3">
+	{{ ta_form.taname.label_tag() }}
+	{{ ta_form.taname }}
+	</div>
+	<div class="row mb-3">
+	{{ ta_form.tatype.label_tag() }}
+	{{ ta_form.tatype }}
+	</div>
 {% endmacro %}
+
 {% block body %}
 <form action="" method="post" id="id_taform">
 	<input type="hidden" name="pk" id="pk" value="{{ ta_form.instance.pk }}">

@@ -20,6 +20,16 @@ Site Group
 {% endblock pagebreadcumb %}
 <!-------------------------- END PAGE BREADCUMB ------------------------->
 
+<!--------- BEGIN NON FIELD ERRORS -------->
+{% block nonfield_errors %}
+<div class="alert alert-danger alert-dismissible fade show" id="nonfield_errors"role="alert" style="display:none">
+    <strong>Error</strong> <span></span>
+    <button type="button" class="btn-sm btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+</div>
+{% endblock nonfield_errors %}
+<!---------- END NON FIELD ERRORS --------->
+
+
 {% block form %}
 <form action="{{ url('peoples:sitegroup') }}" method="post" id="sitegrp_form">
     <input type="hidden" name="pk" id="id_pk"value="{{ sitegrpform.instance.id }}">
@@ -309,11 +319,8 @@ Site Group
 				console.log("status ", status)
 				if(status){
 					show_successful_delete_alert() //defined in customjs
-					$(modal_id).modal("hide")
-					//delete row from table
-					row_index = parseInt($(modalcontent_id).attr('data-rowid'))
-					table.search().ajax.reload()
-					console.log("table reloaded")
+                    location.href = "{{ url('peoples:sitegroup') }}?action=form"
+
 				}else{
 					show_error_alert('Something went wrong!');
 				}

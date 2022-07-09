@@ -123,6 +123,7 @@ class PeopleForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         """Initializes form add atttibutes and classes here."""
+        self.request = kwargs.pop('request', None)
         super(PeopleForm, self).__init__(*args, **kwargs)
         self.fields['peopletype'].queryset = om.TypeAssist.objects.filter(
             tatype__tacode="PEOPLE_TYPE")
@@ -214,7 +215,7 @@ class PgroupForm(forms.ModelForm):
 
     class Meta:
         model = pm.Pgroup
-        fields = ['groupname', 'enable', 'identifier']
+        fields = ['groupname', 'enable', 'identifier', 'ctzoffset']
         labels = {
             'name': 'Name',
             'enable': 'Enable'
@@ -293,7 +294,7 @@ class CapabilityForm(forms.ModelForm):
 
     class Meta:
         model = pm.Capability
-        fields = ['capscode', 'capsname', 'parent', 'cfor']
+        fields = ['capscode', 'capsname', 'parent', 'cfor', 'ctzoffset']
         labels = {
             'capscode': 'Code',
             'capsname': 'Capability',

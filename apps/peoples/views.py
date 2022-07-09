@@ -69,7 +69,7 @@ class SignIn(View):
                     login(request, people)
                     logger.info(
                         'Login Successfull for people "%s" with loginid "%s" client "%s" site "%s"'%(
-                            people.peoplename, people.loginid, people.client.buname, people.bu.buname
+                            people.peoplename, people.loginid, people.client.buname if people.client else "None", people.bu.buname if people.bu else "None"
                         )
                     )
                     utils.save_user_session(request, request.user)
@@ -97,7 +97,7 @@ class SignIn(View):
         return response
 
 
-class SignOut(View):
+class SignOut(LoginRequiredMixin, View):
     def get(self, request, *args, **kwargs):
         response = None
         try:
@@ -622,7 +622,6 @@ class RetriveCapability(LoginRequiredMixin, View):
     def paginate_results(self, request, objects):
         '''paginate the results'''
         logger.info('Pagination Start'if objects else "")
-        from .filters import CapabilityFilter
         if request.GET:
             objects = CapabilityFilter(request.GET, queryset=objects).qs
         filterform = CapabilityFilter().form
@@ -704,7 +703,6 @@ class DeleteCapability(LoginRequiredMixin, View):
 
     def get(self, request, *args, **kwargs):
         """Handles deletion of object"""
-        from django.db.models import RestrictedError
         pk, response = kwargs.get('pk', None), None
         try:
             if pk:
@@ -740,7 +738,7 @@ def delete_master(request, params):
     pass
 
 
-class Capability(View):
+class Capability(LoginRequiredMixin, View):
     params = {
         'form_class': pf.CapabilityForm,
         'template_form': 'peoples/partials/partial_cap_form.html',
@@ -832,14 +830,12 @@ class Capability(View):
             return handle_intergrity_error("Capability")
 
 
-class PeopleView(View):
+class PeopleView(LoginRequiredMixin, View):
     params = {
         'form_class': pf.PeopleForm,
         'json_form': pf.PeopleExtrasForm,
-        'template_form': 'peoples/partials/partial_people_form.html',
-        'template_list': 'peoples/people.html',
-        'partial_form': 'peoples/partials/partial_people_form.html',
-        'partial_list': 'peoples/partials/partial_people_list.html',
+        'template_form': 'peoples/people_form.html',
+        'template_list': 'peoples/people_list.html',
         'related': ['peopletype', 'bu'],
         'model': pm.People,
         'filter': pft.PeopleFilter,
@@ -850,16 +846,17 @@ class PeopleView(View):
     def get(self, request, *args, **kwargs):
         R, resp = request.GET, None
 
+        if R.get('template') == 'true':
+            return render(request, self.params['template_list'])
+        
         # return cap_list data
         if R.get('action', None) == 'list' or R.get('search_term'):
-            d = {'list': "people_list", 'filt_name': "people_filter"}
-            self.params.update(d)
+            
             objs = self.params['model'].objects.select_related(
                 *self.params['related']).filter(
                     ~Q(peoplecode='NONE'), enable=True
             ).values(*self.params['fields'])
-            resp = utils.render_grid(
-                request, self.params, "people_view", objs)
+            return rp.JsonResponse(data = {'data':list(objs)}, status=200)
 
         # return cap_form empty
         elif R.get('action', None) == 'form':
@@ -867,62 +864,56 @@ class PeopleView(View):
                    'pref_form': self.params['json_form'](session=request.session),
                    'ta_form': obf.TypeAssistForm(auto_id=False),
                    'msg': "create people requested"}
-            resp = utils.render_form(request, self.params, cxt)
+            resp = render(request, self.params['template_form'], cxt)
 
         # handle delete request
         elif R.get('action', None) == "delete" and R.get('id', None):
             print(f'resp={resp}')
             resp = utils.render_form_for_delete(request, self.params, True)
+        
         # return form with instance
         elif R.get('id', None):
             from .utils import get_people_prefform
-            people = putils.get_model_obj(R['id'], request, self.params)
-            cxt = {'pref_form': get_people_prefform(people, request.session),
-                   'ta_form': obf.TypeAssistForm(auto_id=False)}
-            resp = utils.render_form_for_update(
-                request, self.params, 'peopleform', people, cxt)
-        print(f'return resp={resp}')
+            people = utils.get_model_obj(R['id'], request, self.params)
+            cxt = {'peopleform': self.params['form_class'](instance=people),
+                   'pref_form': get_people_prefform(people, request.session),
+                   'ta_form': obf.TypeAssistForm(auto_id=False),
+                   'msg': "update people requested"}
+            resp = render(request, self.params['template_form'], context=cxt)
         return resp
 
     def post(self, request, *args, **kwargs):
         resp, create = None, True
+        data = QueryDict(request.POST['formData'])
         try:
-            print(request.POST)
-            data = QueryDict(request.POST['formData'])
-            pk = request.POST.get('pk', None)
-            print(pk, type(pk))
-            if pk:
+            if pk := data.get('pk', None):
                 msg, create = "people_view", False
-                people = putils.get_model_obj(pk, request,  self.params)
-                form = self.params['form_class'](data, instance=people)
-                jsonform = self.params['json_form'](
-                    data, session=request.session)
-                create = False
+                people = utils.get_model_obj(pk, request,  self.params)
+                form = self.params['form_class'](data, request.FILES, instance=people)
             else:
-                form = self.params['form_class'](data)
-                jsonform = self.params['json_form'](
-                    data, session=request.session)
+                form = self.params['form_class'](data, request=request)
+            jsonform = self.params['json_form'](data, session=request.session)
             if form.is_valid() and jsonform.is_valid():
                 resp = self.handle_valid_form(form, jsonform, request, create)
             else:
                 cxt = {'errors': form.errors}
                 resp = utils.handle_invalid_form(request, self.params, cxt)
         except Exception:
-            resp = putils.handle_Exception(request)
+            resp = utils.handle_Exception(request)
         return resp
 
     def handle_valid_form(self, form, jsonform, request ,create):
         logger.info('people form is valid')
         from apps.core.utils import handle_intergrity_error
+        from django_email_verification import send_email
         try:
             people = form.save()
             if putils.save_jsonform(jsonform, people):
                 people = putils.save_userinfo(
                     people, request.user, request.session, create=create)
-                putils.send_email(people, request)
+                send_email(people, request)
                 logger.info("people form saved")
-            data = {'success': "Record has been saved successfully",
-                    'code': people.peoplecode, 'name': people.peoplename, 'loginid': people.loginid}
+            data = {'pk':people.id}
             return rp.JsonResponse(data, status=200)
         except IntegrityError:
             return handle_intergrity_error('People')
@@ -1018,7 +1009,7 @@ class PeopleGroup(LoginRequiredMixin, View):
         
 
 
-class SiteGroup(View, LoginRequiredMixin):
+class SiteGroup(LoginRequiredMixin, View):
     params = {
         'form_class'   : pf.SiteGroupForm,
         'template_form': 'peoples/sitegroup_form.html',
@@ -1089,9 +1080,8 @@ class SiteGroup(View, LoginRequiredMixin):
         elif R.get('action', None) == "delete" and R.get('id', None):
             ic('here')
             obj=utils.get_model_obj(R['id'])
-            print(obj)
-            pm.Pgbelonging.objects.filter(pgroup = obj).delete()
-            return utils.render_form_for_delete(request, self.params, False)
+            pm.Pgbelonging.objects.filter(pgroup_id = obj.id).delete()
+            return rp.JsonResponse(data=None, status=200)
         
     
     def post(self, request, *args, **kwargs):
@@ -1143,7 +1133,7 @@ class SiteGroup(View, LoginRequiredMixin):
                     assignsites_id = site['buid'],
                     client_id      = S['client_id'],
                     bu_id          = S['bu_id'],
-                    tenant_id      = S['tenantid']
+                    tenant_id      = S.get('tenantid', 1)
                 )
                 putils.save_userinfo(pgb, request.user, request.session)
         except Exception as e:

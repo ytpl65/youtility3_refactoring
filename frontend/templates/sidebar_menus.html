@@ -644,7 +644,7 @@
             </a>
           </div>
           <div class="menu-item" id="tourschedhuletour">
-            <a class="menu-link" href="{{ url('schedhuler:retrieve_tours') }}">
+            <a class="menu-link" href="{{ url('schedhuler:schd_internal_tour') }}?template=true">
               <span class="menu-bullet">
                 <span class="bullet bullet-dot"></span>
               </span>
@@ -861,7 +861,7 @@
             </a>
           </div>
           <div class="menu-item" id="people">
-            <a class="menu-link" href="{{ url('peoples:people_list') }}">
+            <a class="menu-link" href="{{ url('peoples:people') }}?template=true">
               <span class="menu-bullet">
                 <span class="bullet bullet-dot"></span>
               </span>
@@ -999,6 +999,79 @@
             </a>
           </div>
         </div>
+      </div>
+    </div>
+  </div>
+  <div data-kt-menu-trigger="click" class="menu-item menu-accordion" style="display:none;" id="admin">
+    <span class="menu-link">
+      <span class="menu-icon">
+        <!--begin::Svg Icon | path: icons/duotone/Communication/Group.svg-->
+        <span class="svg-icon svg-icon-2">
+          <span class="material-icons">
+            upload_file
+          </span>
+        </span>
+        <!--end::Svg Icon-->
+      </span>
+      <span class="menu-title">Import / Export</span>
+      <span class="menu-arrow"></span>
+    </span>
+    <div class="menu-sub menu-sub-accordion" kt-hidden-height="116" style="display: none; overflow: hidden;">
+      <div class="menu-item" id="typeassist">
+        <a class="menu-link" href="{{ url('onboarding:import') }}?model=typeassist">
+          <span class="menu-bullet">
+            <span class="bullet bullet-dot"></span>
+          </span>
+          <span class="menu-title">Type Assists</span>
+        </a>
+      </div>
+      <div class="menu-item" id="editortypeassist">
+        <a class="menu-link" href="{{ url('onboarding:import') }}?model=people">
+          <span class="menu-bullet">
+            <span class="bullet bullet-dot"></span>
+          </span>
+          <span class="menu-title">Peoples</span>
+        </a>
+      </div>
+      <div class="menu-item" id="question">
+        <a class="menu-link" href="{{ url('onboarding:import') }}?model=bu">
+          <span class="menu-bullet">
+            <span class="bullet bullet-dot"></span>
+          </span>
+          <span class="menu-title">Buisiness Units</span>
+        </a>
+      </div>
+      <div class="menu-item" id="shift">
+        <a class="menu-link" href="{{ url('onboarding:import') }}?model=shift">
+          <span class="menu-bullet">
+            <span class="bullet bullet-dot"></span>
+          </span>
+          <span class="menu-title">Shifts</span>
+        </a>
+      </div>
+      <div class="menu-item" id="sitepeople">
+        <a class="menu-link" href="{{ url('onboarding:import') }}?model=asset">
+          <span class="menu-bullet">
+            <span class="bullet bullet-dot"></span>
+          </span>
+          <span class="menu-title">Assets</span>
+        </a>
+      </div>
+      <div class="menu-item" id="peoplegroup">
+        <a class="menu-link" href="{{ url('onboarding:import') }}?model=question">
+          <span class="menu-bullet">
+            <span class="bullet bullet-dot"></span>
+          </span>
+          <span class="menu-title">Questoins</span>
+        </a>
+      </div>
+      <div class="menu-item" id="sitegroup">
+        <a class="menu-link" href="{{ url('onboarding:import') }}?model=peoplegroup">
+          <span class="menu-bullet">
+            <span class="bullet bullet-dot"></span>
+          </span>
+          <span class="menu-title">People Groups</span>
+        </a>
       </div>
     </div>
   </div>

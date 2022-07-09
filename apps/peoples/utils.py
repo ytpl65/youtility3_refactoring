@@ -142,10 +142,10 @@ def save_tenant_client_info(request):
         clientcodeMap = get_tenants_map()
         clientcode = clientcodeMap.get(hostname)
         request.session['hostname'] = hostname
-        client = Bt.objects.get(bucode=clientcode.upper())
-        tenant = Tenant.objects.get(id=client.tenant.id)    
-        request.session['tenantid'] = tenant.id
-        request.session['client_id'] = client.id
+        client = Bt.objects.get(bucode=clientcode.upper() if clientcode else "SPS")
+        #tenant = Tenant.objects.get(id=client.tenant.id)
+        #request.session['tenantid'] = tenant.id
+        request.session['client_id'] = request.user.client.id
         request.session['bu_id'] = request.user.bu.id
         logger.info('saving tenant & client info into the session...DONE')
     except:

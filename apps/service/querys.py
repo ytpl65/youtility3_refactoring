@@ -90,7 +90,7 @@ class Query(graphene.ObjectType):
     
     def resolve_tabyid(self, info, id):
         log.info('request for typeassist data...')
-        ta = TypeAssist.objects.raw(f"select * from typeassist where id = {id}")
+        ta = TypeAssist.objects.raw("select * from typeassist where id = %s", [id])
         return ta[0] if ta else None
     
     

@@ -1,14 +1,8 @@
-from fileinput import filename
-from grpc import insecure_channel
-from numpy import record
-from py import apipkg
-from requests import request
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from django.db import transaction
 import traceback
 import apps.service.utils as sutils
-from pprint import pformat, pprint
 from apps.activity.models import JobneedDetails
 from .serializers import InsertSerializer, JndSerializers, JobneedSerializer
 from .validators import clean_record
@@ -98,7 +92,6 @@ def perform_task_tour_update(data):
 
 def perform_template_report_insert(data):
     import json
-    from pprint import pprint
     service_templatereport = json.loads(data['service_templatereport'])
     child = service_templatereport.pop('child', None)
     parent = service_templatereport or None
