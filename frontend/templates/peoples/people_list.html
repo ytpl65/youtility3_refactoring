@@ -13,89 +13,54 @@ People Lists
 {% endblock pagebreadcumb %}
 <!----------- END PAGE BREADCUMBS ------------->
 
-<!-------- BEGIN PAGE ACTIONS ---------->
-{% block page_actions %}
- {{ form_add('peoples:people_form') }}
-{% endblock page_actions %}
-<!-------- END PAGE ACTIONS ------------->
+
 
 <!------------------ BEGIN PEOPLE TABLE ------------------------->
 {% block table %}
 <div class="table-responsive">
-    <table id="people_table" class="display cell-border" style="width:100%">
-        <thead class="fw-bold fs-6">
-            <th>Code</th>
-            <th>Name</th>
-            <th>People Type</th>
-            <th>Site</th>
-            <th>Is Admin</th>
-        </thead>
-		<!---------- BEGIN TABLE FILTER FIELDS --------->
-		<thead id="filter_row">
-		<form action="" id='people_filter' method='get'>
-			{% for field in people_filter %}
-			<th>
-				<input type="text" 
-				id="{{ field.auto_id }}" 
-				name="{{ field.name }}" 
-				placeholder ="Search {{ field.label }}">
-			</th>
-			{% endfor %}
-		</form>
-		</thead>
-		<!---------- END TABLE FILTER FIELDS --------->
-        {% for people in people_list %}
-        <tr>
-            <td>{{ people['peoplecode'] }}</td>
-            <td><a href="{{ url('peoples:people_update', args=[people['id']]) }}">{{ people['peoplename'] }}</a></td>
-            <td>{{ people['peopletype__tacode'] }}</td>
-            <td>{{ people['buid__bucode'] }}</td>
-            <td>{{ people['isadmin'] }}</td>
-        </tr>
-        {% endfor %}
-		
+    <table id="people_table" class="display compact cell-border" style="width:100%">
     </table>
 </div>
-{% if people_list and people_list.has_other_pages %}
-        <!------ BEGIN PAGINATOIN ----->
-		{{ paginator(people_list) }}
-		<!----- END PAGINATOIN -------->
-    {% endif %}
-{% endblock table %}
+{% endblock table %} 
 <!------------------ END PEOPLE TABLE --------------------------->
 
 <!--------- BEGIN EXTRA SCRIPTS ------>
 {% block extra_scripts %}
 <script>
 	$(document).ready(function () {
-		$("input").keypress(function(event) {
-			if (event.which == 13) {
-				event.preventDefault();
-				$("#people_filter").submit();
-			}
-		});
-
 		//BEGIN DATATABLE INITIALIZATION
 		var table = $('#people_table').DataTable({
-			orderCellsTop: true,
-			fixedHeader: true,
-			paging: false,
-			scrollCollapse: true,
-			language: {
-				searchPlaceholder: "Search on Page"
-			}
+			ajax:{
+				url:"{{ url('peoples:people') }}?action=list"
+			},
+			columns:[
+				{data:'id', visible:false, defaultContent:""},
+				{data:'peoplename', title:'Name'},
+				{data:'peopletype__tacode', title:'People Type'},
+				{data:'bu__bucode', title:'Site'},
+				{data:'isadmin', title:'Is Admin'},
+			],
+			deferRender:true,
+			responsive:true,
+			dom:`<'row' <'col-sm-6 d-flex justify-content-start'f> <'col-sm-6 d-flex justify-content-end'B> >rt<'row'
+			 <'col-sm-6'l> <'col-sm-6'p><'col-sm-12 d-flex justify-content-center'i>>`,
+			columnDefs:[
+				{targets:1, data:'peoplename', render:function(data, type, row, meta){
+					let updateUrl = "{{ url('peoples:people') }}"
+					return `<a href=${updateUrl}?id=${row['id']}>${data}</a>`
+				}}
+			],
+			buttons:[
+				{
+					text     : `Add New &nbsp;<i class='fas fa-plus ch4'></i></a>`,
+					className: "btn btn-sm btn-light-primary",
+					//action for add_new_button 
+					action: function(e, dt, node, config){
+						return location.href = "{{ url('peoples:people') }}?action=form"
+					}
+				}
+			]
 		})
-		//END DATATABLE INITIALIZATION
-
-		//BEGIN STYLING DATATABLE
-		$("th > input").addClass('form-control')
-		$("th > input").css('height', '35px')
-		var styles = {
-			"border-bottom": "none",
-			"background-color": "#f1f4f7"
-		}
-		$('#people_table thead tr:eq(1)').css(styles)
-		//END STYLING DATATABLE
 	});
 </script>
 {% endblock extra_scripts %}

@@ -61,6 +61,11 @@ on top of form -->
 
 <!--END To Render something
 on top of form -->
+{% block fullpage %}
+
+{% endblock fullpage %}
+
+
 
 <!--BEGIN CARD-->
 <div class="card">
@@ -69,12 +74,7 @@ on top of form -->
         <!--BEGIN CARD-HEADER-->
         <div class="card-header ps-0 d-flex justify-content-md-between" style="border: 0;">
             <h4 class="card-title" style="color:#3a3b40de">
-                <!--BEGIN To Reder form-title -->
-                {% if edit is defined %}
-                <strong>Update or Delete&nbsp;</strong>
-                {% else %}
-                <strong>Create&nbsp;</strong>
-                {% endif %}
+
                 {%- block form_title -%}
 
                 {% endblock form_title %}&nbsp;
@@ -91,6 +91,7 @@ on top of form -->
                         adjacent to the form-title-->
                     </span>
                 </span>
+                
                 <!--BEGIN To custom the icon 
                  adjacent to the form-title-->
                  {% block custom_title %}
@@ -111,16 +112,6 @@ on top of form -->
             of form use this block-->
 
 
-            <!----------- BEGIN FORM MESSGES --------------->
-            {%- block form_msgs -%}
-                {% for msg in get_msgs(request) %}
-                    <div class="alert {% if msg.tags %} {{ msg.tags }} {% endif %} " id="alert_msg" style="width:73%; ">
-                        {{ msg }}
-                        <button type="button" class="btn-close flt-right" data-bs-dismiss="alert" aria-label="Close"></button>
-                    </div>
-                {% endfor %}
-            {% endblock form_msgs %}
-            <!----------- END FORM MESSGES ----------------->
 
             <!--keep empty-->
             <div>
@@ -330,21 +321,14 @@ on top of form -->
         </div>
     {% endcall %}
 {% endblock popup_alerts %}
-<!--
-{% block wizard_inline_scripts %}
-    {% set session = request.session %}
-    {# {%- if session['wizard_data'] is defined -%} #}
-        <script>
-            
-        </script>
-        {# <script src="{{ static('assets/js/onboarding/wizard.js') }}"></script> #}
-    {# {% endif %} #}
-{% endblock wizard_inline_scripts %} -->
+
 
 
 
 {% block base_script %}
+<script>
 
+</script>
 {% endblock base_script %}
 <!-------- Begin For Page Level ------->
   {%- block extra_scripts -%}

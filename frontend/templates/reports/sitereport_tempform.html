@@ -1,0 +1,497 @@
+{% extends "base_form.html" %}
+
+
+{% block extra_css %}
+{{ reporttemp_form.media.css }}
+<link  href="{{ static('assets/plugins/custom/DataTables/datatables.min.css') }}" rel="stylesheet" type="text/css"/>
+<link  href="{{ static('assets/plugins/custom/Editor-2.0.8/css/editor.dataTables.min.css') }}" rel="stylesheet" type="text/css"/>
+{% endblock extra_css %}
+
+<!-------------------------- BEGIN PAGE BREADCUMB ----------------------->
+{% block pagebreadcumb %}
+<!--will call parent contents -->
+{{ super() }}
+<li class="breadcrumb-item pe-3"><a href="{{ url('reports:sitereport_template_list') }}?template=true" class="pe-3">Site Report Templates</a></li>
+<li class="breadcrumb-item pe-3"><a href="javascript:void(0)" class="pe-3">Site Report Template Form</a></li>
+{% endblock pagebreadcumb %}
+<!-------------------------- END PAGE BREADCUMB ------------------------->
+
+
+<!------ BEGIN FORM TITLE ------->
+{% block form_title %}
+Site Report Template
+{% endblock form_title %}
+<!------ END FORM TITLE -------->
+
+
+<!--------- BEGIN NON FIELD ERRORS -------->
+{% block nonfield_errors %}
+    {% if reporttemp_form.non_field_errors() %}
+    <div id="non_field_error" class="alert alert-danger" style="width: 73%;">
+        {% for error in reporttemp_form.non_field_errors()[::-1] %}
+        <strong>Error</strong> <span>{{ error }}</span>
+        {% endfor %}
+        <button type="button" class="btn-close flt-right" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+    {% endif %}
+{% endblock nonfield_errors %}
+<!---------- END NON FIELD ERRORS --------->
+
+
+{% block form %}
+<form action="" method="post" id="sitereportTemplateForm" url="{{ url('reports:sitereport_template_form') }}">
+<input type="hidden" name="{{ reporttemp_form.ctzoffset.name }}" id = "{{ reporttemp_form.ctzoffset.auto_id }}" value="-1">
+    {{ reporttemp_form.type }}
+    <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
+    <input type="hidden" name="pk" id="pk" value="{{ reporttemp_form.instance.pk }}">
+    <div class="row gy-3">
+    <!--FIELDS -->
+    {% for field in reporttemp_form %}
+        {% if(field.widget_type != 'checkbox' and field.name not in ['type', 'ctzoffset'])  %}
+            <div class="col-sm-2">
+                {{ field.label_tag() }}
+            </div>
+            <div class="col-sm-4">
+            {{ field }}
+            </div>
+        {% elif field.widget_type == 'checkbox' %}
+            <div class="col-sm-auto">
+                <div class="form-check form-switch form-check-custom form-check-solid">
+                {{ field }}
+                <label for="{{ field.id_for_label }}" class="form-check-label">{{ field.label }}</label>
+            </div>
+            </div>
+        {% endif %}
+    {% endfor %}
+    </div>
+</form>
+{% endblock form %}
+
+
+{% block ajax_page_actions %}
+<div class="form-actions">
+    {% if reporttemp_form.instance.id %}
+    <button type="submit" id="submitTour" form="sitereportTemplateForm" class="btn btn-sm btn-primary btn-hover-scale">
+        Update &nbsp;<i class="fas fa-cloud-upload-alt"></i>
+    </button>
+
+    <button type="button" onclick="deleteMainJob(this)" data-id="{{ reporttemp_form.instance.id }}" id="deleteAttd"
+        class="btn btn-sm btn-danger btn-hover-scale">
+        Delete&nbsp;<i class="fas fa-trash-alt"></i>
+    </button>
+    {% else %}
+    <button type="submit" form="sitereportTemplateForm" class="btn btn-sm btn-primary btn-hover-scale">
+        Save &nbsp;<i class="fas fa-cloud-upload-alt"></i>
+    </button>
+    {% endif %}
+</div>
+{% endblock ajax_page_actions %}
+
+{% block extras %}
+<br><br><br>
+<div class="report_section ">
+<div class="row mb-3">
+    <div class="col-sm-3 card card-bordered border border-2 d-none">
+        <div class="card-header mb-0">
+            <div class="card-title">Question Form</div>
+            <div class="card-toolbar">
+                <button type="submit" id="addQuestion" form="qsetbng_form"
+                    class="btn btn-sm btn-secondary btn-hover-scale">
+                    Add&nbsp;<i class="fa fa-plus" aria-hidden="true"></i>
+                </button>
+            </div>
+        </div>
+        <div class="card-body">
+            <form action="" method="post" id="qsetbng_form">
+            
+                <div class="mb-3">
+                {{ qsetbng.question.label_tag() }}
+                {{ qsetbng.question }}
+                </div>
+                <div class="mb-3">
+                {{ qsetbng.answertype.label_tag() }}
+                {{ qsetbng.answertype }}
+                </div>
+                <div class="mb-3 fv-row optionGrp">
+                {{ qsetbng.options.label_tag() }}
+                {{ qsetbng.options }}
+                </div>
+                <div class="mb-3 fv-row optionGrp">
+                {{ qsetbng.alerton.label_tag() }}
+                {{ qsetbng.alerton }}
+                </div>
+                <div class="row fv-row numeric">
+                    <div class="col-sm-6">
+                    {{ qsetbng.min.label_tag() }}
+                    {{ qsetbng.min }}
+                    </div>
+                    <div class="col-sm-6">
+                    {{ qsetbng.max.label_tag() }}
+                    {{ qsetbng.max }}
+                    </div>
+                </div>
+                <div class="row mb-3 fv-row numeric">
+                    <div class="col-sm-6">
+                    {{ qsetbng.alertbelow.label_tag() }}
+                    {{ qsetbng.alertbelow }}
+                    </div>
+                    <div class="col-sm-6">
+                    {{ qsetbng.alertabove.label_tag() }}
+                    {{ qsetbng.alertabove }}
+                    </div>
+                </div>
+                <div class="booleans d-flex justify-content-sm-between mt-5
+                    form-check form-switch form-check-custom form-check-solid">
+                    <label for="{{ qsetbng.ismandatory.id_for_label }}"
+                        class="form-check-label bool col-form-label me-5 text-sm-right">
+                        {{ qsetbng.ismandatory.label }}: &nbsp; {{ qsetbng.ismandatory }}
+                    </label>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="col-sm-12 card">
+        <div class="card-header">
+            <div class="card-title">List Of Report Section</div>
+        </div>
+        <div class="card-body">
+            <table id="tabSitereports" class="display compact">
+                <tbody></tbody>
+            </table>
+            <div tabindex="-1" id="jqGridSiteReportPager"></div>
+        </div>
+    </div>
+</div>
+</div>
+{% endblock extras %}
+
+{% block extra_scripts %}
+{{ reporttemp_form.media.js }}
+<script src="{{ static('assets/plugins/custom/DataTables/datatables.min.js') }}" type="text/javascript"></script>
+<script src="{{ static('assets/plugins/custom/Editor-2.0.8/js/dataTables.editor.min.js') }}" type="text/javascript"></script>
+
+<script>
+    var tab_parent = null;
+    var _pkid = null;
+    var editor;
+    var optionTag = null
+    var sectionEditor;
+
+    $(document).ready(function(){
+        //set ctzoffset
+  	    $("#id_ctzoffset").val(-new Date().getTimezoneOffset())
+        
+
+        //select2 multiple
+        $("[multiple]").djangoSelect2({
+            closeOnSelect:false
+        })
+
+        //tagifying the options field
+        var input1 = document.querySelector("#id_options");
+        optionTag = new Tagify(input1);
+
+        //on adding/removing options in 
+        //question-form trigger following events
+        optionTag
+        .on('add', function (e) {
+            populateAlertOn(e.detail.data.value)
+        })
+        .on('remove', function (e) {
+            console.log(e.detail.data.value)
+            removeElmtFromAlertOn(e.detail.data.value)
+        })
+
+        //on submitting the questionset-blng form populate the table
+        // "List of Assigned Questions"
+        $('#qsetbng_form').on('submit', function (e) {
+            e.preventDefault()
+            if ($("#id_answertype").val() === 'NUMERIC') {
+                if (qsetbng_form_validator) {
+                    qsetbng_form_validator.validate().then(function (status) {
+                        if (status === 'Valid') {
+                            get_question_formdata()
+                            data = cleanData(data)
+                            Swal.fire(
+                            'Added!',
+                            'You clicked the button!',
+                            'success'
+                            )
+                            
+                        }
+                    })
+                }
+            } else {
+                processValidForm()
+                adjustSlnoInTable()
+                console.log("processing valid form [END]")
+            }
+        });
+
+
+        //on selecting the question from question form show/hide
+        //the fields group of class "optionGroup" and "numeric"
+        $("#id_question.form-select").on("change", function () {
+            var _selectedText = getSelectedValue("#id_question");
+            var selected = _selectedText.split(" | ")[1]
+            if (typeof selected !== 'undefined') {
+                assignQuesType(selected)
+                showHideFields(selected)
+            }
+        })
+        
+        //get main (upper) form data
+        function getFormData(id){
+            return {
+                'buincludes'        : $("#id_buincludes").val(),
+                'site_grp_includes' : $("#id_site_grp_includes").val(),
+                'qsetname'         : $("#id_qset_name").val(),
+                'site_type_includes': $("#id_site_type_includes").val(),
+                'enable'            : $("#id_enable").is(":checked"),
+                'showto_allsites'   : $("#id_showto_allsites").is(":checked"),
+                'type'   : $("#id_type").val()
+            }
+        }
+        
+
+        //editor section table
+        sectionEditor = new $.fn.dataTable.Editor({
+            table:"#tabSitereports",
+            fields:[
+                {label:'Section', name:"qsetname"},
+            ]
+        });
+
+        // Activate an inline edit on click of a table cell
+        $('#tabSitereports').on( 'click', 'tbody td.row-edit', function (e) {
+            sectionEditor.inline( tableSection.cells(this.parentNode, '*').nodes(), {
+                submitTrigger: -2,
+                submitHtml: '<i class="fas fa-play text-primary"></i>'
+            } );
+        } );
+
+          // Delete row
+        $('#tabSitereports').on( 'click', 'tbody td.row-remove', function (e) {
+            sectionEditor.remove( this.parentNode, {
+                title: 'Delete record',
+                message: 'Are you sure you wish to delete this record?',
+                buttons: 'Delete'
+            } );
+        } );
+
+        //datatable configuration tabSiteReports       
+        var tableSection = $("#tabSitereports").DataTable({
+            ajax:{
+                url:"{{ url('reports:sitereport_template_form') }}?get_reports=true",
+                data:{'parent_id' : _pkid}
+            },
+            responsive: true,
+			fixedHeader: true,
+            searching:false,
+            ordering:false,
+            paging:false,
+            dom:`<'row' <'col-sm-6 d-flex justify-content-start'f> <'col-sm-6 d-flex justify-content-end'B> >rt<'row'
+            <'col-sm-6'l> <'col-sm-6'p><'col-sm-12 d-flex justify-content-center'i>>`,
+            columns     : [
+                {className: 'details-control', "orderable": false,data: null,defaultContent: '', width:'5%'},
+                { data: "id", visible:false, orderable:false, defaultContent:"" },
+                { data: "qsetname" ,title:'Section'},
+                {
+                    data: null,
+                    defaultContent: '<i class="fas fa-pencil-alt text-primary"></i>',
+                    className: 'row-edit dt-center',
+                    orderable: false,
+                    width:'5%'
+                },
+                {
+                    data: null,
+                    defaultContent: '<i class="fas fa-trash-alt text-primary"></i>',
+                    className: 'row-remove dt-center',
+                    orderable: false,
+                    width:'5%'
+                },
+            ],
+            order:[[2, 'asc']],
+            initComplete: function () {
+            init = false;
+            },
+            createdRow: function ( row, data, index ) {
+                if (data.extn === '') {
+                  var td = $(row).find("td:first");
+                  td.removeClass( 'details-control' );
+                }
+               },
+            rowCallback: function ( row, data, index ) {
+            //console.log('rowCallback');
+            },
+            buttons:[
+            {
+                extend: "createInline",
+                editor: sectionEditor,
+                formOptions: {
+                    submitTrigger: -2,
+                    submitHtml: '<i class="fa fa-play text-primary"/>'
+                },
+                text:'Add New Section'
+            }
+			]
+        })
+
+
+        
+        //on submit form post request
+        $("#sitereportTemplateForm").submit((e) => {
+            e.preventDefault()
+            var form = $(this);
+            const params   = { url: $(form).attr("action"), modal: false }
+            var   payLoad  = $("#sitereportTemplateForm").serialize()
+            console.log('payLoad', payLoad)
+            
+            fire_ajax_form_post(params, payLoad)
+            .done((data, status, xhr) => {
+                Swal.fire(
+                    `Sitereport template saved`,
+                    `Sitereport template with this name <strong>${data.msg}</strong> has been saved successfully`,
+                    'success'
+                ).then(function () {
+                    formSaved = true
+                    window.location.replace(data.url + `?id=${data.id}&template=true`);
+                })
+            })
+            .fail((xhr, status, error) => {
+                console.log(xhr, typeof(xhr.responseJSON.errors))
+                if(typeof(xhr.responseJSON.errors) === 'string'){
+                    show_error_alert(xhr.responseJSON.errors, "Failed to save!")
+                }else{}
+                
+            })
+        })
+
+        // Add event listener for opening and closing details
+        /*$('#tabSitereports tbody').on('click', 'td.details-control', function () {
+            var tr = $(this).closest('tr');
+            var row = table.row(tr);
+    
+            if (row.child.isShown()) {
+                // This row is already open - close it
+                row.child.hide();
+                tr.removeClass('shown');
+            } else {
+                // Open this row
+                row.child(format(row.data())).show();
+                tr.addClass('shown');
+            }
+        });*/
+
+        
+
+        // Add event listener for opening and closing first level childdetails
+        $('#tabSitereports tbody').on('click', 'td.details-control', function () {
+            var tr = $(this).closest('tr');
+            var row = tableSection.row( tr );
+            var rowData = row.data();
+        
+            //get index to use for child table ID
+            var index = row.index();
+            console.log(index);
+    
+            if ( row.child.isShown() ) {
+                // This row is already open - close it
+                row.child.hide();
+                tr.removeClass('shown');
+            }
+            else {
+                // Open this row
+                row.child( 
+                '<table class="child_table" id = "child_details' + index + '" cellpadding="5" cellspacing="0" border="0" style="padding-left:50px;">'+
+                '<tbody>' +
+                    '</tbody></table>').show();
+                    
+                    //CHILD EDITOR
+                    questioneditor = new $.fn.dataTable.Editor({
+                        table:"#child_details" + index,
+                        fields:[
+                            {label:'Question', name:"question_id"},
+                            //{label:'Type', name:"answertype"},
+                            //{label:'Min', name:"min"},
+                            //{label:'Max', name:"max"},
+                            //{label:'Options', name:"options"},
+                            //{label:'Alert Below', name:"alertbelow"},
+                            //{label:'Alert Above', name:"alertabove"},
+                        ]
+                    });
+
+                    // Activate an inline edit on click of a table cell
+                    $(`#child_details${index}`).on( 'click', 'tbody td.row-edit', function (e) {
+                        questioneditor.inline( childTable.cells(this.parentNode, '*').nodes(), {
+                            submitTrigger: -2,
+                            submitHtml: '<i class="fas fa-play text-primary"></i>'
+                        } );
+                    } );
+
+                    // Delete row
+                    $(`#child_details${index}`).on( 'click', 'tbody td.row-remove', function (e) {
+                        questioneditor.remove( this.parentNode, {
+                            title: 'Delete record',
+                            message: 'Are you sure you wish to delete this record?',
+                            buttons: 'Delete'
+                        } );
+                    } );
+
+
+            
+            var childTable = $('#child_details' + index).DataTable({
+            searching:false,
+            ordering:false,
+            paging:false,
+            dom       : `<'row' <'col-sm-6 d-flex justify-content-start'f> <'col-sm-6 d-flex justify-content-end'B> >rt<'row'
+            <'col-sm-6'l> <'col-sm-6'p><'col-sm-12 d-flex justify-content-center'i>>`,
+            columns: [
+                { "data": "id" , 'visible':false, 'data':null},
+                { "data": "seqno", 'title':'Sl No', 'visible':false , data:null},
+                { "data": "question_id", 'title':'Question'},
+                //{ "data": "answertype", 'title':'Type' },
+                //{ "data": "min", 'title':'Min' },
+                //{ "data": "max" , 'title':'Max'},
+                //{ "data": "options", 'title':'Options' },
+                //{ "data": "alertabove", 'title':'Alert Above' },
+                //{ "data": "alertbelow" , 'title':'Alert Below'},
+                {
+                    data: null,
+                    defaultContent: '<i class="fas fa-pencil-alt text-primary"></i>',
+                    className: 'row-edit dt-center',
+                    orderable: false,
+                    width:'5%'
+                },
+                {
+                    data: null,
+                    defaultContent: '<i class="fas fa-trash-alt text-primary"></i>',
+                    className: 'row-remove dt-center',
+                    orderable: false,
+                    width:'5%'
+                },
+
+            ],
+            buttons:[
+            {
+                extend: "createInline",
+                editor: questioneditor,
+                formOptions: {
+                    submitTrigger: -2,
+                    submitHtml: '<i class="fa fa-play text-primary"/>'
+                },
+                text:'<i class="fas fa-plus"></i>'
+            }
+            ],
+                scrollY: '100px'
+            });
+                tr.addClass('shown');
+            }
+        
+        })
+        
+    })
+</script>
+ <script src="{{ static('assets/js/formValidations.js') }}"></script>
+{% endblock extra_scripts %}

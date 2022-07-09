@@ -1,0 +1,91 @@
+from django.contrib.auth import  login, logout
+
+from apps.peoples.models import People
+
+class Messages:
+    AUTHFAILED     = "Authentication Failed "
+    AUTHSUCCESS    = "Authentication Successfull"
+    NOSITE         = "Unable to find site!"
+    INACTIVE       = "Inactive client or people"
+    NOCLIENTPEOPLE = "Unable to find client or People or User/Client are not verified"
+    MULTIDEVICES   = "Cannot login on multiple devices, Please logout from the other device"
+    WRONGCREDS     = "Incorrect Username or Password"
+    NOTREGISTERED  = "Device Not Registered"
+    
+
+def LoginUser(response, request):
+    if response['isauthenticated']:
+        People.objects.filter(
+            id = response['user'].id).update(
+                deviceid = response['authinput'].deviceid)
+        ic(request.user)
+    
+def LogOutUser(response, request):
+    if response['isauthenticated']:
+        People.objects.filter(
+            id = response['user'].id).update(
+                deviceid = -1
+            )
+        ic(request.user)
+        
+        
+            
+def auth_check(info, input, returnUser, uclientip=None):
+    from django.contrib.auth import authenticate
+    from graphql import GraphQLError
+    from apps.peoples.models import People
+    try:
+        user = authenticate(
+            info.context,
+            username=input.loginid,
+            password=input.password)
+        if not user: raise ValueError
+    except ValueError as e:
+        raise GraphQLError(Messages.WRONGCREDS) from e
+    else:
+        allowAccess = isValidDevice = isUniqueDevice = True
+        people_validips = user.client.bupreferences['validip']
+        people_validimeis = user.client.bupreferences["validimei"].replace(" ", "").split(",")
+
+        if people_validips is not None and len(people_validips.replace(" ", "")) > 0:
+            clientIpList = people_validips.replace(" ", "").split(",")
+            if uclientip is not None and uclientip not in clientIpList:
+                allowAccess = isAuth =False
+        if user.deviceid == '-1' or input.deviceid == user.deviceid: allowAccess=True
+        else:
+            if input.deviceid not in people_validimeis: isValidDevice=False
+            allowAccess = isAuth =False
+            raise GraphQLError(Messages.MULTIDEVICES)
+        if allowAccess:
+            if user.client.enable and user.enable:
+                return returnUser(user, info.context), user
+            else:
+                raise GraphQLError(Messages.NOCLIENTPEOPLE)
+
+
+def authenticate_user(input, request, msg, returnUser):
+    loginid = input.loginid
+    password = input.password
+    deviceid = input.deviceid
+
+    from graphql import GraphQLError
+    from apps.peoples.models import People
+    from django.contrib.auth import authenticate
+    
+    user = authenticate(request, username = loginid, password = password)
+    if not user: raise GraphQLError(msg.WRONGCREDS)
+    valid_imeis = user.client.bupreferences["validimei"].replace(" ", "").split(",")
+    
+
+    if not user:
+        raise GraphQLError(msg.WRONGCREDS)
+    if deviceid != '-1' and user.deviceid == '-1':
+        if all([user.client.enable, user.enable, user.isverified]):
+            return returnUser(user, request), user
+        else:
+            raise GraphQLError(msg.NOCLIENTPEOPLE)
+    if deviceid not in valid_imeis:
+        raise GraphQLError(msg.NOTREGISTERED)
+    if deviceid != user.deviceid:
+        raise GraphQLError(msg.MULTIDEVICES)
+    return returnUser(user, request), user

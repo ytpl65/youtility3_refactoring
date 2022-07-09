@@ -29,7 +29,7 @@ Site People Form
 			</div>
 			<div class="modal-footer">
 				<button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">No Go back</button>
-				<a href="{{ url('peoples:sitepeople_delete', args=[sitepeople_form.instance.sitepeopleid]) }}" class="btn btn-sm  btn-danger rounded-1">Yes I'm Sure</a>
+				<a href="{{ url('peoples:sitepeople_delete', args=[sitepeople_form.instance.sitepeople]) }}" class="btn btn-sm  btn-danger rounded-1">Yes I'm Sure</a>
 			</div>
 		{% endcall %}
 	{% endif %}

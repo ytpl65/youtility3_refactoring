@@ -1,0 +1,170 @@
+{% extends "partial_base.html" %}
+
+
+{% block head %}
+{{ master_assetform.media.css }}
+{% endblock head %}
+
+
+{% block body %}
+<form action="" method="post" id="id_checkpointform">
+<input type="hidden" name="{{ master_assetform.ctzoffset.name }}" id = "{{ master_assetform.ctzoffset.auto_id }}" value="-1">
+    <div class="modal-header border-0">
+        <h3 class="modal-title modal-heading" id="exampleModalLabel">Create {{ label }} <i
+                class="fas fa-poll-h fa-sm ch4"></i>
+                </h3>
+        <button type="button" class="btn-sm btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+    </div>
+    <div class="modal-body" id="partial">
+        <div class="alert alert-danger alert-dismissible fade show" id="nonfield_errors" role="alert"
+            style="display:none">
+            <strong>Error</strong> <span></span>
+            <button type="button" class="btn-sm btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+
+        <!--============================== FORM FIELDS START =============================-->
+        <div class="row mb-3 gy-3">
+            <!--CHeckpoint Name Start-->
+            <label for="{{ master_assetform.assetname.id_for_label }}" class="required col-md-1">Name:</label>
+            <div class="col-md-11">
+                {{ master_assetform.assetname }}
+                {{ master_assetform.assetname.errors }}
+            </div>
+            <!--CHeckpoint Name End-->
+            
+            <!--CHeckpoint Code Start-->
+            <label for="{{ master_assetform.assetcode.id_for_label }}" class="required col-md-1">Code:</label>
+            <div class="col-md-11">
+                {{ master_assetform.assetcode }}
+                {{ master_assetform.assetcode.errors }}
+            </div>
+            <!--CHeckpoint Code End-->
+            
+            <!--Running Status Start-->
+            <label for="{{ master_assetform.runningstatus.id_for_label }}" class="required col-md-1">Status:</label>
+            <div class="col-md-5">
+                {{ master_assetform.runningstatus }}
+                {{ master_assetform.runningstatus.errors }}
+            </div>
+            <!--Running Status End-->
+            
+            <!--Type Start-->
+            <label for="{{ master_assetform.type.id_for_label }}" class="required col-md-1">Type:</label>
+            <div class="col-md-5">
+                {{ master_assetform.type }}
+                {{ master_assetform.type.errors }}
+            </div>
+            <!--Type End-->
+            
+            <!--Belongs To Start-->
+            <label for="{{ master_assetform.parent.id_for_label }}" class="required col-md-1">Belongs To:</label>
+            <div class="col-md-5">
+                {{ master_assetform.parent }}
+                {{ master_assetform.parent.errors }}
+            </div>
+            <!--Belongs To End-->
+            
+            <!--GPS Location Start-->
+            <label for="{{ master_assetform.gpslocation.id_for_label }}" class="required col-md-1">GPS:</label>
+            <div class="col-md-5">
+                <div class="input-group">
+                    {{ master_assetform.gpslocation }}
+                {{ master_assetform.gpslocation.errors }}
+                    <button class="btn btn-primary" type="button" id="button-addon2"><i class="fas fa-map-marker-alt"></i></button>
+                </div>
+                {# {{ master_assetform.gpslocation }}
+                {{ master_assetform.gpslocation.errors }} #}
+            </div>
+            <!--GPS Location End-->
+            
+            <!--Asset Identifier Start-->
+
+            {{ master_assetform.identifier }}
+            {{ master_assetform.identifier.errors }}
+
+            <!--Asset Identifier End-->
+
+
+            <!-- Critical Start -->
+            <div class="booleans col-md-3 d-flex justify-content-sm-between mt-5
+            form-check form-switch form-check-custom form-check-solid">
+                <label for="{{ master_assetform.iscritical.id_for_label }}"
+                    class="form-check-label bool col-form-label me-5 text-sm-right">
+                    {{ master_assetform.iscritical.label }}: &nbsp; {{ master_assetform.iscritical }}
+                </label>
+            </div>
+            <!-- Critical End -->
+
+            <!-- Enable Start -->
+            <div class="booleans col-md-2 d-flex justify-content-sm-between mt-5
+            form-check form-switch form-check-custom form-check-solid">
+                <label for="{{ master_assetform.enable.id_for_label }}"
+                    class="form-check-label bool col-form-label me-5 text-sm-right">
+                    {{ master_assetform.enable.label }}: &nbsp; {{ master_assetform.enable }}
+                </label>
+            </div>
+            <!-- Enable End -->
+            
+            
+        </div>
+    </div>
+
+
+    <div class="modal-footer border-0 pt-0">
+        <button type="button" class="btn btn-sm btn-secondary btn-hover-scale"
+         data-bs-dismiss="modal">
+            Close <i class="fas fa-times"></i>
+        </button>
+        {% if master_assetform.instance.id %}
+            <button type="submit" id="submit" class="btn btn-sm btn-primary btn-hover-scale">
+                Update&nbsp;<i class="fas fa-cloud-upload-alt"></i>
+            </button>
+            
+            <button type="button" onclick="deleteCheckpoint(this)"
+             data-id="{{ master_assetform.instance.id }}" id="deleteCp"
+                class="btn btn-sm btn-danger btn-hover-scale">
+                Delete&nbsp;<i class="fas fa-trash-alt"></i>
+            </button>
+        {% else %}
+            <button type="submit" class="btn btn-sm btn-primary btn-hover-scale">
+                Add&nbsp;<i class="fas fa-cloud-upload-alt"></i>
+            </button>
+        {% endif %}
+    </div>
+</form>
+{% endblock body %}
+
+{% block popup_alerts %}
+{% call general_popup(popup_id = 'select_addr', title = 'Select Address') %}
+<div class="modal-body">
+<div class="row">
+{{ master_assetform.gpslocation }}
+</div>
+</div>
+<div class="modal-footer">
+
+</div>
+{% endcall %}
+{% endblock  popup_alerts %}
+
+
+
+{% block js %}
+
+{{ master_assetform.media.js }}
+<script>
+    //set ctzoffset
+  	$("#id_ctzoffset").val(-new Date().getTimezoneOffset())
+    
+    //$('.optionGrp').hide()
+    $('form').find("label").addClass("col-md-1")
+    $(document).ready(() => {
+        //remove class to label which was added from above
+        $('.booleans label').removeClass('col-md-1')
+        $('.django-select2').djangoSelect2({
+            dropdownParent: $('#modal-checkpoint')
+        })
+        $(".modal").removeAttr("tabindex");
+    })
+</script>
+{% endblock js %}

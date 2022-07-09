@@ -1,0 +1,127 @@
+{% extends "base_list.html" %}
+
+
+<!---- BEGIN CARD TITLE ------>
+{% block card_title %}
+Site Report List
+{% endblock card_title %}
+<!----- END CARD TITLE -------->
+
+{% block extra_css %}
+{% endblock extra_css %}
+
+<!------------------------------------ BEGIN PAGE BREADCUMBS ------------------------------------>
+{% block pagebreadcumb %}
+{{ super() }}
+<li class="breadcrumb-item pe-3"><a href="javascript:void(0)" class="pe-3">Site Report List</a></li>
+{% endblock pagebreadcumb %}
+<!------------------------------------- END PAGE BREADCUMBS ------------------------------------->
+
+
+<!-------------------------------------------- BEGIN TABLE ------------------------------------------->
+{% block table %}
+<table id="sitereport_table" class="display compact cell-border" style="width:100%">
+    <thead class="fw-bold fs-6">
+        <th>Id</th>
+        <th>Plan Datetime</th>
+        <th>Site Report</th>
+        <th>Surveyor</th>
+        <th>Site Name</th>
+        <th>Status</th>
+        <th>Gps Location</th>
+        <th>Distance</th>
+        <th>Remarks</th>
+        <th>Action</th>
+    </thead>
+    <tbody>
+    </tbody>
+</table>
+
+{% endblock table %}
+<!-------------------------------------------- END TABLE ------------------------------------------->
+
+
+{% block extra_scripts %}
+<script>
+var   table      = null;
+const formFilter = '#sitereport_filter'
+const table_id   = "#sitereport_table"
+
+    function submitFormFilter(){
+        $(formFilter).submit()
+    }
+    function setPlanDatetime(val1, val2){
+        $("#id_plandatetime_0").val(val1)
+        $("#id_plandatetime_1").val(val2)
+    }
+    $(document).ready(function (){
+        $("input").keypress(function(event) {
+			if (event.which == 13) {
+				event.preventDefault();
+				submitFormFilter()
+			}
+		});
+        $("#custom_plandatetime").flatpickr({
+            altInput: true,
+            altFormat: "Y-M-d",
+            dateFormat: "Y/m/d",
+            mode: "range",
+            onChange: function(selectedDates, dateStr, instance){
+                if(selectedDates.length > 1){
+                    dates = dateStr.split(" to ")
+                    setPlanDatetime(dates[0], dates[1])
+                }
+            }
+        });
+        
+        //datatable initialization
+        table = $(table_id).DataTable({
+            ajax:{
+                url:"{{ url('reports:sitereport_list') }}",
+                dataSrc:"sitereport_list"
+            },
+			responsive: true,
+            serverSide:true,
+            processing    : true,
+            responsive    : true,
+			fixedHeader: true,
+			language: {
+                search:"_INPUT_",
+                searchPlaceholder: "Search...",
+                processing:"Getting Data"},
+            search      : {return: true},
+            lengthMenu: [[10, 20, 30], [10, 20, 30]],
+            dom:`<'row' <'col-sm-6 d-flex justify-content-start'f> <'col-sm-6 d-flex justify-content-end'B> >rt<'row' <'col-sm-6'l> <'col-sm-6'p><'col-sm-12 d-flex justify-content-center'i>>`,
+            columnDefs:[
+                {
+                    visible   : false,
+                    targets   : [0, 9],
+                    searchable: false
+                },
+                {
+                    data          : null,
+                    orderable     : false,
+                    searchable    : false,
+                    defaultContent: "",
+                    targets       : 9
+                }
+            ],
+            columns     : [
+                { "data": "id" },
+                { "data": "plandatetime" },
+                { "data": "jobdesc" },
+                { "data": "peoplename" },
+                { "data": "buname" },
+                { "data": "jobdesc" },
+                { "data": "jobstatusname" },
+                { "data": "gpslocation" },
+                { "data": "distance" },
+                { "data": "remarks" },
+            ],
+            buttons:[]
+        })
+        $('.btn').removeClass('dt-button')
+    })
+
+</script>
+{% endblock extra_scripts %}

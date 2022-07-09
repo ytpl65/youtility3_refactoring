@@ -1,6 +1,6 @@
 <div
   class="menu menu-column menu-title-gray-800 menu-state-title-primary menu-state-icon-primary menu-state-bullet-primary menu-arrow-gray-500"
-  id="#kt_aside_menu" data-kt-menu="true">
+  id="kt_aside_menu" data-kt-menu="true">
   <div data-kt-menu-trigger="click" id="dashboards" class="menu-item menu-accordion" style="display:none;">
     <span class="menu-link">
       <span class="menu-icon">
@@ -32,7 +32,7 @@
           <span class="menu-title">Security</span>
         </a>
       </div>
-      <div class="menu-item" id="rp_monitoring">
+      <div class="menu-item" id="rpmonitoring">
         <a class="menu-link" href="apps/customers/view.html">
           <span class="menu-bullet">
             <span class="bullet bullet-dot"></span>
@@ -56,22 +56,22 @@
     </span>
     <div class="menu-sub menu-sub-accordion" kt-hidden-height="116" style="display: none; overflow: hidden;">
       <div class="menu-item" id="task">
-        <a class="menu-link" href="apps/customers/getting-started.html">
+        <a class="menu-link" href="{{ url('schedhuler:jobneedtasks') }}?template=true">
           <span class="menu-bullet">
             <span class="bullet bullet-dot"></span>
           </span>
           <span class="menu-title">Task</span>
         </a>
       </div>
-      <div class="menu-item" id="adhoc_task">
-        <a class="menu-link" href="apps/customers/list.html">
+      <div class="menu-item" id="adhoctask">
+        <a class="menu-link" href="{{ url('activity:adhoctasks') }}?template=true">
           <span class="menu-bullet">
             <span class="bullet bullet-dot"></span>
           </span>
           <span class="menu-title">Adhoc Task</span>
         </a>
       </div>
-      <div class="menu-item" id="asset_maintainance_log">
+      <div class="menu-item" id="assetmaintainancelog">
         <a class="menu-link" href="apps/customers/view.html">
           <span class="menu-bullet">
             <span class="bullet bullet-dot"></span>
@@ -79,7 +79,7 @@
           <span class="menu-title">Asset Maintainence Log</span>
         </a>
       </div>
-      <div class="menu-item" id="asset_comparision">
+      <div class="menu-item" id="assetcomparision">
         <a class="menu-link" href="apps/customers/view.html">
           <span class="menu-bullet">
             <span class="bullet bullet-dot"></span>
@@ -87,7 +87,7 @@
           <span class="menu-title">Asset Comparision</span>
         </a>
       </div>
-      <div class="menu-item" id="parameter_comparision">
+      <div class="menu-item" id="parametercomparision">
         <a class="menu-link" href="apps/customers/view.html">
           <span class="menu-bullet">
             <span class="bullet bullet-dot"></span>
@@ -111,7 +111,7 @@
     </span>
     <div class="menu-sub menu-sub-accordion" kt-hidden-height="116" style="display: none; overflow: hidden;">
       <div class="menu-item" id="internaltour">
-        <a class="menu-link" href="{{ url('schedhuler:retrieve_internaltours') }}">
+        <a class="menu-link" href="{{ url('schedhuler:jobneedtours') }}?template=true">
           <span class="menu-bullet">
             <span class="bullet bullet-dot"></span>
           </span>
@@ -126,7 +126,7 @@
           <span class="menu-title">External Tours</span>
         </a>
       </div>
-      <div class="menu-item" id="adhoc_tour">
+      <div class="menu-item" id="adhoctour">
         <a class="menu-link" href="apps/customers/list.html">
           <span class="menu-bullet">
             <span class="bullet bullet-dot"></span>
@@ -136,7 +136,7 @@
       </div>
     </div>
   </div>
-  <div data-kt-menu-trigger="click" id="help_desk" class="menu-item menu-accordion" style="display:none;">
+  <div data-kt-menu-trigger="click" id="helpdesk" class="menu-item menu-accordion" style="display:none;">
     <span class="menu-link">
       <span class="menu-icon">
         <!--begin::Svg Icon | path: icons/duotone/Communication/Group.svg-->
@@ -151,7 +151,7 @@
       <span class="menu-arrow"></span>
     </span>
     <div class="menu-sub menu-sub-accordion" kt-hidden-height="116" style="display: none; overflow: hidden;">
-      <div class="menu-item" id="raise_ticket">
+      <div class="menu-item" id="raiseticket">
         <a class="menu-link" href="apps/customers/getting-started.html">
           <span class="menu-bullet">
             <span class="bullet bullet-dot"></span>
@@ -160,7 +160,7 @@
         </a>
       </div>
       <div class="menu-item" id="tickets">
-        <a class="menu-link" href="apps/customers/list.html">
+        <a class="menu-link" href="{{ url('schedhuler:retrieve_tickets') }}">
           <span class="menu-bullet">
             <span class="bullet bullet-dot"></span>
           </span>
@@ -169,7 +169,7 @@
       </div>
     </div>
   </div>
-  <div data-kt-menu-trigger="click" id="menu_workflow" class="menu-item menu-accordion" style="display:none;">
+  <div data-kt-menu-trigger="click" id="menuworkflow" class="menu-item menu-accordion" style="display:none;">
     <span class="menu-link">
       <span class="menu-icon">
         <!--begin::Svg Icon | path: icons/duotone/Communication/Group.svg-->
@@ -184,7 +184,7 @@
       <span class="menu-arrow"></span>
     </span>
     <div class="menu-sub menu-sub-accordion" kt-hidden-height="116" style="display: none; overflow: hidden;">
-      <div class="menu-item" id="workflow_template">
+      <div class="menu-item" id="workflowtemplate">
         <a class="menu-link" href="apps/customers/getting-started.html">
           <span class="menu-bullet">
             <span class="bullet bullet-dot"></span>
@@ -202,7 +202,7 @@
       </div>
     </div>
   </div>
-  <div data-kt-menu-trigger="click" id="incident_reports" class="menu-item menu-accordion" style="display:none;">
+  <div data-kt-menu-trigger="click" id="incidentreports" class="menu-item menu-accordion" style="display:none;">
     <span class="menu-link">
       <span class="menu-icon">
         <!--begin::Svg Icon | path: icons/duotone/Communication/Group.svg-->
@@ -217,7 +217,7 @@
       <span class="menu-arrow"></span>
     </span>
     <div class="menu-sub menu-sub-accordion" kt-hidden-height="116" style="display: none; overflow: hidden;">
-      <div class="menu-item" id="incident_report">
+      <div class="menu-item" id="incidentreport">
         <a class="menu-link" href="apps/customers/getting-started.html">
           <span class="menu-bullet">
             <span class="bullet bullet-dot"></span>
@@ -225,7 +225,7 @@
           <span class="menu-title">Incident Report</span>
         </a>
       </div>
-      <div class="menu-item" id="incident_report_advanced">
+      <div class="menu-item" id="incidentreportadvanced">
         <a class="menu-link" href="apps/customers/list.html">
           <span class="menu-bullet">
             <span class="bullet bullet-dot"></span>
@@ -235,7 +235,7 @@
       </div>
     </div>
   </div>
-  <div data-kt-menu-trigger="click" id="site_survey" class="menu-item menu-accordion" style="display:none;">
+  <div data-kt-menu-trigger="click" id="sitesurvey" class="menu-item menu-accordion" style="display:none;">
     <span class="menu-link">
       <span class="menu-icon">
         <!--begin::Svg Icon | path: icons/duotone/Communication/Group.svg-->
@@ -250,8 +250,8 @@
       <span class="menu-arrow"></span>
     </span>
     <div class="menu-sub menu-sub-accordion" kt-hidden-height="116" style="display: none; overflow: hidden;">
-      <div class="menu-item" id="site_report">
-        <a class="menu-link" href="apps/customers/getting-started.html">
+      <div class="menu-item" id="sitereport">
+        <a class="menu-link" href="{{ url('reports:sitereport_list') }}?template=true">
           <span class="menu-bullet">
             <span class="bullet bullet-dot"></span>
           </span>
@@ -259,7 +259,7 @@
         </a>
       </div>
       <div class="menu-item" id="conveyance">
-        <a class="menu-link" href="apps/customers/list.html">
+        <a class="menu-link" href="{{ url('attendance:conveyance') }}?template=true">
           <span class="menu-bullet">
             <span class="bullet bullet-dot"></span>
           </span>
@@ -268,7 +268,7 @@
       </div>
     </div>
   </div>
-  <div data-kt-menu-trigger="click" id="kpi_report_menu" class="menu-item menu-accordion" style="display:none;">
+  <div data-kt-menu-trigger="click" id="kpireportmenu" class="menu-item menu-accordion" style="display:none;">
     <span class="menu-link">
       <span class="menu-icon">
         <!--begin::Svg Icon | path: icons/duotone/Communication/Group.svg-->
@@ -283,7 +283,7 @@
       <span class="menu-arrow"></span>
     </span>
     <div class="menu-sub menu-sub-accordion" kt-hidden-height="116" style="display: none; overflow: hidden;">
-      <div class="menu-item" id="kpi_report">
+      <div class="menu-item" id="kpireport">
         <a class="menu-link" href="apps/customers/getting-started.html">
           <span class="menu-bullet">
             <span class="bullet bullet-dot"></span>
@@ -308,7 +308,7 @@
       <span class="menu-arrow"></span>
     </span>
     <div class="menu-sub menu-sub-accordion" kt-hidden-height="116" style="display: none; overflow: hidden;">
-      <div class="menu-item" id="work_permit">
+      <div class="menu-item" id="workpermit">
         <a class="menu-link" href="apps/customers/getting-started.html">
           <span class="menu-bullet">
             <span class="bullet bullet-dot"></span>
@@ -333,15 +333,15 @@
       <span class="menu-arrow"></span>
     </span>
     <div class="menu-sub menu-sub-accordion" kt-hidden-height="116" style="display: none; overflow: hidden;">
-      <div class="menu-item" id="geofence_tracking">
-        <a class="menu-link" href="apps/customers/getting-started.html">
+      <div class="menu-item" id="geofencetracking">
+        <a class="menu-link" href="#">
           <span class="menu-bullet">
             <span class="bullet bullet-dot"></span>
           </span>
           <span class="menu-title">GeoFence Tracking</span>
         </a>
       </div>
-      <div class="menu-item" id="site_tour_tracking">
+      <div class="menu-item" id="sitetourtracking">
         <a class="menu-link" href="apps/customers/getting-started.html">
           <span class="menu-bullet">
             <span class="bullet bullet-dot"></span>
@@ -349,7 +349,7 @@
           <span class="menu-title">Site Tour Tracking</span>
         </a>
       </div>
-      <div class="menu-item" id="mobile_user_log">
+      <div class="menu-item" id="mobileuserlog">
         <a class="menu-link" href="apps/customers/getting-started.html">
           <span class="menu-bullet">
             <span class="bullet bullet-dot"></span>
@@ -357,7 +357,7 @@
           <span class="menu-title">Mobile User Log</span>
         </a>
       </div>
-      <div class="menu-item" id="mobile_user_details">
+      <div class="menu-item" id="mobileuserdetails">
         <a class="menu-link" href="apps/customers/getting-started.html">
           <span class="menu-bullet">
             <span class="bullet bullet-dot"></span>
@@ -373,7 +373,7 @@
           <span class="menu-title">SOS</span>
         </a>
       </div>
-      <div class="menu-item" id="sos_incident_map_tracking">
+      <div class="menu-item" id="sosincidentmaptracking">
         <a class="menu-link" href="apps/customers/getting-started.html">
           <span class="menu-bullet">
             <span class="bullet bullet-dot"></span>
@@ -381,7 +381,7 @@
           <span class="menu-title">SOS/ Incident Map Tracking</span>
         </a>
       </div>
-      <div class="menu-item" id="people_near_asset">
+      <div class="menu-item" id="peoplenearasset">
         <a class="menu-link" href="apps/customers/getting-started.html">
           <span class="menu-bullet">
             <span class="bullet bullet-dot"></span>
@@ -397,7 +397,7 @@
           <span class="menu-title">CCTV Events</span>
         </a>
       </div>
-      <div data-kt-menu-trigger="click" id="tracking_mobile_user_timeline" class="menu-item menu-accordion"
+      <div data-kt-menu-trigger="click" id="trackingmobileusertimeline" class="menu-item menu-accordion"
         style="display:none;">
         <span class="menu-link">
           <span class="menu-title">Mobile User TimeLine</span>
@@ -425,7 +425,7 @@
     </div>
   </div>
 
-  <div data-kt-menu-trigger="click" class="menu-item menu-accordion" style="display:none;" id="time_and_attendance">
+  <div data-kt-menu-trigger="click" class="menu-item menu-accordion" style="display:none;" id="timeandattendance">
     <span class="menu-link">
       <span class="menu-icon">
         <!--begin::Svg Icon | path: icons/duotone/Communication/Group.svg-->
@@ -467,7 +467,7 @@
       <span class="menu-arrow"></span>
     </span>
     <div class="menu-sub menu-sub-accordion" kt-hidden-height="116" style="display: none; overflow: hidden;">
-      <div class="menu-item" id="posting_and_contract">
+      <div class="menu-item" id="postingandcontract">
         <a class="menu-link" href="apps/customers/getting-started.html">
           <span class="menu-bullet">
             <span class="bullet bullet-dot"></span>
@@ -493,7 +493,7 @@
       <span class="menu-arrow"></span>
     </span>
     <div class="menu-sub menu-sub-accordion" kt-hidden-height="116" style="display: none; overflow: hidden;">
-      <div data-kt-menu-trigger="click" class="menu-item menu-accordion" style="display:none;" id="config_task">
+      <div data-kt-menu-trigger="click" class="menu-item menu-accordion" style="display:none;" id="configtask">
         <span class="menu-link">
           <span class="menu-icon">
             <!--begin::Svg Icon | path: icons/duotone/Communication/Group.svg-->
@@ -515,7 +515,7 @@
             </a>
           </div>
           <div class="menu-item" id="task_smartplace">
-            <a class="menu-link" href="apps/customers/getting-started.html">
+            <a class="menu-link" href="{{ url('activity:smartplace') }}?action=list">
               <span class="menu-bullet">
                 <span class="bullet bullet-dot"></span>
               </span>
@@ -531,7 +531,7 @@
             </a>
           </div>
           <div class="menu-item" id="task_questionset">
-            <a class="menu-link" href="apps/customers/getting-started.html">
+            <a class="menu-link" href="{{ url('activity:questionset') }}?template=true">
               <span class="menu-bullet">
                 <span class="bullet bullet-dot"></span>
               </span>
@@ -555,7 +555,7 @@
             </a>
           </div>
           <div class="menu-item" id="task_scheduletask">
-            <a class="menu-link" href="apps/customers/getting-started.html">
+            <a class="menu-link" href="{{ url('schedhuler:jobschdtasks') }}?template=true">
               <span class="menu-bullet">
                 <span class="bullet bullet-dot"></span>
               </span>
@@ -563,7 +563,7 @@
             </a>
           </div>
           <div class="menu-item" id="task_ticket_escalation">
-            <a class="menu-link" href="apps/customers/getting-started.html">
+            <a class="menu-link" href="{{ url('activity:esc_list') }}?template=true">
               <span class="menu-bullet">
                 <span class="bullet bullet-dot"></span>
               </span>
@@ -588,7 +588,7 @@
           </div>
         </div>
       </div>
-      <div data-kt-menu-trigger="click" class="menu-item menu-accordion" style="display:none;" id="config_asset_maintainance">
+      <div data-kt-menu-trigger="click" class="menu-item menu-accordion" style="display:none;" id="configassetmaintainance">
         <span class="menu-link">
           <span class="menu-icon">
             <!--begin::Svg Icon | path: icons/duotone/Communication/Group.svg-->
@@ -603,7 +603,7 @@
           <span class="menu-arrow"></span>
         </span>
         <div class="menu-sub menu-sub-accordion" kt-hidden-height="116" style="display: none; overflow: hidden;"
-          id="asset_maintainance_template">
+          id="assetmaintainancetemplate">
           <div class="menu-item">
             <a class="menu-link" href="apps/customers/getting-started.html">
               <span class="menu-bullet">
@@ -614,7 +614,7 @@
           </div>
         </div>
       </div>
-      <div data-kt-menu-trigger="click" class="menu-item menu-accordion" style="display:none;" id="config_tour">
+      <div data-kt-menu-trigger="click" class="menu-item menu-accordion" style="display:none;" id="configtour">
         <span class="menu-link">
           <span class="menu-icon">
             <!--begin::Svg Icon | path: icons/duotone/Communication/Group.svg-->
@@ -627,7 +627,7 @@
           <span class="menu-arrow"></span>
         </span>
         <div class="menu-sub menu-sub-accordion" kt-hidden-height="116" style="display: none; overflow: hidden;">
-          <div class="menu-item" id="tour_checkpoint">
+          <div class="menu-item" id="tourcheckpoint">
             <a class="menu-link" href="{{ url('activity:checkpoint') }}?action=list">
               <span class="menu-bullet">
                 <span class="bullet bullet-dot"></span>
@@ -635,23 +635,23 @@
               <span class="menu-title">Checkpoint</span>
             </a>
           </div>
-          <div class="menu-item" id="tour_checklist">
-            <a class="menu-link" href="{{ url('activity:checklist') }}?action=list">
+          <div class="menu-item" id="tourchecklist">
+            <a class="menu-link" href="{{ url('activity:checklist') }}?template=true">
               <span class="menu-bullet">
                 <span class="bullet bullet-dot"></span>
               </span>
               <span class="menu-title">Checklist</span>
             </a>
           </div>
-          <div class="menu-item" id="tour_schedhule_tour">
-            <a class="menu-link" href="{{ url('schedhuler:retrieve_tours') }}">
+          <div class="menu-item" id="tourschedhuletour">
+            <a class="menu-link" href="{{ url('schedhuler:schd_internal_tour') }}?template=true">
               <span class="menu-bullet">
                 <span class="bullet bullet-dot"></span>
               </span>
               <span class="menu-title">Schedule Internal Tour</span>
             </a>
           </div>
-          <div class="menu-item" id="tour_routeplan">
+          <div class="menu-item" id="tourrouteplan">
             <a class="menu-link" href="{{ url('schedhuler:retrieve_externaltours') }}">
               <span class="menu-bullet">
                 <span class="bullet bullet-dot"></span>
@@ -662,7 +662,7 @@
         </div>
       </div>
       <div data-kt-menu-trigger="click" class="menu-item menu-accordion" style="display:none;"
-        id="config_incident_report">
+        id="configincidentreport">
         <span class="menu-link">
           <span class="menu-icon">
             <!--begin::Svg Icon | path: icons/duotone/Communication/Group.svg-->
@@ -677,8 +677,8 @@
           <span class="menu-arrow"></span>
         </span>
         <div class="menu-sub menu-sub-accordion" kt-hidden-height="116" style="display: none; overflow: hidden;">
-          <div class="menu-item" id="incident_report_template">
-            <a class="menu-link" href="apps/customers/getting-started.html">
+          <div class="menu-item" id="incidentreporttemplate">
+            <a class="menu-link" href="{{ url('reports:incidentreport_template_list') }}?template=true">
               <span class="menu-bullet">
                 <span class="bullet bullet-dot"></span>
               </span>
@@ -687,7 +687,7 @@
           </div>
         </div>
       </div>
-      <div data-kt-menu-trigger="click" class="menu-item menu-accordion" style="display:none;" id="config_site_report">
+      <div data-kt-menu-trigger="click" class="menu-item menu-accordion" style="display:none;" id="configsitereport">
         <span class="menu-link">
           <span class="menu-icon">
             <!--begin::Svg Icon | path: icons/duotone/Communication/Group.svg-->
@@ -702,15 +702,15 @@
           <span class="menu-arrow"></span>
         </span>
         <div class="menu-sub menu-sub-accordion" kt-hidden-height="116" style="display: none; overflow: hidden;">
-          <div class="menu-item" id="site_report_template">
-            <a class="menu-link" href="apps/customers/getting-started.html">
+          <div class="menu-item" id="sitereporttemplate">
+            <a class="menu-link" href="{{ url('reports:sitereport_template_list') }}?template=true">
               <span class="menu-bullet">
                 <span class="bullet bullet-dot"></span>
               </span>
               <span class="menu-title">Site Report Template</span>
             </a>
           </div>
-          <div class="menu-item" id="schedhule_site_report">
+          <div class="menu-item" id="schedhulesitereport">
             <a class="menu-link" href="apps/customers/getting-started.html">
               <span class="menu-bullet">
                 <span class="bullet bullet-dot"></span>
@@ -721,7 +721,7 @@
         </div>
       </div>
 
-      <div data-kt-menu-trigger="click" class="menu-item menu-accordion" style="display:none;" id="config_kpi">
+      <div data-kt-menu-trigger="click" class="menu-item menu-accordion" style="display:none;" id="configkpi">
         <span class="menu-link">
           <span class="menu-icon">
             <!--begin::Svg Icon | path: icons/duotone/Communication/Group.svg-->
@@ -736,7 +736,7 @@
           <span class="menu-arrow"></span>
         </span>
         <div class="menu-sub menu-sub-accordion" kt-hidden-height="116" style="display: none; overflow: hidden;">
-          <div class="menu-item" id="configkpi_report">
+          <div class="menu-item" id="configkpireport">
             <a class="menu-link" href="apps/customers/getting-started.html">
               <span class="menu-bullet">
                 <span class="bullet bullet-dot"></span>
@@ -746,7 +746,7 @@
           </div>
         </div>
       </div>
-      <div data-kt-menu-trigger="click" class="menu-item menu-accordion" style="display:none;" id="config_workpermit">
+      <div data-kt-menu-trigger="click" class="menu-item menu-accordion" style="display:none;" id="configworkpermit">
         <span class="menu-link">
           <span class="menu-icon">
             <!--begin::Svg Icon | path: icons/duotone/Communication/Group.svg-->
@@ -761,7 +761,7 @@
           <span class="menu-arrow"></span>
         </span>
         <div class="menu-sub menu-sub-accordion" kt-hidden-height="116" style="display: none; overflow: hidden;">
-          <div class="menu-item" id="workpermit_template">
+          <div class="menu-item" id="workpermittemplate">
             <a class="menu-link" href="apps/customers/getting-started.html">
               <span class="menu-bullet">
                 <span class="bullet bullet-dot"></span>
@@ -769,7 +769,7 @@
               <span class="menu-title">Work Permit Template</span>
             </a>
           </div>
-          <div class="menu-item" id="return_permit_template">
+          <div class="menu-item" id="returnpermittemplate">
             <a class="menu-link" href="apps/customers/getting-started.html">
               <span class="menu-bullet">
                 <span class="bullet bullet-dot"></span>
@@ -779,7 +779,7 @@
           </div>
         </div>
       </div>
-      <div data-kt-menu-trigger="click" class="menu-item menu-accordion" style="display:none;" id="config_request">
+      <div data-kt-menu-trigger="click" class="menu-item menu-accordion" style="display:none;" id="configrequest">
         <span class="menu-link">
           <span class="menu-icon">
             <!--begin::Svg Icon | path: icons/duotone/Communication/Group.svg-->
@@ -794,7 +794,7 @@
           <span class="menu-arrow"></span>
         </span>
         <div class="menu-sub menu-sub-accordion" kt-hidden-height="116" style="display: none; overflow: hidden;">
-          <div class="menu-item" id="request_template">
+          <div class="menu-item" id="requesttemplate">
             <a class="menu-link" href="apps/customers/getting-started.html">
               <span class="menu-bullet">
                 <span class="bullet bullet-dot"></span>
@@ -802,7 +802,7 @@
               <span class="menu-title">Request Template</span>
             </a>
           </div>
-          <div class="menu-item" id="request_report">
+          <div class="menu-item" id="requestreport">
             <a class="menu-link" href="apps/customers/getting-started.html">
               <span class="menu-bullet">
                 <span class="bullet bullet-dot"></span>
@@ -812,7 +812,7 @@
           </div>
         </div>
       </div>
-      <div data-kt-menu-trigger="click" class="menu-item menu-accordion" style="display:none;" id="config_geofence_config">
+      <div data-kt-menu-trigger="click" class="menu-item menu-accordion" style="display:none;" id="configgeofenceconfig">
         <span class="menu-link">
           <span class="menu-icon">
             <!--begin::Svg Icon | path: icons/duotone/Communication/Group.svg-->
@@ -828,7 +828,7 @@
         </span>
         <div class="menu-sub menu-sub-accordion" kt-hidden-height="116" style="display: none; overflow: hidden;">
           <div class="menu-item" id="geofence">
-            <a class="menu-link" href="apps/customers/getting-started.html">
+            <a class="menu-link" href="{{ url('onboarding:geofence') }}?template=true">
               <span class="menu-bullet">
                 <span class="bullet bullet-dot"></span>
               </span>
@@ -837,7 +837,7 @@
           </div>
         </div>
       </div>
-      <div data-kt-menu-trigger="click" class="menu-item menu-accordion" style="display:none;" id="config_company_setup">
+      <div data-kt-menu-trigger="click" class="menu-item menu-accordion" style="display:none;" id="configcompanysetup">
         <span class="menu-link">
           <span class="menu-icon">
             <!--begin::Svg Icon | path: icons/duotone/Communication/Group.svg-->
@@ -852,8 +852,8 @@
           <span class="menu-arrow"></span>
         </span>
         <div class="menu-sub menu-sub-accordion" kt-hidden-height="116" style="display: none; overflow: hidden;">
-          <div class="menu-item" id="buisiness_unit">
-            <a class="menu-link" href="{{ url('onboarding:bu_list') }}">
+          <div class="menu-item" id="buisinessunit">
+            <a class="menu-link" href="{{ url('onboarding:bu_list') }}?template=true">
               <span class="menu-bullet">
                 <span class="bullet bullet-dot"></span>
               </span>
@@ -861,15 +861,15 @@
             </a>
           </div>
           <div class="menu-item" id="people">
-            <a class="menu-link" href="{{ url('peoples:people_list') }}">
+            <a class="menu-link" href="{{ url('peoples:people') }}?template=true">
               <span class="menu-bullet">
                 <span class="bullet bullet-dot"></span>
               </span>
               <span class="menu-title">People</span>
             </a>
           </div>
-          <div class="menu-item"   id="client_onboarding">
-            <a class="menu-link" id="onboarding_wizard" href="">
+          <div class="menu-item"   id="clientonboarding">
+            <a class="menu-link" id="onboardingwizard" href="#">
               <span class="menu-bullet">
                 <span class="bullet bullet-dot"></span>
               </span>
@@ -896,11 +896,19 @@
     </span>
     <div class="menu-sub menu-sub-accordion" kt-hidden-height="116" style="display: none; overflow: hidden;">
       <div class="menu-item" id="typeassist">
-        <a class="menu-link" href="{{ url('onboarding:ta_list') }}">
+        <a class="menu-link" href="{{ url('onboarding:typeassist') }}?template=true">
           <span class="menu-bullet">
             <span class="bullet bullet-dot"></span>
           </span>
           <span class="menu-title">Type Assit</span>
+        </a>
+      </div>
+      <div class="menu-item" id="editortypeassist">
+        <a class="menu-link" href="{{ url('onboarding:editortypeassist') }}?template=true">
+          <span class="menu-bullet">
+            <span class="bullet bullet-dot"></span>
+          </span>
+          <span class="menu-title">Type Assit Editor</span>
         </a>
       </div>
       <div class="menu-item" id="question">
@@ -912,14 +920,14 @@
         </a>
       </div>
       <div class="menu-item" id="shift">
-        <a class="menu-link" href="{{ url('onboarding:shift_form') }}">
+        <a class="menu-link" href="{{ url('onboarding:shift') }}?template=true">
           <span class="menu-bullet">
             <span class="bullet bullet-dot"></span>
           </span>
           <span class="menu-title">Shift</span>
         </a>
       </div>
-      <div class="menu-item" id="site_people">
+      <div class="menu-item" id="sitepeople">
         <a class="menu-link" href="{{ 'onboarding:sitepeople_list' }}">
           <span class="menu-bullet">
             <span class="bullet bullet-dot"></span>
@@ -927,23 +935,23 @@
           <span class="menu-title">Site People</span>
         </a>
       </div>
-      <div class="menu-item" id="people_group">
-        <a class="menu-link" href="{{ url('peoples:pgroup_list') }}">
+      <div class="menu-item" id="peoplegroup">
+        <a class="menu-link" href="{{ url('peoples:peoplegroup') }}?template=true">
           <span class="menu-bullet">
             <span class="bullet bullet-dot"></span>
           </span>
           <span class="menu-title">People Group</span>
         </a>
       </div>
-      <div class="menu-item" id="site_group">
-        <a class="menu-link" href="apps/customers/getting-started.html">
+      <div class="menu-item" id="sitegroup">
+        <a class="menu-link" href="{{ url('peoples:sitegroup') }}?template=true">
           <span class="menu-bullet">
             <span class="bullet bullet-dot"></span>
           </span>
           <span class="menu-title">Site Group</span>
         </a>
       </div>
-      <div class="menu-item" id="employee_reference">
+      <div class="menu-item" id="employeereference">
         <a class="menu-link" href="apps/customers/getting-started.html">
           <span class="menu-bullet">
             <span class="bullet bullet-dot"></span>
@@ -951,15 +959,15 @@
           <span class="menu-title">Employee Reference</span>
         </a>
       </div>
-      <div class="menu-item" id="import_export">
-        <a class="menu-link" href="apps/customers/getting-started.html">
+      <div class="menu-item" id="importexport">
+        <a class="menu-link" href="{{ url('onboarding:import') }}?action=form">
           <span class="menu-bullet">
             <span class="bullet bullet-dot"></span>
           </span>
           <span class="menu-title">Import/Export</span>
         </a>
       </div>
-      <div data-kt-menu-trigger="click" class="menu-item menu-accordion" style="display:none;" id="admin_bulk_update">
+      <div data-kt-menu-trigger="click" class="menu-item menu-accordion" style="display:none;" id="adminbulkupdate">
         <span class="menu-link">
           <span class="menu-icon">
             <!--begin::Svg Icon | path: icons/duotone/Communication/Group.svg-->
@@ -974,7 +982,7 @@
           <span class="menu-arrow"></span>
         </span>
         <div class="menu-sub menu-sub-accordion" kt-hidden-height="116" style="display: none; overflow: hidden;">
-          <div class="menu-item" id="import_export_update">
+          <div class="menu-item" id="importexportupdate">
             <a class="menu-link" href="apps/customers/getting-started.html">
               <span class="menu-bullet">
                 <span class="bullet bullet-dot"></span>
@@ -982,7 +990,7 @@
               <span class="menu-title">Import Export (Update)</span>
             </a>
           </div>
-          <div class="menu-item" id="bulkimage_upload">
+          <div class="menu-item" id="bulkimageupload">
             <a class="menu-link" href="apps/customers/getting-started.html">
               <span class="menu-bullet">
                 <span class="bullet bullet-dot"></span>
@@ -991,6 +999,79 @@
             </a>
           </div>
         </div>
+      </div>
+    </div>
+  </div>
+  <div data-kt-menu-trigger="click" class="menu-item menu-accordion" style="display:none;" id="admin">
+    <span class="menu-link">
+      <span class="menu-icon">
+        <!--begin::Svg Icon | path: icons/duotone/Communication/Group.svg-->
+        <span class="svg-icon svg-icon-2">
+          <span class="material-icons">
+            upload_file
+          </span>
+        </span>
+        <!--end::Svg Icon-->
+      </span>
+      <span class="menu-title">Import / Export</span>
+      <span class="menu-arrow"></span>
+    </span>
+    <div class="menu-sub menu-sub-accordion" kt-hidden-height="116" style="display: none; overflow: hidden;">
+      <div class="menu-item" id="typeassist">
+        <a class="menu-link" href="{{ url('onboarding:import') }}?model=typeassist">
+          <span class="menu-bullet">
+            <span class="bullet bullet-dot"></span>
+          </span>
+          <span class="menu-title">Type Assists</span>
+        </a>
+      </div>
+      <div class="menu-item" id="editortypeassist">
+        <a class="menu-link" href="{{ url('onboarding:import') }}?model=people">
+          <span class="menu-bullet">
+            <span class="bullet bullet-dot"></span>
+          </span>
+          <span class="menu-title">Peoples</span>
+        </a>
+      </div>
+      <div class="menu-item" id="question">
+        <a class="menu-link" href="{{ url('onboarding:import') }}?model=bu">
+          <span class="menu-bullet">
+            <span class="bullet bullet-dot"></span>
+          </span>
+          <span class="menu-title">Buisiness Units</span>
+        </a>
+      </div>
+      <div class="menu-item" id="shift">
+        <a class="menu-link" href="{{ url('onboarding:import') }}?model=shift">
+          <span class="menu-bullet">
+            <span class="bullet bullet-dot"></span>
+          </span>
+          <span class="menu-title">Shifts</span>
+        </a>
+      </div>
+      <div class="menu-item" id="sitepeople">
+        <a class="menu-link" href="{{ url('onboarding:import') }}?model=asset">
+          <span class="menu-bullet">
+            <span class="bullet bullet-dot"></span>
+          </span>
+          <span class="menu-title">Assets</span>
+        </a>
+      </div>
+      <div class="menu-item" id="peoplegroup">
+        <a class="menu-link" href="{{ url('onboarding:import') }}?model=question">
+          <span class="menu-bullet">
+            <span class="bullet bullet-dot"></span>
+          </span>
+          <span class="menu-title">Questoins</span>
+        </a>
+      </div>
+      <div class="menu-item" id="sitegroup">
+        <a class="menu-link" href="{{ url('onboarding:import') }}?model=peoplegroup">
+          <span class="menu-bullet">
+            <span class="bullet bullet-dot"></span>
+          </span>
+          <span class="menu-title">People Groups</span>
+        </a>
       </div>
     </div>
   </div>
@@ -1027,7 +1108,7 @@
       </div>
     </div>
   </div>
-  <div data-kt-menu-trigger="click" class="menu-item menu-accordion" style="display:none;" id="visitor_request">
+  <div data-kt-menu-trigger="click" class="menu-item menu-accordion" style="display:none;" id="visitorrequest">
     <span class="menu-link">
       <span class="menu-icon">
         <!--begin::Svg Icon | path: icons/duotone/Communication/Group.svg-->
@@ -1042,7 +1123,7 @@
       <span class="menu-arrow"></span>
     </span>
     <div class="menu-sub menu-sub-accordion" kt-hidden-height="116" style="display: none; overflow: hidden;">
-      <div class="menu-item" id="request_for_visitor">
+      <div class="menu-item" id="requestforvisitor">
         <a class="menu-link" href="apps/customers/getting-started.html">
           <span class="menu-bullet">
             <span class="bullet bullet-dot"></span>
@@ -1050,7 +1131,7 @@
           <span class="menu-title">Request For Visitor</span>
         </a>
       </div>
-      <div class="menu-item" id="menu_visitorin">
+      <div class="menu-item" id="menuvisitorin">
         <a class="menu-link" href="apps/customers/getting-started.html">
           <span class="menu-bullet">
             <span class="bullet bullet-dot"></span>
@@ -1058,7 +1139,7 @@
           <span class="menu-title">Vistor In</span>
         </a>
       </div>
-      <div class="menu-item" id="visitor_out">
+      <div class="menu-item" id="visitorout">
         <a class="menu-link" href="apps/customers/getting-started.html">
           <span class="menu-bullet">
             <span class="bullet bullet-dot"></span>
@@ -1133,15 +1214,7 @@
     </span>
     <div class="menu-sub menu-sub-accordion" kt-hidden-height="116" style="display: none; overflow: hidden;">
       <div class="menu-item" id="capability">
-        <a class="menu-link" href="{{ url('peoples:cap_list') }}?action=list">
-          <span class="menu-bullet">
-            <span class="bullet bullet-dot"></span>
-          </span>
-          <span class="menu-title">Capability</span>
-        </a>
-      </div>
-      <div class="menu-item" id="Capability">
-        <a class="menu-link" href="{{ url('peoples:capability') }}?action=list">
+        <a class="menu-link" href="{{ url('peoples:capability') }}?template=true">
           <span class="menu-bullet">
             <span class="bullet bullet-dot"></span>
           </span>
@@ -1156,8 +1229,8 @@
           <span class="menu-title">Client</span>
         </a>
       </div>
-      <div class="menu-item" id="sp_typeassist">
-        <a class="menu-link" href="{{ url('onboarding:superta_form') }}">
+      <div class="menu-item" id="sptypeassist">
+        <a class="menu-link" href="{{ url('onboarding:super_typeassist') }}?template=true">
           <span class="menu-bullet">
             <span class="bullet bullet-dot"></span>
           </span>

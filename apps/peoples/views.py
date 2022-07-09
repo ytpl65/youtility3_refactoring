@@ -1,19 +1,18 @@
 from django.db.utils import IntegrityError
+from django.db import transaction
+from django.forms import model_to_dict
 from django.http.request import QueryDict
-from django.urls.base import reverse
 from django.db.models import Q
 from icecream import ic
 from django.contrib.auth import authenticate, login, logout
 from django.core.exceptions import EmptyResultSet
 from django.http import response as rp
-from django.template.loader import render_to_string
 from django.shortcuts import redirect, render
 from django.views import View
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 import logging
-from django.core import serializers as ss
-from apps.onboarding.models import TypeAssist
+from apps.onboarding.models import TypeAssist, Bt
 from apps.peoples.filters import CapabilityFilter
 import apps.peoples.filters as pft
 import apps.peoples.forms as pf  # people forms
@@ -21,8 +20,9 @@ import apps.peoples.models as pm  # people models
 import apps.onboarding.forms as obf  # onboarding-modes
 from django.contrib import messages
 from django.db.models import RestrictedError
-from .models import Capability, Pgroup, People
-from .utils import handle_intergrity_error, save_userinfo, save_pgroupbelonging
+from .models import Capability, Pgbelonging, Pgroup, People
+from .utils import save_userinfo, save_pgroupbelonging
+from apps.core import utils
 import apps.peoples.utils as putils
 from .forms import CapabilityForm, PgroupForm, PeopleForm, PeopleExtrasForm, LoginForm
 logger = logging.getLogger('django')
@@ -49,7 +49,7 @@ class SignIn(View):
         return render(request, self.template_path, context={'loginform': form})
 
     def post(self, request, *args, **kwargs):
-        from .utils import save_user_session, display_user_session_info
+        from .utils import  display_user_session_info
         form, response = LoginForm(request.POST), None
         logger.info('form submitted')
         try:
@@ -63,16 +63,20 @@ class SignIn(View):
                 logger.info('Signin form is valid')
                 loginid = form.cleaned_data.get('username')
                 password = form.cleaned_data.get('password')
-                people = authenticate(
-                    request, username=loginid, password=password)
-                if people:
+                if people := authenticate(
+                    request, username=loginid, password=password
+                ):
                     login(request, people)
-                    save_user_session(request, request.user)
+                    logger.info(
+                        'Login Successfull for people "%s" with loginid "%s" client "%s" site "%s"'%(
+                            people.peoplename, people.loginid, people.client.buname if people.client else "None", people.bu.buname if people.bu else "None"
+                        )
+                    )
+                    utils.save_user_session(request, request.user)
                     display_user_session_info(request.session)
-                    logger.info("User logged in {}".format(
-                        request.user.peoplecode))
-                    response = redirect('/dashboard') if not request.session.get(
-                        'wizard_data') else redirect('onboarding:wizard_delete')
+                    logger.info(f"User logged in {request.user.peoplecode}")
+                    response = redirect('onboarding:wizard_delete') if request.session.get('wizard_data') else redirect('/dashboard')
+
                 else:
                     logger.warn(
                         self.error_msgs['auth-error'] % (loginid, '********'))
@@ -93,7 +97,7 @@ class SignIn(View):
         return response
 
 
-class SignOut(View):
+class SignOut(LoginRequiredMixin, View):
     def get(self, request, *args, **kwargs):
         response = None
         try:
@@ -161,11 +165,12 @@ class CreatePeople(LoginRequiredMixin, View):
                 if save_jsonform(peoplepref_form, people):
                     people.save()
                     people = save_userinfo(
-                        people, request.user, request.session)
+                        people, request.user, request.session, bu = people.bu_id)
                     people.peopleimg = request.FILES.get('peopleimg',
                                                          'master/people/blank.png')
                     save_user_paswd(people)
                     send_email(people, request)
+                    #insert_people_attachment()
                     logger.info('People Form saved... DONE')
                     messages.success(request, "Success record saved DONE!",
                                      "alert alert-success")
@@ -191,8 +196,8 @@ class CreatePeople(LoginRequiredMixin, View):
 class RetrievePeoples(LoginRequiredMixin, View):
     template_path = 'peoples/people_list.html'
 
-    related = ['peopletype', 'buid']
-    fields = ['id', 'peoplecode', 'peoplename', 'peopletype__tacode', 'buid__bucode',
+    related = ['peopletype', 'bu']
+    fields = ['id', 'peoplecode', 'peoplename', 'peopletype__tacode', 'bu__bucode',
               'isadmin']
     model = People
 
@@ -286,7 +291,7 @@ class UpdatePeople(LoginRequiredMixin, View):
                         'peopleimg', 'master/people/blank.png')
                     people.save()
                     people = save_userinfo(
-                        people, request.user, request.session)
+                        people, request.user, request.session, create=False)
                     logger.info('PeopleForm Form saved')
                     messages.success(request, "Success record updated successfully!",
                                      "alert alert-success")
@@ -375,7 +380,8 @@ class CreatePgroup(LoginRequiredMixin, View):
                 logger.info('Pgroup Form is valid')
                 pg = form.save()
                 pg.identifier, _ = TypeAssist.objects.get_or_create(
-                    tacode="PEOPLE_GROUP", taname="People Group", defaults={'tacode': "NONE", "parent_id": 1})
+                    tacode="PEOPLE_GROUP", taname="People Group",
+                    defaults={'tacode': "PEOPLEGROUP", 'taname':"People Group", 'tatype_id': -1})
                 pg = save_userinfo(pg, request.user, request.session)
                 save_pgroupbelonging(pg, request)
                 logger.info('Pgroup Form saved')
@@ -455,7 +461,7 @@ class UpdatePgroup(LoginRequiredMixin, View):
             pg = self.model.objects.get(id=pk)
             logger.info('object retrieved {}'.format(pg))
             peoples = pm.Pgbelonging.objects.filter(
-                groupid=pg).values_list('peopleid', flat=True)
+                pgroup=pg).values_list('people', flat=True)
             print(f"peoples {peoples}")
             form = self.form_class(instance=pg, initial={
                                    'peoples': list(peoples)}, request=request)
@@ -482,7 +488,7 @@ class UpdatePgroup(LoginRequiredMixin, View):
             if form.is_valid():
                 logger.info('PgroupForm Form is valid')
                 pg = form.save(commit=True)
-                pg = save_userinfo(pg, request.user, request.session)
+                pg = save_userinfo(pg, request.user, request.session, create=False)
                 save_pgroupbelonging(pg, request)
                 logger.info('PgroupForm Form saved')
                 messages.success(request, "Success record saved successfully!",
@@ -616,7 +622,6 @@ class RetriveCapability(LoginRequiredMixin, View):
     def paginate_results(self, request, objects):
         '''paginate the results'''
         logger.info('Pagination Start'if objects else "")
-        from .filters import CapabilityFilter
         if request.GET:
             objects = CapabilityFilter(request.GET, queryset=objects).qs
         filterform = CapabilityFilter().form
@@ -667,7 +672,7 @@ class UpdateCapability(LoginRequiredMixin, View):
             if form.is_valid():
                 logger.info('CapabilityForm Form is valid')
                 cap = form.save()
-                cap = save_userinfo(cap, request.user, request.session)
+                cap = save_userinfo(cap, request.user, request.session, create=False)
                 messages.success(request, "Success record saved successfully!",
                                  "alert-success")
                 response = redirect('peoples:cap_form')
@@ -698,7 +703,6 @@ class DeleteCapability(LoginRequiredMixin, View):
 
     def get(self, request, *args, **kwargs):
         """Handles deletion of object"""
-        from django.db.models import RestrictedError
         pk, response = kwargs.get('pk', None), None
         try:
             if pk:
@@ -734,7 +738,7 @@ def delete_master(request, params):
     pass
 
 
-class Capability(View):
+class Capability(LoginRequiredMixin, View):
     params = {
         'form_class': pf.CapabilityForm,
         'template_form': 'peoples/partials/partial_cap_form.html',
@@ -749,7 +753,10 @@ class Capability(View):
         'form_initials': {'initial': {}}}
 
     def get(self, request, *args, **kwargs):
-        R, resp = request.GET, None
+        R, resp, objects, filtered = request.GET, None, [], 0
+        
+        # first load the template
+        if R.get('template'): return render(request, self.params['template_list'])
 
         # return cap_list data
         if R.get('action', None) == 'list' or R.get('search_term'):
@@ -759,92 +766,97 @@ class Capability(View):
                 *self.params['related']).filter(
                     ~Q(capscode='NONE'), enable=True
             ).values(*self.params['fields'])
-            resp = putils.render_grid(
-                request, self.params, "capability_view", objs)
-
+            resp = rp.JsonResponse(data = {
+                'data' : list(objs)
+            }, status=200, safe=False)
+        
         # return cap_form empty
         elif R.get('action', None) == 'form':
             cxt = {'cap_form': self.params['form_class'](request=request),
                    'msg': "create capability requested"}
-            resp = putils.render_form(request, self.params, cxt)
+            resp = utils.render_form(request, self.params, cxt)
 
         # handle delete request
         elif R.get('action', None) == "delete" and R.get('id', None):
             print(f'resp={resp}')
-            resp = putils.render_form_for_delete(request, self.params, True)
+            resp = utils.render_form_for_delete(request, self.params, True)
+        
         # return form with instance
         elif R.get('id', None):
-            obj = putils.get_model_obj(int(R['id']), request, self.params)
-            resp = putils.render_form_for_update(
+            obj = utils.get_model_obj(int(R['id']), request, self.params)
+            resp = utils.render_form_for_update(
                 request, self.params, "cap_form", obj)
         print(f'return resp={resp}')
         return resp
 
     def post(self, request, *args, **kwargs):
-        resp = None
+        resp, create = None, True
         try:
             print(request.POST)
             data = QueryDict(request.POST['formData'])
             pk = request.POST.get('pk', None)
             print(pk, type(pk))
             if pk:
-                msg = "capability_view"
-                form = putils.get_instance_for_update(
+                msg, create = "capability_view", False
+                form = utils.get_instance_for_update(
                     data, self.params, msg, int(pk))
                 print(form.data)
+            
             else:
                 form = self.params['form_class'](data, request=request)
             if form.is_valid():
-                resp = self.handle_valid_form(form, request)
+                resp = self.handle_valid_form(form, request, create)
             else:
                 cxt = {'errors': form.errors}
-                resp = putils.handle_invalid_form(request, self.params, cxt)
+                resp = utils.handle_invalid_form(request, self.params, cxt)
+        
         except Exception:
-            resp = putils.handle_Exception(request)
+            resp = utils.handle_Exception(request)
         return resp
 
-    def handle_valid_form(self, form, request):
+    def handle_valid_form(self, form, request, create):
         logger.info('capability form is valid')
+        from apps.core.utils import handle_intergrity_error
+        
         try:
             cap = form.save()
-            putils.save_userinfo(cap, request.user, request.session)
+            putils.save_userinfo(cap, request.user, request.session, create=create)
             logger.info("capability form saved")
             data = {'success': "Record has been saved successfully",
-                    'code': cap.capscode, 'name': cap.capsname, 'cfor': cap.cfor,
-                    'parent': cap.parent.capscode}
+                    'row':pm.Capability.objects.values(
+                        *self.params['fields']).get(id = cap.id)}
             return rp.JsonResponse(data, status=200)
         except IntegrityError:
             return handle_intergrity_error("Capability")
 
 
-class People(View):
+class PeopleView(LoginRequiredMixin, View):
     params = {
         'form_class': pf.PeopleForm,
         'json_form': pf.PeopleExtrasForm,
-        'template_form': 'peoples/partials/partial_people_form.html',
-        'template_list': 'peoples/people.html',
-        'partial_form': 'peoples/partials/partial_people_form.html',
-        'partial_list': 'peoples/partials/partial_people_list.html',
-        'related': ['peopletype', 'buid'],
+        'template_form': 'peoples/people_form.html',
+        'template_list': 'peoples/people_list.html',
+        'related': ['peopletype', 'bu'],
         'model': pm.People,
         'filter': pft.PeopleFilter,
-        'fields': ['id', 'peoplecode', 'peoplename', 'peopletype__tacode', 'buid__bucode',
+        'fields': ['id', 'peoplecode', 'peoplename', 'peopletype__tacode', 'bu__bucode',
                    'isadmin'],
         'form_initials': {'initial': {}}}
 
     def get(self, request, *args, **kwargs):
         R, resp = request.GET, None
 
+        if R.get('template') == 'true':
+            return render(request, self.params['template_list'])
+        
         # return cap_list data
         if R.get('action', None) == 'list' or R.get('search_term'):
-            d = {'list': "people_list", 'filt_name': "people_filter"}
-            self.params.update(d)
+            
             objs = self.params['model'].objects.select_related(
                 *self.params['related']).filter(
                     ~Q(peoplecode='NONE'), enable=True
             ).values(*self.params['fields'])
-            resp = putils.render_grid(
-                request, self.params, "people_view", objs)
+            return rp.JsonResponse(data = {'data':list(objs)}, status=200)
 
         # return cap_form empty
         elif R.get('action', None) == 'form':
@@ -852,61 +864,284 @@ class People(View):
                    'pref_form': self.params['json_form'](session=request.session),
                    'ta_form': obf.TypeAssistForm(auto_id=False),
                    'msg': "create people requested"}
-            resp = putils.render_form(request, self.params, cxt)
+            resp = render(request, self.params['template_form'], cxt)
 
         # handle delete request
         elif R.get('action', None) == "delete" and R.get('id', None):
             print(f'resp={resp}')
-            resp = putils.render_form_for_delete(request, self.params, True)
+            resp = utils.render_form_for_delete(request, self.params, True)
+        
         # return form with instance
         elif R.get('id', None):
             from .utils import get_people_prefform
-            people = putils.get_model_obj(R['id'], request, self.params)
-            cxt = {'pref_form': get_people_prefform(people, request.session),
-                   'ta_form': obf.TypeAssistForm(auto_id=False)}
-            resp = putils.render_form_for_update(
-                request, self.params, 'peopleform', people, cxt)
+            people = utils.get_model_obj(R['id'], request, self.params)
+            cxt = {'peopleform': self.params['form_class'](instance=people),
+                   'pref_form': get_people_prefform(people, request.session),
+                   'ta_form': obf.TypeAssistForm(auto_id=False),
+                   'msg': "update people requested"}
+            resp = render(request, self.params['template_form'], context=cxt)
+        return resp
+
+    def post(self, request, *args, **kwargs):
+        resp, create = None, True
+        data = QueryDict(request.POST['formData'])
+        try:
+            if pk := data.get('pk', None):
+                msg, create = "people_view", False
+                people = utils.get_model_obj(pk, request,  self.params)
+                form = self.params['form_class'](data, request.FILES, instance=people)
+            else:
+                form = self.params['form_class'](data, request=request)
+            jsonform = self.params['json_form'](data, session=request.session)
+            if form.is_valid() and jsonform.is_valid():
+                resp = self.handle_valid_form(form, jsonform, request, create)
+            else:
+                cxt = {'errors': form.errors}
+                resp = utils.handle_invalid_form(request, self.params, cxt)
+        except Exception:
+            resp = utils.handle_Exception(request)
+        return resp
+
+    def handle_valid_form(self, form, jsonform, request ,create):
+        logger.info('people form is valid')
+        from apps.core.utils import handle_intergrity_error
+        from django_email_verification import send_email
+        try:
+            people = form.save()
+            if putils.save_jsonform(jsonform, people):
+                people = putils.save_userinfo(
+                    people, request.user, request.session, create=create)
+                send_email(people, request)
+                logger.info("people form saved")
+            data = {'pk':people.id}
+            return rp.JsonResponse(data, status=200)
+        except IntegrityError:
+            return handle_intergrity_error('People')
+
+
+class PeopleGroup(LoginRequiredMixin, View):
+    params = {
+        'form_class'   : pf.PeopleGroupForm,
+        'template_form': 'peoples/partials/partial_pgroup_form.html',
+        'template_list': 'peoples/peoplegroup.html',
+        'partial_form' : 'peoples/partials/partial_pgroup_form.html',
+        'related'      : ['identifier'],
+        'model'        : pm.Pgroup,
+        'fields'       : ['groupname', 'enable', 'id'],
+        'form_initials': {}
+    }
+    
+    def get(self, request, *args, **kwargs):
+        R, resp, objects, filtered = request.GET, None, [], 0
+        # first load the template
+        if R.get('template'): return render(request, self.params['template_list'])
+        
+        # return list data
+        if R.get('action', None) == 'list' or R.get('search_term'):
+            objs = self.params['model'].objects.select_related(
+                 *self.params['related']).filter(
+                    ~Q(id=-1), enable=True, identifier__tacode='PEOPLEGROUP'
+            ).values(*self.params['fields']).order_by('-mdtz')
+            return  rp.JsonResponse(data = {'data':list(objs)})
+
+        # return form empty
+        elif R.get('action', None) == 'form':
+            ic('fksnfksnfkjsdkjfsjdfkamsdfkmaskf')
+            cxt = {'pgroup_form': self.params['form_class'](request=request),
+                   'msg': "create people group requested"}
+            resp = utils.render_form(request, self.params, cxt)
+
+        # handle delete request
+        elif R.get('action', None) == "delete" and R.get('id', None):
+            obj=utils.get_model_obj(R['id'], request, self.params)
+            pm.Pgbelonging.objects.filter(pgroup = obj).delete()
+            resp = utils.render_form_for_delete(request, self.params, False)
+        
+        # return form with instance
+        elif R.get('id', None):
+            obj = utils.get_model_obj(int(R['id']), request, self.params)
+            peoples = pm.Pgbelonging.objects.filter(
+                pgroup=obj).values_list('people', flat=True)
+            ic(peoples)
+            self.params.update(
+                {'form_initials':{'peoples':list(peoples)}})
+            resp = utils.render_form_for_update(
+                request, self.params, "pgroup_form", obj)
         print(f'return resp={resp}')
         return resp
 
     def post(self, request, *args, **kwargs):
-        resp = None
+        resp, create = None, True
         try:
             print(request.POST)
             data = QueryDict(request.POST['formData'])
             pk = request.POST.get('pk', None)
             print(pk, type(pk))
             if pk:
-                msg = "people_view"
-                people = putils.get_model_obj(pk, request,  self.params)
-                form = self.params['form_class'](data, instance=people)
-                jsonform = self.params['json_form'](
-                    data, session=request.session)
-                print(form.data)
+                msg = "pgroup_view"
+                form = utils.get_instance_for_update(
+                    data, self.params, msg, int(pk), kwargs = {'request':request})
+                create= False
             else:
-                form = self.params['form_class'](data)
-                jsonform = self.params['json_form'](
-                    data, session=request.session)
-            if form.is_valid() and jsonform.is_valid():
-                resp = self.handle_valid_form(form, jsonform, request)
+                form = self.params['form_class'](data, request=request)
+            
+            if form.is_valid():
+                resp = self.handle_valid_form(form, request, create)
             else:
                 cxt = {'errors': form.errors}
-                resp = putils.handle_invalid_form(request, self.params, cxt)
+                resp = utils.handle_invalid_form(request, self.params, cxt)
         except Exception:
-            resp = putils.handle_Exception(request)
+            resp = utils.handle_Exception(request)
         return resp
 
-    def handle_valid_form(self, form, jsonform, request):
-        logger.info('people form is valid')
+    def handle_valid_form(self, form, request, create):
+        logger.info('pgroup form is valid')
+        from apps.core.utils import handle_intergrity_error
         try:
-            people = form.save()
-            if putils.save_jsonform(jsonform, people):
-                people = putils.save_userinfo(
-                    people, request.user, request.session)
-                putils.send_email(people, request)
-                logger.info("people form saved")
-            data = {'success': "Record has been saved successfully",
-                    'code': people.peoplecode, 'name': people.peoplename, 'loginid': people.loginid}
+            pg = form.save(commit=False)
+            putils.save_userinfo(pg, request.user, request.session, create=create)
+            save_pgroupbelonging(pg, request)
+            logger.info("people group form saved")
+            data = {'row': Pgroup.objects.values(*self.params['fields']).get(id=pg.id)}
             return rp.JsonResponse(data, status=200)
         except IntegrityError:
-            return handle_intergrity_error('People')
+            return handle_intergrity_error("Pgroup")
+        
+
+
+class SiteGroup(LoginRequiredMixin, View):
+    params = {
+        'form_class'   : pf.SiteGroupForm,
+        'template_form': 'peoples/sitegroup_form.html',
+        'template_list': 'peoples/sitegroup_list.html',
+        'related'      : ['identifier'],
+        'model'        : pm.Pgroup,
+        'fields'       : ['groupname', 'enable', 'id'],
+        'form_initials': {}
+    }
+  
+    def get(self, request, *args, **kwargs):
+        R, resp, objects, filtered = request.GET, None, [], 0
+        # first load the template
+        if R.get('template'): return render(request, self.params['template_list'])
+        
+        #for list view of group
+        if R.get('action') == 'list':
+            total, filtered, objs = pm.Pgroup.objects.list_view_sitegrp(R)
+            logger.info('SiteGroup objects %s retrieved from db' %(total or "No Records!"))
+            utils.printsql(objs)
+            resp = rp.JsonResponse(data = { 
+                'draw':R['draw'],
+                'data':list(objs),
+                'recordsFiltered':filtered,
+                'recordsTotal':total
+            })
+            return resp
+        
+        #to populate all sites table
+        elif R.get('action', None) == 'allsites':
+            from apps.onboarding.models import Bt
+            objs, idfs  = Bt.objects.get_bus_idfs(R, R['sel_butype'])
+
+            resp = rp.JsonResponse(data = {
+                'data':list(objs),
+                'idfs':list(idfs)
+            })
+            return resp
+        
+        elif R.get('action') == "loadSites":
+            data = Pgbelonging.objects.get_assigned_sitesto_sitegrp(R['id'])
+            print(data)
+            resp = rp.JsonResponse(data = {
+                'assigned_sites':list(data),
+            })
+            return resp
+        
+        #form without instance to create new data
+        elif R.get('action', None) == 'form':
+            #options = self.get_options()
+            cxt = {'sitegrpform': self.params['form_class'](request=request),
+                   'msg': "create site group requested"}
+            return render(request, self.params['template_form'], context=cxt)
+        
+        
+        #form with instance to load existing data
+        elif R.get('id', None):
+            obj = utils.get_model_obj(int(R['id']), request, self.params)
+            sites = pm.Pgbelonging.objects.filter(
+                pgroup=obj).values_list('assignsites', flat=True)
+            ic(sites)
+            cxt = {'sitegrpform': self.params['form_class'](request=request, instance = obj),
+                   'assignedsites': sites}
+            resp = render(request, self.params['template_form'], context=cxt)
+            return resp
+        
+        # handle delete request
+        elif R.get('action', None) == "delete" and R.get('id', None):
+            ic('here')
+            obj=utils.get_model_obj(R['id'])
+            pm.Pgbelonging.objects.filter(pgroup_id = obj.id).delete()
+            return rp.JsonResponse(data=None, status=200)
+        
+    
+    def post(self, request, *args, **kwargs):
+        import json
+        data = QueryDict(request.POST['formData'])
+        assignedSites = json.loads(request.POST['assignedSites'])
+        pk = request.POST.get('pk', None)
+        try:
+            if pk:
+                msg = "pgroup_view"
+                form = utils.get_instance_for_update(
+                    data, self.params, msg, int(pk), kwargs = {'request':request})
+                create= False
+            else:
+                form = self.params['form_class'](data, request=request)
+            
+            if form.is_valid():
+                resp = self.handle_valid_form(form, assignedSites, request)
+            else:
+                cxt = {'errors': form.errors}
+                resp = utils.handle_invalid_form(request, self.params, cxt)    
+        except Exception:
+            resp = utils.handle_Exception(request)
+        return resp
+
+
+    def handle_valid_form(self, form, assignedSites, request):
+        logger.info('pgroup form is valid')
+        from apps.core.utils import handle_intergrity_error
+        try:
+            with transaction.atomic(using=utils.get_current_db_name()):
+                pg = form.save(commit=False)
+                putils.save_userinfo(pg, request.user, request.session)
+                self.save_assignedSites(pg, assignedSites, request)
+                logger.info("people group form saved")
+                data = {'success': "Record has been saved successfully",
+                        'msg': pg.groupname, 'row':model_to_dict(pg)}
+                return rp.JsonResponse(data, status=200)
+        except IntegrityError:
+            return handle_intergrity_error("Pgroup")
+
+    def save_assignedSites(self, pg, sitesArray, request):
+        S = request.session
+        try:
+            for site in sitesArray:
+                pgb = pm.Pgbelonging(
+                    pgroup         = pg,
+                    people_id      = 1,
+                    assignsites_id = site['buid'],
+                    client_id      = S['client_id'],
+                    bu_id          = S['bu_id'],
+                    tenant_id      = S.get('tenantid', 1)
+                )
+                putils.save_userinfo(pgb, request.user, request.session)
+        except Exception as e:
+            raise
+
+
+
+        
+        
+        
+        

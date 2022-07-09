@@ -1,17 +1,13 @@
-from re import search
 from django import forms
 from django.conf import settings
 
 import apps.peoples.models as pm  # people-models
 import apps.onboarding.models as om  # onboarding-models
-import apps.attendance.models as atdm  # attendance-models
 from django.core.validators import RegexValidator
 from icecream import ic
 from django_select2 import forms as s2forms
 from django.db.models import Q
-import apps.onboarding.utils as ob_utils  # onboarding-utils
-import apps.peoples.utils as pp_utils
-from apps.tenants.models import Tenant  # onboarding-utils
+from apps.core import utils
 
 #============= BEGIN LOGIN FORM ====================#
 
@@ -35,8 +31,7 @@ class LoginForm(forms.Form):
     def clean_username(self):
         import re
         from .utils import validate_emailadd, validate_mobileno
-        val = self.cleaned_data.get('username')
-        if val:
+        if val := self.cleaned_data.get('username'):
             ic('username', val)
             email_regex = r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b'
             mobile_regex = r'^[+][0-9]{2,3}[0-9]+'
@@ -55,7 +50,7 @@ class LoginForm(forms.Form):
     def is_valid(self) -> bool:
         """Add class to invalid fields"""
         result = super().is_valid()
-        ob_utils.apply_error_classes(self)
+        utils.apply_error_classes(self)
         return result
 
 
@@ -103,13 +98,13 @@ class PeopleForm(forms.ModelForm):
         fields = ['peoplename', 'peoplecode',  'peopleimg',  'mobno',      'email',
                   'loginid',      'dateofbirth', 'enable',   'deviceid',   'gender',
                   'peopletype',   'dateofjoin',  'department', 'dateofreport',
-                  'designation',  'reportto', 'shift', 'buid', 'isadmin']
+                  'designation',  'reportto',   'bu', 'isadmin', 'ctzoffset']
         labels = {
             'peoplename': 'Name',        'loginid'    : 'Login Id',        'email'       : 'Email',
             'peopletype': 'People Type', 'reportto'   : 'Report to',       'designation' : 'Designation',
             'gender'    : 'Gender',      'dateofbirth': 'Date of Birth',   'enable'      : 'Enable',
             'department': 'Department',  'dateofjoin' : 'Date of Joining', 'dateofreport': 'Date of Release',
-            'deviceid'  : 'Device Id',   'buid'       : "Site",            'isadmin'     : "Is Admin"}
+            'deviceid'  : 'Device Id',   'bu'         : "Site",            'isadmin'     : "Is Admin"}
 
         widgets = {
             'mobno'       : forms.TextInput(attrs={'placeholder': 'Eg:- +91XXXXXXXXXX, +44XXXXXXXXX'}),
@@ -119,17 +114,17 @@ class PeopleForm(forms.ModelForm):
             'dateofjoin'  : forms.DateInput,
             'dateofreport': forms.DateInput,
             'peopletype'  : s2forms.Select2Widget,
-            'shift'       : s2forms.Select2Widget,
             'gender'      : s2forms.Select2Widget,
             'department'  : s2forms.Select2Widget,
             'designation' : s2forms.Select2Widget,
             'reportto'    : s2forms.Select2Widget,
-            'buid'        : s2forms.Select2Widget,
+            'bu'          : s2forms.Select2Widget,
         }
 
     def __init__(self, *args, **kwargs):
         """Initializes form add atttibutes and classes here."""
-        super(PeopleForm, self).__init__(*args, **kwargs)
+        self.request = kwargs.pop('request', None)
+        super().__init__(*args, **kwargs)
         self.fields['peopletype'].queryset = om.TypeAssist.objects.filter(
             tatype__tacode="PEOPLE_TYPE")
         self.fields['department'].queryset = om.TypeAssist.objects.filter(
@@ -139,13 +134,12 @@ class PeopleForm(forms.ModelForm):
         self.fields['dateofbirth'].input_formats  = settings.DATE_INPUT_FORMATS
         self.fields['dateofreport'].input_formats = settings.DATE_INPUT_FORMATS
         self.fields['dateofjoin'].input_formats   = settings.DATE_INPUT_FORMATS
-        self.fields['shift'].queryset             = om.Shift.objects.all()
-        ob_utils.initailize_form_fields(self)
+        utils.initailize_form_fields(self)
 
     def is_valid(self) -> bool:
         """Add class to invalid fields"""
         result = super().is_valid()
-        ob_utils.apply_error_classes(self)
+        utils.apply_error_classes(self)
         return result
 
     def clean(self):
@@ -167,8 +161,7 @@ class PeopleForm(forms.ModelForm):
 
     def clean_peoplecode(self):
         import re
-        value = self.cleaned_data.get('peoplecode')
-        if value:
+        if value := self.cleaned_data.get('peoplecode'):
             regex = "^[a-zA-Z0-9\-_]*$"
             if " " in value:
                 raise forms.ValidationError(self.error_msg['invalid_code'])
@@ -180,8 +173,7 @@ class PeopleForm(forms.ModelForm):
 
     def clean_loginid(self):
         import re
-        value = self.cleaned_data.get('loginid')
-        if value:
+        if value := self.cleaned_data.get('loginid'):
             if " " in value:
                 raise forms.ValidationError(self.error_msg['invalid_id2'])
             regex = '[a-zA-Z0-9@\-\.]+'
@@ -190,15 +182,13 @@ class PeopleForm(forms.ModelForm):
             return value
 
     def clean_peoplename(self):
-        value = self.cleaned_data.get('peoplename')
-        if value:
+        if value := self.cleaned_data.get('peoplename'):
             return value
 
     def clean_mobno(self):
         import phonenumbers as pn
         from phonenumbers.phonenumberutil import NumberParseException
-        mobno = self.cleaned_data.get('mobno')
-        if mobno:
+        if mobno := self.cleaned_data.get('mobno'):
             if '+' not in mobno:
                 raise forms.ValidationError(self.error_msg['invalid_mobno'])
             try:
@@ -206,8 +196,8 @@ class PeopleForm(forms.ModelForm):
                 if not pn.is_valid_number(no):
                     raise forms.ValidationError(
                         self.error_msg['invalid_mobno2'])
-            except NumberParseException:
-                raise forms.ValidationError(self.error_msg['invalid_mobno2'])
+            except NumberParseException as e:
+                raise forms.ValidationError(self.error_msg['invalid_mobno2']) from e
             return mobno
 
 
@@ -219,35 +209,56 @@ class PgroupForm(forms.ModelForm):
         'invalid_code3': "[Invalid code] Code should not endwith '.' ",
     }
     peoples = forms.MultipleChoiceField(
-        required=True, widget=s2forms.Select2MultipleWidget, label="Select People")
+        required=True,
+        widget=s2forms.Select2MultipleWidget,
+        label="Select People")
 
     class Meta:
         model = pm.Pgroup
-        fields = ['groupname', 'enable']
+        fields = ['groupname', 'enable', 'identifier', 'ctzoffset']
         labels = {
-            'groupname': 'Name',
+            'name': 'Name',
             'enable': 'Enable'
         }
         widgets = {
-            'groupname': forms.TimeInput(attrs={
+            'groupname': forms.TextInput(attrs={
                 'placeholder': "Enter People Group Name"
-            })
+            }),
+            'identifier':forms.TextInput(attrs = {"style":"display:none"})
         }
-
-    def __init__(self, *args, **kwargs):
-        self.request = kwargs.pop('request')
-        super(PgroupForm, self).__init__(*args, **kwargs)
-        ob_utils.initailize_form_fields(self)
-        site = self.request.user.buid.bucode if self.request.user.buid else ""
-        self.fields['peoples'].choices = pm.People.objects.select_related(
-            'buid').filter(isadmin=False).values_list(
-            'id', 'peoplename')
 
     def is_valid(self) -> bool:
         """Add class to invalid fields"""
         result = super().is_valid()
-        ob_utils.apply_error_classes(self)
+        utils.apply_error_classes(self)
         return result
+    
+    def clean_peoples(self):
+        if val:=self.request.POST.get('peoples'):
+            print(val)
+
+
+class SiteGroupForm(PgroupForm):
+    peoples=None
+    
+    def __init__(self, *args, **kwargs):
+        self.request = kwargs.pop('request')
+        super().__init__(*args, **kwargs)
+        utils.initailize_form_fields(self)
+        self.fields['identifier'].initial = om.TypeAssist.objects.get(tacode='SITEGROUP')
+
+
+
+class PeopleGroupForm(PgroupForm):
+    def __init__(self, *args, **kwargs):
+        self.request = kwargs.pop('request')
+        super().__init__(*args, **kwargs)
+        utils.initailize_form_fields(self)
+        site = self.request.user.bu.bucode if self.request.user.bu else ""
+        self.fields['identifier'].initial = om.TypeAssist.objects.get(tacode='PEOPLEGROUP')
+        self.fields['peoples'].choices = pm.People.objects.select_related(
+            'bu').filter(~Q(peoplecode='NONE'), isadmin=False).values_list(
+            'id', 'peoplename')
 
 
 class PgbelongingForm(forms.ModelForm):
@@ -261,13 +272,13 @@ class PgbelongingForm(forms.ModelForm):
         }
 
     def __init__(self, *args, **kwargs):
-        super(PgbelongingForm, self).__init__(*args, **kwargs)
-        ob_utils.initailize_form_fields(self)
+        super().__init__(*args, **kwargs)
+        utils.initailize_form_fields(self)
 
     def is_valid(self) -> bool:
         """Add class to invalid fields"""
         result = super().is_valid()
-        ob_utils.apply_error_classes(self)
+        utils.apply_error_classes(self)
         return result
 
 
@@ -283,7 +294,7 @@ class CapabilityForm(forms.ModelForm):
 
     class Meta:
         model = pm.Capability
-        fields = ['capscode', 'capsname', 'parent', 'cfor']
+        fields = ['capscode', 'capsname', 'parent', 'cfor', 'ctzoffset']
         labels = {
             'capscode': 'Code',
             'capsname': 'Capability',
@@ -299,13 +310,12 @@ class CapabilityForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         self.request = kwargs.pop('request', None)
-        super(CapabilityForm, self).__init__(*args, **kwargs)
-        ob_utils.initailize_form_fields(self)
+        super().__init__(*args, **kwargs)
+        utils.initailize_form_fields(self)
 
     def clean_capscode(self):
         import re
-        value = self.cleaned_data.get('capscode')
-        if value:
+        if value := self.cleaned_data.get('capscode'):
             regex = "^[a-zA-Z0-9\-_]*$"
             if " " in value:
                 raise forms.ValidationError(self.error_msg['invalid_code'])
@@ -316,14 +326,13 @@ class CapabilityForm(forms.ModelForm):
             return value.upper()
 
     def clean_capsname(self):
-        value = self.cleaned_data.get('capsname')
-        if value:
+        if value := self.cleaned_data.get('capsname'):
             return value.upper()
 
     def is_valid(self) -> bool:
         """Add class to invalid fields"""
         result = super().is_valid()
-        ob_utils.apply_error_classes(self)
+        utils.apply_error_classes(self)
         return result
 
 
@@ -343,13 +352,15 @@ class PeopleExtrasForm(forms.Form):
     debug                     = forms.BooleanField(initial=False, required=False)
     showtemplatebasedonfilter = forms.BooleanField(initial=False, required=False, label="Display site wise templates")
     blacklist                 = forms.BooleanField(initial=False, required=False)
-    assignsitegroup           = forms.ChoiceField(required=False, label="Site Group", widget=s2forms.Select2Widget)
-    tempincludes              = forms.ChoiceField(required=False, label="Template", widget=s2forms.Select2Widget)
+    assignsitegroup           = forms.MultipleChoiceField(required=False, label="Site Group", widget=s2forms.Select2MultipleWidget)
+    tempincludes              = forms.MultipleChoiceField(required=False, label="Template", widget=s2forms.Select2MultipleWidget)
     mlogsendsto               = forms.CharField(max_length=25, required=False)
 
     def __init__(self, *args, **kwargs):
         session = kwargs.pop('session')
-        super(PeopleExtrasForm, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
+        self.fields['assignsitegroup'].choices = pm.Pgroup.objects.get_assignedsitegroup_forclient(session['client_id'])
+        self.fields['tempincludes'].choices = pm.Pgroup.objects.get_assignedsitegroup_forclient(session['client_id'])
         if not (session['is_superadmin']):
             self.fields['webcapability'].choices     = session['people_webcaps'] or session['client_webcaps']
             self.fields['mobilecapability'].choices  = session['people_mobcaps'] or session['client_mobcaps']
@@ -358,20 +369,22 @@ class PeopleExtrasForm(forms.Form):
         else:
             # if superadmin is logged in
             from .utils import get_caps_choices
-            self.fields['webcapability'].choices    = get_caps_choices(cfor='WEB')
+            self.fields['webcapability'].choices    = get_caps_choices(cfor=pm.Capability.Cfor.WEB)
             self.fields['mobilecapability'].choices = get_caps_choices(
-                cfor='MOB')
+                cfor=pm.Capability.Cfor.MOB)
             self.fields['portletcapability'].choices = get_caps_choices(
-                cfor='REPORT')
+                cfor=pm.Capability.Cfor.PORTLET)
             self.fields['reportcapability'].choices = get_caps_choices(
-                cfor='PORTLET')
-        ob_utils.initailize_form_fields(self)
+                cfor=pm.Capability.Cfor.REPORT)
+        utils.initailize_form_fields(self)
 
     def is_valid(self) -> bool:
         """Add class to invalid fields"""
         result = super().is_valid()
-        ob_utils.apply_error_classes(self)
+        utils.apply_error_classes(self)
         return result
+    
+        
 
 
 class PeopleGrpAllocation(forms.Form):
@@ -380,16 +393,16 @@ class PeopleGrpAllocation(forms.Form):
 
     def __init__(self, *args, **kwargs):
         request = kwargs.pop('request')
-        super(PeopleGrpAllocation, self).__init__(*args, **kwargs)
-        ob_utils.initailize_form_fields(self)
-        site = request.user.buid.bucode if request.user.buid else ""
+        super().__init__(*args, **kwargs)
+        utils.initailize_form_fields(self)
+        site = request.user.bu.bucode if request.user.bu else ""
         self.fields['people'].choices = pm.People.objects.select_related(
-            'buid').filter(
-            buid__bucode=site).values_list(
+            'bu').filter(
+            bu__bucode=site).values_list(
             'id', 'peoplename')
 
     def is_valid(self) -> bool:
         """Add class to invalid fields"""
         result = super().is_valid()
-        ob_utils.apply_error_classes(self)
+        utils.apply_error_classes(self)
         return result

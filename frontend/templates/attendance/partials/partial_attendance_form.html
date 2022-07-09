@@ -6,6 +6,7 @@
 
 {% block body %}
 <form action="" method="post" id="attd_form">
+<input type="hidden" name="{{ attd_form.ctzoffset.name }}" id = "{{ attd_form.ctzoffset.auto_id }}" value="-1">
     <div class="modal-header border-0">
 		<h3 class="modal-title modal-heading" id="exampleModalLabel">Create Attendance <i class="fas fa-poll-h fa-sm ch4"></i></h3>
 		<button type="button" class="btn-sm btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
@@ -55,6 +56,9 @@
 {{ attd_form.media.js }}
 <script>
 $(document).ready(() => {
+    //set ctzoffset
+  	$("#id_ctzoffset").val(-new Date().getTimezoneOffset())
+    
     $('.django-select2').djangoSelect2({
     dropdownParent: $('#modal-attd')
     })

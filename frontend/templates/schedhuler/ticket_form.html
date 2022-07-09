@@ -1,0 +1,292 @@
+{% extends "base_form.html" %}
+
+
+{% block extra_css %}
+{{ ticketform.media.css }}
+{% endblock extra_css %}
+
+<!-------------------------- BEGIN PAGE BREADCUMB ----------------------->
+{% block pagebreadcumb %}
+<!--will call parent contents -->
+{{ super() }}
+<li class="breadcrumb-item pe-3"><a href="{{ url('schedhuler:retrieve_tasks') }}" class="pe-3">Ticket List</a></li>
+<li class="breadcrumb-item pe-3"><a href="javascript:void(0)" class="pe-3">Ticket Form</a></li>
+{% endblock pagebreadcumb %}
+<!-------------------------- END PAGE BREADCUMB ------------------------->
+
+
+<!------ BEGIN FORM TITLE ------->
+{% block form_title %}
+Ticket
+{% endblock form_title %}
+<!------ END FORM TITLE -------->
+
+
+<!--------- BEGIN NON FIELD ERRORS -------->
+{% block nonfield_errors %}
+    {% if ticketform.non_field_errors() %}
+    <div id="non_field_error" class="alert alert-danger" style="width: 73%;">
+        {% for error in ticketform.non_field_errors()[::-1] %}
+        <strong>Error</strong> <span>{{ error }}</span>
+        {% endfor %}
+        <button type="button" class="btn-close flt-right" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+    {% endif %}
+{% endblock nonfield_errors %}
+<!---------- END NON FIELD ERRORS --------->
+
+
+{% block form %}
+<form action="{{ url('schedhuler:create_ticket') }}" method="post" id="ticketform">
+    {{ ticketform.identifier }}
+    {{ ticketform.starttime }}
+    {{ ticketform.endtime }}
+    {{ ticketform.frequency }}
+    {{ ticketform.scantype }}
+    <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
+    <div class="row gy-3">
+        <!--TICKETNO-->
+        <div class="col-md-2">
+            <label for={{ ticketform.ticketno.id_for_label }}
+                class="required">{{ ticketform.ticketno.label }}:</label>
+        </div>
+        <div class="col-md-4">
+            {{ ticketform.ticketno }}
+            {{ ticketform.ticketno.errors }}
+        </div>
+        
+        <!--PLANDURATION-->
+        <div class="col-md-2">
+            <label for={{ ticketform.jobstatus.id_for_label }}
+                class=" required">{{ ticketform.jobstatus.label }}:</label>
+        </div>
+        <div class="col-md-4">
+            {{ ticketform.jobstatus }}
+            {{ ticketform.jobstatus.errors }}
+        </div>
+        
+        <!--JOBDESC-->
+        <div class="col-md-2">
+            <label for={{ ticketform.jobdesc.id_for_label }}
+                class="required">{{ ticketform.jobdesc.label }}:</label>
+        </div>
+        <div class="col-md-4">
+            {{ ticketform.jobdesc }}
+            {{ ticketform.jobdesc.errors }}
+        </div>
+        
+        <!--LOCATION-->
+        <div class="col-md-2">
+            <label for={{ ticketform.asset.id_for_label }}
+                class="">{{ ticketform.asset.label }}:</label>
+        </div>
+        <div class="col-md-4">
+            {{ ticketform.asset }}
+            {{ ticketform.asset.errors }}
+        </div>
+
+        <!--ASSIGNTO-->
+        <div class="col-md-2">
+            <label for={{ ticketform.assign_to.id_for_label }}
+                class="required">{{ ticketform.assign_to.label }}:</label>
+        </div>
+        <div class="col-md-4">
+            <div class="form-check form-check-inline">
+                <input type="radio" class="form-check-input" name={{ ticketform.assign_to.name }}
+                    id="{{ ticketform.assign_to.auto_id }}1" value="PEOPLE" checked
+                    onchange="showHideSelectField('PEOPLE')">
+                <label class="form-check-label" for="{{ ticketform.assign_to.auto_id }}">People</label>
+            </div>
+            <div class="form-check form-check-inline">
+                <input type="radio" class="form-check-input" name={{ ticketform.assign_to.name }}
+                    id="{{ ticketform.assign_to.auto_id }}2" value="GROUP" onchange="showHideSelectField('GROUP')">
+                <label class="form-check-label" for="{{ ticketform.assign_to.auto_id }}">Group</label>
+            </div>
+        </div>
+
+        <!--LOCATION-->
+        <div class="col-md-2">
+            <label for={{ ticketform.cuser.id_for_label }}
+                class="">{{ ticketform.cuser.label }}:</label>
+        </div>
+        <div class="col-md-4">
+            {{ ticketform.cuser }}
+            {{ ticketform.cuser.errors }}
+        </div>
+
+        <!--PEOPLE-->
+        <div class="col-md-2">
+            <label for={{ ticketform.people.id_for_label }}
+                class="required">{{ ticketform.people.label }}:</label>
+        </div>
+        <div class="col-md-4">
+            {{ ticketform.people }}
+            {{ ticketform.people.errors }}
+        </div>
+        
+       <!--RAISED BY-->
+        <div class="col-md-2">
+            <label for={{ ticketform.raisedby.id_for_label }}
+                class="">{{ ticketform.raisedby.label }}:</label>
+        </div>
+        <div class="col-md-4">
+            {{ ticketform.raisedby }}
+            {{ ticketform.raisedby.errors }}
+        </div>
+        
+        
+        <!--PRIORITY-->
+        <div class="col-md-2">
+            <label for={{ ticketform.priority.id_for_label }}
+                class="required">{{ ticketform.priority.label }}:</label>
+        </div>
+        <div class="col-md-4">
+            {{ ticketform.priority }}
+            {{ ticketform.priority.errors }}
+        </div>
+        
+        <!--PERFORMED BY-->
+        <div class="col-md-2">
+            <label for={{ ticketform.performedby.id_for_label }}
+                class="">{{ ticketform.performedby.label }}:</label>
+        </div>
+        <div class="col-md-4">
+            {{ ticketform.performedby }}
+            {{ ticketform.performedby.errors }}
+        </div>
+        
+        
+        <!--CATEGORY-->
+        <div class="col-md-2">
+            <label for={{ ticketform.ticketcategory.id_for_label }}
+                class="required">{{ ticketform.ticketcategory.label }}:</label>
+        </div>
+        <div class="col-md-4">
+            {{ ticketform.ticketcategory }}
+            {{ ticketform.ticketcategory.errors }}
+        </div>
+        
+        <!--GPS LOCATION-->
+        <div class="col-md-2">
+            <label for={{ ticketform.gpslocation.id_for_label }}
+                class=" ">{{ ticketform.gpslocation.label }}:</label>
+        </div>
+        <div class="col-md-4">
+            {{ ticketform.gpslocation }}
+            {{ ticketform.gpslocation.errors }}
+        </div>
+        
+        
+        
+        <!--REMARKS-->
+        <div class="col-md-2">
+            <label for={{ ticketform.remarks.id_for_label }}
+                class="">{{ ticketform.remarks.label }}:</label>
+        </div>
+        <div class="col-md-4">
+            {{ ticketform.remarks }}
+            {{ ticketform.remarks.errors }}
+        </div>
+    </div>
+
+</form>
+{% endblock form %}
+
+
+{% block ajax_page_actions %}
+<div class="form-actions">
+    {% if ticketform.instance.id %}
+    <button type="button" id="runScheduler"  class="btn btn-sm btn-info btn-hover-scale">
+        Run Scheduler&nbsp;<i class="far fa-clock"></i>
+    </button>
+    
+    <button type="submit" id="submitTour" form="ticketform" class="btn btn-sm btn-primary btn-hover-scale">
+        Update Tour&nbsp;<i class="fas fa-cloud-upload-alt"></i>
+    </button>
+
+    <button type="button" onclick="deleteMainJob(this)" data-id="{{ ticketform.instance.id }}" id="deleteAttd"
+        class="btn btn-sm btn-danger btn-hover-scale">
+        Delete&nbsp;<i class="fas fa-trash-alt"></i>
+    </button>
+    {% else %}
+    <button type="submit" form="ticketform" class="btn btn-sm btn-primary btn-hover-scale">
+        Save&nbsp;<i class="fas fa-cloud-upload-alt"></i>
+    </button>
+    {% endif %}
+</div>
+{% endblock ajax_page_actions %}
+
+
+{% block extra_scripts %}
+{{ ticketform.media.js }}
+<script>
+    // add classes to label tags.
+    $('label').removeClass("col-form-label col-md-2 col-sm-2 text-sm-right")
+    function showHideSelectField(val) {
+        if (val == "PEOPLE") {
+            //$("#aatopdiv").show();
+            $(".people").show();
+            $(".pgroup").hide();
+        } else {
+            //$("#aatopdiv").hide();
+            $(".pgroup").show();
+            $(".people").hide();
+        }
+    }
+
+    $(document).ready(function(){
+        //toggle people and pgroup field based on radio button value
+        if ('{{ticketform.instance.id}}' == ('None' || "")) {
+            showHideSelectField('PEOPLE')
+        }else{
+            var assignto = '{{ticketform.instance.people}}' == ('None' || "") ? "GROUP" :"PEOPLE"
+            showHideSelectField(assignto)
+        }
+
+        //hide the delete button when instance is not saved yet.
+        if ('{{ticketform.instance.id}}' == ('None' || "")) {
+            $("#btn_del").hide()
+        }
+
+        //on submit form post request
+        $("#ticketform").submit((e) => {
+            e.preventDefault()
+            var form = $(this);
+            const params   = { url: $(form).attr("action"), modal: false }
+            const formtype = '{{ ticketform.instance.id }}' == 'None' ? "create" : "update"         
+            const id       = '{{ ticketform.instance.id }}'                                          
+            var   payLoad  = { formData: $("#ticketform").serialize(),csrfmiddlewaretoken: '{{ csrf_token }}' }
+            
+            if (formtype === 'update') {
+                var newPayLoad = { ...payLoad,'pk': id }
+                    payLoad    = newPayLoad
+            }
+            submit_form_alert().then((res) => {
+                if(res.isConfirmed){
+                    fire_ajax_form_post(params, payLoad)
+                    .done((data, status, xhr) => {
+                        Swal.fire(
+                            `Ticket Form saved`,
+                            `Ticket Form with this name <strong>${data.jobdesc}</strong> has been saved successfully`,
+                            'success'
+                        ).then(function () {
+                            window.location.replace(data.url);
+                        })
+                    })
+                    .fail((xhr, status, error) => {
+                        console.log(xhr)
+                        if(!typeof(xhr.responseJSON.errors) === 'object'){
+                            show_error_alert(xhr.responseJSON.errors, "Failed to save!")
+                        }else{}
+                        
+                    })
+                }
+            })
+        })
+
+    })
+
+
+</script>
+
+{% endblock extra_scripts %}

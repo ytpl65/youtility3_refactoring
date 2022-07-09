@@ -1,4 +1,4 @@
-NONE ENTRIES SHOULD BE PRESENT IN FOLLOWING TABLES:
+###################### NONE ENTRIES SHOULD BE PRESENT IN FOLLOWING TABLES: ######################
 
 1. People
 2. Capability
@@ -11,3 +11,32 @@ NONE ENTRIES SHOULD BE PRESENT IN FOLLOWING TABLES:
 
 
 
+###################### JAVASCRIPT ERRORS AND FIXES ######################
+1.TypeError: [x] is null
+    Developer will get this is that they are trying to assign an event handler to a DOM element, 
+    but the DOM element hasn't been created yet.
+    To handle this, you need to introduce a delay before your JavaScript is executed,
+    like putting it inside a function that isn't called until the browser has "executed" all of the HTML and fires the event "DOM ready."
+
+    With raw JavaScript, use window.onload:
+
+    window.onload=function() {
+        /*your code here*
+        /*var date = document.getElementById("date");
+        /*alert(date);
+    }
+
+    With jQuery, use document ready:
+
+    $(document).ready(function() {
+        /*your code here*
+        /*var date = document.getElementById("date");
+        /*alert(date);
+    });
+
+
+IMPORTANT COMMANDS 
+1.CHECK STATUS/START/STOP/RESTART OF RABITMQ-SERVER $ sudo systemctl status/start/stop/restart rabbitmq-server
+2.START CELERY WORKER $ celery -A intelliwiz_config worker -l debug
+3.KILL ANY PROCESS BY ITS PORT $ sudo fuser -k <PORT_NO>/tcp
+4.START REDIS SERVER: $ sudo service redis-server  {start|stop|restart|force-reload|status

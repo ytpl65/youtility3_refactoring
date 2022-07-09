@@ -10,14 +10,14 @@ class PeopleFilter(django_filters.FilterSet):
         field_name='peoplename', lookup_expr='icontains', label='Name')
     peopletype = django_filters.CharFilter(
         field_name='peopletype__tacode', lookup_expr='icontains', label='People Type')
-    buid = django_filters.CharFilter(
-        field_name='buid__bucode', lookup_expr='icontains', label='Is Admin')
+    bu = django_filters.CharFilter(
+        field_name='bu__bucode', lookup_expr='icontains', label='Is Admin')
     isadmin = django_filters.CharFilter(
         field_name='isadmin', lookup_expr='icontains', label='Code')
 
     class Meta:
         model = People
-        fields = ['peoplecode', 'peoplename', 'peopletype', 'buid', 'isadmin']
+        fields = ['peoplecode', 'peoplename', 'peopletype', 'bu', 'isadmin']
 
 
 class PgroupFilter(django_filters.FilterSet):

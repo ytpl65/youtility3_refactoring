@@ -1,5 +1,5 @@
 {% extends "base_form.html" %}
-{% from "onboarding/ta_form.html" import typeassist_form with context %}
+{% from "onboarding/partials/partial_ta_form.html" import typeassist_form with context %}
 
 
 {% block extra_css %}
@@ -10,7 +10,7 @@
 {% block pagebreadcumb %}
 <!--will call parent contents -->
 {{ super() }}
-<li class="breadcrumb-item pe-3"><a href="{{ url('onboarding:bu_list') }}" class="pe-3">Bu List</a></li>
+<li class="breadcrumb-item pe-3"><a href="{{ url('onboarding:bu_list') }}?template=true" class="pe-3">Bu List</a></li>
 <li class="breadcrumb-item pe-3"><a href="javascript:void(0)" class="pe-3">Bu Form</a></li>
 {% endblock pagebreadcumb %}
 <!-------------------------- END PAGE BREADCUMB ------------------------->
@@ -83,6 +83,7 @@ Buisiness-View
 <form action="" method="post" id="id_buform">
 	<!-------------------------- CSRF MIDDLEWARE TOKEN --------------------->
 	<input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
+	<input type="hidden" name="{{ buform.ctzoffset.name }}" id = "{{ buform.ctzoffset.auto_id }}" value="-1">
 
 	<div class="mb-3 row g-3 gx-6">
 		<!--BUCODE-->
@@ -125,7 +126,7 @@ Buisiness-View
 		</div>
 		
 		<!--BU IDENTIFIER-->
-		<label for="id_identifier" class="col-form-label col-md-2 col-sm-2 text-sm-right">Type:
+		<label for="id_identifier" class="required col-form-label col-md-2 col-sm-2 text-sm-right">Type:
 			<span class="material-icons-outlined h-19px" data-bs-toggle="tooltip" data-bs-custom-class="tooltip"
 				data-bs-placement="top" style="vertical-align: middle; font-size: 19px;"
 				title="Butype specfies the type of this buisiness unit">
@@ -183,9 +184,9 @@ Buisiness-View
 				</span>
 			</label>
 
-			<label for="{{ buform.is_serviceprovider.id_for_label }}"
+			<label for="{{ buform.isserviceprovider.id_for_label }}"
 				class="form-check-label bool col-form-label me-5 text-sm-right">
-				{{ buform.is_serviceprovider }} &nbsp; {{ buform.is_serviceprovider.label }}
+				{{ buform.isserviceprovider }} &nbsp; {{ buform.isserviceprovider.label }}
 				<span class="material-icons-outlined h-19px" data-bs-toggle="tooltip" data-bs-custom-class="tooltip"
 					data-bs-placement="top" style="vertical-align: middle; font-size: 19px;"
 					title="Check,  if this buisiness unit is a service provider">
@@ -245,7 +246,18 @@ Buisiness-View
 {% block extra_scripts %}
 {{ buform.media.js }}
 <script>
+	function showHideBuType(){
+		//on load check butype is site
+		var data = $("#id_identifier option:selected").text();
+		var list = ['SITE', 'Site (SITE)', 'Site']
+		if(list.includes(data)){
+				$(".site_type").show();
+		}else{$(".site_type").hide();}
+	}
 	$(document).ready(function () {
+		//set ctzoffset
+        $("#id_ctzoffset").val(-new Date().getTimezoneOffset())
+		
 		//hide the delete button when instance is not saved yet.
 		if ('{{buform.instance.id}}' == 'None') {
 			$("#btn_del").hide()
@@ -257,7 +269,7 @@ Buisiness-View
 			'form': "#butype_ta_form",
 			'field': "#id_butype",
 			'modal': "#butype_ta_popup",
-			'default':$("#butype_ta_popup select option:contains('SITE_TYPE')").val()
+			'default':$("#butype_ta_popup select option:contains('SITETYPE')").val()
 
 		}))
 		
@@ -276,21 +288,21 @@ Buisiness-View
 		})
 		
 		//hide next btn if instance is not saved yet
-		if (session['wizard_data'] && session['wizard_data']['buids'].length == 0) {
+		if (session['wizard_data'] && session['wizard_data']['bus'].length == 0) {
 			$('#next_btn').hide()
 		}
 		//show butype when user opts to site
 		$('#id_identifier').on('change', function() {
-			var list = ['SITE', 'Site']
-			var data = $("#id_identifier option:selected").text();
-			if(list.includes(data)){
-				$(".site_type").show();
-			}else{$(".site_type").hide();}
+			console.log("changed")
+			showHideBuType()
 		})
 		//pre-select options for pop-up ta forms
-		$("#butype_ta_popup select[name='tatype']").val($("#butype_ta_popup select option:contains('SITE_TYPE')").val()).change().prop('disabled', true)
+		$("#butype_ta_popup select[name='tatype']").val($("#butype_ta_popup select option:contains('SITETYPE')").val()).change()
+		$("#butype_ta_popup select[name='tatype']").select2({disabled:'readonly'})
 
-
+		//on load check
+		showHideBuType();
+		
 	})
 </script>
 {% endblock extra_scripts %}

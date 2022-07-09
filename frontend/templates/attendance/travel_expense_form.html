@@ -1,0 +1,333 @@
+{% extends "base_form.html" %}
+
+
+<!--BEGIN PAGE TITLE-->
+{% block title %}
+Conveyance Form
+{% endblock title %}
+<!--END PAGE TITLE-->
+
+
+{% block extra_css %}
+<link  href="{{ static('assets/plugins/custom/DataTables/datatables.min.css') }}" rel="stylesheet" type="text/css"/>
+
+{% endblock extra_css %}
+
+
+{% block pagebreadcumb %}
+{{ super() }}
+<li class="breadcrumb-item pe-3"><a href="{{ url('attendance:conveyance') }}?template=true" class="pe-3">Conveyance List</a></li>
+<li class="breadcrumb-item pe-3"><a href="javascript:void(0)" class="pe-3">Coveyance Form</a></li>
+{% endblock pagebreadcumb %}
+
+<!------ BEGIN FORM TITLE ------->
+{% block form_title %}
+Conveyance
+{% endblock form_title %}
+<!------ END FORM TITLE -------->
+
+
+
+
+
+{% block form %}
+<form action="" method="post" id="conveyanceform">
+    <input type="hidden" name="pk" id='pk' value="{{ conveyanceform.instance.id }}">
+    <input type="hidden" name="{{ conveyanceform.ctzoffset.name }}" id = "{{ conveyanceform.ctzoffset.auto_id }}" value="-1">
+    <div class="row">
+        <div class="col-md-6">
+            <div class="input-group mb-3">
+                <div class="col-md-4 mb-3">
+                    {{ conveyanceform.people.label_tag() }}
+                </div>
+                <div class="col-md-8">
+                    {{ conveyanceform.people }}
+                </div>
+            </div>
+            
+            <div class="input-group mb-3">
+                <div class="col-md-4 mb-3">
+                    {{ conveyanceform.transportmodes.label_tag() }}
+                </div>
+                <div class="col-md-8">
+                    {{ conveyanceform.transportmodes }}
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="input-group mb-3">
+                <div class="col-md-4 mb-3">
+                    {{ conveyanceform.expamt.label_tag() }}
+                </div>
+                <div class="col-md-8">
+                    {{ conveyanceform.expamt }}
+                </div>
+            </div>
+            
+            <div class="input-group mb-3">
+                <div class="col-md-4 mb-3">
+                    {{ conveyanceform.duration.label_tag() }}
+                </div>
+                <div class="col-md-8">
+                    {{ conveyanceform.duration }}
+                </div>
+            </div>
+            
+            <div class="input-group mb-3">
+                <div class="col-md-4 mb-3">
+                    {{ conveyanceform.distance.label_tag() }}
+                </div>
+                <div class="col-md-6 d-flex d-inline">
+                    {{ conveyanceform.distance }}
+                </div>
+                <div class="col-md-2 d-flex align-items-end">
+                    <h4>Kms</h4>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-6">
+            <legend style="font-size:15px">Start Location</legend>
+            <hr>
+            <div class="input-group mb-3">
+                <div class="col-md-4 mb-3">
+                    {{ conveyanceform.punchintime.label_tag() }}
+                </div>
+                <div class="col-md-8">
+                    {{ conveyanceform.punchintime }}
+                </div>
+            </div>
+            <div class="input-group mb-3">
+                <div class="col-md-4 mb-3">
+                    {{ conveyanceform.startlocation.label_tag() }}
+                </div>
+                <div class="col-md-8">
+                    {{ conveyanceform.startlocation }}
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <legend style="font-size:15px">End Location</legend>
+             <hr>
+            <div class="input-group mb-3">
+                <div class="col-md-4 mb-3">
+                    {{ conveyanceform.punchouttime.label_tag() }}
+                </div>
+                <div class="col-md-8">
+                    {{ conveyanceform.punchouttime }}
+                </div>
+            </div>
+            <div class="input-group mb-3">
+                <div class="col-md-4 mb-3">
+                    {{ conveyanceform.endlocation.label_tag() }}
+                </div>
+                <div class="col-md-8">
+                    {{ conveyanceform.endlocation }}
+                </div>
+            </div>
+        </div>
+    </div>
+</form>
+{% endblock form %}
+
+
+{% block extras %}
+<div class ="card shadow-lg" id="journeymap">
+    <div class="card-header mb-0">
+        <p class="card-title ch4">Conveyance Journey Path &nbsp;&nbsp;<i class="fas fa-map-marked-alt ch4"></i></p>
+    </div>
+    <div class="card-body">
+        <div id="map" style="height:450px"></div>
+    </div>
+</div>
+{% endblock extras %}
+
+
+{% block page_actions %}
+    {% if edit is defined %}
+        {{ form_update('conveyanceform', popup_id="delete_alert") }}
+    {% else %}
+        
+        {{ form_create('conveyanceform') }}
+    {% endif %}
+{% endblock page_actions %}
+
+
+{% block extra_scripts %}
+<script
+    src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDVbA53nxHKUOHdyIqnVPD01aOlTitfVO0&callback=initAutocomplete&libraries=places&v=weekly"
+    defer
+></script>
+<script>
+//global vars
+var map;
+
+
+//initialize map
+function initAutocomplete(){
+    map = new google.maps.Map(document.getElementById("map"), {
+        center: { lat: 21.7679, lng: 78.8718 },
+        zoom: 6,
+        mapTypeId: "roadmap",
+    });
+}
+
+//get journey coords
+function getJourneyCoords(id){
+    var formUrl = "{{ url('attendance:conveyance') }}"
+    const params = {
+        url:`${formUrl}?action=getpath&conid=${id}`,
+        beforeSend:function(){}
+    }
+    fire_ajax_get(params)
+    .fail((xhr, status, error) => {
+
+    })
+    .done((data, status, xhr) => {
+        drawConveyancePath(data)
+    })
+}
+
+function addMarker(location, map, label){
+  return new google.maps.Marker({
+    position:location,
+    label:label,
+    map:map
+  })
+}
+
+
+//draw path on google map
+function drawConveyancePath(data){
+    console.log(data, "$$$$$$")
+    const journeyPath = new google.maps.Polyline({
+    path: data.obj[0].path,
+    geodesic: true,
+    strokeColor: "#FF0000",
+    strokeOpacity: 1.0,
+    strokeWeight: 2,
+  });
+    
+    var bounds = new google.maps.LatLngBounds()
+    journeyPath.getPath().forEach(function(element,index){bounds.extend(element)})
+    map.fitBounds(bounds)
+    journeyPath.setMap(map);
+
+    const InfoString = 
+            `<div class="card text-dark bg-secondary" style="max-width: 18rem;">
+                <div class="card-body p-0">
+                    <h5>Start Point</h5>
+                    <table class="table-secondary">
+                        {% if conveyanceform.instance.id %}
+                        <tbody>
+                            <tr class="table-secondary border border-secondary"><td>People:</td><td>{{ conveyanceform.instance.people.peoplename }}</td></tr>
+                            <tr class="table-secondary border border-secondary"><td>Start Location:</td><td>{{ conveyanceform.instance.startlocation.coords }}</td></tr>
+                            <tr class="table-secondary border border-secondary"><td>End Location:</td><td>{{ conveyanceform.instance.endlocation.coords }}</td></tr>
+                            <tr class="table-secondary border border-secondary"><td>Start Time: </td><td>{{ conveyanceform.instance.punchintime }}</td></tr>
+                            <tr class="table-secondary border border-secondary"><td>End Time:</td><td>{{ conveyanceform.instance.punchouttime }}</td></tr>
+                            <tr class="table-secondary border border-secondary"><td>Transport Modes:</td><td>{{ conveyanceform.instance.transportmodes }}</td></tr>
+                            <tr class="table-secondary border border-secondary"><td>Duration: </td><td>{{ conveyanceform.instance.duration }}mins</td></tr>
+                            <tr class="table-secondary border border-secondary"><td>Distance:</td><td>{{ conveyanceform.instance.distance }}Kms</td></tr>
+                        </tbody>
+                        {% endif %}
+                    </table>
+                </div>
+            </div>`
+
+
+     const startInfo = new google.maps.InfoWindow({
+        content: InfoString,
+        maxWidth: 700
+    });
+    
+    const endInfo = new google.maps.InfoWindow({
+        content: InfoString,
+        maxWidth: 700
+    });
+
+
+
+    //start marker
+    startMarker = addMarker(data.obj[0].path[0], map, 'S')
+    //end marker
+    endMarker = addMarker(data.obj[0].path[data.obj[0].path.length - 1], map, 'E')
+
+    startMarker.addListener("click", () => {
+        startInfo.open({
+        anchor: startMarker,
+        map,
+        shouldFocus: false,
+        });
+    });
+    endMarker.addListener('click', () => {
+        endInfo.open({
+            anchor: endMarker,
+            map,
+            shouldFocus: false,
+        });
+    })
+
+ 
+
+}
+
+if("{{ conveyanceform.instance.id }}" != "None"){
+    window.initAutocomplete = initAutocomplete;
+    getJourneyCoords("{{ conveyanceform.instance.id }}")
+}else{
+    $("#journeymap").hide()
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+$(document).ready(function(){
+    //set ctzoffset
+  	$("#id_ctzoffset").val(-new Date().getTimezoneOffset())
+    //submit form
+    $("#conveyanceform").on('submit',  function(e) {
+        e.preventDefault()
+        const params = { url:"{{ url('attendance:conveyance') }}", modal:false } //capability view
+        
+        var payLoad = {formData:$("#conveyanceform").serialize(), csrfmiddlewaretoken: '{{ csrf_token }}'}//payload for post request
+        const id = $("#pk").val()
+        if(id != 'None'){
+            var newPayLoad = {...payLoad, 'pk':id}
+            payLoad = newPayLoad
+        }
+        Swal.fire({
+            title:'Submit?',
+            text:'Are you want to save?',
+            icon:'question',
+            showCancelButton:true,
+            confirmButtonText:'submit'
+        }).then((res) => {
+            fire_ajax_form_post(params, payLoad)
+            .done((data, status, xhr) => { //function to submit post request
+                console.log("data ", data)
+                show_successful_save_alert(update= id != 'None' ? true : false)
+                location.href = `{{ url("attendance:conveyance") }}?id=${data['pk']}`
+            })
+        })
+        
+    })
+})
+</script>
+{% endblock extra_scripts %}

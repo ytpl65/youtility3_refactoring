@@ -1,0 +1,147 @@
+{% extends "base_list.html" %}
+
+<!------------------------------------ BEGIN PAGE BREADCUMBS ------------------------------------>
+{% block pagebreadcumb %}
+{{ super() }}
+<li class="breadcrumb-item pe-3"><a href="javascript:void(0)" class="pe-3">Conveyance List</a></li>
+{% endblock pagebreadcumb %}
+<!------------------------------------- END PAGE BREADCUMBS ------------------------------------->
+
+
+<!---- BEGIN CARD TITLE ------>
+{% block card_title %}
+Conveyance List
+{% endblock card_title %}
+<!----- END CARD TITLE -------->
+
+
+{% block table %}
+<table id="conveyance_table"  class="display cell-border compact hover" style="width:100%">
+    <thead  class="fw-bold fs-6"></thead>
+</table>
+{% endblock table %}
+
+{% block popup_alerts %}
+<!-- THE MODAL WE WILL BE USING -->
+<div class="modal animate__animated animate__zoomIn" tabindex="-1" aria-hidden="true"  
+aria-labelledby="exampleModalLabel" data-bs-backdrop="static" id="modal-te">
+	<div class="modal-dialog modal-dialog-centered modal-lg">
+		<div class="modal-content" id="te_content">
+		</div>
+	</div>
+</div>
+{% endblock popup_alerts %}
+
+{% block extra_scripts %}
+<script>
+    var table = null;
+	const modal_id        = "#modal-te"
+	const modalcontent_id = "#te_content"
+	const table_id        = "#conveyance_table"
+	const formid          = "#id_teform"
+	const urlname         = "{{ url('attendance:conveyance') }}"
+	const viewname        = "Conveyance"
+	const rowlink         = "a.te-link"
+
+$(document).ready(() => {
+    //beforeSend of capability ajax request 
+    function TaBeforeSend(){
+        $(modal_id).modal("show");
+    }
+    var formUrl = "{{ url('attendance:conveyance') }}"
+    ////datatable initialization
+    table = $(table_id).DataTable({
+        ajax:{
+            url:"{{ url('attendance:conveyance') }}?action=list",
+            data:function(d){
+                d.fields = ['id', 'bu__buname', 'people__peoplename', 'people__peoplecode',
+                    'bu__bucode', 'punchintime', 'punchouttime', 'transportmodes', 'distance',
+                'duration', 'expamt', 'ctzoffset']
+                }
+        },
+        scrollX: true,
+        fixedHeader:true,
+        deferRender: true,
+        lengthMenu:[[20, 30, 40],[20, 30, 40]],
+        dom:`<'row' <'col-sm-6 d-flex justify-content-start'f> <'col-sm-6 d-flex justify-content-end'B> >rt<'row' <'col-sm-6'l> <'col-sm-6'p><'col-sm-12 d-flex justify-content-center'i>>`,
+        columns:[
+            {visible:false, data:'id', searchable:false, orderable:false, defaultContent:""},
+            {data:'bu__buname', title:'Site Name', render:function ( data, type, row, meta ) {
+                return `<p data-placement="top" data-toggle="tooltip"  
+                data-bs-placement="right"  class="pe-auto"
+                title=${row['bu__bucode']}>${row['bu__buname']}</p>`;
+            }},
+            {data:'people__peoplename', title:'People', render:function ( data, type, row, meta ) {
+                return `<a href=${formUrl}?id=${row['id']}>${data}</a>`
+            }},
+            {data:'people__peoplecode', visible:false, searchable:false, orderable:false },
+            {data:'bu__bucode', visible:false, searchable:false, orderable:false },
+            {data:'punchintime', title:'Start Time', render:function(data, type, row, meta){
+                if(type === "sort" || type === "type"){
+                    return data;
+                }
+                //return data
+                if(data){
+                    let datetime = moment(data, 'YYYY-MM-DDTHH:mm:ss').add(row['ctzoffset'], 'm').format("DD-MMM-YYYY HH:mm")
+                    return data ? datetime : '-';
+                }return data
+                
+            } },
+            {data:'punchouttime', title:'End Time', render:function(data,type,row,meta){
+                if(type === "sort" || type === "type"){
+                    return data ? data: '-';
+                }
+                if(data){
+                    let datetime = moment(data, 'YYYY-MM-DDTHH:mm:ss').add(row['ctzoffset'], 'm').format("DD-MMM-YYYY HH:mm")
+                    return data ? datetime : '-';
+                }return data
+            } },
+            {data:'transportmodes', title:'Transport Modes' },
+            {data:'distance', title:'Distance' },
+            {data:'duration', title:'Duration' },
+            {data:'expamt', title:'Amount' },
+        ],
+        //columnDefs:[{
+        //    targets:[5,6, 7],
+        //    orderable:false,
+        //}],
+        buttons:[{
+            text:'Add New',
+            className:'btn btn-sm btn-light-primary',
+            action:function(e, dt, node, config){
+                location.href = "{{ url('attendance:conveyance') }}?action=form"
+            }
+        }]
+    })
+
+    $('.btn').removeClass('dt-button')
+
+    //submit form
+    $(modal_id).on('submit', formid, function(e) {
+        var form = $(this);
+        e.preventDefault()
+        const params = { url:urlname, modal:true } //capability view
+        const formtype = $(modalcontent_id).attr('data-form') //form-type (create/update)
+        const id = $(modalcontent_id).attr('data-id') //form instance id
+        var payLoad = {formData:form.serialize(), csrfmiddlewaretoken: '{{ csrf_token }}'}//payload for post request
+        if(formtype === 'update'){
+            var newPayLoad = {...payLoad, 'pk':id}
+            payLoad = newPayLoad
+        }
+        fire_ajax_form_post(params, payLoad)
+        .done((data, status, xhr) => { //function to submit post request
+            console.log("data ", data)
+            $(modal_id).modal("hide");
+            Swal.fire(
+            `${viewname} saved`,
+            `${viewname} with this code <strong>${data.code}</strong> has been saved successfully`,
+            'success'
+            ).then(function(){
+                location.reload()
+            })
+        })
+    })
+
+})
+</script>
+{% endblock extra_scripts %}

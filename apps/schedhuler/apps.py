@@ -2,4 +2,4 @@ from django.apps import AppConfig
 
 
 class SchedhulerConfig(AppConfig):
-    name = 'schedhuler'
+    name = 'apps.schedhuler'

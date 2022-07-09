@@ -1,0 +1,177 @@
+{% extends "base_list.html" %}
+
+<!---- BEGIN CARD TITLE ------>
+{% block card_title %}
+Task List
+{% endblock card_title %}
+<!----- END CARD TITLE -------->
+
+
+<!------------------------------------ BEGIN PAGE BREADCUMBS ------------------------------------>
+{% block pagebreadcumb %}
+{{ super() }}
+<li class="breadcrumb-item pe-3"><a href="javascript:void(0)" class="pe-3">Task List</a></li>
+{% endblock pagebreadcumb %}
+<!------------------------------------- END PAGE BREADCUMBS ------------------------------------->
+
+
+<!-------------------------------------------- BEGIN TABLE ------------------------------------------->
+{% block table %}
+<table id="task_table_jobneed" class="display cell-border" style="width:100%">
+    {# <thead class="fw-bold fs-6">
+        <th>Plan Datetime</th>
+        <th>Description</th>
+        <th>Status</th>
+        <th>People/Group</th>
+        <th>Performedby</th>
+        <th>Asset/Smartplace</th>
+        <th>Question Set</th>
+        <th>Grace Time</th>
+        <th>Exp. Time</th>
+    </thead>
+    <!---------- BEGIN TABLE FILTER FIELDS --------->
+	<thead id="filter_row">
+    <form action="" id='task_filter_jobneed' method='get'>
+    {% for field in task_filter %}
+        <th>
+            {% if field.name == 'plandatetime' %}
+                <input type="text" name="plandatetime_min" placeholder="YYYY/MM/DD" class="form-control" id="id_plandatetime_0" style="border-radius: 0px; height: 35px; display:none">
+                <input type="text" name="plandatetime_max" placeholder="YYYY/MM/DD" class="form-control" id="id_plandatetime_1" style="border-radius: 0px; height: 35px; display:none">
+                <input class="form-control input active" id="custom_plandatetime" placeholder="Pick Range" type="text" readonly="readonly">
+            {% else %}
+            {{ field }}
+            {% endif %}
+		</th>
+    {% endfor %}
+    </form>
+    </thead>
+    <!---------- END TABLE FILTER FIELDS --------->
+    <tbody>
+        <!---------- BEGIN TABLE ROWS --------->
+        {% for task in task_list %}
+        <tr>
+            <td><a href="{{ url('schedhuler:update_task_jobneed', args=[task['id']]) }}">{{ task['plandatetime'] | to_local }}</a></td>
+            <td><a href="{{ url('schedhuler:update_task_jobneed', args=[task['id']]) }}">{{ task['jobdesc'] }}</a></td>
+            <td>{{ task['jobstatus']  }}</td>
+            <td>{{ task['people__peoplename'] + " [People]" or task['pgroup__groupname']+ " [Group]" }}</td>
+            <td>{{ task['performedby__peoplename'] }}</td>
+            <td>{{ task['asset__assetname'] }}</td>
+            <td>{{ task['qset__qset_name'] }}</td>
+            <td>{{ task['gracetime'] }} Min</td>
+            <td>{{ task['expirydatetime'] | to_local }}</td>
+        </tr>
+        {% endfor %}
+        <!---------- END TABLE ROWS ----------->
+    </tbody> #}
+</table>
+
+{# {% if task_list and task_list.has_other_pages %}
+<!-- BEGIN PAGINATOIN -->
+{{ paginator(task_list) }}
+<!-- END PAGINATOIN ---->
+{% endif %} #}
+{% endblock table %}
+<!-------------------------------------------- END TABLE ------------------------------------------->
+
+{% block extra_scripts %}
+{# <script src="https://cdn.datatables.net/rowreorder/1.2.8/js/dataTables.rowReorder.min.js" type="text/javascript"></script> #}
+<script>
+    var table = null;
+    const formFilter = '#task_filter_jobneed'
+    const table_id = '#task_table_jobneed'
+    const urlname = "{{ url('schedhuler:jobneedtasks') }}"
+
+
+    function submitFormFilter(){
+        $(formFilter).submit()
+    }
+    function setPlanDatetime(val1, val2){
+        $("#id_plandatetime_0").val(val1)
+        $("#id_plandatetime_1").val(val2)
+    }
+    
+    $(document).ready(function (){
+        $("input").keypress(function(event) {
+			if (event.which == 13) {
+				event.preventDefault();
+				submitFormFilter()
+			}
+		});
+
+        $("#custom_plandatetime").flatpickr({
+            altInput: true,
+            altFormat: "Y-M-d",
+            dateFormat: "Y/m/d",
+            mode: "range",
+            onChange: function(selectedDates, dateStr, instance){
+                if(selectedDates.length > 1){
+                    dates = dateStr.split(" to ")
+                    setPlanDatetime(dates[0], dates[1])
+                }
+            }
+        });
+        //datatable initialization
+        table = $(table_id).DataTable({
+            ajax:{
+                url:`${urlname}?action=list`
+            },
+			deferRender: true,
+			responsive : true,
+            dom:`<'row' <'col-sm-6 d-flex justify-content-start'f> <'col-sm-6 d-flex justify-content-end'B> >rt<'row'
+			 <'col-sm-6'l> <'col-sm-6'p><'col-sm-12 d-flex justify-content-center'i>>`,
+            columns:[
+                {data:'id'},
+                {data:'plandatetime', title:"Plan Datetime"},
+                {data:'jobdesc', title:'Description'},
+                {data:'jobstatus', title:'Status'},
+                {title:'People/Group', data:null},
+                {data:'performedby__peoplename', title:'Performed By'},
+                {data:'gracetime', title:"Grace Time"},
+                {data:'expirydatetime', title:"Expiry Datetime"}
+            ],
+            columnDefs:[
+                {targets:0, data:'id', visible:false, searchable:false},
+                {targets:1, data:'plandatetime', render:function(data, type, row, meta){
+                    return `<a href="${urlname}?id=${row['id']}">${convert_to_local(type, data, row)}</a>`
+                }},
+                {targets:4, render:function(data, type, row, meta){
+                    let peoplename = row['people__peoplename']
+                    let groupname = row['pgroup__groupname']
+                    return peoplename ?  peoplename : groupname
+                }},
+                {targets:[1,7], render:function(data, type, row, meta){
+                    return convert_to_local(type, data, row)
+                }},
+                {targets:6, render:function(data, type, row, meta){
+                    return `${data} mins`
+                }}
+            ],
+            buttons:[
+				{
+					text:`Apply filters &nbsp;<i class='fas fa-search ch4'></i></a>`,
+					className:"btn btn-sm btn-light btn-hover-rise",
+					//action for add_new_button 
+					action: function(e, dt, node, config){
+                        //This will send the page to the location specified
+        				submitFormFilter()
+					}
+				}
+			]
+        
+        })
+
+        //BEGIN STYLING DATATABLE
+		$("th > input").addClass('form-control')
+		$("th > input").css('height', '35px')
+		var styles = {
+			"border-bottom":"none",
+			"background-color":"#f1f4f7"
+		}
+
+        $(`${table_id} thead tr:eq(1)`).css(styles)
+		//END STYLING DATATABLE
+
+
+    })
+</script>
+{% endblock extra_scripts %}
