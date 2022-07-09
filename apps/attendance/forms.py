@@ -35,7 +35,7 @@ class AttendanceForm(forms.ModelForm):
 
 
     def __init__(self, *args, **kwargs):
-        super(AttendanceForm, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         utils.initailize_form_fields(self)
         self.fields['datefor'].required       = True
         self.fields['punch_intime'].required  = True
@@ -88,7 +88,7 @@ class ConveyanceForm(forms.ModelForm):
     
     def __init__(self, *args, **kwargs):
         self.request = kwargs.pop('request', None)
-        super(ConveyanceForm, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         utils.initailize_form_fields(self)
         for visible in self.visible_fields():
             if visible.name in ['startlocation', 'endlocation', 'expamt', 'transportmodes']:

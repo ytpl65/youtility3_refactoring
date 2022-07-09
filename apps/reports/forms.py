@@ -27,7 +27,7 @@ class SiteReportTemplate(MasterReportTemplate):
     
     def __init__(self, *args, **kwargs):
         self.request = kwargs.pop('request')
-        super(SiteReportTemplate, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         utils.initailize_form_fields(self)
         self.fields['site_type_includes'].widget.choices = om.Bt.objects.filter(butype__tacode = "BVTYPE").values_list('id', 'buname')
         bulist = om.Bt.objects.get_bu_list_ids(self.request.session['client_id'])
@@ -43,7 +43,7 @@ class IncidentReportTemplate(MasterReportTemplate):
         exclude = ['showto_allsites', 'site_grp_includes', 'site_type_includes']
     
     def __init__(self, *args, **kwargs):
-        super(IncidentReportTemplate, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.fields['site_type_includes'].queryset = om.TypeAssist.objects.filter(
             tatype__tacode='SITETYPE')
         self.fields['type'].widget.attrs = {'style':'display:none'}

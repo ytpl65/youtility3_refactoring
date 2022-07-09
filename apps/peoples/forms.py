@@ -124,7 +124,7 @@ class PeopleForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         """Initializes form add atttibutes and classes here."""
         self.request = kwargs.pop('request', None)
-        super(PeopleForm, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.fields['peopletype'].queryset = om.TypeAssist.objects.filter(
             tatype__tacode="PEOPLE_TYPE")
         self.fields['department'].queryset = om.TypeAssist.objects.filter(
@@ -243,7 +243,7 @@ class SiteGroupForm(PgroupForm):
     
     def __init__(self, *args, **kwargs):
         self.request = kwargs.pop('request')
-        super(PgroupForm, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         utils.initailize_form_fields(self)
         self.fields['identifier'].initial = om.TypeAssist.objects.get(tacode='SITEGROUP')
 
@@ -252,7 +252,7 @@ class SiteGroupForm(PgroupForm):
 class PeopleGroupForm(PgroupForm):
     def __init__(self, *args, **kwargs):
         self.request = kwargs.pop('request')
-        super(PgroupForm, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         utils.initailize_form_fields(self)
         site = self.request.user.bu.bucode if self.request.user.bu else ""
         self.fields['identifier'].initial = om.TypeAssist.objects.get(tacode='PEOPLEGROUP')
@@ -272,7 +272,7 @@ class PgbelongingForm(forms.ModelForm):
         }
 
     def __init__(self, *args, **kwargs):
-        super(PgbelongingForm, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         utils.initailize_form_fields(self)
 
     def is_valid(self) -> bool:
@@ -310,7 +310,7 @@ class CapabilityForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         self.request = kwargs.pop('request', None)
-        super(CapabilityForm, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         utils.initailize_form_fields(self)
 
     def clean_capscode(self):
@@ -358,7 +358,7 @@ class PeopleExtrasForm(forms.Form):
 
     def __init__(self, *args, **kwargs):
         session = kwargs.pop('session')
-        super(PeopleExtrasForm, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.fields['assignsitegroup'].choices = pm.Pgroup.objects.get_assignedsitegroup_forclient(session['client_id'])
         self.fields['tempincludes'].choices = pm.Pgroup.objects.get_assignedsitegroup_forclient(session['client_id'])
         if not (session['is_superadmin']):
@@ -393,7 +393,7 @@ class PeopleGrpAllocation(forms.Form):
 
     def __init__(self, *args, **kwargs):
         request = kwargs.pop('request')
-        super(PeopleGrpAllocation, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         utils.initailize_form_fields(self)
         site = request.user.bu.bucode if request.user.bu else ""
         self.fields['people'].choices = pm.People.objects.select_related(

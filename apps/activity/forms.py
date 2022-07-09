@@ -45,7 +45,7 @@ class QuestionForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         """Initializes form add atttibutes and classes here."""
         self.request = kwargs.pop('request', None)
-        super(QuestionForm, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         for k in self.fields.keys():
             if k in ['unit', 'min', 'max']:
                 self.fields[k].required = True
@@ -127,7 +127,7 @@ class MasterQsetForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         """Initializes form add atttibutes and classes here."""
-        super(MasterQsetForm, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.fields['type'].initial      = 'ASSET'
         self.fields['type'].widget.attrs = {"style": "display:none;"}
         utils.initailize_form_fields(self)
@@ -153,7 +153,7 @@ class QsetBelongingForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         """Initializes form add atttibutes and classes here."""
-        super(QsetBelongingForm, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         for k in self.fields.keys():
             if k in ['min', 'max']:
                 self.fields[k].required = True
@@ -217,7 +217,7 @@ class ChecklistForm(MasterQsetForm):
 
     def __init__(self, *args, **kwargs):
         self.request = kwargs.pop('request', None)
-        super(ChecklistForm, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.fields['type'].initial        = 'CHECKLIST'
         self.fields['assetincludes'].label = 'Checkpoints'
         self.fields['type'].widget.attrs   = {"style": "display:none;"}
@@ -234,7 +234,7 @@ class QuestionSetForm(MasterQsetForm):
 
     def __init__(self, *args, **kwargs):
         self.request = kwargs.pop('request', None)
-        super(QuestionSetForm, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.fields['type'].initial          = 'QUESTIONSET'
         self.fields['assetincludes'].label   = 'Asset/Smartplace'
         self.fields['assetincludes'].choices = ac_utils.get_assetsmartplace_choices()
@@ -292,7 +292,7 @@ class AssetForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         """Initializes form add atttibutes and classes here."""
         self.request = kwargs.pop('request', None)
-        super(AssetForm, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.fields['identifier'].initial = 'ASSET'
         self.fields['identifier'].widget.attrs = {"style": "display:none;"}
         utils.initailize_form_fields(self)
@@ -329,7 +329,7 @@ class SmartPlaceForm(AssetForm):
     def __init__(self, *args, **kwargs):
         """Initializes form add atttibutes and classes here."""
         self.request = kwargs.pop('request', None)
-        super(SmartPlaceForm, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.fields['identifier'].initial = 'SMARTPLACE'
         self.fields['identifier'].widget.attrs = {"style": "display:none;"}
         self.fields['parent'].queryset = am.Asset.objects.filter(
@@ -366,7 +366,7 @@ class LocationForm(AssetForm):
     def __init__(self, *args, **kwargs):
         """Initializes form add atttibutes and classes here."""
         self.request = kwargs.pop('request', None)
-        super(LocationForm, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.fields['identifier'].initial = 'LOCATION'
         self.fields['identifier'].widget.attrs = {"style": "display:none;"}
         utils.initailize_form_fields(self)
@@ -403,7 +403,7 @@ class CheckpointForm(AssetForm):
     def __init__(self, *args, **kwargs):
         """Initializes form add atttibutes and classes here."""
         self.request = kwargs.pop('request', None)
-        super(CheckpointForm, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.fields['identifier'].initial = 'CHECKPOINT'
         self.fields['identifier'].widget.attrs = {"style": "display:none"}
         self.fields['parent'].queryset = am.Asset.objects.filter(
@@ -537,7 +537,7 @@ class AdhocTaskForm(JobNeedForm):
         """Initializes form add atttibutes and classes here."""
         from django.conf import settings
         self.request = kwargs.pop('request', None)
-        super(AdhocTaskForm, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.fields['plandatetime'].input_formats  = settings.DATETIME_INPUT_FORMATS
         self.fields['expirydatetime'].input_formats  = settings.DATETIME_INPUT_FORMATS
         utils.initailize_form_fields(self)
@@ -561,7 +561,7 @@ class TicketForm(forms.ModelForm):
         }
 
     def __init__(self, *args, **kwargs):
-        super(TicketForm, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.fields["status"].queryset=om.TypeAssist.objects.filter(Q(tatype__tacode='TICKETSTATUS') )
         self.fields["priority"].queryset=om.TypeAssist.objects.filter(tatype__tacode='PRIORITY')
         utils.initailize_form_fields(self)
@@ -585,6 +585,6 @@ class EscalationForm(forms.ModelForm):
         }
 
     def __init__(self, *args, **kwargs):
-        super(EscalationForm, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         utils.initailize_form_fields(self)
 

@@ -24,7 +24,7 @@ class Schd_I_TourJobForm(JobForm):
     def __init__(self, *args, **kwargs):
         """Initializes form add atttibutes and classes here."""
         self.request = kwargs.pop('request', None)
-        super(Schd_I_TourJobForm, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.fields['fromdate'].input_formats  = settings.DATETIME_INPUT_FORMATS
         self.fields['uptodate'].input_formats  = settings.DATETIME_INPUT_FORMATS
         self.fields['identifier'].widget.attrs  = {"style":"display:none"}
@@ -75,7 +75,7 @@ class SchdChild_I_TourJobForm(JobForm): #job
         fields =['qset', 'people', 'asset', 'expirytime', 'seqno']
     
     def __init__(self, *args, **kwargs):
-        super(SchdChild_I_TourJobForm, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.fields['seqno'].widget.attrs = {'readonly':True}
         utils.initailize_form_fields(self)
 
@@ -95,7 +95,7 @@ class I_TourFormJobneed(JobNeedForm): #jobneed
     def __init__(self, *args, **kwargs):
         """Initializes form add atttibutes and classes here."""
         self.request = kwargs.pop('request', None)
-        super(I_TourFormJobneed, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.fields['plandatetime'].input_formats   = settings.DATETIME_INPUT_FORMATS
         self.fields['expirydatetime'].input_formats = settings.DATETIME_INPUT_FORMATS
         self.fields['identifier'].widget.attrs      = {"style":"display:none"}
@@ -142,7 +142,7 @@ class Child_I_TourFormJobneed(JobNeedForm):#jobneed
         fields =['qset', 'asset', 'plandatetime', 'expirydatetime', 'gracetime']
         
     def __init__(self, *args, **kwargs):
-        super(Child_I_TourFormJobneed, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         utils.initailize_form_fields(self)
         
         
@@ -150,7 +150,7 @@ class Child_I_TourFormJobneed(JobNeedForm):#jobneed
 class TaskFormJobneed(I_TourFormJobneed):
     
     def __init__(self, *args, **kwargs):
-        super(TaskFormJobneed, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.fields['jobdesc'].required = True
         utils.initailize_form_fields(self)
         if not self.instance.id:
@@ -170,7 +170,7 @@ class Schd_E_TourJobForm(JobForm):
 
     def __init__(self, *args, **kwargs):
         self.request = kwargs.pop('request', None)
-        super(Schd_E_TourJobForm, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.fields['fromdate'].input_formats = settings.DATETIME_INPUT_FORMATS
         self.fields['uptodate'].input_formats = settings.DATETIME_INPUT_FORMATS
         self.fields['ticketcategory'].initial = ob.TypeAssist.objects.get(tacode='AUTOCLOSED')

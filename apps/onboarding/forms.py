@@ -71,7 +71,7 @@ class TypeAssistForm(SuperTypeAssistForm):
     def __init__(self, *args, **kwargs):
         """Initializes form"""
         self.request = kwargs.pop('request', None)
-        super(TypeAssistForm, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         utils.initailize_form_fields(self)
 
     
@@ -132,7 +132,7 @@ class BtForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         """Initializes form"""
         self.client = kwargs.pop('client', False)
-        super(BtForm, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.fields['identifier'].queryset = obm.TypeAssist.objects.filter(Q(tacode='CLIENT') if self.client else Q(tatype__tacode="BVIDENTIFIER"))
         self.fields['identifier'].required= True
         self.fields['butype'].queryset = obm.TypeAssist.objects.filter(tatype__tacode="SITETYPE")
@@ -217,7 +217,7 @@ class ShiftForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         """Initializes form"""
         self.request = kwargs.pop('request', None)
-        super(ShiftForm, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.fields['nightshiftappicable'].initial = False
         utils.initailize_form_fields(self)
 
@@ -265,7 +265,7 @@ class SitePeopleForm(forms.ModelForm):
     
     def __init__(self, *args, **kwargs):
         """Initializes form"""
-        super(SitePeopleForm, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         utils.initailize_form_fields(self)
 
 
@@ -290,7 +290,7 @@ class ContractDetailForm(forms.ModelForm):
     
     def __init__(self, *args, **kwargs):
         """Initializes form"""
-        super(ContractDetailForm, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         utils.initailize_form_fields(self)
 
 
@@ -310,7 +310,7 @@ class GeoFenceForm(forms.ModelForm):
         
     def __init__(self, *args, **kwargs):
         self.request = kwargs.pop('request', None)
-        super(GeoFenceForm, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         utils.initailize_form_fields(self)
 
     
@@ -346,7 +346,7 @@ class BuPrefForm(forms.Form):
 
     def __init__(self, *args, **kwargs):
         """Initializes form"""
-        super(BuPrefForm, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         utils.initailize_form_fields(self)
 
 
@@ -367,7 +367,7 @@ class ClentForm(BuPrefForm):
 
     def __init__(self, *args, **kwargs):
         """Initializes form"""
-        super(ClentForm, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         utils.initailize_form_fields(self)
         from apps.peoples.utils import get_caps_choices
         self.fields['webcapability'].choices = get_caps_choices(cfor=pm.Capability.Cfor.WEB)
@@ -404,5 +404,5 @@ class ImportForm(forms.Form):
     
     def __init__(self, *args, **kwargs):
         """Initializes form"""
-        super(ImportForm, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         utils.initailize_form_fields(self)

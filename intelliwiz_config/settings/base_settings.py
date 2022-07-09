@@ -13,6 +13,8 @@ BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
 SECRET_KEY = str(os.getenv('SECRET_KEY'))
 
+ALLOWED_HOSTS = ['.localhost', '.youtility.local', 'barfi.youtility.in', '127.0.0.1', 'intelliwiz.youtility.in']
+
 
 INSTALLED_APPS = [
     'django.contrib.admin',
