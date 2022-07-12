@@ -23,22 +23,22 @@ class Query(graphene.ObjectType):
                                       mdtz = graphene.String(required=True),
                                       ctzoffset = graphene.Int(required=True),
                                       buid = graphene.Int(required=True),)
-    
+
     get_jobneedmodifiedafter = graphene.Field(SelectOutputType,
                                              peopleid = graphene.Int(required=True),
                                              buid = graphene.Int(required=True),
                                              clientid = graphene.Int(required=True))
-    
+
     get_jndmodifiedafter = graphene.Field(SelectOutputType,
                                          mdtz = graphene.String(required=True),
                                          ctzoffset = graphene.Int(required=True),
                                          jobneedids = graphene.String(required=True))
-    
+
     get_typeassistmodifiedafter = graphene.Field(SelectOutputType,
                                                 mdtz = graphene.String(required=True),
                                                 ctzoffset = graphene.Int(required=True),
                                                 clientid = graphene.Int(required=True))
-    
+
     get_peoplemodifiedafter = graphene.Field(SelectOutputType,
                                             mdtz = graphene.String(required=True),
                                             ctzoffset = graphene.Int(required=True),
@@ -57,28 +57,28 @@ class Query(graphene.ObjectType):
                                           mdtz = graphene.String(required=True),
                                           ctzoffset = graphene.Int(required=True),
                                           buid = graphene.Int(required=True))   
-    
+
     get_qsetbelongingmodifiedafter = graphene.Field(SelectOutputType,
                                           mdtz = graphene.String(required=True),
                                           ctzoffset = graphene.Int(required=True),
                                           buid = graphene.Int(required=True))
-    
+
     get_pgbelongingmodifiedafter = graphene.Field(SelectOutputType,
                                           mdtz = graphene.String(required=True),
                                           ctzoffset = graphene.Int(required=True),
                                           buid = graphene.Int(required=True),
                                           peopleid = graphene.Int(required=True))
-    
-    
+
+
     get_gfs_for_siteids = graphene.Field(SelectOutputType,
                                  siteids = graphene.List(graphene.Int))
-    
+
     getsitelist  = graphene.Field(SelectOutputType,
                                  clientid = graphene.Int(required=True),
                                  peopleid = graphene.Int(required=True))
-    
+
     verifyclient = graphene.Field(VerifyClientOutput, clientcode = graphene.String(required=True))
-    
+
 
     def resolve_tadata(self, info, keys, **kwargs):
         log.info('request for typeassist data...')
@@ -86,20 +86,20 @@ class Query(graphene.ObjectType):
         records, count, msg = utils.get_select_output(data)
         log.info(f'{count} objects returned...')
         return SelectOutputType(nrows = count, ncols = len(keys), records = records,msg = msg)
-        
-    
+
+
     def resolve_tabyid(self, info, id):
         log.info('request for typeassist data...')
         ta = TypeAssist.objects.raw("select * from typeassist where id = %s", [id])
         return ta[0] if ta else None
-    
-    
+
+
     def resolve_get_assetdetails(self, info, mdtz, ctzoffset, buid):
         mdtz = utils.getawaredatetime(mdtz, ctzoffset)
         log.info('request for assetdetails data...')
         return get_assetdetails(mdtz, buid)
-    
-    
+
+
     def resolve_get_jobneedmodifiedafter(self, info, peopleid, buid, clientid):
         log.info('request for jobneed-modified-after data...')
         return get_jobneedmodifiedafter(peopleid, buid, clientid)
@@ -112,8 +112,8 @@ class Query(graphene.ObjectType):
         records, count, msg = utils.get_select_output(data)
         log.info(f'{count} objects returned...')
         return SelectOutputType(nrows = count, records = records,msg = msg)
-    
-    
+
+
     def resolve_get_typeassistmodifiedafter(self, info, mdtz, ctzoffset, clientid):
         log.info('request for typeassist-modified-after data...')
         mdtzinput = utils.getawaredatetime(mdtz, ctzoffset)
@@ -122,7 +122,7 @@ class Query(graphene.ObjectType):
         records, count, msg = utils.get_select_output(data)
         log.info(f'{count} objects returned...')
         return SelectOutputType(nrows = count, records = records,msg = msg)
-    
+
     def resolve_get_peoplemodifiedafter(self, info, mdtz, ctzoffset, buid):
         log.info('request for people-modified-after data...')
         mdtzinput = utils.getawaredatetime(mdtz, ctzoffset)
@@ -130,7 +130,7 @@ class Query(graphene.ObjectType):
         records, count, msg = utils.get_select_output(data)
         log.info(f'{count} objects returned...')
         return SelectOutputType(nrows = count, records = records,msg = msg)
-            
+
 
     def resolve_get_groupsmodifiedafter(self, info, mdtz, ctzoffset, buid):
         log.info('request for groups-modified-after data...')
@@ -139,16 +139,16 @@ class Query(graphene.ObjectType):
         records, count, msg = utils.get_select_output(data)
         log.info(f'{count} objects returned...')
         return SelectOutputType(nrows = count, records = records,msg = msg)
-        
-        
+
+
     def resolve_get_questionsmodifiedafter(self, info, mdtz, ctzoffset):
         mdtzinput = utils.getawaredatetime(mdtz, ctzoffset)
         data =  Question.objects.get_questions_modified_after(mdtz)
         records, count, msg = utils.get_select_output(data)
         log.info(f'{count} objects returned...')
         return SelectOutputType(nrows = count, records = records,msg = msg)
-    
-    
+
+
     def resolve_get_qsetmodifiedafter(self, info, mdtz, ctzoffset, buid):
         log.info('request for qset-modified-after data...')
         mdtzinput = utils.getawaredatetime(mdtz, ctzoffset)
@@ -156,9 +156,9 @@ class Query(graphene.ObjectType):
         records, count, msg = utils.get_select_output(data)
         log.info(f'{count} objects returned...')
         return SelectOutputType(nrows = count, records = records,msg = msg)
-        
-    
-    
+
+
+
     def resolve_get_qsetbelongingmodifiedafter(self, info, mdtz, ctzoffset, buid):
         log.info('request for qsetbelonging-modified-after data...')
         mdtzinput = utils.getawaredatetime(mdtz, ctzoffset)
@@ -166,8 +166,8 @@ class Query(graphene.ObjectType):
         records, count, msg = utils.get_select_output(data)
         log.info(f'{count} objects returned...')
         return SelectOutputType(nrows = count, records = records,msg = msg)
-    
-    
+
+
     def resolve_get_pgbelongingmodifiedafter(self, info, mdtz, ctzoffset, buid, peopleid):
         log.info('request for pgbelonging-modified-after data...')
         mdtzinput = utils.getawaredatetime(mdtz, ctzoffset)
@@ -175,22 +175,22 @@ class Query(graphene.ObjectType):
         records, count, msg = utils.get_select_output(data)
         log.info(f'{count} objects returned...')
         return SelectOutputType(nrows = count, records = records,msg = msg)
-    
-    
+
+
     def resolve_get_gfs_for_siteids(self, info, siteids):
         log.info('request for getgeofence...')
         data = GeofenceMaster.objects.get_gfs_for_siteids(siteids)
         records, count, msg = utils.get_select_output(data)
         log.info(f'{count} objects returned...')
         return SelectOutputType(nrows = count, records = records,msg = msg)
-    
+
     def resolve_getsitelist(self, info, clientid, peopleid):
         log.info('request for sitelist..')
         data = Bt.objects.getsitelist(clientid, peopleid)
         records, count, msg = utils.get_select_output(data)
         log.info(f'{count} objects returned...')
         return SelectOutputType(nrows = count, records = records,msg = msg)
-    
+
     def resolve_verifyclient(self, info, clientcode):
         try:
             utils.set_db_for_router(clientcode.lower())
@@ -205,13 +205,13 @@ class Query(graphene.ObjectType):
                 return VerifyClientOutput(rc=1, msg="INVALID")
         except Bt.DoesNotExist as ex:
             return VerifyClientOutput(rc=1, msg="INVALID")
-            
-        
-    
+
+
+
 def get_db_rows(sql, args=None):
     import json
     cursor = connections[utils.get_current_db_name()].cursor()
-    
+
     cursor.execute(sql, args)
     print(dir(cursor))
     columns = [col[0] for col in cursor.description]

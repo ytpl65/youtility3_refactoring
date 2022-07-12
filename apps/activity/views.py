@@ -520,15 +520,15 @@ class AdhocRecord(LoginRequiredMixin, View):
                    'qset__qsetname', 'asset__assetname'],
         'form_initials': {},
         'idf'          : ''}
-    
+
     def get(self, request, *args, **kwargs):
         R, resp = request.GET, None
         from datetime import datetime, timedelta
         now = datetime.now()
-        
+
         # first load the template
         if R.get('template'): return render(request, self.params['template_list'])
-        
+
         #then load the table with objects for table_view
         if R.get('action', None) == 'list' or R.get('search_term'):
             total, filtered, objs = self.params['model'].objects.get_adhoctasks_listview(R, self.params['idf'])
@@ -538,13 +538,13 @@ class AdhocRecord(LoginRequiredMixin, View):
                 'recordsFiltered':filtered,
                 'recordsTotal':total,
             }, safe=False)
-        
+
         elif R.get('action', None) == 'form':
             cxt = {'adhoctaskform': self.params['form_class'](request=request),
                    'msg': "create adhoc task requested"}
             return render(request, self.params['template_form'], context=cxt)
-        
 
 
-        
-    
+
+
+

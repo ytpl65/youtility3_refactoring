@@ -11,7 +11,7 @@ class Messages:
     MULTIDEVICES   = "Cannot login on multiple devices, Please logout from the other device"
     WRONGCREDS     = "Incorrect Username or Password"
     NOTREGISTERED  = "Device Not Registered"
-    
+
 
 def LoginUser(response, request):
     if response['isauthenticated']:
@@ -19,7 +19,7 @@ def LoginUser(response, request):
             id = response['user'].id).update(
                 deviceid = response['authinput'].deviceid)
         ic(request.user)
-    
+
 def LogOutUser(response, request):
     if response['isauthenticated']:
         People.objects.filter(
@@ -27,9 +27,9 @@ def LogOutUser(response, request):
                 deviceid = -1
             )
         ic(request.user)
-        
-        
-            
+
+
+
 def auth_check(info, input, returnUser, uclientip=None):
     from django.contrib.auth import authenticate
     from graphql import GraphQLError
@@ -71,11 +71,11 @@ def authenticate_user(input, request, msg, returnUser):
     from graphql import GraphQLError
     from apps.peoples.models import People
     from django.contrib.auth import authenticate
-    
+
     user = authenticate(request, username = loginid, password = password)
     if not user: raise GraphQLError(msg.WRONGCREDS)
     valid_imeis = user.client.bupreferences["validimei"].replace(" ", "").split(",")
-    
+
 
     if not user:
         raise GraphQLError(msg.WRONGCREDS)

@@ -232,7 +232,7 @@ class PgroupForm(forms.ModelForm):
         result = super().is_valid()
         utils.apply_error_classes(self)
         return result
-    
+
     def clean_peoples(self):
         if val:=self.request.POST.get('peoples'):
             print(val)
@@ -240,7 +240,7 @@ class PgroupForm(forms.ModelForm):
 
 class SiteGroupForm(PgroupForm):
     peoples=None
-    
+
     def __init__(self, *args, **kwargs):
         self.request = kwargs.pop('request')
         super().__init__(*args, **kwargs)
@@ -383,8 +383,8 @@ class PeopleExtrasForm(forms.Form):
         result = super().is_valid()
         utils.apply_error_classes(self)
         return result
-    
-        
+
+
 
 
 class PeopleGrpAllocation(forms.Form):

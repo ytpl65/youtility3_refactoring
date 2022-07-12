@@ -204,10 +204,10 @@ class CapabilityResource(resources.ModelResource, BaseFieldSet2):
     def before_save_instance(self, instance, using_transactions, dry_run):
         instance.capscode = instance.capscode.upper()
         utils.save_common_stuff(self.request, instance)
-    
-    
-    
-    
+
+
+
+
 @admin.register(Capability)
 class CapabilityAdmin(ImportExportModelAdmin):
     resource_class = CapabilityResource
@@ -217,7 +217,7 @@ class CapabilityAdmin(ImportExportModelAdmin):
     list_display_links = ['capscode', 'capsname']
 
 
-    
+
     def get_resource_kwargs(self, request, *args, **kwargs):
         return {'request': request}
 

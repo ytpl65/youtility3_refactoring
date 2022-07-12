@@ -39,7 +39,7 @@
 #     from apps.attendance.models import PeopleEventlog
 #     from django.db import transaction
 #     from apps.core import utils
-    
+
 #     log.info("perform_facerecognition ...start [+]")
 #     log.info(f'parameters are {pelogid} {peopleid} {ownerid} {type(ownerid)} {home_dir} {uploadfile}')
 #     try:
@@ -59,7 +59,7 @@
 #         log.error("something went wrong!", exc_info=True)
 #         self.retry(e)
 #         raise
-    
+
 # @app.task(bind=True, default_retry_delay=300, max_retries=5)  
 # def perform_insertrecord_bgt(file, tablename, request=None, filebased=True, db='default'):
 #     """
@@ -117,11 +117,11 @@
 #             with transaction.atomic(using=utils.get_current_db_name()):
 #                 if updated :=  update_record(details, jobneed, Jobneed, JobneedDetails, db):
 #                     recordcount+=1
-    
+
 #     except IntegrityError as e:
 #         log.error("Database Error", exc_info=True)
 #         rc, traceback, msg = 1, tb.format_exc(), Messages.UPLOAD_FAILED
-    
+
 #     except Exception as e:
 #         log.error('Something went wrong', exc_info=True)
 #         rc, traceback, msg = 1, tb.format_exc(), Messages.UPLOAD_FAILED
@@ -159,7 +159,7 @@
 #             if jnd_ser.is_valid(): jnd_ser.save(using=db)
 #             updated+=1
 #         if len(jobneeddetails) == updated: return True 
-        
+
 
 # @app.task(bind=True, default_retry_delay=300, max_retries=5)
 # def perform_reportmutation_bgt(file, db='default'):
@@ -206,7 +206,7 @@
 #                 #ic(details, type(details))
 #                 ch.update({'parent_id':parent.id})
 #                 child_serializer = sz.JobneedSerializer(data=clean_record(ch))
-                
+
 #                 if child_serializer.is_valid():
 #                     child_instance = child_serializer.save(using=db)
 #                     for dtl in details:

@@ -19,7 +19,7 @@ from django.contrib.postgres.fields import ArrayField
 
 # Create your models here.
 class Question(BaseModel, TenantAwareModel):
-    
+
     class AnswerType(models.TextChoices):
         CHECKBOX    = "CHECKBOX"   , _('Checkbox') 
         DATE        = "DATE"       , _('Date')
@@ -86,7 +86,7 @@ class QuestionSet(BaseModel, TenantAwareModel):
         MAINTENANCETEMPLATE    = "MAINTENANCETEMPLATE"   , _('Maintenance Template')
         ASSETMAINTENANCE       = "ASSETMAINTENANCE"      , _('Asset Maintenance')
         QUESTIONSET            = "QUESTIONSET"           , _('Question Set')
-    
+
     #id            = models.BigIntegerField(primary_key=True)
     qsetname           = models.CharField(_("QuestionSet Name"), max_length=200)
     enable             = models.BooleanField(_("Enable"), default=True)
@@ -102,7 +102,7 @@ class QuestionSet(BaseModel, TenantAwareModel):
     url                = models.CharField(_("Url"), max_length=250, null=True, blank=True)
 
     objects = QuestionSetManager()
-    
+
     class Meta(BaseModel.Meta):
         db_table            = 'questionset'
         verbose_name        = 'QuestionSet'
@@ -142,7 +142,7 @@ class QuestionSetBelonging(BaseModel, TenantAwareModel):
         FRONTCAMERA = "FRONTCAMERA", _("Front Camera")
         PEOPLELIST  = "PEOPLELIST" , _("People List")
         SITELIST    = "SITELIST"   , _("Site List")
-    
+
     #id               = models.BigIntegerField(_("QSB Id"), primary_key=True)
     ismandatory       = models.BooleanField(_("Is Manadatory"))
     isavpt            = models.BooleanField(_("Is Attachment Required"), default=False)
@@ -220,8 +220,8 @@ class Job(BaseModel, TenantAwareModel):
         HALFYEARLY  = "HALFYEARLY" , _("Half Yearly")
         YEARLY      = "YEARLY"     , _("Yearly")
         FORTNIGHTLY = "FORTNIGHTLY", _("Fort Nightly")
-    
-    
+
+
     #id          = models.BigIntegerField(_("Job Id"), primary_key=True)
     jobname         = models.CharField(_("Name"), max_length=100)
     jobdesc         = models.CharField(_("Description"), max_length=500)
@@ -252,7 +252,7 @@ class Job(BaseModel, TenantAwareModel):
     other_info      = models.JSONField(_("Other info"), default=other_info, blank=True, encoder=DjangoJSONEncoder)
 
     objects = JobManager()
-    
+
     class Meta(BaseModel.Meta):
         db_table            = 'job'
         verbose_name        = 'Job'
@@ -312,13 +312,13 @@ class Asset(BaseModel, TenantAwareModel):
        LOCATION   = ("LOCATION", "Location")
        SMARTPLACE = ("SMARTPLACE", "Smartplace")
        NEA = ("NEA", "Non Engineering Asset")
-       
+
     class RunningStatus(models.TextChoices):
         MAINTENANCE = ("MAINTENANCE", "Maintenance")
         STANDBY     = ("STANDBY", "Standby")
         WORKING     = ("WORKING", "Working")
         SCRAPPED    = ("SCRAPPED", "Scrapped")   
-    
+
     uuid          = models.UUIDField(unique=True, editable=True, blank=True, default=uuid.uuid4)
     assetcode     = models.CharField(_("Asset Code"), max_length=50)
     assetname     = models.CharField(_("Asset Name"), max_length=250)
@@ -340,7 +340,7 @@ class Asset(BaseModel, TenantAwareModel):
     asset_json    = models.JSONField( encoder = DjangoJSONEncoder, blank=True, null=True, default=asset_json)
 
     objects = AssetManager()
-    
+
     class Meta(BaseModel.Meta):
         db_table            = 'asset'
         verbose_name        = 'Asset'
@@ -376,8 +376,8 @@ class Jobneed(BaseModel, TenantAwareModel):
         NFC     = ('NFC', 'NFC')
         SKIP    = ('SKIP', 'Skip')
         ENTERED = ('ENTERED', 'Entered')
-    
-    
+
+
     class JobStatus(models.TextChoices):
         ASSIGNED           = ('ASSIGNED', 'Assigned')
         AUTOCLOSED         = ('AUTOCLOSED', 'Auto Closed')
@@ -394,15 +394,15 @@ class Jobneed(BaseModel, TenantAwareModel):
         WORKING            = ("WORKING", "Working")
         SCRAPPED           = ("SCRAPPED", "Scrapped")
 
-    
 
-    
+
+
     class JobType(models.TextChoices):
         SCHEDULE = ('SCHEDULE', 'Schedule')
         ADHOC    = ('ADHOC', 'Adhoc')
-    
 
-    
+
+
     class Frequency(models.TextChoices):
         NONE        = ('NONE','None')
         DAILY       = ("DAILY","Daily")
@@ -413,7 +413,7 @@ class Jobneed(BaseModel, TenantAwareModel):
         HALFYEARLY  = ("HALFYEARLY","Half Yearly")
         YEARLY      = ("YEARLY", "Yearly")
         FORTNIGHTLY = ("FORTNIGHTLY", "Fort Nightly")
-    
+
     #id       = models.BigIntegerField(_("Jobneed Id"), primary_key=True)
     uuid             = models.UUIDField(unique=True, editable=True, blank=True, default=uuid.uuid4)
     jobdesc          = models.CharField(_("Job Description"), max_length=200)
@@ -452,7 +452,7 @@ class Jobneed(BaseModel, TenantAwareModel):
     other_info       = models.JSONField(_("Other info"), default=other_info, blank=True, encoder=DjangoJSONEncoder)
 
     objects = JobneedManager()
-    
+
     class Meta(BaseModel.Meta):
         db_table            = 'jobneed'
         verbose_name        = 'Jobneed'
@@ -481,7 +481,7 @@ class JobneedDetails(BaseModel, TenantAwareModel):
         FRONTCAMERA = ("FRONTCAMERA", "Front Camera")
         PEOPLELIST  = ("PEOPLELIST", "People List")
         SITELIST    = ("SITELIST", "Site List")
-    
+
     #id         = models.BigIntegerField(_("Jobneed details"), primary_key=True)
     uuid        = models.UUIDField(unique=True, editable=True, blank=True, default=uuid.uuid4)
     seqno       = models.SmallIntegerField(_("SL No."))
@@ -499,7 +499,7 @@ class JobneedDetails(BaseModel, TenantAwareModel):
     attachmentcount    = models.IntegerField(_('Attachment count'), default=0)
 
     objects = JobneedDetailsManager()
-    
+
     class Meta(BaseModel.Meta):
         db_table     = 'jobneeddetails'
         verbose_name = 'JobneedDetails'
@@ -511,7 +511,7 @@ class Attachment(BaseModel, TenantAwareModel):
         ATMT  = ("ATTACHMENT","Attachment")
         REPLY = ("REPLY", "Reply")
         SIGN  = ("SIGN",  "SIGN")
-    
+
     uuid           = models.UUIDField(unique=True, editable=True, blank=True, default=uuid.uuid4)
     filepath       = models.CharField(max_length=100, null=True, blank=True)
     filename       = models.ImageField(null=True, blank=True)
@@ -529,7 +529,7 @@ class Attachment(BaseModel, TenantAwareModel):
 
     def __str__(self):
         return self.filename.name
-    
+
 
 def tickethistory():
     return {
@@ -575,7 +575,7 @@ class Event(BaseModel, TenantAwareModel):
 
     def __str__(self):
         return self.eventdesc
-    
+
 def ticket_defaults():
     return {"statusjbdata":[]}
 
@@ -584,7 +584,7 @@ class Ticket(BaseModel, TenantAwareModel):
         HIGH   = ('HIGH', 'High')
         LOW    = ('LOW', 'Low')
         MEDIUM = ('MEDIUM', 'Medium')
-    
+
     class Status(models.TextChoices):
         NEW       = ('NEW','New')
         CANCEL    = ('CANCEL','Cancel')
@@ -638,7 +638,7 @@ class EscalationMatrix(BaseModel, TenantAwareModel):
         HOUR   = ('HOUR', 'HOUR')
         DAY    = ('DAY', 'DAY')
         WEEK   = ('WEEK', 'WEEK')
-    
+
     #id                = models.BigIntegerField(primary_key=True)
     body               = models.CharField(max_length=500, null=True)
     level              = models.IntegerField(null=True, blank=True)
@@ -655,7 +655,7 @@ class EscalationMatrix(BaseModel, TenantAwareModel):
     class Meta(BaseModel.Meta):
         db_table = 'escalationmatrix'
         get_latest_by = ["mdtz", 'cdtz']
-        
+
 
 class DeviceEventlog(BaseModel, models.Model):
     class DeviceEvent(models.TextChoices):
@@ -686,8 +686,8 @@ class DeviceEventlog(BaseModel, models.Model):
     modelname       = models.CharField(_("Model Name"), max_length=50, default=None)
     installedapps   = models.CharField(_("Installed Apps"), max_length=50, default=None)
     stepcount       = models.CharField(max_length=55, default='No Steps')
-    
-    
+
+
     class Meta(BaseModel.Meta):
         db_table = 'deviceeventlog'
         get_latest_by = ["mdtz", 'cdtz']

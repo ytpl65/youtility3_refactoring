@@ -228,7 +228,7 @@ class ChecklistForm(MasterQsetForm):
 
 
 class QuestionSetForm(MasterQsetForm):
-    
+
     class Meta(MasterQsetForm.Meta):
         pass
 
@@ -322,7 +322,7 @@ class SmartPlaceForm(AssetForm):
     category       = None
     unit           = None
     brand          = None
-    
+
     class Meta(AssetForm.Meta):
         exclude = ['capacity']
 
@@ -462,11 +462,11 @@ class JobForm(forms.ModelForm):
                 max_results     = 20),
             'bu'              : s2forms.Select2Widget,
         }
-    
+
     def clean_from_date(self):
         if val := self.cleaned_data.get('fromdate'):
             return self._extracted_from_clean_upto_date_3(val)
-    
+
     def clean_upto_date(self):
         if val := self.cleaned_data.get('uptodate'):
             return self._extracted_from_clean_upto_date_3(val)
@@ -532,7 +532,7 @@ class AdhocTaskForm(JobNeedForm):
             'people':'People',
             'qset':'Question Set',
         }
-    
+
     def __init__(self, *args, **kwargs):
         """Initializes form add atttibutes and classes here."""
         from django.conf import settings
@@ -565,8 +565,8 @@ class TicketForm(forms.ModelForm):
         self.fields["status"].queryset=om.TypeAssist.objects.filter(Q(tatype__tacode='TICKETSTATUS') )
         self.fields["priority"].queryset=om.TypeAssist.objects.filter(tatype__tacode='PRIORITY')
         utils.initailize_form_fields(self)
-        
-        
+
+
 # create a ModelForm
 class EscalationForm(forms.ModelForm):
     # specify the name of model to use

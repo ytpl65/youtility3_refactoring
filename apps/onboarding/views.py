@@ -1069,7 +1069,7 @@ class EditorTa(LoginRequiredMixin, View):
     fields = ['id', 'tacode', 'taname', 'tatype__tacode', 'cuser__peoplecode']
     model = TypeAssist
     related = ['cuser', 'tatype']
-    
+
     def get(self, request, *args, **kwargs):
         R = request.GET
         if R.get('template'): return render(request, self.template)
@@ -1104,33 +1104,33 @@ class GeoFence(LoginRequiredMixin, View):
         'related':['alerttogroup', 'alerttopeople'],
         'model':GeofenceMaster
     }
-    
+
     def get(self, request, *args, **kwargs):
         R = request.GET
         params = self.params
         # first load the template
         if R.get('template'): return render(request, self.params['template_list'])
-        
+
         #then load the table with objects for table_view
         if R.get('action', None) == 'list' or R.get('search_term'):
             objs = self.params['model'].objects.get_geofence_list(params['fields'], params['related'], request.session)
             return  rp.JsonResponse(data = {'data':list(objs)})
-        
+
         elif R.get('action', None) == 'form':
             cxt = {'geofenceform':self.params['form_class']()}
             return render(request, self.params['template_form'], context=cxt)
-        
+
         elif R.get('action') == 'drawgeofence':
             return get_geofence_from_point_radii(R)
-        
+
         elif R.get('id', None):
             obj = utils.get_model_obj(int(R['id']), request, self.params)
             cxt = {'geofenceform':self.params['form_class'](request=request, instance=obj),
                     'edit':True,
                 'geofencejson': GeofenceMaster.objects.get_geofence_json(pk=obj.id)}
             return render(request, self.params['template_form'], context=cxt)
-    
-    
+
+
     def post(self, request, *args, **kwargs):
         resp=None
         try:
@@ -1153,8 +1153,8 @@ class GeoFence(LoginRequiredMixin, View):
             logger.error('GEOFENCE saving error!', exc_info=True)
             resp = utils.handle_Exception(request)
         return resp
-    
-    
+
+
     def handle_valid_form(self, form, request, geofence):
         logger.info('geofence form is valid')
         from apps.core.utils import handle_intergrity_error
@@ -1167,8 +1167,8 @@ class GeoFence(LoginRequiredMixin, View):
                 return JsonResponse(data={'pk':gf.id}, status=200)
         except IntegrityError:
             return handle_intergrity_error("GeoFence")
-        
-    
+
+
     def save_geofence_field(self, gf, geofence):
         try:
             from django.contrib.gis.geos import LinearRing, Polygon
@@ -1210,14 +1210,14 @@ class ImportFile(LoginRequiredMixin, View):
        'template_form':'onboarding/',
        'form_class':obforms.ImportForm
     }
-    
+
     def get(self, request, *args, **kwargs):
         R = request.GET
         match(R.get('model')):
             case "typeassist":
                 return render(request, f"{self.params['template_form']}/ta_imp_exp.html")
-        
-        
+
+
     def post(self, request, *args, **kwargs):
         from tablib import Dataset
         from .admin import TaResource
@@ -1242,7 +1242,6 @@ class ImportFile(LoginRequiredMixin, View):
             cxt = {'columns':columns, 'data':data, 'importform':self.params['form_class']()}
             return render(request, self.params['template_form'], context=cxt)
 
-                    
+
         else:
             ic(form.errors)
-            

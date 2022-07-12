@@ -7,7 +7,7 @@ import django_select2.forms as s2forms
 
 def assigned_to_qs(queryset, name, value):
         return queryset.filter(Q(aaatop__peoplename__icontains=value) | Q(pgroup__groupname__icontains=value))
-    
+
 ###################### JOB FILTER #########################
 class JobFilter(dfs.FilterSet):
     class Meta:
@@ -20,8 +20,8 @@ class JobFilter(dfs.FilterSet):
             'frequency',  'scantype',     'ticketcategory', 'people',   'shift',
             'endtime',    'ctzoffset',    
         ]
-        
-        
+
+
 class JobneedFilter(dfs.FilterSet):
     class Meta:
         model = am.Jobneed
@@ -32,8 +32,8 @@ class JobneedFilter(dfs.FilterSet):
             'endtime',    'performedby',   'cuser',     'muser',     'raisedby',
             'bu',              
         ]
-    
-    
+
+
 class SchdTourFilter(JobFilter):
     jobname      = dfs.CharFilter(field_name='jobname', lookup_expr='icontains', label='Name')
     assignedto   = dfs.CharFilter(method=assigned_to_qs, label='People/Group')
@@ -42,7 +42,7 @@ class SchdTourFilter(JobFilter):
     gracetime    = dfs.CharFilter(field_name='gracetime', lookup_expr='icontains', label='Grace Time')
     fromdate    = dfs.DateTimeFilter(field_name='fromdate', lookup_expr='icontains', label='From')
     uptodate    = dfs.DateTimeFilter(field_name='uptodate', lookup_expr='icontains', label='To')
-    
+
     class Meta(JobFilter.Meta):
         exclude = ['endtime','cron','client','ticketcategory','parent','seqno','frequency','pgroup','starttime','bu',
                    'priority','ctzoffset','geofence','identifier','people','shift','jobdesc','scantype','assignedto']
@@ -50,7 +50,7 @@ class SchdTourFilter(JobFilter):
 
 class SchdExtTourFilter(SchdTourFilter):
     bu = dfs.CharFilter(field_name='bu__buname', lookup_expr='icontains', label= "BV")
-    
+
     class Meta(SchdTourFilter.Meta):
         fields = ['jobname',  'bu', 'assignedto', 'planduration', 'expirytime', 'gracetime', 'fromdate', 'uptodate']
         exclude = ['asset']
@@ -60,8 +60,8 @@ class SchdTaskFilter(SchdTourFilter):
     asset        = dfs.CharFilter(field_name='asset__assetname', lookup_expr='icontains', label= "Asset")
     class Meta(SchdTourFilter.Meta):
         fields = ['jobname',  'asset', 'qset', 'assignedto', 'planduration', 'expirytime', 'gracetime', 'fromdate', 'uptodate']
-        
-        
+
+
 class InternalTourFilter(dfs.FilterSet):
     JOBSTATUSCHOICES = [
         ('ASSIGNED', 'Assigned'),
@@ -77,7 +77,7 @@ class InternalTourFilter(dfs.FilterSet):
     gracetime      = dfs.CharFilter(field_name='gracetime', lookup_expr='icontains', label='Grace Time')
     performedby   = dfs.CharFilter(field_name='performedby', lookup_expr='icontains', label='Performed By')
     expirydatetime = dfs.DateTimeFilter(field_name='expirydatetime', label="Exp. Datetime")
-    
+
     class Meta:
         model = am.Jobneed
         fields = [ 'plandatetime', 'jobdesc', 'jobstatus', 'assignedto', 'gracetime', 'performedby', 'expirydatetime']
@@ -117,11 +117,11 @@ class TicketListFilter(JobneedFilter):
     ticketcategory = dfs.CharFilter(field_name='ticketcategory__taname', lookup_expr='icontains')
     jobstatus       = dfs.ChoiceFilter(field_name='jobstatus', choices = TICKETSTATUS, label="Stauts", widget = s2forms.Select2Widget)
     cuser           = dfs.CharFilter(field_name='cuser__peoplename', lookup_expr='icontains')
-    
-    
+
+
     class Meta(JobneedFilter.Meta):
         fields = ['cdtz', 'cuser', 'ticketno', 'bu', 'assignedto', 'performedby', 'ticketcategory', 'jobstatus']
-        
+
     def __init__(self, *args, **kwargs):
         super(TicketListFilter, self).__init__(*args, **kwargs)
         for visible in self.form.visible_fields():
