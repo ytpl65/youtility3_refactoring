@@ -6,7 +6,6 @@ from django.views.generic.base import View
 from django.urls import resolve
 import apps.activity.models as am
 from pprint import pformat
-from django.core.exceptions import EmptyResultSet
 from django.shortcuts import redirect, render
 from django.db.models import Q
 from django.db import IntegrityError
@@ -19,7 +18,6 @@ import apps.onboarding.forms as obf
 from django.contrib import messages
 from django.db import transaction
 from django.http import Http404, QueryDict
-from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 import logging
 logger = logging.getLogger('__main__')
 log = logger
@@ -523,7 +521,7 @@ class AdhocRecord(LoginRequiredMixin, View):
 
     def get(self, request, *args, **kwargs):
         R, resp = request.GET, None
-        from datetime import datetime, timedelta
+        from datetime import datetime
         now = datetime.now()
 
         # first load the template

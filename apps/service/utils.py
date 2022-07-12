@@ -36,8 +36,6 @@ def write_file_to_dir(filebuffer, uploadedfile):
 
 
 from pprint import pformat
-
-from matplotlib.pyplot import table
 from .tasks import Messages
 from .tasks import (
     get_json_data, get_model_or_form,
@@ -48,10 +46,9 @@ log = getLogger('__main__')
 from .types import ServiceOutputType
 from django.db.utils import IntegrityError
 from apps.service import serializers as sz
-from graphql import GraphQLError
 from apps.core import utils
 from .validators import clean_record
-from apps.activity.models import (Job, Jobneed, JobneedDetails, Attachment, Asset)
+from apps.activity.models import (Jobneed, JobneedDetails, Asset)
 import traceback as tb
 
 

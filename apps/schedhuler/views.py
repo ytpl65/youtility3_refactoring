@@ -1,5 +1,3 @@
-from random import lognormvariate
-from xmlrpc.client import TRANSPORT_ERROR
 import apps.schedhuler.utils as sutils
 import apps.peoples.utils as putils
 from django.db.models import Q

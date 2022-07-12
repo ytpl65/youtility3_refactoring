@@ -1,9 +1,7 @@
 #from standard library
 
 #from django core
-from attr import Factory
 from django import forms
-from django.db.models.expressions import F
 from django.db.models.query_utils import Q
 from django.utils.translation import gettext_lazy as _
 from apps.core import utils
@@ -322,7 +320,6 @@ class GeoFenceForm(forms.ModelForm):
 #========================================== START JSON FORMS =======================================#
 class BuPrefForm(forms.Form):
     required_css_class = "required"
-    from .utils import get_webcaps_choices
 
     mobilecapability        = forms.MultipleChoiceField(required=False, label="Mobile Capability", widget=s2forms.Select2MultipleWidget)
     webcapability           = forms.MultipleChoiceField(required=False, label="Web Capability", widget=s2forms.Select2MultipleWidget)

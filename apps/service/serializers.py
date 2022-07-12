@@ -1,7 +1,7 @@
 from rest_framework import serializers
 from apps.activity.models import JobneedDetails
 import apps.service.validators as vs
-from apps.activity.models import Job, Jobneed
+from apps.activity.models import Jobneed
 class Messages:
     AUTHFAILED     = "Authentication Failed "
     AUTHSUCCESS    = "Authentication Successfull"

@@ -1,14 +1,11 @@
-from django.forms import model_to_dict
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db.utils import IntegrityError
-from django.test import TransactionTestCase
 import apps.attendance.forms as atf
 import apps.attendance.models as atdm
 from .filters import AttendanceFilter
 import apps.peoples.utils as putils
 from django.views import View
 from django.http.request import QueryDict
-from django.db.models import Q
 from django.shortcuts import  render
 from django.http import response as rp
 from django.db import transaction
@@ -85,7 +82,6 @@ class Attendance(LoginRequiredMixin, View):
     def handle_valid_form(self, form, request, create):
         logger.info('attendance form is valid')
         try:
-            import json
             attd = form.save()
             putils.save_userinfo(attd, request.user, request.session, create)
             logger.info("attendance form saved")

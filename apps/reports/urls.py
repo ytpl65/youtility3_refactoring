@@ -1,4 +1,3 @@
-from unicodedata import name
 from django.urls import path
 from apps.reports.views import (
     IncidentReportTemplate, MasterReportBelonging, RetriveSiteReports, SiteReportTemplate,

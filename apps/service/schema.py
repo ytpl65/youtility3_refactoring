@@ -1,5 +1,4 @@
 import graphene
-import graphql_jwt
 from graphql_auth.schema import  MeQuery
 from graphql_jwt.decorators import login_required
 from graphene_django.debug import DjangoDebug
@@ -10,13 +9,12 @@ from .mutations import (
   UploadAttMutaion, SyncMutation, InsertJsonMutation
 )
 from .types import (
-    PELogType, PeopleType, TrackingType, TestGeoType, TyType
+    PELogType, TrackingType, TestGeoType, 
 )
 from apps.attendance.models import (
     PeopleEventlog, Tracking, TestGeo
 )
 from .querys import Query as ApiQuery
-from apps.onboarding.models import TypeAssist
 
 
 class Mutation(graphene.ObjectType):

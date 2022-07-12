@@ -1,10 +1,6 @@
 import logging
-from time import time
-
-from django.http import QueryDict
 from apps.peoples import models as pm
 from apps.tenants.models import Tenant
-from django.db import transaction
 from apps.peoples import utils as putils
 logger = logging.getLogger('__main__')
 

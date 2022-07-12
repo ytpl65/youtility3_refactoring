@@ -4,8 +4,7 @@ from import_export import widgets as wg
 import apps.tenants.models as tm
 from import_export.admin import ImportExportModelAdmin
 from apps.peoples import models as pm
-from .forms import (BtForm, ShiftForm, TypeAssistForm, BuPrefForm, SitePeopleForm,
-                    ContractDetailForm, ContractForm)
+from .forms import (BtForm, ShiftForm, )
 import apps.onboarding.models as om
 from apps.core import utils
 

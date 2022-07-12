@@ -1,6 +1,5 @@
 from graphene_django.types import DjangoObjectType
 from typing import List
-from graphene_gis.converter import gis_converter
 import graphene
 from djantic import ModelSchema
 from pydantic import BaseModel,  validator

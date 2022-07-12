@@ -1,4 +1,3 @@
-from django.conf import settings
 
 
 def clean_point_field(val):
@@ -45,7 +44,6 @@ def clean_record(record):
     Cleans the record like code, 
     desc, gps fields, datetime fields etc
     """
-    import re
     for k, v in record.items():
         if k in ['jobdesc', 'remarks']:
             record[k] = clean_text(v)

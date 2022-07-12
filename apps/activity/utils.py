@@ -1,4 +1,3 @@
-import re
 import apps.activity.models as av
 from django.db.models import Value
 from django.db.models.functions import Concat

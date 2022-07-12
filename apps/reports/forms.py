@@ -2,9 +2,6 @@ from django import forms
 from apps.activity import models as am
 from apps.onboarding import models as om
 from apps.peoples import models as pm
-from apps.peoples.models import(
-    Pgroup
-)
 from apps.core import utils
 from django_select2 import forms as s2forms
 

@@ -1,4 +1,3 @@
-from cProfile import label
 import django_filters as dfs
 import apps.activity.models as am
 from django.db.models import Q

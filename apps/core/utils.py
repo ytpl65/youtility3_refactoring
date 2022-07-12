@@ -4,7 +4,6 @@ DEFINE FUNCTIONS AND CLASSES WERE CAN BE USED GLOBALLY.
 import threading
 from PIL import ImageFile
 import os.path
-import numpy as np
 import json
 import django.shortcuts as scts
 from django.contrib import messages as msg
@@ -193,7 +192,6 @@ def local_to_utc(data, offset, mobile_web):
     # sourcery skip: avoid-builtin-shadow
     from datetime import datetime, timedelta
     import pytz
-    from django.utils.timezone import utc
     dateFormatMobile = "%Y-%m-%d %H:%M:%S"
     dateFormatWeb = "%d-%b-%Y %H:%M"
     format = dateFormatWeb if mobile_web == "web" else dateFormatMobile

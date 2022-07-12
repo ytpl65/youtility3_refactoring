@@ -1,5 +1,3 @@
-from django.forms import widgets
-from django.forms.widgets import Widget
 import django_filters
 import apps.attendance.models as atdm
 from django import forms
