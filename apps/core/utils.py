@@ -276,7 +276,7 @@ def save_user_session(request, people):
 
     try:
         logger.info('saving user data into the session ... STARTED')
-        if people.is_superuser == True:
+        if people.is_superuser is True:
             request.session['is_superadmin'] = True
             session = request.session
             session['people_webcaps'] = session['client_webcaps'] = session['people_mobcaps'] = \

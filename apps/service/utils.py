@@ -451,7 +451,7 @@ def alert_observation(pk):
                 body+= "<table style='background:#EEF1F5;' cellpadding=8 cellspacing=2 border=1>"
                 body+= "<tr style='background:#ABE7ED;font-weight:bold;font-size:14px;'><th>Slno</th><th>Question</th><th>Answer</th><th>Option</th><th>Min</th><th>Max</th><th>Alert On</th><tr>"
                 for rd in enumerate(jndRecords):
-                    body+= "<tr %s>"     %("style='color:red;'" if rd[1]["alerts"] == True else "")
+                    body+= "<tr %s>"     %("style='color:red;'" if rd[1]["alerts"] is True else "")
                     body += f"<td>{rd.seqno}</td>"
                     body += f"<td>{rd.questionname}</td>"
                     body += f"<td>{rd.answer}</td>"
@@ -502,7 +502,7 @@ def alert_report(pk):
                         flag= True
                     if flag:
                         body+= "<tr style='background: #F0F0F0;font-weight:bold;font-size:14px;'><td colspan='7'>[%s] %s</td></tr>" %(bd["pseqno"], bd["jobdesc"])
-                    body+= "<tr {}>".format("style='color:red;'" if bd["alerts"] == True else "")
+                    body+= "<tr {}>".format("style='color:red;'" if bd["alerts"] is True else "")
                     body+= f"<td>{bd['cseqno']}</td>"
                     body+= f"<td>{bd['questionname']}</td>"
                     body+= f"<td>{bd['answer']}</td>"

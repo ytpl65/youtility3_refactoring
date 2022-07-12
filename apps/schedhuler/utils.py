@@ -34,7 +34,7 @@ def create_job(jobs=None):
             raise EmptyResultSet
         total_jobs = len(jobs)
         
-        if total_jobs > 0 or jobs != None:
+        if total_jobs > 0 or jobs is not None:
             log.info("processing jobs started found:= '%s' jobs" % (len(jobs)))
             for idx, job in enumerate(jobs):
                 startdtz, enddtz = calculate_startdtz_enddtz(job, tzoffset, tz)
