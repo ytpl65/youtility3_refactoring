@@ -62,7 +62,7 @@ def bu_defaults():
 
 
 class Bt(BaseModel, TenantAwareModel, HeirarchyModel):
-    
+
     #id= models.BigIntegerField(primary_key=True)
     bucode              = models.CharField(_('Code'), max_length=30)
     bupreferences      = models.JSONField(_('bupreferences'), null=True, default=bu_defaults,  encoder=DjangoJSONEncoder, blank=True)
@@ -211,9 +211,9 @@ class TypeAssist(BaseModel, TenantAwareModel):
     tatype = models.ForeignKey( "self", null=True, blank=True, on_delete=models.RESTRICT, related_name='children')
     bu     = models.ForeignKey("Bt", null=True, blank=True, on_delete=models.RESTRICT, related_name='ta_bus')
     client = models.ForeignKey("onboarding.Bt",  null=True, blank=True, on_delete=models.RESTRICT, related_name='ta_clients')
-    
+
     objects = TypeAssistManager()
-    
+
     class Meta(BaseModel.Meta):
         db_table = 'typeassist'
 
@@ -264,7 +264,7 @@ class WizardDraft(models.Model):
     wizard_data = models.JSONField(null=True, default=wizard_default,  encoder=DjangoJSONEncoder, blank=True)
     formdata   = models.JSONField( null=True, default=formData_default,  encoder=DjangoJSONEncoder, blank=True)
 
-    
+
     class Meta:
         db_table = 'wizarddraft'
         constraints = [
@@ -290,7 +290,7 @@ class GeofenceMaster(BaseModel):
     enable        = models.BooleanField(_("Enable"), default=True)
 
     objects = GeofenceManager()
-    
+
     class Meta(BaseModel.Meta):
         db_table = 'geofencemaster'
         constraints = [

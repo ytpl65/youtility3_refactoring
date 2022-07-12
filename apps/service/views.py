@@ -26,7 +26,7 @@ def get_model(tablename):
             return Attachment
         case _:
             return None
-        
+
 
 
 def perform_insertrecord(data):
@@ -34,7 +34,7 @@ def perform_insertrecord(data):
     service_insert = json.loads(data['service_insert'])
     record = service_insert['record']
     tablename = service_insert['tablename']
-    
+
     try:
         ser = InsertSerializer(data=clean_record(service_insert))
         if ser.is_valid():
@@ -87,8 +87,8 @@ def perform_task_tour_update(data):
         log.error('something went wrong', exc_info=True)
         A['rc'], A['reason'], A['msg'] = 1, traceback.format_exc(), Messages.UPDATE_FAILED
     return Response(A)
-     
-        
+
+
 
 def perform_template_report_insert(data):
     import json
@@ -97,11 +97,11 @@ def perform_template_report_insert(data):
     parent = service_templatereport or None
     try:
         with transaction.atomic(using=get_current_db_name()):
-            
+
             if child and len(child) > 0 and parent:
                 jobneed_parent_post_data = parent
                 jn_parent_serializer = JobneedSerializer(data=clean_record(jobneed_parent_post_data))
-                
+
                 if jn_parent_serializer.is_valid():
                     parent = jn_parent_serializer.save()
                     allsaved=0
@@ -109,7 +109,7 @@ def perform_template_report_insert(data):
                         details = ch.pop('details')
                         ch.update({'parent_id':parent.id})
                         child_serializer = JobneedSerializer(data=clean_record(ch))
-                        
+
                         if child_serializer.is_valid():
                             child_instance = child_serializer.save()
                             for dtl in details:
@@ -192,8 +192,8 @@ class InsertRecord(APIView):
     def post(self, request, format=None):
         ic(request.data)
         return perform_insertrecord(request.data)
-        
-    
+
+
 
 
 class TaskTourUpdate(APIView):
@@ -202,15 +202,15 @@ class TaskTourUpdate(APIView):
     """
     def post(self, request, format=None):
         return perform_task_tour_update(request.data)
-    
-    
+
+
 class TemplateReports(APIView):
-    
+
     def post(self, request, format=None):
         ic(request.data)
         return perform_template_report_insert(request.data)
-    
-    
+
+
 
 class AttachmentUpload(APIView):
     """
@@ -218,10 +218,10 @@ class AttachmentUpload(APIView):
     and save the uploaded file in filesystem db
     Perform fr based attendance.
     """
-    
+
     def post(self, request, format=None):
         return perform_attachment_upload(request)
-    
+
 
 
 def alert_observation(pkid, event):

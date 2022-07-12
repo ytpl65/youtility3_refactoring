@@ -2,7 +2,7 @@ from django.conf import settings
 
 
 def clean_point_field(val):
-    
+
     from django.contrib.gis.geos import GEOSGeometry
     try:
         if not val: return val
@@ -12,7 +12,7 @@ def clean_point_field(val):
         return GEOSGeometry(val)
     except Exception:
         raise
-    
+
 
 def clean_code(val):
     val = str(val)

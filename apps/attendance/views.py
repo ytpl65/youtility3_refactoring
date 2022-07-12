@@ -110,45 +110,45 @@ class Conveyance(LoginRequiredMixin, View):
         'related'      : ['bu', 'people'],
         'model'        : atdm.PeopleEventlog,
        'form_class':atf.ConveyanceForm}
-    
-    
+
+
     def get(self, request, *args, **kwargs):
         R, resp, objects, filtered = request.GET, None, [], 0
-        
+
         # first load the template
         if R.get('template'): return render(request, self.params['template_list'])
-        
+
         #then load the table with objects for table_view
         if R.get('action', None) == 'list' or R.get('search_term'):
             objs = self.params['model'].objects.get_lastmonth_conveyance(R)
             ic(utils.printsql(objs))
             resp = rp.JsonResponse(data = {'data':list(objs)})
-        
+
         # return cap_form empty for creation
         elif R.get('action', None) == 'form':
             cxt = {'conveyanceform': self.params['form_class'](),
                    'msg': "create conveyance requested"}
             resp =render(request, self.params['template_form'], context=cxt)
-        
+
         # handle delete request
         elif R.get('action', None) == "delete" and R.get('id', None):
             print(f'resp={resp}')
             resp = utils.render_form_for_delete(request, self.params, False)
-        
+
         # return form with instance for update
         elif R.get('id', None):
             obj = utils.get_model_obj(int(R['id']), request, self.params)
             cxt = {'conveyanceform':self.params['form_class'](request=request, instance=obj),
                     'edit':True}
             resp = render(request, self.params['template_form'], context=cxt)
-        
+
         #return journey path of instance
         elif R.get('action') == 'getpath':
             data = atdm.PeopleEventlog.objects.getjourneycoords(R['conid'])
             resp = rp.JsonResponse(data = {'obj':list(data)}, status=200)
         return resp
-    
-    
+
+
     def post(self, request, *args, **kwargs):
         resp, create=None, True
         try:
@@ -183,4 +183,3 @@ class Conveyance(LoginRequiredMixin, View):
                 return rp.JsonResponse(data={'pk':cy.id}, status=200)
         except IntegrityError:
             return handle_intergrity_error("conveyance")
-    

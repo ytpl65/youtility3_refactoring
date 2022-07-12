@@ -165,7 +165,7 @@ class Pgroup(BaseModel, TenantAwareModel):
     client   = models.ForeignKey('onboarding.Bt', null=True, blank=True, on_delete=models.RESTRICT, related_name='pgroup_clients')
 
     objects = PgroupManager()
-    
+
     class Meta(BaseModel.Meta):
         db_table = 'pgroup'
         constraints = [
@@ -194,9 +194,9 @@ class Pgbelonging(BaseModel, TenantAwareModel):
     assignsites = models.ForeignKey('onboarding.Bt', null=True,  blank=True, on_delete=models.RESTRICT, related_name="pgbelongs_assignsites")
     bu          = models.ForeignKey("onboarding.Bt", null=True, blank=True, on_delete=models.RESTRICT,  related_name='pgbelonging_sites')
     client      = models.ForeignKey('onboarding.Bt', null=True, blank=True, on_delete=models.RESTRICT, related_name='pgbelonging_clients')
-    
+
     objects = PgblngManager()
-    
+
     class Meta(BaseModel.Meta):
         db_table = 'pgbelonging'
         constraints = [
@@ -217,7 +217,7 @@ class Capability(BaseModel, TenantAwareModel):
         PORTLET = ('PORTLET', 'PORTLET')
         REPORT  = ('REPORT', 'REPORT')
         MOB     = ('MOB', 'MOB')
-    
+
     #id   = models.BigIntegerField(_(" Cap Id"), primary_key=True)
     capscode = models.CharField(_('Code'), max_length=50)
     capsname = models.CharField(_('Capability'), max_length=1000, default=None, blank=True, null=True)

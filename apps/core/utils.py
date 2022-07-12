@@ -809,8 +809,8 @@ def get_filter(field_name, filter_condition, filter_value):
 def get_paginated_results(requestData, objects, count,
                           fields, related, model):
     '''paginate the results'''
-    
-    
+
+
     logger.info('Pagination Start'if count else "")
     if not requestData.get('draw'):
         return {'data': []}
@@ -840,7 +840,7 @@ def get_paginated_results2(objs, count, params, R):
         'recordsFiltered':filtered,
         'recordsTotal':count
     })
-        
+
 
 def PD(data=None, post=None, get=None, instance=None, cleaned=None):
     """
@@ -892,7 +892,7 @@ def register_newuser_token(user, clientUrl):
 
 
 def clean_record(record):
-    
+
     from django.contrib.gis.geos import GEOSGeometry
 
     for k, v in record.items():
@@ -988,8 +988,8 @@ def fr(imagePath1, imagePath2):
 
 
 def alert_observation(pk, event):
-    
-    
+
+
     pass
 
 
@@ -1004,7 +1004,7 @@ def printsql(objs):
         print('SQL QUERY:\n', objs.query.__str__())
     except EmptyResultSet:
         print("NO SQL") 
-        
+
 
 def get_select_output(objs):
     if not objs:
@@ -1020,11 +1020,11 @@ def get_qobjs_dir_fields_start_length(R):
     qobjs=None
     if R.get('search[value]'):
         qobjs = searchValue2(R.getlist('fields[]'), R['search[value]'])
-        
+
     orderby, fields = R.getlist('order[0][column]'), R.getlist('fields[]')
     orderby  =  [orderby] if not isinstance(orderby, list) else orderby
     length, start = int(R['length']), int(R['start'])
-    
+
     for order in orderby:
         if order:
             ic(f'columns[{order}][data]')
@@ -1042,8 +1042,8 @@ def runrawsql(sql, args=None, db='default', named=False):
     cursor = connections[db].cursor()
     cursor.execute(sql, args)
     return namedtuplefetchall(cursor) if named else dictfetchall(cursor)
-    
-    
+
+
 def namedtuplefetchall(cursor):
     from collections import namedtuple
     "Return all rows from a cursor as a namedtuple"
@@ -1066,7 +1066,7 @@ def getformatedjson(geofence=None, jsondata=None, rettype=dict):
     geodict = json.loads(data)
     result = [{'lat': lat, 'lng': lng} for lng, lat in geodict['coordinates'][0]]
     return result if rettype == dict else json.dumps(result)
-    
+
 
 
 class Error(Exception):

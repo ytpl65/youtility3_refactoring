@@ -17,7 +17,7 @@ def create_dummy_client_site_and_superadmin(self):
     try:
         clienttype = TypeAssist.objects.get(tatype__tacode = 'BVIDENTIFIER', tacode='CLIENT')
         sitetype = TypeAssist.objects.get(tatype__tacode = 'BVIDENTIFIER', tacode='SITE')
-        
+
         client = Bt.objects.get_or_create(
             bucode='SPS', buname = "Security Personnel Services",
             enable=True, 
@@ -62,7 +62,7 @@ def insert_default_entries_in_typeassist(db, self):
     from tablib import Dataset
     from apps.onboarding.admin import TaResource
     BASEDIR = settings.BASE_DIR
-    
+
     try:
         if TypeAssist.objects.filter(tacode='PEOPLETYPE').exists(): return
         filepath = f'{BASEDIR}/docs/default_types.xlsx'
@@ -84,29 +84,29 @@ def execute_tasks(db, self):
     try:
         with transaction.atomic(using=db):
             utils.create_none_entries(self)
-                
+
         #insert default entries for TypeAssist
         insert_default_entries_in_typeassist(db, self)
-            
+
         with transaction.atomic(using=db):
             #create dummy client: SPS and site: YTPL
             create_dummy_client_site_and_superadmin(self)
     except Exception as e:
         raise
-    
+
 
 
 
 class Command(BaseCommand):
     help = 'creates none entries in the followning tables:\n\
     People, Capability, QuestionSet, Job, Asset, Jobneed, Bt, Typeassist Asset'
-    
-    
-    
+
+
+
     def add_arguments(self, parser) -> None:
         parser.add_argument('db', nargs = 1, type=str)
-    
-    
+
+
     def handle(self, *args, **options):
         max_tries = 6
         for _ in range(max_tries):
@@ -127,7 +127,6 @@ class Command(BaseCommand):
                 if type(e) != IntegrityError:
                     self.stdout.write(self.style.ERROR("something went wrong...!"))
                     log.error('FAILED init_intelliwiz', exc_info=True)
-            
-                
-        
-        
+
+
+

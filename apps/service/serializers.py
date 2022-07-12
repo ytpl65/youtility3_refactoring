@@ -31,26 +31,26 @@ class Messages:
 
 
 class InsertSerializer(serializers.Serializer):
-    
+
     record = serializers.JSONField()
     tablename = serializers.CharField()
-    
+
     tablenames = [
         'jobneed', 'jobneeddetails', 'peopleeventlog', 
         'tracking', 'attachment'
     ]
-    
+
     def validate_tablename(self, value):
         if value not in self.tablenames:
             raise serializers.ValidationError(
                 Messages.NOTABLEFOUND
             )
         return value
-    
+
     def validate_record(self, value):
         return vs.clean_record(record=value)
-            
-            
+
+
 class JndSerializers(serializers.ModelSerializer):
     jobneed_id  = serializers.IntegerField()
     question_id = serializers.IntegerField()
@@ -59,7 +59,7 @@ class JndSerializers(serializers.ModelSerializer):
     class Meta:
         model = JobneedDetails
         exclude = ['question', 'jobneed', 'cuser', 'muser']
-        
+
 
 class JobneedSerializer(serializers.ModelSerializer):
     asset_id          = serializers.IntegerField()
@@ -74,7 +74,7 @@ class JobneedSerializer(serializers.ModelSerializer):
     qset_id           = serializers.IntegerField()
     cuser_id           = serializers.IntegerField()
     muser_id           = serializers.IntegerField()
-    
+
     class Meta:
         model = Jobneed
         exclude = ['receivedonserver', 'other_info', 'parent', 'people', 'pgroup', 'qset',
@@ -83,6 +83,6 @@ class JobneedSerializer(serializers.ModelSerializer):
 
 class PELSerializer(serializers.ModelSerializer):
     pass
-    
+
 
 

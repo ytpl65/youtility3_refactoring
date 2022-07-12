@@ -142,7 +142,7 @@ class Schd_I_TourFormJob(LoginRequiredMixin, View):
                     parent_id  = job.id,
                     asset_id = CP['asset'],
                     qset_id  = CP['qset'],
-                    
+
                     defaults   = sutils.job_fields(job, cp)
                 )
                 checkpoint.save()
@@ -215,8 +215,8 @@ class Retrive_I_ToursJob(LoginRequiredMixin, View):
                         'planduration', 'gracetime', 'expirytime', 'id'],
         'related': ['pgroup', 'people']
     }
-    
-    
+
+
     model = am.Job
     template_path = 'schedhuler/schd_i_tourlist_job.html'
     fields = ['jobname', 'people__peoplename', 'pgroup__groupname', 'fromdate', 'uptodate',
@@ -307,7 +307,7 @@ class Retrive_I_ToursJobneed(LoginRequiredMixin, View):
     def get(self, request, *args, **kwargs):
         '''returns jobneed (internal-tours) from db'''
         response, session = None, request.session
-        
+
         try:
             log.info('Retrieve internal tours(jobneed) view')
             dt = datetime.now(tz=timezone.utc) - timedelta(days=10)
@@ -321,7 +321,7 @@ class Retrive_I_ToursJobneed(LoginRequiredMixin, View):
             cxt = self.paginate_results(request, objects)
             log.info('Results paginated' if objects else "")
             response = render(request, self.template_path, context=cxt)
-        
+
         except EmptyResultSet:
             log.warning('empty objects retrieved', exc_info=True)
             response = render(request, self.template_path, context=cxt)
@@ -339,13 +339,13 @@ class Retrive_I_ToursJobneed(LoginRequiredMixin, View):
         '''paginate the results'''
         log.info('Pagination Start' if objects else "")
         from .filters import InternalTourFilter
-        
+
         if request.GET:
             objects = InternalTourFilter(request.GET, queryset=objects).qs
         filterform = InternalTourFilter().form
         page = request.GET.get('page', 1)
         paginator = Paginator(objects, 25)
-        
+
         try:
             tour_list = paginator.page(page)
         except PageNotAnInteger:
@@ -368,7 +368,7 @@ class Get_I_TourJobneed(LoginRequiredMixin, View):
     def get(self, request, *args, **kwargs):
         log.info("retrieving internal tour datasource[jobneed]")
         parent_jobneed, response = kwargs.get('pk'), None
-        
+
         try:
             obj = self.model.objects.get(id=parent_jobneed)
             form = self.form_class(instance=obj, initial=self.initial)
@@ -377,11 +377,11 @@ class Get_I_TourJobneed(LoginRequiredMixin, View):
             cxt = {'internaltourform': form, 'child_internaltour': self.subform(prefix='child'), 'edit': True,
                    'checkpoints': checkpoints}
             response = render(request, self.template_path, context=cxt)
-        
+
         except self.model.DoesNotExist:
             log.error('object does not exist', exc_info=True)
             response = redirect('schedhuler:retrieve_internaltours')
-        
+
         except Exception:
             log.critical('something went wron', exc_info=True)
             response = redirect('schedhuler:retrieve_internaltours')
@@ -393,7 +393,7 @@ class Get_I_TourJobneed(LoginRequiredMixin, View):
     def get_checkpoints(self, obj):
         log.info("getting checkpoints for the internal tour [start]")
         checkpoints = None
-        
+
         try:
             checkpoints = self.model.objects.select_related(
                 'parent', 'asset', 'qset', 'pgroup',
@@ -403,11 +403,11 @@ class Get_I_TourJobneed(LoginRequiredMixin, View):
                 'asset__assetname', 'asset__id', 'qset__id',
                 'qset__qset_name', 'plandatetime', 'expirydatetime',
                 'gracetime', 'seqno', 'jobstatus', 'id').order_by('seqno')
-        
+
         except Exception:
             log.critical("something went wrong", exc_info=True)
             raise
-        
+
         else:
             log.info("checkpoints retrieved returned success")
         return checkpoints
@@ -453,7 +453,7 @@ class Schd_E_TourFormJob(LoginRequiredMixin, View):
         }
 
     def get(self, request, *args, **kwargs):
-        
+
         log.info("create a guard tour requested")
         cxt = {'schdexternaltourform': self.form_class(
             request=request, initial=self.initial),
@@ -717,8 +717,8 @@ def save_sites_in_job(request, parentid):
     except Exception:
         log.critical("something went wrong!", exc_info=True)
         raise
-    
-    
+
+
 
 class SchdTaskFormJob(LoginRequiredMixin, View):
     template_path = 'schedhuler/schd_taskform_job.html'
@@ -814,14 +814,14 @@ class RetriveSchdTasksJob(LoginRequiredMixin, View):
               'fromdate', 'uptodate', 'qset__qsetname', 'asset__assetname',
               'planduration', 'gracetime', 'expirytime', 'id']
     related = ['pgroup', 'people', 'asset']
-    
+
     def get(self, request, *args, **kwargs):
         '''returns the paginated results from db'''
         R, resp = request.GET, None
         try:
             # first load the template
             if R.get('template'): return render(request, self.template_path)
-            
+
             #then load the table with objects for table_view
             if R.get('action') == 'list':
                 log.info('Retrieve Tasks view')
@@ -883,7 +883,7 @@ class UpdateSchdTaskJob(SchdTaskFormJob):
                            'alert alert-danger')
             response = redirect('schedhuler:create_task')
         return response
-    
+
 
 class RetrieveTasksJobneed(LoginRequiredMixin, View):
     model         = am.Jobneed
@@ -902,7 +902,7 @@ class RetrieveTasksJobneed(LoginRequiredMixin, View):
     def get(self, request, *args, **kwargs):
         '''returns jobneed (tasks) from db'''
         response, session = None, request.session
-        
+
         try:
             log.info('Retrieve tasks(jobneed) view')
             dt      = datetime.now(tz=timezone.utc) - timedelta(days=10)
@@ -917,7 +917,7 @@ class RetrieveTasksJobneed(LoginRequiredMixin, View):
             cxt = self.paginate_results(request, objects)
             log.info('Results paginated' if objects else "")
             response = render(request, self.template_path, context=cxt)
-        
+
         except EmptyResultSet:
             log.warning('no objects found', exc_info=True)
             response = render(request, self.template_path, context=cxt)
@@ -935,13 +935,13 @@ class RetrieveTasksJobneed(LoginRequiredMixin, View):
         '''paginate the results'''
         log.info('Pagination Start' if objects else "")
         from .filters import TaskListJobneedFilter
-        
+
         if request.GET:
             objects = TaskListJobneedFilter(request.GET, queryset=objects).qs
         filterform = TaskListJobneedFilter().form
         page = request.GET.get('page', 1)
         paginator = Paginator(objects, 25)
-        
+
         try:
             tour_list = paginator.page(page)
         except PageNotAnInteger:
@@ -963,7 +963,7 @@ class GetTaskFormJobneed(LoginRequiredMixin, View):
     def get(self, request, *args, **kwargs):
         log.info("retrieving task datasource[jobneed]")
         parent_jobneed, response = kwargs.get('pk'), None
-        
+
         try:
             obj = self.model.objects.get(id=parent_jobneed)
             form = self.form_class(instance=obj)
@@ -971,11 +971,11 @@ class GetTaskFormJobneed(LoginRequiredMixin, View):
             log.info("object retrieved %s" % (obj.jobdesc))
             cxt = {'taskformjobneed': form, 'edit': True}
             response = render(request, self.template_path, context=cxt)
-        
+
         except self.model.DoesNotExist:
             log.error('object does not exist', exc_info=True)
             response = redirect('schedhuler:retrieve_tasksjobneed')
-        
+
         except Exception:
             log.critical('something went wron', exc_info=True)
             response = redirect('schedhuler:retrieve_tasksjobneed')
@@ -1000,7 +1000,7 @@ class Ticket(LoginRequiredMixin, View):
         'jobstatus'  : am.Jobneed.JobStatus.NEW,
         'priority'   : am.Jobneed.Priority.MEDIUM,
     }
-    
+
     def get(self, request, *args, **kwargs):
         log.info('create ticket requested!')
         if request.GET.get('delete_ticket'):
@@ -1039,7 +1039,7 @@ class Ticket(LoginRequiredMixin, View):
             response = rp.JsonResponse(
                 {'errors': 'Failed to process form, something went wrong'}, status=404)
         return response
-    
+
     def process_valid_form(request, form, create):
         resp = None
         try:
@@ -1063,7 +1063,7 @@ class Ticket(LoginRequiredMixin, View):
                 status=200)
         log.info("ticket form processing/saving [ END ]")
         return resp
-    
+
     def process_invalid_form(self, form):
         log.info(
             "processing invalidt ticket form sending errors to the client [ START ]")
@@ -1071,11 +1071,11 @@ class Ticket(LoginRequiredMixin, View):
         log.info(
             "processing invalidt ticket form sending errors to the client [ END ]")
         return rp.JsonResponse(cxt, status=404)
-    
+
 
     def delete_ticket(self, request):
         pass
-    
+
 
 class RetriveTickets(LoginRequiredMixin, View):
     model = am.Jobneed
@@ -1088,7 +1088,7 @@ class RetriveTickets(LoginRequiredMixin, View):
     related = [
         'pgroup', 'people', 'cuser',
         'performedby', 'bu', 'ticketcategory']
-    
+
     def get(self, request, *args, **kwargs):
         '''returns the paginated results from db'''
         response = None
@@ -1131,8 +1131,8 @@ class RetriveTickets(LoginRequiredMixin, View):
         except EmptyPage:
             ticket_list = paginator.page(paginator.num_pages)
         return {'ticket_list': ticket_list, 'ticket_filter': filterform}
-    
-    
+
+
 
 class JobneedTours(LoginRequiredMixin, View):
     params = {
@@ -1143,13 +1143,13 @@ class JobneedTours(LoginRequiredMixin, View):
         'related': ['pgroup',  'ticketcategory', 'asset', 'client',
                'frequency', 'job', 'qset', 'people', 'parent', 'bu']
     }
-    
+
     def get(self, request, *args, **kwargs):
         R = request.GET
-        
+
         # first load the template
         if R.get('template'): return render(request, self.params['template_path'])
-        
+
         #then load the table with objects for table_view
         if R.get('action', None) == 'list' or R.get('search_term'):
             dt = datetime.now(tz=timezone.utc) - timedelta(days=10)
@@ -1160,7 +1160,7 @@ class JobneedTours(LoginRequiredMixin, View):
             ).values(*self.fields).order_by('-plandatetime')
             resp = rp.JsonResponse(data = {'data':list(objs)})
         return resp
-    
+
 
 
 class JobneedTasks(LoginRequiredMixin, View):
@@ -1178,13 +1178,13 @@ class JobneedTasks(LoginRequiredMixin, View):
         'template_form':'schedhuler/taskform_jobneed.html',
         'form_class':scd_forms.TaskFormJobneed
     }
-    
+
     def get(self, request, *args, **kwargs):
         R = request.GET
-        
+
         # first load the template
         if R.get('template'): return render(request, self.params['template_path'])
-        
+
         #then load the table with objects for table_view
         if R.get('action', None) == 'list' or R.get('search_term'):
             p = self.params
@@ -1192,14 +1192,14 @@ class JobneedTasks(LoginRequiredMixin, View):
                 p['related'], p['fields'], request.session)
             resp = rp.JsonResponse(data = {'data':list(objs)})
             return resp
-    
+
         #load form with instance
         elif R.get('id'):
             obj = utils.get_model_obj(int(R['id']), request, self.params)
             cxt = {'taskformjobneed':self.params['form_class'](request=request, instance=obj),
                     'edit':True}
             return render(request, self.params['template_form'], context=cxt)
-    
+
 
 
 class SchdTasks(LoginRequiredMixin, View):
@@ -1227,12 +1227,12 @@ class SchdTasks(LoginRequiredMixin, View):
                 'expirytime'  : 5
             }
     }
-    
+
     def get(self, request, *args, **kwargs):
         R = request.GET
         # first load the template
         if R.get('template'): return render(request, self.params['template_path'])
-        
+
         #then load the table with objects for table_view
         if R.get('action') == 'list':
             log.info('Retrieve Tasks view')
@@ -1242,28 +1242,28 @@ class SchdTasks(LoginRequiredMixin, View):
             ).values(*self.params['fields']).order_by('-cdtz')
             log.info(f'Tasks objects {len(objects)} retrieved from db' if objects else "No Records!")
             return rp.JsonResponse(data = {'data':list(objects)})
-        
+
         #load form with instance
         elif R.get('id'):
             obj = utils.get_model_obj(int(R['id']), request, self.params)
             cxt = {'schdtaskform':self.params['form_class'](request=request, instance=obj),
                     'edit':True}
             return render(request, self.params['template_form'], context=cxt)
-        
+
         #return empty form
         elif R.get('action') == 'form':
             cxt = {
             'schdtaskform':self.params['form_class'](initial = self.params['initial'], request=request)
             }
             return render(request, self.params['template_form'], context=cxt)
-        
+
         elif R.get('runscheduler'):
             #run job scheduler
             pass
-    
+
     def post(self, request, *args, **kwargs):
         R = request.POST
-        
+
         log.info('Task form submitted')
         data, create = QueryDict(R['formData']), True
         utils.display_post_data(data)
@@ -1321,9 +1321,9 @@ class SchdTasks(LoginRequiredMixin, View):
         log.info(
             "processing invalidt task form sending errors to the client [ END ]")
         return rp.JsonResponse(cxt, status=404)
-        
-        
-        
+
+
+
 class InternalTourScheduling(LoginRequiredMixin, View):
     params = {
         'model'        : am.Job,
@@ -1348,14 +1348,14 @@ class InternalTourScheduling(LoginRequiredMixin, View):
         'fields'       : ['id', 'jobname', 'people__peoplename', 'pgroup__groupname', 'fromdate', 'uptodate',
                         'planduration', 'gracetime', 'expirytime']
     }
-    
-    
+
+
     def get(self, request, *args, **kwargs):
         R, P = request.GET, self.params
         #return template
         if R.get('template') == 'true':
             return render(request, P['template_list'])
-        
+
         match R.get('action'):
             case "list":
                 objs = P['model'].objects.get_scheduled_internal_tours(
@@ -1366,7 +1366,7 @@ class InternalTourScheduling(LoginRequiredMixin, View):
                 cxt = {'schdtourform':P['form_class'](request=request, initial=P['initial']),
                        'childtour_form':P['json_form']()}
                 return render(request, P['template_form'], cxt)
-            
+
 
     def post(self, request, *args, **kwargs):
         R, P = request.GET, self.params
@@ -1387,8 +1387,8 @@ class InternalTourScheduling(LoginRequiredMixin, View):
         except Exception:
             resp = utils.handle_Exception(request)
         return resp
-    
-    
+
+
     def handle_valid_form(self, form, assigned_sites,  request):
         data = request.POST.get('formData')
         with transaction.atomic(using=utils.get_current_db_name()):

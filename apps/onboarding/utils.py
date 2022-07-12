@@ -198,7 +198,7 @@ def create_bv_reportting_heirarchy(instance, newcode, newtype, parent):
         else:
             dbg("Updating heirarchy of branch Node")
             update_children_tree(instance, newcode, newtype.tacode)
-        
+
 
 def create_tenant(buname, bucode):
     # create_tenant for every client

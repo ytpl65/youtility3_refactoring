@@ -14,7 +14,7 @@ class SiteReportListFilter(dfs.FilterSet):
         ('INPROGRESS', 'Inprogress'),
         ('PARTIALLYCOMPLETED', 'Partially Completed')
     ]
-    
+
     plandatetime = dfs.DateFromToRangeFilter(widget=wg.RangeWidget(attrs={'placeholder': 'YYYY/MM/DD'}), label='Plan Datetime')
     jobdesc      = dfs.CharFilter(field_name='jobdesc', lookup_expr='icontains', label='Site Report')
     jobstatus    = dfs.ChoiceFilter(field_name='jobstatus', choices = JOBSTATUSCHOICES, label="Status", widget = s2forms.Select2Widget)
@@ -28,7 +28,7 @@ class SiteReportListFilter(dfs.FilterSet):
         model = Jobneed
         fields = ('plandatetime', 'jobdesc', 'peopleid', 'bu', 'jobstatus', 'gpslocation',
                   'distance', 'remarks')
-    
+
     def __init__(self, *args, **kwargs):
         super(SiteReportListFilter, self).__init__(*args, **kwargs)
         for visible in self.form.visible_fields():
@@ -40,7 +40,7 @@ class SiteReportListFilter(dfs.FilterSet):
                 visible.field.widget.attrs['class'] = 'form-select'
                 visible.field.widget.attrs['data-placeholder'] = 'Select an option'
                 visible.field.widget.attrs['data-allow-clear'] = 'true'
-                
+
 
 class MasterReportTemplateFilter(dfs.FilterSet):
     qsetname = dfs.CharFilter(field_name='qsetname', lookup_expr='qset_name__icontains', label='Site Report')

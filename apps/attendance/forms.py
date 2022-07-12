@@ -50,7 +50,7 @@ class AttendanceForm(forms.ModelForm):
         result = super().is_valid()
         utils.apply_error_classes(self)
         return result 
-    
+
 def clean_geometry(val):
     try:
         val = GEOSGeometry(val, srid=4326)
@@ -66,7 +66,7 @@ class ConveyanceForm(forms.ModelForm):
         required=True,
         widget=s2forms.Select2MultipleWidget,
         label='Transport Modes')
-    
+
     class Meta:
         model=atdm.PeopleEventlog
         fields = ['people', 'transportmodes', 'expamt', 'duration', 'ctzoffset',
@@ -83,9 +83,9 @@ class ConveyanceForm(forms.ModelForm):
             'punchintime':'Start Time',
             'punchouttime':'End Time',
             'distance':'Distance'}
-        
 
-    
+
+
     def __init__(self, *args, **kwargs):
         self.request = kwargs.pop('request', None)
         super().__init__(*args, **kwargs)
@@ -93,27 +93,27 @@ class ConveyanceForm(forms.ModelForm):
         for visible in self.visible_fields():
             if visible.name in ['startlocation', 'endlocation', 'expamt', 'transportmodes']:
                 visible.required = False
-        
+
     def clean(self):
         super(ConveyanceForm, self).clean()
         ic(self.cleaned_data)
-    
+
     def is_valid(self) -> bool:
         """Adds 'is-invalid' class to invalid fields"""
         result = super().is_valid()
         utils.apply_error_classes(self)
         return result
-    
+
     def clean_startlocation(self):
         if val := self.cleaned_data.get('startlocation'):
             val = clean_geometry(val)
         return val
-    
+
     def clean_endlocation(self):
         if val := self.cleaned_data.get('endlocation'):
             val = clean_geometry(val)
         return val
-    
+
     def clean_journeypath(self):
         if val := self.cleaned_data.get('journeypath'):
             val = clean_geometry(val)
@@ -128,9 +128,9 @@ class TrackingForm(forms.ModelForm):
         model = atdm.Tracking
         fields = ['deviceid', 'gpslocation', 'receiveddate', 
                   'people', 'transportmode']
-        
+
     def clean_gpslocation(self):
         if val := self.cleaned_data.get('gpslocation'):
             val = clean_geometry(val)
         return val
-    
+

@@ -43,8 +43,8 @@ def validate_alertabove(forms, data):
     if alertabove > max: raise forms.ValidationError(msg)
     print("utils", alertabove)
     return alertabove    
-    
-    
+
+
 def validate_options(forms, val):
     obj = json.loads(val)
     options = []
@@ -62,7 +62,7 @@ def validate_alerton(forms, val):
     list_string = json.dumps(vlist)
     list        = json.loads(list_string)
     return json.dumps([each_string for each_string in list]).replace('"', "").replace("[", "").replace("]", "")
-    
+
 def initialize_alertbelow_alertabove(instance, form):
     alerton, below, above, li = instance.alerton, "", "", []
     print(alerton)
@@ -74,13 +74,13 @@ def initialize_alertbelow_alertabove(instance, form):
         print(li)
         form.fields['alertbelow'].initial = float(li[0])
         form.fields['alertabove'].initial = float(li[1])
-        
-        
+
+
 def init_assetincludes(form):
     form.fields['assetincludes'].initial = form.instance.assetincldes
-    
-    
-    
+
+
+
 def insert_questions_to_qsetblng(assigned_questions, model, fields, request):
     from django.db import transaction
     try:

@@ -11,7 +11,7 @@ class Schd_I_TourJobForm(JobForm):
     ASSIGNTO_CHOICES   = [('PEOPLE', 'People'), ('GROUP', 'Group')]
     assign_to          = forms.ChoiceField(choices=ASSIGNTO_CHOICES, initial="PEOPLE")
     required_css_class = "required"
-    
+
     class Meta(JobForm.Meta):
         exclude = ['shift']
         JobForm.Meta.widgets.update({
@@ -34,46 +34,46 @@ class Schd_I_TourJobForm(JobForm):
         self.fields['frequency'].widget.attrs   = {"style":"display:none"}
         self.fields['ticketcategory'].queryset = ob.TypeAssist.objects.filter(tatype__tacode="TICKETCATEGORY")
         utils.initailize_form_fields(self)
-        
 
-    
+
+
     def clean_from_date(self):
         if val := self.cleaned_data.get('fromdate'):
             val =  ob_utils.to_utc(val)
             return val
-    
+
     def clean_upto_date(self):
         if val := self.cleaned_data.get('uptodate'):
             val =  ob_utils.to_utc(val)
             return val
 
-    
+
     def is_valid(self) -> bool:
         """Add class to invalid fields"""
         result = super(Schd_I_TourJobForm, self).is_valid()
         utils.apply_error_classes(self)
         return result 
-    
-        
+
+
     def clean_slno(self):
         return -1
-    
+
     def clean(self):
         super().clean()
         bu = ob.Bt.objects.get(id = self.request.session['bu_id'])
         self.instance.jobdesc = f'{bu.buname} - {self.instance.jobname}'
-    
+
 
 
 class SchdChild_I_TourJobForm(JobForm): #job
     timeInChoices = [('MIN', 'Min'),('HRS', 'Hours')]
-    
+
     #timeIn = forms.ChoiceField(choices=timeInChoices, initial='MIN', widget=s2forms.Select2Widget)
 
 
     class Meta(JobForm.Meta):
         fields =['qset', 'people', 'asset', 'expirytime', 'seqno']
-    
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields['seqno'].widget.attrs = {'readonly':True}
@@ -81,7 +81,7 @@ class SchdChild_I_TourJobForm(JobForm): #job
 
 
 
-    
+
 
 class I_TourFormJobneed(JobNeedForm): #jobneed
     timeInChoices      = [('MIN', 'Min'),('HRS', 'Hour'), ('DAY', 'Day'), ('WEEK', 'Week')]
@@ -89,9 +89,9 @@ class I_TourFormJobneed(JobNeedForm): #jobneed
     assign_to          = forms.ChoiceField(choices=ASSIGNTO_CHOICES, initial="PEOPLE")
     timeIn             = forms.ChoiceField(choices=timeInChoices, initial='MIN', widget=s2forms.Select2Widget)
     required_css_class = "required"
-    
-    
-    
+
+
+
     def __init__(self, *args, **kwargs):
         """Initializes form add atttibutes and classes here."""
         self.request = kwargs.pop('request', None)
@@ -112,43 +112,43 @@ class I_TourFormJobneed(JobNeedForm): #jobneed
         result = super(I_TourFormJobneed, self).is_valid()
         ob_utils.apply_error_classes(self)
         return result
-        
-        
+
+
     def clean_plandatetime(self):
         if val := self.cleaned_data.get('plandatetime'):
             val =  ob_utils.to_utc(val)
             return val
-    
+
     def clean_expirydatetime(self):
         if val := self.cleaned_data.get('plandatetime'):
             val =  ob_utils.to_utc(val)
             return val
-        
+
     def clean_starttime(self):
         if val := self.cleaned_data.get('starttime'):
             val =  ob_utils.to_utc(val)
             return val
-    
+
     def clean_endtime(self):
         if val := self.cleaned_data.get('endtime'):
             val =  ob_utils.to_utc(val)
             return val
-        
+
     def clean_frequency(self):
         return "NONE"
-    
+
 class Child_I_TourFormJobneed(JobNeedForm):#jobneed
     class Meta(JobNeedForm.Meta):
         fields =['qset', 'asset', 'plandatetime', 'expirydatetime', 'gracetime']
-        
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         utils.initailize_form_fields(self)
-        
-        
+
+
 
 class TaskFormJobneed(I_TourFormJobneed):
-    
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields['jobdesc'].required = True
@@ -157,13 +157,13 @@ class TaskFormJobneed(I_TourFormJobneed):
             ic('iside')
             self.fields['asset'].queryset = am.Asset.objects.filter(identifier__in = ['Asset', 'Smartplace'])
             self.fields['qset'].queryset = am.QuestionSet.objects.filter(type = ['QUESTIONSET'])
-        
+
 
 
 
 class Schd_E_TourJobForm(JobForm):
     timeInChoices = [('MIN', 'Min'),('HRS', 'Hours')]
-    
+
     class Meta(JobForm.Meta):
         JobForm.Meta.labels.update({'bu':'Cluster'})
         exclude = ['jobdesc']
@@ -175,11 +175,11 @@ class Schd_E_TourJobForm(JobForm):
         self.fields['uptodate'].input_formats = settings.DATETIME_INPUT_FORMATS
         self.fields['ticketcategory'].initial = ob.TypeAssist.objects.get(tacode='AUTOCLOSED')
         utils.initailize_form_fields(self)
-        
-        
-        
 
-    
+
+
+
+
 
 class EditAssignedSiteForm(forms.Form):
     br_time   = forms.IntegerField(max_value=30, min_value=0, label="Breaktime", required=True)
@@ -199,12 +199,12 @@ class SchdTaskFormJob(JobForm):
     ASSIGNTO_CHOICES   = [('PEOPLE', 'People'), ('GROUP', 'Group')]
     timeInChoices      = [('MIN', 'Min'),('HRS', 'Hour'), ('DAY', 'Day')]
     required_css_class = "required"
-    
+
     planduration_type  = forms.ChoiceField(choices=timeInChoices, initial='MIN', widget=s2forms.Select2Widget)
     gracetime_type     = forms.ChoiceField(choices=timeInChoices, initial='MIN', widget=s2forms.Select2Widget)
     expirytime_type    = forms.ChoiceField(choices=timeInChoices, initial='MIN', widget=s2forms.Select2Widget)
     assign_to          = forms.ChoiceField(choices=ASSIGNTO_CHOICES, initial="PEOPLE")
-   
+
     class Meta(JobForm.Meta):
         exclude = ['shift']
         JobForm.Meta.widgets.update({
@@ -228,17 +228,17 @@ class SchdTaskFormJob(JobForm):
         self.fields['gracetime'].label         = 'Grace Time Before'
         self.fields['ticketcategory'].queryset = ob.TypeAssist.objects.filter(tatype__tacode="TICKETCATEGORY")
         utils.initailize_form_fields(self)
-        
+
     def clean(self):
         cd          = self.cleaned_data
         times_names = ['planduration', 'expirytime', 'gracetime']
         types_names = ['planduration_type', 'expirytime', 'gracetime']
-        
+
         times = [cd.get(time) for time in times_names]
         types = [cd.get(type) for type in types_names]
         for time, type in zip(times, types):
             self.cleaned_data[time] = self.convertto_mins(type, time)
-            
+
     def convertto_mins(self, _type, _time):
         if _type == 'HOURS':
             return _time * 60
@@ -246,15 +246,15 @@ class SchdTaskFormJob(JobForm):
             return _time * 24 * 60
         else:
             return _time            
-        
-        
+
+
 
 
 class TicketForm(JobNeedForm):
     ASSIGNTO_CHOICES   = [('PEOPLE', 'People'), ('GROUP', 'Group')]
     assign_to          = forms.ChoiceField(choices=ASSIGNTO_CHOICES, initial="PEOPLE")
     required_css_class = "required"
-    
+
     class Meta(JobNeedForm.Meta):
         JobNeedForm.Meta.widgets.update({
             'scantype'   : forms.TextInput(attrs={'style':'display:none'}),
@@ -278,32 +278,32 @@ class TicketForm(JobNeedForm):
         self.fields['asset'].label = 'Location'
         self.fields['ticketcategory'].queryset     = ob.TypeAssist.objects.filter(tatype__tacode="TICKETCATEGORY")
         utils.initailize_form_fields(self)
-        
+
     def is_valid(self) -> bool:
         """Add class to invalid fields"""
         result = super(I_TourFormJobneed, self).is_valid()
         ob_utils.apply_error_classes(self)
         return result
-    
+
     def clean_plandatetime(self):
         if val := self.cleaned_data.get('plandatetime'):
             val =  ob_utils.to_utc(val)
             return val
-    
+
     def clean_expirydatetime(self):
         if val := self.cleaned_data.get('plandatetime'):
             val =  ob_utils.to_utc(val)
             return val
-        
+
     def clean_starttime(self):
         if val := self.cleaned_data.get('starttime'):
             val =  ob_utils.to_utc(val)
             return val
-    
+
     def clean_endtime(self):
         if val := self.cleaned_data.get('endtime'):
             val =  ob_utils.to_utc(val)
             return val
-        
+
     def clean_frequency(self):
         return "NONE"

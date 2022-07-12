@@ -28,7 +28,7 @@ def peventlog_json():
 
 class PeopleEventlog(BaseModel, TenantAwareModel):
 
-    
+
     class TransportMode(models.TextChoices):
         BIKE     = ('BIKE', 'Bike')
         RICKSHAW = ('RICKSHAW', 'Rickshaw')
@@ -39,7 +39,7 @@ class PeopleEventlog(BaseModel, TenantAwareModel):
         NONE     = ('NONE', 'NONE')
         CAR      = ('CAR', 'Car')
         CAB      = ('CAB', 'Cab')
-    
+
     #id          = models.BigIntegerField(primary_key=True)
     uuid            = models.UUIDField(unique=True, editable=True, blank=True, default=uuid.uuid4)
     people          = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.RESTRICT, verbose_name='People')
@@ -80,7 +80,7 @@ class Tracking(models.Model):
         CONVEYANCE  = ('CONVEYANCE', 'Conveyance')
         EXTERNALTOUR = ('EXTERNALTOUR', 'External Tour')
         SITEVISIT = ('SITEVISIT', 'Site Visit')
-    
+
     #id           = models.BigIntegerField(primary_key=True)
     uuid          = models.UUIDField(unique=True, editable=True, blank=True, default=uuid.uuid4)
     deviceid      = models.CharField(max_length=40)
@@ -90,17 +90,16 @@ class Tracking(models.Model):
     transportmode = models.CharField(max_length=55)
     reference     = models.CharField(max_length=255, default=None)
     identifier    = models.CharField(max_length=55, choices=Identifier.choices, default=Identifier.NONE.value)
-    
-    
+
+
     class Meta:
         db_table = 'tracking'
 
-        
-        
+
+
 class TestGeo(models.Model):
     #id= models.BigIntegerField(primary_key=True)
     code = models.CharField(max_length=15)
     poly = PolygonField(geography=True, null=True)
     point = PointField(geography=True, null=True)
     line = LineStringField(geography=True, null=True)
-    

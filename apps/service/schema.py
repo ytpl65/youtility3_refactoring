@@ -44,7 +44,7 @@ class Query(MeQuery, ApiQuery,  graphene.ObjectType):
     testcases   = graphene.List(TestGeoType)
     viewer      = graphene.String()
     '''query-resolutions'''
-    
+
     @staticmethod
     def resolve_PELog_by_id(self, info, id):
         return PeopleEventlog.objects.get(
@@ -56,7 +56,7 @@ class Query(MeQuery, ApiQuery,  graphene.ObjectType):
     def resole_testcases(self, info):
         objs = TestGeo.objects.all()
         return list(objs)
-    
+
     @login_required
     def resolve_viewer(self, info, **kwargs):
         return  "validtoken" if info.context.user.is_authenticated else "tokenexpired"
