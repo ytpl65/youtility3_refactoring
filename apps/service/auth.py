@@ -51,7 +51,7 @@ def auth_check(info, input, returnUser, uclientip=None):
             clientIpList = people_validips.replace(" ", "").split(",")
             if uclientip is not None and uclientip not in clientIpList:
                 allowAccess = isAuth =False
-        if user.deviceid == '-1' or input.deviceid == user.deviceid: allowAccess=True
+        if user.deviceid in ('-1', input.deviceid): allowAccess=True
         else:
             if input.deviceid not in people_validimeis: isValidDevice=False
             allowAccess = isAuth =False
