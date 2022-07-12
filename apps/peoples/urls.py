@@ -4,7 +4,6 @@ from django.urls.conf import include
 from apps.peoples import views
 from django.conf.urls.static import static
 from apps.onboarding.wizard_urls import wizard_url_patterns2
-from apps.onboarding import wizard_views
 app_name = 'peoples'
 urlpatterns = [
     path('people_form/',              views.CreatePeople.as_view(),         name='people_form'),

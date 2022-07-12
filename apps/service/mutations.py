@@ -1,10 +1,8 @@
-from cv2 import trace
 import graphene
 from  graphql_jwt.shortcuts import get_token, get_payload
 from graphql_jwt.decorators import login_required
 from graphene.types.generic import GenericScalar
 from graphql import GraphQLError
-from numpy import rec
 from apps.service import utils as sutils
 from apps.core import utils as cutils
 from django.utils import timezone

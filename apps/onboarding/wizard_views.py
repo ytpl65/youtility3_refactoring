@@ -1,16 +1,10 @@
 #---------------------------- BEGIN client onboarding ---------------------------#
-from venv import create
 from django.http.response import JsonResponse
-from django.views.generic.base import RedirectView
-from django.http.request import QueryDict
 import apps.peoples.models as people_models
 import apps.peoples.views as people_views
 from . import views
-from django.core.exceptions import NON_FIELD_ERRORS
-from icecream.icecream import indented_lines
 import apps.onboarding.forms as obforms
 import apps.peoples.forms as people_forms
-from django.core.files.storage import FileSystemStorage
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.decorators import login_required
 import apps.onboarding.models as ob
@@ -37,7 +31,6 @@ class WizardView(LoginRequiredMixin, View):
 
     def get(self, request, *args, **kwargs):
         '''set wizard variables and call the first formview.'''
-        import json
         # getdata = json.loads(request.GET)
         draft, res = self.check_user_has_unsaved_wizards(request), None
 

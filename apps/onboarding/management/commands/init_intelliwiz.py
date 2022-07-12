@@ -1,4 +1,3 @@
-from lib2to3.pytree import Base
 from django.core.management.base import BaseCommand
 from apps.core import utils
 from django.db import transaction

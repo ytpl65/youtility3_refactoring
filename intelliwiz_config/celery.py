@@ -1,6 +1,5 @@
 # mysite/celery.py
 import os
-from django.conf import settings
 from celery import Celery
 
 # Set the default Django settings module for the 'celery' program.

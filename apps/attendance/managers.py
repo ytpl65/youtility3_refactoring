@@ -1,7 +1,5 @@
 from datetime import timedelta
-import re
 from django.db import models
-from apps.core import utils
 Q = models.Q
 class PELManager(models.Manager):
     use_in_migrations = True

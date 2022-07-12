@@ -7,7 +7,7 @@ from apps.activity.models import JobneedDetails
 from .serializers import InsertSerializer, JndSerializers, JobneedSerializer
 from .validators import clean_record
 from apps.attendance.models import PeopleEventlog
-from apps.activity.models import Job, Jobneed, Attachment
+from apps.activity.models import Jobneed, Attachment
 from apps.service.serializers import Messages
 from apps.core.utils import get_current_db_name
 from logging import getLogger

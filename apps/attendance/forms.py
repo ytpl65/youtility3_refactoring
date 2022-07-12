@@ -4,7 +4,6 @@ from apps.core import utils
 from django.contrib.gis.geos import GEOSGeometry
 import apps.attendance.models as atdm
 import apps.peoples.models as pm
-from django.utils.timezone import get_current_timezone as ctz
 
 class AttendanceForm(forms.ModelForm):
     required_css_class = "required"

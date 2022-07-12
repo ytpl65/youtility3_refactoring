@@ -11,12 +11,10 @@ from django.http import JsonResponse, QueryDict, response as rp
 from django.urls import reverse
 from django.contrib import messages
 from apps.reports import forms as rp_forms
-from django.db.models import Q
 from django.shortcuts import redirect
 from datetime import datetime, timedelta, timezone
 import logging
 from apps.activity.forms import QsetBelongingForm
-from django.forms.models import model_to_dict
 log = logging.getLogger('__main__')
 # Create your views here.
 

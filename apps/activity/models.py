@@ -1,12 +1,8 @@
-from calendar import c
-from doctest import FAIL_FAST
 import uuid
-from email.policy import default
 from apps.peoples.models import BaseModel
 from django.utils.translation import gettext_lazy as _
 from django.core.serializers.json import DjangoJSONEncoder
 from apps.tenants.models import TenantAwareModel
-from django.conf import settings
 from django.db import models
 from datetime import datetime
 from django.contrib.gis.db.models import PointField

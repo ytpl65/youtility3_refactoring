@@ -1,4 +1,3 @@
-from distutils.log import Log, error
 import logging
 from django.views.decorators.cache import cache_page
 from django.utils.decorators import method_decorator
@@ -9,7 +8,7 @@ from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.views import View
 from django.db.models import Q
 from django.contrib import messages
-from django.http import Http404, HttpResponse, response as rp
+from django.http import response as rp
 from django.core.cache.backends.base import DEFAULT_TIMEOUT
 from django.db.utils import IntegrityError
 from django.conf import settings
@@ -17,8 +16,6 @@ from icecream import ic
 from django.core.exceptions import (EmptyResultSet)
 from django.db.models import RestrictedError
 from django.http.request import QueryDict
-from pydantic import Json
-from pytest import param
 from .models import Shift, SitePeople, TypeAssist, Bt, GeofenceMaster
 from apps.peoples.utils import  save_userinfo
 import apps.onboarding.forms as obforms

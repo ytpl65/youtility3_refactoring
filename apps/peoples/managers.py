@@ -1,7 +1,5 @@
-from xmlrpc.client import UNSUPPORTED_ENCODING
 from django.contrib.auth.base_user import BaseUserManager
 from django.db import models
-from django.conf import settings
 from django.db.models import Q, F
 from django.utils.translation import ugettext_lazy as _
 from icecream import ic
@@ -74,7 +72,6 @@ class PeopleManager(BaseUserManager):
 
 class CapabilityManager(models.Manager):
     use_in_migrations = True
-    from apps.peoples import models as pm
     def get_webparentdata(self):
         return self.filter(cfor= self.pm.Capability.Cfor.WEB, parent__capscode='NONE')
 

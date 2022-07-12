@@ -1,4 +1,3 @@
-from django.contrib.auth import  login, logout
 
 from apps.peoples.models import People
 

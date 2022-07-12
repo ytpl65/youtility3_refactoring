@@ -1,19 +1,15 @@
-from operator import ge
 from typing import Type
-from charset_normalizer import from_path
 import graphene
-from numpy import True_, greater
-from pyparsing import counted_array
 from apps.core import utils
 from django.db import connections
 from collections import namedtuple
 from logging import getLogger
 log = getLogger('__main__')
-from apps.activity.models import Asset, Job, Jobneed, JobneedDetails, Question, QuestionSet, QuestionSetBelonging
+from apps.activity.models import JobneedDetails, Question, QuestionSet, QuestionSetBelonging
 from apps.peoples.models import Pgbelonging, Pgroup, People
 from apps.onboarding.models import GeofenceMaster, Bt
-from .types import (PeopleType,QSetType, QuestionType, QSetBlngType,PgBlngType, VerifyClientOutput,
-TyType, TypeAssist, AssetType, JobneedMdtzAfter, JndType, PgroupType, SelectOutputType)
+from .types import (VerifyClientOutput,
+TypeAssist, SelectOutputType)
 
 
 class Query(graphene.ObjectType):

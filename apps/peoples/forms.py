@@ -143,7 +143,6 @@ class PeopleForm(forms.ModelForm):
         return result
 
     def clean(self):
-        from datetime import datetime
         super(PeopleForm, self).clean()
         dob = self.cleaned_data.get('dateofbirth')
         doj = self.cleaned_data.get('dateofjoin')
