@@ -740,8 +740,6 @@ def format_data(objects):
     for i, d in enumerate(objects):
         for c in columns:
             rows[i][c] = "" if rows[i][c] is None else str(rows[i][c])
-            del c
-        del i, d
     data['rows'] = rows
     return data
 
@@ -981,7 +979,6 @@ def fr(imagePath1, imagePath2):
         logger.error(
             f"Face Recongition of {imagePath1} {imagePath2}", exc_info=True)
         raise Exception
-    del image1, image2
     return status, msg
 
 

@@ -87,7 +87,6 @@ def detect_QR(cv2, decode, np, time):
         msg = """Please check your webcam's power 
                 on/off or try connecting it to different usb slot"""
         status = 404
-    del timeOut  
     return rp.JsonResponse({"message":msg, 'title':title, 'decoded':code}, status=status)
 
 def get_actual_img(code, detectFace):
@@ -152,7 +151,6 @@ def recognize_face(cv2, np, time, code):
         msg = """Please check your webcam's power
                 on/off or try connecting it to different usb slot"""
         status = 404
-    del timeOut
     log.debug("msg: %s, title: %s, decoded:%s"%(msg, title, code))
     return rp.JsonResponse({"message":msg, 'title':title, 'decoded':code}, status=status)
 
