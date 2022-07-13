@@ -50,8 +50,6 @@ def get_bu_prefform(bt):
 
 
 def get_tatype_choices(superadmin=False):
-    from .models import TypeAssist
-    from django.db.models.query_utils import Q
 
     if superadmin:
         return TypeAssist.objects.all()
@@ -104,7 +102,6 @@ def get_choice(li):
 def get_webcaps_choices():  # sourcery skip: merge-list-append
     '''Populates parent data in parent-multi-select field'''
     from apps.peoples.models import Capability
-    from django.db.models import Q
     from ..core.raw_queries import query
     parent_menus = Capability.objects.raw(query['get_web_caps_for_client'])
     for i in parent_menus:

@@ -14,7 +14,7 @@ def create_dummy_clientandsite():
     Returns:
         _type_: _description_
     """
-    from apps.onboarding.models import Bt, TypeAssist
+    from apps.onboarding.models import TypeAssist
     try:
         #clienttype = TypeAssist.objects.get(tatype__tacode = 'BVIDENTIFIER', tacode='CLIENT')
         #sitetype = TypeAssist.objects.get(tatype__tacode = 'BVIDENTIFIER', tacode='SITE')
@@ -81,7 +81,6 @@ class Command(BaseCommand):
 
 
     def handle(self, *args, **options):
-        from apps.onboarding.models import Bt
 
         try:
             db = options['db'][0]

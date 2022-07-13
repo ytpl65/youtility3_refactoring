@@ -916,7 +916,6 @@ def save_common_stuff(request, instance, is_superuser=False):
 
 
 def create_tenant_with_alias(db):
-    from apps.tenants.models import Tenant
     Tenant.objects.create(
         tenantname=db.upper(),
         subdomain_prefix=db
@@ -924,7 +923,6 @@ def create_tenant_with_alias(db):
 
 
 def get_record_from_input(input):
-    import json
     try:
         ic(input.values)
         values = eval(json.dumps(input.values))
@@ -1007,7 +1005,6 @@ def printsql(objs):
 def get_select_output(objs):
     if not objs:
         return None, 0, "No records"
-    import json
     records = json.dumps(list(objs), default=str)
     count = objs.count()
     msg = f'Total {count} records fetched successfully!'
@@ -1059,7 +1056,6 @@ def dictfetchall(cursor):
     ]
 
 def getformatedjson(geofence=None, jsondata=None, rettype=dict):
-    import json
     data = jsondata or geofence.geojson
     geodict = json.loads(data)
     result = [{'lat': lat, 'lng': lng} for lng, lat in geodict['coordinates'][0]]

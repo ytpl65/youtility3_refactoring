@@ -31,8 +31,6 @@ class QuestionManager(models.Manager):
     related = ['client', 'muser', 'cuser', 'category', 'unit']
 
     def get_questions_modified_after(self, mdtz):
-
-        from datetime import datetime
         mdtzinput = datetime.strptime(mdtz, "%Y-%m-%d %H:%M:%S")
         qset = self.select_related(*self.related).filter(~Q(id=1), mdtz__gte = mdtzinput).values(*self.fields)
         return qset or None
@@ -48,7 +46,6 @@ class JobneedManager(models.Manager):
         return self.raw(f"select * FROM get_schedule_for_adhoc({pdt}, {buid}, {peopleid}, {assetid}, {qsetid})")
 
     def get_jobneedmodifiedafter(self, mdtz, peopleid, siteid):
-        from datetime import datetime
         mdtzinput = mdtz if (isinstance(mdtz, datetime)) else datetime.strptime(mdtz, "%Y-%m-%d %H:%M:%S")
         return self.raw("select * from fn_getjobneedmodifiedafter('%s', %s, %s) as id", [mdtzinput, peopleid, siteid]) or self.none()
 
@@ -122,7 +119,6 @@ class JobneedManager(models.Manager):
     def get_adhoctasks_listview(self, R, task=True):
         idf = 'TASK' if task else 'TOUR'
         qobjs, dir,  fields, length, start = utils.get_qobjs_dir_fields_start_length(R)
-        from datetime import datetime
         now = datetime.now()
         qset = self.select_related(
                  'performedby', 'qset', 'asset').filter(
@@ -184,7 +180,6 @@ class AssetManager(models.Manager):
               'category_id','client_id','cuser_id','muser_id','parent_id','servprov_id','subcategory_id','tenant_id','type_id','unit_id']
 
     def get_assetdetails(self, mdtz, site_id):
-        from datetime import datetime
         mdtzinput = datetime.strptime(mdtz, "%Y-%m-%d %H:%M:%S")
         return self.filter(
             ~Q(id=1),
@@ -210,7 +205,6 @@ class JobneedDetailsManager(models.Manager):
               'min', 'max', 'alerton', 'question_id', 'jobneed_id', 'alerts', 'cuser_id', 'muser_id', 'tenant_id']
 
     def get_jndmodifiedafter(self, mdtz,jobneedid):
-        from datetime import datetime
         mdtzinput = datetime.strptime(mdtz, "%Y-%m-%d %H:%M:%S")
         if jobneedid:
             jobneedids = jobneedid.split(', ')
