@@ -4,7 +4,6 @@ DEFINE FUNCTIONS AND CLASSES WERE CAN BE USED GLOBALLY.
 import threading
 from PIL import ImageFile
 import os.path
-import numpy as np
 import json
 import django.shortcuts as scts
 from django.contrib import messages as msg
@@ -193,7 +192,6 @@ def local_to_utc(data, offset, mobile_web):
     # sourcery skip: avoid-builtin-shadow
     from datetime import datetime, timedelta
     import pytz
-    from django.utils.timezone import utc
     dateFormatMobile = "%Y-%m-%d %H:%M:%S"
     dateFormatWeb = "%d-%b-%Y %H:%M"
     format = dateFormatWeb if mobile_web == "web" else dateFormatMobile
@@ -276,7 +274,7 @@ def save_user_session(request, people):
 
     try:
         logger.info('saving user data into the session ... STARTED')
-        if people.is_superuser == True:
+        if people.is_superuser is True:
             request.session['is_superadmin'] = True
             session = request.session
             session['people_webcaps'] = session['client_webcaps'] = session['people_mobcaps'] = \
@@ -742,8 +740,6 @@ def format_data(objects):
     for i, d in enumerate(objects):
         for c in columns:
             rows[i][c] = "" if rows[i][c] is None else str(rows[i][c])
-            del c
-        del i, d
     data['rows'] = rows
     return data
 
@@ -809,8 +805,8 @@ def get_filter(field_name, filter_condition, filter_value):
 def get_paginated_results(requestData, objects, count,
                           fields, related, model):
     '''paginate the results'''
-    
-    
+
+
     logger.info('Pagination Start'if count else "")
     if not requestData.get('draw'):
         return {'data': []}
@@ -840,7 +836,7 @@ def get_paginated_results2(objs, count, params, R):
         'recordsFiltered':filtered,
         'recordsTotal':count
     })
-        
+
 
 def PD(data=None, post=None, get=None, instance=None, cleaned=None):
     """
@@ -892,7 +888,7 @@ def register_newuser_token(user, clientUrl):
 
 
 def clean_record(record):
-    
+
     from django.contrib.gis.geos import GEOSGeometry
 
     for k, v in record.items():
@@ -918,7 +914,6 @@ def save_common_stuff(request, instance, is_superuser=False):
 
 
 def create_tenant_with_alias(db):
-    from apps.tenants.models import Tenant
     Tenant.objects.create(
         tenantname=db.upper(),
         subdomain_prefix=db
@@ -926,7 +921,6 @@ def create_tenant_with_alias(db):
 
 
 def get_record_from_input(input):
-    import json
     try:
         ic(input.values)
         values = eval(json.dumps(input.values))
@@ -983,13 +977,12 @@ def fr(imagePath1, imagePath2):
         logger.error(
             f"Face Recongition of {imagePath1} {imagePath2}", exc_info=True)
         raise Exception
-    del image1, image2
     return status, msg
 
 
 def alert_observation(pk, event):
-    
-    
+
+
     pass
 
 
@@ -1004,12 +997,11 @@ def printsql(objs):
         print('SQL QUERY:\n', objs.query.__str__())
     except EmptyResultSet:
         print("NO SQL") 
-        
+
 
 def get_select_output(objs):
     if not objs:
         return None, 0, "No records"
-    import json
     records = json.dumps(list(objs), default=str)
     count = objs.count()
     msg = f'Total {count} records fetched successfully!'
@@ -1020,11 +1012,11 @@ def get_qobjs_dir_fields_start_length(R):
     qobjs=None
     if R.get('search[value]'):
         qobjs = searchValue2(R.getlist('fields[]'), R['search[value]'])
-        
+
     orderby, fields = R.getlist('order[0][column]'), R.getlist('fields[]')
     orderby  =  [orderby] if not isinstance(orderby, list) else orderby
     length, start = int(R['length']), int(R['start'])
-    
+
     for order in orderby:
         if order:
             ic(f'columns[{order}][data]')
@@ -1042,8 +1034,8 @@ def runrawsql(sql, args=None, db='default', named=False):
     cursor = connections[db].cursor()
     cursor.execute(sql, args)
     return namedtuplefetchall(cursor) if named else dictfetchall(cursor)
-    
-    
+
+
 def namedtuplefetchall(cursor):
     from collections import namedtuple
     "Return all rows from a cursor as a namedtuple"
@@ -1061,12 +1053,11 @@ def dictfetchall(cursor):
     ]
 
 def getformatedjson(geofence=None, jsondata=None, rettype=dict):
-    import json
     data = jsondata or geofence.geojson
     geodict = json.loads(data)
     result = [{'lat': lat, 'lng': lng} for lng, lat in geodict['coordinates'][0]]
     return result if rettype == dict else json.dumps(result)
-    
+
 
 
 class Error(Exception):

@@ -4,8 +4,7 @@ from import_export import widgets as wg
 import apps.tenants.models as tm
 from import_export.admin import ImportExportModelAdmin
 from apps.peoples import models as pm
-from .forms import (BtForm, ShiftForm, TypeAssistForm, BuPrefForm, SitePeopleForm,
-                    ContractDetailForm, ContractForm)
+from .forms import (BtForm, ShiftForm, )
 import apps.onboarding.models as om
 from apps.core import utils
 
@@ -45,7 +44,7 @@ class BaseFieldSet2(object):
         widget=wg.ForeignKeyWidget(tm.TenantAwareModel, 'tenantname'),
         saves_null_values=True
     )
-    
+
 
 
 
@@ -75,21 +74,21 @@ class TaResource(resources.ModelResource ):
         widget            = wg.ForeignKeyWidget(om.TypeAssist, 'tacode'),
         saves_null_values = True
     )
-    
+
     class Meta:
         model = om.TypeAssist
         skip_unchanged = True
         import_id_fields = ('id','tacode')
         report_skipped = True
         fields = ('id', 'taname', 'tacode', 'tatype', 'tenant', 'bu', 'client')
-    
-    
+
+
     def __init__(self, *args, **kwargs):
         self.is_superuser = kwargs.pop('is_superuser', None)
         self.request = kwargs.pop('request', None)
         super(TaResource, self).__init__(*args, **kwargs)
-    
-    
+
+
     def before_save_instance(self, instance, using_transactions, dry_run):
         instance.tacode = instance.tacode.upper()
         utils.save_common_stuff(self.request, instance, self.is_superuser)
@@ -105,7 +104,7 @@ class TaAdmin(ImportExportModelAdmin):
     list_display = (
         'id', 'tacode', 'tatype', 'mdtz', 'taname',
         'cuser', 'muser', 'cdtz', 'bu', 'client' )
-    
+
     def get_resource_kwargs(self, request, *args, **kwargs):
         return {'request': request}
 
@@ -125,7 +124,7 @@ class BtResource(resources.ModelResource, BaseFieldSet1):
         column_name='butype',
         attribute='butype',
         widget=wg.ForeignKeyWidget(om.TypeAssist, 'tacode'))
-    
+
     tenant = fields.Field(
         column_name='tenant',
         attribute='tenant',
@@ -159,8 +158,8 @@ class BtResource(resources.ModelResource, BaseFieldSet1):
             'identifier', 'parent', 'butype',
             'tenant', 
         ).all()
-    
-    
+
+
 @admin.register(om.Bt)
 class BtAdmin(ImportExportModelAdmin):
     resource_class = BtResource
@@ -177,8 +176,8 @@ class BtAdmin(ImportExportModelAdmin):
 
     def get_queryset(self, request):
         return om.Bt.objects.select_related('butype', 'identifier', 'parent').all()
-    
-    
+
+
 class ShiftResource(resources.ModelResource, BaseFieldSet1):
 
     class Meta:

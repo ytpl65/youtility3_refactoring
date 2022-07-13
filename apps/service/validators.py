@@ -1,8 +1,7 @@
-from django.conf import settings
 
 
 def clean_point_field(val):
-    
+
     from django.contrib.gis.geos import GEOSGeometry
     try:
         if not val: return val
@@ -12,7 +11,7 @@ def clean_point_field(val):
         return GEOSGeometry(val)
     except Exception:
         raise
-    
+
 
 def clean_code(val):
     val = str(val)
@@ -45,7 +44,6 @@ def clean_record(record):
     Cleans the record like code, 
     desc, gps fields, datetime fields etc
     """
-    import re
     for k, v in record.items():
         if k in ['jobdesc', 'remarks']:
             record[k] = clean_text(v)

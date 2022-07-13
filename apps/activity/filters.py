@@ -6,7 +6,7 @@ class QuestionFilter(django_filters.FilterSet):
     answertype = django_filters.CharFilter(field_name='answertype', lookup_expr='icontains', label='Type')
     unit       = django_filters.CharFilter(field_name='unit__tacode', lookup_expr='icontains', label='Unit')
     isworkflow = django_filters.CharFilter(field_name='isworkflow', lookup_expr='icontains', label='Is WorkFlow')
-    
+
     class Meta:
         model = am.Question
         fields = ['quesname', 'answertype', 'unit', 'isworkflow']
@@ -15,11 +15,11 @@ class QuestionFilter(django_filters.FilterSet):
 
 class MasterQsetFilter(django_filters.FilterSet):
     qsetname   = django_filters.CharFilter(field_name='qsetname', lookup_expr='icontains', label='Name')
-    
+
     class Meta:
         model = am.QuestionSet
         fields = ['qsetname']
-        
+
 
 class MasterAssetFilter(django_filters.FilterSet):
     assetcode   = django_filters.CharFilter(field_name='assetcode', lookup_expr='icontains', label='Code')
@@ -28,7 +28,7 @@ class MasterAssetFilter(django_filters.FilterSet):
     runningstatus = django_filters.CharFilter(field_name='runningstatus', lookup_expr='icontains', label='Status')
     enable = django_filters.CharFilter(field_name='enable', lookup_expr='icontains', label='Enable')
     gpslocation = django_filters.CharFilter(field_name='gpslocation', lookup_expr='icontains', label='GPS Location')
-    
+
     class Meta:
         model = am.Question
         fields = ['assetcode', 'assetname', 'parent', 'runningstatus','enable', 'gpslocation']

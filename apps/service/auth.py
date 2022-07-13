@@ -1,4 +1,3 @@
-from django.contrib.auth import  login, logout
 
 from apps.peoples.models import People
 
@@ -11,7 +10,7 @@ class Messages:
     MULTIDEVICES   = "Cannot login on multiple devices, Please logout from the other device"
     WRONGCREDS     = "Incorrect Username or Password"
     NOTREGISTERED  = "Device Not Registered"
-    
+
 
 def LoginUser(response, request):
     if response['isauthenticated']:
@@ -19,7 +18,7 @@ def LoginUser(response, request):
             id = response['user'].id).update(
                 deviceid = response['authinput'].deviceid)
         ic(request.user)
-    
+
 def LogOutUser(response, request):
     if response['isauthenticated']:
         People.objects.filter(
@@ -27,13 +26,12 @@ def LogOutUser(response, request):
                 deviceid = -1
             )
         ic(request.user)
-        
-        
-            
+
+
+
 def auth_check(info, input, returnUser, uclientip=None):
     from django.contrib.auth import authenticate
     from graphql import GraphQLError
-    from apps.peoples.models import People
     try:
         user = authenticate(
             info.context,
@@ -51,7 +49,7 @@ def auth_check(info, input, returnUser, uclientip=None):
             clientIpList = people_validips.replace(" ", "").split(",")
             if uclientip is not None and uclientip not in clientIpList:
                 allowAccess = isAuth =False
-        if user.deviceid == '-1' or input.deviceid == user.deviceid: allowAccess=True
+        if user.deviceid in ('-1', input.deviceid): allowAccess=True
         else:
             if input.deviceid not in people_validimeis: isValidDevice=False
             isAuth =False
@@ -70,13 +68,12 @@ def authenticate_user(input, request, msg, returnUser):
     deviceid = input.deviceid
 
     from graphql import GraphQLError
-    from apps.peoples.models import People
     from django.contrib.auth import authenticate
-    
+
     user = authenticate(request, username = loginid, password = password)
     if not user: raise GraphQLError(msg.WRONGCREDS)
     valid_imeis = user.client.bupreferences["validimei"].replace(" ", "").split(",")
-    
+
 
     if not user:
         raise GraphQLError(msg.WRONGCREDS)

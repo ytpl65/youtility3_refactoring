@@ -23,7 +23,7 @@ class MultiAuthentcationBackend(BaseBackend):
         except People.DoesNotExist:
             pass
         return result
-            
+
 
     def get_user(self, user_id):
         '''return user for given user_id'''

@@ -1,10 +1,6 @@
 import logging
-from time import time
-
-from django.http import QueryDict
 from apps.peoples import models as pm
 from apps.tenants.models import Tenant
-from django.db import transaction
 from apps.peoples import utils as putils
 logger = logging.getLogger('__main__')
 
@@ -135,7 +131,6 @@ def validate_mobileno(val):
 def save_tenant_client_info(request):
     from apps.core.utils import hostname_from_request, get_tenants_map
     from apps.onboarding.models import Bt
-    from apps.tenants.models import Tenant
     try:
         logger.info('saving tenant & client info into the session...STARTED')
         hostname = hostname_from_request(request)

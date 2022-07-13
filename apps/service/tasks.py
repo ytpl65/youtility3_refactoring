@@ -69,7 +69,7 @@ def get_or_create_dir(path):
 def write_file_to_dir(filebuffer, uploadedfile):
     from django.core.files.base import ContentFile
     from django.core.files.storage import default_storage
-    
+
     try:
         path = default_storage.save(uploadedfile, ContentFile(filebuffer.read()))
         log.info("file is uploaded in file system successfully...")
@@ -139,7 +139,7 @@ def call_service_based_on_filename(data, filename, db='default'):
             return perform_adhocmutation_bgt.delay(data, db=db)
         case _:
             return
-        
+
 
 
 
@@ -151,7 +151,7 @@ def perform_uploadattachment(file, tablename, record, biodata):
     log.info('perform_uploadattachment [start +]')
     try:
         import os
-        
+
         file_buffer = file
         #ic(file_buffer, type(file_buffer))
         filename = biodata['filename']
@@ -163,7 +163,7 @@ def perform_uploadattachment(file, tablename, record, biodata):
         uploadfile = f'{filepath}/{filename}'
         db = utils.get_current_db_name()
         log.info(f'here is the db got from get_current_db_name(): {db}')
-        
+
         with transaction.atomic(using=db):
             utils.set_db_for_router(db)
             log.info(f'router is connected to db:{db}')
@@ -176,11 +176,11 @@ def perform_uploadattachment(file, tablename, record, biodata):
         #from apps.activity.tasks import perform_facerecognition
         results = perform_facerecognition_bgt.delay(pelogid, peopleid, resp, home_dir, uploadfile, db)
         log.warn(f"face recognition status {results.state}")
-    
+
     except Exception as e:
         rc, traceback, msg = 1, tb.format_exc(), Messages.UPLOAD_FAILED
         log.error('something went wrong', exc_info=True)
-    
+
     log.info(f'rc:{rc}, msg:{msg}, traceback:{traceback}, returncount:{recordcount}')
     return ServiceOutputType(rc=rc, recordcount = recordcount, msg = msg, traceback = traceback)
 
@@ -219,7 +219,7 @@ def perform_insertrecord_bgt(self, data, request=None, filebased=True, db='defau
                             obj.endlocation,obj.punchouttime, obj.punchintime]):
                         log.info("save line string is started")
                         save_linestring_and_update_pelrecord(obj)
-                    
+
         except Exception:
             raise
         if recordcount:
@@ -232,7 +232,6 @@ def perform_insertrecord_bgt(self, data, request=None, filebased=True, db='defau
 
 
 def save_linestring_and_update_pelrecord(obj):
-    from apps.attendance.models import Tracking
     from django.contrib.gis.geos import LineString
     try:
         bet_objs = Tracking.objects.filter(reference=obj.uuid)
@@ -335,11 +334,11 @@ def perform_tasktourupdate_bgt(self, data, request=None, db='default'):
                 log.info(f'router is connected to db{db}')
                 if updated :=  update_record(details, jobneed, Jobneed, JobneedDetails, db):
                     recordcount+=1
-    
+
     except IntegrityError as e:
         log.error("Database Error", exc_info=True)
         rc, traceback, msg = 1, tb.format_exc(), Messages.UPLOAD_FAILED
-    
+
     except Exception as e:
         log.error('Something went wrong', exc_info=True)
         rc, traceback, msg = 1, tb.format_exc(), Messages.UPLOAD_FAILED
@@ -396,7 +395,7 @@ def save_parent_childs(sz, jn_parent_serializer, child, M, db):
                 #ic((details, type(details))
                 ch.update({'parent_id':parent.id})
                 child_serializer = sz.JobneedSerializer(data=clean_record(ch))
-                
+
                 if child_serializer.is_valid():
                     child_instance = child_serializer.save()
                     log.info(f'child instance saved its pk is {child_instance.id}')
@@ -410,7 +409,7 @@ def save_parent_childs(sz, jn_parent_serializer, child, M, db):
                             log.error(ch_detail_serializer.errors)
                             traceback, msg, rc = str(ch_detail_serializer.errors), M.INSERT_FAILED, 1
                     allsaved+=1
-                    
+
                 else:
                     log.error(child_serializer.errors)
                     traceback, msg, rc = str(child_serializer.errors), M.INSERT_FAILED, 1
@@ -430,11 +429,7 @@ def save_parent_childs(sz, jn_parent_serializer, child, M, db):
 
 @app.task(bind=True, default_retry_delay=300, max_retries=5)
 def perform_facerecognition_bgt(self, pelogid, peopleid, ownerid, home_dir, uploadfile, db='default'):
-    from apps.activity.models import Attachment
-    from apps.attendance.models import PeopleEventlog
-    from django.db import transaction
-    from apps.core import utils
-    
+
     log.info("perform_facerecognition ...start [+]")
     log.info(f'parameters are pelogid:{pelogid} peopleid:{peopleid} ownerid:{ownerid} typeof ownerid: {type(ownerid)} home_dir:{home_dir} uploadfile:{uploadfile}')
     try:
@@ -463,7 +458,7 @@ def perform_facerecognition_bgt(self, pelogid, peopleid, ownerid, home_dir, uplo
         log.error("something went wrong!", exc_info=True)
         self.retry(e)
         raise
-    
+
 
 @app.task(bind=True, default_retry_delay=300, max_retries=5)
 def perform_adhocmutation_bgt(self, data, db='default'):
@@ -500,9 +495,9 @@ def perform_adhocmutation_bgt(self, data, db='default'):
                         isJnUpdated = jnsz.save()
                     else:
                         rc, traceback, msg = 1, jnsz.errors, 'Operation Failed'
-                    
+
                     JND = JobneedDetails.objects.filter(jobneed_id = jnid).values()
-                    
+
                     for jnd in JND:
                         for dtl in details:
                             if jnd['question_id'] == dtl['question_id']:
@@ -513,12 +508,12 @@ def perform_adhocmutation_bgt(self, data, db='default'):
                                     jndsz.save()
                     msg = "Scheduled Record (ADHOC) updated successfully!"
                     log.info(f'{msg}')
-                
+
                 #have to insert/create to adhoc task
                 else:
                     record = clean_record(jobneedrecord)
                     jnsz = sz.JobneedSerializer(data = record)
-                    
+
                     if jnsz.is_valid():
                         jninstance = jnsz.save()
                         log.debug(f'jninstance.is {jninstance.id}')
@@ -536,7 +531,7 @@ def perform_adhocmutation_bgt(self, data, db='default'):
                         #TODO send_email for ADHOC 
                         pass
             #TODO send_email for Observation
-                    
+
     except utils.NoDataInTheFileError as e:
         rc, traceback = 1, tb.format_exc()
         log.error('something went wrong', exc_info=True)

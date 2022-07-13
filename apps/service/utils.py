@@ -3,14 +3,14 @@ def get_object(uuid, model):
         return model.objects.get(uuid = uuid)
     except model.DoesNotExist as e:
         raise Exception from e
-    
-    
+
+
 def save_jobneeddetails(data):
     import json
     jobneeddetails_post_data = json.loads(data['jobneeddetails'])
-    
 
-        
+
+
 def get_or_create_dir(path):
     try:
         import os
@@ -26,7 +26,7 @@ def get_or_create_dir(path):
 def write_file_to_dir(filebuffer, uploadedfile):
     from django.core.files.base import ContentFile
     from django.core.files.storage import default_storage
-    
+
     try:
         path = default_storage.save(uploadedfile, ContentFile(filebuffer.read()))
         #ic(path)
@@ -36,8 +36,6 @@ def write_file_to_dir(filebuffer, uploadedfile):
 
 
 from pprint import pformat
-
-from matplotlib.pyplot import table
 from .tasks import Messages
 from .tasks import (
     get_json_data, get_model_or_form,
@@ -48,10 +46,9 @@ log = getLogger('__main__')
 from .types import ServiceOutputType
 from django.db.utils import IntegrityError
 from apps.service import serializers as sz
-from graphql import GraphQLError
 from apps.core import utils
 from .validators import clean_record
-from apps.activity.models import (Job, Jobneed, JobneedDetails, Attachment, Asset)
+from apps.activity.models import (Jobneed, JobneedDetails, Asset)
 import traceback as tb
 
 
@@ -60,7 +57,7 @@ def insertrecord(record, tablename):
         if model := get_model_or_form(tablename):
             record = clean_record(record)
             ic(record)
-        
+
             log.info(f'record after cleaning\n {pformat(record)}')
             obj = model.objects.get(uuid = record['uuid'])
             model.objects.filter(uuid = obj.uuid).update(**record)
@@ -131,7 +128,7 @@ def save_parent_childs(sz, jn_parent_serializer, child, M):
                 #ic((details, type(details))
                 ch.update({'parent_id':parent.id})
                 child_serializer = sz.JobneedSerializer(data=clean_record(ch))
-                
+
                 if child_serializer.is_valid():
                     child_instance = child_serializer.save()
                     for dtl in details:
@@ -174,11 +171,11 @@ def perform_tasktourupdate(file, request):
             with transaction.atomic(using=utils.get_current_db_name()):
                 if updated :=  update_record(details, jobneed, Jobneed, JobneedDetails):
                     recordcount+=1
-    
+
     except IntegrityError as e:
         log.error("Database Error", exc_info=True)
         rc, traceback, msg = 1, tb.format_exc(), Messages.UPLOAD_FAILED
-    
+
     except Exception as e:
         log.error('Something went wrong', exc_info=True)
         rc, traceback, msg = 1, tb.format_exc(), Messages.UPLOAD_FAILED
@@ -207,7 +204,7 @@ def perform_insertrecord(file, request=None, filebased=True):
         #ic(data)
         try:
             with transaction.atomic(using=utils.get_current_db_name()):
-                
+
                 for record in data:
                     tablename = record.pop('tablename')
                     ic(tablename)
@@ -216,15 +213,15 @@ def perform_insertrecord(file, request=None, filebased=True):
                     allconditions = [
                         hasattr(obj, 'peventtype'), hasattr(obj, 'endlocation'), 
                         hasattr(obj, 'punchintime'), hasattr(obj, 'punchouttime')]
-                    
+
                     if all(allconditions) and all([tablename == 'peopleeventlog',
                             obj.peventtype.tacode in ('CONVEYANCE','AUDIT'),
                             obj.endlocation,obj.punchouttime, obj.punchintime]):
                         log.info("save line string is started")
                         save_linestring_and_update_pelrecord(obj)
-                        
+
                     # model = get_model_or_form(tablename)
-                     
+
                     # log.info(f'record after cleaning {pformat(record)}')
                     # instance = model.objects.create(**record)
                     recordcount+=1
@@ -242,7 +239,7 @@ def save_linestring_and_update_pelrecord(obj):
     from apps.attendance.models import Tracking
     from django.contrib.gis.geos import LineString
     try:
-        
+
         bet_objs = Tracking.objects.filter(reference=obj.uuid)
         line = [[coord for coord in obj.gpslocation] for obj in bet_objs]
         ls = LineString(line, srid = 4326)
@@ -257,7 +254,7 @@ def save_linestring_and_update_pelrecord(obj):
     except Exception as e:
         log.info('ERROR while saving line string', exc_info=True)
         raise
-    
+
 
 
 def perform_reportmutation(file):
@@ -323,7 +320,7 @@ def perform_adhocmutation(file):  # sourcery skip: remove-empty-nested-block, re
                     #TODO send_email for ADHOC 
                     pass
             #TODO send_email for Observation
-                    
+
     except utils.NoDataInTheFileError as e:
         rc, traceback = 1, tb.format_exc()
         log.error('No data in the file error', exc_info=True)
@@ -332,7 +329,7 @@ def perform_adhocmutation(file):  # sourcery skip: remove-empty-nested-block, re
         rc, traceback = 1, tb.format_exc()
         log.error('something went wrong', exc_info=True)
     return ServiceOutputType(rc=rc, recordcount = recordcount, msg = msg, traceback = traceback)
-    
+
 
 
 def update_adhoc_record(scheduletask, jobneedrecord, details):
@@ -347,7 +344,7 @@ def update_adhoc_record(scheduletask, jobneedrecord, details):
         isJnUpdated = jnsz.save()
     else:
         rc, traceback, msg = 1, jnsz.errors, 'Operation Failed'
-    
+
     JND = JobneedDetails.objects.filter(jobneed_id = jnid).values()
     for jnd in JND:
         for dtl in details:
@@ -360,13 +357,13 @@ def update_adhoc_record(scheduletask, jobneedrecord, details):
     recordcount+=1
     msg = "Scheduled Record (ADHOC) updated successfully!"
     return rc, traceback, msg, recordcount
-        
-        
+
+
 def insert_adhoc_record(jobneedrecord, details):
     rc, recordcount, traceback, msg= 0, 0, 'NA', ""
     record = clean_record(jobneedrecord)
     jnsz = sz.JobneedSerializer(data = record)
-    
+
     if jnsz.is_valid():
         jninstance = jnsz.save()
         for dtl in details:
@@ -389,7 +386,7 @@ def perform_uploadattachment(file,  record, biodata):
     try:
         log.info("perform_uploadattachment [start+]")
         import os
-        
+
         file_buffer = file
         #ic(file_buffer, type(file_buffer))
         filename = biodata['filename']
@@ -409,7 +406,7 @@ def perform_uploadattachment(file,  record, biodata):
             send_alert_mails_if_any(obj)
             rc, traceback, msg = 0, tb.format_exc(), Messages.UPLOAD_SUCCESS
             recordcount = 1
-        
+
         from .tasks import perform_facerecognition_bgt
         results = perform_facerecognition_bgt.delay(pelogid, peopleid, obj.owner, home_dir, uploadfile, db)
         log.warn(f"face recognition status {results.state}")
@@ -453,7 +450,7 @@ def alert_observation(pk):
                 body+= "<table style='background:#EEF1F5;' cellpadding=8 cellspacing=2 border=1>"
                 body+= "<tr style='background:#ABE7ED;font-weight:bold;font-size:14px;'><th>Slno</th><th>Question</th><th>Answer</th><th>Option</th><th>Min</th><th>Max</th><th>Alert On</th><tr>"
                 for rd in enumerate(jndRecords):
-                    body+= "<tr %s>"     %("style='color:red;'" if rd[1]["alerts"] == True else "")
+                    body+= "<tr %s>"     %("style='color:red;'" if rd[1]["alerts"] is True else "")
                     body += f"<td>{rd.seqno}</td>"
                     body += f"<td>{rd.questionname}</td>"
                     body += f"<td>{rd.answer}</td>"
@@ -473,7 +470,7 @@ def alert_observation(pk):
     except Exception as e:
         raise
 
-    
+
 
 
 def alert_report(pk):
@@ -504,7 +501,7 @@ def alert_report(pk):
                         flag= True
                     if flag:
                         body+= "<tr style='background: #F0F0F0;font-weight:bold;font-size:14px;'><td colspan='7'>[%s] %s</td></tr>" %(bd["pseqno"], bd["jobdesc"])
-                    body+= "<tr {}>".format("style='color:red;'" if bd["alerts"] == True else "")
+                    body+= "<tr {}>".format("style='color:red;'" if bd["alerts"] is True else "")
                     body+= f"<td>{bd['cseqno']}</td>"
                     body+= f"<td>{bd['questionname']}</td>"
                     body+= f"<td>{bd['answer']}</td>"
@@ -514,13 +511,12 @@ def alert_report(pk):
                     body+= f"<td>{bd['alerton']}</td>"
                     body+= "</tr>"
                     flag= False
-                    del bd
                 body+= "</table>"
                 body+= "</td></tr></table>"
                 #TODO send_emaill()
     except Exception as e:
         raise
-                
+
 
 
 def alert_deviation(pk):

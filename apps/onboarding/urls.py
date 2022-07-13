@@ -8,7 +8,7 @@ urlpatterns = [
     path('bu_list/',              views.RetrieveBt.as_view(), name='bu_list'),
     path('bu_form/<str:pk>/',     views.UpdateBt.as_view(),   name='bu_update'),
     path('bu_form/del/<str:pk>/', views.DeleteBt.as_view(),   name='bu_delete'),
-    
+
     path('sitepeople_form/',              views.CreateSitePeople.as_view(),   name='sitepeople_form'),
     path('sitepeople_list/',              views.RetrieveSitePeople.as_view(), name='sitepeople_list'),
     path('sitepeople_form/<str:pk>/',     views.UpdateSitePeople.as_view(),   name='sitepeople_update'),
@@ -21,7 +21,7 @@ urlpatterns = [
     path('client_form/get_caps/',    views.get_caps,                  name="get_caps"),
     path('wizard/',                 include(wizard_url_patterns1)),
     path('pop-up/ta/', views.handle_pop_forms, name="ta_popup"),
-    
+
     path('typeassist/', views.TypeAssistAjax.as_view(), name="typeassist"),
     path('super_typeassist/', views.SuperTypeAssist.as_view(), name="super_typeassist"),
     path('shift/', views.Shift.as_view(), name="shift"),

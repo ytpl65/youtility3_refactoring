@@ -26,7 +26,7 @@ class BtManager(models.Manager):
                     return ','.join(list(qset))
             return ""
 
-        
+
     def get_bu_list_ids(self, clientid, type='array'):
         """
         Returns all BU's on given client_id
@@ -35,8 +35,8 @@ class BtManager(models.Manager):
         qset = self.raw(
             f"select fn_get_bulist({clientid}, false, true, '{type}'::text, null::{rtype}) as id;")
         return qset[0].id if qset else self.none()
-    
-        
+
+
     def find_site(self, clientid, sitecode):
         """
         Finds site on given client_id and site_id
@@ -46,8 +46,8 @@ class BtManager(models.Manager):
             & ~Q(parent__id = -1) & Q(id__in = self.get_bu_list_ids(clientid))
         )
         return qset[0] if qset else  self.none()
-    
-    
+
+
     def get_sitelist_web(self, clientid, peopleid):
         """
         Return sitelist assigned to peopleid
@@ -55,8 +55,8 @@ class BtManager(models.Manager):
         """
         qset = self.raw(f"select fn_get_siteslist_web({clientid}, {peopleid}) as id")
         return qset or self.none()
-    
-    
+
+
     def get_whole_tree(self, clientid):
         """
         Returns bu tree 
@@ -66,7 +66,7 @@ class BtManager(models.Manager):
         qset_json = self.raw(
             f"select fn_get_bulist({clientid}, true, true, 'array'::text, null::{rtype}) as id;")
         return json.loads(qset_json[0].id if qset_json else '{}')
-    
+
     def getsitelist(self, clientid, peopleid):
         #check if people is admin or not
         try:
@@ -84,9 +84,9 @@ class BtManager(models.Manager):
                 return qset or self.none()
             else:   
                 pass
-    
-    
-    
+
+
+
 
     def get_bus_idfs(self, R, idf=None):
         # qobjs, dir,  fields, length, start = utils.get_qobjs_dir_fields_start_length(R)
@@ -98,7 +98,7 @@ class BtManager(models.Manager):
         #         'identifier__tacode').distinct(
         #             'identifier__tacode').values('identifier__tacode')
         # total = qset.count()
-        
+
         # if qobjs:
         #     filteredqset = qset.filter(qobjs)
         #     fcount = filteredqset.count()
@@ -116,22 +116,22 @@ class BtManager(models.Manager):
                      'identifier__tacode').values('identifier__tacode')
         return qset, idfs
 
-    
-    
-        
 
 
-    
 
-    
-    
+
+
+
+
+
+
 class TypeAssistManager(models.Manager):
     use_in_migrations = True
     fields = ['id', 'tacode', 'taname', 'tatype_id', 'cuser_id', 'muser_id',
               'ctzoffset',
               'bu_id', 'client_id', 'tenant_id', 'cdtz', 'mdtz']
     related = ['cuser', 'muser', 'bu', 'client','tatype']
-    
+
     def get_typeassist_modified_after(self, mdtz, clientid):
         """
         Return latest typeassist data
@@ -139,12 +139,12 @@ class TypeAssistManager(models.Manager):
         from datetime import datetime
         if not isinstance(mdtz, datetime):
             mdtz = datetime.strptime(mdtz, "%Y-%m-%d %H:%M:%S")
-        
+
         qset = self.select_related(*self.related).filter(
             ~Q(id=1) & Q(mdtz__gte = mdtz) & Q(client_id__in = [clientid])
         ).values(*self.fields)
         return qset or None
-    
+
 
 
 class GeofenceManager(models.Manager):
@@ -152,19 +152,19 @@ class GeofenceManager(models.Manager):
     fields = ['id', 'cdtz',  'mdtz', 'ctzoffset', 'gfcode', 'gfname', 'alerttext', 'geofencecoords', 
               'enable',  'alerttogroup_id', 'alerttopeople_id', 'bu_id', 'client_id', 'cuser_id', 'muser_id']
     related = ['cuser', 'muser', 'bu', 'client']
-    
+
     def get_geofence_list(self, fields, related, session):
         qset = self.select_related(*related).filter(
             ~Q(gfcode='NONE'), enable=True, client_id=session['client_id'],
         ).values(*fields)
         return qset or self.none()
-    
+
     def get_geofence_json(self, pk):
         from django.contrib.gis.db.models.functions import AsGeoJSON
         obj = self.annotate(geofencejson = AsGeoJSON('geofence')).get(id = pk).geofencejson
         obj = utils.getformatedjson(jsondata = obj, rettype=str)
         return obj or self.none()
-    
+
     def get_gfs_for_siteids(self, siteids):
         from django.contrib.gis.db.models.functions import AsGeoJSON
         import json
@@ -177,4 +177,3 @@ class GeofenceManager(models.Manager):
                 obj['geofencecoords'] = geofencestring
             return qset
         return self.none()
-    

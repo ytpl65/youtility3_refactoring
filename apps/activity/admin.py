@@ -1,13 +1,9 @@
-import imp
 from unicodedata import category
-from django.contrib import admin
-from import_export.admin import ImportExportModelAdmin
 from import_export import resources, fields
 from import_export import widgets as wg
-from apps.core import utils
 import apps.onboarding.models as om
 import apps.activity.models as am
-from apps.onboarding.admin import BaseFieldSet1, BaseFieldSet2
+from apps.onboarding.admin import BaseFieldSet2
 
 
 # Register your models here.
@@ -25,7 +21,7 @@ class QuestionResource(BaseFieldSet2, resources.ModelResource):
         widget            = wg.ForeignKeyWidget(om.TypeAssist, 'tacode'),
         saves_null_values = True
     )
-    
+
     class Meta:
         model = am.Question
         skip_unchanged = True
@@ -48,21 +44,21 @@ class AssetResource(BaseFieldSet2, resources.ModelResource):
         widget            = wg.ForeignKeyWidget(om.TypeAssist, 'tacode'),
         saves_null_values = True
     )
-    
+
     serv_prov = fields.Field(
         column_name       = 'serv_prov',
         attribute         = 'serv_prov',
         widget            = wg.ForeignKeyWidget(om.Bt, 'bucode'),
         saves_null_values = True
     )
-    
+
     subcategory = fields.Field(
         column_name       = 'subcategory',
         attribute         = 'subcategory',
         widget            = wg.ForeignKeyWidget(om.TypeAssist, 'tacode'),
         saves_null_values = True
     )
-    
+
     parent = fields.Field(
         column_name       = 'parent',
         attribute         = 'parent',
@@ -75,7 +71,7 @@ class AssetResource(BaseFieldSet2, resources.ModelResource):
         widget            = wg.ForeignKeyWidget(am.Asset, 'tacode'),
         saves_null_values = True
     )
-    
+
     class Meta:
         model = am.Asset
         skip_unchanged = True
@@ -84,5 +80,5 @@ class AssetResource(BaseFieldSet2, resources.ModelResource):
         fields = ('id', 'assetcode', 'assetname',  'gpslocation', 'identifier'
                   'runningstatus', 'capacity', 'parent', 'type', 'client', 'bu',
                   'category', 'subcategory', 'brand', 'unit', 'serv_prov')
-    
+
 

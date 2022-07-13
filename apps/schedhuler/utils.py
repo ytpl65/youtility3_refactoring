@@ -2,7 +2,7 @@ from django.db.models import Q
 import apps.activity.models as am
 from django.core.exceptions import EmptyResultSet
 from django.db import transaction
-from django.http import Http404, response as rp
+from django.http import response as rp
 from logging import getLogger
 from pprint import pformat
 from apps.core import utils
@@ -12,7 +12,7 @@ log = getLogger('__main__')
 def create_job(jobs=None):
     startdtz = enddtz = msg = resp = None
     F, d = {}, []
-    
+
     from django.utils.timezone import get_current_timezone
     with transaction.atomic(using=utils.get_current_db_name()):
         if not jobs:
@@ -24,15 +24,15 @@ def create_job(jobs=None):
                 "asset", "pgroup",
                 "cuser", "muser", "qset", "people",
             ).values_list(named=True)
-        
+
         if not jobs:
             msg = "No jobs found schedhuling terminated"
             resp = rp.JsonResponse("%s"%(msg), status=404)
             log.warn("%s" % (msg), exc_info=True)
             raise EmptyResultSet
         total_jobs = len(jobs)
-        
-        if total_jobs > 0 or jobs != None:
+
+        if total_jobs > 0 or jobs is not None:
             log.info("processing jobs started found:= '%s' jobs" % (len(jobs)))
             for idx, job in enumerate(jobs):
                 startdtz, enddtz = calculate_startdtz_enddtz(job)
@@ -69,7 +69,6 @@ def display_jobs_date_info(cdtz, mdtz, fromdate, uptodate, ldtz):
     log.info(f"valid-from:= [{fromdate}] valid-upto:=[{uptodate}]")
     log.info(f"before lastgeneratedon:= [{ldtz}]")
     log.info(f"{padd} display_jobs_date_info [end] {padd}")
-    del padd
 
 def get_readable_dates(dt_list):
     if (isinstance(dt_list, list)):
@@ -82,24 +81,24 @@ def calculate_startdtz_enddtz(job):
     the plandatetime & expirydatetime of a job for next 2 days or upto
     uptodate.
     """
-    
-    log.info("calculating startdtz, enddtz for job:= [%s]" % (job.id))
+
+    log.info(f"calculating startdtz, enddtz for job:= [{job.id}]")
     tz = timezone(timedelta(minutes=int(job.ctzoffset)))
     ctzoffset = job.ctzoffset
-    
+
     cdtz         = job.cdtz.replace(microsecond=0, tzinfo=tz) + timedelta(minutes=ctzoffset)
     mdtz         = job.mdtz.replace(microsecond=0, tzinfo=tz)  + timedelta(minutes=ctzoffset)
     vfrom        = job.fromdate.replace(microsecond=0, tzinfo=tz)  + timedelta(minutes=ctzoffset)
     vupto        = job.uptodate.replace(microsecond=0, tzinfo=tz) + timedelta(minutes=ctzoffset)
     ldtz         = job.lastgeneratedon.replace(microsecond=0, tzinfo=tz) + timedelta(minutes=ctzoffset)
     # job.ctzoffset     = job.ctzoffset 
+    # tzoffset     = job.ctzoffset 
     # cdtz         = job.cdtz.replace(microsecond=0) 
     # mdtz         = job.mdtz.replace(microsecond=0)  
     # vfrom        = job.fromdate.replace(microsecond=0)  
     # vupto        = job.uptodate.replace(microsecond=0) 
     # ldtz         = job.lastgeneratedon.replace(microsecond=0) 
     # display_jobs_date_info(cdtz, mdtz, vfrom, vupto, ldtz)
-    current_date= datetime.utcnow().replace(tzinfo=timezone.utc).replace(microsecond=0)
     current_date= current_date.replace(tzinfo=tz) + timedelta(minutes= ctzoffset)
 
     if mdtz > cdtz:
@@ -127,7 +126,7 @@ def get_datetime_list(cron_exp, startdtz, enddtz, resp):
         Eg: 
         returning all starttime's from 1/01/20xx --> 3/01/20xx based on cron exp.
     """
-    
+
     log.info("get_datetime_list(cron_exp, startdtz, enddtz) [start]")
     log.info("getting datetime list for cron:=%s, starttime:= '%s' and endtime:= '%s'" % (
         cron_exp, startdtz, enddtz))
@@ -177,11 +176,10 @@ def dt_local_to_utc(tzoffset, data, mob_or_web):
     if isinstance(data, dict):
         handle_dict_of_datetimes(dateFormatMobile, dateFormatWeb, data, tzoffset,
                                  dateRegexMobile, dateRegexWeb, mob_or_web)
-        
+
     else:
         handle_list_of_datetimes(dateFormatMobile, dateFormatWeb, data,  tzoffset,
                                  dateRegexMobile, dateRegexWeb, mob_or_web)
-    del dtlist, udt, cdt, dateFormate
     return data
 
 
@@ -224,8 +222,8 @@ def handle_dict_of_datetimes(dateFormatMobile, dateFormatWeb, data, tzoffset,
             except ValueError:
                 log.error("tzoffset parsing error", exc_info=True)
                 raise
-                
-                
+
+
 def handle_list_of_datetimes(dateFormatMobile, dateFormatWeb, data, tzoffset,
                             dateRegexMobile, dateRegexWeb, mob_or_web):
     import re
@@ -293,7 +291,7 @@ def insert_into_jn_and_jnd(job, DT, resp):
                 'm_factor':multiplication_factor, 'people':people,
                 'NONE_P':NONE_P, 'jobdesc':jobdesc, 'NONE_JN':NONE_JN}
             DT = utils.to_utc(DT)
-            
+
             for dt in DT:
                 dt = dt.strftime("%Y-%m-%d %H:%M")
                 dt = datetime.strptime(dt, '%Y-%m-%d %H:%M').replace(tzinfo=timezone.utc)
@@ -380,7 +378,7 @@ def insert_update_jobneeddetails(jnid, job, parent=False):
     except Exception:
         raise
     log.info("insert_update_jobneeddetails() [END]")
-    
+
 
 
 
@@ -399,10 +397,10 @@ def insert_into_jnd(qsb, job, jnid):
     except Exception:
         raise
     log.info("insert_into_jnd() [END]")
-    
 
-   
-    
+
+
+
 def create_child_tasks(job, _pdtz, _people, jnid, _jobstatus, _jobtype):
     try:
         prev_edtz = None
@@ -445,9 +443,9 @@ def create_child_tasks(job, _pdtz, _people, jnid, _jobstatus, _jobtype):
     else:
         log.info("create_child_tasks() successfully created [ END ]")
         return edtz
- 
- 
- 
+
+
+
 def insert_into_jn_for_child(job, params, r):
     try:
         jn = am.Jobneed.objects.create(

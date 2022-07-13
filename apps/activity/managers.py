@@ -1,4 +1,3 @@
-from mmap import MADV_RANDOM
 from django.db import models
 from django.db.models.functions import Concat
 from django.db.models import CharField, Value as V
@@ -12,55 +11,52 @@ class QuestionSetManager(models.Manager):
               'parent_id', 'qsetname', 'enable', 'assetincludes',
               'buincludes', 'seqno', 'url', 'type' , 'tenant_id']
     related = ['cuser', 'muser', 'client', 'bu', 'parent', 'asset', 'type']
-    
+
     def get_template_list(self, bulist):
         if bulist:
             if qset := self.select_related(
                 *self.related).filter(bu_id__in=bulist).values_list(*self.fields, flat=True):
                 return ','.join(list(qset))
         return ""
-    
+
     def get_qset_modified_after(self, mdtz, buid):
         qset = self.select_related(*self.related).filter(~Q(id=1), mdtz__gte = mdtz, bu_id = buid).values(*self.fields)
         return qset or None
-        
-        
+
+
 class QuestionManager(models.Manager):
     use_in_migrations = True
     fields = ['id', 'quesname', 'options', 'min', 'max', 'alerton', 'answertype', 'muser_id', 'cdtz', 'mdtz',
             'client_id', 'isworkflow', 'enable', 'category_id', 'cuser_id', 'unit_id' , 'tenant_id', 'ctzoffset']
     related = ['client', 'muser', 'cuser', 'category', 'unit']
-    
+
     def get_questions_modified_after(self, mdtz):
-        
-        from datetime import datetime
         mdtzinput = datetime.strptime(mdtz, "%Y-%m-%d %H:%M:%S")
         qset = self.select_related(*self.related).filter(~Q(id=1), mdtz__gte = mdtzinput).values(*self.fields)
         return qset or None
-    
-    
+
+
 class JobneedManager(models.Manager):
     use_in_migrations = True
-    
+
     def insert_report_parent(self, qsetid, record):
         return self.create(qset_id = qsetid, **record)
-    
+
     def get_schedule_for_adhoc(self, pdt, peopleid, assetid, qsetid, buid):
         return self.raw(f"select * FROM get_schedule_for_adhoc({pdt}, {buid}, {peopleid}, {assetid}, {qsetid})")
 
     def get_jobneedmodifiedafter(self, mdtz, peopleid, siteid):
-        from datetime import datetime
         mdtzinput = mdtz if (isinstance(mdtz, datetime)) else datetime.strptime(mdtz, "%Y-%m-%d %H:%M:%S")
         return self.raw("select * from fn_getjobneedmodifiedafter('%s', %s, %s) as id", [mdtzinput, peopleid, siteid]) or self.none()
-        
-    
+
+
     def get_jobneed_observation(self, pk):
         qset = self.select_related('people', 'asset', 'bu', 'identifier').filter(
             alerts = True, id = pk
         )
         return qset or self.none()
-    
-    
+
+
     def get_jobneed_for_report(self,pk):
         qset = self.raw(    
             """
@@ -80,7 +76,7 @@ class JobneedManager(models.Manager):
             )jn
             """, [pk])
         return qset or self.none()
-    
+
     def get_hdata_for_report(self, pk):
         qset = self.raw("""WITH RECURSIVE nodes_cte(jobneedid, parent_id, jobdesc, people_id, qset_id, plandatetime, cdtz, depth, path, top_parent_id, pseqno, buid) AS
         (
@@ -102,7 +98,7 @@ class JobneedManager(models.Manager):
         LEFT JOIN questionsetbelonging qsb ON qsb.question_id=q.id
         WHERE jobneed.parent_id <> -1  ORDER BY pseqno asc, jobdesc asc, pseqno, cseqno asc""", [pk])
         return qset or self.none()
-        
+
     def get_deviation_jn(self, pk):
         qset = self.raw(
             """
@@ -118,12 +114,11 @@ class JobneedManager(models.Manager):
             """, [pk]
         )
         return qset or self.none()
-    
-    
+
+
     def get_adhoctasks_listview(self, R, task=True):
         idf = 'TASK' if task else 'TOUR'
         qobjs, dir,  fields, length, start = utils.get_qobjs_dir_fields_start_length(R)
-        from datetime import datetime
         now = datetime.now()
         qset = self.select_related(
                  'performedby', 'qset', 'asset').filter(
@@ -150,7 +145,7 @@ class JobneedManager(models.Manager):
 
 class AttachmentManager(models.Manager):
     use_in_migrations = True
-    
+
     def get_people_pic(self, ownernameid, ownerid, db):
         ic(ownernameid, 'ATTACHMENT', ownerid)
         qset =  self.filter(
@@ -162,8 +157,8 @@ class AttachmentManager(models.Manager):
                                     output_field=CharField())).order_by('-cdtz').using(db)
         ic(qset)
         return qset[0] or self.none()
-            
-        
+
+
     def get_attachment_record(self, id, db):
         qset =  self.filter(
             ~Q(filename__endswith = '.csv'),
@@ -176,16 +171,15 @@ class AttachmentManager(models.Manager):
             ).using(db)
         print("qset values@@@@@@@@@@@@@@@@", qset)
         return qset or self.none()
-    
-    
+
+
 class AssetManager(models.Manager):
     use_in_migrations = True
     related = ['category', 'client', 'cuser', 'muser', 'parent', 'subcategory', 'tenant', 'type', 'unit', 'brand', 'bu', 'serv_prov']
     fields = ['id','cdtz','mdtz','ctzoffset','assetcode','assetname','enable','iscritical','gpslocation','identifier','runningstatus','capacity','brand_id','bu_id',
               'category_id','client_id','cuser_id','muser_id','parent_id','servprov_id','subcategory_id','tenant_id','type_id','unit_id']
-    
+
     def get_assetdetails(self, mdtz, site_id):
-        from datetime import datetime
         mdtzinput = datetime.strptime(mdtz, "%Y-%m-%d %H:%M:%S")
         return self.filter(
             ~Q(id=1),
@@ -196,22 +190,21 @@ class AssetManager(models.Manager):
         ).select_related(
             *self.related
         ).values(*self.fields) or self.none()
-    
+
     def get_schedule_task_for_adhoc(self, params):
         qset = self.raw("select * from fn_get_schedule_for_adho")
-    
-    
-    
-    
+
+
+
+
 class JobneedDetailsManager(models.Manager):
     use_in_migrations=True
     related = ['question', 'jobneed', 'cuser', 'muser']
     fields = ['id', 'uuid', 'seqno', 'answertype', 'answer', 'isavpt', 'options', 'ctzoffset', 'ismandatory',
               'cdtz', 'mdtz',           
               'min', 'max', 'alerton', 'question_id', 'jobneed_id', 'alerts', 'cuser_id', 'muser_id', 'tenant_id']
-    
+
     def get_jndmodifiedafter(self, mdtz,jobneedid):
-        from datetime import datetime
         mdtzinput = datetime.strptime(mdtz, "%Y-%m-%d %H:%M:%S")
         if jobneedid:
             jobneedids = jobneedid.split(', ')
@@ -224,12 +217,12 @@ class JobneedDetailsManager(models.Manager):
                     *self.fields)
             return qset or self.none()
         return self.none()
-    
+
     def update_ans_muser(self, answer, peopleid, mdtz, jnid):
         _mdtz = datetime.strptime(mdtz, "%Y-%m-%d %H:%M:%S")
         return self.filter(jobneed_id=jnid).update(muser_id=peopleid, answer=answer, mdtz=_mdtz)
 
-    
+
     def get_jnd_observation(self, id):
         qset = self.select_related(
             'jobneed', 'question').filter(
@@ -244,8 +237,8 @@ class QsetBlngManager(models.Manager):
               'qset_id', 'cuser_id', 'muser_id', 'cdtz', 'mdtz', 'alertmails_sendto', 'tenant_id']
     related = ['client', 'bu',  'question', 
               'qset', 'cuser', 'muser', ]
-    
-    
+
+
     def get_modified_after(self ,mdtz, buid):
         qset = self.select_related(
             *self.related).filter(
@@ -253,24 +246,17 @@ class QsetBlngManager(models.Manager):
                     *self.fields
                 )
         return qset or self.none()
-    
-    
-    def get_checklist_of_job(self, job):
-        qset = self.select_related(
-            'question').filter(
-                qset_id = job.qset_id
-            )
-    
-    
+
+
 class TicketManager(models.Manager):
     use_in_migrations = True
-   
+
 
 
 class JobManager(models.Manager):
     use_in_migrations: True
-    
-    
+
+
     def getgeofence(self, peopleid, siteid):
         from django.contrib.gis.db.models.functions import AsGeoJSON
         qset = self.filter(
@@ -282,7 +268,7 @@ class JobManager(models.Manager):
                     'geofence__gfname', 'geofencejson', 'enable', 'uptodate', 'identifier',
                     'starttime', 'endtime', 'bu_id', 'asset_id')
         return qset or self.none()
-    
+
     def get_scheduled_internal_tours(self, related, fields):
         qset = self.select_related(*related).filter(
             parent__jobname='NONE', parent_id=1

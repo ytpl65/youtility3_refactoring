@@ -11,12 +11,10 @@ from django.http import JsonResponse, QueryDict, response as rp
 from django.urls import reverse
 from django.contrib import messages
 from apps.reports import forms as rp_forms
-from django.db.models import Q
 from django.shortcuts import redirect
 from datetime import datetime, timedelta, timezone
 import logging
 from apps.activity.forms import QsetBelongingForm
-from django.forms.models import model_to_dict
 log = logging.getLogger('__main__')
 # Create your views here.
 
@@ -24,7 +22,7 @@ class RetriveSiteReports(LoginRequiredMixin, View):
     model = am.Jobneed
     template_path = 'reports/sitereport_list.html'
 
-    
+
     def get(self, request, *args, **kwargs):
         '''returns the paginated results from db'''
         from apps.core.raw_queries import query
@@ -67,7 +65,7 @@ class MasterReportTemplateList(LoginRequiredMixin, View):
     template_path = None
     fields        = ['id', 'qsetname', 'enable']
     type          = None
-    
+
     def get(self, request, *args, **kwargs):
         resp, R, objects = None, request.GET, am.QuestionSet.objects.none()
         filtered = None
@@ -104,7 +102,7 @@ class MasterReportForm(LoginRequiredMixin, View):
         'type'  :None
     }
     viewname = None
-    
+
     def get(self, request, *args, **kwargs):
         R, resp = request.GET, None
         utils.PD(get=R)
@@ -115,7 +113,7 @@ class MasterReportForm(LoginRequiredMixin, View):
                 cxt = {'reporttemp_form': self.form_class(request=request, initial=self.initial),
                        'qsetbng':self.subform()}
                 return render(request, self.template_path, context=cxt)
-            
+
             #return for with instance loaded
             elif R.get('id') or kwargs.get('id'):
                 import json
@@ -127,7 +125,7 @@ class MasterReportForm(LoginRequiredMixin, View):
                 form = self.form_class(instance = obj, initial=self.initial, request=request)
                 cxt = {'reporttemp_form':form, 'qsetbng':self.subform()}
                 return render(request, self.template_path, context=cxt)
-        
+
         #return reports for list view
         elif R.get('get_reports'):
             resp = self.get_reports(R)
@@ -147,13 +145,13 @@ class MasterReportForm(LoginRequiredMixin, View):
             create=False
             log.info("retrieved existing %s template:= '%s'" %
                      (obj.qsetname, obj.id))
-        
+
         #process new data for creation
         else:
             form = self.form_class(data=request.POST, request=request, initial=self.initial)
             log.info("new %s submitted following is the form-data:\n%s\n" %
                      (self.viewname, pformat(form.data)))
-        
+
         #check for validation
         try:
             if form.is_valid():
@@ -194,7 +192,7 @@ class MasterReportForm(LoginRequiredMixin, View):
                 status=200)
         log.info("%s template form processing/saving [ END ]"%self.viewname)
         return resp
-    
+
     def process_invalid_form(self, form):
         log.info(
             "processing invalid forms sending errors to the client [ START ]")
@@ -202,7 +200,7 @@ class MasterReportForm(LoginRequiredMixin, View):
         log.info(
             "processing invalid forms sending errors to the client [ END ]")
         return rp.JsonResponse(cxt, status=404)
-    
+
 
     def get_reports(self, R):
         qset,count = [], 0
@@ -242,7 +240,7 @@ class SiteReportTemplateForm(MasterReportForm):
     template_path = "reports/sitereport_tempform.html"
     form_class    = rp_forms.SiteReportTemplate
     initial.update({'type':am.QuestionSet.Type.SITEREPORTTEMPLATE})
-    
+
 
 class IncidentReportTemplateForm(MasterReportForm):
     template_path = MasterReportForm.template_path
@@ -254,10 +252,10 @@ class IncidentReportTemplateForm(MasterReportForm):
     initial       = {
         'type':am.QuestionSet.Type.INCIDENTREPORTTEMPLATE
     }
-    
-    
-    
-    
+
+
+
+
 
 class SiteReportTemplate(MasterReportTemplateList):
     type          = MasterReportTemplateList.type
@@ -271,4 +269,4 @@ class IncidentReportTemplate(MasterReportTemplateList):
     template_path = MasterReportTemplateList.template_path
     type          = am.QuestionSet.Type.INCIDENTREPORTTEMPLATE
     template_path = 'reports/incidentreport_template_list.html'
-    
+

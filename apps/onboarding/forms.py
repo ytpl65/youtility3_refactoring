@@ -1,9 +1,7 @@
 #from standard library
 
 #from django core
-from attr import Factory
 from django import forms
-from django.db.models.expressions import F
 from django.db.models.query_utils import Q
 from django.utils.translation import gettext_lazy as _
 from apps.core import utils
@@ -35,7 +33,7 @@ class SuperTypeAssistForm(forms.ModelForm):
             'tacode':forms.TextInput(attrs={'placeholder':'Enter code without space and special characters', 'style':"text-transform: uppercase;"}),
             'taname':forms.TextInput(attrs={'placeholder':"Enter name"}),
             }
-        
+
 
     def __init__(self, *args, **kwargs):
         """Initializes form"""
@@ -43,7 +41,7 @@ class SuperTypeAssistForm(forms.ModelForm):
         super(SuperTypeAssistForm, self).__init__(*args, **kwargs)
         utils.initailize_form_fields(self)
 
-    
+
     def is_valid(self) -> bool:
 
         result = super().is_valid()
@@ -52,7 +50,7 @@ class SuperTypeAssistForm(forms.ModelForm):
 
     def clean_tatype(self):
         return self.cleaned_data.get('tatype')
-    
+
     def clean_tacode(self):
         import re
         value = self.cleaned_data.get('tacode')
@@ -63,31 +61,31 @@ class SuperTypeAssistForm(forms.ModelForm):
         elif value.endswith('.'):
             raise forms.ValidationError(self.error_msg['invalid_code3'])
         return value.upper()
-    
+
 class TypeAssistForm(SuperTypeAssistForm): 
     required_css_class = "required"
-    
-    
+
+
     def __init__(self, *args, **kwargs):
         """Initializes form"""
         self.request = kwargs.pop('request', None)
         super().__init__(*args, **kwargs)
         utils.initailize_form_fields(self)
 
-    
+
     def is_valid(self) -> bool:
         result = super().is_valid()
         utils.apply_error_classes(self)
         return result
-    
+
     def clean_tacode(self):
         super().clean_tacode()
         if val:= self.cleaned_data.get('tacode'):
             val = val.upper()
             if len(val)>25: raise forms.ValidationError("Max Length reached!!")
         return val
-                
-    
+
+
 
 
 class BtForm(forms.ModelForm):  
@@ -104,7 +102,7 @@ class BtForm(forms.ModelForm):
         fields = ['bucode', 'buname', 'parent', 'butype', 'gpslocation', 'identifier',
                 'iswarehouse', 'isserviceprovider', 'isvendor', 'enable','ctzoffset',
                 'gpsenable', 'skipsiteaudit', 'enablesleepingguard', 'deviceevent']
-        
+
         labels = {
             'bucode'             : 'Code',
             'buname'             : 'Name',
@@ -120,15 +118,15 @@ class BtForm(forms.ModelForm):
             'enablesleepingguard': 'Enable Sleeping Guard',
             'deviceevent'        : 'Device Event Log',
         }
-        
+
         widgets = { 
             'bucode'      : forms.TextInput(attrs={'style':'text-transform:uppercase;', 'placeholder':'Enter text without space & special characters'}),
             'buname'      : forms.TextInput(attrs={'placeholder':'Name'}),
             'identifier'      : s2forms.Select2Widget,
             'butype'      : s2forms.Select2Widget,
             'gpslocation' : forms.TextInput(attrs={'placeholder':'GPS Location'}),}    
-    
-    
+
+
     def __init__(self, *args, **kwargs):
         """Initializes form"""
         self.client = kwargs.pop('client', False)
@@ -137,16 +135,16 @@ class BtForm(forms.ModelForm):
         self.fields['identifier'].required= True
         self.fields['butype'].queryset = obm.TypeAssist.objects.filter(tatype__tacode="SITETYPE")
         utils.initailize_form_fields(self)
-    
-    
+
+
     def is_valid(self) -> bool:
         """Add class to invalid fields"""
         result = super().is_valid()
         utils.apply_error_classes(self)
         return result
-        
 
-    
+
+
     def clean(self):
         cleaned_data = super().clean()
         from .utils import create_bv_reportting_heirarchy
@@ -159,9 +157,9 @@ class BtForm(forms.ModelForm):
         if newcode and newtype and instance:
             ic(newcode)
             create_bv_reportting_heirarchy(instance, newcode, newtype, parent)
-        
-        
-    
+
+
+
     def clean_bucode(self):
         import re
         ic(self.cleaned_data)
@@ -173,7 +171,7 @@ class BtForm(forms.ModelForm):
             elif value.endswith('.'):
                 raise forms.ValidationError(self.error_msg['invalid_bucode3'])
             return value.upper()
-    
+
     def clean_gpslocation(self):
         import re
         if gps := self.cleaned_data.get('gpslocation'):
@@ -198,7 +196,7 @@ class ShiftForm(forms.ModelForm):
         "min_hrs_required":"Minimum hours of a shift should be atleast 5hrs"
     }
     shiftduration = forms.CharField(widget=forms.TextInput(attrs={'readonly':True}), required=False)
-    
+
     class Meta:
         model = obm.Shift
         fields = ['shiftname', 'starttime', 'endtime', 'ctzoffset',
@@ -213,7 +211,7 @@ class ShiftForm(forms.ModelForm):
             'shiftname':forms.TextInput(attrs={'placeholder':"Enter shift name"}),
             'nightshiftappicable':forms.CheckboxInput(attrs={'onclick':"return false"})
         }
-     
+
     def __init__(self, *args, **kwargs):
         """Initializes form"""
         self.request = kwargs.pop('request', None)
@@ -224,7 +222,7 @@ class ShiftForm(forms.ModelForm):
     def clean_shiftname(self):
         if val := self.cleaned_data.get('shiftname'):
             return val.upper()
-    
+
     def clean_shiftduration(self):
         if val := self.cleaned_data.get('shiftduration'):
             h, m = val.split(', ')
@@ -235,7 +233,7 @@ class ShiftForm(forms.ModelForm):
             elif hrs < 5:
                 raise forms.ValidationError(self.error_msg['min_hrs_required'])
             return hrs*60+mins
-    
+
     def is_valid(self) -> bool:
         """Add class to invalid fields"""
         result = super().is_valid()
@@ -261,8 +259,8 @@ class SitePeopleForm(forms.ModelForm):
                  'reportto', 'webcapability', 'mobilecapability',
                 'reportcapability', 'fromdt', 'uptodt', 'siteowner',
                 'enable', 'enablesleepingguard', 'ctzoffset']
-        
-    
+
+
     def __init__(self, *args, **kwargs):
         """Initializes form"""
         super().__init__(*args, **kwargs)
@@ -274,8 +272,8 @@ class ContractForm(forms.ModelForm):
     class Meta:
         model=obm.Contract
         fields = []
-    
-    
+
+
     def __init__(self, *args, **kwargs):
         """Initializes form"""
         super(ContractForm, self).__init__(*args, **kwargs)
@@ -287,7 +285,7 @@ class ContractDetailForm(forms.ModelForm):
     class Meta:
         model=obm.ContractDetail
         fields = []
-    
+
     def __init__(self, *args, **kwargs):
         """Initializes form"""
         super().__init__(*args, **kwargs)
@@ -307,13 +305,13 @@ class GeoFenceForm(forms.ModelForm):
         widgets = {
             'gfcode':forms.TextInput(attrs={'style':'text-transform:uppercase;', 'placeholder':'Enter text without space & special characters'})
         }
-        
+
     def __init__(self, *args, **kwargs):
         self.request = kwargs.pop('request', None)
         super().__init__(*args, **kwargs)
         utils.initailize_form_fields(self)
 
-    
+
     def clean_gfcode(self):
         return val.upper() if (val := self.cleaned_data.get('gfcode')) else val
 #========================================== END MODEL FORMS =======================================#
@@ -322,8 +320,7 @@ class GeoFenceForm(forms.ModelForm):
 #========================================== START JSON FORMS =======================================#
 class BuPrefForm(forms.Form):
     required_css_class = "required"
-    from .utils import get_webcaps_choices
-    
+
     mobilecapability        = forms.MultipleChoiceField(required=False, label="Mobile Capability", widget=s2forms.Select2MultipleWidget)
     webcapability           = forms.MultipleChoiceField(required=False, label="Web Capability", widget=s2forms.Select2MultipleWidget)
     reportcapability        = forms.MultipleChoiceField(required=False, label="Report Capability", widget=s2forms.Select2MultipleWidget)
@@ -374,7 +371,7 @@ class ClentForm(BuPrefForm):
         self.fields['mobilecapability'].choices = get_caps_choices(cfor=pm.Capability.Cfor.MOB)
         self.fields['reportcapability'].choices = get_caps_choices(cfor=pm.Capability.Cfor.REPORT)
         self.fields['portletcapability'].choices = get_caps_choices(cfor=pm.Capability.Cfor.PORTLET)
-        
+
 
 
     def is_valid(self) -> bool:
@@ -397,11 +394,11 @@ class ImportForm(forms.Form):
         ('SITEGROUPS', 'Site Groups'),
         ('TYPEASSISTS', 'TypeAssists'),
     ]
-    
-    
+
+
     importfile = forms.FileField(required=True, label='Import File', max_length=50, allow_empty_file=False)
     table = forms.ChoiceField(required=True, choices=TABLECHOICES, label='Select Type of Data', initial='TYPEASSISTS')
-    
+
     def __init__(self, *args, **kwargs):
         """Initializes form"""
         super().__init__(*args, **kwargs)

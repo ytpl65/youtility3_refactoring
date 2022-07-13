@@ -754,7 +754,7 @@ class Capability(LoginRequiredMixin, View):
 
     def get(self, request, *args, **kwargs):
         R, resp, objects, filtered = request.GET, None, [], 0
-        
+
         # first load the template
         if R.get('template'): return render(request, self.params['template_list'])
 
@@ -769,7 +769,7 @@ class Capability(LoginRequiredMixin, View):
             resp = rp.JsonResponse(data = {
                 'data' : list(objs)
             }, status=200, safe=False)
-        
+
         # return cap_form empty
         elif R.get('action', None) == 'form':
             cxt = {'cap_form': self.params['form_class'](request=request),
@@ -780,7 +780,7 @@ class Capability(LoginRequiredMixin, View):
         elif R.get('action', None) == "delete" and R.get('id', None):
             print(f'resp={resp}')
             resp = utils.render_form_for_delete(request, self.params, True)
-        
+
         # return form with instance
         elif R.get('id', None):
             obj = utils.get_model_obj(int(R['id']), request, self.params)
@@ -801,7 +801,7 @@ class Capability(LoginRequiredMixin, View):
                 form = utils.get_instance_for_update(
                     data, self.params, msg, int(pk))
                 print(form.data)
-            
+
             else:
                 form = self.params['form_class'](data, request=request)
             if form.is_valid():
@@ -809,7 +809,7 @@ class Capability(LoginRequiredMixin, View):
             else:
                 cxt = {'errors': form.errors}
                 resp = utils.handle_invalid_form(request, self.params, cxt)
-        
+
         except Exception:
             resp = utils.handle_Exception(request)
         return resp
@@ -817,7 +817,7 @@ class Capability(LoginRequiredMixin, View):
     def handle_valid_form(self, form, request, create):
         logger.info('capability form is valid')
         from apps.core.utils import handle_intergrity_error
-        
+
         try:
             cap = form.save()
             putils.save_userinfo(cap, request.user, request.session, create=create)
@@ -848,10 +848,10 @@ class PeopleView(LoginRequiredMixin, View):
 
         if R.get('template') == 'true':
             return render(request, self.params['template_list'])
-        
+
         # return cap_list data
         if R.get('action', None) == 'list' or R.get('search_term'):
-            
+
             objs = self.params['model'].objects.select_related(
                 *self.params['related']).filter(
                     ~Q(peoplecode='NONE'), enable=True
@@ -870,7 +870,7 @@ class PeopleView(LoginRequiredMixin, View):
         elif R.get('action', None) == "delete" and R.get('id', None):
             print(f'resp={resp}')
             resp = utils.render_form_for_delete(request, self.params, True)
-        
+
         # return form with instance
         elif R.get('id', None):
             from .utils import get_people_prefform
@@ -930,12 +930,12 @@ class PeopleGroup(LoginRequiredMixin, View):
         'fields'       : ['groupname', 'enable', 'id'],
         'form_initials': {}
     }
-    
+
     def get(self, request, *args, **kwargs):
         R, resp, objects, filtered = request.GET, None, [], 0
         # first load the template
         if R.get('template'): return render(request, self.params['template_list'])
-        
+
         # return list data
         if R.get('action', None) == 'list' or R.get('search_term'):
             objs = self.params['model'].objects.select_related(
@@ -956,7 +956,7 @@ class PeopleGroup(LoginRequiredMixin, View):
             obj=utils.get_model_obj(R['id'], request, self.params)
             pm.Pgbelonging.objects.filter(pgroup = obj).delete()
             resp = utils.render_form_for_delete(request, self.params, False)
-        
+
         # return form with instance
         elif R.get('id', None):
             obj = utils.get_model_obj(int(R['id']), request, self.params)
@@ -984,7 +984,7 @@ class PeopleGroup(LoginRequiredMixin, View):
                 create= False
             else:
                 form = self.params['form_class'](data, request=request)
-            
+
             if form.is_valid():
                 resp = self.handle_valid_form(form, request, create)
             else:
@@ -1006,7 +1006,7 @@ class PeopleGroup(LoginRequiredMixin, View):
             return rp.JsonResponse(data, status=200)
         except IntegrityError:
             return handle_intergrity_error("Pgroup")
-        
+
 
 
 class SiteGroup(LoginRequiredMixin, View):
@@ -1019,12 +1019,12 @@ class SiteGroup(LoginRequiredMixin, View):
         'fields'       : ['groupname', 'enable', 'id'],
         'form_initials': {}
     }
-  
+
     def get(self, request, *args, **kwargs):
         R, resp, objects, filtered = request.GET, None, [], 0
         # first load the template
         if R.get('template'): return render(request, self.params['template_list'])
-        
+
         #for list view of group
         if R.get('action') == 'list':
             total, filtered, objs = pm.Pgroup.objects.list_view_sitegrp(R)
@@ -1037,10 +1037,9 @@ class SiteGroup(LoginRequiredMixin, View):
                 'recordsTotal':total
             })
             return resp
-        
+
         #to populate all sites table
         elif R.get('action', None) == 'allsites':
-            from apps.onboarding.models import Bt
             objs, idfs  = Bt.objects.get_bus_idfs(R, R['sel_butype'])
 
             resp = rp.JsonResponse(data = {
@@ -1048,7 +1047,7 @@ class SiteGroup(LoginRequiredMixin, View):
                 'idfs':list(idfs)
             })
             return resp
-        
+
         elif R.get('action') == "loadSites":
             data = Pgbelonging.objects.get_assigned_sitesto_sitegrp(R['id'])
             print(data)
@@ -1056,15 +1055,15 @@ class SiteGroup(LoginRequiredMixin, View):
                 'assigned_sites':list(data),
             })
             return resp
-        
+
         #form without instance to create new data
         elif R.get('action', None) == 'form':
             #options = self.get_options()
             cxt = {'sitegrpform': self.params['form_class'](request=request),
                    'msg': "create site group requested"}
             return render(request, self.params['template_form'], context=cxt)
-        
-        
+
+
         #form with instance to load existing data
         elif R.get('id', None):
             obj = utils.get_model_obj(int(R['id']), request, self.params)
@@ -1075,15 +1074,15 @@ class SiteGroup(LoginRequiredMixin, View):
                    'assignedsites': sites}
             resp = render(request, self.params['template_form'], context=cxt)
             return resp
-        
+
         # handle delete request
         elif R.get('action', None) == "delete" and R.get('id', None):
             ic('here')
             obj=utils.get_model_obj(R['id'])
             pm.Pgbelonging.objects.filter(pgroup_id = obj.id).delete()
             return rp.JsonResponse(data=None, status=200)
-        
-    
+
+
     def post(self, request, *args, **kwargs):
         import json
         data = QueryDict(request.POST['formData'])
@@ -1097,7 +1096,7 @@ class SiteGroup(LoginRequiredMixin, View):
                 create= False
             else:
                 form = self.params['form_class'](data, request=request)
-            
+
             if form.is_valid():
                 resp = self.handle_valid_form(form, assignedSites, request)
             else:
@@ -1141,7 +1140,7 @@ class SiteGroup(LoginRequiredMixin, View):
 
 
 
-        
-        
-        
-        
+
+
+
+

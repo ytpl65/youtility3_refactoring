@@ -1,16 +1,13 @@
-from django.utils import timezone
 import apps.peoples.utils as putils
 import apps.core.utils as utils
-from apps.onboarding.admin import BaseFieldSet1, BaseFieldSet2
+from apps.onboarding.admin import BaseFieldSet2
 from apps.onboarding import models as om
 from apps.peoples import models as pm
 from import_export import widgets as wg
 from import_export import resources, fields
 from import_export.admin import ImportExportModelAdmin
-from import_export import resources
 from .models import People,  Pgroup, Pgbelonging, Capability
 from django.contrib import admin
-from multiprocessing.spawn import import_main_path
 import logging
 
 log = logging.getLogger('__main__')
@@ -204,10 +201,10 @@ class CapabilityResource(resources.ModelResource, BaseFieldSet2):
     def before_save_instance(self, instance, using_transactions, dry_run):
         instance.capscode = instance.capscode.upper()
         utils.save_common_stuff(self.request, instance)
-    
-    
-    
-    
+
+
+
+
 @admin.register(Capability)
 class CapabilityAdmin(ImportExportModelAdmin):
     resource_class = CapabilityResource
@@ -217,7 +214,7 @@ class CapabilityAdmin(ImportExportModelAdmin):
     list_display_links = ['capscode', 'capsname']
 
 
-    
+
     def get_resource_kwargs(self, request, *args, **kwargs):
         return {'request': request}
 

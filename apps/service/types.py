@@ -1,6 +1,5 @@
 from graphene_django.types import DjangoObjectType
 from typing import List
-from graphene_gis.converter import gis_converter
 import graphene
 from djantic import ModelSchema
 from pydantic import BaseModel,  validator
@@ -23,7 +22,7 @@ from graphene_file_upload.scalars import Upload
 
 
 class PELogType(DjangoObjectType):
-    
+
     class Meta:
         model = PeopleEventlog
 
@@ -45,14 +44,14 @@ class JNDType(graphene.InputObjectType):
     options     = graphene.String(required=True)
     min         = graphene.Float(required=True)
     max         = graphene.Float(required=True)
-    
-    
+
+
     # class Meta:
     #     model = JobneedDetails
     #     fields = ['seqno', 'cdtz', 'mdtz', 'answertype', 'answer', 'options', 'min',
     #               'max', 'alerton', 'ismadatory', 'alerts']
-    
-    
+
+
 class JndType(DjangoObjectType):
     class Meta:
         model = JobneedDetails
@@ -62,29 +61,29 @@ class TrackingType(DjangoObjectType):
     class Meta:
         model = Tracking
         fields = '__all__'
-        
+
 
 class TestGeoType(DjangoObjectType):
     class Meta:
         model = TestGeo
         fields = '__all__'
-        
+
 
 class PeopleType(DjangoObjectType):
-    
+
     class Meta:
         model = People
         fields = '__all__'
-        
+
 class VerifyClientOutput(graphene.ObjectType):
     rc        = graphene.Int(default_value=0)
     msg       = graphene.String()
     url = graphene.String(default_value = "")
-        
+
 class LoginResponseType(DjangoObjectType):
     tenantid = graphene.Int()
     shiftid = graphene.Int()
-    
+
     class Meta:
         model = People
         fields = [
@@ -97,13 +96,13 @@ class LoginResponseType(DjangoObjectType):
         print(dict(info.context.POST))
         print(dir(info.context.body))
         print(info.context.content_params)
-        
+
 
 class AssetType(DjangoObjectType):
     class Meta:
         model = Asset
-        
-        
+
+
 class QuestionType(DjangoObjectType):
     class Meta:
         model = Question
@@ -126,23 +125,23 @@ class PgBlngType(DjangoObjectType):
 class PgroupType(DjangoObjectType):
     class Meta:
         model = Pgroup
-        
-        
-        
 
-     
+
+
+
+
 class AuthInput(graphene.InputObjectType):
     loginid     = graphene.String(required=True)
     password    = graphene.String(required=True)
     deviceid    = graphene.String(required=True)
-    
-    
+
+
 class AuthOutput(graphene.ObjectType):
     isauthenticated = graphene.Boolean()
     user            = graphene.Field(PeopleType)
     msg             = graphene.String()
-    
-    
+
+
 class TyType(DjangoObjectType): 
     class Meta:
         model=TypeAssist
@@ -161,11 +160,11 @@ class RowInput(graphene.InputObjectType):
     values    = graphene.List(graphene.String)
     tablename = graphene.String()
 
-    
+
 class RowOutput(graphene.ObjectType):
     id = graphene.Int()
     msg = graphene.JSONString()
- 
+
 
 
 
@@ -185,8 +184,8 @@ class AttachmentInput(graphene.InputObjectType):
     peopleid = graphene.Int(required=True)
     filename = graphene.String(required=True)
     path     = graphene.String(required=True)
-    
-    
+
+
 
 
 class AdhocInputType(graphene.InputObjectType):
@@ -197,13 +196,13 @@ class AdhocInputType(graphene.InputObjectType):
     site_id      = graphene.Int(required=True)
     qset_id      = graphene.Int(required=True)
     remarks      = graphene.String(required=False)
-    
+
 
 class TestJsonInput(graphene.InputObjectType):
     file = Upload(required=True)
     sevicename = graphene.String(required=True)
-    
-    
+
+
 class ServiceOutputType(graphene.ObjectType):
     rc        = graphene.Int(default_value=0)
     msg       = graphene.String()
@@ -223,7 +222,7 @@ class JndSchema(ModelSchema):
     class Config:
         model = JobneedDetails
 
-        
+
 class JobneedSchema(ModelSchema):
     detals: List[JndSchema]
     class Config:
@@ -324,18 +323,18 @@ class DetailsSchema(BaseModel):
     alerton: str
     ismandatory: bool = True
     alerts: bool = False
-    
+
 
 class ChildSchema(BaseModel):
     details: List[DetailsSchema]
     jobdesc: str
     qset_id: int
     seqno: int
-    
+
     @validator('jobdesc', allow_reuse=True)
     def to_title_case(cls, v):
         if v: return v.title()
-            
+
 
 class ReportSchema(BaseModel):
     child: List[ChildSchema]
@@ -359,11 +358,11 @@ class ReportSchema(BaseModel):
     plandatetime: datetime
     qset_id: int
     scantype: Scantype
-    
+
     @validator('jobdesc', 'othersite', allow_reuse=True)
     def to_title_case(cls, v):  # sourcery skip: instance-method-first-arg-name
         if v: return v.title()
-    
+
     @validator('gpslocation', allow_reuse=True)
     def check_gpslocation_format(cls, v):
         # sourcery skip: inline-immediately-returned-variable, instance-method-first-arg-name
@@ -374,7 +373,7 @@ class ReportSchema(BaseModel):
             return point
         except Exception as e:
             raise ValueError('unrecognized gpslocation format') from e
-    
+
 
 class JobneedMdtzAfter(graphene.ObjectType):
     jobneedid         = graphene.Int()
@@ -402,9 +401,9 @@ class JobneedMdtzAfter(graphene.ObjectType):
     ctzoffset         = graphene.Int()
     multifactor       = graphene.Decimal()
     frequency         = graphene.String()
-    
-    
-    
+
+
+
 
 class SelectOutputType(graphene.ObjectType):
     nrows   = graphene.Int()
@@ -413,7 +412,7 @@ class SelectOutputType(graphene.ObjectType):
     rc      = graphene.Int(default_value = 0)
     msg     = graphene.String()
     records = graphene.JSONString()
-    
+
 
 class UploadAttType(graphene.InputObjectType):
     # columns  = graphene.String()

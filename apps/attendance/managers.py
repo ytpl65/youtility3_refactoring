@@ -1,18 +1,16 @@
 from datetime import timedelta
-import re
 from django.db import models
-from apps.core import utils
 Q = models.Q
 class PELManager(models.Manager):
     use_in_migrations = True
-    
+
     def get_current_month_sitevisitorlog(self, peopleid):
         from datetime import datetime
         qset = self.select_related('bu', 'peventtype').filter(
             ~Q(people_id = -1), peventtype__tacode = 'AUDIT',
             people_id = peopleid, datefor__gte = datetime.date() - timedelta(days=7))
         return qset or self.none()
-    
+
     def get_people_attachment(self, pelogid, db=None):
         return self.raw(
             """
@@ -26,17 +24,17 @@ class PELManager(models.Manager):
                 AND peopleeventlog.uuid= %s
             """,params=[pelogid]
         )[0] or self.none()
-    
+
     def update_fr_results(self, result, id, peopleid, db):
         return self.filter(
             id=id
         ).using(db).update(peventlogextras = result, people_id = peopleid)
-        
-    
+
+
     def get_people_attachment(self, pelogid, db):
         pass
-    
-    
+
+
     def get_lastmonth_conveyance(self, R):
         from datetime import datetime
         now = datetime.now()
@@ -61,5 +59,4 @@ class PELManager(models.Manager):
             obj['path'] = coords
             coords = []
         return qset or self.none()
-        
-        
+

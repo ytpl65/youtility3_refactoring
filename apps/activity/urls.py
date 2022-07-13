@@ -1,5 +1,4 @@
 from django.urls import path
-from django.urls.conf import include
 from apps.activity import views
 
 app_name = 'activity'

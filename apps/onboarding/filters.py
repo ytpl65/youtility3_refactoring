@@ -7,11 +7,11 @@ class TypeAssistFilter(django_filters.FilterSet):
     tatype = django_filters.CharFilter(field_name='tatype', lookup_expr='icontains', label='Type')
     taname = django_filters.CharFilter(field_name='taname', lookup_expr='icontains', label='Name')
     cuser = django_filters.CharFilter(field_name='cuser__peoplecode', lookup_expr='icontains', label='Created By')
-    
+
     class Meta:
         model=TypeAssist
         fields = ['tacode', 'taname', 'tatype',  'cuser']
-        
+
 class BtFilter(django_filters.FilterSet):
     bucode     = django_filters.CharFilter(field_name='bucode', lookup_expr='icontains', label='Code')
     buname     = django_filters.CharFilter(field_name='buname', lookup_expr='icontains', label='Name')
@@ -20,7 +20,7 @@ class BtFilter(django_filters.FilterSet):
     parent     = django_filters.CharFilter(field_name='parent__bucode', lookup_expr='icontains', label='Belongs to')
     butree     = django_filters.CharFilter(field_name='butree', lookup_expr='icontains', label="Reporting Structure")
     enable     = django_filters.CharFilter(field_name='enable', lookup_expr='icontains', label="Enable")
-    
+
     class Meta:
         model=Bt
         fields = ['bucode', 'buname', 'identifier', 'enable', 'parent', 'butype', 'butree']

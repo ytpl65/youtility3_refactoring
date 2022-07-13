@@ -9,7 +9,7 @@ def display_msg(msg):
     # get boundary of this text
     font = cv2.FONT_HERSHEY_COMPLEX_SMALL
     textsize = cv2.getTextSize(msg, font, 1, 2)[0]
-    
+
     # get coords based on boundary
     textX = (black_img.shape[1] - textsize[0]) // 2
     textY = (black_img.shape[0] + textsize[1]) // 2
@@ -34,7 +34,7 @@ def try_camera(cv2):
 
 def detect_QR(cv2, decode, np, time):
     code, status  =  None, None, 
-    
+
     cap = try_camera(cv2)
     timeOut, msg = time.time() + 15, "Something went wrong!"
     # initialize the cv2 QRCode detector
@@ -45,7 +45,7 @@ def detect_QR(cv2, decode, np, time):
             _, img, = cap.read()
             #cv2.putText(img, "Hello World!!!", (200, 200), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 255))
             detected = False
-            
+
             #draw rectangle and putText on qr code 
             for barcode in decode(img):
                 print(barcode.data)
@@ -59,7 +59,7 @@ def detect_QR(cv2, decode, np, time):
                     0.9, (255,0,0), 2)
                 detected = True
                 log.debug("QR is detected")
-            
+
             cv2.imshow("Attendance", img)
 
             if time.time() > timeOut:
@@ -87,7 +87,6 @@ def detect_QR(cv2, decode, np, time):
         msg = """Please check your webcam's power 
                 on/off or try connecting it to different usb slot"""
         status = 404
-    del timeOut  
     return rp.JsonResponse({"message":msg, 'title':title, 'decoded':code}, status=status)
 
 def get_actual_img(code, detectFace):
@@ -103,7 +102,7 @@ def get_actual_img(code, detectFace):
         return img_array
     finally:
         log.debug("get_actual_img is ended")
-        
+
 
 
 def recognize_face(cv2, np, time, code):
@@ -113,7 +112,7 @@ def recognize_face(cv2, np, time, code):
     timeOut = time.time() + 15
     detected = False
     msg, title, status = "Something went wrong!", "", None
-        
+
     if hasattr(cap, 'isOpened') and cap.isOpened:
         log.debug("camera is opened")
         actual_face = get_actual_img(code, DeepFace.detectFace)
@@ -121,7 +120,7 @@ def recognize_face(cv2, np, time, code):
         if len(actual_face):
             log.debug("actual face found")
             while True:
-                
+
                 x, img, = cap.read()
                 log.debug("camera is running %s"%(x))
                 cv2.imshow("Attendance", img)
@@ -144,7 +143,7 @@ def recognize_face(cv2, np, time, code):
                     status = 200
                 if cv2.waitKey(1) == ord("q") or detected:
                     break
-                
+
             cap.release()
             cv2.destroyAllWindows()
     else:
@@ -152,9 +151,7 @@ def recognize_face(cv2, np, time, code):
         msg = """Please check your webcam's power
                 on/off or try connecting it to different usb slot"""
         status = 404
-    del timeOut
     log.debug("msg: %s, title: %s, decoded:%s"%(msg, title, code))
     return rp.JsonResponse({"message":msg, 'title':title, 'decoded':code}, status=status)
 
-            
-            
+
