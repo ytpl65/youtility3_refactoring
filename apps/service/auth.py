@@ -32,7 +32,6 @@ def LogOutUser(response, request):
 def auth_check(info, input, returnUser, uclientip=None):
     from django.contrib.auth import authenticate
     from graphql import GraphQLError
-    from apps.peoples.models import People
     try:
         user = authenticate(
             info.context,
@@ -68,7 +67,6 @@ def authenticate_user(input, request, msg, returnUser):
     deviceid = input.deviceid
 
     from graphql import GraphQLError
-    from apps.peoples.models import People
     from django.contrib.auth import authenticate
 
     user = authenticate(request, username = loginid, password = password)

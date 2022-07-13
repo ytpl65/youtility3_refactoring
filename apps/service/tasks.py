@@ -232,7 +232,6 @@ def perform_insertrecord_bgt(self, data, request=None, filebased=True, db='defau
 
 
 def save_linestring_and_update_pelrecord(obj):
-    from apps.attendance.models import Tracking
     from django.contrib.gis.geos import LineString
     try:
         bet_objs = Tracking.objects.filter(reference=obj.uuid)
@@ -430,10 +429,6 @@ def save_parent_childs(sz, jn_parent_serializer, child, M, db):
 
 @app.task(bind=True, default_retry_delay=300, max_retries=5)
 def perform_facerecognition_bgt(self, pelogid, peopleid, ownerid, home_dir, uploadfile, db='default'):
-    from apps.activity.models import Attachment
-    from apps.attendance.models import PeopleEventlog
-    from django.db import transaction
-    from apps.core import utils
 
     log.info("perform_facerecognition ...start [+]")
     log.info(f'parameters are pelogid:{pelogid} peopleid:{peopleid} ownerid:{ownerid} typeof ownerid: {type(ownerid)} home_dir:{home_dir} uploadfile:{uploadfile}')

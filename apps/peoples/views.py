@@ -1040,7 +1040,6 @@ class SiteGroup(LoginRequiredMixin, View):
 
         #to populate all sites table
         elif R.get('action', None) == 'allsites':
-            from apps.onboarding.models import Bt
             objs, idfs  = Bt.objects.get_bus_idfs(R, R['sel_butype'])
 
             resp = rp.JsonResponse(data = {

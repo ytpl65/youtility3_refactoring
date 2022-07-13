@@ -640,7 +640,7 @@ class CreateClient(LoginRequiredMixin, View):
         try:
             if form.is_valid() and jsonform.is_valid():
                 logger.info('ClientBt Form is valid')
-                from .utils import (save_json_from_bu_prefsform, create_tenant,
+                from .utils import (create_tenant,
                                     create_default_admin_for_client)
                 bt = form.save(commit=False)
                 bt.parent = get_or_create_none_bv()
@@ -678,7 +678,6 @@ def get_caps(request):  # sourcery skip: extract-method
     logger.info(f'cfor {cfor}')
     if selected_parents:
         from apps.peoples.models import Capability
-        from django.http import JsonResponse
         import json
         childs = []
         for i in selected_parents:
