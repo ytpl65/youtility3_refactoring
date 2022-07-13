@@ -96,7 +96,9 @@ def update_record(details, jobneed, Jn, Jnd):
                 #TODO send deviation mail
                 return True
     except Exception:
+        log.error("update_record failed", exc_info=True)
         raise
+    return False
 
 
 

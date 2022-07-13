@@ -18,14 +18,14 @@ def create_dummy_client_site_and_superadmin(self):
         clienttype = TypeAssist.objects.get(tatype__tacode = 'BVIDENTIFIER', tacode='CLIENT')
         sitetype = TypeAssist.objects.get(tatype__tacode = 'BVIDENTIFIER', tacode='SITE')
         
-        client = Bt.objects.get_or_create(
+        client, _ = Bt.objects.get_or_create(
             bucode='SPS', buname = "Security Personnel Services",
             enable=True, 
             defaults={
                 'butype_id':1, 'identifier':clienttype
             }
         )
-        site = Bt.objects.get_or_create(
+        site, _ = Bt.objects.get_or_create(
             bucode='YTPL', buname = "Youtility Technologies Pvt Ltd",
             enable=True,
             defaults={
@@ -38,7 +38,7 @@ def create_dummy_client_site_and_superadmin(self):
             defaults={
                 'peoplename':'Superadmin', 'email':'superadmin@youtility.in',
                 'dateofjoin':'1111-11-11', 'dateofbirth':'1111-11-11',
-                'client':client, 'site':site
+                'client':client, 'bu':site
             }
         )
         SU.set_password('superadmin@@2022@@')

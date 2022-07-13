@@ -1222,7 +1222,7 @@ class ImportFile(LoginRequiredMixin, View):
         from tablib import Dataset
         from .admin import TaResource
         import json
-        #utils.set_db_for_router('testDB2')
+        utils.set_db_for_router('testDB2')
         ic(request.POST)
         form = obforms.ImportForm(request.POST, request.FILES)
         if form.is_valid():

@@ -54,7 +54,7 @@ def handle_DoesNotExist(request):
 
 
 def handle_Exception(request, force_return=None):
-    data = {'errors': 'Something went wrong'}
+    data = {'errors': 'Something went wrong, Please try again!'}
     logger.critical(data['errors'], exc_info=True)
     msg.error(request, data['errors'], 'alert-danger')
     if force_return:

@@ -13,7 +13,7 @@ class graphQL:
         if request.status_code != 200:
             raise Exception(f"Query failed to run by returning code of {request.status_code}. {query}")
         pprint(request.json())
-        
+
     def login(self):
         query = """
         mutation TokenAuth{

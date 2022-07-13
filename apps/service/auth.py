@@ -54,8 +54,9 @@ def auth_check(info, input, returnUser, uclientip=None):
         if user.deviceid == '-1' or input.deviceid == user.deviceid: allowAccess=True
         else:
             if input.deviceid not in people_validimeis: isValidDevice=False
-            allowAccess = isAuth =False
-            raise GraphQLError(Messages.MULTIDEVICES)
+            isAuth =False
+            #raise GraphQLError(Messages.MULTIDEVICES)
+            allowAccess = True
         if allowAccess:
             if user.client.enable and user.enable:
                 return returnUser(user, info.context), user

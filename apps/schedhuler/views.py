@@ -1356,6 +1356,15 @@ class InternalTourScheduling(LoginRequiredMixin, View):
         if R.get('template') == 'true':
             return render(request, P['template_list'])
         
+        if R.get('id'):
+            obj = utils.get_model_obj(int(R['id']), request, P)
+            log.info(f'object retrieved {obj}')
+            form        = P['form_class'](instance=obj, initial=P['initial'])
+            checkpoints = self.get_checkpoints(obj, P)
+            cxt = {'schdtourform': form, 'childtour_form': P['subform'](), 'edit': True,
+                   'checkpoints': checkpoints}
+            return render(request, P['template_form'], cxt)
+        
         match R.get('action'):
             case "list":
                 objs = P['model'].objects.get_scheduled_internal_tours(
@@ -1370,8 +1379,7 @@ class InternalTourScheduling(LoginRequiredMixin, View):
 
     def post(self, request, *args, **kwargs):
         R, P = request.GET, self.params
-        pk, data = request.POST.get('pk', None), request.POST.get('formData')
-        assignedSites = json.loads(request.POST['assignedSites'])
+        pk, data = request.POST.get('pk', None), QueryDict(request.POST.get('formData'))
         try:
             if pk:
                 msg = 'internal scheduler tour'
@@ -1380,7 +1388,7 @@ class InternalTourScheduling(LoginRequiredMixin, View):
             else:
                 form = P['form_class'](data, request=request)
             if form.is_valid():
-                resp = self.handle_valid_form(form, assignedSites, request)
+                resp = self.handle_valid_form(form, request)
             else:
                 cxt = {'errors': form.errors}
                 resp = utils.handle_invalid_form(request, self.params, cxt)
@@ -1389,14 +1397,146 @@ class InternalTourScheduling(LoginRequiredMixin, View):
         return resp
     
     
-    def handle_valid_form(self, form, assigned_sites,  request):
-        data = request.POST.get('formData')
-        with transaction.atomic(using=utils.get_current_db_name()):
-            assigned_checkpoints = json.loads(data.get('assigned_checkpoints'))
-            job = form.save(commit=False)
-            job.parent_id = job.asset_id = job.qset_id = 1
-            job.save()
-            job = putils.save_userinfo(job, request.user, request.session)
-            self.save_checpoints_for_tour(assigned_checkpoints, job, request)
+    def handle_valid_form(self, form, request):
+        data = request.POST.get("asssigned_checkpoints")
+        try:
+            with transaction.atomic(using=utils.get_current_db_name()):
+                assigned_checkpoints = json.loads(data)
+                job = form.save(commit=False)
+                job.parent_id = job.asset_id = job.qset_id = 1
+                job.save()
+                job = putils.save_userinfo(job, request.user, request.session)
+                self.save_checpoints_for_tour(assigned_checkpoints, job, request)
+                log.info('guard tour  and its checkpoints saved success...')
+                return rp.JsonResponse({'jobname': job.jobname,
+                    'url': f'{reverse("schedhuler:schd_internal_tour")}?id={job.id}'},
+                    status=200)
+        except Exception as ex:
+            log.info("error handling valid form", exc_info=True)
+            raise ex
+        
 
-    #def save_checpoints_for_tour(self, checkpoints)
+
+    def save_checpoints_for_tour(self, checkpoints, job, request):
+        try:
+            log.info(f"saving Checkpoints found {len(checkpoints)} [started]")
+            ic(checkpoints)
+            CP = {}
+            for cp in checkpoints:
+                CP['expirytime'] = cp[5]
+                CP['asset']    = cp[1]
+                CP['qset']     = cp[3]
+                CP['seqno']       = cp[0]
+                checkpoint, created = self.params['model'].objects.update_or_create(
+                    parent_id  = job.id,
+                    asset_id = CP['asset'],
+                    qset_id  = CP['qset'],
+                    
+                    defaults   = sutils.job_fields(job, CP)
+                )
+                checkpoint.save()
+                status = "CREATED" if created else "UPDATED"
+                log.info("\nsaving checkpoint:= '%s' for JOB:= '%s' with expirytime:= '%s'  %s\n" % (
+                    cp[2],  job.jobname, cp[5], status))
+                putils.save_userinfo(checkpoint, request.user, request.session)
+        except Exception as ex:
+            log.error(
+                "failed to insert checkpoints, something went wrong", exc_info=True)
+            raise ex
+        else:
+            log.info("inserting checkpoints finished...")
+            
+    def get_checkpoints(self, obj, P):
+        log.info("getting checkpoints started...")
+        checkpoints = None
+        try:
+            checkpoints = P['model'].objects.select_related(
+                'parent', 'asset', 'qset', 'pgroup',
+                'people',
+            ).filter(parent_id=obj.id).values(
+                'seqno',
+                'asset__assetname',
+                'asset__id',
+                'qset__qsetname',
+                'qset__id',
+                'expirytime',
+                'id')
+        except Exception:
+            log.critical("something went wrong", exc_info=True)
+            raise
+        else:
+            log.info("checkpoints retrieved returned success")
+        return checkpoints
+
+
+
+class ExternalTourScheduling(LoginRequiredMixin, View):
+    params = {
+        'model'        : am.Job,
+        'template_form': 'schedhuler/schd_e_tourform_job.html',
+        'template_list': 'schedhuler/schd_e_tourlist_job.html',
+        'form_class'   : scd_forms.Schd_E_TourJobForm,
+        #'subform'      : scd_forms.SchdChild_I_TourJobForm,
+        'model'        : am.Job,
+        'related'      : ['pgroup', 'people'],
+        'initial'      : {
+            'identifier': am.Job.Identifier.EXTERNALTOUR,
+            'gracetime' : 5,
+            'planduration' : 5,
+            'fromdate'  : datetime.combine(date.today(), time(00, 00, 00)),
+            'uptodate'  : datetime.combine(date.today(), time(23, 00, 00)) + timedelta(days=2),
+        },
+        'fields'       : ['id', 'jobname', 'people__peoplename', 'pgroup__groupname', 'fromdate', 'uptodate',
+                        'planduration', 'gracetime', 'expirytime']
+    }
+    
+    
+    def get(self, request, *args, **kwargs):
+        R, P = request.GET, self.params
+        
+        #return template
+        if R.get('template') == 'true':
+            return render(request, P['template_list'])
+        
+        match R.get('action'):
+            case "list":
+                objs = P['model'].objects.get_scheduled_internal_tours(
+                    P['related'], P['fields']
+                )
+                return rp.JsonResponse({'data':list(objs)}, status=200)
+            case 'form':
+                cxt = {'schdexternaltourform':P['form_class'](request=request, initial=P['initial'])}
+                return render(request, P['template_form'], cxt)
+            
+            
+    def post(self, request, *args, **kwargs):
+        P = self.params
+        pk, data = request.POST.get('pk', None), QueryDict(request.POST.get('formData'))
+        try:
+            if pk:
+                msg = 'external scheduler tour'
+                form = utils.get_instance_for_update(
+                    data, P, msg, int(pk), kwargs = {'request':request})
+            else:
+                form = P['form_class'](data)
+            if form.is_valid():
+                return self.handle_valid_form(form, request, P)
+            else:
+                cxt = {'errors': form.errors}
+                return utils.handle_invalid_form(request, self.params, cxt)
+        except Exception as ex:
+            return  utils.handle_Exception(request)
+        
+    
+    def handle_valid_form(form, request, P):
+        try:
+            job = form.save(commit=False)
+            job.parent_id = job.asset_id=1
+            job.save()
+            job = putils.save_userinfo(job.request.user,request.session)
+            checkpoints = P['model'].objects.get_checkpoints_for_externaltour(job)
+            return rp.JsonResponse({'checkpoints':checkpoints}, status=200)
+        except Exception as ex:
+            log.error("external tour form, handle valid form failed", exc_info=True)
+            return utils.handle_Exception(request)
+        

@@ -222,7 +222,7 @@ class Job(BaseModel, TenantAwareModel):
         FORTNIGHTLY = "FORTNIGHTLY", _("Fort Nightly")
     
     
-    #id          = models.BigIntegerField(_("Job Id"), primary_key=True)
+    #id             = models.BigIntegerField(_("Job Id"), primary_key=True)
     jobname         = models.CharField(_("Name"), max_length=100)
     jobdesc         = models.CharField(_("Description"), max_length=500)
     fromdate        = models.DateTimeField( _("From date"), auto_now=False, auto_now_add=False)
@@ -324,7 +324,7 @@ class Asset(BaseModel, TenantAwareModel):
     assetname     = models.CharField(_("Asset Name"), max_length=250)
     enable        = models.BooleanField(_("Enable"), default=True)
     iscritical    = models.BooleanField(_("Is Critical"))
-    gpslocation   = PointField(_('GPS Location'), null=True, geography=True, srid=4326, default=[])
+    gpslocation   = PointField(_('GPS Location'), null=True, geography=True, srid=4326, blank=True)
     parent        = models.ForeignKey("self", verbose_name=_( "Belongs to"), on_delete = models.RESTRICT, null=True, blank=True)
     identifier    = models.CharField( _('Asset Identifier'), choices=Identifier.choices, max_length=55, default=Identifier.NONE.value)
     runningstatus = models.CharField(_('Running Status'), choices=RunningStatus.choices, max_length=55)
@@ -615,7 +615,10 @@ class Ticket(BaseModel, TenantAwareModel):
     event              = models.ForeignKey("activity.Event", null=True,blank=True, on_delete=models.RESTRICT)
     isescalated        = models.BooleanField(default=True)
     ticketsource       = models.CharField(max_length=50, choices=TicketSource.choices, null=True, blank=True)
-
+    attcount           = models.IntegerField(_("Attachment Count"), default=0)
+    parent             = models.ForeignKey('self', null=True, blank=True, on_delete=models.RESTRICT)
+    
+    
     class Meta(BaseModel.Meta):
             db_table      = 'ticket'
             get_latest_by = ["cdtz", 'mdtz']

@@ -276,7 +276,7 @@ Schedhule Tour
                                         <td>{{ checkpoint['asset__id'] }}</td>
                                         <td>{{ checkpoint['asset__assetname'] }}</td>
                                         <td>{{ checkpoint['qset__id'] }}</td>
-                                        <td>{{ checkpoint['qset__qset_name'] }}</td>
+                                        <td>{{ checkpoint['qset__qsetname'] }}</td>
                                         <td>{{ checkpoint['expirytime'] }}</td>
                                     </tr>
                                     {% endfor %}
@@ -625,7 +625,7 @@ Schedhule Tour
                 var form = $(this);
                 e.preventDefault()
                 const params = {
-                    url: createUrl,
+                    url: "{{ url('schedhuler:schd_internal_tour') }}",
                     modal: false
                 } //checklist view
                 const formtype = '{{schdtourform.instance.id}}' == 'None' ? "create" : "update" //form-type (create/update)

@@ -315,7 +315,7 @@ Schedhule Task
   	    $("#id_ctzoffset").val(-new Date().getTimezoneOffset())
         formSaved=true
         //toggle people and pgroup field based on radio button value
-        if ('{{schdtaskform.instance.id}}' == ('None' || "")) {
+        if ('{{schdtaskform.instance.id}}' in ('None' || "")) {
             showHideSelectField('PEOPLE')
         }else{
             var assignto = '{{schdtaskform.instance.people}}' == ('None' || "") ? "GROUP" :"PEOPLE"

@@ -242,7 +242,7 @@ class QsetBlngManager(models.Manager):
     fields = ['id', 'seqno', 'answertype',  'isavpt', 'options', 'ctzoffset','ismandatory',
               'min', 'max', 'alerton', 'client_id', 'bu_id',  'question_id', 
               'qset_id', 'cuser_id', 'muser_id', 'cdtz', 'mdtz', 'alertmails_sendto', 'tenant_id']
-    related = [ 'client', 'bu',  'question', 
+    related = ['client', 'bu',  'question', 
               'qset', 'cuser', 'muser', ]
     
     
@@ -253,6 +253,13 @@ class QsetBlngManager(models.Manager):
                     *self.fields
                 )
         return qset or self.none()
+    
+    
+    def get_checklist_of_job(self, job):
+        qset = self.select_related(
+            'question').filter(
+                qset_id = job.qset_id
+            )
     
     
 class TicketManager(models.Manager):
@@ -280,4 +287,12 @@ class JobManager(models.Manager):
         qset = self.select_related(*related).filter(
             parent__jobname='NONE', parent_id=1
         ).values(*fields).order_by('-cdtz')
+        return qset or self.none()
+    
+    def get_checkpoints_for_externaltour(self, job):
+        qset = self.select_related(
+            'identifier', 'butype', 'parent').filter(
+                parent_id = job.bu_id).values(
+                'buname', 'id', 'bucode', 'gpslocation',
+            )
         return qset or self.none()

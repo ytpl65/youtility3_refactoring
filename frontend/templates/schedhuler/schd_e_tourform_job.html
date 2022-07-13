@@ -4,7 +4,7 @@
 <link  href="{{ static('assets/plugins/custom/DataTables/datatables.min.css') }}" rel="stylesheet" type="text/css"/>
 <link rel="stylesheet" href="{{ static('assets/css/jqCron.css') }}" type="text/css">
 {{ schdexternaltourform.media.css }}
-{{ editsiteform.media.css }}
+{# {{ editsiteform.media.css }} #}
 <style>
 table.dataTable.compact tbody td.select-checkbox::before,
 table.dataTable.compact tbody th.select-checkbox::before{
@@ -64,97 +64,122 @@ Schedhule External-Tour&nbsp;<i class="fa fa-clock fs-4 text-primary" aria-hidde
         {{ schdexternaltourform.ticketcategory }}
         {{ schdexternaltourform.seqno }}
     </div>
-    
-    <div class="row mb-3 gy-3">
-        <div class="col-md-1">
-            <label for={{ schdexternaltourform.bu.id_for_label }}
-                class="required">{{ schdexternaltourform.bu.label }}:</label>
+    <div class="row">
+        <div class="col-md-6">
+            <div class="input-group mb-3">
+                <div class="col-md-4">
+                    {{ schdexternaltourform.bu.label_tag() }}
+                </div>
+                <div class="col-md-8">
+                    {{ schdexternaltourform.bu }}
+                </div>
+            </div>
+            <div class="input-group mb-3">
+                <div class="col-md-4">
+                    {{ schdexternaltourform.jobname.label_tag() }}
+                </div>
+                <div class="col-md-8">
+                    {{ schdexternaltourform.jobname }}
+                </div>
+            </div>
+            <div class="input-group mb-3">
+                <div class="col-md-4">
+                    {{ schdexternaltourform.shift.label_tag() }}
+                </div>
+                <div class="col-md-8">
+                    {{ schdexternaltourform.shift }}
+                </div>
+            </div>
+            <div class="input-group mb-3">
+                <div class="col-md-4">
+                    <label for='{{ schdexternaltourform.assign_to.id_for_label }}'
+                    class="required">{{ schdexternaltourform.assign_to.label }}:</label>
+                </div>
+                <div class="col-md-2 form-check form-check-inline">
+                    <input type="radio" class="form-check-input" name='{{ schdexternaltourform.assign_to.name }}'
+                        id="{{ schdexternaltourform.assign_to.auto_id }}1" value="PEOPLE" checked
+                        onchange="showHideSelectField('PEOPLE')">
+                    <label class="form-check-label" for="{{ schdexternaltourform.assign_to.auto_id }}">People</label>
+                </div>
+                <div class="col-md-2 form-check form-check-inline">
+                    <input type="radio" class="form-check-input" name='{{ schdexternaltourform.assign_to.name }}'
+                        id="{{ schdexternaltourform.assign_to.auto_id }}1" value="GROUP" checked
+                        onchange="showHideSelectField('GROUP')">
+                    <label class="form-check-label" for="{{ schdexternaltourform.assign_to.auto_id }}">Group</label>
+                </div>
+            </div>
+            <div class="input-group mb-3">
+                <div class="col-md-4 people">
+                    {{ schdexternaltourform.people.label_tag() }}
+                </div>
+                <div class="col-md-8 people">
+                    {{ schdexternaltourform.people }}
+                </div>
+            </div>
+            <div class="input-group mb-3">
+                <div class="col-md-4 pgroup">
+                    {{ schdexternaltourform.pgroup.label_tag() }}
+                </div>
+                <div class="col-md-8 pgroup">
+                    {{ schdexternaltourform.pgroup }}
+                </div>
+            </div>
+            <div class="input-group mb-3">
+                <div class="col-md-4">
+                    {{ schdexternaltourform.qset.label_tag() }}
+                </div>
+                <div class="col-md-8">
+                    {{ schdexternaltourform.qset }}
+                </div>
+            </div>
         </div>
-        <div class="col-md-5">
-            {{ schdexternaltourform.bu }}
-            {{ schdexternaltourform.bu.errors }}
-        </div>
-        <div class="col-md-1">
-            <label for={{ schdexternaltourform.planduration.id_for_label }}
-                class="required">{{ schdexternaltourform.planduration.label }}:</label>
-        </div>
-        <div class="col-md-5">
-            {{ schdexternaltourform.planduration }}
-            {{ schdexternaltourform.planduration.errors }}
-        </div>
-    </div>
-    <div class="row mb-3 gy-3">
-        <div class="col-md-1">
-                    <label for={{ schdexternaltourform.jobname.id_for_label }}
-            class="required">{{ schdexternaltourform.jobname.label }}:</label>
-        </div>
-        <div class="col-md-5">
-            {{ schdexternaltourform.jobname }}
-            {{ schdexternaltourform.jobname.errors }}
-        </div>
-        <div class="col-md-1">
-            <label for={{ schdexternaltourform.gracetime.id_for_label }}
-            class="required">{{ schdexternaltourform.gracetime.label }}:</label>
-        </div>
-        <div class="col-md-5">
-            {{ schdexternaltourform.gracetime }}
-            {{ schdexternaltourform.gracetime.errors }}
-        </div>
-    </div>
-    <div class="row mb-3 gy-3">
-        <div class="col-md-1">
-            <label for={{ schdexternaltourform.shift.id_for_label }}
-            class="required">{{ schdexternaltourform.shift.label }}:</label>
-        </div>
-        <div class="col-md-5">
-            {{ schdexternaltourform.shift }}
-            {{ schdexternaltourform.shift.errors }}
-        </div>
-        <div class="col-md-1">
-            <label for="{{ schdexternaltourform.cron.id_for_label }}" class="required">{{ schdexternaltourform.cron.label }}:</label>
-        </div>
-        <div class="col-md-5 d-flex">
-            <input type="text" name="{{ schdexternaltourform.cron.name }}" value="{{ schdexternaltourform.cron.value() }}" id="id_cron" readonly required class="form-control" maxlength="250" />
-            <a  class="btn btn-circle btn-icon-only btn-default" id="cron_selector">
-                <i class="fa fa-clock fs-4 text-primary" aria-hidden="true"></i>
-            </a>
-            {{ schdexternaltourform.cron.errors }}
-        </div>
-    </div>
-    <div class="row mb-3 gy-3">
-        <div class="col-md-1">
-            <label for={{ schdexternaltourform.people.id_for_label }}
-            class="required">{{ schdexternaltourform.people.label }}:</label>
-        </div>
-        <div class="col-md-5">
-            {{ schdexternaltourform.people }}
-            {{ schdexternaltourform.people.errors }}
-        </div>
-        <div class="col-md-1">
-            <label for={{ schdexternaltourform.fromdate.id_for_label }}
-            class="required">{{ schdexternaltourform.fromdate.label }}:</label>
-        </div>
-        <div class="col-md-5">
-            {{ schdexternaltourform.fromdate }}
-            {{ schdexternaltourform.fromdate.errors }}
-        </div>
-    </div>
-    <div class="row mb-3 gy-3">
-        <div class="col-md-1">
-            <label for={{ schdexternaltourform.qset.id_for_label }}
-            class="required">{{ schdexternaltourform.qset.label }}:</label>
-        </div>
-        <div class="col-md-5">
-            {{ schdexternaltourform.qset }}
-            {{ schdexternaltourform.qset.errors }}
-        </div>
-        <div class="col-md-1">
-            <label for={{ schdexternaltourform.uptodate.id_for_label }}
-            class="required">{{ schdexternaltourform.uptodate.label }}:</label>
-        </div>
-        <div class="col-md-5">
-            {{ schdexternaltourform.uptodate }}
-            {{ schdexternaltourform.uptodate.errors }}
+
+        <div class="col-md-6">
+            <div class="input-group mb-3">
+                <div class="col-md-4">
+                    {{ schdexternaltourform.planduration.label_tag() }}
+                </div>
+                <div class="col-md-8">
+                    {{ schdexternaltourform.planduration }}
+                </div>
+            </div>
+            <div class="input-group mb-3">
+                <div class="col-md-4">
+                    {{ schdexternaltourform.gracetime.label_tag() }}
+                </div>
+                <div class="col-md-8">
+                    {{ schdexternaltourform.gracetime }}
+                </div>
+            </div>
+            <div class="input-group mb-3">
+                <div class="col-md-4">
+                    <label for="{{ schdexternaltourform.cron.id_for_label }}" class="required">{{ schdexternaltourform.cron.label }}:</label>
+                </div>
+                <div class="col-md-8 d-flex">
+                    <input type="text" name="{{ schdexternaltourform.cron.name }}" value="{{ schdexternaltourform.cron.value() }}" id="id_cron"
+                    readonly required class="form-control form-control-solid" maxlength="250" />
+                    <a  class="btn btn-circle btn-icon-only btn-default " id="cron_selector">
+                        <i class="fa fa-clock fs-4 text-primary" aria-hidden="true"></i>
+                    </a>
+                    {{ schdexternaltourform.cron.errors }}
+                </div>
+            </div>
+            <div class="input-group mb-3">
+                <div class="col-md-4">
+                    {{ schdexternaltourform.fromdate.label_tag() }}
+                </div>
+                <div class="col-md-8">
+                    {{ schdexternaltourform.fromdate }}
+                </div>
+            </div>
+            <div class="input-group mb-3">
+                <div class="col-md-4">
+                    {{ schdexternaltourform.uptodate.label_tag() }}
+                </div>
+                <div class="col-md-8">
+                    {{ schdexternaltourform.uptodate }}
+                </div>
+            </div>
         </div>
     </div>
 </form>
@@ -338,7 +363,7 @@ Schedhule External-Tour&nbsp;<i class="fa fa-clock fs-4 text-primary" aria-hidde
         </div>
     {% endcall %}
 
-    {% call general_popup(popup_id = "edit_assigned_site", title="Edit Record", modal_size = "modal-lg") %}
+    {# {% call general_popup(popup_id = "edit_assigned_site", title="Edit Record", modal_size = "modal-lg") %}
         <div class="modal-body">
             <form action="" id="edit_site_form">
                 <div class="row gy-3">
@@ -363,7 +388,7 @@ Schedhule External-Tour&nbsp;<i class="fa fa-clock fs-4 text-primary" aria-hidde
             <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Cancel</button>
             <button type="button" id="btnSaveEditedSite"  class="btn btn-sm  btn-success rounded-1">Save</button>
         </div>
-    {% endcall %}
+    {% endcall %} #}
 {% endblock popup_alerts %}
 
 
@@ -394,7 +419,7 @@ Schedhule External-Tour&nbsp;<i class="fa fa-clock fs-4 text-primary" aria-hidde
 
 {% block extra_scripts %}
 {{ schdexternaltourform.media.js }}
-{{ editsiteform.media.js }}
+{# {{ editsiteform.media.js }} #}
 
 <script src="{{ static('assets/plugins/custom/DataTables/datatables.min.js') }}" type="text/javascript"></script>
 <script src="{{ static('assets/js/jqCron.js') }}"></script>
@@ -418,11 +443,22 @@ var d2PolyLine         = undefined;
 var allsites_table     = null;
 var asgdsites_table    = null;
 
-
+function showHideSelectField(val) {
+    if (val == "PEOPLE") {
+        //$("#aatopdiv").show();
+        $(".people").show();
+        $(".pgroup").hide();
+    } else {
+        //$("#aatopdiv").hide();
+        $(".pgroup").show();
+        $(".people").hide();
+    }
+}
 
 $(document).ready(() => { //DOCUMENT.READY START[+]
     //set ctzoffset
   	$("#id_ctzoffset").val(-new Date().getTimezoneOffset())
+    
     //ALL SITES TABLE CONFIGURATION
     $('#all-sites thead tr')
     .clone(true)
@@ -432,6 +468,16 @@ $(document).ready(() => { //DOCUMENT.READY START[+]
     //INITIALIZE GOOGLE MAP
     d2InitializeMap()
     
+    
+
+    //toggle people and pgroup field based on radio button value
+    if ('{{schdexternaltourform.instance.id}}' in ['None', ""]) {
+        showHideSelectField('PEOPLE')
+    }else{
+        var assignto = '{{schdexternaltourform.instance.people}}' == ('None' || "") ? "GROUP" :"PEOPLE"
+        showHideSelectField(assignto)
+    }
+
     allsites_table = $('#all-sites').DataTable({
         columnDefs: [ 
             {
@@ -631,7 +677,7 @@ $(document).ready(() => { //DOCUMENT.READY START[+]
         submit_form_alert().then((res) => {
             if(res.isConfirmed){
                 const formtype = '{{schdexternaltourform.instance.id}}' == 'None' ? "create" : "update"
-                const params = {url: "{{ url('schedhuler:create_externaltour') }}", modal:false}
+                const params = {url: "{{ url('schedhuler:schd_external_tour') }}", modal:false}
                 const id = '{{schdexternaltourform.instance.id}}' //form instance id
                 var payLoad = {
                     formData:$("#id_schdexternaltourform").serialize(),
@@ -648,7 +694,9 @@ $(document).ready(() => { //DOCUMENT.READY START[+]
                         `External Tour Main Job with this name <b>${data.jobname}</b>`,
                         'success'
                     ).then((res) => {
-                        window.location.replace(data.url)
+                        //window.location.replace(data.url)
+                        //table reload
+                        console.log("reload table.....")
                     })
                     updateCronDate();
                 })
