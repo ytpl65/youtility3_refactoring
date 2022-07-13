@@ -509,7 +509,6 @@ def alert_report(pk):
                     body+= f"<td>{bd['alerton']}</td>"
                     body+= "</tr>"
                     flag= False
-                    del bd
                 body+= "</table>"
                 body+= "</td></tr></table>"
                 #TODO send_emaill()

@@ -654,7 +654,6 @@ def run_internal_tour_scheduler(request):
         log.error(f"{msg}", exc_info=True)
         resp = rp.JsonResponse({"errors": msg}, status=404)
     log.info(f"{padd} run_guardtour_scheduler initiated [END] {padd}")
-    del padd
     ic("resp in run_internal_tour_scheduler()", resp)
     return resp
 

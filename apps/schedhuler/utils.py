@@ -71,7 +71,6 @@ def display_jobs_date_info(cdtz, mdtz, fromdate, uptodate, ldtz):
     log.info(f"valid-from:= [{fromdate}] valid-upto:=[{uptodate}]")
     log.info(f"before lastgeneratedon:= [{ldtz}]")
     log.info(f"{padd} display_jobs_date_info [end] {padd}")
-    del padd
 
 def get_readable_dates(dt_list):
     if (isinstance(dt_list, list)):
@@ -178,7 +177,6 @@ def dt_local_to_utc(tzoffset, data, mob_or_web):
     else:
         handle_list_of_datetimes(dateFormatMobile, dateFormatWeb, data,  tzoffset,
                                  dateRegexMobile, dateRegexWeb, mob_or_web)
-    del dtlist, udt, cdt, dateFormate
     return data
 
 
