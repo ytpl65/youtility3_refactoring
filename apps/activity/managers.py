@@ -205,13 +205,12 @@ class JobneedDetailsManager(models.Manager):
               'min', 'max', 'alerton', 'question_id', 'jobneed_id', 'alerts', 'cuser_id', 'muser_id', 'tenant_id']
 
     def get_jndmodifiedafter(self, mdtz,jobneedid):
-        mdtzinput = datetime.strptime(mdtz, "%Y-%m-%d %H:%M:%S")
         if jobneedid:
             jobneedids = jobneedid.split(', ')
             ic(jobneedids)
             qset = self.select_related(
                 *self.related).filter(
-                ~Q(id=1), Q(mdtz = None) | Q( mdtz__gte = mdtzinput),
+                ~Q(id=1), Q(mdtz = None) | Q( mdtz__gte = mdtz),
                 jobneed_id__in = jobneedids,
                ).values(
                     *self.fields)
@@ -271,7 +270,7 @@ class JobManager(models.Manager):
 
     def get_scheduled_internal_tours(self, related, fields):
         qset = self.select_related(*related).filter(
-            parent__jobname='NONE', parent_id=1
+            parent__jobname='NONE', parent_id=1, identifier__exact='INTERNALTOUR'
         ).values(*fields).order_by('-cdtz')
         return qset or self.none()
     
@@ -281,4 +280,10 @@ class JobManager(models.Manager):
                 parent_id = job.bu_id).values(
                 'buname', 'id', 'bucode', 'gpslocation',
             )
+        return qset or self.none()
+    
+    def get_scheduled_external_tours(self, related, fields):
+        qset = self.select_related(*related).filter(
+            parent__jobname='NONE', parent_id=1, identifier__exact='EXTERNALTOUR'
+        ).values(*fields).order_by('-cdtz')
         return qset or self.none()

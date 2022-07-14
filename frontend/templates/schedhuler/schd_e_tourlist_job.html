@@ -25,37 +25,8 @@ ext_schdtour_list = 'External ScheduleTour List',
 <!-------------------------------------------- BEGIN Schedhuled External Tour TABLE ------------------------------------------->
 {% block table %}
 <table id="ext_schdtour_table" class="display cell-border" style="width:100%">
-    <thead class="fw-bold fs-6">
-        <th>Name</th>
-        <th>BV</th>
-        <th>People/Group</th>
-        <th>From</th>
-        <th>To</th>
-        <th>Duration</th>
-        <th>Grace Time</th>
-        <th>Exp. Time</th>
-    </thead>
-    <tbody>
-        {% for tour in ext_schdtour_list %}
-        <tr>
-            <td><a href="{{ url('schedhuler:update_externaltour', args=[tour['id']]) }}">{{ tour['jobname'] }}</a></td>
-            <td><a href="{{ url('schedhuler:update_externaltour', args=[tour['id']]) }}">{{ tour['bu__buname'] }}</a></td>
-            <td>{{ tour['people__peoplename'] or tour['pgroup__groupname'] }} </td>
-            <td>{{ tour['fromdate'] |to_local }}</td>
-            <td>{{ tour['uptodate'] |to_local }}</td>
-            <td>{{ tour['planduration'] }}</td>
-            <td>{{ tour['gracetime'] }}</td>
-            <td>{{ tour['expirytime'] }}</td>
-        </tr>
-        {% endfor %}
-    </tbody>
 </table>
 
-{% if ext_schdtour_list and ext_schdtour_list.has_other_pages %}
-<!-- BEGIN PAGINATOIN -->
-{{ paginator(ext_schdtour_list) }}
-<!-- END PAGINATOIN ---->
-{% endif %}
 {% endblock table %}
 <!-------------------------------------------- END Schedhuled External Tour TABLE ------------------------------------------->
 
@@ -68,30 +39,37 @@ ext_schdtour_list = 'External ScheduleTour List',
 	const table_id        = "#ext_schdtour_table"
 
     $(document).ready(function (){
-        $("input").keypress(function(event) {
-			if (event.which == 13) {
-				event.preventDefault();
-				$(formFilter).submit();
-			}
-		});
         //datatable initialization
         table = $(table_id).DataTable({
-			//orderCellsTop: true,
+            ajax:{
+                url:'{{ url("schedhuler:schd_external_tour") }}?action=list'
+            },
+			columns:[
+                {data:'id'},
+                {data:'jobname', title:'Name'},
+                {data:'bu__buname', title:'BV'},
+                {title:'People/Group', defaultContent:null, data:null},
+                {title:'From', data:'fromdate'},
+                {title:'To', data:'uptodate'},
+                {title:'Duration', data:'planduration'},
+                {title:'Gracetime', data:'gracetime'},
+                {title:'Exp. Time', data:'expirytime'},
+            ],
+            columnDefs:[
+                {targets:0, data:'id', visible:'false', searchable:false },
+                {targets:1, data:'jobname', render:function(data, type, row, meta){
+                    return `<a href="${urlname}?id=${row['id']}">${data}</a>`
+                }},
+                {targets:3, render:function(data, type, row, meta){
+                    let peoplename = row['people__peoplename']
+                    let groupname = row['pgroup__groupname']
+                    return typeof peoplename in ['undefined', null] ? groupname : peoplename 
+                }}
+            ],
+            deferRender: true,
 			responsive: true,
-			fixedHeader: true,
-			paging: false,
-			lengthChange: false,
-			language: {
-				searchPlaceholder: "Search on page"
-			},
-            dom:"<'row'" +
-                "<'col-sm-6 d-flex align-items-center justify-conten-start'f>" +
-                "<'col-sm-6 d-flex align-items-center justify-content-end'B>" +
-                ">" +
-
-                "<'table-responsive'tr>",
-            ordering:false,
-            scrollCollapse: true,
+            dom:`<'row' <'col-sm-6 d-flex justify-content-start'f> <'col-sm-6 d-flex justify-content-end'B> >rt<'row'
+			 <'col-sm-6'l> <'col-sm-6'p><'col-sm-12 d-flex justify-content-center'i>>`,
             buttons:[
 				{
 					text:`Add New &nbsp;<i class='fas fa-plus ch4'></i></a>`,
@@ -105,19 +83,6 @@ ext_schdtour_list = 'External ScheduleTour List',
 			]
         
         })
-
-        //BEGIN STYLING DATATABLE
-		$("th > input").addClass('form-control')
-		$("th > input").css('height', '35px')
-		var styles = {
-			"border-bottom":"none",
-			"background-color":"#f1f4f7"
-		}
-
-        $(`${table_id} thead tr:eq(1)`).css(styles)
-		//END STYLING DATATABLE
-
-
     })
 
 </script>

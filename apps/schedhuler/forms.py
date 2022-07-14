@@ -175,9 +175,17 @@ class Schd_E_TourJobForm(JobForm):
     def __init__(self, *args, **kwargs):
         self.request = kwargs.pop('request', None)
         super().__init__(*args, **kwargs)
-        self.fields['fromdate'].input_formats = settings.DATETIME_INPUT_FORMATS
-        self.fields['uptodate'].input_formats = settings.DATETIME_INPUT_FORMATS
-        self.fields['ticketcategory'].initial = ob.TypeAssist.objects.get(tacode='AUTOCLOSED')
+        self.fields['fromdate'].input_formats  = settings.DATETIME_INPUT_FORMATS
+        self.fields['uptodate'].input_formats  = settings.DATETIME_INPUT_FORMATS
+        self.fields['ticketcategory'].initial  = ob.TypeAssist.objects.get(tacode='AUTOCLOSED')
+        self.fields['identifier'].widget.attrs = {"style":"display:none"}
+        self.fields['expirytime'].widget.attrs = {"style":"display:none"}
+        self.fields['starttime'].widget.attrs  = {"style":"display:none"}
+        self.fields['endtime'].widget.attrs    = {"style":"display:none"}
+        self.fields['frequency'].widget.attrs  = {"style":"display:none"}
+        self.fields['priority'].widget.attrs   = {"style":"display:none"}
+        self.fields['scantype'].widget.attrs   = {"style":"display:none"}
+        self.fields['seqno'].widget.attrs      = {"style":"display:none"}
         utils.initailize_form_fields(self)
 
 

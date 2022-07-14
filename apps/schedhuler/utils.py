@@ -27,8 +27,8 @@ def create_job(jobs=None):
 
         if not jobs:
             msg = "No jobs found schedhuling terminated"
-            resp = rp.JsonResponse("%s"%(msg), status=404)
-            log.warn("%s" % (msg), exc_info=True)
+            resp = rp.JsonResponse(f"{msg}", status=404)
+            log.warn(f"{msg}", exc_info=True)
             raise EmptyResultSet
         total_jobs = len(jobs)
 
@@ -36,9 +36,8 @@ def create_job(jobs=None):
             log.info("processing jobs started found:= '%s' jobs" % (len(jobs)))
             for idx, job in enumerate(jobs):
                 startdtz, enddtz = calculate_startdtz_enddtz(job)
-                log.debug(
-                    "Jobs to be schedhuled from startdatetime %s to enddatetime %s"%(startdtz, enddtz)
-                )
+                log.debug(f"Jobs to be schedhuled from startdatetime {startdtz} to enddatetime {enddtz}")
+
                 DT, is_cron, resp = get_datetime_list(job.cron, startdtz, enddtz, resp)
                 log.debug(
                     "Jobneed will going to create for all this datetimes\n %s"%(pformat(get_readable_dates(DT)))
@@ -54,10 +53,9 @@ def create_job(jobs=None):
                     "status"  : status
                 })
             if F:
-                log.info("create_job() Failed job schedule list:= %s" %
-                         (pformat(F)))
-            log.info("createJob()[end-] [%s of %s] parent job:= %s | job:= %s | cron:= %s" %
-                     (idx, (total_jobs - 1), job.jobname, job.id, job.cron))
+                log.info(f"create_job() Failed job schedule list:= {pformat(F)}")
+            log.info(f"createJob()[end-] [{idx} of {total_jobs - 1}] parent job:= {job.jobname} | job:= {job.id} | cron:= {job.cron}")
+
         ic("resp in createjob()", resp)
     return resp
 
@@ -107,7 +105,7 @@ def calculate_startdtz_enddtz(job):
         del_job(job.id)
     startdtz = vfrom
 
-    if ldtz > vfrom:
+    if ldtz > startdtz:
         startdtz = ldtz
     if startdtz < current_date:
         startdtz = current_date
@@ -201,7 +199,7 @@ def handle_dict_of_datetimes(dateFormatMobile, dateFormatWeb, data, tzoffset,
             dtlist= re.findall(dateRegexWeb, value)
             dateFormate= dateFormatWeb
         if dtlist := list(set(dtlist)):
-            log.info("dt_local_to_utc got all date: %s"%dtlist)
+            log.info(f"dt_local_to_utc got all date: {dtlist}")
             try:
                 tzoffset= int(tzoffset)
                 for item_ in dtlist:
@@ -240,7 +238,7 @@ def handle_list_of_datetimes(dateFormatMobile, dateFormatWeb, data, tzoffset,
         dtlist= re.findall(dateRegexWeb, data)
         dateFormate= dateFormatWeb
     if dtlist := list(set(dtlist)):
-        log.info("got all date %s"%(dtlist))
+        log.info(f"got all date {dtlist}")
         try:
             tzoffset= int(tzoffset)
             for item in dtlist:
@@ -477,15 +475,15 @@ def job_fields(job, checkpoint, external=False):
         'jobname'     : job.jobname,                   'jobdesc'        : job.jobdesc,
         'cron'        : job.cron,                      'identifier'     : job.identifier,
         'expirytime'  : int(checkpoint['expirytime']), 'lastgeneratedon': job.lastgeneratedon,
-        'priority'    : job.priority,                  'qset_id'      : checkpoint['qset'],
-        'pgroup_id'  : job.pgroup_id,                'geofence'           : job.geofence_id,
-        'endtime'     : job.endtime,                   'ticketcategory': job.ticketcategory,
-        'fromdate'   : job.fromdate,                 'uptodate'      : job.uptodate,
+        'priority'    : job.priority,                  'qset_id'        : checkpoint['qset'],
+        'pgroup_id'   : job.pgroup_id,                 'geofence'       : job.geofence_id,
+        'endtime'     : job.endtime,                   'ticketcategory' : job.ticketcategory,
+        'fromdate'    : job.fromdate,                  'uptodate'       : job.uptodate,
         'planduration': job.planduration,              'gracetime'      : job.gracetime,
-        'asset_id'  : checkpoint['asset'],         'frequency'      : job.frequency,
-        'people_id' : job.people_id,               'starttime'      : job.starttime,
-        'parent_id'   : job.id,                        'seqno'           : checkpoint['seqno'],
-        'scantype'    : job.scantype,              'ctzoffset':job.ctzoffset
+        'asset_id'    : checkpoint['asset'],           'frequency'      : job.frequency,
+        'people_id'   : job.people_id,                 'starttime'      : job.starttime,
+        'parent_id'   : job.id,                        'seqno'          : checkpoint['seqno'],
+        'scantype'    : job.scantype,                  'ctzoffset'      : job.ctzoffset
     }
     if external:
         jsonData = {

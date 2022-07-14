@@ -1486,7 +1486,7 @@ class ExternalTourScheduling(LoginRequiredMixin, View):
             'uptodate'  : datetime.combine(date.today(), time(23, 00, 00)) + timedelta(days=2),
         },
         'fields'       : ['id', 'jobname', 'people__peoplename', 'pgroup__groupname', 'fromdate', 'uptodate',
-                        'planduration', 'gracetime', 'expirytime']
+                        'planduration', 'gracetime', 'expirytime', 'bu__buname']
     }
     
     
@@ -1499,7 +1499,7 @@ class ExternalTourScheduling(LoginRequiredMixin, View):
         
         match R.get('action'):
             case "list":
-                objs = P['model'].objects.get_scheduled_internal_tours(
+                objs = P['model'].objects.get_scheduled_external_tours(
                     P['related'], P['fields']
                 )
                 return rp.JsonResponse({'data':list(objs)}, status=200)

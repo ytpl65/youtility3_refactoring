@@ -4,6 +4,7 @@ import graphene
 from djantic import ModelSchema
 from pydantic import BaseModel,  validator
 from graphene_gis.scalars import  PointScalar
+from graphene_gis.converter import gis_converter  # noqa
 from datetime import datetime
 from enum import Enum
 from apps.attendance.models import (

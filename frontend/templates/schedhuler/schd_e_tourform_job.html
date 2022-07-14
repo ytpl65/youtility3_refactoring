@@ -53,7 +53,6 @@ Schedhule External-Tour&nbsp;<i class="fa fa-clock fs-4 text-primary" aria-hidde
 <form action="" method="post" id="id_schdexternaltourform">
     <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
     <input type="hidden" name="{{ schdexternaltourform.ctzoffset.name }}" id = "{{ schdexternaltourform.ctzoffset.auto_id }}" value="-1">
-    <div class="default-hidden d-none">
         {{ schdexternaltourform.identifier }}
         {{ schdexternaltourform.priority }}
         {{ schdexternaltourform.starttime }}
@@ -63,7 +62,6 @@ Schedhule External-Tour&nbsp;<i class="fa fa-clock fs-4 text-primary" aria-hidde
         {{ schdexternaltourform.frequency }}
         {{ schdexternaltourform.ticketcategory }}
         {{ schdexternaltourform.seqno }}
-    </div>
     <div class="row">
         <div class="col-md-6">
             <div class="input-group mb-3">
