@@ -536,7 +536,7 @@ def get_tenants_map():
 
 
 def hostname_from_request(request):
-    return request.get_host().split(':')[0].lower()
+    return request.get_host().split(': ')[0].lower()
 
 
 def get_or_create_none_bv():
@@ -599,8 +599,8 @@ def get_or_create_none_gf():
     obj, _ = om.GeofenceMaster.objects.get_or_create(
         id=1,
         defaults = {
-            'gfcode':'NONE', 'gfname':'NONE',
-            'alerttext':'NONE', 'enable':False
+            'gfcode': 'NONE', 'gfname': 'NONE',
+            'alerttext': 'NONE', 'enable':False
         }
     )
     return obj
@@ -894,7 +894,7 @@ def clean_record(record):
     for k, v in record.items():
         if k in ['gpslocation', 'startlocation', 'endlocation']:
             ic(v, type(v))
-            v = v.split(',')
+            v = v.split(', ')
             ic(v)
             p = f'POINT({v[1]} {v[0]})'
             ic(p)

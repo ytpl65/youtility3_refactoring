@@ -222,7 +222,7 @@ class ChecklistForm(MasterQsetForm):
         self.fields['assetincludes'].label = 'Checkpoints'
         self.fields['type'].widget.attrs   = {"style": "display:none;"}
         if self.instance.id:
-            self.fields['assetincludes'].initial = self.instance.assetincludes.split(',')
+            self.fields['assetincludes'].initial = self.instance.assetincludes.split(', ')
         utils.initailize_form_fields(self)
 
 
@@ -286,7 +286,7 @@ class AssetForm(forms.ModelForm):
             'runningstatus': s2forms.Select2Widget,
             'type'         : s2forms.Select2Widget,
             'parent'       : s2forms.Select2Widget,
-            'assetcode'    : forms.TextInput(attrs={'style':'text-transform:uppercase;', 'placeholder':'Enter text without space & special characters'})
+            'assetcode'    : forms.TextInput(attrs={'style': 'text-transform:uppercase;', 'placeholder': 'Enter text without space & special characters'})
         }
 
     def __init__(self, *args, **kwargs):
@@ -429,7 +429,7 @@ class JobForm(forms.ModelForm):
         fields = ['jobname', 'jobdesc', 'fromdate', 'uptodate', 'cron',
                     'identifier', 'planduration', 'gracetime', 'expirytime',
                     'asset', 'priority', 'qset', 'pgroup', 'geofence', 'parent',
-                    'parent', 'seqno', 'client', 'bu', 'starttime', 'endtime','ctzoffset',
+                    'parent', 'seqno', 'client', 'bu', 'starttime', 'endtime', 'ctzoffset',
                     'frequency',  'scantype', 'ticketcategory', 'people', 'shift']
 
         labels = {
@@ -451,7 +451,7 @@ class JobForm(forms.ModelForm):
             'jobdesc'           : forms.Textarea(attrs={'rows': 1, 'cols': 40}),
             'fromdate'         : forms.DateTimeInput,
             'uptodate'         : forms.DateTimeInput,
-            'ctzoffset'         : forms.NumberInput(attrs={"style":"display:none;"}),
+            'ctzoffset'         : forms.NumberInput(attrs={"style": "display:none;"}),
             'qset'            : s2forms.ModelSelect2Widget(
                 model = am.QuestionSet, 
                 search_fields = ['qsetname__icontains'],
@@ -491,7 +491,7 @@ class JobNeedForm(forms.ModelForm):
     class Meta:
         model = am.Jobneed
         fields = ['identifier', 'frequency', 'parent', 'jobdesc', 'asset', 'ticketcategory',
-                  'qset',  'people', 'pgroup', 'priority', 'scantype','multifactor',
+                  'qset',  'people', 'pgroup', 'priority', 'scantype', 'multifactor',
                   'jobstatus', 'plandatetime', 'expirydatetime', 'gracetime', 'starttime',
                   'endtime', 'performedby', 'gpslocation', 'cuser', 'raisedby', 'remarks', 'ctzoffset']
         widgets = {
@@ -509,7 +509,7 @@ class JobNeedForm(forms.ModelForm):
             'gpslocation':forms.TextInput
         }
         label = {
-            'endtime':'End Time'
+            'endtime': 'End Time'
         }
 
 
@@ -518,19 +518,19 @@ class AdhocTaskForm(JobNeedForm):
     assign_to          = forms.ChoiceField(choices=ASSIGNTO_CHOICES, initial="PEOPLE")
     class Meta(JobNeedForm.Meta):
         labels = {
-            'asset':'Asset/SmartPlace',
-            'starttime':'Start Time',
-            'plandatetime':'Plan DateTime',
-            'expirydatetime':'Expity DateTime',
-            'endtime':'End Time',
-            'gracetime':'Grace Time',
-            'jobstatus':'Task Status',
-            'scantype':'ScanType',
-            'gpslocation':'GPS Location',
-            'ticketcategory':'Ticket Category',
-            'performedby':'Performed By',
-            'people':'People',
-            'qset':'Question Set',
+            'asset': 'Asset/SmartPlace',
+            'starttime': 'Start Time',
+            'plandatetime': 'Plan DateTime',
+            'expirydatetime': 'Expity DateTime',
+            'endtime': 'End Time',
+            'gracetime': 'Grace Time',
+            'jobstatus': 'Task Status',
+            'scantype': 'ScanType',
+            'gpslocation': 'GPS Location',
+            'ticketcategory': 'Ticket Category',
+            'performedby': 'Performed By',
+            'people': 'People',
+            'qset': 'Question Set',
         }
 
     def __init__(self, *args, **kwargs):
@@ -546,10 +546,10 @@ class AdhocTaskForm(JobNeedForm):
 class TicketForm(forms.ModelForm):
     class Meta:
         model = am.Ticket
-        fields = ['ticketno','ticketdesc', 'assignedtopeople',
-                  'assignedtogroup', 'priority','status', 'performedby', 'comments','ticketlog']
+        fields = ['ticketno', 'ticketdesc', 'assignedtopeople',
+                  'assignedtogroup', 'priority', 'status', 'performedby', 'comments', 'ticketlog']
         labels = {
-            'ticketno'  :'Ticket No',
+            'ticketno'  : 'Ticket No',
             'ticketdesc': 'Description',
             'assignedtopeople': 'People',
             'assignedtogroup': 'Group',
@@ -557,7 +557,7 @@ class TicketForm(forms.ModelForm):
             'status': 'Status',
             'performedby': 'Performed By',
             'comments': 'comments',
-            'ticketlog':'ticketlog'
+            'ticketlog': 'ticketlog'
         }
 
     def __init__(self, *args, **kwargs):
@@ -572,7 +572,7 @@ class EscalationForm(forms.ModelForm):
     # specify the name of model to use
     class Meta:
         model = am.EscalationMatrix
-        fields = ['level', 'assignedfor',  'assignedperson','ctzoffset',
+        fields = ['level', 'assignedfor',  'assignedperson', 'ctzoffset',
                   'assignedgroup', 'frequency', 'frequencyvalue', 'body']
         labels = {
             'level': 'Level',

@@ -16,12 +16,17 @@ class QuestionSetManager(models.Manager):
         if bulist:
             if qset := self.select_related(
                 *self.related).filter(bu_id__in=bulist).values_list(*self.fields, flat=True):
-                return ','.join(list(qset))
+                return ', '.join(list(qset))
         return ""
 
     def get_qset_modified_after(self, mdtz, buid):
         qset = self.select_related(*self.related).filter(~Q(id=1), mdtz__gte = mdtz, bu_id = buid).values(*self.fields)
         return qset or None
+
+    def get_configured_sitereporttemplates(self, related, fields):
+        qset = self.select_related(
+            *related).filter(enable=True, type='SITEREPORTTEMPLATE').values(*fields)
+        return qset or self.none()
 
 
 class QuestionManager(models.Manager):
@@ -34,6 +39,13 @@ class QuestionManager(models.Manager):
         mdtzinput = datetime.strptime(mdtz, "%Y-%m-%d %H:%M:%S")
         qset = self.select_related(*self.related).filter(~Q(id=1), mdtz__gte = mdtzinput).values(*self.fields)
         return qset or None
+
+    def questions_of_client(self, request):
+        qset = self.filter(
+            client_id = request.session['client_id']).annotate(
+                text = Concat(F('quesname'), V(" | "), F('answertype'))).values(
+                    'id', 'text', 'answertype')
+        return qset or self.none()
 
 
 class JobneedManager(models.Manager):
@@ -91,7 +103,7 @@ class JobneedManager(models.Manager):
             WHERE c.parent_id = p.jobneedid AND c.identifier = 'SITEREPORT'
         )SELECT DISTINCT jobneed.jobdesc, jobneed.pseqno, jnd.seqno as cseqno, jnd.question_id, jnd.answertype, jnd.min, jnd.max, jnd.options, jnd.answer, jnd.alerton,
             jnd.ismandatory, jnd.alerts, q.quesname, jnd.answertype as questiontype, qsb.alertmails_sendto,
-            array_to_string(ARRAY(select email from people where people_id in (select unnest(string_to_array(qsb.alertmails_sendto, ','))::bigint )), ', ') as alerttomails
+            array_to_string(ARRAY(select email from people where people_id in (select unnest(string_to_array(qsb.alertmails_sendto, ', '))::bigint )), ', ') as alerttomails
             FROM nodes_cte as jobneed
         LEFT JOIN jobneeddetails as jnd ON jnd.jobneed_id=jobneedid
         LEFT JOIN question q ON jnd.question_id=q.id
@@ -176,8 +188,8 @@ class AttachmentManager(models.Manager):
 class AssetManager(models.Manager):
     use_in_migrations = True
     related = ['category', 'client', 'cuser', 'muser', 'parent', 'subcategory', 'tenant', 'type', 'unit', 'brand', 'bu', 'serv_prov']
-    fields = ['id','cdtz','mdtz','ctzoffset','assetcode','assetname','enable','iscritical','gpslocation','identifier','runningstatus','capacity','brand_id','bu_id',
-              'category_id','client_id','cuser_id','muser_id','parent_id','servprov_id','subcategory_id','tenant_id','type_id','unit_id']
+    fields = ['id', 'cdtz', 'mdtz', 'ctzoffset', 'assetcode', 'assetname', 'enable', 'iscritical', 'gpslocation', 'identifier', 'runningstatus', 'capacity', 'brand_id', 'bu_id',
+              'category_id', 'client_id', 'cuser_id', 'muser_id', 'parent_id', 'servprov_id', 'subcategory_id', 'tenant_id', 'type_id', 'unit_id']
 
     def get_assetdetails(self, mdtz, site_id):
         mdtzinput = datetime.strptime(mdtz, "%Y-%m-%d %H:%M:%S")
@@ -231,7 +243,7 @@ class JobneedDetailsManager(models.Manager):
 
 class QsetBlngManager(models.Manager):
     use_in_migrations=True
-    fields = ['id', 'seqno', 'answertype',  'isavpt', 'options', 'ctzoffset','ismandatory',
+    fields = ['id', 'seqno', 'answertype',  'isavpt', 'options', 'ctzoffset', 'ismandatory',
               'min', 'max', 'alerton', 'client_id', 'bu_id',  'question_id', 
               'qset_id', 'cuser_id', 'muser_id', 'cdtz', 'mdtz', 'alertmails_sendto', 'tenant_id']
     related = ['client', 'bu',  'question', 

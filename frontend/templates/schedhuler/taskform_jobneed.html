@@ -242,7 +242,7 @@ Task
         if ('{{ taskformjobneed.instance.id }}' == ('None' || "")) {
             showHideSelectField('PEOPLE')
         }else{
-            var assignto = '{{ taskformjobneed.instance.people }}' == ('None' || "") ? "GROUP" :"PEOPLE"
+            var assignto = '{{ taskformjobneed.instance.people }}' == ('None' || "") ? "GROUP" : "PEOPLE"
             showHideSelectField(assignto)
         }
         //datetime widget configurations

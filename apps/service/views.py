@@ -15,7 +15,7 @@ from logging import getLogger
 
 log = getLogger('__main__')
 # Create your views here.
-A = {'rc':0, 'reason':'OK', 'msg':None, 'errors':None, 'returnid':None}
+A = {'rc':0, 'reason': 'OK', 'msg':None, 'errors':None, 'returnid':None}
 def get_model(tablename):
     match tablename:
         case "peopleeventlog":
@@ -234,4 +234,4 @@ class TestLoginREquired(APIView):
     Updates Task Tour activities
     """
     def get(self, request, format=None):
-        return Response(data={"text":"Helloworld"})
+        return Response(data={"text": "Helloworld"})

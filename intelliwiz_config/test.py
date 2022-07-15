@@ -18,10 +18,10 @@ class graphQL:
         query = """
         mutation TokenAuth{
             tokenAuth(input:{
-                deviceid:"fakedeviceid",
-                loginid:"naveen",
-                sitecode:"ICICIBANK.MANIPUR",
-                password:"naveen@youtility" }) {
+                deviceid: "fakedeviceid",
+                loginid: "naveen",
+                sitecode: "ICICIBANK.MANIPUR",
+                password: "naveen@youtility" }) {
                 token
                 payload
             }

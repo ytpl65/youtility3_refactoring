@@ -11,7 +11,7 @@
 {% block pagebreadcumb %}
 <!--will call parent contents -->
 {{ super() }}
-<li class="breadcrumb-item pe-3"><a href="{{ url('reports:sitereport_template_list') }}?template=true" class="pe-3">Site Report Templates</a></li>
+<li class="breadcrumb-item pe-3"><a href="{{ url('reports:config_sitereport_template') }}?template=true" class="pe-3">Site Report Templates</a></li>
 <li class="breadcrumb-item pe-3"><a href="javascript:void(0)" class="pe-3">Site Report Template Form</a></li>
 {% endblock pagebreadcumb %}
 <!-------------------------- END PAGE BREADCUMB ------------------------->
@@ -22,20 +22,6 @@
 Site Report Template
 {% endblock form_title %}
 <!------ END FORM TITLE -------->
-
-
-<!--------- BEGIN NON FIELD ERRORS -------->
-{% block nonfield_errors %}
-    {% if reporttemp_form.non_field_errors() %}
-    <div id="non_field_error" class="alert alert-danger" style="width: 73%;">
-        {% for error in reporttemp_form.non_field_errors()[::-1] %}
-        <strong>Error</strong> <span>{{ error }}</span>
-        {% endfor %}
-        <button type="button" class="btn-close flt-right" data-bs-dismiss="alert" aria-label="Close"></button>
-    </div>
-    {% endif %}
-{% endblock nonfield_errors %}
-<!---------- END NON FIELD ERRORS --------->
 
 
 {% block form %}
@@ -91,75 +77,14 @@ Site Report Template
 <br><br><br>
 <div class="report_section ">
 <div class="row mb-3">
-    <div class="col-sm-3 card card-bordered border border-2 d-none">
-        <div class="card-header mb-0">
-            <div class="card-title">Question Form</div>
-            <div class="card-toolbar">
-                <button type="submit" id="addQuestion" form="qsetbng_form"
-                    class="btn btn-sm btn-secondary btn-hover-scale">
-                    Add&nbsp;<i class="fa fa-plus" aria-hidden="true"></i>
-                </button>
-            </div>
-        </div>
-        <div class="card-body">
-            <form action="" method="post" id="qsetbng_form">
-            
-                <div class="mb-3">
-                {{ qsetbng.question.label_tag() }}
-                {{ qsetbng.question }}
-                </div>
-                <div class="mb-3">
-                {{ qsetbng.answertype.label_tag() }}
-                {{ qsetbng.answertype }}
-                </div>
-                <div class="mb-3 fv-row optionGrp">
-                {{ qsetbng.options.label_tag() }}
-                {{ qsetbng.options }}
-                </div>
-                <div class="mb-3 fv-row optionGrp">
-                {{ qsetbng.alerton.label_tag() }}
-                {{ qsetbng.alerton }}
-                </div>
-                <div class="row fv-row numeric">
-                    <div class="col-sm-6">
-                    {{ qsetbng.min.label_tag() }}
-                    {{ qsetbng.min }}
-                    </div>
-                    <div class="col-sm-6">
-                    {{ qsetbng.max.label_tag() }}
-                    {{ qsetbng.max }}
-                    </div>
-                </div>
-                <div class="row mb-3 fv-row numeric">
-                    <div class="col-sm-6">
-                    {{ qsetbng.alertbelow.label_tag() }}
-                    {{ qsetbng.alertbelow }}
-                    </div>
-                    <div class="col-sm-6">
-                    {{ qsetbng.alertabove.label_tag() }}
-                    {{ qsetbng.alertabove }}
-                    </div>
-                </div>
-                <div class="booleans d-flex justify-content-sm-between mt-5
-                    form-check form-switch form-check-custom form-check-solid">
-                    <label for="{{ qsetbng.ismandatory.id_for_label }}"
-                        class="form-check-label bool col-form-label me-5 text-sm-right">
-                        {{ qsetbng.ismandatory.label }}: &nbsp; {{ qsetbng.ismandatory }}
-                    </label>
-                </div>
-            </form>
-        </div>
-    </div>
-
     <div class="col-sm-12 card">
-        <div class="card-header">
-            <div class="card-title">List Of Report Section</div>
-        </div>
         <div class="card-body">
+            <h4 class="ch4">List Of Sections</h4>
             <table id="tabSitereports" class="display compact">
-                <tbody></tbody>
             </table>
-            <div tabindex="-1" id="jqGridSiteReportPager"></div>
+            <br>
+            <h4 class="ch4">Questions In The Selcted Section</h4>
+            <table id="tabchildReport" class="display compact"></table>
         </div>
     </div>
 </div>
@@ -183,13 +108,9 @@ Site Report Template
   	    $("#id_ctzoffset").val(-new Date().getTimezoneOffset())
         
 
-        //select2 multiple
-        $("[multiple]").djangoSelect2({
-            closeOnSelect:false
-        })
 
         //tagifying the options field
-        var input1 = document.querySelector("#id_options");
+        /*var input1 = document.querySelector("#id_options");
         optionTag = new Tagify(input1);
 
         //on adding/removing options in 
@@ -201,11 +122,11 @@ Site Report Template
         .on('remove', function (e) {
             console.log(e.detail.data.value)
             removeElmtFromAlertOn(e.detail.data.value)
-        })
+        })*/
 
         //on submitting the questionset-blng form populate the table
         // "List of Assigned Questions"
-        $('#qsetbng_form').on('submit', function (e) {
+        /*$('#qsetbng_form').on('submit', function (e) {
             e.preventDefault()
             if ($("#id_answertype").val() === 'NUMERIC') {
                 if (qsetbng_form_validator) {
@@ -252,90 +173,184 @@ Site Report Template
                 'showto_allsites'   : $("#id_showto_allsites").is(":checked"),
                 'type'   : $("#id_type").val()
             }
-        }
+        }*/
         
 
         //editor section table
-        sectionEditor = new $.fn.dataTable.Editor({
-            table:"#tabSitereports",
+        var parentEditor = new $.fn.dataTable.Editor({
+            table: "#tabSitereports",
             fields:[
-                {label:'Section', name:"qsetname"},
+                {label: 'Section', name: "qsetname"},
             ]
         });
 
-        // Activate an inline edit on click of a table cell
-        $('#tabSitereports').on( 'click', 'tbody td.row-edit', function (e) {
-            sectionEditor.inline( tableSection.cells(this.parentNode, '*').nodes(), {
-                submitTrigger: -2,
-                submitHtml: '<i class="fas fa-play text-primary"></i>'
-            } );
-        } );
+        //parentEditor on open
+        parentEditor.on('open', function(e, mode, action){
+            //add required classes
+            $(".DTE_Field").addClass('p-1')
+        })
 
-          // Delete row
-        $('#tabSitereports').on( 'click', 'tbody td.row-remove', function (e) {
-            sectionEditor.remove( this.parentNode, {
-                title: 'Delete record',
-                message: 'Are you sure you wish to delete this record?',
-                buttons: 'Delete'
-            } );
-        } );
+
+        //editor of child tabble
+        var childEditor = new $.fn.dataTable.Editor({
+            table: '#tabchildReport',
+            fields:[
+                {label: 'Question', name: 'question', type: 'select'},
+                {label: 'Type', name: 'answertype', type: 'readonly'},
+                {label: 'Min', name: 'min', type: 'text'},
+                {label: 'Max', name: 'max', type: 'text'},
+                {label: 'Alert below', name: 'alertbelow', type: 'text'},
+                {label: 'Alert above', name: 'alertabove', type: 'text'},
+                {label: 'Option', name: 'option'},
+                {label: 'Alert On', name: 'alerton'},
+                {label: 'Mandatory', name: 'ismandatory', type: 'checkbox', separator: "|",
+                options:   [
+                    { label: '', value: 1 }
+                ]},
+
+            ]
+        })
+
+        //op open form event
+        childEditor.on('open', function(e, mode, action){
+            //add required classes
+            $("#DTE_Field_question").addClass("form-select form-select-solid")
+            $(".DTE_Field").addClass('p-1')
+            
+            //$("#DTE_Field_question").djangoSelect2()
+            var params = {
+                url: "{{ url('reports:config_sitereport_template') }}?action=loadQuestions",
+                id: "#DTE_Field_question",
+                item: 'Questoins'
+            }
+            //initialize select field
+            init_select_field(params)
+
+            //on change question select field, autoselect type field
+            $("#DTE_Field_question.form-select").on("change", function () {
+                var _selectedText = getSelectedValue("#DTE_Field_question");
+                var selected = _selectedText.split(" | ")[1]
+                //hide/show fields based on selected text..
+                if(selected === 'DROPDOWN'){
+                    childEditor.hide(['min', 'max', 'alertbelow', 'alertabove'], false).show(['alerton', 'option'], false)
+                }else if(selected === 'NUMERIC'){
+                    childEditor.hide(['alerton', 'option'], false).show(['min', 'max', 'alertbelow', 'alertabove'], false)
+                }
+                childEditor.field('answertype').val(selected)
+            })
+        })
+
+
+        //validations for child editor..
+        childEditor.on('preSubmit', function(e, o, action){
+            if(action !== 'remove'){
+                let min = this.field('min')
+                let max = this.field('max')
+                let alertbelow = this.field('alertbelow')
+                let alertabove = this.field('alertabove')
+                
+                if(!( min.isMultiValue() && max.isMultiValue() )){
+                    if(!alertabove.isMultiValue()){
+                        if(alertabove.val() > max.val()){
+                            alertabove.error('alertabove value must be smaller than max value')
+                        }
+                    }else{
+                        alertabove.error('alertabove must be number')
+                    }
+                }
+
+
+                if (!( min.isMultiValue() && max.isMultiValue() ) && ( max.val() < min.val() ) ){
+                    max.error('max value must be greater than min value')
+                }
+                if( !(alertabove.isMultiValue() && alertbelow.isMultiValue()) &&  (alertabove.val() < alertbelow.val()) ){
+                    alertabove.error('alertabove value must be greater than alertbelow value')
+                }
+
+                    if(alertabove.val() < max.val()){
+                        alertabove.error('alertabove value must be smaller than max value')
+                    }
+                    if(alertbelow.val() < min.val()){
+                        alertbelow.error('alertbelow value must be greater than min value')
+                    }
+                    if(! (min.isMultiValue() && (typeof min.val() === 'number')) ){min.error('value of min must be number')}
+                    if(! (max.isMultiValue() && (typeof max.val() === 'number'))){max.error('value of max must be number')}
+                    if(! (alertbelow.isMultiValue() && typeof alertbelow.val() === 'number')){alertbelow.error('value of alert below must be number')}
+                    if(! (alertabove.isMultiValue() && typeof alertabove.val() === 'number')){alertabove.error('value of alert above must be number')}
+                
+                // If any error was reported, cancel the submission so it can be corrected
+                if ( this.inError() ) {
+                    return false;
+                }
+
+            }
+        })
+        
+        
+
 
         //datatable configuration tabSiteReports       
-        var tableSection = $("#tabSitereports").DataTable({
+        var parentTable = $("#tabSitereports").DataTable({
             ajax:{
-                url:"{{ url('reports:sitereport_template_form') }}?get_reports=true",
-                data:{'parent_id' : _pkid}
+                url: "{{ url('reports:config_sitereport_template') }}?get_reports=true",
+                
             },
             responsive: true,
-			fixedHeader: true,
             searching:false,
             ordering:false,
             paging:false,
             dom:`<'row' <'col-sm-6 d-flex justify-content-start'f> <'col-sm-6 d-flex justify-content-end'B> >rt<'row'
             <'col-sm-6'l> <'col-sm-6'p><'col-sm-12 d-flex justify-content-center'i>>`,
             columns     : [
-                {className: 'details-control', "orderable": false,data: null,defaultContent: '', width:'5%'},
-                { data: "id", visible:false, orderable:false, defaultContent:"" },
-                { data: "qsetname" ,title:'Section'},
-                {
-                    data: null,
-                    defaultContent: '<i class="fas fa-pencil-alt text-primary"></i>',
-                    className: 'row-edit dt-center',
-                    orderable: false,
-                    width:'5%'
-                },
-                {
-                    data: null,
-                    defaultContent: '<i class="fas fa-trash-alt text-primary"></i>',
-                    className: 'row-remove dt-center',
-                    orderable: false,
-                    width:'5%'
-                },
+                {data: 'id', defaultContent:null, visible:false},
+                {title: "Section", data: 'qsetname'},
+                {title: "Count", width: "15%",data:null, render:function(data){
+                    return data.length()
+                }},
             ],
-            order:[[2, 'asc']],
-            initComplete: function () {
-            init = false;
-            },
-            createdRow: function ( row, data, index ) {
-                if (data.extn === '') {
-                  var td = $(row).find("td:first");
-                  td.removeClass( 'details-control' );
-                }
-               },
-            rowCallback: function ( row, data, index ) {
-            //console.log('rowCallback');
-            },
             buttons:[
-            {
-                extend: "createInline",
-                editor: sectionEditor,
-                formOptions: {
-                    submitTrigger: -2,
-                    submitHtml: '<i class="fa fa-play text-primary"/>'
-                },
-                text:'Add New Section'
+                { extend: "create", editor: parentEditor },
+                { extend: "edit",   editor: parentEditor },
+                { extend: "remove", editor: parentEditor }
+            ],
+            select: {
+                style: 'single'
             }
-			]
+        })
+
+        //report questoins
+        var chlldTable =$("#tabchildReport").DataTable({
+            ajax:{
+                url: "{{ url('reports:config_sitereport_template') }}?action=saveChildQuestion",
+                data:function(d){
+                    var selected = parentTable.row({selected:true});
+                    if(selected.length > 0){
+                        d.id = selected.data().id
+                    }
+                }
+            },
+            responsive:true, 
+            ordering:false,
+            searching:false,
+            dom:`<'row' <'col-sm-6 d-flex justify-content-start'f> <'col-sm-6 d-flex justify-content-end'B> >rt<'row'
+            <'col-sm-6'l> <'col-sm-6'p><'col-sm-12 d-flex justify-content-center'i>>`,
+            columns:[
+                {title: "SNo", data:null, render:function(data, type, row, meta){
+                    return meta.row + 1
+                }},
+                {title: "Question", data: 'quesname'},
+                {title: "Question Type", data: 'answertype'},
+                {title: "Min", data: 'min'},
+                {title: "Max", data: 'max'},
+                {title: "Option", data: 'option'},
+                {title: "Alert On", data: 'alerton'},
+                {title: "Mandatory", data: 'ismandatory'},
+            ],
+            buttons:[
+                { extend: "create", editor: childEditor },
+                { extend: "edit",   editor: childEditor },
+                { extend: "remove", editor: childEditor }
+            ],
         })
 
 
@@ -367,131 +382,8 @@ Site Report Template
                 
             })
         })
-
-        // Add event listener for opening and closing details
-        /*$('#tabSitereports tbody').on('click', 'td.details-control', function () {
-            var tr = $(this).closest('tr');
-            var row = table.row(tr);
-    
-            if (row.child.isShown()) {
-                // This row is already open - close it
-                row.child.hide();
-                tr.removeClass('shown');
-            } else {
-                // Open this row
-                row.child(format(row.data())).show();
-                tr.addClass('shown');
-            }
-        });*/
-
-        
-
-        // Add event listener for opening and closing first level childdetails
-        $('#tabSitereports tbody').on('click', 'td.details-control', function () {
-            var tr = $(this).closest('tr');
-            var row = tableSection.row( tr );
-            var rowData = row.data();
-        
-            //get index to use for child table ID
-            var index = row.index();
-            console.log(index);
-    
-            if ( row.child.isShown() ) {
-                // This row is already open - close it
-                row.child.hide();
-                tr.removeClass('shown');
-            }
-            else {
-                // Open this row
-                row.child( 
-                '<table class="child_table" id = "child_details' + index + '" cellpadding="5" cellspacing="0" border="0" style="padding-left:50px;">'+
-                '<tbody>' +
-                    '</tbody></table>').show();
-                    
-                    //CHILD EDITOR
-                    questioneditor = new $.fn.dataTable.Editor({
-                        table:"#child_details" + index,
-                        fields:[
-                            {label:'Question', name:"question_id"},
-                            //{label:'Type', name:"answertype"},
-                            //{label:'Min', name:"min"},
-                            //{label:'Max', name:"max"},
-                            //{label:'Options', name:"options"},
-                            //{label:'Alert Below', name:"alertbelow"},
-                            //{label:'Alert Above', name:"alertabove"},
-                        ]
-                    });
-
-                    // Activate an inline edit on click of a table cell
-                    $(`#child_details${index}`).on( 'click', 'tbody td.row-edit', function (e) {
-                        questioneditor.inline( childTable.cells(this.parentNode, '*').nodes(), {
-                            submitTrigger: -2,
-                            submitHtml: '<i class="fas fa-play text-primary"></i>'
-                        } );
-                    } );
-
-                    // Delete row
-                    $(`#child_details${index}`).on( 'click', 'tbody td.row-remove', function (e) {
-                        questioneditor.remove( this.parentNode, {
-                            title: 'Delete record',
-                            message: 'Are you sure you wish to delete this record?',
-                            buttons: 'Delete'
-                        } );
-                    } );
-
-
-            
-            var childTable = $('#child_details' + index).DataTable({
-            searching:false,
-            ordering:false,
-            paging:false,
-            dom       : `<'row' <'col-sm-6 d-flex justify-content-start'f> <'col-sm-6 d-flex justify-content-end'B> >rt<'row'
-            <'col-sm-6'l> <'col-sm-6'p><'col-sm-12 d-flex justify-content-center'i>>`,
-            columns: [
-                { "data": "id" , 'visible':false, 'data':null},
-                { "data": "seqno", 'title':'Sl No', 'visible':false , data:null},
-                { "data": "question_id", 'title':'Question'},
-                //{ "data": "answertype", 'title':'Type' },
-                //{ "data": "min", 'title':'Min' },
-                //{ "data": "max" , 'title':'Max'},
-                //{ "data": "options", 'title':'Options' },
-                //{ "data": "alertabove", 'title':'Alert Above' },
-                //{ "data": "alertbelow" , 'title':'Alert Below'},
-                {
-                    data: null,
-                    defaultContent: '<i class="fas fa-pencil-alt text-primary"></i>',
-                    className: 'row-edit dt-center',
-                    orderable: false,
-                    width:'5%'
-                },
-                {
-                    data: null,
-                    defaultContent: '<i class="fas fa-trash-alt text-primary"></i>',
-                    className: 'row-remove dt-center',
-                    orderable: false,
-                    width:'5%'
-                },
-
-            ],
-            buttons:[
-            {
-                extend: "createInline",
-                editor: questioneditor,
-                formOptions: {
-                    submitTrigger: -2,
-                    submitHtml: '<i class="fa fa-play text-primary"/>'
-                },
-                text:'<i class="fas fa-plus"></i>'
-            }
-            ],
-                scrollY: '100px'
-            });
-                tr.addClass('shown');
-            }
-        
-        })
-        
+       
     })
 </script>
- <script src="{{ static('assets/js/formValidations.js') }}"></script>
+{# <script src="{{ static('assets/js/formValidations.js') }}"></script>#}
 {% endblock extra_scripts %}

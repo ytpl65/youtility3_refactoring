@@ -34,7 +34,7 @@ var table = null;
 $(document).ready(() => {
     var editor = new $.fn.dataTable.Editor( {
         "ajax": {
-            "url":"{{ url('onboarding:editortypeassist') }}?action=editor",
+            "url": "{{ url('onboarding:editortypeassist') }}?action=editor",
             "data":{
                 "csrfmiddlewaretoken": "{{ csrf_token }}"
             }
@@ -42,13 +42,13 @@ $(document).ready(() => {
         "idSrc": "id",
         "table": "#editorTa",
         "fields": [ {
-                "label": "Code:",
+                "label": "Code: ",
                 "name": "tacode"
             }, {
-                "label": "Name:",
+                "label": "Name: ",
                 "name": "taname"
             }, {
-                "label": "Type:",
+                "label": "Type: ",
                 "name": "tatype__tacode"
             }, 
         ],
@@ -71,7 +71,7 @@ $('#editorTa').DataTable( {
         ],
         select: true,
         buttons: [
-            { extend: "create", editor: editor , className:"btn btn-sm btn-light-primary"},
+            { extend: "create", editor: editor , className: "btn btn-sm btn-light-primary"},
             { extend: "edit",   editor: editor },
             { extend: "remove", editor: editor }
         ]

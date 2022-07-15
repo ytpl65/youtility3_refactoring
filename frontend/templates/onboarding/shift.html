@@ -62,21 +62,21 @@ Shift List
 			language   : {
                 search           : "_INPUT_",
                 searchPlaceholder: "Search ..",
-				processing:"Getting Data"},
+				processing: "Getting Data"},
             search    : {return: true},
             lengthMenu: [[10, 20, 30], [10, 20, 30]],
             dom       : `<'row' <'col-sm-6 d-flex justify-content-start'f> <'col-sm-6 d-flex justify-content-end'B> >rt<'row'
 			 <'col-sm-6'l> <'col-sm-6'p><'col-sm-12 d-flex justify-content-center'i>>`,
 			columns     : [
                 { "data": "id", 'visible':false, 'searchable':false, 'orderable':false},
-                { "data": "shiftname" , 'title':'Name',
+                { "data": "shiftname" , 'title': 'Name',
                     'render':function(data, type, row, meta){
                         return `<a href="#" class="shift-link" data-id=${row['id']} data-rowid=${meta.row}>${data}</a>`
                     }
                 },
-                { "data": "starttime", 'title':'Start'},
-                { "data": "endtime", 'title':'End' },
-                { "data": "nightshiftappicable", 'title':'Night Shift',
+                { "data": "starttime", 'title': 'Start'},
+                { "data": "endtime", 'title': 'End' },
+                { "data": "nightshiftappicable", 'title': 'Night Shift',
                     'render': function(data, type, row, meta){
                         return data === true ? "True": "False"
                     } 

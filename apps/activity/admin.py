@@ -25,7 +25,7 @@ class QuestionResource(BaseFieldSet2, resources.ModelResource):
     class Meta:
         model = am.Question
         skip_unchanged = True
-        import_id_fields = ('id','quesname', 'answertype', 'client')
+        import_id_fields = ('id', 'quesname', 'answertype', 'client')
         report_skipped = True
         fields = ('id', 'quesname', 'answertype',  'unit', 'options'
                   'client', 'min', 'max', 'alerton', 'isworkflow', 'enable', 'category')
@@ -75,7 +75,7 @@ class AssetResource(BaseFieldSet2, resources.ModelResource):
     class Meta:
         model = am.Asset
         skip_unchanged = True
-        import_id_fields = ('id','assetcode', 'answertype', 'client')
+        import_id_fields = ('id', 'assetcode', 'answertype', 'client')
         report_skipped = True
         fields = ('id', 'assetcode', 'assetname',  'gpslocation', 'identifier'
                   'runningstatus', 'capacity', 'parent', 'type', 'client', 'bu',

@@ -31,7 +31,7 @@ class SiteReportTemplate(MasterReportTemplate):
         self.fields['buincludes'].widget.choices = om.Bt.objects.filter(id__in = bulist).values_list('id', 'buname')
         self.fields['site_grp_includes'].widget.choices = pm.Pgroup.objects.filter(
             identifier__tacode='SITEGROUP', bu_id__in = bulist).values_list('id', 'groupname')
-        self.fields['type'].widget.attrs = {'style':'display:none'}
+        self.fields['type'].widget.attrs = {'style': 'display:none'}
         self.fields['type'].initial = am.QuestionSet.Type.SITEREPORTTEMPLATE
 
 
@@ -43,6 +43,6 @@ class IncidentReportTemplate(MasterReportTemplate):
         super().__init__(*args, **kwargs)
         self.fields['site_type_includes'].queryset = om.TypeAssist.objects.filter(
             tatype__tacode='SITETYPE')
-        self.fields['type'].widget.attrs = {'style':'display:none'}
+        self.fields['type'].widget.attrs = {'style': 'display:none'}
         self.fields['type'].initial = am.QuestionSet.Type.INCIDENTREPORTTEMPLATE
         utils.initailize_form_fields(self)

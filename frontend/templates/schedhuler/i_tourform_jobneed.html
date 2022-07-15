@@ -470,7 +470,7 @@ Internal Tour
         if ('{{internaltourform.instance.id}}' == ('None' || "")) {
             showHideSelectField('PEOPLE')
         }else{
-            var assignto = '{{internaltourform.instance.people}}' == ('None' || "") ? "GROUP" :"PEOPLE"
+            var assignto = '{{internaltourform.instance.people}}' == ('None' || "") ? "GROUP" : "PEOPLE"
             showHideSelectField(assignto)
         }
         //datatable configurations
@@ -530,19 +530,19 @@ Internal Tour
         $("#internaltourform").submit((e) => {
             e.preventDefault();
             Swal.fire({
-                title:"Submit Form",
-                icon:"question",
+                title: "Submit Form",
+                icon: "question",
                 showCancelButton:true,
-                confirmButtonText:"Submit it!"
+                confirmButtonText: "Submit it!"
             }).then((res) => {
                 if(res.isConfirmed){
-                    var params = {'url':"", modal:false}
+                    var params = {'url': "", modal:false}
                     var payload = {formData: $(this).serialize(), parentid : "{{ internaltourform.instance.id }}"}
                     fire_ajax_form_post(params, payload)
                     .done((data, status, xhr) => {
                         Swal.fire({
-                            title:"Checkpoint Added Successfully!",
-                            icon:"success",
+                            title: "Checkpoint Added Successfully!",
+                            icon: "success",
                             showConfirmButton: false,
                             timer: 1500
                         })

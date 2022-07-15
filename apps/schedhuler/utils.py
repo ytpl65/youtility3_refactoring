@@ -142,17 +142,17 @@ def get_datetime_list(cron_exp, startdtz, enddtz, resp):
                 break
     except CroniterBadCronError as ex:
         log.warn('Bad Cron error', exc_info=True)
-        resp =  rp.JsonResponse({"errors":"Bad Cron Error"}, status = 404)
+        resp =  rp.JsonResponse({"errors": "Bad Cron Error"}, status = 404)
     except Exception as ex:
         log.error(
             'get_datetime_list(cron_exp, startdtz, enddtz) \
             Exception: [cronexp:= %s]croniter bad cron error:= %s'
             % (cron_exp, str(ex))
         )
-        resp = rp.JsonResponse({"errors":"Bad Cron Error"}, status = 404)
+        resp = rp.JsonResponse({"errors": "Bad Cron Error"}, status = 404)
         isValidCron = False
         log.error(
-            'get_datetime_list(cron_exp, startdtz, enddtz) ERROR:', exc_info=True)
+            'get_datetime_list(cron_exp, startdtz, enddtz) ERROR: ', exc_info=True)
         raise ex from ex
     if DT:
         log.info(f'Datetime list calculated are as follows:= {pformat(DT, compact=True)}')
@@ -315,7 +315,7 @@ def insert_into_jn_and_jnd(job, DT, resp):
             status = 'failed'
             log.error('insert_into_jn_and_jnd() ERROR', exc_info=True)
             resp = rp.JsonResponse({
-                "errors":"Failed to schedule jobs"}, status=404)
+                "errors": "Failed to schedule jobs"}, status=404)
             raise ex from ex
         else:
             status = "success"
@@ -411,7 +411,7 @@ def create_child_tasks(job, _pdtz, _people, jnid, _jobstatus, _jobtype):
                 'seqno').values_list(named=True)
         log.info(f"create_child_tasks() total child job:={len(R)}")
         prev_edtz = _pdtz
-        params = {'_jobdesc':"", 'jnid':jnid, 'pdtz':None, 'edtz':None,
+        params = {'_jobdesc': "", 'jnid':jnid, 'pdtz':None, 'edtz':None,
                   '_people':_people, '_jobstatus':_jobstatus, '_jobtype':_jobtype,
                   'm_factor':None, 'idx':None, 'NONE_P':NONE_P}
         for idx, r in enumerate(R):

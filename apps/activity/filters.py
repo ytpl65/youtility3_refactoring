@@ -31,4 +31,4 @@ class MasterAssetFilter(django_filters.FilterSet):
 
     class Meta:
         model = am.Question
-        fields = ['assetcode', 'assetname', 'parent', 'runningstatus','enable', 'gpslocation']
+        fields = ['assetcode', 'assetname', 'parent', 'runningstatus', 'enable', 'gpslocation']

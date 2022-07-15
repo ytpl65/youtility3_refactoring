@@ -92,7 +92,7 @@ People List
             language: {
                 searchPlaceholder: "Search on Page"
             },
-            dom:"<'row'" +
+            dom: "<'row'" +
                 "<'col-sm-6 d-flex align-items-center justify-conten-start'f>" +
                 "<'col-sm-6 d-flex align-items-center justify-content-end'B>" +
                 ">" +
@@ -102,8 +102,8 @@ People List
             scrollCollapse: true,
             buttons:[
 				{
-					text:"Add New People &nbsp;<i class='fas fa-plus ch4'></i></a>",
-					className:"btn btn-sm btn-light-primary btn-hover-rise",
+					text: "Add New People &nbsp;<i class='fas fa-plus ch4'></i></a>",
+					className: "btn btn-sm btn-light-primary btn-hover-rise",
 					//action for add_new_button 
 					action: function(e, dt, node, config){
                         const params = {
@@ -138,7 +138,7 @@ People List
 		$('#modal-people').on('submit', '#id_capform', function(e) {
 			var form = $(this);
 			e.preventDefault()
-			const params = { url:"{{ url('peoples:people') }}", modal:true } //People view
+			const params = { url: "{{ url('peoples:people') }}", modal:true } //People view
 			const formtype = $("#people_content").attr('data-form') //form-type (create/update)
 			const id = $("#people_content").attr('data-id') //form instance id
 			var payLoad = {formData:form.serialize(), csrfmiddlewaretoken: '{{ csrf_token }}'}//payload for post request

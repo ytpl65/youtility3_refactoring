@@ -59,13 +59,13 @@ TypeAssist List
 		
 		table = $(table_id).DataTable({
 			ajax:{
-				url:'{{ url("onboarding:typeassist") }}?action=list',
+				url: '{{ url("onboarding:typeassist") }}?action=list',
 			},
 			columns     : [
                 { "data": "id" },
-                { "data": "tacode", title:"Code" },
-                { "data": "taname", title:'Name' },
-                { "data": "tatype__tacode", title:'Type' },
+                { "data": "tacode", title: "Code" },
+                { "data": "taname", title: 'Name' },
+                { "data": "tatype__tacode", title: 'Type' },
                 { "data": "cuser__peoplecode", title: 'Created by' },
             ],
 			deferRender: true,

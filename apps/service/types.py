@@ -88,8 +88,8 @@ class LoginResponseType(DjangoObjectType):
     class Meta:
         model = People
         fields = [
-            'peoplecode', 'loginid', 'peoplename','isadmin',
-             'email','mobno']
+            'peoplecode', 'loginid', 'peoplename', 'isadmin',
+             'email', 'mobno']
     def resolve_tenantid(self, info, *args, **kwargs):
         print("called")
         print(dir(info.context))
@@ -369,7 +369,7 @@ class ReportSchema(BaseModel):
         # sourcery skip: inline-immediately-returned-variable, instance-method-first-arg-name
         from django.contrib.gis.geos import GEOSGeometry
         try:
-            lat, lng = v.split(',')
+            lat, lng = v.split(', ')
             point = GEOSGeometry(f'SRID=4326;POINT({lng} {lat})')
             return point
         except Exception as e:

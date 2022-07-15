@@ -15,10 +15,10 @@ class Schd_I_TourJobForm(JobForm):
     class Meta(JobForm.Meta):
         exclude = ['shift']
         JobForm.Meta.widgets.update({
-            'identifier':forms.TextInput(attrs={'style':'display:none;'}),
-            'starttime':forms.TextInput(attrs={'style':'display:none;'}),
-            'endtime':forms.TextInput(attrs={'style':'display:none;'}),
-            'frequency':forms.TextInput(attrs={'style':'display:none;'}),
+            'identifier':forms.TextInput(attrs={'style': 'display:none;'}),
+            'starttime':forms.TextInput(attrs={'style': 'display:none;'}),
+            'endtime':forms.TextInput(attrs={'style': 'display:none;'}),
+            'frequency':forms.TextInput(attrs={'style': 'display:none;'}),
         })
 
     def __init__(self, *args, **kwargs):
@@ -27,11 +27,11 @@ class Schd_I_TourJobForm(JobForm):
         super().__init__(*args, **kwargs)
         self.fields['fromdate'].input_formats  = settings.DATETIME_INPUT_FORMATS
         self.fields['uptodate'].input_formats  = settings.DATETIME_INPUT_FORMATS
-        self.fields['identifier'].widget.attrs  = {"style":"display:none"}
-        self.fields['expirytime'].widget.attrs  = {"style":"display:none"}
-        self.fields['starttime'].widget.attrs   = {"style":"display:none"}
-        self.fields['endtime'].widget.attrs     = {"style":"display:none"}
-        self.fields['frequency'].widget.attrs   = {"style":"display:none"}
+        self.fields['identifier'].widget.attrs  = {"style": "display:none"}
+        self.fields['expirytime'].widget.attrs  = {"style": "display:none"}
+        self.fields['starttime'].widget.attrs   = {"style": "display:none"}
+        self.fields['endtime'].widget.attrs     = {"style": "display:none"}
+        self.fields['frequency'].widget.attrs   = {"style": "display:none"}
         self.fields['ticketcategory'].queryset = ob.TypeAssist.objects.filter(tatype__tacode="TICKETCATEGORY")
         utils.initailize_form_fields(self)
 
@@ -98,10 +98,10 @@ class I_TourFormJobneed(JobNeedForm): #jobneed
         super().__init__(*args, **kwargs)
         self.fields['plandatetime'].input_formats   = settings.DATETIME_INPUT_FORMATS
         self.fields['expirydatetime'].input_formats = settings.DATETIME_INPUT_FORMATS
-        self.fields['identifier'].widget.attrs      = {"style":"display:none"}
-        self.fields['starttime'].widget.attrs       = {"disabled":"disabled"}
-        self.fields['endtime'].widget.attrs         = {"disabled":"disabled"}
-        self.fields['performedby'].widget.attrs    = {"disabled":"disabled"}
+        self.fields['identifier'].widget.attrs      = {"style": "display:none"}
+        self.fields['starttime'].widget.attrs       = {"disabled": "disabled"}
+        self.fields['endtime'].widget.attrs         = {"disabled": "disabled"}
+        self.fields['performedby'].widget.attrs    = {"disabled": "disabled"}
         self.fields['qset'].label = 'QuestionSet'
         self.fields['asset'].label = 'Asset/Smartplace'
         self.fields['ticketcategory'].queryset     = ob.TypeAssist.objects.filter(tatype__tacode="TICKETCATEGORY")
@@ -169,7 +169,7 @@ class Schd_E_TourJobForm(JobForm):
     
 
     class Meta(JobForm.Meta):
-        JobForm.Meta.labels.update({'bu':'Cluster'})
+        JobForm.Meta.labels.update({'bu': 'Cluster'})
         exclude = ['jobdesc']
 
     def __init__(self, *args, **kwargs):
@@ -178,14 +178,14 @@ class Schd_E_TourJobForm(JobForm):
         self.fields['fromdate'].input_formats  = settings.DATETIME_INPUT_FORMATS
         self.fields['uptodate'].input_formats  = settings.DATETIME_INPUT_FORMATS
         self.fields['ticketcategory'].initial  = ob.TypeAssist.objects.get(tacode='AUTOCLOSED')
-        self.fields['identifier'].widget.attrs = {"style":"display:none"}
-        self.fields['expirytime'].widget.attrs = {"style":"display:none"}
-        self.fields['starttime'].widget.attrs  = {"style":"display:none"}
-        self.fields['endtime'].widget.attrs    = {"style":"display:none"}
-        self.fields['frequency'].widget.attrs  = {"style":"display:none"}
-        self.fields['priority'].widget.attrs   = {"style":"display:none"}
-        self.fields['scantype'].widget.attrs   = {"style":"display:none"}
-        self.fields['seqno'].widget.attrs      = {"style":"display:none"}
+        self.fields['identifier'].widget.attrs = {"style": "display:none"}
+        self.fields['expirytime'].widget.attrs = {"style": "display:none"}
+        self.fields['starttime'].widget.attrs  = {"style": "display:none"}
+        self.fields['endtime'].widget.attrs    = {"style": "display:none"}
+        self.fields['frequency'].widget.attrs  = {"style": "display:none"}
+        self.fields['priority'].widget.attrs   = {"style": "display:none"}
+        self.fields['scantype'].widget.attrs   = {"style": "display:none"}
+        self.fields['seqno'].widget.attrs      = {"style": "display:none"}
         utils.initailize_form_fields(self)
 
 
@@ -220,10 +220,10 @@ class SchdTaskFormJob(JobForm):
     class Meta(JobForm.Meta):
         exclude = ['shift']
         JobForm.Meta.widgets.update({
-            'identifier':forms.TextInput(attrs={'style':'display:none;'}),
-            'starttime':forms.TextInput(attrs={'style':'display:none;'}),
-            'endtime':forms.TextInput(attrs={'style':'display:none;'}),
-            'frequency':forms.TextInput(attrs={'style':'display:none;'}),
+            'identifier':forms.TextInput(attrs={'style': 'display:none;'}),
+            'starttime':forms.TextInput(attrs={'style': 'display:none;'}),
+            'endtime':forms.TextInput(attrs={'style': 'display:none;'}),
+            'frequency':forms.TextInput(attrs={'style': 'display:none;'}),
         })
 
     def __init__(self, *args, **kwargs):
@@ -232,10 +232,10 @@ class SchdTaskFormJob(JobForm):
         self.fields['fromdate'].input_formats  = settings.DATETIME_INPUT_FORMATS
         self.fields['uptodate'].input_formats  = settings.DATETIME_INPUT_FORMATS
         self.fields['jobdesc'].required        = False
-        self.fields['identifier'].widget.attrs = {"style":"display:none"}
-        self.fields['starttime'].widget.attrs  = {"style":"display:none"}
-        self.fields['endtime'].widget.attrs    = {"style":"display:none"}
-        self.fields['frequency'].widget.attrs  = {"style":"display:none"}
+        self.fields['identifier'].widget.attrs = {"style": "display:none"}
+        self.fields['starttime'].widget.attrs  = {"style": "display:none"}
+        self.fields['endtime'].widget.attrs    = {"style": "display:none"}
+        self.fields['frequency'].widget.attrs  = {"style": "display:none"}
         self.fields['expirytime'].label        = 'Grace Time After'
         self.fields['gracetime'].label         = 'Grace Time Before'
         self.fields['ticketcategory'].queryset = ob.TypeAssist.objects.filter(tatype__tacode="TICKETCATEGORY")
@@ -269,12 +269,12 @@ class TicketForm(JobNeedForm):
 
     class Meta(JobNeedForm.Meta):
         JobNeedForm.Meta.widgets.update({
-            'scantype'   : forms.TextInput(attrs={'style':'display:none'}),
-            'frequency'  : forms.TextInput(attrs={'style':'display:none'}),
-            'starttime'  : forms.TextInput(attrs={'style':'display:none'}),
-            'endtime'    : forms.TextInput(attrs={'style':'display:none'}),
-            'identifier' : forms.TextInput(attrs={'style':'display:none'}),
-            'cuser'      : s2forms.Select2Widget(attrs={'disabled':'readonly'}),
+            'scantype'   : forms.TextInput(attrs={'style': 'display:none'}),
+            'frequency'  : forms.TextInput(attrs={'style': 'display:none'}),
+            'starttime'  : forms.TextInput(attrs={'style': 'display:none'}),
+            'endtime'    : forms.TextInput(attrs={'style': 'display:none'}),
+            'identifier' : forms.TextInput(attrs={'style': 'display:none'}),
+            'cuser'      : s2forms.Select2Widget(attrs={'disabled': 'readonly'}),
         })
 
     def __init__(self, *args, **kwargs):
@@ -284,8 +284,8 @@ class TicketForm(JobNeedForm):
         self.fields['plandatetime'].input_formats   = settings.DATETIME_INPUT_FORMATS
         self.fields['expirydatetime'].input_formats = settings.DATETIME_INPUT_FORMATS
         if not self.instance.id:
-            self.fields['jobstatus'].widget.attrs = {'disabled':'readonly'}
-            self.fields['ticketno'].widget.attrs  = {'disabled':'disabled', 'readonly':'readonly'}
+            self.fields['jobstatus'].widget.attrs = {'disabled': 'readonly'}
+            self.fields['ticketno'].widget.attrs  = {'disabled': 'disabled', 'readonly': 'readonly'}
         self.fields['cuser'].required = False
         self.fields['asset'].label = 'Location'
         self.fields['ticketcategory'].queryset     = ob.TypeAssist.objects.filter(tatype__tacode="TICKETCATEGORY")

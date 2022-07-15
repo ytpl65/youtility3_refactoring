@@ -381,7 +381,7 @@ class CreatePgroup(LoginRequiredMixin, View):
                 pg = form.save()
                 pg.identifier, _ = TypeAssist.objects.get_or_create(
                     tacode="PEOPLE_GROUP", taname="People Group",
-                    defaults={'tacode': "PEOPLEGROUP", 'taname':"People Group", 'tatype_id': -1})
+                    defaults={'tacode': "PEOPLEGROUP", 'taname': "People Group", 'tatype_id': -1})
                 pg = save_userinfo(pg, request.user, request.session)
                 save_pgroupbelonging(pg, request)
                 logger.info('Pgroup Form saved')

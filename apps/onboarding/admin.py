@@ -78,7 +78,7 @@ class TaResource(resources.ModelResource ):
     class Meta:
         model = om.TypeAssist
         skip_unchanged = True
-        import_id_fields = ('id','tacode')
+        import_id_fields = ('id', 'tacode')
         report_skipped = True
         fields = ('id', 'taname', 'tacode', 'tatype', 'tenant', 'bu', 'client')
 

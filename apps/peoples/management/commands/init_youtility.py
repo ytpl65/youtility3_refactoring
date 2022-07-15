@@ -35,15 +35,15 @@ def create_dummy_client_site_and_superadmin(self):
             is_superuser=True, isadmin=True, isverified=True,
             peoplecode='SUPERADMIN', is_staff=True, loginid = 'superadmin',
             defaults={
-                'peoplename':'Superadmin', 'email':'superadmin@youtility.in',
-                'dateofjoin':'1111-11-11', 'dateofbirth':'1111-11-11',
+                'peoplename': 'Superadmin', 'email': 'superadmin@youtility.in',
+                'dateofjoin': '1111-11-11', 'dateofbirth': '1111-11-11',
                 'client':client, 'bu':site
             }
         )
         SU.set_password('superadmin@@2022@@')
         SU.save()
-        log.debug(f"Dummy client:'SPS' and site:'YTPL' created successfully...{pformat(utils.ok(self))}")
-        log.debug(f"Superuser with this loginid:'SUPERADMIN' and password:'superadmin@@2022@@' created successfully...{pformat(utils.ok(self))}")
+        log.debug(f"Dummy client: 'SPS' and site: 'YTPL' created successfully...{pformat(utils.ok(self))}")
+        log.debug(f"Superuser with this loginid: 'SUPERADMIN' and password: 'superadmin@@2022@@' created successfully...{pformat(utils.ok(self))}")
     except Exception as e:
         if type(e) != IntegrityError:
             log.error("Failed create_dummy_clientandsite", exc_info= True)

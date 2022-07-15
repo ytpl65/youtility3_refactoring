@@ -239,7 +239,7 @@ Ticket
         if ('{{ticketform.instance.id}}' == ('None' || "")) {
             showHideSelectField('PEOPLE')
         }else{
-            var assignto = '{{ticketform.instance.people}}' == ('None' || "") ? "GROUP" :"PEOPLE"
+            var assignto = '{{ticketform.instance.people}}' == ('None' || "") ? "GROUP" : "PEOPLE"
             showHideSelectField(assignto)
         }
 
@@ -258,7 +258,7 @@ Ticket
             var   payLoad  = { formData: $("#ticketform").serialize(),csrfmiddlewaretoken: '{{ csrf_token }}' }
             
             if (formtype === 'update') {
-                var newPayLoad = { ...payLoad,'pk': id }
+                var newPayLoad = { ...payLoad, 'pk': id }
                     payLoad    = newPayLoad
             }
             submit_form_alert().then((res) => {

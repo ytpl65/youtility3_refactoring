@@ -318,7 +318,7 @@ Schedhule Task
         if ('{{schdtaskform.instance.id}}' in ('None' || "")) {
             showHideSelectField('PEOPLE')
         }else{
-            var assignto = '{{schdtaskform.instance.people}}' == ('None' || "") ? "GROUP" :"PEOPLE"
+            var assignto = '{{schdtaskform.instance.people}}' == ('None' || "") ? "GROUP" : "PEOPLE"
             showHideSelectField(assignto)
         }
 
@@ -388,7 +388,7 @@ Schedhule Task
             var   payLoad  = { formData: $("#schdtaskform").serialize(),csrfmiddlewaretoken: '{{ csrf_token }}' }
             
             if (formtype === 'update') {
-                var newPayLoad = { ...payLoad,'pk': id }
+                var newPayLoad = { ...payLoad, 'pk': id }
                     payLoad    = newPayLoad
             }
             submit_form_alert().then((res) => {
@@ -422,25 +422,25 @@ Schedhule Task
         //RUN-JOB SCHEDULER DEFINITION
         $("#runScheduler").click(function() {
             if(!formSaved){
-                alertuser_to_saveform({fs:"17px", cl:"red"})
+                alertuser_to_saveform({fs: "17px", cl: "red"})
             }else{
                 Swal.fire({
-                    title:"Are you sure?",
-                    text:"Run Task Scheduler, you won't be able to revert this!",
-                    icon:"warning",
+                    title: "Are you sure?",
+                    text: "Run Task Scheduler, you won't be able to revert this!",
+                    icon: "warning",
                     showCancelButton:true,
-                    confirmButtonText:"Schedule it!"
+                    confirmButtonText: "Schedule it!"
                 }).then((result) => {
                     if(result.isConfirmed){
-                        const params = {url:"{{ url('schedhuler:runJob') }}"}
-                        var payLoad = {job:'{{ schdtaskform.instance.id }}',
+                        const params = {url: "{{ url('schedhuler:runJob') }}"}
+                        var payLoad = {job: '{{ schdtaskform.instance.id }}',
                         csrfmiddlewaretoken: '{{ csrf_token }}'}
                         fire_ajax_form_post(params, payLoad)
                         .done((data, status, xhr) => {
                             Swal.fire({
                                 showConfirmButton:false,
                                 timer:1500,
-                                icon:'success',
+                                icon: 'success',
                                 title:data['msg']
                             })
                             $('#lblIsRTour').html('No');
@@ -448,9 +448,9 @@ Schedhule Task
                         .fail((xhr, status, error) => {
                             Swal.fire({
                                 showConfirmButton:false,
-                                icon:"error",
+                                icon: "error",
                                 timer:1500,
-                                title:"Failed to schedhule!"
+                                title: "Failed to schedhule!"
                             })
                         })
                     }

@@ -173,7 +173,7 @@ Site Group
 
         tabAllsites = $("#all_sites").DataTable({
             ajax:{
-                url:"{{ url('peoples:sitegroup') }}?action=allsites",
+                url: "{{ url('peoples:sitegroup') }}?action=allsites",
                 data:function ( d ) {
                     d.sel_butype = current_sel_butype;
                     d.fields = ['buid', 'buname', 'parent__buname', 'identifier__tacode'];
@@ -190,11 +190,11 @@ Site Group
             ordering: false,
             deferRender: true,
             columns:[
-                {data:null, defaultContent: '', orderable:true, className:'select-checkbox', width:"2%"},
-                {data:'buid', visible:false, orderable:false, defaultContent:""},
-                {data:'buname', title:"Site Name"},
-                {data:"parent__buname", title:"Belongs to"},
-                {data:'identifier__tacode', title:"Type"},
+                {data:null, defaultContent: '', orderable:true, className: 'select-checkbox', width: "2%"},
+                {data: 'buid', visible:false, orderable:false, defaultContent: ""},
+                {data: 'buname', title: "Site Name"},
+                {data: "parent__buname", title: "Belongs to"},
+                {data: 'identifier__tacode', title: "Type"},
             ],
             select: {
                 style:    'multi',
@@ -231,13 +231,13 @@ Site Group
         tabAssigned_sites = $("#assigned_sites").DataTable({
             fixedHeader: true,
             responsive: true,
-            dom:"rt",
+            dom: "rt",
             order: [[ 1, 'asc' ]],
             columns:[
-                {data:'buid', visible:false, orderable:false, defaultContent:"", render:function(data, type, full, meta){
+                {data: 'buid', visible:false, orderable:false, defaultContent: "", render:function(data, type, full, meta){
                     return data == undefined ? "" :data
                 }},
-                {data:'buname', title:'Site Name'},
+                {data: 'buname', title: 'Site Name'},
                 {data:function(row, type, val, meta){
                         if(row['13'] != null){
                             return ""
@@ -245,11 +245,11 @@ Site Group
                             return '<a href="#" onClick="return false;"><i class="fas text-dark fa-trash-alt fs-3"></i></a>'
                         }
                     },
-                defaultContent:'',
+                defaultContent: '',
                 orderable:false,
-                className:"remove text-center",
+                className: "remove text-center",
                 targets:12,
-                width:"5%"}
+                width: "5%"}
             ],
             buttons:[]
         })
@@ -282,19 +282,19 @@ Site Group
 			var form = $(this);
 			e.preventDefault()
             if(tabAssigned_sites.data().length){ Swal.fire({
-                title:'Sites Not Assigned!',
-                text:"Do you forget to assign sites!",
-                icon:'warning',
+                title: 'Sites Not Assigned!',
+                text: "Do you forget to assign sites!",
+                icon: 'warning',
                 timer:2000
             })}
 			
-            const params = { url:"{{ url('peoples:sitegroup') }}", modal:false } 
+            const params = { url: "{{ url('peoples:sitegroup') }}", modal:false } 
 			var payLoad =  {'formData':form.serialize(), csrfmiddlewaretoken: '{{ csrf_token }}', 'assignedSites': JSON.stringify(tabAssigned_sites.rows().data().toArray())}
             var isupdate = $("#id_pk")!=="" ?  false : true
             Swal.fire({
-            title:"Submit?",
-            text:"This will allocate the selected sites to the Sites group being created!",
-            icon:'question',
+            title: "Submit?",
+            text: "This will allocate the selected sites to the Sites group being created!",
+            icon: 'question',
             showCancelButton: true,
             confirmButtonText: 'Submit'
             }).then((res) => {

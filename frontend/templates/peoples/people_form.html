@@ -699,13 +699,13 @@ People
             $("#change_pass").hide()
         }
         //pre-select options for pop-up ta forms
-		$("#peopletype_popup select[name='tatype']").val($("#peopletype_popup select option:contains('PEOPLETYPE')").val()).change().prop({"disabled":"true"})
+		$("#peopletype_popup select[name='tatype']").val($("#peopletype_popup select option:contains('PEOPLETYPE')").val()).change().prop({"disabled": "true"})
         
         //pre-select options for pop-up ta forms
-		$("#designation_popup select[name='tatype']").val($("#designation_popup select option:contains('DESIGNATION')").val()).change().prop({"disabled":"true"})
+		$("#designation_popup select[name='tatype']").val($("#designation_popup select option:contains('DESIGNATION')").val()).change().prop({"disabled": "true"})
         
         //pre-select options for pop-up ta forms
-		$("#department_popup select[name='tatype']").val($("#department_popup select option:contains('DEPARTMENT')").val()).change().prop({"disabled":"true"})
+		$("#department_popup select[name='tatype']").val($("#department_popup select option:contains('DEPARTMENT')").val()).change().prop({"disabled": "true"})
         
         //show isadmin checkbox to superuser
         if(session.is_superadmin){
@@ -721,7 +721,7 @@ People
         $("#id_peopleform").on('submit', function(e){
             var form = $(this)
             e.preventDefault()
-            const params = {url:"{{ url('peoples:people') }}", modal:false}
+            const params = {url: "{{ url('peoples:people') }}", modal:false}
             const id = "{{ peopleform.instance.id }}"
             var payLoad = {formData:form.serialize(), csrfmiddlewaretoken: '{{ csrf_token }}'}//payload for post request
             if(id != 'None'){

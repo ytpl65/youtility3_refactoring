@@ -163,7 +163,7 @@ Attendance
             console.log("submitted")
 			var form = $(this);
 			e.preventDefault()
-			const params   = { url:"{{ url('attendance:attendance_view') }}", modal:true }                     //attendance view
+			const params   = { url: "{{ url('attendance:attendance_view') }}", modal:true }                     //attendance view
 			const formtype = $("#attd_content").attr('data-form')                                  //form-type (create/update)
 			const id       = $("#attd_content").attr('data-id')                                    //form instance id
 			var   payLoad  = {formData:form.serialize(), csrfmiddlewaretoken: '{{ csrf_token }}'}  //payload for post request
@@ -216,7 +216,7 @@ Attendance
 
         //date widget
         $("#id_datefor").flatpickr({
-            dateFormat:'d M Y'
+            dateFormat: 'd M Y'
         });
         
         //take attendance
@@ -224,7 +224,7 @@ Attendance
             alert_before_attendance().then((result) => {
                 if(result.isConfirmed){
                     //openCamera to take attendance
-                    const params = {url:"{{ url('attendance:markAttendance') }}?detectQR=true"}
+                    const params = {url: "{{ url('attendance:markAttendance') }}?detectQR=true"}
                     fire_ajax_get(params)
                     .done((data, status, xhr) => {
                         console.log("data", data)

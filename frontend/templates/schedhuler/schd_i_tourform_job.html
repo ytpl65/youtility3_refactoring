@@ -570,7 +570,7 @@ Schedhule Tour
         if ('{{schdtourform.instance.id}}' == ('None' || "")) {
             showHideSelectField('PEOPLE')
         }else{
-            var assignto = '{{schdtourform.instance.people}}' == ('None' || "") ? "GROUP" :"PEOPLE"
+            var assignto = '{{schdtourform.instance.people}}' == ('None' || "") ? "GROUP" : "PEOPLE"
             showHideSelectField(assignto)
         }       
 
@@ -667,30 +667,30 @@ Schedhule Tour
 
         $("#runScheduler").click(function() {
             Swal.fire({
-                title:"Are you sure?",
-                text:"Run Tour Scheduler, you won't be able to revert this!",
-                icon:"warning",
+                title: "Are you sure?",
+                text: "Run Tour Scheduler, you won't be able to revert this!",
+                icon: "warning",
                 showCancelButton:true,
-                confirmButtonText:"Schedule it!"
+                confirmButtonText: "Schedule it!"
             }).then((result) => {
                 if(result.isConfirmed){
-                    const params = {url:"{{ url('schedhuler:runJob') }}"}
-                    var payLoad = {job:'{{ schdtourform.instance.id }}', csrfmiddlewaretoken: '{{ csrf_token }}'}
+                    const params = {url: "{{ url('schedhuler:runJob') }}"}
+                    var payLoad = {job: '{{ schdtourform.instance.id }}', csrfmiddlewaretoken: '{{ csrf_token }}'}
                     fire_ajax_form_post(params, payLoad)
                     .done((data, status, xhr) => {
                         Swal.fire({
                             showConfirmButton:false,
                             timer:1500,
-                            icon:'success',
-                            title:"Tour schedhuled successfully!"
+                            icon: 'success',
+                            title: "Tour schedhuled successfully!"
                         })
                     })
                     .fail((xhr, status, error) => {
                         Swal.fire({
                             showConfirmButton:false,
-                            icon:"error",
+                            icon: "error",
                             timer:1500,
-                            title:"Failed to schedhule successfully!"
+                            title: "Failed to schedhule successfully!"
                         })
                     })
                 }

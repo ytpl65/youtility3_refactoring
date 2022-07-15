@@ -962,7 +962,7 @@ class MasterTypeAssist(LoginRequiredMixin, View):
 class SuperTypeAssist(MasterTypeAssist):
     params = MasterTypeAssist.params
     lookup = MasterTypeAssist.lookup
-    lookup = {'cuser__peoplecode':'SUPERADMIN'}
+    lookup = {'cuser__peoplecode': 'SUPERADMIN'}
     params.update({'form_class':obforms.SuperTypeAssistForm})
 
 class TypeAssistAjax(MasterTypeAssist):
@@ -1093,8 +1093,8 @@ class EditorTa(LoginRequiredMixin, View):
 class GeoFence(LoginRequiredMixin, View):
     params = {
         'form_class':obforms.GeoFenceForm,
-        'template_list':'onboarding/geofence_list.html',
-        'template_form':'onboarding/geofence_form.html',
+        'template_list': 'onboarding/geofence_list.html',
+        'template_form': 'onboarding/geofence_form.html',
         'fields': ['id', 'gfcode',
               'gfname', 'alerttogroup__groupname', 'alerttopeople__peoplename'],
         'related':['alerttogroup', 'alerttopeople'],
@@ -1194,16 +1194,16 @@ def get_geofence_from_point_radii(R):
             geofence.transform(4326)
             return rp.JsonResponse(data={'geojson':utils.getformatedjson(geofence)}, status=200)
         else:
-            return rp.JsonResponse(data={'errors':"Invalid data provided unable to compute geofence!"}, status=404)
+            return rp.JsonResponse(data={'errors': "Invalid data provided unable to compute geofence!"}, status=404)
     except Exception:
         logger.error("something went wrong while computing geofence..", exc_info=True)
-        return rp.JsonResponse(data={'errors':'something went wrong while computing geofence!'}, status=404)
+        return rp.JsonResponse(data={'errors': 'something went wrong while computing geofence!'}, status=404)
 
 
 
 class ImportFile(LoginRequiredMixin, View):
     params = {
-       'template_form':'onboarding/',
+       'template_form': 'onboarding/',
        'form_class':obforms.ImportForm
     }
 

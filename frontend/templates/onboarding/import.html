@@ -82,14 +82,14 @@ Import Data
             
             
             const params = { url: "{{ url('onboarding:import') }}", modal:false}
-            const payLoad = {formData: fd, csrfmiddlewaretoken:'{{ csrf_token }}'}
+            const payLoad = {formData: fd, csrfmiddlewaretoken: '{{ csrf_token }}'}
             
             Swal.fire({
-                title:"Submit",
-                text:'Are you sure the the file you uploading has correct data?',
-                icon:'question',
+                title: "Submit",
+                text: 'Are you sure the the file you uploading has correct data?',
+                icon: 'question',
                 showCancelButton:true,
-                confirmButtonText:'Yes Upload it!'
+                confirmButtonText: 'Yes Upload it!'
             }).then((res) => {
                 $.ajax({
                     url        : params.url,

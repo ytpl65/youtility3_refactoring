@@ -215,7 +215,7 @@ def perform_insertrecord_bgt(self, data, request=None, filebased=True, db='defau
                     obj = insertrecord(record, tablename)
                     recordcount+=1
                     if all([tablename == 'peopleeventlog',
-                            obj.peventtype.tacode in ('CONVEYANCE','AUDIT'),
+                            obj.peventtype.tacode in ('CONVEYANCE', 'AUDIT'),
                             obj.endlocation,obj.punchouttime, obj.punchintime]):
                         log.info("save line string is started")
                         save_linestring_and_update_pelrecord(obj)

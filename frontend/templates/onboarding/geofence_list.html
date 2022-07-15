@@ -35,15 +35,15 @@ var table             = null;
 $(document).ready(function(){
     table = $(table_id).DataTable({
 			ajax:{
-				url:'{{ url("onboarding:geofence") }}?action=list',
+				url: '{{ url("onboarding:geofence") }}?action=list',
 			},
 			columns     : [
                 { data: "id" },
-                { data: "gfcode", title:'Code' },
-                { data: "gfname", title:'Name' },
-                { data: "alerttogroup__groupname", title:'Group' },
-                { data: "alerttopeople__peoplename", title:'People' },
-                {data:"geofence", title:'GeoFence'}
+                { data: "gfcode", title: 'Code' },
+                { data: "gfname", title: 'Name' },
+                { data: "alerttogroup__groupname", title: 'Group' },
+                { data: "alerttopeople__peoplename", title: 'People' },
+                {data: "geofence", title: 'GeoFence'}
             ],
 			deferRender: true,
 			responsive : true,
@@ -59,16 +59,16 @@ $(document).ready(function(){
 				},
 				{
 					targets:5,
-					data:'geofence',
-					defaultContent:""
+					data: 'geofence',
+					defaultContent: ""
 				}
 			],
 			 dom       : `<'row' <'col-sm-6 d-flex justify-content-start'f> <'col-sm-6 d-flex justify-content-end'B> >rt<'row'
 			 <'col-sm-6'l> <'col-sm-6'p><'col-sm-12 d-flex justify-content-center'i>>`,
 			buttons:[
 				{
-                    text:'Add New',
-                    className:"btn btn-sm btn-light-primary",
+                    text: 'Add New',
+                    className: "btn btn-sm btn-light-primary",
                     action:function(e, dt, node, config){   
                         location.href = '{{ url("onboarding:geofence") }}?action=form'
                     }

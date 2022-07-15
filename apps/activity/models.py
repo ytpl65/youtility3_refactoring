@@ -189,7 +189,7 @@ class Job(BaseModel, TenantAwareModel):
         EXTERNALTOUR     = ('EXTERNALTOUR', 'External Tour')
         PPM              = ('PPM', 'PPM')
         OTHER            = ('OTHER', 'Other')
-        SITEREPORT       = ("SITEREPORT","Site Report")
+        SITEREPORT       = ("SITEREPORT", "Site Report")
         INCIDENTREPORT   = ('INCIDENTREPORT', "Incident Report")
         ASSETLOG         = ("ASSETLOG",	"Asset Log")
         ASSETMAINTENANCE = ("ASSETMAINTENANCE",	"Asset Maintenance")
@@ -360,7 +360,7 @@ class Jobneed(BaseModel, TenantAwareModel):
         EXTERNALTOUR     = ('EXTERNALTOUR', 'External Tour')
         PPM              = ('PPM', 'PPM')
         OTHER            = ('OTHER', 'Other')
-        SITEREPORT       = ("SITEREPORT","Site Report")
+        SITEREPORT       = ("SITEREPORT", "Site Report")
         INCIDENTREPORT   = ('INCIDENTREPORT', "Incident Report")
         ASSETLOG         = ("ASSETLOG",	"Asset Log")
         ASSETMAINTENANCE = ("ASSETMAINTENANCE",	"Asset Maintenance")
@@ -400,13 +400,13 @@ class Jobneed(BaseModel, TenantAwareModel):
 
 
     class Frequency(models.TextChoices):
-        NONE        = ('NONE','None')
-        DAILY       = ("DAILY","Daily")
-        WEEKLY      = ("WEEKLY","Weekly")
+        NONE        = ('NONE', 'None')
+        DAILY       = ("DAILY", "Daily")
+        WEEKLY      = ("WEEKLY", "Weekly")
         MONTHLY     = ("MONTHLY", "Monthly")
-        BIMONTHLY   = ("BIMONTHLY","Bimonthly")
-        QUARTERLY   = ("QUARTERLY","Quarterly")
-        HALFYEARLY  = ("HALFYEARLY","Half Yearly")
+        BIMONTHLY   = ("BIMONTHLY", "Bimonthly")
+        QUARTERLY   = ("QUARTERLY", "Quarterly")
+        HALFYEARLY  = ("HALFYEARLY", "Half Yearly")
         YEARLY      = ("YEARLY", "Yearly")
         FORTNIGHTLY = ("FORTNIGHTLY", "Fort Nightly")
 
@@ -504,7 +504,7 @@ class JobneedDetails(BaseModel, TenantAwareModel):
 class Attachment(BaseModel, TenantAwareModel):
     class AttachmentType(models.TextChoices):
         NONE  = ('NONE', 'NONE')
-        ATMT  = ("ATTACHMENT","Attachment")
+        ATMT  = ("ATTACHMENT", "Attachment")
         REPLY = ("REPLY", "Reply")
         SIGN  = ("SIGN",  "SIGN")
 
@@ -582,12 +582,12 @@ class Ticket(BaseModel, TenantAwareModel):
         MEDIUM = ('MEDIUM', 'Medium')
 
     class Status(models.TextChoices):
-        NEW       = ('NEW','New')
-        CANCEL    = ('CANCEL','Cancel')
-        CLOSE     = ('CLOSE','Close')
-        ESCALATED = ('ESCALATED','Escalated')
-        AUTOCLOSE = ('AUTOCLOSE','Autoclose')
-        ASSIGNED  = ('ASSIGNED','Assigned' )
+        NEW       = ('NEW', 'New')
+        CANCEL    = ('CANCEL', 'Cancel')
+        CLOSE     = ('CLOSE', 'Close')
+        ESCALATED = ('ESCALATED', 'Escalated')
+        AUTOCLOSE = ('AUTOCLOSE', 'Autoclose')
+        ASSIGNED  = ('ASSIGNED', 'Assigned' )
 
     class TicketSource(models.TextChoices):
         SYSTEMGENERATED = ('SYSTEMGENERATED', 'System Generated')

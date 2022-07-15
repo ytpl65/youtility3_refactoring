@@ -35,5 +35,5 @@ class ClientFiler(django_filters.FilterSet):
 
     class Meta:
         model = Bt
-        fields = ['bucode','buname', 'enable', 'bu_preferences__webcapability',
+        fields = ['bucode', 'buname', 'enable', 'bu_preferences__webcapability',
                  'bu_preferences__mobcapability', 'bu_preferences__reportcapability']

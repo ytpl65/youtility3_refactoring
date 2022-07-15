@@ -115,18 +115,18 @@ Tour List
 			 <'col-sm-6'l> <'col-sm-6'p><'col-sm-12 d-flex justify-content-center'i>>`,
             //ordering:false,
             columns:[
-                {data:'id'},
-                {data:'plandatetime', title:"Plan Duration"},
-                {data:'jobdesc', title:'Description'},
-                {data:'jobstatus', title:'Status'},
-                {title:'People/Group'},
-                {data:'performedby__peoplename', title:'Performed By'},
-                {data:'gracetime', title:"Grace Time"},
-                {data:'expirydatetime', title:"Expiry Datetime"}
+                {data: 'id'},
+                {data: 'plandatetime', title: "Plan Duration"},
+                {data: 'jobdesc', title: 'Description'},
+                {data: 'jobstatus', title: 'Status'},
+                {title: 'People/Group'},
+                {data: 'performedby__peoplename', title: 'Performed By'},
+                {data: 'gracetime', title: "Grace Time"},
+                {data: 'expirydatetime', title: "Expiry Datetime"}
             ],
             columnDefs:[
-                {targets:0, data:'id', visible:false, searchable:false},
-                {targets:1, data:'plandatetime', render:function(data, type, row, meta){
+                {targets:0, data: 'id', visible:false, searchable:false},
+                {targets:1, data: 'plandatetime', render:function(data, type, row, meta){
                     return `<a href="${urlname}?id=${row['id']}">${data}</a>`
                 }},
                 {targets:4, render:function(data, type, row, meta){
@@ -139,7 +139,7 @@ Tour List
             buttons:[
 				{
 					text:`Apply filters &nbsp;<i class='fas fa-search ch4'></i></a>`,
-					className:"btn btn-sm btn-light btn-hover-rise",
+					className: "btn btn-sm btn-light btn-hover-rise",
 					//action for add_new_button 
 					action: function(e, dt, node, config){
                         //This will send the page to the location specified
@@ -154,8 +154,8 @@ Tour List
 		$("th > input").addClass('form-control')
 		$("th > input").css('height', '35px')
 		var styles = {
-			"border-bottom":"none",
-			"background-color":"#f1f4f7"
+			"border-bottom": "none",
+			"background-color": "#f1f4f7"
 		}
 
         $(`${table_id} thead tr:eq(1)`).css(styles)

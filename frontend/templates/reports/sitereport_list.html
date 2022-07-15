@@ -77,8 +77,8 @@ const table_id   = "#sitereport_table"
         //datatable initialization
         table = $(table_id).DataTable({
             ajax:{
-                url:"{{ url('reports:sitereport_list') }}",
-                dataSrc:"sitereport_list"
+                url: "{{ url('reports:sitereport_list') }}",
+                dataSrc: "sitereport_list"
             },
 			responsive: true,
             serverSide:true,
@@ -86,9 +86,9 @@ const table_id   = "#sitereport_table"
             responsive    : true,
 			fixedHeader: true,
 			language: {
-                search:"_INPUT_",
+                search: "_INPUT_",
                 searchPlaceholder: "Search...",
-                processing:"Getting Data"},
+                processing: "Getting Data"},
             search      : {return: true},
             lengthMenu: [[10, 20, 30], [10, 20, 30]],
             dom:`<'row' <'col-sm-6 d-flex justify-content-start'f> <'col-sm-6 d-flex justify-content-end'B> >rt<'row' <'col-sm-6'l> <'col-sm-6'p><'col-sm-12 d-flex justify-content-center'i>>`,

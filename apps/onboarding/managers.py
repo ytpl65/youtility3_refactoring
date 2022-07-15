@@ -23,7 +23,7 @@ class BtManager(models.Manager):
                     .values_list('assignsites', flat=True)
                     .distinct()
                 ):
-                    return ','.join(list(qset))
+                    return ', '.join(list(qset))
             return ""
 
 
@@ -130,7 +130,7 @@ class TypeAssistManager(models.Manager):
     fields = ['id', 'tacode', 'taname', 'tatype_id', 'cuser_id', 'muser_id',
               'ctzoffset',
               'bu_id', 'client_id', 'tenant_id', 'cdtz', 'mdtz']
-    related = ['cuser', 'muser', 'bu', 'client','tatype']
+    related = ['cuser', 'muser', 'bu', 'client', 'tatype']
 
     def get_typeassist_modified_after(self, mdtz, clientid):
         """

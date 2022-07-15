@@ -304,7 +304,7 @@ $(document).ready(function(){
     //submit form
     $("#conveyanceform").on('submit',  function(e) {
         e.preventDefault()
-        const params = { url:"{{ url('attendance:conveyance') }}", modal:false } //capability view
+        const params = { url: "{{ url('attendance:conveyance') }}", modal:false } //capability view
         
         var payLoad = {formData:$("#conveyanceform").serialize(), csrfmiddlewaretoken: '{{ csrf_token }}'}//payload for post request
         const id = $("#pk").val()
@@ -313,11 +313,11 @@ $(document).ready(function(){
             payLoad = newPayLoad
         }
         Swal.fire({
-            title:'Submit?',
-            text:'Are you want to save?',
-            icon:'question',
+            title: 'Submit?',
+            text: 'Are you want to save?',
+            icon: 'question',
             showCancelButton:true,
-            confirmButtonText:'submit'
+            confirmButtonText: 'submit'
         }).then((res) => {
             fire_ajax_form_post(params, payLoad)
             .done((data, status, xhr) => { //function to submit post request

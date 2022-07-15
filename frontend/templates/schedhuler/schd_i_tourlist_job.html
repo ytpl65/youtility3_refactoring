@@ -84,26 +84,26 @@ Schedhuled Tour List
         //datatable initialization
         table = $(table_id).DataTable({
 			ajax:{
-                url:"{{ url('schedhuler:schd_internal_tour') }}?action=list"
+                url: "{{ url('schedhuler:schd_internal_tour') }}?action=list"
             },
 			deferRender: true,
 			responsive : true,
             dom:`<'row' <'col-sm-6 d-flex justify-content-start'f> <'col-sm-6 d-flex justify-content-end'B> >rt<'row'
 			 <'col-sm-6'l> <'col-sm-6'p><'col-sm-12 d-flex justify-content-center'i>>`,
             columns:[
-                {data:'id', defaultContent:null},
-                {data:'jobname', title:"Name"},
-                {title:'People/Group', defaultContent:null, data:null},
-                {title:'From', data:'fromdate'},
-                {title:'To', data:'uptodate'},
-                {title:'Duration', data:'planduration'},
-                {title:'Gracetime', data:'gracetime'},
-                {title:'Exp. Time', data:'expirytime'},
+                {data: 'id', defaultContent:null},
+                {data: 'jobname', title: "Name"},
+                {title: 'People/Group', defaultContent:null, data:null},
+                {title: 'From', data: 'fromdate'},
+                {title: 'To', data: 'uptodate'},
+                {title: 'Duration', data: 'planduration'},
+                {title: 'Gracetime', data: 'gracetime'},
+                {title: 'Exp. Time', data: 'expirytime'},
             ],
             columnDefs:[
-                {targets:0, data:'id', visible:false, searchable:false},
+                {targets:0, data: 'id', visible:false, searchable:false},
                 {
-                    targets:1, data:'jobname', render: function (data, type, row, meta){
+                    targets:1, data: 'jobname', render: function (data, type, row, meta){
                         return `<a href="${urlname}?id=${row['id']}">${data}</a>`
                     }
                 },
@@ -117,7 +117,7 @@ Schedhuled Tour List
             buttons:[
 				{
 					text:`Schedule Tour &nbsp;<i class='fas fa-plus ch4'></i></a>`,
-					className:"btn btn-sm btn-light-primary btn-hover-rise",
+					className: "btn btn-sm btn-light-primary btn-hover-rise",
 					//action for add_new_button 
 					action: function(e, dt, node, config){
                         //This will send the page to the location specified
@@ -132,8 +132,8 @@ Schedhuled Tour List
 		$("th > input").addClass('form-control')
 		$("th > input").css('height', '35px')
 		var styles = {
-			"border-bottom":"none",
-			"background-color":"#f1f4f7"
+			"border-bottom": "none",
+			"background-color": "#f1f4f7"
 		}
 
         $(`${table_id} thead tr:eq(1)`).css(styles)

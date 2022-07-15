@@ -310,8 +310,8 @@ function createGeoFence(){
     let longitude = userMarker.getPosition().lng()
     var latlng = `${latitude},${longitude}`
 
-    data = {lat:latitude, lng:longitude, radii:radius, action:'drawgeofence'}
-    const params = {data:data, beforeSend:function(){}, url:"{{ url('onboarding:geofence') }}?action=drawgeofence"}
+    data = {lat:latitude, lng:longitude, radii:radius, action: 'drawgeofence'}
+    const params = {data:data, beforeSend:function(){}, url: "{{ url('onboarding:geofence') }}?action=drawgeofence"}
     
     if(typeof latlng!= 'undefined' && lastPoint === latlng && lastRadius === radius){
       showToastMsg("Geofence is already created for this radius..", 'error')
@@ -344,7 +344,7 @@ function placeMarker(location) {
     userMarker = new google.maps.Marker({
       position: location,
       map: map,
-      icon:'http://maps.google.com/mapfiles/ms/icons/blue-dot.png'
+      icon: 'http://maps.google.com/mapfiles/ms/icons/blue-dot.png'
     });
   }
 }
@@ -633,8 +633,8 @@ $(document).ready(() => {
         let longitude = userMarker.getPosition().lng()
         var latlng = `${latitude},${longitude}`
 
-        data = {lat:latitude, lng:longitude, radii:radius, action:'drawgeofence'}
-        const params = {data:data, beforeSend:function(){}, url:"{{ url('onboarding:geofence') }}?action=drawgeofence"}
+        data = {lat:latitude, lng:longitude, radii:radius, action: 'drawgeofence'}
+        const params = {data:data, beforeSend:function(){}, url: "{{ url('onboarding:geofence') }}?action=drawgeofence"}
         
         if(typeof latlng!= 'undefined' && lastPoint === latlng && lastRadius === radius){
           showToastMsg("Geofence is already created for this radius..", 'error')
@@ -660,12 +660,12 @@ $(document).ready(() => {
       e.preventDefault()
       if(typeof GEOFENCE != 'undefined'){
         const params = {
-          url:"{{ url('onboarding:geofence') }}",
+          url: "{{ url('onboarding:geofence') }}",
           modal:false
         }
         var payLoad = {
           formData:$("#geofence_form").serialize(),
-          csrfmiddlewaretoken:'{{ csrf_token }}',
+          csrfmiddlewaretoken: '{{ csrf_token }}',
           geofence:getGeofenceData(GEOFENCE)
         }
         
@@ -676,11 +676,11 @@ $(document).ready(() => {
         }
 
         Swal.fire({
-          title:'Submit',
-          text:"Make sure your geofence is created properly",
-          icon:'question',
+          title: 'Submit',
+          text: "Make sure your geofence is created properly",
+          icon: 'question',
           showCancelButton:true,
-          confirmButtonText:'Yes save it!'
+          confirmButtonText: 'Yes save it!'
         }).then((res) => {
           fire_ajax_form_post(params, payLoad)
           .done((data, status, xhr) => {

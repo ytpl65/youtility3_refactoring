@@ -23,14 +23,14 @@ def create_dummy_clientandsite():
             bucode='SPS', buname = "Security Personnel Services",
             enable=True,
             defaults={
-                'bucode':"SPS", 'buname':"Security Personnel Services", 'enable':True
+                'bucode': "SPS", 'buname': "Security Personnel Services", 'enable':True
                 }            
         )
 
         site = Bt.objects.get_or_create(
             bucode='YTPL', buname = "Youtility Technologies Pvt Ltd",
             enable=True, defaults={
-                'bucode':'SPS', 'buname':'Security Personnel Services', 'enable':True
+                'bucode': 'SPS', 'buname': 'Security Personnel Services', 'enable':True
             }
         )
         return client, site

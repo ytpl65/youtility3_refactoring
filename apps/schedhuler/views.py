@@ -1173,7 +1173,7 @@ class JobneedTasks(LoginRequiredMixin, View):
         'related': [
                 'pgroup',  'ticketcategory', 'asset', 'client',
                 'frequency', 'job', 'qset', 'people', 'parent', 'bu'],
-        'template_form':'schedhuler/taskform_jobneed.html',
+        'template_form': 'schedhuler/taskform_jobneed.html',
         'form_class':scd_forms.TaskFormJobneed
     }
 

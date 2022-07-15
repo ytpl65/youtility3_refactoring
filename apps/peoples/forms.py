@@ -223,7 +223,7 @@ class PgroupForm(forms.ModelForm):
             'groupname': forms.TextInput(attrs={
                 'placeholder': "Enter People Group Name"
             }),
-            'identifier':forms.TextInput(attrs = {"style":"display:none"})
+            'identifier':forms.TextInput(attrs = {"style": "display:none"})
         }
 
     def is_valid(self) -> bool:

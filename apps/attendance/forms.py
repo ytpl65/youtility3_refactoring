@@ -11,7 +11,7 @@ class AttendanceForm(forms.ModelForm):
     class Meta:
         model = atdm.PeopleEventlog
         fields = ['people', 'datefor', 'ctzoffset',
-         'peventtype', 'verifiedby', 'remarks','shift', 'facerecognition']
+         'peventtype', 'verifiedby', 'remarks', 'shift', 'facerecognition']
         labels = {
             'people'        : 'People',
             'punch_intime'    : 'In Time',
@@ -23,10 +23,10 @@ class AttendanceForm(forms.ModelForm):
             'remarks'         : "Remark"}
         widgets = {
             'people'    : s2forms.ModelSelect2Widget(
-                model     = pm.People, search_fields =  ['peoplename__icontains','peoplecode__icontains']
+                model     = pm.People, search_fields =  ['peoplename__icontains', 'peoplecode__icontains']
             ),
             'verifiedby'  : s2forms.ModelSelect2Widget(
-                model     = pm.People, search_fields = ['peoplename__icontains','peoplecode__icontains']
+                model     = pm.People, search_fields = ['peoplename__icontains', 'peoplecode__icontains']
             ),
             'shift'       : s2forms.Select2Widget,
             'peventtype'  : s2forms.Select2Widget,
@@ -75,13 +75,13 @@ class ConveyanceForm(forms.ModelForm):
             'endlocation':forms.TextInput(),
             'transportmodes':s2forms.Select2MultipleWidget}
         labels = {
-            'expamt':'Expense Amount',
+            'expamt': 'Expense Amount',
             'transportmodes': 'Transport Modes',
-            'startlocation':'Start Location',
-            'endlocation':'End Location',
-            'punchintime':'Start Time',
-            'punchouttime':'End Time',
-            'distance':'Distance'}
+            'startlocation': 'Start Location',
+            'endlocation': 'End Location',
+            'punchintime': 'Start Time',
+            'punchouttime': 'End Time',
+            'distance': 'Distance'}
 
 
 

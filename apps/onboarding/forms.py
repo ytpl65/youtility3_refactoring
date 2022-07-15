@@ -23,15 +23,15 @@ class SuperTypeAssistForm(forms.ModelForm):
     }
     class Meta:
         model  = obm.TypeAssist
-        fields = ['tacode' ,'taname', 'tatype', 'ctzoffset']
+        fields = ['tacode' , 'taname', 'tatype', 'ctzoffset']
         labels = {
                 'tacode': 'Code',
                 'taname': 'Name',
                 'tatype': 'Type'}
         widgets = {
             'tatype':s2forms.Select2Widget,
-            'tacode':forms.TextInput(attrs={'placeholder':'Enter code without space and special characters', 'style':"text-transform: uppercase;"}),
-            'taname':forms.TextInput(attrs={'placeholder':"Enter name"}),
+            'tacode':forms.TextInput(attrs={'placeholder': 'Enter code without space and special characters', 'style': "text-transform: uppercase;"}),
+            'taname':forms.TextInput(attrs={'placeholder': "Enter name"}),
             }
 
 
@@ -100,7 +100,7 @@ class BtForm(forms.ModelForm):
     class Meta:
         model  = obm.Bt
         fields = ['bucode', 'buname', 'parent', 'butype', 'gpslocation', 'identifier',
-                'iswarehouse', 'isserviceprovider', 'isvendor', 'enable','ctzoffset',
+                'iswarehouse', 'isserviceprovider', 'isvendor', 'enable', 'ctzoffset',
                 'gpsenable', 'skipsiteaudit', 'enablesleepingguard', 'deviceevent']
 
         labels = {
@@ -120,11 +120,11 @@ class BtForm(forms.ModelForm):
         }
 
         widgets = { 
-            'bucode'      : forms.TextInput(attrs={'style':'text-transform:uppercase;', 'placeholder':'Enter text without space & special characters'}),
-            'buname'      : forms.TextInput(attrs={'placeholder':'Name'}),
+            'bucode'      : forms.TextInput(attrs={'style': 'text-transform:uppercase;', 'placeholder': 'Enter text without space & special characters'}),
+            'buname'      : forms.TextInput(attrs={'placeholder': 'Name'}),
             'identifier'      : s2forms.Select2Widget,
             'butype'      : s2forms.Select2Widget,
-            'gpslocation' : forms.TextInput(attrs={'placeholder':'GPS Location'}),}    
+            'gpslocation' : forms.TextInput(attrs={'placeholder': 'GPS Location'}),}    
 
 
     def __init__(self, *args, **kwargs):
@@ -192,8 +192,8 @@ class ShiftForm(forms.ModelForm):
         'invalid_code' : "Spaces are not allowed in [Code]",
         'invalid_code2': "[Invalid code] Only ('-', '_') special characters are allowed",
         'invalid_code3': "[Invalid code] Code should not endwith '.' ",
-        'max_hrs_exceed':"Maximum hours in a shift cannot be greater than 12hrs",
-        "min_hrs_required":"Minimum hours of a shift should be atleast 5hrs"
+        'max_hrs_exceed': "Maximum hours in a shift cannot be greater than 12hrs",
+        "min_hrs_required": "Minimum hours of a shift should be atleast 5hrs"
     }
     shiftduration = forms.CharField(widget=forms.TextInput(attrs={'readonly':True}), required=False)
 
@@ -202,14 +202,14 @@ class ShiftForm(forms.ModelForm):
         fields = ['shiftname', 'starttime', 'endtime', 'ctzoffset',
         'nightshiftappicable', 'shiftduration', 'captchafreq']
         labels={
-            'shiftname':'Shift Name',
+            'shiftname': 'Shift Name',
             'starttime': 'Start Time',
             'endtime': 'End Time',
-            'capcthafreq':'Captcha Frequency'
+            'capcthafreq': 'Captcha Frequency'
         }
         widgets ={
-            'shiftname':forms.TextInput(attrs={'placeholder':"Enter shift name"}),
-            'nightshiftappicable':forms.CheckboxInput(attrs={'onclick':"return false"})
+            'shiftname':forms.TextInput(attrs={'placeholder': "Enter shift name"}),
+            'nightshiftappicable':forms.CheckboxInput(attrs={'onclick': "return false"})
         }
 
     def __init__(self, *args, **kwargs):
@@ -299,11 +299,11 @@ class GeoFenceForm(forms.ModelForm):
         fields = ['gfcode', 'gfname', 'alerttopeople',
                   'alerttogroup', 'alerttext', 'enable', 'ctzoffset']
         labels = {
-            'gfcode':'Code', 'gfname':'Name', 'alerttopeople':'Alert to People',
-            'alerttogroup':'Alert to Group', 'alerttext':'Alert Text'
+            'gfcode': 'Code', 'gfname': 'Name', 'alerttopeople': 'Alert to People',
+            'alerttogroup': 'Alert to Group', 'alerttext': 'Alert Text'
         }
         widgets = {
-            'gfcode':forms.TextInput(attrs={'style':'text-transform:uppercase;', 'placeholder':'Enter text without space & special characters'})
+            'gfcode':forms.TextInput(attrs={'style': 'text-transform:uppercase;', 'placeholder': 'Enter text without space & special characters'})
         }
 
     def __init__(self, *args, **kwargs):

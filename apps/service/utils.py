@@ -215,7 +215,7 @@ def perform_insertrecord(file, request=None, filebased=True):
                         hasattr(obj, 'punchintime'), hasattr(obj, 'punchouttime')]
 
                     if all(allconditions) and all([tablename == 'peopleeventlog',
-                            obj.peventtype.tacode in ('CONVEYANCE','AUDIT'),
+                            obj.peventtype.tacode in ('CONVEYANCE', 'AUDIT'),
                             obj.endlocation,obj.punchouttime, obj.punchintime]):
                         log.info("save line string is started")
                         save_linestring_and_update_pelrecord(obj)

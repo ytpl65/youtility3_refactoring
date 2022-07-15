@@ -105,7 +105,7 @@ TEMPLATES = [
     },
     #jinja2 configuration
     { 
-        'BACKEND':'django.template.backends.jinja2.Jinja2',
+        'BACKEND': 'django.template.backends.jinja2.Jinja2',
         'DIRS': [JINJA_TEMPLATES],
         'APP_DIRS': True,
         'OPTIONS':{
@@ -265,7 +265,7 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/3.2/ref/settings/#default-auto-field
 
 # Media Files CONF...
-MEDIA_ROOT = os.path.join(os.path.expanduser('~'),'youtility4_media')
+MEDIA_ROOT = os.path.join(os.path.expanduser('~'), 'youtility4_media')
 MEDIA_URL = '/youtility4_media/'
 
 

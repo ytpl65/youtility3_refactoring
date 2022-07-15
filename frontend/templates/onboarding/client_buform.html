@@ -284,32 +284,32 @@ Client
 
         //datatable  list of business units
         listbu_editor = new $.fn.dataTable.Editor({
-            ajax:"{{ url('onboarding:list_bu') }}",
-            table:"#list_bu",
+            ajax: "{{ url('onboarding:list_bu') }}",
+            table: "#list_bu",
             fields:[
-                {label:'Code', name:'peoplecode'},
-                {label:'Name', name:'peoplename'},
-                {label:'Login', name:'loginid'},
-                {label:'Email', name:'email'},
-                {label:'Mob No', name:'mobno'},
-                {label:'Is Admin', name:'isadmin'},
+                {label: 'Code', name: 'peoplecode'},
+                {label: 'Name', name: 'peoplename'},
+                {label: 'Login', name: 'loginid'},
+                {label: 'Email', name: 'email'},
+                {label: 'Mob No', name: 'mobno'},
+                {label: 'Is Admin', name: 'isadmin'},
             ]
         })
 
 
         $("#list_bu").DataTable({
             ajax:{
-                url:"{{ url('onboarding:list_bu') }}"
+                url: "{{ url('onboarding:list_bu') }}"
             },
             columns:[
-                {data:'id', defaulContent:"", visible:false},
-                {data:'peoplecode', title:'Code'},
-                {data:'peoplename', title:'Name'},
-                {data:'loginid', title:'Login'},
-                {data:'email', title:'Email'},
-                {data:'mobno', title:'Mobile no'},
-                {data:'gender', title:'Gender'},
-                {data:'isadmin', title:'Is Admin'},
+                {data: 'id', defaulContent: "", visible:false},
+                {data: 'peoplecode', title: 'Code'},
+                {data: 'peoplename', title: 'Name'},
+                {data: 'loginid', title: 'Login'},
+                {data: 'email', title: 'Email'},
+                {data: 'mobno', title: 'Mobile no'},
+                {data: 'gender', title: 'Gender'},
+                {data: 'isadmin', title: 'Is Admin'},
             ],
             deferRender: true,
 			responsive : true,

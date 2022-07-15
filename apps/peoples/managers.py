@@ -9,7 +9,7 @@ class PeopleManager(BaseUserManager):
     fields = ['id', 'peoplecode', 'peoplename', 'loginid', 'isadmin', 'is_staff', 'isverified',
               'enable', 'department_id', 'designation_id', 'peopletype_id', 'client_id', 
               'bu_id', 'cuser_id', 'muser_id', 'reportto_id', 'deviceid', 'enable', 'mobno',
-              'cdtz', 'mdtz','gender', 'dateofbirth', 'dateofjoin', 'tenant_id', 'ctzoffset']
+              'cdtz', 'mdtz', 'gender', 'dateofbirth', 'dateofjoin', 'tenant_id', 'ctzoffset']
     related = ['bu', 'client', 'peopletype', 'muser', 'cuser', 'reportto', 'department', 'designation']
 
     def create_user(self, loginid, password=None, **extra_fields):
@@ -119,7 +119,7 @@ class PgblngManager(models.Manager):
 
 class PgroupManager(models.Manager):
     use_in_migrations = True
-    fields = ['id', 'groupname', 'enable', 'identifier_id','ctzoffset',
+    fields = ['id', 'groupname', 'enable', 'identifier_id', 'ctzoffset',
               'bu_id', 'client_id', 'tenant_id', 'cdtz', 'mdtz']
     related = ['identifier', 'bu', 'client', 'cuser', 'muser']
 

@@ -270,3 +270,36 @@ class IncidentReportTemplate(MasterReportTemplateList):
     type          = am.QuestionSet.Type.INCIDENTREPORTTEMPLATE
     template_path = 'reports/incidentreport_template_list.html'
 
+
+
+class ConfigSiteReportTemplate(LoginRequiredMixin, View):
+    params = {
+        'template_form': "reports/sitereport_tempform.html",
+        'template_list': 'reports/sitereport_template_list.html',
+        "model":am.QuestionSet,
+        'form_class':rp_forms.SiteReportTemplate,
+        "initial":{
+            'type':am.QuestionSet.Type.SITEREPORTTEMPLATE
+        },
+        'related':[],
+        'fields':['id', 'qsetname', 'enable']
+    }
+
+
+    def get(self, request, *args, **kwargs):
+        R, P = request.GET, self.params
+        if R.get('template'):return render(request, P['template_list'])
+
+        if R.get('action') == 'list':
+            objs =  P['model'].objects.get_configured_sitereporttemplates(
+                    P['related'], P['fields']
+                )
+            return rp.JsonResponse({'data':list(objs)}, status=200)
+        
+        elif R.get('action') == 'form':
+            cxt = {'reporttemp_form':P['form_class'](initial=P['initial'], request=request)}
+            return render(request, P['template_form'], cxt)
+
+        elif R.get('action') =='loadQuestions':
+            qset =  am.Question.objects.questions_of_client(request)
+            return rp.JsonResponse({'items':list(qset), 'total_count':len(qset)}, status=200)
