@@ -155,7 +155,7 @@ class Schd_E_TourJobForm(JobForm):
     timeInChoices = [('MIN', 'Min'),('HRS', 'Hours')]
     assign_to          = forms.ChoiceField(choices = ASSIGNTO_CHOICES, initial="PEOPLE")
     required_css_class = "required"
-    
+
 
     class Meta(JobForm.Meta):
         JobForm.Meta.labels.update({'bu': 'Cluster'})
