@@ -1322,7 +1322,7 @@ class InternalTourScheduling(LoginRequiredMixin, View):
         # return template
         if R.get('template') == 'true':
             return render(request, P['template_list'])
-        
+
         if R.get('id'):
             obj = utils.get_model_obj(int(R['id']), request, P)
             log.info(f'object retrieved {obj}')
@@ -1331,7 +1331,7 @@ class InternalTourScheduling(LoginRequiredMixin, View):
             cxt = {'schdtourform': form, 'childtour_form': P['subform'](), 'edit': True,
                    'checkpoints': checkpoints}
             return render(request, P['template_form'], cxt)
-        
+
 
         match R.get('action'):
             case "list":
@@ -1362,8 +1362,8 @@ class InternalTourScheduling(LoginRequiredMixin, View):
         except Exception:
             resp = utils.handle_Exception(request)
         return resp
-    
-    
+
+
     def handle_valid_form(self, form, request):
         data = request.POST.get("asssigned_checkpoints")
         try:
@@ -1381,7 +1381,7 @@ class InternalTourScheduling(LoginRequiredMixin, View):
         except Exception as ex:
             log.info("error handling valid form", exc_info = True)
             raise ex
-        
+
 
     def save_checpoints_for_tour(self, checkpoints, job, request):
         try:
@@ -1397,7 +1397,7 @@ class InternalTourScheduling(LoginRequiredMixin, View):
                     parent_id  = job.id,
                     asset_id = CP['asset'],
                     qset_id  = CP['qset'],
-                    
+
                     defaults   = sutils.job_fields(job, CP)
                 )
                 checkpoint.save()
@@ -1411,7 +1411,7 @@ class InternalTourScheduling(LoginRequiredMixin, View):
             raise ex
         else:
             log.info("inserting checkpoints finished...")
-            
+
     def get_checkpoints(self, obj, P):
         log.info("getting checkpoints started...")
         checkpoints = None
@@ -1454,15 +1454,15 @@ class ExternalTourScheduling(LoginRequiredMixin, View):
         'fields'       : ['id', 'jobname', 'people__peoplename', 'pgroup__groupname', 'fromdate', 'uptodate',
                         'planduration', 'gracetime', 'expirytime', 'bu__buname']
     }
-    
-    
+
+
     def get(self, request, *args, **kwargs):
         R, P = request.GET, self.params
-        
+
         # return template
         if R.get('template') == 'true':
             return render(request, P['template_list'])
-        
+
         match R.get('action'):
             case "list":
                 objs = P['model'].objects.get_scheduled_external_tours(
@@ -1472,8 +1472,8 @@ class ExternalTourScheduling(LoginRequiredMixin, View):
             case 'form':
                 cxt = {'schdexternaltourform':P['form_class'](request = request, initial = P['initial'])}
                 return render(request, P['template_form'], cxt)
-            
-            
+
+
     def post(self, request, *args, **kwargs):
         P = self.params
         pk, data = request.POST.get('pk', None), QueryDict(request.POST.get('formData'))
@@ -1490,8 +1490,8 @@ class ExternalTourScheduling(LoginRequiredMixin, View):
             return utils.handle_invalid_form(request, self.params, cxt)
         except Exception as ex:
             return utils.handle_Exception(request)
-        
-    
+
+
     def handle_valid_form(self, request, P):
         try:
             data = request.POST.get('formData')
@@ -1506,4 +1506,4 @@ class ExternalTourScheduling(LoginRequiredMixin, View):
         except Exception as ex:
             log.error("external tour form, handle valid form failed", exc_info = True)
             return utils.handle_Exception(request)
-        
+
