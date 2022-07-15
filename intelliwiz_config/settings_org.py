@@ -54,7 +54,7 @@ INSTALLED_APPS = [
     'django_filters',
     "graphql_jwt.refresh_token.apps.RefreshTokenConfig",
     'rest_framework',
-    
+
 
     #local apps
     'apps.peoples',
@@ -172,7 +172,7 @@ home_local_dbs = {
         'PORT':     '5432',
     }
 
-    
+
 }
 
 

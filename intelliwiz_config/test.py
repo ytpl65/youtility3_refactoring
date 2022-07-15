@@ -6,8 +6,8 @@ BARFIURL = 'http://barfi.youtility.in:8000/graphql'
 
 class graphQL:
     headers = {}
-    
-    
+
+
     def run_query(self, query, variables=None):# A simple function to use requests.post to make the API call. Note the json= section.
         request = requests.post(BARFIURL, json={'query': query, 'variables': variables}, headers=self.headers)
         if request.status_code != 200:
@@ -28,8 +28,8 @@ class graphQL:
         }
         """
         self.run_query(query=query)
-        
-	
+
+
     def logout(self):
         query = """
         mutation logout{

@@ -273,7 +273,7 @@ class JobManager(models.Manager):
             parent__jobname='NONE', parent_id=1, identifier__exact='INTERNALTOUR'
         ).values(*fields).order_by('-cdtz')
         return qset or self.none()
-    
+
     def get_checkpoints_for_externaltour(self, job):
         qset = self.select_related(
             'identifier', 'butype', 'parent').filter(
@@ -281,7 +281,7 @@ class JobManager(models.Manager):
                 'buname', 'id', 'bucode', 'gpslocation',
             )
         return qset or self.none()
-    
+
     def get_scheduled_external_tours(self, related, fields):
         qset = self.select_related(*related).filter(
             parent__jobname='NONE', parent_id=1, identifier__exact='EXTERNALTOUR'

@@ -34,7 +34,7 @@ INSTALLED_APPS = [
     "django_select2",
     "graphql_jwt.refresh_token.apps.RefreshTokenConfig",
     'rest_framework',
-    
+
 
     #local apps
     'apps.peoples',

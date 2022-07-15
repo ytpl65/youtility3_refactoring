@@ -613,8 +613,8 @@ class Ticket(BaseModel, TenantAwareModel):
     ticketsource       = models.CharField(max_length=50, choices=TicketSource.choices, null=True, blank=True)
     attcount           = models.IntegerField(_("Attachment Count"), default=0)
     parent             = models.ForeignKey('self', null=True, blank=True, on_delete=models.RESTRICT)
-    
-    
+
+
     class Meta(BaseModel.Meta):
             db_table      = 'ticket'
             get_latest_by = ["cdtz", 'mdtz']
