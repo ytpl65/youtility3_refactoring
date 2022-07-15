@@ -29,7 +29,6 @@ class Messages:
     NOTABLEFOUND    = 'Unable to find table!'
 
 
-
 class InsertSerializer(serializers.Serializer):
 
     record = serializers.JSONField()
@@ -50,7 +49,6 @@ class InsertSerializer(serializers.Serializer):
     def validate_record(self, value):
         return vs.clean_record(record = value)
 
-
 class JndSerializers(serializers.ModelSerializer):
     jobneed_id  = serializers.IntegerField()
     question_id = serializers.IntegerField()
@@ -59,7 +57,6 @@ class JndSerializers(serializers.ModelSerializer):
     class Meta:
         model = JobneedDetails
         exclude = ['question', 'jobneed', 'cuser', 'muser']
-
 
 class JobneedSerializer(serializers.ModelSerializer):
     asset_id          = serializers.IntegerField()
@@ -80,9 +77,7 @@ class JobneedSerializer(serializers.ModelSerializer):
         exclude = ['receivedonserver', 'other_info', 'parent', 'people', 'pgroup', 'qset',
                    'asset', 'job', 'performedby', 'client', 'bu', 'ticketcategory', 'cuser', 'muser', 'id' ]
 
-
 class PELSerializer(serializers.ModelSerializer):
     pass
-
 
 

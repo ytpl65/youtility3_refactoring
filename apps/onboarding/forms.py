@@ -1,16 +1,16 @@
-#from standard library
+# from standard library
 
-#from django core
+# from django core
 from django import forms
 from django.db.models.query_utils import Q
 from django.utils.translation import gettext_lazy as _
 from apps.core import utils
-#from thirdparty apps and packages
+# from thirdparty apps and packages
 from icecream import ic
 from django_select2 import forms as s2forms
-#from this project
-import apps.onboarding.models as obm #onboarding-models
-from apps.peoples import models as pm #onboarding-utils
+# from this project
+import apps.onboarding.models as obm # onboarding-models
+from apps.peoples import models as pm # onboarding-utils
 
 #========================================= BEGIN MODEL FORMS ======================================#
 
@@ -34,13 +34,11 @@ class SuperTypeAssistForm(forms.ModelForm):
             'taname':forms.TextInput(attrs={'placeholder': "Enter name"}),
             }
 
-
     def __init__(self, *args, **kwargs):
         """Initializes form"""
         self.request = kwargs.pop('request', None)
         super(SuperTypeAssistForm, self).__init__(*args, **kwargs)
         utils.initailize_form_fields(self)
-
 
     def is_valid(self) -> bool:
 
@@ -65,13 +63,11 @@ class SuperTypeAssistForm(forms.ModelForm):
 class TypeAssistForm(SuperTypeAssistForm): 
     required_css_class = "required"
 
-
     def __init__(self, *args, **kwargs):
         """Initializes form"""
         self.request = kwargs.pop('request', None)
         super().__init__(*args, **kwargs)
         utils.initailize_form_fields(self)
-
 
     def is_valid(self) -> bool:
         result = super().is_valid()
@@ -84,7 +80,6 @@ class TypeAssistForm(SuperTypeAssistForm):
             val = val.upper()
             if len(val)>25: raise forms.ValidationError("Max Length reached!!")
         return val
-
 
 
 
@@ -126,7 +121,6 @@ class BtForm(forms.ModelForm):
             'butype'      : s2forms.Select2Widget,
             'gpslocation' : forms.TextInput(attrs={'placeholder': 'GPS Location'}),}    
 
-
     def __init__(self, *args, **kwargs):
         """Initializes form"""
         self.client = kwargs.pop('client', False)
@@ -136,13 +130,11 @@ class BtForm(forms.ModelForm):
         self.fields['butype'].queryset = obm.TypeAssist.objects.filter(tatype__tacode="SITETYPE")
         utils.initailize_form_fields(self)
 
-
     def is_valid(self) -> bool:
         """Add class to invalid fields"""
         result = super().is_valid()
         utils.apply_error_classes(self)
         return result
-
 
 
     def clean(self):
@@ -157,7 +149,6 @@ class BtForm(forms.ModelForm):
         if newcode and newtype and instance:
             ic(newcode)
             create_bv_reportting_heirarchy(instance, newcode, newtype, parent)
-
 
 
     def clean_bucode(self):
@@ -183,7 +174,6 @@ class BtForm(forms.ModelForm):
     def clean_buname(self):
         if val := self.cleaned_data.get('buname'):
             return val.upper()
-
 
 
 class ShiftForm(forms.ModelForm):
@@ -225,7 +215,7 @@ class ShiftForm(forms.ModelForm):
 
     def clean_shiftduration(self):
         if val := self.cleaned_data.get('shiftduration'):
-            h, m = val.split(', ')
+            h, m = val.split(',')
             hrs = int(h.replace("Hrs", ""))
             mins = int(m.replace("min", ""))
             if hrs > 12:
@@ -245,7 +235,6 @@ class ShiftForm(forms.ModelForm):
 
 
 
-
 class SitePeopleForm(forms.ModelForm):
     required_css_class = 'required'
     error_msg = {
@@ -260,12 +249,10 @@ class SitePeopleForm(forms.ModelForm):
                 'reportcapability', 'fromdt', 'uptodt', 'siteowner',
                 'enable', 'enablesleepingguard', 'ctzoffset']
 
-
     def __init__(self, *args, **kwargs):
         """Initializes form"""
         super().__init__(*args, **kwargs)
         utils.initailize_form_fields(self)
-
 
 
 class ContractForm(forms.ModelForm):
@@ -273,12 +260,10 @@ class ContractForm(forms.ModelForm):
         model = obm.Contract
         fields = []
 
-
     def __init__(self, *args, **kwargs):
         """Initializes form"""
         super(ContractForm, self).__init__(*args, **kwargs)
         utils.initailize_form_fields(self)
-
 
 
 class ContractDetailForm(forms.ModelForm):
@@ -290,7 +275,6 @@ class ContractDetailForm(forms.ModelForm):
         """Initializes form"""
         super().__init__(*args, **kwargs)
         utils.initailize_form_fields(self)
-
 
 
 class GeoFenceForm(forms.ModelForm):
@@ -311,11 +295,9 @@ class GeoFenceForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         utils.initailize_form_fields(self)
 
-
     def clean_gfcode(self):
         return val.upper() if (val := self.cleaned_data.get('gfcode')) else val
 #========================================== END MODEL FORMS =======================================#
-
 
 #========================================== START JSON FORMS =======================================#
 class BuPrefForm(forms.Form):
@@ -340,12 +322,10 @@ class BuPrefForm(forms.Form):
 
 
 
-
     def __init__(self, *args, **kwargs):
         """Initializes form"""
         super().__init__(*args, **kwargs)
         utils.initailize_form_fields(self)
-
 
     def is_valid(self) -> bool:
         """Add class to invalid fields"""
@@ -355,7 +335,6 @@ class BuPrefForm(forms.Form):
             attrs = self.fields[x].widget.attrs
             attrs.update({'class': attrs.get('class', '') + ' is-invalid'})
         return result
-
 
 class ClentForm(BuPrefForm):
     femalestrength = None
@@ -373,7 +352,6 @@ class ClentForm(BuPrefForm):
         self.fields['portletcapability'].choices = get_caps_choices(cfor = pm.Capability.Cfor.PORTLET)
 
 
-
     def is_valid(self) -> bool:
         """Add class to invalid fields"""
         result = super().is_valid()
@@ -381,7 +359,6 @@ class ClentForm(BuPrefForm):
         return result
 
 #========================================== END JSON FORMS =======================================#
-
 
 class ImportForm(forms.Form):
     TABLECHOICES = [
@@ -394,7 +371,6 @@ class ImportForm(forms.Form):
         ('SITEGROUPS', 'Site Groups'),
         ('TYPEASSISTS', 'TypeAssists'),
     ]
-
 
     importfile = forms.FileField(required = True, label='Import File', max_length = 50, allow_empty_file = False)
     table = forms.ChoiceField(required = True, choices = TABLECHOICES, label='Select Type of Data', initial='TYPEASSISTS')

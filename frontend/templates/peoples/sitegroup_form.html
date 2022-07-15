@@ -1,11 +1,9 @@
 {% extends "base_form.html" %}
 
-
 {% block extra_css %}
 <link  href="{{ static('assets/plugins/custom/DataTables/datatables.min.css') }}" rel="stylesheet" type="text/css"/>
 {{ sitegrpform.media.css }}
 {% endblock extra_css %}
-
 
 {% block form_title %}
 Site Group
@@ -15,7 +13,7 @@ Site Group
 {% block pagebreadcumb %}
 <!--will call parent contents -->
 {{ super() }}
-<li class="breadcrumb-item pe-3"><a href="{{ url('peoples:sitegroup') }}?template = true" class="pe-3">Site Groups</a></li>
+<li class="breadcrumb-item pe-3"><a href="{{ url('peoples:sitegroup') }}?template=true" class="pe-3">Site Groups</a></li>
 <li class="breadcrumb-item pe-3"><a href="javascript:void(0)" class="pe-3">Site Group Form</a></li>
 {% endblock pagebreadcumb %}
 <!-------------------------- END PAGE BREADCUMB ------------------------->
@@ -28,7 +26,6 @@ Site Group
 </div>
 {% endblock nonfield_errors %}
 <!---------- END NON FIELD ERRORS --------->
-
 
 {% block form %}
 <form action="{{ url('peoples:sitegroup') }}" method="post" id="sitegrp_form">
@@ -53,7 +50,6 @@ Site Group
 </form><br><hr><br>
 {% endblock form %}
 
-
 {% block ajax_page_actions %}
     <div class="form-actions">
         {% if sitegrpform.instance.id %}
@@ -72,7 +68,6 @@ Site Group
         {% endif %}
     </div>
 {% endblock ajax_page_actions %}
-
 
 {% block extras %}
 <div class="row">
@@ -107,7 +102,6 @@ Site Group
 </div>
 {% endblock extras %}
 
-
 {% block extra_scripts %}
 {{ sitegrpform.media.js }}
 <script src="{{ static('assets/plugins/custom/DataTables/datatables.min.js') }}" type="text/javascript"></script>
@@ -136,7 +130,7 @@ Site Group
 
     //delete ajax request 
 	function isSiteGrpDeleted(id){ 
-		const params = {url:`${urlname}?action = delete&id=${id}`, 'beforeSend':function () {}}
+		const params = {url:`${urlname}?action=formdelete&id=${id}`, 'beforeSend':function () {}}
 		fire_ajax_get(params)
 		.done((data, status, xhr) => {
 			if(!xhr.status === 200){
@@ -150,9 +144,8 @@ Site Group
 		})
 	}
 
-
     function loadAssignedSitesIfThereAny(table, id){
-        const params = {url:`${urlname}?action = loadSites&id=${id}`, 'beforeSend':function(){}}
+        const params = {url:`${urlname}?action=formloadSites&id=${id}`, 'beforeSend':function(){}}
         fire_ajax_get(params)
         .done((data, status, xhr) => {
             if(xhr.status === 200){
@@ -163,9 +156,7 @@ Site Group
         
     }
 
-
     
-
 
     $(document).ready(() => {
         //set ctzoffset
@@ -173,7 +164,7 @@ Site Group
 
         tabAllsites = $("#all_sites").DataTable({
             ajax:{
-                url: "{{ url('peoples:sitegroup') }}?action = allsites",
+                url: "{{ url('peoples:sitegroup') }}?action=formallsites",
                 data:function ( d ) {
                     d.sel_butype = current_sel_butype;
                     d.fields = ['buid', 'buname', 'parent__buname', 'identifier__tacode'];
@@ -219,7 +210,6 @@ Site Group
         
         
         //populate_buidentifier(tabAllsites, '#custom_butype');
-
 
         //ON CLICK GRAB SELECTED AND POPULATE RIGHT TABLE
         $("#btn_assign_sites").click(() => {
@@ -276,7 +266,6 @@ Site Group
 
         });
 
-
         //submit form
 		$("#sitegrp_form").on('submit', function(e) {
 			var form = $(this);
@@ -306,7 +295,6 @@ Site Group
 			
 		})
 
-
     })
 
     //delete sitegroup 
@@ -319,7 +307,7 @@ Site Group
 				console.log("status ", status)
 				if(status){
 					show_successful_delete_alert() //defined in customjs
-                    location.href = "{{ url('peoples:sitegroup') }}?action = form"
+                    location.href = "{{ url('peoples:sitegroup') }}?action=form"
 
 				}else{
 					show_error_alert('Something went wrong!');

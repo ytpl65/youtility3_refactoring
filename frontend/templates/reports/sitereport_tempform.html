@@ -1,6 +1,5 @@
 {% extends "base_form.html" %}
 
-
 {% block extra_css %}
 {{ reporttemp_form.media.css }}
 <link  href="{{ static('assets/plugins/custom/DataTables/datatables.min.css') }}" rel="stylesheet" type="text/css"/>
@@ -11,18 +10,16 @@
 {% block pagebreadcumb %}
 <!--will call parent contents -->
 {{ super() }}
-<li class="breadcrumb-item pe-3"><a href="{{ url('reports:config_sitereport_template') }}?template = true" class="pe-3">Site Report Templates</a></li>
+<li class="breadcrumb-item pe-3"><a href="{{ url('reports:config_sitereport_template') }}?template=true" class="pe-3">Site Report Templates</a></li>
 <li class="breadcrumb-item pe-3"><a href="javascript:void(0)" class="pe-3">Site Report Template Form</a></li>
 {% endblock pagebreadcumb %}
 <!-------------------------- END PAGE BREADCUMB ------------------------->
-
 
 <!------ BEGIN FORM TITLE ------->
 {% block form_title %}
 Site Report Template
 {% endblock form_title %}
 <!------ END FORM TITLE -------->
-
 
 {% block form %}
 <form action="" method="post" id="sitereportTemplateForm" url="{{ url('reports:sitereport_template_form') }}">
@@ -52,7 +49,6 @@ Site Report Template
     </div>
 </form>
 {% endblock form %}
-
 
 {% block ajax_page_actions %}
 <div class="form-actions">
@@ -108,7 +104,6 @@ Site Report Template
   	    $("#id_ctzoffset").val(-new Date().getTimezoneOffset())
         
 
-
         //tagifying the options field
         /*var input1 = document.querySelector("#id_options");
         optionTag = new Tagify(input1);
@@ -150,7 +145,6 @@ Site Report Template
             }
         });
 
-
         //on selecting the question from question form show/hide
         //the fields group of class "optionGroup" and "numeric"
         $("#id_question.form-select").on("change", function () {
@@ -190,7 +184,6 @@ Site Report Template
             $(".DTE_Field").addClass('p-1')
         })
 
-
         //editor of child tabble
         var childEditor = new $.fn.dataTable.Editor({
             table: '#tabchildReport',
@@ -219,7 +212,7 @@ Site Report Template
             
             //$("#DTE_Field_question").djangoSelect2()
             var params = {
-                url: "{{ url('reports:config_sitereport_template') }}?action = loadQuestions",
+                url: "{{ url('reports:config_sitereport_template') }}?action=formloadQuestions",
                 id: "#DTE_Field_question",
                 item: 'Questoins'
             }
@@ -240,7 +233,6 @@ Site Report Template
             })
         })
 
-
         //validations for child editor..
         childEditor.on('preSubmit', function(e, o, action){
             if(action !== 'remove'){
@@ -258,7 +250,6 @@ Site Report Template
                         alertabove.error('alertabove must be number')
                     }
                 }
-
 
                 if (!( min.isMultiValue() && max.isMultiValue() ) && ( max.val() < min.val() ) ){
                     max.error('max value must be greater than min value')
@@ -287,7 +278,6 @@ Site Report Template
         })
         
         
-
 
         //datatable configuration tabSiteReports       
         var parentTable = $("#tabSitereports").DataTable({
@@ -321,7 +311,7 @@ Site Report Template
         //report questoins
         var chlldTable =$("#tabchildReport").DataTable({
             ajax:{
-                url: "{{ url('reports:config_sitereport_template') }}?action = saveChildQuestion",
+                url: "{{ url('reports:config_sitereport_template') }}?action=formsaveChildQuestion",
                 data:function(d){
                     var selected = parentTable.row({selected:true});
                     if(selected.length > 0){
@@ -353,7 +343,6 @@ Site Report Template
             ],
         })
 
-
         
         //on submit form post request
         $("#sitereportTemplateForm").submit((e) => {
@@ -371,7 +360,7 @@ Site Report Template
                     'success'
                 ).then(function () {
                     formSaved = true
-                    window.location.replace(data.url + `?id=${data.id}&template = true`);
+                    window.location.replace(data.url + `?id=${data.id}&template=true`);
                 })
             })
             .fail((xhr, status, error) => {

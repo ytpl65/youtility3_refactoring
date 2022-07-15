@@ -1,6 +1,5 @@
 {% extends "base_list.html" %}
 
-
 <!---- BEGIN CARD TITLE ------>
 {% block card_title %}
 Shift List
@@ -14,11 +13,9 @@ Shift List
 {% endblock pagebreadcumb %}
 <!------------------------------------- END PAGE BREADCUMBS ------------------------------------->
 
-
 {% block table %}
 <table id="shift_table" class="display cell-bordered compact hover" style="width:100%"></table>
 {% endblock table %}
-
 
 {% block popup_alerts %}
 <!-- THE MODAL WE WILL BE USING -->
@@ -29,7 +26,6 @@ Shift List
 	</div>
 </div>
 {% endblock popup_alerts %}
-
 
 
 <!--------- BEGIN EXTRA SCRIPTS ----------------------------->
@@ -53,7 +49,7 @@ Shift List
 		////datatable initialization
         table = $(table_id).DataTable({
 			ajax: {
-                url    : '{{ url("onboarding:shift") }}?action = list',
+                url    : '{{ url("onboarding:shift") }}?action=list',
             },
 			serverSide : true,
 			processing : true,
@@ -90,7 +86,7 @@ Shift List
 					action: function(e, dt, node, config){
                         const params = {
                             'modal_id'  : modal_id,
-                            'url'       : `${urlname}?action = form`,
+                            'url'       : `${urlname}?action=form`,
                             'beforeSend': ShiftBeforeSend }
 						fire_ajax_get(params)
 						.done((data, status, xhr) => {
@@ -161,7 +157,7 @@ Shift List
 	//delete ajax request 
 	function isShiftDeleted(id){ 
 		console.log("id ", id)
-		const params = {url:`${urlname}?action = delete&id=${id}`, 'beforeSend':function () {}}
+		const params = {url:`${urlname}?action=formdelete&id=${id}`, 'beforeSend':function () {}}
 		fire_ajax_get(params)
 		.done((data, status, xhr) => {
 			if(!xhr.status === 200){
@@ -174,7 +170,6 @@ Shift List
 			return false
 		})
 	}
-
 
 	//delete capability 
 	function deleteShift(elemt){

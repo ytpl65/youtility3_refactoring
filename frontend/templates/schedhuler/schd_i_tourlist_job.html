@@ -1,6 +1,5 @@
 {% extends "base_list.html" %}
 
-
 <!---- BEGIN CARD TITLE ------>
 {% block card_title %}
 Schedhuled Tour List
@@ -16,7 +15,6 @@ Schedhuled Tour List
 <li class="breadcrumb-item pe-3"><a href="javascript:void(0)" class="pe-3">Scheduled Tour List</a></li>
 {% endblock pagebreadcumb %}
 <!------------------------------------- END PAGE BREADCUMBS ------------------------------------->
-
 
 <!-------------------------------------------- BEGIN Schedhuled Tour TABLE ------------------------------------------->
 {% block table %}
@@ -84,7 +82,7 @@ Schedhuled Tour List
         //datatable initialization
         table = $(table_id).DataTable({
 			ajax:{
-                url: "{{ url('schedhuler:schd_internal_tour') }}?action = list"
+                url: "{{ url('schedhuler:schd_internal_tour') }}?action=list"
             },
 			deferRender: true,
 			responsive : true,
@@ -121,7 +119,7 @@ Schedhuled Tour List
 					//action for add_new_button 
 					action: function(e, dt, node, config){
                         //This will send the page to the location specified
-        				window.location.href = "{{ url('schedhuler:create_tour') }}?action = form";
+        				window.location.href = "{{ url('schedhuler:create_tour') }}?action=form";
 					}
 				}
 			]
@@ -138,7 +136,6 @@ Schedhuled Tour List
 
         $(`${table_id} thead tr:eq(1)`).css(styles)
 		//END STYLING DATATABLE
-
 
     })
 

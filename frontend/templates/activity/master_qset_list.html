@@ -6,14 +6,12 @@
 {% endblock card_title %}
 <!----- END CARD TITLE -------->
 
-
 <!------------------------------------ BEGIN PAGE BREADCUMBS ------------------------------------>
 {% block pagebreadcumb %}
 {{ super() }}
 <li class="breadcrumb-item pe-3"><a href="javascript:void(0)" class="pe-3">{{ label }} List</a></li>
 {% endblock pagebreadcumb %}
 <!------------------------------------- END PAGE BREADCUMBS ------------------------------------->
-
 
 <!-------------------------------------------- BEGIN BU TABLE ------------------------------------------->
 {% block table %}
@@ -29,7 +27,6 @@
 {% endblock table %}
 <!------------------ --------------------------END BU TABLE ------------------------------------------------->
 
-
 {% block popup_alerts %}
 <!-- THE MODAL WE WILL BE USING -->
 <div class="modal" tabindex="-1" aria-hidden="true"  aria-labelledby="exampleModalLabel" data-bs-keyboard="false" data-bs-backdrop="static" id="modal-qset">
@@ -39,7 +36,6 @@
 	</div>
 </div>
 {% endblock popup_alerts %}
-
 
 <!--------- BEGIN EXTRA SCRIPTS ----------------------------->
 {% block extra_scripts %}
@@ -71,7 +67,7 @@
         Qsettable = $(table_id).DataTable({
 			//orderCellsTop: true,
 			ajax:{
-				url: "{{ url('activity:questionset') }}?action = list"
+				url: "{{ url('activity:questionset') }}?action=list"
 			},
             deferRender: true,
 			responsive : true,
@@ -98,7 +94,7 @@
 					action: function(e, dt, node, config){
                         const params = {
                             'modal_id'    : modal_id,
-                            'url'         : `${urlname}?action = form`,
+                            'url'         : `${urlname}?action=form`,
                             'beforeSend'  : qsetBeforeSend }
 						fire_ajax_get(params)
 						.done((data, status, xhr) => {
@@ -113,7 +109,6 @@
 				}
 			]
 		})
-
 
 		
 
@@ -147,7 +142,7 @@
 	//delete ajax request 
 	function isQsetDeleted(id){ 
 		console.log("id ", id)
-		const params = {url:`${urlname}?action = delete&id=${id}`, beforeSend:function(){}}
+		const params = {url:`${urlname}?action=formdelete&id=${id}`, beforeSend:function(){}}
 		fire_ajax_get(params)
 		.done((data, status, xhr) => {
 			if(!xhr.status === 200){
@@ -160,7 +155,6 @@
 			return false
 		})
 	}
-
 
 	//delete questionset 
 	function deleteQset(elemt){

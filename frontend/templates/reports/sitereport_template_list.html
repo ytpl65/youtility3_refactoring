@@ -1,6 +1,5 @@
 {% extends "base_list.html" %}
 
-
 <!---- BEGIN CARD TITLE ------>
 {% block card_title %}
 Site Report List
@@ -10,14 +9,12 @@ Site Report List
 {% block extra_css %}
 {% endblock extra_css %}
 
-
 <!------------------------------------ BEGIN PAGE BREADCUMBS ------------------------------------>
 {% block pagebreadcumb %}
 {{ super() }}
 <li class="breadcrumb-item pe-3"><a href="javascript:void(0)" class="pe-3">Site Report List</a></li>
 {% endblock pagebreadcumb %}
 <!------------------------------------- END PAGE BREADCUMBS ------------------------------------->
-
 
 {% block table %}
     <table id="siteReportList" class="display cell-border compact hover">
@@ -30,7 +27,7 @@ $(document).ready(function () {
 
     $("#siteReportList").DataTable({
         ajax:{
-            url: "{{ url('reports:config_sitereport_template') }}?action = list",
+            url: "{{ url('reports:config_sitereport_template') }}?action=list",
         },
         responsive: true,
         deferRender: true,
@@ -56,7 +53,7 @@ $(document).ready(function () {
                 action: function(e, dt, node, config){
                     //This will send the page to the location specified
                     console.log("hitted success")
-                    window.location.href = "{{ url('reports:config_sitereport_template') }}?action = form";
+                    window.location.href = "{{ url('reports:config_sitereport_template') }}?action=form";
                 }
             }
         ]

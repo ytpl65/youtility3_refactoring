@@ -30,10 +30,8 @@ class PELManager(models.Manager):
             id = id
         ).using(db).update(peventlogextras = result, people_id = peopleid)
 
-
     def get_people_attachment(self, pelogid, db):
         pass
-
 
     def get_lastmonth_conveyance(self, R):
         from datetime import datetime
@@ -43,7 +41,6 @@ class PELManager(models.Manager):
                 punchintime__date__gte = (now - timedelta(days = 30)).date()
             ).exclude(endlocation__isnull = True).values(*R.getlist('fields[]'))
         return qset or self.none()
-
 
     def getjourneycoords(self, id):
         from django.contrib.gis.db.models.functions import AsGeoJSON

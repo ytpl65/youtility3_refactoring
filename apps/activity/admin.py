@@ -5,7 +5,6 @@ import apps.onboarding.models as om
 import apps.activity.models as am
 from apps.onboarding.admin import BaseFieldSet2
 
-
 # Register your models here.
 
 class QuestionResource(BaseFieldSet2, resources.ModelResource):
@@ -29,7 +28,6 @@ class QuestionResource(BaseFieldSet2, resources.ModelResource):
         report_skipped = True
         fields = ('id', 'quesname', 'answertype',  'unit', 'options'
                   'client', 'min', 'max', 'alerton', 'isworkflow', 'enable', 'category')
-
 
 class AssetResource(BaseFieldSet2, resources.ModelResource):
     unit = fields.Field(
@@ -80,5 +78,4 @@ class AssetResource(BaseFieldSet2, resources.ModelResource):
         fields = ('id', 'assetcode', 'assetname',  'gpslocation', 'identifier'
                   'runningstatus', 'capacity', 'parent', 'type', 'client', 'bu',
                   'category', 'subcategory', 'brand', 'unit', 'serv_prov')
-
 

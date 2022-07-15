@@ -20,7 +20,6 @@ class JobFilter(dfs.FilterSet):
             'endtime',    'ctzoffset',    
         ]
 
-
 class JobneedFilter(dfs.FilterSet):
     class Meta:
         model = am.Jobneed
@@ -31,7 +30,6 @@ class JobneedFilter(dfs.FilterSet):
             'endtime',    'performedby',   'cuser',     'muser',     'raisedby',
             'bu',              
         ]
-
 
 class SchdTourFilter(JobFilter):
     jobname      = dfs.CharFilter(field_name='jobname', lookup_expr='icontains', label='Name')
@@ -46,7 +44,6 @@ class SchdTourFilter(JobFilter):
         exclude = ['endtime', 'cron', 'client', 'ticketcategory', 'parent', 'seqno', 'frequency', 'pgroup', 'starttime', 'bu',
                    'priority', 'ctzoffset', 'geofence', 'identifier', 'people', 'shift', 'jobdesc', 'scantype', 'assignedto']
 
-
 class SchdExtTourFilter(SchdTourFilter):
     bu = dfs.CharFilter(field_name='bu__buname', lookup_expr='icontains', label= "BV")
 
@@ -54,12 +51,10 @@ class SchdExtTourFilter(SchdTourFilter):
         fields = ['jobname',  'bu', 'assignedto', 'planduration', 'expirytime', 'gracetime', 'fromdate', 'uptodate']
         exclude = ['asset']
 
-
 class SchdTaskFilter(SchdTourFilter):
     asset        = dfs.CharFilter(field_name='asset__assetname', lookup_expr='icontains', label= "Asset")
     class Meta(SchdTourFilter.Meta):
         fields = ['jobname',  'asset', 'qset', 'assignedto', 'planduration', 'expirytime', 'gracetime', 'fromdate', 'uptodate']
-
 
 class InternalTourFilter(dfs.FilterSet):
     JOBSTATUSCHOICES = [
@@ -93,13 +88,11 @@ class InternalTourFilter(dfs.FilterSet):
                 visible.field.widget.attrs['data-placeholder'] = 'Select an option'
                 visible.field.widget.attrs['data-allow-clear'] = 'true'
 
-
 class TaskListJobneedFilter(InternalTourFilter):
     asset   = dfs.CharFilter(field_name='asset__assetname', lookup_expr='icontains', label='Asset/Smartplace')
     qset    = dfs.CharFilter(field_name='qset__qset_name', lookup_expr='icontains', label='QuestionSetz')
     bu      = dfs.CharFilter(field_name= 'bu__buname', lookup_expr='icontains')
     jobdesc = dfs.CharFilter(field_name='jobdesc', lookup_expr='icontains', label='Description')
-
 
 class TicketListFilter(JobneedFilter):
     TICKETSTATUS = [
@@ -116,7 +109,6 @@ class TicketListFilter(JobneedFilter):
     ticketcategory = dfs.CharFilter(field_name='ticketcategory__taname', lookup_expr='icontains')
     jobstatus       = dfs.ChoiceFilter(field_name='jobstatus', choices = TICKETSTATUS, label="Stauts", widget = s2forms.Select2Widget)
     cuser           = dfs.CharFilter(field_name='cuser__peoplename', lookup_expr='icontains')
-
 
     class Meta(JobneedFilter.Meta):
         fields = ['cdtz', 'cuser', 'ticketno', 'bu', 'assignedto', 'performedby', 'ticketcategory', 'jobstatus']

@@ -1,13 +1,11 @@
 {% extends "onboarding/client_onboarding/base_wizard_form.html" %}
 
 
-
 <!------ BEGIN FORM TITLE ------->
 {% block form_title %}
 Create People
 {% endblock form_title %}
 <!------ END FORM TITLE -------->
-
 
 <!--------- BEGIN NON FIELD ERRORS -------->
 {% block nonfield_errors %}
@@ -22,7 +20,6 @@ Create People
 {% endblock nonfield_errors %}
 <!---------- END NON FIELD ERRORS --------->
 
-
 <!----------- BEGIN FORM MESSGES --------------->
 {% block form_msgs %}
 	{% for msg in get_msgs(request) %}
@@ -33,7 +30,6 @@ Create People
 	{% endfor %}
 {% endblock form_msgs %}
 <!----------- END FORM MESSGES ----------------->
-
 
 <!-------------- BEGIN FORM ------------------->
 {% block custom_form %}
@@ -151,7 +147,6 @@ Create People
                 <!--END FIRST COLUMN-->
                 <!--BEGIN IMAGE INPUT-->
                 <div class="col-md-2">
-
 
                     <!--begin::Image input-->
                     <div class="image-input image-input-empty" data-kt-image-input="true" style="background-image: url({{ static('assets/media/images/blank.png') }})">
@@ -271,7 +266,6 @@ Create People
             <input type="submit" value="Next" class="btn btn-sm btn-success">
 {% endblock custom_form %}
 <!------------- END FORM ---------------------->
-
 
 {% block extra_scripts %}
 <script>

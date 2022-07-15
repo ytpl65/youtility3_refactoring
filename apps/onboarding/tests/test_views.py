@@ -1,7 +1,6 @@
 import pytest
 from django.urls import reverse
 
-
 SERVER = "icici.youtility.local"
 
 @pytest.mark.django_db(databases=['icici', 'default'])

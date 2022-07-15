@@ -12,7 +12,6 @@ from apps.service.serializers import Messages
 from apps.core.utils import get_current_db_name
 from logging import getLogger
 
-
 log = getLogger('__main__')
 # Create your views here.
 A = {'rc':0, 'reason': 'OK', 'msg':None, 'errors':None, 'returnid':None}
@@ -26,7 +25,6 @@ def get_model(tablename):
             return Attachment
         case _:
             return None
-
 
 
 def perform_insertrecord(data):
@@ -52,7 +50,6 @@ def perform_insertrecord(data):
         log.error('something went wrong', exc_info = True)
         A['rc'], A['reason'], A['msg'] = 1, e, Messages.INSERT_FAILED   
     return Response(A)
-
 
 
 
@@ -87,7 +84,6 @@ def perform_task_tour_update(data):
         log.error('something went wrong', exc_info = True)
         A['rc'], A['reason'], A['msg'] = 1, traceback.format_exc(), Messages.UPDATE_FAILED
     return Response(A)
-
 
 
 def perform_template_report_insert(data):
@@ -138,7 +134,6 @@ def perform_template_report_insert(data):
         log.error('something went wrong', exc_info = True)
     return Response(A)
 
-
 def perform_attachment_upload(request):
     import os
     try:
@@ -184,7 +179,6 @@ def perform_attachment_upload(request):
         log.error('something went wrong', exc_info = True)
     return Response(A)
 
-
 class InsertRecord(APIView):
     """
     Inserts record in given table after validations
@@ -195,7 +189,6 @@ class InsertRecord(APIView):
 
 
 
-
 class TaskTourUpdate(APIView):
     """
     Updates Task Tour activities
@@ -203,13 +196,11 @@ class TaskTourUpdate(APIView):
     def post(self, request, format = None):
         return perform_task_tour_update(request.data)
 
-
 class TemplateReports(APIView):
 
     def post(self, request, format = None):
         ic(request.data)
         return perform_template_report_insert(request.data)
-
 
 
 class AttachmentUpload(APIView):
@@ -223,10 +214,8 @@ class AttachmentUpload(APIView):
         return perform_attachment_upload(request)
 
 
-
 def alert_observation(pkid, event):
     pass
-
 
 
 class TestLoginREquired(APIView):

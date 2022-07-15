@@ -11,7 +11,6 @@ from apps.core import utils
 
 #============= BEGIN LOGIN FORM ====================#
 
-
 class LoginForm(forms.Form):
     username = forms.CharField(
         max_length = 50,
@@ -52,7 +51,6 @@ class LoginForm(forms.Form):
         result = super().is_valid()
         utils.apply_error_classes(self)
         return result
-
 
 class PeopleForm(forms.ModelForm):
     required_css_class = "required"
@@ -199,7 +197,6 @@ class PeopleForm(forms.ModelForm):
                 raise forms.ValidationError(self.error_msg['invalid_mobno2']) from e
             return mobno
 
-
 class PgroupForm(forms.ModelForm):
     required_css_class = "required"
     error_msg = {
@@ -236,7 +233,6 @@ class PgroupForm(forms.ModelForm):
         if val := self.request.POST.get('peoples'):
             print(val)
 
-
 class SiteGroupForm(PgroupForm):
     peoples = None
 
@@ -245,7 +241,6 @@ class SiteGroupForm(PgroupForm):
         super().__init__(*args, **kwargs)
         utils.initailize_form_fields(self)
         self.fields['identifier'].initial = om.TypeAssist.objects.get(tacode='SITEGROUP')
-
 
 
 class PeopleGroupForm(PgroupForm):
@@ -258,7 +253,6 @@ class PeopleGroupForm(PgroupForm):
         self.fields['peoples'].choices = pm.People.objects.select_related(
             'bu').filter(~Q(peoplecode='NONE'), isadmin = False).values_list(
             'id', 'peoplename')
-
 
 class PgbelongingForm(forms.ModelForm):
     required_css_class = "required"
@@ -279,7 +273,6 @@ class PgbelongingForm(forms.ModelForm):
         result = super().is_valid()
         utils.apply_error_classes(self)
         return result
-
 
 class CapabilityForm(forms.ModelForm):
     required_css_class = "required"
@@ -334,7 +327,6 @@ class CapabilityForm(forms.ModelForm):
         utils.apply_error_classes(self)
         return result
 
-
 class PeopleExtrasForm(forms.Form):
 
     labels = {'mob': 'Mobile Capability', 'port': 'Portlet Capability',
@@ -382,7 +374,6 @@ class PeopleExtrasForm(forms.Form):
         result = super().is_valid()
         utils.apply_error_classes(self)
         return result
-
 
 
 

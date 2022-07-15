@@ -8,8 +8,6 @@ log = logging.getLogger('__main__')
 
 
 
-
-
 def create_dummy_client_site_and_superadmin(self):
     from apps.onboarding.models import Bt, TypeAssist
     from apps.peoples.models import People
@@ -51,7 +49,6 @@ def create_dummy_client_site_and_superadmin(self):
 
 
 
-
 def insert_default_entries_in_typeassist(db, self):
     """
     Inserts Default rows in TypeAssist Table
@@ -69,7 +66,7 @@ def insert_default_entries_in_typeassist(db, self):
             utils.set_db_for_router(db)
             default_types = Dataset().load(f)
             res = TaResource(is_superuser = True)
-            #TODO in production set raise_errors = False
+            # TODO in production set raise_errors = False
             res = res.import_data(dataset = default_types, dry_run = False, raise_errors = True, collect_failed_rows = True, use_transactions = True)
             log.debug(f"Default Entries in table TypeAssist created successfully...{pformat(utils.ok(self))}")
     except Exception as e:
@@ -78,21 +75,19 @@ def insert_default_entries_in_typeassist(db, self):
         raise
 
 
-
 def execute_tasks(db, self):
     try:
         with transaction.atomic(using = db):
             utils.create_none_entries(self)
 
-        #insert default entries for TypeAssist
+        # insert default entries for TypeAssist
         insert_default_entries_in_typeassist(db, self)
 
         with transaction.atomic(using = db):
-            #create dummy client: SPS and site: YTPL
+            # create dummy client: SPS and site: YTPL
             create_dummy_client_site_and_superadmin(self)
     except Exception as e:
         raise
-
 
 
 
@@ -101,10 +96,8 @@ class Command(BaseCommand):
     People, Capability, QuestionSet, Job, Asset, Jobneed, Bt, Typeassist Asset'
 
 
-
     def add_arguments(self, parser) -> None:
         parser.add_argument('db', nargs = 1, type = str)
-
 
     def handle(self, *args, **options):
         max_tries = 6
@@ -126,6 +119,5 @@ class Command(BaseCommand):
                 if type(e) != IntegrityError:
                     self.stdout.write(self.style.ERROR("something went wrong...!"))
                     log.error('FAILED init_intelliwiz', exc_info = True)
-
 
 

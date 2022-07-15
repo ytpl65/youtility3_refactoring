@@ -26,7 +26,6 @@ from pprint import pformat
 CACHE_TTL = getattr(settings, 'CACHE_TTL', DEFAULT_TIMEOUT)
 logger = logging.getLogger('django')
 
-
 #-------------------- Begin Bt View Classes --------------------#
 
 # create Bt instance.
@@ -69,7 +68,6 @@ class CreateBt(LoginRequiredMixin, View):
                    'ta_form': obforms.TypeAssistForm(auto_id = False)}
             response = render(request, self.template_path, context = cxt)
         return response
-
 
 # list-out Bt data
 class RetrieveBt(LoginRequiredMixin, View):
@@ -126,7 +124,6 @@ class RetrieveBt(LoginRequiredMixin, View):
         except EmptyPage:
             bt_list = paginator.page(paginator.num_pages)
         return {'bt_list': bt_list, 'bt_filter': filterform}
-
 
 # update Bt instance
 class UpdateBt(LoginRequiredMixin, View):
@@ -190,7 +187,6 @@ class UpdateBt(LoginRequiredMixin, View):
             response = render(request, self.template_path, context = cxt)
         return response
 
-
 # delete Bt instance
 class DeleteBt(LoginRequiredMixin, View):
     template_path = 'onboarding/bu_form.html'
@@ -231,7 +227,6 @@ class DeleteBt(LoginRequiredMixin, View):
 
 #-------------------- END Bt View Classes --------------------#
 
-
 # #-------------------- Begin Shift View Classes --------------------#
 class CreateShift(LoginRequiredMixin, View):
     template_path = 'onboarding/shift_form.html'
@@ -270,7 +265,6 @@ class CreateShift(LoginRequiredMixin, View):
             cxt = {'shift_form': form, 'edit': True}
             response = render(request, self.template_path, context = cxt)
         return response
-
 
 # @method_decorator(cache_page(CACHE_TTL), name='dispatch')
 class RetrieveShift(LoginRequiredMixin, View):
@@ -321,7 +315,6 @@ class RetrieveShift(LoginRequiredMixin, View):
         except EmptyPage:
             ta_list = paginator.page(paginator.num_pages)
         return {'ta_list': ta_list, 'ta_filter': filterform}
-
 
 class UpdateShift(LoginRequiredMixin, View):
     template_path = 'onboarding/shift_form.html'
@@ -384,7 +377,6 @@ class UpdateShift(LoginRequiredMixin, View):
             response = render(request, self.template_path, context = cxt)
         return response
 
-
 class DeleteShift(LoginRequiredMixin, View):
     form_class = obforms.ShiftForm
     template_path = 'onboarding/shift_form.html'
@@ -419,7 +411,6 @@ class DeleteShift(LoginRequiredMixin, View):
             response = render(request, self.template_path, context = cxt)
         return response
 # #-------------------- END Shift View Classes --------------------#
-
 
 #-------------------- Begin SitePeople View Classes --------------------#
 
@@ -458,7 +449,6 @@ class CreateSitePeople(LoginRequiredMixin, View):
             cxt = {'sitepeople_form': form, 'edit': True}
             response = render(request, self.template_path, context = cxt)
         return response
-
 
 # list-out Bt data
 class RetrieveSitePeople(LoginRequiredMixin, View):
@@ -512,7 +502,6 @@ class RetrieveSitePeople(LoginRequiredMixin, View):
         except EmptyPage:
             bt_list = paginator.page(paginator.num_pages)
         return {'sitepeople_list': bt_list, 'sitepeople_filter': filterform}
-
 
 # update Bt instance
 class UpdateSitePeople(LoginRequiredMixin, View):
@@ -573,7 +562,6 @@ class UpdateSitePeople(LoginRequiredMixin, View):
             response = render(request, self.template_path, context = cxt)
         return response
 
-
 # delete Bt instance
 class DeleteSitePeople(LoginRequiredMixin, View):
     model = SitePeople
@@ -609,7 +597,6 @@ class DeleteSitePeople(LoginRequiredMixin, View):
             cxt = {'sitepeople_form': form, 'edit': True}
             response = render(request, self.template_path, context = cxt)
         return response
-
 
 #-------------------- END SitePeople View Classes --------------------#
 
@@ -669,7 +656,6 @@ class CreateClient(LoginRequiredMixin, View):
             response = render(request, self.template_path, context = cxt)
         return response
 
-
 def get_caps(request):  # sourcery skip: extract-method
     logger.info('get_caps requested')
     selected_parents = request.GET.getlist('webparents[]')
@@ -685,7 +671,6 @@ def get_caps(request):  # sourcery skip: extract-method
             childs.extend({'capscode': j.capscode} for j in child)
         logger.info(f'childs = [] {childs}')
         return JsonResponse(data = childs, safe = False)
-
 
 class RetriveClients(LoginRequiredMixin, View):
     template_path = 'onboarding/client_bulist.html'
@@ -736,7 +721,6 @@ class RetriveClients(LoginRequiredMixin, View):
         except EmptyPage:
             client_list = paginator.page(paginator.num_pages)
         return {'client_list': client_list, 'client_filter': filterform}
-
 
 class UpdateClient(LoginRequiredMixin, View):
     template_path = 'onboarding/client_buform.html'
@@ -810,7 +794,6 @@ class UpdateClient(LoginRequiredMixin, View):
             response = render(request, self.template_path, context = cxt)
         return response
 
-
 class DeleteClient(LoginRequiredMixin, View):
     model = Bt
     template_path = 'onboarding/client_buform.html'
@@ -845,7 +828,6 @@ class DeleteClient(LoginRequiredMixin, View):
             response = render(request, self.template_path, context = cxt)
         return response
 
-
 def handle_pop_forms(request):
     if request.method != 'POST':
         return
@@ -868,12 +850,9 @@ def handle_pop_forms(request):
         print(ta.id)
     return JsonResponse({'saved': True, 'id': ta.id, 'tacode': ta.tacode})
 
-
 #-------------------- END Client View Classes ------------------------------#
 
-
 #---------------------------- END client onboarding   ---------------------------#
-
 
 @method_decorator(cache_page(40), name='dispatch')
 class MasterTypeAssist(LoginRequiredMixin, View):
@@ -896,7 +875,7 @@ class MasterTypeAssist(LoginRequiredMixin, View):
         ic(R)
         # first load the template
         if R.get('template'): return render(request, self.params['template_list'])
-        #then load the table with objects for table_view
+        # then load the table with objects for table_view
         if R.get('action') == 'list':
             objs = self.params['model'].objects.select_related(
                  *self.params['related']).filter(
@@ -958,7 +937,6 @@ class MasterTypeAssist(LoginRequiredMixin, View):
             return handle_intergrity_error("TypeAssist")
 
 
-
 class SuperTypeAssist(MasterTypeAssist):
     params = MasterTypeAssist.params
     lookup = MasterTypeAssist.lookup
@@ -969,7 +947,6 @@ class TypeAssistAjax(MasterTypeAssist):
     params = MasterTypeAssist.params
     params.update({'form_class':obforms.TypeAssistForm})
     pass
-
 
 class Shift(LoginRequiredMixin, View):
     params = {
@@ -986,7 +963,7 @@ class Shift(LoginRequiredMixin, View):
 
         # first load the template
         if R.get('template'): return render(request, self.params['template_list'])
-        #then load the table with objects for table_view
+        # then load the table with objects for table_view
         if R.get('action', None) == 'list' or R.get('search_term'):
             objs = self.params['model'].objects.select_related(
                 *self.params['related']).filter(
@@ -1059,7 +1036,6 @@ class Shift(LoginRequiredMixin, View):
             return handle_intergrity_error("Shift")
 
 
-
 class EditorTa(LoginRequiredMixin, View):
     template = 'onboarding/testEditorTa.html'
     fields = ['id', 'tacode', 'taname', 'tatype__tacode', 'cuser__peoplecode']
@@ -1089,7 +1065,6 @@ class EditorTa(LoginRequiredMixin, View):
         )
 
 
-
 class GeoFence(LoginRequiredMixin, View):
     params = {
         'form_class':obforms.GeoFenceForm,
@@ -1107,7 +1082,7 @@ class GeoFence(LoginRequiredMixin, View):
         # first load the template
         if R.get('template'): return render(request, self.params['template_list'])
 
-        #then load the table with objects for table_view
+        # then load the table with objects for table_view
         if R.get('action', None) == 'list' or R.get('search_term'):
             objs = self.params['model'].objects.get_geofence_list(params['fields'], params['related'], request.session)
             return  rp.JsonResponse(data = {'data':list(objs)})
@@ -1125,7 +1100,6 @@ class GeoFence(LoginRequiredMixin, View):
                     'edit':True,
                 'geofencejson': GeofenceMaster.objects.get_geofence_json(pk = obj.id)}
             return render(request, self.params['template_form'], context = cxt)
-
 
     def post(self, request, *args, **kwargs):
         resp = None
@@ -1150,7 +1124,6 @@ class GeoFence(LoginRequiredMixin, View):
             resp = utils.handle_Exception(request)
         return resp
 
-
     def handle_valid_form(self, form, request, geofence):
         logger.info('geofence form is valid')
         from apps.core.utils import handle_intergrity_error
@@ -1163,7 +1136,6 @@ class GeoFence(LoginRequiredMixin, View):
                 return JsonResponse(data={'pk':gf.id}, status = 200)
         except IntegrityError:
             return handle_intergrity_error("GeoFence")
-
 
     def save_geofence_field(self, gf, geofence):
         try:
@@ -1180,7 +1152,6 @@ class GeoFence(LoginRequiredMixin, View):
         except Exception:
             logger.error('geofence polygon field saving error', exc_info = True)
             raise
-
 
 
 def get_geofence_from_point_radii(R):
@@ -1200,7 +1171,6 @@ def get_geofence_from_point_radii(R):
         return rp.JsonResponse(data={'errors': 'something went wrong while computing geofence!'}, status = 404)
 
 
-
 class ImportFile(LoginRequiredMixin, View):
     params = {
        'template_form': 'onboarding/',
@@ -1212,7 +1182,6 @@ class ImportFile(LoginRequiredMixin, View):
         match(R.get('model')):
             case "typeassist":
                 return render(request, f"{self.params['template_form']}/ta_imp_exp.html")
-
 
     def post(self, request, *args, **kwargs):
         from tablib import Dataset
@@ -1237,7 +1206,6 @@ class ImportFile(LoginRequiredMixin, View):
             data = json.dumps(data)
             cxt = {'columns':columns, 'data':data, 'importform':self.params['form_class']()}
             return render(request, self.params['template_form'], context = cxt)
-
 
         else:
             ic(form.errors)

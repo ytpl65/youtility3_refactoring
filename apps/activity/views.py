@@ -22,7 +22,6 @@ import logging
 logger = logging.getLogger('__main__')
 log = logger
 
-
 # Create your views here.
 class Question(LoginRequiredMixin, View):
     params = {
@@ -107,7 +106,6 @@ class Question(LoginRequiredMixin, View):
             return rp.JsonResponse(data, status = 200)
         except (IntegrityError, pg_errs.UniqueViolation):
             return utils.handle_intergrity_error('Question')
-
 
 class MasterQuestionSet(LoginRequiredMixin, View):
     params = {
@@ -208,7 +206,6 @@ class MasterQuestionSet(LoginRequiredMixin, View):
     def handle_valid_form(form, request, create):
         pass
 
-
 class MasterAsset(LoginRequiredMixin, View):
     params = {
         'form_class': None,
@@ -283,7 +280,6 @@ class MasterAsset(LoginRequiredMixin, View):
     def handle_valid_form(self, form, request, create):
         pass
 
-
 class Checklist(MasterQuestionSet):
     params = MasterQuestionSet.params
     list_grid_lookups = MasterQuestionSet.list_grid_lookups
@@ -331,7 +327,6 @@ class Checklist(MasterQuestionSet):
         except Exception:
             logger.critical("Something went wrong", exc_info = True)
             raise
-
 
 class QuestionSet(MasterQuestionSet):
     params = MasterQuestionSet.params
@@ -385,7 +380,6 @@ class QuestionSet(MasterQuestionSet):
             logger.critical("Something went wrong", exc_info = True)
             raise
 
-
 def deleteQSB(request):
     if request.method != 'GET':
         return Http404
@@ -409,7 +403,6 @@ def deleteQSB(request):
     status = "success" if statuscode == 200 else "failed"
     data = {"status": status}
     return rp.JsonResponse(data, status = statuscode)
-
 
 class Checkpoint(MasterAsset):
     params = MasterAsset.params
@@ -440,7 +433,6 @@ class Checkpoint(MasterAsset):
         except IntegrityError:
             return utils.handle_intergrity_error('Checkpoint')
 
-
 class Smartplace(MasterAsset):
     params = MasterAsset.params
     label = MasterAsset.label
@@ -469,7 +461,6 @@ class Smartplace(MasterAsset):
             return rp.JsonResponse(data, status = 200)
         except IntegrityError:
             return utils.handle_intergrity_error('Smartplace')
-
 
 class RetriveEscList(LoginRequiredMixin, View):
     model = am.EscalationMatrix
@@ -506,7 +497,6 @@ class RetriveEscList(LoginRequiredMixin, View):
         return resp
 
 
-
 class AdhocRecord(LoginRequiredMixin, View):
     params = {
         'form_class'   : af.AdhocTaskForm,
@@ -527,7 +517,7 @@ class AdhocRecord(LoginRequiredMixin, View):
         # first load the template
         if R.get('template'): return render(request, self.params['template_list'])
 
-        #then load the table with objects for table_view
+        # then load the table with objects for table_view
         if R.get('action', None) == 'list' or R.get('search_term'):
             total, filtered, objs = self.params['model'].objects.get_adhoctasks_listview(R, self.params['idf'])
             return  rp.JsonResponse(data = {
@@ -541,8 +531,6 @@ class AdhocRecord(LoginRequiredMixin, View):
             cxt = {'adhoctaskform': self.params['form_class'](request = request),
                    'msg': "create adhoc task requested"}
             return render(request, self.params['template_form'], context = cxt)
-
-
 
 
 

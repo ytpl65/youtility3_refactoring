@@ -6,7 +6,6 @@ import logging
 from apps.onboarding.models import Bt
 log = logging.getLogger('__main__')
 
-
 def create_dummy_clientandsite():
     """
     creates a dummy client:SPS and site:YTPL
@@ -16,7 +15,7 @@ def create_dummy_clientandsite():
     """
     from apps.onboarding.models import TypeAssist
     try:
-        #clienttype = TypeAssist.objects.get(tatype__tacode = 'BVIDENTIFIER', tacode='CLIENT')
+        # clienttype = TypeAssist.objects.get(tatype__tacode = 'BVIDENTIFIER', tacode='CLIENT')# 
         #sitetype = TypeAssist.objects.get(tatype__tacode = 'BVIDENTIFIER', tacode='SITE')
 
         client = Bt.objects.get_or_create(
@@ -37,7 +36,6 @@ def create_dummy_clientandsite():
     except Exception as e:
         log.error("Failed create_dummy_clientandsite", exc_info= True)
         raise
-
 
 
 
@@ -64,9 +62,8 @@ def insert_default_entries_in_typeassist():
         raise
 
 
-
 class Command(BaseCommand):
-    #run commands as django init_intelliwiz test or python manage.py init_intelliwiz <db name>
+    # run commands as django init_intelliwiz test or python manage.py init_intelliwiz <db name>
 
     help = '''
     This command creates None entries in specified DB\n
@@ -75,10 +72,8 @@ class Command(BaseCommand):
     Insert Default Entries in TypeAssist.
     '''
 
-
     def add_arguments(self, parser) -> None:
         parser.add_argument('db', nargs = 1, type = str)
-
 
     def handle(self, *args, **options):
 
@@ -92,20 +87,20 @@ class Command(BaseCommand):
                 utils.set_db_for_router(db)
                 self.stdout.write(self.style.SUCCESS(f"current db selected is {utils.get_current_db_name()}"))
 
-                #create NONE entries in the tables
+                # create NONE entries in the tables
                 id = utils.create_none_entries()
                 print(Bt.objects.get(id = id).bucode, "%%%%%%%%%%%%%5")
                 self.stdout.write(self.style.SUCCESS('None Entries created successfully!'))
 
-                #insert default entries for TypeAssist
+                # insert default entries for TypeAssist
                 insert_default_entries_in_typeassist()
                 self.stdout.write(self.style.SUCCESS('Default Entries Created..'))
 
-                #create dummy client: SPS and site: YTPL
+                # create dummy client: SPS and site: YTPL
                 create_dummy_clientandsite()
                 self.stdout.write(self.style.SUCCESS('Dummy client and site created successfully'))
 
-                #create superadmin
+                # create superadmin# 
                 #TODO
 
         except utils.RecordsAlreadyExist as ex:

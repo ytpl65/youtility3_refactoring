@@ -9,9 +9,7 @@ from django.utils.translation import gettext_lazy as _
 from .managers import PELManager
 from django.contrib.postgres.fields import ArrayField
 
-
 # Create your models here.
-
 
 def peventlog_json():
     return {
@@ -25,9 +23,7 @@ def peventlog_json():
 
 ############## PeopleEventlog Table ###############
 
-
 class PeopleEventlog(BaseModel, TenantAwareModel):
-
 
     class TransportMode(models.TextChoices):
         BIKE     = ('BIKE', 'Bike')
@@ -40,7 +36,7 @@ class PeopleEventlog(BaseModel, TenantAwareModel):
         CAR      = ('CAR', 'Car')
         CAB      = ('CAB', 'Cab')
 
-    #id          = models.BigIntegerField(primary_key = True)
+    # id          = models.BigIntegerField(primary_key = True)
     uuid            = models.UUIDField(unique = True, editable = True, blank = True, default = uuid.uuid4)
     people          = models.ForeignKey(settings.AUTH_USER_MODEL, null = True, blank = True, on_delete = models.RESTRICT, verbose_name='People')
     client          = models.ForeignKey("onboarding.Bt",  null = True, blank = True, on_delete = models.RESTRICT, related_name='clients')
@@ -72,8 +68,7 @@ class PeopleEventlog(BaseModel, TenantAwareModel):
     class Meta(BaseModel.Meta):
         db_table = 'peopleeventlog'
 
-
-#temporary table
+# temporary table
 class Tracking(models.Model):
     class Identifier(models.TextChoices):
         NONE = ('NONE', 'None')
@@ -81,7 +76,7 @@ class Tracking(models.Model):
         EXTERNALTOUR = ('EXTERNALTOUR', 'External Tour')
         SITEVISIT = ('SITEVISIT', 'Site Visit')
 
-    #id           = models.BigIntegerField(primary_key = True)
+    # id           = models.BigIntegerField(primary_key = True)
     uuid          = models.UUIDField(unique = True, editable = True, blank = True, default = uuid.uuid4)
     deviceid      = models.CharField(max_length = 40)
     gpslocation   = PointField(geography = True, srid = 4326)
@@ -91,14 +86,12 @@ class Tracking(models.Model):
     reference     = models.CharField(max_length = 255, default = None)
     identifier    = models.CharField(max_length = 55, choices = Identifier.choices, default = Identifier.NONE.value)
 
-
     class Meta:
         db_table = 'tracking'
 
 
-
 class TestGeo(models.Model):
-    #id= models.BigIntegerField(primary_key = True)
+    # id= models.BigIntegerField(primary_key = True)
     code = models.CharField(max_length = 15)
     poly = PolygonField(geography = True, null = True)
     point = PointField(geography = True, null = True)

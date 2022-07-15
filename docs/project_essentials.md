@@ -9,7 +9,6 @@
   - Capability. 
   - PeopleEventlog.
 
-
 ### APP  ONBOARDING 
 - #### MODELS
   - Bt.
@@ -19,7 +18,6 @@
 - #### MODELS
   - Tenant. 
   - TenantAwareModel.
-
 
 
 ## DEVELOPMENT BEST PRACTICES FOR BETTER COLLABORATION

@@ -15,7 +15,6 @@ logger = logging.getLogger('django')
 log = logging.getLogger('__main__')
 # Create your views here.
 
-
 class Attendance(LoginRequiredMixin, View):
     params = {
         'form_class': atf.AttendanceForm,
@@ -93,7 +92,6 @@ class Attendance(LoginRequiredMixin, View):
 
 
 
-
 class Conveyance(LoginRequiredMixin, View):
     model = atdm.PeopleEventlog,
     params = {
@@ -107,14 +105,13 @@ class Conveyance(LoginRequiredMixin, View):
         'model'        : atdm.PeopleEventlog,
        'form_class':atf.ConveyanceForm}
 
-
     def get(self, request, *args, **kwargs):
         R, resp, objects, filtered = request.GET, None, [], 0
 
         # first load the template
         if R.get('template'): return render(request, self.params['template_list'])
 
-        #then load the table with objects for table_view
+        # then load the table with objects for table_view
         if R.get('action', None) == 'list' or R.get('search_term'):
             objs = self.params['model'].objects.get_lastmonth_conveyance(R)
             ic(utils.printsql(objs))
@@ -138,17 +135,16 @@ class Conveyance(LoginRequiredMixin, View):
                     'edit':True}
             resp = render(request, self.params['template_form'], context = cxt)
 
-        #return journey path of instance
+        # return journey path of instance
         elif R.get('action') == 'getpath':
             data = atdm.PeopleEventlog.objects.getjourneycoords(R['conid'])
             resp = rp.JsonResponse(data = {'obj':list(data)}, status = 200)
         return resp
 
-
     def post(self, request, *args, **kwargs):
         resp, create = None, True
         try:
-            #convert queryparams to python datatypes
+            # convert queryparams to python datatypes
             data = QueryDict(request.POST['formData'])
             if pk := data.get('pk', None):
                 msg = 'conveyance_view'
@@ -166,7 +162,6 @@ class Conveyance(LoginRequiredMixin, View):
         except Exception:
             resp = utils.handle_Exception(request)
         return resp
-
 
     def handle_valid_form(self, form, request, create):
         logger.info('conveyance form is valid')

@@ -10,11 +10,10 @@ load_dotenv()
 # USER DJANGO APP LEVEL IMPORTS
 
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
-
+DEBUG=True
 SECRET_KEY = str(os.getenv('SECRET_KEY'))
 
 ALLOWED_HOSTS = ['.localhost', '.youtility.local', 'barfi.youtility.in', '127.0.0.1', 'intelliwiz.youtility.in']
-
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -25,7 +24,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'django.contrib.gis',
 
-    #third_party_apps
+    # third_party_apps
     'graphene_django',
     'graphene_gis',
     'django_email_verification',
@@ -36,7 +35,7 @@ INSTALLED_APPS = [
     'rest_framework',
     
 
-    #local apps
+    # local apps
     'apps.peoples',
     'apps.onboarding',
     'apps.tenants',
@@ -50,7 +49,7 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
-    'apps.tenants.middlewares.TenantMiddleware', #custom middleware
+    'apps.tenants.middlewares.TenantMiddleware', # custom middleware
     'django.middleware.security.SecurityMiddleware',
     'debug_toolbar.middleware.DebugToolbarMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -81,7 +80,7 @@ TEMPLATES = [
 
         },
     },
-    #jinja2 configuration
+    # jinja2 configuration
      { 
          'BACKEND': 'django.template.backends.jinja2.Jinja2',
          'DIRS': [JINJA_TEMPLATES],
@@ -96,7 +95,6 @@ TEMPLATES = [
      },
 ]
 
-
 WSGI_APPLICATION = 'intelliwiz_config.wsgi.application'
 
 DBUSER  = str(os.getenv('DBUSER'))
@@ -104,7 +102,6 @@ DBUSER  = str(os.getenv('DBUSER'))
 DBPASWD = str(os.getenv('DBPASWD'))
 
 DBHOST  = str(os.getenv('DBHOST'))
-
 
 DATABASES = {
     'default': {
@@ -138,7 +135,7 @@ CACHES = {
     }
 }
 
-#PASSWORD VALIDATORS...
+# PASSWORD VALIDATORS...
 AUTH_PASSWORD_VALIDATORS = [
     {
         'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
@@ -156,8 +153,7 @@ AUTH_PASSWORD_VALIDATORS = [
 
 
 
-
-#SESSION CONF....
+# SESSION CONF....
 SESSION_ENGINE = 'django.contrib.sessions.backends.cached_db'
 
 SESSION_COOKIE_SECURE = False
@@ -168,25 +164,23 @@ SESSION_COOKIE_AGE = 60**2
 
 SESSION_SAVE_EVERY_REQUEST = True
 
-#AUTHENTICATIN BACKENDS CONF...
+# AUTHENTICATIN BACKENDS CONF...
 AUTHENTICATION_BACKENDS = [
     "graphql_jwt.backends.JSONWebTokenBackend",
     'apps.peoples.backends.MultiAuthentcationBackend',
     'django.contrib.auth.backends.ModelBackend'
     ]
 
-#USER MODEL
+# USER MODEL
 AUTH_USER_MODEL = 'peoples.People'
 
 
-
 # Default primary key field type
-# https://docs.djangoproject.com/en/3.2/ref/settings/#default-auto-field
+# https://docs.djangoproject.com/en/3.2/ref/settings/# default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 DATABASE_ROUTERS = ['apps.tenants.middlewares.TenantDbRouter']
-
 
 
 
@@ -195,12 +189,10 @@ MEDIA_ROOT = os.path.join(os.path.expanduser('~'), 'youtility4_media')
 MEDIA_URL = '/youtility4_media/'
 
 
-
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/3.2/howto/static-files/
 STATIC_URL = '/static/'
 STATICFILES_DIRS = [os.path.join(BASE_DIR, 'frontend/static')]
-
 
 # Internationalization
 # https://docs.djangoproject.com/en/3.2/topics/i18n/
@@ -215,14 +207,11 @@ USE_L10N = False
 
 USE_TZ = True
 
-
 # Cache time to live is 15 minutes.
 CACHE_TTL = 60 * 5
 
-
-#LOGIN URL NAME...
+# LOGIN URL NAME...
 LOGIN_URL = 'login'
-
 
 
 

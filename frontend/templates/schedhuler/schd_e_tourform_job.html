@@ -18,7 +18,6 @@ table.dataTable.compact tr.selected th.select-checkbox::after {
 </style>
 {% endblock extra_css %}
 
-
 <!-------------------------- BEGIN PAGE BREADCUMB ----------------------->
 {% block pagebreadcumb %}
 <!--will call parent contents -->
@@ -34,7 +33,6 @@ Schedhule External-Tour&nbsp;<i class="fa fa-clock fs-4 text-primary" aria-hidde
 {% endblock custom_title %}
 <!------ END FORM TITLE -------->
 
-
 <!--------- BEGIN NON FIELD ERRORS -------->
 {% block nonfield_errors %}
 {% if schdexternaltourform.non_field_errors() %}
@@ -47,7 +45,6 @@ Schedhule External-Tour&nbsp;<i class="fa fa-clock fs-4 text-primary" aria-hidde
 {% endif %}
 {% endblock nonfield_errors %}
 <!---------- END NON FIELD ERRORS --------->
-
 
 {% block form %}
 <form action="" method="post" id="id_schdexternaltourform">
@@ -389,7 +386,6 @@ Schedhule External-Tour&nbsp;<i class="fa fa-clock fs-4 text-primary" aria-hidde
     {% endcall %} #}
 {% endblock popup_alerts %}
 
-
 {% block ajax_page_actions %}
     <div class="form-actions">
         {% if schdexternaltourform.instance.id %}
@@ -412,7 +408,6 @@ Schedhule External-Tour&nbsp;<i class="fa fa-clock fs-4 text-primary" aria-hidde
         {% endif %}
     </div>
 {% endblock ajax_page_actions %}
-
 
 
 {% block extra_scripts %}

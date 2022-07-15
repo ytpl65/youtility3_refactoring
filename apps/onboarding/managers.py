@@ -4,7 +4,6 @@ import apps.onboarding.models as om
 import apps.peoples.models as pm
 from apps.core import utils
 
-
 class BtManager(models.Manager):
     use_in_migrations = True
     def get_people_bu_list(self, people):
@@ -26,7 +25,6 @@ class BtManager(models.Manager):
                     return ', '.join(list(qset))
             return ""
 
-
     def get_bu_list_ids(self, clientid, type='array'):
         """
         Returns all BU's on given client_id
@@ -35,7 +33,6 @@ class BtManager(models.Manager):
         qset = self.raw(
             f"select fn_get_bulist({clientid}, false, true, '{type}'::text, null::{rtype}) as id;")
         return qset[0].id if qset else self.none()
-
 
     def find_site(self, clientid, sitecode):
         """
@@ -47,7 +44,6 @@ class BtManager(models.Manager):
         )
         return qset[0] if qset else  self.none()
 
-
     def get_sitelist_web(self, clientid, peopleid):
         """
         Return sitelist assigned to peopleid
@@ -55,7 +51,6 @@ class BtManager(models.Manager):
         """
         qset = self.raw(f"select fn_get_siteslist_web({clientid}, {peopleid}) as id")
         return qset or self.none()
-
 
     def get_whole_tree(self, clientid):
         """
@@ -68,7 +63,7 @@ class BtManager(models.Manager):
         return json.loads(qset_json[0].id if qset_json else '{}')
 
     def getsitelist(self, clientid, peopleid):
-        #check if people is admin or not
+        # check if people is admin or not
         try:
             p = pm.People.objects.get(id = peopleid)
         except pm.People.DoesNotExist:
@@ -84,7 +79,6 @@ class BtManager(models.Manager):
                 return qset or self.none()
             else:   
                 pass
-
 
 
 
@@ -122,9 +116,6 @@ class BtManager(models.Manager):
 
 
 
-
-
-
 class TypeAssistManager(models.Manager):
     use_in_migrations = True
     fields = ['id', 'tacode', 'taname', 'tatype_id', 'cuser_id', 'muser_id',
@@ -144,7 +135,6 @@ class TypeAssistManager(models.Manager):
             ~Q(id = 1) & Q(mdtz__gte = mdtz) & Q(client_id__in = [clientid])
         ).values(*self.fields)
         return qset or None
-
 
 
 class GeofenceManager(models.Manager):

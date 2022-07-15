@@ -1,6 +1,5 @@
 from apps.core.utils import tenant_db_from_request, THREAD_LOCAL
 
-
 class TenantMiddleware:
     def __init__(self, get_response):
         self.get_response = get_response
@@ -10,7 +9,6 @@ class TenantMiddleware:
         print(f"Database:{db}")
         setattr(THREAD_LOCAL, "DB", db)
         return self.get_response(request)
-
 
 
 

@@ -36,7 +36,6 @@ class Schd_I_TourJobForm(JobForm):
         utils.initailize_form_fields(self)
 
 
-
     def clean_from_date(self):
         if val := self.cleaned_data.get('fromdate'):
             val =  ob_utils.to_utc(val)
@@ -47,13 +46,11 @@ class Schd_I_TourJobForm(JobForm):
             val =  ob_utils.to_utc(val)
             return val
 
-
     def is_valid(self) -> bool:
         """Add class to invalid fields"""
         result = super(Schd_I_TourJobForm, self).is_valid()
         utils.apply_error_classes(self)
         return result 
-
 
     def clean_slno(self):
         return -1
@@ -64,12 +61,10 @@ class Schd_I_TourJobForm(JobForm):
         self.instance.jobdesc = f'{bu.buname} - {self.instance.jobname}'
 
 
-
-class SchdChild_I_TourJobForm(JobForm): #job
+class SchdChild_I_TourJobForm(JobForm): # job
     timeInChoices = [('MIN', 'Min'),('HRS', 'Hours')]
 
-    #timeIn = forms.ChoiceField(choices = timeInChoices, initial='MIN', widget = s2forms.Select2Widget)
-
+    # timeIn = forms.ChoiceField(choices = timeInChoices, initial='MIN', widget = s2forms.Select2Widget)
 
     class Meta(JobForm.Meta):
         fields =['qset', 'people', 'asset', 'expirytime', 'seqno']
@@ -81,15 +76,12 @@ class SchdChild_I_TourJobForm(JobForm): #job
 
 
 
-
-
-class I_TourFormJobneed(JobNeedForm): #jobneed
+class I_TourFormJobneed(JobNeedForm): # jobneed
     timeInChoices      = [('MIN', 'Min'),('HRS', 'Hour'), ('DAY', 'Day'), ('WEEK', 'Week')]
     ASSIGNTO_CHOICES   = [('PEOPLE', 'People'), ('GROUP', 'Group')]
     assign_to          = forms.ChoiceField(choices = ASSIGNTO_CHOICES, initial="PEOPLE")
     timeIn             = forms.ChoiceField(choices = timeInChoices, initial='MIN', widget = s2forms.Select2Widget)
     required_css_class = "required"
-
 
 
     def __init__(self, *args, **kwargs):
@@ -112,7 +104,6 @@ class I_TourFormJobneed(JobNeedForm): #jobneed
         result = super(I_TourFormJobneed, self).is_valid()
         ob_utils.apply_error_classes(self)
         return result
-
 
     def clean_plandatetime(self):
         if val := self.cleaned_data.get('plandatetime'):
@@ -137,14 +128,13 @@ class I_TourFormJobneed(JobNeedForm): #jobneed
     def clean_frequency(self):
         return "NONE"
 
-class Child_I_TourFormJobneed(JobNeedForm):#jobneed
+class Child_I_TourFormJobneed(JobNeedForm):# jobneed
     class Meta(JobNeedForm.Meta):
         fields =['qset', 'asset', 'plandatetime', 'expirydatetime', 'gracetime']
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         utils.initailize_form_fields(self)
-
 
 
 class TaskFormJobneed(I_TourFormJobneed):
@@ -157,7 +147,6 @@ class TaskFormJobneed(I_TourFormJobneed):
             ic('iside')
             self.fields['asset'].queryset = am.Asset.objects.filter(identifier__in = ['Asset', 'Smartplace'])
             self.fields['qset'].queryset = am.QuestionSet.objects.filter(type = ['QUESTIONSET'])
-
 
 
 
@@ -191,8 +180,6 @@ class Schd_E_TourJobForm(JobForm):
 
 
 
-
-
 class EditAssignedSiteForm(forms.Form):
     br_time   = forms.IntegerField(max_value = 30, min_value = 0, label="Breaktime", required = True)
     checklist = forms.ChoiceField(
@@ -205,7 +192,6 @@ class EditAssignedSiteForm(forms.Form):
         super(EditAssignedSiteForm, self).__init__(*args, **kwargs)
         self.fields['checklist'].choices = am.QuestionSet.objects.all().values_list('id', 'qsetname')
         utils.initailize_form_fields(self)
-
 
 class SchdTaskFormJob(JobForm):
     ASSIGNTO_CHOICES   = [('PEOPLE', 'People'), ('GROUP', 'Group')]
@@ -258,7 +244,6 @@ class SchdTaskFormJob(JobForm):
             return _time * 24 * 60
         else:
             return _time            
-
 
 
 

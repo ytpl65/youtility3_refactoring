@@ -25,13 +25,11 @@
 #         User.objects.create_user(username = username, email = email, password = password)
 #     return f'{total} random users created with success!'
 
-
 # @app.task(bind = True, default_retry_delay = 300, max_retries = 5)
 # def add(self, x, y):
 #     import time
 #     time.sleep(10)
 #     return x+y
-
 
 # @app.task(bind = True, default_retry_delay = 300, max_retries = 5)
 # def perform_facerecognition_bgt(self, pelogid, peopleid, ownerid, home_dir, uploadfile, db='default'):
@@ -83,7 +81,7 @@
 #             model = get_model_or_form(tablename)
 #         else:
 #             data = [file]
-#         #ic(data)
+#         # ic(data)
 #         model = get_model_or_form(tablename)
 #         try:
 #             with transaction.atomic(using = utils.get_current_db_name()):
@@ -101,7 +99,6 @@
 #         msg, rc, traceback = Messages.INSERT_FAILED, 1, tb.format_exc()
 #     return  ServiceOutputType(rc = rc, recordcount = recordcount, msg = msg, traceback = traceback)
 
-
 # @app.task(bind = True, default_retry_delay = 300, max_retries = 5)
 # def perform_tasktourupdate_bgt(file, request, db='default'):
 #     log.info("perform_tasktourupdate [start]")
@@ -110,7 +107,7 @@
 
 #     try:
 #         data = get_json_data(file)
-#         #ic(data)
+#         # ic(data)
 #         for record in data:
 #             details = record.pop('details')
 #             jobneed = record
@@ -127,11 +124,10 @@
 #         rc, traceback, msg = 1, tb.format_exc(), Messages.UPLOAD_FAILED
 #     return ServiceOutputType(rc = rc, msg = msg, recordcount = recordcount, traceback = traceback)
 
-
 # def update_record(details, jobneed, Jn, Jnd, db):
 #     alerttype = 'OBSERVATION'
 #     record = clean_record(jobneed)
-#     #ic(record)
+#     # ic(record)
 #     try:
 #         with transaction.atomic(using = utils.get_current_db_name()):
 #             instance = Jn.objects.get(uuid = record['uuid'])
@@ -141,13 +137,12 @@
 #             else: log.error(f"something went wrong!\n{jn_parent_serializer.errors} ", exc_info = True )
 #             isJndUpdated = update_jobneeddetails(details, Jnd, db)
 #             if isJnUpdated and  isJndUpdated:
-#                 #utils.alert_email(input.jobneedid, alerttype)
+#                 # utils.alert_email(input.jobneedid, alerttype)# # 
 #                 #TODO send observation email
 #                 #TODO send deviation mail
 #                 return True
 #     except Exception:
 #         raise
-
 
 # def update_jobneeddetails(jobneeddetails, Jnd, db):
 #     if jobneeddetails:
@@ -159,7 +154,6 @@
 #             if jnd_ser.is_valid(): jnd_ser.save(using = db)
 #             updated += 1
 #         if len(jobneeddetails) == updated: return True 
-
 
 # @app.task(bind = True, default_retry_delay = 300, max_retries = 5)
 # def perform_reportmutation_bgt(file, db='default'):
@@ -177,7 +171,7 @@
 #                             jn_parent_serializer = sz.JobneedSerializer(data = clean_record(jobneed_parent_post_data))
 #                             rc,  traceback, msg = save_parent_childs(sz, jn_parent_serializer, child, Messages, db)
 #                             if rc == 0: recordcount += 1
-#                             #ic(recordcount)
+#                             # ic(recordcount)
 #                         else:
 #                             log.error(Messages.NODETAILS)
 #                             msg, rc = Messages.NODETAILS, 1
@@ -191,7 +185,6 @@
 
 
 
-
 # def save_parent_childs(sz, jn_parent_serializer, child, M, db):
 #     log.info("save_parent_childs ............start")
 #     try:
@@ -201,16 +194,16 @@
 #             parent = jn_parent_serializer.save(using = db)
 #             allsaved = 0
 #             for ch in child:
-#                 #ic(ch, type(child))
+#                 # ic(ch, type(child))
 #                 details = ch.pop('details')
-#                 #ic(details, type(details))
+#                 # ic(details, type(details))
 #                 ch.update({'parent_id':parent.id})
 #                 child_serializer = sz.JobneedSerializer(data = clean_record(ch))
 
 #                 if child_serializer.is_valid():
 #                     child_instance = child_serializer.save(using = db)
 #                     for dtl in details:
-#                         #ic(dtl, type(dtl))
+#                         # ic(dtl, type(dtl))
 #                         dtl.update({'jobneed_id':child_instance.id})
 #                         ch_detail_serializer = sz.JndSerializers(data = clean_record(dtl))
 #                         if ch_detail_serializer.is_valid():

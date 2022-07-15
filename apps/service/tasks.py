@@ -15,7 +15,6 @@ from intelliwiz_config.celery import app
 from celery.utils.log import get_task_logger
 log = get_task_logger(__name__)
 
-
 def insertrecord(record, tablename):
     try:
         if model := get_model_or_form(tablename):
@@ -29,7 +28,6 @@ def insertrecord(record, tablename):
     except Exception as e:
         log.error("something went wrong", exc_info = True)
         raise e
-
 
 
 def get_model_or_form(tablename):
@@ -53,7 +51,6 @@ def get_model_or_form(tablename):
         case _:
             return None
 
-
 def get_or_create_dir(path):
     try:
         import os
@@ -65,7 +62,6 @@ def get_or_create_dir(path):
     except Exception:
         raise
 
-
 def write_file_to_dir(filebuffer, uploadedfile):
     from django.core.files.base import ContentFile
     from django.core.files.storage import default_storage
@@ -76,7 +72,6 @@ def write_file_to_dir(filebuffer, uploadedfile):
         log.info(f'here is path of that file: {path}')
     except Exception:
         raise
-
 
 
 
@@ -99,7 +94,6 @@ class Messages(AM):
     UPLOAD_SUCCESS  = 'Uploaded Successfully!'
 
 
-
 def insertrecord_from_tablename(record, tablename, db):
     log.info(f"insertrecord_from_tablename started tablename:{tablename} db:{db}")
     try:
@@ -113,7 +107,6 @@ def insertrecord_from_tablename(record, tablename, db):
     except Exception as e:
         log.error("something went wrong!", exc_info = True)
         raise e
-
 
 # @app.task(bind = True, default_retry_delay = 300, max_retries = 5)
 # def substract(x, y):
@@ -142,18 +135,16 @@ def call_service_based_on_filename(data, filename, db='default'):
 
 
 
-
-
 def perform_uploadattachment(file, tablename, record, biodata):
     rc, traceback, resp = 0,  'NA', 0
     recordcount = msg = None
-    #ic(file, tablename, record, type(record), biodata, type(biodata))
+    # ic(file, tablename, record, type(record), biodata, type(biodata))
     log.info('perform_uploadattachment [start +]')
     try:
         import os
 
         file_buffer = file
-        #ic(file_buffer, type(file_buffer))
+        # ic(file_buffer, type(file_buffer))
         filename = biodata['filename']
         pelogid = biodata['pelog_id']
         peopleid = biodata['people_id']
@@ -173,7 +164,7 @@ def perform_uploadattachment(file, tablename, record, biodata):
             resp = insertrecord_from_tablename(record, tablename, db)
             rc, traceback, msg = 0, tb.format_exc(), Messages.UPLOAD_SUCCESS
             recordcount = 1
-        #from apps.activity.tasks import perform_facerecognition
+        # from apps.activity.tasks import perform_facerecognition
         results = perform_facerecognition_bgt.delay(pelogid, peopleid, resp, home_dir, uploadfile, db)
         log.warn(f"face recognition status {results.state}")
 
@@ -183,7 +174,6 @@ def perform_uploadattachment(file, tablename, record, biodata):
 
     log.info(f'rc:{rc}, msg:{msg}, traceback:{traceback}, returncount:{recordcount}')
     return ServiceOutputType(rc = rc, recordcount = recordcount, msg = msg, traceback = traceback)
-
 
 
 @app.task(bind = True, default_retry_delay = 300, max_retries = 5)
@@ -230,14 +220,13 @@ def perform_insertrecord_bgt(self, data, request = None, filebased = True, db='d
     log.info(f'rc:{rc}, msg:{msg}, traceback:{traceback}, returncount:{recordcount}')
     return  ServiceOutputType(rc = rc, recordcount = recordcount, msg = msg, traceback = traceback)
 
-
 def save_linestring_and_update_pelrecord(obj):
     from django.contrib.gis.geos import LineString
     try:
         bet_objs = Tracking.objects.filter(reference = obj.uuid)
         line = [[coord for coord in obj.gpslocation] for obj in bet_objs]
         ls = LineString(line, srid = 4326)
-        #transform spherical mercator projection system
+        # transform spherical mercator projection system
         ls.transform(3857)
         d = round(ls.length / 1000)
         obj.distance = d
@@ -253,7 +242,7 @@ def get_json_data(file):
     import gzip
     import json
     try:
-        #ic((file, type(file))
+        # ic((file, type(file))
         with gzip.open(file, 'rb') as f:
             s = f.read().decode('utf-8')
             s = s.replace("'", "")
@@ -261,7 +250,6 @@ def get_json_data(file):
     except Exception as e:
         log.error("File unzipping error", exc_info = True)
     return None, None
-
 
 def print_json_data(file):
     import gzip
@@ -274,11 +262,10 @@ def print_json_data(file):
     except Exception as e:
         log.error("json print error", exc_info= True)
 
-
 def update_record(details, jobneed, Jn, Jnd, db):
     alerttype = 'OBSERVATION'
     record = clean_record(jobneed)
-    #ic((record)
+    # ic((record)
     try:
         log.info(f"from function update_record() the router is connected to db {db}")
         instance = Jn.objects.get(uuid = record['uuid'])
@@ -289,14 +276,13 @@ def update_record(details, jobneed, Jn, Jnd, db):
         else: log.error(f"something went wrong!\n{jn_parent_serializer.errors} ", exc_info = True )
         isJndUpdated = update_jobneeddetails(details, Jnd, db)
         if isJnUpdated and  isJndUpdated:
-            #utils.alert_email(input.jobneedid, alerttype)
+            # utils.alert_email(input.jobneedid, alerttype)# # 
             #TODO send observation email
             #TODO send deviation mail
             return True
     except Exception:
         log.error('something went wrong', exc_info= True)
         raise
-
 
 def update_jobneeddetails(jobneeddetails, Jnd, db):
     try:
@@ -317,7 +303,6 @@ def update_jobneeddetails(jobneeddetails, Jnd, db):
         raise
 
 
-
 @app.task(bind = True, default_retry_delay = 300, max_retries = 5)
 def perform_tasktourupdate_bgt(self, data, request = None, db='default'):
     log.info("perform_tasktourupdate [start]")
@@ -325,7 +310,7 @@ def perform_tasktourupdate_bgt(self, data, request = None, db='default'):
     instance, msg = None, ""
 
     try:
-        #ic((data)
+        # ic((data)
         for record in data:
             details = record.pop('details')
             jobneed = record
@@ -344,7 +329,6 @@ def perform_tasktourupdate_bgt(self, data, request = None, db='default'):
         rc, traceback, msg = 1, tb.format_exc(), Messages.UPLOAD_FAILED
     log.info(f'rc:{rc}, msg:{msg}, traceback:{traceback}, returncount:{recordcount}')
     return ServiceOutputType(rc = rc, msg = msg, recordcount = recordcount, traceback = traceback)
-
 
 
 @app.task(bind = True, default_retry_delay = 300, max_retries = 5)
@@ -380,7 +364,6 @@ def perform_reportmutation_bgt(self, data, db='default'):
     return ServiceOutputType(rc = rc, recordcount = recordcount, msg = msg, traceback = traceback)
 
 
-
 def save_parent_childs(sz, jn_parent_serializer, child, M, db):
     log.info("save_parent_childs ............start")
     try:
@@ -390,9 +373,9 @@ def save_parent_childs(sz, jn_parent_serializer, child, M, db):
             parent = jn_parent_serializer.save()
             allsaved = 0
             for ch in child:
-                #ic((ch, type(child))
+                # ic((ch, type(child))
                 details = ch.pop('details')
-                #ic((details, type(details))
+                # ic((details, type(details))
                 ch.update({'parent_id':parent.id})
                 child_serializer = sz.JobneedSerializer(data = clean_record(ch))
 
@@ -400,7 +383,7 @@ def save_parent_childs(sz, jn_parent_serializer, child, M, db):
                     child_instance = child_serializer.save()
                     log.info(f'child instance saved its pk is {child_instance.id}')
                     for dtl in details:
-                        #ic((dtl, type(dtl))
+                        # ic((dtl, type(dtl))
                         dtl.update({'jobneed_id':child_instance.id})
                         ch_detail_serializer = sz.JndSerializers(data = clean_record(dtl))
                         if ch_detail_serializer.is_valid():
@@ -425,7 +408,6 @@ def save_parent_childs(sz, jn_parent_serializer, child, M, db):
     except Exception:
         log.error("something went wrong",exc_info = True)
         raise
-
 
 @app.task(bind = True, default_retry_delay = 300, max_retries = 5)
 def perform_facerecognition_bgt(self, pelogid, peopleid, ownerid, home_dir, uploadfile, db='default'):
@@ -459,7 +441,6 @@ def perform_facerecognition_bgt(self, pelogid, peopleid, ownerid, home_dir, uplo
         self.retry(e)
         raise
 
-
 @app.task(bind = True, default_retry_delay = 300, max_retries = 5)
 def perform_adhocmutation_bgt(self, data, db='default'):
     rc, recordcount, traceback, msg= 0, 0, 'NA', ""
@@ -475,7 +456,7 @@ def perform_adhocmutation_bgt(self, data, db='default'):
                 utils.set_db_for_router(db)
                 log.info(f'router is connected to db:{db}')
                 if jobneedrecord['asset_id'] ==  1:
-                    #then it should be NEA
+                    # then it should be NEA
                     assetobjs = Asset.objects.filter(bu_id = jobneedrecord['bu_id'],
                                     assetcode = jobneedrecord['remarks'])
                     jobneedrecord['asset_id']= 1 if assetobjs.count()  !=  1 else assetobjs[0].id
@@ -483,7 +464,7 @@ def perform_adhocmutation_bgt(self, data, db='default'):
                 args = [jobneedrecord['plandatetime'], jobneedrecord['bu_id'], jobneedrecord['people_id'], jobneedrecord['asset_id'], jobneedrecord['qset_id']]
                 scheduletask = utils.runrawsql(sqlQuery, args, db = db)
 
-                #have to update to scheduled task
+                # have to update to scheduled task
                 if(len(scheduletask) > 0):
                     jnid = scheduletask[0]['jobneedid']
                     recordcount += 1
@@ -509,7 +490,7 @@ def perform_adhocmutation_bgt(self, data, db='default'):
                     msg = "Scheduled Record (ADHOC) updated successfully!"
                     log.info(f'{msg}')
 
-                #have to insert/create to adhoc task
+                # have to insert/create to adhoc task
                 else:
                     record = clean_record(jobneedrecord)
                     jnsz = sz.JobneedSerializer(data = record)
@@ -528,9 +509,9 @@ def perform_adhocmutation_bgt(self, data, db='default'):
                     else:
                         rc, traceback = 1, jnsz.errors
                     if jobneedrecord['attachmentcount'] == 0:
-                        #TODO send_email for ADHOC 
+                        # TODO send_email for ADHOC 
                         pass
-            #TODO send_email for Observation
+            # TODO send_email for Observation
 
     except utils.NoDataInTheFileError as e:
         rc, traceback = 1, tb.format_exc()

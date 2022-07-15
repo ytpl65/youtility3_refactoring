@@ -20,7 +20,6 @@ class PeopleManager(BaseUserManager):
         user.save(using = self._db)
         return user
 
-
     def create_superuser(self, loginid, password = None, **extra_fields):
         if password is None:
             raise TypeError("Super users must have a password.")
@@ -42,10 +41,8 @@ class PeopleManager(BaseUserManager):
     def update_deviceid(self, deviceid, peopleid):
         return self.filter(id = peopleid).update(deviceid = deviceid)
 
-
     def reset_deviceid(self, peopleid):
         return self.filter(id = peopleid).update(deviceid = "-1")
-
 
     def get_people_modified_after(self, mdtz, siteid):
         """
@@ -61,7 +58,6 @@ class PeopleManager(BaseUserManager):
         qset = self.filter(bu_id = siteid, client_id = clientid).values_list('mobno', flat = True).exclude(mobno = None)
         return qset or self.none()
 
-
     def get_emergencyemails(self, siteid, clientid):
         "returns emails of people with given assigned siteid"
         qset = self.filter(bu_id = siteid, client_id = clientid).values_list('email', flat = True)
@@ -69,12 +65,10 @@ class PeopleManager(BaseUserManager):
 
 
 
-
 class CapabilityManager(models.Manager):
     use_in_migrations = True
     def get_webparentdata(self):
         return self.filter(cfor= self.pm.Capability.Cfor.WEB, parent__capscode='NONE')
-
 
     def get_mobparentdata(self):
 
@@ -88,8 +82,6 @@ class CapabilityManager(models.Manager):
 
     def get_child_data(self, parent, cfor):
         return self.filter(cfor = cfor, parent__capscode = parent) if parent else None
-
-
 
 
 
@@ -113,7 +105,6 @@ class PgblngManager(models.Manager):
         ).values('buname', 'buid')
         ic(qset)
         return qset or self.none()
-
 
 
 
@@ -149,7 +140,6 @@ class PgroupManager(models.Manager):
                 identifier__tacode = "PEOPLEGROUP").values(
                     *self.fields)
         return qset or None
-
 
     def list_view_sitegrp(self, R):
         from apps.core import utils

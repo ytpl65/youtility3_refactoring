@@ -16,7 +16,6 @@ logger = logging.getLogger('django')
 
 # Create your models here.
 
-
 def peoplejson():
     return {
         "andriodversion"           : "",
@@ -64,20 +63,19 @@ class SecureString(CharField):
     """Custom Encrypted Field"""
 
     def from_db_value(self, value, expression, connection):
-        #from .utils import decrypt
+        # from .utils import decrypt
         if value != "":
             return value
             # return decrypt(value)
 
     def get_prep_value(self, value):
-        #from .utils import encrypt
+        # from .utils import encrypt
         if value != "":
             return value
             # return encrypt(value)
 
 def now():
     return timezone.now().replace(microsecond = 0)
-
 
 ### Base Model, ALl other models inherit this model properties ###
 class BaseModel(models.Model):
@@ -90,7 +88,6 @@ class BaseModel(models.Model):
     class Meta:
         abstract = True
         ordering = ['mdtz']
-
 
 ############## People Table ###############
 class People(AbstractBaseUser, PermissionsMixin, TenantAwareModel, BaseModel):
@@ -147,7 +144,6 @@ class People(AbstractBaseUser, PermissionsMixin, TenantAwareModel, BaseModel):
     def get_absolute_wizard_url(self):
         return reverse("peoples:wiz_people_update", kwargs={"pk": self.pk})
 
-
 ############## Pgroup Table ###############
 class PermissionGroup(Group):
     class Meta:
@@ -155,9 +151,8 @@ class PermissionGroup(Group):
         verbose_name = _('permissiongroup')
         verbose_name_plural = _('permissiongroups')
 
-
 class Pgroup(BaseModel, TenantAwareModel):
-    #id= models.BigIntegerField(_("Groupid"), primary_key = True, auto_created=)
+    # id= models.BigIntegerField(_("Groupid"), primary_key = True, auto_created=)
     groupname  = models.CharField(_('Name'), max_length = 250)
     enable     = models.BooleanField(_('Enable'), default = True)
     identifier = models.ForeignKey('onboarding.TypeAssist', null = True, blank = True, on_delete = models.RESTRICT, related_name="pgroup_idfs")
@@ -184,10 +179,9 @@ class Pgroup(BaseModel, TenantAwareModel):
     def get_absolute_wizard_url(self):
         return reverse("peoples:wiz_pgropup_update", kwargs={"pk": self.pk})
 
-
 ############## Pgbelonging Table ###############
 class Pgbelonging(BaseModel, TenantAwareModel):
-    #id      = models.BigIntegerField(_("Pgbid"), primary_key = True)
+    # id      = models.BigIntegerField(_("Pgbid"), primary_key = True)
     pgroup      = models.ForeignKey('Pgroup', null = True, blank = True, on_delete = models.RESTRICT, related_name="pgbelongs_grps")
     people      = models.ForeignKey(settings.AUTH_USER_MODEL, null = True, blank = True, on_delete = models.RESTRICT,  related_name="pgbelongs_peoples")
     isgrouplead = models.BooleanField(_('Group Lead'), default = False)
@@ -209,7 +203,6 @@ class Pgbelonging(BaseModel, TenantAwareModel):
     def __str__(self) -> str:
         return str(self.id)
 
-
 ############## Capability Table ###############
 class Capability(BaseModel, TenantAwareModel):
     class Cfor(models.TextChoices):
@@ -218,7 +211,7 @@ class Capability(BaseModel, TenantAwareModel):
         REPORT  = ('REPORT', 'REPORT')
         MOB     = ('MOB', 'MOB')
 
-    #id   = models.BigIntegerField(_(" Cap Id"), primary_key = True)
+    # id   = models.BigIntegerField(_(" Cap Id"), primary_key = True)
     capscode = models.CharField(_('Code'), max_length = 50)
     capsname = models.CharField(_('Capability'), max_length = 1000, default = None, blank = True, null = True)
     parent   = models.ForeignKey('self', on_delete = models.RESTRICT,  null = True, blank = True, related_name='children', verbose_name="Belongs_to")

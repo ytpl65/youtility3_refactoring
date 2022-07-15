@@ -12,12 +12,10 @@ import logging
 
 log = logging.getLogger('__main__')
 
-
 def save_people_passwd(user):
     log.info('Password is created by system... DONE')
     paswd = f'{user.loginid}@youtility'
     user.set_password(paswd)
-
 
 # Register your models here
 class PeopleResource(resources.ModelResource, BaseFieldSet2):
@@ -89,7 +87,6 @@ class PeopleResource(resources.ModelResource, BaseFieldSet2):
         utils.save_common_stuff(self.request, instance)
         save_people_passwd(instance)
 
-
 @admin.register(People)
 class PeopleAdmin(ImportExportModelAdmin):
     resource_class = PeopleResource
@@ -120,7 +117,6 @@ class PeopleAdmin(ImportExportModelAdmin):
         return pm.People.objects.select_related(
             'peopletype', 'cuser', 'muser', 'client', 'bu').all()
 
-
 class PgroupResource(resources.ModelResource, BaseFieldSet2):
 
     identifier = fields.Field(
@@ -136,7 +132,6 @@ class PgroupResource(resources.ModelResource, BaseFieldSet2):
         fields = ['name', 'enable', 'identifier',
                   'bu', 'client', 'cuser', 'muser']
 
-
 @admin.register(Pgroup)
 class PgroupAdmin(ImportExportModelAdmin):
     resource_class = PgroupResource
@@ -145,7 +140,6 @@ class PgroupAdmin(ImportExportModelAdmin):
     list_display = ['id', 'groupname',
                     'enable', 'identifier', 'client', 'bu']
     list_display_links = ['groupname', 'enable', 'identifier']
-
 
 class PgbelongingResource(resources.ModelResource, BaseFieldSet2):
     pgroup = fields.Field(
@@ -166,7 +160,6 @@ class PgbelongingResource(resources.ModelResource, BaseFieldSet2):
         fields = ['pgroup', 'people', 'isgrouplead',
                   'assignsites', 'client', 'bu', 'cuser', 'muser']
 
-
 @admin.register(Pgbelonging)
 class PgbelongingAdmin(ImportExportModelAdmin):
     resource_class = PgbelongingResource
@@ -175,7 +168,6 @@ class PgbelongingAdmin(ImportExportModelAdmin):
     list_display = ['id', 'pgroup', 'people',
                     'isgrouplead', 'assignsites', 'bu']
     list_display_links = ['pgroup', 'people']
-
 
 class CapabilityResource(resources.ModelResource, BaseFieldSet2):
 
@@ -193,7 +185,6 @@ class CapabilityResource(resources.ModelResource, BaseFieldSet2):
                   'parent', 'cuser', 'muser', 'client', 'bu', 'tenant')
 
 
-
     def __init__(self, *args, **kwargs):
         self.request = kwargs.pop('request', None)
         super(CapabilityResource, self).__init__(*args, **kwargs)
@@ -204,7 +195,6 @@ class CapabilityResource(resources.ModelResource, BaseFieldSet2):
 
 
 
-
 @admin.register(Capability)
 class CapabilityAdmin(ImportExportModelAdmin):
     resource_class = CapabilityResource
@@ -212,7 +202,6 @@ class CapabilityAdmin(ImportExportModelAdmin):
     list_display = ['capscode', 'capsname', 'enable', 'cfor', 'parent',
                     'cdtz', 'mdtz', 'cuser', 'muser']
     list_display_links = ['capscode', 'capsname']
-
 
 
     def get_resource_kwargs(self, request, *args, **kwargs):

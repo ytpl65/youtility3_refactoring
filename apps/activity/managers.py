@@ -28,7 +28,6 @@ class QuestionSetManager(models.Manager):
             *related).filter(enable = True, type='SITEREPORTTEMPLATE').values(*fields)
         return qset or self.none()
 
-
 class QuestionManager(models.Manager):
     use_in_migrations = True
     fields = ['id', 'quesname', 'options', 'min', 'max', 'alerton', 'answertype', 'muser_id', 'cdtz', 'mdtz',
@@ -47,7 +46,6 @@ class QuestionManager(models.Manager):
                     'id', 'text', 'answertype')
         return qset or self.none()
 
-
 class JobneedManager(models.Manager):
     use_in_migrations = True
 
@@ -61,13 +59,11 @@ class JobneedManager(models.Manager):
         mdtzinput = mdtz if (isinstance(mdtz, datetime)) else datetime.strptime(mdtz, "%Y-%m-%d %H:%M:%S")
         return self.raw("select * from fn_getjobneedmodifiedafter('%s', %s, %s) as id", [mdtzinput, peopleid, siteid]) or self.none()
 
-
     def get_jobneed_observation(self, pk):
         qset = self.select_related('people', 'asset', 'bu', 'identifier').filter(
             alerts = True, id = pk
         )
         return qset or self.none()
-
 
     def get_jobneed_for_report(self,pk):
         qset = self.raw(    
@@ -127,7 +123,6 @@ class JobneedManager(models.Manager):
         )
         return qset or self.none()
 
-
     def get_adhoctasks_listview(self, R, task = True):
         idf = 'TASK' if task else 'TOUR'
         qobjs, dir,  fields, length, start = utils.get_qobjs_dir_fields_start_length(R)
@@ -144,7 +139,6 @@ class JobneedManager(models.Manager):
             return total, fcount, filteredqset
         qset = qset[start:start+length]
         return total, total, qset
-
 
     def get_last10days_jobneedtasks(self, related, fields, session):
         dt  = datetime.now(tz = timezone.utc) - timedelta(days = 10)
@@ -170,7 +164,6 @@ class AttachmentManager(models.Manager):
         ic(qset)
         return qset[0] or self.none()
 
-
     def get_attachment_record(self, id, db):
         qset =  self.filter(
             ~Q(filename__endswith = '.csv'),
@@ -183,7 +176,6 @@ class AttachmentManager(models.Manager):
             ).using(db)
         print("qset values@@@@@@@@@@@@@@@@", qset)
         return qset or self.none()
-
 
 class AssetManager(models.Manager):
     use_in_migrations = True
@@ -205,7 +197,6 @@ class AssetManager(models.Manager):
 
     def get_schedule_task_for_adhoc(self, params):
         qset = self.raw("select * from fn_get_schedule_for_adho")
-
 
 
 
@@ -233,13 +224,11 @@ class JobneedDetailsManager(models.Manager):
         _mdtz = datetime.strptime(mdtz, "%Y-%m-%d %H:%M:%S")
         return self.filter(jobneed_id = jnid).update(muser_id = peopleid, answer = answer, mdtz = _mdtz)
 
-
     def get_jnd_observation(self, id):
         qset = self.select_related(
             'jobneed', 'question').filter(
                 jobneed_id = id).order_by('seqno')
         return qset or self.none()
-
 
 class QsetBlngManager(models.Manager):
     use_in_migrations = True
@@ -249,7 +238,6 @@ class QsetBlngManager(models.Manager):
     related = ['client', 'bu',  'question', 
               'qset', 'cuser', 'muser', ]
 
-
     def get_modified_after(self ,mdtz, buid):
         qset = self.select_related(
             *self.related).filter(
@@ -258,15 +246,12 @@ class QsetBlngManager(models.Manager):
                 )
         return qset or self.none()
 
-
 class TicketManager(models.Manager):
     use_in_migrations = True
 
 
-
 class JobManager(models.Manager):
     use_in_migrations: True
-
 
     def getgeofence(self, peopleid, siteid):
         from django.contrib.gis.db.models.functions import AsGeoJSON

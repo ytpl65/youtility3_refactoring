@@ -1,6 +1,5 @@
 {% extends "base_form.html" %}
 
-
 {% block extra_css %}
 {{ schdtourform.media.css }}
 <link rel="stylesheet" href="https://cdn.datatables.net/1.11.3/css/jquery.dataTables.min.css" type="text/css">
@@ -16,13 +15,11 @@
 {% endblock pagebreadcumb %}
 <!-------------------------- END PAGE BREADCUMB ------------------------->
 
-
 <!------ BEGIN FORM TITLE ------->
 {% block form_title %}
 Schedhule Tour
 {% endblock form_title %}
 <!------ END FORM TITLE -------->
-
 
 <!--------- BEGIN NON FIELD ERRORS -------->
 {% block nonfield_errors %}
@@ -36,7 +33,6 @@ Schedhule Tour
 {% endif %}
 {% endblock nonfield_errors %}
 <!---------- END NON FIELD ERRORS --------->
-
 
 
 {% block form %}
@@ -172,7 +168,6 @@ Schedhule Tour
         </div>
     </div>
 
-
     <div class="row mb-3 gy-3">
         <div class="col-md-2">
             <label for="{{ schdtourform.scantype.id_for_label }}"
@@ -294,7 +289,6 @@ Schedhule Tour
 </div>
 {% endblock form %}
 
-
 {% block popup_alerts %}
     {% call general_popup(popup_id = "cron_scheduler", title="Cron Scheduler", modal_size='modal-lg') %}
         <div class="modal-body">
@@ -316,7 +310,6 @@ Schedhule Tour
         </div>
     {% endcall %}
 {% endblock popup_alerts %}
-
 
 
 {% block ajax_page_actions %}
@@ -341,7 +334,6 @@ Schedhule Tour
     {% endif %}
 </div>
 {% endblock ajax_page_actions %}
-
 
 {% block extra_scripts %}
 {{ schdtourform.media.js }}
@@ -427,7 +419,6 @@ Schedhule Tour
         return false
     }
 
-
     function checkTourWoCheckpoints(table) {
 
         rows = table.rows().data().toArray()
@@ -495,7 +486,7 @@ Schedhule Tour
     //delete ajax request 
 	function isMainJobDeleted(id){ 
 		console.log("id ", id)
-		const params = {url:`${urlname}?action = delete&id=${id}`}
+		const params = {url:`${urlname}?action=formdelete&id=${id}`}
 		fire_ajax_get(params)
 		.done((data, status, xhr) => {
 			if(!xhr.status === 200){
@@ -524,7 +515,6 @@ Schedhule Tour
 			}
 		})
     }
-
 
     $(document).ready(() => {
         //set ctzoffset

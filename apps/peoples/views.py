@@ -30,7 +30,6 @@ logger = logging.getLogger('django')
 # Create your views here.
 #========================== Begin People View Classes ===========================#
 
-
 class SignIn(View):
     template_path = 'peoples/login.html'
     error_msgs = {
@@ -96,7 +95,6 @@ class SignIn(View):
             response = render(request, self.template_path, context = cxt)
         return response
 
-
 class SignOut(LoginRequiredMixin, View):
     def get(self, request, *args, **kwargs):
         response = None
@@ -110,7 +108,6 @@ class SignOut(LoginRequiredMixin, View):
                              'alert alert-danger')
             response = redirect('/dashboard')
         return response
-
 
 class ChangePeoplePassword(LoginRequiredMixin, View):
     template_path = 'peoples/people_form.html'
@@ -132,7 +129,6 @@ class ChangePeoplePassword(LoginRequiredMixin, View):
             response = JsonResponse({'res': form.errors,
                                      'status': 500})
         return response
-
 
 # @method_decorator(login_required, name='dispatch')
 class CreatePeople(LoginRequiredMixin, View):
@@ -170,7 +166,7 @@ class CreatePeople(LoginRequiredMixin, View):
                                                          'master/people/blank.png')
                     save_user_paswd(people)
                     send_email(people, request)
-                    #insert_people_attachment()
+                    # insert_people_attachment()
                     logger.info('People Form saved... DONE')
                     messages.success(request, "Success record saved DONE!",
                                      "alert alert-success")
@@ -191,7 +187,6 @@ class CreatePeople(LoginRequiredMixin, View):
                    'edit': True, 'ta_form': obf.TypeAssistForm(auto_id = False)}
             response = render(request, self.template_path, context = cxt)
         return response
-
 
 class RetrievePeoples(LoginRequiredMixin, View):
     template_path = 'peoples/people_list.html'
@@ -241,7 +236,6 @@ class RetrievePeoples(LoginRequiredMixin, View):
         except EmptyPage:
             people_list = paginator.page(paginator.num_pages)
         return {'people_list': people_list, 'people_filter': filterform}
-
 
 # update People instance
 class UpdatePeople(LoginRequiredMixin, View):
@@ -320,7 +314,6 @@ class UpdatePeople(LoginRequiredMixin, View):
             response = render(request, self.template_path, context = cxt)
         return response
 
-
 class DeletePeople(LoginRequiredMixin, View):
     template_path = 'peoples/people_form.html'
     form_class = PeopleForm
@@ -356,7 +349,6 @@ class DeletePeople(LoginRequiredMixin, View):
             response = render(request, self.template_path, context = cxt)
         return response
 #=========================== End People View Classes ==============================#
-
 
 #========================== Begin Pgroup View Classes ============================#
 
@@ -401,7 +393,6 @@ class CreatePgroup(LoginRequiredMixin, View):
             response = render(request, self.template_path, context = cxt)
         return response
 
-
 class RetrivePgroups(LoginRequiredMixin, View):
     template_path = 'peoples/pgroup_list.html'
     fields = ['id', 'groupname', 'enable']
@@ -445,7 +436,6 @@ class RetrivePgroups(LoginRequiredMixin, View):
         except EmptyPage:
             pgroup_list = paginator.page(paginator.num_pages)
         return {'pgroup_list': pgroup_list, 'pg_filter': filterform}
-
 
 class UpdatePgroup(LoginRequiredMixin, View):
     template_path = 'peoples/pgroup_form.html'
@@ -513,7 +503,6 @@ class UpdatePgroup(LoginRequiredMixin, View):
             response = render(request, self.template_path, context = cxt)
         return response
 
-
 class DeletePgroup(LoginRequiredMixin, View):
     form_class = PgroupForm
     template_path = 'peoples/pgroup_form.html'
@@ -549,7 +538,6 @@ class DeletePgroup(LoginRequiredMixin, View):
             response = render(request, self.template_path, context = cxt)
         return response
 #=========================== End Pgroup View Classes ==============================#
-
 
 #=========================== Begin  Capability View Classes ==============================#
 class CreateCapability(LoginRequiredMixin, View):
@@ -587,7 +575,6 @@ class CreateCapability(LoginRequiredMixin, View):
             cxt = {'cap_form': form, 'edit': True}
             response = render(request, self.template_path, context = cxt)
         return response
-
 
 class RetriveCapability(LoginRequiredMixin, View):
     template_path = 'peoples/capability_list.html'
@@ -634,7 +621,6 @@ class RetriveCapability(LoginRequiredMixin, View):
         except EmptyPage:
             cap_list = paginator.page(paginator.num_pages)
         return {'cap_list': cap_list, 'cap_filter': filterform}
-
 
 class UpdateCapability(LoginRequiredMixin, View):
     template_path = 'peoples/capability_form.html'
@@ -695,7 +681,6 @@ class UpdateCapability(LoginRequiredMixin, View):
             response = render(request, self.template_path, context = cxt)
         return response
 
-
 class DeleteCapability(LoginRequiredMixin, View):
     model = Capability
     template_path = 'peoples/capability_form.html'
@@ -733,10 +718,8 @@ class DeleteCapability(LoginRequiredMixin, View):
 
 #=========================== End Capability View Classes ==============================#
 
-
 def delete_master(request, params):
     pass
-
 
 class Capability(LoginRequiredMixin, View):
     params = {
@@ -829,7 +812,6 @@ class Capability(LoginRequiredMixin, View):
         except IntegrityError:
             return handle_intergrity_error("Capability")
 
-
 class PeopleView(LoginRequiredMixin, View):
     params = {
         'form_class': pf.PeopleForm,
@@ -917,7 +899,6 @@ class PeopleView(LoginRequiredMixin, View):
             return rp.JsonResponse(data, status = 200)
         except IntegrityError:
             return handle_intergrity_error('People')
-
 
 class PeopleGroup(LoginRequiredMixin, View):
     params = {
@@ -1008,7 +989,6 @@ class PeopleGroup(LoginRequiredMixin, View):
             return handle_intergrity_error("Pgroup")
 
 
-
 class SiteGroup(LoginRequiredMixin, View):
     params = {
         'form_class'   : pf.SiteGroupForm,
@@ -1025,7 +1005,7 @@ class SiteGroup(LoginRequiredMixin, View):
         # first load the template
         if R.get('template'): return render(request, self.params['template_list'])
 
-        #for list view of group
+        # for list view of group
         if R.get('action') == 'list':
             total, filtered, objs = pm.Pgroup.objects.list_view_sitegrp(R)
             logger.info('SiteGroup objects %s retrieved from db' %(total or "No Records!"))
@@ -1038,7 +1018,7 @@ class SiteGroup(LoginRequiredMixin, View):
             })
             return resp
 
-        #to populate all sites table
+        # to populate all sites table
         elif R.get('action', None) == 'allsites':
             objs, idfs  = Bt.objects.get_bus_idfs(R, R['sel_butype'])
 
@@ -1056,15 +1036,14 @@ class SiteGroup(LoginRequiredMixin, View):
             })
             return resp
 
-        #form without instance to create new data
+        # form without instance to create new data
         elif R.get('action', None) == 'form':
-            #options = self.get_options()
+            # options = self.get_options()
             cxt = {'sitegrpform': self.params['form_class'](request = request),
                    'msg': "create site group requested"}
             return render(request, self.params['template_form'], context = cxt)
 
-
-        #form with instance to load existing data
+        # form with instance to load existing data
         elif R.get('id', None):
             obj = utils.get_model_obj(int(R['id']), request, self.params)
             sites = pm.Pgbelonging.objects.filter(
@@ -1081,7 +1060,6 @@ class SiteGroup(LoginRequiredMixin, View):
             obj = utils.get_model_obj(R['id'])
             pm.Pgbelonging.objects.filter(pgroup_id = obj.id).delete()
             return rp.JsonResponse(data = None, status = 200)
-
 
     def post(self, request, *args, **kwargs):
         import json
@@ -1105,7 +1083,6 @@ class SiteGroup(LoginRequiredMixin, View):
         except Exception:
             resp = utils.handle_Exception(request)
         return resp
-
 
     def handle_valid_form(self, form, assignedSites, request):
         logger.info('pgroup form is valid')
@@ -1137,8 +1114,6 @@ class SiteGroup(LoginRequiredMixin, View):
                 putils.save_userinfo(pgb, request.user, request.session)
         except Exception as e:
             raise
-
-
 
 
 

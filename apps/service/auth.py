@@ -11,7 +11,6 @@ class Messages:
     WRONGCREDS     = "Incorrect Username or Password"
     NOTREGISTERED  = "Device Not Registered"
 
-
 def LoginUser(response, request):
     if response['isauthenticated']:
         People.objects.filter(
@@ -26,7 +25,6 @@ def LogOutUser(response, request):
                 deviceid = -1
             )
         ic(request.user)
-
 
 
 def auth_check(info, input, returnUser, uclientip = None):
@@ -53,14 +51,13 @@ def auth_check(info, input, returnUser, uclientip = None):
         else:
             if input.deviceid not in people_validimeis: isValidDevice = False
             isAuth  = False
-            #raise GraphQLError(Messages.MULTIDEVICES)
+            # raise GraphQLError(Messages.MULTIDEVICES)
             allowAccess = True
         if allowAccess:
             if user.client.enable and user.enable:
                 return returnUser(user, info.context), user
             else:
                 raise GraphQLError(Messages.NOCLIENTPEOPLE)
-
 
 def authenticate_user(input, request, msg, returnUser):
     loginid = input.loginid
@@ -73,7 +70,6 @@ def authenticate_user(input, request, msg, returnUser):
     user = authenticate(request, username = loginid, password = password)
     if not user: raise GraphQLError(msg.WRONGCREDS)
     valid_imeis = user.client.bupreferences["validimei"].replace(" ", "").split(",")
-
 
     if not user:
         raise GraphQLError(msg.WRONGCREDS)

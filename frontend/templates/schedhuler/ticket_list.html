@@ -1,6 +1,5 @@
 {% extends "base_list.html" %}
 
-
 <!---- BEGIN CARD TITLE ------>
 {% block card_title %}
 Ticket List
@@ -16,7 +15,6 @@ Ticket List
 <li class="breadcrumb-item pe-3"><a href="javascript:void(0)" class="pe-3">Ticket List</a></li>
 {% endblock pagebreadcumb %}
 <!------------------------------------- END PAGE BREADCUMBS ------------------------------------->
-
 
 <!-------------------------------------------- BEGIN TABLE ------------------------------------------->
 {% block table %}
@@ -72,7 +70,6 @@ Ticket List
 {% endif %}
 {% endblock table %}
 <!-------------------------------------------- END TABLE ------------------------------------------->
-
 
 {% block extra_scripts %}
 <script>
@@ -130,7 +127,6 @@ Ticket List
 
         $(`${table_id} thead tr:eq(1)`).css(styles)
 		//END STYLING DATATABLE
-
 
     })
 </script>

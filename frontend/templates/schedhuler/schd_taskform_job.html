@@ -1,6 +1,5 @@
 {% extends "base_form.html" %}
 
-
 {% block extra_css %}
 {{ schdtaskform.media.css }}
 <link rel="stylesheet" href="{{ static('assets/css/jqCron.css') }}" type="text/css">
@@ -10,18 +9,16 @@
 {% block pagebreadcumb %}
 <!--will call parent contents -->
 {{ super() }}
-<li class="breadcrumb-item pe-3"><a href="{{ url('schedhuler:jobschdtasks') }}?template = true" class="pe-3">Schedhuled Tasks</a></li>
+<li class="breadcrumb-item pe-3"><a href="{{ url('schedhuler:jobschdtasks') }}?template=true" class="pe-3">Schedhuled Tasks</a></li>
 <li class="breadcrumb-item pe-3"><a href="javascript:void(0)" class="pe-3">Schedhule Task Form</a></li>
 {% endblock pagebreadcumb %}
 <!-------------------------- END PAGE BREADCUMB ------------------------->
-
 
 <!------ BEGIN FORM TITLE ------->
 {% block form_title %}
 Schedhule Task
 {% endblock form_title %}
 <!------ END FORM TITLE -------->
-
 
 <!--------- BEGIN NON FIELD ERRORS -------->
 {% block nonfield_errors %}
@@ -35,7 +32,6 @@ Schedhule Task
     {% endif %}
 {% endblock nonfield_errors %}
 <!---------- END NON FIELD ERRORS --------->
-
 
 {% block form %}
 <form action="{{ url('schedhuler:create_task') }}" method="post" id="schdtaskform">
@@ -241,7 +237,6 @@ Schedhule Task
 
 {% endblock form %}
 
-
 {% block popup_alerts %}
     {% call general_popup(popup_id = "cron_scheduler", title="Cron Scheduler <i class='fas fa-clock'></i>", modal_size='modal-lg') %}
         <div class="modal-body">
@@ -262,7 +257,6 @@ Schedhule Task
         </div>
     {% endcall %}
 {% endblock popup_alerts %}
-
 
 {% block ajax_page_actions %}
 <div class="form-actions">
@@ -286,7 +280,6 @@ Schedhule Task
     {% endif %}
 </div>
 {% endblock ajax_page_actions %}
-
 
 {% block extra_scripts %}
 {{ schdtaskform.media.js }}
@@ -315,26 +308,26 @@ Schedhule Task
   	    $("#id_ctzoffset").val(-new Date().getTimezoneOffset())
         formSaved = true
         //toggle people and pgroup field based on radio button value
-        if ('{{schdtaskform.instance.id}}' in ('None' || "")) {
+        if ('{{schdtaskform.instance.id}}' in ['None' || ""]) {
             showHideSelectField('PEOPLE')
         }else{
-            var assignto = '{{schdtaskform.instance.people}}' == ('None' || "") ? "GROUP" : "PEOPLE"
+            var assignto = '{{schdtaskform.instance.people}}' in ['None' || ""] ? "GROUP" : "PEOPLE"
             showHideSelectField(assignto)
         }
 
         //hide the delete button when instance is not saved yet.
-        if ('{{schdtaskform.instance.id}}' == ('None' || "")) {
+        if ('{{schdtaskform.instance.id}}' in ['None', ""]) {
             $("#btn_del").hide()
         }
 
         //ADD CALENDER TO DATE FIELDS WITH FLAT-PICKR PLUGIN
-        /*$("#id_from_date, #id_upto_date").flatpickr({
+        $("#id_fromdate, #id_uptodate").flatpickr({
             enableTime: true,
             time_24hr: true,
-            dateFormat: 'd-M-Y H:S'
-        })*/
+            dateFormat: 'd-M-Y H:i'
+        })
 
-        initDatetimes("#id_from_date, #id_upto_date");
+        //initDatetimes("#id_fromdate, #id_uptodate");
 
         //after cron set hide the modal
         $("#btnSetCron").click(function(){
@@ -376,7 +369,6 @@ Schedhule Task
             }
             $('#cron_scheduler').modal('show');
         });
-
 
         //on submit form post request
         $("#schdtaskform").submit((e) => {

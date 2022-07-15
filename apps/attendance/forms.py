@@ -32,7 +32,6 @@ class AttendanceForm(forms.ModelForm):
             'peventtype'  : s2forms.Select2Widget,
         }
 
-
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         utils.initailize_form_fields(self)
@@ -56,7 +55,6 @@ def clean_geometry(val):
     except ValueError as e:
         raise forms.ValidationError('lat lng string input unrecognized!') from e
     else: return val
-
 
 class ConveyanceForm(forms.ModelForm):
     required_css_class = "required"
@@ -82,7 +80,6 @@ class ConveyanceForm(forms.ModelForm):
             'punchintime': 'Start Time',
             'punchouttime': 'End Time',
             'distance': 'Distance'}
-
 
 
     def __init__(self, *args, **kwargs):
@@ -117,7 +114,6 @@ class ConveyanceForm(forms.ModelForm):
         if val := self.cleaned_data.get('journeypath'):
             val = clean_geometry(val)
         return val
-
 
 
 

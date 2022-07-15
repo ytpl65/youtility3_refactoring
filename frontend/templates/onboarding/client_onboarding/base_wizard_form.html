@@ -1,6 +1,5 @@
 {% extends "base_form.html" %}
 
-
 {% block extra_css %}
 {{ wizard.form.media }}
 <style>
@@ -121,11 +120,9 @@ Client Onboarding
 
 {% endblock form %}
 
-
 <!------------------BEGIN WIZARD STEP COUNT ------------------->
 {% block upside_card %}
 {% set labels_of_wizard = ({1: 'Buisiness Unit', 2: 'Shift', 3: 'People', 4: 'Assign Permissions', 5: 'People Group'}) %}
-
 
 <div class="stepper-wrapper card ">
   <div class="card-body d-flex flex-row">
@@ -146,7 +143,6 @@ Client Onboarding
       <div class="step-name">{{ labels_of_wizard[index] }}</div>
     </div>
     {% endif %}
-
 
     {% endfor %}
   </div>

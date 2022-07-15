@@ -4,7 +4,6 @@
 {{ ques_form.media.css }}
 {% endblock head %}
 
-
 {% block body %}
 <form action="" method="post" id="id_quesform">
     <input type="hidden" name="{{ ques_form.ctzoffset.name }}" id = "{{ ques_form.ctzoffset.auto_id }}" value="-1">
@@ -108,7 +107,6 @@
         {% endif %}
     </div>
 {% endblock body %}
-
 
 {% block js %}
 {{ ques_form.media.js }}

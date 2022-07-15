@@ -6,14 +6,12 @@ from widget_tweaks.templatetags import widget_tweaks as wt
 
 
 
-
 def debug(info):
     print("Printing=============", info)
     
 def to_local(val):
     from django.utils.timezone import get_current_timezone
     return val.astimezone(get_current_timezone()).strftime('%d-%b-%Y %H:%M')
-
 
 
 class JinjaEnvironment(Environment):

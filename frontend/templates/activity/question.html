@@ -41,7 +41,6 @@ Question List
 {% endblock table %}
 <!-------------------------------------------END BU TABLE ------------------------------------------------->
 
-
 {% block popup_alerts %}
 <!-- THE MODAL WE WILL BE USING animate__animated animate__zoomIn -->
 <div class="modal"  tabindex="-1" aria-hidden="true" aria-labelledby="exampleModalLabel" data-bs-backdrop="static" id="modal-ques">
@@ -51,7 +50,6 @@ Question List
 	</div>
 </div>
 {% endblock popup_alerts %}
-
 
 {% block extra_scripts %}
 <script>
@@ -102,7 +100,7 @@ Question List
 				action: function (e, dt, node, config) {
 					const params = {
 						'modal_id': modal_id,
-						'url': `${urlname}?action = form`,
+						'url': `${urlname}?action=form`,
 						'beforeSend': quesBeforeSend
 					}
 					fire_ajax_get(params)
@@ -186,7 +184,7 @@ Question List
 	function isQuesDeleted(id) {
 		console.log("id ", id)
 		const params = {
-			url: `${urlname}?action = delete&id=${id}`
+			url: `${urlname}?action=formdelete&id=${id}`
 		}
 		fire_ajax_get(params)
 			.done((data, status, xhr) => {

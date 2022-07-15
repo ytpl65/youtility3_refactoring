@@ -1,6 +1,5 @@
 {% extends "base_form.html" %}
 
-
 {% block extra_css %}
 <link  href="{{ static('assets/plugins/custom/DataTables/datatables.min.css') }}" rel="stylesheet" type="text/css"/>
 {{ importform.media.css }}
@@ -17,18 +16,16 @@
 {% block pagebreadcumb %}
 <!--will call parent contents -->
 {{ super() }}
-<li class="breadcrumb-item pe-3"><a href="{{ url('home') }}?template = true" class="pe-3">Home</a></li>
+<li class="breadcrumb-item pe-3"><a href="{{ url('home') }}?template=true" class="pe-3">Home</a></li>
 <li class="breadcrumb-item pe-3"><a href="javascript:void(0)" class="pe-3">Import Export</a></li>
 {% endblock pagebreadcumb %}
 <!-------------------------- END PAGE BREADCUMB ------------------------->
-
 
 <!------ BEGIN FORM TITLE ------->
 {% block form_title %}
 Import Data
 {% endblock form_title %}
 <!------ END FORM TITLE -------->   
-
 
 {% block form %}
 <div class="row">
@@ -62,7 +59,6 @@ Import Data
     </div>
 </div>
 {% endblock form %}
-
 
 
 {% block extra_scripts %}

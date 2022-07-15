@@ -4,12 +4,10 @@
 People List
 {% endblock card_title %}
 
-
 {% block pagebreadcumb %}
 {{ super() }}
 <li class="breadcrumb-item pe-3"><a href="javascript:void(0)" class="pe-3">People List</a></li>
 {% endblock pagebreadcumb %}
-
 
 <!------------------ BEGIN PEOPLE TABLE ------------------------->
 {% block table %}
@@ -68,7 +66,6 @@ People List
 </div>
 {% endblock popup_alerts %}
 
-
 <!--------- BEGIN EXTRA SCRIPTS ------>
 {% block extra_scripts %}
 <script>
@@ -108,7 +105,7 @@ People List
 					action: function(e, dt, node, config){
                         const params = {
                             modal_id    : "#modal-people",
-                            url         : "{{ url('peoples:people') }}?action = form",
+                            url         : "{{ url('peoples:people') }}?action=form",
                             beforeSend  : peopleBeforeSend }
 						fire_ajax_get(params)
 						.done((data, status, xhr) => {
@@ -185,7 +182,7 @@ People List
     //delete ajax request 
 	function isCapDeleted(id){ 
 		console.log("id ", id)
-		const params = {url:`{{ url('peoples:people') }}?action = delete&id=${id}`}
+		const params = {url:`{{ url('peoples:people') }}?action=formdelete&id=${id}`}
 		fire_ajax_get(params)
 		.done((data, status, xhr) => {
 			if(!xhr.status === 200){
@@ -198,7 +195,6 @@ People List
 			return false
 		})
 	}
-
 
 	//delete People 
 	function deletePeople(elemt){

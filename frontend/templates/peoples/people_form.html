@@ -7,7 +7,6 @@ People Form
 {% endblock title %}
 <!---- END PAGE TITLE ----->
 
-
 {% block extra_css %}
 {{ peopleform.media.css }}
 {% endblock extra_css %}
@@ -19,7 +18,6 @@ People Form
 <li class="breadcrumb-item pe-3"><a href="javascript:void(0)" class="pe-3">People Form</a></li>
 {% endblock pagebreadcumb %}
 <!-------------------------- END PAGE BREADCUMB ------------------------->
-
 
 <!-------------  BEGIN POP-UPS CODE -------------->
 {% block popup_alerts %}
@@ -117,7 +115,6 @@ People Form
 {% endblock popup_alerts %}
 <!-------------  END POP-UPS CODE -------------->
 
-
 <!------ BEGIN FORM TITLE ------->
 {% block form_title %}
 People
@@ -132,7 +129,6 @@ People
 </div>
 {% endblock nonfield_errors %}
 <!---------- END NON FIELD ERRORS --------->
-
 
 
 <!-------------- BEGIN FORM ------------------->
@@ -153,7 +149,6 @@ People
                 <!--INPUT GROUP-->
                 <div class="col-md-4">
                     {{ peopleform.peoplecode }}
-
 
                     <!----- BEGIN ERROR FIELD  ------->
                     {{ peopleform.peoplecode.errors }}
@@ -178,7 +173,6 @@ People
                 <div class="col-md-4">
                     {{ peopleform.loginid }}
 
-
                     <!----- BEGIN ERROR FIELD  ------->
                     {{ peopleform.loginid.errors }}
                     <!----- END ERROR FIELD  ------->
@@ -198,7 +192,6 @@ People
 
                 <!--LABEL FIELD-->
 
-
                 <!--LABEL FIELD-->
                 <label class="required" for="id_mobno">Mobno:</label>
                 <!--INPUT GROUP-->
@@ -210,7 +203,6 @@ People
                     <!----- END ERROR FIELD  ------->
                 </div>
                 <!--LABEL FIELD-->
-
 
                 <!--LABEL FIELD-->
                 <label class="required" for="id_gender">Gender:</label>
@@ -225,7 +217,6 @@ People
                 </div>
                 <!--LABEL FIELD-->
 
-
                 <!--LABEL FIELD-->
                 <label class="required" for="id_dateofbirth">Date of Birth:</label>
                 <!--INPUT GROUP-->
@@ -239,7 +230,6 @@ People
                 </div>
                 <!--LABEL FIELD-->
 
-
                 <!--LABEL FIELD-->
                 <label class="required" for="id_deviceid">Device Id:</label>
                 <!--INPUT GROUP-->
@@ -252,7 +242,6 @@ People
                     <!----- END ERROR FIELD  ------->
                 </div>
                 <!--LABEL FIELD-->
-
 
 
                 <!--LABEL FIELD-->
@@ -274,7 +263,6 @@ People
                     <!----- END ERROR FIELD  ------->
                 </div>
                 <!--LABEL FIELD-->
-
 
                 <!--LABEL FIELD-->
                 <label class="required" for="id_dateofjoin">Date of Joining:</label>
@@ -325,7 +313,6 @@ People
         <!--END FIRST COLUMN-->
         <!--BEGIN IMAGE INPUT-->
         <div class="col-md-2">
-
 
             <!--begin::Image input-->
             <div class="image-input image-input-empty" data-kt-image-input="true"
@@ -412,7 +399,6 @@ People
                 </div>
                 <!--LABEL FIELD-->
 
-
                 <!--LABEL FIELD-->
                 <label for="id_designation">Designation:</label>
                 <!--INPUT GROUP-->
@@ -433,7 +419,6 @@ People
                 </div>
                 <!--LABEL FIELD-->
 
-
                 <!--LABEL FIELD-->
                 <label for="id_dateofreport">Date of Release:</label>
                 <!--INPUT GROUP-->
@@ -445,7 +430,6 @@ People
                     <!----- END ERROR FIELD  ------->
                 </div>
                 <!--LABEL FIELD-->
-
 
                 <!--LABEL FIELD-->
                 <label for="id_reportto">Report to:</label>
@@ -480,7 +464,6 @@ People
 
                 <!--LABEL FIELD-->
 
-
                 <!--LABEL FIELD-->
                 <label for="id_portletcapability">Portlet Capability:</label>
                 <!--INPUT GROUP-->
@@ -493,7 +476,6 @@ People
                 </div>
                 <!--LABEL FIELD-->
 
-
                 <!--LABEL FIELD-->
                 <label for="id_reportcapability">Report Capability:</label>
                 <!--INPUT GROUP-->
@@ -505,7 +487,6 @@ People
                     <!----- END ERROR FIELD  ------->
                 </div>
                 <!--LABEL FIELD-->
-
 
                 <!--LABEL FIELD-->
                 <label for="id_webcapability">Web Capability:</label>
@@ -560,7 +541,6 @@ People
 <!------------- END FORM ---------------------->
 
 
-
 <!-------------- BEGIN FORM PAGE ACTIONS --------->
 
 {% if request.session['wizard_data'] is defined %}
@@ -580,7 +560,6 @@ People
 {% endblock page_actions %}
 <!------------------- END FORM PAGE ACTIONS --------------->
 {% endif %}
-
 
 
 {% block extra_scripts %}

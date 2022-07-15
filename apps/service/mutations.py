@@ -12,14 +12,9 @@ from apps.peoples.models import People
 from . import types as ty
 from graphene_file_upload.scalars import Upload
 
-
 from logging import getLogger
 import traceback as tb
 log = getLogger('__main__')
-
-
-
-
 
 
 
@@ -36,8 +31,6 @@ log = getLogger('__main__')
 
 
 
-
-
 # class InsertRecord(graphene.Mutation):
 #     """
 #     Inserts new record in the specified table.
@@ -45,7 +38,6 @@ log = getLogger('__main__')
 #     output = graphene.Field(ty.ServiceOutputType)
 #     class Arguments:
 #         input = ty.RowInput(required = True)
-
 
 #     @classmethod
 #     @login_required
@@ -77,7 +69,6 @@ log = getLogger('__main__')
 #             log.error(e, exc_info = True)
 #             raise Exception(f'{Messages.INSERT_FAILED} {e}') from e
 
-
 #     @classmethod
 #     def create_record(cls, model, F, input):
 #         """
@@ -90,7 +81,6 @@ log = getLogger('__main__')
 #         with transaction.atomic(using = utils.get_current_db_name()):
 #             log.info(f'record after cleaning {pformat(record)}')
 #             return model.objects.create(**record)
-
 
 
 # class UpdateRecord(graphene.Mutation):
@@ -122,7 +112,6 @@ log = getLogger('__main__')
 #             log.error(e, exc_info = True)
 #             raise Exception(f'{Messages.UPDATE_FAILED} {e}') from e
 
-
 #     @classmethod
 #     def update_record(cls, model, F, input):
 #         """
@@ -136,7 +125,6 @@ log = getLogger('__main__')
 #                 model.objects.filter(
 #                     id = record['id']).update(**form.data)
 #                 return model.objects.get(id = record['id'])
-
 
 ######################### START PEOPLEEVENTLOG MUTATION #########################
 # class PELogMutation(DjangoModelFormMutation, BaseReturnType):
@@ -159,7 +147,6 @@ log = getLogger('__main__')
 ######################### END PEOPLEEVENTLOG MUTATION #########################
 
 
-
 ######################### START TRACKING MUTATION #########################
 # class TrackingMutation(DjangoModelFormMutation):
 #     TrackingType = graphene.Field(TrackingType)
@@ -169,7 +156,6 @@ log = getLogger('__main__')
 #         form_class        = TrackingForm
 #         return_field_name = 'output'
 ######################### END TRACKING MUTATION #########################
-
 
 ######################### START TYPEASSIST MUTATION #########################
 # class AddTaMutation(DjangoModelFormMutation):
@@ -186,9 +172,7 @@ log = getLogger('__main__')
 #         return cls(errors=[], **kwargs)
 ######################### END TYPEASSIST MUTATION #########################
 
-
 ######################### START AUTHENTICATION #########################
-
 
 # class TaskTourUpdate(graphene.Mutation):
 #     """
@@ -230,10 +214,9 @@ log = getLogger('__main__')
 #             isJndUpdated = cls.update_jobneeddetails(input, Jnd)
 #             if isJnUpdated and  isJndUpdated:
 #                 utils.alert_email(input.jobneedid, alerttype)
-#                 #TODO send observation email
-#                 #TODO send deviation mail
+#                 # TODO send observation email
+#                 # TODO send deviation mail
 #                 return True
-
 
 
 #     @classmethod
@@ -246,12 +229,10 @@ log = getLogger('__main__')
 #                 updated = Jnd.objects.filter(id = detail['id']).update(**record)
 #             if len(input.jobneeddetails) == updated: return True
 
-
 # def perform_template_report_mutation(input, model):
 #     parent = insert_parent(input, model)
 #     insert_child_and_details(input, model, parent)
 #     return parent
-
 
 # class TemplateReport(graphene.Mutation):
 #     output = graphene.Field(RowOutput)
@@ -268,7 +249,7 @@ log = getLogger('__main__')
 #             try:
 #                 with transaction.atomic(using = utils.get_current_db_name()):
 #                     parent = perform_template_report_mutation(input, Jobneed)
-#                     #TODO send email for report
+#                     # TODO send email for report
 #                     output = RowOutput(id = parent.id, msg = Messages.INSERT_SUCCESS)
 #                     return TemplateReport(output = output)
 #             except Exception as e:
@@ -276,7 +257,6 @@ log = getLogger('__main__')
 #                 raise Exception(f'{Messages.INSERT_FAILED} << {e} >>') from e
 #         else:
 #             return TemplateReport(output = RowOutput(id = None, msg = Messages.NOT_INTIATED ))
-
 
 # def insert_parent(input, model):
 #     print(pformat(input, compact = True))
@@ -313,7 +293,6 @@ log = getLogger('__main__')
 #     except Exception:
 #         raise
 
-
 # class UploadAttachment(graphene.Mutation):
 #     """
 #     Upload attachment.
@@ -337,7 +316,7 @@ log = getLogger('__main__')
 #     @classmethod
 #     def perform_query(cls, input, files):
 #         from apps.attendance.models import PeopleEventlog
-#         #TODO perform query coming from mobile
+#         # TODO perform query coming from mobile
 #         if people_att := PeopleEventlog.objects.get(id = input.pelogid):
 #             from apps.onboarding.models import TypeAssist
 #             from apps.activity.models import Attachment
@@ -359,7 +338,6 @@ log = getLogger('__main__')
 #                     log.error("ERROR Failed to recognize face ", exc_info = True)
 #         else:
 #             raise Exception(Messages.NOTFOUND)
-
 
 
 # def process_adhoc_mutation(input):
@@ -392,7 +370,6 @@ log = getLogger('__main__')
 #         raise
 
 
-
 # class Adhoc(graphene.Mutation):
 #     """
 #     Adhoc task/tours are inserted
@@ -409,7 +386,6 @@ log = getLogger('__main__')
 #                 process_adhoc_mutation(input)
 #         except Exception as e:
 #             raise Exception(f'{Messages.ADHOCFAILED} {e}') from e
-
 
 # class TestJsonMutation(graphene.Mutation):
 #     """
@@ -434,7 +410,6 @@ log = getLogger('__main__')
 #             return TestJsonMutation(output = RowOutput(msg = "Json data red successfully",  id = None))
 #         except Exception as e:
 #             raise GraphQLError(e) from e
-
 
 class LoginUser(graphene.Mutation):
     """
@@ -462,7 +437,6 @@ class LoginUser(graphene.Mutation):
             log.error(exc, exc_info = True)
             raise GraphQLError(exc) from exc
 
-
     @classmethod
     def returnUser(cls, user, request):
         user.last_login = timezone.now()
@@ -472,11 +446,9 @@ class LoginUser(graphene.Mutation):
         user = cls.get_user_json(user)
         return LoginUser(token = token, user = user, payload = get_payload(token, request))
 
-
     @classmethod
     def updateDeviceId(cls, user, input):
         People.objects.update_deviceid(input.deviceid, user.id)
-
 
     @classmethod
     def get_user_json(cls, user):
@@ -512,7 +484,6 @@ class LoginUser(graphene.Mutation):
 
 
 
-
 class LogoutUser(graphene.Mutation):
     """
     Logs out user after resetting the deviceid 
@@ -527,10 +498,9 @@ class LogoutUser(graphene.Mutation):
         updated = People.objects.reset_deviceid(info.context.user.id)
         if updated: 
             status, msg = 200, "Success"
-            #log.info(f'user logged out successfully! {user.}')
+            # log.info(f'user logged out successfully! {user.}')
 
         return LogoutUser(status = status, msg = msg)
-
 
 
 class TaskTourUpdate(graphene.Mutation):
@@ -550,7 +520,6 @@ class TaskTourUpdate(graphene.Mutation):
         log.warn("tasktour-update mutations end [-]")
         return TaskTourUpdate(output = o)
 
-
 class InsertRecord(graphene.Mutation):
     """
     Inserts new record in the specified table.
@@ -569,14 +538,12 @@ class InsertRecord(graphene.Mutation):
         return InsertRecord(output = o)
 
 
-
 class ReportMutation(graphene.Mutation):
     output = graphene.Field(ty.ServiceOutputType)
-    #msg = graphene.String()
-    #ic(output)
+    # msg = graphene.String()
+    # ic(output)
     class Arguments:
         file = Upload(required = True)
-
 
     @classmethod
     def mutate(cls, root, info, file):
@@ -585,7 +552,6 @@ class ReportMutation(graphene.Mutation):
         log.info(f"Response: {o.recordcount}, {o.msg}, {o.rc}, {o.traceback}")
         log.warn("report mutations end [-]")
         return ReportMutation(output = o)
-
 
 class UploadAttMutaion(graphene.Mutation):
     output = graphene.Field(ty.ServiceOutputType)
@@ -601,7 +567,6 @@ class UploadAttMutaion(graphene.Mutation):
         return UploadAttMutaion(output = output)
 
 
-
 class AdhocMutation(graphene.Mutation):
     output = graphene.Field(ty.ServiceOutputType)
     class Arguments:
@@ -611,7 +576,6 @@ class AdhocMutation(graphene.Mutation):
     def mutate(cls, root, info, file):
         output = sutils.perform_adhocmutation(file)
         return AdhocMutation(output = output)
-
 
 
 class InsertJsonMutation(graphene.Mutation):
@@ -642,10 +606,8 @@ class InsertJsonMutation(graphene.Mutation):
 
 
 
-
 class SyncMutation(graphene.Mutation):
     rc = graphene.Int()
-
 
     class Arguments:
         file         = Upload(required = True)
@@ -667,7 +629,7 @@ class SyncMutation(graphene.Mutation):
                     log.info(f'filename: {file.filename} and size: {file.file_size}')
                     with zip.open(file) as f:
                         data = tasks.get_json_data(f)
-                        #raise ValueError
+                        # raise ValueError
                         TR += len(data)
                         tasks.call_service_based_on_filename(data, file.filename, db = db)
                         ic(data)
@@ -697,16 +659,7 @@ class SyncMutation(graphene.Mutation):
 
 
 
-
-
-
-
-
-
-
-
 ######################### END AUTHENTICATION ###########################
-
 
 ######################### START TESTGEO MUTATION #########################
 # class TestGeoMutation(graphene.Mutation):
@@ -715,15 +668,13 @@ class SyncMutation(graphene.Mutation):
 #     line = LineStringScalar()
 #     poly = PolygonScalar()
 
-
 #     class Arguments:
-#         #The input arguments for this mutation
+#         # The input arguments for this mutation
 #         id    = graphene.ID()
 #         code  = graphene.String()
 #         point = graphene.String(required = False)
 #         poly  = graphene.String(required = False)
 #         line  = graphene.String(required = False)
-
 
 #     def mutate(self, info, code, point = Point(), poly = Polygon(), line = LineString()):
 #         testGeo = TestGeo(

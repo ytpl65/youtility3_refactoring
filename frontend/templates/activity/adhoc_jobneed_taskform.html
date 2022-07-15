@@ -1,6 +1,5 @@
 {% extends "base_form.html" %}
 
-
 <!---- BEGIN PAGE TITLE ---->
 {% block title %}
 People Form
@@ -14,15 +13,13 @@ People Form
 {% endblock extra_css %}
 <!--- END CSS -->
 
-
 <!-------------------------- BEGIN PAGE BREADCUMB ----------------------->
 {% block pagebreadcumb %}
 {{ super() }}
-<li class="breadcrumb-item pe-3"><a href="{{ url('activity:adhoctasks') }}?template = true" class="pe-3">Adhoc Task List</a></li>
+<li class="breadcrumb-item pe-3"><a href="{{ url('activity:adhoctasks') }}?template=true" class="pe-3">Adhoc Task List</a></li>
 <li class="breadcrumb-item pe-3"><a href="javascript:void(0)" class="pe-3">Adhoc Task Form</a></li>
 {% endblock pagebreadcumb %}
 <!-------------------------- END PAGE BREADCUMB ------------------------->
-
 
 
 <!------ BEGIN FORM TITLE ------>
@@ -30,7 +27,6 @@ People Form
 Adhoc Task
 {% endblock form_title %}
 <!------ END FORM TITLE -------->
-
 
 {% block form %}
 <input type="hidden" name="{{ adhoctaskform.ctzoffset.name }}" id = "{{ adhoctaskform.ctzoffset.auto_id }}" value="-1">
@@ -189,7 +185,6 @@ Adhoc Task
 </div>
 {% endblock form %}
 
-
 {% block extras %}
 <div class="card">
     <div class="card-header">
@@ -263,5 +258,4 @@ $(document).ready(function () {
 })
 </script>
 {% endblock extra_scripts %}
-
 

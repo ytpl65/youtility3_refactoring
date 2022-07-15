@@ -5,7 +5,6 @@
 <link rel="stylesheet" href="https://cdn.datatables.net/1.11.3/css/jquery.dataTables.min.css" type="text/css">
 {% endblock extra_css %}
 
-
 <!-------------------------- BEGIN PAGE BREADCUMB ----------------------->
 {% block pagebreadcumb %}
 <!--will call parent contents -->
@@ -15,13 +14,11 @@
 {% endblock pagebreadcumb %}
 <!-------------------------- END PAGE BREADCUMB ------------------------->
 
-
 <!------ BEGIN FORM TITLE ------->
 {% block form_title %}
 Internal Tour
 {% endblock form_title %}
 <!------ END FORM TITLE -------->
-
 
 <!--------- BEGIN NON FIELD ERRORS -------->
 {% block nonfield_errors %}
@@ -311,7 +308,6 @@ Internal Tour
     {% endcall %}
 {% endblock popup_alerts %}
 
-
 {% block ajax_page_actions %}
 <div class="form-actions">
     {% if internaltourform.instance.jobstatus == "('ASSIGNED',)" %}
@@ -331,7 +327,6 @@ Internal Tour
     {% endif %}
 </div>
 {% endblock ajax_page_actions %}
-
 
 {% block extra_scripts %}
 {{ internaltourform.media.js }}
@@ -462,7 +457,6 @@ Internal Tour
 
     
 
-
     $(document).ready(() => { 
         //set ctzoffset
   	    $("#id_ctzoffset").val(-new Date().getTimezoneOffset())
@@ -555,7 +549,6 @@ Internal Tour
             })
         })
 
-
         if(!$("#internal_tour tbody tr").hasClass("selected")){
             resetForm()
         }
@@ -612,7 +605,6 @@ Internal Tour
         $('.django-select2').select2({
             dropdownParent: $('#child-form-modal')
         })
-
 
 
     })

@@ -12,7 +12,6 @@ from apps.activity.managers import(
 )
 from django.contrib.postgres.fields import ArrayField
 
-
 # Create your models here.
 class Question(BaseModel, TenantAwareModel):
 
@@ -30,7 +29,7 @@ class Question(BaseModel, TenantAwareModel):
         PEOPLELIST  = "PEOPLELIST" , _("People List")
         SITELIST    = "SITELIST"   , _("Site List")
 
-    #id= models.BigIntegerField(primary_key = True)
+    # id= models.BigIntegerField(primary_key = True)
     quesname  = models.CharField(_("Question Name"), max_length = 200)
     options    = models.TextField(_('Options'), max_length = 2000, null = True)
     min        = models.DecimalField(_("Min"), null = True, blank = True, max_digits = 18, decimal_places = 2, default = 0.00)
@@ -55,12 +54,10 @@ class Question(BaseModel, TenantAwareModel):
     def __str__(self) -> str:
         return f"{self.quesname} | {self.answertype}"
 
-
 def site_grp_includes():
     return {
         'sitegrp__id': ""  # save this variable as <sitegrp__id> eg: abcd__12
     }
-
 
 def site_type_includes():
     return {
@@ -68,7 +65,6 @@ def site_type_includes():
     }
 
 # will save on client level
-
 
 class QuestionSet(BaseModel, TenantAwareModel):
     class Type(models.TextChoices):
@@ -83,7 +79,7 @@ class QuestionSet(BaseModel, TenantAwareModel):
         ASSETMAINTENANCE       = "ASSETMAINTENANCE"      , _('Asset Maintenance')
         QUESTIONSET            = "QUESTIONSET"           , _('Question Set')
 
-    #id            = models.BigIntegerField(primary_key = True)
+    # id            = models.BigIntegerField(primary_key = True)
     qsetname           = models.CharField(_("QuestionSet Name"), max_length = 200)
     enable             = models.BooleanField(_("Enable"), default = True)
     assetincludes      = ArrayField(models.CharField(max_length = 50, blank = True), null = True, blank = True, verbose_name= _("Asset Includes"))
@@ -121,7 +117,6 @@ def alertmails_sendto():
         "id__code": []
     }
 
-
 class QuestionSetBelonging(BaseModel, TenantAwareModel):
     class AnswerType(models.TextChoices):
         CHECKBOX    = "CHECKBOX"   , _('Checkbox')
@@ -139,7 +134,7 @@ class QuestionSetBelonging(BaseModel, TenantAwareModel):
         PEOPLELIST  = "PEOPLELIST" , _("People List")
         SITELIST    = "SITELIST"   , _("Site List")
 
-    #id               = models.BigIntegerField(_("QSB Id"), primary_key = True)
+    # id               = models.BigIntegerField(_("QSB Id"), primary_key = True)
     ismandatory       = models.BooleanField(_("Is Manadatory"))
     isavpt            = models.BooleanField(_("Is Attachment Required"), default = False)
     seqno             = models.SmallIntegerField(_("Seq No."))
@@ -170,7 +165,6 @@ class QuestionSetBelonging(BaseModel, TenantAwareModel):
     def __str__(self) -> str:
         return self.answertype
 
-
 def other_info():
     return {
         'tour_frequency': 1,
@@ -179,7 +173,6 @@ def other_info():
         'breaktime': 0,
         'deviation':False,
     }
-
 
 class Job(BaseModel, TenantAwareModel):
     class Identifier(models.TextChoices):
@@ -217,8 +210,7 @@ class Job(BaseModel, TenantAwareModel):
         YEARLY      = "YEARLY"     , _("Yearly")
         FORTNIGHTLY = "FORTNIGHTLY", _("Fort Nightly")
 
-
-    #id          = models.BigIntegerField(_("Job Id"), primary_key = True)
+    # id          = models.BigIntegerField(_("Job Id"), primary_key = True)
     jobname         = models.CharField(_("Name"), max_length = 100)
     jobdesc         = models.CharField(_("Description"), max_length = 500)
     fromdate        = models.DateTimeField( _("From date"), auto_now = False, auto_now_add = False)
@@ -276,7 +268,6 @@ class Job(BaseModel, TenantAwareModel):
     def __str__(self):
         return self.jobname
 
-
 def asset_json():
     return {
         'service': "",
@@ -298,7 +289,6 @@ def asset_json():
         "far_asset_id": "",
         "multifactor": 1
     }
-
 
 class Asset(BaseModel, TenantAwareModel):
     class Identifier(models.TextChoices):
@@ -345,13 +335,11 @@ class Asset(BaseModel, TenantAwareModel):
     def __str__(self):
         return f'{self.assetname} ({self.assetcode})'
 
-
 class Jobneed(BaseModel, TenantAwareModel):
     class Priority(models.TextChoices):
         HIGH   = ('HIGH', 'High')
         LOW    = ('LOW', 'Low')
         MEDIUM = ('MEDIUM', 'Medium')
-
 
     class Identifier(models.TextChoices):
         TASK             = ('TASK', 'Task')
@@ -365,14 +353,12 @@ class Jobneed(BaseModel, TenantAwareModel):
         ASSETLOG         = ("ASSETLOG",	"Asset Log")
         ASSETMAINTENANCE = ("ASSETMAINTENANCE",	"Asset Maintenance")
 
-
     class Scantype(models.TextChoices):
         NONE    = ('NONE', 'None')
         QR      = ('QR', 'QR')
         NFC     = ('NFC', 'NFC')
         SKIP    = ('SKIP', 'Skip')
         ENTERED = ('ENTERED', 'Entered')
-
 
     class JobStatus(models.TextChoices):
         ASSIGNED           = ('ASSIGNED', 'Assigned')
@@ -392,11 +378,9 @@ class Jobneed(BaseModel, TenantAwareModel):
 
 
 
-
     class JobType(models.TextChoices):
         SCHEDULE = ('SCHEDULE', 'Schedule')
         ADHOC    = ('ADHOC', 'Adhoc')
-
 
 
     class Frequency(models.TextChoices):
@@ -410,7 +394,7 @@ class Jobneed(BaseModel, TenantAwareModel):
         YEARLY      = ("YEARLY", "Yearly")
         FORTNIGHTLY = ("FORTNIGHTLY", "Fort Nightly")
 
-    #id       = models.BigIntegerField(_("Jobneed Id"), primary_key = True)
+    # id       = models.BigIntegerField(_("Jobneed Id"), primary_key = True)
     uuid             = models.UUIDField(unique = True, editable = True, blank = True, default = uuid.uuid4)
     jobdesc          = models.CharField(_("Job Description"), max_length = 200)
     plandatetime     = models.DateTimeField(_("Plan date time"), auto_now = False, auto_now_add = False)
@@ -460,7 +444,6 @@ class Jobneed(BaseModel, TenantAwareModel):
             ),
         ]
 
-
 class JobneedDetails(BaseModel, TenantAwareModel):
     class AnswerType(models.TextChoices):
         CHECKBOX    = ('CHECKBOX', 'Checkbox')
@@ -478,7 +461,7 @@ class JobneedDetails(BaseModel, TenantAwareModel):
         PEOPLELIST  = ("PEOPLELIST", "People List")
         SITELIST    = ("SITELIST", "Site List")
 
-    #id         = models.BigIntegerField(_("Jobneed details"), primary_key = True)
+    # id         = models.BigIntegerField(_("Jobneed details"), primary_key = True)
     uuid        = models.UUIDField(unique = True, editable = True, blank = True, default = uuid.uuid4)
     seqno       = models.SmallIntegerField(_("SL No."))
     question    = models.ForeignKey("activity.Question", verbose_name = _("Question"),  null = True, blank = True, on_delete = models.RESTRICT)
@@ -499,7 +482,6 @@ class JobneedDetails(BaseModel, TenantAwareModel):
     class Meta(BaseModel.Meta):
         db_table     = 'jobneeddetails'
         verbose_name = 'JobneedDetails'
-
 
 class Attachment(BaseModel, TenantAwareModel):
     class AttachmentType(models.TextChoices):
@@ -526,14 +508,13 @@ class Attachment(BaseModel, TenantAwareModel):
     def __str__(self):
         return self.filename.name
 
-
 def tickethistory():
     return {
         'history':[]
     }
 
 class Device(BaseModel, TenantAwareModel):
-    #id     = models.BigIntegerField(_("Device Id"), primary_key = True)
+    # id     = models.BigIntegerField(_("Device Id"), primary_key = True)
     devicecode    = models.CharField(max_length = 50)
     devicename    = models.CharField(max_length = 50)
     belongsTo     = models.ForeignKey('self', null = True, blank = True, on_delete = models.RESTRICT)
@@ -551,9 +532,8 @@ class Device(BaseModel, TenantAwareModel):
     def __str__(self):
         return self.devicecode
 
-
 class Event(BaseModel, TenantAwareModel):
-    #id           = models.BigIntegerField(_("Event Id"), primary_key = True)
+    # id           = models.BigIntegerField(_("Event Id"), primary_key = True)
     eventdesc     = models.CharField(max_length = 250, null = True, blank = True)
     device        = models.ForeignKey("activity.Device", null = True, blank = True, on_delete = models.RESTRICT, related_name='event_device')
     eventdatetime = models.DateTimeField(default = timezone.now)
@@ -593,7 +573,7 @@ class Ticket(BaseModel, TenantAwareModel):
         SYSTEMGENERATED = ('SYSTEMGENERATED', 'System Generated')
         USERDEFINED     = ('USERDEFINED', 'User Defined')
 
-    #id          = models.BigIntegerField(_("Ticket Id"), primary_key = True)
+    # id          = models.BigIntegerField(_("Ticket Id"), primary_key = True)
     uuid               = models.UUIDField(unique = True, editable = True, blank = True, default = uuid.uuid4)
     ticketno           = models.IntegerField(null = True,blank = True)
     ticketdesc         = models.CharField(max_length = 250)
@@ -630,7 +610,6 @@ class Ticket(BaseModel, TenantAwareModel):
 
 
 
-
 class EscalationMatrix(BaseModel, TenantAwareModel):
     class Frequency(models.TextChoices):
         MINUTE = ('MINUTE', 'MINUTE')
@@ -638,7 +617,7 @@ class EscalationMatrix(BaseModel, TenantAwareModel):
         DAY    = ('DAY', 'DAY')
         WEEK   = ('WEEK', 'WEEK')
 
-    #id                = models.BigIntegerField(primary_key = True)
+    # id                = models.BigIntegerField(primary_key = True)
     body               = models.CharField(max_length = 500, null = True)
     level              = models.IntegerField(null = True, blank = True)
     frequency          = models.CharField(max_length = 10, default='DAY', choices = Frequency.choices)
@@ -654,7 +633,6 @@ class EscalationMatrix(BaseModel, TenantAwareModel):
     class Meta(BaseModel.Meta):
         db_table = 'escalationmatrix'
         get_latest_by = ["mdtz", 'cdtz']
-
 
 class DeviceEventlog(BaseModel, models.Model):
     class DeviceEvent(models.TextChoices):
@@ -685,7 +663,6 @@ class DeviceEventlog(BaseModel, models.Model):
     modelname       = models.CharField(_("Model Name"), max_length = 50, default = None)
     installedapps   = models.CharField(_("Installed Apps"), max_length = 50, default = None)
     stepcount       = models.CharField(max_length = 55, default='No Steps')
-
 
     class Meta(BaseModel.Meta):
         db_table = 'deviceeventlog'

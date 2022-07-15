@@ -43,10 +43,10 @@ def detect_QR(cv2, decode, np, time):
         log.debug("cameara is opened for qr detection")
         while True:
             _, img, = cap.read()
-            #cv2.putText(img, "Hello World!!!", (200, 200), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 255))
+            # cv2.putText(img, "Hello World!!!", (200, 200), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 255))
             detected = False
 
-            #draw rectangle and putText on qr code 
+            # draw rectangle and putText on qr code 
             for barcode in decode(img):
                 print(barcode.data)
                 code = barcode.data.decode('utf-8')
@@ -104,7 +104,6 @@ def get_actual_img(code, detectFace):
         log.debug("get_actual_img is ended")
 
 
-
 def recognize_face(cv2, np, time, code):
     from deepface import DeepFace
     log.debug("recognize face started")
@@ -153,5 +152,4 @@ def recognize_face(cv2, np, time, code):
         status = 404
     log.debug("msg: %s, title: %s, decoded:%s"%(msg, title, code))
     return rp.JsonResponse({"message":msg, 'title':title, 'decoded':code}, status = status)
-
 

@@ -11,7 +11,6 @@ from django.db import migrations, models
 import django.utils.timezone
 import uuid
 
-
 class Migration(migrations.Migration):
 
     initial = True

@@ -1,22 +1,19 @@
 {% extends "base_form.html" %}
 
-
 <!--BEGIN PAGE TITLE-->
 {% block title %}
 Conveyance Form
 {% endblock title %}
 <!--END PAGE TITLE-->
 
-
 {% block extra_css %}
 <link  href="{{ static('assets/plugins/custom/DataTables/datatables.min.css') }}" rel="stylesheet" type="text/css"/>
 
 {% endblock extra_css %}
 
-
 {% block pagebreadcumb %}
 {{ super() }}
-<li class="breadcrumb-item pe-3"><a href="{{ url('attendance:conveyance') }}?template = true" class="pe-3">Conveyance List</a></li>
+<li class="breadcrumb-item pe-3"><a href="{{ url('attendance:conveyance') }}?template=true" class="pe-3">Conveyance List</a></li>
 <li class="breadcrumb-item pe-3"><a href="javascript:void(0)" class="pe-3">Coveyance Form</a></li>
 {% endblock pagebreadcumb %}
 
@@ -25,8 +22,6 @@ Conveyance Form
 Conveyance
 {% endblock form_title %}
 <!------ END FORM TITLE -------->
-
-
 
 
 
@@ -131,7 +126,6 @@ Conveyance
 </form>
 {% endblock form %}
 
-
 {% block extras %}
 <div class ="card shadow-lg" id="journeymap">
     <div class="card-header mb-0">
@@ -143,7 +137,6 @@ Conveyance
 </div>
 {% endblock extras %}
 
-
 {% block page_actions %}
     {% if edit is defined %}
         {{ form_update('conveyanceform', popup_id="delete_alert") }}
@@ -153,7 +146,6 @@ Conveyance
     {% endif %}
 {% endblock page_actions %}
 
-
 {% block extra_scripts %}
 <script
     src="https://maps.googleapis.com/maps/api/js?key = AIzaSyDVbA53nxHKUOHdyIqnVPD01aOlTitfVO0&callback = initAutocomplete&libraries = places&v = weekly"
@@ -162,7 +154,6 @@ Conveyance
 <script>
 //global vars
 var map;
-
 
 //initialize map
 function initAutocomplete(){
@@ -177,7 +168,7 @@ function initAutocomplete(){
 function getJourneyCoords(id){
     var formUrl = "{{ url('attendance:conveyance') }}"
     const params = {
-        url:`${formUrl}?action = getpath&conid=${id}`,
+        url:`${formUrl}?action=formgetpath&conid=${id}`,
         beforeSend:function(){}
     }
     fire_ajax_get(params)
@@ -196,7 +187,6 @@ function addMarker(location, map, label){
     map:map
   })
 }
-
 
 //draw path on google map
 function drawConveyancePath(data){
@@ -235,7 +225,6 @@ function drawConveyancePath(data){
                 </div>
             </div>`
 
-
      const startInfo = new google.maps.InfoWindow({
         content: InfoString,
         maxWidth: 700
@@ -245,7 +234,6 @@ function drawConveyancePath(data){
         content: InfoString,
         maxWidth: 700
     });
-
 
 
     //start marker
@@ -278,13 +266,6 @@ if("{{ conveyanceform.instance.id }}" != "None"){
 }else{
     $("#journeymap").hide()
 }
-
-
-
-
-
-
-
 
 
 

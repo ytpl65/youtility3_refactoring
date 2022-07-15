@@ -135,7 +135,7 @@ Attendance
                     action: function (e, dt, node, config) {
                         const params = {
                             modal_id: "#modal-attd",
-                            url: "{{ url('attendance:attendance_view') }}?action = form",
+                            url: "{{ url('attendance:attendance_view') }}?action=form",
                             beforeSend: attdBeforeSend}
                         fire_ajax_get(params)
                         .done((data, status, xhr) => {
@@ -259,7 +259,7 @@ Attendance
 
     //deleted ajax request
     function isAttendanceDeleted(id){
-		const params = {url:`{{ url('attendance:attendance_view') }}?action = delete&id=${id}`}
+		const params = {url:`{{ url('attendance:attendance_view') }}?action=formdelete&id=${id}`}
 		fire_ajax_get(params)
 		.done((data, status, xhr) => {
 			if(!xhr.status === 200){

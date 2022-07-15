@@ -42,7 +42,6 @@ class graphQL:
         self.run_query(query = query)
 
 
-
 if __name__ == '__main__':
     gql = graphQL()
     gql.login()

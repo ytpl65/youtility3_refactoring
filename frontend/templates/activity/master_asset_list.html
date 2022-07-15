@@ -1,12 +1,10 @@
 {% extends "base_list.html" %}
 
-
 <!---- BEGIN CARD TITLE ------>
 {% block card_title %}
 {{ label }} List
 {% endblock card_title %}
 <!----- END CARD TITLE -------->
-
 
 <!------------------------------------ BEGIN PAGE BREADCUMBS ------------------------------------>
 {% block pagebreadcumb %}
@@ -14,7 +12,6 @@
 <li class="breadcrumb-item pe-3"><a href="javascript:void(0)" class="pe-3">{{ label }} List</a></li>
 {% endblock pagebreadcumb %}
 <!------------------------------------- END PAGE BREADCUMBS ------------------------------------->
-
 
 <!-------------------------------------------- BEGIN BU TABLE ------------------------------------------->
 {% block table %}
@@ -67,7 +64,6 @@
 <!------------------ --------------------------END BU TABLE ------------------------------------------------->
 
 
-
 {% block popup_alerts %}
 <!-- THE MODAL WE WILL BE USING -->
 <div class="modal animate__animated animate__zoomIn" tabindex="-1" aria-hidden="true"  aria-labelledby="exampleModalLabel" data-bs-backdrop="static" id="modal-checkpoint">
@@ -77,7 +73,6 @@
 	</div>
 </div>
 {% endblock popup_alerts %}
-
 
 <!--------- BEGIN EXTRA SCRIPTS ----------------------------->
 {% block extra_scripts %}
@@ -130,7 +125,7 @@
 					action: function(e, dt, node, config){
                         const params = {
                             'modal_id'    : modal_id,
-                            'url'         : `${urlname}?action = form`,
+                            'url'         : `${urlname}?action=form`,
                             'beforeSend'  : checkpointBeforeSend }
 						fire_ajax_get(params)
 						.done((data, status, xhr) => {
@@ -231,7 +226,7 @@
 	//delete ajax request 
 	function isCheckpointDeleted(id){ 
 		console.log("id ", id)
-		const params = {url:`${urlname}?action = delete&id=${id}`}
+		const params = {url:`${urlname}?action=formdelete&id=${id}`}
 		fire_ajax_get(params)
 		.done((data, status, xhr) => {
 			if(!xhr.status === 200){
@@ -244,7 +239,6 @@
 			return false
 		})
 	}
-
 
 	//delete capability 
 	function deleteCheckpoint(elemt){

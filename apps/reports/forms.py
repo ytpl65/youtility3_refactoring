@@ -5,7 +5,6 @@ from apps.peoples import models as pm
 from apps.core import utils
 from django_select2 import forms as s2forms
 
-
 class MasterReportTemplate(forms.ModelForm):
     required_css_class = "required"
     showto_allsites    = forms.BooleanField(initial = False, required = False, label='Show to all sites')
@@ -18,7 +17,6 @@ class MasterReportTemplate(forms.ModelForm):
         fields = [
             'type',  'qsetname', 'buincludes', 'site_grp_includes', 
             'site_type_includes', 'enable', 'ctzoffset']
-
 
 class SiteReportTemplate(MasterReportTemplate):
 
@@ -33,7 +31,6 @@ class SiteReportTemplate(MasterReportTemplate):
             identifier__tacode='SITEGROUP', bu_id__in = bulist).values_list('id', 'groupname')
         self.fields['type'].widget.attrs = {'style': 'display:none'}
         self.fields['type'].initial = am.QuestionSet.Type.SITEREPORTTEMPLATE
-
 
 class IncidentReportTemplate(MasterReportTemplate):
     class Meta(MasterReportTemplate.Meta):

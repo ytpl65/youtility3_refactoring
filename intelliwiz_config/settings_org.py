@@ -10,14 +10,12 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/3.2/ref/settings/
 """
 
-
 from pathlib import Path
 import os
 from dotenv import load_dotenv
 load_dotenv()  # loads the configs from .env
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
-
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/3.2/howto/deployment/checklist/
@@ -32,7 +30,6 @@ DEBUG = True
 
 ALLOWED_HOSTS = ['.localhost', '.youtility.local', 'barfi.youtility.in', '127.0.0.1', 'intelliwiz.youtility.in']
 
-
 # Application definition
 
 INSTALLED_APPS = [
@@ -43,7 +40,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'django.contrib.gis',
-    #third_party_apps
+    # third_party_apps
     'graphene_django',
     'graphene_gis',
     'django_email_verification',
@@ -56,7 +53,7 @@ INSTALLED_APPS = [
     'rest_framework',
     
 
-    #local apps
+    # local apps
     'apps.peoples',
     'apps.onboarding',
     'apps.tenants',
@@ -66,13 +63,13 @@ INSTALLED_APPS = [
     'apps.reports',
     'apps.service',
 
-    #third-party apps
+    # third-party apps
     'django_cleanup.apps.CleanupConfig'
 
 ]
 
 MIDDLEWARE = [
-    'apps.tenants.middlewares.TenantMiddleware', #custom middleware
+    'apps.tenants.middlewares.TenantMiddleware', # custom middleware
     'django.middleware.security.SecurityMiddleware',
     'debug_toolbar.middleware.DebugToolbarMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -103,7 +100,7 @@ TEMPLATES = [
 
         },
     },
-    #jinja2 configuration
+    # jinja2 configuration
     { 
         'BACKEND': 'django.template.backends.jinja2.Jinja2',
         'DIRS': [JINJA_TEMPLATES],
@@ -118,14 +115,12 @@ TEMPLATES = [
     },
 ]
 
-
 WSGI_APPLICATION = 'intelliwiz_config.wsgi.application'
 
-
 # Database
-# https://docs.djangoproject.com/en/3.2/ref/settings/#databases
+# https://docs.djangoproject.com/en/3.2/ref/settings/# databases
 
-#multi database configuration.
+# multi database configuration.
 DBUSER = str(os.getenv('DBUSER'))
 DBPASWD = str(os.getenv('DBPASWD'))
 DBHOST = str(os.getenv('DBHOST'))
@@ -153,7 +148,6 @@ youtility_dbs = {
 }
 
 
-
 home_local_dbs = {
     'default': {
         'ENGINE':   'django.contrib.gis.db.backends.postgis',
@@ -175,7 +169,6 @@ home_local_dbs = {
     
 }
 
-
 DATABASES = youtility_dbs
 # DATABASES = {
 #         'default':{
@@ -187,7 +180,6 @@ DATABASES = youtility_dbs
 #             'PORT':     '',
 #         }
 #     } 
-
 
 
 CACHES = {
@@ -208,12 +200,12 @@ CACHES = {
        "KEY_PREFIX": "select2"
     }
 }
-#CELERY CONF...
+# CELERY CONF...
 CELERY_BROKER_URL = str(os.getenv('CELERY_BROKER_URL'))
 CELERY_CACHE_BACKEND = str(os.getenv('CELERY_CACHE_BACKEND'))
 CELERY_RESULT_BACKEND = str(os.getenv('CELERY_RESULT_BACKEND'))
 
-#SELECT2 CONF...
+# SELECT2 CONF...
 SELECT2_CACHE_BACKEND = 'select2'
 SELECT2_JS = ""
 SELECT2_CSS = ""
@@ -223,10 +215,9 @@ SELECT2_I18N_PATH = 'assets/plugins/custom/select2-4.x/js/i18n'
 CACHE_TTL = 60 * 5
 
 # Password validation
-# https://docs.djangoproject.com/en/3.2/ref/settings/#auth-password-validators
+# https://docs.djangoproject.com/en/3.2/ref/settings/# auth-password-validators
 
-
-#PASSWORD VALIDATORS...
+# PASSWORD VALIDATORS...
 AUTH_PASSWORD_VALIDATORS = [
     {
         'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
@@ -242,7 +233,6 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-
 # Internationalization
 # https://docs.djangoproject.com/en/3.2/topics/i18n/
 
@@ -256,22 +246,19 @@ USE_L10N = False
 
 USE_TZ = True
 
-
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/3.2/howto/static-files/
 
-
 # Default primary key field type
-# https://docs.djangoproject.com/en/3.2/ref/settings/#default-auto-field
+# https://docs.djangoproject.com/en/3.2/ref/settings/# default-auto-field
 
 # Media Files CONF...
 MEDIA_ROOT = os.path.join(os.path.expanduser('~'), 'youtility4_media')
 MEDIA_URL = '/youtility4_media/'
 
-
-#DATETIME INPUTS CONF...
+# DATETIME INPUTS CONF...
 DATETIME_INPUT_FORMATS = [
-    '%d-%b-%Y %H:%M:%S',   #22-May-1998 13:01
+    '%d-%b-%Y %H:%M:%S',   # 22-May-1998 13:01# 
    "%Y-%m-%d %H:%M:%S",   #1998-05-18 13:01:00
    "%d-%b-%Y %H:%M"
 ]
@@ -283,7 +270,6 @@ DATE_INPUT_FORMATS = [
     "%Y/%m/%d"
 ]
 
-
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/3.2/howto/static-files/
 
@@ -291,7 +277,7 @@ STATIC_URL = '/static/'
 STATICFILES_DIRS = [os.path.join(BASE_DIR, 'frontend/static')]
 
 # Default primary key field type
-# https://docs.djangoproject.com/en/3.2/ref/settings/#default-auto-field
+# https://docs.djangoproject.com/en/3.2/ref/settings/# default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
@@ -305,17 +291,15 @@ INTERNAL_IPS = [
     # ...
 ]
 
-#USER MODEL
+# USER MODEL
 AUTH_USER_MODEL = 'peoples.People'
 
-
-#AUTHENTICATIN BACKENDS CONF...
+# AUTHENTICATIN BACKENDS CONF...
 AUTHENTICATION_BACKENDS = ["graphql_jwt.backends.JSONWebTokenBackend",
 'apps.peoples.backends.MultiAuthentcationBackend',
 'django.contrib.auth.backends.ModelBackend']
 
-
-#GRAPHENE CONF...
+# GRAPHENE CONF...
 GRAPHENE = {
     # ...
     "ATOMIC_MUTATIONS": True,
@@ -326,8 +310,7 @@ GRAPHENE = {
     ]
 }
 
-
-#GRAPHQL JWT CONF...
+# GRAPHQL JWT CONF...
 from datetime import timedelta
 GRAPHQL_JWT = {
     "JWT_VERIFY_EXPIRATION": True,
@@ -337,7 +320,7 @@ GRAPHQL_JWT = {
     "JWT_LONG_RUNNING_REFRESH_TOKEN": True,
 }
 
-#LOGGING CONF...
+# LOGGING CONF...
 import logging.config
 LOGGING_CONFIG = None
 LOGGING_CONFIG_ = { 
@@ -377,32 +360,29 @@ LOGGING_CONFIG_ = {
 }
 logging.config.dictConfig(LOGGING_CONFIG_)
 
-#LOGIN URL NAME...
+# LOGIN URL NAME...
 LOGIN_URL = 'login'
 
-
-#SESSION CONF....
+# SESSION CONF....
 SESSION_ENGINE = 'django.contrib.sessions.backends.cached_db'
 SESSION_COOKIE_SECURE = False
 SESSION_EXPIRE_AT_BROWSER_CLOSE = False # close the session when user closes the browser
 SESSION_COOKIE_AGE = 60**2
 SESSION_SAVE_EVERY_REQUEST = True
 
-
-#DJANGO_IMPORT_EXPORT CONF...
+# DJANGO_IMPORT_EXPORT CONF...
 IMPORT_EXPORT_USE_TRANSACTIONS = True
 
-#DJANGO-EXTENSIONS CONF...
+# DJANGO-EXTENSIONS CONF...
 SHELL_PLUS_PRINT_SQL = True
 GRAPH_MODELS = {
   'all_applications': True,
   'group_models': True,
 }
 
-#Email Verification CONF...
+# Email Verification CONF...
 def verified_callback(user):
     user.isverified = True
-
 
 EMAIL_VERIFIED_CALLBACK = verified_callback
 EMAIL_FROM_ADDRESS = 'snvnrock@gmail.com'
@@ -416,17 +396,17 @@ EMAIL_MULTI_USER = True  # optional (defaults to False)
 
 # # DJANGO EMAIL BACKEND CONF...
 # EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-# #EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+# # EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'# 
 # #DEFAULT_FROM_EMAIL = "snvnrock@gmail.com"
 # EMAIL_HOST = 'smtp.gmail.com'
 # EMAIL_PORT = 587
-# EMAIL_HOST_USER = 'snvnrock@gmail.com' #str(os.getenv('EMAIL_HOST_USER'))
+# EMAIL_HOST_USER = 'snvnrock@gmail.com' # str(os.getenv('EMAIL_HOST_USER'))# 
 # EMAIL_HOST_PASSWORD = '8007008467Na'  #str(os.getenv('EMAIL_HOST_PASSWORD')) # os.environ['password_key'] suggested
 # EMAIL_USE_TLS = True
 
 # For Django Email Backend
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-#EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+# EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 DEFAULT_FROM_EMAIL = "snvnrock@gmail.com"
 EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
@@ -434,13 +414,11 @@ EMAIL_HOST_USER = 'mwaghtest@gmail.com'
 EMAIL_HOST_PASSWORD = 'mwaghtest@123'  # os.environ['password_key'] suggested
 EMAIL_USE_TLS = True
 
-
-#DJANGO TAGGIT CONF...
+# DJANGO TAGGIT CONF...
 TAGGIT_CASE_INSENSITIVE = True
 
-#GOOGLE MAP API KEY...
+# GOOGLE MAP API KEY...
 GOOGLE_MAP_SECRET_KEY  = str(os.getenv('GOOGLE_MAP_SECRET_KEY'))
-
 
 
 

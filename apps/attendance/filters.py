@@ -2,7 +2,6 @@ import django_filters
 import apps.attendance.models as atdm
 from django import forms
 
-
 class AttendanceFilter(django_filters.FilterSet):
     FR_CHOICES = ((True, 'Yes'), ('False', 'No'))
     EVENTTYPE_CHOICES = [('MARK', 'Mark'), ('SELF', 'Self'),

@@ -6,7 +6,6 @@ Capability Form
 {% endblock title %}
 <!---- END PAGE TITLE ----->
 
-
 {% block extra_css %}
 {{ cap_form.media.css }}
 {% endblock extra_css %}
@@ -19,7 +18,6 @@ Capability Form
 {% endblock pagebreadcumb %}
 <!-------------------------- END PAGE BREADCUMB ------------------------->
 
-
 <!-------------  BEGIN POP-UPS CODE ------------->
 {% block popup_alerts %}
 	{{ super()  }}
@@ -31,13 +29,12 @@ Capability Form
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">No Go back</button>
-                <a href="{{ url('peoples:capability') }}?action = delete&id={{ cap_form.instance.id }}" id="delete_cap" class="btn btn-sm  btn-danger rounded-1">Yes I'm Sure</a>
+                <a href="{{ url('peoples:capability') }}?action=formdelete&id={{ cap_form.instance.id }}" id="delete_cap" class="btn btn-sm  btn-danger rounded-1">Yes I'm Sure</a>
             </div>
         {% endcall %}
 	{% endif %}
 {% endblock popup_alerts %}
 <!-------------  END POP-UPS CODE --------------->
-
 
 <!------ BEGIN FORM TITLE ------->
 {% block form_title %}
@@ -57,7 +54,6 @@ Capability Form
 {% endif %}
 {% endblock nonfield_errors %}
 <!---------- END NON FIELD ERRORS --------->
-
 
 
 <!-------------- BEGIN FORM ------------------->
@@ -97,7 +93,6 @@ Capability Form
 {% endif %}
 {% endblock formpage_actions %}
 <!------------------- END FORM PAGE ACTIONS --------------->
-
 
 <!--------------- BEGIN PAGE-LEVEL EXTRA SCRIPTS --------------->
 {% block extra_scripts %}

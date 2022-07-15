@@ -8,7 +8,6 @@ from .forms import (BtForm, ShiftForm, )
 import apps.onboarding.models as om
 from apps.core import utils
 
-
 class BaseFieldSet1:
     bu = fields.Field(
         column_name='bu',
@@ -22,7 +21,6 @@ class BaseFieldSet1:
         widget = wg.ForeignKeyWidget(tm.TenantAwareModel, 'tenantname'),
         saves_null_values = True
     )
-
 
 class BaseFieldSet2(object):
     client = fields.Field(
@@ -44,7 +42,6 @@ class BaseFieldSet2(object):
         widget = wg.ForeignKeyWidget(tm.TenantAwareModel, 'tenantname'),
         saves_null_values = True
     )
-
 
 
 
@@ -82,12 +79,10 @@ class TaResource(resources.ModelResource ):
         report_skipped = True
         fields = ('id', 'taname', 'tacode', 'tatype', 'tenant', 'bu', 'client')
 
-
     def __init__(self, *args, **kwargs):
         self.is_superuser = kwargs.pop('is_superuser', None)
         self.request = kwargs.pop('request', None)
         super(TaResource, self).__init__(*args, **kwargs)
-
 
     def before_save_instance(self, instance, using_transactions, dry_run):
         instance.tacode = instance.tacode.upper()
@@ -95,7 +90,6 @@ class TaResource(resources.ModelResource ):
 
     def skip_row(self, instance, original):
         return True if om.TypeAssist.objects.filter(tacode = instance.tacode).exists() else False
-
 
 
 @admin.register(om.TypeAssist)
@@ -111,7 +105,6 @@ class TaAdmin(ImportExportModelAdmin):
     def get_queryset(self, request):
         return om.TypeAssist.objects.select_related(
             'tatype', 'cuser', 'muser', 'bu', 'client', 'tenant').all()
-
 
 class BtResource(resources.ModelResource, BaseFieldSet1):
     bu = None
@@ -152,13 +145,11 @@ class BtResource(resources.ModelResource, BaseFieldSet1):
         instance.bucode = instance.bucode.upper()
         utils.save_common_stuff(self.request, instance)
 
-
     def get_queryset(self):
         return om.Bt.objects.select_related(
             'identifier', 'parent', 'butype',
             'tenant', 
         ).all()
-
 
 @admin.register(om.Bt)
 class BtAdmin(ImportExportModelAdmin):
@@ -177,7 +168,6 @@ class BtAdmin(ImportExportModelAdmin):
     def get_queryset(self, request):
         return om.Bt.objects.select_related('butype', 'identifier', 'parent').all()
 
-
 class ShiftResource(resources.ModelResource, BaseFieldSet1):
 
     class Meta:
@@ -188,7 +178,6 @@ class ShiftResource(resources.ModelResource, BaseFieldSet1):
         fields = ('id', 'shiftname', 'shiftduration', 'starttime', 'cuser'
                   'endtime', 'nightshiftappicable', 'enable', 'muser', 'bu')
 
-
 @admin.register(om.Shift)
 class ShiftAdmin(ImportExportModelAdmin):
     resource_class = ShiftResource
@@ -198,7 +187,6 @@ class ShiftAdmin(ImportExportModelAdmin):
     list_display = ('bu', 'shiftname', 'shiftduration',
                     'starttime', 'endtime', 'nightshiftappicable')
     list_display_links = ('shiftname',)
-
 
 class SitePeopleResource(resources.ModelResource, BaseFieldSet1):
 

@@ -11,7 +11,6 @@ from django.contrib.postgres.fields import ArrayField
 from apps.peoples.models import BaseModel
 # Create your models here.
 
-
 class HeirarchyModel(models.Model):
     class Meta:
         abstract = True
@@ -39,7 +38,6 @@ class HeirarchyModel(models.Model):
             raise ValidationError("A user cannot have itself \
                     or one of its' children as parent.")
 
-
 def bu_defaults():
     return {
         "mobilecapability"       : [],
@@ -60,10 +58,9 @@ def bu_defaults():
         "nearbyemergencycontacts": [],
     }
 
-
 class Bt(BaseModel, TenantAwareModel, HeirarchyModel):
 
-    #id= models.BigIntegerField(primary_key = True)
+    # id= models.BigIntegerField(primary_key = True)
     bucode              = models.CharField(_('Code'), max_length = 30)
     bupreferences      = models.JSONField(_('bupreferences'), null = True, default = bu_defaults,  encoder = DjangoJSONEncoder, blank = True)
     identifier          = models.ForeignKey('TypeAssist', null = True, blank = True, on_delete = models.RESTRICT, related_name="bu_idfs", verbose_name='Identifier')
@@ -100,7 +97,6 @@ class Bt(BaseModel, TenantAwareModel, HeirarchyModel):
     def get_absolute_wizard_url(self):
         return reverse("onboarding:wiz_bu_update", kwargs={"pk": self.pk})
 
-
 class Contract(BaseModel, TenantAwareModel):
     bu               = models.ForeignKey('Bt', null = True, on_delete = models.RESTRICT,  related_name='contract_bu', verbose_name='Site')
     customer         = models.ForeignKey('Bt', null = True, on_delete = models.RESTRICT, related_name='contract_customer', verbose_name='Customer')
@@ -126,7 +122,6 @@ class Contract(BaseModel, TenantAwareModel):
     def __str__(self):
         return self.contractname
 
-
 class ContractDetail(BaseModel, TenantAwareModel):
     contract  = models.ForeignKey('Contract', null = True, on_delete = models.RESTRICT, related_name="cd_contract", verbose_name='Contract')
     worktype    = models.ForeignKey('TypeAssist', null = True, on_delete = models.RESTRICT, related_name="cd_worktype", verbose_name='Work Type')
@@ -144,9 +139,8 @@ class ContractDetail(BaseModel, TenantAwareModel):
     def __str__(self):
         return self.contract.contractname
 
-
 class Shift(BaseModel, TenantAwareModel):
-    #id= models.BigIntegerField(primary_key = True)
+    # id= models.BigIntegerField(primary_key = True)
     bu                   = models.ForeignKey('Bt', null = True, on_delete = models.RESTRICT,related_name="shift_bu", verbose_name='Site')
     shiftname            = models.CharField(max_length = 50, verbose_name="Name")
     shiftduration        = models.IntegerField(null = True, verbose_name="Shift Duration")
@@ -168,9 +162,8 @@ class Shift(BaseModel, TenantAwareModel):
     def get_absolute_wizard_url(self):
         return reverse("onboarding:wiz_shift_update", kwargs={"pk": self.pk})
 
-
 class SitePeople(BaseModel, TenantAwareModel):
-    #id= models.BigIntegerField(primary_key = True)
+    # id= models.BigIntegerField(primary_key = True)
     bu                  = models.ForeignKey('Bt', null = True, on_delete = models.RESTRICT, related_name="sp_bu")
     people              = models.ForeignKey(settings.AUTH_USER_MODEL, null = True, on_delete = models.RESTRICT,  related_name="sp_people")
     reportto            = models.ForeignKey(settings.AUTH_USER_MODEL, null = True,on_delete = models.RESTRICT,  related_name="sp_reportto")
@@ -203,9 +196,8 @@ class SitePeople(BaseModel, TenantAwareModel):
     def __str__(self):
         return self.people.peoplecode
 
-
 class TypeAssist(BaseModel, TenantAwareModel):
-    #id= models.BigIntegerField(primary_key = True)
+    # id= models.BigIntegerField(primary_key = True)
     tacode = models.CharField(_("tacode"), max_length = 50, unique = True)
     taname = models.CharField(_("taname"), max_length = 100)
     tatype = models.ForeignKey( "self", null = True, blank = True, on_delete = models.RESTRICT, related_name='children')
@@ -246,24 +238,20 @@ class TypeAssist(BaseModel, TenantAwareModel):
             raise ValidationError("A user cannot have itself \
                     or one of its' children as parent.")
 
-
 def wizard_default():
     return {'wizard_data': {}}
-
 
 def formData_default():
     return {'form_id': {}}
 
-
 class WizardDraft(models.Model):
-    #id= models.BigIntegerField(primary_key = True)
+    # id= models.BigIntegerField(primary_key = True)
     createdby   = models.OneToOneField(settings.AUTH_USER_MODEL, null = True, blank = True, on_delete = models.CASCADE, related_name="created_by")
     cdtz        = models.DateTimeField(auto_now_add = True, auto_now = False)
     mdtz        = models.DateTimeField(auto_now = True)
     bu          = models.ForeignKey("Bt", null = True, blank = True,on_delete = models.CASCADE, related_name='wiz_bus')
     wizard_data = models.JSONField(null = True, default = wizard_default,  encoder = DjangoJSONEncoder, blank = True)
     formdata   = models.JSONField( null = True, default = formData_default,  encoder = DjangoJSONEncoder, blank = True)
-
 
     class Meta:
         db_table = 'wizarddraft'
@@ -276,9 +264,8 @@ class WizardDraft(models.Model):
     def __str__(self):
         return f"{self.id}--{self.createdby.peoplecode}"
 
-
 class GeofenceMaster(BaseModel):
-    #id= models.BigIntegerField(primary_key = True)
+    # id= models.BigIntegerField(primary_key = True)
     gfcode        = models.CharField(_("Code"), max_length = 100)
     gfname        = models.CharField(_("Name"), max_length = 100)
     alerttext     = models.CharField(_("Alert Text"), max_length = 100)

@@ -59,7 +59,6 @@ def create_job(jobs = None):
         ic("resp in createjob()", resp)
     return resp
 
-
 def display_jobs_date_info(cdtz, mdtz, fromdate, uptodate, ldtz):
     padd = "#"*8
     log.info(f"{padd} display_jobs_date_info [start] {padd}")
@@ -71,7 +70,6 @@ def display_jobs_date_info(cdtz, mdtz, fromdate, uptodate, ldtz):
 def get_readable_dates(dt_list):
     if (isinstance(dt_list, list)):
         return [dt.strftime("%d-%b-%Y %H:%M") for dt in dt_list]
-
 
 def calculate_startdtz_enddtz(job):
     """
@@ -114,7 +112,6 @@ def calculate_startdtz_enddtz(job):
     if vupto < enddtz:
         enddtz = vupto
     return startdtz, enddtz
-
 
 
 def get_datetime_list(cron_exp, startdtz, enddtz, resp):
@@ -161,7 +158,6 @@ def get_datetime_list(cron_exp, startdtz, enddtz, resp):
     ic("resp in get_datetime_list()", resp)
     return DT, isValidCron, resp
 
-
 def dt_local_to_utc(tzoffset, data, mob_or_web):
     log.info('dt_local_to_utc [start]')
     dtlist= udt= cdt= dateFormate= None
@@ -169,7 +165,6 @@ def dt_local_to_utc(tzoffset, data, mob_or_web):
     dateRegexWeb= r"[0-9]{2}-[A-Za-z]{3}-[0-9]{4} [0-9]{02}:[0-9]{02}"
     dateFormatMobile= "%Y-%m-%d %H:%M:%S"
     dateFormatWeb= "%d-%b-%Y %H:%M"
-
 
     if isinstance(data, dict):
         handle_dict_of_datetimes(dateFormatMobile, dateFormatWeb, data, tzoffset,
@@ -179,7 +174,6 @@ def dt_local_to_utc(tzoffset, data, mob_or_web):
         handle_list_of_datetimes(dateFormatMobile, dateFormatWeb, data,  tzoffset,
                                  dateRegexMobile, dateRegexWeb, mob_or_web)
     return data
-
 
 def handle_dict_of_datetimes(dateFormatMobile, dateFormatWeb, data, tzoffset,
                             dateRegexMobile, dateRegexWeb, mob_or_web):
@@ -221,7 +215,6 @@ def handle_dict_of_datetimes(dateFormatMobile, dateFormatWeb, data, tzoffset,
                 log.error("tzoffset parsing error", exc_info = True)
                 raise
 
-
 def handle_list_of_datetimes(dateFormatMobile, dateFormatWeb, data, tzoffset,
                             dateRegexMobile, dateRegexWeb, mob_or_web):
     import re
@@ -259,7 +252,6 @@ def handle_list_of_datetimes(dateFormatMobile, dateFormatWeb, data, tzoffset,
             log.error("tzoffset parsing error", exc_info = True)
             raise
 
-
 def insert_into_jn_and_jnd(job, DT, resp):
     """
         calculates expirydatetime for every dt in 'DT' list and
@@ -270,7 +262,7 @@ def insert_into_jn_and_jnd(job, DT, resp):
     status   = None
     if len(DT) > 0:
         try:
-            #required variables
+            # required variables
             NONE_JN  = utils.get_or_create_none_jobneed()
             NONE_P   = utils.get_or_create_none_people()
             crontype = job.identifier
@@ -324,7 +316,6 @@ def insert_into_jn_and_jnd(job, DT, resp):
         log.info("insert_into_jn_and_jnd() [ End ]")
         return status, resp
 
-
 def insert_into_jn_for_parent(job, params):
     try:
         jn = am.Jobneed.objects.create(
@@ -347,7 +338,6 @@ def insert_into_jn_for_parent(job, params):
         raise
     else:
         return jn
-
 
 
 
@@ -379,7 +369,6 @@ def insert_update_jobneeddetails(jnid, job, parent = False):
 
 
 
-
 def insert_into_jnd(qsb, job, jnid):
     log.info("insert_into_jnd() [START]")
     try:
@@ -395,7 +384,6 @@ def insert_into_jnd(qsb, job, jnid):
     except Exception:
         raise
     log.info("insert_into_jnd() [END]")
-
 
 
 
@@ -443,7 +431,6 @@ def create_child_tasks(job, _pdtz, _people, jnid, _jobstatus, _jobtype):
         return edtz
 
 
-
 def insert_into_jn_for_child(job, params, r):
     try:
         jn = am.Jobneed.objects.create(
@@ -466,7 +453,6 @@ def insert_into_jn_for_child(job, params, r):
         raise
     else:
         return jn
-
 
 
 def job_fields(job, checkpoint, external = False):
@@ -508,7 +494,6 @@ def delete_from_job(job, checkpointId, checklistId):
     except Exception:
         raise
 
-
 def delete_from_jobneed(parentjob, checkpointId, checklistId):
     try:
         am.Jobneed.objects.get(
@@ -517,7 +502,6 @@ def delete_from_jobneed(parentjob, checkpointId, checklistId):
             qset_id  = int(checklistId)).delete()
     except Exception:
         raise
-
 
 def update_lastgeneratedon(job, pdtz):
     try:
@@ -530,10 +514,8 @@ def update_lastgeneratedon(job, pdtz):
     except Exception:
         raise
 
-
 def send_email_notication(err):
     pass
-
 
 def del_job(id):
     pass

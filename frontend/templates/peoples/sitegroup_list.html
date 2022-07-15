@@ -9,7 +9,6 @@
 
 
 
-
 {% block table %}
 <table id="tabSitegroup" class="display cell-border compact hover"></table>
 {% endblock table %}
@@ -21,7 +20,7 @@
     $(document).ready(() => {
         table = $("#tabSitegroup").DataTable({
             ajax:{
-                url: "{{ url('peoples:sitegroup') }}?action = list",
+                url: "{{ url('peoples:sitegroup') }}?action=list",
                 data:function(d){
                     d.fields = ['id', 'groupname', 'enable']
                 }
@@ -48,7 +47,7 @@
                     text: 'Add New',
                     className: "btn btn-sm btn-light-primary",
                     action:function(e, dt, node, config){
-                        location.href = '{{ url("peoples:sitegroup") }}?action = form'
+                        location.href = '{{ url("peoples:sitegroup") }}?action=form'
                     }
                 }
             ]

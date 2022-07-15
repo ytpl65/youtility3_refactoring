@@ -4,13 +4,11 @@
 <link  href="{{ static('assets/plugins/custom/DataTables/datatables.min.css') }}" rel="stylesheet" type="text/css"/>
 {% endblock extra_css %}
 
-
 {% block pagebreadcumb %}
 {{ super() }}
-<li class="breadcrumb-item pe-3"><a href="{{ url('home') }}?template = true" class="pe-3">Home</a></li>
+<li class="breadcrumb-item pe-3"><a href="{{ url('home') }}?template=true" class="pe-3">Home</a></li>
 <li class="breadcrumb-item pe-3"><a href="javascript:void(0)" class="pe-3">TypeAssist Import</a></li>
 {% endblock pagebreadcumb %}
-
 
 <!------ BEGIN FORM TITLE ------->
 {% block form_title %}
@@ -34,7 +32,6 @@ Import TypeAssist
     <table id='typeassist_model'></table>
 </div>
 {% endblock form %}
-
 
 {% block extra_scripts %}
 <script src="{{ static('assets/plugins/custom/DataTables/datatables.min.js') }}" type="text/javascript"></script>

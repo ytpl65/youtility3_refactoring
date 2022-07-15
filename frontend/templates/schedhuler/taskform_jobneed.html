@@ -5,7 +5,6 @@
 <link rel="stylesheet" href="https://cdn.datatables.net/1.11.3/css/jquery.dataTables.min.css" type="text/css">
 {% endblock extra_css %}
 
-
 <!-------------------------- BEGIN PAGE BREADCUMB ----------------------->
 {% block pagebreadcumb %}
 <!--will call parent contents -->
@@ -15,13 +14,11 @@
 {% endblock pagebreadcumb %}
 <!-------------------------- END PAGE BREADCUMB ------------------------->
 
-
 <!------ BEGIN FORM TITLE ------->
 {% block form_title %}
 Task
 {% endblock form_title %}
 <!------ END FORM TITLE -------->
-
 
 
 <!--------- BEGIN NON FIELD ERRORS -------->
@@ -36,7 +33,6 @@ Task
 {% endif %}
 {% endblock nonfield_errors %}
 <!---------- END NON FIELD ERRORS --------->
-
 
 <!------------- BEGIN FORM ------------------------------>
 {% block form %}
@@ -200,7 +196,6 @@ Task
 {% endblock form %}
 <!------------- END FORM ------------------------------>
 
-
 {% block ajax_page_actions %}
 <div class="form-actions">
     {% if taskformjobneed.instance.jobstatus == "('ASSIGNED',)" %}
@@ -223,7 +218,6 @@ Task
 
 {% block extra_scripts %}
 {{ taskformjobneed.media.js }}
-
 
 <script>
     function showHideSelectField(val) {
@@ -251,7 +245,6 @@ Task
             time_24hr: true,
             dateFormat: 'd-M-Y H:S'
         })
-
 
     })
 </script>

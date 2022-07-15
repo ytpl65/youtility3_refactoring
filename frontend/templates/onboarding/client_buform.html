@@ -1,7 +1,6 @@
 {% extends "base_form.html" %}
 {% from "onboarding/partials/partial_ta_form.html" import typeassist_form with context %}
 
-
 <!---- BEGIN PAGE TITLE ---->
 {% block title %}
 Client Form
@@ -22,7 +21,6 @@ Client Form
 <li class="breadcrumb-item pe-3"><a href="javascript:void(0)" class="pe-3">Client Form</a></li>
 {% endblock pagebreadcumb %}
 <!-------------------------- END PAGE BREADCUMB ------------------------->
-
 
 <!-------------  BEGIN POP-UPS CODE -------------->
 {% block popup_alerts %}
@@ -58,13 +56,11 @@ Client Form
 {% endblock popup_alerts %}
 <!-------------  END POP-UPS CODE -------------->
 
-
 <!------ BEGIN FORM TITLE ------->
 {% block form_title %}
 Client
 {% endblock form_title %}
 <!------ END FORM TITLE -------->
-
 
 <!--------- BEGIN NON FIELD ERRORS -------->
 {% block nonfield_errors %}
@@ -86,7 +82,6 @@ Client
 {% endif %}
 {% endblock nonfield_errors %}
 <!---------- END NON FIELD ERRORS --------->
-
 
 
 <!-------------- BEGIN FORM ------------------->
@@ -234,7 +229,6 @@ Client
 {% endblock extras %}
 <!------------- END FORM ---------------------->
 
-
 <!------------------- BEGIN FORM PAGE ACTIONS --------------->
 {% block page_actions %}
 {% if edit is defined %}
@@ -244,7 +238,6 @@ Client
 {% endif %}
 {% endblock page_actions %}
 <!------------------- END FORM PAGE ACTIONS --------------->
-
 
 {% block extra_scripts %}
 {{ clientform.media.js }}
@@ -295,7 +288,6 @@ Client
                 {label: 'Is Admin', name: 'isadmin'},
             ]
         })
-
 
         $("#list_bu").DataTable({
             ajax:{

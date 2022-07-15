@@ -21,12 +21,10 @@ from apps.tenants.models import Tenant
 logger = logging.getLogger('__main__')
 dbg = logging.getLogger('__main__').debug
 
-
 def cache_it(key, val, time = 1*60):
     from django.core.cache import cache
     cache.set(key, val, time)
     logger.info(f'saved in cache {pformat(val)}')
-
 
 def get_from_cache(key):
     from django.core.cache import cache
@@ -37,20 +35,17 @@ def get_from_cache(key):
         logger.info('Not found in cache')
         return None
 
-
 def render_form(request, params, cxt):
     logger.info("%s", cxt['msg'])
     html = render_to_string(params['template_form'], cxt, request)
     data = {"html_form": html}
     return rp.JsonResponse(data, status = 200)
 
-
 def handle_DoesNotExist(request):
     data = {'errors': 'Unable to edit object not found'}
     logger.error("%s", data['error'], exc_info = True)
     msg.error(request, data['error'], 'alert-danger')
     return rp.JsonResponse(data, status = 404)
-
 
 def handle_Exception(request, force_return = None):
     data = {'errors': 'Something went wrong, Please try again!'}
@@ -60,13 +55,11 @@ def handle_Exception(request, force_return = None):
         return force_return
     return rp.JsonResponse(data, status = 404)
 
-
 def handle_RestrictedError(request):
     data = {'errors': "Unable to delete, due to dependencies"}
     logger.warn("%s", data['error'], exc_info = True)
     msg.error(request, data['error'], "alert-danger")
     return rp.JsonResponse(data, status = 404)
-
 
 def handle_EmptyResultSet(request, params, cxt):
     logger.warn('empty objects retrieved', exc_info = True)
@@ -74,12 +67,10 @@ def handle_EmptyResultSet(request, params, cxt):
               'alert-danger')
     return scts.render(request, params['template_list'], cxt)
 
-
 def handle_intergrity_error(name):
     msg = f'The {name} record of with these values is already exisit!'
     logger.info(msg, exc_info = True)
     return rp.JsonResponse({'errors': msg}, status = 404)
-
 
 def render_form_for_update(request, params, formname, obj, extra_cxt = None):
     if extra_cxt is None:
@@ -99,7 +90,6 @@ def render_form_for_update(request, params, formname, obj, extra_cxt = None):
     except Exception:
         return handle_Exception(request)
 
-
 def render_form_for_delete(request, params, master = False):
     logger.info("render form for delete")
     from django.db.models import RestrictedError
@@ -118,7 +108,6 @@ def render_form_for_delete(request, params, master = False):
         return handle_RestrictedError(request)
     except Exception:
         return handle_Exception(request, params)
-
 
 def render_grid(request, params, msg, objs, extra_cxt = None):
     if extra_cxt is None:
@@ -144,7 +133,6 @@ def render_grid(request, params, msg, objs, extra_cxt = None):
         resp = handle_Exception(request, scts.redirect('/dashboard'))
     return resp
 
-
 def paginate_results(request, objs, params):
     from django.core.paginator import (Paginator,
                                        EmptyPage, PageNotAnInteger)
@@ -163,7 +151,6 @@ def paginate_results(request, objs, params):
         li = paginator.page(paginator.num_pages)
     return {params['list']: li, params['filt_name']: filterform}
 
-
 def get_instance_for_update(postdata, params, msg, pk, kwargs = None):
     if kwargs is None:
         kwargs = {}
@@ -172,11 +159,9 @@ def get_instance_for_update(postdata, params, msg, pk, kwargs = None):
     logger.info(f"object retrieved '{obj}'")
     return params['form_class'](postdata, instance = obj, **kwargs)
 
-
 def handle_invalid_form(request, params, cxt):
     logger.info("form is not valid")
     return rp.JsonResponse(cxt, status = 404)
-
 
 def get_model_obj(pk, request, params):
     try:
@@ -186,7 +171,6 @@ def get_model_obj(pk, request, params):
     else:
         logger.info(f"object retrieved '{obj}'")
         return obj
-
 
 def local_to_utc(data, offset, mobile_web):
     # sourcery skip: avoid-builtin-shadow
@@ -220,7 +204,6 @@ def local_to_utc(data, offset, mobile_web):
         else:
             return newdata
 
-
 def get_or_create_none_people(using = None):
     obj, _ = pm.People.objects.filter(Q(peoplecode='NONE') | Q(peoplename='NONE')).get_or_create(
         id = 1,
@@ -232,7 +215,6 @@ def get_or_create_none_people(using = None):
     )
     return obj
 
-
 def get_or_create_none_pgroup():
     obj, _ = pm.Pgroup.objects.get_or_create(
         id = 1,
@@ -241,7 +223,6 @@ def get_or_create_none_pgroup():
         }
     )
     return obj
-
 
 def get_or_create_none_cap():
     obj, _ = pm.Capability.objects.get_or_create(
@@ -252,20 +233,17 @@ def get_or_create_none_cap():
     )
     return obj
 
-
 def encrypt(data: bytes) -> bytes:
     import zlib
     from base64 import urlsafe_b64encode as b64e, urlsafe_b64decode as b64d
     data = bytes(data, 'utf-8')
     return b64e(zlib.compress(data, 9))
 
-
 def decrypt(obscured: bytes) -> bytes:
     import zlib
     from base64 import urlsafe_b64encode as b64e, urlsafe_b64decode as b64d
     byte_val = zlib.decompress(b64d(obscured))
     return byte_val.decode('utf-8')
-
 
 def save_user_session(request, people):
     '''save user info in session'''
@@ -299,7 +277,6 @@ def save_user_session(request, people):
             'something went wrong please follow the traceback to fix it... ', exc_info = True)
         raise
 
-
 def update_timeline_data(ids, request, update = False):
     # sourcery skip: hoist-statement-from-if, remove-pass-body
     import apps.onboarding.models as ob
@@ -318,7 +295,6 @@ def update_timeline_data(ids, request, update = False):
     else:
         request.session['wizard_data']['timeline_data'][ids].pop()
         request.session['wizard_data']['timeline_data'][ids] = list(data)
-
 
 def process_wizard_form(request, wizard_data, update = False, instance = None):
     logger.info('processing wizard started...', )
@@ -340,7 +316,6 @@ def process_wizard_form(request, wizard_data, update = False, instance = None):
         resp = scts.redirect('onboarding:wizard_view')
     return resp
 
-
 def update_wizard_form(wizard_data, wiz_session, request):
     # sourcery skip: lift-return-into-if, remove-unnecessary-else
     resp = None
@@ -357,7 +332,6 @@ def update_wizard_form(wizard_data, wiz_session, request):
     dbg(f"response from update_wizard_form {resp}")
     return resp
 
-
 def handle_other_exception(request, form, form_name, template, jsonform="", jsonform_name=""):
     logger.critical(
         "something went wrong please follow the traceback to fix it... ", exc_info = True)
@@ -366,13 +340,11 @@ def handle_other_exception(request, form, form_name, template, jsonform="", json
     cxt = {form_name: form, 'edit': True, jsonform_name: jsonform}
     return scts.render(request, template, context = cxt)
 
-
 def handle_does_not_exist(request, url):
     logger.error('Object does not exist', exc_info = True)
     msg.error(request, "Object does not exist",
               "alert-danger")
     return scts.redirect(url)
-
 
 def get_index_for_deletion(lookup, request, ids):
     id = lookup['id']
@@ -381,7 +353,6 @@ def get_index_for_deletion(lookup, request, ids):
         if item['id'] == int(id):
             print(f"idx going to be deleted {idx}")
             return idx
-
 
 def delete_object(request, model, lookup, ids, temp,
                   form, url, form_name, jsonformname = None, jsonform = None):
@@ -415,7 +386,6 @@ def delete_object(request, model, lookup, ids, temp,
         res = scts.render(request, temp, context = cxt)
     return res
 
-
 def delete_unsaved_objects(model, ids):
     if ids:
         try:
@@ -427,7 +397,6 @@ def delete_unsaved_objects(model, ids):
         else:
             logger.info('Unsaved objects are deleted...DONE')
 
-
 def update_prev_step(step_url, request):
     url, ids = step_url
     session = request.session['wizard_data']
@@ -437,7 +406,6 @@ def update_prev_step(step_url, request):
     request.session['wizard_data'].update(
         {'prev_inst': instance,
          'prev_url': new_url})
-
 
 def update_next_step(step_url, request):
     url, ids = step_url
@@ -449,7 +417,6 @@ def update_next_step(step_url, request):
         {'next_inst': instance,
          'next_url': new_url})
 
-
 def update_other_info(step, request, current, formid, pk):
     url, ids = step[current]
     session = request.session['wizard_data']
@@ -459,7 +426,6 @@ def update_other_info(step, request, current, formid, pk):
     session['formid'] = formid
     session['del_url'] = url.replace('form', 'delete')
     session['current_inst'] = pk
-
 
 def update_wizard_steps(request, current, prev, next, formid, pk):
     '''Updates wizard next, current, prev, final urls'''
@@ -476,11 +442,9 @@ def update_wizard_steps(request, current, prev, next, formid, pk):
     # update other info
     update_other_info(step_urls, request, current, formid, pk)
 
-
 def save_msg(request):
     '''Displays a success message'''
     return msg.success(request, 'Entry has been saved successfully!', 'alert-success')
-
 
 def initailize_form_fields(form):
     for visible in form.visible_fields():
@@ -494,13 +458,11 @@ def initailize_form_fields(form):
             visible.field.widget.attrs['data-placeholder'] = 'Select an option'
             visible.field.widget.attrs['data-allow-clear'] = 'true'
 
-
 def apply_error_classes(form):
     # loop on *all* fields if key '__all__' found else only on errors:
     for x in (form.fields if '__all__' in form.errors else form.errors):
         attrs = form.fields[x].widget.attrs
         attrs.update({'class': attrs.get('class', '') + ' is-invalid'})
-
 
 def to_utc(date, format = None):
     import pytz
@@ -519,7 +481,6 @@ def to_utc(date, format = None):
 
 # MAPPING OF HOSTNAME:DATABASE ALIAS NAME
 
-
 def get_tenants_map():
     return {
         'intelliwiz.youtility.local': 'intelliwiz_django',
@@ -534,10 +495,8 @@ def get_tenants_map():
 
 # RETURN HOSTNAME FROM REQUEST
 
-
 def hostname_from_request(request):
-    return request.get_host().split(': ')[0].lower()
-
+    return request.get_host().split(':')[0].lower()
 
 def get_or_create_none_bv():
     obj, _ = om.Bt.objects.get_or_create(
@@ -547,7 +506,6 @@ def get_or_create_none_bv():
         }
     )
     return obj
-
 
 def get_or_create_none_typeassist():
     obj, iscreated = om.TypeAssist.objects.get_or_create(
@@ -560,19 +518,16 @@ def get_or_create_none_typeassist():
 
 # RETURNS DB ALIAS FROM REQUEST
 
-
 def tenant_db_from_request(request):
     hostname = hostname_from_request(request)
     print(f"Hostname from Request:{hostname}")
     tenants_map = get_tenants_map()
     return tenants_map.get(hostname, 'default')
 
-
 def get_client_from_hostname(request):
     hostname = hostname_from_request(request)
     print(hostname)
     return hostname.split('.')[0]
-
 
 def get_or_create_none_tenant():
     return Tenant.objects.get_or_create(id = 1, defaults={'tenantname': 'Intelliwiz', 'subdomain_prefix': 'intelliwiz'})
@@ -593,7 +548,6 @@ def get_or_create_none_job():
         }
     )
     return obj
-
 
 def get_or_create_none_gf():
     obj, _ = om.GeofenceMaster.objects.get_or_create(
@@ -619,7 +573,6 @@ def get_or_create_none_jobneed():
     )
     return obj
 
-
 def get_or_create_none_qset():
     obj, _ = am.QuestionSet.objects.get_or_create(
         id = 1,
@@ -628,7 +581,6 @@ def get_or_create_none_qset():
     )
     return obj
 
-
 def get_or_create_none_question():
     obj, _ = am.Question.objects.get_or_create(
         id = 1,
@@ -636,7 +588,6 @@ def get_or_create_none_question():
             'quesname': "NONE", 'id': 1}
     )
     return obj
-
 
 def get_or_create_none_qsetblng():
     obj, _ = am.QuestionSetBelonging.objects.get_or_create(
@@ -649,7 +600,6 @@ def get_or_create_none_qsetblng():
     )
     return obj
 
-
 def get_or_create_none_asset():
     obj, _ = am.Asset.objects.get_or_create(
         id = 1,
@@ -660,7 +610,6 @@ def get_or_create_none_asset():
         }
     )
     return obj
-
 
 def create_none_entries(self):
     '''
@@ -688,7 +637,6 @@ def create_none_entries(self):
         raise
 
 
-
 def create_super_admin(db):
     try:
         set_db_for_router(db)
@@ -714,13 +662,10 @@ def create_super_admin(db):
         else:
             raise ValueError("Please provide all fields!")
 
-
 THREAD_LOCAL = threading.local()
-
 
 def get_current_db_name():
     return getattr(THREAD_LOCAL, 'DB', "default")
-
 
 def set_db_for_router(db):
     from django.conf import settings
@@ -730,10 +675,8 @@ def set_db_for_router(db):
         raise NoDbError("Database with this alias not exist!")
     setattr(THREAD_LOCAL, "DB", db)
 
-
 def display_post_data(post_data):
     logger.info("\n%s" % (pformat(post_data, compact = True)))
-
 
 def format_data(objects):
     columns, rows, data = objects[0].keys(), {}, {}
@@ -743,14 +686,12 @@ def format_data(objects):
     data['rows'] = rows
     return data
 
-
 def getFilters():
     return {
         "eq": "__iexact", "lt": "__lt",        "le": "__lte",
         "gt": "__gt",     "ge": "__gte",       "bw": "__istartswith",
         "in": "__in",     "ew": "__iendswith", "cn": "__icontains",
         "bt": "__range"}
-
 
 def searchValue(objects, fields, related, model,  ST):
     q_objs = Q()
@@ -760,13 +701,11 @@ def searchValue(objects, fields, related, model,  ST):
         q_objs).select_related(
             *related).values(*fields)
 
-
 def searchValue2(fields,  ST):
     q_objs = Q()
     for field in fields:
         q_objs |= get_filter(field, 'contains', ST)
     return q_objs
-
 
 def get_filter(field_name, filter_condition, filter_value):
     # thanks to the below post
@@ -801,11 +740,9 @@ def get_filter(field_name, filter_condition, filter_value):
         }
         return ~Q(**kwargs)
 
-
 def get_paginated_results(requestData, objects, count,
                           fields, related, model):
     '''paginate the results'''
-
 
     logger.info('Pagination Start'if count else "")
     if not requestData.get('draw'):
@@ -818,7 +755,6 @@ def get_paginated_results(requestData, objects, count,
         filtered = count
     length, start = int(requestData['length']), int(requestData['start'])
     return objects[start:start+length], filtered
-
 
 def get_paginated_results2(objs, count, params, R):
     filtered = 0
@@ -836,7 +772,6 @@ def get_paginated_results2(objs, count, params, R):
         'recordsFiltered':filtered,
         'recordsTotal':count
     })
-
 
 def PD(data = None, post = None, get = None, instance = None, cleaned = None):
     """
@@ -856,7 +791,6 @@ def PD(data = None, post = None, get = None, instance = None, cleaned = None):
             f"INSTANCE data recived from DB {pformat(instance, compact = True)}\n")
     else:
         logger.debug(f"{pformat(data, compact = True)}\n")
-
 
 def register_newuser_token(user, clientUrl):
     if not user.email or not user.loginid:
@@ -886,7 +820,6 @@ def register_newuser_token(user, clientUrl):
         return True, res
     return False, None
 
-
 def clean_record(record):
 
     from django.contrib.gis.geos import GEOSGeometry
@@ -894,13 +827,12 @@ def clean_record(record):
     for k, v in record.items():
         if k in ['gpslocation', 'startlocation', 'endlocation']:
             ic(v, type(v))
-            v = v.split(', ')
+            v = v.split(',')
             ic(v)
             p = f'POINT({v[1]} {v[0]})'
             ic(p)
             record[k] = GEOSGeometry(p, srid = 4326)
     return record
-
 
 def save_common_stuff(request, instance, is_superuser = False):
     from django.utils import timezone
@@ -912,13 +844,11 @@ def save_common_stuff(request, instance, is_superuser = False):
         instance.cuser_id = instance.muser_id = userid
     return instance
 
-
 def create_tenant_with_alias(db):
     Tenant.objects.create(
         tenantname = db.upper(),
         subdomain_prefix = db
     )
-
 
 def get_record_from_input(input):
     try:
@@ -929,12 +859,10 @@ def get_record_from_input(input):
     except Exception:
         raise
 
-
-#import face_recognition
+# import face_recognition
 
 # GLOBAL
 ImageFile.LOAD_TRUNCATED_IMAGES = True
-
 
 def fr(imagePath1, imagePath2):
 
@@ -949,18 +877,18 @@ def fr(imagePath1, imagePath2):
                 image2 = face_recognition.load_image_file(imagePath2)
 
                 # Image Path1 Encoding
-                #after_image1_encoding= face_recognition.face_encodings(image1)[0]
+                # after_image1_encoding= face_recognition.face_encodings(image1)[0]
                 after_image1_encoding = face_recognition.face_encodings(image1)
                 after_image1_encoding = after_image1_encoding[0] if len(
                     after_image1_encoding) > 0 else None
-                #storyline(A, "python_fr.fr() after_image1_encoding: %s", after_image1_encoding)
+                # storyline(A, "python_fr.fr() after_image1_encoding: %s", after_image1_encoding)
 
                 # Image Path2 Encoding
-                #after_image2_encoding= face_recognition.face_encodings(image2)[0]
+                # after_image2_encoding= face_recognition.face_encodings(image2)[0]
                 after_image2_encoding = face_recognition.face_encodings(image2)
                 after_image2_encoding = after_image2_encoding[0] if len(
                     after_image2_encoding) > 0 else None
-                #storyline(A, "python_fr.fr() after_image2_encoding: %s", after_image2_encoding)
+                # storyline(A, "python_fr.fr() after_image2_encoding: %s", after_image2_encoding)
 
                 if (after_image1_encoding is not None and after_image2_encoding is not None):
                     result = face_recognition.compare_faces(
@@ -979,17 +907,13 @@ def fr(imagePath1, imagePath2):
         raise Exception
     return status, msg
 
-
 def alert_observation(pk, event):
-
 
     pass
 
 
-
 def alert_email(pk, event):
     if event == 'OBSERVATION': alert_observation(pk, event)
-
 
 def printsql(objs):
     from django.core.exceptions import EmptyResultSet
@@ -998,7 +922,6 @@ def printsql(objs):
     except EmptyResultSet:
         print("NO SQL") 
 
-
 def get_select_output(objs):
     if not objs:
         return None, 0, "No records"
@@ -1006,7 +929,6 @@ def get_select_output(objs):
     count = objs.count()
     msg = f'Total {count} records fetched successfully!'
     return records, count, msg
-
 
 def get_qobjs_dir_fields_start_length(R):
     qobjs = None
@@ -1027,7 +949,6 @@ def get_qobjs_dir_fields_start_length(R):
     if not orderby: dir = "-mdtz"
     return qobjs, dir,  fields, length, start
 
-
 def runrawsql(sql, args = None, db='default', named = False):
     "Runs raw sql return namedtup[le or dict type results"
     from django.db import connections
@@ -1035,14 +956,12 @@ def runrawsql(sql, args = None, db='default', named = False):
     cursor.execute(sql, args)
     return namedtuplefetchall(cursor) if named else dictfetchall(cursor)
 
-
 def namedtuplefetchall(cursor):
     from collections import namedtuple
     "Return all rows from a cursor as a namedtuple"
     desc = cursor.description
     nt_result = namedtuple('Result', [col[0] for col in desc])
     return [nt_result(*row) for row in cursor.fetchall()]
-
 
 def dictfetchall(cursor):
     "Return all rows from a cursor as a dict"
@@ -1059,7 +978,6 @@ def getformatedjson(geofence = None, jsondata = None, rettype = dict):
     return result if rettype == dict else json.dumps(result)
 
 
-
 class Error(Exception):
     pass
 
@@ -1072,13 +990,11 @@ class FileSizeMisMatchError(Error):
 class TotalRecordsMisMatchError(Error):
     pass
 
-
 class NoDbError(Error):
     pass
 
 class RecordsAlreadyExist(Error):
     pass
-
 
 def getawaredatetime(dt, offset):
     from datetime import datetime, timedelta, timezone

@@ -6,14 +6,12 @@ Task List
 {% endblock card_title %}
 <!----- END CARD TITLE -------->
 
-
 <!------------------------------------ BEGIN PAGE BREADCUMBS ------------------------------------>
 {% block pagebreadcumb %}
 {{ super() }}
 <li class="breadcrumb-item pe-3"><a href="javascript:void(0)" class="pe-3">Task List</a></li>
 {% endblock pagebreadcumb %}
 <!------------------------------------- END PAGE BREADCUMBS ------------------------------------->
-
 
 <!-------------------------------------------- BEGIN TABLE ------------------------------------------->
 {% block table %}
@@ -81,7 +79,6 @@ Task List
     const table_id = '#task_table_jobneed'
     const urlname = "{{ url('schedhuler:jobneedtasks') }}"
 
-
     function submitFormFilter(){
         $(formFilter).submit()
     }
@@ -113,7 +110,7 @@ Task List
         //datatable initialization
         table = $(table_id).DataTable({
             ajax:{
-                url:`${urlname}?action = list`
+                url:`${urlname}?action=list`
             },
 			deferRender: true,
 			responsive : true,
@@ -170,7 +167,6 @@ Task List
 
         $(`${table_id} thead tr:eq(1)`).css(styles)
 		//END STYLING DATATABLE
-
 
     })
 </script>

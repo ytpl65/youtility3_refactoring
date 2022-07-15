@@ -12,16 +12,13 @@ def clean_point_field(val):
     except Exception:
         raise
 
-
 def clean_code(val):
     val = str(val)
     return val.uppper()
 
-
 def clean_text(val):
     val = str(val)
     return val.title()            
-
 
 def clean_datetimes(val, offset):
     from datetime import datetime, timedelta, timezone
@@ -32,11 +29,9 @@ def clean_datetimes(val, offset):
         return val.replace(tzinfo = tz, microsecond = 0)
     return val
 
-
 def clean_date(val):
     from datetime import datetime
     return datetime.strptime(val,  "%Y-%m-%d")
-
 
 
 def clean_record(record):

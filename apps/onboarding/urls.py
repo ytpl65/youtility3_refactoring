@@ -29,5 +29,5 @@ urlpatterns = [
 
     path('geofence/', views.GeoFence.as_view(), name='geofence'),
     path('import/', views.ImportFile.as_view(), name="import"),
-    #path('listbu/', views.ListOfBu.as_view(), name="list_bu")
+    # path('listbu/', views.ListOfBu.as_view(), name="list_bu")
 ]

@@ -1,7 +1,6 @@
 {% extends "base_form.html" %}
 {% from "onboarding/partials/partial_ta_form.html" import typeassist_form with context %}
 
-
 {% block extra_css %}
 {{ buform.media.css }}
 {% endblock extra_css %}
@@ -10,11 +9,10 @@
 {% block pagebreadcumb %}
 <!--will call parent contents -->
 {{ super() }}
-<li class="breadcrumb-item pe-3"><a href="{{ url('onboarding:bu_list') }}?template = true" class="pe-3">Bu List</a></li>
+<li class="breadcrumb-item pe-3"><a href="{{ url('onboarding:bu_list') }}?template=true" class="pe-3">Bu List</a></li>
 <li class="breadcrumb-item pe-3"><a href="javascript:void(0)" class="pe-3">Bu Form</a></li>
 {% endblock pagebreadcumb %}
 <!-------------------------- END PAGE BREADCUMB ------------------------->
-
 
 <!-------------  BEGIN POP-UPS CODE -------------->
 {% block popup_alerts %}
@@ -55,14 +53,11 @@
 
 
 
-
-
 <!------ BEGIN FORM TITLE ------->
 {% block form_title %}
 Buisiness-View
 {% endblock form_title %}
 <!------ END FORM TITLE -------->
-
 
 <!--------- BEGIN NON FIELD ERRORS -------->
 {% block nonfield_errors %}
@@ -76,7 +71,6 @@ Buisiness-View
 {% endif %}
 {% endblock nonfield_errors %}
 <!---------- END NON FIELD ERRORS --------->
-
 
 <!-------------- BEGIN FORM ------------------->
 {% block form %}
@@ -221,7 +215,6 @@ Buisiness-View
 {% endblock form %}
 <!------------- END FORM ---------------------->
 
-
 <!-------------- BEGIN FORM PAGE ACTIONS --------->
 {% block formpage_actions %}
 {% if request.session['wizard_data'] is defined %}
@@ -240,7 +233,6 @@ Buisiness-View
 {% endif %}
 {% endblock formpage_actions %}
 <!---------------- END FORM PAGE ACTIONS ----------->
-
 
 <!--------------- BEGIN PAGE-LEVEL EXTRA SCRIPTS --------------->
 {% block extra_scripts %}

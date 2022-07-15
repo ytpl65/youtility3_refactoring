@@ -10,7 +10,6 @@ from django.core.exceptions import ValidationError
 import django_select2.forms as s2forms
 import json
 
-
 class QuestionForm(forms.ModelForm):
     required_css_class = "required"
     alertbelow         = forms.CharField(widget = forms.NumberInput(
@@ -108,7 +107,6 @@ class QuestionForm(forms.ModelForm):
             except ValidationError as e:
                 self._update_errors(e)
 
-
 class MasterQsetForm(forms.ModelForm):
     required_css_class = "required"
     assetincludes = forms.MultipleChoiceField(
@@ -131,7 +129,6 @@ class MasterQsetForm(forms.ModelForm):
         self.fields['type'].initial      = 'ASSET'
         self.fields['type'].widget.attrs = {"style": "display:none;"}
         utils.initailize_form_fields(self)
-
 
 class QsetBelongingForm(forms.ModelForm):
     required_css_class = "required"
@@ -209,7 +206,6 @@ class QsetBelongingForm(forms.ModelForm):
             except ValidationError as e:
                 self._update_errors(e)
 
-
 class ChecklistForm(MasterQsetForm):
 
     class Meta(MasterQsetForm.Meta):
@@ -222,9 +218,8 @@ class ChecklistForm(MasterQsetForm):
         self.fields['assetincludes'].label = 'Checkpoints'
         self.fields['type'].widget.attrs   = {"style": "display:none;"}
         if self.instance.id:
-            self.fields['assetincludes'].initial = self.instance.assetincludes.split(', ')
+            self.fields['assetincludes'].initial = self.instance.assetincludes.split(',')
         utils.initailize_form_fields(self)
-
 
 
 class QuestionSetForm(MasterQsetForm):
@@ -245,7 +240,6 @@ class QuestionSetForm(MasterQsetForm):
         #     self.fields['assetincludes'].initial = json.loads(
         #         self.instance.assetincludes)
         utils.initailize_form_fields(self)
-
 
 
 
@@ -297,7 +291,6 @@ class AssetForm(forms.ModelForm):
         self.fields['identifier'].widget.attrs = {"style": "display:none;"}
         utils.initailize_form_fields(self)
 
-
 class SmartPlaceForm(AssetForm):
     required_css_class = "required"
 
@@ -336,7 +329,6 @@ class SmartPlaceForm(AssetForm):
             Q(identifier='SMARTPLACE') & Q(enable = True) | Q(assetcode='NONE'))
         utils.initailize_form_fields(self)
 
-
 class LocationForm(AssetForm):
     required_css_class = "required"
 
@@ -370,7 +362,6 @@ class LocationForm(AssetForm):
         self.fields['identifier'].initial = 'LOCATION'
         self.fields['identifier'].widget.attrs = {"style": "display:none;"}
         utils.initailize_form_fields(self)
-
 
 class CheckpointForm(AssetForm):
     required_css_class = "required"
@@ -409,7 +400,6 @@ class CheckpointForm(AssetForm):
         self.fields['parent'].queryset = am.Asset.objects.filter(
             Q(identifier='CHECKPOINT') & Q(enable = True) | Q(assetcode='NONE'))
         utils.initailize_form_fields(self)
-
 
 class JobForm(forms.ModelForm):
 
@@ -486,7 +476,6 @@ class JobForm(forms.ModelForm):
         ic('cleaned')
         self.instance.jobdesc = f'{cd.get("bu")} - {cd.get("jobname")}'
 
-
 class JobNeedForm(forms.ModelForm):
     class Meta:
         model = am.Jobneed
@@ -511,7 +500,6 @@ class JobNeedForm(forms.ModelForm):
         label = {
             'endtime': 'End Time'
         }
-
 
 class AdhocTaskForm(JobNeedForm):
     ASSIGNTO_CHOICES   = [('PEOPLE', 'People'), ('GROUP', 'Group')]
@@ -542,7 +530,6 @@ class AdhocTaskForm(JobNeedForm):
         self.fields['expirydatetime'].input_formats  = settings.DATETIME_INPUT_FORMATS
         utils.initailize_form_fields(self)
 
-
 class TicketForm(forms.ModelForm):
     class Meta:
         model = am.Ticket
@@ -565,7 +552,6 @@ class TicketForm(forms.ModelForm):
         self.fields["status"].queryset = om.TypeAssist.objects.filter(Q(tatype__tacode='TICKETSTATUS') )
         self.fields["priority"].queryset = om.TypeAssist.objects.filter(tatype__tacode='PRIORITY')
         utils.initailize_form_fields(self)
-
 
 # create a ModelForm
 class EscalationForm(forms.ModelForm):

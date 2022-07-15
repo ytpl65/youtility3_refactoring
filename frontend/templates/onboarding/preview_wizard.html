@@ -1,6 +1,5 @@
 {% extends "base_list.html" %}
 
-
 {% block card_title %}
 Preview Submissions
 {% endblock card_title %}
@@ -8,7 +7,6 @@ Preview Submissions
 {% block card_icon %}
 
 {% endblock card_icon %}
-
 
 
 {% block wizard_head %}
@@ -133,7 +131,6 @@ Preview Submissions
     <button type="button" class="btn btn-sm btn-danger" data-bs-toggle="modal" data-bs-target="#id_quit_wizard">Quit
         Wizard</button>
 
-
     {% if not data['ppgroups'] %}
     <!--check previous form id's in session, then load that with the instance -->
     <a href="{{ url('peoples:wiz_pgroup_form') }}" class="mx-2 btn btn-sm btn-primary rounded-1">
@@ -148,7 +145,6 @@ Preview Submissions
 {% endblock table %}
 
 <!------- END Page Body ------->
-
 
 
 <!------------BEGIN PopUp Alerts All Bootstrap Code Should Reside Here --------->
@@ -181,7 +177,6 @@ Preview Submissions
 {% endcall %}
 {% endblock popup_alerts %}
 <!------------ END PopUp Alerts All Bootstrap Code Should Reside Here --------->
-
 
 
 <!------------BEGIN Page Level Scripts -------------------->

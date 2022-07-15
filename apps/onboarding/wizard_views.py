@@ -19,7 +19,6 @@ from django.urls import resolve, reverse
 log = logging.getLogger('django')
 dbg = logging.getLogger('__main__').debug
 
-
 class WizardView(LoginRequiredMixin, View):
     wizard_steps = {
         'buform': 1,
@@ -103,7 +102,6 @@ class WizardView(LoginRequiredMixin, View):
                 createdby__peoplecode = user.peoplecode).delete()
         return self.open_new_wizard(request, True)
 
-
 class WizardDelete(LoginRequiredMixin, View):
     def get(self, request, *args, **kwargs):  # sourcery skip: extract-method
         '''delete wizard and its data saved'''
@@ -126,9 +124,7 @@ class WizardDelete(LoginRequiredMixin, View):
             pg = Pgroup.objects.get(pk = ids[i])
             pg.enable = False
 
-
 # Helper Methods
-
 
 # STEP-1 BTFORM-VIEW
 class WizardBt(views.CreateBt):
@@ -223,7 +219,6 @@ class WizardBt(views.CreateBt):
 
 # STEP-2 SHIFT FORMOF WIZARD
 
-
 class WizardShift(views.CreateShift):
     model = ob.Shift
     wizard_data = {
@@ -309,7 +304,6 @@ class WizardShift(views.CreateShift):
             msg.error(request, 'something went wrong', 'alert-danger')
             res = scts.redirect('onboarding:wiz_shift_form')
         return res
-
 
 # STEP-3 PEOPLE FORM OF WIZARD
 class WizardPeople(people_views.CreatePeople):
@@ -410,7 +404,6 @@ class WizardPeople(people_views.CreatePeople):
             msg.error(request, 'something went wrong', 'alert-danger')
             res = scts.redirect('peoples:wiz_people_form')
         return res
-
 
 # STEP-3 PEOPLE GORUP FORM OF WIZARD
 class WizardPgroup(people_views.CreatePgroup):
@@ -521,7 +514,6 @@ class WizardPgroup(people_views.CreatePgroup):
 
 # Final step (preview wizard)
 
-
 class WizardPreview(LoginRequiredMixin, View):
     wizard_submissions = {
         'buids': [], 'shiftids': [], 'peopleids': [],
@@ -560,14 +552,12 @@ class WizardPreview(LoginRequiredMixin, View):
                 pk__in = sd['wizard_data'][ids]).values(*fields[ids])
             self.wizard_submissions[ids] = data
 
-
 @login_required
 def save_wizard(request):
     log.info("deleting wizard_data from session and redirecting user to home")
     del request.session['wizard_data']
     dbg("wizard_data deleted from the session")
     return scts.redirect('home')
-
 
 @login_required
 def save_as_draft(request):
@@ -586,7 +576,6 @@ def save_as_draft(request):
         del request.session['wizard_data']
         dbg("wizard_data deleted from the session")
     return JsonResponse({'saved': True, 'status': status})
-
 
 @login_required
 def delete_from_draft(request):

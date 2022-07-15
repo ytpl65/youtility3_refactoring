@@ -1,6 +1,5 @@
 {% extends "base_list.html" %}
 
-
 <!---- BEGIN CARD TITLE ------>
 {% block card_title %}
 TypeAssist List
@@ -14,7 +13,6 @@ TypeAssist List
 {% endblock pagebreadcumb %}
 <!------------------------------------- END PAGE BREADCUMBS ------------------------------------->
 
-
 {% block table %}
     <!------------------ BEGIN TABLE --------------------->
     <table id="ta_table" class="display cell-border compact hover" style="width:100%">
@@ -23,7 +21,6 @@ TypeAssist List
 
 {% endblock table %}
 <!------------------ --------------------------END BU TABLE ------------------------------------------------->
-
 
 {% block popup_alerts %}
 <!-- THE MODAL WE WILL BE USING -->
@@ -34,7 +31,6 @@ TypeAssist List
 	</div>
 </div>
 {% endblock popup_alerts %}
-
 
 
 <!--------- BEGIN EXTRA SCRIPTS ----------------------------->
@@ -59,7 +55,7 @@ TypeAssist List
 		
 		table = $(table_id).DataTable({
 			ajax:{
-				url: '{{ url("onboarding:typeassist") }}?action = list',
+				url: '{{ url("onboarding:typeassist") }}?action=list',
 			},
 			columns     : [
                 { "data": "id" },
@@ -90,7 +86,7 @@ TypeAssist List
 					action: function(e, dt, node, config){
                         const params = {
                             'modal_id'  : modal_id,
-                            'url'       : `${urlname}?action = form`,
+                            'url'       : `${urlname}?action=form`,
                             'beforeSend': TaBeforeSend }
 						fire_ajax_get(params)
 						.done((data, status, xhr) => {
@@ -108,7 +104,6 @@ TypeAssist List
 		
 
 		//END STYLING DATATABLE
-
 
 		
 		//submit form
@@ -164,7 +159,7 @@ TypeAssist List
 	//delete ajax request 
 	function isTaDeleted(id){ 
 		console.log("id ", id)
-		const params = {url:`${urlname}?action = delete&id=${id}`, 'beforeSend':function () {}}
+		const params = {url:`${urlname}?action=formdelete&id=${id}`, 'beforeSend':function () {}}
 		fire_ajax_get(params)
 		.done((data, status, xhr) => {
 			if(!xhr.status === 200){
@@ -177,7 +172,6 @@ TypeAssist List
 			return false
 		})
 	}
-
 
 	//delete typeassist 
 	function deleteTa(elemt){

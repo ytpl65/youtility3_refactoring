@@ -4,11 +4,9 @@ def get_object(uuid, model):
     except model.DoesNotExist as e:
         raise Exception from e
 
-
 def save_jobneeddetails(data):
     import json
     jobneeddetails_post_data = json.loads(data['jobneeddetails'])
-
 
 
 def get_or_create_dir(path):
@@ -22,17 +20,15 @@ def get_or_create_dir(path):
     except Exception:
         raise
 
-
 def write_file_to_dir(filebuffer, uploadedfile):
     from django.core.files.base import ContentFile
     from django.core.files.storage import default_storage
 
     try:
         path = default_storage.save(uploadedfile, ContentFile(filebuffer.read()))
-        #ic(path)
+        # ic(path)
     except Exception:
         raise
-
 
 
 from pprint import pformat
@@ -50,7 +46,6 @@ from apps.core import utils
 from .validators import clean_record
 from apps.activity.models import (Jobneed, JobneedDetails, Asset)
 import traceback as tb
-
 
 def insertrecord(record, tablename):
     try:
@@ -74,11 +69,10 @@ def insertrecord(record, tablename):
 
 
 
-
 def update_record(details, jobneed, Jn, Jnd):
     alerttype = 'OBSERVATION'
     record = clean_record(jobneed)
-    #ic((record)
+    # ic((record)
     try:
         with transaction.atomic(using = utils.get_current_db_name()):
             instance = Jn.objects.get(uuid = record['uuid'])
@@ -88,15 +82,14 @@ def update_record(details, jobneed, Jn, Jnd):
             else: log.error(f"something went wrong!\n{jn_parent_serializer.errors} ", exc_info = True )
             isJndUpdated = update_jobneeddetails(details, Jnd)
             if isJnUpdated and  isJndUpdated:
-                #utils.alert_email(input.jobneedid, alerttype)
-                #TODO send observation email
-                #TODO send deviation mail
+                # utils.alert_email(input.jobneedid, alerttype)
+                # TODO send observation email
+                # TODO send deviation mail
                 return True
     except Exception:
         log.error("update_record failed", exc_info = True)
         raise
     return False
-
 
 
 
@@ -113,7 +106,6 @@ def update_jobneeddetails(jobneeddetails, Jnd):
 
 
 
-
 def save_parent_childs(sz, jn_parent_serializer, child, M):
     log.info("save_parent_childs ............start")
     try:
@@ -123,16 +115,16 @@ def save_parent_childs(sz, jn_parent_serializer, child, M):
             parent = jn_parent_serializer.save()
             allsaved = 0
             for ch in child:
-                #ic((ch, type(child))
+                # ic((ch, type(child))
                 details = ch.pop('details')
-                #ic((details, type(details))
+                # ic((details, type(details))
                 ch.update({'parent_id':parent.id})
                 child_serializer = sz.JobneedSerializer(data = clean_record(ch))
 
                 if child_serializer.is_valid():
                     child_instance = child_serializer.save()
                     for dtl in details:
-                        #ic((dtl, type(dtl))
+                        # ic((dtl, type(dtl))
                         dtl.update({'jobneed_id':child_instance.id})
                         ch_detail_serializer = sz.JndSerializers(data = clean_record(dtl))
                         if ch_detail_serializer.is_valid():
@@ -156,7 +148,6 @@ def save_parent_childs(sz, jn_parent_serializer, child, M):
         raise
 
 
-
 def perform_tasktourupdate(file, request):
     log.info("perform_tasktourupdate [start]")
     rc, recordcount, traceback= 0, 0, 'NA'
@@ -164,7 +155,7 @@ def perform_tasktourupdate(file, request):
 
     try:
         data = get_json_data(file)
-        #ic((data)
+        # ic((data)
         for record in data:
             details = record.pop('details')
             jobneed = record
@@ -180,7 +171,6 @@ def perform_tasktourupdate(file, request):
         log.error('Something went wrong', exc_info = True)
         rc, traceback, msg = 1, tb.format_exc(), Messages.UPLOAD_FAILED
     return ServiceOutputType(rc = rc, msg = msg, recordcount = recordcount, traceback = traceback)
-
 
 
 def perform_insertrecord(file, request = None, filebased = True):
@@ -201,7 +191,7 @@ def perform_insertrecord(file, request = None, filebased = True):
     instance = None
     try:
         data = get_json_data(file) if filebased else [file]
-        #ic(data)
+        # ic(data)
         try:
             with transaction.atomic(using = utils.get_current_db_name()):
 
@@ -234,7 +224,6 @@ def perform_insertrecord(file, request = None, filebased = True):
         msg, rc, traceback = Messages.INSERT_FAILED, 1, tb.format_exc()
     return  ServiceOutputType(rc = rc, recordcount = recordcount, msg = msg, traceback = traceback)
 
-
 def save_linestring_and_update_pelrecord(obj):
     from apps.attendance.models import Tracking
     from django.contrib.gis.geos import LineString
@@ -243,7 +232,7 @@ def save_linestring_and_update_pelrecord(obj):
         bet_objs = Tracking.objects.filter(reference = obj.uuid)
         line = [[coord for coord in obj.gpslocation] for obj in bet_objs]
         ls = LineString(line, srid = 4326)
-        #transform spherical mercator projection system
+        # transform spherical mercator projection system
         ls.transform(3857)
         d = round(ls.length / 1000)
         obj.distance = d
@@ -254,7 +243,6 @@ def save_linestring_and_update_pelrecord(obj):
     except Exception as e:
         log.info('ERROR while saving line string', exc_info = True)
         raise
-
 
 
 def perform_reportmutation(file):
@@ -272,7 +260,7 @@ def perform_reportmutation(file):
                             jn_parent_serializer = sz.JobneedSerializer(data = clean_record(jobneed_parent_post_data))
                             rc,  traceback, msg = save_parent_childs(sz, jn_parent_serializer, child, Messages)
                             if rc == 0: recordcount += 1
-                            #ic((recordcount)
+                            # ic((recordcount)
                         else:
                             log.error(Messages.NODETAILS)
                             msg, rc = Messages.NODETAILS, 1
@@ -283,7 +271,6 @@ def perform_reportmutation(file):
         msg, traceback, rc = Messages.INSERT_FAILED, tb.format_exc(), 1
         log.error('something went wrong', exc_info = True)
     return ServiceOutputType(rc = rc, recordcount = recordcount, msg = msg, traceback = traceback)
-
 
 
 def perform_adhocmutation(file):  # sourcery skip: remove-empty-nested-block, remove-redundant-if, remove-redundant-pass
@@ -302,7 +289,7 @@ def perform_adhocmutation(file):  # sourcery skip: remove-empty-nested-block, re
 
             with transaction.atomic(using = db):
                 if jobneedrecord['asset_id'] ==  1:
-                    #then it should be NEA
+                    # then it should be NEA
                     assetobjs = Asset.objects.filter(bu_id = jobneedrecord['bu_id'],
                                     assetcode = jobneedrecord['remarks'])
                     jobneedrecord['asset_id']= 1 if assetobjs.count()  !=  1 else assetobjs[0].id
@@ -310,16 +297,16 @@ def perform_adhocmutation(file):  # sourcery skip: remove-empty-nested-block, re
                 args = [jobneedrecord['plandatetime'], jobneedrecord['bu_id'], jobneedrecord['people_id'], jobneedrecord['asset_id'], jobneedrecord['qset_id']]
                 scheduletask = utils.runrawsql(sqlQuery, args, db = db)
 
-                #have to update to scheduled task
+                # have to update to scheduled task
                 if(len(scheduletask) > 0):
                     rc, traceback, msg, recordcount = update_adhoc_record(scheduletask, jobneedrecord, details)
-                #have to insert/create to adhoc task
+                # have to insert/create to adhoc task
                 else:
                     rc, traceback, msg, recordcount = insert_adhoc_record(jobneedrecord, details)
                 if jobneedrecord['attachmentcount'] == 0:
-                    #TODO send_email for ADHOC 
+                    # TODO send_email for ADHOC 
                     pass
-            #TODO send_email for Observation
+            # TODO send_email for Observation
 
     except utils.NoDataInTheFileError as e:
         rc, traceback = 1, tb.format_exc()
@@ -329,7 +316,6 @@ def perform_adhocmutation(file):  # sourcery skip: remove-empty-nested-block, re
         rc, traceback = 1, tb.format_exc()
         log.error('something went wrong', exc_info = True)
     return ServiceOutputType(rc = rc, recordcount = recordcount, msg = msg, traceback = traceback)
-
 
 
 def update_adhoc_record(scheduletask, jobneedrecord, details):
@@ -358,7 +344,6 @@ def update_adhoc_record(scheduletask, jobneedrecord, details):
     msg = "Scheduled Record (ADHOC) updated successfully!"
     return rc, traceback, msg, recordcount
 
-
 def insert_adhoc_record(jobneedrecord, details):
     rc, recordcount, traceback, msg= 0, 0, 'NA', ""
     record = clean_record(jobneedrecord)
@@ -378,17 +363,16 @@ def insert_adhoc_record(jobneedrecord, details):
         rc, traceback = 1, jnsz.errors
     return rc, traceback, msg, recordcount
 
-
 def perform_uploadattachment(file,  record, biodata):
     rc, traceback, resp = 0,  'NA', 0
     recordcount = msg = None
-    #ic(file, tablename, record, type(record), biodata, type(biodata))
+    # ic(file, tablename, record, type(record), biodata, type(biodata))
     try:
         log.info("perform_uploadattachment [start+]")
         import os
 
         file_buffer = file
-        #ic(file_buffer, type(file_buffer))
+        # ic(file_buffer, type(file_buffer))
         filename = biodata['filename']
         pelogid = biodata['pelog_id']
         peopleid = biodata['people_id']
@@ -415,19 +399,15 @@ def perform_uploadattachment(file,  record, biodata):
         log.error('something went wrong', exc_info = True)
     return ServiceOutputType(rc = rc, recordcount = recordcount, msg = msg, traceback = traceback)
 
-
 def getEmails(R):
     pass
-
 
 def getjobneedrecord():
     pass
 
-
 def send_alert_mails_if_any(attdata):
     getjobneedrecord()
     pass
-
 
 def alert_observation(pk):
     body=""
@@ -462,14 +442,13 @@ def alert_observation(pk):
                 body+= "</table>"
                 body+= "</td></tr></table>"
             log.info(f'alert_observation body {body}')
-            #TODO sendEmail()
+            # TODO sendEmail()
             if jobneedRecord[0].iscritical:
                 ticketdesc = f"[READINGS ALERT] {jobneedRecord[0].asset.identifier.taname}: [{jobneedRecord[0].asset.assetcode}]{jobneedRecord[0].asset.assetname} - readings out of range" 
-                #TODO createTicket
-                #TODO snedTicketEmail()
+                # TODO createTicket
+                # TODO snedTicketEmail()
     except Exception as e:
         raise
-
 
 
 
@@ -513,10 +492,9 @@ def alert_report(pk):
                     flag= False
                 body+= "</table>"
                 body+= "</td></tr></table>"
-                #TODO send_emaill()
+                # TODO send_emaill()
     except Exception as e:
         raise
-
 
 
 def alert_deviation(pk):
@@ -537,6 +515,6 @@ def alert_deviation(pk):
             body+= f"<tr><td {tdstyle}>Name</td><td>%s</td></tr>"
             body+= f"<tr><td {tdstyle}>Mobile</td><td>%s</td></tr>"
             body+= "</table>"
-            #TODO send_email()
+            # TODO send_email()
     except Exception:
         raise

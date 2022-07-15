@@ -2,13 +2,11 @@
 from icecream import ic
 from django.db.models import Q
 
-
 import logging
 
 from apps.onboarding.models import Bt, TypeAssist
 logger = logging.getLogger('django')
 dbg = logging.getLogger('__main__').debug
-
 
 def save_json_from_bu_prefsform(bt, buprefsform):
     try:
@@ -23,7 +21,6 @@ def save_json_from_bu_prefsform(bt, buprefsform):
     else:
         logger.info('save_json_from_bu_prefsform(bt, buprefsform) success')
         return True
-
 
 # returns Bt json form
 def get_bu_prefform(bt):
@@ -48,14 +45,12 @@ def get_bu_prefform(bt):
         logger.info("get_bu_prefform success")
         return BuPrefForm(data = d)
 
-
 def get_tatype_choices(superadmin = False):
 
     if superadmin:
         return TypeAssist.objects.all()
     return TypeAssist.objects.filter(
         Q(tatype__tacode='NONE') & ~Q(tacode='NONE') & ~Q(tacode='BU_IDENTIFIER'))
-
 
 def update_children_tree(instance, newcode, newtype, whole = False):
     """Updates tree of child bu tree's"""
@@ -72,7 +67,6 @@ def update_children_tree(instance, newcode, newtype, whole = False):
                 oldtreepart = f'{instance.identifier.tacode} :: {instance.bucode}'
                 newtreepart = f'{newtype} :: {newcode}'
 
-
                 if oldtree == oldtreepart:
                     ic('saved')
                     instance.butree = newtreepart
@@ -88,7 +82,6 @@ def update_children_tree(instance, newcode, newtype, whole = False):
     else:
         logger.info('update_children_tree(instance, newcode, newtype) success')
 
-
 # Dynamic rendering for capability data
 def get_choice(li):
     label = li[0].capsname
@@ -97,7 +90,6 @@ def get_choice(li):
         t[1].append((i.capscode, i.capsname))
     tuple(t[1])
     return t
-
 
 def get_webcaps_choices():  # sourcery skip: merge-list-append
     '''Populates parent data in parent-multi-select field'''
@@ -117,7 +109,6 @@ def get_webcaps_choices():  # sourcery skip: merge-list-append
             if i == len(parent_menus)-1:
                 choices.append(get_choice(temp))
     return choices
-
 
 def get_bt_prefform(bt):
     try:
@@ -145,7 +136,6 @@ def get_bt_prefform(bt):
     else:
         logger.info('get_bt_prefform success')
 
-
 def create_bt_tree(bucode, indentifier, instance, parent = None):
     # sourcery skip: remove-redundant-if
     # None Entry
@@ -171,31 +161,29 @@ def create_bt_tree(bucode, indentifier, instance, parent = None):
         logger.info('BU Tree created for instance %s... DONE' %
                     (instance.bucode))
 
-
 def create_bv_reportting_heirarchy(instance, newcode, newtype, parent):
     if instance.id is None:
         dbg("Creating the reporting heirarchy!")
-        #create bu tree
+        # create bu tree
         ic(instance.bucode, parent, newcode, newtype)
         if instance.bucode != "NONE" and parent.bucode == 'NONE':
-            #Root Node
+            # Root Node
             dbg("Creating heirarchy of the Root Node")
             instance.butree = f'{newtype.tacode} :: {newcode}'
         elif instance.butree != f'{parent.butree} > {newtype.tacode} :: {newcode}':
-            #Non Root Node
+            # Non Root Node
             dbg("Creating heirarchy of branch Node")
             instance.butree += f"{parent.butree} > {newtype.tacode} :: {newcode}"
 
     else:
         dbg("Updating the reporting heirarchy!")
-        #update bu tree
+        # update bu tree
         if instance.bucode not in(None, 'NONE') and instance.parent.bucode in (None, 'NONE'):
             dbg("Updating heirarchy of the Root Node")
             update_children_tree(instance, newcode, newtype.tacode)
         else:
             dbg("Updating heirarchy of branch Node")
             update_children_tree(instance, newcode, newtype.tacode)
-
 
 def create_tenant(buname, bucode):
     # create_tenant for every client
@@ -212,7 +200,6 @@ def create_tenant(buname, bucode):
     else:
         logger.info(
             'Corresponding tenant created for client %s ...DONE' % (bucode))
-
 
 def create_default_admin_for_client(client):
     from apps.peoples.models import People
@@ -235,6 +222,5 @@ def create_default_admin_for_client(client):
         logger.error("Something went wrong while creating default user-admin for client... FAILED",
                      exc_info = True)
         raise
-
 
 
