@@ -13,14 +13,14 @@ class BaseFieldSet1:
     bu = fields.Field(
         column_name='bu',
         attribute='bu',
-        widget=wg.ForeignKeyWidget(om.Bt, 'bucode'),
-        saves_null_values=True)
+        widget = wg.ForeignKeyWidget(om.Bt, 'bucode'),
+        saves_null_values = True)
 
     tenant = fields.Field(
         column_name='tenant',
         attribute='tenant',
-        widget=wg.ForeignKeyWidget(tm.TenantAwareModel, 'tenantname'),
-        saves_null_values=True
+        widget = wg.ForeignKeyWidget(tm.TenantAwareModel, 'tenantname'),
+        saves_null_values = True
     )
 
 
@@ -28,21 +28,21 @@ class BaseFieldSet2(object):
     client = fields.Field(
         column_name='client',
         attribute='client',
-        widget=wg.ForeignKeyWidget(om.Bt, 'bucode'),
+        widget = wg.ForeignKeyWidget(om.Bt, 'bucode'),
         default='NONE'
     )
     bu = fields.Field(
         column_name='bu',
         attribute='bu',
-        widget=wg.ForeignKeyWidget(om.Bt, 'bucode'),
-        saves_null_values=True,
+        widget = wg.ForeignKeyWidget(om.Bt, 'bucode'),
+        saves_null_values = True,
         default='NONE'
     )
     tenant = fields.Field(
         column_name='tenant',
         attribute='tenant',
-        widget=wg.ForeignKeyWidget(tm.TenantAwareModel, 'tenantname'),
-        saves_null_values=True
+        widget = wg.ForeignKeyWidget(tm.TenantAwareModel, 'tenantname'),
+        saves_null_values = True
     )
 
 
@@ -52,21 +52,21 @@ class TaResource(resources.ModelResource ):
     client = fields.Field(
         column_name='client',
         attribute='client',
-        widget=wg.ForeignKeyWidget(om.Bt, 'bucode'),
+        widget = wg.ForeignKeyWidget(om.Bt, 'bucode'),
         default='NONE'
     )
     bu = fields.Field(
         column_name='bu',
         attribute='bu',
-        widget=wg.ForeignKeyWidget(om.Bt, 'bucode'),
-        saves_null_values=True,
+        widget = wg.ForeignKeyWidget(om.Bt, 'bucode'),
+        saves_null_values = True,
         default='NONE'
     )
     tenant = fields.Field(
         column_name='tenant',
         attribute='tenant',
-        widget=wg.ForeignKeyWidget(tm.TenantAwareModel, 'tenantname'),
-        saves_null_values=True
+        widget = wg.ForeignKeyWidget(tm.TenantAwareModel, 'tenantname'),
+        saves_null_values = True
     )
     tatype = fields.Field(
         column_name       = 'tatype',
@@ -94,7 +94,7 @@ class TaResource(resources.ModelResource ):
         utils.save_common_stuff(self.request, instance, self.is_superuser)
 
     def skip_row(self, instance, original):
-        return True if om.TypeAssist.objects.filter(tacode=instance.tacode).exists() else False
+        return True if om.TypeAssist.objects.filter(tacode = instance.tacode).exists() else False
 
 
 
@@ -118,22 +118,22 @@ class BtResource(resources.ModelResource, BaseFieldSet1):
     parent = fields.Field(
         column_name='parent',
         attribute='parent',
-        widget=wg.ForeignKeyWidget(om.Bt, 'bucode'))
+        widget = wg.ForeignKeyWidget(om.Bt, 'bucode'))
 
     butype = fields.Field(
         column_name='butype',
         attribute='butype',
-        widget=wg.ForeignKeyWidget(om.TypeAssist, 'tacode'))
+        widget = wg.ForeignKeyWidget(om.TypeAssist, 'tacode'))
 
     tenant = fields.Field(
         column_name='tenant',
         attribute='tenant',
-        widget=wg.ForeignKeyWidget(tm.Tenant, 'tenantname'))
+        widget = wg.ForeignKeyWidget(tm.Tenant, 'tenantname'))
 
     identifier = fields.Field(
         column_name='identifier',
         attribute='identifier',
-        widget=wg.ForeignKeyWidget(om.TypeAssist, 'tacode'))
+        widget = wg.ForeignKeyWidget(om.TypeAssist, 'tacode'))
 
     class Meta:
         model = om.Bt
@@ -205,31 +205,31 @@ class SitePeopleResource(resources.ModelResource, BaseFieldSet1):
     people = fields.Field(
         column_name='people',
         attribute='people',
-        widget=wg.ForeignKeyWidget(pm.People, 'peoplecode')
+        widget = wg.ForeignKeyWidget(pm.People, 'peoplecode')
     )
     reportto = fields.Field(
         column_name='reportto',
         attribute='reportto',
-        widget=wg.ForeignKeyWidget(pm.People, 'peoplecode'))
+        widget = wg.ForeignKeyWidget(pm.People, 'peoplecode'))
 
     shift = fields.Field(
         column_name='shift',
         attribute='shift',
-        widget=wg.ForeignKeyWidget(om.Shift, 'shiftname'))
+        widget = wg.ForeignKeyWidget(om.Shift, 'shiftname'))
     worktype = fields.Field(
         column_name='worktype',
         attribute='worktype',
-        widget=wg.ForeignKeyWidget(om.TypeAssist, 'tacode')
+        widget = wg.ForeignKeyWidget(om.TypeAssist, 'tacode')
     )
     contract = fields.Field(
         column_name='contract',
         attribute='contract',
-        widget=wg.ForeignKeyWidget(om.Contract, 'contractname'))
+        widget = wg.ForeignKeyWidget(om.Contract, 'contractname'))
 
     contractdetail = fields.Field(
         column_name='contractdetail',
         attribute='contractdetail',
-        widget=wg.ForeignKeyWidget(om.ContractDetail, 'pk'))
+        widget = wg.ForeignKeyWidget(om.ContractDetail, 'pk'))
 
     class Meta:
         model = om.SitePeople

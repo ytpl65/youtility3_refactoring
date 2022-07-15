@@ -18,56 +18,56 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='peopleeventlog',
             name='bu',
-            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.RESTRICT, related_name='bus', to='onboarding.bt'),
+            field = models.ForeignKey(blank = True, null = True, on_delete = django.db.models.deletion.RESTRICT, related_name='bus', to='onboarding.bt'),
         ),
         migrations.AddField(
             model_name='peopleeventlog',
             name='client',
-            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.RESTRICT, related_name='clients', to='onboarding.bt'),
+            field = models.ForeignKey(blank = True, null = True, on_delete = django.db.models.deletion.RESTRICT, related_name='clients', to='onboarding.bt'),
         ),
         migrations.AddField(
             model_name='peopleeventlog',
             name='cuser',
-            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.RESTRICT, related_name='peopleeventlog_cusers', to=settings.AUTH_USER_MODEL),
+            field = models.ForeignKey(blank = True, null = True, on_delete = django.db.models.deletion.RESTRICT, related_name='peopleeventlog_cusers', to = settings.AUTH_USER_MODEL),
         ),
         migrations.AddField(
             model_name='peopleeventlog',
             name='geofence',
-            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.RESTRICT, to='onboarding.geofencemaster'),
+            field = models.ForeignKey(blank = True, null = True, on_delete = django.db.models.deletion.RESTRICT, to='onboarding.geofencemaster'),
         ),
         migrations.AddField(
             model_name='peopleeventlog',
             name='muser',
-            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.RESTRICT, related_name='peopleeventlog_musers', to=settings.AUTH_USER_MODEL),
+            field = models.ForeignKey(blank = True, null = True, on_delete = django.db.models.deletion.RESTRICT, related_name='peopleeventlog_musers', to = settings.AUTH_USER_MODEL),
         ),
         migrations.AddField(
             model_name='peopleeventlog',
             name='people',
-            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.RESTRICT, to=settings.AUTH_USER_MODEL, verbose_name='People'),
+            field = models.ForeignKey(blank = True, null = True, on_delete = django.db.models.deletion.RESTRICT, to = settings.AUTH_USER_MODEL, verbose_name='People'),
         ),
         migrations.AddField(
             model_name='peopleeventlog',
             name='peventtype',
-            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.RESTRICT, to='onboarding.typeassist'),
+            field = models.ForeignKey(blank = True, null = True, on_delete = django.db.models.deletion.RESTRICT, to='onboarding.typeassist'),
         ),
         migrations.AddField(
             model_name='peopleeventlog',
             name='shift',
-            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.RESTRICT, to='onboarding.shift'),
+            field = models.ForeignKey(blank = True, null = True, on_delete = django.db.models.deletion.RESTRICT, to='onboarding.shift'),
         ),
         migrations.AddField(
             model_name='peopleeventlog',
             name='tenant',
-            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.CASCADE, to='tenants.tenant'),
+            field = models.ForeignKey(blank = True, null = True, on_delete = django.db.models.deletion.CASCADE, to='tenants.tenant'),
         ),
         migrations.AddField(
             model_name='peopleeventlog',
             name='verifiedby',
-            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.RESTRICT, related_name='verifiedpeoples', to=settings.AUTH_USER_MODEL, verbose_name='Verified By'),
+            field = models.ForeignKey(blank = True, null = True, on_delete = django.db.models.deletion.RESTRICT, related_name='verifiedpeoples', to = settings.AUTH_USER_MODEL, verbose_name='Verified By'),
         ),
         migrations.AddField(
             model_name='tracking',
             name='people',
-            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.RESTRICT, to=settings.AUTH_USER_MODEL, verbose_name='People'),
+            field = models.ForeignKey(blank = True, null = True, on_delete = django.db.models.deletion.RESTRICT, to = settings.AUTH_USER_MODEL, verbose_name='People'),
         ),
     ]

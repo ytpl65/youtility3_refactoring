@@ -13,67 +13,67 @@ TypeAssist, SelectOutputType)
 
 
 class Query(graphene.ObjectType):
-    tadata = graphene.Field(SelectOutputType, keys = graphene.List(graphene.String, required=True))
+    tadata = graphene.Field(SelectOutputType, keys = graphene.List(graphene.String, required = True))
     #tabyid = graphene.Field(TyType, id = graphene.String())
     get_assetdetails = graphene.Field(SelectOutputType,
-                                      mdtz = graphene.String(required=True),
-                                      ctzoffset = graphene.Int(required=True),
-                                      buid = graphene.Int(required=True),)
+                                      mdtz = graphene.String(required = True),
+                                      ctzoffset = graphene.Int(required = True),
+                                      buid = graphene.Int(required = True),)
 
     get_jobneedmodifiedafter = graphene.Field(SelectOutputType,
-                                             peopleid = graphene.Int(required=True),
-                                             buid = graphene.Int(required=True),
-                                             clientid = graphene.Int(required=True))
+                                             peopleid = graphene.Int(required = True),
+                                             buid = graphene.Int(required = True),
+                                             clientid = graphene.Int(required = True))
 
     get_jndmodifiedafter = graphene.Field(SelectOutputType,
-                                         mdtz = graphene.String(required=True),
-                                         ctzoffset = graphene.Int(required=True),
-                                         jobneedids = graphene.String(required=True))
+                                         mdtz = graphene.String(required = True),
+                                         ctzoffset = graphene.Int(required = True),
+                                         jobneedids = graphene.String(required = True))
 
     get_typeassistmodifiedafter = graphene.Field(SelectOutputType,
-                                                mdtz = graphene.String(required=True),
-                                                ctzoffset = graphene.Int(required=True),
-                                                clientid = graphene.Int(required=True))
+                                                mdtz = graphene.String(required = True),
+                                                ctzoffset = graphene.Int(required = True),
+                                                clientid = graphene.Int(required = True))
 
     get_peoplemodifiedafter = graphene.Field(SelectOutputType,
-                                            mdtz = graphene.String(required=True),
-                                            ctzoffset = graphene.Int(required=True),
-                                            buid = graphene.Int(required=True),)
+                                            mdtz = graphene.String(required = True),
+                                            ctzoffset = graphene.Int(required = True),
+                                            buid = graphene.Int(required = True),)
 
     get_groupsmodifiedafter = graphene.Field(SelectOutputType, 
-                                            mdtz = graphene.String(required=True),
-                                            ctzoffset = graphene.Int(required=True),
-                                            buid = graphene.Int(required=True))
+                                            mdtz = graphene.String(required = True),
+                                            ctzoffset = graphene.Int(required = True),
+                                            buid = graphene.Int(required = True))
 
     get_questionsmodifiedafter = graphene.Field(SelectOutputType, 
-                                               mdtz=graphene.String(required=True),
-                                               ctzoffset = graphene.Int(required=True))
+                                               mdtz = graphene.String(required = True),
+                                               ctzoffset = graphene.Int(required = True))
 
     get_qsetmodifiedafter = graphene.Field(SelectOutputType,
-                                          mdtz = graphene.String(required=True),
-                                          ctzoffset = graphene.Int(required=True),
-                                          buid = graphene.Int(required=True))   
+                                          mdtz = graphene.String(required = True),
+                                          ctzoffset = graphene.Int(required = True),
+                                          buid = graphene.Int(required = True))   
 
     get_qsetbelongingmodifiedafter = graphene.Field(SelectOutputType,
-                                          mdtz = graphene.String(required=True),
-                                          ctzoffset = graphene.Int(required=True),
-                                          buid = graphene.Int(required=True))
+                                          mdtz = graphene.String(required = True),
+                                          ctzoffset = graphene.Int(required = True),
+                                          buid = graphene.Int(required = True))
 
     get_pgbelongingmodifiedafter = graphene.Field(SelectOutputType,
-                                          mdtz = graphene.String(required=True),
-                                          ctzoffset = graphene.Int(required=True),
-                                          buid = graphene.Int(required=True),
-                                          peopleid = graphene.Int(required=True))
+                                          mdtz = graphene.String(required = True),
+                                          ctzoffset = graphene.Int(required = True),
+                                          buid = graphene.Int(required = True),
+                                          peopleid = graphene.Int(required = True))
 
 
     get_gfs_for_siteids = graphene.Field(SelectOutputType,
                                  siteids = graphene.List(graphene.Int))
 
     getsitelist  = graphene.Field(SelectOutputType,
-                                 clientid = graphene.Int(required=True),
-                                 peopleid = graphene.Int(required=True))
+                                 clientid = graphene.Int(required = True),
+                                 peopleid = graphene.Int(required = True))
 
-    verifyclient = graphene.Field(VerifyClientOutput, clientcode = graphene.String(required=True))
+    verifyclient = graphene.Field(VerifyClientOutput, clientcode = graphene.String(required = True))
 
 
     def resolve_tadata(self, info, keys, **kwargs):
@@ -190,21 +190,21 @@ class Query(graphene.ObjectType):
     def resolve_verifyclient(self, info, clientcode):
         try:
             utils.set_db_for_router(clientcode.lower())
-            Bt.objects.get(bucode=clientcode.upper(), enable=True)
+            Bt.objects.get(bucode = clientcode.upper(), enable = True)
             return VerifyClientOutput(msg = "VALID", url = f'{clientcode.lower()}.youtility.in')
         except utils.NoDbError as ex:
             try:
                 utils.set_db_for_router('default')
-                Bt.objects.get(bucode=clientcode.upper())
+                Bt.objects.get(bucode = clientcode.upper())
                 return VerifyClientOutput(msg = "VALID", url = f'{clientcode.lower()}.youtility.in')
             except Bt.DoesNotExist as ex:
-                return VerifyClientOutput(rc=1, msg="INVALID")
+                return VerifyClientOutput(rc = 1, msg="INVALID")
         except Bt.DoesNotExist as ex:
-            return VerifyClientOutput(rc=1, msg="INVALID")
+            return VerifyClientOutput(rc = 1, msg="INVALID")
 
 
 
-def get_db_rows(sql, args=None):
+def get_db_rows(sql, args = None):
     import json
     cursor = connections[utils.get_current_db_name()].cursor()
 
@@ -219,11 +219,11 @@ def get_db_rows(sql, args=None):
 
 
     cursor.close()
-    data_json = json.dumps(data, default=str)
+    data_json = json.dumps(data, default = str)
     msg = f"Total {len(data)} records fetched successfully!"
     count = len(data)
     log.info(f'{count} objects returned...')
-    return SelectOutputType(records=data_json, msg=msg, nrows = count)
+    return SelectOutputType(records = data_json, msg = msg, nrows = count)
 
 
 def get_jobneedmodifiedafter(peopleid, siteid, clientid):

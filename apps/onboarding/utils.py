@@ -18,7 +18,7 @@ def save_json_from_bu_prefsform(bt, buprefsform):
                      'reportcapability', 'portletcapability'):
                 bt.bupreferences[k] = buprefsform.cleaned_data.get(k)
     except Exception:
-        logger.error("save json from buprefsform... FAILED", exc_info=True)
+        logger.error("save json from buprefsform... FAILED", exc_info = True)
         return False
     else:
         logger.info('save_json_from_bu_prefsform(bt, buprefsform) success')
@@ -43,13 +43,13 @@ def get_bu_prefform(bt):
         }
 
     except Exception:
-        logger.error("get_bu_prefform... FAILED", exc_info=True)
+        logger.error("get_bu_prefform... FAILED", exc_info = True)
     else:
         logger.info("get_bu_prefform success")
-        return BuPrefForm(data=d)
+        return BuPrefForm(data = d)
 
 
-def get_tatype_choices(superadmin=False):
+def get_tatype_choices(superadmin = False):
 
     if superadmin:
         return TypeAssist.objects.all()
@@ -57,7 +57,7 @@ def get_tatype_choices(superadmin=False):
         Q(tatype__tacode='NONE') & ~Q(tacode='NONE') & ~Q(tacode='BU_IDENTIFIER'))
 
 
-def update_children_tree(instance, newcode, newtype, whole=False):
+def update_children_tree(instance, newcode, newtype, whole = False):
     """Updates tree of child bu tree's"""
     from apps.core.raw_queries import query
     try:
@@ -84,7 +84,7 @@ def update_children_tree(instance, newcode, newtype, whole=False):
                     ic(bt.bucode)
     except Exception:
         logger.error(
-            "update_children_tree(instance, newcode, newtype)... FAILED", exc_info=True)
+            "update_children_tree(instance, newcode, newtype)... FAILED", exc_info = True)
     else:
         logger.info('update_children_tree(instance, newcode, newtype) success')
 
@@ -139,14 +139,14 @@ def get_bt_prefform(bt):
             ]
         }
 
-        return ClentForm(data=d)
+        return ClentForm(data = d)
     except Exception:
-        logger.error('get_bt_prefform(bt)... FAILED', exc_info=True)
+        logger.error('get_bt_prefform(bt)... FAILED', exc_info = True)
     else:
         logger.info('get_bt_prefform success')
 
 
-def create_bt_tree(bucode, indentifier, instance, parent=None):
+def create_bt_tree(bucode, indentifier, instance, parent = None):
     # sourcery skip: remove-redundant-if
     # None Entry
     try:
@@ -164,7 +164,7 @@ def create_bt_tree(bucode, indentifier, instance, parent=None):
                 instance.butree = ""
                 instance.butree += f"{parent.butree} > {indentifier.tacode} :: {bucode}"
     except Exception:
-        logger.error(f'Something went wrong while creating Bt tree for instance {instance.bucode}', exc_info=True)
+        logger.error(f'Something went wrong while creating Bt tree for instance {instance.bucode}', exc_info = True)
 
         raise
     else:
@@ -204,10 +204,10 @@ def create_tenant(buname, bucode):
         logger.info(
             'Creating corresponding tenant for client %s ...STARTED' % (bucode))
         _, _ = Tenant.objects.update_or_create(
-            defaults={'tenantname':buname}, subdomain_prefix=bucode.lower())
+            defaults={'tenantname':buname}, subdomain_prefix = bucode.lower())
     except Exception:
         logger.error('Something went wrong while creating tenant for the client %s' % (bucode),
-                     exc_info=True)
+                     exc_info = True)
         raise
     else:
         logger.info(
@@ -226,14 +226,14 @@ def create_default_admin_for_client(client):
         logger.info(
             'Creating default user for the client: %s ...STARTED' % (client.bucode))
 
-        People.objects.create(peoplecode=peoplecode,
-                              peoplename=peoplename, dateofbirth=dob,
-                              dateofjoin=doj, mobno=mobno, email=email,
-                              isadmin=True)
+        People.objects.create(peoplecode = peoplecode,
+                              peoplename = peoplename, dateofbirth = dob,
+                              dateofjoin = doj, mobno = mobno, email = email,
+                              isadmin = True)
         logger.info('Default user-admin created for the client... DONE')
     except Exception:
         logger.error("Something went wrong while creating default user-admin for client... FAILED",
-                     exc_info=True)
+                     exc_info = True)
         raise
 
 

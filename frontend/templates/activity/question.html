@@ -102,7 +102,7 @@ Question List
 				action: function (e, dt, node, config) {
 					const params = {
 						'modal_id': modal_id,
-						'url': `${urlname}?action=form`,
+						'url': `${urlname}?action = form`,
 						'beforeSend': quesBeforeSend
 					}
 					fire_ajax_get(params)
@@ -186,7 +186,7 @@ Question List
 	function isQuesDeleted(id) {
 		console.log("id ", id)
 		const params = {
-			url: `${urlname}?action=delete&id=${id}`
+			url: `${urlname}?action = delete&id=${id}`
 		}
 		fire_ajax_get(params)
 			.done((data, status, xhr) => {

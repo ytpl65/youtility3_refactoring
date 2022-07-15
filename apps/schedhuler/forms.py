@@ -9,7 +9,7 @@ import apps.onboarding.models as ob
 
 class Schd_I_TourJobForm(JobForm):
     ASSIGNTO_CHOICES   = [('PEOPLE', 'People'), ('GROUP', 'Group')]
-    assign_to          = forms.ChoiceField(choices=ASSIGNTO_CHOICES, initial="PEOPLE")
+    assign_to          = forms.ChoiceField(choices = ASSIGNTO_CHOICES, initial="PEOPLE")
     required_css_class = "required"
 
     class Meta(JobForm.Meta):
@@ -68,7 +68,7 @@ class Schd_I_TourJobForm(JobForm):
 class SchdChild_I_TourJobForm(JobForm): #job
     timeInChoices = [('MIN', 'Min'),('HRS', 'Hours')]
 
-    #timeIn = forms.ChoiceField(choices=timeInChoices, initial='MIN', widget=s2forms.Select2Widget)
+    #timeIn = forms.ChoiceField(choices = timeInChoices, initial='MIN', widget = s2forms.Select2Widget)
 
 
     class Meta(JobForm.Meta):
@@ -86,8 +86,8 @@ class SchdChild_I_TourJobForm(JobForm): #job
 class I_TourFormJobneed(JobNeedForm): #jobneed
     timeInChoices      = [('MIN', 'Min'),('HRS', 'Hour'), ('DAY', 'Day'), ('WEEK', 'Week')]
     ASSIGNTO_CHOICES   = [('PEOPLE', 'People'), ('GROUP', 'Group')]
-    assign_to          = forms.ChoiceField(choices=ASSIGNTO_CHOICES, initial="PEOPLE")
-    timeIn             = forms.ChoiceField(choices=timeInChoices, initial='MIN', widget=s2forms.Select2Widget)
+    assign_to          = forms.ChoiceField(choices = ASSIGNTO_CHOICES, initial="PEOPLE")
+    timeIn             = forms.ChoiceField(choices = timeInChoices, initial='MIN', widget = s2forms.Select2Widget)
     required_css_class = "required"
 
 
@@ -164,7 +164,7 @@ class TaskFormJobneed(I_TourFormJobneed):
 class Schd_E_TourJobForm(JobForm):
     ASSIGNTO_CHOICES   = [('PEOPLE', 'People'), ('GROUP', 'Group')]
     timeInChoices = [('MIN', 'Min'),('HRS', 'Hours')]
-    assign_to          = forms.ChoiceField(choices=ASSIGNTO_CHOICES, initial="PEOPLE")
+    assign_to          = forms.ChoiceField(choices = ASSIGNTO_CHOICES, initial="PEOPLE")
     required_css_class = "required"
     
 
@@ -194,7 +194,7 @@ class Schd_E_TourJobForm(JobForm):
 
 
 class EditAssignedSiteForm(forms.Form):
-    br_time   = forms.IntegerField(max_value=30, min_value=0, label="Breaktime", required=True)
+    br_time   = forms.IntegerField(max_value = 30, min_value = 0, label="Breaktime", required = True)
     checklist = forms.ChoiceField(
         widget  = s2forms.Select2Widget,
         label   = "Checklist",           required = True,
@@ -212,10 +212,10 @@ class SchdTaskFormJob(JobForm):
     timeInChoices      = [('MIN', 'Min'),('HRS', 'Hour'), ('DAY', 'Day')]
     required_css_class = "required"
 
-    planduration_type  = forms.ChoiceField(choices=timeInChoices, initial='MIN', widget=s2forms.Select2Widget)
-    gracetime_type     = forms.ChoiceField(choices=timeInChoices, initial='MIN', widget=s2forms.Select2Widget)
-    expirytime_type    = forms.ChoiceField(choices=timeInChoices, initial='MIN', widget=s2forms.Select2Widget)
-    assign_to          = forms.ChoiceField(choices=ASSIGNTO_CHOICES, initial="PEOPLE")
+    planduration_type  = forms.ChoiceField(choices = timeInChoices, initial='MIN', widget = s2forms.Select2Widget)
+    gracetime_type     = forms.ChoiceField(choices = timeInChoices, initial='MIN', widget = s2forms.Select2Widget)
+    expirytime_type    = forms.ChoiceField(choices = timeInChoices, initial='MIN', widget = s2forms.Select2Widget)
+    assign_to          = forms.ChoiceField(choices = ASSIGNTO_CHOICES, initial="PEOPLE")
 
     class Meta(JobForm.Meta):
         exclude = ['shift']
@@ -264,7 +264,7 @@ class SchdTaskFormJob(JobForm):
 
 class TicketForm(JobNeedForm):
     ASSIGNTO_CHOICES   = [('PEOPLE', 'People'), ('GROUP', 'Group')]
-    assign_to          = forms.ChoiceField(choices=ASSIGNTO_CHOICES, initial="PEOPLE")
+    assign_to          = forms.ChoiceField(choices = ASSIGNTO_CHOICES, initial="PEOPLE")
     required_css_class = "required"
 
     class Meta(JobNeedForm.Meta):

@@ -65,7 +65,7 @@ Capability List
         table = $(table_id).DataTable({
 			//orderCellsTop: true,
 			ajax: {
-                url    : '{{ url("peoples:capability") }}?action=list',
+                url    : '{{ url("peoples:capability") }}?action = list',
             },
 			deferRender: true,
 			responsive : true,
@@ -100,7 +100,7 @@ Capability List
 					action: function(e, dt, node, config){
                         const params = {
                             'modal_id'    : modal_id,
-                            'url'         : `${urlname}?action=form`,
+                            'url'         : `${urlname}?action = form`,
                             'beforeSend'  : capBeforeSend }
 						fire_ajax_get(params)
 						.done((data, status, xhr) => {
@@ -136,7 +136,7 @@ Capability List
 				}else{
 					table.row.add(data.row).draw()
 				}
-				show_successful_save_alert(update=isupdated)
+				show_successful_save_alert(update = isupdated)
 			})
 		})
 
@@ -169,7 +169,7 @@ Capability List
 
 	//delete ajax request 
 	function isCapDeleted(id){ 
-		const params = {url:`${urlname}?action=delete&id=${id}`, 'beforeSend':function () {}}
+		const params = {url:`${urlname}?action = delete&id=${id}`, 'beforeSend':function () {}}
 		fire_ajax_get(params)
 		.done((data, status, xhr) => {
 			if(!xhr.status === 200){

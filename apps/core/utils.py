@@ -22,7 +22,7 @@ logger = logging.getLogger('__main__')
 dbg = logging.getLogger('__main__').debug
 
 
-def cache_it(key, val, time=1*60):
+def cache_it(key, val, time = 1*60):
     from django.core.cache import cache
     cache.set(key, val, time)
     logger.info(f'saved in cache {pformat(val)}')
@@ -42,34 +42,34 @@ def render_form(request, params, cxt):
     logger.info("%s", cxt['msg'])
     html = render_to_string(params['template_form'], cxt, request)
     data = {"html_form": html}
-    return rp.JsonResponse(data, status=200)
+    return rp.JsonResponse(data, status = 200)
 
 
 def handle_DoesNotExist(request):
     data = {'errors': 'Unable to edit object not found'}
-    logger.error("%s", data['error'], exc_info=True)
+    logger.error("%s", data['error'], exc_info = True)
     msg.error(request, data['error'], 'alert-danger')
-    return rp.JsonResponse(data, status=404)
+    return rp.JsonResponse(data, status = 404)
 
 
-def handle_Exception(request, force_return=None):
+def handle_Exception(request, force_return = None):
     data = {'errors': 'Something went wrong, Please try again!'}
-    logger.critical(data['errors'], exc_info=True)
+    logger.critical(data['errors'], exc_info = True)
     msg.error(request, data['errors'], 'alert-danger')
     if force_return:
         return force_return
-    return rp.JsonResponse(data, status=404)
+    return rp.JsonResponse(data, status = 404)
 
 
 def handle_RestrictedError(request):
     data = {'errors': "Unable to delete, due to dependencies"}
-    logger.warn("%s", data['error'], exc_info=True)
+    logger.warn("%s", data['error'], exc_info = True)
     msg.error(request, data['error'], "alert-danger")
-    return rp.JsonResponse(data, status=404)
+    return rp.JsonResponse(data, status = 404)
 
 
 def handle_EmptyResultSet(request, params, cxt):
-    logger.warn('empty objects retrieved', exc_info=True)
+    logger.warn('empty objects retrieved', exc_info = True)
     msg.error(request, 'List view not found',
               'alert-danger')
     return scts.render(request, params['template_list'], cxt)
@@ -77,41 +77,41 @@ def handle_EmptyResultSet(request, params, cxt):
 
 def handle_intergrity_error(name):
     msg = f'The {name} record of with these values is already exisit!'
-    logger.info(msg, exc_info=True)
-    return rp.JsonResponse({'errors': msg}, status=404)
+    logger.info(msg, exc_info = True)
+    return rp.JsonResponse({'errors': msg}, status = 404)
 
 
-def render_form_for_update(request, params, formname, obj, extra_cxt=None):
+def render_form_for_update(request, params, formname, obj, extra_cxt = None):
     if extra_cxt is None:
         extra_cxt = {}
     logger.info("render form for update")
     try:
         logger.info(f"object retrieved '{obj}'")
         F = params['form_class'](
-            instance=obj, request=request, initial=params['form_initials'])
+            instance = obj, request = request, initial = params['form_initials'])
         C = {formname: F, 'edit': True}
 
         html = render_to_string(params['template_form'], C, request)
         data = {'html_form': html}
-        return rp.JsonResponse(data, status=200)
+        return rp.JsonResponse(data, status = 200)
     except params['model'].DoesNotExist:
         return handle_DoesNotExist(request)
     except Exception:
         return handle_Exception(request)
 
 
-def render_form_for_delete(request, params, master=False):
+def render_form_for_delete(request, params, master = False):
     logger.info("render form for delete")
     from django.db.models import RestrictedError
     try:
         pk = request.GET.get('id')
-        obj = params['model'].objects.get(id=pk)
+        obj = params['model'].objects.get(id = pk)
         if master:
             obj.enable = False
             obj.save()
         else:
             obj.delete()
-        return rp.JsonResponse({}, status=200)
+        return rp.JsonResponse({}, status = 200)
     except params['model'].DoesNotExist:
         return handle_DoesNotExist(request)
     except RestrictedError:
@@ -120,7 +120,7 @@ def render_form_for_delete(request, params, master=False):
         return handle_Exception(request, params)
 
 
-def render_grid(request, params, msg, objs, extra_cxt=None):
+def render_grid(request, params, msg, objs, extra_cxt = None):
     if extra_cxt is None:
         extra_cxt = {}
 
@@ -137,7 +137,7 @@ def render_grid(request, params, msg, objs, extra_cxt=None):
         logger.info("Pagination Ends" if objs else "")
         if extra_cxt:
             cxt.update(extra_cxt)
-        resp = scts.render(request, params['template_list'], context=cxt)
+        resp = scts.render(request, params['template_list'], context = cxt)
     except EmptyResultSet:
         resp = handle_EmptyResultSet(request, params, cxt)
     except Exception:
@@ -151,7 +151,7 @@ def paginate_results(request, objs, params):
 
     logger.info('paginate results'if objs else "")
     if request.GET:
-        objs = params['filter'](request.GET, queryset=objs).qs
+        objs = params['filter'](request.GET, queryset = objs).qs
     filterform = params['filter']().form
     page = request.GET.get('page', 1)
     paginator = Paginator(objs, 15)
@@ -164,23 +164,23 @@ def paginate_results(request, objs, params):
     return {params['list']: li, params['filt_name']: filterform}
 
 
-def get_instance_for_update(postdata, params, msg, pk, kwargs=None):
+def get_instance_for_update(postdata, params, msg, pk, kwargs = None):
     if kwargs is None:
         kwargs = {}
     logger.info("%s", msg)
-    obj = params['model'].objects.get(id=pk)
+    obj = params['model'].objects.get(id = pk)
     logger.info(f"object retrieved '{obj}'")
-    return params['form_class'](postdata, instance=obj, **kwargs)
+    return params['form_class'](postdata, instance = obj, **kwargs)
 
 
 def handle_invalid_form(request, params, cxt):
     logger.info("form is not valid")
-    return rp.JsonResponse(cxt, status=404)
+    return rp.JsonResponse(cxt, status = 404)
 
 
 def get_model_obj(pk, request, params):
     try:
-        obj = params['model'].objects.get(id=pk)
+        obj = params['model'].objects.get(id = pk)
     except params['model'].DoesNotExist:
         return handle_DoesNotExist(request)
     else:
@@ -199,10 +199,10 @@ def local_to_utc(data, offset, mobile_web):
         try:
             for k, v in data.items():
                 local_dt = datetime.strptime(v, format)
-                dt_utc = local_dt.astimezone(pytz.UTC).replace(microsecond=0)
+                dt_utc = local_dt.astimezone(pytz.UTC).replace(microsecond = 0)
                 data[k] = dt_utc.strftime(format)
         except Exception:
-            logger.error("datetime parsing ERROR", exc_info=True)
+            logger.error("datetime parsing ERROR", exc_info = True)
             raise
         else:
             return data
@@ -211,19 +211,19 @@ def local_to_utc(data, offset, mobile_web):
             newdata = []
             for dt in data:
                 local_dt = datetime.strptime(dt, format)
-                dt_utc = local_dt.astimezone(pytz.UTC).replace(microsecond=0)
+                dt_utc = local_dt.astimezone(pytz.UTC).replace(microsecond = 0)
                 dt = dt_utc.strftime(format)
                 newdata.append(dt)
         except Exception:
-            logger.error("datetime parsing ERROR", exc_info=True)
+            logger.error("datetime parsing ERROR", exc_info = True)
             raise
         else:
             return newdata
 
 
-def get_or_create_none_people(using=None):
+def get_or_create_none_people(using = None):
     obj, _ = pm.People.objects.filter(Q(peoplecode='NONE') | Q(peoplename='NONE')).get_or_create(
-        id=1,
+        id = 1,
         defaults={
             'peoplecode': 'NONE', 'peoplename': 'NONE',
             'email': "none@youtility.in", 'dateofbirth': '1111-1-1',
@@ -235,7 +235,7 @@ def get_or_create_none_people(using=None):
 
 def get_or_create_none_pgroup():
     obj, _ = pm.Pgroup.objects.get_or_create(
-        id=1,
+        id = 1,
         defaults={
             'groupname': "NONE", 'id': 1
         }
@@ -245,7 +245,7 @@ def get_or_create_none_pgroup():
 
 def get_or_create_none_cap():
     obj, _ = pm.Capability.objects.get_or_create(
-        id=1,
+        id = 1,
         defaults={
             'capscode': "NONE", 'capsname': 'NONE', 'id': 1
         }
@@ -288,19 +288,19 @@ def save_user_session(request, people):
             request.session['is_admin'] = people.isadmin
             # get cap choices and save in session data
             putils.get_caps_choices(
-                client=client, session=request.session, people=people)
+                client = client, session = request.session, people = people)
             logger.info('saving user data into the session ... DONE')
         request.session['google_maps_secret_key'] = settings.GOOGLE_MAP_SECRET_KEY
     except ObjectDoesNotExist:
-        logger.error('object not found...', exc_info=True)
+        logger.error('object not found...', exc_info = True)
         raise
     except Exception:
         logger.critical(
-            'something went wrong please follow the traceback to fix it... ', exc_info=True)
+            'something went wrong please follow the traceback to fix it... ', exc_info = True)
         raise
 
 
-def update_timeline_data(ids, request, update=False):
+def update_timeline_data(ids, request, update = False):
     # sourcery skip: hoist-statement-from-if, remove-pass-body
     import apps.onboarding.models as ob
     import apps.peoples.models as pm
@@ -312,7 +312,7 @@ def update_timeline_data(ids, request, update=False):
               'shiftids': ['id', 'shiftname'],
               'pgroupids': ['id', 'name']}
     data = steps[ids].objects.filter(
-        pk__in=request.session['wizard_data'][ids]).values(*fields[ids])
+        pk__in = request.session['wizard_data'][ids]).values(*fields[ids])
     if not update:
         request.session['wizard_data']['timeline_data'][ids] = list(data)
     else:
@@ -320,7 +320,7 @@ def update_timeline_data(ids, request, update=False):
         request.session['wizard_data']['timeline_data'][ids] = list(data)
 
 
-def process_wizard_form(request, wizard_data, update=False, instance=None):
+def process_wizard_form(request, wizard_data, update = False, instance = None):
     logger.info('processing wizard started...', )
     dbg('wizard_Data submitted by the view \n%s' % wizard_data)
     wiz_session, resp = request.session['wizard_data'], None
@@ -350,7 +350,7 @@ def update_wizard_form(wizard_data, wiz_session, request):
             wizard_data['instance_id'])
     if wiz_session.get(wizard_data['next_ids']):
         resp = scts.redirect(
-            wizard_data['next_update_url'], pk=wiz_session[wizard_data['next_ids']][-1])
+            wizard_data['next_update_url'], pk = wiz_session[wizard_data['next_ids']][-1])
     else:
         request.session['wizard_data'].update(wiz_session)
         resp = scts.redirect(wizard_data['current_url'])
@@ -360,15 +360,15 @@ def update_wizard_form(wizard_data, wiz_session, request):
 
 def handle_other_exception(request, form, form_name, template, jsonform="", jsonform_name=""):
     logger.critical(
-        "something went wrong please follow the traceback to fix it... ", exc_info=True)
+        "something went wrong please follow the traceback to fix it... ", exc_info = True)
     msg.error(request, "[ERROR] Something went wrong",
               "alert-danger")
     cxt = {form_name: form, 'edit': True, jsonform_name: jsonform}
-    return scts.render(request, template, context=cxt)
+    return scts.render(request, template, context = cxt)
 
 
 def handle_does_not_exist(request, url):
-    logger.error('Object does not exist', exc_info=True)
+    logger.error('Object does not exist', exc_info = True)
     msg.error(request, "Object does not exist",
               "alert-danger")
     return scts.redirect(url)
@@ -384,13 +384,13 @@ def get_index_for_deletion(lookup, request, ids):
 
 
 def delete_object(request, model, lookup, ids, temp,
-                  form, url, form_name, jsonformname=None, jsonform=None):
+                  form, url, form_name, jsonformname = None, jsonform = None):
     """called when individual form request for deletion"""
     from django.db.models import RestrictedError
     try:
         logger.info('Request for object delete...')
         res, obj = None, model.objects.get(**lookup)
-        form = form(instance=obj)
+        form = form(instance = obj)
         obj.delete()
         msg.success(request, "Entry has been deleted successfully",
                     'alert-success')
@@ -407,12 +407,12 @@ def delete_object(request, model, lookup, ids, temp,
         logger.warn('Unable to delete, duw to dependencies')
         msg.error(request, 'Unable to delete, duw to dependencies')
         cxt = {form_name: form, jsonformname: jsonform, 'edit': True}
-        res = scts.render(request, temp, context=cxt)
+        res = scts.render(request, temp, context = cxt)
     except Exception:
         msg.error(request, '[ERROR] Something went wrong',
                   "alert alert-danger")
         cxt = {form_name: form, jsonformname: jsonform, 'edit': True}
-        res = scts.render(request, temp, context=cxt)
+        res = scts.render(request, temp, context = cxt)
     return res
 
 
@@ -421,7 +421,7 @@ def delete_unsaved_objects(model, ids):
         try:
             logger.info(
                 'Found unsaved objects in session going to be deleted...')
-            model.objects.filter(pk__in=ids).delete()
+            model.objects.filter(pk__in = ids).delete()
         except:
             raise
         else:
@@ -502,17 +502,17 @@ def apply_error_classes(form):
         attrs.update({'class': attrs.get('class', '') + ' is-invalid'})
 
 
-def to_utc(date, format=None):
+def to_utc(date, format = None):
     import pytz
     if isinstance(date, list) and date:
         dtlist = []
         for dt in date:
             dt = dt.astimezone(pytz.utc).replace(
-                microsecond=0, tzinfo=pytz.utc)
+                microsecond = 0, tzinfo = pytz.utc)
             dtlist.append(dt)
         return dtlist
     else:
-        dt = date.astimezone(pytz.utc).replace(microsecond=0, tzinfo=pytz.utc)
+        dt = date.astimezone(pytz.utc).replace(microsecond = 0, tzinfo = pytz.utc)
         if format:
             dt.strftime(format)
         return dt
@@ -541,7 +541,7 @@ def hostname_from_request(request):
 
 def get_or_create_none_bv():
     obj, _ = om.Bt.objects.get_or_create(
-        id=1,
+        id = 1,
         defaults={
             'bucode': "NONE", 'buname': "NONE", 'id': 1,
         }
@@ -551,7 +551,7 @@ def get_or_create_none_bv():
 
 def get_or_create_none_typeassist():
     obj, iscreated = om.TypeAssist.objects.get_or_create(
-        id=1,
+        id = 1,
         defaults={
             'tacode': "NONE", 'taname': "NONE", 'id': 1
         }
@@ -575,13 +575,13 @@ def get_client_from_hostname(request):
 
 
 def get_or_create_none_tenant():
-    return Tenant.objects.get_or_create(id=1, defaults={'tenantname': 'Intelliwiz', 'subdomain_prefix': 'intelliwiz'})
+    return Tenant.objects.get_or_create(id = 1, defaults={'tenantname': 'Intelliwiz', 'subdomain_prefix': 'intelliwiz'})
 
 def get_or_create_none_job():
     from datetime import datetime, timezone
-    date = datetime(1970, 1, 1, 00, 00, 00).replace(tzinfo=timezone.utc)
+    date = datetime(1970, 1, 1, 00, 00, 00).replace(tzinfo = timezone.utc)
     obj, _ = am.Job.objects.get_or_create(
-        id=1,
+        id = 1,
         defaults={
             'jobname': 'NONE',    'jobdesc': 'NONE',
             'fromdate': date,      'uptodate': date,
@@ -597,7 +597,7 @@ def get_or_create_none_job():
 
 def get_or_create_none_gf():
     obj, _ = om.GeofenceMaster.objects.get_or_create(
-        id=1,
+        id = 1,
         defaults = {
             'gfcode': 'NONE', 'gfname': 'NONE',
             'alerttext': 'NONE', 'enable':False
@@ -607,9 +607,9 @@ def get_or_create_none_gf():
 
 def get_or_create_none_jobneed():
     from datetime import datetime, timezone
-    date = datetime(1970, 1, 1, 00, 00, 00).replace(tzinfo=timezone.utc)
+    date = datetime(1970, 1, 1, 00, 00, 00).replace(tzinfo = timezone.utc)
     obj, _ = am.Jobneed.objects.get_or_create(
-        id=1,
+        id = 1,
         defaults={
             'jobdesc': "NONE", 'plandatetime': date,
             'expirydatetime': date,   'gracetime': 0,
@@ -622,7 +622,7 @@ def get_or_create_none_jobneed():
 
 def get_or_create_none_qset():
     obj, _ = am.QuestionSet.objects.get_or_create(
-        id=1,
+        id = 1,
         defaults={
             'qsetname': "NONE", 'id': 1}
     )
@@ -631,7 +631,7 @@ def get_or_create_none_qset():
 
 def get_or_create_none_question():
     obj, _ = am.Question.objects.get_or_create(
-        id=1,
+        id = 1,
         defaults={
             'quesname': "NONE", 'id': 1}
     )
@@ -640,7 +640,7 @@ def get_or_create_none_question():
 
 def get_or_create_none_qsetblng():
     obj, _ = am.QuestionSetBelonging.objects.get_or_create(
-        id=1,
+        id = 1,
         defaults={
             'qset': get_or_create_none_qset(),
             'question': get_or_create_none_question(),
@@ -652,7 +652,7 @@ def get_or_create_none_qsetblng():
 
 def get_or_create_none_asset():
     obj, _ = am.Asset.objects.get_or_create(
-        id=1,
+        id = 1,
         defaults={
             'assetcode': "NONE", 'assetname': 'NONE',
             'iscritical': False,  'identifier': 'NONE',
@@ -684,7 +684,7 @@ def create_none_entries(self):
         get_or_create_none_gf()
         logger.debug(f"NONE entries are successfully inserted...{pformat(ok(self))}")
     except Exception as e:
-        logger.error('create none entries', exc_info=True)
+        logger.error('create none entries', exc_info = True)
         raise
 
 
@@ -702,13 +702,13 @@ def create_super_admin(db):
         inputs = input().split(" ")
         if len(inputs) == 7:
             user = People.objects.create_superuser(
-                loginid=inputs[0],
-                password=inputs[1],
-                peoplecode=inputs[2],
-                peoplename=inputs[3],
-                dateofbirth=inputs[4],
-                dateofjoin=inputs[5],
-                email=inputs[6],
+                loginid = inputs[0],
+                password = inputs[1],
+                peoplecode = inputs[2],
+                peoplename = inputs[3],
+                dateofbirth = inputs[4],
+                dateofjoin = inputs[5],
+                email = inputs[6],
             )
             print(f"Operation Successfull!\n Superuser with this loginid {user.loginid} is created")
         else:
@@ -732,7 +732,7 @@ def set_db_for_router(db):
 
 
 def display_post_data(post_data):
-    logger.info("\n%s" % (pformat(post_data, compact=True)))
+    logger.info("\n%s" % (pformat(post_data, compact = True)))
 
 
 def format_data(objects):
@@ -827,7 +827,7 @@ def get_paginated_results2(objs, count, params, R):
         if R['serch[value]'] != "":
             objects = searchValue2(objs, params['fields'], params['related'], R['search[value]'])
             filtered = objects.count()
-        else: filtered=count
+        else: filtered = count
         length, start = int(R['length']), int(R['start'])
         objects = objects[start:start+length]
     return JsonResponse(data = {
@@ -838,24 +838,24 @@ def get_paginated_results2(objs, count, params, R):
     })
 
 
-def PD(data=None, post=None, get=None, instance=None, cleaned=None):
+def PD(data = None, post = None, get = None, instance = None, cleaned = None):
     """
     Prints Data (DD)
     """
     if post:
         logger.debug(
-            f"POST data recived from client: {pformat(post, compact=True)}\n")
+            f"POST data recived from client: {pformat(post, compact = True)}\n")
     elif get:
         logger.debug(
-            f"GET data recived from client: {pformat(get, compact=True)}\n")
+            f"GET data recived from client: {pformat(get, compact = True)}\n")
     elif cleaned:
         logger.debug(
-            f"CLEANED data after processing {pformat(cleaned, compact=True)}\n")
+            f"CLEANED data after processing {pformat(cleaned, compact = True)}\n")
     elif instance:
         logger.debug(
-            f"INSTANCE data recived from DB {pformat(instance, compact=True)}\n")
+            f"INSTANCE data recived from DB {pformat(instance, compact = True)}\n")
     else:
-        logger.debug(f"{pformat(data, compact=True)}\n")
+        logger.debug(f"{pformat(data, compact = True)}\n")
 
 
 def register_newuser_token(user, clientUrl):
@@ -898,16 +898,16 @@ def clean_record(record):
             ic(v)
             p = f'POINT({v[1]} {v[0]})'
             ic(p)
-            record[k] = GEOSGeometry(p, srid=4326)
+            record[k] = GEOSGeometry(p, srid = 4326)
     return record
 
 
-def save_common_stuff(request, instance, is_superuser=False):
+def save_common_stuff(request, instance, is_superuser = False):
     from django.utils import timezone
     userid =  1 if is_superuser else request.user.id
     if instance.cuser is not None:
         instance.muser_id = userid
-        instance.mdtz = timezone.now().replace(microsecond=0)
+        instance.mdtz = timezone.now().replace(microsecond = 0)
     else:
         instance.cuser_id = instance.muser_id = userid
     return instance
@@ -915,8 +915,8 @@ def save_common_stuff(request, instance, is_superuser=False):
 
 def create_tenant_with_alias(db):
     Tenant.objects.create(
-        tenantname=db.upper(),
-        subdomain_prefix=db
+        tenantname = db.upper(),
+        subdomain_prefix = db
     )
 
 
@@ -964,7 +964,7 @@ def fr(imagePath1, imagePath2):
 
                 if (after_image1_encoding is not None and after_image2_encoding is not None):
                     result = face_recognition.compare_faces(
-                        [after_image1_encoding], after_image2_encoding, tolerance=0.5)
+                        [after_image1_encoding], after_image2_encoding, tolerance = 0.5)
                     status = result[0]
                     msg = f'Face recognition {"success." if status else "failed."}'
                 else:
@@ -975,7 +975,7 @@ def fr(imagePath1, imagePath2):
             msg = "Default people image not found. Please upload default image for people and try again."
     except Exception as e:
         logger.error(
-            f"Face Recongition of {imagePath1} {imagePath2}", exc_info=True)
+            f"Face Recongition of {imagePath1} {imagePath2}", exc_info = True)
         raise Exception
     return status, msg
 
@@ -1002,14 +1002,14 @@ def printsql(objs):
 def get_select_output(objs):
     if not objs:
         return None, 0, "No records"
-    records = json.dumps(list(objs), default=str)
+    records = json.dumps(list(objs), default = str)
     count = objs.count()
     msg = f'Total {count} records fetched successfully!'
     return records, count, msg
 
 
 def get_qobjs_dir_fields_start_length(R):
-    qobjs=None
+    qobjs = None
     if R.get('search[value]'):
         qobjs = searchValue2(R.getlist('fields[]'), R['search[value]'])
 
@@ -1028,7 +1028,7 @@ def get_qobjs_dir_fields_start_length(R):
     return qobjs, dir,  fields, length, start
 
 
-def runrawsql(sql, args=None, db='default', named=False):
+def runrawsql(sql, args = None, db='default', named = False):
     "Runs raw sql return namedtup[le or dict type results"
     from django.db import connections
     cursor = connections[db].cursor()
@@ -1052,7 +1052,7 @@ def dictfetchall(cursor):
         for row in cursor.fetchall()
     ]
 
-def getformatedjson(geofence=None, jsondata=None, rettype=dict):
+def getformatedjson(geofence = None, jsondata = None, rettype = dict):
     data = jsondata or geofence.geojson
     geodict = json.loads(data)
     result = [{'lat': lat, 'lng': lng} for lng, lat in geodict['coordinates'][0]]
@@ -1082,10 +1082,10 @@ class RecordsAlreadyExist(Error):
 
 def getawaredatetime(dt, offset):
     from datetime import datetime, timedelta, timezone
-    tz = timezone(timedelta(minutes=int(offset)))
+    tz = timezone(timedelta(minutes = int(offset)))
     val = dt.replace("+00:00", "")
     val = datetime.strptime(val, "%Y-%m-%d %H:%M:%S")
-    return val.replace(tzinfo=tz, microsecond=0)
+    return val.replace(tzinfo = tz, microsecond = 0)
 
 def ok(self):
     self.stdout.write(self.style.SUCCESS("DONE"))

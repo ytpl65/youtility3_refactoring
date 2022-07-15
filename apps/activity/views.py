@@ -49,15 +49,15 @@ class Question(LoginRequiredMixin, View):
             self.params.update(d)
             objs = self.params['model'].objects.select_related(
                 *self.params['related']).filter(
-                enable=True
+                enable = True
             ).values(*self.params['fields'])
             resp = utils.render_grid(
                 request, self.params, "question_view", objs)
 
         # return cap_form empty
         elif R.get('action', None) == 'form':
-            cxt = {'ques_form': self.params['form_class'](request=request, initial=self.params['form_initials']),
-                   'ta_form': obf.TypeAssistForm(auto_id=False),
+            cxt = {'ques_form': self.params['form_class'](request = request, initial = self.params['form_initials']),
+                   'ta_form': obf.TypeAssistForm(auto_id = False),
                    'msg': "create question requested"}
             resp = utils.render_form(request, self.params, cxt)
 
@@ -67,7 +67,7 @@ class Question(LoginRequiredMixin, View):
         # return form with instance
         elif R.get('id', None):
             obj = utils.get_model_obj(int(R['id']), request, self.params)
-            cxt = {'ta_form': obf.TypeAssistForm(auto_id=False)}
+            cxt = {'ta_form': obf.TypeAssistForm(auto_id = False)}
             resp = utils.render_form_for_update(
                 request, self.params, 'ques_form', obj, cxt)
         return resp
@@ -80,10 +80,10 @@ class Question(LoginRequiredMixin, View):
                 msg = "question_view"
                 ques = utils.get_model_obj(pk, request, self.params)
                 form = self.params['form_class'](
-                    data, instance=ques, request=request)
+                    data, instance = ques, request = request)
                 create = False
             else:
-                form = self.params['form_class'](data, request=request)
+                form = self.params['form_class'](data, request = request)
             if form.is_valid():
                 resp = self.handle_valid_form(form,  request, create)
             else:
@@ -99,12 +99,12 @@ class Question(LoginRequiredMixin, View):
         try:
             ques = form.save()
             ques = putils.save_userinfo(
-                ques, request.user, request.session, create=create)
+                ques, request.user, request.session, create = create)
             logger.info("question form saved")
             data = {'success': "Record has been saved successfully",
                     'name': ques.quesname, 'type': ques.answertype, 'unit': ques.unit.tacode}
             logger.debug(data)
-            return rp.JsonResponse(data, status=200)
+            return rp.JsonResponse(data, status = 200)
         except (IntegrityError, pg_errs.UniqueViolation):
             return utils.handle_intergrity_error('Question')
 
@@ -146,8 +146,8 @@ class MasterQuestionSet(LoginRequiredMixin, View):
                 {'parent': utils.get_or_create_none_qset().id})
             cxt = {
                 'masterqset_form': self.params['form_class'](
-                    request=request,
-                    initial=self.params['form_initials']),
+                    request = request,
+                    initial = self.params['form_initials']),
                 'qsetbng': af.QsetBelongingForm(initial={'ismandatory': True}),
                 'label': self.label,
                 'msg': f"create {self.view_of} requested"}
@@ -179,10 +179,10 @@ class MasterQuestionSet(LoginRequiredMixin, View):
                 msg = self.view_of
                 form = utils.get_instance_for_update(
                     data, self.params, msg, int(pk))
-                logger.debug(pformat(form.data, width=41, compact=True))
+                logger.debug(pformat(form.data, width = 41, compact = True))
                 create = False
             else:
-                form = self.params['form_class'](data, request=request)
+                form = self.params['form_class'](data, request = request)
             if form.is_valid():
                 resp = self.handle_valid_form(form, request, create)
             else:
@@ -195,12 +195,12 @@ class MasterQuestionSet(LoginRequiredMixin, View):
     def get_questions_for_form(self, qset):
         try:
             questions = list(am.QuestionSetBelonging.objects.select_related(
-                "question").filter(qset_id=qset).values(
+                "question").filter(qset_id = qset).values(
                 'ismandatory', 'seqno', 'max', 'min', 'alerton',
                 'options', 'question__quesname', 'answertype', 'question__id'
             ))
         except Exception:
-            logger.critical("Something went wrong", exc_info=True)
+            logger.critical("Something went wrong", exc_info = True)
             raise
         else:
             return questions
@@ -244,7 +244,7 @@ class MasterAsset(LoginRequiredMixin, View):
             self.params['form_initials'].update({
                 'type': utils.get_or_create_none_typeassist().id,
                 'parent': utils.get_or_create_none_asset().id})
-            cxt = {'master_assetform': self.params['form_class'](request=request, initial=self.params['form_initials']),
+            cxt = {'master_assetform': self.params['form_class'](request = request, initial = self.params['form_initials']),
                    'msg': f"create {self.label} requested",
                    'label': self.label}
             resp = utils.render_form(request, self.params, cxt)
@@ -257,7 +257,7 @@ class MasterAsset(LoginRequiredMixin, View):
             obj = utils.get_model_obj(int(R['id']), request, self.params)
             cxt = {'label': self.label}
             resp = utils.render_form_for_update(
-                request, self.params, 'master_assetform', obj, extra_cxt=cxt)
+                request, self.params, 'master_assetform', obj, extra_cxt = cxt)
         return resp
 
     def post(self, request, *args, **kwargs):
@@ -270,7 +270,7 @@ class MasterAsset(LoginRequiredMixin, View):
                     data, self.params, msg, int(pk))
                 create = False
             else:
-                form = self.params['form_class'](data, request=request)
+                form = self.params['form_class'](data, request = request)
             if form.is_valid():
                 resp = self.handle_valid_form(form, request, create)
             else:
@@ -306,7 +306,7 @@ class Checklist(MasterQuestionSet):
                 request.POST.get("asssigned_questions"))
             qset = form.save()
             putils.save_userinfo(qset, request.user,
-                                 request.session, create=create)
+                                 request.session, create = create)
             logger.info('%s form is valid' % (self.view_of))
             fields = {'qset': qset.id, 'qsetname': qset.qsetname,
                       'client': qset.client_id}
@@ -314,7 +314,7 @@ class Checklist(MasterQuestionSet):
             data = {'success': "Record has been saved successfully",
                     'row':{'qsetname':qset.qsetname, 'id':qset.id}
                     }
-            return rp.JsonResponse(data, status=200)
+            return rp.JsonResponse(data, status = 200)
         except IntegrityError:
             return utils.handle_intergrity_error('Question Set')
 
@@ -324,12 +324,12 @@ class Checklist(MasterQuestionSet):
             logger.info("%s saving QuestoinSet Belonging found %s questions" % (
                 " "*4, len(assigned_questions)))
             logger.debug(
-                f"\nassigned_questoins, {pformat(assigned_questions, depth=1, width=60)}, qset {fields['qset']}")
+                f"\nassigned_questoins, {pformat(assigned_questions, depth = 1, width = 60)}, qset {fields['qset']}")
             av_utils.insert_questions_to_qsetblng(
                 assigned_questions, am.QuestionSetBelonging, fields, request)
             logger.info("saving QuestionSet Belongin [Ended]")
         except Exception:
-            logger.critical("Something went wrong", exc_info=True)
+            logger.critical("Something went wrong", exc_info = True)
             raise
 
 
@@ -351,12 +351,12 @@ class QuestionSet(MasterQuestionSet):
     def handle_valid_form(self, form, request, create):
         logger.info(f'{self.view_of} form is valid')
         try:
-            with transaction.atomic(using=utils.get_current_db_name()):
+            with transaction.atomic(using = utils.get_current_db_name()):
                 assigned_questions = json.loads(
                     request.POST.get("asssigned_questions"))
                 qset = form.save()
                 putils.save_userinfo(qset, request.user,
-                                    request.session, create=create)
+                                    request.session, create = create)
                 logger.info(f'{self.view_of} form is valid')
                 fields = {'qset': qset.id, 'qsetname': qset.qsetname,
                         'client': qset.client_id}
@@ -364,11 +364,11 @@ class QuestionSet(MasterQuestionSet):
                 data = {'success': "Record has been saved successfully",
                         'row':{'qsetname':qset.qsetname, 'id':qset.id}
                         }
-                return rp.JsonResponse(data, status=200)
+                return rp.JsonResponse(data, status = 200)
         except IntegrityError:
             return utils.handle_intergrity_error('Question Set')
         except Exception:
-            logger.critical("Something went wrong", exc_info=True)
+            logger.critical("Something went wrong", exc_info = True)
             raise
 
     def save_qset_belonging(self, request, assigned_questions, fields):
@@ -377,12 +377,12 @@ class QuestionSet(MasterQuestionSet):
             logger.info(f'{" " * 4} saving QuestoinSet Belonging found {len(assigned_questions)} questions')
 
             logger.debug(
-                f"\nassigned_questoins, {pformat(assigned_questions, depth=1, width=60)}, qset {fields['qset']}")
+                f"\nassigned_questoins, {pformat(assigned_questions, depth = 1, width = 60)}, qset {fields['qset']}")
             av_utils.insert_questions_to_qsetblng(
                 assigned_questions, am.QuestionSetBelonging, fields, request)
             logger.info("saving QuestionSet Belongin [Ended]")
         except Exception:
-            logger.critical("Something went wrong", exc_info=True)
+            logger.critical("Something went wrong", exc_info = True)
             raise
 
 
@@ -397,18 +397,18 @@ def deleteQSB(request):
         qset = request.GET.get('qset')
         logger.info("request for delete QSB '%s' start" % (quesname))
         am.QuestionSetBelonging.objects.get(
-            question__quesname=quesname,
-            answertype=answertype,
-            qset_id=qset).delete()
+            question__quesname = quesname,
+            answertype = answertype,
+            qset_id = qset).delete()
         statuscode = 200
         logger.info("Delete request executed successfully")
     except Exception:
-        logger.critical("something went wrong", exc_info=True)
+        logger.critical("something went wrong", exc_info = True)
         statuscode = 404
         raise
     status = "success" if statuscode == 200 else "failed"
     data = {"status": status}
-    return rp.JsonResponse(data, status=statuscode)
+    return rp.JsonResponse(data, status = statuscode)
 
 
 class Checkpoint(MasterAsset):
@@ -431,12 +431,12 @@ class Checkpoint(MasterAsset):
         try:
             cp = form.save()
             putils.save_userinfo(
-                cp, request.user, request.session, create=create)
+                cp, request.user, request.session, create = create)
             logger.info("checkpoint form saved")
             data = {'success': "Record has been saved successfully",
                     'code': cp.assetcode, 'id': cp.id
                     }
-            return rp.JsonResponse(data, status=200)
+            return rp.JsonResponse(data, status = 200)
         except IntegrityError:
             return utils.handle_intergrity_error('Checkpoint')
 
@@ -461,12 +461,12 @@ class Smartplace(MasterAsset):
         try:
             cp = form.save()
             putils.save_userinfo(
-                cp, request.user, request.session, create=create)
+                cp, request.user, request.session, create = create)
             logger.info("smartplace form saved")
             data = {'success': "Record has been saved successfully",
                     'code': cp.assetcode, 'id': cp.id
                     }
-            return rp.JsonResponse(data, status=200)
+            return rp.JsonResponse(data, status = 200)
         except IntegrityError:
             return utils.handle_intergrity_error('Smartplace')
 
@@ -496,10 +496,10 @@ class RetriveEscList(LoginRequiredMixin, View):
             resp = rp.JsonResponse(data={
                 'draw': requestData['draw'], 'recordsTotal': count, 'data': list(objects),
                 'recordsFiltered': filtered
-            }, status=200)
+            }, status = 200)
         except Exception:
             log.critical(
-                'something went wrong', exc_info=True)
+                'something went wrong', exc_info = True)
             messages.error(request, 'Something went wrong',
                            "alert alert-danger")
             resp = redirect('/dashboard')
@@ -535,12 +535,12 @@ class AdhocRecord(LoginRequiredMixin, View):
                 'data':list(objs),
                 'recordsFiltered':filtered,
                 'recordsTotal':total,
-            }, safe=False)
+            }, safe = False)
 
         elif R.get('action', None) == 'form':
-            cxt = {'adhoctaskform': self.params['form_class'](request=request),
+            cxt = {'adhoctaskform': self.params['form_class'](request = request),
                    'msg': "create adhoc task requested"}
-            return render(request, self.params['template_form'], context=cxt)
+            return render(request, self.params['template_form'], context = cxt)
 
 
 

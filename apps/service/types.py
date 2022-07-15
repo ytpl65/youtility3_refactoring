@@ -28,23 +28,23 @@ class PELogType(DjangoObjectType):
         model = PeopleEventlog
 
 class JNDType(graphene.InputObjectType):
-    cuser__id   = graphene.Int(required=True)
-    muser__id   = graphene.Int(required=True)
-    tenant_id   = graphene.Int(required=True)
-    question_id = graphene.Int(required=True)
-    jobneed_id  = graphene.Int(required=True)
-    seqno       = graphene.Int(required=True)
-    cdtz        = graphene.String(required=True)
-    mdtz        = graphene.String(required=True)
-    answertype  = graphene.String(required=True)
-    answer      = graphene.String(required=True)
-    isavpt      = graphene.Boolean(required=True)
-    ismadatory  = graphene.Boolean(required=True)
-    alerts      = graphene.Boolean(required=True)
-    question_id = graphene.Int(required=True)
-    options     = graphene.String(required=True)
-    min         = graphene.Float(required=True)
-    max         = graphene.Float(required=True)
+    cuser__id   = graphene.Int(required = True)
+    muser__id   = graphene.Int(required = True)
+    tenant_id   = graphene.Int(required = True)
+    question_id = graphene.Int(required = True)
+    jobneed_id  = graphene.Int(required = True)
+    seqno       = graphene.Int(required = True)
+    cdtz        = graphene.String(required = True)
+    mdtz        = graphene.String(required = True)
+    answertype  = graphene.String(required = True)
+    answer      = graphene.String(required = True)
+    isavpt      = graphene.Boolean(required = True)
+    ismadatory  = graphene.Boolean(required = True)
+    alerts      = graphene.Boolean(required = True)
+    question_id = graphene.Int(required = True)
+    options     = graphene.String(required = True)
+    min         = graphene.Float(required = True)
+    max         = graphene.Float(required = True)
 
 
     # class Meta:
@@ -77,7 +77,7 @@ class PeopleType(DjangoObjectType):
         fields = '__all__'
 
 class VerifyClientOutput(graphene.ObjectType):
-    rc        = graphene.Int(default_value=0)
+    rc        = graphene.Int(default_value = 0)
     msg       = graphene.String()
     url = graphene.String(default_value = "")
 
@@ -121,7 +121,7 @@ class QSetBlngType(DjangoObjectType):
 
 class PgBlngType(DjangoObjectType):
     class Meta:
-        model=Pgbelonging
+        model = Pgbelonging
 
 class PgroupType(DjangoObjectType):
     class Meta:
@@ -132,9 +132,9 @@ class PgroupType(DjangoObjectType):
 
 
 class AuthInput(graphene.InputObjectType):
-    loginid     = graphene.String(required=True)
-    password    = graphene.String(required=True)
-    deviceid    = graphene.String(required=True)
+    loginid     = graphene.String(required = True)
+    password    = graphene.String(required = True)
+    deviceid    = graphene.String(required = True)
 
 
 class AuthOutput(graphene.ObjectType):
@@ -145,7 +145,7 @@ class AuthOutput(graphene.ObjectType):
 
 class TyType(DjangoObjectType): 
     class Meta:
-        model=TypeAssist
+        model = TypeAssist
         fields = [
             'id', 'tacode', 'taname'
         ]
@@ -171,8 +171,8 @@ class RowOutput(graphene.ObjectType):
 
 
 class TemplateReportInput(graphene.InputObjectType):
-    questionsetid = graphene.Int(required=True)
-    tablename     = graphene.String(required=True)
+    questionsetid = graphene.Int(required = True)
+    tablename     = graphene.String(required = True)
     columns       = graphene.List(graphene.String)
     values        = graphene.List(graphene.String)
     childs        = graphene.List(graphene.String)
@@ -180,32 +180,32 @@ class TemplateReportInput(graphene.InputObjectType):
 
 
 class AttachmentInput(graphene.InputObjectType):
-    file     = Upload(required=True)
-    pelogid  = graphene.Int(required=True)
-    peopleid = graphene.Int(required=True)
-    filename = graphene.String(required=True)
-    path     = graphene.String(required=True)
+    file     = Upload(required = True)
+    pelogid  = graphene.Int(required = True)
+    peopleid = graphene.Int(required = True)
+    filename = graphene.String(required = True)
+    path     = graphene.String(required = True)
 
 
 
 
 class AdhocInputType(graphene.InputObjectType):
-    plandatetime = graphene.String(required=True)
-    jobdesc      = graphene.String(required=True)
-    bu_id        = graphene.Int(required=True)
-    people_id    = graphene.Int(required=True)
-    site_id      = graphene.Int(required=True)
-    qset_id      = graphene.Int(required=True)
-    remarks      = graphene.String(required=False)
+    plandatetime = graphene.String(required = True)
+    jobdesc      = graphene.String(required = True)
+    bu_id        = graphene.Int(required = True)
+    people_id    = graphene.Int(required = True)
+    site_id      = graphene.Int(required = True)
+    qset_id      = graphene.Int(required = True)
+    remarks      = graphene.String(required = False)
 
 
 class TestJsonInput(graphene.InputObjectType):
-    file = Upload(required=True)
-    sevicename = graphene.String(required=True)
+    file = Upload(required = True)
+    sevicename = graphene.String(required = True)
 
 
 class ServiceOutputType(graphene.ObjectType):
-    rc        = graphene.Int(default_value=0)
+    rc        = graphene.Int(default_value = 0)
     msg       = graphene.String()
     recordcount  = graphene.Int()
     traceback = graphene.String(default_value = 'NA')
@@ -332,7 +332,7 @@ class ChildSchema(BaseModel):
     qset_id: int
     seqno: int
 
-    @validator('jobdesc', allow_reuse=True)
+    @validator('jobdesc', allow_reuse = True)
     def to_title_case(cls, v):
         if v: return v.title()
 
@@ -360,17 +360,17 @@ class ReportSchema(BaseModel):
     qset_id: int
     scantype: Scantype
 
-    @validator('jobdesc', 'othersite', allow_reuse=True)
+    @validator('jobdesc', 'othersite', allow_reuse = True)
     def to_title_case(cls, v):  # sourcery skip: instance-method-first-arg-name
         if v: return v.title()
 
-    @validator('gpslocation', allow_reuse=True)
+    @validator('gpslocation', allow_reuse = True)
     def check_gpslocation_format(cls, v):
         # sourcery skip: inline-immediately-returned-variable, instance-method-first-arg-name
         from django.contrib.gis.geos import GEOSGeometry
         try:
             lat, lng = v.split(', ')
-            point = GEOSGeometry(f'SRID=4326;POINT({lng} {lat})')
+            point = GEOSGeometry(f'SRID = 4326;POINT({lng} {lat})')
             return point
         except Exception as e:
             raise ValueError('unrecognized gpslocation format') from e
@@ -419,10 +419,10 @@ class UploadAttType(graphene.InputObjectType):
     # columns  = graphene.String()
     # values   = graphene.String()
     # image    = Upload()
-    # path = graphene.String(required=False)
+    # path = graphene.String(required = False)
     # pelogid  = graphene.Int()
     # peopleid = graphene.Int()
     # filename = graphene.String()
-    record = graphene.JSONString(required=True)
-    tablname = graphene.String(required=True)
+    record = graphene.JSONString(required = True)
+    tablname = graphene.String(required = True)
     file = Upload() 

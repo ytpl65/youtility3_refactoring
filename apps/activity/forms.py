@@ -13,10 +13,10 @@ import json
 
 class QuestionForm(forms.ModelForm):
     required_css_class = "required"
-    alertbelow         = forms.CharField(widget=forms.NumberInput(
-        attrs={'step': "0.01"}), required=False, label='Alert Below')
-    alertabove = forms.CharField(widget=forms.NumberInput(
-        attrs={'step': "0.01"}), required=False, label='Alert Above')
+    alertbelow         = forms.CharField(widget = forms.NumberInput(
+        attrs={'step': "0.01"}), required = False, label='Alert Below')
+    alertabove = forms.CharField(widget = forms.NumberInput(
+        attrs={'step': "0.01"}), required = False, label='Alert Above')
 
     class Meta:
         model = am.Question
@@ -97,12 +97,12 @@ class QuestionForm(forms.ModelForm):
         if not self.instance.id:
             try:
                 am.Question.objects.get(
-                    quesname__exact=self.instance.quesname,
-                    answertype__iexact=self.instance.answertype,
-                    client_id__exact=self.request.session['client_id'])
+                    quesname__exact = self.instance.quesname,
+                    answertype__iexact = self.instance.answertype,
+                    client_id__exact = self.request.session['client_id'])
                 msg = 'This type of Question is already exist!'
                 raise forms.ValidationError(
-                    message=msg, code="unique_constraint")
+                    message = msg, code="unique_constraint")
             except am.Question.DoesNotExist:
                 pass
             except ValidationError as e:
@@ -112,7 +112,7 @@ class QuestionForm(forms.ModelForm):
 class MasterQsetForm(forms.ModelForm):
     required_css_class = "required"
     assetincludes = forms.MultipleChoiceField(
-        required=True, label='Checkpoint', widget=s2forms.Select2MultipleWidget, choices=ac_utils.get_assetincludes_choices)
+        required = True, label='Checkpoint', widget = s2forms.Select2MultipleWidget, choices = ac_utils.get_assetincludes_choices)
 
     class Meta:
         model = am.QuestionSet
@@ -135,10 +135,10 @@ class MasterQsetForm(forms.ModelForm):
 
 class QsetBelongingForm(forms.ModelForm):
     required_css_class = "required"
-    alertbelow = forms.CharField(widget=forms.NumberInput(
-        attrs={'step': "0.01"}), required=False, label='Alert Below')
-    alertabove = forms.CharField(widget=forms.NumberInput(
-        attrs={'step': "0.01"}), required=False, label='Alert Above')
+    alertbelow = forms.CharField(widget = forms.NumberInput(
+        attrs={'step': "0.01"}), required = False, label='Alert Below')
+    alertabove = forms.CharField(widget = forms.NumberInput(
+        attrs={'step': "0.01"}), required = False, label='Alert Above')
 
     class Meta:
         model = am.QuestionSetBelonging
@@ -203,7 +203,7 @@ class QsetBelongingForm(forms.ModelForm):
                     client_id__exact = self.request.session['client_id'])
                 msg = 'This type of Question is already exist!'
                 raise forms.ValidationError(
-                    message=msg, code="unique_constraint")
+                    message = msg, code="unique_constraint")
             except am.Question.DoesNotExist:
                 pass
             except ValidationError as e:
@@ -257,24 +257,24 @@ class AssetForm(forms.ModelForm):
         ('WARRANTY', 'Warranty'),
     ]
 
-    tempcode       = forms.CharField(max_length=100, label='Temporary Code', required=False)
-    service        = forms.ChoiceField(choices=SERVICE_CHOICES, initial='NONE', required=False, label='Service')
-    sfdate         = forms.DateField(required=False, label='Service From Date')
-    stdate         = forms.DateField(required=False, label='Service To Datre')
-    msn            = forms.CharField(required=False, max_length=50,label='Manufacture Sr. No')
-    yom            = forms.CharField(required=False, max_length=50,label='Manufacture Date')
-    bill_val       = forms.IntegerField(required=False, label='Bill Value')
-    bill_date      = forms.DateField(required=False, label='Bill Date')
-    purachase_date = forms.DateField(required=False, label='Purchase Date')
-    inst_date      = forms.DateField(required=False, label='Installation Date')
-    po_number      = forms.CharField(required=False, label='Purchase Order Number', max_length=100)
-    far_asset_id   = forms.CharField(required=False, label='FAR Asset Id', max_length=100)
-    invoice_date   = forms.DateField(required=False, label='Invoice Date')
-    invoice_no     = forms.CharField( required=False, label='Invoice No.', max_length=100)
-    supplier       = forms.CharField(required=False, max_length=50)
-    meter          = forms.ChoiceField(choices=[], required=False, initial='NONE', label='Meter')
-    model          = forms.CharField(label='Model', required=False, max_length=100)
-    gpslocation    = forms.CharField(label = 'GPS Location', required=True, initial='0.0,0.0')
+    tempcode       = forms.CharField(max_length = 100, label='Temporary Code', required = False)
+    service        = forms.ChoiceField(choices = SERVICE_CHOICES, initial='NONE', required = False, label='Service')
+    sfdate         = forms.DateField(required = False, label='Service From Date')
+    stdate         = forms.DateField(required = False, label='Service To Datre')
+    msn            = forms.CharField(required = False, max_length = 50,label='Manufacture Sr. No')
+    yom            = forms.CharField(required = False, max_length = 50,label='Manufacture Date')
+    bill_val       = forms.IntegerField(required = False, label='Bill Value')
+    bill_date      = forms.DateField(required = False, label='Bill Date')
+    purachase_date = forms.DateField(required = False, label='Purchase Date')
+    inst_date      = forms.DateField(required = False, label='Installation Date')
+    po_number      = forms.CharField(required = False, label='Purchase Order Number', max_length = 100)
+    far_asset_id   = forms.CharField(required = False, label='FAR Asset Id', max_length = 100)
+    invoice_date   = forms.DateField(required = False, label='Invoice Date')
+    invoice_no     = forms.CharField( required = False, label='Invoice No.', max_length = 100)
+    supplier       = forms.CharField(required = False, max_length = 50)
+    meter          = forms.ChoiceField(choices=[], required = False, initial='NONE', label='Meter')
+    model          = forms.CharField(label='Model', required = False, max_length = 100)
+    gpslocation    = forms.CharField(label = 'GPS Location', required = True, initial='0.0,0.0')
 
     class Meta:
         model = am.Asset
@@ -333,7 +333,7 @@ class SmartPlaceForm(AssetForm):
         self.fields['identifier'].initial = 'SMARTPLACE'
         self.fields['identifier'].widget.attrs = {"style": "display:none;"}
         self.fields['parent'].queryset = am.Asset.objects.filter(
-            Q(identifier='SMARTPLACE') & Q(enable=True) | Q(assetcode='NONE'))
+            Q(identifier='SMARTPLACE') & Q(enable = True) | Q(assetcode='NONE'))
         utils.initailize_form_fields(self)
 
 
@@ -407,7 +407,7 @@ class CheckpointForm(AssetForm):
         self.fields['identifier'].initial = 'CHECKPOINT'
         self.fields['identifier'].widget.attrs = {"style": "display:none"}
         self.fields['parent'].queryset = am.Asset.objects.filter(
-            Q(identifier='CHECKPOINT') & Q(enable=True) | Q(assetcode='NONE'))
+            Q(identifier='CHECKPOINT') & Q(enable = True) | Q(assetcode='NONE'))
         utils.initailize_form_fields(self)
 
 
@@ -420,9 +420,9 @@ class JobForm(forms.ModelForm):
         ('DAY', 'Day'), ]
 
     freq_duration = forms.ChoiceField(
-        choices=DURATION_CHOICES, required=False, initial='MIN', widget=s2forms.Select2Widget)
+        choices = DURATION_CHOICES, required = False, initial='MIN', widget = s2forms.Select2Widget)
     freq_duration2 = forms.ChoiceField(
-        choices=DURATION_CHOICES, required=False, initial='MIN', widget=s2forms.Select2Widget)
+        choices = DURATION_CHOICES, required = False, initial='MIN', widget = s2forms.Select2Widget)
 
     class Meta:
         model = am.Job
@@ -455,7 +455,7 @@ class JobForm(forms.ModelForm):
             'qset'            : s2forms.ModelSelect2Widget(
                 model = am.QuestionSet, 
                 search_fields = ['qsetname__icontains'],
-                max_results=20),
+                max_results = 20),
             'people'          : s2forms.ModelSelect2Widget(
                 model = pm.People,
                 search_fields   = ['peoplecode__icontains', 'peoplecode__icontains'],
@@ -499,8 +499,8 @@ class JobNeedForm(forms.ModelForm):
             'scantype' : s2forms.Select2Widget,
             'pgroup'      : s2forms.Select2Widget,
             'people'      : s2forms.Select2Widget,
-            'qset'        : s2forms.ModelSelect2Widget(model=am.QuestionSet, search_fields = ['qset_name__icontains']),
-            'asset'       : s2forms.ModelSelect2Widget(model=am.Asset, search_fields = ['assetname__icontains']),
+            'qset'        : s2forms.ModelSelect2Widget(model = am.QuestionSet, search_fields = ['qset_name__icontains']),
+            'asset'       : s2forms.ModelSelect2Widget(model = am.Asset, search_fields = ['assetname__icontains']),
             'priority'    : s2forms.Select2Widget,
             'jobdesc'     : forms.Textarea(attrs={'rows': 1, 'cols': 40}),
             'remarks'     : forms.Textarea(attrs={'rows': 2, 'cols': 40}),
@@ -515,7 +515,7 @@ class JobNeedForm(forms.ModelForm):
 
 class AdhocTaskForm(JobNeedForm):
     ASSIGNTO_CHOICES   = [('PEOPLE', 'People'), ('GROUP', 'Group')]
-    assign_to          = forms.ChoiceField(choices=ASSIGNTO_CHOICES, initial="PEOPLE")
+    assign_to          = forms.ChoiceField(choices = ASSIGNTO_CHOICES, initial="PEOPLE")
     class Meta(JobNeedForm.Meta):
         labels = {
             'asset': 'Asset/SmartPlace',
@@ -562,8 +562,8 @@ class TicketForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields["status"].queryset=om.TypeAssist.objects.filter(Q(tatype__tacode='TICKETSTATUS') )
-        self.fields["priority"].queryset=om.TypeAssist.objects.filter(tatype__tacode='PRIORITY')
+        self.fields["status"].queryset = om.TypeAssist.objects.filter(Q(tatype__tacode='TICKETSTATUS') )
+        self.fields["priority"].queryset = om.TypeAssist.objects.filter(tatype__tacode='PRIORITY')
         utils.initailize_form_fields(self)
 
 

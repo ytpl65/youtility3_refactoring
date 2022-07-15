@@ -29,14 +29,14 @@ def LogOutUser(response, request):
 
 
 
-def auth_check(info, input, returnUser, uclientip=None):
+def auth_check(info, input, returnUser, uclientip = None):
     from django.contrib.auth import authenticate
     from graphql import GraphQLError
     try:
         user = authenticate(
             info.context,
-            username=input.loginid,
-            password=input.password)
+            username = input.loginid,
+            password = input.password)
         if not user: raise ValueError
     except ValueError as e:
         raise GraphQLError(Messages.WRONGCREDS) from e
@@ -48,11 +48,11 @@ def auth_check(info, input, returnUser, uclientip=None):
         if people_validips is not None and len(people_validips.replace(" ", "")) > 0:
             clientIpList = people_validips.replace(" ", "").split(",")
             if uclientip is not None and uclientip not in clientIpList:
-                allowAccess = isAuth =False
-        if user.deviceid in ('-1', input.deviceid): allowAccess=True
+                allowAccess = isAuth  = False
+        if user.deviceid in ('-1', input.deviceid): allowAccess = True
         else:
-            if input.deviceid not in people_validimeis: isValidDevice=False
-            isAuth =False
+            if input.deviceid not in people_validimeis: isValidDevice = False
+            isAuth  = False
             #raise GraphQLError(Messages.MULTIDEVICES)
             allowAccess = True
         if allowAccess:

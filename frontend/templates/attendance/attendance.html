@@ -135,7 +135,7 @@ Attendance
                     action: function (e, dt, node, config) {
                         const params = {
                             modal_id: "#modal-attd",
-                            url: "{{ url('attendance:attendance_view') }}?action=form",
+                            url: "{{ url('attendance:attendance_view') }}?action = form",
                             beforeSend: attdBeforeSend}
                         fire_ajax_get(params)
                         .done((data, status, xhr) => {
@@ -224,7 +224,7 @@ Attendance
             alert_before_attendance().then((result) => {
                 if(result.isConfirmed){
                     //openCamera to take attendance
-                    const params = {url: "{{ url('attendance:markAttendance') }}?detectQR=true"}
+                    const params = {url: "{{ url('attendance:markAttendance') }}?detectQR = true"}
                     fire_ajax_get(params)
                     .done((data, status, xhr) => {
                         console.log("data", data)
@@ -234,7 +234,7 @@ Attendance
                             icon: 'success',
                             showConfirmButton: false,
                             timer:3000})
-                        const params = {url:`{{ url('attendance:markAttendance') }}?detectFace=true&code=${data.decoded}`}
+                        const params = {url:`{{ url('attendance:markAttendance') }}?detectFace = true&code=${data.decoded}`}
                         setTimeout(
                             fire_ajax_get(params)
                             .done((data, status, xhr) => {
@@ -248,7 +248,7 @@ Attendance
                     })
                     .fail((xhr, status, error) => {
                         if(xhr.responseJSON.hasOwnProperty('message')){
-                            show_error_alert(xhr.responseJSON.message, title=xhr.responseJSON.title)
+                            show_error_alert(xhr.responseJSON.message, title = xhr.responseJSON.title)
                         }
                     })
                 }
@@ -259,7 +259,7 @@ Attendance
 
     //deleted ajax request
     function isAttendanceDeleted(id){
-		const params = {url:`{{ url('attendance:attendance_view') }}?action=delete&id=${id}`}
+		const params = {url:`{{ url('attendance:attendance_view') }}?action = delete&id=${id}`}
 		fire_ajax_get(params)
 		.done((data, status, xhr) => {
 			if(!xhr.status === 200){

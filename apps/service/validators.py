@@ -7,7 +7,7 @@ def clean_point_field(val):
         if not val: return val
         if 'SRID' not in val:
             lat, lng = val.split(', ')
-            return GEOSGeometry(f'SRID=4326;POINT({lng} {lat})')
+            return GEOSGeometry(f'SRID = 4326;POINT({lng} {lat})')
         return GEOSGeometry(val)
     except Exception:
         raise
@@ -25,11 +25,11 @@ def clean_text(val):
 
 def clean_datetimes(val, offset):
     from datetime import datetime, timedelta, timezone
-    tz = timezone(timedelta(minutes=int(offset)))
+    tz = timezone(timedelta(minutes = int(offset)))
     if val:
         val = val.replace("+00:00", "")
         val = datetime.strptime(val, "%Y-%m-%d %H:%M:%S")
-        return val.replace(tzinfo=tz, microsecond=0)
+        return val.replace(tzinfo = tz, microsecond = 0)
     return val
 
 

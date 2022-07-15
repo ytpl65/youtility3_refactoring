@@ -53,7 +53,7 @@ Shift List
 		////datatable initialization
         table = $(table_id).DataTable({
 			ajax: {
-                url    : '{{ url("onboarding:shift") }}?action=list',
+                url    : '{{ url("onboarding:shift") }}?action = list',
             },
 			serverSide : true,
 			processing : true,
@@ -90,7 +90,7 @@ Shift List
 					action: function(e, dt, node, config){
                         const params = {
                             'modal_id'  : modal_id,
-                            'url'       : `${urlname}?action=form`,
+                            'url'       : `${urlname}?action = form`,
                             'beforeSend': ShiftBeforeSend }
 						fire_ajax_get(params)
 						.done((data, status, xhr) => {
@@ -128,7 +128,7 @@ Shift List
 				$(modal_id).modal("hide");
 				table.row.add(data.row).draw()
 				var isupdated = formtype === 'update' ? true : false
-				show_successful_save_alert(update=isupdated)
+				show_successful_save_alert(update = isupdated)
 			})
 		})
 
@@ -161,7 +161,7 @@ Shift List
 	//delete ajax request 
 	function isShiftDeleted(id){ 
 		console.log("id ", id)
-		const params = {url:`${urlname}?action=delete&id=${id}`, 'beforeSend':function () {}}
+		const params = {url:`${urlname}?action = delete&id=${id}`, 'beforeSend':function () {}}
 		fire_ajax_get(params)
 		.done((data, status, xhr) => {
 			if(!xhr.status === 200){

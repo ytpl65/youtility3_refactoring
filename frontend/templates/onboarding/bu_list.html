@@ -10,7 +10,7 @@ Buisiness Units
 <!----------- BEGIN PAGE BREADCUMBS ----------->
 {% block pagebreadcumb %}
 {{ super() }}
-<li class="breadcrumb-item pe-3"><a href="{{ url('onboarding:bu_list') }}?template=true" class="pe-3">Bu List</a></li>
+<li class="breadcrumb-item pe-3"><a href="{{ url('onboarding:bu_list') }}?template = true" class="pe-3">Bu List</a></li>
 {% endblock pagebreadcumb %}
 <!----------- END PAGE BREADCUMBS ------------->
 
@@ -42,7 +42,7 @@ Buisiness Units
 		//BEGIN DATATABLE INITIALIZATION
 		var table = $('#bt_table').DataTable({
 			ajax:{
-				url: '{{ url("onboarding:bu_list") }}?action=list',
+				url: '{{ url("onboarding:bu_list") }}?action = list',
 			},
 			deferRender: true,
 			responsive : true,

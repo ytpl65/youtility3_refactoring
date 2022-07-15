@@ -302,13 +302,13 @@ People
                 <!------------Checkboxes Rendering Last --------------------->
                 <div class="booleans col-md-6 d-flex justify-content-sm-between mt-5">
                     <!--ENABLE CHECKBOX -->
-                    <label for=id_isenable class="form-check-label bool col-form-label me-5 text-sm-right">Enable
+                    <label for = id_isenable class="form-check-label bool col-form-label me-5 text-sm-right">Enable
                         &nbsp {{ peopleform.enable }}</label>
                      <!--BLACKLIST CHECKBOX -->
-                    <label for=id_blacklist class="form-check-label bool col-form-label me-5 text-sm-right">Blacklist
+                    <label for = id_blacklist class="form-check-label bool col-form-label me-5 text-sm-right">Blacklist
                         &nbsp{{ pref_form.blacklist }}</label>
                      <!--ISADMIN CHECKBOX -->
-                    <label for=id_isadmin id="label_isadmin" class="form-check-label bool col-form-label me-5 text-sm-right" style="display:none">Is Admin
+                    <label for = id_isadmin id="label_isadmin" class="form-check-label bool col-form-label me-5 text-sm-right" style="display:none">Is Admin
                         &nbsp{{ peopleform.isadmin }}</label>
                     {% if peopleform.instance.id %}
                     <button type="button" id="change_pass" class="btn btn-sm  btn-primary rounded-1" data-bs-target='#paswd_change_alert'
@@ -543,10 +543,10 @@ People
                 </div>
                 <div class="booleans col-md-6 d-flex justify-content-sm-between mt-5">
 
-                    <label for=id_showalltemplates
+                    <label for = id_showalltemplates
                         class="form-check-label bool col-form-label me-5 text-sm-right">{{ pref_form.showalltemplates }}
                         &nbspShow all Templates </label>
-                    <label for=id_showtemplatebasedonfilter
+                    <label for = id_showtemplatebasedonfilter
                         class="form-check-label bool col-form-label me-5 text-sm-right">{{ pref_form.showtemplatebasedonfilter }}
                         &nbspDisplay site wise templates</label>
 
@@ -685,13 +685,13 @@ People
         })
         
         //for select2 search work in bootstrap modals
-        $("#department_popup").find("select[name=tatype]").select2({
+        $("#department_popup").find("select[name = tatype]").select2({
             dropdownParent: $('#department_popup')
         })
-        $("#designation_popup").find("select[name=tatype]").select2({
+        $("#designation_popup").find("select[name = tatype]").select2({
             dropdownParent: $('#designation_popup')
         })
-        $("#peopletype_popup").find("select[name=tatype]").select2({
+        $("#peopletype_popup").find("select[name = tatype]").select2({
             dropdownParent: $('#peopletype_popup')
         })
         //hide change_pass feature for session wizard

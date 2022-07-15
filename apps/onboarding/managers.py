@@ -18,9 +18,9 @@ class BtManager(models.Manager):
             ):
                 if (
                     qset := pm.Pgbelonging.objects.filter(
-                        Q(group_id__in=assigned_sites)
+                        Q(group_id__in = assigned_sites)
                     )
-                    .values_list('assignsites', flat=True)
+                    .values_list('assignsites', flat = True)
                     .distinct()
                 ):
                     return ', '.join(list(qset))
@@ -88,10 +88,10 @@ class BtManager(models.Manager):
 
 
 
-    def get_bus_idfs(self, R, idf=None):
+    def get_bus_idfs(self, R, idf = None):
         # qobjs, dir,  fields, length, start = utils.get_qobjs_dir_fields_start_length(R)
-        # qset=self.filter(
-        #     ~Q(bucode__in=('NONE', 'SPS', 'YTPL')), identifier__tacode = idf, enable=True).select_related(
+        # qset = self.filter(
+        #     ~Q(bucode__in=('NONE', 'SPS', 'YTPL')), identifier__tacode = idf, enable = True).select_related(
         #         'parent', 'identifier').annotate(buid = F('id')).values(*fields).order_by(dir)
         # idfs = self.filter(
         #     ~Q(identifier__tacode = 'NONE'), ~Q(bucode__in=('NONE', 'SPS', 'YTPL'))).order_by(
@@ -107,8 +107,8 @@ class BtManager(models.Manager):
         # qset = qset[start:start+length]
         # return total, total, qset, idfs
         fields = R.getlist('fields[]')
-        qset=self.filter(
-             ~Q(bucode__in=('NONE', 'SPS', 'YTPL')), identifier__tacode = idf, enable=True).select_related(
+        qset = self.filter(
+             ~Q(bucode__in=('NONE', 'SPS', 'YTPL')), identifier__tacode = idf, enable = True).select_related(
                  'parent', 'identifier').annotate(buid = F('id')).values(*fields)
         idfs = self.filter(
              ~Q(identifier__tacode = 'NONE'), ~Q(bucode__in=('NONE', 'SPS', 'YTPL'))).order_by(
@@ -141,7 +141,7 @@ class TypeAssistManager(models.Manager):
             mdtz = datetime.strptime(mdtz, "%Y-%m-%d %H:%M:%S")
 
         qset = self.select_related(*self.related).filter(
-            ~Q(id=1) & Q(mdtz__gte = mdtz) & Q(client_id__in = [clientid])
+            ~Q(id = 1) & Q(mdtz__gte = mdtz) & Q(client_id__in = [clientid])
         ).values(*self.fields)
         return qset or None
 
@@ -155,25 +155,25 @@ class GeofenceManager(models.Manager):
 
     def get_geofence_list(self, fields, related, session):
         qset = self.select_related(*related).filter(
-            ~Q(gfcode='NONE'), enable=True, client_id=session['client_id'],
+            ~Q(gfcode='NONE'), enable = True, client_id = session['client_id'],
         ).values(*fields)
         return qset or self.none()
 
     def get_geofence_json(self, pk):
         from django.contrib.gis.db.models.functions import AsGeoJSON
         obj = self.annotate(geofencejson = AsGeoJSON('geofence')).get(id = pk).geofencejson
-        obj = utils.getformatedjson(jsondata = obj, rettype=str)
+        obj = utils.getformatedjson(jsondata = obj, rettype = str)
         return obj or self.none()
 
     def get_gfs_for_siteids(self, siteids):
         from django.contrib.gis.db.models.functions import AsGeoJSON
         import json
-        if qset := self.annotate(geofencecoords=AsGeoJSON('geofence')).select_related(*self.related).filter(bu_id__in=siteids).values(*self.fields):
+        if qset := self.annotate(geofencecoords = AsGeoJSON('geofence')).select_related(*self.related).filter(bu_id__in = siteids).values(*self.fields):
             geofencestring = ""
             for obj in qset:
                 geodict = json.loads(obj['geofencecoords'])
                 for lng, lat in  geodict['coordinates'][0]:
-                    geofencestring+=f'{lat},{lng}|'
+                    geofencestring += f'{lat},{lng}|'
                 obj['geofencecoords'] = geofencestring
             return qset
         return self.none()

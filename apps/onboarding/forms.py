@@ -96,7 +96,7 @@ class BtForm(forms.ModelForm):
         'invalid_bucode3' : "[Invalid code] Code should not endwith '.' ",
         'invalid_latlng'  : "Please enter a correct gps coordinates."
     }
-    parent = forms.ModelChoiceField(label='Belongs to', required=False, widget=s2forms.Select2Widget, queryset=obm.Bt.objects.all())
+    parent = forms.ModelChoiceField(label='Belongs to', required = False, widget = s2forms.Select2Widget, queryset = obm.Bt.objects.all())
     class Meta:
         model  = obm.Bt
         fields = ['bucode', 'buname', 'parent', 'butype', 'gpslocation', 'identifier',
@@ -195,7 +195,7 @@ class ShiftForm(forms.ModelForm):
         'max_hrs_exceed': "Maximum hours in a shift cannot be greater than 12hrs",
         "min_hrs_required": "Minimum hours of a shift should be atleast 5hrs"
     }
-    shiftduration = forms.CharField(widget=forms.TextInput(attrs={'readonly':True}), required=False)
+    shiftduration = forms.CharField(widget = forms.TextInput(attrs={'readonly':True}), required = False)
 
     class Meta:
         model = obm.Shift
@@ -254,7 +254,7 @@ class SitePeopleForm(forms.ModelForm):
         'invalid_code3': "[Invalid code] Code should not endwith '.' ",
     }
     class Meta:
-        model=obm.SitePeople
+        model = obm.SitePeople
         fields = ['contract', 'people', 'worktype', 'shift',
                  'reportto', 'webcapability', 'mobilecapability',
                 'reportcapability', 'fromdt', 'uptodt', 'siteowner',
@@ -270,7 +270,7 @@ class SitePeopleForm(forms.ModelForm):
 
 class ContractForm(forms.ModelForm):
     class Meta:
-        model=obm.Contract
+        model = obm.Contract
         fields = []
 
 
@@ -283,7 +283,7 @@ class ContractForm(forms.ModelForm):
 
 class ContractDetailForm(forms.ModelForm):
     class Meta:
-        model=obm.ContractDetail
+        model = obm.ContractDetail
         fields = []
 
     def __init__(self, *args, **kwargs):
@@ -321,22 +321,22 @@ class GeoFenceForm(forms.ModelForm):
 class BuPrefForm(forms.Form):
     required_css_class = "required"
 
-    mobilecapability        = forms.MultipleChoiceField(required=False, label="Mobile Capability", widget=s2forms.Select2MultipleWidget)
-    webcapability           = forms.MultipleChoiceField(required=False, label="Web Capability", widget=s2forms.Select2MultipleWidget)
-    reportcapability        = forms.MultipleChoiceField(required=False, label="Report Capability", widget=s2forms.Select2MultipleWidget)
-    portletcapability       = forms.MultipleChoiceField(required=False, label="Portlet Capability", widget=s2forms.Select2MultipleWidget)
-    validimei                = forms.CharField(max_length=15, required=False,label="IMEI No.")
-    validip                  = forms.CharField(max_length=15, required=False, label="IP Address")
-    usereliver               = forms.BooleanField(initial=False, required=False, label="Reliver needed?")
-    malestrength             = forms.IntegerField(initial=0, label="Male Strength")
-    femalestrength           = forms.IntegerField(initial=0, label="Female Strength")
-    reliveronpeoplecount     = forms.IntegerField(initial=0, label="Reliver On People Count")
+    mobilecapability        = forms.MultipleChoiceField(required = False, label="Mobile Capability", widget = s2forms.Select2MultipleWidget)
+    webcapability           = forms.MultipleChoiceField(required = False, label="Web Capability", widget = s2forms.Select2MultipleWidget)
+    reportcapability        = forms.MultipleChoiceField(required = False, label="Report Capability", widget = s2forms.Select2MultipleWidget)
+    portletcapability       = forms.MultipleChoiceField(required = False, label="Portlet Capability", widget = s2forms.Select2MultipleWidget)
+    validimei                = forms.CharField(max_length = 15, required = False,label="IMEI No.")
+    validip                  = forms.CharField(max_length = 15, required = False, label="IP Address")
+    usereliver               = forms.BooleanField(initial = False, required = False, label="Reliver needed?")
+    malestrength             = forms.IntegerField(initial = 0, label="Male Strength")
+    femalestrength           = forms.IntegerField(initial = 0, label="Female Strength")
+    reliveronpeoplecount     = forms.IntegerField(initial = 0, label="Reliver On People Count")
     pvideolength             = forms.IntegerField(initial="10", label='Panic Video Length (sec)')
-    guardstrenth             = forms.IntegerField(initial=0)
-    siteclosetime            = forms.TimeField(label="Site Close Time", required=False)
-    tag                      = forms.CharField(max_length=200, required=False)
-    siteopentime             = forms.TimeField(required=False, label="Site Open Time")
-    nearby_emergencycontacts = forms.CharField(max_length=500, required=False)
+    guardstrenth             = forms.IntegerField(initial = 0)
+    siteclosetime            = forms.TimeField(label="Site Close Time", required = False)
+    tag                      = forms.CharField(max_length = 200, required = False)
+    siteopentime             = forms.TimeField(required = False, label="Site Open Time")
+    nearby_emergencycontacts = forms.CharField(max_length = 500, required = False)
 
 
 
@@ -367,10 +367,10 @@ class ClentForm(BuPrefForm):
         super().__init__(*args, **kwargs)
         utils.initailize_form_fields(self)
         from apps.peoples.utils import get_caps_choices
-        self.fields['webcapability'].choices = get_caps_choices(cfor=pm.Capability.Cfor.WEB)
-        self.fields['mobilecapability'].choices = get_caps_choices(cfor=pm.Capability.Cfor.MOB)
-        self.fields['reportcapability'].choices = get_caps_choices(cfor=pm.Capability.Cfor.REPORT)
-        self.fields['portletcapability'].choices = get_caps_choices(cfor=pm.Capability.Cfor.PORTLET)
+        self.fields['webcapability'].choices = get_caps_choices(cfor = pm.Capability.Cfor.WEB)
+        self.fields['mobilecapability'].choices = get_caps_choices(cfor = pm.Capability.Cfor.MOB)
+        self.fields['reportcapability'].choices = get_caps_choices(cfor = pm.Capability.Cfor.REPORT)
+        self.fields['portletcapability'].choices = get_caps_choices(cfor = pm.Capability.Cfor.PORTLET)
 
 
 
@@ -396,8 +396,8 @@ class ImportForm(forms.Form):
     ]
 
 
-    importfile = forms.FileField(required=True, label='Import File', max_length=50, allow_empty_file=False)
-    table = forms.ChoiceField(required=True, choices=TABLECHOICES, label='Select Type of Data', initial='TYPEASSISTS')
+    importfile = forms.FileField(required = True, label='Import File', max_length = 50, allow_empty_file = False)
+    table = forms.ChoiceField(required = True, choices = TABLECHOICES, label='Select Type of Data', initial='TYPEASSISTS')
 
     def __init__(self, *args, **kwargs):
         """Initializes form"""

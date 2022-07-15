@@ -38,7 +38,7 @@ Schedhuled Tasks
         //datatable initialization
         table = $("#schd_task_table").DataTable({
             ajax:{
-                url: "{{ url('schedhuler:jobschdtasks') }}?action=list"
+                url: "{{ url('schedhuler:jobschdtasks') }}?action = list"
             },
 			responsive: true,
             deferRender: true,
@@ -81,7 +81,7 @@ Schedhuled Tasks
 					className: "btn btn-sm btn-light-primary btn-hover-rise",
 					//action for add_new_button 
 					action: function(e, dt, node, config){
-        				window.location.href = "{{ url('schedhuler:jobschdtasks') }}?action=form";
+        				window.location.href = "{{ url('schedhuler:jobschdtasks') }}?action = form";
 					}
 				}
 			]

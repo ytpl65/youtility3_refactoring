@@ -14,10 +14,10 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='Tenant',
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('tenantname', models.CharField(max_length=50, verbose_name='tenantname')),
-                ('subdomain_prefix', models.CharField(max_length=50, unique=True, verbose_name='subdomain_prefix')),
-                ('created_at', models.DateTimeField(auto_now_add=True, verbose_name='created_at')),
+                ('id', models.BigAutoField(auto_created = True, primary_key = True, serialize = False, verbose_name='ID')),
+                ('tenantname', models.CharField(max_length = 50, verbose_name='tenantname')),
+                ('subdomain_prefix', models.CharField(max_length = 50, unique = True, verbose_name='subdomain_prefix')),
+                ('created_at', models.DateTimeField(auto_now_add = True, verbose_name='created_at')),
             ],
         ),
     ]

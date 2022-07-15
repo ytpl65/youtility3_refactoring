@@ -461,7 +461,7 @@ Schedhule Tour
     function deleteCheckpointRequest(checpointid, checklistid, job) {
         var deleted = false
         const params = {
-            'url': `{{ url('schedhuler:delete_checkpointTour') }}?checkpointid=${checpointid}&checklistid=${checklistid}&job=${job}&datasource=job`,
+            'url': `{{ url('schedhuler:delete_checkpointTour') }}?checkpointid=${checpointid}&checklistid=${checklistid}&job=${job}&datasource = job`,
             'beforeSend': function () {}
         }
         fire_ajax_get(params)
@@ -495,7 +495,7 @@ Schedhule Tour
     //delete ajax request 
 	function isMainJobDeleted(id){ 
 		console.log("id ", id)
-		const params = {url:`${urlname}?action=delete&id=${id}`}
+		const params = {url:`${urlname}?action = delete&id=${id}`}
 		fire_ajax_get(params)
 		.done((data, status, xhr) => {
 			if(!xhr.status === 200){

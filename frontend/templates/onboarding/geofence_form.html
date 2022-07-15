@@ -99,7 +99,7 @@ GeoFence
 {% block pagebreadcumb %}
 <!--will call parent contents -->
 {{ super() }}
-<li class="breadcrumb-item pe-3"><a href="{{ url('onboarding:geofence') }}?template=true" class="pe-3">GeoFence List</a></li>
+<li class="breadcrumb-item pe-3"><a href="{{ url('onboarding:geofence') }}?template = true" class="pe-3">GeoFence List</a></li>
 <li class="breadcrumb-item pe-3"><a href="javascript:void(0)" class="pe-3">GeoFence Form</a></li>
 {% endblock pagebreadcumb %}
 <!-------------------------- END PAGE BREADCUMB ------------------------->
@@ -279,7 +279,7 @@ GeoFence
 {% block extra_scripts %}
 {{ geofenceform.media.js }}
 <script
-      src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDVbA53nxHKUOHdyIqnVPD01aOlTitfVO0&callback=initAutocomplete&libraries=places&v=weekly"
+      src="https://maps.googleapis.com/maps/api/js?key = AIzaSyDVbA53nxHKUOHdyIqnVPD01aOlTitfVO0&callback = initAutocomplete&libraries = places&v = weekly"
       defer
     ></script>
 <script>
@@ -311,7 +311,7 @@ function createGeoFence(){
     var latlng = `${latitude},${longitude}`
 
     data = {lat:latitude, lng:longitude, radii:radius, action: 'drawgeofence'}
-    const params = {data:data, beforeSend:function(){}, url: "{{ url('onboarding:geofence') }}?action=drawgeofence"}
+    const params = {data:data, beforeSend:function(){}, url: "{{ url('onboarding:geofence') }}?action = drawgeofence"}
     
     if(typeof latlng!= 'undefined' && lastPoint === latlng && lastRadius === radius){
       showToastMsg("Geofence is already created for this radius..", 'error')
@@ -321,7 +321,7 @@ function createGeoFence(){
       fire_ajax_get(params)
       .fail((xhr, status, error) => {
         showToastMsg(xhr.responseJSON.errors, 'error')
-        lastRadius=null
+        lastRadius = null
       })
       .done((data, status, xhr) => {
         drawGeofenceOnMap(data)
@@ -350,7 +350,7 @@ function placeMarker(location) {
 }
 
 
-function drawGeofenceOnMap(data, dynamicZoom=false){
+function drawGeofenceOnMap(data, dynamicZoom = false){
   // Construct the polygon.
   console.log(data)
   if(GEOFENCE){
@@ -377,7 +377,7 @@ function drawGeofenceOnMap(data, dynamicZoom=false){
 
 function clearGeoFence(){
   if(GEOFENCE){
-    lastRadius=null
+    lastRadius = null
     GEOFENCE.setMap(null)
   }
 }
@@ -398,7 +398,7 @@ function getGeofenceData(GEOFENCE){
 }
 
 function createNewGeoFence(){
- location.href = '{{ url("onboarding:geofence") }}?action=form'
+ location.href = '{{ url("onboarding:geofence") }}?action = form'
 }
 
 
@@ -634,7 +634,7 @@ $(document).ready(() => {
         var latlng = `${latitude},${longitude}`
 
         data = {lat:latitude, lng:longitude, radii:radius, action: 'drawgeofence'}
-        const params = {data:data, beforeSend:function(){}, url: "{{ url('onboarding:geofence') }}?action=drawgeofence"}
+        const params = {data:data, beforeSend:function(){}, url: "{{ url('onboarding:geofence') }}?action = drawgeofence"}
         
         if(typeof latlng!= 'undefined' && lastPoint === latlng && lastRadius === radius){
           showToastMsg("Geofence is already created for this radius..", 'error')
@@ -644,7 +644,7 @@ $(document).ready(() => {
           fire_ajax_get(params)
           .fail((xhr, status, error) => {
             showToastMsg(xhr.responseJSON.errors, 'error')
-            lastRadius=null
+            lastRadius = null
           })
           .done((data, status, xhr) => {
             drawGeofenceOnMap(data)
@@ -685,7 +685,7 @@ $(document).ready(() => {
           fire_ajax_form_post(params, payLoad)
           .done((data, status, xhr) => {
             console.log(isupdate)
-            show_successful_save_alert(update=false)
+            show_successful_save_alert(update = false)
             location.href = `{{ url("onboarding:geofence") }}?id=${data['pk']}`
           })
         })

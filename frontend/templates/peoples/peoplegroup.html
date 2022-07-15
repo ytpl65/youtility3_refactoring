@@ -79,7 +79,7 @@ People Group Lists
 		//datatable initialization
         table = $(table_id).DataTable({
 			ajax:{
-				url:`${urlname}?action=list`
+				url:`${urlname}?action = list`
 			},
 			deferRender: true,
 			responsive : true,
@@ -103,7 +103,7 @@ People Group Lists
 					action: function(e, dt, node, config){
 						const params = {
 							'modal_id'    : modal_id,
-							'url'         : `${urlname}?action=form`,
+							'url'         : `${urlname}?action = form`,
 							'beforeSend'  : BeforeSend }
 						fire_ajax_get(params)
 						.done((data, status, xhr) => {
@@ -175,7 +175,7 @@ People Group Lists
 	//delete ajax request 
 	function isPgroupDeleted(id){ 
 		console.log("id ", id)
-		const params = {url:`${urlname}?action=delete&id=${id}`, beforeSend:function(){}}
+		const params = {url:`${urlname}?action = delete&id=${id}`, beforeSend:function(){}}
 		fire_ajax_get(params)
 		.done((data, status, xhr) => {
 			if(!xhr.status === 200){

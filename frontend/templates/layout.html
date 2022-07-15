@@ -6,9 +6,9 @@
 <div class="d-flex justify-content-end cell-border my-2">
   <ul class="pagination">
     {% if list.has_previous() %}
-    <li class="page-item"><a class="page-link" href="?page=1&action=list">&laquo; First</a>
+    <li class="page-item"><a class="page-link" href="?page = 1&action = list">&laquo; First</a>
     </li>
-    <li class="page-item"><a class="page-link" href="?page={{ list.previous_page_number() }}&action=list">&laquo; Prev</a>
+    <li class="page-item"><a class="page-link" href="?page={{ list.previous_page_number() }}&action = list">&laquo; Prev</a>
     </li>
     {% else %}
       <li class="page-item disabled"><span class="page-link">&laquo; Prev</span></li>
@@ -18,13 +18,13 @@
       {% if list.number == i %}
         <li class="active page-item" aria-current="page"><a href="#" class="page-link">{{ i }} </a></li>
       {% else %}
-        <li class="page-item"><a class="page-link" href="?page={{ i }}&action=list">{{ i }}</a></li>
+        <li class="page-item"><a class="page-link" href="?page={{ i }}&action = list">{{ i }}</a></li>
       {% endif %}
     {% endfor %}
 
     {% if list.has_next() %}
-    <li class="page-item"><a class="page-link" href="?page={{ list.next_page_number() }}&action=list">&raquo; Next</a></li>
-    <li class="page-item"><a class="page-link" href="?page={{ list.paginator.num_pages }}&action=list">&raquo; Last</a></li>
+    <li class="page-item"><a class="page-link" href="?page={{ list.next_page_number() }}&action = list">&raquo; Next</a></li>
+    <li class="page-item"><a class="page-link" href="?page={{ list.paginator.num_pages }}&action = list">&raquo; Last</a></li>
     {% else %}
     <li class="disabled page-item"><span class="page-link">&raquo; Next</span></li>
     {% endif %}
@@ -78,7 +78,7 @@
 {% macro form_addnew(url_path) %}
 <div class="d-flex align-items-center py-1">
   <div id="form_actions">
-    <a href="{{ url(url_path) }}?action=form" class="btn btn-sm rounded-1" style="background-color:#189D54; color:white;">Add New
+    <a href="{{ url(url_path) }}?action = form" class="btn btn-sm rounded-1" style="background-color:#189D54; color:white;">Add New
       <span class="svg-icon svg-icon-2">
        <i class="fas fa-plus text-white"></i></a>
   </div>
@@ -112,17 +112,17 @@
 <!------------------------------------------------ END MACROS ------------------------------------------------------->
 
 
-{# =========HEAD START=========== #}
+{# ======= ==  HEAD START=========== #}
 {% block extra_css %}
 
 {% endblock extra_css %}
-{# =========HEAD END=========== #}
+{# ======= ==  HEAD END=========== #}
 
-{# =====BODY START====== #}
+{# === ==  BODY START====== #}
 {% block body %}
 
-{# =====BEGIN MAIN===== #}
-{# =====BEGIN ROOT===== #}
+{# === ==  BEGIN MAIN===== #}
+{# === ==  BEGIN ROOT===== #}
 <div class="d-flex flex-column flex-root">
   {# BEGIN PAGE #}
   <div class="page d-flex flex-row flex-column-fluid">
@@ -345,7 +345,7 @@
 
 <!-- end demo js-->
 {% endblock body %}
-{# ======BODY END======= #}
+{# ==== ==  BODY END======= #}
 
 
 {% block extra_scripts %}

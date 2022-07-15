@@ -30,7 +30,7 @@ $(document).ready(function () {
 
     $("#siteReportList").DataTable({
         ajax:{
-            url: "{{ url('reports:config_sitereport_template') }}?action=list",
+            url: "{{ url('reports:config_sitereport_template') }}?action = list",
         },
         responsive: true,
         deferRender: true,
@@ -56,7 +56,7 @@ $(document).ready(function () {
                 action: function(e, dt, node, config){
                     //This will send the page to the location specified
                     console.log("hitted success")
-                    window.location.href = "{{ url('reports:config_sitereport_template') }}?action=form";
+                    window.location.href = "{{ url('reports:config_sitereport_template') }}?action = form";
                 }
             }
         ]

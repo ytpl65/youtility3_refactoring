@@ -38,8 +38,8 @@ class CreateBt(LoginRequiredMixin, View):
         """Returns Bt form on html"""
         logger.info('create bt view...')
         cxt = {'buform': self.form_class(),
-               'ta_form': obforms.TypeAssistForm(auto_id=False)}
-        return render(request, self.template_path, context=cxt)
+               'ta_form': obforms.TypeAssistForm(auto_id = False)}
+        return render(request, self.template_path, context = cxt)
 
     def post(self, request, *args, **kwargs):
         """Handles creation of Bt instance."""
@@ -48,7 +48,7 @@ class CreateBt(LoginRequiredMixin, View):
         try:
             if form.is_valid():
                 logger.info('BtForm Form is valid')
-                bt = form.save(commit=False)
+                bt = form.save(commit = False)
                 bt.save()
                 save_userinfo(bt, request.user, request.session)
                 logger.info('BtForm Form saved')
@@ -58,16 +58,16 @@ class CreateBt(LoginRequiredMixin, View):
             else:
                 logger.info('BtForm Form is not valid')
                 cxt = {'buform': form, 'edit': True,
-                       'ta_form': obforms.TypeAssistForm(auto_id=False)}
-                response = render(request, self.template_path, context=cxt)
+                       'ta_form': obforms.TypeAssistForm(auto_id = False)}
+                response = render(request, self.template_path, context = cxt)
         except Exception:
             logger.critical(
-                "something went wrong please follow the traceback to fix it... ", exc_info=True)
+                "something went wrong please follow the traceback to fix it... ", exc_info = True)
             messages.error(request, "[ERROR] Something went wrong",
                            "alert alert-danger")
             cxt = {'buform': form, 'edit': True,
-                   'ta_form': obforms.TypeAssistForm(auto_id=False)}
-            response = render(request, self.template_path, context=cxt)
+                   'ta_form': obforms.TypeAssistForm(auto_id = False)}
+            response = render(request, self.template_path, context = cxt)
         return response
 
 
@@ -104,7 +104,7 @@ class RetrieveBt(LoginRequiredMixin, View):
                         'alert alert-danger')
         except Exception:
             logger.critical(
-                'something went wrong please follow the traceback to fix it... ', exc_info=True)
+                'something went wrong please follow the traceback to fix it... ', exc_info = True)
             messages.error(request, 'Something went wrong',
                         "alert alert-danger")
             response = redirect('/dashboard')
@@ -115,7 +115,7 @@ class RetrieveBt(LoginRequiredMixin, View):
         logger.info('Pagination Start'if objects else "")
         from .filters import BtFilter
         if request.GET:
-            objects = BtFilter(request.GET, queryset=objects).qs
+            objects = BtFilter(request.GET, queryset = objects).qs
         filterform = BtFilter().form
         page = request.GET.get('page', 1)
         paginator = Paginator(objects, 25)
@@ -139,16 +139,16 @@ class UpdateBt(LoginRequiredMixin, View):
         try:
             logger.info('Update Bt view')
             pk = kwargs.get('pk')
-            bt = self.model.objects.get(id=pk)
+            bt = self.model.objects.get(id = pk)
             logger.info(f'object retrieved {bt}')
-            form = self.form_class(instance=bt)
+            form = self.form_class(instance = bt)
             cxt = {'buform': form, 'edit': True,
-                   'ta_form': obforms.TypeAssistForm(auto_id=False)}
-            response = render(request, self.template_path, context=cxt)
+                   'ta_form': obforms.TypeAssistForm(auto_id = False)}
+            response = render(request, self.template_path, context = cxt)
         except self.model.DoesNotExist:
             response = redirect('onboarding:bu_form')
         except Exception:
-            logger.critical('something went wrong', exc_info=True)
+            logger.critical('something went wrong', exc_info = True)
             messages.error(request, 'Something went wrong',
                            'alert-danger')
             response = redirect('onboarding:bu_form')
@@ -159,12 +159,12 @@ class UpdateBt(LoginRequiredMixin, View):
         response = None
         try:
             pk = kwargs.get('pk')
-            bt = self.model.objects.get(id=pk)
-            form = self.form_class(request.POST, instance=bt)
+            bt = self.model.objects.get(id = pk)
+            form = self.form_class(request.POST, instance = bt)
             if form.is_valid():
                 logger.info('BtForm Form is valid')
                 bt = form.save()
-                bt = save_userinfo(bt, request.user, request.session, create=False)
+                bt = save_userinfo(bt, request.user, request.session, create = False)
                 logger.info('BtForm Form saved')
                 messages.success(request, "Success record saved successfully!",
                                  "alert-success")
@@ -174,20 +174,20 @@ class UpdateBt(LoginRequiredMixin, View):
                 response = render(request, self.template_path, context={
                                   'buform': form, 'edit': True})
         except self.model.DoesNotExist:
-            logger.error('Object does not exist', exc_info=True)
+            logger.error('Object does not exist', exc_info = True)
             messages.error(request, "Object does not exist",
                            "alert alert-danger")
             cxt = {'buform': form, 'edit': True,
-                   'ta_form': obforms.TypeAssistForm(auto_id=False)}
-            response = render(request, self.template_path, context=cxt)
+                   'ta_form': obforms.TypeAssistForm(auto_id = False)}
+            response = render(request, self.template_path, context = cxt)
         except Exception:
             logger.critical(
-                "something went wrong please follow the traceback to fix it... ", exc_info=True)
+                "something went wrong please follow the traceback to fix it... ", exc_info = True)
             messages.error(request, "[ERROR] Something went wrong",
                            "alert alert-danger")
             cxt = {'buform': form, 'edit': True,
-                   'ta_form': obforms.TypeAssistForm(auto_id=False)}
-            response = render(request, self.template_path, context=cxt)
+                   'ta_form': obforms.TypeAssistForm(auto_id = False)}
+            response = render(request, self.template_path, context = cxt)
         return response
 
 
@@ -202,8 +202,8 @@ class DeleteBt(LoginRequiredMixin, View):
         pk, response = kwargs.get('pk', None), None
         try:
             if pk:
-                bt = self.model.objects.get(id=pk)
-                form = self.form_class(instance=bt)
+                bt = self.model.objects.get(id = pk)
+                form = self.form_class(instance = bt)
                 bt.delete()
                 logger.info('Bt object deleted')
                 messages.info(request, 'Record deleted successfully',
@@ -219,14 +219,14 @@ class DeleteBt(LoginRequiredMixin, View):
             messages.error(
                 request, 'Unable to delete, due to dependencies', "alert alert-danger")
             cxt = {'buform': form, 'edit': True,
-                   'ta_form': obforms.TypeAssistForm(auto_id=False)}
-            response = render(request, self.template_path, context=cxt)
+                   'ta_form': obforms.TypeAssistForm(auto_id = False)}
+            response = render(request, self.template_path, context = cxt)
         except Exception:
             messages.error(
                 request, '[ERROR] Something went wrong', "alert alert-danger")
             cxt = {'buform': form, 'edit': True,
-                   'ta_form': obforms.TypeAssistForm(auto_id=False)}
-            response = render(request, self.template_path, context=cxt)
+                   'ta_form': obforms.TypeAssistForm(auto_id = False)}
+            response = render(request, self.template_path, context = cxt)
         return response
 
 #-------------------- END Bt View Classes --------------------#
@@ -241,7 +241,7 @@ class CreateShift(LoginRequiredMixin, View):
         """Returns shift form on html"""
         logger.info('create shift view...')
         cxt = {'shift_form': self.form_class()}
-        return render(request, self.template_path, context=cxt)
+        return render(request, self.template_path, context = cxt)
 
     def post(self, request, *args, **kwargs):
         """Handles creation of shift instance."""
@@ -261,14 +261,14 @@ class CreateShift(LoginRequiredMixin, View):
             else:
                 logger.info('Form is not valid')
                 cxt = {'shift_form': form, 'edit': True}
-                response = render(request, self.template_path, context=cxt)
+                response = render(request, self.template_path, context = cxt)
         except Exception:
             logger.critical(
-                "something went wrong please follow the traceback to fix it... ", exc_info=True)
+                "something went wrong please follow the traceback to fix it... ", exc_info = True)
             messages.error(request, "[ERROR] Something went wrong",
                            "alert alert-danger")
             cxt = {'shift_form': form, 'edit': True}
-            response = render(request, self.template_path, context=cxt)
+            response = render(request, self.template_path, context = cxt)
         return response
 
 
@@ -292,14 +292,14 @@ class RetrieveShift(LoginRequiredMixin, View):
 
             cxt = self.paginate_results(request, objects)
             logger.info('Results paginated'if objects else "")
-            response = render(request, self.template_path, context=cxt)
+            response = render(request, self.template_path, context = cxt)
         except EmptyResultSet:
-            response = render(request, self.template_path, context=cxt)
+            response = render(request, self.template_path, context = cxt)
             messages.error(request, 'List view not found',
                            'alert alert-danger')
         except Exception:
             logger.critical(
-                'something went wrong please follow the traceback to fix it... ', exc_info=True)
+                'something went wrong please follow the traceback to fix it... ', exc_info = True)
             messages.error(request, 'Something went wrong',
                            "alert alert-danger")
             response = redirect('/dashboard')
@@ -310,7 +310,7 @@ class RetrieveShift(LoginRequiredMixin, View):
         logger.info('Pagination Start'if objects else "")
         from .filters import ShiftFlter
         if request.GET:
-            objects = ShiftFlter(request.GET, queryset=objects).qs
+            objects = ShiftFlter(request.GET, queryset = objects).qs
         filterform = ShiftFlter().form
         page = request.GET.get('page', 1)
         paginator = Paginator(objects, 25)
@@ -333,9 +333,9 @@ class UpdateShift(LoginRequiredMixin, View):
         try:
             logger.info('Update shift view')
             pk = kwargs.get('pk')
-            shift = self.model.objects.select_related().get(id=pk)
+            shift = self.model.objects.select_related().get(id = pk)
             logger.info(f'object retrieved {shift}')
-            form = self.form_class(instance=shift)
+            form = self.form_class(instance = shift)
             response = render(request, self.template_path,  context={
                               'shift_form': form, 'edit': True})
         except self.model.DoesNotExist:
@@ -343,7 +343,7 @@ class UpdateShift(LoginRequiredMixin, View):
                            'alert alert-danger')
             response = redirect('onboarding:shift_form')
         except Exception:
-            logger.critical('something went wrong', exc_info=True)
+            logger.critical('something went wrong', exc_info = True)
             messages.error(request, 'Something went wrong',
                            'alert alert-danger')
             response = redirect('onboarding:shift_form')
@@ -354,13 +354,13 @@ class UpdateShift(LoginRequiredMixin, View):
         response = None
         try:
             pk = kwargs.get('pk')
-            shift = self.model.objects.select_related().get(id=pk)
-            form = self.form_class(request.POST, instance=shift)
+            shift = self.model.objects.select_related().get(id = pk)
+            form = self.form_class(request.POST, instance = shift)
             if form.is_valid():
                 logger.info('ShiftForm form is valid..')
                 shift = form.save()
                 shift.bu_id = int(request.session['client_id'])
-                shift = save_userinfo(shift, request.user, request.session, create=False)
+                shift = save_userinfo(shift, request.user, request.session, create = False)
                 logger.info('ShiftForm Form saved')
                 messages.success(request, "Success record saved successfully!",
                                  "alert-success")
@@ -370,18 +370,18 @@ class UpdateShift(LoginRequiredMixin, View):
                 response = render(request, self.template_path,
                                   context={'shift_form': form, 'edit': True})
         except self.model.DoesNotExist:
-            logger.error('Object does not exist', exc_info=True)
+            logger.error('Object does not exist', exc_info = True)
             messages.error(request, "Object does not exist",
                            "alert alert-danger")
             cxt = {'shift_form': form, 'edit': True}
-            response = render(request, self.template_path, context=cxt)
+            response = render(request, self.template_path, context = cxt)
         except Exception:
             logger.critical(
-                "something went wrong please follow the traceback to fix it... ", exc_info=True)
+                "something went wrong please follow the traceback to fix it... ", exc_info = True)
             messages.error(request, "[ERROR] Something went wrong",
                            "alert alert-danger")
             cxt = {'shift_form': form, 'edit': True}
-            response = render(request, self.template_path, context=cxt)
+            response = render(request, self.template_path, context = cxt)
         return response
 
 
@@ -396,8 +396,8 @@ class DeleteShift(LoginRequiredMixin, View):
         ic(pk)
         try:
             if pk:
-                shift = self.model.objects.get(id=pk)
-                form = self.form_class(instance=shift)
+                shift = self.model.objects.get(id = pk)
+                form = self.form_class(instance = shift)
                 shift.delete()
                 logger.info('Shift object deleted')
                 response = redirect('onboarding:shift_form')
@@ -411,12 +411,12 @@ class DeleteShift(LoginRequiredMixin, View):
             messages.error(
                 request, 'Unable to delete, due to dependencies', "alert alert-danger")
             cxt = {'shift_form': form, 'edit': True}
-            response = render(request, self.template_path, context=cxt)
+            response = render(request, self.template_path, context = cxt)
         except Exception:
             messages.error(
                 request, '[ERROR] Something went wrong', "alert alert-danger")
             cxt = {'shift_form': form, 'edit': True}
-            response = render(request, self.template_path, context=cxt)
+            response = render(request, self.template_path, context = cxt)
         return response
 # #-------------------- END Shift View Classes --------------------#
 
@@ -431,7 +431,7 @@ class CreateSitePeople(LoginRequiredMixin, View):
         """Returns Bt form on html"""
         logger.info('Create SitePeople view')
         cxt = {'sitepeople_form': self.form_class()}
-        return render(request, self.template_path, context=cxt)
+        return render(request, self.template_path, context = cxt)
 
     def post(self, request, *args, **kwargs):
         """Handles creation of Bt instance."""
@@ -449,14 +449,14 @@ class CreateSitePeople(LoginRequiredMixin, View):
             else:
                 logger.info('SitePeopleForm is not valid')
                 cxt = {'sitepeople_form': form, 'edit': True}
-                response = render(request, self.template_path, context=cxt)
+                response = render(request, self.template_path, context = cxt)
         except Exception:
             logger.critical(
-                'something went wrong please follow the traceback to fix it... ', exc_info=True)
+                'something went wrong please follow the traceback to fix it... ', exc_info = True)
             messages.error(request, "[ERROR] Something went wrong",
                            "alert alert-danger")
             cxt = {'sitepeople_form': form, 'edit': True}
-            response = render(request, self.template_path, context=cxt)
+            response = render(request, self.template_path, context = cxt)
         return response
 
 
@@ -483,14 +483,14 @@ class RetrieveSitePeople(LoginRequiredMixin, View):
 
             cxt = self.paginate_results(request, objects)
             logger.info('Results paginated'if objects else "")
-            response = render(request, self.template_path, context=cxt)
+            response = render(request, self.template_path, context = cxt)
         except EmptyResultSet:
             response = redirect('/dashboard')
             messages.error(request, 'List view not found',
                            'alert alert-danger')
         except Exception:
             logger.critical(
-                'something went wrong please follow the traceback to fix it... ', exc_info=True)
+                'something went wrong please follow the traceback to fix it... ', exc_info = True)
             messages.error(request, 'Something went wrong',
                            "alert alert-danger")
             response = redirect('/dashboard')
@@ -501,7 +501,7 @@ class RetrieveSitePeople(LoginRequiredMixin, View):
         logger.info('Pagination Start'if objects else "")
         from .filters import BtFilter
         if request.GET:
-            objects = BtFilter(request.GET, queryset=objects).qs
+            objects = BtFilter(request.GET, queryset = objects).qs
         filterform = BtFilter().form
         page = request.GET.get('page', 1)
         paginator = Paginator(objects, 25)
@@ -525,15 +525,15 @@ class UpdateSitePeople(LoginRequiredMixin, View):
         response = None
         try:
             pk = kwargs.get('pk')
-            sp = self.model.objects.get(id=pk)
+            sp = self.model.objects.get(id = pk)
             logger.info(f'object retrieved {sp}')
-            form = self.form_class(instance=sp)
+            form = self.form_class(instance = sp)
             response = render(request, self.template_path, context={
                               'sitepeople_form': form, 'edit': True})
         except self.model.DoesNotExist:
             response = redirect('onboarding:sitepeople_form')
         except Exception:
-            logger.critical('something went wrong', exc_info=True)
+            logger.critical('something went wrong', exc_info = True)
             messages.error(request, 'Something went wrong',
                            'alert alert-danger')
             response = redirect('onboarding:sitepeople_form')
@@ -544,12 +544,12 @@ class UpdateSitePeople(LoginRequiredMixin, View):
         response = None
         try:
             pk = kwargs.get('pk')
-            sp = self.model.objects.get(id=pk)
-            form = self.form_class(request.POST, instance=sp)
+            sp = self.model.objects.get(id = pk)
+            form = self.form_class(request.POST, instance = sp)
             if form.is_valid():
                 logger.info('SitePeopleForm Form is valid')
                 sp = form.save()
-                sp = save_userinfo(sp, request.user, request.session, create=False)
+                sp = save_userinfo(sp, request.user, request.session, create = False)
                 logger.info('SitePeopleForm Form saved')
                 messages.success(
                     request, "Success record saved successfully!", "alert-success")
@@ -559,18 +559,18 @@ class UpdateSitePeople(LoginRequiredMixin, View):
                 response = render(request, self.template_path, context={
                                   'sitepeople_form': form, 'edit': True})
         except self.model.DoesNotExist:
-            logger.error('Object does not exist', exc_info=True)
+            logger.error('Object does not exist', exc_info = True)
             messages.error(request, "Object does not exist",
                            "alert alert-danger")
             cxt = {'sitepeople_form': form, 'edit': True}
-            response = render(request, self.template_path, context=cxt)
+            response = render(request, self.template_path, context = cxt)
         except Exception:
             logger.critical(
-                "something went wrong please follow the traceback to fix it... ", exc_info=True)
+                "something went wrong please follow the traceback to fix it... ", exc_info = True)
             messages.error(request, "[ERROR] Something went wrong",
                            "alert alert-danger")
             cxt = {'sitepeople_form': form, 'edit': True}
-            response = render(request, self.template_path, context=cxt)
+            response = render(request, self.template_path, context = cxt)
         return response
 
 
@@ -585,8 +585,8 @@ class DeleteSitePeople(LoginRequiredMixin, View):
         pk, response = kwargs.get('pk', None), None
         try:
             if pk:
-                sp = self.model.objects.get(id=pk)
-                form = self.form_class(instance=sp)
+                sp = self.model.objects.get(id = pk)
+                form = self.form_class(instance = sp)
                 sp.delete()
                 logger.info('SitePeople object deleted')
                 messages.info(request, 'Record deleted successfully',
@@ -602,12 +602,12 @@ class DeleteSitePeople(LoginRequiredMixin, View):
             messages.error(request, 'Unable to delete, due to dependencies',
                            "alert alert-danger")
             cxt = {'sitepeople_form': form, 'edit': True}
-            response = render(request, self.template_path, context=cxt)
+            response = render(request, self.template_path, context = cxt)
         except Exception:
             messages.error(
                 request, '[ERROR] Something went wrong', "alert alert-danger")
             cxt = {'sitepeople_form': form, 'edit': True}
-            response = render(request, self.template_path, context=cxt)
+            response = render(request, self.template_path, context = cxt)
         return response
 
 
@@ -625,11 +625,11 @@ class CreateClient(LoginRequiredMixin, View):
         """Returns Bt form on html"""
         logger.info('Create ClientBt view')
 
-        cxt = {'clientform': self.form_class(client=True),
+        cxt = {'clientform': self.form_class(client = True),
                'clientprefsform': self.json_form(),
-               'ta_form': obforms.TypeAssistForm(auto_id=False)
+               'ta_form': obforms.TypeAssistForm(auto_id = False)
                }
-        return render(request, self.template_path, context=cxt)
+        return render(request, self.template_path, context = cxt)
 
     def post(self, request, *args, **kwargs):
         from .utils import save_json_from_bu_prefsform, get_or_create_none_bv
@@ -642,7 +642,7 @@ class CreateClient(LoginRequiredMixin, View):
                 logger.info('ClientBt Form is valid')
                 from .utils import (create_tenant,
                                     create_default_admin_for_client)
-                bt = form.save(commit=False)
+                bt = form.save(commit = False)
                 bt.parent = get_or_create_none_bv()
                 if save_json_from_bu_prefsform(bt, jsonform):
                     create_tenant(bt.buname, bt.bucode)
@@ -657,16 +657,16 @@ class CreateClient(LoginRequiredMixin, View):
                 ic(form.errors, jsonform.errors)
                 logger.info('ClientBt Form is not valid')
                 cxt = {'clientform': form, 'clientprefsform': jsonform, 'edit': True,
-                       'ta_form': obforms.TypeAssistForm(auto_id=False)}
-                response = render(request, self.template_path, context=cxt)
+                       'ta_form': obforms.TypeAssistForm(auto_id = False)}
+                response = render(request, self.template_path, context = cxt)
         except Exception:
             logger.critical(
-                "something went wrong please follow the traceback to fix it... ", exc_info=True)
+                "something went wrong please follow the traceback to fix it... ", exc_info = True)
             messages.error(request, "[ERROR] Something went wrong",
                            "alert alert-danger")
             cxt = {'clientform': form, 'clientprefsform': jsonform, 'edit': True,
-                   'ta_form': obforms.TypeAssistForm(auto_id=False)}
-            response = render(request, self.template_path, context=cxt)
+                   'ta_form': obforms.TypeAssistForm(auto_id = False)}
+            response = render(request, self.template_path, context = cxt)
         return response
 
 
@@ -684,7 +684,7 @@ def get_caps(request):  # sourcery skip: extract-method
             child = Capability.objects.get_child_data(i, cfor)
             childs.extend({'capscode': j.capscode} for j in child)
         logger.info(f'childs = [] {childs}')
-        return JsonResponse(data=childs, safe=False)
+        return JsonResponse(data = childs, safe = False)
 
 
 class RetriveClients(LoginRequiredMixin, View):
@@ -707,14 +707,14 @@ class RetriveClients(LoginRequiredMixin, View):
 
             cxt = self.paginate_results(request, objects)
             logger.info('Results paginated'if objects else "")
-            response = render(request, self.template_path, context=cxt)
+            response = render(request, self.template_path, context = cxt)
         except EmptyResultSet:
             response = redirect('/dashboad')
             messages.error(request, 'List view not found',
                            'alert alert-danger')
         except Exception:
             logger.critical(
-                'something went wrong please follow the traceback to fix it... ', exc_info=True)
+                'something went wrong please follow the traceback to fix it... ', exc_info = True)
             messages.error(request, 'Something went wrong',
                            "alert alert-danger")
             response = redirect('/dashboard')
@@ -725,7 +725,7 @@ class RetriveClients(LoginRequiredMixin, View):
         logger.info('Pagination Start'if objects else "")
         from .filters import ClientFiler
         if request.GET:
-            objects = ClientFiler(request.GET, queryset=objects).qs
+            objects = ClientFiler(request.GET, queryset = objects).qs
         filterform = ClientFiler().form
         page = request.GET.get('page', 1)
         paginator = Paginator(objects, 25)
@@ -750,18 +750,18 @@ class UpdateClient(LoginRequiredMixin, View):
         try:
             from .utils import get_bt_prefform
             pk = kwargs.get('pk')
-            bt = self.model.objects.select_related('butype').get(id=pk)
+            bt = self.model.objects.select_related('butype').get(id = pk)
             logger.info(f'object retrieved {bt}')
-            form = self.form_class(instance=bt)
+            form = self.form_class(instance = bt)
             cxt = {'clientform': form, 'clientprefsform': get_bt_prefform(bt), 'edit': True,
-                   'ta_form': obforms.TypeAssistForm(auto_id=False)}
-            response = render(request, self.template_path, context=cxt)
+                   'ta_form': obforms.TypeAssistForm(auto_id = False)}
+            response = render(request, self.template_path, context = cxt)
         except self.model.DoesNotExist:
             messages.error(request, 'Unable to edit object not found',
                            'alert alert-danger')
             response = redirect('onboarding:client_form')
         except Exception:
-            logger.critical('something went wrong', exc_info=True)
+            logger.critical('something went wrong', exc_info = True)
             messages.error(request, 'Something went wrong',
                            'alert alert-danger')
             response = redirect('onboarding:client_form')
@@ -771,18 +771,18 @@ class UpdateClient(LoginRequiredMixin, View):
         logger.info('ClientForm Form submitted')
         from .utils import save_json_from_bu_prefsform, create_tenant
         pk, response = kwargs.get('pk'), None
-        client = self.model.objects.get(id=pk)
-        form = self.form_class(request.POST, instance=client)
+        client = self.model.objects.get(id = pk)
+        form = self.form_class(request.POST, instance = client)
         jsonform = self.json_form(request.POST)
         try:
             if form.is_valid() and jsonform.is_valid():
                 logger.info('ClientForm Form is valid')
                 create_tenant(form.data['buname'], form.data['bucode'])
-                client = form.save(commit=False)
+                client = form.save(commit = False)
                 if save_json_from_bu_prefsform(client, jsonform):
                     client.save()
                     client = save_userinfo(
-                        client, request.user, request.session, create=False)
+                        client, request.user, request.session, create = False)
                     logger.info('ClientForm Form saved')
                     messages.success(request, "Success record saved successfully!",
                                      "alert alert-success")
@@ -792,22 +792,22 @@ class UpdateClient(LoginRequiredMixin, View):
                     form.errors, jsonform.errors))
                 cxt = {'clientform': form,
                        'clientprefsform': jsonform, 'edit': True}
-                response = render(request, self.template_path, context=cxt)
+                response = render(request, self.template_path, context = cxt)
         except self.model.DoesNotExist:
-            logger.error('Object does not exist', exc_info=True)
+            logger.error('Object does not exist', exc_info = True)
             messages.error(request, "Object does not exist",
                            "alert alert-danger")
             cxt = {'clientform': form, 'clientprefsform': jsonform, 'edit': True,
-                   'ta_form': obforms.TypeAssistForm(auto_id=False)}
-            response = render(request, self.template_path, context=cxt)
+                   'ta_form': obforms.TypeAssistForm(auto_id = False)}
+            response = render(request, self.template_path, context = cxt)
         except Exception:
             logger.critical(
-                "something went wrong please follow the traceback to fix it... ", exc_info=True)
+                "something went wrong please follow the traceback to fix it... ", exc_info = True)
             messages.error(request, "[ERROR] Something went wrong",
                            "alert alert-danger")
             cxt = {'clientform': form, 'clientprefsform': jsonform, 'edit': True,
-                   'ta_form': obforms.TypeAssistForm(auto_id=False)}
-            response = render(request, self.template_path, context=cxt)
+                   'ta_form': obforms.TypeAssistForm(auto_id = False)}
+            response = render(request, self.template_path, context = cxt)
         return response
 
 
@@ -824,8 +824,8 @@ class DeleteClient(LoginRequiredMixin, View):
         pk, response = kwargs.get('pk', None), None
         try:
             if pk:
-                bt = self.model.objects.get(id=pk)
-                form = self.form_class(instance=bt)
+                bt = self.model.objects.get(id = pk)
+                form = self.form_class(instance = bt)
                 bt.delete()
                 logger.info('Client object deleted...')
                 messages.info(request, 'Record deleted successfully',
@@ -841,8 +841,8 @@ class DeleteClient(LoginRequiredMixin, View):
             messages.error(
                 request, 'Unable to delete, due to dependencies', "alert alert-danger")
             cxt = {'clientform': form, 'clientprefsform': get_bt_prefform(bt), 'edit': True,
-                   'ta_form': obforms.TypeAssistForm(auto_id=False)}
-            response = render(request, self.template_path, context=cxt)
+                   'ta_form': obforms.TypeAssistForm(auto_id = False)}
+            response = render(request, self.template_path, context = cxt)
         return response
 
 
@@ -859,9 +859,9 @@ def handle_pop_forms(request):
     if not form.is_valid():
         ic(form.errors)
         return JsonResponse({'saved': False, 'errors': form.errors})
-    ta = form.save(commit=False)
-    t = TypeAssist.objects.filter(tacode=ta.tacode)
-    ta = t[0] if len(t) else form.save(commit=True)
+    ta = form.save(commit = False)
+    t = TypeAssist.objects.filter(tacode = ta.tacode)
+    ta = t[0] if len(t) else form.save(commit = True)
     save_userinfo(ta, request.user, request.session)
     if request.session.get('wizard_data'):
         request.session['wizard_data']['taids'].append(ta.id)
@@ -905,7 +905,7 @@ class MasterTypeAssist(LoginRequiredMixin, View):
             return  rp.JsonResponse(data = {'data':list(objs)})
 
         elif R.get('action', None) == 'form':
-            cxt = {'ta_form': self.params['form_class'](request=request),
+            cxt = {'ta_form': self.params['form_class'](request = request),
                    'msg': "create typeassist requested"}
             resp = utils.render_form(request, self.params, cxt)
 
@@ -932,9 +932,9 @@ class MasterTypeAssist(LoginRequiredMixin, View):
                 form = utils.get_instance_for_update(
                     data, self.params, msg, int(pk))
                 print(form.data)
-                create=False
+                create = False
             else:
-                form = self.params['form_class'](data, request=request)
+                form = self.params['form_class'](data, request = request)
             if form.is_valid():
                 resp = self.handle_valid_form(form, request, create)
             else:
@@ -949,11 +949,11 @@ class MasterTypeAssist(LoginRequiredMixin, View):
         from apps.core.utils import handle_intergrity_error
         try:
             ta = form.save()
-            putils.save_userinfo(ta, request.user, request.session, create=create)
+            putils.save_userinfo(ta, request.user, request.session, create = create)
             logger.info("typeassist form saved")
             data = {'msg': f"{ta.tacode}",
-            'row': TypeAssist.objects.values(*self.params['fields']).get(id=ta.id)}
-            return rp.JsonResponse(data, status=200)
+            'row': TypeAssist.objects.values(*self.params['fields']).get(id = ta.id)}
+            return rp.JsonResponse(data, status = 200)
         except IntegrityError:
             return handle_intergrity_error("TypeAssist")
 
@@ -990,7 +990,7 @@ class Shift(LoginRequiredMixin, View):
         if R.get('action', None) == 'list' or R.get('search_term'):
             objs = self.params['model'].objects.select_related(
                 *self.params['related']).filter(
-                    enable=True,
+                    enable = True,
             ).values(*self.params['fields'])
             count = objs.count()
             logger.info(f'Shift objects {count or "No Records!"} retrieved from db')
@@ -1003,10 +1003,10 @@ class Shift(LoginRequiredMixin, View):
                 'draw':R['draw'], 'recordsTotal':count,
                 'data' : list(objects), 
                 'recordsFiltered': filtered
-            }, status=200, safe=False)
+            }, status = 200, safe = False)
 
         elif R.get('action', None) == 'form':
-            cxt = {'shift_form': self.params['form_class'](request=request),
+            cxt = {'shift_form': self.params['form_class'](request = request),
                    'msg': "create shift requested"}
             resp = utils.render_form(request, self.params, cxt)
 
@@ -1031,16 +1031,16 @@ class Shift(LoginRequiredMixin, View):
                 msg = "shift_view"
                 form = utils.get_instance_for_update(
                     data, self.params, msg, int(pk))
-                create=False
+                create = False
             else:
-                form = self.params['form_class'](data, request=request)
+                form = self.params['form_class'](data, request = request)
             if form.is_valid():
                 resp = self.handle_valid_form(form, request, create)
             else:
                 cxt = {'errors': form.errors}
                 resp = utils.handle_invalid_form(request, self.params, cxt)
         except Exception:
-            logger.error("SHIFT saving error!", exc_info=True)
+            logger.error("SHIFT saving error!", exc_info = True)
             resp = utils.handle_Exception(request)
         return resp
 
@@ -1050,11 +1050,11 @@ class Shift(LoginRequiredMixin, View):
         try:
             shift = form.save()
             shift.bu_id = int(request.session['client_id'])
-            putils.save_userinfo(shift, request.user, request.session, create=create)
+            putils.save_userinfo(shift, request.user, request.session, create = create)
             logger.info("shift form saved")
             data = {'msg': f"{shift.shiftname}",
-            'row': Shift.objects.values(*self.params['fields']).get(id=shift.id) }
-            return rp.JsonResponse(data, status=200)
+            'row': Shift.objects.values(*self.params['fields']).get(id = shift.id) }
+            return rp.JsonResponse(data, status = 200)
         except IntegrityError:
             return handle_intergrity_error("Shift")
 
@@ -1071,7 +1071,7 @@ class EditorTa(LoginRequiredMixin, View):
         if R.get('template'): return render(request, self.template)
     def post(self, request, *args, **kwargs):
         R = request.POST
-        ic(pformat(request.POST, compact=True))
+        ic(pformat(request.POST, compact = True))
         objs = self.model.objects.select_related(
                 *self.related).filter(
             ).values(*self.fields)
@@ -1114,21 +1114,21 @@ class GeoFence(LoginRequiredMixin, View):
 
         elif R.get('action', None) == 'form':
             cxt = {'geofenceform':self.params['form_class']()}
-            return render(request, self.params['template_form'], context=cxt)
+            return render(request, self.params['template_form'], context = cxt)
 
         elif R.get('action') == 'drawgeofence':
             return get_geofence_from_point_radii(R)
 
         elif R.get('id', None):
             obj = utils.get_model_obj(int(R['id']), request, self.params)
-            cxt = {'geofenceform':self.params['form_class'](request=request, instance=obj),
+            cxt = {'geofenceform':self.params['form_class'](request = request, instance = obj),
                     'edit':True,
-                'geofencejson': GeofenceMaster.objects.get_geofence_json(pk=obj.id)}
-            return render(request, self.params['template_form'], context=cxt)
+                'geofencejson': GeofenceMaster.objects.get_geofence_json(pk = obj.id)}
+            return render(request, self.params['template_form'], context = cxt)
 
 
     def post(self, request, *args, **kwargs):
-        resp=None
+        resp = None
         try:
             data = QueryDict(request.POST['formData'])
             geofence = request.POST['geofence']
@@ -1139,14 +1139,14 @@ class GeoFence(LoginRequiredMixin, View):
                 form = utils.get_instance_for_update(
                 data, self.params, msg, int(pk))
             else:
-                form = self.params['form_class'](data, request=request)
+                form = self.params['form_class'](data, request = request)
             if form.is_valid():
                 resp = self.handle_valid_form(form, request, geofence)
             else:
                 cxt = {'errors': form.errors}
                 resp = utils.handle_invalid_form(request, self.params, cxt)
         except Exception:
-            logger.error('GEOFENCE saving error!', exc_info=True)
+            logger.error('GEOFENCE saving error!', exc_info = True)
             resp = utils.handle_Exception(request)
         return resp
 
@@ -1155,12 +1155,12 @@ class GeoFence(LoginRequiredMixin, View):
         logger.info('geofence form is valid')
         from apps.core.utils import handle_intergrity_error
         try:
-            with transaction.atomic(using=utils.get_current_db_name()):
+            with transaction.atomic(using = utils.get_current_db_name()):
                 gf = form.save()
                 self.save_geofence_field(gf, geofence)
                 gf = putils.save_userinfo(gf, request.user, request.session)
                 logger.info("geofence form saved")
-                return JsonResponse(data={'pk':gf.id}, status=200)
+                return JsonResponse(data={'pk':gf.id}, status = 200)
         except IntegrityError:
             return handle_intergrity_error("GeoFence")
 
@@ -1174,11 +1174,11 @@ class GeoFence(LoginRequiredMixin, View):
             ic(type(geofencedata))
             coords = [(i['lng'], i['lat']) for i in geofencedata]
             ic(coords)
-            pg = Polygon(LinearRing(coords, srid=4326), srid=4326)
+            pg = Polygon(LinearRing(coords, srid = 4326), srid = 4326)
             gf.geofence = pg
             gf.save()
         except Exception:
-            logger.error('geofence polygon field saving error', exc_info=True)
+            logger.error('geofence polygon field saving error', exc_info = True)
             raise
 
 
@@ -1188,16 +1188,16 @@ def get_geofence_from_point_radii(R):
         lat, lng, radii = R.get('lat'), R.get('lng'), R.get('radii')
         if all([lat, lng, radii]):
             from django.contrib.gis import geos
-            point = geos.Point(float(lng),float(lat), srid=4326)
+            point = geos.Point(float(lng),float(lat), srid = 4326)
             point.transform(3857)
             geofence = point.buffer(int(radii))
             geofence.transform(4326)
-            return rp.JsonResponse(data={'geojson':utils.getformatedjson(geofence)}, status=200)
+            return rp.JsonResponse(data={'geojson':utils.getformatedjson(geofence)}, status = 200)
         else:
-            return rp.JsonResponse(data={'errors': "Invalid data provided unable to compute geofence!"}, status=404)
+            return rp.JsonResponse(data={'errors': "Invalid data provided unable to compute geofence!"}, status = 404)
     except Exception:
-        logger.error("something went wrong while computing geofence..", exc_info=True)
-        return rp.JsonResponse(data={'errors': 'something went wrong while computing geofence!'}, status=404)
+        logger.error("something went wrong while computing geofence..", exc_info = True)
+        return rp.JsonResponse(data={'errors': 'something went wrong while computing geofence!'}, status = 404)
 
 
 
@@ -1224,10 +1224,10 @@ class ImportFile(LoginRequiredMixin, View):
         if form.is_valid():
             file = request.FILES['importfile']
             default_types = Dataset().load(file)
-            res = TaResource(is_superuser=True)
+            res = TaResource(is_superuser = True)
             res = res.import_data(
-                dataset=default_types, dry_run=False, raise_errors=False,
-                collect_failed_rows=True, use_transactions=False)
+                dataset = default_types, dry_run = False, raise_errors = False,
+                collect_failed_rows = True, use_transactions = False)
             columns = json.dumps(columns)
             data = []
             for rowerr in res.row_errors():
@@ -1236,7 +1236,7 @@ class ImportFile(LoginRequiredMixin, View):
                     data.append(d)
             data = json.dumps(data)
             cxt = {'columns':columns, 'data':data, 'importform':self.params['form_class']()}
-            return render(request, self.params['template_form'], context=cxt)
+            return render(request, self.params['template_form'], context = cxt)
 
 
         else:

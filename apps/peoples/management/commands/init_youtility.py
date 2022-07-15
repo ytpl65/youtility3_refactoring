@@ -19,21 +19,21 @@ def create_dummy_client_site_and_superadmin(self):
 
         client = Bt.objects.get_or_create(
             bucode='SPS', buname = "Security Personnel Services",
-            enable=True, 
+            enable = True, 
             defaults={
                 'butype_id':1, 'identifier':clienttype
             }
         )
         site, _ = Bt.objects.get_or_create(
             bucode='YTPL', buname = "Youtility Technologies Pvt Ltd",
-            enable=True,
+            enable = True,
             defaults={
                 'butype_id':1, 'identifier':sitetype
             }
         )
         SU, _ = People.objects.get_or_create(
-            is_superuser=True, isadmin=True, isverified=True,
-            peoplecode='SUPERADMIN', is_staff=True, loginid = 'superadmin',
+            is_superuser = True, isadmin = True, isverified = True,
+            peoplecode='SUPERADMIN', is_staff = True, loginid = 'superadmin',
             defaults={
                 'peoplename': 'Superadmin', 'email': 'superadmin@youtility.in',
                 'dateofjoin': '1111-11-11', 'dateofbirth': '1111-11-11',
@@ -68,26 +68,26 @@ def insert_default_entries_in_typeassist(db, self):
         with open(filepath, 'rb') as f:
             utils.set_db_for_router(db)
             default_types = Dataset().load(f)
-            res = TaResource(is_superuser=True)
-            #TODO in production set raise_errors=False
-            res = res.import_data(dataset=default_types, dry_run=False, raise_errors=True, collect_failed_rows=True, use_transactions=True)
+            res = TaResource(is_superuser = True)
+            #TODO in production set raise_errors = False
+            res = res.import_data(dataset = default_types, dry_run = False, raise_errors = True, collect_failed_rows = True, use_transactions = True)
             log.debug(f"Default Entries in table TypeAssist created successfully...{pformat(utils.ok(self))}")
     except Exception as e:
         if type(e) != IntegrityError:
-            log.error('FAILED insert_default_entries', exc_info=True)
+            log.error('FAILED insert_default_entries', exc_info = True)
         raise
 
 
 
 def execute_tasks(db, self):
     try:
-        with transaction.atomic(using=db):
+        with transaction.atomic(using = db):
             utils.create_none_entries(self)
 
         #insert default entries for TypeAssist
         insert_default_entries_in_typeassist(db, self)
 
-        with transaction.atomic(using=db):
+        with transaction.atomic(using = db):
             #create dummy client: SPS and site: YTPL
             create_dummy_client_site_and_superadmin(self)
     except Exception as e:
@@ -103,7 +103,7 @@ class Command(BaseCommand):
 
 
     def add_arguments(self, parser) -> None:
-        parser.add_argument('db', nargs = 1, type=str)
+        parser.add_argument('db', nargs = 1, type = str)
 
 
     def handle(self, *args, **options):
@@ -125,7 +125,7 @@ class Command(BaseCommand):
             except Exception as e:
                 if type(e) != IntegrityError:
                     self.stdout.write(self.style.ERROR("something went wrong...!"))
-                    log.error('FAILED init_intelliwiz', exc_info=True)
+                    log.error('FAILED init_intelliwiz', exc_info = True)
 
 
 

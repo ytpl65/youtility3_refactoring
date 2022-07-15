@@ -59,7 +59,7 @@ TypeAssist List
 		
 		table = $(table_id).DataTable({
 			ajax:{
-				url: '{{ url("onboarding:typeassist") }}?action=list',
+				url: '{{ url("onboarding:typeassist") }}?action = list',
 			},
 			columns     : [
                 { "data": "id" },
@@ -90,7 +90,7 @@ TypeAssist List
 					action: function(e, dt, node, config){
                         const params = {
                             'modal_id'  : modal_id,
-                            'url'       : `${urlname}?action=form`,
+                            'url'       : `${urlname}?action = form`,
                             'beforeSend': TaBeforeSend }
 						fire_ajax_get(params)
 						.done((data, status, xhr) => {
@@ -164,7 +164,7 @@ TypeAssist List
 	//delete ajax request 
 	function isTaDeleted(id){ 
 		console.log("id ", id)
-		const params = {url:`${urlname}?action=delete&id=${id}`, 'beforeSend':function () {}}
+		const params = {url:`${urlname}?action = delete&id=${id}`, 'beforeSend':function () {}}
 		fire_ajax_get(params)
 		.done((data, status, xhr) => {
 			if(!xhr.status === 200){

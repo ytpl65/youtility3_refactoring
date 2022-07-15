@@ -15,7 +15,7 @@ class SiteReportListFilter(dfs.FilterSet):
         ('PARTIALLYCOMPLETED', 'Partially Completed')
     ]
 
-    plandatetime = dfs.DateFromToRangeFilter(widget=wg.RangeWidget(attrs={'placeholder': 'YYYY/MM/DD'}), label='Plan Datetime')
+    plandatetime = dfs.DateFromToRangeFilter(widget = wg.RangeWidget(attrs={'placeholder': 'YYYY/MM/DD'}), label='Plan Datetime')
     jobdesc      = dfs.CharFilter(field_name='jobdesc', lookup_expr='icontains', label='Site Report')
     jobstatus    = dfs.ChoiceFilter(field_name='jobstatus', choices = JOBSTATUSCHOICES, label="Status", widget = s2forms.Select2Widget)
     peopleid     = dfs.CharFilter(field_name='peopleid__peoplename', lookup_expr='icontains', label='Surveyor')
@@ -46,5 +46,5 @@ class MasterReportTemplateFilter(dfs.FilterSet):
     qsetname = dfs.CharFilter(field_name='qsetname', lookup_expr='qset_name__icontains', label='Site Report')
     enable = None
     class Meta:
-        model=QuestionSet
+        model = QuestionSet
         fields = ('qsetname', 'enable')

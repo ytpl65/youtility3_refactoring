@@ -15,17 +15,17 @@ class QuestionSetManager(models.Manager):
     def get_template_list(self, bulist):
         if bulist:
             if qset := self.select_related(
-                *self.related).filter(bu_id__in=bulist).values_list(*self.fields, flat=True):
+                *self.related).filter(bu_id__in = bulist).values_list(*self.fields, flat = True):
                 return ', '.join(list(qset))
         return ""
 
     def get_qset_modified_after(self, mdtz, buid):
-        qset = self.select_related(*self.related).filter(~Q(id=1), mdtz__gte = mdtz, bu_id = buid).values(*self.fields)
+        qset = self.select_related(*self.related).filter(~Q(id = 1), mdtz__gte = mdtz, bu_id = buid).values(*self.fields)
         return qset or None
 
     def get_configured_sitereporttemplates(self, related, fields):
         qset = self.select_related(
-            *related).filter(enable=True, type='SITEREPORTTEMPLATE').values(*fields)
+            *related).filter(enable = True, type='SITEREPORTTEMPLATE').values(*fields)
         return qset or self.none()
 
 
@@ -37,7 +37,7 @@ class QuestionManager(models.Manager):
 
     def get_questions_modified_after(self, mdtz):
         mdtzinput = datetime.strptime(mdtz, "%Y-%m-%d %H:%M:%S")
-        qset = self.select_related(*self.related).filter(~Q(id=1), mdtz__gte = mdtzinput).values(*self.fields)
+        qset = self.select_related(*self.related).filter(~Q(id = 1), mdtz__gte = mdtzinput).values(*self.fields)
         return qset or None
 
     def questions_of_client(self, request):
@@ -84,7 +84,7 @@ class JobneedManager(models.Manager):
                 FROM jobneed jn
                 INNER JOIN bu            ON jn.bu_id=     bu.id
                 INNER JOIN people p      ON jn.people_id= p.id
-                WHERE jn.alerts=TRUE AND jn.id= %s
+                WHERE jn.alerts = TRUE AND jn.id= %s
             )jn
             """, [pk])
         return qset or self.none()
@@ -105,9 +105,9 @@ class JobneedManager(models.Manager):
             jnd.ismandatory, jnd.alerts, q.quesname, jnd.answertype as questiontype, qsb.alertmails_sendto,
             array_to_string(ARRAY(select email from people where people_id in (select unnest(string_to_array(qsb.alertmails_sendto, ', '))::bigint )), ', ') as alerttomails
             FROM nodes_cte as jobneed
-        LEFT JOIN jobneeddetails as jnd ON jnd.jobneed_id=jobneedid
-        LEFT JOIN question q ON jnd.question_id=q.id
-        LEFT JOIN questionsetbelonging qsb ON qsb.question_id=q.id
+        LEFT JOIN jobneeddetails as jnd ON jnd.jobneed_id = jobneedid
+        LEFT JOIN question q ON jnd.question_id = q.id
+        LEFT JOIN questionsetbelonging qsb ON qsb.question_id = q.id
         WHERE jobneed.parent_id <> -1  ORDER BY pseqno asc, jobdesc asc, pseqno, cseqno asc""", [pk])
         return qset or self.none()
 
@@ -120,7 +120,7 @@ class JobneedManager(models.Manager):
             jobneed.bu_id, jobneed.cuser_id, jobneed.muser_id, jobneed.pgroup_id,
             asset.assetname, people.id, people.peoplecode, people.peoplename, people.mobno
             FROM jobneed
-            LEFT JOIN asset  ON jobneed.asset_id=asset.id
+            LEFT JOIN asset  ON jobneed.asset_id = asset.id
             LEFT JOIN people ON jobneed.performedby_id= people.id
             WHERE jobneed.other_info -> 'deviation' = true AND jobneed.parent_id != -1 AND jobneed.id = %s
             """, [pk]
@@ -128,13 +128,13 @@ class JobneedManager(models.Manager):
         return qset or self.none()
 
 
-    def get_adhoctasks_listview(self, R, task=True):
+    def get_adhoctasks_listview(self, R, task = True):
         idf = 'TASK' if task else 'TOUR'
         qobjs, dir,  fields, length, start = utils.get_qobjs_dir_fields_start_length(R)
         now = datetime.now()
         qset = self.select_related(
                  'performedby', 'qset', 'asset').filter(
-                    identifier = idf, jobtype='ADHOC', plandatetime__date__gte = (now - timedelta(days=7)).date()
+                    identifier = idf, jobtype='ADHOC', plandatetime__date__gte = (now - timedelta(days = 7)).date()
              ).values(*fields).order_by(dir)
         total = qset.count()
         if qobjs:
@@ -147,7 +147,7 @@ class JobneedManager(models.Manager):
 
 
     def get_last10days_jobneedtasks(self, related, fields, session):
-        dt  = datetime.now(tz=timezone.utc) - timedelta(days=10)
+        dt  = datetime.now(tz = timezone.utc) - timedelta(days = 10)
         qobjs = self.select_related(*related).filter(
             bu_id = session['bu_id'],
             plandatetime__gte = dt,
@@ -165,8 +165,8 @@ class AttachmentManager(models.Manager):
                 attachmenttype = 'ATTACHMENT',
                 owner = ownerid
                 ).annotate(
-            default_img_path=Concat(F('filepath'), V('/'), F('filename'),
-                                    output_field=CharField())).order_by('-cdtz').using(db)
+            default_img_path = Concat(F('filepath'), V('/'), F('filename'),
+                                    output_field = CharField())).order_by('-cdtz').using(db)
         ic(qset)
         return qset[0] or self.none()
 
@@ -194,7 +194,7 @@ class AssetManager(models.Manager):
     def get_assetdetails(self, mdtz, site_id):
         mdtzinput = datetime.strptime(mdtz, "%Y-%m-%d %H:%M:%S")
         return self.filter(
-            ~Q(id=1),
+            ~Q(id = 1),
             ~Q(identifier = 'NEA'),
             ~Q(runningstatus = 'SCRAPPED'),
             mdtz__gte = mdtzinput,
@@ -210,7 +210,7 @@ class AssetManager(models.Manager):
 
 
 class JobneedDetailsManager(models.Manager):
-    use_in_migrations=True
+    use_in_migrations = True
     related = ['question', 'jobneed', 'cuser', 'muser']
     fields = ['id', 'uuid', 'seqno', 'answertype', 'answer', 'isavpt', 'options', 'ctzoffset', 'ismandatory',
               'cdtz', 'mdtz',           
@@ -222,7 +222,7 @@ class JobneedDetailsManager(models.Manager):
             ic(jobneedids)
             qset = self.select_related(
                 *self.related).filter(
-                ~Q(id=1), Q(mdtz = None) | Q( mdtz__gte = mdtz),
+                ~Q(id = 1), Q(mdtz = None) | Q( mdtz__gte = mdtz),
                 jobneed_id__in = jobneedids,
                ).values(
                     *self.fields)
@@ -231,7 +231,7 @@ class JobneedDetailsManager(models.Manager):
 
     def update_ans_muser(self, answer, peopleid, mdtz, jnid):
         _mdtz = datetime.strptime(mdtz, "%Y-%m-%d %H:%M:%S")
-        return self.filter(jobneed_id=jnid).update(muser_id=peopleid, answer=answer, mdtz=_mdtz)
+        return self.filter(jobneed_id = jnid).update(muser_id = peopleid, answer = answer, mdtz = _mdtz)
 
 
     def get_jnd_observation(self, id):
@@ -242,7 +242,7 @@ class JobneedDetailsManager(models.Manager):
 
 
 class QsetBlngManager(models.Manager):
-    use_in_migrations=True
+    use_in_migrations = True
     fields = ['id', 'seqno', 'answertype',  'isavpt', 'options', 'ctzoffset', 'ismandatory',
               'min', 'max', 'alerton', 'client_id', 'bu_id',  'question_id', 
               'qset_id', 'cuser_id', 'muser_id', 'cdtz', 'mdtz', 'alertmails_sendto', 'tenant_id']
@@ -253,7 +253,7 @@ class QsetBlngManager(models.Manager):
     def get_modified_after(self ,mdtz, buid):
         qset = self.select_related(
             *self.related).filter(
-                ~Q(id=1), mdtz__gte = mdtz, bu_id = buid).values(
+                ~Q(id = 1), mdtz__gte = mdtz, bu_id = buid).values(
                     *self.fields
                 )
         return qset or self.none()
@@ -282,7 +282,7 @@ class JobManager(models.Manager):
 
     def get_scheduled_internal_tours(self, related, fields):
         qset = self.select_related(*related).filter(
-            parent__jobname='NONE', parent_id=1, identifier__exact='INTERNALTOUR'
+            parent__jobname='NONE', parent_id = 1, identifier__exact='INTERNALTOUR'
         ).values(*fields).order_by('-cdtz')
         return qset or self.none()
     
@@ -296,6 +296,6 @@ class JobManager(models.Manager):
     
     def get_scheduled_external_tours(self, related, fields):
         qset = self.select_related(*related).filter(
-            parent__jobname='NONE', parent_id=1, identifier__exact='EXTERNALTOUR'
+            parent__jobname='NONE', parent_id = 1, identifier__exact='EXTERNALTOUR'
         ).values(*fields).order_by('-cdtz')
         return qset or self.none()

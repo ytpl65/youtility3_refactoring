@@ -52,7 +52,7 @@ $(document).ready(() => {
     ////datatable initialization
     table = $(table_id).DataTable({
         ajax:{
-            url: "{{ url('attendance:conveyance') }}?action=list",
+            url: "{{ url('attendance:conveyance') }}?action = list",
             data:function(d){
                 d.fields = ['id', 'bu__buname', 'people__peoplename', 'people__peoplecode',
                     'bu__bucode', 'punchintime', 'punchouttime', 'transportmodes', 'distance',
@@ -109,7 +109,7 @@ $(document).ready(() => {
             text: 'Add New',
             className: 'btn btn-sm btn-light-primary',
             action:function(e, dt, node, config){
-                location.href = "{{ url('attendance:conveyance') }}?action=form"
+                location.href = "{{ url('attendance:conveyance') }}?action = form"
             }
         }]
     })

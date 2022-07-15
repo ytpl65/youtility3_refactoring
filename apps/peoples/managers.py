@@ -12,16 +12,16 @@ class PeopleManager(BaseUserManager):
               'cdtz', 'mdtz', 'gender', 'dateofbirth', 'dateofjoin', 'tenant_id', 'ctzoffset']
     related = ['bu', 'client', 'peopletype', 'muser', 'cuser', 'reportto', 'department', 'designation']
 
-    def create_user(self, loginid, password=None, **extra_fields):
+    def create_user(self, loginid, password = None, **extra_fields):
         if not loginid:
             raise ValueError("Login id is required for any user!")
         user = self.model(loginid = loginid, **extra_fields)
         user.set_password(password)
-        user.save(using=self._db)
+        user.save(using = self._db)
         return user
 
 
-    def create_superuser(self, loginid, password=None, **extra_fields):
+    def create_superuser(self, loginid, password = None, **extra_fields):
         if password is None:
             raise TypeError("Super users must have a password.")
         user = self.create_user(loginid, password, **extra_fields)
@@ -30,12 +30,12 @@ class PeopleManager(BaseUserManager):
         user.is_staff     = True
         user.isadmin      = True
         user.isverified  = True
-        user.save(using=self._db)
+        user.save(using = self._db)
         return user
 
     def get_people_from_creds(self, loginid, clientcode):
         if qset := self.select_related('client', 'bu').get(
-            Q(loginid=loginid) & Q(client__bucode=clientcode)
+            Q(loginid = loginid) & Q(client__bucode = clientcode)
         ):
             return qset
 
@@ -53,18 +53,18 @@ class PeopleManager(BaseUserManager):
         """
         qset = self.select_related(
             *self.related).filter(
-                ~Q(id=1), bu_id = siteid, mdtz__gte = mdtz).values(*self.fields)
+                ~Q(id = 1), bu_id = siteid, mdtz__gte = mdtz).values(*self.fields)
         return qset or self.none()
 
     def get_emergencycontacts(self, siteid, clientid):
         "returns mobnos of people with given assigned siteid"
-        qset = self.filter(bu_id = siteid, client_id = clientid).values_list('mobno', flat=True).exclude(mobno = None)
+        qset = self.filter(bu_id = siteid, client_id = clientid).values_list('mobno', flat = True).exclude(mobno = None)
         return qset or self.none()
 
 
     def get_emergencyemails(self, siteid, clientid):
         "returns emails of people with given assigned siteid"
-        qset = self.filter(bu_id = siteid, client_id = clientid).values_list('email', flat=True)
+        qset = self.filter(bu_id = siteid, client_id = clientid).values_list('email', flat = True)
         return qset or self.none()
 
 
@@ -81,13 +81,13 @@ class CapabilityManager(models.Manager):
         return self.filter(cfor = self.pm.Capability.Cfor.MOB, parent__capscode='NONE')
 
     def get_repparentdata(self):
-        return self.filter(cfor=self.pm.Capability.Cfor.REPORT, parent__capscode='NONE')
+        return self.filter(cfor = self.pm.Capability.Cfor.REPORT, parent__capscode='NONE')
 
     def get_portletparentdata(self):
-        return self.filter(cfor=self.pm.Capability.Cfor.PORTLET, parent__capscode='NONE')
+        return self.filter(cfor = self.pm.Capability.Cfor.PORTLET, parent__capscode='NONE')
 
     def get_child_data(self, parent, cfor):
-        return self.filter(cfor=cfor, parent__capscode=parent) if parent else None
+        return self.filter(cfor = cfor, parent__capscode = parent) if parent else None
 
 
 
@@ -102,7 +102,7 @@ class PgblngManager(models.Manager):
     def get_modified_after(self, mdtz, peopleid, buid):
         qset = self.select_related(
             *self.related).filter(
-                ~Q(id=1),
+                ~Q(id = 1),
                 mdtz__gte = mdtz, people_id = peopleid, bu_id = buid).values(*self.fields)
         return qset or self.none()
 
@@ -123,7 +123,7 @@ class PgroupManager(models.Manager):
               'bu_id', 'client_id', 'tenant_id', 'cdtz', 'mdtz']
     related = ['identifier', 'bu', 'client', 'cuser', 'muser']
 
-    def listview(self, request, fields, related, orderby, dir=None, qobjs=None):
+    def listview(self, request, fields, related, orderby, dir = None, qobjs = None):
         # sourcery skip: assign-if-exp, swap-if-expression
         order = "" if dir == 'asc' else "-"
         if not qobjs:
@@ -145,7 +145,7 @@ class PgroupManager(models.Manager):
         """
         qset = self.select_related(
             *self.related).filter(
-                ~Q(id=1), mdtz__gte = mdtz, bu_id = buid,
+                ~Q(id = 1), mdtz__gte = mdtz, bu_id = buid,
                 identifier__tacode = "PEOPLEGROUP").values(
                     *self.fields)
         return qset or None
@@ -156,7 +156,7 @@ class PgroupManager(models.Manager):
         qobjs, dir,  fields, length, start = utils.get_qobjs_dir_fields_start_length(R)
         qset = self.filter(
             ~Q(groupname = 'NONE'), 
-            enable=True,
+            enable = True,
             identifier__tacode = 'SITEGROUP',
         ).select_related('identifier').values(*fields).order_by(dir)
 

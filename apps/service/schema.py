@@ -69,4 +69,4 @@ class RootQuery(Query):
 class RootMutation(Mutation):
     pass
 
-schema = graphene.Schema(query=RootQuery, mutation=RootMutation)
+schema = graphene.Schema(query = RootQuery, mutation = RootMutation)

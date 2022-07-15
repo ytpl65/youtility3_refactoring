@@ -14,11 +14,11 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='ticket',
             name='attcount',
-            field=models.IntegerField(default=0, verbose_name='Attachment Count'),
+            field = models.IntegerField(default = 0, verbose_name='Attachment Count'),
         ),
         migrations.AddField(
             model_name='ticket',
             name='parent',
-            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.RESTRICT, to='activity.ticket'),
+            field = models.ForeignKey(blank = True, null = True, on_delete = django.db.models.deletion.RESTRICT, to='activity.ticket'),
         ),
     ]

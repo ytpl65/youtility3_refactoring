@@ -21,7 +21,7 @@ def create_dummy_clientandsite():
 
         client = Bt.objects.get_or_create(
             bucode='SPS', buname = "Security Personnel Services",
-            enable=True,
+            enable = True,
             defaults={
                 'bucode': "SPS", 'buname': "Security Personnel Services", 'enable':True
                 }            
@@ -29,7 +29,7 @@ def create_dummy_clientandsite():
 
         site = Bt.objects.get_or_create(
             bucode='YTPL', buname = "Youtility Technologies Pvt Ltd",
-            enable=True, defaults={
+            enable = True, defaults={
                 'bucode': 'SPS', 'buname': 'Security Personnel Services', 'enable':True
             }
         )
@@ -57,10 +57,10 @@ def insert_default_entries_in_typeassist():
             utils.set_db_for_router(utils.get_current_db_name())
             log.info(f'current db when importing data from file {utils.get_current_db_name()}')
             default_types = Dataset().load(f)
-            ta_resource = resources.modelresource_factory(model=TypeAssist)()
-            ta_resource.import_data(default_types, dry_run=False)
+            ta_resource = resources.modelresource_factory(model = TypeAssist)()
+            ta_resource.import_data(default_types, dry_run = False)
     except Exception as e:
-        log.error('FAILED insert_default_entries', exc_info=True)
+        log.error('FAILED insert_default_entries', exc_info = True)
         raise
 
 
@@ -77,7 +77,7 @@ class Command(BaseCommand):
 
 
     def add_arguments(self, parser) -> None:
-        parser.add_argument('db', nargs=1, type=str)
+        parser.add_argument('db', nargs = 1, type = str)
 
 
     def handle(self, *args, **options):
@@ -88,7 +88,7 @@ class Command(BaseCommand):
             # if isexist := TypeAssist.objects.all():
             #     raise utils.RecordsAlreadyExist
 
-            with transaction.atomic(using=db):
+            with transaction.atomic(using = db):
                 utils.set_db_for_router(db)
                 self.stdout.write(self.style.SUCCESS(f"current db selected is {utils.get_current_db_name()}"))
 
@@ -117,4 +117,4 @@ class Command(BaseCommand):
                     "Database with this alias '%s' not exist operation can't be performed"%(db)))
         except Exception as e:
             self.stdout.write(self.style.ERROR("something went wrong...!"))
-            log.error('FAILED init_intelliwiz', exc_info=True)
+            log.error('FAILED init_intelliwiz', exc_info = True)

@@ -38,13 +38,13 @@ urlpatterns = [
     path('reports/', include('apps.reports.urls')),
     #third-party urls
     path('email-verify/', include(email_urls)),
-    path('__debug__/', include(debug_toolbar.urls)), #shoul use when debug=True
+    path('__debug__/', include(debug_toolbar.urls)), #shoul use when debug = True
     path('select2/', include('django_select2.urls')),
-    path("graphql", csrf_exempt(FileUploadGraphQLView.as_view(graphiql=True))),
+    path("graphql", csrf_exempt(FileUploadGraphQLView.as_view(graphiql = True))),
     path('api/', include('apps.service.urls'))
 
 ]
 
 if settings.DEBUG:
-    urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
-    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+    urlpatterns += static(settings.STATIC_URL, document_root = settings.STATIC_ROOT)
+    urlpatterns += static(settings.MEDIA_URL, document_root = settings.MEDIA_ROOT)

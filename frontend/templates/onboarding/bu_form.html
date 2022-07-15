@@ -10,7 +10,7 @@
 {% block pagebreadcumb %}
 <!--will call parent contents -->
 {{ super() }}
-<li class="breadcrumb-item pe-3"><a href="{{ url('onboarding:bu_list') }}?template=true" class="pe-3">Bu List</a></li>
+<li class="breadcrumb-item pe-3"><a href="{{ url('onboarding:bu_list') }}?template = true" class="pe-3">Bu List</a></li>
 <li class="breadcrumb-item pe-3"><a href="javascript:void(0)" class="pe-3">Bu Form</a></li>
 {% endblock pagebreadcumb %}
 <!-------------------------- END PAGE BREADCUMB ------------------------->
@@ -274,11 +274,11 @@ Buisiness-View
 		}))
 		
 		//for select2 search work in bootstrap modals
-		$("#typeassist_popup").find("select[name=tatype]").select2({
+		$("#typeassist_popup").find("select[name = tatype]").select2({
             dropdownParent: $('#typeassist_popup')
         })
 		
-		$("#butype_ta_popup").find("select[name=tatype]").select2({
+		$("#butype_ta_popup").find("select[name = tatype]").select2({
             dropdownParent: $('#butype_ta_popup')
         })
 		

@@ -27,11 +27,11 @@ class RetriveSiteReports(LoginRequiredMixin, View):
         '''returns the paginated results from db'''
         from apps.core.raw_queries import query
         response, requestData, objects = None, request.GET, am.Jobneed.objects.none()
-        filtered=None
+        filtered = None
         if requestData.get('template'):
             return render(request, self.template_path)
         try:
-            pdt1 = datetime.now(tz=timezone.utc) - timedelta(days=7)
+            pdt1 = datetime.now(tz = timezone.utc) - timedelta(days = 7)
             pdt2 = datetime.now(tz = timezone.utc)
             log.info('Retrieve siteReports view')
             pbs = om.Bt.objects.get_people_bu_list(request.user)
@@ -42,15 +42,15 @@ class RetriveSiteReports(LoginRequiredMixin, View):
                 log.info('Site report objects %s retrieved from db' % (count or "No Records!"))
                 objects, filtered = utils.get_paginated_results(requestData, objects, count, self.fields,
                 [], self.model)
-            filtered=count
+            filtered = count
             log.info('Results paginated'if count else "")
             response = rp.JsonResponse(data = {
                 'draw':requestData['draw'], 'recordsTotal':count, 'data' : list(objects), 
                 'recordsFiltered': filtered
-            }, status=200)
+            }, status = 200)
         except Exception:
             log.critical(
-                'something went wrong', exc_info=True)
+                'something went wrong', exc_info = True)
             messages.error(request, 'Something went wrong',
                            "alert alert-danger")
             response = redirect('/dashboard')
@@ -80,14 +80,14 @@ class MasterReportTemplateList(LoginRequiredMixin, View):
                 log.info('Site report template objects %s retrieved from db' % (count or "No Records!"))
                 objects, filtered = utils.get_paginated_results(R, objects, count, self.fields,
                 [], self.model)
-            filtered=count
+            filtered = count
             log.info('Results paginated'if count else "")
             resp = rp.JsonResponse(data = {
                 'draw':R['draw'], 'recordsTotal':count, 'data' : list(objects), 
                 'recordsFiltered': filtered
-            }, status=200)
+            }, status = 200)
         except Exception:
-            log.critical('something went wrong', exc_info=True)
+            log.critical('something went wrong', exc_info = True)
             return redirect('/dashboard')
         return resp
 
@@ -105,26 +105,26 @@ class MasterReportForm(LoginRequiredMixin, View):
 
     def get(self, request, *args, **kwargs):
         R, resp = request.GET, None
-        utils.PD(get=R)
+        utils.PD(get = R)
         if R.get('template'):
             #return empty form if no id
             if not R.get('id'):
                 log.info("create a %s form requested"%self.viewname)
-                cxt = {'reporttemp_form': self.form_class(request=request, initial=self.initial),
+                cxt = {'reporttemp_form': self.form_class(request = request, initial = self.initial),
                        'qsetbng':self.subform()}
-                return render(request, self.template_path, context=cxt)
+                return render(request, self.template_path, context = cxt)
 
             #return for with instance loaded
             elif R.get('id') or kwargs.get('id'):
                 import json
                 pk = R['id'] or kwargs.get('id')
-                obj = self.model.objects.get(id=pk)
+                obj = self.model.objects.get(id = pk)
                 self.initial.update({
                     'buincludes': [8,6],
                 })
-                form = self.form_class(instance = obj, initial=self.initial, request=request)
+                form = self.form_class(instance = obj, initial = self.initial, request = request)
                 cxt = {'reporttemp_form':form, 'qsetbng':self.subform()}
-                return render(request, self.template_path, context=cxt)
+                return render(request, self.template_path, context = cxt)
 
         #return reports for list view
         elif R.get('get_reports'):
@@ -135,20 +135,20 @@ class MasterReportForm(LoginRequiredMixin, View):
         """Handles creation of Pgroup instance."""
         log.info('%s form submitted'%self.viewname)
         R, create = QueryDict(request.POST), True
-        utils.PD(post=R)
+        utils.PD(post = R)
         response = None
         #process already existing data for update
         if pk := request.POST.get('pk', None):
             obj = utils.get_model_obj(pk, request, {'model': self.model})
             form = self.form_class(
-                request=request, instance=obj, data=request.POST)
-            create=False
+                request = request, instance = obj, data = request.POST)
+            create = False
             log.info("retrieved existing %s template:= '%s'" %
                      (obj.qsetname, obj.id))
 
         #process new data for creation
         else:
-            form = self.form_class(data=request.POST, request=request, initial=self.initial)
+            form = self.form_class(data = request.POST, request = request, initial = self.initial)
             log.info("new %s submitted following is the form-data:\n%s\n" %
                      (self.viewname, pformat(form.data)))
 
@@ -160,9 +160,9 @@ class MasterReportForm(LoginRequiredMixin, View):
                 response = self.process_invalid_form(form)
         except Exception:
             log.critical(
-                "failed to process form, something went wrong", exc_info=True)
+                "failed to process form, something went wrong", exc_info = True)
             response = rp.JsonResponse(
-                {'errors': 'Failed to process form, something went wrong'}, status=404)
+                {'errors': 'Failed to process form, something went wrong'}, status = 404)
         return response
 
     def process_valid_form(self, request, form, create):
@@ -170,26 +170,26 @@ class MasterReportForm(LoginRequiredMixin, View):
         log.info("guard tour form processing/saving [ START ]")
         import json
         try:
-            utils.PD(cleaned=form.data)
-            report = form.save(commit=False)
+            utils.PD(cleaned = form.data)
+            report = form.save(commit = False)
             report.buincludes = json.dumps(request.POST.getlist('buincludes', []))
             report.site_grp_includes = json.dumps(request.POST.getlist('site_grp_includes', []))
             report.site_type_includes = json.dumps(request.POST.getlist('site_type_includes', []))
             report.parent_id  = -1
             report.save()
-            report = putils.save_userinfo(report, request.user, request.session, create=create)
+            report = putils.save_userinfo(report, request.user, request.session, create = create)
             log.debug("report saved:%s"%(report.qsetname))
         except Exception as ex:
-            log.critical("%s form is failed to process"%self.viewname, exc_info=True)
+            log.critical("%s form is failed to process"%self.viewname, exc_info = True)
             resp = rp.JsonResponse(
-                {'errors': "saving %s template form failed..."%self.viewname}, status=404)
+                {'errors': "saving %s template form failed..."%self.viewname}, status = 404)
             raise ex
         else:
             log.info("%s template form is processed successfully"%self.viewname)
             resp = rp.JsonResponse({'msg': report.qsetname,
                 'url': reverse("reports:sitereport_template_form"),
                 'id':report.id},
-                status=200)
+                status = 200)
         log.info("%s template form processing/saving [ END ]"%self.viewname)
         return resp
 
@@ -199,7 +199,7 @@ class MasterReportForm(LoginRequiredMixin, View):
         cxt = {"errors": form.errors}
         log.info(
             "processing invalid forms sending errors to the client [ END ]")
-        return rp.JsonResponse(cxt, status=404)
+        return rp.JsonResponse(cxt, status = 404)
 
 
     def get_reports(self, R):
@@ -213,11 +213,11 @@ class MasterReportForm(LoginRequiredMixin, View):
         resp = {
             'data':list(qset)
         }
-        return JsonResponse(data=resp, status=200)
+        return JsonResponse(data = resp, status = 200)
 
 
 class MasterReportBelonging(LoginRequiredMixin, View):
-    model=am.QuestionSet
+    model = am.QuestionSet
     def get(self, request, *args, **kwargs):
         R = request.GET
         if R.get('dataSource') == 'sitereporttemplate'  and R.get('parent'):
@@ -294,12 +294,12 @@ class ConfigSiteReportTemplate(LoginRequiredMixin, View):
             objs =  P['model'].objects.get_configured_sitereporttemplates(
                     P['related'], P['fields']
                 )
-            return rp.JsonResponse({'data':list(objs)}, status=200)
+            return rp.JsonResponse({'data':list(objs)}, status = 200)
         
         elif R.get('action') == 'form':
-            cxt = {'reporttemp_form':P['form_class'](initial=P['initial'], request=request)}
+            cxt = {'reporttemp_form':P['form_class'](initial = P['initial'], request = request)}
             return render(request, P['template_form'], cxt)
 
         elif R.get('action') =='loadQuestions':
             qset =  am.Question.objects.questions_of_client(request)
-            return rp.JsonResponse({'items':list(qset), 'total_count':len(qset)}, status=200)
+            return rp.JsonResponse({'items':list(qset), 'total_count':len(qset)}, status = 200)

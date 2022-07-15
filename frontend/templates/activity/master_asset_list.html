@@ -130,7 +130,7 @@
 					action: function(e, dt, node, config){
                         const params = {
                             'modal_id'    : modal_id,
-                            'url'         : `${urlname}?action=form`,
+                            'url'         : `${urlname}?action = form`,
                             'beforeSend'  : checkpointBeforeSend }
 						fire_ajax_get(params)
 						.done((data, status, xhr) => {
@@ -231,7 +231,7 @@
 	//delete ajax request 
 	function isCheckpointDeleted(id){ 
 		console.log("id ", id)
-		const params = {url:`${urlname}?action=delete&id=${id}`}
+		const params = {url:`${urlname}?action = delete&id=${id}`}
 		fire_ajax_get(params)
 		.done((data, status, xhr) => {
 			if(!xhr.status === 200){

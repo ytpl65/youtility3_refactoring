@@ -11,7 +11,7 @@
 {% block pagebreadcumb %}
 <!--will call parent contents -->
 {{ super() }}
-<li class="breadcrumb-item pe-3"><a href="{{ url('reports:config_sitereport_template') }}?template=true" class="pe-3">Site Report Templates</a></li>
+<li class="breadcrumb-item pe-3"><a href="{{ url('reports:config_sitereport_template') }}?template = true" class="pe-3">Site Report Templates</a></li>
 <li class="breadcrumb-item pe-3"><a href="javascript:void(0)" class="pe-3">Site Report Template Form</a></li>
 {% endblock pagebreadcumb %}
 <!-------------------------- END PAGE BREADCUMB ------------------------->
@@ -219,7 +219,7 @@ Site Report Template
             
             //$("#DTE_Field_question").djangoSelect2()
             var params = {
-                url: "{{ url('reports:config_sitereport_template') }}?action=loadQuestions",
+                url: "{{ url('reports:config_sitereport_template') }}?action = loadQuestions",
                 id: "#DTE_Field_question",
                 item: 'Questoins'
             }
@@ -292,7 +292,7 @@ Site Report Template
         //datatable configuration tabSiteReports       
         var parentTable = $("#tabSitereports").DataTable({
             ajax:{
-                url: "{{ url('reports:config_sitereport_template') }}?get_reports=true",
+                url: "{{ url('reports:config_sitereport_template') }}?get_reports = true",
                 
             },
             responsive: true,
@@ -321,7 +321,7 @@ Site Report Template
         //report questoins
         var chlldTable =$("#tabchildReport").DataTable({
             ajax:{
-                url: "{{ url('reports:config_sitereport_template') }}?action=saveChildQuestion",
+                url: "{{ url('reports:config_sitereport_template') }}?action = saveChildQuestion",
                 data:function(d){
                     var selected = parentTable.row({selected:true});
                     if(selected.length > 0){
@@ -371,7 +371,7 @@ Site Report Template
                     'success'
                 ).then(function () {
                     formSaved = true
-                    window.location.replace(data.url + `?id=${data.id}&template=true`);
+                    window.location.replace(data.url + `?id=${data.id}&template = true`);
                 })
             })
             .fail((xhr, status, error) => {

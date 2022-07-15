@@ -87,7 +87,7 @@ def detect_QR(cv2, decode, np, time):
         msg = """Please check your webcam's power 
                 on/off or try connecting it to different usb slot"""
         status = 404
-    return rp.JsonResponse({"message":msg, 'title':title, 'decoded':code}, status=status)
+    return rp.JsonResponse({"message":msg, 'title':title, 'decoded':code}, status = status)
 
 def get_actual_img(code, detectFace):
     log.debug("get_actual_img started")
@@ -125,7 +125,7 @@ def recognize_face(cv2, np, time, code):
                 log.debug("camera is running %s"%(x))
                 cv2.imshow("Attendance", img)
                 imgS = cv2.resize(img, (0,0), None, 0.25, 0.25)
-                obj = DeepFace.verify(actual_face, imgS, model_name='Facenet', enforce_detection=False)
+                obj = DeepFace.verify(actual_face, imgS, model_name='Facenet', enforce_detection = False)
                 if hasattr(obj, 'verified') and obj['verified']:
                     detected = True
                 if time.time() > timeOut:
@@ -152,6 +152,6 @@ def recognize_face(cv2, np, time, code):
                 on/off or try connecting it to different usb slot"""
         status = 404
     log.debug("msg: %s, title: %s, decoded:%s"%(msg, title, code))
-    return rp.JsonResponse({"message":msg, 'title':title, 'decoded':code}, status=status)
+    return rp.JsonResponse({"message":msg, 'title':title, 'decoded':code}, status = status)
 
 

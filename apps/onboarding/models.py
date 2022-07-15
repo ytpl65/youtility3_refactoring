@@ -63,25 +63,25 @@ def bu_defaults():
 
 class Bt(BaseModel, TenantAwareModel, HeirarchyModel):
 
-    #id= models.BigIntegerField(primary_key=True)
-    bucode              = models.CharField(_('Code'), max_length=30)
-    bupreferences      = models.JSONField(_('bupreferences'), null=True, default=bu_defaults,  encoder=DjangoJSONEncoder, blank=True)
-    identifier          = models.ForeignKey('TypeAssist', null=True, blank=True, on_delete=models.RESTRICT, related_name="bu_idfs", verbose_name='Identifier')
-    buname              = models.CharField(_('Name'), max_length=200)
-    butree              = models.CharField(_('Bu Path'), null=True, blank=True, max_length=300, default="")
-    butype              = models.ForeignKey('TypeAssist', on_delete=models.RESTRICT,  null=True, blank=True,  related_name="bu_butypes", verbose_name="Type")
-    parent              = models.ForeignKey('self', null=True, blank=True, on_delete=models.RESTRICT, related_name="children", verbose_name="Belongs To")
-    enable              = models.BooleanField(_("Enable"), default=True)
-    iswarehouse         = models.BooleanField(_("Is Warehouse"), default=False)
-    gpsenable           = models.BooleanField(_("GPS Enable"), default=False)
-    enablesleepingguard = models.BooleanField(_("Enable SleepingGuard"), default=False)
-    skipsiteaudit       = models.BooleanField(_("Skip SiteAudit"), default=False)
-    siincludes          = ArrayField(models.CharField(max_length=50, blank=True), verbose_name= _("Site Inclides"), null=True, blank=True)
-    deviceevent         = models.BooleanField(_("Device Event"), default=False)
-    pdist               = models.FloatField(_("pdist"), default=0.0, blank=True, null=True)
-    gpslocation         = PointField(_('GPS Location'),null=True, blank=True, geography=True, srid=4326)
-    isvendor            = models.BooleanField(_("Is Vendor"), default=False)
-    isserviceprovider  = models.BooleanField(_("Is ServiceProvider"), default=False)
+    #id= models.BigIntegerField(primary_key = True)
+    bucode              = models.CharField(_('Code'), max_length = 30)
+    bupreferences      = models.JSONField(_('bupreferences'), null = True, default = bu_defaults,  encoder = DjangoJSONEncoder, blank = True)
+    identifier          = models.ForeignKey('TypeAssist', null = True, blank = True, on_delete = models.RESTRICT, related_name="bu_idfs", verbose_name='Identifier')
+    buname              = models.CharField(_('Name'), max_length = 200)
+    butree              = models.CharField(_('Bu Path'), null = True, blank = True, max_length = 300, default="")
+    butype              = models.ForeignKey('TypeAssist', on_delete = models.RESTRICT,  null = True, blank = True,  related_name="bu_butypes", verbose_name="Type")
+    parent              = models.ForeignKey('self', null = True, blank = True, on_delete = models.RESTRICT, related_name="children", verbose_name="Belongs To")
+    enable              = models.BooleanField(_("Enable"), default = True)
+    iswarehouse         = models.BooleanField(_("Is Warehouse"), default = False)
+    gpsenable           = models.BooleanField(_("GPS Enable"), default = False)
+    enablesleepingguard = models.BooleanField(_("Enable SleepingGuard"), default = False)
+    skipsiteaudit       = models.BooleanField(_("Skip SiteAudit"), default = False)
+    siincludes          = ArrayField(models.CharField(max_length = 50, blank = True), verbose_name= _("Site Inclides"), null = True, blank = True)
+    deviceevent         = models.BooleanField(_("Device Event"), default = False)
+    pdist               = models.FloatField(_("pdist"), default = 0.0, blank = True, null = True)
+    gpslocation         = PointField(_('GPS Location'),null = True, blank = True, geography = True, srid = 4326)
+    isvendor            = models.BooleanField(_("Is Vendor"), default = False)
+    isserviceprovider  = models.BooleanField(_("Is ServiceProvider"), default = False)
 
     objects = BtManager()
 
@@ -102,15 +102,15 @@ class Bt(BaseModel, TenantAwareModel, HeirarchyModel):
 
 
 class Contract(BaseModel, TenantAwareModel):
-    bu               = models.ForeignKey('Bt', null=True, on_delete=models.RESTRICT,  related_name='contract_bu', verbose_name='Site')
-    customer         = models.ForeignKey('Bt', null=True, on_delete=models.RESTRICT, related_name='contract_customer', verbose_name='Customer')
-    contractname       = models.CharField(max_length=50)
-    contractstartdate = models.DateField(null=True)
-    contractenddate   = models.DateField(null=True)
-    enable             = models.BooleanField(default=True)
-    isaddposting       = models.BooleanField(default=False)
+    bu               = models.ForeignKey('Bt', null = True, on_delete = models.RESTRICT,  related_name='contract_bu', verbose_name='Site')
+    customer         = models.ForeignKey('Bt', null = True, on_delete = models.RESTRICT, related_name='contract_customer', verbose_name='Customer')
+    contractname       = models.CharField(max_length = 50)
+    contractstartdate = models.DateField(null = True)
+    contractenddate   = models.DateField(null = True)
+    enable             = models.BooleanField(default = True)
+    isaddposting       = models.BooleanField(default = False)
     revno              = models.IntegerField()
-    remarks            = models.CharField(null=True, max_length=50)
+    remarks            = models.CharField(null = True, max_length = 50)
 
     class Meta(BaseModel.Meta):
         db_table = 'contract'
@@ -119,7 +119,7 @@ class Contract(BaseModel, TenantAwareModel):
                 fields=['contractname', 'revno', 'bu'],
                 name='cname_revno_bu_uk'),
             models.CheckConstraint(
-                check=models.Q(revno__gte=0),
+                check = models.Q(revno__gte = 0),
                 name='revno_gte_0_ck')]
         get_latest_by = ["mdtz", 'cdtz']
 
@@ -128,17 +128,17 @@ class Contract(BaseModel, TenantAwareModel):
 
 
 class ContractDetail(BaseModel, TenantAwareModel):
-    contract  = models.ForeignKey('Contract', null=True, on_delete=models.RESTRICT, related_name="cd_contract", verbose_name='Contract')
-    worktype    = models.ForeignKey('TypeAssist', null=True, on_delete=models.RESTRICT, related_name="cd_worktype", verbose_name='Work Type')
+    contract  = models.ForeignKey('Contract', null = True, on_delete = models.RESTRICT, related_name="cd_contract", verbose_name='Contract')
+    worktype    = models.ForeignKey('TypeAssist', null = True, on_delete = models.RESTRICT, related_name="cd_worktype", verbose_name='Work Type')
     quantity    = models.IntegerField()
-    cdstartdate = models.DateTimeField(null=True)
-    cdenddate   = models.DateField(null=True)
+    cdstartdate = models.DateTimeField(null = True)
+    cdenddate   = models.DateField(null = True)
 
     class Meta(BaseModel.Meta):
         db_table = 'contractdetails'
         constraints = [
             models.CheckConstraint(
-                check=models.Q(quantity__gte=0),
+                check = models.Q(quantity__gte = 0),
                 name='qty_gte_0_ck')]
 
     def __str__(self):
@@ -146,15 +146,15 @@ class ContractDetail(BaseModel, TenantAwareModel):
 
 
 class Shift(BaseModel, TenantAwareModel):
-    #id= models.BigIntegerField(primary_key=True)
-    bu                   = models.ForeignKey('Bt', null=True, on_delete=models.RESTRICT,related_name="shift_bu", verbose_name='Site')
-    shiftname            = models.CharField(max_length=50, verbose_name="Name")
-    shiftduration        = models.IntegerField(null=True, verbose_name="Shift Duration")
+    #id= models.BigIntegerField(primary_key = True)
+    bu                   = models.ForeignKey('Bt', null = True, on_delete = models.RESTRICT,related_name="shift_bu", verbose_name='Site')
+    shiftname            = models.CharField(max_length = 50, verbose_name="Name")
+    shiftduration        = models.IntegerField(null = True, verbose_name="Shift Duration")
     starttime            = models.TimeField(verbose_name="Start time")
     endtime              = models.TimeField(verbose_name='End time')
-    nightshiftappicable = models.BooleanField(default=True, verbose_name="Night Shift Applicable")
-    captchafreq          = models.IntegerField(default=10, null=True)
-    enable               = models.BooleanField(verbose_name='Enable', default=True)
+    nightshiftappicable = models.BooleanField(default = True, verbose_name="Night Shift Applicable")
+    captchafreq          = models.IntegerField(default = 10, null = True)
+    enable               = models.BooleanField(verbose_name='Enable', default = True)
 
     class Meta(BaseModel.Meta):
         db_table = 'shift'
@@ -170,28 +170,28 @@ class Shift(BaseModel, TenantAwareModel):
 
 
 class SitePeople(BaseModel, TenantAwareModel):
-    #id= models.BigIntegerField(primary_key=True)
-    bu                  = models.ForeignKey('Bt', null=True, on_delete=models.RESTRICT, related_name="sp_bu")
-    people              = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, on_delete=models.RESTRICT,  related_name="sp_people")
-    reportto            = models.ForeignKey(settings.AUTH_USER_MODEL, null=True,on_delete=models.RESTRICT,  related_name="sp_reportto")
-    shift               = models.ForeignKey('Shift', null=True, on_delete=models.RESTRICT, related_name="sp_shift")
-    worktype            = models.ForeignKey('TypeAssist', null=True, on_delete=models.RESTRICT,  related_name="sp_worktype")
-    contract            = models.ForeignKey('Contract', null=True, on_delete=models.RESTRICT, related_name="sp_contract")
-    contractdetail      = models.ForeignKey('ContractDetail', null=True, on_delete=models.RESTRICT, related_name="sp_contractdetail")
+    #id= models.BigIntegerField(primary_key = True)
+    bu                  = models.ForeignKey('Bt', null = True, on_delete = models.RESTRICT, related_name="sp_bu")
+    people              = models.ForeignKey(settings.AUTH_USER_MODEL, null = True, on_delete = models.RESTRICT,  related_name="sp_people")
+    reportto            = models.ForeignKey(settings.AUTH_USER_MODEL, null = True,on_delete = models.RESTRICT,  related_name="sp_reportto")
+    shift               = models.ForeignKey('Shift', null = True, on_delete = models.RESTRICT, related_name="sp_shift")
+    worktype            = models.ForeignKey('TypeAssist', null = True, on_delete = models.RESTRICT,  related_name="sp_worktype")
+    contract            = models.ForeignKey('Contract', null = True, on_delete = models.RESTRICT, related_name="sp_contract")
+    contractdetail      = models.ForeignKey('ContractDetail', null = True, on_delete = models.RESTRICT, related_name="sp_contractdetail")
     fromdt              = models.DateField()
     uptodt              = models.DateField()
-    siteowner           = models.BooleanField(default=False)
-    seqno                = models.IntegerField(default=1)
-    posting_revision    = models.IntegerField(default=1)
-    webcapability       = models.CharField(null=True, max_length=1000)
-    mobilecapability    = models.CharField(null=True, max_length=1000)
-    reportcapability    = models.CharField(null=True, max_length=1000)
-    enable              = models.BooleanField(default=True)
-    emergencycontact    = models.BooleanField(null=True, default=False)
-    ackdate             = models.DateTimeField(null=True, auto_now_add=True)
-    isreliver           = models.BooleanField(null=True, default=False)
-    checkpost           = models.BigIntegerField(null=True)
-    enablesleepingguard = models.BooleanField(default=False)
+    siteowner           = models.BooleanField(default = False)
+    seqno                = models.IntegerField(default = 1)
+    posting_revision    = models.IntegerField(default = 1)
+    webcapability       = models.CharField(null = True, max_length = 1000)
+    mobilecapability    = models.CharField(null = True, max_length = 1000)
+    reportcapability    = models.CharField(null = True, max_length = 1000)
+    enable              = models.BooleanField(default = True)
+    emergencycontact    = models.BooleanField(null = True, default = False)
+    ackdate             = models.DateTimeField(null = True, auto_now_add = True)
+    isreliver           = models.BooleanField(null = True, default = False)
+    checkpost           = models.BigIntegerField(null = True)
+    enablesleepingguard = models.BooleanField(default = False)
 
     class Meta(BaseModel.Meta):
         db_table = 'sitepeople'
@@ -205,12 +205,12 @@ class SitePeople(BaseModel, TenantAwareModel):
 
 
 class TypeAssist(BaseModel, TenantAwareModel):
-    #id= models.BigIntegerField(primary_key=True)
-    tacode = models.CharField(_("tacode"), max_length=50, unique=True)
-    taname = models.CharField(_("taname"), max_length=100)
-    tatype = models.ForeignKey( "self", null=True, blank=True, on_delete=models.RESTRICT, related_name='children')
-    bu     = models.ForeignKey("Bt", null=True, blank=True, on_delete=models.RESTRICT, related_name='ta_bus')
-    client = models.ForeignKey("onboarding.Bt",  null=True, blank=True, on_delete=models.RESTRICT, related_name='ta_clients')
+    #id= models.BigIntegerField(primary_key = True)
+    tacode = models.CharField(_("tacode"), max_length = 50, unique = True)
+    taname = models.CharField(_("taname"), max_length = 100)
+    tatype = models.ForeignKey( "self", null = True, blank = True, on_delete = models.RESTRICT, related_name='children')
+    bu     = models.ForeignKey("Bt", null = True, blank = True, on_delete = models.RESTRICT, related_name='ta_bus')
+    client = models.ForeignKey("onboarding.Bt",  null = True, blank = True, on_delete = models.RESTRICT, related_name='ta_clients')
 
     objects = TypeAssistManager()
 
@@ -256,13 +256,13 @@ def formData_default():
 
 
 class WizardDraft(models.Model):
-    #id= models.BigIntegerField(primary_key=True)
-    createdby   = models.OneToOneField(settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.CASCADE, related_name="created_by")
-    cdtz        = models.DateTimeField(auto_now_add=True, auto_now=False)
-    mdtz        = models.DateTimeField(auto_now=True)
-    bu          = models.ForeignKey("Bt", null=True, blank=True,on_delete=models.CASCADE, related_name='wiz_bus')
-    wizard_data = models.JSONField(null=True, default=wizard_default,  encoder=DjangoJSONEncoder, blank=True)
-    formdata   = models.JSONField( null=True, default=formData_default,  encoder=DjangoJSONEncoder, blank=True)
+    #id= models.BigIntegerField(primary_key = True)
+    createdby   = models.OneToOneField(settings.AUTH_USER_MODEL, null = True, blank = True, on_delete = models.CASCADE, related_name="created_by")
+    cdtz        = models.DateTimeField(auto_now_add = True, auto_now = False)
+    mdtz        = models.DateTimeField(auto_now = True)
+    bu          = models.ForeignKey("Bt", null = True, blank = True,on_delete = models.CASCADE, related_name='wiz_bus')
+    wizard_data = models.JSONField(null = True, default = wizard_default,  encoder = DjangoJSONEncoder, blank = True)
+    formdata   = models.JSONField( null = True, default = formData_default,  encoder = DjangoJSONEncoder, blank = True)
 
 
     class Meta:
@@ -278,16 +278,16 @@ class WizardDraft(models.Model):
 
 
 class GeofenceMaster(BaseModel):
-    #id= models.BigIntegerField(primary_key=True)
-    gfcode        = models.CharField(_("Code"), max_length=100)
-    gfname        = models.CharField(_("Name"), max_length=100)
-    alerttext     = models.CharField(_("Alert Text"), max_length=100)
-    geofence      = PolygonField(_("GeoFence"), srid=4326, geography=True, null=True,)
-    alerttogroup  = models.ForeignKey("peoples.Pgroup",null=True, verbose_name=_( "Alert to Group"), on_delete=models.RESTRICT)
-    alerttopeople = models.ForeignKey("peoples.People",null=True, verbose_name=_(""), on_delete=models.RESTRICT)
-    client        = models.ForeignKey("onboarding.Bt",null=True, verbose_name=_("Client"), on_delete=models.RESTRICT, related_name="for_clients")
-    bu            = models.ForeignKey("onboarding.Bt", null=True, verbose_name=_( "Site"), on_delete=models.RESTRICT, related_name='for_sites')
-    enable        = models.BooleanField(_("Enable"), default=True)
+    #id= models.BigIntegerField(primary_key = True)
+    gfcode        = models.CharField(_("Code"), max_length = 100)
+    gfname        = models.CharField(_("Name"), max_length = 100)
+    alerttext     = models.CharField(_("Alert Text"), max_length = 100)
+    geofence      = PolygonField(_("GeoFence"), srid = 4326, geography = True, null = True,)
+    alerttogroup  = models.ForeignKey("peoples.Pgroup",null = True, verbose_name = _( "Alert to Group"), on_delete = models.RESTRICT)
+    alerttopeople = models.ForeignKey("peoples.People",null = True, verbose_name = _(""), on_delete = models.RESTRICT)
+    client        = models.ForeignKey("onboarding.Bt",null = True, verbose_name = _("Client"), on_delete = models.RESTRICT, related_name="for_clients")
+    bu            = models.ForeignKey("onboarding.Bt", null = True, verbose_name = _( "Site"), on_delete = models.RESTRICT, related_name='for_sites')
+    enable        = models.BooleanField(_("Enable"), default = True)
 
     objects = GeofenceManager()
 

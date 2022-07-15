@@ -24,49 +24,49 @@ class PeopleResource(resources.ModelResource, BaseFieldSet2):
     department = fields.Field(
         column_name='department',
         attribute='department',
-        widget=wg.ForeignKeyWidget(om.TypeAssist, 'tacode'),
+        widget = wg.ForeignKeyWidget(om.TypeAssist, 'tacode'),
         default='NONE'
     )
     designation = fields.Field(
         column_name='designation',
         attribute='designation',
-        widget=wg.ForeignKeyWidget(om.TypeAssist, 'tacode'),
+        widget = wg.ForeignKeyWidget(om.TypeAssist, 'tacode'),
         default='NONE'
     )
     peopletype = fields.Field(
         column_name='peopletype',
         attribute='peopletype',
-        widget=wg.ForeignKeyWidget(om.TypeAssist, 'tacode'),
+        widget = wg.ForeignKeyWidget(om.TypeAssist, 'tacode'),
         default='NONE'
     )
     reportto = fields.Field(
         column_name='reportto',
         attribute='reportto',
-        widget=wg.ForeignKeyWidget(pm.People, 'peoplecode'),
+        widget = wg.ForeignKeyWidget(pm.People, 'peoplecode'),
         default='NONE'
     )
     dateofbirth = fields.Field(
         column_name='dateofbirth',
         attribute='dateofbirth',
-        widget=wg.DateWidget()
+        widget = wg.DateWidget()
     )
     dateofjoin = fields.Field(
         column_name='dateofjoin',
         attribute='dateofjoin',
-        widget=wg.DateWidget()
+        widget = wg.DateWidget()
     )
 
     client = fields.Field(
         column_name='client',
         attribute='client',
-        widget=wg.ForeignKeyWidget(om.Bt, 'bucode'),
+        widget = wg.ForeignKeyWidget(om.Bt, 'bucode'),
         default='NONE'
     )
     bu = fields.Field(
         column_name='bu',
         attribute='bu',
-        widget=wg.ForeignKeyWidget(om.Bt, 'bucode'),
-        saves_null_values=True,
+        widget = wg.ForeignKeyWidget(om.Bt, 'bucode'),
+        saves_null_values = True,
         default='NONE'
     )
 
@@ -126,7 +126,7 @@ class PgroupResource(resources.ModelResource, BaseFieldSet2):
     identifier = fields.Field(
         column_name='identifier',
         attribute='identifier',
-        widget=wg.ForeignKeyWidget(om.TypeAssist, 'tacode')
+        widget = wg.ForeignKeyWidget(om.TypeAssist, 'tacode')
     )
 
     class Meta:
@@ -151,12 +151,12 @@ class PgbelongingResource(resources.ModelResource, BaseFieldSet2):
     pgroup = fields.Field(
         column_name='pgroup',
         attribute='pgroup',
-        widget=wg.ForeignKeyWidget(pm.Pgroup, 'name')
+        widget = wg.ForeignKeyWidget(pm.Pgroup, 'name')
     )
     people = fields.Field(
         column_name='people',
         attribute='people',
-        widget=wg.ForeignKeyWidget(pm.People, 'peoplecode')
+        widget = wg.ForeignKeyWidget(pm.People, 'peoplecode')
     )
 
     class Meta:
@@ -182,7 +182,7 @@ class CapabilityResource(resources.ModelResource, BaseFieldSet2):
     parent = fields.Field(
         column_name='parent',
         attribute='parent',
-        widget=wg.ForeignKeyWidget(pm.Capability, 'capscode'))
+        widget = wg.ForeignKeyWidget(pm.Capability, 'capscode'))
 
     class Meta:
         model = Capability

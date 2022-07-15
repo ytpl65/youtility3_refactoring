@@ -7,14 +7,14 @@ class MultiAuthentcationBackend(BaseBackend):
     with either a username or an email address or mobileno.
     """
 
-    def authenticate(self, request, username=None, password=None):
+    def authenticate(self, request, username = None, password = None):
         '''authenticates user for login credentials'''
         ic("inside new authentication")
         from .models import People
         result = None
         try:
             user = People.objects.get(
-               Q(loginid = username) | Q(email=username) | Q(mobno=username))
+               Q(loginid = username) | Q(email = username) | Q(mobno = username))
             ic(user)
             pwd_valid = user.check_password(password)
             ic(pwd_valid)
@@ -30,7 +30,7 @@ class MultiAuthentcationBackend(BaseBackend):
         from .models import People
         result = None
         try:
-            user = People.objects.get(pk=user_id)
+            user = People.objects.get(pk = user_id)
             result = user
         except People.DoesNotExist:
             pass

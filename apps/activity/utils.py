@@ -9,7 +9,7 @@ log = logging.getLogger("__main__")
 
 def get_assetincludes_choices():
     qset = av.Asset.objects.filter(
-         ~Q(assetcode='NONE'), identifier='CHECKPOINT', enable=True).select_related(
+         ~Q(assetcode='NONE'), identifier='CHECKPOINT', enable = True).select_related(
             'parent').annotate(
             checkpoint = Concat(
                 'assetname', Value(" ("), 'assetcode', Value(")")))
@@ -17,7 +17,7 @@ def get_assetincludes_choices():
 
 def get_assetsmartplace_choices():
     qset = av.Asset.objects.filter(
-         ~Q(assetcode='NONE') & Q(identifier='SMARTPLACE') | Q(identifier='ASSET'), enable=True).select_related(
+         ~Q(assetcode='NONE') & Q(identifier='SMARTPLACE') | Q(identifier='ASSET'), enable = True).select_related(
             'parent').annotate(
             checkpoint = Concat(
                 'assetname', Value(" ("), 'assetcode', Value(")")))
@@ -25,7 +25,7 @@ def get_assetsmartplace_choices():
 
 
 
-def initialize_alerton_field(val, choices=False):
+def initialize_alerton_field(val, choices = False):
     pass
 
 
@@ -106,5 +106,5 @@ def insert_questions_to_qsetblng(assigned_questions, model, fields, request):
                 log.debug(f"""{" " * 8} {created} question {ques[1]} for QuestionSet {fields['qsetname']} [ended]""")
 
     except Exception:
-        log.critical("something went wrong", exc_info=True)
+        log.critical("something went wrong", exc_info = True)
         raise

@@ -8,10 +8,10 @@ from django_select2 import forms as s2forms
 
 class MasterReportTemplate(forms.ModelForm):
     required_css_class = "required"
-    showto_allsites    = forms.BooleanField(initial=False, required=False, label='Show to all sites')
-    buincludes         = forms.MultipleChoiceField(widget=s2forms.Select2MultipleWidget, label='Buisiness Units')
-    site_type_includes = forms.MultipleChoiceField(widget=s2forms.Select2MultipleWidget, label='Sitetype')
-    site_grp_includes  = forms.MultipleChoiceField(widget=s2forms.Select2MultipleWidget, label='Sitegroup')
+    showto_allsites    = forms.BooleanField(initial = False, required = False, label='Show to all sites')
+    buincludes         = forms.MultipleChoiceField(widget = s2forms.Select2MultipleWidget, label='Buisiness Units')
+    site_type_includes = forms.MultipleChoiceField(widget = s2forms.Select2MultipleWidget, label='Sitetype')
+    site_grp_includes  = forms.MultipleChoiceField(widget = s2forms.Select2MultipleWidget, label='Sitegroup')
 
     class Meta:
         model = am.QuestionSet

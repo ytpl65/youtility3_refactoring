@@ -34,7 +34,7 @@ var table = null;
 $(document).ready(() => {
     var editor = new $.fn.dataTable.Editor( {
         "ajax": {
-            "url": "{{ url('onboarding:editortypeassist') }}?action=editor",
+            "url": "{{ url('onboarding:editortypeassist') }}?action = editor",
             "data":{
                 "csrfmiddlewaretoken": "{{ csrf_token }}"
             }
@@ -58,7 +58,7 @@ $(document).ready(() => {
 $('#editorTa').DataTable( {
         dom: "Bfrtip",
         ajax: {
-            url: "{{ url('onboarding:editortypeassist') }}?action=list",
+            url: "{{ url('onboarding:editortypeassist') }}?action = list",
             type: "POST",
             data:{"csrfmiddlewaretoken": "{{ csrf_token }}" }
         },

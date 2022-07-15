@@ -10,7 +10,7 @@
 {% block pagebreadcumb %}
 <!--will call parent contents -->
 {{ super() }}
-<li class="breadcrumb-item pe-3"><a href="{{ url('schedhuler:jobschdtasks') }}?template=true" class="pe-3">Schedhuled Tasks</a></li>
+<li class="breadcrumb-item pe-3"><a href="{{ url('schedhuler:jobschdtasks') }}?template = true" class="pe-3">Schedhuled Tasks</a></li>
 <li class="breadcrumb-item pe-3"><a href="javascript:void(0)" class="pe-3">Schedhule Task Form</a></li>
 {% endblock pagebreadcumb %}
 <!-------------------------- END PAGE BREADCUMB ------------------------->
@@ -313,7 +313,7 @@ Schedhule Task
     $(document).ready(function(){
         //set ctzoffset
   	    $("#id_ctzoffset").val(-new Date().getTimezoneOffset())
-        formSaved=true
+        formSaved = true
         //toggle people and pgroup field based on radio button value
         if ('{{schdtaskform.instance.id}}' in ('None' || "")) {
             showHideSelectField('PEOPLE')

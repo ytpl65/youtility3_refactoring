@@ -331,8 +331,8 @@ GRAPHENE = {
 from datetime import timedelta
 GRAPHQL_JWT = {
     "JWT_VERIFY_EXPIRATION": True,
-    "JWT_EXPIRATION_DELTA": timedelta(minutes=7*24*60),
-    "JWT_REFRESH_EXPIRATION_DELTA": timedelta(days=7),
+    "JWT_EXPIRATION_DELTA": timedelta(minutes = 7*24*60),
+    "JWT_REFRESH_EXPIRATION_DELTA": timedelta(days = 7),
     # optional
     "JWT_LONG_RUNNING_REFRESH_TOKEN": True,
 }
@@ -439,7 +439,7 @@ EMAIL_USE_TLS = True
 TAGGIT_CASE_INSENSITIVE = True
 
 #GOOGLE MAP API KEY...
-GOOGLE_MAP_SECRET_KEY =str(os.getenv('GOOGLE_MAP_SECRET_KEY'))
+GOOGLE_MAP_SECRET_KEY  = str(os.getenv('GOOGLE_MAP_SECRET_KEY'))
 
 
 

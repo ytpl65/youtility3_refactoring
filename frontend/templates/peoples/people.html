@@ -108,7 +108,7 @@ People List
 					action: function(e, dt, node, config){
                         const params = {
                             modal_id    : "#modal-people",
-                            url         : "{{ url('peoples:people') }}?action=form",
+                            url         : "{{ url('peoples:people') }}?action = form",
                             beforeSend  : peopleBeforeSend }
 						fire_ajax_get(params)
 						.done((data, status, xhr) => {
@@ -185,7 +185,7 @@ People List
     //delete ajax request 
 	function isCapDeleted(id){ 
 		console.log("id ", id)
-		const params = {url:`{{ url('peoples:people') }}?action=delete&id=${id}`}
+		const params = {url:`{{ url('peoples:people') }}?action = delete&id=${id}`}
 		fire_ajax_get(params)
 		.done((data, status, xhr) => {
 			if(!xhr.status === 200){

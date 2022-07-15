@@ -52,7 +52,7 @@ class AttendanceForm(forms.ModelForm):
 
 def clean_geometry(val):
     try:
-        val = GEOSGeometry(val, srid=4326)
+        val = GEOSGeometry(val, srid = 4326)
     except ValueError as e:
         raise forms.ValidationError('lat lng string input unrecognized!') from e
     else: return val
@@ -61,13 +61,13 @@ def clean_geometry(val):
 class ConveyanceForm(forms.ModelForm):
     required_css_class = "required"
     transportmodes = forms.MultipleChoiceField(
-        choices=atdm.PeopleEventlog.TransportMode.choices,
-        required=True,
-        widget=s2forms.Select2MultipleWidget,
+        choices = atdm.PeopleEventlog.TransportMode.choices,
+        required = True,
+        widget = s2forms.Select2MultipleWidget,
         label='Transport Modes')
 
     class Meta:
-        model=atdm.PeopleEventlog
+        model = atdm.PeopleEventlog
         fields = ['people', 'transportmodes', 'expamt', 'duration', 'ctzoffset',
                   'distance', 'startlocation', 'endlocation', 'punchintime', 'punchouttime']
         widgets = {
@@ -122,7 +122,7 @@ class ConveyanceForm(forms.ModelForm):
 
 
 class TrackingForm(forms.ModelForm):
-    gpslocation = forms.CharField(max_length=200, required=True)
+    gpslocation = forms.CharField(max_length = 200, required = True)
     class Meta:
         model = atdm.Tracking
         fields = ['deviceid', 'gpslocation', 'receiveddate', 

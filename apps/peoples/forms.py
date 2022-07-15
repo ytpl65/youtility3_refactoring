@@ -14,17 +14,17 @@ from apps.core import utils
 
 class LoginForm(forms.Form):
     username = forms.CharField(
-        max_length=50,
-        min_length=4,
-        required=True,
-        widget=forms.TextInput(
+        max_length = 50,
+        min_length = 4,
+        required = True,
+        widget = forms.TextInput(
             attrs={'placeholder': 'Username or Phone or Email'}),
         label='Username')
 
     password = forms.CharField(
-        max_length=25,
-        required=True,
-        widget=forms.PasswordInput(attrs={"placeholder": 'Enter Password',
+        max_length = 25,
+        required = True,
+        widget = forms.PasswordInput(attrs={"placeholder": 'Enter Password',
                                           'autocomplete': 'off', 'data-toggle': 'password'}),
         label='Password')
 
@@ -40,7 +40,7 @@ class LoginForm(forms.Form):
             elif re.match(mobile_regex, val):
                 validate_mobileno(val)
             else:
-                user = pm.People.objects.filter(loginid__exact=val)
+                user = pm.People.objects.filter(loginid__exact = val)
                 ic(user)
                 if not user.exists():
                     raise forms.ValidationError(
@@ -81,17 +81,17 @@ class PeopleForm(forms.ModelForm):
         code='invalid_code')
 
     peoplecode = forms.CharField(
-        max_length=20,
-        required=True,
-        widget=forms.TextInput(
+        max_length = 20,
+        required = True,
+        widget = forms.TextInput(
             attrs={'style': 'text-transform:uppercase;',
                    'placeholder': 'Enter text not including any spaces'}),
         validators=[alpha_special],
         label="Code")
-    email = forms.EmailField(max_length=100,
-                             widget=forms.TextInput(attrs={'placeholder': 'Enter email address'}))
-    loginid = forms.CharField(max_length=30, required=True,
-                              widget=forms.TextInput(attrs={'placeholder': 'Enter text not including any spaces'}))
+    email = forms.EmailField(max_length = 100,
+                             widget = forms.TextInput(attrs={'placeholder': 'Enter email address'}))
+    loginid = forms.CharField(max_length = 30, required = True,
+                              widget = forms.TextInput(attrs={'placeholder': 'Enter text not including any spaces'}))
 
     class Meta:
         model = pm.People
@@ -208,8 +208,8 @@ class PgroupForm(forms.ModelForm):
         'invalid_code3': "[Invalid code] Code should not endwith '.' ",
     }
     peoples = forms.MultipleChoiceField(
-        required=True,
-        widget=s2forms.Select2MultipleWidget,
+        required = True,
+        widget = s2forms.Select2MultipleWidget,
         label="Select People")
 
     class Meta:
@@ -233,12 +233,12 @@ class PgroupForm(forms.ModelForm):
         return result
 
     def clean_peoples(self):
-        if val:=self.request.POST.get('peoples'):
+        if val := self.request.POST.get('peoples'):
             print(val)
 
 
 class SiteGroupForm(PgroupForm):
-    peoples=None
+    peoples = None
 
     def __init__(self, *args, **kwargs):
         self.request = kwargs.pop('request')
@@ -256,7 +256,7 @@ class PeopleGroupForm(PgroupForm):
         site = self.request.user.bu.bucode if self.request.user.bu else ""
         self.fields['identifier'].initial = om.TypeAssist.objects.get(tacode='PEOPLEGROUP')
         self.fields['peoples'].choices = pm.People.objects.select_related(
-            'bu').filter(~Q(peoplecode='NONE'), isadmin=False).values_list(
+            'bu').filter(~Q(peoplecode='NONE'), isadmin = False).values_list(
             'id', 'peoplename')
 
 
@@ -288,8 +288,8 @@ class CapabilityForm(forms.ModelForm):
         'invalid_code2': "Only these '-', '_' special characters are allowed in code",
         'invalid_code3': "Code's should not be endswith '.' ",
     }
-    parent = forms.ModelChoiceField(queryset=pm.Capability.objects.filter(Q(parent__capscode='NONE') | Q(capscode='NONE')),
-                                    label='Belongs to', widget=s2forms.Select2Widget)
+    parent = forms.ModelChoiceField(queryset = pm.Capability.objects.filter(Q(parent__capscode='NONE') | Q(capscode='NONE')),
+                                    label='Belongs to', widget = s2forms.Select2Widget)
 
     class Meta:
         model = pm.Capability
@@ -339,21 +339,21 @@ class PeopleExtrasForm(forms.Form):
 
     labels = {'mob': 'Mobile Capability', 'port': 'Portlet Capability',
               'report': 'Report Capability', 'web': 'Web Capability'}
-    andriodversion            = forms.CharField(max_length=2, required=False, label='Andriod Version')
-    appversion                = forms.CharField(max_length=8, required=False, label='App Version')
-    mobilecapability          = forms.MultipleChoiceField(required=False, label=labels['mob'], widget=s2forms.Select2MultipleWidget)
-    portletcapability         = forms.MultipleChoiceField(required=False, label=labels['port'], widget=s2forms.Select2MultipleWidget)
-    reportcapability          = forms.MultipleChoiceField(required=False, label=labels['report'], widget=s2forms.Select2MultipleWidget)
-    webcapability             = forms.MultipleChoiceField(required=False, label=labels['web'], widget=s2forms.Select2MultipleWidget)
-    loacationtracking         = forms.BooleanField(initial=False, required=False)
-    capturemlog               = forms.BooleanField(initial=False, required=False)
-    showalltemplates          = forms.BooleanField(initial=False, required=False, label="Show all Templates ")
-    debug                     = forms.BooleanField(initial=False, required=False)
-    showtemplatebasedonfilter = forms.BooleanField(initial=False, required=False, label="Display site wise templates")
-    blacklist                 = forms.BooleanField(initial=False, required=False)
-    assignsitegroup           = forms.MultipleChoiceField(required=False, label="Site Group", widget=s2forms.Select2MultipleWidget)
-    tempincludes              = forms.MultipleChoiceField(required=False, label="Template", widget=s2forms.Select2MultipleWidget)
-    mlogsendsto               = forms.CharField(max_length=25, required=False)
+    andriodversion            = forms.CharField(max_length = 2, required = False, label='Andriod Version')
+    appversion                = forms.CharField(max_length = 8, required = False, label='App Version')
+    mobilecapability          = forms.MultipleChoiceField(required = False, label = labels['mob'], widget = s2forms.Select2MultipleWidget)
+    portletcapability         = forms.MultipleChoiceField(required = False, label = labels['port'], widget = s2forms.Select2MultipleWidget)
+    reportcapability          = forms.MultipleChoiceField(required = False, label = labels['report'], widget = s2forms.Select2MultipleWidget)
+    webcapability             = forms.MultipleChoiceField(required = False, label = labels['web'], widget = s2forms.Select2MultipleWidget)
+    loacationtracking         = forms.BooleanField(initial = False, required = False)
+    capturemlog               = forms.BooleanField(initial = False, required = False)
+    showalltemplates          = forms.BooleanField(initial = False, required = False, label="Show all Templates ")
+    debug                     = forms.BooleanField(initial = False, required = False)
+    showtemplatebasedonfilter = forms.BooleanField(initial = False, required = False, label="Display site wise templates")
+    blacklist                 = forms.BooleanField(initial = False, required = False)
+    assignsitegroup           = forms.MultipleChoiceField(required = False, label="Site Group", widget = s2forms.Select2MultipleWidget)
+    tempincludes              = forms.MultipleChoiceField(required = False, label="Template", widget = s2forms.Select2MultipleWidget)
+    mlogsendsto               = forms.CharField(max_length = 25, required = False)
 
     def __init__(self, *args, **kwargs):
         session = kwargs.pop('session')
@@ -368,13 +368,13 @@ class PeopleExtrasForm(forms.Form):
         else:
             # if superadmin is logged in
             from .utils import get_caps_choices
-            self.fields['webcapability'].choices    = get_caps_choices(cfor=pm.Capability.Cfor.WEB)
+            self.fields['webcapability'].choices    = get_caps_choices(cfor = pm.Capability.Cfor.WEB)
             self.fields['mobilecapability'].choices = get_caps_choices(
-                cfor=pm.Capability.Cfor.MOB)
+                cfor = pm.Capability.Cfor.MOB)
             self.fields['portletcapability'].choices = get_caps_choices(
-                cfor=pm.Capability.Cfor.PORTLET)
+                cfor = pm.Capability.Cfor.PORTLET)
             self.fields['reportcapability'].choices = get_caps_choices(
-                cfor=pm.Capability.Cfor.REPORT)
+                cfor = pm.Capability.Cfor.REPORT)
         utils.initailize_form_fields(self)
 
     def is_valid(self) -> bool:
@@ -387,8 +387,8 @@ class PeopleExtrasForm(forms.Form):
 
 
 class PeopleGrpAllocation(forms.Form):
-    people = forms.ChoiceField(required=True, widget=s2forms.Select2Widget)
-    is_grouplead = forms.BooleanField(required=False, initial=False)
+    people = forms.ChoiceField(required = True, widget = s2forms.Select2Widget)
+    is_grouplead = forms.BooleanField(required = False, initial = False)
 
     def __init__(self, *args, **kwargs):
         request = kwargs.pop('request')
@@ -397,7 +397,7 @@ class PeopleGrpAllocation(forms.Form):
         site = request.user.bu.bucode if request.user.bu else ""
         self.fields['people'].choices = pm.People.objects.select_related(
             'bu').filter(
-            bu__bucode=site).values_list(
+            bu__bucode = site).values_list(
             'id', 'peoplename')
 
     def is_valid(self) -> bool:

@@ -67,7 +67,7 @@ class Attendance(LoginRequiredMixin, View):
                 msg = "attendance_view"
                 form = utils.get_instance_for_update(
                     data, self.params, msg, int(pk))
-                create=False
+                create = False
             else:
                 form = self.params['form_class'](data)
             if form.is_valid():
@@ -87,7 +87,7 @@ class Attendance(LoginRequiredMixin, View):
             logger.info("attendance form saved")
             data = {'success': "Record has been saved successfully",
                     'type': attd.peventtype}
-            return rp.JsonResponse(data, status=200)
+            return rp.JsonResponse(data, status = 200)
         except IntegrityError:
             return putils.handle_intergrity_error('Attendance')
 
@@ -95,7 +95,7 @@ class Attendance(LoginRequiredMixin, View):
 
 
 class Conveyance(LoginRequiredMixin, View):
-    model=atdm.PeopleEventlog,
+    model = atdm.PeopleEventlog,
     params = {
         'fields': [
             'punch_intime', 'punch_outtime', 'bu__buname', 
@@ -124,7 +124,7 @@ class Conveyance(LoginRequiredMixin, View):
         elif R.get('action', None) == 'form':
             cxt = {'conveyanceform': self.params['form_class'](),
                    'msg': "create conveyance requested"}
-            resp =render(request, self.params['template_form'], context=cxt)
+            resp  = render(request, self.params['template_form'], context = cxt)
 
         # handle delete request
         elif R.get('action', None) == "delete" and R.get('id', None):
@@ -134,19 +134,19 @@ class Conveyance(LoginRequiredMixin, View):
         # return form with instance for update
         elif R.get('id', None):
             obj = utils.get_model_obj(int(R['id']), request, self.params)
-            cxt = {'conveyanceform':self.params['form_class'](request=request, instance=obj),
+            cxt = {'conveyanceform':self.params['form_class'](request = request, instance = obj),
                     'edit':True}
-            resp = render(request, self.params['template_form'], context=cxt)
+            resp = render(request, self.params['template_form'], context = cxt)
 
         #return journey path of instance
         elif R.get('action') == 'getpath':
             data = atdm.PeopleEventlog.objects.getjourneycoords(R['conid'])
-            resp = rp.JsonResponse(data = {'obj':list(data)}, status=200)
+            resp = rp.JsonResponse(data = {'obj':list(data)}, status = 200)
         return resp
 
 
     def post(self, request, *args, **kwargs):
-        resp, create=None, True
+        resp, create = None, True
         try:
             #convert queryparams to python datatypes
             data = QueryDict(request.POST['formData'])
@@ -154,9 +154,9 @@ class Conveyance(LoginRequiredMixin, View):
                 msg = 'conveyance_view'
                 form = utils.get_instance_for_update(
                     data, self.params, msg, int(pk))
-                create=False
+                create = False
             else:
-                form = self.params['form_class'](data, request=request)
+                form = self.params['form_class'](data, request = request)
             ic(form.data)
             if form.is_valid():
                 resp = self.handle_valid_form(form, request, create)
@@ -172,10 +172,10 @@ class Conveyance(LoginRequiredMixin, View):
         logger.info('conveyance form is valid')
         from apps.core.utils import handle_intergrity_error
         try:
-            with transaction.atomic(using=utils.get_current_db_name()):
+            with transaction.atomic(using = utils.get_current_db_name()):
                 cy = form.save()
-                putils.save_userinfo(cy, request.user, request.session, create=create)
+                putils.save_userinfo(cy, request.user, request.session, create = create)
                 logger.info("conveyance form saved")
-                return rp.JsonResponse(data={'pk':cy.id}, status=200)
+                return rp.JsonResponse(data={'pk':cy.id}, status = 200)
         except IntegrityError:
             return handle_intergrity_error("conveyance")

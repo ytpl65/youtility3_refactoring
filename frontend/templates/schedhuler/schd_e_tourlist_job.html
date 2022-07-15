@@ -42,7 +42,7 @@ ext_schdtour_list = 'External ScheduleTour List',
         //datatable initialization
         table = $(table_id).DataTable({
             ajax:{
-                url: '{{ url("schedhuler:schd_external_tour") }}?action=list'
+                url: '{{ url("schedhuler:schd_external_tour") }}?action = list'
             },
 			columns:[
                 {data: 'id'},
@@ -77,7 +77,7 @@ ext_schdtour_list = 'External ScheduleTour List',
 					//action for add_new_button 
 					action: function(e, dt, node, config){
                         //This will send the page to the location specified
-        				window.location.href = "{{ url('schedhuler:schd_external_tour') }}?action=form";
+        				window.location.href = "{{ url('schedhuler:schd_external_tour') }}?action = form";
 					}
 				}
 			]

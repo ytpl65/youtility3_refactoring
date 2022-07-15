@@ -5,7 +5,7 @@ import django_filters.widgets as wg
 import django_select2.forms as s2forms
 
 def assigned_to_qs(queryset, name, value):
-        return queryset.filter(Q(aaatop__peoplename__icontains=value) | Q(pgroup__groupname__icontains=value))
+        return queryset.filter(Q(aaatop__peoplename__icontains = value) | Q(pgroup__groupname__icontains = value))
 
 ###################### JOB FILTER #########################
 class JobFilter(dfs.FilterSet):
@@ -35,7 +35,7 @@ class JobneedFilter(dfs.FilterSet):
 
 class SchdTourFilter(JobFilter):
     jobname      = dfs.CharFilter(field_name='jobname', lookup_expr='icontains', label='Name')
-    assignedto   = dfs.CharFilter(method=assigned_to_qs, label='People/Group')
+    assignedto   = dfs.CharFilter(method = assigned_to_qs, label='People/Group')
     planduration = dfs.CharFilter(field_name='planduration', lookup_expr='icontains', label='Duration')
     expirytime   = dfs.CharFilter(field_name='expirytime', lookup_expr='icontains', label='Exp Time')
     gracetime    = dfs.CharFilter(field_name='gracetime', lookup_expr='icontains', label='Grace Time')
@@ -69,10 +69,10 @@ class InternalTourFilter(dfs.FilterSet):
         ('INPROGRESS', 'Inprogress'),
         ('PARTIALLYCOMPLETED', 'Partially Completed')
     ]
-    plandatetime   = dfs.DateFromToRangeFilter(widget=wg.RangeWidget(attrs={'placeholder': 'YYYY/MM/DD'}))
+    plandatetime   = dfs.DateFromToRangeFilter(widget = wg.RangeWidget(attrs={'placeholder': 'YYYY/MM/DD'}))
     jobdesc        = dfs.CharFilter(field_name='jobdesc', lookup_expr='icontains', label='Description')
     jobstatus      = dfs.ChoiceFilter(field_name='jobstatus', choices = JOBSTATUSCHOICES, label="Stauts", widget = s2forms.Select2Widget)
-    assignedto     = dfs.CharFilter( method=assigned_to_qs, label='People/Group')
+    assignedto     = dfs.CharFilter( method = assigned_to_qs, label='People/Group')
     gracetime      = dfs.CharFilter(field_name='gracetime', lookup_expr='icontains', label='Grace Time')
     performedby   = dfs.CharFilter(field_name='performedby', lookup_expr='icontains', label='Performed By')
     expirydatetime = dfs.DateTimeFilter(field_name='expirydatetime', label="Exp. Datetime")
@@ -111,7 +111,7 @@ class TicketListFilter(JobneedFilter):
     ]
     cdtz            = dfs.DateTimeFilter(field_name='cdtz', lookup_expr='contains')
     ticketno        = dfs.NumberFilter(field_name='ticketno', lookup_expr='contains')
-    assignedto      = dfs.CharFilter(method=assigned_to_qs, label='People/Group')
+    assignedto      = dfs.CharFilter(method = assigned_to_qs, label='People/Group')
     performedby    = dfs.CharFilter(field_name='performedby__peoplename', lookup_expr='icontains')
     ticketcategory = dfs.CharFilter(field_name='ticketcategory__taname', lookup_expr='icontains')
     jobstatus       = dfs.ChoiceFilter(field_name='jobstatus', choices = TICKETSTATUS, label="Stauts", widget = s2forms.Select2Widget)

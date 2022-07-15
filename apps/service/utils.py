@@ -14,7 +14,7 @@ def save_jobneeddetails(data):
 def get_or_create_dir(path):
     try:
         import os
-        created=True
+        created = True
         if not os.path.exists(path):
             os.makedirs(path)
         else: created= False
@@ -69,7 +69,7 @@ def insertrecord(record, tablename):
         log.info("record is not exist so creating new one..")
         return model.objects.create(**record)
     except Exception as e:
-        log.error("something went wrong", exc_info=True)
+        log.error("something went wrong", exc_info = True)
         raise e
 
 
@@ -80,12 +80,12 @@ def update_record(details, jobneed, Jn, Jnd):
     record = clean_record(jobneed)
     #ic((record)
     try:
-        with transaction.atomic(using=utils.get_current_db_name()):
+        with transaction.atomic(using = utils.get_current_db_name()):
             instance = Jn.objects.get(uuid = record['uuid'])
-            jn_parent_serializer = sz.JobneedSerializer(data=record, instance=instance)
+            jn_parent_serializer = sz.JobneedSerializer(data = record, instance = instance)
             if jn_parent_serializer.is_valid():
                 isJnUpdated = jn_parent_serializer.save()
-            else: log.error(f"something went wrong!\n{jn_parent_serializer.errors} ", exc_info=True )
+            else: log.error(f"something went wrong!\n{jn_parent_serializer.errors} ", exc_info = True )
             isJndUpdated = update_jobneeddetails(details, Jnd)
             if isJnUpdated and  isJndUpdated:
                 #utils.alert_email(input.jobneedid, alerttype)
@@ -93,7 +93,7 @@ def update_record(details, jobneed, Jn, Jnd):
                 #TODO send deviation mail
                 return True
     except Exception:
-        log.error("update_record failed", exc_info=True)
+        log.error("update_record failed", exc_info = True)
         raise
     return False
 
@@ -102,13 +102,13 @@ def update_record(details, jobneed, Jn, Jnd):
 
 def update_jobneeddetails(jobneeddetails, Jnd):
     if jobneeddetails:
-        updated=0
+        updated = 0
         for detail in jobneeddetails:
             record = clean_record(detail)
             instance = Jnd.objects.get(uuid = record['uuid'])
-            jnd_ser = sz.JndSerializers(data=record, instance=instance)
+            jnd_ser = sz.JndSerializers(data = record, instance = instance)
             if jnd_ser.is_valid(): jnd_ser.save()
-            updated+=1
+            updated += 1
         if len(jobneeddetails) == updated: return True 
 
 
@@ -121,26 +121,26 @@ def save_parent_childs(sz, jn_parent_serializer, child, M):
         instance = None
         if jn_parent_serializer.is_valid():
             parent = jn_parent_serializer.save()
-            allsaved=0
+            allsaved = 0
             for ch in child:
                 #ic((ch, type(child))
                 details = ch.pop('details')
                 #ic((details, type(details))
                 ch.update({'parent_id':parent.id})
-                child_serializer = sz.JobneedSerializer(data=clean_record(ch))
+                child_serializer = sz.JobneedSerializer(data = clean_record(ch))
 
                 if child_serializer.is_valid():
                     child_instance = child_serializer.save()
                     for dtl in details:
                         #ic((dtl, type(dtl))
                         dtl.update({'jobneed_id':child_instance.id})
-                        ch_detail_serializer = sz.JndSerializers(data=clean_record(dtl))
+                        ch_detail_serializer = sz.JndSerializers(data = clean_record(dtl))
                         if ch_detail_serializer.is_valid():
                             ch_detail_serializer.save()
                         else:
                             log.error(ch_detail_serializer.errors)
                             traceback, msg, rc = str(ch_detail_serializer.errors), M.INSERT_FAILED, 1
-                    allsaved+=1
+                    allsaved += 1
                 else:
                     log.error(child_serializer.errors)
                     traceback, msg, rc = str(child_serializer.errors), M.INSERT_FAILED, 1
@@ -152,7 +152,7 @@ def save_parent_childs(sz, jn_parent_serializer, child, M):
         log.info("save_parent_childs ............end")
         return rc, traceback, msg
     except Exception:
-        log.error("something went wrong",exc_info=True)
+        log.error("something went wrong",exc_info = True)
         raise
 
 
@@ -168,22 +168,22 @@ def perform_tasktourupdate(file, request):
         for record in data:
             details = record.pop('details')
             jobneed = record
-            with transaction.atomic(using=utils.get_current_db_name()):
+            with transaction.atomic(using = utils.get_current_db_name()):
                 if updated :=  update_record(details, jobneed, Jobneed, JobneedDetails):
-                    recordcount+=1
+                    recordcount += 1
 
     except IntegrityError as e:
-        log.error("Database Error", exc_info=True)
+        log.error("Database Error", exc_info = True)
         rc, traceback, msg = 1, tb.format_exc(), Messages.UPLOAD_FAILED
 
     except Exception as e:
-        log.error('Something went wrong', exc_info=True)
+        log.error('Something went wrong', exc_info = True)
         rc, traceback, msg = 1, tb.format_exc(), Messages.UPLOAD_FAILED
-    return ServiceOutputType(rc=rc, msg=msg, recordcount=recordcount, traceback=traceback)
+    return ServiceOutputType(rc = rc, msg = msg, recordcount = recordcount, traceback = traceback)
 
 
 
-def perform_insertrecord(file, request=None, filebased=True):
+def perform_insertrecord(file, request = None, filebased = True):
     """
     Insert records in specified tablename.
 
@@ -203,7 +203,7 @@ def perform_insertrecord(file, request=None, filebased=True):
         data = get_json_data(file) if filebased else [file]
         #ic(data)
         try:
-            with transaction.atomic(using=utils.get_current_db_name()):
+            with transaction.atomic(using = utils.get_current_db_name()):
 
                 for record in data:
                     tablename = record.pop('tablename')
@@ -224,15 +224,15 @@ def perform_insertrecord(file, request=None, filebased=True):
 
                     # log.info(f'record after cleaning {pformat(record)}')
                     # instance = model.objects.create(**record)
-                    recordcount+=1
+                    recordcount += 1
         except Exception:
             raise
         if recordcount:
             msg = Messages.INSERT_SUCCESS
     except Exception as e:
-        log.error("something went wrong!", exc_info=True)
+        log.error("something went wrong!", exc_info = True)
         msg, rc, traceback = Messages.INSERT_FAILED, 1, tb.format_exc()
-    return  ServiceOutputType(rc=rc, recordcount = recordcount, msg = msg, traceback = traceback)
+    return  ServiceOutputType(rc = rc, recordcount = recordcount, msg = msg, traceback = traceback)
 
 
 def save_linestring_and_update_pelrecord(obj):
@@ -240,7 +240,7 @@ def save_linestring_and_update_pelrecord(obj):
     from django.contrib.gis.geos import LineString
     try:
 
-        bet_objs = Tracking.objects.filter(reference=obj.uuid)
+        bet_objs = Tracking.objects.filter(reference = obj.uuid)
         line = [[coord for coord in obj.gpslocation] for obj in bet_objs]
         ls = LineString(line, srid = 4326)
         #transform spherical mercator projection system
@@ -252,7 +252,7 @@ def save_linestring_and_update_pelrecord(obj):
         obj.save()
         log.info("save linestring is saved..")
     except Exception as e:
-        log.info('ERROR while saving line string', exc_info=True)
+        log.info('ERROR while saving line string', exc_info = True)
         raise
 
 
@@ -266,23 +266,23 @@ def perform_reportmutation(file):
                 child = record.pop('child', None)
                 parent = record
                 try:
-                    with transaction.atomic(using=utils.get_current_db_name()):
+                    with transaction.atomic(using = utils.get_current_db_name()):
                         if child and len(child) > 0 and parent:
                             jobneed_parent_post_data = parent
-                            jn_parent_serializer = sz.JobneedSerializer(data=clean_record(jobneed_parent_post_data))
+                            jn_parent_serializer = sz.JobneedSerializer(data = clean_record(jobneed_parent_post_data))
                             rc,  traceback, msg = save_parent_childs(sz, jn_parent_serializer, child, Messages)
-                            if rc == 0: recordcount+=1
+                            if rc == 0: recordcount += 1
                             #ic((recordcount)
                         else:
                             log.error(Messages.NODETAILS)
                             msg, rc = Messages.NODETAILS, 1
                 except Exception as e:
-                    log.error('something went wrong', exc_info=True)
+                    log.error('something went wrong', exc_info = True)
                     raise
     except Exception as e:
         msg, traceback, rc = Messages.INSERT_FAILED, tb.format_exc(), 1
-        log.error('something went wrong', exc_info=True)
-    return ServiceOutputType(rc=rc, recordcount = recordcount, msg = msg, traceback = traceback)
+        log.error('something went wrong', exc_info = True)
+    return ServiceOutputType(rc = rc, recordcount = recordcount, msg = msg, traceback = traceback)
 
 
 
@@ -301,14 +301,14 @@ def perform_adhocmutation(file):  # sourcery skip: remove-empty-nested-block, re
             ic(jobneedrecord)
 
             with transaction.atomic(using = db):
-                if jobneedrecord['asset_id']==1:
+                if jobneedrecord['asset_id'] ==  1:
                     #then it should be NEA
                     assetobjs = Asset.objects.filter(bu_id = jobneedrecord['bu_id'],
                                     assetcode = jobneedrecord['remarks'])
-                    jobneedrecord['asset_id']= 1 if assetobjs.count() !=1 else assetobjs[0].id
+                    jobneedrecord['asset_id']= 1 if assetobjs.count()  !=  1 else assetobjs[0].id
                 sqlQuery = "select * from fn_get_schedule_for_adhoc(%s, %s, %s, %s, %s)"
                 args = [jobneedrecord['plandatetime'], jobneedrecord['bu_id'], jobneedrecord['people_id'], jobneedrecord['asset_id'], jobneedrecord['qset_id']]
-                scheduletask = utils.runrawsql(sqlQuery, args, db=db)
+                scheduletask = utils.runrawsql(sqlQuery, args, db = db)
 
                 #have to update to scheduled task
                 if(len(scheduletask) > 0):
@@ -323,23 +323,23 @@ def perform_adhocmutation(file):  # sourcery skip: remove-empty-nested-block, re
 
     except utils.NoDataInTheFileError as e:
         rc, traceback = 1, tb.format_exc()
-        log.error('No data in the file error', exc_info=True)
+        log.error('No data in the file error', exc_info = True)
         raise
     except Exception as e:
         rc, traceback = 1, tb.format_exc()
-        log.error('something went wrong', exc_info=True)
-    return ServiceOutputType(rc=rc, recordcount = recordcount, msg = msg, traceback = traceback)
+        log.error('something went wrong', exc_info = True)
+    return ServiceOutputType(rc = rc, recordcount = recordcount, msg = msg, traceback = traceback)
 
 
 
 def update_adhoc_record(scheduletask, jobneedrecord, details):
     rc, recordcount, traceback, msg= 0, 0, 'NA', ""
     jnid = scheduletask[0]['jobneedid']
-    recordcount+=1
+    recordcount += 1
     obj = Jobneed.objects.get(id = jnid)
     jobneedrecord.update({'performedby_id': jobneedrecord['people_id']})
     record = clean_record(jobneedrecord)
-    jnsz = sz.JobneedSerializer(instance=obj,data=record)
+    jnsz = sz.JobneedSerializer(instance = obj,data = record)
     if jnsz.is_valid(): 
         isJnUpdated = jnsz.save()
     else:
@@ -351,10 +351,10 @@ def update_adhoc_record(scheduletask, jobneedrecord, details):
             if jnd['question_id'] == dtl['question_id']:
                 obj = JobneedDetails.objects.get(uuid = dtl['uuid'])
                 record = clean_record(dtl)
-                jndsz = sz.JndSerializers(instance=obj, data = record)
+                jndsz = sz.JndSerializers(instance = obj, data = record)
                 if jndsz.is_valid():
                     jndsz.save()
-    recordcount+=1
+    recordcount += 1
     msg = "Scheduled Record (ADHOC) updated successfully!"
     return rc, traceback, msg, recordcount
 
@@ -373,7 +373,7 @@ def insert_adhoc_record(jobneedrecord, details):
             if jndsz.is_valid():
                 jndsz.save()
         msg = "Record (ADHOC) inserted successfully!"
-        recordcount+=1
+        recordcount += 1
     else:
         rc, traceback = 1, jnsz.errors
     return rc, traceback, msg, recordcount
@@ -381,7 +381,7 @@ def insert_adhoc_record(jobneedrecord, details):
 
 def perform_uploadattachment(file,  record, biodata):
     rc, traceback, resp = 0,  'NA', 0
-    recordcount = msg=None
+    recordcount = msg = None
     #ic(file, tablename, record, type(record), biodata, type(biodata))
     try:
         log.info("perform_uploadattachment [start+]")
@@ -398,7 +398,7 @@ def perform_uploadattachment(file,  record, biodata):
         uploadfile = f'{filepath}/{filename}'
         db = utils.get_current_db_name()
         log.info(f"file_buffer {file_buffer} pelogid {pelogid} peopleid {peopleid} path {path} home_dir {home_dir} filepath {filepath} uploadfile {uploadfile}")
-        with transaction.atomic(using=db):
+        with transaction.atomic(using = db):
             iscreated = get_or_create_dir(filepath)
             log.info(f'filepath is {iscreated}')
             write_file_to_dir(file_buffer, uploadfile)
@@ -412,8 +412,8 @@ def perform_uploadattachment(file,  record, biodata):
         log.warn(f"face recognition status {results.state}")
     except Exception as e:
         rc, traceback, msg = 1, tb.format_exc(), Messages.UPLOAD_FAILED
-        log.error('something went wrong', exc_info=True)
-    return ServiceOutputType(rc=rc, recordcount = recordcount, msg = msg, traceback = traceback)
+        log.error('something went wrong', exc_info = True)
+    return ServiceOutputType(rc = rc, recordcount = recordcount, msg = msg, traceback = traceback)
 
 
 def getEmails(R):
@@ -447,7 +447,7 @@ def alert_observation(pk):
                 body += f'<tr><td {tdStyle}>Performed by</td><td>[{jndRecords[0]["peoplecode"]}] {jndRecords[0]["peoplename"]}</td></tr>'
 
                 body+= "<tr><td colspan= 2>"
-                body+= "<table style='background:#EEF1F5;' cellpadding=8 cellspacing=2 border=1>"
+                body+= "<table style='background:#EEF1F5;' cellpadding = 8 cellspacing = 2 border = 1>"
                 body+= "<tr style='background:#ABE7ED;font-weight:bold;font-size:14px;'><th>Slno</th><th>Question</th><th>Answer</th><th>Option</th><th>Min</th><th>Max</th><th>Alert On</th><tr>"
                 for rd in enumerate(jndRecords):
                     body+= "<tr %s>"     %("style='color:red;'" if rd[1]["alerts"] is True else "")
@@ -489,7 +489,7 @@ def alert_report(pk):
                 body+= f"<tr><td {tdstyle}>Surveyor</td><td>[{hdata[0].peoplename}] {hdata[0].peoplename}</td></tr>"
                 body+= f"<tr><td {tdstyle}>Datetime</td><td>{hdata[0].cplandatetime} (24Hr)</td></tr>"
                 body+= "<tr><td colspan= 2>"
-                body+= "<table style='background:#EEF1F5;' cellpadding=8 cellspacing=2 border=1>"
+                body+= "<table style='background:#EEF1F5;' cellpadding = 8 cellspacing = 2 border = 1>"
                 body += "<tr style='background:#ABE7ED;font-weight:bold;font-size:14px;'><th>Slno</th><th>Question</th><th>Answer</th><th>Option</th><th>Min</th><th>Max</th><th>Alert On</th></tr>"
 
                 toemails = getEmails(hdata[0])

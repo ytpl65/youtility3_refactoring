@@ -16,7 +16,7 @@ Conveyance Form
 
 {% block pagebreadcumb %}
 {{ super() }}
-<li class="breadcrumb-item pe-3"><a href="{{ url('attendance:conveyance') }}?template=true" class="pe-3">Conveyance List</a></li>
+<li class="breadcrumb-item pe-3"><a href="{{ url('attendance:conveyance') }}?template = true" class="pe-3">Conveyance List</a></li>
 <li class="breadcrumb-item pe-3"><a href="javascript:void(0)" class="pe-3">Coveyance Form</a></li>
 {% endblock pagebreadcumb %}
 
@@ -156,7 +156,7 @@ Conveyance
 
 {% block extra_scripts %}
 <script
-    src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDVbA53nxHKUOHdyIqnVPD01aOlTitfVO0&callback=initAutocomplete&libraries=places&v=weekly"
+    src="https://maps.googleapis.com/maps/api/js?key = AIzaSyDVbA53nxHKUOHdyIqnVPD01aOlTitfVO0&callback = initAutocomplete&libraries = places&v = weekly"
     defer
 ></script>
 <script>
@@ -177,7 +177,7 @@ function initAutocomplete(){
 function getJourneyCoords(id){
     var formUrl = "{{ url('attendance:conveyance') }}"
     const params = {
-        url:`${formUrl}?action=getpath&conid=${id}`,
+        url:`${formUrl}?action = getpath&conid=${id}`,
         beforeSend:function(){}
     }
     fire_ajax_get(params)

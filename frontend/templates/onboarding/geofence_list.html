@@ -35,7 +35,7 @@ var table             = null;
 $(document).ready(function(){
     table = $(table_id).DataTable({
 			ajax:{
-				url: '{{ url("onboarding:geofence") }}?action=list',
+				url: '{{ url("onboarding:geofence") }}?action = list',
 			},
 			columns     : [
                 { data: "id" },
@@ -70,7 +70,7 @@ $(document).ready(function(){
                     text: 'Add New',
                     className: "btn btn-sm btn-light-primary",
                     action:function(e, dt, node, config){   
-                        location.href = '{{ url("onboarding:geofence") }}?action=form'
+                        location.href = '{{ url("onboarding:geofence") }}?action = form'
                     }
                 }
 			]

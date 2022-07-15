@@ -34,8 +34,8 @@ query = {
                                     c  WHERE c.identifier='SITEREPORT' AND c.parent_id = p.id )
                                     SELECT DISTINCT jobneed.jobdesc, jobneed.pseqno, jnd.seqno as cseqno, jnd.question_id, jnd.answertype, jnd.min, jnd.max, jnd.options,
                                     jnd.answer, jnd.alerton, jnd.ismandatory, q.quesname, q.answertype FROM nodes_cte as jobneed 
-                                    LEFT JOIN jobneed_details as jnd ON jnd.jobneed_id=jobneed.id 
-                                    LEFT JOIN question q ON jnd.question_id=q.id where jnd.answertype='Question Type' AND jobneed.parent_id <> -1 
+                                    LEFT JOIN jobneed_details as jnd ON jnd.jobneed_id = jobneed.id 
+                                    LEFT JOIN question q ON jnd.question_id = q.id where jnd.answertype='Question Type' AND jobneed.parent_id <> -1 
                                     ORDER BY pseqno asc, jobdesc asc, pseqno, cseqno asc
                                 ''',
     'sitereportlist':           '''
@@ -49,15 +49,15 @@ query = {
                                     ) ELSE 0 END ::numeric, 2) AS distance, 
                                     jobneed.bu_id, jobneed.remarks 
                                     FROM jobneed 
-                                    INNER JOIN people ON jobneed.people_id=people.id 
-                                    INNER JOIN bt ON jobneed.bu_id=bt.id 
-                                    LEFT JOIN attachment ON jobneed.id=attachment.owner
-                                    WHERE jobneed.parent_id=-1 AND 1=1 AND bt.id IN (%s) 
+                                    INNER JOIN people ON jobneed.people_id = people.id 
+                                    INNER JOIN bt ON jobneed.bu_id = bt.id 
+                                    LEFT JOIN attachment ON jobneed.id = attachment.owner
+                                    WHERE jobneed.parent_id=-1 AND 1 = 1 AND bt.id IN (%s) 
                                     AND (jobneed.qset_id IN (%s) OR jobneed.qset_id = -1) 
                                     AND jobneed.parent_id='-1' AND jobneed.plandatetime >= %s AND jobneed.plandatetime <= %s 
                                     GROUP BY jobneed.id, buname, bugpslocation, bt.pdist, people.peoplename, jobstatusname, jobneed.plandatetime)
                                     jobneed 
 
-                                    WHERE 1=1 ORDER BY plandatetime desc OFFSET 0 LIMIT 250
+                                    WHERE 1 = 1 ORDER BY plandatetime desc OFFSET 0 LIMIT 250
                                 '''
 }

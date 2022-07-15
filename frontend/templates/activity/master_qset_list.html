@@ -71,7 +71,7 @@
         Qsettable = $(table_id).DataTable({
 			//orderCellsTop: true,
 			ajax:{
-				url: "{{ url('activity:questionset') }}?action=list"
+				url: "{{ url('activity:questionset') }}?action = list"
 			},
             deferRender: true,
 			responsive : true,
@@ -98,7 +98,7 @@
 					action: function(e, dt, node, config){
                         const params = {
                             'modal_id'    : modal_id,
-                            'url'         : `${urlname}?action=form`,
+                            'url'         : `${urlname}?action = form`,
                             'beforeSend'  : qsetBeforeSend }
 						fire_ajax_get(params)
 						.done((data, status, xhr) => {
@@ -147,7 +147,7 @@
 	//delete ajax request 
 	function isQsetDeleted(id){ 
 		console.log("id ", id)
-		const params = {url:`${urlname}?action=delete&id=${id}`, beforeSend:function(){}}
+		const params = {url:`${urlname}?action = delete&id=${id}`, beforeSend:function(){}}
 		fire_ajax_get(params)
 		.done((data, status, xhr) => {
 			if(!xhr.status === 200){

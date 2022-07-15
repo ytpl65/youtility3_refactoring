@@ -14,6 +14,6 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='asset',
             name='gpslocation',
-            field=django.contrib.gis.db.models.fields.PointField(blank=True, geography=True, null=True, srid=4326, verbose_name='GPS Location'),
+            field = django.contrib.gis.db.models.fields.PointField(blank = True, geography = True, null = True, srid = 4326, verbose_name='GPS Location'),
         ),
     ]

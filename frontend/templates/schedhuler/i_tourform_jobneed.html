@@ -338,7 +338,7 @@ Internal Tour
 <script type="text/javascript" src="https://cdn.datatables.net/1.11.3/js/jquery.dataTables.min.js"></script>
 <script type="text/javascript" src="https://cdn.datatables.net/buttons/2.0.1/js/dataTables.buttons.min.js"></script>
 <script>
-    var table=null;
+    var table = null;
     var selected = null;
     $('label').removeClass("col-form-label col-md-2 col-sm-2 text-sm-right")
     function showHideSelectField(val) {
@@ -446,7 +446,7 @@ Internal Tour
     function deleteCheckpointRequest(checpointid, checklistid, parentid) {
         var deleted = false
         const params = {
-            'url': `{{ url('schedhuler:delete_checkpointTour') }}?checkpointid=${checpointid}&checklistid=${checklistid}&job=${parentid}&datasource=jobneed`,
+            'url': `{{ url('schedhuler:delete_checkpointTour') }}?checkpointid=${checpointid}&checklistid=${checklistid}&job=${parentid}&datasource = jobneed`,
             'beforeSend': function () {}
         }
         fire_ajax_get(params)
