@@ -707,7 +707,6 @@ class SchdTaskFormJob(LoginRequiredMixin, View):
         'endtime'     : time(00, 00, 00),
         'fromdate'   : datetime.combine(date.today(), time(00, 00, 00)),
         'uptodate'   : datetime.combine(date.today(), time(23, 00, 00)) + timedelta(days = 2),
-        'expirytime'  : 0,
         'identifier'  : am.Job.Identifier.TASK,
         'frequency'   : am.Job.Frequency.NONE,
         'scantype'    : am.Job.Scantype.QR,
@@ -1186,7 +1185,6 @@ class SchdTasks(LoginRequiredMixin, View):
                 'endtime'     : time(00, 00, 00),
                 'fromdate'   : datetime.combine(date.today(), time(00, 00, 00)),
                 'uptodate'   : datetime.combine(date.today(), time(23, 00, 00)) + timedelta(days = 2),
-                'expirytime'  : 0,
                 'identifier'  : am.Job.Identifier.TASK,
                 'frequency'   : am.Job.Frequency.NONE,
                 'scantype'    : am.Job.Scantype.QR,
@@ -1294,7 +1292,6 @@ class SchdTasks(LoginRequiredMixin, View):
 
 class InternalTourScheduling(LoginRequiredMixin, View):
     params = {
-        'model'        : am.Job,
         'template_form': 'schedhuler/schd_i_tourform_job.html',
         'template_list': 'schedhuler/schd_i_tourlist_job.html',
         'form_class'   : scd_forms.Schd_I_TourJobForm,
@@ -1437,7 +1434,6 @@ class InternalTourScheduling(LoginRequiredMixin, View):
 
 class ExternalTourScheduling(LoginRequiredMixin, View):
     params = {
-        'model'        : am.Job,
         'template_form': 'schedhuler/schd_e_tourform_job.html',
         'template_list': 'schedhuler/schd_e_tourlist_job.html',
         'form_class'   : scd_forms.Schd_E_TourJobForm,
