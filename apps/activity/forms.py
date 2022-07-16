@@ -437,7 +437,6 @@ class JobForm(forms.ModelForm):
             'pgroup'           : s2forms.Select2Widget,
             'asset'           : s2forms.Select2Widget,
             'priority'          : s2forms.Select2Widget,
-            'ctzoffset'         : forms.HiddenInput(),
             'jobdesc'           : forms.Textarea(attrs={'rows': 1, 'cols': 40}),
             'fromdate'         : forms.DateTimeInput,
             'uptodate'         : forms.DateTimeInput,
