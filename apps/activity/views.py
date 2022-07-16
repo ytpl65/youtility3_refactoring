@@ -1,23 +1,21 @@
-from django.http import response as rp
+from django.http import Http404, QueryDict, response as rp
+from django.contrib import messages
+from django.db import IntegrityError, transaction
+from django.db.models import Q
+from django.shortcuts import redirect, render
+from django.urls import resolve
+from django.views.generic.base import View
 import json
 from django.contrib.auth.mixins import LoginRequiredMixin
 import psycopg2.errors as pg_errs
-from django.views.generic.base import View
-from django.urls import resolve
 import apps.activity.models as am
 from pprint import pformat
-from django.shortcuts import redirect, render
-from django.db.models import Q
-from django.db import IntegrityError
 import apps.activity.filters as aft
 import apps.activity.forms as af
 import apps.peoples.utils as putils
 import apps.core.utils as utils
 import apps.activity.utils as av_utils
 import apps.onboarding.forms as obf
-from django.contrib import messages
-from django.db import transaction
-from django.http import Http404, QueryDict
 import logging
 logger = logging.getLogger('__main__')
 log = logger

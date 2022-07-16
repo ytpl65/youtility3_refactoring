@@ -1,16 +1,14 @@
 import uuid
 from apps.peoples.models import BaseModel
+from apps.activity.managers import AssetManager, AttachmentManager, JobManager, JobneedDetailsManager, QsetBlngManager, QuestionManager, QuestionSetManager, JobneedManager
+from apps.tenants.models import TenantAwareModel
 from django.utils.translation import gettext_lazy as _
 from django.core.serializers.json import DjangoJSONEncoder
-from apps.tenants.models import TenantAwareModel
+from django.contrib.postgres.fields import ArrayField
 from django.db import models
 from datetime import datetime
 from django.contrib.gis.db.models import PointField
 from django.utils import timezone
-from apps.activity.managers import(
-    AssetManager, AttachmentManager, JobManager, JobneedDetailsManager, QsetBlngManager, QuestionManager, QuestionSetManager, JobneedManager
-)
-from django.contrib.postgres.fields import ArrayField
 
 # Create your models here.
 class Question(BaseModel, TenantAwareModel):

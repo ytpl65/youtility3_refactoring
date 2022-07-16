@@ -1,9 +1,8 @@
 from django.core.management.base import BaseCommand
-from apps.core import utils
 from django.db import transaction
-import logging
-
+from apps.core import utils
 from apps.onboarding.models import Bt
+import logging
 log = logging.getLogger('__main__')
 
 def create_dummy_clientandsite():

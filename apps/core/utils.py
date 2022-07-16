@@ -9,15 +9,14 @@ import django.shortcuts as scts
 from django.contrib import messages as msg
 from django.template.loader import render_to_string
 from django.http import JsonResponse, response as rp
+from django.db.models import Q
 import apps.peoples.utils as putils
 from pprint import pformat
 from apps.peoples import models as pm
+from apps.tenants.models import Tenant
 import logging
 import apps.onboarding.models as om
 import apps.activity.models as am
-from django.db.models import Q
-
-from apps.tenants.models import Tenant
 logger = logging.getLogger('__main__')
 dbg = logging.getLogger('__main__').debug
 

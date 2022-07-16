@@ -1,8 +1,8 @@
 from django.conf import settings
 from django.urls import path
 from django.urls.conf import include
-from apps.peoples import views
 from django.conf.urls.static import static
+from apps.peoples import views
 from apps.onboarding.wizard_urls import wizard_url_patterns2
 app_name = 'peoples'
 urlpatterns = [
