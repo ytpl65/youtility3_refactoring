@@ -1,13 +1,13 @@
 from typing import Type
 import graphene
 from apps.core import utils
+from apps.activity.models import JobneedDetails, Question, QuestionSet, QuestionSetBelonging
+from apps.onboarding.models import GeofenceMaster, Bt
+from apps.peoples.models import Pgbelonging, Pgroup, People
 from django.db import connections
 from collections import namedtuple
 from logging import getLogger
 log = getLogger('__main__')
-from apps.activity.models import JobneedDetails, Question, QuestionSet, QuestionSetBelonging
-from apps.peoples.models import Pgbelonging, Pgroup, People
-from apps.onboarding.models import GeofenceMaster, Bt
 from .types import (VerifyClientOutput,
 TypeAssist, SelectOutputType)
 

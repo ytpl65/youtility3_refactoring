@@ -3,6 +3,7 @@ from apps.service import serializers as sz
 from apps.attendance.models import PeopleEventlog
 from apps.activity.models import (Jobneed, JobneedDetails, Attachment, Asset, DeviceEventlog, Ticket)
 from apps.attendance.models import Tracking
+from apps.core import utils
 from django.db.utils import IntegrityError
 from django.db import transaction
 from .auth import Messages as AM
@@ -10,7 +11,6 @@ from .types import ServiceOutputType
 import traceback as tb
 from .validators import clean_record
 from pprint import pformat
-from apps.core import utils
 from intelliwiz_config.celery import app
 from celery.utils.log import get_task_logger
 log = get_task_logger(__name__)

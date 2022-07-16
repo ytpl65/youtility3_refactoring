@@ -1,7 +1,7 @@
 from django import forms
+from django.contrib.gis.geos import GEOSGeometry
 from django_select2 import forms as s2forms
 from apps.core import utils
-from django.contrib.gis.geos import GEOSGeometry
 import apps.attendance.models as atdm
 import apps.peoples.models as pm
 

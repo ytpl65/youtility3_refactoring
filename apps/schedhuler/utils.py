@@ -1,8 +1,8 @@
 from django.db.models import Q
-import apps.activity.models as am
 from django.core.exceptions import EmptyResultSet
 from django.db import transaction
 from django.http import response as rp
+import apps.activity.models as am
 from logging import getLogger
 from pprint import pformat
 from apps.core import utils

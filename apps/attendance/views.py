@@ -1,14 +1,14 @@
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db.utils import IntegrityError
+from django.db import transaction
+from django.http import response as rp
+from django.http.request import QueryDict
+from django.shortcuts import render
+from django.views import View
 import apps.attendance.forms as atf
 import apps.attendance.models as atdm
 from .filters import AttendanceFilter
 import apps.peoples.utils as putils
-from django.views import View
-from django.http.request import QueryDict
-from django.shortcuts import  render
-from django.http import response as rp
-from django.db import transaction
 import logging
 from apps.core import utils
 logger = logging.getLogger('django')

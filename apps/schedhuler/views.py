@@ -1,22 +1,21 @@
 import apps.schedhuler.utils as sutils
 import apps.peoples.utils as putils
 from django.db.models import Q
+from django.contrib import messages
+from django.core.exceptions import EmptyResultSet
+from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
+from django.http import Http404, QueryDict, response as rp
+from django.shortcuts import redirect, render
+from django.views import View
 from apps.core import  utils 
 import apps.schedhuler.filters as sdf
-from django.http import  QueryDict
 from pprint import pformat
 import apps.onboarding.models as om
 import apps.activity.models as am
-from django.views import View
-from django.contrib import messages
-from django.shortcuts import redirect, render
-from django.core.exceptions import EmptyResultSet
 from datetime import datetime, time, timedelta, timezone, date
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db import transaction
 import apps.schedhuler.forms as scd_forms
-from django.http import Http404, response as rp
-from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 import logging
 from django.db.models.deletion import RestrictedError
 from django.urls import reverse

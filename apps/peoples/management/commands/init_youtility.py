@@ -1,7 +1,7 @@
 from django.core.management.base import BaseCommand
-from apps.core import utils
 from django.db import transaction
 from django.db.utils import IntegrityError
+from apps.core import utils
 from pprint import pformat
 import logging
 log = logging.getLogger('__main__')
