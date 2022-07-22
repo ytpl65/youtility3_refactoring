@@ -1,0 +1,59 @@
+{% extends "base_list.html" %}
+
+<!---- BEGIN CARD TITLE ------>
+{% block card_title %}
+Asset Maintainance List
+{% endblock card_title %}
+<!----- END CARD TITLE -------->
+
+<!------------------------------------ BEGIN PAGE BREADCUMBS ------------------------------------>
+{% block pagebreadcumb %}
+{{ super() }}
+<li class="breadcrumb-item pe-3"><a href="javascript:void(0)" class="pe-3">Asset Maintainance List</a></li>
+{% endblock pagebreadcumb %}
+<!------------------------------------- END PAGE BREADCUMBS ------------------------------------->
+
+<!-------------------------------------------- BEGIN TABLE ------------------------------------------->
+{% block table %}
+<table id="assetmaintainance_list" class='display cell-border' style="width:100%"></table>
+{% endblock table %}
+<!-------------------------------------------- END TABLE ------------------------------------------->
+
+{% block extra_scripts %}
+<script>
+var table=null;
+$(document).ready(function(){
+    //datatable initialization
+    var urlname = "{{ url('activity:assetmaintainance') }}"
+    table = $("#assetmaintainance_list").DataTable({
+        ajax:{
+            url:`${urlname}?action=list`
+        },
+        deferRender:true,
+        responsive:true,
+        dom:`<'row' <'col-sm-6 d-flex justify-content-start'f> <'col-sm-6 d-flex justify-content-end'B> >rt<'row'
+			 <'col-sm-6'l> <'col-sm-6'p><'col-sm-12 d-flex justify-content-center'i>>`,
+        columns:[
+            {data:'id'},
+            {data:'plandatetime', title:'Plan Datetime'},
+            {data:'jobdesc', title:'Description'},
+            {data:'identifier', title:'Identifier'},
+            {data:'asset__assetname', title:'Asset'},
+            {data:'asset__runningstatus', title:'Status'},
+            {data:'people__peoplename', title:'People'},
+            {data:'gpslocation', title:'GPS Location'},
+        ],
+        columnDefs:[
+            {targets:0, data:'id', visible:false},
+            {targets:1, data:'jobdesc', render:function(data, type, row, meta){
+                return row['identifier'] === 'ASSETMAINTENANCE' ? `<a href="${urlname}?id=${row['id']}">${data}</a>` : data
+            }}
+        ],
+        buttons:[]
+    })
+
+})
+</script>
+
+
+{% endblock extra_scripts %}

@@ -1,0 +1,50 @@
+{% extends "base_list.html" %}
+
+<!---- BEGIN CARD TITLE ------>
+{% block card_title %}
+Adhoc Tours List
+{% endblock card_title %}
+<!----- END CARD TITLE -------->
+
+{% block extra_css %}
+{# <link rel="stylesheet" href="https://cdn.datatables.net/1.11.3/css/jquery.dataTables.min.css"> #}
+{% endblock extra_css %}
+
+<!------------------------------------ BEGIN PAGE BREADCUMBS ------------------------------------>
+{% block pagebreadcumb %}
+{{ super() }}
+<li class="breadcrumb-item pe-3"><a href="javascript:void(0)" class="pe-3">Tour List</a></li>
+{% endblock pagebreadcumb %}
+<!------------------------------------- END PAGE BREADCUMBS ------------------------------------->
+
+<!-------------------------------------------- BEGIN ADHOC Tour TABLE ------------------------------------------->
+{% block table %}
+<table id="adhoc_tours" class="display compact cell-border" style="width:100%" >
+{% endblock table %}
+<!-------------------------------------------- END ADHOC Tour TABLE ------------------------------------------->
+
+{% block extra_scripts %}
+<script>
+var table = null;
+$(document).ready(functoin(){
+    table = $("#adhoc_tours").DataTable({
+        ajax:{
+            url:'{{ url("activity:adhoctours") }}?action=list',
+            data:function(d){
+                d.fields:['id', 'plandatetime', 'jobdesc', 'performedby__peoplename', 'jobstatus',
+                   'qset__qsetname', 'asset__assetname'],
+            }
+        },
+        columns:[
+            { "data": "id", visible:false },
+            { "data": "plandatetime" , title: "PlanDatetime"},
+            { "data": "jobdesc" , title: 'Description'},
+            { "data": "performedby__peoplename", 'title': 'Performedby'},
+            { "data": "jobstatus", title: 'Status'},
+            { "data": "asset__assetname", title: 'Asset/Smartplace'},
+            { "data": "qset__qsetname", title: 'Question Set'},
+        ]
+    })
+})
+</script>
+{% endblock extra_scripts %}

@@ -6,8 +6,8 @@ def clean_point_field(val):
     try:
         if not val: return val
         if 'SRID' not in val:
-            lat, lng = val.split(', ')
-            return GEOSGeometry(f'SRID = 4326;POINT({lng} {lat})')
+            lat, lng = val.split(',')
+            return GEOSGeometry(f'SRID=4326;POINT({lng} {lat})')
         return GEOSGeometry(val)
     except Exception:
         raise

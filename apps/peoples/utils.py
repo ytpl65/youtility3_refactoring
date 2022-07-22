@@ -135,6 +135,7 @@ def save_tenant_client_info(request):
         request.session['bu_id'] = request.user.bu.id
         logger.info('saving tenant & client info into the session...DONE')
     except:
+        logger.error('save_tenant_client_info failed', exc_info=True)
         raise
     else:
         return client

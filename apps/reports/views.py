@@ -285,7 +285,7 @@ class ConfigSiteReportTemplate(LoginRequiredMixin, View):
             return rp.JsonResponse({'data':list(objs)}, status = 200)
         
         elif R.get('action') == 'form':
-            cxt = {'reporttemp_form':P['form_class'](initial = P['initial'], request = request)}
+            cxt = {'reporttemp_form':P['form_class'](initial = P['initial'], request = request), 'test':rp_forms.TestForm}
             return render(request, P['template_form'], cxt)
 
         elif R.get('action') =='loadQuestions':

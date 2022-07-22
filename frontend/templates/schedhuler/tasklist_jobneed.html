@@ -88,25 +88,6 @@ Task List
     }
     
     $(document).ready(function (){
-        $("input").keypress(function(event) {
-			if (event.which == 13) {
-				event.preventDefault();
-				submitFormFilter()
-			}
-		});
-
-        $("#custom_plandatetime").flatpickr({
-            altInput: true,
-            altFormat: "Y-M-d",
-            dateFormat: "Y/m/d",
-            mode: "range",
-            onChange: function(selectedDates, dateStr, instance){
-                if(selectedDates.length > 1){
-                    dates = dateStr.split(" to ")
-                    setPlanDatetime(dates[0], dates[1])
-                }
-            }
-        });
         //datatable initialization
         table = $(table_id).DataTable({
             ajax:{

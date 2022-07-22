@@ -155,7 +155,7 @@ def perform_tasktourupdate(file, request):
 
     try:
         data = get_json_data(file)
-        # ic((data)
+        ic(data)
         for record in data:
             details = record.pop('details')
             jobneed = record
@@ -191,7 +191,7 @@ def perform_insertrecord(file, request = None, filebased = True):
     instance = None
     try:
         data = get_json_data(file) if filebased else [file]
-        # ic(data)
+        ic(data)
         try:
             with transaction.atomic(using = utils.get_current_db_name()):
 
@@ -393,7 +393,7 @@ def perform_uploadattachment(file,  record, biodata):
 
         from .tasks import perform_facerecognition_bgt
         results = perform_facerecognition_bgt.delay(pelogid, peopleid, obj.owner, home_dir, uploadfile, db)
-        log.warn(f"face recognition status {results.state}")
+        log.warning(f"face recognition status {results.state}")
     except Exception as e:
         rc, traceback, msg = 1, tb.format_exc(), Messages.UPLOAD_FAILED
         log.error('something went wrong', exc_info = True)

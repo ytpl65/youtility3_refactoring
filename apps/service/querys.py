@@ -211,7 +211,7 @@ def get_db_rows(sql, args = None):
 
 def get_jobneedmodifiedafter(peopleid, siteid, clientid):
     log.info('request for jobneed-modified-after data...')
-    return get_db_rows("select * from fun_getjobneed(%s, %s)", args=[peopleid, siteid, clientid])
+    return get_db_rows("select * from fun_getjobneed(%s, %s, %s)", args=[peopleid, siteid, clientid])
 
 
 def get_assetdetails(mdtz, buid):

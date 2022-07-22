@@ -53,7 +53,7 @@ class JobneedManager(models.Manager):
         return self.create(qset_id = qsetid, **record)
 
     def get_schedule_for_adhoc(self, pdt, peopleid, assetid, qsetid, buid):
-        return self.raw(f"select * FROM get_schedule_for_adhoc({pdt}, {buid}, {peopleid}, {assetid}, {qsetid})")
+        return self.raw("select * FROM get_schedule_for_adhoc(%s, %s, %s, %s, %s)", params=[pdt, buid, peopleid, assetid, qsetid])
 
     def get_jobneedmodifiedafter(self, mdtz, peopleid, siteid):
         mdtzinput = mdtz if (isinstance(mdtz, datetime)) else datetime.strptime(mdtz, "%Y-%m-%d %H:%M:%S")
@@ -149,6 +149,16 @@ class JobneedManager(models.Manager):
         ).exclude(parent__jobdesc = 'NONE', jobdesc = 'NONE').values(*fields).order_by('-plandatetime')
         return qobjs or self.none()
 
+    def get_assetmaintainance_list(self, request, related, fields):
+        dt  = datetime.now(tz = timezone.utc) - timedelta(days = 90) #3months
+        qset = self.filter(identifier='ASSETMAINTENANCE', plandatetime__gte = dt).select_related(
+            *related).values(*fields)
+        return qset or self.none()
+    
+    def get_adhoctour_listview(self, R):
+        return self.get_adhoctasks_listview(R, False)
+
+
 class AttachmentManager(models.Manager):
     use_in_migrations = True
 
@@ -196,7 +206,7 @@ class AssetManager(models.Manager):
         ).values(*self.fields) or self.none()
 
     def get_schedule_task_for_adhoc(self, params):
-        qset = self.raw("select * from fn_get_schedule_for_adho")
+        qset = self.raw("select * from fn_get_schedule_for_adhoc")
 
 
 
@@ -209,7 +219,7 @@ class JobneedDetailsManager(models.Manager):
 
     def get_jndmodifiedafter(self, mdtz,jobneedid):
         if jobneedid:
-            jobneedids = jobneedid.split(', ')
+            jobneedids = jobneedid.split(',')
             ic(jobneedids)
             qset = self.select_related(
                 *self.related).filter(

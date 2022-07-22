@@ -20,6 +20,8 @@ from .models import Shift, SitePeople, TypeAssist, Bt, GeofenceMaster
 from apps.peoples.utils import  save_userinfo
 import apps.onboarding.forms as obforms
 import apps.peoples.utils as putils
+from apps.peoples import admin as people_admin
+from apps.onboarding import admin as ob_admin
 from django.db import transaction
 from apps.core import utils
 from pprint import pformat
@@ -142,7 +144,7 @@ class UpdateBt(LoginRequiredMixin, View):
             cxt = {'buform': form, 'edit': True,
                    'ta_form': obforms.TypeAssistForm(auto_id = False)}
             response = render(request, self.template_path, context = cxt)
-        except self.model.DoesNotExist:
+        except self.model.objects.DoesNotExist:
             response = redirect('onboarding:bu_form')
         except Exception:
             logger.critical('something went wrong', exc_info = True)
@@ -170,7 +172,7 @@ class UpdateBt(LoginRequiredMixin, View):
                 logger.info('BtForm Form is not valid')
                 response = render(request, self.template_path, context={
                                   'buform': form, 'edit': True})
-        except self.model.DoesNotExist:
+        except self.model.objects.DoesNotExist:
             logger.error('Object does not exist', exc_info = True)
             messages.error(request, "Object does not exist",
                            "alert alert-danger")
@@ -205,13 +207,13 @@ class DeleteBt(LoginRequiredMixin, View):
                 messages.info(request, 'Record deleted successfully',
                               'alert alert-success')
                 response = redirect('onboarding:bu_form')
-        except self.model.DoesNotExist:
+        except self.model.objects.DoesNotExist:
             logger.error('Unable to delete, object does not exist')
             messages.error(request, 'Client does not exist',
                            "alert alert-danger")
             response = redirect('onboarding:bu_form')
         except RestrictedError:
-            logger.warn('Unable to delete, due to dependencies')
+            logger.warning('Unable to delete, due to dependencies')
             messages.error(
                 request, 'Unable to delete, due to dependencies', "alert alert-danger")
             cxt = {'buform': form, 'edit': True,
@@ -226,379 +228,6 @@ class DeleteBt(LoginRequiredMixin, View):
         return response
 
 #-------------------- END Bt View Classes --------------------#
-
-# #-------------------- Begin Shift View Classes --------------------#
-class CreateShift(LoginRequiredMixin, View):
-    template_path = 'onboarding/shift_form.html'
-    form_class = obforms.ShiftForm
-
-    def get(self, request, *args, **kwargs):
-        """Returns shift form on html"""
-        logger.info('create shift view...')
-        cxt = {'shift_form': self.form_class()}
-        return render(request, self.template_path, context = cxt)
-
-    def post(self, request, *args, **kwargs):
-        """Handles creation of shift instance."""
-        logger.info('create shift form submiited for saving...')
-        response, form = None, self.form_class(request.POST)
-        try:
-            print("form data", form.data)
-            if form.is_valid():
-                logger.info('ShiftForm Form is valid')
-                shift = form.save()
-                shift.bu_id = int(request.session['client_id'])
-                save_userinfo(shift, request.user, request.session)
-                logger.info('ShiftForm Form saved')
-                messages.success(request, "Success record saved successfully!",
-                                 "alert alert-success")
-                response = redirect('onboarding:shift_form')
-            else:
-                logger.info('Form is not valid')
-                cxt = {'shift_form': form, 'edit': True}
-                response = render(request, self.template_path, context = cxt)
-        except Exception:
-            logger.critical(
-                "something went wrong please follow the traceback to fix it... ", exc_info = True)
-            messages.error(request, "[ERROR] Something went wrong",
-                           "alert alert-danger")
-            cxt = {'shift_form': form, 'edit': True}
-            response = render(request, self.template_path, context = cxt)
-        return response
-
-# @method_decorator(cache_page(CACHE_TTL), name='dispatch')
-class RetrieveShift(LoginRequiredMixin, View):
-    template_path = 'onboarding/shift_list.html'
-    fields = ['id', 'shiftname', 'starttime', 'endtime']
-    model = Shift
-
-    def get(self, request, *args, **kwargs):
-        '''returns the paginated results from db'''
-        response = None
-        try:
-            objects = self.model.objects.select_related(*self.related
-                                                        ).values(*self.fields)
-            logger.info(
-                f'Shift objects {len(objects)} retrieved from db'
-                if objects
-                else "No Records!"
-            )
-
-            cxt = self.paginate_results(request, objects)
-            logger.info('Results paginated'if objects else "")
-            response = render(request, self.template_path, context = cxt)
-        except EmptyResultSet:
-            response = render(request, self.template_path, context = cxt)
-            messages.error(request, 'List view not found',
-                           'alert alert-danger')
-        except Exception:
-            logger.critical(
-                'something went wrong please follow the traceback to fix it... ', exc_info = True)
-            messages.error(request, 'Something went wrong',
-                           "alert alert-danger")
-            response = redirect('/dashboard')
-        return response
-
-    def paginate_results(self, request, objects):
-        '''paginate the results'''
-        logger.info('Pagination Start'if objects else "")
-        from .filters import ShiftFlter
-        if request.GET:
-            objects = ShiftFlter(request.GET, queryset = objects).qs
-        filterform = ShiftFlter().form
-        page = request.GET.get('page', 1)
-        paginator = Paginator(objects, 25)
-        try:
-            ta_list = paginator.page(page)
-        except PageNotAnInteger:
-            ta_list = paginator.page(1)
-        except EmptyPage:
-            ta_list = paginator.page(paginator.num_pages)
-        return {'ta_list': ta_list, 'ta_filter': filterform}
-
-class UpdateShift(LoginRequiredMixin, View):
-    template_path = 'onboarding/shift_form.html'
-    form_class = obforms.ShiftForm
-    model = Shift
-
-    def get(self, request, *args, **kwargs):
-        response = None
-        try:
-            logger.info('Update shift view')
-            pk = kwargs.get('pk')
-            shift = self.model.objects.select_related().get(id = pk)
-            logger.info(f'object retrieved {shift}')
-            form = self.form_class(instance = shift)
-            response = render(request, self.template_path,  context={
-                              'shift_form': form, 'edit': True})
-        except self.model.DoesNotExist:
-            messages.error(request, 'Unable to edit object not found',
-                           'alert alert-danger')
-            response = redirect('onboarding:shift_form')
-        except Exception:
-            logger.critical('something went wrong', exc_info = True)
-            messages.error(request, 'Something went wrong',
-                           'alert alert-danger')
-            response = redirect('onboarding:shift_form')
-        return response
-
-    def post(self, request, *args, **kwargs):
-        logger.info('Shift Form submitted')
-        response = None
-        try:
-            pk = kwargs.get('pk')
-            shift = self.model.objects.select_related().get(id = pk)
-            form = self.form_class(request.POST, instance = shift)
-            if form.is_valid():
-                logger.info('ShiftForm form is valid..')
-                shift = form.save()
-                shift.bu_id = int(request.session['client_id'])
-                shift = save_userinfo(shift, request.user, request.session, create = False)
-                logger.info('ShiftForm Form saved')
-                messages.success(request, "Success record saved successfully!",
-                                 "alert-success")
-                response = redirect('onboarding:shift_form')
-            else:
-                logger.info('form is not valid...')
-                response = render(request, self.template_path,
-                                  context={'shift_form': form, 'edit': True})
-        except self.model.DoesNotExist:
-            logger.error('Object does not exist', exc_info = True)
-            messages.error(request, "Object does not exist",
-                           "alert alert-danger")
-            cxt = {'shift_form': form, 'edit': True}
-            response = render(request, self.template_path, context = cxt)
-        except Exception:
-            logger.critical(
-                "something went wrong please follow the traceback to fix it... ", exc_info = True)
-            messages.error(request, "[ERROR] Something went wrong",
-                           "alert alert-danger")
-            cxt = {'shift_form': form, 'edit': True}
-            response = render(request, self.template_path, context = cxt)
-        return response
-
-class DeleteShift(LoginRequiredMixin, View):
-    form_class = obforms.ShiftForm
-    template_path = 'onboarding/shift_form.html'
-    model = Shift
-
-    def get(self, request, *args, **kwargs):
-        """Handles deletion of object"""
-        pk, response = kwargs.get('pk', None), None
-        ic(pk)
-        try:
-            if pk:
-                shift = self.model.objects.get(id = pk)
-                form = self.form_class(instance = shift)
-                shift.delete()
-                logger.info('Shift object deleted')
-                response = redirect('onboarding:shift_form')
-        except self.model.DoesNotExist:
-            logger.warn('Unable to delete, object does not exist')
-            messages.error(request, 'Shift does not exist',
-                           "alert alert-danger")
-            response = redirect('onboarding:shift_form')
-        except RestrictedError:
-            logger.warn('Unable to delete, due to dependencies')
-            messages.error(
-                request, 'Unable to delete, due to dependencies', "alert alert-danger")
-            cxt = {'shift_form': form, 'edit': True}
-            response = render(request, self.template_path, context = cxt)
-        except Exception:
-            messages.error(
-                request, '[ERROR] Something went wrong', "alert alert-danger")
-            cxt = {'shift_form': form, 'edit': True}
-            response = render(request, self.template_path, context = cxt)
-        return response
-# #-------------------- END Shift View Classes --------------------#
-
-#-------------------- Begin SitePeople View Classes --------------------#
-
-class CreateSitePeople(LoginRequiredMixin, View):
-    template_path = 'onboarding/sitepeople_form.html'
-    form_class = obforms.SitePeopleForm
-
-    def get(self, request, *args, **kwargs):
-        """Returns Bt form on html"""
-        logger.info('Create SitePeople view')
-        cxt = {'sitepeople_form': self.form_class()}
-        return render(request, self.template_path, context = cxt)
-
-    def post(self, request, *args, **kwargs):
-        """Handles creation of Bt instance."""
-        logger.info('Create SitePeople form submiited')
-        response, form = None, self.form_class(request.POST)
-        try:
-            if form.is_valid():
-                logger.info('SitePeopleForm Form is valid')
-                sp = form.save()
-                save_userinfo(sp, request.user, request.session)
-                logger.info('SitePeopleForm Form saved')
-                messages.success(
-                    request, "Success record saved successfully!", "alert-success")
-                response = redirect('onboarding:sitepeople_form')
-            else:
-                logger.info('SitePeopleForm is not valid')
-                cxt = {'sitepeople_form': form, 'edit': True}
-                response = render(request, self.template_path, context = cxt)
-        except Exception:
-            logger.critical(
-                'something went wrong please follow the traceback to fix it... ', exc_info = True)
-            messages.error(request, "[ERROR] Something went wrong",
-                           "alert alert-danger")
-            cxt = {'sitepeople_form': form, 'edit': True}
-            response = render(request, self.template_path, context = cxt)
-        return response
-
-# list-out Bt data
-class RetrieveSitePeople(LoginRequiredMixin, View):
-    template_path = 'onboarding/sitepeople_list.html'
-    related = ['parent', 'identifier', 'butype']
-    fields = ['id', 'bucode', 'buname', 'identifier',
-              'enable', 'parent__bucode', 'butype']
-    model = SitePeople
-
-    def get(self, request, *args, **kwargs):
-        '''returns the paginated results from db'''
-        response = None
-        try:
-            logger.info('Retrieve SitePeoples view')
-            objects = self.model.objects.select_related(*self.related
-                                                        ).values(*self.fields)
-            logger.info(
-                f'SitePeople objects {len(objects)} retrieved from db'
-                if objects
-                else "No Records!"
-            )
-
-            cxt = self.paginate_results(request, objects)
-            logger.info('Results paginated'if objects else "")
-            response = render(request, self.template_path, context = cxt)
-        except EmptyResultSet:
-            response = redirect('/dashboard')
-            messages.error(request, 'List view not found',
-                           'alert alert-danger')
-        except Exception:
-            logger.critical(
-                'something went wrong please follow the traceback to fix it... ', exc_info = True)
-            messages.error(request, 'Something went wrong',
-                           "alert alert-danger")
-            response = redirect('/dashboard')
-        return response
-
-    def paginate_results(self, request, objects):
-        '''paginate the results'''
-        logger.info('Pagination Start'if objects else "")
-        from .filters import BtFilter
-        if request.GET:
-            objects = BtFilter(request.GET, queryset = objects).qs
-        filterform = BtFilter().form
-        page = request.GET.get('page', 1)
-        paginator = Paginator(objects, 25)
-        try:
-            bt_list = paginator.page(page)
-        except PageNotAnInteger:
-            bt_list = paginator.page(1)
-        except EmptyPage:
-            bt_list = paginator.page(paginator.num_pages)
-        return {'sitepeople_list': bt_list, 'sitepeople_filter': filterform}
-
-# update Bt instance
-class UpdateSitePeople(LoginRequiredMixin, View):
-    template_path = 'onboarding/bu_form.html'
-    form_class = obforms.SitePeopleForm
-    model = SitePeople
-
-    def get(self, request, *args, **kwargs):
-        logger.info('Update SitePeople view')
-        response = None
-        try:
-            pk = kwargs.get('pk')
-            sp = self.model.objects.get(id = pk)
-            logger.info(f'object retrieved {sp}')
-            form = self.form_class(instance = sp)
-            response = render(request, self.template_path, context={
-                              'sitepeople_form': form, 'edit': True})
-        except self.model.DoesNotExist:
-            response = redirect('onboarding:sitepeople_form')
-        except Exception:
-            logger.critical('something went wrong', exc_info = True)
-            messages.error(request, 'Something went wrong',
-                           'alert alert-danger')
-            response = redirect('onboarding:sitepeople_form')
-        return response
-
-    def post(self, request, *args, **kwargs):
-        logger.info('SitePeopleForm Form submitted')
-        response = None
-        try:
-            pk = kwargs.get('pk')
-            sp = self.model.objects.get(id = pk)
-            form = self.form_class(request.POST, instance = sp)
-            if form.is_valid():
-                logger.info('SitePeopleForm Form is valid')
-                sp = form.save()
-                sp = save_userinfo(sp, request.user, request.session, create = False)
-                logger.info('SitePeopleForm Form saved')
-                messages.success(
-                    request, "Success record saved successfully!", "alert-success")
-                response = redirect('onboarding:sitepeople_form')
-            else:
-                logger.info('SitePeopleForm is not valid')
-                response = render(request, self.template_path, context={
-                                  'sitepeople_form': form, 'edit': True})
-        except self.model.DoesNotExist:
-            logger.error('Object does not exist', exc_info = True)
-            messages.error(request, "Object does not exist",
-                           "alert alert-danger")
-            cxt = {'sitepeople_form': form, 'edit': True}
-            response = render(request, self.template_path, context = cxt)
-        except Exception:
-            logger.critical(
-                "something went wrong please follow the traceback to fix it... ", exc_info = True)
-            messages.error(request, "[ERROR] Something went wrong",
-                           "alert alert-danger")
-            cxt = {'sitepeople_form': form, 'edit': True}
-            response = render(request, self.template_path, context = cxt)
-        return response
-
-# delete Bt instance
-class DeleteSitePeople(LoginRequiredMixin, View):
-    model = SitePeople
-    form_class = obforms.SitePeopleForm
-    model = SitePeople
-
-    def get(self, request, *args, **kwargs):
-        """Handles deletion of object"""
-        pk, response = kwargs.get('pk', None), None
-        try:
-            if pk:
-                sp = self.model.objects.get(id = pk)
-                form = self.form_class(instance = sp)
-                sp.delete()
-                logger.info('SitePeople object deleted')
-                messages.info(request, 'Record deleted successfully',
-                              'alert alert-success')
-                response = redirect('onboarding:sitepeople_form')
-        except self.model.DoesNotExist:
-            logger.error('Unable to delete, object does not exist')
-            messages.error(request, 'Client does not exist',
-                           "alert alert-danger")
-            response = redirect('onboarding:sitepeople_form')
-        except RestrictedError:
-            logger.warn('Unable to delete, due to dependencies')
-            messages.error(request, 'Unable to delete, due to dependencies',
-                           "alert alert-danger")
-            cxt = {'sitepeople_form': form, 'edit': True}
-            response = render(request, self.template_path, context = cxt)
-        except Exception:
-            messages.error(
-                request, '[ERROR] Something went wrong', "alert alert-danger")
-            cxt = {'sitepeople_form': form, 'edit': True}
-            response = render(request, self.template_path, context = cxt)
-        return response
-
-#-------------------- END SitePeople View Classes --------------------#
 
 #-------------------- Begin Client View Classes --------------------#
 
@@ -740,7 +369,7 @@ class UpdateClient(LoginRequiredMixin, View):
             cxt = {'clientform': form, 'clientprefsform': get_bt_prefform(bt), 'edit': True,
                    'ta_form': obforms.TypeAssistForm(auto_id = False)}
             response = render(request, self.template_path, context = cxt)
-        except self.model.DoesNotExist:
+        except self.model.objects.DoesNotExist:
             messages.error(request, 'Unable to edit object not found',
                            'alert alert-danger')
             response = redirect('onboarding:client_form')
@@ -772,12 +401,12 @@ class UpdateClient(LoginRequiredMixin, View):
                                      "alert alert-success")
                     response = redirect('onboarding:client_form')
             else:
-                logger.warn('ClientForm is not valid\n Following are the form errors: %s\n%s' % (
+                logger.warning('ClientForm is not valid\n Following are the form errors: %s\n%s' % (
                     form.errors, jsonform.errors))
                 cxt = {'clientform': form,
                        'clientprefsform': jsonform, 'edit': True}
                 response = render(request, self.template_path, context = cxt)
-        except self.model.DoesNotExist:
+        except self.model.objects.DoesNotExist:
             logger.error('Object does not exist', exc_info = True)
             messages.error(request, "Object does not exist",
                            "alert alert-danger")
@@ -814,7 +443,7 @@ class DeleteClient(LoginRequiredMixin, View):
                 messages.info(request, 'Record deleted successfully',
                               'alert alert-success')
                 response = redirect('onboarding:client_form')
-        except self.model.DoesNotExist:
+        except self.model.objects.DoesNotExist:
             logger.error('Unable to delete, object does not exist')
             messages.error(request, 'Client does not exist',
                            "alert alert-danger")
@@ -1174,38 +803,38 @@ def get_geofence_from_point_radii(R):
 class ImportFile(LoginRequiredMixin, View):
     params = {
        'template_form': 'onboarding/',
-       'form_class':obforms.ImportForm
+       'form_class':obforms.ImportForm,
+       'people':people_admin.PeopleResource,
+       'typeassist':ob_admin.TaResource,
     }
 
     def get(self, request, *args, **kwargs):
         R = request.GET
-        match(R.get('model')):
-            case "typeassist":
-                return render(request, f"{self.params['template_form']}/ta_imp_exp.html")
+        if R.get('model') == 'typeassist':
+            return render(request, f"{self.params['template_form']}/ta_imp_exp.html")
+
+        elif R.get('model') == 'people':
+            return render(request, f"{self.params['template_form']}/people_imp_exp.html")
 
     def post(self, request, *args, **kwargs):
+        # sourcery skip: remove-redundant-constructor-in-dict-union
         from tablib import Dataset
-        from .admin import TaResource
         import json
-        utils.set_db_for_router('testDB2')
-        ic(request.POST)
-        form = obforms.ImportForm(request.POST, request.FILES)
-        if form.is_valid():
-            file = request.FILES['importfile']
-            default_types = Dataset().load(file)
-            res = TaResource(is_superuser = True)
-            res = res.import_data(
-                dataset = default_types, dry_run = False, raise_errors = False,
-                collect_failed_rows = True, use_transactions = False)
-            columns = json.dumps(columns)
-            data = []
+        #ic(request.POST)
+        file = request.FILES['file']
+        default_types = Dataset().load(file)
+        #ic(default_types)
+        res = TaResource(is_superuser = True)
+        #utils.set_db_for_router('testdb3')
+        res = res.import_data(
+            dataset = default_types, dry_run = False, raise_errors = False,
+            collect_failed_rows = True, use_transactions = True)
+        data = []
+        ic(dir(res))
+        if res.has_errors():
             for rowerr in res.row_errors():
                 for err in rowerr[1]:
-                    d = dict(err.row).update({'rowno':rowerr[0]})
+                    d = {'rowno':rowerr[0], 'error':str(err.error)} | dict(err.row)
                     data.append(d)
-            data = json.dumps(data)
-            cxt = {'columns':columns, 'data':data, 'importform':self.params['form_class']()}
-            return render(request, self.params['template_form'], context = cxt)
-
-        else:
-            ic(form.errors)
+            return rp.JsonResponse({'data':json.dumps(data),}, status=404)
+        return rp.JsonResponse({'totalrows':res.total_rows}, status=200)

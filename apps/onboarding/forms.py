@@ -379,3 +379,5 @@ class ImportForm(forms.Form):
         """Initializes form"""
         super().__init__(*args, **kwargs)
         utils.initailize_form_fields(self)
+
+

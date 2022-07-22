@@ -166,7 +166,7 @@ def perform_uploadattachment(file, tablename, record, biodata):
             recordcount = 1
         # from apps.activity.tasks import perform_facerecognition
         results = perform_facerecognition_bgt.delay(pelogid, peopleid, resp, home_dir, uploadfile, db)
-        log.warn(f"face recognition status {results.state}")
+        log.warning(f"face recognition status {results.state}")
 
     except Exception as e:
         rc, traceback, msg = 1, tb.format_exc(), Messages.UPLOAD_FAILED

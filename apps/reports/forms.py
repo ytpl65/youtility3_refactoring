@@ -43,3 +43,10 @@ class IncidentReportTemplate(MasterReportTemplate):
         self.fields['type'].widget.attrs = {'style': 'display:none'}
         self.fields['type'].initial = am.QuestionSet.Type.INCIDENTREPORTTEMPLATE
         utils.initailize_form_fields(self)
+
+
+
+class TestForm(forms.Form):
+    firstname  = forms.CharField(max_length=10, required=False)
+    lastname   = forms.CharField(max_length=10, required=True)
+    middlename = forms.CharField(max_length=10, required=True)
