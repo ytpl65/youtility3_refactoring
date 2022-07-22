@@ -6,24 +6,23 @@ from django.shortcuts import redirect, render
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.views import View
-from django.db.models import Q
+from django.db.models import Q, RestrictedError
 from django.contrib import messages
 from django.http import response as rp
 from django.core.cache.backends.base import DEFAULT_TIMEOUT
 from django.db.utils import IntegrityError
 from django.conf import settings
-from icecream import ic
-from django.core.exceptions import (EmptyResultSet)
-from django.db.models import RestrictedError
+from django.core.exceptions import EmptyResultSet
+from django.db import transaction
 from django.http.request import QueryDict
+from icecream import ic
 from .models import Shift, SitePeople, TypeAssist, Bt, GeofenceMaster
 from apps.peoples.utils import  save_userinfo
+from apps.core import utils
 import apps.onboarding.forms as obforms
 import apps.peoples.utils as putils
 from apps.peoples import admin as people_admin
 from apps.onboarding import admin as ob_admin
-from django.db import transaction
-from apps.core import utils
 from pprint import pformat
 CACHE_TTL = getattr(settings, 'CACHE_TTL', DEFAULT_TIMEOUT)
 logger = logging.getLogger('django')

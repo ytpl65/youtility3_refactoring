@@ -1,20 +1,19 @@
 from asyncio.log import logger
 from pprint import pformat
-from django.shortcuts import render
+from django.shortcuts import redirect, render
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.views.generic.base import View
+from django.contrib import messages
+from django.http import JsonResponse, QueryDict, response as rp
+from django.urls import reverse
 from apps.activity  import models as am
 from apps.onboarding  import models as om
 from apps.peoples import utils as putils
 from apps.core import utils as utils
-from django.http import JsonResponse, QueryDict, response as rp
-from django.urls import reverse
-from django.contrib import messages
+from apps.activity.forms import QsetBelongingForm
 from apps.reports import forms as rp_forms
-from django.shortcuts import redirect
 from datetime import datetime, timedelta, timezone
 import logging
-from apps.activity.forms import QsetBelongingForm
 log = logging.getLogger('__main__')
 # Create your views here.
 

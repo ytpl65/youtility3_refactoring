@@ -1,14 +1,14 @@
 from django.conf import settings
 from django.urls import reverse
-from apps.tenants.models import TenantAwareModel
 from django.contrib.gis.db.models import PolygonField
 from django.db import models
+from apps.tenants.models import TenantAwareModel
+from apps.peoples.models import BaseModel
 from .managers import BtManager, TypeAssistManager, GeofenceManager
 from django.core.serializers.json import DjangoJSONEncoder
 from django.utils.translation import gettext_lazy as _
 from django.contrib.gis.db.models import PointField
 from django.contrib.postgres.fields import ArrayField
-from apps.peoples.models import BaseModel
 # Create your models here.
 
 class HeirarchyModel(models.Model):

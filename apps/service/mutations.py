@@ -5,10 +5,9 @@ from graphene.types.generic import GenericScalar
 from graphql import GraphQLError
 from apps.service import utils as sutils
 from apps.core import utils as cutils
+from apps.peoples.models import People
 from django.utils import timezone
 from . import tasks
-
-from apps.peoples.models import People
 from . import types as ty
 from graphene_file_upload.scalars import Upload
 

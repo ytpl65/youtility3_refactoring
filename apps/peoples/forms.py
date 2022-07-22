@@ -1,12 +1,12 @@
 from django import forms
 from django.conf import settings
+from django.core.validators import RegexValidator
+from django.db.models import Q
 
 import apps.peoples.models as pm  # people-models
 import apps.onboarding.models as om  # onboarding-models
-from django.core.validators import RegexValidator
 from icecream import ic
 from django_select2 import forms as s2forms
-from django.db.models import Q
 from apps.core import utils
 
 #============= BEGIN LOGIN FORM ====================#

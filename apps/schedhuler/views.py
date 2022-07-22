@@ -1,22 +1,21 @@
 import apps.schedhuler.utils as sutils
 import apps.peoples.utils as putils
 from django.db.models import Q
+from django.contrib import messages
+from django.core.exceptions import EmptyResultSet
+from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
+from django.http import Http404, QueryDict, response as rp
+from django.shortcuts import redirect, render
+from django.views import View
 from apps.core import  utils 
 import apps.schedhuler.filters as sdf
-from django.http import  QueryDict
 from pprint import pformat
 import apps.onboarding.models as om
 import apps.activity.models as am
-from django.views import View
-from django.contrib import messages
-from django.shortcuts import redirect, render
-from django.core.exceptions import EmptyResultSet
 from datetime import datetime, time, timedelta, timezone, date
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db import transaction
 import apps.schedhuler.forms as scd_forms
-from django.http import Http404, response as rp
-from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 import logging
 from django.db.models.deletion import RestrictedError
 from django.urls import reverse
@@ -707,7 +706,6 @@ class SchdTaskFormJob(LoginRequiredMixin, View):
         'endtime'     : time(00, 00, 00),
         'fromdate'   : datetime.combine(date.today(), time(00, 00, 00)),
         'uptodate'   : datetime.combine(date.today(), time(23, 00, 00)) + timedelta(days = 2),
-        'expirytime'  : 0,
         'identifier'  : am.Job.Identifier.TASK,
         'frequency'   : am.Job.Frequency.NONE,
         'scantype'    : am.Job.Scantype.QR,
@@ -1186,7 +1184,6 @@ class SchdTasks(LoginRequiredMixin, View):
                 'endtime'     : time(00, 00, 00),
                 'fromdate'   : datetime.combine(date.today(), time(00, 00, 00)),
                 'uptodate'   : datetime.combine(date.today(), time(23, 00, 00)) + timedelta(days = 2),
-                'expirytime'  : 0,
                 'identifier'  : am.Job.Identifier.TASK,
                 'frequency'   : am.Job.Frequency.NONE,
                 'scantype'    : am.Job.Scantype.QR,
@@ -1294,7 +1291,6 @@ class SchdTasks(LoginRequiredMixin, View):
 
 class InternalTourScheduling(LoginRequiredMixin, View):
     params = {
-        'model'        : am.Job,
         'template_form': 'schedhuler/schd_i_tourform_job.html',
         'template_list': 'schedhuler/schd_i_tourlist_job.html',
         'form_class'   : scd_forms.Schd_I_TourJobForm,
@@ -1322,7 +1318,7 @@ class InternalTourScheduling(LoginRequiredMixin, View):
         # return template
         if R.get('template') == 'true':
             return render(request, P['template_list'])
-        
+
         if R.get('id'):
             obj = utils.get_model_obj(int(R['id']), request, P)
             log.info(f'object retrieved {obj}')
@@ -1331,7 +1327,7 @@ class InternalTourScheduling(LoginRequiredMixin, View):
             cxt = {'schdtourform': form, 'childtour_form': P['subform'](), 'edit': True,
                    'checkpoints': checkpoints}
             return render(request, P['template_form'], cxt)
-        
+
 
         match R.get('action'):
             case "list":
@@ -1362,8 +1358,8 @@ class InternalTourScheduling(LoginRequiredMixin, View):
         except Exception:
             resp = utils.handle_Exception(request)
         return resp
-    
-    
+
+
     def handle_valid_form(self, form, request):
         data = request.POST.get("asssigned_checkpoints")
         try:
@@ -1381,7 +1377,7 @@ class InternalTourScheduling(LoginRequiredMixin, View):
         except Exception as ex:
             log.info("error handling valid form", exc_info = True)
             raise ex
-        
+
 
     def save_checpoints_for_tour(self, checkpoints, job, request):
         try:
@@ -1397,7 +1393,7 @@ class InternalTourScheduling(LoginRequiredMixin, View):
                     parent_id  = job.id,
                     asset_id = CP['asset'],
                     qset_id  = CP['qset'],
-                    
+
                     defaults   = sutils.job_fields(job, CP)
                 )
                 checkpoint.save()
@@ -1411,7 +1407,7 @@ class InternalTourScheduling(LoginRequiredMixin, View):
             raise ex
         else:
             log.info("inserting checkpoints finished...")
-            
+
     def get_checkpoints(self, obj, P):
         log.info("getting checkpoints started...")
         checkpoints = None
@@ -1437,7 +1433,6 @@ class InternalTourScheduling(LoginRequiredMixin, View):
 
 class ExternalTourScheduling(LoginRequiredMixin, View):
     params = {
-        'model'        : am.Job,
         'template_form': 'schedhuler/schd_e_tourform_job.html',
         'template_list': 'schedhuler/schd_e_tourlist_job.html',
         'form_class'   : scd_forms.Schd_E_TourJobForm,
@@ -1454,15 +1449,15 @@ class ExternalTourScheduling(LoginRequiredMixin, View):
         'fields'       : ['id', 'jobname', 'people__peoplename', 'pgroup__groupname', 'fromdate', 'uptodate',
                         'planduration', 'gracetime', 'expirytime', 'bu__buname']
     }
-    
-    
+
+
     def get(self, request, *args, **kwargs):
         R, P = request.GET, self.params
-        
+
         # return template
         if R.get('template') == 'true':
             return render(request, P['template_list'])
-        
+
         match R.get('action'):
             case "list":
                 objs = P['model'].objects.get_scheduled_external_tours(
@@ -1472,8 +1467,8 @@ class ExternalTourScheduling(LoginRequiredMixin, View):
             case 'form':
                 cxt = {'schdexternaltourform':P['form_class'](request = request, initial = P['initial'])}
                 return render(request, P['template_form'], cxt)
-            
-            
+
+
     def post(self, request, *args, **kwargs):
         P = self.params
         pk, data = request.POST.get('pk', None), QueryDict(request.POST.get('formData'))
@@ -1490,8 +1485,8 @@ class ExternalTourScheduling(LoginRequiredMixin, View):
             return utils.handle_invalid_form(request, self.params, cxt)
         except Exception as ex:
             return utils.handle_Exception(request)
-        
-    
+
+
     def handle_valid_form(self, request, P):
         try:
             data = request.POST.get('formData')
@@ -1506,4 +1501,4 @@ class ExternalTourScheduling(LoginRequiredMixin, View):
         except Exception as ex:
             log.error("external tour form, handle valid form failed", exc_info = True)
             return utils.handle_Exception(request)
-        
+

@@ -1,6 +1,6 @@
 from django.conf import settings
-from apps.activity.forms import JobForm, JobNeedForm
 from django import forms
+from apps.activity.forms import JobForm, JobNeedForm
 import apps.onboarding.utils as ob_utils
 from apps.core import utils
 from django_select2 import forms as s2forms
@@ -155,7 +155,7 @@ class Schd_E_TourJobForm(JobForm):
     timeInChoices = [('MIN', 'Min'),('HRS', 'Hours')]
     assign_to          = forms.ChoiceField(choices = ASSIGNTO_CHOICES, initial="PEOPLE")
     required_css_class = "required"
-    
+
 
     class Meta(JobForm.Meta):
         JobForm.Meta.labels.update({'bu': 'Cluster'})

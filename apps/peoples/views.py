@@ -2,27 +2,26 @@ from django.db.utils import IntegrityError
 from django.db import transaction
 from django.forms import model_to_dict
 from django.http.request import QueryDict
-from django.db.models import Q
-from icecream import ic
+from django.db.models import Q, RestrictedError
+from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.exceptions import EmptyResultSet
+from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.http import response as rp
 from django.shortcuts import redirect, render
 from django.views import View
-from django.contrib.auth.mixins import LoginRequiredMixin
-from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
+from icecream import ic
 import logging
 from apps.onboarding.models import TypeAssist, Bt
 from apps.peoples.filters import CapabilityFilter
+from apps.core import utils
 import apps.peoples.filters as pft
 import apps.peoples.forms as pf  # people forms
 import apps.peoples.models as pm  # people models
 import apps.onboarding.forms as obf  # onboarding-modes
-from django.contrib import messages
-from django.db.models import RestrictedError
 from .models import Capability, Pgbelonging, Pgroup, People
 from .utils import save_userinfo, save_pgroupbelonging
-from apps.core import utils
 import apps.peoples.utils as putils
 from .forms import CapabilityForm, PgroupForm, PeopleForm, PeopleExtrasForm, LoginForm
 logger = logging.getLogger('django')

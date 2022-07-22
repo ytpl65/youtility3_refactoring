@@ -3,6 +3,7 @@ from django.db.models import CharField
 from django.urls import reverse
 from django.conf import settings
 from django.db import models
+from django.utils import timezone
 import uuid
 from django.utils.translation import gettext_lazy as _
 from django.core.serializers.json import DjangoJSONEncoder
@@ -11,7 +12,6 @@ from django.contrib.auth.models import PermissionsMixin
 from .managers import PeopleManager, CapabilityManager, PgblngManager, PgroupManager
 from apps.tenants.models import TenantAwareModel
 import logging
-from django.utils import timezone
 logger = logging.getLogger('django')
 
 # Create your models here.

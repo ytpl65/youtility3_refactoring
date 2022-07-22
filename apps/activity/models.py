@@ -1,16 +1,14 @@
 import uuid
 from apps.peoples.models import BaseModel
+from apps.activity.managers import AssetManager, AttachmentManager, JobManager, JobneedDetailsManager, QsetBlngManager, QuestionManager, QuestionSetManager, JobneedManager
+from apps.tenants.models import TenantAwareModel
 from django.utils.translation import gettext_lazy as _
 from django.core.serializers.json import DjangoJSONEncoder
-from apps.tenants.models import TenantAwareModel
+from django.contrib.postgres.fields import ArrayField
 from django.db import models
 from datetime import datetime
 from django.contrib.gis.db.models import PointField
 from django.utils import timezone
-from apps.activity.managers import(
-    AssetManager, AttachmentManager, JobManager, JobneedDetailsManager, QsetBlngManager, QuestionManager, QuestionSetManager, JobneedManager
-)
-from django.contrib.postgres.fields import ArrayField
 
 # Create your models here.
 class Question(BaseModel, TenantAwareModel):
@@ -593,8 +591,8 @@ class Ticket(BaseModel, TenantAwareModel):
     ticketsource       = models.CharField(max_length = 50, choices = TicketSource.choices, null = True, blank = True)
     attcount           = models.IntegerField(_("Attachment Count"), default = 0)
     parent             = models.ForeignKey('self', null = True, blank = True, on_delete = models.RESTRICT)
-    
-    
+
+
     class Meta(BaseModel.Meta):
             db_table      = 'ticket'
             get_latest_by = ["cdtz", 'mdtz']
