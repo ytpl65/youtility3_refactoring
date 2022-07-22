@@ -515,7 +515,7 @@ def update_lastgeneratedon(job, pdtz):
         raise
 
 def send_email_notication(err):
-    pass
+    raise NotImplementedError()
 
 def del_job(id):
-    pass
+    raise NotImplementedError()

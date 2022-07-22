@@ -31,7 +31,7 @@ class PELManager(models.Manager):
         ).using(db).update(peventlogextras = result, people_id = peopleid)
 
     def get_people_attachment(self, pelogid, db):
-        pass
+        raise NotImplementedError()
 
     def get_lastmonth_conveyance(self, R):
         from datetime import datetime
