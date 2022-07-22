@@ -10,25 +10,18 @@ def save_jobneeddetails(data):
 
 
 def get_or_create_dir(path):
-    try:
-        import os
-        created = True
-        if not os.path.exists(path):
-            os.makedirs(path)
-        else: created= False
-        return created
-    except Exception:
-        raise
+    import os
+    created = True
+    if not os.path.exists(path):
+        os.makedirs(path)
+    else: created= False
+    return created
 
 def write_file_to_dir(filebuffer, uploadedfile):
     from django.core.files.base import ContentFile
     from django.core.files.storage import default_storage
 
-    try:
-        path = default_storage.save(uploadedfile, ContentFile(filebuffer.read()))
-        # ic(path)
-    except Exception:
-        raise
+    path = default_storage.save(uploadedfile, ContentFile(filebuffer.read()))
 
 
 from pprint import pformat
@@ -192,31 +185,28 @@ def perform_insertrecord(file, request = None, filebased = True):
     try:
         data = get_json_data(file) if filebased else [file]
         # ic(data)
-        try:
-            with transaction.atomic(using = utils.get_current_db_name()):
+        with transaction.atomic(using = utils.get_current_db_name()):
 
-                for record in data:
-                    tablename = record.pop('tablename')
-                    ic(tablename)
-                    obj = insertrecord(record, tablename)
-                    ic(obj)
-                    allconditions = [
-                        hasattr(obj, 'peventtype'), hasattr(obj, 'endlocation'), 
-                        hasattr(obj, 'punchintime'), hasattr(obj, 'punchouttime')]
+            for record in data:
+                tablename = record.pop('tablename')
+                ic(tablename)
+                obj = insertrecord(record, tablename)
+                ic(obj)
+                allconditions = [
+                    hasattr(obj, 'peventtype'), hasattr(obj, 'endlocation'), 
+                    hasattr(obj, 'punchintime'), hasattr(obj, 'punchouttime')]
 
-                    if all(allconditions) and all([tablename == 'peopleeventlog',
-                            obj.peventtype.tacode in ('CONVEYANCE', 'AUDIT'),
-                            obj.endlocation,obj.punchouttime, obj.punchintime]):
-                        log.info("save line string is started")
-                        save_linestring_and_update_pelrecord(obj)
+                if all(allconditions) and all([tablename == 'peopleeventlog',
+                        obj.peventtype.tacode in ('CONVEYANCE', 'AUDIT'),
+                        obj.endlocation,obj.punchouttime, obj.punchintime]):
+                    log.info("save line string is started")
+                    save_linestring_and_update_pelrecord(obj)
 
-                    # model = get_model_or_form(tablename)
+                # model = get_model_or_form(tablename)
 
-                    # log.info(f'record after cleaning {pformat(record)}')
-                    # instance = model.objects.create(**record)
-                    recordcount += 1
-        except Exception:
-            raise
+                # log.info(f'record after cleaning {pformat(record)}')
+                # instance = model.objects.create(**record)
+                recordcount += 1
         if recordcount:
             msg = Messages.INSERT_SUCCESS
     except Exception as e:
@@ -411,110 +401,101 @@ def send_alert_mails_if_any(attdata):
 
 def alert_observation(pk):
     body=""
-    try:
-        jobneedRecord = Jobneed.objects.get_jobneed_observation(pk)
-        log.info(f'jobneedRecord {"Found" if jobneedRecord.count() else "Not found"}')
-        if jobneedRecord:
-            toemails = getEmails(jobneedRecord[0])
-            subject= f"[READINGS ALERT] Site: {jobneedRecord[0].bu.buname}, {jobneedRecord[0].asset.identifier.taname}: [{jobneedRecord[0].asset.assetcode}] {jobneedRecord[0].asset.assetname} - readings out of range"
-            if jndRecords := JobneedDetails.objects.get_jnd_observation(jobneedRecord[0].id):
-                tdStyle = "width='120' style='background:#abe7ed;font-weight:bold;font-size:16px'"
-                body+= "<br><b>Some readings were out of permissible limits. Details are below...</b><br/><br/>"
-                body+= "<table style='background:#eef1f5' cellpadding='8' cellspacing='2'>"
-                body += f'<tr><td {tdStyle}>Site</td><td>{jndRecords[0]["buname"]}</td></tr>'
-                body += f'<tr><td {tdStyle}>{jndRecords[0]["asset_identifier"]}</td><td>[{jndRecords[0]["assetcode"]}] {jndRecords[0]["assetname"]}</td></tr>'
+    jobneedRecord = Jobneed.objects.get_jobneed_observation(pk)
+    log.info(f'jobneedRecord {"Found" if jobneedRecord.count() else "Not found"}')
+    if jobneedRecord:
+        toemails = getEmails(jobneedRecord[0])
+        subject= f"[READINGS ALERT] Site: {jobneedRecord[0].bu.buname}, {jobneedRecord[0].asset.identifier.taname}: [{jobneedRecord[0].asset.assetcode}] {jobneedRecord[0].asset.assetname} - readings out of range"
+        if jndRecords := JobneedDetails.objects.get_jnd_observation(jobneedRecord[0].id):
+            tdStyle = "width='120' style='background:#abe7ed;font-weight:bold;font-size:16px'"
+            body+= "<br><b>Some readings were out of permissible limits. Details are below...</b><br/><br/>"
+            body+= "<table style='background:#eef1f5' cellpadding='8' cellspacing='2'>"
+            body += f'<tr><td {tdStyle}>Site</td><td>{jndRecords[0]["buname"]}</td></tr>'
+            body += f'<tr><td {tdStyle}>{jndRecords[0]["asset_identifier"]}</td><td>[{jndRecords[0]["assetcode"]}] {jndRecords[0]["assetname"]}</td></tr>'
 
-                body += f'<tr><td {tdStyle}>Performed by</td><td>[{jndRecords[0]["peoplecode"]}] {jndRecords[0]["peoplename"]}</td></tr>'
+            body += f'<tr><td {tdStyle}>Performed by</td><td>[{jndRecords[0]["peoplecode"]}] {jndRecords[0]["peoplename"]}</td></tr>'
 
-                body+= "<tr><td colspan= 2>"
-                body+= "<table style='background:#EEF1F5;' cellpadding = 8 cellspacing = 2 border = 1>"
-                body+= "<tr style='background:#ABE7ED;font-weight:bold;font-size:14px;'><th>Slno</th><th>Question</th><th>Answer</th><th>Option</th><th>Min</th><th>Max</th><th>Alert On</th><tr>"
-                for rd in enumerate(jndRecords):
-                    body+= "<tr %s>"     %("style='color:red;'" if rd[1]["alerts"] is True else "")
-                    body += f"<td>{rd.seqno}</td>"
-                    body += f"<td>{rd.questionname}</td>"
-                    body += f"<td>{rd.answer}</td>"
-                    body += f"<td>{rd.option}</td>"
-                    body += f"<td>{rd.min}</td>"
-                    body += f"<td>{rd.max}</td>"
-                    body += f"<td>{rd.alerton}</td>"
-                    body+= "</tr>"
-                body+= "</table>"
-                body+= "</td></tr></table>"
-            log.info(f'alert_observation body {body}')
-            # TODO sendEmail()
-            if jobneedRecord[0].iscritical:
-                ticketdesc = f"[READINGS ALERT] {jobneedRecord[0].asset.identifier.taname}: [{jobneedRecord[0].asset.assetcode}]{jobneedRecord[0].asset.assetname} - readings out of range" 
-                # TODO createTicket
-                # TODO snedTicketEmail()
-    except Exception as e:
-        raise
+            body+= "<tr><td colspan= 2>"
+            body+= "<table style='background:#EEF1F5;' cellpadding = 8 cellspacing = 2 border = 1>"
+            body+= "<tr style='background:#ABE7ED;font-weight:bold;font-size:14px;'><th>Slno</th><th>Question</th><th>Answer</th><th>Option</th><th>Min</th><th>Max</th><th>Alert On</th><tr>"
+            for rd in enumerate(jndRecords):
+                body+= "<tr %s>"     %("style='color:red;'" if rd[1]["alerts"] is True else "")
+                body += f"<td>{rd.seqno}</td>"
+                body += f"<td>{rd.questionname}</td>"
+                body += f"<td>{rd.answer}</td>"
+                body += f"<td>{rd.option}</td>"
+                body += f"<td>{rd.min}</td>"
+                body += f"<td>{rd.max}</td>"
+                body += f"<td>{rd.alerton}</td>"
+                body+= "</tr>"
+            body+= "</table>"
+            body+= "</td></tr></table>"
+        log.info(f'alert_observation body {body}')
+        # TODO sendEmail()
+        if jobneedRecord[0].iscritical:
+            ticketdesc = f"[READINGS ALERT] {jobneedRecord[0].asset.identifier.taname}: [{jobneedRecord[0].asset.assetcode}]{jobneedRecord[0].asset.assetname} - readings out of range" 
+            # TODO createTicket
+            # TODO snedTicketEmail()
 
 
 
 def alert_report(pk):
     body=''
-    try:
-        hdata = Jobneed.objects.get_jobneed_for_report(pk)
-        if len(hdata) >0:
-            bdata = Jobneed.objects.get_hdata_for_report(pk)
-            if len(bdata) >0:
-                subject= f"[{hdata[0].idenfiername} ALERT] Site: {hdata[0].buname} | {hdata[0].jobdesc} - audit responses out of range"
-                tdstyle = "width='120' style='background:#abe7ed;font-weight:bold;font-size:16px'"
-                body += "<br><b>Some audit responses were out of permissible limits. Details are below...</b><br/><br/>"
-                body += "<table style='background:#eef1f5' cellpadding='8' cellspacing='2'>"
-                body+= f"<tr><td {tdstyle}>Site</td><td>{hdata[0].buname}</td></tr>"
-                body+= f"<tr><td {tdstyle}>{hdata[0].identifiername}</td><td>{hdata[0].jobdesc}</td></tr>"
-                body+= f"<tr><td {tdstyle}>Surveyor</td><td>[{hdata[0].peoplename}] {hdata[0].peoplename}</td></tr>"
-                body+= f"<tr><td {tdstyle}>Datetime</td><td>{hdata[0].cplandatetime} (24Hr)</td></tr>"
-                body+= "<tr><td colspan= 2>"
-                body+= "<table style='background:#EEF1F5;' cellpadding = 8 cellspacing = 2 border = 1>"
-                body += "<tr style='background:#ABE7ED;font-weight:bold;font-size:14px;'><th>Slno</th><th>Question</th><th>Answer</th><th>Option</th><th>Min</th><th>Max</th><th>Alert On</th></tr>"
+    hdata = Jobneed.objects.get_jobneed_for_report(pk)
+    if len(hdata) >0:
+        bdata = Jobneed.objects.get_hdata_for_report(pk)
+        if len(bdata) >0:
+            subject= f"[{hdata[0].idenfiername} ALERT] Site: {hdata[0].buname} | {hdata[0].jobdesc} - audit responses out of range"
+            tdstyle = "width='120' style='background:#abe7ed;font-weight:bold;font-size:16px'"
+            body += "<br><b>Some audit responses were out of permissible limits. Details are below...</b><br/><br/>"
+            body += "<table style='background:#eef1f5' cellpadding='8' cellspacing='2'>"
+            body+= f"<tr><td {tdstyle}>Site</td><td>{hdata[0].buname}</td></tr>"
+            body+= f"<tr><td {tdstyle}>{hdata[0].identifiername}</td><td>{hdata[0].jobdesc}</td></tr>"
+            body+= f"<tr><td {tdstyle}>Surveyor</td><td>[{hdata[0].peoplename}] {hdata[0].peoplename}</td></tr>"
+            body+= f"<tr><td {tdstyle}>Datetime</td><td>{hdata[0].cplandatetime} (24Hr)</td></tr>"
+            body+= "<tr><td colspan= 2>"
+            body+= "<table style='background:#EEF1F5;' cellpadding = 8 cellspacing = 2 border = 1>"
+            body += "<tr style='background:#ABE7ED;font-weight:bold;font-size:14px;'><th>Slno</th><th>Question</th><th>Answer</th><th>Option</th><th>Min</th><th>Max</th><th>Alert On</th></tr>"
 
-                toemails = getEmails(hdata[0])
-                prevsec= ""
+            toemails = getEmails(hdata[0])
+            prevsec= ""
+            flag= False
+            for bd in bdata:
+                if prevsec == "" or prevsec != bd["jobdesc"]:
+                    prevsec= bd["jobdesc"]
+                    flag= True
+                if flag:
+                    body+= "<tr style='background: #F0F0F0;font-weight:bold;font-size:14px;'><td colspan='7'>[%s] %s</td></tr>" %(bd["pseqno"], bd["jobdesc"])
+                body+= "<tr {}>".format("style='color:red;'" if bd["alerts"] is True else "")
+                body+= f"<td>{bd['cseqno']}</td>"
+                body+= f"<td>{bd['questionname']}</td>"
+                body+= f"<td>{bd['answer']}</td>"
+                body+= f"<td>{bd['option']}</td>"
+                body+= f"<td>{bd['min']}</td>"
+                body+= f"<td>{bd['max']}</td>"
+                body+= f"<td>{bd['alerton']}</td>"
+                body+= "</tr>"
                 flag= False
-                for bd in bdata:
-                    if prevsec == "" or prevsec != bd["jobdesc"]:
-                        prevsec= bd["jobdesc"]
-                        flag= True
-                    if flag:
-                        body+= "<tr style='background: #F0F0F0;font-weight:bold;font-size:14px;'><td colspan='7'>[%s] %s</td></tr>" %(bd["pseqno"], bd["jobdesc"])
-                    body+= "<tr {}>".format("style='color:red;'" if bd["alerts"] is True else "")
-                    body+= f"<td>{bd['cseqno']}</td>"
-                    body+= f"<td>{bd['questionname']}</td>"
-                    body+= f"<td>{bd['answer']}</td>"
-                    body+= f"<td>{bd['option']}</td>"
-                    body+= f"<td>{bd['min']}</td>"
-                    body+= f"<td>{bd['max']}</td>"
-                    body+= f"<td>{bd['alerton']}</td>"
-                    body+= "</tr>"
-                    flag= False
-                body+= "</table>"
-                body+= "</td></tr></table>"
-                # TODO send_emaill()
-    except Exception as e:
-        raise
+            body+= "</table>"
+            body+= "</td></tr></table>"
+            # TODO send_emaill()
 
 
 def alert_deviation(pk):
-    try:
-        R = Jobneed.objects.get_deviation_jn(pk)
-        if R.count() > 0:
-            toemails = getEmails(R)
-            subject =  f"[DEVIATION ALERT] Route Deviation by Patrol Officer [{R[0].peoplename}]"
-            body = f'<br><b>There has been a Route Deviation by Patrol Officer {R[0].peoplename} at {R[0].plandatetime} (24Hrs) to {R[0].assetname} </b><br/>'
-            body+= "<br>Given below are details of the Patrol Officer.<br/><br/>"
-            body+= "<table style='background:#eef1f5' cellpadding='8' cellspacing='2'>"
-            tdstyle = "width='120' style='background:#abe7ed;font-weight:bold;font-size:16px"
-            body+= f"<tr><td {tdstyle}>Description</td><td>%s</td></tr>"
-            body+= f"<tr><td {tdstyle}>Planned On</td><td>%s</td></tr>"
-            body+= f"<tr><td {tdstyle}>Performed On</td><td>%s</td></tr>"
-            body+= f"<tr><td {tdstyle}>Checkpoint</td><td>%s</td></tr>"
-            body+= f"<tr><td {tdstyle}>Code</td><td>%s</td></tr>"
-            body+= f"<tr><td {tdstyle}>Name</td><td>%s</td></tr>"
-            body+= f"<tr><td {tdstyle}>Mobile</td><td>%s</td></tr>"
-            body+= "</table>"
-            # TODO send_email()
-    except Exception:
-        raise
+    R = Jobneed.objects.get_deviation_jn(pk)
+    if R.count() > 0:
+        toemails = getEmails(R)
+        subject =  f"[DEVIATION ALERT] Route Deviation by Patrol Officer [{R[0].peoplename}]"
+        body = f'<br><b>There has been a Route Deviation by Patrol Officer {R[0].peoplename} at {R[0].plandatetime} (24Hrs) to {R[0].assetname} </b><br/>'
+        body+= "<br>Given below are details of the Patrol Officer.<br/><br/>"
+        body+= "<table style='background:#eef1f5' cellpadding='8' cellspacing='2'>"
+        tdstyle = "width='120' style='background:#abe7ed;font-weight:bold;font-size:16px"
+        body+= f"<tr><td {tdstyle}>Description</td><td>%s</td></tr>"
+        body+= f"<tr><td {tdstyle}>Planned On</td><td>%s</td></tr>"
+        body+= f"<tr><td {tdstyle}>Performed On</td><td>%s</td></tr>"
+        body+= f"<tr><td {tdstyle}>Checkpoint</td><td>%s</td></tr>"
+        body+= f"<tr><td {tdstyle}>Code</td><td>%s</td></tr>"
+        body+= f"<tr><td {tdstyle}>Name</td><td>%s</td></tr>"
+        body+= f"<tr><td {tdstyle}>Mobile</td><td>%s</td></tr>"
+        body+= "</table>"
+        # TODO send_email()
