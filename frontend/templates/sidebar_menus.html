@@ -72,7 +72,7 @@
         </a>
       </div>
       <div class="menu-item" id="assetmaintainancelog">
-        <a class="menu-link" href="apps/customers/view.html">
+        <a class="menu-link" href="{{ url('activity:assetmaintainance') }}?template=true">
           <span class="menu-bullet">
             <span class="bullet bullet-dot"></span>
           </span>
@@ -127,7 +127,7 @@
         </a>
       </div>
       <div class="menu-item" id="adhoctour">
-        <a class="menu-link" href="apps/customers/list.html">
+        <a class="menu-link" href="{{ url('activity:adhoctours') }}?template=true">
           <span class="menu-bullet">
             <span class="bullet bullet-dot"></span>
           </span>
@@ -1018,7 +1018,7 @@
     </span>
     <div class="menu-sub menu-sub-accordion" kt-hidden-height="116" style="display: none; overflow: hidden;">
       <div class="menu-item" id="typeassist">
-        <a class="menu-link" href="{{ url('onboarding:import') }}?model = typeassist">
+        <a class="menu-link" href="{{ url('onboarding:import') }}?model=typeassist">
           <span class="menu-bullet">
             <span class="bullet bullet-dot"></span>
           </span>
@@ -1026,7 +1026,7 @@
         </a>
       </div>
       <div class="menu-item" id="editortypeassist">
-        <a class="menu-link" href="{{ url('onboarding:import') }}?model = people">
+        <a class="menu-link" href="{{ url('onboarding:import') }}?model=people">
           <span class="menu-bullet">
             <span class="bullet bullet-dot"></span>
           </span>
@@ -1034,7 +1034,7 @@
         </a>
       </div>
       <div class="menu-item" id="question">
-        <a class="menu-link" href="{{ url('onboarding:import') }}?model = bu">
+        <a class="menu-link" href="{{ url('onboarding:import') }}?model=bu">
           <span class="menu-bullet">
             <span class="bullet bullet-dot"></span>
           </span>
@@ -1042,7 +1042,7 @@
         </a>
       </div>
       <div class="menu-item" id="shift">
-        <a class="menu-link" href="{{ url('onboarding:import') }}?model = shift">
+        <a class="menu-link" href="{{ url('onboarding:import') }}?model=shift">
           <span class="menu-bullet">
             <span class="bullet bullet-dot"></span>
           </span>
@@ -1050,7 +1050,7 @@
         </a>
       </div>
       <div class="menu-item" id="sitepeople">
-        <a class="menu-link" href="{{ url('onboarding:import') }}?model = asset">
+        <a class="menu-link" href="{{ url('onboarding:import') }}?model=asset">
           <span class="menu-bullet">
             <span class="bullet bullet-dot"></span>
           </span>
@@ -1058,7 +1058,7 @@
         </a>
       </div>
       <div class="menu-item" id="peoplegroup">
-        <a class="menu-link" href="{{ url('onboarding:import') }}?model = question">
+        <a class="menu-link" href="{{ url('onboarding:import') }}?model=question">
           <span class="menu-bullet">
             <span class="bullet bullet-dot"></span>
           </span>
@@ -1066,7 +1066,7 @@
         </a>
       </div>
       <div class="menu-item" id="sitegroup">
-        <a class="menu-link" href="{{ url('onboarding:import') }}?model = peoplegroup">
+        <a class="menu-link" href="{{ url('onboarding:import') }}?model=peoplegroup">
           <span class="menu-bullet">
             <span class="bullet bullet-dot"></span>
           </span>

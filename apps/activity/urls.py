@@ -10,5 +10,7 @@ urlpatterns = [
     path('smartplace/', views.Smartplace.as_view(), name='smartplace'),
     path('delete_qsb/', views.deleteQSB, name='delete_qsb'),
     path('esclist/', views.RetriveEscList.as_view(), name='esc_list'),
-    path('adhoctasks/', views.AdhocRecord.as_view(), name='adhoctasks'),
+    path('adhoctasks/', views.AdhocTasks.as_view(), name='adhoctasks'),
+    path('adhoctours/', views.AdhocTours.as_view(), name='adhoctours'),
+    path('assetmaintainance/', views.AssetMaintainceList.as_view(), name='assetmaintainance'),
 ]

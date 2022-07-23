@@ -56,12 +56,12 @@ def handle_Exception(request, force_return = None):
 
 def handle_RestrictedError(request):
     data = {'errors': "Unable to delete, due to dependencies"}
-    logger.warn("%s", data['error'], exc_info = True)
+    logger.warning("%s", data['error'], exc_info = True)
     msg.error(request, data['error'], "alert-danger")
     return rp.JsonResponse(data, status = 404)
 
 def handle_EmptyResultSet(request, params, cxt):
-    logger.warn('empty objects retrieved', exc_info = True)
+    logger.warning('empty objects retrieved', exc_info = True)
     msg.error(request, 'List view not found',
               'alert-danger')
     return scts.render(request, params['template_list'], cxt)
@@ -79,7 +79,7 @@ def render_form_for_update(request, params, formname, obj, extra_cxt = None):
         logger.info(f"object retrieved '{obj}'")
         F = params['form_class'](
             instance = obj, request = request, initial = params['form_initials'])
-        C = {formname: F, 'edit': True}
+        C = {formname: F, 'edit': True} | extra_cxt
 
         html = render_to_string(params['template_form'], C, request)
         data = {'html_form': html}
@@ -374,7 +374,7 @@ def delete_object(request, model, lookup, ids, temp,
         msg.error(request, 'Client does not exist', "alert alert-danger")
         res = scts.redirect(url)
     except RestrictedError:
-        logger.warn('Unable to delete, duw to dependencies')
+        logger.warning('Unable to delete, duw to dependencies')
         msg.error(request, 'Unable to delete, duw to dependencies')
         cxt = {form_name: form, jsonformname: jsonform, 'edit': True}
         res = scts.render(request, temp, context = cxt)
@@ -392,6 +392,7 @@ def delete_unsaved_objects(model, ids):
                 'Found unsaved objects in session going to be deleted...')
             model.objects.filter(pk__in = ids).delete()
         except:
+            logger.error('delete_unsaved_objects failed',exc_info=True)
             raise
         else:
             logger.info('Unsaved objects are deleted...DONE')

@@ -52,7 +52,7 @@ class SignIn(View):
         logger.info('form submitted')
         try:
             if not request.session.test_cookie_worked():
-                logger.warn(
+                logger.warning(
                     'cookies are not enabled in user browser', exc_info = True)
                 form.add_error(None, self.error_msgs['invalid-cookies'])
                 cxt = {'loginform': form}
@@ -76,7 +76,7 @@ class SignIn(View):
                     response = redirect('onboarding:wizard_delete') if request.session.get('wizard_data') else redirect('/dashboard')
 
                 else:
-                    logger.warn(
+                    logger.warning(
                         self.error_msgs['auth-error'] % (loginid, '********'))
                     form.add_error(
                         None, self.error_msgs['invalid-details'])
@@ -84,7 +84,7 @@ class SignIn(View):
                     response = render(
                         request, self.template_path, context = cxt)
             else:
-                logger.warn(self.error_msgs['invalid-form'])
+                logger.warning(self.error_msgs['invalid-form'])
                 cxt = {'loginform': form}
                 response = render(request, self.template_path, context = cxt)
         except Exception:
@@ -525,7 +525,7 @@ class DeletePgroup(LoginRequiredMixin, View):
                            "alert alert-danger")
             response = redirect('peoples:pgroup_form')
         except RestrictedError:
-            logger.warn('Unable to delete, due to dependencies')
+            logger.warning('Unable to delete, due to dependencies')
             messages.error(
                 request, 'Unable to delete, due to dependencies', "alert alert-danger")
             cxt = {'pgroup_form': form, 'edit': True}
@@ -698,12 +698,12 @@ class DeleteCapability(LoginRequiredMixin, View):
                               'alert alert-success')
                 response = redirect('peoples:cap_form')
         except self.model.DoesNotExist:
-            logger.warn('Unable to delete, object does not exist')
+            logger.warning('Unable to delete, object does not exist')
             messages.error(request, 'Capability does not exist',
                            "alert alert-danger")
             response = redirect('peoples:cap_form')
         except RestrictedError:
-            logger.warn('Unable to delete, due to dependencies')
+            logger.warning('Unable to delete, due to dependencies')
             messages.error(request, 'Unable to delete, due to dependencies',
                            "alert alert-danger")
             cxt = {'cap_form': form, 'edit': True}

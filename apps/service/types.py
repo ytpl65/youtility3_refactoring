@@ -334,8 +334,8 @@ class ReportSchema(BaseModel):
         # sourcery skip: inline-immediately-returned-variable, instance-method-first-arg-name
         from django.contrib.gis.geos import GEOSGeometry
         try:
-            lat, lng = v.split(', ')
-            point = GEOSGeometry(f'SRID = 4326;POINT({lng} {lat})')
+            lat, lng = v.split(',')
+            point = GEOSGeometry(f'SRID=4326;POINT({lng} {lat})')
             return point
         except Exception as e:
             raise ValueError('unrecognized gpslocation format') from e

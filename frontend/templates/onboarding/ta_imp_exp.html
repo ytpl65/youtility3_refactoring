@@ -1,8 +1,5 @@
-{% extends "base_form.html" %}
+{% extends "base_imp_exp.html" %}
 
-{% block extra_css %}
-<link  href="{{ static('assets/plugins/custom/DataTables/datatables.min.css') }}" rel="stylesheet" type="text/css"/>
-{% endblock extra_css %}
 
 {% block pagebreadcumb %}
 {{ super() }}
@@ -15,36 +12,53 @@
 Import TypeAssist
 {% endblock form_title %}
 <!------ END FORM TITLE -------->   
-    
 
-{% block form %}
-<div class="row">
-    <div class="col-md-4">
-        <label for="import_file">Import Data:</label>
-    </div>
-    <div class="col-md-8">
-        <input type="file" name="import_file" id="import_file">
-    </div>
-    <button>Submit File</button>
-</div>
 
-<div class="row">
-    <table id='typeassist_model'></table>
-</div>
-{% endblock form %}
+{% block accordion_body %}
+    <strong>There Should be:</strong><br>
+    <ul>
+        <li>File format of .xlsx for seamsless operation</li>
+        <li>No Empty rows in the sheet</li>
+        <li>No column type formatting i.e everything should be text type</li>
+        <li>The first column should always be 'id'</li>
+        <li>Leave 'id' column empty</li>
+    </ul>
+    <strong>Order of column names in the sheet should be in following order.. you can copy it from below.</strong><br>
+    <u>ID, Name, Code, Type, BV, Client</u>
+{% endblock accordion_body %}
 
-{% block extra_scripts %}
-<script src="{{ static('assets/plugins/custom/DataTables/datatables.min.js') }}" type="text/javascript"></script>
+
+{% block accordion_header %}
+<button class="accordion-button bg-dark bg-gradient text-white" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne" aria-expanded="true" aria-controls="collapseOne">
+    Notes before import typeassist data through excel file. &nbsp;&nbsp;&nbsp; click here.. &nbsp;<i class="fas fa-check-double text-white"></i>
+</button>
+{% endblock accordion_header %}
+
+
+{% block errors_table %}
+<table id='typeassist_model' class="display cell-border nowrap compact hover" width="100%"></table>
+{% endblock errors_table %}
+
+
+{% block inline_js %}
 <script>
+    var tableData;
+    var table;
     $(document).ready(function(){
-        $("#typeassist_model").hide()
-        $("#typeassist_model").DataTable({
+        $("#id_ctzoffset").val(-new Date().getTimezoneOffset())
+
+        $(".error-table").hide()
+        table = $("#typeassist_model").DataTable({
             columns:[
-                {data: 'tacode', title: 'Code'},
-                {data: 'taname', title: 'Name'},
-                {data: 'tatype', title: 'Type'},
-                {data: 'bu', title: 'Site'},
-                {data: 'client', title: 'Client'},
+                {data:'error', defaultContent:null, render:function(data, type, row){
+                    return `<span class="text-danger">${data}</span>`
+                }, title:"Error", width:"5%"},
+                {data: 'rowno', title: 'Row No'},
+                {data: 'Code', title: 'Code'},
+                {data: 'Name', title: 'Name'},
+                {data: 'Type', title: 'Type'},
+                {data: 'BV', title: 'Site'},
+                {data: 'Client', title: 'Client'},
             ],
             deferRender:true,
             responsive:true,
@@ -56,7 +70,51 @@ Import TypeAssist
                 }
             ]
         })
+        
+        //on submit-button click post request to save content from file to db
+        $("#submit_import").click(function(){
+            if (document.getElementById("import_file").files.length > 0){
+                formdata = new FormData();
+                var fileInput = $('#import_file')[0].files[0]
+                if(formdata){
+                    formdata.append('table', 'typeassist')
+                    formdata.append('file', fileInput)
+                    formdata.append('ctzoffset', $("#id_ctzoffset").val())
+                    formdata.append('csrfmiddlewaretoken', '{{ csrf_token }}')
+                    $.ajax({
+                        url: "{{ url('onboarding:import') }}",
+                        type: "POST",
+                        data: formdata,
+                        processData: false,
+                        contentType: false,
+                    }).done((data, status, xhr) => {
+                        // show success alert
+                        Swal.fire({
+                            title:'Imported Successfully!',
+                            text:`Total ${data.totalrows} records of Typeassist data imported succesfully`,
+                            icon:'success',
+                            showConfirmButton: true,    
+                            allowOutsideClick:false,
+                        }).then((res) => {
+                            //on click ok page reload
+                            if(res.isConfirmed){
+                                location.reload()
+                            }
+                        })
+                    }).fail((xhr, status, error) => {
+                        console.log(xhr)
+                        //display error rows in datatable
+                        $(".error-table").show()
+                        table.clear().data()
+                        table.rows.add(JSON.parse(xhr.responseJSON.data)).draw()
+
+                    })
+                    
+                }
+
+            }
+        })
     })
 
 </script>
-{% endblock extra_scripts %}
+{% endblock inline_js %}

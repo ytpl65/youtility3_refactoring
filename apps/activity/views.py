@@ -118,6 +118,7 @@ class MasterQuestionSet(LoginRequiredMixin, View):
         'fields'       : ['qsetname', 'type', 'id'],
         'form_initials': {}
     }
+    label=""
     list_grid_lookups = label = None
     view_of = ''
 
@@ -495,7 +496,7 @@ class RetriveEscList(LoginRequiredMixin, View):
         return resp
 
 
-class AdhocRecord(LoginRequiredMixin, View):
+class AdhocTasks(LoginRequiredMixin, View):
     params = {
         'form_class'   : af.AdhocTaskForm,
         'template_form': 'activity/adhoc_jobneed_taskform.html',
@@ -531,4 +532,49 @@ class AdhocRecord(LoginRequiredMixin, View):
             return render(request, self.params['template_form'], context = cxt)
 
 
+class AdhocTours(LoginRequiredMixin, View):
+    params = {
+        'template_list':'activity/adhoc_jobneed_tours.html',
+        'model':am.Jobneed,
+        'fields':['id', 'plandatetime', 'jobdesc', 'performedby__peoplename', 'jobstatus',
+                   'qset__qsetname', 'asset__assetname'],
+        'related':['performedby', 'qset', 'asset'],
+    }
+    def get(self, request, *args, **kwargs):
+        R, resp = request.GET, None
+        from datetime import datetime
+        now = datetime.now()
+        # first load the template
+        if R.get('template'): return render(request, self.params['template_list'])
 
+        # then load the table with objects for table_view
+        if R.get('action', None) == 'list' or R.get('search_term'):
+            total, filtered, objs = self.params['model'].objects.get_adhoctasks_listview(R, self.params['idf'])
+            return  rp.JsonResponse(data = {
+                'draw':R['draw'],
+                'data':list(objs),
+                'recordsFiltered':filtered,
+                'recordsTotal':total,
+            }, safe = False)
+    
+
+
+class AssetMaintainceList(LoginRequiredMixin, View):
+    params = {
+        'template_list': 'activity/assetmaintainance_list.html',
+        'model'        : am.Jobneed,
+        'fields':['id', 'plandatetime', 'jobdesc', 'people__peoplename', 'asset__assetname',
+                  'asset__runningstatus', 'gpslocation', 'identifier'],
+        'related':['asset', 'people']
+    }
+    
+    
+    def get(self, request, *args, **kwargs):
+        R, P = request.GET, self.params
+        # first load the template
+        if R.get('template'): return render(request, P['template_list'])
+        
+        if R.get('action') == 'list':
+            #last 3 months
+            objs = P['model'].objects.get_assetmaintainance_list(request, P['related'], P['fields'])
+            return rp.JsonResponse({'data':list(objs)}, status=200)

@@ -28,7 +28,7 @@ def create_job(jobs = None):
         if not jobs:
             msg = "No jobs found schedhuling terminated"
             resp = rp.JsonResponse(f"{msg}", status = 404)
-            log.warn(f"{msg}", exc_info = True)
+            log.warning(f"{msg}", exc_info = True)
             raise EmptyResultSet
         total_jobs = len(jobs)
 
@@ -95,6 +95,7 @@ def calculate_startdtz_enddtz(job):
     # vupto        = job.uptodate.replace(microsecond = 0) 
     # ldtz         = job.lastgeneratedon.replace(microsecond = 0) 
     # display_jobs_date_info(cdtz, mdtz, vfrom, vupto, ldtz)
+    current_date= datetime.utcnow().replace(tzinfo=timezone.utc).replace(microsecond=0)
     current_date= current_date.replace(tzinfo = tz) + timedelta(minutes= ctzoffset)
 
     if mdtz > cdtz:
@@ -138,7 +139,7 @@ def get_datetime_list(cron_exp, startdtz, enddtz, resp):
             else:
                 break
     except CroniterBadCronError as ex:
-        log.warn('Bad Cron error', exc_info = True)
+        log.warning('Bad Cron error', exc_info = True)
         resp =  rp.JsonResponse({"errors": "Bad Cron Error"}, status = 404)
     except Exception as ex:
         log.error(
@@ -266,8 +267,8 @@ def insert_into_jn_and_jnd(job, DT, resp):
             NONE_JN  = utils.get_or_create_none_jobneed()
             NONE_P   = utils.get_or_create_none_people()
             crontype = job.identifier
-            jobstatus = am.Jobneed.JobStatus.ASSIGNED.value,
-            jobtype = am.Jobneed.JobType.SCHEDULE.value,
+            jobstatus = 'ASSIGNED'
+            jobtype = 'SCHEDULE'
             jobdesc = f'{job.jobname} :: {job.jobdesc}'
             asset = am.Asset.objects.get(id = job.asset_id)
             multiplication_factor = asset.asset_json['multifactor']
@@ -317,6 +318,7 @@ def insert_into_jn_and_jnd(job, DT, resp):
         return status, resp
 
 def insert_into_jn_for_parent(job, params):
+    from django.contrib.gis.geos import Point
     try:
         jn = am.Jobneed.objects.create(
             job_id         = job.id,                     parent            = params['NONE_JN'],
@@ -330,7 +332,7 @@ def insert_into_jn_for_parent(job, params):
             scantype       = job.scantype,               identifier        = job.identifier,
             cuser_id       = job.cuser_id,               muser_id          = job.muser_id,
             bu_id          = job.bu_id,                  ticketcategory_id = job.ticketcategory_id,
-            gpslocation    = 'SRID = 4326;POINT(0.0 0.0)', remarks           = '',
+            gpslocation    = 'POINT(0.0 0.0)',             remarks           = '',
             seqno          = 0,                          multifactor       = params['m_factor'],
             client_id      = job.client_id,
         )
@@ -444,7 +446,7 @@ def insert_into_jn_for_child(job, params, r):
                 scantype       = job.scantype,               identifier        = job.identifier,
                 cuser_id       = r.cuser_id,                 muser_id          = r.muser_id,
                 bu_id          = r.bu_id,                    ticketcategory_id = r.ticketcategory_id,
-                gpslocation    = 'SRID = 4326;POINT(0.0 0.0)', remarks           = '',
+                gpslocation    = 'SRID=4326;POINT(0.0 0.0)', remarks           = '',
                 seqno          = params['idx'],              multifactor       = params['m_factor'],
                 performedby    = params['NONE_P'],           ctzoffset         = r.ctzoffset,
                 people_id      = params['_people'],
@@ -457,7 +459,7 @@ def insert_into_jn_for_child(job, params, r):
 
 def job_fields(job, checkpoint, external = False):
     ic(checkpoint)
-    data =  { 
+    data =  {
         'jobname'     : job.jobname,                   'jobdesc'        : job.jobdesc,
         'cron'        : job.cron,                      'identifier'     : job.identifier,
         'expirytime'  : int(checkpoint['expirytime']), 'lastgeneratedon': job.lastgeneratedon,
@@ -492,6 +494,7 @@ def delete_from_job(job, checkpointId, checklistId):
             asset_id = int(checkpointId),
             qset_id  = int(checklistId)).delete()
     except Exception:
+        log.error('delete_from_job() raised  error', exc_info=True)
         raise
 
 def delete_from_jobneed(parentjob, checkpointId, checklistId):
@@ -501,6 +504,7 @@ def delete_from_jobneed(parentjob, checkpointId, checklistId):
             asset_id = int(checkpointId),
             qset_id  = int(checklistId)).delete()
     except Exception:
+        log.error("delete_from_jobneed() raised error", exc_info=True)
         raise
 
 def update_lastgeneratedon(job, pdtz):
@@ -512,10 +516,21 @@ def update_lastgeneratedon(job, pdtz):
             log.info(f"after lastgenreatedon:={pdtz}")
         log.info('update_lastgeneratedon [end]')
     except Exception:
+        log.error("update_lastgeneratedon() raised error", exc_info=True)
         raise
 
 def send_email_notication(err):
     raise NotImplementedError()
 
 def del_job(id):
-    raise NotImplementedError()
+    log.info("deleting old jobs start[+]")
+    jobs = am.Job.objects.filter(parent_id__in = [id]).exclude(id=1).values_list(named=True)
+    jobids = [job.id for job in jobs]
+    #update jobneedetails and jobneed
+    olddate = datetime(1970, 1, 1, 0, 0, 0, tzinfo=timezone.utc)
+    oldjobneeds = am.Jobneed.objects.filter(plandatetime__gt = datetime.now(timezone.utc), job_id__in = jobids).values_list("id", flat=True)
+    am.JobneedDetails.objects.filter(jobneed_id__in = oldjobneeds).update(cdtz = olddate, mdtz=olddate)
+    am.Jobneed.objects.filter(job_id__in=jobids, plandatetime__gt=datetime.now(timezone.utc)).update(cdtz=olddate, mdtz=olddate, plandatetime=olddate, expirydatetime=olddate)
+
+    am.Job.objects.filter(id=id).exclude(id=1).update(cdtz = F('mdtz'))
+    log.info("deleting old jobs end[-]")

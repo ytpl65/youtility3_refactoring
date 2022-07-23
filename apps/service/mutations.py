@@ -425,12 +425,12 @@ class LoginUser(graphene.Mutation):
 
     @classmethod
     def mutate(cls, root, info, input):
-        log.warn("login mutations start [+]")
+        log.warning("login mutations start [+]")
         try:
             from .auth import auth_check
             output, user = auth_check(info, input, cls.returnUser)
             cls.updateDeviceId(user, input)
-            log.warn("login mutations end [-]")
+            log.warning("login mutations end [-]")
             return output
         except Exception as exc:
             log.error(exc, exc_info = True)
@@ -513,10 +513,10 @@ class TaskTourUpdate(graphene.Mutation):
 
     @classmethod
     def mutate(cls, root, info, file):
-        log.warn("tasktour-update mutations start [+]")
+        log.warning("tasktour-update mutations start [+]")
         o = sutils.perform_tasktourupdate(file, info.context)
         log.info(f"Response: {o.recordcount}, {o.msg}, {o.rc}, {o.traceback}")
-        log.warn("tasktour-update mutations end [-]")
+        log.warning("tasktour-update mutations end [-]")
         return TaskTourUpdate(output = o)
 
 class InsertRecord(graphene.Mutation):
@@ -530,10 +530,10 @@ class InsertRecord(graphene.Mutation):
 
     @classmethod    
     def mutate(cls, root, info, file):
-        log.warn("insert-record mutations start [+]")
+        log.warning("insert-record mutations start [+]")
         ic(file, type(file))
         o = sutils.perform_insertrecord(file, info.context)
-        log.warn("insert-record mutations end [-]")
+        log.warning("insert-record mutations end [-]")
         return InsertRecord(output = o)
 
 
@@ -546,10 +546,10 @@ class ReportMutation(graphene.Mutation):
 
     @classmethod
     def mutate(cls, root, info, file):
-        log.warn("report mutations start [+]")
+        log.warning("report mutations start [+]")
         o = sutils.perform_reportmutation(file)
         log.info(f"Response: {o.recordcount}, {o.msg}, {o.rc}, {o.traceback}")
-        log.warn("report mutations end [-]")
+        log.warning("report mutations end [-]")
         return ReportMutation(output = o)
 
 class UploadAttMutaion(graphene.Mutation):

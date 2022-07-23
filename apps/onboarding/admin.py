@@ -46,14 +46,14 @@ class BaseFieldSet2(object):
 
 
 class TaResource(resources.ModelResource ):
-    client = fields.Field(
-        column_name='client',
+    Client = fields.Field(
+        column_name='Client',
         attribute='client',
         widget = wg.ForeignKeyWidget(om.Bt, 'bucode'),
         default='NONE'
     )
-    bu = fields.Field(
-        column_name='bu',
+    BV = fields.Field(
+        column_name='BV',
         attribute='bu',
         widget = wg.ForeignKeyWidget(om.Bt, 'bucode'),
         saves_null_values = True,
@@ -65,19 +65,22 @@ class TaResource(resources.ModelResource ):
         widget = wg.ForeignKeyWidget(tm.TenantAwareModel, 'tenantname'),
         saves_null_values = True
     )
-    tatype = fields.Field(
-        column_name       = 'tatype',
+    Type = fields.Field(
+        column_name       = 'Type',
         attribute         = 'tatype',
         widget            = wg.ForeignKeyWidget(om.TypeAssist, 'tacode'),
         saves_null_values = True
     )
+    Code = fields.Field(attribute='tacode')
+    Name = fields.Field(attribute='taname')
+    ID   = fields.Field(attribute='taname')
 
     class Meta:
         model = om.TypeAssist
         skip_unchanged = True
-        import_id_fields = ('id', 'tacode')
+        import_id_fields = ('ID', 'Code')
         report_skipped = True
-        fields = ('id', 'taname', 'tacode', 'tatype', 'tenant', 'bu', 'client')
+        fields = ('ID', 'Name', 'Code', 'Type', 'tenant', 'BV', 'Client')
 
     def __init__(self, *args, **kwargs):
         self.is_superuser = kwargs.pop('is_superuser', None)
@@ -89,7 +92,7 @@ class TaResource(resources.ModelResource ):
         utils.save_common_stuff(self.request, instance, self.is_superuser)
 
     def skip_row(self, instance, original):
-        return True if om.TypeAssist.objects.filter(tacode = instance.tacode).exists() else False
+        return om.TypeAssist.objects.filter(tacode = instance.tacode).exists()
 
 
 @admin.register(om.TypeAssist)
@@ -108,13 +111,13 @@ class TaAdmin(ImportExportModelAdmin):
 
 class BtResource(resources.ModelResource, BaseFieldSet1):
     bu = None
-    parent = fields.Field(
-        column_name='parent',
+    BelongsTo = fields.Field(
+        column_name='Belongs To',
         attribute='parent',
         widget = wg.ForeignKeyWidget(om.Bt, 'bucode'))
 
-    butype = fields.Field(
-        column_name='butype',
+    BuType = fields.Field(
+        column_name='Bu Type',
         attribute='butype',
         widget = wg.ForeignKeyWidget(om.TypeAssist, 'tacode'))
 
@@ -123,19 +126,23 @@ class BtResource(resources.ModelResource, BaseFieldSet1):
         attribute='tenant',
         widget = wg.ForeignKeyWidget(tm.Tenant, 'tenantname'))
 
-    identifier = fields.Field(
-        column_name='identifier',
+    Identifier = fields.Field(
+        column_name='Identifier',
         attribute='identifier',
         widget = wg.ForeignKeyWidget(om.TypeAssist, 'tacode'))
+    
+    ID   = fields.Field(attribute='id')
+    Code = fields.Field(attribute='bucode')
+    Name = fields.Field(attribute='buname')
 
     class Meta:
         model = om.Bt
         skip_unchanged = True
-        import_id_fields = ('id', 'bucode')
+        import_id_fields = ('ID', 'Code')
         report_skipped = True
         fields = (
-            'id', 'buname', 'bucode', 'butype__tacode',
-            'identifier__tacode', 'parent__bucode', 'tenant__tenantname',)
+            'ID', 'Name', 'Code', 'BuType',
+            'Identifier', 'BelongsTo', 'tenant',)
 
     def __init__(self, *args, **kwargs):
         self.request = kwargs.pop('request', None)
@@ -168,15 +175,36 @@ class BtAdmin(ImportExportModelAdmin):
     def get_queryset(self, request):
         return om.Bt.objects.select_related('butype', 'identifier', 'parent').all()
 
-class ShiftResource(resources.ModelResource, BaseFieldSet1):
-
+class ShiftResource(resources.ModelResource):
+    Client = fields.Field(
+        column_name='Client',
+        attribute='client',
+        widget = wg.ForeignKeyWidget(om.Bt, 'bucode'),
+        default='NONE'
+    )
+    BV = fields.Field(
+        column_name='BV',
+        attribute='bu',
+        widget = wg.ForeignKeyWidget(om.Bt, 'bucode'),
+        saves_null_values = True,
+        default='NONE'
+    )
+    
+    Name          = fields.Field(attribute='shiftname', column_name='Shift Name')
+    ID            = fields.Field(attribute='id')
+    StartTime     = fields.Field(attribute='starttime', column_name='Start Time', widget=wg.TimeWidget())
+    EndTime       = fields.Field(attribute='endtime', column_name='End Time', widget=wg.TimeWidget())
+    ShiftDuration = fields.Field(attribute='shiftduration', column_name='Shift Duration', widget=wg.TimeWidget())
+    IsNightShift  = fields.Field(attribute='nightshiftappicable', column_name="Is Night Shift", widget=wg.BooleanWidget())
+    Enable        = fields.Field(attribute='enable', widget=wg.BooleanWidget())
+    
     class Meta:
         model = om.Shift
         skip_unchanged = True
-        import_id_fields = ('id',)
+        import_id_fields = ('ID',)
         report_skipped = True
-        fields = ('id', 'shiftname', 'shiftduration', 'starttime', 'cuser'
-                  'endtime', 'nightshiftappicable', 'enable', 'muser', 'bu')
+        fields = ('ID', 'Name', 'ShiftDuration', 'StartTime', 'Client',
+                  'EndTime', 'IsNightShift', 'Enable', 'BV')
 
 @admin.register(om.Shift)
 class ShiftAdmin(ImportExportModelAdmin):

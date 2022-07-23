@@ -15,7 +15,7 @@ def create_dummy_client_site_and_superadmin(self):
         clienttype = TypeAssist.objects.get(tatype__tacode = 'BVIDENTIFIER', tacode='CLIENT')
         sitetype = TypeAssist.objects.get(tatype__tacode = 'BVIDENTIFIER', tacode='SITE')
 
-        client = Bt.objects.get_or_create(
+        client, _ = Bt.objects.get_or_create(
             bucode='SPS', buname = "Security Personnel Services",
             enable = True, 
             defaults={
