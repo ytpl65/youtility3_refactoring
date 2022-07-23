@@ -390,10 +390,10 @@ def perform_uploadattachment(file,  record, biodata):
     return ServiceOutputType(rc = rc, recordcount = recordcount, msg = msg, traceback = traceback)
 
 def getEmails(R):
-    pass
+    raise NotImplementedError()
 
 def getjobneedrecord():
-    pass
+    raise NotImplementedError()
 
 def send_alert_mails_if_any(attdata):
     getjobneedrecord()
