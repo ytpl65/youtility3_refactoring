@@ -1,6 +1,8 @@
 import uuid
 from apps.peoples.models import BaseModel
-from apps.activity.managers import AssetManager, AttachmentManager, JobManager, JobneedDetailsManager, QsetBlngManager, QuestionManager, QuestionSetManager, JobneedManager
+from apps.activity.managers import (AssetManager, AttachmentManager,
+JobManager, JobneedDetailsManager, QsetBlngManager, QuestionManager,
+QuestionSetManager, JobneedManager, DELManager, WorkpermitManager)
 from apps.tenants.models import TenantAwareModel
 from django.utils.translation import gettext_lazy as _
 from django.core.serializers.json import DjangoJSONEncoder
@@ -9,6 +11,7 @@ from django.db import models
 from datetime import datetime
 from django.contrib.gis.db.models import PointField
 from django.utils import timezone
+from django.conf import settings
 
 # Create your models here.
 class Question(BaseModel, TenantAwareModel):
@@ -66,16 +69,17 @@ def site_type_includes():
 
 class QuestionSet(BaseModel, TenantAwareModel):
     class Type(models.TextChoices):
-        CHECKLIST              = "CHECKLIST"             , _('Checklist')
-        INCIDENTREPORTTEMPLATE = "INCIDENTREPORTTEMPLATE", _('Incident Report Template')
-        SITEREPORTTEMPLATE     = "SITEREPORTTEMPLATE"    , _('Site Report Template')
-        WORKPERMITTEMPLATE     = "WORKPERMITTEMPLATE"    , _('Work Permit Template')
-        KPITEMPLATE            = "KPITEMPLATE"           , _('Kpi Template')
-        SCRAPPEDTEMPLATE       = "SCRAPPEDTEMPLATE"      , _('Scrapped Template')
-        ASSETAUDIT             = "ASSETAUDIT"            , _('Asset Audit')
-        MAINTENANCETEMPLATE    = "MAINTENANCETEMPLATE"   , _('Maintenance Template')
-        ASSETMAINTENANCE       = "ASSETMAINTENANCE"      , _('Asset Maintenance')
-        QUESTIONSET            = "QUESTIONSET"           , _('Question Set')
+        CHECKLIST                = "CHECKLIST",                _('Checklist')
+        INCIDENTREPORTTEMPLATE   = "INCIDENTREPORTTEMPLATE",   _('Incident Report Template')
+        SITEREPORTTEMPLATE       = "SITEREPORTTEMPLATE",       _('Site Report Template')
+        WORKPERMITTEMPLATE       = "WORKPERMITTEMPLATE",       _('Work Permit Template')
+        RETURNWORKPERMITTEMPLATE = "RETURNWORKPERMITTEMPLATE", _('Return Work Permit Template')
+        KPITEMPLATE              = "KPITEMPLATE",              _('Kpi Template')
+        SCRAPPEDTEMPLATE         = "SCRAPPEDTEMPLATE",         _('Scrapped Template')
+        ASSETAUDIT               = "ASSETAUDIT",               _('Asset Audit')
+        MAINTENANCETEMPLATE      = "MAINTENANCETEMPLATE",      _('Maintenance Template')
+        ASSETMAINTENANCE         = "ASSETMAINTENANCE",         _('Asset Maintenance')
+        QUESTIONSET              = "QUESTIONSET",              _('Question Set')
 
     # id            = models.BigIntegerField(primary_key = True)
     qsetname           = models.CharField(_("QuestionSet Name"), max_length = 200)
@@ -222,8 +226,9 @@ class Job(BaseModel, TenantAwareModel):
     asset           = models.ForeignKey("activity.Asset", verbose_name = _("Asset"), on_delete = models.RESTRICT, null = True, blank = True)
     priority        = models.CharField(_("Priority"), max_length = 100, choices = Priority.choices)
     qset            = models.ForeignKey("activity.QuestionSet", verbose_name = _("QuestionSet"), on_delete = models.RESTRICT, null = True, blank = True)
-    people          = models.ForeignKey('peoples.People', verbose_name = _( "Aggresive auto-assign to People"), on_delete = models.RESTRICT, null = True, blank = True, related_name='job_aaatops')
-    pgroup          = models.ForeignKey("peoples.Pgroup", verbose_name = _("Group"), on_delete = models.RESTRICT, null = True, blank = True)
+    people          = models.ForeignKey(settings.AUTH_USER_MODEL, verbose_name = _( "Aggresive auto-assign to People"), on_delete = models.RESTRICT, null = True, blank = True, related_name='job_aaatops')
+    pgroup          = models.ForeignKey("peoples.Pgroup", verbose_name = _("People Group"), on_delete = models.RESTRICT, null = True, blank = True, related_name='job_pgroup')
+    sgroup          = models.ForeignKey("peoples.Pgroup", verbose_name = _("Site Group"), on_delete= models.RESTRICT,  null = True, blank = True, related_name='job_sgroup')
     geofence        = models.ForeignKey("onboarding.GeofenceMaster", verbose_name = _("Geofence"), on_delete = models.RESTRICT, null = True, blank = True)
     parent          = models.ForeignKey("self", verbose_name = _("Belongs to"), on_delete = models.RESTRICT, null = True, blank = True)
     seqno           = models.SmallIntegerField(_("Serial No."))
@@ -408,12 +413,13 @@ class Jobneed(BaseModel, TenantAwareModel):
     job              = models.ForeignKey("activity.Job", verbose_name = _("Job"), on_delete  = models.RESTRICT, null = True, blank = True, related_name='jobs')
     jobstatus        = models.CharField('Job Status', choices = JobStatus.choices, max_length = 60, null = True)
     jobtype          = models.CharField(_("Job Type"), max_length = 50, choices = JobType.choices, null = True)
-    performedby      = models.ForeignKey("peoples.People", verbose_name = _("Performed by"), on_delete = models.RESTRICT, null = True, blank = True, related_name='jobneed_performedby')
+    performedby      = models.ForeignKey(settings.AUTH_USER_MODEL,verbose_name = _("Performed by"), on_delete = models.RESTRICT, null = True, blank = True, related_name='jobneed_performedby')
     priority         = models.CharField(_("Priority"), max_length = 50, choices = Priority.choices)
     qset             = models.ForeignKey("activity.QuestionSet", verbose_name = _("QuestionSet"), on_delete  = models.RESTRICT, null = True, blank = True)
     scantype         = models.CharField(_("Scan type"), max_length = 50, choices = Scantype.choices, default = Scantype.NONE.value)
-    people           = models.ForeignKey("peoples.People", verbose_name = _("People"), on_delete = models.RESTRICT,  null = True, blank = True)
-    pgroup           = models.ForeignKey("peoples.Pgroup", verbose_name = _("Group"), on_delete= models.RESTRICT,  null = True, blank = True)
+    people           = models.ForeignKey(settings.AUTH_USER_MODEL,verbose_name = _("People"), on_delete = models.RESTRICT,  null = True, blank = True)
+    pgroup           = models.ForeignKey("peoples.Pgroup", verbose_name = _("People Group"), on_delete= models.RESTRICT,  null = True, blank = True, related_name='jobneed_pgroup')
+    sgroup           = models.ForeignKey("peoples.Pgroup", verbose_name = _("Site Group"), on_delete= models.RESTRICT,  null = True, blank = True, related_name='jobneed_sgroup')
     identifier       = models.CharField(_("Jobneed Type"), max_length = 50, choices = Identifier.choices, null = True)
     parent           = models.ForeignKey("self", verbose_name = _("Belongs to"),  on_delete  = models.RESTRICT,  null = True, blank = True)
     alerts           = models.BooleanField(_("Alerts"), default = False, null = True)
@@ -575,7 +581,7 @@ class Ticket(BaseModel, TenantAwareModel):
     uuid               = models.UUIDField(unique = True, editable = True, blank = True, default = uuid.uuid4)
     ticketno           = models.IntegerField(null = True,blank = True)
     ticketdesc         = models.CharField(max_length = 250)
-    assignedtopeople   = models.ForeignKey('peoples.People', null = True, blank = True, on_delete = models.RESTRICT, related_name="ticket_people")
+    assignedtopeople   = models.ForeignKey(settings.AUTH_USER_MODEL, null = True, blank = True, on_delete = models.RESTRICT, related_name="ticket_people")
     assignedtogroup    = models.ForeignKey('peoples.Pgroup', null = True, blank = True, on_delete = models.RESTRICT, related_name="ticket_grps")
     comments           = models.CharField(max_length = 250, null = True)
     bu                 = models.ForeignKey("onboarding.Bt", null = True,blank = True, on_delete = models.RESTRICT)
@@ -584,12 +590,12 @@ class Ticket(BaseModel, TenantAwareModel):
     modifieddatetime   = models.DateTimeField(default = timezone.now)
     level              = models.IntegerField(default = 0)
     status             = models.CharField(_("Status"), max_length = 50, choices = Status.choices,null = True, blank = True)
-    performedby        = models.ForeignKey('peoples.People', null = True, blank = True, on_delete = models.RESTRICT, related_name="ticket_performedby")
+    performedby        = models.ForeignKey(settings.AUTH_USER_MODEL, null = True, blank = True, on_delete = models.RESTRICT, related_name="ticket_performedby")
     ticketlog          = models.JSONField(null = True,  encoder = DjangoJSONEncoder, blank = True, default = ticket_defaults)
     event              = models.ForeignKey("activity.Event", null = True,blank = True, on_delete = models.RESTRICT)
     isescalated        = models.BooleanField(default = True)
     ticketsource       = models.CharField(max_length = 50, choices = TicketSource.choices, null = True, blank = True)
-    attcount           = models.IntegerField(_("Attachment Count"), default = 0)
+    attachmentcount    = models.IntegerField(_("Attachment Count"), default = 0)
     parent             = models.ForeignKey('self', null = True, blank = True, on_delete = models.RESTRICT)
 
 
@@ -621,7 +627,7 @@ class EscalationMatrix(BaseModel, TenantAwareModel):
     frequency          = models.CharField(max_length = 10, default='DAY', choices = Frequency.choices)
     frequencyvalue     = models.IntegerField(null = True, blank = True)
     assignedfor        = models.CharField(max_length = 50)
-    assignedperson     = models.ForeignKey('peoples.People', null = True, blank = True, on_delete = models.RESTRICT, related_name="escalation_people")
+    assignedperson     = models.ForeignKey(settings.AUTH_USER_MODEL, null = True, blank = True, on_delete = models.RESTRICT, related_name="escalation_people")
     assignedgroup      = models.ForeignKey('peoples.Pgroup', null = True, blank = True, on_delete = models.RESTRICT, related_name="escalation_grps")
     bu                 = models.ForeignKey("onboarding.Bt", null = True,blank = True, on_delete = models.RESTRICT)
     escalationtemplate = models.CharField(max_length = 30)
@@ -634,6 +640,7 @@ class EscalationMatrix(BaseModel, TenantAwareModel):
 
 class DeviceEventlog(BaseModel, models.Model):
     class DeviceEvent(models.TextChoices):
+        STEPCOUNT    = ('STEPCOUNT', 'Step Count')
         AIRPLANEMODEON    = ('AIRPLANEMODEON', 'Airplanemode On')
         AIRPLANEMODEOFF   = ('AIRPLANEMODEOFF', 'Airplanemode Off')
         PHONESWITCHEDON   = ('PHONESWITCHEDON', 'PhoneSwitched On')
@@ -645,23 +652,58 @@ class DeviceEventlog(BaseModel, models.Model):
         MOBILEDATAENABLE  = ('MOBILEDATAENABLE', 'MobileData Enable')
         MOBILEDATADISABLE = ('MOBILEDATADISABLE', 'MobileData Disable')
 
-    deviceid        = models.CharField(_("Device Id"), max_length = 55)
-    deviceevent     = models.CharField(_("Device Event"), max_length = 50, choices = DeviceEvent.choices)
-    bu              = models.ForeignKey("onboarding.Bt", null = True,blank = True, on_delete = models.RESTRICT)
-    client          = models.ForeignKey("onboarding.Bt", verbose_name = _("Client"), on_delete= models.RESTRICT, null = True, blank = True, related_name='deviveevents_clients')
-    receivedon      = models.DateTimeField(_("Received On"), auto_now = False, auto_now_add = True)
-    people          = models.ForeignKey('peoples.People', null = True, blank = True, on_delete = models.RESTRICT, related_name="deviceevent_people")
-    batterylevel    = models.CharField(_("Battery Level"), max_length = 50, default = None)
-    signalstrength  = models.CharField(_("Signal Strength"), max_length = 50, default = None)
-    availintmemory  = models.CharField(_("Available Internal Memory"), max_length = 50, default = None)
-    availextmemory  = models.CharField(_("Available External Memory"), max_length = 50, default = None)
-    signalbandwidth = models.CharField(_("Signal Bandwidth"), max_length = 50, default = None)
-    androidversion  = models.CharField(_("Android Version"), max_length = 50, default = None)
-    appversion      = models.CharField(_("App Version"), max_length = 50, default = None)
-    modelname       = models.CharField(_("Model Name"), max_length = 50, default = None)
-    installedapps   = models.CharField(_("Installed Apps"), max_length = 50, default = None)
-    stepcount       = models.CharField(max_length = 55, default='No Steps')
+    uuid                = models.UUIDField(unique = True, editable = True, blank = True, default = uuid.uuid4)
+    deviceid            = models.CharField(_("Device Id"), max_length = 55)
+    eventvalue          = models.CharField(_("Device Event"), max_length = 50, choices = DeviceEvent.choices)
+    gpslocation         = PointField(null=True, srid=4326,geography = True)
+    accuracy            = models.CharField(max_length=25, default="-")
+    altitude            = models.CharField(max_length=25, default='-')
+    bu                  = models.ForeignKey("onboarding.Bt", null = True,blank = True, on_delete = models.RESTRICT)
+    client              = models.ForeignKey("onboarding.Bt", verbose_name = _("Client"), on_delete= models.RESTRICT, null = True, blank = True, related_name='deviveevents_clients')
+    receivedon          = models.DateTimeField(_("Received On"), auto_now = False, auto_now_add = True)
+    people              = models.ForeignKey('peoples.People', null = True, blank = True, on_delete = models.RESTRICT, related_name="deviceevent_people")
+    batterylevel        = models.CharField(_("Battery Level"), max_length = 50, default = 'NA')
+    signalstrength      = models.CharField(_("Signal Strength"), max_length = 50, default = 'NA')
+    availintmemory      = models.CharField(_("Available Internal Memory"), max_length = 50, default = 'NA')
+    availextmemory      = models.CharField(_("Available External Memory"), max_length = 50, default = 'NA')
+    signalbandwidth     = models.CharField(_("Signal Bandwidth"), max_length = 50, default = 'NA')
+    androidversion      = models.CharField(_("Android Version"), max_length = 50, default = 'NA')
+    applicationversion  = models.CharField(_("App Version"), max_length = 50, default = 'NA')
+    networkprovidername = models.CharField(max_length=55, default='NA')
+    modelname           = models.CharField(_("Model Name"), max_length = 50, default = 'NA')
+    installedapps       = models.CharField(_("Installed Apps"), max_length = 50, default = 'NA')
+    stepcount           = models.CharField(max_length = 55, default='No Steps')
 
+    objects = DELManager()
     class Meta(BaseModel.Meta):
         db_table = 'deviceeventlog'
+        get_latest_by = ["mdtz", 'cdtz']
+
+
+
+class WorkPermit(BaseModel, models.Model):
+    class WorkPermitChoices(models.TextChoices):
+        PENDING    = 'PENDING',  _('Pending')
+        APPROVED   = 'APPROVED', _('Approved')
+        REJECTED   = 'REJECTED', _('Rejected')
+    
+    class WorkStatusChoices(models.TextChoices):
+        INCOMPLETE = 'INCOMPLETE', _('Incomplete')
+        COMPLETED  = 'COMPLETED',  _('Completed')
+    
+    uuid       = models.UUIDField(unique = True, editable = True, blank = True, default = uuid.uuid4)
+    wptype     = models.ForeignKey("activity.QuestionSet", verbose_name=_("WorkPermit Type"), on_delete=models.RESTRICT, null=True)
+    seqno      = models.IntegerField(null=True)
+    wpstatus   = models.CharField(_("Status"), max_length=30, choices=WorkPermitChoices.choices)
+    workstatus = models.CharField(_("Work Status"), max_length=30, choices=WorkStatusChoices.choices)
+    approvedby = models.ForeignKey(settings.AUTH_USER_MODEL,verbose_name=_(""), on_delete=models.RESTRICT, null=True, related_name='wp_approvers')
+    parent     = models.ForeignKey("self", verbose_name=_(""), on_delete=models.RESTRICT, null=True)
+    client     = models.ForeignKey("onboarding.Bt", verbose_name=_("Client"), on_delete=models.RESTRICT, null=True, related_name='wp_clients')
+    bu         = models.ForeignKey("onboarding.Bt", verbose_name=_("Bt"), on_delete=models.RESTRICT, null=True, related_name='wp_sites')
+    attcount   = models.IntegerField(_("Attachment Count"), null=True)
+    
+    
+    objects = WorkpermitManager()
+    class Meta(BaseModel.Meta):
+        db_table = 'workpermit'
         get_latest_by = ["mdtz", 'cdtz']

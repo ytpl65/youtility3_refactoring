@@ -416,7 +416,7 @@ class JobForm(forms.ModelForm):
 
     class Meta:
         model = am.Job
-        fields = ['jobname', 'jobdesc', 'fromdate', 'uptodate', 'cron',
+        fields = ['jobname', 'jobdesc', 'fromdate', 'uptodate', 'cron','sgroup',
                     'identifier', 'planduration', 'gracetime', 'expirytime',
                     'asset', 'priority', 'qset', 'pgroup', 'geofence', 'parent',
                     'parent', 'seqno', 'client', 'bu', 'starttime', 'endtime', 'ctzoffset',
@@ -431,25 +431,19 @@ class JobForm(forms.ModelForm):
         }
 
         widgets = {
-            'ticketcategory'   : s2forms.Select2Widget,
-            'scantype'          : s2forms.Select2Widget,
-            'shift'             : s2forms.Select2Widget,
-            'pgroup'           : s2forms.Select2Widget,
-            'asset'           : s2forms.Select2Widget,
-            'priority'          : s2forms.Select2Widget,
-            'jobdesc'           : forms.Textarea(attrs={'rows': 1, 'cols': 40}),
-            'fromdate'         : forms.DateTimeInput,
-            'uptodate'         : forms.DateTimeInput,
-            'ctzoffset'         : forms.NumberInput(attrs={"style": "display:none;"}),
-            'qset'            : s2forms.ModelSelect2Widget(
-                model = am.QuestionSet, 
-                search_fields = ['qsetname__icontains'],
-                max_results = 20),
-            'people'          : s2forms.ModelSelect2Widget(
-                model = pm.People,
-                search_fields   = ['peoplecode__icontains', 'peoplecode__icontains'],
-                max_results     = 20),
-            'bu'              : s2forms.Select2Widget,
+            'ticketcategory': s2forms.Select2Widget,
+            'scantype'      : s2forms.Select2Widget,
+            'shift'         : s2forms.Select2Widget,
+            'pgroup'        : s2forms.Select2Widget,
+            'asset'         : s2forms.Select2Widget,
+            'priority'      : s2forms.Select2Widget,
+            'jobdesc'       : forms.Textarea(attrs={'rows': 1, 'cols': 40}),
+            'fromdate'      : forms.DateTimeInput,
+            'uptodate'      : forms.DateTimeInput,
+            'ctzoffset'     : forms.NumberInput(attrs={"style": "display:none;"}),
+            'qset'          : s2forms.Select2Widget,
+            'people'        : s2forms.Select2Widget,
+            'bu'            : s2forms.Select2Widget,
         }
 
     def clean_from_date(self):
@@ -484,17 +478,17 @@ class JobNeedForm(forms.ModelForm):
                   'endtime', 'performedby', 'gpslocation', 'cuser', 'raisedby', 'remarks', 'ctzoffset']
         widgets = {
             'ticketcategory': s2forms.Select2Widget,
-            'scantype' : s2forms.Select2Widget,
-            'pgroup'      : s2forms.Select2Widget,
-            'people'      : s2forms.Select2Widget,
-            'qset'        : s2forms.ModelSelect2Widget(model = am.QuestionSet, search_fields = ['qset_name__icontains']),
-            'asset'       : s2forms.ModelSelect2Widget(model = am.Asset, search_fields = ['assetname__icontains']),
-            'priority'    : s2forms.Select2Widget,
-            'jobdesc'     : forms.Textarea(attrs={'rows': 1, 'cols': 40}),
-            'remarks'     : forms.Textarea(attrs={'rows': 2, 'cols': 40}),
-            'jobstatus'   : s2forms.Select2Widget,
-            'performedby' : s2forms.Select2Widget,
-            'gpslocation':forms.TextInput
+            'scantype'      : s2forms.Select2Widget,
+            'pgroup'        : s2forms.Select2Widget,
+            'people'        : s2forms.Select2Widget,
+            'qset'          : s2forms.ModelSelect2Widget(model = am.QuestionSet, search_fields = ['qset_name__icontains']),
+            'asset'         : s2forms.ModelSelect2Widget(model = am.Asset, search_fields = ['assetname__icontains']),
+            'priority'      : s2forms.Select2Widget,
+            'jobdesc'       : forms.Textarea(attrs={'rows': 1, 'cols': 40}),
+            'remarks'       : forms.Textarea(attrs={'rows': 2, 'cols': 40}),
+            'jobstatus'     : s2forms.Select2Widget,
+            'performedby'   : s2forms.Select2Widget,
+            'gpslocation'   : forms.TextInput
         }
         label = {
             'endtime': 'End Time'
@@ -573,3 +567,22 @@ class EscalationForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         utils.initailize_form_fields(self)
 
+
+
+class WorkPermit(forms.ModelForm):
+    required_css_class = "required"
+    class Meta:
+        model = am.WorkPermit
+        fields = ['wptype', 'seqno']
+        labels={
+            'wptype':'Permit to work',
+            'seqno':'Seq No'
+        }
+        widgets = {
+            'wptype':s2forms.Select2Widget
+        }
+    def __init__(self, *args, **kwargs):
+        self.request = kwargs.pop('request')
+        super().__init__(*args, **kwargs)
+        utils.initailize_form_fields(self)
+        self.fields['wptype'].queryset = am.QuestionSet.objects.filter(type='WORKPERMITTEMPLATE')

@@ -50,7 +50,7 @@ class PeopleManager(BaseUserManager):
         """
         qset = self.select_related(
             *self.related).filter(
-                ~Q(id = 1), bu_id = siteid, mdtz__gte = mdtz).values(*self.fields)
+                ~Q(id = 1), bu_id = siteid, mdtz__gte = mdtz).values(*self.fields).order_by('-mdtz')
         return qset or self.none()
 
     def get_emergencycontacts(self, siteid, clientid):
@@ -95,7 +95,7 @@ class PgblngManager(models.Manager):
         qset = self.select_related(
             *self.related).filter(
                 ~Q(id = 1),
-                mdtz__gte = mdtz, people_id = peopleid, bu_id = buid).values(*self.fields)
+                mdtz__gte = mdtz, people_id = peopleid, bu_id = buid).values(*self.fields).order_by('-mdtz')
         return qset or self.none()
 
     def get_assigned_sitesto_sitegrp(self, id):

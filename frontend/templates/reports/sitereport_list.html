@@ -16,108 +16,144 @@ Site Report List
 {% endblock pagebreadcumb %}
 <!------------------------------------- END PAGE BREADCUMBS ------------------------------------->
 
+
+{% block popup_alerts %}
+    {% call general_popup(popup_id = 'report_details', title = 'Site Report Details') %}
+    <div class="modal-body">
+        <h4 class="ch4">List Of Sections</h4>
+        <table id="tabSectionDetails" class="display  cell-border compact hover">
+        </table>
+        <br>
+        <h4 class="ch4">Questions In The Selcted Section</h4>
+        <table id="tabDetails" class="display compact hover"></table>
+    </div>
+    {% endcall %}
+
+
+    {% call general_popup(popup_id = 'att_list', title = 'List of Attachments') %}
+    <div class="modal-body">
+        <!--Attachemts List here -->
+    </div>
+    {% endcall %}
+{% endblock popup_alerts %}
+
 <!-------------------------------------------- BEGIN TABLE ------------------------------------------->
 {% block table %}
 <table id="sitereport_table" class="display compact cell-border" style="width:100%">
-    <thead class="fw-bold fs-6">
-        <th>Id</th>
-        <th>Plan Datetime</th>
-        <th>Site Report</th>
-        <th>Surveyor</th>
-        <th>Site Name</th>
-        <th>Status</th>
-        <th>Gps Location</th>
-        <th>Distance</th>
-        <th>Remarks</th>
-        <th>Action</th>
-    </thead>
-    <tbody>
-    </tbody>
 </table>
 
 {% endblock table %}
 <!-------------------------------------------- END TABLE ------------------------------------------->
-
 {% block extra_scripts %}
 <script>
-var   table      = null;
-const formFilter = '#sitereport_filter'
-const table_id   = "#sitereport_table"
+    var   table      = null;
+    const formFilter = '#sitereport_filter'
+    const table_id   = "#sitereport_table"
+    var sectionTable;
+    var answerTable;
+    //if you want to modifiy here, then modify in custom.js initDateRange also
+    var from_pd = moment().subtract(7, 'days').format('YYYY-MM-DD');
+    var to_pd = moment().format('YYYY-MM-DD')
+    
+    //show section+answer on modal details
+    function showSectionAnswers(templateData){
+        $("#report_details").modal('show')
+        $("#tabSectionDetails").DataTable().ajax.reload();
+    }
 
-    function submitFormFilter(){
-        $(formFilter).submit()
-    }
-    function setPlanDatetime(val1, val2){
-        $("#id_plandatetime_0").val(val1)
-        $("#id_plandatetime_1").val(val2)
-    }
+
+
     $(document).ready(function (){
-        $("input").keypress(function(event) {
-			if (event.which == 13) {
-				event.preventDefault();
-				submitFormFilter()
-			}
-		});
-        $("#custom_plandatetime").flatpickr({
-            altInput: true,
-            altFormat: "Y-M-d",
-            dateFormat: "Y/m/d",
-            mode: "range",
-            onChange: function(selectedDates, dateStr, instance){
-                if(selectedDates.length > 1){
-                    dates = dateStr.split(" to ")
-                    setPlanDatetime(dates[0], dates[1])
-                }
-            }
-        });
-        
         //datatable initialization
         table = $(table_id).DataTable({
             ajax:{
-                url: "{{ url('reports:sitereport_list') }}",
-                dataSrc: "sitereport_list"
+                url: "{{ url('reports:sitereport_list') }}?action=list",
+                data:function(d){
+                    d.pd1 = from_pd,
+                    d.pd2 = to_pd
+                }
             },
-			responsive: true,
-            serverSide:true,
-            processing    : true,
-            responsive    : true,
-			fixedHeader: true,
-			language: {
-                search: "_INPUT_",
-                searchPlaceholder: "Search...",
-                processing: "Getting Data"},
+			deferRender: true,
+			responsive : {
+                details:{
+                    display: $.fn.dataTable.Responsive.display.modal({
+                        header: function ( row ) {
+                            var data = row.data();
+                            return `Section Details for ${data[1]}`;
+                        }
+                    }),
+                    renderer:function(api, rowIdx, columns){
+                        return api.row(rowIdx).data()
+                    }
+                }
+            },
             search      : {return: true},
             lengthMenu: [[10, 20, 30], [10, 20, 30]],
-            dom:`<'row' <'col-sm-6 d-flex justify-content-start'f> <'col-sm-6 d-flex justify-content-end'B> >rt<'row' <'col-sm-6'l> <'col-sm-6'p><'col-sm-12 d-flex justify-content-center'i>>`,
-            columnDefs:[
-                {
-                    visible   : false,
-                    targets   : [0, 9],
-                    searchable: false
-                },
-                {
-                    data          : null,
-                    orderable     : false,
-                    searchable    : false,
-                    defaultContent: "",
-                    targets       : 9
-                }
-            ],
+            dom:`<'row' <'col-sm-6 d-flex justify-content-start'<'customfields'>f> <'col-sm-6 d-flex justify-content-end'B> >rt<'row'
+            <'col-sm-6'l> <'col-sm-6'p><'col-sm-12 d-flex justify-content-center'i>>`,
             columns     : [
-                { "data": "id" },
-                { "data": "plandatetime" },
-                { "data": "jobdesc" },
-                { "data": "peoplename" },
-                { "data": "buname" },
-                { "data": "jobdesc" },
-                { "data": "jobstatusname" },
-                { "data": "gpslocation" },
-                { "data": "distance" },
-                { "data": "remarks" },
+                { "data": "id", visible:false, searchable:false },
+                { "data": "plandatetime", title:'Plan Datetime' },
+                { "data": "jobdesc", title:'Site Report'},
+                { "data": "people__peoplename", title:'Surveyor' },
+                { "data": "buname", title:'SiteName' },
+                { "data": "jobstatus", title:'Status' },
+                { "data": "gps" , title:'GPS', defaultContent:null},
+                { "data": "distance", title:'Distance' },
+                { "data": "remarks", title:'Remarks' },
+                {data:null, visible:false, orderable:false, defaultContent:null, title:'Action'},
+            ],
+            columnDefs:[
+                {targets:1, render:function(data, type, row, meta){
+                    return convert_to_local(type, data, row)
+                }},
+                {targets:2, render:function(data, type, row, meta){
+                    let urlname = "{{ url('reports:sitereport_list') }}"
+                    return `<a id = "id_getSectionDetails" href="${urlname}?id=${row['id']}">${data}</a>`
+                }}
+            ],
+            buttons:[],
+            select: {
+                style: 'single'
+            }
+        })
+        $('.btn').removeClass('dt-button')
+
+        //add input field to the datatables dom
+        initDateRangeHtml()
+        initDateRange("#id_daterange").on('apply.daterangepicker', function(e, picker){
+            from_pd = picker.startDate.format('YYYY-MM-DD');
+            to_pd = picker.endDate.format('YYYY-MM-DD');
+            table.ajax.reload()
+        })
+
+
+        sectionDetailsTable = $('#tabSection').DataTable({
+            ajax:{
+                url: "{{ url('reports:sitereport_list') }}",
+                data:function(d){
+                    data = table.row({'selected':true}).data()
+                    d.id = data.id
+                }
+            },
+			deferRender: true,
+			responsive : true,
+            search      : {return: true},
+            lengthMenu: [[10, 20, 30], [10, 20, 30]],                       
+            dom:`<'row' <'col-sm-6 d-flex justify-content-start'f> <'col-sm-6 d-flex justify-content-end'B> >rt<'row'
+			 <'col-sm-6'l> <'col-sm-6'p><'col-sm-12 d-flex justify-content-center'i>>`,
+            columns     : [
+                {data:'seqno', title:'SNo'},
+                {data:'question__quesname', title:'Question'},
+                {data:'answertype', title:'Type'}
             ],
             buttons:[]
         })
         $('.btn').removeClass('dt-button')
+
+
+
+        
     })
 
 </script>

@@ -1,9 +1,12 @@
 from django.db import models
 from django.db.models.functions import Concat
 from django.db.models import CharField, Value as V
-from django.db.models import Q, F
+from django.db.models import Q, F, Count, Case, When, Value
+from django.contrib.gis.db.models.functions import Distance 
+from django.contrib.gis.db.models.functions import  AsWKT
 from datetime import datetime, timedelta, timezone
 from apps.core import utils
+
 
 class QuestionSetManager(models.Manager):
     use_in_migrations = True
@@ -13,20 +16,75 @@ class QuestionSetManager(models.Manager):
     related = ['cuser', 'muser', 'client', 'bu', 'parent', 'asset', 'type']
 
     def get_template_list(self, bulist):
+        bulist = bulist.split(',') if isinstance(bulist, str) else bulist
+        ic(bulist)
         if bulist:
             if qset := self.select_related(
-                *self.related).filter(bu_id__in = bulist).values_list(*self.fields, flat = True):
-                return ', '.join(list(qset))
+                *self.related).filter(buincludes__contains = bulist).values_list('id', flat = True):
+                return tuple(qset)
+                return ','.join(map(str, list(qset))).replace("'", '')
         return ""
 
     def get_qset_modified_after(self, mdtz, buid):
-        qset = self.select_related(*self.related).filter(~Q(id = 1), mdtz__gte = mdtz, bu_id = buid).values(*self.fields)
+        qset = self.select_related(*self.related).filter(~Q(id = 1), mdtz__gte = mdtz, bu_id = buid, enable=True).values(*self.fields).order_by('-mdtz')
+        qset = self.clean_fields(qset)
         return qset or None
 
-    def get_configured_sitereporttemplates(self, related, fields):
+    def get_configured_sitereporttemplates(self, related, fields, type):
         qset = self.select_related(
-            *related).filter(enable = True, type='SITEREPORTTEMPLATE').values(*fields)
+            *related).filter(enable = True, type=type, parent_id=1).values(*fields)
+        qset = self.clean_fields(qset)
         return qset or self.none()
+    
+    def clean_fields(self, qset):
+        for obj in qset:
+            if(obj.get('assetincludes') or obj.get('buincludes')):
+                obj['assetincludes'] = str(obj['assetincludes']).replace('[', '').replace(']', '').replace("'", "")
+                obj['buincludes'] = str(obj['buincludes']).replace('[', '').replace(']', '').replace("'", "")
+        return qset
+    
+    def get_qset_with_questionscount(self, parentid):
+        qset = self.annotate(qcount=Count('questionsetbelonging')).filter(
+            parent_id=parentid, enable=True
+        ).values('id', 'qsetname', 'qcount', 'seqno')
+        return qset or self.none()
+    
+    def handle_qsetpostdata(self, request):
+        R, S = request.POST, request.session
+        ic(R)
+        postdata = {'parent_id':R['parent_id'], 'ctzoffset':R['ctzoffset'], 'seqno':R['seqno'],
+                    'qsetname':R['qsetname'], 'cuser':request.user, 'muser':request.user,
+                    'cdtz':utils.getawaredatetime(datetime.now(), R['ctzoffset']),
+                    'mdtz':utils.getawaredatetime(datetime.now(), R['ctzoffset']),
+                    'type':R['type'], 'client_id':S['client_id'], 'bu_id':S['bu_id']}
+        if R['action'] == 'create':
+            ID = self.create(**postdata).id
+        
+        elif R['action'] == 'edit':
+            postdata.pop('cuser')
+            postdata.pop('cdtz')
+            updated = self.filter(pk=R['pk']).update(**postdata)
+            if updated: ID = R['pk']
+        
+        else:
+            self.filter(pk=R['pk']).update(enable=False)
+            return self.none()
+        
+        return self.filter(pk=ID).annotate(
+            qcount=Count('questionsetbelonging')).values(
+                'id', 'qsetname', 'qcount', 'seqno') or self.none()
+    
+    def load_checklist(self):
+        "Load Checklist"
+        qset = self.annotate(text = F('qsetname')).filter(enable=True, type='CHECKLIST').values('id', 'text')
+        return qset or self.none()
+    
+    
+
+    
+    
+
+    
 
 class QuestionManager(models.Manager):
     use_in_migrations = True
@@ -36,12 +94,14 @@ class QuestionManager(models.Manager):
 
     def get_questions_modified_after(self, mdtz):
         mdtzinput = datetime.strptime(mdtz, "%Y-%m-%d %H:%M:%S")
-        qset = self.select_related(*self.related).filter(~Q(id = 1), mdtz__gte = mdtzinput).values(*self.fields)
+        qset = self.select_related(*self.related).filter(~Q(id = 1), mdtz__gte = mdtzinput, enable=True).values(*self.fields).order_by('-mdtz')
         return qset or None
 
-    def questions_of_client(self, request):
-        qset = self.filter(
-            client_id = request.session['client_id']).annotate(
+    def questions_of_client(self, request, RGet):
+        search_term = RGet.get('search')
+        qset = self.filter(client_id = request.session['client_id'])
+        qset = qset.filter(quesname__icontains = search_term) if search_term else qset
+        qset = qset.annotate(
                 text = Concat(F('quesname'), V(" | "), F('answertype'))).values(
                     'id', 'text', 'answertype')
         return qset or self.none()
@@ -124,12 +184,12 @@ class JobneedManager(models.Manager):
         return qset or self.none()
 
     def get_adhoctasks_listview(self, R, task = True):
-        idf = 'TASK' if task else 'TOUR'
+        idf = 'TASK' if task else ('INTERNALTOUR', 'EXTERNALTOUR')
         qobjs, dir,  fields, length, start = utils.get_qobjs_dir_fields_start_length(R)
-        now = datetime.now()
         qset = self.select_related(
                  'performedby', 'qset', 'asset').filter(
-                    identifier = idf, jobtype='ADHOC', plandatetime__date__gte = (now - timedelta(days = 7)).date()
+                    identifier__in = idf, jobtype='ADHOC', plandatetime__date__gte = R['pd1'],
+                     plandatetime__date__lte = R['pd2']
              ).values(*fields).order_by(dir)
         total = qset.count()
         if qobjs:
@@ -140,11 +200,12 @@ class JobneedManager(models.Manager):
         qset = qset[start:start+length]
         return total, total, qset
 
-    def get_last10days_jobneedtasks(self, related, fields, session):
-        dt  = datetime.now(tz = timezone.utc) - timedelta(days = 10)
+    def get_last10days_jobneedtasks(self, related, fields, request):
+        R = request.GET
         qobjs = self.select_related(*related).filter(
-            bu_id = session['bu_id'],
-            plandatetime__gte = dt,
+            bu_id = request.session['bu_id'],
+            plandatetime__date__gte = R['pd1'],
+            plandatetime__date__lte = R['pd2'],
             identifier = 'TASK'
         ).exclude(parent__jobdesc = 'NONE', jobdesc = 'NONE').values(*fields).order_by('-plandatetime')
         return qobjs or self.none()
@@ -156,8 +217,83 @@ class JobneedManager(models.Manager):
         return qset or self.none()
     
     def get_adhoctour_listview(self, R):
-        return self.get_adhoctasks_listview(R, False)
+        return self.get_adhoctasks_listview(R, task = False)
 
+    def get_sitereportlist(self, request):
+        "Transaction List View"
+        from apps.onboarding.models import Bt
+        from apps.activity.models import QuestionSet
+        qset, R = self.none(), request.GET
+        pbs = Bt.objects.get_people_bu_list(request.user)
+        tl = QuestionSet.objects.get_template_list(pbs)
+        if pbs and tl:
+            qset  = self.annotate(
+                buname = Case(When(~Q(othersite="") | ~Q(othersite='NONE'), then=Concat(V('otherlocation[ '), F('othersite'), V(']'))), default=Value('bu__buname')),
+                distance = Distance('gpslocation', 'bu__gpslocation'),
+                gps = AsWKT('gpslocation'),
+            ).filter(plandatetime__gte = R['pd1'], plandatetime__lte = R['pd2'], bu_id__in = pbs, identifier = 'SITEREPORT', parent_id=1).values(
+                'id','plandatetime', 'jobdesc', 'people__peoplename', 'jobstatus', 'gps',
+                'distance', 'remarks', 'buname', 'distance'
+            )
+        return qset
+
+    def get_internaltourlist_jobneed(self, request, related, fields):
+        R = request.GET
+        qset = self.select_related(
+                            *related).filter(
+                                bu_id = request.session.get('bu_id', 1),
+                                parent_id=1,
+                                plandatetime__date__gte = R['pd1'],
+                                plandatetime__date__lte = R['pd2'],
+                                jobtype="SCHEDULE",
+                                identifier='INTERNALTOUR'
+                        ).exclude(
+                        id=1
+                        ).values(*fields).order_by('-plandatetime') 
+        return qset or self.none()
+    
+    
+    def get_externaltourlist_jobneed(self, request, related, fields):
+        R = request.GET
+        qset = self.select_related(
+                            *related).filter(
+                                bu_id = request.session.get('bu_id', 1),
+                                parent_id=1,
+                                plandatetime__date__gte = R['pd1'],
+                                plandatetime__date__lte = R['pd2'],
+                                jobtype="SCHEDULE",
+                                identifier='EXTERNALTOUR'
+                        ).exclude(
+                        id=1
+                        ).values(*fields).order_by('-plandatetime') 
+        return qset or self.none()
+
+    def get_tourdetails(self, R):
+        qset = self.select_related(
+            'parent', 'asset', 'qset').filter(parent_id = R['parent_id']).values(
+                'asset__assetname', 'asset__id', 'qset__id',
+                'qset__qsetname', 'plandatetime', 'expirydatetime',
+                'gracetime', 'seqno', 'jobstatus', 'id'
+            ).order_by('seqno')
+
+        return qset or self.none()
+
+    def handle_jobneedpostdata(self, request):
+        S, R = request.session, request.GET
+        pdt = datetime.strptime(R['plandatetime'], '%d-%b-%Y %H:%M')
+        edt = datetime.strptime(R['expirydatetime'], '%d-%b-%Y %H:%M')
+        postdata = {'parent_id':R['parent_id'], 'ctzoffset':R['ctzoffset'], 'seqno':R['seqno'],
+                    'plandatetime':utils.getawaredatetime(pdt, R['ctzoffset']),
+                    'expirydatetime':utils.getawaredatetime(edt, R['ctzoffset']),
+                    'qset_id':R['qset_id'],  'asset_id':R['asset_id'], 'gracetime':R['gracetime'],
+                    'cuser':request.user, 'muser':request.user,
+                    'cdtz':utils.getawaredatetime(datetime.now(), R['ctzoffset']),
+                    'mdtz':utils.getawaredatetime(datetime.now(), R['ctzoffset']),
+                    'type':R['type'], 'client_id':S['client_id'], 'bu_id':S['bu_id']}
+        
+    
+    
+        
 
 class AttachmentManager(models.Manager):
     use_in_migrations = True
@@ -170,7 +306,7 @@ class AttachmentManager(models.Manager):
                 owner = ownerid
                 ).annotate(
             default_img_path = Concat(F('filepath'), V('/'), F('filename'),
-                                    output_field = CharField())).order_by('-cdtz').using(db)
+                                    output_field = CharField())).order_by('-mdtz').using(db)
         ic(qset)
         return qset[0] or self.none()
 
@@ -184,8 +320,31 @@ class AttachmentManager(models.Manager):
             attachmenttype = 'ATTACHMENT', 
             owner = id
             ).using(db)
-        print("qset values@@@@@@@@@@@@@@@@", qset)
         return qset or self.none()
+
+    def get_att_given_owner(self, owneruuid):
+        "return attachments of given jobneed uuid"
+        qset = self.filter(
+            attachmenttype__in = ['ATTACHMENT', 'SIGN'], owner = owneruuid).order_by('filepath').values(
+                'id', 'filepath', 'filename'
+            )
+        return qset or self.none()
+    
+    def create_att_record(self, request, filepath, filename):
+        R, S = request.POST, request.session
+        ic(R)
+        from apps.onboarding.models import TypeAssist
+        ta = TypeAssist.objects.filter(taname = R['ownername'])
+        PostData = {'filepath':filepath, 'filename':filename, 'owner':R['owner'], 'bu_id':S['bu_id'],
+                'attachmenttype':R['attachmenttype'], 'ownername_id':ta[0].id, 'client_id':S['client_id'],
+                'cuser':request.user, 'muser':request.user, 'cdtz':utils.getawaredatetime(datetime.now(), R['ctzoffset']),
+                'mdtz':utils.getawaredatetime(datetime.now(), R['ctzoffset'])}
+        try:
+            qset = self.create(**PostData)
+        except Exception:
+            return {'error':'Upload attachment Failed'}
+        return {'filepath':qset.filepath, 'filename':qset.filename, 'id':qset.id} if qset else self.none()
+        
 
 class AssetManager(models.Manager):
     use_in_migrations = True
@@ -207,7 +366,16 @@ class AssetManager(models.Manager):
 
     def get_schedule_task_for_adhoc(self, params):
         qset = self.raw("select * from fn_get_schedule_for_adhoc")
-
+        
+    def get_peoplenearasset(self, request):
+        "List View"
+        qset = self.annotate(gps = AsWKT('gpslocation')).filter(
+            identifier__in = ['ASSET', 'SMARTPLACE', 'CHECKPOINT'],
+            bu_id = request.session['bu_id']
+        ).values('id', 'assetcode', 'assetname', 'identifier', 'gps')
+        return qset or self.none()
+    
+    
 
 
 class JobneedDetailsManager(models.Manager):
@@ -240,13 +408,24 @@ class JobneedDetailsManager(models.Manager):
                 jobneed_id = id).order_by('seqno')
         return qset or self.none()
 
+    def get_jndofjobneed(self, R):
+        qset = self.filter(jobneed_id = R['jobneedid']).select_related(
+            'jobneed', 'question'
+        ).annotate(quesname = F('question__quesname')).values(
+            'quesname', 'answertype', 'answer', 'min', 'max',
+            'alerton', 'ismandatory', 'options', 'question_id','pk',
+            'ctzoffset','seqno'
+        )
+        return qset or self.none()
+
+
 class QsetBlngManager(models.Manager):
     use_in_migrations = True
     fields = ['id', 'seqno', 'answertype',  'isavpt', 'options', 'ctzoffset', 'ismandatory',
               'min', 'max', 'alerton', 'client_id', 'bu_id',  'question_id', 
               'qset_id', 'cuser_id', 'muser_id', 'cdtz', 'mdtz', 'alertmails_sendto', 'tenant_id']
     related = ['client', 'bu',  'question', 
-              'qset', 'cuser', 'muser', ]
+              'qset', 'cuser', 'muser']
 
     def get_modified_after(self ,mdtz, buid):
         qset = self.select_related(
@@ -255,6 +434,54 @@ class QsetBlngManager(models.Manager):
                     *self.fields
                 )
         return qset or self.none()
+    
+    def handle_questionpostdata(self, request):
+        R, S, Id, r = request.POST, request.session, None, {}
+        ic(R)
+        r['ismandatory'] = R['ismandatory'] == '1'
+        r['options'] = R['options'].replace('"', '').replace('[', '').replace(']', '')
+        r['min'] = 0.0 if R['min'] == "" else R['min']
+        r['max'] = 0.0 if R['max'] == "" else R['max']
+        
+        if R['answertype'] in ['DROPDOWN', 'CHECKBOX']:
+            r['alerton'] = R['alerton'].replace('"', '').replace('[', '').replace(']', '')
+        
+        elif R['answertype'] == 'NUMERIC':
+            r['alerton'] = f"<{R['alertbelow']}, >{R['alertabove']}"
+        
+        PostData = {'qset_id':R['parent_id'], 'answertype':R['answertype'], 'min':r.get('min', '0.0'), 'max':r.get('max', '0.0'),
+                'alerton':r.get('alerton'), 'ismandatory':r['ismandatory'], 'question_id': R['question_id'],
+                'options':r.get('options'), 'seqno':R['seqno'], 'client_id':S['client_id'], 'bu_id':S['bu_id'],
+                'cuser':request.user, 'muser':request.user, 'cdtz':utils.getawaredatetime(datetime.now(), R['ctzoffset']),
+                'mdtz':utils.getawaredatetime(datetime.now(), R['ctzoffset'])}
+        
+        if R['action'] == 'create':
+            ID = self.create(**PostData).id
+        
+        elif R['action'] == 'edit':
+            PostData.pop('cuser')
+            PostData.pop('mdtz')
+            updated = self.filter(pk=R['pk']).update(**PostData)
+            ic(updated)
+            if updated: ID = R['pk']
+        else:
+            self.filter(pk=R['pk']).delete()
+            return self.none()
+        
+        return self.filter(id=ID).annotate(quesname=F('question__quesname')
+        ).values('pk', 'seqno', 'quesname', 'answertype', 'min', 'question_id', 'ctzoffset',
+                 'max', 'options', 'alerton', 'ismandatory') or self.none()
+        
+    
+    def get_questions_of_qset(self, R):
+        qset = self.annotate(quesname = F('question__quesname')).filter(
+            qset_id = R['qset_id']).select_related('question').values(
+                'pk', 'quesname', 'answertype', 'min', 'max','question_id',
+                'options', 'alerton', 'ismandatory', 'seqno', 'ctzoffset')
+        return qset or self.none()
+    
+    
+    
 
 class TicketManager(models.Manager):
     use_in_migrations = True
@@ -293,4 +520,35 @@ class JobManager(models.Manager):
         qset = self.select_related(*related).filter(
             parent__jobname='NONE', parent_id = 1, identifier__exact='EXTERNALTOUR'
         ).values(*fields).order_by('-cdtz')
+        return qset or self.none()
+    
+
+
+
+class DELManager(models.Manager):
+    use_in_migrations = True
+    
+    def get_mobileuserlog(self, request):
+        qobjs, dir,  fields, length, start = utils.get_qobjs_dir_fields_start_length(request.GET)
+        dt  = datetime.now(tz = timezone.utc) - timedelta(days = 10)
+        qset = self.filter(
+            bu_id = request.session['bu_id'],
+            cdtz__gte = dt
+        ).select_related('people', 'bu').values(*fields).order_by(dir)
+        total = qset.count()
+        if qobjs:
+            filteredqset = qset.filter(qobjs)
+            fcount = filteredqset.count()
+            filteredqset = filteredqset[start:start+length]
+            return total, fcount, filteredqset
+        qset = qset[start:start+length]
+        return total, total, qset
+            
+            
+class WorkpermitManager(models.Manager):
+    use_in_migrations = True
+    
+    def get_workpermitlist(self, request):
+        from apps.core.raw_queries import query
+        qset = self.raw(query['workpermitlist'], [request.session['bu_id']])
         return qset or self.none()

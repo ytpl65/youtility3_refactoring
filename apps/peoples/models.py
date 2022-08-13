@@ -94,6 +94,7 @@ class People(AbstractBaseUser, PermissionsMixin, TenantAwareModel, BaseModel):
     class Gender(models.TextChoices):
         M = ('M', 'Male')
         F = ('F', 'Female')
+        O = ('O', 'Others')
     uuid          = models.UUIDField(unique = True, editable = True, blank = True, default = uuid.uuid4, null = True)
     peopleimg     = models.ImageField(_("peopleimg"), upload_to = upload_peopleimg, default="master/people/blank.png", null = True, blank = True)
     peoplecode    = models.CharField(_("Code"), max_length = 50)
@@ -132,8 +133,6 @@ class People(AbstractBaseUser, PermissionsMixin, TenantAwareModel, BaseModel):
                 fields=['peoplecode', 'bu'], name='people_peoplecode_bu'),
             models.UniqueConstraint(
                 fields=['loginid', 'bu'], name='people_loginid_bu_uk'),
-            models.UniqueConstraint(
-                fields=['loginid'], name='people_loginid_uk'),
             models.UniqueConstraint(
                 fields=['loginid', 'mobno', 'email'], name='loginid_mobno_email_uk'),
         ]

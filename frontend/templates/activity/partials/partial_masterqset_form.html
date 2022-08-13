@@ -316,11 +316,11 @@
         //question-form trigger following events
         optionTag
             .on('add', function (e) {
-                populateAlertOn(e.detail.data.value)
+                populateAlertOn(e.detail.data.value, "#id_alerton")
             })
             .on('remove', function (e) {
                 console.log(e.detail.data.value)
-                removeElmtFromAlertOn(e.detail.data.value)
+                removeElmtFromAlertOn(e.detail.data.value, '#id_alerton')
             })
 
         //on submitting the questionset-blng form populate the table
@@ -430,7 +430,7 @@
                     modal: true
                 } //checklist view
                 const formtype = $(modalcontent_id).attr('data-form') //form-type (create/update)
-                const id = $("#pk").val() //form instance id
+                const id = '{{ masterqset_form.instance.id }}' //form instance id
                 var payLoad = {
                     formData: form.serialize(),
                     asssigned_questions: JSON.stringify(table.rows().data().toArray()),

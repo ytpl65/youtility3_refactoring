@@ -166,14 +166,15 @@ def create_bv_reportting_heirarchy(instance, newcode, newtype, parent):
         dbg("Creating the reporting heirarchy!")
         # create bu tree
         ic(instance.bucode, parent, newcode, newtype)
-        if instance.bucode != "NONE" and parent.bucode == 'NONE':
-            # Root Node
-            dbg("Creating heirarchy of the Root Node")
-            instance.butree = f'{newtype.tacode} :: {newcode}'
-        elif instance.butree != f'{parent.butree} > {newtype.tacode} :: {newcode}':
-            # Non Root Node
-            dbg("Creating heirarchy of branch Node")
-            instance.butree += f"{parent.butree} > {newtype.tacode} :: {newcode}"
+        if hasattr(instance, 'bucode')  and hasattr(parent, 'bucode'):
+            if instance.bucode != "NONE" and parent.bucode == 'NONE':
+                # Root Node
+                dbg("Creating heirarchy of the Root Node")
+                instance.butree = f'{newtype.tacode} :: {newcode}'
+            elif instance.butree != f'{parent.butree} > {newtype.tacode} :: {newcode}':
+                # Non Root Node
+                dbg("Creating heirarchy of branch Node")
+                instance.butree += f"{parent.butree} > {newtype.tacode} :: {newcode}"
 
     else:
         dbg("Updating the reporting heirarchy!")

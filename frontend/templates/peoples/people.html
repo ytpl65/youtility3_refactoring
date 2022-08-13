@@ -182,7 +182,7 @@ People List
     //delete ajax request 
 	function isCapDeleted(id){ 
 		console.log("id ", id)
-		const params = {url:`{{ url('peoples:people') }}?action=formdelete&id=${id}`}
+		const params = {url:`{{ url('peoples:people') }}?action=delete&id=${id}`}
 		fire_ajax_get(params)
 		.done((data, status, xhr) => {
 			if(!xhr.status === 200){

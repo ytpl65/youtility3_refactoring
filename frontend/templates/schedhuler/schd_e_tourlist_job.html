@@ -41,7 +41,7 @@ ext_schdtour_list = 'External ScheduleTour List',
                 url: '{{ url("schedhuler:schd_external_tour") }}?action=list'
             },
 			columns:[
-                {data: 'id'},
+                {data: 'id', visible:false},
                 {data: 'jobname', title: 'Name'},
                 {data: 'bu__buname', title: 'BV'},
                 {title: 'People/Group', defaultContent:null, data:null},
@@ -54,13 +54,20 @@ ext_schdtour_list = 'External ScheduleTour List',
             columnDefs:[
                 {targets:0, data: 'id', visible: 'false', searchable:false },
                 {targets:1, data: 'jobname', render:function(data, type, row, meta){
+                    let urlname = "{{ url('schedhuler:schd_external_tour') }}"
                     return `<a href="${urlname}?id=${row['id']}">${data}</a>`
                 }},
                 {targets:3, render:function(data, type, row, meta){
                     let peoplename = row['people__peoplename']
                     let groupname = row['pgroup__groupname']
                     return typeof peoplename in ['undefined', null] ? groupname : peoplename 
-                }}
+                }},
+                {targets:4, render:function(data, type, row, meta){
+                    return convert_to_local(type, data, row)
+                }},
+                {targets:5, render:function(data, type, row, meta){
+                    return convert_to_local(type, data, row)
+                }},
             ],
             deferRender: true,
 			responsive: true,
@@ -72,7 +79,6 @@ ext_schdtour_list = 'External ScheduleTour List',
 					className: "btn btn-sm btn-light-primary btn-hover-rise",
 					//action for add_new_button 
 					action: function(e, dt, node, config){
-                        //This will send the page to the location specified
         				window.location.href = "{{ url('schedhuler:schd_external_tour') }}?action=form";
 					}
 				}

@@ -1,9 +1,11 @@
 from django.http import Http404, QueryDict, response as rp
 from django.contrib import messages
 from django.db import IntegrityError, transaction
+from django.db.models import Q, F, Count, Case, When, Value
 from django.db.models import Q
 from django.shortcuts import redirect, render
 from django.urls import resolve
+from django.contrib.gis.db.models.functions import  AsWKT
 from django.views.generic.base import View
 import json
 from django.contrib.auth.mixins import LoginRequiredMixin
@@ -172,13 +174,16 @@ class MasterQuestionSet(LoginRequiredMixin, View):
         try:
             logger.debug(pformat(request.POST))
             data = QueryDict(request.POST['formData'])
+            ic(data)
             if pk := request.POST.get('pk', None):
+                logger.debug("form is with instance")
                 msg = self.view_of
                 form = utils.get_instance_for_update(
                     data, self.params, msg, int(pk))
                 logger.debug(pformat(form.data, width = 41, compact = True))
                 create = False
             else:
+                logger.debug("form is without instance")
                 form = self.params['form_class'](data, request = request)
             if form.is_valid():
                 resp = self.handle_valid_form(form, request, create)
@@ -216,7 +221,7 @@ class MasterAsset(LoginRequiredMixin, View):
         'model': am.Asset,
         'filter': aft.MasterAssetFilter,
         'fields': ['assetname', 'assetcode', 'runningstatus',
-                   'parent__assetcode', 'gpslocation', 'id', 'enable'],
+                   'parent__assetcode', 'gps', 'id', 'enable'],
         'form_initials': {}
     }
     list_grid_lookups = {}
@@ -225,21 +230,24 @@ class MasterAsset(LoginRequiredMixin, View):
     def get(self, request, *args, **kwargs):
         R, resp = request.GET, None
 
+        # first load the template
+        if R.get('template'): return render(request, self.params['template_list'], {'label':self.label})
         # return qset_list data
         if R.get('action', None) == 'list' or R.get('search_term'):
             d = {'list': "master_assetlist", 'filt_name': "master_asset_filter"}
             self.params.update(d)
-            objs = self.params['model'].objects.select_related(
+            objs = self.params['model'].objects.annotate(
+                gps = AsWKT('gpslocation')
+                ).select_related(
                 *self.params['related']).filter(
                     **self.list_grid_lookups).values(*self.params['fields'])
-            resp = utils.render_grid(request, self.params, self.view_of,
-                                     objs, extra_cxt={'label': self.label})
+            return  rp.JsonResponse(data = {'data':list(objs)})
 
         # return questionset_form empty
         elif R.get('action', None) == 'form':
             self.params['form_initials'].update({
-                'type': utils.get_or_create_none_typeassist().id,
-                'parent': utils.get_or_create_none_asset().id})
+                'type': 1,
+                'parent': 1})
             cxt = {'master_assetform': self.params['form_class'](request = request, initial = self.params['form_initials']),
                    'msg': f"create {self.label} requested",
                    'label': self.label}
@@ -295,14 +303,14 @@ class Checklist(MasterQuestionSet):
     label = 'Checklist'
 
     def handle_valid_form(self, form, request, create):
-        logger.info('%s form is valid' % (self.view_of))
+        logger.info(f'{self.view_of} form is valid')
         try:
             assigned_questions = json.loads(
                 request.POST.get("asssigned_questions"))
             qset = form.save()
             putils.save_userinfo(qset, request.user,
                                  request.session, create = create)
-            logger.info('%s form is valid' % (self.view_of))
+            logger.info(f'{self.view_of} form is valid')
             fields = {'qset': qset.id, 'qsetname': qset.qsetname,
                       'client': qset.client_id}
             self.save_qset_belonging(request, assigned_questions, fields)
@@ -316,8 +324,8 @@ class Checklist(MasterQuestionSet):
     def save_qset_belonging(self, request, assigned_questions, fields):
         try:
             logger.info("saving QuestoinSet Belonging [started]")
-            logger.info("%s saving QuestoinSet Belonging found %s questions" % (
-                " "*4, len(assigned_questions)))
+            logger.info(f'{" " * 4} saving QuestoinSet Belonging found {len(assigned_questions)} questions')
+
             logger.debug(
                 f"\nassigned_questoins, {pformat(assigned_questions, depth = 1, width = 60)}, qset {fields['qset']}")
             av_utils.insert_questions_to_qsetblng(
@@ -476,8 +484,7 @@ class RetriveEscList(LoginRequiredMixin, View):
             objects = self.model.objects.select_related(
                 *self.related).filter().values(*self.fields).order_by('-cdtz')
             count = objects.count()
-            log.info('Escalation objects %s retrieved from db' %
-                     (count or "No Records!"))
+            log.info(f'Escalation objects {count or "No Records!"} retrieved from db')
             if count:
                 objects, filtered = utils.get_paginated_results(
                     requestData, objects, count, self.fields, self.related, self.model)
@@ -504,7 +511,7 @@ class AdhocTasks(LoginRequiredMixin, View):
         'related'      : ['performedby', 'qset', 'asset'],
         'model'        : am.Jobneed,
         'fields'       : ['id', 'plandatetime', 'jobdesc', 'performedby__peoplename', 'jobstatus',
-                   'qset__qsetname', 'asset__assetname'],
+                   'qset__qsetname', 'asset__assetname', 'ctzoffset'],
         'form_initials': {},
         'idf'          : ''}
 
@@ -537,7 +544,7 @@ class AdhocTours(LoginRequiredMixin, View):
         'template_list':'activity/adhoc_jobneed_tours.html',
         'model':am.Jobneed,
         'fields':['id', 'plandatetime', 'jobdesc', 'performedby__peoplename', 'jobstatus',
-                   'qset__qsetname', 'asset__assetname'],
+                  'ctzoffset', 'qset__qsetname', 'asset__assetname'],
         'related':['performedby', 'qset', 'asset'],
     }
     def get(self, request, *args, **kwargs):
@@ -549,7 +556,7 @@ class AdhocTours(LoginRequiredMixin, View):
 
         # then load the table with objects for table_view
         if R.get('action', None) == 'list' or R.get('search_term'):
-            total, filtered, objs = self.params['model'].objects.get_adhoctasks_listview(R, self.params['idf'])
+            total, filtered, objs = self.params['model'].objects.get_adhoctour_listview(R)
             return  rp.JsonResponse(data = {
                 'draw':R['draw'],
                 'data':list(objs),
@@ -564,7 +571,7 @@ class AssetMaintainceList(LoginRequiredMixin, View):
         'template_list': 'activity/assetmaintainance_list.html',
         'model'        : am.Jobneed,
         'fields':['id', 'plandatetime', 'jobdesc', 'people__peoplename', 'asset__assetname',
-                  'asset__runningstatus', 'gpslocation', 'identifier'],
+        'ctzoffset', 'asset__runningstatus', 'gpslocation', 'identifier'],
         'related':['asset', 'people']
     }
     
@@ -578,3 +585,146 @@ class AssetMaintainceList(LoginRequiredMixin, View):
             #last 3 months
             objs = P['model'].objects.get_assetmaintainance_list(request, P['related'], P['fields'])
             return rp.JsonResponse({'data':list(objs)}, status=200)
+
+
+
+class QsetNQsetBelonging(LoginRequiredMixin, View):
+    params = {
+        'model1':am.QuestionSet,
+        'qsb':am.QuestionSetBelonging,
+        'fields':['id', 'quesname', 'answertype', 'min', 'max', 'options', 'alerton',
+                  'ismandatory']
+    }
+    def get(self, request, *args, **kwargs):
+        R, P = request.GET, self.params
+        if R.get('action') == 'get_questions_of_qset' and R.get('qset_id'):
+            objs = P['qsb'].objects.get_questions_of_qset(R)
+            return rp.JsonResponse({'data':list(objs)}, status=200)
+        return rp.JsonResponse({'data':[]}, status=200)
+    
+    def post(self, request, *args, **kwargs):
+        R, P = request.POST, self.params
+        if R.get('questionset'):
+            data = P['model1'].objects.handle_qsetpostdata(request)
+            return rp.JsonResponse({'data':list(data)}, status = 200, safe=False)
+        if R.get('question'):
+            data = P['qsb'].objects.handle_questionpostdata(request)
+            return rp.JsonResponse({'data':list(data)}, status = 200, safe=False)
+        
+        
+class MobileUserLog(LoginRequiredMixin, View):
+    params = {
+        'template_list':'activity/mobileuserlog.html',
+        'model':am.DeviceEventlog,
+        'related':['bu', 'people'],
+        'fields':['cdtz', 'bu__buname', 'startlocation', 'endlocation', 'signalstrength',
+                  'availintmemory', 'availextmemory', 'signalbandwidth', 'ctzoffset',
+                  'people__peoplename', 'gpslocation', 'eventvalue', 'batterylevel']
+    }
+    
+    def get(self, request, *args, **kwargs):
+        R, P = request.GET, self.params
+        # first load the template
+        if R.get('template'): return render(request, self.params['template_list'])
+
+        # then load the table with objects for table_view
+        if R.get('action', None) == 'list' or R.get('search_term'):
+            total, filtered, objs = self.params['model'].objects.get_mobileuserlog(request)
+            ic(utils.printsql(objs))
+            return  rp.JsonResponse(data = {
+                'draw':R['draw'],
+                'data':list(objs),
+                'recordsFiltered':filtered,
+                'recordsTotal':total,
+            }, safe = False)
+            
+            
+
+class MobileUserDetails(LoginRequiredMixin, View):
+    params = {
+        'template_list':'activity/mobileuserlog.html',
+        'model':am.DeviceEventlog,
+        'related':['bu', 'people'],
+        'fields':['cdtz', 'bu__buname', 'signalstrength',
+                  'availintmemory', 'availextmemory', 'signalbandwidth', 'ctzoffset',
+                  'people__peoplename', 'gpslocation', 'eventvalue', 'batterylevel']
+    }
+    
+    def get(self, request, *args, **kwargs):
+        R, P = request.GET, self.params
+        # first load the template
+        if R.get('template'): return render(request, self.params['template_list'])
+
+        # then load the table with objects for table_view
+        if R.get('action', None) == 'list' or R.get('search_term'):
+            total, filtered, objs = self.params['model'].objects.get_mobileuserlog(request)
+            ic(utils.printsql(objs))
+            return  rp.JsonResponse(data = {
+                'draw':R['draw'],
+                'data':list(objs),
+                'recordsFiltered':filtered,
+                'recordsTotal':total,
+            }, safe = False)
+            
+
+class PeopleNearAsset(LoginRequiredMixin, View):
+    params = {
+        'template_list':'activity/peoplenearasset.html',
+        'model':am.Asset,
+        'related':[],
+        'fields':['id', 'assetcode', 'assetname', 'identifier', 'gpslocation']
+    }
+    
+    def get(self, request, *args, **kwargs):
+        R, P = request.GET, self.params
+        # first load the template
+        if R.get('template'): return render(request, self.params['template_list'])
+
+        # then load the table with objects for table_view
+        if R.get('action', None) == 'list' or R.get('search_term'):
+            objs = self.params['model'].objects.get_peoplenearasset(request)
+            ic(utils.printsql(objs))
+            return  rp.JsonResponse(data = {
+                'data':list(objs)}, safe = False)
+            
+
+class WorkPermit(LoginRequiredMixin, View):
+    params = {
+        'template_list':'activity/workpermit_list.html',
+        'model':am.WorkPermit,
+        'related':[],
+        'fields':['id', 'assetcode', 'assetname', 'identifier', 'gpslocation']
+    }
+    
+    def get(self, request, *args, **kwargs):
+        R, P = request.GET, self.params
+        # first load the template
+        if R.get('template'): return render(request, self.params['template_list'])
+        
+        # then load the table with objects for table_view
+        if R.get('action', None) == 'list' or R.get('search_term'):
+            objs = self.params['model'].objects.get_workpermitlist(request)
+            return  rp.JsonResponse(data = {
+                'data':list(objs)}, safe = False)
+            
+
+class Attachments(LoginRequiredMixin, View):
+    params = {
+        'model':am.Attachment
+    }
+    
+    def get(self, request, *args, **kwargs):
+        R, P = request.GET, self.params
+        if R.get('action') == 'get_attachments_of_owner' and R.get('owner'):
+            objs = P['model'].objects.get_att_given_owner(R['owner'])
+            return rp.JsonResponse({'data':list(objs)}, status=200)
+        return rp.JsonResponse({'data':[]}, status=200)
+    
+    def post(self, request, *args, **kwargs):
+        R, P = request.POST, self.params
+        if 'img' in request.FILES:
+            isUploaded, filename, filepath, docnumber = utils.upload(request)
+            if isUploaded:
+                data = P['model'].objects.create_att_record(request, filename, filepath)
+                return rp.JsonResponse(data, status = 200, safe=False)
+        return rp.JsonResponse({'error':"Invalid Request"}, status=200)

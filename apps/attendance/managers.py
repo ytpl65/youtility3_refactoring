@@ -1,5 +1,8 @@
-from datetime import timedelta
+from datetime import timedelta, datetime, date
 from django.db import models
+from django.contrib.gis.db.models.functions import AsGeoJSON, AsWKT
+from apps.core import utils
+
 Q = models.Q
 class PELManager(models.Manager):
     use_in_migrations = True
@@ -34,7 +37,6 @@ class PELManager(models.Manager):
         pass
 
     def get_lastmonth_conveyance(self, R):
-        from datetime import datetime
         now = datetime.now()
         qset = self.select_related('bu', 'people').filter(
                 peventtype__tacode = 'CONVEYANCE',
@@ -43,7 +45,6 @@ class PELManager(models.Manager):
         return qset or self.none()
 
     def getjourneycoords(self, id):
-        from django.contrib.gis.db.models.functions import AsGeoJSON
         import json
         qset = self.annotate(
             path = AsGeoJSON('journeypath')).filter(
@@ -56,4 +57,31 @@ class PELManager(models.Manager):
             obj['path'] = coords
             coords = []
         return qset or self.none()
+    
+    
+    def get_geofencetracking(self, request):
+        "List View"
+        qobjs, dir,  fields, length, start = utils.get_qobjs_dir_fields_start_length(request.GET)
+        last8days = date.today() - timedelta(days=8)
+        qset = self.annotate(
+            slocation = AsWKT('startlocation'),
+            elocation = AsWKT('endlocation'),
+            ).filter(
+            peventtype__tacode = 'GEOFENCE',
+            datefor__gte = last8days,
+            bu_id = request.session['bu_id']
+        ).select_related(
+            'people', 'peventtype', 'geofence').values(*fields).order_by(dir)
+        total = qset.count()
+        if qobjs:
+            filteredqset = qset.filter(qobjs)
+            fcount = filteredqset.count()
+            filteredqset = filteredqset[start:start+length]
+            return total, fcount, filteredqset
+        qset = qset[start:start+length]
+        return total, total, qset
+    
+    
+    
+        
 

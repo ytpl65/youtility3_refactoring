@@ -26,15 +26,32 @@ Adhoc Tours List
 {% block extra_scripts %}
 <script>
 var table = null;
-$(document).ready(functoin(){
+//if you want to modifiy here, then modify in custom.js initDateRange also
+var from_pd = moment().subtract(7, 'days').format('YYYY-MM-DD');
+var to_pd = moment().format('YYYY-MM-DD')
+$(document).ready(function(){
     table = $("#adhoc_tours").DataTable({
         ajax:{
             url:'{{ url("activity:adhoctours") }}?action=list',
             data:function(d){
-                d.fields:['id', 'plandatetime', 'jobdesc', 'performedby__peoplename', 'jobstatus',
-                   'qset__qsetname', 'asset__assetname'],
+                d.fields=['id', 'plandatetime', 'jobdesc', 'performedby__peoplename', 'jobstatus',
+                   'qset__qsetname', 'asset__assetname']
+                d.pd1 = from_pd,
+                d.pd2 = to_pd
             }
         },
+        serverSide:true,
+        fixedHeader:true,
+        columnDefs:[
+            {targets:2, data:'jobdesc', render:function(data, type, row, meta){
+                let url = `{{ url('activity:adhoctours') }}?template=true&id=${row['id']}`
+                return `<a href=${url}>${data}</a>`
+            }}
+        ],
+        search    : {return: true},
+        dom:`<'row' <'col-sm-6 d-flex justify-content-start'<'customfields'>f> <'col-sm-6 d-flex justify-content-end'B> >rt<'row'
+        <'col-sm-6'l> <'col-sm-6'p><'col-sm-12 d-flex justify-content-center'i>>`,
+        responsive : true,
         columns:[
             { "data": "id", visible:false },
             { "data": "plandatetime" , title: "PlanDatetime"},
@@ -43,7 +60,16 @@ $(document).ready(functoin(){
             { "data": "jobstatus", title: 'Status'},
             { "data": "asset__assetname", title: 'Asset/Smartplace'},
             { "data": "qset__qsetname", title: 'Question Set'},
-        ]
+        ],
+        buttons:[]
+    })
+    //add input field to the datatables dom
+    initDateRangeHtml()
+    //onchange update global vars and reload table
+    initDateRange("#id_daterange").on('apply.daterangepicker', function(e, picker){
+        from_pd = picker.startDate.format('YYYY-MM-DD');
+        to_pd = picker.endDate.format('YYYY-MM-DD');
+        table.ajax.reload()
     })
 })
 </script>

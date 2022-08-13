@@ -356,6 +356,7 @@ def insert_adhoc_record(jobneedrecord, details):
 def perform_uploadattachment(file,  record, biodata):
     rc, traceback, resp = 0,  'NA', 0
     recordcount = msg = None
+    ic(biodata)
     # ic(file, tablename, record, type(record), biodata, type(biodata))
     try:
         log.info("perform_uploadattachment [start+]")

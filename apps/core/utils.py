@@ -248,6 +248,7 @@ def save_user_session(request, people):
     '''save user info in session'''
     from django.core.exceptions import ObjectDoesNotExist
     from django.conf import settings
+    from apps.onboarding.models import Bt
 
     try:
         logger.info('saving user data into the session ... STARTED')
@@ -263,6 +264,7 @@ def save_user_session(request, people):
             client = putils.save_tenant_client_info(request)
             request.session['is_superadmin'] = people.peoplecode == 'SUPERADMIN'
             request.session['is_admin'] = people.isadmin
+            #request.session['assigned_siteids'] = Bt.objects.get_sitelist_web(request.session['client_id'], request.user.id)
             # get cap choices and save in session data
             putils.get_caps_choices(
                 client = client, session = request.session, people = people)
@@ -999,8 +1001,11 @@ class RecordsAlreadyExist(Error):
 def getawaredatetime(dt, offset):
     from datetime import datetime, timedelta, timezone
     tz = timezone(timedelta(minutes = int(offset)))
-    val = dt.replace("+00:00", "")
-    val = datetime.strptime(val, "%Y-%m-%d %H:%M:%S")
+    if isinstance(dt, datetime):
+        val = dt
+    else:
+        val = dt.replace("+00:00", "")
+        val = datetime.strptime(val, "%Y-%m-%d %H:%M:%S")
     return val.replace(tzinfo = tz, microsecond = 0)
 
 def ok(self):
@@ -1008,3 +1013,72 @@ def ok(self):
 
 def failed(self):
     self.stdout.write(self.style.ERROR("FAILED"))
+
+
+def upload(request):
+    import os
+    from dateutil import parser
+    from os.path  import expanduser
+    from datetime import datetime
+    ic('upload(request)')
+    filename= filepath= docnumber= None
+    isUploaded= False
+    ownerid= isDefault= foldertype= attachmenttype= None
+    if request.POST["docnumber"]:
+        docnumber=  request.POST["docnumber"]
+        foldertype= request.POST["foldertype"]
+        ownerid=    request.POST["owner"]
+        if "img" in request.FILES:
+            home_dir= basedir= tablename= fyear= fmonth= None
+            home_dir=       ("~") + "/";
+            fyear=      str(datetime.now().year)
+            fmonth=     str(datetime.now().strftime("%b"))
+            fextension= os.path.splitext(request.FILES["img"].name)[1]
+            filename=   parser.parse(str(datetime.now())).strftime('%d_%b_%Y_%H%M%S') + fextension
+            if foldertype   in ["task", "tour", "ticket", "incidentreport"]: basedir, tablename= "transaction", "jobneed"
+            elif foldertype in ["visitorlog"]:                               basedir, tablename= "transaction", "visitorlog"
+            elif foldertype in ["conveyance"]:                               basedir, tablename = "transaction", "conveyance"
+            elif foldertype in ["personlogger"]:
+                basedir, tablename=  "transaction", "personlogger"
+                doctype= request.POST["doctype"]
+                filename= doctype + fextension
+                del doctype
+            else:
+                basedir= "master"
+                if request.POST["isDefault"] == "True" and request.POST["foldertype"] == "people":
+                    filename = f"default{fextension}"
+                elif request.POST["isDefault"] == "True" and request.POST["foldertype"] == "asset" or request.POST["foldertype"] == "smartplace" or request.POST["foldertype"] == "location" or request.POST["foldertype"] == "checkpoint" or request.POST["foldertype"] == "nonengineeringassets" :
+                        filename = ownerid + fextension
+                else: filename= request.FILES['img'].name
+
+            if basedir == "transaction":
+                filepath= "youtility3_avpt" + "/" + basedir + "/" + fyear + "/" + fmonth + "/" + tablename + "/" + foldertype + "/" + ownerid
+            else: filepath= "youtility3_avpt" + "/" + basedir + "/" + foldertype + "/" + ownerid
+
+            filepath= str(filepath).lower() # convert to lower-case
+            fullpath= home_dir + filepath
+            if not os.path.exists(fullpath):
+                os.makedirs(fullpath)
+                pass
+
+            if foldertype in ["personlogger"] and \
+                request.POST["doctype"] != None  and \
+                request.POST["doctype"] != "None":
+                filename=  request.POST["doctype"] + fextension
+
+            uploadedfileurl= fullpath + "/" + filename
+            try:
+                with open(uploadedfileurl, 'wb') as temp_file:
+                    temp_file.write(request.FILES['img'].read())
+                    temp_file.close()
+                pass
+                isUploaded= True
+            except:
+                isUploaded= False
+            del basedir, tablename, fyear, fmonth, home_dir
+        else:
+            if "doctype" in request.POST and request.POST["doctype"] != None and request.POST["doctype"] != "None": filename= request.POST["doctype"] + fextension
+            filepath= "NONE"
+    del ownerid, isDefault, foldertype, attachmenttype
+    del expanduser, parser, os
+    return isUploaded, str(filename), str(filepath), str(docnumber)

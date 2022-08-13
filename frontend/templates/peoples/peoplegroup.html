@@ -169,9 +169,9 @@ People Group Lists
 	}); //END document.ready()
 
 	//delete ajax request 
-	function isPgroupDeleted(id){ 
+	function isPgroupDeleted(id){
 		console.log("id ", id)
-		const params = {url:`${urlname}?action=formdelete&id=${id}`, beforeSend:function(){}}
+		const params = {url:`${urlname}?action=delete&id=${id}`, beforeSend:function(){}}
 		fire_ajax_get(params)
 		.done((data, status, xhr) => {
 			if(!xhr.status === 200){

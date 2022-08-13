@@ -123,9 +123,8 @@ People
 
 <!--------- BEGIN NON FIELD ERRORS -------->
 {% block nonfield_errors %}
-<div class="alert alert-danger alert-dismissible fade show" id="nonfield_errors"role="alert" style="display:none">
+<div class="alert alert-danger" id="nonfield_errors"role="alert" style="display:none">
     <strong>Error</strong> <span></span>
-    <button type="button" class="btn-sm btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
 </div>
 {% endblock nonfield_errors %}
 <!---------- END NON FIELD ERRORS --------->
@@ -233,13 +232,10 @@ People
                 <!--LABEL FIELD-->
                 <label class="required" for="id_deviceid">Device Id:</label>
                 <!--INPUT GROUP-->
-                <div class="col-md-4">
+                <div class="col-md-4 d-flex d-inline">
                     {{ peopleform.deviceid }}
+                    <button type='button' class="btn btn-sm btn-secondary rounded-0" id="id_reset">Reset</button>
                     <!--HELP TEXT-->
-
-                    <!----- BEGIN ERROR FIELD  ------->
-                    {{ peopleform.deviceid.errors }}
-                    <!----- END ERROR FIELD  ------->
                 </div>
                 <!--LABEL FIELD-->
 
@@ -316,7 +312,7 @@ People
 
             <!--begin::Image input-->
             <div class="image-input image-input-empty" data-kt-image-input="true"
-                style="background-image: url({% if peopleform.instance %} {{ peopleform.instance.peopleimg.url }} {% else %} '/static/assets/media/images/blank.png' {% endif %})">
+                style="background-image: url({% if peopleform.instance.id %} {{ peopleform.instance.peopleimg.url }} {% else %} '/static/assets/media/images/blank.png' {% endif %})">
                 <!--begin::Image preview wrapper-->
                 <div class="image-input-wrapper w-125px h-125px"></div>
                 <!--end::Image preview wrapper-->
@@ -566,11 +562,15 @@ People
 {{ peopleform.media.js }}
 <script>
     $(document).ready(function () {
+        //reset deviceid on click
+        $("#id_reset").click(function(){
+            $("#id_deviceid").val('-1')
+        })
         //set ctzoffset
         $("#id_ctzoffset").val(-new Date().getTimezoneOffset())
 
         //hide the delete button when instance is not saved yet.
-        if ('{{peopleform.instance.id}}' == ('None' || "")) {
+        if ('{{peopleform.instance.id}}' === 'None') {
             $("#btn_del").hide()
         }
         //hide site group and template info
@@ -701,7 +701,7 @@ People
             var form = $(this)
             e.preventDefault()
             const params = {url: "{{ url('peoples:people') }}", modal:false}
-            const id = "{{ peopleform.instance.id }}"
+            const id = "{{ peopleform.instance.pk }}"
             var payLoad = {formData:form.serialize(), csrfmiddlewaretoken: '{{ csrf_token }}'}//payload for post request
             if(id != 'None'){
 				var newPayLoad = {...payLoad, 'pk':id}
@@ -710,7 +710,9 @@ People
 			fire_ajax_form_post(params, payLoad)
 			.done((data, status, xhr) => { //function to submit post request
                 show_successful_save_alert(update= id != 'None' ? true : false)
-				location.href = `{{ url('peoples:people') }}?id=${data['pk']}`
+                window.setTimeout(function() {
+                    window.location.href = `{{ url('peoples:people') }}?id=${data.pk}`;
+                }, 2000);
 			})
         })
 

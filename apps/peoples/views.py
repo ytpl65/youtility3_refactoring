@@ -866,13 +866,15 @@ class PeopleView(LoginRequiredMixin, View):
     def post(self, request, *args, **kwargs):
         resp, create = None, True
         data = QueryDict(request.POST['formData'])
+        ic(data)
         try:
-            if pk := data.get('pk', None):
-                msg, create = "people_view", False
+            if pk := request.POST.get('pk', None):
+                msg, create = "people_view", False  
                 people = utils.get_model_obj(pk, request,  self.params)
                 form = self.params['form_class'](data, request.FILES, instance = people)
             else:
                 form = self.params['form_class'](data, request = request)
+            ic(form.instance.id)
             jsonform = self.params['json_form'](data, session = request.session)
             if form.is_valid() and jsonform.is_valid():
                 resp = self.handle_valid_form(form, jsonform, request, create)
@@ -1041,6 +1043,13 @@ class SiteGroup(LoginRequiredMixin, View):
             cxt = {'sitegrpform': self.params['form_class'](request = request),
                    'msg': "create site group requested"}
             return render(request, self.params['template_form'], context = cxt)
+        
+        # handle delete request
+        elif R.get('action', None) == "delete" and R.get('id', None):
+            ic('here')
+            obj = utils.get_model_obj(R['id'])
+            pm.Pgbelonging.objects.filter(pgroup_id = obj.id).delete()
+            return rp.JsonResponse(data = None, status = 200)
 
         # form with instance to load existing data
         elif R.get('id', None):
@@ -1053,18 +1062,14 @@ class SiteGroup(LoginRequiredMixin, View):
             resp = render(request, self.params['template_form'], context = cxt)
             return resp
 
-        # handle delete request
-        elif R.get('action', None) == "delete" and R.get('id', None):
-            ic('here')
-            obj = utils.get_model_obj(R['id'])
-            pm.Pgbelonging.objects.filter(pgroup_id = obj.id).delete()
-            return rp.JsonResponse(data = None, status = 200)
+        
 
     def post(self, request, *args, **kwargs):
         import json
         data = QueryDict(request.POST['formData'])
         assignedSites = json.loads(request.POST['assignedSites'])
-        pk = request.POST.get('pk', None)
+        pk = data.get('pk', None)
+        ic(data)
         try:
             if pk:
                 msg = "pgroup_view"
@@ -1098,9 +1103,14 @@ class SiteGroup(LoginRequiredMixin, View):
         except IntegrityError:
             return handle_intergrity_error("Pgroup")
 
+    def resest_assignedsites(self, pg):
+        pm.Pgbelonging.objects.filter(pgroup_id=pg.id).delete()
+        ic('reset successfully')
+
     def save_assignedSites(self, pg, sitesArray, request):
         S = request.session
         try:
+            self.resest_assignedsites(pg)
             for site in sitesArray:
                 pgb = pm.Pgbelonging(
                     pgroup         = pg,

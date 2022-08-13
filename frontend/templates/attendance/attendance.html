@@ -26,41 +26,10 @@ Attendance
         <th>In Time</th>
         <th>Out Time</th>
     </thead>
-    <!---------- BEGIN TABLE FILTER FIELDS --------->
-    <thead id="filter_row">
-        <form action="" method="get" id="attd_filter">
-            <input type="hidden" name="search_term" value="true">
-            {% for field in attd_filter %}
-            <th>
-                {{ field }}
-            </th>
-            {% endfor %}
-        </form>
-    </thead>
-    <!---------- END TABLE FILTER FIELDS --------->
-    <tbody>
-        {% for attd in attd_list %}
-        <tr>
-            <td><a href="" class="attd-link" data-id="{{ attd['id'] }}"
-            data-rowid={{ loop.index0 }}>{{ attd['peventtype'] }}</a></td>
-            <td>{{ attd['bu__buname'] }}</td>
-            <td>{{ attd['people__peoplename'] }}</td>
-            <td>{{ attd['facerecognition'] }}</td>
-            <td>{{ attd['verifiedby__peoplename'] }}</td>
-            <td>{{ attd['datefor'].strftime('%d-%b-%Y') }}</td>
-            <td>{{ attd['punchintime'].strftime('%d-%b-%Y, %H:%M') }}</td>
-            <td>{{ attd['punchouttime'].strftime('%d-%b-%Y, %H:%M') }}</td>
-        </tr>
-        {% endfor %}
-    </tbody>
 </table>
 <!--------------------------END TABLE------------------------------>
 
-{% if attd_list and attd_list.has_other_pages %}
-<!-- BEGIN PAGINATOIN -->
-{{ paginator(attd_list) }}
-<!-- END PAGINATOIN ---->
-{% endif %}
+
 {% endblock table %}
 
 {% block popup_alerts %}
@@ -72,25 +41,6 @@ Attendance
         </div>
     </div>
 </div>
-<!-- Attendance Capture 
-<div class="modal animate__animated animate__zoomIn" aria-hidden="true" tabindex="-1"
-    aria-labelledby="exampleModalLabel" data-bs-backdrop="static" id="modal-open-cam">
-    <div class="modal-dialog modal-dialog-centered modal-lg">
-        <div class="modal-content" id="fr_content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="exampleModalLabel">Scan QR</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-            
-                <img id="open_cam" src="{{ url('attendance:webcam') }}">
-            </div>
-             <div class="modal-footer">
-                <button  type="button"class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-            </div>
-        </div>
-    </div>
-</div>-->
 {% endblock popup_alerts %}
 
 <!--------- BEGIN EXTRA SCRIPTS ----------------------------->
@@ -99,13 +49,7 @@ Attendance
     var table = null;
     $(document).ready(function () {
         new ClipboardJS('btn-copy')
-        //filter will search on enter key
-        $("input").keypress(function (event) {
-            if (event.which == 13) { //enter key
-                event.preventDefault();
-                $("#cap_filter").submit();
-            }
-        });
+        
 
         //beforeSend of capability ajax request 
         function attdBeforeSend() {
@@ -113,40 +57,69 @@ Attendance
         }
         //datatable initialization
         table = $('#attd_table').DataTable({
-            responsive: true,
-            fixedHeader: true,
-            paging: false,
-            language: {
-                searchPlaceholder: "Search on page"
-            },
-            dom: "<'row'" +
-                "<'col-sm-6 d-flex align-items-center justify-conten-start'f>" +
-                "<'col-sm-6 d-flex align-items-center justify-content-end'B>" +
-                ">" +
-
-                "<'table-responsive'tr>",
+            ajax:{
+				url: '{{ url("attendance:attendance_view") }}?action=list',
+			},
+            deferRender: true,
+			responsive : true,
+            
+            dom: `<'row' <'col-sm-6 d-flex justify-content-start'f> <'col-sm-6 d-flex justify-content-end'B> >rt<'row'
+			 <'col-sm-6'l> <'col-sm-6'p><'col-sm-12 d-flex justify-content-center'i>>`,
             ordering: false,
-            scrollCollapse: true,
-                buttons: [
-                {
-                    text: "Add New Attendance &nbsp;<i class='fas fa-plus ch4'></i>",
-                    className: "btn btn-sm btn-light-primary btn-hover-rise",
-                    //action for add_new_button
-                    action: function (e, dt, node, config) {
-                        const params = {
-                            modal_id: "#modal-attd",
-                            url: "{{ url('attendance:attendance_view') }}?action=form",
-                            beforeSend: attdBeforeSend}
-                        fire_ajax_get(params)
-                        .done((data, status, xhr) => {
-                            $("#modal-attd .modal-content").html(data.html_form)
-                        })
-                        .fail((xhr, status, error) => {
-                                show_error_alert('Something went wrong!')
-                        })
-                    }}, 
+            columnDefs:[
+                {targets:[6,7], render:function(data, type, row, meta){
+                    return convert_to_local(type, data, row)
+                }}
+            ],
+            columns:[
+                {targets:[0], data:'peventtype__tacode'},
+                {targets:[1], data:'bu__buname'},
+                {targets:[2], data:'people__peoplename'},
+                {targets:[3], data:'facerecognition'},
+                {targets:[4], data:'verifiedby__peoplename'},
+                {targets:[5], data:'datefor'},
+                {targets:[6], data:'punchintime'},
+                {targets:[7], data:'punchouttime'},
+                {targets:[8], data:'id', visible:false, searchable:false},
+            ],
+            columnDefs:[
+                //targets:[1, 2], render:function(data, type, row, meta){
+                //    let urlname = '{{ url("attendance:attendance_view") }}'
+                //    return `<a href=${urlname}?id=${row['id']}>${data}</a>`
+                //}},
+                {targets:6, render:function(data, type, row, meta){
+                    return convert_to_local(type, data, row)
+                }},
+                {targets:7, render:function(data, type, row, meta){
+                    return convert_to_local(type, data, row)
+                }},
+                {targets:3, render:function(data, type, row, meta){
+                    return data === false ? 'Not Matched' : 'Matched'
+                }}
+                ],
+            buttons: [
+            {
+                text: "Add New Attendance &nbsp;<i class='fas fa-plus ch4'></i>",
+                className: "btn btn-sm btn-light-primary btn-hover-rise",
+                //action for add_new_button
+                action: function (e, dt, node, config) {
+                    const params = {
+                        modal_id: "#modal-attd",
+                        url: "{{ url('attendance:attendance_view') }}?action=form",
+                        beforeSend: attdBeforeSend}
+                    fire_ajax_get(params)
+                    .done((data, status, xhr) => {
+                        $("#modal-attd .modal-content").html(data.html_form)
+                    })
+                    .fail((xhr, status, error) => {
+                            show_error_alert('Something went wrong!')
+                    })
+                }}, 
 
-            ]
+            ],
+            select: {
+                    style: 'single'
+                }
         })
         //BEGIN STYLING DATATABLE
         $("th > input").addClass('form-control')
@@ -184,14 +157,12 @@ Attendance
 			})
 		})
 
-        //update row (form-view)
-		$("a.attd-link").click((e) => {
-			e.preventDefault();
-			var id    = $(e.currentTarget).attr('data-id');
-			var rowid = $(e.currentTarget).attr('data-rowid');
-			$("#attd_content").attr('data-rowid', rowid)
-			$("#attd_content").attr('data-id', id)
-			const params = {
+        
+
+        table.on('select', function(){
+            var id = table.row({selected:true}).data().id
+            if (!(id)){ return }
+            const params = {
 				modal_id    : "#modal-attd",
 				url         : `{{ url('attendance:attendance_view') }}?id=${id}`,
 				beforeSend  : attdBeforeSend }
@@ -203,13 +174,13 @@ Attendance
 			.fail((xhr, status, error) => {
 				show_error_alert('Something went wrong!') //defined in custom.js
 			})
-		})
+        })
 
         // add classes to checkboxes.
         $(".booleans").addClass("form-check form-switch form-check-custom form-check-solid") 
 
         //datatime widget
-        $("#id_punch_intime, #id_punch_outtime").flatpickr({
+        $("#id_punchintime, #id_punchouttime").flatpickr({
             enableTime: true,
             dateFormat: "Y-m-d H:i",
         });
@@ -219,47 +190,12 @@ Attendance
             dateFormat: 'd M Y'
         });
         
-        //take attendance
-        /*$(".take-attd").click(() => {
-            alert_before_attendance().then((result) => {
-                if(result.isConfirmed){
-                    //openCamera to take attendance
-                    const params = {url: "{{ url('attendance:markAttendance') }}?detectQR = true"}
-                    fire_ajax_get(params)
-                    .done((data, status, xhr) => {
-                        console.log("data", data)
-                        Swal.fire({
-                            title: data.title,
-                            text: data.message,
-                            icon: 'success',
-                            showConfirmButton: false,
-                            timer:3000})
-                        const params = {url:`{{ url('attendance:markAttendance') }}?detectFace = true&code=${data.decoded}`}
-                        setTimeout(
-                            fire_ajax_get(params)
-                            .done((data, status, xhr) => {
-                                console.log("request succeed")
-                                console.log("hello world")
-                            })
-                            .fail((xhr, status, error) => {
-                                console.log("request failed")
-                                console.log("data", xhr)
-                            }), 3000);
-                    })
-                    .fail((xhr, status, error) => {
-                        if(xhr.responseJSON.hasOwnProperty('message')){
-                            show_error_alert(xhr.responseJSON.message, title = xhr.responseJSON.title)
-                        }
-                    })
-                }
-            })
-        })*/
 
     })//END document.ready()
 
     //deleted ajax request
     function isAttendanceDeleted(id){
-		const params = {url:`{{ url('attendance:attendance_view') }}?action=formdelete&id=${id}`}
+		const params = {url:`{{ url('attendance:attendance_view') }}?action=delete&id=${id}`}
 		fire_ajax_get(params)
 		.done((data, status, xhr) => {
 			if(!xhr.status === 200){

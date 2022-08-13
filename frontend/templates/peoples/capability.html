@@ -132,7 +132,7 @@ Capability List
 				}else{
 					table.row.add(data.row).draw()
 				}
-				show_successful_save_alert(update = isupdated)
+				show_successful_save_alert(update =  id != 'None' ? true : false)
 			})
 		})
 
@@ -165,7 +165,7 @@ Capability List
 
 	//delete ajax request 
 	function isCapDeleted(id){ 
-		const params = {url:`${urlname}?action=formdelete&id=${id}`, 'beforeSend':function () {}}
+		const params = {url:`${urlname}?action=delete&id=${id}`, 'beforeSend':function () {}}
 		fire_ajax_get(params)
 		.done((data, status, xhr) => {
 			if(!xhr.status === 200){
@@ -191,9 +191,7 @@ Capability List
 					show_successful_delete_alert() //defined in customjs
 					$(modal_id).modal("hide")
 					//delete row from table
-					row_index = parseInt($(modalcontent_id).attr('data-rowid'))
-					console.log(row_index, "row index")
-					table.row(row_index).remove().draw();
+					table.row('.selected').remove().draw()
 				}else{
 					show_error_alert('Something went wrong!');
 				}

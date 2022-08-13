@@ -3,6 +3,9 @@ from django.urls import path
 from django.urls.conf import include
 from django.conf.urls.static import static
 from apps.peoples import views
+from apps.onboarding.wizard_urls import wizard_url_patterns2
+
+
 app_name = 'peoples'
 urlpatterns = [
     path('people_form/',              views.CreatePeople.as_view(),         name='people_form'),
@@ -25,7 +28,7 @@ urlpatterns = [
     path('peoplegroup/',  views.PeopleGroup.as_view(),    name='peoplegroup'),
     path('sitegroup/',  views.SiteGroup.as_view(),    name='sitegroup'),
     path('people/',  views.PeopleView.as_view(),    name='people'),
-
+    path('wizard/', include(wizard_url_patterns2)),
 ]
 
 if settings.DEBUG:

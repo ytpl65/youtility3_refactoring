@@ -130,7 +130,7 @@ Site Group
 
     //delete ajax request 
 	function isSiteGrpDeleted(id){ 
-		const params = {url:`${urlname}?action=formdelete&id=${id}`, 'beforeSend':function () {}}
+		const params = {url:`${urlname}?action=delete&id=${id}`, 'beforeSend':function () {}}
 		fire_ajax_get(params)
 		.done((data, status, xhr) => {
 			if(!xhr.status === 200){
@@ -145,7 +145,7 @@ Site Group
 	}
 
     function loadAssignedSitesIfThereAny(table, id){
-        const params = {url:`${urlname}?action=formloadSites&id=${id}`, 'beforeSend':function(){}}
+        const params = {url:`${urlname}?action=loadSites&id=${id}`, 'beforeSend':function(){}}
         fire_ajax_get(params)
         .done((data, status, xhr) => {
             if(xhr.status === 200){
@@ -164,7 +164,7 @@ Site Group
 
         tabAllsites = $("#all_sites").DataTable({
             ajax:{
-                url: "{{ url('peoples:sitegroup') }}?action=formallsites",
+                url: "{{ url('peoples:sitegroup') }}?action=allsites",
                 data:function ( d ) {
                     d.sel_butype = current_sel_butype;
                     d.fields = ['buid', 'buname', 'parent__buname', 'identifier__tacode'];
@@ -288,10 +288,10 @@ Site Group
             confirmButtonText: 'Submit'
             }).then((res) => {
                 fire_ajax_form_post(params, payLoad)
-			.done((data, status, xhr) => { //function to submit post request
-				show_successful_save_alert(update = isupdate)
-			})
-            } )
+                .done((data, status, xhr) => { //function to submit post request
+                    show_successful_save_alert(update = isupdate)
+                })
+            })
 			
 		})
 

@@ -456,30 +456,38 @@ class LoginUser(graphene.Mutation):
 
         emergencycontacts = People.objects.get_emergencycontacts(user.bu_id, user.client_id)
         emergencyemails = People.objects.get_emergencyemails(user.bu_id, user.client_id)
-
+        ic(emergencycontacts, emergencyemails)
         qset = People.objects.annotate(
             loggername          = F('peoplename'),
             mobilecapability    = F('people_extras__mobilecapability'),
-            pvideolength        = F('bu__bupreferences__pvideolength'),
-            enablesleepingguard = F('bu__enablesleepingguard'),
-            skipsiteaudit       = F('bu__skipsiteaudit'),
-            deviceevent         = F('bu__deviceevent'),
-            isgpsenable         = F('bu__gpsenable'),
+            pvideolength        = F('client__bupreferences__pvideolength'),
+            enablesleepingguard = F('client__enablesleepingguard'),
+            skipsiteaudit       = F('client__skipsiteaudit'),
+            deviceevent         = F('client__deviceevent'),
+            isgpsenable         = F('client__gpsenable'),
             clientcode          = F('client__bucode'),
             clientname          = F('client__buname'),
             clientenable        = F('client__enable'),
             sitecode            = F('bu__bucode'),
             sitename            = F('bu__buname'),
             ).values(
-            'loggername',  'mobilecapability',
-            'enablesleepingguard',
-            'skipsiteaudit', 'deviceevent', 'pvideolength',
-            'client_id', 'bu_id', 'mobno', 'email', 'isverified',
-            'deviceid', 'id', 'enable', 'isadmin', 'peoplecode',
-            'tenant_id', 'loginid', 'clientcode', 'clientname', 'sitecode',
-            'sitename', 'clientenable', 'isgpsenable').get(id = user.id)
-        qset.update({'emergencycontacts': list(emergencycontacts), 'emergencyemails':list(emergencyemails)})
-        return  json.dumps(qset)
+                'loggername',  'mobilecapability',
+                'enablesleepingguard',
+                'skipsiteaudit', 'deviceevent', 'pvideolength',
+                'client_id', 'bu_id', 'mobno', 'email', 'isverified',
+                'deviceid', 'id', 'enable', 'isadmin', 'peoplecode',
+                'tenant_id', 'loginid', 'clientcode', 'clientname', 'sitecode',
+                'sitename', 'clientenable', 'isgpsenable').filter(id = user.id)
+        qsetList = list(qset)
+        ic(qsetList)
+        qsetList[0].update({'emergencycontacts': list(emergencycontacts), 'emergencyemails':list(emergencyemails)})
+        qsetList[0]['emergencyemails'] = str(qsetList[0]['emergencyemails']).replace('[', '').replace(']', '').replace("'", "")
+        qsetList[0]['emergencycontacts'] = str(qsetList[0]['emergencycontacts']).replace('[', '').replace(']', '').replace("'", "")
+        qsetList[0]['mobilecapability'] = str(qsetList[0]['mobilecapability']).replace('[', '').replace(']', '').replace("'", "")
+        
+        v = json.dumps(qsetList[0])
+        ic(v)
+        return v
 
 
 

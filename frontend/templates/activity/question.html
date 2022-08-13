@@ -184,7 +184,7 @@ Question List
 	function isQuesDeleted(id) {
 		console.log("id ", id)
 		const params = {
-			url: `${urlname}?action=formdelete&id=${id}`
+			url: `${urlname}?action=delete&id=${id}`
 		}
 		fire_ajax_get(params)
 			.done((data, status, xhr) => {

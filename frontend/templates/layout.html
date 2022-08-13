@@ -102,6 +102,54 @@
 {% endmacro %}
 <!--------------- END POP-UP DELETE_ALERT MACRO ------------------>
 
+
+{% macro mainattachment() %}
+<div class="modal fade" id="popup_attachment" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1"
+		aria-labelledby="staticBackdropLabel" aria-hidden="true">
+		<div class="modal-dialog modal-xl">
+			<div class="modal-content">
+				<div class="modal-header">
+					<h5 class="modal-heading" id="staticBackdropLabel" style="color:#3a3b40de">Attachments</h5>
+					<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+				</div>
+        <!--define modal-body, modal-footer classes -->
+        <div class="modal-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="form-group">
+                      <input type="hidden" id="id_att_owner" name="owner" value="{{ kwargs.get('owner') }}">
+                      <input type="hidden" id="id_att_datasource" name="datasource" value="{{ kwargs.get('datasource') }}">
+                      <input type="file" id="attachmentfile" name="attachmentfile"><br>
+                    </div>
+                </div>
+                <div class="col-md-5">
+                    <div class="form-group">
+                        <button type="button" class="btn btn-sm rounded-0 btn-success" name="btnuploadattachment" id="btnuploadattachment">Save<i class="fa fa-save"></i></button>
+                        <button type="button" class="btn btn-sm rounded-0 btn-secondary" name="clearattachment" id="clearattachment">Clear<i class="fa fa-refresh"></i></button>
+                        <button type="button" class="btn btn-sm rounded-0 btn-danger" name="cancelattachment" id="cancelattachment" data-dismiss="modal">Cancel<i class="fa fa-remove"></i></button>
+                    </div>
+                </div>
+            </div>
+            <div class="portlet-body form">
+              <div class="alert alert-danger" id="nonfield_errors"role="alert" style="display:none">
+                  <strong>Error</strong> <span></span>
+              </div>
+                <!-- BEGIN LIST-->
+                <table id="tabAttachment" class="display cell-border hover" style="width:100%">
+                  <thead>
+                    <th>SL NO.</th>
+                    <th>File Name</th>
+                    <th>Action</th>
+                  </thead>
+                  <tbody></tbody>
+                </table>
+            </div>
+        </div>
+      </div>
+		</div>
+	</div>
+{% endmacro %}
+
 {% macro reset_form_btn() %}
 <div class="d-flex justify-content-end">
  <button type="button" class="btn btn-secondary btn-sm btn-hover-scale" onclick="location.reload();$('{{ kwargs['id'] }}').trigger('reset')">Reset Form</button>
@@ -264,6 +312,17 @@
               <li class="breadcrumb-item pe-3"><a href="{{ url('home') }}" class="pe-3">Home</a></li>
               {% endblock pagebreadcumb %}
             </ol>
+            
+            
+            <div class="breadcumb_actions d-flex justify-content-end">
+              <div class="dropdown">
+                {% block breadcumbactions %}
+                
+                {% endblock breadcumbactions %}
+              </div>
+            </div>
+            
+            
             <!--begin::actions-->
 
             {# {% block ajax_page_actions %}

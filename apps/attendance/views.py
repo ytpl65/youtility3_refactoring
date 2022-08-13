@@ -9,6 +9,8 @@ import apps.attendance.forms as atf
 import apps.attendance.models as atdm
 from .filters import AttendanceFilter
 import apps.peoples.utils as putils
+from django.contrib.gis.db.models.functions import  AsWKT
+
 import logging
 from apps.core import utils
 logger = logging.getLogger('django')
@@ -22,23 +24,24 @@ class Attendance(LoginRequiredMixin, View):
         'template_list': 'attendance/attendance.html',
         'partial_form': 'attendance/partials/partial_attendance_form.html',
         'partial_list': 'attendance/partials/partial_attendance_list.html',
-        'related': ['people', 'client', 'bu', 'verifiedby', 'geofence'],
+        'related': ['people', 'client', 'bu', 'verifiedby', 'geofence', 'peventtype'],
         'model': atdm.PeopleEventlog,
         'filter': AttendanceFilter,
-        'fields': ['id', 'people__peoplename', 'verifiedby__peoplename', 'peventtype', 'bu__buname', 'datefor',
-                   'punchintime', 'punchouttime', 'facerecognition', 'startlocation', 'endlocation', 'shift__shiftname']}
+        'form_initials':{},
+        'fields': ['id', 'people__peoplename', 'verifiedby__peoplename', 'peventtype__tacode', 'bu__buname', 'datefor',
+                   'punchintime', 'punchouttime', 'facerecognition','shift__shiftname', 'ctzoffset']}
 
     def get(self, request, *args, **kwargs):
         R, resp = request.GET, None
 
+        if R.get('template'): return render(request, self.params['template_list'])
         # return attendance_list data
         if R.get('action', None) == 'list' or R.get('search_term'):
             d = {'list': "attd_list", 'filt_name': "attd_filter"}
             self.params.update(d)
             objs = self.params['model'].objects.select_related(
-                *self.params['related']).values(*self.params['fields'])
-            resp = utils.render_grid(
-                request, self.params, "attendance_view", objs)
+                *self.params['related']).values(*self.params['fields']).order_by('-mdtz')
+            return rp.JsonResponse({'data':list(objs)}, status=200)
 
         # return attemdance_form empty
         elif R.get('action', None) == 'form': 
@@ -50,10 +53,12 @@ class Attendance(LoginRequiredMixin, View):
         elif R.get('action', None) == "delete" and R.get('id', None):
             print(f'resp={resp}')
             resp = utils.render_form_for_delete(request, self.params)
+        
         # return form with instance
         elif R.get('id', None):
+            obj = utils.get_model_obj(R['id'], request, self.params)
             resp = utils.render_form_for_update(
-                request, self.params, "attd_form")
+                request, self.params, "attd_form", obj)
         print(f'return resp={resp}')
         return resp
 
@@ -174,3 +179,30 @@ class Conveyance(LoginRequiredMixin, View):
                 return rp.JsonResponse(data={'pk':cy.id}, status = 200)
         except IntegrityError:
             return handle_intergrity_error("conveyance")
+
+
+class GeofenceTracking(LoginRequiredMixin, View):
+    params = {
+        'template_list':'attendance/geofencetracking.html',
+        'model':atdm.PeopleEventlog,
+        'related':['geofence', 'peventtype', 'people'],
+        'fields':['datefor', 'geofence__gfname', 'startlocation', 'endlocation',
+                  'people__peoplename']
+    }
+    
+    def get(self, request, *args, **kwargs):
+        R, P = request.GET, self.params
+        # first load the template
+        if R.get('template'): return render(request, self.params['template_list'])
+        
+        # then load the table with objects for table_view
+        if R.get('action', None) == 'list' or R.get('search_term'):
+            total, filtered, objs = self.params['model'].objects.get_geofencetracking(request)
+            ic(utils.printsql(objs))
+            return  rp.JsonResponse(data = {
+                'draw':R['draw'],
+                'data':list(objs),
+                'recordsFiltered':filtered,
+                'recordsTotal':total,
+            }, safe = False)
+            

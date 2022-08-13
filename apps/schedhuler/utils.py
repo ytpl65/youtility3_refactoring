@@ -1,4 +1,4 @@
-from django.db.models import Q
+from django.db.models import Q, F
 from django.core.exceptions import EmptyResultSet
 from django.db import transaction
 from django.http import response as rp
@@ -117,10 +117,10 @@ def calculate_startdtz_enddtz(job):
 
 def get_datetime_list(cron_exp, startdtz, enddtz, resp):
     """
-        this function calculates and returns array of next starttime
-        for every day upto enddatetime based on given cron expression.
-        Eg: 
-        returning all starttime's from 1/01/20xx --> 3/01/20xx based on cron exp.
+    this function calculates and returns array of next starttime
+    for every day upto enddatetime based on given cron expression.
+    Eg: 
+    returning all starttime's from 1/01/20xx --> 3/01/20xx based on cron exp.
     """
 
     log.info("get_datetime_list(cron_exp, startdtz, enddtz) [start]")
@@ -282,7 +282,6 @@ def insert_into_jn_and_jnd(job, DT, resp):
                 'm_factor':multiplication_factor, 'people':people,
                 'NONE_P':NONE_P, 'jobdesc':jobdesc, 'NONE_JN':NONE_JN}
             DT = utils.to_utc(DT)
-
             for dt in DT:
                 dt = dt.strftime("%Y-%m-%d %H:%M")
                 dt = datetime.strptime(dt, '%Y-%m-%d %H:%M').replace(tzinfo = timezone.utc)
@@ -312,13 +311,12 @@ def insert_into_jn_and_jnd(job, DT, resp):
             raise ex from ex
         else:
             status = "success"
-            resp = rp.JsonResponse({'msg': f'{len(DT)} tasks scheduled successfully!'}, status = 200)
+            resp = rp.JsonResponse({'msg': f'{len(DT)} tasks scheduled successfully!', 'count':len(DT)}, status = 200)
 
         log.info("insert_into_jn_and_jnd() [ End ]")
         return status, resp
 
 def insert_into_jn_for_parent(job, params):
-    from django.contrib.gis.geos import Point
     try:
         jn = am.Jobneed.objects.create(
             job_id         = job.id,                     parent            = params['NONE_JN'],
@@ -413,7 +411,7 @@ def create_child_tasks(job, _pdtz, _people, jnid, _jobstatus, _jobtype):
 
             mins = job.planduration + r.expirytime + job.gracetime
             params['_people'] = r.people_id
-            params['_jobdesc'] = f"{r.jobname} :: {_assetname}"
+            params['_jobdesc'] = f"{_assetname} :: {r.jobname}"
             if idx == 0:
                 pdtz = params['pdtz'] = prev_edtz
             else:
@@ -458,9 +456,8 @@ def insert_into_jn_for_child(job, params, r):
 
 
 def job_fields(job, checkpoint, external = False):
-    ic(checkpoint)
     data =  {
-        'jobname'     : job.jobname,                   'jobdesc'        : job.jobdesc,
+        'jobname'     : job.jobname,                   'jobdesc'        : f"${checkpoint['assignsites__buname']} :: ${job.jobname} :: ${checkpoint['qsetname']}",
         'cron'        : job.cron,                      'identifier'     : job.identifier,
         'expirytime'  : int(checkpoint['expirytime']), 'lastgeneratedon': job.lastgeneratedon,
         'priority'    : job.priority,                  'qset_id'        : checkpoint['qset'],
@@ -477,9 +474,9 @@ def job_fields(job, checkpoint, external = False):
         jsonData = {
             'distance'      : checkpoint['distance'],
             'breaktime'     : checkpoint['breaktime'],
-            'is_randomized' : checkpoint['israndom'],
-            'tour_frequency': checkpoint['routeFreq']}
-        data['jobname']    = checkpoint['jobname']
+            'is_randomized' : job.other_info['is_randomized'],
+            'tour_frequency': job.other_info['tour_frequency']}
+        data['jobname']    = job.jobname
         data['other_info'] = jsonData
     return data
 

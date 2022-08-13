@@ -106,11 +106,11 @@ DBHOST  = str(os.getenv('DBHOST'))
 DATABASES = {
     'default': {
         'ENGINE':   'django.contrib.gis.db.backends.postgis',
-        'USER':     DBUSER,
-        'NAME':     'sps_django',
-        'PASSWORD': DBPASWD,
-        'HOST':     DBHOST,
-        'PORT':     '5432',
+        'USER':     'navin',
+        'NAME':     'intelliwiz_django',
+        'PASSWORD': 'admin',
+        'HOST':     'localhost',
+        'PORT':     '',
     },
 }
 

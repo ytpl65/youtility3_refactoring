@@ -142,17 +142,17 @@
         //option field events
         optionTag
         .on('add', function(e){
-            populateAlertOn(e.detail.data.value)
+            populateAlertOn(e.detail.data.value, "#id_alerton")
         })
         .on('remove', function(e){
-            removeElmtFromAlertOn(e.detail.data.value)
+            removeElmtFromAlertOn(e.detail.data.value, "#id_alerton")
         })
 
         var initial_selected = $("#id_answertype.form-select").select2('data')[0].text
         //shows and hides according to answertype
         showHideFields(initial_selected)
         if($("#id_options").val().length){
-            initialize_alerton_field($("#id_options").val(), $("#hidden_alerton").val(), cleaned = false)
+            initialize_alerton_field($("#id_options").val(), $("#hidden_alerton").val(), cleaned = false, id="#id_alerton")
         }
         $(".modal").removeAttr("tabindex");
     })

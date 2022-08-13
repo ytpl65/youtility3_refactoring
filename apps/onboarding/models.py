@@ -271,7 +271,7 @@ class GeofenceMaster(BaseModel):
     alerttext     = models.CharField(_("Alert Text"), max_length = 100)
     geofence      = PolygonField(_("GeoFence"), srid = 4326, geography = True, null = True,)
     alerttogroup  = models.ForeignKey("peoples.Pgroup",null = True, verbose_name = _( "Alert to Group"), on_delete = models.RESTRICT)
-    alerttopeople = models.ForeignKey("peoples.People",null = True, verbose_name = _(""), on_delete = models.RESTRICT)
+    alerttopeople = models.ForeignKey(settings.AUTH_USER_MODEL,null = True, verbose_name = _(""), on_delete = models.RESTRICT)
     client        = models.ForeignKey("onboarding.Bt",null = True, verbose_name = _("Client"), on_delete = models.RESTRICT, related_name="for_clients")
     bu            = models.ForeignKey("onboarding.Bt", null = True, verbose_name = _( "Site"), on_delete = models.RESTRICT, related_name='for_sites')
     enable        = models.BooleanField(_("Enable"), default = True)

@@ -1,4 +1,3 @@
-from typing import Type
 import graphene
 from apps.core import utils
 from apps.activity.models import JobneedDetails, Question, QuestionSet, QuestionSetBelonging

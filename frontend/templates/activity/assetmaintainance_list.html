@@ -34,7 +34,7 @@ $(document).ready(function(){
         dom:`<'row' <'col-sm-6 d-flex justify-content-start'f> <'col-sm-6 d-flex justify-content-end'B> >rt<'row'
 			 <'col-sm-6'l> <'col-sm-6'p><'col-sm-12 d-flex justify-content-center'i>>`,
         columns:[
-            {data:'id'},
+            {data:'id', visible:false, searchable:false},
             {data:'plandatetime', title:'Plan Datetime'},
             {data:'jobdesc', title:'Description'},
             {data:'identifier', title:'Identifier'},
@@ -44,9 +44,11 @@ $(document).ready(function(){
             {data:'gpslocation', title:'GPS Location'},
         ],
         columnDefs:[
-            {targets:0, data:'id', visible:false},
-            {targets:1, data:'jobdesc', render:function(data, type, row, meta){
+            {targets:2, data:'jobdesc', render:function(data, type, row, meta){
                 return row['identifier'] === 'ASSETMAINTENANCE' ? `<a href="${urlname}?id=${row['id']}">${data}</a>` : data
+            }},
+            {targets:1, render:function(data, type, row, meta){
+                return convert_to_local(type, data, row)
             }}
         ],
         buttons:[]

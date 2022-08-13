@@ -8,10 +8,12 @@ from django.http import Http404, QueryDict, response as rp
 from django.shortcuts import redirect, render
 from django.views import View
 from apps.core import  utils 
+from django.contrib.gis.db.models.functions import  AsGeoJSON
 import apps.schedhuler.filters as sdf
 from pprint import pformat
 import apps.onboarding.models as om
 import apps.activity.models as am
+import apps.peoples.models as pm
 from datetime import datetime, time, timedelta, timezone, date
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db import transaction
@@ -424,20 +426,22 @@ def add_cp_internal_tour(request):  # jobneed
             resp = rp.JsonResponse({"errors": msg}, status = 200)
 
 class Schd_E_TourFormJob(LoginRequiredMixin, View):
-    model         = am.Job
-    form_class    = scd_forms.Schd_E_TourJobForm
-    subform       = scd_forms.EditAssignedSiteForm
-    template_path = 'schedhuler/schd_e_tourform_job.html'
-    initial       = {
-        'seqno'        : -1,
-        'scantype'    : am.Job.Scantype.QR,
-        'frequency'   : am.Job.Frequency.NONE,
-        'identifier'  : am.Job.Identifier.EXTERNALTOUR,
-        'starttime'   : time(00, 00, 00),
-        'endtime'     : time(00, 00, 00),
-        'priority'    : am.Job.Priority.HIGH,
-        'expirytime'  : 0
+    params = {
+        'model':am.Jobneed,
+        'form_class':scd_forms.Schd_E_TourJobForm,
+        'subform':scd_forms.EditAssignedSiteForm,
+        'template_path':'schedhuler/schd_e_tourform_job.html',
+        'initial':{
+            'seqno':-1,
+            'scantype':am.Job.Scantype.QR,
+            'frequency':am.Job.Frequency.NONE,
+            'identifier':am.Job.Identifier.EXTERNALTOUR,
+            'starttime':time(00,00,00),
+            'endtime':time(00,00,00),
+            'priority':am.Job.Priority.HIGH,
+            'expirytime':0
         }
+    }
 
     def get(self, request, *args, **kwargs):
 
@@ -494,8 +498,7 @@ class Schd_E_TourFormJob(LoginRequiredMixin, View):
             job.asset_id = 1
             job.save()
             print("%%%%%%%%%5",  form.data, form.data.get('bu'))
-            job = putils.save_userinfo(job, request.user, request.session,
-            bu = form.data.get('bu'), create = create)
+            job = putils.save_userinfo(job, request.user, request.session)
             log.info('external tour  and its checkpoints saved success...')
         except Exception as ex:
             log.critical(
@@ -545,10 +548,10 @@ class Update_E_TourFormJob(Schd_E_TourFormJob, LoginRequiredMixin, View):
         log.info("getting checkpoints started...")
         checkpoints = None
         try:
-            checkpoints = om.Bt.objects.select_related(
-                'identifier', 'butype', 'parent'
-            ).filter(parent_id = obj.bu_id).values(
-                'buname', 'id', 'bucode', 'gpslocation',
+            checkpoints = pm.Pgbelonging.objects.select_related(
+                'assignsites', 'identifier'
+            ).filter(pgroup_id = obj.sgroup_id).values(
+                'assignsites__buname', 'assignsites_id', 'assignsites__bucode', 'assignsites__gpslocation'
             )
         except Exception:
             log.critical("something went wrong", exc_info = True)
@@ -678,22 +681,18 @@ def save_assigned_sites_for_externaltour(request):
 def save_sites_in_job(request, parentid):
     try:
         checkpoints = json.loads(request.POST.get('assignedSites'))
-        job = am.Job.objects.get(id = parentid)
+        job = am.Job.objects.get(id=parentid)
         for cp in checkpoints:
             am.Job.objects.update_or_create(
-                parent_id  = job.id,
-                asset_id = cp['asset'],
-                qset_id  = cp['qset'],
-                breaktime  = cp['breaktime'],
+                parent_id=job.id, asset_id=cp['asset'], qset_id=cp['qset'], breaktime=cp['breaktime'],
+                defaults=sutils.job_fields(job, cp, external=True))
 
-                defaults = sutils.job_fields(job, cp, external = True)
-            )
     except am.Job.DoesNotExist:
         msg = 'Parent job not found failed to save assigned sites!'
-        log.error("%s"%(msg), exc_info = True)
+        log.error(f"{msg}", exc_info=True)
         raise
     except Exception:
-        log.critical("something went wrong!", exc_info = True)
+        log.critical("something went wrong!", exc_info=True)
         raise
 
 
@@ -1107,29 +1106,120 @@ class JobneedTours(LoginRequiredMixin, View):
     params = {
         'model'        : am.Jobneed,
         'template_path': 'schedhuler/i_tourlist_jobneed.html',
-        'fields'       : ['jobdesc', 'people__peoplename', 'pgroup__groupname', 'id',
+        'template_form': 'schedhuler/i_tourform_jobneed.html',
+        'fields'       : ['jobdesc', 'people__peoplename', 'pgroup__groupname', 'id', 'ctzoffset',
             'plandatetime', 'expirydatetime', 'jobstatus', 'gracetime', 'performedby__peoplename'],
         'related': ['pgroup',  'ticketcategory', 'asset', 'client',
-               'frequency', 'job', 'qset', 'people', 'parent', 'bu']
+               'frequency', 'job', 'qset', 'people', 'parent', 'bu'],
+        'form_class':scd_forms.I_TourFormJobneed,
+        'subform' : scd_forms.Child_I_TourFormJobneed,
+        'initial': {
+        'identifier': am.Jobneed.Identifier.INTERNALTOUR,
+        'frequency' : am.Jobneed.Frequency.NONE
+        }
     }
 
     def get(self, request, *args, **kwargs):
-        R = request.GET
-
+        R, P = request.GET, self.params
+        ic(R)
         # first load the template
-        if R.get('template'): return render(request, self.params['template_path'])
+        if R.get('template'): return render(request, P['template_path'])
 
         # then load the table with objects for table_view
         if R.get('action', None) == 'list' or R.get('search_term'):
-            dt = datetime.now(tz = timezone.utc) - timedelta(days = 10)
-            objs = self.params['model'].objects.select_related(
-                *self.related).filter(
-                    Q(bu_id = request.session.get('bu_id', 1)) & Q(parent__jobdesc='NONE')
-                    & ~Q(jobdesc='NONE') & Q(plandatetime__gte = dt)
-            ).values(*self.fields).order_by('-plandatetime')
-            resp = rp.JsonResponse(data = {'data':list(objs)})
-        return resp
+            objs = P['model'].objects.get_internaltourlist_jobneed(request, P['related'], P['fields'])
+            return rp.JsonResponse(data = {'data':list(objs)})
+        
+        elif R.get('id'):
+            obj = P['model'].objects.get(id = R['id'])
+            form = P['form_class'](instance = obj, initial = P['initial'])
+            log.info("object retrieved %s" % (obj.jobdesc))
+            checkpoints = self.get_checkpoints(P, obj = obj)
+            cxt = {'internaltourform': form, 'child_internaltour': P['subform'](prefix='child'), 'edit': True,
+                'checkpoints': checkpoints}
+            return render(request, P['template_form'], context = cxt)
+    
+    def get_checkpoints(self, P, obj):
+        log.info("getting checkpoints for the internal tour [start]")
+        checkpoints = None
 
+        try:
+            checkpoints = P['model'].objects.select_related(
+                'parent', 'asset', 'qset', 'pgroup',
+                'people', 'job', 'client', 'bu',
+                'ticketcategory'
+            ).filter(parent_id = obj.id).values(
+                'asset__assetname', 'asset__id', 'qset__id',
+                'qset__qsetname', 'plandatetime', 'expirydatetime',
+                'gracetime', 'seqno', 'jobstatus', 'id').order_by('seqno')
+
+        except Exception:
+            log.critical("something went wrong", exc_info = True)
+            raise
+
+        else:
+            log.info("checkpoints retrieved returned success")
+        return checkpoints
+
+
+
+class JobneedExternalTours(LoginRequiredMixin, View):
+    params = {
+        'model'        : am.Jobneed,
+        'template_path': 'schedhuler/e_tourlist_jobneed.html',
+        'template_form': 'schedhuler/e_tourform_jobneed.html',
+        'fields'       : ['jobdesc', 'people__peoplename', 'pgroup__groupname', 'id', 'ctzoffset',
+            'plandatetime', 'expirydatetime', 'jobstatus', 'gracetime', 'performedby__peoplename'],
+        'related': ['pgroup',  'ticketcategory', 'asset', 'client',
+               'frequency', 'job', 'qset', 'people', 'parent', 'bu'],
+        'form_class': scd_forms.E_TourFormJobneed,
+        'initial'   : {
+            'identifier': am.Jobneed.Identifier.EXTERNALTOUR,
+            'frequency' : am.Jobneed.Frequency.NONE
+        }
+    }
+
+    def get(self, request, *args, **kwargs):
+        R, P = request.GET, self.params
+        ic(R)
+        # first load the template
+        if R.get('template'): return render(request, P['template_path'])
+
+        # then load the table with objects for table_view
+        if R.get('action', None) == 'list' or R.get('search_term'):
+            objs = P['model'].objects.get_externaltourlist_jobneed(request, P['related'], P['fields'])
+            return rp.JsonResponse(data = {'data':list(objs)})
+        
+        elif R.get('id'):
+            obj = P['model'].objects.get(id = R['id'])
+            form = P['form_class'](instance = obj, initial = P['initial'])
+            log.info("object retrieved %s" % (obj.jobdesc))
+            checkpoints = self.get_checkpoints(P, obj = obj)
+            cxt = {'externaltourform': form, 'edit': True,
+                'checkpoints': checkpoints}
+            return render(request, P['template_form'], context = cxt)
+    
+    def get_checkpoints(self, P, obj):
+        log.info("getting checkpoints for the internal tour [start]")
+        checkpoints = None
+
+        try:
+            checkpoints = P['model'].objects.select_related(
+                'parent', 'asset', 'qset', 'pgroup',
+                'people', 'job', 'client', 'bu',
+                'ticketcategory'
+            ).filter(parent_id = obj.id).values(
+                'asset__assetname', 'asset__id', 'qset__id',
+                'qset__qsetname', 'plandatetime', 'expirydatetime',
+                'gracetime', 'seqno', 'jobstatus', 'id').order_by('seqno')
+
+        except Exception:
+            log.critical("something went wrong", exc_info = True)
+            raise
+
+        else:
+            log.info("checkpoints retrieved returned success")
+        return checkpoints
 
 class JobneedTasks(LoginRequiredMixin, View):
     params = {
@@ -1141,7 +1231,7 @@ class JobneedTasks(LoginRequiredMixin, View):
                     'performedby__peoplename', 'asset__assetname', 'qset__qsetname',
                     'ctzoffset'],
         'related': [
-                'pgroup',  'ticketcategory', 'asset', 'client',
+                'pgroup',  'ticketcategory', 'asset', 'client','ctzoffset',
                 'frequency', 'job', 'qset', 'people', 'parent', 'bu'],
         'template_form': 'schedhuler/taskform_jobneed.html',
         'form_class':scd_forms.TaskFormJobneed
@@ -1157,7 +1247,7 @@ class JobneedTasks(LoginRequiredMixin, View):
         if R.get('action', None) == 'list' or R.get('search_term'):
             p = self.params
             objs = self.params['model'].objects.get_last10days_jobneedtasks(
-                p['related'], p['fields'], request.session)
+                p['related'], p['fields'], request)
             resp = rp.JsonResponse(data = {'data':list(objs)})
             return resp
 
@@ -1322,7 +1412,7 @@ class InternalTourScheduling(LoginRequiredMixin, View):
         if R.get('id'):
             obj = utils.get_model_obj(int(R['id']), request, P)
             log.info(f'object retrieved {obj}')
-            form        = P['form_class'](instance = obj, initial = P['initial'])
+            form        = P['form_class'](instance = obj)
             checkpoints = self.get_checkpoints(obj, P)
             cxt = {'schdtourform': form, 'childtour_form': P['subform'](), 'edit': True,
                    'checkpoints': checkpoints}
@@ -1365,6 +1455,7 @@ class InternalTourScheduling(LoginRequiredMixin, View):
         try:
             with transaction.atomic(using = utils.get_current_db_name()):
                 assigned_checkpoints = json.loads(data)
+                ic(form.data)
                 job = form.save(commit = False)
                 job.parent_id = job.asset_id = job.qset_id = 1
                 job.save()
@@ -1436,11 +1527,17 @@ class ExternalTourScheduling(LoginRequiredMixin, View):
         'template_form': 'schedhuler/schd_e_tourform_job.html',
         'template_list': 'schedhuler/schd_e_tourlist_job.html',
         'form_class'   : scd_forms.Schd_E_TourJobForm,
-        #'subform'      : scd_forms.SchdChild_I_TourJobForm,
         'model'        : am.Job,
         'related'      : ['pgroup', 'people'],
         'initial'      : {
+            'seqno':-1,
             'identifier': am.Job.Identifier.EXTERNALTOUR,
+            'scantype':am.Job.Scantype.QR,
+            'frequency':am.Job.Frequency.NONE,
+            'starttime':time(00,00,00),
+            'endtime':time(00,00,00),
+            'priority':am.Job.Priority.HIGH,
+            'expirytime':0,
             'gracetime' : 5,
             'planduration' : 5,
             'fromdate'  : datetime.combine(date.today(), time(00, 00, 00)),
@@ -1457,28 +1554,63 @@ class ExternalTourScheduling(LoginRequiredMixin, View):
         # return template
         if R.get('template') == 'true':
             return render(request, P['template_list'])
+        
+        if R.get('action') == 'list':
+            objs = P['model'].objects.select_related(
+                *P['related']).filter(
+                    ~Q(jobname='NONE'), parent__jobname='NONE', identifier="EXTERNALTOUR"
+            ).values(*P['fields']).order_by('-cdtz')
+            return rp.JsonResponse({'data':list(objs)}, status = 200)
+        
+        elif R.get('action') == 'form':
+            cxt = {'schdexternaltourform': P['form_class'](
+            request = request, initial = P['initial'])}
+            return render(request, P['template_form'], context = cxt)
+        
+        elif R.get('action') == "get_sitesfromgroup":
+            if R['id'] == 'None': return rp.JsonResponse({'data':[]}, status = 200)
+            job = utils.get_model_obj(int(R['id']), request, P)
+            objs = pm.Pgbelonging.objects.annotate(gpslocation=AsGeoJSON('assignsites__gpslocation')).select_related(
+                'assignsites', 'identifier'
+            ).filter(pgroup_id = job.sgroup_id).values(
+                'assignsites__buname', 'assignsites_id', 'assignsites__bucode', 'gpslocation'
+            )
+            for idx, q in enumerate(objs):
+                q.update({'seqno':idx+1, 'starttime':None, 'endtime':None, 
+                          'qset':job.qset_id, 'qsetname':job.qset.qsetname,
+                          'duration':None, 'expirytime':None, 'distance':None,
+                          'id':None, 'asset':1, 'breaktime':None})
+            return rp.JsonResponse({'data':list(objs)}, status = 200)
+        
+        elif R.get('action') == "loadChecklist":
+            qset =  am.QuestionSet.objects.load_checklist()
+            for idx, q in enumerate(qset):
+                q.update({'slno':idx+1})
+            ic(qset)
+            return rp.JsonResponse({'items':list(qset), 'total_count':len(qset)}, status = 200)
+        
+        elif R.get('id'):
+            obj = utils.get_model_obj(int(R['id']), request, P)
+            cxt = {'schdexternaltourform': P['form_class'](instance=obj, request = request)}
+            return render(request, P['template_form'], context = cxt)
+        
 
-        match R.get('action'):
-            case "list":
-                objs = P['model'].objects.get_scheduled_external_tours(
-                    P['related'], P['fields']
-                )
-                return rp.JsonResponse({'data':list(objs)}, status = 200)
-            case 'form':
-                cxt = {'schdexternaltourform':P['form_class'](request = request, initial = P['initial'])}
-                return render(request, P['template_form'], cxt)
 
 
     def post(self, request, *args, **kwargs):
         P = self.params
-        pk, data = request.POST.get('pk', None), QueryDict(request.POST.get('formData'))
+        pk, R = request.POST.get('pk', None), request.POST
+        formData = QueryDict(request.POST.get('formData'))
         try:
-            if pk:
+            if R.get('action')=='saveCheckpoints':
+                checkpoints =  json.loads(R.get('checkpoints'))
+                return self.saveCheckpointsinJob(R, checkpoints, P, request)
+            elif pk:
                 msg = 'external scheduler tour'
                 form = utils.get_instance_for_update(
-                    data, P, msg, int(pk), kwargs = {'request':request})
+                    formData, P, msg, int(pk), kwargs = {'request':request})
             else:
-                form = P['form_class'](data)
+                form = P['form_class'](formData)
             if form.is_valid():
                 return self.handle_valid_form(form, request, P)
             cxt = {'errors': form.errors}
@@ -1487,18 +1619,75 @@ class ExternalTourScheduling(LoginRequiredMixin, View):
             return utils.handle_Exception(request)
 
 
-    def handle_valid_form(self, request, P):
+    def handle_valid_form(self, form, request, P):
         try:
-            data = request.POST.get('formData')
             with transaction.atomic(using = utils.get_current_db_name()):
-                assigned_checkpoints = json.loads(data.get('assigned_checkpoints'))
-                job = self.save(commit = False)
+                job = form.save(commit = False)
                 job.parent_id = job.asset_id = 1
                 job.save()
-                job = putils.save_userinfo(job.request.user,request.session)
-                checkpoints = P['model'].objects.get_checkpoints_for_externaltour(job)
-                return rp.JsonResponse({'checkpoints':checkpoints}, status = 200)
+                job = putils.save_userinfo(job, request.user,request.session)
+                #self.save_checkpoints_injob_fromgroup(job, P)
+                return rp.JsonResponse({'pk':job.id}, status = 200)
         except Exception as ex:
             log.error("external tour form, handle valid form failed", exc_info = True)
             return utils.handle_Exception(request)
+        
+    def saveCheckpointsinJob(self, R, checkpoints, P, request):
+        try:
+            ic(R)
+            job = utils.get_model_obj(R['parent_id'], request, P)
+            P['model'].objects.filter(parent_id = int(R['parent_id'])).delete()
+            count=0
+            ic(checkpoints)
+            for cp in checkpoints:
+                obj = am.Job.objects.create(
+                    **sutils.job_fields(job, cp, external=True))
+                putils.save_userinfo(obj, request.user, request.session)
+                count+=1
+            if count == len(checkpoints):
+                return rp.JsonResponse({'count':count}, status = 200 )
+            return rp.JsonResponse({"error":"Checkpoints not saved"}, status = 400)
+        except Exception:
+            log.error("something went wrong...", exc_info=True)
+            raise
+        
 
+class TourJobneedEditorView(LoginRequiredMixin, View):
+    params = {
+        'model':am.Jobneed,
+
+    }
+
+    def get(self, request, *args, **kwargs):
+        R, P = request.GET, self.params
+
+        if R.get('action') == 'get_tourdetails':
+            qset = P['model'].objects.get_tourdetails(R)
+            return rp.JsonResponse({'data':list(qset)}, status = 200)
+
+
+
+class JobneednJNDEditor(LoginRequiredMixin, View):
+    params = {
+        'model':am.Jobneed,
+        'jnd':am.JobneedDetails,
+        'fields':['id', 'quesname', 'answertype', 'min', 'max', 'options', 'alerton',
+                  'ismandatory']
+    }
+    def get(self, request, *args, **kwargs):
+        R, P = request.GET, self.params
+        ic(R)
+        if R.get('action') == 'get_jndofjobneed' and R.get('jobneedid'):
+            objs = P['jnd'].objects.get_jndofjobneed(R)
+            return rp.JsonResponse({'data':list(objs)}, status=200)
+        return rp.JsonResponse({'data':[]}, status=200)
+    
+    def post(self, request, *args, **kwargs):
+        R, P = request.POST, self.params
+        ic(R)
+        if R.get('tourjobneed'):
+            data = P['model'].objects.handle_jobneedpostdata(request)
+            return rp.JsonResponse({'data':list(data)}, status = 200, safe=False)
+        if R.get('question'):
+            data = P['qsb'].objects.handle_questionpostdata(request)
+            return rp.JsonResponse({'data':list(data)}, status = 200, safe=False)

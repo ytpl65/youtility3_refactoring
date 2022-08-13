@@ -10,12 +10,12 @@ class AttendanceForm(forms.ModelForm):
 
     class Meta:
         model = atdm.PeopleEventlog
-        fields = ['people', 'datefor', 'ctzoffset',
+        fields = ['people', 'datefor', 'ctzoffset', 'punchintime', 'punchouttime', 
          'peventtype', 'verifiedby', 'remarks', 'shift', 'facerecognition']
         labels = {
             'people'        : 'People',
-            'punch_intime'    : 'In Time',
-            'punch_outtime'   : 'Out Time',
+            'punchintime'    : 'In Time',
+            'punchouttime'   : 'Out Time',
             'datefor'         : 'For Date',
             'peventtype'      : 'Attendance Type',
             'verifiedby'      : 'Verified By',
@@ -33,11 +33,12 @@ class AttendanceForm(forms.ModelForm):
         }
 
     def __init__(self, *args, **kwargs):
+        self.request = kwargs.pop('request', None)
         super().__init__(*args, **kwargs)
         utils.initailize_form_fields(self)
         self.fields['datefor'].required       = True
-        self.fields['punch_intime'].required  = True
-        self.fields['punch_outtime'].required = True
+        self.fields['punchintime'].required  = True
+        self.fields['punchouttime'].required = True
         self.fields['verifiedby'].required    = True
         self.fields['people'].required        = True
         self.fields['peventtype'].required    = True

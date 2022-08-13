@@ -1,8 +1,9 @@
 {% extends "base_form.html" %}
 
 {% block extra_css %}
+<link  href="{{ static('assets/plugins/custom/DataTables/datatables.min.css') }}" rel="stylesheet" type="text/css"/>
+<link  href="{{ static('assets/plugins/custom/Editor-2.0.8/css/editor.dataTables.min.css') }}" rel="stylesheet" type="text/css"/>
 {{ internaltourform.media.css }}
-<link rel="stylesheet" href="https://cdn.datatables.net/1.11.3/css/jquery.dataTables.min.css" type="text/css">
 {% endblock extra_css %}
 
 <!-------------------------- BEGIN PAGE BREADCUMB ----------------------->
@@ -19,6 +20,17 @@
 Internal Tour
 {% endblock form_title %}
 <!------ END FORM TITLE -------->
+
+
+{% block breadcumbactions %}
+<button class="btn btn-secondary dropdown-toggle" type="button" id="id_actions" data-bs-toggle="dropdown" aria-expanded="false">
+    Actions
+</button>
+<ul class="dropdown-menu" aria-labelledby="dropdownMenuButton1">
+    <li><a class="dropdown-item" href="#" id="id_attachment"><i class="fas fa-paperclip"></i> &nbsp;Attachment</a></li>
+</ul>
+{% endblock breadcumbactions %}
+
 
 <!--------- BEGIN NON FIELD ERRORS -------->
 {% block nonfield_errors %}
@@ -133,7 +145,8 @@ Internal Tour
             {{ internaltourform.scantype.errors }}
         </div>
         <div class="col-md-2">
-            <label for={{ internaltourform.endtime.id_for_label }} class="">{{ internaltourform.endtime.label }}:</label>
+            <label for="id_endtime" class="">End time:</label>
+            <!-- <label for={{ internaltourform.endtime.id_for_label }} class="">{{ internaltourform.endtime.label }}:</label> -->
         </div>
         <div class="col-md-4">
             {{ internaltourform.endtime }}
@@ -180,45 +193,19 @@ Internal Tour
     <h4 class="card-title modal-heading">
         Tour Details &nbsp;<i class="fas fs-3 text-primary fa-directions"></i>
     </h4><br>
-    <div class="table-responsive">
-        <table id="internal_tour" class="display cell-border" style="width:100%">
-            <thead>
-                <th>#</th>
-                <th>Plan Datetime</th>
-                <th>Expiry Datetime</th>
-                <th>CheckpointId</th>
-                <th>Checkpoint</th>
-                <th>ChecklistId</th>
-                <th>Checklist</th>
-                <th>Gracetime</th>
-                <th>Status</th>
-                <th>Details</th>
-            </thead>
-            <tbody>
-                {% if checkpoints is defined %}
-                {% for checkpoint in checkpoints %}
-                <tr>
-                    <td>{{ checkpoint['seqno'] }}</td>
-                    <td>{{ checkpoint['plandatetime']| to_local }}</td>
-                    <td>{{ checkpoint['expirydatetime']| to_local }}</td>
-                    <td>{{ checkpoint['asset__id'] }}</td>
-                    <td>{{ checkpoint['asset__assetname'] }}</td>
-                    <td>{{ checkpoint['qset__id'] }}</td>
-                    <td>{{ checkpoint['qset__qset_name'] }}</td>
-                    <td>{{ checkpoint['gracetime'] }}</td>
-                    <td>{{ checkpoint['jobstatus'] }}</td>
-                    <td>{{ checkpoint['id'] }}</td>
-                </tr>
-                {% endfor %}
-                {% endif %}
-            </tbody>
-        </table>
-        <div class="table-editor gap-5 d-md-flex border border-secondary p-3 h-25 justify-content-md-start">
+    <table id="internal_tour" class="display cell-border" style="width:100%">
+    </table><br>
+    <h4 class="card-title modal-heading">
+        Tour Answers &nbsp;<i class="fas fs-3 text-primary fa-directions"></i>
+    </h4><br>
+    <table id="tabTouranswers" class="display cell-border" style="width:100%">
+    </table>
+
+        <!-- <div class="table-editor gap-5 d-md-flex border border-secondary p-3 h-25 justify-content-md-start">
             <a href="#" id="create-child" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-delay = 500 title="Add New Row"><i class="fa fa-plus text-dark opacity-75 fa-lg"></i></a>
             <a href="#" id="edit-child" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-delay = 500 title="Edit Selected Row"><i class="fa fa-edit text-dark opacity-75 fa-lg"></i></a>
             <a href="#" id="delete-child" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-delay = 500 title="Delete Selected Row"><i class="fa fa-trash-alt text-dark opacity-75 fa-lg"></i></a>
-        </div>
-    </div>
+        </div> -->
 </div>
 {% endblock form %}
 
@@ -306,6 +293,9 @@ Internal Tour
         {% endif %}
     </div>
     {% endcall %}
+
+    {{ mainattachment() }}
+
 {% endblock popup_alerts %}
 
 {% block ajax_page_actions %}
@@ -330,145 +320,182 @@ Internal Tour
 
 {% block extra_scripts %}
 {{ internaltourform.media.js }}
-<script type="text/javascript" src="https://cdn.datatables.net/1.11.3/js/jquery.dataTables.min.js"></script>
-<script type="text/javascript" src="https://cdn.datatables.net/buttons/2.0.1/js/dataTables.buttons.min.js"></script>
+<script src="{{ static('assets/plugins/custom/DataTables/datatables.min.js') }}" type="text/javascript"></script>
+<script src="{{ static('assets/plugins/custom/DataTables/Select-1.3.4/js/dataTables.select.min.js') }}" type="text/javascript"></script>
+<script src="{{ static('assets/plugins/custom/Editor-2.0.8/js/dataTables.editor.min.js') }}" type="text/javascript"></script>
+<script src="{{ static('assets/plugins/custom/Editor-2.0.8/js/editor.select2.js') }}" type="text/javascript"></script>
+<script>
+    //set the variables which are gonna used in attachment.js file for fetching attachments against the owner
+    var attachmentUrl = '{{ url("activity:attachments") }}'
+    var attachementDatasource = 'jobneedattachment'
+    var attachmentOwner = '{{ internaltourform.instance.uuid }}'
+    var csrf = '{{ csrf_token }}'
+    var ownerName = "Jobneed"
+    var id = ""
+    var folderType = 'tour'
+    var isDefault= "False";
+    var docnumber=1;
+</script>
+<script src="{{ static('assets/js/local/attachment.js') }}" type="text/javascript"></script>
 <script>
     var table = null;
     var selected = null;
+    var parentTable;
+    var parent_id = '{{ internaltourform.instance.id }}';
+    var childTable;
+    var childEditor;
+    var parentEditor;
     $('label').removeClass("col-form-label col-md-2 col-sm-2 text-sm-right")
-    function showHideSelectField(val) {
-        if (val == "PEOPLE") {
-            //$("#aatopdiv").show();
-            $(".people").show();
-            $(".pgroup").hide();
-        }else {
-            //$("#aatopdiv").hide();
-            $(".pgroup").show();
-            $(".people").hide();
-        }
-    }
 
-    //return selected value of a field
-    function getSelectedValue(id) {
-        var data = $(id).select2('data')[0]
-        if (typeof data !== 'undefined') {
-            return data.text
-        }
-        return "NONE"
-    }
-
-    function getCheckpointFormdata(){
-        const formData = {}
-        formData['qset_id'] = $("#id_child-qset").val()
-        formData['asset_id'] = $("#id_child-asset").val()
-        formData['expirytime'] = $("#id_child-expirytime").val()
-        formData['plandatetime'] = $("#id_child-plandatetime").val()
-        formData['expirydatetime'] = $("#id_child-expirydatetime").val()
-        formData['gracetime'] = $("#id_child-gracetime").val()
-        formData['jobstatus'] = "{{ internaltourform.instance.jobstatus }}"
-        formData['qset'] = getSelectedValue("#id_child-qset")
-        formData['asset'] = getSelectedValue("#id_child-asset").split(" ")[0]
-        return formData
-    }
-
-    function check_for_duplicates(table, dataToInsert) {
-        console.log("check_for_duplicates [start]")
-        var tableData = table.rows().data().toArray();
-        console.log(tableData)
-        for (var row in tableData) {
-            if (tableData[row][3] === dataToInsert[3]) {
-                return true
+    function hideAndShowFields(selected){
+        if(typeof selected !== 'undefined'){
+            if(selected === 'DROPDOWN' || selected === 'CHECKBOX' && typeof selected !== 'undefined'){
+                childEditor.hide(['min', 'max', 'alertbelow', 'alertabove'], false).show(['alerton', 'options'], false)
+            }else if(selected === 'NUMERIC'){
+                childEditor.hide(['alerton', 'options'], false).show(['min', 'max', 'alertbelow', 'alertabove'], false)
+            }else{
+                childEditor.hide(['alerton', 'options', 'min', 'max', 'alertabove', 'alertbelow'])
             }
         }
-        return false
     }
 
-    function adjustSlnoInTable() {
-        console.log("rows adjsuting")
-        var tableData = table.rows().data().toArray();
-        table.rows().remove().draw();
-        var seq = 0
-        for (var row in tableData) {
-            seq++
-            tableData[row][0] = seq
-        }
-        table.rows.add(tableData).draw()
-        console.log("rows adjusted")
-    }
-
-    function processValidForm() {
-        data = getCheckpointFormdata();
-        rowdata = [-1, data.plandatetime, data.expirydatetime, data.asset_id, 
-                data.asset, data.qset_id, data.qset, data.gracetime, data.jobstatus]
-        table.row('.toupdate').remove().draw(false);
-        isduplicate = check_for_duplicates(table, rowdata)
-        if (!isduplicate) {
+    function appenAlerton(options){
+        clearSelection("#DTE_Field_alerton")
+        for(let i=0; i<options.length; i++){
             
-            table.row.add(rowdata).draw()
-            resetForm()
-            //adjustForm(table)
-            $("#deleteCheckpoint").hide();
-        } else {
-            let heading = "Duplicate Record"
-            let msg = "This type ('Checkpoint and QuestionSet') record is already exist"
-            show_error_alert(msg, heading)
+            if ($('#DTE_Field_alerton').find("option[value='" + options[i] + "']").length) {
+                $('#DTE_Field_alerton').val(options[i]).trigger('change');
+            } else { 
+                // Create a DOM Option and pre-select by default
+                var newOption = new Option(options[i], options[i], false, false);
+                // Append it to the select
+                $('#DTE_Field_alerton').append(newOption).trigger('change');
+            } 
         }
     }
 
-    function resetForm() {
-        $("#id_child-expirydatetime, #id_child-plandatetime, #id_child-gracetime").val("")
-        $("#id_child-qset, #id_child-asset").val(null).trigger('change');
+    function getCurrentEditingRow(editor, table){
+        var rowModifier = editor.modifier();
+        return rowModifier ? table.row(rowModifier).data() : 'None'
     }
-    function addRemoveClass(ele){
-        if ($(ele).hasClass('selected')) {
-            $(ele).removeClass('selected');
-            selected = null
-        } else {
-            table.$('tr.selected').removeClass('selected');
-            $(ele).addClass('selected');
-            selected = ele
+
+    function initialize_form(){
+        var data = getCurrentEditingRow(childEditor, childTable)
+        if(data!=='None'){
+            hideAndShowFields(data.answertype)
+            //init question
+            var newOption = new Option(data.quesname.split(' | ')[0], data.question_id, true, true);
+            $('#DTE_Field_question').append(newOption).trigger('change');
+            
+            //init type
+            var _selectedText = getSelectedValue("#DTE_Field_question")
+            childEditor.field('answertype').val(_selectedText.split(" | ")[1])
+            
+            //init options
+            //childEditor.field('options').val(data.options)
+            
+            //init alerton
+            var options = data.options.split(',')
+            if(options.length > 0){
+                appenAlerton(options)
+                let alerton = data.alerton.split(',')
+                $("#DTE_Field_alerton").val(alerton).trigger('change')
+            }
+            
+            if(data.answertype === 'NUMERIC' && data.alerton.length > 0){
+                //init max
+                childEditor.field('max').val(data.max)
+                //init min
+                childEditor.field('min').val(data.min)
+                //init alertbelow and alertabove
+                let alerton = data.alerton
+                let aa = alerton.split(',')[1].replace('>', '') //alert-above
+                let ab = alerton.split(',')[0].replace('<', '') //alert-below
+                childEditor.field('alertbelow').val(ab)
+                childEditor.field('alertabove').val(aa)
+            }
         }
     }
 
-    function update_checkpoint_form(data, fortable = false) {
-        $("#child-form-modal #id_child-asset").val(data[3]).change()
-        $("#child-form-modal #id_child-qset").val(data[5]).change()
-        $("#child-form-modal #id_child-expirydatetime").val(data[2])
-        $("#child-form-modal #id_child-plandatetime").val(data[1])
-        $("#child-form-modal #id_child-gracetime").val(data[7])
+    function clearSelection(id){
+        //$(id).val(null).trigger('change');
+        $(id).empty().trigger("change");
     }
 
-    function deleteCheckpointRequest(checpointid, checklistid, parentid) {
-        var deleted = false
-        const params = {
-            'url': `{{ url('schedhuler:delete_checkpointTour') }}?checkpointid=${checpointid}&checklistid=${checklistid}&job=${parentid}&datasource = jobneed`,
-            'beforeSend': function () {}
-        }
-        fire_ajax_get(params)
-        .done((data, status, xhr) => {
-            show_successful_delete_alert()
-            deleted = true
+    function clearForm(editor){
+        ['min', 'max', 'alertbelow', 'alertabove', 'options'].forEach((ele) => {
+            editor.field(ele).val('')
         })
-        .fail((xhr, status, error) => {
-            show_error_alert(xhr.responseJSON.errors)
-        })
-        return deleted
+        clearSelection("#DTE_Field_alerton")
+        clearSelection("#DTE_Field_question")
     }
 
     
 
-    $(document).ready(() => { 
+    $(document).ready(() => {
         //set ctzoffset
   	    $("#id_ctzoffset").val(-new Date().getTimezoneOffset())
-        //assignto toggle
-        if ('{{internaltourform.instance.id}}' == ('None' || "")) {
-            showHideSelectField('PEOPLE')
-        }else{
-            var assignto = '{{internaltourform.instance.people}}' == ('None' || "") ? "GROUP" : "PEOPLE"
-            showHideSelectField(assignto)
-        }
+        
+        parentEditor = new $.fn.dataTable.Editor({
+            table: "#internal_tour",
+            ajax: {
+                url:"{{ url('schedhuler:jn_jnd_editor') }}",
+                data:function(d){
+                    let currentRow = getCurrentEditingRow(parentEditor, parentTable)
+                    console.log(currentRow)
+                    d.parent_id = '{{internaltourform.instance.id}}'
+                    d.tourjobneed = true
+                    d.csrfmiddlewaretoken = '{{ csrf_token }}'
+                    d.ctzoffset = $("#id_ctzoffset").val()
+                    d.pk = currentRow !== 'None' ? currentRow['id'] : currentRow
+                    console.log(d.pk)
+                    d.qset_id = $('#DTE_Field_qsetname').val()
+                    d.identifier = 'INTERNALTOUR'
+                    d.seqno = $('#DTE_Field_seqno').val()
+                    d.plandatetime = $('#DTE_Field_plandatetime').val()
+                    d.expirydatetime = $('#DTE_Field_expirydatetime').val()
+                    d.asset_id = $('#DTE_Field_asset_id').val()
+                    d.seqno = $('#DTE_Field_seqno').val()
+                    d.gracetime = $('#DTE_Field_seqno').val()
+                }
+            },
+            idSrc:  'id',
+            fields:[
+                {label: 'SL.No', name: "seqno", type:"text"},
+                {label: 'Plan Datetime', name: "plandatetime", type:'datetime', format:    'DD-MMM-YYYY HH:mm',},
+                {label: 'Expiry Datetime', name: "expirydatetime", type:'datetime', format:    'DD-MMM-YYYY HH:mm',},
+                {label: 'Checkpoint', name: "assetname"},
+                {label: 'Checklist', name: "qsetname"},
+                {label: 'gracetime', name: "gracetime"},              
+            ]
+        });
+
+        //PARENT EDITOR ON PRE-OPEN EVENT
+        parentEditor.on('preOpen', function(e, mode, action){
+            
+        })
+
+        //PARENT EDITOR ON OPEN EVENT
+        parentEditor.on('open', function(e, mode, action){
+            $(".DTE_Field").addClass('p-1') // add required classes
+            if(action == 'create'){
+                parentEditor.field('seqno').set(parentTable.data().count() + 1)
+            }
+            
+        })
+        
+        //PARENT EDITOR ON OPENED EVENT
+        parentEditor.on('opened', function(e, mode, action){
+            
+        })
+
+
         //datatable configurations
-        table = $('#internal_tour').DataTable({
+        parentTable = $('#internal_tour').DataTable({
+            ajax:{
+                url:`{{ url('schedhuler:jobneedtourseditor') }}?action=get_tourdetails&parent_id=${parent_id}`,
+
+            },
             responsive: true,
             fixedHeader: true,
             paging: false,
@@ -477,34 +504,284 @@ Internal Tour
                 [0, "asc"]
             ],
             scrollCollapse: true,
-            sDom: "",
+            searching:false,
+            dom: `<'row' <'col-sm-6 d-flex justify-content-start'f> <'col-sm-6 d-flex justify-content-end'B> >rt<'row'
+            <'col-sm-6'l> <'col-sm-6'p><'col-sm-12 d-flex justify-content-center'i>>`,
             ordering: true,
-            columnDefs: [
-                {
-                    width: "5%",
-                    targets: [0, 7]
-                },
-                {
-                    orderable: false,
-                    targets: [1, 2, 4,6, 7,8,9]
-                },
-                {
-                    targets: [5, 3],
-                    visible: false,
-                    searchable: false
-                },
-                {
-                    targets:[9],
-                    render:function(data, type, row, meta){
-                        return '<a href="'+data+'">Details</a>';
-                    }
-                }
+            columns:[
+                {data:'id', visible:false},
+                {data:'seqno', title:'#'},
+                {data:'plandatetime', title:'PlanDatetime'},
+                {data:'expirydatetime', title:'Expiry Datetime'},
+                {data:'asset__assetname', title:'Checkpoint'},
+                {data:'qset__id', visible:false},
+                {data:'qset__qsetname', title:'Checklist'},
+                {data:'gracetime', title:'Gracetime'},
+                {data:'jobstatus', title:'Status'},
             ],
             fixedHeader: {
                 header: true,
                 footer: true
+            },
+            buttons:[
+                { extend: "edit",   editor: parentEditor },
+                { extend: "remove", editor: parentEditor }
+            ],
+            select: {
+                style: 'single'
             }
         })
+
+         //editor of child tabble
+         childEditor = new $.fn.dataTable.Editor({
+            table: '#tabTouranswers',
+            ajax: {
+                url:"{{ url('schedhuler:jn_jnd_editor') }}",
+                data:function(d){
+                    var selected = parentTable.row( { selected: true } )
+                    if ( selected.any() ) {
+                        let currentRow = getCurrentEditingRow(childEditor, childTable)
+                        console.log(currentRow)
+                        d.parent_id = selected.data().id;
+                        d.csrfmiddlewaretoken = '{{ csrf_token }}'
+                        d.question = true
+                        d.alerton = JSON.stringify($("#DTE_Field_alerton").val())
+                        d.question_id = $("#DTE_Field_question").val()
+                        d.min = $("#DTE_Field_min").val()
+                        d.max = $("#DTE_Field_max").val()
+                        d.alertbelow = $("#DTE_Field_alertbelow").val()
+                        d.alertabove = $("#DTE_Field_alertabove").val()
+                        d.answertype = $("#DTE_Field_answertype").val()
+                        d.seqno = $("#DTE_Field_seqno").val()
+                        d.ismandatory = $("#DTE_Field_ismandatory").val()
+                        d.options = $("#DTE_Field_options").val()
+                        d.answer = $("#DTE_Field_answer").val()
+                        d.pk = currentRow !== 'None' ? currentRow['pk'] : currentRow
+                        d.ctzoffset = $("#id_ctzoffset").val()
+                    }
+                }
+            },
+            idSrc:  'pk',
+            fields:[
+                {data:'pk', type:'hidden', name:'pk', def:'None'},
+                {label:'SNo.', name:"seqno", type:'text', data:'seqno'},
+                {label: 'Question', name: 'question', type: 'select', data:'question'},
+                {label: 'Type', name: 'answertype', type: 'readonly', data:'answertype'},
+                {label: 'Min', name: 'min', type: 'text', def:null},
+                {label: 'Max', name: 'max', type: 'text', def:null},
+                {label: 'Alert below', name: 'alertbelow', type: 'text'},
+                {label: 'Alert above', name: 'alertabove', type: 'text'},
+                {label: 'Option', name: 'options', type:'text', fieldInfo:"Enter text ',' (comma) separated"},
+                {label: 'Alert On', name: 'alerton', type:'select'},
+                {label: 'Answer', name: 'answer', type:'text'},
+                {label: 'Mandatory', name: 'ismandatory', type: 'select', def:1,
+                options:   [
+                    { label: 'True', value: 1 },
+                    { label: 'False', value: 0 }
+                ]},
+            ],
+            formOptions:{
+                main:{
+                    onReturn:false
+                }
+            }
+        })
+
+        //CHILD EDITOR ON PRE-OPEN EVENT
+        childEditor.on('preOpen', function(e, mode, action){
+            
+        })
+
+        //CHILD EDITOR ON OPEN EVENT
+        childEditor.on('open', function(e, mode, action){
+            
+            // on change options set alerton
+            if(action === 'create' || action === 'edit'){
+                
+                $('[data-dte-e="form"]').attr('id', 'id_childform') // add id to form
+                $(".DTE_Field").addClass('p-1') // add css to form fields
+                $("#DTE_Field_alerton, #DTE_Field_question").addClass("form-control form-select") // add css to alerton form field
+
+                
+
+                // initialize select field question
+                init_select_field({
+                    url: "{{ url('reports:config_sitereport_template') }}?action=loadQuestions",
+                    id: "#DTE_Field_question",
+                    item: 'Questoins'
+                })
+                
+                // initialize select field alerton
+                init_select_field({
+                    id:'#DTE_Field_alerton',
+                    client:true,
+                    closeOnSelect:false,
+                    multiple:true
+                })
+
+                // on change question select field, autoselect type field
+                $("#DTE_Field_question.form-select").on("change", function () {
+                    var _selectedText = getSelectedValue("#DTE_Field_question");
+                    var selected = _selectedText.split(" | ")[1]
+                    //hide/show fields based on selected text..
+                    hideAndShowFields(selected)
+                    childEditor.field('answertype').val(selected)
+                })
+            }
+            
+            
+            if(action == "create"){
+                childEditor.field('seqno').set(childTable.data().count() + 1) //update seqno for new entry
+                clearForm(childEditor)
+            }
+            
+        })
+
+        // CHILD EDITOR ON OPENED EVENT
+        childEditor.on('opened', function(e, mode, action){
+            //get the data of rows in editing
+            //var data = getCurrentEditingRow(childEditor, childTable)
+            if(action == 'edit'){
+                initialize_form()
+            }
+            //if(action == "edit" && data !== 'None'){
+                //hide/show fields based on selected text..
+                //hideAndShowFields(data.answertype)
+            //}
+            $("#DTE_Field_options").on('change', function(){
+                var options  = $(this).val()
+                if(options.length > 0){
+                    appenAlerton(options.split(','))
+                }else{
+                    console.log('clear selection..........')
+                    clearSelection("#DTE_Field_alerton")
+                }
+            })
+        })
+
+        // CHILD EDITOR ON POSTCREATE
+        childEditor.on('postCreate', function(e, mode, action){
+            //update the count of section
+            rowData = parentTable.row({selected:true}).data()
+            rowData.count++
+            parentTable.row({selected:true}).data(rowData).draw()
+        })
+
+
+        //validations for child editor..
+        childEditor.on('preSubmit', function(e, o, action){
+            if(action !== 'remove' && this.field('answertype').val() == 'NUMERIC' ){
+                let min = this.field('min')
+                let max = this.field('max')
+                let alertbelow = this.field('alertbelow')
+                let alertabove = this.field('alertabove')
+                console.log(!min.isMultiValue(), isNaN(parseInt(min.val())) == NaN)
+
+                if(!(min.isMultiValue()) && isNaN(parseInt(min.val()))) {min.error('value of min must be number')}
+                if(!(max.isMultiValue()) && isNaN(parseInt(max.val()))) {max.error('value of max must be number')}
+                if(!(alertbelow.isMultiValue()) && isNaN(parseInt(alertbelow.val()))) {alertbelow.error('value of alert below must be number')}
+                if(!(alertabove.isMultiValue()) && isNaN(parseInt(alertabove.val()))) {alertabove.error('value of alert above must be number')}
+
+                if(!(min.isMultiValue() && max.isMultiValue()) && (parseInt(min.val()) > parseInt(max.val())) ){
+                    min.error('Min value must be smaller than Max value')
+                }
+                if(!(min.isMultiValue() && alertbelow.isMultiValue()) && (parseInt(alertbelow.val()) < parseInt(min.val())) ){
+                    alertbelow.error('Alert Below value must be greater than Min value')
+                }
+                if(!(max.isMultiValue() && alertabove.isMultiValue()) && (parseInt(alertabove.val())  > parseInt(max.val())) ){
+                    max.error('Alert Above value must be smaller than Max value')
+                }
+                if(!(alertbelow.isMultiValue() && alertabove.isMultiValue()) && (parseInt(alertbelow.val()) > parseInt(alertabove.val())) ){
+                    alertabove.error('Alert Below value must be smaller than Alert Above value')
+                }
+                // If any error was reported, cancel the submission so it can be corrected
+                if ( this.inError() ) {
+                    return false;
+                }
+
+            }else if (this.field('answertype').val() == 'DROPDOWN' || this.field('answertype').val() == 'CHECKBOX'){
+                let alerton = this.field('alerton')
+                let options = this.field('options')
+                if(!options.isMultiValue() && !options.val()){options.error('options must be given')}
+                if ( this.inError() ) {
+                    return false;
+                }
+            }
+
+            
+        })
+
+        //report questoins
+        childTable =$("#tabTouranswers").DataTable({
+            ajax:{
+                url:"{{ url('schedhuler:jn_jnd_editor') }}?action=get_jndofjobneed",
+                type:'get',
+                data:function(d){
+                    var selected = parentTable.row( { selected: true } );
+                        if ( selected.any() ) {
+                        d.jobneedid = selected.data().id
+                        d.count = selected.data().count
+                    }
+
+                }
+            },
+            responsive:true,
+            ordering:false,
+            searching:false,
+            dom:`<'row' <'col-sm-6 d-flex justify-content-start'f> <'col-sm-6 d-flex justify-content-end'B> >rt<'row'
+            <'col-sm-6'l> <'col-sm-6'p><'col-sm-12 d-flex justify-content-center'i>>`,
+            columns:[
+                {data:'pk', defaultContent:null, visible:false},
+                {data:'ctzoffset', defaultContent:null, visible:false},
+                {title: "SNo", data:'seqno', render:function(data, type, row, meta){
+                    return meta.row + 1
+                }},
+                {title: "Question", data: 'quesname'},
+                {data: 'question_id', visible:false, defaultContent:null},
+                {title: "Question Type", data: 'answertype'},
+                {title: "Min", data: 'min', render:function(data, type, row, meta){
+                    return row['answertype'] !== 'NUMERIC' ? 'NA' : data
+                    
+                }},
+                {title: "Max", data: 'max', render:function(data, type, row, meta){
+                    return row['answertype'] !== 'NUMERIC'  ? 'NA' : data
+                }},
+                {title: "Option", data: 'options', render:function(data, type, row, meta){
+                    return row['answertype'] !== 'CHECKBOX' && row['answertype'] !== 'DROPDOWN' ? 'NA' : data
+                }},
+                {title: "Alert On", data: 'alerton', render:function(data, type, row, meta){
+                    return row['answertype'] == 'CHECKBOX' || row['answertype'] == 'DROPDOWN' || row['answertype'] == 'NUMERIC' ? data : 'NA'
+                }},
+                {title: "Mandatory", data: 'ismandatory'},
+                {title: "Answer", data: 'answer'},
+            ],
+            buttons:[
+                { extend: "create", editor: childEditor },
+                { extend: "edit",   editor: childEditor },
+                { extend: "remove", editor: childEditor }
+            ],
+            select: {
+                style: 'single'
+            }
+        })
+        $("#tabTouranswers_wrapper .buttons-create").addClass('disabled')//on page load disable new button of child table
+        $("#tabTouranswers_wrapper .buttons-create").attr({'data-toggle':"tooltip", 'data-placement':"top", 'title':"Select Section First"})
+        
+        parentTable.on( 'select', function () {
+            childTable.ajax.reload();
+            $("#tabTouranswers_wrapper .buttons-create").removeClass('disabled')
+            //childEditor
+            //    .field( 'users.site' )
+            //    .def( parentTable.row( { selected: true } ).data().id );
+        } );
+        
+        parentTable.on( 'deselect', function () {
+            childTable.ajax.reload();
+            $("#tabTouranswers_wrapper .buttons-create").addClass('disabled')
+            $("#tabTouranswers_wrapper .buttons-create").attr({'data-toggle':"tooltip", 'data-placement':"top", 'title':"Select Section First"})
+        } );
+
+
         //datetime widget configurations
         $("#id_child-plandatetime, #id_child-expirydatetime, #id_plandatetime, #id_expirydatetime").flatpickr({
             enableTime: true,
@@ -512,13 +789,7 @@ Internal Tour
             dateFormat: 'd-M-Y H:S'
         })
 
-        //on submitting the questionset-blng form populate the table
-        // "Checkpoint & Checklist Mapping"
-        $('#child_internaltour_form').on('submit', function (e) {
-            e.preventDefault()
-            processValidForm()
-            adjustSlnoInTable()
-        });
+
 
         //middle form post request
         $("#internaltourform").submit((e) => {
@@ -548,65 +819,6 @@ Internal Tour
                 }
             })
         })
-
-        if(!$("#internal_tour tbody tr").hasClass("selected")){
-            resetForm()
-        }
-
-        //on click view-details display jobneeddetails on modal
-        $("#jobneeddetails").click(() => {
-            const params = {url: "" }
-        })
-        
-        //select/deselect row
-        $("#internal_tour tbody").on("click", 'tr', function () {
-            if (!$(this).children().hasClass("dataTables_empty")) {
-                addRemoveClass(this)
-            }
-        })
-        
-        //edit new checkpoint
-        $("#edit-child").click(() => {
-            if(selected !== null){
-                $("#child-form-modal").modal('show')
-                update_checkpoint_form(table.row('.selected').data())
-                $(this).addClass('toupdate');
-            }else{show_warning("Please select a row first!")}
-        })
-        
-        //add new checkpoint
-        $("#create-child").click(() => {
-            $("#child-form-modal").modal('show')
-            resetForm()
-        })
-
-        //delete checkpoint
-        $("#delete-child").click(() => {
-            console.log("clicked")
-            if(selected!== null){
-                data = table.row('.selected').data()
-                show_alert_before_delete(data[4]).then((res) => {
-                    if(res.isConfirmed){
-                        var isDeleted = false
-                        if ('{{ internaltourform.instance.id }}' !== ('None' || "")) {
-                            isDeleted = deleteCheckpointRequest(data[3], data[5], "{{ internaltourform.instance.id }}")
-                        }
-                        if (isDeleted){
-                            table.row('.selected').remove().draw();
-                            adjustSlnoInTable()
-                        }
-                    }
-                })
-
-            }else{show_warning("Please select a row first!")}
-        })
-
-        //select2 configurations
-        $('.django-select2').select2({
-            dropdownParent: $('#child-form-modal')
-        })
-
-
     })
     
 </script>

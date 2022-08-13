@@ -20,52 +20,8 @@ Tour List
 <!-------------------------------------------- BEGIN Schedhuled Tour TABLE ------------------------------------------->
 {% block table %}
 <table id="internaltour_table" class="display compact cell-border" style="width:100%">
-    {# <thead class="fw-bold fs-6">
-        <th>Plan Datetime</th>
-        <th>Description</th>
-        <th>Status</th>
-        <th>People/Group</th>
-        <th>Performedby</th>
-        <th>Grace Time</th>
-        <th>Exp. Time</th>
-    </thead>
-    <!---------- BEGIN TABLE FILTER FIELDS --------->
-	<thead id="filter_row">
-    <form action="" id='internaltour_filter' method='get'>
-    {% for field in tour_filter %}
-        <th>
-            {% if field.name == 'plandatetime' %}
-                <input type="text" name="plandatetime_min" placeholder="YYYY/MM/DD" class="form-control" id="id_plandatetime_0" style="border-radius: 0px; height: 35px; display:none">
-                <input type="text" name="plandatetime_max" placeholder="YYYY/MM/DD" class="form-control" id="id_plandatetime_1" style="border-radius: 0px; height: 35px; display:none">
-                <input class="form-control input active" id="custom_plandatetime" placeholder="Pick Range" type="text" readonly="readonly">
-            {% else %}
-            {{ field }}
-            {% endif %}
-		</th>
-    {% endfor %}
-    </form>
-    </thead>
-    <!---------- END TABLE FILTER FIELDS --------->
-    <tbody>
-        {% for tour in tour_list %}
-        <tr>
-            <td><a href="{{ url('schedhuler:internaltour', args=[tour['id']]) }}">{{ tour['plandatetime'] | to_local }}</a></td>
-            <td><a href="{{ url('schedhuler:internaltour', args=[tour['id']]) }}">{{ tour['jobdesc'] }}</a></td>
-            <td>{{ tour['jobstatus']  }}</td>
-            <td>{{ tour['people__peoplename'] + " [People]" or tour['pgroup__groupname']+ " [Group]" }}</td>
-            <td>{{ tour['performedby__peoplename'] }}</td>
-            <td>{{ tour['gracetime'] }} Min</td>
-            <td>{{ tour['expirydatetime'] | to_local }}</td>
-        </tr>
-        {% endfor %}
-    </tbody> #}
 </table>
-{# 
-{% if tour_list and tour_list.has_other_pages %}
-<!-- BEGIN PAGINATOIN -->
-{{ paginator(tour_list) }}
-<!-- END PAGINATOIN ---->
-{% endif %} #}
+
 {% endblock table %}
 
 {% block extra_scripts %}
@@ -76,61 +32,46 @@ Tour List
     const table_id = '#internaltour_table'
     const urlname = "{{ url('schedhuler:jobneedtours') }}"
 
-    function submitFormFilter(){
-        $(formFilter).submit()
-    }
-    function setPlanDatetime(val1, val2){
-        $("#id_plandatetime_0").val(val1)
-        $("#id_plandatetime_1").val(val2)
-    }
-    
+    //if you want to modifiy here, then modify in custom.js initDateRange also
+    var from_pd = moment().subtract(7, 'days').format('YYYY-MM-DD');
+    var to_pd = moment().format('YYYY-MM-DD')
     $(document).ready(function (){
-        $("input").keypress(function(event) {
-			if (event.which == 13) {
-				event.preventDefault();
-				submitFormFilter()
-			}
-		});
 
-        $("#custom_plandatetime").flatpickr({
-            altInput: true,
-            altFormat: "Y-M-d",
-            dateFormat: "Y/m/d",
-            mode: "range",
-            onChange: function(selectedDates, dateStr, instance){
-                if(selectedDates.length > 1){
-                    dates = dateStr.split(" to ")
-                    setPlanDatetime(dates[0], dates[1])
-                }
-            }
-        });
         //datatable initialization
         table = $(table_id).DataTable({
 			//orderCellsTop: true,
+            ajax:{
+                url:`${urlname}?action=list`,
+                data:function(d){
+                    d.pd1 = from_pd
+                    d.pd2 = to_pd
+                    d.identifier = 'INTERNALTOUR'
+                }
+            },
+            language: { search: "", searchPlaceholder:"Serch keywords..." },
 			deferRender: true,
 			responsive : true,  
-            dom:`<'row' <'col-sm-6 d-flex justify-content-start'f> <'col-sm-6 d-flex justify-content-end'B> >rt<'row'
+            dom:`<'row' <'col-sm-6 d-flex justify-content-start'<'customfields'>f> <'col-sm-6 d-flex justify-content-end'B> >rt<'row'
 			 <'col-sm-6'l> <'col-sm-6'p><'col-sm-12 d-flex justify-content-center'i>>`,
             //ordering:false,
             columns:[
-                {data: 'id'},
-                {data: 'plandatetime', title: "Plan Duration"},
-                {data: 'jobdesc', title: 'Description'},
-                {data: 'jobstatus', title: 'Status'},
-                {title: 'People/Group'},
-                {data: 'performedby__peoplename', title: 'Performed By'},
-                {data: 'gracetime', title: "Grace Time"},
-                {data: 'expirydatetime', title: "Expiry Datetime"}
-            ],
-            columnDefs:[
-                {targets:0, data: 'id', visible:false, searchable:false},
-                {targets:1, data: 'plandatetime', render:function(data, type, row, meta){
+                {data: 'id', visible:false, searchable:false},
+                {data: 'plandatetime', title: "Plan Datetime", render:function(data, type, row, meta){
+                    return `<a href="${urlname}?id=${row['id']}">${convert_to_local(type, data, row)}</a>`
+                }},
+                {data: 'jobdesc', title: 'Description', render:function(data, type, row, meta){
                     return `<a href="${urlname}?id=${row['id']}">${data}</a>`
                 }},
-                {targets:4, render:function(data, type, row, meta){
+                {data: 'jobstatus', title: 'Status'},
+                {title: 'People/Group', defaultContent:null, data:null, render:function(data, type, row, meta){
                     let peoplename = row['people__peoplename']
                     let groupname = row['pgroup__groupname']
-                    return peoplename ? typeof peoplename == 'undefined' : groupname 
+                    return typeof peoplename == 'undefined' ? groupname : peoplename 
+                }},
+                {data: 'performedby__peoplename', title: 'Performed By'},
+                {data: 'gracetime', title: "Grace Time"},
+                {data: 'expirydatetime', title: "Expiry Datetime", render:function(data, type, row, meta){
+                    return convert_to_local(type, data, row)
                 }}
             ],
             scrollCollapse: true,
@@ -148,16 +89,16 @@ Tour List
         
         })
 
-        //BEGIN STYLING DATATABLE
-		$("th > input").addClass('form-control')
-		$("th > input").css('height', '35px')
-		var styles = {
-			"border-bottom": "none",
-			"background-color": "#f1f4f7"
-		}
+        //add input field to the datatables dom
+        initDateRangeHtml()
+        initDateRange("#id_daterange").on('apply.daterangepicker', function(e, picker){
+            from_pd = picker.startDate.format('YYYY-MM-DD');
+            to_pd = picker.endDate.format('YYYY-MM-DD');
+            table.ajax.reload()
+        })
 
-        $(`${table_id} thead tr:eq(1)`).css(styles)
-		//END STYLING DATATABLE
+
+
 
     })
 </script>

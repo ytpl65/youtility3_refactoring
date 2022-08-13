@@ -27,6 +27,9 @@ urlpatterns = [
 
     # SINGLE VIEW CRUD
     path('jobneedtours/', views.JobneedTours.as_view(), name='jobneedtours'),
+    path('jobneedexternaltours/', views.JobneedExternalTours.as_view(), name='jobneedexternaltours'),
+    path('jobneedtours/editor/', views.TourJobneedEditorView.as_view(), name='jobneedtourseditor'),
+    path('jnd/editor/', views.JobneednJNDEditor.as_view(), name='jn_jnd_editor'),
     path('jobneedtasks/', views.JobneedTasks.as_view(), name='jobneedtasks'),
     path('jobschdtasks/', views.SchdTasks.as_view(), name='jobschdtasks'),
     path('schedule-internal-tour', views.InternalTourScheduling.as_view(), name='schd_internal_tour'),

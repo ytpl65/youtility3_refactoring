@@ -124,7 +124,10 @@ class BtForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         """Initializes form"""
         self.client = kwargs.pop('client', False)
+        self.request = kwargs.pop('request', False)
         super().__init__(*args, **kwargs)
+        if self.client:
+            self.fields['identifier'].initial = obm.TypeAssist.objects.get(tacode='CLIENT').id
         self.fields['identifier'].queryset = obm.TypeAssist.objects.filter(Q(tacode='CLIENT') if self.client else Q(tatype__tacode="BVIDENTIFIER"))
         self.fields['identifier'].required= True
         self.fields['butype'].queryset = obm.TypeAssist.objects.filter(tatype__tacode="SITETYPE")
@@ -343,6 +346,7 @@ class ClentForm(BuPrefForm):
 
     def __init__(self, *args, **kwargs):
         """Initializes form"""
+        self.session = kwargs.pop('session', None)
         super().__init__(*args, **kwargs)
         utils.initailize_form_fields(self)
         from apps.peoples.utils import get_caps_choices

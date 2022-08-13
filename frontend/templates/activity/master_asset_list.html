@@ -17,48 +17,9 @@
 {% block table %}
     <!------------------ BEGIN TABLE --------------------->
     <table id="checkpoint_table" class="display compact cell-border" style="width:100%">
-        <thead class="fw-bold fs-6">
-            <th>Code</th>
-            <th>Name</th>
-            <th>Belongs to</th>
-            <th>Status</th>
-            <th>Enable</th>
-            <th>GPS Location</th>
-        </thead>
-		{# <!---------- BEGIN TABLE FILTER FIELDS --------->
-		<thead id="filter_row">
-		<form action="" id='master_asset_filter' method='get'>
-			<input type="hidden" name="search_term" value="true">
-			{% for field in master_asset_filter %}
-			<th>
-				<input type="text" 
-				id="{{ field.auto_id }}" 
-				name="{{ field.name }}" 
-				placeholder ="Search {{ field.label }}">
-			</th>
-			{% endfor %}
-		</form>
-		</thead>
-		<!---------- END TABLE FILTER FIELDS ---------> #}
-		<tbody>
-			{% for cp in master_assetlist %}
-			<tr>
-				<td><a href="" class="cp-link" data-id="{{ cp['id'] }}" data-rowid ={{ loop.index0 }}>{{ cp['assetcode'] }}</a></td>
-				<td>{{ cp['assetname'] }}</td>
-				<td>{{ cp['parent__assetcode'] }}</td>
-				<td>{{ cp['runningstatus'] }}</td>
-				<td>{{ cp['enable'] }}</td>
-				<td>{{ cp['gpslocation'] }}</td>
-			</tr>
-			{% endfor %}
-		</tbody>
     </table>
     <!------------------ END TABLE --------------------->
-{% if master_assetlist and master_assetlist.has_other_pages %}
-<!-- BEGIN PAGINATOIN -->
-{{ paginator(master_assetlist) }}
-<!-- END PAGINATOIN ---->
-{% endif %}
+
 
 {% endblock table %}
 <!------------------ --------------------------END BU TABLE ------------------------------------------------->
@@ -101,22 +62,23 @@
         }
 		//datatable initialization
         table = $(table_id).DataTable({
-			//orderCellsTop: true,
-			responsive: true,
-			fixedHeader: true,
-			paging: false,
-			lengthChange: false,
-			language: {
-				searchPlaceholder: "Search on page"
+			ajax:{
+				url: `${urlname}?action=list`,
 			},
-            dom: "<'row'" +
-                "<'col-sm-6 d-flex align-items-center justify-conten-start'f>" +
-                "<'col-sm-6 d-flex align-items-center justify-content-end'B>" +
-                ">" +
-
-                "<'table-responsive'tr>",
+			columns:[
+				{data:'id', visible:false, searchable:false},
+				{data:'assetcode', title:'Code'},
+				{data:'assetname', title:'Name'},
+				{data:'parent__assetcode', title:'Belongs to'},
+				{data:'runningstatus', title:'Status'},
+				{data:'enable', title:'Enable'},
+				{data:'gps', title:'GPS'},
+			],
+			responsive: true,
+			
+            dom:`<'row' <'col-sm-6 d-flex justify-content-start'f> <'col-sm-6 d-flex justify-content-end'B> >rt<'row'
+			 <'col-sm-6'l> <'col-sm-6'p><'col-sm-12 d-flex justify-content-center'i>>`,
             ordering:false,
-            scrollCollapse: true,
 			buttons:[
 				{
 					text:`Add New ${viewname} &nbsp;<i class='fas fa-plus ch4'></i></a>`,
@@ -140,48 +102,16 @@
 			]
 		})
 
-		//BEGIN STYLING DATATABLE
-		$("th > input").addClass('form-control')
-		$("th > input").css('height', '35px')
-		var styles = {
-			"border-bottom": "none",
-			"background-color": "#f1f4f7"
-		}
-		
-		$(`${table_id} thead tr:eq(1)`).css(styles)
-		//END STYLING DATATABLE
 
-        //add row to the table
-		const addRow = (data) => {
-			table.row.add($(`<tr>
-			<td><a href="${data.url}">${data.capscode}</a></td>
-			<td>${data.capsname}</td>
-			<td>${data.cfor}</td>
-			<td>${data.parent}</td>
-			</tr>`)).draw();
-			console.log("rowadded")
-		}
 
-		const updateRow = (data, rowid) => {
-			table.row(rowid).data(
-			`<tr>
-			<td><a href="${data.url}">${data.capscode}</a></td>
-			<td>${data.capsname}</td>
-			<td>${data.cfor}</td>
-			<td>${data.parent}</td>
-			</tr>`
-			)
-		}
-		
 		//submit form
 		$(modal_id).on('submit', formid, function(e) {
 			var form = $(this);
 			e.preventDefault()
 			const params = { url:urlname, modal:true } //capability view
-			const formtype = $(modalcontent_id).attr('data-form') //form-type (create/update)
-			const id = $(modalcontent_id).attr('data-id') //form instance id
+			const id = $("#pk").val()
 			var payLoad = {formData:form.serialize(), csrfmiddlewaretoken: '{{ csrf_token }}'}//payload for post request
-			if(formtype === 'update'){
+			if(id != 'None'){
 				var newPayLoad = {...payLoad, 'pk':id}
 				payLoad = newPayLoad
 			}
@@ -189,29 +119,22 @@
 			.done((data, status, xhr) => { //function to submit post request
 				console.log("data ", data)
 				$(modal_id).modal("hide");
-				Swal.fire(
-				`${viewname} saved`,
-				`${viewname} with this code <strong>${data.code}</strong> has been saved successfully`,
-				'success'
-				).then(() => {
-					location.reload()
-				})
+				if(id!=='None'){
+					table.row('.selected').data(data.row).draw()
+				}else{
+					table.row.add(data.row).draw()
+				}
+				show_successful_save_alert(update= id != 'None' ? true : false)
 			})
 		})
 
-		//update row (form-view)
-		$(rowlink).click((e) => {
-			e.preventDefault();
-			var id = $(e.currentTarget).attr('data-id');
-			var rowid = $(e.currentTarget).attr('data-rowid');
-			$(modalcontent_id).attr('data-rowid', rowid)
-			$(modalcontent_id).attr('data-id', id)
-			console.log("id ", id)
-			console.log("table ", table)
-			const params = {
-				'modal_id'    : modal_id,
-				'url'         : `${urlname}?id=${id}`,
-				'beforeSend'  : checkpointBeforeSend }
+		table.on('select', function(){
+            var id = table.row({selected:true}).data().id
+            if (!(id)){ return }
+            const params = {
+				modal_id    : modal_id,
+				url         : `${urlname}?id=${id}`,
+				beforeSend  : checkpointBeforeSend }
 			fire_ajax_get(params)
 			.done((data, status, xhr) => {
 				$(modalcontent_id).attr('data-form', 'update')
@@ -220,13 +143,13 @@
 			.fail((xhr, status, error) => {
 				show_error_alert('Something went wrong!') //defined in custom.js
 			})
-		})
+        })
 	}); //END document.ready()
 
 	//delete ajax request 
 	function isCheckpointDeleted(id){ 
 		console.log("id ", id)
-		const params = {url:`${urlname}?action=formdelete&id=${id}`}
+		const params = {url:`${urlname}?action=delete&id=${id}`}
 		fire_ajax_get(params)
 		.done((data, status, xhr) => {
 			if(!xhr.status === 200){
@@ -252,9 +175,7 @@
 					show_successful_delete_alert() //defined in customjs
 					$(modal_id).modal("hide")
 					//delete row from table
-					row_index = parseInt($(modalcontent_id).attr('data-rowid'))
-					console.log(row_index, "row index")
-					table.row(row_index).remove().draw();
+					table.row('.selected').remove().draw()
 				}else{
 					show_error_alert('Something went wrong!');
 				}

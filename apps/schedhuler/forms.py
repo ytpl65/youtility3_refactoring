@@ -5,6 +5,7 @@ import apps.onboarding.utils as ob_utils
 from apps.core import utils
 from django_select2 import forms as s2forms
 import apps.activity.models as am
+import apps.peoples.models as pm
 import apps.onboarding.models as ob
 
 class Schd_I_TourJobForm(JobForm):
@@ -19,6 +20,7 @@ class Schd_I_TourJobForm(JobForm):
             'starttime':forms.TextInput(attrs={'style': 'display:none;'}),
             'endtime':forms.TextInput(attrs={'style': 'display:none;'}),
             'frequency':forms.TextInput(attrs={'style': 'display:none;'}),
+            'jobname':forms.TextInput(attrs={'placeholder': 'Enter Route Plan Name:'}),
         })
 
     def __init__(self, *args, **kwargs):
@@ -158,7 +160,20 @@ class Schd_E_TourJobForm(JobForm):
 
 
     class Meta(JobForm.Meta):
-        JobForm.Meta.labels.update({'bu': 'Cluster'})
+        JobForm.Meta.labels.update({
+            'sgroup':'SiteGroup'
+            }) 
+        JobForm.Meta.widgets.update(
+            {'identifier':forms.TextInput(attrs={'style': 'display:none;'}),
+            'starttime':forms.TextInput(attrs={'style': 'display:none;'}),
+            'endtime':forms.TextInput(attrs={'style': 'display:none;'}),
+            'frequency':forms.TextInput(attrs={'style': 'display:none;'}),
+            'priority':forms.TextInput(attrs={'style': 'display:none;'}),
+            'seqno':forms.TextInput(attrs={'style': 'display:none;'}),
+            'scantype':forms.TextInput(attrs={'style': 'display:none;'}),
+            'ticketcategory':forms.TextInput(attrs={'style': 'display:none;'}),
+            'jobname':forms.TextInput(attrs={'placeholder': 'Enter Route Plan Name:'})}
+            )
         exclude = ['jobdesc']
 
     def __init__(self, *args, **kwargs):
@@ -167,6 +182,7 @@ class Schd_E_TourJobForm(JobForm):
         self.fields['fromdate'].input_formats  = settings.DATETIME_INPUT_FORMATS
         self.fields['uptodate'].input_formats  = settings.DATETIME_INPUT_FORMATS
         self.fields['ticketcategory'].initial  = ob.TypeAssist.objects.get(tacode='AUTOCLOSED')
+        self.fields['sgroup'].queryset  = pm.Pgroup.objects.filter(identifier__tacode="SITEGROUP")
         self.fields['identifier'].widget.attrs = {"style": "display:none"}
         self.fields['expirytime'].widget.attrs = {"style": "display:none"}
         self.fields['starttime'].widget.attrs  = {"style": "display:none"}
@@ -282,6 +298,57 @@ class TicketForm(JobNeedForm):
         ob_utils.apply_error_classes(self)
         return result
 
+    def clean_plandatetime(self):
+        if val := self.cleaned_data.get('plandatetime'):
+            val =  ob_utils.to_utc(val)
+            return val
+
+    def clean_expirydatetime(self):
+        if val := self.cleaned_data.get('plandatetime'):
+            val =  ob_utils.to_utc(val)
+            return val
+
+    def clean_starttime(self):
+        if val := self.cleaned_data.get('starttime'):
+            val =  ob_utils.to_utc(val)
+            return val
+
+    def clean_endtime(self):
+        if val := self.cleaned_data.get('endtime'):
+            val =  ob_utils.to_utc(val)
+            return val
+
+    def clean_frequency(self):
+        return "NONE"
+
+
+class E_TourFormJobneed(JobNeedForm):
+    timeInChoices      = [('MIN', 'Min'),('HRS', 'Hour'), ('DAY', 'Day'), ('WEEK', 'Week')]
+    ASSIGNTO_CHOICES   = [('PEOPLE', 'People'), ('GROUP', 'Group')]
+    assign_to          = forms.ChoiceField(choices = ASSIGNTO_CHOICES, initial="PEOPLE")
+    timeIn             = forms.ChoiceField(choices = timeInChoices, initial='MIN', widget = s2forms.Select2Widget)
+    required_css_class = "required"
+    
+    
+    def __init__(self, *args, **kwargs):
+        '''Initializes form add attributes and classes here'''
+        self.request = kwargs.pop('request', None)
+        super().__init__(*args, **kwargs)
+        self.fields['plandatetime'].input_formats   = settings.DATETIME_INPUT_FORMATS
+        self.fields['expirydatetime'].input_formats = settings.DATETIME_INPUT_FORMATS
+        self.fields['identifier'].widget.attrs      = {"style": "display:none"}
+        self.fields['starttime'].widget.attrs       = {"disabled": "disabled"}
+        self.fields['endtime'].widget.attrs         = {"disabled": "disabled"}
+        self.fields['endtime'].label                = 'End Time'
+        self.fields['performedby'].widget.attrs     = {"disabled": "disabled"}
+        utils.initailize_form_fields(self)
+
+    def is_valid(self) -> bool:
+        """Add class to invalid fields"""
+        result = super(I_TourFormJobneed, self).is_valid()
+        ob_utils.apply_error_classes(self)
+        return result
+    
     def clean_plandatetime(self):
         if val := self.cleaned_data.get('plandatetime'):
             val =  ob_utils.to_utc(val)

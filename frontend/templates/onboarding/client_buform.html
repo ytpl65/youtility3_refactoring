@@ -17,7 +17,7 @@ Client Form
 <!-------------------------- BEGIN PAGE BREADCUMB ----------------------->
 {% block pagebreadcumb %}
 {{ super() }}
-<li class="breadcrumb-item pe-3"><a href="{{ url('onboarding:client_list') }}" class="pe-3">Client List</a></li>
+<li class="breadcrumb-item pe-3"><a href="{{ url('onboarding:client') }}?template=true" class="pe-3">Client List</a></li>
 <li class="breadcrumb-item pe-3"><a href="javascript:void(0)" class="pe-3">Client Form</a></li>
 {% endblock pagebreadcumb %}
 <!-------------------------- END PAGE BREADCUMB ------------------------->
@@ -64,22 +64,9 @@ Client
 
 <!--------- BEGIN NON FIELD ERRORS -------->
 {% block nonfield_errors %}
-{% if clientform.non_field_errors() %}
-<div id="non_field_error" class="alert alert-danger" style="width: 73%;">
-    {% for error in clientform.non_field_errors() %}
-    {{ error }}
-    {% endfor %}
-    <button type="button" class="btn-close flt-right" data-bs-dismiss="alert" aria-label="Close"></button>
+<div class="alert alert-danger" id="nonfield_errors"role="alert" style="display:none">
+    <strong>Error</strong> <span></span>
 </div>
-{% endif %}
-{% if clientprefsform.non_field_errors() %}
-<div id="non_field_error" class="alert alert-danger" style="width: 73%;">
-    {% for error in clientprefsform.non_field_errors() %}
-    {{ error }}
-    {% endfor %}
-    <button type="button" class="btn-close flt-right" data-bs-dismiss="alert" aria-label="Close"></button>
-</div>
-{% endif %}
 {% endblock nonfield_errors %}
 <!---------- END NON FIELD ERRORS --------->
 
@@ -215,14 +202,25 @@ Client
 <br>
 <!--List of Buisiness Units --->
 <div class="row">
+
 <div class="card">
     <div class="card-header p-0">
         <div class="card-title">
-            List of Buisiness Units&nbsp;<i class="fas fa-table ch4"></i>
+            List of Sites&nbsp;<i class="fas fa-table ch4"></i>
         </div>
     </div>
     <div class="card-body">
-        <table id="list_bu"></table>
+        <table id="tabListBu" class="display cell-border compact hover"></table>
+    </div>
+</div>
+<div class="card">
+    <div class="card-header p-0">
+        <div class="card-title">
+            List of Admin/Users&nbsp;<i class="fas fa-table ch4"></i>
+        </div>
+    </div>
+    <div class="card-body">
+        <table id="tabAdminUsers" class="display cell-border compact hover"></table>
     </div>
 </div>
 </div>
@@ -242,8 +240,29 @@ Client
 {% block extra_scripts %}
 {{ clientform.media.js }}
 <script src="{{ static('assets/plugins/custom/DataTables/datatables.min.js') }}" type="text/javascript"></script>
-<script src="{{ static('assets/plugins/custom/Editor-2.0.8/js/editor.datatables.min.js') }}" type="text/javascript"></script>
+<script src="{{ static('assets/plugins/custom/DataTables/Select-1.3.4/js/dataTables.select.min.js') }}" type="text/javascript"></script>
+<script src="{{ static('assets/plugins/custom/Editor-2.0.8/js/dataTables.editor.min.js') }}" type="text/javascript"></script>
+<script src="{{ static('assets/plugins/custom/Editor-2.0.8/js/editor.select2.js') }}" type="text/javascript"></script>
 <script>
+    var tabListBus;
+    var tabListAdmins;
+    var listbu_editor;
+    function getCurrentEditingRow(editor, table){
+        var rowModifier = editor.modifier();
+        return rowModifier ? table.row(rowModifier).data() : 'None'
+    }
+
+    function initialize_form(){
+        var data = getCurrentEditingRow(listbu_editor, tabListBus)
+        if(data!=='None'){
+            //init parent
+            var newOption = new Option(data.parent__buname, data.parent_id, true, true);
+            $('#DTE_Field_parent').append(newOption).trigger('change');
+            //init identifier
+            var newOption = new Option(data.identifier__tacode, data.identifier_id, true, true);
+            $('#DTE_Field_identifier').append(newOption).trigger('change');
+        }
+    }
     $(document).ready(function () {
         //set ctzoffset
   	    $("#id_ctzoffset").val(-new Date().getTimezoneOffset())
@@ -257,6 +276,7 @@ Client
         //hide the delete button when instance is not saved yet.
         if ('{{clientform.instance.id}}' == 'None') {
             $("#btn_del").hide()
+
         }
 
         // submit the popup-butype-taform for validation and saving in db.
@@ -275,23 +295,165 @@ Client
             closeOnSelect:false 
         })
 
-        //datatable  list of business units
+        //editor of datatable business units
         listbu_editor = new $.fn.dataTable.Editor({
-            ajax: "{{ url('onboarding:list_bu') }}",
-            table: "#list_bu",
+            ajax: {
+                url:"{{ url('onboarding:client') }}",
+                data:function(d){
+                    let currentRow = getCurrentEditingRow(listbu_editor, tabListBus)
+                    d.pk = currentRow !== 'None' ? currentRow['id'] : currentRow
+                    d.parent = $('#DTE_Field_parent').val()
+                    d.csrfmiddlewaretoken = '{{ csrf_token }}'
+                    d.bucode = $('#DTE_Field_bucode').val()
+                    d.buname = $('#DTE_Field_buname').val()
+                    d.enable = $('#DTE_Field_enable').val()
+                    d.identifier = $('#DTE_Field_identifier').val()
+                    d.ctzoffset = $("#id_ctzoffset").val()
+                    d.bupostdata=true
+                }
+            },
+            table: "#tabListBu",
             fields:[
-                {label: 'Code', name: 'peoplecode'},
-                {label: 'Name', name: 'peoplename'},
-                {label: 'Login', name: 'loginid'},
-                {label: 'Email', name: 'email'},
-                {label: 'Mob No', name: 'mobno'},
-                {label: 'Is Admin', name: 'isadmin'},
-            ]
+                {label: 'Code', name: 'bucode', data: 'bucode'},
+                {label: 'Name', name: 'buname', data: 'buname'},
+                {label: 'Type', name: 'identifier', type: 'select', data: 'identifier__tacode'},
+                {label: 'Belongs to', name: 'parent', type: 'select', data: 'parent__buname'},
+                {label: 'Enable', name: 'enable', data: 'enable', type:'select', def:1, options:   [
+                { label: 'True', value: 1 },
+                { label: 'False', value: 0 }
+            ]},
+            ],
+            idSrc: 'id',
+            formOptions:{
+                main:{
+                    onReturn:false
+                }
+            }
+        })
+        
+        //LISTBU EDITOR ON OPEN EVENT
+        listbu_editor.on('open', function(e, mode, action){
+            $(".DTE_Field").addClass('p-1') // add required classes
+            $("#DTE_Field_identifier, #DTE_Field_parent").addClass("form-control form-select") // add css to alerton form field
+            if(action === 'create' || action === 'edit'){
+                init_select_field({
+                    url: "{{ url('onboarding:client') }}?action=loadIdentifiers",
+                    id:"#DTE_Field_identifier",
+                    item:'Types',
+                })
+
+                // initialize select field parent
+                init_select_field({
+                    url:"{{ url('onboarding:client') }}?action=loadParents",
+                    id:'#DTE_Field_parent',
+                    item:'Types'
+                })
+            }
+            
         })
 
-        $("#list_bu").DataTable({
+        listbu_editor.on('opened', function(e, mode, action){
+            //get the data of rows in editing
+            //var data = getCurrentEditingRow(childEditor, childTable)
+            if(action == 'edit'){
+                initialize_form()
+            }
+        })
+
+        //datatable  list of business units
+        tabListBus = $("#tabListBu").DataTable({
             ajax:{
-                url: "{{ url('onboarding:list_bu') }}"
+                url: "{{ url('onboarding:client') }}?action=getlistbus"
+            },
+            columns:[
+                {data: 'id', defaulContent: "", visible:false},
+                {data: 'bucode', title: 'Code'},
+                {data: 'buname', title: 'Name'},
+                {data: 'identifier__tacode', title: 'Type'},
+                {data: 'identifier_id', visible: false, defaulContent:null},
+                {data: 'parent__buname', title: 'Belongs to'},
+                {data: 'parent_id', visible: false, defaulContent:null},
+                {data: 'enable', title: 'Enable'},
+
+            ],
+            dom:`<'row' <'col-sm-6 d-flex justify-content-start'f> <'col-sm-6 d-flex justify-content-end'B> >rt<'row'
+                <'col-sm-6'l> <'col-sm-6'p><'col-sm-12 d-flex justify-content-center'i>>`,
+            deferRender: true,
+			responsive : true,
+            ordering:false,
+            buttons: [
+                { extend: "create", editor: listbu_editor },
+                { extend: "edit",   editor: listbu_editor },
+                { extend: "remove", editor: listbu_editor }
+            ],
+            select: {
+                style: 'single'
+            }
+        })
+        
+        adminsEditor = new $.fn.dataTable.Editor({
+            table: "#tabAdminUsers",
+            ajax: {
+                url:"{{ url('onboarding:client') }}",
+                data:function(d){
+                    var selected = tabListBus.row( { selected: true } )
+                    if(selected.any()){
+                        let currentRow = getCurrentEditingRow(adminsEditor, tabListAdmins)
+                        d.pk = currentRow !== 'None' ? currentRow['id'] : currentRow
+                        d.csrfmiddlewaretoken = '{{ csrf_token }}'
+                        d.site_id = selected.data().id;
+                        d.ctzoffset = $("#id_ctzoffset").val()
+                        d.peoplecode = $('#DTE_Field_peoplecode').val()
+                        d.peoplename = $('#DTE_Field_peoplename').val()
+                        d.loginid = $('#DTE_Field_loginid').val()
+                        d.gender = $('#DTE_Field_gender').val()
+                        d.email = $('#DTE_Field_email').val()
+                        d.mobno = $('#DTE_Field_mobno').val()
+                        d.isadmin = $('#DTE_Field_isadmin').val()
+                        d.dateofbirth = $('#DTE_Field_dateofbirth').val()
+                        d.dateofjoin = $('#DTE_Field_dateofjoin').val()
+                        d.adminspostdata=true
+                    }
+                    
+                }},
+            fields:[
+                {label: 'Name', name: 'peoplename', data: 'peoplename'},
+                {label: 'Code', name: 'peoplecode', data: 'peoplecode'},
+                {label: 'Email', name: 'email', data: 'email'},
+                {label: 'Login ID', name: 'loginid', data: 'loginid'},
+                {label: 'Mobile', name: 'mobno', data: 'mobno'},
+                {label: 'Date Of Birth', name: 'dateofbirth', data: 'dateofbirth', type:'datetime'},
+                {label: 'Date Of Join', name: 'dateofjoin', data: 'dateofjoin', type:'datetime'},
+                {label: 'Is Admin', name: 'isadmin', data: 'isadmin',type: 'select', def:1,
+                options:   [
+                    { label: 'True', value: 1 },
+                    { label: 'False', value: 0 }
+                ]},
+                
+                {label: 'Gender', name: 'gender', data: 'gender', type:'select', def:'M',
+                options:[
+                { label: 'Male', value: 'M' },
+                { label: 'Female', value: 'F' },
+                { label: 'Other', value: 'O' }
+            ]},
+            ],
+            idSrc: 'id',
+            formOptions:{
+                main:{
+                    onReturn:false
+                }
+            }
+        })
+
+        adminsEditor.on('open', function(e, mode, action){
+            $(".DTE_Field").addClass('p-1') // add required classes
+        })
+
+        
+        //datatable  list of peoples
+        tabListAdmins= $("#tabAdminUsers").DataTable({
+            ajax:{
+                url: "{{ url('onboarding:client') }}?action=getadmins"
             },
             columns:[
                 {data: 'id', defaulContent: "", visible:false},
@@ -299,18 +461,98 @@ Client
                 {data: 'peoplename', title: 'Name'},
                 {data: 'loginid', title: 'Login'},
                 {data: 'email', title: 'Email'},
-                {data: 'mobno', title: 'Mobile no'},
+                {data: 'mobno', title: 'Mobile'},
+                {data: 'dateofbirth', title: 'Date Of Birth', visible:false},
+                {data: 'dateofjoin', title: 'Date Of Join', visible:false},
                 {data: 'gender', title: 'Gender'},
                 {data: 'isadmin', title: 'Is Admin'},
+
             ],
+            dom:`<'row' <'col-sm-6 d-flex justify-content-start'f> <'col-sm-6 d-flex justify-content-end'B> >rt<'row'
+                <'col-sm-6'l> <'col-sm-6'p><'col-sm-12 d-flex justify-content-center'i>>`,
             deferRender: true,
 			responsive : true,
+            ordering:false,
             buttons: [
-                { extend: "create", editor: editor },
-                { extend: "edit",   editor: editor },
-                { extend: "remove", editor: editor }
-            ]
+                { extend: "create", editor: adminsEditor },
+                { extend: "edit",   editor: adminsEditor },
+                { extend: "remove", editor: adminsEditor }
+            ],
+            select: {
+                style: 'single'
+            }
         })
+        $("#tabAdminUsers_wrapper .buttons-create").addClass('disabled')//on page load disable new button of child table
+        $("#tabAdminUsers_wrapper .buttons-create").attr({'data-toggle':"tooltip", 'data-placement':"top", 'title':"Select Site First"})
+
+
+        tabListBus.on( 'select', function () {
+            $("#tabAdminUsers_wrapper .buttons-create").removeClass('disabled')
+
+        } );
+        
+        tabListBus.on( 'deselect', function () {
+            $("#tabAdminUsers_wrapper .buttons-create").addClass('disabled')
+            $("#tabAdminUsers_wrapper .buttons-create").attr({'data-toggle':"tooltip", 'data-placement':"top", 'title':"Select Section First"})
+        } );
+
+        //on submit form post request
+        $("#id_clientform").submit((e) => {
+            e.preventDefault()
+            var form = $(this);
+            const params   = { url: $(form).attr("action"), modal: false }
+            const id = "{{ clientform.instance.pk }}" //form instance id
+            var   payLoad  = {formData:$("#id_clientform").serialize(), csrfmiddlewaretoken: '{{ csrf_token }}'} 
+            if(id != 'None'){
+                var newPayLoad = {...payLoad, 'pk':id}
+                payLoad = newPayLoad
+            }
+            fire_ajax_form_post(params, payLoad)
+            .done((data, status, xhr) => {
+                let url = "{{ url('onboarding:client') }}"
+                show_successful_save_alert(update= id != 'None' ? true : false)
+                window.setTimeout(function() {
+                    window.location.href = `${url}?id=${data.pk}`;
+                }, 2000);
+            })
+        })
+        //delete ajax request 
+        function isClientDeleted(id){ 
+            let urlname = "{{ url('onboarding:client') }}"
+            const params = {url:`${urlname}?action=delete&id=${id}`}
+            fire_ajax_get(params)
+            .done((data, status, xhr) => {
+                if(!xhr.status === 200){
+                    return false
+                }
+                return true
+            })
+            .fail((xhr, status, error) => {
+                show_error_alert('Something went wrong!') //defined in custom.js
+                return false
+            })
+        }
+
+        //delete typeassist 
+        function deleteClient(elemt){
+            var id = "{{ clientform.instance.pk }}"
+            var viewname = 'Client'
+            show_alert_before_delete(viewname)
+            .then((result) => {
+                if(result.isConfirmed){ //delete requested by user
+                    status = isReportDeleted(id) //fire's request
+                    console.log("status ", status)
+                    if(status){
+                        show_successful_delete_alert() //defined in customjs
+                        window.setTimeout(function() {
+                            window.location.href = "{{ url('reports:config_sitereport_template') }}?action=form";
+                        }, 2000);
+                    }else{
+                        show_error_alert('Something went wrong!');
+                    }
+                }
+            })
+        }
        
     })
 </script>

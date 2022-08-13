@@ -486,7 +486,7 @@ Schedhule Tour
     //delete ajax request 
 	function isMainJobDeleted(id){ 
 		console.log("id ", id)
-		const params = {url:`${urlname}?action=formdelete&id=${id}`}
+		const params = {url:`${urlname}?action=delete&id=${id}`}
 		fire_ajax_get(params)
 		.done((data, status, xhr) => {
 			if(!xhr.status === 200){
@@ -733,7 +733,7 @@ Schedhule Tour
         }
 
         //Add Calendar To Date Fields
-        $("#id_from_date, #id_upto_date").flatpickr({
+        $("#id_fromdate, #id_uptodate").flatpickr({
             enableTime: true,
             time_24hr: true,
             dateFormat: 'd-M-Y H:S'

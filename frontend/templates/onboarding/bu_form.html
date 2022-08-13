@@ -46,6 +46,18 @@
 		</div>
 	</form>
 	{% endcall %}
+
+	<!-- to delete an instance with popup_alert pass the delete_url_name, instance_id, popup_title, popup_id -->
+	{% call general_popup(title="Delete", popup_id="open_map", modal_size="modal-xl") %}
+	<div class="modal-body card">
+		<div class="card-header">
+			<div class="card-title">Set GPS Location</div>
+		</div>
+		<div class="card-body">
+			<div id="map"></div>
+		</div>
+	</div>
+	{% endcall %}
 {% endblock popup_alerts %}
 <!------------------------  END POP-UPS CODE ----------------------------->
 
@@ -161,9 +173,8 @@ Buisiness-View
 				info
 			</span>
 		</label>
-		<div class="col-md-4">
+		<div class="col-md-4 d-flex">
 			{{ buform.gpslocation }}
-			{{ buform.gpslocation.errors }}
 		</div>
 
 		<!--------------------- BEGIN CHECKBOXES -------------------------->
@@ -237,7 +248,151 @@ Buisiness-View
 <!--------------- BEGIN PAGE-LEVEL EXTRA SCRIPTS --------------->
 {% block extra_scripts %}
 {{ buform.media.js }}
+<script
+      src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDVbA53nxHKUOHdyIqnVPD01aOlTitfVO0&callback=initAutocomplete&libraries=places&v=weekly"
+      defer
+    ></script>
 <script>
+	function initAutocomplete() {
+		map = new google.maps.Map(document.getElementById("map"), {
+		center: { lat: 21.7679, lng: 78.8718 },
+		zoom: 6,
+		mapTypeId: "roadmap",
+		mapTypeControl: true,
+		mapTypeControlOptions: {
+			style: google.maps.MapTypeControlStyle.HORIZONTAL_BAR,
+			position: google.maps.ControlPosition.BOTTOM_LEFT,
+		},
+
+		});
+
+
+		//search-radius-form controls
+		const controlDiv = document.createElement('DIV');
+		controlDiv.id = "search_rad_controls";
+
+	
+
+		// Create the search box and link it to the UI element.
+		const controlInput = document.createElement('input');
+		controlInput.id = "pac-input";
+		controlInput.className = "controls mt-2 rounded-pill"
+		controlInput.placeholder = 'Search any keyword..'
+
+
+		// Append everything to the wrapper div
+		controlDiv.appendChild(controlInput);
+
+
+
+		map.controls[google.maps.ControlPosition.TOP_LEFT].push(controlDiv);
+		const searchBox = new google.maps.places.SearchBox(controlInput);
+
+		infoWindow = new google.maps.InfoWindow();
+
+		const locationButton = document.createElement("button");
+
+		locationButton.textContent = "Pan to Current Location";
+		locationButton.classList.add("custom-map-control-button");
+		map.controls[google.maps.ControlPosition.TOP_CENTER].push(locationButton);
+
+		locationButton.addEventListener("click", () => {  
+			// Try HTML5 geolocation.
+			if (navigator.geolocation) {
+				navigator.geolocation.getCurrentPosition(
+				(position) => {
+					const pos = {
+					lat: position.coords.latitude,
+					lng: position.coords.longitude,
+					};
+
+					infoWindow.setPosition(pos);
+					infoWindow.setContent("Location found.");
+					infoWindow.open(map);
+					map.setCenter(pos);
+				},
+				() => {
+					handleLocationError(true, infoWindow, map.getCenter());
+				}
+				);
+			} else {
+				// Browser doesn't support Geolocation
+				handleLocationError(false, infoWindow, map.getCenter());
+			}
+		});
+		// Bias the SearchBox results towards current map's viewport.
+		map.addListener("bounds_changed", () => {
+			searchBox.setBounds(map.getBounds());
+		});
+
+		let markers = [];
+
+		// Listen for the event fired when the user selects a prediction and retrieve
+		// more details for that place.
+		searchBox.addListener("places_changed", () => {
+			const places = searchBox.getPlaces();
+
+			if (places.length == 0) {
+				return;
+			}
+
+			// Clear out the old markers.
+			clearAllMarkers(markers)
+			markers = [];
+
+			// For each place, get the icon, name and location.
+			const bounds = new google.maps.LatLngBounds();
+
+			places.forEach((place) => {
+				if (!place.geometry || !place.geometry.location) {
+				console.log("Returned place contains no geometry");
+				return;
+				}
+
+				const icon = {
+				url: place.icon,
+				size: new google.maps.Size(71, 71),
+				origin: new google.maps.Point(0, 0),
+				anchor: new google.maps.Point(17, 34),
+				scaledSize: new google.maps.Size(25, 25),
+				};
+				
+				let marker = new google.maps.Marker({
+					map,
+					icon,
+					title: place.name,
+					position: place.geometry.location,
+					animation:google.maps.Animation.DROP
+				})
+				
+				// Create a marker for each place.
+				markers.push(
+				marker
+				);
+
+				//on click marker zoom in
+				marker.addListener("click", () => {
+				map.setZoom(17);
+				map.setCenter(marker.getPosition());
+				});
+
+				if (place.geometry.viewport) {
+				// Only geocodes have viewport.
+				bounds.union(place.geometry.viewport);
+				} else {
+				bounds.extend(place.geometry.location);
+				}
+			});
+			map.fitBounds(bounds);
+		});
+			//place marker when user clicks on map
+			google.maps.event.addListener(map, 'click', function(event) {
+				clearAllMarkers(markers)
+				placeMarker(event.latLng);
+			});
+	}
+	
+	
 	function showHideBuType(){
 		//on load check butype is site
 		var data = $("#id_identifier option:selected").text();
@@ -246,6 +401,11 @@ Buisiness-View
 				$(".site_type").show();
 		}else{$(".site_type").hide();}
 	}
+
+	$('#open_map').on('shown.bs.modal', function(e) {
+			initAutocomplete()
+		});
+	
 	$(document).ready(function () {
 		//set ctzoffset
         $("#id_ctzoffset").val(-new Date().getTimezoneOffset())
@@ -253,6 +413,7 @@ Buisiness-View
 		//hide the delete button when instance is not saved yet.
 		if ('{{buform.instance.id}}' == 'None') {
 			$("#btn_del").hide()
+			$(".dt-button buttons-create").addClass("disabled")
 		}
 
 		// submit the popup-taform for validation and saving in db.
@@ -294,6 +455,13 @@ Buisiness-View
 
 		//on load check
 		showHideBuType();
+
+		//on click gpslocation
+		$("#id_gpslocation").click(function() {
+			$("#open_map").modal('show')
+		})
+
+		
 		
 	})
 </script>
