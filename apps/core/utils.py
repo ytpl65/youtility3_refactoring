@@ -911,7 +911,7 @@ def fr(imagePath1, imagePath2):
 
 def alert_observation(pk, event):
 
-    pass
+    raise NotImplementedError()
 
 
 def alert_email(pk, event):

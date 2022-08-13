@@ -25,7 +25,7 @@ def get_assetsmartplace_choices():
 
 
 def initialize_alerton_field(val, choices = False):
-    pass
+    raise NotImplementedError()
 
 def validate_alertbelow(forms, data):
     min, alertbelow = float(data['min']), float(data['alertbelow'])

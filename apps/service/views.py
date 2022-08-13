@@ -215,7 +215,7 @@ class AttachmentUpload(APIView):
 
 
 def alert_observation(pkid, event):
-    pass
+    raise NotImplementedError()
 
 
 class TestLoginREquired(APIView):

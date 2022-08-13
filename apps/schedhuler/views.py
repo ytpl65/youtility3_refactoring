@@ -1043,7 +1043,7 @@ class Ticket(LoginRequiredMixin, View):
         return rp.JsonResponse(cxt, status = 404)
 
     def delete_ticket(self, request):
-        pass
+        raise NotImplementedError()
 
 class RetriveTickets(LoginRequiredMixin, View):
     model = am.Jobneed

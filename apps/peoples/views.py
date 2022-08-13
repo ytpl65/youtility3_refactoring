@@ -718,7 +718,7 @@ class DeleteCapability(LoginRequiredMixin, View):
 #=========================== End Capability View Classes ==============================#
 
 def delete_master(request, params):
-    pass
+    raise NotImplementedError()
 
 class Capability(LoginRequiredMixin, View):
     params = {

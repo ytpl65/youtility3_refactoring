@@ -208,7 +208,7 @@ class MasterQuestionSet(LoginRequiredMixin, View):
             return questions
 
     def handle_valid_form(form, request, create):
-        pass
+        raise NotImplementedError()
 
 class MasterAsset(LoginRequiredMixin, View):
     params = {
@@ -285,7 +285,7 @@ class MasterAsset(LoginRequiredMixin, View):
         return resp
 
     def handle_valid_form(self, form, request, create):
-        pass
+        raise NotImplementedError()
 
 class Checklist(MasterQuestionSet):
     params = MasterQuestionSet.params
