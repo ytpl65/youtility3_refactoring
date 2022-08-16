@@ -5,8 +5,6 @@ docs/importants.txt
 docs/importants.txt
 frontend/static/assets/js/
 frontend/static/assets/css/
-!frontend/static/assets/css/local
-!frontend/static/assets/js/local
 frontend/static/assets/media
 frontend/static/assets/plugins
 .env
