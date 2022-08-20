@@ -15,10 +15,21 @@ from pprint import pformat
 from apps.peoples import models as pm
 from apps.tenants.models import Tenant
 import logging
+from rest_framework.utils.encoders import JSONEncoder
+from django.contrib.gis.measure import Distance
 import apps.onboarding.models as om
 import apps.activity.models as am
 logger = logging.getLogger('__main__')
 dbg = logging.getLogger('__main__').debug
+
+
+class CustomJsonEncoderWithDistance(JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, Distance):
+            print(obj)
+            return obj.m
+        return super(CustomJsonEncoderWithDistance, self).default(obj)
+
 
 def cache_it(key, val, time = 1*60):
     from django.core.cache import cache
@@ -1027,7 +1038,7 @@ def upload(request):
     if request.POST["docnumber"]:
         docnumber=  request.POST["docnumber"]
         foldertype= request.POST["foldertype"]
-        ownerid=    request.POST["owner"]
+        ownerid=    request.POST["ownerid"]
         if "img" in request.FILES:
             home_dir= basedir= tablename= fyear= fmonth= None
             home_dir=       ("~") + "/";
@@ -1035,7 +1046,7 @@ def upload(request):
             fmonth=     str(datetime.now().strftime("%b"))
             fextension= os.path.splitext(request.FILES["img"].name)[1]
             filename=   parser.parse(str(datetime.now())).strftime('%d_%b_%Y_%H%M%S') + fextension
-            if foldertype   in ["task", "tour", "ticket", "incidentreport"]: basedir, tablename= "transaction", "jobneed"
+            if foldertype   in ["task", "internaltour","externaltour", "ticket", "incidentreport"]: basedir, tablename= "transaction", "jobneed"
             elif foldertype in ["visitorlog"]:                               basedir, tablename= "transaction", "visitorlog"
             elif foldertype in ["conveyance"]:                               basedir, tablename = "transaction", "conveyance"
             elif foldertype in ["personlogger"]:
@@ -1052,11 +1063,12 @@ def upload(request):
                 else: filename= request.FILES['img'].name
 
             if basedir == "transaction":
-                filepath= "youtility3_avpt" + "/" + basedir + "/" + fyear + "/" + fmonth + "/" + tablename + "/" + foldertype + "/" + ownerid
-            else: filepath= "youtility3_avpt" + "/" + basedir + "/" + foldertype + "/" + ownerid
+                filepath= "youtility4_media" + "/" + basedir + "/" + fyear + "/" + fmonth + "/" + tablename + "/" + foldertype + "/" + ownerid
+            else: filepath= "youtility4_media" + "/" + basedir + "/" + foldertype + "/" + ownerid
 
             filepath= str(filepath).lower() # convert to lower-case
             fullpath= home_dir + filepath
+            ic(fullpath)
             if not os.path.exists(fullpath):
                 os.makedirs(fullpath)
                 pass
@@ -1067,12 +1079,15 @@ def upload(request):
                 filename=  request.POST["doctype"] + fextension
 
             uploadedfileurl= fullpath + "/" + filename
+            ic(uploadedfileurl)
             try:
-                with open(uploadedfileurl, 'wb') as temp_file:
-                    temp_file.write(request.FILES['img'].read())
-                    temp_file.close()
-                pass
+                if not os.path.exists(uploadedfileurl):
+                    with open(uploadedfileurl, 'wb') as temp_file:
+                        temp_file.write(request.FILES['img'].read())
+                        temp_file.close()
+                    pass
                 isUploaded= True
+                ic(isUploaded)
             except:
                 isUploaded= False
             del basedir, tablename, fyear, fmonth, home_dir

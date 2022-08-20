@@ -43,8 +43,10 @@ ext_schdtour_list = 'External ScheduleTour List',
 			columns:[
                 {data: 'id', visible:false},
                 {data: 'jobname', title: 'Name'},
-                {data: 'bu__buname', title: 'BV'},
-                {title: 'People/Group', defaultContent:null, data:null},
+                {data: 'sitegrpname', title: 'Cluster'},
+                {data: 'assignedto', title:"People/Group", defaultContent:null},
+                {data:'israndomized', title:'Is Random'},
+                {data:'tourfrequency', title:'Frequency'},
                 {title: 'From', data: 'fromdate'},
                 {title: 'To', data: 'uptodate'},
                 {title: 'Duration', data: 'planduration'},
@@ -57,17 +59,17 @@ ext_schdtour_list = 'External ScheduleTour List',
                     let urlname = "{{ url('schedhuler:schd_external_tour') }}"
                     return `<a href="${urlname}?id=${row['id']}">${data}</a>`
                 }},
-                {targets:3, render:function(data, type, row, meta){
-                    let peoplename = row['people__peoplename']
-                    let groupname = row['pgroup__groupname']
-                    return typeof peoplename in ['undefined', null] ? groupname : peoplename 
-                }},
-                {targets:4, render:function(data, type, row, meta){
-                    return convert_to_local(type, data, row)
-                }},
-                {targets:5, render:function(data, type, row, meta){
-                    return convert_to_local(type, data, row)
-                }},
+                //{targets:3, render:function(data, type, row, meta){
+                //    let peoplename = row['people__peoplename']
+                //    let groupname = row['pgroup__groupname']
+                //    return typeof peoplename in ['undefined', null] ? groupname : peoplename 
+                //}},
+                //{targets:6, render:function(data, type, row, meta){
+                //    return convert_to_local(type, data, row)
+                //}},
+                //{targets:7, render:function(data, type, row, meta){
+                //    return convert_to_local(type, data, row)
+                //}},
             ],
             deferRender: true,
 			responsive: true,

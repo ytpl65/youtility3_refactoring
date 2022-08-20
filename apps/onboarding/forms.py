@@ -166,13 +166,13 @@ class BtForm(forms.ModelForm):
                 raise forms.ValidationError(self.error_msg['invalid_bucode3'])
             return value.upper()
 
-    def clean_gpslocation(self):
-        import re
-        if gps := self.cleaned_data.get('gpslocation'):
-            regex = '^([-+]?)([\d]{1,2})(((\.)(\d+)(,)))(\s*)(([-+]?)([\d]{1,3})((\.)(\d+))?)$'
-            if not re.match(regex, gps):
-                raise forms.ValidationError(self.error_msg['invalid_latlng'])
-            return gps
+    #def clean_gpslocation(self):
+    #    import re
+    #    if gps := self.cleaned_data.get('gpslocation'):
+    #        regex = '^([-+]?)([\d]{1,2})(((\.)(\d+)(,)))(\s*)(([-+]?)([\d]{1,3})((\.)(\d+))?)$'
+    #        if not re.match(regex, gps):
+    #            raise forms.ValidationError(self.error_msg['invalid_latlng'])
+    #        return gps
 
     def clean_buname(self):
         if val := self.cleaned_data.get('buname'):

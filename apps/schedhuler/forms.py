@@ -156,6 +156,9 @@ class Schd_E_TourJobForm(JobForm):
     ASSIGNTO_CHOICES   = [('PEOPLE', 'People'), ('GROUP', 'Group')]
     timeInChoices = [('MIN', 'Min'),('HRS', 'Hours')]
     assign_to          = forms.ChoiceField(choices = ASSIGNTO_CHOICES, initial="PEOPLE")
+    israndom = forms.BooleanField(initial=False, label="Is Random Tour")
+    tourfrequency = forms.IntegerField(min_value=1, max_value=3, initial=1, label='Frequency')
+    breaktime = forms.IntegerField(label='Frequency', required=False)
     required_css_class = "required"
 
 
@@ -179,6 +182,8 @@ class Schd_E_TourJobForm(JobForm):
     def __init__(self, *args, **kwargs):
         self.request = kwargs.pop('request', None)
         super().__init__(*args, **kwargs)
+        self.fields['israndom'].widget.attrs['class'] = 'btdeciders'
+        self.fields['tourfrequency'].widget.attrs['class'] = 'btdeciders'
         self.fields['fromdate'].input_formats  = settings.DATETIME_INPUT_FORMATS
         self.fields['uptodate'].input_formats  = settings.DATETIME_INPUT_FORMATS
         self.fields['ticketcategory'].initial  = ob.TypeAssist.objects.get(tacode='AUTOCLOSED')

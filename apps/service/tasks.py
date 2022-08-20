@@ -31,25 +31,14 @@ def insertrecord(record, tablename):
 
 
 def get_model_or_form(tablename):
-    match tablename:
-        case "peopleeventlog":
-            return PeopleEventlog
-        case 'jobneed':
-            return  Jobneed
-        case 'attachment':
-            return  Attachment
-        case 'jobneeddetails':
-            return  JobneedDetails
-        case 'tracking':
-            return  Tracking
-        case 'deviceeventlog':
-            return  DeviceEventlog
-        case 'ticket':
-            return  Ticket
-        case 'asset':
-            return  Asset
-        case _:
-            return None
+    if tablename == 'peopleeventlog':return PeopleEventlog
+    elif tablename == 'attachment': return Attachment
+    elif tablename == 'jobneed': return Jobneed
+    elif tablename == 'jobnneeddetails': return JobneedDetails
+    elif tablename == 'deviceeventlog': return DeviceEventlog
+    elif tablename == 'ticket': return Ticket
+    elif tablename == 'asset': return Asset
+
 
 def get_or_create_dir(path):
     try:
@@ -117,21 +106,19 @@ def insertrecord_from_tablename(record, tablename, db):
 
 def call_service_based_on_filename(data, filename, db='default'):
     log.info(f'filename before calling {filename}')
-    match filename:
-        case 'insertRecord.gz':
-            log.info("calling insertrecord. service..")
-            return perform_insertrecord_bgt.delay(data, db = db)
-        case 'updateTaskTour.gz':
-            log.info("calling updateTaskTour service..")
-            return perform_tasktourupdate_bgt.delay(data, db = db)
-        case 'uploadReport.gz':
-            log.info("calling uploadReport service..")
-            return perform_reportmutation_bgt.delay(data, db = db)
-        case 'adhocRecord.gz':
-            log.info("calling adhocRecord service..")
-            return perform_adhocmutation_bgt.delay(data, db = db)
-        case _:
-            return
+    if filename == 'insertRecord.gz':
+        log.info("calling insertrecord. service..")
+        return perform_insertrecord_bgt.delay(data, db = db)
+    elif filename == 'updateTaskTour.gz':
+        log.info("calling updateTaskTour service..")
+        return perform_tasktourupdate_bgt.delay(data, db = db)
+    elif filename == 'uploadReport.gz':
+        log.info("calling uploadReport service..")
+        return perform_reportmutation_bgt.delay(data, db = db)
+    elif filename == 'adhocRecord.gz':
+        log.info("calling adhocRecord service..")
+        return perform_adhocmutation_bgt.delay(data, db = db)
+
 
 
 

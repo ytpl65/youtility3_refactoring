@@ -1,12 +1,14 @@
 from django.db import models
-from django.db.models.functions import Concat
+from django.db.models.functions import Concat, Cast
 from django.db.models import CharField, Value as V
 from django.db.models import Q, F, Count, Case, When, Value
 from django.contrib.gis.db.models.functions import Distance 
-from django.contrib.gis.db.models.functions import  AsWKT
+from django.contrib.gis.db.models.functions import  AsWKT, AsGeoJSON
 from datetime import datetime, timedelta, timezone
 from apps.core import utils
-
+import logging
+logger = logging.getLogger('__main__')
+log = logger
 
 class QuestionSetManager(models.Manager):
     use_in_migrations = True
@@ -75,8 +77,14 @@ class QuestionSetManager(models.Manager):
                 'id', 'qsetname', 'qcount', 'seqno') or self.none()
     
     def load_checklist(self):
-        "Load Checklist"
-        qset = self.annotate(text = F('qsetname')).filter(enable=True, type='CHECKLIST').values('id', 'text')
+        "Load Checklist for editor dropdown" 
+        qset = self.annotate(
+            text = F('qsetname')).filter(
+                enable=True, type='CHECKLIST').values(
+                    'id', 'text')
+        if qset:
+            for idx, q in enumerate(qset):
+                q.update({'slno':idx+1})
         return qset or self.none()
     
     
@@ -222,7 +230,9 @@ class JobneedManager(models.Manager):
     def get_sitereportlist(self, request):
         "Transaction List View"
         from apps.onboarding.models import Bt
-        from apps.activity.models import QuestionSet
+        from apps.activity.models import QuestionSet, Attachment
+        from apps.activity.models import Attachment
+
         qset, R = self.none(), request.GET
         pbs = Bt.objects.get_people_bu_list(request.user)
         tl = QuestionSet.objects.get_template_list(pbs)
@@ -231,7 +241,10 @@ class JobneedManager(models.Manager):
                 buname = Case(When(~Q(othersite="") | ~Q(othersite='NONE'), then=Concat(V('otherlocation[ '), F('othersite'), V(']'))), default=Value('bu__buname')),
                 distance = Distance('gpslocation', 'bu__gpslocation'),
                 gps = AsWKT('gpslocation'),
-            ).filter(plandatetime__gte = R['pd1'], plandatetime__lte = R['pd2'], bu_id__in = pbs, identifier = 'SITEREPORT', parent_id=1).values(
+                uuc = Cast('uuid', output_field=models.CharField())
+            ).filter(plandatetime__gte = R['pd1'], plandatetime__lte = R['pd2'], bu_id__in = pbs, identifier = 'SITEREPORT', parent_id=1).values_list('uuc', flat=True)
+            attobjs = Attachment.objects.get_attforuuids(qset.uuc)
+            values(
                 'id','plandatetime', 'jobdesc', 'people__peoplename', 'jobstatus', 'gps',
                 'distance', 'remarks', 'buname', 'distance'
             )
@@ -330,20 +343,29 @@ class AttachmentManager(models.Manager):
             )
         return qset or self.none()
     
+    
     def create_att_record(self, request, filepath, filename):
         R, S = request.POST, request.session
         ic(R)
         from apps.onboarding.models import TypeAssist
         ta = TypeAssist.objects.filter(taname = R['ownername'])
-        PostData = {'filepath':filepath, 'filename':filename, 'owner':R['owner'], 'bu_id':S['bu_id'],
-                'attachmenttype':R['attachmenttype'], 'ownername_id':ta[0].id, 'client_id':S['client_id'],
+        PostData = {'filepath':filepath, 'filename':filename, 'owner':R['ownerid'], 'bu_id':S['bu_id'],
+                'attachmenttype':R['attachmenttype'], 'ownername_id':ta[0].id,
                 'cuser':request.user, 'muser':request.user, 'cdtz':utils.getawaredatetime(datetime.now(), R['ctzoffset']),
                 'mdtz':utils.getawaredatetime(datetime.now(), R['ctzoffset'])}
         try:
+            ic("creating record")
             qset = self.create(**PostData)
+            ic(dir(qset.filename))
+            ic(qset.id)
         except Exception:
+            log.error("Attachment record creation failed...", exc_info=True)
             return {'error':'Upload attachment Failed'}
-        return {'filepath':qset.filepath, 'filename':qset.filename, 'id':qset.id} if qset else self.none()
+        return {'filepath':qset.filepath, 'filename':qset.filename.name, 'id':qset.id} if qset else self.none()
+
+    def get_attforuuids(self, uuids):
+        return self.filter(owner__in = uuids) or self.none()
+        
         
 
 class AssetManager(models.Manager):
@@ -522,6 +544,45 @@ class JobManager(models.Manager):
         ).values(*fields).order_by('-cdtz')
         return qset or self.none()
     
+    def get_listview_objs_schdexttour(self, request):
+        qset = self.annotate(
+            assignedto = Case(
+                When(pgroup_id=1, then=Concat(F('people__peoplename'), V(' [PEOPLE]'))),
+                When(people_id=1, then=Concat(F('pgroup__groupname'), V(' [GROUP]'))),
+            ),
+            sitegrpname = F('sgroup__groupname'),
+            israndomized = F('other_info__is_randomized'),
+            tourfrequency = F('other_info__tour_frequency'),
+            breaktime = F('other_info__breaktime'),
+            deviation = F('other_info__deviation')
+        ).filter(
+            ~Q(jobname='NONE'), parent_id=1, identifier='EXTERNALTOUR'
+        ).select_related('pgroup', 'sgroup', 'people').values(
+            'assignedto', 'sitegrpname', 'israndomized', 'tourfrequency',
+            'breaktime', 'deviation', 'fromdate', 'uptodate', 'gracetime',
+            'expirytime', 'planduration','jobname', 'id'
+        ).order_by('-mdtz')
+        ic(utils.printsql(qset))
+        return qset or self.none()
+
+    def get_sitecheckpoints_exttour(self, job):
+
+        qset = self.annotate(
+            qsetid = F('qset_id'), assetid = F('asset_id'),
+            jobid = F('id'), gpslocation = AsGeoJSON('bu__gpslocation'),
+            buid = F('bu_id'), buname=F('bu__buname'),
+            breaktime = F('other_info__breaktime'),
+            distance=F('other_info__distance'),
+            duration = Value(None, output_field=models.CharField(null=True)),
+            qsetname=F('qset__qsetname')
+            
+        ).filter(parent_id=job.id).select_related('asset', 'qset',).values(
+            'breaktime', 'distance', 'starttime', 'expirytime',
+            'qsetid', 'jobid', 'assetid', 'seqno', 'jobdesc',
+            'buname', 'buid', 'gpslocation', 'endtime', 'duration',
+            'qsetname'
+        ).order_by('seqno')
+        return qset or self.none()
 
 
 

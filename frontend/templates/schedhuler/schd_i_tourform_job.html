@@ -268,10 +268,10 @@ Schedhule Tour
                                     {% for checkpoint in checkpoints %}
                                     <tr>
                                         <td>{{ checkpoint['seqno'] }}</td>
-                                        <td>{{ checkpoint['asset__id'] }}</td>
-                                        <td>{{ checkpoint['asset__assetname'] }}</td>
-                                        <td>{{ checkpoint['qset__id'] }}</td>
-                                        <td>{{ checkpoint['qset__qsetname'] }}</td>
+                                        <td>{{ checkpoint['asset_id'] }}</td>
+                                        <td>{{ checkpoint['assetname'] }}</td>
+                                        <td>{{ checkpoint['qset_id'] }}</td>
+                                        <td>{{ checkpoint['qsetname'] }}</td>
                                         <td>{{ checkpoint['expirytime'] }}</td>
                                     </tr>
                                     {% endfor %}

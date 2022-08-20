@@ -16,15 +16,9 @@ log = getLogger('__main__')
 # Create your views here.
 A = {'rc':0, 'reason': 'OK', 'msg':None, 'errors':None, 'returnid':None}
 def get_model(tablename):
-    match tablename:
-        case "peopleeventlog":
-            return PeopleEventlog
-        case 'jobneed':
-            return  Jobneed
-        case 'attachment':
-            return Attachment
-        case _:
-            return None
+    if tablename == 'peopleeventlog':return PeopleEventlog
+    elif tablename == 'attachment': return Attachment
+    elif tablename == 'jobneed': return Jobneed
 
 
 def perform_insertrecord(data):

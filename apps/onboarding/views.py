@@ -767,6 +767,7 @@ class UpdateBt(LoginRequiredMixin, View):
     def post(self, request, *args, **kwargs):
         logger.info('BtForm form submitted...')
         response = None
+        ic(kwargs, args)
         try:
             pk = kwargs.get('pk')
             bt = self.model.objects.get(id = pk)
@@ -778,12 +779,12 @@ class UpdateBt(LoginRequiredMixin, View):
                 logger.info('BtForm Form saved')
                 messages.success(request, "Success record saved successfully!",
                                  "alert-success")
-                response = redirect('onboarding:bu_form')
+                response = redirect('onboarding:bu_update', pk=bt.id)
             else:
                 logger.info('BtForm Form is not valid')
                 response = render(request, self.template_path, context={
                                   'buform': form, 'edit': True})
-        except self.model.objects.DoesNotExist:
+        except self.model.DoesNotExist:
             logger.error('Object does not exist', exc_info = True)
             messages.error(request, "Object does not exist",
                            "alert alert-danger")

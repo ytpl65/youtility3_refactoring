@@ -715,16 +715,20 @@ class Attachments(LoginRequiredMixin, View):
     
     def get(self, request, *args, **kwargs):
         R, P = request.GET, self.params
+        ic(R)
         if R.get('action') == 'get_attachments_of_owner' and R.get('owner'):
-            objs = P['model'].objects.get_att_given_owner(R['owner'])
+            ic("returning")
+            objs = P['model'].objects.get_att_given_owner(R['owner'])   
             return rp.JsonResponse({'data':list(objs)}, status=200)
         return rp.JsonResponse({'data':[]}, status=200)
     
     def post(self, request, *args, **kwargs):
         R, P = request.POST, self.params
+        ic(R, request.FILES)
         if 'img' in request.FILES:
             isUploaded, filename, filepath, docnumber = utils.upload(request)
             if isUploaded:
                 data = P['model'].objects.create_att_record(request, filename, filepath)
+                ic(data)
                 return rp.JsonResponse(data, status = 200, safe=False)
-        return rp.JsonResponse({'error':"Invalid Request"}, status=200)
+        return rp.JsonResponse({'error':"Invalid Request"}, status=404)

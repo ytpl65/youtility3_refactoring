@@ -419,7 +419,7 @@ class JobForm(forms.ModelForm):
         fields = ['jobname', 'jobdesc', 'fromdate', 'uptodate', 'cron','sgroup',
                     'identifier', 'planduration', 'gracetime', 'expirytime',
                     'asset', 'priority', 'qset', 'pgroup', 'geofence', 'parent',
-                    'parent', 'seqno', 'client', 'bu', 'starttime', 'endtime', 'ctzoffset',
+                     'seqno', 'client', 'bu', 'starttime', 'endtime', 'ctzoffset',
                     'frequency',  'scantype', 'ticketcategory', 'people', 'shift']
 
         labels = {

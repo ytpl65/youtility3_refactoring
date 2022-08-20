@@ -326,13 +326,13 @@ Internal Tour
 <script src="{{ static('assets/plugins/custom/Editor-2.0.8/js/editor.select2.js') }}" type="text/javascript"></script>
 <script>
     //set the variables which are gonna used in attachment.js file for fetching attachments against the owner
-    var attachmentUrl = '{{ url("activity:attachments") }}'
+    var attachmentUrl = '{{ url("activity:attachments") }}?action=get_attachments_of_owner'
     var attachementDatasource = 'jobneedattachment'
     var attachmentOwner = '{{ internaltourform.instance.uuid }}'
     var csrf = '{{ csrf_token }}'
-    var ownerName = "Jobneed"
+    var ownername = "Jobneed"
     var id = ""
-    var folderType = 'tour'
+    var folderType = 'internaltour'
     var isDefault= "False";
     var docnumber=1;
 </script>

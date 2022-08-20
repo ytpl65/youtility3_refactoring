@@ -1,6 +1,7 @@
 from django.contrib.auth.base_user import BaseUserManager
 from django.db import models
 from django.db.models import Q, F
+from django.contrib.gis.db.models.functions import  AsGeoJSON
 from django.utils.translation import ugettext_lazy as _
 from icecream import ic
 
@@ -105,6 +106,27 @@ class PgblngManager(models.Manager):
         ).values('buname', 'buid')
         ic(qset)
         return qset or self.none()
+    
+    def get_sitesfromgroup(self, job):
+        "return sites under group with given sitegroupid"
+        from apps.activity.models import Job
+        qset = Job.objects.get_sitecheckpoints_exttour(job)
+        if not qset:
+            qset = self.annotate(
+                gpslocation = AsGeoJSON('assignsites__gpslocation'),
+                buname = F('assignsites__buname'), bucode=F('assignsites__bucode'),
+                buid = F('assignsites_id')
+            ).select_related('assignsites', 'identifier').filter(
+                pgroup_id = job.sgroup_id
+            ).values('gpslocation', 'bucode', 'buname', 'buid')
+            if qset:
+                for q in qset:
+                    q.update(
+                        {'seqno':None, 'starttime':None, 'endtime':None, 'qsetid':job.qset_id,
+                        'qsetname':job.qset.qsetname, 'duration':None, 'expirytime':None,
+                        'distance':None, 'jobid':None, 'assetid':1, 'breaktime':None})
+        return qset or self.none()
+        
 
 
 

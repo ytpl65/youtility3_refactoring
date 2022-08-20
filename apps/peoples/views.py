@@ -61,10 +61,12 @@ class SignIn(View):
                 logger.info('Signin form is valid')
                 loginid = form.cleaned_data.get('username')
                 password = form.cleaned_data.get('password')
+                #utils.set_db_for_router('icicibank')
                 if people := authenticate(
                     request, username = loginid, password = password
                 ):
                     login(request, people)
+                    #response = redirect('onboarding:wizard_delete') if request.session.get('wizard_data') else redirect('/dashboard')
                     logger.info(
                         'Login Successfull for people "%s" with loginid "%s" client "%s" site "%s"'%(
                             people.peoplename, people.loginid, people.client.buname if people.client else "None", people.bu.buname if people.bu else "None"

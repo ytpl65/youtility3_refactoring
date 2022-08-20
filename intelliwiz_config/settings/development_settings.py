@@ -1,3 +1,4 @@
+from pickle import TRUE
 from .base_settings import *
 
 DEBUG = True
@@ -18,7 +19,7 @@ DATABASES.update(
             'NAME':     'icici_django',
             'PASSWORD': 'admin',
             'HOST':     'localhost',
-            'PORT':     '',
+            'PORT':     '5433',
         },
         # 'testDB2':{
         #     'ENGINE':   'django.contrib.gis.db.backends.postgis',
@@ -104,7 +105,7 @@ GRAPHQL_JWT = {
 
 
 # GOOGLE MAP API KEY...
-GOOGLE_MAP_SECRET_KEY  = str(os.getenv('GOOGLE_MAP_SECRET_KEY'))
+GOOGLE_MAP_SECRET_KEY  = 'AIzaSyC3PUZCB7u2PiV8whHeAshweOPIK_d690o'#str(os.getenv('GOOGLE_MAP_SECRET_KEY'))
 
 # CELERY CONF...
 CELERY_BROKER_URL = str(os.getenv('CELERY_BROKER_URL'))
@@ -132,18 +133,27 @@ LOGGING_CONFIG_ = {
         },
     }, 
     'handlers': {
-        'default': { 
+        'default': {
             #'level': 'INFO',
             'formatter': 'coloured',
             'class': 'logging.StreamHandler', 
             'stream': 'ext://sys.stdout',  # Default is stderr
         },
+        'youtility3':{
+            'level':'DEBUG',
+            'class':'logging.handlers.RotatingFileHandler',
+            #'filename': 'youtility2_logs/youtility.log',
+            'filename': os.path.join(os.path.expanduser('~'), 'youtility3_logs/youtility.log'),
+            'maxBytes': 1024 * 1024 * 10, # 10 MB
+            'backupCount': 7,
+            'formatter':'coloured',
+        },
     },
     'loggers': { 
         '': {  # root logger
-            'handlers': ['default'],
-            'level': 'WARNING',
-            'propagate': False 
+            'handlers': ['default', 'youtility3'],
+            'level': 'INFO',
+            'propagate': True 
         },
         'django': { 
             'handlers': ['default'],

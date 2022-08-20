@@ -1,3 +1,4 @@
+from sqlite3 import Row
 from django.db.models import Q, F
 from django.core.exceptions import EmptyResultSet
 from django.db import transaction
@@ -5,9 +6,132 @@ from django.http import response as rp
 import apps.activity.models as am
 from logging import getLogger
 from pprint import pformat
+from random import shuffle
 from apps.core import utils
 from datetime import datetime, timezone, timedelta
 log = getLogger('__main__')
+
+
+def get_service_requirements(R):
+    """
+    returns startpoint, endpoint, waypoints
+    required for directions api
+    """
+    if R:
+        startp = {"lat":float(R[0]['cplocation'].coords[1]),
+                  "lng":float(R[0]['cplocation'].coords[0])}
+
+        endp = {"lat":float(R[len(R)-1]['cplocation'].coords[1]),
+               "lng":float(R[len(R)-1]['cplocation'].coords[0])}
+        waypoints=[]
+        for i in range(1, len(R)-1):
+            lat, lng = R[i]['cplocation'].coords[1], R[i]['cplocation'].coords[0]
+            waypoints.append(
+                {"lat":lat, "lng":lng}
+            )
+        return startp, endp, waypoints
+
+
+def get_frequencied_data(DDE, data, f, breaktime):
+    """
+    Randomize data based on frequency
+    """
+    import copy
+
+    R, dataCopy = [], copy.deepcopy(data)
+    for _ in range(f-1):
+        R=data
+        R+=reversedFPoints(DDE, dataCopy, breaktime)
+
+
+def convertto_namedtuple(A,records, freq, btime):
+    """
+    converts dict to namedtuple
+    """
+    rec, C = [], records[0].keys()
+    from collections import namedtuple
+    for i in range(len(records)):
+        record = namedtuple("Record", C)
+        records[i]["seqno"] = i+1
+        records[i]["jobname"] = f"[{str(records[i]['seqno'])}]-{records[i]['jobname']}"
+        tr = tuple(records[i].values())
+        rec.append(record(**dict(list(zip(C, tr)))))
+    
+    if freq>1 or btime!=0:
+        rec[0] = rec[0]._replace(distance=0) 
+        rec[0] = rec[0]._replace(expirytime=0)
+        rec[0] = rec[0]._replace(breaktime=0)
+    return rec
+
+    
+def reversedFPoints(DDE, data, breaktime):
+    
+    R, j= [], 0
+    DDE = DDE[::-1]
+    for i in reversed(range(len(data))):
+        if (i == len(data)-1):
+            data[i]['distance'] = data[i]['duration'] = data[i]['expirytime'] = data[i]['breaktime'] = 0
+        else:
+            data[i]['distance'], data[i]['duration'], data[i]['expirytime'] = DDE[j]
+            j+=1
+        R.append(data[i])
+    R[-1]['breaktime'] = breaktime
+    return R
+
+
+def calculate_route_details(R, job):
+    data = [r._asdict() for r in R]
+    import googlemaps
+    from django.conf import settings
+    gmaps = googlemaps.Client(key=settings.GOOGLE_MAP_SECRET_KEY)
+    startpoint, endpoint, waypoints = get_service_requirements(R)
+    directions = gmaps.directions(mode='driving', waypoints = waypoints, origin=startpoint, destination= endpoint, optimize_waypoints = True)
+    waypoint_order = directions[0]["waypoint_order"]
+    freq, breaktime = job.other_info['tour_frequency'], job.other_info['breaktime']
+    chekpoints = []
+    
+    #startpoint distance, duration, expirtime is 0.
+    data[0]['seqno'] = 0+1
+    chekpoints.append(data[0])
+    chekpoints[0]['distance'] = 0
+    chekpoints[0]["duration"] = 0
+    chekpoints[0]["expirytime"] = 0
+    
+    #waypoint
+    for i in range(len(waypoint_order)):
+        data[i+1]['seqno'] = (i+1)+1
+        chekpoints.append(data[waypoint_order[i]+1])
+        
+    #endpoint
+    data[len(data)-1]['seqno'] = len(data)-1+1    
+    chekpoints.append(data[len(data)-1])
+    
+    #calculate distance and duration
+    legs = directions[0]["legs"]
+    j=1
+    
+    
+    DDE = []
+    for i in range(len(legs)):
+        l=[]
+        chekpoints[j]['distance']=round(float(legs[i]['distance']["value"]/1000), 2)
+        l.append(chekpoints[j]["distance"])
+        chekpoints[j]['duration']=float(legs[i]["duration"]["value"])
+        l.append(chekpoints[j].duration)
+        chekpoints[j]['expirytime']=int(legs[i]["duration"]["value"]/60)
+        l.append(chekpoints[j]['expirytime'])
+        DDE.append(l)
+        j+=1
+    
+    if freq > 1:
+        chekpoints = get_frequencied_data(DDE, chekpoints, freq, breaktime)
+    
+    if freq>1 and breaktime!=0:
+        #frequency points for freq>1.
+        endp = int(len(chekpoints)/freq)
+        chekpoints[endp]['breaktime'] = breaktime
+    
+    return convertto_namedtuple(chekpoints, freq, breaktime)
 
 def create_job(jobs = None):
     startdtz = enddtz = msg = resp = None
@@ -269,7 +393,8 @@ def insert_into_jn_and_jnd(job, DT, resp):
             crontype = job.identifier
             jobstatus = 'ASSIGNED'
             jobtype = 'SCHEDULE'
-            jobdesc = f'{job.jobname} :: {job.jobdesc}'
+            assignee = job.pgroup.groupname if job.people_id == 1 else job.people.peoplename
+            jobdesc = f'{job.jobname} :: {assignee}'
             asset = am.Asset.objects.get(id = job.asset_id)
             multiplication_factor = asset.asset_json['multifactor']
             mins = pdtz = edtz = people = jnid = None
@@ -385,6 +510,18 @@ def insert_into_jnd(qsb, job, jnid):
         raise
     log.info("insert_into_jnd() [END]")
 
+def extract_seq(R):
+    return [r.seqno for r in R]
+
+
+def check_sequence_of_prevjobneed(job, current_seq):
+    R = am.Jobneed.objects.filter(parent_id=1, job_id=job.id).values_list('seqno', flat=True).order_by('-id')
+    if len(R) > 1:
+        ic(R[1], current_seq)
+        return list(R[1]) == current_seq
+    
+    
+
 
 
 def create_child_tasks(job, _pdtz, _people, jnid, _jobstatus, _jobtype):
@@ -394,7 +531,9 @@ def create_child_tasks(job, _pdtz, _people, jnid, _jobstatus, _jobtype):
         from django.utils.timezone import get_current_timezone
         tz = get_current_timezone()
         mins = pdtz = edtz = None
-        R = am.Job.objects.filter(
+        R = am.Job.objects.annotate(
+            cplocation = F('bu__gpslocation')
+            ).filter(
             parent_id = job.id).order_by(
                 'seqno').values_list(named = True)
         log.info(f"create_child_tasks() total child job:={len(R)}")
@@ -402,12 +541,24 @@ def create_child_tasks(job, _pdtz, _people, jnid, _jobstatus, _jobtype):
         params = {'_jobdesc': "", 'jnid':jnid, 'pdtz':None, 'edtz':None,
                   '_people':_people, '_jobstatus':_jobstatus, '_jobtype':_jobtype,
                   'm_factor':None, 'idx':None, 'NONE_P':NONE_P}
+        
+        if job.other_info['is_randomized'] in ['True', True] and len(R) > 1:
+            #randomize data if it is random tour job
+            L = list(R)
+            while True:
+                shuffle(L)
+                seq = extract_seq(L)
+                if not check_sequence_of_prevjobneed(job, seq):
+                    break
+            R = calculate_route_details(job)  
+            
+            
         for idx, r in enumerate(R):
             log.info(f"create_child_tasks() [{idx}] child job:= {r.jobname} | job:= {r.id} | cron:= {r.cron}")
 
             asset = am.Asset.objects.get(id = r.asset_id)
             params['m_factor'] = asset.asset_json['multifactor']
-            _assetname = asset.assetname
+            _assetname = asset.assetname if r.identifier == 'INTERNALTOUR' else r.qset.qsetname
 
             mins = job.planduration + r.expirytime + job.gracetime
             params['_people'] = r.people_id
@@ -457,16 +608,16 @@ def insert_into_jn_for_child(job, params, r):
 
 def job_fields(job, checkpoint, external = False):
     data =  {
-        'jobname'     : job.jobname,                   'jobdesc'        : f"${checkpoint['assignsites__buname']} :: ${job.jobname} :: ${checkpoint['qsetname']}",
+        'jobname'     : f"{checkpoint.get('assetname', '')} :: {job.jobname}",     'jobdesc'        : f"{checkpoint.get('assetname', '')} :: {job.jobname} :: {checkpoint['qsetname']}",
         'cron'        : job.cron,                      'identifier'     : job.identifier,
         'expirytime'  : int(checkpoint['expirytime']), 'lastgeneratedon': job.lastgeneratedon,
-        'priority'    : job.priority,                  'qset_id'        : checkpoint['qset'],
+        'priority'    : job.priority,                  'qset_id'        : checkpoint['qsetid'],
         'pgroup_id'   : job.pgroup_id,                 'geofence'       : job.geofence_id,
-        'endtime'     : job.endtime,                   'ticketcategory' : job.ticketcategory,
+        'endtime'     : datetime.strptime(checkpoint.get('endtime', "00:00"), "%H:%M"),                   'ticketcategory' : job.ticketcategory,
         'fromdate'    : job.fromdate,                  'uptodate'       : job.uptodate,
         'planduration': job.planduration,              'gracetime'      : job.gracetime,
-        'asset_id'    : checkpoint['asset'],           'frequency'      : job.frequency,
-        'people_id'   : job.people_id,                 'starttime'      : job.starttime,
+        'asset_id'    : checkpoint['assetid'],           'frequency'      : job.frequency,
+        'people_id'   : job.people_id,                 'starttime'      : datetime.strptime(checkpoint.get('starttime', "00:00"), "%H:%M"),
         'parent_id'   : job.id,                        'seqno'          : checkpoint['seqno'],
         'scantype'    : job.scantype,                  'ctzoffset'      : job.ctzoffset
     }
@@ -476,7 +627,8 @@ def job_fields(job, checkpoint, external = False):
             'breaktime'     : checkpoint['breaktime'],
             'is_randomized' : job.other_info['is_randomized'],
             'tour_frequency': job.other_info['tour_frequency']}
-        data['jobname']    = job.jobname
+        data['jobname']    = f"{checkpoint['buname']} :: {job.jobname}"
+        data['jobdesc']    = f"{checkpoint.get('buname', '')} :: {job.jobname} :: {checkpoint['qsetname']}"
         data['other_info'] = jsonData
     return data
 
@@ -531,3 +683,4 @@ def del_job(id):
 
     am.Job.objects.filter(id=id).exclude(id=1).update(cdtz = F('mdtz'))
     log.info("deleting old jobs end[-]")
+
