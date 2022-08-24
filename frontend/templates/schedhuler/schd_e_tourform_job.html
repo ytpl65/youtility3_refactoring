@@ -411,6 +411,15 @@ function checkDirectionsSaved(){
     }else{return true}
 }
 
+function enableFields(elements){
+    $(elements).removeAttr('disabled')
+}
+
+function disableFields(elements){
+    $(elements).attr('disabled', 'disabled')
+}
+
+
 //UPDATE CRONDATETIME ON CRON CHANGE
 function updateCronDate(){
     console.log("called")
@@ -446,7 +455,7 @@ $(document).ready(() => {
   	$("#id_ctzoffset").val(-new Date().getTimezoneOffset())
 
     //addclass btdeciders
-    $("#id_tourfrequency, #id_israndom").addClass('btdeciders').trigger('change')
+    $("#id_tourfrequency, #id_israndom").addClass('btdeciders')
     
 
     editor = new $.fn.dataTable.Editor( {
@@ -499,8 +508,10 @@ $(document).ready(() => {
             { extend: "edit",   editor: editor },
         ],
         initComplete: function( settings, json ) {
-            $("#btnGetRoute").click()
-          }
+            if('{{schdexternaltourform.instance.id}}' !== 'None'){
+                $("#btnGetRoute").click()
+            }
+        }
     }) 
 
      //toggle people and pgroup field based on radio button value
@@ -513,39 +524,17 @@ $(document).ready(() => {
     }
 
     $(".btdeciders").change(function() {
-        //console.log("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$")
         if(parseInt($("#id_tourfrequency").val()) > 1 && $("#id_israndom").is(":checked")){
-            $("#id_breaktime").removeAttr('disabled');
-            //console.log("Attribute Removed")
-        }
-        else if ($("#id_israndom").is(":checked")){
-            $(".non-random").attr('disabled', 'disabled')
-            isDirectionSaved = isRouteSaved = true
-        }else{
-            $("#id_breaktime").val('0')
-            $("#id_breaktime").attr('disabled','disabled');
-            $(".non-random").removeAttr('disabled');
-            isDirectionSaved = isRouteSaved = false
-        }
+            enableFields("#id_breaktime")
+        }else{disableFields("#id_breaktime")}
+        
+        if($("#id_israndom").is(":checked")){
+            enableFields("#id_tourfrequency, #id_breaktime")
+            disableFields()
+        }else{disableFields("#id_tourfrequency, #id_breaktime")}
     })
 
-    if(!$("#id_israndom").is(":checked")){
-        //disable breaktime & frequency
-        $("#id_breaktime, #id_tourfrequency").attr('disabled','disabled');
-        //enable non-random buttons
-        $(".non-random").removeAttr('disabled');
-    }else{
-        //enable breaktime & frequency
-        $("#id_breaktime, #id_tourfrequency").removeAttr('disabled');
-        $(".non-random").attr('disabled','disabled');
-        isRouteSaved=true
-    }
-    if(parseInt($("#id_tourfrequency").val()) > 1){
-        $("#id_breaktime").removeAttr('disabled');
-    }else{
-        $("#id_breaktime").val('0')
-        $("#id_breaktime").attr('disabled','disabled');
-    }
+    disableFields("#id_tourfrequency, #id_breaktime")
 
     
 

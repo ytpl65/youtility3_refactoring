@@ -19,7 +19,7 @@ DATABASES.update(
             'NAME':     'icici_django',
             'PASSWORD': 'admin',
             'HOST':     'localhost',
-            'PORT':     '5433',
+            'PORT':     '5432',
         },
         # 'testDB2':{
         #     'ENGINE':   'django.contrib.gis.db.backends.postgis',

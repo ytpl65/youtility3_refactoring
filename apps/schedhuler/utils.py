@@ -535,7 +535,7 @@ def create_child_tasks(job, _pdtz, _people, jnid, _jobstatus, _jobtype):
             cplocation = F('bu__gpslocation')
             ).filter(
             parent_id = job.id).order_by(
-                'seqno').values_list(named = True)
+                'seqno')
         log.info(f"create_child_tasks() total child job:={len(R)}")
         prev_edtz = _pdtz
         params = {'_jobdesc': "", 'jnid':jnid, 'pdtz':None, 'edtz':None,
@@ -550,7 +550,7 @@ def create_child_tasks(job, _pdtz, _people, jnid, _jobstatus, _jobtype):
                 seq = extract_seq(L)
                 if not check_sequence_of_prevjobneed(job, seq):
                     break
-            R = calculate_route_details(job)  
+            R = calculate_route_details(L, job)
             
             
         for idx, r in enumerate(R):

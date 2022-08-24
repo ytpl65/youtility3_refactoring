@@ -156,8 +156,8 @@ class Schd_E_TourJobForm(JobForm):
     ASSIGNTO_CHOICES   = [('PEOPLE', 'People'), ('GROUP', 'Group')]
     timeInChoices = [('MIN', 'Min'),('HRS', 'Hours')]
     assign_to          = forms.ChoiceField(choices = ASSIGNTO_CHOICES, initial="PEOPLE")
-    israndom = forms.BooleanField(initial=False, label="Is Random Tour")
-    tourfrequency = forms.IntegerField(min_value=1, max_value=3, initial=1, label='Frequency')
+    israndom = forms.BooleanField(initial=False, label="Is Random Tour", required=False)
+    tourfrequency = forms.IntegerField(min_value=1, max_value=3, initial=1, label='Frequency', required=False)
     breaktime = forms.IntegerField(label='Frequency', required=False)
     required_css_class = "required"
 
@@ -176,7 +176,7 @@ class Schd_E_TourJobForm(JobForm):
             'scantype':forms.TextInput(attrs={'style': 'display:none;'}),
             'ticketcategory':forms.TextInput(attrs={'style': 'display:none;'}),
             'jobname':forms.TextInput(attrs={'placeholder': 'Enter Route Plan Name:'})}
-            )
+        )
         exclude = ['jobdesc']
 
     def __init__(self, *args, **kwargs):

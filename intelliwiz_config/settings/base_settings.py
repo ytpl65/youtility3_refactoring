@@ -110,7 +110,7 @@ DATABASES = {
         'NAME':     'intelliwiz_django',
         'PASSWORD': 'admin',
         'HOST':     'localhost',
-        'PORT':     '5433',
+        'PORT':     '5432',
     },
 }
 

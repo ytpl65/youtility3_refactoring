@@ -628,7 +628,6 @@ def run_internal_tour_scheduler(request):
             "asset",
             "pgroup",
             'sgroup',
-            "frequency",
             "cuser",
             "muser",
             "qset",
@@ -1670,7 +1669,6 @@ class ExternalTourScheduling(LoginRequiredMixin, View):
 class TourJobneedEditorView(LoginRequiredMixin, View):
     params = {
         'model':am.Jobneed,
-
     }
 
     def get(self, request, *args, **kwargs):
