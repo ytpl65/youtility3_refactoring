@@ -81,10 +81,11 @@ def reversedFPoints(DDE, data, breaktime):
 
 def calculate_route_details(R, job):
     data = [r._asdict() for r in R]
+    ic(data)
     import googlemaps
     from django.conf import settings
     gmaps = googlemaps.Client(key=settings.GOOGLE_MAP_SECRET_KEY)
-    startpoint, endpoint, waypoints = get_service_requirements(R)
+    startpoint, endpoint, waypoints = get_service_requirements(data)
     directions = gmaps.directions(mode='driving', waypoints = waypoints, origin=startpoint, destination= endpoint, optimize_waypoints = True)
     waypoint_order = directions[0]["waypoint_order"]
     freq, breaktime = job.other_info['tour_frequency'], job.other_info['breaktime']
@@ -550,7 +551,7 @@ def create_child_tasks(job, _pdtz, _people, jnid, _jobstatus, _jobtype):
                 seq = extract_seq(L)
                 if not check_sequence_of_prevjobneed(job, seq):
                     break
-            R = calculate_route_details(job)  
+            R = calculate_route_details(L, job)  
             
             
         for idx, r in enumerate(R):
