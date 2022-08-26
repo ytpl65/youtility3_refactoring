@@ -363,7 +363,7 @@ Client
         //datatable  list of business units
         tabListBus = $("#tabListBu").DataTable({
             ajax:{
-                url: "{{ url('onboarding:client') }}?action=getlistbus"
+                url: `{{ url('onboarding:client') }}?action=getlistbus&id={{ clientform.instance.id }}`
             },
             columns:[
                 {data: 'id', defaulContent: "", visible:false},
@@ -453,7 +453,7 @@ Client
         //datatable  list of peoples
         tabListAdmins= $("#tabAdminUsers").DataTable({
             ajax:{
-                url: "{{ url('onboarding:client') }}?action=getadmins"
+                url: `{{ url('onboarding:client') }}?action=getadmins&id={{ clientform.instance.id }}`
             },
             columns:[
                 {data: 'id', defaulContent: "", visible:false},

@@ -187,6 +187,9 @@ function display_form_errors(errors) {
   /*display errors on respective fields*/
   console.log("started")
   $('p.errors').remove();
+  if (errors instanceof String){
+    display_non_field_errors([errors])
+  }
   for (let key in errors) {
     if (errors.hasOwnProperty(key)) {
       if(errors.hasOwnProperty("__all__")){
@@ -290,16 +293,8 @@ function show_alert_before_update_jn(data){
 }
 
 function display_non_field_errors(errors){
-  var errstr = ""
-  var brtag = "<br>"
-  for(let i=0; i< errors.length; i++){
-    if(!i=== errors.length -1){
-      var msg = errors[i] + brtag
-    }else{
-      var msg = errors[i]
-    }
-    errstr += msg 
-  }
+  $("#nonfield_errors").hide()
+  var errstr = errors[0]
   console.log(errstr)
   $("#nonfield_errors").show()
   $("#nonfield_errors > span").text(errstr)
@@ -345,7 +340,7 @@ function fire_ajax_form_post(params, payload){
     console.log(xhr)
     console.log(status)
     console.log(error)
-    if(typeof(xhr.responseJSON.errors) === 'object'){
+    if(typeof(xhr.responseJSON.errors) === 'object' || typeof(xhr.responseJSON.errors) === 'string'){
       if(params.modal === true){
         display_modelform_errors(xhr.responseJSON.errors)
         }else{
@@ -546,39 +541,40 @@ function performIntersection(arr1, arr2){
   return intersectionResult;
 }
 
-function load_alerton_field(optionsData, selected){
+function load_alerton_field(optionsData, selected, id){
   console.log(optionsData.length, optionsData)
-  $("#id_alerton").empty();
+  $(id).empty();
   for(let i=0; i<optionsData.length; i++){
       var data = {id:optionsData[i], text:optionsData[i]}
       var opt  = new Option(data.text, data.id, false, false)
-      $('#id_alerton').append(opt).trigger('change');
+      $(id).append(opt).trigger('change');
       console.log(i, opt)
   }
-  $('#id_alerton').val(selected).trigger('change');
+  $(id).val(selected).trigger('change');
 }
 
 
-function initialize_alerton_field(_optionsData, alertonData, questype, cleaned){
-    console.log(_optionsData, typeof _optionsData, alertonData)
-    _optionsData = _optionsData.length ? _optionsData.split(",") : ""
-    optionsData  = []
-    if(!cleaned && _optionsData !== ""){
-      _optionsData = JSON.parse(_optionsData)
-      _optionsData.forEach((item) => {
-      optionsData.push(item.value)
-  })
-  console.log("not cleaned")}else{optionsData = _optionsData
-  console.log("cleaned")}
-    console.log(optionsData, alertonData)
-    if(optionsData.length && alertonData.length){
-    alertonData = alertonData.split(",")
-    let selected = performIntersection(optionsData, alertonData)
-    console.log(selected)
-    load_alerton_field(optionsData, selected)
-    }
-  
+function initialize_alerton_field(_optionsData, alertonData, questype, cleaned, id){
+  console.log(_optionsData, typeof _optionsData, alertonData)
+  _optionsData = _optionsData.length ? _optionsData.split(",") : ""
+  optionsData  = []
+  if(!cleaned && _optionsData !== ""){
+    _optionsData = JSON.parse(_optionsData)
+    _optionsData.forEach((item) => {
+    optionsData.push(item.value)
+})
+console.log("not cleaned")}else{optionsData = _optionsData
+console.log("cleaned")}
+  console.log(optionsData, alertonData)
+  if(optionsData.length && alertonData.length){
+  alertonData = alertonData.split(",")
+  let selected = performIntersection(optionsData, alertonData)
+  console.log(selected)
+  load_alerton_field(optionsData, selected, id)
 }
+
+}
+
 
 function column_filtering(targets){
   return function () {
@@ -710,6 +706,15 @@ function get_question_formdata() {
   $("#id_alerton").empty();
   console.log("formData", formData)
   return formData
+}
+function cleanOptionsField(tag){
+  var options = []
+  tag.value.forEach((ele) => {
+    options.push(ele.value)
+  })
+  options = JSON.stringify(options)
+  options = options.replace("[", "").replace("]", "").replace(/['"]+/g, '')
+  return options
 }
 
 //clean the form data before inserting it into
@@ -924,8 +929,123 @@ function adjustSlno(seqno, table, reset) {
   }
 }
 
+//convert to local
 function convert_to_local(type, data, row){
+  if(type === "sort" || type === "type"){
+      return data ? data: '-';
+  }
+  if(data){
+      let datetime = moment(data, 'YYYY-MM-DDTHH:mm:ss').add(row['ctzoffset'], 'm').format("DD-MMM-YYYY HH:mm")
+      return data ? datetime : '-';
+  }return data
+}
 
+function initDatetimes(ids){
+  $(ids).flatpickr({
+    enableTime: true,
+    time_24hr: true,
+    dateFormat: 'd-M-Y H:S'
+  })  
+}
+
+function init_select_field(kwargs){
+  if(kwargs.hasOwnProperty('client') && kwargs.client){
+    $(kwargs.id).select2({
+      allowClear:true,
+      multiple:kwargs.hasOwnProperty('multiple') ? kwargs.multiple :false,
+      closeOnSelect:kwargs.hasOwnProperty('closeOnSelect') ? kwargs.closeOnSelect : true,
+      placeholder:"Select an Option!"
+    })
+  }else{
+    $(kwargs.id).select2({
+      ajax:{
+        url:kwargs.url,
+        closeOnSelect:kwargs.hasOwnProperty('closeOnSelect') ? kwargs.closeOnSelect : true,
+        allowClear:true,
+        multiple:kwargs.hasOwnProperty('multiple')? kwargs.multiple : false,
+        delay: 500, 
+        data:function(args){
+          var query = {
+            search:args.term,
+            type:'public',
+            page:args.page
+          }
+          return query
+        },
+        minimumInputLength: 2,
+        processResults:function(data, args){
+          
+          args.page = args.page || 1
+          return {
+            results:data.items,
+            pagination:{more:(args.page*15)<data.tota_lcount}
+          }
+        },
+        cache:true,
+        placeholder:`Search for ${kwargs.item}..`
+      }
+    })
+  }
+}
+
+function initDateRangeHtml(){
+  $('div.customfields').html(`<div class="input-group pe-4">
+            <span class="input-group-text" id="basic-addon1">From: </span>
+            <input type="text" id="id_daterange"class="form-control">
+          </div>`)
+}
+
+
+//global date range picker
+function initDateRange(element){
+  //console.log("element", element, ">> ", $(element));
+  return $(element).daterangepicker({
+          opens: ('right'),
+          startDate: moment().subtract(7, 'days'),//moment().subtract(7, 'days'),
+          endDate: moment(),
+          //minDate: '01/01/2012',
+          //maxDate: '12/31/2014',
+          dateLimit: {
+              days: 90
+          },
+          showDropdowns: true,
+          showWeekNumbers: true,
+          timePicker: false,
+          timePickerIncrement: 1,
+          timePicker12Hour: true,
+          ranges: {
+              'Tomorrow': [moment().add(1, 'days'), moment().add(1, 'days')],
+              'Today': [moment(), moment()],
+              'Yesterday': [moment().subtract(1, 'days'), moment().subtract(1, 'days')],
+              'Last 7 Days': [moment().subtract(6, 'days'), moment()],
+              'Last 30 Days': [moment().subtract(29, 'days'), moment()],
+              'This Month': [moment().startOf('month'), moment().endOf('month')],
+              'Last Month': [moment().subtract(1, 'month').startOf('month'), moment().subtract(1, 'month').endOf('month')],
+              'Last 2 Month': [moment().subtract(2, 'month').startOf('month'), moment().subtract(1, 'month').endOf('month')],
+              'Last 3 Month': [moment().subtract(3, 'month').startOf('month'), moment().subtract(1, 'month').endOf('month')]
+          },
+          buttonClasses: ['btn'],
+          cancelClass: 'default',
+          dateFormat: 'YYYY-MM-DD',
+          separator: ' to ',
+          locale: {
+              format:'DD/M/YYYY',
+              separator: ' ~ ',
+              applyLabel: 'Apply',
+              fromLabel: 'From',
+              toLabel: 'To',
+              customRangeLabel: 'Custom Range',
+              daysOfWeek: ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'],
+              monthNames: ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'],
+              firstDay: 1
+          }
+      },
+      function (start, end) {
+          //console.log("@@@@", start);
+          //$('#reportrange span').html(start.format('MMMM D, YYYY') + ' - ' + end.format('MMMM D, YYYY'));
+          //$(element).html(start.format('MMMM D, YYYY') + ' - ' + end.format('MMMM D, YYYY'));
+      }
+  );
 }
 
 
@@ -1000,7 +1120,6 @@ $(document).ready(() => {
           window.location.href = deleteWizardUrl;
         });
         });
-        
       }
     });
   });
