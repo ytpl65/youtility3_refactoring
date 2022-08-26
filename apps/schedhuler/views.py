@@ -1594,7 +1594,6 @@ class ExternalTourScheduling(LoginRequiredMixin, View):
                        'tourfrequency':obj.other_info['tour_frequency'],
                        'breaktime':obj.other_info['breaktime']}     #obj.other_info['breaktime']}
             cxt = {'schdexternaltourform': P['form_class'](instance=obj, request = request, initial=initial)}
-            ic(cxt['schdexternaltourform'].as_p())
             return render(request, P['template_form'], context = cxt)
         
 

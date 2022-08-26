@@ -230,24 +230,26 @@ class JobneedManager(models.Manager):
     def get_sitereportlist(self, request):
         "Transaction List View"
         from apps.onboarding.models import Bt
-        from apps.activity.models import QuestionSet, Attachment
-        from apps.activity.models import Attachment
+        # from apps.activity.models import QuestionSet, Attachment
+        # from apps.activity.models import Attachment
 
         qset, R = self.none(), request.GET
         pbs = Bt.objects.get_people_bu_list(request.user)
-        tl = QuestionSet.objects.get_template_list(pbs)
-        if pbs and tl:
-            qset  = self.annotate(
-                buname = Case(When(~Q(othersite="") | ~Q(othersite='NONE'), then=Concat(V('otherlocation[ '), F('othersite'), V(']'))), default=Value('bu__buname')),
-                distance = Distance('gpslocation', 'bu__gpslocation'),
-                gps = AsWKT('gpslocation'),
-                uuc = Cast('uuid', output_field=models.CharField())
-            ).filter(plandatetime__gte = R['pd1'], plandatetime__lte = R['pd2'], bu_id__in = pbs, identifier = 'SITEREPORT', parent_id=1).values_list('uuc', flat=True)
-            attobjs = Attachment.objects.get_attforuuids(qset.uuc)
-            values(
-                'id','plandatetime', 'jobdesc', 'people__peoplename', 'jobstatus', 'gps',
-                'distance', 'remarks', 'buname', 'distance'
-            )
+        # tl = QuestionSet.objects.get_template_list(pbs)
+        # if pbs and tl:
+        #     qset  = self.annotate(
+        #         buname = Case(When(~Q(othersite="") | ~Q(othersite='NONE'), then=Concat(V('otherlocation[ '), F('othersite'), V(']'))), default=Value('bu__buname')),
+        #         distance = Distance('gpslocation', 'bu__gpslocation'),
+        #         gps = AsWKT('gpslocation'),
+        #         uuc = Cast('uuid', output_field=models.CharField())
+        #     ).filter(plandatetime__gte = R['pd1'], plandatetime__lte = R['pd2'], bu_id__in = pbs, identifier = 'SITEREPORT', parent_id=1).values_list('uuc', flat=True)
+        #     attobjs = Attachment.objects.get_attforuuids(qset.uuc)
+        #     values(
+        #         'id','plandatetime', 'jobdesc', 'people__peoplename', 'jobstatus', 'gps',
+        #         'distance', 'remarks', 'buname', 'distance'
+        #     )
+        from apps.core.raw_queries import query
+        qset = self.raw(query['sitereportlist'], params=[pbs, R['pd1'], R['pd2']])
         return qset
 
     def get_internaltourlist_jobneed(self, request, related, fields):

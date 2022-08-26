@@ -83,8 +83,8 @@ def calculate_route_details(R, job):
     data = R
     import googlemaps
     from django.conf import settings
-    gmaps = googlemaps.Client(key=settings.GOOGLE_MAP_SECRET_KEY)
-    startpoint, endpoint, waypoints = get_service_requirements(R)
+    gmaps = googlemaps.Client(key='AIzaSyDVbA53nxHKUOHdyIqnVPD01aOlTitfVO0')
+    startpoint, endpoint, waypoints = get_service_requirements(data)
     directions = gmaps.directions(mode='driving', waypoints = waypoints, origin=startpoint, destination= endpoint, optimize_waypoints = True)
     waypoint_order = directions[0]["waypoint_order"]
     freq, breaktime = job.other_info['tour_frequency'], job.other_info['breaktime']

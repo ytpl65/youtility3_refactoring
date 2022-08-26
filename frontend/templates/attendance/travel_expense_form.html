@@ -148,7 +148,7 @@ Conveyance
 
 {% block extra_scripts %}
 <script
-    src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDVbA53nxHKUOHdyIqnVPD01aOlTitfVO0&callback = initAutocomplete&libraries = places&v = weekly"
+    src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDVbA53nxHKUOHdyIqnVPD01aOlTitfVO0&callback=initAutocomplete&libraries=places&v=weekly"
     defer
 ></script>
 <script>
@@ -168,7 +168,7 @@ function initAutocomplete(){
 function getJourneyCoords(id){
     var formUrl = "{{ url('attendance:conveyance') }}"
     const params = {
-        url:`${formUrl}?action=formgetpath&conid=${id}`,
+        url:`${formUrl}?action=getpath&conid=${id}`,
         beforeSend:function(){}
     }
     fire_ajax_get(params)
