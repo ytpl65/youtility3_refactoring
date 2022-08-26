@@ -623,16 +623,9 @@ def run_internal_tour_scheduler(request):
     log.info(f"{padd} run_guardtour_scheduler initiated [START] {padd}")
     R, job, resp = request.POST, request.POST.get('job'), None
     if (
-        jobs := am.Job.objects.filter(id = job)
-        .select_related(
-            "asset",
-            "pgroup",
-            'sgroup',
-            "cuser",
-            "muser",
-            "qset",
-            "people",
-        )
+        jobs := am.Job.objects.filter(id = job).select_related(
+            "asset","pgroup",'sgroup',
+            "cuser","muser","qset","people").values()
         
     ):
         #check if it is random external tour
@@ -1647,7 +1640,7 @@ class ExternalTourScheduling(LoginRequiredMixin, View):
     def saveCheckpointsinJob(self, R, checkpoints, P, request):
         try:
             #ic(checkpoints)
-            job = utils.get_model_obj(R['parent_id'], request, P)   
+            job = am.Job.objects.filter(id = int(R['parent_id'])).values()[0]
             P['model'].objects.filter(parent_id = job.id).delete()
             count=0
             for cp in checkpoints:

@@ -80,7 +80,7 @@ def reversedFPoints(DDE, data, breaktime):
 
 
 def calculate_route_details(R, job):
-    data = [r._asdict() for r in R]
+    data = R
     import googlemaps
     from django.conf import settings
     gmaps = googlemaps.Client(key=settings.GOOGLE_MAP_SECRET_KEY)
@@ -147,7 +147,7 @@ def create_job(jobs = None):
             ).select_related(
                 "asset", "pgroup",
                 "cuser", "muser", "qset", "people",
-            ).values_list(named = True)
+            ).values()
 
         if not jobs:
             msg = "No jobs found schedhuling terminated"
@@ -162,23 +162,23 @@ def create_job(jobs = None):
                 startdtz, enddtz = calculate_startdtz_enddtz(job)
                 log.debug(f"Jobs to be schedhuled from startdatetime {startdtz} to enddatetime {enddtz}")
 
-                DT, is_cron, resp = get_datetime_list(job.cron, startdtz, enddtz, resp)
+                DT, is_cron, resp = get_datetime_list(job['cron'], startdtz, enddtz, resp)
                 log.debug(
                     "Jobneed will going to create for all this datetimes\n %s"%(pformat(get_readable_dates(DT)))
                 )
-                F[str(job.id)] = is_cron
+                F[str(job['id'])] = is_cron
                 status, resp = insert_into_jn_and_jnd(job, DT, resp)
                 d.append({
-                    "job"   : job.id,
-                    "jobname" : job.jobname,
-                    "cron"    : job.cron,
+                    "job"   : job['id'],
+                    "jobname" : job['jobname'],
+                    "cron"    : job['cron'],
                     "iscron"  : is_cron,
                     "count"   : len(DT),
                     "status"  : status
                 })
             if F:
                 log.info(f"create_job() Failed job schedule list:= {pformat(F)}")
-            log.info(f"createJob()[end-] [{idx} of {total_jobs - 1}] parent job:= {job.jobname} | job:= {job.id} | cron:= {job.cron}")
+            log.info(f"createJob()[end-] [{idx} of {total_jobs - 1}] parent job:= {job['jobname']} | job:= {job['id']} | cron:= {job['cron']}")
 
         ic("resp in createjob()", resp)
     return resp
@@ -202,22 +202,22 @@ def calculate_startdtz_enddtz(job):
     uptodate.
     """
 
-    log.info(f"calculating startdtz, enddtz for job:= [{job.id}]")
-    tz = timezone(timedelta(minutes = int(job.ctzoffset)))
-    ctzoffset = job.ctzoffset
+    log.info(f"calculating startdtz, enddtz for job:= [{job['id']}]")
+    tz = timezone(timedelta(minutes = int(job['ctzoffset'])))
+    ctzoffset = job['ctzoffset']
 
-    cdtz         = job.cdtz.replace(microsecond = 0, tzinfo = tz) + timedelta(minutes = ctzoffset)
-    mdtz         = job.mdtz.replace(microsecond = 0, tzinfo = tz)  + timedelta(minutes = ctzoffset)
-    vfrom        = job.fromdate.replace(microsecond = 0, tzinfo = tz)  + timedelta(minutes = ctzoffset)
-    vupto        = job.uptodate.replace(microsecond = 0, tzinfo = tz) + timedelta(minutes = ctzoffset)
-    ldtz         = job.lastgeneratedon.replace(microsecond = 0, tzinfo = tz) + timedelta(minutes = ctzoffset)
-    # job.ctzoffset     = job.ctzoffset 
-    # tzoffset     = job.ctzoffset 
-    # cdtz         = job.cdtz.replace(microsecond = 0) 
-    # mdtz         = job.mdtz.replace(microsecond = 0)  
-    # vfrom        = job.fromdate.replace(microsecond = 0)  
-    # vupto        = job.uptodate.replace(microsecond = 0) 
-    # ldtz         = job.lastgeneratedon.replace(microsecond = 0) 
+    cdtz         = job['cdtz'].replace(microsecond = 0, tzinfo = tz) + timedelta(minutes = ctzoffset)
+    mdtz         = job['mdtz'].replace(microsecond = 0, tzinfo = tz)  + timedelta(minutes = ctzoffset)
+    vfrom        = job['fromdate'].replace(microsecond = 0, tzinfo = tz)  + timedelta(minutes = ctzoffset)
+    vupto        = job['uptodate'].replace(microsecond = 0, tzinfo = tz) + timedelta(minutes = ctzoffset)
+    ldtz         = job['lastgeneratedon'].replace(microsecond = 0, tzinfo = tz) + timedelta(minutes = ctzoffset)
+    # job['ctzoffset']     = job['ctzoffset'] 
+    # tzoffset     = job['ctzoffset'] 
+    # cdtz         = job['cdtz'].replace(microsecond = 0) 
+    # mdtz         = job['mdtz'].replace(microsecond = 0)  
+    # vfrom        = job['fromdate'].replace(microsecond = 0)  
+    # vupto        = job['uptodate'].replace(microsecond = 0) 
+    # ldtz         = job['lastgeneratedon'].replace(microsecond = 0) 
     # display_jobs_date_info(cdtz, mdtz, vfrom, vupto, ldtz)
     current_date= datetime.utcnow().replace(tzinfo=timezone.utc).replace(microsecond=0)
     current_date= current_date.replace(tzinfo = tz) + timedelta(minutes= ctzoffset)
@@ -225,7 +225,7 @@ def calculate_startdtz_enddtz(job):
     if mdtz > cdtz:
         ldtz = current_date
         # delete all old record
-        del_job(job.id)
+        del_job(job['id'])
     startdtz = vfrom
 
     if ldtz > startdtz:
@@ -390,18 +390,18 @@ def insert_into_jn_and_jnd(job, DT, resp):
             # required variables
             NONE_JN  = utils.get_or_create_none_jobneed()
             NONE_P   = utils.get_or_create_none_people()
-            crontype = job.identifier
+            crontype = job['identifier']
             jobstatus = 'ASSIGNED'
             jobtype = 'SCHEDULE'
-            assignee = job.pgroup.groupname if job.people_id == 1 else job.people.peoplename
-            jobdesc = f'{job.jobname} :: {assignee}'
-            asset = am.Asset.objects.get(id = job.asset_id)
+            assignee = job.pgroup.groupname if job['people_id'] == 1 else job.people.peoplename
+            jobdesc = f'{job["jobname"]} :: {assignee}'
+            asset = am.Asset.objects.get(id = job['asset_id'])
             multiplication_factor = asset.asset_json['multifactor']
             mins = pdtz = edtz = people = jnid = None
             parent = people = -1
 
-            mins = job.planduration + job.expirytime + job.gracetime
-            people = job.people_id
+            mins = job['planduration'] + job['expirytime'] + job['gracetime']
+            people = job['people_id']
             params   = {
                 'jobstatus':jobstatus, 'jobtype':jobtype,
                 'm_factor':multiplication_factor, 'people':people,
@@ -444,20 +444,20 @@ def insert_into_jn_and_jnd(job, DT, resp):
 def insert_into_jn_for_parent(job, params):
     try:
         jn = am.Jobneed.objects.create(
-            job_id         = job.id,                     parent            = params['NONE_JN'],
+            job_id         = job['id'],                     parent            = params['NONE_JN'],
             jobdesc        = params['jobdesc'],          plandatetime      = params['pdtz'],
-            expirydatetime = params['edtz'],             gracetime         = job.gracetime,
-            asset_id       = job.asset_id,               qset_id           = job.qset_id,
-            ctzoffset      = job.ctzoffset,              people_id         = params['people'],
-            pgroup_id      = job.pgroup_id,              frequency         = 'NONE',
-            priority       = job.priority,               jobstatus         = params['jobstatus'],
+            expirydatetime = params['edtz'],             gracetime         = job['gracetime'],
+            asset_id       = job['asset_id'],               qset_id           = job['qset_id'],
+            ctzoffset      = job['ctzoffset'],              people_id         = params['people'],
+            pgroup_id      = job['pgroup_id'],              frequency         = 'NONE',
+            priority       = job['priority'],               jobstatus         = params['jobstatus'],
             performedby    = params['NONE_P'],           jobtype           = params['jobtype'],
-            scantype       = job.scantype,               identifier        = job.identifier,
-            cuser_id       = job.cuser_id,               muser_id          = job.muser_id,
-            bu_id          = job.bu_id,                  ticketcategory_id = job.ticketcategory_id,
+            scantype       = job['scantype'],               identifier        = job['identifier'],
+            cuser_id       = job['cuser_id'],               muser_id          = job['muser_id'],
+            bu_id          = job['bu_id'],                  ticketcategory_id = job['ticketcategory_id'],
             gpslocation    = 'POINT(0.0 0.0)',             remarks           = '',
             seqno          = 0,                          multifactor       = params['m_factor'],
-            client_id      = job.client_id,
+            client_id      = job['client_id'],
         )
     except Exception:
         raise
@@ -478,7 +478,7 @@ def insert_update_jobneeddetails(jnid, job, parent = False):
         if not parent:
             qsb = am.QuestionSetBelonging.objects.select_related(
                 'question').filter(
-                    qset_id = job.qset_id).order_by(
+                    qset_id = job['qset_id']).order_by(
                         'seqno').values_list(named = True)
         else:
             qsb = utils.get_or_create_none_qsetblng()
@@ -504,8 +504,8 @@ def insert_into_jnd(qsb, job, jnid):
             answertype = qsb.answertype, max         = qsb.max,
             min        = qsb.min,        alerton     = qsb.alerton,
             options    = qsb.options,    jobneed_id  = jnid,
-            cuser_id   = job.cuser_id,   muser_id    = job.muser_id,
-            ctzoffset  = job.ctzoffset)
+            cuser_id   = job['cuser_id'],   muser_id    = job['muser_id'],
+            ctzoffset  = job['ctzoffset'])
     except Exception:
         raise
     log.info("insert_into_jnd() [END]")
@@ -515,7 +515,7 @@ def extract_seq(R):
 
 
 def check_sequence_of_prevjobneed(job, current_seq):
-    R = am.Jobneed.objects.filter(parent_id=1, job_id=job.id).values_list('seqno', flat=True).order_by('-id')
+    R = am.Jobneed.objects.filter(parent_id=1, job_id=job['id']).values_list('seqno', flat=True).order_by('-id')
     if len(R) > 1:
         ic(R[1], current_seq)
         return list(R[1]) == current_seq
@@ -534,8 +534,8 @@ def create_child_tasks(job, _pdtz, _people, jnid, _jobstatus, _jobtype):
         R = am.Job.objects.annotate(
             cplocation = F('bu__gpslocation')
             ).filter(
-            parent_id = job.id).order_by(
-                'seqno')
+            parent_id = job['id']).order_by(
+                'seqno').values()
         log.info(f"create_child_tasks() total child job:={len(R)}")
         prev_edtz = _pdtz
         params = {'_jobdesc': "", 'jnid':jnid, 'pdtz':None, 'edtz':None,
@@ -554,20 +554,20 @@ def create_child_tasks(job, _pdtz, _people, jnid, _jobstatus, _jobtype):
             
             
         for idx, r in enumerate(R):
-            log.info(f"create_child_tasks() [{idx}] child job:= {r.jobname} | job:= {r.id} | cron:= {r.cron}")
+            log.info(f"create_child_tasks() [{idx}] child job:= {r['jobname']} | job:= {r.id} | cron:= {r['cron']}")
 
-            asset = am.Asset.objects.get(id = r.asset_id)
+            asset = am.Asset.objects.get(id = r['asset_id'])
             params['m_factor'] = asset.asset_json['multifactor']
-            _assetname = asset.assetname if r.identifier == 'INTERNALTOUR' else r.qset.qsetname
+            _assetname = asset.assetname if r['identifier'] == 'INTERNALTOUR' else r.qset.qsetname
 
-            mins = job.planduration + r.expirytime + job.gracetime
+            mins = job['planduration'] + r.expirytime + job['gracetime']
             params['_people'] = r.people_id
-            params['_jobdesc'] = f"{_assetname} :: {r.jobname}"
+            params['_jobdesc'] = f"{_assetname} :: {r['jobname']}"
             if idx == 0:
                 pdtz = params['pdtz'] = prev_edtz
             else:
                 pdtz = params['pdtz'] = prev_edtz - \
-                    timedelta(minutes = r.expirytime + job.gracetime)
+                    timedelta(minutes = r.expirytime + job['gracetime'])
             edtz = params['edtz'] = pdtz + timedelta(minutes = mins)
             prev_edtz = edtz
             params['idx'] = idx
@@ -585,22 +585,23 @@ def create_child_tasks(job, _pdtz, _people, jnid, _jobstatus, _jobtype):
 def insert_into_jn_for_child(job, params, r):
     try:
         jn = am.Jobneed.objects.create(
-                job_id         = job.id,                     parent_id         = params['jnid'],
+                job_id         = job['id'],                     parent_id         = params['jnid'],
                 jobdesc        = params['_jobdesc'],         plandatetime      = params['pdtz'],
-                expirydatetime = params['edtz'],             gracetime         = job.gracetime,
-                asset_id       = r.asset_id,                 qset_id           = r.qset_id,
-                pgroup_id      = job.pgroup_id,              frequency         = 'NONE',
-                priority       = r.priority,                 jobstatus         = params['_jobstatus'],
-                client_id      = r.client_id,                jobtype           = params['_jobtype'],
-                scantype       = job.scantype,               identifier        = job.identifier,
-                cuser_id       = r.cuser_id,                 muser_id          = r.muser_id,
-                bu_id          = r.bu_id,                    ticketcategory_id = r.ticketcategory_id,
+                expirydatetime = params['edtz'],             gracetime         = job['gracetime'],
+                asset_id       = r['asset_id'],                 qset_id           = r['qset_id'],
+                pgroup_id      = job['pgroup_id'],              frequency         = 'NONE',
+                priority       = r['priority'],                 jobstatus         = params['_jobstatus'],
+                client_id      = r['client_id'],                jobtype           = params['_jobtype'],
+                scantype       = job['scantype'],               identifier        = job['identifier'],
+                cuser_id       = r['cuser_id'],                 muser_id          = r['muser_id'],
+                bu_id          = r['bu_id'],                    ticketcategory_id = r['ticketcategory_id'],
                 gpslocation    = 'SRID=4326;POINT(0.0 0.0)', remarks           = '',
                 seqno          = params['idx'],              multifactor       = params['m_factor'],
-                performedby    = params['NONE_P'],           ctzoffset         = r.ctzoffset,
+                performedby    = params['NONE_P'],           ctzoffset         = r['ctzoffset'],
                 people_id      = params['_people'],
             )
     except Exception:
+        log.error("insert_into_jn_for_child[]", exc_info=True)
         raise
     else:
         return jn
@@ -608,27 +609,27 @@ def insert_into_jn_for_child(job, params, r):
 
 def job_fields(job, checkpoint, external = False):
     data =  {
-        'jobname'     : f"{checkpoint.get('assetname', '')} :: {job.jobname}",     'jobdesc'        : f"{checkpoint.get('assetname', '')} :: {job.jobname} :: {checkpoint['qsetname']}",
-        'cron'        : job.cron,                      'identifier'     : job.identifier,
-        'expirytime'  : int(checkpoint['expirytime']), 'lastgeneratedon': job.lastgeneratedon,
-        'priority'    : job.priority,                  'qset_id'        : checkpoint['qsetid'],
-        'pgroup_id'   : job.pgroup_id,                 'geofence'       : job.geofence_id,
-        'endtime'     : datetime.strptime(checkpoint.get('endtime', "00:00"), "%H:%M"),                   'ticketcategory' : job.ticketcategory,
-        'fromdate'    : job.fromdate,                  'uptodate'       : job.uptodate,
-        'planduration': job.planduration,              'gracetime'      : job.gracetime,
-        'asset_id'    : checkpoint['assetid'],           'frequency'      : job.frequency,
-        'people_id'   : job.people_id,                 'starttime'      : datetime.strptime(checkpoint.get('starttime', "00:00"), "%H:%M"),
-        'parent_id'   : job.id,                        'seqno'          : checkpoint['seqno'],
-        'scantype'    : job.scantype,                  'ctzoffset'      : job.ctzoffset
+        'jobname'     : f"{checkpoint.get('assetname', '')} :: {job['jobname']}",     'jobdesc'        : f"{checkpoint.get('assetname', '')} :: {job['jobname']} :: {checkpoint['qsetname']}",
+        'cron'        : job['cron'],                      'identifier'     : job['identifier'],
+        'expirytime'  : int(checkpoint['expirytime']), 'lastgeneratedon': job['lastgeneratedon'],
+        'priority'    : job['priority'],                  'qset_id'        : checkpoint['qsetid'],
+        'pgroup_id'   : job['pgroup_id'],                 'geofence'       : job['geofence_id'],
+        'endtime'     : datetime.strptime(checkpoint.get('endtime', "00:00"), "%H:%M"),                   'ticketcategory_id' : job['ticketcategory_id'],
+        'fromdate'    : job['fromdate'],                  'uptodate'       : job['uptodate'],
+        'planduration': job['planduration'],              'gracetime'      : job['gracetime'],
+        'asset_id'    : checkpoint['assetid'],           'frequency'      : job['frequency'],
+        'people_id'   : job['people_id'],                 'starttime'      : datetime.strptime(checkpoint.get('starttime', "00:00"), "%H:%M"),
+        'parent_id'   : job['id'],                        'seqno'          : checkpoint['seqno'],
+        'scantype'    : job['scantype'],                  'ctzoffset'      : job['ctzoffset']
     }
     if external:
         jsonData = {
             'distance'      : checkpoint['distance'],
             'breaktime'     : checkpoint['breaktime'],
-            'is_randomized' : job.other_info['is_randomized'],
-            'tour_frequency': job.other_info['tour_frequency']}
-        data['jobname']    = f"{checkpoint['buname']} :: {job.jobname}"
-        data['jobdesc']    = f"{checkpoint.get('buname', '')} :: {job.jobname} :: {checkpoint['qsetname']}"
+            'is_randomized' : job['other_info']['is_randomized'],
+            'tour_frequency': job['other_info']['tour_frequency']}
+        data['jobname']    = f"{checkpoint['buname']} :: {job['jobname']}"
+        data['jobdesc']    = f"{checkpoint.get('buname', '')} :: {job['jobname']} :: {checkpoint['qsetname']}"
         data['other_info'] = jsonData
     return data
 
@@ -659,7 +660,7 @@ def delete_from_jobneed(parentjob, checkpointId, checklistId):
 def update_lastgeneratedon(job, pdtz):
     try:
         log.info('update_lastgeneratedon [start]')
-        if rec := am.Job.objects.filter(id = job.id).update(
+        if rec := am.Job.objects.filter(id = job['id']).update(
             lastgeneratedon = pdtz
         ):
             log.info(f"after lastgenreatedon:={pdtz}")
@@ -674,7 +675,7 @@ def send_email_notication(err):
 def del_job(id):
     log.info("deleting old jobs start[+]")
     jobs = am.Job.objects.filter(parent_id__in = [id]).exclude(id=1).values_list(named=True)
-    jobids = [job.id for job in jobs]
+    jobids = [job['id'] for job in jobs]
     #update jobneedetails and jobneed
     olddate = datetime(1970, 1, 1, 0, 0, 0, tzinfo=timezone.utc)
     oldjobneeds = am.Jobneed.objects.filter(plandatetime__gt = datetime.now(timezone.utc), job_id__in = jobids).values_list("id", flat=True)
