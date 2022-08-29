@@ -1,7 +1,6 @@
 from datetime import datetime
 from django.db import models
 from django.db.models import Q, F
-import apps.onboarding.models as om
 import apps.peoples.models as pm
 from apps.core import utils
 
@@ -77,8 +76,7 @@ class BtManager(models.Manager):
                      'buname', 'cuser_id', 'muser_id', 'identifier_id'
                 )
                 return qset or self.none()
-            else:   
-                pass
+            pass
     
     def load_parent_choices(self, request):
         search_term = request.GET.get('search')

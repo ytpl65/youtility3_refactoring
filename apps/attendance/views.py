@@ -9,7 +9,6 @@ import apps.attendance.forms as atf
 import apps.attendance.models as atdm
 from .filters import AttendanceFilter
 import apps.peoples.utils as putils
-from django.contrib.gis.db.models.functions import  AsWKT
 
 import logging
 from apps.core import utils
@@ -44,7 +43,7 @@ class Attendance(LoginRequiredMixin, View):
             return rp.JsonResponse({'data':list(objs)}, status=200)
 
         # return attemdance_form empty
-        elif R.get('action', None) == 'form': 
+        if R.get('action', None) == 'form': 
             cxt = {'attd_form': self.params['form_class'](),
                    'msg': "create attendance requested"}
             resp = utils.render_form(request, self.params, cxt)

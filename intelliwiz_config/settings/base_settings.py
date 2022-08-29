@@ -35,6 +35,8 @@ INSTALLED_APPS = [
     'rest_framework',
 
 
+
+
     # local apps
     'apps.peoples',
     'apps.onboarding',

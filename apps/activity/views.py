@@ -139,7 +139,7 @@ class MasterQuestionSet(LoginRequiredMixin, View):
             return  rp.JsonResponse(data = {'data':list(objs)})
 
         # return questionset_form empty
-        elif R.get('action', None) == 'form':
+        if R.get('action', None) == 'form':
             self.params['form_initials'].update(
                 {'parent': utils.get_or_create_none_qset().id})
             cxt = {
@@ -243,7 +243,7 @@ class MasterAsset(LoginRequiredMixin, View):
             return  rp.JsonResponse(data = {'data':list(objs)})
 
         # return questionset_form empty
-        elif R.get('action', None) == 'form':
+        if R.get('action', None) == 'form':
             self.params['form_initials'].update({
                 'type': 1,
                 'parent': 1})
@@ -532,7 +532,7 @@ class AdhocTasks(LoginRequiredMixin, View):
                 'recordsTotal':total,
             }, safe = False)
 
-        elif R.get('action', None) == 'form':
+        if R.get('action', None) == 'form':
             cxt = {'adhoctaskform': self.params['form_class'](request = request),
                    'msg': "create adhoc task requested"}
             return render(request, self.params['template_form'], context = cxt)
