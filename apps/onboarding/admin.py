@@ -22,7 +22,7 @@ class BaseFieldSet1:
         saves_null_values = True
     )
 
-class BaseFieldSet2(object):
+class BaseFieldSet2:
     client = fields.Field(
         column_name='client',
         attribute='client',
