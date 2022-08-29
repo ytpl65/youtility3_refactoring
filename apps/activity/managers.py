@@ -1,7 +1,7 @@
 from django.db import models
 from django.db.models.functions import Concat
 from django.db.models import CharField, Value as V
-from django.db.models import Q, F, Count, Case, When, Value
+from django.db.models import Q, F, Count, Case, When, 
 from django.contrib.gis.db.models.functions import  AsWKT, AsGeoJSON
 from datetime import datetime, timedelta, timezone
 from apps.core import utils
