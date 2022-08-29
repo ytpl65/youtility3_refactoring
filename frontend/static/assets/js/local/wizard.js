@@ -1,5 +1,5 @@
 
-if (session.hasOwnProperty("wizard_data")) {
+if (Object.prototype.hasOwnProperty.call(session, 'wizard_data')) {
     //Alert config for quit wizard
     const quitwizard_config = {
       title: "Quit Wizard",

@@ -191,8 +191,8 @@ function display_form_errors(errors) {
     display_non_field_errors([errors])
   }
   for (let key in errors) {
-    if (errors.hasOwnProperty(key)) {
-      if(errors.hasOwnProperty("__all__")){
+    if (Object.prototype.hasOwnProperty.call(errors, key)) {
+      if(Object.prototype.hasOwnProperty.call(errors, '__all__')){
         display_non_field_errors(errors)//non-field errors
       }
       let error = "<p class='errors'>" + errors[key] + "</p>";
@@ -304,7 +304,7 @@ function display_non_field_errors(errors){
 function display_modelform_errors(errors){
   $('p.errors').remove();
   //non field errors
-  if(errors.hasOwnProperty("__all__") || (errors instanceof String)){
+  if(Object.prototype.hasOwnProperty.call(errors, '__all__') || (errors instanceof String)){
     display_non_field_errors(errors.__all__)
   }else if (errors instanceof String){
     display_non_field_errors(errors)
@@ -352,8 +352,8 @@ function fire_ajax_form_post(params, payload){
 
 
 function fire_ajax_get(params){
-  let data = params.hasOwnProperty('data') ? params.data : {}
-  let callback = params.hasOwnProperty('beforeSend') ? params.beforeSend : function () {}
+  let data = Object.prototype.hasOwnProperty.call(params, 'data') ? params.data : {}
+  let callback = Object.prototype.hasOwnProperty.call(params, 'beforeSend') ? params.beforeSend : function () {}
   return $.ajax({
     url:params.url,
     type:"get",
@@ -949,20 +949,20 @@ function initDatetimes(ids){
 }
 
 function init_select_field(kwargs){
-  if(kwargs.hasOwnProperty('client') && kwargs.client){
+  if(Object.prototype.hasOwnProperty.call(kwargs, 'client') && kwargs.client){
     $(kwargs.id).select2({
       allowClear:true,
-      multiple:kwargs.hasOwnProperty('multiple') ? kwargs.multiple :false,
-      closeOnSelect:kwargs.hasOwnProperty('closeOnSelect') ? kwargs.closeOnSelect : true,
+      multiple:Object.prototype.hasOwnProperty.call(kwargs, 'multiple') ? kwargs.multiple :false,
+      closeOnSelect:Object.prototype.hasOwnProperty.call(kwargs, 'closeOnSelect') ? kwargs.closeOnSelect : true,
       placeholder:"Select an Option!"
     })
   }else{
     $(kwargs.id).select2({
       ajax:{
         url:kwargs.url,
-        closeOnSelect:kwargs.hasOwnProperty('closeOnSelect') ? kwargs.closeOnSelect : true,
+        closeOnSelect:Object.prototype.hasOwnProperty.call(kwargs, 'closeOnSelect') ? kwargs.closeOnSelect : true,
         allowClear:true,
-        multiple:kwargs.hasOwnProperty('multiple')? kwargs.multiple : false,
+        multiple:Object.prototype.hasOwnProperty.call(kwargs, 'multiple')? kwargs.multiple : false,
         delay: 500, 
         data:function(args){
           var query = {
