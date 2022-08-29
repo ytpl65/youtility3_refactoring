@@ -1074,7 +1074,7 @@ def upload(request):
                 pass
 
             if foldertype in ["personlogger"] and \
-                request.POST["doctype"] != None  and \
+                request.POST["doctype"] is not None  and \
                 request.POST["doctype"] != "None":
                 filename=  request.POST["doctype"] + fextension
 
@@ -1092,7 +1092,7 @@ def upload(request):
                 isUploaded= False
             del basedir, tablename, fyear, fmonth, home_dir
         else:
-            if "doctype" in request.POST and request.POST["doctype"] != None and request.POST["doctype"] != "None": filename= request.POST["doctype"] + fextension
+            if "doctype" in request.POST and request.POST["doctype"] is not None and request.POST["doctype"] != "None": filename= request.POST["doctype"] + fextension
             filepath= "NONE"
     del ownerid, isDefault, foldertype, attachmenttype
     del expanduser, parser, os
