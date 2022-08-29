@@ -1098,7 +1098,7 @@ def upload(request):
     del expanduser, parser, os
     return isUploaded, str(filename), str(filepath), str(docnumber)
 
-class JobFields(object):
+class JobFields:
     fields = [
         'id', 'jobname', 'jobdesc', 'geofence_id', 'cron',
         'expirytime', 'identifier', 'cuser_id', 'muser_id',
