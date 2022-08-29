@@ -77,8 +77,7 @@ class BtManager(models.Manager):
                      'buname', 'cuser_id', 'muser_id', 'identifier_id'
                 )
                 return qset or self.none()
-            else:   
-                pass
+            pass
     
     def load_parent_choices(self, request):
         search_term = request.GET.get('search')

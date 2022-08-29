@@ -56,8 +56,7 @@ def auth_check(info, input, returnUser, uclientip = None):
         if allowAccess:
             if user.client.enable and user.enable:
                 return returnUser(user, info.context), user
-            else:
-                raise GraphQLError(Messages.NOCLIENTPEOPLE)
+            raise GraphQLError(Messages.NOCLIENTPEOPLE)
 
 def authenticate_user(input, request, msg, returnUser):
     loginid = input.loginid
@@ -76,8 +75,7 @@ def authenticate_user(input, request, msg, returnUser):
     if deviceid != '-1' and user.deviceid == '-1':
         if all([user.client.enable, user.enable, user.isverified]):
             return returnUser(user, request), user
-        else:
-            raise GraphQLError(msg.NOCLIENTPEOPLE)
+        raise GraphQLError(msg.NOCLIENTPEOPLE)
     if deviceid not in valid_imeis:
         raise GraphQLError(msg.NOTREGISTERED)
     if deviceid != user.deviceid:
