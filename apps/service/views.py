@@ -17,8 +17,8 @@ log = getLogger('__main__')
 A = {'rc':0, 'reason': 'OK', 'msg':None, 'errors':None, 'returnid':None}
 def get_model(tablename):
     if tablename == 'peopleeventlog':return PeopleEventlog
-    elif tablename == 'attachment': return Attachment
-    elif tablename == 'jobneed': return Jobneed
+    if tablename == 'attachment': return Attachment
+    if tablename == 'jobneed': return Jobneed
 
 
 def perform_insertrecord(data):

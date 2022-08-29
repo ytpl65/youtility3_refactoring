@@ -19,8 +19,7 @@ class TenantDbRouter:
         if hasattr(THREAD_LOCAL, 'DB'):
             if THREAD_LOCAL.DB in settings.DATABASES:
                 return THREAD_LOCAL.DB
-            else:
-                raise Http404
+            raise Http404
         else:
             return 'default'
 

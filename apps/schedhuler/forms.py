@@ -261,10 +261,9 @@ class SchdTaskFormJob(JobForm):
     def convertto_mins(self, _type, _time):
         if _type == 'HOURS':
             return _time * 60
-        elif _type == 'DAYS':
+        if _type == 'DAYS':
             return _time * 24 * 60
-        else:
-            return _time            
+        return _time            
 
 
 

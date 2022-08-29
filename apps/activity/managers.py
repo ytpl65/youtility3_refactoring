@@ -514,7 +514,6 @@ class JobManager(models.Manager):
     use_in_migrations: True
 
     def getgeofence(self, peopleid, siteid):
-        from django.contrib.gis.db.models.functions import AsGeoJSON
         qset = self.filter(
             people_id = peopleid, bu_id = siteid, identifier='GEOFENCE').select_related(
                 'geofence', 

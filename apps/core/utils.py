@@ -1,6 +1,7 @@
 '''
 DEFINE FUNCTIONS AND CLASSES WERE CAN BE USED GLOBALLY.
 '''
+import ast
 import threading
 from PIL import ImageFile
 import os.path
@@ -41,9 +42,8 @@ def get_from_cache(key):
     if data := cache.get(key):
         logger.info(f'Got from cache {key}')
         return data
-    else:
-        logger.info('Not found in cache')
-        return None
+    logger.info('Not found in cache')
+    return None
 
 def render_form(request, params, cxt):
     logger.info("%s", cxt['msg'])
@@ -485,11 +485,10 @@ def to_utc(date, format = None):
                 microsecond = 0, tzinfo = pytz.utc)
             dtlist.append(dt)
         return dtlist
-    else:
-        dt = date.astimezone(pytz.utc).replace(microsecond = 0, tzinfo = pytz.utc)
-        if format:
-            dt.strftime(format)
-        return dt
+    dt = date.astimezone(pytz.utc).replace(microsecond = 0, tzinfo = pytz.utc)
+    if format:
+        dt.strftime(format)
+    return dt
 
 # MAPPING OF HOSTNAME:DATABASE ALIAS NAME
 
@@ -863,9 +862,10 @@ def create_tenant_with_alias(db):
     )
 
 def get_record_from_input(input):
+
     try:
         ic(input.values)
-        values = eval(json.dumps(input.values))
+        values = ast.literal_eval(json.dumps(input.values))
         ic(values)
         return dict(zip(input.columns, values))
     except Exception:
@@ -1073,7 +1073,7 @@ def upload(request):
                 pass
 
             if foldertype in ["personlogger"] and \
-                request.POST["doctype"] != None  and \
+                request.POST["doctype"] is not None  and \
                 request.POST["doctype"] != "None":
                 filename=  request.POST["doctype"] + fextension
 
@@ -1091,7 +1091,7 @@ def upload(request):
                 isUploaded= False
             del basedir, tablename, fyear, fmonth, home_dir
         else:
-            if "doctype" in request.POST and request.POST["doctype"] != None and request.POST["doctype"] != "None": filename= request.POST["doctype"] + fextension
+            if "doctype" in request.POST and request.POST["doctype"] is not None and request.POST["doctype"] != "None": filename= request.POST["doctype"] + fextension
             filepath= "NONE"
     del ownerid, isDefault, foldertype, attachmenttype
     del expanduser, parser, os

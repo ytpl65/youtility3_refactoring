@@ -53,6 +53,7 @@ INSTALLED_APPS = [
     'rest_framework',
 
 
+
     # local apps
     'apps.peoples',
     'apps.onboarding',
@@ -165,6 +166,7 @@ home_local_dbs = {
         'HOST':     'localhost',
         'PORT':     '5432',
     }
+
 
 
 }

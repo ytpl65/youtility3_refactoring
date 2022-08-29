@@ -76,8 +76,7 @@ class BtManager(models.Manager):
                      'buname', 'cuser_id', 'muser_id', 'identifier_id'
                 )
                 return qset or self.none()
-            else:   
-                pass
+            pass
     
     def load_parent_choices(self, request):
         search_term = request.GET.get('search')
@@ -186,7 +185,6 @@ class TypeAssistManager(models.Manager):
         """
         Return latest typeassist data
         """
-        from datetime import datetime
         if not isinstance(mdtz, datetime):
             mdtz = datetime.strptime(mdtz, "%Y-%m-%d %H:%M:%S")
 

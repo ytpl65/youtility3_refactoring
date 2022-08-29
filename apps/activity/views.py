@@ -1,8 +1,7 @@
 from django.http import Http404, QueryDict, response as rp
 from django.contrib import messages
 from django.db import IntegrityError, transaction
-from django.db.models import Q
-from django.db.models import Q
+from django.db.models import Q, F, Count, Case, When, Value
 from django.shortcuts import redirect, render
 from django.urls import resolve
 from django.contrib.gis.db.models.functions import  AsWKT
@@ -140,7 +139,7 @@ class MasterQuestionSet(LoginRequiredMixin, View):
             return  rp.JsonResponse(data = {'data':list(objs)})
 
         # return questionset_form empty
-        elif R.get('action', None) == 'form':
+        if R.get('action', None) == 'form':
             self.params['form_initials'].update(
                 {'parent': utils.get_or_create_none_qset().id})
             cxt = {
@@ -244,7 +243,7 @@ class MasterAsset(LoginRequiredMixin, View):
             return  rp.JsonResponse(data = {'data':list(objs)})
 
         # return questionset_form empty
-        elif R.get('action', None) == 'form':
+        if R.get('action', None) == 'form':
             self.params['form_initials'].update({
                 'type': 1,
                 'parent': 1})
@@ -533,7 +532,7 @@ class AdhocTasks(LoginRequiredMixin, View):
                 'recordsTotal':total,
             }, safe = False)
 
-        elif R.get('action', None) == 'form':
+        if R.get('action', None) == 'form':
             cxt = {'adhoctaskform': self.params['form_class'](request = request),
                    'msg': "create adhoc task requested"}
             return render(request, self.params['template_form'], context = cxt)

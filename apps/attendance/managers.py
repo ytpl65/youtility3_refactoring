@@ -8,7 +8,6 @@ class PELManager(models.Manager):
     use_in_migrations = True
 
     def get_current_month_sitevisitorlog(self, peopleid):
-        from datetime import datetime
         qset = self.select_related('bu', 'peventtype').filter(
             ~Q(people_id = -1), peventtype__tacode = 'AUDIT',
             people_id = peopleid, datefor__gte = datetime.date() - timedelta(days = 7))
