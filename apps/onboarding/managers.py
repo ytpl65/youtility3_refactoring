@@ -20,7 +20,6 @@ class BtManager(models.Manager):
                     .distinct()
                 ):
                     return tuple(qset)
-                    return ','.join(map(str, list(qset))).replace("'", '')
             return ""
 
     def get_bu_list_ids(self, clientid, type='array'):
