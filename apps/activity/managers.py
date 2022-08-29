@@ -1,7 +1,7 @@
 from django.db import models
 from django.db.models.functions import Concat, Cast
 from django.db.models import CharField, Value as V
-from django.db.models import Q, F, Count, Case, When, Value
+from django.db.models import Q, F, Count, Case, When, 
 from django.contrib.gis.db.models.functions import Distance 
 from django.contrib.gis.db.models.functions import  AsWKT, AsGeoJSON
 from datetime import datetime, timedelta, timezone
@@ -515,7 +515,6 @@ class JobManager(models.Manager):
     use_in_migrations: True
 
     def getgeofence(self, peopleid, siteid):
-        from django.contrib.gis.db.models.functions import AsGeoJSON
         qset = self.filter(
             people_id = peopleid, bu_id = siteid, identifier='GEOFENCE').select_related(
                 'geofence', 

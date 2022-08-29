@@ -187,7 +187,6 @@ class TypeAssistManager(models.Manager):
         """
         Return latest typeassist data
         """
-        from datetime import datetime
         if not isinstance(mdtz, datetime):
             mdtz = datetime.strptime(mdtz, "%Y-%m-%d %H:%M:%S")
 

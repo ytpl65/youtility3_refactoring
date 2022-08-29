@@ -2,7 +2,6 @@ from django.http import Http404, QueryDict, response as rp
 from django.contrib import messages
 from django.db import IntegrityError, transaction
 from django.db.models import Q, F, Count, Case, When, Value
-from django.db.models import Q
 from django.shortcuts import redirect, render
 from django.urls import resolve
 from django.contrib.gis.db.models.functions import  AsWKT
