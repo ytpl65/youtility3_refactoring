@@ -454,12 +454,14 @@ class JobForm(forms.ModelForm):
             return self._extracted_from_clean_upto_date_3(val)
 
     # TODO Rename this here and in `clean_from_date` and `clean_upto_date`
-    def _extracted_from_clean_upto_date_3(self, val):
+    @staticmethod
+    def _extracted_from_clean_upto_date_3(val):
         val = utils.to_utc(val)
         ic('cleaned')
         return val
 
-    def clean_slno(self):
+    @staticmethod
+    def clean_slno():
         ic('cleaned')
         return -1
 

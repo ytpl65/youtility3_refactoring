@@ -171,7 +171,8 @@ class MasterReportForm(LoginRequiredMixin, View):
         log.info("%s template form processing/saving [ END ]"%self.viewname)
         return resp
 
-    def process_invalid_form(self, form):
+    @staticmethod
+    def process_invalid_form(form):
         log.info(
             "processing invalid forms sending errors to the client [ START ]")
         cxt = {"errors": form.errors}
@@ -314,7 +315,8 @@ class ConfigSiteReportTemplate(LoginRequiredMixin, View):
             resp = utils.handle_Exception(request)
         return resp
     
-    def handle_valid_form(self, form, request, data):
+    @staticmethod
+    def handle_valid_form(form, request, data):
         try:
             with transaction.atomic(using=utils.get_current_db_name()):
                 template = form.save()
@@ -396,7 +398,8 @@ class ConfigIncidentReportTemplate(LoginRequiredMixin, View):
             resp = utils.handle_Exception(request)
         return resp
     
-    def handle_valid_form(self, form, request, data):
+    @staticmethod
+    def handle_valid_form(form, request, data):
         try:
             with transaction.atomic(using=utils.get_current_db_name()):
                 template = form.save()
@@ -479,7 +482,8 @@ class ConfigWorkPermitReportTemplate(LoginRequiredMixin, View):
             resp = utils.handle_Exception(request)
         return resp
     
-    def handle_valid_form(self, form, request, data):
+    @staticmethod
+    def handle_valid_form(form, request, data):
         try:
             with transaction.atomic(using=utils.get_current_db_name()):
                 template = form.save()

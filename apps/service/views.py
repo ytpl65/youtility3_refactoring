@@ -177,7 +177,8 @@ class InsertRecord(APIView):
     """
     Inserts record in given table after validations
     """
-    def post(self, request, format = None):
+    @staticmethod
+    def post(request, format = None):
         ic(request.data)
         return perform_insertrecord(request.data)
 
@@ -187,12 +188,14 @@ class TaskTourUpdate(APIView):
     """
     Updates Task Tour activities
     """
-    def post(self, request, format = None):
+    @staticmethod
+    def post(request, format = None):
         return perform_task_tour_update(request.data)
 
 class TemplateReports(APIView):
 
-    def post(self, request, format = None):
+    @staticmethod
+    def post(request, format = None):
         ic(request.data)
         return perform_template_report_insert(request.data)
 
@@ -204,7 +207,8 @@ class AttachmentUpload(APIView):
     Perform fr based attendance.
     """
 
-    def post(self, request, format = None):
+    @staticmethod
+    def post(request, format = None):
         return perform_attachment_upload(request)
 
 
@@ -216,5 +220,6 @@ class TestLoginREquired(APIView):
     """
     Updates Task Tour activities
     """
-    def get(self, request, format = None):
+    @staticmethod
+    def get(request, format = None):
         return Response(data={"text": "Helloworld"})

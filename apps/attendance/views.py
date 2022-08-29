@@ -82,7 +82,8 @@ class Attendance(LoginRequiredMixin, View):
             resp = utils.handle_Exception(request)
         return resp
 
-    def handle_valid_form(self, form, request, create):
+    @staticmethod
+    def handle_valid_form(form, request, create):
         logger.info('attendance form is valid')
         try:
             attd = form.save()
@@ -167,7 +168,8 @@ class Conveyance(LoginRequiredMixin, View):
             resp = utils.handle_Exception(request)
         return resp
 
-    def handle_valid_form(self, form, request, create):
+    @staticmethod
+    def handle_valid_form(form, request, create):
         logger.info('conveyance form is valid')
         from apps.core.utils import handle_intergrity_error
         try:

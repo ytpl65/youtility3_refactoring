@@ -7,7 +7,8 @@ class MultiAuthentcationBackend(BaseBackend):
     with either a username or an email address or mobileno.
     """
 
-    def authenticate(self, request, username = None, password = None):
+    @staticmethod
+    def authenticate(request, username = None, password = None):
         '''authenticates user for login credentials'''
         ic("inside new authentication")
         from .models import People
@@ -24,7 +25,8 @@ class MultiAuthentcationBackend(BaseBackend):
             pass
         return result
 
-    def get_user(self, user_id):
+    @staticmethod
+    def get_user(user_id):
         '''return user for given user_id'''
         from .models import People
         result = None

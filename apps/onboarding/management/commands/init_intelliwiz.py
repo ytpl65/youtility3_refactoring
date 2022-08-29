@@ -71,7 +71,8 @@ class Command(BaseCommand):
     Insert Default Entries in TypeAssist.
     '''
 
-    def add_arguments(self, parser) -> None:
+    @staticmethod
+    def add_arguments(parser) -> None:
         parser.add_argument('db', nargs = 1, type = str)
 
     def handle(self, *args, **options):

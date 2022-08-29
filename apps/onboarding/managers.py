@@ -6,7 +6,8 @@ from apps.core import utils
 
 class BtManager(models.Manager):
     use_in_migrations = True
-    def get_people_bu_list(self, people):
+    @staticmethod
+    def get_people_bu_list(people):
         """
         Returns all BU's assigned to people
         """

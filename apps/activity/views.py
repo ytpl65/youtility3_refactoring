@@ -91,7 +91,8 @@ class Question(LoginRequiredMixin, View):
             resp = utils.handle_Exception(request)
         return resp
 
-    def handle_valid_form(self, form,  request, create):
+    @staticmethod
+    def handle_valid_form(form,  request, create):
         logger.info('ques form is valid')
         ques = None
         try:
@@ -193,7 +194,8 @@ class MasterQuestionSet(LoginRequiredMixin, View):
             resp = utils.handle_Exception(request)
         return resp
 
-    def get_questions_for_form(self, qset):
+    @staticmethod
+    def get_questions_for_form(qset):
         try:
             questions = list(am.QuestionSetBelonging.objects.select_related(
                 "question").filter(qset_id = qset).values(
@@ -320,7 +322,8 @@ class Checklist(MasterQuestionSet):
         except IntegrityError:
             return utils.handle_intergrity_error('Question Set')
 
-    def save_qset_belonging(self, request, assigned_questions, fields):
+    @staticmethod
+    def save_qset_belonging(request, assigned_questions, fields):
         try:
             logger.info("saving QuestoinSet Belonging [started]")
             logger.info(f'{" " * 4} saving QuestoinSet Belonging found {len(assigned_questions)} questions')
@@ -372,7 +375,8 @@ class QuestionSet(MasterQuestionSet):
             logger.critical("Something went wrong", exc_info = True)
             raise
 
-    def save_qset_belonging(self, request, assigned_questions, fields):
+    @staticmethod
+    def save_qset_belonging(request, assigned_questions, fields):
         try:
             logger.info("saving QuestoinSet Belonging [started]")
             logger.info(f'{" " * 4} saving QuestoinSet Belonging found {len(assigned_questions)} questions')
