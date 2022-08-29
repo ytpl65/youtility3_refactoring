@@ -52,7 +52,8 @@ class WizardView(LoginRequiredMixin, View):
             res = self.open_new_wizard(request, False)  # no drafts
         return res
 
-    def check_user_has_unsaved_wizards(self, request):
+    @staticmethod
+    def check_user_has_unsaved_wizards(request):
         user, res = request.user, None
         try:
             res = ob.WizardDraft.objects.get(
@@ -64,7 +65,8 @@ class WizardView(LoginRequiredMixin, View):
             log.info("user has saved draft trying to retrieve that...")
         return res
 
-    def get_appropriate_stage_from_draft(self, request):
+    @staticmethod
+    def get_appropriate_stage_from_draft(request):
         log.info("loaded appropriate stage or the wizard step from the draft")
         wizard_data = request.session['wizard_data']
         if not wizard_data['current_inst']:
@@ -117,7 +119,8 @@ class WizardDelete(LoginRequiredMixin, View):
         del request.session['wizard_data']
         return scts.redirect('home')
 
-    def delete_pgroups(self, Pgroup, ids):
+    @staticmethod
+    def delete_pgroups(Pgroup, ids):
         for i in range(len(ids)):
             pg = Pgroup.objects.get(pk = ids[i])
             pg.enable = False

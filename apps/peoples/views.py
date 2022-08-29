@@ -97,7 +97,8 @@ class SignIn(View):
         return response
 
 class SignOut(LoginRequiredMixin, View):
-    def get(self, request, *args, **kwargs):
+    @staticmethod
+    def get(request, *args, **kwargs):
         response = None
         try:
             logout(request)
@@ -116,7 +117,8 @@ class ChangePeoplePassword(LoginRequiredMixin, View):
     json_form = PeopleExtrasForm
     model = People
 
-    def post(self, request, *args, **kwargs):
+    @staticmethod
+    def post(request, *args, **kwargs):
         from django.contrib.auth.forms import SetPasswordForm
         from django.http import JsonResponse
         id, response = request.POST.get('people'), None
@@ -221,7 +223,8 @@ class RetrievePeoples(LoginRequiredMixin, View):
             response = redirect('/dashboard')
         return response
 
-    def paginate_results(self, request, objects):
+    @staticmethod
+    def paginate_results(request, objects):
         '''paginate the results'''
         logger.info('Pagination Start'if objects else "")
         from .filters import PeopleFilter
@@ -421,7 +424,8 @@ class RetrivePgroups(LoginRequiredMixin, View):
             response = redirect('/dashboard')
         return response
 
-    def paginate_results(self, request, objects):
+    @staticmethod
+    def paginate_results(request, objects):
         '''paginate the results'''
         logger.info('Pagination Start'if objects else "")
         from .filters import PgroupFilter
@@ -607,7 +611,8 @@ class RetriveCapability(LoginRequiredMixin, View):
             response = redirect('/dashboard')
         return response
 
-    def paginate_results(self, request, objects):
+    @staticmethod
+    def paginate_results(request, objects):
         '''paginate the results'''
         logger.info('Pagination Start'if objects else "")
         if request.GET:
@@ -887,7 +892,8 @@ class PeopleView(LoginRequiredMixin, View):
             resp = utils.handle_Exception(request)
         return resp
 
-    def handle_valid_form(self, form, jsonform, request ,create):
+    @staticmethod
+    def handle_valid_form(form, jsonform, request ,create):
         logger.info('people form is valid')
         from apps.core.utils import handle_intergrity_error
         from django_email_verification import send_email
@@ -1105,7 +1111,8 @@ class SiteGroup(LoginRequiredMixin, View):
         except IntegrityError:
             return handle_intergrity_error("Pgroup")
 
-    def resest_assignedsites(self, pg):
+    @staticmethod
+    def resest_assignedsites(pg):
         pm.Pgbelonging.objects.filter(pgroup_id=pg.id).delete()
         ic('reset successfully')
 

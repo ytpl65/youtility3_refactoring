@@ -134,7 +134,8 @@ class RetriveClients(LoginRequiredMixin, View):
             response = redirect('/dashboard')
         return response
 
-    def paginate_results(self, request, objects):
+    @staticmethod
+    def paginate_results(request, objects):
         '''paginate the results'''
         logger.info('Pagination Start'if objects else "")
         from .filters import ClientFiler
@@ -335,7 +336,8 @@ class RetrieveSitePeople(LoginRequiredMixin, View):
             response = redirect('/dashboard')
         return response
 
-    def paginate_results(self, request, objects):
+    @staticmethod
+    def paginate_results(request, objects):
         '''paginate the results'''
         logger.info('Pagination Start'if objects else "")
         from .filters import BtFilter
@@ -524,7 +526,8 @@ class RetrieveShift(LoginRequiredMixin, View):
             response = redirect('/dashboard')
         return response
 
-    def paginate_results(self, request, objects):
+    @staticmethod
+    def paginate_results(request, objects):
         '''paginate the results'''
         logger.info('Pagination Start'if objects else "")
         from .filters import ShiftFlter
@@ -720,7 +723,8 @@ class RetrieveBt(LoginRequiredMixin, View):
             response = redirect('/dashboard')
         return response
 
-    def paginate_results(self, request, objects):
+    @staticmethod
+    def paginate_results(request, objects):
         '''paginate the results'''
         logger.info('Pagination Start'if objects else "")
         from .filters import BtFilter
@@ -945,7 +949,8 @@ class RetriveClients(LoginRequiredMixin, View):
             response = redirect('/dashboard')
         return response
 
-    def paginate_results(self, request, objects):
+    @staticmethod
+    def paginate_results(request, objects):
         '''paginate the results'''
         logger.info('Pagination Start'if objects else "")
         from .filters import ClientFiler
@@ -1377,7 +1382,8 @@ class GeoFence(LoginRequiredMixin, View):
         except IntegrityError:
             return handle_intergrity_error("GeoFence")
 
-    def save_geofence_field(self, gf, geofence):
+    @staticmethod
+    def save_geofence_field(gf, geofence):
         try:
             from django.contrib.gis.geos import LinearRing, Polygon
             import json
@@ -1426,7 +1432,8 @@ class ImportFile(LoginRequiredMixin, View):
         if R.get('model') == 'people':
             return render(request, f"{self.params['template_form']}/people_imp_exp.html")
 
-    def post(self, request, *args, **kwargs):
+    @staticmethod
+    def post(request, *args, **kwargs):
         # sourcery skip: remove-redundant-constructor-in-dict-union
         from tablib import Dataset
         import json
@@ -1535,7 +1542,8 @@ class Client(LoginRequiredMixin, View):
             resp = utils.handle_Exception(request)
         return resp
 
-    def handle_valid_form(self, form, jsonform, request):
+    @staticmethod
+    def handle_valid_form(form, jsonform, request):
         logger.info('client form is valid')
         from .utils import save_json_from_bu_prefsform
         try:

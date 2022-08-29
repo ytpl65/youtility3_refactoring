@@ -84,7 +84,8 @@ class LoginResponseType(DjangoObjectType):
         fields = [
             'peoplecode', 'loginid', 'peoplename', 'isadmin',
              'email', 'mobno']
-    def resolve_tenantid(self, info, *args, **kwargs):
+    @staticmethod
+    def resolve_tenantid(info, *args, **kwargs):
         print("called")
         print(dir(info.context))
         print(dict(info.context.GET))

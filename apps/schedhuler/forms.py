@@ -54,7 +54,8 @@ class Schd_I_TourJobForm(JobForm):
         utils.apply_error_classes(self)
         return result 
 
-    def clean_slno(self):
+    @staticmethod
+    def clean_slno():
         return -1
 
     def clean(self):
@@ -127,7 +128,8 @@ class I_TourFormJobneed(JobNeedForm): # jobneed
             val =  ob_utils.to_utc(val)
             return val
 
-    def clean_frequency(self):
+    @staticmethod
+    def clean_frequency():
         return "NONE"
 
 class Child_I_TourFormJobneed(JobNeedForm):# jobneed
@@ -258,7 +260,8 @@ class SchdTaskFormJob(JobForm):
         for time, type in zip(times, types):
             self.cleaned_data[time] = self.convertto_mins(type, time)
 
-    def convertto_mins(self, _type, _time):
+    @staticmethod
+    def convertto_mins(_type, _time):
         if _type == 'HOURS':
             return _time * 60
         if _type == 'DAYS':
@@ -322,7 +325,8 @@ class TicketForm(JobNeedForm):
             val =  ob_utils.to_utc(val)
             return val
 
-    def clean_frequency(self):
+    @staticmethod
+    def clean_frequency():
         return "NONE"
 
 
@@ -373,5 +377,6 @@ class E_TourFormJobneed(JobNeedForm):
             val =  ob_utils.to_utc(val)
             return val
 
-    def clean_frequency(self):
+    @staticmethod
+    def clean_frequency():
         return "NONE"
