@@ -332,7 +332,7 @@ function CalculateStimeEtimeDuration(params){
         params.mapDistance += parseFloat(data[i]['distance']);
         params.mapDuration += parseInt(data[i]['expirytime']);
         params.timeSpendAtSite += params.duration_grace;
-        if(data[i]['breaktime'] == undefined || data[i]['breaktime'] == null || data[i]['breaktime'] == "") {
+        if(data[i]['breaktime'] == undefined || data[i]['breaktime'] === null || data[i]['breaktime'] == "") {
             data[i]['breaktime'] = 0;
         }
         params.mapBreakTime += parseInt(data[i]['breaktime']);
@@ -342,7 +342,7 @@ function CalculateStimeEtimeDuration(params){
             data[i]['starttime'] = moment(params.calDateTime).add(params.smin, 'minutes').format("HH:mm");
             data[i]['endtime'] = moment(params.calDateTime).add(params.emin, 'minutes').format("HH:mm");
             params.prevExpTime= params.emin;
-            if(data[i]['breaktime'] != undefined && data[i]['breaktime'] != null && data[i]['breaktime'] != ""){
+            if(data[i]['breaktime'] != undefined && data[i]['breaktime'] !== null && data[i]['breaktime'] != ""){
                 params.prevBreakTime= parseInt(data[i]['breaktime']);
             }
         }else {
@@ -351,7 +351,7 @@ function CalculateStimeEtimeDuration(params){
             data[i]['starttime'] = moment(params.calDateTime).add(params.smin, 'minutes').format("HH:mm");
             data[i]['endtime'] = moment(params.calDateTime).add(params.emin, 'minutes').format("HH:mm");
             params.prevExpTime= params.emin;
-            if(data[i]['breaktime'] != undefined && data[i]['breaktime'] != null && data[i]['breaktime'] != ""){
+            if(data[i]['breaktime'] != undefined && data[i]['breaktime'] !== null && data[i]['breaktime'] != ""){
                 params.prevBreakTime= parseInt(data[i]['breaktime']);
             }
         }
