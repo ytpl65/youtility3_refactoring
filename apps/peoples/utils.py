@@ -299,20 +299,17 @@ def get_caps_choices(client = None, cfor = None,  session = None, people = None)
     caps = Capability.objects.raw(query['get_web_caps_for_client'])
     # for cap in caps:
     # print(f'Code {cap.capscode} Depth {cap.depth}')
-    try:
-        if cfor == Capability.Cfor.MOB:
-            return Capability.objects.select_related(
-                'parent').filter(cfor = cfor, enable = True).values_list('capscode', 'capsname')
-        caps = cache.get('caps')
-        if caps:
-            logger.debug('got caps from cache...')
-        if not caps:
-            logger.debug('got caps from db...')
-            caps = Capability.objects.raw(query['get_web_caps_for_client'])
-            cache.set('caps', caps, 1*60)
-            logger.debug('results are stored in cache... DONE')
-    except Exception:
-        raise
+    if cfor == Capability.Cfor.MOB:
+        return Capability.objects.select_related(
+            'parent').filter(cfor = cfor, enable = True).values_list('capscode', 'capsname')
+    caps = cache.get('caps')
+    if caps:
+        logger.debug('got caps from cache...')
+    if not caps:
+        logger.debug('got caps from db...')
+        caps = Capability.objects.raw(query['get_web_caps_for_client'])
+        cache.set('caps', caps, 1*60)
+        logger.debug('results are stored in cache... DONE')
 
     if cfor:
         # return choices for client form
