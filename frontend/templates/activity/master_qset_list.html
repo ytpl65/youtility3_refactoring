@@ -6,14 +6,12 @@
 {% endblock card_title %}
 <!----- END CARD TITLE -------->
 
-
 <!------------------------------------ BEGIN PAGE BREADCUMBS ------------------------------------>
 {% block pagebreadcumb %}
 {{ super() }}
 <li class="breadcrumb-item pe-3"><a href="javascript:void(0)" class="pe-3">{{ label }} List</a></li>
 {% endblock pagebreadcumb %}
 <!------------------------------------- END PAGE BREADCUMBS ------------------------------------->
-
 
 <!-------------------------------------------- BEGIN BU TABLE ------------------------------------------->
 {% block table %}
@@ -29,7 +27,6 @@
 {% endblock table %}
 <!------------------ --------------------------END BU TABLE ------------------------------------------------->
 
-
 {% block popup_alerts %}
 <!-- THE MODAL WE WILL BE USING -->
 <div class="modal" tabindex="-1" aria-hidden="true"  aria-labelledby="exampleModalLabel" data-bs-keyboard="false" data-bs-backdrop="static" id="modal-qset">
@@ -39,7 +36,6 @@
 	</div>
 </div>
 {% endblock popup_alerts %}
-
 
 <!--------- BEGIN EXTRA SCRIPTS ----------------------------->
 {% block extra_scripts %}
@@ -71,13 +67,13 @@
         Qsettable = $(table_id).DataTable({
 			//orderCellsTop: true,
 			ajax:{
-				url:"{{ url('activity:questionset') }}?action=list"
+				url: "{{ url('activity:questionset') }}?action=list"
 			},
             deferRender: true,
 			responsive : true,
 			columns:[
-				{data:'id'},
-				{data:'qsetname'},
+				{data: 'id'},
+				{data: 'qsetname'},
 			],
 			dom       : `<'row' <'col-sm-6 d-flex justify-content-start'f> <'col-sm-6 d-flex justify-content-end'B> >rt<'row'
 			 <'col-sm-6'l> <'col-sm-6'p><'col-sm-12 d-flex justify-content-center'i>>`,
@@ -93,7 +89,7 @@
 			buttons:[
 				{
 					text:`Add New ${viewname} &nbsp;<i class='fas fa-plus ch4'></i></a>`,
-					className:"btn btn-sm btn-light-primary btn-hover-rise",
+					className: "btn btn-sm btn-light-primary btn-hover-rise",
 					//action for add_new_button 
 					action: function(e, dt, node, config){
                         const params = {
@@ -113,7 +109,6 @@
 				}
 			]
 		})
-
 
 		
 
@@ -160,7 +155,6 @@
 			return false
 		})
 	}
-
 
 	//delete questionset 
 	function deleteQset(elemt){

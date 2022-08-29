@@ -1,6 +1,5 @@
 {% extends "base_list.html" %}
 
-
 <!---- BEGIN CARD TITLE ------>
 {% block card_title %}
 Schedhuled External Tour List
@@ -13,14 +12,12 @@ ext_schdtour_filter = 'External ScheduleTour Filter',
 ext_schdtour_list = 'External ScheduleTour List',
 -->
 
-
 <!------------------------------------ BEGIN PAGE BREADCUMBS ------------------------------------>
 {% block pagebreadcumb %}
 {{ super() }}
 <li class="breadcrumb-item pe-3"><a href="javascript:void(0)" class="pe-3">Scheduled External Tour List</a></li>
 {% endblock pagebreadcumb %}
 <!------------------------------------- END PAGE BREADCUMBS ------------------------------------->
-
 
 <!-------------------------------------------- BEGIN Schedhuled External Tour TABLE ------------------------------------------->
 {% block table %}
@@ -29,7 +26,6 @@ ext_schdtour_list = 'External ScheduleTour List',
 
 {% endblock table %}
 <!-------------------------------------------- END Schedhuled External Tour TABLE ------------------------------------------->
-
 
 <!--------- BEGIN EXTRA SCRIPTS ----------------------------->
 {% block extra_scripts %}
@@ -42,29 +38,38 @@ ext_schdtour_list = 'External ScheduleTour List',
         //datatable initialization
         table = $(table_id).DataTable({
             ajax:{
-                url:'{{ url("schedhuler:schd_external_tour") }}?action=list'
+                url: '{{ url("schedhuler:schd_external_tour") }}?action=list'
             },
 			columns:[
-                {data:'id'},
-                {data:'jobname', title:'Name'},
-                {data:'bu__buname', title:'BV'},
-                {title:'People/Group', defaultContent:null, data:null},
-                {title:'From', data:'fromdate'},
-                {title:'To', data:'uptodate'},
-                {title:'Duration', data:'planduration'},
-                {title:'Gracetime', data:'gracetime'},
-                {title:'Exp. Time', data:'expirytime'},
+                {data: 'id', visible:false},
+                {data: 'jobname', title: 'Name'},
+                {data: 'sitegrpname', title: 'Cluster'},
+                {data: 'assignedto', title:"People/Group", defaultContent:null},
+                {data:'israndomized', title:'Is Random'},
+                {data:'tourfrequency', title:'Frequency'},
+                {title: 'From', data: 'fromdate'},
+                {title: 'To', data: 'uptodate'},
+                {title: 'Duration', data: 'planduration'},
+                {title: 'Gracetime', data: 'gracetime'},
+                {title: 'Exp. Time', data: 'expirytime'},
             ],
             columnDefs:[
-                {targets:0, data:'id', visible:'false', searchable:false },
-                {targets:1, data:'jobname', render:function(data, type, row, meta){
+                {targets:0, data: 'id', visible: 'false', searchable:false },
+                {targets:1, data: 'jobname', render:function(data, type, row, meta){
+                    let urlname = "{{ url('schedhuler:schd_external_tour') }}"
                     return `<a href="${urlname}?id=${row['id']}">${data}</a>`
                 }},
-                {targets:3, render:function(data, type, row, meta){
-                    let peoplename = row['people__peoplename']
-                    let groupname = row['pgroup__groupname']
-                    return typeof peoplename in ['undefined', null] ? groupname : peoplename 
-                }}
+                //{targets:3, render:function(data, type, row, meta){
+                //    let peoplename = row['people__peoplename']
+                //    let groupname = row['pgroup__groupname']
+                //    return typeof peoplename in ['undefined', null] ? groupname : peoplename 
+                //}},
+                //{targets:6, render:function(data, type, row, meta){
+                //    return convert_to_local(type, data, row)
+                //}},
+                //{targets:7, render:function(data, type, row, meta){
+                //    return convert_to_local(type, data, row)
+                //}},
             ],
             deferRender: true,
 			responsive: true,
@@ -73,10 +78,9 @@ ext_schdtour_list = 'External ScheduleTour List',
             buttons:[
 				{
 					text:`Add New &nbsp;<i class='fas fa-plus ch4'></i></a>`,
-					className:"btn btn-sm btn-light-primary btn-hover-rise",
+					className: "btn btn-sm btn-light-primary btn-hover-rise",
 					//action for add_new_button 
 					action: function(e, dt, node, config){
-                        //This will send the page to the location specified
         				window.location.href = "{{ url('schedhuler:schd_external_tour') }}?action=form";
 					}
 				}

@@ -1,6 +1,5 @@
 {% extends "base_list.html" %}
 
-
 <!---- BEGIN CARD TITLE ------>
 {% block card_title %}
 Site Report List
@@ -10,7 +9,6 @@ Site Report List
 {% block extra_css %}
 {% endblock extra_css %}
 
-
 <!------------------------------------ BEGIN PAGE BREADCUMBS ------------------------------------>
 {% block pagebreadcumb %}
 {{ super() }}
@@ -18,14 +16,8 @@ Site Report List
 {% endblock pagebreadcumb %}
 <!------------------------------------- END PAGE BREADCUMBS ------------------------------------->
 
-
 {% block table %}
     <table id="siteReportList" class="display cell-border compact hover">
-        <thead class="fw-bold fs-6">
-            <th>Id</th>
-            <th>Site Report</th>
-            <th>Enable</th>
-        </thead>
     </table>
 {% endblock table %}
 
@@ -35,37 +27,24 @@ $(document).ready(function () {
 
     $("#siteReportList").DataTable({
         ajax:{
-            url:"{{ url('reports:sitereport_template_list') }}",
-            data: {
-                format: 'raw',
-                action: 'calls'
-            }
+            url: "{{ url('reports:config_sitereport_template') }}?action=list",
         },
         responsive: true,
-        serverSide:true,
-        processing    : true,
-        responsive    : true,
-        fixedHeader: true,
-        language: {
-            search:"_INPUT_",
-            searchPlaceholder: "Search...",
-            processing:"Searching Data"},
-        search      : {return: true},
-        lengthMenu: [[10, 20, 30], [10, 20, 30]],
+        deferRender: true,
         dom:`<'row' <'col-sm-6 d-flex justify-content-start'f> <'col-sm-6 d-flex justify-content-end'B> >rt<'row' <'col-sm-6'l> <'col-sm-6'p><'col-sm-12 d-flex justify-content-center'i>>`,
         columnDefs:[
-            {data:'id',targets: 0,visible: false},
+            {data: 'id',targets: 0,visible: false},
             {
-                data:'qsetname',
-                targets:2,
+                data: 'qsetname',
+                targets:1,
                 render:function(data, type, row, meta){
-                    var url= "{{ url('reports:sitereport_template_form') }}?template=true&id=" + row['id'];
+                    var url= "{{ url('reports:config_sitereport_template') }}?id=" + row['id'];
                     return `<a href=${url}>${data}</a>`
                 }
             }
         ],
         columns:[
-            {data:'id'},{data:'qsetname'}, {data:'enable'}
+            {data: 'id'},{data: 'qsetname', title: 'Site Report'}, {data: 'enable', title: 'Enable'}
         ],
         buttons:[
             {
@@ -74,7 +53,7 @@ $(document).ready(function () {
                 action: function(e, dt, node, config){
                     //This will send the page to the location specified
                     console.log("hitted success")
-                    window.location.href = "{{ url('reports:sitereport_template_form') }}?template=true";
+                    window.location.href = "{{ url('reports:config_sitereport_template') }}?action=form";
                 }
             }
         ]

@@ -51,7 +51,6 @@
 </form>
 {% endblock body %}
 
-
 {% block js %}
 {{ attd_form.media.js }}
 <script>
@@ -66,14 +65,14 @@ $(document).ready(() => {
     $(".booleans").addClass("form-check form-switch form-check-custom form-check-solid") 
 
     //datatime widget
-    $("#attd_form").find("#id_punch_intime, #id_punch_outtime").flatpickr({
+    $("#attd_form").find("#id_punchintime, #id_punchouttime").flatpickr({
         enableTime: true,
         dateFormat: "Y-m-d H:i",
     });
 
     //date widget
     $("#attd_form").find("#id_datefor").flatpickr({
-        dateFormat:'d M Y'
+        dateFormat: 'd M Y'
     });
     $(".modal").removeAttr("tabindex");
 })

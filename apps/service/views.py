@@ -12,21 +12,13 @@ from apps.service.serializers import Messages
 from apps.core.utils import get_current_db_name
 from logging import getLogger
 
-
 log = getLogger('__main__')
 # Create your views here.
-A = {'rc':0, 'reason':'OK', 'msg':None, 'errors':None, 'returnid':None}
+A = {'rc':0, 'reason': 'OK', 'msg':None, 'errors':None, 'returnid':None}
 def get_model(tablename):
-    match tablename:
-        case "peopleeventlog":
-            return PeopleEventlog
-        case 'jobneed':
-            return  Jobneed
-        case 'attachment':
-            return Attachment
-        case _:
-            return None
-
+    if tablename == 'peopleeventlog':return PeopleEventlog
+    elif tablename == 'attachment': return Attachment
+    elif tablename == 'jobneed': return Jobneed
 
 
 def perform_insertrecord(data):
@@ -36,34 +28,33 @@ def perform_insertrecord(data):
     tablename = service_insert['tablename']
 
     try:
-        ser = InsertSerializer(data=clean_record(service_insert))
+        ser = InsertSerializer(data = clean_record(service_insert))
         if ser.is_valid():
             log.info(ser.data)
             model = get_model(tablename)
-            with transaction.atomic(using=get_current_db_name()):
+            with transaction.atomic(using = get_current_db_name()):
                 obj = model.objects.create(**ser.data['record'])
                 A['msg'], A['returnid'] = Messages.INSERT_SUCCESS, obj.id
         else:
             log.error(ser.errors)
             A['errors']= ser.errors
-            log.error(ser.errors, exc_info=True)
+            log.error(ser.errors, exc_info = True)
             raise Exception(Messages.IMPROPER_DATA)
     except Exception as e:
-        log.error('something went wrong', exc_info=True)
+        log.error('something went wrong', exc_info = True)
         A['rc'], A['reason'], A['msg'] = 1, e, Messages.INSERT_FAILED   
     return Response(A)
 
 
 
-
 def perform_task_tour_update(data):
     try:
-        with transaction.atomic(using=get_current_db_name()):
+        with transaction.atomic(using = get_current_db_name()):
             import json
             service_tasktourupdate      = json.loads(data['service_tasktourupdate'])
             jobneeddetails_post_data = json.loads(data['jobneeddetails'])
             object                   = sutils.get_object(service_tasktourupdate['uuid'], Jobneed)
-            jobneed_serializer       = JobneedSerializer(instance=object, data=clean_record(service_tasktourupdate))
+            jobneed_serializer       = JobneedSerializer(instance = object, data = clean_record(service_tasktourupdate))
 
             if jobneed_serializer.is_valid():
                 jobneedparent = jobneed_serializer.save()
@@ -71,11 +62,11 @@ def perform_task_tour_update(data):
                 allsaved = 0
                 for detail in jobneeddetails_post_data:
                     object = sutils.get_object(detail['uuid'], JobneedDetails)
-                    jobneeddetails_serializer = JndSerializers(instance=object, data = clean_record(detail))
+                    jobneeddetails_serializer = JndSerializers(instance = object, data = clean_record(detail))
 
                     if jobneeddetails_serializer.is_valid() and detail['jobneed_id'] == jobneedparent.id:
                         jobneeddetails_serializer.save()
-                        allsaved+=1
+                        allsaved += 1
                     else:
                         A['errors'], A['msg'], A['rc'] = jobneeddetails_serializer.errors, Messages.UPDATE_FAILED, 1
                         break
@@ -84,10 +75,9 @@ def perform_task_tour_update(data):
             else:
                 A['errors'], A['msg'], A['rc'] = jobneed_serializer.errors, Messages.UPDATE_FAILED, 1
     except Exception as e:
-        log.error('something went wrong', exc_info=True)
+        log.error('something went wrong', exc_info = True)
         A['rc'], A['reason'], A['msg'] = 1, traceback.format_exc(), Messages.UPDATE_FAILED
     return Response(A)
-
 
 
 def perform_template_report_insert(data):
@@ -96,31 +86,31 @@ def perform_template_report_insert(data):
     child = service_templatereport.pop('child', None)
     parent = service_templatereport or None
     try:
-        with transaction.atomic(using=get_current_db_name()):
+        with transaction.atomic(using = get_current_db_name()):
 
             if child and len(child) > 0 and parent:
                 jobneed_parent_post_data = parent
-                jn_parent_serializer = JobneedSerializer(data=clean_record(jobneed_parent_post_data))
+                jn_parent_serializer = JobneedSerializer(data = clean_record(jobneed_parent_post_data))
 
                 if jn_parent_serializer.is_valid():
                     parent = jn_parent_serializer.save()
-                    allsaved=0
+                    allsaved = 0
                     for ch in child:
                         details = ch.pop('details')
                         ch.update({'parent_id':parent.id})
-                        child_serializer = JobneedSerializer(data=clean_record(ch))
+                        child_serializer = JobneedSerializer(data = clean_record(ch))
 
                         if child_serializer.is_valid():
                             child_instance = child_serializer.save()
                             for dtl in details:
                                 dtl.update({'jobneed_id':child_instance.id})
-                                ch_detail_serializer = JndSerializers(data=clean_record(dtl))
+                                ch_detail_serializer = JndSerializers(data = clean_record(dtl))
                                 if ch_detail_serializer.is_valid():
                                    ch_detail_serializer.save()
                                 else:
                                     log.error(ch_detail_serializer.errors)
                                     A['errors'], A['msg'], A['rc'] = ch_detail_serializer.errors, Messages.INSERT_FAILED, 1
-                            allsaved+=1
+                            allsaved += 1
                         else:
                             log.error(child_serializer.errors)
                             A['errors'], A['msg'], A['rc'] = child_serializer.errors, Messages.INSERT_FAILED, 1
@@ -135,9 +125,8 @@ def perform_template_report_insert(data):
                 A['reason'], A['rc'] = Messages.NODETAILS, 1
     except Exception as e:
         A['msg'], A['reason'], A['rc'] = Messages.INSERT_FAILED, traceback.format_exc(), 1
-        log.error('something went wrong', exc_info=True)
+        log.error('something went wrong', exc_info = True)
     return Response(A)
-
 
 def perform_attachment_upload(request):
     import os
@@ -165,7 +154,7 @@ def perform_attachment_upload(request):
         A['msg'] = f'Attachment {Messages.INSERT_SUCCESS}'
         A['errors'] = A['reason'] = None
         A['rc'] = 0
-        if pelogid!=1:
+        if pelogid !=  1:
             if ATT := Attachment.objects.get_attachment_record(resp.data['returnid']):
                 if PEOPLE_ATT := PeopleEventlog.objects.get_people_attachment(pelogid):
                     ic(ATT.ownername_id, PEOPLE_ATT.people_id)
@@ -181,18 +170,16 @@ def perform_attachment_upload(request):
                         ic(A)
     except Exception as e:
         A['rc'], A['reason'], A['msg'] = 1, traceback.format_exc(), Messages.UPLOAD_FAILED
-        log.error('something went wrong', exc_info=True)
+        log.error('something went wrong', exc_info = True)
     return Response(A)
-
 
 class InsertRecord(APIView):
     """
     Inserts record in given table after validations
     """
-    def post(self, request, format=None):
+    def post(self, request, format = None):
         ic(request.data)
         return perform_insertrecord(request.data)
-
 
 
 
@@ -200,16 +187,14 @@ class TaskTourUpdate(APIView):
     """
     Updates Task Tour activities
     """
-    def post(self, request, format=None):
+    def post(self, request, format = None):
         return perform_task_tour_update(request.data)
-
 
 class TemplateReports(APIView):
 
-    def post(self, request, format=None):
+    def post(self, request, format = None):
         ic(request.data)
         return perform_template_report_insert(request.data)
-
 
 
 class AttachmentUpload(APIView):
@@ -219,19 +204,17 @@ class AttachmentUpload(APIView):
     Perform fr based attendance.
     """
 
-    def post(self, request, format=None):
+    def post(self, request, format = None):
         return perform_attachment_upload(request)
 
 
-
 def alert_observation(pkid, event):
-    pass
-
+    raise NotImplementedError()
 
 
 class TestLoginREquired(APIView):
     """
     Updates Task Tour activities
     """
-    def get(self, request, format=None):
-        return Response(data={"text":"Helloworld"})
+    def get(self, request, format = None):
+        return Response(data={"text": "Helloworld"})

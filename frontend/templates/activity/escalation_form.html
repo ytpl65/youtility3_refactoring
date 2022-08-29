@@ -1,11 +1,9 @@
 {% extends "base_form.html" %}
 
-
 {% block extra_css %}
 <link  href="{{ static('assets/plugins/custom/DataTables/datatables.min.css') }}" rel="stylesheet" type="text/css"/>
 {{ editsiteform.media.css }}
 {% endblock extra_css %}
-
 
 <!-------------------------- BEGIN PAGE BREADCUMB ----------------------->
 {% block pagebreadcumb %}
@@ -16,13 +14,11 @@
 {% endblock pagebreadcumb %}
 <!-------------------------- END PAGE BREADCUMB ------------------------->
 
-
 <!------ BEGIN FORM TITLE ------->
 {% block custom_title %}
 Schedhule External-Tour&nbsp;<i class="fa fa-clock fs-4 text-primary" aria-hidden="true"></i>
 {% endblock custom_title %}
 <!------ END FORM TITLE -------->
-
 
 <!--------- BEGIN NON FIELD ERRORS -------->
 {% block nonfield_errors %}
@@ -36,7 +32,6 @@ Schedhule External-Tour&nbsp;<i class="fa fa-clock fs-4 text-primary" aria-hidde
 {% endif %}
 {% endblock nonfield_errors %}
 <!---------- END NON FIELD ERRORS --------->
-
 
 {% block form %}
 <form action="

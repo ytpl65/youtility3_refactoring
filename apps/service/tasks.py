@@ -3,6 +3,7 @@ from apps.service import serializers as sz
 from apps.attendance.models import PeopleEventlog
 from apps.activity.models import (Jobneed, JobneedDetails, Attachment, Asset, DeviceEventlog, Ticket)
 from apps.attendance.models import Tracking
+from apps.core import utils
 from django.db.utils import IntegrityError
 from django.db import transaction
 from .auth import Messages as AM
@@ -10,11 +11,9 @@ from .types import ServiceOutputType
 import traceback as tb
 from .validators import clean_record
 from pprint import pformat
-from apps.core import utils
 from intelliwiz_config.celery import app
 from celery.utils.log import get_task_logger
 log = get_task_logger(__name__)
-
 
 def insertrecord(record, tablename):
     try:
@@ -27,44 +26,30 @@ def insertrecord(record, tablename):
     except model.DoesNotExist:
         return model.objects.create(**record)
     except Exception as e:
-        log.error("something went wrong", exc_info=True)
+        log.error("something went wrong", exc_info = True)
         raise e
 
 
-
 def get_model_or_form(tablename):
-    match tablename:
-        case "peopleeventlog":
-            return PeopleEventlog
-        case 'jobneed':
-            return  Jobneed
-        case 'attachment':
-            return  Attachment
-        case 'jobneeddetails':
-            return  JobneedDetails
-        case 'tracking':
-            return  Tracking
-        case 'deviceeventlog':
-            return  DeviceEventlog
-        case 'ticket':
-            return  Ticket
-        case 'asset':
-            return  Asset
-        case _:
-            return None
+    if tablename == 'peopleeventlog':return PeopleEventlog
+    elif tablename == 'attachment': return Attachment
+    elif tablename == 'jobneed': return Jobneed
+    elif tablename == 'jobnneeddetails': return JobneedDetails
+    elif tablename == 'deviceeventlog': return DeviceEventlog
+    elif tablename == 'ticket': return Ticket
+    elif tablename == 'asset': return Asset
 
 
 def get_or_create_dir(path):
     try:
         import os
-        created=True
+        created = True
         if not os.path.exists(path):
             os.makedirs(path)
         else: created= False
         return created
     except Exception:
         raise
-
 
 def write_file_to_dir(filebuffer, uploadedfile):
     from django.core.files.base import ContentFile
@@ -76,7 +61,6 @@ def write_file_to_dir(filebuffer, uploadedfile):
         log.info(f'here is path of that file: {path}')
     except Exception:
         raise
-
 
 
 
@@ -99,7 +83,6 @@ class Messages(AM):
     UPLOAD_SUCCESS  = 'Uploaded Successfully!'
 
 
-
 def insertrecord_from_tablename(record, tablename, db):
     log.info(f"insertrecord_from_tablename started tablename:{tablename} db:{db}")
     try:
@@ -111,11 +94,10 @@ def insertrecord_from_tablename(record, tablename, db):
             return obj.id
         else: raise GraphQLError(Messages.IMPROPER_DATA)
     except Exception as e:
-        log.error("something went wrong!", exc_info=True)
+        log.error("something went wrong!", exc_info = True)
         raise e
 
-
-# @app.task(bind=True, default_retry_delay=300, max_retries=5)
+# @app.task(bind = True, default_retry_delay = 300, max_retries = 5)
 # def substract(x, y):
 #     try:
 #         return x-y
@@ -124,36 +106,32 @@ def insertrecord_from_tablename(record, tablename, db):
 
 def call_service_based_on_filename(data, filename, db='default'):
     log.info(f'filename before calling {filename}')
-    match filename:
-        case 'insertRecord.gz':
-            log.info("calling insertrecord. service..")
-            return perform_insertrecord_bgt.delay(data, db=db)
-        case 'updateTaskTour.gz':
-            log.info("calling updateTaskTour service..")
-            return perform_tasktourupdate_bgt.delay(data, db=db)
-        case 'uploadReport.gz':
-            log.info("calling uploadReport service..")
-            return perform_reportmutation_bgt.delay(data, db=db)
-        case 'adhocRecord.gz':
-            log.info("calling adhocRecord service..")
-            return perform_adhocmutation_bgt.delay(data, db=db)
-        case _:
-            return
-
+    if filename == 'insertRecord.gz':
+        log.info("calling insertrecord. service..")
+        return perform_insertrecord_bgt.delay(data, db = db)
+    elif filename == 'updateTaskTour.gz':
+        log.info("calling updateTaskTour service..")
+        return perform_tasktourupdate_bgt.delay(data, db = db)
+    elif filename == 'uploadReport.gz':
+        log.info("calling uploadReport service..")
+        return perform_reportmutation_bgt.delay(data, db = db)
+    elif filename == 'adhocRecord.gz':
+        log.info("calling adhocRecord service..")
+        return perform_adhocmutation_bgt.delay(data, db = db)
 
 
 
 
 def perform_uploadattachment(file, tablename, record, biodata):
     rc, traceback, resp = 0,  'NA', 0
-    recordcount = msg=None
-    #ic(file, tablename, record, type(record), biodata, type(biodata))
+    recordcount = msg = None
+    # ic(file, tablename, record, type(record), biodata, type(biodata))
     log.info('perform_uploadattachment [start +]')
     try:
         import os
 
         file_buffer = file
-        #ic(file_buffer, type(file_buffer))
+        # ic(file_buffer, type(file_buffer))
         filename = biodata['filename']
         pelogid = biodata['pelog_id']
         peopleid = biodata['people_id']
@@ -164,7 +142,7 @@ def perform_uploadattachment(file, tablename, record, biodata):
         db = utils.get_current_db_name()
         log.info(f'here is the db got from get_current_db_name(): {db}')
 
-        with transaction.atomic(using=db):
+        with transaction.atomic(using = db):
             utils.set_db_for_router(db)
             log.info(f'router is connected to db:{db}')
             iscreated = get_or_create_dir(filepath)
@@ -173,21 +151,20 @@ def perform_uploadattachment(file, tablename, record, biodata):
             resp = insertrecord_from_tablename(record, tablename, db)
             rc, traceback, msg = 0, tb.format_exc(), Messages.UPLOAD_SUCCESS
             recordcount = 1
-        #from apps.activity.tasks import perform_facerecognition
+        # from apps.activity.tasks import perform_facerecognition
         results = perform_facerecognition_bgt.delay(pelogid, peopleid, resp, home_dir, uploadfile, db)
-        log.warn(f"face recognition status {results.state}")
+        log.warning(f"face recognition status {results.state}")
 
     except Exception as e:
         rc, traceback, msg = 1, tb.format_exc(), Messages.UPLOAD_FAILED
-        log.error('something went wrong', exc_info=True)
+        log.error('something went wrong', exc_info = True)
 
     log.info(f'rc:{rc}, msg:{msg}, traceback:{traceback}, returncount:{recordcount}')
-    return ServiceOutputType(rc=rc, recordcount = recordcount, msg = msg, traceback = traceback)
+    return ServiceOutputType(rc = rc, recordcount = recordcount, msg = msg, traceback = traceback)
 
 
-
-@app.task(bind=True, default_retry_delay=300, max_retries=5)
-def perform_insertrecord_bgt(self, data, request=None, filebased=True, db='default'):
+@app.task(bind = True, default_retry_delay = 300, max_retries = 5)
+def perform_insertrecord_bgt(self, data, request = None, filebased = True, db='default'):
     """
     Insert records in specified tablename.
 
@@ -206,16 +183,16 @@ def perform_insertrecord_bgt(self, data, request=None, filebased=True, db='defau
     instance = None
     try:
         try:
-            with transaction.atomic(using=db):
+            with transaction.atomic(using = db):
                 utils.set_db_for_router(db)
                 log.info(f"router is connected to {db}")
                 for record in data:
                     tablename = record.pop('tablename')
                     log.info(f'tablename: {tablename}')
                     obj = insertrecord(record, tablename)
-                    recordcount+=1
+                    recordcount += 1
                     if all([tablename == 'peopleeventlog',
-                            obj.peventtype.tacode in ('CONVEYANCE','AUDIT'),
+                            obj.peventtype.tacode in ('CONVEYANCE', 'AUDIT'),
                             obj.endlocation,obj.punchouttime, obj.punchintime]):
                         log.info("save line string is started")
                         save_linestring_and_update_pelrecord(obj)
@@ -225,19 +202,18 @@ def perform_insertrecord_bgt(self, data, request=None, filebased=True, db='defau
         if recordcount:
             msg = Messages.INSERT_SUCCESS
     except Exception as e:
-        log.error("something went wrong!", exc_info=True)
+        log.error("something went wrong!", exc_info = True)
         msg, rc, traceback = Messages.INSERT_FAILED, 1, tb.format_exc()
     log.info(f'rc:{rc}, msg:{msg}, traceback:{traceback}, returncount:{recordcount}')
-    return  ServiceOutputType(rc=rc, recordcount = recordcount, msg = msg, traceback = traceback)
-
+    return  ServiceOutputType(rc = rc, recordcount = recordcount, msg = msg, traceback = traceback)
 
 def save_linestring_and_update_pelrecord(obj):
     from django.contrib.gis.geos import LineString
     try:
-        bet_objs = Tracking.objects.filter(reference=obj.uuid)
+        bet_objs = Tracking.objects.filter(reference = obj.uuid)
         line = [[coord for coord in obj.gpslocation] for obj in bet_objs]
         ls = LineString(line, srid = 4326)
-        #transform spherical mercator projection system
+        # transform spherical mercator projection system
         ls.transform(3857)
         d = round(ls.length / 1000)
         obj.distance = d
@@ -246,22 +222,21 @@ def save_linestring_and_update_pelrecord(obj):
         obj.save()
         log.info("save linestring is saved..")
     except Exception as e:
-        log.info('ERROR while saving line string', exc_info=True)
+        log.info('ERROR while saving line string', exc_info = True)
         raise
 
 def get_json_data(file):
     import gzip
     import json
     try:
-        #ic((file, type(file))
+        # ic((file, type(file))
         with gzip.open(file, 'rb') as f:
             s = f.read().decode('utf-8')
             s = s.replace("'", "")
             return json.loads(s)
     except Exception as e:
-        log.error("File unzipping error", exc_info=True)
+        log.error("File unzipping error", exc_info = True)
     return None, None
-
 
 def print_json_data(file):
     import gzip
@@ -274,22 +249,21 @@ def print_json_data(file):
     except Exception as e:
         log.error("json print error", exc_info= True)
 
-
 def update_record(details, jobneed, Jn, Jnd, db):
     alerttype = 'OBSERVATION'
     record = clean_record(jobneed)
-    #ic((record)
+    # ic((record)
     try:
         log.info(f"from function update_record() the router is connected to db {db}")
         instance = Jn.objects.get(uuid = record['uuid'])
-        jn_parent_serializer = sz.JobneedSerializer(data=record, instance=instance)
+        jn_parent_serializer = sz.JobneedSerializer(data = record, instance = instance)
         if jn_parent_serializer.is_valid():
             isJnUpdated = jn_parent_serializer.save()
             log.info(f"jobneed record is updated and its pk is {isJndUpdated.id}")
-        else: log.error(f"something went wrong!\n{jn_parent_serializer.errors} ", exc_info=True )
+        else: log.error(f"something went wrong!\n{jn_parent_serializer.errors} ", exc_info = True )
         isJndUpdated = update_jobneeddetails(details, Jnd, db)
         if isJnUpdated and  isJndUpdated:
-            #utils.alert_email(input.jobneedid, alerttype)
+            # utils.alert_email(input.jobneedid, alerttype)# # 
             #TODO send observation email
             #TODO send deviation mail
             return True
@@ -297,57 +271,54 @@ def update_record(details, jobneed, Jn, Jnd, db):
         log.error('something went wrong', exc_info= True)
         raise
 
-
 def update_jobneeddetails(jobneeddetails, Jnd, db):
     try:
         if jobneeddetails:
-            updated=0
+            updated = 0
             for detail in jobneeddetails:
                 record = clean_record(detail)
                 instance = Jnd.objects.get(uuid = record['uuid'])
-                jnd_ser = sz.JndSerializers(data=record, instance=instance)
+                jnd_ser = sz.JndSerializers(data = record, instance = instance)
                 if jnd_ser.is_valid():
                     jnd = jnd_ser.save()
-                    updated+=1
+                    updated += 1
             if len(jobneeddetails) == updated:
                 log.info("all jobneeddetails record are also updated successfully")
                 return True 
     except Exception as e:
-        log.error('somthing went wrong...', exc_info=True)
+        log.error('somthing went wrong...', exc_info = True)
         raise
 
 
-
-@app.task(bind=True, default_retry_delay=300, max_retries=5)
-def perform_tasktourupdate_bgt(self, data, request=None, db='default'):
+@app.task(bind = True, default_retry_delay = 300, max_retries = 5)
+def perform_tasktourupdate_bgt(self, data, request = None, db='default'):
     log.info("perform_tasktourupdate [start]")
     rc, recordcount, traceback= 0, 0, 'NA'
     instance, msg = None, ""
 
     try:
-        #ic((data)
+        # ic((data)
         for record in data:
             details = record.pop('details')
             jobneed = record
-            with transaction.atomic(using=db):
+            with transaction.atomic(using = db):
                 utils.set_db_for_router(db)
                 log.info(f'router is connected to db{db}')
                 if updated :=  update_record(details, jobneed, Jobneed, JobneedDetails, db):
-                    recordcount+=1
+                    recordcount += 1
 
     except IntegrityError as e:
-        log.error("Database Error", exc_info=True)
+        log.error("Database Error", exc_info = True)
         rc, traceback, msg = 1, tb.format_exc(), Messages.UPLOAD_FAILED
 
     except Exception as e:
-        log.error('Something went wrong', exc_info=True)
+        log.error('Something went wrong', exc_info = True)
         rc, traceback, msg = 1, tb.format_exc(), Messages.UPLOAD_FAILED
     log.info(f'rc:{rc}, msg:{msg}, traceback:{traceback}, returncount:{recordcount}')
-    return ServiceOutputType(rc=rc, msg=msg, recordcount=recordcount, traceback=traceback)
+    return ServiceOutputType(rc = rc, msg = msg, recordcount = recordcount, traceback = traceback)
 
 
-
-@app.task(bind=True, default_retry_delay=300, max_retries=5)
+@app.task(bind = True, default_retry_delay = 300, max_retries = 5)
 def perform_reportmutation_bgt(self, data, db='default'):
     rc, recordcount, traceback= 0, 0, 'NA'
     instance = None
@@ -358,27 +329,26 @@ def perform_reportmutation_bgt(self, data, db='default'):
                 child = record.pop('child', None)
                 parent = record
                 try:
-                    with transaction.atomic(using=db):
+                    with transaction.atomic(using = db):
                         utils.set_db_for_router(db)
                         log.info(f'the router is connected to db {db}')
                         if child and len(child) > 0 and parent:
                             jobneed_parent_post_data = parent
                             log.info(f'the parent record {pformat(jobneed_parent_post_data)}')
-                            jn_parent_serializer = sz.JobneedSerializer(data=clean_record(jobneed_parent_post_data))
+                            jn_parent_serializer = sz.JobneedSerializer(data = clean_record(jobneed_parent_post_data))
                             rc,  traceback, msg = save_parent_childs(sz, jn_parent_serializer, child, Messages, db)
-                            if rc == 0: recordcount+=1
+                            if rc == 0: recordcount += 1
                         else:
                             log.error(Messages.NODETAILS)
                             msg, rc = Messages.NODETAILS, 1
                 except Exception as e:
-                    log.error('something went wrong', exc_info=True)
+                    log.error('something went wrong', exc_info = True)
                     raise
     except Exception as e:
         msg, traceback, rc = Messages.INSERT_FAILED, tb.format_exc(), 1
-        log.error('something went wrong', exc_info=True)
+        log.error('something went wrong', exc_info = True)
     log.info(f'rc:{rc}, msg:{msg}, traceback:{traceback}, returncount:{recordcount}')
-    return ServiceOutputType(rc=rc, recordcount = recordcount, msg = msg, traceback = traceback)
-
+    return ServiceOutputType(rc = rc, recordcount = recordcount, msg = msg, traceback = traceback)
 
 
 def save_parent_childs(sz, jn_parent_serializer, child, M, db):
@@ -388,27 +358,27 @@ def save_parent_childs(sz, jn_parent_serializer, child, M, db):
         instance = None
         if jn_parent_serializer.is_valid():
             parent = jn_parent_serializer.save()
-            allsaved=0
+            allsaved = 0
             for ch in child:
-                #ic((ch, type(child))
+                # ic((ch, type(child))
                 details = ch.pop('details')
-                #ic((details, type(details))
+                # ic((details, type(details))
                 ch.update({'parent_id':parent.id})
-                child_serializer = sz.JobneedSerializer(data=clean_record(ch))
+                child_serializer = sz.JobneedSerializer(data = clean_record(ch))
 
                 if child_serializer.is_valid():
                     child_instance = child_serializer.save()
                     log.info(f'child instance saved its pk is {child_instance.id}')
                     for dtl in details:
-                        #ic((dtl, type(dtl))
+                        # ic((dtl, type(dtl))
                         dtl.update({'jobneed_id':child_instance.id})
-                        ch_detail_serializer = sz.JndSerializers(data=clean_record(dtl))
+                        ch_detail_serializer = sz.JndSerializers(data = clean_record(dtl))
                         if ch_detail_serializer.is_valid():
                             ch_dtl = ch_detail_serializer.save()
                         else:
                             log.error(ch_detail_serializer.errors)
                             traceback, msg, rc = str(ch_detail_serializer.errors), M.INSERT_FAILED, 1
-                    allsaved+=1
+                    allsaved += 1
 
                 else:
                     log.error(child_serializer.errors)
@@ -423,20 +393,19 @@ def save_parent_childs(sz, jn_parent_serializer, child, M, db):
         log.info(f'rc:{rc} traceback {traceback} msg {msg} is the response being returned')
         return rc, traceback, msg
     except Exception:
-        log.error("something went wrong",exc_info=True)
+        log.error("something went wrong",exc_info = True)
         raise
 
-
-@app.task(bind=True, default_retry_delay=300, max_retries=5)
+@app.task(bind = True, default_retry_delay = 300, max_retries = 5)
 def perform_facerecognition_bgt(self, pelogid, peopleid, ownerid, home_dir, uploadfile, db='default'):
 
     log.info("perform_facerecognition ...start [+]")
     log.info(f'parameters are pelogid:{pelogid} peopleid:{peopleid} ownerid:{ownerid} typeof ownerid: {type(ownerid)} home_dir:{home_dir} uploadfile:{uploadfile}')
     try:
-        with transaction.atomic(using=utils.get_current_db_name()):
+        with transaction.atomic(using = utils.get_current_db_name()):
             utils.set_db_for_router(db)
             log.info(f'router is connected to db: {db}')
-            if pelogid!=1:
+            if pelogid !=  1:
                 if ATT := Attachment.objects.get_attachment_record(ownerid, db):
                     log.info(f'attachment record found with ownerid: {ownerid} from db:{db}')
                     if PEOPLE_ATT := PeopleEventlog.objects.get_people_attachment(pelogid, db):
@@ -453,14 +422,13 @@ def perform_facerecognition_bgt(self, pelogid, peopleid, ownerid, home_dir, uplo
                             PeopleEventlog.objects.update_fr_results(fr_results, pelogid, peopleid, db)
                             log.info("updation of fr_results in peopleeventlog is completed...")
     except ValueError as v:
-        log.error("face recogntion failed", exc_info=True)
+        log.error("face recogntion failed", exc_info = True)
     except Exception as e:
-        log.error("something went wrong!", exc_info=True)
+        log.error("something went wrong!", exc_info = True)
         self.retry(e)
         raise
 
-
-@app.task(bind=True, default_retry_delay=300, max_retries=5)
+@app.task(bind = True, default_retry_delay = 300, max_retries = 5)
 def perform_adhocmutation_bgt(self, data, db='default'):
     rc, recordcount, traceback, msg= 0, 0, 'NA', ""
     try:
@@ -474,23 +442,23 @@ def perform_adhocmutation_bgt(self, data, db='default'):
             with transaction.atomic(using = db):
                 utils.set_db_for_router(db)
                 log.info(f'router is connected to db:{db}')
-                if jobneedrecord['asset_id']==1:
-                    #then it should be NEA
+                if jobneedrecord['asset_id'] ==  1:
+                    # then it should be NEA
                     assetobjs = Asset.objects.filter(bu_id = jobneedrecord['bu_id'],
                                     assetcode = jobneedrecord['remarks'])
-                    jobneedrecord['asset_id']= 1 if assetobjs.count() !=1 else assetobjs[0].id
+                    jobneedrecord['asset_id']= 1 if assetobjs.count()  !=  1 else assetobjs[0].id
                 sqlQuery = "select * from fn_get_schedule_for_adhoc(%s, %s, %s, %s, %s)"
                 args = [jobneedrecord['plandatetime'], jobneedrecord['bu_id'], jobneedrecord['people_id'], jobneedrecord['asset_id'], jobneedrecord['qset_id']]
-                scheduletask = utils.runrawsql(sqlQuery, args, db=db)
+                scheduletask = utils.runrawsql(sqlQuery, args, db = db)
 
-                #have to update to scheduled task
+                # have to update to scheduled task
                 if(len(scheduletask) > 0):
                     jnid = scheduletask[0]['jobneedid']
-                    recordcount+=1
+                    recordcount += 1
                     obj = Jobneed.objects.get(id = jnid)
                     jobneedrecord.update({'performedby_id': jobneedrecord['people_id']})
                     record = clean_record(jobneedrecord)
-                    jnsz = sz.JobneedSerializer(instance=obj,data=record)
+                    jnsz = sz.JobneedSerializer(instance = obj,data = record)
                     if jnsz.is_valid(): 
                         isJnUpdated = jnsz.save()
                     else:
@@ -503,13 +471,13 @@ def perform_adhocmutation_bgt(self, data, db='default'):
                             if jnd['question_id'] == dtl['question_id']:
                                 obj = JobneedDetails.objects.get(uuid = dtl['uuid'])
                                 record = clean_record(dtl)
-                                jndsz = sz.JndSerializers(instance=obj, data = record)
+                                jndsz = sz.JndSerializers(instance = obj, data = record)
                                 if jndsz.is_valid():
                                     jndsz.save()
                     msg = "Scheduled Record (ADHOC) updated successfully!"
                     log.info(f'{msg}')
 
-                #have to insert/create to adhoc task
+                # have to insert/create to adhoc task
                 else:
                     record = clean_record(jobneedrecord)
                     jnsz = sz.JobneedSerializer(data = record)
@@ -528,16 +496,16 @@ def perform_adhocmutation_bgt(self, data, db='default'):
                     else:
                         rc, traceback = 1, jnsz.errors
                     if jobneedrecord['attachmentcount'] == 0:
-                        #TODO send_email for ADHOC 
+                        # TODO send_email for ADHOC 
                         pass
-            #TODO send_email for Observation
+            # TODO send_email for Observation
 
     except utils.NoDataInTheFileError as e:
         rc, traceback = 1, tb.format_exc()
-        log.error('something went wrong', exc_info=True)
+        log.error('something went wrong', exc_info = True)
         raise
     except Exception as e:
         rc, traceback = 1, tb.format_exc()
-        log.error('something went wrong', exc_info=True)
+        log.error('something went wrong', exc_info = True)
     log.info(f'rc:{rc}, msg:{msg}, traceback:{traceback}, returncount:{recordcount}')
-    return ServiceOutputType(rc=rc, recordcount = recordcount, msg = msg, traceback = traceback)
+    return ServiceOutputType(rc = rc, recordcount = recordcount, msg = msg, traceback = traceback)

@@ -8,8 +8,6 @@ dbg = logging.getLogger('__main__').debug
 
 
 
-
-
 def save_jsonform(peoplepref_form, p):
     try:
         logger.info('saving jsonform ...')
@@ -20,12 +18,11 @@ def save_jsonform(peoplepref_form, p):
                 p.people_extras[k] = peoplepref_form.cleaned_data[k]
     except Exception:
         logger.error(
-            'save_jsonform(peoplepref_form, p)... FAILED', exc_info=True)
+            'save_jsonform(peoplepref_form, p)... FAILED', exc_info = True)
         raise
     else:
         logger.info('jsonform saved DONE ... ')
         return True
-
 
 def get_people_prefform(people, session):
     try:
@@ -49,25 +46,23 @@ def get_people_prefform(people, session):
         }
 
     except Exception:
-        logger.error('get_people_prefform(people)... FAILED', exc_info=True)
+        logger.error('get_people_prefform(people)... FAILED', exc_info = True)
         raise
     else:
         logger.info('people prefform (json form) retrieved... DONE')
-        return PeopleExtrasForm(data=d, session=session)
+        return PeopleExtrasForm(data = d, session = session)
 
-
-def save_cuser_muser(instance, user, create=None):
+def save_cuser_muser(instance, user, create = None):
     from django.utils import timezone
     if instance.cuser is not None:
         instance.muser = user
-        instance.mdtz = timezone.now().replace(microsecond=0)
+        instance.mdtz = timezone.now().replace(microsecond = 0)
     else:
         instance.cuser = instance.muser = user
     return instance
 
 
-
-def save_client_tenantid(instance, user, session, client=None, bu=None):
+def save_client_tenantid(instance, user, session, client = None, bu = None):
 
     tenantid = session.get('tenantid')
     if bu is None:
@@ -81,8 +76,7 @@ def save_client_tenantid(instance, user, session, client=None, bu=None):
     return instance
 
 
-
-def save_userinfo(instance, user, session,client=None, bu=None, create=True):
+def save_userinfo(instance, user, session,client = None, bu = None, create = True):
     """saves user's related info('cuser', 'muser', 'client', 'tenantid')
     from request and session"""
     from django.core.exceptions import ObjectDoesNotExist
@@ -98,35 +92,32 @@ def save_userinfo(instance, user, session,client=None, bu=None, create=True):
             instance.tenant = None
             instance.client = None
         except Exception:
-            logger.critical("something went wrong !!!", exc_info=True)
+            logger.critical("something went wrong !!!", exc_info = True)
             raise
         return instance
-
 
 def validate_emailadd(val):
     try:
         from django import forms
         from .models import People
-        user = People.objects.filter(email__exact=val)
+        user = People.objects.filter(email__exact = val)
         if not user.exists():
             raise forms.ValidationError("User with this email doesn't exist")
     except Exception:
-        logger.error('validate_emailadd(val)... FAILED', exc_info=True)
+        logger.error('validate_emailadd(val)... FAILED', exc_info = True)
         raise
-
 
 def validate_mobileno(val):
     try:
         from django import forms
         from .models import People
-        user = People.objects.filter(mobno__exact=val)
+        user = People.objects.filter(mobno__exact = val)
         if not user.exists():
             raise forms.ValidationError(
                 "User with this mobile no doesn't exist")
     except Exception:
-        logger.error('validate_mobileno(val)... FAILED', exc_info=True)
+        logger.error('validate_mobileno(val)... FAILED', exc_info = True)
         raise
-
 
 def save_tenant_client_info(request):
     from apps.core.utils import hostname_from_request, get_tenants_map
@@ -137,21 +128,21 @@ def save_tenant_client_info(request):
         clientcodeMap = get_tenants_map()
         clientcode = clientcodeMap.get(hostname)
         request.session['hostname'] = hostname
-        client = Bt.objects.get(bucode=clientcode.upper() if clientcode else "SPS")
-        #tenant = Tenant.objects.get(id=client.tenant.id)
+        client = Bt.objects.get(bucode = clientcode.upper() if clientcode else "SPS")
+        # tenant = Tenant.objects.get(id = client.tenant.id)# 
         #request.session['tenantid'] = tenant.id
         request.session['client_id'] = request.user.client.id
         request.session['bu_id'] = request.user.bu.id
         logger.info('saving tenant & client info into the session...DONE')
     except:
+        logger.error('save_tenant_client_info failed', exc_info=True)
         raise
     else:
         return client
 
 
 
-
-# def get_choice(li, queryset=False):
+# def get_choice(li, queryset = False):
 #     '''return tuple for making choices
 #         according to django synatax
 #     '''
@@ -170,7 +161,6 @@ def save_tenant_client_info(request):
 
 #         tuple(t[1])
 #         return t, code
-
 
 # def get_cap_choices_for_clientform(caps, cfor):
 #     # sourcery skip: merge-list-append
@@ -194,7 +184,6 @@ def save_tenant_client_info(request):
 #     return choices
 
 # this will return choices for heirarchical choices for select2 dropdowns
-
 
 
 def save_caps_inside_session_for_people_client(people, caps, session, client):
@@ -226,13 +215,13 @@ def make_choices(caps_assigned, caps):
         if caps[i].capscode in caps_assigned and caps[i].depth == 3:
             tmp.append(caps[i])
         if tmp and caps[i].depth == 2 and caps[i-1].depth == 3:
-            choice, menucode = get_choice(tmp, queryset=True)
+            choice, menucode = get_choice(tmp, queryset = True)
             print(choice, menucode)
             parent_menus.append(menucode)
             choices.append(choice)
             tmp = []
         if i == (len(caps)-1) and choices:
-            choice, menucode = get_choice(tmp, queryset=True)
+            choice, menucode = get_choice(tmp, queryset = True)
             print(choice, menucode)
             parent_menus.append(menucode)
             choices.append(choice)
@@ -240,8 +229,7 @@ def make_choices(caps_assigned, caps):
         logger.debug('choices are made and returned... DONE')
     return choices, parent_menus
 
-
-def get_choice(li, queryset=False):
+def get_choice(li, queryset = False):
     '''return tuple for making choices
         according to django synatax
     '''
@@ -258,7 +246,6 @@ def get_choice(li, queryset=False):
 
     tuple(t[1])
     return t
-
 
 
 def get_cap_choices_for_clientform(caps, cfor):
@@ -281,7 +268,6 @@ def get_cap_choices_for_clientform(caps, cfor):
         logger.debug('caps collected and returned... DONE')
     return choices
 
-
 def make_choices(caps_assigned, caps):
     print(caps_assigned)
     choices, tmp = [], []
@@ -290,21 +276,20 @@ def make_choices(caps_assigned, caps):
         if caps[i].capscode in caps_assigned and caps[i].depth == 3:
             tmp.append(caps[i])
         if tmp and caps[i].depth == 2 and caps[i-1].depth == 3:
-            choice = get_choice(tmp, queryset=True)
-            #print(f'tmp {tmp} choice {choice}')
+            choice = get_choice(tmp, queryset = True)
+            # print(f'tmp {tmp} choice {choice}')
             choices.append(choice)
             tmp = []
         if i == (len(caps)-1) and choices and tmp:
-            choice = get_choice(tmp, queryset=True)
-            #print(f'tmp {tmp} choice {choice}')
+            choice = get_choice(tmp, queryset = True)
+            # print(f'tmp {tmp} choice {choice}')
             choices.append(choice)
     if choices:
         logger.debug('choices are made and returned... DONE')
     return choices
 
-
 # call this method in session to save data inside session
-def get_caps_choices(client=None, cfor=None,  session=None, people=None):
+def get_caps_choices(client = None, cfor = None,  session = None, people = None):
     '''get choices for capability clientform 
         or save choices in session'''
     from apps.peoples.models import Capability
@@ -313,11 +298,11 @@ def get_caps_choices(client=None, cfor=None,  session=None, people=None):
     from icecream import ic
     caps = Capability.objects.raw(query['get_web_caps_for_client'])
     # for cap in caps:
-    #print(f'Code {cap.capscode} Depth {cap.depth}')
+    # print(f'Code {cap.capscode} Depth {cap.depth}')
     try:
         if cfor == Capability.Cfor.MOB:
             return Capability.objects.select_related(
-                'parent').filter(cfor=cfor, enable=True).values_list('capscode', 'capsname')
+                'parent').filter(cfor = cfor, enable = True).values_list('capscode', 'capsname')
         caps = cache.get('caps')
         if caps:
             logger.debug('got caps from cache...')
@@ -341,13 +326,11 @@ def get_caps_choices(client=None, cfor=None,  session=None, people=None):
 
 
 
-
 def save_user_paswd(user):
     logger.info('Password is created by system... DONE')
     paswd = f'{user.loginid}@youtility'
     user.set_password(paswd)
     user.save()
-
 
 def display_user_session_info(session):
     from pprint import pp
@@ -356,33 +339,31 @@ def display_user_session_info(session):
     for key, value in session.items():
         pp(f'session info:{key} => {value}')
 
-
 def get_choices_for_peoplevsgrp(request):
     site = request.user.bu
     return pm.People.objects.filter(
-        bu__btid=site.btid).values_list(
+        bu__btid = site.btid).values_list(
             'people', 'peoplename')
-
 
 def save_pgroupbelonging(pg, request):
     dbg("saving pgbelonging for pgroup %s" % (pg))
     from apps.onboarding.models import Bt
     peoples = request.POST.getlist('peoples[]')
     ic(peoples)
-    client = Bt.objects.get(id=int(request.session['client_id']))
-    site = Bt.objects.get(id=int(request.session['bu_id']))
-    tenant = Tenant.objects.get(id=int(request.session['tenantid']))
+    client = Bt.objects.get(id = int(request.session['client_id']))
+    site = Bt.objects.get(id = int(request.session['bu_id']))
+    tenant = Tenant.objects.get(id = int(request.session['tenantid']))
     if peoples:
         try:
             print('request>POST', dict(request.POST), peoples)
             for i in range(len(peoples)):
-                people = pm.People.objects.get(id=int(peoples[i]))
+                people = pm.People.objects.get(id = int(peoples[i]))
                 pgb = pm.Pgbelonging.objects.create(
-                    pgroup=pg,
-                    people=people,
-                    client=client,
-                    tenant=tenant,
-                    bu=site
+                    pgroup = pg,
+                    people = people,
+                    client = client,
+                    tenant = tenant,
+                    bu = site
                 )
                 if request.session.get('wizard_data'):
                     request.session['wizard_data']['pgbids'].append(pgb.id)
@@ -401,10 +382,9 @@ def save_pgroupbelonging(pg, request):
 #     txt = str(txt)
 #     # get the key from settings
 #     cipher_suite = Fernet(settings.ENCRYPT_KEY) # key should be byte
-#     # #input should be byte, so convert the text to byte
+#     # # input should be byte, so convert the text to byte
 #     encrypted_text = cipher_suite.encrypt(txt.encode('ascii'))
 #     # encode to urlsafe base64 format
 #     encrypted_text = base64.urlsafe_b64encode(encrypted_text).decode("ascii")
 #     return encrypted_text
-
 

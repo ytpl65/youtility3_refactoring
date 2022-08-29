@@ -1,6 +1,5 @@
 {% extends "base_form.html" %}
 
-
 {% block extra_css %}
 {{ ticketform.media.css }}
 {% endblock extra_css %}
@@ -14,13 +13,11 @@
 {% endblock pagebreadcumb %}
 <!-------------------------- END PAGE BREADCUMB ------------------------->
 
-
 <!------ BEGIN FORM TITLE ------->
 {% block form_title %}
 Ticket
 {% endblock form_title %}
 <!------ END FORM TITLE -------->
-
 
 <!--------- BEGIN NON FIELD ERRORS -------->
 {% block nonfield_errors %}
@@ -34,7 +31,6 @@ Ticket
     {% endif %}
 {% endblock nonfield_errors %}
 <!---------- END NON FIELD ERRORS --------->
-
 
 {% block form %}
 <form action="{{ url('schedhuler:create_ticket') }}" method="post" id="ticketform">
@@ -192,7 +188,6 @@ Ticket
 </form>
 {% endblock form %}
 
-
 {% block ajax_page_actions %}
 <div class="form-actions">
     {% if ticketform.instance.id %}
@@ -216,7 +211,6 @@ Ticket
 </div>
 {% endblock ajax_page_actions %}
 
-
 {% block extra_scripts %}
 {{ ticketform.media.js }}
 <script>
@@ -239,7 +233,7 @@ Ticket
         if ('{{ticketform.instance.id}}' == ('None' || "")) {
             showHideSelectField('PEOPLE')
         }else{
-            var assignto = '{{ticketform.instance.people}}' == ('None' || "") ? "GROUP" :"PEOPLE"
+            var assignto = '{{ticketform.instance.people}}' == ('None' || "") ? "GROUP" : "PEOPLE"
             showHideSelectField(assignto)
         }
 
@@ -258,7 +252,7 @@ Ticket
             var   payLoad  = { formData: $("#ticketform").serialize(),csrfmiddlewaretoken: '{{ csrf_token }}' }
             
             if (formtype === 'update') {
-                var newPayLoad = { ...payLoad,'pk': id }
+                var newPayLoad = { ...payLoad, 'pk': id }
                     payLoad    = newPayLoad
             }
             submit_form_alert().then((res) => {
@@ -285,7 +279,6 @@ Ticket
         })
 
     })
-
 
 </script>
 

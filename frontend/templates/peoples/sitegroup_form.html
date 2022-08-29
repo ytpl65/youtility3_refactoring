@@ -1,11 +1,9 @@
 {% extends "base_form.html" %}
 
-
 {% block extra_css %}
 <link  href="{{ static('assets/plugins/custom/DataTables/datatables.min.css') }}" rel="stylesheet" type="text/css"/>
 {{ sitegrpform.media.css }}
 {% endblock extra_css %}
-
 
 {% block form_title %}
 Site Group
@@ -28,7 +26,6 @@ Site Group
 </div>
 {% endblock nonfield_errors %}
 <!---------- END NON FIELD ERRORS --------->
-
 
 {% block form %}
 <form action="{{ url('peoples:sitegroup') }}" method="post" id="sitegrp_form">
@@ -53,7 +50,6 @@ Site Group
 </form><br><hr><br>
 {% endblock form %}
 
-
 {% block ajax_page_actions %}
     <div class="form-actions">
         {% if sitegrpform.instance.id %}
@@ -72,7 +68,6 @@ Site Group
         {% endif %}
     </div>
 {% endblock ajax_page_actions %}
-
 
 {% block extras %}
 <div class="row">
@@ -107,7 +102,6 @@ Site Group
 </div>
 {% endblock extras %}
 
-
 {% block extra_scripts %}
 {{ sitegrpform.media.js }}
 <script src="{{ static('assets/plugins/custom/DataTables/datatables.min.js') }}" type="text/javascript"></script>
@@ -123,7 +117,7 @@ Site Group
     //populate_buidentifiers
     function populate_buidentifier(resp, id){
         var idfs = resp['idfs']
-        for(let i=0; i<idfs.length; i++){
+        for(let i = 0; i<idfs.length; i++){
             if($(id).find("option[value='" + idfs[i]['identifier__tacode'] + "']").length){}
             else{
             var newOption = new Option(idfs[i]['identifier__tacode'], idfs[i]['identifier__tacode'], false, false);
@@ -150,7 +144,6 @@ Site Group
 		})
 	}
 
-
     function loadAssignedSitesIfThereAny(table, id){
         const params = {url:`${urlname}?action=loadSites&id=${id}`, 'beforeSend':function(){}}
         fire_ajax_get(params)
@@ -163,9 +156,7 @@ Site Group
         
     }
 
-
     
-
 
     $(document).ready(() => {
         //set ctzoffset
@@ -173,7 +164,7 @@ Site Group
 
         tabAllsites = $("#all_sites").DataTable({
             ajax:{
-                url:"{{ url('peoples:sitegroup') }}?action=allsites",
+                url: "{{ url('peoples:sitegroup') }}?action=allsites",
                 data:function ( d ) {
                     d.sel_butype = current_sel_butype;
                     d.fields = ['buid', 'buname', 'parent__buname', 'identifier__tacode'];
@@ -190,11 +181,11 @@ Site Group
             ordering: false,
             deferRender: true,
             columns:[
-                {data:null, defaultContent: '', orderable:true, className:'select-checkbox', width:"2%"},
-                {data:'buid', visible:false, orderable:false, defaultContent:""},
-                {data:'buname', title:"Site Name"},
-                {data:"parent__buname", title:"Belongs to"},
-                {data:'identifier__tacode', title:"Type"},
+                {data:null, defaultContent: '', orderable:true, className: 'select-checkbox', width: "2%"},
+                {data: 'buid', visible:false, orderable:false, defaultContent: ""},
+                {data: 'buname', title: "Site Name"},
+                {data: "parent__buname", title: "Belongs to"},
+                {data: 'identifier__tacode', title: "Type"},
             ],
             select: {
                 style:    'multi',
@@ -209,7 +200,7 @@ Site Group
         //populate dropdown field
         $("#custom_butype").change(()=>{
             var butype = $("#custom_butype").val()
-            if(butype!=current_sel_butype){
+            if(butype !=  current_sel_butype){
                 current_sel_butype = butype
                 tabAllsites.ajax.reload()
             }
@@ -219,7 +210,6 @@ Site Group
         
         
         //populate_buidentifier(tabAllsites, '#custom_butype');
-
 
         //ON CLICK GRAB SELECTED AND POPULATE RIGHT TABLE
         $("#btn_assign_sites").click(() => {
@@ -231,13 +221,13 @@ Site Group
         tabAssigned_sites = $("#assigned_sites").DataTable({
             fixedHeader: true,
             responsive: true,
-            dom:"rt",
+            dom: "rt",
             order: [[ 1, 'asc' ]],
             columns:[
-                {data:'buid', visible:false, orderable:false, defaultContent:"", render:function(data, type, full, meta){
+                {data: 'buid', visible:false, orderable:false, defaultContent: "", render:function(data, type, full, meta){
                     return data == undefined ? "" :data
                 }},
-                {data:'buname', title:'Site Name'},
+                {data: 'buname', title: 'Site Name'},
                 {data:function(row, type, val, meta){
                         if(row['13'] != null){
                             return ""
@@ -245,11 +235,11 @@ Site Group
                             return '<a href="#" onClick="return false;"><i class="fas text-dark fa-trash-alt fs-3"></i></a>'
                         }
                     },
-                defaultContent:'',
+                defaultContent: '',
                 orderable:false,
-                className:"remove text-center",
+                className: "remove text-center",
                 targets:12,
-                width:"5%"}
+                width: "5%"}
             ],
             buttons:[]
         })
@@ -276,36 +266,34 @@ Site Group
 
         });
 
-
         //submit form
 		$("#sitegrp_form").on('submit', function(e) {
 			var form = $(this);
 			e.preventDefault()
             if(tabAssigned_sites.data().length){ Swal.fire({
-                title:'Sites Not Assigned!',
-                text:"Do you forget to assign sites!",
-                icon:'warning',
+                title: 'Sites Not Assigned!',
+                text: "Do you forget to assign sites!",
+                icon: 'warning',
                 timer:2000
             })}
 			
-            const params = { url:"{{ url('peoples:sitegroup') }}", modal:false } 
+            const params = { url: "{{ url('peoples:sitegroup') }}", modal:false } 
 			var payLoad =  {'formData':form.serialize(), csrfmiddlewaretoken: '{{ csrf_token }}', 'assignedSites': JSON.stringify(tabAssigned_sites.rows().data().toArray())}
             var isupdate = $("#id_pk")!=="" ?  false : true
             Swal.fire({
-            title:"Submit?",
-            text:"This will allocate the selected sites to the Sites group being created!",
-            icon:'question',
+            title: "Submit?",
+            text: "This will allocate the selected sites to the Sites group being created!",
+            icon: 'question',
             showCancelButton: true,
             confirmButtonText: 'Submit'
             }).then((res) => {
                 fire_ajax_form_post(params, payLoad)
-			.done((data, status, xhr) => { //function to submit post request
-				show_successful_save_alert(update=isupdate)
-			})
-            } )
+                .done((data, status, xhr) => { //function to submit post request
+                    show_successful_save_alert(update = isupdate)
+                })
+            })
 			
 		})
-
 
     })
 

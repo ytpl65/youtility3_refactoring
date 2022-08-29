@@ -1,3 +1,6 @@
+from urllib import response
+
+from pyparsing import col
 import apps.peoples.utils as putils
 import apps.core.utils as utils
 from apps.onboarding.admin import BaseFieldSet2
@@ -12,73 +15,89 @@ import logging
 
 log = logging.getLogger('__main__')
 
-
 def save_people_passwd(user):
     log.info('Password is created by system... DONE')
     paswd = f'{user.loginid}@youtility'
     user.set_password(paswd)
 
-
 # Register your models here
-class PeopleResource(resources.ModelResource, BaseFieldSet2):
-    department = fields.Field(
-        column_name='department',
+class PeopleResource(resources.ModelResource):
+    Client = fields.Field(
+        column_name='Client',
+        attribute='client',
+        widget = wg.ForeignKeyWidget(om.Bt, 'bucode'),
+        default='NONE'
+    )
+    BV = fields.Field(
+        column_name='BV',
+        attribute='bu',
+        widget = wg.ForeignKeyWidget(om.Bt, 'bucode'),
+        saves_null_values = True,
+        default='NONE'
+    )
+    
+    Department = fields.Field(
+        column_name='Department',
         attribute='department',
-        widget=wg.ForeignKeyWidget(om.TypeAssist, 'tacode'),
+        widget = wg.ForeignKeyWidget(om.TypeAssist, 'tacode'),
         default='NONE'
     )
-    designation = fields.Field(
-        column_name='designation',
+    Designation = fields.Field(
+        column_name='Designation',
         attribute='designation',
-        widget=wg.ForeignKeyWidget(om.TypeAssist, 'tacode'),
+        widget = wg.ForeignKeyWidget(om.TypeAssist, 'tacode'),
         default='NONE'
     )
-    peopletype = fields.Field(
-        column_name='peopletype',
+    
+    PeopleType = fields.Field(
+        column_name='People Type',
         attribute='peopletype',
-        widget=wg.ForeignKeyWidget(om.TypeAssist, 'tacode'),
+        widget = wg.ForeignKeyWidget(om.TypeAssist, 'tacode'),
         default='NONE'
     )
-    reportto = fields.Field(
-        column_name='reportto',
+    Reportto = fields.Field(
+        column_name='Report To',
         attribute='reportto',
-        widget=wg.ForeignKeyWidget(pm.People, 'peoplecode'),
+        widget = wg.ForeignKeyWidget(pm.People, 'peoplecode'),
         default='NONE'
     )
-    dateofbirth = fields.Field(
-        column_name='dateofbirth',
+    DateOfBirth = fields.Field(
+        column_name='Date of Birth',
         attribute='dateofbirth',
-        widget=wg.DateWidget()
+        widget = wg.DateWidget()
     )
-    dateofjoin = fields.Field(
-        column_name='dateofjoin',
+    
+    DateOfJoin = fields.Field(
+        column_name='Date of Join',
         attribute='dateofjoin',
-        widget=wg.DateWidget()
+        widget = wg.DateWidget()
+    )
+    
+    DateOfReport = fields.Field(
+        column_name='Date of Report',
+        attribute='dateofreport',
+        widget = wg.DateWidget()
     )
 
-    client = fields.Field(
-        column_name='client',
-        attribute='client',
-        widget=wg.ForeignKeyWidget(om.Bt, 'bucode'),
-        default='NONE'
-    )
-    bu = fields.Field(
-        column_name='bu',
-        attribute='bu',
-        widget=wg.ForeignKeyWidget(om.Bt, 'bucode'),
-        saves_null_values=True,
-        default='NONE'
-    )
+    ID      = fields.Field(attribute='id')
+    Code    = fields.Field(attribute='peoplecode', column_name='People Code')
+    Name    = fields.Field(attribute='peoplename', column_name='People Name')
+    LoginId = fields.Field(attribute='loginid', column_name='Login ID')
+    MobNo   = fields.Field(attribute='mobno', column_name='Mob No')
+    Email   = fields.Field(attribute='email', column_name='Email')
+    Gender  = fields.Field(attribute='email')
+    Enable  = fields.Field(widget=wg.BooleanWidget(), attribute='enable', default=True)
+    IsAdmin = fields.Field(attribute='isadmin', column_name='Is Admin', widget=wg.BooleanWidget())
 
     class Meta:
         model = pm.People
         skip_unchanged = True
         report_skipped = True
-        import_id_fields = ('id',)
+        import_id_fields = ('ID','Code')
         fields = [
-            'id', 'peoplecode', 'peoplename', 'loginid', 'designation', 'department', 'mobno', 'email',
-            'bu', 'dateofjoin', 'dateofreport', 'dateofbirth', 'gender', 'peopletype', 'enable',
-            'isadmin', 'client', 'cdtz', 'mdtz']
+            'ID', 'Code', 'Name', 'LoginId', 'Designation', 'Department', 'MobNo', 'Email',
+            'BV', 'DateOfJoin', 'DateOfReport', 'DateOfBirth', 'Gender', 'PeopleType', 'Enable',
+            'IsAdmin', 'Client']
 
     def __init__(self, *args, **kwargs):
         self.request = kwargs.pop('request', None)
@@ -88,7 +107,9 @@ class PeopleResource(resources.ModelResource, BaseFieldSet2):
         instance.peoplecode = instance.peoplecode.upper()
         utils.save_common_stuff(self.request, instance)
         save_people_passwd(instance)
-
+    
+    def skip_row(self, instance, original):
+        return pm.People.objects.filter(peoplecode = instance.peoplecode).exists()
 
 @admin.register(People)
 class PeopleAdmin(ImportExportModelAdmin):
@@ -120,13 +141,81 @@ class PeopleAdmin(ImportExportModelAdmin):
         return pm.People.objects.select_related(
             'peopletype', 'cuser', 'muser', 'client', 'bu').all()
 
+class PeopleGroupResource(resources.ModelResource):
+    Client = fields.Field(
+        column_name='Client',
+        attribute='client',
+        widget = wg.ForeignKeyWidget(om.Bt, 'bucode'),
+        default='NONE'
+    )
+    BV = fields.Field(
+        column_name='BV',
+        attribute='bu',
+        widget = wg.ForeignKeyWidget(om.Bt, 'bucode'),
+        saves_null_values = True,
+        default='NONE'
+    )
+    Identifier = fields.Field(
+        attribute='identifier',
+        widget=wg.ForeignKeyWidget(om.TypeAssist, 'tacode'),
+        default='PEOPLEGROUP'
+    )
+    ID = fields.Field(attribute='id')
+    Enable = fields.Field(attribute='enable', column_name='Enable', widget=wg.BooleanWidget(), default=True)
+    Name = fields.Field(attribute='groupname', column_name='Group Name')
+    
+    class Meta:
+        model = pm.Pgroup
+        skip_unchanged = True,
+        import_id_fields = ('ID', 'Name')
+        report_skipped = True,
+        fields = ('ID', 'Client', 'BV', 'Identifier', 'Enable', 'Name')
+
+
+class SiteGroupResource(resources.ModelResource):
+    Client = fields.Field(
+        column_name='Client',
+        attribute='client',
+        widget = wg.ForeignKeyWidget(om.Bt, 'bucode'),
+        default='NONE'
+    )
+    BV = fields.Field(
+        column_name='BV',
+        attribute='bu',
+        widget = wg.ForeignKeyWidget(om.Bt, 'bucode'),
+        saves_null_values = True,
+        default='NONE'
+    )
+    Identifier = fields.Field(
+        attribute='identifier',
+        widget=wg.ForeignKeyWidget(om.TypeAssist, 'tacode'),
+        default='SITEGROUP'
+    )
+    ID = fields.Field(attribute='id')
+    Enable = fields.Field(attribute='enable', column_name='Enable', widget=wg.BooleanWidget(), default=True)
+    Name = fields.Field(attribute='groupname', column_name='Group Name')
+    
+    class Meta:
+        model = pm.Pgroup
+        skip_unchanged = True
+        import_id_fields = ('ID', 'Name')
+        report_skipped = True,
+        fields = ('ID', 'Client', 'BV', 'Identifier', 'Enable', 'Name')
+
+
+
+
+
+
+
+
 
 class PgroupResource(resources.ModelResource, BaseFieldSet2):
 
     identifier = fields.Field(
-        column_name='identifier',
+        column_name='Identifier',
         attribute='identifier',
-        widget=wg.ForeignKeyWidget(om.TypeAssist, 'tacode')
+        widget = wg.ForeignKeyWidget(om.TypeAssist, 'tacode')
     )
 
     class Meta:
@@ -135,7 +224,6 @@ class PgroupResource(resources.ModelResource, BaseFieldSet2):
         report_skipped = True
         fields = ['name', 'enable', 'identifier',
                   'bu', 'client', 'cuser', 'muser']
-
 
 @admin.register(Pgroup)
 class PgroupAdmin(ImportExportModelAdmin):
@@ -146,17 +234,16 @@ class PgroupAdmin(ImportExportModelAdmin):
                     'enable', 'identifier', 'client', 'bu']
     list_display_links = ['groupname', 'enable', 'identifier']
 
-
 class PgbelongingResource(resources.ModelResource, BaseFieldSet2):
     pgroup = fields.Field(
         column_name='pgroup',
         attribute='pgroup',
-        widget=wg.ForeignKeyWidget(pm.Pgroup, 'name')
+        widget = wg.ForeignKeyWidget(pm.Pgroup, 'name')
     )
     people = fields.Field(
         column_name='people',
         attribute='people',
-        widget=wg.ForeignKeyWidget(pm.People, 'peoplecode')
+        widget = wg.ForeignKeyWidget(pm.People, 'peoplecode')
     )
 
     class Meta:
@@ -165,7 +252,6 @@ class PgbelongingResource(resources.ModelResource, BaseFieldSet2):
         report_skipped = True
         fields = ['pgroup', 'people', 'isgrouplead',
                   'assignsites', 'client', 'bu', 'cuser', 'muser']
-
 
 @admin.register(Pgbelonging)
 class PgbelongingAdmin(ImportExportModelAdmin):
@@ -176,13 +262,12 @@ class PgbelongingAdmin(ImportExportModelAdmin):
                     'isgrouplead', 'assignsites', 'bu']
     list_display_links = ['pgroup', 'people']
 
-
 class CapabilityResource(resources.ModelResource, BaseFieldSet2):
 
     parent = fields.Field(
         column_name='parent',
         attribute='parent',
-        widget=wg.ForeignKeyWidget(pm.Capability, 'capscode'))
+        widget = wg.ForeignKeyWidget(pm.Capability, 'capscode'))
 
     class Meta:
         model = Capability
@@ -191,7 +276,6 @@ class CapabilityResource(resources.ModelResource, BaseFieldSet2):
         report_skipped = True
         fields = ('id', 'capscode',  'capsname', 'cfor', 
                   'parent', 'cuser', 'muser', 'client', 'bu', 'tenant')
-
 
 
     def __init__(self, *args, **kwargs):
@@ -204,7 +288,6 @@ class CapabilityResource(resources.ModelResource, BaseFieldSet2):
 
 
 
-
 @admin.register(Capability)
 class CapabilityAdmin(ImportExportModelAdmin):
     resource_class = CapabilityResource
@@ -212,7 +295,6 @@ class CapabilityAdmin(ImportExportModelAdmin):
     list_display = ['capscode', 'capsname', 'enable', 'cfor', 'parent',
                     'cdtz', 'mdtz', 'cuser', 'muser']
     list_display_links = ['capscode', 'capsname']
-
 
 
     def get_resource_kwargs(self, request, *args, **kwargs):

@@ -1,6 +1,5 @@
 {% extends "base_form.html" %}
 
-
 <!---- BEGIN PAGE TITLE ---->
 {% block title %}
 People Form
@@ -14,7 +13,6 @@ People Form
 {% endblock extra_css %}
 <!--- END CSS -->
 
-
 <!-------------------------- BEGIN PAGE BREADCUMB ----------------------->
 {% block pagebreadcumb %}
 {{ super() }}
@@ -24,13 +22,11 @@ People Form
 <!-------------------------- END PAGE BREADCUMB ------------------------->
 
 
-
 <!------ BEGIN FORM TITLE ------>
 {% block form_title %}
 Adhoc Task
 {% endblock form_title %}
 <!------ END FORM TITLE -------->
-
 
 {% block form %}
 <input type="hidden" name="{{ adhoctaskform.ctzoffset.name }}" id = "{{ adhoctaskform.ctzoffset.auto_id }}" value="-1">
@@ -189,7 +185,6 @@ Adhoc Task
 </div>
 {% endblock form %}
 
-
 {% block extras %}
 <div class="card">
     <div class="card-header">
@@ -263,5 +258,4 @@ $(document).ready(function () {
 })
 </script>
 {% endblock extra_scripts %}
-
 

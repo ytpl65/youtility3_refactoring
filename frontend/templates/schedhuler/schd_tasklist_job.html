@@ -1,12 +1,10 @@
 {% extends "base_list.html" %}
 
-
 <!---- BEGIN CARD TITLE ------>
 {% block card_title %}
 Schedhuled Tasks
 {% endblock card_title %}
 <!----- END CARD TITLE -------->
-
 
 <!------------------------------------ BEGIN PAGE BREADCUMBS ------------------------------------>
 {% block pagebreadcumb %}
@@ -14,7 +12,6 @@ Schedhuled Tasks
 <li class="breadcrumb-item pe-3"><a href="javascript:void(0)" class="pe-3">Scheduled Tasks</a></li>
 {% endblock pagebreadcumb %}
 <!------------------------------------- END PAGE BREADCUMBS ------------------------------------->
-
 
 <!-------------------------------------------- BEGIN Schedhuled External Tour TABLE ------------------------------------------->
 {% block table %}
@@ -25,7 +22,6 @@ Schedhuled Tasks
 </table>
 {% endblock table %}
 <!-------------------------------------------- END Schedhuled External Tour TABLE ------------------------------------------->
-
 
 <!--------- BEGIN EXTRA SCRIPTS ----------------------------->
 {% block extra_scripts %}
@@ -38,32 +34,32 @@ Schedhuled Tasks
         //datatable initialization
         table = $("#schd_task_table").DataTable({
             ajax:{
-                url:"{{ url('schedhuler:jobschdtasks') }}?action=list"
+                url: "{{ url('schedhuler:jobschdtasks') }}?action=list"
             },
 			responsive: true,
             deferRender: true,
             columns:[
-                {data:'id', visible:false, searchable:false},
-                {data:'jobname', title:"Name"},
-                {data:'asset__assetname', title:"Asset"},
-                {data:'qset__qsetname', title:'Question Set'},
-                {title:'People/Group', data:null},
-                {data:'fromdate', title:"From"},
-                {data:'uptodate', title:'To'},
-                {data:'planduration', title:'Duration'},
-                {data:'gracetime', title:'Gracetime'},
-                {data:'expirytime', title:'Expirytime'},
+                {data: 'id', visible:false, searchable:false},
+                {data: 'jobname', title: "Name"},
+                {data: 'asset__assetname', title: "Asset"},
+                {data: 'qset__qsetname', title: 'Question Set'},
+                {title: 'People/Group', data:null},
+                {data: 'fromdate', title: "From"},
+                {data: 'uptodate', title: 'To'},
+                {data: 'planduration', title: 'Duration'},
+                {data: 'gracetime', title: 'Gracetime'},
+                {data: 'expirytime', title: 'Expirytime'},
             ],
             dom:`<'row' <'col-sm-6 d-flex justify-content-start'f> <'col-sm-6 d-flex justify-content-end'B> >rt<'row'
 			 <'col-sm-6'l> <'col-sm-6'p><'col-sm-12 d-flex justify-content-center'i>>`,
             columnDefs:[
-                {data:'fromdate', targets: 5, render:function(data, type, row, meta){
+                {data: 'fromdate', targets: 5, render:function(data, type, row, meta){
                     return convert_to_local(type, data, row)
                 }},
-                {data:'uptodate',   targets: 6, render:function(data, type, row, meta){
+                {data: 'uptodate',   targets: 6, render:function(data, type, row, meta){
                     return convert_to_local(type, data, row)
                 }},
-                {data:'jobname', targets: 1, render:function(data, type, row, meta){
+                {data: 'jobname', targets: 1, render:function(data, type, row, meta){
                     return `<a href="${formUrl}?id=${row['id']}">${data}</a>`
                 }},
                 {targets:4, render:function(data, type, row, meta){
@@ -78,7 +74,7 @@ Schedhuled Tasks
             buttons:[
 				{
 					text:`Add New &nbsp;<i class='fas fa-plus ch4'></i></a>`,
-					className:"btn btn-sm btn-light-primary btn-hover-rise",
+					className: "btn btn-sm btn-light-primary btn-hover-rise",
 					//action for add_new_button 
 					action: function(e, dt, node, config){
         				window.location.href = "{{ url('schedhuler:jobschdtasks') }}?action=form";

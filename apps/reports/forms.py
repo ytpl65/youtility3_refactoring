@@ -1,23 +1,27 @@
 from django import forms
+from matplotlib import widgets
 from apps.activity import models as am
 from apps.onboarding import models as om
 from apps.peoples import models as pm
 from apps.core import utils
 from django_select2 import forms as s2forms
 
-
 class MasterReportTemplate(forms.ModelForm):
     required_css_class = "required"
-    showto_allsites    = forms.BooleanField(initial=False, required=False, label='Show to all sites')
-    buincludes         = forms.MultipleChoiceField(widget=s2forms.Select2MultipleWidget, label='Buisiness Units')
-    site_type_includes = forms.MultipleChoiceField(widget=s2forms.Select2MultipleWidget, label='Sitetype')
-    site_grp_includes  = forms.MultipleChoiceField(widget=s2forms.Select2MultipleWidget, label='Sitegroup')
+    showto_allsites    = forms.BooleanField(initial = False, required = False, label='Show to all sites')
+    site_type_includes = forms.MultipleChoiceField(widget=s2forms.Select2MultipleWidget, label="Site Types", required=False)
+    buincludes = forms.MultipleChoiceField(widget=s2forms.Select2MultipleWidget, label='Site Includes', required=False)
+    site_grp_includes = forms.MultipleChoiceField(widget=s2forms.Select2MultipleWidget, label='Site groups', required=False)
+
 
     class Meta:
         model = am.QuestionSet
         fields = [
             'type',  'qsetname', 'buincludes', 'site_grp_includes', 
             'site_type_includes', 'enable', 'ctzoffset']
+        labels = {
+            'qsetname':'Template Name',
+        }
 
 
 class SiteReportTemplate(MasterReportTemplate):
@@ -26,14 +30,13 @@ class SiteReportTemplate(MasterReportTemplate):
         self.request = kwargs.pop('request')
         super().__init__(*args, **kwargs)
         utils.initailize_form_fields(self)
-        self.fields['site_type_includes'].widget.choices = om.Bt.objects.filter(butype__tacode = "BVTYPE").values_list('id', 'buname')
+        self.fields['site_type_includes'].choices = om.Bt.objects.filter(butype__tacode = "BVTYPE").values_list('id', 'buname')
         bulist = om.Bt.objects.get_bu_list_ids(self.request.session['client_id'])
-        self.fields['buincludes'].widget.choices = om.Bt.objects.filter(id__in = bulist).values_list('id', 'buname')
-        self.fields['site_grp_includes'].widget.choices = pm.Pgroup.objects.filter(
+        self.fields['buincludes'].choices = om.Bt.objects.filter(id__in = bulist, identifier__tacode='SITE').values_list('id', 'buname')
+        self.fields['site_grp_includes'].choices = pm.Pgroup.objects.filter(
             identifier__tacode='SITEGROUP', bu_id__in = bulist).values_list('id', 'groupname')
-        self.fields['type'].widget.attrs = {'style':'display:none'}
+        self.fields['type'].widget.attrs = {'style': 'display:none'}
         self.fields['type'].initial = am.QuestionSet.Type.SITEREPORTTEMPLATE
-
 
 class IncidentReportTemplate(MasterReportTemplate):
     class Meta(MasterReportTemplate.Meta):
@@ -43,6 +46,13 @@ class IncidentReportTemplate(MasterReportTemplate):
         super().__init__(*args, **kwargs)
         self.fields['site_type_includes'].queryset = om.TypeAssist.objects.filter(
             tatype__tacode='SITETYPE')
-        self.fields['type'].widget.attrs = {'style':'display:none'}
+        self.fields['type'].widget.attrs = {'style': 'display:none'}
         self.fields['type'].initial = am.QuestionSet.Type.INCIDENTREPORTTEMPLATE
         utils.initailize_form_fields(self)
+
+
+
+class TestForm(forms.Form):
+    firstname  = forms.CharField(max_length=10, required=False)
+    lastname   = forms.CharField(max_length=10, required=True)
+    middlename = forms.CharField(max_length=10, required=True)

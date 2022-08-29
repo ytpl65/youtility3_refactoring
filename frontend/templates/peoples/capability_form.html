@@ -6,7 +6,6 @@ Capability Form
 {% endblock title %}
 <!---- END PAGE TITLE ----->
 
-
 {% block extra_css %}
 {{ cap_form.media.css }}
 {% endblock extra_css %}
@@ -18,7 +17,6 @@ Capability Form
 <li class="breadcrumb-item pe-3"><a href="javascript:void(0)" class="pe-3">Capability Form</a></li>
 {% endblock pagebreadcumb %}
 <!-------------------------- END PAGE BREADCUMB ------------------------->
-
 
 <!-------------  BEGIN POP-UPS CODE ------------->
 {% block popup_alerts %}
@@ -38,7 +36,6 @@ Capability Form
 {% endblock popup_alerts %}
 <!-------------  END POP-UPS CODE --------------->
 
-
 <!------ BEGIN FORM TITLE ------->
 {% block form_title %}
 Capability Form
@@ -57,7 +54,6 @@ Capability Form
 {% endif %}
 {% endblock nonfield_errors %}
 <!---------- END NON FIELD ERRORS --------->
-
 
 
 <!-------------- BEGIN FORM ------------------->
@@ -98,7 +94,6 @@ Capability Form
 {% endblock formpage_actions %}
 <!------------------- END FORM PAGE ACTIONS --------------->
 
-
 <!--------------- BEGIN PAGE-LEVEL EXTRA SCRIPTS --------------->
 {% block extra_scripts %}
 {{ cap_form.media.js }}
@@ -115,7 +110,7 @@ Capability Form
 		$("#savebtn, #form_update").click((e) => {
 			console.log(`jquery version ${$().jquery}`)
 			e.preventDefault();
-			const params = {url:"{{ url('peoples:capability') }}", type:"post"}
+			const params = {url: "{{ url('peoples:capability') }}", type: "post"}
 			const payload = {formData:$("#id_capform").serialize(), csrfmiddlewaretoken: '{{ csrf_token }}'}
 			submit_ajax_form_post(params, payload)	
 		})

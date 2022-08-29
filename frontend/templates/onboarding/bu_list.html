@@ -6,14 +6,12 @@ Buisiness Units
 {% endblock card_title %}
 <!----- END CARD TITLE -------->
 
-
 <!----------- BEGIN PAGE BREADCUMBS ----------->
 {% block pagebreadcumb %}
 {{ super() }}
 <li class="breadcrumb-item pe-3"><a href="{{ url('onboarding:bu_list') }}?template=true" class="pe-3">Bu List</a></li>
 {% endblock pagebreadcumb %}
 <!----------- END PAGE BREADCUMBS ------------->
-
 
 <!------------------ BEGIN BU TABLE ------------------------->
 {% block table %}
@@ -34,7 +32,6 @@ Buisiness Units
 {% endblock table %}
 <!------------------ END BU TABLE --------------------------->
 
-
 <!--------- BEGIN EXTRA SCRIPTS ----------------------------->
 {% block extra_scripts %}
 <script>
@@ -42,7 +39,7 @@ Buisiness Units
 		//BEGIN DATATABLE INITIALIZATION
 		var table = $('#bt_table').DataTable({
 			ajax:{
-				url:'{{ url("onboarding:bu_list") }}?action=list',
+				url: '{{ url("onboarding:bu_list") }}?action=list',
 			},
 			deferRender: true,
 			responsive : true,

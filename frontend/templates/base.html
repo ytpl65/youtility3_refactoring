@@ -2,8 +2,8 @@
 <html lang="en">
 
 <head>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <meta content="text/html;charset=utf-8" http-equiv="Content-Type">
+  <meta name="viewport" content="width = device-width, initial-scale = 1" />
+  <meta content="text/html;charset = utf-8" http-equiv="Content-Type">
   
   <!-- BEGIN PAGEL LEVEL FONTS & ICONS START -->
   <link rel="preconnect" href="https://fonts.gstatic.com">
@@ -24,7 +24,6 @@
   <!-- END GLOBAL STYLESHEETS BUNDLE (used by all pages) -->
 
   <!-- BEGIN PAGE LEVEL STYLESHEETS -->  
-
 
 <!----FOR BASE_LEVEL ---->
   {%- block base_head -%}
@@ -59,7 +58,6 @@
   
   {% endblock body %}
 
-
   <!-- BEGIN  GLOBAL JS BUNDLE (used by all pages) -->
   <script src="{{ static('assets/plugins/global/plugins.bundle.js') }}"></script>
   <script src="{{ static('assets/js/scripts.bundle.js') }}"></script>
@@ -77,7 +75,7 @@
   var dontBlock = false;
   var target = document.querySelector("body")
   var blockUI = new KTBlockUI(target, {
-    message:"<div class='blockui-message'><span class='spinner-border text-primary'></span</div>",
+    message: "<div class='blockui-message'><span class='spinner-border text-primary'></span>Loading...</div>",
   });
   function startBlockUi(){
     if(!dontBlock)
@@ -116,7 +114,6 @@
     $(".booleans").addClass("form-check form-switch form-check-custom form-check-solid") 
 
 
-
     $('.closeit').click(function () {
     $('body').removeClass('modal-open');
     });
@@ -152,7 +149,6 @@
   </script>
   <!-- END GLOBAL-INLINE CUSTOM SCRIPTS -->
   
-
 
 
   <!-- BEGIN BASE LEVEL SCRIPTS FOR BASE PAGES -->  

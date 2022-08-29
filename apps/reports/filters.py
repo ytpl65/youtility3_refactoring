@@ -5,7 +5,6 @@ import django_filters.widgets as wg
 from django_select2 import forms as s2forms
 
 
-
 class SiteReportListFilter(dfs.FilterSet):
     JOBSTATUSCHOICES = [
         ('ASSIGNED', 'Assigned'),
@@ -15,7 +14,7 @@ class SiteReportListFilter(dfs.FilterSet):
         ('PARTIALLYCOMPLETED', 'Partially Completed')
     ]
 
-    plandatetime = dfs.DateFromToRangeFilter(widget=wg.RangeWidget(attrs={'placeholder': 'YYYY/MM/DD'}), label='Plan Datetime')
+    plandatetime = dfs.DateFromToRangeFilter(widget = wg.RangeWidget(attrs={'placeholder': 'YYYY/MM/DD'}), label='Plan Datetime')
     jobdesc      = dfs.CharFilter(field_name='jobdesc', lookup_expr='icontains', label='Site Report')
     jobstatus    = dfs.ChoiceFilter(field_name='jobstatus', choices = JOBSTATUSCHOICES, label="Status", widget = s2forms.Select2Widget)
     peopleid     = dfs.CharFilter(field_name='peopleid__peoplename', lookup_expr='icontains', label='Surveyor')
@@ -41,10 +40,9 @@ class SiteReportListFilter(dfs.FilterSet):
                 visible.field.widget.attrs['data-placeholder'] = 'Select an option'
                 visible.field.widget.attrs['data-allow-clear'] = 'true'
 
-
 class MasterReportTemplateFilter(dfs.FilterSet):
     qsetname = dfs.CharFilter(field_name='qsetname', lookup_expr='qset_name__icontains', label='Site Report')
     enable = None
     class Meta:
-        model=QuestionSet
+        model = QuestionSet
         fields = ('qsetname', 'enable')

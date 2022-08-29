@@ -7,13 +7,11 @@
 {% endblock pagebreadcumb %}
 <!------------------------------------- END PAGE BREADCUMBS ------------------------------------->
 
-
 <!---- BEGIN CARD TITLE ------>
 {% block card_title %}
 Conveyance List
 {% endblock card_title %}
 <!----- END CARD TITLE -------->
-
 
 {% block table %}
 <table id="conveyance_table"  class="display cell-border compact hover" style="width:100%">
@@ -52,31 +50,29 @@ $(document).ready(() => {
     ////datatable initialization
     table = $(table_id).DataTable({
         ajax:{
-            url:"{{ url('attendance:conveyance') }}?action=list",
+            url: "{{ url('attendance:conveyance') }}?action=list",
             data:function(d){
                 d.fields = ['id', 'bu__buname', 'people__peoplename', 'people__peoplecode',
                     'bu__bucode', 'punchintime', 'punchouttime', 'transportmodes', 'distance',
                 'duration', 'expamt', 'ctzoffset']
                 }
         },
-        scrollX: true,
-        fixedHeader:true,
         deferRender: true,
         lengthMenu:[[20, 30, 40],[20, 30, 40]],
         dom:`<'row' <'col-sm-6 d-flex justify-content-start'f> <'col-sm-6 d-flex justify-content-end'B> >rt<'row' <'col-sm-6'l> <'col-sm-6'p><'col-sm-12 d-flex justify-content-center'i>>`,
         columns:[
-            {visible:false, data:'id', searchable:false, orderable:false, defaultContent:""},
-            {data:'bu__buname', title:'Site Name', render:function ( data, type, row, meta ) {
+            {visible:false, data: 'id', searchable:false, orderable:false, defaultContent: ""},
+            {data: 'bu__buname', title: 'Site Name', render:function ( data, type, row, meta ) {
                 return `<p data-placement="top" data-toggle="tooltip"  
                 data-bs-placement="right"  class="pe-auto"
                 title=${row['bu__bucode']}>${row['bu__buname']}</p>`;
             }},
-            {data:'people__peoplename', title:'People', render:function ( data, type, row, meta ) {
+            {data: 'people__peoplename', title: 'People', render:function ( data, type, row, meta ) {
                 return `<a href=${formUrl}?id=${row['id']}>${data}</a>`
             }},
-            {data:'people__peoplecode', visible:false, searchable:false, orderable:false },
-            {data:'bu__bucode', visible:false, searchable:false, orderable:false },
-            {data:'punchintime', title:'Start Time', render:function(data, type, row, meta){
+            {data: 'people__peoplecode', visible:false, searchable:false, orderable:false },
+            {data: 'bu__bucode', visible:false, searchable:false, orderable:false },
+            {data: 'punchintime', title: 'Start Time', render:function(data, type, row, meta){
                 if(type === "sort" || type === "type"){
                     return data;
                 }
@@ -87,7 +83,7 @@ $(document).ready(() => {
                 }return data
                 
             } },
-            {data:'punchouttime', title:'End Time', render:function(data,type,row,meta){
+            {data: 'punchouttime', title: 'End Time', render:function(data,type,row,meta){
                 if(type === "sort" || type === "type"){
                     return data ? data: '-';
                 }
@@ -96,18 +92,18 @@ $(document).ready(() => {
                     return data ? datetime : '-';
                 }return data
             } },
-            {data:'transportmodes', title:'Transport Modes' },
-            {data:'distance', title:'Distance' },
-            {data:'duration', title:'Duration' },
-            {data:'expamt', title:'Amount' },
+            {data: 'transportmodes', title: 'Transport Modes' },
+            {data: 'distance', title: 'Distance' },
+            {data: 'duration', title: 'Duration' },
+            {data: 'expamt', title: 'Amount' },
         ],
         //columnDefs:[{
         //    targets:[5,6, 7],
         //    orderable:false,
         //}],
         buttons:[{
-            text:'Add New',
-            className:'btn btn-sm btn-light-primary',
+            text: 'Add New',
+            className: 'btn btn-sm btn-light-primary',
             action:function(e, dt, node, config){
                 location.href = "{{ url('attendance:conveyance') }}?action=form"
             }

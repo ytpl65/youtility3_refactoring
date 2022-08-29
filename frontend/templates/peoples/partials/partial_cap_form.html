@@ -3,6 +3,7 @@
 {% block body %}
 <form action="" method="post" id="id_capform">
 	<input type="hidden" name="{{ cap_form.ctzoffset.name }}" id = "{{ cap_form.ctzoffset.auto_id }}" value="-1">
+	<input type="hidden" name="pk" id="pk" value="{{ cap_form.instance.pk }}">
 	<div class="modal-header border-0">
 		<h3 class="modal-title modal-heading" id="exampleModalLabel">Create Capability <i class="fas fa-poll-h fa-sm ch4"></i></h3>
 		<button type="button" class="btn-sm btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
@@ -42,7 +43,6 @@
 	</div>
 
 {% endblock body %}
-
 
 
 {% block js %}

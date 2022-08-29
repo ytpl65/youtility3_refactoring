@@ -2,7 +2,7 @@ import pytest
 from django.urls import reverse
 
 SERVER = "icici.youtility.local"
-#test landing-login page
+# test landing-login page
 @pytest.mark.django_db(databases=['icici', 'default'])
 def test_signin(client):
     url2 = reverse('login')

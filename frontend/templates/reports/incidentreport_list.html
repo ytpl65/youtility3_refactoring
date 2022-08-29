@@ -1,0 +1,68 @@
+{% extends "base_list.html" %}
+
+<!---- BEGIN CARD TITLE ------>
+{% block card_title %}
+Incident Report List
+{% endblock card_title %}
+<!----- END CARD TITLE -------->
+
+{% block extra_css %}
+{% endblock extra_css %}
+
+<!------------------------------------ BEGIN PAGE BREADCUMBS ------------------------------------>
+{% block pagebreadcumb %}
+{{ super() }}
+<li class="breadcrumb-item pe-3"><a href="javascript:void(0)" class="pe-3">Incident Report List</a></li>
+{% endblock pagebreadcumb %}
+<!------------------------------------- END PAGE BREADCUMBS ------------------------------------->
+
+<!-------------------------------------------- BEGIN TABLE ------------------------------------------->
+{% block table %}
+<table id="incidentreport_table" class="display compact cell-border" style="width:100%">
+</table>
+
+{% endblock table %}
+<!-------------------------------------------- END TABLE ------------------------------------------->
+
+{% block extra_scripts %}
+<script>
+var   table      = null;
+const formFilter = '#sitereport_filter'
+const table_id   = "#incidentreport_table"
+
+    $(document).ready(function (){
+        //datatable initialization
+        table = $(table_id).DataTable({
+            ajax:{
+                url: "{{ url('reports:incidentreport_list') }}",
+            },
+			deferRender: true,
+			responsive : true,
+            search      : {return: true},
+            lengthMenu: [[10, 20, 30], [10, 20, 30]],
+            dom:`<'row' <'col-sm-6 d-flex justify-content-start'f> <'col-sm-6 d-flex justify-content-end'B> >rt<'row'
+			 <'col-sm-6'l> <'col-sm-6'p><'col-sm-12 d-flex justify-content-center'i>>`,
+            columns     : [
+                { "data": "id", visible:false, searchable:false },
+                { "data": "plandatetime", title:'Plan Datetime' },
+                { "data": "jobdesc", title:'Site Report' },
+                { "data": "peoplename", title:'Surveyor' },
+                { "data": "buname", title:'SiteName' },
+                { "data": "jobstatusname", title:'Status' },
+                { "data": "gpslocation" , title:'GPS'},
+                { "data": "distance", title:'Distance' },
+                { "data": "remarks", title:'Remarks' },
+                { "data": null, orderable:false, defaultContent:null, title:'Action'},
+            ],
+            columnDefs:[
+                {targets:1, render:function(data, type, row, meta){
+                    return convert_to_local(type, data, row)
+                }},
+            ],
+            buttons:[]
+        })
+        $('.btn').removeClass('dt-button')
+    })
+
+</script>
+{% endblock extra_scripts %}

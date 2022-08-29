@@ -1,6 +1,5 @@
 from apps.core.utils import tenant_db_from_request, THREAD_LOCAL
 
-
 class TenantMiddleware:
     def __init__(self, get_response):
         self.get_response = get_response
@@ -10,7 +9,6 @@ class TenantMiddleware:
         print(f"Database:{db}")
         setattr(THREAD_LOCAL, "DB", db)
         return self.get_response(request)
-
 
 
 
@@ -35,5 +33,5 @@ class TenantDbRouter:
     def allow_relation(self, obj1, obj2, **hints):
         return True
 
-    def allow_migrate(self, db, app_label, model_name=None, **hints):
+    def allow_migrate(self, db, app_label, model_name = None, **hints):
         return True

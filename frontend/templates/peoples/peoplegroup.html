@@ -14,7 +14,6 @@ People Group Lists
 <!----------- END PAGE BREADCUMBS ------------->
 
 
-
 <!------------------ BEGIN PEOPLE TABLE ------------------------->
 {% block table %}
 <div class="table-responsive">
@@ -31,7 +30,6 @@ People Group Lists
 {% endblock table %}
 <!------------------ END PEOPLE TABLE --------------------------->
 
-
 {% block popup_alerts %}
 <!-- THE MODAL WE WILL BE USING -->
 <div class="modal animate__animated animate__zoomIn" tabindex="-1" aria-hidden="true"  aria-labelledby="exampleModalLabel" data-bs-backdrop="static" id="modal-pgroup">
@@ -41,7 +39,6 @@ People Group Lists
 	</div>
 </div>
 {% endblock popup_alerts %}
-
 
 <!--------- BEGIN EXTRA SCRIPTS ----------------------------->
 {% block extra_scripts %}
@@ -59,7 +56,7 @@ People Group Lists
 	function addResultToTable(row){
 		table.row.add({
 			'groupname':row['groupname'],
-			'enable':row['enable'] === true ? 'True' :'False',
+			'enable':row['enable'] === true ? 'True' : 'False',
 			'id':row['id']
 		}).draw();
 	}
@@ -87,18 +84,18 @@ People Group Lists
 			 <'col-sm-6'l> <'col-sm-6'p><'col-sm-12 d-flex justify-content-center'i>>`,
 			columns:[
 				{
-					data:"groupname",
+					data: "groupname",
 					render:function(data, type, row, meta){
 						 return `<a href="#" class="ta-link" data-id=${row['id']} data-rowid=${meta.row}>${data}</a>`
 					}
 				},
-				{data:"enable"},
-				{data:'id', visible:false, defaultContent:""}
+				{data: "enable"},
+				{data: 'id', visible:false, defaultContent: ""}
 			],
 			buttons:[
 				{
 					text:`Add New ${viewname} &nbsp;<i class='fas fa-plus ch4'></i></a>`,
-					className:"btn btn-sm btn-light-primary",
+					className: "btn btn-sm btn-light-primary",
 					//action for add_new_button 
 					action: function(e, dt, node, config){
 						const params = {
@@ -117,7 +114,6 @@ People Group Lists
 			]
 		})
 		$('.btn').removeClass('dt-button')
-
 
 		
 		//submit form
@@ -173,7 +169,7 @@ People Group Lists
 	}); //END document.ready()
 
 	//delete ajax request 
-	function isPgroupDeleted(id){ 
+	function isPgroupDeleted(id){
 		console.log("id ", id)
 		const params = {url:`${urlname}?action=delete&id=${id}`, beforeSend:function(){}}
 		fire_ajax_get(params)
@@ -188,7 +184,6 @@ People Group Lists
 			return false
 		})
 	}
-
 
 	//delete pgorup 
 	function deletePgroup(elemt){

@@ -14,7 +14,6 @@ People Lists
 <!----------- END PAGE BREADCUMBS ------------->
 
 
-
 <!------------------ BEGIN PEOPLE TABLE ------------------------->
 {% block table %}
 <div class="table-responsive">
@@ -31,21 +30,21 @@ People Lists
 		//BEGIN DATATABLE INITIALIZATION
 		var table = $('#people_table').DataTable({
 			ajax:{
-				url:"{{ url('peoples:people') }}?action=list"
+				url: "{{ url('peoples:people') }}?action=list"
 			},
 			columns:[
-				{data:'id', visible:false, defaultContent:""},
-				{data:'peoplename', title:'Name'},
-				{data:'peopletype__tacode', title:'People Type'},
-				{data:'bu__bucode', title:'Site'},
-				{data:'isadmin', title:'Is Admin'},
+				{data: 'id', visible:false, defaultContent: ""},
+				{data: 'peoplename', title: 'Name'},
+				{data: 'peopletype__tacode', title: 'People Type'},
+				{data: 'bu__bucode', title: 'Site'},
+				{data: 'isadmin', title: 'Is Admin'},
 			],
 			deferRender:true,
 			responsive:true,
 			dom:`<'row' <'col-sm-6 d-flex justify-content-start'f> <'col-sm-6 d-flex justify-content-end'B> >rt<'row'
 			 <'col-sm-6'l> <'col-sm-6'p><'col-sm-12 d-flex justify-content-center'i>>`,
 			columnDefs:[
-				{targets:1, data:'peoplename', render:function(data, type, row, meta){
+				{targets:1, data: 'peoplename', render:function(data, type, row, meta){
 					let updateUrl = "{{ url('peoples:people') }}"
 					return `<a href=${updateUrl}?id=${row['id']}>${data}</a>`
 				}}

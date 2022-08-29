@@ -1,6 +1,5 @@
 {% extends "base_list.html" %}
 
-
 <!---- BEGIN CARD TITLE ------>
 {% block card_title %}
 Capability List
@@ -14,7 +13,6 @@ Capability List
 {% endblock pagebreadcumb %}
 <!------------------------------------- END PAGE BREADCUMBS ------------------------------------->
 
-
 <!-------------------------------------------- BEGIN BU TABLE ------------------------------------------->
 {% block table %}
     <!------------------ BEGIN TABLE --------------------->
@@ -24,7 +22,6 @@ Capability List
 
 {% endblock table %}
 <!------------------ --------------------------END BU TABLE ------------------------------------------------->
-
 
 {% block popup_alerts %}
 <!-- THE MODAL WE WILL BE USING -->
@@ -75,7 +72,7 @@ Capability List
             ordering:false,
             scrollCollapse: true,
 			columns     : [
-				{'data':'id'},
+				{'data': 'id'},
                 { "data": "capscode" },
                 { "data": "capsname" },
                 { "data": "cfor" },
@@ -95,7 +92,7 @@ Capability List
 			buttons:[
 				{
 					text:`Add New ${viewname} &nbsp;<i class='fas fa-plus ch4'></i></a>`,
-					className:"btn btn-sm btn-light-primary btn-hover-rise",
+					className: "btn btn-sm btn-light-primary btn-hover-rise",
 					//action for add_new_button 
 					action: function(e, dt, node, config){
                         const params = {
@@ -113,7 +110,6 @@ Capability List
 				}
 			]
 		})
-
 
 		
 		//submit form
@@ -136,7 +132,7 @@ Capability List
 				}else{
 					table.row.add(data.row).draw()
 				}
-				show_successful_save_alert(update=isupdated)
+				show_successful_save_alert(update =  id != 'None' ? true : false)
 			})
 		})
 
@@ -183,7 +179,6 @@ Capability List
 		})
 	}
 
-
 	//delete capability 
 	function deleteCapability(elemt){
 		var id = $(elemt).attr("data-id");
@@ -196,9 +191,7 @@ Capability List
 					show_successful_delete_alert() //defined in customjs
 					$(modal_id).modal("hide")
 					//delete row from table
-					row_index = parseInt($(modalcontent_id).attr('data-rowid'))
-					console.log(row_index, "row index")
-					table.row(row_index).remove().draw();
+					table.row('.selected').remove().draw()
 				}else{
 					show_error_alert('Something went wrong!');
 				}

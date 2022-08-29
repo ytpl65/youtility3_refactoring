@@ -1,9 +1,24 @@
 {% extends "base_form.html" %}
 {% from "onboarding/partials/partial_ta_form.html" import typeassist_form with context %}
 
-
 {% block extra_css %}
 {{ buform.media.css }}
+<style>
+.pac-container {
+	background-color: #FFF;
+	z-index: 20;
+	position: fixed;
+	display: inline-block;
+	float: left;
+}
+.modal{
+	z-index: 20;   
+}
+.modal-backdrop{
+	z-index: 10;        
+}
+
+</style>
 {% endblock extra_css %}
 
 <!-------------------------- BEGIN PAGE BREADCUMB ----------------------->
@@ -14,7 +29,6 @@
 <li class="breadcrumb-item pe-3"><a href="javascript:void(0)" class="pe-3">Bu Form</a></li>
 {% endblock pagebreadcumb %}
 <!-------------------------- END PAGE BREADCUMB ------------------------->
-
 
 <!-------------  BEGIN POP-UPS CODE -------------->
 {% block popup_alerts %}
@@ -48,12 +62,32 @@
 		</div>
 	</form>
 	{% endcall %}
+
+	<!-- to delete an instance with popup_alert pass the delete_url_name, instance_id, popup_title, popup_id -->
+	{% call general_popup(title="Delete", popup_id="open_map", modal_size="modal-lg") %}
+	<div class="modal-body card">
+		<div class="card-header">
+			<div class="card-title">Set GPS Location</div>
+		</div>
+		<div class="card-body">
+			<div id="map" style="width:730px; height:300px"></div>
+			<div class="control-group">
+				<label class="control-label" for="keyword">Search Location :</label>
+				<div class="controls">
+					<input type="text" class="span6" name="keyword" id="keyword">
+				</div>
+			</div>
+		</div>
+	</div>
+	<div class="modal-footer">
+		<a href="#" class="btn" data-dismiss="modal">Close</a>
+		<a href="#" class="btn btn-primary">Save changes</a>
+	</div>
+	{% endcall %}
 {% endblock popup_alerts %}
 <!------------------------  END POP-UPS CODE ----------------------------->
 
 <!-- calling the macro form which is imported above -->
-
-
 
 
 
@@ -62,7 +96,6 @@
 Buisiness-View
 {% endblock form_title %}
 <!------ END FORM TITLE -------->
-
 
 <!--------- BEGIN NON FIELD ERRORS -------->
 {% block nonfield_errors %}
@@ -76,7 +109,6 @@ Buisiness-View
 {% endif %}
 {% endblock nonfield_errors %}
 <!---------- END NON FIELD ERRORS --------->
-
 
 <!-------------- BEGIN FORM ------------------->
 {% block form %}
@@ -167,9 +199,8 @@ Buisiness-View
 				info
 			</span>
 		</label>
-		<div class="col-md-4">
+		<div class="col-md-4 d-flex">
 			{{ buform.gpslocation }}
-			{{ buform.gpslocation.errors }}
 		</div>
 
 		<!--------------------- BEGIN CHECKBOXES -------------------------->
@@ -221,7 +252,6 @@ Buisiness-View
 {% endblock form %}
 <!------------- END FORM ---------------------->
 
-
 <!-------------- BEGIN FORM PAGE ACTIONS --------->
 {% block formpage_actions %}
 {% if request.session['wizard_data'] is defined %}
@@ -241,11 +271,156 @@ Buisiness-View
 {% endblock formpage_actions %}
 <!---------------- END FORM PAGE ACTIONS ----------->
 
-
 <!--------------- BEGIN PAGE-LEVEL EXTRA SCRIPTS --------------->
 {% block extra_scripts %}
 {{ buform.media.js }}
+<script
+      src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDVbA53nxHKUOHdyIqnVPD01aOlTitfVO0&callback=initAutocomplete&libraries=places&v=weekly"
+      defer
+></script>
 <script>
+
+
+	//function initAutocomplete() {
+	//	map = new google.maps.Map(document.getElementById("map"), {
+	//	center: { lat: 21.7679, lng: 78.8718 },
+	//	zoom: 6,
+	//	mapTypeId: "roadmap",
+	//	mapTypeControl: true,
+	//	mapTypeControlOptions: {
+	//		style: google.maps.MapTypeControlStyle.HORIZONTAL_BAR,
+	//		position: google.maps.ControlPosition.BOTTOM_LEFT,
+	//	},
+//
+	//	});
+//
+//
+	//	//search-radius-form controls
+	//	const controlDiv = document.createElement('DIV');
+	//	controlDiv.id = "search_rad_controls";
+//
+	//
+//
+	//	// Create the search box and link it to the UI element.
+	//	const controlInput = document.createElement('input');
+	//	controlInput.id = "pac-input";
+	//	controlInput.className = "controls mt-2 rounded-pill"
+	//	controlInput.placeholder = 'Search any keyword..'
+//
+//
+	//	// Append everything to the wrapper div
+	//	controlDiv.appendChild(controlInput);
+//
+//
+//
+	//	map.controls[google.maps.ControlPosition.TOP_LEFT].push(controlDiv);
+	//	const searchBox = new google.maps.places.SearchBox(controlInput);
+//
+	//	infoWindow = new google.maps.InfoWindow();
+//
+	//	const locationButton = document.createElement("button");
+//
+	//	locationButton.textContent = "Pan to Current Location";
+	//	locationButton.classList.add("custom-map-control-button");
+	//	map.controls[google.maps.ControlPosition.TOP_CENTER].push(locationButton);
+//
+	//	locationButton.addEventListener("click", () => {  
+	//		// Try HTML5 geolocation.
+	//		if (navigator.geolocation) {
+	//			navigator.geolocation.getCurrentPosition(
+	//			(position) => {
+	//				const pos = {
+	//				lat: position.coords.latitude,
+	//				lng: position.coords.longitude,
+	//				};
+//
+	//				infoWindow.setPosition(pos);
+	//				infoWindow.setContent("Location found.");
+	//				infoWindow.open(map);
+	//				map.setCenter(pos);
+	//			},
+	//			() => {
+	//				handleLocationError(true, infoWindow, map.getCenter());
+	//			}
+	//			);
+	//		} else {
+	//			// Browser doesn't support Geolocation
+	//			handleLocationError(false, infoWindow, map.getCenter());
+	//		}
+	//	});
+	//	// Bias the SearchBox results towards current map's viewport.
+	//	map.addListener("bounds_changed", () => {
+	//		searchBox.setBounds(map.getBounds());
+	//	});
+//
+	//	let markers = [];
+//
+	//	// Listen for the event fired when the user selects a prediction and retrieve
+	//	// more details for that place.
+	//	searchBox.addListener("places_changed", () => {
+	//		const places = searchBox.getPlaces();
+//
+	//		if (places.length == 0) {
+	//			return;
+	//		}
+//
+	//		// Clear out the old markers.
+	//		clearAllMarkers(markers)
+	//		markers = [];
+//
+	//		// For each place, get the icon, name and location.
+	//		const bounds = new google.maps.LatLngBounds();
+//
+	//		places.forEach((place) => {
+	//			if (!place.geometry || !place.geometry.location) {
+	//			console.log("Returned place contains no geometry");
+	//			return;
+	//			}
+//
+	//			const icon = {
+	//			url: place.icon,
+	//			size: new google.maps.Size(71, 71),
+	//			origin: new google.maps.Point(0, 0),
+	//			anchor: new google.maps.Point(17, 34),
+	//			scaledSize: new google.maps.Size(25, 25),
+	//			};
+	//			
+	//			let marker = new google.maps.Marker({
+	//				map,
+	//				icon,
+	//				title: place.name,
+	//				position: place.geometry.location,
+	//				animation:google.maps.Animation.DROP
+	//			})
+	//			
+	//			// Create a marker for each place.
+	//			markers.push(
+	//			marker
+	//			);
+//
+	//			//on click marker zoom in
+	//			marker.addListener("click", () => {
+	//			map.setZoom(17);
+	//			map.setCenter(marker.getPosition());
+	//			});
+//
+	//			if (place.geometry.viewport) {
+	//			// Only geocodes have viewport.
+	//			bounds.union(place.geometry.viewport);
+	//			} else {
+	//			bounds.extend(place.geometry.location);
+	//			}
+	//		});
+	//		map.fitBounds(bounds);
+	//	});
+	//		//place marker when user clicks on map
+	//		google.maps.event.addListener(map, 'click', function(event) {
+	//			clearAllMarkers(markers)
+	//			placeMarker(event.latLng);
+	//		});
+	//}
+	
+	
 	function showHideBuType(){
 		//on load check butype is site
 		var data = $("#id_identifier option:selected").text();
@@ -254,6 +429,8 @@ Buisiness-View
 				$(".site_type").show();
 		}else{$(".site_type").hide();}
 	}
+
+	
 	$(document).ready(function () {
 		//set ctzoffset
         $("#id_ctzoffset").val(-new Date().getTimezoneOffset())
@@ -261,6 +438,7 @@ Buisiness-View
 		//hide the delete button when instance is not saved yet.
 		if ('{{buform.instance.id}}' == 'None') {
 			$("#btn_del").hide()
+			$(".dt-button buttons-create").addClass("disabled")
 		}
 
 		// submit the popup-taform for validation and saving in db.
@@ -274,11 +452,11 @@ Buisiness-View
 		}))
 		
 		//for select2 search work in bootstrap modals
-		$("#typeassist_popup").find("select[name=tatype]").select2({
+		$("#typeassist_popup").find("select[name = tatype]").select2({
             dropdownParent: $('#typeassist_popup')
         })
 		
-		$("#butype_ta_popup").find("select[name=tatype]").select2({
+		$("#butype_ta_popup").find("select[name = tatype]").select2({
             dropdownParent: $('#butype_ta_popup')
         })
 		
@@ -298,10 +476,58 @@ Buisiness-View
 		})
 		//pre-select options for pop-up ta forms
 		$("#butype_ta_popup select[name='tatype']").val($("#butype_ta_popup select option:contains('SITETYPE')").val()).change()
-		$("#butype_ta_popup select[name='tatype']").select2({disabled:'readonly'})
+		$("#butype_ta_popup select[name='tatype']").select2({disabled: 'readonly'})
 
 		//on load check
 		showHideBuType();
+
+
+		//$("#open_map").modal({
+		//	show: false
+		//}).on("shown", function()
+		//{
+		//	var map_options = {
+		//		center: new google.maps.LatLng(-6.21, 106.84),
+		//		zoom: 11,
+		//		mapTypeId: google.maps.MapTypeId.ROADMAP
+		//	};
+		//
+		//	var map = new google.maps.Map(document.getElementById("map"), map_options);
+		//
+		//	var defaultBounds = new google.maps.LatLngBounds(
+		//		new google.maps.LatLng(-6, 106.6),
+		//		new google.maps.LatLng(-6.3, 107)
+		//	);
+		//
+		//	var input = document.getElementById("keyword");
+		//	var autocomplete = new google.maps.places.Autocomplete(input);
+		//	autocomplete.bindTo("bounds", map);
+		//
+		//	var marker = new google.maps.Marker({map: map});
+		//
+		//	google.maps.event.addListener(autocomplete, "place_changed", function()
+		//	{
+		//		var place = autocomplete.getPlace();
+		//
+		//		if (place.geometry.viewport) {
+		//			map.fitBounds(place.geometry.viewport);
+		//		} else {
+		//			map.setCenter(place.geometry.location);
+		//			map.setZoom(15);
+		//		}
+		//
+		//		marker.setPosition(place.geometry.location);
+		//	});
+		//
+		//	google.maps.event.addListener(map, "click", function(event)
+		//	{
+		//		marker.setPosition(event.latLng);
+		//	});
+		//});
+		//
+		//$("#open_map").modal('show');
+
+		
 		
 	})
 </script>

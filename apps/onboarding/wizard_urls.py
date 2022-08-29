@@ -31,4 +31,3 @@ wizard_url_patterns2  = [
     path('pgroupform/del/<str:pk>/', wizard_views.WizardPgroup.as_view(), name='wiz_pgroup_delete'),
 ]
 
-

@@ -6,7 +6,7 @@
 <div class="d-flex justify-content-end cell-border my-2">
   <ul class="pagination">
     {% if list.has_previous() %}
-    <li class="page-item"><a class="page-link" href="?page=1&action=list">&laquo; First</a>
+    <li class="page-item"><a class="page-link" href="?page = 1&action=list">&laquo; First</a>
     </li>
     <li class="page-item"><a class="page-link" href="?page={{ list.previous_page_number() }}&action=list">&laquo; Prev</a>
     </li>
@@ -86,7 +86,6 @@
 {% endmacro %}
 <!---------------- END FORM ADD MACRO ------------------>
 
-
 {% macro general_popup() %}
 <div class="modal fade" id="{{ kwargs['popup_id'] }}" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1"
 		aria-labelledby="staticBackdropLabel" aria-hidden="true">
@@ -104,6 +103,54 @@
 <!--------------- END POP-UP DELETE_ALERT MACRO ------------------>
 
 
+{% macro mainattachment() %}
+<div class="modal fade" id="popup_attachment" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1"
+		aria-labelledby="staticBackdropLabel" aria-hidden="true">
+		<div class="modal-dialog modal-xl">
+			<div class="modal-content">
+				<div class="modal-header">
+					<h5 class="modal-heading" id="staticBackdropLabel" style="color:#3a3b40de">Attachments</h5>
+					<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+				</div>
+        <!--define modal-body, modal-footer classes -->
+        <div class="modal-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="form-group">
+                      <input type="hidden" id="id_att_owner" name="owner" value="{{ kwargs.get('owner') }}">
+                      <input type="hidden" id="id_att_datasource" name="datasource" value="{{ kwargs.get('datasource') }}">
+                      <input type="file" id="attachmentfile" name="attachmentfile"><br>
+                    </div>
+                </div>
+                <div class="col-md-5">
+                    <div class="form-group">
+                        <button type="button" class="btn btn-sm rounded-0 btn-success" name="btnuploadattachment" id="btnuploadattachment">Save<i class="fa fa-save"></i></button>
+                        <button type="button" class="btn btn-sm rounded-0 btn-secondary" name="clearattachment" id="clearattachment">Clear<i class="fa fa-refresh"></i></button>
+                        <button type="button" class="btn btn-sm rounded-0 btn-danger" name="cancelattachment" id="cancelattachment" data-dismiss="modal">Cancel<i class="fa fa-remove"></i></button>
+                    </div>
+                </div>
+            </div>
+            <div class="portlet-body form">
+              <div class="alert alert-danger fade show" id="nonfield_errors"role="alert" style="display:none">
+                  <strong>Error</strong> <span></span>
+              </div>
+                <!-- BEGIN LIST-->
+                <table id="tabAttachment" class="display cell-border hover" style="width:100%">
+                  <thead>
+                    <th></th>
+                    <th>SL NO.</th>
+                    <th>File Name</th>
+                    <th>Action</th>
+                  </thead>
+                  <tbody></tbody>
+                </table>
+            </div>
+        </div>
+      </div>
+		</div>
+	</div>
+{% endmacro %}
+
 {% macro reset_form_btn() %}
 <div class="d-flex justify-content-end">
  <button type="button" class="btn btn-secondary btn-sm btn-hover-scale" onclick="location.reload();$('{{ kwargs['id'] }}').trigger('reset')">Reset Form</button>
@@ -111,25 +158,24 @@
 {% endmacro %}
 <!------------------------------------------------ END MACROS ------------------------------------------------------->
 
-
-{# =========HEAD START=========== #}
+{# ======= ==  HEAD START=========== #}
 {% block extra_css %}
 
 {% endblock extra_css %}
-{# =========HEAD END=========== #}
+{# ======= ==  HEAD END=========== #}
 
-{# =====BODY START====== #}
+{# === ==  BODY START====== #}
 {% block body %}
 
-{# =====BEGIN MAIN===== #}
-{# =====BEGIN ROOT===== #}
+{# === ==  BEGIN MAIN===== #}
+{# === ==  BEGIN ROOT===== #}
 <div class="d-flex flex-column flex-root">
   {# BEGIN PAGE #}
   <div class="page d-flex flex-row flex-column-fluid">
     {# BEGIN ASIDE #}
     <div id="kt_aside" class="aside aside-dark" data-kt-drawer="true" data-kt-drawer-name="aside"
       data-kt-drawer-activate="{default: true, lg: false}" data-kt-drawer-overlay="true"
-      data-kt-drawer-width="{default:'200px', '300px': '250px'}" data-kt-drawer-direction="start"
+      data-kt-drawer-width="{default: '200px', '300px': '250px'}" data-kt-drawer-direction="start"
       data-kt-drawer-toggle="#kt_aside_mobile_toggle">
       {# BEGIN BRAND #}
       <div class="aside-logo flex-column-auto" id="kt_aside_logo">
@@ -267,6 +313,17 @@
               <li class="breadcrumb-item pe-3"><a href="{{ url('home') }}" class="pe-3">Home</a></li>
               {% endblock pagebreadcumb %}
             </ol>
+            
+            
+            <div class="breadcumb_actions d-flex justify-content-end">
+              <div class="dropdown">
+                {% block breadcumbactions %}
+                
+                {% endblock breadcumbactions %}
+              </div>
+            </div>
+            
+            
             <!--begin::actions-->
 
             {# {% block ajax_page_actions %}
@@ -337,16 +394,13 @@
 </div>
 <!--end::ROOT-->
 
-
 <!-- END wrapper -->
 
 <!-- bundle -->
 
-
 <!-- end demo js-->
 {% endblock body %}
-{# ======BODY END======= #}
-
+{# ==== ==  BODY END======= #}
 
 {% block extra_scripts %}
 {# <script src="//cdnjs.cloudflare.com/ajax/libs/select2/4.0.2/js/select2.min.js" type="text/javascript"></script>
@@ -361,40 +415,40 @@
 //    editor = new $.fn.dataTable.Editor( {
 //        table: "#example",
 //        fields: [ {
-//                label: "First name:",
+//                label: "First name: ",
 //                name: "first_name"
 //            }, {
-//                label: "Last name:",
+//                label: "Last name: ",
 //                name: "last_name"
 //            }, {
-//                label: "Position:",
+//                label: "Position: ",
 //                name: "position"
 //            }, {
-//                label: "Office:",
+//                label: "Office: ",
 //                name: "office"
 //            }, {
-//                label: "Extension:",
+//                label: "Extension: ",
 //                name: "extn"
 //            }, {
-//                label: "Start date:",
+//                label: "Start date: ",
 //                name: "start_date",
 //                type: "datetime"
 //            }, {
-//                label: "Salary:",
+//                label: "Salary: ",
 //                name: "salary"
 //            }
 //        ]
 //    } );
 //
 //    editor.add( {
-//      "label": "Make of automobile:",
+//      "label": "Make of automobile: ",
 //      "name": "automake",
 //      "type": "select2",
 //      "opts": {
 //          "allowClear": true,
 //          "placeholder": {
 //              "id": "",
-//              "text":"(Does not own automobile)"
+//              "text": "(Does not own automobile)"
 //          }
 //      }
 //  })
@@ -410,7 +464,7 @@
 //            { data: "office" },
 //            { data: "extn" },
 //            { data: "start_date" },
-//            { data: "salary", render: $.fn.dataTable.render.number( ',', '.', 0, '$' ) }
+//            { data: "salary", render: $.fn.dataTable.render.number( ', ', '.', 0, '$' ) }
 //        ],
 //        select: true,
 //        buttons: [

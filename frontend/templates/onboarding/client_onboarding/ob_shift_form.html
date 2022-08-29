@@ -1,6 +1,5 @@
 {% extends "onboarding/client_onboarding/base_wizard_form.html" %}
 
-
 <!----------- BEGIN FORM MESSGES --------------->
 {% block form_msgs %}
 	{% for msg in get_msgs(request) %}
@@ -13,11 +12,9 @@
 {% endblock form_msgs %}
 <!----------- END FORM MESSGES ----------------->
 
-
 {% block form_title %}
 Create Shift
 {% endblock form_title %}
-
 
 <!-------------- BEGIN FORM ------------------->
 {% block custom_form %}

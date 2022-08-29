@@ -1,12 +1,10 @@
 {% extends "base_list.html" %}
 
-
 <!---- BEGIN CARD TITLE ------>
 {% block card_title %}
 Schedhuled Tasks
 {% endblock card_title %}
 <!----- END CARD TITLE -------->
-
 
 <!------------------------------------ BEGIN PAGE BREADCUMBS ------------------------------------>
 {% block pagebreadcumb %}
@@ -14,7 +12,6 @@ Schedhuled Tasks
 <li class="breadcrumb-item pe-3"><a href="javascript:void(0)" class="pe-3">Scheduled Tasks</a></li>
 {% endblock pagebreadcumb %}
 <!------------------------------------- END PAGE BREADCUMBS ------------------------------------->
-
 
 {% block table %}
 <table id='editorTa' class="display cell-border compact hover" style="width:100%">
@@ -27,14 +24,13 @@ Schedhuled Tasks
 </table>
 {% endblock table %}
 
-
 {% block extra_scripts %}
 <script>
 var table = null;
 $(document).ready(() => {
     var editor = new $.fn.dataTable.Editor( {
         "ajax": {
-            "url":"{{ url('onboarding:editortypeassist') }}?action=editor",
+            "url": "{{ url('onboarding:editortypeassist') }}?action=formeditor",
             "data":{
                 "csrfmiddlewaretoken": "{{ csrf_token }}"
             }
@@ -42,18 +38,17 @@ $(document).ready(() => {
         "idSrc": "id",
         "table": "#editorTa",
         "fields": [ {
-                "label": "Code:",
+                "label": "Code: ",
                 "name": "tacode"
             }, {
-                "label": "Name:",
+                "label": "Name: ",
                 "name": "taname"
             }, {
-                "label": "Type:",
+                "label": "Type: ",
                 "name": "tatype__tacode"
             }, 
         ],
     } );
-
 
 $('#editorTa').DataTable( {
         dom: "Bfrtip",
@@ -71,12 +66,11 @@ $('#editorTa').DataTable( {
         ],
         select: true,
         buttons: [
-            { extend: "create", editor: editor , className:"btn btn-sm btn-light-primary"},
+            { extend: "create", editor: editor , className: "btn btn-sm btn-light-primary"},
             { extend: "edit",   editor: editor },
             { extend: "remove", editor: editor }
         ]
     } );
-
 
 } );
 

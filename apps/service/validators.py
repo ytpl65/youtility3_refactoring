@@ -1,10 +1,12 @@
-
+def checkHex(s):
+    return not any(((ch < '0' or ch > '9') and (ch < 'A' or ch > 'F')) for ch in s)
 
 def clean_point_field(val):
 
     from django.contrib.gis.geos import GEOSGeometry
-    try:
-        if not val: return val
+    try: 
+        if not val or val in ['None', 'NONE']: return None
+        if checkHex(val): return GEOSGeometry(val)
         if 'SRID' not in val:
             lat, lng = val.split(',')
             return GEOSGeometry(f'SRID=4326;POINT({lng} {lat})')
@@ -12,31 +14,28 @@ def clean_point_field(val):
     except Exception:
         raise
 
-
 def clean_code(val):
     val = str(val)
     return val.uppper()
-
 
 def clean_text(val):
     val = str(val)
     return val.title()            
 
-
 def clean_datetimes(val, offset):
     from datetime import datetime, timedelta, timezone
-    tz = timezone(timedelta(minutes=int(offset)))
+    tz = timezone(timedelta(minutes = int(offset)))
     if val:
+        if val in ['None', 'NONE']:
+            return None
         val = val.replace("+00:00", "")
         val = datetime.strptime(val, "%Y-%m-%d %H:%M:%S")
-        return val.replace(tzinfo=tz, microsecond=0)
+        return val.replace(tzinfo = tz, microsecond = 0)
     return val
-
 
 def clean_date(val):
     from datetime import datetime
     return datetime.strptime(val,  "%Y-%m-%d")
-
 
 
 def clean_record(record):

@@ -9,7 +9,7 @@ log = logging.getLogger("__main__")
 
 def get_assetincludes_choices():
     qset = av.Asset.objects.filter(
-         ~Q(assetcode='NONE'), identifier='CHECKPOINT', enable=True).select_related(
+         ~Q(assetcode='NONE'), identifier='CHECKPOINT', enable = True).select_related(
             'parent').annotate(
             checkpoint = Concat(
                 'assetname', Value(" ("), 'assetcode', Value(")")))
@@ -17,24 +17,21 @@ def get_assetincludes_choices():
 
 def get_assetsmartplace_choices():
     qset = av.Asset.objects.filter(
-         ~Q(assetcode='NONE') & Q(identifier='SMARTPLACE') | Q(identifier='ASSET'), enable=True).select_related(
+         ~Q(assetcode='NONE') & Q(identifier='SMARTPLACE') | Q(identifier='ASSET'), enable = True).select_related(
             'parent').annotate(
             checkpoint = Concat(
                 'assetname', Value(" ("), 'assetcode', Value(")")))
     return qset.values_list('id', 'checkpoint')
 
 
-
-def initialize_alerton_field(val, choices=False):
-    pass
-
+def initialize_alerton_field(val, choices = False):
+    raise NotImplementedError()
 
 def validate_alertbelow(forms, data):
     min, alertbelow = float(data['min']), float(data['alertbelow'])
     msg = 'Alert below should be greater than minimum value.'
     if alertbelow < min: raise forms.ValidationError(msg)
     return alertbelow
-
 
 def validate_alertabove(forms, data):
     max, alertabove = float(data['max']), float(data['alertabove'])
@@ -43,7 +40,6 @@ def validate_alertabove(forms, data):
     print("utils", alertabove)
     return alertabove    
 
-
 def validate_options(forms, val):
     obj = json.loads(val)
     options = []
@@ -51,13 +47,12 @@ def validate_options(forms, val):
         options.append(i['value'])
     return json.dumps(options).replace('"', "").replace("[", "").replace("]", "")
 
-
 def validate_alerton(forms, val):
     ic('validate_alerton', val)
     v1          = val.replace("'", "")
     v2          = v1.replace("[", "")
     v3          = v2.replace("]", "")
-    vlist       = v3.split(", ")
+    vlist       = v3.split(",")
     list_string = json.dumps(vlist)
     list        = json.loads(list_string)
     return json.dumps([each_string for each_string in list]).replace('"', "").replace("[", "").replace("]", "")
@@ -74,10 +69,8 @@ def initialize_alertbelow_alertabove(instance, form):
         form.fields['alertbelow'].initial = float(li[0])
         form.fields['alertabove'].initial = float(li[1])
 
-
 def init_assetincludes(form):
     form.fields['assetincludes'].initial = form.instance.assetincldes
-
 
 
 def insert_questions_to_qsetblng(assigned_questions, model, fields, request):
@@ -106,5 +99,5 @@ def insert_questions_to_qsetblng(assigned_questions, model, fields, request):
                 log.debug(f"""{" " * 8} {created} question {ques[1]} for QuestionSet {fields['qsetname']} [ended]""")
 
     except Exception:
-        log.critical("something went wrong", exc_info=True)
+        log.critical("something went wrong", exc_info = True)
         raise

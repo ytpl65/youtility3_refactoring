@@ -9,7 +9,7 @@ class TypeAssistFilter(django_filters.FilterSet):
     cuser = django_filters.CharFilter(field_name='cuser__peoplecode', lookup_expr='icontains', label='Created By')
 
     class Meta:
-        model=TypeAssist
+        model = TypeAssist
         fields = ['tacode', 'taname', 'tatype',  'cuser']
 
 class BtFilter(django_filters.FilterSet):
@@ -22,7 +22,7 @@ class BtFilter(django_filters.FilterSet):
     enable     = django_filters.CharFilter(field_name='enable', lookup_expr='icontains', label="Enable")
 
     class Meta:
-        model=Bt
+        model = Bt
         fields = ['bucode', 'buname', 'identifier', 'enable', 'parent', 'butype', 'butree']
 
 class ClientFiler(django_filters.FilterSet):
@@ -35,5 +35,5 @@ class ClientFiler(django_filters.FilterSet):
 
     class Meta:
         model = Bt
-        fields = ['bucode','buname', 'enable', 'bu_preferences__webcapability',
+        fields = ['bucode', 'buname', 'enable', 'bu_preferences__webcapability',
                  'bu_preferences__mobcapability', 'bu_preferences__reportcapability']

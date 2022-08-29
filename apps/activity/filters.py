@@ -12,14 +12,12 @@ class QuestionFilter(django_filters.FilterSet):
         fields = ['quesname', 'answertype', 'unit', 'isworkflow']
 
 
-
 class MasterQsetFilter(django_filters.FilterSet):
     qsetname   = django_filters.CharFilter(field_name='qsetname', lookup_expr='icontains', label='Name')
 
     class Meta:
         model = am.QuestionSet
         fields = ['qsetname']
-
 
 class MasterAssetFilter(django_filters.FilterSet):
     assetcode   = django_filters.CharFilter(field_name='assetcode', lookup_expr='icontains', label='Code')
@@ -31,4 +29,4 @@ class MasterAssetFilter(django_filters.FilterSet):
 
     class Meta:
         model = am.Question
-        fields = ['assetcode', 'assetname', 'parent', 'runningstatus','enable', 'gpslocation']
+        fields = ['assetcode', 'assetname', 'parent', 'runningstatus', 'enable', 'gpslocation']

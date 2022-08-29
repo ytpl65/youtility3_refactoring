@@ -2,13 +2,11 @@
 from icecream import ic
 from django.db.models import Q
 
-
 import logging
 
 from apps.onboarding.models import Bt, TypeAssist
 logger = logging.getLogger('django')
 dbg = logging.getLogger('__main__').debug
-
 
 def save_json_from_bu_prefsform(bt, buprefsform):
     try:
@@ -18,12 +16,11 @@ def save_json_from_bu_prefsform(bt, buprefsform):
                      'reportcapability', 'portletcapability'):
                 bt.bupreferences[k] = buprefsform.cleaned_data.get(k)
     except Exception:
-        logger.error("save json from buprefsform... FAILED", exc_info=True)
+        logger.error("save json from buprefsform... FAILED", exc_info = True)
         return False
     else:
         logger.info('save_json_from_bu_prefsform(bt, buprefsform) success')
         return True
-
 
 # returns Bt json form
 def get_bu_prefform(bt):
@@ -43,21 +40,19 @@ def get_bu_prefform(bt):
         }
 
     except Exception:
-        logger.error("get_bu_prefform... FAILED", exc_info=True)
+        logger.error("get_bu_prefform... FAILED", exc_info = True)
     else:
         logger.info("get_bu_prefform success")
-        return BuPrefForm(data=d)
+        return BuPrefForm(data = d)
 
-
-def get_tatype_choices(superadmin=False):
+def get_tatype_choices(superadmin = False):
 
     if superadmin:
         return TypeAssist.objects.all()
     return TypeAssist.objects.filter(
         Q(tatype__tacode='NONE') & ~Q(tacode='NONE') & ~Q(tacode='BU_IDENTIFIER'))
 
-
-def update_children_tree(instance, newcode, newtype, whole=False):
+def update_children_tree(instance, newcode, newtype, whole = False):
     """Updates tree of child bu tree's"""
     from apps.core.raw_queries import query
     try:
@@ -72,7 +67,6 @@ def update_children_tree(instance, newcode, newtype, whole=False):
                 oldtreepart = f'{instance.identifier.tacode} :: {instance.bucode}'
                 newtreepart = f'{newtype} :: {newcode}'
 
-
                 if oldtree == oldtreepart:
                     ic('saved')
                     instance.butree = newtreepart
@@ -84,10 +78,9 @@ def update_children_tree(instance, newcode, newtype, whole=False):
                     ic(bt.bucode)
     except Exception:
         logger.error(
-            "update_children_tree(instance, newcode, newtype)... FAILED", exc_info=True)
+            "update_children_tree(instance, newcode, newtype)... FAILED", exc_info = True)
     else:
         logger.info('update_children_tree(instance, newcode, newtype) success')
-
 
 # Dynamic rendering for capability data
 def get_choice(li):
@@ -97,7 +90,6 @@ def get_choice(li):
         t[1].append((i.capscode, i.capsname))
     tuple(t[1])
     return t
-
 
 def get_webcaps_choices():  # sourcery skip: merge-list-append
     '''Populates parent data in parent-multi-select field'''
@@ -117,7 +109,6 @@ def get_webcaps_choices():  # sourcery skip: merge-list-append
             if i == len(parent_menus)-1:
                 choices.append(get_choice(temp))
     return choices
-
 
 def get_bt_prefform(bt):
     try:
@@ -139,14 +130,13 @@ def get_bt_prefform(bt):
             ]
         }
 
-        return ClentForm(data=d)
+        return ClentForm(data = d)
     except Exception:
-        logger.error('get_bt_prefform(bt)... FAILED', exc_info=True)
+        logger.error('get_bt_prefform(bt)... FAILED', exc_info = True)
     else:
         logger.info('get_bt_prefform success')
 
-
-def create_bt_tree(bucode, indentifier, instance, parent=None):
+def create_bt_tree(bucode, indentifier, instance, parent = None):
     # sourcery skip: remove-redundant-if
     # None Entry
     try:
@@ -164,38 +154,37 @@ def create_bt_tree(bucode, indentifier, instance, parent=None):
                 instance.butree = ""
                 instance.butree += f"{parent.butree} > {indentifier.tacode} :: {bucode}"
     except Exception:
-        logger.error(f'Something went wrong while creating Bt tree for instance {instance.bucode}', exc_info=True)
+        logger.error(f'Something went wrong while creating Bt tree for instance {instance.bucode}', exc_info = True)
 
         raise
     else:
         logger.info('BU Tree created for instance %s... DONE' %
                     (instance.bucode))
 
-
 def create_bv_reportting_heirarchy(instance, newcode, newtype, parent):
     if instance.id is None:
         dbg("Creating the reporting heirarchy!")
-        #create bu tree
+        # create bu tree
         ic(instance.bucode, parent, newcode, newtype)
-        if instance.bucode != "NONE" and parent.bucode == 'NONE':
-            #Root Node
-            dbg("Creating heirarchy of the Root Node")
-            instance.butree = f'{newtype.tacode} :: {newcode}'
-        elif instance.butree != f'{parent.butree} > {newtype.tacode} :: {newcode}':
-            #Non Root Node
-            dbg("Creating heirarchy of branch Node")
-            instance.butree += f"{parent.butree} > {newtype.tacode} :: {newcode}"
+        if hasattr(instance, 'bucode')  and hasattr(parent, 'bucode'):
+            if instance.bucode != "NONE" and parent.bucode == 'NONE':
+                # Root Node
+                dbg("Creating heirarchy of the Root Node")
+                instance.butree = f'{newtype.tacode} :: {newcode}'
+            elif instance.butree != f'{parent.butree} > {newtype.tacode} :: {newcode}':
+                # Non Root Node
+                dbg("Creating heirarchy of branch Node")
+                instance.butree += f"{parent.butree} > {newtype.tacode} :: {newcode}"
 
     else:
         dbg("Updating the reporting heirarchy!")
-        #update bu tree
+        # update bu tree
         if instance.bucode not in(None, 'NONE') and instance.parent.bucode in (None, 'NONE'):
             dbg("Updating heirarchy of the Root Node")
             update_children_tree(instance, newcode, newtype.tacode)
         else:
             dbg("Updating heirarchy of branch Node")
             update_children_tree(instance, newcode, newtype.tacode)
-
 
 def create_tenant(buname, bucode):
     # create_tenant for every client
@@ -204,15 +193,14 @@ def create_tenant(buname, bucode):
         logger.info(
             'Creating corresponding tenant for client %s ...STARTED' % (bucode))
         _, _ = Tenant.objects.update_or_create(
-            defaults={'tenantname':buname}, subdomain_prefix=bucode.lower())
+            defaults={'tenantname':buname}, subdomain_prefix = bucode.lower())
     except Exception:
         logger.error('Something went wrong while creating tenant for the client %s' % (bucode),
-                     exc_info=True)
+                     exc_info = True)
         raise
     else:
         logger.info(
             'Corresponding tenant created for client %s ...DONE' % (bucode))
-
 
 def create_default_admin_for_client(client):
     from apps.peoples.models import People
@@ -226,15 +214,14 @@ def create_default_admin_for_client(client):
         logger.info(
             'Creating default user for the client: %s ...STARTED' % (client.bucode))
 
-        People.objects.create(peoplecode=peoplecode,
-                              peoplename=peoplename, dateofbirth=dob,
-                              dateofjoin=doj, mobno=mobno, email=email,
-                              isadmin=True)
+        People.objects.create(peoplecode = peoplecode,
+                              peoplename = peoplename, dateofbirth = dob,
+                              dateofjoin = doj, mobno = mobno, email = email,
+                              isadmin = True)
         logger.info('Default user-admin created for the client... DONE')
     except Exception:
         logger.error("Something went wrong while creating default user-admin for client... FAILED",
-                     exc_info=True)
+                     exc_info = True)
         raise
-
 
 

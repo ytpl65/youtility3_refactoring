@@ -34,30 +34,49 @@ query = {
                                     c  WHERE c.identifier='SITEREPORT' AND c.parent_id = p.id )
                                     SELECT DISTINCT jobneed.jobdesc, jobneed.pseqno, jnd.seqno as cseqno, jnd.question_id, jnd.answertype, jnd.min, jnd.max, jnd.options,
                                     jnd.answer, jnd.alerton, jnd.ismandatory, q.quesname, q.answertype FROM nodes_cte as jobneed 
-                                    LEFT JOIN jobneed_details as jnd ON jnd.jobneed_id=jobneed.id 
-                                    LEFT JOIN question q ON jnd.question_id=q.id where jnd.answertype='Question Type' AND jobneed.parent_id <> -1 
+                                    LEFT JOIN jobneed_details as jnd ON jnd.jobneed_id = jobneed.id 
+                                    LEFT JOIN question q ON jnd.question_id = q.id where jnd.answertype='Question Type' AND jobneed.parent_id <> -1 
                                     ORDER BY pseqno asc, jobdesc asc, pseqno, cseqno asc
                                 ''',
     'sitereportlist':           '''
                                     SELECT * FROM( 
                                     SELECT DISTINCT jobneed.id, jobneed.plandatetime, jobneed.jobdesc, people.peoplename, 
                                     CASE WHEN (jobneed.othersite!='' or upper(jobneed.othersite)!='NONE') THEN 'other location [ ' ||jobneed.othersite||' ]' ELSE bt.buname END AS buname,
-                                    jobneed.qset_id, jobneed.jobstatus AS jobstatusname, jobneed.gpslocation, bt.gpslocation AS bugpslocation, bt.pdist, count(attachment.owner) AS att,
-                                    ROUND(
-                                    CASE WHEN jobneed.gpslocation <> '0.0,0.0' AND bt.gpslocation <> '0.0,0.0' THEN ( 
-                                    6371 * acos( cos( radians( CAST(split_part(bt.gpslocation,',',1) AS FLOAT)) ) * cos( radians( CAST(split_part(jobneed.gpslocation,',',1) AS FLOAT) ) ) * cos( radians( CAST(split_part(jobneed.gpslocation,',',2) AS FLOAT) ) - radians( CAST(split_part(bt.gpslocation,',',2) AS FLOAT)) ) + sin( radians( CAST(split_part(bt.gpslocation,',',1) AS FLOAT)) ) * sin( radians( CAST(split_part(jobneed.gpslocation,',',1) AS FLOAT) ) ) ) 
-                                    ) ELSE 0 END ::numeric, 2) AS distance, 
+                                    jobneed.qset_id, jobneed.jobstatus AS jobstatusname, ST_AsText(jobneed.gpslocation) as gpslocation, bt.pdist, count(attachment.owner) AS att,
+                                    MIN(ST_Distance(bt.gpslocation, jobneed.gpslocation)) as distance, 
                                     jobneed.bu_id, jobneed.remarks 
                                     FROM jobneed 
-                                    INNER JOIN people ON jobneed.people_id=people.id 
-                                    INNER JOIN bt ON jobneed.bu_id=bt.id 
-                                    LEFT JOIN attachment ON jobneed.id=attachment.owner
-                                    WHERE jobneed.parent_id=-1 AND 1=1 AND bt.id IN (%s) 
-                                    AND (jobneed.qset_id IN (%s) OR jobneed.qset_id = -1) 
-                                    AND jobneed.parent_id='-1' AND jobneed.plandatetime >= %s AND jobneed.plandatetime <= %s 
-                                    GROUP BY jobneed.id, buname, bugpslocation, bt.pdist, people.peoplename, jobstatusname, jobneed.plandatetime)
+                                    INNER JOIN people ON jobneed.people_id = people.id 
+                                    INNER JOIN bt ON jobneed.bu_id = bt.id 
+                                    LEFT JOIN attachment ON jobneed.uuid::text = attachment.owner
+                                    WHERE jobneed.parent_id=1 AND 1 = 1 AND bt.id IN %s 
+                                    AND jobneed.identifier='SITEREPORT'
+                                    AND jobneed.parent_id='1' AND jobneed.plandatetime >= %s AND jobneed.plandatetime <= %s 
+                                    GROUP BY jobneed.id, buname,  bt.pdist, people.peoplename, jobstatusname, jobneed.plandatetime)
                                     jobneed 
+                                    WHERE 1 = 1 ORDER BY plandatetime desc OFFSET 0 LIMIT 250
+                                ''',
+    'workpermitlist':           '''
+                                SELECT * FROM( 
+                                SELECT DISTINCT workpermit.id, workpermit.cdtz,workpermit.seqno, qset.qsetname as wptype, workpermit.wpstatus, workpermit.workstatus,
+                                workpermit.bu_id,  bt.buname  As buname,
+                                pb.peoplename, p.peoplename as user, count(attachment.uuid) as att
 
-                                    WHERE 1=1 ORDER BY plandatetime desc OFFSET 0 LIMIT 250
+                                FROM workpermit INNER JOIN people ON workpermit.muser_id=people.id
+                                INNER JOIN people p ON workpermit.cuser_id=p.id
+                                INNER JOIN people pb ON workpermit.approvedby_id=pb.id
+                                INNER JOIN bt ON workpermit.bu_id=bt.id
+                                INNER JOIN questionset qset ON workpermit.wptype_id=qset.id
+                                LEFT JOIN attachment ON workpermit.uuid=attachment.owner 
+
+                                WHERE workpermit.parent_id=1 
+                                AND 1=1 AND attachment.attachmenttype = 'ATTACHMENT'
+                                AND workpermit.bu_id IN (%s) 
+                                AND workpermit.parent_id='1' 
+                                AND workpermit.id != '1' 
+                                AND workpermit.cdtz >= now() - interval '100 day' 
+                                AND workpermit.cdtz <= now()
+                                GROUP BY workpermit.id, buname, people.peoplename, qset.qsetname, workpermit.wpstatus, workpermit.workstatus,pb.peoplename, p.peoplename)workpermit 
+                                WHERE 1=1 ORDER BY cdtz desc
                                 '''
 }

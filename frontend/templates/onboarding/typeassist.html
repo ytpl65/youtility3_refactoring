@@ -1,6 +1,5 @@
 {% extends "base_list.html" %}
 
-
 <!---- BEGIN CARD TITLE ------>
 {% block card_title %}
 TypeAssist List
@@ -14,7 +13,6 @@ TypeAssist List
 {% endblock pagebreadcumb %}
 <!------------------------------------- END PAGE BREADCUMBS ------------------------------------->
 
-
 {% block table %}
     <!------------------ BEGIN TABLE --------------------->
     <table id="ta_table" class="display cell-border compact hover" style="width:100%">
@@ -23,7 +21,6 @@ TypeAssist List
 
 {% endblock table %}
 <!------------------ --------------------------END BU TABLE ------------------------------------------------->
-
 
 {% block popup_alerts %}
 <!-- THE MODAL WE WILL BE USING -->
@@ -34,7 +31,6 @@ TypeAssist List
 	</div>
 </div>
 {% endblock popup_alerts %}
-
 
 
 <!--------- BEGIN EXTRA SCRIPTS ----------------------------->
@@ -59,13 +55,13 @@ TypeAssist List
 		
 		table = $(table_id).DataTable({
 			ajax:{
-				url:'{{ url("onboarding:typeassist") }}?action=list',
+				url: '{{ url("onboarding:typeassist") }}?action=list',
 			},
 			columns     : [
                 { "data": "id" },
-                { "data": "tacode", title:"Code" },
-                { "data": "taname", title:'Name' },
-                { "data": "tatype__tacode", title:'Type' },
+                { "data": "tacode", title: "Code" },
+                { "data": "taname", title: 'Name' },
+                { "data": "tatype__tacode", title: 'Type' },
                 { "data": "cuser__peoplecode", title: 'Created by' },
             ],
 			deferRender: true,
@@ -108,7 +104,6 @@ TypeAssist List
 		
 
 		//END STYLING DATATABLE
-
 
 		
 		//submit form
@@ -177,7 +172,6 @@ TypeAssist List
 			return false
 		})
 	}
-
 
 	//delete typeassist 
 	function deleteTa(elemt){

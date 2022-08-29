@@ -1,6 +1,5 @@
 {% extends "onboarding/client_onboarding/base_wizard_form.html" %}
 
-
 <!----------- BEGIN FORM MESSGES --------------->
 {% block form_msgs %}
 
@@ -14,13 +13,11 @@
 {% endblock form_msgs %}
 <!----------- END FORM MESSGES ----------------->
 
-
 <!------ BEGIN FORM TITLE ------->
 {% block form_title %}
 Create People group
 {% endblock form_title %}
 <!------ END FORM TITLE -------->
-
 
 <!--------- BEGIN NON FIELD ERRORS -------->
 {% block nonfield_errors %}
@@ -34,7 +31,6 @@ Create People group
 	{% endif %}
 {% endblock nonfield_errors %}
 <!---------- END NON FIELD ERRORS --------->
-
 
 {% block custom_form %}
         <!--groupname-->
@@ -55,5 +51,4 @@ Create People group
         </div>
     <input type="submit" value='Submit' class="btn btn-sm btn-success"/>
 {% endblock custom_form %}
-
 

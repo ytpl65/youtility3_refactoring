@@ -1,5 +1,8 @@
-from datetime import timedelta
+from datetime import timedelta, datetime, date
 from django.db import models
+from django.contrib.gis.db.models.functions import AsGeoJSON, AsWKT
+from apps.core import utils
+
 Q = models.Q
 class PELManager(models.Manager):
     use_in_migrations = True
@@ -8,17 +11,17 @@ class PELManager(models.Manager):
         from datetime import datetime
         qset = self.select_related('bu', 'peventtype').filter(
             ~Q(people_id = -1), peventtype__tacode = 'AUDIT',
-            people_id = peopleid, datefor__gte = datetime.date() - timedelta(days=7))
+            people_id = peopleid, datefor__gte = datetime.date() - timedelta(days = 7))
         return qset or self.none()
 
-    def get_people_attachment(self, pelogid, db=None):
+    def get_people_attachment(self, pelogid, db = None):
         return self.raw(
             """
             SELECT peopleeventlog.people_id, peopleeventlog.id, peopleeventlog.uuid
             FROM icici_django.peopleeventlog
             INNER JOIN typeassist ON typeassist.id= peopleeventlog.peventtype_id AND typeassist.tacode IN ('MARK', 'SELF', 'TAKE', 'AUDIT')
             LEFT JOIN attachment ON attachment.owner= peopleeventlog.uuid::text
-            WHERE 1=1
+            WHERE 1 = 1
                 AND attachment.filename NOT iLIKE '%%.csv' AND attachment.filename NOT iLIKE '%%.txt'
                 AND attachment.filename NOT iLIKE '%%.mp4' AND attachment.filename NOT iLIKE '%%.3gp'
                 AND peopleeventlog.uuid= %s
@@ -27,26 +30,21 @@ class PELManager(models.Manager):
 
     def update_fr_results(self, result, id, peopleid, db):
         return self.filter(
-            id=id
+            id = id
         ).using(db).update(peventlogextras = result, people_id = peopleid)
 
-
     def get_people_attachment(self, pelogid, db):
-        pass
-
+        raise NotImplementedError()
 
     def get_lastmonth_conveyance(self, R):
-        from datetime import datetime
         now = datetime.now()
         qset = self.select_related('bu', 'people').filter(
                 peventtype__tacode = 'CONVEYANCE',
-                punchintime__date__gte = (now - timedelta(days=30)).date()
-            ).exclude(endlocation__isnull=True).values(*R.getlist('fields[]'))
+                punchintime__date__gte = (now - timedelta(days = 30)).date()
+            ).exclude(endlocation__isnull = True).values(*R.getlist('fields[]'))
         return qset or self.none()
 
-
     def getjourneycoords(self, id):
-        from django.contrib.gis.db.models.functions import AsGeoJSON
         import json
         qset = self.annotate(
             path = AsGeoJSON('journeypath')).filter(
@@ -59,4 +57,31 @@ class PELManager(models.Manager):
             obj['path'] = coords
             coords = []
         return qset or self.none()
+    
+    
+    def get_geofencetracking(self, request):
+        "List View"
+        qobjs, dir,  fields, length, start = utils.get_qobjs_dir_fields_start_length(request.GET)
+        last8days = date.today() - timedelta(days=8)
+        qset = self.annotate(
+            slocation = AsWKT('startlocation'),
+            elocation = AsWKT('endlocation'),
+            ).filter(
+            peventtype__tacode = 'GEOFENCE',
+            datefor__gte = last8days,
+            bu_id = request.session['bu_id']
+        ).select_related(
+            'people', 'peventtype', 'geofence').values(*fields).order_by(dir)
+        total = qset.count()
+        if qobjs:
+            filteredqset = qset.filter(qobjs)
+            fcount = filteredqset.count()
+            filteredqset = filteredqset[start:start+length]
+            return total, fcount, filteredqset
+        qset = qset[start:start+length]
+        return total, total, qset
+    
+    
+    
+        
 

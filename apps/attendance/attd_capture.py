@@ -43,10 +43,10 @@ def detect_QR(cv2, decode, np, time):
         log.debug("cameara is opened for qr detection")
         while True:
             _, img, = cap.read()
-            #cv2.putText(img, "Hello World!!!", (200, 200), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 255))
+            # cv2.putText(img, "Hello World!!!", (200, 200), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 255))
             detected = False
 
-            #draw rectangle and putText on qr code 
+            # draw rectangle and putText on qr code 
             for barcode in decode(img):
                 print(barcode.data)
                 code = barcode.data.decode('utf-8')
@@ -87,7 +87,7 @@ def detect_QR(cv2, decode, np, time):
         msg = """Please check your webcam's power 
                 on/off or try connecting it to different usb slot"""
         status = 404
-    return rp.JsonResponse({"message":msg, 'title':title, 'decoded':code}, status=status)
+    return rp.JsonResponse({"message":msg, 'title':title, 'decoded':code}, status = status)
 
 def get_actual_img(code, detectFace):
     log.debug("get_actual_img started")
@@ -102,7 +102,6 @@ def get_actual_img(code, detectFace):
         return img_array
     finally:
         log.debug("get_actual_img is ended")
-
 
 
 def recognize_face(cv2, np, time, code):
@@ -125,7 +124,7 @@ def recognize_face(cv2, np, time, code):
                 log.debug("camera is running %s"%(x))
                 cv2.imshow("Attendance", img)
                 imgS = cv2.resize(img, (0,0), None, 0.25, 0.25)
-                obj = DeepFace.verify(actual_face, imgS, model_name='Facenet', enforce_detection=False)
+                obj = DeepFace.verify(actual_face, imgS, model_name='Facenet', enforce_detection = False)
                 if hasattr(obj, 'verified') and obj['verified']:
                     detected = True
                 if time.time() > timeOut:
@@ -152,6 +151,5 @@ def recognize_face(cv2, np, time, code):
                 on/off or try connecting it to different usb slot"""
         status = 404
     log.debug("msg: %s, title: %s, decoded:%s"%(msg, title, code))
-    return rp.JsonResponse({"message":msg, 'title':title, 'decoded':code}, status=status)
-
+    return rp.JsonResponse({"message":msg, 'title':title, 'decoded':code}, status = status)
 

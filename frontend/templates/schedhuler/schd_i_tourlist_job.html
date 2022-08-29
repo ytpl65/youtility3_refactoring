@@ -1,6 +1,5 @@
 {% extends "base_list.html" %}
 
-
 <!---- BEGIN CARD TITLE ------>
 {% block card_title %}
 Schedhuled Tour List
@@ -17,46 +16,9 @@ Schedhuled Tour List
 {% endblock pagebreadcumb %}
 <!------------------------------------- END PAGE BREADCUMBS ------------------------------------->
 
-
 <!-------------------------------------------- BEGIN Schedhuled Tour TABLE ------------------------------------------->
 {% block table %}
 <table id="schdtour_table" class="display compact cell-border" style="width:100%">
-    {# <thead class="fw-bold fs-6">
-        <th>Name</th>
-        <th>People/Group</th>
-        <th>From</th>
-        <th>To</th>
-        <th>Duration</th>
-        <th>Grace Time</th>
-        <th>Exp. Time</th>
-    </thead>
-    <!---------- BEGIN TABLE FILTER FIELDS --------->
-	<thead id="filter_row">
-    <form action="" id='schdtour_filter' method='get'>
-    {% for field in schdtour_filter %}
-        <th>
-            <input type="text" 
-            id="{{ field.auto_id }}" 
-            name="{{ field.name }}" 
-            placeholder ="Search {{ field.label }}">
-		</th>
-    {% endfor %}
-    </form>
-    </thead>
-    <!---------- END TABLE FILTER FIELDS --------->
-    <tbody>
-        {% for tour in schdtour_list %}
-        <tr>
-            <td><a href="{{ url('schedhuler:update_tour', args=[tour['id']]) }}">{{ tour['jobname'] }}</a></td>
-            <td>{{ tour['people__peoplename'] or tour['pgroup__groupname'] }} </td>
-            <td>{{ tour['fromdate'] |to_local }}</td>
-            <td>{{ tour['uptodate'] |to_local }}</td>
-            <td>{{ tour['planduration'] }}</td>
-            <td>{{ tour['gracetime'] }}</td>
-            <td>{{ tour['expirytime'] }}</td>
-        </tr>
-        {% endfor %}
-    </tbody> #}
 </table>
 {% endblock table %}
 <!-------------------------------------------- END Schedhuled Tour TABLE ------------------------------------------->
@@ -84,26 +46,26 @@ Schedhuled Tour List
         //datatable initialization
         table = $(table_id).DataTable({
 			ajax:{
-                url:"{{ url('schedhuler:schd_internal_tour') }}?action=list"
+                url: "{{ url('schedhuler:schd_internal_tour') }}?action=list"
             },
 			deferRender: true,
 			responsive : true,
             dom:`<'row' <'col-sm-6 d-flex justify-content-start'f> <'col-sm-6 d-flex justify-content-end'B> >rt<'row'
 			 <'col-sm-6'l> <'col-sm-6'p><'col-sm-12 d-flex justify-content-center'i>>`,
             columns:[
-                {data:'id', defaultContent:null},
-                {data:'jobname', title:"Name"},
-                {title:'People/Group', defaultContent:null, data:null},
-                {title:'From', data:'fromdate'},
-                {title:'To', data:'uptodate'},
-                {title:'Duration', data:'planduration'},
-                {title:'Gracetime', data:'gracetime'},
-                {title:'Exp. Time', data:'expirytime'},
+                {data: 'id', defaultContent:null},
+                {data: 'jobname', title: "Name"},
+                {title: 'People/Group', defaultContent:null, data:null},
+                {title: 'From', data: 'fromdate'},
+                {title: 'To', data: 'uptodate'},
+                {title: 'Duration', data: 'planduration'},
+                {title: 'Gracetime', data: 'gracetime'},
+                {title: 'Exp. Time', data: 'expirytime'},
             ],
             columnDefs:[
-                {targets:0, data:'id', visible:false, searchable:false},
+                {targets:0, data: 'id', visible:false, searchable:false},
                 {
-                    targets:1, data:'jobname', render: function (data, type, row, meta){
+                    targets:1, data: 'jobname', render: function (data, type, row, meta){
                         return `<a href="${urlname}?id=${row['id']}">${data}</a>`
                     }
                 },
@@ -112,12 +74,18 @@ Schedhuled Tour List
                     let groupname = row['pgroup__groupname']
                     console.log(peoplename, groupname)
                     return typeof peoplename in ['undefined', null] ? groupname : peoplename 
+                }},
+                {targets:3, render:function(data, type, row, meta){
+                    return  convert_to_local(type, data, row)
+                }},
+                {targets:4, render:function(data, type, row, meta){
+                    return  convert_to_local(type, data, row)
                 }}
             ],
             buttons:[
 				{
 					text:`Schedule Tour &nbsp;<i class='fas fa-plus ch4'></i></a>`,
-					className:"btn btn-sm btn-light-primary btn-hover-rise",
+					className: "btn btn-sm btn-light-primary btn-hover-rise",
 					//action for add_new_button 
 					action: function(e, dt, node, config){
                         //This will send the page to the location specified
@@ -132,13 +100,12 @@ Schedhuled Tour List
 		$("th > input").addClass('form-control')
 		$("th > input").css('height', '35px')
 		var styles = {
-			"border-bottom":"none",
-			"background-color":"#f1f4f7"
+			"border-bottom": "none",
+			"background-color": "#f1f4f7"
 		}
 
         $(`${table_id} thead tr:eq(1)`).css(styles)
 		//END STYLING DATATABLE
-
 
     })
 

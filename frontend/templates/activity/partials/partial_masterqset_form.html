@@ -63,9 +63,7 @@
         </div>
     </form>
 
-
     <!--============================== QuestionSet FORM FIELDS END ============================-->
-
 
     <!--============================== QuestionSet FORM FIELDS END ============================-->
     {# {% if masterqset_form.instance.id %} #}
@@ -98,7 +96,6 @@
                         </div>
                         <!--Qusetion Set Belonging Question End-->
 
-
                         <!--Qusetion Set Belonging Question Type Start-->
                         <label for="{{ qsetbng.answertype.id_for_label }}" class="required col-md-1 col-sm-1">Question
                             Type:</label>
@@ -107,7 +104,6 @@
                             {{ qsetbng.answertype.errors }}
                         </div>
                         <!--Qusetion Set Belonging Question Type End-->
-
 
 
                         <!--Qusetion Set Belonging Is Mandatory Start-->
@@ -214,7 +210,6 @@
     <!--============================== QuestionSet FORM FIELDS END ============================-->
 </div>
 
-
 <div class="modal-footer border-0 pt-0">
     <button type="button" class="btn btn-sm btn-secondary modal-close-control btn-hover-scale">
         Close <i class="fas fa-times"></i>
@@ -236,7 +231,6 @@
 </div>
 {% endblock body %}
 
-
 {% block js %}
 {{ masterqset_form.media.js }}
 <script src="{{ static('assets/js/formValidations.js') }}"></script>
@@ -246,7 +240,6 @@
     var optionTag = null
     var table = null
     var seqno = 0
-
 
     $(document).ready(() => {
         //set ctzoffset
@@ -269,7 +262,6 @@
             closeOnSelect: false,
             dropdownParent: $('#modal-qset')
         })
-
 
         $(".modal").removeAttr("tabindex");
 
@@ -307,7 +299,6 @@
 
             ],
 
-
         })
 
         //on selecting the question from question form show/hide
@@ -325,11 +316,11 @@
         //question-form trigger following events
         optionTag
             .on('add', function (e) {
-                populateAlertOn(e.detail.data.value)
+                populateAlertOn(e.detail.data.value, "#id_alerton")
             })
             .on('remove', function (e) {
                 console.log(e.detail.data.value)
-                removeElmtFromAlertOn(e.detail.data.value)
+                removeElmtFromAlertOn(e.detail.data.value, '#id_alerton')
             })
 
         //on submitting the questionset-blng form populate the table
@@ -439,7 +430,7 @@
                     modal: true
                 } //checklist view
                 const formtype = $(modalcontent_id).attr('data-form') //form-type (create/update)
-                const id = $("#pk").val() //form instance id
+                const id = '{{ masterqset_form.instance.id }}' //form instance id
                 var payLoad = {
                     formData: form.serialize(),
                     asssigned_questions: JSON.stringify(table.rows().data().toArray()),
@@ -466,7 +457,7 @@
             }
         })
 
-        //adjustSlno(seqno, table, reset=false)
+        //adjustSlno(seqno, table, reset = false)
 
     }) //DOCUMENT.READY END
 </script>

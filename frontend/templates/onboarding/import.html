@@ -1,6 +1,5 @@
 {% extends "base_form.html" %}
 
-
 {% block extra_css %}
 <link  href="{{ static('assets/plugins/custom/DataTables/datatables.min.css') }}" rel="stylesheet" type="text/css"/>
 {{ importform.media.css }}
@@ -22,13 +21,11 @@
 {% endblock pagebreadcumb %}
 <!-------------------------- END PAGE BREADCUMB ------------------------->
 
-
 <!------ BEGIN FORM TITLE ------->
 {% block form_title %}
 Import Data
 {% endblock form_title %}
 <!------ END FORM TITLE -------->   
-
 
 {% block form %}
 <div class="row">
@@ -64,7 +61,6 @@ Import Data
 {% endblock form %}
 
 
-
 {% block extra_scripts %}
 <script src="{{ static('assets/plugins/custom/DataTables/datatables.min.js') }}" type="text/javascript"></script>
 <script>
@@ -82,14 +78,14 @@ Import Data
             
             
             const params = { url: "{{ url('onboarding:import') }}", modal:false}
-            const payLoad = {formData: fd, csrfmiddlewaretoken:'{{ csrf_token }}'}
+            const payLoad = {formData: fd, csrfmiddlewaretoken: '{{ csrf_token }}'}
             
             Swal.fire({
-                title:"Submit",
-                text:'Are you sure the the file you uploading has correct data?',
-                icon:'question',
+                title: "Submit",
+                text: 'Are you sure the the file you uploading has correct data?',
+                icon: 'question',
                 showCancelButton:true,
-                confirmButtonText:'Yes Upload it!'
+                confirmButtonText: 'Yes Upload it!'
             }).then((res) => {
                 $.ajax({
                     url        : params.url,

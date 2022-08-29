@@ -19,7 +19,6 @@ Capabilities
 {% endblock page_actions %}
 <!-------- END PAGE ACTIONS ------------>
 
-
 <!------------------ BEGIN BU TABLE ------------------------->
 {% block table %}
     <!------------------ BEGIN TABLE --------------------->
@@ -57,7 +56,6 @@ Capabilities
 		
     </table>
     <!------------------ END TABLE --------------------->
-
 
 {% if cap_list and cap_list.has_other_pages %}
 <!-- BEGIN PAGINATOIN -->
@@ -97,8 +95,8 @@ Capabilities
 		$("th > input").addClass('form-control')
 		$("th > input").css('height', '35px')
 		var styles = {
-			"border-bottom":"none",
-			"background-color":"#f1f4f7"
+			"border-bottom": "none",
+			"background-color": "#f1f4f7"
 		}
 		$('#cap_table thead tr:eq(1)').css(styles)
 		//END STYLING DATATABLE

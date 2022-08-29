@@ -7,7 +7,6 @@ People Form
 {% endblock title %}
 <!---- END PAGE TITLE ----->
 
-
 {% block extra_css %}
 {{ peopleform.media.css }}
 {% endblock extra_css %}
@@ -19,7 +18,6 @@ People Form
 <li class="breadcrumb-item pe-3"><a href="javascript:void(0)" class="pe-3">People Form</a></li>
 {% endblock pagebreadcumb %}
 <!-------------------------- END PAGE BREADCUMB ------------------------->
-
 
 <!-------------  BEGIN POP-UPS CODE -------------->
 {% block popup_alerts %}
@@ -117,7 +115,6 @@ People Form
 {% endblock popup_alerts %}
 <!-------------  END POP-UPS CODE -------------->
 
-
 <!------ BEGIN FORM TITLE ------->
 {% block form_title %}
 People
@@ -126,13 +123,11 @@ People
 
 <!--------- BEGIN NON FIELD ERRORS -------->
 {% block nonfield_errors %}
-<div class="alert alert-danger alert-dismissible fade show" id="nonfield_errors"role="alert" style="display:none">
+<div class="alert alert-danger" id="nonfield_errors"role="alert" style="display:none">
     <strong>Error</strong> <span></span>
-    <button type="button" class="btn-sm btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
 </div>
 {% endblock nonfield_errors %}
 <!---------- END NON FIELD ERRORS --------->
-
 
 
 <!-------------- BEGIN FORM ------------------->
@@ -153,7 +148,6 @@ People
                 <!--INPUT GROUP-->
                 <div class="col-md-4">
                     {{ peopleform.peoplecode }}
-
 
                     <!----- BEGIN ERROR FIELD  ------->
                     {{ peopleform.peoplecode.errors }}
@@ -178,7 +172,6 @@ People
                 <div class="col-md-4">
                     {{ peopleform.loginid }}
 
-
                     <!----- BEGIN ERROR FIELD  ------->
                     {{ peopleform.loginid.errors }}
                     <!----- END ERROR FIELD  ------->
@@ -198,7 +191,6 @@ People
 
                 <!--LABEL FIELD-->
 
-
                 <!--LABEL FIELD-->
                 <label class="required" for="id_mobno">Mobno:</label>
                 <!--INPUT GROUP-->
@@ -210,7 +202,6 @@ People
                     <!----- END ERROR FIELD  ------->
                 </div>
                 <!--LABEL FIELD-->
-
 
                 <!--LABEL FIELD-->
                 <label class="required" for="id_gender">Gender:</label>
@@ -225,7 +216,6 @@ People
                 </div>
                 <!--LABEL FIELD-->
 
-
                 <!--LABEL FIELD-->
                 <label class="required" for="id_dateofbirth">Date of Birth:</label>
                 <!--INPUT GROUP-->
@@ -239,20 +229,15 @@ People
                 </div>
                 <!--LABEL FIELD-->
 
-
                 <!--LABEL FIELD-->
                 <label class="required" for="id_deviceid">Device Id:</label>
                 <!--INPUT GROUP-->
-                <div class="col-md-4">
+                <div class="col-md-4 d-flex d-inline">
                     {{ peopleform.deviceid }}
+                    <button type='button' class="btn btn-sm btn-secondary rounded-0" id="id_reset">Reset</button>
                     <!--HELP TEXT-->
-
-                    <!----- BEGIN ERROR FIELD  ------->
-                    {{ peopleform.deviceid.errors }}
-                    <!----- END ERROR FIELD  ------->
                 </div>
                 <!--LABEL FIELD-->
-
 
 
                 <!--LABEL FIELD-->
@@ -274,7 +259,6 @@ People
                     <!----- END ERROR FIELD  ------->
                 </div>
                 <!--LABEL FIELD-->
-
 
                 <!--LABEL FIELD-->
                 <label class="required" for="id_dateofjoin">Date of Joining:</label>
@@ -302,13 +286,13 @@ People
                 <!------------Checkboxes Rendering Last --------------------->
                 <div class="booleans col-md-6 d-flex justify-content-sm-between mt-5">
                     <!--ENABLE CHECKBOX -->
-                    <label for=id_isenable class="form-check-label bool col-form-label me-5 text-sm-right">Enable
+                    <label for = id_isenable class="form-check-label bool col-form-label me-5 text-sm-right">Enable
                         &nbsp {{ peopleform.enable }}</label>
                      <!--BLACKLIST CHECKBOX -->
-                    <label for=id_blacklist class="form-check-label bool col-form-label me-5 text-sm-right">Blacklist
+                    <label for = id_blacklist class="form-check-label bool col-form-label me-5 text-sm-right">Blacklist
                         &nbsp{{ pref_form.blacklist }}</label>
                      <!--ISADMIN CHECKBOX -->
-                    <label for=id_isadmin id="label_isadmin" class="form-check-label bool col-form-label me-5 text-sm-right" style="display:none">Is Admin
+                    <label for = id_isadmin id="label_isadmin" class="form-check-label bool col-form-label me-5 text-sm-right" style="display:none">Is Admin
                         &nbsp{{ peopleform.isadmin }}</label>
                     {% if peopleform.instance.id %}
                     <button type="button" id="change_pass" class="btn btn-sm  btn-primary rounded-1" data-bs-target='#paswd_change_alert'
@@ -326,10 +310,9 @@ People
         <!--BEGIN IMAGE INPUT-->
         <div class="col-md-2">
 
-
             <!--begin::Image input-->
             <div class="image-input image-input-empty" data-kt-image-input="true"
-                style="background-image: url({% if peopleform.instance %} {{ peopleform.instance.peopleimg.url }} {% else %} '/static/assets/media/images/blank.png' {% endif %})">
+                style="background-image: url({% if peopleform.instance.id %} {{ peopleform.instance.peopleimg.url }} {% else %} '/static/assets/media/images/blank.png' {% endif %})">
                 <!--begin::Image preview wrapper-->
                 <div class="image-input-wrapper w-125px h-125px"></div>
                 <!--end::Image preview wrapper-->
@@ -412,7 +395,6 @@ People
                 </div>
                 <!--LABEL FIELD-->
 
-
                 <!--LABEL FIELD-->
                 <label for="id_designation">Designation:</label>
                 <!--INPUT GROUP-->
@@ -433,7 +415,6 @@ People
                 </div>
                 <!--LABEL FIELD-->
 
-
                 <!--LABEL FIELD-->
                 <label for="id_dateofreport">Date of Release:</label>
                 <!--INPUT GROUP-->
@@ -445,7 +426,6 @@ People
                     <!----- END ERROR FIELD  ------->
                 </div>
                 <!--LABEL FIELD-->
-
 
                 <!--LABEL FIELD-->
                 <label for="id_reportto">Report to:</label>
@@ -480,7 +460,6 @@ People
 
                 <!--LABEL FIELD-->
 
-
                 <!--LABEL FIELD-->
                 <label for="id_portletcapability">Portlet Capability:</label>
                 <!--INPUT GROUP-->
@@ -493,7 +472,6 @@ People
                 </div>
                 <!--LABEL FIELD-->
 
-
                 <!--LABEL FIELD-->
                 <label for="id_reportcapability">Report Capability:</label>
                 <!--INPUT GROUP-->
@@ -505,7 +483,6 @@ People
                     <!----- END ERROR FIELD  ------->
                 </div>
                 <!--LABEL FIELD-->
-
 
                 <!--LABEL FIELD-->
                 <label for="id_webcapability">Web Capability:</label>
@@ -543,10 +520,10 @@ People
                 </div>
                 <div class="booleans col-md-6 d-flex justify-content-sm-between mt-5">
 
-                    <label for=id_showalltemplates
+                    <label for = id_showalltemplates
                         class="form-check-label bool col-form-label me-5 text-sm-right">{{ pref_form.showalltemplates }}
                         &nbspShow all Templates </label>
-                    <label for=id_showtemplatebasedonfilter
+                    <label for = id_showtemplatebasedonfilter
                         class="form-check-label bool col-form-label me-5 text-sm-right">{{ pref_form.showtemplatebasedonfilter }}
                         &nbspDisplay site wise templates</label>
 
@@ -558,7 +535,6 @@ People
 
 {% endblock form %}
 <!------------- END FORM ---------------------->
-
 
 
 <!-------------- BEGIN FORM PAGE ACTIONS --------->
@@ -582,16 +558,19 @@ People
 {% endif %}
 
 
-
 {% block extra_scripts %}
 {{ peopleform.media.js }}
 <script>
     $(document).ready(function () {
+        //reset deviceid on click
+        $("#id_reset").click(function(){
+            $("#id_deviceid").val('-1')
+        })
         //set ctzoffset
         $("#id_ctzoffset").val(-new Date().getTimezoneOffset())
 
         //hide the delete button when instance is not saved yet.
-        if ('{{peopleform.instance.id}}' == ('None' || "")) {
+        if ('{{peopleform.instance.id}}' === 'None') {
             $("#btn_del").hide()
         }
         //hide site group and template info
@@ -685,13 +664,13 @@ People
         })
         
         //for select2 search work in bootstrap modals
-        $("#department_popup").find("select[name=tatype]").select2({
+        $("#department_popup").find("select[name = tatype]").select2({
             dropdownParent: $('#department_popup')
         })
-        $("#designation_popup").find("select[name=tatype]").select2({
+        $("#designation_popup").find("select[name = tatype]").select2({
             dropdownParent: $('#designation_popup')
         })
-        $("#peopletype_popup").find("select[name=tatype]").select2({
+        $("#peopletype_popup").find("select[name = tatype]").select2({
             dropdownParent: $('#peopletype_popup')
         })
         //hide change_pass feature for session wizard
@@ -699,13 +678,13 @@ People
             $("#change_pass").hide()
         }
         //pre-select options for pop-up ta forms
-		$("#peopletype_popup select[name='tatype']").val($("#peopletype_popup select option:contains('PEOPLETYPE')").val()).change().prop({"disabled":"true"})
+		$("#peopletype_popup select[name='tatype']").val($("#peopletype_popup select option:contains('PEOPLETYPE')").val()).change().prop({"disabled": "true"})
         
         //pre-select options for pop-up ta forms
-		$("#designation_popup select[name='tatype']").val($("#designation_popup select option:contains('DESIGNATION')").val()).change().prop({"disabled":"true"})
+		$("#designation_popup select[name='tatype']").val($("#designation_popup select option:contains('DESIGNATION')").val()).change().prop({"disabled": "true"})
         
         //pre-select options for pop-up ta forms
-		$("#department_popup select[name='tatype']").val($("#department_popup select option:contains('DEPARTMENT')").val()).change().prop({"disabled":"true"})
+		$("#department_popup select[name='tatype']").val($("#department_popup select option:contains('DEPARTMENT')").val()).change().prop({"disabled": "true"})
         
         //show isadmin checkbox to superuser
         if(session.is_superadmin){
@@ -721,8 +700,8 @@ People
         $("#id_peopleform").on('submit', function(e){
             var form = $(this)
             e.preventDefault()
-            const params = {url:"{{ url('peoples:people') }}", modal:false}
-            const id = "{{ peopleform.instance.id }}"
+            const params = {url: "{{ url('peoples:people') }}", modal:false}
+            const id = "{{ peopleform.instance.pk }}"
             var payLoad = {formData:form.serialize(), csrfmiddlewaretoken: '{{ csrf_token }}'}//payload for post request
             if(id != 'None'){
 				var newPayLoad = {...payLoad, 'pk':id}
@@ -731,7 +710,9 @@ People
 			fire_ajax_form_post(params, payLoad)
 			.done((data, status, xhr) => { //function to submit post request
                 show_successful_save_alert(update= id != 'None' ? true : false)
-				location.href = `{{ url('peoples:people') }}?id=${data['pk']}`
+                window.setTimeout(function() {
+                    window.location.href = `{{ url('peoples:people') }}?id=${data.pk}`;
+                }, 2000);
 			})
         })
 

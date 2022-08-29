@@ -1,20 +1,21 @@
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db.utils import IntegrityError
+from django.db import transaction
+from django.http import response as rp
+from django.http.request import QueryDict
+from django.shortcuts import render
+from django.views import View
 import apps.attendance.forms as atf
 import apps.attendance.models as atdm
 from .filters import AttendanceFilter
 import apps.peoples.utils as putils
-from django.views import View
-from django.http.request import QueryDict
-from django.shortcuts import  render
-from django.http import response as rp
-from django.db import transaction
+from django.contrib.gis.db.models.functions import  AsWKT
+
 import logging
 from apps.core import utils
 logger = logging.getLogger('django')
 log = logging.getLogger('__main__')
 # Create your views here.
-
 
 class Attendance(LoginRequiredMixin, View):
     params = {
@@ -23,23 +24,24 @@ class Attendance(LoginRequiredMixin, View):
         'template_list': 'attendance/attendance.html',
         'partial_form': 'attendance/partials/partial_attendance_form.html',
         'partial_list': 'attendance/partials/partial_attendance_list.html',
-        'related': ['people', 'client', 'bu', 'verifiedby', 'geofence'],
+        'related': ['people', 'client', 'bu', 'verifiedby', 'geofence', 'peventtype'],
         'model': atdm.PeopleEventlog,
         'filter': AttendanceFilter,
-        'fields': ['id', 'people__peoplename', 'verifiedby__peoplename', 'peventtype', 'bu__buname', 'datefor',
-                   'punchintime', 'punchouttime', 'facerecognition', 'startlocation', 'endlocation', 'shift__shiftname']}
+        'form_initials':{},
+        'fields': ['id', 'people__peoplename', 'verifiedby__peoplename', 'peventtype__tacode', 'bu__buname', 'datefor',
+                   'punchintime', 'punchouttime', 'facerecognition','shift__shiftname', 'ctzoffset']}
 
     def get(self, request, *args, **kwargs):
         R, resp = request.GET, None
 
+        if R.get('template'): return render(request, self.params['template_list'])
         # return attendance_list data
         if R.get('action', None) == 'list' or R.get('search_term'):
             d = {'list': "attd_list", 'filt_name': "attd_filter"}
             self.params.update(d)
             objs = self.params['model'].objects.select_related(
-                *self.params['related']).values(*self.params['fields'])
-            resp = utils.render_grid(
-                request, self.params, "attendance_view", objs)
+                *self.params['related']).values(*self.params['fields']).order_by('-mdtz')
+            return rp.JsonResponse({'data':list(objs)}, status=200)
 
         # return attemdance_form empty
         elif R.get('action', None) == 'form': 
@@ -51,10 +53,12 @@ class Attendance(LoginRequiredMixin, View):
         elif R.get('action', None) == "delete" and R.get('id', None):
             print(f'resp={resp}')
             resp = utils.render_form_for_delete(request, self.params)
+        
         # return form with instance
         elif R.get('id', None):
+            obj = utils.get_model_obj(R['id'], request, self.params)
             resp = utils.render_form_for_update(
-                request, self.params, "attd_form")
+                request, self.params, "attd_form", obj)
         print(f'return resp={resp}')
         return resp
 
@@ -67,7 +71,7 @@ class Attendance(LoginRequiredMixin, View):
                 msg = "attendance_view"
                 form = utils.get_instance_for_update(
                     data, self.params, msg, int(pk))
-                create=False
+                create = False
             else:
                 form = self.params['form_class'](data)
             if form.is_valid():
@@ -87,15 +91,14 @@ class Attendance(LoginRequiredMixin, View):
             logger.info("attendance form saved")
             data = {'success': "Record has been saved successfully",
                     'type': attd.peventtype}
-            return rp.JsonResponse(data, status=200)
+            return rp.JsonResponse(data, status = 200)
         except IntegrityError:
             return putils.handle_intergrity_error('Attendance')
 
 
 
-
 class Conveyance(LoginRequiredMixin, View):
-    model=atdm.PeopleEventlog,
+    model = atdm.PeopleEventlog,
     params = {
         'fields': [
             'punch_intime', 'punch_outtime', 'bu__buname', 
@@ -107,14 +110,13 @@ class Conveyance(LoginRequiredMixin, View):
         'model'        : atdm.PeopleEventlog,
        'form_class':atf.ConveyanceForm}
 
-
     def get(self, request, *args, **kwargs):
         R, resp, objects, filtered = request.GET, None, [], 0
 
         # first load the template
         if R.get('template'): return render(request, self.params['template_list'])
 
-        #then load the table with objects for table_view
+        # then load the table with objects for table_view
         if R.get('action', None) == 'list' or R.get('search_term'):
             objs = self.params['model'].objects.get_lastmonth_conveyance(R)
             ic(utils.printsql(objs))
@@ -124,7 +126,7 @@ class Conveyance(LoginRequiredMixin, View):
         elif R.get('action', None) == 'form':
             cxt = {'conveyanceform': self.params['form_class'](),
                    'msg': "create conveyance requested"}
-            resp =render(request, self.params['template_form'], context=cxt)
+            resp  = render(request, self.params['template_form'], context = cxt)
 
         # handle delete request
         elif R.get('action', None) == "delete" and R.get('id', None):
@@ -134,29 +136,28 @@ class Conveyance(LoginRequiredMixin, View):
         # return form with instance for update
         elif R.get('id', None):
             obj = utils.get_model_obj(int(R['id']), request, self.params)
-            cxt = {'conveyanceform':self.params['form_class'](request=request, instance=obj),
+            cxt = {'conveyanceform':self.params['form_class'](request = request, instance = obj),
                     'edit':True}
-            resp = render(request, self.params['template_form'], context=cxt)
+            resp = render(request, self.params['template_form'], context = cxt)
 
-        #return journey path of instance
+        # return journey path of instance
         elif R.get('action') == 'getpath':
             data = atdm.PeopleEventlog.objects.getjourneycoords(R['conid'])
-            resp = rp.JsonResponse(data = {'obj':list(data)}, status=200)
+            resp = rp.JsonResponse(data = {'obj':list(data)}, status = 200)
         return resp
 
-
     def post(self, request, *args, **kwargs):
-        resp, create=None, True
+        resp, create = None, True
         try:
-            #convert queryparams to python datatypes
+            # convert queryparams to python datatypes
             data = QueryDict(request.POST['formData'])
             if pk := data.get('pk', None):
                 msg = 'conveyance_view'
                 form = utils.get_instance_for_update(
                     data, self.params, msg, int(pk))
-                create=False
+                create = False
             else:
-                form = self.params['form_class'](data, request=request)
+                form = self.params['form_class'](data, request = request)
             ic(form.data)
             if form.is_valid():
                 resp = self.handle_valid_form(form, request, create)
@@ -167,15 +168,41 @@ class Conveyance(LoginRequiredMixin, View):
             resp = utils.handle_Exception(request)
         return resp
 
-
     def handle_valid_form(self, form, request, create):
         logger.info('conveyance form is valid')
         from apps.core.utils import handle_intergrity_error
         try:
-            with transaction.atomic(using=utils.get_current_db_name()):
+            with transaction.atomic(using = utils.get_current_db_name()):
                 cy = form.save()
-                putils.save_userinfo(cy, request.user, request.session, create=create)
+                putils.save_userinfo(cy, request.user, request.session, create = create)
                 logger.info("conveyance form saved")
-                return rp.JsonResponse(data={'pk':cy.id}, status=200)
+                return rp.JsonResponse(data={'pk':cy.id}, status = 200)
         except IntegrityError:
             return handle_intergrity_error("conveyance")
+
+
+class GeofenceTracking(LoginRequiredMixin, View):
+    params = {
+        'template_list':'attendance/geofencetracking.html',
+        'model':atdm.PeopleEventlog,
+        'related':['geofence', 'peventtype', 'people'],
+        'fields':['datefor', 'geofence__gfname', 'startlocation', 'endlocation',
+                  'people__peoplename']
+    }
+    
+    def get(self, request, *args, **kwargs):
+        R, P = request.GET, self.params
+        # first load the template
+        if R.get('template'): return render(request, self.params['template_list'])
+        
+        # then load the table with objects for table_view
+        if R.get('action', None) == 'list' or R.get('search_term'):
+            total, filtered, objs = self.params['model'].objects.get_geofencetracking(request)
+            ic(utils.printsql(objs))
+            return  rp.JsonResponse(data = {
+                'draw':R['draw'],
+                'data':list(objs),
+                'recordsFiltered':filtered,
+                'recordsTotal':total,
+            }, safe = False)
+            

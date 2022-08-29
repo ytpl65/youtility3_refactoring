@@ -11,7 +11,6 @@ class Messages:
     WRONGCREDS     = "Incorrect Username or Password"
     NOTREGISTERED  = "Device Not Registered"
 
-
 def LoginUser(response, request):
     if response['isauthenticated']:
         People.objects.filter(
@@ -28,15 +27,14 @@ def LogOutUser(response, request):
         ic(request.user)
 
 
-
-def auth_check(info, input, returnUser, uclientip=None):
+def auth_check(info, input, returnUser, uclientip = None):
     from django.contrib.auth import authenticate
     from graphql import GraphQLError
     try:
         user = authenticate(
             info.context,
-            username=input.loginid,
-            password=input.password)
+            username = input.loginid,
+            password = input.password)
         if not user: raise ValueError
     except ValueError as e:
         raise GraphQLError(Messages.WRONGCREDS) from e
@@ -48,19 +46,18 @@ def auth_check(info, input, returnUser, uclientip=None):
         if people_validips is not None and len(people_validips.replace(" ", "")) > 0:
             clientIpList = people_validips.replace(" ", "").split(",")
             if uclientip is not None and uclientip not in clientIpList:
-                allowAccess = isAuth =False
-        if user.deviceid in ('-1', input.deviceid): allowAccess=True
+                allowAccess = isAuth  = False
+        if user.deviceid in ('-1', input.deviceid): allowAccess = True
         else:
-            if input.deviceid not in people_validimeis: isValidDevice=False
-            isAuth =False
-            #raise GraphQLError(Messages.MULTIDEVICES)
+            if input.deviceid not in people_validimeis: isValidDevice = False
+            isAuth  = False
+            # raise GraphQLError(Messages.MULTIDEVICES)
             allowAccess = True
         if allowAccess:
             if user.client.enable and user.enable:
                 return returnUser(user, info.context), user
             else:
                 raise GraphQLError(Messages.NOCLIENTPEOPLE)
-
 
 def authenticate_user(input, request, msg, returnUser):
     loginid = input.loginid
@@ -73,7 +70,6 @@ def authenticate_user(input, request, msg, returnUser):
     user = authenticate(request, username = loginid, password = password)
     if not user: raise GraphQLError(msg.WRONGCREDS)
     valid_imeis = user.client.bupreferences["validimei"].replace(" ", "").split(",")
-
 
     if not user:
         raise GraphQLError(msg.WRONGCREDS)

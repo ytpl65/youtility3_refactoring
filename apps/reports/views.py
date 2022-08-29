@@ -1,20 +1,20 @@
 from asyncio.log import logger
 from pprint import pformat
-from django.shortcuts import render
+from django.shortcuts import redirect, render
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.db import transaction
 from django.views.generic.base import View
+from django.contrib import messages
+from django.http import JsonResponse, QueryDict, response as rp
+from django.urls import reverse
 from apps.activity  import models as am
 from apps.onboarding  import models as om
 from apps.peoples import utils as putils
 from apps.core import utils as utils
-from django.http import JsonResponse, QueryDict, response as rp
-from django.urls import reverse
-from django.contrib import messages
+from apps.activity.forms import QsetBelongingForm
 from apps.reports import forms as rp_forms
-from django.shortcuts import redirect
 from datetime import datetime, timedelta, timezone
 import logging
-from apps.activity.forms import QsetBelongingForm
 log = logging.getLogger('__main__')
 # Create your views here.
 
@@ -22,41 +22,23 @@ class RetriveSiteReports(LoginRequiredMixin, View):
     model = am.Jobneed
     template_path = 'reports/sitereport_list.html'
 
-
     def get(self, request, *args, **kwargs):
         '''returns the paginated results from db'''
         from apps.core.raw_queries import query
-        response, requestData, objects = None, request.GET, am.Jobneed.objects.none()
-        filtered=None
+        response, requestData= None, request.GET
         if requestData.get('template'):
             return render(request, self.template_path)
         try:
-            pdt1 = datetime.now(tz=timezone.utc) - timedelta(days=7)
-            pdt2 = datetime.now(tz = timezone.utc)
-            log.info('Retrieve siteReports view')
-            pbs = om.Bt.objects.get_people_bu_list(request.user)
-            tl = am.QuestionSet.objects.get_template_list(pbs)
-            if pbs and tl: objects = self.model.objects.raw(query['sitereportlist'], [pbs, tl, pdt1, pdt2])
-            count = objects.count()
-            if count:
-                log.info('Site report objects %s retrieved from db' % (count or "No Records!"))
-                objects, filtered = utils.get_paginated_results(requestData, objects, count, self.fields,
-                [], self.model)
-            filtered=count
-            log.info('Results paginated'if count else "")
-            response = rp.JsonResponse(data = {
-                'draw':requestData['draw'], 'recordsTotal':count, 'data' : list(objects), 
-                'recordsFiltered': filtered
-            }, status=200)
+            objs = self.model.objects.get_sitereportlist(request)
+            utils.printsql(objs)
+            response = rp.JsonResponse({'data':list(objs)}, status = 200, encoder=utils.CustomJsonEncoderWithDistance)
         except Exception:
             log.critical(
-                'something went wrong', exc_info=True)
+                'something went wrong', exc_info = True)
             messages.error(request, 'Something went wrong',
                            "alert alert-danger")
             response = redirect('/dashboard')
         return response
-
-
 
 
 
@@ -80,17 +62,16 @@ class MasterReportTemplateList(LoginRequiredMixin, View):
                 log.info('Site report template objects %s retrieved from db' % (count or "No Records!"))
                 objects, filtered = utils.get_paginated_results(R, objects, count, self.fields,
                 [], self.model)
-            filtered=count
+            filtered = count
             log.info('Results paginated'if count else "")
             resp = rp.JsonResponse(data = {
                 'draw':R['draw'], 'recordsTotal':count, 'data' : list(objects), 
                 'recordsFiltered': filtered
-            }, status=200)
+            }, status = 200)
         except Exception:
-            log.critical('something went wrong', exc_info=True)
+            log.critical('something went wrong', exc_info = True)
             return redirect('/dashboard')
         return resp
-
 
 
 class MasterReportForm(LoginRequiredMixin, View):
@@ -105,28 +86,28 @@ class MasterReportForm(LoginRequiredMixin, View):
 
     def get(self, request, *args, **kwargs):
         R, resp = request.GET, None
-        utils.PD(get=R)
+        utils.PD(get = R)
         if R.get('template'):
-            #return empty form if no id
+            # return empty form if no id
             if not R.get('id'):
                 log.info("create a %s form requested"%self.viewname)
-                cxt = {'reporttemp_form': self.form_class(request=request, initial=self.initial),
+                cxt = {'reporttemp_form': self.form_class(request = request, initial = self.initial),
                        'qsetbng':self.subform()}
-                return render(request, self.template_path, context=cxt)
+                return render(request, self.template_path, context = cxt)
 
-            #return for with instance loaded
+            # return for with instance loaded
             elif R.get('id') or kwargs.get('id'):
                 import json
                 pk = R['id'] or kwargs.get('id')
-                obj = self.model.objects.get(id=pk)
+                obj = self.model.objects.get(id = pk)
                 self.initial.update({
                     'buincludes': [8,6],
                 })
-                form = self.form_class(instance = obj, initial=self.initial, request=request)
+                form = self.form_class(instance = obj, initial = self.initial, request = request)
                 cxt = {'reporttemp_form':form, 'qsetbng':self.subform()}
-                return render(request, self.template_path, context=cxt)
+                return render(request, self.template_path, context = cxt)
 
-        #return reports for list view
+        # return reports for list view
         elif R.get('get_reports'):
             resp = self.get_reports(R)
         return resp
@@ -135,24 +116,24 @@ class MasterReportForm(LoginRequiredMixin, View):
         """Handles creation of Pgroup instance."""
         log.info('%s form submitted'%self.viewname)
         R, create = QueryDict(request.POST), True
-        utils.PD(post=R)
+        utils.PD(post = R)
         response = None
-        #process already existing data for update
+        # process already existing data for update
         if pk := request.POST.get('pk', None):
             obj = utils.get_model_obj(pk, request, {'model': self.model})
             form = self.form_class(
-                request=request, instance=obj, data=request.POST)
-            create=False
+                request = request, instance = obj, data = request.POST)
+            create = False
             log.info("retrieved existing %s template:= '%s'" %
                      (obj.qsetname, obj.id))
 
-        #process new data for creation
+        # process new data for creation
         else:
-            form = self.form_class(data=request.POST, request=request, initial=self.initial)
+            form = self.form_class(data = request.POST, request = request, initial = self.initial)
             log.info("new %s submitted following is the form-data:\n%s\n" %
                      (self.viewname, pformat(form.data)))
 
-        #check for validation
+        # check for validation
         try:
             if form.is_valid():
                 response = self.process_valid_form(request, form, create)
@@ -160,9 +141,9 @@ class MasterReportForm(LoginRequiredMixin, View):
                 response = self.process_invalid_form(form)
         except Exception:
             log.critical(
-                "failed to process form, something went wrong", exc_info=True)
+                "failed to process form, something went wrong", exc_info = True)
             response = rp.JsonResponse(
-                {'errors': 'Failed to process form, something went wrong'}, status=404)
+                {'errors': 'Failed to process form, something went wrong'}, status = 404)
         return response
 
     def process_valid_form(self, request, form, create):
@@ -170,26 +151,26 @@ class MasterReportForm(LoginRequiredMixin, View):
         log.info("guard tour form processing/saving [ START ]")
         import json
         try:
-            utils.PD(cleaned=form.data)
-            report = form.save(commit=False)
+            utils.PD(cleaned = form.data)
+            report = form.save(commit = False)
             report.buincludes = json.dumps(request.POST.getlist('buincludes', []))
             report.site_grp_includes = json.dumps(request.POST.getlist('site_grp_includes', []))
             report.site_type_includes = json.dumps(request.POST.getlist('site_type_includes', []))
             report.parent_id  = -1
             report.save()
-            report = putils.save_userinfo(report, request.user, request.session, create=create)
+            report = putils.save_userinfo(report, request.user, request.session, create = create)
             log.debug("report saved:%s"%(report.qsetname))
         except Exception as ex:
-            log.critical("%s form is failed to process"%self.viewname, exc_info=True)
+            log.critical("%s form is failed to process"%self.viewname, exc_info = True)
             resp = rp.JsonResponse(
-                {'errors': "saving %s template form failed..."%self.viewname}, status=404)
+                {'errors': "saving %s template form failed..."%self.viewname}, status = 404)
             raise ex
         else:
             log.info("%s template form is processed successfully"%self.viewname)
             resp = rp.JsonResponse({'msg': report.qsetname,
                 'url': reverse("reports:sitereport_template_form"),
                 'id':report.id},
-                status=200)
+                status = 200)
         log.info("%s template form processing/saving [ END ]"%self.viewname)
         return resp
 
@@ -199,8 +180,7 @@ class MasterReportForm(LoginRequiredMixin, View):
         cxt = {"errors": form.errors}
         log.info(
             "processing invalid forms sending errors to the client [ END ]")
-        return rp.JsonResponse(cxt, status=404)
-
+        return rp.JsonResponse(cxt, status = 404)
 
     def get_reports(self, R):
         qset,count = [], 0
@@ -213,11 +193,10 @@ class MasterReportForm(LoginRequiredMixin, View):
         resp = {
             'data':list(qset)
         }
-        return JsonResponse(data=resp, status=200)
-
+        return JsonResponse(data = resp, status = 200)
 
 class MasterReportBelonging(LoginRequiredMixin, View):
-    model=am.QuestionSet
+    model = am.QuestionSet
     def get(self, request, *args, **kwargs):
         R = request.GET
         if R.get('dataSource') == 'sitereporttemplate'  and R.get('parent'):
@@ -241,7 +220,6 @@ class SiteReportTemplateForm(MasterReportForm):
     form_class    = rp_forms.SiteReportTemplate
     initial.update({'type':am.QuestionSet.Type.SITEREPORTTEMPLATE})
 
-
 class IncidentReportTemplateForm(MasterReportForm):
     template_path = MasterReportForm.template_path
     form_class    = MasterReportForm.form_class
@@ -255,18 +233,263 @@ class IncidentReportTemplateForm(MasterReportForm):
 
 
 
-
-
 class SiteReportTemplate(MasterReportTemplateList):
     type          = MasterReportTemplateList.type
     template_path = MasterReportTemplateList.template_path
     type          = am.QuestionSet.Type.SITEREPORTTEMPLATE
     template_path = 'reports/sitereport_template_list.html'
 
-
 class IncidentReportTemplate(MasterReportTemplateList):
     type          = MasterReportTemplateList.type
     template_path = MasterReportTemplateList.template_path
     type          = am.QuestionSet.Type.INCIDENTREPORTTEMPLATE
     template_path = 'reports/incidentreport_template_list.html'
+
+
+class ConfigSiteReportTemplate(LoginRequiredMixin, View):
+    params = {
+        'template_form': "reports/sitereport_tempform.html",
+        'template_list': 'reports/sitereport_template_list.html',
+        "model":am.QuestionSet,
+        'form_class':rp_forms.SiteReportTemplate,
+        "initial":{
+            'type':am.QuestionSet.Type.SITEREPORTTEMPLATE
+        },
+        'related':[],
+        'fields':['id', 'qsetname', 'enable']
+    }
+
+    def get(self, request, *args, **kwargs):
+        R, P = request.GET, self.params
+        ic(R)
+        if R.get('template'):return render(request, P['template_list'])
+
+        if R.get('action') == 'list':
+            objs =  P['model'].objects.get_configured_sitereporttemplates(
+                    P['related'], P['fields'],P['initial']['type']
+                )
+            return rp.JsonResponse({'data':list(objs)}, status = 200)
+        
+        elif R.get('action') == 'form':
+            cxt = {'reporttemp_form':P['form_class'](initial = P['initial'], request = request), 'test':rp_forms.TestForm}
+            return render(request, P['template_form'], cxt)
+
+        elif R.get('action') =='loadQuestions':
+            qset =  am.Question.objects.questions_of_client(request, R)
+            return rp.JsonResponse({'items':list(qset), 'total_count':len(qset)}, status = 200)
+        
+        elif R.get('action') == 'get_sections':
+            parent_id = 0 if R['parent_id'] == 'undefined' else R['parent_id']
+            qset = P['model'].objects.get_qset_with_questionscount(parent_id)
+            return rp.JsonResponse({'data':list(qset)}, status=200)
+        
+        elif R.get('action') == 'delete' and R.get('id') not in [None, 'None']:
+            P['model'].objects.filter(id=R['id']).update(enable=False)
+            log.info(f'site report template with this id : {R["id"]} is deleted')
+            return rp.JsonResponse(data={},status=200)
+        
+        elif R.get('id'):
+            obj = utils.get_model_obj(R['id'], request, {'model': P['model']})
+            cxt = {'reporttemp_form':P['form_class'](instance=obj, request = request), 'test':rp_forms.TestForm}
+            return render(request, P['template_form'], cxt)
+        
+        
+         
+    
+    def post(self, request, *args, **kwargs):
+        R, P = request.POST, self.params
+        try:
+            data = QueryDict(request.POST['formData'])
+            if pk := request.POST.get('pk', None):
+                ic(pk)
+                msg = "site report template updated successfully"
+                form = utils.get_instance_for_update(
+                    data, P, msg, int(pk), {'request':request})
+                create = False
+            else:
+                form = P['form_class'](data, request = request)
+            if form.is_valid():
+                resp = self.handle_valid_form(form, request, data)
+            else:
+                cxt = {'errors': form.errors}
+                resp = utils.handle_invalid_form(request, P, cxt)
+        except Exception:
+            resp = utils.handle_Exception(request)
+        return resp
+    
+    def handle_valid_form(self, form, request, data):
+        try:
+            with transaction.atomic(using=utils.get_current_db_name()):
+                template = form.save()
+                template.parent_id = data.get('parent_id', 1)
+                template = putils.save_userinfo(template, request.user, request.session)
+                return rp.JsonResponse({'parent_id':template.id}, status=200)
+        except Exception:
+            return utils.handle_Exception(request)
+        
+        
+class ConfigIncidentReportTemplate(LoginRequiredMixin, View):
+    params = {
+        'template_form': "reports/incidentreport_tempform.html",
+        'template_list': 'reports/incidentreport_template_list.html',
+        "model":am.QuestionSet,
+        'form_class':rp_forms.SiteReportTemplate,
+        "initial":{
+            'type':am.QuestionSet.Type.INCIDENTREPORTTEMPLATE
+        },
+        'related':[],
+        'fields':['id', 'qsetname', 'enable']
+    }
+
+    def get(self, request, *args, **kwargs):
+        R, P = request.GET, self.params
+        ic(R)
+        if R.get('template'):return render(request, P['template_list'])
+
+        if R.get('action') == 'list':
+            objs =  P['model'].objects.get_configured_sitereporttemplates(
+                    P['related'], P['fields'], P['initial']['type']
+                )
+            return rp.JsonResponse({'data':list(objs)}, status = 200)
+        
+        elif R.get('action') == 'form':
+            cxt = {'reporttemp_form':P['form_class'](initial = P['initial'], request = request), 'test':rp_forms.TestForm}
+            return render(request, P['template_form'], cxt)
+
+        elif R.get('action') =='loadQuestions':
+            qset =  am.Question.objects.questions_of_client(request, R)
+            return rp.JsonResponse({'items':list(qset), 'total_count':len(qset)}, status = 200)
+        
+        elif R.get('action') == 'get_sections':
+            parent_id = 0 if R['parent_id'] == 'undefined' else R['parent_id']
+            qset = P['model'].objects.get_qset_with_questionscount(parent_id)
+            return rp.JsonResponse({'data':list(qset)}, status=200)
+        
+        elif R.get('action') == 'delete' and R.get('id') not in [None, 'None']:
+            P['model'].objects.filter(id=R['id']).update(enable=False)
+            log.info(f'site report template with this id : {R["id"]} is deleted')
+            return rp.JsonResponse(data={},status=200)
+        
+        elif R.get('id'):
+            obj = utils.get_model_obj(R['id'], request, {'model': P['model']})
+            cxt = {'reporttemp_form':P['form_class'](instance=obj, request = request), 'test':rp_forms.TestForm}
+            return render(request, P['template_form'], cxt)
+        
+        
+         
+    
+    def post(self, request, *args, **kwargs):
+        R, P = request.POST, self.params
+        try:
+            data = QueryDict(request.POST['formData'])
+            if pk := request.POST.get('pk', None):
+                ic(pk)
+                msg = "incident report template updated successfully"
+                form = utils.get_instance_for_update(
+                    data, P, msg, int(pk), {'request':request})
+                create = False
+            else:
+                form = P['form_class'](data, request = request)
+            if form.is_valid():
+                resp = self.handle_valid_form(form, request, data)
+            else:
+                cxt = {'errors': form.errors}
+                resp = utils.handle_invalid_form(request, P, cxt)
+        except Exception:
+            resp = utils.handle_Exception(request)
+        return resp
+    
+    def handle_valid_form(self, form, request, data):
+        try:
+            with transaction.atomic(using=utils.get_current_db_name()):
+                template = form.save()
+                template.parent_id = data.get('parent_id', 1)
+                template = putils.save_userinfo(template, request.user, request.session)
+                return rp.JsonResponse({'parent_id':template.id}, status=200)
+        except Exception:
+            return utils.handle_Exception(request)
+
+
+
+class ConfigWorkPermitReportTemplate(LoginRequiredMixin, View):
+    params = {
+        'template_form': "reports/workpermitreport_tempform.html",
+        'template_list': 'reports/workpermitreport_template_list.html',
+        "model":am.QuestionSet,
+        'form_class':rp_forms.SiteReportTemplate,
+        "initial":{
+            'type':am.QuestionSet.Type.WORKPERMITTEMPLATE
+        },
+        'related':[],
+        'fields':['id', 'qsetname', 'enable']
+    }
+
+    def get(self, request, *args, **kwargs):
+        R, P = request.GET, self.params
+        ic(R)
+        if R.get('template'):return render(request, P['template_list'])
+
+        if R.get('action') == 'list':
+            objs =  P['model'].objects.get_configured_sitereporttemplates(
+                    P['related'], P['fields'], P['initial']['type']
+                )
+            return rp.JsonResponse({'data':list(objs)}, status = 200)
+        
+        elif R.get('action') == 'form':
+            cxt = {'reporttemp_form':P['form_class'](initial = P['initial'], request = request), 'test':rp_forms.TestForm}
+            return render(request, P['template_form'], cxt)
+
+        elif R.get('action') =='loadQuestions':
+            qset =  am.Question.objects.questions_of_client(request, R)
+            return rp.JsonResponse({'items':list(qset), 'total_count':len(qset)}, status = 200)
+        
+        elif R.get('action') == 'get_sections':
+            parent_id = 0 if R['parent_id'] == 'undefined' else R['parent_id']
+            qset = P['model'].objects.get_qset_with_questionscount(parent_id)
+            return rp.JsonResponse({'data':list(qset)}, status=200)
+        
+        elif R.get('action') == 'delete' and R.get('id') not in [None, 'None']:
+            P['model'].objects.filter(id=R['id']).update(enable=False)
+            log.info(f'site report template with this id : {R["id"]} is deleted')
+            return rp.JsonResponse(data={},status=200)
+        
+        elif R.get('id'):
+            obj = utils.get_model_obj(R['id'], request, {'model': P['model']})
+            cxt = {'reporttemp_form':P['form_class'](instance=obj, request = request), 'test':rp_forms.TestForm}
+            return render(request, P['template_form'], cxt)
+        
+        
+         
+    
+    def post(self, request, *args, **kwargs):
+        R, P = request.POST, self.params
+        try:
+            data = QueryDict(request.POST['formData'])
+            if pk := request.POST.get('pk', None):
+                ic(pk)
+                msg = f'{self.label}_view'
+                form = utils.get_instance_for_update(
+                    data, P, msg, int(pk))
+                create = False
+            else:
+                form = P['form_class'](data, request = request)
+            if form.is_valid():
+                resp = self.handle_valid_form(form, request, data)
+            else:
+                cxt = {'errors': form.errors}
+                resp = utils.handle_invalid_form(request, P, cxt)
+        except Exception:
+            resp = utils.handle_Exception(request)
+        return resp
+    
+    def handle_valid_form(self, form, request, data):
+        try:
+            with transaction.atomic(using=utils.get_current_db_name()):
+                template = form.save()
+                template.parent_id = data.get('parent_id', 1)
+                template = putils.save_userinfo(template, request.user, request.session)
+                return rp.JsonResponse({'parent_id':template.id}, status=200)
+        except Exception:
+            return utils.handle_Exception(request)
+        
 
