@@ -26,7 +26,7 @@ def get_service_requirements(R):
         waypoints=[]
         for i in range(1, len(R)-1):
             lat, lng = R[i]['cplocation'].coords[1], R[i]['cplocation'].coords[0]
-            waypoints.append(
+            waypoints.append(   
                 {"lat":lat, "lng":lng}
             )
         return startp, endp, waypoints
@@ -82,9 +82,9 @@ def reversedFPoints(DDE, data, breaktime):
 def calculate_route_details(R, job):
     data = R
     import googlemaps
-    from django.conf import settings
     gmaps = googlemaps.Client(key='AIzaSyDVbA53nxHKUOHdyIqnVPD01aOlTitfVO0')
     startpoint, endpoint, waypoints = get_service_requirements(data)
+    directions = gmaps.directions(mode='driving', waypoints = waypoints, origin=startpoint, destination= endpoint, optimize_waypoints = True)
     directions = gmaps.directions(mode='driving', waypoints = waypoints, origin=startpoint, destination= endpoint, optimize_waypoints = True)
     waypoint_order = directions[0]["waypoint_order"]
     freq, breaktime = job.other_info['tour_frequency'], job.other_info['breaktime']
@@ -393,8 +393,8 @@ def insert_into_jn_and_jnd(job, DT, resp):
             crontype = job['identifier']
             jobstatus = 'ASSIGNED'
             jobtype = 'SCHEDULE'
-            assignee = job.pgroup.groupname if job['people_id'] == 1 else job.people.peoplename
-            jobdesc = f'{job["jobname"]} :: {assignee}'
+            #assignee = job.pgroup.groupname if job['people_id'] == 1 else job.people.peoplename
+            jobdesc = f'{job["jobname"]} :: {job["jobdesc"]}'
             asset = am.Asset.objects.get(id = job['asset_id'])
             multiplication_factor = asset.asset_json['multifactor']
             mins = pdtz = edtz = people = jnid = None
@@ -511,7 +511,7 @@ def insert_into_jnd(qsb, job, jnid):
     log.info("insert_into_jnd() [END]")
 
 def extract_seq(R):
-    return [r.seqno for r in R]
+    return [r['seqno'] for r in R]
 
 
 def check_sequence_of_prevjobneed(job, current_seq):
@@ -542,7 +542,7 @@ def create_child_tasks(job, _pdtz, _people, jnid, _jobstatus, _jobtype):
                   '_people':_people, '_jobstatus':_jobstatus, '_jobtype':_jobtype,
                   'm_factor':None, 'idx':None, 'NONE_P':NONE_P}
         
-        if job.other_info['is_randomized'] in ['True', True] and len(R) > 1:
+        if job['other_info']['is_randomized'] in ['True', True] and len(R) > 1:
             #randomize data if it is random tour job
             L = list(R)
             while True:
@@ -554,20 +554,20 @@ def create_child_tasks(job, _pdtz, _people, jnid, _jobstatus, _jobtype):
             
             
         for idx, r in enumerate(R):
-            log.info(f"create_child_tasks() [{idx}] child job:= {r['jobname']} | job:= {r.id} | cron:= {r['cron']}")
+            log.info(f"create_child_tasks() [{idx}] child job:= {r['jobname']} | job:= {r['id']} | cron:= {r['cron']}")
 
             asset = am.Asset.objects.get(id = r['asset_id'])
             params['m_factor'] = asset.asset_json['multifactor']
-            _assetname = asset.assetname if r['identifier'] == 'INTERNALTOUR' else r.qset.qsetname
+            _assetname = asset.assetname if r['identifier'] == 'INTERNALTOUR' else r['qset__qsetname']
 
-            mins = job['planduration'] + r.expirytime + job['gracetime']
-            params['_people'] = r.people_id
+            mins = job['planduration'] + r['expirytime'] + job['gracetime']
+            params['_people'] = r['people_id']
             params['_jobdesc'] = f"{_assetname} :: {r['jobname']}"
             if idx == 0:
                 pdtz = params['pdtz'] = prev_edtz
             else:
                 pdtz = params['pdtz'] = prev_edtz - \
-                    timedelta(minutes = r.expirytime + job['gracetime'])
+                    timedelta(minutes = r['expirytime'] + job['gracetime'])
             edtz = params['edtz'] = pdtz + timedelta(minutes = mins)
             prev_edtz = edtz
             params['idx'] = idx
@@ -674,7 +674,7 @@ def send_email_notication(err):
 
 def del_job(id):
     log.info("deleting old jobs start[+]")
-    jobs = am.Job.objects.filter(parent_id__in = [id]).exclude(id=1).values_list(named=True)
+    jobs = am.Job.objects.filter(parent_id__in = [id]).exclude(id=1).values()
     jobids = [job['id'] for job in jobs]
     #update jobneedetails and jobneed
     olddate = datetime(1970, 1, 1, 0, 0, 0, tzinfo=timezone.utc)

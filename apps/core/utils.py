@@ -1097,3 +1097,13 @@ def upload(request):
     del ownerid, isDefault, foldertype, attachmenttype
     del expanduser, parser, os
     return isUploaded, str(filename), str(filepath), str(docnumber)
+
+class JobFields(object):
+    fields = [
+        'id', 'jobname', 'jobdesc', 'geofence_id', 'cron',
+        'expirytime', 'identifier', 'cuser_id', 'muser_id',
+        'pgroup_id', 'sgroup_id','ticketcategory_id', 'frequency',
+        'starttime', 'endtime', 'seqno', 'ctzoffset', 'people_id',
+        'asset_id', 'parent_id', 'scantype', 'planduration', 'fromdate',
+        'uptodate', 'priority', 'lastgeneratedon', 'qset_id', 'qset__qsetname',
+        'asset__assetname', 'other_info', 'gracetime', 'cdtz', 'mdtz']

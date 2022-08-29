@@ -517,10 +517,18 @@ $(document).ready(() => {
      //toggle people and pgroup field based on radio button value
     if ('{{schdexternaltourform.instance.id}}' === 'None') {
         showHideSelectField('PEOPLE')
+        
     }else{
         checkDirectionsSaved2()
         var assignto = '{{schdexternaltourform.instance.people }}' == 'None' ? "GROUP" : "PEOPLE"
         showHideSelectField(assignto)
+        if($("#id_israndom").is(":checked")){
+            enableFields("#id_tourfrequency, #id_breaktime")
+            disableFields(".non-random")
+            isRouteSaved=true
+        }else{
+            disableFields("#id_tourfrequency, #id_breaktime")
+        }
     }
 
     $(".btdeciders").change(function() {
@@ -530,11 +538,10 @@ $(document).ready(() => {
         
         if($("#id_israndom").is(":checked")){
             enableFields("#id_tourfrequency, #id_breaktime")
-            disableFields()
         }else{disableFields("#id_tourfrequency, #id_breaktime")}
     })
 
-    disableFields("#id_tourfrequency, #id_breaktime")
+    
 
     
 

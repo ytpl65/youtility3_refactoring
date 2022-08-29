@@ -629,11 +629,11 @@ def run_internal_tour_scheduler(request):
         
     ):
         #check if it is random external tour
-        if jobs[0].other_info['is_randomized'] in [True, 'true'] and R.get('action')=='saveCheckpoints':
+        if jobs[0]['other_info']['is_randomized'] in [True, 'true'] and R.get('action')=='saveCheckpoints':
             ic(dir(jobs[0]))
             #save checkpoints
             checkpoints =  json.loads(R.get('checkpoints'))
-            am.Job.objects.filter(parent_id = jobs[0].id).delete()
+            am.Job.objects.filter(parent_id = jobs[0]['id']).delete()
             log.info("saving checkpoints startted...")
             for cp in checkpoints:
                 obj = am.Job.objects.create(
@@ -1578,7 +1578,7 @@ class ExternalTourScheduling(LoginRequiredMixin, View):
         # return resp to populate the sites from sitgroup 
         elif R.get('action') == "get_sitesfromgroup":
             if R['id'] == 'None': return rp.JsonResponse({'data':[]}, status = 200)
-            job = utils.get_model_obj(int(R['id']), request, P)
+            job = am.Job.objects.filter(id = int(R['id'])).values()[0]
             objs = pm.Pgbelonging.objects.get_sitesfromgroup(job)
             return rp.JsonResponse({'data':list(objs)}, status = 200)
         
@@ -1640,7 +1640,7 @@ class ExternalTourScheduling(LoginRequiredMixin, View):
         try:
             #ic(checkpoints)
             job = am.Job.objects.filter(id = int(R['parent_id'])).values()[0]
-            P['model'].objects.filter(parent_id = job.id).delete()
+            P['model'].objects.filter(parent_id = job['id']).delete()
             count=0
             for cp in checkpoints:
                 ic(cp)

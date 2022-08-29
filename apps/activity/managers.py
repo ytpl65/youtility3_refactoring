@@ -568,7 +568,7 @@ class JobManager(models.Manager):
         return qset or self.none()
 
     def get_sitecheckpoints_exttour(self, job):
-
+        ic(job)
         qset = self.annotate(
             qsetid = F('qset_id'), assetid = F('asset_id'),
             jobid = F('id'), gpslocation = AsGeoJSON('bu__gpslocation'),
@@ -578,7 +578,8 @@ class JobManager(models.Manager):
             duration = Value(None, output_field=models.CharField(null=True)),
             qsetname=F('qset__qsetname')
             
-        ).filter(parent_id=job.id).select_related('asset', 'qset',).values(
+        ).filter(parent_id=job['id']).select_related('asset', 'qset',).values(
+            'id',
             'breaktime', 'distance', 'starttime', 'expirytime',
             'qsetid', 'jobid', 'assetid', 'seqno', 'jobdesc',
             'buname', 'buid', 'gpslocation', 'endtime', 'duration',
