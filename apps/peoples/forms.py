@@ -5,7 +5,6 @@ from django.db.models import Q
 
 import apps.peoples.models as pm  # people-models
 import apps.onboarding.models as om  # onboarding-models
-from icecream import ic
 from django_select2 import forms as s2forms
 from apps.core import utils
 
@@ -29,7 +28,6 @@ class LoginForm(forms.Form):
 
     def clean_username(self):
         import re
-        from .utils import validate_emailadd, validate_mobileno
         if val := self.cleaned_data.get('username'):
             # ic('username', val)
             # email_regex = r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b'

@@ -1,4 +1,3 @@
-from pickle import TRUE
 from .base_settings import *
 
 DEBUG = True

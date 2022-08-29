@@ -1,7 +1,6 @@
 from datetime import datetime
 from django.db import models
 from django.db.models import Q, F
-import apps.onboarding.models as om
 import apps.peoples.models as pm
 from apps.core import utils
 
