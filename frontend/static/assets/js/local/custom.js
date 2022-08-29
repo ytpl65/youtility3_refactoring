@@ -48,23 +48,23 @@ function removeRequiredAttr(cls){
       $("#id_options, #id_alerton").prop("required", true)
       $("label[for='id_options'], label[for='id_alerton']").addClass("required")
       
-      console.log("numeric are not required")
+      
   }else if(cls === 'optionGrp'){
       $("#id_options, #id_alerton").prop("required", false)
       $("#id_options").prev().prop("required",false)
       $("#id_min, #id_max").prop("required", true)
       $("label[for='id_min'], label[for='id_max']").addClass("required")
-      console.log("optionGRp is not required")
+      
   }else{
     $("#id_options, #id_alerton, #id_min, #id_max").prop("required", false)
-    console.log("all are not required")
+    
   }
 }
 
 function showHideFields(selected){
     if(typeof selected!=="undefined"){
     var selectedText = selected.toUpperCase();
-    console.log("selectedText", selectedText)
+    
     if(selectedText.toUpperCase() === 'NUMERIC'){
         $(".numeric").show()
         $('.optionGrp').hide()
@@ -125,8 +125,8 @@ function handle_rendering_of_menus(session) {
     for (var i = 0; i < caps.length; i++) {
       parent = caps[i][0];
       childs = caps[i][1];
-      console.log("parent", parent)
-      console.log("childs", childs)
+      
+      
       
       if(parent.startsWith("CONFIG_") || parent.startsWith("CONFIG")){
         first_show_parent(exceptions['config'])
@@ -138,7 +138,7 @@ function handle_rendering_of_menus(session) {
       parent = parent.replace(" ", "_");
       //creating parent id
       parent_id = "#".concat(parent.toLowerCase());
-      console.log("parent", parent_id);
+      
       //first show the parent
       $(parent_id).show();
       
@@ -150,7 +150,7 @@ function handle_rendering_of_menus(session) {
       for (var j = 0; j < childs.length; j++) {
         child = childs[j][0];
         child_id = "#".concat(child.toLowerCase());
-        console.log("child", child_id);
+        
         $(child_id).show();
       }
     }
@@ -185,7 +185,7 @@ function handle_alerts_msgs(msg, alertype){
 
 function display_form_errors(errors) {
   /*display errors on respective fields*/
-  console.log("started")
+  
   $('p.errors').remove();
   if (errors instanceof String){
     display_non_field_errors([errors])
@@ -201,7 +201,7 @@ function display_form_errors(errors) {
         handle_alerts_msgs("Please resolve the following errors!", "alert alert-danger")
         $(field).addClass("is-invalid")
         $(error).insertAfter(field);
-        console.log("inserted")
+        
         $(field).next("p").css(
           {"color":"red", "font-size":"15px"}
           );
@@ -295,7 +295,7 @@ function show_alert_before_update_jn(data){
 function display_non_field_errors(errors){
   $("#nonfield_errors").hide()
   var errstr = errors[0]
-  console.log(errstr)
+  
   $("#nonfield_errors").show()
   $("#nonfield_errors > span").text(errstr)
 }
@@ -337,9 +337,9 @@ function fire_ajax_form_post(params, payload){
     type:"post",
     data:payload
   }).fail((xhr, status, error) =>{
-    console.log(xhr)
-    console.log(status)
-    console.log(error)
+    
+    
+    
     if(typeof(xhr.responseJSON.errors) === 'object' || typeof(xhr.responseJSON.errors) === 'string'){
       if(params.modal === true){
         display_modelform_errors(xhr.responseJSON.errors)
@@ -367,17 +367,17 @@ function request_ajax_form_delete(params){
     url:params['url'],
     type:"get",
   }).fail((xhr, status, error) =>{
-    console.log(xhr)
-    console.log(status)
-    console.log(error)
+    
+    
+    
     display_form_errors(xhr.responseJSON.errors)
   }).done((data, status, xhr) => {
       //hide modal
       $(params.modal_id).modal('hide');
       $(params.formid).html(data.html)
-    console.log(data)
-    console.log(status)
-    console.log(xhr)
+    
+    
+    
     handle_alerts_msgs(data.success, "alert alert-success")
 
   })
@@ -387,8 +387,8 @@ function request_ajax_form_delete(params){
 
 
 function auto_select_the_newly_created(field_id, data) {
-  console.log("called");
-  console.log(data);
+  
+  
   //remove errors text if there are any
   if($(".input-grp > p").length>0){
     $(".input-grp .form-control, .input-grp select").removeClass("is-invalid")
@@ -414,9 +414,9 @@ function sumit_popup_form(param) {
       url: param["url"],
       data: $(param["form"]).serialize(),
       success: function (data, status, xhr) {
-        console.log("data:", data);
+        
         if (data["saved"] != true) {
-          console.log("errors occured");
+          
           display_form_errors(data["errors"]);
         } else {
           auto_select_the_newly_created(param["field"], data);
@@ -443,15 +443,15 @@ const wizardOpenedFromDraft = {
   html: "<h6>Wizard opened from draft</h6>",
 };
 
-console.log("session", session);
+
 
 const check_if_form_in_draft = (callback) => {
-  console.log("check_if_form_in_draft is initiated....");
+  
   $.ajax({
     url: WizardViewUrl,
     type: "get",
     success: function (data, status, xhr) {
-      console.log(`reponse:data = ${data} status = ${status} xhr=${xhr}`);
+      
       callback(data);
     },
   });
@@ -470,11 +470,11 @@ const deniedDraft = (callback) => {
 };
 
 const get_the_wizard = (response) => {
-  console.log(`get the wizard: ${response.url}`);
+  
   Swal.fire(wizardOpenedFromDraft).then(() => {
     window.location.href = response.url;
   });
-  console.log("wizard continued from previous stage");
+  
 };
 
 const saveAsDraft = (toquit = false, callback) => {
@@ -503,7 +503,7 @@ const delete_from_draft = (callback) => {
     url: deleteFromDraftUrl,
     type: "get",
     success: function (res) {
-      console.log("res", res);
+      
       callback(res);
     },
   });
@@ -542,20 +542,20 @@ function performIntersection(arr1, arr2){
 }
 
 function load_alerton_field(optionsData, selected, id){
-  console.log(optionsData.length, optionsData)
+  
   $(id).empty();
   for(let i=0; i<optionsData.length; i++){
       var data = {id:optionsData[i], text:optionsData[i]}
       var opt  = new Option(data.text, data.id, false, false)
       $(id).append(opt).trigger('change');
-      console.log(i, opt)
+      
   }
   $(id).val(selected).trigger('change');
 }
 
 
 function initialize_alerton_field(_optionsData, alertonData, questype, cleaned, id){
-  console.log(_optionsData, typeof _optionsData, alertonData)
+  
   _optionsData = _optionsData.length ? _optionsData.split(",") : ""
   optionsData  = []
   if(!cleaned && _optionsData !== ""){
@@ -563,13 +563,13 @@ function initialize_alerton_field(_optionsData, alertonData, questype, cleaned, 
     _optionsData.forEach((item) => {
     optionsData.push(item.value)
 })
-console.log("not cleaned")}else{optionsData = _optionsData
-console.log("cleaned")}
-  console.log(optionsData, alertonData)
+}else{optionsData = _optionsData
+}
+  
   if(optionsData.length && alertonData.length){
   alertonData = alertonData.split(",")
   let selected = performIntersection(optionsData, alertonData)
-  console.log(selected)
+  
   load_alerton_field(optionsData, selected, id)
 }
 
@@ -685,12 +685,12 @@ function validate_alertonField() {
 //collect qsetblng data for insertion in 
 //table -> "List of Assigned Questions"
 function get_question_formdata() {
-  console.log("Getting question formdata ")
+  
   var formData = {}
 
   formData['id_slno'] = $("#id_slno").val()
   formData['id_answertype'] = $("#id_answertype").val()
-  console.log("check ", $("#id_alerton").val())
+  
   formData['id_alerton'] = typeof $("#id_alerton").val() !== "undefined" ? $("#id_alerton").val() : ""
   formData['id_alertbelow'] = $("#id_alertbelow").val()
   formData['id_alertabove'] = $("#id_alertabove").val()
@@ -699,12 +699,12 @@ function get_question_formdata() {
   formData['id_ismandatory'] = $("#id_ismandatory").is(":checked")
   formData['id_question'] = getSelectedValue("#id_question")
   formData['question_id'] = $("#id_question").val()
-  console.log("check ", $("#id_options").val())
+  
   formData['id_options'] = $("#id_options").val() !== "" ? JSON.parse($("#id_options").val()) : ""
   //formData['id_question']      = getSelectedValue("#id_question")
 
   $("#id_alerton").empty();
-  console.log("formData", formData)
+  
   return formData
 }
 function cleanOptionsField(tag){
@@ -721,7 +721,7 @@ function cleanOptionsField(tag){
 //"List of Assigned Questions"
 function cleanData(data) {
   //clean options
-  console.log('cleanData started')
+  
   if (data.id_options !== "") {
       var options = []
       data.id_options.forEach((ele) => {
@@ -748,13 +748,13 @@ function cleanData(data) {
       data.id_min = data.id_max = '0.0'
       data.id_alerton = []
   }
-  console.log("cleaned Data", data)
+  
   return data
 }
 
 function adjust_above_below(data, for_table = false) {
-  console.log("adjust_above_below", data)
-  console.log(data.id_alertbelow, data.id_alertabove)
+  
+  
   if (typeof data.id_alertbelow !== "undefined" || typeof data.id_alertabove !== "undefined" && for_table) {
       data.id_alerton = `<${data.id_alertbelow}, >${data.id_alertabove}`
       return data
@@ -777,7 +777,7 @@ function resetForm(tag_field) {
 //updates options in options field of questionform
 function update_options_field(data, optionTag) {
   optionTag.removeAllTags()
-  console.log($("#id_options").val() !== "" ? JSON.parse(data) : "")
+  
   optionTag.addTags(data !== "" ? data.split(",") : "")
 }
 
@@ -793,7 +793,7 @@ function update_qsetblng_form(data, optionTag, fortable = false) {
   $("#id_ismandatory").attr("checked", data[8])
   adjust_above_below(data[7], fortable)
   $("#resetQsetB").show()
-  console.log("while updating", data.id_alertbelow, data.id_alertabove)
+  
   //$("#id_alertbelow").val(data.id_alertbelow)
   //$("#id_alertabove").val(data.id_alertabove)
 
@@ -802,9 +802,9 @@ function update_qsetblng_form(data, optionTag, fortable = false) {
 //checks duplicates before inserting into 
 //datatable -> "List of Assigned Questions" 
 function check_for_duplicates(table, dataToInsert) {
-  console.log("check_for_duplicates [start]")
+  
   var tableData = table.rows().data().toArray();
-  console.log(tableData)
+  
   for (var row in tableData) {
       if (tableData[row][1] === dataToInsert[1]) {
           return true
@@ -814,20 +814,20 @@ function check_for_duplicates(table, dataToInsert) {
 }
 //process the valid form
 function processValidForm() {
-  console.log("processing valid form")
+  
   data = get_question_formdata()
-  console.log("Getting question formdata [END]")
+  
   data = cleanData(data)
-  console.log('cleanData started [ENDED]')
+  
   rowdata = [
       -1, data.id_question, data.question_id, data.id_answertype, data.id_min,
       data.id_max, data.id_options, data.id_alerton, data.id_ismandatory
   ]
   table.row('.toupdate').remove().draw(false);
-  console.log(typeof table)
+  
   isduplicate = check_for_duplicates(table, rowdata)
-  console.log("check_for_duplicates [start]")
-  console.log("Is Duplicated ", isduplicate)
+  
+  
   if (!isduplicate) {
       table.row.add(rowdata).draw()
       resetForm(optionTag)
@@ -869,7 +869,7 @@ function checkQsetWoQuestions(table) {
 }
 
 function questionsWoQuestionSetAlert() {
-  console.log("fired already")
+  
   return show_error_alert(
       'You have not submitted any Questions yet, for this Question Set.',
       title = "QuestionSet Without Questions"
@@ -893,7 +893,7 @@ function getSlnoFromTable(){
 }
 
 function adjustSlnoInTable(){
-  console.log("rows adjsuting")
+  
   var tableData = table.rows().data().toArray();
   table.rows().remove().draw();
   var seq = 0
@@ -902,7 +902,7 @@ function adjustSlnoInTable(){
       tableData[row][0] = seq
   }
   table.rows.add(tableData).draw()
-  console.log("rows adjusted")
+  
 }
 
 //Autoadjust seqno
@@ -1054,29 +1054,25 @@ function initDateRange(element){
 //=============================== DOCUMENT READY =============================//
 $(document).ready(() => {
   $("#client_onboarding").click((e) => {
-    console.log("menu clicked");
+    
     e.preventDefault();
     check_if_form_in_draft((response) => {
       if (response.draft) {
-        console.log("wizard found in draft");
+        
         //open popup options
         Swal.fire(openWizardConfig).then((res) => {
           //user choses open from draft
           if (res.isConfirmed) {
-            console.log("open wizard from draft requested...");
+            
             get_the_wizard(response);
           } else if (res.isDenied) {
-            console.log("open wizard from draft denied...");
+            
             //user denied open from draft
             deniedDraft((response) => {
-              console.log(
-                "open wizard from draft denied from user therefore starting a new wizard"
-              );
+              
               if (response.isgranted) {
                 window.location.href = response.url;
-                console.log(
-                  "wizard opened from start, old wizard data deleted from draft successfully"
-                );
+                
               }
             });
           }
@@ -1089,33 +1085,33 @@ $(document).ready(() => {
   });
 
   $("#save_wizard_form").click(() => {
-    console.log("save_wizard_form is clicked ...");
+    
     saveAsDraft(false, (res) => {
       if (res.saved) {
-        console.log(`Draft wizard is ${res.status}`);
+        
       } else {
-        console.log("saveAsDraft() failed to save in draft");
+        
       }
     });
-    console.log("saveAsDraft() is terminated...");
+    
   });
 
   $("#id_quitwizard").click(() => {
-    console.log("id_quitwizard clicked....");
+    
     Swal.fire(quitwizard_config).then((result) => {
       if (result.isConfirmed) {
-        console.log("save as draft requested....");
+        
         //save as draft execution
         saveAsDraft(true, (res) => {
-          console.log(`Draft wizard is ${res.status}`);
+          
           Swal.fire(wizardSavedInDraft).then((res) => {
             window.location.href = "/dashboard/";
           });
         });
       } else if (result.isDenied) {
         delete_from_draft((res) => {
-          console.log(`wizard is ${res.status}`);
-          console.log("delete wizard requested....");
+          
+          
           Swal.fire(wizardDeletedFromDraft).then(() => {
           window.location.href = deleteWizardUrl;
         });
