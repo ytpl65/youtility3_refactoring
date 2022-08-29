@@ -441,27 +441,22 @@ def insert_into_jn_and_jnd(job, DT, resp):
         return status, resp
 
 def insert_into_jn_for_parent(job, params):
-    try:
-        jn = am.Jobneed.objects.create(
-            job_id         = job['id'],                     parent            = params['NONE_JN'],
-            jobdesc        = params['jobdesc'],          plandatetime      = params['pdtz'],
-            expirydatetime = params['edtz'],             gracetime         = job['gracetime'],
-            asset_id       = job['asset_id'],               qset_id           = job['qset_id'],
-            ctzoffset      = job['ctzoffset'],              people_id         = params['people'],
-            pgroup_id      = job['pgroup_id'],              frequency         = 'NONE',
-            priority       = job['priority'],               jobstatus         = params['jobstatus'],
-            performedby    = params['NONE_P'],           jobtype           = params['jobtype'],
-            scantype       = job['scantype'],               identifier        = job['identifier'],
-            cuser_id       = job['cuser_id'],               muser_id          = job['muser_id'],
-            bu_id          = job['bu_id'],                  ticketcategory_id = job['ticketcategory_id'],
-            gpslocation    = 'POINT(0.0 0.0)',             remarks           = '',
-            seqno          = 0,                          multifactor       = params['m_factor'],
-            client_id      = job['client_id'],
-        )
-    except Exception:
-        raise
-    else:
-        return jn
+    jn = am.Jobneed.objects.create(
+        job_id         = job['id'],                     parent            = params['NONE_JN'],
+        jobdesc        = params['jobdesc'],          plandatetime      = params['pdtz'],
+        expirydatetime = params['edtz'],             gracetime         = job['gracetime'],
+        asset_id       = job['asset_id'],               qset_id           = job['qset_id'],
+        ctzoffset      = job['ctzoffset'],              people_id         = params['people'],
+        pgroup_id      = job['pgroup_id'],              frequency         = 'NONE',
+        priority       = job['priority'],               jobstatus         = params['jobstatus'],
+        performedby    = params['NONE_P'],           jobtype           = params['jobtype'],
+        scantype       = job['scantype'],               identifier        = job['identifier'],
+        cuser_id       = job['cuser_id'],               muser_id          = job['muser_id'],
+        bu_id          = job['bu_id'],                  ticketcategory_id = job['ticketcategory_id'],
+        gpslocation    = 'POINT(0.0 0.0)',             remarks           = '',
+        seqno          = 0,                          multifactor       = params['m_factor'],
+        client_id      = job['client_id'],
+    )
 
 
 
@@ -473,40 +468,34 @@ def insert_update_jobneeddetails(jnid, job, parent = False):
         am.JobneedDetails.objects.get(jobneed_id = jnid).delete()
     except am.JobneedDetails.DoesNotExist:
         pass
-    try:
-        if not parent:
-            qsb = am.QuestionSetBelonging.objects.select_related(
-                'question').filter(
-                    qset_id = job['qset_id']).order_by(
-                        'seqno').values_list(named = True)
-        else:
-            qsb = utils.get_or_create_none_qsetblng()
-        if not qsb:
-            log.error("No Checklist Found failed to schedhule job",
-                      exc_info = True)
-            raise EmptyResultSet
-        else:
-            insert_into_jnd(qsb, job, jnid)
-    except Exception:
-        raise
+    if not parent:
+        qsb = am.QuestionSetBelonging.objects.select_related(
+            'question').filter(
+                qset_id = job['qset_id']).order_by(
+                    'seqno').values_list(named = True)
+    else:
+        qsb = utils.get_or_create_none_qsetblng()
+    if not qsb:
+        log.error("No Checklist Found failed to schedhule job",
+                  exc_info = True)
+        raise EmptyResultSet
+    else:
+        insert_into_jnd(qsb, job, jnid)
     log.info("insert_update_jobneeddetails() [END]")
 
 
 
 def insert_into_jnd(qsb, job, jnid):
     log.info("insert_into_jnd() [START]")
-    try:
-        if not isinstance(qsb, am.QuestionSetBelonging):
-            qsb = qsb[0]
-        am.JobneedDetails.objects.create(
-            seqno      = qsb.seqno,      question_id = qsb.question_id,
-            answertype = qsb.answertype, max         = qsb.max,
-            min        = qsb.min,        alerton     = qsb.alerton,
-            options    = qsb.options,    jobneed_id  = jnid,
-            cuser_id   = job['cuser_id'],   muser_id    = job['muser_id'],
-            ctzoffset  = job['ctzoffset'])
-    except Exception:
-        raise
+    if not isinstance(qsb, am.QuestionSetBelonging):
+        qsb = qsb[0]
+    am.JobneedDetails.objects.create(
+        seqno      = qsb.seqno,      question_id = qsb.question_id,
+        answertype = qsb.answertype, max         = qsb.max,
+        min        = qsb.min,        alerton     = qsb.alerton,
+        options    = qsb.options,    jobneed_id  = jnid,
+        cuser_id   = job['cuser_id'],   muser_id    = job['muser_id'],
+        ctzoffset  = job['ctzoffset'])
     log.info("insert_into_jnd() [END]")
 
 def extract_seq(R):

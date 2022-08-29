@@ -41,26 +41,20 @@ def get_model_or_form(tablename):
 
 
 def get_or_create_dir(path):
-    try:
-        import os
-        created = True
-        if not os.path.exists(path):
-            os.makedirs(path)
-        else: created= False
-        return created
-    except Exception:
-        raise
+    import os
+    created = True
+    if not os.path.exists(path):
+        os.makedirs(path)
+    else: created= False
+    return created
 
 def write_file_to_dir(filebuffer, uploadedfile):
     from django.core.files.base import ContentFile
     from django.core.files.storage import default_storage
 
-    try:
-        path = default_storage.save(uploadedfile, ContentFile(filebuffer.read()))
-        log.info("file is uploaded in file system successfully...")
-        log.info(f'here is path of that file: {path}')
-    except Exception:
-        raise
+    path = default_storage.save(uploadedfile, ContentFile(filebuffer.read()))
+    log.info("file is uploaded in file system successfully...")
+    log.info(f'here is path of that file: {path}')
 
 
 
@@ -182,23 +176,19 @@ def perform_insertrecord_bgt(self, data, request = None, filebased = True, db='d
     rc, recordcount, traceback= 0, 0, 'NA'
     instance = None
     try:
-        try:
-            with transaction.atomic(using = db):
-                utils.set_db_for_router(db)
-                log.info(f"router is connected to {db}")
-                for record in data:
-                    tablename = record.pop('tablename')
-                    log.info(f'tablename: {tablename}')
-                    obj = insertrecord(record, tablename)
-                    recordcount += 1
-                    if all([tablename == 'peopleeventlog',
-                            obj.peventtype.tacode in ('CONVEYANCE', 'AUDIT'),
-                            obj.endlocation,obj.punchouttime, obj.punchintime]):
-                        log.info("save line string is started")
-                        save_linestring_and_update_pelrecord(obj)
-
-        except Exception:
-            raise
+        with transaction.atomic(using = db):
+            utils.set_db_for_router(db)
+            log.info(f"router is connected to {db}")
+            for record in data:
+                tablename = record.pop('tablename')
+                log.info(f'tablename: {tablename}')
+                obj = insertrecord(record, tablename)
+                recordcount += 1
+                if all([tablename == 'peopleeventlog',
+                        obj.peventtype.tacode in ('CONVEYANCE', 'AUDIT'),
+                        obj.endlocation,obj.punchouttime, obj.punchintime]):
+                    log.info("save line string is started")
+                    save_linestring_and_update_pelrecord(obj)
         if recordcount:
             msg = Messages.INSERT_SUCCESS
     except Exception as e:

@@ -1111,20 +1111,17 @@ class SiteGroup(LoginRequiredMixin, View):
 
     def save_assignedSites(self, pg, sitesArray, request):
         S = request.session
-        try:
-            self.resest_assignedsites(pg)
-            for site in sitesArray:
-                pgb = pm.Pgbelonging(
-                    pgroup         = pg,
-                    people_id      = 1,
-                    assignsites_id = site['buid'],
-                    client_id      = S['client_id'],
-                    bu_id          = S['bu_id'],
-                    tenant_id      = S.get('tenantid', 1)
-                )
-                putils.save_userinfo(pgb, request.user, request.session)
-        except Exception as e:
-            raise
+        self.resest_assignedsites(pg)
+        for site in sitesArray:
+            pgb = pm.Pgbelonging(
+                pgroup         = pg,
+                people_id      = 1,
+                assignsites_id = site['buid'],
+                client_id      = S['client_id'],
+                bu_id          = S['bu_id'],
+                tenant_id      = S.get('tenantid', 1)
+            )
+            putils.save_userinfo(pgb, request.user, request.session)
 
 
 
