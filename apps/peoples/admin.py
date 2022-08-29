@@ -1,7 +1,3 @@
-from urllib import response
-
-from pyparsing import col
-import apps.peoples.utils as putils
 import apps.core.utils as utils
 from apps.onboarding.admin import BaseFieldSet2
 from apps.onboarding import models as om

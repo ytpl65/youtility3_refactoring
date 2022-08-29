@@ -8,12 +8,10 @@ from django.contrib import messages
 from django.http import JsonResponse, QueryDict, response as rp
 from django.urls import reverse
 from apps.activity  import models as am
-from apps.onboarding  import models as om
 from apps.peoples import utils as putils
 from apps.core import utils as utils
 from apps.activity.forms import QsetBelongingForm
 from apps.reports import forms as rp_forms
-from datetime import datetime, timedelta, timezone
 import logging
 log = logging.getLogger('__main__')
 # Create your views here.
@@ -24,7 +22,6 @@ class RetriveSiteReports(LoginRequiredMixin, View):
 
     def get(self, request, *args, **kwargs):
         '''returns the paginated results from db'''
-        from apps.core.raw_queries import query
         response, requestData= None, request.GET
         if requestData.get('template'):
             return render(request, self.template_path)
@@ -96,7 +93,7 @@ class MasterReportForm(LoginRequiredMixin, View):
                 return render(request, self.template_path, context = cxt)
 
             # return for with instance loaded
-            elif R.get('id') or kwargs.get('id'):
+            if R.get('id') or kwargs.get('id'):
                 import json
                 pk = R['id'] or kwargs.get('id')
                 obj = self.model.objects.get(id = pk)
@@ -270,25 +267,25 @@ class ConfigSiteReportTemplate(LoginRequiredMixin, View):
                 )
             return rp.JsonResponse({'data':list(objs)}, status = 200)
         
-        elif R.get('action') == 'form':
+        if R.get('action') == 'form':
             cxt = {'reporttemp_form':P['form_class'](initial = P['initial'], request = request), 'test':rp_forms.TestForm}
             return render(request, P['template_form'], cxt)
 
-        elif R.get('action') =='loadQuestions':
+        if R.get('action') =='loadQuestions':
             qset =  am.Question.objects.questions_of_client(request, R)
             return rp.JsonResponse({'items':list(qset), 'total_count':len(qset)}, status = 200)
         
-        elif R.get('action') == 'get_sections':
+        if R.get('action') == 'get_sections':
             parent_id = 0 if R['parent_id'] == 'undefined' else R['parent_id']
             qset = P['model'].objects.get_qset_with_questionscount(parent_id)
             return rp.JsonResponse({'data':list(qset)}, status=200)
         
-        elif R.get('action') == 'delete' and R.get('id') not in [None, 'None']:
+        if R.get('action') == 'delete' and R.get('id') not in [None, 'None']:
             P['model'].objects.filter(id=R['id']).update(enable=False)
             log.info(f'site report template with this id : {R["id"]} is deleted')
             return rp.JsonResponse(data={},status=200)
         
-        elif R.get('id'):
+        if R.get('id'):
             obj = utils.get_model_obj(R['id'], request, {'model': P['model']})
             cxt = {'reporttemp_form':P['form_class'](instance=obj, request = request), 'test':rp_forms.TestForm}
             return render(request, P['template_form'], cxt)
@@ -352,25 +349,25 @@ class ConfigIncidentReportTemplate(LoginRequiredMixin, View):
                 )
             return rp.JsonResponse({'data':list(objs)}, status = 200)
         
-        elif R.get('action') == 'form':
+        if R.get('action') == 'form':
             cxt = {'reporttemp_form':P['form_class'](initial = P['initial'], request = request), 'test':rp_forms.TestForm}
             return render(request, P['template_form'], cxt)
 
-        elif R.get('action') =='loadQuestions':
+        if R.get('action') =='loadQuestions':
             qset =  am.Question.objects.questions_of_client(request, R)
             return rp.JsonResponse({'items':list(qset), 'total_count':len(qset)}, status = 200)
         
-        elif R.get('action') == 'get_sections':
+        if R.get('action') == 'get_sections':
             parent_id = 0 if R['parent_id'] == 'undefined' else R['parent_id']
             qset = P['model'].objects.get_qset_with_questionscount(parent_id)
             return rp.JsonResponse({'data':list(qset)}, status=200)
         
-        elif R.get('action') == 'delete' and R.get('id') not in [None, 'None']:
+        if R.get('action') == 'delete' and R.get('id') not in [None, 'None']:
             P['model'].objects.filter(id=R['id']).update(enable=False)
             log.info(f'site report template with this id : {R["id"]} is deleted')
             return rp.JsonResponse(data={},status=200)
         
-        elif R.get('id'):
+        if R.get('id'):
             obj = utils.get_model_obj(R['id'], request, {'model': P['model']})
             cxt = {'reporttemp_form':P['form_class'](instance=obj, request = request), 'test':rp_forms.TestForm}
             return render(request, P['template_form'], cxt)
@@ -435,25 +432,25 @@ class ConfigWorkPermitReportTemplate(LoginRequiredMixin, View):
                 )
             return rp.JsonResponse({'data':list(objs)}, status = 200)
         
-        elif R.get('action') == 'form':
+        if R.get('action') == 'form':
             cxt = {'reporttemp_form':P['form_class'](initial = P['initial'], request = request), 'test':rp_forms.TestForm}
             return render(request, P['template_form'], cxt)
 
-        elif R.get('action') =='loadQuestions':
+        if R.get('action') =='loadQuestions':
             qset =  am.Question.objects.questions_of_client(request, R)
             return rp.JsonResponse({'items':list(qset), 'total_count':len(qset)}, status = 200)
         
-        elif R.get('action') == 'get_sections':
+        if R.get('action') == 'get_sections':
             parent_id = 0 if R['parent_id'] == 'undefined' else R['parent_id']
             qset = P['model'].objects.get_qset_with_questionscount(parent_id)
             return rp.JsonResponse({'data':list(qset)}, status=200)
         
-        elif R.get('action') == 'delete' and R.get('id') not in [None, 'None']:
+        if R.get('action') == 'delete' and R.get('id') not in [None, 'None']:
             P['model'].objects.filter(id=R['id']).update(enable=False)
             log.info(f'site report template with this id : {R["id"]} is deleted')
             return rp.JsonResponse(data={},status=200)
         
-        elif R.get('id'):
+        if R.get('id'):
             obj = utils.get_model_obj(R['id'], request, {'model': P['model']})
             cxt = {'reporttemp_form':P['form_class'](instance=obj, request = request), 'test':rp_forms.TestForm}
             return render(request, P['template_form'], cxt)

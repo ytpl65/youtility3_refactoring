@@ -1,10 +1,8 @@
 #---------------------------- BEGIN client onboarding ---------------------------#
 from django.http.response import JsonResponse
-import apps.peoples.models as people_models
 import apps.peoples.views as people_views
 from . import views
 import apps.onboarding.forms as obforms
-import apps.peoples.forms as people_forms
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.decorators import login_required
 import apps.onboarding.models as ob
