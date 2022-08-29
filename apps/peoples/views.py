@@ -842,7 +842,7 @@ class PeopleView(LoginRequiredMixin, View):
             return rp.JsonResponse(data = {'data':list(objs)}, status = 200)
 
         # return cap_form empty
-        elif R.get('action', None) == 'form':
+        if R.get('action', None) == 'form':
             cxt = {'peopleform': self.params['form_class'](),
                    'pref_form': self.params['json_form'](session = request.session),
                    'ta_form': obf.TypeAssistForm(auto_id = False),
@@ -929,7 +929,7 @@ class PeopleGroup(LoginRequiredMixin, View):
             return  rp.JsonResponse(data = {'data':list(objs)})
 
         # return form empty
-        elif R.get('action', None) == 'form':
+        if R.get('action', None) == 'form':
             ic('fksnfksnfkjsdkjfsjdfkamsdfkmaskf')
             cxt = {'pgroup_form': self.params['form_class'](request = request),
                    'msg': "create people group requested"}
@@ -1022,7 +1022,7 @@ class SiteGroup(LoginRequiredMixin, View):
             return resp
 
         # to populate all sites table
-        elif R.get('action', None) == 'allsites':
+        if R.get('action', None) == 'allsites':
             objs, idfs  = Bt.objects.get_bus_idfs(R, R['sel_butype'])
 
             resp = rp.JsonResponse(data = {
@@ -1031,7 +1031,7 @@ class SiteGroup(LoginRequiredMixin, View):
             })
             return resp
 
-        elif R.get('action') == "loadSites":
+        if R.get('action') == "loadSites":
             data = Pgbelonging.objects.get_assigned_sitesto_sitegrp(R['id'])
             print(data)
             resp = rp.JsonResponse(data = {
@@ -1040,21 +1040,21 @@ class SiteGroup(LoginRequiredMixin, View):
             return resp
 
         # form without instance to create new data
-        elif R.get('action', None) == 'form':
+        if R.get('action', None) == 'form':
             # options = self.get_options()
             cxt = {'sitegrpform': self.params['form_class'](request = request),
                    'msg': "create site group requested"}
             return render(request, self.params['template_form'], context = cxt)
         
         # handle delete request
-        elif R.get('action', None) == "delete" and R.get('id', None):
+        if R.get('action', None) == "delete" and R.get('id', None):
             ic('here')
             obj = utils.get_model_obj(R['id'])
             pm.Pgbelonging.objects.filter(pgroup_id = obj.id).delete()
             return rp.JsonResponse(data = None, status = 200)
 
         # form with instance to load existing data
-        elif R.get('id', None):
+        if R.get('id', None):
             obj = utils.get_model_obj(int(R['id']), request, self.params)
             sites = pm.Pgbelonging.objects.filter(
                 pgroup = obj).values_list('assignsites', flat = True)

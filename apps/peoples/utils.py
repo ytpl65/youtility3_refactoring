@@ -318,7 +318,7 @@ def get_caps_choices(client = None, cfor = None,  session = None, people = None)
         # return choices for client form
         return get_cap_choices_for_clientform(caps, cfor)
 
-    elif session and people and client:
+    if session and people and client:
         putils.save_caps_inside_session_for_people_client(
             people, caps, session, client)
 

@@ -41,9 +41,8 @@ def get_from_cache(key):
     if data := cache.get(key):
         logger.info(f'Got from cache {key}')
         return data
-    else:
-        logger.info('Not found in cache')
-        return None
+    logger.info('Not found in cache')
+    return None
 
 def render_form(request, params, cxt):
     logger.info("%s", cxt['msg'])
@@ -486,11 +485,10 @@ def to_utc(date, format = None):
                 microsecond = 0, tzinfo = pytz.utc)
             dtlist.append(dt)
         return dtlist
-    else:
-        dt = date.astimezone(pytz.utc).replace(microsecond = 0, tzinfo = pytz.utc)
-        if format:
-            dt.strftime(format)
-        return dt
+    dt = date.astimezone(pytz.utc).replace(microsecond = 0, tzinfo = pytz.utc)
+    if format:
+        dt.strftime(format)
+    return dt
 
 # MAPPING OF HOSTNAME:DATABASE ALIAS NAME
 

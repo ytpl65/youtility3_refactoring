@@ -32,12 +32,12 @@ def insertrecord(record, tablename):
 
 def get_model_or_form(tablename):
     if tablename == 'peopleeventlog':return PeopleEventlog
-    elif tablename == 'attachment': return Attachment
-    elif tablename == 'jobneed': return Jobneed
-    elif tablename == 'jobnneeddetails': return JobneedDetails
-    elif tablename == 'deviceeventlog': return DeviceEventlog
-    elif tablename == 'ticket': return Ticket
-    elif tablename == 'asset': return Asset
+    if tablename == 'attachment': return Attachment
+    if tablename == 'jobneed': return Jobneed
+    if tablename == 'jobnneeddetails': return JobneedDetails
+    if tablename == 'deviceeventlog': return DeviceEventlog
+    if tablename == 'ticket': return Ticket
+    if tablename == 'asset': return Asset
 
 
 def get_or_create_dir(path):
@@ -92,7 +92,7 @@ def insertrecord_from_tablename(record, tablename, db):
             obj = model.objects.create(**record)
             log.info(f'the pk of the record inserted is {obj.id}')
             return obj.id
-        else: raise GraphQLError(Messages.IMPROPER_DATA)
+        raise GraphQLError(Messages.IMPROPER_DATA)
     except Exception as e:
         log.error("something went wrong!", exc_info = True)
         raise e
@@ -109,13 +109,13 @@ def call_service_based_on_filename(data, filename, db='default'):
     if filename == 'insertRecord.gz':
         log.info("calling insertrecord. service..")
         return perform_insertrecord_bgt.delay(data, db = db)
-    elif filename == 'updateTaskTour.gz':
+    if filename == 'updateTaskTour.gz':
         log.info("calling updateTaskTour service..")
         return perform_tasktourupdate_bgt.delay(data, db = db)
-    elif filename == 'uploadReport.gz':
+    if filename == 'uploadReport.gz':
         log.info("calling uploadReport service..")
         return perform_reportmutation_bgt.delay(data, db = db)
-    elif filename == 'adhocRecord.gz':
+    if filename == 'adhocRecord.gz':
         log.info("calling adhocRecord service..")
         return perform_adhocmutation_bgt.delay(data, db = db)
 
