@@ -4,7 +4,6 @@ from django.core.exceptions import ValidationError
 from django.db.models import Q
 import apps.activity.models as am
 import apps.onboarding.models as om
-import apps.peoples.models as pm
 from apps.core import utils as utils
 import apps.activity.utils as ac_utils
 import django_select2.forms as s2forms

@@ -8,12 +8,10 @@ from django.contrib import messages
 from django.http import JsonResponse, QueryDict, response as rp
 from django.urls import reverse
 from apps.activity  import models as am
-from apps.onboarding  import models as om
 from apps.peoples import utils as putils
 from apps.core import utils as utils
 from apps.activity.forms import QsetBelongingForm
 from apps.reports import forms as rp_forms
-from datetime import datetime, timedelta, timezone
 import logging
 log = logging.getLogger('__main__')
 # Create your views here.
@@ -24,7 +22,6 @@ class RetriveSiteReports(LoginRequiredMixin, View):
 
     def get(self, request, *args, **kwargs):
         '''returns the paginated results from db'''
-        from apps.core.raw_queries import query
         response, requestData= None, request.GET
         if requestData.get('template'):
             return render(request, self.template_path)

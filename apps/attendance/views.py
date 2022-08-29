@@ -9,7 +9,6 @@ import apps.attendance.forms as atf
 import apps.attendance.models as atdm
 from .filters import AttendanceFilter
 import apps.peoples.utils as putils
-from django.contrib.gis.db.models.functions import  AsWKT
 
 import logging
 from apps.core import utils

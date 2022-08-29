@@ -1,4 +1,3 @@
-from operator import iconcat
 import apps.schedhuler.utils as sutils
 import apps.peoples.utils as putils
 from django.db.models import Q, F
@@ -9,10 +8,7 @@ from django.http import Http404, QueryDict, response as rp
 from django.shortcuts import redirect, render
 from django.views import View
 from apps.core import  utils 
-from django.contrib.gis.db.models.functions import  AsGeoJSON
-import apps.schedhuler.filters as sdf
 from pprint import pformat
-import apps.onboarding.models as om
 import apps.activity.models as am
 import apps.peoples.models as pm
 from datetime import datetime, time, timedelta, timezone, date
