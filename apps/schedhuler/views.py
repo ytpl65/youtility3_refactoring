@@ -1424,8 +1424,6 @@ class InternalTourScheduling(LoginRequiredMixin, View):
             cxt = {'schdtourform': form, 'childtour_form': P['subform'](), 'edit': True,
                    'checkpoints': checkpoints}
             return render(request, P['template_form'], cxt)
-
-
         if R.get('action') == 'list':
             objs = P['model'].objects.get_scheduled_internal_tours(
                 P['related'], P['fields']
@@ -1474,6 +1472,8 @@ class InternalTourScheduling(LoginRequiredMixin, View):
         except Exception as ex:
             log.info("error handling valid form", exc_info = True)
             raise ex
+
+
 
 
     def save_checpoints_for_tour(self, checkpoints, job, request):
@@ -1560,6 +1560,7 @@ class ExternalTourScheduling(LoginRequiredMixin, View):
     def get(self, request, *args, **kwargs):
         R, P = request.GET, self.params
 
+
         # return template first
         if R.get('template') == 'true':
             return render(request, P['template_list'])
@@ -1599,6 +1600,7 @@ class ExternalTourScheduling(LoginRequiredMixin, View):
 
 
 
+
     def post(self, request, *args, **kwargs):
         P = self.params
         pk, R = request.POST.get('pk', None), request.POST
@@ -1621,6 +1623,7 @@ class ExternalTourScheduling(LoginRequiredMixin, View):
             return utils.handle_Exception(request)
 
 
+
     def handle_valid_form(self, form, request, P):
         try:
             with transaction.atomic(using = utils.get_current_db_name()):
@@ -1635,6 +1638,7 @@ class ExternalTourScheduling(LoginRequiredMixin, View):
         except Exception as ex:
             log.error("external tour form, handle valid form failed", exc_info = True)
             return utils.handle_Exception(request)
+
         
     def saveCheckpointsinJob(self, R, checkpoints, P, request):
         try:
