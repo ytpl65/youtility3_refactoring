@@ -375,7 +375,7 @@ function CalculateStimeEtimeDuration(params) {
     params.mapDuration += parseInt(data[i]["expirytime"], 10);
     params.timeSpendAtSite += params.duration_grace;
     if (
-      data[i]["breaktime"] === undefined ||
+      typeof data[i]["breaktime"] === "undefined" ||
       data[i]["breaktime"] === null ||
       data[i]["breaktime"] === ""
     ) {
@@ -396,7 +396,7 @@ function CalculateStimeEtimeDuration(params) {
         .format("HH:mm");
       params.prevExpTime = params.emin;
       if (
-        data[i]["breaktime"] !== undefined &&
+        typeof data[i]["breaktime"] !== "undefined" &&
         data[i]["breaktime"] !== null &&
         data[i]["breaktime"] !== ""
       ) {
@@ -413,7 +413,7 @@ function CalculateStimeEtimeDuration(params) {
         .format("HH:mm");
       params.prevExpTime = params.emin;
       if (
-        data[i]["breaktime"] !== undefined &&
+        typeof data[i]["breaktime"] !== "undefined" &&
         data[i]["breaktime"] !== null &&
         data[i]["breaktime"] !== ""
       ) {
@@ -466,7 +466,7 @@ function populateTourDetailsCard(params) {
 }
 
 function setShiftMin(_shift) {
-  if (_shift !== undefined) {
+  if (typeof _shift !== "undefined") {
     var stime = _shift.starttime.split(":");
     var etime = _shift.endtime.split(":");
 
