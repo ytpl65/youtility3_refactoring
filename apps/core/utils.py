@@ -863,13 +863,10 @@ def create_tenant_with_alias(db):
 
 def get_record_from_input(input):
 
-    try:
-        ic(input.values)
-        values = ast.literal_eval(json.dumps(input.values))
-        ic(values)
-        return dict(zip(input.columns, values))
-    except Exception:
-        raise
+    ic(input.values)
+    values = ast.literal_eval(json.dumps(input.values))
+    ic(values)
+    return dict(zip(input.columns, values))
 
 # import face_recognition
 
