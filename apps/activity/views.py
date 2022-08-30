@@ -208,7 +208,7 @@ class MasterQuestionSet(LoginRequiredMixin, View):
         else:
             return questions
 
-    def handle_valid_form(form, request, create):
+    def handle_valid_form(self, form, request, create):
         raise NotImplementedError()
 
 class MasterAsset(LoginRequiredMixin, View):

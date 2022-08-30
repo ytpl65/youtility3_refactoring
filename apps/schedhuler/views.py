@@ -1016,7 +1016,7 @@ class Ticket(LoginRequiredMixin, View):
                 {'errors': 'Failed to process form, something went wrong'}, status = 404)
         return response
 
-    def process_valid_form(request, form, create):
+    def process_valid_form(self, request, form, create):
         resp = None
         try:
             ticket             = form.save(commit = False)
