@@ -353,8 +353,8 @@ def save_pgroupbelonging(pg, request):
     if peoples:
         try:
             print('request>POST', dict(request.POST), peoples)
-            for i in range(len(peoples)):
-                people = pm.People.objects.get(id = int(peoples[i]))
+            for i, item in enumerate(peoples):
+                people = pm.People.objects.get(id = int(item))
                 pgb = pm.Pgbelonging.objects.create(
                     pgroup = pg,
                     people = people,

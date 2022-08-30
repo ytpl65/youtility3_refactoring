@@ -121,8 +121,8 @@ class WizardDelete(LoginRequiredMixin, View):
 
     @staticmethod
     def delete_pgroups(Pgroup, ids):
-        for i in range(len(ids)):
-            pg = Pgroup.objects.get(pk = ids[i])
+        for i, item in enumerate(ids):
+            pg = Pgroup.objects.get(pk = item)
             pg.enable = False
 
 # Helper Methods

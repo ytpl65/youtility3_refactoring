@@ -49,11 +49,11 @@ def convertto_namedtuple(A,records, freq, btime):
     """
     rec, C = [], records[0].keys()
     from collections import namedtuple
-    for i in range(len(records)):
+    for i, item in enumerate(records):
         record = namedtuple("Record", C)
-        records[i]["seqno"] = i+1
-        records[i]["jobname"] = f"[{str(records[i]['seqno'])}]-{records[i]['jobname']}"
-        tr = tuple(records[i].values())
+        item["seqno"] = i+1
+        item["jobname"] = f"[{str(item['seqno'])}]-{item['jobname']}"
+        tr = tuple(item.values())
         rec.append(record(**dict(list(zip(C, tr)))))
     
     if freq>1 or btime!=0:
@@ -97,9 +97,9 @@ def calculate_route_details(R, job):
     chekpoints[0]["expirytime"] = 0
     
     #waypoint
-    for i in range(len(waypoint_order)):
+    for i, item in enumerate(waypoint_order):
         data[i+1]['seqno'] = (i+1)+1
-        chekpoints.append(data[waypoint_order[i]+1])
+        chekpoints.append(data[item+1])
         
     #endpoint
     data[len(data)-1]['seqno'] = len(data)-1+1    
@@ -111,13 +111,13 @@ def calculate_route_details(R, job):
     
     
     DDE = []
-    for i in range(len(legs)):
+    for i, item in enumerate(legs):
         l=[]
-        chekpoints[j]['distance']=round(float(legs[i]['distance']["value"]/1000), 2)
+        chekpoints[j]['distance']=round(float(item['distance']["value"]/1000), 2)
         l.append(chekpoints[j]["distance"])
-        chekpoints[j]['duration']=float(legs[i]["duration"]["value"])
+        chekpoints[j]['duration']=float(item["duration"]["value"])
         l.append(chekpoints[j].duration)
-        chekpoints[j]['expirytime']=int(legs[i]["duration"]["value"]/60)
+        chekpoints[j]['expirytime']=int(item["duration"]["value"]/60)
         l.append(chekpoints[j]['expirytime'])
         DDE.append(l)
         j+=1
