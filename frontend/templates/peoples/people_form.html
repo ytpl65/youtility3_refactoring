@@ -574,7 +574,7 @@ People
             $("#btn_del").hide()
         }
         //hide site group and template info
-        session = {{ dict(request.session) |default ("") | tojson}}
+        session = {{ dict(request.session) | default ("") | tojson }}
         if (session && session['wizard_data']) {
             $('#sgti').hide()
         }

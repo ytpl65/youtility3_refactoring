@@ -408,7 +408,7 @@ function sumit_popup_form(param) {
       url: param["url"],
       data: $(param["form"]).serialize(),
       success: function (data, status, xhr) {
-        if (data["saved"] ! true) {
+        if (data["saved"] !== true) {
           display_form_errors(data["errors"]);
         } else {
           auto_select_the_newly_created(param["field"], data);
