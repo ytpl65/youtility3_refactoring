@@ -56,7 +56,7 @@ class MasterReportTemplateList(LoginRequiredMixin, View):
             ).values('id', 'qsetname', 'enable')
             count = objects.count()
             if count:
-                log.info('Site report template objects %s retrieved from db' % (count or "No Records!"))
+                log.info('Site report template objects %s retrieved from db', (count or "No Records!"))
                 objects, filtered = utils.get_paginated_results(R, objects, count, self.fields,
                 [], self.model)
             filtered = count
@@ -87,7 +87,7 @@ class MasterReportForm(LoginRequiredMixin, View):
         if R.get('template'):
             # return empty form if no id
             if not R.get('id'):
-                log.info("create a %s form requested"%self.viewname)
+                log.info("create a %s form requested", self.viewname)
                 cxt = {'reporttemp_form': self.form_class(request = request, initial = self.initial),
                        'qsetbng':self.subform()}
                 return render(request, self.template_path, context = cxt)
@@ -111,7 +111,7 @@ class MasterReportForm(LoginRequiredMixin, View):
 
     def post(self, request, *args, **kwargs):
         """Handles creation of Pgroup instance."""
-        log.info('%s form submitted'%self.viewname)
+        log.info('%s form submitted', self.viewname)
         R, create = QueryDict(request.POST), True
         utils.PD(post = R)
         response = None
@@ -121,14 +121,12 @@ class MasterReportForm(LoginRequiredMixin, View):
             form = self.form_class(
                 request = request, instance = obj, data = request.POST)
             create = False
-            log.info("retrieved existing %s template:= '%s'" %
-                     (obj.qsetname, obj.id))
+            log.info("retrieved existing %s template:= '%s'", obj.qsetname, obj.id)
 
         # process new data for creation
         else:
             form = self.form_class(data = request.POST, request = request, initial = self.initial)
-            log.info("new %s submitted following is the form-data:\n%s\n" %
-                     (self.viewname, pformat(form.data)))
+            log.info("new %s submitted following is the form-data:\n%s\n", self.viewname, pformat(form.data))
 
         # check for validation
         try:
@@ -156,19 +154,19 @@ class MasterReportForm(LoginRequiredMixin, View):
             report.parent_id  = -1
             report.save()
             report = putils.save_userinfo(report, request.user, request.session, create = create)
-            log.debug("report saved:%s"%(report.qsetname))
+            log.debug("report saved:%s", (report.qsetname))
         except Exception as ex:
-            log.critical("%s form is failed to process"%self.viewname, exc_info = True)
+            log.critical("%s form is failed to process", self.viewname, exc_info = True)
             resp = rp.JsonResponse(
                 {'errors': "saving %s template form failed..."%self.viewname}, status = 404)
             raise ex
         else:
-            log.info("%s template form is processed successfully"%self.viewname)
+            log.info("%s template form is processed successfully", self.viewname)
             resp = rp.JsonResponse({'msg': report.qsetname,
                 'url': reverse("reports:sitereport_template_form"),
                 'id':report.id},
                 status = 200)
-        log.info("%s template form processing/saving [ END ]"%self.viewname)
+        log.info("%s template form processing/saving [ END ]", self.viewname)
         return resp
 
     @staticmethod
