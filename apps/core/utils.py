@@ -1117,7 +1117,6 @@ def failed(self):
 def upload(request):
     import os
     from dateutil import parser
-    from os.path import expanduser
     from datetime import datetime
     ic('upload(request)')
     filename = filepath = docnumber = None
