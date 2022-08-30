@@ -203,7 +203,7 @@ class UpdateClient(LoginRequiredMixin, View):
                                      "alert alert-success")
                     response = redirect('onboarding:client_form')
             else:
-                logger.warn('ClientForm is not valid\n Following are the form errors: %s\n%s' % (
+                logger.warning('ClientForm is not valid\n Following are the form errors: %s\n%s' % (
                     form.errors, jsonform.errors))
                 cxt = {'clientform': form,
                        'clientprefsform': jsonform, 'edit': True}
@@ -439,7 +439,7 @@ class DeleteSitePeople(LoginRequiredMixin, View):
                            "alert alert-danger")
             response = redirect('onboarding:sitepeople_form')
         except RestrictedError:
-            logger.warn('Unable to delete, due to dependencies')
+            logger.warning('Unable to delete, due to dependencies')
             messages.error(request, 'Unable to delete, due to dependencies',
                            "alert alert-danger")
             cxt = {'sitepeople_form': form, 'edit': True}
@@ -624,12 +624,12 @@ class DeleteShift(LoginRequiredMixin, View):
                 logger.info('Shift object deleted')
                 response = redirect('onboarding:shift_form')
         except self.model.DoesNotExist:
-            logger.warn('Unable to delete, object does not exist')
+            logger.warning('Unable to delete, object does not exist')
             messages.error(request, 'Shift does not exist',
                            "alert alert-danger")
             response = redirect('onboarding:shift_form')
         except RestrictedError:
-            logger.warn('Unable to delete, due to dependencies')
+            logger.warning('Unable to delete, due to dependencies')
             messages.error(
                 request, 'Unable to delete, due to dependencies', "alert alert-danger")
             cxt = {'shift_form': form, 'edit': True}
