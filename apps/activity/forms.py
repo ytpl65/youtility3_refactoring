@@ -79,7 +79,7 @@ class QuestionForm(forms.ModelForm):
     def clean_alerton(self):
         print("alertbelow", self.cleaned_data.get('alertbelow'))
         print("alertabove", self.cleaned_data.get('alertabove'))
-        val = self.cleaned_data.get('alerton', None)
+        val = self.cleaned_data.get('alerton')
         if val:
             return ac_utils.validate_alerton(forms, val)
         return val
@@ -178,7 +178,7 @@ class QsetBelongingForm(forms.ModelForm):
     def clean_alerton(self):
         print("alertbelow", self.cleaned_data.get('alertbelow'))
         print("alertabove", self.cleaned_data.get('alertabove'))
-        val = self.cleaned_data.get('alerton', None)
+        val = self.cleaned_data.get('alerton')
         if val:
             return ac_utils.validate_alerton(forms, val)
         return val

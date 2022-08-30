@@ -519,8 +519,7 @@ class WizardPgroup(people_views.CreatePgroup):
             pg.enable = False
             msg.info(request, "Record deleted successfully", "alert-success")
             request.session['wizard_data']['pgroupids'].remove(int(pk))
-            dbg('item returned from get_index_for_deletion is %s' %
-                ob_utils.get_index_for_deletion({'id': pk}, request, 'pgroupids'))
+            dbg('item returned from get_index_for_deletion is %s', ob_utils.get_index_for_deletion({'id': pk}, request, 'pgroupids'))
             request.session['wizard_data']['timeline_data']['pgroupids'].pop(
                 ob_utils.get_index_for_deletion({'id': pk}, request, 'pgroupids'))
             res = scts.redirect('peoples:wiz_pgroup_form')

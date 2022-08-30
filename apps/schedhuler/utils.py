@@ -20,8 +20,8 @@ def get_service_requirements(R):
         startp = {"lat":float(R[0]['cplocation'].coords[1]),
                   "lng":float(R[0]['cplocation'].coords[0])}
 
-        endp = {"lat":float(R[len(R)-1]['cplocation'].coords[1]),
-               "lng":float(R[len(R)-1]['cplocation'].coords[0])}
+        endp = {"lat":float(R[-1][-1].coords[-1]),
+               "lng":float(R[-1][-1].coords[-1])}
         waypoints=[]
         for i in range(1, len(R)-1):
             lat, lng = R[i]['cplocation'].coords[1], R[i]['cplocation'].coords[0]
@@ -49,11 +49,11 @@ def convertto_namedtuple(A,records, freq, btime):
     """
     rec, C = [], records[0].keys()
     from collections import namedtuple
-    for i in range(len(records)):
+    for i, item in enumerate(records):
         record = namedtuple("Record", C)
-        records[i]["seqno"] = i+1
-        records[i]["jobname"] = f"[{str(records[i]['seqno'])}]-{records[i]['jobname']}"
-        tr = tuple(records[i].values())
+        item["seqno"] = i+1
+        item["jobname"] = f"[{str(item['seqno'])}]-{item['jobname']}"
+        tr = tuple(item.values())
         rec.append(record(**dict(list(zip(C, tr)))))
     
     if freq>1 or btime!=0:
@@ -97,13 +97,13 @@ def calculate_route_details(R, job):
     chekpoints[0]["expirytime"] = 0
     
     #waypoint
-    for i in range(len(waypoint_order)):
+    for i, item in enumerate(waypoint_order):
         data[i+1]['seqno'] = (i+1)+1
-        chekpoints.append(data[waypoint_order[i]+1])
+        chekpoints.append(data[item+1])
         
     #endpoint
-    data[len(data)-1]['seqno'] = len(data)-1+1    
-    chekpoints.append(data[len(data)-1])
+    data[-1][-1] = len(data)-1+1    
+    chekpoints.append(data[-1])
     
     #calculate distance and duration
     legs = directions[0]["legs"]
@@ -111,13 +111,13 @@ def calculate_route_details(R, job):
     
     
     DDE = []
-    for i in range(len(legs)):
+    for i, item in enumerate(legs):
         l=[]
-        chekpoints[j]['distance']=round(float(legs[i]['distance']["value"]/1000), 2)
+        chekpoints[j]['distance']=round(float(item['distance']["value"]/1000), 2)
         l.append(chekpoints[j]["distance"])
-        chekpoints[j]['duration']=float(legs[i]["duration"]["value"])
+        chekpoints[j]['duration']=float(item["duration"]["value"])
         l.append(chekpoints[j].duration)
-        chekpoints[j]['expirytime']=int(legs[i]["duration"]["value"]/60)
+        chekpoints[j]['expirytime']=int(item["duration"]["value"]/60)
         l.append(chekpoints[j]['expirytime'])
         DDE.append(l)
         j+=1
@@ -156,15 +156,14 @@ def create_job(jobs = None):
         total_jobs = len(jobs)
 
         if total_jobs > 0 or jobs is not None:
-            log.info("processing jobs started found:= '%s' jobs" % (len(jobs)))
+            log.info("processing jobs started found:= '%s' jobs", (len(jobs)))
             for idx, job in enumerate(jobs):
                 startdtz, enddtz = calculate_startdtz_enddtz(job)
                 log.debug(f"Jobs to be schedhuled from startdatetime {startdtz} to enddatetime {enddtz}")
 
                 DT, is_cron, resp = get_datetime_list(job['cron'], startdtz, enddtz, resp)
                 log.debug(
-                    "Jobneed will going to create for all this datetimes\n %s"%(pformat(get_readable_dates(DT)))
-                )
+                    "Jobneed will going to create for all this datetimes\n %s", (pformat(get_readable_dates(DT))))
                 F[str(job['id'])] = is_cron
                 status, resp = insert_into_jn_and_jnd(job, DT, resp)
                 d.append({
@@ -247,8 +246,7 @@ def get_datetime_list(cron_exp, startdtz, enddtz, resp):
     """
 
     log.info("get_datetime_list(cron_exp, startdtz, enddtz) [start]")
-    log.info("getting datetime list for cron:=%s, starttime:= '%s' and endtime:= '%s'" % (
-        cron_exp, startdtz, enddtz))
+    log.info("getting datetime list for cron:=%s, starttime:= '%s' and endtime:= '%s'", cron_exp, startdtz, enddtz)
     from croniter import croniter, CroniterBadCronError
     DT = []
     isValidCron = True
@@ -267,9 +265,7 @@ def get_datetime_list(cron_exp, startdtz, enddtz, resp):
     except Exception as ex:
         log.error(
             'get_datetime_list(cron_exp, startdtz, enddtz) \
-            Exception: [cronexp:= %s]croniter bad cron error:= %s'
-            % (cron_exp, str(ex))
-        )
+            Exception: [cronexp:= %s]croniter bad cron error:= %s', cron_exp, str(ex))
         resp = rp.JsonResponse({"errors": "Bad Cron Error"}, status = 404)
         isValidCron = False
         log.error(

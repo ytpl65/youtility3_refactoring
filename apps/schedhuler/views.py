@@ -54,13 +54,11 @@ class Schd_I_TourFormJob(LoginRequiredMixin, View):
             obj = utils.get_model_obj(pk, request, {'model': self.model})
             form = self.form_class(
                 instance = obj, data = data, initial = self.initial, request = request)
-            log.info("retrieved existing guard tour jobname:= '%s'" %
-                     (obj.jobname))
+            log.info("retrieved existing guard tour jobname:= '%s'", (obj.jobname))
             create = False
         else:
             form = self.form_class(data = data, initial = self.initial, request = request)
-            log.info("new guard tour submitted following is the form-data:\n%s\n" %
-                     (pformat(form.data)))
+            log.info("new guard tour submitted following is the form-data:\n%s\n", (pformat(form.data)))
         response = None
         try:
             with transaction.atomic(using = utils.get_current_db_name()):
@@ -124,8 +122,7 @@ class Schd_I_TourFormJob(LoginRequiredMixin, View):
 
     def insert_checkpoints(self, checkpoints, job, request):
         log.info("inserting checkpoints started...")
-        log.info("inserting checkpoints found %s checkpoints" %
-                 (len(checkpoints)))
+        log.info("inserting checkpoints found %s checkpoints", (len(checkpoints)))
         log.debug(checkpoints)
         CP = {}
         try:
@@ -143,8 +140,7 @@ class Schd_I_TourFormJob(LoginRequiredMixin, View):
                 )
                 checkpoint.save()
                 status = "CREATED" if created else "UPDATED"
-                log.info("\nsaving checkpoint:= '%s' for JOB:= '%s' with expirytime:= '%s'  %s\n" % (
-                    cp[2],  job.jobname, cp[5], status))
+                log.info("\nsaving checkpoint:= '%s' for JOB:= '%s' with expirytime:= '%s'  %s\n", cp[2], job.jobname, cp[5], status)
                 putils.save_userinfo(checkpoint, request.user, request.session, create = created)
         except Exception as ex:
             log.critical(
@@ -363,7 +359,7 @@ class Get_I_TourJobneed(LoginRequiredMixin, View):
         try:
             obj = self.model.objects.get(id = parent_jobneed)
             form = self.form_class(instance = obj, initial = self.initial)
-            log.info("object retrieved %s" % (obj.jobdesc))
+            log.info("object retrieved %s", (obj.jobdesc))
             checkpoints = self.get_checkpoints(obj = obj)
             cxt = {'internaltourform': form, 'child_internaltour': self.subform(prefix='child'), 'edit': True,
                    'checkpoints': checkpoints}
@@ -461,13 +457,11 @@ class Schd_E_TourFormJob(LoginRequiredMixin, View):
             obj = utils.get_model_obj(pk, request, {'model': self.model})
             form = self.form_class(
                 instance = obj, data = formData, initial = self.initial)
-            log.info("retrieved existing guard tour jobname:= '%s'" %
-                     (obj.jobname))
+            log.info("retrieved existing guard tour jobname:= '%s'", (obj.jobname))
             create = False
         else:
             form = self.form_class(data = formData, initial = self.initial)
-            log.info("new guard tour submitted following is the form-data:\n%s\n" %
-                     (pformat(form.data)))
+            log.info("new guard tour submitted following is the form-data:\n%s\n", (pformat(form.data)))
         response = None
         try:
             with transaction.atomic(using = utils.get_current_db_name()):
@@ -534,7 +528,7 @@ class Update_E_TourFormJob(Schd_E_TourFormJob, LoginRequiredMixin, View):
                         'checkpoints': checkpoints,
                         'qsetname':obj.qset.qsetname,
                         'qset':obj.qset.id}
-            log.debug("qsetname %s qset %s"%(obj.qset.qsetname, obj.qset.id))
+            log.debug("qsetname %s qset %s", obj.qset.qsetname, obj.qset.id)
             response = render(request, self.template_path,  context = cxt)
         except self.model.DoesNotExist:
             messages.error(request, 'Unable to edit object not found',
@@ -562,7 +556,7 @@ class Update_E_TourFormJob(Schd_E_TourFormJob, LoginRequiredMixin, View):
             raise
         else:
             if checkpoints:
-                log.info("total %s checkpoints retrieved returned success"%(len(checkpoints)))
+                log.info("total %s checkpoints retrieved returned success", (len(checkpoints)))
             else: log.info("checkpoints not found")
         return checkpoints
 
@@ -740,12 +734,10 @@ class SchdTaskFormJob(LoginRequiredMixin, View):
             obj = utils.get_model_obj(pk, request, {'model': self.model})
             form = self.form_class(
                 instance = obj, data = data, initial = self.initial)
-            log.info("retrieved existing task whose jobname:= '%s'" %
-                     (obj.jobname))
+            log.info("retrieved existing task whose jobname:= '%s'", (obj.jobname))
         else:
             form = self.form_class(data = data, initial = self.initial)
-            log.info("new task submitted following is the form-data:\n%s\n" %
-                     (pformat(form.data)))
+            log.info("new task submitted following is the form-data:\n%s\n", (pformat(form.data)))
         response = None
         try:
             with transaction.atomic(using = utils.get_current_db_name()):
@@ -1004,13 +996,11 @@ class Ticket(LoginRequiredMixin, View):
             obj = utils.get_model_obj(pk, request, {'model': self.model})
             form = self.form_class(
                 instance = obj, data = data, initial = self.initial)
-            log.info("retrieved existing ticket whose ticketno:= '%s'" %
-                     (obj.ticketno))
+            log.info("retrieved existing ticket whose ticketno:= '%s'", (obj.ticketno))
             create = False
         else:
             form = self.form_class(data = data, initial = self.initial)
-            log.info("new ticket submitted following is the form-data:\n%s\n" %
-                     (pformat(form.data)))
+            log.info("new ticket submitted following is the form-data:\n%s\n", (pformat(form.data)))
         response = None
         try:
             with transaction.atomic(using = utils.get_current_db_name()):
@@ -1151,7 +1141,7 @@ class JobneedTours(LoginRequiredMixin, View):
         if R.get('id'):
             obj = P['model'].objects.get(id = R['id'])
             form = P['form_class'](instance = obj, initial = P['initial'])
-            log.info("object retrieved %s" % (obj.jobdesc))
+            log.info("object retrieved %s", (obj.jobdesc))
             checkpoints = self.get_checkpoints(P, obj = obj)
             cxt = {'internaltourform': form, 'child_internaltour': P['subform'](prefix='child'), 'edit': True,
                 'checkpoints': checkpoints}
@@ -1212,7 +1202,7 @@ class JobneedExternalTours(LoginRequiredMixin, View):
         if R.get('id'):
             obj = P['model'].objects.get(id = R['id'])
             form = P['form_class'](instance = obj, initial = P['initial'])
-            log.info("object retrieved %s" % (obj.jobdesc))
+            log.info("object retrieved %s", (obj.jobdesc))
             checkpoints = self.get_checkpoints(P, obj = obj)
             cxt = {'externaltourform': form, 'edit': True,
                 'checkpoints': checkpoints}
@@ -1347,12 +1337,10 @@ class SchdTasks(LoginRequiredMixin, View):
             obj = utils.get_model_obj(pk, request, {'model': self.params['model']})
             form = self.params['form_class'](
                 instance = obj, data = data, request = request)
-            log.info("retrieved existing task whose jobname:= '%s'" %
-                     (obj.jobname))
+            log.info("retrieved existing task whose jobname:= '%s'", (obj.jobname))
         else:
             form = self.params['form_class'](data = data, request = request)
-            log.info("new task submitted following is the form-data:\n%s\n" %
-                     (pformat(form.data)))
+            log.info("new task submitted following is the form-data:\n%s\n", (pformat(form.data)))
         response = None
         try:
             with transaction.atomic(using = utils.get_current_db_name()):
@@ -1510,8 +1498,7 @@ class InternalTourScheduling(LoginRequiredMixin, View):
                 )
                 checkpoint.save()
                 status = "CREATED" if created else "UPDATED"
-                log.info("\nsaving checkpoint:= '%s' for JOB:= '%s' with expirytime:= '%s'  %s\n" % (
-                    cp[2],  job.jobname, cp[5], status))
+                log.info("\nsaving checkpoint:= '%s' for JOB:= '%s' with expirytime:= '%s'  %s\n", cp[2], job.jobname, cp[5], status)
                 putils.save_userinfo(checkpoint, request.user, request.session)
         except Exception as ex:
             log.error(

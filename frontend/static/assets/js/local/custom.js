@@ -306,9 +306,7 @@ function display_modelform_errors(errors) {
     errors instanceof String
   ) {
     display_non_field_errors(errors.__all__);
-  } else if (errors instanceof String) {
-    display_non_field_errors(errors);
-  } else {
+  }  else {
     //field errors
     for (let key in errors) {
       error = "<p class='errors'>" + errors[key] + "</p>";
@@ -918,7 +916,7 @@ function adjustSlno(seqno, table, reset) {
       tableData[row][0] = seq;
     }
     table.rows.add(tableData).draw();
-  } else if ("{{ masterqset_form.instance.id }}" !== ("None" || "")) {
+  } else if (("None" || "") !== "{{ masterqset_form.instance.id }}") {
     //update row
     var lastrow = table.row(table.rows().count() - 1).data();
     seqno = lastrow.length > 0 ? parseInt(lastrow[0], 10) + 1 : ++seqno;

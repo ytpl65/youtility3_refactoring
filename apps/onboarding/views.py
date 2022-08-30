@@ -203,8 +203,7 @@ class UpdateClient(LoginRequiredMixin, View):
                                      "alert alert-success")
                     response = redirect('onboarding:client_form')
             else:
-                logger.warning('ClientForm is not valid\n Following are the form errors: %s\n%s' % (
-                    form.errors, jsonform.errors))
+                logger.warning('ClientForm is not valid\n Following are the form errors: %s\n%s', form.errors, jsonform.errors)
                 cxt = {'clientform': form,
                        'clientprefsform': jsonform, 'edit': True}
                 response = render(request, self.template_path, context=cxt)
@@ -236,7 +235,7 @@ class DeleteClient(LoginRequiredMixin, View):
         """Handles deletion of object"""
         from django.db import models
         from .utils import get_bt_prefform
-        pk, response = kwargs.get('pk', None), None
+        pk, response = kwargs.get('pk'), None
         try:
             if pk:
                 bt = self.model.objects.get(id=pk)
@@ -423,7 +422,7 @@ class DeleteSitePeople(LoginRequiredMixin, View):
 
     def get(self, request, *args, **kwargs):
         """Handles deletion of object"""
-        pk, response = kwargs.get('pk', None), None
+        pk, response = kwargs.get('pk'), None
         try:
             if pk:
                 sp = self.model.objects.get(id=pk)
@@ -614,7 +613,7 @@ class DeleteShift(LoginRequiredMixin, View):
 
     def get(self, request, *args, **kwargs):
         """Handles deletion of object"""
-        pk, response = kwargs.get('pk', None), None
+        pk, response = kwargs.get('pk'), None
         ic(pk)
         try:
             if pk:
@@ -812,7 +811,7 @@ class DeleteBt(LoginRequiredMixin, View):
 
     def get(self, request, *args, **kwargs):
         """Handles deletion of object"""
-        pk, response = kwargs.get('pk', None), None
+        pk, response = kwargs.get('pk'), None
         try:
             if pk:
                 bt = self.model.objects.get(id = pk)
@@ -1017,8 +1016,7 @@ class UpdateClient(LoginRequiredMixin, View):
                                      "alert alert-success")
                     response = redirect('onboarding:client_form')
             else:
-                logger.warning('ClientForm is not valid\n Following are the form errors: %s\n%s' % (
-                    form.errors, jsonform.errors))
+                logger.warning('ClientForm is not valid\n Following are the form errors: %s\n%s', form.errors, jsonform.errors)
                 cxt = {'clientform': form,
                        'clientprefsform': jsonform, 'edit': True}
                 response = render(request, self.template_path, context = cxt)
@@ -1049,7 +1047,7 @@ class DeleteClient(LoginRequiredMixin, View):
         """Handles deletion of object"""
         from django.db import models
         from .utils import get_bt_prefform
-        pk, response = kwargs.get('pk', None), None
+        pk, response = kwargs.get('pk'), None
         try:
             if pk:
                 bt = self.model.objects.get(id = pk)

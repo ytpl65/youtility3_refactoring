@@ -355,7 +355,7 @@ def get_choices_for_peoplevsgrp(request):
 
 
 def save_pgroupbelonging(pg, request):
-    dbg("saving pgbelonging for pgroup %s" % (pg))
+    dbg("saving pgbelonging for pgroup %s", (pg))
     from apps.onboarding.models import Bt
     peoples = request.POST.getlist('peoples[]')
     ic(peoples)
@@ -378,10 +378,10 @@ def save_pgroupbelonging(pg, request):
                     request.session['wizard_data']['pgbids'].append(pgb.id)
                 save_cuser_muser(pgb, request.user)
         except Exception:
-            dbg("saving pgbelonging for pgroup %s FAILED" % (pg))
+            dbg("saving pgbelonging for pgroup %s FAILED", (pg))
             raise
         else:
-            dbg("saving pgbelonging for pgroup %s DONE" % (pg))
+            dbg("saving pgbelonging for pgroup %s DONE", (pg))
 
 # def encrypt(txt):
 #     from django.conf import settings
