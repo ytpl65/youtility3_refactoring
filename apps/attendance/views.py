@@ -9,7 +9,6 @@ import apps.attendance.forms as atf
 import apps.attendance.models as atdm
 from .filters import AttendanceFilter
 import apps.peoples.utils as putils
-from django.contrib.gis.db.models.functions import  AsWKT
 
 import logging
 from apps.core import utils
@@ -44,7 +43,7 @@ class Attendance(LoginRequiredMixin, View):
             return rp.JsonResponse({'data':list(objs)}, status=200)
 
         # return attemdance_form empty
-        elif R.get('action', None) == 'form': 
+        if R.get('action', None) == 'form': 
             cxt = {'attd_form': self.params['form_class'](),
                    'msg': "create attendance requested"}
             resp = utils.render_form(request, self.params, cxt)
@@ -83,7 +82,8 @@ class Attendance(LoginRequiredMixin, View):
             resp = utils.handle_Exception(request)
         return resp
 
-    def handle_valid_form(self, form, request, create):
+    @staticmethod
+    def handle_valid_form(form, request, create):
         logger.info('attendance form is valid')
         try:
             attd = form.save()
@@ -168,7 +168,8 @@ class Conveyance(LoginRequiredMixin, View):
             resp = utils.handle_Exception(request)
         return resp
 
-    def handle_valid_form(self, form, request, create):
+    @staticmethod
+    def handle_valid_form(form, request, create):
         logger.info('conveyance form is valid')
         from apps.core.utils import handle_intergrity_error
         try:

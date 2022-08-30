@@ -1,13 +1,13 @@
 from datetime import datetime
 from django.db import models
 from django.db.models import Q, F
-import apps.onboarding.models as om
 import apps.peoples.models as pm
 from apps.core import utils
 
 class BtManager(models.Manager):
     use_in_migrations = True
-    def get_people_bu_list(self, people):
+    @staticmethod
+    def get_people_bu_list(people):
         """
         Returns all BU's assigned to people
         """
@@ -21,7 +21,6 @@ class BtManager(models.Manager):
                     .distinct()
                 ):
                     return tuple(qset)
-                    return ','.join(map(str, list(qset))).replace("'", '')
             return ""
 
     def get_bu_list_ids(self, clientid, type='array'):
@@ -77,8 +76,7 @@ class BtManager(models.Manager):
                      'buname', 'cuser_id', 'muser_id', 'identifier_id'
                 )
                 return qset or self.none()
-            else:   
-                pass
+            pass
     
     def load_parent_choices(self, request):
         search_term = request.GET.get('search')
@@ -187,7 +185,6 @@ class TypeAssistManager(models.Manager):
         """
         Return latest typeassist data
         """
-        from datetime import datetime
         if not isinstance(mdtz, datetime):
             mdtz = datetime.strptime(mdtz, "%Y-%m-%d %H:%M:%S")
 

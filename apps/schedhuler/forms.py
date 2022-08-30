@@ -54,7 +54,8 @@ class Schd_I_TourJobForm(JobForm):
         utils.apply_error_classes(self)
         return result 
 
-    def clean_slno(self):
+    @staticmethod
+    def clean_slno():
         return -1
 
     def clean(self):
@@ -127,7 +128,8 @@ class I_TourFormJobneed(JobNeedForm): # jobneed
             val =  ob_utils.to_utc(val)
             return val
 
-    def clean_frequency(self):
+    @staticmethod
+    def clean_frequency():
         return "NONE"
 
 class Child_I_TourFormJobneed(JobNeedForm):# jobneed
@@ -156,8 +158,8 @@ class Schd_E_TourJobForm(JobForm):
     ASSIGNTO_CHOICES   = [('PEOPLE', 'People'), ('GROUP', 'Group')]
     timeInChoices = [('MIN', 'Min'),('HRS', 'Hours')]
     assign_to          = forms.ChoiceField(choices = ASSIGNTO_CHOICES, initial="PEOPLE")
-    israndom = forms.BooleanField(initial=False, label="Is Random Tour")
-    tourfrequency = forms.IntegerField(min_value=1, max_value=3, initial=1, label='Frequency')
+    israndom = forms.BooleanField(initial=False, label="Is Random Tour", required=False)
+    tourfrequency = forms.IntegerField(min_value=1, max_value=3, initial=1, label='Frequency', required=False)
     breaktime = forms.IntegerField(label='Frequency', required=False)
     required_css_class = "required"
 
@@ -176,7 +178,7 @@ class Schd_E_TourJobForm(JobForm):
             'scantype':forms.TextInput(attrs={'style': 'display:none;'}),
             'ticketcategory':forms.TextInput(attrs={'style': 'display:none;'}),
             'jobname':forms.TextInput(attrs={'placeholder': 'Enter Route Plan Name:'})}
-            )
+        )
         exclude = ['jobdesc']
 
     def __init__(self, *args, **kwargs):
@@ -258,13 +260,13 @@ class SchdTaskFormJob(JobForm):
         for time, type in zip(times, types):
             self.cleaned_data[time] = self.convertto_mins(type, time)
 
-    def convertto_mins(self, _type, _time):
+    @staticmethod
+    def convertto_mins(_type, _time):
         if _type == 'HOURS':
             return _time * 60
-        elif _type == 'DAYS':
+        if _type == 'DAYS':
             return _time * 24 * 60
-        else:
-            return _time            
+        return _time            
 
 
 
@@ -323,7 +325,8 @@ class TicketForm(JobNeedForm):
             val =  ob_utils.to_utc(val)
             return val
 
-    def clean_frequency(self):
+    @staticmethod
+    def clean_frequency():
         return "NONE"
 
 
@@ -374,5 +377,6 @@ class E_TourFormJobneed(JobNeedForm):
             val =  ob_utils.to_utc(val)
             return val
 
-    def clean_frequency(self):
+    @staticmethod
+    def clean_frequency():
         return "NONE"

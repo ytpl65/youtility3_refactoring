@@ -46,7 +46,8 @@ class InsertSerializer(serializers.Serializer):
             )
         return value
 
-    def validate_record(self, value):
+    @staticmethod
+    def validate_record(value):
         return vs.clean_record(record = value)
 
 class JndSerializers(serializers.ModelSerializer):

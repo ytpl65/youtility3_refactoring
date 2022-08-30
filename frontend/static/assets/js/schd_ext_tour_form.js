@@ -37,7 +37,7 @@ function checkFrequenciedData(data, F, DDE, breaktime){
     for(let i=0; i<F-1 ;i++){
         let r = reversedFpoints(DDE, data, breaktime).reverse()
         data.push(...r)
-        console.log("while pushing...", data)
+        
     }
     return data
 }
@@ -67,11 +67,11 @@ function update_site_form(data){
 
 function updateAssignedSitesTable(btime, checkListId, checkListName){
     newData     = asgdsites_table.row('.selected').data()
-    console.log(newData, "before")
+    
     newData['breaktime']  = btime
     newData['qsetid'] = checkListId
     newData['qsetname'] = checkListName
-    console.log(newData, "newData")
+    
     asgdsites_table.row('.selected').data(newData).draw();
 }
 
@@ -79,7 +79,7 @@ function calculateAndDisplayRoute(data, routeFreq){
     if(data.length > 1){
         if(routeFreq > 1){
             //copy first obj
-            console.log(data, "freqq......")
+            
             let copiedFirstObject = JSON.parse(JSON.stringify(data[0]));
             data[data.length] = copiedFirstObject
         }
@@ -95,7 +95,7 @@ function calculateAndDisplayRoute(data, routeFreq){
                 reCaclTime()
                 isDirectionSaved = true
             }else{
-                console.log(response, "response,,,,,,,")
+                
                 //google maps fetching error
                 show_error_alert(`Directions request failed due to ${status}`, "GMaps Error!")
             }
@@ -105,16 +105,16 @@ function calculateAndDisplayRoute(data, routeFreq){
 
 
 function getDirectionConfig(data){
-    console.log("getDirectionConfig:", data)
+    
     var gpsStartCoords = JSON.parse(data[0]['gpslocation'])['coordinates']
     var gpsEndCoords = JSON.parse(data[data.length - 1]['gpslocation'])['coordinates']
-    console.log(gpsEndCoords, gpsStartCoords, "&^^^^^^^^^^^^^^^^^^^^^")
+    
 
     var startPoint = { lat: Number(gpsStartCoords[1]),  lng: Number(gpsStartCoords[0]) };
     var endPoint   = { lat: Number(gpsEndCoords[1]),  lng: Number(gpsEndCoords[0]) };
 
-    console.log(`startpoint ${startPoint}`)
-    console.log(`endPoint ${endPoint}`)
+    
+    
     var wayPoints  = [];
     for(var i = 1; i < data.length - 1; i++){
         let wpCoords = JSON.parse(data[i]['gpslocation'])['coordinates']
@@ -123,7 +123,7 @@ function getDirectionConfig(data){
             stopover: true
         });
     }
-    console.log(`startpoint ${startPoint} endPoint ${endPoint} waypoints ${wayPoints}`)
+    
     return  {
         origin           : startPoint,
         destination      : endPoint,
@@ -134,7 +134,7 @@ function getDirectionConfig(data){
 }
 
 function calculateLatLngPoints(response, data, routeFreq){
-    console.log("calculateLatLngPoints", data)
+    
     var optimizedPoints = []
     directionsRenderer.setDirections(response);
     var waypoint_order= response.routes[0].waypoint_order;
@@ -234,7 +234,7 @@ function hitGmapsService(config){
     directionService.route(config, function(response, status){
         result['response'] = response
         result['status'] = status
-        console.log(response, status)
+        
     })
     return result
 }
@@ -260,7 +260,7 @@ function ManageFrequenciedRoutes(data, routeFreq){
     optimizedPoints = data
     for(var f= 0; f < routeFreq; f++) {
         for(var i= 0; i < optimizedPoints.length - 1; i++){
-            console.log("f: ", f, " :: i: ", i, " :: fCnt: ", fCnt);
+            
             if( f > 0 &&  i == 0) {
                 fPoint[fCnt] = optimizedPoints[optimizedPoints.length - 1];
                 fPoint[fCnt]['seqno'] = fCnt + 1;
@@ -326,13 +326,13 @@ function reCaclTime(){
 function CalculateStimeEtimeDuration(params){
     var data = params.data
     for(var i= 0; i < data.length; i++) {
-        console.log(i, ": reCaclTime data: ", data[i]);
+        
         data[i]['duration'] = secondsToString(parseInt(data[i]['expirytime'], 10) * 60);
-        console.log()
+        
         params.mapDistance += parseFloat(data[i]['distance']);
         params.mapDuration += parseInt(data[i]['expirytime'], 10);
         params.timeSpendAtSite += params.duration_grace;
-        if(data[i]['breaktime'] == undefined || data[i]['breaktime'] == null || data[i]['breaktime'] == "") {
+        if(data[i]['breaktime'] == undefined || data[i]['breaktime'] === null || data[i]['breaktime'] == "") {
             data[i]['breaktime'] = 0;
         }
         params.mapBreakTime += parseInt(data[i]['breaktime'], 10);
@@ -361,7 +361,7 @@ function CalculateStimeEtimeDuration(params){
 function populateTourDetailsCard(params){
     var speed= parseFloat((params.mapDistance) / (params.mapDuration / 60)).toFixed(2);
     var rtime= (parseInt(_shiftMinute, 10) - parseInt(params.mapDuration, 10) - parseInt(params.mapBreakTime, 10) - (params.timeSpendAtSite));
-    console.log("reCaclTime() rtime: ", rtime);
+    
 
     _fduration= isNaN(params.mapDuration) ? "--" : secondsToString(params.mapDuration * 60);
     _fdistance= isNaN(params.mapDistance) ? "--" : parseFloat(params.mapDistance).toFixed(2);
@@ -376,7 +376,7 @@ function populateTourDetailsCard(params){
     $("#lblTourFrequency").html($("#id_tourfrequency").val());
     $("#lblBreakTime").html($("#id_breaktime").val());
     $("#lblIsRTour").html($("#id_israndom").is(":checked") ? "Yes" :"No")
-    console.log(params.data)
+    
     asgdsites_table.rows.add(params.data).draw()
 }
 
@@ -385,14 +385,14 @@ function setShiftMin(_shift) {
     if(_shift != undefined){
         var stime= _shift.starttime.split(":");
         var etime= _shift.endtime.split(":");
-        console.log("before stime: ", stime);
-        console.log("before etime: ", etime);
+        
+        
         stime= parseInt(stime[0] * 60, 10) + parseInt(stime[1], 10);
         etime= parseInt(etime[0] * 60, 10) + parseInt(etime[1], 10);
-        console.log("after stime: ", stime);
-        console.log("after etime: ", etime);
+        
+        
         _shiftMinute= (stime > etime) ? (1440 + etime - stime) : (etime - stime);
-        console.log("_shiftMinute: ", _shiftMinute);
+        
 
         //$("#lblSTime").html(_shiftMinute + " Min");
         $("#lblSTime").html(secondsToString(_shiftMinute * 60));
@@ -427,7 +427,7 @@ function getSitesData(params){
         params['assignedSites'].push(obj)
     }
     params['assignedSites'] = JSON.stringify(params['assignedSites'])
-    console.log("getSitesData()", params)
+    
     return params
     
 }

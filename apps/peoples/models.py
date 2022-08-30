@@ -62,13 +62,15 @@ def upload_peopleimg(instance, filename):
 class SecureString(CharField):
     """Custom Encrypted Field"""
 
-    def from_db_value(self, value, expression, connection):
+    @staticmethod
+    def from_db_value(value, expression, connection):
         # from .utils import decrypt
         if value != "":
             return value
             # return decrypt(value)
 
-    def get_prep_value(self, value):
+    @staticmethod
+    def get_prep_value(value):
         # from .utils import encrypt
         if value != "":
             return value

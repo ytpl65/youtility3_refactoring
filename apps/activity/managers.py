@@ -1,8 +1,7 @@
 from django.db import models
-from django.db.models.functions import Concat, Cast
+from django.db.models.functions import Concat
 from django.db.models import CharField, Value as V
-from django.db.models import Q, F, Count, Case, When, Value
-from django.contrib.gis.db.models.functions import Distance 
+from django.db.models import Q, F, Count, Case, When, 
 from django.contrib.gis.db.models.functions import  AsWKT, AsGeoJSON
 from datetime import datetime, timedelta, timezone
 from apps.core import utils
@@ -515,7 +514,6 @@ class JobManager(models.Manager):
     use_in_migrations: True
 
     def getgeofence(self, peopleid, siteid):
-        from django.contrib.gis.db.models.functions import AsGeoJSON
         qset = self.filter(
             people_id = peopleid, bu_id = siteid, identifier='GEOFENCE').select_related(
                 'geofence', 
@@ -568,7 +566,7 @@ class JobManager(models.Manager):
         return qset or self.none()
 
     def get_sitecheckpoints_exttour(self, job):
-
+        ic(job)
         qset = self.annotate(
             qsetid = F('qset_id'), assetid = F('asset_id'),
             jobid = F('id'), gpslocation = AsGeoJSON('bu__gpslocation'),
@@ -578,7 +576,8 @@ class JobManager(models.Manager):
             duration = Value(None, output_field=models.CharField(null=True)),
             qsetname=F('qset__qsetname')
             
-        ).filter(parent_id=job.id).select_related('asset', 'qset',).values(
+        ).filter(parent_id=job['id']).select_related('asset', 'qset',).values(
+            'id',
             'breaktime', 'distance', 'starttime', 'expirytime',
             'qsetid', 'jobid', 'assetid', 'seqno', 'jobdesc',
             'buname', 'buid', 'gpslocation', 'endtime', 'duration',

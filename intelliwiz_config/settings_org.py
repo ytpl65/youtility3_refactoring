@@ -14,7 +14,7 @@ from pathlib import Path
 import os
 from dotenv import load_dotenv
 load_dotenv()  # loads the configs from .env
-# Build paths inside the project like this: BASE_DIR / 'subdir'.
+# Build paths inside the project like this: BASE_DIR / 'subdir'.p
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # Quick-start development settings - unsuitable for production
@@ -51,6 +51,7 @@ INSTALLED_APPS = [
     'django_filters',
     "graphql_jwt.refresh_token.apps.RefreshTokenConfig",
     'rest_framework',
+
 
 
     # local apps
@@ -165,6 +166,7 @@ home_local_dbs = {
         'HOST':     'localhost',
         'PORT':     '5432',
     }
+
 
 
 }

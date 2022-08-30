@@ -1,9 +1,7 @@
-from unicodedata import category
 from import_export import resources, fields
 from import_export import widgets as wg
 import apps.onboarding.models as om
 import apps.activity.models as am
-from apps.onboarding.admin import BaseFieldSet2
 
 # Register your models here.
 

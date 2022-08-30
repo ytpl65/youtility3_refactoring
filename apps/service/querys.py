@@ -72,28 +72,33 @@ class Query(graphene.ObjectType):
 
     verifyclient = graphene.Field(VerifyClientOutput, clientcode = graphene.String(required = True))
 
-    def resolve_tadata(self, info, keys, **kwargs):
+    @staticmethod
+    def resolve_tadata(info, keys, **kwargs):
         log.info('request for typeassist data...')
         data = TypeAssist.objects.values(*keys)
         records, count, msg = utils.get_select_output(data)
         log.info(f'{count} objects returned...')
         return SelectOutputType(nrows = count, ncols = len(keys), records = records,msg = msg)
 
-    def resolve_tabyid(self, info, id):
+    @staticmethod
+    def resolve_tabyid(info, id):
         log.info('request for typeassist data...')
         ta = TypeAssist.objects.raw("select * from typeassist where id = %s", [id])
         return ta[0] if ta else None
 
-    def resolve_get_assetdetails(self, info, mdtz, ctzoffset, buid):
+    @staticmethod
+    def resolve_get_assetdetails(info, mdtz, ctzoffset, buid):
         mdtz = utils.getawaredatetime(mdtz, ctzoffset)
         log.info('request for assetdetails data...')
         return get_assetdetails(mdtz, buid)
 
-    def resolve_get_jobneedmodifiedafter(self, info, peopleid, buid, clientid):
+    @staticmethod
+    def resolve_get_jobneedmodifiedafter(info, peopleid, buid, clientid):
         log.info('request for jobneed-modified-after data...')
         return get_jobneedmodifiedafter(peopleid, buid, clientid)
 
-    def resolve_get_jndmodifiedafter(self, info, mdtz, ctzoffset, jobneedids):
+    @staticmethod
+    def resolve_get_jndmodifiedafter(info, mdtz, ctzoffset, jobneedids):
         log.info('request for jndmodifiedafter data...')
         mdtz = utils.getawaredatetime(mdtz, ctzoffset)
         data = JobneedDetails.objects.get_jndmodifiedafter(mdtz, jobneedids)
@@ -101,7 +106,8 @@ class Query(graphene.ObjectType):
         log.info(f'{count} objects returned...')
         return SelectOutputType(nrows = count, records = records,msg = msg)
 
-    def resolve_get_typeassistmodifiedafter(self, info, mdtz, ctzoffset, clientid):
+    @staticmethod
+    def resolve_get_typeassistmodifiedafter(info, mdtz, ctzoffset, clientid):
         log.info('request for typeassist-modified-after data...')
         mdtzinput = utils.getawaredatetime(mdtz, ctzoffset)
         ic(mdtzinput)
@@ -110,7 +116,8 @@ class Query(graphene.ObjectType):
         log.info(f'{count} objects returned...')
         return SelectOutputType(nrows = count, records = records,msg = msg)
 
-    def resolve_get_peoplemodifiedafter(self, info, mdtz, ctzoffset, buid):
+    @staticmethod
+    def resolve_get_peoplemodifiedafter(info, mdtz, ctzoffset, buid):
         log.info('request for people-modified-after data...')
         mdtzinput = utils.getawaredatetime(mdtz, ctzoffset)
         data = People.objects.get_people_modified_after(mdtzinput, buid)
@@ -118,7 +125,8 @@ class Query(graphene.ObjectType):
         log.info(f'{count} objects returned...')
         return SelectOutputType(nrows = count, records = records,msg = msg)
 
-    def resolve_get_groupsmodifiedafter(self, info, mdtz, ctzoffset, buid):
+    @staticmethod
+    def resolve_get_groupsmodifiedafter(info, mdtz, ctzoffset, buid):
         log.info('request for groups-modified-after data...')
         mdtzinput = utils.getawaredatetime(mdtz, ctzoffset)
         data = Pgroup.objects.get_groups_modified_after(mdtzinput, buid)
@@ -126,14 +134,16 @@ class Query(graphene.ObjectType):
         log.info(f'{count} objects returned...')
         return SelectOutputType(nrows = count, records = records,msg = msg)
 
-    def resolve_get_questionsmodifiedafter(self, info, mdtz, ctzoffset):
+    @staticmethod
+    def resolve_get_questionsmodifiedafter(info, mdtz, ctzoffset):
         mdtzinput = utils.getawaredatetime(mdtz, ctzoffset)
         data =  Question.objects.get_questions_modified_after(mdtz)
         records, count, msg = utils.get_select_output(data)
         log.info(f'{count} objects returned...')
         return SelectOutputType(nrows = count, records = records,msg = msg)
 
-    def resolve_get_qsetmodifiedafter(self, info, mdtz, ctzoffset, buid):
+    @staticmethod
+    def resolve_get_qsetmodifiedafter(info, mdtz, ctzoffset, buid):
         log.info('request for qset-modified-after data...')
         mdtzinput = utils.getawaredatetime(mdtz, ctzoffset)
         data = QuestionSet.objects.get_qset_modified_after(mdtzinput, buid)
@@ -142,7 +152,8 @@ class Query(graphene.ObjectType):
         return SelectOutputType(nrows = count, records = records,msg = msg)
 
 
-    def resolve_get_qsetbelongingmodifiedafter(self, info, mdtz, ctzoffset, buid):
+    @staticmethod
+    def resolve_get_qsetbelongingmodifiedafter(info, mdtz, ctzoffset, buid):
         log.info('request for qsetbelonging-modified-after data...')
         mdtzinput = utils.getawaredatetime(mdtz, ctzoffset)
         data = QuestionSetBelonging.objects.get_modified_after(mdtzinput, buid)
@@ -150,7 +161,8 @@ class Query(graphene.ObjectType):
         log.info(f'{count} objects returned...')
         return SelectOutputType(nrows = count, records = records,msg = msg)
 
-    def resolve_get_pgbelongingmodifiedafter(self, info, mdtz, ctzoffset, buid, peopleid):
+    @staticmethod
+    def resolve_get_pgbelongingmodifiedafter(info, mdtz, ctzoffset, buid, peopleid):
         log.info('request for pgbelonging-modified-after data...')
         mdtzinput = utils.getawaredatetime(mdtz, ctzoffset)
         data = Pgbelonging.objects.get_modified_after(mdtzinput, peopleid, buid)
@@ -158,21 +170,24 @@ class Query(graphene.ObjectType):
         log.info(f'{count} objects returned...')
         return SelectOutputType(nrows = count, records = records,msg = msg)
 
-    def resolve_get_gfs_for_siteids(self, info, siteids):
+    @staticmethod
+    def resolve_get_gfs_for_siteids(info, siteids):
         log.info('request for getgeofence...')
         data = GeofenceMaster.objects.get_gfs_for_siteids(siteids)
         records, count, msg = utils.get_select_output(data)
         log.info(f'{count} objects returned...')
         return SelectOutputType(nrows = count, records = records,msg = msg)
 
-    def resolve_getsitelist(self, info, clientid, peopleid):
+    @staticmethod
+    def resolve_getsitelist(info, clientid, peopleid):
         log.info('request for sitelist..')
         data = Bt.objects.getsitelist(clientid, peopleid)
         records, count, msg = utils.get_select_output(data)
         log.info(f'{count} objects returned...')
         return SelectOutputType(nrows = count, records = records,msg = msg)
 
-    def resolve_verifyclient(self, info, clientcode):
+    @staticmethod
+    def resolve_verifyclient(info, clientcode):
         try:
             utils.set_db_for_router(clientcode.lower())
             Bt.objects.get(bucode = clientcode.upper(), enable = True)

@@ -1,4 +1,3 @@
-import sys
 import requests
 from pprint import pprint
 URL = 'http://127.0.0.1:8001/graphql'
@@ -8,8 +7,9 @@ class graphQL:
     headers = {}
 
 
-    def run_query(self, query, variables = None):# A simple function to use requests.post to make the API call. Note the json= section.
-        request = requests.post(BARFIURL, json={'query': query, 'variables': variables}, headers = self.headers)
+    def run_query(self, query, variables=None):# A simple function to use requests.post to make the API call. Note the json= section.
+        request = requests.post(BARFIURL, json={'query': query, 'variables': variables}, headers=self.headers)
+
         if request.status_code != 200:
             raise Exception(f"Query failed to run by returning code of {request.status_code}. {query}")
         pprint(request.json())
@@ -27,7 +27,8 @@ class graphQL:
             }
         }
         """
-        self.run_query(query = query)
+        self.run_query(query=query)
+
 
 
     def logout(self):

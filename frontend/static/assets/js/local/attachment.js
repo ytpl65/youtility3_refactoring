@@ -18,7 +18,7 @@ $(document).ready(() => {
      $("#popup_attachment").on('shown.bs.modal', () => {
          //get attachement data from ajax get
         var data = getAttachmentData(attachmentOwner)
-        console.log(data)
+        
         if(data){
             attTable.clear()
             attTable.rows.add(data).draw()
@@ -79,7 +79,7 @@ function getAttachmentData(uuid){
         data:{'owner':uuid}
     }).done((data, status, xhr) => {
         if(data){
-            console.log(data, "&&&&&&&&&")
+            
             attTable.clear()
             attTable.rows.add(data).draw()
         }
