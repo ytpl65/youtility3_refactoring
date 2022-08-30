@@ -97,7 +97,6 @@ class WizardView(LoginRequiredMixin, View):
     def delete_from_draft(self, request):
         if 'wizard_data' in request.session:
             dbg("deleting wizard_data from request.session and from the draft as well")
-            del request.session['wizard_data']
             user = request.user
             ob.WizardDraft.objects.get(
                 createdby__peoplecode=user.peoplecode).delete()
@@ -118,7 +117,6 @@ class WizardDelete(LoginRequiredMixin, View):
             ob_utils.delete_unsaved_objects(People, wizard_data['peopleids'])
             self.delete_pgroups(Pgroup, wizard_data['pgroupids'])
         dbg("deleting wizard_data from session")
-        del request.session['wizard_data']
         return scts.redirect('home')
 
     @staticmethod
@@ -573,7 +571,6 @@ class WizardPreview(LoginRequiredMixin, View):
 @login_required
 def save_wizard(request):
     log.info("deleting wizard_data from session and redirecting user to home")
-    del request.session['wizard_data']
     dbg("wizard_data deleted from the session")
     return scts.redirect('home')
 
@@ -592,7 +589,6 @@ def save_as_draft(request):
     status = 'created' if created else 'updated'
     log.info(f"wizard draft {status}")
     if request.GET.get('quit') == "true":
-        del request.session['wizard_data']
         dbg("wizard_data deleted from the session")
     return JsonResponse({'saved': True, 'status': status})
 
