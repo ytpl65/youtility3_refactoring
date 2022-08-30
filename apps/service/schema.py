@@ -42,14 +42,14 @@ class Query(MeQuery, ApiQuery,  graphene.ObjectType):
     '''query-resolutions'''
 
     @staticmethod
-    def resolve_PELog_by_id(self, info, id):
+    def resolve_PELog_by_id(info, id):
         return PeopleEventlog.objects.get(
             id = id)
     @staticmethod
-    def resolve_trackings(self, info):
+    def resolve_trackings(info):
         return Tracking.objects.all()
     @staticmethod
-    def resole_testcases(self, info):
+    def resole_testcases(info):
         objs = TestGeo.objects.all()
         return list(objs)
 
