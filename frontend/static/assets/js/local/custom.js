@@ -306,9 +306,7 @@ function display_modelform_errors(errors) {
     errors instanceof String
   ) {
     display_non_field_errors(errors.__all__);
-  } else if (errors instanceof String) {
-    display_non_field_errors(errors);
-  } else {
+  }  else {
     //field errors
     for (let key in errors) {
       error = "<p class='errors'>" + errors[key] + "</p>";
