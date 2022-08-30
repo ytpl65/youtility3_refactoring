@@ -1145,7 +1145,6 @@ def upload(request):
                 basedir, tablename = "transaction", "personlogger"
                 doctype = request.POST["doctype"]
                 filename = doctype + fextension
-                del doctype
             else:
                 basedir = "master"
                 if request.POST["isDefault"] == "True" and request.POST["foldertype"] == "people":
@@ -1185,13 +1184,10 @@ def upload(request):
                 ic(isUploaded)
             except Exception:
                 isUploaded = False
-            del basedir, tablename, fyear, fmonth, home_dir
         else:
             if "doctype" in request.POST and request.POST["doctype"] is not None and request.POST["doctype"] != "None":
                 filename = request.POST["doctype"] + fextension
             filepath = "NONE"
-    del ownerid, isDefault, foldertype, attachmenttype
-    del expanduser, parser, os
     return isUploaded, str(filename), str(filepath), str(docnumber)
 
 
