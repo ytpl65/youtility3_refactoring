@@ -20,8 +20,8 @@ def get_service_requirements(R):
         startp = {"lat":float(R[0]['cplocation'].coords[1]),
                   "lng":float(R[0]['cplocation'].coords[0])}
 
-        endp = {"lat":float(R[len(R)-1]['cplocation'].coords[1]),
-               "lng":float(R[len(R)-1]['cplocation'].coords[0])}
+        endp = {"lat":float(R[-1][-1].coords[-1]),
+               "lng":float(R[-1][-1].coords[-1])}
         waypoints=[]
         for i in range(1, len(R)-1):
             lat, lng = R[i]['cplocation'].coords[1], R[i]['cplocation'].coords[0]
@@ -102,8 +102,8 @@ def calculate_route_details(R, job):
         chekpoints.append(data[item+1])
         
     #endpoint
-    data[len(data)-1]['seqno'] = len(data)-1+1    
-    chekpoints.append(data[len(data)-1])
+    data[-1][-1] = len(data)-1+1    
+    chekpoints.append(data[-1])
     
     #calculate distance and duration
     legs = directions[0]["legs"]
