@@ -156,15 +156,14 @@ def create_job(jobs = None):
         total_jobs = len(jobs)
 
         if total_jobs > 0 or jobs is not None:
-            log.info("processing jobs started found:= '%s' jobs" % (len(jobs)))
+            log.info("processing jobs started found:= '%s' jobs", (len(jobs)))
             for idx, job in enumerate(jobs):
                 startdtz, enddtz = calculate_startdtz_enddtz(job)
                 log.debug(f"Jobs to be schedhuled from startdatetime {startdtz} to enddatetime {enddtz}")
 
                 DT, is_cron, resp = get_datetime_list(job['cron'], startdtz, enddtz, resp)
                 log.debug(
-                    "Jobneed will going to create for all this datetimes\n %s"%(pformat(get_readable_dates(DT)))
-                )
+                    "Jobneed will going to create for all this datetimes\n %s", (pformat(get_readable_dates(DT))))
                 F[str(job['id'])] = is_cron
                 status, resp = insert_into_jn_and_jnd(job, DT, resp)
                 d.append({
@@ -247,8 +246,7 @@ def get_datetime_list(cron_exp, startdtz, enddtz, resp):
     """
 
     log.info("get_datetime_list(cron_exp, startdtz, enddtz) [start]")
-    log.info("getting datetime list for cron:=%s, starttime:= '%s' and endtime:= '%s'" % (
-        cron_exp, startdtz, enddtz))
+    log.info("getting datetime list for cron:=%s, starttime:= '%s' and endtime:= '%s'", cron_exp, startdtz, enddtz)
     from croniter import croniter, CroniterBadCronError
     DT = []
     isValidCron = True
@@ -267,9 +265,7 @@ def get_datetime_list(cron_exp, startdtz, enddtz, resp):
     except Exception as ex:
         log.error(
             'get_datetime_list(cron_exp, startdtz, enddtz) \
-            Exception: [cronexp:= %s]croniter bad cron error:= %s'
-            % (cron_exp, str(ex))
-        )
+            Exception: [cronexp:= %s]croniter bad cron error:= %s', cron_exp, str(ex))
         resp = rp.JsonResponse({"errors": "Bad Cron Error"}, status = 404)
         isValidCron = False
         log.error(

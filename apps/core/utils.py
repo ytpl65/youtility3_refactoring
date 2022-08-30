@@ -307,7 +307,7 @@ def update_timeline_data(ids, request, update = False):
 
 def process_wizard_form(request, wizard_data, update = False, instance = None):
     logger.info('processing wizard started...', )
-    dbg('wizard_Data submitted by the view \n%s' % wizard_data)
+    dbg('wizard_Data submitted by the view \n%s', wizard_data)
     wiz_session, resp = request.session['wizard_data'], None
     if not wizard_data['last_form']:
         logger.info('wizard its NOT last form')
@@ -685,7 +685,7 @@ def set_db_for_router(db):
     setattr(THREAD_LOCAL, "DB", db)
 
 def display_post_data(post_data):
-    logger.info("\n%s" % (pformat(post_data, compact = True)))
+    logger.info("\n%s", (pformat(post_data, compact = True)))
 
 def format_data(objects):
     columns, rows, data = objects[0].keys(), {}, {}

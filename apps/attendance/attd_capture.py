@@ -93,7 +93,7 @@ def get_actual_img(code, detectFace):
     log.debug("get_actual_img started")
     from apps.peoples.models import People
     try:
-        log.debug("searching for img with this code %s"%(code))
+        log.debug("searching for img with this code %s", (code))
         img = People.objects.get(peoplecode = code)
         img_array = detectFace(img.peopleimg.path, detector_backend='opencv')
     except People.DoesNotExist:
@@ -115,13 +115,13 @@ def recognize_face(cv2, np, time, code):
     if hasattr(cap, 'isOpened') and cap.isOpened:
         log.debug("camera is opened")
         actual_face = get_actual_img(code, DeepFace.detectFace)
-        log.debug("result of get_actual_img%s"%(actual_face))
+        log.debug("result of get_actual_img%s", (actual_face))
         if len(actual_face):
             log.debug("actual face found")
             while True:
 
                 x, img, = cap.read()
-                log.debug("camera is running %s"%(x))
+                log.debug("camera is running %s", (x))
                 cv2.imshow("Attendance", img)
                 imgS = cv2.resize(img, (0,0), None, 0.25, 0.25)
                 obj = DeepFace.verify(actual_face, imgS, model_name='Facenet', enforce_detection = False)
@@ -150,6 +150,6 @@ def recognize_face(cv2, np, time, code):
         msg = """Please check your webcam's power
                 on/off or try connecting it to different usb slot"""
         status = 404
-    log.debug("msg: %s, title: %s, decoded:%s"%(msg, title, code))
+    log.debug("msg: %s, title: %s, decoded:%s", msg, title, code)
     return rp.JsonResponse({"message":msg, 'title':title, 'decoded':code}, status = status)
 

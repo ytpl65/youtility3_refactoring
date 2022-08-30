@@ -68,10 +68,7 @@ class SignIn(View):
                     login(request, people)
                     #response = redirect('onboarding:wizard_delete') if request.session.get('wizard_data') else redirect('/dashboard')
                     logger.info(
-                        'Login Successfull for people "%s" with loginid "%s" client "%s" site "%s"'%(
-                            people.peoplename, people.loginid, people.client.buname if people.client else "None", people.bu.buname if people.bu else "None"
-                        )
-                    )
+                        'Login Successfull for people "%s" with loginid "%s" client "%s" site "%s"', people.peoplename, people.loginid, people.client.buname if people.client else "None", people.bu.buname if people.bu else "None")
                     utils.save_user_session(request, request.user)
                     display_user_session_info(request.session)
                     logger.info(f"User logged in {request.user.peoplecode}")
@@ -79,7 +76,7 @@ class SignIn(View):
 
                 else:
                     logger.warning(
-                        self.error_msgs['auth-error'] % (loginid, '********'))
+                        self.error_msgs['auth-error'], loginid, '********')
                     form.add_error(
                         None, self.error_msgs['invalid-details'])
                     cxt = {'loginform': form}
@@ -331,7 +328,7 @@ class DeletePeople(LoginRequiredMixin, View):
         try:
             if pk:
                 people = self.model.objects.get(id = pk)
-                logger.info('deleting people %s ...' % people.peoplecode)
+                logger.info('deleting people %s ...', people.peoplecode)
                 form = self.form_class(instance = people)
                 people.delete()
                 logger.info('People object deleted... DONE')
@@ -1017,7 +1014,7 @@ class SiteGroup(LoginRequiredMixin, View):
         # for list view of group
         if R.get('action') == 'list':
             total, filtered, objs = pm.Pgroup.objects.list_view_sitegrp(R)
-            logger.info('SiteGroup objects %s retrieved from db' %(total or "No Records!"))
+            logger.info('SiteGroup objects %s retrieved from db', (total or "No Records!"))
             utils.printsql(objs)
             resp = rp.JsonResponse(data = { 
                 'draw':R['draw'],

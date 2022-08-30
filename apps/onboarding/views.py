@@ -203,8 +203,7 @@ class UpdateClient(LoginRequiredMixin, View):
                                      "alert alert-success")
                     response = redirect('onboarding:client_form')
             else:
-                logger.warning('ClientForm is not valid\n Following are the form errors: %s\n%s' % (
-                    form.errors, jsonform.errors))
+                logger.warning('ClientForm is not valid\n Following are the form errors: %s\n%s', form.errors, jsonform.errors)
                 cxt = {'clientform': form,
                        'clientprefsform': jsonform, 'edit': True}
                 response = render(request, self.template_path, context=cxt)
@@ -1017,8 +1016,7 @@ class UpdateClient(LoginRequiredMixin, View):
                                      "alert alert-success")
                     response = redirect('onboarding:client_form')
             else:
-                logger.warning('ClientForm is not valid\n Following are the form errors: %s\n%s' % (
-                    form.errors, jsonform.errors))
+                logger.warning('ClientForm is not valid\n Following are the form errors: %s\n%s', form.errors, jsonform.errors)
                 cxt = {'clientform': form,
                        'clientprefsform': jsonform, 'edit': True}
                 response = render(request, self.template_path, context = cxt)

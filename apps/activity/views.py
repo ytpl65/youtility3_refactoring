@@ -399,7 +399,7 @@ def deleteQSB(request):
         quesname = request.GET.get('quesname')
         answertype = request.GET.get('answertype')
         qset = request.GET.get('qset')
-        logger.info("request for delete QSB '%s' start" % (quesname))
+        logger.info("request for delete QSB '%s' start", (quesname))
         am.QuestionSetBelonging.objects.get(
             question__quesname = quesname,
             answertype = answertype,

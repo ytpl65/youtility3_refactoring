@@ -158,8 +158,7 @@ def create_bt_tree(bucode, indentifier, instance, parent = None):
 
         raise
     else:
-        logger.info('BU Tree created for instance %s... DONE' %
-                    (instance.bucode))
+        logger.info('BU Tree created for instance %s... DONE', (instance.bucode))
 
 def create_bv_reportting_heirarchy(instance, newcode, newtype, parent):
     if instance.id is None:
@@ -191,16 +190,15 @@ def create_tenant(buname, bucode):
     from apps.tenants.models import Tenant
     try:
         logger.info(
-            'Creating corresponding tenant for client %s ...STARTED' % (bucode))
+            'Creating corresponding tenant for client %s ...STARTED', (bucode))
         _, _ = Tenant.objects.update_or_create(
             defaults={'tenantname':buname}, subdomain_prefix = bucode.lower())
     except Exception:
-        logger.error('Something went wrong while creating tenant for the client %s' % (bucode),
-                     exc_info = True)
+        logger.error('Something went wrong while creating tenant for the client %s', (bucode), exc_info = True)
         raise
     else:
         logger.info(
-            'Corresponding tenant created for client %s ...DONE' % (bucode))
+            'Corresponding tenant created for client %s ...DONE', (bucode))
 
 def create_default_admin_for_client(client):
     from apps.peoples.models import People
@@ -212,7 +210,7 @@ def create_default_admin_for_client(client):
     email = client.bucode + '@youtility.in'
     try:
         logger.info(
-            'Creating default user for the client: %s ...STARTED' % (client.bucode))
+            'Creating default user for the client: %s ...STARTED', (client.bucode))
 
         People.objects.create(peoplecode = peoplecode,
                               peoplename = peoplename, dateofbirth = dob,
