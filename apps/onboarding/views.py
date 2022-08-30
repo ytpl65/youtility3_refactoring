@@ -236,7 +236,7 @@ class DeleteClient(LoginRequiredMixin, View):
         """Handles deletion of object"""
         from django.db import models
         from .utils import get_bt_prefform
-        pk, response = kwargs.get('pk', None), None
+        pk, response = kwargs.get('pk'), None
         try:
             if pk:
                 bt = self.model.objects.get(id=pk)
@@ -423,7 +423,7 @@ class DeleteSitePeople(LoginRequiredMixin, View):
 
     def get(self, request, *args, **kwargs):
         """Handles deletion of object"""
-        pk, response = kwargs.get('pk', None), None
+        pk, response = kwargs.get('pk'), None
         try:
             if pk:
                 sp = self.model.objects.get(id=pk)
@@ -614,7 +614,7 @@ class DeleteShift(LoginRequiredMixin, View):
 
     def get(self, request, *args, **kwargs):
         """Handles deletion of object"""
-        pk, response = kwargs.get('pk', None), None
+        pk, response = kwargs.get('pk'), None
         ic(pk)
         try:
             if pk:
@@ -812,7 +812,7 @@ class DeleteBt(LoginRequiredMixin, View):
 
     def get(self, request, *args, **kwargs):
         """Handles deletion of object"""
-        pk, response = kwargs.get('pk', None), None
+        pk, response = kwargs.get('pk'), None
         try:
             if pk:
                 bt = self.model.objects.get(id = pk)
@@ -1049,7 +1049,7 @@ class DeleteClient(LoginRequiredMixin, View):
         """Handles deletion of object"""
         from django.db import models
         from .utils import get_bt_prefform
-        pk, response = kwargs.get('pk', None), None
+        pk, response = kwargs.get('pk'), None
         try:
             if pk:
                 bt = self.model.objects.get(id = pk)

@@ -327,7 +327,7 @@ class DeletePeople(LoginRequiredMixin, View):
     def get(self, request, *args, **kwargs):
         """Handles deletion of object"""
         from .utils import get_people_prefform
-        pk, response = kwargs.get('pk', None), None
+        pk, response = kwargs.get('pk'), None
         try:
             if pk:
                 people = self.model.objects.get(id = pk)
@@ -515,7 +515,7 @@ class DeletePgroup(LoginRequiredMixin, View):
 
     def get(self, request, *args, **kwargs):
         """Handles deletion of object"""
-        pk, response = kwargs.get('pk', None), None
+        pk, response = kwargs.get('pk'), None
         try:
             if pk:
                 pg = self.model.objects.get(id = pk)
@@ -694,7 +694,7 @@ class DeleteCapability(LoginRequiredMixin, View):
 
     def get(self, request, *args, **kwargs):
         """Handles deletion of object"""
-        pk, response = kwargs.get('pk', None), None
+        pk, response = kwargs.get('pk'), None
         try:
             if pk:
                 cap = self.model.objects.get(id = pk)
