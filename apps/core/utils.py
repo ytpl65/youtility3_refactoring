@@ -18,7 +18,7 @@ from apps.tenants.models import Tenant
 import logging
 from rest_framework.utils.encoders import JSONEncoder
 from django.contrib.gis.measure import Distance
-import apps.onboarding.models as om
+import apps.onboarding.models as ob
 import apps.activity.models as am
 logger = logging.getLogger('__main__')
 dbg = logging.getLogger('__main__').debug
@@ -290,8 +290,6 @@ def save_user_session(request, people):
 
 def update_timeline_data(ids, request, update = False):
     # sourcery skip: hoist-statement-from-if, remove-pass-body
-    import apps.onboarding.models as ob
-    import apps.peoples.models as pm
     steps = {'taids': ob.TypeAssist, 'buids': ob.Bt, 'shiftids': ob.Shift,
              'peopleids': pm.People, 'pgroupids': pm.Pgroup}
     fields = {'buids': ['id', 'bucode', 'buname'],
@@ -510,7 +508,7 @@ def hostname_from_request(request):
     return request.get_host().split(':')[0].lower()
 
 def get_or_create_none_bv():
-    obj, _ = om.Bt.objects.get_or_create(
+    obj, _ = ob.Bt.objects.get_or_create(
         id = 1,
         defaults={
             'bucode': "NONE", 'buname': "NONE", 'id': 1,
@@ -519,7 +517,7 @@ def get_or_create_none_bv():
     return obj
 
 def get_or_create_none_typeassist():
-    obj, iscreated = om.TypeAssist.objects.get_or_create(
+    obj, iscreated = ob.TypeAssist.objects.get_or_create(
         id = 1,
         defaults={
             'tacode': "NONE", 'taname': "NONE", 'id': 1
@@ -561,7 +559,7 @@ def get_or_create_none_job():
     return obj
 
 def get_or_create_none_gf():
-    obj, _ = om.GeofenceMaster.objects.get_or_create(
+    obj, _ = ob.GeofenceMaster.objects.get_or_create(
         id = 1,
         defaults = {
             'gfcode': 'NONE', 'gfname': 'NONE',
