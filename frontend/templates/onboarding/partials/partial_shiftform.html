@@ -119,7 +119,7 @@
     //format mins to readable format
     var val = $("#id_shiftduration").val()
     if (val != "") {
-        let mins = parseInt(val);
+        let mins = parseInt(val, 10);
         $("#id_shiftduration").val(formatMins(mins))
     }
 

@@ -220,7 +220,7 @@ Attendance
 					show_successful_delete_alert() //defined in customjs
 					$("#modal-attd").modal("hide")
 					//delete row from table
-					row_index = parseInt($("#attd_content").attr('data-rowid'))
+					row_index = parseInt($("#attd_content").attr('data-rowid'), 10)
 					table.row(row_index).remove().draw();
 				}else{
 					show_error_alert('Something went wrong!');

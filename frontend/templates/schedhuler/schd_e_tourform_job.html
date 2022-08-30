@@ -514,7 +514,7 @@ $(document).ready(() => {
 
     $(".btdeciders").change(function() {
         //console.log("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$")
-        if(parseInt($("#id_tourfrequency").val()) > 1 && $("#id_israndom").is(":checked")){
+        if(parseInt($("#id_tourfrequency").val(), 10) > 1 && $("#id_israndom").is(":checked")){
             $("#id_breaktime").removeAttr('disabled');
             //console.log("Attribute Removed")
         }
@@ -540,7 +540,7 @@ $(document).ready(() => {
         $(".non-random").attr('disabled','disabled');
         isRouteSaved=true
     }
-    if(parseInt($("#id_tourfrequency").val()) > 1){
+    if(parseInt($("#id_tourfrequency").val()) > 1, 10){
         $("#id_breaktime").removeAttr('disabled');
     }else{
         $("#id_breaktime").val('0')

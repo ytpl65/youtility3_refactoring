@@ -439,7 +439,7 @@ Schedhule Tour
     }
 
     function update_checkpoint_form(data, fortable = false) {
-        $("#createchildjob_form #id_slno").val(parseInt(data[0]))
+        $("#createchildjob_form #id_slno").val(parseInt(data[0]), 10)
         $("#createchildjob_form #id_asset").val(data[1]).change()
         $("#createchildjob_form #id_qset").val(data[3]).change()
         $("#createchildjob_form #id_expirytime").val(data[5])

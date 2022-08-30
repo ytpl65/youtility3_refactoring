@@ -183,7 +183,7 @@ Shift List
 					show_successful_delete_alert() //defined in customjs
 					$(modal_id).modal("hide")
 					//delete row from table
-					row_index = parseInt($(modalcontent_id).attr('data-rowid'))
+					row_index = parseInt($(modalcontent_id).attr('data-rowid'), 10)
 					console.log(row_index, "row index")
 					table.row(row_index).remove().draw(false);
 				}else{

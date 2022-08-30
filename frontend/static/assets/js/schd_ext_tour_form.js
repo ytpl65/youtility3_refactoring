@@ -170,7 +170,7 @@ function calculateDistanceDuration(response, data){
         l.push(optimizedPoints[i+1]['distance'])
         optimizedPoints[i+1]['duration'] = secondsToString(legs[i]["duration"]["value"]);
         l.push(optimizedPoints[i+1]['duration'])
-        optimizedPoints[i+1]['expirytime'] = parseInt(legs[i]["duration"]["value"] / 60);
+        optimizedPoints[i+1]['expirytime'] = parseInt(legs[i]["duration"]["value"] / 60, 10);
         l.push(optimizedPoints[i+1]['expirytime'])
         DDE.push(l)
     }
@@ -313,7 +313,7 @@ function reCaclTime(){
         'prevBreakTime' : 0, 'smin':0,
         'prevExpTime'   : 0, 'emin':0,
         'calDateTime'   : _cronDates[0], 'mapDistance':0,
-        'duration_grace': parseInt($("#id_planduration").val()) + parseInt($("#id_gracetime").val()),
+        'duration_grace': parseInt($("#id_planduration").val(), 10) + parseInt($("#id_gracetime").val(), 10),
         'mapDuration':0,
         'mapBreakTime'  : 0, 'timeSpendAtSite':0
     }
@@ -327,32 +327,32 @@ function CalculateStimeEtimeDuration(params){
     var data = params.data
     for(var i= 0; i < data.length; i++) {
         console.log(i, ": reCaclTime data: ", data[i]);
-        data[i]['duration'] = secondsToString(parseInt(data[i]['expirytime']) * 60);
+        data[i]['duration'] = secondsToString(parseInt(data[i]['expirytime'], 10) * 60);
         console.log()
         params.mapDistance += parseFloat(data[i]['distance']);
-        params.mapDuration += parseInt(data[i]['expirytime']);
+        params.mapDuration += parseInt(data[i]['expirytime'], 10);
         params.timeSpendAtSite += params.duration_grace;
         if(data[i]['breaktime'] == undefined || data[i]['breaktime'] == null || data[i]['breaktime'] == "") {
             data[i]['breaktime'] = 0;
         }
-        params.mapBreakTime += parseInt(data[i]['breaktime']);
+        params.mapBreakTime += parseInt(data[i]['breaktime'], 10);
         if(i > 0) {
-            params.smin  = params.prevExpTime + parseInt(data[i]['expirytime']) + params.prevBreakTime;
-            params.emin  = params.smin + parseInt(params.duration_grace);
+            params.smin  = params.prevExpTime + parseInt(data[i]['expirytime'], 10) + params.prevBreakTime;
+            params.emin  = params.smin + parseInt(params.duration_grace, 10);
             data[i]['starttime'] = moment(params.calDateTime).add(params.smin, 'minutes').format("HH:mm");
             data[i]['endtime'] = moment(params.calDateTime).add(params.emin, 'minutes').format("HH:mm");
             params.prevExpTime= params.emin;
             if(data[i]['breaktime'] != undefined && data[i]['breaktime'] != null && data[i]['breaktime'] != ""){
-                params.prevBreakTime= parseInt(data[i]['breaktime']);
+                params.prevBreakTime= parseInt(data[i]['breaktime'], 10);
             }
         }else {
-            params.smin  = parseInt(data[i]['expirytime'])
-            params.emin  = params.smin + parseInt(params.duration_grace);
+            params.smin  = parseInt(data[i]['expirytime'], 10)
+            params.emin  = params.smin + parseInt(params.duration_grace, 10);
             data[i]['starttime'] = moment(params.calDateTime).add(params.smin, 'minutes').format("HH:mm");
             data[i]['endtime'] = moment(params.calDateTime).add(params.emin, 'minutes').format("HH:mm");
             params.prevExpTime= params.emin;
             if(data[i]['breaktime'] != undefined && data[i]['breaktime'] != null && data[i]['breaktime'] != ""){
-                params.prevBreakTime= parseInt(data[i]['breaktime']);
+                params.prevBreakTime= parseInt(data[i]['breaktime'], 10);
             }
         }
     }
@@ -360,7 +360,7 @@ function CalculateStimeEtimeDuration(params){
 
 function populateTourDetailsCard(params){
     var speed= parseFloat((params.mapDistance) / (params.mapDuration / 60)).toFixed(2);
-    var rtime= (parseInt(_shiftMinute) - parseInt(params.mapDuration) - parseInt(params.mapBreakTime) - (params.timeSpendAtSite));
+    var rtime= (parseInt(_shiftMinute, 10) - parseInt(params.mapDuration, 10) - parseInt(params.mapBreakTime, 10) - (params.timeSpendAtSite));
     console.log("reCaclTime() rtime: ", rtime);
 
     _fduration= isNaN(params.mapDuration) ? "--" : secondsToString(params.mapDuration * 60);
@@ -387,8 +387,8 @@ function setShiftMin(_shift) {
         var etime= _shift.endtime.split(":");
         console.log("before stime: ", stime);
         console.log("before etime: ", etime);
-        stime= parseInt(stime[0] * 60) + parseInt(stime[1]);
-        etime= parseInt(etime[0] * 60) + parseInt(etime[1]);
+        stime= parseInt(stime[0] * 60, 10) + parseInt(stime[1], 10);
+        etime= parseInt(etime[0] * 60, 10) + parseInt(etime[1], 10);
         console.log("after stime: ", stime);
         console.log("after etime: ", etime);
         _shiftMinute= (stime > etime) ? (1440 + etime - stime) : (etime - stime);

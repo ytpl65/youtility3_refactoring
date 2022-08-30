@@ -451,23 +451,23 @@ Site Report Template
                     let max = this.field('max')
                     let alertbelow = this.field('alertbelow')
                     let alertabove = this.field('alertabove')
-                    console.log(!min.isMultiValue(), isNaN(parseInt(min.val())) == NaN)
+                    console.log(!min.isMultiValue(), isNaN(parseInt(min.val(), 10)) == NaN)
 
-                    if(!(min.isMultiValue()) && isNaN(parseInt(min.val()))) {min.error('value of min must be number')}
-                    if(!(max.isMultiValue()) && isNaN(parseInt(max.val()))) {max.error('value of max must be number')}
+                    if(!(min.isMultiValue()) && isNaN(parseInt(min.val(), 10))) {min.error('value of min must be number')}
+                    if(!(max.isMultiValue()) && isNaN(parseInt(max.val(), 10))) {max.error('value of max must be number')}
                     if(!(alertbelow.isMultiValue()) && isNaN(parseInt(alertbelow.val()))) {alertbelow.error('value of alert below must be number')}
                     if(!(alertabove.isMultiValue()) && isNaN(parseInt(alertabove.val()))) {alertabove.error('value of alert above must be number')}
 
-                    if(!(min.isMultiValue() && max.isMultiValue()) && (parseInt(min.val()) > parseInt(max.val())) ){
+                    if(!(min.isMultiValue() && max.isMultiValue()) && (parseInt(min.val(), 10) > parseInt(max.val(), 10)) ){
                         min.error('Min value must be smaller than Max value')
                     }
-                    if(!(min.isMultiValue() && alertbelow.isMultiValue()) && (parseInt(alertbelow.val()) < parseInt(min.val())) ){
+                    if(!(min.isMultiValue() && alertbelow.isMultiValue()) && (parseInt(alertbelow.val(), 10) < parseInt(min.val(), 10)) ){
                         alertbelow.error('Alert Below value must be greater than Min value')
                     }
-                    if(!(max.isMultiValue() && alertabove.isMultiValue()) && (parseInt(alertabove.val())  > parseInt(max.val())) ){
+                    if(!(max.isMultiValue() && alertabove.isMultiValue()) && (parseInt(alertabove.val())  > parseInt(max.val(), 10)) ){
                         max.error('Alert Above value must be smaller than Max value')
                     }
-                    if(!(alertbelow.isMultiValue() && alertabove.isMultiValue()) && (parseInt(alertbelow.val()) > parseInt(alertabove.val())) ){
+                    if(!(alertbelow.isMultiValue() && alertabove.isMultiValue()) && (parseInt(alertbelow.val(), 10) > parseInt(alertabove.val(), 10)) ){
                         alertabove.error('Alert Below value must be smaller than Alert Above value')
                     }
                     // If any error was reported, cancel the submission so it can be corrected

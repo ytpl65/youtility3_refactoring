@@ -782,7 +782,7 @@ function update_options_field(data, optionTag) {
 }
 
 function update_qsetblng_form(data, optionTag, fortable = false) {
-  $("#id_slno").val(parseInt(data[0]))
+  $("#id_slno").val(parseInt(data[0], 10))
   $("select[name='question']").val($(`select option:contains(${data[1]})`).val()).change()
   $("#id_answertype").val(data[3])
   $("#id_min").val(data[4])
@@ -888,7 +888,7 @@ function warnFormCLoseAlert() {
 
 function getSlnoFromTable(){
   var lastrow = table.row(table.rows().count() - 1).data();
-  const seqno = lastrow.length > 0 ? parseInt(lastrow[0]) + 1 : {};
+  const seqno = lastrow.length > 0 ? parseInt(lastrow[0], 10) + 1 : {};
   return seqno
 }
 
@@ -918,7 +918,7 @@ function adjustSlno(seqno, table, reset) {
   } else if ('{{ masterqset_form.instance.id }}' !== ('None' || "")) {
       //update row
       var lastrow = table.row(table.rows().count() - 1).data();
-      seqno = lastrow.length > 0 ? parseInt(lastrow[0]) + 1 : ++seqno;
+      seqno = lastrow.length > 0 ? parseInt(lastrow[0], 10) + 1 : ++seqno;
       
 
   } else {
