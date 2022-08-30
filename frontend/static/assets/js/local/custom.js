@@ -918,7 +918,7 @@ function adjustSlno(seqno, table, reset) {
       tableData[row][0] = seq;
     }
     table.rows.add(tableData).draw();
-  } else if ("{{ masterqset_form.instance.id }}" !== ("None" || "")) {
+  } else if (("None" || "") !== "{{ masterqset_form.instance.id }}") {
     //update row
     var lastrow = table.row(table.rows().count() - 1).data();
     seqno = lastrow.length > 0 ? parseInt(lastrow[0], 10) + 1 : ++seqno;
