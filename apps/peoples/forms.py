@@ -146,10 +146,10 @@ class PeopleForm(forms.ModelForm):
         if (dob and dor and doj):
             if dob == doj:
                 raise forms.ValidationError(self.error_msg['invalid_dates'])
-            elif dob > doj:
+            if dob > doj:
                 print(dob, doj)
                 raise forms.ValidationError(self.error_msg['invalid_dates2'])
-            elif dob > dor:
+            if dob > dor:
                 raise forms.ValidationError(self.error_msg['invalid_dates3'])
 
     # For field level validation define functions like clean_<func name>.
@@ -160,9 +160,9 @@ class PeopleForm(forms.ModelForm):
             regex = "^[a-zA-Z0-9\-_]*$"
             if " " in value:
                 raise forms.ValidationError(self.error_msg['invalid_code'])
-            elif not re.match(regex, value):
+            if not re.match(regex, value):
                 raise forms.ValidationError(self.error_msg['invalid_code2'])
-            elif value.endswith('.'):
+            if value.endswith('.'):
                 raise forms.ValidationError(self.error_msg['invalid_code3'])
             return value.upper()
 
@@ -307,9 +307,9 @@ class CapabilityForm(forms.ModelForm):
             regex = "^[a-zA-Z0-9\-_]*$"
             if " " in value:
                 raise forms.ValidationError(self.error_msg['invalid_code'])
-            elif not re.match(regex, value):
+            if not re.match(regex, value):
                 raise forms.ValidationError(self.error_msg['invalid_code2'])
-            elif value.endswith('.'):
+            if value.endswith('.'):
                 raise forms.ValidationError(self.error_msg['invalid_code3'])
             return value.upper()
 

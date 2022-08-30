@@ -475,8 +475,7 @@ def insert_update_jobneeddetails(jnid, job, parent = False):
         log.error("No Checklist Found failed to schedhule job",
                   exc_info = True)
         raise EmptyResultSet
-    else:
-        insert_into_jnd(qsb, job, jnid)
+    insert_into_jnd(qsb, job, jnid)
     log.info("insert_update_jobneeddetails() [END]")
 
 
