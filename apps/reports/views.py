@@ -9,7 +9,7 @@ from django.http import JsonResponse, QueryDict, response as rp
 from django.urls import reverse
 from apps.activity  import models as am
 from apps.peoples import utils as putils
-from apps.core import utils as utils
+from apps.core import utils
 from apps.activity.forms import QsetBelongingForm
 from apps.reports import forms as rp_forms
 import logging
