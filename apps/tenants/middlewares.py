@@ -21,8 +21,7 @@ class TenantDbRouter:
             if THREAD_LOCAL.DB in settings.DATABASES:
                 return THREAD_LOCAL.DB
             raise Http404
-        else:
-            return 'default'
+        return 'default'
 
     def db_for_read(self, model, **hints):
         return self._multi_db()
