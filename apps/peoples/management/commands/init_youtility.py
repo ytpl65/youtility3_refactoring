@@ -76,18 +76,15 @@ def insert_default_entries_in_typeassist(db, self):
 
 
 def execute_tasks(db, self):
-    try:
-        with transaction.atomic(using = db):
-            utils.create_none_entries(self)
+    with transaction.atomic(using = db):
+        utils.create_none_entries(self)
 
-        # insert default entries for TypeAssist
-        insert_default_entries_in_typeassist(db, self)
+    # insert default entries for TypeAssist
+    insert_default_entries_in_typeassist(db, self)
 
-        with transaction.atomic(using = db):
-            # create dummy client: SPS and site: YTPL
-            create_dummy_client_site_and_superadmin(self)
-    except Exception as e:
-        raise
+    with transaction.atomic(using = db):
+        # create dummy client: SPS and site: YTPL
+        create_dummy_client_site_and_superadmin(self)
 
 
 

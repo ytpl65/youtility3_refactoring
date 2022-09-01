@@ -532,7 +532,7 @@ $(document).ready(() => {
     }
 
     $(".btdeciders").change(function() {
-        if(parseInt($("#id_tourfrequency").val()) > 1 && $("#id_israndom").is(":checked")){
+        if(parseInt($("#id_tourfrequency").val(), 10) > 1 && $("#id_israndom").is(":checked")){
             enableFields("#id_breaktime")
         }else{disableFields("#id_breaktime")}
         
@@ -541,7 +541,23 @@ $(document).ready(() => {
         }else{disableFields("#id_tourfrequency, #id_breaktime")}
     })
 
-    
+    if(!$("#id_israndom").is(":checked")){
+        //disable breaktime & frequency
+        $("#id_breaktime, #id_tourfrequency").attr('disabled','disabled');
+        //enable non-random buttons
+        $(".non-random").removeAttr('disabled');
+    }else{
+        //enable breaktime & frequency
+        $("#id_breaktime, #id_tourfrequency").removeAttr('disabled');
+        $(".non-random").attr('disabled','disabled');
+        isRouteSaved=true
+    }
+    if(parseInt($("#id_tourfrequency").val()) > 1){
+        $("#id_breaktime").removeAttr('disabled');
+    }else{
+        $("#id_breaktime").val('0')
+        $("#id_breaktime").attr('disabled','disabled');
+    }
 
     
 

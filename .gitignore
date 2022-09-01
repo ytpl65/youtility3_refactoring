@@ -4,6 +4,7 @@ docs/importants.txt
 .gitignore
 docs/importants.txt
 frontend/static/assets/js/jqCron.en.js
+frontend/static/assets/js/daterangepicker.js
 frontend/static/assets/js/jqCron.js
 frontend/static/assets/js/jquery.jqgrid.min.js
 frontend/static/assets/js/scripts.bundle.js

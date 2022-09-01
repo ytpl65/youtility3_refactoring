@@ -54,7 +54,7 @@ class CreateClient(LoginRequiredMixin, View):
         try:
             if form.is_valid() and jsonform.is_valid():
                 logger.info('ClientBt Form is valid')
-                from .utils import (save_json_from_bu_prefsform, create_tenant,
+                from .utils import (create_tenant,
                                     create_default_admin_for_client)
                 bt = form.save(commit=False)
                 bt.parent = get_or_create_none_bv()
@@ -92,7 +92,6 @@ def get_caps(request):  # sourcery skip: extract-method
     logger.info(f'cfor {cfor}')
     if selected_parents:
         from apps.peoples.models import Capability
-        from django.http import JsonResponse
         import json
         childs = []
         for i in selected_parents:
@@ -135,7 +134,8 @@ class RetriveClients(LoginRequiredMixin, View):
             response = redirect('/dashboard')
         return response
 
-    def paginate_results(self, request, objects):
+    @staticmethod
+    def paginate_results(request, objects):
         '''paginate the results'''
         logger.info('Pagination Start'if objects else "")
         from .filters import ClientFiler
@@ -203,8 +203,7 @@ class UpdateClient(LoginRequiredMixin, View):
                                      "alert alert-success")
                     response = redirect('onboarding:client_form')
             else:
-                logger.warn('ClientForm is not valid\n Following are the form errors: %s\n%s' % (
-                    form.errors, jsonform.errors))
+                logger.warning('ClientForm is not valid\n Following are the form errors: %s\n%s', form.errors, jsonform.errors)
                 cxt = {'clientform': form,
                        'clientprefsform': jsonform, 'edit': True}
                 response = render(request, self.template_path, context=cxt)
@@ -236,7 +235,7 @@ class DeleteClient(LoginRequiredMixin, View):
         """Handles deletion of object"""
         from django.db import models
         from .utils import get_bt_prefform
-        pk, response = kwargs.get('pk', None), None
+        pk, response = kwargs.get('pk'), None
         try:
             if pk:
                 bt = self.model.objects.get(id=pk)
@@ -336,7 +335,8 @@ class RetrieveSitePeople(LoginRequiredMixin, View):
             response = redirect('/dashboard')
         return response
 
-    def paginate_results(self, request, objects):
+    @staticmethod
+    def paginate_results(request, objects):
         '''paginate the results'''
         logger.info('Pagination Start'if objects else "")
         from .filters import BtFilter
@@ -422,7 +422,7 @@ class DeleteSitePeople(LoginRequiredMixin, View):
 
     def get(self, request, *args, **kwargs):
         """Handles deletion of object"""
-        pk, response = kwargs.get('pk', None), None
+        pk, response = kwargs.get('pk'), None
         try:
             if pk:
                 sp = self.model.objects.get(id=pk)
@@ -438,7 +438,7 @@ class DeleteSitePeople(LoginRequiredMixin, View):
                            "alert alert-danger")
             response = redirect('onboarding:sitepeople_form')
         except RestrictedError:
-            logger.warn('Unable to delete, due to dependencies')
+            logger.warning('Unable to delete, due to dependencies')
             messages.error(request, 'Unable to delete, due to dependencies',
                            "alert alert-danger")
             cxt = {'sitepeople_form': form, 'edit': True}
@@ -525,7 +525,8 @@ class RetrieveShift(LoginRequiredMixin, View):
             response = redirect('/dashboard')
         return response
 
-    def paginate_results(self, request, objects):
+    @staticmethod
+    def paginate_results(request, objects):
         '''paginate the results'''
         logger.info('Pagination Start'if objects else "")
         from .filters import ShiftFlter
@@ -612,7 +613,7 @@ class DeleteShift(LoginRequiredMixin, View):
 
     def get(self, request, *args, **kwargs):
         """Handles deletion of object"""
-        pk, response = kwargs.get('pk', None), None
+        pk, response = kwargs.get('pk'), None
         ic(pk)
         try:
             if pk:
@@ -622,12 +623,12 @@ class DeleteShift(LoginRequiredMixin, View):
                 logger.info('Shift object deleted')
                 response = redirect('onboarding:shift_form')
         except self.model.DoesNotExist:
-            logger.warn('Unable to delete, object does not exist')
+            logger.warning('Unable to delete, object does not exist')
             messages.error(request, 'Shift does not exist',
                            "alert alert-danger")
             response = redirect('onboarding:shift_form')
         except RestrictedError:
-            logger.warn('Unable to delete, due to dependencies')
+            logger.warning('Unable to delete, due to dependencies')
             messages.error(
                 request, 'Unable to delete, due to dependencies', "alert alert-danger")
             cxt = {'shift_form': form, 'edit': True}
@@ -721,7 +722,8 @@ class RetrieveBt(LoginRequiredMixin, View):
             response = redirect('/dashboard')
         return response
 
-    def paginate_results(self, request, objects):
+    @staticmethod
+    def paginate_results(request, objects):
         '''paginate the results'''
         logger.info('Pagination Start'if objects else "")
         from .filters import BtFilter
@@ -809,7 +811,7 @@ class DeleteBt(LoginRequiredMixin, View):
 
     def get(self, request, *args, **kwargs):
         """Handles deletion of object"""
-        pk, response = kwargs.get('pk', None), None
+        pk, response = kwargs.get('pk'), None
         try:
             if pk:
                 bt = self.model.objects.get(id = pk)
@@ -946,7 +948,8 @@ class RetriveClients(LoginRequiredMixin, View):
             response = redirect('/dashboard')
         return response
 
-    def paginate_results(self, request, objects):
+    @staticmethod
+    def paginate_results(request, objects):
         '''paginate the results'''
         logger.info('Pagination Start'if objects else "")
         from .filters import ClientFiler
@@ -1013,8 +1016,7 @@ class UpdateClient(LoginRequiredMixin, View):
                                      "alert alert-success")
                     response = redirect('onboarding:client_form')
             else:
-                logger.warning('ClientForm is not valid\n Following are the form errors: %s\n%s' % (
-                    form.errors, jsonform.errors))
+                logger.warning('ClientForm is not valid\n Following are the form errors: %s\n%s', form.errors, jsonform.errors)
                 cxt = {'clientform': form,
                        'clientprefsform': jsonform, 'edit': True}
                 response = render(request, self.template_path, context = cxt)
@@ -1045,7 +1047,7 @@ class DeleteClient(LoginRequiredMixin, View):
         """Handles deletion of object"""
         from django.db import models
         from .utils import get_bt_prefform
-        pk, response = kwargs.get('pk', None), None
+        pk, response = kwargs.get('pk'), None
         try:
             if pk:
                 bt = self.model.objects.get(id = pk)
@@ -1124,7 +1126,7 @@ class MasterTypeAssist(LoginRequiredMixin, View):
              ).values(*self.params['fields'])
             return  rp.JsonResponse(data = {'data':list(objs)})
 
-        elif R.get('action', None) == 'form':
+        if R.get('action', None) == 'form':
             cxt = {'ta_form': self.params['form_class'](request = request),
                    'msg': "create typeassist requested"}
             resp = utils.render_form(request, self.params, cxt)
@@ -1328,14 +1330,14 @@ class GeoFence(LoginRequiredMixin, View):
             objs = self.params['model'].objects.get_geofence_list(params['fields'], params['related'], request.session)
             return  rp.JsonResponse(data = {'data':list(objs)})
 
-        elif R.get('action', None) == 'form':
+        if R.get('action', None) == 'form':
             cxt = {'geofenceform':self.params['form_class']()}
             return render(request, self.params['template_form'], context = cxt)
 
-        elif R.get('action') == 'drawgeofence':
+        if R.get('action') == 'drawgeofence':
             return get_geofence_from_point_radii(R)
 
-        elif R.get('id', None):
+        if R.get('id', None):
             obj = utils.get_model_obj(int(R['id']), request, self.params)
             cxt = {'geofenceform':self.params['form_class'](request = request, instance = obj),
                     'edit':True,
@@ -1378,7 +1380,8 @@ class GeoFence(LoginRequiredMixin, View):
         except IntegrityError:
             return handle_intergrity_error("GeoFence")
 
-    def save_geofence_field(self, gf, geofence):
+    @staticmethod
+    def save_geofence_field(gf, geofence):
         try:
             from django.contrib.gis.geos import LinearRing, Polygon
             import json
@@ -1405,8 +1408,7 @@ def get_geofence_from_point_radii(R):
             geofence = point.buffer(int(radii))
             geofence.transform(4326)
             return rp.JsonResponse(data={'geojson':utils.getformatedjson(geofence)}, status = 200)
-        else:
-            return rp.JsonResponse(data={'errors': "Invalid data provided unable to compute geofence!"}, status = 404)
+        return rp.JsonResponse(data={'errors': "Invalid data provided unable to compute geofence!"}, status = 404)
     except Exception:
         logger.error("something went wrong while computing geofence..", exc_info = True)
         return rp.JsonResponse(data={'errors': 'something went wrong while computing geofence!'}, status = 404)
@@ -1425,10 +1427,11 @@ class ImportFile(LoginRequiredMixin, View):
         if R.get('model') == 'typeassist':
             return render(request, f"{self.params['template_form']}/ta_imp_exp.html")
 
-        elif R.get('model') == 'people':
+        if R.get('model') == 'people':
             return render(request, f"{self.params['template_form']}/people_imp_exp.html")
 
-    def post(self, request, *args, **kwargs):
+    @staticmethod
+    def post(request, *args, **kwargs):
         # sourcery skip: remove-redundant-constructor-in-dict-union
         from tablib import Dataset
         import json
@@ -1475,34 +1478,34 @@ class Client(LoginRequiredMixin, View):
             objs = P['model'].objects.get_client_list(P['fields'], P['related'])
             return  rp.JsonResponse(data = {'data':list(objs)})
 
-        elif R.get('action', None) == 'form':
+        if R.get('action', None) == 'form':
             cxt = {'clientform': P['form_class'](client = True),
                'clientprefsform': P['json_form'](),
                'ta_form': obforms.TypeAssistForm(auto_id = False)
                }
             return render(request, P['template_form'], context = cxt)
         
-        elif R.get('action') =='loadIdentifiers':
+        if R.get('action') =='loadIdentifiers':
             qset =  TypeAssist.objects.load_identifiers(request)
             return rp.JsonResponse({'items':list(qset), 'total_count':len(qset)}, status = 200)
         
-        elif R.get('action') =='loadParents':
+        if R.get('action') =='loadParents':
             qset =  Bt.objects.load_parent_choices(request)
             return rp.JsonResponse({'items':list(qset), 'total_count':len(qset)}, status = 200)
         
-        elif R.get('action') == 'delete':
+        if R.get('action') == 'delete':
             resp = utils.render_form_for_delete(request, self.params, True)
             return resp
         
-        elif R.get('action') == 'getlistbus':
+        if R.get('action') == 'getlistbus':
             objs = P['model'].objects.get_listbus(request)
             return rp.JsonResponse(data = {'data':list(objs)})
         
-        elif R.get('action') == 'getadmins':
+        if R.get('action') == 'getadmins':
             objs = P['model'].objects.get_listadmins(request)
             return rp.JsonResponse(data = {'data':list(objs)})
         
-        elif R.get('id', None):
+        if R.get('id', None):
             obj = utils.get_model_obj(int(R['id']), request, self.params)
             cxt = {'clientform':self.params['form_class'](request = request, instance = obj),
                     'edit':True, 'ta_form': obforms.TypeAssistForm(auto_id = False),
@@ -1515,7 +1518,7 @@ class Client(LoginRequiredMixin, View):
         if R.get('bupostdata'):
             objs = P['model'].objects.handle_bupostdata(request)
             return rp.JsonResponse({'data':list(objs)}, status=200)
-        elif R.get('adminspostdata'):
+        if R.get('adminspostdata'):
             objs = P['model'].objects.handle_adminspostdata(request)
             return rp.JsonResponse({'data':list(objs)}, status=200)
         data = QueryDict(request.POST['formData'])
@@ -1537,7 +1540,8 @@ class Client(LoginRequiredMixin, View):
             resp = utils.handle_Exception(request)
         return resp
 
-    def handle_valid_form(self, form, jsonform, request):
+    @staticmethod
+    def handle_valid_form(form, jsonform, request):
         logger.info('client form is valid')
         from .utils import save_json_from_bu_prefsform
         try:

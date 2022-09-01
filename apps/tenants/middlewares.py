@@ -13,16 +13,15 @@ class TenantMiddleware:
 
 
 class TenantDbRouter:
-    def _multi_db(self):
+    @staticmethod
+    def _multi_db():
         from django.http import Http404
         from django.conf import settings
         if hasattr(THREAD_LOCAL, 'DB'):
             if THREAD_LOCAL.DB in settings.DATABASES:
                 return THREAD_LOCAL.DB
-            else:
-                raise Http404
-        else:
-            return 'default'
+            raise Http404
+        return 'default'
 
     def db_for_read(self, model, **hints):
         return self._multi_db()
@@ -30,8 +29,10 @@ class TenantDbRouter:
     def db_for_write(self, model, **hints):
         return self.db_for_read(model, **hints)
 
-    def allow_relation(self, obj1, obj2, **hints):
+    @staticmethod
+    def allow_relation(obj1, obj2, **hints):
         return True
 
-    def allow_migrate(self, db, app_label, model_name = None, **hints):
+    @staticmethod
+    def allow_migrate(db, app_label, model_name = None, **hints):
         return True

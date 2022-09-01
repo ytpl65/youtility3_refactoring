@@ -208,7 +208,7 @@ People List
 					show_successful_delete_alert() //defined in customjs
 					$("#modal-people").modal("hide")
 					//delete row from table
-					row_index = parseInt($("#people_content").attr('data-rowid'))
+					row_index = parseInt($("#people_content").attr('data-rowid'), 10)
 					console.log(row_index, "row index")
 					table.row(row_index).remove().draw();
 				}else{

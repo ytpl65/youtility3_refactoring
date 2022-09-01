@@ -4,8 +4,7 @@ from django.core.exceptions import ValidationError
 from django.db.models import Q
 import apps.activity.models as am
 import apps.onboarding.models as om
-import apps.peoples.models as pm
-from apps.core import utils as utils
+from apps.core import utils
 import apps.activity.utils as ac_utils
 import django_select2.forms as s2forms
 import json
@@ -80,7 +79,7 @@ class QuestionForm(forms.ModelForm):
     def clean_alerton(self):
         print("alertbelow", self.cleaned_data.get('alertbelow'))
         print("alertabove", self.cleaned_data.get('alertabove'))
-        val = self.cleaned_data.get('alerton', None)
+        val = self.cleaned_data.get('alerton')
         if val:
             return ac_utils.validate_alerton(forms, val)
         return val
@@ -179,7 +178,7 @@ class QsetBelongingForm(forms.ModelForm):
     def clean_alerton(self):
         print("alertbelow", self.cleaned_data.get('alertbelow'))
         print("alertabove", self.cleaned_data.get('alertabove'))
-        val = self.cleaned_data.get('alerton', None)
+        val = self.cleaned_data.get('alerton')
         if val:
             return ac_utils.validate_alerton(forms, val)
         return val
@@ -455,12 +454,14 @@ class JobForm(forms.ModelForm):
             return self._extracted_from_clean_upto_date_3(val)
 
     # TODO Rename this here and in `clean_from_date` and `clean_upto_date`
-    def _extracted_from_clean_upto_date_3(self, val):
+    @staticmethod
+    def _extracted_from_clean_upto_date_3(val):
         val = utils.to_utc(val)
         ic('cleaned')
         return val
 
-    def clean_slno(self):
+    @staticmethod
+    def clean_slno():
         ic('cleaned')
         return -1
 

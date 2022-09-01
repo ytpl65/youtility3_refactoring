@@ -217,7 +217,7 @@ Question List
 							location.reload();
 						})
 						//delete row from table
-						row_index = parseInt($("#ques_content").attr('data-rowid'))
+						row_index = parseInt($("#ques_content").attr('data-rowid'), 10)
 						console.log(row_index, "row index")
 						table.row(row_index).remove().draw();
 					} else {

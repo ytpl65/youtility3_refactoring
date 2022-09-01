@@ -68,10 +68,7 @@ class SignIn(View):
                     login(request, people)
                     #response = redirect('onboarding:wizard_delete') if request.session.get('wizard_data') else redirect('/dashboard')
                     logger.info(
-                        'Login Successfull for people "%s" with loginid "%s" client "%s" site "%s"'%(
-                            people.peoplename, people.loginid, people.client.buname if people.client else "None", people.bu.buname if people.bu else "None"
-                        )
-                    )
+                        'Login Successfull for people "%s" with loginid "%s" client "%s" site "%s"', people.peoplename, people.loginid, people.client.buname if people.client else "None", people.bu.buname if people.bu else "None")
                     utils.save_user_session(request, request.user)
                     display_user_session_info(request.session)
                     logger.info(f"User logged in {request.user.peoplecode}")
@@ -79,7 +76,7 @@ class SignIn(View):
 
                 else:
                     logger.warning(
-                        self.error_msgs['auth-error'] % (loginid, '********'))
+                        self.error_msgs['auth-error'], loginid, '********')
                     form.add_error(
                         None, self.error_msgs['invalid-details'])
                     cxt = {'loginform': form}
@@ -97,7 +94,8 @@ class SignIn(View):
         return response
 
 class SignOut(LoginRequiredMixin, View):
-    def get(self, request, *args, **kwargs):
+    @staticmethod
+    def get(request, *args, **kwargs):
         response = None
         try:
             logout(request)
@@ -116,7 +114,8 @@ class ChangePeoplePassword(LoginRequiredMixin, View):
     json_form = PeopleExtrasForm
     model = People
 
-    def post(self, request, *args, **kwargs):
+    @staticmethod
+    def post(request, *args, **kwargs):
         from django.contrib.auth.forms import SetPasswordForm
         from django.http import JsonResponse
         id, response = request.POST.get('people'), None
@@ -221,7 +220,8 @@ class RetrievePeoples(LoginRequiredMixin, View):
             response = redirect('/dashboard')
         return response
 
-    def paginate_results(self, request, objects):
+    @staticmethod
+    def paginate_results(request, objects):
         '''paginate the results'''
         logger.info('Pagination Start'if objects else "")
         from .filters import PeopleFilter
@@ -324,11 +324,11 @@ class DeletePeople(LoginRequiredMixin, View):
     def get(self, request, *args, **kwargs):
         """Handles deletion of object"""
         from .utils import get_people_prefform
-        pk, response = kwargs.get('pk', None), None
+        pk, response = kwargs.get('pk'), None
         try:
             if pk:
                 people = self.model.objects.get(id = pk)
-                logger.info('deleting people %s ...' % people.peoplecode)
+                logger.info('deleting people %s ...', people.peoplecode)
                 form = self.form_class(instance = people)
                 people.delete()
                 logger.info('People object deleted... DONE')
@@ -421,7 +421,8 @@ class RetrivePgroups(LoginRequiredMixin, View):
             response = redirect('/dashboard')
         return response
 
-    def paginate_results(self, request, objects):
+    @staticmethod
+    def paginate_results(request, objects):
         '''paginate the results'''
         logger.info('Pagination Start'if objects else "")
         from .filters import PgroupFilter
@@ -511,7 +512,7 @@ class DeletePgroup(LoginRequiredMixin, View):
 
     def get(self, request, *args, **kwargs):
         """Handles deletion of object"""
-        pk, response = kwargs.get('pk', None), None
+        pk, response = kwargs.get('pk'), None
         try:
             if pk:
                 pg = self.model.objects.get(id = pk)
@@ -607,7 +608,8 @@ class RetriveCapability(LoginRequiredMixin, View):
             response = redirect('/dashboard')
         return response
 
-    def paginate_results(self, request, objects):
+    @staticmethod
+    def paginate_results(request, objects):
         '''paginate the results'''
         logger.info('Pagination Start'if objects else "")
         if request.GET:
@@ -689,7 +691,7 @@ class DeleteCapability(LoginRequiredMixin, View):
 
     def get(self, request, *args, **kwargs):
         """Handles deletion of object"""
-        pk, response = kwargs.get('pk', None), None
+        pk, response = kwargs.get('pk'), None
         try:
             if pk:
                 cap = self.model.objects.get(id = pk)
@@ -842,7 +844,7 @@ class PeopleView(LoginRequiredMixin, View):
             return rp.JsonResponse(data = {'data':list(objs)}, status = 200)
 
         # return cap_form empty
-        elif R.get('action', None) == 'form':
+        if R.get('action', None) == 'form':
             cxt = {'peopleform': self.params['form_class'](),
                    'pref_form': self.params['json_form'](session = request.session),
                    'ta_form': obf.TypeAssistForm(auto_id = False),
@@ -887,7 +889,8 @@ class PeopleView(LoginRequiredMixin, View):
             resp = utils.handle_Exception(request)
         return resp
 
-    def handle_valid_form(self, form, jsonform, request ,create):
+    @staticmethod
+    def handle_valid_form(form, jsonform, request ,create):
         logger.info('people form is valid')
         from apps.core.utils import handle_intergrity_error
         from django_email_verification import send_email
@@ -929,7 +932,7 @@ class PeopleGroup(LoginRequiredMixin, View):
             return  rp.JsonResponse(data = {'data':list(objs)})
 
         # return form empty
-        elif R.get('action', None) == 'form':
+        if R.get('action', None) == 'form':
             ic('fksnfksnfkjsdkjfsjdfkamsdfkmaskf')
             cxt = {'pgroup_form': self.params['form_class'](request = request),
                    'msg': "create people group requested"}
@@ -1011,7 +1014,7 @@ class SiteGroup(LoginRequiredMixin, View):
         # for list view of group
         if R.get('action') == 'list':
             total, filtered, objs = pm.Pgroup.objects.list_view_sitegrp(R)
-            logger.info('SiteGroup objects %s retrieved from db' %(total or "No Records!"))
+            logger.info('SiteGroup objects %s retrieved from db', (total or "No Records!"))
             utils.printsql(objs)
             resp = rp.JsonResponse(data = { 
                 'draw':R['draw'],
@@ -1022,7 +1025,7 @@ class SiteGroup(LoginRequiredMixin, View):
             return resp
 
         # to populate all sites table
-        elif R.get('action', None) == 'allsites':
+        if R.get('action', None) == 'allsites':
             objs, idfs  = Bt.objects.get_bus_idfs(R, R['sel_butype'])
 
             resp = rp.JsonResponse(data = {
@@ -1031,7 +1034,7 @@ class SiteGroup(LoginRequiredMixin, View):
             })
             return resp
 
-        elif R.get('action') == "loadSites":
+        if R.get('action') == "loadSites":
             data = Pgbelonging.objects.get_assigned_sitesto_sitegrp(R['id'])
             print(data)
             resp = rp.JsonResponse(data = {
@@ -1040,21 +1043,21 @@ class SiteGroup(LoginRequiredMixin, View):
             return resp
 
         # form without instance to create new data
-        elif R.get('action', None) == 'form':
+        if R.get('action', None) == 'form':
             # options = self.get_options()
             cxt = {'sitegrpform': self.params['form_class'](request = request),
                    'msg': "create site group requested"}
             return render(request, self.params['template_form'], context = cxt)
         
         # handle delete request
-        elif R.get('action', None) == "delete" and R.get('id', None):
+        if R.get('action', None) == "delete" and R.get('id', None):
             ic('here')
             obj = utils.get_model_obj(R['id'])
             pm.Pgbelonging.objects.filter(pgroup_id = obj.id).delete()
             return rp.JsonResponse(data = None, status = 200)
 
         # form with instance to load existing data
-        elif R.get('id', None):
+        if R.get('id', None):
             obj = utils.get_model_obj(int(R['id']), request, self.params)
             sites = pm.Pgbelonging.objects.filter(
                 pgroup = obj).values_list('assignsites', flat = True)
@@ -1105,26 +1108,24 @@ class SiteGroup(LoginRequiredMixin, View):
         except IntegrityError:
             return handle_intergrity_error("Pgroup")
 
-    def resest_assignedsites(self, pg):
+    @staticmethod
+    def resest_assignedsites(pg):
         pm.Pgbelonging.objects.filter(pgroup_id=pg.id).delete()
         ic('reset successfully')
 
     def save_assignedSites(self, pg, sitesArray, request):
         S = request.session
-        try:
-            self.resest_assignedsites(pg)
-            for site in sitesArray:
-                pgb = pm.Pgbelonging(
-                    pgroup         = pg,
-                    people_id      = 1,
-                    assignsites_id = site['buid'],
-                    client_id      = S['client_id'],
-                    bu_id          = S['bu_id'],
-                    tenant_id      = S.get('tenantid', 1)
-                )
-                putils.save_userinfo(pgb, request.user, request.session)
-        except Exception as e:
-            raise
+        self.resest_assignedsites(pg)
+        for site in sitesArray:
+            pgb = pm.Pgbelonging(
+                pgroup         = pg,
+                people_id      = 1,
+                assignsites_id = site['buid'],
+                client_id      = S['client_id'],
+                bu_id          = S['bu_id'],
+                tenant_id      = S.get('tenantid', 1)
+            )
+            putils.save_userinfo(pgb, request.user, request.session)
 
 
 

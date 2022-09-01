@@ -1,7 +1,6 @@
 from django.http import Http404, QueryDict, response as rp
 from django.contrib import messages
 from django.db import IntegrityError, transaction
-from django.db.models import Q, F, Count, Case, When, Value
 from django.db.models import Q
 from django.shortcuts import redirect, render
 from django.urls import resolve
@@ -92,7 +91,8 @@ class Question(LoginRequiredMixin, View):
             resp = utils.handle_Exception(request)
         return resp
 
-    def handle_valid_form(self, form,  request, create):
+    @staticmethod
+    def handle_valid_form(form,  request, create):
         logger.info('ques form is valid')
         ques = None
         try:
@@ -140,7 +140,7 @@ class MasterQuestionSet(LoginRequiredMixin, View):
             return  rp.JsonResponse(data = {'data':list(objs)})
 
         # return questionset_form empty
-        elif R.get('action', None) == 'form':
+        if R.get('action', None) == 'form':
             self.params['form_initials'].update(
                 {'parent': utils.get_or_create_none_qset().id})
             ic(self.params['form_initials'])
@@ -195,7 +195,8 @@ class MasterQuestionSet(LoginRequiredMixin, View):
             resp = utils.handle_Exception(request)
         return resp
 
-    def get_questions_for_form(self, qset):
+    @staticmethod
+    def get_questions_for_form(qset):
         try:
             questions = list(am.QuestionSetBelonging.objects.select_related(
                 "question").filter(qset_id = qset).values(
@@ -208,7 +209,7 @@ class MasterQuestionSet(LoginRequiredMixin, View):
         else:
             return questions
 
-    def handle_valid_form(form, request, create):
+    def handle_valid_form(self, form, request, create):
         raise NotImplementedError()
 
 class MasterAsset(LoginRequiredMixin, View):
@@ -245,7 +246,7 @@ class MasterAsset(LoginRequiredMixin, View):
             return  rp.JsonResponse(data = {'data':list(objs)})
 
         # return questionset_form empty
-        elif R.get('action', None) == 'form':
+        if R.get('action', None) == 'form':
             self.params['form_initials'].update({
                 'type': 1,
                 'parent': 1})
@@ -323,7 +324,8 @@ class Checklist(MasterQuestionSet):
         except IntegrityError:
             return utils.handle_intergrity_error('Question Set')
 
-    def save_qset_belonging(self, request, assigned_questions, fields):
+    @staticmethod
+    def save_qset_belonging(request, assigned_questions, fields):
         try:
             logger.info("saving QuestoinSet Belonging [started]")
             logger.info(f'{" " * 4} saving QuestoinSet Belonging found {len(assigned_questions)} questions')
@@ -375,7 +377,8 @@ class QuestionSet(MasterQuestionSet):
             logger.critical("Something went wrong", exc_info = True)
             raise
 
-    def save_qset_belonging(self, request, assigned_questions, fields):
+    @staticmethod
+    def save_qset_belonging(request, assigned_questions, fields):
         try:
             logger.info("saving QuestoinSet Belonging [started]")
             logger.info(f'{" " * 4} saving QuestoinSet Belonging found {len(assigned_questions)} questions')
@@ -398,7 +401,7 @@ def deleteQSB(request):
         quesname = request.GET.get('quesname')
         answertype = request.GET.get('answertype')
         qset = request.GET.get('qset')
-        logger.info("request for delete QSB '%s' start" % (quesname))
+        logger.info("request for delete QSB '%s' start", (quesname))
         am.QuestionSetBelonging.objects.get(
             question__quesname = quesname,
             answertype = answertype,
@@ -535,7 +538,7 @@ class AdhocTasks(LoginRequiredMixin, View):
                 'recordsTotal':total,
             }, safe = False)
 
-        elif R.get('action', None) == 'form':
+        if R.get('action', None) == 'form':
             cxt = {'adhoctaskform': self.params['form_class'](request = request),
                    'msg': "create adhoc task requested"}
             return render(request, self.params['template_form'], context = cxt)

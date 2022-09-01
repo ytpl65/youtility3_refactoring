@@ -1,4 +1,3 @@
-from operator import iconcat
 import apps.schedhuler.utils as sutils
 import apps.peoples.utils as putils
 from django.db.models import Q, F
@@ -9,10 +8,7 @@ from django.http import Http404, QueryDict, response as rp
 from django.shortcuts import redirect, render
 from django.views import View
 from apps.core import  utils 
-from django.contrib.gis.db.models.functions import  AsGeoJSON
-import apps.schedhuler.filters as sdf
 from pprint import pformat
-import apps.onboarding.models as om
 import apps.activity.models as am
 import apps.peoples.models as pm
 from datetime import datetime, time, timedelta, timezone, date
@@ -58,13 +54,11 @@ class Schd_I_TourFormJob(LoginRequiredMixin, View):
             obj = utils.get_model_obj(pk, request, {'model': self.model})
             form = self.form_class(
                 instance = obj, data = data, initial = self.initial, request = request)
-            log.info("retrieved existing guard tour jobname:= '%s'" %
-                     (obj.jobname))
+            log.info("retrieved existing guard tour jobname:= '%s'", (obj.jobname))
             create = False
         else:
             form = self.form_class(data = data, initial = self.initial, request = request)
-            log.info("new guard tour submitted following is the form-data:\n%s\n" %
-                     (pformat(form.data)))
+            log.info("new guard tour submitted following is the form-data:\n%s\n", (pformat(form.data)))
         response = None
         try:
             with transaction.atomic(using = utils.get_current_db_name()):
@@ -107,7 +101,8 @@ class Schd_I_TourFormJob(LoginRequiredMixin, View):
         log.info("guard tour form processing/saving [ END ]")
         return resp
 
-    def process_invalid_schd_tourform(self, form):
+    @staticmethod
+    def process_invalid_schd_tourform(form):
         log.info(
             "processing invalid forms sending errors to the client [ START ]")
         cxt = {"errors": form.errors}
@@ -127,8 +122,7 @@ class Schd_I_TourFormJob(LoginRequiredMixin, View):
 
     def insert_checkpoints(self, checkpoints, job, request):
         log.info("inserting checkpoints started...")
-        log.info("inserting checkpoints found %s checkpoints" %
-                 (len(checkpoints)))
+        log.info("inserting checkpoints found %s checkpoints", (len(checkpoints)))
         log.debug(checkpoints)
         CP = {}
         try:
@@ -146,8 +140,7 @@ class Schd_I_TourFormJob(LoginRequiredMixin, View):
                 )
                 checkpoint.save()
                 status = "CREATED" if created else "UPDATED"
-                log.info("\nsaving checkpoint:= '%s' for JOB:= '%s' with expirytime:= '%s'  %s\n" % (
-                    cp[2],  job.jobname, cp[5], status))
+                log.info("\nsaving checkpoint:= '%s' for JOB:= '%s' with expirytime:= '%s'  %s\n", cp[2], job.jobname, cp[5], status)
                 putils.save_userinfo(checkpoint, request.user, request.session, create = created)
         except Exception as ex:
             log.critical(
@@ -246,7 +239,8 @@ class Retrive_I_ToursJob(LoginRequiredMixin, View):
             response = redirect('/dashboard')
         return response
 
-    def paginate_results(self, request, objects):
+    @staticmethod
+    def paginate_results(request, objects):
         '''paginate the results'''
         log.info('Pagination Start'if objects else "")
         from .filters import SchdTourFilter
@@ -328,7 +322,8 @@ class Retrive_I_ToursJobneed(LoginRequiredMixin, View):
             response = redirect('/dashboard')
         return response
 
-    def paginate_results(self, request, objects):
+    @staticmethod
+    def paginate_results(request, objects):
         '''paginate the results'''
         log.info('Pagination Start' if objects else "")
         from .filters import InternalTourFilter
@@ -364,7 +359,7 @@ class Get_I_TourJobneed(LoginRequiredMixin, View):
         try:
             obj = self.model.objects.get(id = parent_jobneed)
             form = self.form_class(instance = obj, initial = self.initial)
-            log.info("object retrieved %s" % (obj.jobdesc))
+            log.info("object retrieved %s", (obj.jobdesc))
             checkpoints = self.get_checkpoints(obj = obj)
             cxt = {'internaltourform': form, 'child_internaltour': self.subform(prefix='child'), 'edit': True,
                    'checkpoints': checkpoints}
@@ -379,7 +374,8 @@ class Get_I_TourJobneed(LoginRequiredMixin, View):
             response = redirect('schedhuler:retrieve_internaltours')
         return response
 
-    def post(self, request, *args, **kwargs):
+    @staticmethod
+    def post(request, *args, **kwargs):
         log.info("saving internal tour datasource[jobneed]")
 
     def get_checkpoints(self, obj):
@@ -461,13 +457,11 @@ class Schd_E_TourFormJob(LoginRequiredMixin, View):
             obj = utils.get_model_obj(pk, request, {'model': self.model})
             form = self.form_class(
                 instance = obj, data = formData, initial = self.initial)
-            log.info("retrieved existing guard tour jobname:= '%s'" %
-                     (obj.jobname))
+            log.info("retrieved existing guard tour jobname:= '%s'", (obj.jobname))
             create = False
         else:
             form = self.form_class(data = formData, initial = self.initial)
-            log.info("new guard tour submitted following is the form-data:\n%s\n" %
-                     (pformat(form.data)))
+            log.info("new guard tour submitted following is the form-data:\n%s\n", (pformat(form.data)))
         response = None
         try:
             with transaction.atomic(using = utils.get_current_db_name()):
@@ -482,7 +476,8 @@ class Schd_E_TourFormJob(LoginRequiredMixin, View):
                 {'errors': 'Failed to process form, something went wrong'}, status = 404)
         return response
 
-    def process_invalid_schd_tourform(self, form):
+    @staticmethod
+    def process_invalid_schd_tourform(form):
         log.info(
             "processing invalid forms sending errors to the client [ START ]")
         cxt = {"errors": form.errors}
@@ -490,7 +485,8 @@ class Schd_E_TourFormJob(LoginRequiredMixin, View):
             "processing invalid forms sending errors to the client [ END ]")
         return rp.JsonResponse(cxt, status = 404)
 
-    def process_valid_schd_tourform(self, request, form, create):
+    @staticmethod
+    def process_valid_schd_tourform(request, form, create):
         resp = None
         log.info("external tour form processing/saving [ START ]")
         try:
@@ -532,7 +528,7 @@ class Update_E_TourFormJob(Schd_E_TourFormJob, LoginRequiredMixin, View):
                         'checkpoints': checkpoints,
                         'qsetname':obj.qset.qsetname,
                         'qset':obj.qset.id}
-            log.debug("qsetname %s qset %s"%(obj.qset.qsetname, obj.qset.id))
+            log.debug("qsetname %s qset %s", obj.qset.qsetname, obj.qset.id)
             response = render(request, self.template_path,  context = cxt)
         except self.model.DoesNotExist:
             messages.error(request, 'Unable to edit object not found',
@@ -545,7 +541,8 @@ class Update_E_TourFormJob(Schd_E_TourFormJob, LoginRequiredMixin, View):
             response = redirect('schedhuler:create_tour')
         return response
 
-    def get_checkpoints(self, obj):
+    @staticmethod
+    def get_checkpoints(obj):
         log.info("getting checkpoints started...")
         checkpoints = None
         try:
@@ -559,7 +556,7 @@ class Update_E_TourFormJob(Schd_E_TourFormJob, LoginRequiredMixin, View):
             raise
         else:
             if checkpoints:
-                log.info("total %s checkpoints retrieved returned success"%(len(checkpoints)))
+                log.info("total %s checkpoints retrieved returned success", (len(checkpoints)))
             else: log.info("checkpoints not found")
         return checkpoints
 
@@ -598,7 +595,8 @@ class Retrive_E_ToursJob(LoginRequiredMixin, View):
             response = redirect('/dashboard')
         return response
 
-    def paginate_results(self, request, objects):
+    @staticmethod
+    def paginate_results(request, objects):
         '''paginate the results'''
         log.info('Pagination Start'if objects else "")
         from .filters import SchdExtTourFilter
@@ -734,12 +732,10 @@ class SchdTaskFormJob(LoginRequiredMixin, View):
             obj = utils.get_model_obj(pk, request, {'model': self.model})
             form = self.form_class(
                 instance = obj, data = data, initial = self.initial)
-            log.info("retrieved existing task whose jobname:= '%s'" %
-                     (obj.jobname))
+            log.info("retrieved existing task whose jobname:= '%s'", (obj.jobname))
         else:
             form = self.form_class(data = data, initial = self.initial)
-            log.info("new task submitted following is the form-data:\n%s\n" %
-                     (pformat(form.data)))
+            log.info("new task submitted following is the form-data:\n%s\n", (pformat(form.data)))
         response = None
         try:
             with transaction.atomic(using = utils.get_current_db_name()):
@@ -755,7 +751,8 @@ class SchdTaskFormJob(LoginRequiredMixin, View):
                 {'errors': 'Failed to process form, something went wrong'}, status = 404)
         return response
 
-    def process_valid_schd_taskform(self, request, form):
+    @staticmethod
+    def process_valid_schd_taskform(request, form):
         resp = None
         log.info("task form processing/saving [ START ]")
         try:
@@ -777,7 +774,8 @@ class SchdTaskFormJob(LoginRequiredMixin, View):
         log.info("task form processing/saving [ END ]")
         return resp
 
-    def process_invalid_schd_taskform(self, form):
+    @staticmethod
+    def process_invalid_schd_taskform(form):
         log.info(
             "processing invalidt task form sending errors to the client [ START ]")
         cxt = {"errors": form.errors}
@@ -823,7 +821,8 @@ class RetriveSchdTasksJob(LoginRequiredMixin, View):
             response = redirect('/dashboard')
         return response
 
-    def paginate_results(self, request, objects):
+    @staticmethod
+    def paginate_results(request, objects):
         '''paginate the results'''
         log.info('Pagination Start'if objects else "")
         from .filters import SchdTaskFilter
@@ -908,7 +907,8 @@ class RetrieveTasksJobneed(LoginRequiredMixin, View):
             response = redirect('/dashboard')
         return response
 
-    def paginate_results(self, request, objects):
+    @staticmethod
+    def paginate_results(request, objects):
         '''paginate the results'''
         log.info('Pagination Start' if objects else "")
         from .filters import TaskListJobneedFilter
@@ -957,7 +957,8 @@ class GetTaskFormJobneed(LoginRequiredMixin, View):
             response = redirect('schedhuler:retrieve_tasksjobneed')
         return response
 
-    def post(self, request, *args, **kwargs):
+    @staticmethod
+    def post(request, *args, **kwargs):
         log.info("saving tasks datasource[jobneed]")
 
 
@@ -993,13 +994,11 @@ class Ticket(LoginRequiredMixin, View):
             obj = utils.get_model_obj(pk, request, {'model': self.model})
             form = self.form_class(
                 instance = obj, data = data, initial = self.initial)
-            log.info("retrieved existing ticket whose ticketno:= '%s'" %
-                     (obj.ticketno))
+            log.info("retrieved existing ticket whose ticketno:= '%s'", (obj.ticketno))
             create = False
         else:
             form = self.form_class(data = data, initial = self.initial)
-            log.info("new ticket submitted following is the form-data:\n%s\n" %
-                     (pformat(form.data)))
+            log.info("new ticket submitted following is the form-data:\n%s\n", (pformat(form.data)))
         response = None
         try:
             with transaction.atomic(using = utils.get_current_db_name()):
@@ -1015,7 +1014,7 @@ class Ticket(LoginRequiredMixin, View):
                 {'errors': 'Failed to process form, something went wrong'}, status = 404)
         return response
 
-    def process_valid_form(request, form, create):
+    def process_valid_form(self, request, form, create):
         resp = None
         try:
             ticket             = form.save(commit = False)
@@ -1039,7 +1038,8 @@ class Ticket(LoginRequiredMixin, View):
         log.info("ticket form processing/saving [ END ]")
         return resp
 
-    def process_invalid_form(self, form):
+    @staticmethod
+    def process_invalid_form(form):
         log.info(
             "processing invalidt ticket form sending errors to the client [ START ]")
         cxt = {"errors": form.errors}
@@ -1089,7 +1089,8 @@ class RetriveTickets(LoginRequiredMixin, View):
             response = redirect('/dashboard')
         return response
 
-    def paginate_results(self, request, objects):
+    @staticmethod
+    def paginate_results(request, objects):
         '''paginate the results'''
         log.info('Pagination Start'if objects else "")
         from .filters import TicketListFilter
@@ -1135,16 +1136,17 @@ class JobneedTours(LoginRequiredMixin, View):
             objs = P['model'].objects.get_internaltourlist_jobneed(request, P['related'], P['fields'])
             return rp.JsonResponse(data = {'data':list(objs)})
         
-        elif R.get('id'):
+        if R.get('id'):
             obj = P['model'].objects.get(id = R['id'])
             form = P['form_class'](instance = obj, initial = P['initial'])
-            log.info("object retrieved %s" % (obj.jobdesc))
+            log.info("object retrieved %s", (obj.jobdesc))
             checkpoints = self.get_checkpoints(P, obj = obj)
             cxt = {'internaltourform': form, 'child_internaltour': P['subform'](prefix='child'), 'edit': True,
                 'checkpoints': checkpoints}
             return render(request, P['template_form'], context = cxt)
     
-    def get_checkpoints(self, P, obj):
+    @staticmethod
+    def get_checkpoints(P, obj):
         log.info("getting checkpoints for the internal tour [start]")
         checkpoints = None
 
@@ -1195,16 +1197,17 @@ class JobneedExternalTours(LoginRequiredMixin, View):
             objs = P['model'].objects.get_externaltourlist_jobneed(request, P['related'], P['fields'])
             return rp.JsonResponse(data = {'data':list(objs)})
         
-        elif R.get('id'):
+        if R.get('id'):
             obj = P['model'].objects.get(id = R['id'])
             form = P['form_class'](instance = obj, initial = P['initial'])
-            log.info("object retrieved %s" % (obj.jobdesc))
+            log.info("object retrieved %s", (obj.jobdesc))
             checkpoints = self.get_checkpoints(P, obj = obj)
             cxt = {'externaltourform': form, 'edit': True,
                 'checkpoints': checkpoints}
             return render(request, P['template_form'], context = cxt)
     
-    def get_checkpoints(self, P, obj):
+    @staticmethod
+    def get_checkpoints(P, obj):
         log.info("getting checkpoints for the internal tour [start]")
         checkpoints = None
 
@@ -1257,7 +1260,7 @@ class JobneedTasks(LoginRequiredMixin, View):
             return resp
 
         # load form with instance
-        elif R.get('id'):
+        if R.get('id'):
             obj = utils.get_model_obj(int(R['id']), request, self.params)
             cxt = {'taskformjobneed':self.params['form_class'](request = request, instance = obj),
                     'edit':True}
@@ -1305,20 +1308,20 @@ class SchdTasks(LoginRequiredMixin, View):
             return rp.JsonResponse(data = {'data':list(objects)})
 
         # load form with instance
-        elif R.get('id'):
+        if R.get('id'):
             obj = utils.get_model_obj(int(R['id']), request, self.params)
             cxt = {'schdtaskform':self.params['form_class'](request = request, instance = obj),
                     'edit':True}
             return render(request, self.params['template_form'], context = cxt)
 
         # return empty form
-        elif R.get('action') == 'form':
+        if R.get('action') == 'form':
             cxt = {
             'schdtaskform':self.params['form_class'](initial = self.params['initial'], request = request)
             }
             return render(request, self.params['template_form'], context = cxt)
 
-        elif R.get('runscheduler'):
+        if R.get('runscheduler'):
             # run job scheduler
             pass
 
@@ -1332,12 +1335,10 @@ class SchdTasks(LoginRequiredMixin, View):
             obj = utils.get_model_obj(pk, request, {'model': self.params['model']})
             form = self.params['form_class'](
                 instance = obj, data = data, request = request)
-            log.info("retrieved existing task whose jobname:= '%s'" %
-                     (obj.jobname))
+            log.info("retrieved existing task whose jobname:= '%s'", (obj.jobname))
         else:
             form = self.params['form_class'](data = data, request = request)
-            log.info("new task submitted following is the form-data:\n%s\n" %
-                     (pformat(form.data)))
+            log.info("new task submitted following is the form-data:\n%s\n", (pformat(form.data)))
         response = None
         try:
             with transaction.atomic(using = utils.get_current_db_name()):
@@ -1353,7 +1354,8 @@ class SchdTasks(LoginRequiredMixin, View):
                 {'errors': 'Failed to process form, something went wrong'}, status = 404)
         return response
 
-    def process_valid_schd_taskform(self, request, form):
+    @staticmethod
+    def process_valid_schd_taskform(request, form):
         resp = None
         log.info("task form processing/saving [ START ]")
         try:
@@ -1375,7 +1377,8 @@ class SchdTasks(LoginRequiredMixin, View):
         log.info("task form processing/saving [ END ]")
         return resp
 
-    def process_invalid_schd_taskform(self, form):
+    @staticmethod
+    def process_invalid_schd_taskform(form):
         log.info(
             "processing invalidt task form sending errors to the client [ START ]")
         cxt = {"errors": form.errors}
@@ -1422,14 +1425,12 @@ class InternalTourScheduling(LoginRequiredMixin, View):
             cxt = {'schdtourform': form, 'childtour_form': P['subform'](), 'edit': True,
                    'checkpoints': checkpoints}
             return render(request, P['template_form'], cxt)
-
-
         if R.get('action') == 'list':
             objs = P['model'].objects.get_scheduled_internal_tours(
                 P['related'], P['fields']
             )
             return rp.JsonResponse({'data':list(objs)}, status = 200)
-        elif R.get('action') == 'list':
+        if R.get('action') == 'list':
             cxt = {'schdtourform':P['form_class'](request = request, initial = P['initial']),
                     'childtour_form':P['json_form']()}
             return render(request, P['template_form'], cxt)
@@ -1474,6 +1475,8 @@ class InternalTourScheduling(LoginRequiredMixin, View):
             raise ex
 
 
+
+
     def save_checpoints_for_tour(self, checkpoints, job, request):
         try:
             log.info(f"saving Checkpoints found {len(checkpoints)} [started]")
@@ -1493,8 +1496,7 @@ class InternalTourScheduling(LoginRequiredMixin, View):
                 )
                 checkpoint.save()
                 status = "CREATED" if created else "UPDATED"
-                log.info("\nsaving checkpoint:= '%s' for JOB:= '%s' with expirytime:= '%s'  %s\n" % (
-                    cp[2],  job.jobname, cp[5], status))
+                log.info("\nsaving checkpoint:= '%s' for JOB:= '%s' with expirytime:= '%s'  %s\n", cp[2], job.jobname, cp[5], status)
                 putils.save_userinfo(checkpoint, request.user, request.session)
         except Exception as ex:
             log.error(
@@ -1503,7 +1505,8 @@ class InternalTourScheduling(LoginRequiredMixin, View):
         else:
             log.info("inserting checkpoints finished...")
 
-    def get_checkpoints(self, obj, P):
+    @staticmethod
+    def get_checkpoints(obj, P):
         log.info("getting checkpoints started...")
         checkpoints = None
         try:
@@ -1558,6 +1561,7 @@ class ExternalTourScheduling(LoginRequiredMixin, View):
     def get(self, request, *args, **kwargs):
         R, P = request.GET, self.params
 
+
         # return template first
         if R.get('template') == 'true':
             return render(request, P['template_list'])
@@ -1568,25 +1572,25 @@ class ExternalTourScheduling(LoginRequiredMixin, View):
             return rp.JsonResponse({'data':list(objs)}, status = 200)
         
         # return resp for job creation 
-        elif R.get('action') == 'form':
+        if R.get('action') == 'form':
             cxt = {'schdexternaltourform': P['form_class'](
             request = request, initial = P['initial'])}
             return render(request, P['template_form'], context = cxt)
         
         # return resp to populate the sites from sitgroup 
-        elif R.get('action') == "get_sitesfromgroup":
+        if R.get('action') == "get_sitesfromgroup":
             if R['id'] == 'None': return rp.JsonResponse({'data':[]}, status = 200)
             job = am.Job.objects.filter(id = int(R['id'])).values(*utils.JobFields.fields)[0]
             objs = pm.Pgbelonging.objects.get_sitesfromgroup(job)
             return rp.JsonResponse({'data':list(objs)}, status = 200)
         
         # return resp to load checklist
-        elif R.get('action') == "loadChecklist":
+        if R.get('action') == "loadChecklist":
             qset =  am.QuestionSet.objects.load_checklist()
             return rp.JsonResponse({'items':list(qset), 'total_count':len(qset)}, status = 200)
         
         # return resp for updation of job
-        elif R.get('id'):
+        if R.get('id'):
             obj = utils.get_model_obj(int(R['id']), request, P)
             initial = {'israndom':obj.other_info['is_randomized'],
                        'tourfrequency':obj.other_info['tour_frequency'],
@@ -1594,6 +1598,7 @@ class ExternalTourScheduling(LoginRequiredMixin, View):
             cxt = {'schdexternaltourform': P['form_class'](instance=obj, request = request, initial=initial)}
             return render(request, P['template_form'], context = cxt)
         
+
 
 
 
@@ -1605,7 +1610,7 @@ class ExternalTourScheduling(LoginRequiredMixin, View):
             if R.get('action')=='saveCheckpoints':
                 checkpoints =  json.loads(R.get('checkpoints'))
                 return self.saveCheckpointsinJob(R, checkpoints, P, request)
-            elif pk:
+            if pk:
                 msg = 'external scheduler tour'
                 form = utils.get_instance_for_update(
                     formData, P, msg, int(pk), kwargs = {'request':request})
@@ -1619,7 +1624,9 @@ class ExternalTourScheduling(LoginRequiredMixin, View):
             return utils.handle_Exception(request)
 
 
-    def handle_valid_form(self, form, request, P):
+
+    @staticmethod
+    def handle_valid_form(form, request, P):
         try:
             with transaction.atomic(using = utils.get_current_db_name()):
                 job = form.save(commit=False)
@@ -1633,8 +1640,10 @@ class ExternalTourScheduling(LoginRequiredMixin, View):
         except Exception as ex:
             log.error("external tour form, handle valid form failed", exc_info = True)
             return utils.handle_Exception(request)
+
         
-    def saveCheckpointsinJob(self, R, checkpoints, P, request):
+    @staticmethod
+    def saveCheckpointsinJob(R, checkpoints, P, request):
         try:
             #ic(checkpoints)
             job = am.Job.objects.filter(id = int(R['parent_id'])).values()[0]

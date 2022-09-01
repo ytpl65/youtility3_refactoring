@@ -54,9 +54,9 @@ class SuperTypeAssistForm(forms.ModelForm):
         value = self.cleaned_data.get('tacode')
         regex = "^[a-zA-Z0-9\-_]*$"
         if " " in value: raise forms.ValidationError(self.error_msg['invalid_code'])
-        elif  not re.match(regex, value):
+        if  not re.match(regex, value):
             raise forms.ValidationError(self.error_msg['invalid_code2'])
-        elif value.endswith('.'):
+        if value.endswith('.'):
             raise forms.ValidationError(self.error_msg['invalid_code3'])
         return value.upper()
 
@@ -160,9 +160,9 @@ class BtForm(forms.ModelForm):
         if value := self.cleaned_data.get('bucode'):
             regex = "^[a-zA-Z0-9\-_]*$"
             if " " in value: raise forms.ValidationError(self.error_msg['invalid_bucode'])
-            elif  not re.match(regex, value):
+            if  not re.match(regex, value):
                 raise forms.ValidationError(self.error_msg['invalid_bucode2'])
-            elif value.endswith('.'):
+            if value.endswith('.'):
                 raise forms.ValidationError(self.error_msg['invalid_bucode3'])
             return value.upper()
 
@@ -223,7 +223,7 @@ class ShiftForm(forms.ModelForm):
             mins = int(m.replace("min", ""))
             if hrs > 12:
                 raise forms.ValidationError(self.error_msg['max_hrs_exceed'])
-            elif hrs < 5:
+            if hrs < 5:
                 raise forms.ValidationError(self.error_msg['min_hrs_required'])
             return hrs*60+mins
 

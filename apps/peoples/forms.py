@@ -5,7 +5,6 @@ from django.db.models import Q
 
 import apps.peoples.models as pm  # people-models
 import apps.onboarding.models as om  # onboarding-models
-from icecream import ic
 from django_select2 import forms as s2forms
 from apps.core import utils
 
@@ -29,7 +28,6 @@ class LoginForm(forms.Form):
 
     def clean_username(self):
         import re
-        from .utils import validate_emailadd, validate_mobileno
         if val := self.cleaned_data.get('username'):
             # ic('username', val)
             # email_regex = r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b'
@@ -148,10 +146,10 @@ class PeopleForm(forms.ModelForm):
         if (dob and dor and doj):
             if dob == doj:
                 raise forms.ValidationError(self.error_msg['invalid_dates'])
-            elif dob > doj:
+            if dob > doj:
                 print(dob, doj)
                 raise forms.ValidationError(self.error_msg['invalid_dates2'])
-            elif dob > dor:
+            if dob > dor:
                 raise forms.ValidationError(self.error_msg['invalid_dates3'])
 
     # For field level validation define functions like clean_<func name>.
@@ -162,9 +160,9 @@ class PeopleForm(forms.ModelForm):
             regex = "^[a-zA-Z0-9\-_]*$"
             if " " in value:
                 raise forms.ValidationError(self.error_msg['invalid_code'])
-            elif not re.match(regex, value):
+            if not re.match(regex, value):
                 raise forms.ValidationError(self.error_msg['invalid_code2'])
-            elif value.endswith('.'):
+            if value.endswith('.'):
                 raise forms.ValidationError(self.error_msg['invalid_code3'])
             return value.upper()
 
@@ -309,9 +307,9 @@ class CapabilityForm(forms.ModelForm):
             regex = "^[a-zA-Z0-9\-_]*$"
             if " " in value:
                 raise forms.ValidationError(self.error_msg['invalid_code'])
-            elif not re.match(regex, value):
+            if not re.match(regex, value):
                 raise forms.ValidationError(self.error_msg['invalid_code2'])
-            elif value.endswith('.'):
+            if value.endswith('.'):
                 raise forms.ValidationError(self.error_msg['invalid_code3'])
             return value.upper()
 

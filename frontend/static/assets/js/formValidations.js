@@ -55,7 +55,7 @@
                                 var max        = parseFloat(document.querySelector("#id_max").value)
                                 var alertbelow = parseFloat(document.querySelector("#id_alertbelow").value)
                                 var min        = parseFloat(document.querySelector("#id_min").value)
-                                console.log(`min ${min} max ${max}, alertbelow ${alertbelow}, alertabove ${alertabove}`)
+                                
                                 if(alertabove > max){
                                     //console.log("should return error")
                                     return {valid: false, message: "Alertabove should be smaller than Max value"}
