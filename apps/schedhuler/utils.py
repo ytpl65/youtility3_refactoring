@@ -1,5 +1,5 @@
 from sqlite3 import Row
-from django.db.models import Q, F
+from django.db.models import Q, F, Subquery
 from django.core.exceptions import EmptyResultSet
 from django.db import transaction
 from django.http import response as rp
@@ -87,7 +87,7 @@ def calculate_route_details(R, job):
     directions = gmaps.directions(mode='driving', waypoints = waypoints, origin=startpoint, destination= endpoint, optimize_waypoints = True)
     directions = gmaps.directions(mode='driving', waypoints = waypoints, origin=startpoint, destination= endpoint, optimize_waypoints = True)
     waypoint_order = directions[0]["waypoint_order"]
-    freq, breaktime = job.other_info['tour_frequency'], job.other_info['breaktime']
+    freq, breaktime = job['other_info']['tour_frequency'], job['other_info']['breaktime']
     chekpoints = []
     
     #startpoint distance, duration, expirtime is 0.
@@ -117,7 +117,7 @@ def calculate_route_details(R, job):
         chekpoints[j]['distance']=round(float(legs[i]['distance']["value"]/1000), 2)
         l.append(chekpoints[j]["distance"])
         chekpoints[j]['duration']=float(legs[i]["duration"]["value"])
-        l.append(chekpoints[j].duration)
+        l.append(chekpoints[j]['duration'])
         chekpoints[j]['expirytime']=int(legs[i]["duration"]["value"]/60)
         l.append(chekpoints[j]['expirytime'])
         DDE.append(l)
@@ -131,7 +131,7 @@ def calculate_route_details(R, job):
         endp = int(len(chekpoints)/freq)
         chekpoints[endp]['breaktime'] = breaktime
     
-    return convertto_namedtuple(chekpoints, freq, breaktime)
+    return chekpoints
 
 def create_job(jobs = None):
     startdtz = enddtz = msg = resp = None
@@ -147,7 +147,7 @@ def create_job(jobs = None):
             ).select_related(
                 "asset", "pgroup",
                 "cuser", "muser", "qset", "people",
-            ).values()
+            ).values(*utils.JobFields.fields)
 
         if not jobs:
             msg = "No jobs found schedhuling terminated"
@@ -475,6 +475,7 @@ def insert_update_jobneeddetails(jnid, job, parent = False):
     except am.JobneedDetails.DoesNotExist:
         pass
     try:
+        ic(parent, job['qset_id'])
         if not parent:
             qsb = am.QuestionSetBelonging.objects.select_related(
                 'question').filter(
@@ -515,10 +516,13 @@ def extract_seq(R):
 
 
 def check_sequence_of_prevjobneed(job, current_seq):
-    R = am.Jobneed.objects.filter(parent_id=1, job_id=job['id']).values_list('seqno', flat=True).order_by('-id')
-    if len(R) > 1:
-        ic(R[1], current_seq)
-        return list(R[1]) == current_seq
+    previousJobneedParent = am.Jobneed.objects.filter(job_id=job['id'], parent_id=1).order_by('-id')
+    if previousJobneedParent.count() > 1:
+        seqnos = am.Jobneed.objects.filter(parent_id = previousJobneedParent.values_list('id', flat=True)[1]).values_list('seqno', flat=True)
+        ic(utils.printsql(seqnos))
+        ic(seqnos)
+        return list(seqnos) == current_seq
+    return False
     
     
 
@@ -535,7 +539,8 @@ def create_child_tasks(job, _pdtz, _people, jnid, _jobstatus, _jobtype):
             cplocation = F('bu__gpslocation')
             ).filter(
             parent_id = job['id']).order_by(
-                'seqno').values()
+                'seqno').values(*utils.JobFields.fields, 'cplocation')
+        ic(R)
         log.info(f"create_child_tasks() total child job:={len(R)}")
         prev_edtz = _pdtz
         params = {'_jobdesc': "", 'jnid':jnid, 'pdtz':None, 'edtz':None,

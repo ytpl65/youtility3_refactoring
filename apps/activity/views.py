@@ -143,6 +143,7 @@ class MasterQuestionSet(LoginRequiredMixin, View):
         elif R.get('action', None) == 'form':
             self.params['form_initials'].update(
                 {'parent': utils.get_or_create_none_qset().id})
+            ic(self.params['form_initials'])
             cxt = {
                 'masterqset_form': self.params['form_class'](
                     request = request,
@@ -305,19 +306,20 @@ class Checklist(MasterQuestionSet):
     def handle_valid_form(self, form, request, create):
         logger.info(f'{self.view_of} form is valid')
         try:
-            assigned_questions = json.loads(
-                request.POST.get("asssigned_questions"))
-            qset = form.save()
-            putils.save_userinfo(qset, request.user,
-                                 request.session, create = create)
-            logger.info(f'{self.view_of} form is valid')
-            fields = {'qset': qset.id, 'qsetname': qset.qsetname,
-                      'client': qset.client_id}
-            self.save_qset_belonging(request, assigned_questions, fields)
-            data = {'success': "Record has been saved successfully",
-                    'row':{'qsetname':qset.qsetname, 'id':qset.id}
-                    }
-            return rp.JsonResponse(data, status = 200)
+            with transaction.atomic(using=utils.get_current_db_name()):
+                assigned_questions = json.loads(
+                    request.POST.get("asssigned_questions"))
+                qset = form.save()
+                putils.save_userinfo(qset, request.user,
+                                    request.session, create = create)
+                logger.info(f'{self.view_of} form is valid')
+                fields = {'qset': qset.id, 'qsetname': qset.qsetname,
+                        'client': qset.client_id}
+                self.save_qset_belonging(request, assigned_questions, fields)
+                data = {'success': "Record has been saved successfully",
+                        'row':{'qsetname':qset.qsetname, 'id':qset.id}
+                        }
+                return rp.JsonResponse(data, status = 200)
         except IntegrityError:
             return utils.handle_intergrity_error('Question Set')
 

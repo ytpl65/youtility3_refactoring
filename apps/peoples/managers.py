@@ -117,13 +117,13 @@ class PgblngManager(models.Manager):
                 buname = F('assignsites__buname'), bucode=F('assignsites__bucode'),
                 buid = F('assignsites_id')
             ).select_related('assignsites', 'identifier').filter(
-                pgroup_id = job.sgroup_id
+                pgroup_id = job['sgroup_id']
             ).values('gpslocation', 'bucode', 'buname', 'buid')
             if qset:
                 for q in qset:
                     q.update(
-                        {'seqno':None, 'starttime':None, 'endtime':None, 'qsetid':job.qset_id,
-                        'qsetname':job.qset.qsetname, 'duration':None, 'expirytime':None,
+                        {'seqno':None, 'starttime':None, 'endtime':None, 'qsetid':job['qset_id'],
+                        'qsetname':job['qset__qsetname'], 'duration':None, 'expirytime':None,
                         'distance':None, 'jobid':None, 'assetid':1, 'breaktime':None})
         return qset or self.none()
         

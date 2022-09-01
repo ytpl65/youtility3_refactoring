@@ -625,12 +625,10 @@ def run_internal_tour_scheduler(request):
     if (
         jobs := am.Job.objects.filter(id = job).select_related(
             "asset","pgroup",'sgroup',
-            "cuser","muser","qset","people").values()
-        
+            "cuser","muser","qset","people").values(*utils.JobFields.fields)
     ):
         #check if it is random external tour
         if jobs[0]['other_info']['is_randomized'] in [True, 'true'] and R.get('action')=='saveCheckpoints':
-            ic(dir(jobs[0]))
             #save checkpoints
             checkpoints =  json.loads(R.get('checkpoints'))
             am.Job.objects.filter(parent_id = jobs[0]['id']).delete()
@@ -1578,7 +1576,7 @@ class ExternalTourScheduling(LoginRequiredMixin, View):
         # return resp to populate the sites from sitgroup 
         elif R.get('action') == "get_sitesfromgroup":
             if R['id'] == 'None': return rp.JsonResponse({'data':[]}, status = 200)
-            job = am.Job.objects.filter(id = int(R['id'])).values()[0]
+            job = am.Job.objects.filter(id = int(R['id'])).values(*utils.JobFields.fields)[0]
             objs = pm.Pgbelonging.objects.get_sitesfromgroup(job)
             return rp.JsonResponse({'data':list(objs)}, status = 200)
         

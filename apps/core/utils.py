@@ -1101,7 +1101,8 @@ def upload(request):
 class JobFields(object):
     fields = [
         'id', 'jobname', 'jobdesc', 'geofence_id', 'cron',
-        'expirytime', 'identifier', 'cuser_id', 'muser_id',
+        'expirytime', 'identifier', 'cuser_id', 'muser_id','bu_id',
+        'client_id',
         'pgroup_id', 'sgroup_id','ticketcategory_id', 'frequency',
         'starttime', 'endtime', 'seqno', 'ctzoffset', 'people_id',
         'asset_id', 'parent_id', 'scantype', 'planduration', 'fromdate',
