@@ -105,7 +105,7 @@ DBPASWD = str(os.getenv('DBPASWD'))
 
 DBHOST  = str(os.getenv('DBHOST'))
 
-
+'''
 DATABASES = {
     'default': {
         'ENGINE':   'django.contrib.gis.db.backends.postgis',
@@ -116,7 +116,7 @@ DATABASES = {
         'PORT':     '5432',
     },
 }
-
+'''
 DATABASE_ROUTERS = ['apps.tenants.middlewares.TenantDbRouter']
 
 CACHES = {
