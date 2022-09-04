@@ -529,7 +529,7 @@ def get_tenants_map():
         'capgemini.youtility.local' : 'capgemini',
         'dell.youtility.local'      : 'dell',
         'icicibank.youtility.local' : 'icicibank',
-        'icicistaging.youtility.in' : 'icicibank',
+        'redmine.youtility.in' : 'icicibank',
         'barfi.youtility.in'        : 'icicibank',
         'intelliwiz.youtility.in'   : 'default',
         'testdb.youtility.local'    : 'testDB'
