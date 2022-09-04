@@ -126,7 +126,7 @@ LOGGING_CONFIG_ = {
             'level':'DEBUG',
             'class':'logging.handlers.RotatingFileHandler',
             #'filename': 'youtility2_logs/youtility.log',
-            'filename': os.path.join(os.path.expanduser('~'), 'youtility3_logs/youtility.log'),
+            'filename': os.path.join(os.path.expanduser('~'), 'youtility4_logs/youtility.log'),
             'maxBytes': 1024 * 1024 * 10, # 10 MB
             'backupCount': 7,
             'formatter':'coloured',
