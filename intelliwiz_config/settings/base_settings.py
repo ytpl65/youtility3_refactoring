@@ -193,6 +193,7 @@ MEDIA_URL = '/youtility4_media/'
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/3.2/howto/static-files/
 STATIC_URL = '/static/'
+STATIC_ROOT = os.path.join(BASE_DIR, "frontend/static/static_server")
 STATICFILES_DIRS = [os.path.join(BASE_DIR, 'frontend/static')]
 
 # Internationalization
