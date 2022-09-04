@@ -531,14 +531,14 @@ def to_utc(date, format=None):
 def get_tenants_map():
     return {
         'intelliwiz.youtility.local': 'intelliwiz_django',
-        'sps.youtility.local': 'sps',
-        'capgemini.youtility.local': 'capgemini',
-        'dell.youtility.local': 'dell',
-        'icicibank.youtility.local': 'icicibank',
-        'icicistaging.youtility.local': 'icicibank',
-        'barfi.youtility.in': 'icicibank',
-        'intelliwiz.youtility.in': 'default',
-        'testdb.youtility.local': 'testDB'
+        'sps.youtility.local'       : 'sps',
+        'capgemini.youtility.local' : 'capgemini',
+        'dell.youtility.local'      : 'dell',
+        'icicibank.youtility.local' : 'icicibank',
+        'redmine.youtility.in' : 'icicibank',
+        'barfi.youtility.in'        : 'icicibank',
+        'intelliwiz.youtility.in'   : 'default',
+        'testdb.youtility.local'    : 'testDB'
     }
 
 # RETURN HOSTNAME FROM REQUEST

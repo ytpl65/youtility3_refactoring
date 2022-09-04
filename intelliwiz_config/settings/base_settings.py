@@ -115,7 +115,6 @@ DATABASES = {
         'PORT':     '5432',
     },
 }
-
 DATABASE_ROUTERS = ['apps.tenants.middlewares.TenantDbRouter']
 
 CACHES = {
