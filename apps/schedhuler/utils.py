@@ -21,8 +21,8 @@ def get_service_requirements(R):
         startp = {"lat":float(R[0]['cplocation'].coords[1]),
                   "lng":float(R[0]['cplocation'].coords[0])}
 
-        endp = {"lat":float(R[-1][-1].coords[-1]),
-               "lng":float(R[-1][-1].coords[-1])}
+        endp = {"lat":float(R[-1]['cplocation'].coords[1]),
+               "lng":float(R[-1]['cplocation'].coords[0])}
         waypoints=[]
         for i in range(1, len(R)-1):
             lat, lng = R[i]['cplocation'].coords[1], R[i]['cplocation'].coords[0]
@@ -84,53 +84,40 @@ def calculate_route_details(R, job):
     import googlemaps
     gmaps = googlemaps.Client(key='AIzaSyDVbA53nxHKUOHdyIqnVPD01aOlTitfVO0')
     startpoint, endpoint, waypoints = get_service_requirements(data)
-    directions = gmaps.directions(mode='driving', waypoints = waypoints, origin=startpoint, destination= endpoint, optimize_waypoints = True)
-    directions = gmaps.directions(mode='driving', waypoints = waypoints, origin=startpoint, destination= endpoint, optimize_waypoints = True)
+    directions = gmaps.directions(mode='driving', waypoints=waypoints, origin=startpoint, destination=endpoint, optimize_waypoints=True)
+
+    directions = gmaps.directions(mode='driving', waypoints=waypoints, origin=startpoint, destination=endpoint, optimize_waypoints=True)
+
     waypoint_order = directions[0]["waypoint_order"]
     freq, breaktime = job['other_info']['tour_frequency'], job['other_info']['breaktime']
-    chekpoints = []
-    
-    #startpoint distance, duration, expirtime is 0.
-    data[0]['seqno'] = 0+1
-    chekpoints.append(data[0])
+
+    data[0]['seqno'] = 0 + 1
+    chekpoints = [data[0]]
     chekpoints[0]['distance'] = 0
     chekpoints[0]["duration"] = 0
     chekpoints[0]["expirytime"] = 0
-    
-    #waypoint
     for i, item in enumerate(waypoint_order):
-        data[i+1]['seqno'] = (i+1)+1
-        chekpoints.append(data[item+1])
-        
-    #endpoint
-    data[-1][-1] = len(data)-1+1    
+        data[i + 1]['seqno'] = i + 1 + 1
+        chekpoints.append(data[item + 1])
+    data[-1][-1] = len(data) - 1 + 1
     chekpoints.append(data[-1])
-    
-    #calculate distance and duration
     legs = directions[0]["legs"]
-    j=1
-    
-    
+    j = 1
     DDE = []
     for i, item in enumerate(legs):
-        l=[]
-        chekpoints[j]['distance']=round(float(item['distance']["value"]/1000), 2)
-        l.append(chekpoints[j]["distance"])
-        chekpoints[j]['duration']=float(legs[i]["duration"]["value"])
+        chekpoints[j]['distance'] = round(float(item['distance']["value"] / 1000), 2)
+        l = [chekpoints[j]["distance"]]
+        chekpoints[j]['duration'] = float(legs[i]["duration"]["value"])
         l.append(chekpoints[j].duration)
-        chekpoints[j]['expirytime']=int(legs[i]["duration"]["value"]/60)
+        chekpoints[j]['expirytime'] = int(legs[i]["duration"]["value"] / 60)
         l.append(chekpoints[j]['expirytime'])
         DDE.append(l)
-        j+=1
-    
+        j += 1
     if freq > 1:
         chekpoints = get_frequencied_data(DDE, chekpoints, freq, breaktime)
-    
-    if freq>1 and breaktime!=0:
-        #frequency points for freq>1.
-        endp = int(len(chekpoints)/freq)
+    if freq > 1 and breaktime != 0:
+        endp = int(len(chekpoints) / freq)
         chekpoints[endp]['breaktime'] = breaktime
-    
     return chekpoints
 
 def create_job(jobs = None):
@@ -438,44 +425,31 @@ def insert_into_jn_and_jnd(job, DT, resp):
         return status, resp
 
 def insert_into_jn_for_parent(job, params):
-    jn = am.Jobneed.objects.create(
-        job_id         = job['id'],                     parent            = params['NONE_JN'],
-        jobdesc        = params['jobdesc'],          plandatetime      = params['pdtz'],
-        expirydatetime = params['edtz'],             gracetime         = job['gracetime'],
-        asset_id       = job['asset_id'],               qset_id           = job['qset_id'],
-        ctzoffset      = job['ctzoffset'],              people_id         = params['people'],
-        pgroup_id      = job['pgroup_id'],              frequency         = 'NONE',
-        priority       = job['priority'],               jobstatus         = params['jobstatus'],
-        performedby    = params['NONE_P'],           jobtype           = params['jobtype'],
-        scantype       = job['scantype'],               identifier        = job['identifier'],
-        cuser_id       = job['cuser_id'],               muser_id          = job['muser_id'],
-        bu_id          = job['bu_id'],                  ticketcategory_id = job['ticketcategory_id'],
-        gpslocation    = 'POINT(0.0 0.0)',             remarks           = '',
-        seqno          = 0,                          multifactor       = params['m_factor'],
-        client_id      = job['client_id'],
-    )
+    return am.Jobneed.objects.create(
+        job_id=job['id'], parent=params['NONE_JN'], jobdesc=params['jobdesc'], plandatetime=params['pdtz'],
+        expirydatetime=params['edtz'], gracetime=job['gracetime'], asset_id=job['asset_id'], qset_id=job['qset_id'],
+        ctzoffset=job['ctzoffset'], people_id=params['people'], pgroup_id=job['pgroup_id'], frequency='NONE',
+        priority=job['priority'], jobstatus=params['jobstatus'], performedby=params['NONE_P'], jobtype=params['jobtype'],
+        scantype=job['scantype'], identifier=job['identifier'], cuser_id=job['cuser_id'], muser_id=job['muser_id'],
+        bu_id=job['bu_id'], ticketcategory_id=job['ticketcategory_id'], gpslocation='POINT(0.0 0.0)', remarks='', seqno=0,
+        multifactor=params['m_factor'], client_id=job['client_id'])
 
 
 
-def insert_update_jobneeddetails(jnid, job, parent = False):
+def insert_update_jobneeddetails(jnid, job, parent=False):
+    # sourcery skip: use-contextlib-suppress
     log.info("insert_update_jobneeddetails() [START]")
     from django.utils.timezone import get_current_timezone
     tz = get_current_timezone()
     try:
-        am.JobneedDetails.objects.get(jobneed_id = jnid).delete()
+        am.JobneedDetails.objects.get(jobneed_id=jnid).delete()
     except am.JobneedDetails.DoesNotExist:
         pass
     try:
-        if not parent:
-            qsb = am.QuestionSetBelonging.objects.select_related(
-                'question').filter(
-                    qset_id = job['qset_id']).order_by(
-                        'seqno').values_list(named = True)
-        else:
-            qsb = utils.get_or_create_none_qsetblng()
+        qsb = utils.get_or_create_none_qsetblng() if parent else am.QuestionSetBelonging.objects.select_related('question').filter(qset_id=job['qset_id']).order_by('seqno').values_list(named=True)
+
         if not qsb:
-            log.error("No Checklist Found failed to schedhule job",
-                      exc_info = True)
+            log.error("No Checklist Found failed to schedhule job", exc_info=True)
             raise EmptyResultSet
         else:
             insert_into_jnd(qsb, job, jnid)

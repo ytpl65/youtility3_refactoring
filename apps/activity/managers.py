@@ -1,7 +1,7 @@
 from django.db import models
 from django.db.models.functions import Concat
 from django.db.models import CharField, Value as V
-from django.db.models import Q, F, Count, Case, When, 
+from django.db.models import Q, F, Count, Case, When
 from django.contrib.gis.db.models.functions import  AsWKT, AsGeoJSON
 from datetime import datetime, timedelta, timezone
 from apps.core import utils
@@ -573,7 +573,7 @@ class JobManager(models.Manager):
             buid = F('bu_id'), buname=F('bu__buname'),
             breaktime = F('other_info__breaktime'),
             distance=F('other_info__distance'),
-            duration = Value(None, output_field=models.CharField(null=True)),
+            duration = V(None, output_field=models.CharField(null=True)),
             qsetname=F('qset__qsetname')
             
         ).filter(parent_id=job['id']).select_related('asset', 'qset',).values(
