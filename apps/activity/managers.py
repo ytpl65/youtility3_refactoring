@@ -573,7 +573,7 @@ class JobManager(models.Manager):
             buid = F('bu_id'), buname=F('bu__buname'),
             breaktime = F('other_info__breaktime'),
             distance=F('other_info__distance'),
-            duration = Value(None, output_field=models.CharField(null=True)),
+            duration = V(None, output_field=models.CharField(null=True)),
             qsetname=F('qset__qsetname')
             
         ).filter(parent_id=job['id']).select_related('asset', 'qset',).values(
