@@ -20,22 +20,6 @@ DATABASES.update(
             'HOST':     'localhost',
             'PORT':     '5432',
         },
-        # 'testDB2':{
-        #     'ENGINE':   'django.contrib.gis.db.backends.postgis',
-        #     'USER':     DBUSER,
-        #     'NAME':     'testDB',
-        #     'PASSWORD': DBPASWD,
-        #     'HOST':     DBHOST,
-        #     'PORT':     '5432',
-        # },
-        # 'testdb3':{
-        #     'ENGINE':   'django.contrib.gis.db.backends.postgis',
-        #     'USER':     DBUSER,
-        #     'NAME':     'testing_db2',
-        #     'PASSWORD': DBPASWD,
-        #     'HOST':     DBHOST,
-        #     'PORT':     '5432',
-        # },
     }
 )
 

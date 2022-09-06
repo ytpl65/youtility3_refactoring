@@ -77,6 +77,7 @@ def insert_questions_to_qsetblng(assigned_questions, model, fields, request):
     from django.db import transaction
     try:
         with transaction.atomic():
+            ic(assigned_questions)
             for ques in assigned_questions:
                 log.info(f"""{" " * 8} saving question {ques[1]} for QuestionSet {fields['qsetname']} [started]""")
 
@@ -88,8 +89,8 @@ def insert_questions_to_qsetblng(assigned_questions, model, fields, request):
                     "answertype"   : ques[3],
                     "min"         : float(ques[4]),
                     "max"         : float(ques[5]),
-                    "options"     : ques[6].replace('"', ''),
-                    "alerton"     : ques[7].replace('"', ''),
+                    "options"     : ques[6].replace('"', '') if isinstance(ques[6], str) else "",
+                    "alerton"     : ques[7].replace('"', '') if isinstance(ques[7], str) else "",
                     "ismandatory" : ques[8],
                     "qset_id"   : fields['qset']}
                 )
