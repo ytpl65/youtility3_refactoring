@@ -111,13 +111,14 @@ class MasterQuestionSet(LoginRequiredMixin, View):
     params = {
         'form_class'   : None,
         'template_form': 'activity/partials/partial_masterqset_form.html',
-        'template_list': 'activity/master_qset_list.html',
+        'qset_list': 'activity/questionset.html',
+        'checklist_list': 'activity/checklist.html',
         'partial_form' : 'peoples/partials/partial_masterqset_form.html',
         'partial_list' : 'peoples/partials/master_qset_list.html',
         'related'      : ['unit'],
         'model'        : am.QuestionSet,
         'filter'       : aft.MasterQsetFilter,
-        'fields'       : ['qsetname', 'type', 'id'],
+        'fields'       : ['qsetname', 'type', 'id', 'ctzoffset', 'cdtz', 'mdtz'],
         'form_initials': {}
     }
     label=""
@@ -127,14 +128,19 @@ class MasterQuestionSet(LoginRequiredMixin, View):
     def get(self, request, *args, **kwargs):
         R, resp = request.GET, None
         urlname = resolve(request.path_info).url_name
+        ic(R)
         # first load the template
-        if R.get('template'): return render(request, self.params['template_list'], context={'label':self.label})
+        if R.get('template'):
+            template = self.params['qset_list'] if R['type'] == 'QUESTIONSET' else self.params['checklist_list']
+            return render(request, template, context={'label':self.label})
+        
         # return qset_list data
         if R.get('action', None) == 'list' or R.get('search_term'):
             objs = self.params['model'].objects.select_related(
                 *self.params['related']).filter(
-                    ~Q(qsetname='NONE'), **self.list_grid_lookups
+                    ~Q(qsetname='NONE'), type=R['type'], enable=True
             ).values(*self.params['fields'])
+            utils.printsql(objs)
             resp = utils.render_grid(request, self.params,
                                      "questionset_view", objs, extra_cxt={'label': self.label})
             return  rp.JsonResponse(data = {'data':list(objs)})
@@ -142,7 +148,7 @@ class MasterQuestionSet(LoginRequiredMixin, View):
         # return questionset_form empty
         if R.get('action', None) == 'form':
             self.params['form_initials'].update(
-                {'parent': utils.get_or_create_none_qset().id})
+                {'parent_id': 1})
             ic(self.params['form_initials'])
             cxt = {
                 'masterqset_form': self.params['form_class'](
@@ -151,7 +157,6 @@ class MasterQuestionSet(LoginRequiredMixin, View):
                 'qsetbng': af.QsetBelongingForm(initial={'ismandatory': True}),
                 'label': self.label,
                 'msg': f"create {self.view_of} requested"}
-            ic(cxt['masterqset_form'].as_p())
             resp = utils.render_form(request, self.params, cxt)
 
         # handle delete request
@@ -295,10 +300,7 @@ class Checklist(MasterQuestionSet):
     view_of = MasterQuestionSet.view_of
     label = MasterQuestionSet.label
     params.update({
-        'form_class': af.ChecklistForm,
-        'form_initials': {
-            'type': am.QuestionSet.Type.CHECKLIST
-        }
+        'form_class': af.ChecklistForm
     })
     list_grid_lookups = {'enable': True, 'type': 'CHECKLIST'}
     view_of = 'checklist'
@@ -310,6 +312,7 @@ class Checklist(MasterQuestionSet):
             with transaction.atomic(using=utils.get_current_db_name()):
                 assigned_questions = json.loads(
                     request.POST.get("asssigned_questions"))
+                ic(form.data)
                 qset = form.save()
                 putils.save_userinfo(qset, request.user,
                                     request.session, create = create)
@@ -318,7 +321,8 @@ class Checklist(MasterQuestionSet):
                         'client': qset.client_id}
                 self.save_qset_belonging(request, assigned_questions, fields)
                 data = {'success': "Record has been saved successfully",
-                        'row':{'qsetname':qset.qsetname, 'id':qset.id}
+                        'row':{'qsetname':qset.qsetname, 'id':qset.id,
+                               'cdtz':qset.cdtz, 'mdtz':qset.mdtz, 'ctzoffset':qset.ctzoffset}
                         }
                 return rp.JsonResponse(data, status = 200)
         except IntegrityError:
@@ -368,7 +372,8 @@ class QuestionSet(MasterQuestionSet):
                         'client': qset.client_id}
                 self.save_qset_belonging(request, assigned_questions, fields)
                 data = {'success': "Record has been saved successfully",
-                        'row':{'qsetname':qset.qsetname, 'id':qset.id}
+                        'row':{'qsetname':qset.qsetname, 'id':qset.id,
+                               'cdtz':qset.cdtz, 'mdtz':qset.mdtz, 'ctzoffset':qset.ctzoffset}
                         }
                 return rp.JsonResponse(data, status = 200)
         except IntegrityError:

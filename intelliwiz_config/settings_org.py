@@ -28,7 +28,7 @@ ENCRYPT_KEY = str(os.getenv('ENCRYPT_KEY'))
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['.localhost', '.youtility.local', 'barfi.youtility.in', '127.0.0.1', 'intelliwiz.youtility.in']
+ALLOWED_HOSTS = ['.localhost', '.youtility.local', 'barfi.youtility.in', '127.0.0.1', 'intelliwiz.youtility.in', '192.168.1.33']
 
 # Application definition
 
@@ -171,17 +171,17 @@ home_local_dbs = {
 
 }
 
-DATABASES = youtility_dbs
-# DATABASES = {
-#         'default':{
-#             'ENGINE':   'django.contrib.gis.db.backends.postgis',
-#             'USER':     'navin',
-#             'NAME':     'intelliwiz_django',
-#             'PASSWORD': 'admin',
-#             'HOST':     'localhost',
-#             'PORT':     '',
-#         }
-#     } 
+#DATABASES = youtility_dbs
+DATABASES = {
+        'default':{
+            'ENGINE':   'django.contrib.gis.db.backends.postgis',
+            'USER':     'navin',
+            'NAME':     'icici_django',
+            'PASSWORD': 'admin',
+            'HOST':     'localhost',
+            'PORT':     '5432',
+        },
+}   
 
 
 CACHES = {

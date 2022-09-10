@@ -29,19 +29,6 @@ class LoginForm(forms.Form):
     def clean_username(self):
         import re
         if val := self.cleaned_data.get('username'):
-            # ic('username', val)
-            # email_regex = r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b'
-            # mobile_regex = r'^[+][0-9]{2,3}[0-9]+'
-            # if re.match(email_regex, val):
-            #     validate_emailadd(val)
-            # elif re.match(mobile_regex, val):
-            #     validate_mobileno(val)
-            # else:
-            #     user = pm.People.objects.filter(loginid__exact = val)
-            #     ic(user)
-            #     if not user.exists():
-            #         raise forms.ValidationError(
-            #             "[Access Denied] Invalid user details")
             return val
 
     def is_valid(self) -> bool:

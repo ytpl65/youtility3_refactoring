@@ -78,5 +78,8 @@ query = {
                                 AND workpermit.cdtz <= now()
                                 GROUP BY workpermit.id, buname, people.peoplename, qset.qsetname, workpermit.wpstatus, workpermit.workstatus,pb.peoplename, p.peoplename)workpermit 
                                 WHERE 1=1 ORDER BY cdtz desc
-                                '''
+                                ''',
+    'exttours_jobneed':         '''
+                                SELECT * FROM jobneed
+    '''
 }

@@ -537,7 +537,7 @@ def get_tenants_map():
         'icicibank.youtility.local': 'icicibank',
         'barfi.youtility.in': 'icicibank',
         'intelliwiz.youtility.in': 'default',
-        'testdb.youtility.local': 'testDB'
+        'testdb.youtility.local': 'testDB',
     }
 
 # RETURN HOSTNAME FROM REQUEST
@@ -672,7 +672,7 @@ def get_or_create_none_asset():
     return obj
 
 
-def create_none_entries(self):
+def create_none_entries():
     '''
     Creates None entries in self relationship models.
     '''
@@ -693,8 +693,7 @@ def create_none_entries(self):
         get_or_create_none_question()
         get_or_create_none_qsetblng()
         get_or_create_none_gf()
-        logger.debug(
-            f"NONE entries are successfully inserted...{pformat(ok(self))}")
+        logger.debug("NONE entries are successfully inserted...")
     except Exception as e:
         logger.error('create none entries', exc_info=True)
         raise

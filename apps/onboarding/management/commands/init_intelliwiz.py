@@ -2,6 +2,7 @@ from django.core.management.base import BaseCommand
 from django.db import transaction
 from apps.core import utils
 from apps.onboarding.models import Bt
+from apps.peoples.models import People
 import logging
 log = logging.getLogger('__main__')
 
@@ -59,6 +60,12 @@ def insert_default_entries_in_typeassist():
     except Exception as e:
         log.error('FAILED insert_default_entries', exc_info = True)
         raise
+
+def create_superuser(client, site):
+    People.objects.create_superuser(
+        
+    )
+    
 
 
 class Command(BaseCommand):

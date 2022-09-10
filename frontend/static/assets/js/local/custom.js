@@ -14,9 +14,8 @@ $(document).on({
 
 //creating environment for wizard
 function make_env_for_wizard(session) {
-  const wizard = session["wizard_data"];
   $(document).ready(function () {
-    if (wizard !== null) {
+    if (session.hasOwnProperty('wizard_data') &&  session['wizard_data'] !== null) {
       //minimize sidebar
       //$('#kt_body').attr('data-kt-aside-minimize', 'on')
       //hide the pagebreadcumb

@@ -26,7 +26,7 @@ tr.odd td {
 tr.even td {
     background-color:#F3F6F8 ;
    }
-thead th {
+.dataTable thead th {
 background-color:#1e1e2d;
 }
 

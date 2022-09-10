@@ -21,12 +21,12 @@ def get_service_requirements(R):
         startp = {"lat":float(R[0]['cplocation'].coords[1]),
                   "lng":float(R[0]['cplocation'].coords[0])}
 
-        endp = {"lat":float(R[-1][-1].coords[-1]),
-               "lng":float(R[-1][-1].coords[-1])}
+        endp = {"lat":float(R[-1]['cplocation'].coords[1]),
+               "lng":float(R[-1]['cplocation'].coords[0])}
         waypoints=[]
         for i in range(1, len(R)-1):
             lat, lng = R[i]['cplocation'].coords[1], R[i]['cplocation'].coords[0]
-            waypoints.append(   
+            waypoints.append(
                 {"lat":lat, "lng":lng}
             )
         return startp, endp, waypoints
@@ -117,7 +117,7 @@ def calculate_route_details(R, job):
         chekpoints[j]['distance']=round(float(item['distance']["value"]/1000), 2)
         l.append(chekpoints[j]["distance"])
         chekpoints[j]['duration']=float(legs[i]["duration"]["value"])
-        l.append(chekpoints[j].duration)
+        l.append(chekpoints[j]['duration'])
         chekpoints[j]['expirytime']=int(legs[i]["duration"]["value"]/60)
         l.append(chekpoints[j]['expirytime'])
         DDE.append(l)
@@ -438,7 +438,7 @@ def insert_into_jn_and_jnd(job, DT, resp):
         return status, resp
 
 def insert_into_jn_for_parent(job, params):
-    jn = am.Jobneed.objects.create(
+    return am.Jobneed.objects.create(
         job_id         = job['id'],                     parent            = params['NONE_JN'],
         jobdesc        = params['jobdesc'],          plandatetime      = params['pdtz'],
         expirydatetime = params['edtz'],             gracetime         = job['gracetime'],
@@ -461,6 +461,7 @@ def insert_update_jobneeddetails(jnid, job, parent = False):
     log.info("insert_update_jobneeddetails() [START]")
     from django.utils.timezone import get_current_timezone
     tz = get_current_timezone()
+    ic(parent, job['qset_id'])
     try:
         am.JobneedDetails.objects.get(jobneed_id = jnid).delete()
     except am.JobneedDetails.DoesNotExist:
@@ -671,9 +672,10 @@ def del_job(id):
     #update jobneedetails and jobneed
     olddate = datetime(1970, 1, 1, 0, 0, 0, tzinfo=timezone.utc)
     oldjobneeds = am.Jobneed.objects.filter(plandatetime__gt = datetime.now(timezone.utc), job_id__in = jobids).values_list("id", flat=True)
-    am.JobneedDetails.objects.filter(jobneed_id__in = oldjobneeds).update(cdtz = olddate, mdtz=olddate)
-    am.Jobneed.objects.filter(job_id__in=jobids, plandatetime__gt=datetime.now(timezone.utc)).update(cdtz=olddate, mdtz=olddate, plandatetime=olddate, expirydatetime=olddate)
-
+    jndcount = am.JobneedDetails.objects.filter(jobneed_id__in = oldjobneeds).update(cdtz = olddate, mdtz=olddate)
+    jncount = am.Jobneed.objects.filter(job_id__in=jobids, plandatetime__gt=datetime.now(timezone.utc)).update(cdtz=olddate, mdtz=olddate, plandatetime=olddate, expirydatetime=olddate)
+    log.info("total jobneedetails deleted: %s", jndcount)
+    log.info("total jobneed deleted: %s", jncount)
     am.Job.objects.filter(id=id).exclude(id=1).update(cdtz = F('mdtz'))
     log.info("deleting old jobs end[-]")
 

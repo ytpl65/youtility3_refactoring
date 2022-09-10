@@ -1,7 +1,7 @@
 from django.db import models
 from django.db.models.functions import Concat
 from django.db.models import CharField, Value as V
-from django.db.models import Q, F, Count, Case, When, 
+from django.db.models import Q, F, Count, Case, When
 from django.contrib.gis.db.models.functions import  AsWKT, AsGeoJSON
 from datetime import datetime, timedelta, timezone
 from apps.core import utils
@@ -133,7 +133,7 @@ class JobneedManager(models.Manager):
         return qset or self.none()
 
     def get_jobneed_for_report(self,pk):
-        qset = self.raw(    
+        qset = self.raw(
             """
             SELECT jn.identifier, jn.peoplecode, jn.peoplename, jn.jobdesc, jn.plandatetime,
                 jn.ctzoffset, jn.buname, jn.people_id, jn.pgroup_id, jn.bu_id, jn.cuser_id, jn.muser_id,
@@ -304,6 +304,11 @@ class JobneedManager(models.Manager):
                     'cdtz':utils.getawaredatetime(datetime.now(), R['ctzoffset']),
                     'mdtz':utils.getawaredatetime(datetime.now(), R['ctzoffset']),
                     'type':R['type'], 'client_id':S['client_id'], 'bu_id':S['bu_id']}
+        
+    def get_exttoursjobneed(self, peopleid, clientid, siteid):
+        return self.raw(
+            
+        )
         
     
     
@@ -573,7 +578,7 @@ class JobManager(models.Manager):
             buid = F('bu_id'), buname=F('bu__buname'),
             breaktime = F('other_info__breaktime'),
             distance=F('other_info__distance'),
-            duration = Value(None, output_field=models.CharField(null=True)),
+            duration = V(None, output_field=models.CharField(null=True)),
             qsetname=F('qset__qsetname')
             
         ).filter(parent_id=job['id']).select_related('asset', 'qset',).values(
