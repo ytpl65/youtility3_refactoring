@@ -80,16 +80,14 @@ class Command(BaseCommand):
         try:
             db = options['db'][0]
             utils.set_db_for_router(db)
-            # if isexist := TypeAssist.objects.all():
-            #     raise utils.RecordsAlreadyExist
+
 
             with transaction.atomic(using = db):
                 utils.set_db_for_router(db)
                 self.stdout.write(self.style.SUCCESS(f"current db selected is {utils.get_current_db_name()}"))
 
                 # create NONE entries in the tables
-                id = utils.create_none_entries()
-                print(Bt.objects.get(id = id).bucode, "%%%%%%%%%%%%%5")
+                utils.create_none_entries()
                 self.stdout.write(self.style.SUCCESS('None Entries created successfully!'))
 
                 # insert default entries for TypeAssist
@@ -100,8 +98,6 @@ class Command(BaseCommand):
                 create_dummy_clientandsite()
                 self.stdout.write(self.style.SUCCESS('Dummy client and site created successfully'))
 
-                # create superadmin# 
-                #TODO
 
         except utils.RecordsAlreadyExist as ex:
             self.stdout.write(self.style.WARNING('Database with this alias "%s" is not empty so cannot create -1 extries operation terminated!' % db))
