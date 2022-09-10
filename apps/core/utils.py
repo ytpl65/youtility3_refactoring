@@ -673,7 +673,7 @@ def get_or_create_none_asset():
     return obj
 
 
-def create_none_entries(self):
+def create_none_entries():
     '''
     Creates None entries in self relationship models.
     '''
