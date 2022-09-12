@@ -392,7 +392,8 @@ function getAsgdsitesTabColumnConfig(){
 }
 
 function checkRouteSaved(){
-    if(!isRouteSaved){
+    console.log(isRouteSaved, "isRouteSaved")
+    if(!isRouteSaved && !$("#id_israndom").is(":checked")){
         Swal.fire(
         'Route Not Saved Yet!',
         'Please Save Route Before Run Scheduler.',
@@ -442,6 +443,44 @@ function updateCronDate(){
         show_error_alert(xhr.responseJSON.errors, "Bad Cron!")
     })
 }
+
+    //delete tour 
+	function deleteMainJob(elemt){
+		var id = $(elemt).attr("data-id");
+		show_alert_before_delete("External Tour")
+		.then((result) => {
+			if(result.isConfirmed){ //delete requested by user
+				status = isETourDeleted(id) //fire's request
+				console.log("status ", status)
+				if(status){
+					show_successful_delete_alert() //defined in customjs
+                    window.setTimeout(function() {
+                        window.location.href = `{{ url('schedhuler:schd_external_tour') }}?action=form`;
+                    }, 2000);
+
+				}else{
+					show_error_alert('Something went wrong!');
+				}
+			}
+		})
+	}
+
+     //delete ajax request 
+	function isETourDeleted(id){ 
+        let urlname = "{{ url('schedhuler:schd_external_tour') }}"
+		const params = {url:`${urlname}?action=delete&id=${id}`, 'beforeSend':function (){} }
+		fire_ajax_get(params)
+		.done((data, status, xhr) => {
+			if(!xhr.status === 200){
+				return false
+			}
+			return true
+		})
+		.fail((xhr, status, error) => {
+			show_error_alert('Something went wrong!') //defined in custom.js
+			return false
+		})
+	}
 
 var d2bounds           = new google.maps.LatLngBounds();
 var d2infowindow       = new google.maps.InfoWindow({content: "",maxWidth: 350});
@@ -551,6 +590,7 @@ $(document).ready(() => {
         $("#id_breaktime, #id_tourfrequency").removeAttr('disabled');
         $(".non-random").attr('disabled','disabled');
         isRouteSaved=true
+        debugger;
     }
     if(parseInt($("#id_tourfrequency").val()) > 1){
         $("#id_breaktime").removeAttr('disabled');
@@ -722,10 +762,10 @@ $(document).ready(() => {
                     })
                     .fail((xhr, status, error) => {
                         Swal.fire({
-                            showConfirmButton:false,
+                            showConfirmButton:true,
                             icon: "error",
-                            timer:1500,
-                            title: "Failed to schedhule!"
+                            title: "Failed to schedhule!",
+                            text:xhr.responseJSON.msg
                         })
                     })
                 }

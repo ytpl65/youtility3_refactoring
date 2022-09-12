@@ -123,8 +123,10 @@ def calculate_route_details(R, job):
         DDE.append(l)
         j+=1
     
+    ic(chekpoints)
+    
     if freq > 1:
-        chekpoints = get_frequencied_data(DDE, chekpoints, freq, breaktime)
+        get_frequencied_data(DDE, chekpoints, freq, breaktime)
     
     if freq>1 and breaktime!=0:
         #frequency points for freq>1.
@@ -163,6 +165,7 @@ def create_job(jobs = None):
                 log.debug(f"Jobs to be schedhuled from startdatetime {startdtz} to enddatetime {enddtz}")
 
                 DT, is_cron, resp = get_datetime_list(job['cron'], startdtz, enddtz, resp)
+                if not DT: return rp.JsonResponse({'msg':"Please check your Valid From and Valid To dates"}, status = 404)
                 log.debug(
                     "Jobneed will going to create for all this datetimes\n %s", (pformat(get_readable_dates(DT))))
                 F[str(job['id'])] = is_cron
@@ -538,11 +541,7 @@ def create_child_tasks(job, _pdtz, _people, jnid, _jobstatus, _jobtype):
         if job['other_info']['is_randomized'] in ['True', True] and len(R) > 1:
             #randomize data if it is random tour job
             L = list(R)
-            while True:
-                shuffle(L)
-                seq = extract_seq(L)
-                if not check_sequence_of_prevjobneed(job, seq):
-                    break
+            ic(L)
             R = calculate_route_details(L, job)
             
             

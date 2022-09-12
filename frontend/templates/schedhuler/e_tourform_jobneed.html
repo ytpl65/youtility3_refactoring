@@ -310,6 +310,31 @@ var parentEditor;
             showHideSelectField(assignto)
         }
 
+        //Datatable
+        table = $("#external_tour").DataTable({
+            ajax:{
+                url:"{{ url('schedhuler:jobneedexternaltours') }}?action=checkpoints&parent_id={{ externaltourform.instance.id }}"},
+            columns:[
+                {data:"id", visible:false},
+                {data:"seqno", title:'Slno'},
+                {data:"plandatetime", title:'Plan Datetime'},
+                {data:"expirydatetime", title:'Expiry Datetime'},
+                {data:"bu__buname", title:'Checkpoint'},
+                {data:'qset__qsetname', title:'Checklist'},
+                {data:'gracetime', 'Gracetime'},
+                {data:'jobstatus', title:'Status'},
+                {data:'distance', title:'Distance'},
+                {data:'duration', title:'Duration'},
+                {data:'breaktime', title:'Breaktime'},
+
+            ],
+            deferRender: true,
+			responsive : true,
+            dom: `<'row' <'col-sm-6 d-flex justify-content-start'f> <'col-sm-6 d-flex justify-content-end'B> >rt<'row'
+			 <'col-sm-6'l> <'col-sm-6'p><'col-sm-12 d-flex justify-content-center'i>>`,
+
+        })
+
     })
 </script>
 {% endblock extra_scripts %}

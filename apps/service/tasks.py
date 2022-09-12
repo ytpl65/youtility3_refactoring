@@ -38,6 +38,7 @@ def get_model_or_form(tablename):
     if tablename == 'deviceeventlog': return DeviceEventlog
     if tablename == 'ticket': return Ticket
     if tablename == 'asset': return Asset
+    if tablename == 'tracking': return Tracking
 
 
 def get_or_create_dir(path):
@@ -80,6 +81,7 @@ class Messages(AM):
 def insertrecord_from_tablename(record, tablename, db):
     log.info(f"insertrecord_from_tablename started tablename:{tablename} db:{db}")
     try:
+        ic(tablename)
         if model := get_model_or_form(tablename):
             log.info(f'selected model to insert is {str(model)}')
             record = clean_record(record)

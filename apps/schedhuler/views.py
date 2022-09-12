@@ -1197,6 +1197,10 @@ class JobneedExternalTours(LoginRequiredMixin, View):
             objs = P['model'].objects.get_externaltourlist_jobneed(request, P['related'], P['fields'])
             return rp.JsonResponse(data = {'data':list(objs)})
         
+        if R.get('action') == "checkpoints":
+            objs = P['model'].objects.get_ext_checkpoints_jobneed(request, P['related'], P['fields'])
+            return rp.JsonResponse(data = {'data':list(objs)})
+        
         if R.get('id'):
             obj = P['model'].objects.get(id = R['id'])
             form = P['form_class'](instance = obj, initial = P['initial'])
@@ -1588,6 +1592,10 @@ class ExternalTourScheduling(LoginRequiredMixin, View):
         if R.get('action') == "loadChecklist":
             qset =  am.QuestionSet.objects.load_checklist()
             return rp.JsonResponse({'items':list(qset), 'total_count':len(qset)}, status = 200)
+        
+        # return resp to delete request
+        if R.get('action', None) == "delete" and R.get('id', None):
+            return utils.render_form_for_delete(request, self.params, True)
         
         # return resp for updation of job
         if R.get('id'):

@@ -241,6 +241,7 @@ class Job(BaseModel, TenantAwareModel):
     scantype        = models.CharField(_("Scan Type"), max_length = 50, choices = Scantype.choices)
     frequency       = models.CharField(verbose_name = _("Frequency type"), null = True, max_length = 55, choices = Frequency.choices, default = Frequency.NONE.value)
     other_info      = models.JSONField(_("Other info"), default = other_info, blank = True, encoder = DjangoJSONEncoder)
+    enable          = models.BooleanField(_("Enable"), default = True)
 
     objects = JobManager()
 

@@ -200,6 +200,11 @@ class Schd_E_TourJobForm(JobForm):
         self.fields['scantype'].widget.attrs   = {"style": "display:none"}
         self.fields['seqno'].widget.attrs      = {"style": "display:none"}
         utils.initailize_form_fields(self)
+        
+    def clean_cron(self):
+        if val := self.cleaned_data.get('cron'):
+            return val
+        raise forms.ValidationError("Invalid Cron")
 
 
 

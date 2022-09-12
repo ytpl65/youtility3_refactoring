@@ -43,7 +43,6 @@ query = {
                                     SELECT DISTINCT jobneed.id, jobneed.plandatetime, jobneed.jobdesc, people.peoplename, 
                                     CASE WHEN (jobneed.othersite!='' or upper(jobneed.othersite)!='NONE') THEN 'other location [ ' ||jobneed.othersite||' ]' ELSE bt.buname END AS buname,
                                     jobneed.qset_id, jobneed.jobstatus AS jobstatusname, ST_AsText(jobneed.gpslocation) as gpslocation, bt.pdist, count(attachment.owner) AS att,
-                                    MIN(ST_Distance(bt.gpslocation, jobneed.gpslocation)) as distance, 
                                     jobneed.bu_id, jobneed.remarks 
                                     FROM jobneed 
                                     INNER JOIN people ON jobneed.people_id = people.id 

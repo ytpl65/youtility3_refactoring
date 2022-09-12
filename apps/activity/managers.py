@@ -276,7 +276,8 @@ class JobneedManager(models.Manager):
                                 plandatetime__date__gte = R['pd1'],
                                 plandatetime__date__lte = R['pd2'],
                                 jobtype="SCHEDULE",
-                                identifier='EXTERNALTOUR'
+                                identifier='EXTERNALTOUR',
+                                job__enable=True
                         ).exclude(
                         id=1
                         ).values(*fields).order_by('-plandatetime') 
@@ -309,6 +310,13 @@ class JobneedManager(models.Manager):
         return self.raw(
             
         )
+    
+    def get_ext_checkpoints_jobneed(self, request, related, fields):
+        qset  = self.select_related(*related).filter(
+            parent_id = request.GET['parent_id'],
+            identifier = 'EXTERNALTOUR',
+            job__enable=True
+        ).order_by('seqno').values(*fields)
         
     
     
@@ -561,7 +569,7 @@ class JobManager(models.Manager):
             breaktime = F('other_info__breaktime'),
             deviation = F('other_info__deviation')
         ).filter(
-            ~Q(jobname='NONE'), parent_id=1, identifier='EXTERNALTOUR'
+            ~Q(jobname='NONE'), parent_id=1, identifier='EXTERNALTOUR', enable=True
         ).select_related('pgroup', 'sgroup', 'people').values(
             'assignedto', 'sitegrpname', 'israndomized', 'tourfrequency',
             'breaktime', 'deviation', 'fromdate', 'uptodate', 'gracetime',

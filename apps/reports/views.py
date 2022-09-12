@@ -28,7 +28,7 @@ class RetriveSiteReports(LoginRequiredMixin, View):
         try:
             objs = self.model.objects.get_sitereportlist(request)
             utils.printsql(objs)
-            response = rp.JsonResponse({'data':list(objs)}, status = 200, encoder=utils.CustomJsonEncoderWithDistance)
+            response = rp.JsonResponse({'data':list(objs)}, status = 200)
         except Exception:
             log.critical(
                 'something went wrong', exc_info = True)
