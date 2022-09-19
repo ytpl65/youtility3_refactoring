@@ -84,33 +84,25 @@ def calculate_route_details(R, job):
     import googlemaps
     gmaps = googlemaps.Client(key='AIzaSyDVbA53nxHKUOHdyIqnVPD01aOlTitfVO0')
     startpoint, endpoint, waypoints = get_service_requirements(data)
-    directions = gmaps.directions(mode='driving', waypoints = waypoints, origin=startpoint, destination= endpoint, optimize_waypoints = True)
-    directions = gmaps.directions(mode='driving', waypoints = waypoints, origin=startpoint, destination= endpoint, optimize_waypoints = True)
+    directions = gmaps.directions(mode='driving', waypoints=waypoints, origin=startpoint, destination=endpoint, optimize_waypoints=True)
+
+    directions = gmaps.directions(mode='driving', waypoints=waypoints, origin=startpoint, destination=endpoint, optimize_waypoints=True)
+
     waypoint_order = directions[0]["waypoint_order"]
     freq, breaktime = job['other_info']['tour_frequency'], job['other_info']['breaktime']
-    chekpoints = []
-    
-    #startpoint distance, duration, expirtime is 0.
-    data[0]['seqno'] = 0+1
-    chekpoints.append(data[0])
+
+    data[0]['seqno'] = 0 + 1
+    chekpoints = [data[0]]
     chekpoints[0]['distance'] = 0
     chekpoints[0]["duration"] = 0
     chekpoints[0]["expirytime"] = 0
-    
-    #waypoint
     for i, item in enumerate(waypoint_order):
-        data[i+1]['seqno'] = (i+1)+1
-        chekpoints.append(data[item+1])
-        
-    #endpoint
-    data[-1][-1] = len(data)-1+1    
+        data[i + 1]['seqno'] = i + 1 + 1
+        chekpoints.append(data[item + 1])
+    data[-1][-1] = len(data) - 1 + 1
     chekpoints.append(data[-1])
-    
-    #calculate distance and duration
     legs = directions[0]["legs"]
-    j=1
-    
-    
+    j = 1
     DDE = []
     for i, item in enumerate(legs):
         l=[]
@@ -121,18 +113,12 @@ def calculate_route_details(R, job):
         chekpoints[j]['expirytime']=int(legs[i]["duration"]["value"]/60)
         l.append(chekpoints[j]['expirytime'])
         DDE.append(l)
-        j+=1
-    
-    ic(chekpoints)
-    
+        j += 1
     if freq > 1:
-        get_frequencied_data(DDE, chekpoints, freq, breaktime)
-    
-    if freq>1 and breaktime!=0:
-        #frequency points for freq>1.
-        endp = int(len(chekpoints)/freq)
+        chekpoints = get_frequencied_data(DDE, chekpoints, freq, breaktime)
+    if freq > 1 and breaktime != 0:
+        endp = int(len(chekpoints) / freq)
         chekpoints[endp]['breaktime'] = breaktime
-    
     return chekpoints
 
 def create_job(jobs = None):
@@ -460,26 +446,21 @@ def insert_into_jn_for_parent(job, params):
 
 
 
-def insert_update_jobneeddetails(jnid, job, parent = False):
+def insert_update_jobneeddetails(jnid, job, parent=False):
+    # sourcery skip: use-contextlib-suppress
     log.info("insert_update_jobneeddetails() [START]")
     from django.utils.timezone import get_current_timezone
     tz = get_current_timezone()
     ic(parent, job['qset_id'])
     try:
-        am.JobneedDetails.objects.get(jobneed_id = jnid).delete()
+        am.JobneedDetails.objects.get(jobneed_id=jnid).delete()
     except am.JobneedDetails.DoesNotExist:
         pass
     try:
-        if not parent:
-            qsb = am.QuestionSetBelonging.objects.select_related(
-                'question').filter(
-                    qset_id = job['qset_id']).order_by(
-                        'seqno').values_list(named = True)
-        else:
-            qsb = utils.get_or_create_none_qsetblng()
+        qsb = utils.get_or_create_none_qsetblng() if parent else am.QuestionSetBelonging.objects.select_related('question').filter(qset_id=job['qset_id']).order_by('seqno').values_list(named=True)
+
         if not qsb:
-            log.error("No Checklist Found failed to schedhule job",
-                      exc_info = True)
+            log.error("No Checklist Found failed to schedhule job", exc_info=True)
             raise EmptyResultSet
         else:
             insert_into_jnd(qsb, job, jnid)

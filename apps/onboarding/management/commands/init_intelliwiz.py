@@ -139,3 +139,4 @@ class Command(BaseCommand):
             except Exception as e:
                 self.stdout.write(self.style.ERROR("something went wrong...!"))
                 log.error('FAILED init_intelliwiz', exc_info = True)
+
