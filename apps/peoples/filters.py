@@ -2,7 +2,6 @@ from django.db.models import fields
 import django_filters
 from .models import Capability, People, Pgroup
 
-
 class PeopleFilter(django_filters.FilterSet):
     peoplecode = django_filters.CharFilter(
         field_name='peoplecode', lookup_expr='icontains', label='Code')
@@ -10,15 +9,14 @@ class PeopleFilter(django_filters.FilterSet):
         field_name='peoplename', lookup_expr='icontains', label='Name')
     peopletype = django_filters.CharFilter(
         field_name='peopletype__tacode', lookup_expr='icontains', label='People Type')
-    buid = django_filters.CharFilter(
-        field_name='buid__bucode', lookup_expr='icontains', label='Is Admin')
+    bu = django_filters.CharFilter(
+        field_name='bu__bucode', lookup_expr='icontains', label='Is Admin')
     isadmin = django_filters.CharFilter(
         field_name='isadmin', lookup_expr='icontains', label='Code')
 
     class Meta:
         model = People
-        fields = ['peoplecode', 'peoplename', 'peopletype', 'buid', 'isadmin']
-
+        fields = ['peoplecode', 'peoplename', 'peopletype', 'bu', 'isadmin']
 
 class PgroupFilter(django_filters.FilterSet):
     groupname = django_filters.CharFilter(
@@ -29,7 +27,6 @@ class PgroupFilter(django_filters.FilterSet):
     class Meta:
         model = Pgroup
         fields = ['groupname', 'enable']
-
 
 class CapabilityFilter(django_filters.FilterSet):
     capscode = django_filters.CharFilter(

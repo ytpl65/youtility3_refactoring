@@ -1,0 +1,197 @@
+{% extends "base_list.html" %}
+
+<!---- BEGIN CARD TITLE ------>
+{% block card_title %}
+Shift List
+{% endblock card_title %}
+<!----- END CARD TITLE -------->
+
+<!------------------------------------ BEGIN PAGE BREADCUMBS ------------------------------------>
+{% block pagebreadcumb %}
+{{ super() }}
+<li class="breadcrumb-item pe-3"><a href="javascript:void(0)" class="pe-3">Shift List</a></li>
+{% endblock pagebreadcumb %}
+<!------------------------------------- END PAGE BREADCUMBS ------------------------------------->
+
+{% block table %}
+<table id="shift_table" class="display cell-bordered compact hover" style="width:100%"></table>
+{% endblock table %}
+
+{% block popup_alerts %}
+<!-- THE MODAL WE WILL BE USING -->
+<div class="modal animate__animated animate__zoomIn" tabindex="-1" aria-hidden="true"  aria-labelledby="exampleModalLabel" data-bs-backdrop="static" id="modal-shift">
+	<div class="modal-dialog modal-dialog-centered modal-xl">
+		<div class="modal-content" id="shift_content">
+		</div>
+	</div>
+</div>
+{% endblock popup_alerts %}
+
+
+<!--------- BEGIN EXTRA SCRIPTS ----------------------------->
+{% block extra_scripts %}
+<script>
+	var table             = null;
+	const modal_id        = "#modal-shift"
+	const modalcontent_id = "#shift_content"
+	const table_id        = "#shift_table"
+	const formid          = "#id_shiftform"
+	const urlname         = "{{ url('onboarding:shift') }}"
+	const viewname        = "Shift"
+	const rowlink         = "a.shift-link"
+	
+	$(document).ready(function () {
+
+        //beforeSend of capability ajax request 
+        function ShiftBeforeSend(){
+            $(modal_id).modal("show");
+        }
+		////datatable initialization
+        table = $(table_id).DataTable({
+			ajax: {
+                url    : '{{ url("onboarding:shift") }}?action=list',
+            },
+			serverSide : true,
+			processing : true,
+			responsive : true,
+			fixedHeader: true,
+			language   : {
+                search           : "_INPUT_",
+                searchPlaceholder: "Search ..",
+				processing: "Getting Data"},
+            search    : {return: true},
+            lengthMenu: [[10, 20, 30], [10, 20, 30]],
+            dom       : `<'row' <'col-sm-6 d-flex justify-content-start'f> <'col-sm-6 d-flex justify-content-end'B> >rt<'row'
+			 <'col-sm-6'l> <'col-sm-6'p><'col-sm-12 d-flex justify-content-center'i>>`,
+			columns     : [
+                { "data": "id", 'visible':false, 'searchable':false, 'orderable':false},
+                { "data": "shiftname" , 'title': 'Name',
+                    'render':function(data, type, row, meta){
+                        return `<a href="#" class="shift-link" data-id=${row['id']} data-rowid=${meta.row}>${data}</a>`
+                    }
+                },
+                { "data": "starttime", 'title': 'Start'},
+                { "data": "endtime", 'title': 'End' },
+                { "data": "nightshiftappicable", 'title': 'Night Shift',
+                    'render': function(data, type, row, meta){
+                        return data === true ? "True": "False"
+                    } 
+                },
+            ],
+			buttons:[
+				{
+					text     : `Add New &nbsp;<i class='fas fa-plus ch4'></i></a>`,
+					className: "btn btn-sm btn-light-primary",
+					//action for add_new_button 
+					action: function(e, dt, node, config){
+                        const params = {
+                            'modal_id'  : modal_id,
+                            'url'       : `${urlname}?action=form`,
+                            'beforeSend': ShiftBeforeSend }
+						fire_ajax_get(params)
+						.done((data, status, xhr) => {
+							$(modalcontent_id).attr('data-form', 'create')
+                            $(`${modal_id} .modal-content`).html(data.html_form)
+                        })
+						.fail((xhr, status, error) => {
+							show_error_alert("Something went wrong!")
+						})
+					}
+				}
+			]
+		})
+		$('.btn').removeClass('dt-button')
+		
+
+		//END STYLING DATATABLE
+
+		
+		//submit form
+		$(modal_id).on('submit', formid, function(e) {
+			var form = $(this);
+			e.preventDefault()
+			const params = { url:urlname, modal:true } //capability view
+			const formtype = $(modalcontent_id).attr('data-form') //form-type (create/update)
+			const id = $(modalcontent_id).attr('data-id') //form instance id
+			var payLoad = {formData:form.serialize(), csrfmiddlewaretoken: '{{ csrf_token }}'}//payload for post request
+			if(formtype === 'update'){
+				var newPayLoad = {...payLoad, 'pk':id}
+				payLoad = newPayLoad
+			}
+			fire_ajax_form_post(params, payLoad)
+			.done((data, status, xhr) => { //function to submit post request
+				console.log("data ", data)
+				$(modal_id).modal("hide");
+				table.row.add(data.row).draw()
+				var isupdated = formtype === 'update' ? true : false
+				show_successful_save_alert(update = isupdated)
+			})
+		})
+
+		//update row (form-view)
+		$("tbody").click(rowlink,  (e) => {
+			console.log(e)
+			e.preventDefault();
+			var id = $(e.originalEvent.originalTarget).attr('data-id');
+			var rowid = $(e.originalEvent.originalTarget).attr('data-rowid');
+			if (!(id && rowid)){ return }
+			$(modalcontent_id).attr('data-rowid', rowid)
+			$(modalcontent_id).attr('data-id', id)
+			console.log("id ", id)
+			console.log("table ", table)
+			const params = {
+				'modal_id'    : modal_id,
+				'url'         : `${urlname}?id=${id}`,
+				'beforeSend'  : ShiftBeforeSend }
+			fire_ajax_get(params)
+			.done((data, status, xhr) => {
+				$(modalcontent_id).attr('data-form', 'update')
+				$(`${modal_id} .modal-content`).html(data.html_form)
+			})
+			.fail((xhr, status, error) => {
+				show_error_alert('Something went wrong!') //defined in custom.js
+			})
+		})
+	}); //END document.ready()
+
+	//delete ajax request 
+	function isShiftDeleted(id){ 
+		console.log("id ", id)
+		const params = {url:`${urlname}?action=delete&id=${id}`, 'beforeSend':function () {}}
+		fire_ajax_get(params)
+		.done((data, status, xhr) => {
+			if(!xhr.status === 200){
+				return false
+			}
+			return true
+		})
+		.fail((xhr, status, error) => {
+			show_error_alert('Something went wrong!') //defined in custom.js
+			return false
+		})
+	}
+
+	//delete capability 
+	function deleteShift(elemt){
+		var id = $(elemt).attr("data-id");
+		show_alert_before_delete(viewname)
+		.then((result) => {
+			if(result.isConfirmed){ //delete requested by user
+				status = isShiftDeleted(id) //fire's request
+				console.log("status ", status)
+				if(status){
+					show_successful_delete_alert() //defined in customjs
+					$(modal_id).modal("hide")
+					//delete row from table
+					row_index = parseInt($(modalcontent_id).attr('data-rowid'), 10)
+					console.log(row_index, "row index")
+					table.row(row_index).remove().draw(false);
+				}else{
+					show_error_alert('Something went wrong!');
+				}
+			}
+		})
+	}
+</script>
+{% endblock extra_scripts %}
+<!-------- END EXTRA SCRIPTS ------------------------------->

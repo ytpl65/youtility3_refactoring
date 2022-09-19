@@ -1,31 +1,27 @@
 ################## Activity app - Forms ###################
-from re import A
 from django import forms
-from django.forms import widgets
+from django.core.exceptions import ValidationError
+from django.db.models import Q
 import apps.activity.models as am
 import apps.onboarding.models as om
-import apps.peoples.models as pm
-from apps.onboarding import utils as ob_utils
-from django.db.models import Q
+from apps.core import utils
 import apps.activity.utils as ac_utils
-from django.core.exceptions import ValidationError
 import django_select2.forms as s2forms
 import json
 
-
 class QuestionForm(forms.ModelForm):
     required_css_class = "required"
-    alertbelow         = forms.CharField(widget=forms.NumberInput(
-        attrs={'step': "0.01"}), required=False, label='Alert Below')
-    alertabove = forms.CharField(widget=forms.NumberInput(
-        attrs={'step': "0.01"}), required=False, label='Alert Above')
+    alertbelow         = forms.CharField(widget = forms.NumberInput(
+        attrs={'step': "0.01"}), required = False, label='Alert Below')
+    alertabove = forms.CharField(widget = forms.NumberInput(
+        attrs={'step': "0.01"}), required = False, label='Alert Above')
 
     class Meta:
         model = am.Question
-        fields = ['ques_name', 'answertype', 'alerton', 'isworkflow',
-                  'unit', 'category', 'options', 'isworkflow', 'min', 'max']
+        fields = ['quesname', 'answertype', 'alerton', 'isworkflow',
+                  'unit', 'category', 'options', 'isworkflow', 'min', 'max', 'ctzoffset']
         labels = {
-            'ques_name' : 'Name',
+            'quesname' : 'Name',
             'answertype': 'Type',
             'unit'      : 'Unit',
             'category'  : 'Category',
@@ -47,7 +43,7 @@ class QuestionForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         """Initializes form add atttibutes and classes here."""
         self.request = kwargs.pop('request', None)
-        super(QuestionForm, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         for k in self.fields.keys():
             if k in ['unit', 'min', 'max']:
                 self.fields[k].required = True
@@ -55,7 +51,7 @@ class QuestionForm(forms.ModelForm):
                 self.fields[k].required = False
         if self.instance.id:
             ac_utils.initialize_alertbelow_alertabove(self.instance, self)
-        ob_utils.initailize_form_fields(self)
+        utils.initailize_form_fields(self)
 
     def clean(self):
         cleaned_data = super().clean()
@@ -83,7 +79,7 @@ class QuestionForm(forms.ModelForm):
     def clean_alerton(self):
         print("alertbelow", self.cleaned_data.get('alertbelow'))
         print("alertabove", self.cleaned_data.get('alertabove'))
-        val = self.cleaned_data.get('alerton', None)
+        val = self.cleaned_data.get('alerton')
         if val:
             return ac_utils.validate_alerton(forms, val)
         return val
@@ -99,63 +95,61 @@ class QuestionForm(forms.ModelForm):
         if not self.instance.id:
             try:
                 am.Question.objects.get(
-                    ques_name__exact=self.instance.ques_name,
-                    answertype__iexact=self.instance.answertype,
-                    clientid_id__exact=self.request.session['clientid'])
+                    quesname__exact = self.instance.quesname,
+                    answertype__iexact = self.instance.answertype,
+                    client_id__exact = self.request.session['client_id'])
                 msg = 'This type of Question is already exist!'
                 raise forms.ValidationError(
-                    message=msg, code="unique_constraint")
+                    message = msg, code="unique_constraint")
             except am.Question.DoesNotExist:
                 pass
             except ValidationError as e:
                 self._update_errors(e)
 
-
-class QsetForm(forms.ModelForm):
+class MasterQsetForm(forms.ModelForm):
     required_css_class = "required"
     assetincludes = forms.MultipleChoiceField(
-        required=False, label='Checkpoint', widget=s2forms.Select2MultipleWidget, choices=ac_utils.get_assetincludes_choices)
+        required = True, label='Checkpoint', widget = s2forms.Select2MultipleWidget, choices = ac_utils.get_assetincludes_choices)
 
     class Meta:
         model = am.QuestionSet
-        fields = ['qset_name', 'parent', 'enable', 'assetincludes', 'type']
+        fields = ['qsetname', 'parent', 'enable', 'assetincludes', 'type', 'ctzoffset']
 
         labels = {
             'parent': 'Parent',
-            'qset_name': 'Name', }
+            'qsetname': 'Name', }
         widgets = {
             'parent': s2forms.Select2Widget()
         }
 
     def __init__(self, *args, **kwargs):
         """Initializes form add atttibutes and classes here."""
-        super(QsetForm, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.fields['type'].initial      = 'ASSET'
         self.fields['type'].widget.attrs = {"style": "display:none;"}
-        ob_utils.initailize_form_fields(self)
-
+        utils.initailize_form_fields(self)
 
 class QsetBelongingForm(forms.ModelForm):
     required_css_class = "required"
-    alertbelow = forms.CharField(widget=forms.NumberInput(
-        attrs={'step': "0.01"}), required=False, label='Alert Below')
-    alertabove = forms.CharField(widget=forms.NumberInput(
-        attrs={'step': "0.01"}), required=False, label='Alert Above')
+    alertbelow = forms.CharField(widget = forms.NumberInput(
+        attrs={'step': "0.01"}), required = False, label='Alert Below')
+    alertabove = forms.CharField(widget = forms.NumberInput(
+        attrs={'step': "0.01"}), required = False, label='Alert Above')
 
     class Meta:
         model = am.QuestionSetBelonging
-        fields = ['slno', 'qsetid', 'quesid', 'answertype', 'min', 'max',
-                  'alerton', 'options', 'ismandatory']
+        fields = ['seqno', 'qset', 'question', 'answertype', 'min', 'max',
+                  'alerton', 'options', 'ismandatory', 'ctzoffset']
         widgets = {
             'answertype': forms.TextInput(attrs={'readonly': 'readonly'}),
-            'quesid'    : s2forms.Select2Widget,
+            'question'    : s2forms.Select2Widget,
             'alerton'   : s2forms.Select2MultipleWidget,
             'options'   : forms.Textarea(attrs={'rows': 3, 'cols': 40}),
         }
 
     def __init__(self, *args, **kwargs):
         """Initializes form add atttibutes and classes here."""
-        super(QsetBelongingForm, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         for k in self.fields.keys():
             if k in ['min', 'max']:
                 self.fields[k].required = True
@@ -163,7 +157,7 @@ class QsetBelongingForm(forms.ModelForm):
                 self.fields[k].required = False
         if self.instance.id:
             ac_utils.initialize_alertbelow_alertabove(self.instance, self)
-        ob_utils.initailize_form_fields(self)
+        utils.initailize_form_fields(self)
 
     def clean(self):
         cleaned_data = super().clean()
@@ -184,7 +178,7 @@ class QsetBelongingForm(forms.ModelForm):
     def clean_alerton(self):
         print("alertbelow", self.cleaned_data.get('alertbelow'))
         print("alertabove", self.cleaned_data.get('alertabove'))
-        val = self.cleaned_data.get('alerton', None)
+        val = self.cleaned_data.get('alerton')
         if val:
             return ac_utils.validate_alerton(forms, val)
         return val
@@ -200,37 +194,52 @@ class QsetBelongingForm(forms.ModelForm):
         if not self.instance.id:
             try:
                 am.Question.objects.get(
-                    ques_name__exact   = self.instance.ques_name,
+                    ques_name__exact   = self.instance.quesname,
                     answertype__iexact = self.instance.answertype,
-                    clientid_id__exact = self.request.session['clientid'])
+                    client_id__exact = self.request.session['client_id'])
                 msg = 'This type of Question is already exist!'
                 raise forms.ValidationError(
-                    message=msg, code="unique_constraint")
+                    message = msg, code="unique_constraint")
             except am.Question.DoesNotExist:
                 pass
             except ValidationError as e:
                 self._update_errors(e)
 
+class ChecklistForm(MasterQsetForm):
 
-class ChecklistForm(QsetForm):
-
-    class Meta(QsetForm.Meta):
+    class Meta(MasterQsetForm.Meta):
         pass
 
     def __init__(self, *args, **kwargs):
         self.request = kwargs.pop('request', None)
-        super(ChecklistForm, self).__init__(*args, **kwargs)
-        self.fields['type'].initial = 'CHECKLIST'
-        self.fields['type'].widget.attrs = {"style": "display:none;"}
+        super().__init__(*args, **kwargs)
+        self.fields['type'].initial        = 'CHECKLIST'
+        self.fields['assetincludes'].label = 'Checkpoints'
+        self.fields['type'].widget.attrs   = {"style": "display:none;"}
         if self.instance.id:
-            self.fields['assetincludes'].initial = json.loads(
-                self.instance.assetincludes)
-        ob_utils.initailize_form_fields(self)
+            self.fields['assetincludes'].initial = self.instance.assetincludes.split(',')
+        utils.initailize_form_fields(self)
 
-    def clean_assetincludes(self):
-        val = self.cleaned_data.get('assetincludes')
-        if val:
-            return json.dumps(val)
+
+class QuestionSetForm(MasterQsetForm):
+
+    class Meta(MasterQsetForm.Meta):
+        pass
+
+    def __init__(self, *args, **kwargs):
+        self.request = kwargs.pop('request', None)
+        super().__init__(*args, **kwargs)
+        self.fields['type'].initial          = 'QUESTIONSET'
+        self.fields['assetincludes'].label   = 'Asset/Smartplace'
+        self.fields['assetincludes'].choices = ac_utils.get_assetsmartplace_choices()
+        self.fields['type'].widget.attrs     = {"style": "display:none;"}
+        # if self.instance.id:
+        #     ic(json.loads(
+        #         self.instance.assetincludes))
+        #     self.fields['assetincludes'].initial = json.loads(
+        #         self.instance.assetincludes)
+        utils.initailize_form_fields(self)
+
 
 
 class AssetForm(forms.ModelForm):
@@ -241,44 +250,45 @@ class AssetForm(forms.ModelForm):
         ('WARRANTY', 'Warranty'),
     ]
 
-    tempcode       = forms.CharField(max_length=100, label='Temporary Code', required=False)
-    service        = forms.ChoiceField(choices=SERVICE_CHOICES, initial='NONE', required=False, label='Service')
-    sfdate         = forms.DateField(required=False, label='Service From Date')
-    stdate         = forms.DateField(required=False, label='Service To Datre')
-    msn            = forms.CharField(required=False, max_length=50,label='Manufacture Sr. No')
-    yom            = forms.CharField(required=False, max_length=50,label='Manufacture Date')
-    bill_val       = forms.IntegerField(required=False, label='Bill Value')
-    bill_date      = forms.DateField(required=False, label='Bill Date')
-    purachase_date = forms.DateField(required=False, label='Purchase Date')
-    inst_date      = forms.DateField(required=False, label='Installation Date')
-    po_number      = forms.CharField(required=False, label='Purchase Order Number', max_length=100)
-    far_asset_id   = forms.CharField(required=False, label='FAR Asset Id', max_length=100)
-    invoice_date   = forms.DateField(required=False, label='Invoice Date')
-    invoice_no     = forms.CharField( required=False, label='Invoice No.', max_length=100)
-    supplier       = forms.CharField(required=False, max_length=50)
-    meter          = forms.ChoiceField(choices=[], required=False, initial='NONE', label='Meter')
-    model          = forms.CharField(label='Model', required=False, max_length=100)
+    tempcode       = forms.CharField(max_length = 100, label='Temporary Code', required = False)
+    service        = forms.ChoiceField(choices = SERVICE_CHOICES, initial='NONE', required = False, label='Service')
+    sfdate         = forms.DateField(required = False, label='Service From Date')
+    stdate         = forms.DateField(required = False, label='Service To Datre')
+    msn            = forms.CharField(required = False, max_length = 50,label='Manufacture Sr. No')
+    yom            = forms.CharField(required = False, max_length = 50,label='Manufacture Date')
+    bill_val       = forms.IntegerField(required = False, label='Bill Value')
+    bill_date      = forms.DateField(required = False, label='Bill Date')
+    purachase_date = forms.DateField(required = False, label='Purchase Date')
+    inst_date      = forms.DateField(required = False, label='Installation Date')
+    po_number      = forms.CharField(required = False, label='Purchase Order Number', max_length = 100)
+    far_asset_id   = forms.CharField(required = False, label='FAR Asset Id', max_length = 100)
+    invoice_date   = forms.DateField(required = False, label='Invoice Date')
+    invoice_no     = forms.CharField( required = False, label='Invoice No.', max_length = 100)
+    supplier       = forms.CharField(required = False, max_length = 50)
+    meter          = forms.ChoiceField(choices=[], required = False, initial='NONE', label='Meter')
+    model          = forms.CharField(label='Model', required = False, max_length = 100)
+    gpslocation    = forms.CharField(label = 'GPS Location', required = True, initial='0.0,0.0')
 
     class Meta:
         model = am.Asset
         fields = ['assetcode', 'assetname', 'enable', 'runningstatus', 'type', 'parent',
-                  'gpslocation', 'iscritical', 'category', 'subcategory', 'identifier',
-                  'capacity', 'unit', 'brand', ]
+                   'iscritical', 'category', 'subcategory', 'identifier',
+                  'capacity', 'unit', 'brand', 'ctzoffset']
 
         widgets = {
             'runningstatus': s2forms.Select2Widget,
             'type'         : s2forms.Select2Widget,
-            'parent'       : s2forms.Select2Widget
+            'parent'       : s2forms.Select2Widget,
+            'assetcode'    : forms.TextInput(attrs={'style': 'text-transform:uppercase;', 'placeholder': 'Enter text without space & special characters'})
         }
 
     def __init__(self, *args, **kwargs):
         """Initializes form add atttibutes and classes here."""
         self.request = kwargs.pop('request', None)
-        super(AssetForm, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.fields['identifier'].initial = 'ASSET'
         self.fields['identifier'].widget.attrs = {"style": "display:none;"}
-        ob_utils.initailize_form_fields(self)
-
+        utils.initailize_form_fields(self)
 
 class SmartPlaceForm(AssetForm):
     required_css_class = "required"
@@ -305,14 +315,18 @@ class SmartPlaceForm(AssetForm):
     unit           = None
     brand          = None
 
+    class Meta(AssetForm.Meta):
+        exclude = ['capacity']
+
     def __init__(self, *args, **kwargs):
         """Initializes form add atttibutes and classes here."""
         self.request = kwargs.pop('request', None)
-        super(SmartPlaceForm, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.fields['identifier'].initial = 'SMARTPLACE'
         self.fields['identifier'].widget.attrs = {"style": "display:none;"}
-        ob_utils.initailize_form_fields(self)
-
+        self.fields['parent'].queryset = am.Asset.objects.filter(
+            Q(identifier='SMARTPLACE') & Q(enable = True) | Q(assetcode='NONE'))
+        utils.initailize_form_fields(self)
 
 class LocationForm(AssetForm):
     required_css_class = "required"
@@ -343,11 +357,10 @@ class LocationForm(AssetForm):
     def __init__(self, *args, **kwargs):
         """Initializes form add atttibutes and classes here."""
         self.request = kwargs.pop('request', None)
-        super(LocationForm, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.fields['identifier'].initial = 'LOCATION'
         self.fields['identifier'].widget.attrs = {"style": "display:none;"}
-        ob_utils.initailize_form_fields(self)
-
+        utils.initailize_form_fields(self)
 
 class CheckpointForm(AssetForm):
     required_css_class = "required"
@@ -380,13 +393,12 @@ class CheckpointForm(AssetForm):
     def __init__(self, *args, **kwargs):
         """Initializes form add atttibutes and classes here."""
         self.request = kwargs.pop('request', None)
-        super(CheckpointForm, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.fields['identifier'].initial = 'CHECKPOINT'
         self.fields['identifier'].widget.attrs = {"style": "display:none"}
         self.fields['parent'].queryset = am.Asset.objects.filter(
-            Q(identifier='CHECKPOINT') & Q(enable=True) | Q(assetcode='NONE'))
-        ob_utils.initailize_form_fields(self)
-
+            Q(identifier='CHECKPOINT') & Q(enable = True) | Q(assetcode='NONE'))
+        utils.initailize_form_fields(self)
 
 class JobForm(forms.ModelForm):
 
@@ -397,69 +409,181 @@ class JobForm(forms.ModelForm):
         ('DAY', 'Day'), ]
 
     freq_duration = forms.ChoiceField(
-        choices=DURATION_CHOICES, required=False, initial='MIN', widget=s2forms.Select2Widget)
+        choices = DURATION_CHOICES, required = False, initial='MIN', widget = s2forms.Select2Widget)
     freq_duration2 = forms.ChoiceField(
-        choices=DURATION_CHOICES, required=False, initial='MIN', widget=s2forms.Select2Widget)
+        choices = DURATION_CHOICES, required = False, initial='MIN', widget = s2forms.Select2Widget)
 
     class Meta:
         model = am.Job
-        fields = ['jobname', 'jobdesc', 'from_date', 'upto_date', 'cron',
+        fields = ['jobname', 'jobdesc', 'fromdate', 'uptodate', 'cron','sgroup',
                     'identifier', 'planduration', 'gracetime', 'expirytime',
-                    'assetid', 'priority', 'qsetid', 'groupid', 'gfid', 'parent',
-                    'parent', 'slno', 'clientid', 'buid', 'starttime', 'endtime','ctzoffset',
-                    'frequency',  'scantype', 'ticket_category', 'peopleid', 'shift']
+                    'asset', 'priority', 'qset', 'pgroup', 'geofence', 'parent',
+                     'seqno', 'client', 'bu', 'starttime', 'endtime', 'ctzoffset',
+                    'frequency',  'scantype', 'ticketcategory', 'people', 'shift']
 
         labels = {
-            'jobname'   : 'Name',         'jobdesc'     : 'Description',     'from_date'      : 'Valid From',
-            'upto_date' : 'Valid To',     'cron'        : 'Cron Expression', 'ticket_category': 'Ticket Catgory',
+            'jobname'   : 'Name',         'jobdesc'     : 'Description',     'fromdate'      : 'Valid From',
+            'uptodate' : 'Valid To',     'cron'        : 'Cron Expression', 'ticketcategory': 'Ticket Catgory',
             'grace_time': 'Grace Time',   'planduration': 'Plan Duration',   'scan_type'      : 'Scan Type',
-            'priority'  : 'Priority',     'peopleid'    : 'People',          'groupid'        : 'Group',          
-            'qset_id'   : 'Question Set', 'shift'       : "Shift",           'assetid'        : 'Asset',
+            'priority'  : 'Priority',     'people'    : 'People',          'pgroup'        : 'Group',          
+            'qset_id'   : 'Question Set', 'shift'       : "Shift",           'asset'        : 'Asset',
         }
 
         widgets = {
-            'ticket_category'   : s2forms.Select2Widget,
-            'scantype'          : s2forms.Select2Widget,
-            'shift'             : s2forms.Select2Widget,
-            'groupid'           : s2forms.Select2Widget,
-            'assetid'           : s2forms.Select2Widget,
-            'priority'          : s2forms.Select2Widget,
-            'ctzoffset'         : forms.HiddenInput(),
-            'jobdesc'           : forms.Textarea(attrs={'rows': 2, 'cols': 40}),
-            'from_date'         : forms.DateTimeInput,
-            'upto_date'         : forms.DateTimeInput,
-            'ctzoffset'         : forms.NumberInput(attrs={"style":"display:none;"}),
-            'qsetid'            : s2forms.ModelSelect2Widget(
-                model = am.QuestionSet, 
-                search_fields = ['qset_name__icontains'],
-                max_results=10),
-            'peopleid'          : s2forms.ModelSelect2Widget(
-                model = pm.People,
-                search_fields   = ['peoplecode__icontains', 'peoplecode__icontains'],
-                max_results     = 10),
-            'buid'              : s2forms.ModelSelect2Widget(
-                model = om.Bt,
-                search_fields   = ['buname__icontains', 'bucode__icontains'],
-                max_results     = 10),
+            'ticketcategory': s2forms.Select2Widget,
+            'scantype'      : s2forms.Select2Widget,
+            'shift'         : s2forms.Select2Widget,
+            'pgroup'        : s2forms.Select2Widget,
+            'asset'         : s2forms.Select2Widget,
+            'priority'      : s2forms.Select2Widget,
+            'jobdesc'       : forms.Textarea(attrs={'rows': 1, 'cols': 40}),
+            'fromdate'      : forms.DateTimeInput,
+            'uptodate'      : forms.DateTimeInput,
+            'ctzoffset'     : forms.NumberInput(attrs={"style": "display:none;"}),
+            'qset'          : s2forms.Select2Widget,
+            'people'        : s2forms.Select2Widget,
+            'bu'            : s2forms.Select2Widget,
         }
 
+    def clean_from_date(self):
+        if val := self.cleaned_data.get('fromdate'):
+            return self._extracted_from_clean_upto_date_3(val)
+
+    def clean_upto_date(self):
+        if val := self.cleaned_data.get('uptodate'):
+            return self._extracted_from_clean_upto_date_3(val)
+
+    # TODO Rename this here and in `clean_from_date` and `clean_upto_date`
+    @staticmethod
+    def _extracted_from_clean_upto_date_3(val):
+        val = utils.to_utc(val)
+        ic('cleaned')
+        return val
+
+    @staticmethod
+    def clean_slno():
+        ic('cleaned')
+        return -1
+
+    def clean(self):
+        cd = super().clean()
+        ic('cleaned')
+        self.instance.jobdesc = f'{cd.get("bu")} - {cd.get("jobname")}'
 
 class JobNeedForm(forms.ModelForm):
     class Meta:
         model = am.Jobneed
-        fields = ['identifier', 'frequency', 'parent', 'jobdesc', 'assetid', 'ticket_category',
-                  'qsetid',  'peopleid', 'groupid', 'priority', 'scantype',
+        fields = ['identifier', 'frequency', 'parent', 'jobdesc', 'asset', 'ticketcategory',
+                  'qset',  'people', 'pgroup', 'priority', 'scantype', 'multifactor',
                   'jobstatus', 'plandatetime', 'expirydatetime', 'gracetime', 'starttime',
-                  'endtime', 'performed_by', 'gpslocation']
+                  'endtime', 'performedby', 'gpslocation', 'cuser', 'raisedby', 'remarks', 'ctzoffset']
         widgets = {
-            'ticket_category': s2forms.Select2Widget,
-            'scantype'       : s2forms.Select2Widget,
-            'groupid'        : s2forms.Select2Widget,
-            'peopleid'       : s2forms.Select2Widget,
-            'qsetid'         : s2forms.Select2Widget,
-            'assetid'        : s2forms.Select2Widget,
-            'priority'       : s2forms.Select2Widget,
-            'jobdesc'        : forms.Textarea(attrs={'rows': 2, 'cols': 40}),
-            'jobstatus'      : s2forms.Select2Widget,
-            'performed_by'   : s2forms.Select2Widget
+            'ticketcategory': s2forms.Select2Widget,
+            'scantype'      : s2forms.Select2Widget,
+            'pgroup'        : s2forms.Select2Widget,
+            'people'        : s2forms.Select2Widget,
+            'qset'          : s2forms.ModelSelect2Widget(model = am.QuestionSet, search_fields = ['qset_name__icontains']),
+            'asset'         : s2forms.ModelSelect2Widget(model = am.Asset, search_fields = ['assetname__icontains']),
+            'priority'      : s2forms.Select2Widget,
+            'jobdesc'       : forms.Textarea(attrs={'rows': 1, 'cols': 40}),
+            'remarks'       : forms.Textarea(attrs={'rows': 2, 'cols': 40}),
+            'jobstatus'     : s2forms.Select2Widget,
+            'performedby'   : s2forms.Select2Widget,
+            'gpslocation'   : forms.TextInput
         }
+        label = {
+            'endtime': 'End Time'
+        }
+
+class AdhocTaskForm(JobNeedForm):
+    ASSIGNTO_CHOICES   = [('PEOPLE', 'People'), ('GROUP', 'Group')]
+    assign_to          = forms.ChoiceField(choices = ASSIGNTO_CHOICES, initial="PEOPLE")
+    class Meta(JobNeedForm.Meta):
+        labels = {
+            'asset': 'Asset/SmartPlace',
+            'starttime': 'Start Time',
+            'plandatetime': 'Plan DateTime',
+            'expirydatetime': 'Expity DateTime',
+            'endtime': 'End Time',
+            'gracetime': 'Grace Time',
+            'jobstatus': 'Task Status',
+            'scantype': 'ScanType',
+            'gpslocation': 'GPS Location',
+            'ticketcategory': 'Ticket Category',
+            'performedby': 'Performed By',
+            'people': 'People',
+            'qset': 'Question Set',
+        }
+
+    def __init__(self, *args, **kwargs):
+        """Initializes form add atttibutes and classes here."""
+        from django.conf import settings
+        self.request = kwargs.pop('request', None)
+        super().__init__(*args, **kwargs)
+        self.fields['plandatetime'].input_formats  = settings.DATETIME_INPUT_FORMATS
+        self.fields['expirydatetime'].input_formats  = settings.DATETIME_INPUT_FORMATS
+        utils.initailize_form_fields(self)
+
+class TicketForm(forms.ModelForm):
+    class Meta:
+        model = am.Ticket
+        fields = ['ticketno', 'ticketdesc', 'assignedtopeople',
+                  'assignedtogroup', 'priority', 'status', 'performedby', 'comments', 'ticketlog']
+        labels = {
+            'ticketno'  : 'Ticket No',
+            'ticketdesc': 'Description',
+            'assignedtopeople': 'People',
+            'assignedtogroup': 'Group',
+            'priority': 'Priority',
+            'status': 'Status',
+            'performedby': 'Performed By',
+            'comments': 'comments',
+            'ticketlog': 'ticketlog'
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["status"].queryset = om.TypeAssist.objects.filter(Q(tatype__tacode='TICKETSTATUS') )
+        self.fields["priority"].queryset = om.TypeAssist.objects.filter(tatype__tacode='PRIORITY')
+        utils.initailize_form_fields(self)
+
+# create a ModelForm
+class EscalationForm(forms.ModelForm):
+    # specify the name of model to use
+    class Meta:
+        model = am.EscalationMatrix
+        fields = ['level', 'assignedfor',  'assignedperson', 'ctzoffset',
+                  'assignedgroup', 'frequency', 'frequencyvalue', 'body']
+        labels = {
+            'level': 'Level',
+            'assignedfor': 'Assigned To',
+            'assignedperson': 'People',
+            'assignedgroup': 'Group',
+            'frequency': 'Frequency',
+            'frequencyvalue': 'Value',
+            'body': 'Body',
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        utils.initailize_form_fields(self)
+
+
+
+class WorkPermit(forms.ModelForm):
+    required_css_class = "required"
+    class Meta:
+        model = am.WorkPermit
+        fields = ['wptype', 'seqno']
+        labels={
+            'wptype':'Permit to work',
+            'seqno':'Seq No'
+        }
+        widgets = {
+            'wptype':s2forms.Select2Widget
+        }
+    def __init__(self, *args, **kwargs):
+        self.request = kwargs.pop('request')
+        super().__init__(*args, **kwargs)
+        utils.initailize_form_fields(self)
+        self.fields['wptype'].queryset = am.QuestionSet.objects.filter(type='WORKPERMITTEMPLATE')

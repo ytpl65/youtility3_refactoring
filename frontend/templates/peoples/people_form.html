@@ -1,12 +1,11 @@
 {% extends "base_form.html" %}
-{% from "onboarding/ta_form.html" import typeassist_form with context %}
+{% from "onboarding/partials/partial_ta_form.html" import typeassist_form with context %}
 
 <!---- BEGIN PAGE TITLE ---->
 {% block title %}
 People Form
 {% endblock title %}
 <!---- END PAGE TITLE ----->
-
 
 {% block extra_css %}
 {{ peopleform.media.css }}
@@ -19,7 +18,6 @@ People Form
 <li class="breadcrumb-item pe-3"><a href="javascript:void(0)" class="pe-3">People Form</a></li>
 {% endblock pagebreadcumb %}
 <!-------------------------- END PAGE BREADCUMB ------------------------->
-
 
 <!-------------  BEGIN POP-UPS CODE -------------->
 {% block popup_alerts %}
@@ -71,6 +69,7 @@ People Form
 <form action="" method="post" id="pop_peopletype_form">
     <div class="modal-body">
         <input type="hidden" name="form_name" , value="ta_form">
+        <input type="hidden" name="csrfto" , value="ta_form">
         {% if ta_form is defined %}
         {{ typeassist_form() }}
         {% endif %}
@@ -116,7 +115,6 @@ People Form
 {% endblock popup_alerts %}
 <!-------------  END POP-UPS CODE -------------->
 
-
 <!------ BEGIN FORM TITLE ------->
 {% block form_title %}
 People
@@ -125,26 +123,11 @@ People
 
 <!--------- BEGIN NON FIELD ERRORS -------->
 {% block nonfield_errors %}
-{% if peopleform.non_field_errors() %}
-<div id="non_field_error" class="alert alert-danger" style="width: 73%;">
-    {% for error in peopleform.non_field_errors() %}
-    {{ error }}
-    {% endfor %}
-    <button type="button" class="btn-close flt-right" data-bs-dismiss="alert" aria-label="Close"></button>
+<div class="alert alert-danger" id="nonfield_errors"role="alert" style="display:none">
+    <strong>Error</strong> <span></span>
 </div>
-{% endif %}
-{% if pref_form.non_field_errors() %}
-<div id="non_field_error" class="alert alert-danger" style="width: 73%;">
-    {% for error in pref_form.non_field_errors() %}
-    {{ error }}
-    {% endfor %}
-    <button type="button" class="btn-close flt-right" data-bs-dismiss="alert" aria-label="Close"></button>
-</div>
-{% endif %}
-
 {% endblock nonfield_errors %}
 <!---------- END NON FIELD ERRORS --------->
-
 
 
 <!-------------- BEGIN FORM ------------------->
@@ -152,6 +135,7 @@ People
 <form action="" method="post" id="id_peopleform" enctype="multipart/form-data">
     <!--------------------------CSRF MIDDLEWARE TOKEN---------------------->
     <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
+    <input type="hidden" name="{{ peopleform.ctzoffset.name }}" id = "{{ peopleform.ctzoffset.auto_id }}" value="-1">
     <!--BEGIN FIRST ROW-->
     <div class="mb-3 row g-3 gx-6">
         <!--BEGIN FIRST COLUMN-->
@@ -164,7 +148,6 @@ People
                 <!--INPUT GROUP-->
                 <div class="col-md-4">
                     {{ peopleform.peoplecode }}
-
 
                     <!----- BEGIN ERROR FIELD  ------->
                     {{ peopleform.peoplecode.errors }}
@@ -189,7 +172,6 @@ People
                 <div class="col-md-4">
                     {{ peopleform.loginid }}
 
-
                     <!----- BEGIN ERROR FIELD  ------->
                     {{ peopleform.loginid.errors }}
                     <!----- END ERROR FIELD  ------->
@@ -209,7 +191,6 @@ People
 
                 <!--LABEL FIELD-->
 
-
                 <!--LABEL FIELD-->
                 <label class="required" for="id_mobno">Mobno:</label>
                 <!--INPUT GROUP-->
@@ -221,7 +202,6 @@ People
                     <!----- END ERROR FIELD  ------->
                 </div>
                 <!--LABEL FIELD-->
-
 
                 <!--LABEL FIELD-->
                 <label class="required" for="id_gender">Gender:</label>
@@ -236,7 +216,6 @@ People
                 </div>
                 <!--LABEL FIELD-->
 
-
                 <!--LABEL FIELD-->
                 <label class="required" for="id_dateofbirth">Date of Birth:</label>
                 <!--INPUT GROUP-->
@@ -250,32 +229,16 @@ People
                 </div>
                 <!--LABEL FIELD-->
 
-
                 <!--LABEL FIELD-->
                 <label class="required" for="id_deviceid">Device Id:</label>
                 <!--INPUT GROUP-->
-                <div class="col-md-4">
+                <div class="col-md-4 d-flex d-inline">
                     {{ peopleform.deviceid }}
+                    <button type='button' class="btn btn-sm btn-secondary rounded-0" id="id_reset">Reset</button>
                     <!--HELP TEXT-->
-
-                    <!----- BEGIN ERROR FIELD  ------->
-                    {{ peopleform.deviceid.errors }}
-                    <!----- END ERROR FIELD  ------->
                 </div>
                 <!--LABEL FIELD-->
 
-
-                <!--LABEL FIELD-->
-                <label for="id_shift">Shift:</label>
-                <!--INPUT GROUP-->
-                <div class="col-md-4">
-                    {{ peopleform.shift }}
-                    <!--HELP TEXT-->
-
-                    <!----- BEGIN ERROR FIELD  ------->
-                    {{ peopleform.shift.errors }}
-                    <!----- END ERROR FIELD  ------->
-                </div>
 
                 <!--LABEL FIELD-->
                 <label for="id_peopletype">People Type:</label>
@@ -297,7 +260,6 @@ People
                 </div>
                 <!--LABEL FIELD-->
 
-
                 <!--LABEL FIELD-->
                 <label class="required" for="id_dateofjoin">Date of Joining:</label>
                 <!--INPUT GROUP-->
@@ -314,23 +276,23 @@ People
                 <label class="required" for="id_dateofjoin">Site</label>
                 <!--INPUT GROUP-->
                 <div class="col-md-4">
-                    {{ peopleform.buid }}
+                    {{ peopleform.bu }}
                     <!--HELP TEXT-->
                     <!----- BEGIN ERROR FIELD  ------->
-                    {{ peopleform.buid.errors }}
+                    {{ peopleform.bu.errors }}
                     <!----- END ERROR FIELD  ------->
                 </div>
                 <!--LABEL FIELD-->
                 <!------------Checkboxes Rendering Last --------------------->
-                <div class="booleans col-md-6 d-flex justify-content-sm-start mt-5">
+                <div class="booleans col-md-6 d-flex justify-content-sm-between mt-5">
                     <!--ENABLE CHECKBOX -->
-                    <label for=id_isenable class="form-check-label bool col-form-label me-5 text-sm-right">Enable
+                    <label for = id_isenable class="form-check-label bool col-form-label me-5 text-sm-right">Enable
                         &nbsp {{ peopleform.enable }}</label>
                      <!--BLACKLIST CHECKBOX -->
-                    <label for=id_blacklist class="form-check-label bool col-form-label me-5 text-sm-right">Blacklist
+                    <label for = id_blacklist class="form-check-label bool col-form-label me-5 text-sm-right">Blacklist
                         &nbsp{{ pref_form.blacklist }}</label>
                      <!--ISADMIN CHECKBOX -->
-                    <label for=id_isadmin id="label_isadmin" class="form-check-label bool col-form-label me-5 text-sm-right" style="display:none">Is Admin
+                    <label for = id_isadmin id="label_isadmin" class="form-check-label bool col-form-label me-5 text-sm-right" style="display:none">Is Admin
                         &nbsp{{ peopleform.isadmin }}</label>
                     {% if peopleform.instance.id %}
                     <button type="button" id="change_pass" class="btn btn-sm  btn-primary rounded-1" data-bs-target='#paswd_change_alert'
@@ -348,10 +310,9 @@ People
         <!--BEGIN IMAGE INPUT-->
         <div class="col-md-2">
 
-
             <!--begin::Image input-->
             <div class="image-input image-input-empty" data-kt-image-input="true"
-                style="background-image: url({% if peopleform.instance %} {{ peopleform.instance.peopleimg.url }} {% else %} '/static/assets/media/images/blank.png' {% endif %})">
+                style="background-image: url({% if peopleform.instance.id %} {{ peopleform.instance.peopleimg.url }} {% else %} '/static/assets/media/images/blank.png' {% endif %})">
                 <!--begin::Image preview wrapper-->
                 <div class="image-input-wrapper w-125px h-125px"></div>
                 <!--end::Image preview wrapper-->
@@ -402,8 +363,8 @@ People
     <div class="d-flex flex-row justify-content-center mt-2">
     <p id="add_more" style="cursor:pointer; color:#009EF7" class="" id="add_more"><span id="ptxt"><u>Add more info</u></span>
     <span class="material-icons-outlined align-middle">
-            arrow_downward
-            </span>     
+    arrow_downward
+    </span>     
     </p>
     </div>
     <!--END-Add More Details --->
@@ -434,7 +395,6 @@ People
                 </div>
                 <!--LABEL FIELD-->
 
-
                 <!--LABEL FIELD-->
                 <label for="id_designation">Designation:</label>
                 <!--INPUT GROUP-->
@@ -455,7 +415,6 @@ People
                 </div>
                 <!--LABEL FIELD-->
 
-
                 <!--LABEL FIELD-->
                 <label for="id_dateofreport">Date of Release:</label>
                 <!--INPUT GROUP-->
@@ -467,7 +426,6 @@ People
                     <!----- END ERROR FIELD  ------->
                 </div>
                 <!--LABEL FIELD-->
-
 
                 <!--LABEL FIELD-->
                 <label for="id_reportto">Report to:</label>
@@ -502,7 +460,6 @@ People
 
                 <!--LABEL FIELD-->
 
-
                 <!--LABEL FIELD-->
                 <label for="id_portletcapability">Portlet Capability:</label>
                 <!--INPUT GROUP-->
@@ -515,7 +472,6 @@ People
                 </div>
                 <!--LABEL FIELD-->
 
-
                 <!--LABEL FIELD-->
                 <label for="id_reportcapability">Report Capability:</label>
                 <!--INPUT GROUP-->
@@ -527,7 +483,6 @@ People
                     <!----- END ERROR FIELD  ------->
                 </div>
                 <!--LABEL FIELD-->
-
 
                 <!--LABEL FIELD-->
                 <label for="id_webcapability">Web Capability:</label>
@@ -545,7 +500,7 @@ People
     </div>
 
     <div class="mb-4 row" id="sgti" style="display:none">
-        <section class="mb-6" id="sgti">
+        <section class="mb-6">
             <h4>Site Group And Template Information</h4>
             <hr>
             <div class="mb-3 row g-3 gx-6">
@@ -565,10 +520,10 @@ People
                 </div>
                 <div class="booleans col-md-6 d-flex justify-content-sm-between mt-5">
 
-                    <label for=id_showalltemplates
+                    <label for = id_showalltemplates
                         class="form-check-label bool col-form-label me-5 text-sm-right">{{ pref_form.showalltemplates }}
                         &nbspShow all Templates </label>
-                    <label for=id_showtemplatebasedonfilter
+                    <label for = id_showtemplatebasedonfilter
                         class="form-check-label bool col-form-label me-5 text-sm-right">{{ pref_form.showtemplatebasedonfilter }}
                         &nbspDisplay site wise templates</label>
 
@@ -580,7 +535,6 @@ People
 
 {% endblock form %}
 <!------------- END FORM ---------------------->
-
 
 
 <!-------------- BEGIN FORM PAGE ACTIONS --------->
@@ -604,17 +558,23 @@ People
 {% endif %}
 
 
-
 {% block extra_scripts %}
 {{ peopleform.media.js }}
 <script>
     $(document).ready(function () {
+        //reset deviceid on click
+        $("#id_reset").click(function(){
+            $("#id_deviceid").val('-1')
+        })
+        //set ctzoffset
+        $("#id_ctzoffset").val(-new Date().getTimezoneOffset())
+
         //hide the delete button when instance is not saved yet.
-        if ('{{peopleform.instance.id}}' == ('None' || "")) {
+        if ('{{peopleform.instance.id}}' === 'None') {
             $("#btn_del").hide()
         }
         //hide site group and template info
-        session = {{ dict(request.session) |default ("") | tojson}}
+        session = {{ dict(request.session) | default ("") | tojson }}
         if (session && session['wizard_data']) {
             $('#sgti').hide()
         }
@@ -627,6 +587,7 @@ People
         $("#add_more").click(function () {
             //show more fields to add in peopleform
             $('#capinfo, #sgti, #workinfo').toggle()
+            $('')
         })
         //on submit password change form
         $('#passwordChangeForm').on('submit', function (e) {
@@ -660,7 +621,7 @@ People
         })
 
         //hide next btn if instance is not saved yet
-        if (session['wizard_data'] && session['wizard_data']['peopleids'].length == 0) {
+        if (session['wizard_data'] && session['wizard_data']['peoples'].length == 0) {
             $('#next_btn').hide()
         }
 
@@ -692,6 +653,8 @@ People
         $("#id_dateofbirth, #id_dateofjoin, #id_dateofreport").flatpickr({
             dateFormat: 'd-M-Y'
         })
+        
+        $("#id_dateofbirth, #id_dateofjoin, #id_dateofreport").addClass("form-control")
 
         //Add More Details toggle
         $("#add_more").click(() => {
@@ -699,14 +662,15 @@ People
                 return text === "Add more info" ? "Hide more info" : "Add more info";
             })
         })
+        
         //for select2 search work in bootstrap modals
-        $("#department_popup").find("select[name=tatype]").select2({
+        $("#department_popup").find("select[name = tatype]").select2({
             dropdownParent: $('#department_popup')
         })
-        $("#designation_popup").find("select[name=tatype]").select2({
+        $("#designation_popup").find("select[name = tatype]").select2({
             dropdownParent: $('#designation_popup')
         })
-        $("#peopletype_popup").find("select[name=tatype]").select2({
+        $("#peopletype_popup").find("select[name = tatype]").select2({
             dropdownParent: $('#peopletype_popup')
         })
         //hide change_pass feature for session wizard
@@ -714,13 +678,13 @@ People
             $("#change_pass").hide()
         }
         //pre-select options for pop-up ta forms
-		$("#peopletype_popup select[name='tatype']").val($("#peopletype_popup select option:contains('PEOPLE_TYPE')").val()).change().prop({"disabled":"true"})
+		$("#peopletype_popup select[name='tatype']").val($("#peopletype_popup select option:contains('PEOPLETYPE')").val()).change().prop({"disabled": "true"})
         
         //pre-select options for pop-up ta forms
-		$("#designation_popup select[name='tatype']").val($("#designation_popup select option:contains('DESIGNATION')").val()).change().prop({"disabled":"true"})
+		$("#designation_popup select[name='tatype']").val($("#designation_popup select option:contains('DESIGNATION')").val()).change().prop({"disabled": "true"})
         
         //pre-select options for pop-up ta forms
-		$("#department_popup select[name='tatype']").val($("#department_popup select option:contains('DEPARTMENT')").val()).change().prop({"disabled":"true"})
+		$("#department_popup select[name='tatype']").val($("#department_popup select option:contains('DEPARTMENT')").val()).change().prop({"disabled": "true"})
         
         //show isadmin checkbox to superuser
         if(session.is_superadmin){
@@ -731,6 +695,48 @@ People
         $("[multiple]").select2({
             closeOnSelect:false 
         })
+
+        //on form submit
+        $("#id_peopleform").on('submit', function(e){
+            var form = $(this)
+            e.preventDefault()
+            const params = {url: "{{ url('peoples:people') }}", modal:false}
+            const id = "{{ peopleform.instance.pk }}"
+            var payLoad = {formData:form.serialize(), csrfmiddlewaretoken: '{{ csrf_token }}'}//payload for post request
+            if(id != 'None'){
+				var newPayLoad = {...payLoad, 'pk':id}
+				payLoad = newPayLoad
+			}
+			fire_ajax_form_post(params, payLoad)
+			.done((data, status, xhr) => { //function to submit post request
+                show_successful_save_alert(update= id != 'None' ? true : false)
+                window.setTimeout(function() {
+                    window.location.href = `{{ url('peoples:people') }}?id=${data.pk}`;
+                }, 2000);
+			})
+        })
+
+        //on delete form
+        function deletePeople(elemt){
+            var id = "{{ peopleform.instance.id }}"
+            show_alert_before_delete('People')
+            .then((result) => {
+                if(result.isConfirmed){ //delete requested by user
+                    status = isSiteGrpDeleted(id) //fire's request
+                    console.log("status ", status)
+                    if(status){
+                        show_successful_delete_alert() //defined in customjs
+                        $(modal_id).modal("hide")
+                        //delete row from table
+                        row_index = parseInt($(modalcontent_id).attr('data-rowid'), 10)
+                        table.search().ajax.reload()
+                        console.log("table reloaded")
+                    }else{
+                        show_error_alert('Something went wrong!');
+                    }
+                }
+            })
+        }
     })
 </script>
 {% endblock extra_scripts %}

@@ -1,6 +1,5 @@
 {% extends "base_list.html" %}
 
-
 {% block card_title %}
 Preview Submissions
 {% endblock card_title %}
@@ -8,7 +7,6 @@ Preview Submissions
 {% block card_icon %}
 
 {% endblock card_icon %}
-
 
 
 {% block wizard_head %}
@@ -35,7 +33,7 @@ Preview Submissions
 {% block table %}
 <div class="row">
     <div class="table-responsive col-md-6 col-sm-6">
-        {% set buids = wizard_subs['buids'] %}
+        {% set bus = wizard_subs['bus'] %}
         <h6>Step-1 Buisiness Unit</h6>
         <table class="table table-striped" id="bu_table">
             <thead class="ml-1">
@@ -46,7 +44,7 @@ Preview Submissions
                 <th scope="col">Belongs To</th>
             </thead>
             <tbody>
-                {% for bu in buids %}
+                {% for bu in bus %}
                 <tr class="ms-1">
                     <td scope="row">{{ loop.index }}</td>
                     <td><a href="#">{{ bu['bucode'] }}</a></td>
@@ -96,7 +94,7 @@ Preview Submissions
             </tr>
             </thead>
             <tbody>
-                {% for people in wizard_subs['peopleids'] %}
+                {% for people in wizard_subs['peoples'] %}
                 <tr>
                     <td scope="row">{{ loop.index }}</td>
                     <td>{{ people['peoplecode'] }}</td>
@@ -117,7 +115,7 @@ Preview Submissions
                 <th scope="col">Name</th>
             </thead>
             <tbody>
-                {% for pg in wizard_subs['pgroupids'] %}
+                {% for pg in wizard_subs['ppgroups'] %}
                 <tr>
                     <td scope="row">{{ loop.index }}</td>
                     <td>{{ pg['groupname'] }}</td>
@@ -133,14 +131,13 @@ Preview Submissions
     <button type="button" class="btn btn-sm btn-danger" data-bs-toggle="modal" data-bs-target="#id_quit_wizard">Quit
         Wizard</button>
 
-
-    {% if not data['pgroupids'] %}
+    {% if not data['ppgroups'] %}
     <!--check previous form id's in session, then load that with the instance -->
     <a href="{{ url('peoples:wiz_pgroup_form') }}" class="mx-2 btn btn-sm btn-primary rounded-1">
         Previous</a>
     {% else %}
     <!--if previous form id's not in session, then load that form empty-->
-    <a href="{{ url('peoples:wiz_pgroup_update', args=[data['pgroupids'][-1] ]) }}"
+    <a href="{{ url('peoples:wiz_pgroup_update', args=[data['ppgroups'][-1] ]) }}"
         class="mx-2 btn btn-sm btn-primary rounded-1">Previous</a>
     {% endif %}
     <button type="button" class="btn btn-sm btn-success" id="saveWizard">Save Wizard</button>
@@ -148,7 +145,6 @@ Preview Submissions
 {% endblock table %}
 
 <!------- END Page Body ------->
-
 
 
 <!------------BEGIN PopUp Alerts All Bootstrap Code Should Reside Here --------->
@@ -183,7 +179,6 @@ Preview Submissions
 <!------------ END PopUp Alerts All Bootstrap Code Should Reside Here --------->
 
 
-
 <!------------BEGIN Page Level Scripts -------------------->
 {% block extra_scripts %}
 <script>
@@ -197,7 +192,7 @@ Preview Submissions
         //saveWizard with swal(sweetalert)
         $("#saveWizard").click(function(){
             Swal.fire({
-                title:"Are you sure?",
+                title: "Are you sure?",
                 text: "You won't be able to revert this!",
                 icon: 'warning',
                 showCancelButton: true,

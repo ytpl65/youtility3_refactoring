@@ -1,0 +1,133 @@
+{% extends "base_list.html" %}
+
+<!---- BEGIN CARD TITLE ------>
+{% block card_title %}
+Ticket List
+{% endblock card_title %}
+<!----- END CARD TITLE -------->
+
+{% block extra_css %}
+{% endblock extra_css %}
+
+<!------------------------------------ BEGIN PAGE BREADCUMBS ------------------------------------>
+{% block pagebreadcumb %}
+{{ super() }}
+<li class="breadcrumb-item pe-3"><a href="javascript:void(0)" class="pe-3">Ticket List</a></li>
+{% endblock pagebreadcumb %}
+<!------------------------------------- END PAGE BREADCUMBS ------------------------------------->
+
+<!-------------------------------------------- BEGIN TABLE ------------------------------------------->
+{% block table %}
+<table id="ticket_table" class="display compact cell-border rounded" style="width:100%">
+    <thead class="fw-bold fs-6">
+        <th>Timer</th>
+        <th>Created ON</th>
+        <th>Created By</th>
+        <th>Ticket No</th>
+        <th>Site</th>
+        <th>People/Group</th>
+        <th>Performed By</th>
+        <th>Category</th>
+        <th>Status</th>
+    </thead>
+    <!---------- BEGIN TABLE FILTER FIELDS --------->
+	<thead id="filter_row">
+    <form action="" id='ticket_filter' method='get'>
+        <th></th>
+    {% for field in ticket_filter %}
+        <th>
+            <input type="text" 
+            id="{{ field.auto_id }}" 
+            name="{{ field.name }}" 
+            placeholder ="Search {{ field.label }}">
+		</th>
+    {% endfor %}
+    </form>
+    </thead>
+    <!---------- END TABLE FILTER FIELDS --------->
+    <tbody>
+        {% for ticket in ticket_list %}
+        <tr>
+            <td><a href="{{ url('schedhuler:update_ticket', args=[ticket['id']]) }}">{{ ticket['cdtz'] }}</a></td>
+            <td>{{ ticket['cuser__peoplename'] }} </td>
+            <td>{{ ticket['ticketno']  }}</td>
+            <td>{{ ticket['bu__buname']  }}</td>
+            <td>{{ ticket['jobdesc'] }}</td>
+            <td>{{ ticket['people__peoplename'] or ticket['pgroup__groupname'] }}</td>
+            <td>{{ ticket['performedby__peoplename'] }}</td>
+            <td>{{ ticket['ticketcategory__taname'] }}</td>
+            <td>{{ ticket['jobstatus'] }}</td>
+            <td>{{ ticket['priority'] }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+{% if ticket_list and ticket_list.has_other_pages %}
+<!-- BEGIN PAGINATOIN -->
+{{ paginator(ticket_list) }}
+<!-- END PAGINATOIN ---->
+{% endif %}
+{% endblock table %}
+<!-------------------------------------------- END TABLE ------------------------------------------->
+
+{% block extra_scripts %}
+<script>
+    var   table      = null;
+    const formFilter = "#ticket_filter"
+    const table_id   = "#ticket_table"
+
+    $(document).ready(function (){
+        $("input").keypress(function(event) {
+			if (event.which == 13) {
+				event.preventDefault();
+				$(formFilter).submit();
+			}
+		});
+        
+        //datatable initialization
+        table = $(table_id).DataTable({
+			//orderCellsTop: true,
+			responsive: true,
+			fixedHeader: true,
+			paging: false,
+			lengthChange: false,
+			language: {
+				searchPlaceholder: "Search on page"
+			},
+            dom: "<'row'" +
+                "<'col-sm-6 d-flex align-items-center justify-conten-start'f>" +
+                "<'col-sm-6 d-flex align-items-center justify-content-end'B>" +
+                ">" +
+
+                "<'table-responsive'tr>",
+            ordering:false,
+            scrollCollapse: true,
+            buttons:[
+				{
+					text:`Add New &nbsp;<i class='fas fa-plus ch4'></i></a>`,
+					className: "btn btn-sm btn-light-primary btn-hover-rise",
+					//action for add_new_button 
+					action: function(e, dt, node, config){
+                        //This will send the page to the location specified
+        				window.location.href = "{{ url('schedhuler:create_ticket') }}";
+					}
+				}
+			]
+        
+        })
+
+        //BEGIN STYLING DATATABLE
+		$("th > input").addClass('form-control')
+		$("th > input").css('height', '35px')
+		var styles = {
+			"border-bottom": "none",
+			"background-color": "#f1f4f7"
+		}
+
+        $(`${table_id} thead tr:eq(1)`).css(styles)
+		//END STYLING DATATABLE
+
+    })
+</script>
+{% endblock extra_scripts %}

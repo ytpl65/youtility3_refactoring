@@ -10,7 +10,7 @@ wizard_url_patterns1 = [
     path('buform/', wizard_views.WizardBt.as_view(), name='wiz_bu_form'),
     path('buform/<str:pk>/', wizard_views.WizardBt.as_view(), name='wiz_bu_update'),
     path('buform/del/<str:pk>/', wizard_views.WizardBt.as_view(), name='wiz_bu_delete'),
-    
+
     path('shiftform/', wizard_views.WizardShift.as_view(), name='wiz_shift_form'),
     path('shiftform/<str:pk>/', wizard_views.WizardShift.as_view(), name='wiz_shift_update'),
     path('shiftform/del/<str:pk>/', wizard_views.WizardShift.as_view(), name='wiz_shift_delete'),
@@ -25,10 +25,9 @@ wizard_url_patterns2  = [
     path('peoplform/', wizard_views.WizardPeople.as_view(), name='wiz_people_form'),
     path('peoplform/<str:pk>/', wizard_views.WizardPeople.as_view(), name='wiz_people_update'),
     path('peoplform/del/<str:pk>/', wizard_views.WizardPeople.as_view(), name='wiz_people_delete'),
-    
+
     path('pgroupform/', wizard_views.WizardPgroup.as_view(), name='wiz_pgroup_form'),
     path('pgroupform/<str:pk>/', wizard_views.WizardPgroup.as_view(), name='wiz_pgroup_update'),
     path('pgroupform/del/<str:pk>/', wizard_views.WizardPgroup.as_view(), name='wiz_pgroup_delete'),
 ]
-
 

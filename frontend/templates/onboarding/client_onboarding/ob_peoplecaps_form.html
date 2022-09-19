@@ -1,13 +1,11 @@
 {% extends "onboarding/client_onboarding/base_wizard_form.html" %}
 
 
-
 <!------ BEGIN FORM TITLE ------->
 {% block form_title %}
 Assign Permissions and other info.
 {% endblock form_title %}
 <!------ END FORM TITLE -------->
-
 
 <!--------- BEGIN NON FIELD ERRORS -------->
 {% block nonfield_errors %}
@@ -22,7 +20,6 @@ Assign Permissions and other info.
 {% endblock nonfield_errors %}
 <!---------- END NON FIELD ERRORS --------->
 
-
 <!----------- BEGIN FORM MESSGES --------------->
 {% block form_msgs %}
 	{% for msg in get_msgs(request) %}
@@ -33,7 +30,6 @@ Assign Permissions and other info.
 	{% endfor %}
 {% endblock form_msgs %}
 <!----------- END FORM MESSGES ----------------->
-
 
 <!-------------- BEGIN FORM ------------------->
 {% block custom_form %}

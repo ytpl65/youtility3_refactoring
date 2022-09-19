@@ -1,12 +1,10 @@
 {% extends "base_form.html" %}
 
-
 <!---- BEGIN PAGE TITLE ---->
 {% block title %}
 Site People Form
 {% endblock title %}
 <!---- END PAGE TITLE ----->
-
 
 <!-------------------------- BEGIN PAGE BREADCUMB ----------------------->
 {% block pagebreadcumb %}
@@ -15,7 +13,6 @@ Site People Form
 <li class="breadcrumb-item pe-3"><a href="javascript:void(0)" class="pe-3">Site-People Form</a></li>
 {% endblock pagebreadcumb %}
 <!-------------------------- END PAGE BREADCUMB ------------------------->
-
 
 
 <!-------------  BEGIN POP-UPS CODE ------------->
@@ -29,7 +26,7 @@ Site People Form
 			</div>
 			<div class="modal-footer">
 				<button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">No Go back</button>
-				<a href="{{ url('peoples:sitepeople_delete', args=[sitepeople_form.instance.sitepeopleid]) }}" class="btn btn-sm  btn-danger rounded-1">Yes I'm Sure</a>
+				<a href="{{ url('peoples:sitepeople_delete', args=[sitepeople_form.instance.sitepeople]) }}" class="btn btn-sm  btn-danger rounded-1">Yes I'm Sure</a>
 			</div>
 		{% endcall %}
 	{% endif %}
@@ -41,7 +38,6 @@ Site People Form
 Site-People Form
 {% endblock form_title %}
 <!------ END FORM TITLE -------->
-
 
 <!--------- BEGIN NON FIELD ERRORS -------->
 {% block nonfield_errors %}
@@ -55,7 +51,6 @@ Site-People Form
 {% endif %}
 {% endblock nonfield_errors %}
 <!---------- END NON FIELD ERRORS --------->
-
 
 
 
@@ -83,7 +78,6 @@ Site-People Form
 			<!----- END ERROR FIELD  ------->
 		</div>
 		{% else %}
-
 
 		<!------ BEGIN LABEL FIELD ------->
 		{{ field.label_tag() }}
@@ -122,7 +116,6 @@ Site-People Form
 {% endblock form %}
 <!------------- END FORM ---------------------->
 
-
 <!------------------- BEGIN FORM PAGE ACTIONS --------------->
 {% block formpage_actions %}
 {% if edit is defined %}
@@ -132,7 +125,6 @@ Site-People Form
 {% endif %}
 {% endblock formpage_actions %}
 <!------------------- END FORM PAGE ACTIONS --------------->
-
 
 <!--------------- BEGIN PAGE-LEVEL EXTRA SCRIPTS --------------->
 {% block extra_scripts %}

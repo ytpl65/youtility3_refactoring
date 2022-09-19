@@ -1,0 +1,187 @@
+{% extends "partial_base.html" %}
+
+{% block head %}
+{{ shift_form.media.css }}
+{% endblock head %}
+
+{% block body %}
+<form action="" method="post" id="id_shiftform">
+    <input type="hidden" name="{{ shift_form.ctzoffset.name }}" id = "{{ shift_form.ctzoffset.auto_id }}" value="-1">
+    <div class="modal-header border-0">
+        <h3 class="modal-title modal-heading" id="exampleModalLabel">Create Shift <i
+                class="fas fa-poll-h fa-sm ch4"></i></h3>
+        <button type="button" class="btn-sm btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+    </div>
+
+    <div class="modal-body" id="partial">
+        <div class="alert alert-danger alert-dismissible fade show" id="nonfield_errors" role="alert"
+            style="display:none">
+            <strong>Error</strong> <span></span>
+            <button type="button" class="btn-sm btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        <!-------------------------- CSRF MIDDLEWARE TOKEN --------------------->
+        <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
+        <div class="mb-3 row g-3 gx-6">
+            <!--SHIFTNAME-->
+            <label class="required col-form-label col-md-2 col-sm-2 text-sm-right" for="id_shift_form-shiftname">Shift
+                Name:
+                <span class="material-icons-outlined h-19px" style="vertical-align: middle; font-size: 19px;"
+                    data-bs-toggle="tooltip" data-bs-custom-class="tooltip" data-bs-placement="top"
+                    title="Display name of the shift">
+                    info
+                </span>
+            </label>
+            <div class="col-md-4">
+                {{ shift_form.shiftname }}
+                {{ shift_form.shiftname.errors }}
+            </div>
+            <!--STARTTIME-->
+            <label class="required col-form-label col-md-2 col-sm-2 text-sm-right" for="id_shift_form-starttime">Start
+                Time:
+                <span class="material-icons-outlined h-19px" style="vertical-align: middle; font-size: 19px;"
+                    data-bs-toggle="tooltip" data-bs-custom-class="tooltip" data-bs-placement="top"
+                    title="Enter starttime of shift">
+                    info
+                </span>
+            </label>
+            <div class="col-md-4">
+                {{ shift_form.starttime }}
+                {{ shift_form.starttime.errors }}
+            </div>
+            <!--CAPCTCHA FREQUENCY-->
+            <label class="required col-form-label col-md-2 col-sm-2 text-sm-right"
+                for="id_shift_form-captchafreq">Captchafreq:
+                <span class="material-icons-outlined h-19px" style="vertical-align: middle; font-size: 19px;"
+                    data-bs-toggle="tooltip" data-bs-custom-class="tooltip" data-bs-placement="top" title="">
+                    info
+                </span>
+            </label>
+            <div class="col-md-4">
+                {{ shift_form.captchafreq }}
+                {{ shift_form.captchafreq.errors }}
+            </div>
+            <!--ENDTIME-->
+            <label class="required col-form-label col-md-2 col-sm-2 text-sm-right" for="id_shift_form-endtime">End Time:
+                <span class="material-icons-outlined h-19px" style="vertical-align: middle; font-size: 19px;"
+                    data-bs-toggle="tooltip" data-bs-custom-class="tooltip" data-bs-placement="top"
+                    title="Enter endtime of shift">
+                    info
+                </span>
+            </label>
+            <div class="col-md-4">
+                {{ shift_form.endtime }}
+                {{ shift_form.endtime.errors }}
+            </div>
+            <!--NIGHTSHIFT APPLICABLE-->
+
+            <div class="booleans col-md-4 d-flex justify-content-sm-between mt-5">
+                <label for={{ shift_form.nightshiftappicable.id_for_label }}
+                    class="form-check-label bool col-form-label me-5 text-sm-right">{{ shift_form.nightshiftappicable }}
+                    &nbsp{{ shift_form.nightshiftappicable.label }}</label>
+            </div>
+
+            <!--SHIFT DURATION-->
+            <label class="col-form-label col-md-2 col-sm-2 text-sm-right" for="id_shiftduration">Shift duration:
+                <span class="material-icons-outlined h-19px" style="vertical-align: middle; font-size: 19px;"
+                    data-bs-toggle="tooltip" data-bs-custom-class="tooltip" data-bs-placement="top"
+                    title="Total shift duration">
+                    info
+                </span>
+            </label>
+            <div class="col-md-4">
+                {{ shift_form.shiftduration }}
+                {{ shift_form.shiftduration.errors }}
+            </div>
+        </div>
+    </div>
+
+</form>
+<div class="modal-footer border-0 pt-0">
+    <button type="button" class="btn btn-sm btn-secondary btn-hover-scale" data-bs-dismiss="modal">Close <i
+            class="fas fa-times"></i></button>
+    {% if shift_form.instance.id %}
+    <button type="submit" id="submit" form="id_taform" class="btn btn-sm btn-primary btn-hover-scale">Update&nbsp;<i
+            class="fas fa-cloud-upload-alt"></i></button>
+    <button type="button" onclick="deleteShift(this)" data-id="{{ shift_form.instance.id }}" id="deleteCap"
+        class="btn btn-sm btn-hover-scale btn-danger">Delete&nbsp;<i class="fas fa-trash-alt"></i></button>
+    {% else %}
+    <button type="submit" form="id_shiftform" class="btn btn-sm btn-primary btn-hover-scale">Add&nbsp;<i
+            class="fas fa-cloud-upload-alt"></i></button>
+    {% endif %}
+</div>
+{% endblock body %}
+
+{% block js %}
+<script>
+    const formatMins = (duration) => {
+        return Math.floor(duration / 60) + 'Hrs, ' + duration % 60 + "min";
+    }
+    //format mins to readable format
+    var val = $("#id_shiftduration").val()
+    if (val != "") {
+        let mins = parseInt(val, 10);
+        $("#id_shiftduration").val(formatMins(mins))
+    }
+
+    $(document).ready(function () {
+        //set ctzoffset
+  	    $("#id_ctzoffset").val(-new Date().getTimezoneOffset())
+        //hide the delete button when instance is not saved yet.
+        if ('{{shift_form.instance.id}}' == 'None') {
+            $("#btn_del").hide()
+        }
+        //adding time widget to starttime and endtime
+        $('#id_starttime, #id_endtime').flatpickr({
+            enableTime: true,
+            noCalendar: true,
+            dateFormat: "H:i",
+            time_24hr: true
+        })
+        //hide next btn if instance is not saved yet
+        if (session['wizard_data'] && session['wizard_data']['shiftids'].length == 0) {
+            $('#next_btn').hide()
+        }
+
+        //alert user about night shift
+        const nightShiftAlert = {
+            title: "Night shift alert",
+            text: `According to Start time & End Time do you want to create a 'Night Shift',
+                then the checkbox 'Night Shift Applicable will be enabled by default'`,
+            icon: "warning",
+            showCancelButton: true,
+            confirmButtonText: 'Go for it!',
+            allowOutsideClick: false
+        }
+        const alertUser = () => {
+            Swal.fire(nightShiftAlert).then((res) => {
+                if (res.isConfirmed) {
+                    $("#id_nightshift_appicable").prop('checked', true)
+                } else {
+                    $("#id_starttime, #id_endtime, #id_shiftduration").val("")
+                    $("#id_nightshift_appicable").prop('checked', false)
+                }
+            })
+        }
+
+        //total shift duration
+        $("#id_starttime, #id_endtime").change(() => {
+            var st = moment($("#id_starttime").val(), "HH:mm")
+            var et = moment($("#id_endtime").val(), "HH:mm")
+            var duration = moment.duration(et.diff(st)).asMinutes()
+            if (duration < 0) {
+                duration = 1440 + duration
+                alertUser()
+            } else {
+                $("#id_nightshift_appicable").prop('checked', false)
+            }
+            var totalhrs = formatMins(duration)
+            console.log("totalhrs", totalhrs)
+            if (totalhrs !== 'NaNHrs, NaNmin') {
+                $("#id_shiftduration").val(totalhrs)
+            }
+
+        })
+
+    })
+</script>
+{% endblock js %}

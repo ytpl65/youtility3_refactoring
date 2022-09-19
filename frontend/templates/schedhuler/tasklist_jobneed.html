@@ -1,0 +1,99 @@
+{% extends "base_list.html" %}
+
+<!---- BEGIN CARD TITLE ------>
+{% block card_title %}
+Task List
+{% endblock card_title %}
+<!----- END CARD TITLE -------->
+
+<!------------------------------------ BEGIN PAGE BREADCUMBS ------------------------------------>
+{% block pagebreadcumb %}
+{{ super() }}
+<li class="breadcrumb-item pe-3"><a href="javascript:void(0)" class="pe-3">Task List</a></li>
+{% endblock pagebreadcumb %}
+<!------------------------------------- END PAGE BREADCUMBS ------------------------------------->
+
+<!-------------------------------------------- BEGIN TABLE ------------------------------------------->
+{% block table %}
+<table id="task_table_jobneed" class="display cell-border" style="width:100%">
+</table>
+{% endblock table %}
+<!-------------------------------------------- END TABLE ------------------------------------------->
+
+{% block extra_scripts %}
+<script>
+    var table = null;
+    const formFilter = '#task_filter_jobneed'
+    const table_id = '#task_table_jobneed'
+    const urlname = "{{ url('schedhuler:jobneedtasks') }}"
+    //if you want to modifiy here, then modify in custom.js initDateRange also
+    var from_pd = moment().subtract(7, 'days').format('YYYY-MM-DD');
+    var to_pd = moment().format('YYYY-MM-DD')
+    
+    $(document).ready(function (){
+        //datatable initialization
+        table = $(table_id).DataTable({
+            ajax:{
+                url:`${urlname}?action=list`,
+                data:function(d){
+                    d.pd1 = from_pd,
+                    d.pd2 = to_pd
+                }
+            },
+			deferRender: true,
+			responsive : true,
+            dom:`<'row' <'col-sm-6 d-flex justify-content-start'<'customfields'>f> <'col-sm-6 d-flex justify-content-end'B> >rt<'row'
+            <'col-sm-6'l> <'col-sm-6'p><'col-sm-12 d-flex justify-content-center'i>>`,
+            columns:[
+                {data: 'id'},
+                {data: 'plandatetime', title: "Plan Datetime"},
+                {data: 'jobdesc', title: 'Description'},
+                {data: 'jobstatus', title: 'Status'},
+                {title: 'People/Group', data:null},
+                {data: 'performedby__peoplename', title: 'Performed By'},
+                {data: 'gracetime', title: "Grace Time"},
+                {data: 'expirydatetime', title: "Expiry Datetime"}
+            ],
+            columnDefs:[
+                {targets:0, data: 'id', visible:false, searchable:false},
+                {targets:1, data: 'plandatetime', render:function(data, type, row, meta){
+                    return `<a href="${urlname}?id=${row['id']}">${convert_to_local(type, data, row)}</a>`
+                }},
+                {targets:4, render:function(data, type, row, meta){
+                    let peoplename = row['people__peoplename']
+                    let groupname = row['pgroup__groupname']
+                    return peoplename ?  peoplename : groupname
+                }},
+                {targets:[1,7], render:function(data, type, row, meta){
+                    return convert_to_local(type, data, row)
+                }},
+                {targets:6, render:function(data, type, row, meta){
+                    return `${data} mins`
+                }}
+            ],
+            buttons:[
+				{
+					text:`Apply filters &nbsp;<i class='fas fa-search ch4'></i></a>`,
+					className: "btn btn-sm btn-light btn-hover-rise",
+					//action for add_new_button 
+					action: function(e, dt, node, config){
+                        //This will send the page to the location specified
+        				submitFormFilter()
+					}
+				}
+			]
+        
+        })
+
+         //add input field to the datatables dom
+         initDateRangeHtml()
+         initDateRange("#id_daterange").on('apply.daterangepicker', function(e, picker){
+             from_pd = picker.startDate.format('YYYY-MM-DD');
+             to_pd = picker.endDate.format('YYYY-MM-DD');
+             table.ajax.reload()
+         })
+		//END STYLING DATATABLE
+
+    })
+</script>
+{% endblock extra_scripts %}

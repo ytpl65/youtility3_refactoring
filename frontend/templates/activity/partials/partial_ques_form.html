@@ -4,9 +4,9 @@
 {{ ques_form.media.css }}
 {% endblock head %}
 
-
 {% block body %}
 <form action="" method="post" id="id_quesform">
+    <input type="hidden" name="{{ ques_form.ctzoffset.name }}" id = "{{ ques_form.ctzoffset.auto_id }}" value="-1">
     <div class="modal-header border-0">
         <h3 class="modal-title modal-heading" id="exampleModalLabel">Create Question <i
                 class="fas fa-poll-h fa-sm ch4"></i></h3>
@@ -21,22 +21,22 @@
         <input type="hidden", value='{{ ques_form.instance.alerton }}' id="hidden_alerton">
         <!--============================== FORM FIELDS START =============================-->
         <div class="row mb-3 gy-3">
-            <label for={{ ques_form.ques_name.id_for_label }} class="col-md-1">{{ ques_form.ques_name.label }}:</label>
+            <label for={{ ques_form.quesname.id_for_label }} class="col-md-1 required">{{ ques_form.quesname.label }}:</label>
             <div class="col-md-11">
-                {{ ques_form.ques_name }}
-                {{ ques_form.ques_name.errors }}
+                {{ ques_form.quesname }}
+                {{ ques_form.quesname.errors }}
             </div>
-            <label for={{ ques_form.answertype.id_for_label }} class="col-md-1">{{ ques_form.answertype.label }}:</label>
+            <label for={{ ques_form.answertype.id_for_label }} class="col-md-1 required">{{ ques_form.answertype.label }}:</label>
             <div class="col-md-5">
                 {{ ques_form.answertype }}
                 {{ ques_form.answertype.errors }}
             </div>
-            <label for={{ ques_form.unit.id_for_label }} class="col-md-1">{{ ques_form.unit.label }}:</label>
+            <label for={{ ques_form.unit.id_for_label }} class="col-md-1 required">{{ ques_form.unit.label }}:</label>
             <div class="col-md-5">
                 {{ ques_form.unit }}
                 {{ ques_form.unit.errors }}
             </div>
-           <label for={{ ques_form.category.id_for_label }} class="col-md-1">{{ ques_form.category.label }}:</label>
+           <label for={{ ques_form.category.id_for_label }} class="col-md-1 required">{{ ques_form.category.label }}:</label>
             <div class="col-md-5">
                 {{ ques_form.category }}
                 {{ ques_form.category.errors }}
@@ -108,7 +108,6 @@
     </div>
 {% endblock body %}
 
-
 {% block js %}
 {{ ques_form.media.js }}
 <script>
@@ -123,6 +122,8 @@
     }
 
     $(document).ready(() => {
+        //set ctzoffset
+        $("#id_ctzoffset").val(-new Date().getTimezoneOffset())
         // Initialize Tagify components
         var input1 = document.querySelector("#id_options");
         var optionTag = new Tagify(input1);
@@ -134,24 +135,24 @@
         //on change answertype field
         $("#id_answertype.form-select").on("change", function(){
             var selected = getQuesTypeValue("#id_answertype");
-            //shows and hides according to questypes
+            //shows and hides according to answertype
             showHideFields(selected)
         } )
 
         //option field events
         optionTag
         .on('add', function(e){
-            populateAlertOn(e.detail.data.value)
+            populateAlertOn(e.detail.data.value, "#id_alerton")
         })
         .on('remove', function(e){
-            removeElmtFromAlertOn(e.detail.data.value)
+            removeElmtFromAlertOn(e.detail.data.value, "#id_alerton")
         })
 
         var initial_selected = $("#id_answertype.form-select").select2('data')[0].text
-        //shows and hides according to questypes
+        //shows and hides according to answertype
         showHideFields(initial_selected)
         if($("#id_options").val().length){
-            initialize_alerton_field($("#id_options").val(), $("#hidden_alerton").val(), cleaned=false)
+            initialize_alerton_field($("#id_options").val(), $("#hidden_alerton").val(), cleaned = false, id="#id_alerton")
         }
         $(".modal").removeAttr("tabindex");
     })

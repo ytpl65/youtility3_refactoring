@@ -2,6 +2,8 @@
 
 {% block body %}
 <form action="" method="post" id="id_capform">
+	<input type="hidden" name="{{ cap_form.ctzoffset.name }}" id = "{{ cap_form.ctzoffset.auto_id }}" value="-1">
+	<input type="hidden" name="pk" id="pk" value="{{ cap_form.instance.pk }}">
 	<div class="modal-header border-0">
 		<h3 class="modal-title modal-heading" id="exampleModalLabel">Create Capability <i class="fas fa-poll-h fa-sm ch4"></i></h3>
 		<button type="button" class="btn-sm btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
@@ -11,17 +13,22 @@
 			<strong>Error</strong> <span></span>
 			<button type="button" class="btn-sm btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
 		</div>
-
-		{% for field in cap_form %}
-		<div class="mb-3 row">
-			<!--LABEL FIELD-->
-			{{ field.label_tag() }}
-			<!--INPUT GROUP -->
-			{{ field }}
-			<!-- ERROR FIELD -->
-			{{ field.errors }}
+		<div class="row mb-3">
+			{{ cap_form.capscode.label_tag() }}
+			{{ cap_form.capscode }}
 		</div>
-		{% endfor %}
+		<div class="row mb-3">
+			{{ cap_form.capsname.label_tag() }}
+			{{ cap_form.capsname }}
+		</div>
+		<div class="row mb-3">
+			{{ cap_form.parent.label_tag() }}
+			{{ cap_form.parent }}
+		</div>
+		<div class="row mb-3">
+			{{ cap_form.cfor.label_tag() }}
+			{{ cap_form.cfor }}
+		</div>
 	</div>
 </form>
 	
@@ -38,10 +45,12 @@
 {% endblock body %}
 
 
-
 {% block js %}
 <script>
 $(document).ready(() => {
+	//set ctzoffset
+  	$("#id_ctzoffset").val(-new Date().getTimezoneOffset())
+	
 	$("#modal-cap").find("select").select2({
 		dropdownParent: $('#modal-cap')
     })

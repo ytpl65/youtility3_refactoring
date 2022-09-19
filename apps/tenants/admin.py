@@ -1,9 +1,7 @@
 from django.contrib import admin
 from .models import Tenant
-from import_export import widgets as wg
 from import_export.admin import ImportExportModelAdmin
 from import_export import resources
-
 
 # Register your models here.
 class TenantResource(resources.ModelResource):

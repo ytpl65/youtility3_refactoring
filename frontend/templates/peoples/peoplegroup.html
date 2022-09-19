@@ -1,0 +1,211 @@
+{% extends "base_list.html" %}
+
+<!---- BEGIN CARD TITLE ------>
+{% block card_title %}
+People Group Lists
+{% endblock card_title %}
+<!---- END CARD TITLE -------->
+
+<!----------- BEGIN PAGE BREADCUMBS ----------->
+{% block pagebreadcumb %}
+{{ super() }}
+<li class="breadcrumb-item pe-3"><a href="javascript:void(0)" class="pe-3">People Group List</a></li>
+{% endblock pagebreadcumb %}
+<!----------- END PAGE BREADCUMBS ------------->
+
+
+<!------------------ BEGIN PEOPLE TABLE ------------------------->
+{% block table %}
+<div class="table-responsive">
+    <table id="pgroup_table" class="display cell-border hover compact" style="width:100%">
+        <thead class="fw-bold fs-6">
+            <th>Name</th>
+            <th>Enable</th>
+			<th></th>
+        </thead>
+		<tbody>
+		</tbody>
+    </table>
+</div>
+{% endblock table %}
+<!------------------ END PEOPLE TABLE --------------------------->
+
+{% block popup_alerts %}
+<!-- THE MODAL WE WILL BE USING -->
+<div class="modal animate__animated animate__zoomIn" tabindex="-1" aria-hidden="true"  aria-labelledby="exampleModalLabel" data-bs-backdrop="static" id="modal-pgroup">
+	<div class="modal-dialog modal-dialog-centered modal-lg">
+		<div class="modal-content" id="pgroup_content">
+		</div>
+	</div>
+</div>
+{% endblock popup_alerts %}
+
+<!--------- BEGIN EXTRA SCRIPTS ----------------------------->
+{% block extra_scripts %}
+<script>
+	var table             = null;
+	const modal_id        = "#modal-pgroup"
+	const modalcontent_id = "#pgroup_content"
+	const formFilter      = "#pgroup_filter"
+	const table_id        = "#pgroup_table"
+	const formid          = "#id_pgroupform"
+	const urlname         = "{{ url('peoples:peoplegroup') }}"
+	const viewname        = "Pgroup"
+	const rowlink         = "a.pg-link"
+	
+	function addResultToTable(row){
+		table.row.add({
+			'groupname':row['groupname'],
+			'enable':row['enable'] === true ? 'True' : 'False',
+			'id':row['id']
+		}).draw();
+	}
+
+	$(document).ready(function () {
+		new ClipboardJS('.btn-copy');
+		$("input").keypress(function(event) {
+			if (event.which == 13) {
+				event.preventDefault();
+				$(formFilter).submit();
+			}
+		});
+        //beforeSend of capability ajax request 
+        function BeforeSend(){
+            $(modal_id).modal("show");
+        }
+		//datatable initialization
+        table = $(table_id).DataTable({
+			ajax:{
+				url:`${urlname}?action=list`
+			},
+			deferRender: true,
+			responsive : true,
+            dom       : `<'row' <'col-sm-6 d-flex justify-content-start'f> <'col-sm-6 d-flex justify-content-end'B> >rt<'row'
+			 <'col-sm-6'l> <'col-sm-6'p><'col-sm-12 d-flex justify-content-center'i>>`,
+			columns:[
+				{
+					data: "groupname",
+					render:function(data, type, row, meta){
+						 return `<a href="#" class="ta-link" data-id=${row['id']} data-rowid=${meta.row}>${data}</a>`
+					}
+				},
+				{data: "enable"},
+				{data: 'id', visible:false, defaultContent: ""}
+			],
+			buttons:[
+				{
+					text:`Add New ${viewname} &nbsp;<i class='fas fa-plus ch4'></i></a>`,
+					className: "btn btn-sm btn-light-primary",
+					//action for add_new_button 
+					action: function(e, dt, node, config){
+						const params = {
+							'modal_id'    : modal_id,
+							'url'         : `${urlname}?action=form`,
+							'beforeSend'  : BeforeSend }
+						fire_ajax_get(params)
+						.done((data, status, xhr) => {
+                            $(`${modal_id} .modal-content`).html(data.html_form)
+                        })
+						.fail((xhr, status, error) => {
+							show_error_alert("Something went wrong!")
+						})
+					}
+				}
+			]
+		})
+		$('.btn').removeClass('dt-button')
+
+		
+		//submit form
+		$(modal_id).on('submit', formid, function(e) {
+			var form = $(this);
+			e.preventDefault()
+			const params = { url:urlname, modal:true } //capability view
+			const id = $("#pk").val() //form instance id
+			var payLoad = {formData:form.serialize(), peoples:$("#id_peoples").val(),  csrfmiddlewaretoken: '{{ csrf_token }}'}//payload for post request
+			if(id != 'None'){
+				var newPayLoad = {...payLoad, 'pk':id}
+				payLoad = newPayLoad
+			}
+			
+			fire_ajax_form_post(params, payLoad)
+			.done((data, status, xhr) => { //function to submit post request
+				$(modal_id).modal("hide");
+				if(id!=='None'){
+					table.row('.selected').data(data.row).draw()
+				}else{
+					table.row.add(data.row).draw()
+				}
+				show_successful_save_alert(update= id != 'None' ? true : false)
+			})
+		})
+
+		//update row (form-view)
+		$('#pgroup_table tbody').on('click', 'tr', function(e){
+			if ($(this).hasClass('selected')) {
+				$(this).removeClass('selected');
+			} else {
+				table.$('tr.selected').removeClass('selected');
+				$(this).addClass('selected');
+			}
+			
+			var d = table.row( this ).data();
+			e.preventDefault();
+			var id = d.id
+			if (!(id)){ return }
+			const params = {
+				'modal_id'    : modal_id,
+				'url'         : `${urlname}?id=${id}`,
+				'beforeSend'  : BeforeSend }
+			fire_ajax_get(params)
+			.done((data, status, xhr) => {
+				$(modalcontent_id).attr('data-form', 'update')
+				$(`${modal_id} .modal-content`).html(data.html_form)
+			})
+			.fail((xhr, status, error) => {
+				show_error_alert('Something went wrong!') //defined in custom.js
+			})
+		})
+	}); //END document.ready()
+
+	//delete ajax request 
+	function isPgroupDeleted(id){
+		console.log("id ", id)
+		const params = {url:`${urlname}?action=delete&id=${id}`, beforeSend:function(){}}
+		fire_ajax_get(params)
+		.done((data, status, xhr) => {
+			if(!xhr.status === 200){
+				return false
+			}
+			return true
+		})
+		.fail((xhr, status, error) => {
+			show_error_alert('Something went wrong!') //defined in custom.js
+			return false
+		})
+	}
+
+	//delete pgorup 
+	function deletePgroup(elemt){
+		var id = $(elemt).attr("data-id");
+		show_alert_before_delete(viewname)
+		.then((result) => {
+			if(result.isConfirmed){ //delete requested by user
+				status = isPgroupDeleted(id) //fire's request
+				console.log("status ", status)
+				if(status){
+					show_successful_delete_alert() //defined in customjs
+					$(modal_id).modal("hide")
+					//delete row from table
+					row_index = parseInt($(modalcontent_id).attr('data-rowid'), 10)
+					console.log(row_index, "row index")
+					table.row(row_index).remove().draw();
+				}else{
+					show_error_alert('Something went wrong!');
+				}
+			}
+		})
+	}
+</script>
+{% endblock extra_scripts %}
+<!-------- END EXTRA SCRIPTS ------------------------------->

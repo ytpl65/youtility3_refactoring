@@ -10,30 +10,18 @@ Question List
 {% endblock pagebreadcumb %}
 
 {% block table %}
-<table id="ques_table" class="display cell-border" style="width:100%">
+<table id="ques_table" class="display compact cell-border" style="width:100%">
 	<thead class="fw-bold fs-6">
 		<th>Name</th>
 		<th>Type</th>
 		<th>Unit</th>
 		<th>Is WorkFlow</th>
 	</thead>
-	<!---------- BEGIN TABLE FILTER FIELDS --------->
-	<thead id="filter_row">
-		<form action="" id='ques_filter' method='get'>
-			{% for field in ques_filter %}
-			<th>
-				<input type="text" id="{{ field.auto_id }}" name="{{ field.name }}"
-					placeholder="Search {{ field.label }}">
-			</th>
-			{% endfor %}
-		</form>
-	</thead>
-	<!---------- END TABLE FILTER FIELDS --------->
 	<!---------- END TABLE FILTER FIELDS --------->
 	<tbody>
 		{% for ques in ques_list %}
 		<tr>
-			<td>{{ ques['ques_name'] }}</td>
+			<td>{{ ques['quesname'] }}</td>
 			<td><a href="" class="ques-link" data-id="{{ ques['id'] }}" data-rowid ={{ loop.index0 }}>{{ ques['answertype'] }}</a></td>
 			</td>
 			<td>{{ ques['unit__tacode'] }}</td>
@@ -53,7 +41,6 @@ Question List
 {% endblock table %}
 <!-------------------------------------------END BU TABLE ------------------------------------------------->
 
-
 {% block popup_alerts %}
 <!-- THE MODAL WE WILL BE USING animate__animated animate__zoomIn -->
 <div class="modal"  tabindex="-1" aria-hidden="true" aria-labelledby="exampleModalLabel" data-bs-backdrop="static" id="modal-ques">
@@ -63,7 +50,6 @@ Question List
 	</div>
 </div>
 {% endblock popup_alerts %}
-
 
 {% block extra_scripts %}
 <script>
@@ -183,7 +169,7 @@ Question List
 				$("#modal-ques").modal("hide");
 				Swal.fire(
 				`${viewname} saved`,
-				`${viewname} with this name <strong>${data.name}</strong> has been saved successfully`,
+				`${viewname} with this name <b>${data.name}</b> has been saved successfully`,
 				'success'
 				).then(function() {
 					location.reload();
@@ -231,7 +217,7 @@ Question List
 							location.reload();
 						})
 						//delete row from table
-						row_index = parseInt($("#ques_content").attr('data-rowid'))
+						row_index = parseInt($("#ques_content").attr('data-rowid'), 10)
 						console.log(row_index, "row index")
 						table.row(row_index).remove().draw();
 					} else {

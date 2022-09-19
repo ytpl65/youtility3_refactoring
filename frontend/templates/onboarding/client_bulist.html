@@ -13,87 +13,53 @@ Client Lists
 {% endblock pagebreadcumb %}
 <!----------- END PAGE BREADCUMBS ------------->
 
-<!-------- BEGIN PAGE ACTIONS ---------->
-{% block page_actions %}
- {{ form_add('onboarding:client_form') }}
-{% endblock page_actions %}
-<!-------- END PAGE ACTIONS ------------->
+
 
 <!------------------ BEGIN CLIENT TABLE ------------------------->
 {% block table %}
-<table id="client_table" class="display cell-border stripe hover" style="width:100%">
-	<thead class="fw-bold fs-6">
-		<th>Code</th>
-		<th>Name</th>
-		<th>Enable</th>
-		<th>Web Capability</th>
-		<th>Mobile Capability</th>
-		<th>Report Capability</th>
-	</thead>
-	<!---------- BEGIN TABLE FILTER FIELDS --------->
-	<thead id="filter_row">
-	<form action="" id='client_filter' method='get'>
-		{% for field in client_filter %}
-		<th>
-			<input type="text" 
-			id="{{ field.auto_id }}" 
-			name="{{ field.name }}" 
-			placeholder ="Search {{ field.label }}">
-		</th>
-		{% endfor %}
-	</form>
-	</thead>
-	<!---------- END TABLE FILTER FIELDS --------->
-	{% for client in client_list %}
-	<tr>
-		<td><a href="{{ url('onboarding:client_update', args=[client['id']]) }}">{{ client['bucode'] }}</a></td>
-		<td>{{ client['buname'] }}</td>
-		<td>{{ client['enable'] }}</td>
-		<td>{{ client['bu_preferences__webcapability'] }}</td>
-		<td>{{ client['bu_preferences__mobilecapability'] }}</td>
-		<td>{{ client['bu_preferences__reportcapability'] }}</td>
-	</tr>
-	{% endfor %}
+<table id="client_table" class="display compact cell-border stripe hover" style="width:100%">
 </table>
-{% if client_list and client_list.has_other_pages %}
-        <!------ BEGIN PAGINATOIN ----->
-		{{ paginator(client_list) }}
-		<!----- END PAGINATOIN -------->
-    {% endif %}
 {% endblock table %}
 <!------------------ END CLIENT TABLE --------------------------->
 
 <!--------- BEGIN EXTRA SCRIPTS ------>
 {% block extra_scripts %}
 <script>
+	var table;
 	$(document).ready(function () {
-		$("input").keypress(function(event) {
-			if (event.which == 13) {
-				event.preventDefault();
-				$("#client_filter").submit();
-			}
-		});
-
 		//BEGIN DATATABLE INITIALIZATION
-		var table = $('#client_table').DataTable({
-			orderCellsTop: true,
-			fixedHeader: true,
-			paging: false,
-			scrollCollapse: true,
-			sDom:'<>',
-			
-		})
+		table = $("#client_table").DataTable({
+            ajax:{
+                url: "{{ url('onboarding:client') }}?action=list",
+            },
+            deferRender: true,
+			responsive : true,
+            dom       : `<'row' <'col-sm-6 d-flex justify-content-start'f> <'col-sm-6 d-flex justify-content-end'B> >rt<'row'
+			             <'col-sm-6'l> <'col-sm-6'p><'col-sm-12 d-flex justify-content-center'i>>`,
+            columns   : [
+                { data: "id", visible:false, searchable:false, orderable:false },
+                { 
+                    data: "bucode",
+                    render:function(data, type, row, meta){
+						let formUrl = "{{ url('onboarding:client') }}"
+                        return `<a href=${formUrl}?id=${row['id']}>${data}</a>`
+                    },
+                    title: "Code" 
+                },
+                {data: 'buname', title: 'Name', orderable:false},
+                {data: 'enable', title: 'Enable', orderable:false}
+            ],
+            buttons:[
+                {
+                    text: 'Add New',
+                    className: "btn btn-sm btn-light-primary",
+                    action:function(e, dt, node, config){
+                        location.href = '{{ url("onboarding:client") }}?action=form'
+                    }
+                }
+            ]
+        })
 		//END DATATABLE INITIALIZATION
-
-		//BEGIN STYLING DATATABLE
-		$("th > input").addClass('form-control')
-		$("th > input").css('height', '35px')
-		var styles = {
-			"border-bottom": "none",
-			"background-color": "#f1f4f7"
-		}
-		$('#client_table thead tr:eq(1)').css(styles)
-		//END STYLING DATATABLE
 	});
 </script>
 {% endblock extra_scripts %}

@@ -6,19 +6,20 @@ from widget_tweaks.templatetags import widget_tweaks as wt
 
 
 
-
 def debug(info):
     print("Printing=============", info)
-    
+
 def to_local(val):
     from django.utils.timezone import get_current_timezone
     return val.astimezone(get_current_timezone()).strftime('%d-%b-%Y %H:%M')
+
 
 class JinjaEnvironment(Environment):
     keep_trailing_newline=True,  # newline-terminate generated files
     lstrip_blocks=True,  # so can indent control flow tags
     trim_blocks=True # so don't need {%- -%} everywhere
-    
+
+
     def __init__(self, **kwargs):
         super(JinjaEnvironment, self).__init__(**kwargs)
         self.globals['static']  = staticfiles_storage.url

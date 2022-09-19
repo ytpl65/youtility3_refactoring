@@ -19,12 +19,11 @@ Capability's
 {% endblock page_actions %}
 <!-------- END PAGE ACTIONS ------------>
 
-
 <!------------------ BEGIN SITEPEOPLE TABLE ------------------------->
 {% block table %}
 <div class="table-responsive">
 	<!------------------ BEGIN TABLE --------------------->
-	<table id="sitepeople_table" class="table gy-2" style="width:100%">
+	<table id="sitepeople_table" class="display table gy-2 compact" style="width:100%">
 		<thead class="fw-bold fs-6">
 			<th>Code</th>
 			<th>Name</th>
@@ -56,7 +55,6 @@ Capability's
 	<!------------------ END TABLE --------------------->
 </div>
 
-
 {% if sitepeople_list and sitepeople_list.has_other_pages %}
 <!-- BEGIN PAGINATOIN -->
 {{ paginator(sitepeople_list) }}
@@ -65,7 +63,6 @@ Capability's
 
 {% endblock table %}
 <!------------------ END SITEPEOPLE TABLE --------------------------->
-
 
 <!--------- BEGIN EXTRA SCRIPTS ----------------------------->
 {% block extra_scripts %}

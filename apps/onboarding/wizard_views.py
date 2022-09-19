@@ -1,15 +1,8 @@
 #---------------------------- BEGIN client onboarding ---------------------------#
 from django.http.response import JsonResponse
-from django.views.generic.base import RedirectView
-from django.http.request import QueryDict
-import apps.peoples.models as people_models
 import apps.peoples.views as people_views
 from . import views
-from django.core.exceptions import NON_FIELD_ERRORS
-from icecream.icecream import indented_lines
 import apps.onboarding.forms as obforms
-import apps.peoples.forms as people_forms
-from django.core.files.storage import FileSystemStorage
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.decorators import login_required
 import apps.onboarding.models as ob
@@ -36,7 +29,6 @@ class WizardView(LoginRequiredMixin, View):
 
     def get(self, request, *args, **kwargs):
         '''set wizard variables and call the first formview.'''
-        import json
         # getdata = json.loads(request.GET)
         draft, res = self.check_user_has_unsaved_wizards(request), None
 
@@ -61,7 +53,8 @@ class WizardView(LoginRequiredMixin, View):
             res = self.open_new_wizard(request, False)  # no drafts
         return res
 
-    def check_user_has_unsaved_wizards(self, request):
+    @staticmethod
+    def check_user_has_unsaved_wizards(request):
         user, res = request.user, None
         try:
             res = ob.WizardDraft.objects.get(
@@ -73,7 +66,8 @@ class WizardView(LoginRequiredMixin, View):
             log.info("user has saved draft trying to retrieve that...")
         return res
 
-    def get_appropriate_stage_from_draft(self, request):
+    @staticmethod
+    def get_appropriate_stage_from_draft(request):
         log.info("loaded appropriate stage or the wizard step from the draft")
         wizard_data = request.session['wizard_data']
         if not wizard_data['current_inst']:
@@ -103,7 +97,6 @@ class WizardView(LoginRequiredMixin, View):
     def delete_from_draft(self, request):
         if 'wizard_data' in request.session:
             dbg("deleting wizard_data from request.session and from the draft as well")
-            del request.session['wizard_data']
             user = request.user
             ob.WizardDraft.objects.get(
                 createdby__peoplecode=user.peoplecode).delete()
@@ -124,19 +117,19 @@ class WizardDelete(LoginRequiredMixin, View):
             ob_utils.delete_unsaved_objects(People, wizard_data['peopleids'])
             self.delete_pgroups(Pgroup, wizard_data['pgroupids'])
         dbg("deleting wizard_data from session")
-        del request.session['wizard_data']
         return scts.redirect('home')
 
-    def delete_pgroups(self, Pgroup, ids):
-        for i in range(len(ids)):
-            pg = Pgroup.objects.get(pk=ids[i])
+    @staticmethod
+    def delete_pgroups(Pgroup, ids):
+        for i, item in enumerate(ids):
+            pg = Pgroup.objects.get(pk=item)
             pg.enable = False
-
 
 # Helper Methods
 
-
 # STEP-1 BTFORM-VIEW
+
+
 class WizardBt(views.CreateBt):
     form_class = obforms.BtForm
     model = ob.Bt
@@ -203,10 +196,12 @@ class WizardBt(views.CreateBt):
             bt = form.save(commit=True)
             ob_utils.save_msg(request)
             self.wizard_data['instance_id'] = bt.id
-            people_utils.save_userinfo(bt, request.user, request.session)
+            people_utils.save_userinfo(
+                bt, request.user, request.session, create=not update)
             res = ob_utils.process_wizard_form(
                 request, self.wizard_data, update)
-        except:
+        except Exception:
+            log.error("process_valid_form failed", exc_info=True)
             raise
         else:
             return res
@@ -290,13 +285,15 @@ class WizardShift(views.CreateShift):
             res = None
             log.info('step-2 is valid')
             shift = form.save()
-            shift.buid_id = request.session['buid']
+            shift.bu_id = request.session['bu_id']
             ob_utils.save_msg(request)
             self.wizard_data['instance_id'] = shift.id
-            people_utils.save_userinfo(shift, request.user, request.session)
+            people_utils.save_userinfo(
+                shift, request.user, request.session, create=not update)
             res = ob_utils.process_wizard_form(
                 request, self.wizard_data, update)
-        except:
+        except Exception:
+            log.error('process_valid_form', exc_info=True)
             raise
         else:
             return res
@@ -316,10 +313,11 @@ class WizardShift(views.CreateShift):
             res = scts.redirect('onboarding:wiz_shift_form')
         return res
 
-
 # STEP-3 PEOPLE FORM OF WIZARD
+
+
 class WizardPeople(people_views.CreatePeople):
-    model = people_models.People
+    model = pm.People
     wizard_data = {
         'current_ids': 'peopleids',
         'next_ids': 'pgroupids',
@@ -384,11 +382,12 @@ class WizardPeople(people_views.CreatePeople):
                 people.save()
                 ob_utils.save_msg(request)
                 people = people_utils.save_userinfo(
-                    people, request.user, request.session)
+                    people, request.user, request.session, create=not update)
                 self.wizard_data['instance_id'] = people.id
             res = ob_utils.process_wizard_form(
                 request, self.wizard_data, update)
-        except:
+        except Exception:
+            log.error('process_valid_form failed', exc_info=True)
             raise
         else:
             return res
@@ -417,10 +416,11 @@ class WizardPeople(people_views.CreatePeople):
             res = scts.redirect('peoples:wiz_people_form')
         return res
 
-
 # STEP-3 PEOPLE GORUP FORM OF WIZARD
+
+
 class WizardPgroup(people_views.CreatePgroup):
-    model = people_models.Pgroup
+    model = pm.Pgroup
     wizard_data = {
         'current_ids': 'pgroupids',
         'next_ids': None,
@@ -478,13 +478,15 @@ class WizardPgroup(people_views.CreatePgroup):
     def process_valid_form(self, form, request, update):
         try:
             res, pg = None, form.save(commit=True)
-            people_utils.save_userinfo(pg, request.user, request.session)
+            people_utils.save_userinfo(
+                pg, request.user, request.session, create=not update)
             people_utils.save_pgroupbelonging(pg=pg, request=request)
             ob_utils.save_msg(request)
             self.wizard_data['instance_id'] = pg.id
             res = ob_utils.process_wizard_form(
                 request, self.wizard_data, update)
-        except:
+        except Exception:
+            log.error('process_valid_form failed', exc_info=True)
             raise
         else:
             return res
@@ -494,7 +496,7 @@ class WizardPgroup(people_views.CreatePgroup):
         try:
             pg = self.model.objects.get(id=pk)
             peoples = pm.Pgbelonging.objects.filter(
-                groupid=pg).values_list('peopleid', flat=True)
+                pgroup=pg).values_list('people', flat=True)
             form = self.form_class(instance=pg, initial={
                                    'peoples': list(peoples)}, request=request)
             cxt = {'pgroup_form': form, 'edit': True}
@@ -515,8 +517,7 @@ class WizardPgroup(people_views.CreatePgroup):
             pg.enable = False
             msg.info(request, "Record deleted successfully", "alert-success")
             request.session['wizard_data']['pgroupids'].remove(int(pk))
-            dbg('item returned from get_index_for_deletion is %s' %
-                ob_utils.get_index_for_deletion({'id': pk}, request, 'pgroupids'))
+            dbg('item returned from get_index_for_deletion is %s', ob_utils.get_index_for_deletion({'id': pk}, request, 'pgroupids'))
             request.session['wizard_data']['timeline_data']['pgroupids'].pop(
                 ob_utils.get_index_for_deletion({'id': pk}, request, 'pgroupids'))
             res = scts.redirect('peoples:wiz_pgroup_form')
@@ -544,7 +545,7 @@ class WizardPreview(LoginRequiredMixin, View):
                      (pm.People, 'peopleids'), (pm.Pgroup, 'pgroupids')]
             for model, ids in steps:
                 self.get_data(model, session_data, ids)
-        except:
+        except Exception:
             log.error(
                 'Something went wrong while collecting data...FAILED', exc_info=True)
         else:
@@ -560,7 +561,7 @@ class WizardPreview(LoginRequiredMixin, View):
                       'taids': ['tacode', 'taname', 'tatype', 'parent__taname'],
                       'peopleids': ['peoplecode', 'peoplename', 'peopletype__taname', 'loginid'],
                       'shiftids': ['shiftname', 'starttime', 'endtime'],
-                      'pgroupids': ['groupname']}
+                      'pgroupids': ['name']}
 
             data = model.objects.filter(
                 pk__in=sd['wizard_data'][ids]).values(*fields[ids])
@@ -570,7 +571,6 @@ class WizardPreview(LoginRequiredMixin, View):
 @login_required
 def save_wizard(request):
     log.info("deleting wizard_data from session and redirecting user to home")
-    del request.session['wizard_data']
     dbg("wizard_data deleted from the session")
     return scts.redirect('home')
 
@@ -581,15 +581,14 @@ def save_as_draft(request):
     if request.method != 'GET':
         return
     user, session = request.user, request.session
-    bu = ob.Bt.objects.get(pk=session['clientid'])
+    bu = ob.Bt.objects.get(pk=session['client_id'])
     wd = session['wizard_data']
     _, created = ob.WizardDraft.objects.update_or_create(
-        createdby=user, buid=bu,
+        createdby=user, bu=bu,
         defaults={'wizard_data': {'wizard_data': wd}})
     status = 'created' if created else 'updated'
     log.info(f"wizard draft {status}")
     if request.GET.get('quit') == "true":
-        del request.session['wizard_data']
         dbg("wizard_data deleted from the session")
     return JsonResponse({'saved': True, 'status': status})
 
