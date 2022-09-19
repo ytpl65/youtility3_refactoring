@@ -83,7 +83,7 @@ class TypeAssistForm(SuperTypeAssistForm):
 
 
 
-class BtForm(forms.ModelForm):  
+class BtForm(forms.ModelForm):
     required_css_class = "required"
     error_msg = {
         'invalid_bucode'  : 'Spaces are not allowed in [Code]',
@@ -119,7 +119,7 @@ class BtForm(forms.ModelForm):
             'buname'      : forms.TextInput(attrs={'placeholder': 'Name'}),
             'identifier'      : s2forms.Select2Widget,
             'butype'      : s2forms.Select2Widget,
-            'gpslocation' : forms.TextInput(attrs={'placeholder': 'GPS Location'}),}    
+            'gpslocation' : forms.TextInput(attrs={'placeholder': 'Latitude, Longitude'}),}    
 
     def __init__(self, *args, **kwargs):
         """Initializes form"""
@@ -156,7 +156,6 @@ class BtForm(forms.ModelForm):
 
     def clean_bucode(self):
         import re
-        ic(self.cleaned_data)
         if value := self.cleaned_data.get('bucode'):
             regex = "^[a-zA-Z0-9\-_]*$"
             if " " in value: raise forms.ValidationError(self.error_msg['invalid_bucode'])
@@ -166,17 +165,16 @@ class BtForm(forms.ModelForm):
                 raise forms.ValidationError(self.error_msg['invalid_bucode3'])
             return value.upper()
 
-    #def clean_gpslocation(self):
-    #    import re
-    #    if gps := self.cleaned_data.get('gpslocation'):
-    #        regex = '^([-+]?)([\d]{1,2})(((\.)(\d+)(,)))(\s*)(([-+]?)([\d]{1,3})((\.)(\d+))?)$'
-    #        if not re.match(regex, gps):
-    #            raise forms.ValidationError(self.error_msg['invalid_latlng'])
-    #        return gps
+    def clean_gpslocation(self):
+        import re
+        if gps := self.cleaned_data.get('gpslocation'):
+            regex = '^([-+]?)([\d]{1,2})(((\.)(\d+)(,)))(\s*)(([-+]?)([\d]{1,3})((\.)(\d+))?)$'
+            if not re.match(regex, gps):
+               raise forms.ValidationError(self.error_msg['invalid_latlng'])
+            lat, lng = gps.split(',')
+            gps = f'SRID=4326;POINT({lng} {lat})'
+        return gps   
 
-    def clean_buname(self):
-        if val := self.cleaned_data.get('buname'):
-            return val.upper()
 
 
 class ShiftForm(forms.ModelForm):
@@ -355,6 +353,20 @@ class ClentForm(BuPrefForm):
         self.fields['reportcapability'].choices = get_caps_choices(cfor = pm.Capability.Cfor.REPORT)
         self.fields['portletcapability'].choices = get_caps_choices(cfor = pm.Capability.Cfor.PORTLET)
 
+    
+    def clean_validip(self):
+        if val := self.cleaned_data.get('validip'):
+            #check if ip is valid
+            text = val.split('.')
+            if len(text) != 4:
+                raise forms.ValidationError("Invalid IP Address")
+        return val
+    
+    def clean_validimei(self):
+        if val := self.cleaned_data.get('validimei'):
+            #check if imei is valid
+            if  not utils.isValidEMEI(val):
+                raise forms.ValidationError("Invalid IMEI No.")
 
     def is_valid(self) -> bool:
         """Add class to invalid fields"""

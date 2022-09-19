@@ -1,3 +1,4 @@
+from gettext import install
 from django.contrib import admin
 from import_export import resources, fields
 from import_export import widgets as wg
@@ -73,12 +74,12 @@ class TaResource(resources.ModelResource ):
     )
     Code = fields.Field(attribute='tacode')
     Name = fields.Field(attribute='taname')
-    ID   = fields.Field(attribute='taname')
+    ID   = fields.Field(attribute='id')
 
     class Meta:
         model = om.TypeAssist
         skip_unchanged = True
-        import_id_fields = ('ID', 'Code')
+        import_id_fields = ('ID',)
         report_skipped = True
         fields = ('ID', 'Name', 'Code', 'Type', 'tenant', 'BV', 'Client')
 
@@ -92,6 +93,7 @@ class TaResource(resources.ModelResource ):
         utils.save_common_stuff(self.request, instance, self.is_superuser)
 
     def skip_row(self, instance, original):
+        ic(instance.tacode)
         return om.TypeAssist.objects.filter(tacode = instance.tacode).exists()
 
 

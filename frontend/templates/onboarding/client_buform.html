@@ -252,6 +252,9 @@ Client
         return rowModifier ? table.row(rowModifier).data() : 'None'
     }
 
+    //hide the delete button when instance is not saved yet.
+    $("#btn_del").hide()
+
     function initialize_form(){
         var data = getCurrentEditingRow(listbu_editor, tabListBus)
         if(data!=='None'){
@@ -273,11 +276,7 @@ Client
         $("#id_portletcapability").attr("form", "id_clientform")
         $("#id_mobilecapability").attr("form", "id_clientform")
 
-        //hide the delete button when instance is not saved yet.
-        if ('{{clientform.instance.id}}' == 'None') {
-            $("#btn_del").hide()
 
-        }
 
         // submit the popup-butype-taform for validation and saving in db.
         $('#pop_butype_form').on('submit', sumit_popup_form({

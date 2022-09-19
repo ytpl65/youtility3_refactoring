@@ -24,3 +24,4 @@ frontend/static/assets/css/ui.jqgrid.min.css
 frontend/static/assets/media
 frontend/static/assets/plugins
 .env
+testPython.py

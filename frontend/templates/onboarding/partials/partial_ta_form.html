@@ -5,6 +5,7 @@
 {% endblock head %}
 {% macro typeassist_form() %}
 	<input type="hidden" name="{{ ta_form.ctzoffset.name }}" id = "{{ ta_form.ctzoffset.auto_id }}" value="-1">
+	<input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
 	<div class="row mb-3">
 	{{ ta_form.tacode.label_tag() }}
 	{{ ta_form.tacode }}

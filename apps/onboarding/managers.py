@@ -1,4 +1,5 @@
 from datetime import datetime
+from urllib import request
 from django.db import models
 from django.db.models import Q, F
 import apps.peoples.models as pm
@@ -85,19 +86,6 @@ class BtManager(models.Manager):
         qset = qset.annotate(text = F('buname')).values('id', 'text')
         return qset or self.none()
 
-
-
-    def get_bus_idfs(self, R, idf = None):
-        fields = R.getlist('fields[]')
-        qset = self.filter(
-             ~Q(bucode__in=('NONE', 'SPS', 'YTPL')), identifier__tacode = idf, enable = True).select_related(
-                 'parent', 'identifier').annotate(buid = F('id')).values(*fields)
-        idfs = self.filter(
-             ~Q(identifier__tacode = 'NONE'), ~Q(bucode__in=('NONE', 'SPS', 'YTPL'))).order_by(
-                 'identifier__tacode').distinct(
-                     'identifier__tacode').values('identifier__tacode')
-        return qset, idfs
-
     def get_client_list(self, fields, related):
         qset = self.filter(
             identifier__tacode = 'CLIENT').select_related(*related).values(
@@ -155,6 +143,8 @@ class BtManager(models.Manager):
 
     def get_listbus(self, request):
         "return list bus for client_form"
+        if request.GET.get("id") == "None":
+            return self.none()
         qset = self.filter(identifier__tacode='SITE').exclude(bucode__in=['NONE', 'YTPL']).distinct().values(
             'id', 'bucode', 'buname', 'enable', 'parent__buname', 'identifier__tacode', 'parent_id', 'identifier_id').order_by('-mdtz')
         return qset or self.none()
@@ -162,10 +152,29 @@ class BtManager(models.Manager):
 
     def get_listadmins(self, request):
         "return list admins for client_form"
-        qset = pm.People.objects.filter(isadmin=True).exclude(peoplecode__in=['NONE', 'SUPERADMIN']).distinct().values(
+        if request.GET.get("id") == "None":
+            return self.none()
+        qset = pm.People.objects.filter(isadmin=True, client_id = request.GET.get('id')).exclude(peoplecode__in=['NONE', 'SUPERADMIN']).distinct().values(
             'peoplecode', 'peoplename', 'loginid', 'isadmin', 'mobno', 'email',
             'gender', 'id', 'dateofbirth', 'dateofjoin'
         ).order_by('-mdtz')
+        return qset or self.none()
+    
+    def get_allsites_of_client(self, clientid, request=None, fields=None):
+        "return all the sites of a client"
+        qset = self.get_bus_based_on_idf(clientid, 'SITE', request, fields)
+        return qset or self.none()
+    
+    def get_bus_based_on_idf(self, clientid, idf, request=None, fields=None):
+        "return all the bu list based on given identifier of a client"
+        if request:
+            clientid = request.GET.get('client_id')
+            idf = request.GET.get('identifier')
+        
+        buids = utils.runrawsql("select fn_get_bulist(%s, true, true, 'array'::text, null::bigint[]) as buids", [clientid])
+        qset = self.filter(id__in=buids[0]['buids']).select_related('identifier', 'parent', 'butype')
+        qset = self.filter(identifier__tacode=idf).exclude(
+                bucode__in=['NONE', 'YTPL']).distinct().values(*fields)
         return qset or self.none()
 
     

@@ -181,6 +181,14 @@ DATABASES = {
             'HOST':     'localhost',
             'PORT':     '5432',
         },
+        'testDB':{
+            'ENGINE':   'django.contrib.gis.db.backends.postgis',
+            'USER':     'navin',
+            'PASSWORD': 'admin',
+            "HOST":     'localhost',
+            'PORT':     '5432',
+            'NAME':     'testDB',
+        }
 }   
 
 

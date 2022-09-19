@@ -1,3 +1,4 @@
+from dataclasses import fields
 import logging
 from typing import Type
 from django.views.decorators.cache import cache_page
@@ -1498,7 +1499,10 @@ class Client(LoginRequiredMixin, View):
             return resp
         
         if R.get('action') == 'getlistbus':
-            objs = P['model'].objects.get_listbus(request)
+            fields = ['id', 'bucode', 'buname', 'identifier__tacode', 'identifier_id',
+                      'parent__buname', 'enable', 'parent_id']
+            objs = P['model'].objects.get_allsites_of_client(
+                request.GET.get('id'), fields=fields)
             return rp.JsonResponse(data = {'data':list(objs)})
         
         if R.get('action') == 'getadmins':
