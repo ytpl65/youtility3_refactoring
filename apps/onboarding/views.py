@@ -1503,6 +1503,7 @@ class Client(LoginRequiredMixin, View):
                       'parent__buname', 'enable', 'parent_id']
             objs = P['model'].objects.get_allsites_of_client(
                 request.GET.get('id'), fields=fields)
+            ic(objs)
             return rp.JsonResponse(data = {'data':list(objs)})
         
         if R.get('action') == 'getadmins':

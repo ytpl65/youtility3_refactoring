@@ -441,7 +441,7 @@ def insert_into_jn_for_parent(job, params):
         bu_id          = job['bu_id'],                  ticketcategory_id = job['ticketcategory_id'],
         gpslocation    = 'POINT(0.0 0.0)',             remarks           = '',
         seqno          = 0,                          multifactor       = params['m_factor'],
-        client_id      = job['client_id'],
+        client_id      = job['client_id'],           other_info = job['other_info']
     )
 
 

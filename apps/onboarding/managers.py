@@ -170,10 +170,9 @@ class BtManager(models.Manager):
         if request:
             clientid = request.GET.get('client_id')
             idf = request.GET.get('identifier')
-        
         buids = utils.runrawsql("select fn_get_bulist(%s, true, true, 'array'::text, null::bigint[]) as buids", [clientid])
         qset = self.filter(id__in=buids[0]['buids']).select_related('identifier', 'parent', 'butype')
-        qset = self.filter(identifier__tacode=idf).exclude(
+        qset = qset.filter(identifier__tacode=idf).exclude(
                 bucode__in=['NONE', 'YTPL']).distinct().values(*fields)
         return qset or self.none()
 

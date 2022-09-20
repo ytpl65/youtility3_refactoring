@@ -59,14 +59,6 @@ External Tour
             </div>
             <div class="input-group mb-3">
                 <div class="col-md-4">
-                    {{ externaltourform.jobdesc.label_tag() }}
-                </div>
-                <div class="col-md-8">
-                    {{ externaltourform.jobdesc }}
-                </div>
-            </div>
-            <div class="input-group mb-3">
-                <div class="col-md-4">
                     <label class="required">Assign to:</label>
                 </div>
                 <div class="col-md-8">
@@ -236,6 +228,9 @@ External Tour
         <table class="display cell-border" style="width:100%" id="tabTouranswers"></table>
     </div>
 </div>
+<div class="row googleMaps">
+    <div id="d2Map" style="width:100%;height:400px;background:#f1f1f1"></div>
+</div>
 {% endblock extras %}
 
 {% block ajax_page_actions %}
@@ -266,6 +261,19 @@ External Tour
 <script src="{{ static('assets/plugins/custom/Editor-2.0.8/js/dataTables.editor.min.js') }}" type="text/javascript"></script>
 <script src="{{ static('assets/plugins/custom/Editor-2.0.8/js/editor.select2.js') }}" type="text/javascript"></script>
 <script>
+    //FOR GLOBAL VARIABLE TO BE AVAILABLE BELOW SCRIPTS
+    var _cronDates   = [];
+    var _shiftMinute = 0;
+    var _fbreaktime  = '--';
+    var _fduration   = '--';
+    var _fdistance   = '--';
+
+</script>
+<script type="text/javascript" src="https://maps.googleapis.com/maps/api/js?key=AIzaSyC3PUZCB7u2PiV8whHeAshweOPIK_d690o&libraries=places"></script>
+<script src="{{ static('assets/js/overlapping_marker_spiderfier.js') }}" type="text/javascript"></script>
+<script src="{{ static('assets/js/schd_ext_tour_form.js') }}" type="text/javascript"></script>
+
+<script>
     //set the variables which are gonna used in attachment.js file for fetching attachments against the owner
     var attachmentUrl = '{{ url("activity:attachments") }}'
     var attachementDatasource = 'jobneedattachment'
@@ -279,7 +287,7 @@ External Tour
 </script>
 <script src="{{ static('assets/js/local/attachment.js') }}" type="text/javascript"></script>
 <script>
-var table;
+var asgdsites_table;
 var selected;
 var parentTable;
 var parent_id;
@@ -298,7 +306,13 @@ var parentEditor;
         }
     }
 
+    function calculate_tour_details(data, routeFreq){
+        d2ClearMarker()
+        calculateAndDisplayRoute(data, routeFreq)
+    }
+
     $(document).ready(() => {
+        d2InitializeMap()
         //set ctzoffset
   	    $("#id_ctzoffset").val(-new Date().getTimezoneOffset())
 
@@ -311,7 +325,7 @@ var parentEditor;
         }
 
         //Datatable
-        table = $("#external_tour").DataTable({
+        asgdsites_table = $("#external_tour").DataTable({
             ajax:{
                 url:"{{ url('schedhuler:jobneedexternaltours') }}?action=checkpoints&parent_id={{ externaltourform.instance.id }}"},
             columns:[
@@ -321,19 +335,39 @@ var parentEditor;
                 {data:"expirydatetime", title:'Expiry Datetime'},
                 {data:"bu__buname", title:'Checkpoint'},
                 {data:'qset__qsetname', title:'Checklist'},
-                {data:'gracetime', 'Gracetime'},
+                {data:'gracetime', title:'Gracetime'},
                 {data:'jobstatus', title:'Status'},
-                {data:'distance', title:'Distance'},
-                {data:'duration', title:'Duration'},
-                {data:'breaktime', title:'Breaktime'},
-
+                {data:'distance', title:'Distance', defaultContent:null, render:function(data, type, row, meta){
+                        return data === null ? '--' : data
+                    }
+                },
+                {data:'duration', title:'Duration', defaultContent:null, render:function(data, type, row, meta){
+                        return data === null ? '--' : data
+                    }
+                },
             ],
             deferRender: true,
+            columnDefs:[
+                {targets:1, data:'seqno', render:function(data, type, row, meta){
+                        return parseInt(data) + 1;
+                    }
+                },
+            ],
 			responsive : true,
             dom: `<'row' <'col-sm-6 d-flex justify-content-start'f> <'col-sm-6 d-flex justify-content-end'B> >rt<'row'
 			 <'col-sm-6'l> <'col-sm-6'p><'col-sm-12 d-flex justify-content-center'i>>`,
+            buttons:[],
+            initComplete: function( settings, json ) {
+            if('{{ externaltourform.instance.id }}' !== 'None'){
+                $("#btnGetRoute").click()
+            }
+        }
 
         })
+
+        if('{{externaltourform.instance.id}}' !== 'None'){
+            reCaclTime()
+        }
 
     })
 </script>
