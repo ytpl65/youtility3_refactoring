@@ -313,7 +313,7 @@ class BuPrefForm(forms.Form):
     usereliver               = forms.BooleanField(initial = False, required = False, label="Reliver needed?")
     malestrength             = forms.IntegerField(initial = 0, label="Male Strength")
     femalestrength           = forms.IntegerField(initial = 0, label="Female Strength")
-    reliveronpeoplecount     = forms.IntegerField(initial = 0, label="Reliver On People Count")
+    reliveronpeoplecount     = forms.IntegerField(initial = 0, label="Reliver On People Count", required=False)
     pvideolength             = forms.IntegerField(initial="10", label='Panic Video Length (sec)')
     guardstrenth             = forms.IntegerField(initial = 0)
     siteclosetime            = forms.TimeField(label="Site Close Time", required = False)

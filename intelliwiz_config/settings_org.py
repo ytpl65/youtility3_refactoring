@@ -315,7 +315,6 @@ GRAPHENE = {
     "ATOMIC_MUTATIONS": True,
     "SCHEMA": "apps.service.schema.schema",
     'MIDDLEWARE': [
-        'graphene_django.debug.DjangoDebugMiddleware',
         "graphql_jwt.middleware.JSONWebTokenMiddleware",
     ]
 }

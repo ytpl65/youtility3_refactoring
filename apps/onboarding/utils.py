@@ -178,7 +178,7 @@ def create_bv_reportting_heirarchy(instance, newcode, newtype, parent):
     else:
         dbg("Updating the reporting heirarchy!")
         # update bu tree
-        if instance.bucode not in(None, 'NONE') and instance.parent.bucode in (None, 'NONE'):
+        if instance.bucode not in(None, 'NONE') and hasattr(instance.parent, 'bucode') and instance.parent.bucode in (None, 'NONE'):
             dbg("Updating heirarchy of the Root Node")
             update_children_tree(instance, newcode, newtype.tacode)
         else:

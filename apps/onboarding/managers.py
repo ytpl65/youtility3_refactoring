@@ -3,6 +3,8 @@ from urllib import request
 from django.db import models
 from django.db.models import Q, F
 import apps.peoples.models as pm
+from django.db.models.functions import Concat
+from django.db.models import Value as V
 from apps.core import utils
 
 class BtManager(models.Manager):
@@ -83,7 +85,7 @@ class BtManager(models.Manager):
         search_term = request.GET.get('search')
         qset = self.filter(~Q(id=1), ~Q(identifier__tacode='CLIENT')).distinct()
         qset = qset.filter(buname__icontains = search_term) if search_term else qset
-        qset = qset.annotate(text = F('buname')).values('id', 'text')
+        qset = qset.annotate(text = Concat(F('buname'), V(" ("), F('identifier__tacode'), V(")"))).values('id', 'text')
         return qset or self.none()
 
     def get_client_list(self, fields, related):
@@ -170,11 +172,13 @@ class BtManager(models.Manager):
         if request:
             clientid = request.GET.get('client_id')
             idf = request.GET.get('identifier')
-        buids = utils.runrawsql("select fn_get_bulist(%s, true, true, 'array'::text, null::bigint[]) as buids", [clientid])
-        qset = self.filter(id__in=buids[0]['buids']).select_related('identifier', 'parent', 'butype')
-        qset = qset.filter(identifier__tacode=idf).exclude(
-                bucode__in=['NONE', 'YTPL']).distinct().values(*fields)
-        return qset or self.none()
+        if clientid not in (None, 'None'):
+            buids = utils.runrawsql("select fn_get_bulist(%s, true, true, 'array'::text, null::bigint[]) as buids", [clientid])
+            qset = self.filter(id__in=buids[0]['buids']).select_related('identifier', 'parent', 'butype')
+            qset = qset.filter(identifier__tacode=idf).exclude(
+                    bucode__in=['NONE', 'YTPL']).distinct().values(*fields)
+            return qset or self.none()
+        return self.none()
 
     
 
@@ -203,7 +207,7 @@ class TypeAssistManager(models.Manager):
     
     def load_identifiers(self, request):
         search_term = request.GET.get('search')
-        qset = self.filter(tatype__tacode='BVIDENTIFIER').annotate(text = F('taname')).values('text', 'id').distinct()
+        qset = self.filter(tatype__tacode='BVIDENTIFIER').annotate(text = F('taname')).exclude(taname='Client').values('text', 'id').distinct()
         qset = qset.filter(taname__icontains = search_term, tatype__tacode='BVIDENTIFIER') if search_term else qset
         return qset or self.none()
 

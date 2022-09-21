@@ -252,8 +252,7 @@ Client
         return rowModifier ? table.row(rowModifier).data() : 'None'
     }
 
-    //hide the delete button when instance is not saved yet.
-    $("#btn_del").hide()
+
 
     function initialize_form(){
         var data = getCurrentEditingRow(listbu_editor, tabListBus)
@@ -269,6 +268,11 @@ Client
     $(document).ready(function () {
         //set ctzoffset
   	    $("#id_ctzoffset").val(-new Date().getTimezoneOffset())
+
+        $('#btn_clear').click((e) => {
+            e.preventDefault()
+            location.href = "{{ url('onboarding:client') }}?action=form"
+        })
         
         //add form attribute to fields which are outside form element
         $("#id_webcapability").attr("form", "id_clientform")
@@ -532,27 +536,19 @@ Client
             })
         }
 
-        //delete typeassist 
-        function deleteClient(elemt){
-            var id = "{{ clientform.instance.pk }}"
-            var viewname = 'Client'
-            show_alert_before_delete(viewname)
-            .then((result) => {
-                if(result.isConfirmed){ //delete requested by user
-                    status = isReportDeleted(id) //fire's request
-                    console.log("status ", status)
-                    if(status){
-                        show_successful_delete_alert() //defined in customjs
-                        window.setTimeout(function() {
-                            window.location.href = "{{ url('reports:config_sitereport_template') }}?action=form";
-                        }, 2000);
-                    }else{
-                        show_error_alert('Something went wrong!');
-                    }
+        //on click on "#btn_del" call the deleteClient function
+        $("#btn_del").click((e) => {
+            e.preventDefault()
+            const id = "{{ clientform.instance.pk }}"
+            if(id != 'None'){
+                if(isClientDeleted(id)){
+                    show_successful_delete_alert()
+                    window.setTimeout(function() {
+                        window.location.href = "{{ url('onboarding:client') }}";
+                    }, 2000);
                 }
-            })
-        }
-       
+            }
+        })
     })
 </script>
 {% endblock extra_scripts %}
