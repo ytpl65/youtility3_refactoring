@@ -1485,19 +1485,18 @@ class Client(LoginRequiredMixin, View):
                'ta_form': obforms.TypeAssistForm(auto_id = False)
                }
             return render(request, P['template_form'], context = cxt)
-        
+
         if R.get('action') =='loadIdentifiers':
             qset =  TypeAssist.objects.load_identifiers(request)
             return rp.JsonResponse({'items':list(qset), 'total_count':len(qset)}, status = 200)
-        
+
         if R.get('action') =='loadParents':
             qset =  Bt.objects.load_parent_choices(request)
             return rp.JsonResponse({'items':list(qset), 'total_count':len(qset)}, status = 200)
-        
+
         if R.get('action') == 'delete':
-            resp = utils.render_form_for_delete(request, self.params, True)
-            return resp
-        
+            return utils.render_form_for_delete(request, self.params, True)
+
         if R.get('action') == 'getlistbus':
             fields = ['id', 'bucode', 'buname', 'identifier__tacode', 'identifier_id',
                       'parent__buname', 'enable', 'parent_id']
@@ -1505,11 +1504,11 @@ class Client(LoginRequiredMixin, View):
                 request.GET.get('id'), fields=fields)
             ic(objs)
             return rp.JsonResponse(data = {'data':list(objs)})
-        
+
         if R.get('action') == 'getadmins':
             objs = P['model'].objects.get_listadmins(request)
             return rp.JsonResponse(data = {'data':list(objs)})
-        
+
         if R.get('id', None):
             obj = utils.get_model_obj(int(R['id']), request, self.params)
             cxt = {'clientform':self.params['form_class'](request = request, instance = obj),

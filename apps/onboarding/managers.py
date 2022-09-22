@@ -83,14 +83,15 @@ class BtManager(models.Manager):
     
     def load_parent_choices(self, request):
         search_term = request.GET.get('search')
-        qset = self.filter(~Q(id=1), ~Q(identifier__tacode='CLIENT')).distinct()
+        parentid = -1 if request.GET.get('parentid') == 'None' else request.GET.get('parentid')
+        qset = self.filter(~Q(id=1), Q(id = parentid) | Q(parent_id=parentid)).distinct()
         qset = qset.filter(buname__icontains = search_term) if search_term else qset
         qset = qset.annotate(text = Concat(F('buname'), V(" ("), F('identifier__tacode'), V(")"))).values('id', 'text')
         return qset or self.none()
 
     def get_client_list(self, fields, related):
         qset = self.filter(
-            identifier__tacode = 'CLIENT').select_related(*related).values(
+            identifier__tacode = 'CLIENT', enable=True).select_related(*related).values(
                 *fields).order_by('-mdtz')
         return qset or self.none()
 

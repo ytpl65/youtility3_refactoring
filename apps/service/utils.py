@@ -378,7 +378,7 @@ def perform_uploadattachment(file,  record, biodata):
             log.info(f'filepath is {iscreated}')
             write_file_to_dir(file_buffer, uploadfile)
             obj = insertrecord(record, 'attachment')
-            send_alert_mails_if_any(obj)
+            #send_alert_mails_if_any(obj)
             rc, traceback, msg = 0, tb.format_exc(), Messages.UPLOAD_SUCCESS
             recordcount = 1
 

@@ -25,19 +25,6 @@ Client Form
 <!-------------  BEGIN POP-UPS CODE -------------->
 {% block popup_alerts %}
 {{ super()  }}
-{% if edit is defined %}
-<!-- to delete an instance with popup_alert pass the delete_url_name, instance_id, popup_title, popup_id -->
-{% call general_popup(title="Delete", popup_id="delete_alert") %}
-<div class="modal-body">
-    <h4>Are you sure, you want to delete this?</h4>
-</div>
-<div class="modal-footer">
-    <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">No Go back</button>
-    <a href="{{ url('onboarding:client_delete', args=[clientform.instance.id]) }}"
-        class="btn btn-sm  btn-danger rounded-1">Yes I'm Sure</a>
-</div>
-{% endcall %}
-{% endif %}
 <!------------- typeassist popup for onclick + icon ---------------------->
 {% call general_popup(title='Create TypeAssist', popup_id = "butype_popup") %}
 <form action="" method="post" id="pop_butype_form">
@@ -336,7 +323,7 @@ Client
         
         //LISTBU EDITOR ON OPEN EVENT
         listbu_editor.on('open', function(e, mode, action){
-            $(".DTE_Field").addClass('p-1') // add required classes
+            $(".DTE_Field").addClass('p-1 form-control') // add required classes
             $("#DTE_Field_identifier, #DTE_Field_parent").addClass("form-control form-select") // add css to alerton form field
             if(action === 'create' || action === 'edit'){
                 init_select_field({
@@ -347,7 +334,7 @@ Client
 
                 // initialize select field parent
                 init_select_field({
-                    url:"{{ url('onboarding:client') }}?action=loadParents",
+                    url:"{{ url('onboarding:client') }}?action=loadParents&parentid={{ clientform.instance.id }}",
                     id:'#DTE_Field_parent',
                     item:'Types'
                 })
@@ -361,6 +348,8 @@ Client
             if(action == 'edit'){
                 initialize_form()
             }
+            //code text transform to uppercase while typing
+            $("#DTE_Field_bucode").css("text-transform", "uppercase")
         })
 
         //datatable  list of business units
@@ -418,7 +407,8 @@ Client
                         d.adminspostdata=true
                     }
                     
-                }},
+                }
+            },
             fields:[
                 {label: 'Name', name: 'peoplename', data: 'peoplename'},
                 {label: 'Code', name: 'peoplecode', data: 'peoplecode'},
@@ -450,6 +440,65 @@ Client
 
         adminsEditor.on('open', function(e, mode, action){
             $(".DTE_Field").addClass('p-1') // add required classes
+        })
+
+        //adminsEditor form validations
+        adminsEditor.on('preSubmit', function(e, o, action){
+            if(action !== 'remove'){
+                var peoplename = this.field('peoplename')
+                var peoplecode = this.field('peoplecode')
+                var email = this.field('email')
+                var loginid = this.field('loginid')
+                var mobno = this.field('mobno')
+                var dateofbirth = this.field('dateofbirth')
+                var dateofjoin = this.field('dateofjoin')
+                var isadmin = this.field('isadmin')
+            }
+        })
+
+        //listbu_editor form validations
+        listbu_editor.on('preSubmit', function(e, o, action){
+            if(action !== 'remove'){
+                var buname = this.field('buname')
+                var bucode = this.field('bucode')
+                var identifier = this.field('identifier')
+                var parent = this.field('parent')
+                if(!(buname.isMultiValue() || bucode.isMultiValue() || identifier.isMultiValue() || parent.isMultiValue())){
+                    if(!buname.val()){
+                        console.log(buname.val(), "@@@@222")
+                        buname.error('Please enter a name')
+                    }
+                    if(!bucode.val()){
+                        console.log(bucode.val(), "@@@@222")
+                        bucode.error('Please enter a code')
+                    }
+                    if(!identifier.val()){
+                        console.log(identifier.val(), "@@@@222")
+                        identifier.error('Please select a type')
+                    }
+                    if(!parent.val()){
+                        console.log(parent.val(), "@@@@222")
+                        parent.error('Please select a parent')
+                    }
+                    
+                    //check for duplicates in the table
+                    tabListBus.column(1).data().filter(function(value, index){
+                        if(value === bucode.val()){
+                            bucode.error('Site with this code already exists')
+                        }
+                    })
+                    //dont allow special characters and spaces in the bucode, except '-, _'
+                    if(!bucode.val().match(/^[a-zA-Z0-9_-]+$/)){
+                        bucode.error('Please enter a valid code')
+                    }
+                    if(this.inError()){
+                        return false
+                    }
+        
+
+                }
+
+            }
         })
 
         
@@ -526,6 +575,7 @@ Client
             fire_ajax_get(params)
             .done((data, status, xhr) => {
                 if(!xhr.status === 200){
+                    console.log("deleted...")
                     return false
                 }
                 return true
@@ -537,16 +587,23 @@ Client
         }
 
         //on click on "#btn_del" call the deleteClient function
-        $("#btn_del").click((e) => {
+        $("#btn_del").on('click', (e) => {
             e.preventDefault()
             const id = "{{ clientform.instance.pk }}"
             if(id != 'None'){
-                if(isClientDeleted(id)){
-                    show_successful_delete_alert()
-                    window.setTimeout(function() {
-                        window.location.href = "{{ url('onboarding:client') }}";
-                    }, 2000);
-                }
+                show_alert_before_delete("Client")
+                .then((res) => {
+                    if(res.isConfirmed){
+                        status = isClientDeleted(id)
+                        console.log(status, "status")
+                        if(status){
+                            show_successful_delete_alert()
+                            window.setTimeout(function() {
+                                window.location.href = "{{ url('onboarding:client') }}?action=form";
+                            }, 2000);
+                        }
+                    }
+                })
             }
         })
     })
