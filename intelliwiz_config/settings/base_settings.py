@@ -1,19 +1,27 @@
 # PYTHON STANDARD LIBRARY IMPORTS
 from pathlib import Path
 import os
+from icecream import ic
+import configparser
+import mimetypes
+mimetypes.add_type("text/css", ".css", True)
 
-# PYTHON EXTERNAL PACAGE LEVEL IMPORTS
-from dotenv import load_dotenv
-load_dotenv() 
+config = configparser.RawConfigParser()
+config.sections()
+CONFIGPATH = os.path.join(os.path.abspath('intelliwiz_config/settings/config.ini'))
+config.read(CONFIGPATH)
+
+
 
 # DJANGO LEVEL IMPORTS
 # USER DJANGO APP LEVEL IMPORTS
 
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
+ic(BASE_DIR)
 DEBUG=True
-SECRET_KEY = str(os.getenv('SECRET_KEY'))
+SECRET_KEY = config.get('DEFAULT', 'SECRET_KEY')
 
-ALLOWED_HOSTS = ['.localhost', '.youtility.local', 'barfi.youtility.in', '127.0.0.1', 'intelliwiz.youtility.in', '192.168.1.33']
+ALLOWED_HOSTS = ['.localhost', '.youtility.local', 'barfi.youtility.in', '127.0.0.1', 'intelliwiz.youtility.in', '192.168.1.33', '192.168.1.254']
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -58,6 +66,7 @@ MIDDLEWARE = [
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
@@ -99,22 +108,23 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'intelliwiz_config.wsgi.application'
 
-DBUSER  = str(os.getenv('DBUSER'))
+DBUSER  = config.get('DEVELOPMENT', 'DBUSER')
+DBPASS = config.get('DEVELOPMENT', 'DBPASS')
+DBNAME = config.get('DEVELOPMENT', 'DBNAME')
 
-DBPASWD = str(os.getenv('DBPASWD'))
 
-DBHOST  = str(os.getenv('DBHOST'))
+DBHOST  = config.get('DEVELOPMENT', 'DBHOST')
   
 DATABASES = {
     'icici': {
         'ENGINE':   'django.contrib.gis.db.backends.postgis',
-        'USER':     'navin',
-        'NAME':     'intelliwiz_django',
-        'PASSWORD': 'admin',
-        'HOST':     'localhost',
+        'USER':     DBUSER,
+        'NAME':     DBNAME,
+        'PASSWORD': DBPASS,
+        'HOST':     DBHOST,
         'PORT':     '5432',
     },
-}
+}   
 DATABASE_ROUTERS = ['apps.tenants.middlewares.TenantDbRouter']
 
 CACHES = {
@@ -192,9 +202,11 @@ MEDIA_URL = '/youtility4_media/'
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/3.2/howto/static-files/
-STATIC_URL = '/static/'
+STATIC_URL = 'static/'
 STATIC_ROOT = os.path.join(BASE_DIR, "frontend/static/static_server")
 STATICFILES_DIRS = [os.path.join(BASE_DIR, 'frontend/static')]
+
+ic(STATICFILES_DIRS)
 
 # Internationalization
 # https://docs.djangoproject.com/en/3.2/topics/i18n/
@@ -219,6 +231,14 @@ LOGIN_URL = 'login'
 # LOGGING CONF...
 import logging.config
 LOGGING_CONFIG = None
+
+def get_logpath():
+    logname = f'youtility_logs/{DBNAME}.log'
+    logpath = o.path.join(os.path.expanduser('~'), logname)
+    if not os.path.exists(logpath):
+        open(logpath)
+    return logpath
+
 LOGGING_CONFIG_ = { 
     'version': 1,
     'disable_existing_loggers': True,
@@ -283,9 +303,9 @@ DATE_INPUT_FORMATS = [
 GOOGLE_MAP_SECRET_KEY  = 'AIzaSyC3PUZCB7u2PiV8whHeAshweOPIK_d690o' #str(os.getenv('GOOGLE_MAP_SECRET_KEY'))
 
 # CELERY CONF...
-CELERY_BROKER_URL = str(os.getenv('CELERY_BROKER_URL'))
-CELERY_CACHE_BACKEND = str(os.getenv('CELERY_CACHE_BACKEND'))
-CELERY_RESULT_BACKEND = str(os.getenv('CELERY_RESULT_BACKEND'))
+CELERY_BROKER_URL = config.get('DEFAULT', 'CELERY_BROKER_URL')
+CELERY_CACHE_BACKEND = config.get('DEFAULT', 'CELERY_CACHE_BACKEND')
+CELERY_RESULT_BACKEND = config.get('DEFAULT', 'CELERY_RESULT_BACKEND')
 
 # SELECT2 CONF...
 SELECT2_CACHE_BACKEND = 'select2'
