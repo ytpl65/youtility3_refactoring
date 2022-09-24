@@ -367,6 +367,7 @@ class ClentForm(BuPrefForm):
             #check if imei is valid
             if  not utils.isValidEMEI(val):
                 raise forms.ValidationError("Invalid IMEI No.")
+        return val
 
     def is_valid(self) -> bool:
         """Add class to invalid fields"""

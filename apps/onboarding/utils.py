@@ -9,6 +9,7 @@ logger = logging.getLogger('django')
 dbg = logging.getLogger('__main__').debug
 
 def save_json_from_bu_prefsform(bt, buprefsform):
+    ic(buprefsform.cleaned_data)
     try:
         for k, _ in bt.bupreferences.items():
             if k in ('validimei', 'validip', 'reliveronpeoplecount',
