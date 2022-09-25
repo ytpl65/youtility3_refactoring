@@ -2,7 +2,7 @@ from .base_settings import *
 
 DEBUG = False
 
-ALLOWED_HOSTS +=['django-local.youtility.in', '127.0.0.1']
+ALLOWED_HOSTS +=['django-local.youtility.in', '127.0.0.1', '.youtility.in']
 
 try:
     SECRET_KEY = os.environ["SECRET_KEY"]
@@ -19,18 +19,15 @@ DATABASES = {
         'PORT':     '5432',
     }
 }
-
 CSRF_COOKIE_SECURE=True
 SESSION_COOKIE_SECURE=True
 SECURE_SSL_REDIRECT=True
 
-# security.W004
-SECURE_HSTS_SECONDS = 31536000 # One year in seconds
-
-# Another security settings
-SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+# Add to project/settings.py
+SECURE_HSTS_SECONDS = 30  # Unit is seconds; *USE A SMALL VALUE FOR TESTING!*
 SECURE_HSTS_PRELOAD = True
-SECURE_CONTENT_TYPE_NOSNIFF = True
+SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 
 # Media Files CONF...
 MEDIA_ROOT = os.path.join(os.path.expanduser('~'), 'youtility4_media')
@@ -38,9 +35,10 @@ MEDIA_URL = '/youtility4_media/'
 
 
 # Static files (CSS, JavaScript, Images)
-STATIC_ROOT = '/var/www/intelliwiz/static/'
+STATIC_ROOT = '/var/www/django-local.youtility.in/static/'
 STATIC_URL = 'static/'
 STATICFILES_DIRS = [os.path.join(BASE_DIR, 'frontend/static')]
+ROOT_URLCONF = 'intelliwiz_config.urls'
 
 # Email Verification CONF...
 def verified_callback(user):

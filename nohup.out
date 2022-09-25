@@ -2,27 +2,564 @@ ic| BASE_DIR: PosixPath('/home/redmine/youtility4_icici')
 ic| STATICFILES_DIRS: ['/home/redmine/youtility4_icici/frontend/static']
 ic| BASE_DIR: PosixPath('/home/redmine/youtility4_icici')
 ic| STATICFILES_DIRS: ['/home/redmine/youtility4_icici/frontend/static']
- 2022-09-24 19:49:56,878  INFO        from method: run_with_reloader                 << Watching for file changes with StatReloader >>
+ 2022-09-25 09:52:15,125  INFO        from method: run_with_reloader                 << Watching for file changes with StatReloader >>
 Performing system checks...
 
- 2022-09-24 19:49:56,996  WARNING     from method: ModelSchemaField                  << <class 'django.contrib.gis.db.models.fields.PointField'> is currently unhandled, defaulting to str. >>
+ 2022-09-25 09:52:15,244  WARNING     from method: ModelSchemaField                  << <class 'django.contrib.gis.db.models.fields.PointField'> is currently unhandled, defaulting to str. >>
 System check identified no issues (0 silenced).
-September 24, 2022 - 19:49:57
+September 25, 2022 - 09:52:15
 Django version 3.2.14, using settings 'intelliwiz_config.settings.prod_settings'
 Starting development server at http://192.168.1.254:8000/
+Quit the server with CONTROL-C.
+{'default': {'ENGINE': 'django.contrib.gis.db.backends.postgis', 'USER': 'youtilitydba', 'NAME': 'icici_django', 'PASSWORD': '!!sysadmin!!', 'HOST': '192.168.1.254', 'PORT': '5432', 'ATOMIC_REQUESTS': False, 'AUTOCOMMIT': True, 'CONN_MAX_AGE': 0, 'OPTIONS': {}, 'TIME_ZONE': None, 'TEST': {'CHARSET': None, 'COLLATION': None, 'MIGRATE': True, 'MIRROR': None, 'NAME': None}}} settings.DATABASES
+Hostname from Request:redmine.youtility.in
+Database:icicibank
+ 2022-09-25 09:54:19,664  INFO        from method: log_message                       << "GET / HTTP/1.1" 301 0 >>
+ 2022-09-25 09:54:19,671  INFO        from method: log_message                       << code 400, message Bad request syntax ('\x16\x03\x01\x02\x00\x01\x00\x01ü\x03\x03\x13\x86G$!d\x9eT¯;\x17\x0eS\x1c') >>
+ 2022-09-25 09:54:19,671  ERROR       from method: log_message                       << You're accessing the development server over HTTPS, but it only supports HTTP.
+ >>
+ 2022-09-25 09:54:19,675  INFO        from method: log_message                       << code 400, message Bad request version ('ÚÚ\x13\x03\x13\x01\x13\x02Ì©Ì¨À+À/À,À0À\x13À\x14\x00\x9c\x00\x9d\x00/\x005\x01\x00\x01\x93\x1a\x1a\x00\x00\x00\x00\x00\x19\x00\x17\x00\x00\x14redmine.youtility.in\x00\x17\x00\x00ÿ\x01\x00\x01\x00\x00') >>
+ 2022-09-25 09:54:19,675  ERROR       from method: log_message                       << You're accessing the development server over HTTPS, but it only supports HTTP.
+ >>
+{'default': {'ENGINE': 'django.contrib.gis.db.backends.postgis', 'USER': 'youtilitydba', 'NAME': 'icici_django', 'PASSWORD': '!!sysadmin!!', 'HOST': '192.168.1.254', 'PORT': '5432', 'ATOMIC_REQUESTS': False, 'AUTOCOMMIT': True, 'CONN_MAX_AGE': 0, 'OPTIONS': {}, 'TIME_ZONE': None, 'TEST': {'CHARSET': None, 'COLLATION': None, 'MIGRATE': True, 'MIRROR': None, 'NAME': None}}} settings.DATABASES
+Hostname from Request:django-local.youtility.in
+Database:default
+ 2022-09-25 09:55:15,876  INFO        from method: log_message                       << "GET / HTTP/1.1" 301 0 >>
+ 2022-09-25 09:55:15,886  INFO        from method: log_message                       << code 400, message Bad request syntax ('\x16\x03\x01\x02\x00\x01\x00\x01ü\x03\x03ûåå\x10\x8b.Á\x8f\x9e\x88öî+\x9f«\x95öqQ') >>
+ 2022-09-25 09:55:15,887  ERROR       from method: log_message                       << You're accessing the development server over HTTPS, but it only supports HTTP.
+ >>
+ 2022-09-25 09:55:15,891  INFO        from method: log_message                       << code 400, message Bad request version ('\x00\x00\x19django-local.youtility.in\x00\x17\x00\x00ÿ\x01\x00\x01\x00\x00') >>
+ 2022-09-25 09:55:15,892  ERROR       from method: log_message                       << You're accessing the development server over HTTPS, but it only supports HTTP.
+ >>
+{'default': {'ENGINE': 'django.contrib.gis.db.backends.postgis', 'USER': 'youtilitydba', 'NAME': 'icici_django', 'PASSWORD': '!!sysadmin!!', 'HOST': '192.168.1.254', 'PORT': '5432', 'ATOMIC_REQUESTS': False, 'AUTOCOMMIT': True, 'CONN_MAX_AGE': 0, 'OPTIONS': {}, 'TIME_ZONE': None, 'TEST': {'CHARSET': None, 'COLLATION': None, 'MIGRATE': True, 'MIRROR': None, 'NAME': None}}} settings.DATABASES
+Hostname from Request:django-local.youtility.in
+Database:default
+ 2022-09-25 09:55:35,866  INFO        from method: log_message                       << "GET / HTTP/1.1" 301 0 >>
+ 2022-09-25 09:55:35,889  INFO        from method: log_message                       << code 400, message Bad request version ('\x00\x00\x19django-local.youtility.in\x00\x17\x00\x00ÿ\x01\x00\x01\x00\x00') >>
+ 2022-09-25 09:55:35,890  ERROR       from method: log_message                       << You're accessing the development server over HTTPS, but it only supports HTTP.
+ >>
+ 2022-09-25 09:55:35,895  INFO        from method: log_message                       << code 400, message Bad request version ('\x00\x00\x19django-local.youtility.in\x00\x17\x00\x00ÿ\x01\x00\x01\x00\x00') >>
+ 2022-09-25 09:55:35,895  ERROR       from method: log_message                       << You're accessing the development server over HTTPS, but it only supports HTTP.
+ >>
+ 2022-09-25 09:55:45,729  INFO        from method: log_message                       << code 400, message Bad request version ('zz\x13\x03\x13\x01\x13\x02Ì©Ì¨À+À/À,À0À\x13À\x14\x00\x9c\x00\x9d\x00/\x005\x01\x00\x01\x93\x1a\x1a\x00\x00\x00\x00\x00\x19\x00\x17\x00\x00\x14redmine.youtility.in\x00\x17\x00\x00ÿ\x01\x00\x01\x00\x00') >>
+ 2022-09-25 09:55:45,730  ERROR       from method: log_message                       << You're accessing the development server over HTTPS, but it only supports HTTP.
+ >>
+ 2022-09-25 09:55:45,733  INFO        from method: log_message                       << code 400, message Bad request version ('zz\x13\x03\x13\x01\x13\x02Ì©Ì¨À+À/À,À0À\x13À\x14\x00\x9c\x00\x9d\x00/\x005\x01\x00\x01\x93\x8a\x8a\x00\x00\x00\x00\x00\x19\x00\x17\x00\x00\x14redmine.youtility.in\x00\x17\x00\x00ÿ\x01\x00\x01\x00\x00') >>
+ 2022-09-25 09:55:45,734  ERROR       from method: log_message                       << You're accessing the development server over HTTPS, but it only supports HTTP.
+ >>
+ic| BASE_DIR: PosixPath('/home/redmine/youtility4_icici')
+ic| STATICFILES_DIRS: ['/home/redmine/youtility4_icici/frontend/static']
+ic| BASE_DIR: PosixPath('/home/redmine/youtility4_icici')
+ic| STATICFILES_DIRS: ['/home/redmine/youtility4_icici/frontend/static']
+ 2022-09-25 09:57:37,951  INFO        from method: run_with_reloader                 << Watching for file changes with StatReloader >>
+Performing system checks...
+
+ 2022-09-25 09:57:38,071  WARNING     from method: ModelSchemaField                  << <class 'django.contrib.gis.db.models.fields.PointField'> is currently unhandled, defaulting to str. >>
+System check identified no issues (0 silenced).
+September 25, 2022 - 09:57:38
+Django version 3.2.14, using settings 'intelliwiz_config.settings.prod_settings'
+Starting development server at http://0.0.0.0:8000/
 Quit the server with CONTROL-C.
 Error: That port is already in use.
 ic| BASE_DIR: PosixPath('/home/redmine/youtility4_icici')
 ic| STATICFILES_DIRS: ['/home/redmine/youtility4_icici/frontend/static']
 ic| BASE_DIR: PosixPath('/home/redmine/youtility4_icici')
 ic| STATICFILES_DIRS: ['/home/redmine/youtility4_icici/frontend/static']
- 2022-09-24 19:54:17,092  INFO        from method: run_with_reloader                 << Watching for file changes with StatReloader >>
+ 2022-09-25 09:58:09,411  INFO        from method: run_with_reloader                 << Watching for file changes with StatReloader >>
 Performing system checks...
 
- 2022-09-24 19:54:17,213  WARNING     from method: ModelSchemaField                  << <class 'django.contrib.gis.db.models.fields.PointField'> is currently unhandled, defaulting to str. >>
+ 2022-09-25 09:58:09,529  WARNING     from method: ModelSchemaField                  << <class 'django.contrib.gis.db.models.fields.PointField'> is currently unhandled, defaulting to str. >>
 System check identified no issues (0 silenced).
-September 24, 2022 - 19:54:17
+September 25, 2022 - 09:58:09
 Django version 3.2.14, using settings 'intelliwiz_config.settings.prod_settings'
-Starting development server at http://192.168.1.254:8000/
+Starting development server at http://0.0.0.0:8000/
 Quit the server with CONTROL-C.
-Error: That port is already in use.
+ 2022-09-25 09:58:26,878  INFO        from method: log_message                       << code 400, message Bad request version ('êê\x13\x03\x13\x01\x13\x02Ì©Ì¨À+À/À,À0À\x13À\x14\x00\x9c\x00\x9d\x00/\x005\x01\x00\x01\x93jj\x00\x00\x00\x00\x00\x19\x00\x17\x00\x00\x14redmine.youtility.in\x00\x17\x00\x00ÿ\x01\x00\x01\x00\x00') >>
+ 2022-09-25 09:58:26,879  ERROR       from method: log_message                       << You're accessing the development server over HTTPS, but it only supports HTTP.
+ >>
+ 2022-09-25 09:58:26,882  INFO        from method: log_message                       << code 400, message Bad request version ('êê\x13\x03\x13\x01\x13\x02Ì©Ì¨À+À/À,À0À\x13À\x14\x00\x9c\x00\x9d\x00/\x005\x01\x00\x01\x93ºº\x00\x00\x00\x00\x00\x19\x00\x17\x00\x00\x14redmine.youtility.in\x00\x17\x00\x00ÿ\x01\x00\x01\x00\x00') >>
+ 2022-09-25 09:58:26,883  ERROR       from method: log_message                       << You're accessing the development server over HTTPS, but it only supports HTTP.
+ >>
+ 2022-09-25 09:58:27,713  INFO        from method: log_message                       << code 400, message Bad request syntax ('\x16\x03\x01\x02\x00\x01\x00\x01ü\x03\x03\x18\x8f¶\x9b"ø\x8fÔRµ[\x1a\x93xE') >>
+ 2022-09-25 09:58:27,714  ERROR       from method: log_message                       << You're accessing the development server over HTTPS, but it only supports HTTP.
+ >>
+ 2022-09-25 09:58:27,717  INFO        from method: log_message                       << code 400, message Bad request version ('êê\x13\x03\x13\x01\x13\x02Ì©Ì¨À+À/À,À0À\x13À\x14\x00\x9c\x00\x9d\x00/\x005\x01\x00\x01\x93::\x00\x00\x00\x00\x00\x19\x00\x17\x00\x00\x14redmine.youtility.in\x00\x17\x00\x00ÿ\x01\x00\x01\x00\x00') >>
+ 2022-09-25 09:58:27,718  ERROR       from method: log_message                       << You're accessing the development server over HTTPS, but it only supports HTTP.
+ >>
+ 2022-09-25 09:58:29,598  INFO        from method: log_message                       << code 400, message Bad request version ('ÚÚ\x13\x03\x13\x01\x13\x02Ì©Ì¨À+À/À,À0À\x13À\x14\x00\x9c\x00\x9d\x00/\x005\x01\x00\x01\x93\x8a\x8a\x00\x00\x00\x00\x00\x19\x00\x17\x00\x00\x14redmine.youtility.in\x00\x17\x00\x00ÿ\x01\x00\x01\x00\x00') >>
+ 2022-09-25 09:58:29,599  ERROR       from method: log_message                       << You're accessing the development server over HTTPS, but it only supports HTTP.
+ >>
+ 2022-09-25 09:58:29,601  INFO        from method: log_message                       << code 400, message Bad request version ('\x9a\x9a\x13\x03\x13\x01\x13\x02Ì©Ì¨À+À/À,À0À\x13À\x14\x00\x9c\x00\x9d\x00/\x005\x01\x00\x01\x93ZZ\x00\x00\x00\x00\x00\x19\x00\x17\x00\x00\x14redmine.youtility.in\x00\x17\x00\x00ÿ\x01\x00\x01\x00\x00') >>
+ 2022-09-25 09:58:29,602  ERROR       from method: log_message                       << You're accessing the development server over HTTPS, but it only supports HTTP.
+ >>
+{'default': {'ENGINE': 'django.contrib.gis.db.backends.postgis', 'USER': 'youtilitydba', 'NAME': 'icici_django', 'PASSWORD': '!!sysadmin!!', 'HOST': '192.168.1.254', 'PORT': '5432', 'ATOMIC_REQUESTS': False, 'AUTOCOMMIT': True, 'CONN_MAX_AGE': 0, 'OPTIONS': {}, 'TIME_ZONE': None, 'TEST': {'CHARSET': None, 'COLLATION': None, 'MIGRATE': True, 'MIRROR': None, 'NAME': None}}} settings.DATABASES
+Hostname from Request:redmine.youtility.in
+Database:icicibank
+ 2022-09-25 09:58:35,717  INFO        from method: log_message                       << "GET / HTTP/1.1" 301 0 >>
+ 2022-09-25 09:58:35,723  INFO        from method: log_message                       << code 400, message Bad request version ('\x8a\x8a\x13\x03\x13\x01\x13\x02Ì©Ì¨À+À/À,À0À\x13À\x14\x00\x9c\x00\x9d\x00/\x005\x01\x00\x01\x93') >>
+ 2022-09-25 09:58:35,723  ERROR       from method: log_message                       << You're accessing the development server over HTTPS, but it only supports HTTP.
+ >>
+ 2022-09-25 09:58:35,726  INFO        from method: log_message                       << code 400, message Bad request version ('Ía«Ëßû¢\x82\x80[\x8b?o\x15{\x8aÍ') >>
+ 2022-09-25 09:58:35,727  ERROR       from method: log_message                       << You're accessing the development server over HTTPS, but it only supports HTTP.
+ >>
+ 2022-09-25 09:58:38,706  INFO        from method: log_message                       << code 400, message Bad request version ('JJ\x13\x03\x13\x01\x13\x02Ì©Ì¨À+À/À,À0À\x13À\x14\x00\x9c\x00\x9d\x00/\x005\x01\x00\x01\x93ºº\x00\x00\x00\x00\x00\x19\x00\x17\x00\x00\x14redmine.youtility.in\x00\x17\x00\x00ÿ\x01\x00\x01\x00\x00') >>
+ 2022-09-25 09:58:38,707  ERROR       from method: log_message                       << You're accessing the development server over HTTPS, but it only supports HTTP.
+ >>
+ 2022-09-25 09:58:38,708  INFO        from method: log_message                       << code 400, message Bad request version ('::\x13\x03\x13\x01\x13\x02Ì©Ì¨À+À/À,À0À\x13À\x14\x00\x9c\x00\x9d\x00/\x005\x01\x00\x01\x93**\x00\x00\x00\x00\x00\x19\x00\x17\x00\x00\x14redmine.youtility.in\x00\x17\x00\x00ÿ\x01\x00\x01\x00\x00') >>
+ 2022-09-25 09:58:38,708  ERROR       from method: log_message                       << You're accessing the development server over HTTPS, but it only supports HTTP.
+ >>
+ 2022-09-25 09:58:39,032  INFO        from method: log_message                       << code 400, message Bad request version ('ÊÊ\x13\x03\x13\x01\x13\x02Ì©Ì¨À+À/À,À0À\x13À\x14\x00\x9c\x00\x9d\x00/\x005\x01\x00\x01\x93ÚÚ\x00\x00\x00\x00\x00\x19\x00\x17\x00\x00\x14redmine.youtility.in\x00\x17\x00\x00ÿ\x01\x00\x01\x00\x00') >>
+ 2022-09-25 09:58:39,032  ERROR       from method: log_message                       << You're accessing the development server over HTTPS, but it only supports HTTP.
+ >>
+ 2022-09-25 09:58:39,036  INFO        from method: log_message                       << code 400, message Bad request version ('õFû³Z>\x96]üä.é\x06.:6âô\x10ÅÃ¨\x88Ôlç7\x94') >>
+ 2022-09-25 09:58:39,036  ERROR       from method: log_message                       << You're accessing the development server over HTTPS, but it only supports HTTP.
+ >>
+ 2022-09-25 09:58:39,213  INFO        from method: log_message                       << code 400, message Bad request version ('úú\x13\x03\x13\x01\x13\x02Ì©Ì¨À+À/À,À0À\x13À\x14\x00\x9c\x00\x9d\x00/\x005\x01\x00\x01\x93jj\x00\x00\x00\x00\x00\x19\x00\x17\x00\x00\x14redmine.youtility.in\x00\x17\x00\x00ÿ\x01\x00\x01\x00\x00') >>
+ 2022-09-25 09:58:39,214  ERROR       from method: log_message                       << You're accessing the development server over HTTPS, but it only supports HTTP.
+ >>
+ 2022-09-25 09:58:39,216  INFO        from method: log_message                       << code 400, message Bad request syntax ('\x16\x03\x01\x02\x00\x01\x00\x01ü\x03\x03Ç¡Opºø?¤lÊ5l©â\x90ûø)') >>
+ 2022-09-25 09:58:39,217  ERROR       from method: log_message                       << You're accessing the development server over HTTPS, but it only supports HTTP.
+ >>
+ 2022-09-25 09:58:39,375  INFO        from method: log_message                       << code 400, message Bad request version ('ÙÜ4·\x94\x81ð;\xad\x92\x13?\x1beIF') >>
+ 2022-09-25 09:58:39,375  ERROR       from method: log_message                       << You're accessing the development server over HTTPS, but it only supports HTTP.
+ >>
+ 2022-09-25 09:58:39,379  INFO        from method: log_message                       << code 400, message Bad request version ('ºº\x13\x03\x13\x01\x13\x02Ì©Ì¨À+À/À,À0À\x13À\x14\x00\x9c\x00\x9d\x00/\x005\x01\x00\x01\x93\x8a\x8a\x00\x00\x00\x00\x00\x19\x00\x17\x00\x00\x14redmine.youtility.in\x00\x17\x00\x00ÿ\x01\x00\x01\x00\x00') >>
+ 2022-09-25 09:58:39,379  ERROR       from method: log_message                       << You're accessing the development server over HTTPS, but it only supports HTTP.
+ >>
+ 2022-09-25 09:58:39,523  INFO        from method: log_message                       << code 400, message Bad request version ('y\x00') >>
+ 2022-09-25 09:58:39,524  ERROR       from method: log_message                       << You're accessing the development server over HTTPS, but it only supports HTTP.
+ >>
+ 2022-09-25 09:58:39,527  INFO        from method: log_message                       << code 400, message Bad request version ('ÿ:Ïëp8ì/õ\x00') >>
+ 2022-09-25 09:58:39,528  ERROR       from method: log_message                       << You're accessing the development server over HTTPS, but it only supports HTTP.
+ >>
+ 2022-09-25 09:58:39,680  INFO        from method: log_message                       << code 400, message Bad request version ('ªª\x13\x03\x13\x01\x13\x02Ì©Ì¨À+À/À,À0À\x13À\x14\x00\x9c\x00\x9d\x00/\x005\x01\x00\x01\x93jj\x00\x00\x00\x00\x00\x19\x00\x17\x00\x00\x14redmine.youtility.in\x00\x17\x00\x00ÿ\x01\x00\x01\x00\x00') >>
+ 2022-09-25 09:58:39,681  ERROR       from method: log_message                       << You're accessing the development server over HTTPS, but it only supports HTTP.
+ >>
+ 2022-09-25 09:58:39,684  INFO        from method: log_message                       << code 400, message Bad request version ('ÚÚ\x13\x03\x13\x01\x13\x02Ì©Ì¨À+À/À,À0À\x13À\x14\x00\x9c\x00\x9d\x00/\x005\x01\x00\x01\x93\x9a\x9a\x00\x00\x00\x00\x00\x19\x00\x17\x00\x00\x14redmine.youtility.in\x00\x17\x00\x00ÿ\x01\x00\x01\x00\x00') >>
+ 2022-09-25 09:58:39,685  ERROR       from method: log_message                       << You're accessing the development server over HTTPS, but it only supports HTTP.
+ >>
+ 2022-09-25 09:58:39,835  INFO        from method: log_message                       << code 400, message Bad request version ('ZZ\x13\x03\x13\x01\x13\x02Ì©Ì¨À+À/À,À0À\x13À\x14\x00\x9c\x00\x9d\x00/\x005\x01\x00\x01\x93\x1a\x1a\x00\x00\x00\x00\x00\x19\x00\x17\x00\x00\x14redmine.youtility.in\x00\x17\x00\x00ÿ\x01\x00\x01\x00\x00') >>
+ 2022-09-25 09:58:39,835  ERROR       from method: log_message                       << You're accessing the development server over HTTPS, but it only supports HTTP.
+ >>
+ 2022-09-25 09:58:39,839  INFO        from method: log_message                       << code 400, message Bad request version ('ÊÊ\x13\x03\x13\x01\x13\x02Ì©Ì¨À+À/À,À0À\x13À\x14\x00\x9c\x00\x9d\x00/\x005\x01\x00\x01\x93úú\x00\x00\x00\x00\x00\x19\x00\x17\x00\x00\x14redmine.youtility.in\x00\x17\x00\x00ÿ\x01\x00\x01\x00\x00') >>
+ 2022-09-25 09:58:39,840  ERROR       from method: log_message                       << You're accessing the development server over HTTPS, but it only supports HTTP.
+ >>
+ 2022-09-25 09:59:21,613  INFO        from method: log_message                       << code 400, message Bad request version ('ªª\x13\x03\x13\x01\x13\x02Ì©Ì¨À+À/À,À0À\x13À\x14\x00\x9c\x00\x9d\x00/\x005\x01\x00\x01\x93\x8a\x8a\x00\x00\x00\x00\x00\x19\x00\x17\x00\x00\x14redmine.youtility.in\x00\x17\x00\x00ÿ\x01\x00\x01\x00\x00') >>
+ 2022-09-25 09:59:21,614  ERROR       from method: log_message                       << You're accessing the development server over HTTPS, but it only supports HTTP.
+ >>
+ 2022-09-25 09:59:21,618  INFO        from method: log_message                       << code 400, message Bad request version ("'¼\x05ÜÈ<") >>
+ 2022-09-25 09:59:21,619  ERROR       from method: log_message                       << You're accessing the development server over HTTPS, but it only supports HTTP.
+ >>
+ 2022-09-25 09:59:27,017  INFO        from method: log_message                       << code 400, message Bad request syntax ('\x16\x03\x01\x02\x00\x01\x00\x01ü\x03\x03\x9b') >>
+ 2022-09-25 09:59:27,018  ERROR       from method: log_message                       << You're accessing the development server over HTTPS, but it only supports HTTP.
+ >>
+ 2022-09-25 09:59:27,021  INFO        from method: log_message                       << code 400, message Bad request version ('§@c\x14²\x91\x95\x02ßAX\\Ñ<¬L') >>
+ 2022-09-25 09:59:27,022  ERROR       from method: log_message                       << You're accessing the development server over HTTPS, but it only supports HTTP.
+ >>
+{'default': {'ENGINE': 'django.contrib.gis.db.backends.postgis', 'USER': 'youtilitydba', 'NAME': 'icici_django', 'PASSWORD': '!!sysadmin!!', 'HOST': '192.168.1.254', 'PORT': '5432', 'ATOMIC_REQUESTS': False, 'AUTOCOMMIT': True, 'CONN_MAX_AGE': 0, 'OPTIONS': {}, 'TIME_ZONE': None, 'TEST': {'CHARSET': None, 'COLLATION': None, 'MIGRATE': True, 'MIRROR': None, 'NAME': None}}} settings.DATABASES
+Hostname from Request:django-local.youtility.in
+Database:default
+ 2022-09-25 10:00:51,828  INFO        from method: log_message                       << "GET / HTTP/1.1" 301 0 >>
+ 2022-09-25 10:00:51,841  INFO        from method: log_message                       << code 400, message Bad HTTP/0.9 request type ('\x16\x03\x01\x02\x00\x01\x00\x01ü\x03\x03@Æ') >>
+ 2022-09-25 10:00:51,842  ERROR       from method: log_message                       << You're accessing the development server over HTTPS, but it only supports HTTP.
+ >>
+ 2022-09-25 10:00:51,849  INFO        from method: log_message                       << code 400, message Bad request version ('\x00\x00\x19django-local.youtility.in\x00\x17\x00\x00ÿ\x01\x00\x01\x00\x00') >>
+ 2022-09-25 10:00:51,850  ERROR       from method: log_message                       << You're accessing the development server over HTTPS, but it only supports HTTP.
+ >>
+ 2022-09-25 10:01:03,277  INFO        from method: log_message                       << code 400, message Bad request version ('\x00\x00\x19django-local.youtility.in\x00\x17\x00\x00ÿ\x01\x00\x01\x00\x00') >>
+ 2022-09-25 10:01:03,278  ERROR       from method: log_message                       << You're accessing the development server over HTTPS, but it only supports HTTP.
+ >>
+ 2022-09-25 10:01:03,286  INFO        from method: log_message                       << code 400, message Bad request version ('\x00\x00\x19django-local.youtility.in\x00\x17\x00\x00ÿ\x01\x00\x01\x00\x00') >>
+ 2022-09-25 10:01:03,287  ERROR       from method: log_message                       << You're accessing the development server over HTTPS, but it only supports HTTP.
+ >>
+ 2022-09-25 10:01:04,302  INFO        from method: log_message                       << code 400, message Bad request version ('\x00\x00\x19django-local.youtility.in\x00\x17\x00\x00ÿ\x01\x00\x01\x00\x00') >>
+ 2022-09-25 10:01:04,302  ERROR       from method: log_message                       << You're accessing the development server over HTTPS, but it only supports HTTP.
+ >>
+ 2022-09-25 10:01:04,317  INFO        from method: log_message                       << code 400, message Bad request version ('\x00\x00\x19django-local.youtility.in\x00\x17\x00\x00ÿ\x01\x00\x01\x00\x00') >>
+ 2022-09-25 10:01:04,317  ERROR       from method: log_message                       << You're accessing the development server over HTTPS, but it only supports HTTP.
+ >>
+ 2022-09-25 10:01:05,110  INFO        from method: log_message                       << code 400, message Bad request version ('\x00\x00\x19django-local.youtility.in\x00\x17\x00\x00ÿ\x01\x00\x01\x00\x00') >>
+ 2022-09-25 10:01:05,110  ERROR       from method: log_message                       << You're accessing the development server over HTTPS, but it only supports HTTP.
+ >>
+ 2022-09-25 10:01:05,118  INFO        from method: log_message                       << code 400, message Bad request version ('\x00\x00\x19django-local.youtility.in\x00\x17\x00\x00ÿ\x01\x00\x01\x00\x00') >>
+ 2022-09-25 10:01:05,118  ERROR       from method: log_message                       << You're accessing the development server over HTTPS, but it only supports HTTP.
+ >>
+ 2022-09-25 10:01:05,603  INFO        from method: log_message                       << code 400, message Bad request syntax ('\x16\x03\x01\x02\x00\x01\x00\x01ü\x03\x03¸¹\x00Ùo&&Ó\x9f3É¶\x12«\xad\x8e') >>
+ 2022-09-25 10:01:05,604  ERROR       from method: log_message                       << You're accessing the development server over HTTPS, but it only supports HTTP.
+ >>
+ 2022-09-25 10:01:05,613  INFO        from method: log_message                       << code 400, message Bad request version ('\x00\x00\x19django-local.youtility.in\x00\x17\x00\x00ÿ\x01\x00\x01\x00\x00') >>
+ 2022-09-25 10:01:05,613  ERROR       from method: log_message                       << You're accessing the development server over HTTPS, but it only supports HTTP.
+ >>
+ 2022-09-25 10:01:06,119  INFO        from method: log_message                       << code 400, message Bad request syntax ('\x16\x03\x01\x02\x00\x01\x00\x01ü\x03\x03\x16\x18+\x84è\x01\x15\x0e|') >>
+ 2022-09-25 10:01:06,119  ERROR       from method: log_message                       << You're accessing the development server over HTTPS, but it only supports HTTP.
+ >>
+ 2022-09-25 10:01:06,127  INFO        from method: log_message                       << code 400, message Bad request version ('\x00\x00\x19django-local.youtility.in\x00\x17\x00\x00ÿ\x01\x00\x01\x00\x00') >>
+ 2022-09-25 10:01:06,128  ERROR       from method: log_message                       << You're accessing the development server over HTTPS, but it only supports HTTP.
+ >>
+ 2022-09-25 10:01:06,578  INFO        from method: log_message                       << code 400, message Bad request version ('\x00\x00\x19django-local.youtility.in\x00\x17\x00\x00ÿ\x01\x00\x01\x00\x00') >>
+ 2022-09-25 10:01:06,579  ERROR       from method: log_message                       << You're accessing the development server over HTTPS, but it only supports HTTP.
+ >>
+ 2022-09-25 10:01:06,589  INFO        from method: log_message                       << code 400, message Bad request version ('\x00\x00\x19django-local.youtility.in\x00\x17\x00\x00ÿ\x01\x00\x01\x00\x00') >>
+ 2022-09-25 10:01:06,589  ERROR       from method: log_message                       << You're accessing the development server over HTTPS, but it only supports HTTP.
+ >>
+ 2022-09-25 10:01:07,475  INFO        from method: log_message                       << code 400, message Bad request version ('\x00\x00\x19django-local.youtility.in\x00\x17\x00\x00ÿ\x01\x00\x01\x00\x00') >>
+ 2022-09-25 10:01:07,476  ERROR       from method: log_message                       << You're accessing the development server over HTTPS, but it only supports HTTP.
+ >>
+ 2022-09-25 10:01:07,486  INFO        from method: log_message                       << code 400, message Bad request version ('\x00\x00\x19django-local.youtility.in\x00\x17\x00\x00ÿ\x01\x00\x01\x00\x00') >>
+ 2022-09-25 10:01:07,487  ERROR       from method: log_message                       << You're accessing the development server over HTTPS, but it only supports HTTP.
+ >>
+ 2022-09-25 10:01:07,995  INFO        from method: log_message                       << code 400, message Bad request version ('\x00\x00\x19django-local.youtility.in\x00\x17\x00\x00ÿ\x01\x00\x01\x00\x00') >>
+ 2022-09-25 10:01:07,996  ERROR       from method: log_message                       << You're accessing the development server over HTTPS, but it only supports HTTP.
+ >>
+ 2022-09-25 10:01:08,005  INFO        from method: log_message                       << code 400, message Bad request version ('\x00\x00\x19django-local.youtility.in\x00\x17\x00\x00ÿ\x01\x00\x01\x00\x00') >>
+ 2022-09-25 10:01:08,006  ERROR       from method: log_message                       << You're accessing the development server over HTTPS, but it only supports HTTP.
+ >>
+ 2022-09-25 10:01:09,420  INFO        from method: log_message                       << code 400, message Bad request version ('\x00\x00\x19django-local.youtility.in\x00\x17\x00\x00ÿ\x01\x00\x01\x00\x00') >>
+ 2022-09-25 10:01:09,420  ERROR       from method: log_message                       << You're accessing the development server over HTTPS, but it only supports HTTP.
+ >>
+ 2022-09-25 10:01:09,432  INFO        from method: log_message                       << code 400, message Bad request version ('\x00\x00\x19django-local.youtility.in\x00\x17\x00\x00ÿ\x01\x00\x01\x00\x00') >>
+ 2022-09-25 10:01:09,432  ERROR       from method: log_message                       << You're accessing the development server over HTTPS, but it only supports HTTP.
+ >>
+ 2022-09-25 10:01:10,342  INFO        from method: log_message                       << code 400, message Bad request version ('-²µ.Wkðå') >>
+ 2022-09-25 10:01:10,343  ERROR       from method: log_message                       << You're accessing the development server over HTTPS, but it only supports HTTP.
+ >>
+ 2022-09-25 10:01:10,358  INFO        from method: log_message                       << code 400, message Bad request version ('\x00\x00\x19django-local.youtility.in\x00\x17\x00\x00ÿ\x01\x00\x01\x00\x00') >>
+ 2022-09-25 10:01:10,359  ERROR       from method: log_message                       << You're accessing the development server over HTTPS, but it only supports HTTP.
+ >>
+ 2022-09-25 10:01:10,955  INFO        from method: log_message                       << code 400, message Bad HTTP/0.9 request type ('\x16\x03\x01\x02\x00\x01\x00\x01ü\x03\x03áJ\x8bu4\\\x0eDßk\x00äEú\x98¾çü,©»cw7p:ÐþR\x15ß>') >>
+ 2022-09-25 10:01:10,956  ERROR       from method: log_message                       << You're accessing the development server over HTTPS, but it only supports HTTP.
+ >>
+ 2022-09-25 10:01:10,964  INFO        from method: log_message                       << code 400, message Bad request version ('\x00\x00\x19django-local.youtility.in\x00\x17\x00\x00ÿ\x01\x00\x01\x00\x00') >>
+ 2022-09-25 10:01:10,965  ERROR       from method: log_message                       << You're accessing the development server over HTTPS, but it only supports HTTP.
+ >>
+ 2022-09-25 10:01:13,092  INFO        from method: log_message                       << code 400, message Bad request version ('\x00\x00\x19django-local.youtility.in\x00\x17\x00\x00ÿ\x01\x00\x01\x00\x00') >>
+ 2022-09-25 10:01:13,093  ERROR       from method: log_message                       << You're accessing the development server over HTTPS, but it only supports HTTP.
+ >>
+ 2022-09-25 10:01:13,103  INFO        from method: log_message                       << code 400, message Bad request version ('\x80\x8d,²yÁ') >>
+ 2022-09-25 10:01:13,103  ERROR       from method: log_message                       << You're accessing the development server over HTTPS, but it only supports HTTP.
+ >>
+ 2022-09-25 10:01:13,721  INFO        from method: log_message                       << code 400, message Bad request version ('fÍè\x7fê]\x8e\x00') >>
+ 2022-09-25 10:01:13,721  ERROR       from method: log_message                       << You're accessing the development server over HTTPS, but it only supports HTTP.
+ >>
+ 2022-09-25 10:01:13,729  INFO        from method: log_message                       << code 400, message Bad request syntax ('\x16\x03\x01\x02\x00\x01\x00\x01ü\x03\x03\x13¦') >>
+ 2022-09-25 10:01:13,730  ERROR       from method: log_message                       << You're accessing the development server over HTTPS, but it only supports HTTP.
+ >>
+ 2022-09-25 10:01:15,474  INFO        from method: log_message                       << code 400, message Bad request version ('\x00\x00\x19django-local.youtility.in\x00\x17\x00\x00ÿ\x01\x00\x01\x00\x00') >>
+ 2022-09-25 10:01:15,475  ERROR       from method: log_message                       << You're accessing the development server over HTTPS, but it only supports HTTP.
+ >>
+ 2022-09-25 10:01:15,486  INFO        from method: log_message                       << code 400, message Bad request version ('\x00\x00\x19django-local.youtility.in\x00\x17\x00\x00ÿ\x01\x00\x01\x00\x00') >>
+ 2022-09-25 10:01:15,487  ERROR       from method: log_message                       << You're accessing the development server over HTTPS, but it only supports HTTP.
+ >>
+ 2022-09-25 10:01:16,078  INFO        from method: log_message                       << code 400, message Bad request version ('\x00\x00\x19django-local.youtility.in\x00\x17\x00\x00ÿ\x01\x00\x01\x00\x00') >>
+ 2022-09-25 10:01:16,079  ERROR       from method: log_message                       << You're accessing the development server over HTTPS, but it only supports HTTP.
+ >>
+ 2022-09-25 10:01:16,087  INFO        from method: log_message                       << code 400, message Bad request syntax ('\x16\x03\x01\x02\x00\x01\x00\x01ü\x03\x03ö¾ò\x0f5¢') >>
+ 2022-09-25 10:01:16,088  ERROR       from method: log_message                       << You're accessing the development server over HTTPS, but it only supports HTTP.
+ >>
+{'default': {'ENGINE': 'django.contrib.gis.db.backends.postgis', 'USER': 'youtilitydba', 'NAME': 'icici_django', 'PASSWORD': '!!sysadmin!!', 'HOST': '192.168.1.254', 'PORT': '5432', 'ATOMIC_REQUESTS': False, 'AUTOCOMMIT': True, 'CONN_MAX_AGE': 0, 'OPTIONS': {}, 'TIME_ZONE': None, 'TEST': {'CHARSET': None, 'COLLATION': None, 'MIGRATE': True, 'MIRROR': None, 'NAME': None}}} settings.DATABASES
+Hostname from Request:192.168.1.254
+Database:default
+ 2022-09-25 10:01:27,136  INFO        from method: log_message                       << "GET / HTTP/1.1" 301 0 >>
+ 2022-09-25 10:01:27,241  INFO        from method: log_message                       << code 400, message Bad request version ('êê\x13\x01\x13\x02\x13\x03À+À/À,À0Ì©Ì¨À\x13À\x14\x00\x9c\x00\x9d\x00/\x005\x01\x00\x01\x93zz\x00\x00\x00\x17\x00\x00ÿ\x01\x00\x01\x00\x00') >>
+ 2022-09-25 10:01:27,242  ERROR       from method: log_message                       << You're accessing the development server over HTTPS, but it only supports HTTP.
+ >>
+ 2022-09-25 10:01:27,254  INFO        from method: log_message                       << code 400, message Bad request version ('ÚÚ\x13\x01\x13\x02\x13\x03À+À/À,À0Ì©Ì¨À\x13À\x14\x00\x9c\x00\x9d\x00/\x005\x01\x00\x01\x93jj\x00\x00\x00\x17\x00\x00ÿ\x01\x00\x01\x00\x00') >>
+ 2022-09-25 10:01:27,254  ERROR       from method: log_message                       << You're accessing the development server over HTTPS, but it only supports HTTP.
+ >>
+ 2022-09-25 10:01:30,922  INFO        from method: log_message                       << code 400, message Bad request version ('JJ\x13\x01\x13\x02\x13\x03À+À/À,À0Ì©Ì¨À\x13À\x14\x00\x9c\x00\x9d\x00/\x005\x01\x00\x01\x93::\x00\x00\x00\x17\x00\x00ÿ\x01\x00\x01\x00\x00') >>
+ 2022-09-25 10:01:30,923  ERROR       from method: log_message                       << You're accessing the development server over HTTPS, but it only supports HTTP.
+ >>
+ 2022-09-25 10:01:30,932  INFO        from method: log_message                       << code 400, message Bad request version ('êê\x13\x01\x13\x02\x13\x03À+À/À,À0Ì©Ì¨À\x13À\x14\x00\x9c\x00\x9d\x00/\x005\x01\x00\x01\x93ÊÊ\x00\x00\x00\x17\x00\x00ÿ\x01\x00\x01\x00\x00') >>
+ 2022-09-25 10:01:30,933  ERROR       from method: log_message                       << You're accessing the development server over HTTPS, but it only supports HTTP.
+ >>
+ 2022-09-25 10:01:31,539  INFO        from method: log_message                       << code 400, message Bad request version ('ÊÊ\x13\x01\x13\x02\x13\x03À+À/À,À0Ì©Ì¨À\x13À\x14\x00\x9c\x00\x9d\x00/\x005\x01\x00\x01\x93\x1a\x1a\x00\x00\x00\x17\x00\x00ÿ\x01\x00\x01\x00\x00') >>
+ 2022-09-25 10:01:31,540  ERROR       from method: log_message                       << You're accessing the development server over HTTPS, but it only supports HTTP.
+ >>
+ 2022-09-25 10:01:31,549  INFO        from method: log_message                       << code 400, message Bad request version ('ªª\x13\x01\x13\x02\x13\x03À+À/À,À0Ì©Ì¨À\x13À\x14\x00\x9c\x00\x9d\x00/\x005\x01\x00\x01\x93úú\x00\x00\x00\x17\x00\x00ÿ\x01\x00\x01\x00\x00') >>
+ 2022-09-25 10:01:31,550  ERROR       from method: log_message                       << You're accessing the development server over HTTPS, but it only supports HTTP.
+ >>
+ 2022-09-25 10:01:32,153  INFO        from method: log_message                       << code 400, message Bad request version ('::\x13\x01\x13\x02\x13\x03À+À/À,À0Ì©Ì¨À\x13À\x14\x00\x9c\x00\x9d\x00/\x005\x01\x00\x01\x93jj\x00\x00\x00\x17\x00\x00ÿ\x01\x00\x01\x00\x00') >>
+ 2022-09-25 10:01:32,154  ERROR       from method: log_message                       << You're accessing the development server over HTTPS, but it only supports HTTP.
+ >>
+ 2022-09-25 10:01:32,163  INFO        from method: log_message                       << code 400, message Bad request version ('êê\x13\x01\x13\x02\x13\x03À+À/À,À0Ì©Ì¨À\x13À\x14\x00\x9c\x00\x9d\x00/\x005\x01\x00\x01\x93zz\x00\x00\x00\x17\x00\x00ÿ\x01\x00\x01\x00\x00') >>
+ 2022-09-25 10:01:32,164  ERROR       from method: log_message                       << You're accessing the development server over HTTPS, but it only supports HTTP.
+ >>
+ 2022-09-25 10:01:32,767  INFO        from method: log_message                       << code 400, message Bad request version ('jj\x13\x01\x13\x02\x13\x03À+À/À,À0Ì©Ì¨À\x13À\x14\x00\x9c\x00\x9d\x00/\x005\x01\x00\x01\x93\x1a\x1a\x00\x00\x00\x17\x00\x00ÿ\x01\x00\x01\x00\x00') >>
+ 2022-09-25 10:01:32,767  ERROR       from method: log_message                       << You're accessing the development server over HTTPS, but it only supports HTTP.
+ >>
+ 2022-09-25 10:01:32,776  INFO        from method: log_message                       << code 400, message Bad request version ('÷i\x02H%ÙK9Pør\x03÷T\x06f\x0em\x94q¯\x02\x8fäio\x15[¾') >>
+ 2022-09-25 10:01:32,776  ERROR       from method: log_message                       << You're accessing the development server over HTTPS, but it only supports HTTP.
+ >>
+ 2022-09-25 10:02:13,968  INFO        from method: log_message                       << code 400, message Bad request version ('\x86ä+áºáwQ;©ÂÖ¨\x00') >>
+ 2022-09-25 10:02:13,968  ERROR       from method: log_message                       << You're accessing the development server over HTTPS, but it only supports HTTP.
+ >>
+ 2022-09-25 10:02:13,978  INFO        from method: log_message                       << code 400, message Bad HTTP/0.9 request type ('\x16\x03\x01\x02\x00\x01\x00\x01ü\x03\x031O\x9dÅ') >>
+ 2022-09-25 10:02:13,978  ERROR       from method: log_message                       << You're accessing the development server over HTTPS, but it only supports HTTP.
+ >>
+ 2022-09-25 10:02:35,574  INFO        from method: trigger_reload                    << /home/redmine/youtility4_icici/intelliwiz_config/settings/prod_settings.py changed, reloading. >>
+Traceback (most recent call last):
+  File "/home/redmine/youtility4_icici/manage.py", line 20, in <module>
+    main()
+  File "/home/redmine/youtility4_icici/manage.py", line 17, in main
+    execute_from_command_line(sys.argv)
+  File "/home/redmine/envs/youtility4/lib/python3.10/site-packages/django/core/management/__init__.py", line 419, in execute_from_command_line
+    utility.execute()
+  File "/home/redmine/envs/youtility4/lib/python3.10/site-packages/django/core/management/__init__.py", line 363, in execute
+    settings.INSTALLED_APPS
+  File "/home/redmine/envs/youtility4/lib/python3.10/site-packages/django/conf/__init__.py", line 82, in __getattr__
+    self._setup(name)
+  File "/home/redmine/envs/youtility4/lib/python3.10/site-packages/django/conf/__init__.py", line 69, in _setup
+    self._wrapped = Settings(settings_module)
+  File "/home/redmine/envs/youtility4/lib/python3.10/site-packages/django/conf/__init__.py", line 170, in __init__
+    mod = importlib.import_module(self.SETTINGS_MODULE)
+  File "/usr/lib/python3.10/importlib/__init__.py", line 126, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+  File "<frozen importlib._bootstrap>", line 1050, in _gcd_import
+  File "<frozen importlib._bootstrap>", line 1027, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1006, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 688, in _load_unlocked
+  File "<frozen importlib._bootstrap_external>", line 879, in exec_module
+  File "<frozen importlib._bootstrap_external>", line 1017, in get_code
+  File "<frozen importlib._bootstrap_external>", line 947, in source_to_code
+  File "<frozen importlib._bootstrap>", line 241, in _call_with_frames_removed
+  File "/home/redmine/youtility4_icici/intelliwiz_config/settings/prod_settings.py", line 30
+    Another security settings
+            ^^^^^^^^
+SyntaxError: invalid syntax
+ic| BASE_DIR: PosixPath('/home/redmine/youtility4_icici')
+ic| STATICFILES_DIRS: ['/home/redmine/youtility4_icici/frontend/static']
+ic| BASE_DIR: PosixPath('/home/redmine/youtility4_icici')
+ic| STATICFILES_DIRS: ['/home/redmine/youtility4_icici/frontend/static']
+ 2022-09-25 10:02:59,916  INFO        from method: run_with_reloader                 << Watching for file changes with StatReloader >>
+Performing system checks...
+
+ 2022-09-25 10:03:00,034  WARNING     from method: ModelSchemaField                  << <class 'django.contrib.gis.db.models.fields.PointField'> is currently unhandled, defaulting to str. >>
+System check identified no issues (0 silenced).
+September 25, 2022 - 10:03:00
+Django version 3.2.14, using settings 'intelliwiz_config.settings.prod_settings'
+Starting development server at http://0.0.0.0:8000/
+Quit the server with CONTROL-C.
+ 2022-09-25 10:03:07,079  INFO        from method: log_message                       << code 400, message Bad request version ('êê\x13\x01\x13\x02\x13\x03À+À/À,À0Ì©Ì¨À\x13À\x14\x00\x9c\x00\x9d\x00/\x005\x01\x00\x01\x93jj\x00\x00\x00\x17\x00\x00ÿ\x01\x00\x01\x00\x00') >>
+ 2022-09-25 10:03:07,080  ERROR       from method: log_message                       << You're accessing the development server over HTTPS, but it only supports HTTP.
+ >>
+ 2022-09-25 10:03:07,089  INFO        from method: log_message                       << code 400, message Bad request version ('\x1a\x1a\x13\x01\x13\x02\x13\x03À+À/À,À0Ì©Ì¨À\x13À\x14\x00\x9c\x00\x9d\x00/\x005\x01\x00\x01\x93JJ\x00\x00\x00\x17\x00\x00ÿ\x01\x00\x01\x00\x00') >>
+ 2022-09-25 10:03:07,090  ERROR       from method: log_message                       << You're accessing the development server over HTTPS, but it only supports HTTP.
+ >>
+ 2022-09-25 10:03:22,333  INFO        from method: log_message                       << code 400, message Bad request version ('JJ\x13\x01\x13\x02\x13\x03À+À/À,À0Ì©Ì¨À\x13À\x14\x00\x9c\x00\x9d\x00/\x005\x01\x00\x01\x93êê\x00\x00\x00\x17\x00\x00ÿ\x01\x00\x01\x00\x00') >>
+ 2022-09-25 10:03:22,334  ERROR       from method: log_message                       << You're accessing the development server over HTTPS, but it only supports HTTP.
+ >>
+ 2022-09-25 10:03:22,443  INFO        from method: log_message                       << code 400, message Bad request version ('úú\x13\x01\x13\x02\x13\x03À+À/À,À0Ì©Ì¨À\x13À\x14\x00\x9c\x00\x9d\x00/\x005\x01\x00\x01\x93**\x00\x00\x00\x17\x00\x00ÿ\x01\x00\x01\x00\x00') >>
+ 2022-09-25 10:03:22,444  ERROR       from method: log_message                       << You're accessing the development server over HTTPS, but it only supports HTTP.
+ >>
+{'default': {'ENGINE': 'django.contrib.gis.db.backends.postgis', 'USER': 'youtilitydba', 'NAME': 'icici_django', 'PASSWORD': '!!sysadmin!!', 'HOST': '192.168.1.254', 'PORT': '5432', 'ATOMIC_REQUESTS': False, 'AUTOCOMMIT': True, 'CONN_MAX_AGE': 0, 'OPTIONS': {}, 'TIME_ZONE': None, 'TEST': {'CHARSET': None, 'COLLATION': None, 'MIGRATE': True, 'MIRROR': None, 'NAME': None}}} settings.DATABASES
+Hostname from Request:192.168.1.254
+Database:default
+ 2022-09-25 10:03:41,768  INFO        from method: get                               << SignIn View >>
+ 2022-09-25 10:03:41,794  INFO        from method: log_message                       << "GET / HTTP/1.1" 200 7595 >>
+{'default': {'ENGINE': 'django.contrib.gis.db.backends.postgis', 'USER': 'youtilitydba', 'NAME': 'icici_django', 'PASSWORD': '!!sysadmin!!', 'HOST': '192.168.1.254', 'PORT': '5432', 'ATOMIC_REQUESTS': False, 'AUTOCOMMIT': True, 'CONN_MAX_AGE': 0, 'OPTIONS': {}, 'TIME_ZONE': None, 'TEST': {'CHARSET': None, 'COLLATION': None, 'MIGRATE': True, 'MIRROR': None, 'NAME': None}}} settings.DATABASES
+Hostname from Request:django-local.youtility.in
+Database:default
+ 2022-09-25 10:04:36,112  INFO        from method: get                               << SignIn View >>
+ 2022-09-25 10:04:36,128  INFO        from method: log_message                       << "GET / HTTP/1.1" 200 7595 >>
+{'default': {'ENGINE': 'django.contrib.gis.db.backends.postgis', 'USER': 'youtilitydba', 'NAME': 'icici_django', 'PASSWORD': '!!sysadmin!!', 'HOST': '192.168.1.254', 'PORT': '5432', 'ATOMIC_REQUESTS': False, 'AUTOCOMMIT': True, 'CONN_MAX_AGE': 0, 'OPTIONS': {}, 'TIME_ZONE': None, 'TEST': {'CHARSET': None, 'COLLATION': None, 'MIGRATE': True, 'MIRROR': None, 'NAME': None}}} settings.DATABASES
+Hostname from Request:django-local.youtility.in
+Database:default
+ 2022-09-25 10:04:40,725  INFO        from method: get                               << SignIn View >>
+ 2022-09-25 10:04:40,740  INFO        from method: log_message                       << "GET / HTTP/1.1" 200 7595 >>
+ 2022-09-25 10:06:07,773  INFO        from method: trigger_reload                    << /home/redmine/youtility4_icici/intelliwiz_config/settings/prod_settings.py changed, reloading. >>
+ic| BASE_DIR: PosixPath('/home/redmine/youtility4_icici')
+ic| STATICFILES_DIRS: ['/home/redmine/youtility4_icici/frontend/static']
+ 2022-09-25 10:06:08,798  INFO        from method: run_with_reloader                 << Watching for file changes with StatReloader >>
+Performing system checks...
+
+ 2022-09-25 10:06:08,916  WARNING     from method: ModelSchemaField                  << <class 'django.contrib.gis.db.models.fields.PointField'> is currently unhandled, defaulting to str. >>
+System check identified no issues (0 silenced).
+September 25, 2022 - 10:06:09
+Django version 3.2.14, using settings 'intelliwiz_config.settings.prod_settings'
+Starting development server at http://0.0.0.0:8000/
+Quit the server with CONTROL-C.
+ 2022-09-25 10:06:10,436  INFO        from method: trigger_reload                    << /home/redmine/youtility4_icici/intelliwiz_config/settings/prod_settings.py changed, reloading. >>
+ic| BASE_DIR: PosixPath('/home/redmine/youtility4_icici')
+ic| STATICFILES_DIRS: ['/home/redmine/youtility4_icici/frontend/static']
+ 2022-09-25 10:06:11,459  INFO        from method: run_with_reloader                 << Watching for file changes with StatReloader >>
+Performing system checks...
+
+ 2022-09-25 10:06:11,578  WARNING     from method: ModelSchemaField                  << <class 'django.contrib.gis.db.models.fields.PointField'> is currently unhandled, defaulting to str. >>
+System check identified no issues (0 silenced).
+September 25, 2022 - 10:06:11
+Django version 3.2.14, using settings 'intelliwiz_config.settings.prod_settings'
+Starting development server at http://0.0.0.0:8000/
+Quit the server with CONTROL-C.
+ 2022-09-25 10:06:13,064  INFO        from method: trigger_reload                    << /home/redmine/youtility4_icici/intelliwiz_config/settings/prod_settings.py changed, reloading. >>
+ic| BASE_DIR: PosixPath('/home/redmine/youtility4_icici')
+ic| STATICFILES_DIRS: ['/home/redmine/youtility4_icici/frontend/static']
+ 2022-09-25 10:06:14,113  INFO        from method: run_with_reloader                 << Watching for file changes with StatReloader >>
+Performing system checks...
+
+ 2022-09-25 10:06:14,232  WARNING     from method: ModelSchemaField                  << <class 'django.contrib.gis.db.models.fields.PointField'> is currently unhandled, defaulting to str. >>
+System check identified no issues (0 silenced).
+September 25, 2022 - 10:06:14
+Django version 3.2.14, using settings 'intelliwiz_config.settings.prod_settings'
+Starting development server at http://0.0.0.0:8000/
+Quit the server with CONTROL-C.
+ 2022-09-25 10:06:29,079  INFO        from method: trigger_reload                    << /home/redmine/youtility4_icici/intelliwiz_config/settings/prod_settings.py changed, reloading. >>
+ic| BASE_DIR: PosixPath('/home/redmine/youtility4_icici')
+ic| STATICFILES_DIRS: ['/home/redmine/youtility4_icici/frontend/static']
+ 2022-09-25 10:06:30,123  INFO        from method: run_with_reloader                 << Watching for file changes with StatReloader >>
+Performing system checks...
+
+ 2022-09-25 10:06:30,244  WARNING     from method: ModelSchemaField                  << <class 'django.contrib.gis.db.models.fields.PointField'> is currently unhandled, defaulting to str. >>
+System check identified no issues (0 silenced).
+September 25, 2022 - 10:06:30
+Django version 3.2.14, using settings 'intelliwiz_config.settings.prod_settings'
+Starting development server at http://0.0.0.0:8000/
+Quit the server with CONTROL-C.
+ 2022-09-25 10:06:33,842  INFO        from method: trigger_reload                    << /home/redmine/youtility4_icici/intelliwiz_config/settings/prod_settings.py changed, reloading. >>
+ic| BASE_DIR: PosixPath('/home/redmine/youtility4_icici')
+ic| STATICFILES_DIRS: ['/home/redmine/youtility4_icici/frontend/static']
+ 2022-09-25 10:06:34,868  INFO        from method: run_with_reloader                 << Watching for file changes with StatReloader >>
+Performing system checks...
+
+ 2022-09-25 10:06:34,988  WARNING     from method: ModelSchemaField                  << <class 'django.contrib.gis.db.models.fields.PointField'> is currently unhandled, defaulting to str. >>
+System check identified no issues (0 silenced).
+September 25, 2022 - 10:06:35
+Django version 3.2.14, using settings 'intelliwiz_config.settings.prod_settings'
+Starting development server at http://0.0.0.0:8000/
+Quit the server with CONTROL-C.
+ 2022-09-25 10:06:41,597  INFO        from method: trigger_reload                    << /home/redmine/youtility4_icici/intelliwiz_config/settings/prod_settings.py changed, reloading. >>
+ic| BASE_DIR: PosixPath('/home/redmine/youtility4_icici')
+ic| STATICFILES_DIRS: ['/home/redmine/youtility4_icici/frontend/static']
+ 2022-09-25 10:06:42,635  INFO        from method: run_with_reloader                 << Watching for file changes with StatReloader >>
+Performing system checks...
+
+ 2022-09-25 10:06:42,755  WARNING     from method: ModelSchemaField                  << <class 'django.contrib.gis.db.models.fields.PointField'> is currently unhandled, defaulting to str. >>
+System check identified no issues (0 silenced).
+September 25, 2022 - 10:06:42
+Django version 3.2.14, using settings 'intelliwiz_config.settings.prod_settings'
+Starting development server at http://0.0.0.0:8000/
+Quit the server with CONTROL-C.
+ 2022-09-25 10:06:45,326  INFO        from method: trigger_reload                    << /home/redmine/youtility4_icici/intelliwiz_config/settings/prod_settings.py changed, reloading. >>
+ic| BASE_DIR: PosixPath('/home/redmine/youtility4_icici')
+ic| STATICFILES_DIRS: ['/home/redmine/youtility4_icici/frontend/static']
+ 2022-09-25 10:06:46,385  INFO        from method: run_with_reloader                 << Watching for file changes with StatReloader >>
+Performing system checks...
+
+ 2022-09-25 10:06:46,504  WARNING     from method: ModelSchemaField                  << <class 'django.contrib.gis.db.models.fields.PointField'> is currently unhandled, defaulting to str. >>
+System check identified no issues (0 silenced).
+September 25, 2022 - 10:06:46
+Django version 3.2.14, using settings 'intelliwiz_config.settings.prod_settings'
+Starting development server at http://0.0.0.0:8000/
+Quit the server with CONTROL-C.
+ 2022-09-25 10:06:48,004  INFO        from method: trigger_reload                    << /home/redmine/youtility4_icici/intelliwiz_config/settings/prod_settings.py changed, reloading. >>
+ic| BASE_DIR: PosixPath('/home/redmine/youtility4_icici')
+ic| STATICFILES_DIRS: ['/home/redmine/youtility4_icici/frontend/static']
+ 2022-09-25 10:06:49,031  INFO        from method: run_with_reloader                 << Watching for file changes with StatReloader >>
+Performing system checks...
+
+ 2022-09-25 10:06:49,150  WARNING     from method: ModelSchemaField                  << <class 'django.contrib.gis.db.models.fields.PointField'> is currently unhandled, defaulting to str. >>
+System check identified no issues (0 silenced).
+September 25, 2022 - 10:06:49
+Django version 3.2.14, using settings 'intelliwiz_config.settings.prod_settings'
+Starting development server at http://0.0.0.0:8000/
+Quit the server with CONTROL-C.
+ 2022-09-25 10:06:57,851  INFO        from method: trigger_reload                    << /home/redmine/youtility4_icici/intelliwiz_config/settings/prod_settings.py changed, reloading. >>
+ic| BASE_DIR: PosixPath('/home/redmine/youtility4_icici')
+ic| STATICFILES_DIRS: ['/home/redmine/youtility4_icici/frontend/static']
+ 2022-09-25 10:06:58,877  INFO        from method: run_with_reloader                 << Watching for file changes with StatReloader >>
+Performing system checks...
+
+ 2022-09-25 10:06:58,996  WARNING     from method: ModelSchemaField                  << <class 'django.contrib.gis.db.models.fields.PointField'> is currently unhandled, defaulting to str. >>
+System check identified no issues (0 silenced).
+September 25, 2022 - 10:06:59
+Django version 3.2.14, using settings 'intelliwiz_config.settings.prod_settings'
+Starting development server at http://0.0.0.0:8000/
+Quit the server with CONTROL-C.
+ 2022-09-25 10:07:04,649  INFO        from method: trigger_reload                    << /home/redmine/youtility4_icici/intelliwiz_config/settings/prod_settings.py changed, reloading. >>
+ic| BASE_DIR: PosixPath('/home/redmine/youtility4_icici')
+ic| STATICFILES_DIRS: ['/home/redmine/youtility4_icici/frontend/static']
+ 2022-09-25 10:07:05,686  INFO        from method: run_with_reloader                 << Watching for file changes with StatReloader >>
+Performing system checks...
+
+ 2022-09-25 10:07:05,803  WARNING     from method: ModelSchemaField                  << <class 'django.contrib.gis.db.models.fields.PointField'> is currently unhandled, defaulting to str. >>
+System check identified no issues (0 silenced).
+September 25, 2022 - 10:07:05
+Django version 3.2.14, using settings 'intelliwiz_config.settings.prod_settings'
+Starting development server at http://0.0.0.0:8000/
+Quit the server with CONTROL-C.
+ 2022-09-25 10:07:13,506  INFO        from method: trigger_reload                    << /home/redmine/youtility4_icici/intelliwiz_config/settings/prod_settings.py changed, reloading. >>
+ic| BASE_DIR: PosixPath('/home/redmine/youtility4_icici')
+ic| STATICFILES_DIRS: ['/home/redmine/youtility4_icici/frontend/static']
+ 2022-09-25 10:07:14,546  INFO        from method: run_with_reloader                 << Watching for file changes with StatReloader >>
+Performing system checks...
+
+ 2022-09-25 10:07:14,668  WARNING     from method: ModelSchemaField                  << <class 'django.contrib.gis.db.models.fields.PointField'> is currently unhandled, defaulting to str. >>
+System check identified no issues (0 silenced).
+September 25, 2022 - 10:07:14
+Django version 3.2.14, using settings 'intelliwiz_config.settings.prod_settings'
+Starting development server at http://0.0.0.0:8000/
+Quit the server with CONTROL-C.
+ 2022-09-25 10:08:06,490  INFO        from method: trigger_reload                    << /home/redmine/youtility4_icici/intelliwiz_config/settings/prod_settings.py changed, reloading. >>
+ic| BASE_DIR: PosixPath('/home/redmine/youtility4_icici')
+ic| STATICFILES_DIRS: ['/home/redmine/youtility4_icici/frontend/static']
+ 2022-09-25 10:08:07,515  INFO        from method: run_with_reloader                 << Watching for file changes with StatReloader >>
+Performing system checks...
+
+ 2022-09-25 10:08:07,635  WARNING     from method: ModelSchemaField                  << <class 'django.contrib.gis.db.models.fields.PointField'> is currently unhandled, defaulting to str. >>
+System check identified no issues (0 silenced).
+September 25, 2022 - 10:08:07
+Django version 3.2.14, using settings 'intelliwiz_config.settings.prod_settings'
+Starting development server at http://0.0.0.0:8000/
+Quit the server with CONTROL-C.
+ 2022-09-25 10:08:43,012  INFO        from method: trigger_reload                    << /home/redmine/youtility4_icici/intelliwiz_config/settings/prod_settings.py changed, reloading. >>
+ic| BASE_DIR: PosixPath('/home/redmine/youtility4_icici')
+ic| STATICFILES_DIRS: ['/home/redmine/youtility4_icici/frontend/static']
+ 2022-09-25 10:08:44,054  INFO        from method: run_with_reloader                 << Watching for file changes with StatReloader >>
+Performing system checks...
+
+ 2022-09-25 10:08:44,175  WARNING     from method: ModelSchemaField                  << <class 'django.contrib.gis.db.models.fields.PointField'> is currently unhandled, defaulting to str. >>
+System check identified no issues (0 silenced).
+September 25, 2022 - 10:08:44
+Django version 3.2.14, using settings 'intelliwiz_config.settings.prod_settings'
+Starting development server at http://0.0.0.0:8000/
+Quit the server with CONTROL-C.
+ 2022-09-25 10:08:46,684  INFO        from method: trigger_reload                    << /home/redmine/youtility4_icici/intelliwiz_config/settings/prod_settings.py changed, reloading. >>
+ic| BASE_DIR: PosixPath('/home/redmine/youtility4_icici')
+ic| STATICFILES_DIRS: ['/home/redmine/youtility4_icici/frontend/static']
+ 2022-09-25 10:08:47,717  INFO        from method: run_with_reloader                 << Watching for file changes with StatReloader >>
+Performing system checks...
+
+ 2022-09-25 10:08:47,835  WARNING     from method: ModelSchemaField                  << <class 'django.contrib.gis.db.models.fields.PointField'> is currently unhandled, defaulting to str. >>
+System check identified no issues (0 silenced).
+September 25, 2022 - 10:08:47
+Django version 3.2.14, using settings 'intelliwiz_config.settings.prod_settings'
+Starting development server at http://0.0.0.0:8000/
+Quit the server with CONTROL-C.
+{'default': {'ENGINE': 'django.contrib.gis.db.backends.postgis', 'USER': 'youtilitydba', 'NAME': 'icici_django', 'PASSWORD': '!!sysadmin!!', 'HOST': '192.168.1.254', 'PORT': '5432', 'ATOMIC_REQUESTS': False, 'AUTOCOMMIT': True, 'CONN_MAX_AGE': 0, 'OPTIONS': {}, 'TIME_ZONE': None, 'TEST': {'CHARSET': None, 'COLLATION': None, 'MIGRATE': True, 'MIRROR': None, 'NAME': None}}} settings.DATABASES
+Hostname from Request:django-local.youtility.in
+Database:default
+ 2022-09-25 10:11:15,241  INFO        from method: get                               << SignIn View >>
+ 2022-09-25 10:11:15,276  INFO        from method: log_message                       << "GET / HTTP/1.1" 200 7595 >>
+{'default': {'ENGINE': 'django.contrib.gis.db.backends.postgis', 'USER': 'youtilitydba', 'NAME': 'icici_django', 'PASSWORD': '!!sysadmin!!', 'HOST': '192.168.1.254', 'PORT': '5432', 'ATOMIC_REQUESTS': False, 'AUTOCOMMIT': True, 'CONN_MAX_AGE': 0, 'OPTIONS': {}, 'TIME_ZONE': None, 'TEST': {'CHARSET': None, 'COLLATION': None, 'MIGRATE': True, 'MIRROR': None, 'NAME': None}}} settings.DATABASES{'default': {'ENGINE': 'django.contrib.gis.db.backends.postgis', 'USER': 'youtilitydba', 'NAME': 'icici_django', 'PASSWORD': '!!sysadmin!!', 'HOST': '192.168.1.254', 'PORT': '5432', 'ATOMIC_REQUESTS': False, 'AUTOCOMMIT': True, 'CONN_MAX_AGE': 0, 'OPTIONS': {}, 'TIME_ZONE': None, 'TEST': {'CHARSET': None, 'COLLATION': None, 'MIGRATE': True, 'MIRROR': None, 'NAME': None}}} 
+settings.DATABASESHostname from Request:django-local.youtility.in
+
+Hostname from Request:django-local.youtility.inDatabase:default
+
+Database:default
+{'default': {'ENGINE': 'django.contrib.gis.db.backends.postgis', 'USER': 'youtilitydba', 'NAME': 'icici_django', 'PASSWORD': '!!sysadmin!!', 'HOST': '192.168.1.254', 'PORT': '5432', 'ATOMIC_REQUESTS': False, 'AUTOCOMMIT': True, 'CONN_MAX_AGE': 0, 'OPTIONS': {}, 'TIME_ZONE': None, 'TEST': {'CHARSET': None, 'COLLATION': None, 'MIGRATE': True, 'MIRROR': None, 'NAME': None}}} settings.DATABASES
+Hostname from Request:django-local.youtility.in
+Database:default
+{'default': {'ENGINE': 'django.contrib.gis.db.backends.postgis', 'USER': 'youtilitydba', 'NAME': 'icici_django', 'PASSWORD': '!!sysadmin!!', 'HOST': '192.168.1.254', 'PORT': '5432', 'ATOMIC_REQUESTS': False, 'AUTOCOMMIT': True, 'CONN_MAX_AGE': 0, 'OPTIONS': {}, 'TIME_ZONE': None, 'TEST': {'CHARSET': None, 'COLLATION': None, 'MIGRATE': True, 'MIRROR': None, 'NAME': None}}} settings.DATABASES
+Hostname from Request:django-local.youtility.in
+Database:default
+{'default': {'ENGINE': 'django.contrib.gis.db.backends.postgis', 'USER': 'youtilitydba', 'NAME': 'icici_django', 'PASSWORD': '!!sysadmin!!', 'HOST': '192.168.1.254', 'PORT': '5432', 'ATOMIC_REQUESTS': False, 'AUTOCOMMIT': True, 'CONN_MAX_AGE': 0, 'OPTIONS': {}, 'TIME_ZONE': None, 'TEST': {'CHARSET': None, 'COLLATION': None, 'MIGRATE': True, 'MIRROR': None, 'NAME': None}}} settings.DATABASES
+Hostname from Request:django-local.youtility.in
+Database:default
+ 2022-09-25 10:11:15,428  INFO        from method: log_message                       << "GET /static/assets/plugins/global/plugins.bundle.css HTTP/1.1" 200 266529 >>
+ 2022-09-25 10:11:15,451  INFO        from method: log_message                       << "GET /static/assets/media/images/logo-transparent.png HTTP/1.1" 200 14351 >>
+ 2022-09-25 10:11:15,478  INFO        from method: log_message                       << "GET /static/assets/js/scripts.bundle.js HTTP/1.1" 200 205218 >>
+ 2022-09-25 10:11:15,547  INFO        from method: log_message                       << "GET /static/assets/css/style.bundle.css HTTP/1.1" 200 1187633 >>
+ 2022-09-25 10:11:15,665  INFO        from method: log_message                       << "GET /static/assets/plugins/global/plugins.bundle.js HTTP/1.1" 200 2260000 >>
+{'default': {'ENGINE': 'django.contrib.gis.db.backends.postgis', 'USER': 'youtilitydba', 'NAME': 'icici_django', 'PASSWORD': '!!sysadmin!!', 'HOST': '192.168.1.254', 'PORT': '5432', 'ATOMIC_REQUESTS': False, 'AUTOCOMMIT': True, 'CONN_MAX_AGE': 0, 'OPTIONS': {}, 'TIME_ZONE': None, 'TEST': {'CHARSET': None, 'COLLATION': None, 'MIGRATE': True, 'MIRROR': None, 'NAME': None}}} settings.DATABASES
+Hostname from Request:django-local.youtility.in
+Database:default
+ 2022-09-25 10:11:15,942  INFO        from method: log_message                       << "GET /static/assets/media/images/favicon.ico HTTP/1.1" 200 1150 >>
