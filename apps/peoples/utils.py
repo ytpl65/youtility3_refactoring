@@ -2,6 +2,7 @@ import logging
 from apps.peoples import models as pm
 from apps.tenants.models import Tenant
 from apps.peoples import utils as putils
+from apps.core import utils
 logger = logging.getLogger('__main__')
 
 dbg = logging.getLogger('__main__').debug
@@ -130,9 +131,12 @@ def save_tenant_client_info(request):
     try:
         logger.info('saving tenant & client info into the session...STARTED')
         hostname = hostname_from_request(request)
+        ic(hostname)
         clientcodeMap = get_tenants_map()
         clientcode = clientcodeMap.get(hostname)
+        utils.set_db_for_router(clientcode)
         request.session['hostname'] = hostname
+        ic(clientcode)
         client = Bt.objects.get(bucode=clientcode.upper()
                                 if clientcode else "SPS")
         # tenant = Tenant.objects.get(id = client.tenant.id)#

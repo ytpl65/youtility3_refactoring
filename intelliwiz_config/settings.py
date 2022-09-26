@@ -12,23 +12,27 @@ https://docs.djangoproject.com/en/3.2/ref/settings/
 
 from pathlib import Path
 import os
+import configparser
 from dotenv import load_dotenv
 load_dotenv()  # loads the configs from .env
 # Build paths inside the project like this: BASE_DIR / 'subdir'.p
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+config = configparser.RawConfigParser()
+config.sections()
+CONFIGPATH = os.path.join(os.path.abspath('intelliwiz_config/config.ini'))
+config.read(CONFIGPATH)
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/3.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = str(os.getenv('SECRET_KEY'))
-SECRET_SALT = str(os.getenv('SECRET_SALT'))
+SECRET_KEY = config.get('DEFAULT', 'SECRET_KEY')
 ENCRYPT_KEY = str(os.getenv('ENCRYPT_KEY'))
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
-ALLOWED_HOSTS = ['.localhost', '.youtility.local', 'barfi.youtility.in', '127.0.0.1', 'intelliwiz.youtility.in', '192.168.1.33']
+ALLOWED_HOSTS = ['.localhost', 'django-local.youtility.in','redmine.youtility.in', '192.168.1.254', '192.168.1.33']
 
 # Application definition
 
@@ -70,11 +74,12 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
-    'apps.tenants.middlewares.TenantMiddleware', # custom middleware
+    'apps.tenants.middlewares.TenantMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'debug_toolbar.middleware.DebugToolbarMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
@@ -122,73 +127,33 @@ WSGI_APPLICATION = 'intelliwiz_config.wsgi.application'
 # https://docs.djangoproject.com/en/3.2/ref/settings/# databases
 
 # multi database configuration.
-DBUSER = str(os.getenv('DBUSER'))
-DBPASWD = str(os.getenv('DBPASWD'))
-DBHOST = str(os.getenv('DBHOST'))
+DBUSER  = config.get('PRODUCTION', 'DBUSER')
+DBPASS = config.get('PRODUCTION', 'DBPASS')
+DBNAME = config.get('PRODUCTION', 'DBNAME')
+DBHOST = config.get('PRODUCTION', 'DBHOST')
 '''
 NOTE: Client bucode should match the database alias name.
 '''
-youtility_dbs = {
-    'default': {
-        'ENGINE':   'django.contrib.gis.db.backends.postgis',
-        'USER':     DBUSER,
-        'NAME':     'sps_django',
-        'PASSWORD': DBPASWD,
-        'HOST':     DBHOST,
-        'PORT':     '5432',
-    },
-
-    'icicibank':{
-        'ENGINE':   'django.contrib.gis.db.backends.postgis',
-        'USER':     DBUSER,
-        'NAME':     'icici_django',
-        'PASSWORD': DBPASWD,
-        'HOST':     DBHOST,
-        'PORT':     '5432',
-    },
-}
-
-
-home_local_dbs = {
-    'default': {
-        'ENGINE':   'django.contrib.gis.db.backends.postgis',
-        'USER':     'youtilitydba',
-        'NAME':     'intelliwiz_django',
-        'PASSWORD': 'admin',
-        'HOST':     'localhost',
-        'PORT':     '5432',
-    },
-    'sps':{
-        'ENGINE':   'django.contrib.gis.db.backends.postgis',
-        'USER':     'youtilitydba',
-        'NAME':     'sps_django',
-        'PASSWORD': 'admin',
-        'HOST':     'localhost',
-        'PORT':     '5432',
-    }
-
-
-
-}
-
 #DATABASES = youtility_dbs
 DATABASES = {
-        'default':{
-            'ENGINE':   'django.contrib.gis.db.backends.postgis',
-            'USER':     'navin',
-            'NAME':     'icici_django',
-            'PASSWORD': 'admin',
-            'HOST':     'localhost',
-            'PORT':     '5432',
-        },
-        'testDB':{
-            'ENGINE':   'django.contrib.gis.db.backends.postgis',
-            'USER':     'navin',
-            'PASSWORD': 'admin',
-            "HOST":     'localhost',
-            'PORT':     '5432',
-            'NAME':     'testDB',
-        }
+    'default': {
+        'ENGINE':   'django.contrib.gis.db.backends.postgis',
+        'USER':     DBUSER,
+        'NAME':     "sps_django",
+        'PASSWORD': DBPASS,
+        'HOST':     DBHOST,
+        'PORT':     '5432',
+    },
+    'sps': {
+        'ENGINE':   'django.contrib.gis.db.backends.postgis',
+        'USER':     DBUSER,
+        'NAME':     DBNAME,
+        'PASSWORD': DBPASS,
+        'HOST':     DBHOST,
+        'PORT':     '5432',
+    },
+
+
 }   
 
 
@@ -211,9 +176,9 @@ CACHES = {
     }
 }
 # CELERY CONF...
-CELERY_BROKER_URL = str(os.getenv('CELERY_BROKER_URL'))
-CELERY_CACHE_BACKEND = str(os.getenv('CELERY_CACHE_BACKEND'))
-CELERY_RESULT_BACKEND = str(os.getenv('CELERY_RESULT_BACKEND'))
+CELERY_BROKER_URL = config.get('DEFAULT', 'CELERY_BROKER_URL')
+CELERY_CACHE_BACKEND = config.get('DEFAULT', 'CELERY_CACHE_BACKEND')
+CELERY_RESULT_BACKEND = config.get('DEFAULT', 'CELERY_RESULT_BACKEND')
 
 # SELECT2 CONF...
 SELECT2_CACHE_BACKEND = 'select2'
@@ -284,6 +249,7 @@ DATE_INPUT_FORMATS = [
 # https://docs.djangoproject.com/en/3.2/howto/static-files/
 
 STATIC_URL = '/static/'
+STATIC_ROOT = '/var/www/redmine.youtility.in/static/'
 STATICFILES_DIRS = [os.path.join(BASE_DIR, 'frontend/static')]
 
 # Default primary key field type
@@ -394,13 +360,13 @@ def verified_callback(user):
     user.isverified = True
 
 EMAIL_VERIFIED_CALLBACK = verified_callback
-EMAIL_FROM_ADDRESS = 'snvnrock@gmail.com'
+EMAIL_FROM_ADDRESS = config.get('PRODUCTION', 'EMAIL_FROM_ADDRESS')
 EMAIL_MAIL_SUBJECT = 'Confirm your email'
 EMAIL_MAIL_HTML = 'email.html'
 EMAIL_MAIL_PLAIN = 'mail_body.txt'
 EMAIL_TOKEN_LIFE = 60**2
 EMAIL_PAGE_TEMPLATE = 'email_verify.html'
-EMAIL_PAGE_DOMAIN = 'http://127.0.0.1:8000/'
+EMAIL_PAGE_DOMAIN = config.get('PRODUCTION', 'EMAIL_PAGE_DOMAIN')
 EMAIL_MULTI_USER = True  # optional (defaults to False)
 
 # # DJANGO EMAIL BACKEND CONF...
@@ -416,12 +382,14 @@ EMAIL_MULTI_USER = True  # optional (defaults to False)
 # For Django Email Backend
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 # EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
-DEFAULT_FROM_EMAIL = "snvnrock@gmail.com"
+DEFAULT_FROM_EMAIL = config.get('PRODUCTION', 'DEFAULT_FROM_EMAIL')
 EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
-EMAIL_HOST_USER = 'mwaghtest@gmail.com'
-EMAIL_HOST_PASSWORD = 'mwaghtest@123'  # os.environ['password_key'] suggested
+EMAIL_HOST_USER = config.get('PRODUCTION', 'EMAIL_HOST_USER')
+EMAIL_HOST_PASSWORD = config.get('PRODUCTION', 'EMAIL_HOST_PASSWORD')
 EMAIL_USE_TLS = True
+DJANGO_SETTINGS_MODULE = 'intelliwiz_config.settings'
+
 
 # DJANGO TAGGIT CONF...
 TAGGIT_CASE_INSENSITIVE = True
@@ -429,5 +397,7 @@ TAGGIT_CASE_INSENSITIVE = True
 # GOOGLE MAP API KEY...
 GOOGLE_MAP_SECRET_KEY  = str(os.getenv('GOOGLE_MAP_SECRET_KEY'))
 
-
+CSRF_COOKIE_SECURE=True
+SESSION_COOKIE_SECURE=True
+SECURE_SSL_REDIRECT=True
 

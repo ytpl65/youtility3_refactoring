@@ -535,7 +535,8 @@ def get_tenants_map():
         'capgemini.youtility.local' : 'capgemini',
         'dell.youtility.local'      : 'dell',
         'icicibank.youtility.local' : 'icicibank',
-        'redmine.youtility.in' : 'icicibank',
+        'redmine.youtility.in' : 'sps',
+        'django-local.youtility.in' : 'default',
         'barfi.youtility.in'        : 'icicibank',
         'intelliwiz.youtility.in'   : 'default',
         'testdb.youtility.local'    : 'testDB'
