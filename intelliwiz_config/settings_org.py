@@ -13,6 +13,7 @@ https://docs.djangoproject.com/en/3.2/ref/settings/
 from pathlib import Path
 import os
 from dotenv import load_dotenv
+from icecream import ic
 load_dotenv()  # loads the configs from .env
 # Build paths inside the project like this: BASE_DIR / 'subdir'.p
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -283,8 +284,11 @@ DATE_INPUT_FORMATS = [
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/3.2/howto/static-files/
 
+ic(BASE_DIR)
 STATIC_URL = '/static/'
 STATICFILES_DIRS = [os.path.join(BASE_DIR, 'frontend/static')]
+ic(STATICFILES_DIRS)
+
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/3.2/ref/settings/# default-auto-field
