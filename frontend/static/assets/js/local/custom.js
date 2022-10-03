@@ -29,6 +29,30 @@ function make_env_for_wizard(session) {
   })
 }
 
+function validateCode(bucode){
+  // validate bucode return false bucode has special characters and contains space
+  var regex = /^[a-zA-Z0-9]+$/;
+  if(!regex.test(bucode)){
+      return false;
+  }return true;
+}
+
+function validateEmail(email){
+  //validate email return false if email is invalid
+  var regex = /^([a-zA-Z0-9_\-\.]+)@([a-zA-Z0-9_\-\.]+)\.([a-zA-Z]{2,5})$/;
+  if(!regex.test(email)){
+      return false;
+  }return true
+}
+
+function validatePhone(phone) {
+  var regex = /^[\+]?[(]?[0-9]{3}[)]?[-\s\.]?[0-9]{3}[-\s\.]?[0-9]{4,6}$/im;
+  if (!regex.test(phone)) {
+    return false;
+  }
+  return true;
+}
+
 function alertuser_to_saveform(styles = "") {
   Swal.fire({
     title: "Form Modified",

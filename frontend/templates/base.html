@@ -69,6 +69,7 @@
 <script>
   // tojson filter converts python datatypes to json datatypes.
   var   session            = {{ dict(request.session) |default ("") | tojson }}
+  console.log("session", session)
   const newWizardUrl       = "{{ url('onboarding:wizard_view') }}"
   const deleteWizardUrl    = "{{ url('onboarding:wizard_delete') }}"
   const WizardViewUrl      = "{{ url('onboarding:wizard_view') }}"
@@ -91,7 +92,7 @@
   }
 </script>
 <!-- BEGIN GLOBAL-CUSTOM-FILE LEVEL SCRIPTS --> 
- <script src="{{ static('assets/js/local/custom.js') }}" type="text/javascript"></script>
+ <script src="{{ static('assets/js/local/custom.js') }}?v=2" type="text/javascript"></script>
 <!-- END GLOBAL-CUSTOM-FILE LEVEL SCRIPTS -->
 
   <!-- BEGIN GLOBAL-INLINE CUSTOM SCRIPTS -->

@@ -272,8 +272,9 @@
             <div></div>
             <div class="d-flex align-items-stretch flex-shrink-0 d-inline">
               <div id="site-info" class="mt-5 mx-2">
-                <a href="#" class="align-middle text-dark"><span>Site:</span><b> YTPLD.Youtility Technologies Head
-                    Office </b></a>
+                <a href="#" class="align-middle text-dark"><span>Site:</span>
+                  <b id="client_site_info"> {{ request.session['clientcode'] }}.{{ request.session['sitename'] }}</b>
+                </a>
               </div>
               <div>
                 <div class="dropdown mt-5 mx-3">
@@ -380,7 +381,7 @@
           <!--begin::Copyright-->
           <div></div>
           <!--end::Copyright-->
-          <div class="page-footer-inner text-light"> <span id="copyRightYear ">2021 © Powered by</span>
+          <div class="page-footer-inner text-light"> <span id="copyRightYear ">2022 © Powered by</span>
             <a target="_blank" class="text-primary" href="http://www.youtility.in">Youtility Technologies Pvt. Ltd. </a>
           </div>
         </div>

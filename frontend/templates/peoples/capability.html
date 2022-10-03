@@ -72,11 +72,11 @@ Capability List
             ordering:false,
             scrollCollapse: true,
 			columns     : [
-				{'data': 'id'},
-                { "data": "capscode" },
-                { "data": "capsname" },
-                { "data": "cfor" },
-                { "data": "parent__capscode" },
+				{'data': 'id', },
+                { "data": "capscode", title:"Code" },
+                { "data": "capsname", title:'Name' },
+                { "data": "cfor", title:'Capability For' },
+                { "data": "parent__capscode", title:'Belongs to'},
             ],
 			columnDefs:[
 				{targets:0, data: "id", visible:false, searchable:false, orderable:false },

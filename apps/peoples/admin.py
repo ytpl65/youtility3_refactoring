@@ -258,31 +258,53 @@ class PgbelongingAdmin(ImportExportModelAdmin):
                     'isgrouplead', 'assignsites', 'bu']
     list_display_links = ['pgroup', 'people']
 
-class CapabilityResource(resources.ModelResource, BaseFieldSet2):
+class CapabilityResource(resources.ModelResource):
 
     parent = fields.Field(
-        column_name='parent',
+        column_name='Belongs To',
         attribute='parent',
         widget = wg.ForeignKeyWidget(pm.Capability, 'capscode'))
+
+    Client = fields.Field(
+        column_name='Client',
+        attribute='client',
+        widget = wg.ForeignKeyWidget(om.Bt, 'bucode'),
+        default='NONE'
+    )
+    BV = fields.Field(
+        column_name='BV',
+        attribute='bu',
+        widget = wg.ForeignKeyWidget(om.Bt, 'bucode'),
+        saves_null_values = True,
+        default='NONE'
+    )
+
+    ID   = fields.Field(attribute='id')
+    Code = fields.Field(attribute='capscode')
+    Name = fields.Field(attribute='capsname')
+    cfor = fields.Field(attribute='cfor', column_name='Capability For')
+
 
     class Meta:
         model = Capability
         skip_unchanged = True
-        import_id_fields = ('id', 'capscode', 'cfor',)
+        import_id_fields = ('ID', 'Code', 'cfor',)
         report_skipped = True
-        fields = ('id', 'capscode',  'capsname', 'cfor', 
-                  'parent', 'cuser', 'muser', 'client', 'bu', 'tenant')
+        fields = ('ID', 'Code',  'Name', 'cfor',
+                  'parent', 'Client', 'BV', 'tenant')
 
 
     def __init__(self, *args, **kwargs):
         self.request = kwargs.pop('request', None)
+        self.is_superuser = kwargs.pop('is_superuser', None)
         super(CapabilityResource, self).__init__(*args, **kwargs)
 
     def before_save_instance(self, instance, using_transactions, dry_run):
         instance.capscode = instance.capscode.upper()
-        utils.save_common_stuff(self.request, instance)
+        utils.save_common_stuff(self.request, instance, self.is_superuser)
 
-
+    def skip_row(self, instance, original):
+        return Capability.objects.filter(capscode = instance.capscode).exists()
 
 @admin.register(Capability)
 class CapabilityAdmin(ImportExportModelAdmin):

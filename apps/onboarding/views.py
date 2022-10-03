@@ -1539,6 +1539,7 @@ class Client(LoginRequiredMixin, View):
                 resp = self.handle_valid_form(form, jsonform, request)
             else:
                 cxt = {'errors': form.errors}
+                if jsonform.errors: cxt.update({'errors': jsonform.errors})
                 resp = utils.handle_invalid_form(request, P, cxt)
         except Exception:
             resp = utils.handle_Exception(request)

@@ -75,7 +75,7 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
-    'apps.tenants.middlewares.TenantMiddleware',
+    #'apps.tenants.middlewares.TenantMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'debug_toolbar.middleware.DebugToolbarMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -144,17 +144,7 @@ DATABASES = {
         'PASSWORD': DBPASS,
         'HOST':     DBHOST,
         'PORT':     '5432',
-    },
-    'sps': {
-        'ENGINE':   'django.contrib.gis.db.backends.postgis',
-        'USER':     DBUSER,
-        'NAME':     DBNAME,
-        'PASSWORD': DBPASS,
-        'HOST':     DBHOST,
-        'PORT':     '5432',
-    },
-
-
+    }
 }   
 
 
@@ -167,6 +157,14 @@ CACHES = {
         },
        "KEY_PREFIX": "youtility4"
     },
+    "redis_session_cache": {
+        "BACKEND": "django_redis.cache.RedisCache",
+        "LOCATION": "redis://127.0.0.1:6379/3",
+        "OPTIONS": {
+            "CLIENT_CLASS": "django_redis.client.DefaultClient",
+        },
+       "KEY_PREFIX": "y4session"
+    },
     "select2": {
         "BACKEND": "django_redis.cache.RedisCache",
         "LOCATION": "redis://127.0.0.1:6379/2",
@@ -176,6 +174,15 @@ CACHES = {
        "KEY_PREFIX": "select2"
     }
 }
+# SESSION CONF....
+SESSION_ENGINE = 'django.contrib.sessions.backends.cached_db'
+SESSION_CACHE_ALIAS = 'redis_session_cache'
+SESSION_COOKIE_SECURE = False
+SESSION_EXPIRE_AT_BROWSER_CLOSE = True # close the session when user closes the browser
+SESSION_COOKIE_AGE = 60**2
+SESSION_SAVE_EVERY_REQUEST = True
+
+
 # CELERY CONF...
 CELERY_BROKER_URL = config.get('DEFAULT', 'CELERY_BROKER_URL')
 CELERY_CACHE_BACKEND = config.get('DEFAULT', 'CELERY_CACHE_BACKEND')
@@ -315,6 +322,13 @@ LOGGING_CONFIG_ = {
             'class': 'logging.StreamHandler', 
             'stream': 'ext://sys.stdout',  # Default is stderr
         },
+        'filelogs': {
+            'class': 'logging.handlers.RotatingFileHandler',
+            'filename': '/tmp/y4.log',
+            'maxBytes': 15728640,
+            'backupCount': 10,
+            'formatter': 'coloured',
+        }
     },
     'loggers': { 
         '': {  # root logger
@@ -328,7 +342,7 @@ LOGGING_CONFIG_ = {
             'propagate': False
         },
         '__main__': {  # if __name__ == '__main__'
-            'handlers': ['default'],
+            'handlers': ['default', 'filelogs'],
             'level': 'DEBUG',
             'propagate': False
         },                 
@@ -339,12 +353,7 @@ logging.config.dictConfig(LOGGING_CONFIG_)
 # LOGIN URL NAME...
 LOGIN_URL = 'login'
 
-# SESSION CONF....
-SESSION_ENGINE = 'django.contrib.sessions.backends.cached_db'
-SESSION_COOKIE_SECURE = False
-SESSION_EXPIRE_AT_BROWSER_CLOSE = False # close the session when user closes the browser
-SESSION_COOKIE_AGE = 60**2
-SESSION_SAVE_EVERY_REQUEST = True
+
 
 # DJANGO_IMPORT_EXPORT CONF...
 IMPORT_EXPORT_USE_TRANSACTIONS = True
@@ -370,15 +379,6 @@ EMAIL_PAGE_TEMPLATE = 'email_verify.html'
 EMAIL_PAGE_DOMAIN = config.get('PRODUCTION', 'EMAIL_PAGE_DOMAIN')
 EMAIL_MULTI_USER = True  # optional (defaults to False)
 
-# # DJANGO EMAIL BACKEND CONF...
-# EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-# # EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'# 
-# #DEFAULT_FROM_EMAIL = "snvnrock@gmail.com"
-# EMAIL_HOST = 'smtp.gmail.com'
-# EMAIL_PORT = 587
-# EMAIL_HOST_USER = 'snvnrock@gmail.com' # str(os.getenv('EMAIL_HOST_USER'))# 
-# EMAIL_HOST_PASSWORD = '8007008467Na'  #str(os.getenv('EMAIL_HOST_PASSWORD')) # os.environ['password_key'] suggested
-# EMAIL_USE_TLS = True
 
 # For Django Email Backend
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'

@@ -11,7 +11,7 @@ Client Form
 {% block extra_css %}
 <link  href="{{ static('assets/plugins/custom/DataTables/datatables.min.css') }}" rel="stylesheet" type="text/css"/>
 <link  href="{{ static('assets/plugins/custom/Editor-2.0.8/css/editor.dataTables.min.css') }}" rel="stylesheet" type="text/css"/>
-{% endblock extra_css %}
+{% endblock extra_css %} 
 <!--- END CSS -->
 
 <!-------------------------- BEGIN PAGE BREADCUMB ----------------------->
@@ -122,14 +122,6 @@ Client
                     {{ clientprefsform.pvideolength }}
                 </div>
             </div>
-            <div class="input-group mb-3">
-                <div class="col-md-4">
-                    {{ clientprefsform.validimei.label_tag() }}
-                </div>
-                <div class="col-md-8">
-                    {{ clientprefsform.validimei }}
-                </div>
-            </div>
         </div>
 
         <div class="col-md-4 offset-md-2 form-check form-switch form-check-solid">
@@ -208,6 +200,10 @@ Client
     </div>
     <div class="card-body">
         <table id="tabAdminUsers" class="display cell-border compact hover"></table>
+        <div class="card-footer ps-0">
+            <p class="text-primary">Note: Select site from list of sites where you want to create a site-admin</p>
+            <p class="text-primary"><b>Note:</b>Default password for new admin-user is { Login ID }@123</p> 
+        </div>
     </div>
 </div>
 </div>
@@ -252,6 +248,47 @@ Client
             $('#DTE_Field_identifier').append(newOption).trigger('change');
         }
     }
+
+    function validateCode(bucode){
+        // validate bucode return false bucode has special characters and contains space
+        var regex = /^[a-zA-Z0-9]+$/;
+        if(!regex.test(bucode)){
+            return false;
+        }return true;
+    }
+
+    function validateEmail(email){
+        //validate email return false if email is invalid
+        var regex = /^([a-zA-Z0-9_\-\.]+)@([a-zA-Z0-9_\-\.]+)\.([a-zA-Z]{2,5})$/;
+        if(!regex.test(email)){
+            return false;
+        }return true
+    }
+
+    function validatePhone(phone) {
+        var regex = /^[\+]?[(]?[0-9]{3}[)]?[-\s\.]?[0-9]{3}[-\s\.]?[0-9]{4,6}$/im;
+        if (!regex.test(phone)) {
+            return false;
+        }
+        return true;
+    }
+    function validateLoginid(loginid){
+        //validate loginid return false if loginid is invalid
+        var regex = /^[a-zA-Z0-9]+$/;
+        if(!regex.test(loginid)){
+            return false;
+        }return true
+    }
+
+    function validateDate(date){
+        //validate date return false if date is invalid
+        var regex = /^\d{4}-\d{2}-\d{2}$/;
+        if(!regex.test(date)){
+            return false;
+        }return true
+    }
+
+
     $(document).ready(function () {
         //set ctzoffset
   	    $("#id_ctzoffset").val(-new Date().getTimezoneOffset())
@@ -267,7 +304,17 @@ Client
         $("#id_portletcapability").attr("form", "id_clientform")
         $("#id_mobilecapability").attr("form", "id_clientform")
 
-
+        //on usereliver checked make reliveronpeoplecount required and class required to its label field
+        $("#id_usereliver").change(function(){
+            console.log("chaged....")
+            if($(this).is(":checked")){
+                $("#id_reliveronpeoplecount").attr("required", true)
+                $("label[for='id_reliveronpeoplecount']").addClass("required")
+            }else{
+                $("#id_reliveronpeoplecount").attr("required", false)
+                $("label[for='id_reliveronpeoplecount']").removeClass("required")
+            }
+        })
 
         // submit the popup-butype-taform for validation and saving in db.
         $('#pop_butype_form').on('submit', sumit_popup_form({
@@ -393,7 +440,8 @@ Client
                         let currentRow = getCurrentEditingRow(adminsEditor, tabListAdmins)
                         d.pk = currentRow !== 'None' ? currentRow['id'] : currentRow
                         d.csrfmiddlewaretoken = '{{ csrf_token }}'
-                        d.site_id = selected.data().id;
+                        d.site_id = selected.data().id
+                        d.client_id = '{{ clientform.instance.id }}'
                         d.ctzoffset = $("#id_ctzoffset").val()
                         d.peoplecode = $('#DTE_Field_peoplecode').val()
                         d.peoplename = $('#DTE_Field_peoplename').val()
@@ -411,11 +459,11 @@ Client
             },
             fields:[
                 {label: 'Name', name: 'peoplename', data: 'peoplename'},
-                {label: 'Code', name: 'peoplecode', data: 'peoplecode'},
+                {label: 'Code', name: 'peoplecode', data: 'peoplecode', fieldInfo:'Enter text without any spaces and special characters'},
                 {label: 'Email', name: 'email', data: 'email'},
                 {label: 'Login ID', name: 'loginid', data: 'loginid'},
-                {label: 'Mobile', name: 'mobno', data: 'mobno'},
-                {label: 'Date Of Birth', name: 'dateofbirth', data: 'dateofbirth', type:'datetime'},
+                {label: 'Mobile', name: 'mobno', data: 'mobno', fieldInfo:"Enter country code followed by 10 digit mobile no"},
+                {label: 'Date Of Birth', name: 'dateofbirth', data: 'dateofbirth', type:'datetime', fieldInfo:"Select or Enter date of birth in yyyy-mm-dd format"},
                 {label: 'Date Of Join', name: 'dateofjoin', data: 'dateofjoin', type:'datetime'},
                 {label: 'Is Admin', name: 'isadmin', data: 'isadmin',type: 'select', def:1,
                 options:   [
@@ -453,7 +501,63 @@ Client
                 var dateofbirth = this.field('dateofbirth')
                 var dateofjoin = this.field('dateofjoin')
                 var isadmin = this.field('isadmin')
+
+                if(!(peoplecode.isMultiValue() || peoplename.isMultiValue() || mobno.isMultiValue() ||
+                 loginid.isMultiValue() || dateofbirth.isMultiValue() || dateofjoin.isMultiValue())){
+                    if(!peoplename.val()){
+                        console.log(peoplename.val(), "@@@@222")
+                        peoplename.error('Please enter a name')
+                    }
+                    if(!email.val()){
+                        console.log(email.val(), "@@@@222")
+                        email.error('Please enter a email')
+                    }else{
+                        if(!validateEmail(email.val())){
+                            email.error('Please enter a valid email address')
+                        }
+                    }
+                    if(!mobno.val()){
+                        console.log(mobno.val(), "@@@@222")
+                        mobno.error('Please enter a mobno')
+                    }else{
+                        if(!validatePhone(mobno.val())){
+                            mobno.error('Please enter a valid Mobile number')
+                        }
+                    }
+                    if(!peoplecode.val()){
+                        console.log(peoplecode.val(), "@@@@222")
+                        peoplecode.error('Please enter a code')
+                    }else{
+                        if(!validateCode(peoplecode.val())){
+                            peoplecode.error('Please enter a valid code only alphabets numbers and underscore allowed')
+                        }
+                    }
+                    if(!loginid.val()){
+                        console.log(loginid.val(), "@@@@222")
+                        loginid.error('Please enter a loginid')
+                    }
+                    if(!dateofbirth.val()){
+                        console.log(dateofbirth.val(), "@@@@222")
+                        dateofbirth.error('Please enter a dateofbirth')
+                    }else{
+                        if(!validateDate(dateofbirth.val())){
+                            dateofbirth.error('Please enter a valid "Date of birth" in yyyy-mm-dd format')
+                        }
+                    }
+                    if(!dateofjoin.val()){
+                        console.log(dateofjoin.val(), "@@@@222")
+                        dateofjoin.error('Please enter a dateofjoin')
+                    }else{
+                        if(!validateDate(dateofjoin.val())){
+                            dateofjoin.error('Please enter a valid "Date of join" in yyyy-mm-dd format')
+                        }
+                    }
+                }
+                if(this.inError()){
+                    return false
+                }
             }
+
         })
 
         //listbu_editor form validations
@@ -471,6 +575,11 @@ Client
                     if(!bucode.val()){
                         console.log(bucode.val(), "@@@@222")
                         bucode.error('Please enter a code')
+                    }else{
+                        //validate budcode
+                        if(!validateCode(bucode.val())){
+                            bucode.error('Please enter a valid code only alphabets, numbers and underscore allowed')
+                        }
                     }
                     if(!$("#DTE_Field_identifier").val()){
                         console.log(identifier.val(), "@@@@222")
@@ -505,13 +614,19 @@ Client
         //datatable  list of peoples
         tabListAdmins= $("#tabAdminUsers").DataTable({
             ajax:{
-                url: `{{ url('onboarding:client') }}?action=getadmins&id={{ clientform.instance.id }}`
+                url: `{{ url('onboarding:client') }}?action=getadmins&clientid={{ clientform.instance.id }}`,
+                data:function(d){
+                var selected = tabListBus.row( { selected: true } );
+                    if ( selected.any() ) {
+                    d.buid = selected.data().id
+                }
+            }
             },
             columns:[
                 {data: 'id', defaulContent: "", visible:false},
                 {data: 'peoplecode', title: 'Code'},
                 {data: 'peoplename', title: 'Name'},
-                {data: 'loginid', title: 'Login'},
+                {data: 'loginid', title: 'Login ID'},
                 {data: 'email', title: 'Email'},
                 {data: 'mobno', title: 'Mobile'},
                 {data: 'dateofbirth', title: 'Date Of Birth', visible:false},
@@ -535,7 +650,7 @@ Client
             }
         })
         $("#tabAdminUsers_wrapper .buttons-create").addClass('disabled')//on page load disable new button of child table
-        $("#tabAdminUsers_wrapper .buttons-create").attr({'data-toggle':"tooltip", 'data-placement':"top", 'title':"Select Site First"})
+        $("#tabAdminUsers_wrapper .buttons-create").attr({'data-toggle':"tooltip", 'data-placement':"top", 'title':"Select Site From The Above Table"})
 
 
         tabListBus.on( 'select', function () {
@@ -569,13 +684,12 @@ Client
             })
         })
         //delete ajax request 
-        function isClientDeleted(id){ 
+        function isClientDeleted(id){
             let urlname = "{{ url('onboarding:client') }}"
             const params = {url:`${urlname}?action=delete&id=${id}`}
             fire_ajax_get(params)
             .done((data, status, xhr) => {
                 if(!xhr.status === 200){
-                    console.log("deleted...")
                     return false
                 }
                 return true
@@ -606,6 +720,24 @@ Client
                 })
             }
         })
+        
+        tabListBus.on( 'select', function () {
+            tabListAdmins.ajax.reload();
+            $("#tabListAdmins_wrapper .buttons-create").removeClass('disabled')
+        } );
+            
+        tabListBus.on( 'deselect', function () {
+            tabListAdmins.ajax.reload();
+            $("#tabListAdmins_wrapper .buttons-create").addClass('disabled')
+            $("#tabListAdmins_wrapper .buttons-create").attr({'data-toggle':"tooltip", 'data-placement':"top", 'title':"Select Section First"})
+        } );
+
+        //disable the create button of sites table
+        $("#tabListBu_wrapper .buttons-create").addClass('disabled')
+        //if client form instance  not equal to None then enable the create button of sites table
+        if("{{ clientform.instance.pk }}" != 'None'){
+            $("#tabListBu_wrapper .buttons-create").removeClass('disabled')
+        }
     })
 </script>
 {% endblock extra_scripts %}

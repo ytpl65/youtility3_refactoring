@@ -50,7 +50,6 @@ class BtManager(models.Manager):
         Return sitelist assigned to peopleid
         considering whether people is admin or not.
         """
-        ic(clientid, peopleid)
         qset = self.raw("select fn_get_siteslist_web(%s, %s) as id", [clientid, peopleid])
         return qset or self.none()
 
@@ -86,7 +85,9 @@ class BtManager(models.Manager):
         parentid = -1 if request.GET.get('parentid') == 'None' else request.GET.get('parentid')
         qset = self.filter(~Q(id=1), Q(id = parentid) | Q(parent_id=parentid)).distinct()
         qset = qset.filter(buname__icontains = search_term) if search_term else qset
-        qset = qset.annotate(text = Concat(F('buname'), V(" ("), F('identifier__tacode'), V(")"))).values('id', 'text')
+        qset = qset.annotate(
+            text = Concat(F('buname'), V(" ("), F('identifier__tacode'), V(")"))).exclude(
+                identifier__tacode = 'SITE').values('id', 'text')
         return qset or self.none()
 
     def get_client_list(self, fields, related):
@@ -100,7 +101,7 @@ class BtManager(models.Manager):
         "handles post data submitted by editor in client form"
         R, S = request.POST, request.session
         r = {'enable':R['enable'] == '1'}
-        PostData = {'bucode':R['bucode'], 'buname':R['buname'], 'parent_id' : R['parent'], 'identifier_id':R['identifier'],
+        PostData = {'bucode':R['bucode'].upper(), 'buname':R['buname'], 'parent_id' : R['parent'], 'identifier_id':R['identifier'],
                     'enable':r['enable'],
                 'cuser':request.user, 'muser':request.user, 'cdtz':utils.getawaredatetime(datetime.now(), R['ctzoffset']),
                 'mdtz':utils.getawaredatetime(datetime.now(), R['ctzoffset'])}
@@ -115,15 +116,20 @@ class BtManager(models.Manager):
             ic(updated)
             if updated: ID = R['pk']
         else:
+            ic(R['pk'])
             self.filter(pk=R['pk']).delete()
             return self.none()
+        
+        return self.filter(id=ID).values('id', 'bucode', 'buname', 'identifier__tacode', 'identifier_id', 
+                 'parent__buname', 'parent_id', 'enable') or self.none()
     
     def handle_adminspostdata(self, request):
+        # sourcery skip: use-named-expression
         "handles post data submitted by editor in client form"
         R, S = request.POST, request.session
         r = {'isadmin':R['isadmin'] == '1'}
-        PostData = {'peoplecode':R['peoplecode'], 'peoplename':R['peoplename'], 'bu_id' : R['site_id'], 'loginid':R['loginid'],
-                    'email':R['email'], 'gender':R['gender'],'mobno':R['mobno'], 'isadmin':r['isadmin'], 'dateofbirth':R['dateofbirth'],
+        PostData = {'peoplecode':R['peoplecode'].upper(), 'peoplename':R['peoplename'], 'bu_id' : R['site_id'], 'loginid':R['loginid'],
+                    'client_id':R['client_id'] , 'email':R['email'], 'gender':R['gender'],'mobno':R['mobno'], 'isadmin':r['isadmin'], 'dateofbirth':R['dateofbirth'],
                     'dateofjoin':R['dateofjoin'],
                 'cuser':request.user, 'muser':request.user, 'cdtz':utils.getawaredatetime(datetime.now(), R['ctzoffset']),
                 'mdtz':utils.getawaredatetime(datetime.now(), R['ctzoffset'])}
@@ -135,14 +141,21 @@ class BtManager(models.Manager):
             PostData.pop('cuser')
             PostData.pop('mdtz')
             updated = pm.People.objects.filter(pk=R['pk']).update(**PostData)
-            ic(updated)
             if updated: ID = R['pk']
         else:
             pm.People.objects.filter(pk=R['pk']).delete()
             return self.none()
         
-        return pm.People.objects.filter(id=ID).values('peoplecode', 'peoplename', 'loginid', 'email',
-        'isadmin', 'mobno', 'gender', 'dateofbirth', 'dateofjoin') or self.none()
+        qset = pm.People.objects.filter(id=ID).values(
+            'id', 'peoplecode', 'peoplename', 'loginid', 'email',
+        'isadmin', 'mobno', 'gender', 'dateofbirth', 'dateofjoin')
+        
+        if qset:
+            user = pm.People.objects.get(id=qset[0]['id'])
+            user.set_password(f'{qset[0]["loginid"]}@123')
+            user.save()
+        return qset or self.none()
+        
 
     def get_listbus(self, request):
         "return list bus for client_form"
@@ -157,7 +170,10 @@ class BtManager(models.Manager):
         "return list admins for client_form"
         if request.GET.get("id") == "None":
             return self.none()
-        qset = pm.People.objects.filter(isadmin=True, client_id = request.GET.get('id')).exclude(peoplecode__in=['NONE', 'SUPERADMIN']).distinct().values(
+        qset = pm.People.objects.filter(
+            isadmin=True, bu_id = request.GET.get('buid'),
+            
+            ).exclude(peoplecode__in=['NONE', 'SUPERADMIN']).distinct().values(
             'peoplecode', 'peoplename', 'loginid', 'isadmin', 'mobno', 'email',
             'gender', 'id', 'dateofbirth', 'dateofjoin'
         ).order_by('-mdtz')

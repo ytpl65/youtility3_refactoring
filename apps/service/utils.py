@@ -22,6 +22,7 @@ def write_file_to_dir(filebuffer, uploadedfile):
     from django.core.files.storage import default_storage
 
     path = default_storage.save(uploadedfile, ContentFile(filebuffer.read()))
+    log.info(f"file saved to {path}")
 
 
 from pprint import pformat
@@ -375,19 +376,21 @@ def perform_uploadattachment(file,  record, biodata):
         log.info(f"file_buffer {file_buffer} pelogid {pelogid} peopleid {peopleid} path {path} home_dir {home_dir} filepath {filepath} uploadfile {uploadfile}")
         with transaction.atomic(using = db):
             iscreated = get_or_create_dir(filepath)
-            log.info(f'filepath is {iscreated}')
+            log.info(f'Is FilePath created? {iscreated}')
             write_file_to_dir(file_buffer, uploadfile)
             obj = insertrecord(record, 'attachment')
             #send_alert_mails_if_any(obj)
             rc, traceback, msg = 0, tb.format_exc(), Messages.UPLOAD_SUCCESS
             recordcount = 1
-
+    except Exception as e:
+        rc, traceback, msg = 1, tb.format_exc(), Messages.UPLOAD_FAILED
+        log.error('something went wrong', exc_info = True)
+    try:
         from .tasks import perform_facerecognition_bgt
         results = perform_facerecognition_bgt.delay(pelogid, peopleid, obj.owner, home_dir, uploadfile, db)
         log.warning(f"face recognition status {results.state}")
     except Exception as e:
-        rc, traceback, msg = 1, tb.format_exc(), Messages.UPLOAD_FAILED
-        log.error('something went wrong', exc_info = True)
+        log.error('something went wrong while performing face recognition', exc_info = True)
     return ServiceOutputType(rc = rc, recordcount = recordcount, msg = msg, traceback = traceback)
 
 def getEmails(R):
