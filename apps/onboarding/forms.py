@@ -353,6 +353,18 @@ class ClentForm(BuPrefForm):
         self.fields['reportcapability'].choices = get_caps_choices(cfor = pm.Capability.Cfor.REPORT)
         self.fields['portletcapability'].choices = get_caps_choices(cfor = pm.Capability.Cfor.PORTLET)
 
+    def clean(self):
+        ic("called")
+        cleaned_data = super().clean()
+        if not cleaned_data.get('mobilecapability') and not cleaned_data.get('webcapability'):
+            msg = "Please select atleast one capability"
+            self.add_error("mobilecapability", msg)
+            self.add_error("webcapability", msg)
+        #if usereliver is checked then reliveronpeoplecount should be greater than 0
+        if cleaned_data.get('usereliver') and cleaned_data.get('reliveronpeoplecount') <= 0:
+            ic(cleaned_data.get('usereliver'), cleaned_data.get('reliveronpeoplecount'))
+            self.add_error('reliveronpeoplecount', "Reliver on people count should be greater than 0")
+    
     
     def clean_validip(self):
         if val := self.cleaned_data.get('validip'):

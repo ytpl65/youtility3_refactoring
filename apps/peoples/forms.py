@@ -25,7 +25,14 @@ class LoginForm(forms.Form):
         widget = forms.PasswordInput(attrs={"placeholder": 'Enter Password',
                                           'autocomplete': 'off', 'data-toggle': 'password'}),
         label='Password')
-
+    
+    def clean(self):
+        super().clean()
+        username = self.cleaned_data.get('username')
+        user  = self.get_user(username)
+        self.check_active(user)
+        self.check_user_hassite(user)
+    
     def clean_username(self):
         import re
         if val := self.cleaned_data.get('username'):
@@ -36,6 +43,23 @@ class LoginForm(forms.Form):
         result = super().is_valid()
         utils.apply_error_classes(self)
         return result
+    
+    def check_active(self, user):
+        if not user.enable:
+            raise forms.ValidationError("Can't Login User Is Not Active, Please Contact Admin")
+    
+    def check_user_hassite(self, user):
+        if not user.bu and user.people_extras['assignsitegroup']:
+            raise forms.ValidationError("User has no site assigned")
+    
+    def get_user(self, loginid):
+        try:
+            return pm.People.objects.get(loginid=loginid)
+        except pm.People.DoesNotExist as e:
+            raise forms.ValidationError("User not found with these loginid") from e
+            
+    
+    
 
 class PeopleForm(forms.ModelForm):
     required_css_class = "required"

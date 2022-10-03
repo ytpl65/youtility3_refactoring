@@ -292,14 +292,14 @@ def save_user_session(request, people):
             logger.info(request.session['is_superadmin'])
             putils.save_tenant_client_info(request)
         else:
-            client = putils.save_tenant_client_info(request)
+            putils.save_tenant_client_info(request)
             request.session['is_superadmin'] = people.peoplecode == 'SUPERADMIN'
             request.session['is_admin'] = people.isadmin
-            #request.session['assigned_siteids'] = Bt.objects.get_sitelist_web(request.session['client_id'], request.user.id)
-            # get cap choices and save in session data
             putils.get_caps_choices(
-                client=client, session=request.session, people=people)
+                client=request.user.client, session=request.session, people=people)
             logger.info('saving user data into the session ... DONE')
+        request.session['clientcode'] = request.user.client.bucode
+        request.session['sitename'] = request.user.bu.buname
         request.session['google_maps_secret_key'] = settings.GOOGLE_MAP_SECRET_KEY
     except ObjectDoesNotExist:
         logger.error('object not found...', exc_info=True)
@@ -573,7 +573,6 @@ def get_or_create_none_typeassist():
 
 def tenant_db_from_request(request):
     hostname = hostname_from_request(request)
-    print(f"Hostname from Request:{hostname}")
     tenants_map = get_tenants_map()
     return tenants_map.get(hostname, 'default')
 
@@ -1222,17 +1221,18 @@ def isValidEMEI(n):
     # If length is not 15 then IMEI is Invalid
     if l != 15:
         return False
+    return True
  
-    d = 0
-    sum = 0
-    for i in range(15, 0, -1):
-        d = (int)(n % 10)
-        if i % 2 == 0:
+    # d = 0
+    # sum = 0
+    # for i in range(15, 0, -1):
+    #     d = int(n % 10)
+    #     if i % 2 == 0:
  
-            # Doubling every alternate digit
-            d = 2 * d
+    #         # Doubling every alternate digit
+    #         d = 2 * d
  
-        # Finding sum of the digits
-        sum = sum + sumDig(d)
-        n = n / 10
-    return (sum % 10 == 0)
+    #     # Finding sum of the digits
+    #     sum = sum + sumDig(d)
+    #     n = n / 10
+    # return (sum % 10 == 0)

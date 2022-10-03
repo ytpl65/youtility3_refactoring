@@ -42,26 +42,31 @@ def create_dummy_clientandsite():
 
 
 
-def insert_default_entries_in_typeassist():
+def insert_default_entries():
     """
     Inserts Default rows in TypeAssist Table
     """
     from apps.onboarding.models import TypeAssist
     from apps.onboarding.admin import TaResource
+    from apps.peoples.admin import CapabilityResource
     from django.conf import settings
     from tablib import Dataset
     from import_export import resources
     BASEDIR = settings.BASE_DIR
 
     try:
-        filepath = f'{BASEDIR}/docs/default_types.xlsx'
-        with open(filepath, 'rb') as f:
-            utils.set_db_for_router(utils.get_current_db_name())
-            log.info(f'current db when importing data from file {utils.get_current_db_name()}')
-            default_types = Dataset().load(f)
-            ic(default_types)
-            ta_resource = TaResource(is_superuser=True)
-            ta_resource.import_data(default_types, dry_run = False, raise_errors = True)
+        ta_filepath = f'{BASEDIR}/docs/default_types.xlsx'
+        cap_filepath = f'{BASEDIR}/docs/caps.xlsx'
+        files = {ta_filepath:TaResource, cap_filepath:CapabilityResource}
+        
+        for k,v in files.items():
+            with open(k, 'rb') as f:
+                utils.set_db_for_router(utils.get_current_db_name())
+                log.info(f'current db when importing data from file {utils.get_current_db_name()}')
+                default_types = Dataset().load(f)
+                resource = v(is_superuser=True)
+                resource.import_data(default_types, dry_run = False, raise_errors = True)
+        log.info("Default entries inserted successfully")
     except Exception as e:
         log.error('FAILED insert_default_entries', exc_info = True)
         raise
@@ -69,7 +74,7 @@ def insert_default_entries_in_typeassist():
 def create_superuser(client, site):
     # sourcery skip: replace-interpolation-with-fstring, simplify-fstring-formatting
     user = People.objects.create(
-        peoplecode='SUPERADMIN', peoplename='Super Admin',
+        peoplecode='SUPERADMIN', loginid="superadmin", peoplename='Super Admin',
         dateofbirth='1111-11-11', dateofjoin='1111-11-11',
         email='superadmin@youtility.in', isverified=True,
         is_staff=True, is_superuser=True,
@@ -86,7 +91,7 @@ def base_call(self):
     self.stdout.write(self.style.SUCCESS('None Entries created successfully!'))
     
     # insert default entries for TypeAssist
-    insert_default_entries_in_typeassist()
+    insert_default_entries()
     self.stdout.write(self.style.SUCCESS('Default Entries Created..'))
 
     # create dummy client: SPS and site: YTPL
@@ -134,7 +139,7 @@ class Command(BaseCommand):
                         "Database with this alias '%s' not exist operation can't be performed"%(db)))
 
             except IntegrityError as e:
-                log.warning("IntegrityError occured Retrying Again", exc_info = True)
+                log.warning("IntegrityError occured Retrying Again", exc_info = False)
                 continue
             except Exception as e:
                 self.stdout.write(self.style.ERROR("something went wrong...!"))

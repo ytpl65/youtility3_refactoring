@@ -93,7 +93,6 @@ class TaResource(resources.ModelResource ):
         utils.save_common_stuff(self.request, instance, self.is_superuser)
 
     def skip_row(self, instance, original):
-        ic(instance.tacode)
         return om.TypeAssist.objects.filter(tacode = instance.tacode).exists()
 
 

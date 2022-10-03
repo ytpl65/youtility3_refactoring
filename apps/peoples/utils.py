@@ -126,29 +126,15 @@ def validate_mobileno(val):
 
 
 def save_tenant_client_info(request):
-    from apps.core.utils import hostname_from_request, get_tenants_map
     from apps.onboarding.models import Bt
     try:
         logger.info('saving tenant & client info into the session...STARTED')
-        hostname = hostname_from_request(request)
-        ic(hostname)
-        clientcodeMap = get_tenants_map()
-        clientcode = clientcodeMap.get(hostname)
-        utils.set_db_for_router(clientcode)
-        request.session['hostname'] = hostname
-        ic(clientcode)
-        client = Bt.objects.get(bucode=clientcode.upper()
-                                if clientcode else "SPS")
-        # tenant = Tenant.objects.get(id = client.tenant.id)#
-        #request.session['tenantid'] = tenant.id
         request.session['client_id'] = request.user.client.id
         request.session['bu_id'] = request.user.bu.id
         logger.info('saving tenant & client info into the session...DONE')
     except Exception:
         logger.error('save_tenant_client_info failed', exc_info=True)
         raise
-    else:
-        return client
 
 
 # def get_choice(li, queryset = False):

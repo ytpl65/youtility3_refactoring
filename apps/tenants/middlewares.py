@@ -6,7 +6,6 @@ class TenantMiddleware:
 
     def __call__(self, request):
         db = tenant_db_from_request(request)
-        print(f"Database:{db}")
         setattr(THREAD_LOCAL, "DB", db)
         return self.get_response(request)
 
