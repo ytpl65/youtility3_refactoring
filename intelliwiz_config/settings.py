@@ -13,6 +13,7 @@ https://docs.djangoproject.com/en/3.2/ref/settings/
 from pathlib import Path
 import os
 import configparser
+from pickle import TRUE
 from dotenv import load_dotenv
 load_dotenv()  # loads the configs from .env
 # Build paths inside the project like this: BASE_DIR / 'subdir'.p
@@ -30,7 +31,7 @@ SECRET_KEY = config.get('DEFAULT', 'SECRET_KEY')
 ENCRYPT_KEY = str(os.getenv('ENCRYPT_KEY'))
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
+DEBUG = True
 
 ALLOWED_HOSTS = ['.localhost', 'django-local.youtility.in','redmine.youtility.in', '192.168.1.254', '192.168.1.33']
 
@@ -139,7 +140,7 @@ DATABASES = {
     'default': {
         'ENGINE':   'django.contrib.gis.db.backends.postgis',
         'USER':     DBUSER,
-        'NAME':     "sps_django",
+        'NAME':     DBNAME,
         'PASSWORD': DBPASS,
         'HOST':     DBHOST,
         'PORT':     '5432',
@@ -397,7 +398,7 @@ TAGGIT_CASE_INSENSITIVE = True
 # GOOGLE MAP API KEY...
 GOOGLE_MAP_SECRET_KEY  = str(os.getenv('GOOGLE_MAP_SECRET_KEY'))
 
-CSRF_COOKIE_SECURE=True
-SESSION_COOKIE_SECURE=True
-SECURE_SSL_REDIRECT=True
+CSRF_COOKIE_SECURE=False
+SESSION_COOKIE_SECURE=False
+SECURE_SSL_REDIRECT=False
 
