@@ -1520,10 +1520,18 @@ class Client(LoginRequiredMixin, View):
         R, P = request.POST, self.params
         ic(R)
         if R.get('bupostdata'):
-            objs = P['model'].objects.handle_bupostdata(request)
+            try:
+                objs = P['model'].objects.handle_bupostdata(request)
+            except IntegrityError as e:
+                return rp.JsonResponse(dict(R).update({"error" : e.__cause__}), status=200, safe=False)
             return rp.JsonResponse({'data':list(objs)}, status=200)
+        
         if R.get('adminspostdata'):
-            objs = P['model'].objects.handle_adminspostdata(request)
+            try:
+                objs = P['model'].objects.handle_adminspostdata(request)
+            except IntegrityError as e:
+                ic(e.__cause__)
+                return rp.JsonResponse(dict(R).update({"error" : e.__cause__}), status=200, safe=False)
             return rp.JsonResponse({'data':list(objs)}, status=200)
         data = QueryDict(request.POST['formData'])
         try:
