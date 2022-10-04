@@ -71,12 +71,12 @@
 		</div>
 		<div class="card-body">
 			<div id="map" style="width:730px; height:300px"></div>
-			<div class="control-group">
+			{# <div class="control-group">
 				<label class="control-label" for="keyword">Search Location :</label>
 				<div class="controls">
 					<input type="text" class="span6" name="keyword" id="keyword">
 				</div>
-			</div>
+			</div> #}
 		</div>
 	</div>
 	<div class="modal-footer">
@@ -200,8 +200,9 @@ Buisiness-View
 				info
 			</span>
 		</label>
-		<div class="col-md-4">
+		<div class="col-md-4  d-flex d-inline">
 			{{ buform.gpslocation }}
+			<button type='button' class="btn btn-sm btn-secondary rounded-right rounded-1" style="height:3.2rem;" id="id_setgps">GPS</button>
 			{{ buform.gpslocation.errors }}
 		</div>
 
@@ -275,7 +276,13 @@ Buisiness-View
 <!--------------- BEGIN PAGE-LEVEL EXTRA SCRIPTS --------------->
 {% block extra_scripts %}
 {{ buform.media.js }}
+<script
+      src="https://maps.googleapis.com/maps/api/js?key=AIzaSyC3PUZCB7u2PiV8whHeAshweOPIK_d690o&libraries=places&v=weekly"
+      defer
+    ></script>
 <script>
+	//map global var
+	var map;
 	
 	function showHideBuType(){
 		//on load check butype is site
@@ -286,8 +293,21 @@ Buisiness-View
 		}else{$(".site_type").hide();}
 	}
 
+	function initMap() {
+	map = new google.maps.Map(document.getElementById("map"), {
+		center: { lat: -34.397, lng: 150.644 },
+		zoom: 8,
+	});
+	}
 	
 	$(document).ready(function () {
+		//onclick id_setgps open popup open-map
+		$("#id_setgps").click(function(){
+			$("#open_map").modal('show');
+			initMap();
+		});
+
+
 		//set ctzoffset
         $("#id_ctzoffset").val(-new Date().getTimezoneOffset())
 		

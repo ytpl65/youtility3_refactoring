@@ -1524,14 +1524,15 @@ class Client(LoginRequiredMixin, View):
             try:
                 objs = P['model'].objects.handle_bupostdata(request)
             except IntegrityError as e:
-                return rp.JsonResponse(R.update({"error" : e.message}), status=200)
+                return rp.JsonResponse(dict(R).update({"error" : e.__cause__}), status=200, safe=False)
             return rp.JsonResponse({'data':list(objs)}, status=200)
         
         if R.get('adminspostdata'):
             try:
                 objs = P['model'].objects.handle_adminspostdata(request)
             except IntegrityError as e:
-                return rp.JsonResponse(R.update({"error" : e.message}), status=200)
+                ic(e.__cause__)
+                return rp.JsonResponse(dict(R).update({"error" : e.__cause__}), status=200, safe=False)
             return rp.JsonResponse({'data':list(objs)}, status=200)
         data = QueryDict(request.POST['formData'])
         
