@@ -25,6 +25,7 @@ import apps.onboarding.forms as obforms
 import apps.peoples.utils as putils
 from apps.peoples import admin as people_admin
 from apps.onboarding import admin as ob_admin
+from django.db import IntegrityError
 from pprint import pformat
 CACHE_TTL = getattr(settings, 'CACHE_TTL', DEFAULT_TIMEOUT)
 logger = logging.getLogger('django')
@@ -1520,12 +1521,20 @@ class Client(LoginRequiredMixin, View):
         R, P = request.POST, self.params
         ic(R)
         if R.get('bupostdata'):
-            objs = P['model'].objects.handle_bupostdata(request)
+            try:
+                objs = P['model'].objects.handle_bupostdata(request)
+            except IntegrityError as e:
+                return rp.JsonResponse(R.update({"error" : e.message}), status=200)
             return rp.JsonResponse({'data':list(objs)}, status=200)
+        
         if R.get('adminspostdata'):
-            objs = P['model'].objects.handle_adminspostdata(request)
+            try:
+                objs = P['model'].objects.handle_adminspostdata(request)
+            except IntegrityError as e:
+                return rp.JsonResponse(R.update({"error" : e.message}), status=200)
             return rp.JsonResponse({'data':list(objs)}, status=200)
         data = QueryDict(request.POST['formData'])
+        
         try:
             if pk := request.POST.get('pk', None):
                 msg, create = "client_view", False

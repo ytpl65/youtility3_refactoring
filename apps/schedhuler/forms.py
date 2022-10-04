@@ -4,6 +4,7 @@ from apps.activity.forms import JobForm, JobNeedForm
 import apps.onboarding.utils as ob_utils
 from apps.core import utils
 from django_select2 import forms as s2forms
+from django.db.models import Q
 import apps.activity.models as am
 import apps.peoples.models as pm
 import apps.onboarding.models as ob
@@ -239,7 +240,11 @@ class SchdTaskFormJob(JobForm):
             'starttime':forms.TextInput(attrs={'style': 'display:none;'}),
             'endtime':forms.TextInput(attrs={'style': 'display:none;'}),
             'frequency':forms.TextInput(attrs={'style': 'display:none;'}),
+            'ticketcategory': s2forms.Select2Widget,
+            'scantype'      : s2forms.Select2Widget,
+            'priority'      : s2forms.Select2Widget,
         })
+    ic(Meta.fields, Meta.exclude, Meta.widgets, Meta.labels)
 
     def __init__(self, *args, **kwargs):
         self.request = kwargs.pop('request')
@@ -254,6 +259,11 @@ class SchdTaskFormJob(JobForm):
         self.fields['expirytime'].label        = 'Grace Time After'
         self.fields['gracetime'].label         = 'Grace Time Before'
         self.fields['ticketcategory'].queryset = ob.TypeAssist.objects.filter(tatype__tacode="TICKETCATEGORY")
+        self.fields['qset'].queryset = am.QuestionSet.objects.filter(type="QUESTIONSET",  enable=True)
+        self.fields['asset'].queryset = am.Asset.objects.filter(~Q(runningstatus='SCRAPPED'), identifier__in =["LOCATION", "ASSET", "SMARTPLACE"],)
+        ic(self.fields['ticketcategory'].widget.attrs)
+        ic(self.fields['scantype'].widget.attrs)
+        ic(self.fields['priority'].widget.attrs)
         utils.initailize_form_fields(self)
 
     def clean(self):
@@ -270,9 +280,7 @@ class SchdTaskFormJob(JobForm):
     def convertto_mins(_type, _time):
         if _type == 'HOURS':
             return _time * 60
-        if _type == 'DAYS':
-            return _time * 24 * 60
-        return _time            
+        return _time * 24 * 60 if _type == 'DAYS' else _time            
 
 
 
