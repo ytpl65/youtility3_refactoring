@@ -209,7 +209,6 @@ function handle_alerts_msgs(msg, alertype) {
 }
 
 function display_form_errors(errors) {
-  /*display errors on respective fields*/
 
   $("p.errors").remove();
   if (errors instanceof String) {
@@ -221,16 +220,18 @@ function display_form_errors(errors) {
         display_non_field_errors(errors); //non-field errors
       }
       let error = "<p class='errors'>" + errors[key] + "</p>";
-      let field = "[name='" + key + "']";
-      if ($(field).is(":visible")) {
+      let fieldselector = "[name='" + key + "']";
+      var field = $(fieldselector);
+      if (field.is(":visible")) {
         handle_alerts_msgs(
           "Please resolve the following errors!",
           "alert alert-danger"
         );
-        $(field).addClass("is-invalid");
+        field.addClass("is-invalid");
+        field = field.parent().hasClass("d-flex") ? field.parent() : field;
         $(error).insertAfter(field);
 
-        $(field).next("p").css({ color: "red", "font-size": "15px" });
+        field.next("p").css({ color: "red", "font-size": "15px" });
       }
     }
   }

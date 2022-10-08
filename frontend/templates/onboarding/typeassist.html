@@ -157,7 +157,7 @@ TypeAssist List
 	}); //END document.ready()
 
 	//delete ajax request 
-	function isTaDeleted(id){ 
+	function isTaDeleted(id){
 		console.log("id ", id)
 		const params = {url:`${urlname}?action=delete&id=${id}`, 'beforeSend':function () {}}
 		fire_ajax_get(params)

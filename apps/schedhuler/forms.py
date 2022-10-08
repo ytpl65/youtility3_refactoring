@@ -244,7 +244,6 @@ class SchdTaskFormJob(JobForm):
             'scantype'      : s2forms.Select2Widget,
             'priority'      : s2forms.Select2Widget,
         })
-    ic(Meta.fields, Meta.exclude, Meta.widgets, Meta.labels)
 
     def __init__(self, *args, **kwargs):
         self.request = kwargs.pop('request')

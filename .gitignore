@@ -6,3 +6,4 @@ docs/importants.txt
 manage.py
 .env
 testPython.py
+intelliwiz_config/settings.py

@@ -63,25 +63,19 @@
 	</form>
 	{% endcall %}
 
-	<!-- to delete an instance with popup_alert pass the delete_url_name, instance_id, popup_title, popup_id -->
-	{% call general_popup(title="Delete", popup_id="open_map", modal_size="modal-lg") %}
+	<!-- Moda for setting GPS coordianates-->
+	{% call general_popup(title="Set GPS Location", popup_id="open_map", modal_size="modal-lg") %}
 	<div class="modal-body card">
-		<div class="card-header">
-			<div class="card-title">Set GPS Location</div>
-		</div>
-		<div class="card-body">
-			<div id="map" style="width:730px; height:300px"></div>
-			{# <div class="control-group">
-				<label class="control-label" for="keyword">Search Location :</label>
-				<div class="controls">
-					<input type="text" class="span6" name="keyword" id="keyword">
-				</div>
-			</div> #}
+		<div class="card-body p-0">
+			<div id="map" style="width:750px; height:350px"></div>
 		</div>
 	</div>
-	<div class="modal-footer">
-		<a href="#" class="btn" data-dismiss="modal">Close</a>
-		<a href="#" class="btn btn-primary">Save changes</a>
+	<div class="modal-footer d-flex justify-content-between">
+		<div><p>Tip: Zoom in for accurate coordinates of address, place the marker and then set the coords.</p></div>
+		<div></div>
+		<div><a href="#" class="btn" data-dismiss="modal">Close</a>
+		<a href="#" class="btn btn-primary" id="set_the_coords">Set the coordinates</a></div>
+		
 	</div>
 	{% endcall %}
 {% endblock popup_alerts %}
@@ -200,10 +194,11 @@ Buisiness-View
 				info
 			</span>
 		</label>
-		<div class="col-md-4  d-flex d-inline">
-			{{ buform.gpslocation }}
-			<button type='button' class="btn btn-sm btn-secondary rounded-right rounded-1" style="height:3.2rem;" id="id_setgps">GPS</button>
-			{{ buform.gpslocation.errors }}
+		<div class="col-md-4">
+			<div class="d-flex d-inline">
+				<input type="text" name="gpslocation"  placeholder="Latitude, Longitude" geom_type="POINT" class="form-control" id="id_gpslocation">
+				<button type='button' class="btn btn-sm btn-secondary rounded-right rounded-1" style="height:3.2rem;" id="id_setgps">GPS</button>
+			</div>
 		</div>
 
 		<!--------------------- BEGIN CHECKBOXES -------------------------->
@@ -281,8 +276,9 @@ Buisiness-View
       defer
     ></script>
 <script>
-	//map global var
+	//global var
 	var map;
+	var userMarker;
 	
 	function showHideBuType(){
 		//on load check butype is site
@@ -293,18 +289,150 @@ Buisiness-View
 		}else{$(".site_type").hide();}
 	}
 
-	function initMap() {
-	map = new google.maps.Map(document.getElementById("map"), {
-		center: { lat: -34.397, lng: 150.644 },
-		zoom: 8,
-	});
+	function clearAllMarkers(markers){
+		// Clear out the old markers.
+		markers.forEach((marker) => {
+			marker.setMap(null);
+		});
 	}
+
+	function placeMarker(location) {
+		if ( userMarker ) {
+			userMarker.setPosition(location);
+		} else {
+			userMarker = new google.maps.Marker({
+			position: location,
+			map: map,
+			icon: 'http://maps.google.com/mapfiles/ms/icons/blue-dot.png'
+			});
+		}
+	}
+
+	//delete ajax request 
+	function isBuDeleted(id){
+		const params = {url:`{{ url('onboarding:bu') }}?action=delete&id=${id}`,
+		 'beforeSend':function () {}
+		}
+		fire_ajax_get(params)
+		.done((data, status, xhr) => {
+			if(!xhr.status === 200){
+				return false
+			}
+			return true
+		})
+		.fail((xhr, status, error) => {
+			show_error_alert('Something went wrong!') //defined in custom.js
+			return false
+		})
+	}
+
+	function initMap() {
+		map = new google.maps.Map(document.getElementById("map"), {
+			center: { lat: -34.397, lng: 150.644 },
+			zoom: 8,
+		});
+		//search-radius-form controls
+		const controlDiv = document.createElement('DIV');
+		controlDiv.id = "search_rad_controls";
+
+		// Create the search box and link it to the UI element.
+		const controlInput = document.createElement('input');
+		controlInput.id = "pac-input";
+		controlInput.className = "controls mt-2 form-control";
+		controlInput.placeholder = 'Search any keyword..'
+		controlInput.style = 'width: 170% !important;'
+
+		controlDiv.appendChild(controlInput);
+		map.controls[google.maps.ControlPosition.TOP_LEFT].push(controlDiv);
+
+		const searchBox = new google.maps.places.SearchBox(controlInput);
+
+		// Bias the SearchBox results towards current map's viewport.
+		map.addListener("bounds_changed", () => {
+			searchBox.setBounds(map.getBounds());
+		});
+
+		let markers = [];
+
+		// Listen for the event fired when the user selects a prediction and retrieve
+		// more details for that place.
+		searchBox.addListener("places_changed", () => {
+			const places = searchBox.getPlaces();
+
+			if (places.length == 0) {
+			return;
+			}
+
+			// Clear out the old markers.
+			clearAllMarkers(markers)
+			markers = [];
+
+			// For each place, get the icon, name and location.
+			const bounds = new google.maps.LatLngBounds();
+
+			places.forEach((place) => {
+			if (!place.geometry || !place.geometry.location) {
+				console.log("Returned place contains no geometry");
+				return;
+			}
+
+			const icon = {
+				url: place.icon,
+				size: new google.maps.Size(71, 71),
+				origin: new google.maps.Point(0, 0),
+				anchor: new google.maps.Point(17, 34),
+				scaledSize: new google.maps.Size(25, 25),
+			};
+			
+			let marker = new google.maps.Marker({
+				map,
+				icon,
+				title: place.name,
+				position: place.geometry.location,
+				animation:google.maps.Animation.DROP
+				})
+			
+			// Create a marker for each place.
+			markers.push(
+				marker
+			);
+
+			//on click marker zoom in
+			marker.addListener("click", () => {
+				map.setZoom(17);
+				map.setCenter(marker.getPosition());
+			});
+
+			if (place.geometry.viewport) {
+				// Only geocodes have viewport.
+				bounds.union(place.geometry.viewport);
+			} else {
+				bounds.extend(place.geometry.location);
+			}
+			});
+			map.fitBounds(bounds);
+		}); // searchBox.addListener
+
+		//place marker when user clicks on map
+		google.maps.event.addListener(map, 'click', function(event) {
+			clearAllMarkers(markers)
+			placeMarker(event.latLng);
+		});
+	}// initMap end
 	
 	$(document).ready(function () {
 		//onclick id_setgps open popup open-map
 		$("#id_setgps").click(function(){
 			$("#open_map").modal('show');
 			initMap();
+		});
+
+		//onclick set the coords get lat and lng from useMarker and set to gpslocation field
+		$("#set_the_coords").click(function(){
+			var lat = userMarker.getPosition().lat();
+			var lng = userMarker.getPosition().lng();
+			$("#id_gpslocation").val(lat + ', ' + lng);
+			$("#open_map").modal('hide');
 		});
 
 
@@ -315,6 +443,8 @@ Buisiness-View
 		if ('{{buform.instance.id}}' == 'None') {
 			$("#btn_del").hide()
 			$(".dt-button buttons-create").addClass("disabled")
+		}else{
+			$("#id_gpslocation").val("{{ buform.instance.gpslocation.coords }} | (0.0, 0.0)")
 		}
 
 		// submit the popup-taform for validation and saving in db.
@@ -358,6 +488,44 @@ Buisiness-View
 		//on load check
 		showHideBuType();
 
+
+		//on form submit
+        $("#id_buform").on('submit', function(e){
+            var form = $(this)
+            e.preventDefault()
+            const params = {url: "{{ url('onboarding:bu') }}", modal:false}
+            const id = "{{ buform.instance.pk }}"
+            var payLoad = {formData:form.serialize(), csrfmiddlewaretoken: '{{ csrf_token }}'}//payload for post request
+            if(id != 'None'){
+				var newPayLoad = {...payLoad, 'pk':id}
+				payLoad = newPayLoad
+			}
+			fire_ajax_form_post(params, payLoad)
+			.done((data, status, xhr) => { //function to submit post request
+                show_successful_save_alert(update= id != 'None' ? true : false)
+                window.setTimeout(function() {
+                    window.location.href = `{{ url('onboarding:bu') }}?id=${data.pk}`;
+                }, 2000);
+			})
+        })
+
+		//on delete form
+		$("#btn_del").on('click', function(e){
+			e.preventDefault()
+			var id = "{{ buform.instance.id }}"
+            show_alert_before_delete('Business Unit')
+            .then((result) => {
+                if(result.isConfirmed){ //delete requested by user
+                    status = isBuDeleted(id) //fire's request
+                    console.log("status ", status)
+                    if(status){
+                        show_successful_delete_alert() //defined in customjs
+                    }else{
+                        show_error_alert('Something went wrong!');
+                    }
+                }
+            })
+		})
 	})
 </script>
 {% endblock extra_scripts %}

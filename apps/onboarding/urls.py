@@ -4,12 +4,11 @@ from .wizard_urls import wizard_url_patterns1
 
 
 app_name = 'onboarding'
-urlpatterns = [ 
+urlpatterns = [
     path('bu_form/',              views.CreateBt.as_view(),   name='bu_form'),
     path('bu_list/',              views.RetrieveBt.as_view(), name='bu_list'),
     path('bu_form/<str:pk>/',     views.UpdateBt.as_view(),   name='bu_update'),
     path('bu_form/del/<str:pk>/', views.DeleteBt.as_view(),   name='bu_delete'),
-
 
     path('client_form/',             views.CreateClient.as_view() ,   name='client_form'),
     path('client_list/',             views.RetriveClients.as_view() , name='client_list'),
@@ -22,10 +21,10 @@ urlpatterns = [
     path('super_typeassist/', views.SuperTypeAssist.as_view(), name="super_typeassist"),
     path('shift/', views.Shift.as_view(), name="shift"),
     path('editor/', views.EditorTa.as_view(), name="editortypeassist"),
-    path('wizard/',                 include(wizard_url_patterns1)),
+    path('wizard/',  include(wizard_url_patterns1)),
 
     path('geofence/', views.GeoFence.as_view(), name='geofence'),
     path('import/', views.ImportFile.as_view(), name="import"),
     path('client/', views.Client.as_view(), name="client"),
-    #path('listbu/', views.ListOfBu.as_view(), name="list_bu")
+    path('bu/', views.BtView.as_view(), name="bu"),
 ]

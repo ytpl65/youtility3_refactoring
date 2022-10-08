@@ -652,14 +652,14 @@ class CreateBt(LoginRequiredMixin, View):
     def get(self, request, *args, **kwargs):
         """Returns Bt form on html"""
         logger.info('create bt view...')
-        cxt = {'buform': self.form_class(),
+        cxt = {'buform': self.form_class(request=request),
                'ta_form': obforms.TypeAssistForm(auto_id = False)}
         return render(request, self.template_path, context = cxt)
 
     def post(self, request, *args, **kwargs):
         """Handles creation of Bt instance."""
         logger.info('create bt form submiited for saving...')
-        form, response = self.form_class(request.POST), None
+        form, response = self.form_class(request.POST, request=request), None
         try:
             if form.is_valid():
                 logger.info('BtForm Form is valid')
@@ -671,6 +671,7 @@ class CreateBt(LoginRequiredMixin, View):
                                  "alert-success")
                 response = redirect('onboarding:bu_form')
             else:
+                ic(form.errors, form.cleaned_data)
                 logger.info('BtForm Form is not valid')
                 cxt = {'buform': form, 'edit': True,
                        'ta_form': obforms.TypeAssistForm(auto_id = False)}
@@ -1526,7 +1527,7 @@ class Client(LoginRequiredMixin, View):
             except IntegrityError as e:
                 return rp.JsonResponse(dict(R).update({"error" : e.__cause__}), status=200, safe=False)
             return rp.JsonResponse({'data':list(objs)}, status=200)
-        
+
         if R.get('adminspostdata'):
             try:
                 objs = P['model'].objects.handle_adminspostdata(request)
@@ -1535,7 +1536,7 @@ class Client(LoginRequiredMixin, View):
                 return rp.JsonResponse(dict(R).update({"error" : e.__cause__}), status=200, safe=False)
             return rp.JsonResponse({'data':list(objs)}, status=200)
         data = QueryDict(request.POST['formData'])
-        
+
         try:
             if pk := request.POST.get('pk', None):
                 msg, create = "client_view", False
@@ -1549,7 +1550,8 @@ class Client(LoginRequiredMixin, View):
                 resp = self.handle_valid_form(form, jsonform, request)
             else:
                 cxt = {'errors': form.errors}
-                if jsonform.errors: cxt.update({'errors': jsonform.errors})
+                if jsonform.errors:
+                    cxt['errors'] = jsonform.errors
                 resp = utils.handle_invalid_form(request, P, cxt)
         except Exception:
             resp = utils.handle_Exception(request)
@@ -1572,3 +1574,82 @@ class Client(LoginRequiredMixin, View):
             return utils.handle_Exception(request)
 
 
+
+class BtView(LoginRequiredMixin, View):
+    params = {
+        'form_class': obforms.BtForm,
+        'template_form': 'onboarding/bu_form.html',
+        'template_list': 'onboarding/bu_list.html',
+        'related': ['parent', 'identifier', 'butype'],
+        'model': Bt,
+        'fields': ['id', 'bucode', 'buname', 'butree', 'identifier__tacode',
+              'enable', 'parent__bucode', 'butype__tacode'],
+        'form_initials': {} }
+
+    def get(self, request, *args, **kwargs):
+        R, resp = request.GET, None
+
+        # first load the template
+        if R.get('template'): return render(request, self.params['template_list'])
+        # then load the table with objects for table_view
+        if R.get('action', None) == 'list':
+            objs = self.params['model'].objects.select_related(
+                *self.params['related']).filter(
+                    enable = True,
+            ).values(*self.params['fields'])
+            return  rp.JsonResponse(data = {'data':list(objs)})
+
+        elif R.get('action', None) == 'form':
+            cxt = {'buform': self.params['form_class'](request = request),
+                   'ta_form': obforms.TypeAssistForm(auto_id = False),
+                   'msg': "create bu requested"}
+            resp = utils.render_form(request, self.params, cxt)
+
+        elif R.get('action', None) == "delete" and R.get('id', None):
+            resp = utils.render_form_for_delete(request, self.params, True)
+        
+        elif R.get('id', None):
+            obj = utils.get_model_obj(int(R['id']), request, self.params)
+            cxt = {'ta_form':obforms.TypeAssistForm(auto_id = False),
+                   'buform': self.params['form_class'](request = request, instance = obj)}
+        return render(request, self.params['template_form'], context = cxt)
+
+    def post(self, request, *args, **kwargs):
+        resp, create = None, True
+        try:
+            print(request.POST)
+            data = QueryDict(request.POST['formData'])
+            pk = request.POST.get('pk', None)
+            print(pk, type(pk))
+            if pk:
+                msg = "bu_view"
+                form = utils.get_instance_for_update(
+                    data, self.params, msg, int(pk), kwargs={'request':request})
+                create = False
+            else:
+                form = self.params['form_class'](data, request = request)
+            
+            if form.is_valid():
+                resp = self.handle_valid_form(form, request, create)
+            else:
+                cxt = {'errors': form.errors}
+                ic(len(form.errors), form.errors.get('gpslocation'))
+                resp = utils.handle_invalid_form(request, self.params, cxt)
+        except Exception:
+            logger.error("BU saving error!", exc_info = True)
+            resp = utils.handle_Exception(request)
+        return resp
+
+    def handle_valid_form(self, form, request, create):
+        logger.info('bu form is valid')
+        from apps.core.utils import handle_intergrity_error
+        try:
+            bu = form.save(commit=False)
+            ic(form.cleaned_data['gpslocation'])
+            bu.gpslocation = form.cleaned_data['gpslocation']
+            putils.save_userinfo(bu, request.user, request.session, create = create)
+            logger.info("bu form saved")
+            return rp.JsonResponse({'pk':bu.id}, status = 200)
+        except IntegrityError:
+            return handle_intergrity_error("Bu")
+        

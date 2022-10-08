@@ -9,7 +9,7 @@ Buisiness Units
 <!----------- BEGIN PAGE BREADCUMBS ----------->
 {% block pagebreadcumb %}
 {{ super() }}
-<li class="breadcrumb-item pe-3"><a href="{{ url('onboarding:bu_list') }}?template=true" class="pe-3">Bu List</a></li>
+<li class="breadcrumb-item pe-3"><a href="{{ url('onboarding:bu') }}?template=true" class="pe-3">Bu List</a></li>
 {% endblock pagebreadcumb %}
 <!----------- END PAGE BREADCUMBS ------------->
 
@@ -38,7 +38,7 @@ Buisiness Units
 		//BEGIN DATATABLE INITIALIZATION
 		var table = $('#bt_table').DataTable({
 			ajax:{
-				url: '{{ url("onboarding:bu_list") }}?action=list',
+				url: '{{ url("onboarding:bu") }}?action=list',
 			},
 			deferRender: true,
 			responsive : true,
@@ -60,7 +60,7 @@ Buisiness Units
 					targets: 1,
 					data   : 'bucode',
 					render : function ( data, type, row, meta ) {
-						return `<a href="/onboarding/bu_form/${row['id']}">${data}</a>`
+						return `<a href={{ url('onboarding:bu') }}?id=${row['id']}>${data}</a>`
 					}
 				}
 			],
@@ -72,7 +72,7 @@ Buisiness Units
 					className: "btn btn-sm btn-light-primary",
 					//action for add_new_button 
 					action: function(e, dt, node, config){
-						location.href =  "{{ url('onboarding:bu_form') }}"
+						location.href =  "{{ url('onboarding:bu_form') }}?action=form"
 					}
 				}
 			]	

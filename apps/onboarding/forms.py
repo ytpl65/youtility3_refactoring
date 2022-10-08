@@ -11,7 +11,8 @@ from django_select2 import forms as s2forms
 # from this project
 import apps.onboarding.models as obm # onboarding-models
 from apps.peoples import models as pm # onboarding-utils
-
+from django.contrib.gis.geos import GEOSGeometry
+from django.http import QueryDict
 #========================================= BEGIN MODEL FORMS ======================================#
 
 class SuperTypeAssistForm(forms.ModelForm):
@@ -94,7 +95,7 @@ class BtForm(forms.ModelForm):
     parent = forms.ModelChoiceField(label='Belongs to', required = False, widget = s2forms.Select2Widget, queryset = obm.Bt.objects.all())
     class Meta:
         model  = obm.Bt
-        fields = ['bucode', 'buname', 'parent', 'butype', 'gpslocation', 'identifier',
+        fields = ['bucode', 'buname', 'parent', 'butype', 'identifier',
                 'iswarehouse', 'isserviceprovider', 'isvendor', 'enable', 'ctzoffset',
                 'gpsenable', 'skipsiteaudit', 'enablesleepingguard', 'deviceevent']
 
@@ -104,7 +105,6 @@ class BtForm(forms.ModelForm):
             'butype'             : 'Site Type',
             'identifier'         : 'Type',
             'iswarehouse'        : 'Warehouse',
-            'gpslocation'        : 'GPS Location',
             'isenable'           : 'Enable',
             'isvendor'           : 'Vendor',
             'isserviceprovider' : 'Service Provider',
@@ -118,8 +118,7 @@ class BtForm(forms.ModelForm):
             'bucode'      : forms.TextInput(attrs={'style': 'text-transform:uppercase;', 'placeholder': 'Enter text without space & special characters'}),
             'buname'      : forms.TextInput(attrs={'placeholder': 'Name'}),
             'identifier'      : s2forms.Select2Widget,
-            'butype'      : s2forms.Select2Widget,
-            'gpslocation' : forms.TextInput(attrs={'placeholder': 'Latitude, Longitude'}),}    
+            'butype'      : s2forms.Select2Widget}    
 
     def __init__(self, *args, **kwargs):
         """Initializes form"""
@@ -141,20 +140,23 @@ class BtForm(forms.ModelForm):
 
 
     def clean(self):
-        cleaned_data = super().clean()
+        super().clean()
+        
         from .utils import create_bv_reportting_heirarchy
-        newcode = cleaned_data.get('bucode')
-        newtype = cleaned_data.get('identifier')
-        parent= cleaned_data.get('parent')
+        newcode = self.cleaned_data.get('bucode')
+        newtype = self.cleaned_data.get('identifier')
+        parent= self.cleaned_data.get('parent')
         instance = self.instance
-        ic(newcode, newtype, instance)
-        ic(instance.bucode)
         if newcode and newtype and instance:
-            ic(newcode)
             create_bv_reportting_heirarchy(instance, newcode, newtype, parent)
+        if self.cleaned_data.get('gpslocation'):
+            data = QueryDict(self.request.POST['formData'])
+            self.cleaned_data['gpslocation'] = self.clean_gpslocation(data.get('gpslocation'))
+        return self.cleaned_data
 
 
     def clean_bucode(self):
+        self.cleaned_data['gpslocation'] = self.data.get('gpslocation')
         import re
         if value := self.cleaned_data.get('bucode'):
             regex = "^[a-zA-Z0-9\-_]*$"
@@ -165,15 +167,16 @@ class BtForm(forms.ModelForm):
                 raise forms.ValidationError(self.error_msg['invalid_bucode3'])
             return value.upper()
 
-    def clean_gpslocation(self):
+    def clean_gpslocation(self, val):
         import re
-        if gps := self.cleaned_data.get('gpslocation'):
+        if gps := val:
             regex = '^([-+]?)([\d]{1,2})(((\.)(\d+)(,)))(\s*)(([-+]?)([\d]{1,3})((\.)(\d+))?)$'
             if not re.match(regex, gps):
                raise forms.ValidationError(self.error_msg['invalid_latlng'])
+            gps.replace(' ', '')
             lat, lng = gps.split(',')
-            gps = f'SRID=4326;POINT({lng} {lat})'
-        return gps   
+            gps = GEOSGeometry(f'SRID=4326;POINT({lng} {lat})')
+        return gps
 
 
 
