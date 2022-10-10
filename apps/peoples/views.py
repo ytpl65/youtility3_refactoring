@@ -883,7 +883,9 @@ class PeopleView(LoginRequiredMixin, View):
             if form.is_valid() and jsonform.is_valid():
                 resp = self.handle_valid_form(form, jsonform, request, create)
             else:
-                cxt = {'errors': form.errors + jsonform.errors}
+                cxt = {'errors': form.errors}
+                if jsonform.errors:
+                    cxt.update({'errors': jsonform.errors})
                 resp = utils.handle_invalid_form(request, self.params, cxt)
         except Exception:
             resp = utils.handle_Exception(request)

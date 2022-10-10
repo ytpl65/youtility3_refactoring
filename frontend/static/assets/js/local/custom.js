@@ -212,12 +212,15 @@ function display_form_errors(errors) {
 
   $("p.errors").remove();
   if (errors instanceof String) {
+    console.log("errors is a string");
     display_non_field_errors([errors]);
   }
   for (let key in errors) {
+    console.log("errors is an object");
     if (Object.prototype.hasOwnProperty.call(errors, key)) {
       if (Object.prototype.hasOwnProperty.call(errors, "__all__")) {
-        display_non_field_errors(errors); //non-field errors
+        console.log("errors has non field errors");
+        display_non_field_errors(errors['__all__']); //non-field errors
       }
       let error = "<p class='errors'>" + errors[key] + "</p>";
       let fieldselector = "[name='" + key + "']";
@@ -315,6 +318,7 @@ function show_alert_before_update_jn(data) {
 }
 
 function display_non_field_errors(errors) {
+  console.log(errors, "errors");
   $("#nonfield_errors").hide();
   var errstr = errors[0];
 
@@ -357,6 +361,7 @@ function fire_ajax_form_post(params, payload) {
     type: "post",
     data: payload,
   }).fail((xhr, status, error) => {
+    console.log("xhr", xhr)
     if (
       typeof xhr.responseJSON.errors === "object" ||
       typeof xhr.responseJSON.errors === "string"

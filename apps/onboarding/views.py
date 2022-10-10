@@ -1551,7 +1551,7 @@ class Client(LoginRequiredMixin, View):
             else:
                 cxt = {'errors': form.errors}
                 if jsonform.errors:
-                    cxt['errors'] = jsonform.errors
+                    cxt.update({'errors': jsonform.errors})
                 resp = utils.handle_invalid_form(request, P, cxt)
         except Exception:
             resp = utils.handle_Exception(request)
@@ -1596,14 +1596,14 @@ class BtView(LoginRequiredMixin, View):
             objs = self.params['model'].objects.select_related(
                 *self.params['related']).filter(
                     enable = True,
-            ).values(*self.params['fields'])
+            ).exclude(identifier__tacode='CLIENT').values(*self.params['fields'])
             return  rp.JsonResponse(data = {'data':list(objs)})
 
         elif R.get('action', None) == 'form':
             cxt = {'buform': self.params['form_class'](request = request),
                    'ta_form': obforms.TypeAssistForm(auto_id = False),
                    'msg': "create bu requested"}
-            resp = utils.render_form(request, self.params, cxt)
+            return render(request, self.params['template_form'], context = cxt)
 
         elif R.get('action', None) == "delete" and R.get('id', None):
             resp = utils.render_form_for_delete(request, self.params, True)
