@@ -73,7 +73,7 @@
 	<div class="modal-footer d-flex justify-content-between">
 		<div><p>Tip: Zoom in for accurate coordinates of address, place the marker and then set the coords.</p></div>
 		<div></div>
-		<div><a href="#" class="btn" data-dismiss="modal">Close</a>
+		<div><a href="#" class="btn" id="close_setgps" data-dismiss="modal">Close</a>
 		<a href="#" class="btn btn-primary" id="set_the_coords">Set the coordinates</a></div>
 		
 	</div>
@@ -435,6 +435,10 @@ Buisiness-View
 			$("#open_map").modal('hide');
 		});
 
+		$("#close_setgps").click(function(){
+			$("#open_map").modal('hide');
+		});
+
 
 		//set ctzoffset
         $("#id_ctzoffset").val(-new Date().getTimezoneOffset())
@@ -444,7 +448,7 @@ Buisiness-View
 			$("#btn_del").hide()
 			$(".dt-button buttons-create").addClass("disabled")
 		}else{
-			$("#id_gpslocation").val("{{ buform.instance.gpslocation.coords }} | (0.0, 0.0)")
+			$("#id_gpslocation").val("{{ buform.instance.gpslocation.coords if buform.instance.gpslocation is not none else 'NONE' }}")
 		}
 
 		// submit the popup-taform for validation and saving in db.
