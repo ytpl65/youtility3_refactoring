@@ -251,7 +251,7 @@ Client
 
     function validateCode(bucode){
         // validate bucode return false bucode has special characters and contains space
-        var regex = /^[a-zA-Z0-9]+$/;
+        var regex = /^[a-zA-Z0-9_]+$/;
         if(!regex.test(bucode)){
             return false;
         }return true;
@@ -562,6 +562,17 @@ Client
 
         //listbu_editor form validations
         listbu_editor.on('preSubmit', function(e, o, action){
+            if(action == "create"){
+                //check for duplicates in the table
+                tabListBus.column(1).data().filter(function(value, index){
+                    if(value === bucode.val()){
+                        bucode.error('Site with this code already exists')
+                    }
+                })
+                if(this.inError()){
+                    return false
+                }
+            }
             if(action !== 'remove'){
                 var buname = this.field('buname')
                 var bucode = this.field('bucode')
@@ -578,7 +589,7 @@ Client
                     }else{
                         //validate budcode
                         if(!validateCode(bucode.val())){
-                            bucode.error('Please enter a valid code only alphabets, numbers and underscore allowed')
+                            bucode.error('Please enter a valid code - alphabets, numbers and underscore allowed')
                         }
                     }
                     if(!$("#DTE_Field_identifier").val()){
@@ -590,16 +601,7 @@ Client
                         parent.error('Please select a parent')
                     }
                     
-                    //check for duplicates in the table
-                    tabListBus.column(1).data().filter(function(value, index){
-                        if(value === bucode.val()){
-                            bucode.error('Site with this code already exists')
-                        }
-                    })
-                    //dont allow special characters and spaces in the bucode, except '-, _'
-                    if(!bucode.val().match(/^[a-zA-Z0-9_-]+$/)){
-                        bucode.error('Please enter a valid code')
-                    }
+                    
                     if(this.inError()){
                         return false
                     }

@@ -100,6 +100,7 @@ class BtManager(models.Manager):
     def handle_bupostdata(self, request):
         "handles post data submitted by editor in client form"
         R, S = request.POST, request.session
+        ic(R)
         r = {'enable':R['enable'] == '1'}
         PostData = {'bucode':R['bucode'].upper(), 'buname':R['buname'], 'parent_id' : R['parent'], 'identifier_id':R['identifier'],
                     'enable':r['enable'],
