@@ -112,6 +112,14 @@ class QuestionManager(models.Manager):
                 text = Concat(F('quesname'), V(" | "), F('answertype'))).values(
                     'id', 'text', 'answertype')
         return qset or self.none()
+    
+    def questions_listview(self, fields, related):
+        qset = self.select_related(
+                *related).filter(
+                enable = True
+            ).values(*fields)
+        return qset or self.none()
+        
 
 class JobneedManager(models.Manager):
     use_in_migrations = True

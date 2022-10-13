@@ -360,6 +360,8 @@ function fire_ajax_form_post(params, payload) {
     url: params["url"],
     type: "post",
     data: payload,
+    processData: false,
+    contentType: false,
   }).fail((xhr, status, error) => {
     console.log("xhr", xhr)
     if (
@@ -584,7 +586,6 @@ function initialize_alerton_field(
   if (optionsData.length && alertonData.length) {
     alertonData = alertonData.split(",");
     let selected = performIntersection(optionsData, alertonData);
-
     load_alerton_field(optionsData, selected, id);
   }
 }

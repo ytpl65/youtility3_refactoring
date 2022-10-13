@@ -129,7 +129,7 @@ class BtManager(models.Manager):
         "handles post data submitted by editor in client form"
         R, S = request.POST, request.session
         r = {'isadmin':R['isadmin'] == '1'}
-        PostData = {'peoplecode':R['peoplecode'].upper(), 'peoplename':R['peoplename'], 'bu_id' : R['site_id'], 'loginid':R['loginid'],
+        PostData = {'peoplecode':R['peoplecode'].upper(), 'peoplename':R['peoplename'], 'bu_id' : 1, 'loginid':R['loginid'],
                     'client_id':R['client_id'] , 'email':R['email'], 'gender':R['gender'],'mobno':R['mobno'], 'isadmin':r['isadmin'], 'dateofbirth':R['dateofbirth'],
                     'dateofjoin':R['dateofjoin'],
                 'cuser':request.user, 'muser':request.user, 'cdtz':utils.getawaredatetime(datetime.now(), R['ctzoffset']),
@@ -172,7 +172,7 @@ class BtManager(models.Manager):
         if request.GET.get("id") == "None":
             return self.none()
         qset = pm.People.objects.filter(
-            isadmin=True, bu_id = request.GET.get('buid'),
+            isadmin=True, client_id = request.GET.get('clientid'),
             
             ).exclude(peoplecode__in=['NONE', 'SUPERADMIN']).distinct().values(
             'peoplecode', 'peoplename', 'loginid', 'isadmin', 'mobno', 'email',

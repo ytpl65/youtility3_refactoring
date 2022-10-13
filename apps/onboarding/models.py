@@ -56,6 +56,7 @@ def bu_defaults():
         "tag"                    : "",
         "siteopentime"           : "",
         "nearbyemergencycontacts": [],
+        'maxadmins': 5,
     }
 
 class Bt(BaseModel, TenantAwareModel, HeirarchyModel):

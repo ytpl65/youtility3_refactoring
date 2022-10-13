@@ -40,7 +40,7 @@ class QuestionForm(forms.ModelForm):
             'alerton'   : s2forms.Select2MultipleWidget,
         }
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, **kwargs):  # sourcery skip: use-named-expression
         """Initializes form add atttibutes and classes here."""
         self.request = kwargs.pop('request', None)
         super().__init__(*args, **kwargs)
@@ -49,6 +49,13 @@ class QuestionForm(forms.ModelForm):
                 self.fields[k].required = True
             elif k in ['options', 'alerton']:
                 self.fields[k].required = False
+        
+        self.fields['min'].initial       = None
+        self.fields['max'].initial       = None
+        self.fields['category'].required = False
+        self.fields['unit'].required     = False
+        self.fields['alerton'].required  = False
+        
         if self.instance.id:
             ac_utils.initialize_alertbelow_alertabove(self.instance, self)
         utils.initailize_form_fields(self)
@@ -77,34 +84,23 @@ class QuestionForm(forms.ModelForm):
             cleaned_data['alerton'] = alerton
 
     def clean_alerton(self):
-        print("alertbelow", self.cleaned_data.get('alertbelow'))
-        print("alertabove", self.cleaned_data.get('alertabove'))
-        val = self.cleaned_data.get('alerton')
-        if val:
+        if val := self.cleaned_data.get('alerton'):
             return ac_utils.validate_alerton(forms, val)
-        return val
+        else:
+            return val
 
     def clean_options(self):
-        val = self.cleaned_data.get('options')
-        if val:
+        if val := self.cleaned_data.get('options'):
             return ac_utils.validate_options(forms, val)
-        return val
-
-    def validate_unique(self) -> None:
-        super().validate_unique()
-        if not self.instance.id:
-            try:
-                am.Question.objects.get(
-                    quesname__exact = self.instance.quesname,
-                    answertype__iexact = self.instance.answertype,
-                    client_id__exact = self.request.session['client_id'])
-                msg = 'This type of Question is already exist!'
-                raise forms.ValidationError(
-                    message = msg, code="unique_constraint")
-            except am.Question.DoesNotExist:
-                pass
-            except ValidationError as e:
-                self._update_errors(e)
+        else:
+            return val
+    
+    def clean_min(self):
+        return val if (val := self.cleaned_data.get('min')) else 0.0
+    
+    def clean_max(self):
+        return val if (val := self.cleaned_data.get('max')) else 0.0
+            
 
 class MasterQsetForm(forms.ModelForm):
     required_css_class = "required"

@@ -897,11 +897,16 @@ class PeopleView(LoginRequiredMixin, View):
         from apps.core.utils import handle_intergrity_error
         from django_email_verification import send_email
         try:
-            people = form.save()
+            ic(request.POST, request.FILES)
+            people = form.save(commit=False)
+            if request.FILES.get('peopleimg'):
+                people.peopleimg = request.FILES['peopleimg']
+            if not people.password:
+                people.set_password(form.cleaned_data["peoplecode"])
             if putils.save_jsonform(jsonform, people):
                 people = putils.save_userinfo(
                     people, request.user, request.session, create = create)
-                send_email(people, request)
+                #send_email(people, request)
                 logger.info("people form saved")
             data = {'pk':people.id}
             return rp.JsonResponse(data, status = 200)
@@ -962,11 +967,8 @@ class PeopleGroup(LoginRequiredMixin, View):
     def post(self, request, *args, **kwargs):
         resp, create = None, True
         try:
-            print(request.POST)
             data = QueryDict(request.POST['formData'])
-            pk = request.POST.get('pk', None)
-            print(pk, type(pk))
-            if pk:
+            if pk := request.POST.get('pk', None):
                 msg = "pgroup_view"
                 form = utils.get_instance_for_update(
                     data, self.params, msg, int(pk), kwargs = {'request':request})

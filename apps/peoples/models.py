@@ -35,7 +35,9 @@ def peoplejson():
         "mlogsendsto"              : "",
         "user_type"                : "",
         "secondaryemails"          : [],
-        'secondarymobno'           : []
+        'secondarymobno'           : [],
+        'isemergencycontact':False,
+        'alertmails':False
     }
 
 def upload_peopleimg(instance, filename):
@@ -109,6 +111,7 @@ class People(AbstractBaseUser, PermissionsMixin, TenantAwareModel, BaseModel):
     department    = models.ForeignKey("onboarding.TypeAssist", null = True, blank = True,on_delete = models.RESTRICT, related_name='people_departments')
     designation   = models.ForeignKey("onboarding.TypeAssist", null = True, blank = True,on_delete = models.RESTRICT, related_name='people_designations')
     peopletype    = models.ForeignKey("onboarding.TypeAssist", verbose_name="People Type",null = True, blank = True, on_delete = models.RESTRICT, related_name='people_types')
+    worktype    = models.ForeignKey("onboarding.TypeAssist", verbose_name="Work Type",null = True, blank = True, on_delete = models.RESTRICT, related_name='work_types')
     client        = models.ForeignKey("onboarding.Bt",  null = True, blank = True, on_delete = models.RESTRICT, related_name='people_clients')
     bu            = models.ForeignKey("onboarding.Bt",  null = True, blank = True,on_delete = models.RESTRICT, related_name='people_bus')
     reportto      = models.ForeignKey("self", null = True, blank = True, on_delete = models.RESTRICT, related_name='children', verbose_name='Report to')
@@ -117,14 +120,14 @@ class People(AbstractBaseUser, PermissionsMixin, TenantAwareModel, BaseModel):
     mobno         = SecureString(_("Mob No"), max_length = 254, null = True)
     gender        = models.CharField(_("Gender"), choices = Gender.choices, max_length = 15, null = True)
     dateofbirth   = models.DateField(_("Date of Birth"))
-    dateofjoin    = models.DateField(_("Date of Join"))
+    dateofjoin    = models.DateField(_("Date of Join"), null=True)
     dateofreport  = models.DateField(_("Date of Report"), null = True, blank = True)
     people_extras = models.JSONField(_("people_extras"), default = peoplejson, blank = True, encoder = DjangoJSONEncoder)
 
     objects = PeopleManager()
     USERNAME_FIELD = 'loginid'
     REQUIRED_FIELDS = ['peoplecode',  'peoplename', 'dateofbirth',
-                       'dateofjoin', 'email']
+                        'email']
 
     class Meta:
         db_table = 'people'

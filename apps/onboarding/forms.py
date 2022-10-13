@@ -170,6 +170,7 @@ class BtForm(forms.ModelForm):
     def clean_gpslocation(self, val):
         import re
         if gps := val:
+            if gps == 'NONE': return None
             regex = '^([-+]?)([\d]{1,2})(((\.)(\d+)(,)))(\s*)(([-+]?)([\d]{1,3})((\.)(\d+))?)$'
             if not re.match(regex, gps):
                raise forms.ValidationError(self.error_msg['invalid_latlng'])
@@ -307,10 +308,10 @@ class GeoFenceForm(forms.ModelForm):
 class BuPrefForm(forms.Form):
     required_css_class = "required"
 
-    mobilecapability        = forms.MultipleChoiceField(required = False, label="Mobile Capability", widget = s2forms.Select2MultipleWidget)
-    webcapability           = forms.MultipleChoiceField(required = False, label="Web Capability", widget = s2forms.Select2MultipleWidget)
-    reportcapability        = forms.MultipleChoiceField(required = False, label="Report Capability", widget = s2forms.Select2MultipleWidget)
-    portletcapability       = forms.MultipleChoiceField(required = False, label="Portlet Capability", widget = s2forms.Select2MultipleWidget)
+    mobilecapability         = forms.MultipleChoiceField(required = False, label="Mobile Capability", widget = s2forms.Select2MultipleWidget)
+    webcapability            = forms.MultipleChoiceField(required = False, label="Web Capability", widget = s2forms.Select2MultipleWidget)
+    reportcapability         = forms.MultipleChoiceField(required = False, label="Report Capability", widget = s2forms.Select2MultipleWidget)
+    portletcapability        = forms.MultipleChoiceField(required = False, label="Portlet Capability", widget = s2forms.Select2MultipleWidget)
     validimei                = forms.CharField(max_length = 15, required = False,label="IMEI No.")
     validip                  = forms.CharField(max_length = 15, required = False, label="IP Address")
     usereliver               = forms.BooleanField(initial = False, required = False, label="Reliver needed?")

@@ -115,10 +115,10 @@ Client
                 </div>
             </div>
             <div class="input-group mb-3">
-                <div class="col-md-4">
+                <div class="col-md-4 pt-2">
                     {{ clientprefsform.pvideolength.label_tag() }}
                 </div>
-                <div class="col-md-8">
+                <div class="col-md-8 pe-2">
                     {{ clientprefsform.pvideolength }}
                 </div>
             </div>
@@ -435,12 +435,9 @@ Client
             ajax: {
                 url:"{{ url('onboarding:client') }}",
                 data:function(d){
-                    var selected = tabListBus.row( { selected: true } )
-                    if(selected.any()){
                         let currentRow = getCurrentEditingRow(adminsEditor, tabListAdmins)
                         d.pk = currentRow !== 'None' ? currentRow['id'] : currentRow
                         d.csrfmiddlewaretoken = '{{ csrf_token }}'
-                        d.site_id = selected.data().id
                         d.client_id = '{{ clientform.instance.id }}'
                         d.ctzoffset = $("#id_ctzoffset").val()
                         d.peoplecode = $('#DTE_Field_peoplecode').val()
@@ -453,7 +450,6 @@ Client
                         d.dateofbirth = $('#DTE_Field_dateofbirth').val()
                         d.dateofjoin = $('#DTE_Field_dateofjoin').val()
                         d.adminspostdata=true
-                    }
                     
                 }
             },
@@ -492,15 +488,26 @@ Client
 
         //adminsEditor form validations
         adminsEditor.on('preSubmit', function(e, o, action){
+            var peoplename = this.field('peoplename')
+            var peoplecode = this.field('peoplecode')
+            var email = this.field('email')
+            var loginid = this.field('loginid')
+            var mobno = this.field('mobno')
+            var dateofbirth = this.field('dateofbirth')
+            var dateofjoin = this.field('dateofjoin')
+            var isadmin = this.field('isadmin')
+            if(action == "create"){
+                //check for duplicates in the table
+                tabListAdmins.column(1).data().filter(function(value, index){
+                    if(value === peoplecode.val() || value === loginid.val()){
+                        bucode.error('Peoplecode or loginid with this value already exists')
+                    }
+                })
+                if(this.inError()){
+                    return false
+                }
+            }
             if(action !== 'remove'){
-                var peoplename = this.field('peoplename')
-                var peoplecode = this.field('peoplecode')
-                var email = this.field('email')
-                var loginid = this.field('loginid')
-                var mobno = this.field('mobno')
-                var dateofbirth = this.field('dateofbirth')
-                var dateofjoin = this.field('dateofjoin')
-                var isadmin = this.field('isadmin')
 
                 if(!(peoplecode.isMultiValue() || peoplename.isMultiValue() || mobno.isMultiValue() ||
                  loginid.isMultiValue() || dateofbirth.isMultiValue() || dateofjoin.isMultiValue())){
@@ -562,6 +569,10 @@ Client
 
         //listbu_editor form validations
         listbu_editor.on('preSubmit', function(e, o, action){
+            var buname = this.field('buname')
+            var bucode = this.field('bucode')
+            var identifier = this.field('identifier')
+            var parent = this.field('parent')
             if(action == "create"){
                 //check for duplicates in the table
                 tabListBus.column(1).data().filter(function(value, index){
@@ -574,10 +585,6 @@ Client
                 }
             }
             if(action !== 'remove'){
-                var buname = this.field('buname')
-                var bucode = this.field('bucode')
-                var identifier = this.field('identifier')
-                var parent = this.field('parent')
                 if(!(buname.isMultiValue() || bucode.isMultiValue() || identifier.isMultiValue() || parent.isMultiValue())){
                     if(!buname.val()){
                         console.log(buname.val(), "@@@@222")
@@ -618,10 +625,6 @@ Client
             ajax:{
                 url: `{{ url('onboarding:client') }}?action=getadmins&clientid={{ clientform.instance.id }}`,
                 data:function(d){
-                var selected = tabListBus.row( { selected: true } );
-                    if ( selected.any() ) {
-                    d.buid = selected.data().id
-                }
             }
             },
             columns:[
@@ -652,18 +655,8 @@ Client
             }
         })
         $("#tabAdminUsers_wrapper .buttons-create").addClass('disabled')//on page load disable new button of child table
-        $("#tabAdminUsers_wrapper .buttons-create").attr({'data-toggle':"tooltip", 'data-placement':"top", 'title':"Select Site From The Above Table"})
 
 
-        tabListBus.on( 'select', function () {
-            $("#tabAdminUsers_wrapper .buttons-create").removeClass('disabled')
-
-        } );
-        
-        tabListBus.on( 'deselect', function () {
-            $("#tabAdminUsers_wrapper .buttons-create").addClass('disabled')
-            $("#tabAdminUsers_wrapper .buttons-create").attr({'data-toggle':"tooltip", 'data-placement':"top", 'title':"Select Section First"})
-        } );
 
         //on submit form post request
         $("#id_clientform").submit((e) => {
@@ -723,22 +716,13 @@ Client
             }
         })
         
-        tabListBus.on( 'select', function () {
-            tabListAdmins.ajax.reload();
-            $("#tabListAdmins_wrapper .buttons-create").removeClass('disabled')
-        } );
-            
-        tabListBus.on( 'deselect', function () {
-            tabListAdmins.ajax.reload();
-            $("#tabListAdmins_wrapper .buttons-create").addClass('disabled')
-            $("#tabListAdmins_wrapper .buttons-create").attr({'data-toggle':"tooltip", 'data-placement':"top", 'title':"Select Section First"})
-        } );
 
         //disable the create button of sites table
         $("#tabListBu_wrapper .buttons-create").addClass('disabled')
         //if client form instance  not equal to None then enable the create button of sites table
         if("{{ clientform.instance.pk }}" != 'None'){
             $("#tabListBu_wrapper .buttons-create").removeClass('disabled')
+            $("#tabAdminUsers_wrapper .buttons-create").removeClass('disabled')
         }
     })
 </script>

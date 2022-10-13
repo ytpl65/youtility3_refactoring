@@ -44,14 +44,9 @@ Capability Form
 
 <!--------- BEGIN NON FIELD ERRORS -------->
 {% block nonfield_errors %}
-{% if cap_form.non_field_errors() %}
-<div id="non_field_error" class="alert alert-danger" style="width: 73%;">
-	{% for error in cap_form.non_field_errors() %}
-	{{ error }}
-	{% endfor %}
-	<button type="button" class="btn-close flt-right" data-bs-dismiss="alert" aria-label="Close"></button>
+<div class="alert alert-danger" id="nonfield_errors"role="alert" style="display:none">
+    <strong>Error</strong> <span></span>
 </div>
-{% endif %}
 {% endblock nonfield_errors %}
 <!---------- END NON FIELD ERRORS --------->
 
