@@ -9,6 +9,11 @@ People Form
 
 {% block extra_css %}
 {{ peopleform.media.css }}
+<style>
+.toggleeye {
+    margin-top: 15px;
+    margin-left: -30px;
+}</style>
 {% endblock extra_css %}
 
 <!-------------------------- BEGIN PAGE BREADCUMB ----------------------->
@@ -37,7 +42,7 @@ People Form
 {% endif %}
 
 {% if peopleform.instance.id %}
-{% call general_popup(popup_id = 'paswd_change_alert', title = 'Change Password') %}
+{% call general_popup(popup_id = 'paswd_change_alert', title = 'Change Password', modal_size='modal-lg') %}
 <div class="modal-body">
     <form id="passwordChangeForm" action="" method="post">
         <!---------------------------CSRF MIDDLEWARE TOKEN---------------------->
@@ -46,12 +51,18 @@ People Form
         <div class="row g-3">
             <div class="col-md-3"><label>Password:</label></div>
             <div class="col-md-9">
-                <input type="password" class="form-control" name='new_password1'>
+                <div class="d-flex">
+                    <input type="password" class="form-control" name='new_password1'>
+                    <i class="fas fa-eye toggleeye"></i>
+                </div>
                 <div class="password_fields" for="new_password1"></div>
             </div>
             <div class="col-md-3"><label>Confirm Password:</label></div>
             <div class="col-md-9">
-                <input type="password" class="form-control" name='new_password2'>
+                <div class="d-flex">
+                    <input type="password" class="form-control" name='new_password2'>
+                    <i class="fas fa-eye toggleeye"></i>
+                </div>
                 <div id="password_error" class="password_fields" for="new_password2"></div>
             </div>
         </div>
@@ -124,7 +135,7 @@ People
 <!--------- BEGIN NON FIELD ERRORS -------->
 {% block nonfield_errors %}
 <div class="alert alert-danger" id="nonfield_errors"role="alert" style="display:none">
-    <strong>Error</strong> <span></span>
+    <strong>Error: </strong> <span></span>
 </div>
 {% endblock nonfield_errors %}
 <!---------- END NON FIELD ERRORS --------->
@@ -241,7 +252,7 @@ People
 
 
                 <!--LABEL FIELD-->
-                <label for="id_peopletype">People Type:</label>
+                <label for="id_peopletype">Work Type:</label>
                 <!--INPUT GROUP-->
                 <div class="col-md-4">
                     <div class="d-flex flex-row">
@@ -249,7 +260,7 @@ People
                         <a href="" type="button" data-bs-toggle="modal" data-bs-target="#peopletype_popup"><span
                                 style="font-size: 24px;" data-bs-toggle="tooltip" data-bs-placement="left"
                                 title="If you haven't found an option in selection menu, then create one from here"
-                                class="material-icons-outlined mt-3 ps-2 primary-col">
+                                class="material-icons-outlined mt-3 ps-2 primary-col opacity-50">
                                 add_circle
                             </span></a>
                     </div>
@@ -261,7 +272,7 @@ People
                 <!--LABEL FIELD-->
 
                 <!--LABEL FIELD-->
-                <label class="required" for="id_dateofjoin">Date of Joining:</label>
+                <label class="" for="id_dateofjoin">Date of Joining:</label>
                 <!--INPUT GROUP-->
                 <div class="col-md-4">
                     {{ peopleform.dateofjoin }}
@@ -284,25 +295,36 @@ People
                 </div>
                 <!--LABEL FIELD-->
                 <!------------Checkboxes Rendering Last --------------------->
+                {% if request.user.isadmin %}
                 <div class="booleans col-md-6 d-flex justify-content-sm-between mt-5">
+                
                     <!--ENABLE CHECKBOX -->
                     <label for = id_isenable class="form-check-label bool col-form-label me-5 text-sm-right">Enable
                         &nbsp {{ peopleform.enable }}</label>
                      <!--BLACKLIST CHECKBOX -->
                     <label for = id_blacklist class="form-check-label bool col-form-label me-5 text-sm-right">Blacklist
                         &nbsp{{ pref_form.blacklist }}</label>
+                    
                      <!--ISADMIN CHECKBOX -->
-                    <label for = id_isadmin id="label_isadmin" class="form-check-label bool col-form-label me-5 text-sm-right" style="display:none">Is Admin
+                    <label for = id_isadmin id="label_isadmin" class="form-check-label bool col-form-label me-5 text-sm-right">Is Admin
                         &nbsp{{ peopleform.isadmin }}</label>
-                    {% if peopleform.instance.id %}
-                    <button type="button" id="change_pass" class="btn btn-sm  btn-primary rounded-1" data-bs-target='#paswd_change_alert'
+                    
+                     <!--ISEMERGENCYCONTACT CHECKBOX -->
+                    <label for = id_isemergencycontact id="label_isemergencycontact" class="form-check-label bool col-form-label me-5 text-sm-right" >Is Emergency Contact
+                        &nbsp{{ pref_form.isemergencycontact }}</label>
+                    <!--ALERTMAILS CHECKBOX -->
+                    <label for = id_alertmails id="label_alertmails" class="form-check-label bool col-form-label me-5 text-sm-right">Alert Mails
+                        &nbsp{{ pref_form.alertmails }}</label>
+                </div>
+                {% endif %}
+                {% if peopleform.instance.password %}
+                    <button type="button" id="change_pass" class="btn btn-sm col-md-2 btn-primary rounded-1" data-bs-target='#paswd_change_alert'
                         data-bs-toggle="modal">Change Password
                         <span class="svg-icon svg-icon-2">
                             <span class="material-icons h-19px" style="vertical-align: middle; font-size: 19px;">
                                 lock
                             </span></span></button>
-                    {% endif %}
-                </div>
+                {% endif %}
             </div>
             <!--END INNER ROW-->
         </div>
@@ -312,7 +334,7 @@ People
 
             <!--begin::Image input-->
             <div class="image-input image-input-empty" data-kt-image-input="true"
-                style="background-image: url({% if peopleform.instance.id %} {{ peopleform.instance.peopleimg.url }} {% else %} '/static/assets/media/images/blank.png' {% endif %})">
+                style="background-image: url({% if peopleform.instance.peopleimg %} {{ peopleform.instance.peopleimg.url }} {% else %} '/static/assets/media/images/blank.png' {% endif %})">
                 <!--begin::Image preview wrapper-->
                 <div class="image-input-wrapper w-125px h-125px"></div>
                 <!--end::Image preview wrapper-->
@@ -328,7 +350,7 @@ People
                     </span>
 
                     <!--begin::Inputs-->
-                    <input type="file" name="peopleimg" accept=".png, .jpg, .jpeg" />
+                    <input type="file" name="peopleimg" id="id_peopleimg" accept=".png, .jpg, .jpeg" />
                     <input type="hidden" name="avatar_remove" />
                     <!--end::Inputs-->
                 </label>
@@ -561,7 +583,26 @@ People
 {% block extra_scripts %}
 {{ peopleform.media.js }}
 <script>
+
+    //toggle eye icon to eye-slash icon on click
+    function toggleIcon() {
+        var x = $('.toggleeye');
+        if (x.hasClass("fa-eye")) {
+            x.removeClass("fa-eye");
+            x.addClass("fa-eye-slash");
+            x.prev().attr('type') === 'password' ? x.prev().attr('type', 'text') : x.prev().attr('type', 'password');
+        } else {
+            x.removeClass("fa-eye-slash");
+            x.addClass("fa-eye");
+            x.prev().attr('type') === 'password' ? x.prev().attr('type', 'text') : x.prev().attr('type', 'password');
+        }
+    }
+
     $(document).ready(function () {
+        //onclick 'toggleeye' call toggleIcon
+        $('.toggleeye').click(function () {
+            toggleIcon();
+        });
         //reset deviceid on click
         $("#id_reset").click(function(){
             $("#id_deviceid").val('-1')
@@ -702,12 +743,18 @@ People
             e.preventDefault()
             const params = {url: "{{ url('peoples:people') }}", modal:false}
             const id = "{{ peopleform.instance.pk }}"
+            var formdata = new FormData();
+            formdata.append('formData', form.serialize())
+            var peopleimg = $("#id_peopleimg")[0].files[0]
+            formdata.append('peopleimg', peopleimg)
+            formdata.append('csrfmiddlewaretoken', '{{ csrf_token }}')
             var payLoad = {formData:form.serialize(), csrfmiddlewaretoken: '{{ csrf_token }}'}//payload for post request
             if(id != 'None'){
-				var newPayLoad = {...payLoad, 'pk':id}
-				payLoad = newPayLoad
+                formdata.append('pk', id)
+				//var newPayLoad = {...payLoad, 'pk':id}
+				//payLoad = newPayLoad
 			}
-			fire_ajax_form_post(params, payLoad)
+			fire_ajax_form_post(params, formdata)
 			.done((data, status, xhr) => { //function to submit post request
                 show_successful_save_alert(update= id != 'None' ? true : false)
                 window.setTimeout(function() {

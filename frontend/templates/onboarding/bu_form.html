@@ -93,14 +93,9 @@ Buisiness-View
 
 <!--------- BEGIN NON FIELD ERRORS -------->
 {% block nonfield_errors %}
-{% if buform.non_field_errors() %}
-<div id="non_field_error" class="alert alert-danger" style="width: 73%;">
-	{% for error in buform.non_field_errors() %}
-	{{ error }}
-	{% endfor %}
-	<button type="button" class="btn-close flt-right" data-bs-dismiss="alert" aria-label="Close"></button>
+<div class="alert alert-danger" id="nonfield_errors"role="alert" style="display:none">
+    <strong>Error</strong> <span></span>
 </div>
-{% endif %}
 {% endblock nonfield_errors %}
 <!---------- END NON FIELD ERRORS --------->
 
@@ -447,7 +442,13 @@ Buisiness-View
 		if ('{{buform.instance.id}}' == 'None') {
 			$("#btn_del").hide()
 			$(".dt-button buttons-create").addClass("disabled")
+			//on load check
+			showHideBuType();
 		}else{
+			if('{{ buform.instance.butype }}' !== 'None'){
+				console.log("shown")
+				$(".site_type").show();
+			}
 			$("#id_gpslocation").val("{{ buform.instance.gpslocation.coords if buform.instance.gpslocation is not none else 'NONE' }}")
 		}
 
@@ -488,9 +489,8 @@ Buisiness-View
 		//pre-select options for pop-up ta forms
 		$("#butype_ta_popup select[name='tatype']").val($("#butype_ta_popup select option:contains('SITETYPE')").val()).change()
 		$("#butype_ta_popup select[name='tatype']").select2({disabled: 'readonly'})
+		
 
-		//on load check
-		showHideBuType();
 
 
 		//on form submit

@@ -17,7 +17,7 @@ urlpatterns = [
     path('client_form/get_caps/',    views.get_caps,                  name="get_caps"),
     path('pop-up/ta/', views.handle_pop_forms, name="ta_popup"),
 
-    path('typeassist/', views.TypeAssistAjax.as_view(), name="typeassist"),
+    path('typeassist/', views.TypeAssist.as_view(), name="typeassist"),
     path('super_typeassist/', views.SuperTypeAssist.as_view(), name="super_typeassist"),
     path('shift/', views.Shift.as_view(), name="shift"),
     path('editor/', views.EditorTa.as_view(), name="editortypeassist"),

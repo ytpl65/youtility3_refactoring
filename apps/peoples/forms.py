@@ -7,7 +7,7 @@ import apps.peoples.models as pm  # people-models
 import apps.onboarding.models as om  # onboarding-models
 from django_select2 import forms as s2forms
 from apps.core import utils
-
+import re
 #============= BEGIN LOGIN FORM ====================#
 
 class LoginForm(forms.Form):
@@ -52,11 +52,11 @@ class LoginForm(forms.Form):
         if not user.bu and user.people_extras['assignsitegroup']:
             raise forms.ValidationError("User has no site assigned")
     
-    def get_user(self, loginid):
+    def get_user(self, username):
         try:
-            return pm.People.objects.get(loginid=loginid)
+            return pm.People.objects.get(Q(loginid = username) | Q(email = username) | Q(mobno = username))
         except pm.People.DoesNotExist as e:
-            raise forms.ValidationError("User not found with these loginid") from e
+            raise forms.ValidationError("User not found with these UserName") from e
             
     
     
@@ -73,7 +73,9 @@ class PeopleForm(forms.ModelForm):
         'invalid_id2'   : 'Enter loginid without any spaces',
         'invalid_code'  : "Spaces are not allowed in [Code]",
         'invalid_code2' : "[Invalid code] Only ('-', '_') special characters are allowed",
-        'invalid_code3' : "[Invalid code] Code should not endwith '.' ",                   }
+        'invalid_code3' : "[Invalid code] Code should not endwith '.' ",                   
+        'invalid_name' : "[Invalid name] Only these special characters [-, _, @, #] are allowed in name field",                   
+    }
 
     # defines field rendering order
     field_order = ['peoplecode',  'peoplename', 'loginid',     'email',
@@ -105,10 +107,10 @@ class PeopleForm(forms.ModelForm):
         fields = ['peoplename', 'peoplecode',  'peopleimg',  'mobno',      'email',
                   'loginid',      'dateofbirth', 'enable',   'deviceid',   'gender',
                   'peopletype',   'dateofjoin',  'department', 'dateofreport',
-                  'designation',  'reportto',   'bu', 'isadmin', 'ctzoffset']
+                  'designation',  'reportto',   'bu', 'isadmin', 'ctzoffset',]
         labels = {
             'peoplename': 'Name',        'loginid'    : 'Login Id',        'email'       : 'Email',
-            'peopletype': 'People Type', 'reportto'   : 'Report to',       'designation' : 'Designation',
+            'peopletype': 'Employee Type', 'reportto'   : 'Report to',       'designation' : 'Designation',
             'gender'    : 'Gender',      'dateofbirth': 'Date of Birth',   'enable'      : 'Enable',
             'department': 'Department',  'dateofjoin' : 'Date of Joining', 'dateofreport': 'Date of Release',
             'deviceid'  : 'Device Id',   'bu'         : "Site",            'isadmin'     : "Is Admin"}
@@ -133,7 +135,7 @@ class PeopleForm(forms.ModelForm):
         self.request = kwargs.pop('request', None)
         super().__init__(*args, **kwargs)
         self.fields['peopletype'].queryset = om.TypeAssist.objects.filter(
-            tatype__tacode="PEOPLE_TYPE")
+            tatype__tacode="PEOPLETYPE")
         self.fields['department'].queryset = om.TypeAssist.objects.filter(
             tatype__tacode="DEPARTMENT")
         self.fields['designation'].queryset = om.TypeAssist.objects.filter(
@@ -141,6 +143,7 @@ class PeopleForm(forms.ModelForm):
         self.fields['dateofbirth'].input_formats  = settings.DATE_INPUT_FORMATS
         self.fields['dateofreport'].input_formats = settings.DATE_INPUT_FORMATS
         self.fields['dateofjoin'].input_formats   = settings.DATE_INPUT_FORMATS
+        self.fields['dateofjoin'].required        = False
         utils.initailize_form_fields(self)
 
     def is_valid(self) -> bool:
@@ -178,7 +181,7 @@ class PeopleForm(forms.ModelForm):
             return value.upper()
 
     def clean_loginid(self):
-        import re
+        
         if value := self.cleaned_data.get('loginid'):
             if " " in value:
                 raise forms.ValidationError(self.error_msg['invalid_id2'])
@@ -189,7 +192,10 @@ class PeopleForm(forms.ModelForm):
 
     def clean_peoplename(self):
         if value := self.cleaned_data.get('peoplename'):
-            return value
+            regex = "^[a-zA-Z0-9\-_@#\[\]\(\|\)\{\}]*$"
+            if not re.match(regex, value):
+                raise forms.ValidationError(self.error_msg['invalid_name'])
+        return value
 
     def clean_mobno(self):
         import phonenumbers as pn
@@ -347,10 +353,13 @@ class PeopleExtrasForm(forms.Form):
     debug                     = forms.BooleanField(initial = False, required = False)
     showtemplatebasedonfilter = forms.BooleanField(initial = False, required = False, label="Display site wise templates")
     blacklist                 = forms.BooleanField(initial = False, required = False)
+    alertmails = forms.BooleanField(initial=False , label='Alert Mails', required=False)
+    isemergencycontact = forms.BooleanField(initial=False , label='Is Emergency Contact', required=False)
     assignsitegroup           = forms.MultipleChoiceField(required = False, label="Site Group", widget = s2forms.Select2MultipleWidget)
     tempincludes              = forms.MultipleChoiceField(required = False, label="Template", widget = s2forms.Select2MultipleWidget)
     mlogsendsto               = forms.CharField(max_length = 25, required = False)
 
+    
     def __init__(self, *args, **kwargs):
         session = kwargs.pop('session')
         super().__init__(*args, **kwargs)

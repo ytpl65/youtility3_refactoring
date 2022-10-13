@@ -42,15 +42,11 @@ class Question(LoginRequiredMixin, View):
         R, resp = request.GET, None
 
         # return cap_list data
-        if R.get('action', None) == 'list' or R.get('search_term'):
-            d = {'list': "ques_list", 'filt_name': "ques_filter"}
-            self.params.update(d)
-            objs = self.params['model'].objects.select_related(
-                *self.params['related']).filter(
-                enable = True
-            ).values(*self.params['fields'])
-            resp = utils.render_grid(
-                request, self.params, "question_view", objs)
+        if R.get('template'): return render(request, self.params['template_list'])
+        if R.get('action', None) == 'list':
+            objs = self.params['model'].objects.questions_listview(self.params['fields'], self.params['related'])
+            return  rp.JsonResponse(data = {'data':list(objs)})
+            
 
         # return cap_form empty
         elif R.get('action', None) == 'form':

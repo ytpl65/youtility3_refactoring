@@ -1100,21 +1100,18 @@ def handle_pop_forms(request):
 
 #---------------------------- END client onboarding   ---------------------------#
 
-@method_decorator(cache_page(40), name='dispatch')
-class MasterTypeAssist(LoginRequiredMixin, View):
-    from .filters import TypeAssistFilter
+class SuperTypeAssist(LoginRequiredMixin, View):
     params = {
-        'form_class': '',
+        'form_class': obforms.SuperTypeAssistForm,
         'template_form': 'onboarding/partials/partial_ta_form.html',
-        'template_list': 'onboarding/typeassist.html',
+        'template_list': 'onboarding/supertypeassist.html',
         'partial_form': 'onboarding/partials/partial_ta_form.html',
         'related': ['parent',  'cuser', 'muser'],
         'model': TypeAssist,
-        'filter': TypeAssistFilter,
         'fields': ['id', 'tacode',
               'taname', 'tatype__tacode', 'cuser__peoplecode'],
         'form_initials': {} }
-    lookup = {}
+
 
     def get(self, request, *args, **kwargs):
         R, resp = request.GET, None
@@ -1123,9 +1120,92 @@ class MasterTypeAssist(LoginRequiredMixin, View):
         if R.get('template'): return render(request, self.params['template_list'])
         # then load the table with objects for table_view
         if R.get('action') == 'list':
+            ic(self.params)
             objs = self.params['model'].objects.select_related(
                  *self.params['related']).filter(
-                     ~Q(tacode='NONE'),  **self.lookup
+                    ~Q(tacode='NONE')
+             ).values(*self.params['fields'])
+            return  rp.JsonResponse(data = {'data':list(objs)})
+
+        if R.get('action', None) == 'form':
+            cxt = {'ta_form': self.params['form_class'](request = request),
+                   'msg': "create supertypeassist requested"}
+            resp = utils.render_form(request, self.params, cxt)
+
+        elif R.get('action', None) == "delete" and R.get('id', None):
+            print(f'resp={resp}')
+            resp = utils.render_form_for_delete(request, self.params, False)
+        
+        elif R.get('id', None):
+            obj = utils.get_model_obj(int(R['id']), request, self.params)
+            resp = utils.render_form_for_update(
+                request, self.params, "ta_form", obj)
+        print(f'return resp={resp}')
+        return resp
+
+    def post(self, request, *args, **kwargs):
+        resp , create= None, True
+        R = request.POST
+        try:
+            print(request.POST)
+            data = QueryDict(request.POST['formData'])
+            pk = request.POST.get('pk', None)
+            print(pk, type(pk))
+            if pk:
+                msg = "supertypeassist_view"
+                form = utils.get_instance_for_update(
+                    data, self.params, msg, int(pk))
+                print(form.data)
+                create = False
+            else:
+                form = self.params['form_class'](data, request = request)
+            if form.is_valid():
+                resp = self.handle_valid_form(form, request, create)
+            else:
+                cxt = {'errors': form.errors}
+                resp = utils.handle_invalid_form(request, self.params, cxt)
+        except Exception:
+            resp = utils.handle_Exception(request)
+        return resp
+
+    def handle_valid_form(self, form, request, create):
+        logger.info('supertypeassist form is valid')
+        from apps.core.utils import handle_intergrity_error
+        try:
+            ta = form.save()
+            putils.save_userinfo(ta, request.user, request.session, create = create)
+            logger.info("supertypeassist form saved")
+            data = {'msg': f"{ta.tacode}",
+            'row': TypeAssist.objects.values(*self.params['fields']).get(id = ta.id)}
+            return rp.JsonResponse(data, status = 200)
+        except IntegrityError:
+            return handle_intergrity_error("SuperTypeAssist")
+
+
+class TypeAssist(LoginRequiredMixin, View):
+    params = {
+        'form_class': obforms.TypeAssistForm,
+        'template_form': 'onboarding/partials/partial_ta_form.html',
+        'template_list': 'onboarding/typeassist.html',
+        'partial_form': 'onboarding/partials/partial_ta_form.html',
+        'related': ['parent',  'cuser', 'muser'],
+        'model': TypeAssist,
+        'fields': ['id', 'tacode',
+              'taname', 'tatype__tacode', 'cuser__peoplecode'],
+        'form_initials': {} }
+
+
+    def get(self, request, *args, **kwargs):
+        R, resp = request.GET, None
+        ic(R)
+        # first load the template
+        if R.get('template'): return render(request, self.params['template_list'])
+        # then load the table with objects for table_view
+        if R.get('action') == 'list':
+            ic(self.params)
+            objs = self.params['model'].objects.select_related(
+                 *self.params['related']).filter(
+                    ~Q(tacode='NONE'), ~Q(tatype__tacode='NONE')
              ).values(*self.params['fields'])
             return  rp.JsonResponse(data = {'data':list(objs)})
 
@@ -1137,6 +1217,7 @@ class MasterTypeAssist(LoginRequiredMixin, View):
         elif R.get('action', None) == "delete" and R.get('id', None):
             print(f'resp={resp}')
             resp = utils.render_form_for_delete(request, self.params, False)
+        
         elif R.get('id', None):
             obj = utils.get_model_obj(int(R['id']), request, self.params)
             resp = utils.render_form_for_update(
@@ -1183,16 +1264,7 @@ class MasterTypeAssist(LoginRequiredMixin, View):
             return handle_intergrity_error("TypeAssist")
 
 
-class SuperTypeAssist(MasterTypeAssist):
-    params = MasterTypeAssist.params
-    lookup = MasterTypeAssist.lookup
-    lookup = {'cuser__peoplecode': 'SUPERADMIN'}
-    params.update({'form_class':obforms.SuperTypeAssistForm})
 
-class TypeAssistAjax(MasterTypeAssist):
-    params = MasterTypeAssist.params
-    params.update({'form_class':obforms.TypeAssistForm})
-    pass
 
 class Shift(LoginRequiredMixin, View):
     params = {
@@ -1645,7 +1717,7 @@ class BtView(LoginRequiredMixin, View):
         from apps.core.utils import handle_intergrity_error
         try:
             bu = form.save(commit=False)
-            ic(form.cleaned_data['gpslocation'])
+            ic(form.cleaned_data)
             bu.gpslocation = form.cleaned_data['gpslocation']
             putils.save_userinfo(bu, request.user, request.session, create = create)
             logger.info("bu form saved")
