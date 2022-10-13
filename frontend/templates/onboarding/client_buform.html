@@ -562,6 +562,11 @@ Client
 
         //listbu_editor form validations
         listbu_editor.on('preSubmit', function(e, o, action){
+            var buname = this.field('buname')
+            var bucode = this.field('bucode')
+            var identifier = this.field('identifier')
+            var parent = this.field('parent')
+            
             if(action == "create"){
                 //check for duplicates in the table
                 tabListBus.column(1).data().filter(function(value, index){
@@ -574,10 +579,7 @@ Client
                 }
             }
             if(action !== 'remove'){
-                var buname = this.field('buname')
-                var bucode = this.field('bucode')
-                var identifier = this.field('identifier')
-                var parent = this.field('parent')
+                
                 if(!(buname.isMultiValue() || bucode.isMultiValue() || identifier.isMultiValue() || parent.isMultiValue())){
                     if(!buname.val()){
                         console.log(buname.val(), "@@@@222")
