@@ -1605,7 +1605,7 @@ class Client(LoginRequiredMixin, View):
                 objs = P['model'].objects.handle_adminspostdata(request)
             except IntegrityError as e:
                 ic(e.__cause__)
-                return rp.JsonResponse(dict(R).update({"error" : e.__cause__}), status=200, safe=False)
+                return rp.JsonResponse(dict(R).update({"error" : "loginid already exist"}), status=200, safe=False)
             return rp.JsonResponse({'data':list(objs)}, status=200)
         data = QueryDict(request.POST['formData'])
 
