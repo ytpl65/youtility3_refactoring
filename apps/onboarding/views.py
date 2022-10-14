@@ -1182,7 +1182,7 @@ class SuperTypeAssist(LoginRequiredMixin, View):
             return handle_intergrity_error("SuperTypeAssist")
 
 
-class TypeAssist(LoginRequiredMixin, View):
+class TypeAssistView(LoginRequiredMixin, View):
     params = {
         'form_class': obforms.TypeAssistForm,
         'template_form': 'onboarding/partials/partial_ta_form.html',

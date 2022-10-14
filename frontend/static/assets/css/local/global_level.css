@@ -338,3 +338,7 @@ box-shadow: inset 0 0 0 9999px #0abffc;
 table.dataTable.display tbody tr:hover.selected > .sorting_3, table.dataTable.order-column.hover tbody tr:hover.selected > .sorting_3 {
 box-shadow: inset 0 0 0 9999px #0abffc;
 }
+
+tr.selected td a{
+    color: white;
+}

@@ -51,7 +51,6 @@ class Question(LoginRequiredMixin, View):
         # return cap_form empty
         elif R.get('action', None) == 'form':
             cxt = {'ques_form': self.params['form_class'](request = request, initial = self.params['form_initials']),
-                   'ta_form': obf.TypeAssistForm(auto_id = False),
                    'msg': "create question requested"}
             resp = utils.render_form(request, self.params, cxt)
 
@@ -61,15 +60,16 @@ class Question(LoginRequiredMixin, View):
         # return form with instance
         elif R.get('id', None):
             obj = utils.get_model_obj(int(R['id']), request, self.params)
-            cxt = {'ta_form': obf.TypeAssistForm(auto_id = False)}
             resp = utils.render_form_for_update(
-                request, self.params, 'ques_form', obj, cxt)
+                request, self.params, 'ques_form', obj)
         return resp
 
     def post(self, request, *args, **kwargs):
         resp, create = None, True
         try:
-            data = QueryDict(request.POST['formData'])
+            data = QueryDict(request.POST['formData']).copy()
+            if not data['min'] or data['max']:
+                data['min'] = data['max'] = 0.0
             if pk := request.POST.get('pk', None):
                 msg = "question_view"
                 ques = utils.get_model_obj(pk, request, self.params)
@@ -81,14 +81,14 @@ class Question(LoginRequiredMixin, View):
             if form.is_valid():
                 resp = self.handle_valid_form(form,  request, create)
             else:
+                ic(form.cleaned_data, form.data)
                 cxt = {'errors': form.errors}
                 resp = utils.handle_invalid_form(request, self.params, cxt)
         except Exception:
             resp = utils.handle_Exception(request)
         return resp
 
-    @staticmethod
-    def handle_valid_form(form,  request, create):
+    def handle_valid_form(self, form,  request, create):
         logger.info('ques form is valid')
         ques = None
         try:
@@ -96,8 +96,8 @@ class Question(LoginRequiredMixin, View):
             ques = putils.save_userinfo(
                 ques, request.user, request.session, create = create)
             logger.info("question form saved")
-            data = {'success': "Record has been saved successfully",
-                    'name': ques.quesname, 'type': ques.answertype, 'unit': ques.unit.tacode}
+            data = {'msg': f"{ques.quesname}",
+            'row': am.Question.objects.values(*self.params['fields']).get(id = ques.id)}
             logger.debug(data)
             return rp.JsonResponse(data, status = 200)
         except (IntegrityError, pg_errs.UniqueViolation):

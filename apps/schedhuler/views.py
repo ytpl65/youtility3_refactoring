@@ -1331,9 +1331,9 @@ class SchdTasks(LoginRequiredMixin, View):
 
     def post(self, request, *args, **kwargs):
         R = request.POST
-
         log.info('Task form submitted')
         data, create = QueryDict(R['formData']), True
+        ic(data)
         utils.display_post_data(data)
         if pk := R.get('pk', None):
             obj = utils.get_model_obj(pk, request, {'model': self.params['model']})

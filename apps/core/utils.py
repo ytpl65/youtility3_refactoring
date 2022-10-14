@@ -97,7 +97,7 @@ def render_form_for_update(request, params, formname, obj, extra_cxt=None):
     try:
         logger.info(f"object retrieved '{obj}'")
         F = params['form_class'](
-            instance=obj, request=request, initial=params['form_initials'])
+            instance=obj, request=request)
         C = {formname: F, 'edit': True} | extra_cxt
 
         html = render_to_string(params['template_form'], C, request)

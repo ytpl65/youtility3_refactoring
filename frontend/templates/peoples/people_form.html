@@ -620,6 +620,10 @@ People
             $('#sgti').hide()
         }
 
+        $("#btn_clear").click(() => {
+            location.href = "{{ url('peoples:people') }}?action=form"
+        })
+
         /*add class to labels of modals or 
 		popup-taform to adjust the grid properly*/
         $('.row > label').addClass('col-sm-2')
@@ -754,7 +758,7 @@ People
 				//var newPayLoad = {...payLoad, 'pk':id}
 				//payLoad = newPayLoad
 			}
-			fire_ajax_form_post(params, formdata)
+			fire_ajax_fileform_post(params, formdata)
 			.done((data, status, xhr) => { //function to submit post request
                 show_successful_save_alert(update= id != 'None' ? true : false)
                 window.setTimeout(function() {

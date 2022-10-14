@@ -374,7 +374,7 @@ Schedhule Task
         $("#schdtaskform").submit((e) => {
             e.preventDefault()
             var form = $(this);
-            const params   = { url: $(form).attr("action"), modal: false }
+            const params   = { url: "{{ url('schedhuler:jobschdtasks') }}", modal: false }
             const formtype = '{{schdtaskform.instance.id}}' == 'None' ? "create" : "update"         
             const id       = '{{schdtaskform.instance.id}}'                                          
             var   payLoad  = { formData: $("#schdtaskform").serialize(),csrfmiddlewaretoken: '{{ csrf_token }}' }
@@ -385,6 +385,7 @@ Schedhule Task
             }
             submit_form_alert().then((res) => {
                 if(res.isConfirmed){
+                    console.log(payLoad, "payload")
                     fire_ajax_form_post(params, payLoad)
                     .done((data, status, xhr) => {
                         Swal.fire(

@@ -69,16 +69,18 @@ const first_show_parent = (id) => {
 //removes required attr from field specified.
 function removeRequiredAttr(cls) {
   if (cls === "numeric") {
-    $("#id_min, #id_max").prop("required", false);
-    $("#id_options, #id_alerton").prop("required", true);
+    $("#id_min, #id_max").removeAttr("required");
+    $("#id_options, #id_alerton").attr("required", true);
     $("label[for='id_options'], label[for='id_alerton']").addClass("required");
+    console.log("removed...")
   } else if (cls === "optionGrp") {
-    $("#id_options, #id_alerton").prop("required", false);
-    $("#id_options").prev().prop("required", false);
-    $("#id_min, #id_max").prop("required", true);
+    $("#id_options, #id_alerton").removeAttr("required");
+    $("#id_options").prev().removeAttr("required");
+    $("#id_min, #id_max").attr("required", true);
     $("label[for='id_min'], label[for='id_max']").addClass("required");
+    console.log("added again...")
   } else {
-    $("#id_options, #id_alerton, #id_min, #id_max").prop("required", false);
+    $("#id_options, #id_alerton, #id_min, #id_max").removeAttr("required");
   }
 }
 
@@ -360,6 +362,26 @@ function fire_ajax_form_post(params, payload) {
     url: params["url"],
     type: "post",
     data: payload,
+  }).fail((xhr, status, error) => {
+    console.log("xhr", xhr)
+    if (
+      typeof xhr.responseJSON.errors === "object" ||
+      typeof xhr.responseJSON.errors === "string"
+    ) {
+      if (params.modal === true) {
+        display_modelform_errors(xhr.responseJSON.errors);
+      } else {
+        display_form_errors(xhr.responseJSON.errors);
+      }
+    }
+  });
+}
+
+function fire_ajax_fileform_post(params, payload){
+  return $.ajax({
+    url: params["url"],
+    type: "post",
+    data: payload,
     processData: false,
     contentType: false,
   }).fail((xhr, status, error) => {
@@ -555,37 +577,45 @@ function performIntersection(arr1, arr2) {
   return intersectionResult;
 }
 
-function load_alerton_field(optionsData, selected, id) {
-  $(id).empty();
+function load_alerton_field(optionsData, selected, id_ele) {
+  console.log("id_ele", id_ele)
+  $(id_ele).empty();
   for (let i = 0; i < optionsData.length; i++) {
     var data = { id: optionsData[i], text: optionsData[i] };
     var opt = new Option(data.text, data.id, false, false);
-    $(id).append(opt).trigger("change");
+    $(id_ele).append(opt).trigger("change");
   }
-  $(id).val(selected).trigger("change");
+  console.log("selected", selected)
+  console.log("id_ele", id_ele)
+  $(id_ele).val(selected).trigger("change");
 }
 
 function initialize_alerton_field(
   _optionsData,
   alertonData,
-  questype,
   cleaned,
   id
 ) {
   _optionsData = _optionsData.length ? _optionsData.split(",") : "";
+  console.log(_optionsData, "111-----")
   optionsData = [];
-  if (!cleaned && _optionsData !== "") {
+  console.log(cleaned,  _optionsData)
+  if (!cleaned && _optionsData) {
     _optionsData = JSON.parse(_optionsData);
     _optionsData.forEach((item) => {
       optionsData.push(item.value);
     });
+    console.log(optionsData, "2222------------")
   } else {
     optionsData = _optionsData;
+    console.log(optionsData, '3333-----------')
   }
-
+  console.log(alertonData, "alertondata1")
   if (optionsData.length && alertonData.length) {
     alertonData = alertonData.split(",");
+    console.log(alertonData , optionsData, "alertondata")
     let selected = performIntersection(optionsData, alertonData);
+    console.log(selected, "selected")
     load_alerton_field(optionsData, selected, id);
   }
 }
@@ -820,7 +850,7 @@ function update_qsetblng_form(data, optionTag, fortable = false) {
   $("#id_min").val(data[4]);
   $("#id_max").val(data[5]);
   update_options_field(data[6], optionTag);
-  initialize_alerton_field(data[6], data[7], data[3], (cleaned = true));
+  initialize_alerton_field(data[6], data[7], cleaned = true, id = "#id_alerton");
   data[8] = data[8] === "True" ? true : false;
   $("#id_ismandatory").attr("checked", data[8]);
   adjust_above_below(data[7], fortable);

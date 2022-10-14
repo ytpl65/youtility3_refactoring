@@ -282,6 +282,10 @@ if("{{ conveyanceform.instance.id }}" != "None"){
 $(document).ready(function(){
     //set ctzoffset
   	$("#id_ctzoffset").val(-new Date().getTimezoneOffset())
+
+    $("#btn_clear").click(() => {
+        location.href = "{{ url('attendance:conveyance') }}?action=form"
+    })
     //submit form
     $("#conveyanceform").on('submit',  function(e) {
         e.preventDefault()

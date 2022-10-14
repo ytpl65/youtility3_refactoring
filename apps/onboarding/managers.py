@@ -90,6 +90,17 @@ class BtManager(models.Manager):
                 identifier__tacode = 'SITE').values('id', 'text')
         return qset or self.none()
 
+    def get_bus_idfs(self, R, idf = None):
+        fields = R.getlist('fields[]')
+        qset = self.filter(
+             ~Q(bucode__in=('NONE', 'SPS', 'YTPL')), identifier__tacode = idf, enable = True).select_related(
+                 'parent', 'identifier').annotate(buid = F('id')).values(*fields)
+        idfs = self.filter(
+             ~Q(identifier__tacode = 'NONE'), ~Q(bucode__in=('NONE', 'SPS', 'YTPL'))).order_by(
+                 'identifier__tacode').distinct(
+                     'identifier__tacode').values('identifier__tacode')
+        return qset, idfs
+
     def get_client_list(self, fields, related):
         qset = self.filter(
             identifier__tacode = 'CLIENT', enable=True).select_related(*related).values(

@@ -122,6 +122,12 @@
         return "NONE"
     }
 
+    function handleReqAttribute(id, add){
+        if(add){
+            $(id).attr("required", true)
+        }else{$(id).removeAttr("required")}
+    }
+
     $(document).ready(() => {
         //set ctzoffset
         $("#id_ctzoffset").val(-new Date().getTimezoneOffset())
@@ -154,7 +160,7 @@
         //shows and hides according to answertype
         showHideFields(initial_selected)
         if($("#id_options").val().length){
-            initialize_alerton_field($("#id_options").val(), $("#hidden_alerton").val(), cleaned = false, id="#id_alerton")
+            initialize_alerton_field($("#id_options").val(), $("#hidden_alerton").val().replace('["', "").replace('"]', ""), cleaned = false, id="#id_alerton")
         }
         $(".modal").removeAttr("tabindex");
     })

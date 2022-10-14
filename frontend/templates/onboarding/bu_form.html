@@ -422,6 +422,10 @@ Buisiness-View
 			initMap();
 		});
 
+		$("#btn_clear").click(() => {
+			location.href = "{{ url('onboarding:bu') }}?action=form"
+		})
+
 		//onclick set the coords get lat and lng from useMarker and set to gpslocation field
 		$("#set_the_coords").click(function(){
 			var lat = userMarker.getPosition().lat();

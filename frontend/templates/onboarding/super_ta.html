@@ -104,6 +104,10 @@ Super Type Assist
 		if ('{{superta_form.instance.tacode}}' == ('None' || "")) {
 			$("#btn_del").hide()
 		}
+
+		$("#btn_clear").click(() => {
+			location.href = "{{ url('onboarding:typeassist') }}?action=form"
+		})
 	})
 </script>
 {% endblock extra_scripts %}
