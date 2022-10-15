@@ -147,6 +147,8 @@ class QsetBelongingForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         """Initializes form add atttibutes and classes here."""
         super().__init__(*args, **kwargs)
+        self.fields['min'].initial = None
+        self.fields['max'].initial = None
         for k in self.fields.keys():
             if k in ['min', 'max']:
                 self.fields[k].required = True

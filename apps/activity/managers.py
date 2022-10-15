@@ -119,6 +119,12 @@ class QuestionManager(models.Manager):
                 enable = True
             ).values(*fields)
         return qset or self.none()
+    
+    def get_questiondetails(self, questionid):
+        qset = self.filter(pk = questionid).values(
+            'id',  'answertype', 'isavpt', 'options', 'min',
+             'max', 'alerton', 'avpttype')
+        return qset or self.none()
         
 
 class JobneedManager(models.Manager):
@@ -510,6 +516,8 @@ class QsetBlngManager(models.Manager):
                 'pk', 'quesname', 'answertype', 'min', 'max','question_id',
                 'options', 'alerton', 'ismandatory', 'seqno', 'ctzoffset')
         return qset or self.none()
+    
+
     
     
     

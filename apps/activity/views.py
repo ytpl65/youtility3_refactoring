@@ -603,10 +603,16 @@ class QsetNQsetBelonging(LoginRequiredMixin, View):
     }
     def get(self, request, *args, **kwargs):
         R, P = request.GET, self.params
+        if(R.get('action') == 'getquestion') and R.get('questionid') not in [None, 'null']:
+            objs = am.Question.objects.get_questiondetails(R['questionid'])
+            return rp.JsonResponse({'qsetbng':list(objs)}, status=200)
+        
         if R.get('action') == 'get_questions_of_qset' and R.get('qset_id'):
             objs = P['qsb'].objects.get_questions_of_qset(R)
             return rp.JsonResponse({'data':list(objs)}, status=200)
         return rp.JsonResponse({'data':[]}, status=200)
+
+        
     
     def post(self, request, *args, **kwargs):
         R, P = request.POST, self.params

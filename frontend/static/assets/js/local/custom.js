@@ -70,11 +70,11 @@ const first_show_parent = (id) => {
 function removeRequiredAttr(cls) {
   if (cls === "numeric") {
     $("#id_min, #id_max").removeAttr("required");
-    $("#id_options, #id_alerton").attr("required", true);
-    $("label[for='id_options'], label[for='id_alerton']").addClass("required");
+    $("#id_options").attr("required", true);
+    $("label[for='id_options']").addClass("required");
     console.log("removed...")
   } else if (cls === "optionGrp") {
-    $("#id_options, #id_alerton").removeAttr("required");
+    $("#id_options").removeAttr("required");
     $("#id_options").prev().removeAttr("required");
     $("#id_min, #id_max").attr("required", true);
     $("label[for='id_min'], label[for='id_max']").addClass("required");
@@ -596,7 +596,7 @@ function initialize_alerton_field(
   cleaned,
   id
 ) {
-  _optionsData = _optionsData.length ? _optionsData.split(",") : "";
+  _optionsData = _optionsData.length ? _optionsData.replace(' ', '').split(",") : "";
   console.log(_optionsData, "111-----")
   optionsData = [];
   console.log(cleaned,  _optionsData)
@@ -612,7 +612,7 @@ function initialize_alerton_field(
   }
   console.log(alertonData, "alertondata1")
   if (optionsData.length && alertonData.length) {
-    alertonData = alertonData.split(",");
+    alertonData =  typeof alertonData == 'string' ? alertonData.replace(' ', '').split(",") : alertonData;
     console.log(alertonData , optionsData, "alertondata")
     let selected = performIntersection(optionsData, alertonData);
     console.log(selected, "selected")
@@ -807,7 +807,8 @@ function cleanData(data) {
   return data;
 }
 
-function adjust_above_below(data, for_table = false) {
+function adjust_above_below(data, for_table = false, editor=false) {
+  console.log(data, editor)
   if (
     typeof data.id_alertbelow !== "undefined" ||
     (typeof data.id_alertabove !== "undefined" && for_table)
@@ -821,8 +822,14 @@ function adjust_above_below(data, for_table = false) {
     (data.includes("&gt;") && !for_table)
   ) {
     var nums = data.split(", ");
-    $("#id_alertbelow").val(parseFloat(nums[0].replace(/[^0-9\.]+/g, "")));
-    $("#id_alertabove").val(parseFloat(nums[1].replace(/[^0-9\.]+/g, "")));
+    if(editor){
+      console.log(editor)
+      $("#DTE_Field_alertbelow").val(parseFloat(nums[0].replace(/[^0-9\.]+/g, "")));
+      $("#DTE_Field_alertabove").val(parseFloat(nums[1].replace(/[^0-9\.]+/g, "")));
+    }else{
+      $("#id_alertbelow").val(parseFloat(nums[0].replace(/[^0-9\.]+/g, "")));
+      $("#id_alertabove").val(parseFloat(nums[1].replace(/[^0-9\.]+/g, "")));
+    }
   }
 }
 
@@ -838,7 +845,7 @@ function resetForm(tag_field) {
 function update_options_field(data, optionTag) {
   optionTag.removeAllTags();
 
-  optionTag.addTags(data !== "" ? data.split(",") : "");
+  optionTag.addTags(data ? data.split(",") : "");
 }
 
 function update_qsetblng_form(data, optionTag, fortable = false) {

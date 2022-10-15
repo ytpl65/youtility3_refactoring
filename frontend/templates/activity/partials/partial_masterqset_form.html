@@ -97,24 +97,13 @@
                         <!--Qusetion Set Belonging Question End-->
 
                         <!--Qusetion Set Belonging Question Type Start-->
-                        <label for="{{ qsetbng.answertype.id_for_label }}" class="required col-md-1 col-sm-1">Question
+                        <label for="{{ qsetbng.answertype.id_for_label }}" class="required col-md-2 col-sm-2">Question
                             Type:</label>
                         <div class="col-md-8 col-sm-8">
                             {{ qsetbng.answertype }}
                             {{ qsetbng.answertype.errors }}
                         </div>
                         <!--Qusetion Set Belonging Question Type End-->
-
-
-                        <!--Qusetion Set Belonging Is Mandatory Start-->
-                        <div class="booleans col-md-2 col-sm-2 d-flex justify-content-sm-between mt-5
-                            form-check form-switch form-check-custom form-check-solid">
-                            <label for="{{ qsetbng.ismandatory.id_for_label }}"
-                                class="form-check-label bool col-form-label me-5 text-sm-right">
-                                {{ qsetbng.ismandatory.label }}: &nbsp; {{ qsetbng.ismandatory }}
-                            </label>
-                        </div>
-                        <!--Qusetion Set Belonging Is Mandatory End-->
                     </div>
                     <div class="row mb-3 fv-row gy3 optionGrp">
                         {{ qsetbng.options.label_tag() }}
@@ -150,6 +139,26 @@
                             {{ qsetbng.alertabove.errors }}
                         </div>
                     </div>
+
+                    <!--Qusetion Set Belonging Is Mandatory Start-->
+                    <div class="booleans col-md-6 col-sm-6 d-flex justify-content-sm-between mt-5
+                        form-check form-switch form-check-custom form-check-solid">
+                        <label for="{{ qsetbng.ismandatory.id_for_label }}"
+                            class="form-check-label bool col-form-label me-5 text-sm-right">
+                            {{ qsetbng.ismandatory.label }}: &nbsp; {{ qsetbng.ismandatory }}
+                        </label>
+                        <label for="{{ qsetbng.isavpt.id_for_label }}"
+                            class="form-check-label bool col-form-label me-5 text-sm-right">
+                            {{ qsetbng.isavpt.label }}: &nbsp; {{ qsetbng.isavpt }}
+                        </label>
+                        <label for={{ qsetbng.avpttype.id_for_label }} class="col-md-2">{{ qsetbng.avpttype.label }}:</label>
+                        <div class="col-md-4">
+                            {{ qsetbng.avpttype }}
+                            {{ qsetbng.avpttype.errors }}
+                        </div>
+                    </div>
+                    <!--Qusetion Set Belonging Is Mandatory End-->
+                    
                     <div class="d-flex justify-content-end">
                         <button type="submit" id="addQuestion" form="qsetbng_form"
                             class="btn btn-sm btn-secondary btn-hover-scale">
@@ -242,22 +251,21 @@
     var seqno = 0
 
     function populateQsetForm(questionid){
-        const params = {url:`{{ url('activity:qset_qsetblng') }}?questionid=${questionid}`, modal:false}
-        fire_ajax_form_post(params, {questionid:questionid})
+        debugger;
+        const params = {url:`{{ url('activity:qset_qsetblng') }}?action=getquestion&questionid=${questionid}`, modal:false}
+        fire_ajax_get(params)
         .done((data, status, xhr) => {
-            if(data.status == 'success'){
-                const qsetbng = data.qsetbng
+            if(status == 'success'){
+                const qsetbng = data.qsetbng[0]
                 $('#qsetbng_form').find('input[name="min"]').val(qsetbng.min)
                 $('#qsetbng_form').find('input[name="max"]').val(qsetbng.max)
-                $('#qsetbng_form').find('input[name="options"]').val(qsetbng.options)
-                $('#qsetbng_form').find('input[name="alerton"]').val(qsetbng.alerton)
-                $('#qsetbng_form').find('input[name="alertbelow"]').val(qsetbng.alertbelow)
-                $('#qsetbng_form').find('input[name="alertabove"]').val(qsetbng.alertabove)
-                $('#qsetbng_form').find('input[name="ismandatory"]').val(qsetbng.ismandatory)
-                $('#qsetbng_form').find('input[name="seqno"]').val(qsetbng.seqno)
-                $('#addQuestion').hide()
-                $('#resetQsetB').show()
-                $('#deleteQuestion').show()
+                console.log(qsetbng.options, optionTag)
+                debugger;
+                console.log(qsetbng.alerton, "alerton")
+                qsetbng.options ?  update_options_field(qsetbng.options, optionTag) : {}
+                qsetbng.alerton && qsetbng.options ?  initialize_alerton_field(qsetbng.options, qsetbng.alerton.split(','), cleaned=true, id = "#id_alerton") : {}
+                qsetbng.alerton ? adjust_above_below(qsetbng.alerton, fortable=false) : {}
+                $("#id_ismandatory").attr("checked", qsetbng.ismandatory);
             }
         })
         
@@ -331,6 +339,8 @@
             if (typeof selected !== 'undefined') {
                 assignQuesType(selected)
                 showHideFields(selected)
+                populateQsetForm($("#id_question").val())
+                
             }
         })
 

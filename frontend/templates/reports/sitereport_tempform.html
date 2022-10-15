@@ -239,6 +239,31 @@ Site Report Template
         })
     }
 
+    function populateQsetForm(questionid){
+        const params = {url:`{{ url('activity:qset_qsetblng') }}?action=getquestion&questionid=${questionid}`, modal:false}
+        fire_ajax_get(params)
+        .done((data, status, xhr) => {
+            if(status == 'success' && data.qsetbng){
+                const qsetbng = data.qsetbng[0]
+                $('#DTE_Field_min').val(qsetbng.min)
+                $('#DTE_Field_max').val(qsetbng.max)
+                $('#DTE_Field_options').val(qsetbng.options)
+                if(qsetbng.options && qsetbng.alerton){
+                    let optionArr = qsetbng.options.replace(' ', '').split(',')
+                    let alertonArr = qsetbng.alerton.replace(' ', '').split(',')
+                    selected = performIntersection(optionArr, alertonArr)
+                    load_alerton_field(optionArr, selected, "#DTE_Field_alerton")
+                }else if(qsetbng.alerton){
+                    adjust_above_below(qsetbng.alerton, for_table=false, editor=true)
+                }
+                
+
+            }
+        })
+    }
+        
+    
+
 
     
 
@@ -402,6 +427,7 @@ Site Report Template
                     //hide/show fields based on selected text..
                     hideAndShowFields(selected)
                     childEditor.field('answertype').val(selected)
+                    populateQsetForm($("#DTE_Field_question").val())
                 })
             }
             
