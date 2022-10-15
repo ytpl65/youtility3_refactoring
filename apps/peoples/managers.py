@@ -51,7 +51,8 @@ class PeopleManager(BaseUserManager):
         """
         qset = self.select_related(
             *self.related).filter(
-                ~Q(id = 1), bu_id = siteid, mdtz__gte = mdtz).values(*self.fields).order_by('-mdtz')
+                 Q(bu_id = siteid), Q(mdtz__gte = mdtz)).values(*self.fields).order_by('-mdtz')
+        ic(qset.query)
         return qset or self.none()
 
     def get_emergencycontacts(self, siteid, clientid):
@@ -95,7 +96,6 @@ class PgblngManager(models.Manager):
     def get_modified_after(self, mdtz, peopleid, buid):
         qset = self.select_related(
             *self.related).filter(
-                ~Q(id = 1),
                 mdtz__gte = mdtz, people_id = peopleid, bu_id = buid).values(*self.fields).order_by('-mdtz')
         return qset or self.none()
 
@@ -158,8 +158,8 @@ class PgroupManager(models.Manager):
         """
         qset = self.select_related(
             *self.related).filter(
-                ~Q(id = 1), mdtz__gte = mdtz, bu_id = buid,
-                identifier__tacode = "PEOPLEGROUP").values(
+                Q(id=1) | Q(mdtz__gte = mdtz) & Q(bu_id = buid) &
+                Q(identifier__tacode = "PEOPLEGROUP")).values(
                     *self.fields)
         return qset or None
 

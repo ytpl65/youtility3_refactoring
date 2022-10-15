@@ -27,7 +27,7 @@ class QuestionSetManager(models.Manager):
         return ""
 
     def get_qset_modified_after(self, mdtz, buid):
-        qset = self.select_related(*self.related).filter(~Q(id = 1), mdtz__gte = mdtz, bu_id = buid, enable=True).values(*self.fields).order_by('-mdtz')
+        qset = self.select_related(*self.related).filter(Q(id = 1) | Q(mdtz__gte = mdtz) &  Q(bu_id = buid) & Q(enable=True)).values(*self.fields).order_by('-mdtz')
         qset = self.clean_fields(qset)
         return qset or None
 
@@ -101,7 +101,7 @@ class QuestionManager(models.Manager):
 
     def get_questions_modified_after(self, mdtz):
         mdtzinput = datetime.strptime(mdtz, "%Y-%m-%d %H:%M:%S")
-        qset = self.select_related(*self.related).filter(~Q(id = 1), mdtz__gte = mdtzinput, enable=True).values(*self.fields).order_by('-mdtz')
+        qset = self.select_related(*self.related).filter( mdtz__gte = mdtzinput, enable=True).values(*self.fields).order_by('-mdtz')
         return qset or None
 
     def questions_of_client(self, request, RGet):
@@ -386,11 +386,11 @@ class AssetManager(models.Manager):
     def get_assetdetails(self, mdtz, site_id):
         mdtzinput = datetime.strptime(mdtz, "%Y-%m-%d %H:%M:%S")
         return self.filter(
-            ~Q(id = 1),
+            Q(id=1) | 
             ~Q(identifier = 'NEA'),
             ~Q(runningstatus = 'SCRAPPED'),
-            mdtz__gte = mdtzinput,
-            bu_id= site_id,
+            Q(mdtz__gte = mdtzinput),
+            Q(bu_id= site_id),
         ).select_related(
             *self.related
         ).values(*self.fields) or self.none()
@@ -461,7 +461,7 @@ class QsetBlngManager(models.Manager):
     def get_modified_after(self ,mdtz, buid):
         qset = self.select_related(
             *self.related).filter(
-                ~Q(id = 1), mdtz__gte = mdtz, bu_id = buid).values(
+                 mdtz__gte = mdtz, bu_id = buid).values(
                     *self.fields
                 )
         return qset or self.none()

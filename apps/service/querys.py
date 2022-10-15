@@ -130,6 +130,7 @@ class Query(graphene.ObjectType):
         data = TypeAssist.objects.get_typeassist_modified_after(mdtzinput, clientid)
         records, count, msg = utils.get_select_output(data)
         log.info(f'{count} objects returned...')
+        ic(records)
         return SelectOutputType(nrows = count, records = records,msg = msg)
 
     @staticmethod
@@ -139,6 +140,7 @@ class Query(graphene.ObjectType):
         data = People.objects.get_people_modified_after(mdtzinput, buid)
         records, count, msg = utils.get_select_output(data)
         log.info(f'{count} objects returned...')
+        ic(records)
         return SelectOutputType(nrows = count, records = records,msg = msg)
 
     @staticmethod
@@ -148,6 +150,7 @@ class Query(graphene.ObjectType):
         data = Pgroup.objects.get_groups_modified_after(mdtzinput, buid)
         records, count, msg = utils.get_select_output(data)
         log.info(f'{count} objects returned...')
+        ic(records)
         return SelectOutputType(nrows = count, records = records,msg = msg)
 
     @staticmethod
@@ -165,6 +168,7 @@ class Query(graphene.ObjectType):
         data = QuestionSet.objects.get_qset_modified_after(mdtzinput, buid)
         records, count, msg = utils.get_select_output(data)
         log.info(f'{count} objects returned...')
+        ic(records)
         return SelectOutputType(nrows = count, records = records,msg = msg)
 
 
@@ -252,4 +256,6 @@ def get_externaltouremodifiedafter(peopleid, siteid, clientid):
 
 def get_assetdetails(mdtz, buid):
     log.info('request for assetdetails-modified-after data...')
-    return get_db_rows("select * from fn_getassetdetails(%s, %s)", args=[mdtz, buid])
+    qset =  get_db_rows("select * from fn_getassetdetails(%s, %s)", args=[mdtz, buid])
+    ic(qset)
+    return qset

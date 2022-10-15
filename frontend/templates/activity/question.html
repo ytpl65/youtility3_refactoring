@@ -38,6 +38,18 @@ Question List
 	const urlname         = "{{ url('activity:question') }}"
 	const viewname        = "Question"
 	const rowlink         = "a.ques-link"
+	function handleReqAttribute(id, add){
+        if(add){
+            $(`#${id}`).attr("required", true)
+            $(`label[for='${id}']`).addClass("required")
+            console.log("added")
+            
+        }else{
+            $(`#${id}`).removeAttr("required")
+            $(`label[for='${id}']`).removeClass("required")
+            console.log("removed")
+        }
+    }
 	
 	$(document).ready(function () {
 		//on enter search query
@@ -124,6 +136,10 @@ Question List
 				})
 			}
 		})
+		if($("#id_isavpt").is(':checked')){
+            console.log("added")
+            handleReqAttribute("id_avpttype", true)
+        }else{handleReqAttribute("id_avpttype", false)}
 
 
 		//submit form

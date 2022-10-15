@@ -18,7 +18,7 @@ class QuestionForm(forms.ModelForm):
 
     class Meta:
         model = am.Question
-        fields = ['quesname', 'answertype', 'alerton', 'isworkflow',
+        fields = ['quesname', 'answertype', 'alerton', 'isworkflow', 'isavpt', 'avpttype',
                   'unit', 'category', 'options', 'isworkflow', 'min', 'max', 'ctzoffset']
         labels = {
             'quesname' : 'Name',
@@ -135,6 +135,7 @@ class QsetBelongingForm(forms.ModelForm):
     class Meta:
         model = am.QuestionSetBelonging
         fields = ['seqno', 'qset', 'question', 'answertype', 'min', 'max',
+                  'isavpt', 'avpttype',
                   'alerton', 'options', 'ismandatory', 'ctzoffset']
         widgets = {
             'answertype': forms.TextInput(attrs={'readonly': 'readonly'}),

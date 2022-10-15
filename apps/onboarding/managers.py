@@ -230,7 +230,7 @@ class TypeAssistManager(models.Manager):
             mdtz = datetime.strptime(mdtz, "%Y-%m-%d %H:%M:%S")
 
         qset = self.select_related(*self.related).filter(
-            ~Q(id = 1) & Q(mdtz__gte = mdtz) & Q(client_id__in = [clientid])
+            Q(mdtz__gte = mdtz) & Q(client_id__in = [clientid])
         ).values(*self.fields)
         return qset or None
     
@@ -250,7 +250,7 @@ class GeofenceManager(models.Manager):
 
     def get_geofence_list(self, fields, related, session):
         qset = self.select_related(*related).filter(
-            ~Q(gfcode='NONE'), enable = True, client_id = session['client_id'],
+             enable = True, client_id = session['client_id'],
         ).values(*fields)
         return qset or self.none()
 

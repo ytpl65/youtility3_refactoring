@@ -29,6 +29,12 @@ class Question(BaseModel, TenantAwareModel):
         RATING      = "RATING"     , _("Rating")
         PEOPLELIST  = "PEOPLELIST" , _("People List")
         SITELIST    = "SITELIST"   , _("Site List")
+    
+    class AvptType(models.TextChoices):
+        BACKCAMPIC    = "BACKCAMPIC"   , _('Back Camera Pic')
+        FRONTCAMPIC        = "FRONTCAMPIC"       , _('Front Camera Pic')
+        AUDIO    = "AUDIO"   , _('Audio')
+        VIDEO     = "VIDEO"    , _("Video")
 
     # id= models.BigIntegerField(primary_key = True)
     quesname  = models.CharField(_("Question Name"), max_length = 200)
@@ -42,7 +48,10 @@ class Question(BaseModel, TenantAwareModel):
     isworkflow = models.BooleanField(_("Is WorkFlow"), default = False)
     enable     = models.BooleanField(_("Enable"), default = True)
     category   = models.ForeignKey("onboarding.TypeAssist", verbose_name = _("Category"), on_delete = models.RESTRICT, related_name='category_types', null = True, blank = True)
+    avpttype        = models.CharField(_("Attachment Type"), max_length = 50, choices = AvptType.choices)
+    isavpt            = models.BooleanField(_("Is Attachment Required"), default = False)
 
+    
     objects = QuestionManager()
 
     class Meta(BaseModel.Meta):
@@ -135,6 +144,12 @@ class QuestionSetBelonging(BaseModel, TenantAwareModel):
         FRONTCAMERA = "FRONTCAMERA", _("Front Camera")
         PEOPLELIST  = "PEOPLELIST" , _("People List")
         SITELIST    = "SITELIST"   , _("Site List")
+        
+    class AvptType(models.TextChoices):
+        BACKCAMPIC    = "BACKCAMPIC"   , _('Back Camera Pic')
+        FRONTCAMPIC        = "FRONTCAMPIC"       , _('Front Camera Pic')
+        AUDIO    = "AUDIO"   , _('Audio')
+        VIDEO     = "VIDEO"    , _("Video")
 
     # id               = models.BigIntegerField(_("QSB Id"), primary_key = True)
     ismandatory       = models.BooleanField(_("Is Manadatory"))
@@ -143,6 +158,7 @@ class QuestionSetBelonging(BaseModel, TenantAwareModel):
     qset              = models.ForeignKey("activity.QuestionSet", verbose_name = _("Question Set"), on_delete = models.RESTRICT, null = True, blank = True)
     question          = models.ForeignKey("activity.Question", verbose_name = _("Question"), null = True, blank = False,  on_delete = models.RESTRICT)
     answertype        = models.CharField(_("Question Type"), max_length = 50, choices = AnswerType.choices)
+    avpttype        = models.CharField(_("Attachment Type"), max_length = 50, choices = AvptType.choices)
     max               = models.DecimalField(_("Max"), null = True, max_digits = 18, decimal_places = 2, default = 0.00)
     min               = models.DecimalField(_("Min"), null = True, max_digits = 18, decimal_places = 2, default = 0.00)
     alerton           = models.CharField(_("Alert on"), null = True, blank = True, max_length = 300)
@@ -465,6 +481,12 @@ class JobneedDetails(BaseModel, TenantAwareModel):
         FRONTCAMERA = ("FRONTCAMERA", "Front Camera")
         PEOPLELIST  = ("PEOPLELIST", "People List")
         SITELIST    = ("SITELIST", "Site List")
+    
+    class AvptType(models.TextChoices):
+        BACKCAMPIC    = "BACKCAMPIC"   , _('Back Camera Pic')
+        FRONTCAMPIC        = "FRONTCAMPIC"       , _('Front Camera Pic')
+        AUDIO    = "AUDIO"   , _('Audio')
+        VIDEO     = "VIDEO"    , _("Video")
 
     # id         = models.BigIntegerField(_("Jobneed details"), primary_key = True)
     uuid        = models.UUIDField(unique = True, editable = True, blank = True, default = uuid.uuid4)
@@ -473,6 +495,7 @@ class JobneedDetails(BaseModel, TenantAwareModel):
     answertype  = models.CharField(_("Answer Type"), max_length = 50, choices = AnswerType.choices, null = True)
     answer      = models.CharField(_("Answer"), max_length = 250, default="", null = True)
     isavpt      = models.BooleanField(_("Is Attachement Required"), default = False)
+    avpttype        = models.CharField(_("Attachment Type"), max_length = 50, choices = AvptType.choices)
     options     = models.CharField( _("Option"), max_length = 200, null = True, blank = True)
     min         = models.DecimalField(_("Min"), max_digits = 18,  decimal_places = 4, null = True)
     max         = models.DecimalField(_("Max"), max_digits = 18, decimal_places = 4, null = True)
