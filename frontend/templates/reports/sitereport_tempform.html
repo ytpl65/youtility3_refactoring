@@ -154,24 +154,26 @@ Site Report Template
     function initialize_form(){
         var data = getCurrentEditingRow(childEditor, childTable)
         if(data!=='None'){
+            console.log(data, "data")
             hideAndShowFields(data.answertype)
             //init question
             var newOption = new Option(data.quesname.split(' | ')[0], data.question_id, true, true);
-            $('#DTE_Field_question').append(newOption).trigger('change');
+            $('#DTE_Field_question').append(newOption);
             
             //init type
             var _selectedText = getSelectedValue("#DTE_Field_question")
             childEditor.field('answertype').val(_selectedText.split(" | ")[1])
             
             //init options
-            //childEditor.field('options').val(data.options)
+            childEditor.field('options').val(data.options)
             
             //init alerton
             var options = data.options.split(',')
             if(options.length > 0){
                 appenAlerton(options)
                 let alerton = data.alerton.split(',')
-                $("#DTE_Field_alerton").val(alerton).trigger('change')
+                console.log(alerton, "alerton")
+                $("#DTE_Field_alerton").val(alerton).trigger('change')  
             }
             
             if(data.answertype === 'NUMERIC' && data.alerton.length > 0){
@@ -186,6 +188,10 @@ Site Report Template
                 childEditor.field('alertbelow').val(ab)
                 childEditor.field('alertabove').val(aa)
             }
+            //init isavpt & avpttype
+            childEditor.field('isavpt').val(data.isavpt)
+            childEditor.field('ismandatory').val(data.ismandatory)
+            childEditor.field('avpttype').val(data.avpttype)
         }
     }
 
@@ -248,6 +254,8 @@ Site Report Template
                 $('#DTE_Field_min').val(qsetbng.min)
                 $('#DTE_Field_max').val(qsetbng.max)
                 $('#DTE_Field_options').val(qsetbng.options)
+                $('#DTE_Field_avpttype').val(qsetbng.avpttype)
+                $('#DTE_Field_isavpt').val(qsetbng.isavpt)
                 if(qsetbng.options && qsetbng.alerton){
                     let optionArr = qsetbng.options.replace(' ', '').split(',')
                     let alertonArr = qsetbng.alerton.replace(' ', '').split(',')
@@ -256,6 +264,7 @@ Site Report Template
                 }else if(qsetbng.alerton){
                     adjust_above_below(qsetbng.alerton, for_table=false, editor=true)
                 }
+                
                 
 
             }
@@ -338,6 +347,8 @@ Site Report Template
                         d.seqno = $("#DTE_Field_seqno").val()
                         d.ismandatory = $("#DTE_Field_ismandatory").val()
                         d.options = $("#DTE_Field_options").val()
+                        d.isavpt = $("#DTE_Field_isavpt").val()
+                        d.avpttype = $("#DTE_Field_avpttype").val()
                         d.pk = currentRow !== 'None' ? currentRow['pk'] : currentRow
                         d.ctzoffset = $("#id_ctzoffset").val()
                     }
@@ -357,8 +368,21 @@ Site Report Template
                 {label: 'Alert On', name: 'alerton', type:'select'},
                 {label: 'Mandatory', name: 'ismandatory', type: 'select', def:1,
                 options:   [
-                    { label: 'True', value: 1 },
-                    { label: 'False', value: 0 }
+                    { label: 'True', value: true },
+                    { label: 'False', value: false }
+                ]},
+                {label: 'Is Attachment Required', name: 'isavpt', type: 'select', def:1,
+                options:   [
+                    { label: 'True', value: true },
+                    { label: 'False', value: false }
+                ]},
+                {label: 'Attachment Type', name: 'avpttype', type: 'select', def:1,
+                options:   [
+                    { label: 'NONE', value: 'NONE' },
+                    { label: 'Back Camera Pic', value: 'BACKCAMPIC' },
+                    { label: 'Front Camera Pic', value: 'FRONTCAMPIC' },
+                    { label: 'Audio', value: 'AUDIO' },
+                    { label: 'Video', value: 'VIDEO' },
                 ]},
             ],
             formOptions:{
@@ -427,7 +451,7 @@ Site Report Template
                     //hide/show fields based on selected text..
                     hideAndShowFields(selected)
                     childEditor.field('answertype').val(selected)
-                    populateQsetForm($("#DTE_Field_question").val())
+                    //populateQsetForm($("#DTE_Field_question").val())
                 })
             }
             
@@ -582,6 +606,8 @@ Site Report Template
                         return row['answertype'] == 'CHECKBOX' || row['answertype'] == 'DROPDOWN' || row['answertype'] == 'NUMERIC' ? data : 'NA'
                     }},
                     {title: "Mandatory", data: 'ismandatory'},
+                    {visible: false, data: 'isavpt'},
+                    {visible: false, data: 'avpttype'},
                 ],
                 buttons:[
                     { extend: "create", editor: childEditor },
@@ -630,10 +656,6 @@ Site Report Template
                 $("#tabchildReport_wrapper .buttons-create").addClass('disabled')
                 $("#tabchildReport_wrapper .buttons-create").attr({'data-toggle':"tooltip", 'data-placement':"top", 'title':"Select Section First"})
             } );
-
-            
-
-       
     })
 </script>
 {# <script src="{{ static('assets/js/formValidations.js') }}"></script>#}

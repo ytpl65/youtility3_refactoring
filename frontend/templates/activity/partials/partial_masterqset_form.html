@@ -141,7 +141,7 @@
                     </div>
 
                     <!--Qusetion Set Belonging Is Mandatory Start-->
-                    <div class="booleans col-md-6 col-sm-6 d-flex justify-content-sm-between mt-5
+                    <div class="booleans col-md-12 d-flex justify-content-sm-between mt-5
                         form-check form-switch form-check-custom form-check-solid">
                         <label for="{{ qsetbng.ismandatory.id_for_label }}"
                             class="form-check-label bool col-form-label me-5 text-sm-right">
@@ -265,7 +265,8 @@
                 qsetbng.options ?  update_options_field(qsetbng.options, optionTag) : {}
                 qsetbng.alerton && qsetbng.options ?  initialize_alerton_field(qsetbng.options, qsetbng.alerton.split(','), cleaned=true, id = "#id_alerton") : {}
                 qsetbng.alerton ? adjust_above_below(qsetbng.alerton, fortable=false) : {}
-                $("#id_ismandatory").attr("checked", qsetbng.ismandatory);
+                $("#id_isavpt").attr("checked", qsetbng.isavpt);
+                $("#id_avpttype").val(qsetbng.avpttype);
             }
         })
         

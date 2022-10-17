@@ -475,7 +475,8 @@ class QsetBlngManager(models.Manager):
     def handle_questionpostdata(self, request):
         R, S, Id, r = request.POST, request.session, None, {}
         ic(R)
-        r['ismandatory'] = R['ismandatory'] == '1'
+        r['ismandatory'] = R.get('ismandatory', False) == 'true'
+        r['isavpt'] = R.get('isavpt', False) == 'true'
         r['options'] = R['options'].replace('"', '').replace('[', '').replace(']', '')
         r['min'] = 0.0 if R['min'] == "" else R['min']
         r['max'] = 0.0 if R['max'] == "" else R['max']
@@ -488,6 +489,7 @@ class QsetBlngManager(models.Manager):
         
         PostData = {'qset_id':R['parent_id'], 'answertype':R['answertype'], 'min':r.get('min', '0.0'), 'max':r.get('max', '0.0'),
                 'alerton':r.get('alerton'), 'ismandatory':r['ismandatory'], 'question_id': R['question_id'],
+                'isavpt':r['isavpt'], 'avpttype':R['avpttype'],
                 'options':r.get('options'), 'seqno':R['seqno'], 'client_id':S['client_id'], 'bu_id':S['bu_id'],
                 'cuser':request.user, 'muser':request.user, 'cdtz':utils.getawaredatetime(datetime.now(), R['ctzoffset']),
                 'mdtz':utils.getawaredatetime(datetime.now(), R['ctzoffset'])}
@@ -514,7 +516,7 @@ class QsetBlngManager(models.Manager):
         qset = self.annotate(quesname = F('question__quesname')).filter(
             qset_id = R['qset_id']).select_related('question').values(
                 'pk', 'quesname', 'answertype', 'min', 'max','question_id',
-                'options', 'alerton', 'ismandatory', 'seqno', 'ctzoffset')
+                'options', 'alerton', 'ismandatory', 'seqno', 'ctzoffset', 'isavpt', 'avpttype')
         return qset or self.none()
     
 

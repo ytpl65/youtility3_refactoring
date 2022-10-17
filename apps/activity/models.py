@@ -31,10 +31,11 @@ class Question(BaseModel, TenantAwareModel):
         SITELIST    = "SITELIST"   , _("Site List")
     
     class AvptType(models.TextChoices):
-        BACKCAMPIC    = "BACKCAMPIC"   , _('Back Camera Pic')
-        FRONTCAMPIC        = "FRONTCAMPIC"       , _('Front Camera Pic')
-        AUDIO    = "AUDIO"   , _('Audio')
-        VIDEO     = "VIDEO"    , _("Video")
+        NONE  = "NONE",  _('NONE')
+        BACKCAMPIC  = "BACKCAMPIC",  _('Back Camera Pic')
+        FRONTCAMPIC = "FRONTCAMPIC", _('Front Camera Pic')
+        AUDIO       = "AUDIO",       _('Audio')
+        VIDEO       = "VIDEO",       _("Video")
 
     # id= models.BigIntegerField(primary_key = True)
     quesname  = models.CharField(_("Question Name"), max_length = 200)
