@@ -172,6 +172,7 @@ class BtForm(forms.ModelForm):
         if gps := val:
             if gps == 'NONE': return None
             regex = '^([-+]?)([\d]{1,2})(((\.)(\d+)(,)))(\s*)(([-+]?)([\d]{1,3})((\.)(\d+))?)$'
+            gps = gps.replace('(', '').replace(')', '')
             if not re.match(regex, gps):
                raise forms.ValidationError(self.error_msg['invalid_latlng'])
             gps.replace(' ', '')

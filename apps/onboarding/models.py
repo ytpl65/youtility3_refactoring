@@ -61,8 +61,7 @@ def bu_defaults():
 
 class Bt(BaseModel, TenantAwareModel, HeirarchyModel):
 
-    # id= models.BigIntegerField(primary_key = True)
-    bucode              = models.CharField(_('Code'), max_length = 30)
+    bucode             = models.CharField(_('Code'), max_length = 30)
     bupreferences      = models.JSONField(_('bupreferences'), null = True, default = bu_defaults,  encoder = DjangoJSONEncoder, blank = True)
     identifier          = models.ForeignKey('TypeAssist', null = True, blank = True, on_delete = models.RESTRICT, related_name="bu_idfs", verbose_name='Identifier')
     buname              = models.CharField(_('Name'), max_length = 200)

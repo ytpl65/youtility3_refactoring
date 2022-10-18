@@ -191,7 +191,7 @@ class Schd_E_TourJobForm(JobForm):
         self.fields['uptodate'].input_formats  = settings.DATETIME_INPUT_FORMATS
         self.fields['ticketcategory'].initial  = ob.TypeAssist.objects.get(tacode='AUTOCLOSED')
         self.fields['sgroup'].queryset  = pm.Pgroup.objects.filter(identifier__tacode="SITEGROUP")
-        self.fields['qset'].queryset  = am.QuestionSet.objects.filter(type = 'CHECKLIST')
+        self.fields['qset'].queryset  = am.QuestionSet.objects.filter(type__in = ['CHECKLIST', 'SITEREPORTTEMPLATE'])
         self.fields['identifier'].widget.attrs = {"style": "display:none"}
         self.fields['expirytime'].widget.attrs = {"style": "display:none"}
         self.fields['starttime'].widget.attrs  = {"style": "display:none"}

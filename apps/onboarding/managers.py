@@ -75,7 +75,7 @@ class BtManager(models.Manager):
                 bus = self.filter(id__in = bulist)
                 qset = bus.annotate(bu_id = F('id')).filter(identifier__tacode = 'SITE').values(
                     'bu_id', 'bucode', 'butype_id', 'enable', 'cdtz', 'mdtz', 'skipsiteaudit',
-                     'buname', 'cuser_id', 'muser_id', 'identifier_id'
+                     'buname', 'cuser_id', 'muser_id', 'identifier_id', 'bupreferences'
                 )
                 return qset or self.none()
             pass
