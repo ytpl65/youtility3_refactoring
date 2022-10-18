@@ -453,7 +453,7 @@ Buisiness-View
 				console.log("shown")
 				$(".site_type").show();
 			}
-			$("#id_gpslocation").val("{{ buform.instance.gpslocation.coords if buform.instance.gpslocation is not none else 'NONE' }}")
+			$("#id_gpslocation").val("{{ buform.instance.gpslocation.coords[::-1] if buform.instance.gpslocation is not none else 'NONE' }}")
 		}
 
 		// submit the popup-taform for validation and saving in db.
