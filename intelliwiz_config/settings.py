@@ -140,7 +140,7 @@ DATABASES = {
     'default': {
         'ENGINE':   'django.contrib.gis.db.backends.postgis',
         'USER':     DBUSER,
-        'NAME':     'icici_django',
+        'NAME':     DBNAME,
         'PASSWORD': DBPASS,
         'HOST':     DBHOST,
         'PORT':     '5432',
