@@ -40,3 +40,7 @@ IMPORTANT COMMANDS
 2.START CELERY WORKER $ celery -A intelliwiz_config worker -l debug
 3.KILL ANY PROCESS BY ITS PORT $ sudo fuser -k <PORT_NO>/tcp
 4.START REDIS SERVER: $ sudo service redis-server  {start|stop|restart|force-reload|status
+
+
+IMPORTANT NOTES
+1.BY DEFAULT PEOPLE PASSWORD IS <peoplecode>

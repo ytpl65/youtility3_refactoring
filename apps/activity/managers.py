@@ -419,7 +419,7 @@ class JobneedDetailsManager(models.Manager):
     use_in_migrations = True
     related = ['question', 'jobneed', 'cuser', 'muser']
     fields = ['id', 'uuid', 'seqno', 'answertype', 'answer', 'isavpt', 'options', 'ctzoffset', 'ismandatory',
-              'cdtz', 'mdtz',           
+              'cdtz', 'mdtz', 'avpttype',           
               'min', 'max', 'alerton', 'question_id', 'jobneed_id', 'alerts', 'cuser_id', 'muser_id', 'tenant_id']
 
     def get_jndmodifiedafter(self, mdtz,jobneedid):
@@ -459,7 +459,7 @@ class JobneedDetailsManager(models.Manager):
 class QsetBlngManager(models.Manager):
     use_in_migrations = True
     fields = ['id', 'seqno', 'answertype',  'isavpt', 'options', 'ctzoffset', 'ismandatory',
-              'min', 'max', 'alerton', 'client_id', 'bu_id',  'question_id', 
+              'min', 'max', 'alerton', 'client_id', 'bu_id',  'question_id', 'isavpt', 'avpttype',
               'qset_id', 'cuser_id', 'muser_id', 'cdtz', 'mdtz', 'alertmails_sendto', 'tenant_id']
     related = ['client', 'bu',  'question', 
               'qset', 'cuser', 'muser']
