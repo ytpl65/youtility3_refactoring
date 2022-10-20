@@ -140,7 +140,7 @@ DATABASES = {
     'default': {
         'ENGINE':   'django.contrib.gis.db.backends.postgis',
         'USER':     DBUSER,
-        'NAME':     DBNAME,
+        'NAME':     'icici_django',
         'PASSWORD': DBPASS,
         'HOST':     DBHOST,
         'PORT':     '5432',
@@ -202,18 +202,18 @@ CACHE_TTL = 60 * 5
 
 # PASSWORD VALIDATORS...
 AUTH_PASSWORD_VALIDATORS = [
-    {
-        'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
-    },
+    #{
+    #    'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
+    #},
     {
         'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
     },
-    {
-        'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
-    },
+    #{
+    #    'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
+    #},
+    #{
+    #    'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
+    #},
 ]
 
 # Internationalization

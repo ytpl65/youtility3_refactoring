@@ -7,7 +7,11 @@ import apps.onboarding.models as om
 from apps.core import utils
 import apps.activity.utils as ac_utils
 import django_select2.forms as s2forms
+from django.contrib.gis.geos import GEOSGeometry
 import json
+import re
+from django.http import QueryDict
+
 
 class QuestionForm(forms.ModelForm):
     required_css_class = "required"
@@ -67,6 +71,7 @@ class QuestionForm(forms.ModelForm):
         if data.get('answertype') and data['answertype'] not in (
             'NUMERIC',
             'DROPDOWN',
+            'CHECKBOX',
         ):
             cleaned_data['alerton'] = json.dumps([])
             cleaned_data['min']     = cleaned_data['max'] = 0.0
@@ -266,7 +271,6 @@ class AssetForm(forms.ModelForm):
     supplier       = forms.CharField(required = False, max_length = 50)
     meter          = forms.ChoiceField(choices=[], required = False, initial='NONE', label='Meter')
     model          = forms.CharField(label='Model', required = False, max_length = 100)
-    gpslocation    = forms.CharField(label = 'GPS Location', required = True, initial='0.0,0.0')
 
     class Meta:
         model = am.Asset
@@ -278,6 +282,7 @@ class AssetForm(forms.ModelForm):
             'runningstatus': s2forms.Select2Widget,
             'type'         : s2forms.Select2Widget,
             'parent'       : s2forms.Select2Widget,
+            'gpslocation'  : forms.TextInput(attrs={'readonly': 'readonly'}),
             'assetcode'    : forms.TextInput(attrs={'style': 'text-transform:uppercase;', 'placeholder': 'Enter text without space & special characters'})
         }
 
@@ -363,6 +368,14 @@ class LocationForm(AssetForm):
 
 class CheckpointForm(AssetForm):
     required_css_class = "required"
+    error_msg = {
+        'invalid_assetcode'  : 'Spaces are not allowed in [Code]',
+        'invalid_assetcode2' : "[Invalid code] Only ('-', '_') special characters are allowed",
+        'invalid_assetcode3' : "[Invalid code] Code should not endwith '.' ",
+        'invalid_latlng'  : "Please enter a correct gps coordinates."
+    }
+    request=None
+
 
     tempcode       = None
     service        = None
@@ -388,16 +401,44 @@ class CheckpointForm(AssetForm):
 
     class Meta(AssetForm.Meta):
         exclude = ['capacity']
+        
 
     def __init__(self, *args, **kwargs):
         """Initializes form add atttibutes and classes here."""
         self.request = kwargs.pop('request', None)
-        super().__init__(*args, **kwargs)
+        super(CheckpointForm, self).__init__(*args, **kwargs)
         self.fields['identifier'].initial = 'CHECKPOINT'
+        self.fields['parent'].required = False
+        self.fields['type'].required = False
         self.fields['identifier'].widget.attrs = {"style": "display:none"}
         self.fields['parent'].queryset = am.Asset.objects.filter(
             Q(identifier='CHECKPOINT') & Q(enable = True) | Q(assetcode='NONE'))
         utils.initailize_form_fields(self)
+        
+    def clean_assetcode(self):
+        self.cleaned_data['gpslocation'] = self.data.get('gpslocation')
+        import re
+        if value := self.cleaned_data.get('assetcode'):
+            regex = "^[a-zA-Z0-9\-_]*$"
+            if " " in value: raise forms.ValidationError(self.error_msg['invalid_assetcode'])
+            if  not re.match(regex, value):
+                raise forms.ValidationError(self.error_msg['invalid_assetcode2'])
+            if value.endswith('.'):
+                raise forms.ValidationError(self.error_msg['invalid_assetcode3'])
+            return value.upper()
+        
+    def clean_gpslocation(self, val):
+        import re
+        if gps := val:
+            if gps == 'NONE': return None
+            regex = '^([-+]?)([\d]{1,2})(((\.)(\d+)(,)))(\s*)(([-+]?)([\d]{1,3})((\.)(\d+))?)$'
+            gps = gps.replace('(', '').replace(')', '')
+            if not re.match(regex, gps):
+               raise forms.ValidationError(self.error_msg['invalid_latlng'])
+            gps.replace(' ', '')
+            lat, lng = gps.split(',')
+            gps = GEOSGeometry(f'SRID=4326;POINT({lng} {lat})')
+        return gps
 
 class JobForm(forms.ModelForm):
 

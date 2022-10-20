@@ -113,6 +113,7 @@ Incident Report Template
     var childTable;
     var childEditor;
     var parentEditor;
+    var forminitilizing;
 
     function fire_ajax_get_qsb(qsetData){
         //get qsb of qset
@@ -161,10 +162,11 @@ Incident Report Template
     function initialize_form(){
         var data = getCurrentEditingRow(childEditor, childTable)
         if(data!=='None'){
+            forminitilizing=true;
             hideAndShowFields(data.answertype)
             //init question
             var newOption = new Option(data.quesname.split(' | ')[0], data.question_id, true, true);
-            $('#DTE_Field_question').append(newOption).trigger('change');
+            $('#DTE_Field_question').append(newOption);
             
             //init type
             var _selectedText = getSelectedValue("#DTE_Field_question")
@@ -174,11 +176,11 @@ Incident Report Template
             //childEditor.field('options').val(data.options)
             
             //init alerton
-            var options = data.options.split(',')
+            var options = data.options ? data.options.split(',') : []
             if(options.length > 0){
                 appenAlerton(options)
                 let alerton = data.alerton.split(',')
-                $("#DTE_Field_alerton").val(alerton).trigger('change')
+                $("#DTE_Field_alerton").val(alerton)
             }
             
             if(data.answertype === 'NUMERIC' && data.alerton.length > 0){
@@ -193,8 +195,44 @@ Incident Report Template
                 childEditor.field('alertbelow').val(ab)
                 childEditor.field('alertabove').val(aa)
             }
+            //init is mandatory
+            childEditor.field('ismandatory').val(data.ismandatory)
+            childEditor.field('isavpt').val(data.isavpt)
+            childEditor.field('avpttype').val(data.avpttype)
+
         }
     }
+
+
+    function populateQsetForm(questionid){
+        if (!forminitilizing){
+            const params = {url:`{{ url('activity:qset_qsetblng') }}?action=getquestion&questionid=${questionid}`, modal:false}
+            fire_ajax_get(params)
+            .done((data, status, xhr) => {
+                if(status == 'success' && data.qsetbng){
+                    const qsetbng = data.qsetbng[0]
+                    $('#DTE_Field_min').val(qsetbng.min)
+                    $('#DTE_Field_max').val(qsetbng.max)
+                    $('#DTE_Field_options').val(qsetbng.options)
+                    $('#DTE_Field_avpttype').val(qsetbng.avpttype)
+                    $('#DTE_Field_isavpt').val(qsetbng.isavpt)
+                    if(qsetbng.options && qsetbng.alerton){
+                        let optionArr = qsetbng.options.replace(' ', '').split(',')
+                        let alertonArr = qsetbng.alerton.replace(' ', '').split(',')
+                        selected = performIntersection(optionArr, alertonArr)
+                        load_alerton_field(optionArr, selected, "#DTE_Field_alerton")
+                    }else if(qsetbng.alerton){
+                        adjust_above_below(qsetbng.alerton, for_table=false, editor=true)
+                    }
+                    
+                    
+
+                }
+            })
+        }
+        
+    }
+        
 
     function clearSelection(id){
         //$(id).val(null).trigger('change');
@@ -319,6 +357,8 @@ Incident Report Template
                         d.answertype = $("#DTE_Field_answertype").val()
                         d.seqno = $("#DTE_Field_seqno").val()
                         d.ismandatory = $("#DTE_Field_ismandatory").val()
+                        d.isavpt = $("#DTE_Field_isavpt").val()
+                        d.avpttype = $("#DTE_Field_avpttype").val()
                         d.options = $("#DTE_Field_options").val()
                         d.pk = currentRow !== 'None' ? currentRow['pk'] : currentRow
                         d.ctzoffset = $("#id_ctzoffset").val()
@@ -339,8 +379,21 @@ Incident Report Template
                 {label: 'Alert On', name: 'alerton', type:'select'},
                 {label: 'Mandatory', name: 'ismandatory', type: 'select', def:1,
                 options:   [
-                    { label: 'True', value: 1 },
-                    { label: 'False', value: 0 }
+                    { label: 'True', value: true },
+                    { label: 'False', value: false }
+                ]},
+                {label: 'Is Attachment Required', name: 'isavpt', type: 'select', def:1,
+                options:   [
+                    { label: 'True', value: true },
+                    { label: 'False', value: false }
+                ]},
+                {label: 'Attachment Type', name: 'avpttype', type: 'select', def:1,
+                options:   [
+                    { label: 'NONE', value: 'NONE' },
+                    { label: 'Back Camera Pic', value: 'BACKCAMPIC' },
+                    { label: 'Front Camera Pic', value: 'FRONTCAMPIC' },
+                    { label: 'Audio', value: 'AUDIO' },
+                    { label: 'Video', value: 'VIDEO' },
                 ]},
             ],
             formOptions:{
@@ -373,6 +426,10 @@ Incident Report Template
         //CHILD EDITOR ON PRE-OPEN EVENT
         childEditor.on('preOpen', function(e, mode, action){
             
+        })
+
+        childEditor.on("initEdit", function(e, node, data, item, type){
+            console.log("editing started....")
         })
 
         //CHILD EDITOR ON OPEN EVENT
@@ -409,7 +466,14 @@ Incident Report Template
                     //hide/show fields based on selected text..
                     hideAndShowFields(selected)
                     childEditor.field('answertype').val(selected)
+                    //populateQsetForm($("#DTE_Field_question").val())
                 })
+            }
+
+            if(action == 'edit'){
+                initialize_form()
+                forminitilizing=false
+
             }
             
             
@@ -422,15 +486,7 @@ Incident Report Template
 
         // CHILD EDITOR ON OPENED EVENT
         childEditor.on('opened', function(e, mode, action){
-            //get the data of rows in editing
-            //var data = getCurrentEditingRow(childEditor, childTable)
-            if(action == 'edit'){
-                initialize_form()
-            }
-            //if(action == "edit" && data !== 'None'){
-                //hide/show fields based on selected text..
-                //hideAndShowFields(data.answertype)
-            //}
+
             $("#DTE_Field_options").on('change', function(){
                 var options  = $(this).val()
                 if(options.length > 0){
@@ -440,6 +496,13 @@ Incident Report Template
                     clearSelection("#DTE_Field_alerton")
                 }
             })
+
+            if(action == 'create'){
+                // on change question select field, autoselect type field
+                $("#DTE_Field_question.form-select").on("change", function () {
+                    populateQsetForm($("#DTE_Field_question").val())
+                })
+            }
         })
 
 
@@ -640,8 +703,11 @@ Incident Report Template
                         return row['answertype'] !== 'CHECKBOX' && row['answertype'] !== 'DROPDOWN' ? 'NA' : data
                     }},
                     {title: "Mandatory", data: 'ismandatory'},
+                    {visible: false, data: 'isavpt'},
+                    {visible: false, data: 'avpttype'},
                 ],
                 buttons:[
+                    {text:'<i class="fas fa-sync-alt text-dark"></i>', titleAttr:'Refresh Data', className:'refreshBtn'},
                     { extend: "create", editor: childEditor },
                     { extend: "edit",   editor: childEditor },
                     { extend: "remove", editor: childEditor }
@@ -678,6 +744,7 @@ Incident Report Template
             parentTable.on( 'select', function () {
                 childTable.ajax.reload();
                 $("#tabchildReport_wrapper .buttons-create").removeClass('disabled')
+                $("#tabchildReport_wrapper .refreshBtn").removeClass('disabled')
                 //childEditor
                 //    .field( 'users.site' )
                 //    .def( parentTable.row( { selected: true } ).data().id );
@@ -686,8 +753,16 @@ Incident Report Template
             parentTable.on( 'deselect', function () {
                 childTable.ajax.reload();
                 $("#tabchildReport_wrapper .buttons-create").addClass('disabled')
+                $("#tabchildReport_wrapper .refreshBtn").addClass('disabled')
                 $("#tabchildReport_wrapper .buttons-create").attr({'data-toggle':"tooltip", 'data-placement':"top", 'title':"Select Section First"})
             } );
+
+            $('.refreshBtn').click(() => {
+                var selected = parentTable.row( { selected: true } );
+                if(selected){
+                    childTable.ajax.reload();
+                }
+            })
 
             
 

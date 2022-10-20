@@ -84,6 +84,10 @@ class CapabilityManager(models.Manager):
 
     def get_child_data(self, parent, cfor):
         return self.filter(cfor = cfor, parent__capscode = parent) if parent else None
+    
+    def get_caps(self, cfor):
+        qset = self.filter(cfor = cfor).values_list('capscode', 'capsname')
+        return qset or self.none()
 
 
 

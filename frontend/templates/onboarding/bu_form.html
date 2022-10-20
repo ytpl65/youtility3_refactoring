@@ -462,7 +462,7 @@ Buisiness-View
 			'form': "#butype_ta_form",
 			'field': "#id_butype",
 			'modal': "#butype_ta_popup",
-			'default':$("#butype_ta_popup select option:contains('SITETYPE')").val()
+			'default':$("#butype_ta_popup select option:contains('Site Type')").val()
 
 		}))
 		
@@ -491,7 +491,7 @@ Buisiness-View
 		})
 		
 		//pre-select options for pop-up ta forms
-		$("#butype_ta_popup select[name='tatype']").val($("#butype_ta_popup select option:contains('SITETYPE')").val()).change()
+		$("#butype_ta_popup select[name='tatype']").val($("#butype_ta_popup select option:contains('Site Type')").val()).change()
 		$("#butype_ta_popup select[name='tatype']").select2({disabled: 'readonly'})
 		
 

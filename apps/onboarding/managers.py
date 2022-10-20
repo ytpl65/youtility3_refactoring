@@ -119,6 +119,8 @@ class BtManager(models.Manager):
                 'mdtz':utils.getawaredatetime(datetime.now(), R['ctzoffset'])}
         
         if R['action'] == 'create':
+            if self.filter(bucode=R['bucode'].upper()).exists():
+                return {'data':list(self.none()), 'error':'Bu code already exists'}
             ID = self.create(**PostData).id
         
         elif R['action'] == 'edit':
@@ -130,10 +132,12 @@ class BtManager(models.Manager):
         else:
             ic(R['pk'])
             self.filter(pk=R['pk']).delete()
-            return self.none()
+            return {'data':list(self.none())}
         
-        return self.filter(id=ID).values('id', 'bucode', 'buname', 'identifier__tacode', 'identifier_id', 
+        qset = self.filter(id=ID).values('id', 'bucode', 'buname', 'identifier__tacode', 'identifier_id', 
                  'parent__buname', 'parent_id', 'enable') or self.none()
+        return {'data':list(qset)}
+        
     
     def handle_adminspostdata(self, request):
         # sourcery skip: use-named-expression
@@ -147,6 +151,15 @@ class BtManager(models.Manager):
                 'mdtz':utils.getawaredatetime(datetime.now(), R['ctzoffset'])}
         
         if R['action'] == 'create':
+            if pm.People.objects.filter(peoplecode=R['peoplecode'].upper()).exists():
+                return {'data':list(self.none()), 'error':'People code already exists'}
+            
+            if pm.People.objects.filter(loginid = R['loginid']).exists():
+                return {'data':list(self.none()), 'error':'Login id already exists'}
+            
+            if pm.People.objects.filter(email = R['email']).exists():
+                return {'data':list(self.none()), 'error':'Email already exists'}
+            
             ID = pm.People.objects.create(**PostData).id
         
         elif R['action'] == 'edit':
@@ -156,7 +169,7 @@ class BtManager(models.Manager):
             if updated: ID = R['pk']
         else:
             pm.People.objects.filter(pk=R['pk']).delete()
-            return self.none()
+            return {'data':list(self.none())}
         
         qset = pm.People.objects.filter(id=ID).values(
             'id', 'peoplecode', 'peoplename', 'loginid', 'email',
@@ -166,7 +179,7 @@ class BtManager(models.Manager):
             user = pm.People.objects.get(id=qset[0]['id'])
             user.set_password(f'{qset[0]["loginid"]}@123')
             user.save()
-        return qset or self.none()
+        return {'data':list(qset)}
         
 
     def get_listbus(self, request):
@@ -180,7 +193,8 @@ class BtManager(models.Manager):
 
     def get_listadmins(self, request):
         "return list admins for client_form"
-        if request.GET.get("id") == "None":
+        print(request.GET.get("id"))
+        if request.GET.get("id") in ["None", None]:
             return self.none()
         qset = pm.People.objects.filter(
             isadmin=True, client_id = request.GET.get('clientid'),

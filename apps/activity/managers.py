@@ -4,6 +4,8 @@ from django.db.models import CharField, Value as V
 from django.db.models import Q, F, Count, Case, When
 from django.contrib.gis.db.models.functions import  AsWKT, AsGeoJSON
 from datetime import datetime, timedelta, timezone
+
+from pyparsing import identbodychars
 from apps.core import utils
 import logging
 logger = logging.getLogger('__main__')
@@ -412,6 +414,30 @@ class AssetManager(models.Manager):
         ).values('id', 'assetcode', 'assetname', 'identifier', 'gps')
         return qset or self.none()
     
+    def get_checkpointlistview(self, request, related, fields, id=None):
+        
+        qset = self.annotate(
+            gps = AsWKT('gpslocation')
+        ).select_related(*related)
+
+        if id:
+            qset = qset.filter(enable=True, identifier='CHECKPOINT',id=id).values(*fields)[0]
+        else:
+            qset = qset.filter(enable=True, identifier='CHECKPOINT').values(*fields)
+        
+        return qset or self.none()
+    
+    def get_smartplacelistview(self, request, related, fields, id=None):
+        qset = self.annotate(
+            gps = AsWKT('gpslocation')
+        ).select_related(*related)
+
+        if id:
+            qset = qset.filter(enable=True, identifier='SMARTPLACE',id=id).values(*fields)[0]
+        else:
+            qset = qset.filter(enable=True, identifier='SMARTPLACE').values(*fields)
+        return qset or self.none()
+    
     
 
 
@@ -509,7 +535,7 @@ class QsetBlngManager(models.Manager):
         
         return self.filter(id=ID).annotate(quesname=F('question__quesname')
         ).values('pk', 'seqno', 'quesname', 'answertype', 'min', 'question_id', 'ctzoffset',
-                 'max', 'options', 'alerton', 'ismandatory') or self.none()
+                 'max', 'options', 'alerton', 'ismandatory', 'isavpt', 'avpttype') or self.none()
         
     
     def get_questions_of_qset(self, R):

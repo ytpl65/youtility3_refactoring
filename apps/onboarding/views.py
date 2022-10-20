@@ -1123,7 +1123,7 @@ class SuperTypeAssist(LoginRequiredMixin, View):
             ic(self.params)
             objs = self.params['model'].objects.select_related(
                  *self.params['related']).filter(
-                    ~Q(tacode='NONE')
+                    ~Q(tacode='NONE'), enable=True
              ).values(*self.params['fields'])
             return  rp.JsonResponse(data = {'data':list(objs)})
 
@@ -1134,7 +1134,7 @@ class SuperTypeAssist(LoginRequiredMixin, View):
 
         elif R.get('action', None) == "delete" and R.get('id', None):
             print(f'resp={resp}')
-            resp = utils.render_form_for_delete(request, self.params, False)
+            resp = utils.render_form_for_delete(request, self.params, True)
         
         elif R.get('id', None):
             obj = utils.get_model_obj(int(R['id']), request, self.params)
@@ -1205,7 +1205,7 @@ class TypeAssistView(LoginRequiredMixin, View):
             ic(self.params)
             objs = self.params['model'].objects.select_related(
                  *self.params['related']).filter(
-                    ~Q(tacode='NONE'), ~Q(tatype__tacode='NONE')
+                    ~Q(tacode='NONE'), ~Q(tatype__tacode='NONE'), enable=True
              ).values(*self.params['fields'])
             return  rp.JsonResponse(data = {'data':list(objs)})
 
@@ -1216,7 +1216,7 @@ class TypeAssistView(LoginRequiredMixin, View):
 
         elif R.get('action', None) == "delete" and R.get('id', None):
             print(f'resp={resp}')
-            resp = utils.render_form_for_delete(request, self.params, False)
+            resp = utils.render_form_for_delete(request, self.params, True)
         
         elif R.get('id', None):
             obj = utils.get_model_obj(int(R['id']), request, self.params)
@@ -1592,21 +1592,13 @@ class Client(LoginRequiredMixin, View):
     
     def post(self, request, *args, **kwargs):
         R, P = request.POST, self.params
-        ic(R)
         if R.get('bupostdata'):
-            try:
-                objs = P['model'].objects.handle_bupostdata(request)
-            except IntegrityError as e:
-                return rp.JsonResponse(dict(R).update({"error" : e.__cause__}), status=200, safe=False)
-            return rp.JsonResponse({'data':list(objs)}, status=200)
-
+            resp= P['model'].objects.handle_bupostdata(request)
+            return rp.JsonResponse(resp, status = 200)
+        
         if R.get('adminspostdata'):
-            try:
-                objs = P['model'].objects.handle_adminspostdata(request)
-            except IntegrityError as e:
-                ic(e.__cause__)
-                return rp.JsonResponse(dict(R).update({"error" : "loginid already exist"}), status=200, safe=False)
-            return rp.JsonResponse({'data':list(objs)}, status=200)
+            resp = P['model'].objects.handle_adminspostdata(request)
+            return rp.JsonResponse(resp, status=200)
         data = QueryDict(request.POST['formData'])
 
         try:
@@ -1704,6 +1696,7 @@ class BtView(LoginRequiredMixin, View):
             if form.is_valid():
                 resp = self.handle_valid_form(form, request, create)
             else:
+                ic(form.cleaned_data)
                 cxt = {'errors': form.errors}
                 ic(len(form.errors), form.errors.get('gpslocation'))
                 resp = utils.handle_invalid_form(request, self.params, cxt)

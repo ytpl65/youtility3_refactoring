@@ -252,7 +252,7 @@ People
 
 
                 <!--LABEL FIELD-->
-                <label for="id_peopletype">Work Type:</label>
+                <label for="id_peopletype">Employee Type:</label>
                 <!--INPUT GROUP-->
                 <div class="col-md-4">
                     <div class="d-flex flex-row">
@@ -284,6 +284,18 @@ People
                 <!--LABEL FIELD-->
                 
                 <!--LABEL FIELD-->
+                <label class="" for="id_worktype">Work Type:</label>
+                <!--INPUT GROUP-->
+                <div class="col-md-4">
+                    {{ peopleform.worktype }}
+                    <!--HELP TEXT-->
+                    <!----- BEGIN ERROR FIELD  ------->
+                    {{ peopleform.worktype.errors }}
+                    <!----- END ERROR FIELD  ------->
+                </div>
+                <!--LABEL FIELD-->
+                
+                <!--LABEL FIELD-->
                 <label class="required" for="id_dateofjoin">Site</label>
                 <!--INPUT GROUP-->
                 <div class="col-md-4">
@@ -296,11 +308,22 @@ People
                 <!--LABEL FIELD-->
                 <!------------Checkboxes Rendering Last --------------------->
                 {% if request.user.isadmin %}
-                <div class="booleans col-md-6 d-flex justify-content-sm-between mt-5">
-                
+                <div class="booleans col-md-12 d-flex justify-content-sm-between mt-5">
+                    {% if peopleform.instance.password %}
+                        <button type="button" id="change_pass" class="btn btn-sm col-md-2 btn-primary rounded-1" data-bs-target='#paswd_change_alert'
+                            data-bs-toggle="modal">Change Password
+                            <span class="svg-icon svg-icon-2">
+                                <span class="material-icons h-19px" style="vertical-align: middle; font-size: 19px;">
+                                    lock
+                                </span>
+                            </span>
+                        </button>
+                    {% endif %}
+                    {% if request.user.is_superuser %}
                     <!--ENABLE CHECKBOX -->
                     <label for = id_isenable class="form-check-label bool col-form-label me-5 text-sm-right">Enable
                         &nbsp {{ peopleform.enable }}</label>
+                    {% endif %}
                      <!--BLACKLIST CHECKBOX -->
                     <label for = id_blacklist class="form-check-label bool col-form-label me-5 text-sm-right">Blacklist
                         &nbsp{{ pref_form.blacklist }}</label>
@@ -316,14 +339,6 @@ People
                     <label for = id_alertmails id="label_alertmails" class="form-check-label bool col-form-label me-5 text-sm-right">Alert Mails
                         &nbsp{{ pref_form.alertmails }}</label>
                 </div>
-                {% endif %}
-                {% if peopleform.instance.password %}
-                    <button type="button" id="change_pass" class="btn btn-sm col-md-2 btn-primary rounded-1" data-bs-target='#paswd_change_alert'
-                        data-bs-toggle="modal">Change Password
-                        <span class="svg-icon svg-icon-2">
-                            <span class="material-icons h-19px" style="vertical-align: middle; font-size: 19px;">
-                                lock
-                            </span></span></button>
                 {% endif %}
             </div>
             <!--END INNER ROW-->
@@ -381,15 +396,18 @@ People
         <!--END IMAGE INPUT-->
     </div>
 
-    <!---BEGIN Add More Details --->
-    <div class="d-flex flex-row justify-content-center mt-2">
-    <p id="add_more" style="cursor:pointer; color:#009EF7" class="" id="add_more"><span id="ptxt"><u>Add more info</u></span>
-    <span class="material-icons-outlined align-middle">
-    arrow_downward
-    </span>     
-    </p>
-    </div>
-    <!--END-Add More Details --->
+        {% if not request.user.is_superuser %}
+            <!---BEGIN Add More Details --->
+            <div class="d-flex flex-row justify-content-center mt-2">
+                <p id="add_more" style="cursor:pointer; color:#009EF7" class="" id="add_more"><span id="ptxt"><u>Add more info</u></span>
+                    <span class="material-icons-outlined align-middle">
+                    arrow_downward
+                    </span>     
+                </p>
+            </div>
+            <!--END-Add More Details --->
+        {% endif %}
+
 
     <!--END FIRST ROW-->
     <div class="mb-4 row" id="workinfo" style="display:none;">
@@ -407,7 +425,7 @@ People
                         <a href="" type="button" data-bs-toggle="modal" data-bs-target="#department_popup"><span
                                 style="font-size: 24px;" data-bs-toggle="tooltip" data-bs-placement="left"
                                 title="If you haven't found an option in selection menu, then create one from here"
-                                class="material-icons-outlined mt-3 ps-2 primary-col">
+                                class="material-icons-outlined mt-3 ps-2 primary-col opacity-50">
                                 add_circle
                             </span></a>
                     </div>
@@ -426,7 +444,7 @@ People
                         <a href="" type="button" data-bs-toggle="modal" data-bs-target="#designation_popup"><span
                                 style="font-size: 24px;" data-bs-toggle="tooltip" data-bs-placement="left"
                                 title="If you haven't found an option in selection menu, then create one from here"
-                                class="material-icons-outlined mt-3 ps-2 primary-col">
+                                class="material-icons-outlined mt-3 ps-2 primary-col opacity-50">
                                 add_circle
                             </span></a>
                     </div>
@@ -542,10 +560,10 @@ People
                 </div>
                 <div class="booleans col-md-6 d-flex justify-content-sm-between mt-5">
 
-                    <label for = id_showalltemplates
+                    <label for=id_showalltemplates
                         class="form-check-label bool col-form-label me-5 text-sm-right">{{ pref_form.showalltemplates }}
                         &nbspShow all Templates </label>
-                    <label for = id_showtemplatebasedonfilter
+                    <label for=id_showtemplatebasedonfilter
                         class="form-check-label bool col-form-label me-5 text-sm-right">{{ pref_form.showtemplatebasedonfilter }}
                         &nbspDisplay site wise templates</label>
 
@@ -553,6 +571,29 @@ People
             </div>
         </section>
     </div>
+    <div class="mb-4 row" id="address" style="display:none">
+        <section class="mb-6">
+            <h4>Address Info</h4>
+            <hr>
+            <div class="mb-3 row g-3 gx-6">
+                <label for="id_currentaddress">Current Address</label>
+                <div class="col-md-4">
+                    {{ pref_form.currentaddress }}
+                    <!--HELP TEXT-->
+                    <!--ERROR FIELD-->
+                    {{ pref_form.currentaddress.errors }}
+                </div>
+                <label for="id_permanentaddress">Permanent Address</label>
+                <div class="col-md-4">
+                    {{ pref_form.permanentaddress }}
+                    <!--HELP TEXT-->
+                    <!--ERROR FIELD-->
+                    {{ pref_form.permanentaddress.errors }}
+                </div>
+            </div>
+        </section>
+    </div>
+    
 </form>
 
 {% endblock form %}
@@ -631,8 +672,7 @@ People
 
         $("#add_more").click(function () {
             //show more fields to add in peopleform
-            $('#capinfo, #sgti, #workinfo').toggle()
-            $('')
+            $('#capinfo, #sgti, #workinfo, #address').toggle()
         })
         //on submit password change form
         $('#passwordChangeForm').on('submit', function (e) {
@@ -723,13 +763,13 @@ People
             $("#change_pass").hide()
         }
         //pre-select options for pop-up ta forms
-		$("#peopletype_popup select[name='tatype']").val($("#peopletype_popup select option:contains('PEOPLETYPE')").val()).change().prop({"disabled": "true"})
+		$("#peopletype_popup select[name='tatype']").val($("#peopletype_popup select option:contains('People Type')").val()).change().prop({"disabled": "true"})
         
         //pre-select options for pop-up ta forms
-		$("#designation_popup select[name='tatype']").val($("#designation_popup select option:contains('DESIGNATION')").val()).change().prop({"disabled": "true"})
+		$("#designation_popup select[name='tatype']").val($("#designation_popup select option:contains('Designation')").val()).change().prop({"disabled": "true"})
         
         //pre-select options for pop-up ta forms
-		$("#department_popup select[name='tatype']").val($("#department_popup select option:contains('DEPARTMENT')").val()).change().prop({"disabled": "true"})
+		$("#department_popup select[name='tatype']").val($("#department_popup select option:contains('Department')").val()).change().prop({"disabled": "true"})
         
         //show isadmin checkbox to superuser
         if(session.is_superadmin){

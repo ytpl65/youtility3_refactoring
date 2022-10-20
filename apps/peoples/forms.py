@@ -2,12 +2,14 @@ from django import forms
 from django.conf import settings
 from django.core.validators import RegexValidator
 from django.db.models import Q
+from requests import request
 
 import apps.peoples.models as pm  # people-models
 import apps.onboarding.models as om  # onboarding-models
 from django_select2 import forms as s2forms
 from apps.core import utils
 import re
+from apps.peoples.utils import create_caps_choices_for_peopleform
 #============= BEGIN LOGIN FORM ====================#
 
 class LoginForm(forms.Form):
@@ -74,7 +76,7 @@ class PeopleForm(forms.ModelForm):
         'invalid_code'  : "Spaces are not allowed in [Code]",
         'invalid_code2' : "[Invalid code] Only ('-', '_') special characters are allowed",
         'invalid_code3' : "[Invalid code] Code should not endwith '.' ",                   
-        'invalid_name' : "[Invalid name] Only these special characters [-, _, @, #] are allowed in name field",                   
+        'invalid_name'  : "[Invalid name] Only these special characters [-, _, @, #] are allowed in name field",                   
     }
 
     # defines field rendering order
@@ -106,14 +108,15 @@ class PeopleForm(forms.ModelForm):
         model = pm.People
         fields = ['peoplename', 'peoplecode',  'peopleimg',  'mobno',      'email',
                   'loginid',      'dateofbirth', 'enable',   'deviceid',   'gender',
-                  'peopletype',   'dateofjoin',  'department', 'dateofreport',
+                  'peopletype',   'dateofjoin',  'department', 'dateofreport', 'worktype',
                   'designation',  'reportto',   'bu', 'isadmin', 'ctzoffset',]
         labels = {
             'peoplename': 'Name',        'loginid'    : 'Login Id',        'email'       : 'Email',
             'peopletype': 'Employee Type', 'reportto'   : 'Report to',       'designation' : 'Designation',
             'gender'    : 'Gender',      'dateofbirth': 'Date of Birth',   'enable'      : 'Enable',
             'department': 'Department',  'dateofjoin' : 'Date of Joining', 'dateofreport': 'Date of Release',
-            'deviceid'  : 'Device Id',   'bu'         : "Site",            'isadmin'     : "Is Admin"}
+            'deviceid'  : 'Device Id',   'bu'         : "Site",            'isadmin'     : "Is Admin",
+            'worktype':'Work Type'}
 
         widgets = {
             'mobno'       : forms.TextInput(attrs={'placeholder': 'Eg:- 91XXXXXXXXXX, 44XXXXXXXXX'}),
@@ -136,10 +139,12 @@ class PeopleForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         self.fields['peopletype'].queryset = om.TypeAssist.objects.filter(
             tatype__tacode="PEOPLETYPE")
+        self.fields['worktype'].queryset = om.TypeAssist.objects.filter(
+            tatype__tacode="WORKTYPE")
         self.fields['department'].queryset = om.TypeAssist.objects.filter(
             tatype__tacode="DEPARTMENT")
         self.fields['designation'].queryset = om.TypeAssist.objects.filter(
-            tatype__tacode="DESINGATION")
+            tatype__tacode="DESIGNATION")
         self.fields['dateofbirth'].input_formats  = settings.DATE_INPUT_FORMATS
         self.fields['dateofreport'].input_formats = settings.DATE_INPUT_FORMATS
         self.fields['dateofjoin'].input_formats   = settings.DATE_INPUT_FORMATS
@@ -192,7 +197,7 @@ class PeopleForm(forms.ModelForm):
 
     def clean_peoplename(self):
         if value := self.cleaned_data.get('peoplename'):
-            regex = "^[a-zA-Z0-9\-_@#\[\]\(\|\)\{\}]*$"
+            regex = "^[a-zA-Z0-9\-_@#\[\]\(\|\)\{\} ]*$"
             if not re.match(regex, value):
                 raise forms.ValidationError(self.error_msg['invalid_name'])
         return value
@@ -353,23 +358,27 @@ class PeopleExtrasForm(forms.Form):
     debug                     = forms.BooleanField(initial = False, required = False)
     showtemplatebasedonfilter = forms.BooleanField(initial = False, required = False, label="Display site wise templates")
     blacklist                 = forms.BooleanField(initial = False, required = False)
-    alertmails = forms.BooleanField(initial=False , label='Alert Mails', required=False)
-    isemergencycontact = forms.BooleanField(initial=False , label='Is Emergency Contact', required=False)
+    alertmails                = forms.BooleanField(initial=False , label='Alert Mails', required=False)
+    isemergencycontact        = forms.BooleanField(initial=False , label='Is Emergency Contact', required=False)
     assignsitegroup           = forms.MultipleChoiceField(required = False, label="Site Group", widget = s2forms.Select2MultipleWidget)
     tempincludes              = forms.MultipleChoiceField(required = False, label="Template", widget = s2forms.Select2MultipleWidget)
     mlogsendsto               = forms.CharField(max_length = 25, required = False)
+    currentaddress            = forms.CharField(required = False, widget=forms.Textarea(attrs={'rows': 2, 'cols': 15}))
+    permanentaddress          = forms.CharField(required = False,  widget=forms.Textarea(attrs={'rows': 2, 'cols': 15}))
 
     
     def __init__(self, *args, **kwargs):
         session = kwargs.pop('session')
+        request = kwargs.pop('request')
         super().__init__(*args, **kwargs)
         self.fields['assignsitegroup'].choices = pm.Pgroup.objects.get_assignedsitegroup_forclient(session['client_id'])
         self.fields['tempincludes'].choices = pm.Pgroup.objects.get_assignedsitegroup_forclient(session['client_id'])
+        web, mob, portlet, report = create_caps_choices_for_peopleform(request.user.client)
         if not (session['is_superadmin']):
-            self.fields['webcapability'].choices     = session['people_webcaps'] or session['client_webcaps']
-            self.fields['mobilecapability'].choices  = session['people_mobcaps'] or session['client_mobcaps']
-            self.fields['portletcapability'].choices = session['people_reportcaps'] or session['client_reportcaps']
-            self.fields['reportcapability'].choices  = session['people_portletcaps'] or session['client_portletcaps']
+            self.fields['webcapability'].choices     = session['people_webcaps'] or  web
+            self.fields['mobilecapability'].choices  = session['people_mobcaps'] or mob
+            self.fields['portletcapability'].choices = session['people_portletcaps'] or portlet
+            self.fields['reportcapability'].choices  = session['people_reportcaps'] or report
         else:
             # if superadmin is logged in
             from .utils import get_caps_choices

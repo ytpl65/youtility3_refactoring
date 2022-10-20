@@ -72,8 +72,8 @@ def handle_Exception(request, force_return=None):
 
 def handle_RestrictedError(request):
     data = {'errors': "Unable to delete, due to dependencies"}
-    logger.warning("%s", data['error'], exc_info=True)
-    msg.error(request, data['error'], "alert-danger")
+    logger.warning("%s", data['errors'], exc_info=True)
+    msg.error(request, data['errors'], "alert-danger")
     return rp.JsonResponse(data, status=404)
 
 
@@ -128,6 +128,22 @@ def render_form_for_delete(request, params, master=False):
     except Exception:
         return handle_Exception(request, params)
 
+
+def clean_gpslocation( val):
+    import re
+    from django.forms import ValidationError
+    from django.contrib.gis.geos import GEOSGeometry
+
+    if gps := val:
+        if gps == 'NONE': return None
+        regex = '^([-+]?)([\d]{1,2})(((\.)(\d+)(,)))(\s*)(([-+]?)([\d]{1,3})((\.)(\d+))?)$'
+        gps = gps.replace('(', '').replace(')', '')
+        if not re.match(regex, gps):
+            raise ValidationError("Invalid GPS location")
+        gps.replace(' ', '')
+        lat, lng = gps.split(',')
+        gps = GEOSGeometry(f'SRID=4326;POINT({lng} {lat})')
+    return gps
 
 def render_grid(request, params, msg, objs, extra_cxt=None):
     if extra_cxt is None:
@@ -275,6 +291,26 @@ def decrypt(obscured: bytes) -> bytes:
     byte_val = zlib.decompress(b64d(obscured))
     return byte_val.decode('utf-8')
 
+def save_capsinfo_inside_session(people, request):
+    logger.info('save_capsinfo_inside_session... STARTED')
+    from apps.peoples.models import Capability
+    from apps.core.raw_queries import query
+    web, mob, portlet, report = putils.create_caps_choices_for_peopleform(request.user.client)
+    request.session['client_webcaps'] = web
+    request.session['client_mobcaps'] = list(mob)
+    request.session['client_portletcaps'] = list(portlet)
+    request.session['client_reportcaps'] = list(report)
+    
+    caps = Capability.objects.raw(query['get_web_caps_for_client'])
+    request.session['people_webcaps'] = putils.make_choices(people.people_extras['webcapability'], caps)
+    request.session['people_mobcaps'] = list(Capability.objects.filter(capscode__in = people.people_extras['mobilecapability'], cfor='MOB').values_list('capscode', 'capsname')) 
+    request.session['people_reportcaps'] = list(Capability.objects.filter(capscode__in = people.people_extras['reportcapability'], cfor='REPORT').values_list('capscode', 'capsname')) 
+    request.session['people_portletcaps'] = list(Capability.objects.filter(capscode__in = people.people_extras['portletcapability'], cfor='PORTLET').values_list('capscode', 'capsname')) 
+    logger.info('save_capsinfo_inside_session... DONE')
+    
+    
+
+
 
 def save_user_session(request, people):
     '''save user info in session'''
@@ -295,8 +331,7 @@ def save_user_session(request, people):
             putils.save_tenant_client_info(request)
             request.session['is_superadmin'] = people.peoplecode == 'SUPERADMIN'
             request.session['is_admin'] = people.isadmin
-            putils.get_caps_choices(
-                client=request.user.client, session=request.session, people=people)
+            save_capsinfo_inside_session(people, request)
             logger.info('saving user data into the session ... DONE')
         request.session['clientcode'] = request.user.client.bucode
         request.session['sitename'] = request.user.bu.buname

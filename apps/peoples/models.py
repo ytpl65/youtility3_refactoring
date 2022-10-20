@@ -36,8 +36,10 @@ def peoplejson():
         "user_type"                : "",
         "secondaryemails"          : [],
         'secondarymobno'           : [],
-        'isemergencycontact':False,
-        'alertmails':False
+        'isemergencycontact'       : False,
+        'alertmails'               : False,
+        'currentaddress'          : "",
+        'permanentaddress'        : "",
     }
 
 def upload_peopleimg(instance, filename):

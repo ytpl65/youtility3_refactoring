@@ -13,6 +13,7 @@ import apps.onboarding.models as obm # onboarding-models
 from apps.peoples import models as pm # onboarding-utils
 from django.contrib.gis.geos import GEOSGeometry
 from django.http import QueryDict
+from apps.peoples.utils import create_caps_choices_for_clientform
 #========================================= BEGIN MODEL FORMS ======================================#
 
 class SuperTypeAssistForm(forms.ModelForm):
@@ -24,11 +25,12 @@ class SuperTypeAssistForm(forms.ModelForm):
     }
     class Meta:
         model  = obm.TypeAssist
-        fields = ['tacode' , 'taname', 'tatype', 'ctzoffset']
+        fields = ['tacode' , 'taname', 'tatype', 'ctzoffset', 'enable']
         labels = {
                 'tacode': 'Code',
                 'taname': 'Name',
-                'tatype': 'Type'}
+                'tatype': 'Type',
+                'enable':'Enable'}
         widgets = {
             'tatype':s2forms.Select2Widget,
             'tacode':forms.TextInput(attrs={'placeholder': 'Enter code without space and special characters', 'style': "text-transform: uppercase;"}),
@@ -352,12 +354,13 @@ class ClentForm(BuPrefForm):
         self.session = kwargs.pop('session', None)
         super().__init__(*args, **kwargs)
         utils.initailize_form_fields(self)
-        from apps.peoples.utils import get_caps_choices
-        self.fields['webcapability'].choices = get_caps_choices(cfor = pm.Capability.Cfor.WEB)
-        self.fields['mobilecapability'].choices = get_caps_choices(cfor = pm.Capability.Cfor.MOB)
-        self.fields['reportcapability'].choices = get_caps_choices(cfor = pm.Capability.Cfor.REPORT)
-        self.fields['portletcapability'].choices = get_caps_choices(cfor = pm.Capability.Cfor.PORTLET)
-
+        web, mob, portlet, report = create_caps_choices_for_clientform()
+        
+        self.fields['webcapability'].choices = web
+        self.fields['mobilecapability'].choices = mob
+        self.fields['reportcapability'].choices = report
+        self.fields['portletcapability'].choices = portlet
+    
     def clean(self):
         ic("called")
         cleaned_data = super().clean()

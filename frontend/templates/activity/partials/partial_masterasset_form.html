@@ -2,11 +2,15 @@
 
 {% block head %}
 {{ master_assetform.media.css }}
+<style>
+.pac-container { z-index: 100000; }
+</style>
 {% endblock head %}
 
 {% block body %}
 <form action="" method="post" id="id_checkpointform">
 <input type="hidden" name="{{ master_assetform.ctzoffset.name }}" id = "{{ master_assetform.ctzoffset.auto_id }}" value="-1">
+<input type="hidden" name="pk" id = "pk" value="{{ master_assetform.instance.id }}">
     <div class="modal-header border-0">
         <h3 class="modal-title modal-heading" id="exampleModalLabel">Create {{ label }} <i
                 class="fas fa-poll-h fa-sm ch4"></i>
@@ -47,7 +51,7 @@
             <!--Running Status End-->
             
             <!--Type Start-->
-            <label for="{{ master_assetform.type.id_for_label }}" class="required col-md-1">Type:</label>
+            <label for="{{ master_assetform.type.id_for_label }}" class="col-md-1">Type:</label>
             <div class="col-md-5">
                 {{ master_assetform.type }}
                 {{ master_assetform.type.errors }}
@@ -55,7 +59,7 @@
             <!--Type End-->
             
             <!--Belongs To Start-->
-            <label for="{{ master_assetform.parent.id_for_label }}" class="required col-md-1">Belongs To:</label>
+            <label for="{{ master_assetform.parent.id_for_label }}" class="col-md-1">Belongs To:</label>
             <div class="col-md-5">
                 {{ master_assetform.parent }}
                 {{ master_assetform.parent.errors }}
@@ -63,15 +67,12 @@
             <!--Belongs To End-->
             
             <!--GPS Location Start-->
-            <label for="{{ master_assetform.gpslocation.id_for_label }}" class="required col-md-1">GPS:</label>
+            <label for="id_gpslocation" class="required col-md-1">GPS:</label>
             <div class="col-md-5">
                 <div class="input-group">
-                    {{ master_assetform.gpslocation }}
-                {{ master_assetform.gpslocation.errors }}
-                    <button class="btn btn-primary" type="button" id="button-addon2"><i class="fas fa-map-marker-alt"></i></button>
+                    <input type="text" name="gpslocation" readonly placeholder="Latitude, Longitude" geom_type="POINT" class="form-control" id="id_gpslocation">
+                    <button class="btn btn-primary" type="button" id="id_setgps"><i class="fas fa-map-marker-alt"></i></button>
                 </div>
-                {# {{ master_assetform.gpslocation }}
-                {{ master_assetform.gpslocation.errors }} #}
             </div>
             <!--GPS Location End-->
             
@@ -141,25 +142,185 @@
 
 </div>
 {% endcall %}
+
+	<!-- Moda for setting GPS coordianates-->
+	{% call general_popup(title="Set GPS Location", popup_id="open_map", modal_size="modal-lg") %}
+	<div class="modal-body card">
+		<div class="card-body p-0">
+			<div id="map" style="width:750px; height:350px"></div>
+		</div>
+	</div>
+	<div class="modal-footer d-flex justify-content-between">
+		<div><p>Tip: Zoom in for accurate coordinates of address, place the marker and then set the coords.</p></div>
+		<div></div>
+		<div><a href="#" class="btn" id="close_setgps" data-dismiss="modal">Close</a>
+		<a href="#" class="btn btn-primary" id="set_the_coords">Set the coordinates</a></div>
+		
+	</div>
+	{% endcall %}
 {% endblock  popup_alerts %}
 
 
 {% block js %}
 
 {{ master_assetform.media.js }}
+
 <script>
+
     //set ctzoffset
   	$("#id_ctzoffset").val(-new Date().getTimezoneOffset())
+
+    function clearAllMarkers(markers){
+		// Clear out the old markers.
+		markers.forEach((marker) => {
+			marker.setMap(null);
+		});
+	}
+
+	function placeMarker(location) {
+		if ( userMarker ) {
+			userMarker.setPosition(location);
+		} else {
+			userMarker = new google.maps.Marker({
+			position: location,
+			map: map,
+			icon: 'http://maps.google.com/mapfiles/ms/icons/blue-dot.png'
+			});
+		}
+	}
+
+    function initMap(center='none') {
+        console.log("{{ master_assetform.instance.gpslocation }}")
+		map = new google.maps.Map(document.getElementById("map"), {
+			center:center === 'none' ? { lat: -34.397, lng: 150.644 } : center,
+            zoom: 8,
+		});
+		//search-radius-form controls
+		const controlDiv = document.createElement('DIV');
+		controlDiv.id = "search_rad_controls";
+
+		// Create the search box and link it to the UI element.
+		const controlInput = document.createElement('input');
+		controlInput.id = "pac-input";
+		controlInput.className = "controls mt-2 form-control";
+		controlInput.placeholder = 'Search any keyword..'
+		controlInput.style = 'width: 170% !important;'
+
+		controlDiv.appendChild(controlInput);
+		map.controls[google.maps.ControlPosition.TOP_LEFT].push(controlDiv);
+
+		const searchBox = new google.maps.places.SearchBox(controlInput);
+
+		// Bias the SearchBox results towards current map's viewport.
+		map.addListener("bounds_changed", () => {
+			searchBox.setBounds(map.getBounds());
+		});
+
+		let markers = [];
+
+		// Listen for the event fired when the user selects a prediction and retrieve
+		// more details for that place.
+		searchBox.addListener("places_changed", () => {
+			const places = searchBox.getPlaces();
+
+			if (places.length == 0) {
+			return;
+			}
+
+			// Clear out the old markers.
+			clearAllMarkers(markers)
+			markers = [];
+
+			// For each place, get the icon, name and location.
+			const bounds = new google.maps.LatLngBounds();
+
+			places.forEach((place) => {
+			if (!place.geometry || !place.geometry.location) {
+				console.log("Returned place contains no geometry");
+				return;
+			}
+
+			const icon = {
+				url: place.icon,
+				size: new google.maps.Size(71, 71),
+				origin: new google.maps.Point(0, 0),
+				anchor: new google.maps.Point(17, 34),
+				scaledSize: new google.maps.Size(25, 25),
+			};
+			
+			let marker = new google.maps.Marker({
+				map,
+				icon,
+				title: place.name,
+				position: place.geometry.location,
+				animation:google.maps.Animation.DROP
+				})
+			
+			// Create a marker for each place.
+			markers.push(
+				marker
+			);
+
+			//on click marker zoom in
+			marker.addListener("click", () => {
+				map.setZoom(17);
+				map.setCenter(marker.getPosition());
+			});
+
+			if (place.geometry.viewport) {
+				// Only geocodes have viewport.
+				bounds.union(place.geometry.viewport);
+			} else {
+				bounds.extend(place.geometry.location);
+			}
+			});
+			map.fitBounds(bounds);
+		}); // searchBox.addListener
+
+		//place marker when user clicks on map
+		google.maps.event.addListener(map, 'click', function(event) {
+			clearAllMarkers(markers)
+			placeMarker(event.latLng);
+		});
+	}// initMap end
     
     //$('.optionGrp').hide()
     $('form').find("label").addClass("col-md-1")
     $(document).ready(() => {
+        //onclick id_setgps open popup open-map
+		$(`${modal_id} #id_setgps`).click(function(){
+			$("#open_map").modal('show');
+			initMap()
+		});
+
+		$("#close_setgps").click(function(){
+			$("#open_map").modal('hide');
+		});
+        
         //remove class to label which was added from above
         $('.booleans label').removeClass('col-md-1')
         $('.django-select2').djangoSelect2({
             dropdownParent: $('#modal-checkpoint')
         })
         $(".modal").removeAttr("tabindex");
+
+        //onclick set the coords get lat and lng from useMarker and set to gpslocation field
+		$("#set_the_coords").click(function(){
+			var lat = userMarker.getPosition().lat();
+			var lng = userMarker.getPosition().lng();
+			$("#id_gpslocation").val(lat + ', ' + lng);
+			$("#open_map").modal('hide');
+		});
+
+        if ('{{master_assetform.instance.id}}' != 'None') {
+            $("#id_gpslocation").val("{{ master_assetform.instance.gpslocation.coords[::-1] if master_assetform.instance.gpslocation is not none else 'NONE' }}")
+            
+        }
+
+
     })
+
+
+
 </script>
 {% endblock js %}

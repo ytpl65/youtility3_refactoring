@@ -68,6 +68,7 @@ class Question(LoginRequiredMixin, View):
         resp, create = None, True
         try:
             data = QueryDict(request.POST['formData']).copy()
+            ic(data)
             if not data['min'] or data['max']:
                 data['min'] = data['max'] = 0.0
             if pk := request.POST.get('pk', None):
@@ -244,6 +245,7 @@ class MasterAsset(LoginRequiredMixin, View):
                 ).select_related(
                 *self.params['related']).filter(
                     **self.list_grid_lookups).values(*self.params['fields'])
+            utils.printsql(objs)
             return  rp.JsonResponse(data = {'data':list(objs)})
 
         # return questionset_form empty
@@ -417,60 +419,164 @@ def deleteQSB(request):
     data = {"status": status}
     return rp.JsonResponse(data, status = statuscode)
 
-class Checkpoint(MasterAsset):
-    params = MasterAsset.params
-    label = MasterAsset.label
-    view_of = MasterAsset.view_of
-    list_grid_lookups = MasterAsset.list_grid_lookups
-    params.update({
+class Checkpoint(View, LoginRequiredMixin):
+    params = {
         'form_class': af.CheckpointForm,
+        'template_form': 'activity/partials/partial_masterasset_form.html',
+        'template_list': 'activity/master_asset_list.html',
+        'partial_form': 'peoples/partials/partial_masterasset_form.html',
+        'partial_list': 'peoples/partials/master_asset_list.html',
+        'related': ['parent', 'type'],
+        'model': am.Asset,
+        'fields': ['assetname', 'assetcode', 'runningstatus',
+                   'parent__assetcode', 'gps', 'id', 'enable'],
         'form_initials': {'runningstatus': 'WORKING',
                           'identifier': 'CHECKPOINT',
                           'iscritical': False, 'enable': True}
-    })
-    list_grid_lookups = {'enable': True, 'identifier': 'CHECKPOINT'}
-    view_of = 'checkpoint'
-    label = 'Checkpoint'
+    }
+    
+    def get(self, request, *args, **kwargs):
+        R, resp, P = request.GET, None, self.params
+
+        # first load the template
+        if R.get('template'): return render(request, P['template_list'], {'label':"Checkpoint"})
+        # return qset_list data
+        if R.get('action', None) == 'list':
+            objs = P['model'].objects.get_checkpointlistview(request, P['related'], P['fields'])
+            return  rp.JsonResponse(data = {'data':list(objs)})
+
+        # return questionset_form empty
+        if R.get('action', None) == 'form':
+            P['form_initials'].update({
+                'type': 1,
+                'parent': 1})
+            cxt = {'master_assetform': P['form_class'](request=request, initial=P['form_initials']),
+                   'msg': "create checkpoint requested",
+                   'label': "Checkpoint"}
+
+            resp = utils.render_form(request, P, cxt)
+
+        elif R.get('action', None) == "delete" and R.get('id', None):
+            resp = utils.render_form_for_delete(request, P, True)
+        elif R.get('id', None):
+            obj = utils.get_model_obj(int(R['id']), request, P)
+            cxt = {'label': "Checkpoint"}
+            resp = utils.render_form_for_update(
+                request, P, 'master_assetform', obj, extra_cxt = cxt)
+        return resp
+
+    def post(self, request, *args, **kwargs):
+        resp, create, P = None, False, self.params
+        try:
+            data = QueryDict(request.POST['formData'])
+            if pk := request.POST.get('pk', None):
+                msg = 'Checkpoint_view'
+                form = utils.get_instance_for_update(
+                    data, P, msg, int(pk), kwargs={'request':request})
+                create = False
+            else:
+                form = P['form_class'](data, request = request)
+            if form.is_valid():
+                resp = self.handle_valid_form(form, request, create)
+            else:
+                cxt = {'errors': form.errors}
+                resp = utils.handle_invalid_form(request, P, cxt)
+        except Exception:
+            resp = utils.handle_Exception(request)
+        return resp
 
     def handle_valid_form(self, form, request, create):
         logger.info('checkpoint form is valid')
+        P = self.params
         try:
-            cp = form.save()
+            cp = form.save(commit=False)
+            cp.gpslocation = utils.clean_gpslocation(form.cleaned_data['gpslocation'])
             putils.save_userinfo(
                 cp, request.user, request.session, create = create)
             logger.info("checkpoint form saved")
-            data = {'success': "Record has been saved successfully",
-                    'code': cp.assetcode, 'id': cp.id
-                    }
+            data = {'msg': f"{cp.assetcode}",
+            'row': am.Asset.objects.get_checkpointlistview(request, P['related'], P['fields'], id=cp.id)}
             return rp.JsonResponse(data, status = 200)
         except IntegrityError:
             return utils.handle_intergrity_error('Checkpoint')
 
-class Smartplace(MasterAsset):
-    params = MasterAsset.params
-    label = MasterAsset.label
-    view_of = MasterAsset.view_of
-    list_grid_lookups = MasterAsset.params
-    params.update({
+class Smartplace(View, LoginRequiredMixin):
+    params = {
         'form_class': af.SmartPlaceForm,
-        'form_initials': {'identifier': 'SMARTPLACE',
-                          'runningstatus': 'WORKING',
+        'template_form': 'activity/partials/partial_masterasset_form.html',
+        'template_list': 'activity/master_asset_list.html',
+        'partial_form': 'peoples/partials/partial_masterasset_form.html',
+        'partial_list': 'peoples/partials/master_asset_list.html',
+        'related': ['parent', 'type'],
+        'model': am.Asset,
+        'fields': ['assetname', 'assetcode', 'runningstatus',
+                   'parent__assetcode', 'gps', 'id', 'enable'],
+        'form_initials': {'runningstatus': 'WORKING',
+                          'identifier': 'SMARTPLACE',
                           'iscritical': False, 'enable': True}
-    })
-    list_grid_lookups = {'enable': True, 'identifier': 'SMARTPLACE'}
-    view_of = 'smartplace'
-    label = 'Smartplace'
+    }
+    
+    def get(self, request, *args, **kwargs):
+        R, resp, P = request.GET, None, self.params
+
+        # first load the template
+        if R.get('template'): return render(request, P['template_list'], {'label':"Smartplace"})
+        # return qset_list data
+        if R.get('action', None) == 'list':
+            objs = P['model'].objects.get_smartplacelistview(request, P['related'], P['fields'])
+            return  rp.JsonResponse(data = {'data':list(objs)})
+
+        # return questionset_form empty
+        if R.get('action', None) == 'form':
+            P['form_initials'].update({
+                'type': 1,
+                'parent': 1})
+            cxt = {'master_assetform': P['form_class'](request=request, initial=P['form_initials']),
+                   'msg': "create Smartplace requested",
+                   'label': "Smartplace"}
+
+            resp = utils.render_form(request, P, cxt)
+
+        elif R.get('action', None) == "delete" and R.get('id', None):
+            resp = utils.render_form_for_delete(request, P, True)
+        elif R.get('id', None):
+            obj = utils.get_model_obj(int(R['id']), request, P)
+            cxt = {'label': "Smartplace"}
+            resp = utils.render_form_for_update(
+                request, P, 'master_assetform', obj, extra_cxt = cxt)
+        return resp
+
+    def post(self, request, *args, **kwargs):
+        resp, create, P = None, False, self.params
+        try:
+            data = QueryDict(request.POST['formData'])
+            if pk := request.POST.get('pk', None):
+                msg = 'Smartplace_view'
+                form = utils.get_instance_for_update(
+                    data, P, msg, int(pk),  kwargs={'request':request})
+                create = False
+            else:
+                form = P['form_class'](data, request = request)
+            if form.is_valid():
+                resp = self.handle_valid_form(form, request, create)
+            else:
+                cxt = {'errors': form.errors}
+                resp = utils.handle_invalid_form(request, P, cxt)
+        except Exception:
+            resp = utils.handle_Exception(request)
+        return resp
 
     def handle_valid_form(self, form, request, create):
         logger.info('smarplace form is valid')
+        P = self.params
         try:
-            cp = form.save()
+            sp = form.save(commit=False)
+            sp.gpslocation = utils.clean_gpslocation(form.cleaned_data['gpslocation'])
             putils.save_userinfo(
-                cp, request.user, request.session, create = create)
+                sp, request.user, request.session, create = create)
             logger.info("smartplace form saved")
-            data = {'success': "Record has been saved successfully",
-                    'code': cp.assetcode, 'id': cp.id
-                    }
+            data = {'msg': f"{sp.assetcode}",
+            'row': am.Asset.objects.get_smartplacelistview(request, P['related'], P['fields'], id=sp.id)}
             return rp.JsonResponse(data, status = 200)
         except IntegrityError:
             return utils.handle_intergrity_error('Smartplace')

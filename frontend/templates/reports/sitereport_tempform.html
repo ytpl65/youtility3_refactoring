@@ -168,12 +168,11 @@ Site Report Template
             childEditor.field('options').val(data.options)
             
             //init alerton
-            var options = data.options.split(',')
+            var options = data.options ? data.options.split(',') : []
             if(options.length > 0){
                 appenAlerton(options)
                 let alerton = data.alerton.split(',')
-                console.log(alerton, "alerton")
-                $("#DTE_Field_alerton").val(alerton).trigger('change')  
+                $("#DTE_Field_alerton").val(alerton).trigger('change')
             }
             
             if(data.answertype === 'NUMERIC' && data.alerton.length > 0){

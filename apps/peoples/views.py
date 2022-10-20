@@ -846,7 +846,7 @@ class PeopleView(LoginRequiredMixin, View):
         # return cap_form empty
         if R.get('action', None) == 'form':
             cxt = {'peopleform': self.params['form_class'](),
-                   'pref_form': self.params['json_form'](session = request.session),
+                   'pref_form': self.params['json_form'](session = request.session, request=request),
                    'ta_form': obf.TypeAssistForm(auto_id = False),
                    'msg': "create people requested"}
             resp = render(request, self.params['template_form'], cxt)
@@ -861,7 +861,7 @@ class PeopleView(LoginRequiredMixin, View):
             from .utils import get_people_prefform
             people = utils.get_model_obj(R['id'], request, self.params)
             cxt = {'peopleform': self.params['form_class'](instance = people),
-                   'pref_form': get_people_prefform(people, request.session),
+                   'pref_form': get_people_prefform(people, request.session, request),
                    'ta_form': obf.TypeAssistForm(auto_id = False),
                    'msg': "update people requested"}
             resp = render(request, self.params['template_form'], context = cxt)
@@ -879,7 +879,7 @@ class PeopleView(LoginRequiredMixin, View):
             else:
                 form = self.params['form_class'](data, request = request)
             ic(form.instance.id)
-            jsonform = self.params['json_form'](data, session = request.session)
+            jsonform = self.params['json_form'](data, session = request.session, request=request)
             if form.is_valid() and jsonform.is_valid():
                 resp = self.handle_valid_form(form, jsonform, request, create)
             else:
@@ -898,14 +898,15 @@ class PeopleView(LoginRequiredMixin, View):
         from django_email_verification import send_email
         try:
             ic(request.POST, request.FILES)
-            people = form.save(commit=False)
+            people = form.save()
             if request.FILES.get('peopleimg'):
                 people.peopleimg = request.FILES['peopleimg']
             if not people.password:
                 people.set_password(form.cleaned_data["peoplecode"])
             if putils.save_jsonform(jsonform, people):
+                buid = people.bu.id if people.bu else None
                 people = putils.save_userinfo(
-                    people, request.user, request.session, create = create)
+                    people, request.user, request.session, create = create, bu = buid)
                 #send_email(people, request)
                 logger.info("people form saved")
             data = {'pk':people.id}

@@ -57,12 +57,17 @@ def bu_defaults():
         "siteopentime"           : "",
         "nearbyemergencycontacts": [],
         'maxadmins': 5,
+        'address':"",
+        'permissibledistance': 0,
     }
 
 class Bt(BaseModel, TenantAwareModel, HeirarchyModel):
 
-    bucode             = models.CharField(_('Code'), max_length = 30)
-    bupreferences      = models.JSONField(_('bupreferences'), null = True, default = bu_defaults,  encoder = DjangoJSONEncoder, blank = True)
+    bucode              = models.CharField(_('Code'), max_length = 30)
+    solid               = models.CharField(max_length=30, null=True, blank=True)
+    siteincharge        = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.RESTRICT, null=True, blank=True)
+    controlroom         = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.RESTRICT, null=True, blank=True, related_name="controlroom")
+    bupreferences       = models.JSONField(_('bupreferences'), null = True, default = bu_defaults,  encoder = DjangoJSONEncoder, blank = True)
     identifier          = models.ForeignKey('TypeAssist', null = True, blank = True, on_delete = models.RESTRICT, related_name="bu_idfs", verbose_name='Identifier')
     buname              = models.CharField(_('Name'), max_length = 200)
     butree              = models.CharField(_('Bu Path'), null = True, blank = True, max_length = 300, default="")
@@ -78,7 +83,7 @@ class Bt(BaseModel, TenantAwareModel, HeirarchyModel):
     pdist               = models.FloatField(_("pdist"), default = 0.0, blank = True, null = True)
     gpslocation         = PointField(_('GPS Location'),null = True, blank = True, geography = True, srid = 4326)
     isvendor            = models.BooleanField(_("Is Vendor"), default = False)
-    isserviceprovider  = models.BooleanField(_("Is ServiceProvider"), default = False)
+    isserviceprovider   = models.BooleanField(_("Is ServiceProvider"), default = False)
 
     objects = BtManager()
 
@@ -92,7 +97,7 @@ class Bt(BaseModel, TenantAwareModel, HeirarchyModel):
         get_latest_by = ["mdtz", 'cdtz']
 
     def __str__(self) -> str:
-        return f'{self.buname} ({self.bucode})'
+        return self.buname
 
     def get_absolute_wizard_url(self):
         return reverse("onboarding:wiz_bu_update", kwargs={"pk": self.pk})
@@ -203,6 +208,7 @@ class TypeAssist(BaseModel, TenantAwareModel):
     tatype = models.ForeignKey( "self", null = True, blank = True, on_delete = models.RESTRICT, related_name='children')
     bu     = models.ForeignKey("Bt", null = True, blank = True, on_delete = models.RESTRICT, related_name='ta_bus')
     client = models.ForeignKey("onboarding.Bt",  null = True, blank = True, on_delete = models.RESTRICT, related_name='ta_clients')
+    enable = models.BooleanField(_("Enable"), default = True)
 
     objects = TypeAssistManager()
 
@@ -210,7 +216,7 @@ class TypeAssist(BaseModel, TenantAwareModel):
         db_table = 'typeassist'
 
     def __str__(self):
-        return f'{self.taname} ({self.tacode})'
+        return self.taname
 
     def get_absolute_url(self):
         return reverse("onboarding:ta_update", kwargs={"pk": self.pk})
