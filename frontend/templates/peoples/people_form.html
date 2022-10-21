@@ -343,7 +343,7 @@ People
                             </span>
                         </button>
                     {% endif %}
-                    {% if request.user.is_superuser %}
+                    {% if request.user.isadmin %}
                     <!--ENABLE CHECKBOX -->
                     <label for = id_isenable class="form-check-label bool col-form-label me-5 text-sm-right">Enable
                         &nbsp {{ peopleform.enable }}</label>
