@@ -116,7 +116,8 @@ class PeopleForm(forms.ModelForm):
             'gender'    : 'Gender',      'dateofbirth': 'Date of Birth',   'enable'      : 'Enable',
             'department': 'Department',  'dateofjoin' : 'Date of Joining', 'dateofreport': 'Date of Release',
             'deviceid'  : 'Device Id',   'bu'         : "Site",            'isadmin'     : "Is Admin",
-            'worktype':'Work Type'}
+            'worktype':'Work Type'
+        }
 
         widgets = {
             'mobno'       : forms.TextInput(attrs={'placeholder': 'Eg:- 91XXXXXXXXXX, 44XXXXXXXXX'}),
