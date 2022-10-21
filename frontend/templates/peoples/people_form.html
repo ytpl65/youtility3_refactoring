@@ -91,6 +91,22 @@ People Form
     </div>
 </form>
 {% endcall %}
+<!------------- typeassist popup for worktype onclick + icon ---------------------->
+{% call general_popup(title='Create TypeAssist', popup_id = "worktype_popup") %}
+<form action="" method="post" id="pop_worktype_form">
+    <div class="modal-body">
+        <input type="hidden" name="form_name" , value="ta_form">
+        <input type="hidden" name="csrfto" , value="ta_form">
+        {% if ta_form is defined %}
+        {{ typeassist_form() }}
+        {% endif %}
+    </div>
+    <div class="modal-footer">
+        <button type="button" class="btn btn-sm  btn-secondary rounded-1" data-bs-dismiss="modal">Close</button>
+        <input type="submit" class="btn btn-sm  btn-primary rounded-1" value="Sumbit" form="pop_worktype_form" />
+    </div>
+</form>
+{% endcall %}
 
 <!------------- typeassist popup for department onclick + icon ---------------------->
 {% call general_popup(title='Create TypeAssist', popup_id = "department_popup") %}
@@ -287,7 +303,15 @@ People
                 <label class="" for="id_worktype">Work Type:</label>
                 <!--INPUT GROUP-->
                 <div class="col-md-4">
+                <div class="d-flex flex-row">
                     {{ peopleform.worktype }}
+                    <a href="" type="button" data-bs-toggle="modal" data-bs-target="#worktype_popup"><span
+                                style="font-size: 24px;" data-bs-toggle="tooltip" data-bs-placement="left"
+                                title="If you haven't found an option in selection menu, then create one from here"
+                                class="material-icons-outlined mt-3 ps-2 primary-col opacity-50">
+                                add_circle
+                            </span></a>
+                </div>
                     <!--HELP TEXT-->
                     <!----- BEGIN ERROR FIELD  ------->
                     {{ peopleform.worktype.errors }}
@@ -717,6 +741,14 @@ People
             'field': "#id_peopletype",
             'modal': "#peopletype_popup"
         }))
+        
+        // submit the popup-worktype-taform for validation and saving in db.
+        $('#pop_worktype_form').on('submit', sumit_popup_form({
+            'url': "{{ url('onboarding:ta_popup') }}",
+            'form': "#pop_worktype_form",
+            'field': "#id_worktype",
+            'modal': "#worktype_popup"
+        }))
 
         // submit the popup-department-taform for validation and saving in db.
         $('#pop_dept_form').on('submit', sumit_popup_form({
@@ -758,12 +790,18 @@ People
         $("#peopletype_popup").find("select[name = tatype]").select2({
             dropdownParent: $('#peopletype_popup')
         })
+        $("#worktype_popup").find("select[name = tatype]").select2({
+            dropdownParent: $('#worktype_popup')
+        })
         //hide change_pass feature for session wizard
         if(session['wizard_data']){
             $("#change_pass").hide()
         }
         //pre-select options for pop-up ta forms
 		$("#peopletype_popup select[name='tatype']").val($("#peopletype_popup select option:contains('People Type')").val()).change().prop({"disabled": "true"})
+        
+        //pre-select options for pop-up ta forms
+		$("#worktype_popup select[name='tatype']").val($("#worktype_popup select option:contains('Work Type')").val()).change().prop({"disabled": "true"})
         
         //pre-select options for pop-up ta forms
 		$("#designation_popup select[name='tatype']").val($("#designation_popup select option:contains('Designation')").val()).change().prop({"disabled": "true"})

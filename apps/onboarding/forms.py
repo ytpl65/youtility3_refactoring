@@ -95,11 +95,15 @@ class BtForm(forms.ModelForm):
         'invalid_latlng'  : "Please enter a correct gps coordinates."
     }
     parent = forms.ModelChoiceField(label='Belongs to', required = False, widget = s2forms.Select2Widget, queryset = obm.Bt.objects.all())
+    controlroom = forms.MultipleChoiceField(widget=s2forms.Select2MultipleWidget, required=False, label='Control Room')
+    permissibledistance = forms.CharField(required=False, label='Permissible Distance')
+    address = forms.CharField(required=False, label='Address', max_length=500, widget=forms.Textarea(attrs={'rows': 2, 'cols': 15}))
+    
     class Meta:
         model  = obm.Bt
-        fields = ['bucode', 'buname', 'parent', 'butype', 'identifier',
+        fields = ['bucode', 'buname', 'parent', 'butype', 'identifier', 'siteincharge',
                 'iswarehouse', 'isserviceprovider', 'isvendor', 'enable', 'ctzoffset',
-                'gpsenable', 'skipsiteaudit', 'enablesleepingguard', 'deviceevent']
+                'gpsenable', 'skipsiteaudit', 'enablesleepingguard', 'deviceevent', 'solid']
 
         labels = {
             'bucode'             : 'Code',
@@ -114,6 +118,8 @@ class BtForm(forms.ModelForm):
             'skipsiteaudit'      : 'Skip Site Audit',
             'enablesleepingguard': 'Enable Sleeping Guard',
             'deviceevent'        : 'Device Event Log',
+            'solid'        : 'Sol Id',
+            'siteincharge':'Site Incharge'
         }
 
         widgets = { 
@@ -132,6 +138,7 @@ class BtForm(forms.ModelForm):
         self.fields['identifier'].queryset = obm.TypeAssist.objects.filter(Q(tacode='CLIENT') if self.client else Q(tatype__tacode="BVIDENTIFIER"))
         self.fields['identifier'].required= True
         self.fields['butype'].queryset = obm.TypeAssist.objects.filter(tatype__tacode="SITETYPE")
+        self.fields['controlroom'].choices = pm.People.objects.controlroomchoices()
         utils.initailize_form_fields(self)
 
     def is_valid(self) -> bool:

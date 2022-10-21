@@ -1712,6 +1712,9 @@ class BtView(LoginRequiredMixin, View):
             bu = form.save(commit=False)
             ic(form.cleaned_data)
             bu.gpslocation = form.cleaned_data['gpslocation']
+            bu.bupreferences['permissibledistance'] = form.cleaned_data['permissibledistance']
+            bu.bupreferences['controlroom'] = form.cleaned_data['controlroom']
+            bu.bupreferences['address'] = form.cleaned_data['address']
             putils.save_userinfo(bu, request.user, request.session, create = create)
             logger.info("bu form saved")
             return rp.JsonResponse({'pk':bu.id}, status = 200)

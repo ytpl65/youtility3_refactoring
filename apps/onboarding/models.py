@@ -59,14 +59,14 @@ def bu_defaults():
         'maxadmins': 5,
         'address':"",
         'permissibledistance': 0,
+        'controlroom':[]
     }
 
 class Bt(BaseModel, TenantAwareModel, HeirarchyModel):
 
     bucode              = models.CharField(_('Code'), max_length = 30)
     solid               = models.CharField(max_length=30, null=True, blank=True)
-    siteincharge        = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.RESTRICT, null=True, blank=True)
-    controlroom         = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.RESTRICT, null=True, blank=True, related_name="controlroom")
+    siteincharge        = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.RESTRICT, null=True, blank=True, related_name='siteincharge')
     bupreferences       = models.JSONField(_('bupreferences'), null = True, default = bu_defaults,  encoder = DjangoJSONEncoder, blank = True)
     identifier          = models.ForeignKey('TypeAssist', null = True, blank = True, on_delete = models.RESTRICT, related_name="bu_idfs", verbose_name='Identifier')
     buname              = models.CharField(_('Name'), max_length = 200)

@@ -134,6 +134,13 @@ Buisiness-View
 			{{ buform.buname }}
 			{{ buform.buname.errors }}
 		</div>
+		<!--SOLID-->
+		<label class="col-form-label col-md-2 col-sm-2 text-sm-right" for="id_solid">Sol Id:
+		</label>
+		<div class="col-md-4">
+			{{ buform.solid }}
+			{{ buform.solid.errors }}
+		</div>
 		<!--PARENT-->
 		<label class="required col-form-label col-md-2 col-sm-2 text-sm-right" for="id_parent">Belongs to:
 			<span class="material-icons-outlined h-19px" data-bs-toggle="tooltip" data-bs-custom-class="tooltip"
@@ -181,6 +188,32 @@ Buisiness-View
 			</div>
 			{{ buform.butype.errors }}
 		</div>
+		<!--Site Incharge-->
+		<label for="id_siteincharge" class="col-form-label col-md-2 col-sm-2 text-sm-right">Site Incharge:
+		</label>
+		<div class="col-md-4">
+			<div class="d-flex flex-row">
+				{{ buform.siteincharge }}
+			</div>
+			{{ buform.siteincharge.errors }}
+		</div>
+		<!--Control Room-->
+		<label for="id_controlroom" class="col-form-label col-md-2 col-sm-2 text-sm-right">Control Room:
+		</label>
+		<div class="col-md-4">
+			<div class="d-flex flex-row">
+				{{ buform.controlroom }}
+			</div>
+			{{ buform.controlroom.errors }}
+		</div>
+		<label for="id_permissibledistance" class="col-form-label col-md-2 col-sm-2 text-sm-right">Permissible Distance:
+		</label>
+		<div class="col-md-4">
+			<div class="d-flex flex-row">
+				{{ buform.permissibledistance }}
+			</div>
+			{{ buform.permissibledistance.errors }}
+		</div>
 		<!--GPS LOCATION-->
 		<label for="id_gpslocation" class="col-form-label col-md-2 col-sm-2 text-sm-right">GPS Location:
 			<span class="material-icons-outlined h-19px" data-bs-toggle="tooltip" data-bs-custom-class="tooltip"
@@ -196,7 +229,14 @@ Buisiness-View
 			</div>
 		</div>
 
-		<!--------------------- BEGIN CHECKBOXES -------------------------->
+		<!--ADDRESS-->
+		<label for="id_address" class="col-form-label col-md-2 col-sm-2 text-sm-right">Address:
+		</label>
+		<div class="col-md-4">
+			{{ buform.address }}
+		</div>
+
+		<!--------------------- BEGIN CHECKBOXES ---------------------------->
 		<div class="booleans col-md-6 d-flex justify-content-sm-between mt-5">
 			<label for="{{ buform.iswarehouse.id_for_label }}"
 				class="form-check-label bool col-form-label me-5 text-sm-right">
@@ -274,6 +314,8 @@ Buisiness-View
 	//global var
 	var map;
 	var userMarker;
+	var currinfowindow;
+	var currAddr='';
 	
 	function showHideBuType(){
 		//on load check butype is site
@@ -301,6 +343,25 @@ Buisiness-View
 			icon: 'http://maps.google.com/mapfiles/ms/icons/blue-dot.png'
 			});
 		}
+		const infowindow = new google.maps.InfoWindow()
+		const geocode = new google.maps.Geocoder()
+		geocode.geocode({location:location})
+		.then((response) => {
+			if(response.results[0]){
+				if(currinfowindow){
+					currinfowindow.close();
+				}
+				currinfowindow = infowindow
+				currAddr = response.results[0].formatted_address
+				infowindow.setContent(response.results[0].formatted_address);
+				infowindow.open(map, userMarker);
+			}else{
+				infowindow.setContent('No results found');
+				infowindow.open(map, userMarker);
+			}
+		})
+
+		
 	}
 
 	//delete ajax request 
@@ -385,7 +446,7 @@ Buisiness-View
 				title: place.name,
 				position: place.geometry.location,
 				animation:google.maps.Animation.DROP
-				})
+			})
 			
 			// Create a marker for each place.
 			markers.push(
@@ -398,12 +459,12 @@ Buisiness-View
 				map.setCenter(marker.getPosition());
 			});
 
-			if (place.geometry.viewport) {
-				// Only geocodes have viewport.
-				bounds.union(place.geometry.viewport);
-			} else {
-				bounds.extend(place.geometry.location);
-			}
+				if (place.geometry.viewport) {
+					// Only geocodes have viewport.
+					bounds.union(place.geometry.viewport);
+				} else {
+					bounds.extend(place.geometry.location);
+				}
 			});
 			map.fitBounds(bounds);
 		}); // searchBox.addListener
@@ -431,6 +492,7 @@ Buisiness-View
 			var lat = userMarker.getPosition().lat();
 			var lng = userMarker.getPosition().lng();
 			$("#id_gpslocation").val(lat + ', ' + lng);
+			$("#id_address").val(currAddr);
 			$("#open_map").modal('hide');
 		});
 
@@ -454,6 +516,7 @@ Buisiness-View
 				$(".site_type").show();
 			}
 			$("#id_gpslocation").val("{{ buform.instance.gpslocation.coords[::-1] if buform.instance.gpslocation is not none else 'NONE' }}")
+			$("#id_address").val("{{ buform.instance.bupreferences.get('address', "") }}")
 		}
 
 		// submit the popup-taform for validation and saving in db.

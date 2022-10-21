@@ -1,6 +1,7 @@
 from django.contrib.auth.base_user import BaseUserManager
 from django.db import models
-from django.db.models import Q, F
+from django.db.models import Q, F, Value as V
+from django.db.models.functions import Concat
 from django.contrib.gis.db.models.functions import  AsGeoJSON
 from django.utils.translation import ugettext_lazy as _
 from icecream import ic
@@ -63,6 +64,14 @@ class PeopleManager(BaseUserManager):
     def get_emergencyemails(self, siteid, clientid):
         "returns emails of people with given assigned siteid"
         qset = self.filter(bu_id = siteid, client_id = clientid).values_list('email', flat = True)
+        return qset or self.none()
+    
+    def controlroomchoices(self):
+        "returns people whose worktype is in [AO, AM, CR] choices for bu form"
+        qset = self.filter(
+            enable=True,
+            worktype__tacode__in = ['AO', 'AM', 'CR']
+        ).annotate(text =Concat(F('peoplename'), V(' ('), F('peoplecode'), V(')'))).values_list('id', 'text')
         return qset or self.none()
 
 
