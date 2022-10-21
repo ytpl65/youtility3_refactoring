@@ -14,6 +14,7 @@ from apps.peoples import models as pm # onboarding-utils
 from django.contrib.gis.geos import GEOSGeometry
 from django.http import QueryDict
 from apps.peoples.utils import create_caps_choices_for_clientform
+import re
 #========================================= BEGIN MODEL FORMS ======================================#
 
 class SuperTypeAssistForm(forms.ModelForm):
@@ -53,7 +54,6 @@ class SuperTypeAssistForm(forms.ModelForm):
         return self.cleaned_data.get('tatype')
 
     def clean_tacode(self):
-        import re
         value = self.cleaned_data.get('tacode')
         regex = "^[a-zA-Z0-9\-_]*$"
         if " " in value: raise forms.ValidationError(self.error_msg['invalid_code'])
@@ -92,11 +92,13 @@ class BtForm(forms.ModelForm):
         'invalid_bucode'  : 'Spaces are not allowed in [Code]',
         'invalid_bucode2' : "[Invalid code] Only ('-', '_') special characters are allowed",
         'invalid_bucode3' : "[Invalid code] Code should not endwith '.' ",
-        'invalid_latlng'  : "Please enter a correct gps coordinates."
+        'invalid_latlng'  : "Please enter a correct gps coordinates.",
+        'invalid_permissibledistance':"Please enter a correct value for Permissible Distance",
+        'invalid_solid': "Please enter a correct value for Sol id",
     }
     parent = forms.ModelChoiceField(label='Belongs to', required = False, widget = s2forms.Select2Widget, queryset = obm.Bt.objects.all())
     controlroom = forms.MultipleChoiceField(widget=s2forms.Select2MultipleWidget, required=False, label='Control Room')
-    permissibledistance = forms.CharField(required=False, label='Permissible Distance')
+    permissibledistance = forms.IntegerField(required=False, label='Permissible Distance')
     address = forms.CharField(required=False, label='Address', max_length=500, widget=forms.Textarea(attrs={'rows': 2, 'cols': 15}))
     
     class Meta:
@@ -139,6 +141,8 @@ class BtForm(forms.ModelForm):
         self.fields['identifier'].required= True
         self.fields['butype'].queryset = obm.TypeAssist.objects.filter(tatype__tacode="SITETYPE")
         self.fields['controlroom'].choices = pm.People.objects.controlroomchoices()
+        self.fields['siteincharge'].queryset = pm.People.objects.filter(
+            Q(designation__tacode__in = ['AO', 'AM', 'BM', 'BOM', 'ABM']) | Q(worktype__tacode__in = ['AO', 'AM', 'BM', 'BOM', 'ABM']))
         utils.initailize_form_fields(self)
 
     def is_valid(self) -> bool:
@@ -166,7 +170,6 @@ class BtForm(forms.ModelForm):
 
     def clean_bucode(self):
         self.cleaned_data['gpslocation'] = self.data.get('gpslocation')
-        import re
         if value := self.cleaned_data.get('bucode'):
             regex = "^[a-zA-Z0-9\-_]*$"
             if " " in value: raise forms.ValidationError(self.error_msg['invalid_bucode'])
@@ -177,7 +180,6 @@ class BtForm(forms.ModelForm):
             return value.upper()
 
     def clean_gpslocation(self, val):
-        import re
         if gps := val:
             if gps == 'NONE': return None
             regex = '^([-+]?)([\d]{1,2})(((\.)(\d+)(,)))(\s*)(([-+]?)([\d]{1,3})((\.)(\d+))?)$'
@@ -188,6 +190,22 @@ class BtForm(forms.ModelForm):
             lat, lng = gps.split(',')
             gps = GEOSGeometry(f'SRID=4326;POINT({lng} {lat})')
         return gps
+    
+    def clean_permissibledistance(self):
+        if val := self.cleaned_data.get('permissibledistance'):
+            regex = "^[0-9]*$"
+            if not re.match(regex, str(val)):
+                raise forms.ValidationError(self.error_msg['invalid_permissibledistance'])
+            if val < 0:
+                raise forms.ValidationError(self.error_msg['invalid_permissibledistance'])
+        return val
+
+    def clean_solid(self):
+        if val:=self.cleaned_data.get('solid'):
+            regex = "^[a-zA-Z0-9]*$"
+            if not re.match(regex, str(val)):
+                raise forms.ValidationError(self.error_msg['invalid_solid'])
+        return val
 
 
 

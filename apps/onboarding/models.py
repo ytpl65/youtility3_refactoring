@@ -9,6 +9,7 @@ from django.core.serializers.json import DjangoJSONEncoder
 from django.utils.translation import gettext_lazy as _
 from django.contrib.gis.db.models import PointField
 from django.contrib.postgres.fields import ArrayField
+from django.db.models import Q
 # Create your models here.
 
 class HeirarchyModel(models.Model):
@@ -203,7 +204,7 @@ class SitePeople(BaseModel, TenantAwareModel):
 
 class TypeAssist(BaseModel, TenantAwareModel):
     # id= models.BigIntegerField(primary_key = True)
-    tacode = models.CharField(_("tacode"), max_length = 50, unique = True)
+    tacode = models.CharField(_("tacode"), max_length = 50)
     taname = models.CharField(_("taname"), max_length = 100)
     tatype = models.ForeignKey( "self", null = True, blank = True, on_delete = models.RESTRICT, related_name='children')
     bu     = models.ForeignKey("Bt", null = True, blank = True, on_delete = models.RESTRICT, related_name='ta_bus')
@@ -214,6 +215,14 @@ class TypeAssist(BaseModel, TenantAwareModel):
 
     class Meta(BaseModel.Meta):
         db_table = 'typeassist'
+        constraints = [
+            models.UniqueConstraint(
+                fields=['tacode', 'tatype'], name='code_unique'
+            ),
+            models.UniqueConstraint(
+                fields=['tacode'], condition=Q(tatype=None), name='code_unique2'
+            )
+        ]
 
     def __str__(self):
         return self.taname

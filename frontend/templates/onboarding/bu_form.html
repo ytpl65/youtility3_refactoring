@@ -211,6 +211,7 @@ Buisiness-View
 		<div class="col-md-4">
 			<div class="d-flex flex-row">
 				{{ buform.permissibledistance }}
+				<span class="mt-2 ms-1">Metres</span>
 			</div>
 			{{ buform.permissibledistance.errors }}
 		</div>
@@ -267,7 +268,7 @@ Buisiness-View
 					info
 				</span>
 			</label>
-
+			{% if request.user.isadmin %}
 			<label for="{{ buform.enable.id_for_label }}"
 				class="form-check-label bool col-form-label me-5 text-sm-right">
 				{{ buform.enable }} &nbsp; {{ buform.enable.label }}
@@ -277,6 +278,7 @@ Buisiness-View
 					info
 				</span>
 			</label>
+			{% endif %}
 		</div>
 		<!--------------------- END CHECKBOXES -------------------------->
 	</div>
@@ -517,6 +519,7 @@ Buisiness-View
 			}
 			$("#id_gpslocation").val("{{ buform.instance.gpslocation.coords[::-1] if buform.instance.gpslocation is not none else 'NONE' }}")
 			$("#id_address").val("{{ buform.instance.bupreferences.get('address', "") }}")
+			$("#id_permissibledistance").val("{{ buform.instance.bupreferences.get('permissibledistance', "") }}")
 		}
 
 		// submit the popup-taform for validation and saving in db.

@@ -69,8 +69,8 @@ class PeopleManager(BaseUserManager):
     def controlroomchoices(self):
         "returns people whose worktype is in [AO, AM, CR] choices for bu form"
         qset = self.filter(
+            Q(designation__tacode__in = ['CR']) |  Q(worktype__tacode__in = ['CR']),
             enable=True,
-            worktype__tacode__in = ['AO', 'AM', 'CR']
         ).annotate(text =Concat(F('peoplename'), V(' ('), F('peoplecode'), V(')'))).values_list('id', 'text')
         return qset or self.none()
 

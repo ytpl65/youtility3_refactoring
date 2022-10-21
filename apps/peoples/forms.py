@@ -221,6 +221,7 @@ class PgroupForm(forms.ModelForm):
         'invalid_code' : "Spaces are not allowed in [Code]",
         'invalid_code2': "[Invalid code] Only ('-', '_') special characters are allowed",
         'invalid_code3': "[Invalid code] Code should not endwith '.' ",
+        'invalid_name'  : "[Invalid name] Only these special characters [-, _, @, #] are allowed in name field", 
     }
     peoples = forms.MultipleChoiceField(
         required = True,
@@ -250,6 +251,13 @@ class PgroupForm(forms.ModelForm):
     def clean_peoples(self):
         if val := self.request.POST.get('peoples'):
             print(val)
+    
+    def clean_groupname(self):
+        if value := self.cleaned_data.get('groupname'):
+            regex = "^[a-zA-Z0-9\-_@#\[\]\(\|\)\{\} ]*$"
+            if not re.match(regex, value):
+                raise forms.ValidationError(self.error_msg['invalid_name'])
+        return value
 
 class SiteGroupForm(PgroupForm):
     peoples = None
@@ -298,6 +306,7 @@ class CapabilityForm(forms.ModelForm):
         'invalid_code' : "Please don't enter spaces in your code",
         'invalid_code2': "Only these '-', '_' special characters are allowed in code",
         'invalid_code3': "Code's should not be endswith '.' ",
+        'invalid_name'  : "[Invalid name] Only these special characters [-, _, @, #] are allowed in name field",                   
     }
     parent = forms.ModelChoiceField(queryset = pm.Capability.objects.filter(Q(parent__capscode='NONE') | Q(capscode='NONE')),
                                     label='Belongs to', widget = s2forms.Select2Widget)
@@ -335,6 +344,12 @@ class CapabilityForm(forms.ModelForm):
                 raise forms.ValidationError(self.error_msg['invalid_code3'])
             return value.upper()
 
+    def clean_capsname(self):
+        if value := self.cleaned_data.get('capsname'):
+            regex = "^[a-zA-Z0-9\-_@#\[\]\(\|\)\{\} ]*$"
+            if not re.match(regex, value):
+                raise forms.ValidationError(self.error_msg['invalid_name'])
+        return value
 
     def is_valid(self) -> bool:
         """Add class to invalid fields"""

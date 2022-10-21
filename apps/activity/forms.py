@@ -14,6 +14,9 @@ from django.http import QueryDict
 
 
 class QuestionForm(forms.ModelForm):
+    error_msg = {
+        'invalid_name'  : "[Invalid name] Only these special characters [-, _, @, #] are allowed in name field",
+    }
     required_css_class = "required"
     alertbelow         = forms.CharField(widget = forms.NumberInput(
         attrs={'step': "0.01"}), required = False, label='Alert Below')
@@ -105,10 +108,20 @@ class QuestionForm(forms.ModelForm):
     
     def clean_max(self):
         return val if (val := self.cleaned_data.get('max')) else 0.0
+    
+    def clean_quesname(self):
+        if value := self.cleaned_data.get('quesname'):
+            regex = "^[a-zA-Z0-9\-_@#\[\]\(\|\)\{\} ]*$"
+            if not re.match(regex, value):
+                raise forms.ValidationError("[Invalid name] Only these special characters [-, _, @, #] are allowed in name field")
+        return value
             
 
 class MasterQsetForm(forms.ModelForm):
     required_css_class = "required"
+    error_msg = {
+        'invalid_name'  : "[Invalid name] Only these special characters [-, _, @, #] are allowed in name field",
+    }
     assetincludes = forms.MultipleChoiceField(
         required = True, label='Checkpoint', widget = s2forms.Select2MultipleWidget, choices = ac_utils.get_assetincludes_choices)
 
@@ -129,6 +142,13 @@ class MasterQsetForm(forms.ModelForm):
         self.fields['type'].initial      = 'ASSET'
         self.fields['type'].widget.attrs = {"style": "display:none;"}
         utils.initailize_form_fields(self)
+    
+    def clean_qsetname(self):
+        if value := self.cleaned_data.get('qsetname'):
+            regex = "^[a-zA-Z0-9\-_@#\[\]\(\|\)\{\} ]*$"
+            if not re.match(regex, value):
+                raise forms.ValidationError("[Invalid name] Only these special characters [-, _, @, #] are allowed in name field")
+        return value
 
 class QsetBelongingForm(forms.ModelForm):
     required_css_class = "required"
@@ -237,11 +257,6 @@ class QuestionSetForm(MasterQsetForm):
         self.fields['assetincludes'].label   = 'Asset/Smartplace'
         self.fields['assetincludes'].choices = ac_utils.get_assetsmartplace_choices()
         self.fields['type'].widget.attrs     = {"style": "display:none;"}
-        # if self.instance.id:
-        #     ic(json.loads(
-        #         self.instance.assetincludes))
-        #     self.fields['assetincludes'].initial = json.loads(
-        #         self.instance.assetincludes)
         utils.initailize_form_fields(self)
 
 
@@ -293,6 +308,14 @@ class AssetForm(forms.ModelForm):
         self.fields['identifier'].initial = 'ASSET'
         self.fields['identifier'].widget.attrs = {"style": "display:none;"}
         utils.initailize_form_fields(self)
+        
+    
+    def clean_assetname(self):
+        if value := self.cleaned_data.get('assetname'):
+            regex = "^[a-zA-Z0-9\-_@#\[\]\(\|\)\{\} ]*$"
+            if not re.match(regex, value):
+                raise forms.ValidationError("[Invalid name] Only these special characters [-, _, @, #] are allowed in name field")
+        return value
 
 class SmartPlaceForm(AssetForm):
     required_css_class = "required"
