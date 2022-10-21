@@ -13,12 +13,10 @@ def save_jsonform(peoplepref_form, p):
     try:
         logger.info('saving jsonform ...')
         ic(peoplepref_form.cleaned_data)
-        for k, v in p.people_extras.items():
-            if k in ('blacklist', 'assignsitegroup', 'tempincludes', 'currentaddress', 'permanentaddress',
+        for k in ['blacklist', 'assignsitegroup', 'tempincludes', 'currentaddress', 'permanentaddress',
                      'showalltemplates', 'showtemplatebasedonfilter', 'mobilecapability',
-                     'portletcapability', 'reportcapability', 'webcapability'):
-                p.people_extras[k] = peoplepref_form.cleaned_data[k]
-        ic(p.people_extras)
+                     'portletcapability', 'reportcapability', 'webcapability']:
+            p.people_extras[k] = peoplepref_form.cleaned_data.get(k)
     except Exception:
         logger.error(
             'save_jsonform(peoplepref_form, p)... FAILED', exc_info=True)
