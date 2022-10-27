@@ -90,13 +90,13 @@ def handle_intergrity_error(name):
     return rp.JsonResponse({'errors': msg}, status=404)
 
 
-def render_form_for_update(request, params, formname, obj, extra_cxt=None):
+def render_form_for_update(request, params, formname, obj, extra_cxt=None, FORM=None):
     if extra_cxt is None:
         extra_cxt = {}
     logger.info("render form for update")
     try:
         logger.info(f"object retrieved '{obj}'")
-        F = params['form_class'](
+        F = FORM or params['form_class'](
             instance=obj, request=request)
         C = {formname: F, 'edit': True} | extra_cxt
 

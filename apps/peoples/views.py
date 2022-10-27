@@ -958,10 +958,9 @@ class PeopleGroup(LoginRequiredMixin, View):
             peoples = pm.Pgbelonging.objects.filter(
                 pgroup = obj).values_list('people', flat = True)
             ic(peoples)
-            self.params.update(
-                {'form_initials':{'peoples':list(peoples)}})
+            FORM = self.params['form_class'](request = request, instance = obj, initial = {'peoples':list(peoples)})
             resp = utils.render_form_for_update(
-                request, self.params, "pgroup_form", obj)
+                request, self.params, "pgroup_form", obj, FORM=FORM)
         print(f'return resp={resp}')
         return resp
 
