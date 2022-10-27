@@ -369,7 +369,6 @@ def save_pgroupbelonging(pg, request):
     ic(peoples)
     client = Bt.objects.get(id=int(request.session['client_id']))
     site = Bt.objects.get(id=int(request.session['bu_id']))
-    tenant = Tenant.objects.get(id=int(request.session['tenantid']))
     if peoples:
         try:
             print('request>POST', dict(request.POST), peoples)
@@ -379,7 +378,6 @@ def save_pgroupbelonging(pg, request):
                     pgroup=pg,
                     people=people,
                     client=client,
-                    tenant=tenant,
                     bu=site
                 )
                 if request.session.get('wizard_data'):
