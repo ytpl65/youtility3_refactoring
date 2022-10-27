@@ -1081,7 +1081,7 @@ class SiteGroup(LoginRequiredMixin, View):
         pk = data.get('pk', None)
         ic(data)
         try:
-            if pk:
+            if pk not in [None, 'None']:
                 msg = "pgroup_view"
                 form = utils.get_instance_for_update(
                     data, self.params, msg, int(pk), kwargs = {'request':request})
@@ -1108,7 +1108,7 @@ class SiteGroup(LoginRequiredMixin, View):
                 self.save_assignedSites(pg, assignedSites, request)
                 logger.info("people group form saved")
                 data = {'success': "Record has been saved successfully",
-                        'msg': pg.groupname, 'row':model_to_dict(pg)}
+                        'pk': pg.pk, 'row':model_to_dict(pg)}
                 return rp.JsonResponse(data, status = 200)
         except IntegrityError:
             return handle_intergrity_error("Pgroup")
