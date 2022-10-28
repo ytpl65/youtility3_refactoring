@@ -147,15 +147,18 @@ def perform_uploadattachment(file, tablename, record, biodata):
             resp = insertrecord_from_tablename(record, tablename, db)
             rc, traceback, msg = 0, tb.format_exc(), Messages.UPLOAD_SUCCESS
             recordcount = 1
-        # from apps.activity.tasks import perform_facerecognition
-        results = perform_facerecognition_bgt.delay(pelogid, peopleid, resp, home_dir, uploadfile, db)
-        log.warning(f"face recognition status {results.state}")
-
     except Exception as e:
         rc, traceback, msg = 1, tb.format_exc(), Messages.UPLOAD_FAILED
         log.error('something went wrong', exc_info = True)
 
-    log.info(f'rc:{rc}, msg:{msg}, traceback:{traceback}, returncount:{recordcount}')
+    try:
+        pel = PeopleEventlog.objects.get(id=int(pelogid))
+        if pel.peventtype.tacode in ['SELF', 'MARK']:
+            from .tasks import perform_facerecognition_bgt
+            results = perform_facerecognition_bgt.delay(pelogid, peopleid, obj.owner, home_dir, uploadfile, db)
+            log.warning(f"face recognition status {results.state}")
+    except Exception as e:
+        log.error('something went wrong while performing face recognition', exc_info = True)
     return ServiceOutputType(rc = rc, recordcount = recordcount, msg = msg, traceback = traceback)
 
 

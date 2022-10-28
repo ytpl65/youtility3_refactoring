@@ -26,6 +26,8 @@ def write_file_to_dir(filebuffer, uploadedfile):
 
 
 from pprint import pformat
+
+from apps.attendance.models import PeopleEventlog
 from .tasks import Messages
 from .tasks import (
     get_json_data, get_model_or_form,
@@ -386,9 +388,11 @@ def perform_uploadattachment(file,  record, biodata):
         rc, traceback, msg = 1, tb.format_exc(), Messages.UPLOAD_FAILED
         log.error('something went wrong', exc_info = True)
     try:
-        from .tasks import perform_facerecognition_bgt
-        results = perform_facerecognition_bgt.delay(pelogid, peopleid, obj.owner, home_dir, uploadfile, db)
-        log.warning(f"face recognition status {results.state}")
+        pel = PeopleEventlog.objects.get(id=int(pelogid))
+        if pel.peventtype.tacode in ['SELF', 'MARK']:
+            from .tasks import perform_facerecognition_bgt
+            results = perform_facerecognition_bgt.delay(pelogid, peopleid, obj.owner, home_dir, uploadfile, db)
+            log.warning(f"face recognition status {results.state}")
     except Exception as e:
         log.error('something went wrong while performing face recognition', exc_info = True)
     return ServiceOutputType(rc = rc, recordcount = recordcount, msg = msg, traceback = traceback)
