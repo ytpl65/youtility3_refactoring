@@ -70,6 +70,7 @@ class QuestionForm(forms.ModelForm):
     def clean(self):
         cleaned_data = super().clean()
         data = cleaned_data
+        ic(data)
         alertabove = alertbelow = None
         if data.get('answertype') and data['answertype'] not in (
             'NUMERIC',
@@ -104,17 +105,13 @@ class QuestionForm(forms.ModelForm):
             return val
     
     def clean_min(self):
+        ic(self.cleaned_data)
         return val if (val := self.cleaned_data.get('min')) else 0.0
     
     def clean_max(self):
+        ic(self.cleaned_data)
         return val if (val := self.cleaned_data.get('max')) else 0.0
     
-    def clean_quesname(self):
-        if value := self.cleaned_data.get('quesname'):
-            regex = "^[a-zA-Z0-9\-_@#\[\]\(\|\)\{\} ]*$"
-            if not re.match(regex, value):
-                raise forms.ValidationError("[Invalid name] Only these special characters [-, _, @, #] are allowed in name field")
-        return value
             
 
 class MasterQsetForm(forms.ModelForm):

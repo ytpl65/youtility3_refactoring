@@ -1271,3 +1271,15 @@ def isValidEMEI(n):
     #     sum = sum + sumDig(d)
     #     n = n / 10
     # return (sum % 10 == 0)
+    
+def verify_mobno(mobno):
+    import phonenumbers as pn
+    from phonenumbers.phonenumberutil import NumberParseException
+    try:
+        no = pn.parse(f'+{mobno}') if '+' not in mobno else pn.parse(mobno)
+        if not pn.is_valid_number(no):
+            return False
+    except NumberParseException as e:
+        return False
+    else: return True
+    

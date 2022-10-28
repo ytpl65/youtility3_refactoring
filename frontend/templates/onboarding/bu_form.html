@@ -384,9 +384,16 @@ Buisiness-View
 		})
 	}
 
+	function getLatLng(){
+		return {
+			lat:parseFloat("{{ buform.instance.gpslocation.y }}"),
+			lng:parseFloat("{{ buform.instance.gpslocation.x }}")
+		}
+	}
+
 	function initMap() {
 		map = new google.maps.Map(document.getElementById("map"), {
-			center: { lat: -34.397, lng: 150.644 },
+			center: getLatLng(),
 			zoom: 8,
 		});
 		//search-radius-form controls
@@ -513,10 +520,7 @@ Buisiness-View
 			//on load check
 			showHideBuType();
 		}else{
-			if('{{ buform.instance.butype }}' !== 'None'){
-				console.log("shown")
-				$(".site_type").show();
-			}
+			showHideBuType();
 			$("#id_gpslocation").val("{{ buform.instance.gpslocation.coords[::-1] if buform.instance.gpslocation is not none else 'NONE' }}")
 			$("#id_address").val("{{ buform.instance.bupreferences.get('address', "") }}")
 			$("#id_permissibledistance").val("{{ buform.instance.bupreferences.get('permissibledistance', "") }}")

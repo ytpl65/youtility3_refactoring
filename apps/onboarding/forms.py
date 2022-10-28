@@ -181,7 +181,7 @@ class BtForm(forms.ModelForm):
 
     def clean_gpslocation(self, val):
         if gps := val:
-            if gps == 'NONE': return None
+            if gps == 'NONE': return GEOSGeometry(f'SRID=4326;POINT({0.0} {0.0})')
             regex = '^([-+]?)([\d]{1,2})(((\.)(\d+)(,)))(\s*)(([-+]?)([\d]{1,3})((\.)(\d+))?)$'
             gps = gps.replace('(', '').replace(')', '')
             if not re.match(regex, gps):

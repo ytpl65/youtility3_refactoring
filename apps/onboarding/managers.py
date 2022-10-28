@@ -111,7 +111,6 @@ class BtManager(models.Manager):
     def handle_bupostdata(self, request):
         "handles post data submitted by editor in client form"
         R, S = request.POST, request.session
-        ic(R)
         r = {'enable':R['enable'] == '1'}
         PostData = {'bucode':R['bucode'].upper(), 'buname':R['buname'], 'parent_id' : R['parent'], 'identifier_id':R['identifier'],
                     'enable':r['enable'],
@@ -149,6 +148,10 @@ class BtManager(models.Manager):
                     'dateofjoin':R['dateofjoin'],
                 'cuser':request.user, 'muser':request.user, 'cdtz':utils.getawaredatetime(datetime.now(), R['ctzoffset']),
                 'mdtz':utils.getawaredatetime(datetime.now(), R['ctzoffset'])}
+        
+        if not utils.verify_mobno(R['mobno']):
+            return {'data':list(self.none()),
+                    'fieldErrors':[{'name':'mobno', 'status':"Please Enter Correct Mobile Number!"}]}
         
         if R['action'] == 'create':
             if pm.People.objects.filter(peoplecode=R['peoplecode'].upper()).exists():
@@ -193,8 +196,7 @@ class BtManager(models.Manager):
 
     def get_listadmins(self, request):
         "return list admins for client_form"
-        print(request.GET.get("id"))
-        if request.GET.get("id") in ["None", None]:
+        if request.GET.get("clientid") in ["None", None]:
             return self.none()
         qset = pm.People.objects.filter(
             isadmin=True, client_id = request.GET.get('clientid'),

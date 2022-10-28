@@ -68,9 +68,6 @@ class Question(LoginRequiredMixin, View):
         resp, create = None, True
         try:
             data = QueryDict(request.POST['formData']).copy()
-            ic(data)
-            if not data['min'] or data['max']:
-                data['min'] = data['max'] = 0.0
             if pk := request.POST.get('pk', None):
                 msg = "question_view"
                 ques = utils.get_model_obj(pk, request, self.params)

@@ -208,7 +208,7 @@ class PeopleForm(forms.ModelForm):
         from phonenumbers.phonenumberutil import NumberParseException
         if mobno := self.cleaned_data.get('mobno'):
             try:
-                no = pn.parse(f'+{mobno}')
+                no = pn.parse(f'+{mobno}') if '+' not in mobno else pn.parse(mobno)
                 if not pn.is_valid_number(no):
                     raise forms.ValidationError(
                         self.error_msg['invalid_mobno2'])
