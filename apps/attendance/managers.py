@@ -17,7 +17,7 @@ class PELManager(models.Manager):
         return self.raw(
             """
             SELECT peopleeventlog.people_id, peopleeventlog.id, peopleeventlog.uuid
-            FROM icici_django.peopleeventlog
+            FROM peopleeventlog
             INNER JOIN typeassist ON typeassist.id= peopleeventlog.peventtype_id AND typeassist.tacode IN ('MARK', 'SELF', 'TAKE', 'AUDIT')
             LEFT JOIN attachment ON attachment.owner= peopleeventlog.uuid::text
             WHERE 1 = 1
@@ -28,12 +28,21 @@ class PELManager(models.Manager):
         )[0] or self.none()
 
     def update_fr_results(self, result, id, peopleid, db):
-        return self.filter(
-            id = id
-        ).using(db).update(peventlogextras = result, people_id = peopleid)
-
-    def get_people_attachment(self, pelogid, db):
-        raise NotImplementedError()
+        if obj := self.filter(id=id).using(db):
+            extras = obj[0].peventlogextras
+            if obj[0].punchintime:
+                extras['verified_in'] = result['verified']
+                extras['distance_in'] = result['distance']
+            if obj[0].punchouttime:
+                extras['verified_out'] = result['verified']
+                extras['distance_out'] = result['distance']
+            obj[0]['peventlogextras'] = extras
+            obj[0].facerecognitionin = extras['verified_in']
+            obj[0].facerecognitionout = extras['verified_out']
+            obj[0].people_id = peopleid
+            obj[0].save()
+    
+    
 
     def get_lastmonth_conveyance(self, R):
         now = datetime.now()

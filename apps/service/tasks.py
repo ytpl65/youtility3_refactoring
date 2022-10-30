@@ -78,21 +78,26 @@ class Messages(AM):
     UPLOAD_SUCCESS  = 'Uploaded Successfully!'
 
 
-def insertrecord_from_tablename(record, tablename, db):
-    log.info(f"insertrecord_from_tablename started tablename:{tablename} db:{db}")
-    try:
-        ic(tablename)
-        if model := get_model_or_form(tablename):
-            log.info(f'selected model to insert is {str(model)}')
-            record = clean_record(record)
-            obj = model.objects.create(**record)
-            log.info(f'the pk of the record inserted is {obj.id}')
-            return obj.id
-        raise GraphQLError(Messages.IMPROPER_DATA)
-    except Exception as e:
-        log.error("something went wrong!", exc_info = True)
-        raise e
 
+def insertrecord(record, tablename):
+    try:
+        if model := get_model_or_form(tablename):
+            record = clean_record(record)
+            ic(record)
+
+            log.info(f'record after cleaning\n {pformat(record)}')
+            obj = model.objects.get(uuid = record['uuid'])
+            model.objects.filter(uuid = obj.uuid).update(**record)
+            log.info("record is already exist so updating it now..")
+            ic("updating")
+            return model.objects.get(uuid = record['uuid'])
+    except model.DoesNotExist:
+        ic("creating")
+        log.info("record is not exist so creating new one..")
+        return model.objects.create(**record)
+    except Exception as e:
+        log.error("something went wrong", exc_info = True)
+        raise e
 # @app.task(bind = True, default_retry_delay = 300, max_retries = 5)
 # def substract(x, y):
 #     try:
@@ -128,34 +133,40 @@ def perform_uploadattachment(file, tablename, record, biodata):
 
         file_buffer = file
         # ic(file_buffer, type(file_buffer))
-        filename = biodata['filename']
-        pelogid = biodata['pelog_id']
-        peopleid = biodata['people_id']
-        path = biodata['path']
-        home_dir = os.path.expanduser('~') + '/'
-        filepath = home_dir + path
+        filename   = biodata['filename']
+        pelogid    = biodata['pelog_id']
+        peopleid   = biodata['people_id']
+        path       = biodata['path']
+        home_dir   = os.path.expanduser('~') + '/'
+        filepath   = home_dir + path
         uploadfile = f'{filepath}/{filename}'
-        db = utils.get_current_db_name()
-        log.info(f'here is the db got from get_current_db_name(): {db}')
+        db         = utils.get_current_db_name()
+        log.info(f"file_buffer: '{file_buffer}' \npelogid: '{pelogid}' \npeopleid: '{peopleid}' \npath: {path} home_dir: '{home_dir}' \nfilepath: '{filepath}' \nuploadfile: '{uploadfile}'")
 
         with transaction.atomic(using = db):
             utils.set_db_for_router(db)
             log.info(f'router is connected to db:{db}')
             iscreated = get_or_create_dir(filepath)
-            log.info(f'filepath is {iscreated}')
+            log.info(f'Is FilePath created? {iscreated}')
             write_file_to_dir(file_buffer, uploadfile)
-            resp = insertrecord_from_tablename(record, tablename, db)
             rc, traceback, msg = 0, tb.format_exc(), Messages.UPLOAD_SUCCESS
             recordcount = 1
-        # from apps.activity.tasks import perform_facerecognition
-        results = perform_facerecognition_bgt.delay(pelogid, peopleid, resp, home_dir, uploadfile, db)
-        log.warning(f"face recognition status {results.state}")
-
+            log.info('file uploaded success')
     except Exception as e:
         rc, traceback, msg = 1, tb.format_exc(), Messages.UPLOAD_FAILED
         log.error('something went wrong', exc_info = True)
 
-    log.info(f'rc:{rc}, msg:{msg}, traceback:{traceback}, returncount:{recordcount}')
+    try:
+        obj = insertrecord(record, 'attachment')
+        log.info(f'Attachment record inserted: {obj.filepath}')
+        pel = PeopleEventlog.objects.get(id=int(pelogid))
+        log.info(f'Event Type: {pel.peventtype.tacode}')
+        if pel.peventtype.tacode in ['SELF', 'MARK']:
+            from .tasks import perform_facerecognition_bgt
+            results = perform_facerecognition_bgt.delay(pelogid, peopleid, obj.owner, home_dir, uploadfile, db)
+            log.warning(f"face recognition status {results.state}")
+    except Exception as e:
+        log.error('something went wrong while performing face recognition', exc_info = True)
     return ServiceOutputType(rc = rc, recordcount = recordcount, msg = msg, traceback = traceback)
 
 
@@ -402,8 +413,8 @@ def perform_facerecognition_bgt(self, pelogid, peopleid, ownerid, home_dir, uplo
                     log.info(f'attachment record found with ownerid: {ownerid} from db:{db}')
                     if PEOPLE_ATT := PeopleEventlog.objects.get_people_attachment(pelogid, db):
                         log.info(f'people attachment found with pelogid {pelogid} form db:{db}')
-                        if PEOPLE_PIC := Attachment.objects.get_people_pic(ATT.ownername_id, PEOPLE_ATT.uuid, db):
-                            log.info(f'people pic found with from table {ATT.ownername__tacode} with pel uuid {PEOPLE_ATT.uuid} from db:{db}')
+                        if PEOPLE_PIC := Attachment.objects.get_people_pic(ATT[0]['ownername_id'], PEOPLE_ATT.uuid, db):
+                            log.info(f'people pic found with from table {ATT[0]["ownername__tacode"]} with pel uuid {PEOPLE_ATT.uuid} from db:{db}')
                             default_image_path = PEOPLE_PIC.default_img_path
                             default_image_path = home_dir + default_image_path
                             log.info(f"default image path:{default_image_path}")

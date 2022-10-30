@@ -41,6 +41,8 @@ diff-match-patch==20200713
 dill==0.3.5.1
 Django==3.2.14
 django-appconf==1.0.5
+django-celery-beat==2.4.0
+django-celery-results==2.4.0
 django-cleanup==5.2.0
 django-debug-toolbar==3.2
 django-email-verification==0.1.1rc1
@@ -57,6 +59,7 @@ django-redis==5.0.0
 django-select2==7.7.3
 django-shortcuts==1.6
 django-taggit==2.0.0
+django-timezone-field==5.0
 django-widget-tweaks==1.4.9
 djangorestframework==3.13.1
 djantic==0.7.0
@@ -168,7 +171,9 @@ pyrsistent==0.18.1
 PySocks==1.7.1
 pytest==6.2.5
 pytest-django==4.4.0
+python-crontab==2.6.0
 python-dateutil==2.8.2
+python-decouple==3.6
 python-dotenv==0.20.0
 pytz==2022.1
 pytz-deprecation-shim==0.1.0.post0
