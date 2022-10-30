@@ -14,21 +14,26 @@ from pathlib import Path
 import os
 import configparser
 from pickle import TRUE
-from dotenv import load_dotenv
-load_dotenv()  # loads the configs from .env
+
+import environ
+env = environ.Env()
+
+ENVPATH = os.path.join(os.path.abspath('intelliwiz_config/envs'))
+environ.Env.read_env(os.path.join(ENVPATH, '.env.dev')) #rename it '.env.prod' for production
+
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.p
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-config = configparser.RawConfigParser()
-config.sections()
-CONFIGPATH = os.path.join(os.path.abspath('intelliwiz_config/config.ini'))
-config.read(CONFIGPATH)
-# Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/3.2/howto/deployment/checklist/
+#config = configparser.RawConfigParser()
+#config.sections()
+#CONFIGPATH = os.path.join(os.path.abspath('intelliwiz_config/config.ini'))
+#config.read(CONFIGPATH)
+
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = config.get('DEFAULT', 'SECRET_KEY')
-ENCRYPT_KEY = str(os.getenv('ENCRYPT_KEY'))
+SECRET_KEY = env('SECRET_KEY')
+ENCRYPT_KEY = env('ENCRYPT_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -56,6 +61,8 @@ INSTALLED_APPS = [
     'django_filters',
     "graphql_jwt.refresh_token.apps.RefreshTokenConfig",
     'rest_framework',
+    'django_celery_beat',
+    'django_celery_results',
 
 
 
@@ -108,7 +115,7 @@ TEMPLATES = [
         },
     },
     # jinja2 configuration
-    { 
+    {
         'BACKEND': 'django.template.backends.jinja2.Jinja2',
         'DIRS': [JINJA_TEMPLATES],
         'APP_DIRS': True,
@@ -126,12 +133,6 @@ WSGI_APPLICATION = 'intelliwiz_config.wsgi.application'
 
 # Database
 # https://docs.djangoproject.com/en/3.2/ref/settings/# databases
-
-# multi database configuration.
-DBUSER  = config.get('PRODUCTION', 'DBUSER')
-DBPASS = config.get('PRODUCTION', 'DBPASS')
-DBNAME = config.get('PRODUCTION', 'DBNAME')
-DBHOST = config.get('PRODUCTION', 'DBHOST')
 '''
 NOTE: Client bucode should match the database alias name.
 '''
@@ -139,10 +140,10 @@ NOTE: Client bucode should match the database alias name.
 DATABASES = {
     'default': {
         'ENGINE':   'django.contrib.gis.db.backends.postgis',
-        'USER':     DBUSER,
-        'NAME':     DBNAME,
-        'PASSWORD': DBPASS,
-        'HOST':     DBHOST,
+        'USER':     env('DBUSER'),
+        'NAME':     env('DBNAME'),
+        'PASSWORD': env('DBPASS'),
+        'HOST':     env('DBHOST'),
         'PORT':     '5432',
     }
 }   
@@ -184,9 +185,11 @@ SESSION_SAVE_EVERY_REQUEST = True
 
 
 # CELERY CONF...
-CELERY_BROKER_URL = config.get('DEFAULT', 'CELERY_BROKER_URL')
-CELERY_CACHE_BACKEND = config.get('DEFAULT', 'CELERY_CACHE_BACKEND')
-CELERY_RESULT_BACKEND = config.get('DEFAULT', 'CELERY_RESULT_BACKEND')
+CELERY_BROKER_URL = env('CELERY_BROKER_URL')
+CELERY_RESULT_BACKEND = env("CELERY_RESULT_BACKEND")
+CELERY_BEAT_SCHEDULER = env('CELERY_BEAT_SCHEDULER')
+
+
 
 # SELECT2 CONF...
 SELECT2_CACHE_BACKEND = 'select2'
@@ -370,24 +373,24 @@ def verified_callback(user):
     user.isverified = True
 
 EMAIL_VERIFIED_CALLBACK = verified_callback
-EMAIL_FROM_ADDRESS = config.get('PRODUCTION', 'EMAIL_FROM_ADDRESS')
+EMAIL_FROM_ADDRESS = env('EMAIL_FROM_ADDRESS')
 EMAIL_MAIL_SUBJECT = 'Confirm your email'
 EMAIL_MAIL_HTML = 'email.html'
 EMAIL_MAIL_PLAIN = 'mail_body.txt'
 EMAIL_TOKEN_LIFE = 60**2
 EMAIL_PAGE_TEMPLATE = 'email_verify.html'
-EMAIL_PAGE_DOMAIN = config.get('PRODUCTION', 'EMAIL_PAGE_DOMAIN')
+EMAIL_PAGE_DOMAIN = env('EMAIL_PAGE_DOMAIN')
 EMAIL_MULTI_USER = True  # optional (defaults to False)
 
 
 # For Django Email Backend
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 # EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
-DEFAULT_FROM_EMAIL = config.get('PRODUCTION', 'DEFAULT_FROM_EMAIL')
+DEFAULT_FROM_EMAIL = env('DEFAULT_FROM_EMAIL')
 EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
-EMAIL_HOST_USER = config.get('PRODUCTION', 'EMAIL_HOST_USER')
-EMAIL_HOST_PASSWORD = config.get('PRODUCTION', 'EMAIL_HOST_PASSWORD')
+EMAIL_HOST_USER = env('EMAIL_HOST_USER')
+EMAIL_HOST_PASSWORD = env('EMAIL_HOST_PASSWORD')
 EMAIL_USE_TLS = True
 DJANGO_SETTINGS_MODULE = 'intelliwiz_config.settings'
 
@@ -396,7 +399,7 @@ DJANGO_SETTINGS_MODULE = 'intelliwiz_config.settings'
 TAGGIT_CASE_INSENSITIVE = True
 
 # GOOGLE MAP API KEY...
-GOOGLE_MAP_SECRET_KEY  = str(os.getenv('GOOGLE_MAP_SECRET_KEY'))
+GOOGLE_MAP_SECRET_KEY  = env('GOOGLE_MAP_SECRET_KEY')
 
 CSRF_COOKIE_SECURE=False
 SESSION_COOKIE_SECURE=False

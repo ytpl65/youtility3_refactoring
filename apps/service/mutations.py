@@ -595,7 +595,7 @@ class InsertJsonMutation(graphene.Mutation):
     @classmethod
     def mutate(cls, root, info, jsondata, tablename):
         # sourcery skip: instance-method-first-arg-name
-        from .tasks import insertrecord_from_tablename
+        from .tasks import insertrecord
         from apps.core.utils import get_current_db_name
         import json
         log.info('insert jsondata mutations start[+]')
@@ -603,7 +603,7 @@ class InsertJsonMutation(graphene.Mutation):
         msg = ""
         try:
             db = get_current_db_name()
-            insertrecord_from_tablename(jsondata, tablename, db)
+            insertrecord(jsondata, tablename)
             recordcount, msg = 1, 'Inserted Successfully'
         except Exception as e:
             log.error('something went wrong', exc_info = True)

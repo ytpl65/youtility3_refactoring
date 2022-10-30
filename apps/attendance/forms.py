@@ -11,7 +11,7 @@ class AttendanceForm(forms.ModelForm):
     class Meta:
         model = atdm.PeopleEventlog
         fields = ['people', 'datefor', 'ctzoffset', 'punchintime', 'punchouttime', 
-         'peventtype', 'verifiedby', 'remarks', 'shift', 'facerecognition']
+         'peventtype', 'verifiedby', 'remarks', 'shift', 'facerecognitionin', 'facerecognitionout']
         labels = {
             'people'        : 'People',
             'punchintime'    : 'In Time',

@@ -353,7 +353,7 @@ class AttachmentManager(models.Manager):
             ownername__tacode = 'PEOPLEEVENTLOG',
             attachmenttype = 'ATTACHMENT', 
             owner = id
-            ).using(db)
+            ).using(db).values('ownername_id', 'ownername__tacode')
         return qset or self.none()
 
     def get_att_given_owner(self, owneruuid):

@@ -13,12 +13,13 @@ from django.contrib.postgres.fields import ArrayField
 
 def peventlog_json():
     return {
-        'verified': None,
-        'distance':None,
-        'threshold': None,
-        'model':None,
-        'detector_backend':None,
-        'similarity_metric':None
+        'verified_in': None,
+        'distance_in':None,
+        'verified_out': None,
+        'distance_out':None,
+        'threshold': '0.4',
+        'model':'VGG',
+        'similarity_metric':'cosine'
     }
 
 ############## PeopleEventlog Table ###############
@@ -58,7 +59,8 @@ class PeopleEventlog(BaseModel, TenantAwareModel):
     endlocation     = PointField(_("GPS-Out"), null = True, geography = True, blank = True, srid = 4326)
     journeypath     = LineStringField(geography = True, null = True)
     remarks         = models.CharField(_("remarks"), null = True, max_length = 500, blank = True)
-    facerecognition = models.BooleanField(_("Enable Face-Recognition"), default = True)
+    facerecognitionin = models.BooleanField(_("Enable Face-Recognition In"), default = False)
+    facerecognitionout = models.BooleanField(_("Enable Face-Recognition Out"), default = False)
     peventlogextras = models.JSONField(_("peventlogextras"), encoder = DjangoJSONEncoder, default = peventlog_json)
     otherlocation   = models.CharField(_("Other Location"), max_length = 50, default = None)
     reference       = models.CharField('Reference', max_length = 55, null = True)

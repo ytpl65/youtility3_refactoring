@@ -203,6 +203,7 @@ class Query(graphene.ObjectType):
         log.info('request for sitelist..')
         data = Bt.objects.getsitelist(clientid, peopleid)
         records, count, msg = utils.get_select_output(data)
+        ic("get_sitelist", records) 
         log.info(f'{count} objects returned...')
         return SelectOutputType(nrows = count, records = records,msg = msg)
 
