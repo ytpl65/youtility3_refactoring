@@ -56,6 +56,8 @@ INSTALLED_APPS = [
     'django_filters',
     "graphql_jwt.refresh_token.apps.RefreshTokenConfig",
     'rest_framework',
+    'django_celery_beat',
+    'django_celery_results',
 
 
 
@@ -184,9 +186,11 @@ SESSION_SAVE_EVERY_REQUEST = True
 
 
 # CELERY CONF...
-CELERY_BROKER_URL = config.get('DEFAULT', 'CELERY_BROKER_URL')
-CELERY_CACHE_BACKEND = config.get('DEFAULT', 'CELERY_CACHE_BACKEND')
-CELERY_RESULT_BACKEND = config.get('DEFAULT', 'CELERY_RESULT_BACKEND')
+CELERY_BROKER_URL = 'redis://localhost:6379'#config.get('DEFAULT', 'CELERY_BROKER_URL')
+#CELERY_CACHE_BACKEND = config.get('DEFAULT', 'CELERY_CACHE_BACKEND')
+CELERY_RESULT_BACKEND = "django-db"#config.get('DEFAULT', 'CELERY_RESULT_BACKEND')
+CELERY_BEAT_SCHEDULER = 'django_celery_beat.schedulers.DatabaseScheduler'
+
 
 # SELECT2 CONF...
 SELECT2_CACHE_BACKEND = 'select2'

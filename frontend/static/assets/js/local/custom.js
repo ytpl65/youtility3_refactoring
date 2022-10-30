@@ -144,9 +144,7 @@ function handle_rendering_of_menus(session) {
     /*======show menu-item based on user or client capabilites======*/
 
     //if user is admin show client webcaps else people webcaps
-    caps = session["is_admin"]
-      ? session["client_webcaps"]
-      : session["people_webcaps"];
+    caps = session['people_webcaps'].length ? session['people_webcaps'] : session["client_webcaps"];
     //console.log(session["people_webcaps"].length);
     //console.log("caps length ",caps.length);
     //console.log("caps ", caps);
