@@ -527,8 +527,10 @@ def save_msg(request):
 
 
 def initailize_form_fields(form):
+    
     for visible in form.visible_fields():
-        if visible.widget_type in ['text', 'textarea', 'datetime', 'time', 'number', 'email', 'decimal']:
+        ic(visible.widget_type, visible.name)
+        if visible.widget_type in ['text', 'textarea', 'datetime', 'time', 'number', 'date','email', 'decimal']:
             visible.field.widget.attrs['class'] = 'form-control'
         elif visible.widget_type in ['radio', 'checkbox']:
             visible.field.widget.attrs['class'] = 'form-check-input'
@@ -1283,3 +1285,13 @@ def verify_mobno(mobno):
         return False
     else: return True
     
+    
+def verify_emailaddr(email):
+    from email_validator import validate_email, EmailNotValidError
+    try:
+        validate_email(email)
+        return True
+    except EmailNotValidError as e:
+        logger.warning('email is not valid')
+        return False
+        

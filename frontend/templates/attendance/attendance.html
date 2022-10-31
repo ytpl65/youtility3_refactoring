@@ -20,7 +20,8 @@ Attendance
         <th>Type</th>
         <th>Site Name</th>
         <th>People</th>
-        <th>Face Recognition</th>
+        <th>FR IN</th>
+        <th>FR OUT</th>
         <th>Verified By</th>
         <th>Date For</th>
         <th>In Time</th>
@@ -75,12 +76,13 @@ Attendance
                 {targets:[0], data:'peventtype__tacode'},
                 {targets:[1], data:'bu__buname'},
                 {targets:[2], data:'people__peoplename'},
-                {targets:[3], data:'facerecognition'},
-                {targets:[4], data:'verifiedby__peoplename'},
-                {targets:[5], data:'datefor'},
-                {targets:[6], data:'punchintime'},
-                {targets:[7], data:'punchouttime'},
-                {targets:[8], data:'id', visible:false, searchable:false},
+                {targets:[3], data:'facerecognitionin'},
+                {targets:[4], data:'facerecognitionout'},
+                {targets:[5], data:'verifiedby__peoplename'},
+                {targets:[6], data:'datefor'},
+                {targets:[7], data:'punchintime'},
+                {targets:[8], data:'punchouttime'},
+                {targets:[9], data:'id', visible:false, searchable:false},
             ],
             columnDefs:[
                 //targets:[1, 2], render:function(data, type, row, meta){

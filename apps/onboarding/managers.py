@@ -83,7 +83,8 @@ class BtManager(models.Manager):
     def load_parent_choices(self, request):
         search_term = request.GET.get('search')
         parentid = -1 if request.GET.get('parentid') == 'None' else request.GET.get('parentid')
-        qset = self.filter(~Q(id=1), Q(id = parentid) | Q(parent_id=parentid)).distinct()
+        buids = utils.runrawsql("select fn_get_bulist(%s, true, true, 'array'::text, null::bigint[]) as buids", [parentid])
+        qset = self.filter(id__in=buids[0]['buids']).select_related('identifier', 'parent')
         qset = qset.filter(buname__icontains = search_term) if search_term else qset
         qset = qset.annotate(
             text = Concat(F('buname'), V(" ("), F('identifier__tacode'), V(")"))).exclude(
@@ -152,6 +153,9 @@ class BtManager(models.Manager):
         if not utils.verify_mobno(R['mobno']):
             return {'data':list(self.none()),
                     'fieldErrors':[{'name':'mobno', 'status':"Please Enter Correct Mobile Number!"}]}
+        if not utils.verify_emailaddr(R['email']):
+            return {'data':list(self.none()),
+                    'fieldErrors':[{'name':'email', 'status':"Please Enter Correct Email Address!"}]}
         
         if R['action'] == 'create':
             if pm.People.objects.filter(peoplecode=R['peoplecode'].upper()).exists():

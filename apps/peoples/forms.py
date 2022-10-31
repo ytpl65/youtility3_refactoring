@@ -345,12 +345,6 @@ class CapabilityForm(forms.ModelForm):
                 raise forms.ValidationError(self.error_msg['invalid_code3'])
             return value.upper()
 
-    def clean_capsname(self):
-        if value := self.cleaned_data.get('capsname'):
-            regex = "^[a-zA-Z0-9\-_@#\[\]\(\|\)\{\} ]*$"
-            if not re.match(regex, value):
-                raise forms.ValidationError(self.error_msg['invalid_name'])
-        return value
 
     def is_valid(self) -> bool:
         """Add class to invalid fields"""
