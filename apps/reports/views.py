@@ -97,9 +97,9 @@ class MasterReportForm(LoginRequiredMixin, View):
                 import json
                 pk = R['id'] or kwargs.get('id')
                 obj = self.model.objects.get(id = pk)
-                self.initial.update({
-                    'buincludes': [8,6],
-                })
+                # self.initial.update({
+                #     'buincludes': [8,6],
+                # })
                 form = self.form_class(instance = obj, initial = self.initial, request = request)
                 cxt = {'reporttemp_form':form, 'qsetbng':self.subform()}
                 return render(request, self.template_path, context = cxt)

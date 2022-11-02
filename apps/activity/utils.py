@@ -92,6 +92,8 @@ def insert_questions_to_qsetblng(assigned_questions, model, fields, request):
                     "options"     : ques[6].replace('"', '') if isinstance(ques[6], str) else "",
                     "alerton"     : ques[7].replace('"', '') if isinstance(ques[7], str) else "",
                     "ismandatory" : ques[8],
+                    "isavpt" : ques[9],
+                    "avpttype" : ques[10],
                     "qset_id"   : fields['qset']}
                 )
                 qsetbng.save()

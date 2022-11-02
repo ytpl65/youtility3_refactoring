@@ -26,7 +26,7 @@ Buisiness Units
 			<th>Belongs To</th>
 			<th>Site Type</th>
 		</thead>
-	</table>	
+	</table>
 </div>
 {% endblock table %}
 <!------------------ END BU TABLE --------------------------->
@@ -62,8 +62,16 @@ Buisiness Units
 					render : function ( data, type, row, meta ) {
 						return `<a href={{ url('onboarding:bu') }}?id=${row['id']}>${data}</a>`
 					}
-				}
+				},
+				{targets:2, data:'buname', render:function(data, type, row, meta){
+					return `<a href={{ url('onboarding:bu') }}?id=${row['id']}>${data}</a>`}
+				},
 			],
+			createdRow:function(row, data, dataIndex){
+				if(data['enable'] === false){
+					$(row).addClass('disabled-record text-white')
+				}
+			},
 			dom       : `<'row' <'col-sm-6 d-flex justify-content-start'f> <'col-sm-6 d-flex justify-content-end'B> >rt<'row'
 			<'col-sm-6'l> <'col-sm-6'p><'col-sm-12 d-flex justify-content-center'i>>`,
 			buttons:[

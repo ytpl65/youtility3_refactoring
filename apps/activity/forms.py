@@ -3,6 +3,7 @@ from django import forms
 from django.core.exceptions import ValidationError
 from django.db.models import Q
 import apps.activity.models as am
+import apps.peoples.models as pm
 import apps.onboarding.models as om
 from apps.core import utils
 import apps.activity.utils as ac_utils
@@ -76,6 +77,7 @@ class QuestionForm(forms.ModelForm):
             'NUMERIC',
             'DROPDOWN',
             'CHECKBOX',
+            'RATING'
         ):
             cleaned_data['alerton'] = json.dumps([])
             cleaned_data['min']     = cleaned_data['max'] = 0.0
@@ -110,7 +112,8 @@ class QuestionForm(forms.ModelForm):
     
     def clean_max(self):
         ic(self.cleaned_data)
-        return val if (val := self.cleaned_data.get('max')) else 0.0
+        val = val if (val := self.cleaned_data.get('max')) else 0.0
+        return val
     
             
 
@@ -121,10 +124,13 @@ class MasterQsetForm(forms.ModelForm):
     }
     assetincludes = forms.MultipleChoiceField(
         required = True, label='Checkpoint', widget = s2forms.Select2MultipleWidget, choices = ac_utils.get_assetincludes_choices)
+    site_type_includes = forms.MultipleChoiceField(widget=s2forms.Select2MultipleWidget, label="Site Types", required=False)
+    buincludes         = forms.MultipleChoiceField(widget=s2forms.Select2MultipleWidget, label='Site Includes', required=False)
+    site_grp_includes  = forms.MultipleChoiceField(widget=s2forms.Select2MultipleWidget, label='Site groups', required=False)
 
     class Meta:
         model = am.QuestionSet
-        fields = ['qsetname', 'parent', 'enable', 'assetincludes', 'type', 'ctzoffset']
+        fields = ['qsetname', 'parent', 'enable', 'assetincludes', 'type', 'ctzoffset', 'site_type_includes', 'buincludes', 'site_grp_includes']
 
         labels = {
             'parent': 'Parent',
@@ -138,6 +144,11 @@ class MasterQsetForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         self.fields['type'].initial      = 'ASSET'
         self.fields['type'].widget.attrs = {"style": "display:none;"}
+        self.fields['site_type_includes'].choices = om.TypeAssist.objects.filter(tatype__tacode = "SITETYPE").values_list('id', 'taname')
+        bulist = om.Bt.objects.get_bu_list_ids(self.request.session['client_id'])
+        self.fields['buincludes'].choices = om.Bt.objects.filter(id__in = bulist, identifier__tacode='SITE').values_list('id', 'buname')
+        self.fields['site_grp_includes'].choices = pm.Pgroup.objects.filter(
+            identifier__tacode='SITEGROUP', bu_id__in = bulist).values_list('id', 'groupname')
         utils.initailize_form_fields(self)
     
     def clean_qsetname(self):
@@ -227,7 +238,6 @@ class QsetBelongingForm(forms.ModelForm):
                 self._update_errors(e)
 
 class ChecklistForm(MasterQsetForm):
-
     class Meta(MasterQsetForm.Meta):
         pass
 

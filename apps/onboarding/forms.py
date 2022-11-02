@@ -127,7 +127,7 @@ class BtForm(forms.ModelForm):
         widgets = { 
             'bucode'      : forms.TextInput(attrs={'style': 'text-transform:uppercase;', 'placeholder': 'Enter text without space & special characters'}),
             'buname'      : forms.TextInput(attrs={'placeholder': 'Name'}),
-            'identifier'      : s2forms.Select2Widget,
+            'identifier'  : s2forms.Select2Widget,
             'butype'      : s2forms.Select2Widget}    
 
     def __init__(self, *args, **kwargs):
@@ -164,7 +164,7 @@ class BtForm(forms.ModelForm):
             create_bv_reportting_heirarchy(instance, newcode, newtype, parent)
         if self.cleaned_data.get('gpslocation'):
             data = QueryDict(self.request.POST['formData'])
-            self.cleaned_data['gpslocation'] = self.clean_gpslocation(data.get('gpslocation'))
+            self.cleaned_data['gpslocation'] = self.clean_gpslocation(data.get('gpslocation', 'NONE'))
         return self.cleaned_data
 
 

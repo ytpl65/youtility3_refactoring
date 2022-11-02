@@ -1659,7 +1659,6 @@ class BtView(LoginRequiredMixin, View):
         if R.get('action', None) == 'list':
             objs = self.params['model'].objects.select_related(
                 *self.params['related']).filter(
-                    enable = True,
             ).exclude(identifier__tacode='CLIENT').values(*self.params['fields'])
             return  rp.JsonResponse(data = {'data':list(objs)})
 
@@ -1674,8 +1673,9 @@ class BtView(LoginRequiredMixin, View):
         
         elif R.get('id', None):
             obj = utils.get_model_obj(int(R['id']), request, self.params)
+            initial = {'controlroom':obj.bupreferences.get('controlroom') }
             cxt = {'ta_form':obforms.TypeAssistForm(auto_id = False),
-                   'buform': self.params['form_class'](request = request, instance = obj)}
+                   'buform': self.params['form_class'](request = request, instance = obj, initial=initial)}
         return render(request, self.params['template_form'], context = cxt)
 
     def post(self, request, *args, **kwargs):
@@ -1687,6 +1687,7 @@ class BtView(LoginRequiredMixin, View):
             print(pk, type(pk))
             if pk:
                 msg = "bu_view"
+                obj = utils.get_model_obj(pk, request, self.params)
                 form = utils.get_instance_for_update(
                     data, self.params, msg, int(pk), kwargs={'request':request})
                 create = False
@@ -1696,7 +1697,6 @@ class BtView(LoginRequiredMixin, View):
             if form.is_valid():
                 resp = self.handle_valid_form(form, request, create)
             else:
-                ic(form.cleaned_data)
                 cxt = {'errors': form.errors}
                 ic(len(form.errors), form.errors.get('gpslocation'))
                 resp = utils.handle_invalid_form(request, self.params, cxt)

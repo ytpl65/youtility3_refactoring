@@ -38,6 +38,7 @@ People Lists
 				{data: 'peopletype__tacode', title: 'People Type'},
 				{data: 'bu__bucode', title: 'Site'},
 				{data: 'isadmin', title: 'Is Admin'},
+				{data: 'enable', title: 'Enable'},
 			],
 			deferRender:true,
 			responsive:true,
@@ -49,6 +50,11 @@ People Lists
 					return `<a href=${updateUrl}?id=${row['id']}>${data}</a>`
 				}}
 			],
+			createdRow:function(row, data, dataIndex){
+				if(data['enable'] === false){
+					$(row).addClass('disabled-record text-white')
+				}
+			},
 			buttons:[
 				{
 					text     : `Add New &nbsp;<i class='fas fa-plus ch4'></i></a>`,

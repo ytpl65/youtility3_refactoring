@@ -825,7 +825,7 @@ class PeopleView(LoginRequiredMixin, View):
         'model': pm.People,
         'filter': pft.PeopleFilter,
         'fields': ['id', 'peoplecode', 'peoplename', 'peopletype__tacode', 'bu__bucode',
-                   'isadmin'],
+                   'isadmin', 'enable'],
         'form_initials': {'initial': {}}}
 
     def get(self, request, *args, **kwargs):
@@ -839,7 +839,7 @@ class PeopleView(LoginRequiredMixin, View):
 
             objs = self.params['model'].objects.select_related(
                 *self.params['related']).filter(
-                    ~Q(peoplecode='NONE'), enable = True
+                    ~Q(peoplecode='NONE')
             ).values(*self.params['fields'])
             return rp.JsonResponse(data = {'data':list(objs)}, status = 200)
 

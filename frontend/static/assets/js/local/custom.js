@@ -100,6 +100,11 @@ function showHideFields(selected) {
       $(".optionGrp").show();
       $(".numeric").hide();
       removeRequiredAttr("numeric");
+    }else if (selectedText.toUpperCase() === 'RATING'){
+      $('.numeric').hide()
+      $('.rating.numeric').show();
+      $(".optionGrp").hide();
+      removeRequiredAttr("optionGrp");
     } else {
       $(".numeric").hide();
       $(".optionGrp").hide();
@@ -742,7 +747,8 @@ function get_question_formdata() {
   formData["id_ismandatory"] = $("#id_ismandatory").is(":checked");
   formData["id_question"] = getSelectedValue("#id_question");
   formData["question_id"] = $("#id_question").val();
-
+  formData['isavpt'] = $("#id_isavpt").is(':checked')
+  formData['avpttype'] = $('#id_avpttype').val()
   formData["id_options"] =
     $("#id_options").val() !== "" ? JSON.parse($("#id_options").val()) : "";
   //formData['id_question']      = getSelectedValue("#id_question")
@@ -847,10 +853,10 @@ function update_options_field(data, optionTag) {
 }
 
 function update_qsetblng_form(data, optionTag, fortable = false) {
+  debugger;
   $("#id_slno").val(parseInt(data[0], 10));
   $("select[name='question']")
-    .val($(`select option:contains(${data[1]})`).val())
-    .change();
+    .val($(`select option:contains(${data[1]})`).val());
   $("#id_answertype").val(data[3]);
   $("#id_min").val(data[4]);
   $("#id_max").val(data[5]);
@@ -859,6 +865,8 @@ function update_qsetblng_form(data, optionTag, fortable = false) {
   data[8] = data[8] === "True" ? true : false;
   $("#id_ismandatory").attr("checked", data[8]);
   adjust_above_below(data[7], fortable);
+  $("#id_isavpt").attr("checked", data[9]);
+  $("#id_avpttype").val(data[10]);
   $("#resetQsetB").show();
 
   //$("#id_alertbelow").val(data.id_alertbelow)
@@ -893,6 +901,8 @@ function processValidForm() {
     data.id_options,
     data.id_alerton,
     data.id_ismandatory,
+    data.isavpt,
+    data.avpttype
   ];
   table.row(".toupdate").remove().draw(false);
 

@@ -59,7 +59,7 @@ Checklist List
         Qsettable = $(table_id).DataTable({
 			//orderCellsTop: true,
 			ajax:{
-				url: "{{ url('activity:questionset') }}?action=list&type=CHECKLIST"
+				url: "{{ url('activity:checklist') }}?action=list&type=CHECKLIST"
 			},
             deferRender: true,
 			responsive : true,
@@ -112,7 +112,11 @@ Checklist List
 						})
 					}
 				}
-			]
+			],
+			select:{
+				style: 'single',
+				selector: 'tr'
+			}
 		})
 
 		

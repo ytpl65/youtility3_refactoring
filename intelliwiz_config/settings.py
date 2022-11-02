@@ -141,7 +141,7 @@ DATABASES = {
     'default': {
         'ENGINE':   'django.contrib.gis.db.backends.postgis',
         'USER':     env('DBUSER'),
-        'NAME':     env('DBNAME'),
+        'NAME':     'icici_staging_db',
         'PASSWORD': env('DBPASS'),
         'HOST':     env('DBHOST'),
         'PORT':     '5432',

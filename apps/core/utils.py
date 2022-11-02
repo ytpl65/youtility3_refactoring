@@ -1295,3 +1295,10 @@ def verify_emailaddr(email):
         logger.warning('email is not valid')
         return False
         
+def verify_loginid(loginid):
+    import re
+    return bool(re.match(r"^[a-zA-Z0-9@#_\-\_]+$", loginid))
+    
+def verify_peoplename(peoplename):
+    import re
+    return bool(re.match(r"^[a-zA-Z0-9\-_@#\(\|\) ]*$", peoplename))

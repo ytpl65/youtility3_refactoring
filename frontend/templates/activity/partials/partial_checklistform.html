@@ -1,20 +1,20 @@
 {% extends "partial_base.html" %}
 
 {% block head %}
-{{ masterqset_form.media.css }}
+{{ checklistform.media.css }}
 {% endblock head %}
 
 {% block body %}
 
 <div class="modal-header border-0">
-    <h3 class="modal-title modal-heading" id="exampleModalLabel">Create {{ label }} <i
+    <h3 class="modal-title modal-heading" id="exampleModalLabel">Create Checklist <i
             class="fas fa-poll-h fa-sm ch4"></i></h3>
     <button type="button" class="btn-sm btn-close modal-close-control" aria-label="Close"></button>
 </div>
 <div class="modal-body" id="partial">
     <form action="" method="post" id="id_qsetform">
     <input type="hidden" name="pk" id="pk">
-    <input type="hidden" name="{{ masterqset_form.ctzoffset.name }}" id = "{{ masterqset_form.ctzoffset.auto_id }}" value="-1">
+    <input type="hidden" name="{{ checklistform.ctzoffset.name }}" id = "{{ checklistform.ctzoffset.auto_id }}" value="-1">
         <div class="alert alert-danger alert-dismissible fade show" id="nonfield_errors" role="alert"
             style="display:none">
             <strong>Error</strong> <span></span>
@@ -23,42 +23,68 @@
         <!--============================== QuestionSet FORM FIELDS START =============================-->
         <div class="row mb-3 gy-3">
             <!--Qusetion Set Name Start-->
-            <label for="{{ masterqset_form.qsetname.id_for_label }}" class="required col-md-1 col-sm-1">Name:</label>
+            <label for="{{ checklistform.qsetname.id_for_label }}" class="required col-md-1 col-sm-1">Name:</label>
             <div class="col-md-11 col-sm-11">
-                {{ masterqset_form.qsetname }}
-                {{ masterqset_form.qsetname.errors }}
+                {{ checklistform.qsetname }}
+                {{ checklistform.qsetname.errors }}
             </div>
             <!--Qusetion Set Name End-->
 
             <!--Checkpoint Start-->
-            <label for="{{ masterqset_form.assetincludes.id_for_label }}"
-                class="required col-md-2 col-sm-2">{% if label == 'Checklist' %}Checkpoints{% else %} Asset/Smartplace{% endif %}:</label>
-            <div class="col-md-10 col-sm-10">
-                {{ masterqset_form.assetincludes }}
-                {{ masterqset_form.assetincludes.errors }}
+            <label for="{{ checklistform.assetincludes.id_for_label }}"
+                class="required col-md-2 col-sm-2">Checkpoints:</label>
+            <div class="col-md-4 col-sm-4">
+                {{ checklistform.assetincludes }}
+                {{ checklistform.assetincludes.errors }}
             </div>
             <!--Checkpoint End-->
+                <!--Site Includes Start-->
+                <label for="{{ checklistform.buincludes.id_for_label }}"
+                    class="required col-md-2 col-sm-2">Site Includes:</label>
+                <div class="col-md-4 col-sm-4">
+                    {{ checklistform.buincludes }}
+                    {{ checklistform.buincludes.errors }}
+                </div>
+                <!--Site Includes End-->
+                
+                <!--Site Group Includes Start-->
+                <label for="{{ checklistform.site_grp_includes.id_for_label }}"
+                    class="required col-md-2 col-sm-2">Site Group Includes:</label>
+                <div class="col-md-4 col-sm-4">
+                    {{ checklistform.site_grp_includes }}
+                    {{ checklistform.site_grp_includes.errors }}
+                </div>
+                <!--Site Group Includes End-->
+                <!--Site Type Includes Start-->
+                <label for="{{ checklistform.site_type_includes.id_for_label }}"
+                    class="required col-md-2 col-sm-2">Site Type Includes:</label>
+                <div class="col-md-4 col-sm-4">
+                    {{ checklistform.site_type_includes }}
+                    {{ checklistform.site_type_includes.errors }}
+                </div>
+                <!--Site Type Includes End-->
+            
 
             <!-- Parent Start -->
-            <label for="{{ masterqset_form.parent.id_for_label }}" class="required col-md-1 col-sm-1">Parent:</label>
-            <div class="col-md-7 col-sm-7">
-                {{ masterqset_form.parent }}
-                {{ masterqset_form.parent.errors }}
+            <label for="{{ checklistform.parent.id_for_label }}" class="required col-md-1 col-sm-1">Parent:</label>
+            <div class="col-md-4 col-sm-4">
+                {{ checklistform.parent }}
+                {{ checklistform.parent.errors }}
             </div>
             <!-- Parent End -->
 
             <!-- Enable Start -->
             <div class="booleans col-md-4 col-sm-4 d-flex justify-content-sm-between mt-5
             form-check form-switch form-check-custom form-check-solid">
-                <label for="{{ masterqset_form.enable.id_for_label }}"
+                <label for="{{ checklistform.enable.id_for_label }}"
                     class="form-check-label bool col-form-label me-5 text-sm-right">
-                    {{ masterqset_form.enable.label }}: &nbsp; {{ masterqset_form.enable }}
+                    {{ checklistform.enable.label }}: &nbsp; {{ checklistform.enable }}
                 </label>
             </div>
             <!-- Enable End -->
 
             <!--QuestionSet Type Start-->
-            {{ masterqset_form.type }}
+            {{ checklistform.type }}
             <!--QuestionSet Type End-->
         </div>
     </form>
@@ -66,7 +92,7 @@
     <!--============================== QuestionSet FORM FIELDS END ============================-->
 
     <!--============================== QuestionSet FORM FIELDS END ============================-->
-    {# {% if masterqset_form.instance.id %} #}
+    {# {% if checklistform.instance.id %} #}
     <div class="accordion" id="assign_questions">
         <div class="accordion-item">
             <!--begin::Header-->
@@ -82,7 +108,7 @@
             <!--begin::Body-->
             <form action="" method="post" id="qsetbng_form">
                 <div id="assign_questions_body" aria-labelledby="assign_questions_heading"
-                    class=" ps-10 {% if masterqset_form.instance.id %} {% else %} collapse {% endif %}"
+                    class=" ps-10 {% if checklistform.instance.id %} {% else %} collapse {% endif %}"
                     data-bs-parent="#assign_questions">
                     <br>
                     <div class="row fv-row mb-3 gy-2">
@@ -188,6 +214,8 @@
                                 <th>Option</th>
                                 <th>Alert On</th>
                                 <th>Mandatory</th>
+                                <th>Is Avpt</th>
+                                <th>Avpt Type</th>
                             </thead>
                             <tbody>
                                 {% if questions is defined %}
@@ -202,6 +230,8 @@
                                     <td>{{ question["options"] }}</td>
                                     <td>{{ question["alerton"] | string }} </td>
                                     <td>{{ question["ismandatory"] }}</td>
+                                    <td>{{ question["isavpt"] }}</td>
+                                    <td>{{ question["avpttype"] }}</td>
                                 </tr>
                                 {% endfor %}
                                 {% else %}
@@ -223,12 +253,12 @@
     <button type="button" class="btn btn-sm btn-secondary modal-close-control btn-hover-scale">
         Close <i class="fas fa-times"></i>
     </button>
-    {% if masterqset_form.instance.id %}
+    {% if checklistform.instance.id %}
     <button type="submit" id="submit" form="id_qsetform" class="btn btn-sm btn-primary btn-hover-scale">
         Update&nbsp;<i class="fas fa-cloud-upload-alt"></i>
     </button>
 
-    <button type="button" onclick="deleteQset(this)" data-id="{{ masterqset_form.instance.id }}" id="deleteAttd"
+    <button type="button" onclick="deleteQset(this)" data-id="{{ checklistform.instance.id }}" id="deleteAttd"
         class="btn btn-sm btn-danger btn-hover-scale">
         Delete&nbsp;<i class="fas fa-trash-alt"></i>
     </button>
@@ -241,7 +271,7 @@
 {% endblock body %}
 
 {% block js %}
-{{ masterqset_form.media.js }}
+{{ checklistform.media.js }}
 <script src="{{ static('assets/js/formValidations.js') }}"></script>
 <script>
     //$('.optionGrp').hide()
@@ -323,12 +353,13 @@
                     targets: [1, 2, 3, 4, 5, 6, 7, 8]
                 },
                 {
-                    "targets": [2],
+                    "targets": [2, 9, 10],
                     "visible": false,
                     "searchable": false
                 },
 
             ],
+            select:'single'
 
         })
 
@@ -392,10 +423,10 @@
                     addRemoveClass(this)
                     const isDeleted = false
                     console.log("delete initiated")
-                    if ('{{ masterqset_form.instance.id }}' !== ('None' || "")) {
+                    if ('{{ checklistform.instance.id }}' !== ('None' || "")) {
                         data = table.row('.selected').data()
                         console.log(data)
-                        isDeleted = deleteQuestionRequest(data[1], data[3], "{{ masterqset_form.instance.id }}")
+                        isDeleted = deleteQuestionRequest(data[1], data[3], "{{ checklistform.instance.id }}")
                     }if(isDeleted){
                         table.row('.selected').remove().draw();
                         adjustSlnoInTable()
@@ -406,10 +437,10 @@
 
         //on click delete-btn of questionform delete the row from the datatable
         $("#deleteQuestion").on('click', function () {
-            if ('{{ masterqset_form.instance.id }}' !== ('None' || "")) {
-                console.log('{{ masterqset_form.instance.id }}')
+            if ('{{ checklistform.instance.id }}' !== ('None' || "")) {
+                console.log('{{ checklistform.instance.id }}')
                 data = table.row('.toupdate').data()
-                deleteQuestionRequest(data[1], data[3], "{{ masterqset_form.instance.id }}")
+                deleteQuestionRequest(data[1], data[3], "{{ checklistform.instance.id }}")
             }
             table.row('.toupdate').remove().draw();
             adjustSlnoInTable()
@@ -421,7 +452,7 @@
         })
 
         $(".modal-close-control").on("click", function () {
-            if ('{{ masterqset_form.instance.id }}' !== ('None' || "")) {
+            if ('{{ checklistform.instance.id }}' !== ('None' || "")) {
                 if (checkQsetWoQuestions(table)) {
                     questionsWoQuestionSetAlert()
                 } else {
@@ -433,14 +464,18 @@
                         })
                 }
             } else {
-                if("{{ masterqset_form.is_bound }}" == "True" || table.rows().count() > 0 ){
+                if("{{ checklistform.is_bound }}" == "True" || table.rows().count() > 0 ){
                     warnFormCLoseAlert()
                     .then((result) => {
                         if (result.isConfirmed) {
                             $(modal_id).modal('hide')
+                            table.rows('.selected').deselect()
                         }
                     })
-                }else{$(modal_id).modal('hide')}
+                }else{
+                    $(modal_id).modal('hide')
+                    table.rows('.selected').deselect()
+                    }
                 
             }
         })
@@ -463,7 +498,7 @@
                     modal: true
                 } //checklist view
                 const formtype = $(modalcontent_id).attr('data-form') //form-type (create/update)
-                const id = '{{ masterqset_form.instance.id }}' //form instance id
+                const id = '{{ checklistform.instance.id }}' //form instance id
                 var payLoad = {
                     formData: form.serialize(),
                     asssigned_questions: JSON.stringify(table.rows().data().toArray()),

@@ -1586,6 +1586,7 @@ class ExternalTourScheduling(LoginRequiredMixin, View):
             if R['id'] == 'None': return rp.JsonResponse({'data':[]}, status = 200)
             job = am.Job.objects.filter(id = int(R['id'])).values(*utils.JobFields.fields)[0]
             objs = pm.Pgbelonging.objects.get_sitesfromgroup(job)
+            ic(objs)
             return rp.JsonResponse({'data':list(objs)}, status = 200)
         
         # return resp to load checklist

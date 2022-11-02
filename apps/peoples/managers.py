@@ -128,10 +128,10 @@ class PgblngManager(models.Manager):
             qset = self.annotate(
                 gpslocation = AsGeoJSON('assignsites__gpslocation'),
                 buname = F('assignsites__buname'), bucode=F('assignsites__bucode'),
-                buid = F('assignsites_id')
+                buid = F('assignsites_id'), solid = F('assignsites__solid')
             ).select_related('assignsites', 'identifier').filter(
                 pgroup_id = job['sgroup_id']
-            ).values('gpslocation', 'bucode', 'buname', 'buid')
+            ).values('gpslocation', 'bucode', 'buname', 'buid', 'solid')
             if qset:
                 for q in qset:
                     q.update(

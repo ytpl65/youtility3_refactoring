@@ -140,12 +140,12 @@ class PeopleForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         self.fields['peopletype'].queryset = om.TypeAssist.objects.filter(
             tatype__tacode="PEOPLETYPE")
-        self.fields['worktype'].queryset = om.TypeAssist.objects.filter(
-            tatype__tacode="WORKTYPE")
+        self.fields['worktype'].choices = om.TypeAssist.objects.filter(
+            tatype__tacode="WORKTYPE").values_list('id', 'tacode')
         self.fields['department'].queryset = om.TypeAssist.objects.filter(
             tatype__tacode="DEPARTMENT")
-        self.fields['designation'].queryset = om.TypeAssist.objects.filter(
-            tatype__tacode="DESIGNATION")
+        self.fields['designation'].choices = om.TypeAssist.objects.filter(
+            tatype__tacode="DESIGNATION").values_list('id', 'taname')
         self.fields['dateofbirth'].input_formats  = settings.DATE_INPUT_FORMATS
         self.fields['dateofreport'].input_formats = settings.DATE_INPUT_FORMATS
         self.fields['dateofjoin'].input_formats   = settings.DATE_INPUT_FORMATS
@@ -191,14 +191,14 @@ class PeopleForm(forms.ModelForm):
         if value := self.cleaned_data.get('loginid'):
             if " " in value:
                 raise forms.ValidationError(self.error_msg['invalid_id2'])
-            regex = '[a-zA-Z0-9@\-\.]+'
+            regex = '[a-zA-Z0-9@#_\-\._]+'
             if not re.match(regex, value):
                 raise forms.ValidationError(self.error_msg['invalid_id'])
             return value
 
     def clean_peoplename(self):
         if value := self.cleaned_data.get('peoplename'):
-            regex = "^[a-zA-Z0-9\-_@#\[\]\(\|\)\{\} ]*$"
+            regex = "^[a-zA-Z0-9\-_@#\(\|\) ]*$"
             if not re.match(regex, value):
                 raise forms.ValidationError(self.error_msg['invalid_name'])
         return value

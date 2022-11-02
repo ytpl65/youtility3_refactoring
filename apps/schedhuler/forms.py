@@ -167,7 +167,7 @@ class Schd_E_TourJobForm(JobForm):
 
     class Meta(JobForm.Meta):
         JobForm.Meta.labels.update({
-            'sgroup':'SiteGroup'
+            'sgroup':'Route Name'
             }) 
         JobForm.Meta.widgets.update(
             {'identifier':forms.TextInput(attrs={'style': 'display:none;'}),

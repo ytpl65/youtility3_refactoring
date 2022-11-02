@@ -385,10 +385,12 @@ Buisiness-View
 	}
 
 	function getLatLng(){
-		return {
-			lat:parseFloat("{{ buform.instance.gpslocation.y }}"),
-			lng:parseFloat("{{ buform.instance.gpslocation.x }}")
-		}
+		var gps  = '{% if buform.instance.gpslocation != None %}{{ buform.instance.gpslocation.y }},{{ buform.instance.gpslocation.x }}{% else %} null {% endif %}';
+		if(gps != "None"){
+			console.log('{{ buform.instance.gpslocation }}')
+			return { lat:parseFloat(gps.split(',')[0]), lng:parseFloat(gps.split(',')[1]) }
+		}return {lat:0.0, lng:0.0}
+		
 	}
 
 	function initMap() {

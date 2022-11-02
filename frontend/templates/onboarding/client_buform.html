@@ -256,6 +256,14 @@ Client
             return false;
         }return true;
     }
+    
+    function validateName(name){
+        // validate bucode return false bucode has special characters and contains space
+        var regex = /^[a-zA-Z0-9_\-@#\.]+$/;
+        if(!regex.test(name)){
+            return false;
+        }return true;
+    }
 
     function validateEmail(email){
         //validate email return false if email is invalid
@@ -274,7 +282,7 @@ Client
     }
     function validateLoginid(loginid){
         //validate loginid return false if loginid is invalid
-        var regex = /^[a-zA-Z0-9]+$/;
+        var regex = /^[a-zA-Z0-9@#_\.\-\_]+$/;
         if(!regex.test(loginid)){
             return false;
         }return true
@@ -461,7 +469,7 @@ Client
                 {label: 'Mobile', name: 'mobno', data: 'mobno', fieldInfo:"Enter country code followed by 10 digit mobile no"},
                 {label: 'Date Of Birth', name: 'dateofbirth', data: 'dateofbirth', type:'datetime', fieldInfo:"Select or Enter date of birth in yyyy-mm-dd format"},
                 {label: 'Date Of Join', name: 'dateofjoin', data: 'dateofjoin', type:'datetime'},
-                {label: 'Is Admin', name: 'isadmin', data: 'isadmin',type: 'select', def:1,
+                {label: 'Is Admin', name: 'isadmin', data: 'isadmin',type: 'select', def:1, readonly:true,
                 options:   [
                     { label: 'True', value: 1 },
                     { label: 'False', value: 0 }
@@ -484,6 +492,10 @@ Client
 
         adminsEditor.on('open', function(e, mode, action){
             $(".DTE_Field").addClass('p-1') // add required classes
+        })
+
+        adminsEditor.on('opened', function(e, mode, action){
+            this.field('isadmin').disable()
         })
 
         //adminsEditor form validations

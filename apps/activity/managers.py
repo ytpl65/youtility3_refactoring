@@ -618,6 +618,7 @@ class JobManager(models.Manager):
             breaktime = F('other_info__breaktime'),
             distance=F('other_info__distance'),
             duration = V(None, output_field=models.CharField(null=True)),
+            solid = F('bu__solid'),
             qsetname=F('qset__qsetname')
             
         ).filter(parent_id=job['id']).select_related('asset', 'qset',).values(
@@ -625,7 +626,7 @@ class JobManager(models.Manager):
             'breaktime', 'distance', 'starttime', 'expirytime',
             'qsetid', 'jobid', 'assetid', 'seqno', 'jobdesc',
             'buname', 'buid', 'gpslocation', 'endtime', 'duration',
-            'qsetname'
+            'qsetname', 'solid'
         ).order_by('seqno')
         return qset or self.none()
 

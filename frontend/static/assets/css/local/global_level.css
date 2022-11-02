@@ -86,6 +86,7 @@ select {
     border: 1px solid #ced4da;
 }
 
+
 /*Disable pointer events when sidebar minimized*/
 body[data-kt-aside-minimize="on"]>.menu-item {
     pointer-events: none;
@@ -340,5 +341,13 @@ box-shadow: inset 0 0 0 9999px #0abffc;
 }
 
 tr.selected td a{
+    color: white;
+}
+tr.disabled-record td {
+    background-color: rgb(245, 119, 119) !important;
+    background-image:linear-gradient(rgb(245, 119, 119), #ff7474);
+}
+
+tr.disabled-record td a {
     color: white;
 }
