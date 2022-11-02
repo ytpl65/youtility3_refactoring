@@ -1133,5 +1133,13 @@ class SiteGroup(LoginRequiredMixin, View):
 
 
 
-
-
+class NoSite(View, LoginRequiredMixin):
+    def get(self, request):
+        cxt = {'nositeform':pf.NoSiteForm()}
+        return render(request, 'peoples/nosite.html', cxt)
+    
+    def post(self, request):
+        form = pf.NoSiteForm(request.POST)
+        if form.is_valid():
+            request.session['bu_id'] = form.cleaned_data['site']
+            return redirect('/dashboard')

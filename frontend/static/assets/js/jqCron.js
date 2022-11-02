@@ -348,8 +348,8 @@ var jqCronDefaultSettings = {
       var text = settings.texts[settings.lang][key] || null;
       if (typeof text == "string" && text.match("<b")) {
         text = text.replace(
-          /(<b *\/>)/gi,
-          '</span><b /><span class="jqCron-text">'
+          /(<br *\/>)/gi,
+          '</span><br /><span class="jqCron-text">'
         );
         text = '<span class="jqCron-text">' + text + "</span>";
       }
@@ -968,7 +968,7 @@ var jqCronDefaultSettings = {
     this.$ = _$selector;
 
     // constructor
-    _$block.find("b:eq(0)").after(_$selector).remove();
+    _$block.find("br:eq(0)").after(_$selector).remove();
     _$selector
       .addClass("jqCron-selector-" + _$block.find(".jqCron-selector").length)
       .append(_$title)

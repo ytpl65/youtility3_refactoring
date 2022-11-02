@@ -143,7 +143,7 @@ Schedhule External-Tour&nbsp;<i class="fa fa-clock fs-4 text-primary" aria-hidde
                     <label for="{{ schdexternaltourform.cron.id_for_label }}" class="required">{{ schdexternaltourform.cron.label }}:</label>
                 </div>
                 <div class="col-md-8 d-flex">
-                    <input type="text" name="{{ schdexternaltourform.cron.name }}" value="{{ schdexternaltourform.cron.value() }}" id="id_cron"
+                    <input type="text" name="{{ schdexternaltourform.cron.name }}" value="* * * * *" id="id_cron"
                     readonly required class="form-control form-control-solid" maxlength="250" />
                     <a  class="btn btn-circle btn-icon-only btn-default " id="cron_selector">
                         <i class="fa fa-clock fs-4 text-primary" aria-hidden="true"></i>

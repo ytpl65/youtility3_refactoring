@@ -428,3 +428,10 @@ class PeopleGrpAllocation(forms.Form):
         result = super().is_valid()
         utils.apply_error_classes(self)
         return result
+
+class NoSiteForm(forms.Form):
+    site = forms.ChoiceField(required = False, widget = s2forms.Select2Widget)
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['site'].choices = pm.People.objects.get_assigned_sites()
