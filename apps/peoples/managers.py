@@ -146,6 +146,40 @@ class PgblngManager(models.Manager):
                         'qsetname':job['qset__qsetname'], 'duration':None, 'expirytime':None,
                         'distance':None, 'jobid':None, 'assetid':1, 'breaktime':None})
         return qset or self.none()
+    
+    def get_assigned_sites_to_people(self, peopleid, makechoice=False):
+        "returns sites assigned to people"
+        from apps.peoples.models import People
+        from apps.onboarding.models import Bt
+
+        #get default site assigned to people
+        peopleqset = People.objects.annotate(
+            buname= F('bu__buname'), bucode=F('bu__bucode'), buid = F('bu_id')
+        ).filter(id = peopleid)
+
+        if peopleqset and peopleqset[0].isadmin:
+            #return all sites of client
+            bulist_ids = Bt.objects.get_bu_list_ids(clientid=peopleqset[0].client_id)
+            qset = Bt.objects.filter(id__in = bulist_ids).annotate(buid = F('id')).values('buid', 'bucode', 'buname')
+            if makechoice:
+                qset = qset.annotate(text = Concat(F('buname'), V(' ('), F('bucode'), V(')'))).values_list('buid', 'text')
+        else:
+            #get groupids assigned to people
+            assigned_sitegroup_ids = People.objects.filter(id = peopleid).values_list('people_extras__assignsitegroup', flat=True)
+
+            #get sites assigned to groupids
+            qset = self.select_related('assignsites').filter(
+                pgroup_id__in = assigned_sitegroup_ids[0]).annotate(
+                    buname = F('assignsites__buname'), bucode=F('assignsites__bucode'), buid = F('assignsites_id')
+                    ).values('buname', 'bucode', 'bu_id').order_by('assignsites_id').distinct('assignsites_id')
+
+            qset2 = peopleqset.values('buname', 'bucode', 'buid')
+
+            qset = qset.union(qset2) or self.none()
+            if qset and makechoice:
+                qset = qset.annotate(text = Concat(F('buname'), V(' ('), F('bucode'), V(')'))).values_list('buid', 'text')
+
+        return qset or self.none()
         
 
 

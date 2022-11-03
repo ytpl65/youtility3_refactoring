@@ -1303,3 +1303,4 @@ def verify_loginid(loginid):
 def verify_peoplename(peoplename):
     import re
     return bool(re.match(r"^[a-zA-Z0-9\-_@#\(\|\) ]*$", peoplename))
+

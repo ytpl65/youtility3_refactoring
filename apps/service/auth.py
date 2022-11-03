@@ -10,6 +10,7 @@ class Messages:
     MULTIDEVICES   = "Cannot login on multiple devices, Please logout from the other device"
     WRONGCREDS     = "Incorrect Username or Password"
     NOTREGISTERED  = "Device Not Registered"
+    NOSITE = "User site not found"
 
 def LoginUser(response, request):
     if response['isauthenticated']:
@@ -26,6 +27,9 @@ def LogOutUser(response, request):
             )
         ic(request.user)
 
+def check_user_site(user):
+    return user.bu_id not in [1, None, 'NONE', 'None']
+
 
 def auth_check(info, input, returnUser, uclientip = None):
     from django.contrib.auth import authenticate
@@ -39,6 +43,7 @@ def auth_check(info, input, returnUser, uclientip = None):
     except ValueError as e:
         raise GraphQLError(Messages.WRONGCREDS) from e
     else:
+        if not check_user_site(user): raise GraphQLError(Messages.NOSITE)
         allowAccess = isValidDevice = isUniqueDevice = True
         people_validips = user.client.bupreferences['validip']
         people_validimeis = user.client.bupreferences["validimei"].replace(" ", "").split(",")
@@ -47,12 +52,10 @@ def auth_check(info, input, returnUser, uclientip = None):
             clientIpList = people_validips.replace(" ", "").split(",")
             if uclientip is not None and uclientip not in clientIpList:
                 allowAccess = isAuth  = False
-        if user.deviceid in ('-1', input.deviceid): allowAccess = True
-        else:
+        if user.deviceid not in ('-1', input.deviceid):
             if input.deviceid not in people_validimeis: isValidDevice = False
             isAuth  = False
-            # raise GraphQLError(Messages.MULTIDEVICES)
-            allowAccess = True
+        if user.deviceid in ('-1', input.deviceid): allowAccess = True
         if allowAccess:
             if user.client.enable and user.enable:
                 return returnUser(user, info.context), user

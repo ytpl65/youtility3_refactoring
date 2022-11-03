@@ -430,10 +430,10 @@ class PeopleGrpAllocation(forms.Form):
         return result
 
 class NoSiteForm(forms.Form):
-    site = forms.ChoiceField(required = False, widget = s2forms.Select2Widget)
+    site = forms.ChoiceField(required = False, widget = s2forms.Select2Widget, label="Default Site")
     
     def __init__(self, *args, **kwargs):
         session = kwargs.pop('session')
         super().__init__(*args, **kwargs)
-        self.fields['site'].choices = pm.People.objects.get_assigned_sites(session.get('client_id'), session.get('_auth_user_id'))
+        self.fields['site'].choices = pm.Pgbelonging.objects.get_assigned_sites_to_people(session.get('_auth_user_id'), True)
         utils.initailize_form_fields(self)
