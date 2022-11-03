@@ -72,6 +72,7 @@ class SignIn(View):
                     utils.save_user_session(request, request.user)
                     display_user_session_info(request.session)
                     logger.info(f"User logged in {request.user.peoplecode}")
+                    if request.session.get('bu_id') in [1, None]: return redirect('peoples:no_site')
                     response = redirect('onboarding:wizard_delete') if request.session.get('wizard_data') else redirect('/dashboard')
 
                 else:
@@ -1133,13 +1134,18 @@ class SiteGroup(LoginRequiredMixin, View):
 
 
 
-class NoSite(View, LoginRequiredMixin):
+class NoSite(View):
     def get(self, request):
-        cxt = {'nositeform':pf.NoSiteForm()}
+        
+        cxt = {'nositeform':pf.NoSiteForm(session=request.session)}
         return render(request, 'peoples/nosite.html', cxt)
     
     def post(self, request):
-        form = pf.NoSiteForm(request.POST)
+        form = pf.NoSiteForm(request.POST, session=request.session)
         if form.is_valid():
-            request.session['bu_id'] = form.cleaned_data['site']
+            ic(request.session['bu_id'])
+            bu_id = form.cleaned_data['site']
+            request.session['bu_id'] = bu_id
+            pm.People.objects.filter(id=request.user.id).update(bu_id=bu_id)
+            ic(request.session['bu_id'])
             return redirect('/dashboard')

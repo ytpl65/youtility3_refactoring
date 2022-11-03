@@ -331,7 +331,6 @@ People
                 </div>
                 <!--LABEL FIELD-->
                 <!------------Checkboxes Rendering Last --------------------->
-                {% if request.user.isadmin %}
                 <div class="booleans col-md-12 d-flex justify-content-sm-between mt-5">
                     {% if peopleform.instance.password %}
                         <button type="button" id="change_pass" class="btn btn-sm col-md-2 btn-primary rounded-1" data-bs-target='#paswd_change_alert'
@@ -363,7 +362,6 @@ People
                     <label for = id_alertmails id="label_alertmails" class="form-check-label bool col-form-label me-5 text-sm-right">Alert Mails
                         &nbsp{{ pref_form.alertmails }}</label>
                 </div>
-                {% endif %}
             </div>
             <!--END INNER ROW-->
         </div>

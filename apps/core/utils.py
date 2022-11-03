@@ -529,7 +529,7 @@ def save_msg(request):
 def initailize_form_fields(form):
     
     for visible in form.visible_fields():
-        ic(visible.widget_type, visible.name)
+        #ic(visible.widget_type, visible.name)
         if visible.widget_type in ['text', 'textarea', 'datetime', 'time', 'number', 'date','email', 'decimal']:
             visible.field.widget.attrs['class'] = 'form-control'
         elif visible.widget_type in ['radio', 'checkbox']:
@@ -1094,6 +1094,7 @@ def namedtuplefetchall(cursor):
 def dictfetchall(cursor):
     "Return all rows from a cursor as a dict"
     columns = [col[0] for col in cursor.description]
+    ic(columns)
     return [
         dict(zip(columns, row))
         for row in cursor.fetchall()

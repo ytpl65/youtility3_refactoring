@@ -1,15 +1,55 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Select Site</title>
+    <!-- BEGIN GLOBAL STYLESHEETS BUNDLE (used by all pages) -->
+    <link href="{{ static('assets/plugins/global/plugins.bundle.css') }}" rel="stylesheet" type="text/css" />
+    <link href="{{ static('assets/css/style.bundle.css') }}" rel="stylesheet" type="text/css" />
+    <link href="{{ static('assets/plugins/custom/jquery-ui/jquery-ui.min.css') }}" rel="stylesheet" type="text/css" />
+
+    {{ nositeform.media.css }}
 </head>
+
 <body>
     <div class="container">
-        <div class="row justify-content-center">
+        <div class="row justify-content-center align-middle">
+            <div class="col-md-8 col-lg-6 col-xl-4 ">
+                <div class="card shadow-sm" style="margin-top: 250px;">
+                    <div class="card-header justify-content-center">
+                        <div class="site_logo mt-5"><img class="dlogo"
+                                src="{{static('assets/media/images/logo-transparent.png')}}" alt="">
+                        </div>
+                     </div>
+                        <div class="card-body p-5">
+                            <form action="" method="post"id="nosite">
+
+                                <div class="col"><input type="hidden" name="csrfmiddlewaretoken"
+                                        value="{{ csrf_token }}">
+                                    {{ nositeform.site.label_tag() }}
+                                    {{ nositeform.site }}
+                                </div>
+                                
+                            </form>
+                        </div>
+                        <div class="card-footer justify-content-around">
+                            <button type="submit" form="nosite" class="btn btn-primary btn-sm mt-4">Submit</button>
+                            <a href="{{ url('logout') }}">Log Out</a>
+                        </div>
+                   
+                </div>
+            </div>
         </div>
-    </div>
+        <!-- BEGIN  GLOBAL JS BUNDLE (used by all pages) -->
+        <script src="{{ static('assets/plugins/global/plugins.bundle.js') }}"></script>
+        <script src="{{ static('assets/js/scripts.bundle.js') }}"></script>
+        <script src="{{ static('assets/plugins/custom/jquery-ui/jquery-ui.min.js') }}"></script>
+        <!-- END  GLOBAL JS BUNDLE (used by all pages) -->
+
+        {{ nositeform.media.js }}
 </body>
+
 </html>

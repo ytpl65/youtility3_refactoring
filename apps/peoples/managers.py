@@ -73,6 +73,13 @@ class PeopleManager(BaseUserManager):
             enable=True,
         ).annotate(text =Concat(F('peoplename'), V(' ('), F('peoplecode'), V(')'))).values_list('id', 'text')
         return qset or self.none()
+    
+    def get_assigned_sites(self, clientid, peopleid):
+        from apps.onboarding.models import Bt
+        qset = Bt.objects.filter(id__gte=12, id__lte=150).annotate(
+            text = Concat(F('buname'),  V(' ('), F('bucode'), V(')'))).values_list('id', 'text')
+        
+        return qset
 
 
 

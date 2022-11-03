@@ -433,5 +433,7 @@ class NoSiteForm(forms.Form):
     site = forms.ChoiceField(required = False, widget = s2forms.Select2Widget)
     
     def __init__(self, *args, **kwargs):
+        session = kwargs.pop('session')
         super().__init__(*args, **kwargs)
-        self.fields['site'].choices = pm.People.objects.get_assigned_sites()
+        self.fields['site'].choices = pm.People.objects.get_assigned_sites(session.get('client_id'), session.get('_auth_user_id'))
+        utils.initailize_form_fields(self)

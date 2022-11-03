@@ -50,7 +50,7 @@ class BtManager(models.Manager):
         Return sitelist assigned to peopleid
         considering whether people is admin or not.
         """
-        qset = self.raw("select fn_get_siteslist_web(%s, %s) as id", [clientid, peopleid])
+        qset = utils.runrawsql('select fn_get_siteslist_web(%s, %s)', [clientid, peopleid])
         return qset or self.none()
 
     def get_whole_tree(self, clientid):
