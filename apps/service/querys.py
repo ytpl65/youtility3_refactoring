@@ -130,7 +130,6 @@ class Query(graphene.ObjectType):
         data = TypeAssist.objects.get_typeassist_modified_after(mdtzinput, clientid)
         records, count, msg = utils.get_select_output(data)
         log.info(f'{count} objects returned...')
-        ic(records)
         return SelectOutputType(nrows = count, records = records,msg = msg)
 
     @staticmethod
@@ -198,16 +197,14 @@ class Query(graphene.ObjectType):
     @staticmethod
     def resolve_getsitelist(self, info, clientid, peopleid):
         log.info('request for sitelist..')
-        data = Bt.objects.getsitelist(clientid, peopleid)
+        data = Pgbelonging.objects.get_assigned_sites_to_people(peopleid, forservice=True)
         records, count, msg = utils.get_select_output(data)
-        ic("get_sitelist", records) 
         log.info(f'{count} objects returned...')
         return SelectOutputType(nrows = count, records = records,msg = msg)
 
     @staticmethod
     def resolve_verifyclient(self,info, clientcode):
         print("function started")
-        ic(clientcode)
         try:
             utils.set_db_for_router(clientcode.lower())
             Bt.objects.get(bucode = clientcode.upper(), enable = True)

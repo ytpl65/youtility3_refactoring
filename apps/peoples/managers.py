@@ -147,10 +147,14 @@ class PgblngManager(models.Manager):
                         'distance':None, 'jobid':None, 'assetid':1, 'breaktime':None})
         return qset or self.none()
     
-    def get_assigned_sites_to_people(self, peopleid, makechoice=False):
+    def get_assigned_sites_to_people(self, peopleid, makechoice=False, forservice=False):
         "returns sites assigned to people"
         from apps.peoples.models import People
         from apps.onboarding.models import Bt
+        bufields = [
+            'buname', 'bucode', 'bu_id', 'butype_id', 'enable', 'cdtz', 'mdtz',
+            'cuser_id', 'muser_id', 'skipsiteaudit', 'identifier_id', 'bupreferences'
+        ]
 
         #get default site assigned to people
         peopleqset = People.objects.annotate(
@@ -160,7 +164,10 @@ class PgblngManager(models.Manager):
         if peopleqset and peopleqset[0].isadmin:
             #return all sites of client
             bulist_ids = Bt.objects.get_bu_list_ids(clientid=peopleqset[0].client_id)
+            #return for mobile service
+            if forservice: return Bt.objects.annotate(bu_id=F('id')).filter(id__in = bulist_ids).select_related('identifier', 'butype', 'cuser', 'muser').values(*bufields) or Bt.objects.none()
             qset = Bt.objects.filter(id__in = bulist_ids).annotate(buid = F('id')).values('buid', 'bucode', 'buname')
+            #return as a dropdown choices
             if makechoice:
                 qset = qset.annotate(text = Concat(F('buname'), V(' ('), F('bucode'), V(')'))).values_list('buid', 'text')
         else:
@@ -171,14 +178,15 @@ class PgblngManager(models.Manager):
             qset = self.select_related('assignsites').filter(
                 pgroup_id__in = assigned_sitegroup_ids[0]).annotate(
                     buname = F('assignsites__buname'), bucode=F('assignsites__bucode'), buid = F('assignsites_id')
-                    ).values('buname', 'bucode', 'bu_id').order_by('assignsites_id').distinct('assignsites_id')
+                    ).values('buname', 'bucode', 'buid').order_by('assignsites_id').distinct('assignsites_id')
 
-            qset2 = peopleqset.values('buname', 'bucode', 'buid')
-
-            qset = qset.union(qset2) or self.none()
+            buids = qset.values_list('buid', flat=True)
+            
             if qset and makechoice:
                 qset = qset.annotate(text = Concat(F('buname'), V(' ('), F('bucode'), V(')'))).values_list('buid', 'text')
-
+            
+            #return for mobile service
+            if forservice: return Bt.objects.annotate(bu_id=F('id')).filter(id__in = buids).select_related('identifier', 'butype', 'cuser', 'muser').values(*bufields) or Bt.objects.none()
         return qset or self.none()
         
 
