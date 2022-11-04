@@ -13,6 +13,7 @@ from .validators import clean_record
 from pprint import pformat
 from intelliwiz_config.celery import app
 from celery.utils.log import get_task_logger
+from deepface import DeepFace
 log = get_task_logger(__name__)
 
 def insertrecord(record, tablename):
@@ -418,12 +419,11 @@ def perform_facerecognition_bgt(self, pelogid, peopleid, ownerid, home_dir, uplo
                             default_image_path = PEOPLE_PIC.default_img_path
                             default_image_path = home_dir + default_image_path
                             log.info(f"default image path:{default_image_path}")
-                            from deepface import DeepFace
                             log.info("deepface is imported going to verify 2 images")
                             fr_results = DeepFace.verify(img1_path = default_image_path, img2_path = uploadfile)
                             log.info(f"deepface verification completed and results are {fr_results}")
-                            PeopleEventlog.objects.update_fr_results(fr_results, pelogid, peopleid, db)
-                            log.info("updation of fr_results in peopleeventlog is completed...")
+                            if PeopleEventlog.objects.update_fr_results(fr_results, pelogid, peopleid, db):
+                                log.info("updation of fr_results in peopleeventlog is completed...")
     except ValueError as v:
         log.error("face recogntion failed", exc_info = True)
     except Exception as e:
