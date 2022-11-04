@@ -250,7 +250,7 @@ class TypeAssistManager(models.Manager):
             mdtz = datetime.strptime(mdtz, "%Y-%m-%d %H:%M:%S")
 
         qset = self.select_related(*self.related).filter(
-            Q(mdtz__gte = mdtz) & (Q(client_id__in=[6]) | Q(cuser__is_superuser=True) | Q(cuser__peoplecode='NONE'))
+            Q(mdtz__gte = mdtz) & (Q(client_id__in=[clientid]) | Q(cuser__is_superuser=True) | Q(cuser__peoplecode='NONE')) & Q(enable=True)
         ).values(*self.fields)
         return qset or None
     
