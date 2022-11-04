@@ -152,7 +152,7 @@ class PgblngManager(models.Manager):
         from apps.peoples.models import People
         from apps.onboarding.models import Bt
         bufields = [
-            'buname', 'bucode', 'bu_id', 'butype_id', 'enable', 'cdtz', 'mdtz',
+            'buname', 'bucode', 'bu_id', 'butype_id', 'enable', 'cdtz', 'mdtz', 'siteincharge_id',
             'cuser_id', 'muser_id', 'skipsiteaudit', 'identifier_id', 'bupreferences'
         ]
 
