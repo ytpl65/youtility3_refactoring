@@ -140,7 +140,6 @@ class Query(graphene.ObjectType):
         data = People.objects.get_people_modified_after(mdtzinput, buid)
         records, count, msg = utils.get_select_output(data)
         log.info(f'{count} objects returned...')
-        ic(records)
         return SelectOutputType(nrows = count, records = records,msg = msg)
 
     @staticmethod
@@ -150,7 +149,6 @@ class Query(graphene.ObjectType):
         data = Pgroup.objects.get_groups_modified_after(mdtzinput, buid)
         records, count, msg = utils.get_select_output(data)
         log.info(f'{count} objects returned...')
-        ic(records)
         return SelectOutputType(nrows = count, records = records,msg = msg)
 
     @staticmethod
@@ -168,7 +166,6 @@ class Query(graphene.ObjectType):
         data = QuestionSet.objects.get_qset_modified_after(mdtzinput, buid)
         records, count, msg = utils.get_select_output(data)
         log.info(f'{count} objects returned...')
-        ic(records)
         return SelectOutputType(nrows = count, records = records,msg = msg)
 
 
