@@ -27,8 +27,8 @@ class PELManager(models.Manager):
             """,params=[pelogid]
         )[0] or self.none()
 
-    def update_fr_results(self, result, id, peopleid, db):
-        if obj := self.filter(id=id).using(db):
+    def update_fr_results(self, result, uuid, peopleid, db):
+        if obj := self.filter(uuid=uuid).using(db):
             extras = obj[0].peventlogextras
             if obj[0].punchintime:
                 extras['verified_in'] = result['verified']
