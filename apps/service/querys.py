@@ -7,6 +7,7 @@ from django.db import connections
 from collections import namedtuple
 from logging import getLogger
 log = getLogger('__main__')
+import json
 from .types import (VerifyClientOutput,
 TypeAssist, SelectOutputType)
 
@@ -198,6 +199,8 @@ class Query(graphene.ObjectType):
     def resolve_getsitelist(self, info, clientid, peopleid):
         log.info('request for sitelist..')
         data = Pgbelonging.objects.get_assigned_sites_to_people(peopleid, forservice=True)
+        #change bupreferences back to json
+        data['bupreferences'] = json.dumps(data['bupreferences'])
         records, count, msg = utils.get_select_output(data)
         ic(records)
         log.info(f'{count} objects returned...')

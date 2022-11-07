@@ -149,6 +149,18 @@ class People(AbstractBaseUser, PermissionsMixin, TenantAwareModel, BaseModel):
 
     def get_absolute_wizard_url(self):
         return reverse("peoples:wiz_people_update", kwargs={"pk": self.pk})
+    
+
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+        from apps.core import utils
+        if self.department is None: self.department, _ = utils.get_or_create_none_typeassist()
+        if self.designation is None: self.designation, _ = utils.get_or_create_none_typeassist()
+        if self.peopletype is None: self.peopletype, _ = utils.get_or_create_none_typeassist()
+        if self.worktype is None: self.worktype, _ = utils.get_or_create_none_typeassist()
+        if self.reportto is None: self.reportto, _ = utils.get_or_create_none_people()
+        
+    
 
 ############## Pgroup Table ###############
 class PermissionGroup(Group):
@@ -184,6 +196,7 @@ class Pgroup(BaseModel, TenantAwareModel):
 
     def get_absolute_wizard_url(self):
         return reverse("peoples:wiz_pgropup_update", kwargs={"pk": self.pk})
+    
 
 ############## Pgbelonging Table ###############
 class Pgbelonging(BaseModel, TenantAwareModel):
