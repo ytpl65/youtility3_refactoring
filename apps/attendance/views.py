@@ -48,6 +48,12 @@ class Attendance(LoginRequiredMixin, View):
                    'msg': "create attendance requested"}
             resp = utils.render_form(request, self.params, cxt)
 
+        #return FR Status
+        if R.get('action') == 'getFRStatus' and R.get('id') != 'None':
+            objs, found = self.params['model'].objects.get_fr_status(R)
+            if found: return rp.JsonResponse({'data':objs}, status=200)
+            return rp.JsonResponse({}, status=404)
+        
         # handle delete request
         elif R.get('action', None) == "delete" and R.get('id', None):
             print(f'resp={resp}')

@@ -199,7 +199,8 @@ class Query(graphene.ObjectType):
         log.info('request for sitelist..')
         data = Pgbelonging.objects.get_assigned_sites_to_people(peopleid, forservice=True)
         records, count, msg = utils.get_select_output(data)
-        log.info(f'{count} objects returned...')
+        ic(records)
+	log.info(f'{count} objects returned...')
         return SelectOutputType(nrows = count, records = records,msg = msg)
 
     @staticmethod

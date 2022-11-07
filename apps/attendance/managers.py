@@ -2,6 +2,8 @@ from datetime import timedelta, datetime, date
 from django.db import models
 from django.contrib.gis.db.models.functions import AsGeoJSON, AsWKT
 from apps.core import utils
+from apps.activity.models import Attachment
+from itertools import chain
 
 Q = models.Q
 class PELManager(models.Manager):
@@ -43,6 +45,18 @@ class PELManager(models.Manager):
             obj[0].save()
             return True
         return False
+    
+    def get_fr_status(self, R):
+        "return fr images and status"
+        qset = self.filter(id=R['id']).values('uuid', 'peventlogextras')
+        atts = Attachment.objects.filter(
+            owner=qset[0]['uuid']).values(
+                'filepath', 'filename', 'attachmenttype', 'datetime', 'gpslocation')
+        if atts:
+            fr_data = list(chain(qset, atts))
+            return fr_data
+        return list(self.none)
+        
     
     
 

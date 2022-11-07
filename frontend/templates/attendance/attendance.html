@@ -6,6 +6,14 @@ Attendance
 {% endblock card_title %}
 <!----- END CARD TITLE -------->
 
+{% block extra_css %}
+<style>
+td.selected { background-color: yellow; }
+td:not(:last-child) { cursor: pointer; }
+td { padding: 6px; border: 1px solid #CCC; }
+</style>
+{% endblock extra_css %}
+
 <!------------------------------------ BEGIN PAGE BREADCUMBS ------------------------------------>
 {% block pagebreadcumb %}
 {{ super() }}
@@ -16,17 +24,6 @@ Attendance
 {% block table %}
 <!--------------------------BEGIN TABLE------------------------------>
 <table id="attd_table" class="display cell-border" style="width:100%">
-    <thead class="fw-bold fs-6">
-        <th>Type</th>
-        <th>Site Name</th>
-        <th>People</th>
-        <th>FR IN</th>
-        <th>FR OUT</th>
-        <th>Verified By</th>
-        <th>Date For</th>
-        <th>In Time</th>
-        <th>Out Time</th>
-    </thead>
 </table>
 <!--------------------------END TABLE------------------------------>
 
@@ -48,6 +45,16 @@ Attendance
 {% block extra_scripts %}
 <script>
     var table = null;
+    function getFRStatus(data){
+        fire_ajax_get({url:`{{ url('attendance:attendance_view') }}?action=getFRStatus&id=${data}`,})
+        .done((data, status, xhr) => {
+
+        })
+        .fail((xhr, status, error) =>  {
+            
+        })
+    }
+
     $(document).ready(function () {
         new ClipboardJS('btn-copy')
         
@@ -73,16 +80,16 @@ Attendance
                 }}
             ],
             columns:[
-                {targets:[0], data:'peventtype__tacode'},
-                {targets:[1], data:'bu__buname'},
-                {targets:[2], data:'people__peoplename'},
-                {targets:[3], data:'facerecognitionin'},
-                {targets:[4], data:'facerecognitionout'},
-                {targets:[5], data:'verifiedby__peoplename'},
-                {targets:[6], data:'datefor'},
-                {targets:[7], data:'punchintime'},
-                {targets:[8], data:'punchouttime'},
-                {targets:[9], data:'id', visible:false, searchable:false},
+                {targets:[0], data:'peventtype__tacode', title:'Type'},
+                {targets:[1], data:'bu__buname', title:'Site Name'},
+                {targets:[2], data:'people__peoplename', title:'People'},
+                {targets:[3], data:'facerecognitionin', title:'FR IN'},
+                {targets:[4], data:'facerecognitionout', title:'FR OUT'},
+                {targets:[5], data:'verifiedby__peoplename', title:'Verifie By'},
+                {targets:[6], data:'datefor', title:'Date For'},
+                {targets:[7], data:'punchintime', title:'In Time'},
+                {targets:[8], data:'punchouttime', title:'Out Time'},
+                {targets:[9], data:'id',  searchable:false, title:'FR Status'},
             ],
             columnDefs:[
                 //targets:[1, 2], render:function(data, type, row, meta){
@@ -97,6 +104,10 @@ Attendance
                 }},
                 {targets:3, render:function(data, type, row, meta){
                     return data === false ? 'Not Matched' : 'Matched'
+                }},
+                {targets:9, render:function(data, type, row, meta){
+                    return `<button type="button" class="btn p-0 btn-link" onClick="getFRStatus(${data});event.stopPropagation();">FR Status</button>`
+
                 }}
                 ],
             buttons: [
@@ -159,6 +170,10 @@ Attendance
 			})
 		})
 
+        $("table tr td").click(function() {
+            $(".selected").removeClass("selected");
+            $(this).closest("tr").find("td").not(":last-child").addClass("selected");
+        });
         
 
         table.on('select', function(){
