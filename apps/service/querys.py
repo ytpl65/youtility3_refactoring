@@ -203,13 +203,13 @@ class Query(graphene.ObjectType):
         for i in range(len(data)):
             data[i]['bupreferences'] = json.dumps(data[i]['bupreferences'])
         records, count, msg = utils.get_select_output(data)
-        ic(records)
+        log.info(records)
         log.info(f'{count} objects returned...')
         return SelectOutputType(nrows = count, records = records,msg = msg)
 
     @staticmethod
     def resolve_verifyclient(self,info, clientcode):
-        print("function started")
+        print("function started")   
         try:
             utils.set_db_for_router(clientcode.lower())
             Bt.objects.get(bucode = clientcode.upper(), enable = True)
