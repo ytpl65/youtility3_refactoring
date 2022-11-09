@@ -5,7 +5,7 @@
 {% endblock head %}
 
 {% block body %}
-<form action="" method="post" id="id_quesform">
+<form action="" method="post" id="qsetbng_form">
     <input type="hidden" name="{{ ques_form.ctzoffset.name }}" id = "{{ ques_form.ctzoffset.auto_id }}" value="-1">
     <input type="hidden" name="pk" id="pk" value="{{ ques_form.instance.pk }}">
     <div class="modal-header border-0">
@@ -51,7 +51,7 @@
             </div>
         </div>
         
-        <div class="row mb-3 gy3 optionGrp" {% if not ques_form.instance.id %} style="display:none;"{% endif %}>
+        <div class="row mb-3 fv-row gy3 optionGrp" {% if not ques_form.instance.id %} style="display:none;"{% endif %}>
             <label for={{ ques_form.options.id_for_label }} class="col-md-1">{{ ques_form.options.label }}:</label>
             <div class="col-md-5">
                 {{ ques_form.options }}
@@ -64,7 +64,7 @@
             </div>
         </div>
             
-        <div class="row mb-3 gy-3">
+        <div class="row mb-3 gy-3 fv-row">
             <label for={{ ques_form.min.id_for_label }} class="col-md-1 rating numeric">{{ ques_form.min.label }}:</label>
             <div class="col-md-4 rating numeric">
                 {{ ques_form.min }}
@@ -106,7 +106,7 @@
             Close <i class="fas fa-times"></i>
         </button>
         {% if ques_form.instance.id %}
-            <button type="submit" id="submit" form= "id_quesform" class="btn btn-sm btn-primary btn-hover-scale">
+            <button type="submit" id="submit" form= "qsetbng_form" class="btn btn-sm btn-primary btn-hover-scale">
                 Update&nbsp;<i class="fas fa-cloud-upload-alt"></i>
             </button>
             <button type="button" onclick="deleteQuestion(this)" data-id="{{ ques_form.instance.id }}" id="deleteAttd"
@@ -114,7 +114,7 @@
                 Delete&nbsp;<i class="fas fa-trash-alt"></i>
             </button>
         {% else %}
-            <button type="submit"  form="id_quesform" class="btn btn-sm btn-primary btn-hover-scale">
+            <button type="submit"  form="qsetbng_form" class="btn btn-sm btn-primary btn-hover-scale">
                 Add&nbsp;<i class="fas fa-cloud-upload-alt"></i>
             </button>
         {% endif %}
@@ -123,6 +123,7 @@
 
 {% block js %}
 {{ ques_form.media.js }}
+<script src="{{ static('assets/js/formValidations.js') }}"></script>
 <script>
     //return selected value of a field
     console.log("script loaded")

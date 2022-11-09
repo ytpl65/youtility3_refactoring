@@ -802,7 +802,7 @@ function cleanData(data) {
     data.id_options = "";
   } else if (
     data.id_answertype !== "NUMERIC" &&
-    data.id_answertype !== "DROPDOWN"
+    data.id_answertype !== "DROPDOWN" && data.id_answertype !== 'RATING'
   ) {
     data.id_min = data.id_max = "0.0";
     data.id_alerton = [];
@@ -856,7 +856,7 @@ function update_qsetblng_form(data, optionTag, fortable = false) {
   debugger;
   $("#id_slno").val(parseInt(data[0], 10));
   $("select[name='question']")
-    .val($(`select option:contains(${data[1]})`).val());
+    .val(data[2]).trigger("change");
   $("#id_answertype").val(data[3]);
   $("#id_min").val(data[4]);
   $("#id_max").val(data[5]);

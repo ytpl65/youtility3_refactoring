@@ -200,7 +200,8 @@ class Query(graphene.ObjectType):
         log.info('request for sitelist..')
         data = Pgbelonging.objects.get_assigned_sites_to_people(peopleid, forservice=True)
         #change bupreferences back to json
-        data['bupreferences'] = [data['bupreferences']]
+        for i in range(len(data)):
+            data[i]['bupreferences'] = json.dumps(data[i]['bupreferences'])
         records, count, msg = utils.get_select_output(data)
         ic(records)
         log.info(f'{count} objects returned...')

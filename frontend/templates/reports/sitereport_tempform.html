@@ -123,6 +123,8 @@ Site Report Template
         if(typeof selected !== 'undefined'){
             if(selected === 'DROPDOWN' || selected === 'CHECKBOX' && typeof selected !== 'undefined'){
                 childEditor.hide(['min', 'max', 'alertbelow', 'alertabove'], false).show(['alerton', 'options'], false)
+            }else if (selected === 'RATING'){
+                childEditor.hide(['alerton', 'options', 'alertbelow', 'alertabove'], false).show(['min', 'max'], false)
             }else if(selected === 'NUMERIC'){
                 childEditor.hide(['alerton', 'options'], false).show(['min', 'max', 'alertbelow', 'alertabove'], false)
             }else{
@@ -165,13 +167,13 @@ Site Report Template
             childEditor.field('answertype').val(_selectedText.split(" | ")[1])
             
             //init options
-            childEditor.field('options').val(data.options)
+            //childEditor.field('options').val(data.options)
             
             //init alerton
-            var options = data.options ? data.options.split(',') : []
+            var options = data.options ? data.options.replaceAll(', ', ',').split(',') : []
             if(options.length > 0){
                 appenAlerton(options)
-                let alerton = data.alerton.split(',')
+                let alerton = data.alerton.replaceAll(', ', ',').replaceAll('" ', '"').split(',')
                 $("#DTE_Field_alerton").val(alerton).trigger('change')
             }
             
@@ -182,8 +184,8 @@ Site Report Template
                 childEditor.field('min').val(data.min)
                 //init alertbelow and alertabove
                 let alerton = data.alerton
-                let aa = alerton.split(',')[1].replace('>', '') //alert-above
-                let ab = alerton.split(',')[0].replace('<', '') //alert-below
+                let aa = alerton.split(',')[1].replaceAll('>', '') //alert-above
+                let ab = alerton.split(',')[0].replaceAll('<', '') //alert-below
                 childEditor.field('alertbelow').val(ab)
                 childEditor.field('alertabove').val(aa)
             }
@@ -245,29 +247,31 @@ Site Report Template
     }
 
     function populateQsetForm(questionid){
-        const params = {url:`{{ url('activity:qset_qsetblng') }}?action=getquestion&questionid=${questionid}`, modal:false}
-        fire_ajax_get(params)
-        .done((data, status, xhr) => {
-            if(status == 'success' && data.qsetbng){
-                const qsetbng = data.qsetbng[0]
-                $('#DTE_Field_min').val(qsetbng.min)
-                $('#DTE_Field_max').val(qsetbng.max)
-                $('#DTE_Field_options').val(qsetbng.options)
-                $('#DTE_Field_avpttype').val(qsetbng.avpttype)
-                $('#DTE_Field_isavpt').val(qsetbng.isavpt)
-                if(qsetbng.options && qsetbng.alerton){
-                    let optionArr = qsetbng.options.replace(' ', '').split(',')
-                    let alertonArr = qsetbng.alerton.replace(' ', '').split(',')
-                    selected = performIntersection(optionArr, alertonArr)
-                    load_alerton_field(optionArr, selected, "#DTE_Field_alerton")
-                }else if(qsetbng.alerton){
-                    adjust_above_below(qsetbng.alerton, for_table=false, editor=true)
-                }
-                
-                
+        if(questionid){
+            const params = {url:`{{ url('activity:qset_qsetblng') }}?action=getquestion&questionid=${questionid}`, modal:false}
+            fire_ajax_get(params)
+            .done((data, status, xhr) => {
+                if(status == 'success' && data.qsetbng){
+                    const qsetbng = data.qsetbng[0]
+                    $('#DTE_Field_min').val(qsetbng.min)
+                    $('#DTE_Field_max').val(qsetbng.max)
+                    $('#DTE_Field_options').val(qsetbng.options)
+                    $('#DTE_Field_avpttype').val(qsetbng.avpttype)
+                    $('#DTE_Field_isavpt').val(`${qsetbng.isavpt}`)
+                    if(qsetbng.options && qsetbng.alerton){
+                        let optionArr = qsetbng.options.replaceAll(' ', '').split(',')
+                        let alertonArr = qsetbng.alerton.replaceAll(' ', '').split(',')
+                        selected = performIntersection(optionArr, alertonArr)
+                        load_alerton_field(optionArr, selected, "#DTE_Field_alerton")
+                    }else if(qsetbng.alerton){
+                        adjust_above_below(qsetbng.alerton, for_table=false, editor=true)
+                    }
+                    
+                    
 
-            }
-        })
+                }
+            })
+        }
     }
         
     
@@ -317,7 +321,6 @@ Site Report Template
             fields:[
                 {label: 'SNo', name: "seqno", type:"text"},
                 {label: 'Section', name: "qsetname"}
-                
             ]
         });
 
@@ -391,6 +394,7 @@ Site Report Template
             }
         })
 
+
         //PARENT EDITOR ON PRE-OPEN EVENT
         parentEditor.on('preOpen', function(e, mode, action){
             
@@ -421,6 +425,12 @@ Site Report Template
             
             // on change options set alerton
             if(action === 'create' || action === 'edit'){
+                $(".DTE_Form_Buttons").append('<button type="button" class="btn btn-primary" id="btnLoad">Load</button>')
+
+                //onclick load button call populateQsetForm function
+                $("#btnLoad").on('click', function(){
+                    populateQsetForm($("#DTE_Field_question").val())
+                })
                 
                 $('[data-dte-e="form"]').attr('id', 'id_childform') // add id to form
                 $(".DTE_Field").addClass('p-1') // add css to form fields
@@ -459,6 +469,9 @@ Site Report Template
                 childEditor.field('seqno').set(childTable.data().count() + 1) //update seqno for new entry
                 clearForm(childEditor)
             }
+            if(action == 'edit'){
+                initialize_form()
+            }
             
         })
 
@@ -466,9 +479,7 @@ Site Report Template
         childEditor.on('opened', function(e, mode, action){
             //get the data of rows in editing
             //var data = getCurrentEditingRow(childEditor, childTable)
-            if(action == 'edit'){
-                initialize_form()
-            }
+            
             //if(action == "edit" && data !== 'None'){
                 //hide/show fields based on selected text..
                 //hideAndShowFields(data.answertype)
@@ -479,7 +490,7 @@ Site Report Template
                     appenAlerton(options.split(','))
                 }else{
                     console.log('clear selection..........')
-                    clearSelection("#DTE_Field_alerton")
+                    //clearSelection("#DTE_Field_alerton")
                 }
             })
         })
@@ -609,6 +620,7 @@ Site Report Template
                     {visible: false, data: 'avpttype'},
                 ],
                 buttons:[
+                {text:'<i class="fas fa-sync-alt text-dark"></i>', titleAttr:'Refresh Data', className:'refreshBtn disabled'},
                     { extend: "create", editor: childEditor },
                     { extend: "edit",   editor: childEditor },
                     { extend: "remove", editor: childEditor }
@@ -645,16 +657,23 @@ Site Report Template
             parentTable.on( 'select', function () {
                 childTable.ajax.reload();
                 $("#tabchildReport_wrapper .buttons-create").removeClass('disabled')
-                //childEditor
-                //    .field( 'users.site' )
-                //    .def( parentTable.row( { selected: true } ).data().id );
+                $("#tabchildReport_wrapper .refreshBtn").removeClass('disabled')
             } );
             
             parentTable.on( 'deselect', function () {
                 childTable.ajax.reload();
                 $("#tabchildReport_wrapper .buttons-create").addClass('disabled')
+                $("#tabchildReport_wrapper .refreshBtn").addClass('disabled')
                 $("#tabchildReport_wrapper .buttons-create").attr({'data-toggle':"tooltip", 'data-placement':"top", 'title':"Select Section First"})
             } );
+            
+            $('.refreshBtn').click(() => {
+                var selected = parentTable.row( { selected: true } );
+                console.log(selected)
+                if(selected.count()){
+                    childTable.ajax.reload();
+                }
+            })
     })
 </script>
 {# <script src="{{ static('assets/js/formValidations.js') }}"></script>#}

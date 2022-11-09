@@ -116,24 +116,24 @@
                             {{ qsetbng.alerton.errors }}
                         </div>
                     </div>
-                    <div class="row mb-3 gy-3  fv-row numeric">
-                        {{ qsetbng.min.label_tag() }}
-                        <div class="col-md-2 col-sm-2">
+                    <div class="row mb-3 gy-3  fv-row">
+                        <label for={{ qsetbng.min.id_for_label }} class="col-md-1 rating numeric">{{ qsetbng.min.label }}:</label>
+                        <div class="col-md-2 col-sm-2 rating numeric">
                             {{ qsetbng.min }}
                             {{ qsetbng.min.errors }}
                         </div>
-                        {{ qsetbng.max.label_tag() }}
-                        <div class="col-md-2 col-sm-2">
+                        <label for={{ qsetbng.max.id_for_label }} class="col-md-1 rating numeric">{{ qsetbng.max.label }}:</label>
+                        <div class="col-md-2 col-sm-2 rating numeric">
                             {{ qsetbng.max }}
                             {{ qsetbng.max.errors }}
                         </div>
-                        {{ qsetbng.alertbelow.label_tag() }}
-                        <div class="col-md-2 col-sm-2">
+                        <label for={{ qsetbng.alertbelow.id_for_label }} class="col-md-1 numeric">{{ qsetbng.alertbelow.label }}:</label>
+                        <div class="col-md-2 col-sm-2 numeric">
                             {{ qsetbng.alertbelow }}
                             {{ qsetbng.alertbelow.errors }}
                         </div>
-                        {{ qsetbng.alertabove.label_tag() }}
-                        <div class="col-md-2 col-sm-2">
+                        <label for={{ qsetbng.alertabove.id_for_label }} class="col-md-1 numeric">{{ qsetbng.alertabove.label }}:</label>
+                        <div class="col-md-2 col-sm-2 numeric">
                             {{ qsetbng.alertabove }}
                             {{ qsetbng.alertabove.errors }}
                         </div>
@@ -159,6 +159,11 @@
                     <!--Qusetion Set Belonging Is Mandatory End-->
                     
                     <div class="d-flex justify-content-end">
+                        <button type="button" id="loadQuestion" data-bs-toggle="tooltip" data-bs-placement="top" title="Load default question data" form="qsetbng_form"
+                            class="btn me-2 btn-sm btn-secondary btn-hover-scale">
+                            Load&nbsp;<i class="fa fa-plus" aria-hidden="true"></i>
+                        </button>
+                        
                         <button type="submit" id="addQuestion" form="qsetbng_form"
                             class="btn btn-sm btn-secondary btn-hover-scale">
                             Add&nbsp;<i class="fa fa-plus" aria-hidden="true"></i>
@@ -168,9 +173,10 @@
                             class="btn ms-2 btn-sm btn-primary btn-hover-scale">
                             Reset&nbsp;<i class="fas fa-times"></i>
                         </button>
+                        
                         <button type="button" id="deleteQuestion" style="display:none;" form="qsetbng_form"
                             class="ms-2 btn btn-sm btn-danger btn-hover-scale">
-                            Delete&nbsp;<i class="fa fa-plus" aria-hidden="true"></i>
+                            Delete&nbsp;<i class="fa fa-trash" aria-hidden="true"></i>
                         </button>
                     </div>
                     <hr>
@@ -276,6 +282,11 @@
     }
 
     $(document).ready(() => {
+        //on click #loadQuestion call populateQsetForm
+        $('#loadQuestion').on('click', function(){
+            const questionid = $('#id_question').val()
+            populateQsetForm(questionid)
+        })
         //set ctzoffset
         $("#id_ctzoffset").val(-new Date().getTimezoneOffset())
 
@@ -344,7 +355,6 @@
             if (typeof selected !== 'undefined') {
                 assignQuesType(selected)
                 showHideFields(selected)
-                populateQsetForm($("#id_question").val())
                 
             }
         })

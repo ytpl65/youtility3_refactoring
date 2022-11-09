@@ -255,7 +255,7 @@ def get_or_create_none_people(using=None):
             'dateofjoin': "1111-1-1", 'id': 1
         }
     )
-    return obj
+    return obj, _
 
 
 def get_or_create_none_pgroup():

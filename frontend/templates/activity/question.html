@@ -34,7 +34,7 @@ Question List
 	const modalcontent_id = "#ques_content"
 	const formFilter      = "#ques_filter"
 	const table_id        = "#ques_table"
-	const formid          = "#id_quesform"
+	const formid          = "#qsetbng_form"
 	const urlname         = "{{ url('activity:question') }}"
 	const viewname        = "Question"
 	const rowlink         = "a.ques-link"
@@ -147,24 +147,32 @@ Question List
 			console.log("worked...")
 			var form = $(this);
 			e.preventDefault()
-			const params = { url:urlname, modal:true } //capability view
-			const id = $("#pk").val() //form instance id
-			var payLoad = {formData:form.serialize(), csrfmiddlewaretoken: '{{ csrf_token }}'}//payload for post request
-			if(id != 'None'){
-				var newPayLoad = {...payLoad, 'pk':id}
-				payLoad = newPayLoad
+			debugger;
+			if(qsetbng_form_validator){
+				qsetbng_form_validator.validate().then(function (status) {
+					if(status === 'Valid'){
+						const params = { url:urlname, modal:true } //capability view
+						const id = $("#pk").val() //form instance id
+						var payLoad = {formData:form.serialize(), csrfmiddlewaretoken: '{{ csrf_token }}'}//payload for post request
+						if(id != 'None'){
+							var newPayLoad = {...payLoad, 'pk':id}
+							payLoad = newPayLoad
+						}
+						fire_ajax_form_post(params, payLoad)
+						.done((data, status, xhr) => { //function to submit post request
+							console.log("data ", data)
+							$("#modal-ques").modal("hide");
+							if(id!=='None'){
+								table.row('.selected').data(data.row).draw()
+							}else{
+								table.row.add(data.row).draw()
+							}
+							show_successful_save_alert(update= id != 'None' ? true : false)
+						})
+					}
+				})
 			}
-			fire_ajax_form_post(params, payLoad)
-			.done((data, status, xhr) => { //function to submit post request
-				console.log("data ", data)
-				$("#modal-ques").modal("hide");
-				if(id!=='None'){
-					table.row('.selected').data(data.row).draw()
-				}else{
-					table.row.add(data.row).draw()
-				}
-				show_successful_save_alert(update= id != 'None' ? true : false)
-			})
+			
 		})
 	}) //END DOCUMENT.READY
 
