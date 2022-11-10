@@ -148,8 +148,8 @@ Question List
 			var form = $(this);
 			e.preventDefault()
 			debugger;
-			if(qsetbng_form_validator){
-				qsetbng_form_validator.validate().then(function (status) {
+			if(quesValidator){
+				quesValidator.validate().then(function (status) {
 					if(status === 'Valid'){
 						const params = { url:urlname, modal:true } //capability view
 						const id = $("#pk").val() //form instance id

@@ -138,7 +138,7 @@ Site Report Template
         for(let i=0; i<options.length; i++){
             
             if ($('#DTE_Field_alerton').find("option[value='" + options[i] + "']").length) {
-                $('#DTE_Field_alerton').val(options[i]).trigger('change');
+                //$('#DTE_Field_alerton').val(options[i]).trigger('change');
             } else { 
                 // Create a DOM Option and pre-select by default
                 var newOption = new Option(options[i], options[i], false, false);
@@ -173,7 +173,7 @@ Site Report Template
             var options = data.options ? data.options.replaceAll(', ', ',').split(',') : []
             if(options.length > 0){
                 appenAlerton(options)
-                let alerton = data.alerton.replaceAll(', ', ',').replaceAll('" ', '"').split(',')
+                let alerton = data.alerton ? data.alerton.replaceAll(', ', ',').replaceAll('" ', '"').split(',') : []
                 $("#DTE_Field_alerton").val(alerton).trigger('change')
             }
             
@@ -261,7 +261,7 @@ Site Report Template
                     if(qsetbng.options && qsetbng.alerton){
                         let optionArr = qsetbng.options.replaceAll(' ', '').split(',')
                         let alertonArr = qsetbng.alerton.replaceAll(' ', '').split(',')
-                        selected = performIntersection(optionArr, alertonArr)
+                        let selected = performIntersection(optionArr, alertonArr)
                         load_alerton_field(optionArr, selected, "#DTE_Field_alerton")
                     }else if(qsetbng.alerton){
                         adjust_above_below(qsetbng.alerton, for_table=false, editor=true)
@@ -425,7 +425,7 @@ Site Report Template
             
             // on change options set alerton
             if(action === 'create' || action === 'edit'){
-                $(".DTE_Form_Buttons").append('<button type="button" class="btn btn-primary" id="btnLoad">Load</button>')
+                $(".DTE_Form_Buttons").append('<button type="button" class="btn btn-primary" id="btnLoad">Load Question Data</button>')
 
                 //onclick load button call populateQsetForm function
                 $("#btnLoad").on('click', function(){
@@ -484,13 +484,12 @@ Site Report Template
                 //hide/show fields based on selected text..
                 //hideAndShowFields(data.answertype)
             //}
-            $("#DTE_Field_options").on('change', function(){
+            $("#DTE_Field_options").on('focusout', function(){
                 var options  = $(this).val()
                 if(options.length > 0){
-                    appenAlerton(options.split(','))
+                    appenAlerton(options.replaceAll(', ', ',').split(','))
                 }else{
-                    console.log('clear selection..........')
-                    //clearSelection("#DTE_Field_alerton")
+                    clearSelection("#DTE_Field_alerton")
                 }
             })
         })

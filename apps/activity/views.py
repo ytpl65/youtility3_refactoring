@@ -313,7 +313,7 @@ class Checklist(View, LoginRequiredMixin):
         'model'        : am.QuestionSet,
         'filter'       : aft.MasterQsetFilter,
         'fields'       : ['qsetname', 'type', 'id', 'ctzoffset', 'cdtz', 'mdtz'],
-        'form_initials': {'parent_id':1, 'type':'CHECKLIST'}
+        'form_initials': {'parent_id':'1', 'type':'CHECKLIST'}
     }
     
     def get(self, request, *args, **kwargs):

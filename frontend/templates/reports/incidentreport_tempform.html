@@ -146,7 +146,7 @@ Incident Report Template
         for(let i=0; i<options.length; i++){
             
             if ($('#DTE_Field_alerton').find("option[value='" + options[i] + "']").length) {
-                $('#DTE_Field_alerton').val(options[i]).trigger('change');
+                //$('#DTE_Field_alerton').val(options[i]).trigger('change');
             } else { 
                 // Create a DOM Option and pre-select by default
                 var newOption = new Option(options[i], options[i], false, false);
@@ -175,14 +175,14 @@ Incident Report Template
             childEditor.field('answertype').val(_selectedText.split(" | ")[1])
             
             //init options
-            childEditor.field('options').val(data.options)
+            //childEditor.field('options').val(data.options)
             
             //init alerton
-            var options = data.options ? data.options.split(',') : []
+            var options = data.options ? data.options.replaceAll(', ', ',').split(',') : []
             if(options.length > 0){
                 appenAlerton(options)
-                let alerton = data.alerton.split(',')
-                $("#DTE_Field_alerton").val(alerton)
+                let alerton = data.alerton ? data.alerton.replaceAll(', ', ',').replaceAll('" ', '"').split(',') : []
+                $("#DTE_Field_alerton").val(alerton).trigger('change')
             }
             
             if(data.answertype === 'NUMERIC' && data.alerton.length > 0){
@@ -435,7 +435,7 @@ Incident Report Template
             
             // on change options set alerton
             if(action === 'create' || action === 'edit'){
-                $(".DTE_Form_Buttons").append('<button type="button" class="btn btn-primary" id="btnLoad">Load</button>')
+                $(".DTE_Form_Buttons").append('<button type="button" class="btn btn-primary" id="btnLoad">Load Question Data</button>')
                 
                 //onclick load button call populateQsetForm function
                 $("#btnLoad").on('click', function(){
@@ -481,6 +481,9 @@ Incident Report Template
                 childEditor.field('seqno').set(childTable.data().count() + 1) //update seqno for new entry
                 clearForm(childEditor)
             }
+            if(action == 'edit'){
+                initialize_form()
+            }
             
         })
 
@@ -490,7 +493,7 @@ Incident Report Template
             $("#DTE_Field_options").on('change', function(){
                 var options  = $(this).val()
                 if(options.length > 0){
-                    appenAlerton(options.split(','))
+                    appenAlerton(options.replaceAll(', ', ',').split(','))
                 }else{
                     console.log('clear selection..........')
                     clearSelection("#DTE_Field_alerton")
@@ -498,10 +501,7 @@ Incident Report Template
             })
 
 
-            if(action == 'edit'){
-                initialize_form()
 
-            }
         })
 
         // CHILD EDITOR ON POSTCREATE

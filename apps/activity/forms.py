@@ -52,11 +52,7 @@ class QuestionForm(forms.ModelForm):
         """Initializes form add atttibutes and classes here."""
         self.request = kwargs.pop('request', None)
         super().__init__(*args, **kwargs)
-        for k in self.fields.keys():
-            if k in ['unit', 'min', 'max']:
-                self.fields[k].required = True
-            elif k in ['options', 'alerton']:
-                self.fields[k].required = False
+
         
         self.fields['min'].initial       = None
         self.fields['max'].initial       = None
@@ -248,7 +244,7 @@ class ChecklistForm(MasterQsetForm):
         self.fields['assetincludes'].label = 'Checkpoints'
         self.fields['type'].widget.attrs   = {"style": "display:none;"}
         if self.instance.id:
-            self.fields['assetincludes'].initial = self.instance.assetincludes.split(',')
+            self.fields['assetincludes'].initial = self.instance.assetincludes
         utils.initailize_form_fields(self)
 
 
