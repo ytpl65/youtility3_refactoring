@@ -2,24 +2,28 @@
 DEFINE FUNCTIONS AND CLASSES WERE CAN BE USED GLOBALLY.
 '''
 import ast
-import threading
-from PIL import ImageFile
-import os.path
 import json
+import logging
+import os.path
+import threading
+from pprint import pformat
+
 import django.shortcuts as scts
 from django.contrib import messages as msg
-from django.template.loader import render_to_string
-from django.http import JsonResponse, response as rp
+from django.contrib.gis.measure import Distance
 from django.db.models import Q
+from django.http import JsonResponse
+from django.http import response as rp
+from django.template.loader import render_to_string
+from PIL import ImageFile
+from rest_framework.utils.encoders import JSONEncoder
+
+import apps.activity.models as am
+import apps.onboarding.models as ob
 import apps.peoples.utils as putils
-from pprint import pformat
 from apps.peoples import models as pm
 from apps.tenants.models import Tenant
-import logging
-from rest_framework.utils.encoders import JSONEncoder
-from django.contrib.gis.measure import Distance
-import apps.onboarding.models as ob
-import apps.activity.models as am
+
 logger = logging.getLogger('__main__')
 dbg = logging.getLogger('__main__').debug
 
@@ -131,8 +135,9 @@ def render_form_for_delete(request, params, master=False):
 
 def clean_gpslocation( val):
     import re
-    from django.forms import ValidationError
+
     from django.contrib.gis.geos import GEOSGeometry
+    from django.forms import ValidationError
 
     if gps := val:
         if gps == 'NONE': return None
@@ -171,8 +176,7 @@ def render_grid(request, params, msg, objs, extra_cxt=None):
 
 
 def paginate_results(request, objs, params):
-    from django.core.paginator import (Paginator,
-                                       EmptyPage, PageNotAnInteger)
+    from django.core.paginator import EmptyPage, PageNotAnInteger, Paginator
 
     logger.info('paginate results'if objs else "")
     if request.GET:
@@ -216,6 +220,7 @@ def get_model_obj(pk, request, params):
 def local_to_utc(data, offset, mobile_web):
     # sourcery skip: avoid-builtin-shadow
     from datetime import datetime, timedelta
+
     import pytz
     dateFormatMobile = "%Y-%m-%d %H:%M:%S"
     dateFormatWeb = "%d-%b-%Y %H:%M"
@@ -280,21 +285,23 @@ def get_or_create_none_cap():
 
 def encrypt(data: bytes) -> bytes:
     import zlib
-    from base64 import urlsafe_b64encode as b64e, urlsafe_b64decode as b64d
+    from base64 import urlsafe_b64decode as b64d
+    from base64 import urlsafe_b64encode as b64e
     data = bytes(data, 'utf-8')
     return b64e(zlib.compress(data, 9))
 
 
 def decrypt(obscured: bytes) -> bytes:
     import zlib
-    from base64 import urlsafe_b64encode as b64e, urlsafe_b64decode as b64d
+    from base64 import urlsafe_b64decode as b64d
+    from base64 import urlsafe_b64encode as b64e
     byte_val = zlib.decompress(b64d(obscured))
     return byte_val.decode('utf-8')
 
 def save_capsinfo_inside_session(people, request):
     logger.info('save_capsinfo_inside_session... STARTED')
-    from apps.peoples.models import Capability
     from apps.core.raw_queries import query
+    from apps.peoples.models import Capability
     web, mob, portlet, report = putils.create_caps_choices_for_peopleform(request.user.client)
     request.session['client_webcaps'] = web
     request.session['client_mobcaps'] = list(mob)
@@ -314,8 +321,8 @@ def save_capsinfo_inside_session(people, request):
 
 def save_user_session(request, people):
     '''save user info in session'''
-    from django.core.exceptions import ObjectDoesNotExist
     from django.conf import settings
+    from django.core.exceptions import ObjectDoesNotExist
 
     try:
         logger.info('saving user data into the session ... STARTED')
@@ -1154,8 +1161,9 @@ def failed(self):
 
 def upload(request):
     import os
-    from dateutil import parser
     from datetime import datetime
+
+    from dateutil import parser
     ic('upload(request)')
     filename = filepath = docnumber = None
     isUploaded = False
@@ -1288,7 +1296,7 @@ def verify_mobno(mobno):
     
     
 def verify_emailaddr(email):
-    from email_validator import validate_email, EmailNotValidError
+    from email_validator import EmailNotValidError, validate_email
     try:
         validate_email(email)
         return True
@@ -1304,3 +1312,7 @@ def verify_peoplename(peoplename):
     import re
     return bool(re.match(r"^[a-zA-Z0-9\-_@#\(\|\) ]*$", peoplename))
 
+
+def get_home_dir():
+    import os
+    return os.path.expanduser("~") + '/'

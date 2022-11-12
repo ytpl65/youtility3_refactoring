@@ -884,3 +884,21 @@ class Attachments(LoginRequiredMixin, View):
                 ic(data)
                 return rp.JsonResponse(data, status = 200, safe=False)
         return rp.JsonResponse({'error':"Invalid Request"}, status=404)
+
+
+
+class PreviewImage(LoginRequiredMixin, View):
+    P = {
+        'model':am.Attachment
+    }
+    
+    
+    def get(self, request, *args, **kwargs):
+        R = request.GET
+        
+        if R.get('action') == 'getFRStatus'  and R.get('uuid'):
+            resp = self.P['model'].objects.get_fr_status(R['uuid'])
+            log.info(resp)
+            return rp.JsonResponse(resp, status=200)
+    
+    

@@ -382,7 +382,32 @@ class AttachmentManager(models.Manager):
 
     def get_attforuuids(self, uuids):
         return self.filter(owner__in = uuids) or self.none()
-        
+    
+    def get_fr_status(self,attduuid):
+        from apps.attendance.models import PeopleEventlog
+        from apps.peoples.models import People
+
+        #get attachments of IN and OUT of attendance
+        attqset = self.filter(owner = attduuid, attachmenttype = 'ATTACHMENT', ownername__tacode='PEOPLEEVENTLOG').values('id', 'filename', 'filepath', 'cdtz', 'cuser__peoplename').order_by('cdtz') or self.none()
+        log.info(attqset)
+
+        #get eventlog of IN and OUT of attendance
+        eventlogqset = PeopleEventlog.objects.filter(
+            uuid = attduuid, peventtype__tacode__in = ['SELF', 'MARK']).annotate(
+                eventtype = F('peventtype__tacode'),
+                createdby = F('cuser__peoplename'),
+                site = F('bu__buname'),
+                startgps = AsGeoJSON('startlocation'),
+                endgps = AsGeoJSON('endlocation'),).values(
+                    'peventlogextras', 'startgps', 'endgps','createdby', 'datefor', 'site', 'people_id', 'people__uuid').order_by('cdtz') or PeopleEventlog.objects.none()
+        log.info(eventlogqset)
+        #default image of people
+        defaultimgqset = People.objects.filter(
+            id=eventlogqset[0]['people_id']).values(
+                'id', 'peopleimg', 'cdtz', 'cuser__peoplename') if eventlogqset else self.none()
+        log.info(defaultimgqset)
+
+        return {'attd_in_out': list(attqset), 'eventlog_in_out': list(eventlogqset), 'default_img_path': list(defaultimgqset)}
         
 
 class AssetManager(models.Manager):

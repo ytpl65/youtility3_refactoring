@@ -19,4 +19,5 @@ urlpatterns = [
     path('peoplenearassets/', views.PeopleNearAsset.as_view(), name='peoplenearasset'),
     path('workpermit/', views.WorkPermit.as_view(), name='workpermit'),
     path('attachments/', views.Attachments.as_view(), name='attachments'),
+    path('previewImage/', views.PreviewImage.as_view(), name='previewImage'),
 ]

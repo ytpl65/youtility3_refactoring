@@ -39,6 +39,44 @@ td { padding: 6px; border: 1px solid #CCC; }
         </div>
     </div>
 </div>
+
+{% call general_popup(popup_id = 'modal_fr_status', title = 'Face Recognition Details', modal_size='modal-lg') %}
+<div class="modal-body">
+    <div class="row">
+        <div class="col-sm-4" >
+            <div class="card" style="width: 18rem;">
+                <img src="" class="card-img-top" alt="" id="attd_in_img" style="width: 252px;height: 252px;">
+                <div class="card-body">
+                    <p class="card-text">Some quick example text to build on the card title and make up the bulk of the
+                        card's content.</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-sm-4">
+            <div class="card" style="width: 18rem;">
+                <img src="" class="card-img-top" alt="" id="default_people_img" style="width: 252px;height: 252px;">
+                <div class="card-body">
+                    <p class="card-text">Some quick example text to build on the card title and make up the bulk of the
+                        card's content.</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-sm-4" >
+            <div class="card" style="width: 18rem;">
+                <img src="" class="card-img-top" alt="" id="attd_out_img" style="width: 252px;height: 252px;">
+                <div class="card-body">
+                    <p class="card-text">Some quick example text to build on the card title and make up the bulk of the
+                        card's content.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="modal-footer">
+    <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">OK</button>
+</div>
+{% endcall %}
+
 {% endblock popup_alerts %}
 
 <!--------- BEGIN EXTRA SCRIPTS ----------------------------->
@@ -46,8 +84,17 @@ td { padding: 6px; border: 1px solid #CCC; }
 <script>
     var table = null;
     function getFRStatus(data){
-        fire_ajax_get({url:`{{ url('attendance:attendance_view') }}?action=getFRStatus&id=${data}`,})
+        fire_ajax_get({url:`{{ url('activity:previewImage') }}?action=getFRStatus&uuid=${data}`,})
         .done((data, status, xhr) => {
+            const filepathIN = data['attd_in_out'].length ? `{{MEDIA_URL}}${data['attd_in_out'][0]['filepath'].replace('youtility4_media/', '')}/${data['attd_in_out'][0]['filename']}` : "{{ static('assets/media/images/blank.png') }}"
+            const filepathOUT = data['attd_in_out'].length > 1 ? `{{MEDIA_URL}}${data['attd_in_out'][1]['filepath'].replace('youtility4_media/', '')}/${data['attd_in_out'][1]['filename']}` : "{{ static('assets/media/images/blank.png') }}"
+            const defaultIMG =  data['default_img_path'].length ? `{{MEDIA_URL}}${data['default_img_path'][0]['peopleimg'].replace('youtility4_media/', '')}` : "{{ static('assets/media/images/blank.png') }}"
+            
+            $("#attd_in_img").attr('src', filepathIN)
+            $("#attd_out_img").attr('src', filepathOUT)
+            $("#default_people_img").attr('src', defaultIMG)
+            $("#modal_fr_status").modal("show");
+
 
         })
         .fail((xhr, status, error) =>  {
@@ -76,40 +123,36 @@ td { padding: 6px; border: 1px solid #CCC; }
             ordering: false,
             columnDefs:[
                 {targets:[6,7], render:function(data, type, row, meta){
-                    return convert_to_local(type, data, row)
-                }}
+                    return convert_to_local(type, data, row)}
+                }
             ],
             columns:[
-                {targets:[0], data:'peventtype__tacode', title:'Type'},
-                {targets:[1], data:'bu__buname', title:'Site Name'},
-                {targets:[2], data:'people__peoplename', title:'People'},
-                {targets:[3], data:'facerecognitionin', title:'FR IN'},
-                {targets:[4], data:'facerecognitionout', title:'FR OUT'},
-                {targets:[5], data:'verifiedby__peoplename', title:'Verifie By'},
-                {targets:[6], data:'datefor', title:'Date For'},
-                {targets:[7], data:'punchintime', title:'In Time'},
-                {targets:[8], data:'punchouttime', title:'Out Time'},
-                {targets:[9], data:'id',  searchable:false, title:'FR Status'},
-            ],
+                {data:'peventtype__tacode', title:'Type'},
+                {data:'bu__buname', title:'Site Name'},
+                {data:'people__peoplename', title:'People'},
+                {data:'facerecognitionin', title:'FR IN'},
+                {data:'facerecognitionout', title:'FR OUT'},
+                {data:'verifiedby__peoplename', title:'Verifie By'},
+                {data:'datefor', title:'Date For'},
+                {data:'punchintime', title:'In Time'},
+                {data:'punchouttime', title:'Out Time'},
+                {data:'id',  searchable:false, title:'FR Status'},
+                { data:'uuid',  visible:false, searchable:false},
+            ], 
             columnDefs:[
-                //targets:[1, 2], render:function(data, type, row, meta){
-                //    let urlname = '{{ url("attendance:attendance_view") }}'
-                //    return `<a href=${urlname}?id=${row['id']}>${data}</a>`
-                //}},
                 {targets:6, render:function(data, type, row, meta){
-                    return convert_to_local(type, data, row)
-                }},
+                    return convert_to_local(type, data, row)}
+                },
                 {targets:7, render:function(data, type, row, meta){
-                    return convert_to_local(type, data, row)
-                }},
+                    return convert_to_local(type, data, row)}
+                },
                 {targets:3, render:function(data, type, row, meta){
-                    return data === false ? 'Not Matched' : 'Matched'
-                }},
+                    return data === false ? 'Not Matched' : 'Matched'}
+                },
                 {targets:9, render:function(data, type, row, meta){
-                    return `<button type="button" class="btn p-0 btn-link" onClick="getFRStatus(${data});event.stopPropagation();">FR Status</button>`
-
-                }}
-                ],
+                    return `<button type="button" class="btn p-0 btn-link" onClick="getFRStatus('${row['uuid']}');event.stopPropagation();">FR Status</button>`}
+                }
+            ],
             buttons: [
             {
                 text: "Add New Attendance &nbsp;<i class='fas fa-plus ch4'></i>",
@@ -206,6 +249,13 @@ td { padding: 6px; border: 1px solid #CCC; }
         $("#id_datefor").flatpickr({
             dateFormat: 'd M Y'
         });
+
+        //on click  fr_status_btn open modal fr_status
+        $("#fr_status_btn").click(function(e){
+            e.preventDefault()
+            $("#modal_fr_status").modal("show");
+            e.stopPropagation()
+        })
         
 
     })//END document.ready()

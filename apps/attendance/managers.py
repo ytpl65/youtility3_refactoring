@@ -49,12 +49,10 @@ class PELManager(models.Manager):
     def get_fr_status(self, R):
         "return fr images and status"
         qset = self.filter(id=R['id']).values('uuid', 'peventlogextras')
-        atts = Attachment.objects.filter(
+        if atts := Attachment.objects.filter(
             owner=qset[0]['uuid']).values(
-                'filepath', 'filename', 'attachmenttype', 'datetime', 'gpslocation')
-        if atts:
-            fr_data = list(chain(qset, atts))
-            return fr_data
+                'filepath', 'filename', 'attachmenttype', 'datetime', 'gpslocation'):
+            return list(chain(qset, atts))
         return list(self.none)
         
     
