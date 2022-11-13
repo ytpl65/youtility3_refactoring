@@ -47,8 +47,7 @@ td { padding: 6px; border: 1px solid #CCC; }
             <div class="card" style="width: 18rem;">
                 <img src="" class="card-img-top" alt="" id="attd_in_img" style="width: 252px;height: 252px;">
                 <div class="card-body">
-                    <p class="card-text">Some quick example text to build on the card title and make up the bulk of the
-                        card's content.</p>
+                    <p class="card-text" id="in_text"></p>
                 </div>
             </div>
         </div>
@@ -56,8 +55,7 @@ td { padding: 6px; border: 1px solid #CCC; }
             <div class="card" style="width: 18rem;">
                 <img src="" class="card-img-top" alt="" id="default_people_img" style="width: 252px;height: 252px;">
                 <div class="card-body">
-                    <p class="card-text">Some quick example text to build on the card title and make up the bulk of the
-                        card's content.</p>
+                    <p class="card-text" ></p>
                 </div>
             </div>
         </div>
@@ -65,8 +63,7 @@ td { padding: 6px; border: 1px solid #CCC; }
             <div class="card" style="width: 18rem;">
                 <img src="" class="card-img-top" alt="" id="attd_out_img" style="width: 252px;height: 252px;">
                 <div class="card-body">
-                    <p class="card-text">Some quick example text to build on the card title and make up the bulk of the
-                        card's content.</p>
+                    <p class="card-text" id="out_text"></p>
                 </div>
             </div>
         </div>
@@ -83,6 +80,26 @@ td { padding: 6px; border: 1px solid #CCC; }
 {% block extra_scripts %}
 <script>
     var table = null;
+    function getReadableTextForINOUT(details){
+        console.log(details['peventlogextras'], 'details');
+        verifiedInValuye = details['peventlogextras']['distance_in'] ? (1-parseInt(details['peventlogextras']['distance_in']))*100 : 'N/A'
+        verifiedOutValuye = details['peventlogextras']['distance_out'] ? (1-parseInt(details['peventlogextras']['distance_out']))*100 : 'N/A'
+        threshold = details['peventlogextras']['threshold'] ? details['peventlogextras']['threshold']: 'N/A'
+        metric = details['peventlogextras']['similarity_metric'] ? details['peventlogextras']['similarity_metric'].toUpperCase(): 'N/A'
+        ingps = details['startgps'] ? JSON.parse(details['startgps'])['coordinates'] : 'N/A'
+        outgps = details['endgps'] ?  JSON.parse(details['endgps'])['coordinates'] : 'N/A'
+        ondate = details['datefor'] ? details['datefor'] : 'N/A'
+        createdby = details['createdby'] ? details['createdby'] : 'N/A'
+        var inHtml = `FR IN:   ${verifiedInValuye}% <br> Threshold:   ${threshold}% 
+        \<br> Metric:    ${metric} In Lat-Lng:   ${ingps} <br> On Date:   ${ondate} \
+        <br> Performed By:${createdby}`
+        var outHtml = `FR OUT:${verifiedOutValuye}% <br> Threshold:${threshold}% 
+        \<br> Metric:${metric} <br> Out Lat-Lng:${outgps} <br> On Date:${ondate} \
+        <br> Performed By:${createdby}`
+        return [inHtml, outHtml]
+    }
+
+
     function getFRStatus(data){
         fire_ajax_get({url:`{{ url('activity:previewImage') }}?action=getFRStatus&uuid=${data}`,})
         .done((data, status, xhr) => {
@@ -94,6 +111,9 @@ td { padding: 6px; border: 1px solid #CCC; }
             $("#attd_out_img").attr('src', filepathOUT)
             $("#default_people_img").attr('src', defaultIMG)
             $("#modal_fr_status").modal("show");
+            let html = getReadableTextForINOUT(data['eventlog_in_out'][0])
+            $("#in_text").html(html[0])
+            $("#out_text").html(html[1])
 
 
         })
