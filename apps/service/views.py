@@ -137,7 +137,7 @@ def perform_attachment_upload(request):
         service_insert = json.loads(request.data['service_insert'])
         ic(service_uploadattachment, service_insert)
         file_buffer     = request.FILES.getlist('image')
-        home_dir        = os.path.expanduser('~')+'/'
+        home_dir        = '/var/www/redmine.youtility.in'+'/'
         attachment_data = service_uploadattachment
         pelogid         = attachment_data['pelog_id']
         peopleid        = attachment_data['people_id']
