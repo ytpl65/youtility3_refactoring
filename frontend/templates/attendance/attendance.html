@@ -81,22 +81,25 @@ td { padding: 6px; border: 1px solid #CCC; }
 <script>
     var table = null;
     function getReadableTextForINOUT(details){
-        console.log(details['peventlogextras'], 'details');
-        verifiedInValuye = details['peventlogextras']['distance_in'] ? (1-parseInt(details['peventlogextras']['distance_in']))*100 : 'N/A'
-        verifiedOutValuye = details['peventlogextras']['distance_out'] ? (1-parseInt(details['peventlogextras']['distance_out']))*100 : 'N/A'
-        threshold = details['peventlogextras']['threshold'] ? details['peventlogextras']['threshold']: 'N/A'
-        metric = details['peventlogextras']['similarity_metric'] ? details['peventlogextras']['similarity_metric'].toUpperCase(): 'N/A'
-        ingps = details['startgps'] ? JSON.parse(details['startgps'])['coordinates'] : 'N/A'
-        outgps = details['endgps'] ?  JSON.parse(details['endgps'])['coordinates'] : 'N/A'
-        ondate = details['datefor'] ? details['datefor'] : 'N/A'
-        createdby = details['createdby'] ? details['createdby'] : 'N/A'
-        var inHtml = `FR IN:   ${verifiedInValuye}% <br> Threshold:   ${threshold}% 
-        \<br> Metric:    ${metric} In Lat-Lng:   ${ingps} <br> On Date:   ${ondate} \
-        <br> Performed By:${createdby}`
-        var outHtml = `FR OUT:${verifiedOutValuye}% <br> Threshold:${threshold}% 
-        \<br> Metric:${metric} <br> Out Lat-Lng:${outgps} <br> On Date:${ondate} \
-        <br> Performed By:${createdby}`
-        return [inHtml, outHtml]
+        if(details){
+            console.log(details['peventlogextras'], 'details');
+            verifiedInValuye = details['peventlogextras']['distance_in'] ? (1-parseInt(details['peventlogextras']['distance_in']))*100 : 'N/A'
+            verifiedOutValuye = details['peventlogextras']['distance_out'] ? (1-parseInt(details['peventlogextras']['distance_out']))*100 : 'N/A'
+            threshold = details['peventlogextras']['threshold'] ? details['peventlogextras']['threshold']: 'N/A'
+            metric = details['peventlogextras']['similarity_metric'] ? details['peventlogextras']['similarity_metric'].toUpperCase(): 'N/A'
+            ingps = details['startgps'] ? JSON.parse(details['startgps'])['coordinates'] : 'N/A'
+            outgps = details['endgps'] ?  JSON.parse(details['endgps'])['coordinates'] : 'N/A'
+            ondate = details['datefor'] ? details['datefor'] : 'N/A'
+            createdby = details['createdby'] ? details['createdby'] : 'N/A'
+            var inHtml = `FR IN:   ${verifiedInValuye}% <br> Threshold:   ${threshold}% 
+            \<br> Metric:    ${metric} In Lat-Lng:   ${ingps} <br> On Date:   ${ondate} \
+            <br> Performed By:${createdby}`
+            var outHtml = `FR OUT:${verifiedOutValuye}% <br> Threshold:${threshold}% 
+            \<br> Metric:${metric} <br> Out Lat-Lng:${outgps} <br> On Date:${ondate} \
+            <br> Performed By:${createdby}`
+            return [inHtml, outHtml]
+        }
+        
     }
 
 
@@ -111,7 +114,7 @@ td { padding: 6px; border: 1px solid #CCC; }
             $("#attd_out_img").attr('src', filepathOUT)
             $("#default_people_img").attr('src', defaultIMG)
             $("#modal_fr_status").modal("show");
-            let html = getReadableTextForINOUT(data['eventlog_in_out'][0])
+            let html = getReadableTextForINOUT(data['eventlog_in_out'].length > 0 ? data['eventlog_in_out'][0] : null)
             $("#in_text").html(html[0])
             $("#out_text").html(html[1])
 
