@@ -385,7 +385,7 @@ Buisiness-View
 	}
 
 	function getLatLng(){
-		var gps  = '{% if buform.instance.gpslocation != None %}{{ buform.instance.gpslocation.y }},{{ buform.instance.gpslocation.x }}{% else %} null {% endif %}';
+		var gps  = '{% if buform.instance.gpslocation != None %}{{ buform.instance.gpslocation.y }},{{ buform.instance.gpslocation.x }}{% else %}None{% endif %}';
 		if(gps != "None"){
 			console.log('{{ buform.instance.gpslocation }}')
 			return { lat:parseFloat(gps.split(',')[0]), lng:parseFloat(gps.split(',')[1]) }
@@ -438,46 +438,47 @@ Buisiness-View
 			const bounds = new google.maps.LatLngBounds();
 
 			places.forEach((place) => {
-			if (!place.geometry || !place.geometry.location) {
-				console.log("Returned place contains no geometry");
-				return;
-			}
-
-			const icon = {
-				url: place.icon,
-				size: new google.maps.Size(71, 71),
-				origin: new google.maps.Point(0, 0),
-				anchor: new google.maps.Point(17, 34),
-				scaledSize: new google.maps.Size(25, 25),
-			};
-			
-			let marker = new google.maps.Marker({
-				map,
-				icon,
-				title: place.name,
-				position: place.geometry.location,
-				animation:google.maps.Animation.DROP
-			})
-			
-			// Create a marker for each place.
-			markers.push(
-				marker
-			);
-
-			//on click marker zoom in
-			marker.addListener("click", () => {
-				map.setZoom(17);
-				map.setCenter(marker.getPosition());
-			});
-
-				if (place.geometry.viewport) {
-					// Only geocodes have viewport.
-					bounds.union(place.geometry.viewport);
-				} else {
-					bounds.extend(place.geometry.location);
+				if (!place.geometry || !place.geometry.location) {
+					console.log("Returned place contains no geometry");
+					return;
 				}
+
+				const icon = {
+					url: place.icon,
+					size: new google.maps.Size(71, 71),
+					origin: new google.maps.Point(0, 0),
+					anchor: new google.maps.Point(17, 34),
+					scaledSize: new google.maps.Size(25, 25),
+				};
+				
+				let marker = new google.maps.Marker({
+					map,
+					icon,
+					title: place.name,
+					position: place.geometry.location,
+					animation:google.maps.Animation.DROP
+				})
+				
+				// Create a marker for each place.
+				markers.push(
+					marker
+				);
+
+				//on click marker zoom in
+				marker.addListener("click", () => {
+					map.setZoom(17);
+					map.setCenter(marker.getPosition());
+				});
+
+					if (place.geometry.viewport) {
+						// Only geocodes have viewport.
+						bounds.union(place.geometry.viewport);
+					} else {
+						bounds.extend(place.geometry.location);
+					}
 			});
 			map.fitBounds(bounds);
+			userMarker = markers.length ? markers[0] : null
 		}); // searchBox.addListener
 
 		//place marker when user clicks on map

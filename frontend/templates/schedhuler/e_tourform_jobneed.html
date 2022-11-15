@@ -57,7 +57,7 @@ External Tour
                     {{ externaltourform.jobdesc }}
                 </div>
             </div>
-            <div class="input-group mb-3">
+            <div class="input-group mb-6">
                 <div class="col-md-4">
                     <label class="required">Assign to:</label>
                 </div>
@@ -113,6 +113,14 @@ External Tour
                 </div>
                 <div class="col-md-8">
                     {{ externaltourform.priority }}
+                </div>
+            </div>
+            <div class="input-group mb-3">
+                <div class="col-md-4">
+                    {{ externaltourform.gpslocation.label_tag() }}
+                </div>
+                <div class="col-md-8">
+                    {{ externaltourform.gpslocation }}
                 </div>
             </div>
         </div>
@@ -173,14 +181,6 @@ External Tour
                     {{ externaltourform.ticketcategory }}
                 </div>
             </div>
-            <div class="input-group mb-3">
-                <div class="col-md-4">
-                    {{ externaltourform.gpslocation.label_tag() }}
-                </div>
-                <div class="col-md-8">
-                    {{ externaltourform.gpslocation }}
-                </div>
-            </div>
         </div>
     </div>
 </form>
@@ -188,8 +188,8 @@ External Tour
 
 
 {% block extras %}
-<div class="row mb-3 card card-flush my-shadow p-4">
-    <table width="100%" class="card-body">
+<div class="row mb-3 card p-4">
+    <table width="100%" class="table">
         <tbody>
             <tr>
             <td style="padding:4px;"><span class="caption-subject bold font-red-mint" style="font-size:16px;">Total time in shift: </span></td>
@@ -337,8 +337,9 @@ var parentEditor;
                 {data:'qset__qsetname', title:'Checklist'},
                 {data:'gracetime', title:'Gracetime'},
                 {data:'jobstatus', title:'Status'},
-                {data:'distance', title:'Distance', defaultContent:null, render:function(data, type, row, meta){
-                        return data === null ? '--' : data
+                {data:'bu__gpslocation', visible:false},
+                {data:'distance', title:'Distance',  defaultContent:null, render:function(data, type, row, meta){
+                        return data === null ? '--' : data + ' km'
                     }
                 },
                 {data:'duration', title:'Duration', defaultContent:null, render:function(data, type, row, meta){
@@ -346,10 +347,11 @@ var parentEditor;
                     }
                 },
             ],
+            ordering:false,
             deferRender: true,
             columnDefs:[
                 {targets:1, data:'seqno', render:function(data, type, row, meta){
-                        return parseInt(data) + 1;
+                        return parseInt(data)
                     }
                 },
             ],
@@ -359,7 +361,10 @@ var parentEditor;
             buttons:[],
             initComplete: function( settings, json ) {
             if('{{ externaltourform.instance.id }}' !== 'None'){
-                $("#btnGetRoute").click()
+                data = asgdsites_table.rows().data().toArray() 
+                freq = "{{ externaltourform.instance.other_info['tour_frequency'] }}"
+                console.log(data, 'data')
+                calculate_tour_details(data, freq)
             }
         }
 

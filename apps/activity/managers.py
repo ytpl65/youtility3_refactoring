@@ -271,7 +271,8 @@ class JobneedManager(models.Manager):
     
     
     def get_externaltourlist_jobneed(self, request, related, fields):
-        ic(fields)
+        fields = ['id', 'plandatetime', 'expirydatetime', 'performedby__peoplename', 'jobstatus',
+                  'jobdesc', 'people__peoplename', 'pgroup__groupname', 'gracetime']
         R = request.GET
         qset = self.select_related(
                             *related).filter(
@@ -316,14 +317,16 @@ class JobneedManager(models.Manager):
         )
     
     def get_ext_checkpoints_jobneed(self, request, related, fields):
-        fields+=['distance', 'duration']
+        fields+=['distance', 'duration', 'bu__gpslocation']
         ic(fields)
         qset  = self.annotate(distance=F('other_info__distance'),
+                              bu__gpslocation = AsGeoJSON('bu__gpslocation'),
             duration = V(None, output_field=models.CharField(null=True))).select_related(*related).filter(
             parent_id = request.GET['parent_id'],
             identifier = 'EXTERNALTOUR',
             job__enable=True
         ).order_by('seqno').values(*fields)
+        ic(qset.values('seqno'))
         return qset or self.none()
     
         
@@ -638,7 +641,7 @@ class JobManager(models.Manager):
         ic(job)
         qset = self.annotate(
             qsetid = F('qset_id'), assetid = F('asset_id'),
-            jobid = F('id'), gpslocation = AsGeoJSON('bu__gpslocation'),
+            jobid = F('id'), bu__gpslocation = AsGeoJSON('bu__gpslocation'),
             buid = F('bu_id'), buname=F('bu__buname'),
             breaktime = F('other_info__breaktime'),
             distance=F('other_info__distance'),
@@ -650,7 +653,7 @@ class JobManager(models.Manager):
             'id',
             'breaktime', 'distance', 'starttime', 'expirytime',
             'qsetid', 'jobid', 'assetid', 'seqno', 'jobdesc',
-            'buname', 'buid', 'gpslocation', 'endtime', 'duration',
+            'buname', 'buid', 'bu__gpslocation', 'endtime', 'duration',
             'qsetname', 'solid'
         ).order_by('seqno')
         return qset or self.none()

@@ -9,6 +9,9 @@ from pprint import pformat
 from random import shuffle
 from apps.core import utils
 from datetime import datetime, timezone, timedelta
+from django.db.models.query import QuerySet
+import random
+
 log = getLogger('__main__')
 
 
@@ -81,6 +84,7 @@ def reversedFPoints(DDE, data, breaktime):
 
 def calculate_route_details(R, job):
     data = R
+    ic(data)
     import googlemaps
     gmaps = googlemaps.Client(key='AIzaSyDVbA53nxHKUOHdyIqnVPD01aOlTitfVO0')
     startpoint, endpoint, waypoints = get_service_requirements(data)
@@ -89,18 +93,25 @@ def calculate_route_details(R, job):
     directions = gmaps.directions(mode='driving', waypoints=waypoints, origin=startpoint, destination=endpoint, optimize_waypoints=True)
 
     waypoint_order = directions[0]["waypoint_order"]
+    ic(waypoint_order)
     freq, breaktime = job['other_info']['tour_frequency'], job['other_info']['breaktime']
 
     data[0]['seqno'] = 0 + 1
+    #startpoint
     chekpoints = [data[0]]
     chekpoints[0]['distance'] = 0
     chekpoints[0]["duration"] = 0
     chekpoints[0]["expirytime"] = 0
+    
+    #waypoints
     for i, item in enumerate(waypoint_order):
         data[i + 1]['seqno'] = i + 1 + 1
         chekpoints.append(data[item + 1])
-    data[-1][-1] = len(data) - 1 + 1
-    chekpoints.append(data[-1])
+    
+    #endpoint
+    data[len(data)-1]["seqno"] = len(data)-1+1    
+    chekpoints.append(data[len(data)-1])
+    
     legs = directions[0]["legs"]
     j = 1
     DDE = []
@@ -115,7 +126,7 @@ def calculate_route_details(R, job):
         DDE.append(l)
         j += 1
     if freq > 1:
-        chekpoints = get_frequencied_data(DDE, chekpoints, freq, breaktime)
+        checkpoints = get_frequencied_data(DDE, chekpoints, freq, breaktime)
     if freq > 1 and breaktime != 0:
         endp = int(len(chekpoints) / freq)
         chekpoints[endp]['breaktime'] = breaktime
@@ -374,7 +385,7 @@ def insert_into_jn_and_jnd(job, DT, resp):
         try:
             # required variables
             NONE_JN  = utils.get_or_create_none_jobneed()
-            NONE_P   = utils.get_or_create_none_people()
+            NONE_P, _   = utils.get_or_create_none_people()
             crontype = job['identifier']
             jobstatus = 'ASSIGNED'
             jobtype = 'SCHEDULE'
@@ -458,11 +469,11 @@ def insert_update_jobneeddetails(jnid, job, parent=False):
         pass
     try:
         qsb = utils.get_or_create_none_qsetblng() if parent else am.QuestionSetBelonging.objects.select_related('question').filter(qset_id=job['qset_id']).order_by('seqno').values_list(named=True)
-
         if not qsb:
             log.error("No Checklist Found failed to schedhule job", exc_info=True)
             raise EmptyResultSet
         else:
+            log.info(f'Checklist found with {len(qsb) if isinstance(qsb, QuerySet) else 1} questions in it.')
             insert_into_jnd(qsb, job, jnid)
     except Exception:
         raise
@@ -472,15 +483,15 @@ def insert_update_jobneeddetails(jnid, job, parent=False):
 
 def insert_into_jnd(qsb, job, jnid):
     log.info("insert_into_jnd() [START]")
-    if not isinstance(qsb, am.QuestionSetBelonging):
-        qsb = qsb[0]
-    am.JobneedDetails.objects.create(
-        seqno      = qsb.seqno,      question_id = qsb.question_id,
-        answertype = qsb.answertype, max         = qsb.max,
-        min        = qsb.min,        alerton     = qsb.alerton,
-        options    = qsb.options,    jobneed_id  = jnid,
-        cuser_id   = job['cuser_id'],   muser_id    = job['muser_id'],
-        ctzoffset  = job['ctzoffset'])
+    qset = qsb if isinstance(qsb, QuerySet) else [qsb]
+    for obj in qset:
+        am.JobneedDetails.objects.create(
+            seqno      = obj.seqno,      question_id = obj.question_id,
+            answertype = obj.answertype, max         = obj.max,
+            min        = obj.min,        alerton     = obj.alerton,
+            options    = obj.options,    jobneed_id  = jnid,
+            cuser_id   = job['cuser_id'],   muser_id    = job['muser_id'],
+            ctzoffset  = job['ctzoffset'])
     log.info("insert_into_jnd() [END]")
 
 def extract_seq(R):
@@ -503,7 +514,7 @@ def check_sequence_of_prevjobneed(job, current_seq):
 def create_child_tasks(job, _pdtz, _people, jnid, _jobstatus, _jobtype):
     try:
         prev_edtz = None
-        NONE_P = utils.get_or_create_none_people()
+        NONE_P, _ = utils.get_or_create_none_people()
         from django.utils.timezone import get_current_timezone
         tz = get_current_timezone()
         mins = pdtz = edtz = None
@@ -522,7 +533,7 @@ def create_child_tasks(job, _pdtz, _people, jnid, _jobstatus, _jobtype):
         if job['other_info']['is_randomized'] in ['True', True] and len(R) > 1:
             #randomize data if it is random tour job
             L = list(R)
-            ic(L)
+            random.shuffle(L)
             R = calculate_route_details(L, job)
             
             

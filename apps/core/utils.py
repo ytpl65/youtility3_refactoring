@@ -694,6 +694,7 @@ def get_or_create_none_question():
 
 
 def get_or_create_none_qsetblng():
+    'A None qsetblng with seqno -1'
     obj, _ = am.QuestionSetBelonging.objects.get_or_create(
         id=1,
         defaults={

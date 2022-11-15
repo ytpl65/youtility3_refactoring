@@ -234,7 +234,7 @@ class Job(BaseModel, TenantAwareModel):
     jobdesc         = models.CharField(_("Description"), max_length = 500)
     fromdate        = models.DateTimeField( _("From date"), auto_now = False, auto_now_add = False)
     uptodate        = models.DateTimeField( _("To date"), auto_now = False, auto_now_add = False)
-    cron            = models.CharField(_("Cron Exp."), max_length = 200)
+    cron            = models.CharField(_("Cron Exp."), max_length = 200, default='* * * * *')
     identifier      = models.CharField(_("Job Type"), max_length = 100, choices = Identifier.choices, null = True)
     planduration    = models.IntegerField(_("Plan duration (min)"))
     gracetime       = models.IntegerField(_("Grace Time"))

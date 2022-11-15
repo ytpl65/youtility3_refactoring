@@ -19,6 +19,7 @@ import logging
 from django.db.models.deletion import RestrictedError
 from django.urls import reverse
 import json
+from django.contrib.gis.db.models.functions import  AsWKT, AsGeoJSON
 log = logging.getLogger('__main__')
 # Create your views here.
 
@@ -619,14 +620,16 @@ def run_internal_tour_scheduler(request):
         return Http404
     padd = "#"*10
     log.info(f"{padd} run_guardtour_scheduler initiated [START] {padd}")
-    R, job, resp = request.POST, request.POST.get('job'), None
+    R, job_id, resp = request.POST, request.POST.get('job_id'), None
+    ic(R)
     if (
-        jobs := am.Job.objects.filter(id = job).select_related(
+        jobs := am.Job.objects.filter(id = job_id).select_related(
             "asset","pgroup",'sgroup',
             "cuser","muser","qset","people").values(*utils.JobFields.fields)
     ):
         #check if it is random external tour
         if jobs[0]['other_info']['is_randomized'] in [True, 'true'] and R.get('action')=='saveCheckpoints':
+            log.info('tour type random is going to schedule')
             #save checkpoints
             checkpoints =  json.loads(R.get('checkpoints'))
             am.Job.objects.filter(parent_id = jobs[0]['id']).delete()
@@ -1204,6 +1207,7 @@ class JobneedExternalTours(LoginRequiredMixin, View):
         if R.get('id'):
             obj = P['model'].objects.get(id = R['id'])
             form = P['form_class'](instance = obj, initial = P['initial'])
+            ic(form.as_p())
             log.info("object retrieved %s", (obj.jobdesc))
             checkpoints = self.get_checkpoints(P, obj = obj)
             cxt = {'externaltourform': form, 'edit': True,
@@ -1220,9 +1224,9 @@ class JobneedExternalTours(LoginRequiredMixin, View):
                 'parent', 'asset', 'qset', 'pgroup',
                 'people', 'job', 'client', 'bu',
                 'ticketcategory'
-            ).filter(parent_id = obj.id).values(
+            ).annotate(bu__gpslocation=AsGeoJSON('bu__gpslocation')).filter(parent_id = obj.id).values(
                 'asset__assetname', 'asset__id', 'qset__id',
-                'qset__qsetname', 'plandatetime', 'expirydatetime',
+                'qset__qsetname', 'plandatetime', 'expirydatetime', 'bu__gpslocation',
                 'gracetime', 'seqno', 'jobstatus', 'id').order_by('seqno')
 
         except Exception:
@@ -1623,6 +1627,7 @@ class ExternalTourScheduling(LoginRequiredMixin, View):
                 msg = 'external scheduler tour'
                 form = utils.get_instance_for_update(
                     formData, P, msg, int(pk), kwargs = {'request':request})
+                ic(form.data)
             else:
                 form = P['form_class'](formData)
             if form.is_valid():
@@ -1655,7 +1660,7 @@ class ExternalTourScheduling(LoginRequiredMixin, View):
     def saveCheckpointsinJob(R, checkpoints, P, request):
         try:
             #ic(checkpoints)
-            job = am.Job.objects.filter(id = int(R['parent_id'])).values()[0]
+            job = am.Job.objects.filter(id = int(R['job_id'])).values()[0]
             P['model'].objects.filter(parent_id = job['id']).delete()
             count=0
             for cp in checkpoints:

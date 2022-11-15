@@ -17,11 +17,10 @@ def get_or_create_dir(path):
     else: created= False
     return created
 
-def write_file_to_dir(filebuffer, uploadedfile):
+def write_file_to_dir(filebuffer, uploadedfilepath):
     from django.core.files.base import ContentFile
     from django.core.files.storage import default_storage
-
-    path = default_storage.save(uploadedfile, ContentFile(filebuffer.read()))
+    path = default_storage.save(uploadedfilepath, ContentFile(filebuffer.read()))
     log.info(f"file saved to {path}")
 
 

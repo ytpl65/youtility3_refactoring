@@ -51,7 +51,7 @@ function spreadColNames() {
   return [
     { name: "bu", targets: 1 },
     { name: "buname", targets: 2 },
-    { name: "gpslocation", targets: 3 },
+    { name: "bu__gpslocation", targets: 3 },
     { name: "distance", targets: 6 },
     { name: "duration", targets: 7 },
     { name: "breaktime", targets: 8 },
@@ -79,23 +79,23 @@ function updateAssignedSitesTable(btime, checkListId, checkListName) {
   asgdsites_table.row(".selected").data(newData).draw();
 }
 
-function calculateAndDisplayRoute(data, routeFreq) {
+function calculateAndDisplayRoute(data, routeFreq, optimize=false) {
   if (data.length > 1) {
-    if (routeFreq > 1) {
-      //copy first obj
+    // if (routeFreq > 1) {
+    //   //copy first obj
 
-      let copiedFirstObject = JSON.parse(JSON.stringify(data[0]));
-      data[data.length] = copiedFirstObject;
-    }
+    //   let copiedFirstObject = JSON.parse(JSON.stringify(data[0]));
+    //   data[data.length] = copiedFirstObject;
+    // }
 
     directionService.route(
-      getDirectionConfig(data),
+      getDirectionConfig(data, optimize),
       function (response, status) {
         if (status === "OK") {
           data = calculateLatLngPoints(response, data, routeFreq);
           data = calculateDistanceDuration(response, data);
-          fpoint = ManageFrequenciedRoutes(data, routeFreq);
-          var rowData = routeFreq > 1 ? fpoint : data;
+          //fpoint = ManageFrequenciedRoutes(data, routeFreq);
+          var rowData = data//routeFreq > 1 ? fpoint : data;
           //data = checkFrequenciedData(R[0], routeFreq, R[1], $("#id_breaktime").val())
           reloadAssignedSitesTable(rowData);
           reCaclTime();
@@ -112,9 +112,9 @@ function calculateAndDisplayRoute(data, routeFreq) {
   }
 }
 
-function getDirectionConfig(data) {
-  var gpsStartCoords = JSON.parse(data[0]["gpslocation"])["coordinates"];
-  var gpsEndCoords = JSON.parse(data[data.length - 1]["gpslocation"])[
+function getDirectionConfig(data, optimize) {
+  var gpsStartCoords = JSON.parse(data[0]["bu__gpslocation"])["coordinates"];
+  var gpsEndCoords = JSON.parse(data[data.length - 1]["bu__gpslocation"])[
     "coordinates"
   ];
 
@@ -126,7 +126,7 @@ function getDirectionConfig(data) {
 
   var wayPoints = [];
   for (var i = 1; i < data.length - 1; i++) {
-    let wpCoords = JSON.parse(data[i]["gpslocation"])["coordinates"];
+    let wpCoords = JSON.parse(data[i]["bu__gpslocation"])["coordinates"];
     wayPoints.push({
       location: new google.maps.LatLng(
         Number(wpCoords[1]),
@@ -141,7 +141,7 @@ function getDirectionConfig(data) {
     destination: endPoint,
     waypoints: wayPoints,
     travelMode: "DRIVING",
-    optimizeWaypoints: true,
+    optimizeWaypoints: optimize,
   };
 }
 
@@ -207,7 +207,7 @@ function d2DrawMarker(
   no = null,
   left = null
 ) {
-  var latlng = JSON.parse(row["gpslocation"])["coordinates"];
+  var latlng = JSON.parse(row["bu__gpslocation"])["coordinates"];
   if (end && routeFreq > 1) {
     var max = idx + 1;
     nStr = `${max - idx},${max}`;
@@ -322,6 +322,7 @@ function ManageFrequenciedRoutes(data, routeFreq) {
 
 function reloadAssignedSitesTable(data) {
   asgdsites_table.rows().remove().draw();
+  console.log(data, "data")
   asgdsites_table.rows.add(data).draw();
 }
 

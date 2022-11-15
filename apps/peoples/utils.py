@@ -73,7 +73,7 @@ def save_client_tenantid(instance, user, session, client=None, bu=None):
     if bu is None:
         bu = session.get('bu_id')
     if client is None:
-        client = session.get('client_id')
+        client = session.get('client_id') if instance.client_id  in [1, None] else instance.client_id
     instance.tenant_id = tenantid
     instance.client_id = client
     instance.bu_id = bu

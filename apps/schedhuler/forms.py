@@ -362,6 +362,7 @@ class E_TourFormJobneed(JobNeedForm):
         self.fields['endtime'].widget.attrs         = {"disabled": "disabled"}
         self.fields['endtime'].label                = 'End Time'
         self.fields['performedby'].widget.attrs     = {"disabled": "disabled"}
+        self.fields['scantype'].widget.attrs.pop('style')
         utils.initailize_form_fields(self)
 
     def is_valid(self) -> bool:

@@ -143,7 +143,7 @@ Schedhule External-Tour&nbsp;<i class="fa fa-clock fs-4 text-primary" aria-hidde
                     <label for="{{ schdexternaltourform.cron.id_for_label }}" class="required">{{ schdexternaltourform.cron.label }}:</label>
                 </div>
                 <div class="col-md-8 d-flex">
-                    <input type="text" name="{{ schdexternaltourform.cron.name }}" value="* * * * *" id="id_cron"
+                    <input type="text" name="{{ schdexternaltourform.cron.name }}" value="{{ schdexternaltourform.instance.cron }}" id="id_cron"
                     readonly required class="form-control form-control-solid" maxlength="250" />
                     <a  class="btn btn-circle btn-icon-only btn-default " id="cron_selector">
                         <i class="fa fa-clock fs-4 text-primary" aria-hidden="true"></i>
@@ -229,7 +229,6 @@ Schedhule External-Tour&nbsp;<i class="fa fa-clock fs-4 text-primary" aria-hidde
                 <div class="card-header">
                     <h3 class="card-title">Site Checkpoints &nbsp;<i class="fas ch4 fa-sm fa-paste"></i></h3>
                     <div class="card-toolbar gap-5 d-md-flex justify-content-md-end">
-                        <button type="button" id="btnRandomTour"  data-toggle="modal" data-target="#randomTourModal" class="btn red sbold">Random Tour &nbsp<i class="fa fa-random"></i></button>
                         <button type="button" class="btn btn-sm btn-hover-scale btn-primary non-random" id="btnGetRoute"
                             data-bs-custom-class="tooltip-dark" data-bs-toggle="tooltip" data-bs-placement="top" title="Get Route">
                             <i class="fas fa-map-marker-alt fa-lg"></i>
@@ -370,7 +369,7 @@ function getAsgdsitesTabColumnConfig(){
         {data:'buid', visible:false, searchable:false},
         {data:'solid', searchable:false, title:'Sol ID'},
         {data:'buname', title:'Site'},
-        {data:'gpslocation', title:'GPS', visible:false},
+        {data:'bu__gpslocation', title:'GPS', visible:false},
         {title:'Start', defaultContent:null, data:'starttime', render:function(data, type, row, meta){
                 return data === null ? '--' : data
             }
@@ -388,7 +387,7 @@ function getAsgdsitesTabColumnConfig(){
             }
         },
         {data:'qsetid', visible:false,targets:11, searchable:false},
-        {data:'qsetname', targets:10, title:'Checklist'},
+        {data:'qsetname', targets:10, title:'Checklist', visible:false},
         {data:'jobid', visible:false, defaultContent:null, searchable:false},
         {data:'expirytime', visible:false, defaultContent:null, searchable:false},
         {data:'assetid', visible:false, defaultContent:null, searchable:false},
@@ -426,28 +425,34 @@ function disableFields(elements){
     $(elements).attr('disabled', 'disabled')
 }
 
+function properCron(cron){
+    return cron === '* * * * *' ? false :true
+}
+
 
 //UPDATE CRONDATETIME ON CRON CHANGE
 function updateCronDate(){
-    console.log("called")
-    var cron = $("#id_cron").val()
-    var params = {'url':`{{ url('schedhuler:getCronDateTime') }}?cron=${cron}`,
-    'beforeSend':function(){}} 
-    fire_ajax_get(params)
-    .done((data, status, xhr) => {
-        if(data.rows.length > 0){
-            _cronDates = data.rows
-        }else{
-            _cronDates= [new Date(new Date().setHours(0, 0, 0))];
-        }
-        reCaclTime()
-        console.log(_cronDates, "_cronDates")
-        
-    })
-    .fail((xhr, status, error) => {
-        
-        show_error_alert(xhr.responseJSON.errors, "Bad Cron!")
-    })
+        console.log("called")
+        var cron = $("#id_cron").val()
+        var params = {'url':`{{ url('schedhuler:getCronDateTime') }}?cron=${cron}`,
+        'beforeSend':function(){}
+        } 
+        fire_ajax_get(params)
+        .done((data, status, xhr) => {
+            if(data.rows.length > 0){
+                _cronDates = data.rows
+            }else{
+                _cronDates= [new Date(new Date().setHours(0, 0, 0))];
+            }
+            reCaclTime()
+            console.log(_cronDates, "_cronDates")
+            
+        })
+        .fail((xhr, status, error) => {
+            
+            show_error_alert(xhr.responseJSON.errors, "Bad Cron!")
+        })
+    
 }
 
     //delete tour 
@@ -515,18 +520,18 @@ $(document).ready(() => {
     });
 
     //CHILD EDITOR ON OPEN EVENT
-        editor.on('open', function(e, mode, action){
-            $(".DTE_Field").addClass('p-1') 
-            if(action === 'create' || action === 'edit'){
-                $("#DTE_Field_qsetname").addClass("form-control form-select") // add css to alerton form field
-            }
-            // initialize select field question
-            init_select_field({
-                url: "{{ url('schedhuler:schd_external_tour') }}?action=loadChecklist",
-                id: "#DTE_Field_qsetname",
-                item: 'Checklist',
-            })
+    editor.on('open', function(e, mode, action){
+        $(".DTE_Field").addClass('p-1') 
+        if(action === 'create' || action === 'edit'){
+            $("#DTE_Field_qsetname").addClass("form-control form-select") // add css to alerton form field
+        }
+        // initialize select field question
+        init_select_field({
+            url: "{{ url('schedhuler:schd_external_tour') }}?action=loadChecklist",
+            id: "#DTE_Field_qsetname",
+            item: 'Checklist',
         })
+    })
 
     asgdsites_table = $("#assigned_sites").DataTable({
         ajax:{
@@ -557,7 +562,7 @@ $(document).ready(() => {
                 $("#btnGetRoute").click()
             }
         }
-    }) 
+    })
 
     //toggle people and pgroup field based on radio button value
     if ('{{schdexternaltourform.instance.id}}' === 'None') {
@@ -605,10 +610,7 @@ $(document).ready(() => {
         $("#id_breaktime").attr('disabled','disabled');
     }
 
-    
-
-
-     //ADD CALENDER TO DATE FIELDS WITH FLAT-PICKR PLUGIN
+    //ADD CALENDER TO DATE FIELDS WITH FLAT-PICKR PLUGIN
     $("#id_fromdate, #id_uptodate").flatpickr({
         enableTime: true,
         time_24hr: true,
@@ -663,7 +665,7 @@ $(document).ready(() => {
         routeFreq = $("#tour_frequency").val()
         if(data.length > 0){
             d2ClearMarker()
-            calculateAndDisplayRoute(data, routeFreq)
+            calculateAndDisplayRoute(data, routeFreq, optimize=true)
             
         }
     })
@@ -712,7 +714,7 @@ $(document).ready(() => {
                     var payLoad = {'checkpoints':JSON.stringify(asgdsites_table.rows().data().toArray()),
                     csrfmiddlewaretoken: '{{ csrf_token }}',
                     action:'saveCheckpoints',
-                    parent_id: '{{schdexternaltourform.instance.id}}'}
+                    job_id: '{{schdexternaltourform.instance.id}}'}
                     fire_ajax_form_post(params, payLoad)
                     .done((data, status, xhr) => {
                         asgdsites_table.rows().remove().draw()
@@ -738,7 +740,12 @@ $(document).ready(() => {
     })
 
     $("#runScheduler").click(function() {
-        if(checkRouteSaved() === true){
+        debugger;
+        if(!properCron($("#id_cron").val())){
+            show_error_alert( "Please change your cron expression and update the job record.", "Problematic Cron")
+            return
+        }
+        if(checkRouteSaved() === true ){
             Swal.fire({
                 title: "Are you sure?",
                 text: "Run Tour Scheduler, you won't be able to revert this!",
@@ -749,7 +756,7 @@ $(document).ready(() => {
                 if(result.isConfirmed){
                     const params = {url: "{{ url('schedhuler:runJob') }}"}
                     var payLoad = {
-                        job: '{{ schdexternaltourform.instance.id }}',
+                        job_id: '{{ schdexternaltourform.instance.id }}',
                         csrfmiddlewaretoken: '{{ csrf_token }}'
                     }
                     if($("#id_israndom").is(":checked")){
