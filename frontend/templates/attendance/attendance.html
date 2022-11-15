@@ -99,7 +99,7 @@ td { padding: 6px; border: 1px solid #CCC; }
             <br> Performed By:${createdby}`
             return [inHtml, outHtml]
         }
-        
+        return null
     }
 
 
@@ -115,8 +115,8 @@ td { padding: 6px; border: 1px solid #CCC; }
             $("#default_people_img").attr('src', defaultIMG)
             $("#modal_fr_status").modal("show");
             let html = getReadableTextForINOUT(data['eventlog_in_out'].length > 0 ? data['eventlog_in_out'][0] : null)
-            $("#in_text").html(html.length > 0 ? html[0] : 'N/A')
-            $("#out_text").html(html.length > 0 ? html[1] : 'N/A')
+            $("#in_text").html(html ? html[0] : 'N/A')
+            $("#out_text").html(html ? html[1] : 'N/A')
 
 
         })
