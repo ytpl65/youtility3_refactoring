@@ -38,7 +38,7 @@ class PELManager(models.Manager):
             if obj[0].punchouttime:
                 extras['verified_out'] = result['verified']
                 extras['distance_out'] = result['distance']
-            obj[0]['peventlogextras'] = extras
+            obj[0].peventlogextras = extras
             obj[0].facerecognitionin = extras['verified_in']
             obj[0].facerecognitionout = extras['verified_out']
             obj[0].people_id = peopleid
