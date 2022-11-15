@@ -361,19 +361,7 @@ def perform_uploadattachment(file,  record, biodata):
     ic(biodata)
     # ic(file, tablename, record, type(record), biodata, type(biodata))
     try:
-        log.info("perform_uploadattachment [start+] utils.py")
-        log.info("perform_uploadattachment [start+] utils.py")
-        log.info("perform_uploadattachment [start+] utils.py")
-        log.info("perform_uploadattachment [start+] utils.py")
-        log.info("perform_uploadattachment [start+] utils.py")
-        log.info("perform_uploadattachment [start+] utils.py")
-        log.info("perform_uploadattachment [start+] utils.py")
-        log.info("perform_uploadattachment [start+] utils.py")
-        log.info("perform_uploadattachment [start+] utils.py")
-        log.info("perform_uploadattachment [start+] utils.py")
-        log.info("perform_uploadattachment [start+] utils.py")
-        log.info("perform_uploadattachment [start+] utils.py")
-        log.info("perform_uploadattachment [start+] utils.py")
+        log.info("perform_uploadattachment [start+########################]")
         import os
 
         file_buffer = file

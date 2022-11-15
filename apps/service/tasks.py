@@ -128,19 +128,7 @@ def perform_uploadattachment(file, tablename, record, biodata):
     rc, traceback, resp = 0,  'NA', 0
     recordcount = msg = None
     # ic(file, tablename, record, type(record), biodata, type(biodata))
-    log.info('perform_uploadattachment [start +]')
-    log.info('perform_uploadattachment [start +]')
-    log.info('perform_uploadattachment [start +]')
-    log.info('perform_uploadattachment [start +]')
-    log.info('perform_uploadattachment [start +]')
-    log.info('perform_uploadattachment [start +]')
-    log.info('perform_uploadattachment [start +]')
-    log.info('perform_uploadattachment [start +]')
-    log.info('perform_uploadattachment [start +]')
-    log.info('perform_uploadattachment [start +]')
-    log.info('perform_uploadattachment [start +]')
-    log.info('perform_uploadattachment [start +]')
-    log.info('perform_uploadattachment [start +]')
+    log.info('perform_uploadattachment [start +####################################]')
     try:
         import os
 
