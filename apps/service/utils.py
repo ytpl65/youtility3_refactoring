@@ -366,10 +366,10 @@ def perform_uploadattachment(file,  record, biodata):
 
         file_buffer = file
         filename    = biodata['filename']
-        peloguuid     = biodata['pelog_id']
+        peloguuid   = biodata['pelog_id']
         peopleid    = biodata['people_id']
         path        = biodata['path']
-        home_dir        = '/var/www/redmine.youtility.in'+'/'
+        home_dir    = '/var/www/redmine.youtility.in'+'/'
         filepath    = home_dir + path
         uploadfile  = f'{filepath}/{filename}'
         db          = utils.get_current_db_name()

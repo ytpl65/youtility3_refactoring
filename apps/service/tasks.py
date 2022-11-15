@@ -138,7 +138,7 @@ def perform_uploadattachment(file, tablename, record, biodata):
         pelogid    = biodata['pelog_id']
         peopleid   = biodata['people_id']
         path       = biodata['path']
-        home_dir   = os.path.expanduser('~') + '/'
+        home_dir   = '/var/www/redmine.youtility.in'+'/'
         filepath   = home_dir + path
         uploadfile = f'{filepath}/{filename}'
         db         = utils.get_current_db_name()
