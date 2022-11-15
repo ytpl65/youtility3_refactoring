@@ -176,6 +176,7 @@ class UploadAttMutaion(graphene.Mutation):
 
     @classmethod
     def mutate(cls,root, info, file,  record, biodata):
+        log.info("CALLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLED")
         output = sutils.perform_uploadattachment( file, record, biodata)
         return UploadAttMutaion(output = output)
 
