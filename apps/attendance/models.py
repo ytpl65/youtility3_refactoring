@@ -13,9 +13,9 @@ from django.contrib.postgres.fields import ArrayField
 
 def peventlog_json():
     return {
-        'verified_in': None,
+        'verified_in': False,
         'distance_in':None,
-        'verified_out': None,
+        'verified_out': False,
         'distance_out':None,
         'threshold': '0.4',
         'model':'VGG',
