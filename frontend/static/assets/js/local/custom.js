@@ -12,6 +12,41 @@ $(document).on({
 //   endBlockUi();
 // })
 
+function getAddressOfPoint(geocoder, point){
+  return geocoder.geocode({ location: point })
+
+}
+
+function getDirectionConfig(data){
+  //start point
+  var start = data['path'][0]
+  //end point
+  var end = data['path'][data['path'].length - 1]
+  //waypoints
+  var waypoints = [data['path'].slice(1, data['path'].length - 1)]
+  return {
+    travelMode: "DRIVING",
+    origin: start,
+    destination: end,
+    waypoints: waypoints,
+    transitOptions:{
+      arrivalTime: data['punchintime'],
+      departureTime: data['punchouttime'],
+      modes:[data['transportmodes'].split(',')],
+    }
+  }
+}
+
+
+function getRoute(directionService, data){
+  directionService.route(data['directionConfig']).then((response) => {
+    return response
+  }).catch((e) => console.error(e));
+}
+
+
+
+
 //creating environment for wizhaard
 function make_env_for_wizard(session) {
   $(document).ready(function () {

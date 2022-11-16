@@ -223,15 +223,16 @@ def save_linestring_and_update_pelrecord(obj):
 
         bet_objs = Tracking.objects.filter(reference = obj.uuid)
         line = [[coord for coord in obj.gpslocation] for obj in bet_objs]
-        ls = LineString(line, srid = 4326)
-        # transform spherical mercator projection system
-        ls.transform(3857)
-        d = round(ls.length / 1000)
-        obj.distance = d
-        ls.transform(4326)
-        obj.journeypath = ls
-        obj.save()
-        log.info("save linestring is saved..")
+        if len(line) > 1:
+            ls = LineString(line, srid = 4326)
+            # transform spherical mercator projection system
+            ls.transform(3857)
+            d = round(ls.length / 1000)
+            obj.distance = d
+            ls.transform(4326)
+            obj.journeypath = ls
+            obj.save()
+            log.info("save linestring is saved..")
     except Exception as e:
         log.info('ERROR while saving line string', exc_info = True)
         raise
@@ -361,7 +362,7 @@ def perform_uploadattachment(file,  record, biodata):
     ic(biodata)
     # ic(file, tablename, record, type(record), biodata, type(biodata))
     try:
-        log.info("perform_uploadattachment [start+########################]")
+        log.info("perform_uploadattachment [start+]")
         import os
 
         file_buffer = file

@@ -1204,6 +1204,11 @@ class JobneedExternalTours(LoginRequiredMixin, View):
             objs = P['model'].objects.get_ext_checkpoints_jobneed(request, P['related'], P['fields'])
             return rp.JsonResponse(data = {'data':list(objs)})
         
+        if R.get('action') == 'checklist_details' and R.get('jobneedid'):
+            objs = am.JobneedDetails.objects.get_e_tour_checklist_details(R['jobneedid'])
+            return rp.JsonResponse(data = {'data':list(objs)})
+        #else: return rp.JsonResponse(data={'data':[]}, safe=False)
+        
         if R.get('id'):
             obj = P['model'].objects.get(id = R['id'])
             form = P['form_class'](instance = obj, initial = P['initial'])

@@ -509,6 +509,14 @@ class JobneedDetailsManager(models.Manager):
         )
         return qset or self.none()
 
+    def get_e_tour_checklist_details(self, jobneedid):
+        qset = self.filter(jobneed_id=jobneedid).values(
+            'question__quesname', 'answertype', 'min', 'max', 'id',
+            'options', 'alerton', 'ismandatory', 'seqno','answer'
+        ).order_by('seqno')
+        return qset or self.none()
+        
+
 
 class QsetBlngManager(models.Manager):
     use_in_migrations = True

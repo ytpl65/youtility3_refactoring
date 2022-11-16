@@ -154,6 +154,7 @@ Conveyance
 <script>
 //global vars
 var map;
+var lineCoords;
 
 //initialize map
 function initAutocomplete(){
@@ -176,6 +177,7 @@ function getJourneyCoords(id){
 
     })
     .done((data, status, xhr) => {
+        lineCoords = data
         drawConveyancePath(data)
     })
 }
@@ -313,6 +315,40 @@ $(document).ready(function(){
         })
         
     })
+
+    if("{{ conveyanceform.instance.id }}" !== 'None'){
+        var geocoder = new google.maps.Geocoder()
+        var startpoint = {lat: parseFloat("{{ conveyanceform.instance.startlocation.y }}"), lng:parseFloat("{{ conveyanceform.instance.startlocation.x }}")}
+        var endpoint = {lat:parseFloat("{{ conveyanceform.instance.endlocation.y }}"), lng:parseFloat("{{ conveyanceform.instance.endlocation.x }}")}
+        geocoder.geocode({ location: startpoint }).then((res) => {
+            console.log(res)
+            if (res.results[0]) {
+                var formattedAddr = res.results[0].formatted_address
+                formattedAddr += `\nCoordinates: (${startpoint.lat}, ${startpoint.lng})`
+                $("#id_startlocation").val(formattedAddr)
+            }
+        })
+        geocoder.geocode({ location: endpoint }).then((res) => {
+            if (res.results[0]) {
+                var formattedAddr = res.results[0].formatted_address
+                formattedAddr += `\nCoordinates: (${endpoint.lat}, ${endpoint.lng})`
+                $("#id_endlocation").val(formattedAddr)
+            }
+        })
+
+        //Draw Route
+        //var dirConfig = getDirectionConfig(lineCoords['obj'][0])
+        //var directionsService = new google.maps.DirectionsService();
+        //directionsService.route(dirConfig, (result, status) => {
+        //    if (status === "OK") {
+        //        directionsRenderer.setDirections(result);
+        //    } else {
+        //        console.log("Directions request failed due to " + status);
+        //    }
+        //});
+
+
+    }
 })
 </script>
 {% endblock extra_scripts %}

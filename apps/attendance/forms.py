@@ -30,6 +30,7 @@ class AttendanceForm(forms.ModelForm):
             ),
             'shift'       : s2forms.Select2Widget,
             'peventtype'  : s2forms.Select2Widget,
+            
         }
 
     def __init__(self, *args, **kwargs):
@@ -72,7 +73,9 @@ class ConveyanceForm(forms.ModelForm):
         widgets = {
             'startlocation':forms.TextInput(),
             'endlocation':forms.TextInput(),
-            'transportmodes':s2forms.Select2MultipleWidget}
+            'transportmodes':s2forms.Select2MultipleWidget,
+            'startlocation':forms.Textarea(attrs={'rows': 2, 'cols': 20}),
+            'endlocation':forms.Textarea(attrs={'rows': 2, 'cols': 20}),}
         labels = {
             'expamt': 'Expense Amount',
             'transportmodes': 'Transport Modes',

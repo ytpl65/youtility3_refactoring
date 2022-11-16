@@ -1,7 +1,7 @@
 from django.contrib.auth.base_user import BaseUserManager
 from django.db import models
 from django.db.models import Q, F, Value as V
-from django.db.models.functions import Concat
+from django.db.models.functions import Concat, Cast
 from django.contrib.gis.db.models.functions import  AsGeoJSON
 from django.utils.translation import ugettext_lazy as _
 from icecream import ic
@@ -80,6 +80,12 @@ class PeopleManager(BaseUserManager):
             text = Concat(F('buname'),  V(' ('), F('bucode'), V(')'))).values_list('id', 'text')
         
         return qset
+    
+    def get_people_pic(self, peopleid):
+        "returns people picture"
+        qset = self.filter(id = peopleid).annotate(
+            default_img_path = Concat(V('youtility4_media/', output_field=models.CharField()), Cast('peopleimg', output_field=models.CharField()))).values_list('default_img_path', named=True)
+        return qset[0] if qset else qset or self.none()
 
 
 
@@ -189,6 +195,8 @@ class PgblngManager(models.Manager):
             if forservice: return Bt.objects.annotate(bu_id=F('id')).filter(id__in = buids).select_related('identifier', 'butype', 'cuser', 'muser').values(*bufields) or Bt.objects.none()
         return qset or self.none()
         
+    
+
 
 
 

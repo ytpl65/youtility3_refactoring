@@ -1315,5 +1315,6 @@ def verify_peoplename(peoplename):
 
 
 def get_home_dir():
-    import os
-    return os.path.expanduser("~") + '/'
+    from django.conf import settings
+    ic(settings.MEDIA_ROOT)
+    return settings.MEDIA_ROOT
