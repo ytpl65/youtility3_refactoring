@@ -55,12 +55,12 @@ def auth_check(info, input, returnUser, uclientip = None):
 
         if user.deviceid in [-1, '-1'] or input.deviceid in [-1, '-1']:
             allowAccess=True
-        elif input.deviceid != user.deviceid:
-            raise GraphQLError(Messages.MULTIDEVICES)
+        # elif input.deviceid != user.deviceid:
+        #     raise GraphQLError(Messages.MULTIDEVICES)
 
-        if user.deviceid not in ('-1', input.deviceid):
-            isAuth  = False
-            raise GraphQLError(Messages.MULTIDEVICES)
+        # if user.deviceid not in ('-1', input.deviceid):
+        #     isAuth  = False
+        #     raise GraphQLError(Messages.MULTIDEVICES)
 
 
         allowAccess = True
