@@ -170,25 +170,28 @@ function initAutocomplete(){
 
     getJourneyCoords("{{ conveyanceform.instance.id }}")
     .done((resp, status, xhr) => {
-        drawConveyancePath(resp)
         var startpoint = {lat: parseFloat("{{ conveyanceform.instance.startlocation.y }}"), lng:parseFloat("{{ conveyanceform.instance.startlocation.x }}")}
         var endpoint = {lat:parseFloat("{{ conveyanceform.instance.endlocation.y }}"), lng:parseFloat("{{ conveyanceform.instance.endlocation.x }}")}
-        var dirConfig = getDirectionConfig(resp.obj[0])
-
         getAddressOfPoint(geocoder, startpoint, function(addr){
-        $("#id_startlocation").val(addr)
+            $("#id_startlocation").val(addr)
         })
         getAddressOfPoint(geocoder, endpoint, function(addr){
             $("#id_endlocation").val(addr)
         })
-        getRoute(directionsService, dirConfig, function(response) {
-            console.log(response, "response")
-            directionsRenderer.setDirections(response)
-        })
+        
+        if(resp.obj.length > 0){
+            drawConveyancePath(resp)
+            var dirConfig = getDirectionConfig(resp.obj[0])
+            getRoute(directionsService, dirConfig, function(response) {
+                console.log(response, "response")
+                directionsRenderer.setDirections(response)
+            })
+        }
     })
     .fail((xhr, status, error) => {
         console.log(error)
     })
+    directionsRenderer.setMap(map);
 }
 
 //get journey coords
@@ -212,70 +215,73 @@ function addMarker(location, map, label){
 //draw path on google map
 function drawConveyancePath(data){
     console.log(data, "$$$$$$")
-    const journeyPath = new google.maps.Polyline({
-    path: data.obj[0].path,
-    geodesic: true,
-    strokeColor: "#FF0000",
-    strokeOpacity: 1.0,
-    strokeWeight: 2,
-  });
-    
-    var bounds = new google.maps.LatLngBounds()
-    journeyPath.getPath().forEach(function(element,index){bounds.extend(element)})
-    map.fitBounds(bounds)
-    journeyPath.setMap(map);
-
-    const InfoString = 
-            `<div class="card text-dark bg-secondary" style="max-width: 18rem;">
-                <div class="card-body p-0">
-                    <h5>Start Point</h5>
-                    <table class="table-secondary">
-                        {% if conveyanceform.instance.id %}
-                        <tbody>
-                            <tr class="table-secondary border border-secondary"><td>People:</td><td>{{ conveyanceform.instance.people.peoplename }}</td></tr>
-                            <tr class="table-secondary border border-secondary"><td>Start Location:</td><td>{{ conveyanceform.instance.startlocation.coords }}</td></tr>
-                            <tr class="table-secondary border border-secondary"><td>End Location:</td><td>{{ conveyanceform.instance.endlocation.coords }}</td></tr>
-                            <tr class="table-secondary border border-secondary"><td>Start Time: </td><td>{{ conveyanceform.instance.punchintime }}</td></tr>
-                            <tr class="table-secondary border border-secondary"><td>End Time:</td><td>{{ conveyanceform.instance.punchouttime }}</td></tr>
-                            <tr class="table-secondary border border-secondary"><td>Transport Modes:</td><td>{{ conveyanceform.instance.transportmodes }}</td></tr>
-                            <tr class="table-secondary border border-secondary"><td>Duration: </td><td>{{ conveyanceform.instance.duration }}mins</td></tr>
-                            <tr class="table-secondary border border-secondary"><td>Distance:</td><td>{{ conveyanceform.instance.distance }}Kms</td></tr>
-                        </tbody>
-                        {% endif %}
-                    </table>
-                </div>
-            </div>`
-
-     const startInfo = new google.maps.InfoWindow({
-        content: InfoString,
-        maxWidth: 700
-    });
-    
-    const endInfo = new google.maps.InfoWindow({
-        content: InfoString,
-        maxWidth: 700
-    });
-
-
-    //start marker
-    startMarker = addMarker(data.obj[0].path[0], map, 'S')
-    //end marker
-    endMarker = addMarker(data.obj[0].path[data.obj[0].path.length - 1], map, 'E')
-
-    startMarker.addListener("click", () => {
-        startInfo.open({
-        anchor: startMarker,
-        map,
-        shouldFocus: false,
+    if(data['obj'].length > 0){
+        const journeyPath = new google.maps.Polyline({
+            path: data.obj[0].path,
+            geodesic: true,
+            strokeColor: "#FF0000",
+            strokeOpacity: 1.0,
+            strokeWeight: 2,
         });
-    });
-    endMarker.addListener('click', () => {
-        endInfo.open({
-            anchor: endMarker,
+        
+        var bounds = new google.maps.LatLngBounds()
+        journeyPath.getPath().forEach(function(element,index){bounds.extend(element)})
+        map.fitBounds(bounds)
+        journeyPath.setMap(map);
+
+        const InfoString = 
+                `<div class="card text-dark bg-secondary" style="max-width: 18rem;">
+                    <div class="card-body p-0">
+                        <h5>Start Point</h5>
+                        <table class="table-secondary">
+                            {% if conveyanceform.instance.id %}
+                            <tbody>
+                                <tr class="table-secondary border border-secondary"><td>People:</td><td>{{ conveyanceform.instance.people.peoplename }}</td></tr>
+                                <tr class="table-secondary border border-secondary"><td>Start Location:</td><td>{{ conveyanceform.instance.startlocation.coords }}</td></tr>
+                                <tr class="table-secondary border border-secondary"><td>End Location:</td><td>{{ conveyanceform.instance.endlocation.coords }}</td></tr>
+                                <tr class="table-secondary border border-secondary"><td>Start Time: </td><td>{{ conveyanceform.instance.punchintime }}</td></tr>
+                                <tr class="table-secondary border border-secondary"><td>End Time:</td><td>{{ conveyanceform.instance.punchouttime }}</td></tr>
+                                <tr class="table-secondary border border-secondary"><td>Transport Modes:</td><td>{{ conveyanceform.instance.transportmodes }}</td></tr>
+                                <tr class="table-secondary border border-secondary"><td>Duration: </td><td>{{ conveyanceform.instance.duration }}mins</td></tr>
+                                <tr class="table-secondary border border-secondary"><td>Distance:</td><td>{{ conveyanceform.instance.distance }}Kms</td></tr>
+                            </tbody>
+                            {% endif %}
+                        </table>
+                    </div>
+                </div>`
+
+        const startInfo = new google.maps.InfoWindow({
+            content: InfoString,
+            maxWidth: 700
+        });
+        
+        const endInfo = new google.maps.InfoWindow({
+            content: InfoString,
+            maxWidth: 700
+        });
+
+
+        //start marker
+        startMarker = addMarker(data.obj[0].path[0], map, 'S')
+        //end marker
+        endMarker = addMarker(data.obj[0].path[data.obj[0].path.length - 1], map, 'E')
+
+        startMarker.addListener("click", () => {
+            startInfo.open({
+            anchor: startMarker,
             map,
             shouldFocus: false,
+            });
         });
-    })
+        endMarker.addListener('click', () => {
+            endInfo.open({
+                anchor: endMarker,
+                map,
+                shouldFocus: false,
+            });
+        })
+    }
+    
 }
 
 if("{{ conveyanceform.instance.id }}" != "None"){

@@ -106,6 +106,7 @@ td { padding: 6px; border: 1px solid #CCC; }
     function getFRStatus(data){
         fire_ajax_get({url:`{{ url('activity:previewImage') }}?action=getFRStatus&uuid=${data}`,})
         .done((data, status, xhr) => {
+            const NA = "Information not available"
             const filepathIN = data['attd_in_out'].length ? `{{MEDIA_URL}}${data['attd_in_out'][0]['filepath'].replace('youtility4_media/', '')}/${data['attd_in_out'][0]['filename']}` : "{{ static('assets/media/images/blank.png') }}"
             const filepathOUT = data['attd_in_out'].length > 1 ? `{{MEDIA_URL}}${data['attd_in_out'][1]['filepath'].replace('youtility4_media/', '')}/${data['attd_in_out'][1]['filename']}` : "{{ static('assets/media/images/blank.png') }}"
             const defaultIMG =  data['default_img_path'].length ? `{{MEDIA_URL}}${data['default_img_path'][0]['peopleimg'].replace('youtility4_media/', '')}` : "{{ static('assets/media/images/blank.png') }}"
@@ -115,8 +116,8 @@ td { padding: 6px; border: 1px solid #CCC; }
             $("#default_people_img").attr('src', defaultIMG)
             $("#modal_fr_status").modal("show");
             let html = getReadableTextForINOUT(data['eventlog_in_out'].length > 0 ? data['eventlog_in_out'][0] : null)
-            $("#in_text").html(html ? html[0] : 'N/A')
-            $("#out_text").html(html ? html[1] : 'N/A')
+            $("#in_text").html(html ? html[0] : NA)
+            $("#out_text").html(html ? html[1] : NA)
 
 
         })
@@ -150,7 +151,7 @@ td { padding: 6px; border: 1px solid #CCC; }
                 }
             ],
             columns:[
-                {data:'peventtype__tacode', title:'Type'},
+                {data:'peventtype__taname', title:'Type'},
                 {data:'bu__buname', title:'Site Name'},
                 {data:'people__peoplename', title:'People'},
                 {data:'facerecognitionin', title:'FR IN'},
@@ -163,10 +164,10 @@ td { padding: 6px; border: 1px solid #CCC; }
                 { data:'uuid',  visible:false, searchable:false},
             ], 
             columnDefs:[
-                {targets:6, render:function(data, type, row, meta){
+                {targets:7, render:function(data, type, row, meta){
                     return convert_to_local(type, data, row)}
                 },
-                {targets:7, render:function(data, type, row, meta){
+                {targets:8, render:function(data, type, row, meta){
                     return convert_to_local(type, data, row)}
                 },
                 {targets:3, render:function(data, type, row, meta){

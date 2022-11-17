@@ -215,7 +215,7 @@ def perform_insertrecord_bgt(self, data, request = None, filebased = True, db='d
 def save_linestring_and_update_pelrecord(obj):
     from django.contrib.gis.geos import LineString
     try:
-        bet_objs = Tracking.objects.filter(reference = obj.uuid)
+        bet_objs = Tracking.objects.filter(reference = obj.uuid).order_by('receiveddate')
         line = [[coord for coord in obj.gpslocation] for obj in bet_objs]
         if len(line) > 1:
             ls = LineString(line, srid = 4326)

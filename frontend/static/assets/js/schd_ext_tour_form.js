@@ -221,18 +221,18 @@ function d2DrawMarker(
   var infoWindowHtml = "";
   var markerC = new google.maps.Marker({
     map: d2map,
-    title: row["buname"],
+    title: row["bu__buname"],
     position: new google.maps.LatLng(latlng[1], latlng[0]),
     //icon:     "https://chart.googleapis.com/chart?chst=d_map_spin&chld=0.8|0|00bfff|10|b|" + (idx + 1),
     icon:
       "https://chart.googleapis.com/chart?chst=d_map_spin&chld=0.8|0|00bfff|10|b|" +
-      nStr,
+      (idx+1),
   });
   google.maps.event.addListener(markerC, "click", function () {
     //var infoWindowHtml= '<h3 style="background-color: #FFF8C9;font-weight:bold;">' + row['buname'] + '</h3>';
     var infoWindowHtml =
       "<span style= 'font-weight: bold;font-size:16px'>" +
-      row["buname"] +
+      row["bu__buname"] +
       "</span>";
     d2infowindow.setContent(infoWindowHtml);
     d2infowindow.open(d2map, markerC);

@@ -30,7 +30,8 @@ function getDirectionConfig(data){
   //end point
   var end = data['path'][data['path'].length - 1]
   //waypoints
-  var inBetweenPoints = data['path'].slice(1, data['path'].length - 1)
+  var inBetweenPoints = data['waypoints']
+  console.log(inBetweenPoints.length)
   var waypoints=[]
   for (let i = 0; i < inBetweenPoints.length; i++) {
       waypoints.push({

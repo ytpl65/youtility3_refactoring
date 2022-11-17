@@ -77,8 +77,10 @@ class PELManager(models.Manager):
                 ic(obj['path'])
                 geodict = json.loads(obj['path'])
                 coords = [{'lat':lat, 'lng':lng} for lng, lat in geodict['coordinates']]
+                waypoints = utils.orderedRandom(coords[1:-1], k=25)
                 obj['path'] = coords
-                coords = []
+                obj['waypoints'] = waypoints
+                coords, waypoints = [], []
             else: return self.none()
         return qset or self.none()
     

@@ -6,6 +6,7 @@ import json
 import logging
 import os.path
 import threading
+import random
 from pprint import pformat
 
 import django.shortcuts as scts
@@ -1318,3 +1319,8 @@ def get_home_dir():
     from django.conf import settings
     ic(settings.MEDIA_ROOT)
     return settings.MEDIA_ROOT
+
+
+def orderedRandom(arr, k):
+    indices = random.sample(range(len(arr)), k)
+    return [arr[i] for i in sorted(indices)]    
