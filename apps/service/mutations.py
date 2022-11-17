@@ -33,7 +33,7 @@ class LoginUser(graphene.Mutation):
     def mutate(cls, root, info, input):
         log.warning("login mutations start [+]")
         try:
-            ic(input.deviceid, input.loginid, input.password)
+            log.info("%s, %s, %s", input.deviceid, input.loginid, input.password)
             from .auth import auth_check
             output, user = auth_check(info, input, cls.returnUser)
             cls.updateDeviceId(user, input)

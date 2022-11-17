@@ -147,10 +147,11 @@ Conveyance
 {% endblock page_actions %}
 
 {% block extra_scripts %}
-<script
-    src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDVbA53nxHKUOHdyIqnVPD01aOlTitfVO0&callback=initAutocomplete&libraries=places&v=weekly"
+{# <script
+    src="https://maps.googleapis.com/maps/api/js?key=AIzaSyC3PUZCB7u2PiV8whHeAshweOPIK_d690o&callback=initAutocomplete&libraries=places&v=weekly"
     defer
-></script>
+></script> #}
+<script type="text/javascript" defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyC3PUZCB7u2PiV8whHeAshweOPIK_d690o&libraries=places&callback=initAutocomplete"></script>
 <script>
 //global vars
 var map;
@@ -163,6 +164,31 @@ function initAutocomplete(){
         zoom: 6,
         mapTypeId: "roadmap",
     });
+    const directionsService = new google.maps.DirectionsService();
+    const directionsRenderer = new google.maps.DirectionsRenderer();
+    const geocoder = new google.maps.Geocoder();
+
+    getJourneyCoords("{{ conveyanceform.instance.id }}")
+    .done((resp, status, xhr) => {
+        drawConveyancePath(resp)
+        var startpoint = {lat: parseFloat("{{ conveyanceform.instance.startlocation.y }}"), lng:parseFloat("{{ conveyanceform.instance.startlocation.x }}")}
+        var endpoint = {lat:parseFloat("{{ conveyanceform.instance.endlocation.y }}"), lng:parseFloat("{{ conveyanceform.instance.endlocation.x }}")}
+        var dirConfig = getDirectionConfig(resp.obj[0])
+
+        getAddressOfPoint(geocoder, startpoint, function(addr){
+        $("#id_startlocation").val(addr)
+        })
+        getAddressOfPoint(geocoder, endpoint, function(addr){
+            $("#id_endlocation").val(addr)
+        })
+        getRoute(directionsService, dirConfig, function(response) {
+            console.log(response, "response")
+            directionsRenderer.setDirections(response)
+        })
+    })
+    .fail((xhr, status, error) => {
+        console.log(error)
+    })
 }
 
 //get journey coords
@@ -172,14 +198,7 @@ function getJourneyCoords(id){
         url:`${formUrl}?action=getpath&conid=${id}`,
         beforeSend:function(){}
     }
-    fire_ajax_get(params)
-    .fail((xhr, status, error) => {
-
-    })
-    .done((data, status, xhr) => {
-        lineCoords = data
-        drawConveyancePath(data)
-    })
+    return fire_ajax_get(params)
 }
 
 function addMarker(location, map, label){
@@ -257,14 +276,10 @@ function drawConveyancePath(data){
             shouldFocus: false,
         });
     })
-
- 
-
 }
 
 if("{{ conveyanceform.instance.id }}" != "None"){
     window.initAutocomplete = initAutocomplete;
-    getJourneyCoords("{{ conveyanceform.instance.id }}")
 }else{
     $("#journeymap").hide()
 }
@@ -316,39 +331,6 @@ $(document).ready(function(){
         
     })
 
-    if("{{ conveyanceform.instance.id }}" !== 'None'){
-        var geocoder = new google.maps.Geocoder()
-        var startpoint = {lat: parseFloat("{{ conveyanceform.instance.startlocation.y }}"), lng:parseFloat("{{ conveyanceform.instance.startlocation.x }}")}
-        var endpoint = {lat:parseFloat("{{ conveyanceform.instance.endlocation.y }}"), lng:parseFloat("{{ conveyanceform.instance.endlocation.x }}")}
-        geocoder.geocode({ location: startpoint }).then((res) => {
-            console.log(res)
-            if (res.results[0]) {
-                var formattedAddr = res.results[0].formatted_address
-                formattedAddr += `\nCoordinates: (${startpoint.lat}, ${startpoint.lng})`
-                $("#id_startlocation").val(formattedAddr)
-            }
-        })
-        geocoder.geocode({ location: endpoint }).then((res) => {
-            if (res.results[0]) {
-                var formattedAddr = res.results[0].formatted_address
-                formattedAddr += `\nCoordinates: (${endpoint.lat}, ${endpoint.lng})`
-                $("#id_endlocation").val(formattedAddr)
-            }
-        })
-
-        //Draw Route
-        //var dirConfig = getDirectionConfig(lineCoords['obj'][0])
-        //var directionsService = new google.maps.DirectionsService();
-        //directionsService.route(dirConfig, (result, status) => {
-        //    if (status === "OK") {
-        //        directionsRenderer.setDirections(result);
-        //    } else {
-        //        console.log("Directions request failed due to " + status);
-        //    }
-        //});
-
-
-    }
 })
 </script>
 {% endblock extra_scripts %}

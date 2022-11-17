@@ -12,8 +12,15 @@ $(document).on({
 //   endBlockUi();
 // })
 
-function getAddressOfPoint(geocoder, point){
-  return geocoder.geocode({ location: point })
+function getAddressOfPoint(geocoder, point, callback){
+  geocoder.geocode({ location: point })
+  .then((res) => {
+    if (res.results[0]) {
+      var formattedAddr = res.results[0].formatted_address
+      formattedAddr += `\nCoordinates: (${point.lat}, ${point.lng})`
+      callback(formattedAddr)
+    }
+  })
 
 }
 
@@ -23,24 +30,33 @@ function getDirectionConfig(data){
   //end point
   var end = data['path'][data['path'].length - 1]
   //waypoints
-  var waypoints = [data['path'].slice(1, data['path'].length - 1)]
+  var inBetweenPoints = data['path'].slice(1, data['path'].length - 1)
+  var waypoints=[]
+  for (let i = 0; i < inBetweenPoints.length; i++) {
+      waypoints.push({
+        location: inBetweenPoints[i],
+        stopover: false,
+      });
+  }
+
+  
   return {
     travelMode: "DRIVING",
     origin: start,
     destination: end,
     waypoints: waypoints,
     transitOptions:{
-      arrivalTime: data['punchintime'],
-      departureTime: data['punchouttime'],
-      modes:[data['transportmodes'].split(',')],
+      arrivalTime: new Date(data['punchintime']),
+      departureTime: new Date(data['punchouttime']),
+      //modes:['OTHER']//data['transportmodes'],
     }
   }
 }
 
 
-function getRoute(directionService, data){
-  directionService.route(data['directionConfig']).then((response) => {
-    return response
+function getRoute(directionService, directionConfig, callback){
+  directionService.route(directionConfig).then((response) => {
+    callback(response)
   }).catch((e) => console.error(e));
 }
 

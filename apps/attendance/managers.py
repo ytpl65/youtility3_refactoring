@@ -73,11 +73,13 @@ class PELManager(models.Manager):
                 id = id).values('path', 'punchintime', 'punchouttime', 'deviceid', 'expamt', 'accuracy',
                     'people__peoplename', 'people__peoplecode', 'distance', 'duration', 'transportmodes')
         for obj in qset:
-            ic(obj['path'])
-            geodict = json.loads(obj['path'])
-            coords = [{'lat':lat, 'lng':lng} for lng, lat in geodict['coordinates']]
-            obj['path'] = coords
-            coords = []
+            if(obj['path']):
+                ic(obj['path'])
+                geodict = json.loads(obj['path'])
+                coords = [{'lat':lat, 'lng':lng} for lng, lat in geodict['coordinates']]
+                obj['path'] = coords
+                coords = []
+            else: return self.none()
         return qset or self.none()
     
     
