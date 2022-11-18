@@ -593,18 +593,18 @@ def insert_into_jn_for_child(job, params, r):
 
 def job_fields(job, checkpoint, external = False):
     data =  {
-        'jobname'     : f"{checkpoint.get('assetname', '')} :: {job['jobname']}",     'jobdesc'        : f"{checkpoint.get('assetname', '')} :: {job['jobname']} :: {checkpoint['qsetname']}",
-        'cron'        : job['cron'],                      'identifier'     : job['identifier'],
-        'expirytime'  : int(checkpoint['expirytime']), 'lastgeneratedon': job['lastgeneratedon'],
-        'priority'    : job['priority'],                  'qset_id'        : checkpoint['qsetid'],
-        'pgroup_id'   : job['pgroup_id'],                 'geofence'       : job['geofence_id'],
-        'endtime'     : datetime.strptime(checkpoint.get('endtime', "00:00"), "%H:%M"),                   'ticketcategory_id' : job['ticketcategory_id'],
-        'fromdate'    : job['fromdate'],                  'uptodate'       : job['uptodate'],
-        'planduration': job['planduration'],              'gracetime'      : job['gracetime'],
-        'asset_id'    : checkpoint['assetid'],           'frequency'      : job['frequency'],
-        'people_id'   : job['people_id'],                 'starttime'      : datetime.strptime(checkpoint.get('starttime', "00:00"), "%H:%M"),
-        'parent_id'   : job['id'],                        'seqno'          : checkpoint['seqno'],
-        'scantype'    : job['scantype'],                  'ctzoffset'      : job['ctzoffset']
+        'jobname'     : f"{checkpoint.get('bu__buname', '')} :: {job['jobname']}",       'jobdesc'          : f"{checkpoint.get('bu__buname', '')} :: {job['jobname']} :: {checkpoint['qsetname']}",
+        'cron'        : job['cron'],                                                    'identifier'       : job['identifier'],
+        'expirytime'  : int(checkpoint['expirytime']),                                  'lastgeneratedon'  : job['lastgeneratedon'],
+        'priority'    : job['priority'],                                                'qset_id'          : checkpoint['qsetid'],
+        'pgroup_id'   : job['pgroup_id'],                                               'geofence'         : job['geofence_id'],
+        'endtime'     : datetime.strptime(checkpoint.get('endtime', "00:00"), "%H:%M"), 'ticketcategory_id': job['ticketcategory_id'],
+        'fromdate'    : job['fromdate'],                                                'uptodate'         : job['uptodate'],
+        'planduration': job['planduration'],                                            'gracetime'        : job['gracetime'],
+        'asset_id'    : checkpoint['assetid'],                                          'frequency'        : job['frequency'],
+        'people_id'   : job['people_id'],                                               'starttime'        : datetime.strptime(checkpoint.get('starttime', "00:00"), "%H:%M"),
+        'parent_id'   : job['id'],                                                      'seqno'            : checkpoint['seqno'],
+        'scantype'    : job['scantype'],                                                'ctzoffset'        : job['ctzoffset']
     }
     if external:
         jsonData = {
@@ -612,8 +612,8 @@ def job_fields(job, checkpoint, external = False):
             'breaktime'     : checkpoint['breaktime'],
             'is_randomized' : job['other_info']['is_randomized'],
             'tour_frequency': job['other_info']['tour_frequency']}
-        data['jobname']    = f"{checkpoint['buname']} :: {job['jobname']}"
-        data['jobdesc']    = f"{checkpoint.get('buname', '')} :: {job['jobname']} :: {checkpoint['qsetname']}"
+        data['jobname']    = f"{checkpoint['bu__buname']} :: {job['jobname']}"
+        data['jobdesc']    = f"{checkpoint.get('bu__buname', '')} :: {job['jobname']} :: {checkpoint['qsetname']}"
         data['other_info'] = jsonData
     return data
 

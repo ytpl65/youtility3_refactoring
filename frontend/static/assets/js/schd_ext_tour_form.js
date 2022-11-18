@@ -461,7 +461,7 @@ function populateTourDetailsCard(params) {
   );
   $("#lblTourFrequency").html($("#id_tourfrequency").val());
   $("#lblBreakTime").html($("#id_breaktime").val());
-  $("#lblIsRTour").html($("#id_israndom").is(":checked") ? "Yes" : "No");
+  $("#lblIsRTour").html(israndom);
 
   asgdsites_table.rows.add(params.data).draw();
 }

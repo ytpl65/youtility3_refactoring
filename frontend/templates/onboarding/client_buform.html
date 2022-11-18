@@ -435,6 +435,11 @@ Client
             ],
             select: {
                 style: 'single'
+            },
+            createdRow:function(row, data, dataIndex){
+                if(data.enable === false){
+                    $(row).addClass('disabled-record text-white')
+                }
             }
         })
         

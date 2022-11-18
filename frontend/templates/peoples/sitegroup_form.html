@@ -153,9 +153,25 @@ Site Group
             if(xhr.status === 200){
                 console.log(data['assigned_sites'])
 				table.rows.add(data['assigned_sites']).draw()
+                var all_sites = tabAllsites.rows().data().toArray()
+                var assigned_sites = tabAssigned_sites.rows().data().toArray()
+                autoCheckSitesWhichAreAssigned(all_sites, assigned_sites)
 			}
         })
         
+        
+    }
+
+    function autoCheckSitesWhichAreAssigned(all_sites, assigned_sites){
+        
+        for(let i = 0; i<all_sites.length; i++){
+            for(let j = 0; j<assigned_sites.length; j++){
+                console.log(all_sites[i]['buname'], assigned_sites[j]['buname'])
+                if(all_sites[i]['buname'] === assigned_sites[j]['buname']){
+                    tabAllsites.row(i).select()
+                }
+            }
+        }
     }
 
     
@@ -199,7 +215,8 @@ Site Group
                 selector: 'tr'
             },
             dom :  `<'row' <'col-sm-12 d-flex justify-content-start'f> ><'row' <'col-sm-12'rtlp>>`,
-            buttons:[]
+            buttons:[],
+            pageLength:25
 
         })
         $("div.dtToolbar").html(``);
@@ -248,7 +265,8 @@ Site Group
                 targets:12,
                 width: "5%"}
             ],
-            buttons:[]
+            buttons:[],
+            
         })
 
         //reduce size of search bar
@@ -304,7 +322,6 @@ Site Group
             })
 			
 		})
-
     })
 
     //delete sitegroup 

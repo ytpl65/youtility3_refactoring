@@ -217,6 +217,7 @@ def perform_insertrecord(file, request = None, filebased = True):
     return  ServiceOutputType(rc = rc, recordcount = recordcount, msg = msg, traceback = traceback)
 
 def save_linestring_and_update_pelrecord(obj):
+    # sourcery skip: identity-comprehension
     from apps.attendance.models import Tracking
     from django.contrib.gis.geos import LineString
     try:
@@ -232,7 +233,9 @@ def save_linestring_and_update_pelrecord(obj):
             ls.transform(4326)
             obj.journeypath = ls
             obj.save()
+            bet_objs.delete()
             log.info("save linestring is saved..")
+            
     except Exception as e:
         log.info('ERROR while saving line string', exc_info = True)
         raise

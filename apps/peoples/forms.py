@@ -74,9 +74,9 @@ class PeopleForm(forms.ModelForm):
         'invalid_mobno2': 'Please enter a valid mobile number',
         'invalid_id2'   : 'Enter loginid without any spaces',
         'invalid_code'  : "Spaces are not allowed in [Code]",
-        'invalid_code2' : "[Invalid code] Only ('-', '_') special characters are allowed",
-        'invalid_code3' : "[Invalid code] Code should not endwith '.' ",                   
-        'invalid_name'  : "[Invalid name] Only these special characters [-, _, @, #] are allowed in name field",                   
+        'invalid_code2' : "[Invalid text] Only ('-', '_') special characters are allowed",
+        'invalid_code3' : "[Invalid text] Code should not endwith '.' ",                   
+        'invalid_name'  : "[Invalid text] Only these special characters [-, _, @, #] are allowed in name field",                   
     }
 
     # defines field rendering order
@@ -187,13 +187,13 @@ class PeopleForm(forms.ModelForm):
             return value.upper()
 
     def clean_loginid(self):
-        
+        ic('cleaning')
         if value := self.cleaned_data.get('loginid'):
             if " " in value:
                 raise forms.ValidationError(self.error_msg['invalid_id2'])
-            regex = '[a-zA-Z0-9@#_\-\._]+'
+            regex = "^[a-zA-Z0-9\-_@#]*$"
             if not re.match(regex, value):
-                raise forms.ValidationError(self.error_msg['invalid_id'])
+                raise forms.ValidationError(self.error_msg['invalid_name'])
             return value
 
     def clean_peoplename(self):

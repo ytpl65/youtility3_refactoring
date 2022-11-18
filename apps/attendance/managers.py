@@ -32,10 +32,10 @@ class PELManager(models.Manager):
     def update_fr_results(self, result, uuid, peopleid, db):
         if obj := self.filter(uuid=uuid).using(db):
             extras = obj[0].peventlogextras
-            if obj[0].punchintime:
+            if not obj[0].punchintime:
                 extras['verified_in'] = result['verified']
                 extras['distance_in'] = result['distance']
-            if obj[0].punchouttime:
+            if not obj[0].punchouttime:
                 extras['verified_out'] = result['verified']
                 extras['distance_out'] = result['distance']
             obj[0].peventlogextras = extras

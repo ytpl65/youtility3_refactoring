@@ -42,9 +42,15 @@ External Tour
 {% endblock nonfield_errors %}
 <!---------- END NON FIELD ERRORS --------->
 {% block popup_alerts %}
-    {% call general_popup(title="Checklist Details", popup_id="id_checklistdetails", modal_size='modal-xl') %}
+    {% call general_popup(title='Checklist Details <i class="fas fa-tasks ch4"></i>', popup_id="id_checklistdetails", modal_size='modal-xl') %}
         <div class="modal-body">
             <table class="display cell-border" style="width:100%" id="tabChecklistDetails"></table>
+        </div>
+        
+    {% endcall  %}
+    {% call general_popup(title='Attachment Details <i class="fas fa-paperclip ch4"></i>', popup_id="id_attachmentdetails", modal_size='modal-xl') %}
+        <div class="modal-body">
+            <table class="display cell-border" style="width:100%" id="tabAttachmentDetails"></table>
         </div>
         
     {% endcall  %}
@@ -56,6 +62,9 @@ External Tour
     <input type="hidden" name="{{ externaltourform.ctzoffset.name }}" id = "{{ externaltourform.ctzoffset.auto_id }}" value="-1">
     <div class="row mb-3 gy-3">
         <div class="col-md-6">
+            <input type="hidden" name="tour_frequency" id="id_tourfrequency" value="{{ externaltourform.instance.other_info['tour_frequency'] }}">
+            <input type="hidden" name="israndom" id="id_israndom" value="{{ externaltourform.instance.other_info['is_randomized'] }}">
+            <input type="hidden" name="breaktime" id="id_breaktime" value="{{ externaltourform.instance.other_info['breaktime'] }}">
             <div class="input-group mb-3">
                 <div class="col-md-4">
                     {{ externaltourform.jobdesc.label_tag() }}
@@ -296,6 +305,7 @@ External Tour
 <script>
 var asgdsites_table;
 var checklistdetails;
+var attachmentDetails;
 var ajaxData = {};
 var selected;
 var parentTable;
@@ -303,6 +313,7 @@ var parent_id;
 var childTable;
 var childEditor;
 var parentEditor;
+var israndom = "{{ externaltourform.instance.other_info['is_randomized'] }}";
     function showHideSelectField(val) {
         if (val == "PEOPLE") {
             //$("#aatopdiv").show();
@@ -321,6 +332,13 @@ var parentEditor;
         ajaxData.jobneedid=id
         ajaxData.action='checklist_details'
         checklistdetails.ajax.reload()
+    }
+    function showAttachmentDetails(id, from){
+        
+        $('#id_attachmentdetails').modal('show')
+        ajaxData.id=id
+        ajaxData.action = from === 'jobneed' ? 'getAttachmentJobneed' : 'getAttachmentJND' 
+        attachmentDetails.ajax.reload()
     }
 
     function calculate_tour_details(data, routeFreq){
@@ -355,7 +373,7 @@ var parentEditor;
                 {data:"expirydatetime", title:'Expiry Datetime'},
                 {data:"bu__buname", title:'Checkpoint'},
                 {data:'qset__qsetname', title:'Checklist'},
-                {data:'gracetime', title:'Gracetime'},
+                {data:'gracetime', title:'Gracetime', visible:false},
                 {data:'jobstatus', title:'Status'},
                 {data:'bu__gpslocation', visible:false},
                 {data:'distance', title:'Distance',  defaultContent:null, render:function(data, type, row, meta){
@@ -366,10 +384,14 @@ var parentEditor;
                         return data === null ? '--' : data
                     }
                 },
+                {title:'Attachments',data:null, defaultContent:null, render:function(data, type, row, meta){
+                        return `<a href="javascript:void(0)"  onClick='showAttachmentDetails(${row['id']}, "jobneed")'>View</i></a>`
+                    }
+                },
                 {title:'Details',data:null, defaultContent:null, render:function(data, type, row, meta){
                         return  `<a href="#" onClick='showCpDetails(${row['id']})'>View Details</a>`
                     }
-                    }
+                }
             ],
             ordering:false,
             deferRender: true,
@@ -377,6 +399,12 @@ var parentEditor;
                 {targets:1, data:'seqno', render:function(data, type, row, meta){
                         return parseInt(data)
                     }
+                },
+                {targets:2, render:function(data, type, row, meta){
+                    return convert_to_local(type, data, row)}
+                },
+                {targets:3, render:function(data, type, row, meta){
+                    return convert_to_local(type, data, row)}
                 },
             ],
 			responsive : true,
@@ -394,7 +422,6 @@ var parentEditor;
 
         })
 
-        checklistdetails = $("#external_tour").DataTable()
 
         if('{{externaltourform.instance.id}}' !== 'None'){
             reCaclTime()
@@ -422,7 +449,11 @@ var parentEditor;
                     {data:'options', title:'Options'},
                     {data:'alerton', title:'Alert On'},
                     {data:'answer', title:'Answer'},
-                    {data:'ismandatory', title:'Mandatory'}
+                    {data:'ismandatory', title:'Mandatory'},
+                    {data: null, title:'Attachments', render:function(data, type, row, meta){
+                        return `<a href="javascript:void(0)"  onClick='showAttachmentDetails(${row['id']}, "jnd")'>View</a>`
+                    }
+                    }
                 ],
                 ordering:false,
                 deferRender: true,
@@ -432,6 +463,39 @@ var parentEditor;
                 buttons:[],
 
             })
+            
+        })
+        $('#id_attachmentdetails').on('shown.bs.modal', function (event) {
+            $.fn.dataTable.tables( {visible: true, api: true} ).columns.adjust();
+                $('#id_attachmentdetails').modal({
+                    keyboard: false
+                })
+                attachmentDetails = $("#tabAttachmentDetails").DataTable(
+                {
+                    ajax:{
+                        url:`{{ url("schedhuler:jobneedexternaltours") }}`,
+                        data:function(d){
+                        return  $.extend(d, ajaxData);
+                        }
+                    },
+                    retrieve: true,
+                    columns:[
+                        {data:'id', visible:false},
+                        {data:null, defaultContent:null, render:function(data, type, row, meta){
+                            `<img src="${row['file']}" alt="my image" width="40px" height="40px">`
+                        }
+                        },
+                        {data:'filename', title:'File Name'},
+                    ],
+                    ordering:false,
+                    deferRender: true,
+                    scrollX: true,
+                    dom: `<'row' <'col-sm-6 d-flex justify-content-start'f> <'col-sm-6 d-flex justify-content-end'B> >rt<'row'
+                    <'col-sm-6'l> <'col-sm-6'p><'col-sm-12 d-flex justify-content-center'i>>`,
+                    buttons:[],
+
+                }
+            )
             
         })
 

@@ -72,8 +72,10 @@ def save_client_tenantid(instance, user, session, client=None, bu=None):
     tenantid = session.get('tenantid')
     if bu is None:
         bu = session.get('bu_id')
-    if client is None:
+    
+    if hasattr(instance, 'client_id'):
         client = session.get('client_id') if instance.client_id  in [1, None] else instance.client_id
+    if client is None: session.get('client_id')
     
     logger.info('client_id from session: %s', client)
     instance.tenant_id = tenantid

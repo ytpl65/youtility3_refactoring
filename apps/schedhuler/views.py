@@ -1207,7 +1207,14 @@ class JobneedExternalTours(LoginRequiredMixin, View):
         if R.get('action') == 'checklist_details' and R.get('jobneedid'):
             objs = am.JobneedDetails.objects.get_e_tour_checklist_details(R['jobneedid'])
             return rp.JsonResponse(data = {'data':list(objs)})
-        #else: return rp.JsonResponse(data={'data':[]}, safe=False)
+        
+        if R.get('action') == 'getAttachmentJobneed' and R.get('id'):
+            att = P['model'].objects.getAttachmentJobneed(R['id'])
+            return rp.JsonResponse(data = {'data':list(att)})
+        
+        if R.get('action') == 'getAttachmentJND' and R.get('id'):
+            att = am.JobneedDetails.objects.getAttachmentJND(R['id'])
+            return rp.JsonResponse(data = {'data': list(att)})
         
         if R.get('id'):
             obj = P['model'].objects.get(id = R['id'])
@@ -1218,6 +1225,8 @@ class JobneedExternalTours(LoginRequiredMixin, View):
             cxt = {'externaltourform': form, 'edit': True,
                 'checkpoints': checkpoints}
             return render(request, P['template_form'], context = cxt)
+        
+        
     
     @staticmethod
     def get_checkpoints(P, obj):

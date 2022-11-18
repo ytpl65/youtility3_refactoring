@@ -368,7 +368,7 @@ function getAsgdsitesTabColumnConfig(){
         },
         {data:'buid', visible:false, searchable:false},
         {data:'solid', searchable:false, title:'Sol ID'},
-        {data:'buname', title:'Site'},
+        {data:'bu__buname', title:'Site'},
         {data:'bu__gpslocation', title:'GPS', visible:false},
         {title:'Start', defaultContent:null, data:'starttime', render:function(data, type, row, meta){
                 return data === null ? '--' : data
@@ -498,6 +498,7 @@ var d2infowindow       = new google.maps.InfoWindow({content: "",maxWidth: 350})
 var d2PolyLine         = undefined;
 var allsites_table     = null;
 var asgdsites_table    = null;
+var israndom = "{{ schdexternaltourform.instance.other_info['is_randomized'] }}"
 
 $(document).ready(() => {
     d2InitializeMap()

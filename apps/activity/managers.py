@@ -1,14 +1,15 @@
 from django.db import models
-from django.db.models.functions import Concat
+from django.db.models.functions import Concat, Cast
 from django.db.models import CharField, Value as V
 from django.db.models import Q, F, Count, Case, When
 from django.contrib.gis.db.models.functions import  AsWKT, AsGeoJSON
 from datetime import datetime, timedelta, timezone
-
 from pyparsing import identbodychars
 from apps.core import utils
+from itertools import chain
 import logging
 logger = logging.getLogger('__main__')
+from django.conf import settings
 log = logger
 
 class QuestionSetManager(models.Manager):
@@ -329,6 +330,23 @@ class JobneedManager(models.Manager):
         ic(qset.values('seqno'))
         return qset or self.none()
     
+    def getAttachmentJobneed(self, id):
+        if qset := self.filter(id=id).values('uuid'):
+            if atts := self.get_atts(qset[0]['uuid']):
+                return chain(qset, atts) or self.none()
+        return self.none()
+
+    
+    def get_atts(self, uuid):
+        from apps.activity.models import Attachment
+        if atts := Attachment.objects.annotate(
+            file = Concat(V(settings.MEDIA_URL, output_field=models.CharField()),
+                          F('filepath'),
+                          V('/'), Cast('filename', output_field=models.CharField()))
+            ).filter(owner = uuid).values(
+            'filepath', 'filename', 'attachmenttype', 'datetime', 'gpslocation', 'id', 'file'
+            ):return atts
+        return self.none()
         
     
     
@@ -515,6 +533,22 @@ class JobneedDetailsManager(models.Manager):
             'options', 'alerton', 'ismandatory', 'seqno','answer'
         ).order_by('seqno')
         return qset or self.none()
+
+    def getAttachmentJND(self, id):
+        if qset := self.filter(id=id).values('uuid'):
+            if atts := self.get_atts(qset[0]['uuid']):
+                return chain(qset, atts) or self.none()
+        return self.none()
+    
+    def get_atts(self, uuid):
+        from apps.activity.models import Attachment
+        if atts := Attachment.objects.annotate(
+            file = Concat(V(settings.MEDIA_URL, output_field=models.CharField()), F('filepath'),
+                          V('/'), Cast('filename', output_field=models.CharField()))
+            ).filter(owner = uuid).values(
+            'filepath', 'filename', 'attachmenttype', 'datetime', 'gpslocation', 'id', 'file'
+            ):return atts
+        return self.none()
         
 
 
@@ -612,7 +646,7 @@ class JobManager(models.Manager):
 
     def get_checkpoints_for_externaltour(self, job):
         qset = self.select_related(
-            'identifier', 'butype', 'parent').filter(
+            'identifier', 'butype', 'parent').annotate(bu__buname = F('buname')).filter(
                 parent_id = job.bu_id).values(
                 'buname', 'id', 'bucode', 'gpslocation',
             )
@@ -650,7 +684,7 @@ class JobManager(models.Manager):
         qset = self.annotate(
             qsetid = F('qset_id'), assetid = F('asset_id'),
             jobid = F('id'), bu__gpslocation = AsGeoJSON('bu__gpslocation'),
-            buid = F('bu_id'), buname=F('bu__buname'),
+            buid = F('bu_id'),
             breaktime = F('other_info__breaktime'),
             distance=F('other_info__distance'),
             duration = V(None, output_field=models.CharField(null=True)),
@@ -661,7 +695,7 @@ class JobManager(models.Manager):
             'id',
             'breaktime', 'distance', 'starttime', 'expirytime',
             'qsetid', 'jobid', 'assetid', 'seqno', 'jobdesc',
-            'buname', 'buid', 'bu__gpslocation', 'endtime', 'duration',
+            'bu__buname', 'buid', 'bu__gpslocation', 'endtime', 'duration',
             'qsetname', 'solid'
         ).order_by('seqno')
         return qset or self.none()
