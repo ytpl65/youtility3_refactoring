@@ -1322,5 +1322,6 @@ def get_home_dir():
 
 
 def orderedRandom(arr, k):
+    if not len(arr) > 25: return arr
     indices = random.sample(range(len(arr)), k)
     return [arr[i] for i in sorted(indices)]    

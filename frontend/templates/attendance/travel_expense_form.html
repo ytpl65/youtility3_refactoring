@@ -214,15 +214,14 @@ function addMarker(location, map, label){
 
 //draw path on google map
 function drawConveyancePath(data){
-    console.log(data, "$$$$$$")
     if(data['obj'].length > 0){
         const journeyPath = new google.maps.Polyline({
             path: data.obj[0].path,
             geodesic: true,
-            strokeColor: "#FF0000",
+            strokeColor: "#F57F17",
             strokeOpacity: 1.0,
-            strokeWeight: 2,
-        });
+            strokeWeight: 5,
+        }); 
         
         var bounds = new google.maps.LatLngBounds()
         journeyPath.getPath().forEach(function(element,index){bounds.extend(element)})

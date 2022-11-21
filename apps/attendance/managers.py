@@ -4,6 +4,8 @@ from django.contrib.gis.db.models.functions import AsGeoJSON, AsWKT
 from apps.core import utils
 from apps.activity.models import Attachment
 from itertools import chain
+import logging
+log = logging.getLogger('__main__')
 
 Q = models.Q
 class PELManager(models.Manager):
@@ -30,14 +32,17 @@ class PELManager(models.Manager):
         )[0] or self.none()
 
     def update_fr_results(self, result, uuid, peopleid, db):
+        log.info('update_fr_results started results:%s', result)
         if obj := self.filter(uuid=uuid).using(db):
+            log.info('retrived obj punchintime: %s and punchoutime: %s', obj[0].punchintime, obj[0].punchouttime)
             extras = obj[0].peventlogextras
-            if not obj[0].punchintime:
-                extras['verified_in'] = result['verified']
-                extras['distance_in'] = result['distance']
-            if not obj[0].punchouttime:
+            if obj[0].punchouttime:
+                log.info('no punchintime found')
                 extras['verified_out'] = result['verified']
                 extras['distance_out'] = result['distance']
+            else:
+                extras['verified_in'] = result['verified']
+                extras['distance_in'] = result['distance']
             obj[0].peventlogextras = extras
             obj[0].facerecognitionin = extras['verified_in']
             obj[0].facerecognitionout = extras['verified_out']
@@ -60,10 +65,10 @@ class PELManager(models.Manager):
 
     def get_lastmonth_conveyance(self, R):
         now = datetime.now()
-        qset = self.select_related('bu', 'people').filter(
+        qset = self.select_related('bu', 'people').filter(  
                 peventtype__tacode = 'CONVEYANCE',
                 punchintime__date__gte = (now - timedelta(days = 30)).date()
-            ).exclude(endlocation__isnull = True).values(*R.getlist('fields[]'))
+            ).exclude(endlocation__isnull = True).values(*R.getlist('fields[]')).order_by('-punchintime')
         return qset or self.none()
 
     def getjourneycoords(self, id):
