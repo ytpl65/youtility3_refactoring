@@ -45,7 +45,7 @@ function getDirectionConfig(data){
     travelMode: "DRIVING",
     origin: start,
     destination: end,
-    waypoints: waypoints,
+    //waypoints: waypoints,
     transitOptions:{
       arrivalTime: new Date(data['punchintime']),
       departureTime: new Date(data['punchouttime']),
@@ -750,13 +750,13 @@ function validate_optionsField() {
   }
 }
 
-function showToastMsg(msg, icon) {
+function showToastMsg(msg, icon, position="top-end") {
   return Swal.fire({
     toast: true,
     html: `<strong>${msg}</strong>`,
     timer: 3500,
     showConfirmButton: false,
-    position: "top-end",
+    position: position,
     icon: icon,
     timerProgressBar: true,
   });

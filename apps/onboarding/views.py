@@ -1406,7 +1406,9 @@ class GeoFence(LoginRequiredMixin, View):
             return  rp.JsonResponse(data = {'data':list(objs)})
 
         if R.get('action', None) == 'form':
-            cxt = {'geofenceform':self.params['form_class']()}
+            NONE_P, _ = utils.get_or_create_none_people()
+            NONE_G = utils.get_or_create_none_pgroup()
+            cxt = {'geofenceform':self.params['form_class'](initial ={'alerttopeople':NONE_P, 'alerttogroup':NONE_G}, request=request)}
             return render(request, self.params['template_form'], context = cxt)
 
         if R.get('action') == 'drawgeofence':
@@ -1429,7 +1431,7 @@ class GeoFence(LoginRequiredMixin, View):
             if pk := request.POST.get('pk', None):
                 msg = "geofence_view"
                 form = utils.get_instance_for_update(
-                data, self.params, msg, int(pk))
+                data, self.params, msg, int(pk), kwargs={'request':request})
             else:
                 form = self.params['form_class'](data, request = request)
             if form.is_valid():

@@ -127,7 +127,6 @@ class Query(graphene.ObjectType):
     def resolve_get_typeassistmodifiedafter(self, info, mdtz, ctzoffset, clientid):
         log.info(f'request for typeassist-modified-after inputs : mdtz:{mdtz}, ctzoffset:{ctzoffset}, clientid:{clientid}')
         mdtzinput = utils.getawaredatetime(mdtz, ctzoffset)
-        ic(mdtzinput)
         data = TypeAssist.objects.get_typeassist_modified_after(mdtzinput, clientid)
         records, count, msg = utils.get_select_output(data)
         log.info(f'{count} objects returned...')
@@ -204,7 +203,6 @@ class Query(graphene.ObjectType):
         for i in range(len(data)):
             data[i]['bupreferences'] = json.dumps(data[i]['bupreferences'])
         records, count, msg = utils.get_select_output(data)
-        log.info(records)
         log.info(f'{count} objects returned...')
         return SelectOutputType(nrows = count, records = records,msg = msg)
 
@@ -253,6 +251,4 @@ def get_externaltouremodifiedafter(peopleid, siteid, clientid):
     return get_db_rows("select * from fun_getexttourjobneed(%s, %s, %s)", args=[peopleid, siteid, clientid])
 
 def get_assetdetails(mdtz, buid):
-    qset =  get_db_rows("select * from fn_getassetdetails(%s, %s)", args=[mdtz, buid])
-    ic(qset)
-    return qset
+    return get_db_rows("select * from fn_getassetdetails(%s, %s)", args=[mdtz, buid])

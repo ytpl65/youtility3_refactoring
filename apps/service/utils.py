@@ -233,7 +233,7 @@ def save_linestring_and_update_pelrecord(obj):
             ls.transform(4326)
             obj.journeypath = ls
             obj.save()
-            bet_objs.delete()
+            #bet_objs.delete()
             log.info("save linestring is saved..")
             
     except Exception as e:

@@ -144,6 +144,14 @@ GeoFence
       </div>
       <div class="input-group mb-3">
           <div class="col-md-3">
+              {{ geofenceform.bu.label_tag() }}
+          </div>
+          <div class="col-md-9">
+              {{ geofenceform.bu }}
+          </div>
+      </div>
+      <div class="input-group mb-3">
+          <div class="col-md-3">
               {{ geofenceform.alerttopeople.label_tag() }}
           </div>
           <div class="col-md-9">
@@ -337,7 +345,8 @@ function placeMarker(location) {
     userMarker = new google.maps.Marker({
       position: location,
       map: map,
-      icon: 'http://maps.google.com/mapfiles/ms/icons/blue-dot.png'
+      icon: 'http://maps.google.com/mapfiles/ms/icons/blue-dot.png',
+      draggable:true
     });
   }
 }
@@ -410,21 +419,21 @@ function initAutocomplete() {
   const createGFBtn = document.createElement('button')
   createGFBtn.id = 'btnCreateGF'
   createGFBtn.textContent = "Create Geofence"
-  createGFBtn.className = "btn btn-secondary rounded-pill ms-2 mb-2"
+  createGFBtn.className = "btn btn-secondary  ms-2 mb-2"
   createGFBtn.title = "Click to create the Geofence";
 
   //clear geofence button
   const clearGFBtn = document.createElement('button')
   clearGFBtn.id = 'btnClearGF'
   clearGFBtn.textContent = "Clear Geofence"
-  clearGFBtn.className = "btn btn-secondary rounded-pill ms-2 mb-2"
+  clearGFBtn.className = "btn btn-secondary  ms-2 mb-2"
   clearGFBtn.title = "Click to clear the Geofence";
 
   //create new geofence
   const createNewBtn =  document.createElement('button')
   createNewBtn.id = 'btnCreateNew'
   createNewBtn.textContent = "Create New"
-  createNewBtn.className = "btn btn-secondary rounded-pill ms-2"
+  createNewBtn.className = "btn btn-secondary  ms-2"
   createNewBtn.title = "Click to create a new geofence from start";
 
 
@@ -436,12 +445,12 @@ function initAutocomplete() {
   const editFormBtn = document.createElement('button')
   editFormBtn.id = 'togglemapform'
   editFormBtn.textContent = 'Edit Form'
-  editFormBtn.className = "btn btn-secondary rounded-pill ms-2"
+  editFormBtn.className = "btn btn-secondary  ms-2"
 
   // Create the search box and link it to the UI element.
   const controlInput = document.createElement('input');
   controlInput.id = "pac-input";
-  controlInput.className = "controls mt-2 rounded-pill"
+  controlInput.className = "controls mt-2"
   controlInput.placeholder = 'Search any keyword..'
 
   //Create a number input element
@@ -450,8 +459,9 @@ function initAutocomplete() {
   radiusInput.type = 'number'
   radiusInput.min = '0'
   radiusInput.max = '100'
-  radiusInput.className = "ms-2 rounded-end"
+  radiusInput.className = "ms-2"
   radiusInput.placeholder = "Enter Radius"
+  radiusInput.style.width = "100px"
 
   // Append everything to the wrapper div
   controlDiv.appendChild(editFormBtn);
@@ -553,7 +563,8 @@ function initAutocomplete() {
           icon,
           title: place.name,
           position: place.geometry.location,
-          animation:google.maps.Animation.DROP
+          animation:google.maps.Animation.DROP,
+          draggable: true,
         })
       
       // Create a marker for each place.
@@ -575,6 +586,7 @@ function initAutocomplete() {
       }
     });
     map.fitBounds(bounds);
+    userMarker = markers.length ? markers[0] : null
     
     
     
@@ -599,6 +611,12 @@ function handleLocationError(browserHasGeolocation, infoWindow, pos) {
 
 window.initAutocomplete = initAutocomplete;
 $(document).ready(() => {
+  //instruction to save form after editing the geofence
+  Swal.fire(
+    'Instructions for creating geofence record',
+    '1.After editing the geoFence through the map.<br>2.Click on "Edit Form" fill the information then submit the form, it will save the record permanently',
+    'info'
+  )
   //set ctzoffset
   $("#id_ctzoffset").val(-new Date().getTimezoneOffset())
     $("#btnCreateGF").click(() => {
@@ -628,7 +646,7 @@ $(document).ready(() => {
           })
           .done((data, status, xhr) => {
             drawGeofenceOnMap(data)
-            showToastMsg('Geofence created successfully!', 'success')
+            showToastMsg('Geofence created successfully!, you can proceed to save this geofence through "Edit Form"', 'success', position='center')
           })
         }
       }

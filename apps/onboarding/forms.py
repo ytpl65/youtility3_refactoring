@@ -311,9 +311,10 @@ class ContractDetailForm(forms.ModelForm):
 
 
 class GeoFenceForm(forms.ModelForm):
+    required_css_class = 'required'
     class Meta:
         model = obm.GeofenceMaster
-        fields = ['gfcode', 'gfname', 'alerttopeople',
+        fields = ['gfcode', 'gfname', 'alerttopeople', 'bu',
                   'alerttogroup', 'alerttext', 'enable', 'ctzoffset']
         labels = {
             'gfcode': 'Code', 'gfname': 'Name', 'alerttopeople': 'Alert to People',
@@ -326,6 +327,11 @@ class GeoFenceForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         self.request = kwargs.pop('request', None)
         super().__init__(*args, **kwargs)
+        self.fields['alerttogroup'].required = True
+        self.fields['bu'].queryset = obm.Bt.objects.filter(id__in = self.request.session['assignedsites'])
+        self.fields['alerttopeople'].required = True
+        self.fields['alerttext'].required = True
+        self.fields['bu'].required = False
         utils.initailize_form_fields(self)
 
     def clean_gfcode(self):
