@@ -30,30 +30,23 @@ Incident Report Template
     <input type="hidden" name="parent_id" id="parent" value="1">
     <div class="row gy-3">
         <!--FIELDS -->
-        <div class="input-group mb-3">
-            <div class="col-md-4">
-                {{ reporttemp_form.qsetname.label_tag() }}
-            </div>
-            <div class="col-md-8">
-                {{ reporttemp_form.qsetname }}
-            </div>
-        </div>
-        <div class="input-group mb-3">
-            <div class="col-md-4">
-                {{ reporttemp_form.buincludes.label_tag() }}
-            </div>
-            <div class="col-md-8">
-                {{ reporttemp_form.buincludes }}
-            </div>
-        </div>
-        <div class="input-group mb-3">
-            <div class="col-sm-auto">
-                <div class="form-check form-switch form-check-custom form-check-solid">
-                    {{ reporttemp_form.enable }}
-                    <label for="{{ reporttemp_form.enable.id_for_label }}" class="form-check-label">{{ reporttemp_form.enable.label }}</label>
+        {% for field in reporttemp_form %}
+            {% if(field.widget_type != 'checkbox' and field.name not in ['type', 'ctzoffset'])  %}
+                <div class="col-sm-2">
+                    {{ field.label_tag() }}
                 </div>
-            </div>
-        </div>
+                <div class="col-sm-4">
+                {{ field }}
+                </div>
+            {% elif field.widget_type == 'checkbox' %}
+                <div class="col-sm-auto">
+                    <div class="form-check form-switch form-check-custom form-check-solid">
+                    {{ field }}
+                    <label for="{{ field.id_for_label }}" class="form-check-label">{{ field.label }}</label>
+                </div>
+                </div>
+            {% endif %}
+        {% endfor %}
     </div>
 </form>
 {% endblock form %}
@@ -115,139 +108,7 @@ Incident Report Template
     var parentEditor;
     var forminitilizing;
 
-    function fire_ajax_get_qsb(qsetData){
-        //get qsb of qset
-        let d = {qset_id:qsetData[0].id, count:qsetData[0].count}
-        fire_ajax_get({url:"{{ url('activity:qset_qsetblng') }}?action=get_questions_of_qset", data: d})
-        .done((data, status, xhr) => {
-            childTable.clear();
-            childTable.rows.add(data.rows);
-            childTable.draw();
-        })
-
-    }
-
-    function hideAndShowFields(selected){
-        if(typeof selected !== 'undefined'){
-            if(selected === 'DROPDOWN' || selected === 'CHECKBOX' && typeof selected !== 'undefined'){
-                childEditor.hide(['min', 'max', 'alertbelow', 'alertabove'], false).show(['alerton', 'options'], false)
-            }else if (selected === 'RATING'){
-                childEditor.hide(['alerton', 'options', 'alertbelow', 'alertabove'], false).show(['min', 'max'], false)
-            }else if(selected === 'NUMERIC'){
-                childEditor.hide(['alerton', 'options'], false).show(['min', 'max', 'alertbelow', 'alertabove'], false)
-            }else{
-                childEditor.hide(['alerton', 'options', 'min', 'max', 'alertabove', 'alertbelow'])
-            }
-        }
-    }
-
-    function appenAlerton(options){
-        clearSelection("#DTE_Field_alerton")
-        for(let i=0; i<options.length; i++){
-            
-            if ($('#DTE_Field_alerton').find("option[value='" + options[i] + "']").length) {
-                //$('#DTE_Field_alerton').val(options[i]).trigger('change');
-            } else { 
-                // Create a DOM Option and pre-select by default
-                var newOption = new Option(options[i], options[i], false, false);
-                // Append it to the select
-                $('#DTE_Field_alerton').append(newOption).trigger('change');
-            } 
-        }
-    }
-
-    function getCurrentEditingRow(editor, table){
-        var rowModifier = editor.modifier();
-        return rowModifier ? table.row(rowModifier).data() : 'None'
-    }
-
-    function initialize_form(){
-        var data = getCurrentEditingRow(childEditor, childTable)
-        if(data!=='None'){
-            forminitilizing=true;
-            hideAndShowFields(data.answertype)
-            //init question
-            var newOption = new Option(data.quesname.split(' | ')[0], data.question_id, true, true);
-            $('#DTE_Field_question').append(newOption);
-            
-            //init type
-            var _selectedText = getSelectedValue("#DTE_Field_question")
-            childEditor.field('answertype').val(_selectedText.split(" | ")[1])
-            
-            //init options
-            //childEditor.field('options').val(data.options)
-            
-            //init alerton
-            var options = data.options ? data.options.replaceAll(', ', ',').split(',') : []
-            if(options.length > 0){
-                appenAlerton(options)
-                let alerton = data.alerton ? data.alerton.replaceAll(', ', ',').replaceAll('" ', '"').split(',') : []
-                $("#DTE_Field_alerton").val(alerton).trigger('change')
-            }
-            
-            if(data.answertype === 'NUMERIC' && data.alerton.length > 0){
-                //init max
-                childEditor.field('max').val(data.max)
-                //init min
-                childEditor.field('min').val(data.min)
-                //init alertbelow and alertabove
-                let alerton = data.alerton
-                let aa = alerton.split(',')[1].replace('>', '') //alert-above
-                let ab = alerton.split(',')[0].replace('<', '') //alert-below
-                childEditor.field('alertbelow').val(ab)
-                childEditor.field('alertabove').val(aa)
-            }
-            //init is mandatory
-            childEditor.field('ismandatory').val(data.ismandatory)
-            childEditor.field('isavpt').val(data.isavpt)
-            childEditor.field('avpttype').val(data.avpttype)
-
-        }
-    }
-
-
-    function populateQsetForm(questionid){
-        if (!forminitilizing){
-            const params = {url:`{{ url('activity:qset_qsetblng') }}?action=getquestion&questionid=${questionid}`, modal:false}
-            fire_ajax_get(params)
-            .done((data, status, xhr) => {
-                if(status == 'success' && data.qsetbng){
-                    const qsetbng = data.qsetbng[0]
-                    $('#DTE_Field_min').val(qsetbng.min)
-                    $('#DTE_Field_max').val(qsetbng.max)
-                    $('#DTE_Field_options').val(qsetbng.options)
-                    $('#DTE_Field_avpttype').val(qsetbng.avpttype)
-                    $('#DTE_Field_isavpt').val(`${qsetbng.isavpt}`)
-                    if(qsetbng.options && qsetbng.alerton){
-                        let optionArr = qsetbng.options.replace(' ', '').split(',')
-                        let alertonArr = qsetbng.alerton.replace(' ', '').split(',')
-                        selected = performIntersection(optionArr, alertonArr)
-                        load_alerton_field(optionArr, selected, "#DTE_Field_alerton")
-                    }else if(qsetbng.alerton){
-                        adjust_above_below(qsetbng.alerton, for_table=false, editor=true)
-                    }
-                    
-                    
-
-                }
-            })
-        }
-        
-    }
-        
-
-    function clearSelection(id){
-        //$(id).val(null).trigger('change');
-        $(id).empty().trigger("change");
-    }
-
-    function clearForm(editor){
-        ['min', 'max', 'alertbelow', 'alertabove', 'options'].forEach((ele) => {
-            editor.field(ele).val('')
-        })
-        clearSelection("#DTE_Field_alerton")
-        clearSelection("#DTE_Field_question")
-    }
+    
     //delete ajax request 
     function isReportDeleted(id){ 
         let urlname = "{{ url('reports:config_incidentreport_template') }}"
@@ -285,10 +146,6 @@ Incident Report Template
             }
         })
     }
-
-
-    
-
 
     $(document).ready(function(){
         //close on select false
@@ -345,58 +202,13 @@ Incident Report Template
                 data:function(d){
                     var selected = parentTable.row( { selected: true } )
                     if ( selected.any() ) {
-                        let currentRow = getCurrentEditingRow(childEditor, childTable)
-                        console.log(currentRow)
-                        d.parent_id = selected.data().id;
-                        d.csrfmiddlewaretoken = '{{ csrf_token }}'
-                        d.question = true
-                        d.alerton = JSON.stringify($("#DTE_Field_alerton").val())
-                        d.question_id = $("#DTE_Field_question").val()
-                        d.min = $("#DTE_Field_min").val()
-                        d.max = $("#DTE_Field_max").val()
-                        d.alertbelow = $("#DTE_Field_alertbelow").val()
-                        d.alertabove = $("#DTE_Field_alertabove").val()
-                        d.answertype = $("#DTE_Field_answertype").val()
-                        d.seqno = $("#DTE_Field_seqno").val()
-                        d.ismandatory = $("#DTE_Field_ismandatory").val()
-                        d.isavpt = $("#DTE_Field_isavpt").val()
-                        d.avpttype = $("#DTE_Field_avpttype").val()
-                        d.options = $("#DTE_Field_options").val()
-                        d.pk = currentRow !== 'None' ? currentRow['pk'] : currentRow
-                        d.ctzoffset = $("#id_ctzoffset").val()
+                        editorAjaxData(d, childEditor, parentTable, selected.data().id, '{{ csrf_token }}')
                     }
                 }
             },
             idSrc:  'pk',
             fields:[
-                {data:'pk', type:'hidden', name:'pk', def:'None'},
-                {label:'SNo.', name:"seqno", type:'text', data:'seqno'},
-                {label: 'Question', name: 'question', type: 'select', data:'question'},
-                {label: 'Type', name: 'answertype', type: 'readonly', data:'answertype'},
-                {label: 'Min', name: 'min', type: 'text', def:null},
-                {label: 'Max', name: 'max', type: 'text', def:null},
-                {label: 'Alert below', name: 'alertbelow', type: 'text'},
-                {label: 'Alert above', name: 'alertabove', type: 'text'},
-                {label: 'Option', name: 'options', type:'text', fieldInfo:"Enter text ',' (comma) separated"},
-                {label: 'Alert On', name: 'alerton', type:'select'},
-                {label: 'Mandatory', name: 'ismandatory', type: 'select', def:1,
-                options:   [
-                    { label: 'True', value: true },
-                    { label: 'False', value: false }
-                ]},
-                {label: 'Is Attachment Required', name: 'isavpt', type: 'select', def:1,
-                options:   [
-                    { label: 'True', value: true },
-                    { label: 'False', value: false }
-                ]},
-                {label: 'Attachment Type', name: 'avpttype', type: 'select', def:1,
-                options:   [
-                    { label: 'NONE', value: 'NONE' },
-                    { label: 'Back Camera Pic', value: 'BACKCAMPIC' },
-                    { label: 'Front Camera Pic', value: 'FRONTCAMPIC' },
-                    { label: 'Audio', value: 'AUDIO' },
-                    { label: 'Video', value: 'VIDEO' },
-                ]},
+                ...editorFieldsConfig()
             ],
             formOptions:{
                 main:{
@@ -432,76 +244,14 @@ Incident Report Template
 
         //CHILD EDITOR ON OPEN EVENT
         childEditor.on('open', function(e, mode, action){
-            
             // on change options set alerton
-            if(action === 'create' || action === 'edit'){
-                $(".DTE_Form_Buttons").append('<button type="button" class="btn btn-primary" id="btnLoad">Load Question Data</button>')
-                
-                //onclick load button call populateQsetForm function
-                $("#btnLoad").on('click', function(){
-                    populateQsetForm($("#DTE_Field_question").val())
-                })
-                                
-                $('[data-dte-e="form"]').attr('id', 'id_childform') // add id to form
-                $(".DTE_Field").addClass('p-1') // add css to form fields
-                $("#DTE_Field_alerton, #DTE_Field_question").addClass("form-control form-select") // add css to alerton form field
-
-                
-
-                // initialize select field question
-                init_select_field({
-                    url: "{{ url('reports:config_incidentreport_template') }}?action=loadQuestions",
-                    id: "#DTE_Field_question",
-                    item: 'Questoins'
-                })
-                
-                // initialize select field alerton
-                init_select_field({
-                    id:'#DTE_Field_alerton',
-                    client:true,
-                    closeOnSelect:false,
-                    multiple:true
-                })
-
-                // on change question select field, autoselect type field
-                $("#DTE_Field_question.form-select").on("change", function () {
-                    var _selectedText = getSelectedValue("#DTE_Field_question");
-                    var selected = _selectedText.split(" | ")[1]
-                    //hide/show fields based on selected text..
-                    hideAndShowFields(selected)
-                    childEditor.field('answertype').val(selected)
-                    //populateQsetForm($("#DTE_Field_question").val())
-                })
-            }
-
-
-            
-            
-            if(action == "create"){
-                childEditor.field('seqno').set(childTable.data().count() + 1) //update seqno for new entry
-                clearForm(childEditor)
-            }
-            if(action == 'edit'){
-                initialize_form()
-            }
+            editorOnOpenActions('{{ url("activity:qset_qsetblng") }}', childEditor, parentTable, action)
             
         })
 
         // CHILD EDITOR ON OPENED EVENT
         childEditor.on('opened', function(e, mode, action){
-
-            $("#DTE_Field_options").on('change', function(){
-                var options  = $(this).val()
-                if(options.length > 0){
-                    appenAlerton(options.replaceAll(', ', ',').split(','))
-                }else{
-                    console.log('clear selection..........')
-                    clearSelection("#DTE_Field_alerton")
-                }
-            })
-
-
-
+            editorOnOpenedActions()
         })
 
         // CHILD EDITOR ON POSTCREATE
@@ -606,30 +356,7 @@ Incident Report Template
                 dom:`<'row' <'col-sm-6 d-flex justify-content-start'f> <'col-sm-6 d-flex justify-content-end'B> >rt<'row'
                 <'col-sm-6'l> <'col-sm-6'p><'col-sm-12 d-flex justify-content-center'i>>`,
                 columns:[
-                    {data:'pk', defaultContent:null, visible:false},
-                    {data:'ctzoffset', defaultContent:null, visible:false},
-                    {title: "SNo", data:'seqno', render:function(data, type, row, meta){
-                        return meta.row + 1
-                    }},
-                    {title: "Question", data: 'quesname'},
-                    {data: 'question_id', visible:false, defaultContent:null},
-                    {title: "Question Type", data: 'answertype'},
-                    {title: "Min", data: 'min', render:function(data, type, row, meta){
-                        return row['answertype'] !== 'NUMERIC' ? 'NA' : data
-                        
-                    }},
-                    {title: "Max", data: 'max', render:function(data, type, row, meta){
-                        return row['answertype'] !== 'NUMERIC'  ? 'NA' : data
-                    }},
-                    {title: "Option", data: 'options', render:function(data, type, row, meta){
-                        return row['answertype'] !== 'CHECKBOX' && row['answertype'] !== 'DROPDOWN' ? 'NA' : data
-                    }},
-                    {title: "Alert On", data: 'alerton', render:function(data, type, row, meta){
-                        return row['answertype'] !== 'CHECKBOX' && row['answertype'] !== 'DROPDOWN' ? 'NA' : data
-                    }},
-                    {title: "Mandatory", data: 'ismandatory'},
-                    {visible: false, data: 'isavpt'},
-                    {visible: false, data: 'avpttype'},
+                    ...QSBTableColumnsConfig()
                 ],
                 buttons:[
                     {text:'<i class="fas fa-sync-alt text-dark"></i>', titleAttr:'Refresh Data', className:'refreshBtn'},

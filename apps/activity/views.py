@@ -1,9 +1,10 @@
-from django.http import Http404, QueryDict, response as rp
+from django.http import Http404, QueryDict, response as rp, HttpResponse
 from django.contrib import messages
 from django.db import IntegrityError, transaction
 from django.db.models import Q
 from django.shortcuts import redirect, render
 from django.urls import resolve
+from django.conf import settings
 from django.contrib.gis.db.models.functions import  AsWKT
 from django.views.generic.base import View
 import json
@@ -18,6 +19,7 @@ import apps.core.utils as utils
 import apps.activity.utils as av_utils
 import apps.onboarding.forms as obf
 import logging
+import mimetypes
 logger = logging.getLogger('__main__')
 log = logger
 
@@ -79,7 +81,7 @@ class Question(LoginRequiredMixin, View):
             if form.is_valid():
                 resp = self.handle_valid_form(form,  request, create)
             else:
-                ic(form.cleaned_data, form.data)
+                ic(form.cleaned_data, form.data, form.errors)
                 cxt = {'errors': form.errors}
                 resp = utils.handle_invalid_form(request, self.params, cxt)
         except Exception:
@@ -104,12 +106,12 @@ class Question(LoginRequiredMixin, View):
 class QuestionSet(LoginRequiredMixin, View):
     params = {
         'form_class'   : af.QuestionSetForm,
-        'template_form': 'activity/partials/partial_questionsetform.html',
+        'template_form': 'activity/questionset_form.html',
         'template_list' : 'activity/questionset.html',
         'related'      : ['unit'],
         'model'        : am.QuestionSet,
         'fields'       : ['qsetname', 'type', 'id', 'ctzoffset', 'cdtz', 'mdtz'],
-        'form_initials': {'parent_id':1, 'type':'QUESTIONSET'}
+        'form_initials': { 'type':'QUESTIONSET'}
     }
 
     def get(self, request, *args, **kwargs):
@@ -133,9 +135,8 @@ class QuestionSet(LoginRequiredMixin, View):
                 'questionsetform': self.params['form_class'](
                     request = request,
                     initial = self.params['form_initials']),
-                'qsetbng': af.QsetBelongingForm(initial={'ismandatory': True}),
                 'msg': f"create questionset requested"}
-            resp = utils.render_form(request, self.params, cxt)
+            resp = render(request, self.params['template_form'], context = cxt)
 
         # handle delete request
         elif R.get('action', None) == "delete" and R.get('id', None):
@@ -143,11 +144,11 @@ class QuestionSet(LoginRequiredMixin, View):
 
         # return form with instance
         elif R.get('id', None):
-            questions = self.get_questions_for_form(int(R['id']))
-            cxt = {'qsetbng': af.QsetBelongingForm(), "questions": questions}
+            log.info('detail view requested')
             obj = utils.get_model_obj(int(R['id']), request, self.params)
-            resp = utils.render_form_for_update(
-                request, self.params, 'questionsetform', obj, cxt)
+            cxt = {'questionsetform': self.params['form_class'](request = request, instance = obj)}
+            resp = render(request, self.params['template_form'], context = cxt)
+            log.debug(resp)
         return resp
 
     def post(self, request, *args, **kwargs):
@@ -193,8 +194,8 @@ class QuestionSet(LoginRequiredMixin, View):
         logger.info('questionset form is valid')
         try:
             with transaction.atomic(using=utils.get_current_db_name()):
-                assigned_questions = json.loads(
-                    request.POST.get("asssigned_questions"))
+                #assigned_questions = json.loads(
+                #    request.POST.get("asssigned_questions"))
                 ic(form.data)
                 qset = form.save()
                 putils.save_userinfo(qset, request.user,
@@ -202,10 +203,9 @@ class QuestionSet(LoginRequiredMixin, View):
                 logger.info('questionset form is valid')
                 fields = {'qset': qset.id, 'qsetname': qset.qsetname,
                         'client': qset.client_id}
-                self.save_qset_belonging(request, assigned_questions, fields)
+                #self.save_qset_belonging(request, assigned_questions, fields)
                 data = {'success': "Record has been saved successfully",
-                        'row':{'qsetname':qset.qsetname, 'id':qset.id,
-                               'cdtz':qset.cdtz, 'mdtz':qset.mdtz, 'ctzoffset':qset.ctzoffset}
+                        'parent_id':qset.id
                         }
                 return rp.JsonResponse(data, status = 200)
         except IntegrityError:
@@ -307,13 +307,13 @@ class MasterAsset(LoginRequiredMixin, View):
 class Checklist(View, LoginRequiredMixin):
     params = {
         'form_class'   : af.ChecklistForm,
-        'template_form': 'activity/partials/partial_checklistform.html',
+        'template_form': 'activity/checklist_form.html',
         'template_list' : 'activity/checklist.html',
         'related'      : ['unit'],
         'model'        : am.QuestionSet,
         'filter'       : aft.MasterQsetFilter,
         'fields'       : ['qsetname', 'type', 'id', 'ctzoffset', 'cdtz', 'mdtz'],
-        'form_initials': {'parent_id':'1', 'type':'CHECKLIST'}
+        'form_initials': { 'type':'CHECKLIST'}
     }
     
     def get(self, request, *args, **kwargs):
@@ -321,7 +321,7 @@ class Checklist(View, LoginRequiredMixin):
         # first load the template
         if R.get('template'):
             return render(request, P['template_list'])
-        
+
         # return qset_list data
         if R.get('action', None) == 'list' or R.get('search_term'):
             objs = self.params['model'].objects.select_related(
@@ -333,25 +333,20 @@ class Checklist(View, LoginRequiredMixin):
 
         # return questionset_form empty
         if R.get('action', None) == 'form':
-            cxt = {
-                'checklistform': self.params['form_class'](
-                    request = request,
-                    initial = self.params['form_initials']),
-                'qsetbng': af.QsetBelongingForm(initial={'ismandatory': True}),
-                'msg': f"create checklist form requested"}
-            resp = utils.render_form(request, self.params, cxt)
+            cxt = {'checklistform': self.params['form_class'](request=request, initial=self.params['form_initials']),
+                   'qsetbng': af.QsetBelongingForm(initial={'ismandatory': True}), 'msg': "create checklist form requested"}
 
-        # handle delete request
+            resp = render(request, self.params['template_form'], context = cxt)
+
         elif R.get('action', None) == "delete" and R.get('id', None):
             resp = utils.render_form_for_delete(request, self.params, True)
 
-        # return form with instance
         elif R.get('id', None):
-            questions = self.get_questions_for_form(int(R['id']))
-            cxt = {'qsetbng': af.QsetBelongingForm(), "questions": questions}
+            log.info('detail view requested')
             obj = utils.get_model_obj(int(R['id']), request, self.params)
-            resp = utils.render_form_for_update(
-                request, self.params, 'checklistform', obj, cxt)
+            cxt = {'checklistform': self.params['form_class'](request = request, instance = obj)}
+            resp = render(request, self.params['template_form'], context = cxt)
+            log.debug(resp)
         return resp
     
     def post(self, request, *args, **kwargs):
@@ -397,18 +392,17 @@ class Checklist(View, LoginRequiredMixin):
         logger.info('checklist form is valid')
         try:
             with transaction.atomic(using=utils.get_current_db_name()):
-                assigned_questions = json.loads(
-                    request.POST.get("asssigned_questions"))
+                # assigned_questions = json.loads(
+                #     request.POST.get("asssigned_questions"))
                 qset = form.save()
                 putils.save_userinfo(qset, request.user,
                                     request.session, create = create)
                 logger.info('checklist form is valid')
                 fields = {'qset': qset.id, 'qsetname': qset.qsetname,
                         'client': qset.client_id}
-                self.save_qset_belonging(request, assigned_questions, fields)
+                #self.save_qset_belonging(request, assigned_questions, fields)
                 data = {'success': "Record has been saved successfully",
-                        'row':{'qsetname':qset.qsetname, 'id':qset.id,
-                               'cdtz':qset.cdtz, 'mdtz':qset.mdtz, 'ctzoffset':qset.ctzoffset}
+                        'parent_id':qset.id
                         }
                 return rp.JsonResponse(data, status = 200)
         except IntegrityError:
@@ -743,11 +737,15 @@ class QsetNQsetBelonging(LoginRequiredMixin, View):
     }
     def get(self, request, *args, **kwargs):
         R, P = request.GET, self.params
+        if(R.get('action') == 'loadQuestions'):
+            qset =  am.Question.objects.questions_of_client(request, R)
+            return rp.JsonResponse({'items':list(qset), 'total_count':len(qset)}, status = 200)
+
         if(R.get('action') == 'getquestion') and R.get('questionid') not in [None, 'null']:
             objs = am.Question.objects.get_questiondetails(R['questionid'])
             return rp.JsonResponse({'qsetbng':list(objs)}, status=200)
         
-        if R.get('action') == 'get_questions_of_qset' and R.get('qset_id'):
+        if R.get('action') == 'get_questions_of_qset' and R.get('qset_id') not in [None, 'None']:
             objs = P['qsb'].objects.get_questions_of_qset(R)
             return rp.JsonResponse({'data':list(objs)}, status=200)
         return rp.JsonResponse({'data':[]}, status=200)
@@ -869,10 +867,16 @@ class Attachments(LoginRequiredMixin, View):
         R, P = request.GET, self.params
         ic(R)
         if R.get('action') == 'get_attachments_of_owner' and R.get('owner'):
-            ic("returning")
             objs = P['model'].objects.get_att_given_owner(R['owner'])   
             return rp.JsonResponse({'data':list(objs)}, status=200)
-        return rp.JsonResponse({'data':[]}, status=200)
+
+        if R.get('action') == 'download' and R.get('filepath') and R.get('filename'):
+            file = f"{settings.MEDIA_URL}{R['filepath'].replace('youtility4_media/', '')}/{R['filename']}"
+            file = open(file, 'r')
+            mime_type, _ = mimetypes.guess_type(R['filepath'])
+            response = HttpResponse(file, content_type=mime_type)
+            response['Content-Disposition'] = f"attachment; filename={R['filename']}"
+            return response
     
     def post(self, request, *args, **kwargs):
         R, P = request.POST, self.params
@@ -881,7 +885,7 @@ class Attachments(LoginRequiredMixin, View):
             isUploaded, filename, filepath, docnumber = utils.upload(request)
             if isUploaded:
                 data = P['model'].objects.create_att_record(request, filename, filepath)
-                ic(data)
+
                 return rp.JsonResponse(data, status = 200, safe=False)
         return rp.JsonResponse({'error':"Invalid Request"}, status=404)
 

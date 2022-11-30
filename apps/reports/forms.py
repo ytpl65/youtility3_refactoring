@@ -38,15 +38,18 @@ class SiteReportTemplate(MasterReportTemplate):
         self.fields['type'].initial = am.QuestionSet.Type.SITEREPORTTEMPLATE
 
 class IncidentReportTemplate(MasterReportTemplate):
-    class Meta(MasterReportTemplate.Meta):
-        exclude = ['showto_allsites', 'site_grp_includes', 'site_type_includes']
+    
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields['site_type_includes'].queryset = om.TypeAssist.objects.filter(
-            tatype__tacode='SITETYPE')
-        self.fields['type'].widget.attrs = {'style': 'display:none'}
+
         self.fields['type'].initial = am.QuestionSet.Type.INCIDENTREPORTTEMPLATE
+        self.fields['site_type_includes'].choices = om.TypeAssist.objects.filter(tatype__tacode = "SITETYPE").values_list('id', 'taname')
+        bulist = om.Bt.objects.get_bu_list_ids(self.request.session['client_id'])
+        self.fields['buincludes'].choices = om.Bt.objects.filter(id__in = bulist, identifier__tacode='SITE').values_list('id', 'buname')
+        self.fields['site_grp_includes'].choices = pm.Pgroup.objects.filter(
+            identifier__tacode='SITEGROUP', bu_id__in = bulist).values_list('id', 'groupname')
+        self.fields['type'].widget.attrs = {'style': 'display:none'}
         utils.initailize_form_fields(self)
 
 

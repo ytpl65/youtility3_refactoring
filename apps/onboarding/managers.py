@@ -104,7 +104,7 @@ class BtManager(models.Manager):
 
     def get_client_list(self, fields, related):
         qset = self.filter(
-            identifier__tacode = 'CLIENT', enable=True).select_related(*related).values(
+            identifier__tacode = 'CLIENT').select_related(*related).values(
                 *fields).order_by('-mdtz')
         return qset or self.none()
 
@@ -292,3 +292,15 @@ class GeofenceManager(models.Manager):
                 obj['geofencecoords'] = geofencestring
             return qset
         return self.none()
+
+    def getPeoplesGeofence(self, request):
+        searchterm = request.GET.get('search')
+        qset = pm.People.objects.filter(
+            client_id = request.session['client_id'],
+            enable=True, verified=True,
+        )
+        qset = qset.filter(peoplename__icontains = searchterm) if searchterm else qset
+        qset = qset.annotate(
+            text = Concat('peoplename', V(' ('), 'peoplecode', V(')'))
+        ).values('text', 'id').distinct()
+        return qset or self.none()

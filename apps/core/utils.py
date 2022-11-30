@@ -8,6 +8,8 @@ import os.path
 import threading
 import random
 from pprint import pformat
+from datetime import datetime
+from dateutil import parser
 
 import django.shortcuts as scts
 from django.contrib import messages as msg
@@ -18,6 +20,7 @@ from django.http import response as rp
 from django.template.loader import render_to_string
 from PIL import ImageFile
 from rest_framework.utils.encoders import JSONEncoder
+from django.conf import settings
 
 import apps.activity.models as am
 import apps.onboarding.models as ob
@@ -536,9 +539,7 @@ def save_msg(request):
 
 
 def initailize_form_fields(form):
-    
     for visible in form.visible_fields():
-        #ic(visible.widget_type, visible.name)
         if visible.widget_type in ['text', 'textarea', 'datetime', 'time', 'number', 'date','email', 'decimal']:
             visible.field.widget.attrs['class'] = 'form-control'
         elif visible.widget_type in ['radio', 'checkbox']:
@@ -1162,81 +1163,82 @@ def failed(self):
     self.stdout.write(self.style.ERROR("FAILED"))
 
 
-def upload(request):
-    import os
-    from datetime import datetime
+# def upload(request):
+#     import os
+#     from datetime import datetime
 
-    from dateutil import parser
-    ic('upload(request)')
-    filename = filepath = docnumber = None
-    isUploaded = False
-    ownerid = isDefault = foldertype = attachmenttype = None
-    if request.POST["docnumber"]:
-        docnumber = request.POST["docnumber"]
-        foldertype = request.POST["foldertype"]
-        ownerid = request.POST["ownerid"]
-        if "img" in request.FILES:
-            home_dir = basedir = tablename = fyear = fmonth = None
-            home_dir = ("~") + "/"
-            fyear = str(datetime.now().year)
-            fmonth = str(datetime.now().strftime("%b"))
-            fextension = os.path.splitext(request.FILES["img"].name)[1]
-            filename = parser.parse(str(datetime.now())).strftime(
-                '%d_%b_%Y_%H%M%S') + fextension
-            if foldertype in ["task", "internaltour", "externaltour", "ticket", "incidentreport"]:
-                basedir, tablename = "transaction", "jobneed"
-            elif foldertype in ["visitorlog"]:
-                basedir, tablename = "transaction", "visitorlog"
-            elif foldertype in ["conveyance"]:
-                basedir, tablename = "transaction", "conveyance"
-            elif foldertype in ["personlogger"]:
-                basedir, tablename = "transaction", "personlogger"
-                doctype = request.POST["doctype"]
-                filename = doctype + fextension
-            else:
-                basedir = "master"
-                if request.POST["isDefault"] == "True" and request.POST["foldertype"] == "people":
-                    filename = f"default{fextension}"
-                elif request.POST["isDefault"] == "True" and request.POST["foldertype"] == "asset" or request.POST["foldertype"] == "smartplace" or request.POST["foldertype"] == "location" or request.POST["foldertype"] == "checkpoint" or request.POST["foldertype"] == "nonengineeringassets":
-                    filename = ownerid + fextension
-                else:
-                    filename = request.FILES['img'].name
+#     from dateutil import parser
+#     ic('upload(request)')
+#     filename = filepath = docnumber = None
+#     isUploaded = False
+#     ownerid = isDefault = foldertype = attachmenttype = None
+#     if request.POST["docnumber"]:
+#         docnumber = request.POST["docnumber"]
+#         foldertype = request.POST["foldertype"]
+#         ownerid = request.POST["ownerid"]
+#         peopleid = request.POST["peopleid"]
+#         if "img" in request.FILES:
+#             home_dir = basedir = tablename = fyear = fmonth = None
+#             home_dir = ("~") + "/"
+#             fyear = str(datetime.now().year)
+#             fmonth = str(datetime.now().strftime("%b"))
+#             fextension = os.path.splitext(request.FILES["img"].name)[1]
+#             filename = parser.parse(str(datetime.now())).strftime(
+#                 '%d_%b_%Y_%H%M%S') + fextension
+#             if foldertype in ["task", "internaltour", "externaltour", "ticket", "incidentreport"]:
+#                 basedir, tablename = "transaction", "JOBNEED"
+#             elif foldertype in ["visitorlog"]:
+#                 basedir, tablename = "transaction", "VISITORLOG"
+#             elif foldertype in ["conveyance"]:
+#                 basedir, tablename = "transaction", "CONVEYANCE"
+#             elif foldertype in ["personlogger"]:
+#                 basedir, tablename = "transaction", "personlogger"
+#                 doctype = request.POST["doctype"]
+#                 filename = doctype + fextension
+#             else:#youtility4_media/transaction/38/CONVEYANCE/2022/Nov/
+#                 basedir = "master"
+#                 if request.POST["isDefault"] == "True" and request.POST["foldertype"] == "people":
+#                     filename = f"default{fextension}"
+#                 elif request.POST["isDefault"] == "True" and request.POST["foldertype"] == "asset" or request.POST["foldertype"] == "smartplace" or request.POST["foldertype"] == "location" or request.POST["foldertype"] == "checkpoint" or request.POST["foldertype"] == "nonengineeringassets":
+#                     filename = ownerid + fextension
+#                 else:
+#                     filename = request.FILES['img'].name
 
-            if basedir == "transaction":
-                filepath = "youtility4_media" + "/" + basedir + "/" + fyear + "/" + \
-                    fmonth + "/" + tablename + "/" + foldertype + "/" + ownerid
-            else:
-                filepath = "youtility4_media" + "/" + basedir + "/" + foldertype + "/" + ownerid
+#             if basedir == "transaction":
+#                 filepath = "youtility4_media" + "/" + basedir + "/" + fyear + "/" + \
+#                     fmonth + "/" + tablename + "/" + foldertype + "/" + ownerid
+#             else:
+#                 filepath = "youtility4_media" + "/" + basedir + "/" + foldertype + "/" + ownerid
 
-            filepath = str(filepath).lower()  # convert to lower-case
-            fullpath = home_dir + filepath
-            ic(fullpath)
-            if not os.path.exists(fullpath):
-                os.makedirs(fullpath)
-                pass
+#             filepath = str(filepath).lower()  # convert to lower-case
+#             fullpath = home_dir + filepath
+#             ic(fullpath)
+#             if not os.path.exists(fullpath):
+#                 os.makedirs(fullpath)
+#                 pass
 
-            if foldertype in ["personlogger"] and \
-                    request.POST["doctype"] is not None and \
-                    request.POST["doctype"] != "None":
-                filename = request.POST["doctype"] + fextension
+#             if foldertype in ["personlogger"] and \
+#                     request.POST["doctype"] is not None and \
+#                     request.POST["doctype"] != "None":
+#                 filename = request.POST["doctype"] + fextension
 
-            uploadedfileurl = fullpath + "/" + filename
-            ic(uploadedfileurl)
-            try:
-                if not os.path.exists(uploadedfileurl):
-                    with open(uploadedfileurl, 'wb') as temp_file:
-                        temp_file.write(request.FILES['img'].read())
-                        temp_file.close()
-                    pass
-                isUploaded = True
-                ic(isUploaded)
-            except Exception:
-                isUploaded = False
-        else:
-            if "doctype" in request.POST and request.POST["doctype"] is not None and request.POST["doctype"] != "None":
-                filename = request.POST["doctype"] + fextension
-            filepath = "NONE"
-    return isUploaded, str(filename), str(filepath), str(docnumber)
+#             uploadedfileurl = fullpath + "/" + filename
+#             ic(uploadedfileurl)
+#             try:
+#                 if not os.path.exists(uploadedfileurl):
+#                     with open(uploadedfileurl, 'wb') as temp_file:
+#                         temp_file.write(request.FILES['img'].read())
+#                         temp_file.close()
+#                     pass
+#                 isUploaded = True
+#                 ic(isUploaded)
+#             except Exception:
+#                 isUploaded = False
+#         else:
+#             if "doctype" in request.POST and request.POST["doctype"] is not None and request.POST["doctype"] != "None":
+#                 filename = request.POST["doctype"] + fextension
+#             filepath = "NONE"
+#     return isUploaded, str(filename), str(filepath), str(docnumber)
 
 
 class JobFields:
@@ -1326,3 +1328,44 @@ def orderedRandom(arr, k):
     if not len(arr) > 25: return arr
     indices = random.sample(range(len(arr)), k)
     return [arr[i] for i in sorted(indices)]    
+
+
+
+def upload(request):
+    if 'img' not in request.FILES:
+        return
+    foldertype = request.POST["foldertype"]
+    if foldertype in ["task", "internaltour", "externaltour", "ticket", "incidentreport"]:
+        tabletype, activity_name = "transaction", "JOBNEED"
+    elif foldertype in ["visitorlog"]:
+        tabletype, activity_name = "transaction", "VISITORLOG"
+    elif foldertype in ["conveyance"]:
+        tabletype, activity_name = "transaction", "CONVEYANCE"
+
+    if tabletype == 'transaction':
+        fmonth = str(datetime.now().strftime("%b"))
+        fyear = str(datetime.now().year)
+        peopleid = request.POST["peopleid"]
+        home_dir = settings.MEDIA_URL
+        fullpath = f'{home_dir}transaction/{peopleid}/{activity_name/{fyear}/{fmonth}}'
+        fextension = os.path.splitext(request.FILES['img'].name)[1]
+        filename = parser.parse(str(datetime.now())).strftime('%d_%b_%Y_%H%M%S') + fextension
+
+
+        if not os.path.exists(fullpath):
+            os.makedirs(fullpath)
+        fileurl = f'{fullpath}/{filename}'
+        try:
+            if not os.path.exists(fileurl):
+                with open(fileurl, 'wb') as temp_file:
+                    temp_file.write(request.FILES['img'].read())
+                    temp_file.close()
+        except Exception as e:
+            logger.error(e, exc_info=True)
+            return False, None, None
+
+        return True, filename, fullpath 
+            
+                
+            
+            

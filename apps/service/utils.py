@@ -25,7 +25,6 @@ def write_file_to_dir(filebuffer, uploadedfilepath):
 
 
 from pprint import pformat
-
 from apps.attendance.models import PeopleEventlog
 from .tasks import Messages
 from .tasks import (
@@ -33,10 +32,11 @@ from .tasks import (
     get_or_create_dir)
 from django.db import transaction
 from logging import getLogger
-log = getLogger('__main__')
+log = getLogger('django')
 from .types import ServiceOutputType
 from django.db.utils import IntegrityError
 from apps.service import serializers as sz
+from django.contrib.gis.geos import GEOSGeometry
 from apps.core import utils
 from .validators import clean_record
 from apps.activity.models import (Jobneed, JobneedDetails, Asset)
@@ -46,8 +46,6 @@ def insertrecord(record, tablename):
     try:
         if model := get_model_or_form(tablename):
             record = clean_record(record)
-            ic(record)
-
             log.info(f'record after cleaning\n {pformat(record)}')
             obj = model.objects.get(uuid = record['uuid'])
             model.objects.filter(uuid = obj.uuid).update(**record)
@@ -62,6 +60,13 @@ def insertrecord(record, tablename):
         log.error("something went wrong", exc_info = True)
         raise e
 
+
+def discardAccept(curr, prev):
+    pnt = GEOSGeometry(f'SRID=4326;POINT({curr[0]} {curr[1]})')
+    pnt2 = GEOSGeometry(f'SRID=4326;POINT({prev[0]} {prev[1]})')
+    dis = pnt.distance(pnt2) * 100
+    ic(dis)
+    return abs(dis) > 2
 
 
 def update_record(details, jobneed, Jn, Jnd):
@@ -191,9 +196,7 @@ def perform_insertrecord(file, request = None, filebased = True):
 
             for record in data:
                 tablename = record.pop('tablename')
-                ic(tablename)
                 obj = insertrecord(record, tablename)
-                ic(obj)
                 allconditions = [
                     hasattr(obj, 'peventtype'), hasattr(obj, 'endlocation'), 
                     hasattr(obj, 'punchintime'), hasattr(obj, 'punchouttime')]

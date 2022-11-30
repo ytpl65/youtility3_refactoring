@@ -269,10 +269,6 @@ class ConfigSiteReportTemplate(LoginRequiredMixin, View):
         if R.get('action') == 'form':
             cxt = {'reporttemp_form':P['form_class'](initial = P['initial'], request = request), 'test':rp_forms.TestForm}
             return render(request, P['template_form'], cxt)
-
-        if R.get('action') =='loadQuestions':
-            qset =  am.Question.objects.questions_of_client(request, R)
-            return rp.JsonResponse({'items':list(qset), 'total_count':len(qset)}, status = 200)
         
         if R.get('action') == 'get_sections':
             parent_id = 0 if R['parent_id'] == 'undefined' else R['parent_id']

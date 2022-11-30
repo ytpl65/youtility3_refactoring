@@ -18,7 +18,7 @@ People Lists
 {% block table %}
 <div class="table-responsive">
     <table id="people_table" class="display compact cell-border" style="width:100%">
-    </table>
+	</table>
 </div>
 {% endblock table %} 
 <!------------------ END PEOPLE TABLE --------------------------->
@@ -40,6 +40,8 @@ People Lists
 				{data: 'isadmin', title: 'Is Admin'},
 				{data: 'enable', title: 'Enable'},
 			],
+			pageLength:50,
+			order:[[1, 'asc'], [3, 'asc']],
 			deferRender:true,
 			responsive:true,
 			dom:`<'row' <'col-sm-6 d-flex justify-content-start'f> <'col-sm-6 d-flex justify-content-end'B> >rt<'row'

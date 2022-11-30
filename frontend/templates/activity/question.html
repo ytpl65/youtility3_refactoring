@@ -68,6 +68,7 @@ Question List
 			ajax:{
 				url:"{{ url('activity:question') }}?action=list"
 			},
+			pageLength:50,
 			columns     : [
                 { "data": "id" },
                 { "data": "quesname", title: "Name" },
@@ -147,7 +148,7 @@ Question List
 			console.log("worked...")
 			var form = $(this);
 			e.preventDefault()
-			debugger;
+		debugger;
 			if(quesValidator){
 				quesValidator.validate().then(function (status) {
 					if(status === 'Valid'){

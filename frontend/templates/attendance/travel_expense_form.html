@@ -126,6 +126,12 @@ Conveyance
 </form>
 {% endblock form %}
 
+{% block popup_alerts %}
+{{ mainattachment() }}
+{% endblock popup_alerts %}
+
+
+
 {% block extras %}
 <div class ="card shadow-lg" id="journeymap">
     <div class="card-header mb-0">
@@ -146,7 +152,32 @@ Conveyance
     {% endif %}
 {% endblock page_actions %}
 
+
+{% block breadcumbactions %}
+<button class="btn btn-secondary dropdown-toggle" type="button" id="id_actions" data-bs-toggle="dropdown" aria-expanded="false">
+    Actions
+</button>
+<ul class="dropdown-menu" aria-labelledby="dropdownMenuButton1">
+    <li><a class="dropdown-item" href="#" id="id_attachment"><i class="fas fa-paperclip"></i> &nbsp;Attachment</a></li>
+</ul>
+{% endblock breadcumbactions %}
+
 {% block extra_scripts %}
+<script>
+    //set the variables which are gonna used in attachment.js file for fetching attachments against the owner
+    var attachmentUrl = '{{ url("activity:attachments") }}'
+    var media_url = '{{MEDIA_URL}}'
+    var attachementDatasource = 'peopleeventlog'
+    var attachmentOwner = '{{ conveyanceform.instance.uuid }}'
+    var csrf = '{{ csrf_token }}'
+    var ownername = "Jobneed"
+    var id = ""
+    var folderType = 'internaltour'
+    var isDefault= "False";
+    var docnumber=1;
+</script>
+<script src="{{ static('assets/plugins/custom/DataTables/datatables.min.js') }}" type="text/javascript"></script>
+<script src="{{ static('assets/js/local/attachment.js') }}" type="text/javascript"></script>
 <script type="text/javascript" defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyC3PUZCB7u2PiV8whHeAshweOPIK_d690o&libraries=places&callback=initAutocomplete"></script>
 <script>
 //global vars
@@ -176,7 +207,8 @@ function initAutocomplete(){
         })
         
         if(resp.obj.length > 0){
-            drawConveyancePath(resp)
+            //drawConveyancePath(resp)
+            plotPoints(resp)
             var dirConfig = getDirectionConfig(resp.obj[0])
             getRoute(directionsService, dirConfig, function(response) {
                 console.log(response, "response")
@@ -207,6 +239,25 @@ function addMarker(location, map, label){
     map:map
   })
 }
+
+function plotPoints(data){
+    const locations = data.obj[0].path
+    for(i=0; i<locations.length; i++){
+        marker = new google.maps.Marker({
+            position: new google.maps.LatLng(locations[i].lat, locations[i].lng),
+            map: map,
+            icon: {
+                path: google.maps.SymbolPath.CIRCLE,
+                scale: 10,
+                fillOpacity: 1,
+                strokeWeight: 2,
+                fillColor: '#5384ED',
+                strokeColor: '#ffffff',
+            }
+        });
+    }
+}
+
 
 //draw path on google map
 function drawConveyancePath(data){

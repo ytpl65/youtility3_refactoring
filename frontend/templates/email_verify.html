@@ -1,4 +1,27 @@
-<!DOCTYPE html>
+{% extends "base.html" %}
+
+
+{% block body %}
+<div class="container">
+    <div class="row">
+        <div class="col-auto">
+            <div class="msg mt-5 d-flex justify-content-center">
+                <img src="{{ static('assets/media/images/logo-transparent.png') }}" style="height:90px; width:200px"
+                    alt="">
+                <div class="alert alert-success d-flex align-items-center" role="alert">
+                    <svg class="bi flex-shrink-0 me-2" width="24" height="24" role="img" aria-label="Success:">
+                        <use xlink:href="#check-circle-fill" /></svg>
+                    <div>An example success alert with an icon
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock body %}
+
+
+{# <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -11,4 +34,6 @@
 Error, invalid token!
 {% endif %}
 </body>
-</html>
+</html> #}
+
+

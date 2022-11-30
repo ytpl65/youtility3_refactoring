@@ -23,6 +23,7 @@ class QuestionForm(forms.ModelForm):
         attrs={'step': "0.01"}), required = False, label='Alert Below')
     alertabove = forms.CharField(widget = forms.NumberInput(
         attrs={'step': "0.01"}), required = False, label='Alert Above')
+    options = forms.CharField(max_length=100, required=False, label='Options', widget=forms.TextInput(attrs={'placeholder': 'Enter options separated by comma (,)'}))
 
     class Meta:
         model = am.Question
@@ -35,7 +36,6 @@ class QuestionForm(forms.ModelForm):
             'category'  : 'Category',
             'min'       : 'Min Value',
             'max'       : 'Max Value',
-            'options'   : 'Options',
             'alerton'   : 'Alert On',
             'isworkflow': 'Is used in workflow?',
         }
@@ -44,7 +44,6 @@ class QuestionForm(forms.ModelForm):
             'answertype': s2forms.Select2Widget,
             'category'  : s2forms.Select2Widget,
             'unit'      : s2forms.Select2Widget,
-            'options'   : forms.Textarea(attrs={'rows': 3, 'cols': 40}),
             'alerton'   : s2forms.Select2MultipleWidget,
         }
 
@@ -69,24 +68,20 @@ class QuestionForm(forms.ModelForm):
         data = cleaned_data
         ic(data)
         alertabove = alertbelow = None
-        if data.get('answertype') and data['answertype'] not in (
-            'NUMERIC',
-            'DROPDOWN',
-            'CHECKBOX',
-            'RATING'
-        ):
-            cleaned_data['alerton'] = json.dumps([])
-            cleaned_data['min']     = cleaned_data['max'] = 0.0
-            cleaned_data['options'] = ""
+        if(data.get('answertype') not in ['NUMERIC', 'RATING', 'CHECKBOX', 'DROPDOWN']):
+            cleaned_data['min'] = cleaned_data['max'] = None
+            cleaned_data['alertbelow'] = cleaned_data['alertabove'] = None
+            cleaned_data['alerton'] = cleaned_data['options'] = None
+        if data.get('answertype') in  ['CHECKBOX', 'DROPDOWN']:
+            cleaned_data['min'] = cleaned_data['max'] = None
+            cleaned_data['alertbelow'] = cleaned_data['alertabove'] = None
+        if data.get('answertype') in ['NUMERIC', 'RATING']:
+            cleaned_data['options'] = None
         if data.get('alertbelow') and data.get('min'):
-            print("inside alerbelowdata", data)
             alertbelow = ac_utils.validate_alertbelow(forms, data)
         if data.get('alertabove') and data.get('max'):
-            print("inside alerabovedata", data)
-            print("forms", data)
             alertabove = ac_utils.validate_alertabove(forms, data)
-        print(alertabove, alertbelow)
-        if alertabove and alertbelow:
+        if data.get('answertype') == 'NUMERIC' and alertabove and alertbelow:
             alerton = f'<{alertbelow}, >{alertabove}'
             cleaned_data['alerton'] = alerton
 
@@ -140,11 +135,11 @@ class MasterQsetForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         self.fields['type'].initial      = 'ASSET'
         self.fields['type'].widget.attrs = {"style": "display:none;"}
-        self.fields['site_type_includes'].choices = om.TypeAssist.objects.filter(tatype__tacode = "SITETYPE").values_list('id', 'taname')
+        self.fields['site_type_includes'].choices = om.TypeAssist.objects.filter(Q(tatype__tacode = "SITETYPE") | Q(tacode='NONE')).values_list('id', 'taname')
         bulist = om.Bt.objects.get_bu_list_ids(self.request.session['client_id'])
-        self.fields['buincludes'].choices = om.Bt.objects.filter(id__in = bulist, identifier__tacode='SITE').values_list('id', 'buname')
+        self.fields['buincludes'].choices = om.Bt.objects.filter(Q(bucode='NONE') | Q(id__in = bulist) &  Q(identifier__tacode='SITE')).values_list('id', 'buname')
         self.fields['site_grp_includes'].choices = pm.Pgroup.objects.filter(
-            identifier__tacode='SITEGROUP', bu_id__in = bulist).values_list('id', 'groupname')
+            Q(groupname='NONE') |  Q(identifier__tacode='SITEGROUP') & Q(bu_id__in = bulist)).values_list('id', 'groupname')
         utils.initailize_form_fields(self)
     
     def clean_qsetname(self):
@@ -160,6 +155,8 @@ class QsetBelongingForm(forms.ModelForm):
         attrs={'step': "0.01"}), required = False, label='Alert Below')
     alertabove = forms.CharField(widget = forms.NumberInput(
         attrs={'step': "0.01"}), required = False, label='Alert Above')
+    options = forms.CharField(max_length=100, required=False, label='Options', widget=forms.TextInput(attrs= {'placeholder':'Enter options separated by comma ","'}))
+
 
     class Meta:
         model = am.QuestionSetBelonging
@@ -190,16 +187,22 @@ class QsetBelongingForm(forms.ModelForm):
     def clean(self):
         cleaned_data = super().clean()
         data = cleaned_data
+        ic(data)
         alertabove = alertbelow = None
+        if(data.get('answertype') not in ['NUMERIC', 'RATING', 'CHECKBOX', 'DROPDOWN']):
+            cleaned_data['min'] = cleaned_data['max'] = None
+            cleaned_data['alertbelow'] = cleaned_data['alertabove'] = None
+            cleaned_data['alerton'] = cleaned_data['options'] = None
+        if data.get('answertype') in  ['CHECKBOX', 'DROPDOWN']:
+            cleaned_data['min'] = cleaned_data['max'] = None
+            cleaned_data['alertbelow'] = cleaned_data['alertabove'] = None
+        if data.get('answertype') in ['NUMERIC', 'RATING']:
+            cleaned_data['options'] = None
         if data.get('alertbelow') and data.get('min'):
-            print("inside alerbelowdata", data)
             alertbelow = ac_utils.validate_alertbelow(forms, data)
         if data.get('alertabove') and data.get('max'):
-            print("inside alerabovedata", data)
-            print("forms", data)
             alertabove = ac_utils.validate_alertabove(forms, data)
-        print(alertabove, alertbelow)
-        if alertabove and alertbelow:
+        if data.get('answertype') == 'NUMERIC' and alertabove and alertbelow:
             alerton = f'<{alertbelow}, >{alertabove}'
             cleaned_data['alerton'] = alerton
 
@@ -234,17 +237,26 @@ class QsetBelongingForm(forms.ModelForm):
                 self._update_errors(e)
 
 class ChecklistForm(MasterQsetForm):
-    class Meta(MasterQsetForm.Meta):
-        pass
+    assetincludes = None
+    class Meta:
+        model = am.QuestionSet
+        fields = ['qsetname', 'parent', 'enable', 'type', 'ctzoffset',
+                  'site_type_includes', 'buincludes', 'site_grp_includes']
+        widgets = {
+            'parent': s2forms.Select2Widget()
+        }
+    
 
     def __init__(self, *args, **kwargs):
         self.request = kwargs.pop('request', None)
         super().__init__(*args, **kwargs)
         self.fields['type'].initial        = 'CHECKLIST'
-        self.fields['assetincludes'].label = 'Checkpoints'
         self.fields['type'].widget.attrs   = {"style": "display:none;"}
-        if self.instance.id:
-            self.fields['assetincludes'].initial = self.instance.assetincludes
+        if not self.instance.id:
+            self.fields['parent'].initial = 1
+            self.fields['site_grp_includes'].initial = 1
+            self.fields['site_type_includes'].initial = 1
+            self.fields['buincludes'].initial = 1
         utils.initailize_form_fields(self)
 
 
@@ -260,6 +272,11 @@ class QuestionSetForm(MasterQsetForm):
         self.fields['assetincludes'].label   = 'Asset/Smartplace'
         self.fields['assetincludes'].choices = ac_utils.get_assetsmartplace_choices()
         self.fields['type'].widget.attrs     = {"style": "display:none;"}
+        if not self.instance.id:
+            self.fields['parent'].initial = 1
+            self.fields['site_grp_includes'].initial = 1
+            self.fields['site_type_includes'].initial = 1
+            self.fields['buincludes'].initial = 1
         utils.initailize_form_fields(self)
 
 

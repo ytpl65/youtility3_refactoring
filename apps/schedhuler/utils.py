@@ -390,7 +390,7 @@ def insert_into_jn_and_jnd(job, DT, resp):
             jobstatus = 'ASSIGNED'
             jobtype = 'SCHEDULE'
             #assignee = job.pgroup.groupname if job['people_id'] == 1 else job.people.peoplename
-            jobdesc = f'{job["jobname"]} :: {job["jobdesc"]}'
+            jobdesc = f'{job["jobname"]}'
             asset = am.Asset.objects.get(id = job['asset_id'])
             multiplication_factor = asset.asset_json['multifactor']
             mins = pdtz = edtz = people = jnid = None

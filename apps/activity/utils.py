@@ -41,10 +41,11 @@ def validate_alertabove(forms, data):
     return alertabove    
 
 def validate_options(forms, val):
-    obj = json.loads(val)
-    options = []
-    for i in obj:
-        options.append(i['value'])
+    try:
+        obj = json.loads(val)
+    except ValueError as e:
+        return val
+    options = [i['value'] for i in obj]
     return json.dumps(options).replace('"', "").replace("[", "").replace("]", "")
 
 def validate_alerton(forms, val):

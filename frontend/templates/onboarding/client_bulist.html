@@ -32,6 +32,7 @@ Client Lists
             ajax:{
                 url: "{{ url('onboarding:client') }}?action=list",
             },
+            pageLength:50,
             deferRender: true,
 			responsive : true,
             dom       : `<'row' <'col-sm-6 d-flex justify-content-start'f> <'col-sm-6 d-flex justify-content-end'B> >rt<'row'
@@ -49,6 +50,11 @@ Client Lists
                 {data: 'buname', title: 'Name', orderable:false},
                 {data: 'enable', title: 'Enable', orderable:false}
             ],
+            createdRow:function(row, data, dataIndex){
+				if(data['enable'] === false){
+					$(row).addClass('disabled-record text-white')
+				}
+			},
             buttons:[
                 {
                     text: 'Add New',

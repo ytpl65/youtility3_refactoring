@@ -11,13 +11,6 @@
 	display: inline-block;
 	float: left;
 }
-.modal{
-	z-index: 20;   
-}
-.modal-backdrop{
-	z-index: 10;        
-}
-
 </style>
 {% endblock extra_css %}
 
@@ -308,17 +301,18 @@ Buisiness-View
 <!--------------- BEGIN PAGE-LEVEL EXTRA SCRIPTS --------------->
 {% block extra_scripts %}
 {{ buform.media.js }}
-<script
-      src="https://maps.googleapis.com/maps/api/js?key=AIzaSyC3PUZCB7u2PiV8whHeAshweOPIK_d690o&libraries=places&v=weekly"
-      defer
-    ></script>
 <script>
-	//global var
-	var map;
-	var userMarker;
-	var currinfowindow;
-	var currAddr='';
-	
+	var map, userMarker, currinfowindow, currAddr;
+	function getLatLng(){
+		var gps  = '{% if buform.instance.gpslocation != None %}{{ buform.instance.gpslocation.y }},{{ buform.instance.gpslocation.x }}{% else %}None{% endif %}';
+		if(gps != "None"){
+			console.log('{{ buform.instance.gpslocation }}')
+			return { lat:parseFloat(gps.split(',')[0]), lng:parseFloat(gps.split(',')[1]) }
+		}return {lat:0.0, lng:0.0}
+	}
+</script>
+<script src="{{ static('assets/js/local/maps.js') }}"></script>
+<script>
 	function showHideBuType(){
 		//on load check butype is site
 		var data = $("#id_identifier option:selected").text();
@@ -328,48 +322,12 @@ Buisiness-View
 		}else{$(".site_type").hide();}
 	}
 
-	function clearAllMarkers(markers){
-		// Clear out the old markers.
-		markers.forEach((marker) => {
-			marker.setMap(null);
-		});
-	}
-
-	function placeMarker(location) {
-		if ( userMarker ) {
-			userMarker.setPosition(location);
-		} else {
-			userMarker = new google.maps.Marker({
-			position: location,
-			map: map,
-			icon: 'http://maps.google.com/mapfiles/ms/icons/blue-dot.png'
-			});
-		}
-		const infowindow = new google.maps.InfoWindow()
-		const geocode = new google.maps.Geocoder()
-		geocode.geocode({location:location})
-		.then((response) => {
-			if(response.results[0]){
-				if(currinfowindow){
-					currinfowindow.close();
-				}
-				currinfowindow = infowindow
-				currAddr = response.results[0].formatted_address
-				infowindow.setContent(response.results[0].formatted_address);
-				infowindow.open(map, userMarker);
-			}else{
-				infowindow.setContent('No results found');
-				infowindow.open(map, userMarker);
-			}
-		})
-
-		
-	}
 
 	//delete ajax request 
 	function isBuDeleted(id){
-		const params = {url:`{{ url('onboarding:bu') }}?action=delete&id=${id}`,
-		 'beforeSend':function () {}
+		const params = {
+			'url':`{{ url('onboarding:bu') }}?action=delete&id=${id}`,
+		 	'beforeSend':function () {}
 		}
 		fire_ajax_get(params)
 		.done((data, status, xhr) => {
@@ -384,115 +342,12 @@ Buisiness-View
 		})
 	}
 
-	function getLatLng(){
-		var gps  = '{% if buform.instance.gpslocation != None %}{{ buform.instance.gpslocation.y }},{{ buform.instance.gpslocation.x }}{% else %}None{% endif %}';
-		if(gps != "None"){
-			console.log('{{ buform.instance.gpslocation }}')
-			return { lat:parseFloat(gps.split(',')[0]), lng:parseFloat(gps.split(',')[1]) }
-		}return {lat:0.0, lng:0.0}
-		
-	}
 
-	function initMap() {
-		map = new google.maps.Map(document.getElementById("map"), {
-			center: getLatLng(),
-			zoom: 8,
-		});
-		//search-radius-form controls
-		const controlDiv = document.createElement('DIV');
-		controlDiv.id = "search_rad_controls";
-
-		// Create the search box and link it to the UI element.
-		const controlInput = document.createElement('input');
-		controlInput.id = "pac-input";
-		controlInput.className = "controls mt-2 form-control";
-		controlInput.placeholder = 'Search any keyword..'
-		controlInput.style = 'width: 170% !important;'
-
-		controlDiv.appendChild(controlInput);
-		map.controls[google.maps.ControlPosition.TOP_LEFT].push(controlDiv);
-
-		const searchBox = new google.maps.places.SearchBox(controlInput);
-
-		// Bias the SearchBox results towards current map's viewport.
-		map.addListener("bounds_changed", () => {
-			searchBox.setBounds(map.getBounds());
-		});
-
-		let markers = [];
-
-		// Listen for the event fired when the user selects a prediction and retrieve
-		// more details for that place.
-		searchBox.addListener("places_changed", () => {
-			const places = searchBox.getPlaces();
-
-			if (places.length == 0) {
-			return;
-			}
-
-			// Clear out the old markers.
-			clearAllMarkers(markers)
-			markers = [];
-
-			// For each place, get the icon, name and location.
-			const bounds = new google.maps.LatLngBounds();
-
-			places.forEach((place) => {
-				if (!place.geometry || !place.geometry.location) {
-					console.log("Returned place contains no geometry");
-					return;
-				}
-
-				const icon = {
-					url: place.icon,
-					size: new google.maps.Size(71, 71),
-					origin: new google.maps.Point(0, 0),
-					anchor: new google.maps.Point(17, 34),
-					scaledSize: new google.maps.Size(25, 25),
-				};
-				
-				let marker = new google.maps.Marker({
-					map,
-					icon,
-					title: place.name,
-					position: place.geometry.location,
-					animation:google.maps.Animation.DROP
-				})
-				
-				// Create a marker for each place.
-				markers.push(
-					marker
-				);
-
-				//on click marker zoom in
-				marker.addListener("click", () => {
-					map.setZoom(17);
-					map.setCenter(marker.getPosition());
-				});
-
-					if (place.geometry.viewport) {
-						// Only geocodes have viewport.
-						bounds.union(place.geometry.viewport);
-					} else {
-						bounds.extend(place.geometry.location);
-					}
-			});
-			map.fitBounds(bounds);
-			userMarker = markers.length ? markers[0] : null
-		}); // searchBox.addListener
-
-		//place marker when user clicks on map
-		google.maps.event.addListener(map, 'click', function(event) {
-			clearAllMarkers(markers)
-			placeMarker(event.latLng);
-		});
-	}// initMap end
-	
 	$(document).ready(function () {
 		//onclick id_setgps open popup open-map
 		$("#id_setgps").click(function(){
 			$("#open_map").modal('show');
-			initMap();
+			initMap("map");
 		});
 
 		$("#btn_clear").click(() => {
@@ -504,7 +359,10 @@ Buisiness-View
 			var lat = userMarker.getPosition().lat();
 			var lng = userMarker.getPosition().lng();
 			$("#id_gpslocation").val(lat + ', ' + lng);
-			$("#id_address").val(currAddr);
+			const geocoder = new google.maps.Geocoder()
+			getAddressOfPoint(geocoder, {lat:lat, lng:lng}, (address) => {
+				$("#id_address").val(address)
+			})
 			$("#open_map").modal('hide');
 		});
 

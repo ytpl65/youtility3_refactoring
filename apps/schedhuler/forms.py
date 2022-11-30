@@ -176,7 +176,6 @@ class Schd_E_TourJobForm(JobForm):
             'frequency':forms.TextInput(attrs={'style': 'display:none;'}),
             'priority':forms.TextInput(attrs={'style': 'display:none;'}),
             'seqno':forms.TextInput(attrs={'style': 'display:none;'}),
-            'scantype':forms.TextInput(attrs={'style': 'display:none;'}),
             'ticketcategory':forms.TextInput(attrs={'style': 'display:none;'}),
             'jobname':forms.TextInput(attrs={'placeholder': 'Enter Route Plan Name:'})}
         )
@@ -352,17 +351,23 @@ class E_TourFormJobneed(JobNeedForm):
     
     
     def __init__(self, *args, **kwargs):
-        '''Initializes form add attributes and classes here'''
-        self.request = kwargs.pop('request', None)
-        super().__init__(*args, **kwargs)
-        self.fields['plandatetime'].input_formats   = settings.DATETIME_INPUT_FORMATS
-        self.fields['expirydatetime'].input_formats = settings.DATETIME_INPUT_FORMATS
-        self.fields['identifier'].widget.attrs      = {"style": "display:none"}
-        self.fields['starttime'].widget.attrs       = {"disabled": "disabled"}
-        self.fields['endtime'].widget.attrs         = {"disabled": "disabled"}
-        self.fields['endtime'].label                = 'End Time'
-        self.fields['performedby'].widget.attrs     = {"disabled": "disabled"}
-        self.fields['scantype'].widget.attrs.pop('style')
+    #     '''Initializes form add attributes and classes here'''
+        super(JobNeedForm, self).__init__(*args, **kwargs)
+    #     ic('E_TourFormJobneed')
+    #     self.request = kwargs.pop('request', None)
+    #     self.fields['plandatetime'].input_formats   = settings.DATETIME_INPUT_FORMATS
+    #     self.fields['expirydatetime'].input_formats = settings.DATETIME_INPUT_FORMATS
+    #     self.fields['identifier'].widget.attrs      = {"style": "display:none"}
+    #     for f in self.fields:
+    #         ic(f)
+    #         if self.fields[f] in ['starttime', 'priority', 'scantype', 'jobstatus', 'people', 'tickercategory',
+    #                           'expirydatetime', 'plandatetime', 'starttime', 'endtime', 'performedby', 'gracetime' ]:
+    #             self.fields[f].widget.attrs.update({'disabled': True})
+    #     self.fields['endtime'].label                = 'End Time'
+        for k in ['scantype', 'starttime', 'endtime']:
+            self.fields[k].widget.attrs.pop('style')
+            if k in ['starttime', 'endtime']:
+                self.fields[k].widget.attrs.update({'disabled':True})
         utils.initailize_form_fields(self)
 
     def is_valid(self) -> bool:

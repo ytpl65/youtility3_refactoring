@@ -1606,6 +1606,11 @@ class ExternalTourScheduling(LoginRequiredMixin, View):
             objs = pm.Pgbelonging.objects.get_sitesfromgroup(job)
             ic(objs)
             return rp.JsonResponse({'data':list(objs)}, status = 200)
+
+        if R.get('action') == "forcegetfromgroup" and R.get('sgroup_id')!='None' and R.get('id')!='None':
+            job = am.Job.objects.filter(id = int(R['id'])).values(*utils.JobFields.fields)[0]
+            objs = pm.Pgbelonging.objects.get_sitesfromgroup(job, force=True)
+            return rp.JsonResponse({'rows':list(objs)}, status = 200)
         
         # return resp to load checklist
         if R.get('action') == "loadChecklist":

@@ -51,7 +51,7 @@
             </div>
         </div>
         
-        <div class="row mb-3 fv-row gy3 optionGrp" {% if not ques_form.instance.id %} style="display:none;"{% endif %}>
+        <div class="row mb-3 fv-row gy3 optionGrp">
             <label for={{ ques_form.options.id_for_label }} class="col-md-1">{{ ques_form.options.label }}:</label>
             <div class="col-md-5">
                 {{ ques_form.options }}
@@ -92,8 +92,8 @@
                     class="form-check-label bool col-form-label me-5 text-sm-right">
                     {{ ques_form.isavpt.label }}: &nbsp; {{ ques_form.isavpt }}
                 </label>
-            <label for={{ ques_form.avpttype.id_for_label }} class="col-md-2">{{ ques_form.avpttype.label }}:</label>
-            <div class="col-md-4">
+            <label for={{ ques_form.avpttype.id_for_label }} class="col-md-2 avpttype d-none">{{ ques_form.avpttype.label }}:</label>
+            <div class="col-md-4 avpttype d-none">
                 {{ ques_form.avpttype }}
                 {{ ques_form.avpttype.errors }}
             </div>
@@ -134,6 +134,25 @@
         }
         return "NONE"
     }
+    function appenAlerton(options){
+        clearSelection("#id_alerton")
+        for(let i=0; i<options.length; i++){
+            
+            if ($('#id_alerton').find("option[value='" + options[i] + "']").length) {
+                //$('#DTE_Field_alerton').val(options[i]).trigger('change');
+            } else { 
+                // Create a DOM Option and pre-select by default
+                var newOption = new Option(options[i], options[i], false, false);
+                // Append it to the select
+                $('#id_alerton').append(newOption).trigger('change');
+            } 
+        }
+    }
+
+    function clearSelection(id){
+        //$(id).val(null).trigger('change');
+        $(id).empty().trigger("change");
+    }
 
     
 
@@ -141,11 +160,29 @@
         //set ctzoffset
         $("#id_ctzoffset").val(-new Date().getTimezoneOffset())
         // Initialize Tagify components
-        var input1 = document.querySelector("#id_options");
-        var optionTag = new Tagify(input1);
+        //var input1 = document.querySelector("#id_options");
+        //var optionTag = new Tagify(input1);
 
         $("#modal-ques").find("select").select2({
             dropdownParent: $('#modal-ques')
+        })
+        //on change isavpt, if it is checked remove class d-none of  else add class d-none to class avpttype
+        $("#id_isavpt").change(function(){
+            if($(this).is(":checked")){
+                $(".avpttype").removeClass("d-none")
+            }else{
+                $(".avpttype").addClass("d-none")
+            }
+        })
+        
+
+        $("#id_options").on('focusout', () => {
+            var options  = $('#id_options').val()
+            if(options.length > 0){
+                appenAlerton(options.replaceAll(', ', ',').split(','))
+            }else{
+                clearSelection("#id_alerton")
+            }
         })
 
         //on attachment required checked make avpttype mandatory
@@ -161,14 +198,6 @@
             showHideFields(selected)
         } )
 
-        //option field events
-        optionTag
-        .on('add', function(e){
-            populateAlertOn(e.detail.data.value, "#id_alerton")
-        })
-        .on('remove', function(e){
-            removeElmtFromAlertOn(e.detail.data.value, "#id_alerton")
-        })
 
         var initial_selected = getQuesTypeValue("#id_answertype");
         console.log(initial_selected, "initial selected")

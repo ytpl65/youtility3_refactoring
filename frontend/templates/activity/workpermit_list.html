@@ -30,6 +30,7 @@ $(document).ready(function(){
         ajax:{
             url:'{{ url("activity:workpermit") }}?action=list'
         },
+        pageLength:50,
         deferRender:true,
         responsive:true,
         lengthMenu:[[10,20,30], [10,20,30]],

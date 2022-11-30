@@ -61,6 +61,7 @@ Question Set List
 			ajax:{
 				url: "{{ url('activity:questionset') }}?action=list&type=QUESTIONSET"
 			},
+			pageLength:50,
             deferRender: true,
 			responsive : true,
 			columns:[
@@ -75,10 +76,11 @@ Question Set List
 			columnDefs:[
 				{targets:0, data: "id", visible:false, searchable:false, orderable:false },
 				{
-					targets: 1,
+					targets: 2,
 					data   : 'qsetname',
 					render : function ( data, type, row, meta ) {
-						return `<a href="#" class="ta-link" data-id=${row['id']} data-rowid=${meta.row}>${data}</a>`
+						let formUrl = "{{ url('activity:questionset') }}"
+						return `<a href="${formUrl}?id=${row['id']}">${data}</a>`
 					}
 				},
 				{targets:3, data:'cdtz', render: function(data, type, row, meta){
@@ -101,9 +103,7 @@ Question Set List
                             'beforeSend'  : qsetBeforeSend }
 						fire_ajax_get(params)
 						.done((data, status, xhr) => {
-							$(modalcontent_id).attr('data-form', 'create')
-                            $(`${modal_id} .modal-content`).html(data.html_form)
-							$('#id_assetincludes').val(null).trigger('change');
+							location.href = '{{ url("activity:questionset") }}?action=form&type=QUESTIONSET'
                         })
 						.fail((xhr, status, error) => {
 							show_error_alert("Something went wrong!")
@@ -115,31 +115,7 @@ Question Set List
 
 		
 
-		//update row (form-view)
-		$("#qset_table tbody").on('click', 'tr', function (e) {
-			if ($(this).hasClass('selected')) {
-				$(this).removeClass('selected');
-			} else {
-				Qsettable.$('tr.selected').removeClass('selected');
-				$(this).addClass('selected');
-			}
-			var d = Qsettable.row( this ).data();
-			e.preventDefault();
-			var id = d.id
-			if (!(id)){ return }
-			const params = {
-				'modal_id'    : modal_id,
-				'url'         : `${urlname}?id=${id}`,
-				'beforeSend'  : qsetBeforeSend }
-			fire_ajax_get(params)
-			.done((data, status, xhr) => {
-				$(modalcontent_id).attr('data-form', 'update')
-				$(`${modal_id} .modal-content`).html(data.html_form)
-			})
-			.fail((xhr, status, error) => {
-				show_error_alert('Something went wrong!') //defined in custom.js
-			})
-		})
+
 	}); //END document.ready()
 
 	//delete ajax request 

@@ -86,7 +86,6 @@ def insertrecord(record, tablename):
         if model := get_model_or_form(tablename):
             record = clean_record(record)
             ic(record)
-
             log.info(f'record after cleaning\n {pformat(record)}')
             obj = model.objects.get(uuid = record['uuid'])
             model.objects.filter(uuid = obj.uuid).update(**record)
@@ -100,12 +99,24 @@ def insertrecord(record, tablename):
     except Exception as e:
         log.error("something went wrong", exc_info = True)
         raise e
-# @app.task(bind = True, default_retry_delay = 300, max_retries = 5)
-# def substract(x, y):
-#     try:
-#         return x-y
-#     except Exception as e:
-#         self.retry(e)
+
+def insertrecord_json(records, tablename):
+    try:
+        if model := get_model_or_form(tablename):
+            for record in records:
+                record = clean_record(record)
+                log.info(f'record after cleaning\n {pformat(record)}')
+                obj = model.objects.get(uuid = record['uuid'])
+                model.objects.filter(uuid = obj.uuid).update(**record)
+                log.info("record is already exist so updating it now..")
+                ic("updating")
+    except model.DoesNotExist:
+        ic("creating")
+        log.info("record is not exist so creating new one..")
+        model.objects.create(**record)
+    except Exception as e:
+        log.error("something went wrong", exc_info = True)
+        raise e
 
 def call_service_based_on_filename(data, filename, db='default'):
     log.info(f'filename before calling {filename}')
@@ -239,6 +250,10 @@ def get_json_data(file):
         with gzip.open(file, 'rb') as f:
             s = f.read().decode('utf-8')
             s = s.replace("'", "")
+            if isTrackingRecord := s.startswith('{'):
+                log.info("Tracking record found")
+                arr = s.split('?')
+                s = json.dumps(arr)
             return json.loads(s)
     except Exception as e:
         log.error("File unzipping error", exc_info = True)

@@ -6,7 +6,7 @@ from apps.peoples.models import Pgbelonging, Pgroup, People
 from django.db import connections
 from collections import namedtuple
 from logging import getLogger
-log = getLogger('__main__')
+log = getLogger('django')
 import json
 from .types import (VerifyClientOutput,
 TypeAssist, SelectOutputType)

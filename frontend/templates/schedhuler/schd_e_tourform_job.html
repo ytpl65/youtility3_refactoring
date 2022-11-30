@@ -46,7 +46,6 @@ Schedhule External-Tour&nbsp;<i class="fa fa-clock fs-4 text-primary" aria-hidde
         {{ schdexternaltourform.priority }}
         {{ schdexternaltourform.starttime }}
         {{ schdexternaltourform.endtime }}
-        {{ schdexternaltourform.scantype }}
         {{ schdexternaltourform.expirytime }}
         {{ schdexternaltourform.frequency }}
         {{ schdexternaltourform.ticketcategory }}
@@ -117,6 +116,14 @@ Schedhule External-Tour&nbsp;<i class="fa fa-clock fs-4 text-primary" aria-hidde
                 </div>
                 <div class="col-md-8">
                     {{ schdexternaltourform.qset }}
+                </div>
+            </div>
+            <div class="input-group mb-3">
+                <div class="col-md-4">
+                    {{ schdexternaltourform.scantype.label_tag() }}
+                </div>
+                <div class="col-md-8">
+                    {{ schdexternaltourform.scantype }}
                 </div>
             </div>
         </div>
@@ -229,6 +236,13 @@ Schedhule External-Tour&nbsp;<i class="fa fa-clock fs-4 text-primary" aria-hidde
                 <div class="card-header">
                     <h3 class="card-title">Site Checkpoints &nbsp;<i class="fas ch4 fa-sm fa-paste"></i></h3>
                     <div class="card-toolbar gap-5 d-md-flex justify-content-md-end">
+                        {% if schdexternaltourform.instance.id %}
+                        <button type="button" class="btn btn-sm btn-hover-scale btn-warning" id="getfromgroup"
+                            data-bs-custom-class="tooltip-dark" data-bs-toggle="tooltip" data-bs-placement="top" title="Get From Group">
+                            <i class="fab fa-get-pocket fa-lg"></i>
+                        </button>
+                        {% endif %}
+                        
                         <button type="button" class="btn btn-sm btn-hover-scale btn-primary non-random" id="btnGetRoute"
                             data-bs-custom-class="tooltip-dark" data-bs-toggle="tooltip" data-bs-placement="top" title="Get Route">
                             <i class="fas fa-map-marker-alt fa-lg"></i>
@@ -302,6 +316,9 @@ Schedhule External-Tour&nbsp;<i class="fa fa-clock fs-4 text-primary" aria-hidde
     </div>
 {% endblock ajax_page_actions %}
 
+{% block base_script %}
+
+{% endblock base_script %}
 
 {% block extra_scripts %}
 {{ schdexternaltourform.media.js }}
@@ -493,6 +510,25 @@ function updateCronDate(){
 		})
 	}
 
+function forceGetFromGroup(){
+    var sitegrp_id = '{{ schdexternaltourform.instance.sgroup_id }}'
+    var id = '{{ schdexternaltourform.instance.id }}'
+    const params = {url:`{{ url('schedhuler:schd_external_tour') }}?action=forcegetfromgroup&sgroup_id=${sitegrp_id}&id=${id}`, 'beforeSend':function (){} }
+    fire_ajax_get(params)
+    .done((data, status, xhr) => {
+        if(!xhr.status === 200){
+            return false
+        }
+        asgdsites_table.clear().rows.add(data.rows).draw()
+        $("#btnGetRoute").click()
+    })
+    .fail((xhr, status, error) => {
+        console.log(xhr.responseJSON.errors)
+        show_error_alert('Something went wrong!') //defined in custom.js
+        return false
+    })
+}
+
 var d2bounds           = new google.maps.LatLngBounds();
 var d2infowindow       = new google.maps.InfoWindow({content: "",maxWidth: 350});
 var d2PolyLine         = undefined;
@@ -536,7 +572,7 @@ $(document).ready(() => {
 
     asgdsites_table = $("#assigned_sites").DataTable({
         ajax:{
-            url:"{{ url('schedhuler:schd_external_tour') }}?action=get_sitesfromgroup&id={{schdexternaltourform.instance.id}}",    
+            url:"{{ url('schedhuler:schd_external_tour') }}?action=get_sitesfromgroup&id={{schdexternaltourform.instance.id}}", 
         },
         fixedHeader: true,
         responsive: true,
@@ -658,6 +694,11 @@ $(document).ready(() => {
         }
         $('#cron_scheduler').modal('show');
     });
+
+    $("#getfromgroup").click((e) => {
+        e.preventDefault()
+        forceGetFromGroup()
+    })
 
 
 

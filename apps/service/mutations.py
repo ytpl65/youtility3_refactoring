@@ -13,7 +13,7 @@ from graphene_file_upload.scalars import Upload
 
 from logging import getLogger
 import traceback as tb
-log = getLogger('__main__')
+log = getLogger('django')
 
 
 class LoginUser(graphene.Mutation):
@@ -200,9 +200,9 @@ class InsertJsonMutation(graphene.Mutation):
         tablename = graphene.String(required = True)
 
     @classmethod
-    def mutate(cls, root, info, jsondata, tablename):
+    def mutate(cls, root, info, list_of_json, tablename):
         # sourcery skip: instance-method-first-arg-name
-        from .tasks import insertrecord
+        from .tasks import insertrecord_json
         from apps.core.utils import get_current_db_name
         import json
         log.info('insert jsondata mutations start[+]')
@@ -210,7 +210,7 @@ class InsertJsonMutation(graphene.Mutation):
         msg = ""
         try:
             db = get_current_db_name()
-            insertrecord(jsondata, tablename)
+            insertrecord_json(list_of_json, tablename)
             recordcount, msg = 1, 'Inserted Successfully'
         except Exception as e:
             log.error('something went wrong', exc_info = True)

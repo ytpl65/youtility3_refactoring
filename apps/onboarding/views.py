@@ -26,6 +26,7 @@ import apps.peoples.utils as putils
 from apps.peoples import admin as people_admin
 from apps.onboarding import admin as ob_admin
 from django.db import IntegrityError
+import apps.activity.models as am
 from pprint import pformat
 CACHE_TTL = getattr(settings, 'CACHE_TTL', DEFAULT_TIMEOUT)
 logger = logging.getLogger('django')
@@ -1088,6 +1089,7 @@ def handle_pop_forms(request):
         ic(form.errors)
         return JsonResponse({'saved': False, 'errors': form.errors})
     ta = form.save(commit = False)
+    ta.enable=True
     t = TypeAssist.objects.filter(tacode = ta.tacode)
     ta = t[0] if len(t) else form.save(commit = True)
     save_userinfo(ta, request.user, request.session)
@@ -1397,6 +1399,7 @@ class GeoFence(LoginRequiredMixin, View):
     def get(self, request, *args, **kwargs):
         R = request.GET
         params = self.params
+        
         # first load the template
         if R.get('template'): return render(request, self.params['template_list'])
 
@@ -1404,6 +1407,14 @@ class GeoFence(LoginRequiredMixin, View):
         if R.get('action', None) == 'list' or R.get('search_term'):
             objs = self.params['model'].objects.get_geofence_list(params['fields'], params['related'], request.session)
             return  rp.JsonResponse(data = {'data':list(objs)})
+        
+        if R.get('action') == 'loadPeoples':
+            objs = self.params['model'].objects.getPeoplesGeofence(request)
+            return rp.JsonResponse(data = {'data':list(objs)})
+        
+        if R.get('action') == "getAssignedPeople" and R.get('id'):
+            objs = am.Job.objects.get_people_assigned_to_geofence(R['id'])
+            return rp.JsonResponse(data = {'data':list(objs)})
 
         if R.get('action', None) == 'form':
             NONE_P, _ = utils.get_or_create_none_people()

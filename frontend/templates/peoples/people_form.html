@@ -13,7 +13,8 @@ People Form
 .toggleeye {
     margin-top: 15px;
     margin-left: -30px;
-}</style>
+}
+</style>
 {% endblock extra_css %}
 
 <!-------------------------- BEGIN PAGE BREADCUMB ----------------------->
@@ -138,6 +139,38 @@ People Form
         <input type="submit" class="btn btn-sm  btn-primary rounded-1" value="Sumbit" form="pop_desgn_form" />
     </div>
 </form>
+{% endcall %}
+
+<!-- Moda for setting GPS coordianates-->
+{% call general_popup(title="Set GPS Location", popup_id="open_map_perm", modal_size="modal-lg") %}
+<div class="modal-body card">
+    <div class="card-body p-0">
+        <div id="map" style="width:750px; height:350px"></div>
+    </div>
+</div>
+<div class="modal-footer d-flex justify-content-between">
+    <div><p>Tip: Zoom in for accurate coordinates of address, place the marker and then set the coords.</p></div>
+    <div></div>
+    <div><a href="#" class="btn" id="close_setgps_perm" data-dismiss="modal">Close</a>
+    <a href="#" class="btn btn-primary" id="set_the_coords_perm">Set the coordinates</a></div>
+    
+</div>
+{% endcall %}
+
+<!-- Moda for setting GPS coordianates-->
+{% call general_popup(title="Set GPS Location", popup_id="open_map_curr", modal_size="modal-lg") %}
+<div class="modal-body card">
+    <div class="card-body p-0">
+        <div id="map2" style="width:750px; height:350px"></div>
+    </div>
+</div>
+<div class="modal-footer d-flex justify-content-between">
+    <div><p>Tip: Zoom in for accurate coordinates of address, place the marker and then set the coords.</p></div>
+    <div></div>
+    <div><a href="#" class="btn" id="close_setgps_curr" data-dismiss="modal">Close</a>
+    <a href="#" class="btn btn-primary" id="set_the_coords_curr">Set the coordinates</a></div>
+    
+</div>
 {% endcall %}
 {% endblock popup_alerts %}
 <!-------------  END POP-UPS CODE -------------->
@@ -600,14 +633,21 @@ People
             <div class="mb-3 row g-3 gx-6">
                 <label for="id_currentaddress">Current Address</label>
                 <div class="col-md-4">
-                    {{ pref_form.currentaddress }}
+                    <div class="d-flex d-inline">
+                        {{ pref_form.currentaddress }}
+                        <button type='button' class="btn btn-sm btn-secondary rounded-right rounded-1" style="height:3.2rem;" id="id_setgps_curr">GPS</button>
+                    </div>
+                    
                     <!--HELP TEXT-->
                     <!--ERROR FIELD-->
                     {{ pref_form.currentaddress.errors }}
                 </div>
                 <label for="id_permanentaddress">Permanent Address</label>
                 <div class="col-md-4">
-                    {{ pref_form.permanentaddress }}
+                    <div class="d-flex d-inline">
+                        {{ pref_form.permanentaddress }}
+                        <button type='button' class="btn btn-sm btn-secondary rounded-right rounded-1" style="height:3.2rem;" id="id_setgps_perm">GPS</button>
+                    </div>
                     <!--HELP TEXT-->
                     <!--ERROR FIELD-->
                     {{ pref_form.permanentaddress.errors }}
@@ -646,7 +686,13 @@ People
 {% block extra_scripts %}
 {{ peopleform.media.js }}
 <script>
-
+	var map, userMarker, currinfowindow, currAddr;
+	function getLatLng(){
+		return {lat:0.0, lng:0.0}
+	}
+</script>
+<script src="{{ static('assets/js/local/maps.js') }}"></script>
+<script>
     //toggle eye icon to eye-slash icon on click
     function toggleIcon() {
         var x = $('.toggleeye');
@@ -662,6 +708,48 @@ People
     }
 
     $(document).ready(function () {
+        //onclick id_setgps_curr open popup open_map_curr 
+		$("#id_setgps_curr").click(function(){
+			$("#open_map_curr").modal('show');
+			initMap("map2");
+		});
+
+        $("#close_setgps_curr").click(function(){
+			$("#open_map_curr").modal('hide');
+		});
+        
+        //onclick id_setgps_perm open popup open-map_perm
+		$("#id_setgps_perm").click(function(){
+			$("#open_map_perm").modal('show');
+			initMap("map");
+		});
+
+        $("#close_setgps_perm").click(function(){
+			$("#open_map_perm").modal('hide');
+		});
+
+        //onclick set the coords get lat and lng from useMarker and set to gpslocation field
+		$("#set_the_coords_perm").click(function(){
+			var lat = userMarker.getPosition().lat();
+			var lng = userMarker.getPosition().lng();
+			const geocoder = new google.maps.Geocoder()
+			getAddressOfPoint(geocoder, {lat:lat, lng:lng}, (address) => {
+				$("#id_permanentaddress").val(address)
+			})
+			$("#open_map_perm").modal('hide');
+		});
+        
+        //onclick set the coords get lat and lng from useMarker and set to gpslocation field
+		$("#set_the_coords_curr").click(function(){
+			var lat = userMarker.getPosition().lat();
+			var lng = userMarker.getPosition().lng();
+			const geocoder = new google.maps.Geocoder()
+			getAddressOfPoint(geocoder, {lat:lat, lng:lng}, (address) => {
+				$("#id_currentaddress").val(address)
+			})
+			$("#open_map_curr").modal('hide');
+		});
+        
         //onclick 'toggleeye' call toggleIcon
         $('.toggleeye').click(function () {
             toggleIcon();

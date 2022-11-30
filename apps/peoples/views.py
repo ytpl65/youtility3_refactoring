@@ -908,7 +908,7 @@ class PeopleView(LoginRequiredMixin, View):
                 buid = people.bu.id if people.bu else None
                 people = putils.save_userinfo(
                     people, request.user, request.session, create = create, bu = buid)
-                #send_email(people, request)
+                send_email(people, request)
                 logger.info("people form saved")
             data = {'pk':people.id}
             return rp.JsonResponse(data, status = 200)

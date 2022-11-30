@@ -35,6 +35,7 @@ $(document).ready(function(){
 			ajax:{
 				url: '{{ url("onboarding:geofence") }}?action=list',
 			},
+			pageLength:50,
 			columns     : [
                 { data: "id" },
                 { data: "gfcode", title: 'Code' },

@@ -133,11 +133,12 @@ class PgblngManager(models.Manager):
         ic(qset)
         return qset or self.none()
     
-    def get_sitesfromgroup(self, job):
+    def get_sitesfromgroup(self, job, force=False):
         "return sites under group with given sitegroupid"
-        from apps.activity.models import Job
-        qset = Job.objects.get_sitecheckpoints_exttour(job)
-        if not qset:
+        if not force:
+            from apps.activity.models import Job
+            qset = Job.objects.get_sitecheckpoints_exttour(job)
+        if force or not qset:
             qset = self.annotate(
                 bu__gpslocation = AsGeoJSON('assignsites__gpslocation'),
                 bu__buname = F('assignsites__buname'), bucode=F('assignsites__bucode'),

@@ -344,10 +344,25 @@ tr.selected td a{
     color: white;
 }
 tr.disabled-record td {
-    background-color: rgb(245, 119, 119) !important;
-    background-image:linear-gradient(rgb(245, 119, 119), #ff7474);
+    background-color: rgb(255, 202, 158) !important;
+    color: black;
+    /*background-image:linear-gradient(rgb(252, 199, 199), #ff7d7d);*/
 }
 
 tr.disabled-record td a {
     color: white;
+}
+
+.pac-container {
+	background-color: #FFF;
+	z-index: 20;
+	position: fixed;
+	display: inline-block;
+	float: left;
+}
+.modal{
+	z-index: 20;   
+}
+.modal-backdrop{
+	z-index: 10;        
 }

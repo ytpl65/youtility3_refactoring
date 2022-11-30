@@ -33,6 +33,7 @@ $(document).ready(function(){
         ajax:{
             url: '{{ url("activity:peoplenearasset") }}?action=list',
         },
+        pageLength:50,
         columns     : [
             { "data": "id", visible:false },
             { "data": "assetcode" , title: "Code"},

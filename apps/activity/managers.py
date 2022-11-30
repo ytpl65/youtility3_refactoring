@@ -273,7 +273,7 @@ class JobneedManager(models.Manager):
     
     def get_externaltourlist_jobneed(self, request, related, fields):
         fields = ['id', 'plandatetime', 'expirydatetime', 'performedby__peoplename', 'jobstatus',
-                  'jobdesc', 'people__peoplename', 'pgroup__groupname', 'gracetime']
+                  'jobdesc', 'people__peoplename', 'pgroup__groupname', 'gracetime', 'ctzoffset']
         R = request.GET
         qset = self.select_related(
                             *related).filter(
@@ -286,7 +286,7 @@ class JobneedManager(models.Manager):
                                 job__enable=True
                         ).exclude(
                         id=1
-                        ).values(*fields).order_by('-plandatetime') 
+                        ).values(*fields).order_by('-cdtz') 
         return qset or self.none()
 
     def get_tourdetails(self, R):
@@ -699,6 +699,12 @@ class JobManager(models.Manager):
             'qsetname', 'solid'
         ).order_by('seqno')
         return qset or self.none()
+    
+    def get_people_assigned_to_geofence(self, geofenceid):
+        objs = self.filter(
+            identifier='GEOFENCE', enable=True, geofence_id = geofenceid
+        ).values('people_id', 'people__peoplename', 'fromdate', 'uptodate', 'starttime', 'endtime')
+        return objs or self.none()
 
 
 
