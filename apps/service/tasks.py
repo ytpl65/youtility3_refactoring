@@ -15,6 +15,7 @@ from pprint import pformat
 from intelliwiz_config.celery import app
 from celery.utils.log import get_task_logger
 from deepface import DeepFace
+import json
 log = get_task_logger(__name__)
 
 def insertrecord(record, tablename):
@@ -101,22 +102,27 @@ def insertrecord(record, tablename):
         raise e
 
 def insertrecord_json(records, tablename):
+    uuids = []
     try:
         if model := get_model_or_form(tablename):
             for record in records:
+                record = json.loads(record)
+                record = json.loads(record)
                 record = clean_record(record)
                 log.info(f'record after cleaning\n {pformat(record)}')
-                obj = model.objects.get(uuid = record['uuid'])
-                model.objects.filter(uuid = obj.uuid).update(**record)
-                log.info("record is already exist so updating it now..")
-                ic("updating")
-    except model.DoesNotExist:
-        ic("creating")
-        log.info("record is not exist so creating new one..")
-        model.objects.create(**record)
+                try:
+                    obj = model.objects.get(uuid = record['uuid'])
+                    model.objects.filter(uuid = obj.uuid).update(**record)
+                    log.info("record is already exist so updating it now..")
+                    uuids.append(str(record['uuid']))
+                except model.DoesNotExist:
+                    log.info("record is not exist so creating new one..")
+                    model.objects.create(**record)
+                    uuids.append(str(record['uuid']))
     except Exception as e:
         log.error("something went wrong", exc_info = True)
         raise e
+    return uuids
 
 def call_service_based_on_filename(data, filename, db='default'):
     log.info(f'filename before calling {filename}')

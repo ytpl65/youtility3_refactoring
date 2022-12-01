@@ -23,7 +23,9 @@ import apps.onboarding.forms as obf  # onboarding-modes
 from .models import Capability, Pgbelonging, Pgroup, People
 from .utils import save_userinfo, save_pgroupbelonging
 import apps.peoples.utils as putils
+from django.contrib import messages
 from .forms import CapabilityForm, PgroupForm, PeopleForm, PeopleExtrasForm, LoginForm
+from django_email_verification import send_email
 logger = logging.getLogger('django')
 
 # Create your views here.
@@ -896,7 +898,7 @@ class PeopleView(LoginRequiredMixin, View):
     def handle_valid_form(form, jsonform, request ,create):
         logger.info('people form is valid')
         from apps.core.utils import handle_intergrity_error
-        from django_email_verification import send_email
+        
         try:
             ic(request.POST, request.FILES)
             people = form.save()
@@ -908,7 +910,6 @@ class PeopleView(LoginRequiredMixin, View):
                 buid = people.bu.id if people.bu else None
                 people = putils.save_userinfo(
                     people, request.user, request.session, create = create, bu = buid)
-                send_email(people, request)
                 logger.info("people form saved")
             data = {'pk':people.id}
             return rp.JsonResponse(data, status = 200)
@@ -1149,3 +1150,16 @@ class NoSite(View):
             pm.People.objects.filter(id=request.user.id).update(bu_id=bu_id)
             ic(request.session['bu_id'])
             return redirect('/dashboard')
+
+
+def verifyemail(request):
+    logger.info('verify email requested for user id %s', request.GET.get('userid'))
+    user = People.objects.get(id = request.GET.get('userid'))
+    try:
+        send_email(user)
+        messages.success(request, 'Verification email has been sent to your email address','alert alert-success')
+        logger.info("message sent to %s", user.email)
+    except Exception as e:
+        messages.error(request, 'Unable to send verification email', 'alert alert-danger')
+        logger.error("email verification failed", exc_info=True)
+    return redirect('login')

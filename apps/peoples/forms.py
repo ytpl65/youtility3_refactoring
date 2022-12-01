@@ -2,7 +2,9 @@ from django import forms
 from django.conf import settings
 from django.core.validators import RegexValidator
 from django.db.models import Q
-from requests import request
+from django.utils.html import format_html
+from django.urls import reverse
+
 
 import apps.peoples.models as pm  # people-models
 import apps.onboarding.models as om  # onboarding-models
@@ -33,7 +35,9 @@ class LoginForm(forms.Form):
         username = self.cleaned_data.get('username')
         user  = self.get_user(username)
         self.check_active(user)
+        self.check_verified(user)
         self.check_user_hassite(user)
+        
     
     def clean_username(self):
         import re
@@ -49,6 +53,11 @@ class LoginForm(forms.Form):
     def check_active(self, user):
         if not user.enable:
             raise forms.ValidationError("Can't Login User Is Not Active, Please Contact Admin")
+    
+    def check_verified(self, user):
+        if not user.isverified:
+            message = format_html('User is not verified, Please verify your email address by clicking <a href="{}?userid={}">verify me</a>', reverse('peoples:verify_email'), user.id)
+            raise forms.ValidationError(message)
     
     def check_user_hassite(self, user):
         if not user.bu and user.people_extras['assignsitegroup']:

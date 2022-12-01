@@ -28,6 +28,7 @@ urlpatterns = [
     path('peoplegroup/',  views.PeopleGroup.as_view(),    name='peoplegroup'),
     path('sitegroup/',  views.SiteGroup.as_view(),    name='sitegroup'),
     path('people/',  views.PeopleView.as_view(),    name='people'),
+    path('verifyemail/', views.verifyemail, name='verify_email'),
     path('wizard/', include(wizard_url_patterns2)),
     path('no-site/', views.NoSite.as_view(), name='no_site'),
 ]

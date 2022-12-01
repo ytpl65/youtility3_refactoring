@@ -187,6 +187,7 @@ class ServiceOutputType(graphene.ObjectType):
     msg       = graphene.String()
     recordcount  = graphene.Int()
     traceback = graphene.String(default_value = 'NA')
+    uuids = graphene.List(graphene.String, default_value = ())
 
 
 

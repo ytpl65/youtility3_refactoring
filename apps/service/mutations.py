@@ -196,11 +196,11 @@ class InsertJsonMutation(graphene.Mutation):
     output = graphene.Field(ty.ServiceOutputType)
 
     class Arguments:
-        jsondata = graphene.JSONString(required = True)
+        jsondata = graphene.List(graphene.String,required = True)
         tablename = graphene.String(required = True)
 
     @classmethod
-    def mutate(cls, root, info, list_of_json, tablename):
+    def mutate(cls, root, info, jsondata, tablename):
         # sourcery skip: instance-method-first-arg-name
         from .tasks import insertrecord_json
         from apps.core.utils import get_current_db_name
@@ -210,12 +210,14 @@ class InsertJsonMutation(graphene.Mutation):
         msg = ""
         try:
             db = get_current_db_name()
-            insertrecord_json(list_of_json, tablename)
+            log.info(f'=================== jsondata:============= \n{jsondata}')
+            uuids = insertrecord_json(jsondata, tablename)
             recordcount, msg = 1, 'Inserted Successfully'
         except Exception as e:
             log.error('something went wrong', exc_info = True)
             msg, rc, traceback = 'Insert Failed!',1, tb.format_exc()
-        output = ty.ServiceOutputType(rc = rc, recordcount = recordcount, msg = msg, traceback = traceback)
+        output = ty.ServiceOutputType(rc = rc, recordcount = recordcount, msg = msg, traceback = traceback, uuids=uuids)
+        ic(output.uuids, output.rc, output.msg)
         return InsertJsonMutation(output = output)
 
 

@@ -1291,6 +1291,7 @@ $(document).ready(() => {
 
 //============================================== QSB EDITOR FUNCTIONS START===========================================//
 function getCurrentEditingRow(editor, table){
+  console.log(editor, "editor")
   var rowModifier = editor.modifier();
   return rowModifier ? table.row(rowModifier).data() : 'None'
 }
