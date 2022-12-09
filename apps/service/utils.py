@@ -78,10 +78,12 @@ def update_record(details, jobneed, Jn, Jnd):
             instance = Jn.objects.get(uuid = record['uuid'])
             jn_parent_serializer = sz.JobneedSerializer(data = record, instance = instance)
             if jn_parent_serializer.is_valid():
+                log.info("parent record is valid")
                 isJnUpdated = jn_parent_serializer.save()
             else: log.error(f"something went wrong!\n{jn_parent_serializer.errors} ", exc_info = True )
             isJndUpdated = update_jobneeddetails(details, Jnd)
             if isJnUpdated and  isJndUpdated:
+                log.info("record and details are updated successfully")
                 # utils.alert_email(input.jobneedid, alerttype)
                 # TODO send observation email
                 # TODO send deviation mail
@@ -150,7 +152,7 @@ def save_parent_childs(sz, jn_parent_serializer, child, M):
 
 def perform_tasktourupdate(file, request):
     log.info("perform_tasktourupdate [start]")
-    rc, recordcount, traceback= 0, 0, 'NA'
+    rc, recordcount, traceback= 1, 0, 'NA'
     instance, msg = None, ""
 
     try:
@@ -162,6 +164,7 @@ def perform_tasktourupdate(file, request):
             with transaction.atomic(using = utils.get_current_db_name()):
                 if updated :=  update_record(details, jobneed, Jobneed, JobneedDetails):
                     recordcount += 1
+                    rc=0
 
     except IntegrityError as e:
         log.error("Database Error", exc_info = True)
@@ -187,7 +190,7 @@ def perform_insertrecord(file, request = None, filebased = True):
         ServiceOutputType: rc, recordcount, msg, traceback
     """
     log.info('perform_insertrecord [start]')
-    rc, recordcount, traceback= 0, 0, 'NA'
+    rc, recordcount, traceback= 1, 0, 'NA'
     instance = None
     try:
         data = get_json_data(file) if filebased else [file]
@@ -212,6 +215,7 @@ def perform_insertrecord(file, request = None, filebased = True):
                 # log.info(f'record after cleaning {pformat(record)}')
                 # instance = model.objects.create(**record)
                 recordcount += 1
+                rc = 0
         if recordcount:
             msg = Messages.INSERT_SUCCESS
     except Exception as e:
@@ -245,7 +249,7 @@ def save_linestring_and_update_pelrecord(obj):
 
 
 def perform_reportmutation(file):
-    rc, recordcount, traceback= 0, 0, 'NA'
+    rc, recordcount, traceback= 1, 0, 'NA'
     instance = None
     try:
         if data := get_json_data(file):
@@ -273,7 +277,7 @@ def perform_reportmutation(file):
 
 
 def perform_adhocmutation(file):  # sourcery skip: remove-empty-nested-block, remove-redundant-if, remove-redundant-pass
-    rc, recordcount, traceback, msg= 0, 0, 'NA', ""
+    rc, recordcount, traceback, msg= 1, 0, 'NA', ""
     try:
         if not (data := get_json_data(file)):
             raise utils.NoDataInTheFileError
@@ -318,7 +322,7 @@ def perform_adhocmutation(file):  # sourcery skip: remove-empty-nested-block, re
 
 
 def update_adhoc_record(scheduletask, jobneedrecord, details):
-    rc, recordcount, traceback, msg= 0, 0, 'NA', ""
+    rc, recordcount, traceback, msg= 1, 0, 'NA', ""
     jnid = scheduletask[0]['jobneedid']
     recordcount += 1
     obj = Jobneed.objects.get(id = jnid)
@@ -327,6 +331,7 @@ def update_adhoc_record(scheduletask, jobneedrecord, details):
     jnsz = sz.JobneedSerializer(instance = obj,data = record)
     if jnsz.is_valid(): 
         isJnUpdated = jnsz.save()
+        rc=0
     else:
         rc, traceback, msg = 1, jnsz.errors, 'Operation Failed'
 
@@ -340,11 +345,12 @@ def update_adhoc_record(scheduletask, jobneedrecord, details):
                 if jndsz.is_valid():
                     jndsz.save()
     recordcount += 1
+    rc=0
     msg = "Scheduled Record (ADHOC) updated successfully!"
     return rc, traceback, msg, recordcount
 
 def insert_adhoc_record(jobneedrecord, details):
-    rc, recordcount, traceback, msg= 0, 0, 'NA', ""
+    rc, recordcount, traceback, msg= 1, 0, 'NA', ""
     record = clean_record(jobneedrecord)
     jnsz = sz.JobneedSerializer(data = record)
 
@@ -358,6 +364,7 @@ def insert_adhoc_record(jobneedrecord, details):
                 jndsz.save()
         msg = "Record (ADHOC) inserted successfully!"
         recordcount += 1
+        rc=0
     else:
         rc, traceback = 1, jnsz.errors
     return rc, traceback, msg, recordcount

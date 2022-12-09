@@ -206,7 +206,7 @@ def perform_insertrecord_bgt(self, data, request = None, filebased = True, db='d
     """
     log.info('perform_insertrecord [start]')
 
-    rc, recordcount, traceback= 0, 0, 'NA'
+    rc, recordcount, traceback= 1, 0, 'NA'
     instance = None
     try:
         with transaction.atomic(using = db):
@@ -321,7 +321,7 @@ def update_jobneeddetails(jobneeddetails, Jnd, db):
 @app.task(bind = True, default_retry_delay = 300, max_retries = 5)
 def perform_tasktourupdate_bgt(self, data, request = None, db='default'):
     log.info("perform_tasktourupdate [start]")
-    rc, recordcount, traceback= 0, 0, 'NA'
+    rc, recordcount, traceback= 1, 0, 'NA'
     instance, msg = None, ""
 
     try:
@@ -348,7 +348,7 @@ def perform_tasktourupdate_bgt(self, data, request = None, db='default'):
 
 @app.task(bind = True, default_retry_delay = 300, max_retries = 5)
 def perform_reportmutation_bgt(self, data, db='default'):
-    rc, recordcount, traceback= 0, 0, 'NA'
+    rc, recordcount, traceback= 1, 0, 'NA'
     instance = None
     try:
         log.info('perform_reportmutation_bgt [start +]')
@@ -457,7 +457,7 @@ def perform_facerecognition_bgt(self, pelogid, peopleid, pel_ownerid, home_dir, 
 
 @app.task(bind = True, default_retry_delay = 300, max_retries = 5)
 def perform_adhocmutation_bgt(self, data, db='default'):
-    rc, recordcount, traceback, msg= 0, 0, 'NA', ""
+    rc, recordcount, traceback, msg= 1, 0, 'NA', ""
     try:
         log.info("perform_adhocmutation_bgt [start]")
         for record in data:

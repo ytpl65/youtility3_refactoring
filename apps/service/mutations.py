@@ -130,7 +130,7 @@ class TaskTourUpdate(graphene.Mutation):
     def mutate(cls, root, info, file):
         log.warning("tasktour-update mutations start [+]")
         o = sutils.perform_tasktourupdate(file, info.context)
-        log.info(f"Response: {o.recordcount}, {o.msg}, {o.rc}, {o.traceback}")
+        log.info(f"Response: # records updated:{o.recordcount}, msg:{o.msg}, rc:{o.rc}, traceback:{o.traceback}")
         log.warning("tasktour-update mutations end [-]")
         return TaskTourUpdate(output = o)
 
@@ -146,8 +146,8 @@ class InsertRecord(graphene.Mutation):
     @classmethod    
     def mutate(cls, root, info, file):
         log.warning("insert-record mutations start [+]")
-        ic(file, type(file))
         o = sutils.perform_insertrecord(file, info.context)
+        log.info(f"Response: # records updated:{o.recordcount}, msg:{o.msg}, rc:{o.rc}, traceback:{o.traceback}")
         log.warning("insert-record mutations end [-]")
         return InsertRecord(output = o)
 
@@ -177,8 +177,9 @@ class UploadAttMutaion(graphene.Mutation):
 
     @classmethod
     def mutate(cls,root, info, file,  record, biodata):
-        output = sutils.perform_uploadattachment( file, record, biodata)
-        return UploadAttMutaion(output = output)
+        o = sutils.perform_uploadattachment( file, record, biodata)
+        log.info(f"Response: {o.recordcount}, {o.msg}, {o.rc}, {o.traceback}")
+        return UploadAttMutaion(output = o)
 
 
 class AdhocMutation(graphene.Mutation):
@@ -188,8 +189,9 @@ class AdhocMutation(graphene.Mutation):
 
     @classmethod
     def mutate(cls, root, info, file):
-        output = sutils.perform_adhocmutation(file)
-        return AdhocMutation(output = output)
+        o = sutils.perform_adhocmutation(file)
+        log.info(f"Response: {o.recordcount}, {o.msg}, {o.rc}, {o.traceback}")
+        return AdhocMutation(output = o)
 
 
 class InsertJsonMutation(graphene.Mutation):
@@ -216,9 +218,9 @@ class InsertJsonMutation(graphene.Mutation):
         except Exception as e:
             log.error('something went wrong', exc_info = True)
             msg, rc, traceback = 'Insert Failed!',1, tb.format_exc()
-        output = ty.ServiceOutputType(rc = rc, recordcount = recordcount, msg = msg, traceback = traceback, uuids=uuids)
-        ic(output.uuids, output.rc, output.msg)
-        return InsertJsonMutation(output = output)
+        o = ty.ServiceOutputType(rc = rc, recordcount = recordcount, msg = msg, traceback = traceback, uuids=uuids)
+        log.info(f"Response: {o.recordcount}, {o.msg}, {o.rc}, {o.traceback}")
+        return InsertJsonMutation(output = o)
 
 
 
