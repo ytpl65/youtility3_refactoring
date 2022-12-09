@@ -30,8 +30,8 @@ class SiteReportTemplate(MasterReportTemplate):
         super().__init__(*args, **kwargs)
         utils.initailize_form_fields(self)
         self.fields['site_type_includes'].choices = om.TypeAssist.objects.filter(tatype__tacode = "SITETYPE").values_list('id', 'taname')
-        bulist = om.Bt.objects.get_bu_list_ids(self.request.session['client_id'])
-        self.fields['buincludes'].choices = om.Bt.objects.filter(id__in = bulist, identifier__tacode='SITE').values_list('id', 'buname')
+        bulist = om.Bt.objects.get_all_sites_of_client(self.request.session['client_id']).values_list('id', flat=True)
+        self.fields['buincludes'].choices = pm.Pgbelonging.objects.get_assigned_sites_to_people(self.request.user.id, makechoice=True)
         self.fields['site_grp_includes'].choices = pm.Pgroup.objects.filter(
             identifier__tacode='SITEGROUP', bu_id__in = bulist).values_list('id', 'groupname')
         self.fields['type'].widget.attrs = {'style': 'display:none'}
@@ -45,8 +45,8 @@ class IncidentReportTemplate(MasterReportTemplate):
 
         self.fields['type'].initial = am.QuestionSet.Type.INCIDENTREPORTTEMPLATE
         self.fields['site_type_includes'].choices = om.TypeAssist.objects.filter(tatype__tacode = "SITETYPE").values_list('id', 'taname')
-        bulist = om.Bt.objects.get_bu_list_ids(self.request.session['client_id'])
-        self.fields['buincludes'].choices = om.Bt.objects.filter(id__in = bulist, identifier__tacode='SITE').values_list('id', 'buname')
+        bulist = om.Bt.objects.get_all_bu_of_client(self.request.session['client_id'])
+        self.fields['buincludes'].choices = pm.Pgbelonging.objects.get_assigned_sites_to_people(self.request.user.id, makechoice=True)
         self.fields['site_grp_includes'].choices = pm.Pgroup.objects.filter(
             identifier__tacode='SITEGROUP', bu_id__in = bulist).values_list('id', 'groupname')
         self.fields['type'].widget.attrs = {'style': 'display:none'}

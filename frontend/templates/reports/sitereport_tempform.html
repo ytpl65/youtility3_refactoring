@@ -201,7 +201,7 @@ Site Report Template
                 data:function(d){
                     var selected = parentTable.row( { selected: true } )
                     if ( selected.any() ) {
-                        editorAjaxData(d, childEditor, parentTable, selected.data().id, '{{ csrf_token }}')
+                        editorAjaxData(d, childEditor, childTable, selected.data().id, '{{ csrf_token }}')
                     }
                 }
             },
@@ -245,7 +245,7 @@ Site Report Template
         //CHILD EDITOR ON OPEN EVENT
         childEditor.on('open', function(e, mode, action){
             // on change options set alerton
-            editorOnOpenActions('{{ url("activity:qset_qsetblng") }}', childEditor, parentTable, action)
+            editorOnOpenActions('{{ url("activity:qset_qsetblng") }}', childEditor, childTable, action)
         })
 
         // CHILD EDITOR ON OPENED EVENT
@@ -323,6 +323,7 @@ Site Report Template
                     {title: "Count", width: "15%", defaultContent:null, data:'qcount'},
                 ],
                 buttons:[
+                    {text:'<i class="fas fa-sync-alt text-dark"></i>', titleAttr:'Refresh Data', className:'refreshBtnParent'},
                     { extend: "create", editor: parentEditor },
                     { extend: "edit",   editor: parentEditor },
                     { extend: "remove", editor: parentEditor }
@@ -409,6 +410,10 @@ Site Report Template
                     childTable.ajax.reload();
                 }
             })
+            $('.refreshBtnParent').click(() => {
+                parentTable.ajax.reload();
+            })
+            
     })
 </script>
 {# <script src="{{ static('assets/js/formValidations.js') }}"></script>#}

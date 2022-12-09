@@ -1399,7 +1399,7 @@ class GeoFence(LoginRequiredMixin, View):
     def get(self, request, *args, **kwargs):
         R = request.GET
         params = self.params
-        
+        ic(R)
         # first load the template
         if R.get('template'): return render(request, self.params['template_list'])
 
@@ -1408,9 +1408,13 @@ class GeoFence(LoginRequiredMixin, View):
             objs = self.params['model'].objects.get_geofence_list(params['fields'], params['related'], request.session)
             return  rp.JsonResponse(data = {'data':list(objs)})
         
+        if request.GET.get('perform') == 'editAssignedpeople':
+            resp = am.Job.objects.handle_geofencepostdata(request)
+            return rp.JsonResponse(resp, status=200)
+        
         if R.get('action') == 'loadPeoples':
             objs = self.params['model'].objects.getPeoplesGeofence(request)
-            return rp.JsonResponse(data = {'data':list(objs)})
+            return rp.JsonResponse(data = {'items':list(objs)})
         
         if R.get('action') == "getAssignedPeople" and R.get('id'):
             objs = am.Job.objects.get_people_assigned_to_geofence(R['id'])
@@ -1425,7 +1429,7 @@ class GeoFence(LoginRequiredMixin, View):
         if R.get('action') == 'drawgeofence':
             return get_geofence_from_point_radii(R)
 
-        if R.get('id', None):
+        if R.get('id') not in [None, 'None']:
             obj = utils.get_model_obj(int(R['id']), request, self.params)
             cxt = {'geofenceform':self.params['form_class'](request = request, instance = obj),
                     'edit':True,
@@ -1435,10 +1439,8 @@ class GeoFence(LoginRequiredMixin, View):
     def post(self, request, *args, **kwargs):
         resp = None
         try:
-            data = QueryDict(request.POST['formData'])
-            geofence = request.POST['geofence']
-            ic('geofence form data', data)
-            ic(geofence)
+            data = QueryDict(request.POST.get('formData'))
+            geofence = request.POST.get('geofence')
             if pk := request.POST.get('pk', None):
                 msg = "geofence_view"
                 form = utils.get_instance_for_update(

@@ -24,8 +24,8 @@
   }
   #map{
     position: fixed !important; 
-    height: 80% !important;
-    width: 92% !important;
+    height: 75% !important;
+    width: 45% !important;
   }
 
   .pac-card {
@@ -105,7 +105,7 @@ GeoFence
 
 {% block pagebody_container %}
 <!---Start Drawer --->
-<div id="geofence_form_drawer"
+{# <div id="geofence_form_drawer"
   data-kt-drawer="true"
   data-kt-drawer-activate="true" 
   data-kt-drawer-toggle="#togglemapform" 
@@ -198,15 +198,102 @@ GeoFence
     </form><br><hr><br>
   </div>
   
-</div>
+</div> #}
 
-<!---Start Google Maps -->
-  <div class="card">
-    <div class="card-body">
+<div class="row">
+  <div class="col-md-6 map-div">
+    <!---Start Google Maps -->
       <div id="map"></div>
+    <!---End Google Maps -->
+  </div>
+  <div class="col-md-6 form-div">
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">
+          <p class="fs-4 ch-4 text-gray-900 text-hover-primary me-1 lh-1">Geofence Form</p>
+        </div>
+      </div>
+      <div class="card-body pt-0">
+        <form  action="{{ url('onboarding:geofence') }}" method="post" id="geofence_form" class="card-body">
+          <input type="text" name="pk" id="id_pk" style="display:none;" value = "{{ geofenceform.instance.id }}">
+          <input type="hidden" name="{{ geofenceform.ctzoffset.name }}" id = "{{ geofenceform.ctzoffset.auto_id }}" value="-1">
+          <div class="input-group mb-3">
+              <div class="col-md-3">
+                  {{ geofenceform.gfcode.label_tag() }}
+              </div>
+              <div class="col-md-9">
+                  {{ geofenceform.gfcode }}
+              </div>
+          </div>
+          <div class="input-group mb-3">
+              <div class="col-md-3">
+                  {{ geofenceform.gfname.label_tag() }}
+              </div>
+              <div class="col-md-9">
+                  {{ geofenceform.gfname }}
+              </div>
+          </div>
+          <div class="input-group mb-3">
+              <div class="col-md-3">
+                  {{ geofenceform.bu.label_tag() }}
+              </div>
+              <div class="col-md-9">
+                  {{ geofenceform.bu }}
+              </div>
+          </div>
+          <div class="input-group mb-3">
+              <div class="col-md-3">
+                  {{ geofenceform.alerttopeople.label_tag() }}
+              </div>
+              <div class="col-md-9">
+                  {{ geofenceform.alerttopeople }}
+              </div>
+          </div>
+          <div class="input-group mb-3">
+              <div class="col-md-3">
+                  {{ geofenceform.alerttogroup.label_tag() }}
+              </div>
+              <div class="col-md-9">
+                  {{ geofenceform.alerttogroup }}
+              </div>
+          </div>
+          <div class="input-group mb-3">
+              <div class="col-md-3">
+                  {{ geofenceform.alerttext.label_tag() }}
+              </div>
+              <div class="col-md-9">
+                  {{ geofenceform.alerttext }}
+              </div>
+          </div>
+          <div class="input-group mb-3">
+              <div class="booleans d-flex justify-content-sm-between mt-5
+                  form-check form-switch form-check-custom form-check-solid">
+                  <label for="{{ geofenceform.enable.id_for_label }}"
+                      class="form-check-label bool col-form-label me-5 text-sm-right">
+                      {{ geofenceform.enable.label }}: &nbsp; {{ geofenceform.enable }}
+                  </label>
+              </div>
+          </div>
+          <br><br>
+          <div class="formcontrols mb-5">
+            {% if geofenceform.instance.gfcode %}
+              <button type="submit" id="submit" form="geofence_form" class="btn btn-sm btn-primary btn-hover-scale">Update&nbsp;<i class="fas fa-cloud-upload-alt"></i></button>
+              <button type="button" onclick="deleteTa(this)" data-id="{{ geofenceform.instance.id }}" id="deleteCap" class="btn btn-sm btn-hover-scale btn-danger">Delete&nbsp;<i class="fas fa-trash-alt"></i></button>
+            {% else %}
+              <button type="submit" form="geofence_form" class="btn btn-sm btn-primary btn-hover-scale">Submit&nbsp;<i class="fas fa-cloud-upload-alt"></i></button>
+            {% endif %}
+          </div>
+        </form>
+        <hr>
+        <div class="tableview d-none">
+          <table id="assignedpeople" class=""></table>
+        </div>
+      </div>
     </div>
   </div>
-<!---End Google Maps -->
+</div>
+
+
 
 <!-- End Drawer --->
 {% endblock pagebody_container %}
@@ -382,11 +469,7 @@ function initAutocomplete() {
   const controlDiv = document.createElement('DIV');
   controlDiv.id = "search_rad_controls";
 
-  //edit-form button
-  const editFormBtn = document.createElement('button')
-  editFormBtn.id = 'togglemapform'
-  editFormBtn.textContent = 'Edit Form'
-  editFormBtn.className = "btn btn-secondary  ms-2"
+
 
   // Create the search box and link it to the UI element.
   const controlInput = document.createElement('input');
@@ -405,7 +488,6 @@ function initAutocomplete() {
   radiusInput.style.width = "100px"
 
   // Append everything to the wrapper div
-  controlDiv.appendChild(editFormBtn);
   controlDiv.appendChild(controlInput);
   controlDiv.appendChild(radiusInput);
 
@@ -432,36 +514,6 @@ function initAutocomplete() {
 
   infoWindow = new google.maps.InfoWindow();
 
-  const locationButton = document.createElement("button");
-
-  locationButton.textContent = "Pan to Current Location";
-  locationButton.classList.add("custom-map-control-button");
-  map.controls[google.maps.ControlPosition.TOP_CENTER].push(locationButton);
-  
-    locationButton.addEventListener("click", () => {  
-    // Try HTML5 geolocation.
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          const pos = {
-            lat: position.coords.latitude,
-            lng: position.coords.longitude,
-          };
-
-          infoWindow.setPosition(pos);
-          infoWindow.setContent("Location found.");
-          infoWindow.open(map);
-          map.setCenter(pos);
-        },
-        () => {
-          handleLocationError(true, infoWindow, map.getCenter());
-        }
-      );
-    } else {
-      // Browser doesn't support Geolocation
-      handleLocationError(false, infoWindow, map.getCenter());
-    }
-  });
   // Bias the SearchBox results towards current map's viewport.
   map.addListener("bounds_changed", () => {
     searchBox.setBounds(map.getBounds());
@@ -576,7 +628,7 @@ $(document).ready(() => {
         let longitude = userMarker.getPosition().lng()
         var latlng = `${latitude},${longitude}`
 
-        data = {lat:latitude, lng:longitude, radii:radius, action: 'drawgeofence'}
+        data = {lat:latitude, lng:longitude, radii:radius, action: 'drawgxeofence'}
         const params = {data:data, beforeSend:function(){}, url: "{{ url('onboarding:geofence') }}?action=formdrawgeofence"}
         
         if(typeof latlng!= 'undefined' && lastPoint === latlng && lastRadius === radius){
@@ -655,70 +707,113 @@ $(document).ready(() => {
     editor = new $.fn.dataTable.Editor({
       table: "#assignedpeople",
       ajax:{
-        url:"{{ url('onboarding:geofence') }}",
+        url:"{{ url('onboarding:geofence') }}?perform=editAssignedpeople",
+        type:'GET',
         data:function(d){
           let currentrow = getCurrentEditingRow(editor, table)
-          d.csrfmiddlewaretoken = '{{ csrf_token }}'
-          d.pk = currentRow !== 'None' ? currentRow['id'] : currentRow
-          d.people__peoplename = $("#DTE_Field_people__peoplename").val()
-          d.fromdate = $("#DTE_Field_fromdate").val()
-          d.uptodate = $("#DTE_Field_uptodate").val()
-          d.starttime = $("#DTE_Field_starttime").val()
-          d.endtime = $("#DTE_Field_endtime").val()
+            d.csrfmiddlewaretoken = '{{ csrf_token }}'
+            d.pk                  = currentrow !== 'None' ? currentrow['pk'] : currentrow
+            d.people__peoplename  = getSelectedValue("#DTE_Field_people__peoplename")
+            d.people_id           = $("#DTE_Field_people__peoplename").val()
+            d.gfcode              = $("#id_gfcode").val()
+            d.gfname              = $("#id_gfname").val()
+            d.geofence_id         = $("#id_pk").val()
+            d.fromdate            = $("#DTE_Field_fromdate").val()
+            d.uptodate            = $("#DTE_Field_uptodate").val()
+            d.starttime           = $("#DTE_Field_starttime").val()
+            d.endtime             = $("#DTE_Field_endtime").val()
+            d.bu_id = '{{ geofenceform.instance.bu_id }}'
         }
       },
       idSrc:'pk',
       fields:[
         {data:'pk', type:'hidden', name:'pk', def:'None'},
         {data:'people__peoplename', name:'people__peoplename', label:'People Name', type:'select'},
-        {data:"fromdate", name:'fromdate', label:'From Date', type:'datetime'},
-        {data:'uptodate', name:'uptodate', label:'Up To Date', type:'datetime'},
-        {data:'starttime', name:'starttime', label:'Start Time', type:'datetime', format: 'HH:mm:ss', fieldInfo: '24 hour clock format with seconds'},
-        {data:'endtime', name:'endtime', label:'End Time', type:'datetime', format: 'HH:mm:ss', fieldInfo: '24 hour clock format with seconds'},
+        {data:'people__peoplecode', name:'people__peoplecode', type:'hidden'},
+        {data:"fromdate", name:'fromdate', label:'From Date', type:'readonly'},
+        {data:'uptodate', name:'uptodate', label:'Up To Date', type:'readonly'},
+        {data:'starttime', name:'starttime', label:'Start Time', type:'readonly'},
+        {data:'endtime', name:'endtime', label:'End Time', type:'readonly'},
       ],
       formOptions:{
-              main:{
-                  onReturn:false
-              }
+        main:{
+          onReturn:false
         }
+      }
     })
-
-    // Activate an inline edit on click of a table cell
-    $('#assignedpeople').on( 'click', 'tbody td:not(:first-child)', function (e) {
-        editor.inline( this );
-    } );
-
 
     table = $("#assignedpeople").DataTable({
       ajax:{url:`{{ url("onboarding:geofence") }}?action=getAssignedPeople&id={{ geofenceform.instance.id }}`},
       columns:[
         {data:'pk', visible:false },
-        {data:'people__peoplename', title:"Name"},
+        {data:'people__peoplename', title:"Name", render:function(data, type, row){
+          return `${data} (${row['people__peoplecode']})`
+          }
+        },
+        {data:'people__peoplecode', title:"Code", visible:false},
+        {data:'people_id', visible:false, defaultContent:null},
         {data:'fromdate', title:"Valid From"},
         {data:'uptodate', title:"Valid to"},
         {data:'starttime', title:"Start Time"},
         {data:'endtime', title:"End Time"},
       ],
       deferRender: true,
-      dom:'rtpB',
+      dom:'Brtp',
       buttons:[
-        {
-          extend: "createInline",
-          editor: editor,
-        } 
-      ]
-
+        { extend: "create", editor: editor },
+        { extend: "edit",   editor: editor },
+        { extend: "remove", editor: editor }
+      ],
+      select:true,
     })
 
     editor.on('open', function(e, mode, action){
+      $(".DTE_Field").addClass('p-1')
+      
+      modifyWidgets('#DTE_Field_starttime, #DTE_Field_endtime', time=true)
+      modifyWidgets("#DTE_Field_fromdate, #DTE_Field_uptodate", time=false, date=true)
+      
       if(action == 'create' || action == 'edit'){
+        $("#DTE_Field_people__peoplename").addClass("form-control form-select")
         init_select_field({
-            url: "{{ url('onboarding:geofence') }}?action=loadPeoples",
-            id: "#DTE_Field_people__peoplename",
-            item: 'Questoins'
+          url: "{{ url('onboarding:geofence') }}?action=loadPeoples",
+          id: "#DTE_Field_people__peoplename",
+          item:'People'
         })
       }
+      if(action == 'edit'){
+        data = getCurrentEditingRow(editor, table)
+        console.log("$$$$$$$$$$$", data)
+        var newOption = new Option(data.people__peoplename, data.people_id, true, true);
+        $('#DTE_Field_people__peoplename').append(newOption);
+      }
     })
+
+    editor.on('preSubmit', function(e, o, action){
+      var fromdate = Date.parse(this.field('fromdate').val())
+      var uptodate = Date.parse(this.field('uptodate').val())
+      var starttime = moment(this.field('starttime').val(), 'HH:mm')
+      var endtime = moment(this.field('endtime').val(), 'HH:mm')
+      
+      if(action !== 'remove'){
+        if(check_for_duplicate_record(table, this.field('people__peoplename').val(), 1)){
+          editor.error(`Record already exists for ${this.field('people__peoplename').val()}`)
+        }
+        if(fromdate > uptodate){
+          this.field('fromdate').error('From date should be less than up to date')
+        }
+        if(starttime > endtime){
+          this.field('starttime').error('Start time should be less than end time')
+        }
+        if ( this.inError() ) {
+          return false;
+        }
+      }
+    })
+
+    if("{{ geofenceform.instance.id }}" !== 'None'){
+      $(".tableview").removeClass('d-none')
+    }
 
 })
 

@@ -95,7 +95,6 @@ class CapabilityManager(models.Manager):
         return self.filter(cfor= self.pm.Capability.Cfor.WEB, parent__capscode='NONE')
 
     def get_mobparentdata(self):
-
         return self.filter(cfor = self.pm.Capability.Cfor.MOB, parent__capscode='NONE')
 
     def get_repparentdata(self):
@@ -170,10 +169,10 @@ class PgblngManager(models.Manager):
 
         if peopleqset and peopleqset[0].isadmin:
             #return all sites of client
-            bulist_ids = Bt.objects.get_bu_list_ids(clientid=peopleqset[0].client_id)
+            bulist_ids = Bt.objects.get_all_sites_of_client(clientid=peopleqset[0].client_id).values_list('id', flat=True)
             #return for mobile service
             if forservice: return Bt.objects.annotate(bu_id=F('id')).filter(id__in = bulist_ids).select_related('identifier', 'butype', 'cuser', 'muser').values(*bufields) or Bt.objects.none()
-            qset = Bt.objects.filter(id__in = bulist_ids).annotate(buid = F('id')).values('buid', 'bucode', 'buname')
+            qset = Bt.objects.filter(id__in = bulist_ids, identifier__tacode='SITE').annotate(buid = F('id')).values('buid', 'bucode', 'buname')
             #return as a dropdown choices
             if makechoice:
                 qset = qset.annotate(text = Concat(F('buname'), V(' ('), F('bucode'), V(')'))).values_list('buid', 'text')
@@ -195,7 +194,7 @@ class PgblngManager(models.Manager):
             #return for mobile service
             if forservice: return Bt.objects.annotate(bu_id=F('id')).filter(id__in = buids).select_related('identifier', 'butype', 'cuser', 'muser').values(*bufields) or Bt.objects.none()
         return qset or self.none()
-        
+    
     
 
 

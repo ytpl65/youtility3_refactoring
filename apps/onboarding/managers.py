@@ -26,7 +26,7 @@ class BtManager(models.Manager):
                     return tuple(qset)
             return ""
 
-    def get_bu_list_ids(self, clientid, type='array'):
+    def get_all_bu_of_client(self, clientid, type='array'):
         """
         Returns all BU's on given client_id
         """
@@ -34,6 +34,14 @@ class BtManager(models.Manager):
         qset = self.raw(
             f"select fn_get_bulist({clientid}, false, true, '{type}'::text, null::{rtype}) as id;")
         return qset[0].id if qset else self.none()
+    
+    def get_all_sites_of_client(self, clientid):
+        """
+        Returns all sites of a given clientid
+        """
+        all_buids = self.get_all_bu_of_client(clientid)
+        return self.filter(id__in = all_buids, identifier__tacode = 'SITE') or self.none()
+    
 
     def find_site(self, clientid, sitecode):
         """
@@ -41,7 +49,7 @@ class BtManager(models.Manager):
         """
         qset = self.filter(
             Q(identifier__tacode = 'SITE') & Q(bucode = sitecode) 
-            & ~Q(parent__id = -1) & Q(id__in = self.get_bu_list_ids(clientid))
+            & ~Q(parent__id = -1) & Q(id__in = self.get_all_bu_of_client(clientid))
         )
         return qset[0] if qset else  self.none()
 
@@ -71,7 +79,7 @@ class BtManager(models.Manager):
             return self.none()
         else:
             if p.isadmin:
-                bulist = self.get_bu_list_ids(clientid)
+                bulist = self.get_all_bu_of_client(clientid)
                 bus = self.filter(id__in = bulist)
                 qset = bus.annotate(bu_id = F('id')).filter(identifier__tacode = 'SITE').values(
                     'bu_id', 'bucode', 'butype_id', 'enable', 'cdtz', 'mdtz', 'skipsiteaudit',
@@ -125,7 +133,7 @@ class BtManager(models.Manager):
         
         elif R['action'] == 'edit':
             PostData.pop('cuser')
-            PostData.pop('mdtz')
+            PostData.pop('cdtz')
             updated = self.filter(pk=R['pk']).update(**PostData)
             ic(updated)
             if updated: ID = R['pk']
@@ -294,13 +302,15 @@ class GeofenceManager(models.Manager):
         return self.none()
 
     def getPeoplesGeofence(self, request):
+        
         searchterm = request.GET.get('search')
         qset = pm.People.objects.filter(
             client_id = request.session['client_id'],
-            enable=True, verified=True,
+            enable=True, isverified=True,
         )
+        
         qset = qset.filter(peoplename__icontains = searchterm) if searchterm else qset
         qset = qset.annotate(
             text = Concat('peoplename', V(' ('), 'peoplecode', V(')'))
         ).values('text', 'id').distinct()
-        return qset or self.none()
+        return qset or self.none()  

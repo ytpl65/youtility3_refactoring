@@ -10,6 +10,7 @@ from django.db import transaction
 from .auth import Messages as AM
 from .types import ServiceOutputType
 import traceback as tb
+from django.conf import settings
 from .validators import clean_record
 from pprint import pformat
 from intelliwiz_config.celery import app
@@ -156,7 +157,7 @@ def perform_uploadattachment(file, tablename, record, biodata):
         pelogid    = biodata['pelog_id']
         peopleid   = biodata['people_id']
         path       = biodata['path']
-        home_dir   = '/var/www/redmine.youtility.in'+'/'
+        home_dir   = f'{settings.MEDIA_ROOT}/'
         filepath   = home_dir + path
         uploadfile = f'{filepath}/{filename}'
         db         = utils.get_current_db_name()

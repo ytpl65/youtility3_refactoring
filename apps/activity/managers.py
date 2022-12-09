@@ -701,11 +701,50 @@ class JobManager(models.Manager):
         return qset or self.none()
     
     def get_people_assigned_to_geofence(self, geofenceid):
+        if geofenceid in [None, "None"]:return self.none()
         objs = self.filter(
             identifier='GEOFENCE', enable=True, geofence_id = geofenceid
-        ).values('people_id', 'people__peoplename', 'fromdate', 'uptodate', 'starttime', 'endtime')
+        ).values('people_id', 'people__peoplename','people__peoplecode', 'fromdate', 'uptodate', 'starttime', 'endtime', 'pk')
         return objs or self.none()
+    
 
+    def handle_geofencepostdata(self, request):
+        """handle post data submitted from geofence add people form"""
+        R, S = request.GET, request.session
+        fromdate = datetime.strptime(R['fromdate'], '%d-%b-%Y').date()
+        uptodate = datetime.strptime(R['uptodate'], '%d-%b-%Y').date()
+        starttime = datetime.strptime(R['starttime'], '%H:%M').time()
+        endtime = datetime.strptime(R['endtime'], '%H:%M').time()
+        cdtz = datetime.now(tz = timezone.utc)
+        mdtz = datetime.now(tz = timezone.utc)
+
+        PostData = {
+            'jobname':f"{R['gfcode']}-{R['people__peoplename']}", 'identifier':'GEOFENCE',
+            'jobdesc':f"{R['gfcode']}-{R['gfname']}-{R['people__peoplename']}",
+            'fromdate':fromdate, 'uptodate':uptodate, 'starttime':starttime,
+            'endtime':endtime, 'cdtz':cdtz, 'mdtz':mdtz, 'enable':True, 'bu_id':R['bu_id'],
+            'client_id':S['client_id'], 'people_id':R['people_id'], 'geofence_id':R['geofence_id'],
+            'seqno':-1, 'parent_id':1, 'pgroup_id':1, 'sgroup_id':1, 'asset_id':1, 'qset_id':1,
+            'planduration':0, 'gracetime':0, 'expirytime':0, 'cuser':request.user, 'muser':request.user
+        }
+        if R['action'] == 'create':
+            if self.filter(
+                jobname = PostData['jobname'], asset_id = PostData['asset_id'],
+                qset_id = PostData['qset_id'], parent_id = PostData['parent_id'],
+                identifier='GEOFENCE').exists():
+                return {'data':list(self.none()), 'error':'Warning: Record already added!'}
+            ID = self.create(**PostData).id
+        elif R['action'] == 'edit':
+            PostData.pop('cdtz')
+            PostData.pop('cuser')
+            if updated := self.filter(pk=R['pk']).update(**PostData):
+                ID = R['pk']
+        else:
+            self.filter(pk = R['pk']).delete()
+            return {'data':list(self.none()),}
+        qset = self.filter(pk = ID).values('people__peoplename', 'people_id', 'fromdate', 'uptodate',
+                                            'starttime', 'endtime', 'people__peoplecode', 'pk')
+        return {'data':list(qset)}
 
 
 class DELManager(models.Manager):

@@ -336,13 +336,11 @@ class ConfigIncidentReportTemplate(LoginRequiredMixin, View):
 
     def get(self, request, *args, **kwargs):
         R, P = request.GET, self.params
-        ic(R)
         if R.get('template'):return render(request, P['template_list'])
 
         if R.get('action') == 'list':
             objs =  P['model'].objects.get_configured_sitereporttemplates(
-                    P['related'], P['fields'], P['initial']['type']
-                )
+                    P['related'], P['fields'], P['initial']['type'])
             return rp.JsonResponse({'data':list(objs)}, status = 200)
         
         if R.get('action') == 'form':

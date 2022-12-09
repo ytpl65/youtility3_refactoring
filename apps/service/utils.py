@@ -41,6 +41,7 @@ from apps.core import utils
 from .validators import clean_record
 from apps.activity.models import (Jobneed, JobneedDetails, Asset)
 import traceback as tb
+from django.conf import settings
 
 def insertrecord(record, tablename):
     try:
@@ -72,7 +73,6 @@ def discardAccept(curr, prev):
 def update_record(details, jobneed, Jn, Jnd):
     alerttype = 'OBSERVATION'
     record = clean_record(jobneed)
-    # ic((record)
     try:
         with transaction.atomic(using = utils.get_current_db_name()):
             instance = Jn.objects.get(uuid = record['uuid'])
@@ -369,14 +369,13 @@ def perform_uploadattachment(file,  record, biodata):
     # ic(file, tablename, record, type(record), biodata, type(biodata))
     try:
         log.info("perform_uploadattachment [start+]")
-        import os
 
         file_buffer = file
         filename    = biodata['filename']
         peloguuid   = biodata['pelog_id']
         peopleid    = biodata['people_id']
         path        = biodata['path']
-        home_dir    = '/var/www/redmine.youtility.in'+'/'
+        home_dir    = f'{settings.MEDIA_ROOT}/'
         filepath    = home_dir + path
         uploadfile  = f'{filepath}/{filename}'
         db          = utils.get_current_db_name()

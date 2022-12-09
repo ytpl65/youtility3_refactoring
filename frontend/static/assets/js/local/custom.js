@@ -942,6 +942,20 @@ function check_for_duplicates(table, dataToInsert) {
   }
   return false;
 }
+
+
+function check_for_duplicate_record(table, key, colIndex){
+  var tableData = table.rows().data().toArray();
+
+  for (var row in tableData) {
+    if (tableData[row][colIndex] === key) {
+      return true;
+    }
+  }
+  return false;
+}
+
+
 //process the valid form
 function processValidForm() {
   data = get_question_formdata();
@@ -963,7 +977,7 @@ function processValidForm() {
   ];
   table.row(".toupdate").remove().draw(false);
 
-  isduplicate = check_for_duplicates(table, rowdata);
+  isduplicate = check_for_duplicates(table, rowdata, 1);
 
   if (!isduplicate) {
     table.row.add(rowdata).draw();
@@ -1574,4 +1588,27 @@ function initializeQSBForm(table, editor){
             editor.field('avpttype').val(data.avpttype)
         }
 }
+
+function modifyWidgets(element, time=false, date=false, datetime=false){
+  if(time){
+    $(element).flatpickr({
+      enableTime: true,
+      noCalendar: true,
+      dateFormat: "H:i",
+      time_24hr: true
+    })
+  }else if(date){
+    $(element).flatpickr({
+      dateFormat: 'd-M-Y'
+    })
+  }
+  else{
+    $(element).flatpickr({
+      enableTime: false,
+      noCalendar: false,
+      dateFormat: "Y-m-d",
+    })
+  }
+}
+
 //============================================== QSB EDITOR FUNCTIONS END===========================================//
