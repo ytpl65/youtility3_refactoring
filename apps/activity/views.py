@@ -9,6 +9,7 @@ from django.contrib.gis.db.models.functions import  AsWKT
 from django.views.generic.base import View
 import json
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.auth.decorators import login_required
 import psycopg2.errors as pg_errs
 import apps.activity.models as am
 from pprint import pformat
@@ -18,6 +19,8 @@ import apps.peoples.utils as putils
 import apps.core.utils as utils
 import apps.activity.utils as av_utils
 import apps.onboarding.forms as obf
+import apps.onboarding.models as obm
+import apps.peoples.models as pm
 import logging
 import mimetypes
 logger = logging.getLogger('__main__')
@@ -905,4 +908,56 @@ class PreviewImage(LoginRequiredMixin, View):
             log.info(resp)
             return rp.JsonResponse(resp, status=200)
     
-    
+class GetAllSites(LoginRequiredMixin, View):
+   
+    def get(self, request):
+        print("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%55")
+        try:
+            qset = obm.Bt.objects.get_all_sites_of_client(request.session['client_id'])
+            sites = qset.values('id', 'bucode','buname')
+            return rp.JsonResponse(list(sites), status=200)
+        except Exception as e:
+            logger.error("get_allsites() exception: %s", e)
+        return rp.JsonResponse({'error':"Invalid Request"}, status=404)       
+
+class GetAssignedSites(LoginRequiredMixin, View):
+    def get(self, request):
+        print("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%55")
+        try:
+            if data := pm.Pgbelonging.objects.get_assigned_sites_to_people(request.user.id).values_list('buid', flat=True):
+                sites    = obm.Bt.objects.filter(id__in = data).values('id', 'bucode','buname')
+                return rp.JsonResponse(list(sites), status=200)
+        except Exception as e:
+            logger.error("get_assignedsites() exception: %s", e)
+        return rp.JsonResponse({'error':"Invalid Request"}, status=404)
+
+class SwitchSite(LoginRequiredMixin, View):
+    def post(self, request):
+        req_buid= request.POST["buid"]
+        resp = {}
+        if req_buid !=" ":
+            print(" iff  req_buid", req_buid )
+            client_id = request.session['client_id']
+            sites = obm.Bt.objects.filter(id__in=req_buid, parent=client_id).values('id', 'bucode','buname', 'enable')[:1]
+            if len(sites) > 0:
+                if sites[0]['enable'] == True:
+                    request.session['bu_id']  = sites[0]['id']
+                    request.session['sitecode'] = sites[0]['bucode']
+                    request.session['sitename'] = sites[0]['buname']
+                    resp["rc"] = 0
+                    resp['message'] = "successfully switched to site."
+                    log.info('successfully switched to site')
+                else:
+                    resp["rc"] = 1
+                    resp['errMsg'] = "Inactive Site"
+                    log.info('Inactive Site')
+            else:
+                    resp["rc"] = 1
+                    resp['errMsg'] = "unable to find site."
+                    log.info('unable to find site.')
+        else:  
+            resp["rc"] = 1
+            resp['errMsg'] = "unable to find site."
+            log.info('unable to find site.')
+        return rp.JsonResponse(resp, status=200)
+

@@ -51,14 +51,12 @@ def insertrecord(record, tablename):
             obj = model.objects.get(uuid = record['uuid'])
             model.objects.filter(uuid = obj.uuid).update(**record)
             log.info("record is already exist so updating it now..")
-            ic("updating")
             return model.objects.get(uuid = record['uuid'])
     except model.DoesNotExist:
-        ic("creating")
         log.info("record is not exist so creating new one..")
         return model.objects.create(**record)
     except Exception as e:
-        log.error("something went wrong", exc_info = True)
+        log.error("something went wrong while inserting/updating record", exc_info = True)
         raise e
 
 
@@ -74,20 +72,22 @@ def update_record(details, jobneed, Jn, Jnd):
     alerttype = 'OBSERVATION'
     record = clean_record(jobneed)
     try:
-        with transaction.atomic(using = utils.get_current_db_name()):
-            instance = Jn.objects.get(uuid = record['uuid'])
-            jn_parent_serializer = sz.JobneedSerializer(data = record, instance = instance)
-            if jn_parent_serializer.is_valid():
-                log.info("parent record is valid")
-                isJnUpdated = jn_parent_serializer.save()
-            else: log.error(f"something went wrong!\n{jn_parent_serializer.errors} ", exc_info = True )
-            isJndUpdated = update_jobneeddetails(details, Jnd)
-            if isJnUpdated and  isJndUpdated:
-                log.info("record and details are updated successfully")
-                # utils.alert_email(input.jobneedid, alerttype)
-                # TODO send observation email
-                # TODO send deviation mail
-                return True
+        instance = Jn.objects.get(uuid = record['uuid'])
+        jn_parent_serializer = sz.JobneedSerializer(data = record, instance = instance)
+        if jn_parent_serializer.is_valid():
+            isJnUpdated = jn_parent_serializer.save()
+            log.info("parent jobneed is valid and saved successfully")
+            if isJndUpdated := update_jobneeddetails(details, Jnd):
+                log.info('parent jobneed and its details are updated successully')
+        else: 
+            log.error(f"parent jobneed record has some errors\n{jn_parent_serializer.errors} ", exc_info = True )
+        
+        if isJnUpdated and  isJndUpdated:
+            log.info("record and details are updated successfully")
+            # utils.alert_email(input.jobneedid, alerttype)
+            # TODO send observation email
+            # TODO send deviation mail
+            return True
     except Exception:
         log.error("update_record failed", exc_info = True)
         raise
@@ -96,16 +96,28 @@ def update_record(details, jobneed, Jn, Jnd):
 
 
 def update_jobneeddetails(jobneeddetails, Jnd):
-    if jobneeddetails:
-        updated = 0
-        for detail in jobneeddetails:
-            record = clean_record(detail)
-            instance = Jnd.objects.get(uuid = record['uuid'])
-            jnd_ser = sz.JndSerializers(data = record, instance = instance)
-            if jnd_ser.is_valid(): jnd_ser.save()
-            updated += 1
-        if len(jobneeddetails) == updated: return True 
-
+    try:
+        
+        if jobneeddetails:
+            updated = 0
+            log.info(f'total {len(jobneeddetails)} JND records found')
+            for detail in jobneeddetails:
+                record = clean_record(detail)
+                instance = Jnd.objects.get(uuid = record['uuid'])
+                jnd_ser = sz.JndSerializers(data = record, instance = instance)
+                if jnd_ser.is_valid(): 
+                    jnd_ser.save()
+                    updated += 1
+                else:
+                    log.error(f'JND record with this uuid: {record["uuid"]} has some errors!\n {jnd_ser.errors}', exc_info=True)
+            if len(jobneeddetails) == updated: 
+                log.info(f'All {updated} JND records are updated successfully')
+                return True 
+            else:
+                log.warning(f'failed to update all {len(jobneeddetails)} JND records')
+    except Exception as e:
+        log.error('jobneed details record failed to save', exc_info= True)
+        raise
 
 
 def save_parent_childs(sz, jn_parent_serializer, child, M):
@@ -115,31 +127,33 @@ def save_parent_childs(sz, jn_parent_serializer, child, M):
         instance = None
         if jn_parent_serializer.is_valid():
             parent = jn_parent_serializer.save()
+            log.info('parent record for report mutation saved')
             allsaved = 0
+            log.info(f'Total {len(child)} child records found for report mutation')
             for ch in child:
-                # ic((ch, type(child))
                 details = ch.pop('details')
-                # ic((details, type(details))
+                log.info(f'Total {len(details)} detail records found for the chid with this uuid:{ch["uuid"]}')
                 ch.update({'parent_id':parent.id})
                 child_serializer = sz.JobneedSerializer(data = clean_record(ch))
 
                 if child_serializer.is_valid():
                     child_instance = child_serializer.save()
+                    log.info(f"child record with this uuid: {child_instance.uuid} saved for report mutation")
                     for dtl in details:
-                        # ic((dtl, type(dtl))
                         dtl.update({'jobneed_id':child_instance.id})
                         ch_detail_serializer = sz.JndSerializers(data = clean_record(dtl))
                         if ch_detail_serializer.is_valid():
                             ch_detail_serializer.save()
                         else:
-                            log.error(ch_detail_serializer.errors)
+                            log.error(f"detail record of this child uuid:{child_instance.uuid} has some errors: {ch_detail_serializer.errors}")
                             traceback, msg, rc = str(ch_detail_serializer.errors), M.INSERT_FAILED, 1
                     allsaved += 1
                 else:
-                    log.error(child_serializer.errors)
+                    log.error(f'child record has some errors:{child_serializer.errors}')
                     traceback, msg, rc = str(child_serializer.errors), M.INSERT_FAILED, 1
             if allsaved == len(child):
                 msg= M.INSERT_SUCCESS
+                log.info(f'All {allsaved} child records saved successfully')
         else:
             log.error(jn_parent_serializer.errors)
             traceback, msg, rc = str(jn_parent_serializer.errors), M.INSERT_FAILED, 1
@@ -157,19 +171,25 @@ def perform_tasktourupdate(file, request):
 
     try:
         data = get_json_data(file)
-        ic(data)
+        if len(data) == 0: raise utils.NoRecordsFound
+        log.info(f'total {len(data)} records found for task tour update')
         for record in data:
             details = record.pop('details')
             jobneed = record
             with transaction.atomic(using = utils.get_current_db_name()):
-                if updated :=  update_record(details, jobneed, Jobneed, JobneedDetails):
+                if isupdated :=  update_record(details, jobneed, Jobneed, JobneedDetails):
                     recordcount += 1
-                    rc=0
-
+                    log.info(f'{recordcount} task/tour updated successfully')
+        if len(data) == recordcount:
+            msg = Messages.UPDATE_SUCCESS
+            log.info(f'All {recordcount} task/tour records are updated successfully')
+            rc=0
+    except utils.NoRecordsFound as e:
+        log.warning('No records found for task/tour update', exc_info=True)
+        rc, traceback, msg = 1, tb.format_exc(), Messages.UPLOAD_FAILED
     except IntegrityError as e:
         log.error("Database Error", exc_info = True)
         rc, traceback, msg = 1, tb.format_exc(), Messages.UPLOAD_FAILED
-
     except Exception as e:
         log.error('Something went wrong', exc_info = True)
         rc, traceback, msg = 1, tb.format_exc(), Messages.UPLOAD_FAILED
@@ -194,7 +214,8 @@ def perform_insertrecord(file, request = None, filebased = True):
     instance = None
     try:
         data = get_json_data(file) if filebased else [file]
-        # ic(data)
+        if len(data) == 0: raise utils.NoRecordsFound
+        log.info(f'total {len(data)} records for table: {tablename} found for insert record service.')
         with transaction.atomic(using = utils.get_current_db_name()):
 
             for record in data:
@@ -209,15 +230,15 @@ def perform_insertrecord(file, request = None, filebased = True):
                         obj.endlocation,obj.punchouttime, obj.punchintime]):
                     log.info("save line string is started")
                     save_linestring_and_update_pelrecord(obj)
-
-                # model = get_model_or_form(tablename)
-
-                # log.info(f'record after cleaning {pformat(record)}')
-                # instance = model.objects.create(**record)
                 recordcount += 1
-                rc = 0
-        if recordcount:
+                log.info(f'{recordcount} record inserted successfully')
+        if len(data) == recordcount:
             msg = Messages.INSERT_SUCCESS
+            log.info(f'All {recordcount} records are inserted successfully')
+            rc=0
+    except utils.NoRecordsFound as e:
+        log.warning('No records found for insertrecord service', exc_info=True)
+        rc, traceback, msg = 1, tb.format_exc(), Messages.INSERT_FAILED
     except Exception as e:
         log.error("something went wrong!", exc_info = True)
         msg, rc, traceback = Messages.INSERT_FAILED, 1, tb.format_exc()
@@ -252,24 +273,33 @@ def perform_reportmutation(file):
     rc, recordcount, traceback= 1, 0, 'NA'
     instance = None
     try:
-        if data := get_json_data(file):
-            for record in data:
-                child = record.pop('child', None)
-                parent = record
-                try:
-                    with transaction.atomic(using = utils.get_current_db_name()):
-                        if child and len(child) > 0 and parent:
-                            jobneed_parent_post_data = parent
-                            jn_parent_serializer = sz.JobneedSerializer(data = clean_record(jobneed_parent_post_data))
-                            rc,  traceback, msg = save_parent_childs(sz, jn_parent_serializer, child, Messages)
-                            if rc == 0: recordcount += 1
-                            # ic((recordcount)
-                        else:
-                            log.error(Messages.NODETAILS)
-                            msg, rc = Messages.NODETAILS, 1
-                except Exception as e:
-                    log.error('something went wrong', exc_info = True)
-                    raise
+        data = get_json_data(file)
+        if len(data) == 0: raise utils.NoRecordsFound
+        for record in data:
+            child = record.pop('child', None)
+            parent = record
+            try:
+                with transaction.atomic(using = utils.get_current_db_name()):
+                    if child and len(child) > 0 and parent:
+                        jobneed_parent_post_data = parent
+                        jn_parent_serializer = sz.JobneedSerializer(data = clean_record(jobneed_parent_post_data))
+                        rc,  traceback, msg = save_parent_childs(sz, jn_parent_serializer, child, Messages)
+                        if rc == 0: recordcount += 1
+                        # ic((recordcount)
+                    else:
+                        log.error(Messages.NODETAILS)
+                        msg, rc = Messages.NODETAILS, 1
+            except Exception as e:
+                log.error('something went wrong while saving \
+                          parent and child for report mutations', exc_info = True)
+                raise
+        if len(data) == recordcount:
+            msg = Messages.UPDATE_SUCCESS
+            log.info(f'All {recordcount} report records are updated successfully')
+            rc=0
+    except utils.NoRecordsFound as e:
+        log.warning('No records found for report mutation', exc_info=True)
+        rc, traceback, msg = 1, tb.format_exc(), Messages.UPLOAD_FAILED
     except Exception as e:
         msg, traceback, rc = Messages.INSERT_FAILED, tb.format_exc(), 1
         log.error('something went wrong', exc_info = True)

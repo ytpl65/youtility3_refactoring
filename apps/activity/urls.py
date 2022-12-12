@@ -20,4 +20,7 @@ urlpatterns = [
     path('workpermit/', views.WorkPermit.as_view(), name='workpermit'),
     path('attachments/', views.Attachments.as_view(), name='attachments'),
     path('previewImage/', views.PreviewImage.as_view(), name='previewImage'),
+    path('get_assignedsites/', views.GetAssignedSites.as_view(), name='get_assignedsites'),
+    path('get_allsites/', views.GetAllSites.as_view(), name='get_allsites'),
+    path('switchsite/', views.SwitchSite.as_view(), name='switchsite'),
 ]

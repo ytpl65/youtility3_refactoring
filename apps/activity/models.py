@@ -151,6 +151,7 @@ class QuestionSetBelonging(BaseModel, TenantAwareModel):
         FRONTCAMPIC        = "FRONTCAMPIC"       , _('Front Camera Pic')
         AUDIO    = "AUDIO"   , _('Audio')
         VIDEO     = "VIDEO"    , _("Video")
+        NONE = ("NONE", "NONE")
 
     # id               = models.BigIntegerField(_("QSB Id"), primary_key = True)
     ismandatory       = models.BooleanField(_("Is Manadatory"))
@@ -488,6 +489,7 @@ class JobneedDetails(BaseModel, TenantAwareModel):
         FRONTCAMPIC        = "FRONTCAMPIC"       , _('Front Camera Pic')
         AUDIO    = "AUDIO"   , _('Audio')
         VIDEO     = "VIDEO"    , _("Video")
+        NONE = ("NONE", "NONE")
 
 # id              = models.BigIntegerField(_("Jobneed details"), primary_key = True)
     uuid            = models.UUIDField(unique = True, editable = True, blank = True, default = uuid.uuid4)

@@ -147,7 +147,7 @@ def perform_uploadattachment(file, tablename, record, biodata):
     rc, traceback, resp = 0,  'NA', 0
     recordcount = msg = None
     # ic(file, tablename, record, type(record), biodata, type(biodata))
-    log.info('perform_uploadattachment [start +####################################]')
+    log.info('perform_uploadattachment [start +]')
     try:
         import os
 
@@ -209,6 +209,8 @@ def perform_insertrecord_bgt(self, data, request = None, filebased = True, db='d
     rc, recordcount, traceback= 1, 0, 'NA'
     instance = None
     try:
+        if len(data) == 0: raise utils.NoRecordsFound
+        log.info(f'total {len(data)} records for table: {tablename} found for insert record service.')
         with transaction.atomic(using = db):
             utils.set_db_for_router(db)
             log.info(f"router is connected to {db}")
@@ -216,14 +218,21 @@ def perform_insertrecord_bgt(self, data, request = None, filebased = True, db='d
                 tablename = record.pop('tablename')
                 log.info(f'tablename: {tablename}')
                 obj = insertrecord(record, tablename)
-                recordcount += 1
+                
                 if all([tablename == 'peopleeventlog',
                         obj.peventtype.tacode in ('CONVEYANCE', 'AUDIT'),
                         obj.endlocation,obj.punchouttime, obj.punchintime]):
                     log.info("save line string is started")
                     save_linestring_and_update_pelrecord(obj)
-        if recordcount:
+                recordcount += 1
+                log.info(f'{recordcount} record inserted successfully')
+        if len(data) == recordcount:
             msg = Messages.INSERT_SUCCESS
+            log.info(f'All {recordcount} records are inserted successfully')
+            rc=0
+    except utils.NoRecordsFound as e:
+        log.warning('No records found for insertrecord service', exc_info=True)
+        rc, traceback, msg = 1, tb.format_exc(), Messages.INSERT_FAILED
     except Exception as e:
         log.error("something went wrong!", exc_info = True)
         msg, rc, traceback = Messages.INSERT_FAILED, 1, tb.format_exc()
@@ -287,10 +296,13 @@ def update_record(details, jobneed, Jn, Jnd, db):
         jn_parent_serializer = sz.JobneedSerializer(data = record, instance = instance)
         if jn_parent_serializer.is_valid():
             isJnUpdated = jn_parent_serializer.save()
-            log.info(f"jobneed record is updated and its pk is {isJndUpdated.id}")
-        else: log.error(f"something went wrong!\n{jn_parent_serializer.errors} ", exc_info = True )
-        isJndUpdated = update_jobneeddetails(details, Jnd, db)
+            log.info(f"parent jobneed with this pk:{isJnUpdated.pk} is valid and saved successfully")
+            if isJndUpdated := update_jobneeddetails(details, Jnd, db):
+                log.info('parent jobneed and its details are updated successully')
+        else:
+            log.error(f"parent jobneed record has some errors\n{jn_parent_serializer.errors} ", exc_info = True )
         if isJnUpdated and  isJndUpdated:
+            log.info("record and details are updated successfully")
             # utils.alert_email(input.jobneedid, alerttype)# # 
             #TODO send observation email
             #TODO send deviation mail
@@ -310,11 +322,15 @@ def update_jobneeddetails(jobneeddetails, Jnd, db):
                 if jnd_ser.is_valid():
                     jnd = jnd_ser.save()
                     updated += 1
+                else:
+                    log.error(f'JND record with this uuid: {record["uuid"]} has some errors!\n {jnd_ser.errors}', exc_info=True)
             if len(jobneeddetails) == updated:
-                log.info("all jobneeddetails record are also updated successfully")
-                return True 
+                log.info(f"All {updated} JND record are  updated successfully")
+                return True
+            else:
+                log.warning(f'failed to update all {len(jobneeddetails)} JND records')
     except Exception as e:
-        log.error('somthing went wrong...', exc_info = True)
+        log.error('jobneed details record failed to save', exc_info = True)
         raise
 
 
@@ -326,6 +342,8 @@ def perform_tasktourupdate_bgt(self, data, request = None, db='default'):
 
     try:
         # ic((data)
+        if len(data) == 0: raise utils.NoRecordsFound
+        log.info(f'total {len(data)} records found for task tour update')
         for record in data:
             details = record.pop('details')
             jobneed = record
@@ -334,7 +352,14 @@ def perform_tasktourupdate_bgt(self, data, request = None, db='default'):
                 log.info(f'router is connected to db{db}')
                 if updated :=  update_record(details, jobneed, Jobneed, JobneedDetails, db):
                     recordcount += 1
-
+                    log.info(f'{recordcount} task/tour updated successfully')
+        if len(data) == recordcount:
+            msg = Messages.UPDATE_SUCCESS
+            log.info(f'All {recordcount} task/tour records are updated successfully')
+            rc=0
+    except utils.NoRecordsFound as e:
+        log.warning('No records found for task/tour update', exc_info=True)
+        rc, traceback, msg = 1, tb.format_exc(), Messages.UPLOAD_FAILED
     except IntegrityError as e:
         log.error("Database Error", exc_info = True)
         rc, traceback, msg = 1, tb.format_exc(), Messages.UPLOAD_FAILED
@@ -352,26 +377,34 @@ def perform_reportmutation_bgt(self, data, db='default'):
     instance = None
     try:
         log.info('perform_reportmutation_bgt [start +]')
-        if data:
-            for record in data:
-                child = record.pop('child', None)
-                parent = record
-                try:
-                    with transaction.atomic(using = db):
-                        utils.set_db_for_router(db)
-                        log.info(f'the router is connected to db {db}')
-                        if child and len(child) > 0 and parent:
-                            jobneed_parent_post_data = parent
-                            log.info(f'the parent record {pformat(jobneed_parent_post_data)}')
-                            jn_parent_serializer = sz.JobneedSerializer(data = clean_record(jobneed_parent_post_data))
-                            rc,  traceback, msg = save_parent_childs(sz, jn_parent_serializer, child, Messages, db)
-                            if rc == 0: recordcount += 1
-                        else:
-                            log.error(Messages.NODETAILS)
-                            msg, rc = Messages.NODETAILS, 1
-                except Exception as e:
-                    log.error('something went wrong', exc_info = True)
-                    raise
+        if len(data) == 0: raise utils.NoRecordsFound
+        for record in data:
+            child = record.pop('child', None)
+            parent = record
+            try:
+                with transaction.atomic(using = db):
+                    utils.set_db_for_router(db)
+                    log.info(f'the router is connected to db {db}')
+                    if child and len(child) > 0 and parent:
+                        jobneed_parent_post_data = parent
+                        log.info(f'the parent record {pformat(jobneed_parent_post_data)}')
+                        jn_parent_serializer = sz.JobneedSerializer(data = clean_record(jobneed_parent_post_data))
+                        rc,  traceback, msg = save_parent_childs(sz, jn_parent_serializer, child, Messages, db)
+                        if rc == 0: recordcount += 1
+                    else:
+                        log.error(Messages.NODETAILS)
+                        msg, rc = Messages.NODETAILS, 1
+            except Exception as e:
+                log.error('something went wrong while saving \
+                          parent and child for report mutations', exc_info = True)
+                raise
+        if len(data) == recordcount:
+            msg = Messages.UPDATE_SUCCESS
+            log.info(f'All {recordcount} report records are updated successfully')
+            rc=0
+    except utils.NoRecordsFound as e:
+        log.warning('No records found for report mutation', exc_info=True)
+        rc, traceback, msg = 1, tb.format_exc(), Messages.UPLOAD_FAILED
     except Exception as e:
         msg, traceback, rc = Messages.INSERT_FAILED, tb.format_exc(), 1
         log.error('something went wrong', exc_info = True)
@@ -386,11 +419,14 @@ def save_parent_childs(sz, jn_parent_serializer, child, M, db):
         instance = None
         if jn_parent_serializer.is_valid():
             parent = jn_parent_serializer.save()
+            log.info('parent record for report mutation saved')
             allsaved = 0
+            log.info(f'Total {len(child)} child records found for report mutation')
             for ch in child:
                 # ic((ch, type(child))
                 details = ch.pop('details')
                 # ic((details, type(details))
+                log.info(f'Total {len(details)} detail records found for the chid with this uuid:{ch["uuid"]}')
                 ch.update({'parent_id':parent.id})
                 child_serializer = sz.JobneedSerializer(data = clean_record(ch))
 
@@ -404,12 +440,12 @@ def save_parent_childs(sz, jn_parent_serializer, child, M, db):
                         if ch_detail_serializer.is_valid():
                             ch_dtl = ch_detail_serializer.save()
                         else:
-                            log.error(ch_detail_serializer.errors)
+                            log.error(f"detail record of this child uuid:{child_instance.uuid} has some errors: {ch_detail_serializer.errors}")
                             traceback, msg, rc = str(ch_detail_serializer.errors), M.INSERT_FAILED, 1
                     allsaved += 1
 
                 else:
-                    log.error(child_serializer.errors)
+                    log.error(f'child record has some errors:{child_serializer.errors}')
                     traceback, msg, rc = str(child_serializer.errors), M.INSERT_FAILED, 1
             if allsaved == len(child):
                 log.info(f'all childs:{len(child)} and its details records are saved successfully...')
