@@ -240,7 +240,7 @@ class SyncMutation(graphene.Mutation):
         from apps.service import tasks
         try:
             db = get_current_db_name()
-            log.info('the type of file', type(file))
+            log.info(f'the type of file is {type(file)}')
             with zipfile.ZipFile(file) as zip:
                 zipsize = TR = 0
                 for file in zip.filelist:
