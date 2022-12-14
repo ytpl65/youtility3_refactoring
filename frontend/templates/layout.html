@@ -88,7 +88,7 @@
 {% macro general_popup() %}
 <div class="modal fade" id="{{ kwargs['popup_id'] }}" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1"
 		aria-labelledby="staticBackdropLabel" aria-hidden="true">
-		<div class="modal-dialog modal-dialog-centered {{ kwargs.get('modal_size', '') }}">
+		<div class="modal-dialog {{ kwargs.get('modal_type', 'modal-dialog-centered') }} {{ kwargs.get('modal_size', '') }}">
 			<div class="modal-content">
 				<div class="modal-header">
 					<h5 class="modal-heading" id="staticBackdropLabel" style="color:#3a3b40de">{{ kwargs['title'] }}</h5>
@@ -392,15 +392,15 @@
 <!-- bundle -->
 
 <!-- end demo js-->
+
+
 {% endblock body %}
 {# ==== ==  BODY END======= #}
-
-{% block extra_scripts %}
-
+{% block switchSiteScript %}
 <script>
   //get_sites to poulate the site dropdown
   function getSites(url){
-    fire_ajax_get({})
+    fire_ajax_get({'url':url})
     .done((data, status, xhr) => {
       var client_site= "{{ request.session.clientcode }}.{{ request.session.sitecode }}"
       $("#id_defaultsite").val(client_site);
@@ -408,8 +408,8 @@
       $("#id_assignesite").append($("<option></option>").val(" ").html("----------"));
       if(data!=undefined){
         console.log("data.rows :", data);
-        JSON.parse(data).forEach(function(row, idx) {
-            if(row.id != session_buid){
+        data.forEach(function(row, idx) {
+            if(row.id != session.bu_id){
                 $("#id_assignesite").append($("<option></option>").val(row.id).html(row.buname + " - [" + row.bucode +"]"));
             }
         });
@@ -448,8 +448,7 @@
       const params = {url:"{{ url('activity:switchsite') }}"}
       const payLoad = {buid:$("#id_assignesite").val(), csrfmiddlewaretoken:'{{ csrf_token }}'}
       fire_ajax_form_post(params, payLoad)
-      .done((data, status, xhr) => {
-        response = JSON.parse(response)
+      .done((response, status, xhr) => {
         if(response.rc==1){
           console.log("if response", response.rc);
           $('.site_err_msg').html("Error: "+response.errMsg);
@@ -475,7 +474,9 @@
         $('.site_err_msg').html("Error: "+data["msg"]);
       });
     });
-  } );
+  });
 
 </script>
+{% endblock switchSiteScript %}
+{% block extra_scripts %}
 {% endblock extra_scripts %}

@@ -23,4 +23,9 @@ urlpatterns = [
     path('get_assignedsites/', views.GetAssignedSites.as_view(), name='get_assignedsites'),
     path('get_allsites/', views.GetAllSites.as_view(), name='get_allsites'),
     path('switchsite/', views.SwitchSite.as_view(), name='switchsite'),
+    path('ticket_list', views.ShowTicket.as_view(), name='ticket_list'),
+    path('ticket_form/', views.CreateTicket.as_view(), name='ticket_form'),
+    path('ticket_form/<str:pk>', views.UpdateTicket.as_view(),name='update_ticket'),
+    path('get_ticketcount', views.get_allticket,name='get_ticketcount'),
+    path('get_last24hrticket', views.get_last24hrticket,name='get_last24hrticket'),
 ]

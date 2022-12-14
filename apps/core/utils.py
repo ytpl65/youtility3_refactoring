@@ -702,7 +702,6 @@ def get_or_create_none_qsetblng():
     obj, _ = am.QuestionSetBelonging.objects.get_or_create(
         id=1,
     defaults={
-            'answer': 'NONE',
             'qset': get_or_create_none_qset(),
             'question': get_or_create_none_question(),
             'answertype': 'NONE', 'id': 1,

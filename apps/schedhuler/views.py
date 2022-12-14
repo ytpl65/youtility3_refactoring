@@ -495,7 +495,6 @@ class Schd_E_TourFormJob(LoginRequiredMixin, View):
             job.parent_id  = 1
             job.asset_id = 1
             job.save()
-            print("%%%%%%%%%5",  form.data, form.data.get('bu'))
             job = putils.save_userinfo(job, request.user, request.session)
             log.info('external tour  and its checkpoints saved success...')
         except Exception as ex:
@@ -1678,12 +1677,11 @@ class ExternalTourScheduling(LoginRequiredMixin, View):
     @staticmethod
     def saveCheckpointsinJob(R, checkpoints, P, request):
         try:
-            #ic(checkpoints)
+            ic(checkpoints)
             job = am.Job.objects.filter(id = int(R['job_id'])).values()[0]
             P['model'].objects.filter(parent_id = job['id']).delete()
             count=0
             for cp in checkpoints:
-                ic(cp)
                 #ic(sutils.job_fields(job, cp, external=True))
                 obj = am.Job.objects.create(
                     **sutils.job_fields(job, cp, external=True))

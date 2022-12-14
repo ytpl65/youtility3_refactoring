@@ -6,6 +6,7 @@ from django.shortcuts import redirect, render
 from django.urls import resolve
 from django.conf import settings
 from django.contrib.gis.db.models.functions import  AsWKT
+from django.core.exceptions import  EmptyResultSet
 from django.views.generic.base import View
 import json
 from django.contrib.auth.mixins import LoginRequiredMixin
@@ -23,6 +24,8 @@ import apps.onboarding.models as obm
 import apps.peoples.models as pm
 import logging
 import mimetypes
+from datetime import datetime, timedelta
+import pytz
 logger = logging.getLogger('__main__')
 log = logger
 
@@ -925,8 +928,10 @@ class GetAssignedSites(LoginRequiredMixin, View):
         print("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%55")
         try:
             if data := pm.Pgbelonging.objects.get_assigned_sites_to_people(request.user.id).values_list('buid', flat=True):
+                ic(data)
                 sites    = obm.Bt.objects.filter(id__in = data).values('id', 'bucode','buname')
-                return rp.JsonResponse(list(sites), status=200)
+                ic(sites)
+                return rp.JsonResponse(list(sites), status=200, safe=False)
         except Exception as e:
             logger.error("get_assignedsites() exception: %s", e)
         return rp.JsonResponse({'error':"Invalid Request"}, status=404)
@@ -937,8 +942,7 @@ class SwitchSite(LoginRequiredMixin, View):
         resp = {}
         if req_buid !=" ":
             print(" iff  req_buid", req_buid )
-            client_id = request.session['client_id']
-            sites = obm.Bt.objects.filter(id__in=req_buid, parent=client_id).values('id', 'bucode','buname', 'enable')[:1]
+            sites = obm.Bt.objects.filter(id=req_buid).values('id', 'bucode','buname', 'enable')[:1]
             if len(sites) > 0:
                 if sites[0]['enable'] == True:
                     request.session['bu_id']  = sites[0]['id']
@@ -961,3 +965,218 @@ class SwitchSite(LoginRequiredMixin, View):
             log.info('unable to find site.')
         return rp.JsonResponse(resp, status=200)
 
+
+
+class ShowTicket(LoginRequiredMixin, View):
+    template_path = 'activity/ticket_list.html'
+    fields = ['id', 'ticketdesc','status','level','cdtz','ticketno',
+              'performedby__peoplename', 'assignedtopeople', 'assignedtogroup','ticketlog','events']
+    model = am.Ticket
+
+    def get(self, request, *args, **kwargs):
+        '''returns the paginated results from db'''
+        response = None
+        try:
+            print("requestttt",request.GET.get('columns', None))
+            if request.GET.get('action', None) is None:
+                logger.info('Show Ticket view')
+                response = render(request, self.template_path, context={})
+            if request.GET.get('action', None) =='list':
+                kwargs={}
+                kwargs['ticketsource']=request.GET['generatedby']
+                length, start, objects = av_utils.list_viewdata(request, self.model, self.fields, kwargs)
+                draw = request.GET.get('draw')
+                count = objects.count()
+                filtered = count
+                logger.info(f'count {count}')
+                return rp.JsonResponse(data={'draw': draw, 'recordsTotal': count, 'data': list(list(objects[start : start + length])), 'recordsFiltered': filtered}, status=200, safe=False)
+            if request.GET.get('action',None) == 'childlist':
+                hostname = utils.tenant_db_from_request(request)
+                records, length, start = av_utils.childlist_viewdata(request, hostname)
+                draw = request.GET.get('draw')
+                count = len(records)
+                filtered = count
+                return rp.JsonResponse(data={'draw': draw, 'recordsTotal': filtered, 'data': list(list(records[start : start + length])), 'recordsFiltered': filtered}, status=200, safe=False)
+        except EmptyResultSet:
+            logger.warning('empty objects retrieved', exc_info=True)
+            response = render(request, self.template_path, context={})
+            messages.error(request, 'List view not found',
+                           'alert alert-danger')
+        except Exception:
+            logger.critical('something went wrong...', exc_info=True)
+            messages.error(request, 'Something went wrong',
+                           "alert alert-danger")
+            response = redirect('/dashboard')
+        return response
+    
+class CreateTicket(LoginRequiredMixin, View):
+    template_path = 'activity/ticket_form.html'
+    form_class = af.TicketForm
+   
+    def get(self, request, *args, **kwargs):
+        logger.info('Create Ticket view')
+        cxt = {'ticket_form': self.form_class(request=request)}
+        return render(request, self.template_path, context=cxt)
+
+    def post(self, request, *args, **kwargs):
+        logger.info(f'Create Ticket form submiited {request.POST}')
+        form, response = self.form_class(request.POST, request=request), None
+        form = af.TicketForm(request.POST, request=request)
+        logger.info(f"@@@@@@@@@@@@@@@@@@@@@@@ logged {form}")
+        status_dict = {'statusjbdata': []} 
+        try:
+            if form.is_valid():
+                logger.info('TicketForm Form is valid')
+                tkt = form.save(commit=False)
+                tkt.ticketno = av_utils.increment_ticket_number()
+                tkt.ticketsource= am.Ticket.TicketSource.USERDEFINED
+                tkt = putils.save_userinfo(tkt, request.user, request.session)
+                print("request session", request.session)
+                asset =form.cleaned_data['asset']
+                location =form.cleaned_data['location']
+                tkt = av_utils.savejsonbdata(request, tkt, asset, location )
+                tkt.save()
+                av_utils.sendTicketMail(tkt.id, 'add')
+                logger.info('TicketForm Form saved')
+                messages.success(request, "Success record saved successfully!",
+                                 "alert alert-success")
+                response = redirect(
+                    'activity:update_ticket', pk=tkt.id)
+            else:
+                logger.info('Form is not valid')
+                cxt = {'ticket_form': form, 'edit': True}
+                response = render(request, self.template_path, context=cxt)
+        except Exception as e:
+            logger.critical("something went wrong...", exc_info=True)
+            logger.error("create ticket() exception: %s", (e))  
+            messages.error(request, "[ERROR] Something went wrong",
+                           "alert alert-danger")
+            cxt = {'ticket_form': form, 'edit': True}
+            response = render(request, self.template_path, context=cxt)
+        return response
+    
+class UpdateTicket(LoginRequiredMixin, View):
+    template_path = 'activity/ticket_form.html'
+    form_class = af.TicketForm
+    model = am.Ticket
+
+    def get(self, request, *args, **kwargs):
+        logger.info('Update Ticket view')
+        response = None
+        try:
+            pk = kwargs.get('pk')
+            id_id = self.model.objects.get(id=pk)
+            print("id_id",id_id)
+            logger.info(f'object retrieved {id_id}')
+            form = self.form_class(instance=id_id, request= request)
+            listObj = av_utils.datastatus(request, id_id)
+            cxt = {'ticket_form': form, 'edit': True, 'tdata':listObj}
+            response = render(request, self.template_path, context=cxt)
+        except self.model.DoesNotExist:
+            messages.error(request, 'Unable to edit object not found',
+                           'alert alert-danger')
+            response = redirect('activity:ticket_form')
+        except Exception:
+            logger.critical('something went wrong', exc_info=True)
+            messages.error(request, 'Something went wrong',
+                           'alert alert-danger')
+            response = redirect('activity:ticket_form')
+        return response
+
+    def post(self, request, *args, **kwargs):
+        logger.info('Ticket Form submitted')
+        response = None
+        try:
+            pk = kwargs.get('pk')
+            id_id = self.model.objects.get(id=pk)
+            form = self.form_class(request.POST, instance=id_id, request= request)
+            if form.is_valid():
+                logger.info('Ticket Form is valid')
+                id_id = form.save(commit=False)
+                id_id = putils.save_userinfo(
+                    id_id, request.user, request.session)
+                asset =form.cleaned_data['asset']
+                location =form.cleaned_data['location']
+                id_id =     (request, id_id, asset, location)
+                id_id.save()
+                av_utils.sendTicketMail(id_id.id, 'edit')
+                messages.success(request, "Success record saved successfully!",
+                                 "alert-success")
+                response = redirect('activity:update_ticket', pk=pk)
+            else:
+                logger.info('Form is not valid')
+                cxt = {'ticket_form': form, 'edit': True}
+                response = render(request, self.template_path, context=cxt)
+        except self.model.DoesNotExist:
+            logger.error('Object does not exist', exc_info=True)
+            messages.error(request, "Object does not exist",
+                           "alert alert-danger")
+            cxt = {'ticket_form': form, 'edit': True}
+            response = render(request, self.template_path, context=cxt)
+        except Exception:
+            logger.critical("something went wrong...", exc_info=True)
+            messages.error(request, "[ERROR] Something went wrong",
+                           "alert alert-danger")
+            cxt = {'ticket_form': form, 'edit': True}
+            response = render(request, self.template_path, context=cxt)
+        return response
+    
+def get_allticket(request):
+    att       = 0
+    try:
+        startdate = datetime.now() - timedelta(hours = 24)
+        start_utc = startdate.astimezone(pytz.UTC).replace(microsecond=0)
+        enddate = datetime.now().astimezone(pytz.UTC).replace(microsecond=0)
+        print("start_utc", start_utc, enddate, request.session['is_superadmin']);
+        if request.method == "GET":
+            if request.session['is_superadmin']:
+                att = am.Ticket.objects.filter(ticketsource='SYSTEMGENERATED',cdtz__range=[start_utc, enddate]).count()
+            else:
+                bu_list = av_utils.get_assignedsitedata(request)
+                if len(bu_list) > 0 :
+                    print("bu_list", bu_list)
+                    att = am.Ticket.objects.filter(Q(ticketsource='SYSTEMGENERATED'), Q(bu__in = bu_list),cdtz__range=[start_utc, enddate]).count()
+                    print("att", att, am.Ticket.objects.filter(Q(ticketsource='SYSTEMGENERATED'), Q(bu__in = bu_list),cdtz__range=[start_utc, enddate]).query)
+    except Exception as e:
+        logger.error("get_allticket() exception: %s", (e))  
+ 
+    return HttpResponse(att)
+
+def get_last24hrticket(request):
+    draw, count, start, filtered, length = 1, 0, 0, 0, 0
+    att = []
+    try:
+        draw = request.GET['draw']
+        startdate = datetime.now() - timedelta(hours = 24)
+        start_utc = startdate.astimezone(pytz.UTC).replace(microsecond=0)
+        enddate = datetime.now().astimezone(pytz.UTC).replace(microsecond=0)
+        jsondata={'data':[]}
+        col0, col1, col2, col3,col4, col5, colval0, colval1, colval2, colval3, colval4, colval5,length, start = av_utils.getdatatable_filter(request)
+        kwargs = av_utils.column_filter(col0, col1, col2, col3, col4, col5, colval0, colval1, colval2, colval3, colval4, colval5, start_utc)
+        print("start_utc, enddate", start_utc, enddate)
+        if request.session['is_superadmin']:
+            att = am.Ticket.objects.filter(ticketsource="SYSTEMGENERATED", cdtz__range=[start_utc, enddate]).values('id', 'ticketdesc', 'ticketno', 'cdtz', 'status', 'level', 'performedby__peoplename', 'bu__buname')
+        else:
+            bu_list = av_utils.get_assignedsitedata(request)
+            kwargs['bu__in'] = bu_list
+            print("kwargs", kwargs['bu__in'])
+            if len(bu_list) > 0 :
+                att = am.Ticket.objects.filter(ticketsource='SYSTEMGENERATED',cdtz__range=[start_utc, enddate] ,bu__in = bu_list).order_by('-cdtz').values('id', 'ticketdesc', 'ticketno', 'cdtz', 'status', 'level', 'performedby__peoplename', 'bu__buname')
+        count= att.count()
+        print("count", count)
+        if colval0 !="" or colval1!="" or colval2 !="" or colval3!="" or colval4!="" or colval5!="":
+            att = am.Ticket.objects.filter(ticketsource='SYSTEMGENERATED',  **kwargs).order_by('-cdtz').values('id', 'ticketdesc', 'ticketno', 'cdtz', 'status', 'level', 'performedby__peoplename', 'bu__buname')
+            filtered = att.count()
+            print("att", att.query)
+        else:
+            filtered = count
+        jsondata = {'data': list(att[start: start+length])}
+        print("jsondata",jsondata, jsondata)  
+        print("att", att.query)  
+    except Exception as e: 
+        pass
+    return rp.JsonResponse(data = {
+    'draw':draw, 'recordsTotal':count,
+    'data' : list(list(att[start: start+length])), 
+    'recordsFiltered': filtered}, status=200, safe=False)
+    

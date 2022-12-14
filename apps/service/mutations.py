@@ -7,6 +7,9 @@ from apps.service import utils as sutils
 from apps.core import utils as cutils
 from apps.peoples.models import People
 from django.utils import timezone
+from rest_framework.views import APIView
+from rest_framework.parsers import MultiPartParser, FileUploadParser, JSONParser
+from rest_framework.response import Response
 from . import tasks
 from . import types as ty
 from graphene_file_upload.scalars import Upload
@@ -180,6 +183,24 @@ class UploadAttMutaion(graphene.Mutation):
         o = sutils.perform_uploadattachment( file, record, biodata)
         log.info(f"Response: {o.recordcount}, {o.msg}, {o.rc}, {o.traceback}")
         return UploadAttMutaion(output = o)
+
+
+class UploadFile(APIView):
+    parser_classes = [MultiPartParser, FileUploadParser, JSONParser]
+    
+    def post(self, request, format=None):
+        file    = request.data['file']
+        biodata = request.data['biodata']
+        record  = request.data['record']
+        ic(file, biodata, record)
+        ic(type(file), type(biodata), type(record))
+        output = sutils.perform_uploadattachment(file, record, biodata)
+        return Response(data={'rc':output.rc, 'msg':output.msg, 
+            'recordcount':output.recordcount, 'traceback':output.traceback})
+        
+        
+        
+
 
 
 class AdhocMutation(graphene.Mutation):

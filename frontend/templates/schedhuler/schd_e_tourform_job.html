@@ -404,12 +404,11 @@ function getAsgdsitesTabColumnConfig(){
             }
         },
         {data:'qsetid', visible:false,targets:11, searchable:false},
-        {data:'qsetname', targets:10, title:'Checklist', visible:false},
+        {data:'qsetname', targets:10, title:'Checklist', visible:true},
         {data:'jobid', visible:false, defaultContent:null, searchable:false},
         {data:'expirytime', visible:false, defaultContent:null, searchable:false},
         {data:'assetid', visible:false, defaultContent:null, searchable:false},
         {data:'breaktime', visible:false, defaultContent:null, searchable:false},
-
     ]
 }
 
@@ -528,6 +527,12 @@ function forceGetFromGroup(){
         return false
     })
 }
+function checklistSelected(){
+    var checklist = $("#id_checklist").val()
+    if(checklist){
+        return true
+    }return false
+}
 
 var d2bounds           = new google.maps.LatLngBounds();
 var d2infowindow       = new google.maps.InfoWindow({content: "",maxWidth: 350});
@@ -587,6 +592,7 @@ $(document).ready(() => {
             style:    'single',
             selector: 'tr'
         },
+        rowReorder: true,
         footerCallback:function(row, data, start, end, display){
                             var api = this.api();
                             setFooter(api)
@@ -618,28 +624,28 @@ $(document).ready(() => {
         }
     }
 
-    $(".btdeciders").change(function() {
-        if(parseInt($("#id_tourfrequency").val(), 10) > 1 && $("#id_israndom").is(":checked")){
-            enableFields("#id_breaktime")
-        }else{disableFields("#id_breaktime")}
-        
-        if($("#id_israndom").is(":checked")){
-            enableFields("#id_tourfrequency, #id_breaktime")
-        }else{disableFields("#id_tourfrequency, #id_breaktime")}
-    })
+    //$(".btdeciders").change(function() {
+    //    if(parseInt($("#id_tourfrequency").val(), 10) > 1 && $("#id_israndom").is(":checked")){
+    //        enableFields("#id_breaktime")
+    //    }else{disableFields("#id_breaktime")}
+    //    
+    //    if($("#id_israndom").is(":checked")){
+    //        enableFields("#id_tourfrequency, #id_breaktime")
+    //    }else{disableFields("#id_tourfrequency, #id_breaktime")}
+    //})
 
-    if(!$("#id_israndom").is(":checked")){
-        //disable breaktime & frequency
-        $("#id_breaktime, #id_tourfrequency").attr('disabled','disabled');
-        //enable non-random buttons
-        $(".non-random").removeAttr('disabled');
-    }else{
-        //enable breaktime & frequency
-        $("#id_breaktime, #id_tourfrequency").removeAttr('disabled');
-        $(".non-random").attr('disabled','disabled');
-        isRouteSaved=true
-        debugger;
-    }
+    //if(!$("#id_israndom").is(":checked")){
+    //    //disable breaktime & frequency
+    //    $("#id_breaktime, #id_tourfrequency").attr('disabled','disabled');
+    //    //enable non-random buttons
+    //    $(".non-random").removeAttr('disabled');
+    //}else{
+    //    //enable breaktime & frequency
+    //    $("#id_breaktime, #id_tourfrequency").removeAttr('disabled');
+    //    $(".non-random").attr('disabled','disabled');
+    //    isRouteSaved=true
+    //}
+    
     if(parseInt($("#id_tourfrequency").val()) > 1){
         $("#id_breaktime").removeAttr('disabled');
     }else{
@@ -717,6 +723,11 @@ $(document).ready(() => {
     //submit main form
     $("#id_schdexternaltourform").on('submit', function(e) {
         e.preventDefault();
+        if(!properCron($("#id_cron").val())){
+            show_error_alert( "Please change your cron expression and update the job record.", "Problematic Cron")
+            return
+        }
+        else{
         submit_form_alert().then((res) => {
             if(res.isConfirmed){
                 var form = $(this);
@@ -737,7 +748,7 @@ $(document).ready(() => {
                 })
             }
 
-        })
+        })}
     })
 
     //ON SAVE-ROUTE CLICK

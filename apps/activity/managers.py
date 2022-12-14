@@ -342,9 +342,10 @@ class JobneedManager(models.Manager):
         if atts := Attachment.objects.annotate(
             file = Concat(V(settings.MEDIA_URL, output_field=models.CharField()),
                           F('filepath'),
-                          V('/'), Cast('filename', output_field=models.CharField()))
+                          V('/'), Cast('filename', output_field=models.CharField())),
+            location = AsGeoJSON('gpslocation')
             ).filter(owner = uuid).values(
-            'filepath', 'filename', 'attachmenttype', 'datetime', 'gpslocation', 'id', 'file'
+            'filepath', 'filename', 'attachmenttype', 'datetime', 'location', 'id', 'file'
             ):return atts
         return self.none()
         
@@ -619,9 +620,28 @@ class QsetBlngManager(models.Manager):
     
     
     
-
 class TicketManager(models.Manager):
     use_in_migrations = True
+   
+    def send_ticket_mail(self, ticketid):
+        ticketmail = self.raw('''SELECT ticket.id, ticket.ticketlog,  ticket.comments, ticket.ticketdesc, ticket.cdtz,ticket.status, ticket.ticketno, ticket.level, bt.buname,
+                ( ticket.cdtz + interval'1 minutes' ) createdon, ( ticket.mdtz + interval '1 minutes' ) modifiedon,  modifier.peoplename as  modifiername,                                       
+                    people.peoplename, people.email as peopleemail, creator.id as creatorid, creator.email as creatoremail,
+                    modifier.id as modifierid, modifier.email as modifiermail,pgroup.id as pgroupid, pgroup.groupname ,
+                    ticket.assignedtogroup_id,  ticket.priority,
+                    ticket.assignedtopeople_id, ticket.escalationtemplate as tescalationtemplate,                                                
+                ( SELECT emnext.frequencyvalue || ' ' || emnext.frequency FROM escalationmatrix AS emnext                         
+                WHERE  ticket.bu_id= emnext.bu_id AND ticket.escalationtemplate=emnext.escalationtemplate AND emnext.level=ticket.level + 1   
+                ORDER BY cdtz LIMIT 1 ) AS next_escalation,
+                (select array_to_string(ARRAY(select email from people where id in(select people_id from pgbelonging where pgroup_id=pgroup.id )),',') ) as pgroupemail                                                                     
+                FROM ticket                                                                                                          
+                LEFT  JOIN people modifier    ON ticket.muser_id=modifier.id                                                      
+                LEFT JOIN people              ON ticket.assignedtopeople_id=people.id 
+                LEFT JOIN pgroup              ON ticket.assignedtogroup_id=pgroup.id
+                LEFT JOIN people creator      ON ticket.cuser_id =creator.id
+                LEFT JOIN bt                  ON ticket.bu_id =bt.id
+                WHERE ticket.id in (%s)''', [ticketid])
+        return ticketmail or self.none() 
 
 
 class JobManager(models.Manager):

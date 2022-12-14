@@ -2,6 +2,7 @@ from graphql import GraphQLError
 from apps.service import serializers as sz
 from apps.attendance.models import PeopleEventlog
 from apps.activity.models import (Jobneed, JobneedDetails, Attachment, Asset, DeviceEventlog, Ticket)
+from apps.onboarding.models import TypeAssist
 from apps.peoples.models import People
 from apps.attendance.models import Tracking
 from apps.core import utils
@@ -43,6 +44,7 @@ def get_model_or_form(tablename):
     if tablename == 'ticket': return Ticket
     if tablename == 'asset': return Asset
     if tablename == 'tracking': return Tracking
+    if tablename == 'typeassist': return TypeAssist
 
 
 def get_or_create_dir(path):
@@ -210,7 +212,6 @@ def perform_insertrecord_bgt(self, data, request = None, filebased = True, db='d
     instance = None
     try:
         if len(data) == 0: raise utils.NoRecordsFound
-        log.info(f'total {len(data)} records for table: {tablename} found for insert record service.')
         with transaction.atomic(using = db):
             utils.set_db_for_router(db)
             log.info(f"router is connected to {db}")
@@ -317,6 +318,7 @@ def update_jobneeddetails(jobneeddetails, Jnd, db):
             updated = 0
             for detail in jobneeddetails:
                 record = clean_record(detail)
+                log.info(f'JND record after cleaning\n {pformat(record)}')
                 instance = Jnd.objects.get(uuid = record['uuid'])
                 jnd_ser = sz.JndSerializers(data = record, instance = instance)
                 if jnd_ser.is_valid():
@@ -344,6 +346,7 @@ def perform_tasktourupdate_bgt(self, data, request = None, db='default'):
         # ic((data)
         if len(data) == 0: raise utils.NoRecordsFound
         log.info(f'total {len(data)} records found for task tour update')
+        log.info(f'data: {pformat(data)}')
         for record in data:
             details = record.pop('details')
             jobneed = record
