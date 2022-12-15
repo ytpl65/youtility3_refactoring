@@ -13,6 +13,8 @@ from rest_framework.response import Response
 from . import tasks
 from . import types as ty
 from graphene_file_upload.scalars import Upload
+import zipfile
+import gzip
 
 from logging import getLogger
 import traceback as tb
@@ -181,14 +183,13 @@ class UploadAttMutaion(graphene.Mutation):
     @classmethod
     def mutate(cls,root, info, file,  record, biodata):
         log.info("upload-attachment mutations start [+]")
-        import zipfile
         try:
-            with zipfile.ZipFile(file) as zip_ref:
-                for file in zip_ref.filelist:
-                    o = sutils.perform_uploadattachment( file, record, biodata)
-                    log.info(f"Response: {o.recordcount}, {o.msg}, {o.rc}, {o.traceback}")
-                    return UploadAttMutaion(output = o)
+            with gzip.open(file, 'rb   ') as fl:
+                o = sutils.perform_uploadattachment(fl, record, biodata)
+                log.info(f"Response: {o.recordcount}, {o.msg}, {o.rc}, {o.traceback}")
+                return UploadAttMutaion(output = o)
         except Exception as e:
+            log.error(f"Exception: {e}", exc_info=True)
             return UploadAttMutaion(output = ty.ServiceOutputType(rc = 1, recordcount = 0, msg = 'Upload Failed', traceback = tb.format_exc()))
 
 

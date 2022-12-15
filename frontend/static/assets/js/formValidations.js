@@ -1,4 +1,4 @@
-    var qsetbngformConfig =         {
+    var qsetbngformConfig = {
         fields:{
             'min':{
                 validators:{
@@ -23,9 +23,7 @@
                                     return max > min
                                 }
                             }
-                            
                         },
-                        
                     }
                 }
             },

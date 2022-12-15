@@ -552,7 +552,7 @@ def create_child_tasks(job, _pdtz, _people, jnid, _jobstatus, _jobtype):
             if idx == 0:
                 pdtz = params['pdtz'] = prev_edtz
             else:
-                pdtz = params['pdtz'] = prev_edtz - \
+                pdtz = params['pdtz'] = prev_edtz + \
                     timedelta(minutes = r['expirytime'] + job['gracetime'])
             edtz = params['edtz'] = pdtz + timedelta(minutes = mins)
             prev_edtz = edtz
