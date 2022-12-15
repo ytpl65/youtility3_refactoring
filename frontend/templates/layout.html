@@ -88,7 +88,7 @@
 {% macro general_popup() %}
 <div class="modal fade" id="{{ kwargs['popup_id'] }}" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1"
 		aria-labelledby="staticBackdropLabel" aria-hidden="true">
-		<div class="modal-dialog modal-dialog-centered">
+		<div class="modal-dialog modal-dialog-centered {{ kwargs['modal_size'] }}">
 			<div class="modal-content">
 				<div class="modal-header">
 					<h5 class="modal-heading" id="staticBackdropLabel" style="color:#3a3b40de">{{ kwargs['title'] }}</h5>

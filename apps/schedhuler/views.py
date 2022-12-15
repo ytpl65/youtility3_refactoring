@@ -1218,7 +1218,6 @@ class JobneedExternalTours(LoginRequiredMixin, View):
         if R.get('id'):
             obj = P['model'].objects.get(id = R['id'])
             form = P['form_class'](instance = obj, initial = P['initial'])
-            ic(form.as_p())
             log.info("object retrieved %s", (obj.jobdesc))
             checkpoints = self.get_checkpoints(P, obj = obj)
             cxt = {'externaltourform': form, 'edit': True,

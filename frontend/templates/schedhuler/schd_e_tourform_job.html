@@ -547,7 +547,7 @@ $(document).ready(() => {
   	$("#id_ctzoffset").val(-new Date().getTimezoneOffset())
 
     //addclass btdeciders
-    $("#id_tourfrequency, #id_israndom").addClass('btdeciders')
+    //$("#id_tourfrequency, #id_israndom").addClass('btdeciders')
     
 
     editor = new $.fn.dataTable.Editor( {
@@ -646,12 +646,12 @@ $(document).ready(() => {
     //    isRouteSaved=true
     //}
     
-    if(parseInt($("#id_tourfrequency").val()) > 1){
-        $("#id_breaktime").removeAttr('disabled');
-    }else{
-        $("#id_breaktime").val('0')
-        $("#id_breaktime").attr('disabled','disabled');
-    }
+    //if(parseInt($("#id_tourfrequency").val()) > 1){
+    //    $("#id_breaktime").removeAttr('disabled');
+    //}else{
+    //    $("#id_breaktime").val('0')
+    //    $("#id_breaktime").attr('disabled','disabled');
+    //}
 
     //ADD CALENDER TO DATE FIELDS WITH FLAT-PICKR PLUGIN
     $("#id_fromdate, #id_uptodate").flatpickr({

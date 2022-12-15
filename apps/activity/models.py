@@ -331,7 +331,7 @@ class Asset(BaseModel, TenantAwareModel):
         MAINTENANCE = ("MAINTENANCE", "Maintenance")
         STANDBY     = ("STANDBY", "Standby")
         WORKING     = ("WORKING", "Working")
-        SCRAPPED    = ("SCRAPPED", "Scrapped")   
+        SCRAPPED    = ("SCRAPPED", "Scrapped")
 
     uuid          = models.UUIDField(unique = True, editable = True, blank = True, default = uuid.uuid4)
     assetcode     = models.CharField(_("Asset Code"), max_length = 50)
@@ -352,7 +352,6 @@ class Asset(BaseModel, TenantAwareModel):
     capacity      = models.DecimalField(_("Capacity"), default = 0.0, max_digits = 18, decimal_places = 2)
     servprov      = models.ForeignKey("onboarding.Bt", verbose_name = _( "Client"), on_delete = models.RESTRICT, null = True, related_name='asset_serv_providers')
     asset_json    = models.JSONField( encoder = DjangoJSONEncoder, blank = True, null = True, default = asset_json)
-    geojson       = models.JSONField( encoder = DjangoJSONEncoder, blank = True, null = True, default = {'gpslocation':""})
 
     objects = AssetManager()
 
@@ -461,7 +460,6 @@ class Jobneed(BaseModel, TenantAwareModel):
     attachmentcount  = models.IntegerField(_('Attachment Count'), default = 0)
     other_info       = models.JSONField(_("Other info"), default = other_info, blank = True, encoder = DjangoJSONEncoder)
     deviation       = models.BooleanField(_("Deviation"), default = False, null=True)
-    geojson = models.JSONField(_("Geojson"), default = geojson_jobnjobneed, blank = True, encoder = DjangoJSONEncoder)
 
 
     objects = JobneedManager()

@@ -530,11 +530,12 @@ def create_child_tasks(job, _pdtz, _people, jnid, _jobstatus, _jobtype):
         params = {'_jobdesc': "", 'jnid':jnid, 'pdtz':None, 'edtz':None,
                   '_people':_people, '_jobstatus':_jobstatus, '_jobtype':_jobtype,
                   'm_factor':None, 'idx':None, 'NONE_P':NONE_P}
-        
+        L = list(R)
         if job['other_info']['is_randomized'] in ['True', True] and len(R) > 1:
             #randomize data if it is random tour job
-            L = list(R)
             random.shuffle(L)
+            R = calculate_route_details(L, job)
+        elif int(job['other_info']['tour_frequency']) > 1:
             R = calculate_route_details(L, job)
             
             

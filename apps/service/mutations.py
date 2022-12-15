@@ -180,10 +180,11 @@ class UploadAttMutaion(graphene.Mutation):
 
     @classmethod
     def mutate(cls,root, info, file,  record, biodata):
+        log.info("upload-attachment mutations start [+]")
         import zipfile
         try:
-            with zipfile.ZipFile(file, 'r') as zip_ref:
-                for file in zip_ref:
+            with zipfile.ZipFile(file) as zip_ref:
+                for file in zip_ref.filelist:
                     o = sutils.perform_uploadattachment( file, record, biodata)
                     log.info(f"Response: {o.recordcount}, {o.msg}, {o.rc}, {o.traceback}")
                     return UploadAttMutaion(output = o)

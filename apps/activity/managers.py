@@ -333,7 +333,7 @@ class JobneedManager(models.Manager):
     def getAttachmentJobneed(self, id):
         if qset := self.filter(id=id).values('uuid'):
             if atts := self.get_atts(qset[0]['uuid']):
-                return chain(qset, atts) or self.none()
+                return atts or self.none()
         return self.none()
 
     
