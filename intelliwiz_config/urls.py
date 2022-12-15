@@ -24,6 +24,8 @@ from django_email_verification import urls as email_urls
 from apps.peoples.views import SignIn, SignOut
 from graphene_file_upload.django import FileUploadGraphQLView
 import debug_toolbar
+from apps.service.mutations import UploadFile
+
 urlpatterns = [
     path('', SignIn.as_view(), name='login'),
     path('logout/', SignOut.as_view(), name='logout'),
@@ -39,6 +41,7 @@ urlpatterns = [
     path('__debug__/', include(debug_toolbar.urls)), # shoul use when debug = True
     path('select2/', include('django_select2.urls')),
     path("graphql", csrf_exempt(FileUploadGraphQLView.as_view(graphiql = True))),
+    path("upload/att_file", UploadFile.as_view(), name = "upload_att_file"),
 
 ]
 

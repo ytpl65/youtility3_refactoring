@@ -1,8 +1,5 @@
 <!doctype html>
 <html lang="en">
-
-
-
 <head>
   <meta name="viewport" content="width = device-width, initial-scale = 1" />
   <meta content="text/html;charset = utf-8" http-equiv="Content-Type">
@@ -156,6 +153,10 @@
   <!-- END GLOBAL-INLINE CUSTOM SCRIPTS -->
   
 
+{% block switchSiteScript %}
+
+{% endblock switchSiteScript %}
+
 
   <!-- BEGIN BASE LEVEL SCRIPTS FOR BASE PAGES -->  
   {%- block base_script -%}
@@ -168,6 +169,76 @@
   {% endblock extra_scripts %}
   <!-------- END SCRIPTS FOR NON-BASE PAGES ------->
 </body>
+
+<!---------------------- SWITCH SITE MODAL -------------------------->
+<div class="modal" tabindex="-1" role="dialog" id="popupshow_Attachment">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <div class="modal-body">
+        <div id="carouselExampleIndicators" class="carousel slide" data-bs-ride="carousel">
+          <div class="carousel-indicators">
+          </div>
+          <div class="carousel-inner">
+          </div>
+          <button class="carousel-control-prev" type="button" data-bs-target="#carouselExampleIndicators" data-bs-slide="prev">
+              <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+              <span class="visually-hidden">Previous</span>
+          </button>
+          <button class="carousel-control-next" type="button" data-bs-target="#carouselExampleIndicators" data-bs-slide="next">
+              <span class="carousel-control-next-icon" aria-hidden="true"></span>
+              <span class="visually-hidden">Next</span>
+          </button>
+          </div>
+        </div>
+      </div>
+    </div>
+    </div>
+    <div id="popup_switch_site" class="modal fade" aria-hidden="true">
+      <div class="modal-dialog">
+          <div class="modal-content">
+              <div class="modal-header">
+                <h4 class="modal-title bold">Switch Site</h4>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+              </div>
+              <div class="modal-body">
+                <div class="alert alert-danger site_err_msg"  id="site_err_popup" style="display:none">
+                  <button type="button" class="close" data-dismiss="alert">x</button>
+                  <strong>Error! </strong>
+                </div>
+                <div class="alert alert-success site_success_msg"  id="site_success_popup" style="display:none">
+                  <button type="button" class="close" data-dismiss="alert">x</button>
+                  <strong>Success! </strong>
+                </div>
+                <form id="SwitchSiteForm" name="SwitchSiteForm" action="" method="post">
+                    <input type="hidden" name="oper" id="switchsite_oper" value="edit">
+                    <input type="hidden" name="id" id="switchsite_id" value="">
+                    <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
+                    <div class="row g-3">
+                        <div class="col-md-3"><label>Current Site:</label></div>
+                        <div class="col-md-9">
+                            <div >
+                              <input type="text" name="defaultsite" value="" id="id_defaultsite" readonly required class="form-control" maxlength="250" />
+                            </div>
+                        </div>
+                        <div class="col-md-3"><label>Other Sites:</label></div>
+                        <div class="col-md-9">
+                            <div >
+                              <select class="form-select form-select-solid" name="assignesite" id="id_assignesite"  data-control="select2" required  maxlength="20">
+                              <option>NONE</option>
+                              </select>
+                          </div>
+                       </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary font-weight-bold" id="btnSwitchSite" name="btnSwitchSite" >Switch</button>
+                <button type="button" class="btn btn-danger font-weight-bold" data-bs-dismiss="modal">Cancel </button>
+            </div>
+  
+          </div>
+      </div>
+    </div>
 <!---BEGIN POP-UP/MODAL'S CODE HERE--->
   {%- block popup_alerts -%}
   

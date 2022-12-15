@@ -474,24 +474,25 @@ def insert_update_jobneeddetails(jnid, job, parent=False):
             raise EmptyResultSet
         else:
             log.info(f'Checklist found with {len(qsb) if isinstance(qsb, QuerySet) else 1} questions in it.')
-            insert_into_jnd(qsb, job, jnid)
+            insert_into_jnd(qsb, job, jnid, parent)
     except Exception:
         raise
     log.info("insert_update_jobneeddetails() [END]")
 
 
 
-def insert_into_jnd(qsb, job, jnid):
+def insert_into_jnd(qsb, job, jnid, parent=False):
     log.info("insert_into_jnd() [START]")
     qset = qsb if isinstance(qsb, QuerySet) else [qsb]
     for obj in qset:
+        answer = 'NONE' if parent else None
         am.JobneedDetails.objects.create(
             seqno      = obj.seqno,      question_id = obj.question_id,
             answertype = obj.answertype, max         = obj.max,
             min        = obj.min,        alerton     = obj.alerton,
             options    = obj.options,    jobneed_id  = jnid,
             cuser_id   = job['cuser_id'],   muser_id    = job['muser_id'],
-            ctzoffset  = job['ctzoffset'])
+            ctzoffset  = job['ctzoffset'], answer = answer)
     log.info("insert_into_jnd() [END]")
 
 def extract_seq(R):
@@ -556,6 +557,7 @@ def create_child_tasks(job, _pdtz, _people, jnid, _jobstatus, _jobtype):
             prev_edtz = edtz
             params['idx'] = idx
             jn = insert_into_jn_for_child(job, params, r)
+            ic(r)
             insert_update_jobneeddetails(jn.id, r)
     except Exception:
         log.error(

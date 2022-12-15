@@ -7,6 +7,9 @@ from apps.service import utils as sutils
 from apps.core import utils as cutils
 from apps.peoples.models import People
 from django.utils import timezone
+from rest_framework.views import APIView
+from rest_framework.parsers import MultiPartParser, FileUploadParser, JSONParser
+from rest_framework.response import Response
 from . import tasks
 from . import types as ty
 from graphene_file_upload.scalars import Upload
@@ -130,7 +133,7 @@ class TaskTourUpdate(graphene.Mutation):
     def mutate(cls, root, info, file):
         log.warning("tasktour-update mutations start [+]")
         o = sutils.perform_tasktourupdate(file, info.context)
-        log.info(f"Response: {o.recordcount}, {o.msg}, {o.rc}, {o.traceback}")
+        log.info(f"Response: # records updated:{o.recordcount}, msg:{o.msg}, rc:{o.rc}, traceback:{o.traceback}")
         log.warning("tasktour-update mutations end [-]")
         return TaskTourUpdate(output = o)
 
@@ -146,8 +149,8 @@ class InsertRecord(graphene.Mutation):
     @classmethod    
     def mutate(cls, root, info, file):
         log.warning("insert-record mutations start [+]")
-        ic(file, type(file))
         o = sutils.perform_insertrecord(file, info.context)
+        log.info(f"Response: # records updated:{o.recordcount}, msg:{o.msg}, rc:{o.rc}, traceback:{o.traceback}")
         log.warning("insert-record mutations end [-]")
         return InsertRecord(output = o)
 
@@ -177,8 +180,33 @@ class UploadAttMutaion(graphene.Mutation):
 
     @classmethod
     def mutate(cls,root, info, file,  record, biodata):
-        output = sutils.perform_uploadattachment( file, record, biodata)
-        return UploadAttMutaion(output = output)
+        import zipfile
+        try:
+            with zipfile.ZipFile(file, 'r') as zip_ref:
+                for file in zip_ref:
+                    o = sutils.perform_uploadattachment( file, record, biodata)
+                    log.info(f"Response: {o.recordcount}, {o.msg}, {o.rc}, {o.traceback}")
+                    return UploadAttMutaion(output = o)
+        except Exception as e:
+            return UploadAttMutaion(output = ty.ServiceOutputType(rc = 1, recordcount = 0, msg = 'Upload Failed', traceback = tb.format_exc()))
+
+
+class UploadFile(APIView):
+    parser_classes = [MultiPartParser, FileUploadParser, JSONParser]
+    
+    def post(self, request, format=None):
+        file    = request.data['file']
+        biodata = request.data['biodata']
+        record  = request.data['record']
+        ic(file, biodata, record)
+        ic(type(file), type(biodata), type(record))
+        output = sutils.perform_uploadattachment(file, record, biodata)
+        return Response(data={'rc':output.rc, 'msg':output.msg, 
+            'recordcount':output.recordcount, 'traceback':output.traceback})
+        
+        
+        
+
 
 
 class AdhocMutation(graphene.Mutation):
@@ -188,8 +216,9 @@ class AdhocMutation(graphene.Mutation):
 
     @classmethod
     def mutate(cls, root, info, file):
-        output = sutils.perform_adhocmutation(file)
-        return AdhocMutation(output = output)
+        o = sutils.perform_adhocmutation(file)
+        log.info(f"Response: {o.recordcount}, {o.msg}, {o.rc}, {o.traceback}")
+        return AdhocMutation(output = o)
 
 
 class InsertJsonMutation(graphene.Mutation):
@@ -216,9 +245,9 @@ class InsertJsonMutation(graphene.Mutation):
         except Exception as e:
             log.error('something went wrong', exc_info = True)
             msg, rc, traceback = 'Insert Failed!',1, tb.format_exc()
-        output = ty.ServiceOutputType(rc = rc, recordcount = recordcount, msg = msg, traceback = traceback, uuids=uuids)
-        ic(output.uuids, output.rc, output.msg)
-        return InsertJsonMutation(output = output)
+        o = ty.ServiceOutputType(rc = rc, recordcount = recordcount, msg = msg, traceback = traceback, uuids=uuids)
+        log.info(f"Response: {o.recordcount}, {o.msg}, {o.rc}, {o.traceback}")
+        return InsertJsonMutation(output = o)
 
 
 
@@ -238,7 +267,7 @@ class SyncMutation(graphene.Mutation):
         from apps.service import tasks
         try:
             db = get_current_db_name()
-            log.info('the type of file', type(file))
+            log.info(f'the type of file is {type(file)}')
             with zipfile.ZipFile(file) as zip:
                 zipsize = TR = 0
                 for file in zip.filelist:

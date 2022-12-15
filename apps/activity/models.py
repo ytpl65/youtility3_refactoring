@@ -2,7 +2,7 @@ import uuid
 from apps.peoples.models import BaseModel
 from apps.activity.managers import (AssetManager, AttachmentManager,
 JobManager, JobneedDetailsManager, QsetBlngManager, QuestionManager,
-QuestionSetManager, JobneedManager, DELManager, WorkpermitManager)
+QuestionSetManager, JobneedManager, DELManager, WorkpermitManager, TicketManager)
 from apps.tenants.models import TenantAwareModel
 from django.utils.translation import gettext_lazy as _
 from django.core.serializers.json import DjangoJSONEncoder
@@ -145,12 +145,14 @@ class QuestionSetBelonging(BaseModel, TenantAwareModel):
         FRONTCAMERA = "FRONTCAMERA", _("Front Camera")
         PEOPLELIST  = "PEOPLELIST" , _("People List")
         SITELIST    = "SITELIST"   , _("Site List")
+        NONE        = ("NONE", "NONE")
         
     class AvptType(models.TextChoices):
         BACKCAMPIC    = "BACKCAMPIC"   , _('Back Camera Pic')
         FRONTCAMPIC        = "FRONTCAMPIC"       , _('Front Camera Pic')
         AUDIO    = "AUDIO"   , _('Audio')
         VIDEO     = "VIDEO"    , _("Video")
+        NONE = ("NONE", "NONE")
 
     # id               = models.BigIntegerField(_("QSB Id"), primary_key = True)
     ismandatory       = models.BooleanField(_("Is Manadatory"))
@@ -193,6 +195,10 @@ def other_info():
         'deviation':False,
     }
 
+def geojson_jobnjobneed():
+    return {
+        'gpslocation':""
+    }
 class Job(BaseModel, TenantAwareModel):
     class Identifier(models.TextChoices):
         TASK             = ('TASK', 'Task')
@@ -311,6 +317,7 @@ def asset_json():
         "multifactor": 1
     }
 
+
 class Asset(BaseModel, TenantAwareModel):
     class Identifier(models.TextChoices):
        NONE       = ("NONE", "None")
@@ -345,6 +352,7 @@ class Asset(BaseModel, TenantAwareModel):
     capacity      = models.DecimalField(_("Capacity"), default = 0.0, max_digits = 18, decimal_places = 2)
     servprov      = models.ForeignKey("onboarding.Bt", verbose_name = _( "Client"), on_delete = models.RESTRICT, null = True, related_name='asset_serv_providers')
     asset_json    = models.JSONField( encoder = DjangoJSONEncoder, blank = True, null = True, default = asset_json)
+    geojson       = models.JSONField( encoder = DjangoJSONEncoder, blank = True, null = True, default = {'gpslocation':""})
 
     objects = AssetManager()
 
@@ -452,6 +460,9 @@ class Jobneed(BaseModel, TenantAwareModel):
     ismailsent       = models.BooleanField(_('Is Mail Sent'), default= False)
     attachmentcount  = models.IntegerField(_('Attachment Count'), default = 0)
     other_info       = models.JSONField(_("Other info"), default = other_info, blank = True, encoder = DjangoJSONEncoder)
+    deviation       = models.BooleanField(_("Deviation"), default = False, null=True)
+    geojson = models.JSONField(_("Geojson"), default = geojson_jobnjobneed, blank = True, encoder = DjangoJSONEncoder)
+
 
     objects = JobneedManager()
 
@@ -482,12 +493,14 @@ class JobneedDetails(BaseModel, TenantAwareModel):
         FRONTCAMERA = ("FRONTCAMERA", "Front Camera")
         PEOPLELIST  = ("PEOPLELIST", "People List")
         SITELIST    = ("SITELIST", "Site List")
+        NONE        = ("NONE", "NONE")
     
     class AvptType(models.TextChoices):
         BACKCAMPIC    = "BACKCAMPIC"   , _('Back Camera Pic')
         FRONTCAMPIC        = "FRONTCAMPIC"       , _('Front Camera Pic')
         AUDIO    = "AUDIO"   , _('Audio')
         VIDEO     = "VIDEO"    , _("Video")
+        NONE = ("NONE", "NONE")
 
 # id              = models.BigIntegerField(_("Jobneed details"), primary_key = True)
     uuid            = models.UUIDField(unique = True, editable = True, blank = True, default = uuid.uuid4)
@@ -599,40 +612,38 @@ class Ticket(BaseModel, TenantAwareModel):
         ASSIGNED  = ('ASSIGNED', 'Assigned' )
 
     class TicketSource(models.TextChoices):
-        SYSTEMGENERATED = ('SYSTEMGENERATED', 'System Generated')
+        SYSTEMGENERATED = ('SYSTEMGENERATED', 'New Generated')
         USERDEFINED     = ('USERDEFINED', 'User Defined')
 
-    # id          = models.BigIntegerField(_("Ticket Id"), primary_key = True)
-    uuid               = models.UUIDField(unique = True, editable = True, blank = True, default = uuid.uuid4)
-    ticketno           = models.IntegerField(null = True,blank = True)
-    ticketdesc         = models.CharField(max_length = 250)
-    assignedtopeople   = models.ForeignKey(settings.AUTH_USER_MODEL, null = True, blank = True, on_delete = models.RESTRICT, related_name="ticket_people")
-    assignedtogroup    = models.ForeignKey('peoples.Pgroup', null = True, blank = True, on_delete = models.RESTRICT, related_name="ticket_grps")
-    comments           = models.CharField(max_length = 250, null = True)
-    bu                 = models.ForeignKey("onboarding.Bt", null = True,blank = True, on_delete = models.RESTRICT)
-    priority           = models.CharField(_("Priority"), max_length = 50, choices = Priority.choices, null = True, blank = True)
-    escalationtemplate = models.CharField(max_length = 30, null = True, blank = True)
-    modifieddatetime   = models.DateTimeField(default = timezone.now)
-    level              = models.IntegerField(default = 0)
-    status             = models.CharField(_("Status"), max_length = 50, choices = Status.choices,null = True, blank = True)
-    performedby        = models.ForeignKey(settings.AUTH_USER_MODEL, null = True, blank = True, on_delete = models.RESTRICT, related_name="ticket_performedby")
-    ticketlog          = models.JSONField(null = True,  encoder = DjangoJSONEncoder, blank = True, default = ticket_defaults)
-    event              = models.ForeignKey("activity.Event", null = True,blank = True, on_delete = models.RESTRICT)
-    isescalated        = models.BooleanField(default = True)
-    ticketsource       = models.CharField(max_length = 50, choices = TicketSource.choices, null = True, blank = True)
-    attachmentcount    = models.IntegerField(_("Attachment Count"), default = 0)
-    parent             = models.ForeignKey('self', null = True, blank = True, on_delete = models.RESTRICT)
 
+    ticketno           = models.IntegerField(null=True,blank=True)   
+    ticketdesc         = models.CharField(max_length=250)
+    assignedtopeople   = models.ForeignKey('peoples.People', null=True, blank=True, on_delete=models.RESTRICT, related_name="ticket_people")
+    assignedtogroup    = models.ForeignKey('peoples.Pgroup', null=True, blank=True, on_delete=models.RESTRICT, related_name="ticket_grps")
+    comments           = models.CharField(max_length=250, null=True)
+    bu                 = models.ForeignKey("onboarding.Bt", null=True,blank=True, on_delete=models.RESTRICT)
+    priority           = models.CharField(_("Priority"), max_length=50, choices=Priority.choices, null=True, blank=True)
+    escalationtemplate = models.CharField(max_length=30, null=True, blank=True)
+    modifieddatetime   = models.DateTimeField(default=timezone.now)
+    level              = models.IntegerField(default=0)
+    status             = models.CharField(_("Status"), max_length=50, choices=Status.choices,null=True, blank=True)
+    performedby        = models.ForeignKey('peoples.People', null=True, blank=True, on_delete=models.RESTRICT, related_name="ticket_performedby")
+    ticketlog          = models.JSONField(null=True,  encoder=DjangoJSONEncoder, blank=True, default=ticket_defaults)
+    events             = models.TextField(null=True, blank=True)
+    isescalated        = models.BooleanField(default=True)
+    ticketsource       = models.CharField(max_length=50, choices=TicketSource.choices, null=True, blank=True)
 
+    objects = TicketManager() 
+    
     class Meta(BaseModel.Meta):
-            db_table      = 'ticket'
-            get_latest_by = ["cdtz", 'mdtz']
-            constraints         = [
-                models.UniqueConstraint(
-                    fields=['bu', 'ticketno'],
-                    name='bu_ticketno_uk'
-                )
-            ]
+        db_table      = 'ticket'
+        get_latest_by = ["cdtz", 'mdtz']
+        constraints         = [
+            models.UniqueConstraint(
+                fields=['bu', 'ticketno'],
+                name='bu_ticketno_uk'
+            )
+        ]
 
     def __str__(self):
         return self.ticketdesc

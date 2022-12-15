@@ -82,3 +82,7 @@ class PELSerializer(serializers.ModelSerializer):
     pass
 
 
+class VideoFileUpload(serializers.Serializer):
+    file    = serializers.FileField()
+    biodata = serializers.JSONField()
+    record  = serializers.JSONField()
