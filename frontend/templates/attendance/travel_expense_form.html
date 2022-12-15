@@ -210,8 +210,8 @@ function initAutocomplete(){
         })
         
         if(resp.obj.length > 0){
-            //drawConveyancePath(resp)
-            plotPoints(resp)
+            drawConveyancePath(resp)
+            //plotPoints(resp)
             var dirConfig = getDirectionConfig(resp.obj[0])
             getRoute(directionsService, dirConfig, function(response) {
                 console.log(response, "response")

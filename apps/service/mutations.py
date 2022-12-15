@@ -180,9 +180,15 @@ class UploadAttMutaion(graphene.Mutation):
 
     @classmethod
     def mutate(cls,root, info, file,  record, biodata):
-        o = sutils.perform_uploadattachment( file, record, biodata)
-        log.info(f"Response: {o.recordcount}, {o.msg}, {o.rc}, {o.traceback}")
-        return UploadAttMutaion(output = o)
+        import zipfile
+        try:
+            with zipfile.ZipFile(file, 'r') as zip_ref:
+                for file in zip_ref:
+                    o = sutils.perform_uploadattachment( file, record, biodata)
+                    log.info(f"Response: {o.recordcount}, {o.msg}, {o.rc}, {o.traceback}")
+                    return UploadAttMutaion(output = o)
+        except Exception as e:
+            return UploadAttMutaion(output = ty.ServiceOutputType(rc = 1, recordcount = 0, msg = 'Upload Failed', traceback = tb.format_exc()))
 
 
 class UploadFile(APIView):
