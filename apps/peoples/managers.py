@@ -135,9 +135,11 @@ class PgblngManager(models.Manager):
     def get_sitesfromgroup(self, job, force=False):
         "return sites under group with given sitegroupid"
         if not force:
+            ic(not force)
             from apps.activity.models import Job
             qset = Job.objects.get_sitecheckpoints_exttour(job)
         if force or not qset:
+            ic(force or not qset)
             qset = self.annotate(
                 bu__gpslocation = AsGeoJSON('assignsites__gpslocation'),
                 bu__buname = F('assignsites__buname'), bucode=F('assignsites__bucode'),
@@ -151,6 +153,7 @@ class PgblngManager(models.Manager):
                         {'seqno':None, 'starttime':None, 'endtime':None, 'qsetid':job['qset_id'],
                         'qsetname':job['qset__qsetname'], 'duration':None, 'expirytime':None,
                         'distance':None, 'jobid':None, 'assetid':1, 'breaktime':None})
+        ic(qset)
         return qset or self.none()
     
     def get_assigned_sites_to_people(self, peopleid, makechoice=False, forservice=False):

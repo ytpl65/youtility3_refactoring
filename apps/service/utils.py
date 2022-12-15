@@ -41,6 +41,7 @@ from apps.core import utils
 from .validators import clean_record
 from apps.activity.models import (Jobneed, JobneedDetails, Asset)
 import traceback as tb
+from django.core.mail import send_mail, EmailMessage
 from django.conf import settings
 
 def insertrecord(record, tablename):
@@ -51,14 +52,12 @@ def insertrecord(record, tablename):
             obj = model.objects.get(uuid = record['uuid'])
             model.objects.filter(uuid = obj.uuid).update(**record)
             log.info("record is already exist so updating it now..")
-            ic("updating")
             return model.objects.get(uuid = record['uuid'])
     except model.DoesNotExist:
-        ic("creating")
         log.info("record is not exist so creating new one..")
         return model.objects.create(**record)
     except Exception as e:
-        log.error("something went wrong", exc_info = True)
+        log.error("something went wrong while inserting/updating record", exc_info = True)
         raise e
 
 
@@ -70,22 +69,26 @@ def discardAccept(curr, prev):
     return abs(dis) > 2
 
 
-def update_record(details, jobneed, Jn, Jnd):
-    alerttype = 'OBSERVATION'
-    record = clean_record(jobneed)
+def update_record(details, jobneed_record, JnModel, JndModel):
+    '''
+    takes details(jobneeddetails list), jobneed_record, JnModel, JndModel
+    updates both jobneed and its jobneeddetails
+    '''
+    record = clean_record(jobneed_record)
     try:
-        with transaction.atomic(using = utils.get_current_db_name()):
-            instance = Jn.objects.get(uuid = record['uuid'])
-            jn_parent_serializer = sz.JobneedSerializer(data = record, instance = instance)
-            if jn_parent_serializer.is_valid():
-                isJnUpdated = jn_parent_serializer.save()
-            else: log.error(f"something went wrong!\n{jn_parent_serializer.errors} ", exc_info = True )
-            isJndUpdated = update_jobneeddetails(details, Jnd)
-            if isJnUpdated and  isJndUpdated:
-                # utils.alert_email(input.jobneedid, alerttype)
-                # TODO send observation email
-                # TODO send deviation mail
+        instance = JnModel.objects.get(uuid = record['uuid'])
+        jn_parent_serializer = sz.JobneedSerializer(data = record, instance = instance)
+        if jn_parent_serializer.is_valid():
+            jobneed = jn_parent_serializer.save()
+            log.info("parent jobneed is valid and saved successfully")
+            if isJndUpdated := update_jobneeddetails(details, JndModel):
+                log.info('parent jobneed and its details are updated successully')
+                if jobneed.alerts and jobneed.attachment_count == 0:
+                    alert_sendmail(jobneed, 'observation')
+                    alert_sendmail(jobneed, 'deviation')
                 return True
+        else: 
+            log.error(f"parent jobneed record has some errors\n{jn_parent_serializer.errors} ", exc_info = True )
     except Exception:
         log.error("update_record failed", exc_info = True)
         raise
@@ -93,17 +96,30 @@ def update_record(details, jobneed, Jn, Jnd):
 
 
 
-def update_jobneeddetails(jobneeddetails, Jnd):
-    if jobneeddetails:
-        updated = 0
-        for detail in jobneeddetails:
-            record = clean_record(detail)
-            instance = Jnd.objects.get(uuid = record['uuid'])
-            jnd_ser = sz.JndSerializers(data = record, instance = instance)
-            if jnd_ser.is_valid(): jnd_ser.save()
-            updated += 1
-        if len(jobneeddetails) == updated: return True 
-
+def update_jobneeddetails(jobneeddetails, JndModel):
+    try:
+        
+        if jobneeddetails:
+            updated = 0
+            log.info(f'total {len(jobneeddetails)} JND records found')
+            for detail in jobneeddetails:
+                record = clean_record(detail)
+                log.info(f'JND record after cleaning\n {pformat(record)}')
+                instance = JndModel.objects.get(uuid = record['uuid'])
+                jnd_ser = sz.JndSerializers(data = record, instance = instance)
+                if jnd_ser.is_valid(): 
+                    jnd_ser.save()
+                    updated += 1
+                else:
+                    log.error(f'JND record with this uuid: {record["uuid"]} has some errors!\n {jnd_ser.errors}', exc_info=True)
+            if len(jobneeddetails) == updated: 
+                log.info(f'All {updated} JND records are updated successfully')
+                return True
+            else:
+                log.warning(f'failed to update all {len(jobneeddetails)} JND records')
+    except Exception as e:
+        log.error('jobneed details record failed to save', exc_info= True)
+        raise
 
 
 def save_parent_childs(sz, jn_parent_serializer, child, M):
@@ -113,31 +129,33 @@ def save_parent_childs(sz, jn_parent_serializer, child, M):
         instance = None
         if jn_parent_serializer.is_valid():
             parent = jn_parent_serializer.save()
+            log.info('parent record for report mutation saved')
             allsaved = 0
+            log.info(f'Total {len(child)} child records found for report mutation')
             for ch in child:
-                # ic((ch, type(child))
                 details = ch.pop('details')
-                # ic((details, type(details))
+                log.info(f'Total {len(details)} detail records found for the chid with this uuid:{ch["uuid"]}')
                 ch.update({'parent_id':parent.id})
                 child_serializer = sz.JobneedSerializer(data = clean_record(ch))
 
                 if child_serializer.is_valid():
                     child_instance = child_serializer.save()
+                    log.info(f"child record with this uuid: {child_instance.uuid} saved for report mutation")
                     for dtl in details:
-                        # ic((dtl, type(dtl))
                         dtl.update({'jobneed_id':child_instance.id})
                         ch_detail_serializer = sz.JndSerializers(data = clean_record(dtl))
                         if ch_detail_serializer.is_valid():
                             ch_detail_serializer.save()
                         else:
-                            log.error(ch_detail_serializer.errors)
+                            log.error(f"detail record of this child uuid:{child_instance.uuid} has some errors: {ch_detail_serializer.errors}")
                             traceback, msg, rc = str(ch_detail_serializer.errors), M.INSERT_FAILED, 1
                     allsaved += 1
                 else:
-                    log.error(child_serializer.errors)
+                    log.error(f'child record has some errors:{child_serializer.errors}')
                     traceback, msg, rc = str(child_serializer.errors), M.INSERT_FAILED, 1
             if allsaved == len(child):
                 msg= M.INSERT_SUCCESS
+                log.info(f'All {allsaved} child records saved successfully')
         else:
             log.error(jn_parent_serializer.errors)
             traceback, msg, rc = str(jn_parent_serializer.errors), M.INSERT_FAILED, 1
@@ -150,23 +168,31 @@ def save_parent_childs(sz, jn_parent_serializer, child, M):
 
 def perform_tasktourupdate(file, request):
     log.info("perform_tasktourupdate [start]")
-    rc, recordcount, traceback= 0, 0, 'NA'
+    rc, recordcount, traceback= 1, 0, 'NA'
     instance, msg = None, ""
 
     try:
         data = get_json_data(file)
-        ic(data)
+        log.info(f'data: {pformat(data)}')
+        if len(data) == 0: raise utils.NoRecordsFound
+        log.info(f'total {len(data)} records found for task tour update')
         for record in data:
             details = record.pop('details')
             jobneed = record
             with transaction.atomic(using = utils.get_current_db_name()):
-                if updated :=  update_record(details, jobneed, Jobneed, JobneedDetails):
+                if isupdated :=  update_record(details, jobneed, Jobneed, JobneedDetails):
                     recordcount += 1
-
+                    log.info(f'{recordcount} task/tour updated successfully')
+        if len(data) == recordcount:
+            msg = Messages.UPDATE_SUCCESS
+            log.info(f'All {recordcount} task/tour records are updated successfully')
+            rc=0
+    except utils.NoRecordsFound as e:
+        log.warning('No records found for task/tour update', exc_info=True)
+        rc, traceback, msg = 1, tb.format_exc(), Messages.UPLOAD_FAILED
     except IntegrityError as e:
         log.error("Database Error", exc_info = True)
         rc, traceback, msg = 1, tb.format_exc(), Messages.UPLOAD_FAILED
-
     except Exception as e:
         log.error('Something went wrong', exc_info = True)
         rc, traceback, msg = 1, tb.format_exc(), Messages.UPLOAD_FAILED
@@ -187,11 +213,11 @@ def perform_insertrecord(file, request = None, filebased = True):
         ServiceOutputType: rc, recordcount, msg, traceback
     """
     log.info('perform_insertrecord [start]')
-    rc, recordcount, traceback= 0, 0, 'NA'
+    rc, recordcount, traceback= 1, 0, 'NA'
     instance = None
     try:
         data = get_json_data(file) if filebased else [file]
-        # ic(data)
+        if len(data) == 0: raise utils.NoRecordsFound
         with transaction.atomic(using = utils.get_current_db_name()):
 
             for record in data:
@@ -206,14 +232,15 @@ def perform_insertrecord(file, request = None, filebased = True):
                         obj.endlocation,obj.punchouttime, obj.punchintime]):
                     log.info("save line string is started")
                     save_linestring_and_update_pelrecord(obj)
-
-                # model = get_model_or_form(tablename)
-
-                # log.info(f'record after cleaning {pformat(record)}')
-                # instance = model.objects.create(**record)
                 recordcount += 1
-        if recordcount:
+                log.info(f'{recordcount} record inserted successfully')
+        if len(data) == recordcount:
             msg = Messages.INSERT_SUCCESS
+            log.info(f'All {recordcount} records are inserted successfully')
+            rc=0
+    except utils.NoRecordsFound as e:
+        log.warning('No records found for insertrecord service', exc_info=True)
+        rc, traceback, msg = 1, tb.format_exc(), Messages.INSERT_FAILED
     except Exception as e:
         log.error("something went wrong!", exc_info = True)
         msg, rc, traceback = Messages.INSERT_FAILED, 1, tb.format_exc()
@@ -245,27 +272,37 @@ def save_linestring_and_update_pelrecord(obj):
 
 
 def perform_reportmutation(file):
-    rc, recordcount, traceback= 0, 0, 'NA'
+    rc, recordcount, traceback= 1, 0, 'NA'
     instance = None
     try:
-        if data := get_json_data(file):
-            for record in data:
-                child = record.pop('child', None)
-                parent = record
-                try:
-                    with transaction.atomic(using = utils.get_current_db_name()):
-                        if child and len(child) > 0 and parent:
-                            jobneed_parent_post_data = parent
-                            jn_parent_serializer = sz.JobneedSerializer(data = clean_record(jobneed_parent_post_data))
-                            rc,  traceback, msg = save_parent_childs(sz, jn_parent_serializer, child, Messages)
-                            if rc == 0: recordcount += 1
-                            # ic((recordcount)
-                        else:
-                            log.error(Messages.NODETAILS)
-                            msg, rc = Messages.NODETAILS, 1
-                except Exception as e:
-                    log.error('something went wrong', exc_info = True)
-                    raise
+        data = get_json_data(file)
+        log.info(f'data: {pformat(data)}')
+        if len(data) == 0: raise utils.NoRecordsFound
+        for record in data:
+            child = record.pop('child', None)
+            parent = record
+            try:
+                with transaction.atomic(using = utils.get_current_db_name()):
+                    if child and len(child) > 0 and parent:
+                        jobneed_parent_post_data = parent
+                        jn_parent_serializer = sz.JobneedSerializer(data = clean_record(jobneed_parent_post_data))
+                        rc,  traceback, msg = save_parent_childs(sz, jn_parent_serializer, child, Messages)
+                        if rc == 0: recordcount += 1
+                        # ic((recordcount)
+                    else:
+                        log.error(Messages.NODETAILS)
+                        msg, rc = Messages.NODETAILS, 1
+            except Exception as e:
+                log.error('something went wrong while saving \
+                          parent and child for report mutations', exc_info = True)
+                raise
+        if len(data) == recordcount:
+            msg = Messages.UPDATE_SUCCESS
+            log.info(f'All {recordcount} report records are updated successfully')
+            rc=0
+    except utils.NoRecordsFound as e:
+        log.warning('No records found for report mutation', exc_info=True)
+        rc, traceback, msg = 1, tb.format_exc(), Messages.UPLOAD_FAILED
     except Exception as e:
         msg, traceback, rc = Messages.INSERT_FAILED, tb.format_exc(), 1
         log.error('something went wrong', exc_info = True)
@@ -273,7 +310,7 @@ def perform_reportmutation(file):
 
 
 def perform_adhocmutation(file):  # sourcery skip: remove-empty-nested-block, remove-redundant-if, remove-redundant-pass
-    rc, recordcount, traceback, msg= 0, 0, 'NA', ""
+    rc, recordcount, traceback, msg= 1, 0, 'NA', ""
     try:
         if not (data := get_json_data(file)):
             raise utils.NoDataInTheFileError
@@ -318,7 +355,7 @@ def perform_adhocmutation(file):  # sourcery skip: remove-empty-nested-block, re
 
 
 def update_adhoc_record(scheduletask, jobneedrecord, details):
-    rc, recordcount, traceback, msg= 0, 0, 'NA', ""
+    rc, recordcount, traceback, msg= 1, 0, 'NA', ""
     jnid = scheduletask[0]['jobneedid']
     recordcount += 1
     obj = Jobneed.objects.get(id = jnid)
@@ -327,6 +364,7 @@ def update_adhoc_record(scheduletask, jobneedrecord, details):
     jnsz = sz.JobneedSerializer(instance = obj,data = record)
     if jnsz.is_valid(): 
         isJnUpdated = jnsz.save()
+        rc=0
     else:
         rc, traceback, msg = 1, jnsz.errors, 'Operation Failed'
 
@@ -340,11 +378,12 @@ def update_adhoc_record(scheduletask, jobneedrecord, details):
                 if jndsz.is_valid():
                     jndsz.save()
     recordcount += 1
+    rc=0
     msg = "Scheduled Record (ADHOC) updated successfully!"
     return rc, traceback, msg, recordcount
 
 def insert_adhoc_record(jobneedrecord, details):
-    rc, recordcount, traceback, msg= 0, 0, 'NA', ""
+    rc, recordcount, traceback, msg= 1, 0, 'NA', ""
     record = clean_record(jobneedrecord)
     jnsz = sz.JobneedSerializer(data = record)
 
@@ -358,6 +397,7 @@ def insert_adhoc_record(jobneedrecord, details):
                 jndsz.save()
         msg = "Record (ADHOC) inserted successfully!"
         recordcount += 1
+        rc=0
     else:
         rc, traceback = 1, jnsz.errors
     return rc, traceback, msg, recordcount
@@ -367,21 +407,22 @@ def perform_uploadattachment(file,  record, biodata):
     recordcount = msg = None
     ic(biodata)
     # ic(file, tablename, record, type(record), biodata, type(biodata))
-    try:
-        log.info("perform_uploadattachment [start+]")
+    
+    log.info("perform_uploadattachment [start+]")
 
-        file_buffer = file
-        filename    = biodata['filename']
-        peloguuid   = biodata['pelog_id']
-        peopleid    = biodata['people_id']
-        path        = biodata['path']
-        home_dir    = f'{settings.MEDIA_ROOT}/'
-        filepath    = home_dir + path
-        uploadfile  = f'{filepath}/{filename}'
-        db          = utils.get_current_db_name()
-        
-        log.info(f"file_buffer: '{file_buffer}' \npelogid: '{peloguuid}' \npeopleid: '{peopleid}' \npath: {path} home_dir: '{home_dir}' \nfilepath: '{filepath}' \nuploadfile: '{uploadfile}'")
-        
+    file_buffer = file
+    filename    = biodata['filename']
+    peopleid    = biodata['people_id']
+    path        = biodata['path']
+    ownerid     = biodata['owner']
+    onwername   = biodata['ownername']
+    home_dir    = f'{settings.MEDIA_ROOT}/'
+    filepath    = home_dir + path
+    uploadfile  = f'{filepath}/{filename}'
+    db          = utils.get_current_db_name()
+    
+    log.info(f"file_buffer: '{file_buffer}' \ownerid: '{ownerid}' \npeopleid: '{peopleid}' \npath: {path} home_dir: '{home_dir}' \nfilepath: '{filepath}' \nuploadfile: '{uploadfile}'")
+    try:
         with transaction.atomic(using = db):
             iscreated = get_or_create_dir(filepath)
             log.info(f'Is FilePath created? {iscreated}')
@@ -396,11 +437,19 @@ def perform_uploadattachment(file,  record, biodata):
     try:
         obj = insertrecord(record, 'attachment')
         log.info(f'Attachment record inserted: {obj.filepath}')
-        pel = PeopleEventlog.objects.get(uuid=peloguuid)
-        log.info(f'Event Type: {pel.peventtype.tacode}')
-        if pel.peventtype.tacode in ['SELF', 'MARK']:
+        
+        model = get_model_or_form(onwername.lower())
+        eobj = model.objects.get(uuid=ownerid)
+        
+        # if jobneed instance has alerts and attachmentcount > 0 the send alert mail
+        if isinstance(eobj, Jobneed) and eobj.alerts == True and eobj.attachmentcount > 0:
+            alert_sendmail(eobj, 'observation', atts=True)
+            alert_sendmail(eobj, 'deviation', atts=True)
+            
+        if hasattr(eobj, 'peventtype'): log.info(f'Event Type: {eobj.peventtype.tacode}')
+        if hasattr(eobj, 'peventtype') and eobj.peventtype.tacode in ['SELF', 'MARK']:
             from .tasks import perform_facerecognition_bgt
-            results = perform_facerecognition_bgt.delay(peloguuid, peopleid, obj.owner, home_dir, uploadfile, db)
+            results = perform_facerecognition_bgt.delay(ownerid, peopleid, obj.owner, home_dir, uploadfile, db)
             log.warning(f"face recognition status {results.state}")
     except Exception as e:
         log.error('something went wrong while performing face recognition', exc_info = True)
@@ -416,103 +465,77 @@ def send_alert_mails_if_any(attdata):
     getjobneedrecord()
     pass
 
-def alert_observation(pk):
-    body=""
-    jobneedRecord = Jobneed.objects.get_jobneed_observation(pk)
-    log.info(f'jobneedRecord {"Found" if jobneedRecord.count() else "Not found"}')
-    if jobneedRecord:
-        toemails = getEmails(jobneedRecord[0])
-        subject= f"[READINGS ALERT] Site: {jobneedRecord[0].bu.buname}, {jobneedRecord[0].asset.identifier.taname}: [{jobneedRecord[0].asset.assetcode}] {jobneedRecord[0].asset.assetname} - readings out of range"
-        if jndRecords := JobneedDetails.objects.get_jnd_observation(jobneedRecord[0].id):
-            tdStyle = "width='120' style='background:#abe7ed;font-weight:bold;font-size:16px'"
-            body+= "<br><b>Some readings were out of permissible limits. Details are below...</b><br/><br/>"
-            body+= "<table style='background:#eef1f5' cellpadding='8' cellspacing='2'>"
-            body += f'<tr><td {tdStyle}>Site</td><td>{jndRecords[0]["buname"]}</td></tr>'
-            body += f'<tr><td {tdStyle}>{jndRecords[0]["asset_identifier"]}</td><td>[{jndRecords[0]["assetcode"]}] {jndRecords[0]["assetname"]}</td></tr>'
-
-            body += f'<tr><td {tdStyle}>Performed by</td><td>[{jndRecords[0]["peoplecode"]}] {jndRecords[0]["peoplename"]}</td></tr>'
-
-            body+= "<tr><td colspan= 2>"
-            body+= "<table style='background:#EEF1F5;' cellpadding = 8 cellspacing = 2 border = 1>"
-            body+= "<tr style='background:#ABE7ED;font-weight:bold;font-size:14px;'><th>Slno</th><th>Question</th><th>Answer</th><th>Option</th><th>Min</th><th>Max</th><th>Alert On</th><tr>"
-            for rd in enumerate(jndRecords):
-                body+= "<tr %s>"     %("style='color:red;'" if rd[1]["alerts"] is True else "")
-                body += f"<td>{rd.seqno}</td>"
-                body += f"<td>{rd.questionname}</td>"
-                body += f"<td>{rd.answer}</td>"
-                body += f"<td>{rd.option}</td>"
-                body += f"<td>{rd.min}</td>"
-                body += f"<td>{rd.max}</td>"
-                body += f"<td>{rd.alerton}</td>"
-                body+= "</tr>"
-            body+= "</table>"
-            body+= "</td></tr></table>"
-        log.info(f'alert_observation body {body}')
-        # TODO sendEmail()
-        if jobneedRecord[0].iscritical:
-            ticketdesc = f"[READINGS ALERT] {jobneedRecord[0].asset.identifier.taname}: [{jobneedRecord[0].asset.assetcode}]{jobneedRecord[0].asset.assetname} - readings out of range" 
-            # TODO createTicket
-            # TODO snedTicketEmail()
 
 
 
-def alert_report(pk):
-    body=''
-    hdata = Jobneed.objects.get_jobneed_for_report(pk)
-    if len(hdata) >0:
-        bdata = Jobneed.objects.get_hdata_for_report(pk)
-        if len(bdata) >0:
-            subject= f"[{hdata[0].idenfiername} ALERT] Site: {hdata[0].buname} | {hdata[0].jobdesc} - audit responses out of range"
-            tdstyle = "width='120' style='background:#abe7ed;font-weight:bold;font-size:16px'"
-            body += "<br><b>Some audit responses were out of permissible limits. Details are below...</b><br/><br/>"
-            body += "<table style='background:#eef1f5' cellpadding='8' cellspacing='2'>"
-            body+= f"<tr><td {tdstyle}>Site</td><td>{hdata[0].buname}</td></tr>"
-            body+= f"<tr><td {tdstyle}>{hdata[0].identifiername}</td><td>{hdata[0].jobdesc}</td></tr>"
-            body+= f"<tr><td {tdstyle}>Surveyor</td><td>[{hdata[0].peoplename}] {hdata[0].peoplename}</td></tr>"
-            body+= f"<tr><td {tdstyle}>Datetime</td><td>{hdata[0].cplandatetime} (24Hr)</td></tr>"
-            body+= "<tr><td colspan= 2>"
-            body+= "<table style='background:#EEF1F5;' cellpadding = 8 cellspacing = 2 border = 1>"
-            body += "<tr style='background:#ABE7ED;font-weight:bold;font-size:14px;'><th>Slno</th><th>Question</th><th>Answer</th><th>Option</th><th>Min</th><th>Max</th><th>Alert On</th></tr>"
+def get_email_recipients(jobneed):
+    from apps.peoples.models import People
+    from apps.onboarding.models import Bt
+    
+    #get email of siteincharge
+    siemails = People.objects.get_siteincharge_emails(jobneed.bu_id)
+    #get email of client admins
+    adm_emails = People.objects.get_admin_emails(jobneed.client_id)
+    return siemails + adm_emails
+    
 
-            toemails = getEmails(hdata[0])
-            prevsec= ""
-            flag= False
-            for bd in bdata:
-                if prevsec == "" or prevsec != bd["jobdesc"]:
-                    prevsec= bd["jobdesc"]
-                    flag= True
-                if flag:
-                    body+= "<tr style='background: #F0F0F0;font-weight:bold;font-size:14px;'><td colspan='7'>[%s] %s</td></tr>" %(bd["pseqno"], bd["jobdesc"])
-                body+= "<tr {}>".format("style='color:red;'" if bd["alerts"] is True else "")
-                body+= f"<td>{bd['cseqno']}</td>"
-                body+= f"<td>{bd['questionname']}</td>"
-                body+= f"<td>{bd['answer']}</td>"
-                body+= f"<td>{bd['option']}</td>"
-                body+= f"<td>{bd['min']}</td>"
-                body+= f"<td>{bd['max']}</td>"
-                body+= f"<td>{bd['alerton']}</td>"
-                body+= "</tr>"
-                flag= False
-            body+= "</table>"
-            body+= "</td></tr></table>"
-            # TODO send_emaill()
+def get_context_for_mailtemplate(jobneed, subject):
+    from apps.activity.models import JobneedDetails
+    return  {
+        'details'     : list(JobneedDetails.objects.get_e_tour_checklist_details(jobneedid=jobneed.id)),
+        'when'        : jobneed.endtime.strftime("%d-%m-%Y %H:%M"),
+        'tourtype'    : jobneed.identifier,
+        'performedby' : jobneed.performedby.peoplename,
+        'site'        : jobneed.bu.buname,
+        'subject'     : subject,
+    }
 
 
-def alert_deviation(pk):
-    R = Jobneed.objects.get_deviation_jn(pk)
-    if R.count() > 0:
-        toemails = getEmails(R)
-        subject =  f"[DEVIATION ALERT] Route Deviation by Patrol Officer [{R[0].peoplename}]"
-        body = f'<br><b>There has been a Route Deviation by Patrol Officer {R[0].peoplename} at {R[0].plandatetime} (24Hrs) to {R[0].assetname} </b><br/>'
-        body+= "<br>Given below are details of the Patrol Officer.<br/><br/>"
-        body+= "<table style='background:#eef1f5' cellpadding='8' cellspacing='2'>"
-        tdstyle = "width='120' style='background:#abe7ed;font-weight:bold;font-size:16px"
-        body+= f"<tr><td {tdstyle}>Description</td><td>%s</td></tr>"
-        body+= f"<tr><td {tdstyle}>Planned On</td><td>%s</td></tr>"
-        body+= f"<tr><td {tdstyle}>Performed On</td><td>%s</td></tr>"
-        body+= f"<tr><td {tdstyle}>Checkpoint</td><td>%s</td></tr>"
-        body+= f"<tr><td {tdstyle}>Code</td><td>%s</td></tr>"
-        body+= f"<tr><td {tdstyle}>Name</td><td>%s</td></tr>"
-        body+= f"<tr><td {tdstyle}>Mobile</td><td>%s</td></tr>"
-        body+= "</table>"
-        # TODO send_email()
+def alert_sendmail(obj, event, atts=False):
+    '''
+    takes uuid, ownername (which is the model name) and event (observation or deviation)
+    gets the record from model if record has alerts set to true then send mail based on event
+    '''
+    if event == 'observation': alert_observation(obj, atts)
+    if event == 'deviation': alert_deviation(obj, atts)
+
+
+
+
+def alert_observation(jobneed, atts=False):
+    # sourcery skip: extract-method, remove-redundant-fstring, switch
+    from django.template.loader import render_to_string
+    
+    try:
+        if jobneed.alerts:
+            recipents = get_email_recipients(jobneed)
+            if jobneed.identifier == 'EXTERNALTOUR':
+                subject = f"[READINGS ALERT] Site with SOl id: [{jobneed.bu.solid}], {jobneed.bu.buname} having checklist [{jobneed.qset.qsetname}] - readings out of range"
+            elif jobneed.identifier == 'INTERNALTOUR':
+                subject = f"[READINGS ALERT] Checkpoint with Name: {jobneed.asset.assetname} at Site: {jobneed.bu.buname} having checklist [{jobneed.qset.qsetname}] - readings out of range"
+            else:
+                subject = f"[READINGS ALERT] Site with Name: {jobneed.bu.buname} having checklist [{jobneed.qset.qsetname}] - readings out of range"
+            context = get_context_for_mailtemplate(jobneed, subject)
+            
+            html_message = render_to_string('observation_mail.html', context)
+            log.info(f"Sending alert mail with subject {subject}")
+            msg = EmailMessage()
+            msg.subject = subject
+            msg.body  = html_message
+            msg.from_email = settings.EMAIL_HOST_USER
+            msg.to = recipents
+            if atts:
+                #add attachments to msg
+                pass
+            msg.send()
+            log.info(f"Alert mail sent to {recipents} with subject {subject}")
+    except model.DoesNotExist as e:
+        log.error(f"Record not found for uuid {uuid}", exc_info=True)
+    except Exception as e:
+        log.error(f"Error while sending alert mail", exc_info=True)
+        
+        
+
+def alert_deviation(uuid, ownername):
+    pass
+

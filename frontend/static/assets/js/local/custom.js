@@ -42,7 +42,7 @@ function populateQsetForm(questionid, url){
               let selected = performIntersection(optionArr, alertonArr)
               load_alerton_field(optionArr, selected, "#DTE_Field_alerton")
           } if(qsetbng.alerton){
-              adjust_above_below(qsetbng.alerton, for_table=false, editor=true)
+              adjust_above_below(qsetbng.alerton, for_table=false, foreditor=true)
           }
       }
   })
@@ -868,8 +868,8 @@ function cleanData(data) {
   return data;
 }
 
-function adjust_above_below(data, for_table = false, editor=false) {
-  console.log(data, editor)
+function adjust_above_below(data, for_table = false, foreditor=false) {
+  console.log(data, foreditor)
   if (
     typeof data.id_alertbelow !== "undefined" ||
     (typeof data.id_alertabove !== "undefined" && for_table)
@@ -883,8 +883,8 @@ function adjust_above_below(data, for_table = false, editor=false) {
     (data.includes("&gt;") && !for_table)
   ) {
     var nums = data.split(", ");
-    if(editor){
-      console.log(editor)
+    if(foreditor){
+      console.log(foreditor)
       $("#DTE_Field_alertbelow").val(parseFloat(nums[0].replace(/[^0-9\.]+/g, "")));
       $("#DTE_Field_alertabove").val(parseFloat(nums[1].replace(/[^0-9\.]+/g, "")));
     }else{
@@ -1305,10 +1305,9 @@ $(document).ready(() => {
 
 //============================================== QSB EDITOR FUNCTIONS START===========================================//
 function getCurrentEditingRow(editor, table){
-  console.log(editor, "editor")
-  var rowModifier = editor.modifier();
-  return rowModifier ? table.row(rowModifier).data() : 'None'
+  return table.row({selected:true}).data()
 }
+  
 
 function hideAndShowFields(selected, editor){
   if(typeof selected !== 'undefined'){

@@ -81,27 +81,17 @@ function updateAssignedSitesTable(btime, checkListId, checkListName) {
 
 function calculateAndDisplayRoute(data, routeFreq, optimize=false) {
   if (data.length > 1) {
-    // if (routeFreq > 1) {
-    //   //copy first obj
-
-    //   let copiedFirstObject = JSON.parse(JSON.stringify(data[0]));
-    //   data[data.length] = copiedFirstObject;
-    // }
-
     directionService.route(
       getDirectionConfig(data, optimize),
       function (response, status) {
         if (status === "OK") {
           data = calculateLatLngPoints(response, data, routeFreq);
           data = calculateDistanceDuration(response, data);
-          //fpoint = ManageFrequenciedRoutes(data, routeFreq);
           var rowData = data//routeFreq > 1 ? fpoint : data;
-          //data = checkFrequenciedData(R[0], routeFreq, R[1], $("#id_breaktime").val())
           reloadAssignedSitesTable(rowData);
           reCaclTime();
           isDirectionSaved = true;
         } else {
-          //google maps fetching error
           show_error_alert(
             `Directions request failed due to ${status}`,
             "GMaps Error!"
@@ -476,7 +466,6 @@ function setShiftMin(_shift) {
 
     _shiftMinute = stime > etime ? 1440 + etime - stime : etime - stime;
 
-    //$("#lblSTime").html(_shiftMinute + " Min");
     $("#lblSTime").html(secondsToString(_shiftMinute * 60));
   }
 }

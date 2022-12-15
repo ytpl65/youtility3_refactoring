@@ -330,7 +330,6 @@ var israndom = "{{ externaltourform.instance.other_info['is_randomized'] }}";
     }
 
     function showCpDetails(id){
-        
         $('#id_checklistdetails').modal('show')
         ajaxData.jobneedid=id
         ajaxData.action='checklist_details'
@@ -392,7 +391,7 @@ var israndom = "{{ externaltourform.instance.other_info['is_randomized'] }}";
                     }
                 },
                 {title:'Details',data:null, defaultContent:null, render:function(data, type, row, meta){
-                        return  `<a href="#" onClick='showCpDetails(${row['id']})'>View Details</a>`
+                        return  `<button class="btn btn-link p-0" onClick='showCpDetails(${row['id']})'>View Details</button>`
                     }
                 }
             ],

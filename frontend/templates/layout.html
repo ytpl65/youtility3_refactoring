@@ -281,7 +281,7 @@
                   </a>
                   <ul class="dropdown-menu" aria-labelledby="user-info">
                     <li><a class="dropdown-item" href="#">Change Password</a></li>
-                    <li><a class="dropdown-item" href="#">Switch Site</a></li>
+                    <li><a class="dropdown-item" href="javascript:changeSiteReq();">Switch Site</a></li>
                     <li><a class="dropdown-item" href="{{ url('logout') }}">Log Out</a></li>
                   </ul>
                 </div>
@@ -392,81 +392,91 @@
 <!-- bundle -->
 
 <!-- end demo js-->
+
+
 {% endblock body %}
 {# ==== ==  BODY END======= #}
-
-{% block extra_scripts %}
-{# <script src="//cdnjs.cloudflare.com/ajax/libs/select2/4.0.2/js/select2.min.js" type="text/javascript"></script>
-<script src="{{ static('assets/plugins/custom/DataTables/datatables.min.js') }}" type="text/javascript"></script>
-<script src="{{ static('assets/plugins/custom/Editor-2.0.8/js/dataTables.editor.min.js') }}" type="text/javascript"></script>
-<script src="{{ static('assets/plugins/custom/Editor-2.0.8/js/editor.select2.js') }}" type="text/javascript"></script> #}
+{% block switchSiteScript %}
 <script>
-// Create an Editor instance with a Select2 field and data
-//var editor; // use a global for the submit and return data rendering in the examples
-// 
-//$(document).ready(function() {
-//    editor = new $.fn.dataTable.Editor( {
-//        table: "#example",
-//        fields: [ {
-//                label: "First name: ",
-//                name: "first_name"
-//            }, {
-//                label: "Last name: ",
-//                name: "last_name"
-//            }, {
-//                label: "Position: ",
-//                name: "position"
-//            }, {
-//                label: "Office: ",
-//                name: "office"
-//            }, {
-//                label: "Extension: ",
-//                name: "extn"
-//            }, {
-//                label: "Start date: ",
-//                name: "start_date",
-//                type: "datetime"
-//            }, {
-//                label: "Salary: ",
-//                name: "salary"
-//            }
-//        ]
-//    } );
-//
-//    editor.add( {
-//      "label": "Make of automobile: ",
-//      "name": "automake",
-//      "type": "select2",
-//      "opts": {
-//          "allowClear": true,
-//          "placeholder": {
-//              "id": "",
-//              "text": "(Does not own automobile)"
-//          }
-//      }
-//  })
-// 
-//    $('#example').DataTable( {
-//        dom: "Bfrtip",
-//        columns: [
-//            { data: null, render: function ( data, type, row ) {
-//                // Combine the first and last names into a single table field
-//                return data.first_name+' '+data.last_name;
-//            } },
-//            { data: "position" },
-//            { data: "office" },
-//            { data: "extn" },
-//            { data: "start_date" },
-//            { data: "salary", render: $.fn.dataTable.render.number( ', ', '.', 0, '$' ) }
-//        ],
-//        select: true,
-//        buttons: [
-//            { extend: "create", editor: editor },
-//            { extend: "edit",   editor: editor },
-//            { extend: "remove", editor: editor }
-//        ]
-//    } );
-//} );
+  //get_sites to poulate the site dropdown
+  function getSites(url){
+    fire_ajax_get({'url':url})
+    .done((data, status, xhr) => {
+      var client_site= "{{ request.session.clientcode }}.{{ request.session.sitecode }}"
+      $("#id_defaultsite").val(client_site);
+      $("#id_assignesite").empty();
+      $("#id_assignesite").append($("<option></option>").val(" ").html("----------"));
+      if(data!=undefined){
+        console.log("data.rows :", data);
+        data.forEach(function(row, idx) {
+            if(row.id != session.bu_id){
+                $("#id_assignesite").append($("<option></option>").val(row.id).html(row.buname + " - [" + row.bucode +"]"));
+            }
+        });
+      }
+    })
+    .fail((xhr, status, error) =>{
+      console.log("getSites error", error);
+    })
+  }
+
+  function changeSiteReq(){
+    var session = "{{ request.session.bu_id }}";
+    if ("{{ request.session }}".toUpperCase() == "TRUE"){
+      let url = "{{ url('activity:get_allsites') }}"
+      getSites(url)
+    }
+    else{
+      let url = "{{ url('activity:get_assignedsites') }}"
+      getSites(url)
+    }
+    $('#popup_switch_site').modal('show');
+  }
+
+  $(document).ready(function() {
+    $("#id_assignesite").select2({
+      dropdownParent: $("#popup_switch_site")
+    });
+    $("#btnSwitchSite").click(function(){
+      $('#SwitchSiteForm').submit();
+    });
+    
+    $('#SwitchSiteForm').submit(function(e){
+      e.preventDefault();
+      var form = $(this);
+
+      const params = {url:"{{ url('activity:switchsite') }}"}
+      const payLoad = {buid:$("#id_assignesite").val(), csrfmiddlewaretoken:'{{ csrf_token }}'}
+      fire_ajax_form_post(params, payLoad)
+      .done((response, status, xhr) => {
+        if(response.rc==1){
+          console.log("if response", response.rc);
+          $('.site_err_msg').html("Error: "+response.errMsg);
+          $("#site_err_popup").fadeTo(2000, 1000).slideUp(800, function(){
+          $("#site_err_popup").slideUp(1000);
+          });
+        }else{
+          console.log("else response", response.rc);
+          var count = 3;
+          $('.site_success_msg').html("Site switching in "+ count +" seconds");
+          $("#site_success_popup").show();
+          var timer = setInterval(function() {
+            if (count !== 0) {
+              $('.site_success_msg').html("Site switching in "+ count-- +" seconds");
+            } else {
+            clearInterval(timer);
+            setTimeout(location.reload.bind(location), 0);
+            }
+          }, 1000);
+        }
+      })
+      .fail((xhr, status, error) => {
+        $('.site_err_msg').html("Error: "+data["msg"]);
+      });
+    });
+  });
 
 </script>
+{% endblock switchSiteScript %}
+{% block extra_scripts %}
 {% endblock extra_scripts %}

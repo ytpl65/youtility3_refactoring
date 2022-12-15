@@ -347,6 +347,7 @@ def save_user_session(request, people):
         request.session['assignedsites'] = list(pm.Pgbelonging.objects.get_assigned_sites_to_people(people.id).values_list('buid', flat=True))
         request.session['clientcode'] = request.user.client.bucode
         request.session['sitename'] = request.user.bu.buname
+        request.session['sitecode'] = request.user.bu.bucode
         request.session['google_maps_secret_key'] = settings.GOOGLE_MAP_SECRET_KEY
     except ObjectDoesNotExist:
         logger.error('object not found...', exc_info=True)
@@ -700,10 +701,10 @@ def get_or_create_none_qsetblng():
     'A None qsetblng with seqno -1'
     obj, _ = am.QuestionSetBelonging.objects.get_or_create(
         id=1,
-        defaults={
+    defaults={
             'qset': get_or_create_none_qset(),
             'question': get_or_create_none_question(),
-            'answertype': 'NUMERIC', 'id': 1,
+            'answertype': 'NONE', 'id': 1,
             'ismandatory': False, 'seqno': -1}
     )
     return obj
@@ -1141,6 +1142,8 @@ class NoDbError(Error):
 
 
 class RecordsAlreadyExist(Error):
+    pass
+class NoRecordsFound(Error):
     pass
 
 

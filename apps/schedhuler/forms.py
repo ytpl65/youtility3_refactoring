@@ -353,17 +353,7 @@ class E_TourFormJobneed(JobNeedForm):
     def __init__(self, *args, **kwargs):
     #     '''Initializes form add attributes and classes here'''
         super(JobNeedForm, self).__init__(*args, **kwargs)
-    #     ic('E_TourFormJobneed')
-    #     self.request = kwargs.pop('request', None)
-    #     self.fields['plandatetime'].input_formats   = settings.DATETIME_INPUT_FORMATS
-    #     self.fields['expirydatetime'].input_formats = settings.DATETIME_INPUT_FORMATS
-    #     self.fields['identifier'].widget.attrs      = {"style": "display:none"}
-    #     for f in self.fields:
-    #         ic(f)
-    #         if self.fields[f] in ['starttime', 'priority', 'scantype', 'jobstatus', 'people', 'tickercategory',
-    #                           'expirydatetime', 'plandatetime', 'starttime', 'endtime', 'performedby', 'gracetime' ]:
-    #             self.fields[f].widget.attrs.update({'disabled': True})
-    #     self.fields['endtime'].label                = 'End Time'
+        self.fields['endtime'].label = "End Time"
         for k in ['scantype', 'starttime', 'endtime']:
             self.fields[k].widget.attrs.pop('style')
             if k in ['starttime', 'endtime']:
