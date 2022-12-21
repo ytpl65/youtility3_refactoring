@@ -345,7 +345,7 @@ class Checklist(View, LoginRequiredMixin):
             resp = render(request, self.params['template_form'], context = cxt)
 
         elif R.get('action', None) == "delete" and R.get('id', None):
-            resp = utils.render_form_for_delete(request, self.params, True)
+            resp = utils.render_form_for_delete(request, self.params, False)
 
         elif R.get('id', None):
             log.info('detail view requested')

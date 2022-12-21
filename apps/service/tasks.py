@@ -16,7 +16,6 @@ from .validators import clean_record
 from pprint import pformat
 from intelliwiz_config.celery import app
 from celery.utils.log import get_task_logger
-from deepface import DeepFace
 import json
 log = get_task_logger(__name__)
 
@@ -483,6 +482,7 @@ def perform_facerecognition_bgt(self, pelogid, peopleid, pel_ownerid, home_dir, 
                             default_image_path = home_dir + default_image_path
                             log.info(f"default image path:{default_image_path} and uploaded file path:{uploadfile}")
                             log.info("deepface is imported going to verify 2 images")
+                            from deepface import DeepFace
                             fr_results = DeepFace.verify(img1_path = default_image_path, img2_path = uploadfile)
                             log.info(f"deepface verification completed and results are {fr_results}")
                             if PeopleEventlog.objects.update_fr_results(fr_results, pelogid, peopleid, db):
