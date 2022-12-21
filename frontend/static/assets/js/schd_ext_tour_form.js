@@ -129,7 +129,7 @@ function getDirectionConfig(data, optimize) {
   return {
     origin: startPoint,
     destination: endPoint,
-    waypoints: wayPoints,
+    waypoints: [],
     travelMode: "DRIVING",
     optimizeWaypoints: optimize,
   };

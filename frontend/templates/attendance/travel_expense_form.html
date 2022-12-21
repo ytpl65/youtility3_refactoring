@@ -136,6 +136,20 @@ Conveyance
 <div class ="card shadow-lg" id="journeymap">
     <div class="card-header mb-0">
         <p class="card-title ch4">Conveyance Journey Path &nbsp;&nbsp;<i class="fas fa-map-marked-alt ch4"></i></p>
+        <div class="card-toolbar">
+            <div class="form-check">
+                <input class="form-check-input" type="radio" name="Route" id="actual_route">
+                <label class="form-check-label pe-2" for="actual_route">
+                    Actual Performed
+                </label>
+                </div>
+                <div class="form-check">
+                <input class="form-check-input" type="radio" name="Route" id="google_route" checked>
+                <label class="form-check-label" for="google_route">
+                    Google Recommended
+                </label>
+            </div>
+        </div>
     </div>
     <div class="card-body">
         <div id="map" style="height:450px"></div>
@@ -186,7 +200,9 @@ Conveyance
 //global vars
 var map;
 var lineCoords;
-
+var googleMapsResp;
+var actualResp;
+var directionsRenderer 
 //initialize map
 function initAutocomplete(){
     map = new google.maps.Map(document.getElementById("map"), {
@@ -195,7 +211,7 @@ function initAutocomplete(){
         mapTypeId: "roadmap",
     });
     const directionsService = new google.maps.DirectionsService();
-    const directionsRenderer = new google.maps.DirectionsRenderer();
+    directionsRenderer = new google.maps.DirectionsRenderer();
     const geocoder = new google.maps.Geocoder();
 
     getJourneyCoords("{{ conveyanceform.instance.id }}")
@@ -210,11 +226,13 @@ function initAutocomplete(){
         })
         
         if(resp.obj.length > 0){
-            drawConveyancePath(resp)
-            //plotPoints(resp)
+            actualResp = resp
+            //drawConveyancePath(resp)
+            plotPoints(resp)
             var dirConfig = getDirectionConfig(resp.obj[0])
             getRoute(directionsService, dirConfig, function(response) {
                 console.log(response, "response")
+                googleMapsResp = response
                 directionsRenderer.setDirections(response)
             })
         }
@@ -264,7 +282,7 @@ function plotPoints(data){
 
 //draw path on google map
 function drawConveyancePath(data){
-    if(data['obj'].length > 0){
+    if(data && data['obj'].length > 0){
         const journeyPath = new google.maps.Polyline({
             path: data.obj[0].path,
             geodesic: true,
@@ -279,25 +297,25 @@ function drawConveyancePath(data){
         journeyPath.setMap(map);
 
         const InfoString = 
-                `<div class="card text-dark bg-secondary" style="max-width: 18rem;">
-                    <div class="card-body p-0">
-                        <h5>Start Point</h5>
-                        <table class="table-secondary">
-                            {% if conveyanceform.instance.id %}
-                            <tbody>
-                                <tr class="table-secondary border border-secondary"><td>People:</td><td>{{ conveyanceform.instance.people.peoplename }}</td></tr>
-                                <tr class="table-secondary border border-secondary"><td>Start Location:</td><td>{{ conveyanceform.instance.startlocation.coords }}</td></tr>
-                                <tr class="table-secondary border border-secondary"><td>End Location:</td><td>{{ conveyanceform.instance.endlocation.coords }}</td></tr>
-                                <tr class="table-secondary border border-secondary"><td>Start Time: </td><td>{{ conveyanceform.instance.punchintime }}</td></tr>
-                                <tr class="table-secondary border border-secondary"><td>End Time:</td><td>{{ conveyanceform.instance.punchouttime }}</td></tr>
-                                <tr class="table-secondary border border-secondary"><td>Transport Modes:</td><td>{{ conveyanceform.instance.transportmodes }}</td></tr>
-                                <tr class="table-secondary border border-secondary"><td>Duration: </td><td>{{ conveyanceform.instance.duration }}mins</td></tr>
-                                <tr class="table-secondary border border-secondary"><td>Distance:</td><td>{{ conveyanceform.instance.distance }}Kms</td></tr>
-                            </tbody>
-                            {% endif %}
-                        </table>
-                    </div>
-                </div>`
+            `<div class="card text-dark bg-secondary" style="max-width: 18rem;">
+                <div class="card-body p-0">
+                    <h5>Start Point</h5>
+                    <table class="table-secondary">
+                        {% if conveyanceform.instance.id %}
+                        <tbody>
+                            <tr class="table-secondary border border-secondary"><td>People:</td><td>{{ conveyanceform.instance.people.peoplename }}</td></tr>
+                            <tr class="table-secondary border border-secondary"><td>Start Location:</td><td>{{ conveyanceform.instance.startlocation.coords }}</td></tr>
+                            <tr class="table-secondary border border-secondary"><td>End Location:</td><td>{{ conveyanceform.instance.endlocation.coords }}</td></tr>
+                            <tr class="table-secondary border border-secondary"><td>Start Time: </td><td>{{ conveyanceform.instance.punchintime }}</td></tr>
+                            <tr class="table-secondary border border-secondary"><td>End Time:</td><td>{{ conveyanceform.instance.punchouttime }}</td></tr>
+                            <tr class="table-secondary border border-secondary"><td>Transport Modes:</td><td>{{ conveyanceform.instance.transportmodes }}</td></tr>
+                            <tr class="table-secondary border border-secondary"><td>Duration: </td><td>{{ conveyanceform.instance.duration }}mins</td></tr>
+                            <tr class="table-secondary border border-secondary"><td>Distance:</td><td>{{ conveyanceform.instance.distance }}Kms</td></tr>
+                        </tbody>
+                        {% endif %}
+                    </table>
+                </div>
+            </div>`
 
         const startInfo = new google.maps.InfoWindow({
             content: InfoString,
@@ -385,6 +403,23 @@ $(document).ready(function(){
         })
         
     })
+
+    //on click google_route radio checked directionsRenderer setMap to googleMapsResp
+    $("#google_route").on('change', () => {
+        if($("#google_route").is(':checked')){
+            console.log('changed......')
+            directionsRenderer.setDirections(null)
+            drawConveyancePath(null)
+        }else{
+            directionsRenderer.setDirections(null)
+            drawConveyancePath(actualResp)
+        }
+    })
+
+
+
+
+
 
 })
 </script>

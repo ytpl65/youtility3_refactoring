@@ -13,7 +13,10 @@ from rest_framework.response import Response
 from . import tasks
 from . import types as ty
 from graphene_file_upload.scalars import Upload
+from rest_framework.permissions import AllowAny
+from pprint import pformat
 import zipfile
+import json
 import gzip
 
 from logging import getLogger
@@ -176,17 +179,25 @@ class UploadAttMutaion(graphene.Mutation):
     output = graphene.Field(ty.ServiceOutputType)
 
     class Arguments:
-        record = graphene.JSONString(required = True)
-        file = Upload(required = True) 
-        biodata = graphene.JSONString(required = True)
+        file    = Upload(required = True)
+        biodata = graphene.List(graphene.String,required = True)
+        record  = graphene.List(graphene.String,required = True)
 
     @classmethod
     def mutate(cls,root, info, file,  record, biodata):
-        log.info("upload-attachment mutations start [+]")
+        log.error("upload-attachment mutations start [+]")
         try:
-            with gzip.open(file, 'rb   ') as fl:
-                o = sutils.perform_uploadattachment(fl, record, biodata)
-                log.info(f"Response: {o.recordcount}, {o.msg}, {o.rc}, {o.traceback}")
+            recordcount=0
+            log.info(f"type of file is {type(file)}")
+            with zipfile.ZipFile(file) as zref:
+                for file, rec, bd in zip(zref.filelist, record, biodata):
+                    log.info(f'file{type(file)} \nbiodata:{type(bd)} \nrecord:{type(rec)}')
+                    bd, rec = json.loads(bd), json.loads(rec)
+                    with zref.open(file) as fl:
+                        o = sutils.perform_uploadattachment(fl, rec, bd)
+                        recordcount += o.recordcount
+                    log.info(f"Response: {o.recordcount}, {o.msg}, {o.rc}, {o.traceback}")
+                o.recordcount = recordcount
                 return UploadAttMutaion(output = o)
         except Exception as e:
             log.error(f"Exception: {e}", exc_info=True)
@@ -195,20 +206,21 @@ class UploadAttMutaion(graphene.Mutation):
 
 class UploadFile(APIView):
     parser_classes = [MultiPartParser, FileUploadParser, JSONParser]
+    permission_classes = [AllowAny]
     
     def post(self, request, format=None):
+        log.info(f"request.data: {pformat(request.data)}")
+        
         file    = request.data['file']
-        biodata = request.data['biodata']
-        record  = request.data['record']
-        ic(file, biodata, record)
-        ic(type(file), type(biodata), type(record))
+        biodata = json.loads(request.data['biodata'])
+        record  = json.loads(request.data['record'])
+        
         output = sutils.perform_uploadattachment(file, record, biodata)
-        return Response(data={'rc':output.rc, 'msg':output.msg, 
+        resp = Response(data={'rc':output.rc, 'msg':output.msg, 
             'recordcount':output.recordcount, 'traceback':output.traceback})
+        log.warning(f'Response:{pformat(resp.data)}')
+        return resp
         
-        
-        
-
 
 
 class AdhocMutation(graphene.Mutation):

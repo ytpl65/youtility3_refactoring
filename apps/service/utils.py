@@ -83,7 +83,7 @@ def update_record(details, jobneed_record, JnModel, JndModel):
             log.info("parent jobneed is valid and saved successfully")
             if isJndUpdated := update_jobneeddetails(details, JndModel):
                 log.info('parent jobneed and its details are updated successully')
-                if jobneed.alerts and jobneed.attachment_count == 0:
+                if jobneed.alerts and jobneed.attachmentcount == 0:
                     alert_sendmail(jobneed, 'observation')
                     alert_sendmail(jobneed, 'deviation')
                 return True
@@ -435,6 +435,7 @@ def perform_uploadattachment(file,  record, biodata):
         rc, traceback, msg = 1, tb.format_exc(), Messages.UPLOAD_FAILED
         log.error('something went wrong', exc_info = True)
     try:
+        record.pop('localfilepath')
         obj = insertrecord(record, 'attachment')
         log.info(f'Attachment record inserted: {obj.filepath}')
         
