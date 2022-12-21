@@ -63,8 +63,11 @@ Conveyance
                 <div class="col-md-4 mb-3">
                     {{ conveyanceform.duration.label_tag() }}
                 </div>
-                <div class="col-md-8">
+                <div class="col-md-6">
                     {{ conveyanceform.duration }}
+                </div>
+                <div class="col-md-2 ps-2 d-flex align-items-end">
+                    <h4>Minutes</h4>
                 </div>
             </div>
             
@@ -75,7 +78,7 @@ Conveyance
                 <div class="col-md-6 d-flex d-inline">
                     {{ conveyanceform.distance }}
                 </div>
-                <div class="col-md-2 d-flex align-items-end">
+                <div class="col-md-2 ps-2 d-flex align-items-end">
                     <h4>Kms</h4>
                 </div>
             </div>
@@ -136,7 +139,7 @@ Conveyance
 <div class ="card shadow-lg" id="journeymap">
     <div class="card-header mb-0">
         <p class="card-title ch4">Conveyance Journey Path &nbsp;&nbsp;<i class="fas fa-map-marked-alt ch4"></i></p>
-        <div class="card-toolbar">
+        <div class="card-toolbar d-none">
             <div class="form-check">
                 <input class="form-check-input" type="radio" name="Route" id="actual_route">
                 <label class="form-check-label pe-2" for="actual_route">
@@ -211,7 +214,9 @@ function initAutocomplete(){
         mapTypeId: "roadmap",
     });
     const directionsService = new google.maps.DirectionsService();
-    directionsRenderer = new google.maps.DirectionsRenderer();
+    directionsRenderer = new google.maps.DirectionsRenderer({
+        map:map, suppressMarkers: true
+    });
     const geocoder = new google.maps.Geocoder();
 
     getJourneyCoords("{{ conveyanceform.instance.id }}")
@@ -227,8 +232,8 @@ function initAutocomplete(){
         
         if(resp.obj.length > 0){
             actualResp = resp
-            //drawConveyancePath(resp)
-            plotPoints(resp)
+            drawConveyancePath(resp)
+            //plotPoints(resp)
             var dirConfig = getDirectionConfig(resp.obj[0])
             getRoute(directionsService, dirConfig, function(response) {
                 console.log(response, "response")
@@ -256,7 +261,10 @@ function getJourneyCoords(id){
 function addMarker(location, map, label){
   return new google.maps.Marker({
     position:location,
-    label:label,
+    label:{
+        text:label,
+        color:'#FFFFFF'
+    },
     map:map
   })
 }
@@ -370,6 +378,13 @@ if("{{ conveyanceform.instance.id }}" != "None"){
 
 
 $(document).ready(function(){
+    //disable all fields if user is not superuser
+    if("{{ request.user.is_superuser }}" !== 'True'){
+        $("input, textarea, select").attr('disabled', "disabled")
+    }
+
+
+    $("#btn_del").hide()
     //set ctzoffset
   	$("#id_ctzoffset").val(-new Date().getTimezoneOffset())
 

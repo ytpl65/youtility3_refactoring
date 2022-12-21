@@ -95,6 +95,9 @@ Questionset Form
                     Save&nbsp;<i class="fas fa-cloud-upload-alt"></i>
                 </button>
                 {% endif %}
+                <button type="button" id="newform" class="btn btn-sm me-2 btn-secondary btn-hover-scale">
+                    Clear&nbsp;<i class="fas fa-cloud-upload-alt"></i>
+                </button>
             </div>
         </div>
     </form><br><hr><br>
@@ -155,37 +158,23 @@ Questionset Form
         show_alert_before_delete(viewname)
         .then((result) => {
             if(result.isConfirmed){ //delete requested by user
-                status = isQuestionsetDeleted(id) //fire's request
-                console.log("status ", status)
-                if(status){
+                let urlname = "{{ url('activity:questionset') }}"
+                const params = {url:`${urlname}?action=delete&id=${id}`}
+                fire_ajax_get(params)
+                .done((data, status, xhr) => {
                     show_successful_delete_alert() //defined in customjs
                     window.setTimeout(function() {
                         window.location.href = "{{ url('activity:questionset') }}?action=form";
                     }, 2000);
-                }else{
-                    show_error_alert('Something went wrong!');
-                }
+                })
+                .fail((xhr, status, error) => {
+                    let err = typeof xhr.responseJSON.errors == 'string' ? xhr.responseJSON.errors : 'Something went wrong!'
+                    show_error_alert(err) //defined in custom.js
+                })
             }
         })
     }
 
-    //on click delete-btn of questionform delete the row from the datatable
-        //delete ajax request 
-    function isQuestionsetDeleted(id){ 
-        let urlname = "{{ url('activity:questionset') }}"
-        const params = {url:`${urlname}?action=delete&id=${id}`}
-        fire_ajax_get(params)
-        .done((data, status, xhr) => {
-            if(!xhr.status === 200){
-                return false
-            }
-            return true
-        })
-        .fail((xhr, status, error) => {
-            show_error_alert('Something went wrong!') //defined in custom.js
-            return false
-        })
-    }
 
     function clearSelection(id){
         //$(id).val(null).trigger('change');
@@ -193,7 +182,9 @@ Questionset Form
     }
 
     $(document).ready(() => {
-
+        $("#newform").click(() => {
+            location.href = "{{ url('activity:questionset') }}?action=form"
+        })
 
         if ($("#pk").val() === "None"){
             $(".section_asdquestions").hide()   

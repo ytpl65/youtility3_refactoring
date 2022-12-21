@@ -129,7 +129,9 @@ Checklist List
 			return true
 		})
 		.fail((xhr, status, error) => {
-			show_error_alert('Something went wrong!') //defined in custom.js
+			console.log(xhr, "xhr")
+			show_error_alert('Something went wrong!')
+			debugger;//defined in custom.js
 			return false
 		})
 	}

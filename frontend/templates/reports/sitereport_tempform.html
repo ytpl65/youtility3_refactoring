@@ -21,6 +21,14 @@ Site Report Template
 {% endblock form_title %}
 <!------ END FORM TITLE -------->
 
+<!--------- BEGIN NON FIELD ERRORS -------->
+{% block nonfield_errors %}
+<div class="alert alert-danger" id="nonfield_errors"role="alert" style="display:none">
+    <strong>Error</strong> <span></span>
+</div>
+{% endblock nonfield_errors %}
+<!---------- END NON FIELD ERRORS --------->
+
 {% block form %}
 <form action="" method="post" id="sitereportTemplateForm" url="{{ url('reports:sitereport_template_form') }}">
 <input type="hidden" name="{{ reporttemp_form.ctzoffset.name }}" id = "{{ reporttemp_form.ctzoffset.auto_id }}" value="-1">
@@ -67,6 +75,9 @@ Site Report Template
         Save &nbsp;<i class="fas fa-cloud-upload-alt"></i>
     </button>
     {% endif %}
+    <button type="button" id="newform" class="btn btn-sm me-2 btn-secondary btn-hover-scale">
+        Clear&nbsp;<i class="fas fa-cloud-upload-alt"></i>
+    </button>
 </div>
 {% endblock ajax_page_actions %}
 
@@ -108,23 +119,6 @@ Site Report Template
     var parentEditor;
 
     
-    //delete ajax request 
-    function isReportDeleted(id){ 
-        let urlname = "{{ url('reports:config_sitereport_template') }}"
-        const params = {url:`${urlname}?action=delete&id=${id}`}
-        fire_ajax_get(params)
-        .done((data, status, xhr) => {
-            if(!xhr.status === 200){
-                return false
-            }
-            return true
-        })
-        .fail((xhr, status, error) => {
-            show_error_alert('Something went wrong!') //defined in custom.js
-            return false
-        })
-    }
-
     //delete typeassist 
     function deleteReport(elemt){
         var id = "{{ reporttemp_form.instance.pk }}"
@@ -132,16 +126,19 @@ Site Report Template
         show_alert_before_delete(viewname)
         .then((result) => {
             if(result.isConfirmed){ //delete requested by user
-                status = isReportDeleted(id) //fire's request
-                console.log("status ", status)
-                if(status){
+                let urlname = "{{ url('reports:config_sitereport_template') }}"
+                const params = {url:`${urlname}?action=delete&id=${id}`}
+                fire_ajax_get(params)
+                .done((data, status, xhr) => {
                     show_successful_delete_alert() //defined in customjs
                     window.setTimeout(function() {
                         window.location.href = "{{ url('reports:config_sitereport_template') }}?action=form";
                     }, 2000);
-                }else{
-                    show_error_alert('Something went wrong!');
-                }
+                })
+                .fail((xhr, status, error) => {
+                    let err = typeof xhr.responseJSON.errors == 'string' ? xhr.responseJSON.errors : 'Something went wrong!'
+                    show_error_alert(err) //defined in custom.js
+                })
             }
         })
     }
@@ -163,6 +160,10 @@ Site Report Template
         
         //set ctzoffset
   	    $("#id_ctzoffset").val(-new Date().getTimezoneOffset())
+
+        $("#newform").click(() => {
+            location.href = "{{ url('reports:config_sitereport_template') }}?action=form"
+        })
         
         
         //editor section table

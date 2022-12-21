@@ -1573,8 +1573,8 @@ class ExternalTourScheduling(LoginRequiredMixin, View):
             'fromdate'  : datetime.combine(date.today(), time(00, 00, 00)),
             'uptodate'  : datetime.combine(date.today(), time(23, 00, 00)) + timedelta(days = 2),
         },
-        'fields'       : ['id', 'jobname', 'people__peoplename', 'pgroup__groupname', 'fromdate', 'uptodate',
-                        'planduration', 'gracetime', 'expirytime', 'bu__buname']
+        'fields' : ['id', 'jobname', 'people__peoplename', 'pgroup__groupname', 'fromdate', 'uptodate',
+                'planduration', 'gracetime', 'expirytime', 'bu__buname']
     }
 
 
@@ -1617,7 +1617,7 @@ class ExternalTourScheduling(LoginRequiredMixin, View):
         
         # return resp to delete request
         if R.get('action', None) == "delete" and R.get('id', None):
-            return utils.render_form_for_delete(request, self.params, True)
+            return utils.render_form_for_delete(request, self.params, False)
         
         # return resp for updation of job
         if R.get('id'):
@@ -1661,6 +1661,8 @@ class ExternalTourScheduling(LoginRequiredMixin, View):
         try:
             with transaction.atomic(using = utils.get_current_db_name()):
                 job = form.save(commit=False)
+                if request.POST.get('pk'):
+                    am.Job.objects.filter(parent_id = job.id).update(qset_id = job.qset_id)
                 job.other_info['tour_frequency'] = form.cleaned_data['tourfrequency']
                 job.other_info['is_randomized'] = form.cleaned_data['israndom']
                 job.other_info['breaktime'] = form.cleaned_data['breaktime']

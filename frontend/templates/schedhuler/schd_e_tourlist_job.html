@@ -58,18 +58,16 @@ ext_schdtour_list = 'External ScheduleTour List',
                 {targets:1, data: 'jobname', render:function(data, type, row, meta){
                     let urlname = "{{ url('schedhuler:schd_external_tour') }}"
                     return `<a href="${urlname}?id=${row['id']}">${data}</a>`
-                }},
-                //{targets:3, render:function(data, type, row, meta){
-                //    let peoplename = row['people__peoplename']
-                //    let groupname = row['pgroup__groupname']
-                //    return typeof peoplename in ['undefined', null] ? groupname : peoplename 
-                //}},
-                //{targets:6, render:function(data, type, row, meta){
-                //    return convert_to_local(type, data, row)
-                //}},
-                //{targets:7, render:function(data, type, row, meta){
-                //    return convert_to_local(type, data, row)
-                //}},
+                }
+                },
+                {targets:6, render:function(data, type, row, meta){
+                    return convert_to_local(type, data, row)
+                }
+                },
+                {targets:7, render:function(data, type, row, meta){
+                    return convert_to_local(type, data, row)
+                }
+                },
             ],
             deferRender: true,
 			responsive: true,

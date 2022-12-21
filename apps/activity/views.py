@@ -310,7 +310,7 @@ class MasterAsset(LoginRequiredMixin, View):
     def handle_valid_form(self, form, request, create):
         raise NotImplementedError()
 
-class Checklist(View, LoginRequiredMixin):
+class Checklist(LoginRequiredMixin, View):
     params = {
         'form_class'   : af.ChecklistForm,
         'template_form': 'activity/checklist_form.html',
@@ -453,7 +453,7 @@ def deleteQSB(request):
     data = {"status": status}
     return rp.JsonResponse(data, status = statuscode)
 
-class Checkpoint(View, LoginRequiredMixin):
+class Checkpoint(LoginRequiredMixin, View):
     params = {
         'form_class': af.CheckpointForm,
         'template_form': 'activity/partials/partial_masterasset_form.html',
@@ -534,7 +534,7 @@ class Checkpoint(View, LoginRequiredMixin):
         except IntegrityError:
             return utils.handle_intergrity_error('Checkpoint')
 
-class Smartplace(View, LoginRequiredMixin):
+class Smartplace(LoginRequiredMixin, View):
     params = {
         'form_class': af.SmartPlaceForm,
         'template_form': 'activity/partials/partial_masterasset_form.html',

@@ -4,6 +4,7 @@ from apps.onboarding import models as om
 from apps.peoples import models as pm
 from apps.core import utils
 from django_select2 import forms as s2forms
+from django.db.models import Q
 
 class MasterReportTemplate(forms.ModelForm):
     required_css_class = "required"
@@ -21,6 +22,15 @@ class MasterReportTemplate(forms.ModelForm):
         labels = {
             'qsetname':'Template Name',
         }
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['site_type_includes'].choices = om.TypeAssist.objects.filter(Q(tatype__tacode = "SITETYPE") | Q(tacode='NONE')).values_list('id', 'taname')
+        bulist = om.Bt.objects.get_all_sites_of_client(self.request.session['client_id']).values_list('id', flat=True)
+        self.fields['buincludes'].choices = pm.Pgbelonging.objects.get_assigned_sites_to_people(self.request.user.id, makechoice=True)
+        self.fields['site_grp_includes'].choices = pm.Pgroup.objects.filter(
+            Q(groupname='NONE') |  Q(identifier__tacode='SITEGROUP') & Q(bu_id__in = bulist)).values_list('id', 'groupname')
+        
 
 
 class SiteReportTemplate(MasterReportTemplate):
@@ -29,28 +39,24 @@ class SiteReportTemplate(MasterReportTemplate):
         self.request = kwargs.pop('request')
         super().__init__(*args, **kwargs)
         utils.initailize_form_fields(self)
-        self.fields['site_type_includes'].choices = om.TypeAssist.objects.filter(tatype__tacode = "SITETYPE").values_list('id', 'taname')
-        bulist = om.Bt.objects.get_all_sites_of_client(self.request.session['client_id']).values_list('id', flat=True)
-        self.fields['buincludes'].choices = pm.Pgbelonging.objects.get_assigned_sites_to_people(self.request.user.id, makechoice=True)
-        self.fields['site_grp_includes'].choices = pm.Pgroup.objects.filter(
-            identifier__tacode='SITEGROUP', bu_id__in = bulist).values_list('id', 'groupname')
-        self.fields['type'].widget.attrs = {'style': 'display:none'}
         self.fields['type'].initial = am.QuestionSet.Type.SITEREPORTTEMPLATE
+        self.fields['type'].widget.attrs = {'style': 'display:none'}
+        if not self.instance.id:
+            self.fields['site_grp_includes'].initial = 1
+            self.fields['site_type_includes'].initial = 1
+            self.fields['buincludes'].initial = 1
 
 class IncidentReportTemplate(MasterReportTemplate):
     
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-
         self.fields['type'].initial = am.QuestionSet.Type.INCIDENTREPORTTEMPLATE
-        self.fields['site_type_includes'].choices = om.TypeAssist.objects.filter(tatype__tacode = "SITETYPE").values_list('id', 'taname')
-        bulist = om.Bt.objects.get_all_bu_of_client(self.request.session['client_id'])
-        self.fields['buincludes'].choices = pm.Pgbelonging.objects.get_assigned_sites_to_people(self.request.user.id, makechoice=True)
-        self.fields['site_grp_includes'].choices = pm.Pgroup.objects.filter(
-            identifier__tacode='SITEGROUP', bu_id__in = bulist).values_list('id', 'groupname')
-        self.fields['type'].widget.attrs = {'style': 'display:none'}
         utils.initailize_form_fields(self)
+        if not self.instance.id:
+            self.fields['site_grp_includes'].initial = 1
+            self.fields['site_type_includes'].initial = 1
+            self.fields['buincludes'].initial = 1
 
 
 

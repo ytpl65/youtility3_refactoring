@@ -24,14 +24,9 @@ Schedhule External-Tour&nbsp;<i class="fa fa-clock fs-4 text-primary" aria-hidde
 
 <!--------- BEGIN NON FIELD ERRORS -------->
 {% block nonfield_errors %}
-{% if schdexternaltourform.non_field_errors() %}
-<div id="non_field_error" class="alert alert-danger" style="width: 73%;">
-    {% for error in schdexternaltourform.non_field_errors() %}
-    <strong>Error</strong> <span>{{ error }}</span>
-    {% endfor %}
-    <button type="button" class="btn-close flt-right" data-bs-dismiss="alert" aria-label="Close"></button>
+<div class="alert alert-danger" id="nonfield_errors"role="alert" style="display:none">
+    <strong>Error: </strong> <span></span>
 </div>
-{% endif %}
 {% endblock nonfield_errors %}
 <!---------- END NON FIELD ERRORS --------->
 
@@ -498,35 +493,20 @@ function updateCronDate(){
 		show_alert_before_delete("External Tour")
 		.then((result) => {
 			if(result.isConfirmed){ //delete requested by user
-				status = isETourDeleted(id) //fire's request
-				console.log("status ", status)
-				if(status){
-					show_successful_delete_alert() //defined in customjs
+				let urlname = "{{ url('schedhuler:schd_external_tour') }}"
+                const params = {url:`${urlname}?action=delete&id=${id}`, 'beforeSend':function (){} }
+                fire_ajax_get(params)
+                .done((data, status, xhr) => {
+                    show_successful_delete_alert() //defined in customjs
                     window.setTimeout(function() {
-                        window.location.href = `{{ url('schedhuler:schd_external_tour') }}?action=form`;
+                        window.location.href = "{{ url('schedhuler:schd_external_tour') }}?action=form";
                     }, 2000);
-
-				}else{
-					show_error_alert('Something went wrong!');
-				}
+                })
+                .fail((xhr, status, error) => {
+                    let err = typeof xhr.responseJSON.errors == 'string' ? xhr.responseJSON.errors : 'Something went wrong!'
+                    show_error_alert(err) //defined in custom.js
+                })
 			}
-		})
-	}
-
-     //delete ajax request 
-	function isETourDeleted(id){ 
-        let urlname = "{{ url('schedhuler:schd_external_tour') }}"
-		const params = {url:`${urlname}?action=delete&id=${id}`, 'beforeSend':function (){} }
-		fire_ajax_get(params)
-		.done((data, status, xhr) => {
-			if(!xhr.status === 200){
-				return false
-			}
-			return true
-		})
-		.fail((xhr, status, error) => {
-			show_error_alert('Something went wrong!') //defined in custom.js
-			return false
 		})
 	}
 
