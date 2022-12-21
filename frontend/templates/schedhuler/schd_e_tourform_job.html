@@ -181,11 +181,11 @@ Schedhule External-Tour&nbsp;<i class="fa fa-clock fs-4 text-primary" aria-hidde
                     {{ schdexternaltourform.israndom }}
                     &nbsp;&nbsp;{{ schdexternaltourform.israndom.label }}</label>
                 </div>
-                    <div class="form-floating col-md-4">
+                    <div class="form-floating col-md-4 fv-row">
                         {{ schdexternaltourform.tourfrequency }}
                         <label for="id_tourfrequency">Frequency</label>
                     </div>
-                    <div class="form-floating col-md-4">
+                    <div class="form-floating col-md-4 fv-row">
                         {{ schdexternaltourform.breaktime }}
                         <label for="id_breaktime">Breaktime (In Mins)</label>
                     </div>
@@ -367,6 +367,27 @@ function getSelectedValue(id) {
         return data.text
     }
     return "NONE"
+}
+
+function checkBreaktimeWithFreq(){
+    return FormValidation.formValidation(document.querySelector("#id_schdexternaltourform"), {
+        fields:{
+            'breaktime':{
+                validators:{
+                    callback:function(inpuyt){
+                        var freq = $("#id_tourfrequency").val()
+                        var breaktime = $("#id_breaktime").val()
+                        if(freq > 1 && breaktime == 0){
+                            return {
+                                valid:false,
+                                message:"Break time cannot be 0"
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    })
 }
 
 //check & return data from table

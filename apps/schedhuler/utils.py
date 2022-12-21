@@ -523,7 +523,7 @@ def create_child_tasks(job, _pdtz, _people, jnid, _jobstatus, _jobtype):
             cplocation = F('bu__gpslocation')
             ).filter(
             parent_id = job['id']).order_by(
-                'seqno').values(*utils.JobFields.fields, 'cplocation')
+                'seqno').values(*utils.JobFields.fields, 'cplocation', 'sgroup__groupname', 'bu__solid', 'bu__buname')
         ic(R)
         log.info(f"create_child_tasks() total child job:={len(R)}")
         prev_edtz = _pdtz
@@ -544,11 +544,14 @@ def create_child_tasks(job, _pdtz, _people, jnid, _jobstatus, _jobtype):
 
             asset = am.Asset.objects.get(id = r['asset_id'])
             params['m_factor'] = asset.asset_json['multifactor']
-            _assetname = asset.assetname if r['identifier'] == 'INTERNALTOUR' else r['qset__qsetname']
+            jobdescription = f"{r['asset__assetname']} - {r['jobname']}" 
+            
+            if r['identifier'] == 'EXTERNALTOUR':
+                jobdescription = f"{r['sgroup__groupname']} - {r['bu__solid']} - {r['bu__buname']}" 
 
             mins = job['planduration'] + r['expirytime'] + job['gracetime']
             params['_people'] = r['people_id']
-            params['_jobdesc'] = f"{_assetname} :: {r['jobname']}"
+            params['_jobdesc'] = jobdescription
             if idx == 0:
                 pdtz = params['pdtz'] = prev_edtz
             else:
