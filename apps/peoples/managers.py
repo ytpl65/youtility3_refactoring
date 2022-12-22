@@ -59,7 +59,7 @@ class PeopleManager(BaseUserManager):
     def get_emergencycontacts(self, siteid, clientid):
         "returns mobnos of people with given assigned siteid"
         qset = self.filter(bu_id = siteid, client_id = clientid).annotate(
-            pmobno = Concat(F('peoplename'), V(':'), F('mobno'))
+            pmobno = Concat(F('peoplename'), V(':', output_field=models.CharField()), Cast('mobno', output_field=models.CharField()))
             ).values_list('pmobno', flat = True).exclude(mobno = None)
         return qset or self.none()
 

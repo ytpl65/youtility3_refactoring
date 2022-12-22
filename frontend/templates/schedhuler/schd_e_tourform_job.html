@@ -587,17 +587,16 @@ $(document).ready(() => {
         ],
         dom: `<'row' <'col-sm-6 d-flex justify-content-start'f> <'col-sm-6 d-flex justify-content-end'B> >rt<'row'
 			 <'col-sm-6'l> <'col-sm-6'p><'col-sm-12 d-flex justify-content-center'i>>`,
-        order: [[ 1, 'asc' ]],
-        ordering:false,
         select: {
             style:    'single',
             selector: 'tr'
         },
-        rowReorder: true,
+        order:[[1, 'asc']],
+        ordering:false,
         footerCallback:function(row, data, start, end, display){
-                            var api = this.api();
-                            setFooter(api)
-                        },
+            var api = this.api();
+            setFooter(api)
+        },
         buttons: [
             { extend: "edit",   editor: editor },
         ],
