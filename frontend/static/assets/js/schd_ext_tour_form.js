@@ -116,6 +116,14 @@ function getDirectionConfig(data, optimize) {
 
   var wayPoints = [];
   for (var i = 1; i < data.length - 1; i++) {
+    if(!data[i]['bu__gpslocation']){
+      Swal.fire(
+        'No coordinates found!',
+        'Some of your checkpoints has not assigned GPG coords yet.',
+        'warning'
+      )
+      break
+    }
     let wpCoords = JSON.parse(data[i]["bu__gpslocation"])["coordinates"];
     wayPoints.push({
       location: new google.maps.LatLng(

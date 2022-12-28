@@ -28,7 +28,7 @@ class RetriveSiteReports(LoginRequiredMixin, View):
         try:
             objs = self.model.objects.get_sitereportlist(request)
             utils.printsql(objs)
-            response = rp.JsonResponse({'data':list(objs)}, status = 200)
+            response = rp.JsonResponse({'data':list(objs)}, status = 200, encoder=utils.CustomJsonEncoderWithDistance)
         except Exception:
             log.critical(
                 'something went wrong', exc_info = True)
@@ -38,6 +38,25 @@ class RetriveSiteReports(LoginRequiredMixin, View):
         return response
 
 
+class RetriveIncidentReports(LoginRequiredMixin, View):
+    model = am.Jobneed
+    template_path = 'reports/incidentreport_list.html'
+
+    def get(self, request, *args, **kwargs):
+        '''returns the paginated results from db'''
+        response, requestData= None, request.GET
+        if requestData.get('template'):
+            return render(request, self.template_path)
+        try:
+            objs, atts = self.model.objects.get_incidentreportlist(request)
+            response = rp.JsonResponse({'data':list(objs), 'atts':list(atts)}, status = 200)
+        except Exception:
+            log.critical(
+                'something went wrong', exc_info = True)
+            messages.error(request, 'Something went wrong',
+                           "alert alert-danger")
+            response = redirect('/dashboard')
+        return response
 
 class MasterReportTemplateList(LoginRequiredMixin, View):
     model         = am.QuestionSet

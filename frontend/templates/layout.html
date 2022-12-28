@@ -148,6 +148,19 @@
  <button type="button" class="btn btn-secondary btn-sm btn-hover-scale" onclick="location.reload();$('{{ kwargs['id'] }}').trigger('reset')">Reset Form</button>
 </div>
 {% endmacro %}
+
+
+
+{% macro load_leaflet_tags() %}
+  <link href="{{ static('assets/plugins/custom/leaflet/leaflet.css') }}" rel="stylesheet" type="text/css" />
+  <script src="{{ static('assets/plugins/custom/leaflet/leaflet.js') }}"></script>
+{% endmacro %}
+
+{% macro load_google_maps() %}
+<script
+      src="https://maps.googleapis.com/maps/api/js?key=AIzaSyC3PUZCB7u2PiV8whHeAshweOPIK_d690o&libraries=places&v=weekly"
+></script>
+{% endmacro %}
 <!------------------------------------------------ END MACROS ------------------------------------------------------->
 
 {# ======= ==  HEAD START=========== #}

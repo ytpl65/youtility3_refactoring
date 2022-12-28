@@ -41,8 +41,7 @@ urlpatterns = [
     path('__debug__/', include(debug_toolbar.urls)), # shoul use when debug = True
     path('select2/', include('django_select2.urls')),
     path("graphql", csrf_exempt(FileUploadGraphQLView.as_view(graphiql = True))),
-    path("upload/att_file", UploadFile.as_view(), name = "upload_att_file"),
-
+    path("upload/att_file", UploadFile.as_view()),
 ]
 
 if settings.DEBUG:

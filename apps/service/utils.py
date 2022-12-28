@@ -80,6 +80,8 @@ def update_record(details, jobneed_record, JnModel, JndModel):
         jn_parent_serializer = sz.JobneedSerializer(data = record, instance = instance)
         if jn_parent_serializer.is_valid():
             jobneed = jn_parent_serializer.save()
+            jobneed.geojson['gpslocation'] = get_readable_addr_from_point(jobneed.gpslocation)
+            jobneed.save()
             log.info("parent jobneed is valid and saved successfully")
             if isJndUpdated := update_jobneeddetails(details, JndModel):
                 log.info('parent jobneed and its details are updated successully')
@@ -252,7 +254,7 @@ def save_linestring_and_update_pelrecord(obj):
     from django.contrib.gis.geos import LineString
     try:
 
-        bet_objs = Tracking.objects.filter(reference = obj.uuid)
+        bet_objs = Tracking.objects.filter(reference = obj.uuid).order_by('receiveddate')
         line = [[coord for coord in obj.gpslocation] for obj in bet_objs]
         if len(line) > 1:
             ls = LineString(line, srid = 4326)
@@ -262,6 +264,8 @@ def save_linestring_and_update_pelrecord(obj):
             obj.distance = d
             ls.transform(4326)
             obj.journeypath = ls
+            obj.geojson['startlocation'] = get_readable_addr_from_point(obj.startlocation)
+            obj.geojson['endlocation'] = get_readable_addr_from_point(obj.endlocation)
             obj.save()
             #bet_objs.delete()
             log.info("save linestring is saved..")
@@ -421,7 +425,7 @@ def perform_uploadattachment(file,  record, biodata):
     uploadfile  = f'{filepath}/{filename}'
     db          = utils.get_current_db_name()
     
-    log.info(f"file_buffer: '{file_buffer}' \ownerid: '{ownerid}' \npeopleid: '{peopleid}' \npath: {path} home_dir: '{home_dir}' \nfilepath: '{filepath}' \nuploadfile: '{uploadfile}'")
+    log.info(f"file_buffer: '{file_buffer}' \n'onwername':{onwername}, \nownerid: '{ownerid}' \npeopleid: '{peopleid}' \npath: {path} \nhome_dir: '{home_dir}' \nfilepath: '{filepath}' \nuploadfile: '{uploadfile}'")
     try:
         with transaction.atomic(using = db):
             iscreated = get_or_create_dir(filepath)
@@ -435,7 +439,7 @@ def perform_uploadattachment(file,  record, biodata):
         rc, traceback, msg = 1, tb.format_exc(), Messages.UPLOAD_FAILED
         log.error('something went wrong', exc_info = True)
     try:
-        record.pop('localfilepath')
+        if record.get('localfilepath'): record.pop('localfilepath')
         obj = insertrecord(record, 'attachment')
         log.info(f'Attachment record inserted: {obj.filepath}')
         
@@ -450,22 +454,11 @@ def perform_uploadattachment(file,  record, biodata):
         if hasattr(eobj, 'peventtype'): log.info(f'Event Type: {eobj.peventtype.tacode}')
         if hasattr(eobj, 'peventtype') and eobj.peventtype.tacode in ['SELF', 'MARK']:
             from .tasks import perform_facerecognition_bgt
-            results = perform_facerecognition_bgt.delay(ownerid, peopleid, obj.owner, home_dir, uploadfile, db)
+            results = perform_facerecognition_bgt.delay(ownerid, peopleid, db)
             log.warning(f"face recognition status {results.state}")
     except Exception as e:
         log.error('something went wrong while performing face recognition', exc_info = True)
     return ServiceOutputType(rc = rc, recordcount = recordcount, msg = msg, traceback = traceback)
-
-def getEmails(R):
-    raise NotImplementedError()
-
-def getjobneedrecord():
-    raise NotImplementedError()
-
-def send_alert_mails_if_any(attdata):
-    getjobneedrecord()
-    pass
-
 
 
 
@@ -477,7 +470,7 @@ def get_email_recipients(jobneed):
     siemails = People.objects.get_siteincharge_emails(jobneed.bu_id)
     #get email of client admins
     adm_emails = People.objects.get_admin_emails(jobneed.client_id)
-    return siemails + adm_emails
+    return list(siemails) + list(adm_emails)
     
 
 def get_context_for_mailtemplate(jobneed, subject):
@@ -530,8 +523,6 @@ def alert_observation(jobneed, atts=False):
                 pass
             msg.send()
             log.info(f"Alert mail sent to {recipents} with subject {subject}")
-    except model.DoesNotExist as e:
-        log.error(f"Record not found for uuid {uuid}", exc_info=True)
     except Exception as e:
         log.error(f"Error while sending alert mail", exc_info=True)
         
@@ -540,3 +531,18 @@ def alert_observation(jobneed, atts=False):
 def alert_deviation(uuid, ownername):
     pass
 
+
+
+def get_readable_addr_from_point(point):
+    import googlemaps
+    try:
+        if hasattr(point, 'coords') and point.coords[0] not in [0.0, "0.0"]:
+            gmaps = googlemaps.Client(key='AIzaSyDVbA53nxHKUOHdyIqnVPD01aOlTitfVO0')
+            result = gmaps.reverse_geocode(point.coords[::-1])
+            log.info("reverse geocoding complete, results returned")
+            return result[0]['formatted_address']
+        log.info("Not a valid point, returned empty string")
+        return ""
+    except Exception as e:
+        log.error("something went wrong while reverse geocoding", exc_info=True)
+        return ""

@@ -399,7 +399,7 @@ def insert_into_jn_and_jnd(job, DT, resp):
             mins = job['planduration'] + job['expirytime'] + job['gracetime']
             people = job['people_id']
             params   = {
-                'jobstatus':jobstatus, 'jobtype':jobtype,
+                'jobstatus':jobstatus, 'jobtype':jobtype, 'route_name':job['sgroup__groupname'],
                 'm_factor':multiplication_factor, 'people':people,
                 'NONE_P':NONE_P, 'jobdesc':jobdesc, 'NONE_JN':NONE_JN}
             DT = utils.to_utc(DT)
@@ -547,7 +547,7 @@ def create_child_tasks(job, _pdtz, _people, jnid, _jobstatus, _jobtype):
             jobdescription = f"{r['asset__assetname']} - {r['jobname']}" 
             
             if r['identifier'] == 'EXTERNALTOUR':
-                jobdescription = f"{r['sgroup__groupname']} - {r['bu__solid']} - {r['bu__buname']}" 
+                jobdescription = f"{job['sgroup__groupname']} - {r['bu__solid']} - {r['bu__buname']}" 
 
             mins = job['planduration'] + r['expirytime'] + job['gracetime']
             params['_people'] = r['people_id']

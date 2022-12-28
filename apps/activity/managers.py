@@ -1,6 +1,6 @@
 from django.db import models
 from django.db.models.functions import Concat, Cast
-from django.db.models import CharField, Value as V
+from django.db.models import CharField, Value as V, Subquery, OuterRef
 from django.db.models import Q, F, Count, Case, When
 from django.contrib.gis.db.models.functions import  AsWKT, AsGeoJSON
 from datetime import datetime, timedelta, timezone
@@ -245,15 +245,72 @@ class JobneedManager(models.Manager):
 
     def get_sitereportlist(self, request):
         "Transaction List View"
-        from apps.onboarding.models import Bt
-        # from apps.activity.models import QuestionSet, Attachment
-        # from apps.activity.models import Attachment
+        from apps.peoples.models import Pgbelonging
+        from apps.activity.models import Attachment
+        from django.contrib.gis.db.models.functions import Distance
 
         qset, R = self.none(), request.GET
-        pbs = Bt.objects.get_people_bu_list(request.user)
-        from apps.core.raw_queries import query
-        qset = self.raw(query['sitereportlist'], params=[pbs, R['pd1'], R['pd2']])
+        pbs = Pgbelonging.objects.get_assigned_sites_to_people(request.user.id)
+        
+        #att count subquery
+        attachment_count = Subquery(
+            Attachment.objects.filter(
+                owner = Cast(OuterRef('uuid'), output_field=models.CharField())
+            ).annotate(
+                att=Count('owner')
+            ).values('att')[:1]
+        )
+        
+        #outer query
+        qset = self.filter(
+                    parent_id = 1,
+                    bu_id__in=pbs.values_list('buid', flat=True),
+                    plandatetime__date__gte=R['pd1'],
+                    plandatetime__date__lte=R['pd2'],
+                    identifier='SITEREPORT'
+                ).annotate(
+                    buname=Case(
+                        When(
+                            Q(Q(othersite__isnull=True) | Q(othersite = "") | Q(othersite = 'NONE')),
+                            then=F('bu__buname')
+                        ),
+                        default=Concat(
+                            V('other location ['),
+                            F('othersite'),
+                            V(']')
+                        )
+                    ),
+                    gps = AsGeoJSON('gpslocation'),
+                    distance = Distance('gpslocation', 'bu__gpslocation')
+                ).values('id', 'plandatetime', 'jobdesc', 'people__peoplename', 'starttime', 'endtime', 
+                         'buname', 'jobstatus', 'gps', 'distance', 'remarks').order_by('-plandatetime').distinct()
         return qset
+
+        
+        
+    
+    def get_incidentreportlist(self, request):
+        "Transaction List View"
+        from apps.peoples.models import Pgbelonging
+        from apps.activity.models import Attachment
+        R = request.GET
+        sites = Pgbelonging.objects.get_assigned_sites_to_people(request.user.id)
+        buids = sites.values_list('buid', flat=True)
+        qset = self.annotate(
+            buname = Case(
+                When(Q(Q(othersite__isnull=True) | Q(othersite = "") | Q(othersite = 'NONE')), then=F('bu__buname')),
+                default= F('othersite')
+            ),
+            gps = AsGeoJSON('gpslocation'),
+            uuidtext = Cast('uuid', output_field=models.CharField())
+        ).filter(
+            plandatetime__date__gte = R['pd1'], plandatetime__date__lte = R['pd2'], identifier='INCIDENTREPORT', bu_id__in = buids).values(
+            'id', 'plandatetime', 'jobdesc', 'bu_id', 'buname', 'gps', 'jobstatus', 'people__peoplename', 'uuidtext', 'remarks', 'geojson__gpslocation'
+        )
+        atts = Attachment.objects.filter(
+            owner__in = qset.values_list('uuidtext', flat=True)
+        ).values('filepath', 'filename')
+        return qset, atts or self.none()        
 
     def get_internaltourlist_jobneed(self, request, related, fields):
         R = request.GET
@@ -356,17 +413,16 @@ class JobneedManager(models.Manager):
 class AttachmentManager(models.Manager):
     use_in_migrations = True
 
-    def get_people_pic(self, ownernameid, ownerid, db):
+    def get_people_pic(self,  ownerid, db):
         qset =  self.filter(
-                ownername_id = ownernameid,
                 attachmenttype = 'ATTACHMENT',
                 owner = ownerid
                 ).annotate(
-            default_img_path = Concat(F('filepath'), V('/'), F('filename'),
+            people_event_pic = Concat(V(settings.MEDIA_ROOT), V('/'),  F('filepath'), V('/'), F('filename'),
                                     output_field = CharField())).order_by('-mdtz').using(db)
         return qset[0] or self.none()
 
-    def get_attachment_record(self, id, db):
+    def get_attachment_record(self, uuid, db):
         qset =  self.filter(
             ~Q(filename__endswith = '.csv'),
             ~Q(filename__endswith = '.mp4'),
@@ -374,7 +430,7 @@ class AttachmentManager(models.Manager):
             ~Q(filename__endswith = '.3gp'),
             ownername__tacode = 'PEOPLEEVENTLOG',
             attachmenttype = 'ATTACHMENT', 
-            owner = id
+            owner = uuid
             ).using(db).values('ownername_id', 'ownername__tacode')
         return qset or self.none()
 
@@ -426,7 +482,7 @@ class AttachmentManager(models.Manager):
         #default image of people
         defaultimgqset = People.objects.filter(
             id=eventlogqset[0]['people_id']).values(
-                'id', 'peopleimg', 'cdtz', 'cuser__peoplename') if eventlogqset else self.none()
+                'id', 'peopleimg', 'cdtz', 'cuser__peoplename', 'mdtz', 'muser__peoplename', 'ctzoffset') if eventlogqset else self.none()
         log.info(defaultimgqset)
 
         return {'attd_in_out': list(attqset), 'eventlog_in_out': list(eventlogqset), 'default_img_path': list(defaultimgqset)}

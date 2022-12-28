@@ -32,18 +32,6 @@ Internal Tour
 {% endblock breadcumbactions %}
 
 
-<!--------- BEGIN NON FIELD ERRORS -------->
-{% block nonfield_errors %}
-{% if internaltourform.non_field_errors() %}
-<div id="non_field_error" class="alert alert-danger" style="width: 73%;">
-    {% for error in internaltourform.non_field_errors() %}
-    <strong>Error</strong> <span>{{ error }}</span>
-    {% endfor %}
-    <button type="button" class="btn-close flt-right" data-bs-dismiss="alert" aria-label="Close"></button>
-</div>
-{% endif %}
-{% endblock nonfield_errors %}
-<!---------- END NON FIELD ERRORS --------->
 
 {% block form %}
 <form action="" method="post" id="internaltourform">
@@ -195,109 +183,36 @@ Internal Tour
     </h4><br>
     <table id="internal_tour" class="display cell-border" style="width:100%">
     </table><br>
-    <h4 class="card-title modal-heading">
+    <h4 class="card-title modal-heading d-none">
         Tour Answers &nbsp;<i class="fas fs-3 text-primary fa-directions"></i>
     </h4><br>
-    <table id="tabTouranswers" class="display cell-border" style="width:100%">
+    <table id="tabTouranswers" class="display d-none cell-border" style="width:100%">
     </table>
-
-        <!-- <div class="table-editor gap-5 d-md-flex border border-secondary p-3 h-25 justify-content-md-start">
-            <a href="#" id="create-child" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-delay = 500 title="Add New Row"><i class="fa fa-plus text-dark opacity-75 fa-lg"></i></a>
-            <a href="#" id="edit-child" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-delay = 500 title="Edit Selected Row"><i class="fa fa-edit text-dark opacity-75 fa-lg"></i></a>
-            <a href="#" id="delete-child" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-delay = 500 title="Delete Selected Row"><i class="fa fa-trash-alt text-dark opacity-75 fa-lg"></i></a>
-        </div> -->
 </div>
 {% endblock form %}
-{% block base_script %}
 
-{% endblock base_script %}
+
+<!--------- BEGIN NON FIELD ERRORS -------->
+{% block nonfield_errors %}
+<div class="alert alert-danger" id="nonfield_errors"role="alert" style="display:none">
+    <strong>Error</strong> <span></span>
+</div>
+{% endblock nonfield_errors %}
+<!---------- END NON FIELD ERRORS --------->
+
 {% block popup_alerts %}
-    <!-- THE MODAL WE WILL BE USING -->
-    <div class="modal animate__animated animate__zoomIn" tabindex="-1" aria-hidden="true"  aria-labelledby="exampleModalLabel" data-bs-backdrop="static" id="modal-jnd">
-        <div class="modal-dialog modal-dialog-centered modal-lg">
-            <div class="modal-content" id="jobneeddetails_content">
-            </div>
+    {% call general_popup(title='Checklist Details <i class="fas fa-tasks ch4"></i>', popup_id="id_checklistdetails", modal_size='modal-xl') %}
+        <div class="modal-body">
+            <table class="display cell-border" style="width:100%" id="tabChecklistDetails"></table>
         </div>
-    </div>
-    
-    <!--popup_form-->
-    {% call general_popup(popup_id = 'child-form-modal', title = "Add Checkpoint", modal_size = "modal-lg") %}
-    <div class="modal-body">
-        <form action="" method="post" id="child_internaltour_form">
-            <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
-            <div class="row mb-3 gy-3">
-                <div class="col-md-2">
-                    <label for="{{ child_internaltour.plandatetime.id_for_label }}"
-                    class="required">{{ child_internaltour.plandatetime.label }}</label>
-                </div>
-                <div class="col-md-10">
-                    {{ child_internaltour.plandatetime }}
-                    {{ child_internaltour.plandatetime.errors }}
-                </div>
-            </div>
-            <div class="row mb-3 gy-3">
-                <div class="col-md-2">
-                    <label for="{{ child_internaltour.expirydatetime.id_for_label }}"
-                    class="required">{{ child_internaltour.expirydatetime.label }}</label>
-                </div>
-                <div class="col-md-10">
-                    {{ child_internaltour.expirydatetime }}
-                    {{ child_internaltour.expirydatetime.errors }}
-                </div>
-            </div>
-            <div class="row mb-3 gy-3">
-                <div class="col-md-2">
-                    <label for="{{ child_internaltour.asset.id_for_label }}"
-                    class="required">{{ child_internaltour.asset.label }}</label>
-                </div>
-                <div class="col-md-10">
-                    {{ child_internaltour.asset }}
-                    {{ child_internaltour.asset.errors }}
-                </div>
-            </div>
-            <div class="row mb-3 gy-3">
-                <div class="col-md-2">
-                    <label for="{{ child_internaltour.qset.id_for_label }}"
-                    class="required">{{ child_internaltour.qset.label }}</label>
-                </div>
-                <div class="col-md-10">
-                    {{ child_internaltour.qset }}
-                    {{ child_internaltour.qset.errors }}
-                </div>
-            </div>
-            <div class="row mb-3 gy-3">
-                <div class="col-md-2">
-                    <label for="{{ child_internaltour.gracetime.id_for_label }}"
-                    class="required">{{ child_internaltour.gracetime.label }}</label>
-                </div>
-                <div class="col-md-10">
-                    {{ child_internaltour.gracetime }}
-                    {{ child_internaltour.gracetime.errors }}
-                </div>
-            </div>
-        </form>
-    </div>
-    <div class="modal-footer">
-        <!-- ADD/DELETE/RESET BUTTONS OF MIDDLE FORM -->
-        {% if internaltourform.instance.jobstatus == "('ASSIGNED',)" %}
-        <div class="d-flex justify-content-end">
-            <button type="submit" id="addQuestion" form="child_internaltour_form"
-                class="btn btn-sm btn-success me-2 btn-hover-scale">
-                Save&nbsp;<i class="fa fa-plus" aria-hidden="true"></i>
-            </button>
-
-            {# <button type="button" id="resetMiddleForm" style="display:none;"
-                class="btn ms-2 btn-sm btn-primary btn-hover-scale">
-                Reset&nbsp;<i class="fas fa-times"></i>
-            </button> #}
-            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        
+    {% endcall  %}
+    {% call general_popup(title='Attachment Details <i class="fas fa-paperclip ch4"></i>', popup_id="id_attachmentdetails", modal_size='modal-xl') %}
+        <div class="modal-body">
+            <table class="display cell-border" style="width:100%" id="tabAttachmentDetails"></table>
         </div>
-        {% endif %}
-    </div>
-    {% endcall %}
-
-    {{ mainattachment() }}
-
+        
+    {% endcall  %}
 {% endblock popup_alerts %}
 
 {% block ajax_page_actions %}
@@ -328,7 +243,7 @@ Internal Tour
 <script src="{{ static('assets/plugins/custom/Editor-2.0.8/js/editor.select2.js') }}" type="text/javascript"></script>
 <script>
     //set the variables which are gonna used in attachment.js file for fetching attachments against the owner
-    var attachmentUrl = '{{ url("activity:attachments") }}?action=get_attachments_of_owner'
+    var attachmentUrl = '{{ url("activity:attachments") }}'
     var attachementDatasource = 'jobneedattachment'
     var attachmentOwner = '{{ internaltourform.instance.uuid }}'
     var csrf = '{{ csrf_token }}'
@@ -342,6 +257,9 @@ Internal Tour
 <script>
     var table = null;
     var selected = null;
+    var checklistdetails;
+    var ajaxData = {};
+    var attachmentDetails;
     var parentTable;
     var parent_id = '{{ internaltourform.instance.id }}';
     var childTable;
@@ -359,6 +277,19 @@ Internal Tour
                 childEditor.hide(['alerton', 'options', 'min', 'max', 'alertabove', 'alertbelow'])
             }
         }
+    }
+
+    function showCpDetails(id){
+        $('#id_checklistdetails').modal('show')
+        ajaxData.jobneedid=id
+        ajaxData.action='checklist_details'
+        checklistdetails.ajax.reload()
+    }
+    function showAttachmentDetails(id, from){
+        $('#id_attachmentdetails').modal('show')
+        ajaxData.id=id
+        ajaxData.action = from === 'jobneed' ? 'getAttachmentJobneed' : 'getAttachmentJND' 
+        attachmentDetails.ajax.reload()
     }
 
     function appenAlerton(options){
@@ -499,16 +430,8 @@ Internal Tour
 
             },
             responsive: true,
-            fixedHeader: true,
-            paging: false,
-            lengthChange: false,
-            order: [
-                [0, "asc"]
-            ],
-            scrollCollapse: true,
-            searching:false,
-            dom: `<'row' <'col-sm-6 d-flex justify-content-start'f> <'col-sm-6 d-flex justify-content-end'B> >rt<'row'
-            <'col-sm-6'l> <'col-sm-6'p><'col-sm-12 d-flex justify-content-center'i>>`,
+            dom:`<'row' <'col-sm-6 d-flex justify-content-start'f> <'col-sm-6 d-flex justify-content-end'B> >rt<'row'
+			 <'col-sm-6'l> <'col-sm-6'p><'col-sm-12 d-flex justify-content-center'i>>`,
             ordering: true,
             columns:[
                 {data:'id', visible:false},
@@ -520,22 +443,108 @@ Internal Tour
                 {data:'qset__qsetname', title:'Checklist'},
                 {data:'gracetime', title:'Gracetime'},
                 {data:'jobstatus', title:'Status'},
+                {title:'Attachments',data:null, defaultContent:null, render:function(data, type, row, meta){
+                        return `<a href="javascript:void(0)"  onClick='showAttachmentDetails(${row['id']}, "jobneed")'>View</i></a>`
+                    }
+                },
+                {title:'Details',data:null, defaultContent:null, render:function(data, type, row, meta){
+                        return  `<button class="btn btn-link p-0" onClick='showCpDetails(${row['id']})'>View Details</button>`
+                    }
+                }
             ],
-            fixedHeader: {
-                header: true,
-                footer: true
-            },
-            buttons:[
-                { extend: "edit",   editor: parentEditor },
-                { extend: "remove", editor: parentEditor }
+            ordering:false,
+            deferRender: true,
+            columnDefs:[
+                {targets:1, data:'seqno', render:function(data, type, row, meta){
+                        return parseInt(data)
+                    }
+                },
+                {targets:2, render:function(data, type, row, meta){
+                    return convert_to_local(type, data, row)}
+                },
+                {targets:3, render:function(data, type, row, meta){
+                    return convert_to_local(type, data, row)}
+                },
             ],
-            select: {
-                style: 'single'
-            }
+            buttons:[]
+        })
+        $('#id_checklistdetails').on('shown.bs.modal', function (event) {
+            $.fn.dataTable.tables( {visible: true, api: true} ).columns.adjust();
+            $('#id_checklistdetails').modal({
+                keyboard: false
+            })
+            checklistdetails = $("#tabChecklistDetails").DataTable(
+            {
+                ajax:{
+                    url:`{{ url("schedhuler:jobneedtours") }}`,
+                    data:function(d){
+                    return  $.extend(d, ajaxData);
+                    }
+                },
+                retrieve: true,
+                columns:[
+                    {data:'id', visible:false},
+                    {data:'question__quesname', title:'Question'},
+                    {data:'answertype', title:'Type'},
+                    {data:'min', title:'Min'},
+                    {data:'max', title:'Max'},
+                    {data:'options', title:'Options'},
+                    {data:'alerton', title:'Alert On'},
+                    {data:'answer', title:'Answer'},
+                    {data:'ismandatory', title:'Mandatory'},
+                    {data: null, title:'Attachments', render:function(data, type, row, meta){
+                        return `<a href="javascript:void(0)"  onClick='showAttachmentDetails(${row['id']}, "jnd")'>View</a>`
+                    }
+                    }
+                ],
+                ordering:false,
+                deferRender: true,
+                scrollX: true,
+                dom: `<'row' <'col-sm-6 d-flex justify-content-start'f> <'col-sm-6 d-flex justify-content-end'B> >rt<'row'
+                <'col-sm-6'l> <'col-sm-6'p><'col-sm-12 d-flex justify-content-center'i>>`,
+                buttons:[],
+
+            })
+            
+        })
+        $('#id_attachmentdetails').on('shown.bs.modal', function (event) {
+            $.fn.dataTable.tables( {visible: true, api: true} ).columns.adjust();
+                $('#id_attachmentdetails').modal({
+                    keyboard: false
+                })
+                attachmentDetails = $("#tabAttachmentDetails").DataTable(
+                {
+                    ajax:{
+                        url:`{{ url("schedhuler:jobneedtours") }}`,
+                        data:function(d){
+                        return  $.extend(d, ajaxData);
+                        }
+                    },
+                    retrieve: true,
+                    columns:[
+                        { data: "id", visible: false },
+                        {title:'SL No.', width:"5%", data:null, defaultContent:null, render:function (data, type, row, meta) { return meta.row  + 1; }},
+                        { data: "filepath",  width:"5%", title:'File', render:function (data, type, row, meta) { return `<img src="{{ MEDIA_URL }}${row.filepath.replace('youtility4_media/', "")}/${row.filename}" class="card-img-top" target="_blank" alt="" style="width: 30px;height: 30px;">`; }},
+                        { data: "filename",  title:'File Name' },
+                        { data: null, width:"5%", defaultContent:null, title:"Action", render:function(data, type, row, meta ){
+                        let file = `{{ MEDIA_URL }}${row.filepath.replace('youtility4_media/', "")}/${row.filename}`
+                        return `<a href="${file}" target="_blank" class=""><i class="ch4 fas fa-eye"></i></a>&nbsp;&nbsp;&nbsp;&nbsp;<a href="${file}" download="${row.filename}"><i class="ch4 fas fa-save"></i></a>`;
+                        } },
+                    ],
+                    ordering:false,
+                    deferRender: true,
+                    scrollX: true,
+                    dom: `<'row' <'col-sm-6 d-flex justify-content-start'f> <'col-sm-6 d-flex justify-content-end'B> >rt<'row'
+                    <'col-sm-6'l> <'col-sm-6'p><'col-sm-12 d-flex justify-content-center'i>>`,
+                    buttons:[],
+
+                }
+            )
+            
         })
 
-         //editor of child tabble
-         childEditor = new $.fn.dataTable.Editor({
+        //editor of child tabble
+         /*childEditor = new $.fn.dataTable.Editor({
             table: '#tabTouranswers',
             ajax: {
                 url:"{{ url('schedhuler:jn_jnd_editor') }}",
@@ -781,7 +790,7 @@ Internal Tour
             childTable.ajax.reload();
             $("#tabTouranswers_wrapper .buttons-create").addClass('disabled')
             $("#tabTouranswers_wrapper .buttons-create").attr({'data-toggle':"tooltip", 'data-placement':"top", 'title':"Select Section First"})
-        } );
+        } );*/
 
 
         //datetime widget configurations

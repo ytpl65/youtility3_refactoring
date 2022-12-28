@@ -417,7 +417,7 @@ def perform_reportmutation_bgt(self, data, db='default'):
 def save_parent_childs(sz, jn_parent_serializer, child, M, db):
     log.info("save_parent_childs ............start")
     try:
-        rc,  traceback= 0,  'NA'
+        rc, traceback= 0,  'NA'
         instance = None
         if jn_parent_serializer.is_valid():
             parent = jn_parent_serializer.save()
@@ -463,36 +463,32 @@ def save_parent_childs(sz, jn_parent_serializer, child, M, db):
         raise
 
 @app.task(bind = True, default_retry_delay = 300, max_retries = 5)
-def perform_facerecognition_bgt(self, pelogid, peopleid, pel_ownerid, home_dir, uploadfile, db='default'):
-
-    log.info("perform_facerecognition ...start [+]")
-    log.info(f'parameters are pelogid:{pelogid} peopleid:{peopleid} ownerid:{pel_ownerid} typeof pel_ownerid: {type(pel_ownerid)} home_dir:{home_dir} uploadfile:{uploadfile}')
+def perform_facerecognition_bgt(self, pel_uuid, peopleid, db='default'):
+    # sourcery skip: remove-redundant-except-handler
     try:
-        with transaction.atomic(using = utils.get_current_db_name()):
+        log.info("perform_facerecognition ...start [+]")
+        with transaction.atomic(using=utils.get_current_db_name()):
             utils.set_db_for_router(db)
-            log.info(f'router is connected to db: {db}')
-            if pelogid !=  1:
-                if ATT := Attachment.objects.get_attachment_record(pel_ownerid, db):
-                    log.info(f'attachment record found with pel_ownerid: {pel_ownerid} from db:{db}')
-                    if PEOPLE_ATT := PeopleEventlog.objects.get_people_attachment(pelogid, db):
-                        log.info(f'people attachment found with pelogid {pelogid} and people_id {PEOPLE_ATT.people_id} form db:{db}')
-                        if PEOPLE_PIC := People.objects.get_people_pic(PEOPLE_ATT.people_id):
-                            log.info(f'people pic found with from table {ATT[0]["ownername__tacode"]} with pel uuid {PEOPLE_ATT.uuid} from db:{db}')
-                            default_image_path = PEOPLE_PIC.default_img_path
-                            default_image_path = home_dir + default_image_path
-                            log.info(f"default image path:{default_image_path} and uploaded file path:{uploadfile}")
-                            log.info("deepface is imported going to verify 2 images")
-                            from deepface import DeepFace
-                            fr_results = DeepFace.verify(img1_path = default_image_path, img2_path = uploadfile)
-                            log.info(f"deepface verification completed and results are {fr_results}")
-                            if PeopleEventlog.objects.update_fr_results(fr_results, pelogid, peopleid, db):
-                                log.info("updation of fr_results in peopleeventlog is completed...")
+            if pel_uuid not in [None,'NONE', '', 1]  and peopleid not in [None, 'NONE', 1, ""]:
+                #people event pic
+                pel_att = Attachment.objects.get_people_pic(pel_uuid, db)
+                #people default profile pic
+                people_obj = People.objects.get(id=peopleid)
+                default_peopleimg = f'{settings.MEDIA_ROOT}/{people_obj.peopleimg.url.replace("/youtility4_media/", "")}'
+                if default_peopleimg and pel_att.people_event_pic:
+                    log.info(f"default image path:{default_peopleimg} and uploaded file path:{pel_att.people_event_pic}")
+                    from deepface import DeepFace
+                    fr_results = DeepFace.verify(img1_path=default_peopleimg, img2_path=pel_att.people_event_pic)
+                    log.info(f"deepface verification completed and results are {fr_results}")
+                    if PeopleEventlog.objects.update_fr_results(fr_results, pel_uuid, peopleid, db):
+                        log.info("updation of fr_results in peopleeventlog is completed...")
     except ValueError as v:
         log.error("face recogntion image not found or face is not there...", exc_info = True)
     except Exception as e:
-        log.error("something went wrong!", exc_info = True)
+        log.error("something went wrong! while performing face-recogntion in background", exc_info = True)
         self.retry(e)
         raise
+
 
 @app.task(bind = True, default_retry_delay = 300, max_retries = 5)
 def perform_adhocmutation_bgt(self, data, db='default'):

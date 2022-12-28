@@ -24,7 +24,8 @@ def peventlog_json():
 
 def pel_geojson():
     return {
-        'startlocation':""
+        'startlocation':"",
+        'endlocation':""
     }
 
 ############## PeopleEventlog Table ###############
@@ -71,7 +72,7 @@ class PeopleEventlog(BaseModel, TenantAwareModel):
     peventlogextras = models.JSONField(_("peventlogextras"), encoder = DjangoJSONEncoder, default = peventlog_json)
     otherlocation   = models.CharField(_("Other Location"), max_length = 50, default = None)
     reference       = models.CharField('Reference', max_length = 55, null = True)
-    peopleeventloggeojson = models.JSONField(default=pel_geojson, null=True)
+    geojson = models.JSONField(default=pel_geojson, null=True)
 
     objects = PELManager()
 

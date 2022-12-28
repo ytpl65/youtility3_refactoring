@@ -232,8 +232,8 @@ function initAutocomplete(){
         
         if(resp.obj.length > 0){
             actualResp = resp
-            drawConveyancePath(resp)
-            //plotPoints(resp)
+            //drawConveyancePath(resp)
+            plotPoints(resp)
             var dirConfig = getDirectionConfig(resp.obj[0])
             getRoute(directionsService, dirConfig, function(response) {
                 console.log(response, "response")
@@ -277,11 +277,11 @@ function plotPoints(data){
             map: map,
             icon: {
                 path: google.maps.SymbolPath.CIRCLE,
-                scale: 5,
-                fillOpacity: 1,
-                strokeWeight: 2,
-                fillColor: '#5384ED',
-                strokeColor: '#ffffff',
+                scale: 2,
+                fillOpacity: 0.5,
+                strokeWeight: 1,
+                fillColor: '#9F2B68',
+                strokeColor: '#9F2B68',
             }
         });
     }
@@ -303,11 +303,11 @@ function drawConveyancePath(data){
         journeyPath.getPath().forEach(function(element,index){bounds.extend(element)})
         map.fitBounds(bounds)
         journeyPath.setMap(map);
-
+        
         const InfoString = 
             `<div class="card text-dark bg-secondary" style="max-width: 18rem;">
                 <div class="card-body p-0">
-                    <h5>Start Point</h5>
+                    <h5>{0} Point</h5>
                     <table class="table-secondary">
                         {% if conveyanceform.instance.id %}
                         <tbody>
@@ -330,6 +330,7 @@ function drawConveyancePath(data){
             maxWidth: 700
         });
         
+
         const endInfo = new google.maps.InfoWindow({
             content: InfoString,
             maxWidth: 700

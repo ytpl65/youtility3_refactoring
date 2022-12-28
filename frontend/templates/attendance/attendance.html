@@ -46,31 +46,43 @@ td { padding: 6px; border: 1px solid #CCC; }
         <div class="col-sm-4" >
             <div class="card" style="width: 18rem;">
                 <img src="" class="card-img-top" alt="" id="attd_in_img" style="width: 252px;height: 252px;">
-                <div class="card-body">
-                    <p class="card-text" id="in_text"></p>
-                </div>
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item" id="fr_in"></li>
+                    <li class="list-group-item"id='thresold'></li>
+                    <li class="list-group-item"id="fr_metric"></li>
+                    <li class="list-group-item"id="fr_ppl"></li>
+                    <li class="list-group-item"id="fr_date"></li>
+                </ul>
             </div>
         </div>
         <div class="col-sm-4">
             <div class="card" style="width: 18rem;">
                 <img src="" class="card-img-top" alt="" id="default_people_img" style="width: 252px;height: 252px;">
-                <div class="card-body">
-                    <p class="card-text" ></p>
-                </div>
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item">Default Profile Image</li>
+                    <li class="list-group-item"id='taken_on'></li>
+                    <li class="list-group-item"id="cuser"></li>
+                    <li class="list-group-item pe-0"id="modified_on"></li>
+                    <li class="list-group-item"id="muser"></li>
+                </ul>
             </div>
         </div>
         <div class="col-sm-4" >
             <div class="card" style="width: 18rem;">
                 <img src="" class="card-img-top" alt="" id="attd_out_img" style="width: 252px;height: 252px;">
-                <div class="card-body">
-                    <p class="card-text" id="out_text"></p>
-                </div>
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item" id="fr_in2"></li>
+                    <li class="list-group-item"id='thresold2'></li>
+                    <li class="list-group-item"id="fr_metric2"></li>
+                    <li class="list-group-item"id="fr_ppl2"></li>
+                    <li class="list-group-item"id="fr_date2"></li>
+                </ul>
             </div>
         </div>
     </div>
 </div>
 <div class="modal-footer">
-    <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">OK</button>
+    <button type="button" class="btn btn-sm btn-primary" data-bs-dismiss="modal">OK</button>
 </div>
 {% endcall %}
 
@@ -82,22 +94,21 @@ td { padding: 6px; border: 1px solid #CCC; }
     var table = null;
     function getReadableTextForINOUT(details){
         if(details){
-            console.log(details['peventlogextras'], 'details');
-            verifiedInValuye = details['peventlogextras']['distance_in'] ? (1-parseInt(details['peventlogextras']['distance_in']))*100 : 'N/A'
-            verifiedOutValuye = details['peventlogextras']['distance_out'] ? (1-parseInt(details['peventlogextras']['distance_out']))*100 : 'N/A'
-            threshold = details['peventlogextras']['threshold'] ? details['peventlogextras']['threshold']: 'N/A'
-            metric = details['peventlogextras']['similarity_metric'] ? details['peventlogextras']['similarity_metric'].toUpperCase(): 'N/A'
-            ingps = details['startgps'] ? JSON.parse(details['startgps'])['coordinates'] : 'N/A'
-            outgps = details['endgps'] ?  JSON.parse(details['endgps'])['coordinates'] : 'N/A'
-            ondate = details['datefor'] ? details['datefor'] : 'N/A'
-            createdby = details['createdby'] ? details['createdby'] : 'N/A'
-            var inHtml = `FR IN:   ${verifiedInValuye}% <br> Threshold:   ${threshold}% 
-            \<br> Metric:    ${metric} In Lat-Lng:   ${ingps} <br> On Date:   ${ondate} \
-            <br> Performed By:${createdby}`
-            var outHtml = `FR OUT:${verifiedOutValuye}% <br> Threshold:${threshold}% 
-            \<br> Metric:${metric} <br> Out Lat-Lng:${outgps} <br> On Date:${ondate} \
-            <br> Performed By:${createdby}`
-            return [inHtml, outHtml]
+            console.log(details, "details")
+            let verifiedInValuye = details['peventlogextras']['distance_in'] ? Math.round((1-details['peventlogextras']['distance_in'])*100) : 'N/A'
+            $("#fr_in").html(`Face Recognition: ${verifiedInValuye}%`)
+            let verifiedOutValuye = details['peventlogextras']['distance_out'] ? Math.round((1-details['peventlogextras']['distance_out'])*100) : 'N/A'
+            $("#fr_in2").html(`Face Recognition: ${verifiedOutValuye}%`)
+            let threshold = details['peventlogextras']['threshold'] ? details['peventlogextras']['threshold']: 'N/A'
+            $("#thresold, #thresold2").html(`Threshold Used: ${threshold}`)
+            let metric = details['peventlogextras']['similarity_metric'] ? details['peventlogextras']['similarity_metric'].toUpperCase(): 'N/A'
+            $("#fr_metric, #fr_metric2").html(`Metric Used: ${metric}`)
+            let ingps = details['startgps'] ? JSON.parse(details['startgps'])['coordinates'] : 'N/A'
+            let outgps = details['endgps'] ?  JSON.parse(details['endgps'])['coordinates'] : 'N/A'
+            let ondate = details['datefor'] ? details['datefor'] : 'N/A'
+            $("#fr_date, #fr_date2").html(`Captured Date: ${ondate}`)
+            let createdby = details['createdby'] ? details['createdby'] : 'N/A'
+            $("#fr_ppl, #fr_ppl2").html(`Performed By: ${createdby}`)
         }
         return null
     }
@@ -115,9 +126,12 @@ td { padding: 6px; border: 1px solid #CCC; }
             $("#attd_out_img").attr('src', filepathOUT)
             $("#default_people_img").attr('src', defaultIMG)
             $("#modal_fr_status").modal("show");
-            let html = getReadableTextForINOUT(data['eventlog_in_out'].length > 0 ? data['eventlog_in_out'][0] : null)
-            $("#in_text").html(html ? html[0] : NA)
-            $("#out_text").html(html ? html[1] : NA)
+            getReadableTextForINOUT(data['eventlog_in_out'].length > 0 ? data['eventlog_in_out'][0] : null)
+            $("#taken_on").html(`Take on: ${utc_to_local(data['default_img_path'][0]['ctzoffset'], data['default_img_path'][0]['cdtz'])}`)
+            $("#cuser").html(`Onboarded By: ${data['default_img_path'][0]['cuser__peoplename']}`)
+            $("#modified_on").html(`Last Updated on: ${utc_to_local(data['default_img_path'][0]['ctzoffset'], data['default_img_path'][0]['mdtz'])}`)
+            $("#muser").html(`Modified By: ${data['default_img_path'][0]['muser__peoplename']}`)
+            
 
 
         })
@@ -128,8 +142,6 @@ td { padding: 6px; border: 1px solid #CCC; }
 
     $(document).ready(function () {
         new ClipboardJS('btn-copy')
-        
-
         //beforeSend of capability ajax request 
         function attdBeforeSend() {
             $("#modal-attd").modal("show");
@@ -139,7 +151,7 @@ td { padding: 6px; border: 1px solid #CCC; }
             ajax:{
 				url: '{{ url("attendance:attendance_view") }}?action=list',
 			},
-            pageLength:50,
+            pageLength:14,
             deferRender: true,
 			responsive : true,
             
@@ -165,17 +177,29 @@ td { padding: 6px; border: 1px solid #CCC; }
                 { data:'uuid',  visible:false, searchable:false},
             ], 
             columnDefs:[
+                {targets:6, render:function(data, type, row, meta){return utc_to_local(row['ctzoffset'], data, 'YYYY-MM-DD')}
+                },
                 {targets:7, render:function(data, type, row, meta){
                     return convert_to_local(type, data, row)}
                 },
                 {targets:8, render:function(data, type, row, meta){
                     return convert_to_local(type, data, row)}
                 },
-                {targets:3, render:function(data, type, row, meta){
-                    return data === false ? 'Not Matched' : 'Matched'}
+                {targets:[3], render:function(data, type, row, meta){
+                    if(['Self Attendance', 'Mark Attendance'].includes(row['peventtype__taname'])){
+                        if(!row['punchintime']){ return '--'}
+                        return data === false ? '<span class="badge badge-danger">Not Matched</span>' : '<span class="badge badge-success">Matched</span>'
+                    }return '--'
+                }},
+                { targets: 4, render:function(data, type, row, meta){
+                    if(['Self Attendance', 'Mark Attendance'].includes(row['peventtype__taname'])){
+                        if(!row['punchouttime']){ return '<span class="badge badge-warning">Pending</span>'}
+                        return data === false ? '<span class="badge badge-danger">Not Matched</span>' : '<span class="badge badge-success">Matched</span>'
+                    }return '--'
+                }
                 },
                 {targets:9, render:function(data, type, row, meta){
-                    return `<button type="button" class="btn p-0 btn-link" onClick="getFRStatus('${row['uuid']}');event.stopPropagation();">FR Status</button>`}
+                    return ['Self Attendance', 'Mark Attendance'].includes(row['peventtype__taname']) ? `<button type="button" class="btn p-0 btn-link" onClick="getFRStatus('${row['uuid']}');event.stopPropagation();">FR Status</button>` : '--'}
                 }
             ],
             buttons: [
@@ -193,7 +217,7 @@ td { padding: 6px; border: 1px solid #CCC; }
                         $("#modal-attd .modal-content").html(data.html_form)
                     })
                     .fail((xhr, status, error) => {
-                            show_error_alert('Something went wrong!')
+                        show_error_alert('Something went wrong!')
                     })
                 }
                 }, 
@@ -266,10 +290,10 @@ td { padding: 6px; border: 1px solid #CCC; }
         $(".booleans").addClass("form-check form-switch form-check-custom form-check-solid") 
 
         //datatime widget
-        $("#id_punchintime, #id_punchouttime").flatpickr({
-            enableTime: true,
-            dateFormat: "Y-m-d H:i",
-        });
+        //$("#id_punchintime, #id_punchouttime").flatpickr({
+        //    enableTime: true,
+        //    dateFormat: "Y-m-d H:i",
+        //});
 
         //date widget
         $("#id_datefor").flatpickr({

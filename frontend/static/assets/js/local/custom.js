@@ -1088,6 +1088,10 @@ function convert_to_local(type, data, row) {
   return data;
 }
 
+function utc_to_local(offset, datetime, format=null){
+  return moment(datetime, format ? format : "YYYY-MM-DDTHH:mm:ss").add(offset, 'm').format(format ? "DD-MMM-YYYY" :"DD-MMM-YYYY HH:mm")
+}
+
 function initDatetimes(ids) {
   $(ids).flatpickr({
     enableTime: true,

@@ -88,6 +88,27 @@ class PeopleManager(BaseUserManager):
         qset = self.filter(id = peopleid).annotate(
             default_img_path = Concat(V('youtility4_media/', output_field=models.CharField()), Cast('peopleimg', output_field=models.CharField()))).values_list('default_img_path', named=True)
         return qset[0] if qset else qset or self.none()
+    
+
+    def get_siteincharge_emails(self, buid):
+        from apps.peoples.models import Pgbelonging
+        
+        grps = Pgbelonging.objects.filter(
+            assignsites_id=buid, people_id__in = [1, None]).values_list(
+                'pgroup_id', flat=True)
+        return self.filter(
+            Q(Q(bu_id=buid) | Q(people_extras__assignsitegroup__in = grps)) &
+            Q(Q(designation__tacode = 'SITEINCHARGE') | Q(worktype__tacode= 'SITEINCHARGE')) 
+            & Q(isverified=True)).values_list(
+                'email', flat=True
+            ) or self.none()
+    
+    def get_admin_emails(self, clientid):
+        return self.filter(
+            Q(isadmin=True) & Q(client_id=clientid) & Q(isverified=True),
+            enable=True
+        ).values_list('email', flat=True) or self.none()
+        
 
 
 

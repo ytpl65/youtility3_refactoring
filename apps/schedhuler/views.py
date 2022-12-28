@@ -1138,6 +1138,18 @@ class JobneedTours(LoginRequiredMixin, View):
             objs = P['model'].objects.get_internaltourlist_jobneed(request, P['related'], P['fields'])
             return rp.JsonResponse(data = {'data':list(objs)})
         
+        if R.get('action') == 'checklist_details' and R.get('jobneedid'):
+            objs = am.JobneedDetails.objects.get_e_tour_checklist_details(R['jobneedid'])
+            return rp.JsonResponse(data = {'data':list(objs)})
+        
+        if R.get('action') == 'getAttachmentJobneed' and R.get('id'):
+            att = P['model'].objects.getAttachmentJobneed(R['id'])
+            return rp.JsonResponse(data = {'data':list(att)})
+
+        if R.get('action') == 'getAttachmentJND' and R.get('id'):
+            att = am.JobneedDetails.objects.getAttachmentJND(R['id'])
+            return rp.JsonResponse(data = {'data': list(att)})
+        
         if R.get('id'):
             obj = P['model'].objects.get(id = R['id'])
             form = P['form_class'](instance = obj, initial = P['initial'])
@@ -1177,7 +1189,7 @@ class JobneedExternalTours(LoginRequiredMixin, View):
         'model'        : am.Jobneed,
         'template_path': 'schedhuler/e_tourlist_jobneed.html',
         'template_form': 'schedhuler/e_tourform_jobneed.html',
-        'fields'       : ['jobdesc', 'people__peoplename', 'pgroup__groupname', 'id', 'ctzoffset','bu__buname',
+        'fields'       : ['jobdesc', 'people__peoplename', 'pgroup__groupname', 'id', 'ctzoffset','bu__buname', 'bu__solid',
             'plandatetime', 'expirydatetime', 'jobstatus', 'gracetime', 'performedby__peoplename', 'seqno', 'qset__qsetname'],
         'related': ['pgroup',  'ticketcategory', 'asset', 'client',
                'frequency', 'job', 'qset', 'people', 'parent', 'bu'],
@@ -1502,22 +1514,22 @@ class InternalTourScheduling(LoginRequiredMixin, View):
             log.info(f"saving Checkpoints found {len(checkpoints)} [started]")
             ic(checkpoints)
             CP = {}
+            job = am.Job.objects.filter(id = job.id).values()[0]
+            self.params['model'].objects.filter(parent_id = job['id']).delete()
+            count=0
             for cp in checkpoints:
                 CP['expirytime'] = cp[5]
-                CP['asset']    = cp[1]
-                CP['qset']     = cp[3]
+                CP['qsetname'] = cp[4]
+                CP['assetid']    = cp[1]
+                CP['qsetid']     = cp[3]
                 CP['seqno']       = cp[0]
-                checkpoint, created = self.params['model'].objects.update_or_create(
-                    parent_id  = job.id,
-                    asset_id = CP['asset'],
-                    qset_id  = CP['qset'],
-
-                    defaults   = sutils.job_fields(job, CP)
+                obj = am.Job.objects.create(
+                    **sutils.job_fields(job, CP)
                 )
-                checkpoint.save()
-                status = "CREATED" if created else "UPDATED"
-                log.info("\nsaving checkpoint:= '%s' for JOB:= '%s' with expirytime:= '%s'  %s\n", cp[2], job.jobname, cp[5], status)
-                putils.save_userinfo(checkpoint, request.user, request.session)
+                putils.save_userinfo(obj, request.user, request.session)
+                count+=1
+            if count == len(checkpoints):
+                log.info('all checkpoints saved successfully')
         except Exception as ex:
             log.error(
                 "failed to insert checkpoints, something went wrong", exc_info = True)

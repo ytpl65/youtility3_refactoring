@@ -402,7 +402,11 @@ function getAsgdsitesTabColumnConfig(){
         {data:'buid', visible:false, searchable:false},
         {data:'solid', searchable:false, title:'Sol ID'},
         {data:'bu__buname', title:'Site'},
-        {data:'bu__gpslocation', title:'GPS', visible:false},
+        {data:'bu__gpslocation', title:'GPS', title:'GPS', render:function(data, type, row, meta){
+            let coords = typeof data === 'string' && data.length > 0 ? JSON.parse(data): 'NONE'
+            return coords !== 'NONE' ? `${coords['coordinates'][1]}, ${coords['coordinates'][0]}` : coords
+            }
+        },
         {title:'Start', defaultContent:null, data:'starttime', render:function(data, type, row, meta){
                 return data === null ? '--' : data
             }

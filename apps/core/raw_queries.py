@@ -39,7 +39,7 @@ query = {
                                     ORDER BY pseqno asc, jobdesc asc, pseqno, cseqno asc
                                 ''',
     'sitereportlist':           '''
-                                    SELECT * FROM( 
+                                    SELECT * FROM(
                                     SELECT DISTINCT jobneed.id, jobneed.plandatetime, jobneed.jobdesc, people.peoplename, 
                                     CASE WHEN (jobneed.othersite!='' or upper(jobneed.othersite)!='NONE') THEN 'other location [ ' ||jobneed.othersite||' ]' ELSE bt.buname END AS buname,
                                     jobneed.qset_id, jobneed.jobstatus AS jobstatusname, ST_AsText(jobneed.gpslocation) as gpslocation, bt.pdist, count(attachment.owner) AS att,
@@ -50,10 +50,28 @@ query = {
                                     LEFT JOIN attachment ON jobneed.uuid::text = attachment.owner
                                     WHERE jobneed.parent_id=1 AND 1 = 1 AND bt.id IN %s 
                                     AND jobneed.identifier='SITEREPORT'
-                                    AND jobneed.parent_id='1' AND jobneed.plandatetime >= %s AND jobneed.plandatetime <= %s 
+                                    AND jobneed.plandatetime >= %s AND jobneed.plandatetime <= %s 
                                     GROUP BY jobneed.id, buname,  bt.pdist, people.peoplename, jobstatusname, jobneed.plandatetime)
                                     jobneed 
                                     WHERE 1 = 1 ORDER BY plandatetime desc OFFSET 0 LIMIT 250
+                                ''',
+
+    'incidentreportlist':        '''
+                                    SELECT * FROM(
+                                    SELECT DISTINCT jobneed.id, jobneed.plandatetime, jobneed.jobdesc,  jobneed.bu_id, 
+                                    case when (jobneed.othersite!='' or upper(jobneed.othersite)!='NONE') then 'other location [ ' ||jobneed.othersite||' ]' else bt.buname end  As buname,
+                                    people.peoplename, jobneed.jobstatus as jobstatusname, count(attachment.owner) as att, ST_AsText(jobneed.gpslocation) as gpslocation
+                                    FROM jobneed 
+                                    INNER JOIN people ON jobneed.people_id=people.id 
+                                    INNER JOIN bt ON jobneed.bu_id=bt.id 
+                                    LEFT JOIN attachment ON jobneed.uuid::text = attachment.owner 
+                                    WHERE jobneed.parent_id=1 AND jobneed.identifier = 'INCIDENTREPORT' 
+                                    AND bt.id IN %s 
+                                    AND jobneed.plandatetime >= %s AND jobneed.plandatetime <= %s
+                                    AND attachment.attachmenttype = 'ATTACHMENT'
+                                    GROUP BY jobneed.id, buname, people.peoplename, jobstatusname, jobneed.plandatetime)
+                                    jobneed
+                                    where 1=1 ORDER BY plandatetime desc OFFSET 0 LIMIT 250
                                 ''',
     'workpermitlist':           '''
                                 SELECT * FROM( 

@@ -665,7 +665,7 @@ Schedhule Tour
             }).then((result) => {
                 if(result.isConfirmed){
                     const params = {url: "{{ url('schedhuler:runJob') }}"}
-                    var payLoad = {job: '{{ schdtourform.instance.id }}', csrfmiddlewaretoken: '{{ csrf_token }}'}
+                    var payLoad = {job_id: '{{ schdtourform.instance.id }}', csrfmiddlewaretoken: '{{ csrf_token }}'}
                     fire_ajax_form_post(params, payLoad)
                     .done((data, status, xhr) => {
                         Swal.fire({

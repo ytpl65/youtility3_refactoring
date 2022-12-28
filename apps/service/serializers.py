@@ -75,8 +75,8 @@ class JobneedSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Jobneed
-        exclude = ['receivedonserver', 'other_info', 'parent', 'people', 'pgroup', 'qset',
-                   'asset', 'job', 'performedby', 'client', 'bu', 'ticketcategory', 'cuser', 'muser', 'id' ]
+        exclude = ['receivedonserver', 'other_info', 'parent', 'people', 'pgroup', 'qset', 'geojson',
+                   'asset', 'job', 'performedby', 'client', 'bu', 'ticketcategory', 'cuser', 'muser', 'id' ]        
 
 class PELSerializer(serializers.ModelSerializer):
     pass

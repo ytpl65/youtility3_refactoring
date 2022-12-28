@@ -18,6 +18,7 @@ from pprint import pformat
 import zipfile
 import json
 import gzip
+from django.views import View
 
 from logging import getLogger
 import traceback as tb
@@ -209,13 +210,13 @@ class UploadFile(APIView):
     permission_classes = [AllowAny]
     
     def post(self, request, format=None):
-        log.info(f"request.data: {pformat(request.data)}")
+        file    = request.data.get('file')
+        biodata = json.loads(request.data.get('biodata'))
+        record  = json.loads(request.data.get('record'))
         
-        file    = request.data['file']
-        biodata = json.loads(request.data['biodata'])
-        record  = json.loads(request.data['record'])
-        
-        output = sutils.perform_uploadattachment(file, record, biodata)
+        if file and biodata and record:
+            output = sutils.perform_uploadattachment(file, record, biodata)
+        else: return Response(data={'rc':1, 'msg':'No data', 'recordcount':0})
         resp = Response(data={'rc':output.rc, 'msg':output.msg, 
             'recordcount':output.recordcount, 'traceback':output.traceback})
         log.warning(f'Response:{pformat(resp.data)}')

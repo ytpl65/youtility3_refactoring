@@ -350,6 +350,10 @@ var israndom = "{{ externaltourform.instance.other_info['is_randomized'] }}";
 
 
     $(document).ready(() => {
+        //disabled fields
+        if("{{ request.user.is_superuser }}" !== 'True'){
+            $("input, textarea, select").attr('disabled', "disabled")
+        }
         d2InitializeMap()
         //set ctzoffset
   	    $("#id_ctzoffset").val(-new Date().getTimezoneOffset())
@@ -373,11 +377,16 @@ var israndom = "{{ externaltourform.instance.other_info['is_randomized'] }}";
                 {data:"seqno", title:'Slno'},
                 {data:"plandatetime", title:'Plan Datetime'},
                 {data:"expirydatetime", title:'Expiry Datetime'},
+                {data:"bu__solid", title:'Sol Id'},
                 {data:"bu__buname", title:'Checkpoint'},
                 {data:'qset__qsetname', title:'Checklist'},
                 {data:'gracetime', title:'Gracetime', visible:false},
                 {data:'jobstatus', title:'Status'},
-                {data:'bu__gpslocation', visible:false},
+                {data:'bu__gpslocation', visible:true, title:"GPS", render:function(data, type, row, meta){
+                    let coords = typeof data === 'string' && data.length > 0 ? JSON.parse(data): 'NONE'
+                    return coords !== 'NONE' ? `${coords['coordinates'][1]}, ${coords['coordinates'][0]}` : coords
+                    }
+                },
                 {data:'distance', title:'Distance',  defaultContent:null, render:function(data, type, row, meta){
                         return data === null ? '--' : data + ' km'
                     }
