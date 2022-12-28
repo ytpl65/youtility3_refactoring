@@ -225,6 +225,7 @@ def perform_insertrecord(file, request = None, filebased = True):
             for record in data:
                 tablename = record.pop('tablename')
                 obj = insertrecord(record, tablename)
+                if hasattr(obj, 'geojson'): save_addr_for_point(obj)
                 allconditions = [
                     hasattr(obj, 'peventtype'), hasattr(obj, 'endlocation'), 
                     hasattr(obj, 'punchintime'), hasattr(obj, 'punchouttime')]
@@ -546,3 +547,12 @@ def get_readable_addr_from_point(point):
     except Exception as e:
         log.error("something went wrong while reverse geocoding", exc_info=True)
         return ""
+    
+def save_addr_for_point(obj):
+    if hasattr(obj, 'gpslocation'):
+        obj.geojson['gpslocation'] = get_readable_addr_from_point(obj.gpslocation)
+    if hasattr(obj, 'startlocation'):
+        obj.geojson['startlocation'] = get_readable_addr_from_point(obj.startlocation)
+    if hasattr(obj, 'endlocation'):
+        obj.geojson['endlocation'] = get_readable_addr_from_point(obj.endlocation)
+    obj.save()

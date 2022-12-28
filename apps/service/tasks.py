@@ -16,6 +16,7 @@ from .validators import clean_record
 from pprint import pformat
 from intelliwiz_config.celery import app
 from celery.utils.log import get_task_logger
+from .utils import get_readable_addr_from_point, alert_sendmail, save_addr_for_point
 import json
 log = get_task_logger(__name__)
 
@@ -218,7 +219,7 @@ def perform_insertrecord_bgt(self, data, request = None, filebased = True, db='d
                 tablename = record.pop('tablename')
                 log.info(f'tablename: {tablename}')
                 obj = insertrecord(record, tablename)
-                
+                if hasattr(obj, 'geojson'): save_addr_for_point(obj)
                 if all([tablename == 'peopleeventlog',
                         obj.peventtype.tacode in ('CONVEYANCE', 'AUDIT'),
                         obj.endlocation,obj.punchouttime, obj.punchintime]):
@@ -286,27 +287,27 @@ def print_json_data(file):
     except Exception as e:
         log.error("json print error", exc_info= True)
 
-def update_record(details, jobneed, Jn, Jnd, db):
+def update_record(details, jobneed_record, Jn, Jnd, db):
     alerttype = 'OBSERVATION'
-    record = clean_record(jobneed)
+    record = clean_record(jobneed_record)
     # ic((record)
     try:
         log.info(f"from function update_record() the router is connected to db {db}")
         instance = Jn.objects.get(uuid = record['uuid'])
         jn_parent_serializer = sz.JobneedSerializer(data = record, instance = instance)
         if jn_parent_serializer.is_valid():
-            isJnUpdated = jn_parent_serializer.save()
-            log.info(f"parent jobneed with this pk:{isJnUpdated.pk} is valid and saved successfully")
-            if isJndUpdated := update_jobneeddetails(details, Jnd, db):
+            jobneed = jn_parent_serializer.save()
+            jobneed.geojson['gpslocation'] = get_readable_addr_from_point(jobneed.gpslocation)
+            jobneed.save()
+            log.info(f"parent jobneed with this pk:{jobneed.pk} is valid and saved successfully")
+            if isJndUpdated := update_jobneeddetails(details, Jnd):
                 log.info('parent jobneed and its details are updated successully')
+                if jobneed.alerts and jobneed.attachmentcount == 0:
+                    alert_sendmail(jobneed, 'observation')
+                    alert_sendmail(jobneed, 'deviation')
+                return True
         else:
             log.error(f"parent jobneed record has some errors\n{jn_parent_serializer.errors} ", exc_info = True )
-        if isJnUpdated and  isJndUpdated:
-            log.info("record and details are updated successfully")
-            # utils.alert_email(input.jobneedid, alerttype)# # 
-            #TODO send observation email
-            #TODO send deviation mail
-            return True
     except Exception:
         log.error('something went wrong', exc_info= True)
         raise
