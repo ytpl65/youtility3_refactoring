@@ -219,33 +219,43 @@ function initAutocomplete(){
     });
     const geocoder = new google.maps.Geocoder();
 
-    getJourneyCoords("{{ conveyanceform.instance.id }}")
-    .done((resp, status, xhr) => {
-        var startpoint = {lat: parseFloat("{{ conveyanceform.instance.startlocation.y }}"), lng:parseFloat("{{ conveyanceform.instance.startlocation.x }}")}
-        var endpoint = {lat:parseFloat("{{ conveyanceform.instance.endlocation.y }}"), lng:parseFloat("{{ conveyanceform.instance.endlocation.x }}")}
-        getAddressOfPoint(geocoder, startpoint, function(addr){
-            $("#id_startlocation").val(addr)
+    
+        getJourneyCoords("{{ conveyanceform.instance.id }}")
+        .done((resp, status, xhr) => {
+            var startpoint = {lat: parseFloat("{{ conveyanceform.instance.startlocation.y }}"), lng:parseFloat("{{ conveyanceform.instance.startlocation.x }}")}
+            var endpoint = {lat:parseFloat("{{ conveyanceform.instance.endlocation.y }}"), lng:parseFloat("{{ conveyanceform.instance.endlocation.x }}")}
+            let start = "{{ conveyanceform.instance.geojson['startlocation'] }}"
+            let end = "{{ conveyanceform.instance.geojson['endlocation'] }}"
+            //let end = 
+            if(start === "" || end === ""){
+                getAddressOfPoint(geocoder, startpoint, function(addr){
+                $("#id_startlocation").val(addr)
+                })
+                getAddressOfPoint(geocoder, endpoint, function(addr){
+                    $("#id_endlocation").val(addr)
+                })
+            }else{
+                $("#id_startlocation").val(start)
+                $("#id_endlocation").val(end)
+            }
+            
+            if(resp.obj.length > 0){
+                actualResp = resp
+                //drawConveyancePath(resp)
+                plotPoints(resp)
+                var dirConfig = getDirectionConfig(resp.obj[0])
+                getRoute(directionsService, dirConfig, function(response) {
+                    console.log(response, "response")
+                    googleMapsResp = response
+                    directionsRenderer.setDirections(response)
+                })
+            }
         })
-        getAddressOfPoint(geocoder, endpoint, function(addr){
-            $("#id_endlocation").val(addr)
+        .fail((xhr, status, error) => {
+            console.log(error)
         })
-        
-        if(resp.obj.length > 0){
-            actualResp = resp
-            //drawConveyancePath(resp)
-            plotPoints(resp)
-            var dirConfig = getDirectionConfig(resp.obj[0])
-            getRoute(directionsService, dirConfig, function(response) {
-                console.log(response, "response")
-                googleMapsResp = response
-                directionsRenderer.setDirections(response)
-            })
-        }
-    })
-    .fail((xhr, status, error) => {
-        console.log(error)
-    })
-    directionsRenderer.setMap(map);
+        directionsRenderer.setMap(map);
+    
 }
 
 //get journey coords

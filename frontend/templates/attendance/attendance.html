@@ -12,6 +12,7 @@ td.selected { background-color: yellow; }
 td:not(:last-child) { cursor: pointer; }
 td { padding: 6px; border: 1px solid #CCC; }
 </style>
+{{ load_advanced_search_css() }}
 {% endblock extra_css %}
 
 <!------------------------------------ BEGIN PAGE BREADCUMBS ------------------------------------>
@@ -86,10 +87,17 @@ td { padding: 6px; border: 1px solid #CCC; }
 </div>
 {% endcall %}
 
+{% call general_popup(popup_id = 'modal_adv_search',modal_size="modal-lg", title="Search with criteria &nbsp;<i class='fas text-primary fa-search ch4'></i>") %}
+<div class="modal-body">
+<div id="myFilter" style="height: 100%;" class="d-block"></div>
+</div>
+{% endcall %}
+
 {% endblock popup_alerts %}
 
 <!--------- BEGIN EXTRA SCRIPTS ----------------------------->
 {% block extra_scripts %}
+{{ load_advanced_search_js() }}
 <script>
     var table = null;
     function getReadableTextForINOUT(details){
@@ -100,7 +108,7 @@ td { padding: 6px; border: 1px solid #CCC; }
             let verifiedOutValuye = details['peventlogextras']['distance_out'] ? Math.round((1-details['peventlogextras']['distance_out'])*100) : 'N/A'
             $("#fr_in2").html(`Face Recognition: ${verifiedOutValuye}%`)
             let threshold = details['peventlogextras']['threshold'] ? details['peventlogextras']['threshold']: 'N/A'
-            $("#thresold, #thresold2").html(`Threshold Used: ${threshold}`)
+            $("#thresold, #thresold2").html(`Threshold Used: 0.90`)
             let metric = details['peventlogextras']['similarity_metric'] ? details['peventlogextras']['similarity_metric'].toUpperCase(): 'N/A'
             $("#fr_metric, #fr_metric2").html(`Metric Used: ${metric}`)
             let ingps = details['startgps'] ? JSON.parse(details['startgps'])['coordinates'] : 'N/A'
@@ -112,6 +120,42 @@ td { padding: 6px; border: 1px solid #CCC; }
         }
         return null
     }
+    // sample data for Structured-Filter
+    var contacts=[
+    { type:"text", id:"Lastname", label:"Lastname"},
+    { type:"text", id:"Firstname", label:"Firstname"},
+    { type:"boolean", id:"active", label:"Is active"},  
+    { type:"number", id:"age", label:"Age"},
+        {type:"list", id:"category", label:"Category",
+        list:[
+            {id:'1', label:"Family"},
+            {id:'2', label:"Friends"},
+            {id:'3', label:"Business"},
+            {id:'4', label:"Acquaintances"},
+            {id:'5', label:"Other"}
+        ]
+        },
+    {type:"date", id:"bday", label:"Birthday"},
+    {type:"text", id:"phone", label:"Phone"},
+    {type:"text", id:"cell", label:"Mobile"},
+    {type:"text", id:"Address1", label:"Address"},
+    {type:"text", id:"City", label:"City"},
+    {type:"list", id:"State", label:"State",
+        list:[ 
+        {id:"AL", label:"Alabama"},
+        {id:"AK", label:"Alaska"},
+        {id:"AZ", label:"Arizona"}
+        ]
+    },
+    {type:"text", id:"Zip", label:"Zip"},
+    {type:"list", id:"Country", label:"Country",
+        list:[ 
+        {label: 'Afghanistan', id: 'AF'}, 
+        {label: 'Åland Islands', id: 'AX'},
+        // ...
+        ]
+    }
+    ] 
 
 
     function getFRStatus(data){
@@ -131,16 +175,19 @@ td { padding: 6px; border: 1px solid #CCC; }
             $("#cuser").html(`Onboarded By: ${data['default_img_path'][0]['cuser__peoplename']}`)
             $("#modified_on").html(`Last Updated on: ${utc_to_local(data['default_img_path'][0]['ctzoffset'], data['default_img_path'][0]['mdtz'])}`)
             $("#muser").html(`Modified By: ${data['default_img_path'][0]['muser__peoplename']}`)
-            
-
-
         })
         .fail((xhr, status, error) =>  {
             
         })
     }
+    //if you want to modifiy here, then modify in custom.js initDateRange also
+    var from_pd = moment().subtract(7, 'days').format('YYYY-MM-DD');
+    var to_pd = moment().format('YYYY-MM-DD')
 
     $(document).ready(function () {
+        $('#myFilter').structFilter({
+            fields: contacts,
+        })
         new ClipboardJS('btn-copy')
         //beforeSend of capability ajax request 
         function attdBeforeSend() {
@@ -150,12 +197,16 @@ td { padding: 6px; border: 1px solid #CCC; }
         table = $('#attd_table').DataTable({
             ajax:{
 				url: '{{ url("attendance:attendance_view") }}?action=list',
+                data:function(d){
+                    d.pd1 = from_pd
+                    d.pd2 = to_pd
+                }
 			},
             pageLength:14,
             deferRender: true,
 			responsive : true,
             
-            dom: `<'row' <'col-sm-6 d-flex justify-content-start'f> <'col-sm-6 d-flex justify-content-end'B> >rt<'row'
+            dom: `<'row' <'col-sm-6 d-flex justify-content-start'<'customfields'>f> <'col-sm-6 d-flex justify-content-end'B> >rt<'row'
 			 <'col-sm-6'l> <'col-sm-6'p><'col-sm-12 d-flex justify-content-center'i>>`,
             ordering: false,
             columnDefs:[
@@ -203,30 +254,47 @@ td { padding: 6px; border: 1px solid #CCC; }
                 }
             ],
             buttons: [
-            {
-                text: "Add New Attendance &nbsp;<i class='fas fa-plus ch4'></i>",
-                className: "btn btn-sm btn-light-primary btn-hover-rise",
-                //action for add_new_button
-                action: function (e, dt, node, config) {
-                    const params = {
-                        modal_id: "#modal-attd",
-                        url: "{{ url('attendance:attendance_view') }}?action=form",
-                        beforeSend: attdBeforeSend}
-                    fire_ajax_get(params)
-                    .done((data, status, xhr) => {
-                        $("#modal-attd .modal-content").html(data.html_form)
-                    })
-                    .fail((xhr, status, error) => {
-                        show_error_alert('Something went wrong!')
-                    })
+                {
+                    text:'Advanced Search &nbsp;<i class="fas fa-search"></i>',
+                    className:"btn btn-sm btn-warning btn-hover-rise",
+                    action:function(e, dt, node, config){
+                        $("#modal_adv_search").modal('show')
+                    }
+
+                },
+                {
+                    text: "Add New Attendance &nbsp;<i class='fas fa-plus ch4'></i>",
+                    className: "btn btn-sm btn-primary btn-hover-rise",
+                    //action for add_new_button
+                    action: function (e, dt, node, config) {
+                        const params = {
+                            modal_id: "#modal-attd",
+                            url: "{{ url('attendance:attendance_view') }}?action=form",
+                            beforeSend: attdBeforeSend}
+                        fire_ajax_get(params)
+                        .done((data, status, xhr) => {
+                            $("#modal-attd .modal-content").html(data.html_form)
+                        })
+                        .fail((xhr, status, error) => {
+                            show_error_alert('Something went wrong!')
+                        })
+                    }
                 }
-                }, 
 
             ],
             select: {
                     style: 'single'
                 }
         })
+        
+        //add input field to the datatables dom
+        initDateRangeHtml()
+        initDateRange("#id_daterange").on('apply.daterangepicker', function(e, picker){
+            from_pd = picker.startDate.format('YYYY-MM-DD');
+            to_pd = picker.endDate.format('YYYY-MM-DD');
+            table.ajax.reload()
+        })
+        
         //BEGIN STYLING DATATABLE
         $("th > input").addClass('form-control')
         $("th > input").css('height', '35px')

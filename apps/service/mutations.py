@@ -138,7 +138,8 @@ class TaskTourUpdate(graphene.Mutation):
     @classmethod
     def mutate(cls, root, info, file):
         log.warning("tasktour-update mutations start [+]")
-        o = sutils.perform_tasktourupdate(file, info.context)
+        db = cutils.get_current_db_name()
+        o = sutils.perform_tasktourupdate(file=file, request = info.context, db=db)
         log.info(f"Response: # records updated:{o.recordcount}, msg:{o.msg}, rc:{o.rc}, traceback:{o.traceback}")
         log.warning("tasktour-update mutations end [-]")
         return TaskTourUpdate(output = o)
@@ -155,7 +156,8 @@ class InsertRecord(graphene.Mutation):
     @classmethod    
     def mutate(cls, root, info, file):
         log.warning("insert-record mutations start [+]")
-        o = sutils.perform_insertrecord(file, info.context)
+        db = cutils.get_current_db_name()
+        o = sutils.perform_insertrecord(file=file, request = info.context, db=db)
         log.info(f"Response: # records updated:{o.recordcount}, msg:{o.msg}, rc:{o.rc}, traceback:{o.traceback}")
         log.warning("insert-record mutations end [-]")
         return InsertRecord(output = o)
@@ -170,8 +172,9 @@ class ReportMutation(graphene.Mutation):
 
     @classmethod
     def mutate(cls, root, info, file):
-        log.warning("report mutations start [+]")
-        o = sutils.perform_reportmutation(file)
+        log.warning("\n\nreport mutations start [+]")
+        db=cutils.get_current_db_name()
+        o = sutils.perform_reportmutation(file=file, db=db)
         log.info(f"Response: {o.recordcount}, {o.msg}, {o.rc}, {o.traceback}")
         log.warning("report mutations end [-]")
         return ReportMutation(output = o)
@@ -231,7 +234,8 @@ class AdhocMutation(graphene.Mutation):
 
     @classmethod
     def mutate(cls, root, info, file):
-        o = sutils.perform_adhocmutation(file)
+        db = cutils.get_current_db_name()
+        o = sutils.perform_adhocmutation(file=file, db=db)
         log.info(f"Response: {o.recordcount}, {o.msg}, {o.rc}, {o.traceback}")
         return AdhocMutation(output = o)
 
@@ -279,7 +283,7 @@ class SyncMutation(graphene.Mutation):
         from apps.core.utils import get_current_db_name
         log.info("sync now mutation is running")
         import zipfile
-        from apps.service import tasks
+        from apps.service.utils import call_service_based_on_filename
         try:
             db = get_current_db_name()
             log.info(f'the type of file is {type(file)}')
@@ -292,7 +296,7 @@ class SyncMutation(graphene.Mutation):
                         data = tasks.get_json_data(f)
                         # raise ValueError
                         TR += len(data)
-                        tasks.call_service_based_on_filename(data, file.filename, db = db)
+                        call_service_based_on_filename(data, file.filename, db = db)
                         ic(data)
                 if filesize !=  zipsize:
                     log.error(f"file size is not matched with the actual zipfile {filesize} x {zipsize}")

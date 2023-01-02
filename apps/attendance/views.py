@@ -31,15 +31,14 @@ class Attendance(LoginRequiredMixin, View):
                    'punchintime', 'punchouttime', 'facerecognitionin', 'facerecognitionout','shift__shiftname', 'ctzoffset', 'peventlogextras']}
 
     def get(self, request, *args, **kwargs):
-        R, resp = request.GET, None
+        R, P, resp = request.GET, self.params, None
 
         if R.get('template'): return render(request, self.params['template_list'])
         # return attendance_list data
         if R.get('action', None) == 'list' or R.get('search_term'):
             d = {'list': "attd_list", 'filt_name': "attd_filter"}
             self.params.update(d)
-            objs = self.params['model'].objects.select_related(
-                *self.params['related']).values(*self.params['fields']).order_by('-mdtz')
+            objs = self.params['model'].objects.get_peopleevents_listview(P['related'], P['fields'], request)
             return rp.JsonResponse({'data':list(objs)}, status=200)
 
         # return attemdance_form empty

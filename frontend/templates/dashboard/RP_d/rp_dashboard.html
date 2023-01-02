@@ -1,0 +1,85 @@
+{% extends "layout.html" %}
+
+{% block extra_css %}
+<link  href="{{ static('assets/plugins/custom/DataTables/datatables.min.css') }}" rel="stylesheet" type="text/css"/>
+<link  href="{{ static('assets/plugins/custom/Editor-2.0.8/css/editor.dataTables.min.css') }}" rel="stylesheet" type="text/css"/>
+<link  href="{{ static('assets/css/daterangepicker.css') }}" rel="stylesheet" type="text/css"/>
+
+{% endblock extra_css %}
+
+<!-------------------------- BEGIN PAGE BREADCUMB ----------------------->
+{% block pagebreadcumb %}
+{{ super() }}
+<li class="breadcrumb-item pe-3"><a href="{{ url('home') }}" class="pe-3">Home</a></li>
+<li class="breadcrumb-item pe-3"><a href="javascript:void(0)" class="pe-3">Dashboard</a></li>
+{% endblock pagebreadcumb %}
+<!-------------------------- END PAGE BREADCUMB ------------------------->
+
+
+<!------------------------------ START PAGE BODY CONTAINER -------------------------->
+{% block pagebody_container %}
+<div class="cards-space">
+    <div class="row first-row">
+        <div class="col">
+            <div class="counter">
+                <i class="fa fa-code fa-2x"></i>
+                <h2 class="timer count-title count-number">1000</h2>
+                <p class="count-text ">SOS Alerts</p>
+            </div>
+        </div>
+        <div class="col">
+            <div class="counter">
+                <i class="fa fa-code fa-2x"></i>
+                <h2 class="timer count-title count-number">2521</h2>
+                <p class="count-text ">Incident Reports</p>
+            </div>
+        </div>
+        <div class="col">
+            <div class="counter">
+                <i class="fa fa-code fa-2x"></i>
+                <h2 class="timer count-title count-number">1514</h2>
+                <p class="count-text ">FR Failures</p>
+            </div>
+        </div>
+        <div class="col">
+            <div class="counter">
+                <i class="fa fa-code fa-2x"></i>
+                <h2 class="timer count-title count-number">25451</h2>
+                <p class="count-text ">Sceduled Tours</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card tableview">
+    <!---Table For SOS Alerts --->
+    <table id="tabSOS" class="display compact cell-border" style="width:100%"></table>
+    <!---Table For Incident Reports --->
+    <table id="tabIncidentReports" class="display compact cell-border" style="width:100%"></table>
+    <!---Table For FR Failures--->
+    <table id="tabFRFail" class="display compact cell-border" style="width:100%"></table>
+    <!---Table For Scheduled Tours --->
+    <table id="tabScheduledTours" class="display compact cell-border" style="width:100%"></table>
+</div>
+{% endblock pagebody_container %}
+<!------------------------------ END PAGE BODY CONTAINER -------------------------->
+
+
+
+{% block extra_scripts %}
+<script src="{{ static('assets/plugins/custom/DataTables/datatables.min.js') }}" type="text/javascript"></script>
+<script src="{{ static('assets/plugins/custom/Editor-2.0.8/js/dataTables.editor.min.js') }}" type="text/javascript"></script>
+<script src="{{ static('assets/js/daterangepicker.js') }}" type="text/javascript"></script>
+
+<script>
+//Global Variables here
+</script>
+
+<!----- Datatable For SOS ----->
+{% include "dashboard/RP_d/partials/partial_sos_datatable.html" %}
+
+
+<script>
+//Global Modifications here
+</script>
+{% endblock extra_scripts %}

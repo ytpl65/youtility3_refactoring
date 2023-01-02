@@ -125,9 +125,9 @@ def calculate_route_details(R, job):
         l.append(chekpoints[j]['expirytime'])
         DDE.append(l)
         j += 1
-    if freq > 1:
+    if freq and freq > 1:
         checkpoints = get_frequencied_data(DDE, chekpoints, freq, breaktime)
-    if freq > 1 and breaktime != 0:
+    if freq and freq > 1 and breaktime != 0:
         endp = int(len(chekpoints) / freq)
         chekpoints[endp]['breaktime'] = breaktime
     return chekpoints
@@ -219,7 +219,8 @@ def calculate_startdtz_enddtz(job):
     # ldtz         = job['lastgeneratedon'].replace(microsecond = 0) 
     # display_jobs_date_info(cdtz, mdtz, vfrom, vupto, ldtz)
     current_date= datetime.utcnow().replace(tzinfo=timezone.utc).replace(microsecond=0)
-    current_date= current_date.replace(tzinfo = tz) + timedelta(minutes= ctzoffset)
+    #current_date= current_date.replace(tzinfo = tz) + timedelta(minutes= ctzoffset)
+    current_date= current_date + timedelta(minutes= ctzoffset)
 
     if mdtz > cdtz:
         ldtz = current_date
@@ -227,7 +228,7 @@ def calculate_startdtz_enddtz(job):
         del_job(job['id'])
     startdtz = vfrom
 
-    if ldtz > startdtz:
+    if ldtz > vfrom:
         startdtz = ldtz
     if startdtz < current_date:
         startdtz = current_date
@@ -526,7 +527,7 @@ def create_child_tasks(job, _pdtz, _people, jnid, _jobstatus, _jobtype):
                 'seqno').values(*utils.JobFields.fields, 'cplocation', 'sgroup__groupname', 'bu__solid', 'bu__buname')
         ic(R)
         log.info(f"create_child_tasks() total child job:={len(R)}")
-        prev_edtz = _pdtz
+        
         params = {'_jobdesc': "", 'jnid':jnid, 'pdtz':None, 'edtz':None,
                   '_people':_people, '_jobstatus':_jobstatus, '_jobtype':_jobtype,
                   'm_factor':None, 'idx':None, 'NONE_P':NONE_P}
@@ -538,7 +539,7 @@ def create_child_tasks(job, _pdtz, _people, jnid, _jobstatus, _jobtype):
         elif job['other_info']['tour_frequency'] and int(job['other_info']['tour_frequency']) > 1:
             R = calculate_route_details(L, job)
             
-            
+        prev_edtz = _pdtz
         for idx, r in enumerate(R):
             log.info(f"create_child_tasks() [{idx}] child job:= {r['jobname']} | job:= {r['id']} | cron:= {r['cron']}")
 
@@ -552,13 +553,19 @@ def create_child_tasks(job, _pdtz, _people, jnid, _jobstatus, _jobtype):
             mins = job['planduration'] + r['expirytime'] + job['gracetime']
             params['_people'] = r['people_id']
             params['_jobdesc'] = jobdescription
-            if idx == 0:
-                pdtz = params['pdtz'] = prev_edtz
-            else:
-                pdtz = params['pdtz'] = prev_edtz + \
-                    timedelta(minutes = r['expirytime'] + job['gracetime'])
-            edtz = params['edtz'] = pdtz + timedelta(minutes = mins)
+            
+            
+            pdtz = params['pdtz'] = prev_edtz + timedelta(minutes=r['expirytime'])
+            edtz = params['edtz'] = pdtz + timedelta(minutes=job['planduration'] + job['gracetime'])
             prev_edtz = edtz
+            #if idx == 0:
+            #    pdtz = params['pdtz'] = prev_edtz
+            #else:
+            #    pdtz = params['pdtz'] = prev_edtz + \
+            #        timedelta(minutes = r['expirytime'] + job['gracetime'])
+            #edtz = params['edtz'] = pdtz + timedelta(minutes = mins)
+            #prev_edtz = edtz
+            
             params['idx'] = idx
             jn = insert_into_jn_for_child(job, params, r)
             ic(r)

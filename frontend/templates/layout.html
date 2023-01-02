@@ -91,7 +91,7 @@
 		<div class="modal-dialog modal-dialog-centered {{ kwargs.get('modal_size') }}">
 			<div class="modal-content">
 				<div class="modal-header">
-					<h5 class="modal-heading" id="staticBackdropLabel" style="color:#3a3b40de">{{ kwargs['title'] }}</h5>
+					<h5 class="modal-heading ch4" id="staticBackdropLabel" >{{ kwargs['title'] }}</h5>
 					<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
 				</div>
         {{ caller() }}<!--define modal-body, modal-footer classes -->
@@ -101,6 +101,13 @@
 {% endmacro %}
 <!--------------- END POP-UP DELETE_ALERT MACRO ------------------>
 
+{% macro load_advanced_search_css() %}
+<link href="{{ static('assets/css/structured-filter.css') }}" rel="stylesheet" />
+{% endmacro %}
+
+{% macro load_advanced_search_js() %}
+  <script src="{{ static('assets/js/structured-filter.min.js') }}"></script>
+{% endmacro %}
 
 {% macro mainattachment() %}
 <div class="modal fade" id="popup_attachment" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1"

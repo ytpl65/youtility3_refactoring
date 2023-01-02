@@ -1,0 +1,45 @@
+<script>
+$(document).ready(function(){
+    var tabSOS = $("#tabSOS").DataTable({
+        ajax:{
+            url:"{{ url('attendance:attendance_view') }}",
+            data:function(d){
+                d.from = from
+                d.upto = upto
+                d.action="dashboard_sos"                
+            }
+        },
+        language: { search: "", searchPlaceholder:"Serch keywords..." },
+        deferRender: true,
+        responsive : true,
+        dom:`<'row' <'col-sm-6 d-flex justify-content-start'<'customfields'>f> <'col-sm-6 d-flex justify-content-end'B> >rt<'row'
+            <'col-sm-6'l> <'col-sm-6'p><'col-sm-12 d-flex justify-content-center'i>>`,
+        columns:[
+            {data:'id', visible:false, searchable:false},
+            {data:"datefor", title:"Date", render:function(data, type, row, meta){
+                return convert_to_local(type, data, row)}
+            },
+            {data:'buname', title:"Site", render:function(data, type, row, meta){
+                return `(${row['solid']}) ${data}`}
+            },
+            {data:'people__peoplename', title:"Name", render:function(data, type, row, meta){
+                return `(${row['people__peoplecode']}) ${data}`}
+            },
+            {data:'people__designation__tacode', title:"Designation"},
+            {data:'people__mobno', title:"Mob No"},
+            {data:'remarks', title:"Remark"},
+        ],
+        order:[[1, 'desc'], [3, 'asc']],
+        scrollCollapse: true,
+        buttons:[]
+    })
+
+    //add input field to the datatables dom
+    initDateRangeHtml()
+    initDateRange("#id_daterange").on('apply.daterangepicker', function(e, picker){
+        from_pd = picker.startDate.format('YYYY-MM-DD');
+        to_pd = picker.endDate.format('YYYY-MM-DD');
+        table.ajax.reload()
+    })
+})
+</script>

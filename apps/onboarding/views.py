@@ -1736,3 +1736,14 @@ class BtView(LoginRequiredMixin, View):
         except IntegrityError:
             return handle_intergrity_error("Bu")
         
+        
+class Dashboard(LoginRequiredMixin, View):
+    P = {
+        "RP":"dashboard/RP_d/rp_dashboard.html",
+        }
+    
+    def get(self, request, *args, **kwargs):
+        P,R = self.P, request.GET
+        
+        if R.get('action') == "rp_dashboard":
+            return render(request, self.P['RP'])

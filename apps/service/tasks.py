@@ -16,7 +16,6 @@ from .validators import clean_record
 from pprint import pformat
 from intelliwiz_config.celery import app
 from celery.utils.log import get_task_logger
-from .utils import get_readable_addr_from_point, alert_sendmail, save_addr_for_point
 import json
 log = get_task_logger(__name__)
 
@@ -210,6 +209,7 @@ def perform_insertrecord_bgt(self, data, request = None, filebased = True, db='d
 
     rc, recordcount, traceback= 1, 0, 'NA'
     instance = None
+    from .utils import save_addr_for_point
     try:
         if len(data) == 0: raise utils.NoRecordsFound
         with transaction.atomic(using = db):
@@ -288,6 +288,7 @@ def print_json_data(file):
         log.error("json print error", exc_info= True)
 
 def update_record(details, jobneed_record, Jn, Jnd, db):
+    from .utils import get_readable_addr_from_point, alert_sendmail
     alerttype = 'OBSERVATION'
     record = clean_record(jobneed_record)
     # ic((record)
@@ -479,7 +480,7 @@ def perform_facerecognition_bgt(self, pel_uuid, peopleid, db='default'):
                 if default_peopleimg and pel_att.people_event_pic:
                     log.info(f"default image path:{default_peopleimg} and uploaded file path:{pel_att.people_event_pic}")
                     from deepface import DeepFace
-                    fr_results = DeepFace.verify(img1_path=default_peopleimg, img2_path=pel_att.people_event_pic)
+                    fr_results = DeepFace.verify(img1_path=default_peopleimg, img2_path=pel_att.people_event_pic, model_name='Facenet')
                     log.info(f"deepface verification completed and results are {fr_results}")
                     if PeopleEventlog.objects.update_fr_results(fr_results, pel_uuid, peopleid, db):
                         log.info("updation of fr_results in peopleeventlog is completed...")

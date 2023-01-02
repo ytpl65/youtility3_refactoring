@@ -42,6 +42,7 @@ from .validators import clean_record
 from apps.activity.models import (Jobneed, JobneedDetails, Asset)
 import traceback as tb
 from django.core.mail import send_mail, EmailMessage
+from intelliwiz_config.celery import app
 from django.conf import settings
 
 def insertrecord(record, tablename):
@@ -168,20 +169,21 @@ def save_parent_childs(sz, jn_parent_serializer, child, M):
         raise
 
 
-def perform_tasktourupdate(file, request):
-    log.info("perform_tasktourupdate [start]")
+@app.task(bind = True, default_retry_delay = 300, max_retries = 5)
+def perform_tasktourupdate(self, file, request, db='default', bg=False):
+    log.info("\n\nperform_tasktourupdate [start]")
     rc, recordcount, traceback= 1, 0, 'NA'
     instance, msg = None, ""
 
     try:
-        data = get_json_data(file)
+        data = file if bg else get_json_data(file)
         log.info(f'data: {pformat(data)}')
         if len(data) == 0: raise utils.NoRecordsFound
         log.info(f'total {len(data)} records found for task tour update')
         for record in data:
             details = record.pop('details')
             jobneed = record
-            with transaction.atomic(using = utils.get_current_db_name()):
+            with transaction.atomic(using = db):
                 if isupdated :=  update_record(details, jobneed, Jobneed, JobneedDetails):
                     recordcount += 1
                     log.info(f'{recordcount} task/tour updated successfully')
@@ -201,7 +203,8 @@ def perform_tasktourupdate(file, request):
     return ServiceOutputType(rc = rc, msg = msg, recordcount = recordcount, traceback = traceback)
 
 
-def perform_insertrecord(file, request = None, filebased = True):
+@app.task(bind = True, default_retry_delay = 300, max_retries = 5)
+def perform_insertrecord(self, file, request = None, db='default', filebased = True, bg=False):
     """
     Insert records in specified tablename.
 
@@ -214,13 +217,17 @@ def perform_insertrecord(file, request = None, filebased = True):
     Returns:
         ServiceOutputType: rc, recordcount, msg, traceback
     """
-    log.info('perform_insertrecord [start]')
+    log.info('\n\nperform_insertrecord [start]')
     rc, recordcount, traceback= 1, 0, 'NA'
     instance = None
     try:
-        data = get_json_data(file) if filebased else [file]
+        if bg:
+            data = file
+        else:
+            data = get_json_data(file) if filebased else [file]
+        
         if len(data) == 0: raise utils.NoRecordsFound
-        with transaction.atomic(using = utils.get_current_db_name()):
+        with transaction.atomic(using = db):
 
             for record in data:
                 tablename = record.pop('tablename')
@@ -275,19 +282,19 @@ def save_linestring_and_update_pelrecord(obj):
         log.info('ERROR while saving line string', exc_info = True)
         raise
 
-
-def perform_reportmutation(file):
+@app.task(bind = True, default_retry_delay = 300, max_retries = 5)
+def perform_reportmutation(self, file, db= 'default', bg=False):
     rc, recordcount, traceback= 1, 0, 'NA'
     instance = None
     try:
-        data = get_json_data(file)
+        data = file if bg else get_json_data(file)
         log.info(f'data: {pformat(data)}')
         if len(data) == 0: raise utils.NoRecordsFound
         for record in data:
             child = record.pop('child', None)
             parent = record
             try:
-                with transaction.atomic(using = utils.get_current_db_name()):
+                with transaction.atomic(using = db):
                     if child and len(child) > 0 and parent:
                         jobneed_parent_post_data = parent
                         jn_parent_serializer = sz.JobneedSerializer(data = clean_record(jobneed_parent_post_data))
@@ -314,13 +321,15 @@ def perform_reportmutation(file):
     return ServiceOutputType(rc = rc, recordcount = recordcount, msg = msg, traceback = traceback)
 
 
-def perform_adhocmutation(file):  # sourcery skip: remove-empty-nested-block, remove-redundant-if, remove-redundant-pass
+@app.task(bind = True, default_retry_delay = 300, max_retries = 5)
+def perform_adhocmutation(self, file, db='default', bg=False):  # sourcery skip: remove-empty-nested-block, remove-redundant-if, remove-redundant-pass
     rc, recordcount, traceback, msg= 1, 0, 'NA', ""
     try:
-        if not (data := get_json_data(file)):
+        if bg:
+            data = file
+        elif not (data := get_json_data(file)):
             raise utils.NoDataInTheFileError
 
-        db = utils.get_current_db_name()
         log.info(f"{len(data)} Number of records found in the file")
         for record in data:
             details = record.pop('details')
@@ -413,7 +422,7 @@ def perform_uploadattachment(file,  record, biodata):
     ic(biodata)
     # ic(file, tablename, record, type(record), biodata, type(biodata))
     
-    log.info("perform_uploadattachment [start+]")
+    log.info("\n\nperform_uploadattachment [start+]")
 
     file_buffer = file
     filename    = biodata['filename']
@@ -556,3 +565,18 @@ def save_addr_for_point(obj):
     if hasattr(obj, 'endlocation'):
         obj.geojson['endlocation'] = get_readable_addr_from_point(obj.endlocation)
     obj.save()
+    
+def call_service_based_on_filename(data, filename, db='default'):
+    log.info(f'filename before calling {filename}')
+    if filename == 'insertRecord.gz':
+        log.info("calling insertrecord. service..")
+        return perform_insertrecord.delay(file=data, db = db, bg=True)
+    if filename == 'updateTaskTour.gz':
+        log.info("calling updateTaskTour service..")
+        return perform_tasktourupdate.delay(file=data, db = db, bg=True)
+    if filename == 'uploadReport.gz':
+        log.info("calling uploadReport service..")
+        return perform_reportmutation.delay(file=data, db = db, bg=True)
+    if filename == 'adhocRecord.gz':
+        log.info("calling adhocRecord service..")
+        return perform_adhocmutation.delay(file=data, db = db, bg=True)

@@ -59,7 +59,16 @@ class PELManager(models.Manager):
                 'filepath', 'filename', 'attachmenttype', 'datetime', 'gpslocation'):
             return list(chain(qset, atts))
         return list(self.none)
-        
+    
+    def get_peopleevents_listview(self, related,fields,request):
+        R, S = request.GET, request.session
+        qset = self.select_related(*related).filter(
+            bu_id__in = S['assignedsites'],
+            datefor__gte = R['pd1'],
+            datefor__lte = R['pd2'],
+            peventtype__tacode__in = ['SELF', 'SELFATTENDANCE']
+        ).exclude(id=1).values(*fields).order_by('-datefor')
+        return qset or self.none()
     
     
 
@@ -79,7 +88,7 @@ class PELManager(models.Manager):
                     'people__peoplename', 'people__peoplecode', 'distance', 'duration', 'transportmodes')
         for obj in qset:
             if(obj['path']):
-                ic(obj['path'])
+                ic(obj['path']) 
                 geodict = json.loads(obj['path'])
                 coords = [{'lat':lat, 'lng':lng} for lng, lat in geodict['coordinates']]
                 waypoints = utils.orderedRandom(coords[1:-1], k=25)

@@ -305,7 +305,7 @@ class JobneedManager(models.Manager):
             uuidtext = Cast('uuid', output_field=models.CharField())
         ).filter(
             plandatetime__date__gte = R['pd1'], plandatetime__date__lte = R['pd2'], identifier='INCIDENTREPORT', bu_id__in = buids).values(
-            'id', 'plandatetime', 'jobdesc', 'bu_id', 'buname', 'gps', 'jobstatus', 'people__peoplename', 'uuidtext', 'remarks', 'geojson__gpslocation'
+            'id', 'plandatetime', 'jobdesc', 'bu_id', 'buname', 'gps', 'jobstatus', 'performedby__peoplename', 'uuidtext', 'remarks', 'geojson__gpslocation'
         )
         atts = Attachment.objects.filter(
             owner__in = qset.values_list('uuidtext', flat=True)
