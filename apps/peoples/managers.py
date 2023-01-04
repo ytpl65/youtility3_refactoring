@@ -53,7 +53,6 @@ class PeopleManager(BaseUserManager):
         qset = self.select_related(
             *self.related).filter(
                  Q(bu_id = siteid), Q(mdtz__gte = mdtz)).values(*self.fields).order_by('-mdtz')
-        ic(qset.query)
         return qset or self.none()
 
     def get_emergencycontacts(self, siteid, clientid):
@@ -152,7 +151,6 @@ class PgblngManager(models.Manager):
             buname = F('assignsites__buname'),
             buid = F('assignsites__id'),
         ).values('buname', 'buid')
-        ic(qset)
         return qset or self.none()
     
     def get_sitesfromgroup(self, job, force=False):
@@ -176,7 +174,6 @@ class PgblngManager(models.Manager):
                         {'seqno':None, 'starttime':None, 'endtime':None, 'qsetid':job['qset_id'],
                         'qsetname':job['qset__qsetname'], 'duration':None, 'expirytime':None,
                         'distance':None, 'jobid':None, 'assetid':1, 'breaktime':None})
-        ic(qset)
         return qset or self.none()
     
     def get_assigned_sites_to_people(self, peopleid, makechoice=False, forservice=False):
@@ -196,7 +193,6 @@ class PgblngManager(models.Manager):
         if peopleqset and peopleqset[0].isadmin:
             #return all sites of client
             bulist_ids = list(Bt.objects.get_all_sites_of_client(clientid=peopleqset[0].client_id).values_list('id', flat=True))
-            ic(bulist_ids)
             #return for mobile service
             if forservice: return Bt.objects.annotate(bu_id=F('id')).filter(id__in = bulist_ids).select_related('identifier', 'butype', 'cuser', 'muser').values(*bufields) or Bt.objects.none()
             qset = Bt.objects.filter(Q(id__in = bulist_ids) & Q(identifier__tacode='SITE') | Q(id=1)).annotate(buid = F('id')).values('buid', 'bucode', 'buname')
@@ -221,7 +217,6 @@ class PgblngManager(models.Manager):
             
             #return for mobile service
             if forservice: return Bt.objects.annotate(bu_id=F('id')).filter(id__in = buids).select_related('identifier', 'butype', 'cuser', 'muser').values(*bufields) or Bt.objects.none()
-        ic(qset)
         return qset or self.none()
     
     

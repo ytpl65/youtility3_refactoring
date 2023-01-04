@@ -1,0 +1,30 @@
+<script>
+$(document).ready(function(){
+    var tabSOS = $("#tabSitePeople").DataTable({
+        ajax:{
+            url:"{{ url('onboarding:rp_dashboard') }}",
+            data:function(d){
+                d.action="dashboard_sitepeople"                
+            }
+        },
+        language: { search: "", searchPlaceholder:"Serch keywords..." },
+        deferRender: true,
+        responsive : true,
+        dom:`<'row' <'col-sm-6 d-flex justify-content-start'<'customfields'>f> <'col-sm-6 d-flex justify-content-end'B> >rt<'row'
+            <'col-sm-6'l> <'col-sm-6'p><'col-sm-12 d-flex justify-content-center'i>>`,
+        columns:[
+            {data:'id', visible:false, searchable:false}
+            {data:"peoplename", title:"Date", render:function(data, type, row, meta){
+                return `(${row['peoplecode']}) ${data}`
+            }},
+            {data:'peoplecode', visible:false},
+            {data:'mobno', title:"Contact"},
+            {data:'email', title:"Email"},
+            {data:'designation__tacode', title:"Designation"},
+        ],
+        order:[[1, 'desc'], [3, 'asc']],
+        scrollCollapse: true,
+        buttons:[]
+    })
+})
+</script>

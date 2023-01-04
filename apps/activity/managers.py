@@ -7,6 +7,7 @@ from datetime import datetime, timedelta, timezone
 from pyparsing import identbodychars
 from apps.core import utils
 from itertools import chain
+import apps.peoples.models as pm
 import logging
 logger = logging.getLogger('__main__')
 from django.conf import settings
@@ -304,8 +305,10 @@ class JobneedManager(models.Manager):
             gps = AsGeoJSON('gpslocation'),
             uuidtext = Cast('uuid', output_field=models.CharField())
         ).filter(
+            Q(Q(parent_id__in = [1, -1]) | Q(parent_id__isnull=True)),
             plandatetime__date__gte = R['pd1'], plandatetime__date__lte = R['pd2'], identifier='INCIDENTREPORT', bu_id__in = buids).values(
-            'id', 'plandatetime', 'jobdesc', 'bu_id', 'buname', 'gps', 'jobstatus', 'performedby__peoplename', 'uuidtext', 'remarks', 'geojson__gpslocation'
+            'id', 'plandatetime', 'jobdesc', 'bu_id', 'buname', 'gps', 'jobstatus', 'performedby__peoplename', 'uuidtext', 'remarks', 'geojson__gpslocation',
+            'identifier', 'parent_id'
         )
         atts = Attachment.objects.filter(
             owner__in = qset.values_list('uuidtext', flat=True)
@@ -369,10 +372,7 @@ class JobneedManager(models.Manager):
                     'mdtz':utils.getawaredatetime(datetime.now(), R['ctzoffset']),
                     'type':R['type'], 'client_id':S['client_id'], 'bu_id':S['bu_id']}
         
-    def get_exttoursjobneed(self, peopleid, clientid, siteid):
-        return self.raw(
-            
-        )
+
     
     def get_ext_checkpoints_jobneed(self, request, related, fields):
         fields+=['distance', 'duration', 'bu__gpslocation']
@@ -384,7 +384,6 @@ class JobneedManager(models.Manager):
             identifier = 'EXTERNALTOUR',
             job__enable=True
         ).order_by('seqno').values(*fields)
-        ic(qset.values('seqno'))
         return qset or self.none()
     
     def getAttachmentJobneed(self, id):
@@ -405,6 +404,34 @@ class JobneedManager(models.Manager):
             'filepath', 'filename', 'attachmenttype', 'datetime', 'location', 'id', 'file'
             ):return atts
         return self.none()
+
+    def get_ir_count_forcard(self, request):
+        R = request.GET
+        pd1 = R.get('pd1', datetime.now().date())
+        pd2 = R.get('pd2', datetime.now().date())
+        assignedsite_ids = pm.Pgbelonging.objects.get_assigned_sites_to_people(
+            request.user.id).values_list("buid", flat=True)
+        return self.filter(
+            Q(Q(parent_id__in = [1, -1]) | Q(parent_id__isnull=True)),
+            bu_id__in = assignedsite_ids,
+            identifier = 'INCIDENTREPORT',
+            plandatetime__date__gte = pd1,
+            plandatetime__date__lte = pd2,
+        ).count() or 0
+    
+    def get_schdtour_count_forcard(self, request):
+        R = request.GET
+        pd1 = R.get('pd1', datetime.now().date())
+        pd2 = R.get('pd2', datetime.now().date())
+        assignedsite_ids = pm.Pgbelonging.objects.get_assigned_sites_to_people(
+            request.user.id).values_list("buid", flat=True)
+        return self.filter(
+            bu_id__in = assignedsite_ids,
+            plandatetime__date__gte = pd1,
+            plandatetime__date__lte = pd2,
+            parent_id = 1,
+            identifier='EXTERNALTOUR'
+        ).count() or 0
         
     
     

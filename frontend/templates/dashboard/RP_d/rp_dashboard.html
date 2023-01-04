@@ -1,17 +1,50 @@
 {% extends "layout.html" %}
 
 {% block extra_css %}
-<link  href="{{ static('assets/plugins/custom/DataTables/datatables.min.css') }}" rel="stylesheet" type="text/css"/>
-<link  href="{{ static('assets/plugins/custom/Editor-2.0.8/css/editor.dataTables.min.css') }}" rel="stylesheet" type="text/css"/>
-<link  href="{{ static('assets/css/daterangepicker.css') }}" rel="stylesheet" type="text/css"/>
+<link href="{{ static('assets/plugins/custom/DataTables/datatables.min.css') }}" rel="stylesheet" type="text/css" />
+<link href="{{ static('assets/plugins/custom/Editor-2.0.8/css/editor.dataTables.min.css') }}" rel="stylesheet"
+    type="text/css" />
+<link href="{{ static('assets/css/daterangepicker.css') }}" rel="stylesheet" type="text/css" />
+<style>
+    .bg-gradient-primary {
+        background-image: linear-gradient(to right, #12dbfa, #0052cc);
+    }
 
+    .bg-gradient-warning {
+        background-image: linear-gradient(to right, #bb91ff, rgb(118, 0, 197));
+    }
+
+    .bg-gradient-success {
+        background-image: linear-gradient(to right, #93f145, #02791b);
+    }
+
+    .bg-gradient-danger {
+        background-image: linear-gradient(to right, #fd8656, #da0f00);
+    }
+
+    .yicon {
+        font-size: 55px !important;
+    }
+    .yiconpadd{
+        padding-left: 25px !important;
+    }
+</style>
+{{ load_leaflet_tags() }}
 {% endblock extra_css %}
+
+{% block breadcumbactions %}
+<div class="dashboard_timeline">
+    <div class="input-group pe-4">
+        <span class="input-group-text" id="basic-addon1">From: </span>
+        <input type="text" id="id_daterange" class="form-control">
+    </div>
+</div>
+{% endblock breadcumbactions %}
 
 <!-------------------------- BEGIN PAGE BREADCUMB ----------------------->
 {% block pagebreadcumb %}
-{{ super() }}
-<li class="breadcrumb-item pe-3"><a href="{{ url('home') }}" class="pe-3">Home</a></li>
-<li class="breadcrumb-item pe-3"><a href="javascript:void(0)" class="pe-3">Dashboard</a></li>
+    {{ super() }}
+    <li class="breadcrumb-item pe-3"><a href="javascript:void(0)" class="pe-3">Dashboard</a></li>
 {% endblock pagebreadcumb %}
 <!-------------------------- END PAGE BREADCUMB ------------------------->
 
@@ -20,46 +53,90 @@
 {% block pagebody_container %}
 <div class="cards-space">
     <div class="row first-row">
-        <div class="col">
-            <div class="counter">
-                <i class="fa fa-code fa-2x"></i>
-                <h2 class="timer count-title count-number">1000</h2>
-                <p class="count-text ">SOS Alerts</p>
+        <div class="col-sm-12 col-md-3">
+            <div class="counter me-2 mb-2 rounded-3 bg-gradient-danger p-2">
+                <div class="d-flex justify-content-start">
+                    {# <i class="fas p-4 yiconpadd yicon fa-clipboard-user text-white"></i> #}
+                    <i class="fas p-4 yiconpadd yicon text-white fa-exclamation-triangle"></i>
+                    <div>
+                        <h3 data-kt-countup="true" data-kt-countup-value="{{ sos_count }}" data-kt-countup-duration="40"
+                            class="pb-3 text-white timer count-title count-number">0</h3>
+                        <p class="h2 text-white text-center">SOS Alerts</p>
+                    </div>
+                </div>
             </div>
         </div>
-        <div class="col">
-            <div class="counter">
-                <i class="fa fa-code fa-2x"></i>
-                <h2 class="timer count-title count-number">2521</h2>
-                <p class="count-text ">Incident Reports</p>
+        <div class="col-sm-12 col-md-3">
+            <div class="counter p-2 me-2 mb-2 rounded-3 bg-gradient-primary">
+                <div class="d-flex justify-content-start">
+                    {# <i class="fas p-4 yiconpadd yicon fa-clipboard-user text-white fs-1"></i> #}
+                    <i class="fas p-4 yiconpadd yicon text-white fa-file-medical-alt"></i>
+                    <div>
+                        <h3 data-kt-countup="true" data-kt-countup-value="{{ IR_count }}" data-kt-countup-duration="40" 
+                            class="pb-3 text-white timer count-title count-number">0</h3>
+                        <p class="h2 text-white text-center">Incident Reports</p>
+                    </div>
+                </div>
             </div>
         </div>
-        <div class="col">
-            <div class="counter">
-                <i class="fa fa-code fa-2x"></i>
-                <h2 class="timer count-title count-number">1514</h2>
-                <p class="count-text ">FR Failures</p>
+        <div class="col-sm-12 col-md-3">
+            <div class="counter p-2 me-2 mb-2 rounded-3 bg-gradient-warning">
+                <div class="d-flex justify-content-start">
+                    <i class="fas p-4 yiconpadd yicon fa-clipboard-user text-white fs-1"></i>
+                    <div>
+                        <h3 data-kt-countup="true" data-kt-countup-value="{{ FR_fail_count }}" data-kt-countup-duration="40"
+                            class="pb-3 text-white timer count-title count-number">0</h3>
+                        <p class="h2 text-white text-center">Face Recognition Failures</p>
+                    </div>
+                </div>
             </div>
         </div>
-        <div class="col">
-            <div class="counter">
-                <i class="fa fa-code fa-2x"></i>
-                <h2 class="timer count-title count-number">25451</h2>
-                <p class="count-text ">Sceduled Tours</p>
+        <div class="col-sm-12 col-md-3">
+            <div class="counter p-2 me-2  mb-2 rounded-3 bg-gradient-success">
+                <div class="d-flex justify-content-start">
+                   <i class="fas yicon yiconpadd text-white p-4 fa-route"></i>
+                    <div>
+                        <h3 data-kt-countup="true" data-kt-countup-value="{{ tour_count }}" data-kt-countup-duration="40"
+                            class="pb-3 text-white timer count-title count-number">0</h3>
+                        <p class="h2 text-white text-center">Scheduled Tours</p>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 </div>
 
-<div class="card tableview">
-    <!---Table For SOS Alerts --->
-    <table id="tabSOS" class="display compact cell-border" style="width:100%"></table>
-    <!---Table For Incident Reports --->
-    <table id="tabIncidentReports" class="display compact cell-border" style="width:100%"></table>
-    <!---Table For FR Failures--->
-    <table id="tabFRFail" class="display compact cell-border" style="width:100%"></table>
-    <!---Table For Scheduled Tours --->
-    <table id="tabScheduledTours" class="display compact cell-border" style="width:100%"></table>
+<div class="row pt-3">
+    <div class="col-sm-12 col-md-6 mapview">
+        <div class="card">
+            <div class="card-title mb-0 text-center py-2 bg-light bg-gradient">
+                Map View
+            </div>
+            <div class="card-body rounded-3 p-3 pt-0">
+                <div id="map" style="height: 350px;"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-sm-12 col-md-6 tableview">
+        <div class="card">
+            <div class="card-title  text-center py-2 bg-light bg-gradient">
+                Default View: List of people under the site you logged in
+            </div>
+            <div class="card-body">
+                <!---Table For SOS Alerts --->
+                <table id="tabSitePeople" class="display compact cell-border" style="width:100%"></table>
+                <!---Table For SOS Alerts --->
+                <table id="tabSOS" class="display compact cell-border" style="width:100%"></table>
+                <!---Table For Incident Reports --->
+                <table id="tabIncidentReports" class="display compact cell-border" style="width:100%"></table>
+                <!---Table For FR Failures--->
+                <table id="tabFRFail" class="display compact cell-border" style="width:100%"></table>
+                <!---Table For Scheduled Tours --->
+                <table id="tabScheduledTours" class="display compact cell-border" style="width:100%"></table>
+            </div>
+        </div>
+    </div>
 </div>
 {% endblock pagebody_container %}
 <!------------------------------ END PAGE BODY CONTAINER -------------------------->
@@ -68,18 +145,54 @@
 
 {% block extra_scripts %}
 <script src="{{ static('assets/plugins/custom/DataTables/datatables.min.js') }}" type="text/javascript"></script>
-<script src="{{ static('assets/plugins/custom/Editor-2.0.8/js/dataTables.editor.min.js') }}" type="text/javascript"></script>
+<script src="{{ static('assets/plugins/custom/Editor-2.0.8/js/dataTables.editor.min.js') }}" type="text/javascript">
+</script>
 <script src="{{ static('assets/js/daterangepicker.js') }}" type="text/javascript"></script>
 
 <script>
-//Global Variables here
+    //Global Variables here
+    var from, upto;
 </script>
 
 <!----- Datatable For SOS ----->
-{% include "dashboard/RP_d/partials/partial_sos_datatable.html" %}
+{% include "dashboard/RP_d/partials/partial_sitepeople_datatable.html" %}
 
 
 <script>
-//Global Modifications here
+    //Global Modifications here
+    var map = L.map('map').setView([21.7679, 78.8718], 5)
+    L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    maxZoom: 19,
+    attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+    }).addTo(map);
+
+    $(document).ready(() => {
+        // check if the browser supports the HTML5 Geolocation API
+        if ("geolocation" in navigator) {
+            // if the browser supports the HTML5 Geolocation API, get the current location
+            navigator.geolocation.getCurrentPosition(function(position) {
+            console.log("[position.coords.latitude, position.coords.longitude]")
+            // create a marker at the current location
+            var marker = L.marker([position.coords.latitude, position.coords.longitude]).addTo(map).bindPopup("you are here").openPopup()
+            map.flyTo([position.coords.latitude, position.coords.longitude], 18, {
+                animate: true,
+                duration: 1.0
+            });
+        });
+        } else {
+            // if the browser does not support the HTML5 Geolocation API, display an error message
+            console.error("browser not enabled the gps location permission")
+            map.setView([21.7679, 78.8718], 5)
+        }
+
+        //display the data according to dashboard timeline calendar
+        initDateRange("#id_daterange").on('apply.daterangepicker', function(e, picker){
+            let from_pd = picker.startDate.format('YYYY-MM-DD');
+            let to_pd = picker.endDate.format('YYYY-MM-DD');
+            let url = "{{ url('onboarding:rp_dashboard') }}"
+            location.href = `${url}?pd1=${from_pd}&pd2=${to_pd}`
+        })
+    })
+    
 </script>
 {% endblock extra_scripts %}

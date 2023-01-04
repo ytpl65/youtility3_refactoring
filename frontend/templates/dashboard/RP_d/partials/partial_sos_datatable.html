@@ -2,7 +2,7 @@
 $(document).ready(function(){
     var tabSOS = $("#tabSOS").DataTable({
         ajax:{
-            url:"{{ url('attendance:attendance_view') }}",
+            url:"{{ url('onboarding:rp_dashboard') }}",
             data:function(d){
                 d.from = from
                 d.upto = upto
@@ -32,14 +32,6 @@ $(document).ready(function(){
         order:[[1, 'desc'], [3, 'asc']],
         scrollCollapse: true,
         buttons:[]
-    })
-
-    //add input field to the datatables dom
-    initDateRangeHtml()
-    initDateRange("#id_daterange").on('apply.daterangepicker', function(e, picker){
-        from_pd = picker.startDate.format('YYYY-MM-DD');
-        to_pd = picker.endDate.format('YYYY-MM-DD');
-        table.ajax.reload()
     })
 })
 </script>

@@ -9,12 +9,14 @@
   <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Poppins:300,400,500,600,700"  type="text/css"/>
   <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined" rel="stylesheet" type="text/css"/>
   <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet" type="text/css"/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.2.1/css/all.min.css" integrity="sha512-MV7K8+y+gLIBoVD59lQIYicR65iaqukzvf/nwasF0nqhPay5w/9lJmVM2hMDcnK1OnMGCdVK+iQrJ7lzPJQd1w==" crossorigin="anonymous" referrerpolicy="no-referrer" />
   <!-- END PAGEL LEVEL FONTS & ICONS END -->
   
   <!-- BEGIN GLOBAL STYLESHEETS BUNDLE (used by all pages) -->
   <link href="{{ static('assets/plugins/global/plugins.bundle.css') }}" rel="stylesheet" type="text/css" />
   <link href="{{ static('assets/css/style.bundle.css') }}" rel="stylesheet" type="text/css" />
-  {# <link rel="stylesheet" type="text/css" href="https://ajax.googleapis.com/ajax/libs/jqueryui/1.12.1/themes/ui-darkness/jquery-ui.css"> #}
+  <link rel="stylesheet" type="text/css" href="https://ajax.googleapis.com/ajax/libs/jqueryui/1.12.1/themes/ui-darkness/jquery-ui.css">
+  <link  type="text/css" href="{{ static('assets/css/structured-filter.css') }}" rel="stylesheet" />
 
 
 
@@ -61,9 +63,11 @@
   {% endblock body %}
 
   <!-- BEGIN  GLOBAL JS BUNDLE (used by all pages) -->
+  
   <script src="{{ static('assets/plugins/global/plugins.bundle.js') }}"></script>
   <script src="{{ static('assets/js/scripts.bundle.js') }}"></script>
-  {# <script src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.13.2/jquery-ui.min.js" type="text/javascript" charset="utf-8"></script> #}
+  <script src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.13.2/jquery-ui.min.js" type="text/javascript" charset="utf-8"></script>
+  <script src="{{ static('assets/js/structured-filter.min.js') }}"></script>
 
   <!-- END  GLOBAL JS BUNDLE (used by all pages) -->
 

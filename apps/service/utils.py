@@ -171,7 +171,6 @@ def save_parent_childs(sz, jn_parent_serializer, child, M):
 
 @app.task(bind = True, default_retry_delay = 300, max_retries = 5)
 def perform_tasktourupdate(self, file, request, db='default', bg=False):
-    log.info("\n\nperform_tasktourupdate [start]")
     rc, recordcount, traceback= 1, 0, 'NA'
     instance, msg = None, ""
 
@@ -217,7 +216,6 @@ def perform_insertrecord(self, file, request = None, db='default', filebased = T
     Returns:
         ServiceOutputType: rc, recordcount, msg, traceback
     """
-    log.info('\n\nperform_insertrecord [start]')
     rc, recordcount, traceback= 1, 0, 'NA'
     instance = None
     try:
@@ -335,7 +333,7 @@ def perform_adhocmutation(self, file, db='default', bg=False):  # sourcery skip:
             details = record.pop('details')
             jobneedrecord = record
             ic(details)
-            ic(jobneedrecord)
+            0(jobneedrecord)
 
             with transaction.atomic(using = db):
                 if jobneedrecord['asset_id'] ==  1:
@@ -422,7 +420,6 @@ def perform_uploadattachment(file,  record, biodata):
     ic(biodata)
     # ic(file, tablename, record, type(record), biodata, type(biodata))
     
-    log.info("\n\nperform_uploadattachment [start+]")
 
     file_buffer = file
     filename    = biodata['filename']

@@ -81,7 +81,7 @@ class Query(graphene.ObjectType):
     
     @staticmethod
     def resolve_tadata(self, info, keys, **kwargs):
-        log.info('request for typeassist data...')
+        log.info('\n\nrequest for typeassist data...')
         data = TypeAssist.objects.values(*keys)
         records, count, msg = utils.get_select_output(data)
         log.info(f'{count} objects returned...')
@@ -94,29 +94,29 @@ class Query(graphene.ObjectType):
 
     @staticmethod
     def resolve_tabyid(self, info, id):
-        log.info('request for typeassist data...')
+        log.info('\n\nrequest for typeassist data...')
         ta = TypeAssist.objects.raw("select * from typeassist where id = %s", [id])
         return ta[0] if ta else None
 
     @staticmethod
     def resolve_get_assetdetails(self, info, mdtz, ctzoffset, buid):
         mdtz = utils.getawaredatetime(mdtz, ctzoffset)
-        log.info(f'request for assetdetails data...inputs: mdtz:{mdtz}, ctzoffset:{ctzoffset}, buid:{buid}')
+        log.info(f'\n\nrequest for assetdetails data...inputs: mdtz:{mdtz}, ctzoffset:{ctzoffset}, buid:{buid}')
         return get_assetdetails(mdtz, buid)
 
     @staticmethod
     def resolve_get_jobneedmodifiedafter(self, info, peopleid, buid, clientid):
-        log.info(f'request for jobneed-modified-after inputs: peopleid:{peopleid}, buid:{buid}, clientid:{clientid}')
+        log.info(f'\n\nrequest for jobneed-modified-after inputs: peopleid:{peopleid}, buid:{buid}, clientid:{clientid}')
         return get_jobneedmodifiedafter(peopleid, buid, clientid)
     
     @staticmethod
     def resolve_get_externaltourmodifiedafter(self, info, peopleid, buid, clientid):
-        log.info(f'request for exttour-jobneed-modified-after inputs : peopleid:{peopleid}, buid:{buid}, clientid:{clientid}')
+        log.info(f'\n\nrequest for exttour-jobneed-modified-after inputs : peopleid:{peopleid}, buid:{buid}, clientid:{clientid}')
         return get_externaltouremodifiedafter(peopleid, buid, clientid)
 
     @staticmethod
     def resolve_get_jndmodifiedafter(self, info, mdtz, ctzoffset, jobneedids):
-        log.info(f'request for jndmodifiedafter inputs : mdtz:{mdtz}, ctzoffset:{ctzoffset}, jobneedids:{jobneedids}')
+        log.info(f'\n\nrequest for jndmodifiedafter inputs : mdtz:{mdtz}, ctzoffset:{ctzoffset}, jobneedids:{jobneedids}')
         mdtz = utils.getawaredatetime(mdtz, ctzoffset)
         data = JobneedDetails.objects.get_jndmodifiedafter(mdtz, jobneedids)
         records, count, msg = utils.get_select_output(data)
@@ -125,7 +125,7 @@ class Query(graphene.ObjectType):
 
     @staticmethod
     def resolve_get_typeassistmodifiedafter(self, info, mdtz, ctzoffset, clientid):
-        log.info(f'request for typeassist-modified-after inputs : mdtz:{mdtz}, ctzoffset:{ctzoffset}, clientid:{clientid}')
+        log.info(f'\n\nrequest for typeassist-modified-after inputs : mdtz:{mdtz}, ctzoffset:{ctzoffset}, clientid:{clientid}')
         mdtzinput = utils.getawaredatetime(mdtz, ctzoffset)
         data = TypeAssist.objects.get_typeassist_modified_after(mdtzinput, clientid)
         records, count, msg = utils.get_select_output(data)
@@ -134,7 +134,7 @@ class Query(graphene.ObjectType):
 
     @staticmethod
     def resolve_get_peoplemodifiedafter(self, info, mdtz, ctzoffset, buid):
-        log.info(f'request for people-modified-after inputs : mdtz:{mdtz}, ctzoffset:{ctzoffset}, buid:{buid}')
+        log.info(f'\n\nrequest for people-modified-after inputs : mdtz:{mdtz}, ctzoffset:{ctzoffset}, buid:{buid}')
         mdtzinput = utils.getawaredatetime(mdtz, ctzoffset)
         data = People.objects.get_people_modified_after(mdtzinput, buid)
         records, count, msg = utils.get_select_output(data)
@@ -143,7 +143,7 @@ class Query(graphene.ObjectType):
 
     @staticmethod
     def resolve_get_groupsmodifiedafter(self, info, mdtz, ctzoffset, buid):
-        log.info(f'request for groups-modified-after inputs : mdtz:{mdtz}, ctzoffset:{ctzoffset}, buid:{buid}')
+        log.info(f'\n\nrequest for groups-modified-after inputs : mdtz:{mdtz}, ctzoffset:{ctzoffset}, buid:{buid}')
         mdtzinput = utils.getawaredatetime(mdtz, ctzoffset)
         data = Pgroup.objects.get_groups_modified_after(mdtzinput, buid)
         records, count, msg = utils.get_select_output(data)
@@ -152,7 +152,7 @@ class Query(graphene.ObjectType):
 
     @staticmethod
     def resolve_get_questionsmodifiedafter(self, info, mdtz, ctzoffset):
-        log.info(f'request for questions-modified-after inputs : mdtz:{mdtz}, ctzoffset:{ctzoffset}')
+        log.info(f'\n\nrequest for questions-modified-after inputs : mdtz:{mdtz}, ctzoffset:{ctzoffset}')
         mdtzinput = utils.getawaredatetime(mdtz, ctzoffset)
         data =  Question.objects.get_questions_modified_after(mdtz)
         records, count, msg = utils.get_select_output(data)
@@ -161,7 +161,7 @@ class Query(graphene.ObjectType):
 
     @staticmethod
     def resolve_get_qsetmodifiedafter(self, info, mdtz, ctzoffset, buid):
-        log.info(f'request for qset-modified-after inputs : mdtz:{mdtz}, ctzoffset:{ctzoffset}, buid:{buid}')
+        log.info(f'\n\nrequest for qset-modified-after inputs : mdtz:{mdtz}, ctzoffset:{ctzoffset}, buid:{buid}')
         mdtzinput = utils.getawaredatetime(mdtz, ctzoffset)
         data = QuestionSet.objects.get_qset_modified_after(mdtzinput, buid)
         records, count, msg = utils.get_select_output(data)
@@ -171,7 +171,7 @@ class Query(graphene.ObjectType):
 
     @staticmethod
     def resolve_get_qsetbelongingmodifiedafter(self, info, mdtz, ctzoffset, buid):
-        log.info(f'request for qsetbelonging-modified-after inputs : mdtz:{mdtz}, ctzoffset:{ctzoffset}, buid:{buid}')
+        log.info(f'\n\nrequest for qsetbelonging-modified-after inputs : mdtz:{mdtz}, ctzoffset:{ctzoffset}, buid:{buid}')
         mdtzinput = utils.getawaredatetime(mdtz, ctzoffset)
         data = QuestionSetBelonging.objects.get_modified_after(mdtzinput, buid)
         records, count, msg = utils.get_select_output(data)
@@ -180,7 +180,7 @@ class Query(graphene.ObjectType):
 
     @staticmethod
     def resolve_get_pgbelongingmodifiedafter(self, info, mdtz, ctzoffset, buid, peopleid):
-        log.info(f'request for pgbelonging-modified-after inputs : mdtz:{mdtz}, ctzoffset:{ctzoffset}, buid:{buid}, peopleid:{peopleid}')
+        log.info(f'\n\nrequest for pgbelonging-modified-after inputs : mdtz:{mdtz}, ctzoffset:{ctzoffset}, buid:{buid}, peopleid:{peopleid}')
         mdtzinput = utils.getawaredatetime(mdtz, ctzoffset)
         data = Pgbelonging.objects.get_modified_after(mdtzinput, peopleid, buid)
         records, count, msg = utils.get_select_output(data)
@@ -189,7 +189,7 @@ class Query(graphene.ObjectType):
 
     @staticmethod
     def resolve_get_gfs_for_siteids(self, info, siteids):
-        log.info(f'request for getgeofence inputs : siteids:{siteids}')
+        log.info(f'\n\nrequest for getgeofence inputs : siteids:{siteids}')
         data = GeofenceMaster.objects.get_gfs_for_siteids(siteids)
         records, count, msg = utils.get_select_output(data)
         log.info(f'{count} objects returned...')
@@ -197,7 +197,7 @@ class Query(graphene.ObjectType):
 
     @staticmethod
     def resolve_getsitelist(self, info, clientid, peopleid):
-        log.info(f'request for sitelis inputs : clientid:{clientid}, peopleid:{peopleid}')
+        log.info(f'\n\nrequest for sitelis inputs : clientid:{clientid}, peopleid:{peopleid}')
         data = Pgbelonging.objects.get_assigned_sites_to_people(peopleid, forservice=True)
         #change bupreferences back to json
         for i in range(len(data)):

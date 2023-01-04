@@ -95,7 +95,6 @@ class LoginUser(graphene.Mutation):
                 'tenant_id', 'loginid', 'clientcode', 'clientname', 'sitecode',
                 'sitename', 'clientenable', 'isgpsenable').filter(id = user.id)
         qsetList = list(qset)
-        ic(qsetList)
         qsetList[0].update({'emergencycontacts': list(emergencycontacts), 'emergencyemails':list(emergencyemails)})
         qsetList[0]['emergencyemails'] = str(qsetList[0]['emergencyemails']).replace('[', '').replace(']', '').replace("'", "")
         qsetList[0]['emergencycontacts'] = str(qsetList[0]['emergencycontacts']).replace('[', '').replace(']', '').replace("'", "")
@@ -137,7 +136,7 @@ class TaskTourUpdate(graphene.Mutation):
 
     @classmethod
     def mutate(cls, root, info, file):
-        log.warning("tasktour-update mutations start [+]")
+        log.warning("\n\ntasktour-update mutations start [+]")
         db = cutils.get_current_db_name()
         o = sutils.perform_tasktourupdate(file=file, request = info.context, db=db)
         log.info(f"Response: # records updated:{o.recordcount}, msg:{o.msg}, rc:{o.rc}, traceback:{o.traceback}")
@@ -155,7 +154,7 @@ class InsertRecord(graphene.Mutation):
 
     @classmethod    
     def mutate(cls, root, info, file):
-        log.warning("insert-record mutations start [+]")
+        log.warning("\n\ninsert-record mutations start [+]")
         db = cutils.get_current_db_name()
         o = sutils.perform_insertrecord(file=file, request = info.context, db=db)
         log.info(f"Response: # records updated:{o.recordcount}, msg:{o.msg}, rc:{o.rc}, traceback:{o.traceback}")
@@ -189,7 +188,7 @@ class UploadAttMutaion(graphene.Mutation):
 
     @classmethod
     def mutate(cls,root, info, file,  record, biodata):
-        log.error("upload-attachment mutations start [+]")
+        log.error("\n\nupload-attachment mutations start [+]")
         try:
             recordcount=0
             log.info(f"type of file is {type(file)}")
@@ -253,7 +252,7 @@ class InsertJsonMutation(graphene.Mutation):
         from .tasks import insertrecord_json
         from apps.core.utils import get_current_db_name
         import json
-        log.info('insert jsondata mutations start[+]')
+        log.info('\n\ninsert jsondata mutations start[+]')
         rc, traceback, resp, recordcount = 0,  'NA', 0, 0
         msg = ""
         try:
@@ -281,7 +280,7 @@ class SyncMutation(graphene.Mutation):
     @classmethod
     def mutate(cls, root, info, file, filesize, totalrecords):
         from apps.core.utils import get_current_db_name
-        log.info("sync now mutation is running")
+        log.info("\n\nsync now mutation is running")
         import zipfile
         from apps.service.utils import call_service_based_on_filename
         try:

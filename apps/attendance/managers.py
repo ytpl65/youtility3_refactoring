@@ -3,6 +3,7 @@ from django.db import models
 from django.contrib.gis.db.models.functions import AsGeoJSON, AsWKT
 from apps.core import utils
 from apps.activity.models import Attachment
+from apps.peoples.models import Pgbelonging
 from itertools import chain
 import logging
 log = logging.getLogger('__main__')
@@ -122,6 +123,29 @@ class PELManager(models.Manager):
         return total, total, qset
     
     
-    
-        
+    def get_sos_count_forcard(self, request):
+        R = request.GET
+        pd1 = R.get('pd1', datetime.now().date())
+        pd2 = R.get('pd2', datetime.now().date())
+        assignedsiteids = Pgbelonging.objects.get_assigned_sites_to_people(
+            request.user.id).values_list('buid', flat=True)
+        return self.filter(
+            bu_id__in = assignedsiteids,
+            peventtype__tacode='SOS',
+            datefor__gte = pd1,
+            datefor__lte = pd2
+        ).count() or 0
 
+    def get_frfail_count_forcard(self, request):
+        R = request.GET
+        pd1 = R.get('pd1', datetime.now().date())
+        pd2 = R.get('pd2', datetime.now().date())
+        assignedsiteids = Pgbelonging.objects.get_assigned_sites_to_people(
+            request.user.id).values_list('buid', flat=True)
+        
+        return self.filter(
+            bu_id__in = assignedsiteids,
+            datefor__gte = pd1,
+            datefor__lte = pd2,
+            peventtype__tacode__in = ['SELF', 'SELFATTENDANCE']
+        ).count() or 0

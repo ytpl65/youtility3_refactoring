@@ -102,11 +102,12 @@
 <!--------------- END POP-UP DELETE_ALERT MACRO ------------------>
 
 {% macro load_advanced_search_css() %}
-<link href="{{ static('assets/css/structured-filter.css') }}" rel="stylesheet" />
+{# <link  type="text/css" href="{{ static('assets/css/structured-filter.css') }}" rel="stylesheet" /> #}
+
 {% endmacro %}
 
 {% macro load_advanced_search_js() %}
-  <script src="{{ static('assets/js/structured-filter.min.js') }}"></script>
+  {# <script src="{{ static('assets/js/structured-filter.min.js') }}"></script> #}
 {% endmacro %}
 
 {% macro mainattachment() %}

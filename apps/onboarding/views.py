@@ -27,6 +27,7 @@ from apps.peoples import admin as people_admin
 from apps.onboarding import admin as ob_admin
 from django.db import IntegrityError
 import apps.activity.models as am
+import apps.attendance.models as atm
 from pprint import pformat
 CACHE_TTL = getattr(settings, 'CACHE_TTL', DEFAULT_TIMEOUT)
 logger = logging.getLogger('django')
@@ -1737,13 +1738,26 @@ class BtView(LoginRequiredMixin, View):
             return handle_intergrity_error("Bu")
         
         
-class Dashboard(LoginRequiredMixin, View):
+class   RPDashboard(LoginRequiredMixin, View):
     P = {
         "RP":"dashboard/RP_d/rp_dashboard.html",
+        "pel_model": atm.PeopleEventlog,
+        "jn_model":am.Jobneed
         }
     
     def get(self, request, *args, **kwargs):
         P,R = self.P, request.GET
+        try:
+            if R.get('action') == 'dashboard_sitepeople':
+                from apps.peoples.models import People
+                objs = People.objects.get_peoples_at_site()
+            cxt = {
+                'sos_count':P['pel_model'].objects.get_sos_count_forcard(request),
+                'IR_count': P['jn_model'].objects.get_ir_count_forcard(request),
+                'FR_fail_count':P['pel_model'].objects.get_frfail_count_forcard(request),
+                'tour_count':P['jn_model'].objects.get_schdtour_count_forcard(request)
+            }
+            return render(request, P['RP'], context=cxt)
+        except Exception as e:
+            logger.error("something went wrong RPDashboard view", exc_info=True)
         
-        if R.get('action') == "rp_dashboard":
-            return render(request, self.P['RP'])

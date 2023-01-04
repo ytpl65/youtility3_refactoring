@@ -697,7 +697,8 @@ class DeviceEventlog(BaseModel, models.Model):
     deviceid               = models.CharField(_("Device Id"), max_length = 55)
     eventvalue             = models.CharField(_("Device Event"), max_length = 50, choices = DeviceEvent.choices)
     locationserviceenabled = models.BooleanField(_("Is Location Serivice Enabled"),default=False)
-    locationallowed        = models.CharField(max_length=25, choices=LocationAllowedChoices.choices, default=LocationAllowedChoices.NONE.value)
+    islocationmocked       = models.BooleanField(_("Is Location Spoofed"),default=False)
+    locationpermission     = models.CharField(max_length=25, choices=LocationAllowedChoices.choices, default=LocationAllowedChoices.NONE.value)
     gpslocation            = PointField(null=True, srid=4326,geography = True)
     accuracy               = models.CharField(max_length=25, default="-")
     altitude               = models.CharField(max_length=25, default='-')
@@ -710,17 +711,20 @@ class DeviceEventlog(BaseModel, models.Model):
     availintmemory         = models.CharField(_("Available Internal Memory"), max_length = 50, default = 'NA')
     availextmemory         = models.CharField(_("Available External Memory"), max_length = 50, default = 'NA')
     signalbandwidth        = models.CharField(_("Signal Bandwidth"), max_length = 50, default = 'NA')
-    androidversion         = models.CharField(_("Android Version"), max_length = 50, default = 'NA')
+    platformversion        = models.CharField(_("Android Version"), max_length = 50, default = 'NA')
     applicationversion     = models.CharField(_("App Version"), max_length = 50, default = 'NA')
     networkprovidername    = models.CharField(max_length=55, choices=NetworkProviderChoices.choices, default=NetworkProviderChoices.NONE.value)
     modelname              = models.CharField(_("Model Name"), max_length = 50, default = 'NA')
-    installedapps          = models.CharField(_("Installed Apps"), max_length = 50, default = 'NA')
+    installedapps          = models.CharField(_("Installed Apps"), max_length = 500, default = 'NA')
     stepcount              = models.CharField(max_length = 55, default='No Steps')
 
     objects = DELManager()
     class Meta(BaseModel.Meta):
         db_table = 'deviceeventlog'
         get_latest_by = ["mdtz", 'cdtz']
+    
+    def __str__(self) -> str:
+        return f'{self.deviceid} {self.eventvalue}'
 
 
 
