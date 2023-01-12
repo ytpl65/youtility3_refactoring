@@ -708,8 +708,8 @@ class SchdTaskFormJob(LoginRequiredMixin, View):
     initial       = {
         'starttime'   : time(00, 00, 00),
         'endtime'     : time(00, 00, 00),
-        'fromdate'   : datetime.combine(date.today(), time(00, 00, 00)),
-        'uptodate'   : datetime.combine(date.today(), time(23, 00, 00)) + timedelta(days = 2),
+        'fromdate'    : datetime.combine(date.today(), time(00, 00, 00)),
+        'uptodate'    : datetime.combine(date.today(), time(23, 00, 00)) + timedelta(days = 2),
         'identifier'  : am.Job.Identifier.TASK,
         'frequency'   : am.Job.Frequency.NONE,
         'scantype'    : am.Job.Scantype.QR,
@@ -1264,6 +1264,7 @@ class JobneedExternalTours(LoginRequiredMixin, View):
 class JobneedTasks(LoginRequiredMixin, View):
     params = {
         'model'        : am.Jobneed,
+        'model_jnd'        : am.JobneedDetails,
         'template_path':  'schedhuler/tasklist_jobneed.html',
         'fields'       : [
                     'jobdesc', 'people__peoplename', 'pgroup__groupname', 'id',
@@ -1279,6 +1280,7 @@ class JobneedTasks(LoginRequiredMixin, View):
 
     def get(self, request, *args, **kwargs):
         R = request.GET
+        ic(R)
 
         # first load the template
         if R.get('template'): return render(request, self.params['template_path'])
@@ -1290,6 +1292,10 @@ class JobneedTasks(LoginRequiredMixin, View):
                 p['related'], p['fields'], request)
             resp = rp.JsonResponse(data = {'data':list(objs)})
             return resp
+        
+        if R.get('action') == 'getAttachmentJND':
+            att =  self.params['model_jnd'].objects.getAttachmentJND(R['id'])
+            return rp.JsonResponse(data = {'data': list(att)})
 
         # load form with instance
         if R.get('id'):
@@ -1297,6 +1303,12 @@ class JobneedTasks(LoginRequiredMixin, View):
             cxt = {'taskformjobneed':self.params['form_class'](request = request, instance = obj),
                     'edit':True}
             return render(request, self.params['template_form'], context = cxt)
+        
+        if R.get('action') == 'get_task_details' and R.get('taskid'):
+            objs = self.params['model_jnd'].objects.get_task_details(R['taskid'])
+            return rp.JsonResponse({"data":list(objs)})
+        
+        
 
 
 class SchdTasks(LoginRequiredMixin, View):
@@ -1452,7 +1464,7 @@ class InternalTourScheduling(LoginRequiredMixin, View):
         if R.get('id'):
             obj = utils.get_model_obj(int(R['id']), request, P)
             log.info(f'object retrieved {obj}')
-            form        = P['form_class'](instance = obj)
+            form        = P['form_class'](instance = obj, request=request)
             checkpoints = self.get_checkpoints(obj, P)
             cxt = {'schdtourform': form, 'childtour_form': P['subform'](), 'edit': True,
                    'checkpoints': checkpoints}
@@ -1582,6 +1594,7 @@ class ExternalTourScheduling(LoginRequiredMixin, View):
             'expirytime':0,
             'gracetime' : 5,
             'planduration' : 5,
+            'pgroup':utils.get_or_create_none_pgroup(),
             'fromdate'  : datetime.combine(date.today(), time(00, 00, 00)),
             'uptodate'  : datetime.combine(date.today(), time(23, 00, 00)) + timedelta(days = 2),
         },

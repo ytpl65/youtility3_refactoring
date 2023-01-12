@@ -64,12 +64,18 @@ Task List
                     let groupname = row['pgroup__groupname']
                     return peoplename ?  peoplename : groupname
                 }},
-                {targets:[1,7], render:function(data, type, row, meta){
+                {targets:[1], render:function(data, type, row, meta){
+                    return convert_to_local(type, data, row)
+                }},
+                {targets:[7], render:function(data, type, row, meta){
                     return convert_to_local(type, data, row)
                 }},
                 {targets:6, render:function(data, type, row, meta){
                     return `${data} mins`
-                }}
+                }},
+
+                
+
             ],
             buttons:[
 				{

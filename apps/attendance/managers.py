@@ -124,27 +124,22 @@ class PELManager(models.Manager):
     
     
     def get_sos_count_forcard(self, request):
-        R = request.GET
+        R, S = request.GET, request.session
         pd1 = R.get('pd1', datetime.now().date())
         pd2 = R.get('pd2', datetime.now().date())
-        assignedsiteids = Pgbelonging.objects.get_assigned_sites_to_people(
-            request.user.id).values_list('buid', flat=True)
         return self.filter(
-            bu_id__in = assignedsiteids,
+            bu_id__in = S['assignedsites'],
             peventtype__tacode='SOS',
             datefor__gte = pd1,
             datefor__lte = pd2
         ).count() or 0
 
     def get_frfail_count_forcard(self, request):
-        R = request.GET
+        R, S = request.GET, request.session
         pd1 = R.get('pd1', datetime.now().date())
         pd2 = R.get('pd2', datetime.now().date())
-        assignedsiteids = Pgbelonging.objects.get_assigned_sites_to_people(
-            request.user.id).values_list('buid', flat=True)
-        
         return self.filter(
-            bu_id__in = assignedsiteids,
+            bu_id__in = S['assignedsites'],
             datefor__gte = pd1,
             datefor__lte = pd2,
             peventtype__tacode__in = ['SELF', 'SELFATTENDANCE']

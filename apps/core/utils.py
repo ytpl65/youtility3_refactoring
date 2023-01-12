@@ -31,6 +31,9 @@ from apps.tenants.models import Tenant
 logger = logging.getLogger('__main__')
 dbg = logging.getLogger('__main__').debug
 
+def get_current_year():
+    return datetime.now().year
+
 
 class CustomJsonEncoderWithDistance(JSONEncoder):
     def default(self, obj):

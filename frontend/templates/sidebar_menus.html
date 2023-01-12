@@ -506,14 +506,6 @@
           <span class="menu-arrow"></span>
         </span>
         <div class="menu-sub menu-sub-accordion" kt-hidden-height="116" style="display: none; overflow: hidden;">
-          <div class="menu-item" id="task_location">
-            <a class="menu-link" href="apps/customers/getting-started.html">
-              <span class="menu-bullet">
-                <span class="bullet bullet-dot"></span>
-              </span>
-              <span class="menu-title">Location</span>
-            </a>
-          </div>
           <div class="menu-item" id="task_smartplace">
             <a class="menu-link" href="{{ url('activity:smartplace') }}?template=true">
               <span class="menu-bullet">
@@ -523,7 +515,7 @@
             </a>
           </div>
           <div class="menu-item" id="task_asset">
-            <a class="menu-link" href="apps/customers/getting-started.html">
+            <a class="menu-link" href="{{ url('activity:asset') }}?template=true">
               <span class="menu-bullet">
                 <span class="bullet bullet-dot"></span>
               </span>
@@ -571,7 +563,7 @@
             </a>
           </div>
           <div class="menu-item" id="task_ppm_planner">
-            <a class="menu-link" href="apps/customers/getting-started.html">
+            <a class="menu-link" href="{{ url('activity:ppm') }}?template=true">
               <span class="menu-bullet">
                 <span class="bullet bullet-dot"></span>
               </span>
@@ -902,6 +894,14 @@
           </span>
           <span class="menu-title">Question</span>
         </a>
+      </div>
+      <div class="menu-item" id="location">
+          <a class="menu-link" href="{{ url('activity:location') }}?template=true">
+            <span class="menu-bullet">
+              <span class="bullet bullet-dot"></span>
+            </span>
+            <span class="menu-title">Location</span>
+          </a>
       </div>
       <div class="menu-item" id="shift">
         <a class="menu-link" href="{{ url('onboarding:shift') }}?template=true">

@@ -12,6 +12,8 @@ from django.contrib.gis.geos import GEOSGeometry
 import json
 import re
 from django.http import QueryDict
+from datetime import datetime
+
 
 
 class QuestionForm(forms.ModelForm):
@@ -114,7 +116,7 @@ class MasterQsetForm(forms.ModelForm):
         'invalid_name'  : "[Invalid name] Only these special characters [-, _, @, #] are allowed in name field",
     }
     assetincludes = forms.MultipleChoiceField(
-        required = True, label='Checkpoint', widget = s2forms.Select2MultipleWidget, choices = ac_utils.get_assetincludes_choices)
+        required = True, label='Checkpoint', widget = s2forms.Select2MultipleWidget)
     site_type_includes = forms.MultipleChoiceField(widget=s2forms.Select2MultipleWidget, label="Site Types", required=False)
     buincludes         = forms.MultipleChoiceField(widget=s2forms.Select2MultipleWidget, label='Site Includes', required=False)
     site_grp_includes  = forms.MultipleChoiceField(widget=s2forms.Select2MultipleWidget, label='Site groups', required=False)
@@ -237,10 +239,9 @@ class QsetBelongingForm(forms.ModelForm):
                 self._update_errors(e)
 
 class ChecklistForm(MasterQsetForm):
-    assetincludes = None
     class Meta:
         model = am.QuestionSet
-        fields = ['qsetname', 'parent', 'enable', 'type', 'ctzoffset',
+        fields = ['qsetname', 'parent', 'enable', 'type', 'ctzoffset', 'assetincludes',
                   'site_type_includes', 'buincludes', 'site_grp_includes']
         widgets = {
             'parent': s2forms.Select2Widget()
@@ -257,6 +258,8 @@ class ChecklistForm(MasterQsetForm):
             self.fields['site_grp_includes'].initial = 1
             self.fields['site_type_includes'].initial = 1
             self.fields['buincludes'].initial = 1
+            self.fields['assetincludes'].initial = 1
+        self.fields['assetincludes'].choices = ac_utils.get_assetsmartplace_choices(self.request)
         utils.initailize_form_fields(self)
 
 
@@ -270,7 +273,7 @@ class QuestionSetForm(MasterQsetForm):
         super().__init__(*args, **kwargs)
         self.fields['type'].initial          = 'QUESTIONSET'
         self.fields['assetincludes'].label   = 'Asset/Smartplace'
-        self.fields['assetincludes'].choices = ac_utils.get_assetsmartplace_choices()
+        self.fields['assetincludes'].choices = ac_utils.get_assetsmartplace_choices(self.request)
         self.fields['type'].widget.attrs     = {"style": "display:none;"}
         if not self.instance.id:
             self.fields['parent'].initial = 1
@@ -281,13 +284,14 @@ class QuestionSetForm(MasterQsetForm):
 
 
 
-class AssetForm(forms.ModelForm):
+class   MasterAssetForm(forms.ModelForm):
     required_css_class = "required"
     SERVICE_CHOICES = [
         ('NONE', 'None'),
         ('AMC', 'AMC'),
         ('WARRANTY', 'Warranty'),
     ]
+    
 
     tempcode       = forms.CharField(max_length = 100, label='Temporary Code', required = False)
     service        = forms.ChoiceField(choices = SERVICE_CHOICES, initial='NONE', required = False, label='Service')
@@ -317,7 +321,6 @@ class AssetForm(forms.ModelForm):
             'runningstatus': s2forms.Select2Widget,
             'type'         : s2forms.Select2Widget,
             'parent'       : s2forms.Select2Widget,
-            'gpslocation'  : forms.TextInput(attrs={'readonly': 'readonly'}),
             'assetcode'    : forms.TextInput(attrs={'style': 'text-transform:uppercase;', 'placeholder': 'Enter text without space & special characters'})
         }
 
@@ -337,33 +340,18 @@ class AssetForm(forms.ModelForm):
                 raise forms.ValidationError("[Invalid name] Only these special characters [-, _, @, #] are allowed in name field")
         return value
 
-class SmartPlaceForm(AssetForm):
-    required_css_class = "required"
+class SmartPlaceForm(forms.ModelForm):
 
-    tempcode       = None
-    service        = None
-    sfdate         = None
-    stdate         = None
-    msn            = None
-    yom            = None
-    bill_val       = None
-    bill_date      = None
-    purachase_date = None
-    inst_date      = None
-    po_number      = None
-    far_asset_id   = None
-    invoice_date   = None
-    invoice_no     = None
-    supplier       = None
-    meter          = None
-    model          = None
-    subcategory    = None
-    category       = None
-    unit           = None
-    brand          = None
 
-    class Meta(AssetForm.Meta):
-        exclude = ['capacity']
+    class Meta:
+        model = am.Asset
+        fields = ['assetcode', 'assetname', 'identifier', 'ctzoffset', 'runningstatus',
+                  'type', 'parent', 'iscritical', 'enable']
+        labels = {
+            'assetcode':'Code', 'assetname':'Name', 'enable':'Enable',
+            'type': 'Type', 'iscritical':'Is Critical', 'runningstatus':"Status",
+            'parent':'Belongs To'
+        }
 
     def __init__(self, *args, **kwargs):
         """Initializes form add atttibutes and classes here."""
@@ -374,42 +362,29 @@ class SmartPlaceForm(AssetForm):
         self.fields['parent'].queryset = am.Asset.objects.filter(
             Q(identifier='SMARTPLACE') & Q(enable = True) | Q(assetcode='NONE'))
         utils.initailize_form_fields(self)
+    
+    def clean(self):
+        super().clean()
+        self.cleaned_data['gpslocation'] = self.data.get('gpslocation')
+        if self.cleaned_data.get('gpslocation'):
+            data = QueryDict(self.request.POST['formData'])
+            self.cleaned_data['gpslocation'] = self.clean_gpslocation(data.get('gpslocation', 'NONE'))
+        return self.cleaned_data
 
-class LocationForm(AssetForm):
-    required_css_class = "required"
+    def clean_gpslocation(self, val):
+        if gps := val:
+            if gps == 'NONE': return GEOSGeometry(f'SRID=4326;POINT({0.0} {0.0})')
+            regex = '^([-+]?)([\d]{1,2})(((\.)(\d+)(,)))(\s*)(([-+]?)([\d]{1,3})((\.)(\d+))?)$'
+            gps = gps.replace('(', '').replace(')', '')
+            if not re.match(regex, gps):
+               raise forms.ValidationError(self.error_msg['invalid_latlng'])
+            gps.replace(' ', '')
+            lat, lng = gps.split(',')
+            gps = GEOSGeometry(f'SRID=4326;POINT({lng} {lat})')
+        return gps
 
-    tempcode       = None
-    service        = None
-    sfdate         = None
-    stdate         = None
-    msn            = None
-    yom            = None
-    bill_val       = None
-    bill_date      = None
-    purachase_date = None
-    inst_date      = None
-    po_number      = None
-    far_asset_id   = None
-    invoice_date   = None
-    invoice_no     = None
-    supplier       = None
-    meter          = None
-    model          = None
-    subcategory    = None
-    category       = None
-    unit           = None
-    brand          = None
-    iscritical     = None
 
-    def __init__(self, *args, **kwargs):
-        """Initializes form add atttibutes and classes here."""
-        self.request = kwargs.pop('request', None)
-        super().__init__(*args, **kwargs)
-        self.fields['identifier'].initial = 'LOCATION'
-        self.fields['identifier'].widget.attrs = {"style": "display:none;"}
-        utils.initailize_form_fields(self)
-
-class CheckpointForm(AssetForm):
+class CheckpointForm(MasterAssetForm):
     required_css_class = "required"
     error_msg = {
         'invalid_assetcode'  : 'Spaces are not allowed in [Code]',
@@ -442,7 +417,7 @@ class CheckpointForm(AssetForm):
     unit           = None
     brand          = None
 
-    class Meta(AssetForm.Meta):
+    class Meta(MasterAssetForm.Meta):
         exclude = ['capacity']
         
 
@@ -457,6 +432,28 @@ class CheckpointForm(AssetForm):
         self.fields['parent'].queryset = am.Asset.objects.filter(
             Q(identifier='CHECKPOINT') & Q(enable = True) | Q(assetcode='NONE'))
         utils.initailize_form_fields(self)
+        
+        
+    def clean(self):
+        super().clean()
+        self.cleaned_data['gpslocation'] = self.data.get('gpslocation')
+        if self.cleaned_data.get('gpslocation'):
+            data = QueryDict(self.request.POST['formData'])
+            self.cleaned_data['gpslocation'] = self.clean_gpslocation(data.get('gpslocation', 'NONE'))
+        return self.cleaned_data
+
+    def clean_gpslocation(self, val):
+        if gps := val:
+            if gps == 'NONE': return GEOSGeometry(f'SRID=4326;POINT({0.0} {0.0})')
+            regex = '^([-+]?)([\d]{1,2})(((\.)(\d+)(,)))(\s*)(([-+]?)([\d]{1,3})((\.)(\d+))?)$'
+            gps = gps.replace('(', '').replace(')', '')
+            if not re.match(regex, gps):
+               raise forms.ValidationError(self.error_msg['invalid_latlng'])
+            gps.replace(' ', '')
+            lat, lng = gps.split(',')
+            gps = GEOSGeometry(f'SRID=4326;POINT({lng} {lat})')
+        return gps
+        
         
     def clean_assetcode(self):
         self.cleaned_data['gpslocation'] = self.data.get('gpslocation')
@@ -495,6 +492,7 @@ class JobForm(forms.ModelForm):
         choices = DURATION_CHOICES, required = False, initial='MIN', widget = s2forms.Select2Widget)
     freq_duration2 = forms.ChoiceField(
         choices = DURATION_CHOICES, required = False, initial='MIN', widget = s2forms.Select2Widget)
+    jobdesc = forms.CharField(widget=forms.Textarea(attrs={'rows': 2, 'cols': 40}), label='Description', required=False)
 
     class Meta:
         model = am.Job
@@ -505,7 +503,7 @@ class JobForm(forms.ModelForm):
                     'frequency',  'scantype', 'ticketcategory', 'people', 'shift']
 
         labels = {
-            'jobname'   : 'Name',         'jobdesc'     : 'Description',     'fromdate'      : 'Valid From',
+            'jobname'   : 'Name',            'fromdate'      : 'Valid From',
             'uptodate' : 'Valid To',     'cron'        : 'Cron Expression', 'ticketcategory': 'Ticket Catgory',
             'grace_time': 'Grace Time',   'planduration': 'Plan Duration',   'scan_type'      : 'Scan Type',
             'priority'  : 'Priority',     'people'    : 'People',          'pgroup'        : 'Group',          
@@ -519,7 +517,6 @@ class JobForm(forms.ModelForm):
             'pgroup'        : s2forms.Select2Widget,
             'asset'         : s2forms.Select2Widget,
             'priority'      : s2forms.Select2Widget,
-            'jobdesc'       : forms.Textarea(attrs={'rows': 2, 'cols': 40}),
             'fromdate'      : forms.DateTimeInput,
             'uptodate'      : forms.DateTimeInput,
             'ctzoffset'     : forms.NumberInput(attrs={"style": "display:none;"}),
@@ -605,6 +602,7 @@ class AdhocTaskForm(JobNeedForm):
         super().__init__(*args, **kwargs)
         self.fields['plandatetime'].input_formats  = settings.DATETIME_INPUT_FORMATS
         self.fields['expirydatetime'].input_formats  = settings.DATETIME_INPUT_FORMATS
+        self.fields['gpslocation'].required  = False
         utils.initailize_form_fields(self)
 
 class TicketForm(forms.ModelForm):
@@ -670,3 +668,200 @@ class WorkPermit(forms.ModelForm):
         super().__init__(*args, **kwargs)
         utils.initailize_form_fields(self)
         self.fields['wptype'].queryset = am.QuestionSet.objects.filter(type='WORKPERMITTEMPLATE')
+
+
+class AssetForm(forms.ModelForm):
+    required_css_class = "required"
+    enable = forms.BooleanField(required=False, initial=True, label='Enable')
+    class Meta:
+        model = am.Asset
+        fields = [
+            'assetcode', 'assetname', 'runningstatus', 'type', 'category', 
+            'subcategory', 'brand', 'unit', 'capacity', 'servprov', 'parent',
+            'iscritical', 'enable', 'identifier', 'ctzoffset'
+        ]
+        labels={
+            'assetcode':'Code', 'assetname':'Name', 'runningstatus':'Status',
+            'type':'Type', 'category':'Category', 'subcategory':'Sub Category',
+            'brand':'Brand', 'unit':'Unit', 'capacity':'Capacity', 'servprov':'Service Provider',
+            'parent':'Belongs To', 'gpslocation':'GPS'
+        }
+        widgets={
+            'brand'        : s2forms.Select2Widget,
+            'unit'         : s2forms.Select2Widget,
+            'category'     : s2forms.Select2Widget,
+            'subcategory'  : s2forms.Select2Widget,
+            'servprov'     : s2forms.Select2Widget,
+            'runningstatus': s2forms.Select2Widget,
+            'type'         : s2forms.Select2Widget,
+            'parent'       : s2forms.Select2Widget,
+        }
+    
+    def __init__(self, *args, **kwargs):
+        self.request = kwargs.pop('request')
+        super().__init__(*args, **kwargs)
+        self.fields['enable'].widget.attrs = {'checked':False} if self.instance.id else {'checked':True}
+        utils.initailize_form_fields(self)
+        self.fields['identifier'].widget.attrs = {'style':"display:none"}
+        self.fields['identifier'].initial = 'ASSET'
+        self.fields['capacity'].required = False
+        self.fields['servprov'].required = False
+        self.fields['parent'].queryset = am.Asset.objects.filter(~Q(runningstatus='SCRAPPED'), identifier='ASSET')
+        self.fields['type'].queryset = om.TypeAssist.objects.filter(Q(tatype__tacode__in = ['ASSETTYPE', 'ASSET_TYPE']))
+        self.fields['category'].queryset = om.TypeAssist.objects.filter(Q(tatype__tacode__in = ['ASSETCATEGORY', 'ASSET_CATEGORY']))
+        self.fields['subcategory'].queryset = om.TypeAssist.objects.filter(Q(tatype__tacode__in = ['ASSETSUBCATEGORY', 'ASSET_SUBCATEGORY']))
+        self.fields['unit'].queryset = om.TypeAssist.objects.filter(Q(tatype__tacode__in = ['ASSETUNIT', 'ASSET_UNIT', 'UNIT']))
+        self.fields['brand'].queryset = om.TypeAssist.objects.filter(Q(tatype__tacode__in = ['ASSETBRAND', 'ASSET_BRAND', 'BRAND']))
+        self.fields['servprov'].queryset = om.Bt.objects.filter(id__in = self.request.session['assignedsites'], isserviceprovider = True, enable=True)
+        
+        
+    
+    def clean(self):
+        super().clean()
+        self.cleaned_data['gpslocation'] = self.data.get('gpslocation')
+        if self.cleaned_data.get('parent') is None:
+            self.cleaned_data['parent'] = utils.get_or_create_none_asset()
+        if self.cleaned_data.get('gpslocation'):
+            data = QueryDict(self.request.POST['formData'])
+            self.cleaned_data['gpslocation'] = self.clean_gpslocation(data.get('gpslocation', 'NONE'))
+        return self.cleaned_data
+    
+    def clean_gpslocation(self, val):
+        if gps := val:
+            if gps == 'NONE': return GEOSGeometry(f'SRID=4326;POINT({0.0} {0.0})')
+            regex = '^([-+]?)([\d]{1,2})(((\.)(\d+)(,)))(\s*)(([-+]?)([\d]{1,3})((\.)(\d+))?)$'
+            gps = gps.replace('(', '').replace(')', '')
+            if not re.match(regex, gps):
+               raise forms.ValidationError(self.error_msg['invalid_latlng'])
+            gps.replace(' ', '')
+            lat, lng = gps.split(',')
+            gps = GEOSGeometry(f'SRID=4326;POINT({lng} {lat})')
+        return gps
+        
+
+
+class AssetExtrasForm(forms.Form):
+    required_css_class = "required"
+    tempcode      = forms.CharField(max_length=55, label='Temporary Code', required=False)
+    supplier      = forms.CharField(max_length=55, label='Supplier', required=False)
+    meter         = forms.ChoiceField(widget=s2forms.Select2Widget, label='Meter', required=False)
+    invoice_no    = forms.CharField( max_length=55, required=False, label='Invoice No')
+    invoice_date  = forms.DateField(required=False, label='Invoice Date')
+    service       = forms.ChoiceField(widget=s2forms.Select2Widget, label='Service', required=False)
+    sfdate        = forms.DateField(label='Service From Date', required=False)
+    stdate        = forms.DateField(label='Service To Date', required=False)
+    yom           = forms.IntegerField(min_value=1980, max_value=utils.get_current_year(), label='Year of Manufactured', required=False)
+    msn           = forms.CharField( max_length=55, required=False, label='Manufactured Serial No')
+    bill_val      = forms.CharField(label='Bill Value', required=False, max_length=55)
+    bill_date     = forms.DateField(label='Bill Date', required=False)
+    purchase_date = forms.DateField(label='Purchase Date', required=False)
+    inst_date     = forms.DateField(label='Installation Date', required=False)
+    po_number     = forms.CharField(max_length=55, label='Purchase Order Number',required=False)
+    far_asset_id  = forms.CharField(max_length=55, label='FAR Aseet ID',required=False)
+    
+    def __init__(self, *args, **kwargs):
+        self.request = kwargs.pop('request')
+        super().__init__(*args, **kwargs)
+        utils.initailize_form_fields(self)
+        self.fields['service'].choices = om.TypeAssist.objects.filter(tacode__in = ['SERVICE_TYPE','ASSETSERVICE', 'ASSET_SERVICE' 'SERVICETYPE']).values_list('id', 'tacode')
+        self.fields['meter'].choices = om.TypeAssist.objects.filter(tacode__in = ['ASSETMETER', 'ASSET_METER']).values_list('id', 'tacode')  
+
+    def clean(self):
+        cd = super().clean() #cleaned_data
+        if (cd['sfdate'] and cd['stdate']) and cd['sfdate'] > cd['stdate']:
+            raise forms.ValidationError('Service from date should be smaller than service to date!')
+        if cd['bill_date'] and cd['bill_date'] > datetime.now().date():
+            raise forms.ValidationError('Bill date cannot be greater than today')
+        if cd['purchase_date'] and cd['purchase_date'] > datetime.now().date():
+            raise forms.ValidationError('Purchase date cannot be greater than today')
+        
+        
+
+class LocationForm(forms.ModelForm):
+    class Meta:
+        model = am.Asset
+        fields = [
+            'assetcode', 'assetname', 'type', 'parent', 'enable', 
+            'iscritical', 'identifier', 'ctzoffset', 'runningstatus'
+        ]
+        labels = {
+            'assetcode':'Code', 'assetname':'Name', 'type':'Type', 'parent':'Belongs To', 
+            
+        }
+        widgets = {
+            'type':s2forms.Select2Widget,
+            'parent':s2forms.Select2Widget
+        }
+    
+    def __init__(self, *args, **kwargs):
+        self.request = kwargs.pop('request', False)
+        super().__init__(*args, **kwargs)
+        self.fields['identifier'].initial = 'LOCATION'
+        self.fields['type'].queryset = om.TypeAssist.objects.filter(tatype__tacode = 'LOCATIONTYPE')
+        utils.initailize_form_fields(self)
+        self.fields['identifier'].widget.attrs = {'style':"display:none"}
+        
+    def clean(self):
+        super().clean()
+        self.cleaned_data['gpslocation'] = self.data.get('gpslocation')
+        if self.cleaned_data.get('gpslocation'):
+            data = QueryDict(self.request.POST['formData'])
+            self.cleaned_data['gpslocation'] = self.clean_gpslocation(data.get('gpslocation', 'NONE'))
+        return self.cleaned_data
+
+    def clean_gpslocation(self, val):
+        if gps := val:
+            if gps == 'NONE': return GEOSGeometry(f'SRID=4326;POINT({0.0} {0.0})')
+            regex = '^([-+]?)([\d]{1,2})(((\.)(\d+)(,)))(\s*)(([-+]?)([\d]{1,3})((\.)(\d+))?)$'
+            gps = gps.replace('(', '').replace(')', '')
+            if not re.match(regex, gps):
+               raise forms.ValidationError(self.error_msg['invalid_latlng'])
+            gps.replace(' ', '')
+            lat, lng = gps.split(',')
+            gps = GEOSGeometry(f'SRID=4326;POINT({lng} {lat})')
+        return gps
+        
+class PPMForm(forms.ModelForm):
+    ASSIGNTO_CHOICES   = [('PEOPLE', 'People'), ('GROUP', 'Group')]
+    FREQUENCY_CHOICES   = [('WEEKLY', 'Weekly'),('FORTNIGHTLY', 'Fortnight'), ('BIMONTHLY', 'Bimonthly'),
+                           ("QUARTERLY", "Quarterly"), ('MONTHLY', 'Monthly'),('HALFYEARLY', 'Half Yearly'),
+                           ('YEARLY', 'Yearly')]
+    frequency = forms.ChoiceField(choices=FREQUENCY_CHOICES, label="Frequency", widget=s2forms.Select2Widget)
+    assign_to          = forms.ChoiceField(choices = ASSIGNTO_CHOICES, initial="PEOPLE")
+    required_css_class = "required"
+
+
+    class Meta:
+        model = am.Job
+        fields = [
+            'jobname', 'jobdesc', 'planduration', 'gracetime', 'expirytime', 'cron', 'priority', 'ticketcategory',
+            'fromdate', 'uptodate', 'people', 'pgroup', 'scantype', 'frequency', 'asset', 'qset', 'assign_to',
+            'ctzoffset', 'parent', 'identifier', 'seqno'
+        ]
+        labels = {
+            'asset':'Asset', 'qset':"Question Set", 'people':"People", 
+            'scantype':'Scantype', 'priority':'Priority',
+            'jobdesc':'Description', 'jobname':"Name", 'planduration':"Plan Duration",
+            'expirytime':'Exp time', 'cron':"Cron Exp", 'ticketcategory':'Ticket Category',
+            'fromdate':'Valid From', 'uptdate':'Valid To', 'pgroup':'Group', 
+            'assign_to':'Assign to'
+        }
+        widgets = {
+            'asset'         : s2forms.Select2Widget,
+            'qset'          : s2forms.Select2Widget,
+            'people'        : s2forms.Select2Widget,
+            'pgroup'        : s2forms.Select2Widget,
+            'priority'      : s2forms.Select2Widget,
+            'scantype'      : s2forms.Select2Widget,
+            'ticketcategory': s2forms.Select2Widget,
+        }
+    
+    def __init__(self, *args, **kwargs):
+        self.request = kwargs.pop('request')
+        super().__init__(*args, **kwargs)
+        utils.initailize_form_fields(self)
+        self.fields['identifier'].initial = 'PPM'
+        self.fields['identifier'].widget.attrs = {'style':"display:none"} 
+        self.fields['ticketcategory'].queryset = om.TypeAssist.objects.filter(tatype__tacode="TICKETCATEGORY")
+
+        

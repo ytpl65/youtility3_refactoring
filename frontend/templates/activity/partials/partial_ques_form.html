@@ -86,7 +86,7 @@
                 {{ ques_form.alertabove.errors }}
             </div>
         </div>
-        <div class="booleans col-md-6 d-flex justify-content-sm-between mt-5
+        <div class="booleans isavptcb col-md-6 d-flex justify-content-sm-between mt-5
             form-check form-switch form-check-custom form-check-solid">
                 <label for="{{ ques_form.isavpt.id_for_label }}"
                     class="form-check-label bool col-form-label me-5 text-sm-right">
@@ -166,12 +166,26 @@
         $("#modal-ques").find("select").select2({
             dropdownParent: $('#modal-ques')
         })
+        
         //on change isavpt, if it is checked remove class d-none of  else add class d-none to class avpttype
         $("#id_isavpt").change(function(){
             if($(this).is(":checked")){
                 $(".avpttype").removeClass("d-none")
+                $('#id_avpttype').attr('required', true);
+                $("label[for='id_avpttype']").addClass("required")
             }else{
                 $(".avpttype").addClass("d-none")
+                $('#id_avpttype').attr('required', false);
+                $("label[for='id_avpttype']").removeClass("required")
+            }
+        })
+
+        //on change answertype to signature field
+        $("#id_answertype").on('change', () => {
+            if($("#id_answertype").val() === 'SIGNATURE'){
+                $(".isavptcb").addClass("d-none")
+            }else{
+                $(".isavptcb").removeClass("d-none")
             }
         })
         
@@ -184,12 +198,6 @@
                 clearSelection("#id_alerton")
             }
         })
-
-        //on attachment required checked make avpttype mandatory
-        if($("#id_isavpt").is(':checked')){
-            console.log("added")
-            handleReqAttribute("id_avpttype", true)
-        }else{handleReqAttribute("id_avpttype", false)}
 
         //on change answertype field
         $("#id_answertype.form-select").on("change", function(){

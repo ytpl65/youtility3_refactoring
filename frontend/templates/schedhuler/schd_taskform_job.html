@@ -72,7 +72,7 @@ Schedhule Task
         <!--JOBDESCRIPTION-->
         <div class="col-md-2">
             <label for={{ schdtaskform.jobdesc.id_for_label }}
-                class="required">{{ schdtaskform.jobdesc.label }}:</label>
+                class="">{{ schdtaskform.jobdesc.label }}:</label>
         </div>
         <div class="col-md-4">
             {{ schdtaskform.jobdesc }}
@@ -426,7 +426,7 @@ Schedhule Task
                 }).then((result) => {
                     if(result.isConfirmed){
                         const params = {url: "{{ url('schedhuler:runJob') }}"}
-                        var payLoad = {job: '{{ schdtaskform.instance.id }}',
+                        var payLoad = {job_id: '{{ schdtaskform.instance.id }}',
                         csrfmiddlewaretoken: '{{ csrf_token }}'}
                         fire_ajax_form_post(params, payLoad)
                         .done((data, status, xhr) => {

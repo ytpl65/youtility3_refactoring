@@ -1750,7 +1750,9 @@ class   RPDashboard(LoginRequiredMixin, View):
         try:
             if R.get('action') == 'dashboard_sitepeople':
                 from apps.peoples.models import People
-                objs = People.objects.get_peoples_at_site()
+                objs = People.objects.get_peoples_at_site(request)
+                ic(objs)
+                return rp.JsonResponse({'data':list(objs)}, status=200)
             cxt = {
                 'sos_count':P['pel_model'].objects.get_sos_count_forcard(request),
                 'IR_count': P['jn_model'].objects.get_ir_count_forcard(request),

@@ -67,6 +67,7 @@ Checklist List
 			columns:[
 				{data: 'id', visible:false},
 				{data: 'ctzoffset', visible:false},
+				{data: 'type', visible:false},
 				{data: 'qsetname', title:'Name'},
 				{data: 'cdtz', title:"Created Date"},
 				{data: 'mdtz', title:"Modified Date"},
@@ -76,7 +77,7 @@ Checklist List
 			columnDefs:[
 				{targets:0, data: "id", visible:false, searchable:false, orderable:false },
 				{
-					targets: 2,
+					targets: 3,
 					data   : 'qsetname',
 					render : function ( data, type, row, meta ) {
 						let formUrl = "{{ url('activity:checklist') }}"

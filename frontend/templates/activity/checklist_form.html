@@ -15,7 +15,7 @@ Checklist Form
 {% block pagebreadcumb %}
 <!--will call parent contents -->
 {{ super() }}
-<li class="breadcrumb-item pe-3"><a href="{{ url('activity:checklist') }}?template=true" class="pe-3">Chcklist List</a></li>
+<li class="breadcrumb-item pe-3"><a href="{{ url('activity:checklist') }}?template=true" class="pe-3">Checklist List</a></li>
 <li class="breadcrumb-item pe-3"><a href="javascript:void(0)" class="pe-3">Checklist Form</a></li>
 {% endblock pagebreadcumb %}
 <!-------------------------- END PAGE BREADCUMB ------------------------->
@@ -80,9 +80,16 @@ Checklist Form
                 </div>
                 <!--Site Type Includes End-->
             
+            <!-- Asset Includes Start -->
+            <label for="{{ checklistform.assetincludes.id_for_label }}" class="col-md-2 required col-sm-2">Asset Includes:</label>
+            <div class="col-md-4 col-sm-4">
+                {{ checklistform.assetincludes }}
+                {{ checklistform.assetincludes.errors }}
+            </div>
+            <!-- Asset Includes End -->
 
             <!-- Parent Start -->
-            <label for="{{ checklistform.parent.id_for_label }}" class="col-md-1 col-sm-1">Parent:</label>
+            <label for="{{ checklistform.parent.id_for_label }}" class="col-md-2 col-sm-2">Parent:</label>
             <div class="col-md-4 col-sm-4">
                 {{ checklistform.parent }}
                 {{ checklistform.parent.errors }}
@@ -243,7 +250,7 @@ Checklist Form
                 ],
                 order:[[0, 'desc']],
                 buttons:[
-                {text:'<i class="fas fa-sync-alt text-dark"></i>', titleAttr:'Refresh Data', className:'refreshBtn disabled'},
+                {text:'<i class="fas fa-sync-alt text-dark"></i>', titleAttr:'Refresh Data', className:'refreshBtn'},
                     { extend: "create", editor: editor },
                     { extend: "edit",   editor: editor },
                     { extend: "remove", editor: editor }
@@ -322,6 +329,15 @@ Checklist Form
                 }, 2000);
             })
         })
+
+         
+            $('.refreshBtn').click(() => {
+                var selected = table.rows().data();
+                console.log(selected)
+                if(selected.count()){
+                    table.ajax.reload();
+                }
+            })
 
     }) //DOCUMENT.READY END
 </script>

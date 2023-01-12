@@ -57,7 +57,7 @@ Tour List
             columns:[
                 {data: 'id', visible:false, searchable:false},
                 {data: 'plandatetime', title: "Plan Datetime", render:function(data, type, row, meta){
-                    return `<a href="${urlname}?id=${row['id']}">${data}</a>`
+                    //return `<a href="${urlname}?id=${row['id']}">${data}</a>`
                     return `<a href="${urlname}?id=${row['id']}">${convert_to_local(type, data, row)}</a>`
                 }},
                 {data: 'jobdesc', title: 'Description', render:function(data, type, row, meta){
@@ -72,8 +72,7 @@ Tour List
                 {data: 'performedby__peoplename', title: 'Performed By'},
                 {data: 'gracetime', title: "Grace Time"},
                 {data: 'expirydatetime', title: "Expiry Datetime", render:function(data, type, row, meta){
-                    //return convert_to_local(type, data, row)
-                    return data
+                    return `<a href="${urlname}?id=${row['id']}">${convert_to_local(type, data, row)}</a>`
                 }}
 
             ],

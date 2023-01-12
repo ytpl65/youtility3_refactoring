@@ -9,6 +9,7 @@ import apps.attendance.forms as atf
 import apps.attendance.models as atdm
 from .filters import AttendanceFilter
 import apps.peoples.utils as putils
+from apps.service.utils import save_linestring_and_update_pelrecord
 
 import logging
 from apps.core import utils
@@ -141,6 +142,7 @@ class Conveyance(LoginRequiredMixin, View):
         # return form with instance for update
         elif R.get('id', None):
             obj = utils.get_model_obj(int(R['id']), request, self.params)
+            save_linestring_and_update_pelrecord(obj)
             cxt = {'conveyanceform':self.params['form_class'](request = request, instance = obj),
                     'edit':True}
             resp = render(request, self.params['template_form'], context = cxt)
@@ -185,6 +187,8 @@ class Conveyance(LoginRequiredMixin, View):
                 return rp.JsonResponse(data={'pk':cy.id}, status = 200)
         except IntegrityError:
             return handle_intergrity_error("conveyance")
+    
+   
 
 
 class GeofenceTracking(LoginRequiredMixin, View):

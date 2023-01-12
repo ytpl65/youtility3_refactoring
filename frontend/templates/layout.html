@@ -101,14 +101,6 @@
 {% endmacro %}
 <!--------------- END POP-UP DELETE_ALERT MACRO ------------------>
 
-{% macro load_advanced_search_css() %}
-{# <link  type="text/css" href="{{ static('assets/css/structured-filter.css') }}" rel="stylesheet" /> #}
-
-{% endmacro %}
-
-{% macro load_advanced_search_js() %}
-  {# <script src="{{ static('assets/js/structured-filter.min.js') }}"></script> #}
-{% endmacro %}
 
 {% macro mainattachment() %}
 <div class="modal fade" id="popup_attachment" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1"
@@ -162,6 +154,8 @@
 {% macro load_leaflet_tags() %}
   <link href="{{ static('assets/plugins/custom/leaflet/leaflet.css') }}" rel="stylesheet" type="text/css" />
   <script src="{{ static('assets/plugins/custom/leaflet/leaflet.js') }}"></script>
+  <link href="{{ static('assets/plugins/custom/leaflet.fullscreen/Control.FullScreen.css') }}" rel="stylesheet" type="text/css" />
+  <script src="{{ static('assets/plugins/custom/leaflet.fullscreen/Control.FullScreen.js') }}"></script>
 {% endmacro %}
 
 {% macro load_google_maps() %}

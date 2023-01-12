@@ -120,43 +120,6 @@ td { padding: 6px; border: 1px solid #CCC; }
         }
         return null
     }
-    // sample data for Structured-Filter
-    var contacts=[
-    { type:"text", id:"Lastname", label:"Lastname"},
-    { type:"text", id:"Firstname", label:"Firstname"},
-    { type:"boolean", id:"active", label:"Is active"},  
-    { type:"number", id:"age", label:"Age"},
-        {type:"list", id:"category", label:"Category",
-        list:[
-            {id:'1', label:"Family"},
-            {id:'2', label:"Friends"},
-            {id:'3', label:"Business"},
-            {id:'4', label:"Acquaintances"},
-            {id:'5', label:"Other"}
-        ]
-        },
-    {type:"date", id:"bday", label:"Birthday"},
-    {type:"text", id:"phone", label:"Phone"},
-    {type:"text", id:"cell", label:"Mobile"},
-    {type:"text", id:"Address1", label:"Address"},
-    {type:"text", id:"City", label:"City"},
-    {type:"list", id:"State", label:"State",
-        list:[ 
-        {id:"AL", label:"Alabama"},
-        {id:"AK", label:"Alaska"},
-        {id:"AZ", label:"Arizona"}
-        ]
-    },
-    {type:"text", id:"Zip", label:"Zip"},
-    {type:"list", id:"Country", label:"Country",
-        list:[ 
-        {label: 'Afghanistan', id: 'AF'}, 
-        {label: 'Åland Islands', id: 'AX'},
-        // ...
-        ]
-    }
-    ] 
-
 
     function getFRStatus(data){
         fire_ajax_get({url:`{{ url('activity:previewImage') }}?action=getFRStatus&uuid=${data}`,})
@@ -185,9 +148,7 @@ td { padding: 6px; border: 1px solid #CCC; }
     var to_pd = moment().format('YYYY-MM-DD')
 
     $(document).ready(function () {
-        $('#myFilter').structFilter({
-            fields: contacts,
-        })
+        
         new ClipboardJS('btn-copy')
         //beforeSend of capability ajax request 
         function attdBeforeSend() {

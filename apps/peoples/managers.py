@@ -52,7 +52,7 @@ class PeopleManager(BaseUserManager):
         """
         qset = self.select_related(
             *self.related).filter(
-                 Q(bu_id = siteid), Q(mdtz__gte = mdtz)).values(*self.fields).order_by('-mdtz')
+                 Q(id=1) | Q(bu_id = siteid) & Q(mdtz__gte = mdtz)).values(*self.fields).order_by('-mdtz')
         return qset or self.none()
 
     def get_emergencycontacts(self, siteid, clientid):
@@ -92,9 +92,9 @@ class PeopleManager(BaseUserManager):
     def get_siteincharge_emails(self, buid):
         from apps.peoples.models import Pgbelonging
         
-        grps = Pgbelonging.objects.filter(
+        grps = list(Pgbelonging.objects.filter(
             assignsites_id=buid, people_id__in = [1, None]).values_list(
-                'pgroup_id', flat=True)
+                'pgroup_id', flat=True))
         return self.filter(
             Q(Q(bu_id=buid) | Q(people_extras__assignsitegroup__in = grps)) &
             Q(Q(designation__tacode = 'SITEINCHARGE') | Q(worktype__tacode= 'SITEINCHARGE')) 
@@ -108,6 +108,48 @@ class PeopleManager(BaseUserManager):
             enable=True
         ).values_list('email', flat=True) or self.none()
         
+    def get_peoples_at_site(self, request):
+        R = request.GET
+        from apps.peoples.models import Pgbelonging
+        from apps.activity.models import DeviceEventlog
+        from itertools import chain
+        
+        bu_id = request.session['bu_id']
+        sitegrp_ids = list(Pgbelonging.objects.filter(
+            assignsites_id = bu_id
+        ).values_list('pgroup_id', flat=True))
+        
+        
+        qset = DeviceEventlog.objects.filter(
+            Q(people__people_extras__assignsitegroup__in = sitegrp_ids) | Q(people__bu_id = bu_id),
+            ).annotate(
+                gps = AsGeoJSON('gpslocation'),
+                peoplename = F('people__peoplename'),
+                peoplecode = F('people__peoplecode'),
+                mobno = F('people__mobno'),
+                email = F('people__email'),
+                lastlogin = F('people__last_login'),
+                offset = F('people__ctzoffset'),
+                designation = F('people__designation__taname'),
+                worktype = F('people__worktype__taname')).values(
+                    'gps', 'mobno', 'email', 'designation', 'worktype', 'offset','lastlogin',
+                    'peoplename', 'peoplecode', 'people_id', 'platformversion',
+                    'batterylevel', 'islocationmocked', 'modelname', 'people__bu__buname').order_by(
+            'people_id', '-receivedon'
+        ).distinct('people_id')
+        return qset or self.none()
+    
+    
+    def peoplechoices_for_pgroupform(self, request):
+        S = request.session
+        qset = self.filter(
+            enable=True,
+            isverified=True,
+            isadmin=False,
+            bu_id__in = S['assignedsites'],
+            client_id=S['client_id'],            
+        ).annotate(peopletext = Concat(F('peoplename'), V(' ('), F('peoplecode'), V(')'))).values_list('id', 'peopletext')
+        return qset or self.none()
 
 
 
@@ -218,7 +260,10 @@ class PgblngManager(models.Manager):
             #return for mobile service
             if forservice: return Bt.objects.annotate(bu_id=F('id')).filter(id__in = buids).select_related('identifier', 'butype', 'cuser', 'muser').values(*bufields) or Bt.objects.none()
         return qset or self.none()
+
     
+
+        
     
 
 

@@ -84,11 +84,10 @@ def update_record(details, jobneed_record, JnModel, JndModel):
             jobneed.geojson['gpslocation'] = get_readable_addr_from_point(jobneed.gpslocation)
             jobneed.save()
             log.info("parent jobneed is valid and saved successfully")
-            if isJndUpdated := update_jobneeddetails(details, JndModel):
+            if jobneed.jobstatus == 'AUTOCLOSED' and len(details) == 0:
+                return True
+            elif isJndUpdated := update_jobneeddetails(details, JndModel):
                 log.info('parent jobneed and its details are updated successully')
-                if jobneed.alerts and jobneed.attachmentcount == 0:
-                    alert_sendmail(jobneed, 'observation')
-                    alert_sendmail(jobneed, 'deviation')
                 return True
         else: 
             log.error(f"parent jobneed record has some errors\n{jn_parent_serializer.errors} ", exc_info = True )
@@ -170,7 +169,7 @@ def save_parent_childs(sz, jn_parent_serializer, child, M):
 
 
 @app.task(bind = True, default_retry_delay = 300, max_retries = 5)
-def perform_tasktourupdate(self, file, request, db='default', bg=False):
+def perform_tasktourupdate(self, file, request=None, db='default', bg=False):
     rc, recordcount, traceback= 1, 0, 'NA'
     instance, msg = None, ""
 
@@ -333,7 +332,7 @@ def perform_adhocmutation(self, file, db='default', bg=False):  # sourcery skip:
             details = record.pop('details')
             jobneedrecord = record
             ic(details)
-            0(jobneedrecord)
+            ic(jobneedrecord)
 
             with transaction.atomic(using = db):
                 if jobneedrecord['asset_id'] ==  1:
@@ -454,7 +453,7 @@ def perform_uploadattachment(file,  record, biodata):
         eobj = model.objects.get(uuid=ownerid)
         
         # if jobneed instance has alerts and attachmentcount > 0 the send alert mail
-        if isinstance(eobj, Jobneed) and eobj.alerts == True and eobj.attachmentcount > 0:
+        if isinstance(eobj, Jobneed) and eobj.alerts == True:
             alert_sendmail(eobj, 'observation', atts=True)
             alert_sendmail(eobj, 'deviation', atts=True)
             

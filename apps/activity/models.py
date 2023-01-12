@@ -1,7 +1,7 @@
 import uuid
 from apps.peoples.models import BaseModel
 from apps.activity.managers import (AssetManager, AttachmentManager,
-JobManager, JobneedDetailsManager, QsetBlngManager, QuestionManager,
+JobManager, JobneedDetailsManager, QsetBlngManager, QuestionManager, ESCManager,
 QuestionSetManager, JobneedManager, DELManager, WorkpermitManager, TicketManager)
 from apps.tenants.models import TenantAwareModel
 from django.utils.translation import gettext_lazy as _
@@ -656,9 +656,11 @@ class EscalationMatrix(BaseModel, TenantAwareModel):
         HOUR   = ('HOUR', 'HOUR')
         DAY    = ('DAY', 'DAY')
         WEEK   = ('WEEK', 'WEEK')
+    
 
     # id                = models.BigIntegerField(primary_key = True)
     body               = models.CharField(max_length = 500, null = True)
+    job = models.ForeignKey("activity.Job", verbose_name=_("Job"),null=True, on_delete=models.RESTRICT)
     level              = models.IntegerField(null = True, blank = True)
     frequency          = models.CharField(max_length = 10, default='DAY', choices = Frequency.choices)
     frequencyvalue     = models.IntegerField(null = True, blank = True)
@@ -668,8 +670,10 @@ class EscalationMatrix(BaseModel, TenantAwareModel):
     bu                 = models.ForeignKey("onboarding.Bt", null = True,blank = True, on_delete = models.RESTRICT)
     escalationtemplate = models.CharField(max_length = 30)
     notify             = models.TextField(blank = True, null = True)
-    bu                 = models.ForeignKey("onboarding.Bt", null = True,blank = True, on_delete = models.RESTRICT)
+    client                 = models.ForeignKey("onboarding.Bt", null = True,blank = True, on_delete = models.RESTRICT, related_name='esc_clients')
 
+    objects = ESCManager() 
+    
     class Meta(BaseModel.Meta):
         db_table = 'escalationmatrix'
         get_latest_by = ["mdtz", 'cdtz']
@@ -679,6 +683,8 @@ class DeviceEventlog(BaseModel, models.Model):
         STEPCOUNT     = ('stepcount', 'Step Count')
         LOCATIONALERT = ('locationalert', 'Location Alert')
         DEVICEOGS     = ('devicelogs', 'Device Logs')
+        LOGIN         = ('login', 'Log In')
+        LOGOUT        = ('logout', 'Log Out')
     
     class NetworkProviderChoices(models.TextChoices):
         BLUETOOTH = ('bluetooth', 'Bluetooth')

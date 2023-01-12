@@ -90,6 +90,28 @@ class QuestionSetManager(models.Manager):
                 q.update({'slno':idx+1})
         return qset or self.none()
     
+    def questionset_listview(self, request, fields, related):
+        R, S = request.GET, request.session
+        
+        qset = self.filter(
+            ~Q(qsetname='NONE'),
+            type='QUESTIONSET',
+            bu_id__in = S['assignedsites'],
+            client_id = S['client_id']
+        ).select_related(*related).values(*fields)
+        return qset or self.none()
+
+    def checklist_listview(self, request, fields, related):
+        R, S = request.GET, request.session
+        
+        qset = self.filter(
+            ~Q(qsetname='NONE'),
+            type='CHECKLIST',
+            bu_id__in = S['assignedsites'],
+            client_id = S['client_id']
+        ).select_related(*related).values(*fields)
+        return qset or self.none()
+    
     
 
     
@@ -236,8 +258,11 @@ class JobneedManager(models.Manager):
         return qobjs or self.none()
 
     def get_assetmaintainance_list(self, request, related, fields):
+        S = request.session
         dt  = datetime.now(tz = timezone.utc) - timedelta(days = 90) #3months
-        qset = self.filter(identifier='ASSETMAINTENANCE', plandatetime__gte = dt).select_related(
+        qset = self.filter(identifier='ASSETMAINTENANCE',
+                           plandatetime__gte = dt,
+                           bu_id__in = S['assignedsites']).select_related(
             *related).values(*fields)
         return qset or self.none()
     
@@ -251,6 +276,7 @@ class JobneedManager(models.Manager):
         from django.contrib.gis.db.models.functions import Distance
 
         qset, R = self.none(), request.GET
+        S = request.session
         pbs = Pgbelonging.objects.get_assigned_sites_to_people(request.user.id)
         
         #att count subquery
@@ -265,10 +291,10 @@ class JobneedManager(models.Manager):
         #outer query
         qset = self.filter(
                     parent_id = 1,
-                    bu_id__in=pbs.values_list('buid', flat=True),
                     plandatetime__date__gte=R['pd1'],
                     plandatetime__date__lte=R['pd2'],
-                    identifier='SITEREPORT'
+                    identifier='SITEREPORT',
+                    bu_id__in = S['assignedsites']
                 ).annotate(
                     buname=Case(
                         When(
@@ -406,32 +432,45 @@ class JobneedManager(models.Manager):
         return self.none()
 
     def get_ir_count_forcard(self, request):
-        R = request.GET
+        R, S = request.GET, request.session
         pd1 = R.get('pd1', datetime.now().date())
         pd2 = R.get('pd2', datetime.now().date())
-        assignedsite_ids = pm.Pgbelonging.objects.get_assigned_sites_to_people(
-            request.user.id).values_list("buid", flat=True)
         return self.filter(
             Q(Q(parent_id__in = [1, -1]) | Q(parent_id__isnull=True)),
-            bu_id__in = assignedsite_ids,
+            bu_id__in = S['assignedsites'],
             identifier = 'INCIDENTREPORT',
             plandatetime__date__gte = pd1,
             plandatetime__date__lte = pd2,
         ).count() or 0
     
     def get_schdtour_count_forcard(self, request):
-        R = request.GET
+        R, S = request.GET, request.session
         pd1 = R.get('pd1', datetime.now().date())
         pd2 = R.get('pd2', datetime.now().date())
-        assignedsite_ids = pm.Pgbelonging.objects.get_assigned_sites_to_people(
-            request.user.id).values_list("buid", flat=True)
         return self.filter(
-            bu_id__in = assignedsite_ids,
+            bu_id__in = S['assignedsites'],
             plandatetime__date__gte = pd1,
             plandatetime__date__lte = pd2,
             parent_id = 1,
             identifier='EXTERNALTOUR'
         ).count() or 0
+    
+    def get_ppm_listview(self, request, fields, related):
+        S, R = request.session, request.GET
+        pd1 = R.get('pd1', datetime.now() - timedelta(days=7))
+        pd2 = R.get('pd2', datetime.now())
+        qset = self.annotate(
+            assignedto = Case(
+                When(pgroup_id=1, then=Concat(F('people__peoplename'), V(' [PEOPLE]'))),
+                When(people_id=1, then=Concat(F('pgroup__groupname'), V(' [GROUP]'))),
+            )).filter(
+                ~Q(id=1),
+                identifier='PPM',
+                client_id = S['client_id'],
+                plandatetime__date__gte = pd1,
+                plandatetime__date__lte = pd2
+            ).select_related(*related).values(*fields)
+        return qset or self.none()
         
     
     
@@ -513,6 +552,8 @@ class AttachmentManager(models.Manager):
         log.info(defaultimgqset)
 
         return {'attd_in_out': list(attqset), 'eventlog_in_out': list(eventlogqset), 'default_img_path': list(defaultimgqset)}
+
+    
         
 
 class AssetManager(models.Manager):
@@ -568,6 +609,28 @@ class AssetManager(models.Manager):
             qset = qset.filter(enable=True, identifier='SMARTPLACE').values(*fields)
         return qset or self.none()
     
+    def get_assetlistview(self, related, fields, request):
+        
+        S = request.session
+        qset = self.annotate(gps = AsGeoJSON('gpslocation')).filter(
+            ~Q(assetcode='NONE'),
+            bu_id__in = S['assignedsites'],
+            client_id = S['client_id'],
+            identifier='ASSET'
+        ).select_related(*related).values(*fields)
+        return qset or self.none()
+    
+    
+    def get_locationlistview(self, related, fields, request):
+        S = request.session
+        qset = self.filter(
+            ~Q(assetcode='NONE'),
+            bu_id__in = S['assignedsites'],
+            client_id = S['client_id'],
+            identifier = 'LOCATION'
+        ).select_related(*related).values(*fields)
+        return qset or self.none()
+    
     
 
 
@@ -612,7 +675,7 @@ class JobneedDetailsManager(models.Manager):
         return qset or self.none()
 
     def get_e_tour_checklist_details(self, jobneedid):
-        qset = self.filter(jobneed_id=jobneedid).values(
+        qset = self.filter(jobneed_id=jobneedid).select_related('question').values(
             'question__quesname', 'answertype', 'min', 'max', 'id',
             'options', 'alerton', 'ismandatory', 'seqno','answer'
         ).order_by('seqno')
@@ -633,6 +696,13 @@ class JobneedDetailsManager(models.Manager):
             'filepath', 'filename', 'attachmenttype', 'datetime',  'id', 'file'
             ):return atts
         return self.none()
+    
+    def get_task_details(self, taskid):
+        qset = self.filter(
+            jobneed_id = taskid
+        ).select_related('question').values('question__quesname', 'answertype', 'min', 'max', 'id',
+            'options', 'alerton', 'ismandatory', 'seqno','answer').order_by('seqno')
+        return qset or self.none()
         
 
 
@@ -848,6 +918,25 @@ class JobManager(models.Manager):
         qset = self.filter(pk = ID).values('people__peoplename', 'people_id', 'fromdate', 'uptodate',
                                             'starttime', 'endtime', 'people__peoplecode', 'pk')
         return {'data':list(qset)}
+    
+    def get_jobppm_listview(self, request):
+        R, S = request.GET, request.session
+        fromdt = R.get('from', datetime.now() - timedelta(days=7))
+        uptpdt = R.get('upto', datetime.now())
+        qset = self.annotate(
+            assignedto = Case(
+                When(pgroup_id=1, then=Concat(F('people__peoplename'), V(' [PEOPLE]'))),
+                When(people_id=1, then=Concat(F('pgroup__groupname'), V(' [GROUP]'))),
+            )).filter(
+            fromdate__date__gte = fromdt,
+            uptodate__date__lte = uptpdt,
+            client_id = S['client_id'],
+            identifier = 'PPM'
+        ).values('id', 'jobname', 'asset__assetname', 'qset__qsetname', 'assignedto',
+                 'uptodate', 'planduration', 'gracetime', 'expirytime', 'fromdate')
+        return qset or self.none()
+
+    
 
 
 class DELManager(models.Manager):
@@ -877,3 +966,48 @@ class WorkpermitManager(models.Manager):
         from apps.core.raw_queries import query
         qset = self.raw(query['workpermitlist'], [request.session['bu_id']])
         return qset or self.none()
+    
+    
+class ESCManager(models.Manager):
+    use_in_migrations=True
+    
+    def get_reminder_config_forppm(self, job_id, fields):
+        qset = self.filter(
+            escalationtemplate="JOB",
+            job_id = job_id
+        ).values(*fields) 
+        return qset or self.none()
+    
+    
+    def handle_reminder_config_postdata(self,request):
+        
+        P, S = request.POST, request.session
+        ic(P)
+        cdtz = datetime.now(tz = timezone.utc)
+        mdtz = datetime.now(tz = timezone.utc)
+        PostData = {
+            'cdtz':cdtz, 'mdtz':mdtz, 'cuser':request.user, 'muser':request.user,
+            'level':1, 'job_id':P['jobid'], 'frequency':P['frequency'], 'frequencyvalue':P['frequencyvalue'],
+            'notify':P['notify'], 'assignedperson_id':P['peopleid'], 'assignedgroup_id':P['groupid'], 
+            'bu_id':S['bu_id'], 'escalationtemplate':P['esctemplate'], 'client_id':S['client_id'], 
+            'ctzoffset':P['ctzoffset']
+        }
+        if P['action'] == 'create':
+            if self.filter(
+                frequency = PostData['frequency'], frequencyvalue = PostData['frequencyvalue'], 
+                ).exists():
+                return {'data':list(self.none()), 'error':'Warning: Record already added!'}
+            ID = self.create(**PostData).id
+        
+        elif P['action'] == 'edit':
+            PostData.pop('cdtz')
+            PostData.pop('cuser')
+            if updated := self.filter(pk=P['pk']).update(**PostData):
+                ID = P['pk']
+        else:
+            self.filter(pk = P['pk']).delete()
+            return {'data':list(self.none()),}
+        ic(ID)
+        qset = self.filter(pk = ID).values('notify', 'frequency', 'frequencyvalue', 'id')
+        ic(qset)
+        return {'data':list(qset)}

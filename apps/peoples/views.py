@@ -75,7 +75,7 @@ class SignIn(View):
                     display_user_session_info(request.session)
                     logger.info(f"User logged in {request.user.peoplecode}")
                     if request.session.get('bu_id') in [1, None]: return redirect('peoples:no_site')
-                    response = redirect('onboarding:wizard_delete') if request.session.get('wizard_data') else redirect('/dashboard')
+                    response = redirect('onboarding:wizard_delete') if request.session.get('wizard_data') else redirect('onboarding:rp_dashboard')
 
                 else:
                     logger.warning(

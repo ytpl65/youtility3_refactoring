@@ -1,0 +1,85 @@
+{% extends "base_list.html" %}
+
+<!---- BEGIN CARD TITLE ------>
+{% block card_title %}
+Asset Lists
+{% endblock card_title %}
+<!---- END CARD TITLE -------->
+
+<!----------- BEGIN PAGE BREADCUMBS ----------->
+{% block pagebreadcumb %}
+{{ super() }}
+<li class="breadcrumb-item pe-3"><a href="javascript:void(0)" class="pe-3">Asset List</a></li>
+{% endblock pagebreadcumb %}
+<!----------- END PAGE BREADCUMBS ------------->
+
+
+<!------------------ BEGIN PEOPLE TABLE ------------------------->
+{% block table %}
+<div class="table-responsive">
+    <table id="asset_table" class="display compact cell-border" style="width:100%">
+	</table>
+</div>
+{% endblock table %} 
+<!------------------ END PEOPLE TABLE --------------------------->
+
+
+{% block extra_scripts %}
+<script>
+$(document).ready(function () {
+		//BEGIN DATATABLE INITIALIZATION
+		var table = $('#asset_table').DataTable({
+			ajax:{
+				url: "{{ url('activity:asset') }}?action=list"
+			},
+			columns:[
+				{data: 'id', visible:false, defaultContent: ""},
+				{data: 'identifier', visible:false, defaultContent: ""},
+				{data: 'assetcode', title: 'Code'},
+				{data: 'assetname', title: 'Name'},
+				{data: 'parent__assetname', title: 'Belongs To', defaultContent:null},
+				{data: 'runningstatus', title: 'Status'},
+				{data: 'enable', title: 'Enable'},
+
+			],
+			pageLength:14,
+			order:[[1, 'asc']],
+			deferRender:true,
+			responsive:true,
+			dom:`<'row' <'col-sm-6 d-flex justify-content-start'f> <'col-sm-6 d-flex justify-content-end'B> >rt<'row'
+			 <'col-sm-6'l> <'col-sm-6'p><'col-sm-12 d-flex justify-content-center'i>>`,
+			columnDefs:[
+				{targets:[2,3], data: 'assetname', render:function(data, type, row, meta){
+					let updateUrl = "{{ url('activity:asset') }}"
+					return `<a href=${updateUrl}?id=${row['id']}>${data}</a>`
+				}},
+				{targets:5, data: 'runningstatus',  render:function(data, type, row, meta){
+					if(data === 'MAINTENANCE'){return `<span class="badge badge-danger">${data}</span>`}
+					if(data === 'SCRAPPED'){return `<span class="badge badge-secondary">${data}</span>`}
+					if(data === 'STANDBY'){return `<span class="badge badge-orange">${data}</span>`}
+					if(data === 'WORKING'){return `<span class="badge badge-success">${data}</span>`}
+				}},
+				{targets:4, render:function(data, type, row, meta){
+					return data || 'NONE'
+				}}
+
+			],
+			createdRow:function(row, data, dataIndex){
+				if(data['enable'] === false){
+					$(row).addClass('disabled-record text-white')
+				}
+			},
+			buttons:[
+				{
+					text     : `Add New &nbsp;<i class='fas fa-plus ch4'></i></a>`,
+					className: "btn btn-sm btn-light-primary",
+					//action for add_new_button 
+					action: function(e, dt, node, config){
+						return location.href = "{{ url('activity:asset') }}?action=form"
+					}
+				}
+			]
+		})
+	});
+</script>
+{% endblock extra_scripts %}

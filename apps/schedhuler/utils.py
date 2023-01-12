@@ -210,7 +210,7 @@ def calculate_startdtz_enddtz(job):
     vfrom        = job['fromdate'].replace(microsecond = 0, tzinfo = tz)  + timedelta(minutes = ctzoffset)
     vupto        = job['uptodate'].replace(microsecond = 0, tzinfo = tz) + timedelta(minutes = ctzoffset)
     ldtz         = job['lastgeneratedon'].replace(microsecond = 0, tzinfo = tz) + timedelta(minutes = ctzoffset)
-    # job['ctzoffset']     = job['ctzoffset'] 
+    # job['ctzoffset']     = job['ctzoffset']
     # tzoffset     = job['ctzoffset'] 
     # cdtz         = job['cdtz'].replace(microsecond = 0) 
     # mdtz         = job['mdtz'].replace(microsecond = 0)  
@@ -219,8 +219,8 @@ def calculate_startdtz_enddtz(job):
     # ldtz         = job['lastgeneratedon'].replace(microsecond = 0) 
     # display_jobs_date_info(cdtz, mdtz, vfrom, vupto, ldtz)
     current_date= datetime.utcnow().replace(tzinfo=timezone.utc).replace(microsecond=0)
-    #current_date= current_date.replace(tzinfo = tz) + timedelta(minutes= ctzoffset)
-    current_date= current_date + timedelta(minutes= ctzoffset)
+    current_date= current_date.replace(tzinfo = tz) + timedelta(minutes= ctzoffset)
+    #current_date= current_date + timedelta(minutes= ctzoffset)
 
     if mdtz > cdtz:
         ldtz = current_date
@@ -275,6 +275,7 @@ def get_datetime_list(cron_exp, startdtz, enddtz, resp):
         raise ex from ex
     if DT:
         log.info(f'Datetime list calculated are as follows:= {pformat(DT, compact = True)}')
+    else: resp = rp.JsonResponse({"errors": "Unable to schedule task, check your 'Valid From' and 'Valid To'"}, status = 404)
 
     log.info("get_datetime_list(cron_exp, startdtz, enddtz) [end]")
     ic("resp in get_datetime_list()", resp)

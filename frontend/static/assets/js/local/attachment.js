@@ -7,6 +7,13 @@ $(document).ready(() => {
   });
   
   $("#popup_attachment").on("shown.bs.modal", () => {
+    if ($.fn.DataTable.isDataTable("#tabAttachment")) {
+      attTable.destroy();
+    }
+    $.fn.dataTable.tables( {visible: true, api: true} ).columns.adjust();
+    $('#popup_attachment').modal({
+          keyboard: false
+    })
     //get attachement data from ajax get
     attTable = $("#tabAttachment").DataTable({
       ajax:{

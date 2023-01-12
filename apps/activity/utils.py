@@ -9,17 +9,19 @@ log = logging.getLogger("__main__")
 from datetime import datetime
 import pytz
 
-def get_assetincludes_choices():
+def get_assetincludes_choices(request):
+    S = request.session
     qset = av.Asset.objects.filter(
-         ~Q(assetcode='NONE'), identifier='CHECKPOINT', enable = True).select_related(
+         Q(identifier='CHECKPOINT') & Q(enable = True) &  Q(bu_id__in = S['assignedsites']) |  Q(assetcode='NONE')).select_related(
             'parent').annotate(
             checkpoint = Concat(
                 'assetname', Value(" ("), 'assetcode', Value(")")))
     return qset.values_list('id', 'checkpoint')
 
-def get_assetsmartplace_choices():
+def get_assetsmartplace_choices(request):
+    S = request.session
     qset = av.Asset.objects.filter(
-         ~Q(assetcode='NONE') & Q(identifier='SMARTPLACE') | Q(identifier='ASSET'), enable = True).select_related(
+         Q(identifier__in =['CHECKPOINT', 'SMARTPLACE']) & Q(enable = True) &  Q(bu_id__in = S['assignedsites']) |  Q(assetcode='NONE')).select_related(
             'parent').annotate(
             checkpoint = Concat(
                 'assetname', Value(" ("), 'assetcode', Value(")")))
@@ -290,3 +292,41 @@ def list_viewdata(request, model, fields, kwargs):
     filtered = count
     jsondata = {'data': list(objects[start:start + length])}
     return  length, start, objects
+
+def save_assetjsonform(jsonform, asset):
+    try:
+        log.info('saving jsonform ...')
+        for k in ['tempcode', 'supplier', 'meter', 'invoice_no', 'invoice_date',
+                     'service', 'sfdate', 'stdate', 'yom', 'msn', 'bill_val',
+                     'bill_date', 'purchase_date', 'inst_date', 'po_number', 'far_asset_id']:
+            asset.asset_json[k] = jsonform.cleaned_data.get(k)
+    except Exception:
+        log.error(
+            'save_jsonform(jsonform, p)... FAILED', exc_info=True)
+        raise
+    else:
+        log.info('jsonform saved DONE ... ')
+        return True
+    
+    
+def get_asset_jsonform(people, request):
+    try:
+        log.info('people prefform (json form) retrieving...')
+        from .forms import AssetExtrasForm
+        d = {
+            k: v
+            for k, v in people.asset_json.items()
+            if k
+            in (
+                'tempcode', 'supplier', 'meter', 'invoice_no', 'invoice_date',
+                'service', 'sfdate', 'stdate', 'yom', 'msn', 'bill_val',
+                'bill_date', 'purchase_date', 'inst_date', 'po_number', 'far_asset_id'
+            )
+        }
+
+    except Exception:
+        log.error('get_asset_jsonform(people)... FAILED', exc_info=True)
+        raise
+    else:
+        log.info('people prefform (json form) retrieved... DONE')
+        return AssetExtrasForm(data=d, request=request)

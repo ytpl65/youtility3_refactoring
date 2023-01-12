@@ -298,7 +298,7 @@ function handle_alerts_msgs(msg, alertype) {
 function display_form_errors(errors) {
 
   $("p.errors").remove();
-  if (errors instanceof String) {
+  if (typeof errors == 'string') {
     console.log("errors is a string");
     display_non_field_errors([errors]);
   }
@@ -1153,10 +1153,12 @@ function init_select_field(kwargs) {
   }
 }
 
-function initDateRangeHtml() {
-  $("div.customfields").html(`<div class="input-group pe-4">
+function initDateRangeHtml(id=null, range_ele=null) {
+  let ele = (id !== null) ? id : 'div.customfields'
+  let range_id = (range_ele !== null) ? range_ele : 'id_daterange'
+  $(ele).html(`<div class="input-group pe-4 mt-2">
             <span class="input-group-text" id="basic-addon1">From: </span>
-            <input type="text" id="id_daterange"class="form-control">
+            <input type="text" id="${range_id}"class="form-control">
           </div>`);
 }
 
@@ -1477,7 +1479,7 @@ function editorAjaxData(d, editor, table, parentid, csrf){
   d.options = $("#DTE_Field_options").val()
   d.isavpt = $("#DTE_Field_isavpt").val()
   d.avpttype = $("#DTE_Field_avpttype").val()
-  d.pk = currentRow !== 'None' ? currentRow['pk'] : currentRow
+  d.pk = currentRow ? currentRow['pk'] : currentRow
   d.ctzoffset = $("#id_ctzoffset").val()
 }
 

@@ -344,9 +344,10 @@ tr.selected td a{
     color: white;
 }
 tr.disabled-record td {
-    background-color: rgb(255, 202, 158) !important;
-    color: black;
-    /*background-image:linear-gradient(rgb(252, 199, 199), #ff7d7d);*/
+    
+    color: white;
+    text-decoration: line-through;
+    background-image:linear-gradient(rgb(209, 209, 209), #979797) !important;
 }
 
 tr.disabled-record td a {
@@ -393,4 +394,31 @@ tr.disabled-record td a {
     float: none;
     display: table;
     color: #0abffc;
+}
+
+.bg-gradient-primary {
+    background-image: linear-gradient(45deg,#4099ff,#73b4ff);;
+}
+
+.bg-gradient-warning {
+    background-image: linear-gradient(45deg,#FFB64D,#ffcb80);
+}
+
+.bg-gradient-success {
+    background-image: linear-gradient(45deg,#2ed8b6,#59e0c5);
+}
+
+.bg-gradient-danger {
+    background-image: linear-gradient(45deg,#FF5370,#ff869a);
+}
+
+.yicon {
+    font-size: 65px !important;
+}
+.yiconpadd{
+    padding-left: 25px !important;
+}
+
+.badge-orange{
+    background-color: orange;
 }

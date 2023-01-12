@@ -284,6 +284,7 @@ class SyncMutation(graphene.Mutation):
         import zipfile
         from apps.service.utils import call_service_based_on_filename
         try:
+            log.info(f"sync inputs: totalrecords:{totalrecords} filesize:{filesize} typeof file:{type(file)}")
             db = get_current_db_name()
             log.info(f'the type of file is {type(file)}')
             with zipfile.ZipFile(file) as zip:

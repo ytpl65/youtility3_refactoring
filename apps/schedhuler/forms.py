@@ -21,7 +21,6 @@ class Schd_I_TourJobForm(JobForm):
             'starttime':forms.TextInput(attrs={'style': 'display:none;'}),
             'endtime':forms.TextInput(attrs={'style': 'display:none;'}),
             'frequency':forms.TextInput(attrs={'style': 'display:none;'}),
-            'jobname':forms.TextInput(attrs={'placeholder': 'Enter Route Plan Name:'}),
         })
 
     def __init__(self, *args, **kwargs):
@@ -36,6 +35,8 @@ class Schd_I_TourJobForm(JobForm):
         self.fields['endtime'].widget.attrs     = {"style": "display:none"}
         self.fields['frequency'].widget.attrs   = {"style": "display:none"}
         self.fields['ticketcategory'].queryset = ob.TypeAssist.objects.filter(tatype__tacode="TICKETCATEGORY")
+        ic(self.request)
+        self.fields['pgroup'].queryset = pm.Pgroup.objects.filter(bu_id__in = self.request.session['assignedsites'], identifier__tacode__in = ['PEOPLEGROUP', 'PEOPLE_GROUP'])
         utils.initailize_form_fields(self)
 
 
@@ -177,7 +178,7 @@ class Schd_E_TourJobForm(JobForm):
             'priority':forms.TextInput(attrs={'style': 'display:none;'}),
             'seqno':forms.TextInput(attrs={'style': 'display:none;'}),
             'ticketcategory':forms.TextInput(attrs={'style': 'display:none;'}),
-            'jobname':forms.TextInput(attrs={'placeholder': 'Enter Route Plan Name:'})}
+            }
         )
         exclude = ['jobdesc']
 
@@ -189,7 +190,9 @@ class Schd_E_TourJobForm(JobForm):
         self.fields['fromdate'].input_formats  = settings.DATETIME_INPUT_FORMATS
         self.fields['uptodate'].input_formats  = settings.DATETIME_INPUT_FORMATS
         self.fields['ticketcategory'].initial  = ob.TypeAssist.objects.get(tacode='AUTOCLOSED')
-        self.fields['sgroup'].queryset  = pm.Pgroup.objects.filter(identifier__tacode="SITEGROUP")
+        self.fields['sgroup'].queryset  = pm.Pgroup.objects.filter(identifier__tacode="SITEGROUP", bu_id__in = self.request.session['assignedsites'],)
+        self.fields['pgroup'].queryset = pm.Pgroup.objects.filter(bu_id__in = self.request.session['assignedsites'], identifier__tacode__in = ['PEOPLEGROUP', 'PEOPLE_GROUP'])
+        self.fields['sgroup'].required  = True
         self.fields['qset'].queryset  = am.QuestionSet.objects.filter(type__in = ['CHECKLIST'])
         self.fields['identifier'].widget.attrs = {"style": "display:none"}
         self.fields['expirytime'].widget.attrs = {"style": "display:none"}
@@ -235,10 +238,10 @@ class SchdTaskFormJob(JobForm):
     class Meta(JobForm.Meta):
         exclude = ['shift']
         JobForm.Meta.widgets.update({
-            'identifier':forms.TextInput(attrs={'style': 'display:none;'}),
-            'starttime':forms.TextInput(attrs={'style': 'display:none;'}),
-            'endtime':forms.TextInput(attrs={'style': 'display:none;'}),
-            'frequency':forms.TextInput(attrs={'style': 'display:none;'}),
+            'identifier'    : forms.TextInput(attrs={'style': 'display:none;'}),
+            'starttime'     : forms.TextInput(attrs={'style': 'display:none;'}),
+            'endtime'       : forms.TextInput(attrs={'style': 'display:none;'}),
+            'frequency'     : forms.TextInput(attrs={'style': 'display:none;'}),
             'ticketcategory': s2forms.Select2Widget,
             'scantype'      : s2forms.Select2Widget,
             'priority'      : s2forms.Select2Widget,
@@ -259,16 +262,18 @@ class SchdTaskFormJob(JobForm):
         self.fields['ticketcategory'].queryset = ob.TypeAssist.objects.filter(tatype__tacode="TICKETCATEGORY")
         self.fields['qset'].queryset = am.QuestionSet.objects.filter(type="QUESTIONSET",  enable=True)
         self.fields['asset'].queryset = am.Asset.objects.filter(~Q(runningstatus='SCRAPPED'), identifier__in =["LOCATION", "ASSET", "SMARTPLACE"],)
-        ic(self.fields['ticketcategory'].widget.attrs)
-        ic(self.fields['scantype'].widget.attrs)
-        ic(self.fields['priority'].widget.attrs)
+        self.fields['pgroup'].queryset = pm.Pgroup.objects.filter(bu_id__in = self.request.session['assignedsites'], identifier__tacode__in = ['PEOPLEGROUP', 'PEOPLE_GROUP'])
         utils.initailize_form_fields(self)
 
     def clean(self):
         cd          = self.cleaned_data
         times_names = ['planduration', 'expirytime', 'gracetime']
         types_names = ['planduration_type', 'expirytime', 'gracetime']
-
+        if cd['pgroup'] is None:
+            cd['pgroup'] = utils.get_or_create_none_pgroup()
+        if cd['people'] is None:
+            cd['people'] = utils.get_or_create_none_people()
+        
         times = [cd.get(time) for time in times_names]
         types = [cd.get(type) for type in types_names]
         for time, type in zip(times, types):

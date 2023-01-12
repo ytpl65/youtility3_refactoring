@@ -128,11 +128,7 @@ class QuestionSet(LoginRequiredMixin, View):
         
         # return qset_list data
         if R.get('action', None) == 'list' or R.get('search_term'):
-            objs = self.params['model'].objects.select_related(
-                *self.params['related']).filter(
-                    ~Q(qsetname='NONE'), type='QUESTIONSET', enable=True
-            ).values(*self.params['fields'])
-            utils.printsql(objs)
+            objs = self.params['model'].objects.questionset_listview(request, P['fields'], P['related'])
             return  rp.JsonResponse(data = {'data':list(objs)})
 
         # return questionset_form empty
@@ -330,11 +326,7 @@ class Checklist(LoginRequiredMixin, View):
 
         # return qset_list data
         if R.get('action', None) == 'list' or R.get('search_term'):
-            objs = self.params['model'].objects.select_related(
-                *self.params['related']).filter(
-                    ~Q(qsetname='NONE'), type='CHECKLIST', enable=True
-            ).values(*self.params['fields'])
-            utils.printsql(objs)
+            objs = self.params['model'].objects.checklist_listview(request, P['fields'], P['related'])
             return  rp.JsonResponse(data = {'data':list(objs)})
 
         # return questionset_form empty
@@ -462,7 +454,7 @@ class Checkpoint(LoginRequiredMixin, View):
         'partial_list': 'peoples/partials/master_asset_list.html',
         'related': ['parent', 'type'],
         'model': am.Asset,
-        'fields': ['assetname', 'assetcode', 'runningstatus',
+        'fields': ['assetname', 'assetcode', 'runningstatus', 'identifier',
                    'parent__assetcode', 'gps', 'id', 'enable'],
         'form_initials': {'runningstatus': 'WORKING',
                           'identifier': 'CHECKPOINT',
@@ -524,7 +516,7 @@ class Checkpoint(LoginRequiredMixin, View):
         P = self.params
         try:
             cp = form.save(commit=False)
-            cp.gpslocation = utils.clean_gpslocation(form.cleaned_data['gpslocation'])
+            cp.gpslocation = form.cleaned_data['gpslocation']
             putils.save_userinfo(
                 cp, request.user, request.session, create = create)
             logger.info("checkpoint form saved")
@@ -543,7 +535,7 @@ class Smartplace(LoginRequiredMixin, View):
         'partial_list': 'peoples/partials/master_asset_list.html',
         'related': ['parent', 'type'],
         'model': am.Asset,
-        'fields': ['assetname', 'assetcode', 'runningstatus',
+        'fields': ['assetname', 'assetcode', 'runningstatus', 'identifier',
                    'parent__assetcode', 'gps', 'id', 'enable'],
         'form_initials': {'runningstatus': 'WORKING',
                           'identifier': 'SMARTPLACE',
@@ -605,7 +597,7 @@ class Smartplace(LoginRequiredMixin, View):
         P = self.params
         try:
             sp = form.save(commit=False)
-            sp.gpslocation = utils.clean_gpslocation(form.cleaned_data['gpslocation'])
+            sp.gpslocation = form.cleaned_data['gpslocation']
             putils.save_userinfo(
                 sp, request.user, request.session, create = create)
             logger.info("smartplace form saved")
@@ -1180,3 +1172,284 @@ def get_last24hrticket(request):
     'data' : list(list(att[start: start+length])), 
     'recordsFiltered': filtered}, status=200, safe=False)
     
+
+class Asset(LoginRequiredMixin,View):
+    P = {
+        'template_form':'activity/asset_form.html',
+        'template_list':'activity/asset_list.html',
+        'model':am.Asset,
+        'form':af.AssetForm,
+        'jsonform':af.AssetExtrasForm,
+        'related':['parent'],
+        'fields':['assetcode', 'assetname', 'id', 'parent__assetname',
+                  'runningstatus', 'enable', 'gps', 'identifier']
+    }
+    
+    def get(self, request, *args, **kwargs):
+        R, P = request.GET, self.P
+        
+        # first load the template
+        if R.get('template'): return render(request, P['template_list'])
+        
+        # return qset_list data
+        if R.get('action', None) == 'list':
+            objs = P['model'].objects.get_assetlistview(P['related'], P['fields'], request)
+            ic(objs)
+            return  rp.JsonResponse(data = {'data':list(objs)})
+        
+        # return questionset_form empty
+        if R.get('action', None) == 'form':
+            cxt = {'assetform': P['form'](request=request),
+                   'assetextrasform': P['jsonform'](request=request),
+                   'msg': "create asset requested"}
+            resp = render(request, P['template_form'], cxt)
+        
+        if R.get('action', None) == "delete" and R.get('id', None):
+            return utils.render_form_for_delete(request, P, True)
+        
+        # return form with instance
+        elif R.get('id', None):
+            from .utils import get_asset_jsonform
+            asset = utils.get_model_obj(R['id'], request, P)
+            cxt = {'assetform': P['form'](instance = asset, request=request),
+                   'assetextrasform': get_asset_jsonform(asset, request),
+                   'msg': "Asset Update Requested"}
+            resp = render(request, P['template_form'], context = cxt)
+        return resp
+
+    def post(self, request, *args, **kwargs):
+        resp, create = None, True
+        data = QueryDict(request.POST['formData'])
+        ic(data)
+        try:
+            if pk := request.POST.get('pk', None):
+                msg, create = "asset_view", False  
+                people = utils.get_model_obj(pk, request,  self.P)
+                form = self.P['form'](data, request=request, instance = people)
+            else:
+                form = self.P['form'](data, request = request)
+            ic(form.instance.id)
+            jsonform = self.P['jsonform'](data, request=request)
+            if form.is_valid() and jsonform.is_valid():
+                resp = self.handle_valid_form(form, jsonform, request, create)
+            else:
+                ic(form.errors)
+                cxt = {'errors': form.errors}
+                if jsonform.errors:
+                    cxt.update({'errors': jsonform.errors})
+                resp = utils.handle_invalid_form(request, self.P, cxt)
+        except Exception:
+            resp = utils.handle_Exception(request)
+        return resp
+
+    @staticmethod
+    def handle_valid_form(form, jsonform, request ,create):
+        logger.info('asset form is valid')
+        from apps.core.utils import handle_intergrity_error
+        
+        try:
+            ic(request.POST, request.FILES)
+            asset = form.save(commit=False)
+            asset.gpslocation = form.cleaned_data['gpslocation']
+            asset.save()
+            if av_utils.save_assetjsonform(jsonform, asset):
+                asset = putils.save_userinfo(
+                    asset, request.user, request.session, create = create)
+                logger.info("asset form saved")
+            data = {'pk':asset.id}
+            return rp.JsonResponse(data, status = 200)
+        except IntegrityError:
+            return handle_intergrity_error('Asset')
+        
+        
+class LocationView(LoginRequiredMixin, View):
+    P = {
+        'template_form':'activity/location_form.html',
+        'template_list':'activity/location_list.html',
+        'model':am.Asset,
+        'form':af.LocationForm,
+        'related':['parent'],
+        'fields':['id', 'identifier', 'assetcode', 'assetname', 'parent__assetname',
+                  'runningstatus', 'enable']
+    }
+    
+    def get(self, request, *args, **kwargs):
+        R, P = request.GET, self.P
+        
+        # first load the template
+        if R.get('template'): return render(request, P['template_list'])
+        
+        # return qset_list data
+        if R.get('action', None) == 'list':
+            objs = P['model'].objects.get_locationlistview(P['related'], P['fields'], request)
+            return  rp.JsonResponse(data = {'data':list(objs)})
+        
+        # return questionset_form empty
+        if R.get('action', None) == 'form':
+            cxt = {'locationform': P['form'](request=request),
+                   'msg': "create location requested"}
+            resp = render(request, P['template_form'], cxt)
+        
+        if R.get('action', None) == "delete" and R.get('id', None):
+            return utils.render_form_for_delete(request, P, True)
+        
+        # return form with instance
+        elif R.get('id', None):
+            asset = utils.get_model_obj(R['id'], request, P)
+            cxt = {'locationform': P['form'](instance = asset, request=request),
+                   'msg': "Location Update Requested"}
+            resp = render(request, P['template_form'], context = cxt)
+        return resp
+    
+    def post(self, request, *args, **kwargs):
+        resp, create = None, True
+        data = QueryDict(request.POST['formData'])
+        ic(data)
+        try:
+            if pk := request.POST.get('pk', None):
+                msg, create = "location_view", False
+                people = utils.get_model_obj(pk, request,  self.P)
+                form = self.P['form'](data, request=request, instance = people)
+            else:
+                form = self.P['form'](data, request = request)
+            ic(form.instance.id)
+            if form.is_valid():
+                resp = self.handle_valid_form(form, request, create)
+            else:
+                ic(form.errors)
+                cxt = {'errors': form.errors}
+                resp = utils.handle_invalid_form(request, self.P, cxt)
+        except Exception:
+            resp = utils.handle_Exception(request)
+        return resp
+
+    @staticmethod
+    def handle_valid_form(form, request ,create):
+        logger.info('location form is valid')
+        from apps.core.utils import handle_intergrity_error
+        
+        try:
+            ic(request.POST, request.FILES)
+            location = form.save(commit=False)
+            location.gpslocation = form.cleaned_data['gpslocation']
+            location.save()
+            location = putils.save_userinfo(
+                location, request.user, request.session, create = create)
+            logger.info("location form saved")
+            data = {'pk':location.id}
+            return rp.JsonResponse(data, status = 200)
+        except IntegrityError:
+            return handle_intergrity_error('Location')
+        
+    
+class PPMView(LoginRequiredMixin, View):
+    P = {
+        'template_list':'activity/ppm/ppm_list.html',
+        'template_form':'activity/ppm/ppm_form.html',
+        'model_jn':am.Jobneed,
+        'model':am.Job,
+        'related':['asset', 'qset', 'people', 'pgroup'],
+        'fields':['plandatetime', 'expirydatetime', 'gracetime', 'asset__assetname', 
+                  'assignedto', 'performedby__peoplename', 'jobdesc', 'frequenct', 
+                  'qset__qsetname', 'gpslocation', 'fromdate', 'uptodate'],
+        'form':af.PPMForm
+    }
+    
+    def get(self, request, *args, **kwargs):
+        R, P = request.GET, self.P
+        # first load the template
+        cxt = {
+            'status_options':[
+                ('COMPLETED', 'Completed'),
+                ('AUTOCLOSED', 'AutoClosed'),
+                ('ASSIGNED', 'Assigned'),
+            ]
+        }
+        if R.get('template'): return render(request, P['template_list'], context=cxt)
+        
+        if R.get('action') == 'jobneed_ppmlist':
+            objs = P['model_jn'].objects.get_ppm_listview(request, P['related'], P['fields'])
+            return  rp.JsonResponse(data = {'data':list(objs)})
+        
+        if R.get('action') == 'job_ppmlist':
+            objs = P['model'].objects.get_jobppm_listview(request)
+            return  rp.JsonResponse(data = {'data':list(objs)})
+        
+        # return questionset_form empty
+        if R.get('action', None) == 'form':
+            cxt = {'ppmform': P['form'](request=request),
+                   'msg': "create PPM requested"}
+            return render(request, P['template_form'], cxt)
+        
+        if R.get('action', None) == "delete" and R.get('id', None):
+            return utils.render_form_for_delete(request, P, True)
+
+        # return form with instance
+        elif R.get('id', None):
+            ppm = utils.get_model_obj(R['id'], request, P)
+            cxt = {'ppmform': P['form'](instance = ppm, request=request),
+                   'msg': "PPM Update Requested"}
+            return render(request, P['template_form'], context = cxt)
+    
+    def post(self, request, *args, **kwargs):
+        resp, create = None, True
+        data = QueryDict(request.POST['formData'])
+        ic(data)
+        try:
+            if pk := request.POST.get('pk', None):
+                msg, create = "ppm view", False
+                people = utils.get_model_obj(pk, request,  self.P)
+                form = self.P['form'](data, request=request, instance = people)
+            else:
+                form = self.P['form'](data, request = request)
+            ic(form.instance.id)
+            if form.is_valid():
+                resp = self.handle_valid_form(form, request, create)
+            else:
+                ic(form.errors)
+                cxt = {'errors': form.errors}
+                resp = utils.handle_invalid_form(request, self.P, cxt)
+        except Exception:
+            resp = utils.handle_Exception(request)
+        return resp
+
+    @staticmethod
+    def handle_valid_form(form, request ,create):
+        logger.info('ppm form is valid')
+        from apps.core.utils import handle_intergrity_error
+        
+        try:
+            ic(request.POST, request.FILES)
+            ppm = form.save()
+            ppm = putils.save_userinfo(
+                ppm, request.user, request.session, create = create)
+            logger.info("ppm form saved")
+            data = {'pk':ppm.id}
+            return rp.JsonResponse(data, status = 200)
+        except IntegrityError:
+            return handle_intergrity_error('PPM')
+        
+        
+class EscalationMatrix(LoginRequiredMixin, View):
+    P = {
+        'model':am.EscalationMatrix,
+        "fields":[
+            'frequencyvalue', 'frequency', 'notify', 'id'
+        ]
+        
+    }
+    
+    def get(self, request, *args, **kwargs):
+        R, P = request.GET, self.P
+        ic(R, "GET")
+        
+        if R.get('action') == 'get_reminder_config' and R.get('job_id'):
+            objs  = P['model'].objects.get_reminder_config_forppm(R['job_id'], P['fields'])
+            return rp.JsonResponse(data={'data':list(objs)})
+    
+    def post(self, request, *args, **kwargs):
+        R,P = request.POST, self.P
+        
+        data = P['model'].objects.handle_reminder_config_postdata(request)
+        return rp.JsonResponse({'data':list(data)}, status = 200, safe=False)
+        

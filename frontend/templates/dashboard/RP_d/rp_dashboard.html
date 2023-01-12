@@ -5,30 +5,6 @@
 <link href="{{ static('assets/plugins/custom/Editor-2.0.8/css/editor.dataTables.min.css') }}" rel="stylesheet"
     type="text/css" />
 <link href="{{ static('assets/css/daterangepicker.css') }}" rel="stylesheet" type="text/css" />
-<style>
-    .bg-gradient-primary {
-        background-image: linear-gradient(to right, #12dbfa, #0052cc);
-    }
-
-    .bg-gradient-warning {
-        background-image: linear-gradient(to right, #bb91ff, rgb(118, 0, 197));
-    }
-
-    .bg-gradient-success {
-        background-image: linear-gradient(to right, #93f145, #02791b);
-    }
-
-    .bg-gradient-danger {
-        background-image: linear-gradient(to right, #fd8656, #da0f00);
-    }
-
-    .yicon {
-        font-size: 55px !important;
-    }
-    .yiconpadd{
-        padding-left: 25px !important;
-    }
-</style>
 {{ load_leaflet_tags() }}
 {% endblock extra_css %}
 
@@ -53,60 +29,60 @@
 {% block pagebody_container %}
 <div class="cards-space">
     <div class="row first-row">
-        <div class="col-sm-12 col-md-3">
-            <div class="counter me-2 mb-2 rounded-3 bg-gradient-danger p-2">
-                <div class="d-flex justify-content-start">
-                    {# <i class="fas p-4 yiconpadd yicon fa-clipboard-user text-white"></i> #}
+        <div class="col-sm-12 portlet d-none col-md" id="PORTLET_SOS_ALERTS">
+            <div class="counter shadow me-2 mb-2 rounded-3 bg-gradient-danger p-2">
+                <div class="d-flex justify-content-between">
                     <i class="fas p-4 yiconpadd yicon text-white fa-exclamation-triangle"></i>
-                    <div>
-                        <h3 data-kt-countup="true" data-kt-countup-value="{{ sos_count }}" data-kt-countup-duration="40"
-                            class="pb-3 text-white timer count-title count-number">0</h3>
-                        <p class="h2 text-white text-center">SOS Alerts</p>
+                    <div class="pe-3">
+                        <h3 data-kt-countup="true" data-kt-countup-value="{{ sos_count }}" data-kt-countup-duration="20"
+                            class="pb-3 text-white text-end timer count-title text-white count-number">{{ sos_count }}</h3>
+                        <p class="h2 text-white">SOS Alerts</p>
                     </div>
                 </div>
             </div>
         </div>
-        <div class="col-sm-12 col-md-3">
-            <div class="counter p-2 me-2 mb-2 rounded-3 bg-gradient-primary">
-                <div class="d-flex justify-content-start">
+        <div class="col-sm-12 portlet d-none col-md" id="PORTLET_INCIDENTREPORTS">
+            <div class="counter shadow  p-2 me-2 mb-2 rounded-3 bg-gradient-primary">
+                <div class="d-flex justify-content-between">
                     {# <i class="fas p-4 yiconpadd yicon fa-clipboard-user text-white fs-1"></i> #}
-                    <i class="fas p-4 yiconpadd yicon text-white fa-file-medical-alt"></i>
-                    <div>
-                        <h3 data-kt-countup="true" data-kt-countup-value="{{ IR_count }}" data-kt-countup-duration="40" 
-                            class="pb-3 text-white timer count-title count-number">0</h3>
-                        <p class="h2 text-white text-center">Incident Reports</p>
+                    <i class="fas p-4 yiconpadd yicon text-start text-white fa-file-medical-alt"></i>
+                    <div class="pe-3">
+                        <h3 data-kt-countup="true" data-kt-countup-value="{{ IR_count }}" data-kt-countup-duration="20" 
+                            class="pb-3 text-white text-end timer count-title count-number">{{ IR_count }}</h3>
+                        <p class="h2 text-white">Incident Reports</p>
                     </div>
                 </div>
             </div>
         </div>
-        <div class="col-sm-12 col-md-3">
-            <div class="counter p-2 me-2 mb-2 rounded-3 bg-gradient-warning">
-                <div class="d-flex justify-content-start">
+        <div class="col-sm-12 portlet d-none col-md" id="PORTLET_FR_FAILURES">
+            <div class="counter shadow  p-2 me-2 mb-2 rounded-3 bg-gradient-warning">
+                <div class="d-flex justify-content-between">
                     <i class="fas p-4 yiconpadd yicon fa-clipboard-user text-white fs-1"></i>
-                    <div>
-                        <h3 data-kt-countup="true" data-kt-countup-value="{{ FR_fail_count }}" data-kt-countup-duration="40"
-                            class="pb-3 text-white timer count-title count-number">0</h3>
-                        <p class="h2 text-white text-center">Face Recognition Failures</p>
+                    <div class="pe-3">
+                        <h3 data-kt-countup="true" data-kt-countup-value="{{ FR_fail_count }}" data-kt-countup-duration="20"
+                            class="pb-3 text-white text-end timer count-title count-number">{{ FR_fail_count }}</h3>
+                        <p class="h2 text-white">Face Recognition Failures</p>
                     </div>
                 </div>
             </div>
         </div>
-        <div class="col-sm-12 col-md-3">
-            <div class="counter p-2 me-2  mb-2 rounded-3 bg-gradient-success">
-                <div class="d-flex justify-content-start">
+        <div class="col-sm-12 portlet d-none col-md" id="PORTLET_ROUTES">
+            <div class="counter shadow p-2 me-2  mb-2 rounded-3 bg-gradient-success">
+                <div class="d-flex justify-content-between">
                    <i class="fas yicon yiconpadd text-white p-4 fa-route"></i>
-                    <div>
-                        <h3 data-kt-countup="true" data-kt-countup-value="{{ tour_count }}" data-kt-countup-duration="40"
-                            class="pb-3 text-white timer count-title count-number">0</h3>
-                        <p class="h2 text-white text-center">Scheduled Tours</p>
+                    <div class="pe-3">
+                        <h3 data-kt-countup="true" data-kt-countup-value="{{ tour_count }}" data-kt-countup-duration="20"
+                            class="pb-3 text-white text-end timer count-title count-number">{{ tour_count }}</h3>
+                        <p class="h2 text-white">Routes</p>
                     </div>
                 </div>
             </div>
         </div>
+        
     </div>
 </div>
 
-<div class="row pt-3">
+<div class="row pt-2">
     <div class="col-sm-12 col-md-6 mapview">
         <div class="card">
             <div class="card-title mb-0 text-center py-2 bg-light bg-gradient">
@@ -151,7 +127,35 @@
 
 <script>
     //Global Variables here
-    var from, upto;
+    var from, upto, map;
+    function showMap(row){
+        let gps = ['NONE', '0.0,0.0', ""].includes(row['gps']) ? null : JSON.parse(row['gps'])
+        let lat = gps ? gps.coordinates[1] : null
+        let lng = gps ? gps.coordinates[0] : null
+        
+        if(row && gps && lat && lng){
+        let html = `<table><tbody class="border border-1">
+        <tr class="border border-1"><td>Site</td><td>${row['people__bu__buname']}</td></tr>
+        <tr class="border border-1"><td>Device using</td><td>${row['modelname']}</td></tr>
+        <tr class="border border-1"><td>Battery Level</td><td>${row['batterylevel']}</td></tr>
+        <tr class="border border-1"><td>Platform Version</td><td>${row['platformversion']}</td></tr>
+        <tr class="border border-1"><td>Is Location Mocked</td><td>${row['islocationmocked']}</td></tr>
+        <tr class="border border-1"><td>Last Login</td><td>${utc_to_local(row['offset'], row['lastlogin'])}</td></tr>
+        </tbody></table>`
+        
+        L.marker([lat, lng]).addTo(map).bindPopup(html).openPopup()
+        map.flyTo([lat, lng], 18, {
+            animate: true,
+            duration:1.0
+        })  
+        }else{
+            show_error_alert("Not a coordinates, unable to plot on map!", 'Not Found')
+        }
+    }
+
+    function convertListToString(list, prefix) {
+        return list.map(item => prefix + item[0]).join(", ");
+    }
 </script>
 
 <!----- Datatable For SOS ----->
@@ -160,11 +164,23 @@
 
 <script>
     //Global Modifications here
-    var map = L.map('map').setView([21.7679, 78.8718], 5)
-    L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    
+    var base = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
     maxZoom: 19,
     attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-    }).addTo(map);
+    })
+    
+    map = L.map('map', {
+        layers:[base],
+        center: new L.LatLng(21.7679, 78.8718),
+        zoom:5,
+        fullscreenControl: true,
+        fullscreenControlOptions: { // optional
+            title:"Show me the fullscreen !",
+            titleCancel:"Exit fullscreen mode"
+        }
+    })
+
 
     $(document).ready(() => {
         // check if the browser supports the HTML5 Geolocation API
@@ -183,7 +199,7 @@
             // if the browser does not support the HTML5 Geolocation API, display an error message
             console.error("browser not enabled the gps location permission")
             map.setView([21.7679, 78.8718], 5)
-        }
+        }   
 
         //display the data according to dashboard timeline calendar
         initDateRange("#id_daterange").on('apply.daterangepicker', function(e, picker){
@@ -192,6 +208,17 @@
             let url = "{{ url('onboarding:rp_dashboard') }}"
             location.href = `${url}?pd1=${from_pd}&pd2=${to_pd}`
         })
+
+        //show only assigned portlet caps
+        if("{{ request.user.is_superuser }}" == 'False'){
+            var pcaps = session['people_portletcaps'].length === 0 ? session['client_portletcaps'] :  session['people_portletcaps']
+            let ele = convertListToString(pcaps, "#")
+            console.log(ele)
+            $(ele).removeClass('d-none') 
+        }else{
+            $('.card').removeClass('d-none') 
+        }
+        
     })
     
 </script>

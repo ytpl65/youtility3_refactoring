@@ -286,9 +286,8 @@ class PeopleGroupForm(PgroupForm):
         utils.initailize_form_fields(self)
         site = self.request.user.bu.bucode if self.request.user.bu else ""
         self.fields['identifier'].initial = om.TypeAssist.objects.get(tacode='PEOPLEGROUP')
-        self.fields['peoples'].choices = pm.People.objects.select_related(
-            'bu').filter(~Q(peoplecode='NONE'), isadmin = False).values_list(
-            'id', 'peoplename')
+        ic(self.request)
+        self.fields['peoples'].choices = pm.People.objects.peoplechoices_for_pgroupform(self.request)
 
 class PgbelongingForm(forms.ModelForm):
     required_css_class = "required"
