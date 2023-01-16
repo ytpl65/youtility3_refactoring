@@ -65,6 +65,7 @@ class PELManager(models.Manager):
         R, S = request.GET, request.session
         qset = self.select_related(*related).filter(
             bu_id__in = S['assignedsites'],
+            client_id = S['client_id'],
             datefor__gte = R['pd1'],
             datefor__lte = R['pd2'],
             peventtype__tacode__in = ['SELF', 'SELFATTENDANCE']
@@ -129,6 +130,7 @@ class PELManager(models.Manager):
         pd2 = R.get('pd2', datetime.now().date())
         return self.filter(
             bu_id__in = S['assignedsites'],
+            client_id = S['client_id'],
             peventtype__tacode='SOS',
             datefor__gte = pd1,
             datefor__lte = pd2
@@ -140,6 +142,7 @@ class PELManager(models.Manager):
         pd2 = R.get('pd2', datetime.now().date())
         return self.filter(
             bu_id__in = S['assignedsites'],
+            client_id = S['client_id'],
             datefor__gte = pd1,
             datefor__lte = pd2,
             peventtype__tacode__in = ['SELF', 'SELFATTENDANCE']

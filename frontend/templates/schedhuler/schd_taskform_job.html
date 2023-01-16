@@ -9,14 +9,14 @@
 {% block pagebreadcumb %}
 <!--will call parent contents -->
 {{ super() }}
-<li class="breadcrumb-item pe-3"><a href="{{ url('schedhuler:jobschdtasks') }}?template=true" class="pe-3">Schedhuled Tasks</a></li>
-<li class="breadcrumb-item pe-3"><a href="javascript:void(0)" class="pe-3">Schedhule Task Form</a></li>
+<li class="breadcrumb-item pe-3"><a href="{{ url('schedhuler:jobschdtasks') }}?template=true" class="pe-3">Scheduled Tasks</a></li>
+<li class="breadcrumb-item pe-3"><a href="javascript:void(0)" class="pe-3">Schedule Task Setup</a></li>
 {% endblock pagebreadcumb %}
 <!-------------------------- END PAGE BREADCUMB ------------------------->
 
 <!------ BEGIN FORM TITLE ------->
 {% block form_title %}
-Schedhule Task
+Schedule Task
 {% endblock form_title %}
 <!------ END FORM TITLE -------->
 
@@ -147,13 +147,13 @@ Schedhule Task
         <div class="col-md-4">
             <div class="form-check form-check-inline">
                 <input type="radio" class="form-check-input" name={{ schdtaskform.assign_to.name }}
-                    id="{{ schdtaskform.assign_to.auto_id }}1" value="PEOPLE" checked
+                    id="id_peopleradio" value="PEOPLE" checked
                     onchange="showHideSelectField('PEOPLE')">
                 <label class="form-check-label" for="{{ schdtaskform.assign_to.auto_id }}">People</label>
             </div>
             <div class="form-check form-check-inline">
                 <input type="radio" class="form-check-input" name={{ schdtaskform.assign_to.name }}
-                    id="{{ schdtaskform.assign_to.auto_id }}2" value="GROUP" onchange="showHideSelectField('GROUP')">
+                    id="id_groupradio" value="GROUP" onchange="showHideSelectField('GROUP')">
                 <label class="form-check-label" for="{{ schdtaskform.assign_to.auto_id }}">Group</label>
             </div>
         </div>
@@ -294,11 +294,15 @@ Schedhule Task
         if (val == "PEOPLE") {
             //$("#aatopdiv").show();
             $(".people").show();
+            $("#id_peopleradio").attr('checked', 'checked')
             $(".pgroup").hide();
+            $("#id_pgroup").val(1)
         } else {
             //$("#aatopdiv").hide();
             $(".pgroup").show();
+            $("#id_groupradio").attr('checked', 'checked')
             $(".people").hide();
+            $("#id_people").val(1)
         }
     }
     var formSaved = false;
@@ -311,7 +315,7 @@ Schedhule Task
         if ('{{schdtaskform.instance.id}}' === 'None') {
             showHideSelectField('PEOPLE')
         }else{
-            var assignto = '{{schdtaskform.instance.people}}' in ['None' || ""] ? "GROUP" : "PEOPLE"
+            var assignto = '{{schdtaskform.instance.people_id }}' == '1' ? "GROUP" : "PEOPLE"
             showHideSelectField(assignto)
         }
 

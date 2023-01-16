@@ -12,16 +12,16 @@ import pytz
 def get_assetincludes_choices(request):
     S = request.session
     qset = av.Asset.objects.filter(
-         Q(identifier='CHECKPOINT') & Q(enable = True) &  Q(bu_id__in = S['assignedsites']) |  Q(assetcode='NONE')).select_related(
+         Q(identifier__in=['CHECKPOINT']) & Q(enable = True) &  Q(bu_id__in = S['assignedsites']) |  Q(assetcode='NONE')).select_related(
             'parent').annotate(
             checkpoint = Concat(
                 'assetname', Value(" ("), 'assetcode', Value(")")))
     return qset.values_list('id', 'checkpoint')
 
-def get_assetsmartplace_choices(request):
+def get_assetsmartplace_choices(request, idfs):
     S = request.session
     qset = av.Asset.objects.filter(
-         Q(identifier__in =['CHECKPOINT', 'SMARTPLACE']) & Q(enable = True) &  Q(bu_id__in = S['assignedsites']) |  Q(assetcode='NONE')).select_related(
+         Q(identifier__in = idfs) & Q(enable = True) &  Q(bu_id__in = S['assignedsites']) | Q(client_id = S['client_id']) |  Q(assetcode='NONE') ).select_related(
             'parent').annotate(
             checkpoint = Concat(
                 'assetname', Value(" ("), 'assetcode', Value(")")))

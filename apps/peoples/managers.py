@@ -57,7 +57,7 @@ class PeopleManager(BaseUserManager):
 
     def get_emergencycontacts(self, siteid, clientid):
         "returns mobnos of people with given assigned siteid"
-        qset = self.filter(bu_id = siteid, client_id = clientid).annotate(
+        qset = self.filter(bu_id = siteid, client_id = clientid, people_extras__isemergencycontact = True).annotate(
             pmobno = Concat(F('peoplename'), V(':', output_field=models.CharField()), Cast('mobno', output_field=models.CharField()))
             ).values_list('pmobno', flat = True).exclude(mobno = None)
         return qset or self.none()
@@ -67,11 +67,11 @@ class PeopleManager(BaseUserManager):
         qset = self.filter(bu_id = siteid, client_id = clientid).values_list('email', flat = True)
         return qset or self.none()
     
-    def controlroomchoices(self):
+    def controlroomchoices(self, request):
         "returns people whose worktype is in [AO, AM, CR] choices for bu form"
         qset = self.filter(
             Q(designation__tacode__in = ['CR']) |  Q(worktype__tacode__in = ['CR']),
-            enable=True,
+            enable=True, client_id = request.session['client_id']
         ).annotate(text =Concat(F('peoplename'), V(' ('), F('peoplecode'), V(')'))).values_list('id', 'text')
         return qset or self.none()
     
@@ -144,7 +144,7 @@ class PeopleManager(BaseUserManager):
         S = request.session
         qset = self.filter(
             enable=True,
-            isverified=True,
+            #isverified=True,
             isadmin=False,
             bu_id__in = S['assignedsites'],
             client_id=S['client_id'],            
@@ -272,7 +272,7 @@ class PgblngManager(models.Manager):
 class PgroupManager(models.Manager):
     use_in_migrations = True
     fields = ['id', 'groupname', 'enable', 'identifier_id', 'ctzoffset',
-              'bu_id', 'client_id', 'tenant_id', 'cdtz', 'mdtz']
+              'bu_id', 'client_id', 'tenant_id', 'cdtz', 'mdtz', 'cuser_id', 'muser_id']
     related = ['identifier', 'bu', 'client', 'cuser', 'muser']
 
     def listview(self, request, fields, related, orderby, dir = None, qobjs = None):
@@ -302,13 +302,15 @@ class PgroupManager(models.Manager):
                     *self.fields)
         return qset or None
 
-    def list_view_sitegrp(self, R):
+    def list_view_sitegrp(self, R, request):
+        S = request.session
         from apps.core import utils
         qobjs, dir,  fields, length, start = utils.get_qobjs_dir_fields_start_length(R)
         qset = self.filter(
             ~Q(groupname = 'NONE'), 
             enable = True,
             identifier__tacode = 'SITEGROUP',
+            client_id = S['client_id']
         ).select_related('identifier').values(*fields).order_by(dir)
 
         total = qset.count()

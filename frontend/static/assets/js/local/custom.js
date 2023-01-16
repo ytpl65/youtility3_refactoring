@@ -1163,13 +1163,13 @@ function initDateRangeHtml(id=null, range_ele=null) {
 }
 
 //global date range picker
-function initDateRange(element) {
+function initDateRange(element, start=null, end=null) {
   //console.log("element", element, ">> ", $(element));
   return $(element).daterangepicker(
     {
       opens: "right",
-      startDate: moment().subtract(7, "days"), //moment().subtract(7, 'days'),
-      endDate: moment(),
+      startDate: start === null ? moment().subtract(7, "days") : moment(start, "YYYY-MM-DD"), //moment().subtract(7, 'days'),
+      endDate: end === null ? moment() : moment(end, "YYYY-MM-DD"),
       //minDate: '01/01/2012',
       //maxDate: '12/31/2014',
       dateLimit: {

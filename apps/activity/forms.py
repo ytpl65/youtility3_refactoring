@@ -259,7 +259,7 @@ class ChecklistForm(MasterQsetForm):
             self.fields['site_type_includes'].initial = 1
             self.fields['buincludes'].initial = 1
             self.fields['assetincludes'].initial = 1
-        self.fields['assetincludes'].choices = ac_utils.get_assetsmartplace_choices(self.request)
+        self.fields['assetincludes'].choices = ac_utils.get_assetsmartplace_choices(self.request, ['CHECKPOINT'])
         utils.initailize_form_fields(self)
 
 
@@ -271,9 +271,9 @@ class QuestionSetForm(MasterQsetForm):
     def __init__(self, *args, **kwargs):
         self.request = kwargs.pop('request', None)
         super().__init__(*args, **kwargs)
-        self.fields['type'].initial          = 'QUESTIONSET'
+        self.fields['type'].initial          = 'QUESTIONSET'    
         self.fields['assetincludes'].label   = 'Asset/Smartplace'
-        self.fields['assetincludes'].choices = ac_utils.get_assetsmartplace_choices(self.request)
+        self.fields['assetincludes'].choices = ac_utils.get_assetsmartplace_choices(self.request, ['ASSET', 'SMARTPLACE'])
         self.fields['type'].widget.attrs     = {"style": "display:none;"}
         if not self.instance.id:
             self.fields['parent'].initial = 1
@@ -357,11 +357,13 @@ class SmartPlaceForm(forms.ModelForm):
         """Initializes form add atttibutes and classes here."""
         self.request = kwargs.pop('request', None)
         super().__init__(*args, **kwargs)
+        utils.initailize_form_fields(self)
         self.fields['identifier'].initial = 'SMARTPLACE'
         self.fields['identifier'].widget.attrs = {"style": "display:none;"}
         self.fields['parent'].queryset = am.Asset.objects.filter(
-            Q(identifier='SMARTPLACE') & Q(enable = True) | Q(assetcode='NONE'))
-        utils.initailize_form_fields(self)
+            Q(identifier='LOCATION') & Q(enable = True) | Q(assetcode='NONE'))
+        self.fields['type'].queryset = om.TypeAssist.objects.filter(tatype__tacode__in = ['ASSETTYPE', 'ASSET_TYPE'])
+
     
     def clean(self):
         super().clean()
@@ -424,6 +426,7 @@ class CheckpointForm(MasterAssetForm):
     def __init__(self, *args, **kwargs):
         """Initializes form add atttibutes and classes here."""
         self.request = kwargs.pop('request', None)
+       
         super(CheckpointForm, self).__init__(*args, **kwargs)
         self.fields['identifier'].initial = 'CHECKPOINT'
         self.fields['parent'].required = False
@@ -703,16 +706,16 @@ class AssetForm(forms.ModelForm):
         self.fields['enable'].widget.attrs = {'checked':False} if self.instance.id else {'checked':True}
         utils.initailize_form_fields(self)
         self.fields['identifier'].widget.attrs = {'style':"display:none"}
-        self.fields['identifier'].initial = 'ASSET'
-        self.fields['capacity'].required = False
-        self.fields['servprov'].required = False
-        self.fields['parent'].queryset = am.Asset.objects.filter(~Q(runningstatus='SCRAPPED'), identifier='ASSET')
-        self.fields['type'].queryset = om.TypeAssist.objects.filter(Q(tatype__tacode__in = ['ASSETTYPE', 'ASSET_TYPE']))
-        self.fields['category'].queryset = om.TypeAssist.objects.filter(Q(tatype__tacode__in = ['ASSETCATEGORY', 'ASSET_CATEGORY']))
-        self.fields['subcategory'].queryset = om.TypeAssist.objects.filter(Q(tatype__tacode__in = ['ASSETSUBCATEGORY', 'ASSET_SUBCATEGORY']))
-        self.fields['unit'].queryset = om.TypeAssist.objects.filter(Q(tatype__tacode__in = ['ASSETUNIT', 'ASSET_UNIT', 'UNIT']))
-        self.fields['brand'].queryset = om.TypeAssist.objects.filter(Q(tatype__tacode__in = ['ASSETBRAND', 'ASSET_BRAND', 'BRAND']))
-        self.fields['servprov'].queryset = om.Bt.objects.filter(id__in = self.request.session['assignedsites'], isserviceprovider = True, enable=True)
+        self.fields['identifier'].initial      = 'ASSET'
+        self.fields['capacity'].required       = False
+        self.fields['servprov'].required       = False
+        self.fields['parent'].queryset         = am.Asset.objects.filter(~Q(runningstatus='SCRAPPED'), identifier='LOCATION', client_id = self.request.session['client_id'])
+        self.fields['type'].queryset           = om.TypeAssist.objects.filter(Q(tatype__tacode__in = ['ASSETTYPE', 'ASSET_TYPE']))
+        self.fields['category'].queryset       = om.TypeAssist.objects.filter(Q(tatype__tacode__in = ['ASSETCATEGORY', 'ASSET_CATEGORY']))
+        self.fields['subcategory'].queryset    = om.TypeAssist.objects.filter(Q(tatype__tacode__in = ['ASSETSUBCATEGORY', 'ASSET_SUBCATEGORY']))
+        self.fields['unit'].queryset           = om.TypeAssist.objects.filter(Q(tatype__tacode__in = ['ASSETUNIT', 'ASSET_UNIT', 'UNIT']))
+        self.fields['brand'].queryset          = om.TypeAssist.objects.filter(Q(tatype__tacode__in = ['ASSETBRAND', 'ASSET_BRAND', 'BRAND']))
+        self.fields['servprov'].queryset       = om.Bt.objects.filter(id__in = self.request.session['assignedsites'], isserviceprovider = True, enable=True)
         
         
     

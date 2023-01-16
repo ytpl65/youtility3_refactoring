@@ -8,7 +8,7 @@ html * {
 }
 table.dataTable.cell-border tbody tr th:first-child,
 table.dataTable.cell-border tbody tr td:first-child {
-    border-left: 1px solid #a9a9b7;
+    border-left: 1px solid #e7e7e7;
 }
 table.dataTable.cell-border tbody th,
 table.dataTable.cell-border tbody td {
@@ -17,17 +17,17 @@ table.dataTable.cell-border tbody td {
 }
 table.dataTable.cell-border tbody th,
 table.dataTable.cell-border tbody td {
- border-top:1px solid #ddd;
- border-right:1px solid #a9a9b7;
+ border-top:1px solid #fff;
+ border-right:1px solid #e5e5e5;
 }
 tr.odd td {
-    background-color:#F3F6F8 ;
-   }
+    background-color: #ffffff;
+}
 tr.even td {
     background-color:#F3F6F8 ;
    }
 .dataTable thead th {
-background-color:#1e1e2d;
+background-color:#01579b;
 }
 
 .btn:not(.btn-outline):not(.btn-dashed):not(.border-hover):not(.border-active):not(.btn-flush):not(.btn-icon){
@@ -36,7 +36,7 @@ background-color:#1e1e2d;
       
 th {
     border: 0.5px solid #c3c4ca;
-    color:#c3c4ca;  
+    color:#ffffff;  
   }
 thead tr th:first-child{
     border-left: 2px solid #1c1c31;
@@ -178,6 +178,10 @@ h6 > ol > li {
 .ch4{
     color:#3a3b40de;
     font-size: 1.4rem;
+}
+.ch5{
+    color:#3a3b40de;
+    font-size: 1.7rem;
 }
 
 
@@ -413,12 +417,37 @@ tr.disabled-record td a {
 }
 
 .yicon {
-    font-size: 65px !important;
+    font-size: 40px !important;
 }
 .yiconpadd{
-    padding-left: 25px !important;
+    padding-left: 15px !important;
 }
 
 .badge-orange{
     background-color: orange;
+}
+
+.aside.aside-dark{
+    background-color: #01579B;
+}
+
+.aside.aside-dark .aside-logo {
+    background-color: #01579B;
+}
+
+.aside-dark .menu .menu-item .menu-link{
+    color: white;
+}
+
+.aside.aside-dark .aside-toggle svg [fill]:not(.permanent):not(g) {
+    transition: fill 0.3s ease;
+    fill: #ffffff;
+}
+
+.aside-dark .menu .menu-item .menu-link .menu-title {
+    color: #ffffff;
+}
+
+.y-primary{
+    color: #01579b;
 }

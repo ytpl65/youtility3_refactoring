@@ -55,23 +55,23 @@ External Tour List
             //ordering:false,
             columns:[
                 {data: 'id', visible:false, searchable:false},
-                {data: 'plandatetime', title: "Plan Datetime", render:function(data, type, row, meta){
-                    return `<a href="${urlname}?id=${row['id']}">${convert_to_local(type, data, row)}</a>`
-                }},
+                {data: 'plandatetime', title: "Plan Datetime",
+                 render:function(data, type, row, meta){
+                  return `<a href="${urlname}?id=${row['id']}">${convert_to_local(type, data, row)}</a>`
+                }
+                },
                 {data: 'jobdesc', title: 'Description', render:function(data, type, row, meta){
                     return `<a href="${urlname}?id=${row['id']}">${data}</a>`
                 }},
                 {data: 'jobstatus', title: 'Status'},
-                {title: 'People/Group', defaultContent:null, data:null, render:function(data, type, row, meta){
-                    let peoplename = row['people__peoplename']
-                    let groupname = row['pgroup__groupname']
-                    return typeof peoplename == 'undefined' ? groupname : peoplename 
-                }},
+                {title: 'People/Group', defaultContent:null, data:'assignedto',},
                 {data: 'performedby__peoplename', title: 'Performed By'},
                 {data: 'gracetime', title: "Grace Time"},
-                {data: 'expirydatetime', title: "Expiry Datetime", render:function(data, type, row, meta){
+                {data: 'expirydatetime', title: "Expiry Datetime",
+                     render:function(data, type, row, meta){
                     return convert_to_local(type, data, row)
-                }}
+                }
+                }
             ],
             order:[[1, 'desc']],
             scrollCollapse: true,

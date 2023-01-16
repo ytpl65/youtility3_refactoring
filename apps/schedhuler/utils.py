@@ -262,6 +262,7 @@ def get_datetime_list(cron_exp, startdtz, enddtz, resp):
             else:
                 break
     except CroniterBadCronError as ex:
+        isValidCron = False
         log.warning('Bad Cron error', exc_info = True)
         resp =  rp.JsonResponse({"errors": "Bad Cron Error"}, status = 404)
     except Exception as ex:
@@ -404,8 +405,8 @@ def insert_into_jn_and_jnd(job, DT, resp):
                 'jobstatus':jobstatus, 'jobtype':jobtype, 'route_name':job['sgroup__groupname'],
                 'm_factor':multiplication_factor, 'people':people,
                 'NONE_P':NONE_P, 'jobdesc':jobdesc, 'NONE_JN':NONE_JN}
-            DT = utils.to_utc(DT)
-            for dt in DT:
+            UTC_DT = utils.to_utc(DT)
+            for dt in UTC_DT:
                 dt = dt.strftime("%Y-%m-%d %H:%M")
                 dt = datetime.strptime(dt, '%Y-%m-%d %H:%M').replace(tzinfo = timezone.utc)
                 pdtz = params['pdtz'] = dt

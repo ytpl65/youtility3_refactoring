@@ -281,7 +281,7 @@ class ConfigSiteReportTemplate(LoginRequiredMixin, View):
 
         if R.get('action') == 'list':
             objs =  P['model'].objects.get_configured_sitereporttemplates(
-                    P['related'], P['fields'],P['initial']['type']
+                    request, P['related'], P['fields'],P['initial']['type']
                 )
             return rp.JsonResponse({'data':list(objs)}, status = 200)
         
@@ -359,7 +359,7 @@ class ConfigIncidentReportTemplate(LoginRequiredMixin, View):
 
         if R.get('action') == 'list':
             objs =  P['model'].objects.get_configured_sitereporttemplates(
-                    P['related'], P['fields'], P['initial']['type'])
+                    request, P['related'], P['fields'], P['initial']['type'])
             return rp.JsonResponse({'data':list(objs)}, status = 200)
         
         if R.get('action') == 'form':

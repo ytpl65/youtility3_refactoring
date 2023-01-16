@@ -140,9 +140,12 @@ class BtForm(forms.ModelForm):
         self.fields['identifier'].queryset = obm.TypeAssist.objects.filter(Q(tacode='CLIENT') if self.client else Q(tatype__tacode="BVIDENTIFIER"))
         self.fields['identifier'].required= True
         self.fields['butype'].queryset = obm.TypeAssist.objects.filter(tatype__tacode="SITETYPE")
-        self.fields['controlroom'].choices = pm.People.objects.controlroomchoices()
+        qset = obm.Bt.objects.get_whole_tree(self.request.session['client_id'])
+        self.fields['parent'].queryset = obm.Bt.objects.filter(id__in = qset)
+        self.fields['controlroom'].choices = pm.People.objects.controlroomchoices(self.request)
         self.fields['siteincharge'].queryset = pm.People.objects.filter(
-            Q(designation__tacode__in = ['AO', 'AM', 'BM', 'BOM', 'ABM']) | Q(worktype__tacode__in = ['AO', 'AM', 'BM', 'BOM', 'ABM']))
+            Q(designation__tacode__in = ['AO', 'AM', 'BM', 'BOM', 'ABM']) | Q(worktype__tacode__in = ['AO', 'AM', 'BM', 'BOM', 'ABM']),
+            client_id = self.request.session['client_id'])
         utils.initailize_form_fields(self)
 
     def is_valid(self) -> bool:

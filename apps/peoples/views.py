@@ -842,7 +842,8 @@ class PeopleView(LoginRequiredMixin, View):
 
             objs = self.params['model'].objects.select_related(
                 *self.params['related']).filter(
-                    ~Q(peoplecode='NONE')
+                    ~Q(peoplecode='NONE'), 
+                    client_id = request.session['client_id']
             ).values(*self.params['fields'])
             return rp.JsonResponse(data = {'data':list(objs)}, status = 200)
 
@@ -937,7 +938,7 @@ class PeopleGroup(LoginRequiredMixin, View):
         if R.get('action', None) == 'list' or R.get('search_term'):
             objs = self.params['model'].objects.select_related(
                  *self.params['related']).filter(
-                    ~Q(id=-1), enable = True, identifier__tacode='PEOPLEGROUP'
+                    ~Q(id=-1), enable = True, identifier__tacode='PEOPLEGROUP', client_id = request.session['client_id']
             ).values(*self.params['fields']).order_by('-mdtz')
             return  rp.JsonResponse(data = {'data':list(objs)})
 
@@ -1019,7 +1020,7 @@ class SiteGroup(LoginRequiredMixin, View):
 
         # for list view of group
         if R.get('action') == 'list':
-            total, filtered, objs = pm.Pgroup.objects.list_view_sitegrp(R)
+            total, filtered, objs = pm.Pgroup.objects.list_view_sitegrp(R, request)
             logger.info('SiteGroup objects %s retrieved from db', (total or "No Records!"))
             utils.printsql(objs)
             resp = rp.JsonResponse(data = { 
@@ -1032,7 +1033,7 @@ class SiteGroup(LoginRequiredMixin, View):
 
         # to populate all sites table
         if R.get('action', None) == 'allsites':
-            objs, idfs  = Bt.objects.get_bus_idfs(R, R['sel_butype'])
+            objs, idfs  = Bt.objects.get_bus_idfs(R, request=request, idf= R['sel_butype'])
 
             resp = rp.JsonResponse(data = {
                 'data':list(objs),

@@ -35,9 +35,10 @@ class QuestionSetManager(models.Manager):
         qset = self.clean_fields(qset)
         return qset or None
 
-    def get_configured_sitereporttemplates(self, related, fields, type):
+    def get_configured_sitereporttemplates(self, request, related, fields, type):
+        S = request.session
         qset = self.select_related(
-            *related).filter(enable = True, type=type, parent_id=1).values(*fields)
+            *related).filter(enable = True, type=type, client_id = S['client_id'], bu_id__in = S['assignedsites'], parent_id=1).values(*fields)
         qset = self.clean_fields(qset)
         return qset or self.none()
     
@@ -112,6 +113,19 @@ class QuestionSetManager(models.Manager):
         ).select_related(*related).values(*fields)
         return qset or self.none()
     
+    def get_proper_checklist_for_scheduling(self,request, types):
+        S = request.session
+        
+        qset = self.filter(
+            bu_id__in = S['assignedsites'],
+            client_id = S['client_id'],
+            type__in = types,
+        ).select_related('bu' ,'client', 'parent').exclude(
+            questionsetbelonging=None
+        )
+        return qset or self.none()
+        
+    
     
 
     
@@ -139,10 +153,12 @@ class QuestionManager(models.Manager):
                     'id', 'text', 'answertype')
         return qset or self.none()
     
-    def questions_listview(self, fields, related):
+    def questions_listview(self, request, fields, related):
+        S = request.session
         qset = self.select_related(
                 *related).filter(
-                enable = True
+                enable = True,
+                client_id = S['client_id'],
             ).values(*fields)
         return qset or self.none()
     
@@ -249,8 +265,13 @@ class JobneedManager(models.Manager):
 
     def get_last10days_jobneedtasks(self, related, fields, request):
         R = request.GET
-        qobjs = self.select_related(*related).filter(
-            bu_id = request.session['bu_id'],
+        qobjs = self.select_related(*related).annotate(
+            assignedto = Case(
+                When(Q(pgroup_id=1) | Q(pgroup_id__isnull =  True), then=Concat(F('people__peoplename'), V(' [PEOPLE]'))),
+                When(Q(people_id=1) | Q(people_id__isnull =  True), then=Concat(F('pgroup__groupname'), V(' [GROUP]'))),
+                ),
+            ).filter(
+            bu_id__in = request.session['assignedsites'],
             plandatetime__date__gte = R['pd1'],
             plandatetime__date__lte = R['pd2'],
             identifier = 'TASK'
@@ -262,7 +283,8 @@ class JobneedManager(models.Manager):
         dt  = datetime.now(tz = timezone.utc) - timedelta(days = 90) #3months
         qset = self.filter(identifier='ASSETMAINTENANCE',
                            plandatetime__gte = dt,
-                           bu_id__in = S['assignedsites']).select_related(
+                           bu_id__in = S['assignedsites'],
+                           client_id = S['client_id']).select_related(
             *related).values(*fields)
         return qset or self.none()
     
@@ -294,7 +316,8 @@ class JobneedManager(models.Manager):
                     plandatetime__date__gte=R['pd1'],
                     plandatetime__date__lte=R['pd2'],
                     identifier='SITEREPORT',
-                    bu_id__in = S['assignedsites']
+                    bu_id__in = S['assignedsites'],
+                    client_id = S['client_id']
                 ).annotate(
                     buname=Case(
                         When(
@@ -343,9 +366,15 @@ class JobneedManager(models.Manager):
 
     def get_internaltourlist_jobneed(self, request, related, fields):
         R = request.GET
-        qset = self.select_related(
+        qset = self.annotate(
+            assignedto = Case(
+                When(Q(pgroup_id=1) | Q(pgroup_id__isnull =  True), then=Concat(F('people__peoplename'), V(' [PEOPLE]'))),
+                When(Q(people_id=1) | Q(people_id__isnull =  True), then=Concat(F('pgroup__groupname'), V(' [GROUP]'))),
+                ),
+            ).select_related(
                             *related).filter(
-                                bu_id = request.session.get('bu_id', 1),
+                                bu_id__in = request.session['assignedsites'],
+                                client_id = request.session['client_id'],
                                 parent_id=1,
                                 plandatetime__date__gte = R['pd1'],
                                 plandatetime__date__lte = R['pd2'],
@@ -359,11 +388,16 @@ class JobneedManager(models.Manager):
     
     def get_externaltourlist_jobneed(self, request, related, fields):
         fields = ['id', 'plandatetime', 'expirydatetime', 'performedby__peoplename', 'jobstatus',
-                  'jobdesc', 'people__peoplename', 'pgroup__groupname', 'gracetime', 'ctzoffset']
+                  'jobdesc', 'people__peoplename', 'pgroup__groupname', 'gracetime', 'ctzoffset', 'assignedto']
         R = request.GET
-        qset = self.select_related(
+        qset = self.annotate(
+            assignedto = Case(
+                When(Q(pgroup_id=1) | Q(pgroup_id__isnull =  True), then=Concat(F('people__peoplename'), V(' [PEOPLE]'))),
+                When(Q(people_id=1) | Q(people_id__isnull =  True), then=Concat(F('pgroup__groupname'), V(' [GROUP]'))),
+                ),
+            ).select_related(
                             *related).filter(
-                                bu_id = request.session.get('bu_id', 1),
+                                bu_id__in = request.session['assignedsites'],
                                 parent_id=1,
                                 plandatetime__date__gte = R['pd1'],
                                 plandatetime__date__lte = R['pd2'],
@@ -441,6 +475,7 @@ class JobneedManager(models.Manager):
             identifier = 'INCIDENTREPORT',
             plandatetime__date__gte = pd1,
             plandatetime__date__lte = pd2,
+            client_id = S['client_id'],
         ).count() or 0
     
     def get_schdtour_count_forcard(self, request):
@@ -449,6 +484,7 @@ class JobneedManager(models.Manager):
         pd2 = R.get('pd2', datetime.now().date())
         return self.filter(
             bu_id__in = S['assignedsites'],
+            client_id = S['client_id'],
             plandatetime__date__gte = pd1,
             plandatetime__date__lte = pd2,
             parent_id = 1,
@@ -470,6 +506,28 @@ class JobneedManager(models.Manager):
                 plandatetime__date__gte = pd1,
                 plandatetime__date__lte = pd2
             ).select_related(*related).values(*fields)
+        return qset or self.none()
+    
+    def get_tasks_db_card(self, request, R):
+        S = request.session
+        
+        qset = self.annotate(
+            assignedto = Case(
+                When(pgroup_id=1, then=Concat(F('people__peoplename'), V(' [PEOPLE]'))),
+                When(people_id=1, then=Concat(F('pgroup__groupname'), V(' [GROUP]'))),
+            )
+        ).filter(
+            client_id = S['client_id'],
+            bu_id__in = S['assignedsites'],
+            plandatetime__date__gte = R['from'],
+            expirydatetime__date__lte = R['upto'],
+            identifier='TASK'
+        ).values('id', 'jobdesc', 'performedby__peoplename', 'jobstatus',
+                 'qset__qsetname', 'asset__assetname', 'expirydatetime',
+                 'gracetime', 'assignedto', 'plandatetime')
+        if R['jobstatus'] != 'TOTALSCHEDULED':
+            qset = qset.filter(jobstatus = R['jobstatus'])
+        ic(str(qset.query))
         return qset or self.none()
         
     
@@ -586,7 +644,7 @@ class AssetManager(models.Manager):
         return qset or self.none()
     
     def get_checkpointlistview(self, request, related, fields, id=None):
-        
+        S = request.session
         qset = self.annotate(
             gps = AsWKT('gpslocation')
         ).select_related(*related)
@@ -594,11 +652,12 @@ class AssetManager(models.Manager):
         if id:
             qset = qset.filter(enable=True, identifier='CHECKPOINT',id=id).values(*fields)[0]
         else:
-            qset = qset.filter(enable=True, identifier='CHECKPOINT').values(*fields)
+            qset = qset.filter(enable=True, identifier='CHECKPOINT', bu_id__in = S['assignedsites'], client_id = S['client_id']).values(*fields)
         
         return qset or self.none()
     
     def get_smartplacelistview(self, request, related, fields, id=None):
+        S = request.session
         qset = self.annotate(
             gps = AsWKT('gpslocation')
         ).select_related(*related)
@@ -606,7 +665,7 @@ class AssetManager(models.Manager):
         if id:
             qset = qset.filter(enable=True, identifier='SMARTPLACE',id=id).values(*fields)[0]
         else:
-            qset = qset.filter(enable=True, identifier='SMARTPLACE').values(*fields)
+            qset = qset.filter(enable=True, identifier='SMARTPLACE', bu_id__in = S['assignedsites'], client_id = S['client_id']).values(*fields)
         return qset or self.none()
     
     def get_assetlistview(self, related, fields, request):
@@ -811,9 +870,20 @@ class JobManager(models.Manager):
                     'starttime', 'endtime', 'bu_id', 'asset_id')
         return qset or self.none()
 
-    def get_scheduled_internal_tours(self, related, fields):
-        qset = self.select_related(*related).filter(
-            parent__jobname='NONE', parent_id = 1, identifier__exact='INTERNALTOUR'
+    def get_scheduled_internal_tours(self, request, related, fields):
+        S = request.session
+        qset = self.select_related(*related).annotate(
+                assignedto = Case(
+                When(Q(pgroup_id=1) | Q(pgroup_id__isnull =  True), then=Concat(F('people__peoplename'), V(' [PEOPLE]'))),
+                When(Q(people_id=1) | Q(people_id__isnull =  True), then=Concat(F('pgroup__groupname'), V(' [GROUP]'))),
+                ),
+            ).filter(
+            Q(parent__jobname = 'NONE') | Q(parent_id = 1),
+            ~Q(jobname='NONE') | ~Q(id=1),
+            bu_id__in = S['assignedsites'],
+            client_id = S['client_id'],
+            identifier__exact='INTERNALTOUR',
+            enable=True
         ).values(*fields).order_by('-cdtz')
         return qset or self.none()
 
@@ -825,17 +895,29 @@ class JobManager(models.Manager):
             )
         return qset or self.none()
 
-    def get_scheduled_external_tours(self, related, fields):
-        qset = self.select_related(*related).filter(
-            parent__jobname='NONE', parent_id = 1, identifier__exact='EXTERNALTOUR'
-        ).values(*fields).order_by('-cdtz')
+    
+    def get_scheduled_tasks(self, request, related, fields):
+        S = request.session
+        qset = self.annotate(
+            assignedto = Case(
+                When(Q(pgroup_id=1) | Q(pgroup_id__isnull =  True), then=Concat(F('people__peoplename'), V(' [PEOPLE]'))),
+                When(Q(people_id=1) | Q(people_id__isnull =  True), then=Concat(F('pgroup__groupname'), V(' [GROUP]'))),
+            )
+            ).filter(
+            ~Q(jobname='NONE') | ~Q(id=1),
+            Q(parent__jobname = 'NONE') | Q(parent_id = 1),
+            bu_id__in = S['assignedsites'],
+            client_id = S['client_id'],
+            identifier = 'TASK',
+        ).select_related(*related).values(*fields)
         return qset or self.none()
     
     def get_listview_objs_schdexttour(self, request):
+        S = request.session
         qset = self.annotate(
             assignedto = Case(
-                When(pgroup_id=1, then=Concat(F('people__peoplename'), V(' [PEOPLE]'))),
-                When(people_id=1, then=Concat(F('pgroup__groupname'), V(' [GROUP]'))),
+                When(Q(pgroup_id=1) | Q(pgroup_id__isnull =  True), then=Concat(F('people__peoplename'), V(' [PEOPLE]'))),
+                When(Q(people_id=1) | Q(people_id__isnull =  True), then=Concat(F('pgroup__groupname'), V(' [GROUP]'))),
             ),
             sitegrpname = F('sgroup__groupname'),
             israndomized = F('other_info__is_randomized'),
@@ -843,7 +925,7 @@ class JobManager(models.Manager):
             breaktime = F('other_info__breaktime'),
             deviation = F('other_info__deviation')
         ).filter(
-            ~Q(jobname='NONE'), parent_id=1, identifier='EXTERNALTOUR', enable=True
+            ~Q(jobname='NONE'), parent_id=1, identifier='EXTERNALTOUR', bu_id__in = S['assignedsites'], enable=True,client_id = S['client_id']
         ).select_related('pgroup', 'sgroup', 'people').values(
             'assignedto', 'sitegrpname', 'israndomized', 'tourfrequency',
             'breaktime', 'deviation', 'fromdate', 'uptodate', 'gracetime',

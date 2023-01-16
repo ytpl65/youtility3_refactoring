@@ -26,14 +26,6 @@
 
         <!--============================== FORM FIELDS START =============================-->
         <div class="row mb-3 gy-3">
-            <!--CHeckpoint Name Start-->
-            <label for="{{ master_assetform.assetname.id_for_label }}" class="required col-md-1">Name:</label>
-            <div class="col-md-11">
-                {{ master_assetform.assetname }}
-                {{ master_assetform.assetname.errors }}
-            </div>
-            <!--CHeckpoint Name End-->
-            
             <!--CHeckpoint Code Start-->
             <label for="{{ master_assetform.assetcode.id_for_label }}" class="required col-md-1">Code:</label>
             <div class="col-md-11">
@@ -41,6 +33,14 @@
                 {{ master_assetform.assetcode.errors }}
             </div>
             <!--CHeckpoint Code End-->
+
+            <!--CHeckpoint Name Start-->
+            <label for="{{ master_assetform.assetname.id_for_label }}" class="required col-md-1">Name:</label>
+            <div class="col-md-11">
+                {{ master_assetform.assetname }}
+                {{ master_assetform.assetname.errors }}
+            </div>
+            <!--CHeckpoint Name End-->
             
             <!--Running Status Start-->
             <label for="{{ master_assetform.runningstatus.id_for_label }}" class="required col-md-1">Status:</label>

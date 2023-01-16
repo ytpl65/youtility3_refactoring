@@ -210,7 +210,7 @@
 				{data:'id', visible:false, searchable:false},
 				{data:'assetcode', title:'Code'},
 				{data:'assetname', title:'Name'},
-				{data:'parent__assetcode', title:'Belongs to'},
+				{data:'parent__assetname', title:'Belongs to'},
 				{data:'runningstatus', title:'Status'},
 				{data:'enable', title:'Enable'},
 				{data:'gps', title:'GPS'},
@@ -220,7 +220,7 @@
 			columnDefs:[
 				{targets:0, data: "id", visible:false, searchable:false, orderable:false},
 				{
-					targets: 1,
+					targets: [1,2],
 					data   : 'assetcode',
 					render : function ( data, type, row, meta ) {
 						return `<a href="#" class="cp-link" data-id=${row['id']} data-rowid=${meta.row}>${data}</a>`

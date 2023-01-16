@@ -44,6 +44,8 @@ import traceback as tb
 from django.core.mail import send_mail, EmailMessage
 from intelliwiz_config.celery import app
 from django.conf import settings
+from celery.utils.log import get_task_logger
+
 
 def insertrecord(record, tablename):
     try:

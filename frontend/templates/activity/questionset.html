@@ -77,18 +77,18 @@ Question Set List
 			columnDefs:[
 				{targets:0, data: "id", visible:false, searchable:false, orderable:false },
 				{
-					targets: 2,
+					targets: 3,
 					data   : 'qsetname',
 					render : function ( data, type, row, meta ) {
 						let formUrl = "{{ url('activity:questionset') }}"
 						return `<a href="${formUrl}?id=${row['id']}">${data}</a>`
 					}
 				},
-				{targets:3, data:'cdtz', render: function(data, type, row, meta){
+				{targets:4, data:'cdtz', render: function(data, type, row, meta){
 						return convert_to_local(type, data, row)
 					}
 				},
-				{targets:4, data:'mdtz', render: function(data, type, row, meta){
+				{targets:5, data:'mdtz', render: function(data, type, row, meta){
 						return convert_to_local(type, data, row)
 					}
 				},],

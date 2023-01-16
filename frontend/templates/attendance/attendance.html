@@ -12,7 +12,6 @@ td.selected { background-color: yellow; }
 td:not(:last-child) { cursor: pointer; }
 td { padding: 6px; border: 1px solid #CCC; }
 </style>
-{{ load_advanced_search_css() }}
 {% endblock extra_css %}
 
 <!------------------------------------ BEGIN PAGE BREADCUMBS ------------------------------------>
@@ -97,7 +96,6 @@ td { padding: 6px; border: 1px solid #CCC; }
 
 <!--------- BEGIN EXTRA SCRIPTS ----------------------------->
 {% block extra_scripts %}
-{{ load_advanced_search_js() }}
 <script>
     var table = null;
     function getReadableTextForINOUT(details){
@@ -169,7 +167,8 @@ td { padding: 6px; border: 1px solid #CCC; }
             
             dom: `<'row' <'col-sm-6 d-flex justify-content-start'<'customfields'>f> <'col-sm-6 d-flex justify-content-end'B> >rt<'row'
 			 <'col-sm-6'l> <'col-sm-6'p><'col-sm-12 d-flex justify-content-center'i>>`,
-            ordering: false,
+            order:[[7, 'desc']],
+            //ordering: false,
             columnDefs:[
                 {targets:[6,7], render:function(data, type, row, meta){
                     return convert_to_local(type, data, row)}

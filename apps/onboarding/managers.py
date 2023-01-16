@@ -69,7 +69,7 @@ class BtManager(models.Manager):
         rtype = 'bigint[]'
         qset_json = self.raw(
             f"select fn_get_bulist({clientid}, true, true, 'array'::text, null::{rtype}) as id;")
-        return json.loads(qset_json[0].id if qset_json else '{}')
+        return qset_json[0].id if qset_json else  []
 
     def getsitelist(self, clientid, peopleid):
         # check if people is admin or not
@@ -99,13 +99,17 @@ class BtManager(models.Manager):
                 identifier__tacode = 'SITE').values('id', 'text')
         return qset or self.none()
 
-    def get_bus_idfs(self, R, idf = None):
+    def get_bus_idfs(self, R, request, idf = None):
+        S = request.session
+        
+        bu_ids = self.get_whole_tree(S['client_id'])
+        
         fields = R.getlist('fields[]')
         qset = self.filter(
-             ~Q(bucode__in=('NONE', 'SPS', 'YTPL')), identifier__tacode = idf, enable = True).select_related(
+             ~Q(bucode__in=('NONE', 'SPS', 'YTPL')), identifier__tacode = idf, enable = True, id__in = bu_ids).select_related(
                  'parent', 'identifier').annotate(buid = F('id')).values(*fields)
         idfs = self.filter(
-             ~Q(identifier__tacode = 'NONE'), ~Q(bucode__in=('NONE', 'SPS', 'YTPL'))).order_by(
+             ~Q(identifier__tacode = 'NONE'), ~Q(bucode__in=('NONE', 'SPS', 'YTPL')),id__in = bu_ids ).order_by(
                  'identifier__tacode').distinct(
                      'identifier__tacode').values('identifier__tacode')
         return qset, idfs
@@ -256,10 +260,11 @@ class TypeAssistManager(models.Manager):
         """
         if not isinstance(mdtz, datetime):
             mdtz = datetime.strptime(mdtz, "%Y-%m-%d %H:%M:%S")
-
+        none_entry = self.filter(tacode = 'NONE').values(*self.fields)
         qset = self.select_related(*self.related).filter(
-            Q(mdtz__gte = mdtz) & (Q(client_id__in=[clientid]) | Q(cuser__is_superuser=True) | Q(cuser__peoplecode='NONE')) & Q(enable=True)
-        ).values(*self.fields)
+            Q(mdtz__gte = mdtz) & (Q(client_id__in=[clientid]) | Q(cuser__is_superuser=True) | Q(cuser__peoplecode='NONE'))  & Q(enable=True)
+            ).values(*self.fields)
+        qset = qset.union(none_entry)
         return qset or None
     
     def load_identifiers(self, request):

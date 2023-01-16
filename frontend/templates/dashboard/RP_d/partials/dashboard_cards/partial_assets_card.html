@@ -1,0 +1,115 @@
+<script>
+var assets_status_counts = [1,1,9,0]
+var total_number_of_assets = 10
+var borderColor = '#E1E3EA'
+var labelColor = '#3F4254'
+var options = {
+            series: [{
+                name: 'Count',
+                data: assets_status_counts                                                                                                          
+            }],           
+            chart: {
+                fontFamily: 'inherit',
+                type: 'bar',
+                height: 350,
+                toolbar: {
+                    show: false
+                },
+                events: {
+                dataPointSelection: function(event, chartContext, config) {
+                console.log(config);
+                }
+            }                                
+            },                    
+            plotOptions: {
+                bar: {
+                    borderRadius: 2,
+                    horizontal: true,
+                    distributed: true,
+                    barHeight: 50,
+                    dataLabels: {
+				        position: 'bottom' // use 'bottom' for left and 'top' for right align(textAnchor)
+			        }                                                       
+                }
+            },
+            dataLabels: {  // Docs: https://apexcharts.com/docs/options/datalabels/
+                enabled: true,              
+                textAnchor: 'start',  
+                offsetX: 0,                 
+                style: {
+                    fontSize: '14px',
+                    fontWeight: '600',
+                    align: 'left',                                                            
+                }                                       
+            },             
+            legend: {
+                show: false
+            },                               
+            colors: ['#F1416C', '#FFC700',  '#50CD89', '#B0B0B0'],                                                                      
+            xaxis: {
+                categories: ["Maintenance", "Standby", 'Working', 'Scrapped'],
+                labels: {
+                    style: {
+                        colors: [labelColor],
+                        fontSize: '14px',
+                        fontWeight: '600',
+                        align: 'left'                                              
+                    }                  
+                },
+                axisBorder: {
+					show: false
+				}                         
+            },
+            yaxis: {
+                labels: {       
+                    formatter: function (val, opt) {
+                        if (Number.isInteger(val)) {
+                            var percentage = parseInt(val * 100 / total_number_of_assets) . toString(); 
+                            return val + ' - ' + percentage + '%';
+                        } else {
+                            return val;
+                        }
+                    },            
+                    style: {
+                        colors: labelColor,
+                        fontSize: '14px',
+                        fontWeight: '600'                                                                 
+                    },
+                    offsetY: 2,
+                    align: 'left' 
+                }           
+            },
+            grid: {                
+                borderColor: borderColor,                
+                xaxis: {
+                    lines: {
+                        show: true
+                    }
+                },   
+                yaxis: {
+                    lines: {
+                        show: false  
+                    }
+                },
+                strokeDashArray: 4              
+            },
+            tooltip: {
+                style: {
+                    fontSize: '12px'
+                },
+                y: {
+                    formatter: function (val) {
+                        return val + 'K';
+                    }
+                }
+            },
+                                    
+        };  
+
+
+var chart = new ApexCharts(document.querySelector("#assets_status_chart"), options);
+setTimeout(function() {
+            chart.render();
+        }, 200); 
+
+</script>

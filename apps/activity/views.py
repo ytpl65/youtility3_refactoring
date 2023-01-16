@@ -52,7 +52,7 @@ class Question(LoginRequiredMixin, View):
         # return cap_list data
         if R.get('template'): return render(request, self.params['template_list'])
         if R.get('action', None) == 'list':
-            objs = self.params['model'].objects.questions_listview(self.params['fields'], self.params['related'])
+            objs = self.params['model'].objects.questions_listview(request, self.params['fields'], self.params['related'])
             return  rp.JsonResponse(data = {'data':list(objs)})
             
 
@@ -455,7 +455,7 @@ class Checkpoint(LoginRequiredMixin, View):
         'related': ['parent', 'type'],
         'model': am.Asset,
         'fields': ['assetname', 'assetcode', 'runningstatus', 'identifier',
-                   'parent__assetcode', 'gps', 'id', 'enable'],
+                   'parent__assetname', 'gps', 'id', 'enable'],
         'form_initials': {'runningstatus': 'WORKING',
                           'identifier': 'CHECKPOINT',
                           'iscritical': False, 'enable': True}
@@ -536,7 +536,7 @@ class Smartplace(LoginRequiredMixin, View):
         'related': ['parent', 'type'],
         'model': am.Asset,
         'fields': ['assetname', 'assetcode', 'runningstatus', 'identifier',
-                   'parent__assetcode', 'gps', 'id', 'enable'],
+                   'parent__assetname', 'gps', 'id', 'enable'],
         'form_initials': {'runningstatus': 'WORKING',
                           'identifier': 'SMARTPLACE',
                           'iscritical': False, 'enable': True}

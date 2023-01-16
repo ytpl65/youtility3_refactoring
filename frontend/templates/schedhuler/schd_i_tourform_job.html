@@ -10,14 +10,14 @@
 {% block pagebreadcumb %}
 <!--will call parent contents -->
 {{ super() }}
-<li class="breadcrumb-item pe-3"><a href="{{ url('schedhuler:retrieve_tours') }}" class="pe-3">Schedhuled Tours</a></li>
-<li class="breadcrumb-item pe-3"><a href="javascript:void(0)" class="pe-3">Schedhule Tour Form</a></li>
+<li class="breadcrumb-item pe-3"><a href="{{ url('schedhuler:schd_internal_tour') }}" class="pe-3">Scheduled Tours</a></li>
+<li class="breadcrumb-item pe-3"><a href="javascript:void(0)" class="pe-3">Schedule Tour Setup</a></li>
 {% endblock pagebreadcumb %}
 <!-------------------------- END PAGE BREADCUMB ------------------------->
 
 <!------ BEGIN FORM TITLE ------->
 {% block form_title %}
-Schedhule Tour
+Schedhule Tour 
 {% endblock form_title %}
 <!------ END FORM TITLE -------->
 
@@ -70,13 +70,13 @@ Schedhule Tour
         <div class="col-md-4">
             <div class="form-check form-check-inline">
                 <input type="radio" class="form-check-input" name={{ schdtourform.assign_to.name }}
-                    id="{{ schdtourform.assign_to.auto_id }}1" value="PEOPLE" checked
+                    id="id_peopleradio" value="PEOPLE" checked
                     onchange="showHideSelectField('PEOPLE')">
                 <label class="form-check-label" for="{{ schdtourform.assign_to.auto_id }}">People</label>
             </div>
             <div class="form-check form-check-inline">
                 <input type="radio" class="form-check-input" name={{ schdtourform.assign_to.name }}
-                    id="{{ schdtourform.assign_to.auto_id }}2" value="GROUP" onchange="showHideSelectField('GROUP')">
+                    id="id_groupradio" value="GROUP" onchange="showHideSelectField('GROUP')">
                 <label class="form-check-label" for="{{ schdtourform.assign_to.auto_id }}">Group</label>
             </div>
         </div>
@@ -351,11 +351,15 @@ Schedhule Tour
         if (val == "PEOPLE") {
             //$("#aatopdiv").show();
             $(".people").show();
+            $("#id_peopleradio").attr('checked', 'checked')
+            $("#id_pgroup").val(1)
             $(".pgroup").hide();
         } else {
             //$("#aatopdiv").hide();
             $(".pgroup").show();
+            $("#id_groupradio").attr('checked', 'checked')
             $(".people").hide();
+            $("#id_people").val(1)
         }
     }
     //return selected value of a field
@@ -483,35 +487,25 @@ Schedhule Tour
         }
     }
 
-    //delete ajax request 
-	function isMainJobDeleted(id){ 
-		console.log("id ", id)
-		const params = {url:`${urlname}?action=delete&id=${id}`}
-		fire_ajax_get(params)
-		.done((data, status, xhr) => {
-			if(!xhr.status === 200){
-				return false
-			}
-			return true
-		})
-		.fail((xhr, status, error) => {
-			show_error_alert('Something went wrong!') //defined in custom.js
-			return false
-		})
-	}
 
     function deleteMainJob(ele){
         var id = $(ele).attr('data-id')
         show_alert_before_delete('Guard Tour')
 		.then((result) => {
 			if(result.isConfirmed){ //delete requested by user
-				status = isMainJobDeleted(id) //fire's request
-				console.log("status ", status)
-				if(status){
-					show_successful_delete_alert() //defined in customjs
-				}else{
-					show_error_alert(xhr.responseJSON.errors);
-				}
+				let urlname = "{{ url('schedhuler:schd_internal_tour') }}"
+                const params = {url:`${urlname}?action=delete&id=${id}`, 'beforeSend':function (){} }
+                fire_ajax_get(params)
+                .done((data, status, xhr) => {
+                    show_successful_delete_alert() //defined in customjs
+                    window.setTimeout(function() {
+                        window.location.href = "{{ url('schedhuler:schd_internal_tour') }}?action=form";
+                    }, 2000);
+                })
+                .fail((xhr, status, error) => {
+                    let err = typeof xhr.responseJSON.errors == 'string' ? xhr.responseJSON.errors : 'Something went wrong!'
+                    show_error_alert(err) //defined in custom.js
+                })
 			}
 		})
     }
@@ -560,7 +554,7 @@ Schedhule Tour
         if ('{{schdtourform.instance.id}}' == ('None' || "")) {
             showHideSelectField('PEOPLE')
         }else{
-            var assignto = '{{schdtourform.instance.people}}' == ('None' || "") ? "GROUP" : "PEOPLE"
+            var assignto = '{{schdtourform.instance.people_id }}' == '1' ? "GROUP" : "PEOPLE"
             showHideSelectField(assignto)
         }       
 

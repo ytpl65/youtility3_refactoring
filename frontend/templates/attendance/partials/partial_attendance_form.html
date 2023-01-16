@@ -124,13 +124,15 @@ $(document).ready(() => {
 
     //datatime widget
     $("#attd_form").find("#id_punchintime, #id_punchouttime").flatpickr({
-        enableTime: true,
-        dateFormat: "Y-m-d H:i",
+    enableTime: true,
+    dateFormat: "Y-m-d H:i",
     });
 
     //date widget
     $("#attd_form").find("#id_datefor").flatpickr({
-        dateFormat: 'd M Y'
+        enableTime: true,
+        time_24hr: true,
+        dateFormat: 'd-M-Y H:i'
     });
     $(".modal").removeAttr("tabindex");
 })

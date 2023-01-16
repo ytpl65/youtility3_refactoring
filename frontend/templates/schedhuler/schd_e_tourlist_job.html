@@ -2,7 +2,7 @@
 
 <!---- BEGIN CARD TITLE ------>
 {% block card_title %}
-Schedhuled External Tour List
+Routes 
 {% endblock card_title %}
 <!----- END CARD TITLE -------->
 
@@ -15,7 +15,8 @@ ext_schdtour_list = 'External ScheduleTour List',
 <!------------------------------------ BEGIN PAGE BREADCUMBS ------------------------------------>
 {% block pagebreadcumb %}
 {{ super() }}
-<li class="breadcrumb-item pe-3"><a href="javascript:void(0)" class="pe-3">Scheduled External Tour List</a></li>
+<li class="breadcrumb-item pe-3"><a href="javascript:void(0)" class="pe-3">Routes 
+</a></li>
 {% endblock pagebreadcumb %}
 <!------------------------------------- END PAGE BREADCUMBS ------------------------------------->
 
@@ -69,6 +70,7 @@ ext_schdtour_list = 'External ScheduleTour List',
                 }
                 },
             ],
+            order:[[6, 'desc']],
             deferRender: true,
 			responsive: true,
             dom:`<'row' <'col-sm-6 d-flex justify-content-start'f> <'col-sm-6 d-flex justify-content-end'B> >rt<'row'

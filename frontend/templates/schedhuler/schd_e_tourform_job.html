@@ -1,4 +1,4 @@
-    {% extends "base_form.html" %}
+{% extends "base_form.html" %}
 
 {% block extra_css %}
 <link  href="{{ static('assets/plugins/custom/DataTables/datatables.min.css') }}" rel="stylesheet" type="text/css"/>
@@ -11,14 +11,14 @@
 {% block pagebreadcumb %}
 <!--will call parent contents -->
 {{ super() }}
-<li class="breadcrumb-item pe-3"><a href="{{ url('schedhuler:retrieve_externaltours') }}" class="pe-3">Schedhuled Tours</a></li>
-<li class="breadcrumb-item pe-3"><a href="javascript:void(0)" class="pe-3">External-Tour Form</a></li>
+<li class="breadcrumb-item pe-3"><a href="{{ url('schedhuler:retrieve_externaltours') }}" class="pe-3">Routes</a></li>
+<li class="breadcrumb-item pe-3"><a href="javascript:void(0)" class="pe-3">Route Plan Setup</a></li>
 {% endblock pagebreadcumb %}
 <!-------------------------- END PAGE BREADCUMB ------------------------->
 
 <!------ BEGIN FORM TITLE ------->
 {% block custom_title %}
-Schedhule External-Tour&nbsp;<i class="fa fa-clock fs-4 text-primary" aria-hidden="true"></i>
+Route Plan Setup&nbsp;<i class="fa fa-clock fs-4 text-primary" aria-hidden="true"></i>
 {% endblock custom_title %}
 <!------ END FORM TITLE -------->
 
@@ -617,7 +617,7 @@ $(document).ready(() => {
         
     }else{
         checkDirectionsSaved2()
-        var assignto = '{{schdexternaltourform.instance.people }}' == 'None' ? "GROUP" : "PEOPLE"
+        var assignto = '{{schdexternaltourform.instance.people_id }}' == '1' ? "GROUP" : "PEOPLE"
         showHideSelectField(assignto)
         if($("#id_israndom").is(":checked")){
             enableFields("#id_tourfrequency, #id_breaktime")

@@ -49,7 +49,7 @@ Task List
                 {data: 'plandatetime', title: "Plan Datetime"},
                 {data: 'jobdesc', title: 'Description'},
                 {data: 'jobstatus', title: 'Status'},
-                {title: 'People/Group', data:null},
+                {title: 'People/Group', data:'assignedto'},
                 {data: 'performedby__peoplename', title: 'Performed By'},
                 {data: 'gracetime', title: "Grace Time"},
                 {data: 'expirydatetime', title: "Expiry Datetime"}
@@ -59,11 +59,7 @@ Task List
                 {targets:1, data: 'plandatetime', render:function(data, type, row, meta){
                     return `<a href="${urlname}?id=${row['id']}">${convert_to_local(type, data, row)}</a>`
                 }},
-                {targets:4, render:function(data, type, row, meta){
-                    let peoplename = row['people__peoplename']
-                    let groupname = row['pgroup__groupname']
-                    return peoplename ?  peoplename : groupname
-                }},
+
                 {targets:[1], render:function(data, type, row, meta){
                     return convert_to_local(type, data, row)
                 }},
@@ -74,9 +70,8 @@ Task List
                     return `${data} mins`
                 }},
 
-                
-
             ],
+            order:[[1, 'desc']],
             buttons:[
 				{
 					text:`Apply filters &nbsp;<i class='fas fa-search ch4'></i></a>`,

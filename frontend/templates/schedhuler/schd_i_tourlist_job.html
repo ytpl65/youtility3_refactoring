@@ -1,8 +1,8 @@
-{% extends "base_list.html" %}
+    {% extends "base_list.html" %}
 
 <!---- BEGIN CARD TITLE ------>
 {% block card_title %}
-Schedhuled Tour List
+Scheduled Tours
 {% endblock card_title %}
 <!----- END CARD TITLE -------->
 
@@ -12,7 +12,7 @@ Schedhuled Tour List
 <!------------------------------------ BEGIN PAGE BREADCUMBS ------------------------------------>
 {% block pagebreadcumb %}
 {{ super() }}
-<li class="breadcrumb-item pe-3"><a href="javascript:void(0)" class="pe-3">Scheduled Tour List</a></li>
+<li class="breadcrumb-item pe-3"><a href="javascript:void(0)" class="pe-3">Scheduled Tours</a></li>
 {% endblock pagebreadcumb %}
 <!------------------------------------- END PAGE BREADCUMBS ------------------------------------->
 
@@ -55,7 +55,7 @@ Schedhuled Tour List
             columns:[
                 {data: 'id', defaultContent:null},
                 {data: 'jobname', title: "Name"},
-                {title: 'People/Group', defaultContent:null, data:null},
+                {data: 'assignedto', title:"People/Group", defaultContent:null},
                 {title: 'From', data: 'fromdate'},
                 {title: 'To', data: 'uptodate'},
                 {title: 'Duration', data: 'planduration'},
@@ -69,12 +69,6 @@ Schedhuled Tour List
                         return `<a href="${urlname}?id=${row['id']}">${data}</a>`
                     }
                 },
-                {targets:2, render:function(data, type, row, meta){
-                    let peoplename = row['people__peoplename']
-                    let groupname = row['pgroup__groupname']
-                    console.log(peoplename, groupname)
-                    return typeof peoplename in ['undefined', null] ? groupname : peoplename 
-                }},
                 {targets:3, render:function(data, type, row, meta){
                     return  convert_to_local(type, data, row)
                 }},
@@ -82,6 +76,7 @@ Schedhuled Tour List
                     return  convert_to_local(type, data, row)
                 }}
             ],
+            order:[[3, 'desc']],
             buttons:[
 				{
 					text:`Schedule Tour &nbsp;<i class='fas fa-plus ch4'></i></a>`,
@@ -89,7 +84,7 @@ Schedhuled Tour List
 					//action for add_new_button 
 					action: function(e, dt, node, config){
                         //This will send the page to the location specified
-        				window.location.href = "{{ url('schedhuler:create_tour') }}?action=form";
+        				window.location.href = "{{ url('schedhuler:schd_internal_tour') }}?action=form";
 					}
 				}
 			]

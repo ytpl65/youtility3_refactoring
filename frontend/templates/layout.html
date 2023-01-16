@@ -143,6 +143,32 @@
 	</div>
 {% endmacro %}
 
+{% macro modal_for_table_view() %}
+<div class="modal fade" id="popup_table" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1"
+		aria-labelledby="staticBackdropLabel" aria-hidden="true">
+		<div class="modal-dialog modal-xl modal-dialog-centered">
+			<div class="modal-content">
+				<div class="modal-header">
+					<h5 class="modal-heading" id="staticBackdropLabel" style="color:#3a3b40de">Data</h5>
+					<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+				</div>
+        <!--define modal-body, modal-footer classes -->
+        <div class="modal-body">
+            <div class="portlet-body form">
+              <div class="alert alert-danger fade show" id="nonfield_errors"role="alert" style="display:none">
+                  <strong>Error</strong> <span id="table_error"></span>
+              </div>
+                <!-- BEGIN LIST-->
+                <table id="dashboardTable" class="display cell-border hover" style="width:100%">
+                </table>
+            </div>
+        </div>
+      </div>
+		</div>
+	</div>
+{% endmacro %}
+
+
 {% macro reset_form_btn() %}
 <div class="d-flex justify-content-end">
  <button type="button" class="btn btn-secondary btn-sm btn-hover-scale" onclick="location.reload();$('{{ kwargs['id'] }}').trigger('reset')">Reset Form</button>
@@ -187,9 +213,9 @@
       {# BEGIN BRAND #}
       <div class="aside-logo flex-column-auto" id="kt_aside_logo">
         {# BEGIN LOGO #}
-        <a href="index.html">
-          <img alt="Logo" src="{{static('assets/media/images/logo-transparent.png')}}"
-            class="h-50px ml-3 mt-3 logo w-160px">
+        <a href="{{ url('onboarding:rp_dashboard') }}">
+          {# <img alt="Logo" src="{{static('assets/media/images/logo.png')}}"
+            class="h-50px ml-3 mt-3 logo w-160px" style="border-radius: 3px;"> #}
         </a>
         {# END LOGO #}
         {# BEGIN ASIDE TOGGLER #}
@@ -234,7 +260,6 @@
       <!--end::Aside menu-->
       <!--begin::Footer-->
       <div class="aside-footer flex-column-auto pt-5 pb-7 px-5" id="kt_aside_footer">
-        <p>fsafasfsa</p>
       </div>
       <!--end::Footer-->
     </div>
@@ -382,14 +407,14 @@
       <!--end::Content-->
       <!--begin::footer-->
       <div class="footer py-4 d-flex flex-lg-column" id="kt_footer"
-      style="background-color: #1c1c31;">
+      style="background-color: #01579B;">
         <!--begin::Container-->
         <div class="container-fluid d-flex flex-column flex-md-row align-items-center justify-content-between">
           <!--begin::Copyright-->
           <div></div>
           <!--end::Copyright-->
-          <div class="page-footer-inner text-light"> <span id="copyRightYear ">2022 © Powered by</span>
-            <a target="_blank" class="text-primary" href="http://www.youtility.in">Youtility Technologies Pvt. Ltd. </a>
+          <div class="page-footer-inner text-light"> <span id="copyRightYear ">2023 © Powered by</span>
+            <a target="_blank" class="text-white opacity-50" href="http://www.youtility.in">Youtility Technologies Pvt. Ltd. </a>
           </div>
         </div>
         <!--end::Container-->

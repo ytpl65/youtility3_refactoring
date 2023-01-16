@@ -1116,7 +1116,7 @@ class JobneedTours(LoginRequiredMixin, View):
         'template_path': 'schedhuler/i_tourlist_jobneed.html',
         'template_form': 'schedhuler/i_tourform_jobneed.html',
         'fields'       : ['jobdesc', 'people__peoplename', 'pgroup__groupname', 'id', 'ctzoffset',
-            'plandatetime', 'expirydatetime', 'jobstatus', 'gracetime', 'performedby__peoplename'],
+            'plandatetime', 'expirydatetime', 'jobstatus', 'gracetime', 'performedby__peoplename', 'assignedto'],
         'related': ['pgroup',  'ticketcategory', 'asset', 'client',
                'frequency', 'job', 'qset', 'people', 'parent', 'bu'],
         'form_class':scd_forms.I_TourFormJobneed,
@@ -1270,7 +1270,7 @@ class JobneedTasks(LoginRequiredMixin, View):
                     'jobdesc', 'people__peoplename', 'pgroup__groupname', 'id',
                     'plandatetime', 'expirydatetime', 'jobstatus', 'gracetime',
                     'performedby__peoplename', 'asset__assetname', 'qset__qsetname',
-                    'ctzoffset'],
+                    'ctzoffset', 'assignedto'],
         'related': [
                 'pgroup',  'ticketcategory', 'asset', 'client','ctzoffset',
                 'frequency', 'job', 'qset', 'people', 'parent', 'bu'],
@@ -1317,7 +1317,8 @@ class SchdTasks(LoginRequiredMixin, View):
         'template_path': 'schedhuler/schd_tasklist_job.html',
         'fields'       : ['jobname', 'people__peoplename', 'pgroup__groupname',
                         'fromdate', 'uptodate', 'qset__qsetname', 'asset__assetname',
-                        'planduration', 'gracetime', 'expirytime', 'id', 'ctzoffset'],
+                        'planduration', 'gracetime', 'expirytime', 'id', 'ctzoffset',
+                        'assignedto'],
         'related'      : ['pgroup', 'people', 'asset'],
         'form_class': scd_forms.SchdTaskFormJob,
         'template_form': 'schedhuler/schd_taskform_job.html',
@@ -1337,33 +1338,30 @@ class SchdTasks(LoginRequiredMixin, View):
     }
 
     def get(self, request, *args, **kwargs):
-        R = request.GET
+        R, P = request.GET, self.params
         # first load the template
-        if R.get('template'): return render(request, self.params['template_path'])
+        if R.get('template'): return render(request, P['template_path'])
 
         # then load the table with objects for table_view
         if R.get('action') == 'list':
             log.info('Retrieve Tasks view')
-            objects = self.params['model'].objects.select_related(
-                *self.params['related']).filter(
-                    ~Q(jobname='NONE'), parent__jobname='NONE', identifier="TASK"
-            ).values(*self.params['fields']).order_by('-cdtz')
+            objects = P['model'].objects.get_scheduled_tasks(request, P['related'], P['fields'])
             log.info(f'Tasks objects {len(objects)} retrieved from db' if objects else "No Records!")
             return rp.JsonResponse(data = {'data':list(objects)})
 
         # load form with instance
         if R.get('id'):
-            obj = utils.get_model_obj(int(R['id']), request, self.params)
-            cxt = {'schdtaskform':self.params['form_class'](request = request, instance = obj),
+            obj = utils.get_model_obj(int(R['id']), request, P)
+            cxt = {'schdtaskform':P['form_class'](request = request, instance = obj),
                     'edit':True}
-            return render(request, self.params['template_form'], context = cxt)
+            return render(request, P['template_form'], context = cxt)
 
         # return empty form
         if R.get('action') == 'form':
             cxt = {
-            'schdtaskform':self.params['form_class'](initial = self.params['initial'], request = request)
+            'schdtaskform':P['form_class'](initial = P['initial'], request = request)
             }
-            return render(request, self.params['template_form'], context = cxt)
+            return render(request, P['template_form'], context = cxt)
 
         if R.get('runscheduler'):
             # run job scheduler
@@ -1452,7 +1450,7 @@ class InternalTourScheduling(LoginRequiredMixin, View):
             'uptodate'  : datetime.combine(date.today(), time(23, 00, 00)) + timedelta(days = 2),
         },
         'fields'       : ['id', 'jobname', 'people__peoplename', 'pgroup__groupname', 'fromdate', 'uptodate',
-                        'planduration', 'gracetime', 'expirytime']
+                        'planduration', 'gracetime', 'expirytime', 'assignedto']
     }
 
     def get(self, request, *args, **kwargs):
@@ -1466,17 +1464,23 @@ class InternalTourScheduling(LoginRequiredMixin, View):
             log.info(f'object retrieved {obj}')
             form        = P['form_class'](instance = obj, request=request)
             checkpoints = self.get_checkpoints(obj, P)
-            cxt = {'schdtourform': form, 'childtour_form': P['subform'](), 'edit': True,
+            cxt = {'schdtourform': form, 'childtour_form': P['subform'](request=request), 'edit': True,
                    'checkpoints': checkpoints}
             return render(request, P['template_form'], cxt)
+        
+        # return resp to delete request
+        if R.get('action', None) == "delete" and R.get('id', None):
+            return utils.render_form_for_delete(request, self.params, False)
+        
         if R.get('action') == 'list':
             objs = P['model'].objects.get_scheduled_internal_tours(
-                P['related'], P['fields']
+                request, P['related'], P['fields']
             )
             return rp.JsonResponse({'data':list(objs)}, status = 200)
-        if R.get('action') == 'list':
+        
+        if R.get('action') == 'form':
             cxt = {'schdtourform':P['form_class'](request = request, initial = P['initial']),
-                    'childtour_form':P['json_form']()}
+                    'childtour_form':P['subform'](request=request)}
             return render(request, P['template_form'], cxt)
 
     def post(self, request, *args, **kwargs):
@@ -1599,7 +1603,7 @@ class ExternalTourScheduling(LoginRequiredMixin, View):
             'uptodate'  : datetime.combine(date.today(), time(23, 00, 00)) + timedelta(days = 2),
         },
         'fields' : ['id', 'jobname', 'people__peoplename', 'pgroup__groupname', 'fromdate', 'uptodate',
-                'planduration', 'gracetime', 'expirytime', 'bu__buname']
+                'planduration', 'gracetime', 'expirytime', 'bu__buname', 'assignedto']
     }
 
 
@@ -1671,7 +1675,7 @@ class ExternalTourScheduling(LoginRequiredMixin, View):
                     formData, P, msg, int(pk), kwargs = {'request':request})
                 ic(form.data)
             else:
-                form = P['form_class'](formData)
+                form = P['form_class'](formData, request=request)
             if form.is_valid():
                 return self.handle_valid_form(form, request, P)
             cxt = {'errors': form.errors}

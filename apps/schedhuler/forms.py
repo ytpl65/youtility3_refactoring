@@ -35,8 +35,8 @@ class Schd_I_TourJobForm(JobForm):
         self.fields['endtime'].widget.attrs     = {"style": "display:none"}
         self.fields['frequency'].widget.attrs   = {"style": "display:none"}
         self.fields['ticketcategory'].queryset = ob.TypeAssist.objects.filter(tatype__tacode="TICKETCATEGORY")
-        ic(self.request)
         self.fields['pgroup'].queryset = pm.Pgroup.objects.filter(bu_id__in = self.request.session['assignedsites'], identifier__tacode__in = ['PEOPLEGROUP', 'PEOPLE_GROUP'])
+        self.fields['people'].queryset = pm.People.objects.filter(bu_id__in = self.request.session['assignedsites'], client_id = self.request.session['client_id'])
         utils.initailize_form_fields(self)
 
 
@@ -64,6 +64,12 @@ class Schd_I_TourJobForm(JobForm):
         super().clean()
         bu = ob.Bt.objects.get(id = self.request.session['bu_id'])
         self.instance.jobdesc = f'{bu.buname} - {self.instance.jobname}'
+        cd = self.cleaned_data
+        if cd['pgroup'] is None:
+            cd['pgroup'] = utils.get_or_create_none_pgroup()
+        if cd['people'] is None:
+            cd['people'], _ = utils.get_or_create_none_people()
+        
 
 
 class SchdChild_I_TourJobForm(JobForm): # job
@@ -75,8 +81,11 @@ class SchdChild_I_TourJobForm(JobForm): # job
         fields =['qset', 'people', 'asset', 'expirytime', 'seqno']
 
     def __init__(self, *args, **kwargs):
+        self.request = kwargs.pop('request', None)
         super().__init__(*args, **kwargs)
         self.fields['seqno'].widget.attrs = {'readonly':True}
+        self.fields['qset'].queryset = am.QuestionSet.objects.get_proper_checklist_for_scheduling(self.request, ['CHECKLIST', 'QUESTIONSET'])
+        self.fields['asset'].queryset = am.Asset.objects.filter(identifier__in = ['CHECKPOINT'], client_id = self.request.session['client_id'])
         utils.initailize_form_fields(self)
 
 
@@ -191,9 +200,11 @@ class Schd_E_TourJobForm(JobForm):
         self.fields['uptodate'].input_formats  = settings.DATETIME_INPUT_FORMATS
         self.fields['ticketcategory'].initial  = ob.TypeAssist.objects.get(tacode='AUTOCLOSED')
         self.fields['sgroup'].queryset  = pm.Pgroup.objects.filter(identifier__tacode="SITEGROUP", bu_id__in = self.request.session['assignedsites'],)
+        self.fields['people'].queryset  = pm.People.objects.filter(bu_id__in = self.request.session['assignedsites'], client_id = self.request.session['client_id'])
         self.fields['pgroup'].queryset = pm.Pgroup.objects.filter(bu_id__in = self.request.session['assignedsites'], identifier__tacode__in = ['PEOPLEGROUP', 'PEOPLE_GROUP'])
         self.fields['sgroup'].required  = True
-        self.fields['qset'].queryset  = am.QuestionSet.objects.filter(type__in = ['CHECKLIST'])
+        self.fields['qset'].queryset  = am.QuestionSet.objects.get_proper_checklist_for_scheduling(self.request, ['CHECKLIST'])
+        ic(self.fields['qset'].queryset)
         self.fields['identifier'].widget.attrs = {"style": "display:none"}
         self.fields['expirytime'].widget.attrs = {"style": "display:none"}
         self.fields['starttime'].widget.attrs  = {"style": "display:none"}
@@ -260,9 +271,10 @@ class SchdTaskFormJob(JobForm):
         self.fields['expirytime'].label        = 'Grace Time After'
         self.fields['gracetime'].label         = 'Grace Time Before'
         self.fields['ticketcategory'].queryset = ob.TypeAssist.objects.filter(tatype__tacode="TICKETCATEGORY")
-        self.fields['qset'].queryset = am.QuestionSet.objects.filter(type="QUESTIONSET",  enable=True)
-        self.fields['asset'].queryset = am.Asset.objects.filter(~Q(runningstatus='SCRAPPED'), identifier__in =["LOCATION", "ASSET", "SMARTPLACE"],)
+        self.fields['qset'].queryset = am.QuestionSet.objects.get_proper_checklist_for_scheduling(self.request, ['QUESTIONSET'])
+        self.fields['asset'].queryset = am.Asset.objects.filter(~Q(runningstatus='SCRAPPED'), identifier__in =["LOCATION", "ASSET", "SMARTPLACE"], client_id = self.request.session['client_id'])
         self.fields['pgroup'].queryset = pm.Pgroup.objects.filter(bu_id__in = self.request.session['assignedsites'], identifier__tacode__in = ['PEOPLEGROUP', 'PEOPLE_GROUP'])
+        self.fields['people'].queryset = pm.People.objects.filter(bu_id__in = self.request.session['assignedsites'], client_id = self.request.session['client_id'])
         utils.initailize_form_fields(self)
 
     def clean(self):
@@ -272,7 +284,7 @@ class SchdTaskFormJob(JobForm):
         if cd['pgroup'] is None:
             cd['pgroup'] = utils.get_or_create_none_pgroup()
         if cd['people'] is None:
-            cd['people'] = utils.get_or_create_none_people()
+            cd['people'], _ = utils.get_or_create_none_people()
         
         times = [cd.get(time) for time in times_names]
         types = [cd.get(type) for type in types_names]

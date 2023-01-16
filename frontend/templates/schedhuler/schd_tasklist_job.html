@@ -2,7 +2,7 @@
 
 <!---- BEGIN CARD TITLE ------>
 {% block card_title %}
-Schedhuled Tasks
+Scheduled Tasks
 {% endblock card_title %}
 <!----- END CARD TITLE -------->
 
@@ -43,13 +43,14 @@ Schedhuled Tasks
                 {data: 'jobname', title: "Name"},
                 {data: 'asset__assetname', title: "Asset"},
                 {data: 'qset__qsetname', title: 'Question Set'},
-                {title: 'People/Group', data:null},
+                {data: 'assignedto', title:"People/Group", defaultContent:null},
                 {data: 'fromdate', title: "From"},
                 {data: 'uptodate', title: 'To'},
                 {data: 'planduration', title: 'Duration'},
                 {data: 'gracetime', title: 'Gracetime'},
                 {data: 'expirytime', title: 'Expirytime'},
             ],
+            order:[[5, 'desc']],
             dom:`<'row' <'col-sm-6 d-flex justify-content-start'f> <'col-sm-6 d-flex justify-content-end'B> >rt<'row'
 			 <'col-sm-6'l> <'col-sm-6'p><'col-sm-12 d-flex justify-content-center'i>>`,
             columnDefs:[
@@ -61,11 +62,6 @@ Schedhuled Tasks
                 }},
                 {data: 'jobname', targets: 1, render:function(data, type, row, meta){
                     return `<a href="${formUrl}?id=${row['id']}">${data}</a>`
-                }},
-                {targets:4, render:function(data, type, row, meta){
-                    let peoplename = row['people__peoplename']
-                    let groupname = row['pgroup__groupname']
-                    return peoplename ?  peoplename : groupname
                 }},
                 {targets:[7,8,9], render:function(data, type, row, meta){
                     return `${data} mins`

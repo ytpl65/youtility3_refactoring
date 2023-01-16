@@ -17,84 +17,122 @@
 </div>
 {% endblock breadcumbactions %}
 
+{% block popup_alerts %}
+{{ modal_for_table_view() }}
+{% endblock popup_alerts %}
+
+
+
 <!-------------------------- BEGIN PAGE BREADCUMB ----------------------->
 {% block pagebreadcumb %}
     {{ super() }}
     <li class="breadcrumb-item pe-3"><a href="javascript:void(0)" class="pe-3">Dashboard</a></li>
 {% endblock pagebreadcumb %}
 <!-------------------------- END PAGE BREADCUMB ------------------------->
-
+ 
 
 <!------------------------------ START PAGE BODY CONTAINER -------------------------->
 {% block pagebody_container %}
-<div class="cards-space">
-    <div class="row first-row">
-        <div class="col-sm-12 portlet d-none col-md" id="PORTLET_SOS_ALERTS">
-            <div class="counter shadow me-2 mb-2 rounded-3 bg-gradient-danger p-2">
-                <div class="d-flex justify-content-between">
-                    <i class="fas p-4 yiconpadd yicon text-white fa-exclamation-triangle"></i>
-                    <div class="pe-3">
-                        <h3 data-kt-countup="true" data-kt-countup-value="{{ sos_count }}" data-kt-countup-duration="20"
-                            class="pb-3 text-white text-end timer count-title text-white count-number">{{ sos_count }}</h3>
-                        <p class="h2 text-white">SOS Alerts</p>
+
+
+<div class="row">
+    <div class="col-md-3" id="tasks_card">
+        {% include "dashboard/RP_d/partials/dashboard_cards/partial_taskstats_card.html" %}
+    </div>
+    <div class="col-md-4">
+        <div class="card card-flush h-lg-100">
+            <div class="card-header py-4 mb-3">
+                <h3 class="card-title align-items-start flex-column">
+                    <span class="card-label fw-bold text-gray-800">Assets Running Status</span>
+                    <span class="text-gray-400 mt-1 fw-semibold fs-6">Total <span>10</span> Assets</span>
+                </h3>
+            </div>
+            <div class="card-body pb-0 pt-7 ps-6 mt-n12">
+                <div id="assets_status_chart"></div>
+            </div>
+
+        </div>
+    </div>
+    <div class="col-md-3" id="tasks_card">
+        {% include "dashboard/RP_d/partials/dashboard_cards/partial_guardtour_card.html" %}
+    </div>
+    <div class="card col-md-2">
+        <div class="row card">
+            <div class="col-sm-12 portlet d-none col-md mb-2" id="PORTLET_SOS_ALERTS">
+                <div class="counter shadow me-3 mt-3 mb-2 rounded-3 bg-gradient-danger p-2">
+                    <div class="d-flex justify-content-between">
+                        <i class="fas p-4 align-middle yiconpadd yicon text-white fa-exclamation-triangle"></i>
+                        <div class="pe-3">
+                            <h4 data-kt-countup="true" data-kt-countup-value="{{ sos_count }}"
+                                data-kt-countup-duration="20"
+                                class="pb-3 text-white  timer count-title text-end count-number">
+                                {{ sos_count }}
+                            </h4>
+                            <p class="h3 text-white">SOS Alerts</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-sm-12 portlet d-none col-md mb-2" id="PORTLET_INCIDENTREPORTS">
+                <div class="counter shadow  p-2 me-2 mb-2 rounded-3 bg-gradient-primary">
+                    <div class="d-flex justify-content-between">
+                        {# <i class="fas p-4 yiconpadd yicon fa-clipboard-user text-white fs-1"></i> #}
+                        <i class="fas p-4 yiconpadd yicon text-start text-white fa-file-medical-alt"></i>
+                        <div class="pe-3">
+                            <h4 data-kt-countup="true" data-kt-countup-value="{{ IR_count }}"
+                                data-kt-countup-duration="20"
+                                class="pb-3 text-white text-end timer count-title count-number">{{ IR_count }}</h4>
+                            <p class="h3 text-white">Incident Reports</p>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
-        <div class="col-sm-12 portlet d-none col-md" id="PORTLET_INCIDENTREPORTS">
-            <div class="counter shadow  p-2 me-2 mb-2 rounded-3 bg-gradient-primary">
-                <div class="d-flex justify-content-between">
-                    {# <i class="fas p-4 yiconpadd yicon fa-clipboard-user text-white fs-1"></i> #}
-                    <i class="fas p-4 yiconpadd yicon text-start text-white fa-file-medical-alt"></i>
-                    <div class="pe-3">
-                        <h3 data-kt-countup="true" data-kt-countup-value="{{ IR_count }}" data-kt-countup-duration="20" 
-                            class="pb-3 text-white text-end timer count-title count-number">{{ IR_count }}</h3>
-                        <p class="h2 text-white">Incident Reports</p>
+        <div class="row card">
+            <div class="col-sm-12 portlet d-none col-md mb-2" id="PORTLET_FR_FAILURES">
+                <div class="counter shadow  p-2 me-2 mb-2 rounded-3 bg-gradient-warning">
+                    <div class="d-flex justify-content-between">
+                        <i class="bi bi-person-bounding-box yiconpadd yicon p-4 text-white"></i>
+                        <div class="pe-3">
+                            <h4 data-kt-countup="true" data-kt-countup-value="{{ FR_fail_count }}"
+                                data-kt-countup-duration="20"
+                                class="pb-3 text-white  text-end timer count-title count-number">{{ FR_fail_count }}</h4>
+                            <p class="h4 text-white">Attendance</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-sm-12 portlet d-none col-md " id="PORTLET_ROUTES">
+                <div class="counter shadow p-2 me-2  mb-2 rounded-3 bg-gradient-success">
+                    <div class="d-flex justify-content-between">
+                        <i class="fas yicon yiconpadd text-white p-4 fa-route"></i>
+                        <div class="pe-3">
+                            <h4 data-kt-countup="true" data-kt-countup-value="{{ tour_count }}"
+                                data-kt-countup-duration="20"
+                                class="pb-3 text-white text-end timer count-title count-number">{{ tour_count }}</h4>
+                            <p class="h3 text-white">Routes</p>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
-        <div class="col-sm-12 portlet d-none col-md" id="PORTLET_FR_FAILURES">
-            <div class="counter shadow  p-2 me-2 mb-2 rounded-3 bg-gradient-warning">
-                <div class="d-flex justify-content-between">
-                    <i class="fas p-4 yiconpadd yicon fa-clipboard-user text-white fs-1"></i>
-                    <div class="pe-3">
-                        <h3 data-kt-countup="true" data-kt-countup-value="{{ FR_fail_count }}" data-kt-countup-duration="20"
-                            class="pb-3 text-white text-end timer count-title count-number">{{ FR_fail_count }}</h3>
-                        <p class="h2 text-white">Face Recognition Failures</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="col-sm-12 portlet d-none col-md" id="PORTLET_ROUTES">
-            <div class="counter shadow p-2 me-2  mb-2 rounded-3 bg-gradient-success">
-                <div class="d-flex justify-content-between">
-                   <i class="fas yicon yiconpadd text-white p-4 fa-route"></i>
-                    <div class="pe-3">
-                        <h3 data-kt-countup="true" data-kt-countup-value="{{ tour_count }}" data-kt-countup-duration="20"
-                            class="pb-3 text-white text-end timer count-title count-number">{{ tour_count }}</h3>
-                        <p class="h2 text-white">Routes</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-        
+
     </div>
 </div>
 
 <div class="row pt-2">
-    <div class="col-sm-12 col-md-6 mapview">
+    <div class="col-sm-12 col-md-6 mapview d-none">
         <div class="card">
             <div class="card-title mb-0 text-center py-2 bg-light bg-gradient">
                 Map View
             </div>
-            <div class="card-body rounded-3 p-3 pt-0">
-                <div id="map" style="height: 350px;"></div>
+            <div class="card-body rounded-3 p-3  pt-0">
+                <div id="map" style="height: 350px;"class=""></div>
             </div>
         </div>
     </div>
 
-    <div class="col-sm-12 col-md-6 tableview">
+    <div class="col-sm-12 col-md-6 tableview d-none">
         <div class="card">
             <div class="card-title  text-center py-2 bg-light bg-gradient">
                 Default View: List of people under the site you logged in
@@ -114,6 +152,8 @@
         </div>
     </div>
 </div>
+
+
 {% endblock pagebody_container %}
 <!------------------------------ END PAGE BODY CONTAINER -------------------------->
 
@@ -128,6 +168,9 @@
 <script>
     //Global Variables here
     var from, upto, map;
+    var assets_status_counts=null;
+    var total_number_of_assets=null;
+
     function showMap(row){
         let gps = ['NONE', '0.0,0.0', ""].includes(row['gps']) ? null : JSON.parse(row['gps'])
         let lat = gps ? gps.coordinates[1] : null
@@ -159,7 +202,8 @@
 </script>
 
 <!----- Datatable For SOS ----->
-{% include "dashboard/RP_d/partials/partial_sitepeople_datatable.html" %}
+{# {% include "dashboard/RP_d/partials/partial_sitepeople_datatable.html" %} #}
+
 
 
 <script>
@@ -180,6 +224,12 @@
             titleCancel:"Exit fullscreen mode"
         }
     })
+    var _taskJobstatus = null;
+    var _popUpTable = null;
+    var _dataTableConfig = null;
+    var _db_cardtype = null;
+    var _from_pd = moment().format('YYYY-MM-DD');
+    var _to_pd = moment().format('YYYY-MM-DD')
 
 
     $(document).ready(() => {
@@ -201,13 +251,6 @@
             map.setView([21.7679, 78.8718], 5)
         }   
 
-        //display the data according to dashboard timeline calendar
-        initDateRange("#id_daterange").on('apply.daterangepicker', function(e, picker){
-            let from_pd = picker.startDate.format('YYYY-MM-DD');
-            let to_pd = picker.endDate.format('YYYY-MM-DD');
-            let url = "{{ url('onboarding:rp_dashboard') }}"
-            location.href = `${url}?pd1=${from_pd}&pd2=${to_pd}`
-        })
 
         //show only assigned portlet caps
         if("{{ request.user.is_superuser }}" == 'False'){
@@ -218,8 +261,76 @@
         }else{
             $('.card').removeClass('d-none') 
         }
-        
     })
-    
 </script>
+
+    {% include "dashboard/RP_d/partials/dashboard_cards/partial_datatables_config.html" %}
+
+<script>
+    function getStatsForDashboard(){
+        let params = {
+            data:{"from":_from_pd, "upto":_to_pd, action:"getCounts"},
+            url:"{{ url('onboarding:rp_dashboard') }}",
+        }
+        fire_ajax_get(params)
+        .done((data, status, xhr) => {
+            let data_ = data.counts
+            $("#tasks_completed").html(data_.completed_tasks_count)
+            $("#tasks_autoclosed").html(data_.autoclosed_tasks_count)
+            $("#tasks_pending").html(data_.assigned_tasks_count)
+            $("#tasks_scheduled").html(data_.totalschd_tasks_count)
+            $("#tours_completed").html(data_.completed_tours_count)
+            $("#tours_scheduled").html(data_.totalscheduled_tours_count)
+            $("#tours_inprogress").html(data_.inprogress_tours_count)
+            $("#tours_partiallycompleted").html(data_.partiallycompleted_tours_count)
+            total_number_of_assets = data_.total_assets
+            assets_status_counts = [data_.asset_maintainence_count, data_.asset_standby_count,
+             data_.asset_working_count,data_.asset_scrapped_count]
+            
+        })
+        .fail((xhr, status, error) => {
+            console.log(xhr)
+        }) 
+
+    }
+
+
+    $(document).ready(() => {
+        //on click on popup_link
+        //$(".popup_link").on('click', (e) => {
+        //    $("#popup_table").modal('show')
+        //    _taskJobstatus = $(e.currentTarget).attr("data-jobstatus");
+        //    _db_cardtype = $(e.currentTarget).attr("data-cardtype");
+        //    if(_db_cardtype === 'taskstats'){
+        //        _dataTableConfig = tasks_dashboard_options
+        //    }
+        //    
+        //    if ($.fn.DataTable.isDataTable("#dashboardTable")) {
+        //        _popUpTable.destroy();
+        //    }
+        //    
+        //    $.fn.dataTable.tables( {visible: true, api: true} ).columns.adjust();
+        //    $('#popup_table').modal({
+        //        keyboard: false
+        //    })
+        //    
+        //    _popUpTable = $("#dashboardTable").DataTable(
+        //        _dataTableConfig
+        //    )
+        //    
+        //    
+        //})
+
+        getStatsForDashboard()
+
+        //add input field to the datatables dom
+        initDateRange("#id_daterange", start = _from_pd, end = _to_pd).on('apply.daterangepicker', function(e, picker){
+            _from_pd = picker.startDate.format('YYYY-MM-DD');
+            _to_pd = picker.endDate.format('YYYY-MM-DD');
+            getStatsForDashboard()
+        })
+    })
+</script>
+
+{% include "dashboard/RP_d/partials/dashboard_cards/partial_assets_card.html" %}
 {% endblock extra_scripts %}
