@@ -467,8 +467,8 @@ class JobneedManager(models.Manager):
 
     def get_ir_count_forcard(self, request):
         R, S = request.GET, request.session
-        pd1 = R.get('pd1', datetime.now().date())
-        pd2 = R.get('pd2', datetime.now().date())
+        pd1 = R.get('from', datetime.now().date())
+        pd2 = R.get('upto', datetime.now().date())
         return self.filter(
             Q(Q(parent_id__in = [1, -1]) | Q(parent_id__isnull=True)),
             bu_id__in = S['assignedsites'],
@@ -478,16 +478,16 @@ class JobneedManager(models.Manager):
             client_id = S['client_id'],
         ).count() or 0
     
-    def get_schdtour_count_forcard(self, request):
+    def get_schdroutes_count_forcard(self, request):
         R, S = request.GET, request.session
-        pd1 = R.get('pd1', datetime.now().date())
-        pd2 = R.get('pd2', datetime.now().date())
+        pd1 = R.get('from', datetime.now().date())
+        pd2 = R.get('upto', datetime.now().date())
         return self.filter(
+            Q(Q(parent_id__in = [1, -1]) | Q(parent_id__isnull=True)),
             bu_id__in = S['assignedsites'],
             client_id = S['client_id'],
             plandatetime__date__gte = pd1,
             plandatetime__date__lte = pd2,
-            parent_id = 1,
             identifier='EXTERNALTOUR'
         ).count() or 0
     
@@ -508,28 +508,42 @@ class JobneedManager(models.Manager):
             ).select_related(*related).values(*fields)
         return qset or self.none()
     
-    def get_tasks_db_card(self, request, R):
-        S = request.session
-        
-        qset = self.annotate(
-            assignedto = Case(
-                When(pgroup_id=1, then=Concat(F('people__peoplename'), V(' [PEOPLE]'))),
-                When(people_id=1, then=Concat(F('pgroup__groupname'), V(' [GROUP]'))),
-            )
-        ).filter(
-            client_id = S['client_id'],
+
+    
+    def get_taskchart_data(self, request):
+        S, R = request.session, request.GET
+        total_schd = self.filter(
+            Q(Q(parent_id__in = [1, -1]) | Q(parent_id__isnull=True)),
             bu_id__in = S['assignedsites'],
+            identifier = 'TASK',
             plandatetime__date__gte = R['from'],
-            expirydatetime__date__lte = R['upto'],
-            identifier='TASK'
-        ).values('id', 'jobdesc', 'performedby__peoplename', 'jobstatus',
-                 'qset__qsetname', 'asset__assetname', 'expirydatetime',
-                 'gracetime', 'assignedto', 'plandatetime')
-        if R['jobstatus'] != 'TOTALSCHEDULED':
-            qset = qset.filter(jobstatus = R['jobstatus'])
-        ic(str(qset.query))
-        return qset or self.none()
-        
+            plandatetime__date__lte = R['upto'],
+            client_id = S['client_id']
+        ).values()
+        return [
+            total_schd.filter(jobstatus='ASSIGNED').count(),
+            total_schd.filter(jobstatus='COMPLETED').count(),
+            total_schd.filter(jobstatus='AUTOCLOSED').count(),
+            total_schd.count(),
+        ]
+    
+    
+    def get_tourchart_data(self, request):
+        S, R = request.session, request.GET
+        total_schd = self.filter(
+            Q(Q(parent_id__in = [1, -1]) | Q(parent_id__isnull=True)),
+            bu_id__in = S['assignedsites'],
+            identifier = 'INTERNALTOUR',
+            plandatetime__date__gte = R['from'],
+            plandatetime__date__lte = R['upto'],
+            client_id = S['client_id']
+        ).values()
+        return [
+            total_schd.filter(jobstatus='COMPLETED').count(),
+            total_schd.filter(jobstatus='INPROGRESS').count(),
+            total_schd.filter(jobstatus='PARTIALLYCOMPLETED').count(),
+            total_schd.count(),
+        ]
     
     
         
@@ -542,7 +556,7 @@ class AttachmentManager(models.Manager):
                 attachmenttype = 'ATTACHMENT',
                 owner = ownerid
                 ).annotate(
-            people_event_pic = Concat(V(settings.MEDIA_ROOT), V('/'),  F('filepath'), V('/'), F('filename'),
+            people_event_pic = Concat(V(settings.MEDIA_ROOT), V('/'),  F('filepath'),  F('filename'),
                                     output_field = CharField())).order_by('-mdtz').using(db)
         return qset[0] or self.none()
 
@@ -689,6 +703,38 @@ class AssetManager(models.Manager):
             identifier = 'LOCATION'
         ).select_related(*related).values(*fields)
         return qset or self.none()
+    
+    def get_assetchart_data(self, request):
+        S = request.session
+        
+        working = [
+        self.filter(runningstatus = 'WORKING', bu_id__in = S['assignedsites'], identifier = 'ASSET').values('id').order_by('assetcode').distinct('assetcode').count(),
+        self.filter(runningstatus = 'WORKING', bu_id__in = S['assignedsites'], identifier = 'CHECKPOINT').values('id').order_by('assetcode').distinct('assetcode').count(),
+        self.filter(runningstatus = 'WORKING', bu_id__in = S['assignedsites'], identifier = 'LOCATION').values('id').order_by('assetcode').distinct('assetcode').count()]
+        mnt = [
+        self.filter(runningstatus = 'MAINTENANCE', bu_id__in = S['assignedsites'], identifier = 'ASSET').values('id').order_by('assetcode').distinct('assetcode').count(),
+        self.filter(runningstatus = 'MAINTENANCE', bu_id__in = S['assignedsites'], identifier = 'CHECKPOINT').values('id').order_by('assetcode').distinct('assetcode').count(),
+        self.filter(runningstatus = 'MAINTENANCE', bu_id__in = S['assignedsites'], identifier = 'LOCATION').values('id').order_by('assetcode').distinct('assetcode').count()
+        ]
+        stb = [
+        self.filter(runningstatus = 'STANDBY', bu_id__in = S['assignedsites'], identifier = 'ASSET').values('id').order_by('assetcode').distinct('assetcode').count(),
+        self.filter(runningstatus = 'STANDBY', bu_id__in = S['assignedsites'], identifier = 'CHECKPOINT').values('id').order_by('assetcode').distinct('assetcode').count(),
+        self.filter(runningstatus = 'STANDBY', bu_id__in = S['assignedsites'], identifier = 'LOCATION').values('id').order_by('assetcode').distinct('assetcode').count()
+        ]
+        scp = [
+        self.filter(runningstatus = 'SCRAPPED', bu_id__in = S['assignedsites'], identifier = 'ASSET').values('id').order_by('assetcode').distinct('assetcode').count(),
+        self.filter(runningstatus = 'SCRAPPED', bu_id__in = S['assignedsites'], identifier = 'CHECKPOINT').values('id').order_by('assetcode').distinct('assetcode').count(),
+        self.filter(runningstatus = 'SCRAPPED', bu_id__in = S['assignedsites'], identifier = 'LOCATION').values('id').order_by('assetcode').distinct('assetcode').count()
+        ]
+        
+        series = [
+            {'name':'Working', 'data':working},     
+            {'name':'Maintainence', 'data':mnt},
+            {'name':'Standby', 'data':stb},
+            {'name':'Scrapped', 'data':scp},
+        ]
+        
+        return series, sum(list(map(sum, zip(*[working, mnt, stb, scp]))))
     
     
 

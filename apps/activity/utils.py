@@ -297,7 +297,7 @@ def save_assetjsonform(jsonform, asset):
     try:
         log.info('saving jsonform ...')
         for k in ['tempcode', 'supplier', 'meter', 'invoice_no', 'invoice_date',
-                     'service', 'sfdate', 'stdate', 'yom', 'msn', 'bill_val',
+                     'service', 'sfdate', 'stdate', 'yom', 'msn', 'bill_val', 'ismeter',
                      'bill_date', 'purchase_date', 'inst_date', 'po_number', 'far_asset_id']:
             asset.asset_json[k] = jsonform.cleaned_data.get(k)
     except Exception:
@@ -319,7 +319,7 @@ def get_asset_jsonform(people, request):
             if k
             in (
                 'tempcode', 'supplier', 'meter', 'invoice_no', 'invoice_date',
-                'service', 'sfdate', 'stdate', 'yom', 'msn', 'bill_val',
+                'service', 'sfdate', 'stdate', 'yom', 'msn', 'bill_val', 'ismeter',
                 'bill_date', 'purchase_date', 'inst_date', 'po_number', 'far_asset_id'
             )
         }

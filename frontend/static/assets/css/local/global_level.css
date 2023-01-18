@@ -451,3 +451,7 @@ tr.disabled-record td a {
 .y-primary{
     color: #01579b;
 }
+
+.count-item:hover {
+background-color: #e8f6ff !important;
+}

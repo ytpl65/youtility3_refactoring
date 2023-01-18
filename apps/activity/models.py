@@ -299,6 +299,7 @@ class Job(BaseModel, TenantAwareModel):
 def asset_json():
     return {
         'service': "",
+        'ismeter':False,
         'meter': "",
         "bill_val": 0.0,
         "supplier": '',
@@ -326,7 +327,7 @@ class Asset(BaseModel, TenantAwareModel):
        CHECKPOINT = ("CHECKPOINT", "Checkpoint")
        LOCATION   = ("LOCATION", "Location")
        SMARTPLACE = ("SMARTPLACE", "Smartplace")
-       NEA = ("NEA", "Non Engineering Asset")
+       NEA        = ("NEA", "Non Engineering Asset")
 
     class RunningStatus(models.TextChoices):
         MAINTENANCE = ("MAINTENANCE", "Maintenance")
@@ -335,7 +336,7 @@ class Asset(BaseModel, TenantAwareModel):
         SCRAPPED    = ("SCRAPPED", "Scrapped")
 
     uuid          = models.UUIDField(unique = True, editable = True, blank = True, default = uuid.uuid4)
-    assetcode     = models.CharField(_("Asset Code"), max_length = 50)
+    assetcode     = models.CharField(_("Asset Code"), max_length = 50, unique=True)
     assetname     = models.CharField(_("Asset Name"), max_length = 250)
     enable        = models.BooleanField(_("Enable"), default = True)
     iscritical    = models.BooleanField(_("Is Critical"))
@@ -423,7 +424,6 @@ class Jobneed(BaseModel, TenantAwareModel):
         YEARLY      = ("YEARLY", "Yearly")
         FORTNIGHTLY = ("FORTNIGHTLY", "Fort Nightly")
 
-    # id       = models.BigIntegerField(_("Jobneed Id"), primary_key = True)
     uuid             = models.UUIDField(unique = True, editable = True, blank = True, default = uuid.uuid4)
     jobdesc          = models.CharField(_("Job Description"), max_length = 200)
     plandatetime     = models.DateTimeField(_("Plan date time"), auto_now = False, auto_now_add = False)
@@ -616,6 +616,7 @@ class Ticket(BaseModel, TenantAwareModel):
         USERDEFINED     = ('USERDEFINED', 'User Defined')
 
 
+    uuid           = models.UUIDField(unique = True, editable = True, blank = True, default = uuid.uuid4)
     ticketno           = models.IntegerField(null=True,blank=True)   
     ticketdesc         = models.CharField(max_length=250)
     assignedtopeople   = models.ForeignKey('peoples.People', null=True, blank=True, on_delete=models.RESTRICT, related_name="ticket_people")

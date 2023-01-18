@@ -456,6 +456,7 @@ def perform_uploadattachment(file,  record, biodata):
         
         # if jobneed instance has alerts and attachmentcount > 0 the send alert mail
         if isinstance(eobj, Jobneed) and eobj.alerts == True:
+            log.info(f"Jobneed of uuid :{eobj.uuid} has alerts!")
             alert_sendmail(eobj, 'observation', atts=True)
             alert_sendmail(eobj, 'deviation', atts=True)
             
@@ -505,7 +506,6 @@ def alert_sendmail(obj, event, atts=False):
 
 
 def alert_observation(jobneed, atts=False):
-    # sourcery skip: extract-method, remove-redundant-fstring, switch
     from django.template.loader import render_to_string
     
     try:
@@ -526,6 +526,7 @@ def alert_observation(jobneed, atts=False):
             msg.body  = html_message
             msg.from_email = settings.EMAIL_HOST_USER
             msg.to = recipents
+            msg.content_subtype = 'html'
             if atts:
                 #add attachments to msg
                 pass
@@ -578,3 +579,5 @@ def call_service_based_on_filename(data, filename, db='default'):
     if filename == 'adhocRecord.gz':
         log.info("calling adhocRecord service..")
         return perform_adhocmutation.delay(file=data, db = db, bg=True)
+    
+    

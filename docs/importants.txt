@@ -44,3 +44,5 @@ IMPORTANT COMMANDS
 
 IMPORTANT NOTES
 1.BY DEFAULT PEOPLE PASSWORD IS <peoplecode>
+2. To give permission to the path : sudo chmod -R 777 /path/to/file or dir
+

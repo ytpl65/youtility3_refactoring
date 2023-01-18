@@ -676,6 +676,7 @@ class WorkPermit(forms.ModelForm):
 class AssetForm(forms.ModelForm):
     required_css_class = "required"
     enable = forms.BooleanField(required=False, initial=True, label='Enable')
+    
     class Meta:
         model = am.Asset
         fields = [
@@ -704,6 +705,7 @@ class AssetForm(forms.ModelForm):
         self.request = kwargs.pop('request')
         super().__init__(*args, **kwargs)
         self.fields['enable'].widget.attrs = {'checked':False} if self.instance.id else {'checked':True}
+        self.fields['assetcode'].widget.attrs = {'style':"text-transform:uppercase"}
         utils.initailize_form_fields(self)
         self.fields['identifier'].widget.attrs = {'style':"display:none"}
         self.fields['identifier'].initial      = 'ASSET'
@@ -716,6 +718,7 @@ class AssetForm(forms.ModelForm):
         self.fields['unit'].queryset           = om.TypeAssist.objects.filter(Q(tatype__tacode__in = ['ASSETUNIT', 'ASSET_UNIT', 'UNIT']))
         self.fields['brand'].queryset          = om.TypeAssist.objects.filter(Q(tatype__tacode__in = ['ASSETBRAND', 'ASSET_BRAND', 'BRAND']))
         self.fields['servprov'].queryset       = om.Bt.objects.filter(id__in = self.request.session['assignedsites'], isserviceprovider = True, enable=True)
+       
         
         
     
@@ -740,11 +743,18 @@ class AssetForm(forms.ModelForm):
             lat, lng = gps.split(',')
             gps = GEOSGeometry(f'SRID=4326;POINT({lng} {lat})')
         return gps
+    
+    def clean_assetcode(self):
+        if val := self.cleaned_data.get('assetcode'):
+            if am.Asset.objects.filter(assetcode = val).exists():
+                raise forms.ValidationError("Asset with this code already exist")
+            return val
         
 
 
 class AssetExtrasForm(forms.Form):
     required_css_class = "required"
+    ismeter =    forms.BooleanField(initial=False, required=False, label='Is Meter')
     tempcode      = forms.CharField(max_length=55, label='Temporary Code', required=False)
     supplier      = forms.CharField(max_length=55, label='Supplier', required=False)
     meter         = forms.ChoiceField(widget=s2forms.Select2Widget, label='Meter', required=False)

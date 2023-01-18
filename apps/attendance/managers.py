@@ -126,8 +126,8 @@ class PELManager(models.Manager):
     
     def get_sos_count_forcard(self, request):
         R, S = request.GET, request.session
-        pd1 = R.get('pd1', datetime.now().date())
-        pd2 = R.get('pd2', datetime.now().date())
+        pd1 = R.get('from', datetime.now().date())
+        pd2 = R.get('upto', datetime.now().date())
         return self.filter(
             bu_id__in = S['assignedsites'],
             client_id = S['client_id'],
@@ -138,8 +138,8 @@ class PELManager(models.Manager):
 
     def get_frfail_count_forcard(self, request):
         R, S = request.GET, request.session
-        pd1 = R.get('pd1', datetime.now().date())
-        pd2 = R.get('pd2', datetime.now().date())
+        pd1 = R.get('from', datetime.now().date())
+        pd2 = R.get('upto', datetime.now().date())
         return self.filter(
             bu_id__in = S['assignedsites'],
             client_id = S['client_id'],

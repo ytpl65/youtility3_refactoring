@@ -35,16 +35,16 @@
 {% block pagebody_container %}
 
 
-<div class="row">
+<div class="row d-flex justify-content-around">
     <div class="col-md-3" id="tasks_card">
         {% include "dashboard/RP_d/partials/dashboard_cards/partial_taskstats_card.html" %}
     </div>
-    <div class="col-md-4">
+    <div class="col-md-4 h-xl-75">
         <div class="card card-flush h-lg-100">
-            <div class="card-header py-4 mb-3">
+            <div class="card-header py-2 mb-3">
                 <h3 class="card-title align-items-start flex-column">
-                    <span class="card-label fw-bold text-gray-800">Assets Running Status</span>
-                    <span class="text-gray-400 mt-1 fw-semibold fs-6">Total <span>10</span> Assets</span>
+                    <span class="card-label fw-bold text-gray-800 y-primary">Assets Running Status</span>
+                    <span class="text-gray-400 mt-1 fw-semibold fs-6">Total <span id="total_assets"></span> Assets</span>
                 </h3>
             </div>
             <div class="card-body pb-0 pt-7 ps-6 mt-n12">
@@ -56,33 +56,31 @@
     <div class="col-md-3" id="tasks_card">
         {% include "dashboard/RP_d/partials/dashboard_cards/partial_guardtour_card.html" %}
     </div>
-    <div class="card col-md-2">
+    <div class="card col-xl-2 col-md-6">
         <div class="row card">
             <div class="col-sm-12 portlet d-none col-md mb-2" id="PORTLET_SOS_ALERTS">
-                <div class="counter shadow me-3 mt-3 mb-2 rounded-3 bg-gradient-danger p-2">
+                <div class="counter count-item bg-gray-100 bg-opacity-60 me-3 mt-3 mb-2 rounded-3 p-2">
                     <div class="d-flex justify-content-between">
-                        <i class="fas p-4 align-middle yiconpadd yicon text-white fa-exclamation-triangle"></i>
+                        <i class="fas p-4 align-middle yiconpadd yicon y-primary fa-exclamation-triangle"></i>
                         <div class="pe-3">
-                            <h4 data-kt-countup="true" data-kt-countup-value="{{ sos_count }}"
-                                data-kt-countup-duration="20"
-                                class="pb-3 text-white  timer count-title text-end count-number">
-                                {{ sos_count }}
+                            <h4  
+                                class="pb-3 y-primary  timer count-title text-end count-number" id="sos_count">
+                               
                             </h4>
-                            <p class="h3 text-white">SOS Alerts</p>
+                            <p class="h3 text-gray-500 fw-semibold fs-6">SOS Alerts</p>
                         </div>
                     </div>
                 </div>
             </div>
             <div class="col-sm-12 portlet d-none col-md mb-2" id="PORTLET_INCIDENTREPORTS">
-                <div class="counter shadow  p-2 me-2 mb-2 rounded-3 bg-gradient-primary">
+                <div class="counter count-item bg-gray-100 bg-opacity-60  p-2 me-2 mb-2 rounded-3 ">
                     <div class="d-flex justify-content-between">
-                        {# <i class="fas p-4 yiconpadd yicon fa-clipboard-user text-white fs-1"></i> #}
-                        <i class="fas p-4 yiconpadd yicon text-start text-white fa-file-medical-alt"></i>
+                        {# <i class="fas p-4 yiconpadd yicon fa-clipboard-user y-primary fs-1"></i> #}
+                        <i class="fas p-4 yiconpadd yicon text-start y-primary fa-file-medical-alt"></i>
                         <div class="pe-3">
-                            <h4 data-kt-countup="true" data-kt-countup-value="{{ IR_count }}"
-                                data-kt-countup-duration="20"
-                                class="pb-3 text-white text-end timer count-title count-number">{{ IR_count }}</h4>
-                            <p class="h3 text-white">Incident Reports</p>
+                            <h4 
+                                class="pb-3 y-primary text-end timer count-title count-number" id="ir_count"></h4>
+                            <p class="h3 text-gray-500 fw-semibold fs-6">Incident Reports</p>
                         </div>
                     </div>
                 </div>
@@ -90,27 +88,25 @@
         </div>
         <div class="row card">
             <div class="col-sm-12 portlet d-none col-md mb-2" id="PORTLET_FR_FAILURES">
-                <div class="counter shadow  p-2 me-2 mb-2 rounded-3 bg-gradient-warning">
+                <div class="counter count-item bg-gray-100 bg-opacity-60  p-2 me-2 mb-2 rounded-3">
                     <div class="d-flex justify-content-between">
-                        <i class="bi bi-person-bounding-box yiconpadd yicon p-4 text-white"></i>
+                        <i class="bi bi-person-bounding-box yiconpadd yicon p-4 y-primary"></i>
                         <div class="pe-3">
-                            <h4 data-kt-countup="true" data-kt-countup-value="{{ FR_fail_count }}"
-                                data-kt-countup-duration="20"
-                                class="pb-3 text-white  text-end timer count-title count-number">{{ FR_fail_count }}</h4>
-                            <p class="h4 text-white">Attendance</p>
+                            <h4  
+                                class="pb-3 y-primary  text-end timer count-title count-number" id="att_count"></h4>
+                            <p class="h4 text-gray-500 fw-semibold fs-6">Attendance</p>
                         </div>
                     </div>
                 </div>
             </div>
             <div class="col-sm-12 portlet d-none col-md " id="PORTLET_ROUTES">
-                <div class="counter shadow p-2 me-2  mb-2 rounded-3 bg-gradient-success">
+                <div class="counter count-item bg-gray-100 bg-opacity-60 p-2 me-2  mb-2 rounded-3">
                     <div class="d-flex justify-content-between">
-                        <i class="fas yicon yiconpadd text-white p-4 fa-route"></i>
+                        <i class="fas yicon yiconpadd y-primary p-4 fa-route"></i>
                         <div class="pe-3">
-                            <h4 data-kt-countup="true" data-kt-countup-value="{{ tour_count }}"
-                                data-kt-countup-duration="20"
-                                class="pb-3 text-white text-end timer count-title count-number">{{ tour_count }}</h4>
-                            <p class="h3 text-white">Routes</p>
+                            <h4 
+                                class="pb-3 y-primary text-end timer count-title count-number" id="route_count"></h4>
+                            <p class="h3 text-gray-500 fw-semibold fs-6">Routes</p>
                         </div>
                     </div>
                 </div>
@@ -224,12 +220,15 @@
             titleCancel:"Exit fullscreen mode"
         }
     })
+    //Gloval vars used by below scripts
     var _taskJobstatus = null;
     var _popUpTable = null;
     var _dataTableConfig = null;
     var _db_cardtype = null;
+    var _assetChart = null;
     var _from_pd = moment().format('YYYY-MM-DD');
     var _to_pd = moment().format('YYYY-MM-DD')
+    var _assetChartSeries;
 
 
     $(document).ready(() => {
@@ -262,6 +261,7 @@
             $('.card').removeClass('d-none') 
         }
     })
+    
 </script>
 
     {% include "dashboard/RP_d/partials/dashboard_cards/partial_datatables_config.html" %}
@@ -283,44 +283,34 @@
             $("#tours_scheduled").html(data_.totalscheduled_tours_count)
             $("#tours_inprogress").html(data_.inprogress_tours_count)
             $("#tours_partiallycompleted").html(data_.partiallycompleted_tours_count)
-            total_number_of_assets = data_.total_assets
-            assets_status_counts = [data_.asset_maintainence_count, data_.asset_standby_count,
-             data_.asset_working_count,data_.asset_scrapped_count]
+            $("#total_assets").html(data_.assetchart_total_count)
+            $("#ir_count").html(data_.IR_count)
+            $("#route_count").html(data_.route_count)
+            $("#sos_count").html(data_.sos_count)
+            $("#att_count").html(data_.FR_fail_count)
             
+            //script related to chart of asset status card loaded with this file
+            {% include "dashboard/RP_d/partials/dashboard_cards/partial_assets_card.html" %}
+
+            let assetCharData = data_.assetchartdata
+            if(_assetChart !== null){
+                _assetChart.updateSeries(assetCharData) 
+            }else{
+                _assetChartSeries = assetCharData
+                _assetChart = new ApexCharts(document.querySelector("#assets_status_chart"), options2);
+                setTimeout(function() {
+                    _assetChart.render()
+                }, 200); 
+            }
         })
         .fail((xhr, status, error) => {
             console.log(xhr)
         }) 
 
     }
-
+    
 
     $(document).ready(() => {
-        //on click on popup_link
-        //$(".popup_link").on('click', (e) => {
-        //    $("#popup_table").modal('show')
-        //    _taskJobstatus = $(e.currentTarget).attr("data-jobstatus");
-        //    _db_cardtype = $(e.currentTarget).attr("data-cardtype");
-        //    if(_db_cardtype === 'taskstats'){
-        //        _dataTableConfig = tasks_dashboard_options
-        //    }
-        //    
-        //    if ($.fn.DataTable.isDataTable("#dashboardTable")) {
-        //        _popUpTable.destroy();
-        //    }
-        //    
-        //    $.fn.dataTable.tables( {visible: true, api: true} ).columns.adjust();
-        //    $('#popup_table').modal({
-        //        keyboard: false
-        //    })
-        //    
-        //    _popUpTable = $("#dashboardTable").DataTable(
-        //        _dataTableConfig
-        //    )
-        //    
-        //    
-        //})
-
         getStatsForDashboard()
 
         //add input field to the datatables dom
@@ -329,8 +319,12 @@
             _to_pd = picker.endDate.format('YYYY-MM-DD');
             getStatsForDashboard()
         })
+        
+        
+
+
+        
     })
 </script>
 
-{% include "dashboard/RP_d/partials/dashboard_cards/partial_assets_card.html" %}
 {% endblock extra_scripts %}

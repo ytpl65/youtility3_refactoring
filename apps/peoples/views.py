@@ -26,6 +26,8 @@ import apps.peoples.utils as putils
 from django.contrib import messages
 from .forms import CapabilityForm, PgroupForm, PeopleForm, PeopleExtrasForm, LoginForm
 from django_email_verification import send_email
+from django.views.decorators.cache import never_cache
+
 logger = logging.getLogger('django')
 
 # Create your views here.
@@ -42,6 +44,7 @@ class SignIn(View):
         'invalid-form': 'sign in form is not valid...',
         'critical-error': 'something went wrong please follow the traceback to fix it... '}
 
+    @never_cache
     def get(self, request, *args, **kwargs):
         logger.info('SignIn View')
         request.session.set_test_cookie()

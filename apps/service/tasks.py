@@ -16,8 +16,38 @@ from .validators import clean_record
 from pprint import pformat
 from intelliwiz_config.celery import app
 from celery.utils.log import get_task_logger
-log = get_task_logger(__name__)
+log = get_task_logger('django')
 import json
+
+
+def make_square(path1, path2):
+    from PIL import Image
+    try:
+        # Open the first image
+        img1 = Image.open(path1)
+        # Get the aspect ratio
+        width, height = img1.size
+        aspect_ratio = width / height
+        # If the aspect ratio is not 1:1
+        if aspect_ratio != 1:
+            # Resize the image to make it square
+            img1 = img1.resize((height, height))
+        # Save the new square image
+        
+        img1.save(path1)
+        # Repeat the process for the second image
+        img2 = Image.open(path2)
+        width, height = img2.size
+        aspect_ratio = width / height
+        if aspect_ratio != 1:
+            img2 = img2.resize((height, height))
+        img2.save(path2)
+    except FileNotFoundError:
+        print("Error: One or both of the provided file paths do not exist.")
+    except IOError:
+        print("Error: One or both of the provided files are not images.")
+    except Exception as e:
+        print("Error: An unknown error occurred. while performing make_square(path1, path2)",e)
 
 
 def insertrecord(record, tablename):
@@ -481,7 +511,8 @@ def perform_facerecognition_bgt(self, pel_uuid, peopleid, db='default'):
                 if default_peopleimg and pel_att.people_event_pic:
                     log.info(f"default image path:{default_peopleimg} and uploaded file path:{pel_att.people_event_pic}")
                     from deepface import DeepFace
-                    fr_results = DeepFace.verify(img1_path=default_peopleimg, img2_path=pel_att.people_event_pic, model_name='VGG-Face')
+                    make_square(default_peopleimg, pel_att.people_event_pic)
+                    fr_results = DeepFace.verify(img1_path=default_peopleimg, img2_path=pel_att.people_event_pic, enforce_detection=False)
                     log.info(f"deepface verification completed and results are {fr_results}")
                     if PeopleEventlog.objects.update_fr_results(fr_results, pel_uuid, peopleid, db):
                         log.info("updation of fr_results in peopleeventlog is completed...")

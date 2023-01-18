@@ -92,11 +92,15 @@ class PeopleManager(BaseUserManager):
     def get_siteincharge_emails(self, buid):
         from apps.peoples.models import Pgbelonging
         
-        grps = list(Pgbelonging.objects.filter(
-            assignsites_id=buid, people_id__in = [1, None]).values_list(
-                'pgroup_id', flat=True))
-        return self.filter(
-            Q(Q(bu_id=buid) | Q(people_extras__assignsitegroup__in = grps)) &
+        grps = list(Pgbelonging.objects.annotate(
+                groupid = Cast('pgroup_id', models.CharField())
+            ).filter(
+            assignsites_id=buid,
+            people_id__in = [1, None],
+            ).values_list(
+                'groupid', flat=True))
+        return self.filter( 
+            Q(Q(bu_id=buid) | Q(people_extras__assignsitegroup__in = grps)) &   
             Q(Q(designation__tacode = 'SITEINCHARGE') | Q(worktype__tacode= 'SITEINCHARGE')) 
             & Q(isverified=True)).values_list(
                 'email', flat=True

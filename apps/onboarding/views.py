@@ -1752,143 +1752,41 @@ class   RPDashboard(LoginRequiredMixin, View):
         ic(R)
         try:
             if R.get('action') == 'getCounts':
-                objs = self.get_all_dashboard_counts(request)
+                objs = self.get_all_dashboard_counts(request, P)
                 ic(objs)
                 return rp.JsonResponse(objs, status=200)   
-            
-            if R.get('action') == 'dashboard_tasks_card' and R.get('jobstatus'):
-                ic("called......... ")
-                objs = am.Jobneed.objects.get_tasks_db_card(request, R)
-                ic(objs)
-                return rp.JsonResponse({'data':list(objs)}, status=200)   
-            
-            if R.get('action') == 'dashboard_sitepeople':
-                from apps.peoples.models import People
-                objs = People.objects.get_peoples_at_site(request)
-                ic(objs)
-                return rp.JsonResponse({'data':list(objs)}, status=200)
-            cxt = {
-                'sos_count':P['pel_model'].objects.get_sos_count_forcard(request),
-                'IR_count': P['jn_model'].objects.get_ir_count_forcard(request),
-                'FR_fail_count':P['pel_model'].objects.get_frfail_count_forcard(request),
-                'tour_count':P['jn_model'].objects.get_schdtour_count_forcard(request)
-            }
-            return render(request, P['RP'], context=cxt)
+            return render(request, P['RP'])
         except Exception as e:
             logger.error("something went wrong RPDashboard view", exc_info=True)
     
-    def get_all_dashboard_counts(self, request):
+    def get_all_dashboard_counts(self, request, P):
         R, S = request.GET, request.session
         if R['from'] and R['upto']:
             from django.db.models import Q, F, Count
             from itertools import chain
+            arr, total = am.Asset.objects.get_assetchart_data(request)
+            task_arr = am.Jobneed.objects.get_taskchart_data(request)
+            tour_arr = am.Jobneed.objects.get_tourchart_data(request)
 
             return {
                 'counts': {
-                    'totalschd_tasks_count': am.Jobneed.objects.filter(
-                        Q(Q(identifier='TASK') & Q(client_id=S['client_id'])),
-                        plandatetime__date__gte=R['from'],
-                        plandatetime__date__lte=R['upto'],
-                    ).count(),
-                    'assigned_tasks_count': am.Jobneed.objects.filter(
-                        Q(Q(identifier='TASK') & Q(client_id=S['client_id'])& Q(jobstatus='ASSIGNED')),
-                        plandatetime__date__gte=R['from'],
-                        plandatetime__date__lte=R['upto'],
-                    ).count(),
-                    'completed_tasks_count': am.Jobneed.objects.filter(
-                        Q(
-                            Q(identifier='TASK')
-                            & Q(client_id=S['client_id'])
-                            & Q(jobstatus='COMPLETED')
-                        ),
-                        plandatetime__date__gte=R['from'],
-                        plandatetime__date__lte=R['upto'],
-                    ).count(),
-                    'autoclosed_tasks_count': am.Jobneed.objects.filter(
-                        Q(
-                            Q(identifier='TASK')
-                            & Q(client_id=S['client_id'])
-                            & Q(jobstatus='AUTOCLOSED')
-                        ),
-                        plandatetime__date__gte=R['from'],
-                        plandatetime__date__lte=R['upto'],
-                    ).count(),
+                    'totalschd_tasks_count': task_arr[-1],
+                    'assigned_tasks_count': task_arr[0],
+                    'completed_tasks_count': task_arr[1],
+                    'autoclosed_tasks_count': task_arr[2],
                     
-                    'totalscheduled_tours_count': am.Jobneed.objects.filter(
-                        Q(
-                            Q(identifier='INTERNALTOUR')
-                            & Q(client_id=S['client_id']) 
-                            & Q(parent_id = 1)
-                        ),
-                        plandatetime__date__gte=R['from'],
-                        plandatetime__date__lte=R['upto'],
-                    ).count(),
-                    'completed_tours_count': am.Jobneed.objects.filter(
-                        Q(
-                            Q(identifier='INTERNALTOUR')
-                            & Q(client_id=S['client_id'])
-                            & Q(jobstatus='COMPLETED') & Q(parent_id = 1)
-                        ),
-                        plandatetime__date__gte=R['from'],
-                        plandatetime__date__lte=R['upto'],
-                    ).count(),
-                    'inprogress_tours_count': am.Jobneed.objects.filter(
-                        Q(
-                            Q(identifier='INTERNALTOUR')
-                            & Q(client_id=S['client_id'])
-                            & Q(jobstatus='INPROGRESS') & Q(parent_id = 1)
-                        ),
-                        plandatetime__date__gte=R['from'],
-                        plandatetime__date__lte=R['upto'],
-                    ).count(),
-                    'partiallycompleted_tours_count': am.Jobneed.objects.filter(
-                        Q(
-                            Q(identifier='INTERNALTOUR')
-                            & Q(client_id=S['client_id'])
-                            & Q(jobstatus='PARTIALLYCOMPLETED') & Q(parent_id = 1)
-                        ),
-                        plandatetime__date__gte=R['from'],
-                        plandatetime__date__lte=R['upto'],
-                    ).count(),
-                    'asset_maintainence_count': am.Asset.objects.filter(
-                        Q(
-                            Q(runningstatus='MAINTENANCE')
-                            & Q(client_id=S['client_id'])
-                        ),
-                        mdtz__date__gte=R['from'],
-                        mdtz__date__lte=R['upto'],
-                    ).count(),
-                    'asset_scrapped_count': am.Asset.objects.filter(
-                        Q(
-                            Q(runningstatus='MAINTENANCE')
-                            & Q(client_id=S['client_id'])
-                        ),
-                        mdtz__date__gte=R['from'],
-                        mdtz__date__lte=R['upto'],
-                    ).count(),
-                    'asset_working_count': am.Asset.objects.filter(
-                        Q(
-                            Q(runningstatus='WORKING')
-                            & Q(client_id=S['client_id'])
-                        ),
-                        mdtz__date__gte=R['from'],
-                        mdtz__date__lte=R['upto'],
-                    ).count(),
-                    'asset_standby_count': am.Asset.objects.filter(
-                        Q(
-                            Q(runningstatus='STANDBY')
-                            & Q(client_id=S['client_id'])
-                        ),
-                        mdtz__date__gte=R['from'],
-                        mdtz__date__lte=R['upto'],
-                    ).count(),
-                    'total_assets': am.Asset.objects.filter(
-                        Q(
-                            Q(client_id=S['client_id'])
-                        ),
-                        mdtz__date__gte=R['from'],
-                        mdtz__date__lte=R['upto'],
-                    ).count(),
+                    'totalscheduled_tours_count': tour_arr[-1],
+                    'completed_tours_count': tour_arr[0],
+                    'inprogress_tours_count': tour_arr[1],
+                    'partiallycompleted_tours_count':tour_arr[2],
+                    
+                    'assetchartdata':arr,
+                    'assetchart_total_count':total,
+                    
+                'sos_count':P['pel_model'].objects.get_sos_count_forcard(request),
+                'IR_count': P['jn_model'].objects.get_ir_count_forcard(request),
+                'FR_fail_count':P['pel_model'].objects.get_frfail_count_forcard(request),
+                'route_count':P['jn_model'].objects.get_schdroutes_count_forcard(request)
                 }
             }
                 
