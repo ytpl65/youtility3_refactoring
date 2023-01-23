@@ -106,8 +106,8 @@ class Bt(BaseModel, TenantAwareModel, HeirarchyModel):
     def save(self, *args, **kwargs):
         super().save(*args, **kwargs)
         from apps.core import utils
-        if self.siteincharge is None: self.siteincharge,  _ = utils.get_or_create_none_people()
-        if self.butype is None: self.butype, _ = utils.get_or_create_none_typeassist()
+        if self.siteincharge is None: self.siteincharge= utils.get_or_create_none_people()
+        if self.butype is None: self.butype = utils.get_none_typeassist()
 
 class Contract(BaseModel, TenantAwareModel):
     bu               = models.ForeignKey('Bt', null = True, on_delete = models.RESTRICT,  related_name='contract_bu', verbose_name='Site')

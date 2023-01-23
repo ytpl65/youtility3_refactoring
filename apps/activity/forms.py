@@ -284,7 +284,7 @@ class QuestionSetForm(MasterQsetForm):
 
 
 
-class   MasterAssetForm(forms.ModelForm):
+class  MasterAssetForm(forms.ModelForm):
     required_css_class = "required"
     SERVICE_CHOICES = [
         ('NONE', 'None'),
@@ -386,7 +386,7 @@ class SmartPlaceForm(forms.ModelForm):
         return gps
 
 
-class CheckpointForm(MasterAssetForm):
+class CheckpointForm(forms.ModelForm):
     required_css_class = "required"
     error_msg = {
         'invalid_assetcode'  : 'Spaces are not allowed in [Code]',
@@ -397,48 +397,37 @@ class CheckpointForm(MasterAssetForm):
     request=None
 
 
-    tempcode       = None
-    service        = None
-    sfdate         = None
-    stdate         = None
-    msn            = None
-    yom            = None
-    bill_val       = None
-    bill_date      = None
-    purachase_date = None
-    inst_date      = None
-    po_number      = None
-    far_asset_id   = None
-    invoice_date   = None
-    invoice_no     = None
-    supplier       = None
-    meter          = None
-    model          = None
-    subcategory    = None
-    category       = None
-    unit           = None
-    brand          = None
-
-    class Meta(MasterAssetForm.Meta):
-        exclude = ['capacity']
+    class Meta:
+        model = am.Asset
+        fields = ['assetcode', 'assetname', 'runningstatus',
+            'iscritical', 'enable', 'identifier', 'ctzoffset', 'type', 'location']
+        widgets = {
+            'location':s2forms.Select2Widget,
+            'type':s2forms.Select2Widget,
+            'parent':s2forms.Select2Widget,
+            'runningstatus':s2forms.Select2Widget
+        }
+        labels = {'location':'Location'}
         
 
     def __init__(self, *args, **kwargs):
         """Initializes form add atttibutes and classes here."""
         self.request = kwargs.pop('request', None)
-       
         super(CheckpointForm, self).__init__(*args, **kwargs)
         self.fields['identifier'].initial = 'CHECKPOINT'
         self.fields['parent'].required = False
         self.fields['type'].required = False
         self.fields['identifier'].widget.attrs = {"style": "display:none"}
-        self.fields['parent'].queryset = am.Asset.objects.filter(
-            Q(identifier='CHECKPOINT') & Q(enable = True) | Q(assetcode='NONE'))
+        self.fields['location'].queryset = am.Location.objects.filter(
+            Q(enable = True) | Q(loccode='NONE'),
+            bu_id__in = self.request.session['assignedsites'])
         utils.initailize_form_fields(self)
         
         
     def clean(self):
+        ic(self.request)
         super().clean()
+        self.cleaned_data = self.check_nones(self.cleaned_data)
         self.cleaned_data['gpslocation'] = self.data.get('gpslocation')
         if self.cleaned_data.get('gpslocation'):
             data = QueryDict(self.request.POST['formData'])
@@ -482,6 +471,22 @@ class CheckpointForm(MasterAssetForm):
             lat, lng = gps.split(',')
             gps = GEOSGeometry(f'SRID=4326;POINT({lng} {lat})')
         return gps
+    
+    def check_nones(self, cd):
+        fields = {
+            'parent': 'get_or_create_none_asset',
+            'servprov'   : 'get_or_create_none_bv',
+            'type'       : 'get_none_typeassist',
+            'category'   : 'get_none_typeassist',
+            'subcategory': 'get_none_typeassist',
+            'brand'      : 'get_none_typeassist',
+            'unit'       : 'get_none_typeassist',
+            'location'   : 'get_or_create_none_location'}
+        for field, func in fields.items():
+            if cd.get(field) in [None, ""]:
+                cd[field] = getattr(utils, func)()
+        return cd
+    
 
 class JobForm(forms.ModelForm):
 
@@ -682,13 +687,13 @@ class AssetForm(forms.ModelForm):
         fields = [
             'assetcode', 'assetname', 'runningstatus', 'type', 'category', 
             'subcategory', 'brand', 'unit', 'capacity', 'servprov', 'parent',
-            'iscritical', 'enable', 'identifier', 'ctzoffset'
+            'iscritical', 'enable', 'identifier', 'ctzoffset','location'
         ]
         labels={
             'assetcode':'Code', 'assetname':'Name', 'runningstatus':'Status',
             'type':'Type', 'category':'Category', 'subcategory':'Sub Category',
             'brand':'Brand', 'unit':'Unit', 'capacity':'Capacity', 'servprov':'Service Provider',
-            'parent':'Belongs To', 'gpslocation':'GPS'
+            'parent':'Belongs To', 'gpslocation':'GPS', 'location':'Belongs to location'
         }
         widgets={
             'brand'        : s2forms.Select2Widget,
@@ -699,6 +704,7 @@ class AssetForm(forms.ModelForm):
             'runningstatus': s2forms.Select2Widget,
             'type'         : s2forms.Select2Widget,
             'parent'       : s2forms.Select2Widget,
+            'location'     : s2forms.Select2Widget,
         }
     
     def __init__(self, *args, **kwargs):
@@ -711,7 +717,8 @@ class AssetForm(forms.ModelForm):
         self.fields['identifier'].initial      = 'ASSET'
         self.fields['capacity'].required       = False
         self.fields['servprov'].required       = False
-        self.fields['parent'].queryset         = am.Asset.objects.filter(~Q(runningstatus='SCRAPPED'), identifier='LOCATION', client_id = self.request.session['client_id'])
+        self.fields['parent'].queryset         = am.Asset.objects.filter(~Q(runningstatus='SCRAPPED'), identifier='ASSET', bu_id__in = self.request.session['assignedsites'])
+        self.fields['location'].queryset        = am.Location.objects.filter(~Q(locstatus='SCRAPPED'), bu_id__in = self.request.session['assignedsites'])
         self.fields['type'].queryset           = om.TypeAssist.objects.filter(Q(tatype__tacode__in = ['ASSETTYPE', 'ASSET_TYPE']))
         self.fields['category'].queryset       = om.TypeAssist.objects.filter(Q(tatype__tacode__in = ['ASSETCATEGORY', 'ASSET_CATEGORY']))
         self.fields['subcategory'].queryset    = om.TypeAssist.objects.filter(Q(tatype__tacode__in = ['ASSETSUBCATEGORY', 'ASSET_SUBCATEGORY']))
@@ -724,6 +731,7 @@ class AssetForm(forms.ModelForm):
     
     def clean(self):
         super().clean()
+        self.cleaned_data = self.check_nones(self.cleaned_data)
         self.cleaned_data['gpslocation'] = self.data.get('gpslocation')
         if self.cleaned_data.get('parent') is None:
             self.cleaned_data['parent'] = utils.get_or_create_none_asset()
@@ -746,10 +754,24 @@ class AssetForm(forms.ModelForm):
     
     def clean_assetcode(self):
         if val := self.cleaned_data.get('assetcode'):
-            if am.Asset.objects.filter(assetcode = val).exists():
+            if not self.instance.id and  am.Asset.objects.filter(assetcode = val).exists():
                 raise forms.ValidationError("Asset with this code already exist")
             return val
-        
+    
+    def check_nones(self, cd):
+        fields = {'parent': 'get_or_create_none_asset',
+                'servprov': 'get_or_create_none_bv',
+                'type': 'get_none_typeassist',
+                'category': 'get_none_typeassist',
+                'subcategory': 'get_none_typeassist',
+                'brand': 'get_none_typeassist',
+                'unit': 'get_none_typeassist',
+                'location':'get_none_or_create_location'}
+        for field, func in fields.items():
+            if cd.get(field) in [None, ""]:
+                cd[field] = getattr(utils, func)()
+        return cd
+
 
 
 class AssetExtrasForm(forms.Form):
@@ -791,31 +813,32 @@ class AssetExtrasForm(forms.Form):
         
 
 class LocationForm(forms.ModelForm):
+    required_css_class = "required"
     class Meta:
-        model = am.Asset
+        model = am.Location
         fields = [
-            'assetcode', 'assetname', 'type', 'parent', 'enable', 
-            'iscritical', 'identifier', 'ctzoffset', 'runningstatus'
+            'loccode', 'locname',  'parent', 'enable', 'type',
+            'iscritical',  'ctzoffset', 'locstatus'
         ]
         labels = {
-            'assetcode':'Code', 'assetname':'Name', 'type':'Type', 'parent':'Belongs To', 
-            
+            'loccode':'Code', 'locname':'Name', 'parent':'Belongs To', 
         }
         widgets = {
             'type':s2forms.Select2Widget,
+            'locstatus':s2forms.Select2Widget,
             'parent':s2forms.Select2Widget
         }
     
     def __init__(self, *args, **kwargs):
         self.request = kwargs.pop('request', False)
         super().__init__(*args, **kwargs)
-        self.fields['identifier'].initial = 'LOCATION'
-        self.fields['type'].queryset = om.TypeAssist.objects.filter(tatype__tacode = 'LOCATIONTYPE')
+        self.fields['type'].queryset = om.TypeAssist.objects.filter(tatype__tacode__in = ['LOCATIONTYPE', 'LOCATION_TYPE'])
+        self.fields['loccode'].widget.attrs = {'style':"text-transform:uppercase"}
         utils.initailize_form_fields(self)
-        self.fields['identifier'].widget.attrs = {'style':"display:none"}
         
     def clean(self):
         super().clean()
+        self.cleaned_data = self.check_nones(self.cleaned_data)
         self.cleaned_data['gpslocation'] = self.data.get('gpslocation')
         if self.cleaned_data.get('gpslocation'):
             data = QueryDict(self.request.POST['formData'])
@@ -833,6 +856,21 @@ class LocationForm(forms.ModelForm):
             lat, lng = gps.split(',')
             gps = GEOSGeometry(f'SRID=4326;POINT({lng} {lat})')
         return gps
+    
+    def clean_loccode(self):
+        if val:= self.cleaned_data['loccode']:
+            if not self.instance.id and am.Location.objects.filter(loccode = val).exists():
+                raise forms.ValidationError("Location code already exist, choose different code")
+        return val.upper() if val else val
+    
+    def check_nones(self, cd):
+        fields = {'parent': 'get_or_create_none_location',
+                'type': 'get_none_typeassist',
+                }
+        for field, func in fields.items():
+            if cd.get(field) in [None, ""]:
+                cd[field] = getattr(utils, func)()
+        return cd
         
 class PPMForm(forms.ModelForm):
     ASSIGNTO_CHOICES   = [('PEOPLE', 'People'), ('GROUP', 'Group')]

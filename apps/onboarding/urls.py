@@ -24,7 +24,7 @@ urlpatterns = [
     path('wizard/',  include(wizard_url_patterns1)),
 
     path('geofence/', views.GeoFence.as_view(), name='geofence'),
-    path('import/', views.ImportFile.as_view(), name="import"),
+    path('import/', views.BulkImportData.as_view(), name="import"),
     path('client/', views.Client.as_view(), name="client"),
     path('bu/', views.BtView.as_view(), name="bu"),
     path('rp_dashboard/', views.RPDashboard.as_view(), name="rp_dashboard")

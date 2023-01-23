@@ -154,11 +154,11 @@ class People(AbstractBaseUser, PermissionsMixin, TenantAwareModel, BaseModel):
     def save(self, *args, **kwargs):
         super().save(*args, **kwargs)
         from apps.core import utils
-        if self.department is None: self.department, _ = utils.get_or_create_none_typeassist()
-        if self.designation is None: self.designation, _ = utils.get_or_create_none_typeassist()
-        if self.peopletype is None: self.peopletype, _ = utils.get_or_create_none_typeassist()
-        if self.worktype is None: self.worktype, _ = utils.get_or_create_none_typeassist()
-        if self.reportto is None: self.reportto, _ = utils.get_or_create_none_people()
+        if self.department is None: self.department = utils.get_none_typeassist()
+        if self.designation is None: self.designation = utils.get_none_typeassist()
+        if self.peopletype is None: self.peopletype = utils.get_none_typeassist()
+        if self.worktype is None: self.worktype = utils.get_none_typeassist()
+        if self.reportto is None: self.reportto = utils.get_or_create_none_people()
         
     
 

@@ -1598,7 +1598,7 @@ class ExternalTourScheduling(LoginRequiredMixin, View):
             'expirytime':0,
             'gracetime' : 5,
             'planduration' : 5,
-            'pgroup':utils.get_or_create_none_pgroup(),
+            'pgroup':1,
             'fromdate'  : datetime.combine(date.today(), time(00, 00, 00)),
             'uptodate'  : datetime.combine(date.today(), time(23, 00, 00)) + timedelta(days = 2),
         },

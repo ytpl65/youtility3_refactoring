@@ -388,7 +388,7 @@ def insert_into_jn_and_jnd(job, DT, resp):
         try:
             # required variables
             NONE_JN  = utils.get_or_create_none_jobneed()
-            NONE_P, _   = utils.get_or_create_none_people()
+            NONE_P   = utils.get_or_create_none_people()
             crontype = job['identifier']
             jobstatus = 'ASSIGNED'
             jobtype = 'SCHEDULE'
@@ -518,7 +518,7 @@ def check_sequence_of_prevjobneed(job, current_seq):
 def create_child_tasks(job, _pdtz, _people, jnid, _jobstatus, _jobtype):
     try:
         prev_edtz = None
-        NONE_P, _ = utils.get_or_create_none_people()
+        NONE_P  = utils.get_or_create_none_people()
         from django.utils.timezone import get_current_timezone
         tz = get_current_timezone()
         mins = pdtz = edtz = None

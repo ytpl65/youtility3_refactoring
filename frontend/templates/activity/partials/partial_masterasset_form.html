@@ -57,12 +57,12 @@
                 {{ master_assetform.type.errors }}
             </div>
             <!--Type End-->
-            
+            <!--Belongs To End-->
             <!--Belongs To Start-->
-            <label for="{{ master_assetform.parent.id_for_label }}" class="col-md-1">Belongs To:</label>
+            <label for="{{ master_assetform.location.id_for_label }}" class="col-md-1">Location:</label>
             <div class="col-md-5">
-                {{ master_assetform.parent }}
-                {{ master_assetform.parent.errors }}
+                {{ master_assetform.location }}
+                {{ master_assetform.location.errors }}
             </div>
             <!--Belongs To End-->
             
@@ -212,7 +212,7 @@
         
         //remove class to label which was added from above
         $('.booleans label').removeClass('col-md-1')
-        $('.django-select2').djangoSelect2({
+        $('.django-select2').select2({
             dropdownParent: $('#modal-checkpoint')
         })
         $(".modal").removeAttr("tabindex");

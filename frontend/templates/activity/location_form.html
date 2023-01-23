@@ -30,23 +30,22 @@ Location Form
     <input type="hidden" name="pk" id="pk" value="{{ locationform.instance.pk }}">
     <input type="hidden" name="csrfmiddlewaretoken" value ="{{ csrf_token }}">
     <input type="hidden" name="{{   locationform.ctzoffset.name }}"id= "{{ locationform.ctzoffset.auto_id }}" value="-1">
-    {{ locationform.identifier }}
     <div class="row">
         <div class="col-md-6">
             <div class="input-group mb-3">
                 <div class="col-md-4">
-                    {{ locationform.assetcode.label_tag() }}
+                    {{ locationform.loccode.label_tag() }}
                 </div>
                 <div class="col-md-8">
-                    {{ locationform.assetcode }}
+                    {{ locationform.loccode }}
                 </div>
             </div>
             <div class="input-group mb-3">
                 <div class="col-md-4">
-                    {{ locationform.assetname.label_tag() }}
+                    {{ locationform.locname.label_tag() }}
                 </div>
                 <div class="col-md-8">
-                    {{ locationform.assetname }}
+                    {{ locationform.locname }}
                 </div>
             </div>
             <div class="input-group mb-3">
@@ -71,10 +70,10 @@ Location Form
          <div class="col-md-6">
             <div class="input-group mb-3">
                 <div class="col-md-4">
-                    {{ locationform.runningstatus.label_tag() }}
+                    {{ locationform.locstatus.label_tag() }}
                 </div>
                 <div class="col-md-8">
-                    {{ locationform.runningstatus }}
+                    {{ locationform.locstatus }}
                 </div>
             </div>
             <div class="input-group mb-3">

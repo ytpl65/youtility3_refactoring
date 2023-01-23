@@ -1,7 +1,7 @@
 from django.conf import settings
 from django import forms
 from apps.activity.forms import JobForm, JobNeedForm
-import apps.onboarding.utils as ob_utils
+import apps.onboarding.utils as ob_utils    
 from apps.core import utils
 from django_select2 import forms as s2forms
 from django.db.models import Q
@@ -39,6 +39,12 @@ class Schd_I_TourJobForm(JobForm):
         self.fields['people'].queryset = pm.People.objects.filter(bu_id__in = self.request.session['assignedsites'], client_id = self.request.session['client_id'])
         utils.initailize_form_fields(self)
 
+    def clean(self):
+        super().clean()
+        cd = self.cleaned_data
+        if cd['people'] is None and cd['pgroup'] is None:
+            raise forms.ValidationError('Cannot be proceed assigned tour to either people or group.')
+    
 
     def clean_from_date(self):
         if val := self.cleaned_data.get('fromdate'):
@@ -54,7 +60,19 @@ class Schd_I_TourJobForm(JobForm):
         """Add class to invalid fields"""
         result = super(Schd_I_TourJobForm, self).is_valid()
         utils.apply_error_classes(self)
-        return result 
+        return result
+    
+    
+    def check_nones(self, cd):
+        fields = {
+            'parent':'get_or_create_none_job',
+            'people': 'get_or_create_none_people',
+            'pgroup': 'get_or_create_none_pgroup',
+            'asset' : 'get_or_create_none_asset'}
+        for field, func in fields.items():
+            if cd.get(field) in [None, ""]:
+                cd[field] = getattr(utils, func)()
+        return cd
 
     @staticmethod
     def clean_slno():
@@ -68,7 +86,7 @@ class Schd_I_TourJobForm(JobForm):
         if cd['pgroup'] is None:
             cd['pgroup'] = utils.get_or_create_none_pgroup()
         if cd['people'] is None:
-            cd['people'], _ = utils.get_or_create_none_people()
+            cd['people'] = utils.get_or_create_none_people()
         
 
 
@@ -215,6 +233,13 @@ class Schd_E_TourJobForm(JobForm):
         self.fields['seqno'].widget.attrs      = {"style": "display:none"}
         utils.initailize_form_fields(self)
         
+    def clean(self):
+        super().clean()
+        cd = self.cleaned_data
+        if cd['people'] is None and cd['pgroup'] is None:
+            raise forms.ValidationError('Cannot be proceed assigned tour to either people or group.')
+        
+        
     def clean_cron(self):
         if val := self.cleaned_data.get('cron'):
             return val
@@ -281,10 +306,7 @@ class SchdTaskFormJob(JobForm):
         cd          = self.cleaned_data
         times_names = ['planduration', 'expirytime', 'gracetime']
         types_names = ['planduration_type', 'expirytime', 'gracetime']
-        if cd['pgroup'] is None:
-            cd['pgroup'] = utils.get_or_create_none_pgroup()
-        if cd['people'] is None:
-            cd['people'], _ = utils.get_or_create_none_people()
+        self.cleaned_data = self.check_nones(self.cleaned_data)
         
         times = [cd.get(time) for time in times_names]
         types = [cd.get(type) for type in types_names]
@@ -295,7 +317,19 @@ class SchdTaskFormJob(JobForm):
     def convertto_mins(_type, _time):
         if _type == 'HOURS':
             return _time * 60
-        return _time * 24 * 60 if _type == 'DAYS' else _time            
+        return _time * 24 * 60 if _type == 'DAYS' else _time
+    
+    def check_nones(self, cd):
+        fields = {
+            'parent':'get_or_create_none_job',
+            'people': 'get_or_create_none_people',
+            'pgroup': 'get_or_create_none_pgroup',
+            'asset' : 'get_or_create_none_asset'}
+        for field, func in fields.items():
+            if cd.get(field) in [None, ""]:
+                cd[field] = getattr(utils, func)()
+        return cd      
+       
 
 
 

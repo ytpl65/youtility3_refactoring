@@ -59,9 +59,9 @@
     <div class="card col-xl-2 col-md-6">
         <div class="row card">
             <div class="col-sm-12 portlet d-none col-md mb-2" id="PORTLET_SOS_ALERTS">
-                <div class="counter count-item bg-gray-100 bg-opacity-60 me-3 mt-3 mb-2 rounded-3 p-2">
-                    <div class="d-flex justify-content-between">
-                        <i class="fas p-4 align-middle yiconpadd yicon y-primary fa-exclamation-triangle"></i>
+                <div class="counter  bg-gray-100 bg-opacity-60 me-3 mt-3 mb-2 rounded-3 p-2" >
+                    <div class="d-flex count-item justify-content-between" data-cardtype='SOSALERTS'>
+                        <i class="fas p-4 align-middle yiconpadd yicon text-danger fa-exclamation-triangle"></i>
                         <div class="pe-3">
                             <h4  
                                 class="pb-3 y-primary  timer count-title text-end count-number" id="sos_count">
@@ -73,10 +73,10 @@
                 </div>
             </div>
             <div class="col-sm-12 portlet d-none col-md mb-2" id="PORTLET_INCIDENTREPORTS">
-                <div class="counter count-item bg-gray-100 bg-opacity-60  p-2 me-2 mb-2 rounded-3 ">
-                    <div class="d-flex justify-content-between">
+                <div class="counter  bg-gray-100 bg-opacity-60  p-2 me-2 mb-2 rounded-3 ">
+                    <div class="d-flex count-item justify-content-between" data-cardtype='INCREPORTS'>
                         {# <i class="fas p-4 yiconpadd yicon fa-clipboard-user y-primary fs-1"></i> #}
-                        <i class="fas p-4 yiconpadd yicon text-start y-primary fa-file-medical-alt"></i>
+                        <i class="fas p-4 yiconpadd yicon text-start text-warning fa-file-medical-alt"></i>
                         <div class="pe-3">
                             <h4 
                                 class="pb-3 y-primary text-end timer count-title count-number" id="ir_count"></h4>
@@ -88,8 +88,8 @@
         </div>
         <div class="row card">
             <div class="col-sm-12 portlet d-none col-md mb-2" id="PORTLET_FR_FAILURES">
-                <div class="counter count-item bg-gray-100 bg-opacity-60  p-2 me-2 mb-2 rounded-3">
-                    <div class="d-flex justify-content-between">
+                <div class="counter  bg-gray-100 bg-opacity-60  p-2 me-2 mb-2 rounded-3">
+                    <div class="d-flex count-item justify-content-between" data-cardtype='ATTENDANCE'>
                         <i class="bi bi-person-bounding-box yiconpadd yicon p-4 y-primary"></i>
                         <div class="pe-3">
                             <h4  
@@ -100,9 +100,9 @@
                 </div>
             </div>
             <div class="col-sm-12 portlet d-none col-md " id="PORTLET_ROUTES">
-                <div class="counter count-item bg-gray-100 bg-opacity-60 p-2 me-2  mb-2 rounded-3">
-                    <div class="d-flex justify-content-between">
-                        <i class="fas yicon yiconpadd y-primary p-4 fa-route"></i>
+                <div class="counter  bg-gray-100 bg-opacity-60 p-2 me-2  mb-2 rounded-3">
+                    <div class="d-flex count-item justify-content-between" data-cardtype='ROUTES'>
+                        <i class="fas yicon yiconpadd text-success p-4 fa-route"></i>
                         <div class="pe-3">
                             <h4 
                                 class="pb-3 y-primary text-end timer count-title count-number" id="route_count"></h4>
@@ -289,14 +289,15 @@
             $("#sos_count").html(data_.sos_count)
             $("#att_count").html(data_.FR_fail_count)
             
-            //script related to chart of asset status card loaded with this file
-            {% include "dashboard/RP_d/partials/dashboard_cards/partial_assets_card.html" %}
+            
 
             let assetCharData = data_.assetchartdata
             if(_assetChart !== null){
                 _assetChart.updateSeries(assetCharData) 
             }else{
                 _assetChartSeries = assetCharData
+            //script related to chart of asset status card loaded with this file
+                {% include "dashboard/RP_d/partials/dashboard_cards/partial_assets_card.html" %}
                 _assetChart = new ApexCharts(document.querySelector("#assets_status_chart"), options2);
                 setTimeout(function() {
                     _assetChart.render()
@@ -319,11 +320,28 @@
             _to_pd = picker.endDate.format('YYYY-MM-DD');
             getStatsForDashboard()
         })
-        
-        
 
-
-        
+        $(".count-item").on('click', (e) => {
+            let cardType = $(e.target).attr('data-cardtype');
+            console.log(cardType, "^^^^^^^^^^")
+            switch (cardType) {
+                case 'SOSALERTS':
+                location.reload()
+                break;
+                case 'INCREPORTS':
+                console.log('clicked.......')
+                location.href = "{{ url('reports:incidentreport_list') }}?template=true";
+                break;
+                case 'ROUTES':
+                location.href = "{{ url('schedhuler:jobneedexternaltours') }}?template=true";
+                break;
+                case 'ATTENDANCE':
+                location.href = '{{ url("attendance:attendance_view") }}?template=true';
+                break;
+                default:
+                {}
+            }
+        })
     })
 </script>
 

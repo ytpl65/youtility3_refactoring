@@ -401,19 +401,19 @@ tr.disabled-record td a {
 }
 
 .bg-gradient-primary {
-    background-image: linear-gradient(45deg,#4099ff,#73b4ff);;
+    color: linear-gradient(45deg,#4099ff,#73b4ff);;
 }
 
 .bg-gradient-warning {
-    background-image: linear-gradient(45deg,#FFB64D,#ffcb80);
+    color: linear-gradient(45deg,#FFB64D,#ffcb80);
 }
 
 .bg-gradient-success {
-    background-image: linear-gradient(45deg,#2ed8b6,#59e0c5);
+    color: linear-gradient(45deg,#2ed8b6,#59e0c5);
 }
 
 .bg-gradient-danger {
-    background-image: linear-gradient(45deg,#FF5370,#ff869a);
+    color: linear-gradient(45deg,#FF5370,#ff869a);
 }
 
 .yicon {
@@ -454,4 +454,5 @@ tr.disabled-record td a {
 
 .count-item:hover {
 background-color: #e8f6ff !important;
+cursor: pointer;
 }

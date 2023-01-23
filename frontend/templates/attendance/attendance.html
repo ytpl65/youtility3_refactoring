@@ -48,7 +48,6 @@ td { padding: 6px; border: 1px solid #CCC; }
                 <img src="" class="card-img-top" alt="" id="attd_in_img" style="width: 252px;height: 252px;">
                 <ul class="list-group list-group-flush">
                     <li class="list-group-item" id="fr_in"></li>
-                    <li class="list-group-item"id='thresold'></li>
                     <li class="list-group-item"id="fr_metric"></li>
                     <li class="list-group-item"id="fr_ppl"></li>
                     <li class="list-group-item"id="fr_date"></li>
@@ -72,7 +71,6 @@ td { padding: 6px; border: 1px solid #CCC; }
                 <img src="" class="card-img-top" alt="" id="attd_out_img" style="width: 252px;height: 252px;">
                 <ul class="list-group list-group-flush">
                     <li class="list-group-item" id="fr_in2"></li>
-                    <li class="list-group-item"id='thresold2'></li>
                     <li class="list-group-item"id="fr_metric2"></li>
                     <li class="list-group-item"id="fr_ppl2"></li>
                     <li class="list-group-item"id="fr_date2"></li>
@@ -138,7 +136,7 @@ td { padding: 6px; border: 1px solid #CCC; }
             $("#muser").html(`Modified By: ${data['default_img_path'][0]['muser__peoplename']}`)
         })
         .fail((xhr, status, error) =>  {
-            
+            console.log(error)
         })
     }
     //if you want to modifiy here, then modify in custom.js initDateRange also

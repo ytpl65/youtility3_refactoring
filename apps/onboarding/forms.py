@@ -76,6 +76,10 @@ class TypeAssistForm(SuperTypeAssistForm):
         result = super().is_valid()
         utils.apply_error_classes(self)
         return result
+    
+    def clean(self):
+        super().clean()
+        ic(self.cleaned_data['tatype'])
 
     def clean_tacode(self):
         super().clean_tacode()
@@ -433,18 +437,19 @@ class ClentForm(BuPrefForm):
 
 class ImportForm(forms.Form):
     TABLECHOICES = [
-        ('PEOPLES', 'Peoples'),
-        ('BU', 'Buisiness Units'),
-        ('SHIFTS', 'Shifts'),
-        ('ASSETS', 'Assets'),
-        ('QUESTIONS', 'Questions'),
-        ('PEOPLEGROUPS', 'People Groups'),
-        ('SITEGROUPS', 'Site Groups'),
-        ('TYPEASSISTS', 'TypeAssists'),
+        ('PEOPLE', 'People'),
+        ('BU', 'Buisiness Unit'),
+        ('SHIFT', 'Shift'),
+        ('ASSET', 'Asset'),
+        ('QUESTION', 'Question'),
+        ('PEOPLEGROUP', 'People Group'),
+        ('SITEGROUP', 'Site Group'),
+        ('TYPEASSIST', 'TypeAssist'),
+        ('CAPABILITY', 'Capability'),
     ]
 
     importfile = forms.FileField(required = True, label='Import File', max_length = 50, allow_empty_file = False)
-    table = forms.ChoiceField(required = True, choices = TABLECHOICES, label='Select Type of Data', initial='TYPEASSISTS')
+    table = forms.ChoiceField(required = True, choices = TABLECHOICES, label='Select Type of Data', initial='TYPEASSISTS', widget=s2forms.Select2Widget)
 
     def __init__(self, *args, **kwargs):
         """Initializes form"""

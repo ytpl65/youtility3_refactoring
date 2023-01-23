@@ -3,6 +3,7 @@ from django.contrib.staticfiles.storage import staticfiles_storage
 from django.urls import reverse
 from django.contrib import messages
 from widget_tweaks.templatetags import widget_tweaks as wt
+from datetime import  datetime
 
 
 
@@ -23,6 +24,7 @@ class JinjaEnvironment(Environment):
     def __init__(self, **kwargs):
         super(JinjaEnvironment, self).__init__(**kwargs)
         self.globals['static']  = staticfiles_storage.url
+        self.globals['current_year'] = datetime.now().date().year
         self.globals['url'] = reverse
         self.filters["debug"] = debug
         self.globals['get_msgs'] = messages.get_messages

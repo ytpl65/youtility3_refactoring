@@ -262,7 +262,7 @@ function handle_rendering_of_menus(session) {
       //then showing every child assigned inside that parent
       for (var j = 0; j < childs.length; j++) {
         child = childs[j][0];
-        child_id = "#".concat(child.toLowerCase());
+        child_id = "#".concat(child.toUpperCase());
 
         $(child_id).show();
       }

@@ -1,12 +1,12 @@
 {% extends "base_form.html" %}
 
 {% block extra_css %}
-<link  href="{{ static('assets/plugins/custom/DataTables/datatables.min.css') }}" rel="stylesheet" type="text/css"/>
+<link href="{{ static('assets/plugins/custom/DataTables/datatables.min.css') }}" rel="stylesheet" type="text/css" />
 {{ importform.media.css }}
 <style>
-.vl {
-  border-right: 1px solid grey;
-}
+    .vl {
+        border-right: 1px solid grey;
+    }
 </style>
 
 <div class="vl"></div>
@@ -25,37 +25,40 @@
 {% block form_title %}
 Import Data
 {% endblock form_title %}
-<!------ END FORM TITLE -------->   
+<!------ END FORM TITLE -------->
 
 {% block form %}
-<div class="row">
-    <div class="col-md-4">
+<div class="row gx-8">
+    <div class="col-md-6">
+        <p class="ch4 y-primary mb-2">Please follow the instructions before proceed:</p>
+        <ol class="list-group ps-2 list-group-numbered">
+            <li class="list-group-item">File format of .xlsx for seamsless operation</li>
+            <li class="list-group-item">No column type formatting i.e everything should be text type</li>
+            <li class="list-group-item">The first column should always be 'id'</li>
+            <li class="list-group-item">Leave 'id' column empty</li>
+            <li class="list-group-item">ID, Name, Code, Type, BV, Client</li>
+        </ol>
+    </div>
+    
+    <div class="col-md-6">
         <form action="" method="post" id="id_import_form" enctype="multipart/form-data">
-            <input type="hidden"  name="csrfmiddlewaretoken" value="{{ csrf_token }}">
+            <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
             <div class="row mb-3">
-                <div class="col-md-6 mb-3">
+                <div class="col-md-3 mb-3">
                     {{ importform.table.label_tag() }}
                 </div>
-                <div class="col-md-6 mb-3">
+                <div class="col-md-9 mb-3">
                     {{ importform.table }}
                 </div>
-                <div class="col-md-6 mb-3">
+                <div class="col-md-3 mb-3">
                     {{ importform.importfile.label_tag() }}
                 </div>
-                <div class="col-md-6 mb-3">
+                <div class="col-md-9 mb-3">
                     {{ importform.importfile }}
                 </div>
             </div>
-            <button type="button"  class="btn btn-sm btn-secondary" form="id_import_form">Import Data</button>
+            <button type="button" class="btn btn-sm btn-primary" id="btn_importdata">Import Data</button>
         </form>
-    </div>
-    
-    <div class="col-md-1 vl"></div>
-    
-    <div class="col-md-7">
-        <table id="import_data_table">
-            <thead></thead>
-        </table>
     </div>
 </div>
 {% endblock form %}
@@ -64,62 +67,71 @@ Import Data
 {% block extra_scripts %}
 <script src="{{ static('assets/plugins/custom/DataTables/datatables.min.js') }}" type="text/javascript"></script>
 <script>
-    var _columns = {{ columns |default ("[]") | tojson }}
+    var _columns = {{columns |default ("[]") | tojson }}
     const DATA = {{ data |default ("[]") | tojson }}
-    
-    $(document).ready(function (){
+
+    $(document).ready(function () {
+
         //submit form with data-file
-        $("#id_import_form").click(() => {
+        $("#btn_importdata").click(() => {
             var fd = new FormData();
             fd.append('table', $("#id_table").val())
             const input = $('#id_importfile')[0].files[0] //document.querySelector('#id_importfile');
             fd.append('importfile', input);
             fd.append('csrfmiddlewaretoken', '{{ csrf_token }}');
-            
-            
-            const params = { url: "{{ url('onboarding:import') }}", modal:false}
-            const payLoad = {formData: fd, csrfmiddlewaretoken: '{{ csrf_token }}'}
-            
+
+
+            const params = {
+                url: "{{ url('onboarding:import') }}",
+                modal: false
+            }
+            const payLoad = {
+                formData: fd,
+                csrfmiddlewaretoken: '{{ csrf_token }}'
+            }
+
             Swal.fire({
                 title: "Submit",
                 text: 'Are you sure the the file you uploading has correct data?',
                 icon: 'question',
-                showCancelButton:true,
+                showCancelButton: true,
                 confirmButtonText: 'Yes Upload it!'
             }).then((res) => {
                 $.ajax({
-                    url        : params.url,
-                    data       : fd,
+                    url: params.url,
+                    data: fd,
                     contentType: false,
                     processData: false,
                     type: 'POST',
-                    success:function(res){
+                    success: function (res) {
                         console.log(res)
                     },
-                    error:function(xhr,status,error){
-                        console.log(error)
+                    error: function (xhr, status, error) {
+                        console.log(xhr)
                     }
                 })
             })
         })
-        
-        if ($.fn.DataTable.isDataTable( '#import_data_table' ) ) {
+
+        if ($.fn.DataTable.isDataTable('#import_data_table')) {
             table = $('#import_data_table').DataTable();
             table.destroy();
             $('#import_data_table').empty();
         }
-        
+
         //DataTable configuration
         $("#import_data_table").DataTable({
-            data       : JSON.parse(DATA),
-            columns    : JSON.parse(_columns),
+            data: JSON.parse(DATA),
+            columns: JSON.parse(_columns),
             deferRender: true,
-            ordering:false,
-            responsive : true,
-            dom        : `<'row' >rt<'row'>`,
-            columnDefs:[
-                {targets:0, visible:false, defaultContent:null}
-            ]
+            ordering: false,
+            responsive: true,
+            dom: `<'row' >rt<'row'>`,
+            columnDefs: [{
+                targets: 0,
+                visible: false,
+                defaultContent: null
+            }]
         })
     })
 </script>

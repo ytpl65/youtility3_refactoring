@@ -206,6 +206,7 @@ def get_instance_for_update(postdata, params, msg, pk, kwargs=None):
     logger.info("%s", msg)
     obj = params['model'].objects.get(id=pk)
     logger.info(f"object retrieved '{obj}'")
+    ic(kwargs)
     return params['form_class'](postdata, instance=obj, **kwargs)
 
 
@@ -267,7 +268,14 @@ def get_or_create_none_people(using=None):
             'dateofjoin': "1111-1-1", 'id': 1
         }
     )
-    return obj, _
+    return obj
+
+def get_none_typeassist():
+    try:
+        return ob.TypeAssist.objects.get(id=1)
+    except ob.TypeAssist.DoesNotExist:
+        o, _ = get_or_create_none_typeassist()
+        return o
 
 
 def get_or_create_none_pgroup():
@@ -276,6 +284,16 @@ def get_or_create_none_pgroup():
         defaults={
             'groupname': "NONE", 'id': 1
         }
+    )
+    return obj
+
+def get_or_create_none_location():
+    obj, _ = am.Location.objects.get_or_create(
+        id=1,
+        defaults={
+            'loccode': "NONE", 'id': 1, 'locname':'NONE',
+            'locstatus':'SCRAPPED'
+            }
     )
     return obj
 
@@ -1373,5 +1391,16 @@ def upload(request):
         return True, filename, fullpath 
             
                 
-            
-            
+
+def check_nones(none_fields, tablename, cleaned_data, json=False):
+    none_instance_map = {
+        'question':get_or_create_none_question,
+        'asset':get_or_create_none_asset,
+        'people': get_or_create_none_people,
+        'pgroup': get_or_create_none_pgroup,
+        'typeassist':get_or_create_none_typeassist
+    }
+
+    for field in none_fields:
+        cleaned_data[field] = 1 if json else none_instance_map[tablename]()
+    return cleaned_data

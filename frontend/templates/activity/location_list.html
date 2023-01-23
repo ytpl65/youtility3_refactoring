@@ -34,11 +34,10 @@ $(document).ready(function () {
 			},
 			columns:[
 				{data: 'id', visible:false, defaultContent: ""},
-				{data: 'identifier', visible:false, defaultContent: ""},
-				{data: 'assetcode', title: 'Code'},
-				{data: 'assetname', title: 'Name'},
-				{data: 'parent__assetname', title: 'Belongs To', defaultContent:null},
-				{data: 'runningstatus', title: 'Status'},
+				{data: 'loccode', title: 'Code'},
+				{data: 'locname', title: 'Name'},
+				{data: 'parent__locname', title: 'Belongs To', defaultContent:null},
+				{data: 'locstatus', title: 'Status'},
 				{data: 'enable', title: 'Enable'},
 			],
 			pageLength:14,
@@ -48,17 +47,17 @@ $(document).ready(function () {
 			dom:`<'row' <'col-sm-6 d-flex justify-content-start'f> <'col-sm-6 d-flex justify-content-end'B> >rt<'row'
 			 <'col-sm-6'l> <'col-sm-6'p><'col-sm-12 d-flex justify-content-center'i>>`,
 			columnDefs:[
-				{targets:[2,3], data: 'assetname', render:function(data, type, row, meta){
+				{targets:[1,2], data: 'locname', render:function(data, type, row, meta){
 					let updateUrl = "{{ url('activity:location') }}"
 					return `<a href=${updateUrl}?id=${row['id']}>${data}</a>`
 				}},
-				{targets:5, data: 'runningstatus',  render:function(data, type, row, meta){
+				{targets:4, data: 'locstatus',  render:function(data, type, row, meta){
 					if(data === 'MAINTENANCE'){return `<span class="badge badge-danger">${data}</span>`}
 					if(data === 'SCRAPPED'){return `<span class="badge badge-secondary">${data}</span>`}
 					if(data === 'STANDBY'){return `<span class="badge badge-info">${data}</span>`}
 					if(data === 'WORKING'){return `<span class="badge badge-success">${data}</span>`}
 				}},
-				{targets:4, render:function(data, type, row, meta){
+				{targets:3, render:function(data, type, row, meta){
 					return data || 'NONE'
 				}}
 

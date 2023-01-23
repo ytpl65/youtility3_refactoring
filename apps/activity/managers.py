@@ -694,37 +694,30 @@ class AssetManager(models.Manager):
         return qset or self.none()
     
     
-    def get_locationlistview(self, related, fields, request):
-        S = request.session
-        qset = self.filter(
-            ~Q(assetcode='NONE'),
-            bu_id__in = S['assignedsites'],
-            client_id = S['client_id'],
-            identifier = 'LOCATION'
-        ).select_related(*related).values(*fields)
-        return qset or self.none()
+    
     
     def get_assetchart_data(self, request):
         S = request.session
+        from apps.activity.models import Location
         
         working = [
         self.filter(runningstatus = 'WORKING', bu_id__in = S['assignedsites'], identifier = 'ASSET').values('id').order_by('assetcode').distinct('assetcode').count(),
         self.filter(runningstatus = 'WORKING', bu_id__in = S['assignedsites'], identifier = 'CHECKPOINT').values('id').order_by('assetcode').distinct('assetcode').count(),
-        self.filter(runningstatus = 'WORKING', bu_id__in = S['assignedsites'], identifier = 'LOCATION').values('id').order_by('assetcode').distinct('assetcode').count()]
+        Location.objects.filter(locstatus = 'WORKING', bu_id__in = S['assignedsites']).values('id').order_by('loccode').distinct('loccode').count()]
         mnt = [
         self.filter(runningstatus = 'MAINTENANCE', bu_id__in = S['assignedsites'], identifier = 'ASSET').values('id').order_by('assetcode').distinct('assetcode').count(),
         self.filter(runningstatus = 'MAINTENANCE', bu_id__in = S['assignedsites'], identifier = 'CHECKPOINT').values('id').order_by('assetcode').distinct('assetcode').count(),
-        self.filter(runningstatus = 'MAINTENANCE', bu_id__in = S['assignedsites'], identifier = 'LOCATION').values('id').order_by('assetcode').distinct('assetcode').count()
+        Location.objects.filter(locstatus = 'MAINTENANCE', bu_id__in = S['assignedsites']).values('id').order_by('loccode').distinct('loccode').count()
         ]
         stb = [
         self.filter(runningstatus = 'STANDBY', bu_id__in = S['assignedsites'], identifier = 'ASSET').values('id').order_by('assetcode').distinct('assetcode').count(),
         self.filter(runningstatus = 'STANDBY', bu_id__in = S['assignedsites'], identifier = 'CHECKPOINT').values('id').order_by('assetcode').distinct('assetcode').count(),
-        self.filter(runningstatus = 'STANDBY', bu_id__in = S['assignedsites'], identifier = 'LOCATION').values('id').order_by('assetcode').distinct('assetcode').count()
+        Location.objects.filter(locstatus = 'STANDBY', bu_id__in = S['assignedsites']).values('id').order_by('loccode').distinct('loccode').count()
         ]
         scp = [
         self.filter(runningstatus = 'SCRAPPED', bu_id__in = S['assignedsites'], identifier = 'ASSET').values('id').order_by('assetcode').distinct('assetcode').count(),
         self.filter(runningstatus = 'SCRAPPED', bu_id__in = S['assignedsites'], identifier = 'CHECKPOINT').values('id').order_by('assetcode').distinct('assetcode').count(),
-        self.filter(runningstatus = 'SCRAPPED', bu_id__in = S['assignedsites'], identifier = 'LOCATION').values('id').order_by('assetcode').distinct('assetcode').count()
+        #Location.objects.filter(locstatus = 'SCRAPPED', bu_id__in = S['assignedsites']).values('id').order_by('loccode').distinct('loccode').count()
         ]
         
         series = [
@@ -1139,3 +1132,28 @@ class ESCManager(models.Manager):
         qset = self.filter(pk = ID).values('notify', 'frequency', 'frequencyvalue', 'id')
         ic(qset)
         return {'data':list(qset)}
+    
+
+class LocationManager(models.Manager):
+    use_in_migrations = True
+    
+    def get_locationlistview(self, related, fields, request):
+        S = request.session
+        qset = self.filter(
+            ~Q(loccode='NONE'),
+            bu_id__in = S['assignedsites'],
+            client_id = S['client_id'],
+        ).select_related(*related).values(*fields)
+        return qset or self.none()
+    
+    def get_locations_modified_after(self, mdtz, buid, ctzoffset):
+        related = ['client', 'cuser', 'muser', 'parent',  'tenant', 'type', 'bu']
+        fields = ['id', 'cdtz', 'mdtz', 'ctzoffset', 'loccode', 'locname', 'enable', 'iscritical', 'gpslocation', 'locstatus',  'bu_id',
+               'client_id', 'cuser_id', 'muser_id', 'parent_id',  'tenant_id', 'type_id']
+        
+        if not isinstance(mdtz, datetime):
+            mdtz = datetime.strptime(mdtz, "%Y-%m-%d %H:%M:%S")
+        qset = self.select_related(*related).filter(
+            Q(mdtz__gte = mdtz) & Q(bu_id__in=[buid])  & Q(enable=True)
+            ).values(*fields)
+        return qset or self.none()

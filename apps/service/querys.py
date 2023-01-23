@@ -1,6 +1,6 @@
 import graphene
 from apps.core import utils
-from apps.activity.models import JobneedDetails, Question, QuestionSet, QuestionSetBelonging
+from apps.activity.models import JobneedDetails, Question, QuestionSet, QuestionSetBelonging, Location
 from apps.onboarding.models import GeofenceMaster, Bt
 from apps.peoples.models import Pgbelonging, Pgroup, People
 from django.db import connections
@@ -37,6 +37,11 @@ class Query(graphene.ObjectType):
                                                 mdtz = graphene.String(required = True),
                                                 ctzoffset = graphene.Int(required = True),
                                                 clientid = graphene.Int(required = True))
+    
+    get_locations = graphene.Field(SelectOutputType,
+                                                mdtz = graphene.String(required = True),
+                                                ctzoffset = graphene.Int(required = True),
+                                                buid = graphene.Int(required = True))
 
     get_peoplemodifiedafter = graphene.Field(SelectOutputType,
                                             mdtz = graphene.String(required = True),
@@ -128,6 +133,15 @@ class Query(graphene.ObjectType):
         log.info(f'\n\nrequest for typeassist-modified-after inputs : mdtz:{mdtz}, ctzoffset:{ctzoffset}, clientid:{clientid}')
         mdtzinput = utils.getawaredatetime(mdtz, ctzoffset)
         data = TypeAssist.objects.get_typeassist_modified_after(mdtzinput, clientid)
+        records, count, msg = utils.get_select_output(data)
+        log.info(f'{count} objects returned...')
+        return SelectOutputType(nrows = count, records = records,msg = msg)
+    
+    @staticmethod
+    def resolve_get_locations(self, info, mdtz, ctzoffset, buid):
+        log.info(f'\n\nrequest for location-modified-after inputs : mdtz:{mdtz}, ctzoffset:{ctzoffset}, clientid:{buid}')
+        mdtzinput = utils.getawaredatetime(mdtz, ctzoffset)
+        data = Location.objects.get_locations_modified_after(mdtzinput, buid, ctzoffset)
         records, count, msg = utils.get_select_output(data)
         log.info(f'{count} objects returned...')
         return SelectOutputType(nrows = count, records = records,msg = msg)

@@ -1266,11 +1266,11 @@ class LocationView(LoginRequiredMixin, View):
     P = {
         'template_form':'activity/location_form.html',
         'template_list':'activity/location_list.html',
-        'model':am.Asset,
+        'model':am.Location,
         'form':af.LocationForm,
         'related':['parent'],
-        'fields':['id', 'identifier', 'assetcode', 'assetname', 'parent__assetname',
-                  'runningstatus', 'enable']
+        'fields':['id', 'loccode', 'locname', 'parent__locname',
+                  'locstatus', 'enable']
     }
     
     def get(self, request, *args, **kwargs):

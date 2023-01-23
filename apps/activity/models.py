@@ -1,7 +1,7 @@
 import uuid
 from apps.peoples.models import BaseModel
 from apps.activity.managers import (AssetManager, AttachmentManager,
-JobManager, JobneedDetailsManager, QsetBlngManager, QuestionManager, ESCManager,
+JobManager, JobneedDetailsManager, QsetBlngManager, QuestionManager, ESCManager,LocationManager,
 QuestionSetManager, JobneedManager, DELManager, WorkpermitManager, TicketManager)
 from apps.tenants.models import TenantAwareModel
 from django.utils.translation import gettext_lazy as _
@@ -216,7 +216,7 @@ class Job(BaseModel, TenantAwareModel):
     class Priority(models.TextChoices):
         HIGH   = "HIGH" , _('High')
         LOW    = "LOW"  , _('Low')
-        MEDIUM = "MEDIU", _('Medium')
+        MEDIUM = "MEDIUM", _('Medium')
 
     class Scantype(models.TextChoices):
         QR      = "QR"     , _('QR')
@@ -325,8 +325,6 @@ class Asset(BaseModel, TenantAwareModel):
        NONE       = ("NONE", "None")
        ASSET      = ("ASSET", "Asset")
        CHECKPOINT = ("CHECKPOINT", "Checkpoint")
-       LOCATION   = ("LOCATION", "Location")
-       SMARTPLACE = ("SMARTPLACE", "Smartplace")
        NEA        = ("NEA", "Non Engineering Asset")
 
     class RunningStatus(models.TextChoices):
@@ -353,6 +351,7 @@ class Asset(BaseModel, TenantAwareModel):
     unit          = models.ForeignKey("onboarding.TypeAssist", verbose_name = _("Unit"), null = True, blank = True, on_delete = models.RESTRICT, related_name='asset_units')
     capacity      = models.DecimalField(_("Capacity"), default = 0.0, max_digits = 18, decimal_places = 2)
     servprov      = models.ForeignKey("onboarding.Bt", verbose_name = _( "Client"), on_delete = models.RESTRICT, null = True, related_name='asset_serv_providers')
+    location      = models.ForeignKey("activity.Location", verbose_name=_("Location"), on_delete=models.RESTRICT, null=True, blank=True)
     asset_json    = models.JSONField( encoder = DjangoJSONEncoder, blank = True, null = True, default = asset_json)
 
     objects = AssetManager()
@@ -361,6 +360,8 @@ class Asset(BaseModel, TenantAwareModel):
         db_table            = 'asset'
         verbose_name        = 'Asset'
         verbose_name_plural = 'Assets'
+        
+        
 
     def __str__(self):
         return f'{self.assetname} ({self.assetcode})'
@@ -760,4 +761,39 @@ class WorkPermit(BaseModel, models.Model):
     objects = WorkpermitManager()
     class Meta(BaseModel.Meta):
         db_table = 'workpermit'
+        get_latest_by = ["mdtz", 'cdtz']
+
+def loc_json():
+    return {
+        'address':""
+    }
+
+
+class Location(BaseModel, TenantAwareModel):
+    class LocationStatus(models.TextChoices):
+        MAINTENANCE = ("MAINTENANCE", "Maintenance")
+        STANDBY     = ("STANDBY", "Standby")
+        WORKING     = ("WORKING", "Working")
+        SCRAPPED    = ("SCRAPPED", "Scrapped")
+    
+    uuid        = models.UUIDField(unique = True, editable = True, blank = True, default = uuid.uuid4)
+    loccode     = models.CharField(_("Asset Code"), max_length = 50, unique=True)
+    locname     = models.CharField(_("Asset Name"), max_length = 250)
+    enable      = models.BooleanField(_("Enable"), default = True)
+    iscritical  = models.BooleanField(_("Is Critical"))
+    gpslocation = PointField(_('GPS Location'), null = True, geography = True, srid = 4326, blank = True)
+    parent      = models.ForeignKey("self", verbose_name = _( "Belongs to"), on_delete = models.RESTRICT, null = True, blank = True)
+    locstatus   = models.CharField(_('Running Status'), choices = LocationStatus.choices, max_length = 55)
+    type        = models.ForeignKey("onboarding.TypeAssist", verbose_name = _("Type"), on_delete = models.RESTRICT, null = True, blank = True, related_name='location_types')
+    client      = models.ForeignKey("onboarding.Bt", verbose_name = _("Client"), on_delete = models.RESTRICT, null = True, blank = True, related_name='location_clients')
+    bu          = models.ForeignKey("onboarding.Bt", verbose_name = _("Site"), on_delete = models.RESTRICT, null = True, blank = True, related_name='location_bus')
+    locjson     = models.JSONField(_("Location Json"), encoder=DjangoJSONEncoder, blank=True, null=True, default=loc_json)
+
+    objects = LocationManager()
+    
+    def __str__(self) -> str:
+        return f'({self.loccode}) {self.locname}'
+    
+    class Meta(BaseModel.Meta):
+        db_table = 'location'
         get_latest_by = ["mdtz", 'cdtz']

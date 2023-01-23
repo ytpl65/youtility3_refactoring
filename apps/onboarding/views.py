@@ -1422,7 +1422,7 @@ class GeoFence(LoginRequiredMixin, View):
             return rp.JsonResponse(data = {'data':list(objs)})
 
         if R.get('action', None) == 'form':
-            NONE_P, _ = utils.get_or_create_none_people()
+            NONE_P = utils.get_or_create_none_people()
             NONE_G = utils.get_or_create_none_pgroup()
             cxt = {'geofenceform':self.params['form_class'](initial ={'alerttopeople':NONE_P, 'alerttogroup':NONE_G}, request=request)}
             return render(request, self.params['template_form'], context = cxt)
@@ -1505,45 +1505,93 @@ def get_geofence_from_point_radii(R):
         return rp.JsonResponse(data={'errors': 'something went wrong while computing geofence!'}, status = 404)
 
 
-class ImportFile(LoginRequiredMixin, View):
+# class ImportFile(LoginRequiredMixin, View):
+#     params = {
+#        'template_form': 'onboarding/',
+#        'form_class':obforms.ImportForm,
+#        'people':people_admin.PeopleResource,
+#        'typeassist':ob_admin.TaResource,
+#     }
+
+#     def get(self, request, *args, **kwargs):
+#         R = request.GET
+#         if R.get('model') == 'typeassist':
+#             cxt = {'importform':self.params['form_class']()}
+#             return render(request, f"{self.params['template_form']}/import.html", context=cxt)
+
+#         if R.get('model') == 'people':
+#             return render(request, f"{self.params['template_form']}/people_imp_exp.html")
+
+#     @staticmethod
+#     def post(request, *args, **kwargs):
+#         # sourcery skip: remove-redundant-constructor-in-dict-union
+#         from tablib import Dataset
+#         import json
+#         #ic(request.POST)
+#         file = request.FILES['file']
+#         default_types = Dataset().load(file)
+#         #ic(default_types)
+#         res = TaResource(is_superuser = True)
+#         #utils.set_db_for_router('testdb3')
+#         res = res.import_data(
+#             dataset = default_types, dry_run = False, raise_errors = False,
+#             collect_failed_rows = True, use_transactions = True)
+#         data = []
+#         ic(dir(res))
+#         if res.has_errors():
+#             for rowerr in res.row_errors():
+#                 data.extend(
+#                     {'rowno': rowerr[0], 'error': str(err.error)} | dict(err.row)
+#                     for err in rowerr[1]
+#                 )
+#             return rp.JsonResponse({'data':json.dumps(data),}, status=404)
+#         return rp.JsonResponse({'totalrows':res.total_rows}, status=200)
+
+
+
+class BulkImportData(LoginRequiredMixin, View):
     params = {
-       'template_form': 'onboarding/',
-       'form_class':obforms.ImportForm,
-       'people':people_admin.PeopleResource,
-       'typeassist':ob_admin.TaResource,
+        'model_resource_map':{
+            'TYPEASSIST':ob_admin.TaResource,
+            'BU':ob_admin.BtResource,
+            'PEOPLEGROUP':people_admin.PeopleResource,
+            'SITEGROUP':people_admin.SiteGroupResource,
+            'CAPABILITY':people_admin.Capability,
+        },
+        'form':obforms.ImportForm,
+        'template':'onboarding/import.html'
     }
-
+    
     def get(self, request, *args, **kwargs):
-        R = request.GET
-        if R.get('model') == 'typeassist':
-            return render(request, f"{self.params['template_form']}/ta_imp_exp.html")
-
-        if R.get('model') == 'people':
-            return render(request, f"{self.params['template_form']}/people_imp_exp.html")
-
-    @staticmethod
-    def post(request, *args, **kwargs):
-        # sourcery skip: remove-redundant-constructor-in-dict-union
-        from tablib import Dataset
-        import json
-        #ic(request.POST)
-        file = request.FILES['file']
-        default_types = Dataset().load(file)
-        #ic(default_types)
-        res = TaResource(is_superuser = True)
-        #utils.set_db_for_router('testdb3')
-        res = res.import_data(
-            dataset = default_types, dry_run = False, raise_errors = False,
-            collect_failed_rows = True, use_transactions = True)
-        data = []
-        ic(dir(res))
-        if res.has_errors():
-            for rowerr in res.row_errors():
-                for err in rowerr[1]:
-                    d = {'rowno':rowerr[0], 'error':str(err.error)} | dict(err.row)
-                    data.append(d)
-            return rp.JsonResponse({'data':json.dumps(data),}, status=404)
-        return rp.JsonResponse({'totalrows':res.total_rows}, status=200)
+        R, P = request.GET, self.params
+        if (R.get('action') == 'form'):
+            cxt = {'importform': P['form']()}
+            return render(request, P['template'], cxt)
+        
+    def post(self, request, *args, **kwargs):
+        R, P = request.POST, self.params
+        form = P['form'](R, request.FILES)
+        if form.is_valid():
+            from tablib import Dataset
+            table = form.cleaned_data.get('table')
+            file = request.FILES['importfile']
+            dataset = Dataset().load(file)
+            res = P['model_resource_map'][table]()
+            ic(res)
+            results = res.import_data(
+                dataset = dataset, dry_run = False, raise_errors = False,
+             collect_failed_rows = True, use_transactions = True
+            )
+            if results.has_errors():
+                data = []
+                for rowerr in results.row_errors():
+                    data.extend(
+                        {'rowno': rowerr[0], 'error': str(err.error)} | err.row
+                        for err in rowerr[1]
+                    )
+                return rp.JsonResponse({'data':data}, status=404)
+            return rp.JsonResponse({'totalrows':results.total_rows}, status=200)
+        return rp.JsonResponse({'errors':form.errors}, status=404)
 
 
 class Client(LoginRequiredMixin, View):
@@ -1621,7 +1669,7 @@ class Client(LoginRequiredMixin, View):
             if pk := request.POST.get('pk', None):
                 msg, create = "client_view", False
                 client = utils.get_model_obj(pk, request,  P)
-                form = P['form_class'](data, request.FILES, instance = client)
+                form = P['form_class'](data, request.FILES, instance = client, request=request)
             else:
                 form = P['form_class'](data, request = request)
             ic(form.instance.id)
@@ -1740,7 +1788,7 @@ class BtView(LoginRequiredMixin, View):
             return handle_intergrity_error("Bu")
         
         
-class   RPDashboard(LoginRequiredMixin, View):
+class RPDashboard(LoginRequiredMixin, View):
     P = {
         "RP":"dashboard/RP_d/rp_dashboard.html",
         "pel_model": atm.PeopleEventlog,
@@ -1749,7 +1797,6 @@ class   RPDashboard(LoginRequiredMixin, View):
     
     def get(self, request, *args, **kwargs):
         P,R = self.P, request.GET
-        ic(R)
         try:
             if R.get('action') == 'getCounts':
                 objs = self.get_all_dashboard_counts(request, P)
@@ -1770,23 +1817,23 @@ class   RPDashboard(LoginRequiredMixin, View):
 
             return {
                 'counts': {
-                    'totalschd_tasks_count': task_arr[-1],
-                    'assigned_tasks_count': task_arr[0],
-                    'completed_tasks_count': task_arr[1],
+                    'totalschd_tasks_count' : task_arr[-1],
+                    'assigned_tasks_count'  : task_arr[0],
+                    'completed_tasks_count' : task_arr[1],
                     'autoclosed_tasks_count': task_arr[2],
                     
-                    'totalscheduled_tours_count': tour_arr[-1],
-                    'completed_tours_count': tour_arr[0],
-                    'inprogress_tours_count': tour_arr[1],
-                    'partiallycompleted_tours_count':tour_arr[2],
+                    'totalscheduled_tours_count'    : tour_arr[-1],
+                    'completed_tours_count'         : tour_arr[0],
+                    'inprogress_tours_count'        : tour_arr[1],
+                    'partiallycompleted_tours_count': tour_arr[2],
                     
-                    'assetchartdata':arr,
-                    'assetchart_total_count':total,
+                    'assetchartdata'        : arr,
+                    'assetchart_total_count': total,
                     
-                'sos_count':P['pel_model'].objects.get_sos_count_forcard(request),
-                'IR_count': P['jn_model'].objects.get_ir_count_forcard(request),
-                'FR_fail_count':P['pel_model'].objects.get_frfail_count_forcard(request),
-                'route_count':P['jn_model'].objects.get_schdroutes_count_forcard(request)
+                'sos_count'    : P['pel_model'].objects.get_sos_count_forcard(request),
+                'IR_count'     : P['jn_model'].objects.get_ir_count_forcard(request),
+                'FR_fail_count': P['pel_model'].objects.get_frfail_count_forcard(request),
+                'route_count'  : P['jn_model'].objects.get_schdroutes_count_forcard(request)
                 }
             }
                 
