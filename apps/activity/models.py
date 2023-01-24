@@ -37,8 +37,7 @@ class Question(BaseModel, TenantAwareModel):
         AUDIO       = "AUDIO",       _('Audio')
         VIDEO       = "VIDEO",       _("Video")
 
-    # id= models.BigIntegerField(primary_key = True)
-    quesname  = models.CharField(_("Question Name"), max_length = 200)
+    quesname   = models.CharField(_("Name"), max_length = 200)
     options    = models.TextField(_('Options'), max_length = 2000, null = True)
     min        = models.DecimalField(_("Min"), null = True, blank = True, max_digits = 18, decimal_places = 2, default = 0.00)
     max        = models.DecimalField( _('Max'), null = True, blank = True, max_digits = 18, decimal_places = 2, default = 0.00)
@@ -49,8 +48,8 @@ class Question(BaseModel, TenantAwareModel):
     isworkflow = models.BooleanField(_("Is WorkFlow"), default = False)
     enable     = models.BooleanField(_("Enable"), default = True)
     category   = models.ForeignKey("onboarding.TypeAssist", verbose_name = _("Category"), on_delete = models.RESTRICT, related_name='category_types', null = True, blank = True)
-    avpttype = models.CharField(_("Attachment Type"), max_length = 50, choices = AvptType.choices, null = True, blank = True)
-    isavpt   = models.BooleanField(_("Is Attachment Required"), default = False)
+    avpttype   = models.CharField(_("Attachment Type"), max_length = 50, choices = AvptType.choices, null = True, blank = True)
+    isavpt     = models.BooleanField(_("Is Attachment Required"), default = False)
 
     
     objects = QuestionManager()
@@ -96,9 +95,9 @@ class QuestionSet(BaseModel, TenantAwareModel):
     enable             = models.BooleanField(_("Enable"), default = True)
     assetincludes      = ArrayField(models.CharField(max_length = 50, blank = True), null = True, blank = True, verbose_name= _("Asset Includes"))
     buincludes         = ArrayField(models.CharField(max_length = 50, blank = True), null = True, blank = True, verbose_name= _("Bu Includes"))
-    seqno              = models.SmallIntegerField(_("SL No."), default = 1)
+    seqno              = models.SmallIntegerField(_("Sl No."), default = 1)
     parent             = models.ForeignKey("self", verbose_name = _("Belongs To"), on_delete = models.RESTRICT, null = True, blank = True)
-    type               = models.CharField( _("Question Set Type"), choices = Type.choices, null = True, max_length = 50)
+    type               = models.CharField( _("Type"), choices = Type.choices, null = True, max_length = 50)
     bu                 = models.ForeignKey("onboarding.Bt", verbose_name = _("Site"), on_delete = models.RESTRICT, related_name='qset_bus', null = True, blank = True)
     client             = models.ForeignKey("onboarding.Bt", verbose_name = _("Client"), on_delete = models.RESTRICT, related_name='qset_clients', null = True, blank = True)
     site_grp_includes  = ArrayField(models.CharField(max_length = 50, blank = True), null = True, blank = True, verbose_name= _("Site Group Includes"))

@@ -451,14 +451,17 @@ def perform_uploadattachment(file,  record, biodata):
         obj = insertrecord(record, 'attachment')
         log.info(f'Attachment record inserted: {obj.filepath}')
         
+        log.info(f"ownername:{onwername} and owner:{ownerid}")
         model = get_model_or_form(onwername.lower())
         eobj = model.objects.get(uuid=ownerid)
+        log.info(f"object retrived of type {type(eobj)}")
         
         # if jobneed instance has alerts and attachmentcount > 0 the send alert mail
-        if isinstance(eobj, Jobneed) and eobj.alerts == True:
-            log.info(f"Jobneed of uuid :{eobj.uuid} has alerts!")
-            alert_sendmail(eobj, 'observation', atts=True)
-            alert_sendmail(eobj, 'deviation', atts=True)
+        if isinstance(eobj, Jobneed) or isinstance(eobj, JobneedDetails) and eobj.alerts == True:
+            jn_obj = eobj.jobneed if isinstance(eobj, JobneedDetails) else eobj
+            log.info(f"Jobneed of uuid :{jn_obj.uuid} has alerts!")
+            alert_sendmail(jn_obj, 'observation', atts=True)
+            alert_sendmail(jn_obj, 'deviation', atts=True)
             
         if hasattr(eobj, 'peventtype'): log.info(f'Event Type: {eobj.peventtype.tacode}')
         if hasattr(eobj, 'peventtype') and eobj.peventtype.tacode in ['SELF', 'MARK']:
@@ -466,7 +469,7 @@ def perform_uploadattachment(file,  record, biodata):
             results = perform_facerecognition_bgt.delay(ownerid, peopleid, db)
             log.warning(f"face recognition status {results.state}")
     except Exception as e:
-        log.error('something went wrong while performing face recognition', exc_info = True)
+        log.error('something went wrong while perform_uploadattachment', exc_info = True)
     return ServiceOutputType(rc = rc, recordcount = recordcount, msg = msg, traceback = traceback)
 
 
@@ -484,9 +487,11 @@ def get_email_recipients(jobneed):
 
 def get_context_for_mailtemplate(jobneed, subject):
     from apps.activity.models import JobneedDetails
+    from datetime import timedelta
+    when = jobneed.endtime + timedelta(minutes=jobneed.ctzoffset)
     return  {
         'details'     : list(JobneedDetails.objects.get_e_tour_checklist_details(jobneedid=jobneed.id)),
-        'when'        : jobneed.endtime.strftime("%d-%m-%Y %H:%M"),
+        'when'        : when.strftime("%d-%m-%Y %H:%M"),
         'tourtype'    : jobneed.identifier,
         'performedby' : jobneed.performedby.peoplename,
         'site'        : jobneed.bu.buname,
@@ -503,6 +508,23 @@ def alert_sendmail(obj, event, atts=False):
     if event == 'deviation': alert_deviation(obj, atts)
 
 
+def add_attachments(jobneed, msg):
+    from apps.activity.models import Attachment
+    from django.core.files import File
+    from django.core.files.storage import default_storage
+    JND = JobneedDetails.objects.filter(jobneed_id = jobneed.id)
+    
+    
+    for jnd in JND:
+        jnd_atts = JobneedDetails.objects.getAttachmentJND(jnd.id)
+    jn_atts = Jobneed.objects.getAttachmentJobneed(jobneed.id)
+    total_atts = jn_atts + jnd_atts
+    for att in total_atts:
+        with default_storage.open(att['file'], 'rb') as f:
+            msg.attach_file(att['file'])
+    return msg
+    
+    
 
 
 def alert_observation(jobneed, atts=False):
@@ -529,6 +551,7 @@ def alert_observation(jobneed, atts=False):
             msg.content_subtype = 'html'
             if atts:
                 #add attachments to msg
+                msg = add_attachments(jobneed, msg)
                 pass
             msg.send()
             log.info(f"Alert mail sent to {recipents} with subject {subject}")

@@ -1576,21 +1576,28 @@ class BulkImportData(LoginRequiredMixin, View):
             table = form.cleaned_data.get('table')
             file = request.FILES['importfile']
             dataset = Dataset().load(file)
-            res = P['model_resource_map'][table]()
+            res = P['model_resource_map'][table](request=request)
             ic(res)
-            results = res.import_data(
-                dataset = dataset, dry_run = False, raise_errors = False,
-             collect_failed_rows = True, use_transactions = True
-            )
-            if results.has_errors():
-                data = []
-                for rowerr in results.row_errors():
-                    data.extend(
-                        {'rowno': rowerr[0], 'error': str(err.error)} | err.row
-                        for err in rowerr[1]
-                    )
-                return rp.JsonResponse({'data':data}, status=404)
-            return rp.JsonResponse({'totalrows':results.total_rows}, status=200)
+            try:
+                results = res.import_data(
+                    dataset = dataset, dry_run = False, raise_errors = False,
+                collect_failed_rows = True, use_transactions = True
+                )
+                if results.has_errors():
+                    data = []
+                    for rowerr in results.row_errors():
+                        data.extend(
+                            {'rowno': rowerr[0], 'error': str(err.error)} | err.row
+                            for err in rowerr[1]
+                        )
+                    columns = [{'title':col, 'data':col } for col in data[0].keys()]
+                    no_of_cols = len(data[0].keys()) if data else 0
+
+                    return rp.JsonResponse(
+                        {'data':data, 'columns':columns, 'no_of_cols':no_of_cols, 'rc':1}, status=200)
+                return rp.JsonResponse({'totalrows':results.total_rows, 'rc':0}, status=200)
+            except Exception as e:
+                logger.error("something went wrong while bulk importing data", e)
         return rp.JsonResponse({'errors':form.errors}, status=404)
 
 

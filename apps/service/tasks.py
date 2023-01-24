@@ -69,7 +69,7 @@ def get_model_or_form(tablename):
     if tablename == 'peopleeventlog':return PeopleEventlog
     if tablename == 'attachment': return Attachment
     if tablename == 'jobneed': return Jobneed
-    if tablename == 'jobnneeddetails': return JobneedDetails
+    if tablename == 'jobneeddetails': return JobneedDetails
     if tablename == 'deviceeventlog': return DeviceEventlog
     if tablename == 'ticket': return Ticket
     if tablename == 'asset': return Asset

@@ -66,10 +66,10 @@ def bu_defaults():
 class Bt(BaseModel, TenantAwareModel, HeirarchyModel):
 
     bucode              = models.CharField(_('Code'), max_length = 30)
-    solid               = models.CharField(max_length=30, null=True, blank=True)
-    siteincharge        = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.RESTRICT, null=True, blank=True, related_name='siteincharge')
+    solid               = models.CharField(max_length=30, null=True, blank=True, verbose_name='Sol ID')
+    siteincharge        = models.ForeignKey(settings.AUTH_USER_MODEL, verbose_name='Site Incharge', on_delete=models.RESTRICT, null=True, blank=True, related_name='siteincharge')
     bupreferences       = models.JSONField(_('bupreferences'), null = True, default = bu_defaults,  encoder = DjangoJSONEncoder, blank = True)
-    identifier          = models.ForeignKey('TypeAssist', null = True, blank = True, on_delete = models.RESTRICT, related_name="bu_idfs", verbose_name='Identifier')
+    identifier          = models.ForeignKey('TypeAssist',verbose_name='Identifier',  null = True, blank = True, on_delete = models.RESTRICT, related_name="bu_idfs")
     buname              = models.CharField(_('Name'), max_length = 200)
     butree              = models.CharField(_('Bu Path'), null = True, blank = True, max_length = 300, default="")
     butype              = models.ForeignKey('TypeAssist', on_delete = models.RESTRICT,  null = True, blank = True,  related_name="bu_butypes", verbose_name="Type")
@@ -81,7 +81,7 @@ class Bt(BaseModel, TenantAwareModel, HeirarchyModel):
     skipsiteaudit       = models.BooleanField(_("Skip SiteAudit"), default = False)
     siincludes          = ArrayField(models.CharField(max_length = 50, blank = True), verbose_name= _("Site Inclides"), null = True, blank = True)
     deviceevent         = models.BooleanField(_("Device Event"), default = False)
-    pdist               = models.FloatField(_("pdist"), default = 0.0, blank = True, null = True)
+    pdist               = models.FloatField(_("Permissible Distance"), default = 0.0, blank = True, null = True)
     gpslocation         = PointField(_('GPS Location'),null = True, blank = True, geography = True, srid = 4326)
     isvendor            = models.BooleanField(_("Is Vendor"), default = False)
     isserviceprovider   = models.BooleanField(_("Is ServiceProvider"), default = False)
@@ -153,7 +153,7 @@ class ContractDetail(BaseModel, TenantAwareModel):
 
 class Shift(BaseModel, TenantAwareModel):
     # id= models.BigIntegerField(primary_key = True)
-    bu                   = models.ForeignKey('Bt', null = True, on_delete = models.RESTRICT,related_name="shift_bu", verbose_name='Site')
+    bu                   = models.ForeignKey('Bt', verbose_name='Buisiness View', null = True, on_delete = models.RESTRICT,related_name="shift_bu")
     shiftname            = models.CharField(max_length = 50, verbose_name="Name")
     shiftduration        = models.IntegerField(null = True, verbose_name="Shift Duration")
     starttime            = models.TimeField(verbose_name="Start time")
@@ -211,10 +211,10 @@ class SitePeople(BaseModel, TenantAwareModel):
 class TypeAssist(BaseModel, TenantAwareModel):
     # id= models.BigIntegerField(primary_key = True)
     tacode = models.CharField(_("tacode"), max_length = 50)
-    taname = models.CharField(_("taname"), max_length = 100)
-    tatype = models.ForeignKey( "self", null = True, blank = True, on_delete = models.RESTRICT, related_name='children')
-    bu     = models.ForeignKey("Bt", null = True, blank = True, on_delete = models.RESTRICT, related_name='ta_bus')
-    client = models.ForeignKey("onboarding.Bt",  null = True, blank = True, on_delete = models.RESTRICT, related_name='ta_clients')
+    taname = models.CharField(_("taname"),   max_length = 100)
+    tatype = models.ForeignKey( "self", verbose_name='TypeAssist', null = True, blank = True, on_delete = models.RESTRICT, related_name='children')
+    bu     = models.ForeignKey("Bt",verbose_name='Buisiness View',  null = True, blank = True, on_delete = models.RESTRICT, related_name='ta_bus')
+    client = models.ForeignKey("onboarding.Bt", verbose_name='Client',  null = True, blank = True, on_delete = models.RESTRICT, related_name='ta_clients')
     enable = models.BooleanField(_("Enable"), default = True)
 
     objects = TypeAssistManager()

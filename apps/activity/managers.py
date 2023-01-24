@@ -717,7 +717,7 @@ class AssetManager(models.Manager):
         scp = [
         self.filter(runningstatus = 'SCRAPPED', bu_id__in = S['assignedsites'], identifier = 'ASSET').values('id').order_by('assetcode').distinct('assetcode').count(),
         self.filter(runningstatus = 'SCRAPPED', bu_id__in = S['assignedsites'], identifier = 'CHECKPOINT').values('id').order_by('assetcode').distinct('assetcode').count(),
-        #Location.objects.filter(locstatus = 'SCRAPPED', bu_id__in = S['assignedsites']).values('id').order_by('loccode').distinct('loccode').count()
+        0
         ]
         
         series = [
@@ -775,7 +775,7 @@ class JobneedDetailsManager(models.Manager):
     def get_e_tour_checklist_details(self, jobneedid):
         qset = self.filter(jobneed_id=jobneedid).select_related('question').values(
             'question__quesname', 'answertype', 'min', 'max', 'id',
-            'options', 'alerton', 'ismandatory', 'seqno','answer'
+            'options', 'alerton', 'ismandatory', 'seqno','answer', 'alerts'
         ).order_by('seqno')
         return qset or self.none()
 

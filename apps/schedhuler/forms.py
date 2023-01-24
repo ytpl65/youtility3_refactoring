@@ -296,8 +296,8 @@ class SchdTaskFormJob(JobForm):
         self.fields['expirytime'].label        = 'Grace Time After'
         self.fields['gracetime'].label         = 'Grace Time Before'
         self.fields['ticketcategory'].queryset = ob.TypeAssist.objects.filter(tatype__tacode="TICKETCATEGORY")
-        self.fields['qset'].queryset = am.QuestionSet.objects.get_proper_checklist_for_scheduling(self.request, ['QUESTIONSET'])
-        self.fields['asset'].queryset = am.Asset.objects.filter(~Q(runningstatus='SCRAPPED'), identifier__in =["LOCATION", "ASSET", "SMARTPLACE"], client_id = self.request.session['client_id'])
+        self.fields['qset'].queryset = am.QuestionSet.objects.get_proper_checklist_for_scheduling(self.request, ['CHECKLIST'])
+        self.fields['asset'].queryset = am.Asset.objects.filter(~Q(runningstatus='SCRAPPED'), identifier__in =["ASSET", 'CHECKPOINT'], client_id = self.request.session['client_id'])
         self.fields['pgroup'].queryset = pm.Pgroup.objects.filter(bu_id__in = self.request.session['assignedsites'], identifier__tacode__in = ['PEOPLEGROUP', 'PEOPLE_GROUP'])
         self.fields['people'].queryset = pm.People.objects.filter(bu_id__in = self.request.session['assignedsites'], client_id = self.request.session['client_id'])
         utils.initailize_form_fields(self)

@@ -452,7 +452,7 @@ tr.disabled-record td a {
     color: #01579b;
 }
 
-.count-item:hover {
+.count-item:hover, .ci:hover {
 background-color: #e8f6ff !important;
 cursor: pointer;
 }

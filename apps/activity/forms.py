@@ -68,7 +68,7 @@ class QuestionForm(forms.ModelForm):
     def clean(self):
         cleaned_data = super().clean()
         data = cleaned_data
-        ic(data)
+        print(data.get('alertbelow'), data.get('min'), "********88888")
         alertabove = alertbelow = None
         if(data.get('answertype') not in ['NUMERIC', 'RATING', 'CHECKBOX', 'DROPDOWN']):
             cleaned_data['min'] = cleaned_data['max'] = None
@@ -79,12 +79,15 @@ class QuestionForm(forms.ModelForm):
             cleaned_data['alertbelow'] = cleaned_data['alertabove'] = None
         if data.get('answertype') in ['NUMERIC', 'RATING']:
             cleaned_data['options'] = None
-        if data.get('alertbelow') and data.get('min'):
+        if data.get('alertbelow') and data.get('min') not in [None, ""]:
             alertbelow = ac_utils.validate_alertbelow(forms, data)
-        if data.get('alertabove') and data.get('max'):
+            ic(alertbelow)
+        if data.get('alertabove') and data.get('max') not in [None, '']:
             alertabove = ac_utils.validate_alertabove(forms, data)
+            ic(alertabove)
         if data.get('answertype') == 'NUMERIC' and alertabove and alertbelow:
             alerton = f'<{alertbelow}, >{alertabove}'
+            ic(alerton)
             cleaned_data['alerton'] = alerton
 
     def clean_alerton(self):
@@ -241,12 +244,9 @@ class QsetBelongingForm(forms.ModelForm):
 class ChecklistForm(MasterQsetForm):
     class Meta:
         model = am.QuestionSet
-        fields = ['qsetname', 'parent', 'enable', 'type', 'ctzoffset', 'assetincludes',
+        fields = ['qsetname', 'enable', 'type', 'ctzoffset', 'assetincludes',
                   'site_type_includes', 'buincludes', 'site_grp_includes']
-        widgets = {
-            'parent': s2forms.Select2Widget()
-        }
-    
+
 
     def __init__(self, *args, **kwargs):
         self.request = kwargs.pop('request', None)
@@ -254,7 +254,6 @@ class ChecklistForm(MasterQsetForm):
         self.fields['type'].initial        = 'CHECKLIST'
         self.fields['type'].widget.attrs   = {"style": "display:none;"}
         if not self.instance.id:
-            self.fields['parent'].initial = 1
             self.fields['site_grp_includes'].initial = 1
             self.fields['site_type_includes'].initial = 1
             self.fields['buincludes'].initial = 1

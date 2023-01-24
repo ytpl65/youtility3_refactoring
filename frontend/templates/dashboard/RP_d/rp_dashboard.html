@@ -338,6 +338,9 @@
                 case 'ATTENDANCE':
                 location.href = '{{ url("attendance:attendance_view") }}?template=true';
                 break;
+                case 'taskstats':
+                location.href = '{{ url("schedhuler:jobneedtasks") }}?template=true';
+                break;
                 default:
                 {}
             }

@@ -84,11 +84,11 @@ Checklist List
 						return `<a href="${formUrl}?id=${row['id']}">${data}</a>`
 					}
 				},
-				{targets:3, data:'cdtz', render: function(data, type, row, meta){
+				{targets:4, data:'cdtz', render: function(data, type, row, meta){
 						return convert_to_local(type, data, row)
 					}
 				},
-				{targets:4, data:'mdtz', render: function(data, type, row, meta){
+				{targets:5, data:'mdtz', render: function(data, type, row, meta){
 						return convert_to_local(type, data, row)
 					}
 				},
