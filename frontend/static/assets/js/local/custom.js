@@ -684,7 +684,7 @@ function initialize_alerton_field(
   optionsData = typeof _optionsData == 'string' ? _optionsData.split(",") : _optionsData;
   console.log(alertonData, "alertondata1")
   if (optionsData.length) {
-    alertonData =  alertonData.length > 0 && typeof alertonData == 'string' ? alertonData.replace(' ', '').split(",") : alertonData;
+    alertonData =  alertonData.length > 0 && typeof alertonData == 'string' ? alertonData.split(",") : alertonData;
     console.log(alertonData , optionsData, "alertondata")
     let selected = performIntersection(optionsData, alertonData);
     console.log(selected, "selected")

@@ -90,6 +90,8 @@ def update_record(details, jobneed_record, JnModel, JndModel):
                 return True
             elif isJndUpdated := update_jobneeddetails(details, JndModel):
                 log.info('parent jobneed and its details are updated successully')
+                alert_sendmail(jobneed, 'observation', atts=True)
+                alert_sendmail(jobneed, 'deviation', atts=True)
                 return True
         else: 
             log.error(f"parent jobneed record has some errors\n{jn_parent_serializer.errors} ", exc_info = True )
@@ -456,13 +458,7 @@ def perform_uploadattachment(file,  record, biodata):
         eobj = model.objects.get(uuid=ownerid)
         log.info(f"object retrived of type {type(eobj)}")
         
-        # if jobneed instance has alerts and attachmentcount > 0 the send alert mail
-        if isinstance(eobj, Jobneed) or isinstance(eobj, JobneedDetails) and eobj.alerts == True:
-            jn_obj = eobj.jobneed if isinstance(eobj, JobneedDetails) else eobj
-            log.info(f"Jobneed of uuid :{jn_obj.uuid} has alerts!")
-            alert_sendmail(jn_obj, 'observation', atts=True)
-            alert_sendmail(jn_obj, 'deviation', atts=True)
-            
+
         if hasattr(eobj, 'peventtype'): log.info(f'Event Type: {eobj.peventtype.tacode}')
         if hasattr(eobj, 'peventtype') and eobj.peventtype.tacode in ['SELF', 'MARK']:
             from .tasks import perform_facerecognition_bgt
@@ -496,6 +492,7 @@ def get_context_for_mailtemplate(jobneed, subject):
         'performedby' : jobneed.performedby.peoplename,
         'site'        : jobneed.bu.buname,
         'subject'     : subject,
+        'jobdesc': jobneed.jobdesc
     }
 
 
@@ -509,19 +506,18 @@ def alert_sendmail(obj, event, atts=False):
 
 
 def add_attachments(jobneed, msg):
-    from apps.activity.models import Attachment
-    from django.core.files import File
-    from django.core.files.storage import default_storage
+    from django.conf import settings
     JND = JobneedDetails.objects.filter(jobneed_id = jobneed.id)
-    
-    
+
+    jnd_atts = []
     for jnd in JND:
-        jnd_atts = JobneedDetails.objects.getAttachmentJND(jnd.id)
-    jn_atts = Jobneed.objects.getAttachmentJobneed(jobneed.id)
+        if att := list(JobneedDetails.objects.getAttachmentJND(jnd.id)):
+            jnd_atts.append(att[0])
+    jn_atts = list(Jobneed.objects.getAttachmentJobneed(jobneed.id))
     total_atts = jn_atts + jnd_atts
     for att in total_atts:
-        with default_storage.open(att['file'], 'rb') as f:
-            msg.attach_file(att['file'])
+        msg.attach_file(f"{settings.MEDIA_ROOT}/{att['filepath']}{att['filename']}")
+        log.info("attachments are attached....")
     return msg
     
     
@@ -550,6 +546,7 @@ def alert_observation(jobneed, atts=False):
             msg.to = recipents
             msg.content_subtype = 'html'
             if atts:
+                log.info('Attachments are going to attach')
                 #add attachments to msg
                 msg = add_attachments(jobneed, msg)
                 pass

@@ -138,7 +138,7 @@
         clearSelection("#id_alerton")
         for(let i=0; i<options.length; i++){
             
-            if ($('#id_alerton').find("option[value='" + options[i] + "']").length) {
+            if ($('#id_alerton').find(`option[value="${options[i]}"]`).length) {
                 //$('#DTE_Field_alerton').val(options[i]).trigger('change');
             } else { 
                 // Create a DOM Option and pre-select by default
@@ -193,7 +193,9 @@
         $("#id_options").on('focusout', () => {
             var options  = $('#id_options').val()
             if(options.length > 0){
-                appenAlerton(options.replaceAll(', ', ',').split(','))
+                var cleanString = options.replace(/\s+/g, ' ').replace(/, /g, ',');
+                console.log(cleanString)
+                appenAlerton(cleanString.split(','))
             }else{
                 clearSelection("#id_alerton")
             }
@@ -212,7 +214,8 @@
         //shows and hides according to answertype
         showHideFields(initial_selected)
         if($("#id_options").val().length){
-            initialize_alerton_field($("#id_options").val(), $("#hidden_alerton").val().replace('["', "").replace('"]', ""), cleaned = false, id="#id_alerton")
+            let cleanedOptions = $("#id_options").val().replace(/\s+/g, ' ').replace(/, /g, ',');
+            initialize_alerton_field(cleanedOptions, $("#hidden_alerton").val().replace('["', "").replace('"]', ""), cleaned = false, id="#id_alerton")
         }
         $(".modal").removeAttr("tabindex");
     })

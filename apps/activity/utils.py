@@ -4,6 +4,7 @@ from django.db.models.functions import Concat
 from django.db.models import Q
 import apps.peoples.utils as putils
 import json
+import re
 import logging
 log = logging.getLogger("__main__")
 from datetime import datetime
@@ -53,14 +54,13 @@ def validate_options(forms, val):
     return json.dumps(options).replace('"', "").replace("[", "").replace("]", "")
 
 def validate_alerton(forms, val):
-    ic('validate_alerton', val)
-    v1          = val.replace("'", "")
-    v2          = v1.replace("[", "")
-    v3          = v2.replace("]", "")
-    vlist       = v3.split(",")
-    list_string = json.dumps(vlist)
-    list        = json.loads(list_string)
-    return json.dumps([each_string for each_string in list]).replace('"', "").replace("[", "").replace("]", "")
+    input_string = val.replace("[","")
+    input_string = input_string.replace("]","")
+    input_string = input_string.replace("\'","")
+    input_string = input_string.replace("\"","")
+    clean_string = re.sub(r',\s*', ',', input_string)
+    return clean_string
+
 
 def initialize_alertbelow_alertabove(instance, form):
     alerton, below, above, li = instance.alerton, "", "", []

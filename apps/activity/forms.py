@@ -68,7 +68,7 @@ class QuestionForm(forms.ModelForm):
     def clean(self):
         cleaned_data = super().clean()
         data = cleaned_data
-        print(data.get('alertbelow'), data.get('min'), "********88888")
+        print(data.get('alerton'), data.get('min'), "********88888")
         alertabove = alertbelow = None
         if(data.get('answertype') not in ['NUMERIC', 'RATING', 'CHECKBOX', 'DROPDOWN']):
             cleaned_data['min'] = cleaned_data['max'] = None

@@ -9,11 +9,11 @@
         }
 
         th {
-            background-color: #01579B;
+            background-color: #eaf1fb;
             text-align: left;
             padding: 8px;
             border: 1px solid #ddd;
-            color: white;
+            color: black;
         }
 
         td {
@@ -21,8 +21,8 @@
             border: 1px solid #ddd;
             text-align: left;
         }
-        tr.alerts{
-            background-color: #ffcccc;
+        tr.alerts > td{
+            color: red;
         }
     </style>
 </head> 
@@ -32,8 +32,8 @@
         <div class="row">
             <div class="card">
                 <div class="card-header">
-                    Readings alert at <strong>{{ site }}</strong> of checklist performed by
-                    <strong>{{ performedby }}</strong> on <strong>{{ when }}</strong> below are the readings.
+                    Readings alerts for the <strong>{{ jobdesc }}</strong> was observed at <strong>{{ site }}</strong> performed by
+                    <strong>{{ performedby }}</strong> on <strong>{{ when }}</strong>.
                 </div><br>
                 <div class="card-body">
                     <table>
@@ -57,7 +57,7 @@
                                 <td>{{ reading['max'] }}</td>
                                 <td>{{ reading['options'] }}</td>
                                 <td>{{ reading['alerton'] }}</td>
-                                <td>{{ reading['answer'] }}</td>
+                                <td><strong>{{ reading['answer'] }}</strong></td>
                             </tr>
                             {% endfor %}
                         </tbody>

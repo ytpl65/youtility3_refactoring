@@ -330,16 +330,16 @@
                 break;
                 case 'INCREPORTS':
                 console.log('clicked.......')
-                location.href = "{{ url('reports:incidentreport_list') }}?template=true";
+                window.open("{{ url('reports:incidentreport_list') }}?template=true", '_blank');
                 break;
                 case 'ROUTES':
-                location.href = "{{ url('schedhuler:jobneedexternaltours') }}?template=true";
+                window.open("{{ url('schedhuler:jobneedexternaltours') }}?template=true", '_blank');
                 break;
                 case 'ATTENDANCE':
-                location.href = '{{ url("attendance:attendance_view") }}?template=true';
+                window.open('{{ url("attendance:attendance_view") }}?template=true', '_blank');
                 break;
                 case 'taskstats':
-                location.href = '{{ url("schedhuler:jobneedtasks") }}?template=true';
+                window.open('{{ url("schedhuler:jobneedtasks") }}?template=true', '_blank');
                 break;
                 default:
                 {}
