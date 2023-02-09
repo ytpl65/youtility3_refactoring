@@ -1,0 +1,295 @@
+{% extends "base_form.html" %}
+
+{% block extra_css %}
+{{ ticketform.media.css }}
+{% endblock extra_css %}
+
+<!-------------------------- BEGIN PAGE BREADCUMB ----------------------->
+{% block pagebreadcumb %}
+<!--will call parent contents -->
+{{ super() }}
+<li class="breadcrumb-item pe-3"><a href="{{ url('helpdesk:ticket') }}?template=true" class="pe-3">Ticket List</a></li>
+<li class="breadcrumb-item pe-3"><a href="javascript:void(0)" class="pe-3">Ticket Form</a></li>
+{% endblock pagebreadcumb %}
+<!-------------------------- END PAGE BREADCUMB ------------------------->
+
+<!------ BEGIN FORM TITLE ------->
+{% block form_title %}
+Ticket
+{% endblock form_title %}
+<!------ END FORM TITLE -------->
+
+<!--------- BEGIN NON FIELD ERRORS -------->
+{% block nonfield_errors %}
+<div class="alert alert-danger" id="nonfield_errors"role="alert" style="display:none">
+    <strong>Error</strong> <span></span>
+</div>
+{% endblock nonfield_errors %}
+<!---------- END NON FIELD ERRORS --------->
+
+{% block form %}
+<form action="{{ url('schedhuler:create_ticket') }}" method="post" id="ticketform">
+    <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
+    <input type="hidden" name="{{ ticketform.ctzoffset.name }}" id = "{{ ticketform.ctzoffset.auto_id }}" value="-1">
+
+    <div class="row gy-3">
+       <div class="col-md-6">
+            <div class="input-group mb-3">
+                <div class="col-md-4">
+                    {{ ticketform.ticketdesc.label_tag() }}
+                </div>
+                <div class="col-md-8">
+                    {{ ticketform.ticketdesc }}
+                </div>
+            </div>
+            <div class="input-group mb-6">
+                <div class="col-md-4">
+                    <label class="required">Assign to:</label>
+                </div>
+                <div class="col-md-8">
+                    <div class="form-check form-check-inline">
+                        <input type="radio" class="form-check-input" name={{ ticketform.assign_to.name }}
+                            id="{{ ticketform.assign_to.auto_id }}1" value="PEOPLE" checked
+                            onchange="showHideSelectField('PEOPLE')">
+                        <label class="form-check-label" for="{{ ticketform.assign_to.auto_id }}">People</label>
+                    </div>
+                    <div class="form-check form-check-inline">
+                        <input type="radio" class="form-check-input" name={{ ticketform.assign_to.name }}
+                            id="{{ ticketform.assign_to.auto_id }}2" value="GROUP" onchange="showHideSelectField('GROUP')">
+                        <label class="form-check-label" for="{{ ticketform.assign_to.auto_id }}">Group</label>
+                    </div>
+                </div>
+            </div>
+            <div class="input-group mb-3 people">
+                <div class="col-md-4">
+                    {{ ticketform.assignedtopeople.label_tag() }}
+                </div>
+                <div class="col-md-8">
+                    {{ ticketform.assignedtopeople }}
+                </div>
+            </div>
+            <div class="input-group mb-3 pgroup">
+                <div class="col-md-4">
+                    {{ ticketform.assignedtogroup.label_tag() }}
+                </div>
+                <div class="col-md-8">
+                    {{ ticketform.assignedtogroup }}
+                </div>
+            </div>
+            
+            <div class="input-group mb-3">
+                <div class="col-md-4">
+                    {{ ticketform.ticketcategory.label_tag() }}
+                </div>
+                <div class="col-md-8">
+                    {{ ticketform.ticketcategory }}
+                </div>
+            </div>
+            <div class="input-group mb-3">
+                <div class="col-md-4">
+                    {{ ticketform.priority.label_tag() }}
+                </div>
+                <div class="col-md-8">
+                    {{ ticketform.priority }}
+                </div>
+            </div>
+            <div class="form-check form-switch form-check-solid">
+                <div class="input-group">
+                    <label for="{{ ticketform.isescalated.id_for_label }}" 
+                class="form-check-label bool text-sm-right">{{ ticketform.isescalated.label }}&nbsp;&nbsp; {{ ticketform.isescalated }}</label>
+                </div>
+            </div>
+       </div>
+       <div class="col-md-6">
+            <div class="input-group mb-3">
+                <div class="col-md-4">
+                    {{ ticketform.status.label_tag() }}
+                </div>
+                <div class="col-md-8">
+                    {{ ticketform.status }}
+                </div>
+            </div>
+            <div class="input-group mb-3">
+                <div class="col-md-4">
+                    {{ ticketform.location.label_tag() }}
+                </div>
+                <div class="col-md-8">
+                    {{ ticketform.location }}
+                </div>
+            </div>
+            <div class="input-group mb-3">
+                <div class="col-md-4">
+                    {{ ticketform.cuser.label_tag() }}
+                </div>
+                <div class="col-md-8">
+                    {{ ticketform.cuser }}
+                </div>
+            </div>
+            <div class="input-group mb-3">
+                <div class="col-md-4">
+                    {{ ticketform.cdtz.label_tag() }}
+                </div>
+                <div class="col-md-8">
+                    {{ ticketform.cdtz }}
+                </div>
+            </div>
+            <div class="input-group mb-3">
+                <div class="col-md-4">
+                    {{ ticketform.comments.label_tag() }}
+                </div>
+                <div class="col-md-8">
+                    {{ ticketform.comments }}
+                </div>
+            </div>
+       </div>
+    </div>
+</form>
+{% endblock form %}
+
+
+{% block extras %}
+{% if "{{ ticketform.instance.id }}" != "None" %}
+    <br><hr>
+    <div class="mt-7 tab-pane">
+        <p class="ch4">Ticket History&nbsp;<i class="bi bi-clock-fill fs-5"></i></p>
+        <div class="scroll hover-scroll h-300px">
+        {% for item in ticketform.instance.ticketlog['ticket_history'] %}
+            <div class="d-flex align-items-center mb-6">
+            <span data-kt-element="bullet" class="bullet bullet-vertical d-flex align-items-center min-h-20px mh-100 me-4 bg-primary"></span>
+                <div class="fliex-grow-1 me-5 d-flex">
+                    <!-- DATETIME --->
+                    <div class="text-gray-800 fw-semibold fs-6 me-5">
+                        {{ item['when']|string_to_datetime(ticketform.instance.ctzoffset) }}
+                    </div>
+                    <!-- Location & Prioirity -->
+                    <div class="text-gray-600 fw-semibold fs-6 me-3">
+                    <div><span class="text-gray-500 fw-semibold">Location &nbsp;&nbsp;</span><span class="text-gray-800 fw-semibold">{{ item['previous_state']['location'] }}</span> 
+                    <span class="text-gray-500 fw-semibold">&nbsp;&nbsp;Priority &nbsp;&nbsp;</span><span class="text-gray-800 fw-semibold">{{ item['previous_state']['priority'] }}</span></div>
+                    </div>
+                    <!-- User -->
+                    <div class="text-gray-600 fw-semibold fs-6">
+                        User&nbsp;&nbsp;
+                        <a href="{{ url('peoples:people') }}?id={{ item['people_id'] }}">{{ item['who'] }}</a>
+                        &nbsp;Comments&nbsp;&nbsp;
+                        <span class="fs-6 text-gray-800">{{ item['previous_state']['comments'] }}</span>
+                    </div>
+
+                </div>
+            </div>
+        {% endfor %}
+        </div>
+    </div>
+{% endif %}
+{% endblock extras %}
+
+{% block ajax_page_actions %}
+<div class="form-actions">
+    {% if ticketform.instance.id %}
+    <button type="submit" id="submitTour" form="ticketform" class="btn btn-sm btn-primary btn-hover-scale">
+        Update&nbsp;<i class="fas fa-cloud-upload-alt"></i>
+    </button>
+    <button type="submit" id="clearForm" class="btn btn-sm btn-secondary btn-hover-scale">
+        Clear&nbsp;<i class="fas fa-cloud-upload-alt"></i>
+    </button>
+
+    <button type="button" onclick="deleteMainJob(this)" data-id="{{ ticketform.instance.id }}" id="deleteAttd"
+        class="btn btn-sm btn-danger btn-hover-scale">
+        Delete&nbsp;<i class="fas fa-trash-alt"></i>
+    </button>
+    {% else %}
+    <button type="submit" form="ticketform" class="btn btn-sm btn-primary btn-hover-scale">
+        Save&nbsp;<i class="fas fa-cloud-upload-alt"></i>
+    </button>
+    {% endif %}
+</div>
+{% endblock ajax_page_actions %}
+
+{% block extra_scripts %}
+{{ ticketform.media.js }}
+<script>
+    // add classes to label tags.
+    $('label').removeClass("col-form-label col-md-2 col-sm-2 text-sm-right")
+
+    function showHideSelectField(val) {
+        if (val == "PEOPLE") {
+            //$("#aatopdiv").show();
+            $(".people").show();
+            $("#id_peopleradio").attr('checked', 'checked')
+            $("#id_assignedtogroup").val(1)
+            $(".pgroup").hide();
+        } else {
+            //$("#aatopdiv").hide();
+            $(".pgroup").show();
+            $("#id_groupradio").attr('checked', 'checked')
+            $(".people").hide();
+            $("#id_assignedtopeople").val(1)
+        }
+    }
+
+    $(document).ready(function(){
+        //set ctzoffset
+        $("#id_ctzoffset").val(-new Date().getTimezoneOffset())
+        //toggle people and pgroup field based on radio button value
+
+        if ('{{ticketform.instance.id}}' == ('None' || "")) {
+            $("#id_status").select2({"disabled": 'readonly'})
+            showHideSelectField('PEOPLE')
+        }else{
+            var assignto = '{{ticketform.instance.assignedtopeople}}' == ('None' || "") ? "GROUP" : "PEOPLE"
+            showHideSelectField(assignto)
+            $('#id_status option[value="NEW"]').remove();
+        }
+        $("#id_cuser").select2({"disabled": 'readonly'})
+        $("#id_cdtz").prop('readonly', true)
+        $("#id_comments").val("")
+
+        //hide the delete button when instance is not saved yet.
+        if ('{{ticketform.instance.id}}' == ('None' || "")) {
+            $("#btn_del").hide()
+        }
+
+        $("#clearForm").click(() => {
+            location.href = "{{ url('helpdesk:ticket') }}?action=form"
+        })
+
+        //on submit form post request
+        $("#ticketform").submit((e) => {
+            e.preventDefault()
+            var form = $(this);
+            const params   = { url: $(form).attr("action"), modal: false }
+            const formtype = '{{ticketform.instance.id}}' == 'None' ? "create" : "update" //form-type (create/update)      
+            const id       = '{{ ticketform.instance.id }}'                                          
+            var   payLoad  = { formData: $("#ticketform").serialize(),csrfmiddlewaretoken: '{{ csrf_token }}' }
+            
+            if (formtype === 'update') {
+                var newPayLoad = { ...payLoad, 'pk': id }
+                    payLoad    = newPayLoad
+            }
+            submit_form_alert().then((res) => {
+                if(res.isConfirmed){
+                    fire_ajax_form_post(params, payLoad)
+                    .done((data, status, xhr) => {
+                        Swal.fire(
+                            `Ticket Form saved`,
+                            `Ticket Form with this name <strong>${data.jobdesc}</strong> has been saved successfully`,
+                            'success'
+                        ).then(function () {
+                            location.href = `{{ url('helpdesk:ticket') }}?template=true`;
+                        })
+                    })
+                    .fail((xhr, status, error) => {
+                        console.log(xhr)
+                        if(!typeof(xhr.responseJSON.errors) === 'object'){
+                            show_error_alert(xhr.responseJSON.errors, "Failed to save!")
+                        }else{}
+                        
+                    })
+                }
+            })
+        })
+
+    })
+
+</script>
+
+{% endblock extra_scripts %}

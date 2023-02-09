@@ -5,6 +5,7 @@ from apps.core import utils
 from apps.activity.models import Attachment
 from apps.peoples.models import Pgbelonging
 from itertools import chain
+import json
 import logging
 log = logging.getLogger('__main__')
 
@@ -63,12 +64,14 @@ class PELManager(models.Manager):
     
     def get_peopleevents_listview(self, related,fields,request):
         R, S = request.GET, request.session
+        P = json.loads(R['params'])
+        ic(P)
         qset = self.select_related(*related).filter(
             bu_id__in = S['assignedsites'],
             client_id = S['client_id'],
-            datefor__gte = R['pd1'],
-            datefor__lte = R['pd2'],
-            peventtype__tacode__in = ['SELF', 'SELFATTENDANCE']
+            datefor__gte = P['from'],
+            datefor__lte =P['to'],
+            peventtype__tacode__in = ['SELF', 'SELFATTENDANCE', 'MARK', 'MRKATTENDANCE']
         ).exclude(id=1).values(*fields).order_by('-datefor')
         return qset or self.none()
     
@@ -147,3 +150,18 @@ class PELManager(models.Manager):
             datefor__lte = pd2,
             peventtype__tacode__in = ['SELF', 'SELFATTENDANCE']
         ).count() or 0
+    
+    def get_attendance_history(self, month, year, people_id, bu_id, client_id):
+        qset = self.filter(
+            punchintime__month = month,
+            punchintime__year = year,
+            people_id = people_id,
+            bu_id = bu_id,
+            client_id = client_id
+        ).select_related('people', 'bu', 'client', 'verifiedby', 'peventtype', 'geofence', 'shift').values(
+            'uuid', 'people_id', 'client_id', 'bu_id','shift_id', 'verifiedby_id', 'geofence_id',
+            'peventtype_id', 'transportmodes', 'punchintime', 'punchouttime', 'datefor', 'distance',
+            'duration', 'expamt', 'accuracy', 'deviceid', 'startlocation', 'endlocation', 'journeypath',
+            'remarks', 'facerecognitionin', 'facerecognitionout', 'otherlocation', 'reference'
+        )
+        return qset or self.none()

@@ -37,6 +37,7 @@ urlpatterns = [
     path('activity/', include('apps.activity.urls')),
     path('schedhule/', include('apps.schedhuler.urls')),
     path('reports/', include('apps.reports.urls')),
+    path('helpdesk/', include('apps.y_helpdesk.urls')),
     #path('reminder/', include('apps.reminder.urls')),
     path('email/', include(email_urls)), 
     path('__debug__/', include(debug_toolbar.urls)), # shoul use when debug = True

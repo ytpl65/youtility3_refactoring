@@ -219,7 +219,7 @@
         </a>
         {# END LOGO #}
         {# BEGIN ASIDE TOGGLER #}
-        <div id="kt_aside_toggle" class="btn btn-icon w-auto px-0 btn-active-color-primary aside-toggle"
+        <div id="kt_aside_toggle" class="btn btn-icon w-auto px-0 d-none btn-active-color-primary aside-toggle"
           data-kt-toggle="true" data-kt-toggle-state="active" data-kt-toggle-target="body"
           data-kt-toggle-name="aside-minimize">
           <!--begin::Svg Icon | path: icons/duotone/Navigation/Angle-double-left.svg-->
@@ -343,7 +343,7 @@
             <!--begin::Page title-->
             <ol class="breadcrumb breadcrumb-dot text-muted fs-6 fw-bold">
               {% block pagebreadcumb %}
-              <li class="breadcrumb-item pe-3"><a href="{{ url('home') }}" class="pe-3">Home</a></li>
+              <li class="breadcrumb-item pe-3"><a href="{{ url('onboarding:rp_dashboard') }}" class="pe-3">Home</a></li>
               {% endblock pagebreadcumb %}
             </ol>
             
@@ -406,15 +406,15 @@
       </div>
       <!--end::Content-->
       <!--begin::footer-->
-      <div class="footer py-4 d-flex flex-lg-column" id="kt_footer"
-      style="background-color: #01579B;">
+      <div class="footer py-1 d-flex flex-lg-column" id="kt_footer"
+      style="background-color: #ffffff;">
         <!--begin::Container-->
-        <div class="container-fluid d-flex flex-column flex-md-row align-items-center justify-content-between">
+        <div class="container-fluid d-flex flex-column flex-md-row align-items-center justify-content-end">
           <!--begin::Copyright-->
           <div></div>
           <!--end::Copyright-->
-          <div class="page-footer-inner text-light"> <span id="copyRightYear ">{{ current_year }} © Powered by</span>
-            <a target="_blank" class="text-white opacity-50" href="http://www.youtility.in">Youtility Technologies Pvt. Ltd. </a>
+          <div class="page-footer-inner" style="color: #01579B"> <span id="copyRightYear ">{{ current_year }} © Powered by</span>
+            <a target="_blank"   style="color: #01579B" href="http://www.youtility.in">Youtility Technologies Pvt. Ltd. </a>
           </div>
         </div>
         <!--end::Container-->

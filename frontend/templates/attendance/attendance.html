@@ -140,8 +140,15 @@ td { padding: 6px; border: 1px solid #CCC; }
         })
     }
     //if you want to modifiy here, then modify in custom.js initDateRange also
+    var params=null
     var from_pd = moment().subtract(7, 'days').format('YYYY-MM-DD');
     var to_pd = moment().format('YYYY-MM-DD')
+    params = {from:from_pd, to:to_pd}
+
+    function reloadTable(table, filters){
+        params = filters
+        table.ajax.reload()
+    }
 
     $(document).ready(function () {
         
@@ -155,8 +162,7 @@ td { padding: 6px; border: 1px solid #CCC; }
             ajax:{
 				url: '{{ url("attendance:attendance_view") }}?action=list',
                 data:function(d){
-                    d.pd1 = from_pd
-                    d.pd2 = to_pd
+                    d.params = JSON.stringify(params)
                 }
 			},
             pageLength:14,
@@ -240,6 +246,13 @@ td { padding: 6px; border: 1px solid #CCC; }
                 }
 
             ],
+            initComplete:function(settings, json){
+                const table_filters = localStorage.getItem('attds_filter')
+                if(table_filters){
+                    reloadTable(table, JSON.parse(table_filters))
+                    localStorage.clear()
+                }
+            },
             select: {
                     style: 'single'
                 }
@@ -250,7 +263,8 @@ td { padding: 6px; border: 1px solid #CCC; }
         initDateRange("#id_daterange").on('apply.daterangepicker', function(e, picker){
             from_pd = picker.startDate.format('YYYY-MM-DD');
             to_pd = picker.endDate.format('YYYY-MM-DD');
-            table.ajax.reload()
+            let filters = {from:from_pd, to:to_pd}
+            reloadTable(table, filters)
         })
         
         //BEGIN STYLING DATATABLE

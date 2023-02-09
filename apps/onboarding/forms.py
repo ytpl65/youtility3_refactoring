@@ -43,6 +43,7 @@ class SuperTypeAssistForm(forms.ModelForm):
         self.request = kwargs.pop('request', None)
         super(SuperTypeAssistForm, self).__init__(*args, **kwargs)
         utils.initailize_form_fields(self)
+        self.fields['enable'].initial = True
 
     def is_valid(self) -> bool:
 
@@ -70,6 +71,7 @@ class TypeAssistForm(SuperTypeAssistForm):
         """Initializes form"""
         self.request = kwargs.pop('request', None)
         super().__init__(*args, **kwargs)
+        self.fields['enable'].initial = True
         utils.initailize_form_fields(self)
 
     def is_valid(self) -> bool:

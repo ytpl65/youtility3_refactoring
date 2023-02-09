@@ -272,6 +272,17 @@ class TypeAssistManager(models.Manager):
         qset = self.filter(tatype__tacode='BVIDENTIFIER').annotate(text = F('taname')).exclude(taname='Client').values('text', 'id').distinct()
         qset = qset.filter(taname__icontains = search_term, tatype__tacode='BVIDENTIFIER') if search_term else qset
         return qset or self.none()
+    
+    def get_escalationlevels(self, request):
+        R, S = request.GET, request.session
+        ic(R)
+        if qobj := self.filter(id=R['id']).first():
+            return list(qobj.esc_types.select_related('escalationtemplate', 'assignedperson', 'assignedgroup').values(
+                'assignedfor', 'assignedperson__peoplename', 'assignedperson__peoplecode', 
+                'assignedgroup__groupname', 'frequency', 'frequencyvalue', 'id', 'level',
+                'assignedperson_id', 'assignedgroup_id'
+            )) or []
+        return []
 
 
 

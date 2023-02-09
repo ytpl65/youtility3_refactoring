@@ -184,6 +184,42 @@ h6 > ol > li {
     font-size: 1.7rem;
 }
 
+@media(min-width: 992px){
+    .aside .aside-menu {
+        width:220px
+    }
+}
+
+
+@media(min-width:992px){
+    .aside {
+        width: 223px;
+        transition: width 0.3s ease;
+    }
+}
+
+@media(min-width:992px){
+    .aside-enabled.aside-fixed.header-fixed .header {
+        left: 198px;
+        transition: left 0.3s ease;
+    }
+}
+
+@media (min-width: 992px){
+    .aside-enabled.aside-fixed .wrapper {
+        transition: padding-left 0.3s ease;
+        padding-left: 210px;
+    }
+}
+
+@media(min-width:992px){
+    .aside-enabled.aside-fixed.toolbar-fixed .toolbar {
+        left: 198px;
+        transition: left 0.3s ease;
+    }
+}
+
+
 
 body{
     overflow: auto;
@@ -193,7 +229,7 @@ li.page-item{
 }
 div#kt_footer {
     position: fixed;
-    height: 50px;
+    height: 25px;
     bottom: 0px;
     left: 0px;
     right: 0px;
@@ -378,7 +414,7 @@ tr.disabled-record td a {
 }
 
 .count-title {
-    font-size: 40px;
+    font-size: 30px;
     font-weight: normal;
     margin-top: 10px;
     margin-bottom: 0;
@@ -417,7 +453,7 @@ tr.disabled-record td a {
 }
 
 .yicon {
-    font-size: 40px !important;
+    font-size: 30px !important;
 }
 .yiconpadd{
     padding-left: 15px !important;
@@ -455,4 +491,28 @@ tr.disabled-record td a {
 .count-item:hover, .ci:hover {
 background-color: #e8f6ff !important;
 cursor: pointer;
+}
+/*Select2 ReadOnly Start*/
+
+select[readonly].select2-hidden-accessible + .select2-container {
+    pointer-events: none;
+    touch-action: none;
+}
+
+select[readonly].select2-hidden-accessible + .select2-container .select2-selection {
+    background: #eee;
+    box-shadow: none;
+}
+
+select[readonly].select2-hidden-accessible + .select2-container .select2-selection__arrow, select[readonly].select2-hidden-accessible + .select2-container .select2-selection__clear {
+    display: none;
+}
+/*Select2 ReadOnly End*/
+.readonly-select{
+    pointer-events: none;
+}
+
+
+.d-flex > .y-active{
+    border-bottom: 3px solid red;
 }

@@ -146,7 +146,7 @@ class PeopleManager(BaseUserManager):
     
     def peoplechoices_for_pgroupform(self, request):
         S = request.session
-        qset = self.filter(
+        qset = self.select_related('client', 'bu').filter(
             enable=True,
             #isverified=True,
             isadmin=False,
@@ -154,6 +154,17 @@ class PeopleManager(BaseUserManager):
             client_id=S['client_id'],            
         ).annotate(peopletext = Concat(F('peoplename'), V(' ('), F('peoplecode'), V(')'))).values_list('id', 'peopletext')
         return qset or self.none()
+
+    def getPeoplesForEscForm(self, request):
+        R = request.GET
+        qset = self.peoplechoices_for_pgroupform(request)
+        qset = qset.filter(peoplename__icontains = R['search']) if R.get('search')  else qset
+        qset = qset.annotate(
+            text = Concat(F('peoplename'), V(' ('), F('peoplecode'), V(')'))
+        ).values('id', 'text')
+        ic(qset)
+        return qset or self.none()
+        
 
 
 
@@ -331,4 +342,17 @@ class PgroupManager(models.Manager):
             client_id = clientid,
             identifier__tacode = 'SITEGROUP'
             ).values_list('id', 'groupname')
+        return qset or self.none()
+
+    def getGroupsForEscForm(self, request):
+        R, S = request.GET, request.session 
+        qset = self.filter(
+            bu_id__in = S['assignedsites'],
+            client_id = S['client_id'],
+            identifier__tacode = 'PEOPLEGROUP'
+        ).select_related('identifier', 'bu', 'client')
+        qset = qset.filter(groupname__icontains = R['search']) if R.get('search') else qset
+        qset.annotate(
+            text = F('groupname')
+        ).values('id', 'text')
         return qset or self.none()

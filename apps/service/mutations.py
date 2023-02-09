@@ -10,6 +10,7 @@ from django.utils import timezone
 from rest_framework.views import APIView
 from rest_framework.parsers import MultiPartParser, FileUploadParser, JSONParser
 from rest_framework.response import Response
+from django.core.serializers.json import DjangoJSONEncoder
 from . import tasks
 from . import types as ty
 from graphene_file_upload.scalars import Upload
@@ -91,7 +92,7 @@ class LoginUser(graphene.Mutation):
                 'enablesleepingguard',
                 'skipsiteaudit', 'deviceevent', 'pvideolength',
                 'client_id', 'bu_id', 'mobno', 'email', 'isverified',
-                'deviceid', 'id', 'enable', 'isadmin', 'peoplecode',
+                'deviceid', 'id', 'enable', 'isadmin', 'peoplecode', 'dateofjoin',
                 'tenant_id', 'loginid', 'clientcode', 'clientname', 'sitecode',
                 'sitename', 'clientenable', 'isgpsenable').filter(id = user.id)
         qsetList = list(qset)
@@ -100,7 +101,7 @@ class LoginUser(graphene.Mutation):
         qsetList[0]['emergencycontacts'] = str(qsetList[0]['emergencycontacts']).replace('[', '').replace(']', '').replace("'", "")
         qsetList[0]['mobilecapability'] = str(qsetList[0]['mobilecapability']).replace('[', '').replace(']', '').replace("'", "")
         
-        v = json.dumps(qsetList[0])
+        v = json.dumps(qsetList[0], cls = DjangoJSONEncoder)
         ic(v)
         return v
 

@@ -185,6 +185,28 @@
 	const urlname         = "{{ label }}" == 'Smartplace' ? "{{ url('activity:smartplace') }}" : "{{ url('activity:checkpoint') }}"
 	const viewname        = "{{ label }}"
 	const rowlink         = "a.cp-link"
+	var params = null;
+	
+	function reloadTable(table, index){
+		switch(index){
+			case 0:
+			params = {status:'WORKING'}
+			table.ajax.reload()
+			break;
+			case 1:
+			params = {status:'MAINTENANCE'}
+			table.ajax.reload()
+			break;
+			case 2:
+			params = {status:'STANDBY'}
+			table.ajax.reload()
+			break;
+			case 3:
+			params = {status:'SCRAPPED'}
+			table.ajax.reload()
+			break;
+		}
+	}
 	
 	$(document).ready(function () {
 
@@ -204,6 +226,9 @@
         table = $(table_id).DataTable({
 			ajax:{
 				url: `${urlname}?action=list`,
+				data:function(d){
+					d.params = JSON.stringify(params)
+				}
 			},
 			pageLength:50,
 			columns:[
@@ -225,11 +250,23 @@
 					render : function ( data, type, row, meta ) {
 						return `<a href="#" class="cp-link" data-id=${row['id']} data-rowid=${meta.row}>${data}</a>`
 					}
-				}
+				},
+				{targets:4, data: 'runningstatus',  render:function(data, type, row, meta){
+					if(data === 'MAINTENANCE'){return `<span class="badge badge-danger">${data}</span>`}
+					if(data === 'SCRAPPED'){return `<span class="badge badge-secondary">${data}</span>`}
+					if(data === 'STANDBY'){return `<span class="badge badge-orange">${data}</span>`}
+					if(data === 'WORKING'){return `<span class="badge badge-success">${data}</span>`}
+				}},
+
 			],
             dom:`<'row' <'col-sm-6 d-flex justify-content-start'f> <'col-sm-6 d-flex justify-content-end'B> >rt<'row'
 			 <'col-sm-6'l> <'col-sm-6'p><'col-sm-12 d-flex justify-content-center'i>>`,
             ordering:false,
+			createdRow:function(row, data, dataIndex){
+				if(data['enable'] === false){
+					$(row).addClass('disabled-record text-white')
+				}
+			},
 			buttons:[
 				{
 					text:`Add New ${viewname} &nbsp;<i class='fas fa-plus ch4'></i></a>`,
@@ -250,6 +287,12 @@
 					}
 				}
 			],
+			initComplete:function(settings, json){
+				let filters = localStorage.getItem('assetFilters') ? JSON.parse(localStorage.getItem('assetFilters')) : null
+				if(filters && filters.AssetType === 1){
+					reloadTable(table, filters.AssetStatus)
+				}
+			},
 			select: {
                     style: 'single'
                 }

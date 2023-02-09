@@ -1,0 +1,144 @@
+from django.db import models
+from datetime import datetime, timezone
+import json
+from django.db.models import Q
+from apps.onboarding.models import TypeAssist
+
+class TicketManager(models.Manager):
+    use_in_migrations = True
+   
+    def send_ticket_mail(self, ticketid):
+        ticketmail = self.raw('''SELECT ticket.id, ticket.ticketlog,  ticket.comments, ticket.ticketdesc, ticket.cdtz,ticket.status, ticket.ticketno, ticket.level, bt.buname,
+                ( ticket.cdtz + interval'1 minutes' ) createdon, ( ticket.mdtz + interval '1 minutes' ) modifiedon,  modifier.peoplename as  modifiername,                                       
+                    people.peoplename, people.email as peopleemail, creator.id as creatorid, creator.email as creatoremail,
+                    modifier.id as modifierid, modifier.email as modifiermail,pgroup.id as pgroupid, pgroup.groupname ,
+                    ticket.assignedtogroup_id,  ticket.priority,
+                    ticket.assignedtopeople_id, ticket.escalationtemplate as tescalationtemplate,                                                
+                ( SELECT emnext.frequencyvalue || ' ' || emnext.frequency FROM escalationmatrix AS emnext                         
+                WHERE  ticket.bu_id= emnext.bu_id AND ticket.escalationtemplate=emnext.escalationtemplate AND emnext.level=ticket.level + 1   
+                ORDER BY cdtz LIMIT 1 ) AS next_escalation,
+                (select array_to_string(ARRAY(select email from people where id in(select people_id from pgbelonging where pgroup_id=pgroup.id )),',') ) as pgroupemail                                                                     
+                FROM ticket                                                                                                          
+                LEFT  JOIN people modifier    ON ticket.muser_id=modifier.id                                                      
+                LEFT JOIN people              ON ticket.assignedtopeople_id=people.id 
+                LEFT JOIN pgroup              ON ticket.assignedtogroup_id=pgroup.id
+                LEFT JOIN people creator      ON ticket.cuser_id =creator.id
+                LEFT JOIN bt                  ON ticket.bu_id =bt.id
+                WHERE ticket.id in (%s)''', [ticketid])
+        return ticketmail or self.none() 
+    
+    def get_tickets_listview(self, request):
+        R, S = request.GET, request.session
+        P = json.loads(R['params'])
+        qset = self.filter(
+            cdtz__date__gte = P['from'],
+            cdtz__date__lte = P['to'],
+            bu_id__in = S['assignedsites'],
+            #client_id = S['client_id'],
+        ).select_related('assignedtopeople', 'assignedtogroup', 'bu').values(
+            'id', 'cdtz', 'bu__buname', 'status', 'bu__bucode', 'isescalated',
+            'cuser__peoplename', 'cuser__peoplecode', 'ticketdesc', 'ctzoffset'
+        )
+        return qset or self.none()
+
+
+class ESCManager(models.Manager):
+    use_in_migrations=True
+    
+    def get_reminder_config_forppm(self, job_id, fields):
+        qset = self.filter(
+            escalationtemplate__tacode="JOB",
+            job_id = job_id
+        ).values(*fields) 
+        return qset or self.none()
+    
+    
+    def handle_reminder_config_postdata(self,request):
+        
+        P, S = request.POST, request.session
+        ic(P)
+        cdtz = datetime.now(tz = timezone.utc)
+        mdtz = datetime.now(tz = timezone.utc)
+        ppmjob = TypeAssist.objects.get(tatype__tacode='ESCALATIONTEMPLATE', tacode="JOB")
+        PostData = {
+            'cdtz':cdtz, 'mdtz':mdtz, 'cuser':request.user, 'muser':request.user,
+            'level':1, 'job_id':P['jobid'], 'frequency':P['frequency'], 'frequencyvalue':P['frequencyvalue'],
+            'notify':P['notify'], 'assignedperson_id':P['peopleid'], 'assignedgroup_id':P['groupid'], 
+            'bu_id':S['bu_id'], 'escalationtemplate':ppmjob, 'client_id':S['client_id'], 
+            'ctzoffset':P['ctzoffset']
+        }
+        if P['action'] == 'create':
+            if self.filter(
+                job_id = P['jobid'],
+                frequency = PostData['frequency'], frequencyvalue = PostData['frequencyvalue'], 
+                ).exists():
+                return {'data':list(self.none()), 'error':'Warning: Record already added!'}
+            ID = self.create(**PostData).id
+        
+        elif P['action'] == 'edit':
+            PostData.pop('cdtz')
+            PostData.pop('cuser')
+            if updated := self.filter(pk=P['pk']).update(**PostData):
+                ID = P['pk']
+        else:
+            self.filter(pk = P['pk']).delete()
+            return {'data':list(self.none()),}
+        ic(ID)
+        qset = self.filter(pk = ID).values('notify', 'frequency', 'frequencyvalue', 'id')
+        return {'data':list(qset)}
+    
+
+    def get_escalation_listview(self, request):
+        R, S = request.GET, request.session
+        from apps.onboarding.models import TypeAssist
+        qset = TypeAssist.objects.filter(
+            bu_id__in = S['assignedsites'],
+            tatype__tacode__in = ['TICKETCATEGORY', 'TICKET_CATEGORY']
+        ).values(
+            'tacode', 'cdtz', 'id'
+        )
+        return qset or self.none()
+    
+    
+    
+    def handle_esclevel_form_postdata(self,request):
+        
+        P, S = request.POST, request.session
+        ic(P)
+        cdtz = datetime.now(tz = timezone.utc)
+        mdtz = datetime.now(tz = timezone.utc)
+        PostData = {
+            'cdtz':cdtz, 'mdtz':mdtz, 'cuser':request.user, 'muser':request.user,
+            'level':P['level'], 'job_id':1, 'frequency':P['frequency'], 'frequencyvalue':P['frequencyvalue'],
+            'notify':"", 'assignedperson_id':P['assignedperson'], 'assignedgroup_id':P['assignedgroup'], 
+            'assignedfor':P['assignedfor'],
+            'bu_id':S['bu_id'], 'escalationtemplate_id':P['escalationtemplate_id'], 'client_id':S['client_id'], 
+            'ctzoffset':P['ctzoffset']
+        }
+        if P['action'] == 'create':
+            if self.filter(
+                (Q(assignedgroup_id = P['assignedgroup']) & Q(assignedperson_id = P['assignedperson'])),
+                escalationtemplate_id = P['escalationtemplate_id'], 
+                ).exists():
+                return {'data':list(self.none()), 'error':'Warning: Record with this escalation template and people is already added!'}
+            ID = self.create(**PostData).id
+        
+        elif P['action'] == 'edit':
+            PostData.pop('cdtz')
+            PostData.pop('cuser')
+            if updated := self.filter(pk=P['pk']).update(**PostData):
+                ID = P['pk']
+        else:
+            self.filter(pk = P['pk']).delete()
+            return {'data':list(self.none()),}
+        ic(ID)
+        qset = self.filter(pk = ID).values(
+            'assignedfor', 'assignedperson__peoplename', 'assignedperson__peoplecode', 
+            'assignedgroup__groupname', 'frequency', 'frequencyvalue', 'id', 'level',
+            'assignedperson_id', 'assignedgroup_id')
+        ic(qset)
+        return {'data':list(qset)}
+    
+            
+        
+        

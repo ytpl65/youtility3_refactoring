@@ -14,7 +14,7 @@ class Migration(migrations.Migration):
         migrations.AlterModelManagers(
             name='ticket',
             managers=[
-                ('objects', apps.activity.managers.TicketManager()),
+                ('objects', apps.y_helpdesk.managers.TicketManager()),
             ],
         ),
         migrations.RemoveField(

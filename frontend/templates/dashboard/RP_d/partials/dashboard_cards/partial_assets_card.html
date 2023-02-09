@@ -1,4 +1,4 @@
-var options2 = {
+var barChartOptions = {
     series: _assetChartSeries,
     chart: {
     type: 'bar',
@@ -12,7 +12,20 @@ var options2 = {
     },
     events: {
                 dataPointSelection: function(event, chartContext, config) {
-                console.log(config);
+                let filters = {'AssetType':config.dataPointIndex, 'AssetStatus':config.seriesIndex}
+                localStorage.setItem('assetFilters', JSON.stringify(filters))
+                switch(config.dataPointIndex){
+                  case 0:
+                  window.open('{{ url("activity:asset") }}?template=true', '_blank');
+                  break;
+                  case 1:
+                  window.open('{{ url("activity:checkpoint") }}?template=true', '_blank');
+                  break;
+                  case 2:
+                  window.open('{{ url("activity:location") }}?template=true', '_blank');
+                  break;
+
+                }
                 }
   }
   },
@@ -39,7 +52,7 @@ var options2 = {
             fontWeight: 900
           }
         }
-      }
+      },
     },
   },
   colors: [  '#2ed8b6',  '#FF5370','#FFB64D', '#B0B0B0'], 

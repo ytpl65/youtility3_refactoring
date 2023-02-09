@@ -2,6 +2,7 @@ from django.db import models
 from django.utils.translation import gettext_lazy as _
 from apps.peoples.models import BaseModel
 from django.conf import settings
+from .managers import ReminderManager
 # Create your models here.
 
 
@@ -41,3 +42,16 @@ class Reminder(BaseModel):
     plandatetime   = models.DateTimeField(_("Plan Datetime"), null=True)
     mailids        = models.TextField(_("Mail Ids"), max_length=500)
     status         = models.CharField(_("Status"), choices=StatusChoices.choices, max_length=50)
+    
+    
+    objects = ReminderManager()
+
+    class Meta(BaseModel.Meta):
+        db_table            = 'reminder'
+        verbose_name        = 'Reminder'
+        verbose_name_plural = 'Reminders'
+        
+        
+
+    def __str__(self):
+        return f'{self.assetname} ({self.assetcode})'

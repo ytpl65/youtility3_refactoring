@@ -9,6 +9,7 @@ from apps.core import utils
 from itertools import chain
 import apps.peoples.models as pm
 import logging
+import json
 logger = logging.getLogger('__main__')
 from django.conf import settings
 log = logger
@@ -265,6 +266,7 @@ class JobneedManager(models.Manager):
 
     def get_last10days_jobneedtasks(self, related, fields, request):
         R = request.GET
+        P = json.loads(R['params'])
         qobjs = self.select_related(*related).annotate(
             assignedto = Case(
                 When(Q(pgroup_id=1) | Q(pgroup_id__isnull =  True), then=Concat(F('people__peoplename'), V(' [PEOPLE]'))),
@@ -272,10 +274,12 @@ class JobneedManager(models.Manager):
                 ),
             ).filter(
             bu_id__in = request.session['assignedsites'],
-            plandatetime__date__gte = R['pd1'],
-            plandatetime__date__lte = R['pd2'],
+            plandatetime__date__gte = P['from'],
+            plandatetime__date__lte = P['to'],
             identifier = 'TASK'
         ).exclude(parent__jobdesc = 'NONE', jobdesc = 'NONE').values(*fields).order_by('-plandatetime')
+        if P.get('jobstatus') and P['jobstatus'] != 'TOTALSCHEDULED':
+            qobjs = qobjs.filter(jobstatus = P['jobstatus'])
         return qobjs or self.none()
 
     def get_assetmaintainance_list(self, request, related, fields):
@@ -344,6 +348,7 @@ class JobneedManager(models.Manager):
         from apps.peoples.models import Pgbelonging
         from apps.activity.models import Attachment
         R = request.GET
+        P = json.loads(R['params'])
         sites = Pgbelonging.objects.get_assigned_sites_to_people(request.user.id)
         buids = sites.values_list('buid', flat=True)
         qset = self.annotate(
@@ -355,7 +360,7 @@ class JobneedManager(models.Manager):
             uuidtext = Cast('uuid', output_field=models.CharField())
         ).filter(
             Q(Q(parent_id__in = [1, -1]) | Q(parent_id__isnull=True)),
-            plandatetime__date__gte = R['pd1'], plandatetime__date__lte = R['pd2'], identifier='INCIDENTREPORT', bu_id__in = buids).values(
+            plandatetime__date__gte =P['from'], plandatetime__date__lte = P['to'], identifier='INCIDENTREPORT', bu_id__in = buids).values(
             'id', 'plandatetime', 'jobdesc', 'bu_id', 'buname', 'gps', 'jobstatus', 'performedby__peoplename', 'uuidtext', 'remarks', 'geojson__gpslocation',
             'identifier', 'parent_id'
         )
@@ -366,6 +371,8 @@ class JobneedManager(models.Manager):
 
     def get_internaltourlist_jobneed(self, request, related, fields):
         R = request.GET
+        P = json.loads(R['params'])
+        ic(P)
         qset = self.annotate(
             assignedto = Case(
                 When(Q(pgroup_id=1) | Q(pgroup_id__isnull =  True), then=Concat(F('people__peoplename'), V(' [PEOPLE]'))),
@@ -376,13 +383,15 @@ class JobneedManager(models.Manager):
                                 bu_id__in = request.session['assignedsites'],
                                 client_id = request.session['client_id'],
                                 parent_id=1,
-                                plandatetime__date__gte = R['pd1'],
-                                plandatetime__date__lte = R['pd2'],
+                                plandatetime__date__gte = P['from'],
+                                plandatetime__date__lte = P['to'],
                                 jobtype="SCHEDULE",
                                 identifier='INTERNALTOUR'
                         ).exclude(
                         id=1
-                        ).values(*fields).order_by('-plandatetime') 
+                        ).values(*fields).order_by('-plandatetime')
+        if P.get('jobstatus') and P['jobstatus'] != 'TOTALSCHEDULED':
+            qset = qset.filter(jobstatus = P['jobstatus'])
         return qset or self.none()
     
     
@@ -390,23 +399,26 @@ class JobneedManager(models.Manager):
         fields = ['id', 'plandatetime', 'expirydatetime', 'performedby__peoplename', 'jobstatus',
                   'jobdesc', 'people__peoplename', 'pgroup__groupname', 'gracetime', 'ctzoffset', 'assignedto']
         R = request.GET
+        P = json.loads(R['params'])
         qset = self.annotate(
             assignedto = Case(
                 When(Q(pgroup_id=1) | Q(pgroup_id__isnull =  True), then=Concat(F('people__peoplename'), V(' [PEOPLE]'))),
                 When(Q(people_id=1) | Q(people_id__isnull =  True), then=Concat(F('pgroup__groupname'), V(' [GROUP]'))),
                 ),
             ).select_related(
-                            *related).filter(
-                                bu_id__in = request.session['assignedsites'],
-                                parent_id=1,
-                                plandatetime__date__gte = R['pd1'],
-                                plandatetime__date__lte = R['pd2'],
-                                jobtype="SCHEDULE",
-                                identifier='EXTERNALTOUR',
-                                job__enable=True
+                *related).filter(
+                    bu_id__in = request.session['assignedsites'],
+                    parent_id=1,
+                    plandatetime__date__gte = P['from'],
+                    plandatetime__date__lte =  P['to'],
+                    jobtype="SCHEDULE",
+                    identifier='EXTERNALTOUR',
+                    job__enable=True
                         ).exclude(
                         id=1
                         ).values(*fields).order_by('-cdtz') 
+        if P.get('jobstatus') and P['jobstatus'] != 'TOTALSCHEDULED':
+            qset = qset.filter(jobstatus = P['jobstatus'])
         return qset or self.none()
 
     def get_tourdetails(self, R):
@@ -504,7 +516,8 @@ class JobneedManager(models.Manager):
                 identifier='PPM',
                 client_id = S['client_id'],
                 plandatetime__date__gte = pd1,
-                plandatetime__date__lte = pd2
+                plandatetime__date__lte = pd2,
+                job__enable = True
             ).select_related(*related).values(*fields)
         return qset or self.none()
     
@@ -544,6 +557,24 @@ class JobneedManager(models.Manager):
             total_schd.filter(jobstatus='PARTIALLYCOMPLETED').count(),
             total_schd.count(),
         ]
+    
+    def get_alertchart_data(self, request):
+        S, R = request.session, request.GET
+        qset = self.filter(
+            bu_id__in = S['assignedsites'],
+            plandatetime__date__gte = R['from'],
+            plandatetime__date__lte = R['upto'],
+            client_id = S['client_id'],
+            alerts=True
+        )
+        
+        task_alerts = qset.filter( Q(Q(parent_id__in = [1, -1]) | Q(parent_id__isnull=True)), identifier='TASK').count()
+        tour_alerts = qset.filter(identifier='INTERNALTOUR').count()
+        route_alerts = qset.filter(identifier='EXTERNALTOUR').count()
+        chart_arr =  [task_alerts, tour_alerts, route_alerts]
+        ic(chart_arr)
+        return chart_arr, sum(chart_arr)
+        
     
     
         
@@ -659,6 +690,7 @@ class AssetManager(models.Manager):
     
     def get_checkpointlistview(self, request, related, fields, id=None):
         S = request.session
+        P = request.GET['params']
         qset = self.annotate(
             gps = AsWKT('gpslocation')
         ).select_related(*related)
@@ -667,11 +699,15 @@ class AssetManager(models.Manager):
             qset = qset.filter(enable=True, identifier='CHECKPOINT',id=id).values(*fields)[0]
         else:
             qset = qset.filter(enable=True, identifier='CHECKPOINT', bu_id__in = S['assignedsites'], client_id = S['client_id']).values(*fields)
+        if(P not in ['null', None]):
+            P = json.loads(P)
+            qset = qset.filter(runningstatus = P['status'])
         
         return qset or self.none()
     
     def get_smartplacelistview(self, request, related, fields, id=None):
         S = request.session
+        P = request.GET['params']
         qset = self.annotate(
             gps = AsWKT('gpslocation')
         ).select_related(*related)
@@ -685,12 +721,17 @@ class AssetManager(models.Manager):
     def get_assetlistview(self, related, fields, request):
         
         S = request.session
+        P = request.GET['params']
+        ic(request.GET)
         qset = self.annotate(gps = AsGeoJSON('gpslocation')).filter(
             ~Q(assetcode='NONE'),
             bu_id__in = S['assignedsites'],
             client_id = S['client_id'],
             identifier='ASSET'
         ).select_related(*related).values(*fields)
+        if(P not in ['null', None]):
+            P = json.loads(P)
+            qset = qset.filter(runningstatus = P['status'])
         return qset or self.none()
     
     
@@ -701,22 +742,22 @@ class AssetManager(models.Manager):
         from apps.activity.models import Location
         
         working = [
-        self.filter(runningstatus = 'WORKING', bu_id__in = S['assignedsites'], identifier = 'ASSET').values('id').order_by('assetcode').distinct('assetcode').count(),
-        self.filter(runningstatus = 'WORKING', bu_id__in = S['assignedsites'], identifier = 'CHECKPOINT').values('id').order_by('assetcode').distinct('assetcode').count(),
-        Location.objects.filter(locstatus = 'WORKING', bu_id__in = S['assignedsites']).values('id').order_by('loccode').distinct('loccode').count()]
+        self.filter(runningstatus = 'WORKING', bu_id__in = S['assignedsites'], identifier = 'ASSET', client_id=S['client_id']).values('id').order_by('assetcode').distinct('assetcode').count(),
+        self.filter(runningstatus = 'WORKING', bu_id__in = S['assignedsites'], identifier = 'CHECKPOINT', client_id=S['client_id']).values('id').order_by('assetcode').distinct('assetcode').count(),
+        Location.objects.filter(locstatus = 'WORKING', bu_id__in = S['assignedsites'], client_id=S['client_id']).values('id').order_by('loccode').distinct('loccode').count()]
         mnt = [
-        self.filter(runningstatus = 'MAINTENANCE', bu_id__in = S['assignedsites'], identifier = 'ASSET').values('id').order_by('assetcode').distinct('assetcode').count(),
-        self.filter(runningstatus = 'MAINTENANCE', bu_id__in = S['assignedsites'], identifier = 'CHECKPOINT').values('id').order_by('assetcode').distinct('assetcode').count(),
-        Location.objects.filter(locstatus = 'MAINTENANCE', bu_id__in = S['assignedsites']).values('id').order_by('loccode').distinct('loccode').count()
+        self.filter(runningstatus = 'MAINTENANCE', bu_id__in = S['assignedsites'], identifier = 'ASSET', client_id=S['client_id']).values('id').order_by('assetcode').distinct('assetcode').count(),
+        self.filter(runningstatus = 'MAINTENANCE', bu_id__in = S['assignedsites'], identifier = 'CHECKPOINT', client_id=S['client_id']).values('id').order_by('assetcode').distinct('assetcode').count(),
+        Location.objects.filter(locstatus = 'MAINTENANCE', bu_id__in = S['assignedsites'], client_id=S['client_id']).values('id').order_by('loccode').distinct('loccode').count()
         ]
         stb = [
-        self.filter(runningstatus = 'STANDBY', bu_id__in = S['assignedsites'], identifier = 'ASSET').values('id').order_by('assetcode').distinct('assetcode').count(),
-        self.filter(runningstatus = 'STANDBY', bu_id__in = S['assignedsites'], identifier = 'CHECKPOINT').values('id').order_by('assetcode').distinct('assetcode').count(),
-        Location.objects.filter(locstatus = 'STANDBY', bu_id__in = S['assignedsites']).values('id').order_by('loccode').distinct('loccode').count()
+        self.filter(runningstatus = 'STANDBY', bu_id__in = S['assignedsites'], identifier = 'ASSET', client_id=S['client_id']).values('id').order_by('assetcode').distinct('assetcode').count(),
+        self.filter(runningstatus = 'STANDBY', bu_id__in = S['assignedsites'], identifier = 'CHECKPOINT', client_id=S['client_id']).values('id').order_by('assetcode').distinct('assetcode').count(),
+        Location.objects.filter(locstatus = 'STANDBY', bu_id__in = S['assignedsites'], client_id=S['client_id']).values('id').order_by('loccode').distinct('loccode').count()
         ]
         scp = [
-        self.filter(runningstatus = 'SCRAPPED', bu_id__in = S['assignedsites'], identifier = 'ASSET').values('id').order_by('assetcode').distinct('assetcode').count(),
-        self.filter(runningstatus = 'SCRAPPED', bu_id__in = S['assignedsites'], identifier = 'CHECKPOINT').values('id').order_by('assetcode').distinct('assetcode').count(),
+        self.filter(runningstatus = 'SCRAPPED', bu_id__in = S['assignedsites'], identifier = 'ASSET', client_id=S['client_id']).values('id').order_by('assetcode').distinct('assetcode').count(),
+        self.filter(runningstatus = 'SCRAPPED', bu_id__in = S['assignedsites'], identifier = 'CHECKPOINT', client_id=S['client_id']).values('id').order_by('assetcode').distinct('assetcode').count(),
         0
         ]
         
@@ -801,6 +842,9 @@ class JobneedDetailsManager(models.Manager):
         ).select_related('question').values('question__quesname', 'answertype', 'min', 'max', 'id',
             'options', 'alerton', 'ismandatory', 'seqno','answer').order_by('seqno')
         return qset or self.none()
+    
+    def get_ppm_details(self, request):
+        return self.get_task_details(request.GET.get('taskid'))
         
 
 
@@ -867,33 +911,6 @@ class QsetBlngManager(models.Manager):
                 'options', 'alerton', 'ismandatory', 'seqno', 'ctzoffset', 'isavpt', 'avpttype')
         return qset or self.none()
     
-
-    
-    
-    
-class TicketManager(models.Manager):
-    use_in_migrations = True
-   
-    def send_ticket_mail(self, ticketid):
-        ticketmail = self.raw('''SELECT ticket.id, ticket.ticketlog,  ticket.comments, ticket.ticketdesc, ticket.cdtz,ticket.status, ticket.ticketno, ticket.level, bt.buname,
-                ( ticket.cdtz + interval'1 minutes' ) createdon, ( ticket.mdtz + interval '1 minutes' ) modifiedon,  modifier.peoplename as  modifiername,                                       
-                    people.peoplename, people.email as peopleemail, creator.id as creatorid, creator.email as creatoremail,
-                    modifier.id as modifierid, modifier.email as modifiermail,pgroup.id as pgroupid, pgroup.groupname ,
-                    ticket.assignedtogroup_id,  ticket.priority,
-                    ticket.assignedtopeople_id, ticket.escalationtemplate as tescalationtemplate,                                                
-                ( SELECT emnext.frequencyvalue || ' ' || emnext.frequency FROM escalationmatrix AS emnext                         
-                WHERE  ticket.bu_id= emnext.bu_id AND ticket.escalationtemplate=emnext.escalationtemplate AND emnext.level=ticket.level + 1   
-                ORDER BY cdtz LIMIT 1 ) AS next_escalation,
-                (select array_to_string(ARRAY(select email from people where id in(select people_id from pgbelonging where pgroup_id=pgroup.id )),',') ) as pgroupemail                                                                     
-                FROM ticket                                                                                                          
-                LEFT  JOIN people modifier    ON ticket.muser_id=modifier.id                                                      
-                LEFT JOIN people              ON ticket.assignedtopeople_id=people.id 
-                LEFT JOIN pgroup              ON ticket.assignedtogroup_id=pgroup.id
-                LEFT JOIN people creator      ON ticket.cuser_id =creator.id
-                LEFT JOIN bt                  ON ticket.bu_id =bt.id
-                WHERE ticket.id in (%s)''', [ticketid])
-        return ticketmail or self.none() 
-
 
 class JobManager(models.Manager):
     use_in_migrations: True
@@ -1050,11 +1067,13 @@ class JobManager(models.Manager):
                 When(people_id=1, then=Concat(F('pgroup__groupname'), V(' [GROUP]'))),
             )).filter(
             fromdate__date__gte = fromdt,
-            uptodate__date__lte = uptpdt,
+            fromdate__date__lte = uptpdt,
             client_id = S['client_id'],
-            identifier = 'PPM'
+            identifier = 'PPM',
+            enable=True
         ).values('id', 'jobname', 'asset__assetname', 'qset__qsetname', 'assignedto',
                  'uptodate', 'planduration', 'gracetime', 'expirytime', 'fromdate')
+        ic(qset)
         return qset or self.none()
 
     
@@ -1089,61 +1108,20 @@ class WorkpermitManager(models.Manager):
         return qset or self.none()
     
     
-class ESCManager(models.Manager):
-    use_in_migrations=True
-    
-    def get_reminder_config_forppm(self, job_id, fields):
-        qset = self.filter(
-            escalationtemplate="JOB",
-            job_id = job_id
-        ).values(*fields) 
-        return qset or self.none()
-    
-    
-    def handle_reminder_config_postdata(self,request):
-        
-        P, S = request.POST, request.session
-        ic(P)
-        cdtz = datetime.now(tz = timezone.utc)
-        mdtz = datetime.now(tz = timezone.utc)
-        PostData = {
-            'cdtz':cdtz, 'mdtz':mdtz, 'cuser':request.user, 'muser':request.user,
-            'level':1, 'job_id':P['jobid'], 'frequency':P['frequency'], 'frequencyvalue':P['frequencyvalue'],
-            'notify':P['notify'], 'assignedperson_id':P['peopleid'], 'assignedgroup_id':P['groupid'], 
-            'bu_id':S['bu_id'], 'escalationtemplate':P['esctemplate'], 'client_id':S['client_id'], 
-            'ctzoffset':P['ctzoffset']
-        }
-        if P['action'] == 'create':
-            if self.filter(
-                frequency = PostData['frequency'], frequencyvalue = PostData['frequencyvalue'], 
-                ).exists():
-                return {'data':list(self.none()), 'error':'Warning: Record already added!'}
-            ID = self.create(**PostData).id
-        
-        elif P['action'] == 'edit':
-            PostData.pop('cdtz')
-            PostData.pop('cuser')
-            if updated := self.filter(pk=P['pk']).update(**PostData):
-                ID = P['pk']
-        else:
-            self.filter(pk = P['pk']).delete()
-            return {'data':list(self.none()),}
-        ic(ID)
-        qset = self.filter(pk = ID).values('notify', 'frequency', 'frequencyvalue', 'id')
-        ic(qset)
-        return {'data':list(qset)}
-    
-
 class LocationManager(models.Manager):
     use_in_migrations = True
     
     def get_locationlistview(self, related, fields, request):
         S = request.session
+        P = request.GET['params']
         qset = self.filter(
             ~Q(loccode='NONE'),
             bu_id__in = S['assignedsites'],
             client_id = S['client_id'],
         ).select_related(*related).values(*fields)
+        if(P not in ['null', None]):
+            P = json.loads(P)
+            qset = qset.filter(locstatus = P['status'])
         return qset or self.none()
     
     def get_locations_modified_after(self, mdtz, buid, ctzoffset):

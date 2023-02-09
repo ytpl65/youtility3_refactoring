@@ -4,7 +4,7 @@
      data-theme="light">
         <!--begin::Title-->
         <h3 class="card-title align-items-start flex-column py-9" style="color: #01579b;">
-            <span class="fw-bold fs-2x mb-3">Tasks&nbsp;<i class="bi bi-list-task fs-3 y-primary"></i></span>
+        <span class="fw-bold fs-2x mb-3">Tasks&nbsp;<i class="bi bi-list-task fs-3 y-primary"></i></span>
         </h3>
         <!--end::Title-->
     </div>
@@ -19,7 +19,7 @@
                     <!--begin::Col-->
                     <div class="col-6">
                         <!--begin::Items-->
-                        <div class="bg-gray-100 ci shadow-sm bg-opacity-70  rounded-2 px-6 py-5" >
+                        <div class="bg-gray-100 count-item shadow-sm bg-opacity-70  rounded-2 px-6 py-5" >
                             <!--begin::Symbol-->
                             <div class="symbol symbol-30px me-5 mb-5">
                                 <span class="symbol-label">  
@@ -30,7 +30,7 @@
                             <!--end::Symbol-->
 
                             <!--begin::Stats-->
-                            <div class="m-0 count-item stat" data-cardtype = 'taskstats'>
+                            <div class="m-0  stat" data-cardtype = 'TASKSTATS' data-jobstatus="COMPLETED">
                                 <!--begin::Number-->
                                 <span class="text-gray-700 fw-bolder d-block fs-2qx lh-1 ls-n1 mb-1">
                                 <a href="javascript:void(0)" class="text-dark popup_link"   data-jobstatus = "COMPLETED" id="tasks_completed"></a>
@@ -38,7 +38,7 @@
                                 <!--end::Number-->
 
                                 <!--begin::Desc-->
-                                <span class="text-gray-500 fw-semibold fs-6" > Completed</span>
+                                <span class="text-gray-500 fw-semibold fs-7" > Completed</span>
                                 <!--end::Desc-->
                             </div>
                             <!--end::Stats-->
@@ -49,7 +49,7 @@
                     <!--begin::Col-->
                     <div class="col-6">
                         <!--begin::Items-->
-                        <div class="bg-gray-100  ci shadow-sm bg-opacity-70 rounded-2 px-6 py-5" >
+                        <div class="bg-gray-100 count-item shadow-sm bg-opacity-70 rounded-2 px-6 py-5" >
                             <!--begin::Symbol-->
                             <div class="symbol symbol-30px me-5 mb-5">
                                 <span class="symbol-label">  
@@ -60,7 +60,7 @@
                             <!--end::Symbol-->
 
                             <!--begin::Stats-->
-                            <div class="m-0 count-item stat" data-cardtype = 'taskstats'> 
+                            <div class="m-0  stat" data-cardtype = 'TASKSTATS' data-jobstatus="AUTOCLOSED"> 
                                 <!--begin::Number-->
                                 <span class="text-gray-700 fw-bolder d-block fs-2qx lh-1 ls-n1 mb-1">
                                 <a href="javascript:void(0)"  data-jobstatus = "AUTOCLOSED"  id = "tasks_autoclosed"class="text-dark popup_link"></a>
@@ -68,7 +68,7 @@
                                 <!--end::Number-->
 
                                 <!--begin::Desc-->
-                                <span class="text-gray-500 fw-semibold fs-6"> Autoclosed</span>
+                                <span class="text-gray-500 fw-semibold fs-7"> Autoclosed</span>
                                 <!--end::Desc-->
                             </div>
                             <!--end::Stats-->
@@ -79,7 +79,7 @@
                                     <!--begin::Col-->
                     <div class="col-6">
                         <!--begin::Items-->
-                        <div class="bg-gray-100 ci shadow-sm bg-opacity-70 rounded-2 px-6 py-5" >
+                        <div class="bg-gray-100 count-item shadow-sm bg-opacity-70 rounded-2 px-6 py-5" >
                             <!--begin::Symbol-->
                             <div class="symbol symbol-30px me-5 mb-5">
                                 <span class="symbol-label">  
@@ -90,15 +90,15 @@
                             <!--end::Symbol-->
 
                             <!--begin::Stats-->
-                            <div class="m-0 stat count-item" data-cardtype = 'taskstats'>
+                            <div class="m-0 stat" data-cardtype = 'TASKSTATS' data-jobstatus="ASSIGNED">
                                 <!--begin::Number-->
                                 <span class="text-gray-700 fw-bolder d-block fs-2qx lh-1 ls-n1 mb-1">
-                                <a href="javascript:void(0)"   data-jobstatus = "ASSIGNED" id = "tasks_pending" class="text-dark popup_link">12</a>
+                                <a href="javascript:void(0)"   data-jobstatus = "ASSIGNED" id = "tasks_pending" class="text-dark popup_link"></a>
                                 </span>
                                 <!--end::Number-->
 
                                 <!--begin::Desc-->
-                                <span class="text-gray-500 fw-semibold fs-6"> Pending</span>
+                                <span class="text-gray-500 fw-semibold fs-7"> Pending</span>
                                 <!--end::Desc-->
                             </div>
                             <!--end::Stats-->
@@ -109,7 +109,7 @@
                                     <!--begin::Col-->
                     <div class="col-6">
                         <!--begin::Items-->
-                        <div class="bg-gray-100 ci shadow-sm bg-opacity-70 rounded-2 px-6 py-5" >
+                        <div class="bg-gray-100 count-item shadow-sm bg-opacity-70 rounded-2 px-6 py-5" >
                             <!--begin::Symbol-->
                             <div class="symbol symbol-30px me-5 mb-5">
                                 <span class="symbol-label">  
@@ -120,15 +120,15 @@
                             <!--end::Symbol-->
 
                             <!--begin::Stats-->
-                            <div class="m-0 count-item stat" data-cardtype='taskstats'>
+                            <div class="m-0  stat" data-cardtype='TASKSTATS' data-jobstatus="TOTALSCHEDULED">
                                 <!--begin::Number-->
                                 <span class="text-gray-700 fw-bolder d-block fs-2qx lh-1 ls-n1 mb-1">
-                                <a href="javascript:void(0)"    data-jobstatus = "TOTALSCHEDULED"id="tasks_scheduled" class="text-dark popup_link">121</a>
+                                <a href="javascript:void(0)"    data-jobstatus = "TOTALSCHEDULED"id="tasks_scheduled" class="text-dark popup_link"></a>
                                 </span>
                                 <!--end::Number-->
 
                                 <!--begin::Desc-->
-                                <span class="text-gray-500 fw-semibold fs-6">Total Scheduled</span>
+                                <span class="text-gray-500 fw-semibold fs-7">Total Scheduled</span>
                                 <!--end::Desc-->
                             </div>
                             <!--end::Stats-->

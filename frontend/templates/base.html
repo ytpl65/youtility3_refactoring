@@ -136,6 +136,14 @@
     to load scripts after dom-load write
     them under "$(document).ready()"
     ==============================*/
+    function toggleAttribute() {
+      var body = document.querySelector("body");
+      if (body.hasAttribute("data-kt-aside-minimize")) {
+        body.removeAttribute("data-kt-aside-minimize");
+      } else {
+        body.setAttribute("data-kt-aside-minimize", "on");
+      }
+    }
     
     $(document).ready(function() {
       //adds styles to non-field-errors
@@ -152,6 +160,10 @@
       $("[multiple]").select2({
           closeOnSelect:false 
       })
+     
+     $("body[data-kt-aside-minimize='on'] #kt_aside").hover(function(){
+      toggleAttribute()
+     });
 
     })
   </script>

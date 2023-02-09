@@ -530,7 +530,7 @@ def alert_observation(jobneed, atts=False):
         if jobneed.alerts:
             recipents = get_email_recipients(jobneed)
             if jobneed.identifier == 'EXTERNALTOUR':
-                subject = f"[READINGS ALERT] Site with SOl id: [{jobneed.bu.solid}], {jobneed.bu.buname} having checklist [{jobneed.qset.qsetname}] - readings out of range"
+                subject = f"[READINGS ALERT] Site with Sol Id: [{jobneed.bu.solid}], {jobneed.bu.buname} having checklist [{jobneed.qset.qsetname}] - readings out of range"
             elif jobneed.identifier == 'INTERNALTOUR':
                 subject = f"[READINGS ALERT] Checkpoint with Name: {jobneed.asset.assetname} at Site: {jobneed.bu.buname} having checklist [{jobneed.qset.qsetname}] - readings out of range"
             else:

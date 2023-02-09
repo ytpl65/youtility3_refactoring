@@ -1,0 +1,39 @@
+var donutChartOptions = {
+    series: _alertChartSeries,
+    chart:{
+        type:'donut',
+        height:270,
+        toolbar:{
+          show:true
+        }
+    },
+    responsive:[{
+    breakpoint: 480,
+    options: {
+      legend: {
+        position: 'bottom',
+        offsetX: -10,
+        offsetY: 0
+      }
+    }
+  }],
+  legend:{
+    position:'right'
+  },
+  plotOptions:{
+    pie: {
+      donut: {
+        label: {
+          show: false,
+          total: {
+            showAlways: false,
+            show: false
+          }
+        }
+      }
+    }
+  },
+  labels:['Task Alerts', 'Tour Alerts', 'Route Alerts']
+
+}
+

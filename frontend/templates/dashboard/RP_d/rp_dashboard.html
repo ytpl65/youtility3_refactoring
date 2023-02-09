@@ -35,16 +35,16 @@
 {% block pagebody_container %}
 
 
-<div class="row d-flex justify-content-around">
-    <div class="col-md-3" id="tasks_card">
+<div class="row d-flex gy-3 justify-content-around">
+    <div class="col-xl-3 col-lg-6 col-sm-12" id="tasks_card">
         {% include "dashboard/RP_d/partials/dashboard_cards/partial_taskstats_card.html" %}
     </div>
-    <div class="col-md-4 h-xl-75">
+    <div class="col-xl-4 col-lg-6 h-xl-75 col-sm-12">
         <div class="card card-flush h-lg-100">
             <div class="card-header py-2 mb-3">
                 <h3 class="card-title align-items-start flex-column">
-                    <span class="card-label fw-bold text-gray-800 y-primary">Assets Running Status</span>
-                    <span class="text-gray-400 mt-1 fw-semibold fs-6">Total <span id="total_assets"></span> Assets</span>
+                    <span class="card-label fw-bold y-primary"  style="color: #01579b;">Assets Status</span>
+                    {# <span class="text-gray-400 mt-1 fw-semibold fs-6">Total <span id="total_assets"></span> Assets and <span id="total_locations"></span> locations</span> #}
                 </h3>
             </div>
             <div class="card-body pb-0 pt-7 ps-6 mt-n12">
@@ -53,101 +53,83 @@
 
         </div>
     </div>
-    <div class="col-md-3" id="tasks_card">
+    <div class="col-xl-3 col-lg-6 col-sm-12" id="tasks_card">
         {% include "dashboard/RP_d/partials/dashboard_cards/partial_guardtour_card.html" %}
     </div>
-    <div class="card col-xl-2 col-md-6">
-        <div class="row card">
-            <div class="col-sm-12 portlet d-none col-md mb-2" id="PORTLET_SOS_ALERTS">
-                <div class="counter  bg-gray-100 bg-opacity-60 me-3 mt-3 mb-2 rounded-3 p-2" >
-                    <div class="d-flex count-item justify-content-between" data-cardtype='SOSALERTS'>
+    <div class="card col-xl-2 col-lg-6 col-sm-12">
+        <div class="row mt-2">
+            <div class="col-lg-12 portlet d-none mb-2" id="PORTLET_SOS_ALERTS">
+                <div class="counter  bg-gray-100 bg-opacity-60 mt-3 mb-2 rounded-3 p-2" >
+                    <div class="d-flex count-item justify-content-between" >
                         <i class="fas p-4 align-middle yiconpadd yicon text-danger fa-exclamation-triangle"></i>
-                        <div class="pe-3">
-                            <h4  
-                                class="pb-3 y-primary  timer count-title text-end count-number" id="sos_count">
+                        <div class="pe-3" data-cardtype='SOSALERTS'>
+                            <h6  
+                                class="pb-1 y-primary  timer count-title text-end count-number" id="sos_count">
                                
-                            </h4>
-                            <p class="h3 text-gray-500 fw-semibold fs-6">SOS Alerts</p>
+                            </h6>
+                            <p class="h4 text-gray-500 fw-semibold fs-6">SOS Alerts</p>
                         </div>
                     </div>
                 </div>
             </div>
-            <div class="col-sm-12 portlet d-none col-md mb-2" id="PORTLET_INCIDENTREPORTS">
-                <div class="counter  bg-gray-100 bg-opacity-60  p-2 me-2 mb-2 rounded-3 ">
-                    <div class="d-flex count-item justify-content-between" data-cardtype='INCREPORTS'>
+            <div class="col-lg-12 portlet d-none mb-2" id="PORTLET_INCIDENTREPORTS">
+                <div class="counter  bg-gray-100 bg-opacity-60  p-2 mb-2 rounded-3 ">
+                    <div class="d-flex count-item justify-content-between" >
                         {# <i class="fas p-4 yiconpadd yicon fa-clipboard-user y-primary fs-1"></i> #}
                         <i class="fas p-4 yiconpadd yicon text-start text-warning fa-file-medical-alt"></i>
-                        <div class="pe-3">
-                            <h4 
-                                class="pb-3 y-primary text-end timer count-title count-number" id="ir_count"></h4>
-                            <p class="h3 text-gray-500 fw-semibold fs-6">Incident Reports</p>
+                        <div class="pe-3" data-cardtype='INCREPORTS'>
+                            <h6 
+                                class="pb-1 y-primary text-end timer count-title count-number" id="ir_count"></h6>
+                            <p class="h4 text-gray-500 fw-semibold fs-6">Incident Reports</p>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
-        <div class="row card">
-            <div class="col-sm-12 portlet d-none col-md mb-2" id="PORTLET_FR_FAILURES">
-                <div class="counter  bg-gray-100 bg-opacity-60  p-2 me-2 mb-2 rounded-3">
-                    <div class="d-flex count-item justify-content-between" data-cardtype='ATTENDANCE'>
+        <div class="row">
+            <div class="col-lg-12 portlet d-none mb-2" id="PORTLET_FR_FAILURES">
+                <div class="counter  bg-gray-100 bg-opacity-60  p-2 mb-2 rounded-3">
+                    <div class="d-flex count-item justify-content-between" >
                         <i class="bi bi-person-bounding-box yiconpadd yicon p-4 y-primary"></i>
-                        <div class="pe-3">
-                            <h4  
-                                class="pb-3 y-primary  text-end timer count-title count-number" id="att_count"></h4>
+                        <div class="pe-3" data-cardtype='ATTENDANCE'>
+                            <h6  
+                                class="pb-1 y-primary  text-end timer count-title count-number" id="att_count"></h6>
                             <p class="h4 text-gray-500 fw-semibold fs-6">Attendance</p>
                         </div>
                     </div>
                 </div>
             </div>
-            <div class="col-sm-12 portlet d-none col-md " id="PORTLET_ROUTES">
-                <div class="counter  bg-gray-100 bg-opacity-60 p-2 me-2  mb-2 rounded-3">
-                    <div class="d-flex count-item justify-content-between" data-cardtype='ROUTES'>
+            <div class="col-lg-12 portlet d-none " id="PORTLET_ROUTES">
+                <div class="counter  bg-gray-100 bg-opacity-60 p-2  mb-2 rounded-3">
+                    <div class="d-flex count-item justify-content-between">
                         <i class="fas yicon yiconpadd text-success p-4 fa-route"></i>
-                        <div class="pe-3">
-                            <h4 
-                                class="pb-3 y-primary text-end timer count-title count-number" id="route_count"></h4>
-                            <p class="h3 text-gray-500 fw-semibold fs-6">Routes</p>
+                        <div class="pe-3"  data-cardtype='ROUTES'>
+                            <h6 
+                                class="pb-1 y-primary text-end timer count-title count-number" id="route_count"></h6>
+                            <p class="h4 text-gray-500 fw-semibold fs-6">Routes</p>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
-
     </div>
 </div>
-
-<div class="row pt-2">
-    <div class="col-sm-12 col-md-6 mapview d-none">
-        <div class="card">
-            <div class="card-title mb-0 text-center py-2 bg-light bg-gradient">
-                Map View
+<div class="row mt-3">
+<div class="col-xl-4 col-lg-6 h-xl-75 col-sm-12">
+        <div class="card card-flush h-lg-100">
+            <div class="card-header py-2 mb-3">
+                <h3 class="card-title align-items-start flex-column">
+                    <span class="card-label fw-bold"  style="color: #01579b;">Alerts</span>
+                    <span class="text-gray-400 mt-1 fw-semibold fs-6">Total <span id="total_alerts"></span> Alerts</span>
+                </h3>
             </div>
-            <div class="card-body rounded-3 p-3  pt-0">
-                <div id="map" style="height: 350px;"class=""></div>
-            </div>
-        </div>
-    </div>
-
-    <div class="col-sm-12 col-md-6 tableview d-none">
-        <div class="card">
-            <div class="card-title  text-center py-2 bg-light bg-gradient">
-                Default View: List of people under the site you logged in
-            </div>
-            <div class="card-body">
-                <!---Table For SOS Alerts --->
-                <table id="tabSitePeople" class="display compact cell-border" style="width:100%"></table>
-                <!---Table For SOS Alerts --->
-                <table id="tabSOS" class="display compact cell-border" style="width:100%"></table>
-                <!---Table For Incident Reports --->
-                <table id="tabIncidentReports" class="display compact cell-border" style="width:100%"></table>
-                <!---Table For FR Failures--->
-                <table id="tabFRFail" class="display compact cell-border" style="width:100%"></table>
-                <!---Table For Scheduled Tours --->
-                <table id="tabScheduledTours" class="display compact cell-border" style="width:100%"></table>
+            <div class="card-body pb-0 pt-7 ps-6 mt-n12">
+                <div id="alerts_donut_chart"></div>
             </div>
         </div>
     </div>
 </div>
+
 
 
 {% endblock pagebody_container %}
@@ -205,50 +187,52 @@
 <script>
     //Global Modifications here
     
-    var base = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    maxZoom: 19,
-    attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-    })
+    //var base = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    //maxZoom: 19,
+    //attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+    //})
     
-    map = L.map('map', {
-        layers:[base],
-        center: new L.LatLng(21.7679, 78.8718),
-        zoom:5,
-        fullscreenControl: true,
-        fullscreenControlOptions: { // optional
-            title:"Show me the fullscreen !",
-            titleCancel:"Exit fullscreen mode"
-        }
-    })
+    //map = L.map('map', {
+    //    layers:[base],
+    //    center: new L.LatLng(21.7679, 78.8718),
+    //    zoom:5,
+    //    fullscreenControl: true,
+    //    fullscreenControlOptions: { // optional
+    //        title:"Show me the fullscreen !",
+    //        titleCancel:"Exit fullscreen mode"
+    //    }
+    //})
     //Gloval vars used by below scripts
     var _taskJobstatus = null;
     var _popUpTable = null;
     var _dataTableConfig = null;
     var _db_cardtype = null;
     var _assetChart = null;
+    var _alertChart = null;
     var _from_pd = moment().format('YYYY-MM-DD');
     var _to_pd = moment().format('YYYY-MM-DD')
     var _assetChartSeries;
+    var _alertChartSeries;
 
 
     $(document).ready(() => {
         // check if the browser supports the HTML5 Geolocation API
-        if ("geolocation" in navigator) {
-            // if the browser supports the HTML5 Geolocation API, get the current location
-            navigator.geolocation.getCurrentPosition(function(position) {
-            console.log("[position.coords.latitude, position.coords.longitude]")
-            // create a marker at the current location
-            var marker = L.marker([position.coords.latitude, position.coords.longitude]).addTo(map).bindPopup("you are here").openPopup()
-            map.flyTo([position.coords.latitude, position.coords.longitude], 18, {
-                animate: true,
-                duration: 1.0
-            });
-        });
-        } else {
-            // if the browser does not support the HTML5 Geolocation API, display an error message
-            console.error("browser not enabled the gps location permission")
-            map.setView([21.7679, 78.8718], 5)
-        }   
+        //if ("geolocation" in navigator) {
+        //    // if the browser supports the HTML5 Geolocation API, get the current location
+        //    navigator.geolocation.getCurrentPosition(function(position) {
+        //    console.log("[position.coords.latitude, position.coords.longitude]")
+        //    // create a marker at the current location
+        //    var marker = L.marker([position.coords.latitude, position.coords.longitude]).addTo(map).bindPopup("you are here").openPopup()
+        //    map.flyTo([position.coords.latitude, position.coords.longitude], 18, {
+        //        animate: true,
+        //        duration: 1.0
+        //    });
+        //});
+        //} else {
+        //    // if the browser does not support the HTML5 Geolocation API, display an error message
+        //    console.error("browser not enabled the gps location permission")
+        //    map.setView([21.7679, 78.8718], 5)
+        //}   
 
 
         //show only assigned portlet caps
@@ -274,6 +258,7 @@
         }
         fire_ajax_get(params)
         .done((data, status, xhr) => {
+            console.log(data.counts)
             let data_ = data.counts
             $("#tasks_completed").html(data_.completed_tasks_count)
             $("#tasks_autoclosed").html(data_.autoclosed_tasks_count)
@@ -284,23 +269,32 @@
             $("#tours_inprogress").html(data_.inprogress_tours_count)
             $("#tours_partiallycompleted").html(data_.partiallycompleted_tours_count)
             $("#total_assets").html(data_.assetchart_total_count)
+            $("#total_alerts").html(data_.alertchart_total_count)
             $("#ir_count").html(data_.IR_count)
             $("#route_count").html(data_.route_count)
-            $("#sos_count").html(data_.sos_count)
+            $("#sos_count").html(data_.sos_count)   
             $("#att_count").html(data_.FR_fail_count)
             
             
 
             let assetCharData = data_.assetchartdata
-            if(_assetChart !== null){
-                _assetChart.updateSeries(assetCharData) 
+            let alertsChartData = data_.alertchartdata
+            if(_assetChart !== null && _alertChart !== null){
+                _assetChart.updateSeries(assetCharData)
+                _alertChart.updateSeries(alertsChartData)
             }else{
                 _assetChartSeries = assetCharData
-            //script related to chart of asset status card loaded with this file
+                _alertChartSeries = alertsChartData
+                //script related to chart of asset status card loaded with this file
                 {% include "dashboard/RP_d/partials/dashboard_cards/partial_assets_card.html" %}
-                _assetChart = new ApexCharts(document.querySelector("#assets_status_chart"), options2);
+                {% include "dashboard/RP_d/partials/dashboard_cards/partial_alerts_card.html" %}
+                _assetChart = new ApexCharts(document.querySelector("#assets_status_chart"), barChartOptions);
+                _alertChart = new ApexCharts(document.querySelector("#alerts_donut_chart"), donutChartOptions);
+                
+                
                 setTimeout(function() {
                     _assetChart.render()
+                    _alertChart.render()
                 }, 200); 
             }
         })
@@ -320,26 +314,42 @@
             _to_pd = picker.endDate.format('YYYY-MM-DD');
             getStatsForDashboard()
         })
+        
+        //$('.count-item').on('click', function() {
+        //var cardType = $(this).find('[data-cardtype]').attr('data-cardtype');
+        //console.log("new method", cardType);
+        //});
 
-        $(".count-item").on('click', (e) => {
-            let cardType = $(e.target).attr('data-cardtype');
-            console.log(cardType, "^^^^^^^^^^")
+
+        $(".count-item").on('click', function() {
+            let cardType = $(this).find('[data-cardtype]').attr('data-cardtype');
+            let jobstatus = $(this).find('[data-jobstatus]').attr('data-jobstatus');
+            let filterData = {cardType:cardType, jobstatus:jobstatus, from:_from_pd, to:_to_pd}
+            console.log(filterData, "&&&")
             switch (cardType) {
                 case 'SOSALERTS':
+                localStorage.setItem('sos_alerts_filter', JSON.stringify(filterData))
                 location.reload()
                 break;
                 case 'INCREPORTS':
-                console.log('clicked.......')
+                localStorage.setItem('incident_reports_filter', JSON.stringify(filterData))
                 window.open("{{ url('reports:incidentreport_list') }}?template=true", '_blank');
                 break;
                 case 'ROUTES':
+                localStorage.setItem('routes_filter', JSON.stringify(filterData))
                 window.open("{{ url('schedhuler:jobneedexternaltours') }}?template=true", '_blank');
                 break;
                 case 'ATTENDANCE':
+                localStorage.setItem('attds_filter', JSON.stringify(filterData))
                 window.open('{{ url("attendance:attendance_view") }}?template=true', '_blank');
                 break;
-                case 'taskstats':
+                case 'TASKSTATS':
+                localStorage.setItem('taskstats_filter', JSON.stringify(filterData))
                 window.open('{{ url("schedhuler:jobneedtasks") }}?template=true', '_blank');
+                break;
+                case 'TOURSTATS':
+                localStorage.setItem('tourstats_filter', JSON.stringify(filterData))
+                window.open('{{ url("schedhuler:jobneedtours") }}?template=true', '_blank');
                 break;
                 default:
                 {}

@@ -19,10 +19,6 @@ Escalation List
 {% block table %}
 <div class="table-responsive">
 	<table id="esc_table" class="compact display cell-border" style="width:100%">
-		<thead class="fw-bold fs-6">
-			<th>Escalation Template</th>
-			<th>Created On</th>
-		</thead>
 	</table>
 </div>
 {% endblock table %}
@@ -35,31 +31,34 @@ Escalation List
 		//BEGIN DATATABLE INITIALIZATION
 		var table = $('#esc_table').DataTable({
             ajax: {
-                url: '{{ url("activity:esc_list") }}',
+                url: '{{ url("helpdesk:escalationmatrix") }}?action=list',
             },
-            pageLength:50,
-            serverSide:true,
-            processing    : true,
-            responsive    : true,
-            fixedHeader   : true,
+            deferRender: true,
+			responsive : true,
+            language: {
+				searchPlaceholder: "Search keyword"
+			},
+            columns:[
+                {data:'id', visible:false},
+                {title:'Category', data:'tacode', render:function(data, type, row, meta){
+                    let url = "{{ url('helpdesk:escalationmatrix') }}"
+                    return `<a href="${url}?id=${row['id']}">${data}</a>`
+                }},
+                {title:'Created on', data:'cdtz'},
+                
+            ],
+            dom       : `<'row' <'col-sm-6 d-flex justify-content-start'f> <'col-sm-6 d-flex justify-content-end'B> >rt<'row'
+			<'col-sm-6'l> <'col-sm-6'p><'col-sm-12 d-flex justify-content-center'i>>`,
             buttons:[
-                {
-                    text     : `Add New &nbsp;<i class='fas fa-plus ch4'></i></a>`,
-                    className: "btn btn-sm btn-light-primary",
-                    action   : function(e, dt, node, config){}
-                    }
-            ],
-            language    : {
-                search: "_INPUT_",
-                searchPlaceholder: "Search ..",
-                processing: "Getting Data"},
-            search      : {return: true},
-            lengthMenu: [[10, 20, 30], [10, 20, 30]],
-            columns     : [
-                { "data": "esctemplate__taname" },
-                { "data": "cdtz" },
-            ],
-            dom: "<'row' <'col-sm-6 d-flex justify-content-start'f> <'col-sm-6 d-flex justify-content-end'B> >rt<'row' <'col-sm-6'l> <'col-sm-6'p><'col-sm-12 d-flex justify-content-center'i>>"
+				{
+					text     : `Add New &nbsp;<i class='fas fa-plus ch4'></i></a>`,
+					className: "btn btn-sm btn-light-primary",
+					//action for add_new_button 
+					action: function(e, dt, node, config){
+						location.href =  "{{ url('helpdesk:escalationmatrix') }}?action=form"
+					}
+				}
+			]
 		})
         
         $('.btn').removeClass('dt-button')

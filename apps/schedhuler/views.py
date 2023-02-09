@@ -1290,9 +1290,7 @@ class JobneedTasks(LoginRequiredMixin, View):
             p = self.params
             objs = self.params['model'].objects.get_last10days_jobneedtasks(
                 p['related'], p['fields'], request)
-            resp = rp.JsonResponse(data = {'data':list(objs)})
-            return resp
-        
+            return rp.JsonResponse(data = {'data':list(objs)})
         if R.get('action') == 'getAttachmentJND':
             att =  self.params['model_jnd'].objects.getAttachmentJND(R['id'])
             return rp.JsonResponse(data = {'data': list(att)})
@@ -1303,7 +1301,7 @@ class JobneedTasks(LoginRequiredMixin, View):
             cxt = {'taskformjobneed':self.params['form_class'](request = request, instance = obj),
                     'edit':True}
             return render(request, self.params['template_form'], context = cxt)
-        
+
         if R.get('action') == 'get_task_details' and R.get('taskid'):
             objs = self.params['model_jnd'].objects.get_task_details(R['taskid'])
             return rp.JsonResponse({"data":list(objs)})

@@ -301,7 +301,7 @@ class Migration(migrations.Migration):
                 ('modifieddatetime', models.DateTimeField(default=django.utils.timezone.now)),
                 ('level', models.IntegerField(default=0)),
                 ('status', models.CharField(blank=True, choices=[('NEW', 'New'), ('CANCEL', 'Cancel'), ('CLOSE', 'Close'), ('ESCALATED', 'Escalated'), ('AUTOCLOSE', 'Autoclose'), ('ASSIGNED', 'Assigned')], max_length=50, null=True, verbose_name='Status')),
-                ('ticketlog', models.JSONField(blank=True, default=apps.activity.models.ticket_defaults, encoder=django.core.serializers.json.DjangoJSONEncoder, null=True)),
+                ('ticketlog', models.JSONField(blank=True, default=apps.y_helpdesk.models.ticket_defaults, encoder=django.core.serializers.json.DjangoJSONEncoder, null=True)),
                 ('isescalated', models.BooleanField(default=True)),
                 ('ticketsource', models.CharField(blank=True, choices=[('SYSTEMGENERATED', 'System Generated'), ('USERDEFINED', 'User Defined')], max_length=50, null=True)),
                 ('attcount', models.IntegerField(default=0, verbose_name='Attachment Count')),

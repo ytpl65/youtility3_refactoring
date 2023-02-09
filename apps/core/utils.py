@@ -581,17 +581,22 @@ def apply_error_classes(form):
 
 
 def to_utc(date, format=None):
+    logger.info("to_utc() start [+]")
     import pytz
     if isinstance(date, list) and date:
+        logger.info(f'found total {len(date)} datetimes')
+        logger.info(f"before conversion datetimes {date}")
         dtlist = []
         for dt in date:
             dt = dt.astimezone(pytz.utc).replace(
                 microsecond=0, tzinfo=pytz.utc)
             dtlist.append(dt)
+        logger.info(f"after conversion datetime list returned {dtlist=}")
         return dtlist
     dt = date.astimezone(pytz.utc).replace(microsecond=0, tzinfo=pytz.utc)
     if format:
         dt.strftime(format)
+    logger.info("to_utc() end [-]")
     return dt
 
 # MAPPING OF HOSTNAME:DATABASE ALIAS NAME
@@ -738,6 +743,17 @@ def get_or_create_none_asset():
             'assetcode': "NONE", 'assetname': 'NONE',
             'iscritical': False,  'identifier': 'NONE',
             'runningstatus': 'SCRAPPED', 'id': 1
+        }
+    )
+    return obj
+
+
+def get_or_create_none_location():
+    obj, _ = am.Location.objects.get_or_create(
+        id=1, 
+        defaults={
+            'loccode':"NONE", "locname":"NONE", 'identifier': 'NONE',
+            "iscritical":False, 'runningstatus': 'SCRAPPED', 'id': 1
         }
     )
     return obj
@@ -1404,3 +1420,98 @@ def check_nones(none_fields, tablename, cleaned_data, json=False):
     for field in none_fields:
         cleaned_data[field] = 1 if json else none_instance_map[tablename]()
     return cleaned_data
+
+
+def get_action_on_ticket_states(prev_tkt, current_state):
+    actions = []
+    if prev_tkt and prev_tkt[-1]['previous_state'] and current_state:
+        prev_state = prev_tkt[-1]['previous_state']
+        if prev_state['status'] != current_state['status']:
+            actions.append(f'''Status Changed From "{prev_state['status']}" To "{current_state['status']}"''')
+        
+        if prev_state['priority'] != current_state['priority']:
+            actions.append(f'''Priority Changed from "{prev_state['priority']}" To "{current_state['priority']}"''')
+        
+        if prev_state['location'] != current_state['location']:
+            actions.append(f'''Location Changed from "{prev_state['location']}" To "{current_state['location']}"''')
+        
+        if prev_state['ticketdesc'] != current_state['ticketdesc']:
+            actions.append(f'''Ticket Description Changed From "{prev_state['ticketdesc']}" To "{current_state['ticketdesc']}"''')
+        
+        if prev_state['assignedtopeople'] != current_state['assignedtopeople']:
+            actions.append(f'''Ticket Is Reassigned From "{prev_state['assignedtopeople']}" To "{current_state['assignedtopeople']}"''')
+        
+        if prev_state['assignedtogroup'] != current_state['assignedtogroup']:
+            actions.append(f'''Ticket Is Reassigned From "{prev_state['assignedtogroup']}" To "{current_state['assignedtogroup']}"''')
+        
+        if prev_state['comments'] != current_state['comments']:
+            actions.append(f'''New Comments "{current_state['comments']}" are added after "{prev_state['comments']}"''')
+        return actions
+    return ["Ticket Created"]
+        
+    
+
+
+from django.utils import timezone
+
+def store_ticket_history(instance, request):
+    logger.info("saving ticket history has started....")
+    # Get the current time
+    now = timezone.now().replace(microsecond=0, second=0)
+    
+    # Get the current state of the ticket
+    current_state = {
+        "ticketdesc": instance.ticketdesc,
+        "assignedtopeople": instance.assignedtopeople.peoplename,
+        "assignedtogroup": instance.assignedtogroup.groupname,
+        "comments":instance.comments,
+        "status":instance.status,
+        "priority":instance.priority,
+        "location":instance.location.locname
+    }
+
+    # Get the previous state of the ticket, if it exists
+    ticketstate = instance.ticketlog['ticket_history']
+    
+    details = get_action_on_ticket_states(ticketstate, current_state)
+    
+    # Create a dictionary to represent the changes made to the ticket
+    history_item = {
+        "people_id"     :request.user.id,
+        "when"          : str(now),
+        "who"           : request.user.peoplename,
+        "action"        : "created",
+        "details"       : details,
+        "previous_state": current_state,
+    }
+
+    # Check if there have been any changes to the ticket
+    if instance.mdtz > instance.cdtz and  ticketstate and  ticketstate[-1]['previous_state'] != current_state:
+        history_item['action'] = "updated"
+
+        # Append the history item to the ticket_history list within the ticketlog JSONField
+        ticket_history = instance.ticketlog["ticket_history"]
+        ticket_history.append(history_item)
+        instance.ticketlog = {"ticket_history": ticket_history}
+    elif instance.mdtz > instance.cdtz:
+        history_item['details'] = 'No changes detected'
+        history_item['action'] = 'updated'
+        instance.ticketlog['ticket_history'].append(history_item)
+    else:
+        instance.ticketlog['ticket_history'] = [history_item]    
+    instance.save()
+    logger.info("saving ticket history ended...")
+    
+
+def get_email_addresses(people_ids, group_ids):
+    from apps.peoples.models import People, Pgbelonging
+    
+    p_emails = list(People.objects.filter(
+        id__in = people_ids
+    ).values_list('email', flat=True))
+    g_emails = list(Pgbelonging.objects.select_related('pgroup').filter(
+        pgroup_id__in = group_ids,
+    ).values_list('people__email', flat=True))
+    return list(set(p_emails + g_emails)) or []
+    
+    

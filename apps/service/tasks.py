@@ -1,13 +1,15 @@
 from graphql import GraphQLError
 from apps.service import serializers as sz
 from apps.attendance.models import PeopleEventlog
-from apps.activity.models import (Jobneed, JobneedDetails, Attachment, Asset, DeviceEventlog, Ticket)
+from apps.activity.models import (Jobneed, JobneedDetails, Attachment, Asset, DeviceEventlog)
+from apps.y_helpdesk.models import Ticket
 from apps.onboarding.models import TypeAssist
 from apps.peoples.models import People
 from apps.attendance.models import Tracking
 from apps.core import utils
 from django.db.utils import IntegrityError
 from django.db import transaction
+from django.db.models import Q
 from .auth import Messages as AM
 from .types import ServiceOutputType
 import traceback as tb
@@ -15,9 +17,25 @@ from django.conf import settings
 from .validators import clean_record
 from pprint import pformat
 from intelliwiz_config.celery import app
+from celery import shared_task
 from celery.utils.log import get_task_logger
 log = get_task_logger('django')
 import json
+
+def correct_image_orientation(img):
+    # Check the current orientation
+    if hasattr(img, '_getexif'):
+        orientation = 0x0112
+        exif = img._getexif()
+        orientation = exif.get(orientation, 1) if exif is not None else 1
+    # Rotate the image based on the orientation
+    if orientation == 3:
+        img = img.rotate(180, expand=True)
+    elif orientation == 6:
+        img = img.rotate(270, expand=True)
+    elif orientation == 8:
+        img = img.rotate(90, expand=True)
+    return img
 
 
 def make_square(path1, path2):
@@ -33,7 +51,7 @@ def make_square(path1, path2):
             # Resize the image to make it square
             img1 = img1.resize((height, height))
         # Save the new square image
-        
+        img1 = correct_image_orientation(img1)
         img1.save(path1)
         # Repeat the process for the second image
         img2 = Image.open(path2)
@@ -41,6 +59,8 @@ def make_square(path1, path2):
         aspect_ratio = width / height
         if aspect_ratio != 1:
             img2 = img2.resize((height, height))
+        
+        img2 = correct_image_orientation(img2)
         img2.save(path2)
     except FileNotFoundError:
         print("Error: One or both of the provided file paths do not exist.")
@@ -495,7 +515,7 @@ def save_parent_childs(sz, jn_parent_serializer, child, M, db):
         log.error("something went wrong",exc_info = True)
         raise
 
-@app.task(bind = True, default_retry_delay = 300, max_retries = 5)
+@app.task(bind = True, default_retry_delay = 300, max_retries = 5, name='Face recognition')
 def perform_facerecognition_bgt(self, pel_uuid, peopleid, db='default'):
     # sourcery skip: remove-redundant-except-handler
     try:
@@ -605,3 +625,95 @@ def perform_adhocmutation_bgt(self, data, db='default'):
         log.error('something went wrong', exc_info = True)
     log.info(f'rc:{rc}, msg:{msg}, traceback:{traceback}, returncount:{recordcount}')
     return ServiceOutputType(rc = rc, recordcount = recordcount, msg = msg, traceback = traceback)
+
+
+
+
+@shared_task(name="schedule_ppm_jobs")
+def create_ppm_job(jobid=None):
+    F, d = {}, []
+    startdtz = enddtz = msg = resp = None
+    from apps.activity.models import Job, Asset
+    from apps.schedhuler.utils import (calculate_startdtz_enddtz_for_ppm, get_datetime_list,
+                                       insert_into_jn_and_jnd, get_readable_dates, create_ppm_reminder)
+    
+    try:
+        with transaction.atomic(using=utils.get_current_db_name()):
+            jobs = Job.objects.filter(
+                ~Q(jobname='NONE'),
+                ~Q(asset__runningstatus = Asset.RunningStatus.SCRAPPED),
+                identifier = Job.Identifier.PPM.value,
+                parent_id = 1
+            ).select_related('asset', 'pgroup', 'cuser', 'muser', 'people', 'qset').values(
+                *utils.JobFields.fields
+            )
+            if jobid:
+                jobs = jobs.filter(id = jobid).values(*utils.JobFields.fields)
+
+
+            if not jobs:
+                msg = "No jobs found schedhuling terminated"
+                log.warning(f"{msg}", exc_info = True)
+            total_jobs = len(jobs)
+
+            if total_jobs > 0 and jobs is not None:
+                log.info("processing jobs started found:= '%s' jobs", (len(jobs)))
+                for job in jobs:
+                    startdtz, enddtz = calculate_startdtz_enddtz_for_ppm(job)
+                    log.debug(f"Jobs to be schedhuled from startdatetime {startdtz} to enddatetime {enddtz}")
+                    DT, is_cron, resp = get_datetime_list(job['cron'], startdtz, enddtz, resp)
+                    log.debug(
+                        "Jobneed will going to create for all this datetimes\n %s", (pformat(get_readable_dates(DT))))
+                    if not is_cron: F[str(job['id'])] = job['cron']
+                    status, resp = insert_into_jn_and_jnd(job, DT, resp)
+                    if status:
+                        d.append({
+                            "job"   : job['id'],
+                            "jobname" : job['jobname'],
+                            "cron"    : job['cron'],
+                            "iscron"  : is_cron,
+                            "count"   : len(DT),
+                            "status"  : status
+                        })
+                create_ppm_reminder(d)
+                if F:
+                    log.info(f"create_ppm_job Failed job schedule list:={pformat(F)}")
+                    for key, value in list(F.items()):
+                        log.info(f"create_ppm_job job_id: {key} | cron: {value}")
+    except Exception as e:
+        log.error("something went wrong create_ppm_job", exc_info=True)
+        
+                
+@shared_task(name="send_reminder_emails")
+def send_reminder_email():
+    #get all reminders which are not sent
+    from django.template.loader import render_to_string
+    from django.conf import settings
+    from django.core.mail import  EmailMessage
+    from apps.reminder.models import Reminder
+
+    reminders = Reminder.objects.get_all_due_reminders()
+    try:
+        for rem in reminders:
+            emails = utils.get_email_addresses([rem['people_id'], rem['cuser_id'], rem['muser_id']], [rem['group_id']])
+            recipents = list(set(emails + rem['mailids'].split(',')))
+            subject = f"Reminder For {rem['job__jobname']}"
+            context = {'job':rem['job__jobname'], 'plandatetime':rem['pdate'], 'jobdesc':rem['job__jobdesc'],
+                    'creator':rem['cuser__peoplename'],'modifier':rem['muser__peoplename']}
+            html_message = render_to_string('reminder_mail.html', context=context)
+            log.info(f"Sending reminder mail with subject {subject}")
+            msg = EmailMessage()
+            msg.subject = subject
+            msg.body  = html_message
+            msg.from_email = settings.EMAIL_HOST_USER
+            msg.to = recipents
+            msg.content_subtype = 'html'
+            msg.send()
+            log.info(f"Reminder mail sent to {recipents} with subject {subject}")
+    except Exception as e:
+        log.error("Error while sending reminder email")
+
+
+@shared_task(name='hello_naveen')
+def hello_naveen():
+    log.info("Hello naveen hope you having a good time....")

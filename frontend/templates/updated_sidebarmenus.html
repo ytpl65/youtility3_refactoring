@@ -1,4 +1,4 @@
-<div class="menu menu-column menu-title-gray-800 menu-state-title-primary menu-state-icon-primary menu-state-bullet-primary menu-arrow-gray-500"
+<div class="menu menu-column menu-title-gray-800 menu-state-title-primary menu-state-icon-primary menu-state-bullet-primary menu-arrow text-white mb-1-gray-500"
     id="kt_aside_menu" data-kt-menu="true">
 
     <!---DASHBOARD--->
@@ -29,7 +29,7 @@
                 <!--end::Svg Icon-->
             </span>
             <span class="menu-title">Tracking</span>
-            <span class="menu-arrow"></span>
+            <span class="menu-arrow text-white mb-1"></span>
         </span>
         <div class="menu-sub menu-sub-accordion" kt-hidden-height="116" style="display: none; overflow: hidden;">
             <div class="menu-item" id="GEOFENCETRACKING">
@@ -100,7 +100,7 @@
                 style="display:none;">
                 <span class="menu-link">
                     <span class="menu-title">Mobile User TimeLine</span>
-                    <span class="menu-arrow"></span>
+                    <span class="menu-arrow text-white mb-1"></span>
                 </span>
                 <div class="menu-sub menu-sub-accordion" kt-hidden-height="116"
                     style="display: none; overflow: hidden;">
@@ -134,7 +134,7 @@
                 <!--end::Svg Icon-->
             </span>
             <span class="menu-title">Onboarding</span>
-            <span class="menu-arrow"></span>
+            <span class="menu-arrow text-white mb-1"></span>
         </span>
         <div class="menu-sub menu-sub-accordion" kt-hidden-height="116" style="display: none; overflow: hidden;">
             <div data-kt-menu-trigger="click" class="menu-item menu-accordion" style="display:none;" id="configtask">
@@ -147,7 +147,7 @@
                         <!--end::Svg Icon-->
                     </span>
                     <span class="menu-title">Company Setup</span>
-                    <span class="menu-arrow"></span>
+                    <span class="menu-arrow text-white mb-1"></span>
                 </span>
                 <div class="menu-sub menu-sub-accordion" kt-hidden-height="116"
                     style="display: none; overflow: hidden;">
@@ -178,7 +178,7 @@
                 </div>
             </div>
         </div>
-            
+
         <div class="menu-sub menu-sub-accordion" kt-hidden-height="116" style="overflow: hidden;">
             <div class="menu-item" id="SHIFT">
                 <a class="menu-link" href="{{ url('onboarding:shift') }}?template=true&type=QUESTIONSET">
@@ -220,7 +220,7 @@
                     <span class="menu-title">Checkpoint</span>
                 </a>
             </div>
-            
+
             <div class="menu-item" id="QUESTION">
                 <a class="menu-link" href="{{ url('activity:question') }}?template=true">
                     <span class="menu-bullet">
@@ -229,7 +229,7 @@
                     <span class="menu-title">Question</span>
                 </a>
             </div>
-            
+
             <div class="menu-item" id="CHECKLIST">
                 <a class="menu-link" href="{{ url('activity:checklist') }}?template=true&type=QUESTIONSET">
                     <span class="menu-bullet">
@@ -259,7 +259,7 @@
                 <!--end::Svg Icon-->
             </span>
             <span class="menu-title">Scheduling</span>
-            <span class="menu-arrow"></span>
+            <span class="menu-arrow text-white mb-1"></span>
         </span>
         <div class="menu-sub menu-sub-accordion" kt-hidden-height="116" style="display: none; overflow: hidden;">
             <div class="menu-item" id="TASK">
@@ -296,8 +296,50 @@
             </div>
         </div>
     </div>
-    
-    
+
+    <div data-kt-menu-trigger="click" id="helpdesk" class="menu-item menu-accordion" style="display:none;">
+        <span class="menu-link">
+            <span class="menu-icon">
+                <!--begin::Svg Icon | path: icons/duotone/Communication/Group.svg-->
+                <span class="svg-icon svg-icon-2">
+                    <span class="material-icons">
+                        live_help
+                    </span>
+                </span>
+                <!--end::Svg Icon-->
+            </span>
+            <span class="menu-title">HelpDesk</span>
+            <span class="menu-arrow text-white mb-1"></span>
+        </span>
+        <div class="menu-sub menu-sub-accordion" kt-hidden-height="116" style="display: none; overflow: hidden;">
+            <div class="menu-item" id="raiseticket">
+                <a class="menu-link" href="apps/customers/getting-started.html">
+                    <span class="menu-bullet">
+                        <span class="bullet bullet-dot"></span>
+                    </span>
+                    <span class="menu-title">Raise Ticket</span>
+                </a>
+            </div>
+            <div class="menu-item" id="tickets">
+                <a class="menu-link" href="{{ url('helpdesk:ticket') }}?template=true">
+                    <span class="menu-bullet">
+                        <span class="bullet bullet-dot"></span>
+                    </span>
+                    <span class="menu-title">Tickets</span>
+                </a>
+            </div>
+            <div class="menu-item" id="task_ticket_escalation">
+                <a class="menu-link" href="{{ url('helpdesk:escalationmatrix') }}?template=true">
+                    <span class="menu-bullet">
+                        <span class="bullet bullet-dot"></span>
+                    </span>
+                    <span class="menu-title">Ticket Escalation</span>
+                </a>
+            </div>
+        </div>
+    </div>
+
+
     <div data-kt-menu-trigger="click" id="ADMIN" class="menu-item menu-accordion" style="display:none;">
         <span class="menu-link">
             <span class="menu-icon">
@@ -308,7 +350,7 @@
                 <!--end::Svg Icon-->
             </span>
             <span class="menu-title">Admin</span>
-            <span class="menu-arrow"></span>
+            <span class="menu-arrow text-white mb-1"></span>
         </span>
         <div class="menu-sub menu-sub-accordion" kt-hidden-height="116" style="display: none; overflow: hidden;">
             <div class="menu-item" id="TYPEASSIST">
@@ -360,7 +402,7 @@
                 <!--end::Svg Icon-->
             </span>
             <span class="menu-title">Super Admin</span>
-            <span class="menu-arrow"></span>
+            <span class="menu-arrow text-white mb-1"></span>
         </span>
         <div class="menu-sub menu-sub-accordion" kt-hidden-height="116" style="display: none; overflow: hidden;">
             <div class="menu-item" id="capability">
@@ -410,7 +452,7 @@
                 <!--end::Svg Icon-->
             </span>
             <span class="menu-title">Import / Export</span>
-            <span class="menu-arrow"></span>
+            <span class="menu-arrow text-white mb-1"></span>
         </span>
         <div class="menu-sub menu-sub-accordion" kt-hidden-height="116" style="display: none; overflow: hidden;">
             <div class="menu-item" id="typeassist">
@@ -463,7 +505,7 @@
             </div>
             <div class="menu-item" id="sitegroup">
                 <a class="menu-link" href="{{ url('onboarding:import') }}?model=peoplegroup">
-                    <span cl    ass="menu-bullet">
+                    <span cl ass="menu-bullet">
                         <span class="bullet bullet-dot"></span>
                     </span>
                     <span class="menu-title">People Groups</span>
@@ -472,30 +514,5 @@
         </div>
     </div>
     <!---TEMPORARY MENUS--->
-    <div data-kt-menu-trigger="click" class="menu-item menu-accordion" style="display:none;" id="timeandattendance">
-        <span class="menu-link">
-            <span class="menu-icon">
-                <!--begin::Svg Icon | path: icons/duotone/Communication/Group.svg-->
-                <span class="svg-icon svg-icon-2">
-                    <span class="material-icons">
-                        query_builder
-                    </span>
-                </span>
-                <!--end::Svg Icon-->
-            </span>
-            <span class="menu-title">Time and Attendance</span>
-            <span class="menu-arrow"></span>
-        </span>
-        <div class="menu-sub menu-sub-accordion" kt-hidden-height="116" style="display: none; overflow: hidden;">
-            <div class="menu-item" id="attendance">
-                <a class="menu-link" href="{{ url('attendance:attendance_view') }}?template=true">
-                    <span class="menu-bullet">
-                        <span class="bullet bullet-dot"></span>
-                    </span>
-                    <span class="menu-title">Attendance</span>
-                </a>
-            </div>
 
-        </div>
-    </div>
 </div>

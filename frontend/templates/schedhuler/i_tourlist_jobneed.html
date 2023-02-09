@@ -33,19 +33,29 @@ Tour List
     const urlname = "{{ url('schedhuler:jobneedtours') }}"
 
     //if you want to modifiy here, then modify in custom.js initDateRange also
+    var params=null
     var from_pd = moment().subtract(7, 'days').format('YYYY-MM-DD');
     var to_pd = moment().format('YYYY-MM-DD')
-    $(document).ready(function (){
+    params = {from:from_pd, to:to_pd}
 
+    const table_filters = localStorage.getItem('tourstats_filter')
+    if(table_filters){
+        params = JSON.parse(table_filters)
+        localStorage.clear()
+    }
+
+    function reloadTable(table, filters){
+        params = filters
+        table.ajax.reload()
+    }
+    $(document).ready(function (){
         //datatable initialization
         table = $(table_id).DataTable({
 			//orderCellsTop: true,
             ajax:{
                 url:`${urlname}?action=list`,
                 data:function(d){
-                    d.pd1 = from_pd
-                    d.pd2 = to_pd
-                    d.identifier = 'INTERNALTOUR'
+                    d.params = JSON.stringify(params)
                 }
             },
             language: { search: "", searchPlaceholder:"Serch keywords..." },
@@ -84,8 +94,7 @@ Tour List
         				submitFormFilter()
 					}
 				}
-			]
-        
+			],      
         })
 
         //add input field to the datatables dom
@@ -93,7 +102,8 @@ Tour List
         initDateRange("#id_daterange").on('apply.daterangepicker', function(e, picker){
             from_pd = picker.startDate.format('YYYY-MM-DD');
             to_pd = picker.endDate.format('YYYY-MM-DD');
-            table.ajax.reload()
+            let filters = {from:from_pd, to:to_pd}
+            reloadTable(table, filters)
         })
 
 

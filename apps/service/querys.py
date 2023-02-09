@@ -3,6 +3,7 @@ from apps.core import utils
 from apps.activity.models import JobneedDetails, Question, QuestionSet, QuestionSetBelonging, Location
 from apps.onboarding.models import GeofenceMaster, Bt
 from apps.peoples.models import Pgbelonging, Pgroup, People
+from apps.attendance.models import PeopleEventlog
 from django.db import connections
 from collections import namedtuple
 from logging import getLogger
@@ -76,6 +77,13 @@ class Query(graphene.ObjectType):
     get_gfs_for_siteids = graphene.Field(SelectOutputType,
                                  siteids = graphene.List(graphene.Int))
 
+    get_attendance_history = graphene.Field(SelectOutputType,
+                                            month = graphene.Int(required=True),
+                                            year = graphene.Int(required=True),
+                                            peopleid = graphene.Int(required=True),
+                                            buid = graphene.Int(required=True),
+                                            clientid = graphene.Int(required=True),
+                                            )
     getsitelist  = graphene.Field(SelectOutputType,
                                  clientid = graphene.Int(required = True),
                                  peopleid = graphene.Int(required = True))
@@ -236,6 +244,15 @@ class Query(graphene.ObjectType):
                 return VerifyClientOutput(rc = 1, msg="INVALID")
         except Bt.DoesNotExist as ex:
             return VerifyClientOutput(rc = 1, msg="INVALID")
+        
+    
+    def resolve_get_attendance_history(self, info, month, year, peopleid, buid, clientid):
+        log.info(f'\n\nrequest for getgeofence inputs : {month = } {year = } {peopleid = } {buid = } { clientid = }')
+        data = PeopleEventlog.objects.get_attendance_history(month, year, peopleid, buid, clientid)
+        records, count, msg = utils.get_select_output(data)
+        log.info(f'total {count} objects returned')
+        return SelectOutputType(nrows = count, records = records,msg = msg)
+        
 
 
 def get_db_rows(sql, args = None):

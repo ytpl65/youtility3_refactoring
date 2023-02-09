@@ -82,9 +82,21 @@
                 {data:'frequency', title:"Frequency"},
                 {data:'expirydatetime', title:"Exp Datetime"},
                 {data:'gracetime', title:"Gracetime"},
-                {data:'gpslocation', title:"GPS", visible:false},
+                {data:'ctzoffset', visible:false}
             ],
-            buttons:[],
+            columnDefs:[
+                {targets:[1], render:function(data, type, row, meta){
+                    return convert_to_local(type, data, row)
+                }},
+                {targets:[8], render:function(data, type, row, meta){
+                    return convert_to_local(type, data, row)
+                }},
+                {targets:[3], render:function(data, type, row, meta){
+                    let url = `{{ url('activity:ppm') }}?action=getppm_jobneedform&id=${row['id']}`
+                    return `<a href="${url}">${data}</a>`
+                }}
+            ],
+            buttons:['excel'],
             initComplete:function(){
                 //populate dropdown field
                 $("#custom_jobstatus").change(() => {
@@ -149,7 +161,13 @@
                 {targets:[1], render:function(data, type, row, meta){
                     let url = "{{ url('activity:ppm') }}"
                     return `<a href="${url}?id=${row['id']}">${data}</a>`
-                }}
+                }},
+                {targets:[5], render:function(data, type, row, meta){
+                    return convert_to_local(type, data, row)
+                }},
+                {targets:[6], render:function(data, type, row, meta){
+                    return convert_to_local(type, data, row)
+                }},
             ],
             buttons:[
                 {
@@ -170,11 +188,11 @@
             //table = 
             jb_table.ajax.reload()
         })
-        $("#ppm_planner").removeClass("border-bottom")
-        $("#jobneedppm_table").hide()
-        jnppm_table ? jnppm_table.destroy() : {}
-        $("#schedule_ppm").addClass("border-bottom")
-        $("#jobppm_table").show()
+            $("#ppm_planner").removeClass("border-bottom")
+            $("#jobneedppm_table").hide()
+            jnppm_table ? jnppm_table.destroy() : {}
+            $("#schedule_ppm").addClass("border-bottom")
+            $("#jobppm_table").show()
     }
 
 
@@ -182,13 +200,13 @@
     $(document).ready(() => {
         
         
-        initJobneedPPM()
+        initJobPPM()
 
         $("#ppm_planner").click(() => {
-            initJobneedPPM()
+            jnppm_table ? jnppm_table.ajax.reload() : initJobneedPPM()
         })
         $("#schedule_ppm").click(() => {
-            initJobPPM()
+            jb_table ? jb_table.ajax.reload() : initJobPPM()
         })
         
     })

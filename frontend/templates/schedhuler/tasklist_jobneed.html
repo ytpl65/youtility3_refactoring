@@ -27,8 +27,22 @@ Task List
     const table_id = '#task_table_jobneed'
     const urlname = "{{ url('schedhuler:jobneedtasks') }}"
     //if you want to modifiy here, then modify in custom.js initDateRange also
+    var params = null
     var from_pd = moment().subtract(7, 'days').format('YYYY-MM-DD');
     var to_pd = moment().format('YYYY-MM-DD')
+    params = {from:from_pd, to:to_pd}
+
+    const table_filters = localStorage.getItem('taskstats_filter')
+    if(table_filters){
+        params = JSON.parse(table_filters)
+        localStorage.clear()
+    }
+
+
+    function reloadTable(table, filters){
+        params = filters
+        table.ajax.reload()
+    }
     
     $(document).ready(function (){
         //datatable initialization
@@ -36,8 +50,7 @@ Task List
             ajax:{
                 url:`${urlname}?action=list`,
                 data:function(d){
-                    d.pd1 = from_pd,
-                    d.pd2 = to_pd
+                    d.params = JSON.stringify(params)
                 }
             },
 			deferRender: true,
@@ -82,16 +95,20 @@ Task List
         				submitFormFilter()
 					}
 				}
-			]
+			],
+
         
         })
+        //table.ajax.data = {'action':'list', "pd1":from_pd, "pd2":to_pd}
+        //table.ajax.reload()
 
          //add input field to the datatables dom
          initDateRangeHtml()
          initDateRange("#id_daterange").on('apply.daterangepicker', function(e, picker){
-             from_pd = picker.startDate.format('YYYY-MM-DD');
-             to_pd = picker.endDate.format('YYYY-MM-DD');
-             table.ajax.reload()
+            from_pd = picker.startDate.format('YYYY-MM-DD');
+            to_pd = picker.endDate.format('YYYY-MM-DD');
+            let filters = {from:from_pd, to:to_pd}
+            reloadTable(table, filters)
          })
 		//END STYLING DATATABLE
 

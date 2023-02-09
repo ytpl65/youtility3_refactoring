@@ -46,8 +46,10 @@ var map;
 const geocoder = new google.maps.Geocoder();
 const formFilter = '#sitereport_filter'
 const table_id   = "#incidentreport_table"
+var params = null
 var from_pd = moment().subtract(7, 'days').format('YYYY-MM-DD');
 var to_pd = moment().format('YYYY-MM-DD')
+params = {from:from_pd, to:to_pd}
 
     //show point on map
     function showMap(longititude, latitude, address){
@@ -57,14 +59,18 @@ var to_pd = moment().format('YYYY-MM-DD')
         $('#leafletmap_modal').modal('show');
     }
 
+    function reloadTable(table, filters){
+        params = filters
+        table.ajax.reload()
+    }
+
     $(document).ready(function (){
         //datatable initialization
         table = $(table_id).DataTable({
             ajax:{
                 url: "{{ url('reports:incidentreport_list') }}?action=list",
                 data:function(d){
-                    d.pd1 = from_pd
-                    d.pd2 = to_pd
+                    d.params = JSON.stringify(params)
                 }
             },
 			deferRender: true,
@@ -94,7 +100,14 @@ var to_pd = moment().format('YYYY-MM-DD')
                     return convert_to_local(type, data, row)}
                 },
             ],
-            buttons:[]
+            buttons:[],
+            initComplete:function(settings, json){
+                const table_filters = localStorage.getItem('incident_reports_filter')
+                if(table_filters){
+                    reloadTable(table, JSON.parse(table_filters))
+                    localStorage.clear()
+                }
+            }
         })
 
         //on modal shown render map
@@ -121,7 +134,8 @@ var to_pd = moment().format('YYYY-MM-DD')
         initDateRange("#id_daterange").on('apply.daterangepicker', function(e, picker){
             from_pd = picker.startDate.format('YYYY-MM-DD');
             to_pd = picker.endDate.format('YYYY-MM-DD');
-            table.ajax.reload()
+            let filters = {from:from_pd, to:to_pd}
+            reloadTable(table, filters)
         })
     })
 

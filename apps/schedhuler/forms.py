@@ -37,6 +37,7 @@ class Schd_I_TourJobForm(JobForm):
         self.fields['ticketcategory'].queryset = ob.TypeAssist.objects.filter(tatype__tacode="TICKETCATEGORY")
         self.fields['pgroup'].queryset = pm.Pgroup.objects.filter(bu_id__in = self.request.session['assignedsites'], identifier__tacode__in = ['PEOPLEGROUP', 'PEOPLE_GROUP'])
         self.fields['people'].queryset = pm.People.objects.filter(bu_id__in = self.request.session['assignedsites'], client_id = self.request.session['client_id'])
+        #self.fields['asset'].queryset = am.Asset.objects.filter(~Q(runningstatus='SCRAPPED'), identifier__in =["ASSET", 'CHECKPOINT'], client_id = self.request.session['client_id'])
         utils.initailize_form_fields(self)
 
     def clean(self):
@@ -103,7 +104,7 @@ class SchdChild_I_TourJobForm(JobForm): # job
         super().__init__(*args, **kwargs)
         self.fields['seqno'].widget.attrs = {'readonly':True}
         self.fields['qset'].queryset = am.QuestionSet.objects.get_proper_checklist_for_scheduling(self.request, ['CHECKLIST', 'QUESTIONSET'])
-        self.fields['asset'].queryset = am.Asset.objects.filter(identifier__in = ['CHECKPOINT'], client_id = self.request.session['client_id'])
+        self.fields['asset'].queryset = am.Asset.objects.filter(identifier__in = ['CHECKPOINT', "ASSET"], client_id = self.request.session['client_id'])
         utils.initailize_form_fields(self)
 
 

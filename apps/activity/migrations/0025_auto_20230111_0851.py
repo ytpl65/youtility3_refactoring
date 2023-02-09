@@ -15,7 +15,7 @@ class Migration(migrations.Migration):
         migrations.AlterModelManagers(
             name='escalationmatrix',
             managers=[
-                ('objects', apps.activity.managers.ESCManager()),
+                ('objects', apps.y_helpdesk.managers.ESCManager()),
             ],
         ),
         migrations.AddField(

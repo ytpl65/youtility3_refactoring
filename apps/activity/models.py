@@ -1,8 +1,8 @@
 import uuid
 from apps.peoples.models import BaseModel
 from apps.activity.managers import (AssetManager, AttachmentManager,
-JobManager, JobneedDetailsManager, QsetBlngManager, QuestionManager, ESCManager,LocationManager,
-QuestionSetManager, JobneedManager, DELManager, WorkpermitManager, TicketManager)
+JobManager, JobneedDetailsManager, QsetBlngManager, QuestionManager, LocationManager,
+QuestionSetManager, JobneedManager, DELManager, WorkpermitManager)
 from apps.tenants.models import TenantAwareModel
 from django.utils.translation import gettext_lazy as _
 from django.core.serializers.json import DjangoJSONEncoder
@@ -594,90 +594,10 @@ class Event(BaseModel, TenantAwareModel):
     def __str__(self):
         return self.eventdesc
 
-def ticket_defaults():
-    return {"statusjbdata":[]}
-
-class Ticket(BaseModel, TenantAwareModel):
-    class Priority(models.TextChoices):
-        HIGH   = ('HIGH', 'High')
-        LOW    = ('LOW', 'Low')
-        MEDIUM = ('MEDIUM', 'Medium')
-
-    class Status(models.TextChoices):
-        NEW       = ('NEW', 'New')
-        CANCEL    = ('CANCEL', 'Cancel')
-        CLOSE     = ('CLOSE', 'Close')
-        ESCALATED = ('ESCALATED', 'Escalated')
-        AUTOCLOSE = ('AUTOCLOSE', 'Autoclose')
-        ASSIGNED  = ('ASSIGNED', 'Assigned' )
-
-    class TicketSource(models.TextChoices):
-        SYSTEMGENERATED = ('SYSTEMGENERATED', 'New Generated')
-        USERDEFINED     = ('USERDEFINED', 'User Defined')
-
-
-    uuid           = models.UUIDField(unique = True, editable = True, blank = True, default = uuid.uuid4)
-    ticketno           = models.IntegerField(null=True,blank=True)   
-    ticketdesc         = models.CharField(max_length=250)
-    assignedtopeople   = models.ForeignKey('peoples.People', null=True, blank=True, on_delete=models.RESTRICT, related_name="ticket_people")
-    assignedtogroup    = models.ForeignKey('peoples.Pgroup', null=True, blank=True, on_delete=models.RESTRICT, related_name="ticket_grps")
-    comments           = models.CharField(max_length=250, null=True)
-    bu                 = models.ForeignKey("onboarding.Bt", null=True,blank=True, on_delete=models.RESTRICT)
-    priority           = models.CharField(_("Priority"), max_length=50, choices=Priority.choices, null=True, blank=True)
-    escalationtemplate = models.CharField(max_length=30, null=True, blank=True)
-    modifieddatetime   = models.DateTimeField(default=timezone.now)
-    level              = models.IntegerField(default=0)
-    status             = models.CharField(_("Status"), max_length=50, choices=Status.choices,null=True, blank=True)
-    performedby        = models.ForeignKey('peoples.People', null=True, blank=True, on_delete=models.RESTRICT, related_name="ticket_performedby")
-    ticketlog          = models.JSONField(null=True,  encoder=DjangoJSONEncoder, blank=True, default=ticket_defaults)
-    events             = models.TextField(null=True, blank=True)
-    isescalated        = models.BooleanField(default=True)
-    ticketsource       = models.CharField(max_length=50, choices=TicketSource.choices, null=True, blank=True)
-
-    objects = TicketManager() 
-    
-    class Meta(BaseModel.Meta):
-        db_table      = 'ticket'
-        get_latest_by = ["cdtz", 'mdtz']
-        constraints         = [
-            models.UniqueConstraint(
-                fields=['bu', 'ticketno'],
-                name='bu_ticketno_uk'
-            )
-        ]
-
-    def __str__(self):
-        return self.ticketdesc
 
 
 
-class EscalationMatrix(BaseModel, TenantAwareModel):
-    class Frequency(models.TextChoices):
-        MINUTE = ('MINUTE', 'MINUTE')
-        HOUR   = ('HOUR', 'HOUR')
-        DAY    = ('DAY', 'DAY')
-        WEEK   = ('WEEK', 'WEEK')
-    
 
-    # id                = models.BigIntegerField(primary_key = True)
-    body               = models.CharField(max_length = 500, null = True)
-    job = models.ForeignKey("activity.Job", verbose_name=_("Job"),null=True, on_delete=models.RESTRICT)
-    level              = models.IntegerField(null = True, blank = True)
-    frequency          = models.CharField(max_length = 10, default='DAY', choices = Frequency.choices)
-    frequencyvalue     = models.IntegerField(null = True, blank = True)
-    assignedfor        = models.CharField(max_length = 50)
-    assignedperson     = models.ForeignKey(settings.AUTH_USER_MODEL, null = True, blank = True, on_delete = models.RESTRICT, related_name="escalation_people")
-    assignedgroup      = models.ForeignKey('peoples.Pgroup', null = True, blank = True, on_delete = models.RESTRICT, related_name="escalation_grps")
-    bu                 = models.ForeignKey("onboarding.Bt", null = True,blank = True, on_delete = models.RESTRICT)
-    escalationtemplate = models.CharField(max_length = 30)
-    notify             = models.TextField(blank = True, null = True)
-    client                 = models.ForeignKey("onboarding.Bt", null = True,blank = True, on_delete = models.RESTRICT, related_name='esc_clients')
-
-    objects = ESCManager() 
-    
-    class Meta(BaseModel.Meta):
-        db_table = 'escalationmatrix'
-        get_latest_by = ["mdtz", 'cdtz']
 
 class DeviceEventlog(BaseModel, models.Model):
     class DeviceEvent(models.TextChoices):

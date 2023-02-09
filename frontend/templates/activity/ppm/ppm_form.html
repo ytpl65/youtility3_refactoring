@@ -420,8 +420,9 @@ $(document).ready(() => {
     editor = new $.fn.dataTable.Editor({
         table:"#reminder_config",
         ajax: {
-            url:"{{ url('activity:escalationmatrix') }}",
+            url:"{{ url('helpdesk:escalationmatrix') }}",
             data:function(d){
+                d.post = 'postReminder'
                 let currentRow = getCurrentEditingRow(editior, table)
                 console.log(currentRow, "currentRow")
                 d.jobid = "{{ ppmform.instance.id }}",
@@ -468,7 +469,7 @@ $(document).ready(() => {
     //table for above editor
     table = $("#reminder_config").DataTable({
         ajax:{
-                url: `{{ url('activity:escalationmatrix') }}?action=get_reminder_config&job_id=${jobid}`,
+                url: `{{ url('helpdesk:escalationmatrix') }}?action=get_reminder_config&job_id=${jobid}`,
             },
         responsive: true,
         searching:false,

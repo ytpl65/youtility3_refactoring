@@ -26,11 +26,37 @@ Asset Lists
 
 {% block extra_scripts %}
 <script>
+var params=null
+
+function reloadTable(table, index){
+	switch(index){
+		case 0:
+		params = {status:'WORKING'}
+		table.ajax.reload()
+		break;
+		case 1:
+		params = {status:'MAINTENANCE'}
+		table.ajax.reload()
+		break;
+		case 2:
+		params = {status:'STANDBY'}
+		table.ajax.reload()
+		break;
+		case 3:
+		params = {status:'SCRAPPED'}
+		table.ajax.reload()
+		break;
+	}
+}
+
 $(document).ready(function () {
 		//BEGIN DATATABLE INITIALIZATION
 		var table = $('#asset_table').DataTable({
 			ajax:{
-				url: "{{ url('activity:asset') }}?action=list"
+				url: "{{ url('activity:asset') }}?action=list",
+				data:function(d){
+					d.params = JSON.stringify(params)
+				}
 			},
 			columns:[
 				{data: 'id', visible:false, defaultContent: ""},
@@ -78,7 +104,13 @@ $(document).ready(function () {
 						return location.href = "{{ url('activity:asset') }}?action=form"
 					}
 				}
-			]
+			],
+			initComplete:function(settings, json){
+				let filters = localStorage.getItem('assetFilters') ? JSON.parse(localStorage.getItem('assetFilters')) : null
+				if(filters && filters.AssetType === 0){
+					reloadTable(table, filters.AssetStatus)
+				}
+			}
 		})
 	});
 </script>

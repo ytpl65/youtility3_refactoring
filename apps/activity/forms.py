@@ -414,7 +414,6 @@ class CheckpointForm(forms.ModelForm):
         self.request = kwargs.pop('request', None)
         super(CheckpointForm, self).__init__(*args, **kwargs)
         self.fields['identifier'].initial = 'CHECKPOINT'
-        self.fields['parent'].required = False
         self.fields['type'].required = False
         self.fields['identifier'].widget.attrs = {"style": "display:none"}
         self.fields['location'].queryset = am.Location.objects.filter(
@@ -612,50 +611,6 @@ class AdhocTaskForm(JobNeedForm):
         self.fields['gpslocation'].required  = False
         utils.initailize_form_fields(self)
 
-class TicketForm(forms.ModelForm):
-    class Meta:
-        model = am.Ticket
-        fields = ['ticketno', 'ticketdesc', 'assignedtopeople',
-                  'assignedtogroup', 'priority', 'status', 'performedby', 'comments', 'ticketlog']
-        labels = {
-            'ticketno'  : 'Ticket No',
-            'ticketdesc': 'Description',
-            'assignedtopeople': 'People',
-            'assignedtogroup': 'Group',
-            'priority': 'Priority',
-            'status': 'Status',
-            'performedby': 'Performed By',
-            'comments': 'comments',
-            'ticketlog': 'ticketlog'
-        }
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.fields["status"].queryset = om.TypeAssist.objects.filter(Q(tatype__tacode='TICKETSTATUS') )
-        self.fields["priority"].queryset = om.TypeAssist.objects.filter(tatype__tacode='PRIORITY')
-        utils.initailize_form_fields(self)
-
-# create a ModelForm
-class EscalationForm(forms.ModelForm):
-    # specify the name of model to use
-    class Meta:
-        model = am.EscalationMatrix
-        fields = ['level', 'assignedfor',  'assignedperson', 'ctzoffset',
-                  'assignedgroup', 'frequency', 'frequencyvalue', 'body']
-        labels = {
-            'level': 'Level',
-            'assignedfor': 'Assigned To',
-            'assignedperson': 'People',
-            'assignedgroup': 'Group',
-            'frequency': 'Frequency',
-            'frequencyvalue': 'Value',
-            'body': 'Body',
-        }
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        utils.initailize_form_fields(self)
-
 
 
 class WorkPermit(forms.ModelForm):
@@ -765,7 +720,7 @@ class AssetForm(forms.ModelForm):
                 'subcategory': 'get_none_typeassist',
                 'brand': 'get_none_typeassist',
                 'unit': 'get_none_typeassist',
-                'location':'get_none_or_create_location'}
+                'location':'get_or_create_none_location'}
         for field, func in fields.items():
             if cd.get(field) in [None, ""]:
                 cd[field] = getattr(utils, func)()
@@ -910,8 +865,45 @@ class PPMForm(forms.ModelForm):
         self.request = kwargs.pop('request')
         super().__init__(*args, **kwargs)
         utils.initailize_form_fields(self)
+        self.fields['asset'].required = True
+        self.fields['qset'].required = True
         self.fields['identifier'].initial = 'PPM'
-        self.fields['identifier'].widget.attrs = {'style':"display:none"} 
+        self.fields['identifier'].widget.attrs = {'style':"display:none"}
         self.fields['ticketcategory'].queryset = om.TypeAssist.objects.filter(tatype__tacode="TICKETCATEGORY")
 
-        
+
+class PPMFormJobneed(forms.ModelForm):
+    ASSIGNTO_CHOICES   = [('PEOPLE', 'People'), ('GROUP', 'Group')]
+    assign_to          = forms.ChoiceField(choices = ASSIGNTO_CHOICES, initial="PEOPLE")
+    required_css_class = "required"
+
+
+    class Meta:
+        model = am.Jobneed
+        fields = [
+            'jobdesc', 'asset',  'priority', 'ticketcategory', 'gracetime','starttime', 'endtime',
+            'performedby','expirydatetime', 'people', 'pgroup', 'scantype', 'jobstatus',  'qset', 'assign_to',
+            'plandatetime', 'ctzoffset'
+        ]
+        labels = {
+            'asset':'Asset', 'qset':"Question Set", 'people':"People", 
+            'scantype':'Scantype', 'priority':'Priority',
+            'jobdesc':'Description', 'ticketcategory':'Ticket Category',
+            'fromdate':'Valid From', 'uptdate':'Valid To', 'pgroup':'Group', 
+            'assign_to':'Assign to'
+        }
+        widgets = {
+            'asset'         : s2forms.Select2Widget,
+            'qset'          : s2forms.Select2Widget,
+            'people'        : s2forms.Select2Widget,
+            'pgroup'        : s2forms.Select2Widget,
+            'priority'      : s2forms.Select2Widget,
+            'scantype'      : s2forms.Select2Widget,
+            'ticketcategory': s2forms.Select2Widget,
+        }
+    
+    def __init__(self, *args, **kwargs):
+        self.request = kwargs.pop('request')
+        super().__init__(*args, **kwargs)
+        utils.initailize_form_fields(self)
+        self.fields['ticketcategory'].queryset = om.TypeAssist.objects.filter(tatype__tacode="TICKETCATEGORY")

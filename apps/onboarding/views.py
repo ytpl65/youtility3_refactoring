@@ -1818,7 +1818,8 @@ class RPDashboard(LoginRequiredMixin, View):
         if R['from'] and R['upto']:
             from django.db.models import Q, F, Count
             from itertools import chain
-            arr, total = am.Asset.objects.get_assetchart_data(request)
+            asset_chart_arr, asset_chart_total = am.Asset.objects.get_assetchart_data(request)
+            alert_chart_arr, alert_chart_total = am.Jobneed.objects.get_alertchart_data(request)
             task_arr = am.Jobneed.objects.get_taskchart_data(request)
             tour_arr = am.Jobneed.objects.get_tourchart_data(request)
 
@@ -1834,13 +1835,15 @@ class RPDashboard(LoginRequiredMixin, View):
                     'inprogress_tours_count'        : tour_arr[1],
                     'partiallycompleted_tours_count': tour_arr[2],
                     
-                    'assetchartdata'        : arr,
-                    'assetchart_total_count': total,
+                    'assetchartdata'        : asset_chart_arr,
+                    'alertchartdata'        : alert_chart_arr,
+                    'assetchart_total_count': asset_chart_total,
+                    'alertchart_total_count': alert_chart_total,
                     
-                'sos_count'    : P['pel_model'].objects.get_sos_count_forcard(request),
-                'IR_count'     : P['jn_model'].objects.get_ir_count_forcard(request),
-                'FR_fail_count': P['pel_model'].objects.get_frfail_count_forcard(request),
-                'route_count'  : P['jn_model'].objects.get_schdroutes_count_forcard(request)
+                    'sos_count'    : P['pel_model'].objects.get_sos_count_forcard(request),
+                    'IR_count'     : P['jn_model'].objects.get_ir_count_forcard(request),
+                    'FR_fail_count': P['pel_model'].objects.get_frfail_count_forcard(request),
+                    'route_count'  : P['jn_model'].objects.get_schdroutes_count_forcard(request)
                 }
             }
                 

@@ -3,7 +3,7 @@ from django.contrib.staticfiles.storage import staticfiles_storage
 from django.urls import reverse
 from django.contrib import messages
 from widget_tweaks.templatetags import widget_tweaks as wt
-from datetime import  datetime
+from datetime import  datetime, timedelta
 
 
 
@@ -13,6 +13,11 @@ def debug(info):
 def to_local(val):
     from django.utils.timezone import get_current_timezone
     return val.astimezone(get_current_timezone()).strftime('%d-%b-%Y %H:%M')
+
+def string_to_datetime(val, ctzoffset):
+    dt =  datetime.strptime(val, "%Y-%m-%d %H:%M:%S%z") + timedelta(minutes=int(ctzoffset))
+    return dt.strftime('%d-%b-%Y %H:%M')
+    
 
 
 class JinjaEnvironment(Environment):
@@ -32,3 +37,4 @@ class JinjaEnvironment(Environment):
         self.filters['set_attr']  = wt.set_attr 
         self.filters['addlabel_class']  = wt.add_label_class 
         self.filters['to_local']  = to_local
+        self.filters['string_to_datetime']  = string_to_datetime

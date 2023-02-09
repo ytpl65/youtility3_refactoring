@@ -1,17 +1,19 @@
-from sqlite3 import Row
 from django.db.models import Q, F, Subquery
 from django.core.exceptions import EmptyResultSet
 from django.db import transaction
 from django.http import response as rp
 import apps.activity.models as am
+from apps.y_helpdesk.models import Ticket, EscalationMatrix
 from logging import getLogger
 from pprint import pformat
 from random import shuffle
 from apps.core import utils
 from datetime import datetime, timezone, timedelta
 from django.db.models.query import QuerySet
+from apps.reminder.models import Reminder
 import random
-
+from intelliwiz_config.celery import app
+from celery import shared_task
 log = getLogger('__main__')
 
 
@@ -165,16 +167,17 @@ def create_job(jobs = None):
                 if not DT: return rp.JsonResponse({'msg':"Please check your Valid From and Valid To dates"}, status = 404)
                 log.debug(
                     "Jobneed will going to create for all this datetimes\n %s", (pformat(get_readable_dates(DT))))
-                F[str(job['id'])] = is_cron
+                if not is_cron: F[str(job['id'])] = job['cron']
                 status, resp = insert_into_jn_and_jnd(job, DT, resp)
-                d.append({
-                    "job"   : job['id'],
-                    "jobname" : job['jobname'],
-                    "cron"    : job['cron'],
-                    "iscron"  : is_cron,
-                    "count"   : len(DT),
-                    "status"  : status
-                })
+                if status:
+                    d.append({
+                        "job"   : job['id'],
+                        "jobname" : job['jobname'],
+                        "cron"    : job['cron'],
+                        "iscron"  : is_cron,
+                        "count"   : len(DT),
+                        "status"  : status
+                    })
             if F:
                 log.info(f"create_job() Failed job schedule list:= {pformat(F)}")
             log.info(f"createJob()[end-] [{idx} of {total_jobs - 1}] parent job:= {job['jobname']} | job:= {job['id']} | cron:= {job['cron']}")
@@ -383,7 +386,7 @@ def insert_into_jn_and_jnd(job, DT, resp):
         in 'DT' list.
     """
     log.info("insert_into_jn_and_jnd() [ start ]")
-    status   = None
+    status, resp   = None, None
     if len(DT) > 0:
         try:
             # required variables
@@ -438,24 +441,24 @@ def insert_into_jn_and_jnd(job, DT, resp):
             resp = rp.JsonResponse({'msg': f'{len(DT)} tasks scheduled successfully!', 'count':len(DT)}, status = 200)
 
         log.info("insert_into_jn_and_jnd() [ End ]")
-        return status, resp
+    return status, resp
 
 def insert_into_jn_for_parent(job, params):
     return am.Jobneed.objects.create(
-        job_id         = job['id'],                     parent            = params['NONE_JN'],
-        jobdesc        = params['jobdesc'],          plandatetime      = params['pdtz'],
-        expirydatetime = params['edtz'],             gracetime         = job['gracetime'],
-        asset_id       = job['asset_id'],               qset_id           = job['qset_id'],
-        ctzoffset      = job['ctzoffset'],              people_id         = params['people'],
-        pgroup_id      = job['pgroup_id'],              frequency         = 'NONE',
-        priority       = job['priority'],               jobstatus         = params['jobstatus'],
-        performedby    = params['NONE_P'],           jobtype           = params['jobtype'],
-        scantype       = job['scantype'],               identifier        = job['identifier'],
-        cuser_id       = job['cuser_id'],               muser_id          = job['muser_id'],
-        bu_id          = job['bu_id'],                  ticketcategory_id = job['ticketcategory_id'],
-        gpslocation    = 'POINT(0.0 0.0)',             remarks           = '',
-        seqno          = 0,                          multifactor       = params['m_factor'],
-        client_id      = job['client_id'],           other_info = job['other_info']
+        job_id         = job['id'],         parent            = params['NONE_JN'],
+        jobdesc        = params['jobdesc'], plandatetime      = params['pdtz'],
+        expirydatetime = params['edtz'],    gracetime         = job['gracetime'],
+        asset_id       = job['asset_id'],   qset_id           = job['qset_id'],
+        ctzoffset      = job['ctzoffset'],  people_id         = params['people'],
+        pgroup_id      = job['pgroup_id'],  frequency         = 'NONE',
+        priority       = job['priority'],   jobstatus         = params['jobstatus'],
+        performedby    = params['NONE_P'],  jobtype           = params['jobtype'],
+        scantype       = job['scantype'],   identifier        = job['identifier'],
+        cuser_id       = job['cuser_id'],   muser_id          = job['muser_id'],
+        bu_id          = job['bu_id'],      ticketcategory_id = job['ticketcategory_id'],
+        gpslocation    = 'POINT(0.0 0.0)',  remarks           = '',
+        seqno          = 0,                 multifactor       = params['m_factor'],
+        client_id      = job['client_id'],  other_info        = job['other_info']
     )
 
 
@@ -671,9 +674,10 @@ def update_lastgeneratedon(job, pdtz):
 def send_email_notication(err):
     raise NotImplementedError()
 
-def del_job(id):
+def del_job(id, ppm=False):
     log.info("deleting old jobs start[+]")
     jobs = am.Job.objects.filter(parent_id__in = [id]).exclude(id=1).values()
+    if ppm: jobs = am.Job.objects.filter(id = id).values()
     jobids = [job['id'] for job in jobs]
     #update jobneedetails and jobneed
     olddate = datetime(1970, 1, 1, 0, 0, 0, tzinfo=timezone.utc)
@@ -685,3 +689,174 @@ def del_job(id):
     am.Job.objects.filter(id=id).exclude(id=1).update(cdtz = F('mdtz'))
     log.info("deleting old jobs end[-]")
 
+
+def del_ppm_reminder(jobid):
+    log.info('del_ppm_reminder start +')
+    Reminder.objects.filter(reminderdate__gt = datetime.now(timezone.utc), job_id = jobid).delete()
+    log.info('del_ppm_reminder end -')
+
+
+def calculate_startdtz_enddtz_for_ppm(job): 
+    log.info(f"calculating startdtz, enddtz for job:= [{job['id']}]")
+    tz = timezone(timedelta(minutes = int(job['ctzoffset'])))
+    ctzoffset = job['ctzoffset']
+
+    current_date = datetime.now(timezone.utc).replace(microsecond=0, tzinfo=tz) + timedelta(minutes=ctzoffset)
+    cdtz         = job['cdtz'].replace(microsecond=0, tzinfo=tz) + timedelta(minutes=ctzoffset)
+    mdtz         = job['mdtz'].replace(microsecond=0, tzinfo=tz) + timedelta(minutes=ctzoffset)
+    vfrom        = job['fromdate'].replace(microsecond=0, tzinfo=tz) + timedelta(minutes=ctzoffset)
+    vupto        = job['uptodate'].replace(microsecond=0, tzinfo=tz) + timedelta(minutes=ctzoffset)
+    ldtz         = job['lastgeneratedon'].replace(microsecond=0, tzinfo=tz) + timedelta(minutes=ctzoffset)
+
+    if mdtz > cdtz:
+        ldtz = current_date
+        del_job(job['id'], True)
+        del_ppm_reminder(job['id'])
+
+    startdtz = max(current_date, vfrom)
+    enddtz = vupto
+    startdtz = max(startdtz, ldtz)
+
+    if startdtz < current_date:
+        ldtz = current_date
+    return startdtz, enddtz
+    
+    
+def create_ppm_reminder(jobs):
+    try:
+        #FOR EVERY JOB
+        for job in jobs:
+            if job['count'] <= 0:
+                continue
+            #EXTRACT REMINDER CONFIG (FROM ESCMATRIX)
+            esm = EscalationMatrix.objects.select_related('job', 'assignedgroup', 'assignedperson', 'bu').filter(job_id=job['job'])
+            #RETRIVE JOBNEEDS
+            jobneeds = am.Jobneed.objects.select_related('job', 'asset', 'qset', 'bu', 'client', 'people', 'pgroup').filter(
+                plandatetime__gt=datetime.now(), job_id=job['job'])
+            
+            if not esm or not jobneeds:
+                continue
+            
+            #FOR EVERY JOBNEED
+            for jn in jobneeds:
+                log.info(f'create_ppm_reminder() jobneed:{jn.id} plandatetime {jn.plandatetime} jobdesc {jn.jobdesc} buid {jn.bu_id} asset_id {jn.asset_id} qsetid {jn.qset_id}')
+                assignto = "GROUP" if jn.pgroup_id != 1 else "PEOPLE"
+                #FOR EVERY REMINDER IN REMINDER CONFIG
+                for r in esm:
+                    log.debug(f"reminder : {pformat(r)}")
+                    reminderdate = jn.plandatetime.replace(microsecond=0)
+
+                    if r.frequency == "WEEK":
+                        reminderbefore = int(r.frequencyvalue) * 7 * 24 * 60
+                    elif r.frequency == "DAY":
+                        reminderbefore = int(r.frequencyvalue) * 24 * 60
+                    elif r.frequency == "HOUR":
+                        reminderbefore = int(r.frequencyvalue) * 60
+                    elif r.frequency == "MINUTE":
+                        reminderbefore = int(r.frequencyvalue)
+                    
+                    reminderdate = reminderdate - timedelta(minutes=reminderbefore)
+                    #CREATE REMINDER
+                    Reminder.objects.create(
+                        description    = jn.jobdesc,
+                        bu_id          = jn.bu_id,
+                        asset_id       = jn.asset_id,
+                        qset_id        = jn.qset_id,
+                        people_id      = jn.people_id,
+                        group_id       = jn.pgroup_id,
+                        priority       = jn.priority,
+                        reminderin     = r.frequency,
+                        reminderbefore = r.frequencyvalue,
+                        reminderdate = reminderdate,
+                        job_id         = jn.job_id,
+                        jobneed_id     = jn.id,
+                        plandatetime   = jn.plandatetime,
+                        cuser_id       = jn.cuser_id,
+                        muser_id       = jn.muser_id,
+                        ctzoffset      = jn.ctzoffset,
+                        mailids        = r.notify
+                    )
+    except Exception as e:
+        log.error("something went wrong inside create_ppm_reminder", exc_info=True)
+
+
+@shared_task(name="create_ppm_job")
+def create_ppm_job(jobid=None):
+    F, d = {}, []
+    startdtz = enddtz = msg = resp = None
+    try:
+        with transaction.atomic(using=utils.get_current_db_name()):
+            jobs = am.Job.objects.filter(
+                ~Q(jobname='NONE'),
+                ~Q(asset__runningstatus = am.Asset.RunningStatus.SCRAPPED),
+                identifier = am.Job.Identifier.PPM.value,
+                parent_id = 1
+            ).select_related('asset', 'pgroup', 'cuser', 'muser', 'people', 'qset').values(
+                *utils.JobFields.fields
+            )
+            if jobid:
+                jobs = jobs.filter(id = jobid).values(*utils.JobFields.fields)
+
+
+            if not jobs:
+                msg = "No jobs found schedhuling terminated"
+                resp = rp.JsonResponse(f"{msg}", status = 404)
+                log.warning(f"{msg}", exc_info = True)
+                raise EmptyResultSet
+            total_jobs = len(jobs)
+
+            if total_jobs > 0 and jobs is not None:
+                log.info("processing jobs started found:= '%s' jobs", (len(jobs)))
+                for job in jobs:
+                    startdtz, enddtz = calculate_startdtz_enddtz_for_ppm(job)
+                    log.debug(f"Jobs to be schedhuled from startdatetime {startdtz} to enddatetime {enddtz}")
+                    DT, is_cron, resp = get_datetime_list(job['cron'], startdtz, enddtz, resp)
+                    log.debug(
+                        "Jobneed will going to create for all this datetimes\n %s", (pformat(get_readable_dates(DT))))
+                    if not is_cron: F[str(job['id'])] = job['cron']
+                    status, resp = insert_into_jn_and_jnd(job, DT, resp)
+                    if status:
+                        d.append({
+                            "job"   : job['id'],
+                            "jobname" : job['jobname'],
+                            "cron"    : job['cron'],
+                            "iscron"  : is_cron,
+                            "count"   : len(DT),
+                            "status"  : status
+                        })
+                create_ppm_reminder(d)
+                if F:
+                    log.info(f"create_ppm_job Failed job schedule list:={pformat(F)}")
+                    for key, value in list(F.items()):
+                        log.info(f"create_ppm_job job_id: {key} | cron: {value}")
+    except Exception as e:
+        log.error("something went wrong create_ppm_job", exc_info=True)
+        
+                
+
+def send_reminder_email():
+    #get all reminders which are not sent
+    from django.template.loader import render_to_string
+    from django.conf import settings
+    from django.core.mail import  EmailMessage
+
+    reminders = Reminder.objects.get_all_due_reminders()
+    try:
+        for rem in reminders:
+            emails = utils.get_email_addresses([rem['people_id'], rem['cuser_id'], rem['muser_id']], [rem['group_id']])
+            recipents = list(set(emails + rem['mailids'].split(',')))
+            subject = f"Reminder For {rem['job__jobname']}"
+            context = {'job':rem['job__jobname'], 'plandatetime':rem['pdate'], 'jobdesc':rem['job__jobdesc'],
+                    'creator':rem['cuser__peoplename'],'modifier':rem['muser__peoplename']}
+            html_message = render_to_string('reminder_mail.html', context=context)
+            log.info(f"Sending reminder mail with subject {subject}")
+            msg = EmailMessage()
+            msg.subject = subject
+            msg.body  = html_message
+            msg.from_email = settings.EMAIL_HOST_USER
+            msg.to = recipents
+            msg.content_subtype = 'html'
+            msg.send()
+            log.info(f"Reminder mail sent to {recipents} with subject {subject}")
+    except Exception as e:
+        log.error("Error while sending reminder email")
