@@ -42,6 +42,7 @@ from .validators import clean_record
 from apps.activity.models import (Jobneed, JobneedDetails, Asset)
 import traceback as tb
 from django.core.mail import send_mail, EmailMessage
+from apps.y_helpdesk.models import Ticket
 from intelliwiz_config.celery import app
 from django.conf import settings
 from celery.utils.log import get_task_logger
@@ -233,6 +234,7 @@ def perform_insertrecord(self, file, request = None, db='default', filebased = T
             for record in data:
                 tablename = record.pop('tablename')
                 obj = insertrecord(record, tablename)
+                if tablename == 'ticket' and isinstance(obj, Ticket): utils.store_ticket_history(obj, request)
                 if hasattr(obj, 'geojson'): save_addr_for_point(obj)
                 allconditions = [
                     hasattr(obj, 'peventtype'), hasattr(obj, 'endlocation'), 
@@ -585,11 +587,11 @@ def save_addr_for_point(obj):
         obj.geojson['endlocation'] = get_readable_addr_from_point(obj.endlocation)
     obj.save()
     
-def call_service_based_on_filename(data, filename, db='default'):
+def call_service_based_on_filename(data, filename, db='default', request=None):
     log.info(f'filename before calling {filename}')
     if filename == 'insertRecord.gz':
         log.info("calling insertrecord. service..")
-        return perform_insertrecord.delay(file=data, db = db, bg=True)
+        return perform_insertrecord.delay(file=data, db = db, bg=True, request=request)
     if filename == 'updateTaskTour.gz':
         log.info("calling updateTaskTour service..")
         return perform_tasktourupdate.delay(file=data, db = db, bg=True)

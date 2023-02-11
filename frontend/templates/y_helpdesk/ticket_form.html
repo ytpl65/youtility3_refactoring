@@ -35,18 +35,35 @@ Ticket
     <div class="row gy-3">
        <div class="col-md-6">
             <div class="input-group mb-3">
-                <div class="col-md-4">
+                <div class="col-md-3">
                     {{ ticketform.ticketdesc.label_tag() }}
                 </div>
-                <div class="col-md-8">
+                <div class="col-md-9">
                     {{ ticketform.ticketdesc }}
                 </div>
             </div>
+                        <div class="input-group mb-3">
+                <div class="col-md-3">
+                    {{ ticketform.status.label_tag() }}
+                </div>
+                <div class="col-md-9">
+                    {{ ticketform.status }}
+                </div>
+            </div>
+            <div class="input-group mb-3">
+                <div class="col-md-3">
+                    {{ ticketform.priority.label_tag() }}
+                </div>
+                <div class="col-md-9">
+                    {{ ticketform.priority }}
+                </div>
+            </div>
+
             <div class="input-group mb-6">
-                <div class="col-md-4">
+                <div class="col-md-3">
                     <label class="required">Assign to:</label>
                 </div>
-                <div class="col-md-8">
+                <div class="col-md-9">
                     <div class="form-check form-check-inline">
                         <input type="radio" class="form-check-input" name={{ ticketform.assign_to.name }}
                             id="{{ ticketform.assign_to.auto_id }}1" value="PEOPLE" checked
@@ -61,83 +78,61 @@ Ticket
                 </div>
             </div>
             <div class="input-group mb-3 people">
-                <div class="col-md-4">
+                <div class="col-md-3">
                     {{ ticketform.assignedtopeople.label_tag() }}
                 </div>
-                <div class="col-md-8">
+                <div class="col-md-9">
                     {{ ticketform.assignedtopeople }}
                 </div>
             </div>
             <div class="input-group mb-3 pgroup">
-                <div class="col-md-4">
+                <div class="col-md-3">
                     {{ ticketform.assignedtogroup.label_tag() }}
                 </div>
-                <div class="col-md-8">
+                <div class="col-md-9">
                     {{ ticketform.assignedtogroup }}
                 </div>
             </div>
-            
             <div class="input-group mb-3">
-                <div class="col-md-4">
-                    {{ ticketform.ticketcategory.label_tag() }}
+                <div class="col-md-3">
+                    {{ ticketform.isescalated.label_tag() }}
                 </div>
-                <div class="col-md-8">
-                    {{ ticketform.ticketcategory }}
-                </div>
-            </div>
-            <div class="input-group mb-3">
-                <div class="col-md-4">
-                    {{ ticketform.priority.label_tag() }}
-                </div>
-                <div class="col-md-8">
-                    {{ ticketform.priority }}
-                </div>
-            </div>
-            <div class="form-check form-switch form-check-solid">
-                <div class="input-group">
-                    <label for="{{ ticketform.isescalated.id_for_label }}" 
-                class="form-check-label bool text-sm-right">{{ ticketform.isescalated.label }}&nbsp;&nbsp; {{ ticketform.isescalated }}</label>
+                <div class="col-md-9">
+                    {{ ticketform.isescalated }}
                 </div>
             </div>
        </div>
        <div class="col-md-6">
+            
             <div class="input-group mb-3">
-                <div class="col-md-4">
-                    {{ ticketform.status.label_tag() }}
-                </div>
-                <div class="col-md-8">
-                    {{ ticketform.status }}
-                </div>
-            </div>
-            <div class="input-group mb-3">
-                <div class="col-md-4">
+                <div class="col-md-3">
                     {{ ticketform.location.label_tag() }}
                 </div>
-                <div class="col-md-8">
+                <div class="col-md-9">
                     {{ ticketform.location }}
                 </div>
             </div>
             <div class="input-group mb-3">
-                <div class="col-md-4">
+                <div class="col-md-3">
                     {{ ticketform.cuser.label_tag() }}
                 </div>
-                <div class="col-md-8">
+                <div class="col-md-9">
                     {{ ticketform.cuser }}
                 </div>
             </div>
             <div class="input-group mb-3">
-                <div class="col-md-4">
+                <div class="col-md-3">
                     {{ ticketform.cdtz.label_tag() }}
                 </div>
-                <div class="col-md-8">
+                <div class="col-md-9">
                     {{ ticketform.cdtz }}
                 </div>
             </div>
             <div class="input-group mb-3">
-                <div class="col-md-4">
+                <div class="col-md-3">
                     {{ ticketform.comments.label_tag() }}
                 </div>
-                <div class="col-md-8">
+                <div class="col-md-9">
                     {{ ticketform.comments }}
                 </div>
             </div>

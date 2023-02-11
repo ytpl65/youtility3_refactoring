@@ -1,8 +1,9 @@
 from django.db import models
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 import json
 from django.db.models import Q
 from apps.onboarding.models import TypeAssist
+from apps.peoples.models import Pgbelonging
 
 class TicketManager(models.Manager):
     use_in_migrations = True
@@ -34,11 +35,31 @@ class TicketManager(models.Manager):
             cdtz__date__gte = P['from'],
             cdtz__date__lte = P['to'],
             bu_id__in = S['assignedsites'],
-            #client_id = S['client_id'],
+            ticketsource = 'USERDEFINED'
         ).select_related('assignedtopeople', 'assignedtogroup', 'bu').values(
             'id', 'cdtz', 'bu__buname', 'status', 'bu__bucode', 'isescalated',
             'cuser__peoplename', 'cuser__peoplecode', 'ticketdesc', 'ctzoffset'
         )
+        return qset or self.none()
+    
+    def get_tickets_for_mob(self, peopleid, buid, clientid, mdtz, ctzoffset):
+        if not isinstance(mdtz, datetime):
+            mdtz = datetime.strptime(mdtz, "%Y-%m-%d %H:%M:%S") - timedelta(minutes=ctzoffset)
+            
+        group_ids = list(Pgbelonging.objects.filter(~Q(pgroup_id = 1), people_id = peopleid).values_list('pgroup_id' , flat=True))
+        qset = self.select_related(
+            'assignedtopeople', 'assignedtogroup', 'bu', 'client', 
+            'ticketcategory', 'location', 'performedby').filter(
+                (Q(assignedtopeople_id = peopleid) | Q(cuser_id = peopleid) | Q(muser_id = peopleid)| Q(assignedtogroup_id__in = group_ids)),
+                mdtz__gte = mdtz,
+                bu_id = buid,
+                client_id = clientid,
+            ).values(
+                'id', 'uuid', 'ticketdesc', 'assignedtopeople_id', 'assignedtogroup_id', 'comments', 'bu_id', 'ticketcategory__taname',
+                'ticketcategory__tacode','client_id', 'priority', 'ticketcategory_id', 'location_id', 'modifieddatetime', 'level', 'status'
+                'performedby_id', 'events', 'isescalated', 'ticketsource', 'cuser_id', 'muser_id', 'cdtz', 'mdtz', 'ctzoffset', 'attachmentcount',
+                'cuser__peoplename', 'muser__peoplename'
+            )
         return qset or self.none()
 
 

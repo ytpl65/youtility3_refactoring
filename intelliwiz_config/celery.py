@@ -20,11 +20,15 @@ app.autodiscover_tasks()
 app.conf.beat_schedule = {
     "ppm_schedule":{
         'task':'schedule_ppm_jobs',
-        'schedule': crontab(hour=5, minute=0),
+        'schedule': crontab(hour=12, minute=0),
     },
     "reminder_emails":{
         'task':'send_reminder_emails',
-        'schedule': crontab(hour=5, minute=0),
+        'schedule': crontab(hour=12, minute=0),
+    },
+    "auto_close":{
+        'task':'auto_close_jobs',
+        'schedule': crontab(hour=12, minute=0),
     },
     "hi_to_navee":{
         'task':"hello_naveen",

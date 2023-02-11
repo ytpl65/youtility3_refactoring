@@ -710,7 +710,8 @@ class AssetForm(forms.ModelForm):
         if val := self.cleaned_data.get('assetcode'):
             if not self.instance.id and  am.Asset.objects.filter(assetcode = val).exists():
                 raise forms.ValidationError("Asset with this code already exist")
-            return val
+            return val.upper()
+        return val
     
     def check_nones(self, cd):
         fields = {'parent': 'get_or_create_none_asset',

@@ -59,6 +59,7 @@ class Ticket(BaseModel, TenantAwareModel):
     events           = models.TextField(null=True, blank=True)
     isescalated      = models.BooleanField(default=False)
     ticketsource     = models.CharField(max_length=50, choices=TicketSource.choices, null=True, blank=True)
+    attachmentcount = models.IntegerField(null=True)
 
     objects = TicketManager() 
     

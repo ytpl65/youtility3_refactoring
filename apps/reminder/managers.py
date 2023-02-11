@@ -1,5 +1,5 @@
 from django.db import models
-from django.db.models import Q, F, Count, Case, When
+from django.db.models import Q, F, Count, Case, When, Value
 from datetime import datetime, timedelta, timezone
 
 
@@ -11,8 +11,8 @@ class ReminderManager(models.Manager):
         qset = self.select_related(
             'bt', 'job', 'asset', 'qset', 'pgroup', 'people'
         ).annotate(
-            rdate = F('reminderdate') + timedelta(minutes=F('ctzoffset')),
-            pdate = F('plandatetime') + timedelta(minutes=F('ctzoffset'))
+            rdate = F('reminderdate') + timedelta(minutes=Value(F('ctzoffset'), output_field=models.IntegerField()).value),
+            pdate = F('plandatetime') + timedelta(minutes=Value(F('ctzoffset'), output_field=models.IntegerField()).value)
         ).filter(
             reminderdate__gt = datetime.now(timezone.utc),
             status__ne = 'SUCCESS'

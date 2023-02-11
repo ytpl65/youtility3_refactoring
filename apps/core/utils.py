@@ -1503,7 +1503,7 @@ def store_ticket_history(instance, request):
     logger.info("saving ticket history ended...")
     
 
-def get_email_addresses(people_ids, group_ids):
+def get_email_addresses(people_ids, group_ids=None, buids=None):
     from apps.peoples.models import People, Pgbelonging
     
     p_emails = list(People.objects.filter(

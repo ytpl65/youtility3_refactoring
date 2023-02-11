@@ -55,7 +55,7 @@ Ticket List
 			pageLength:50,
 			columns     : [
                 { "data": "cdtz", title:"Created On" },
-                { "title": "Ticket No.", data:'id' },
+                { "title": "Ticket No.", data:'id', width:"8%" },
                 { "data": "bu__buname", title:'Site' },
                 { "data": "bu__bucode", visible:false },
                 { "data": "ticketdesc", title:'Description' },
@@ -74,15 +74,22 @@ Ticket List
                 {targets:[0], render:function(data, type, row, meta){
                     return convert_to_local(type, data, row)
                 }},
-                {targets:[6], render:function(data, type, row, meta){
+                {targets:[7], render:function(data, type, row, meta){
                     return `${data} (${row['cuser__peoplecode']})`
                 }},
+                {targets:6, data: 'runningstatus',  render:function(data, type, row, meta){
+					if(data === 'CANCELLED'){return `<span class="badge badge-danger">${data}</span>`}
+					if(data === 'NEW'){return `<span class="badge badge-primary">${data}</span>`}
+					if(data === 'OPEN'){return `<span class="badge badge-orange">${data}</span>`}
+					if(data === 'RESOLVED'){return `<span class="badge badge-success">${data}</span>`}
+				}},
 			],
 			createdRow:function(row, data, dataIndex){
 				if(data['enable'] === false){
 					$(row).addClass('disabled-record text-white')
 				}
 			},
+            ordering:[[0, 'asc']],
 			dom       : `<'row' <'col-sm-6 d-flex justify-content-start'f> <'col-sm-6 d-flex justify-content-end'B> >rt<'row'
 			<'col-sm-6'l> <'col-sm-6'p><'col-sm-12 d-flex justify-content-center'i>>`,
 			buttons:[

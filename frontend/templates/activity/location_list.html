@@ -27,25 +27,23 @@ Location Lists
 {% block extra_scripts %}
 <script>
 var params=null;
-function reloadTable(table, index){
-	switch(index){
+let filters = localStorage.getItem('assetFilters') ? JSON.parse(localStorage.getItem('assetFilters')) : null
+if(filters && filters.AssetType === 2){
+	switch(filters.AssetStatus){
 		case 0:
 		params = {status:'WORKING'}
-		table.ajax.reload()
 		break;
 		case 1:
 		params = {status:'MAINTENANCE'}
-		table.ajax.reload()
 		break;
 		case 2:
 		params = {status:'STANDBY'}
-		table.ajax.reload()
 		break;
 		case 3:
 		params = {status:'SCRAPPED'}
-		table.ajax.reload()
 		break;
 	}
+	localStorage.clear()
 }
 
 $(document).ready(function () {
@@ -79,7 +77,7 @@ $(document).ready(function () {
 				{targets:4, data: 'locstatus',  render:function(data, type, row, meta){
 					if(data === 'MAINTENANCE'){return `<span class="badge badge-danger">${data}</span>`}
 					if(data === 'SCRAPPED'){return `<span class="badge badge-secondary">${data}</span>`}
-					if(data === 'STANDBY'){return `<span class="badge badge-info">${data}</span>`}
+					if(data === 'STANDBY'){return `<span class="badge badge-orange">${data}</span>`}
 					if(data === 'WORKING'){return `<span class="badge badge-success">${data}</span>`}
 				}},
 				{targets:3, render:function(data, type, row, meta){
@@ -100,14 +98,17 @@ $(document).ready(function () {
 					action: function(e, dt, node, config){
 						return location.href = "{{ url('activity:location') }}?action=form"
 					}
+				},
+								{
+					text     : `Refresh &nbsp;<i class="bi bi-arrow-clockwise"></i></a>`,
+					className: "btn btn-sm btn-light-primary",
+					//action for add_new_button 
+					action: function(e, dt, node, config){
+						params=null
+						table.ajax.reload()
+					}
 				}
 			],
-			initComplete:function(settings, json){
-				let filters = localStorage.getItem('assetFilters') ? JSON.parse(localStorage.getItem('assetFilters')) : null
-				if(filters && filters.AssetType === 2){
-					reloadTable(table, filters.AssetStatus)
-				}
-			}
 		})
 	});
 </script>

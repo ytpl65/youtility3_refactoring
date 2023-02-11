@@ -192,6 +192,9 @@ def other_info():
         'distance': None,
         'breaktime': 0,
         'deviation':False,
+        'ticket_generated':False,
+        'email_sent':False,
+        'autoclosed_by_server':False
     }
 
 def geojson_jobnjobneed():

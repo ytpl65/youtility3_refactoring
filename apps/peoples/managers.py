@@ -148,8 +148,7 @@ class PeopleManager(BaseUserManager):
         S = request.session
         qset = self.select_related('client', 'bu').filter(
             enable=True,
-            #isverified=True,
-            isadmin=False,
+            isverified=True,
             bu_id__in = S['assignedsites'],
             client_id=S['client_id'],            
         ).annotate(peopletext = Concat(F('peoplename'), V(' ('), F('peoplecode'), V(')'))).values_list('id', 'peopletext')

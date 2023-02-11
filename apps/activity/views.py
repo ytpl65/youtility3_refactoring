@@ -454,7 +454,7 @@ class Checkpoint(LoginRequiredMixin, View):
         'partial_list': 'peoples/partials/master_asset_list.html',
         'related': ['parent', 'type'],
         'model': am.Asset,
-        'fields': ['assetname', 'assetcode', 'runningstatus', 'identifier',
+        'fields': ['assetname', 'assetcode', 'runningstatus', 'identifier','location__locname',
                    'parent__assetname', 'gps', 'id', 'enable'],
         'form_initials': {'runningstatus': 'WORKING',
                           'identifier': 'CHECKPOINT',
@@ -1149,7 +1149,7 @@ class Asset(LoginRequiredMixin,View):
         'jsonform':af.AssetExtrasForm,
         'related':['parent'],
         'fields':['assetcode', 'assetname', 'id', 'parent__assetname',
-                  'runningstatus', 'enable', 'gps', 'identifier']
+                  'runningstatus', 'enable', 'gps', 'identifier', 'location__locname']
     }
     
     def get(self, request, *args, **kwargs):

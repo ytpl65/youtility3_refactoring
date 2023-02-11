@@ -5,7 +5,7 @@ from apps.core import utils
 
 class TicketForm(forms.ModelForm):
     required_css_class = "required"
-    ASSIGNTO_CHOICES   = [('PEOPLE', 'People'), ('GROUP', 'Group')]
+    ASSIGNTO_CHOICES   = [('PEOPLE', 'People'), ('GROUP', 'Group of people')]
     assign_to          = forms.ChoiceField(choices = ASSIGNTO_CHOICES, initial="PEOPLE")
 
     class Meta:
@@ -13,13 +13,18 @@ class TicketForm(forms.ModelForm):
         fields = [
             'ticketdesc', 'assignedtopeople', 'assignedtogroup', 'priority', 'ctzoffset',
             'ticketcategory', 'status', 'comments', 'assign_to', 'location', 'cuser', 'cdtz',
-            'isescalated'
+            'isescalated', 'ticketsource'
         ]
         labels = {
-            'assignedtopeople':'People', 'assignedtogroup':"Group", 'ticketdesc':"Description",
+            'assignedtopeople':'People', 'assignedtogroup':"Group of people", 'ticketdesc':"Subject",
             'cuser':"Created By", 'cdtz':"Created On", 'ticketcategory':"Ticket Category",
             "isescalated":"Is Escalated"
         }
+        widgets={
+            'comments' : forms.Textarea(attrs={'rows': 2, 'cols': 40}),
+            'isescalated':forms.TextInput(attrs={'readonly':True})
+        }
+        
 
     
     def __init__(self, *args, **kwargs):
@@ -28,9 +33,11 @@ class TicketForm(forms.ModelForm):
         utils.initailize_form_fields(self)
         self.fields['ticketdesc'].required=True
         self.fields['ticketcategory'].required=True
-        self.fields['location'].required=True
         self.fields['priority'].required=True
         self.fields['comments'].required=False
+        self.fields['ticketsource'].initial=Ticket.TicketSource.USERDEFINED
+        self.fields['ticketsource'].widget.attrs = {'style':"display:none"}
+        self.fields['ticketcategory'].queryset = TypeAssist.objects.filter(tatype__tacode='TICKETCATEGORY')
         if not self.instance.id:
             self.fields['status'].initial = 'NEW'
     

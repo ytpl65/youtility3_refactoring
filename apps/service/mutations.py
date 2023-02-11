@@ -297,7 +297,7 @@ class SyncMutation(graphene.Mutation):
                         data = tasks.get_json_data(f)
                         # raise ValueError
                         TR += len(data)
-                        call_service_based_on_filename(data, file.filename, db = db)
+                        call_service_based_on_filename(data, file.filename, db = db, request=info.context)
                         ic(data)
                 if filesize !=  zipsize:
                     log.error(f"file size is not matched with the actual zipfile {filesize} x {zipsize}")

@@ -2,7 +2,7 @@ from graphql import GraphQLError
 from apps.service import serializers as sz
 from apps.attendance.models import PeopleEventlog
 from apps.activity.models import (Jobneed, JobneedDetails, Attachment, Asset, DeviceEventlog)
-from apps.y_helpdesk.models import Ticket
+from apps.y_helpdesk.models import Ticket, EscalationMatrix
 from apps.onboarding.models import TypeAssist
 from apps.peoples.models import People
 from apps.attendance.models import Tracking
@@ -19,6 +19,7 @@ from pprint import pformat
 from intelliwiz_config.celery import app
 from celery import shared_task
 from celery.utils.log import get_task_logger
+from datetime import timedelta, datetime, timezone
 log = get_task_logger('django')
 import json
 
@@ -693,6 +694,7 @@ def send_reminder_email():
     from apps.reminder.models import Reminder
 
     reminders = Reminder.objects.get_all_due_reminders()
+    log.info(f"total due reminders are {len(reminders)}")
     try:
         for rem in reminders:
             emails = utils.get_email_addresses([rem['people_id'], rem['cuser_id'], rem['muser_id']], [rem['group_id']])
@@ -714,6 +716,125 @@ def send_reminder_email():
         log.error("Error while sending reminder email")
 
 
-@shared_task(name='hello_naveen')
-def hello_naveen():
-    log.info("Hello naveen hope you having a good time....")
+def send_email(subject, body):
+    pass
+
+
+
+def create_ticket_for_autoclose(jobneedrecord, ticketdesc):
+    try:
+        tkt, _ =  Ticket.objects.get_or_create(
+            bu_id=jobneedrecord['bu_id'],
+            status="NEW",
+            client_id=jobneedrecord['client_id'],
+            ticketcategory_id=jobneedrecord['ticketcategory_id'],
+            ticketsource=Ticket.TicketSource.SYSTEMGENERATED,
+            ticketdesc=ticketdesc,
+            priority=jobneedrecord['priority'],
+            
+        )
+        return Ticket.objects.filter(
+            id = tkt.id
+        ).select_related('bu', 'client', 'escalationtemplate').values(
+            'ticketcategory_id', 'client_id', 'level', 'bu_id', 'id',
+            'cdtz', 'ctzoffset'
+        ).first()
+    except Exception as e:
+        log.error("something went wrong in create_ticket_for_autoclose", exc_info=True)
+        
+        
+def update_job_autoclose_status(record):
+    obj = Jobneed.objects.get(id=record['id'])
+    obj.mdtz = datetime.now(timezone.utc)
+    obj.jobstatus = 'AUTOCLOSED'
+    obj.other_info['email_sent'] = record['ticketcategory__tacode'] == 'AUTOCLOSENOTIFY'
+    obj.other_info['ticket_generated'] = record['ticketcategory__tacode'] == 'RAISETICKETNOTIFY'
+    obj.other_info['autoclosed_by_server'] = True
+    obj.save()
+    
+        
+def get_escalation_of_ticket(tkt):
+    if tkt:
+        return EscalationMatrix.objects.filter(
+            bu_id = tkt['bu_id'],
+            escalationtemplate_id = tkt['ticketcategory_id'],
+            client_id = tkt['client_id'],
+            level = tkt['level'] + 1
+        ).select_related('escalationtemplate', 'client', 'bu').values(
+            'level', 'frequencyvalue', 'frequency'
+        ).order_by('level').first() or []
+    return []
+
+@shared_task(name="auto_close_jobs")
+def autoclose_job():
+    from django.template.loader import render_to_string
+    from django.conf import settings
+    from django.core.mail import  EmailMessage
+    try:
+        #get all expired jobs
+        expired = Jobneed.objects.get_expired_jobs()
+        context = {}
+        with transaction.atomic(using=utils.get_current_db_name()):
+            for rec in expired:
+                
+                if rec['ticketcategory__tacode'] in ['AUTOCLOSENOTIFY', 'RAISETICKETNOTIFY']:
+                    log.info("notifying through email...")
+                    pdate = rec["plandatetime"] + timedelta(minutes=rec['ctzoffset'])
+                    pdate = pdate.strftime("%d-%b-%Y %H:%M")
+                    edate = rec["expirydatetime"] + timedelta(minutes=rec['ctzoffset'])
+                    edate = edate.strftime("%d-%b-%Y %H:%M")
+
+                    subject = f'AUTOCLOSE {"TOUR" if rec["identifier"] in  ["INTERNALTOUR", "EXTERNALTOUR"] else rec["identifier"] } planned on \
+                    {pdate} not reported in time'
+                    context = {
+                        'subject'         : subject,
+                        'buname'          : rec['bu__buname'],
+                        'plan_dt'         : pdate,
+                        'creatorname'     : rec['cuser__peoplename'],
+                        'assignedto'      : rec['assignedto'],
+                        'exp_dt'          : edate,
+                        'show_ticket_body': False,
+                        'identifier':rec['identifier'],
+                        'jobdesc':rec['jobdesc']
+                    }
+
+                    emails = utils.get_email_addresses([rec['people_id'], rec['cuser_id'], rec['muser_id']], [rec['pgroup_id']], [rec['bu_id']])
+                    log.info(f"recipents are as follows...{emails}")
+                    msg = EmailMessage()
+                    msg.subject = subject
+                    msg.from_email = settings.EMAIL_HOST_USER
+                    msg.to = emails
+                    msg.content_subtype = 'html'
+
+                    if rec['ticketcategory__tacode'] == 'RAISETICKETNOTIFY':
+                        log.info("ticket needs to be generated")
+                        context['show_ticket_body'] = True
+                        jobdesc = f'AUTOCLOSE {"TOUR" if rec["identifier"] in  ["INTERNALTOUR", "EXTERNALTOUR"] else rec["identifier"] } \
+                        planned on {pdate} not reported in time'
+                        #DB OPERATION
+                        ticket_data = create_ticket_for_autoclose(rec, jobdesc)
+                        log.info(f'{ticket_data}')
+                        if esc := get_escalation_of_ticket(ticket_data):
+                            context['escalation'] = True
+                            context['next_escalation'] = f"{esc['frequencyvalue']} {esc['frequency']}"
+                        created_at = ticket_data['cdtz'] + timedelta(minutes=ticket_data['ctzoffset'])
+                        created_at = created_at.strftime("%d-%b-%Y %H:%M")
+                        
+                        context['ticketno']       = ticket_data['id']
+                        context['tjobdesc']       = jobdesc
+                        context['categoryname']   = rec['ticketcategory__taname']
+                        context['priority']       = rec['priority']
+                        context['status']         = 'NEW'
+                        context['tcreatedby']     = rec['cuser__peoplename']
+                        context['created_at']     = created_at
+                        context['tkt_assignedto'] = rec['assignedto']
+
+                    html_message = render_to_string('autoclose_mail.html', context=context)
+                    msg.body = html_message
+                    msg.send()
+                    log.info(f"mail sent, record_id:{rec['id']}")
+                update_job_autoclose_status(rec)
+    except Exception as e:
+        log.error(f'context in the template:{context}')
+        log.error("something went wrong while running autoclose_job()", exc_info=True)
+        pass

@@ -1,6 +1,7 @@
 import graphene
 from apps.core import utils
 from apps.activity.models import JobneedDetails, Question, QuestionSet, QuestionSetBelonging, Location
+from apps.y_helpdesk.models import Ticket
 from apps.onboarding.models import GeofenceMaster, Bt
 from apps.peoples.models import Pgbelonging, Pgroup, People
 from apps.attendance.models import PeopleEventlog
@@ -87,6 +88,13 @@ class Query(graphene.ObjectType):
     getsitelist  = graphene.Field(SelectOutputType,
                                  clientid = graphene.Int(required = True),
                                  peopleid = graphene.Int(required = True))
+    
+    get_tickets = graphene.Field(SelectOutputType,
+                                 peopleid = graphene.Int(required=True),
+                                 ctzoffset = graphene.Int(required=True),
+                                 buid = graphene.Int(),
+                                 clientid = graphene.Int(),
+                                 mdtz = graphene.String(required=True))
 
     verifyclient = graphene.Field(VerifyClientOutput, clientcode = graphene.String(required = True))
 
@@ -99,6 +107,14 @@ class Query(graphene.ObjectType):
         records, count, msg = utils.get_select_output(data)
         log.info(f'{count} objects returned...')
         return SelectOutputType(nrows = count, ncols = len(keys), records = records,msg = msg)
+    
+    @staticmethod
+    def resolve_get_tickets(self, info, peopleid, ctzoffset, buid, clientid, mdtz):
+        log.info('request for get_tickets')
+        data = Ticket.objects.get_tickets_for_mob(peopleid, buid, clientid, mdtz, ctzoffset)
+        records, count, msg = utils.get_select_output(data)
+        log.info(f'{count} objects returned...')
+        return SelectOutputType(nrows = count,  records = records,msg = msg)
     
     @staticmethod
     def resolve_checkquery(self, info):
