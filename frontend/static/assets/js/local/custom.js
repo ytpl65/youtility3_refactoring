@@ -25,6 +25,20 @@ function getAddressOfPoint(geocoder, point, callback){
 }
 
 
+//upload file using dropzone
+function getDropzoneObject(){
+  return new Dropzone("#dropzone_file", {
+    url: fileUploadUrl,
+    paramName: "file",
+    maxFiles: 5,
+    maxFileSize: 10,
+    addRemoveLinks: true,
+    accept: function (file, done) { console.log(file, done);
+    }
+  });
+}
+
+
 function populateQsetForm(questionid, url){
   debugger;
   const params = {url:`${url}?action=getquestion&questionid=${questionid}`, modal:false}

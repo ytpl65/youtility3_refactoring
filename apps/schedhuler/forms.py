@@ -45,6 +45,8 @@ class Schd_I_TourJobForm(JobForm):
         cd = self.cleaned_data
         if cd['people'] is None and cd['pgroup'] is None:
             raise forms.ValidationError('Cannot be proceed assigned tour to either people or group.')
+        self.cleaned_data = self.check_nones(self.cleaned_data)
+        
     
 
     def clean_from_date(self):
@@ -79,15 +81,7 @@ class Schd_I_TourJobForm(JobForm):
     def clean_slno():
         return -1
 
-    def clean(self):
-        super().clean()
-        bu = ob.Bt.objects.get(id = self.request.session['bu_id'])
-        self.instance.jobdesc = f'{bu.buname} - {self.instance.jobname}'
-        cd = self.cleaned_data
-        if cd['pgroup'] is None:
-            cd['pgroup'] = utils.get_or_create_none_pgroup()
-        if cd['people'] is None:
-            cd['people'] = utils.get_or_create_none_people()
+
         
 
 

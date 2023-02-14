@@ -31,119 +31,111 @@ Ticket
 <form action="{{ url('schedhuler:create_ticket') }}" method="post" id="ticketform">
     <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
     <input type="hidden" name="{{ ticketform.ctzoffset.name }}" id = "{{ ticketform.ctzoffset.auto_id }}" value="-1">
+    {{ ticketform.ticketsource }}
 
     <div class="row gy-3">
        <div class="col-md-6">
             <div class="input-group mb-3">
-                <div class="col-md-3">
+                <div class="pt-3 col-md-3">
                     {{ ticketform.ticketdesc.label_tag() }}
                 </div>
-                <div class="col-md-9">
+                <div class="col-md-9" data-bs-toggle="tooltip" data-bs-custom-class="tooltip-dark" data-bs-placement="top" title="A brief summary of your issue or request">
                     {{ ticketform.ticketdesc }}
                 </div>
             </div>
-                        <div class="input-group mb-3">
-                <div class="col-md-3">
+            <div class="input-group mb-3">
+                <div class="pt-3 col-md-3">
                     {{ ticketform.status.label_tag() }}
                 </div>
-                <div class="col-md-9">
+                <div class="col-md-9" data-bs-toggle="tooltip" data-bs-custom-class="tooltip-dark" data-bs-placement="top" title="Current status of ticket">
                     {{ ticketform.status }}
                 </div>
             </div>
             <div class="input-group mb-3">
-                <div class="col-md-3">
+                <div class="pt-3 col-md-3">
                     {{ ticketform.priority.label_tag() }}
                 </div>
-                <div class="col-md-9">
+                <div class="col-md-9" data-bs-toggle="tooltip" data-bs-custom-class="tooltip-dark" data-bs-placement="top" title="Select the appropriate priority level for your ticket based on the urgency of your issue or request">
                     {{ ticketform.priority }}
                 </div>
             </div>
-
-            <div class="input-group mb-6">
-                <div class="col-md-3">
-                    <label class="required">Assign to:</label>
+            <div class="input-group mb-3">
+                <div class="pt-3 col-md-3">
+                    {{ ticketform.ticketcategory.label_tag() }}
                 </div>
-                <div class="col-md-9">
-                    <div class="form-check form-check-inline">
-                        <input type="radio" class="form-check-input" name={{ ticketform.assign_to.name }}
-                            id="{{ ticketform.assign_to.auto_id }}1" value="PEOPLE" checked
-                            onchange="showHideSelectField('PEOPLE')">
-                        <label class="form-check-label" for="{{ ticketform.assign_to.auto_id }}">People</label>
-                    </div>
-                    <div class="form-check form-check-inline">
-                        <input type="radio" class="form-check-input" name={{ ticketform.assign_to.name }}
-                            id="{{ ticketform.assign_to.auto_id }}2" value="GROUP" onchange="showHideSelectField('GROUP')">
-                        <label class="form-check-label" for="{{ ticketform.assign_to.auto_id }}">Group</label>
-                    </div>
-                </div>
-            </div>
-            <div class="input-group mb-3 people">
-                <div class="col-md-3">
-                    {{ ticketform.assignedtopeople.label_tag() }}
-                </div>
-                <div class="col-md-9">
-                    {{ ticketform.assignedtopeople }}
-                </div>
-            </div>
-            <div class="input-group mb-3 pgroup">
-                <div class="col-md-3">
-                    {{ ticketform.assignedtogroup.label_tag() }}
-                </div>
-                <div class="col-md-9">
-                    {{ ticketform.assignedtogroup }}
+                <div class="col-md-9" data-bs-toggle="tooltip" data-bs-custom-class="tooltip-dark" data-bs-placement="top" title="Select the people that this ticket should be assigned to">
+                    {{ ticketform.ticketcategory }}
                 </div>
             </div>
             <div class="input-group mb-3">
-                <div class="col-md-3">
-                    {{ ticketform.isescalated.label_tag() }}
+                <div class="pt-3 col-md-3">
+                    {{ ticketform.assignedtopeople.label_tag() }}
                 </div>
-                <div class="col-md-9">
-                    {{ ticketform.isescalated }}
+                <div class="col-md-9" data-bs-toggle="tooltip" data-bs-custom-class="tooltip-dark" data-bs-placement="top" title="Select the people that this ticket should be assigned to">
+                    {{ ticketform.assignedtopeople }}
                 </div>
             </div>
+            <div class="input-group mb-3">
+                <div class="pt-3 col-md-3">
+                    {{ ticketform.assignedtogroup.label_tag() }}
+                </div>
+                <div class="col-md-9" data-bs-toggle="tooltip" data-bs-custom-class="tooltip-dark" data-bs-placement="top" title="Select the group that this ticket should be assigned to">
+                    {{ ticketform.assignedtogroup }}
+                </div>
+            </div>
+
        </div>
        <div class="col-md-6">
             
             <div class="input-group mb-3">
-                <div class="col-md-3">
+                <div class="pt-3 col-md-3">
                     {{ ticketform.location.label_tag() }}
                 </div>
-                <div class="col-md-9">
+                <div class="col-md-9" data-bs-toggle="tooltip" data-bs-custom-class="tooltip-dark" data-bs-placement="top" title="Select the location associated with this issue or request">
                     {{ ticketform.location }}
                 </div>
             </div>
             <div class="input-group mb-3">
-                <div class="col-md-3">
+                <div class="pt-3 col-md-3">
                     {{ ticketform.cuser.label_tag() }}
                 </div>
-                <div class="col-md-9">
+                <div class="col-md-9"  data-bs-toggle="tooltip" data-bs-custom-class="tooltip-dark" data-bs-placement="top" title="This field displays the name of the user who created this ticket">
                     {{ ticketform.cuser }}
                 </div>
             </div>
             <div class="input-group mb-3">
-                <div class="col-md-3">
+                <div class="pt-3 col-md-3">
                     {{ ticketform.cdtz.label_tag() }}
                 </div>
-                <div class="col-md-9">
+                <div class="col-md-9" data-bs-toggle="tooltip" data-bs-custom-class="tooltip-dark" data-bs-placement="top" title="This field displays the date and time when this ticket was created" >
                     {{ ticketform.cdtz }}
                 </div>
             </div>
             <div class="input-group mb-3">
-                <div class="col-md-3">
+                <div class="pt-3 col-md-3">
+                    {{ ticketform.isescalated.label_tag() }}
+                </div>
+                <div class="col-md-9" data-bs-toggle="tooltip" data-bs-custom-class="tooltip-dark" data-bs-placement="top" title="This field displays whether ticket is escalated or not">
+                    {{ ticketform.isescalated }}
+                </div>
+            </div>
+            <div class="input-group mb-3">
+                <div class="pt-3 col-md-3">
                     {{ ticketform.comments.label_tag() }}
                 </div>
-                <div class="col-md-9">
+                <div class="col-md-9" data-bs-toggle="tooltip" data-bs-custom-class="tooltip-dark" data-bs-placement="top" title="Please provide a detailed description of the issue or request in the comments field">
                     {{ ticketform.comments }}
                 </div>
             </div>
        </div>
     </div>
+    {{ fileupoad() }}
 </form>
 {% endblock form %}
 
 
 {% block extras %}
-{% if "{{ ticketform.instance.id }}" != "None" %}
+{% if ticketform.instance.id is not none %}
     <br><hr>
     <div class="mt-7 tab-pane">
         <p class="ch4">Ticket History&nbsp;<i class="bi bi-clock-fill fs-5"></i></p>
@@ -282,6 +274,11 @@ Ticket
                 }
             })
         })
+
+        //get dropzone object
+        var dropzone = getDropzoneObject()
+        
+
 
     })
 

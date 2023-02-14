@@ -27,5 +27,6 @@ urlpatterns = [
     path('import/', views.BulkImportData.as_view(), name="import"),
     path('client/', views.Client.as_view(), name="client"),
     path('bu/', views.BtView.as_view(), name="bu"),
-    path('rp_dashboard/', views.RPDashboard.as_view(), name="rp_dashboard")
+    path('rp_dashboard/', views.RPDashboard.as_view(), name="rp_dashboard"),
+    path('fileUpload/', views.FileUpload.as_view(), name="file_upload")
 ]

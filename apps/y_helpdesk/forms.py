@@ -5,19 +5,17 @@ from apps.core import utils
 
 class TicketForm(forms.ModelForm):
     required_css_class = "required"
-    ASSIGNTO_CHOICES   = [('PEOPLE', 'People'), ('GROUP', 'Group of people')]
-    assign_to          = forms.ChoiceField(choices = ASSIGNTO_CHOICES, initial="PEOPLE")
 
     class Meta:
         model = Ticket
         fields = [
             'ticketdesc', 'assignedtopeople', 'assignedtogroup', 'priority', 'ctzoffset',
-            'ticketcategory', 'status', 'comments', 'assign_to', 'location', 'cuser', 'cdtz',
+            'ticketcategory', 'status', 'comments', 'location', 'cuser', 'cdtz',
             'isescalated', 'ticketsource'
         ]
         labels = {
-            'assignedtopeople':'People', 'assignedtogroup':"Group of people", 'ticketdesc':"Subject",
-            'cuser':"Created By", 'cdtz':"Created On", 'ticketcategory':"Ticket Category",
+            'assignedtopeople':'People', 'assignedtogroup':"User Group", 'ticketdesc':"Subject",
+            'cuser':"Created By", 'cdtz':"Created On", 'ticketcategory':"Queue",
             "isescalated":"Is Escalated"
         }
         widgets={
@@ -31,6 +29,7 @@ class TicketForm(forms.ModelForm):
         self.request = kwargs.pop('request')
         super().__init__(*args, **kwargs)
         utils.initailize_form_fields(self)
+        self.fields['assignedtogroup'].required=True
         self.fields['ticketdesc'].required=True
         self.fields['ticketcategory'].required=True
         self.fields['priority'].required=True
@@ -44,15 +43,11 @@ class TicketForm(forms.ModelForm):
     def clean(self):
         super().clean()
         cd = self.cleaned_data
-        if not (cd['assignedtopeople'] and cd['assignedtogroup']):
+        ic(cd)
+        if cd['assignedtopeople'] is None and cd['assignedtogroup'] is None:
             raise forms.ValidationError("Make Sure You Assigned Ticket Either People OR Group")
-        if cd['assign_to'] == 'PEOPLE':
-            cd['assignedtogroup'] = utils.get_or_create_none_pgroup()
-        else:
-            cd['assignedtopeople'] = utils.get_or_create_none_people()
-        
-        
-        
+        self.cleaned_data = self.check_nones(self.cleaned_data)
+        ic(self.cleaned_data)
         
     def clean_ticketdesc(self):
         if val:= self.cleaned_data.get('ticketdesc'):
@@ -62,6 +57,16 @@ class TicketForm(forms.ModelForm):
     
     def clean_comments(self):
         return val.strip() if (val:= self.cleaned_data.get('comments')) else val
+    
+    def check_nones(self, cd):
+        fields = {
+            'location':'get_or_create_none_location',
+            'assignedtopeople': 'get_or_create_none_people',
+            'assignedtogroup': 'get_or_create_none_pgroup',}
+        for field, func in fields.items():
+            if cd.get(field) in [None, ""]:
+                cd[field] = getattr(utils, func)()
+        return cd
     
 
 

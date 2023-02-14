@@ -78,6 +78,8 @@
   const WizardViewUrl      = "{{ url('onboarding:wizard_view') }}"
   const saveAsDraftUrl     = "{{ url('onboarding:save_asdraft') }}"
   const deleteFromDraftUrl = "{{ url('onboarding:delete_from_draft') }}"
+  const fileUploadUrl = "{{ url('onboarding:file_upload') }}"
+
   var dontBlock = false;
   var target = document.querySelector("body")
   var blockUI = new KTBlockUI(target, {

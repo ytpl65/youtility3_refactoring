@@ -275,6 +275,8 @@ class TypeAssistManager(models.Manager):
     
     def get_escalationlevels(self, request):
         R, S = request.GET, request.session
+        if R.get('id') in [None, "None", ""]:
+            return self.none()
         ic(R)
         if qobj := self.filter(id=R['id']).first():
             return list(qobj.esc_types.select_related('escalationtemplate', 'assignedperson', 'assignedgroup').values(

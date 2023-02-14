@@ -94,6 +94,32 @@ query = {
                                 AND workpermit.cdtz >= now() - interval '100 day' 
                                 AND workpermit.cdtz <= now()
                                 GROUP BY workpermit.id, buname, people.peoplename, qset.qsetname, workpermit.wpstatus, workpermit.workstatus,pb.peoplename, p.peoplename)workpermit 
-                                WHERE 1=1 ORDER BY cdtz desc'''
-
+                                WHERE 1=1 ORDER BY cdtz desc''',
+'get_ticketlist_for_escalation':'''SELECT DISTINCT ticket.cdtz + INTERVAL '1 minute' * escalation.calcminute as exp_time, escalation.level,       
+                 escalation.frequency AS efrequency, escalation.frequencyvalue, escalation.calcminute,                 
+                 escalation.assignedperson_id, escalation.assignedgroup_id, escalation.body, ticket.ticketdesc,           
+                ticket.comments,  ticket.performedby_id, ticket.priority,                  
+                 ticket.cuser_id, ticket.muser_id,  
+                 ticket.cdtz, ticket.mdtz,  ticket.id as ticketno, ticket.bu_id,                                
+                ticket.level, ticket.ticketcategory_id                                             
+                 FROM(                                                                                                 
+                    SELECT A.*                                                                                         
+                    FROM ticket A                                                                                     
+                    WHERE A.status NOT IN ('CANCELLED', 'COMPLETED', 'ESCALATED', 'RESOLVED') and 
+                    A.isescalated=false                      
+                 )ticket,                                                                                              
+                 (                                                                                                     
+                    SELECT id,escalationtemplate_id,  level, frequency, frequencyvalue,                                           
+                    CASE WHEN frequency = 'MINUTE' THEN frequencyvalue                                                 
+                         WHEN frequency = 'HOUR'   THEN frequencyvalue * 60                                            
+    	                 WHEN frequency = 'DAY'    THEN frequencyvalue * 24 * 60                                       
+	                     WHEN frequency = 'WEEK'   THEN frequencyvalue * 07 * 24 * 60                                  
+                    END calcminute,                                                                                    
+                    assignedperson_id, assignedgroup_id, body, cuser_id, cdtz, muser_id, mdtz, bu_id                                            
+                    FROM escalationmatrix WHERE escalationtemplate_id <> 1                       
+                 )escalation                                                                                           
+                 WHERE (ticket.level+1)=escalation.level                                                               
+                    AND escalation.bu_id=ticket.bu_id                                                                    
+                    AND ticket.ticketcategory_id=escalation.escalationtemplate_id                                                      
+                    AND ticket.cdtz + INTERVAL '1 minute' * escalation.calcminute < now();  '''
 }

@@ -633,6 +633,7 @@ def perform_adhocmutation_bgt(self, data, db='default'):
 @shared_task(name="schedule_ppm_jobs")
 def create_ppm_job(jobid=None):
     F, d = {}, []
+    resp = {'story':"", 'traceback':""}
     startdtz = enddtz = msg = resp = None
     from apps.activity.models import Job, Asset
     from apps.schedhuler.utils import (calculate_startdtz_enddtz_for_ppm, get_datetime_list,
@@ -693,16 +694,21 @@ def send_reminder_email():
     from django.core.mail import  EmailMessage
     from apps.reminder.models import Reminder
 
+    resp = {'story':"", "traceback":""}
     reminders = Reminder.objects.get_all_due_reminders()
+    resp['story'] += f"total due reminders are: {len(reminders)}\n"
     log.info(f"total due reminders are {len(reminders)}")
     try:
         for rem in reminders:
+            resp['story'] += f"processing reminder with id: {rem['id']}"
             emails = utils.get_email_addresses([rem['people_id'], rem['cuser_id'], rem['muser_id']], [rem['group_id']])
+            resp['story'] += f"emails recipents are as follows {emails}\n"
             recipents = list(set(emails + rem['mailids'].split(',')))
             subject = f"Reminder For {rem['job__jobname']}"
             context = {'job':rem['job__jobname'], 'plandatetime':rem['pdate'], 'jobdesc':rem['job__jobdesc'],
                     'creator':rem['cuser__peoplename'],'modifier':rem['muser__peoplename']}
             html_message = render_to_string('reminder_mail.html', context=context)
+            resp['story'] += f"context in email template is {context}\n"
             log.info(f"Sending reminder mail with subject {subject}")
             msg = EmailMessage()
             msg.subject = subject
@@ -714,7 +720,9 @@ def send_reminder_email():
             log.info(f"Reminder mail sent to {recipents} with subject {subject}")
     except Exception as e:
         log.error("Error while sending reminder email")
+        resp['traceback'] = tb.format_exc()
 
+    return resp
 
 def send_email(subject, body):
     pass
@@ -772,18 +780,24 @@ def autoclose_job():
     from django.core.mail import  EmailMessage
     try:
         #get all expired jobs
+        resp = {'story':"", 'traceback':""}
         expired = Jobneed.objects.get_expired_jobs()
+        resp['story'] += f'total expired jobs = {len(expired)}\n'
         context = {}
         with transaction.atomic(using=utils.get_current_db_name()):
+            resp['story'] += f"using database: {utils.get_current_db_name()}\n"
             for rec in expired:
+                resp['story'] += f"processing record with id= {rec['id']}\n" 
+                resp['story'] += f"record category is {rec['ticketcategory__tacode']}\n" 
                 
                 if rec['ticketcategory__tacode'] in ['AUTOCLOSENOTIFY', 'RAISETICKETNOTIFY']:
+                    
                     log.info("notifying through email...")
                     pdate = rec["plandatetime"] + timedelta(minutes=rec['ctzoffset'])
                     pdate = pdate.strftime("%d-%b-%Y %H:%M")
                     edate = rec["expirydatetime"] + timedelta(minutes=rec['ctzoffset'])
                     edate = edate.strftime("%d-%b-%Y %H:%M")
-
+                    
                     subject = f'AUTOCLOSE {"TOUR" if rec["identifier"] in  ["INTERNALTOUR", "EXTERNALTOUR"] else rec["identifier"] } planned on \
                     {pdate} not reported in time'
                     context = {
@@ -797,8 +811,10 @@ def autoclose_job():
                         'identifier':rec['identifier'],
                         'jobdesc':rec['jobdesc']
                     }
+                    
 
                     emails = utils.get_email_addresses([rec['people_id'], rec['cuser_id'], rec['muser_id']], [rec['pgroup_id']], [rec['bu_id']])
+                    resp['story'] += f"email recipents are as follows {emails}\n"
                     log.info(f"recipents are as follows...{emails}")
                     msg = EmailMessage()
                     msg.subject = subject
@@ -830,11 +846,168 @@ def autoclose_job():
                         context['tkt_assignedto'] = rec['assignedto']
 
                     html_message = render_to_string('autoclose_mail.html', context=context)
+                    resp['story'] += f"context in email template is {context}\n"
                     msg.body = html_message
                     msg.send()
                     log.info(f"mail sent, record_id:{rec['id']}")
                 update_job_autoclose_status(rec)
+                
     except Exception as e:
         log.error(f'context in the template:{context}')
         log.error("something went wrong while running autoclose_job()", exc_info=True)
-        pass
+        resp['traceback'] += f"{tb.format_exc()}"
+    return resp
+
+
+def TicketEscalation():
+    try:
+        updateT= []
+        ids=""
+        core_utils.set_db_for_router('npl')
+        status=am.Ticket.Status.ESCALATED
+        logger.info("Escalated escalated")
+        sqlquery = av_raw_queries.getQuery("ticketlist")
+        print("ticketlist", sqlquery)
+        with connections['npl'].cursor() as cursor: 
+            cursor = connections['npl'].cursor()
+            records = av_utils.converttodict(cursor,sqlquery)
+            print("length of records",len(records))
+            ids, updateT = getescalationdata(records, ids, status , updateT) 
+            updateticket(cursor,records,ids,updateT)
+    except  Exception as e:
+        logger.error("TicketEscalation error: %s", (e)) 
+        
+def updateticket(cursor,records,ids,updateT):
+    try:
+        print("updateT", updateT)
+        updateQuery= """UPDATE ticket AS t 
+                        SET status = e.status, level = e.level, mdtz =  e.mdtz::timestamp with time zone,
+                            modifieddatetime= e.modifieddatetime::timestamp with time zone ,
+                            assignedtopeople_id = e.assignedperson_id, assignedtogroup_id = e.assignedtogroup_id, 
+                            ticketlog = e.json_dictionary::json 
+                        FROM (VALUES %s) AS e(status, level, mdtz, modifieddatetime, assignedperson_id, assignedtogroup_id ,json_dictionary, id)
+                        WHERE t.id = e.id::BIGINT;"""             
+        print("length of records",len(records))
+        if len(records) > 0:
+            updateQuery= "".join(str(cursor.mogrify(updateQuery, (x,)), 'utf-8') for x in updateT)
+            updateQuery= " ".join(updateQuery.split())
+            # print(updateQuery, updateQuery)
+            cursor.execute(updateQuery)
+            sqlquery = av_raw_queries.getQuery("ticketmail")
+            sqlQuery= sqlquery % ids.replace(",","",1)
+            tdata= av_utils.converttodict(cursor, sqlQuery)
+            print("sqlquery",tdata, type(tdata))
+            sendEscalationTicketMail(tdata, 'None', 'CRON')
+            print("ticketmail query",tdata)
+    except  Exception as e:
+        logger.error("updateticket error: %s", (e)) 
+        
+def sendEscalationTicketMail(D, oper, param):
+    try:
+        if len(D) <= 0:
+            return
+        email_from = password = toaddr = body = subject= tdstyle = asset = location = ticketlog = ""
+        tdstyle= "style='background:#ABE7ED;font-weight:bold;font-size:14px;'"
+        email_from = settings.EMAIL_HOST_USER
+        for d in D:
+            asset, location, ticketlog = ticketassetlocationdata(d)    
+            print("sendEscalationTicketMail  asset, location ", asset, location)
+            toaddr= d["creatoremail"].replace(" ", "") if d["creatorid"] != 1 else ""
+            toaddr= d["modifiermail"].replace(" ", "") if d["modifierid"] != 1 else ""
+            toaddr += f', {d["peopleemail"].replace(" ", "")}' if d["assignedtopeople_id"] not in [1, " ", None] else ""
+            toaddr += f', {d["pgroupemail"].replace(" ", "")}' if d["assignedtogroup_id"] not in [1, " ", None, "" ] else ""
+            if param.strip('') in ['WEB', 'MOBILE']:
+                print("param web", param)
+                if oper.strip('') == 'add':
+                    subject = f'New Ticket : Ticket Number {str(d["ticketno"])}'
+                if oper.strip('') == 'edit': 
+                    subject = f'Ticket Updated: Ticket Number {str(d["ticketno"])} - Site Name {str(d["buname"])}'
+            if param.strip('') == 'CRON':
+                subject = f'Escalation Level {str(d["level"])}: Ticket Number {str(d["ticketno"])}'
+                print("param cronnn", param)
+                toaddr += f', {d["notifyemail"].replace(" ", "")}' if d["notify"]  not in [1, " ", None, "" ] else ""
+            body = "" + "<table style='background:#EEF1F5;' cellpadding=8 cellspacing=2>"
+            body += "<tr> <td align='right' %s>%s</td> <td> %s    </td> </tr>" % (tdstyle, "Description", str(d["ticketdesc"]))
+            body += "<tr> <td align='right' %s>%s</td> <td> %s    </td> </tr>" % (tdstyle, "Template", str(d["tescalationtemplate"]))
+            body += "<tr> <td align='right' %s>%s</td> <td> %s    </td> </tr>" % (tdstyle, "Priority", str(d["priority"]))
+            body += "<tr> <td align='right' %s>%s</td> <td> %s    </td> </tr>" % (tdstyle, "Status", str(d["status"]) if d["level"] != '0' else str(d["status"]) + " - " + str(d["level"]))
+            body += "<tr> <td align='right' %s>%s</td> <td> %s    </td> </tr>" % (tdstyle, "Created On", str(d["cdtz"] + datetime.timedelta(hours=5, minutes=30))[:19])
+            if asset not in['NONE'] or location not in ["NONE"]:
+                body += "<tr> <td align='right' %s>%s</td> <td> %s    </td> </tr>" % (tdstyle, "Asset/Smartplace", str(asset))
+                # body += "<tr> <td align='right' %s>%s</td> <td> %s    </td> </tr>" % (tdstyle, "Location", str(location))
+            if oper.strip('') not in ['add', 'None']: 
+                body += "<tr> <td align='right' %s>%s</td><td>%s</td></tr>" % (tdstyle, "Modified By", str(d["modifiername"]))
+                body += "<tr> <td align='right' %s>%s</td><td>%s</td></tr>" % (tdstyle, "Modified On", str(d["modifiedon"] + datetime.timedelta(hours=5, minutes=30))[:19])
+            body += "<tr> <td align='right' %s>%s</td> <td> %s    </td> </tr>" % (tdstyle, "Assigned To", str(d["peoplename"]) if (d["assignedtopeople_id"] not in [1, " ", None]) else str(d["groupname"]))
+            body += "<tr> <td align='right' %s>%s</td> <td> %s    </td> </tr>" % (tdstyle, "Comments", "NA" if d["comments"] == '' else str(d["comments"]))
+            if oper.strip('') == 'None': 
+                body += "<tr> <td align='right' %s>%s</td> <td> %s    </td> </tr>" % (tdstyle, "Escalation Details", "NA" if d["body"] == '' else str(d["body"]))
+                body += "<tr> <td align='right' %s>%s</td> <td> %s %s </td> </tr>" % (tdstyle, "Escalated In", "" if d["frequencyvalue"] is None else d["frequencyvalue"], "" if d["frequency"] is None else str(d["frequency"]))
+            body += "<tr> <td align='right' %s>%s</td> <td> %s    </td> </tr>" % (tdstyle, "Next Escalation", str(d["next_escalation"]))
+            body+= "</table>"
+            print("sendEscalationTicketMail",toaddr.split(','), toaddr)
+            toaddress = [x.strip(' ') for x in toaddr.split(',')]
+            print("sendEscalationTicketMail",toaddress)
+            send_mail(subject, '', email_from, toaddress, fail_silently=False,html_message=body)
+    except  Exception as e:
+        logger.error("TicketEscalation error: %s", (e)) 
+ 
+def ticketassetlocationdata(d):
+    try:
+        asset = location = ""
+        if type(d["ticketlog"]) is str:
+            d["ticketlog"] = json.loads(d["ticketlog"])
+        print("ticketlog",d["ticketlog"] , type(d["ticketlog"]))
+        print("ticketlog", d["ticketlog"]['statusjbdata'])
+        if len(d["ticketlog"]['statusjbdata']) > 0:
+            for i in d["ticketlog"]['statusjbdata']:
+                asset = json.loads(i)['asset']
+                location = json.loads(i)['location']
+                break   
+    except  Exception as e:
+        logger.error("getescalationdata error: %s", (e))   
+    return asset, location, d["ticketlog"]
+                      
+def getescalationdata(records, ids, status ,updateT):
+    try:    
+        assignedto = 'NONE'
+        for td in records:
+            print("getescalationdata", td)
+            print("getescalationdata", type(td['ticketlog']), td['ticketlog'])
+            asset, location, tlog = ticketassetlocationdata(td)
+            print("getescalationdata  asset, location ", asset, location, type(asset))
+            ids += f',{td["id"]} '
+            if (td["escgrpid"] =='1' and td["escpersonid"] =='1'):
+                print("if",td["groupname"], td["peoplename"] ,td["escgroupname"],td["escpeoplename"])
+                assignedperson_id =td["assignedtopeople"]
+                assignedtogroup_id =td["assignedtogroup"]
+                assignedto = assignedto
+            else:
+                assignedperson_id=td["escpersonid"]
+                assignedtogroup_id =td["escgrpid"]
+                if str(td["escgroupname"]) not in ["None", "NONE"]:
+                    assignedto=td["escgroupname"]
+                elif str(td["escpeoplename"]) not in ["None", "NONE"]:
+                    assignedto=td["escpeoplename"]
+                else:
+                    assignedto = assignedto
+                print("else",td["groupname"], td["peoplename"] ,td["escgroupname"],td["escpeoplename"])
+            ticketlog = {
+                "performedby": "",
+                "status": f"{status}-" + str(td["level"] + 1),
+                "datetime": datetime.datetime.now().strftime(
+                    "%Y-%m-%d %H:%M:%S"
+                ),
+                "comments": str(td["comments"]),
+                "assignedto": assignedto,
+                "asset": str(asset), "location": str(location)  # change this with actual values.
+            }
+            print("ticketlog",ticketlog,  tlog)
+            # json_dictionary = json.loads(td["ticketlog"])
+            json_dictionary = tlog
+            for key in json_dictionary:
+                json_dictionary[key].append(json.dumps(ticketlog, default=str))
+            updateT.append((status,td["level"]+1, str(td['exp_time']), str(td['exp_time']), assignedperson_id, assignedtogroup_id ,json.dumps(json_dictionary), td["id"]))   
+    except  Exception as e:
+        logger.error("getescalationdata error: %s", (e))             
+    return ids, updateT  

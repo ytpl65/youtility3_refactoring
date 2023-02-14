@@ -231,8 +231,8 @@ $(document).ready(() => {
     }
 
     $("#id_escalationtemplate").on("change", () => {
-        console.log($(this).val())
-        if($(this).val() === ""){
+        console.log($('#id_escalationtemplate').val())
+        if($('#id_escalationtemplate').val() === ""){
             $("#tabEscalationLevels_wrapper .buttons-create").addClass('disabled')
         }
         $("#tabEscalationLevels_wrapper .buttons-create").removeClass('disabled')

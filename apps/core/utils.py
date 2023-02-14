@@ -748,15 +748,7 @@ def get_or_create_none_asset():
     return obj
 
 
-def get_or_create_none_location():
-    obj, _ = am.Location.objects.get_or_create(
-        id=1, 
-        defaults={
-            'loccode':"NONE", "locname":"NONE", 'identifier': 'NONE',
-            "iscritical":False, 'runningstatus': 'SCRAPPED', 'id': 1
-        }
-    )
-    return obj
+
 
 
 def create_none_entries():
@@ -1454,10 +1446,12 @@ def get_action_on_ticket_states(prev_tkt, current_state):
 
 from django.utils import timezone
 
-def store_ticket_history(instance, request):
+def store_ticket_history(instance, request, peopleid=None, peoplename=None):
     logger.info("saving ticket history has started....")
     # Get the current time
     now = timezone.now().replace(microsecond=0, second=0)
+    peopleid = request.user.id if request else peopleid
+    peoplename = request.user.peoplename if request else peoplename
     
     # Get the current state of the ticket
     current_state = {
@@ -1477,9 +1471,9 @@ def store_ticket_history(instance, request):
     
     # Create a dictionary to represent the changes made to the ticket
     history_item = {
-        "people_id"     :request.user.id,
+        "people_id"     :peopleid,
         "when"          : str(now),
-        "who"           : request.user.peoplename,
+        "who"           : peoplename,
         "action"        : "created",
         "details"       : details,
         "previous_state": current_state,

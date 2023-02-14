@@ -55,12 +55,16 @@ class TicketManager(models.Manager):
                 bu_id = buid,
                 client_id = clientid,
             ).values(
-                'id', 'uuid', 'ticketdesc', 'assignedtopeople_id', 'assignedtogroup_id', 'comments', 'bu_id', 'ticketcategory__taname',
-                'ticketcategory__tacode','client_id', 'priority', 'ticketcategory_id', 'location_id', 'modifieddatetime', 'level', 'status'
+                'id', 'uuid', 'ticketdesc', 'assignedtopeople_id', 'assignedtogroup_id', 'comments', 'bu_id', 'client_id', 'priority', 'ticketcategory_id', 'location_id', 'modifieddatetime', 'level', 'status',
                 'performedby_id', 'events', 'isescalated', 'ticketsource', 'cuser_id', 'muser_id', 'cdtz', 'mdtz', 'ctzoffset', 'attachmentcount',
-                'cuser__peoplename', 'muser__peoplename'
+                
             )
         return qset or self.none()
+    
+    def get_ticketlist_for_escalation(self):
+        from apps.core import utils, raw_queries
+        return utils.runrawsql(raw_queries['get_ticketlist_for_escalation']) or self.none()
+
 
 
 class ESCManager(models.Manager):

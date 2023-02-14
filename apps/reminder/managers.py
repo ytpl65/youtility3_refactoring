@@ -20,6 +20,6 @@ class ReminderManager(models.Manager):
             'rdate', 'pdate', 'job__jobname', 'bu__buname', 'asset__assetname', 'job__jobdesc',
             'qset__qsetname', 'priority', 'reminderin', 'people__peoplename', 'cuser__peoplename',
             'group__groupname', 'people_id', 'group_id', 'cuser_id', 'muser_id', 'mailsids', 
-            'muser__peoplename'
+            'muser__peoplename', 'id'
         ).distinct()
         return qset or self.none()

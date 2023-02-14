@@ -1847,4 +1847,9 @@ class RPDashboard(LoginRequiredMixin, View):
                 }
             }
                 
-                
+
+class FileUpload(LoginRequiredMixin, View):
+    
+    
+    def post(self, request, *args, **kwargs):
+        pass

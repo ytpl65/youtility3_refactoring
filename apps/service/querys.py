@@ -79,8 +79,8 @@ class Query(graphene.ObjectType):
                                  siteids = graphene.List(graphene.Int))
 
     get_attendance_history = graphene.Field(SelectOutputType,
-                                            month = graphene.Int(required=True),
-                                            year = graphene.Int(required=True),
+                                            mdtz = graphene.String(required = True),
+                                            ctzoffset = graphene.Int(required = True),
                                             peopleid = graphene.Int(required=True),
                                             buid = graphene.Int(required=True),
                                             clientid = graphene.Int(required=True),
@@ -262,9 +262,9 @@ class Query(graphene.ObjectType):
             return VerifyClientOutput(rc = 1, msg="INVALID")
         
     
-    def resolve_get_attendance_history(self, info, month, year, peopleid, buid, clientid):
-        log.info(f'\n\nrequest for getgeofence inputs : {month = } {year = } {peopleid = } {buid = } { clientid = }')
-        data = PeopleEventlog.objects.get_attendance_history(month, year, peopleid, buid, clientid)
+    def resolve_get_attendance_history(self, info, mdtz, peopleid, buid, clientid, ctzoffset):
+        log.info(f'\n\nrequest for getgeofence inputs : {mdtz = }  {peopleid = } {buid = } { clientid = }')
+        data = PeopleEventlog.objects.get_attendance_history(mdtz, peopleid, buid, clientid, ctzoffset)
         records, count, msg = utils.get_select_output(data)
         log.info(f'total {count} objects returned')
         return SelectOutputType(nrows = count, records = records,msg = msg)

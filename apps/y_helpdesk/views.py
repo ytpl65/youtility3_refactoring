@@ -46,7 +46,7 @@ class EscalationMatrix(LoginRequiredMixin, View):
             objs = P['model'].objects.get_escalation_listview(request)
             return rp.JsonResponse({'data':list(objs)}, status=200)
         
-        if R.get('action') == "get_escalationlevels" and R.get('id') not in [None, "None", ""]:
+        if R.get('action') == "get_escalationlevels" :
             objs = TypeAssist.objects.get_escalationlevels(request)
             return rp.JsonResponse({'data':objs}, status=200)
         

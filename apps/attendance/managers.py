@@ -151,17 +151,18 @@ class PELManager(models.Manager):
             peventtype__tacode__in = ['SELF', 'SELFATTENDANCE']
         ).count() or 0
     
-    def get_attendance_history(self, month, year, people_id, bu_id, client_id):
+    def get_attendance_history(self, mdtz, people_id, bu_id, client_id, ctzoffset):
+        if not isinstance(mdtz, datetime):
+            mdtz = datetime.strptime(mdtz, "%Y-%m-%d %H:%M:%S")
         qset = self.filter(
-            punchintime__month = month,
-            punchintime__year = year,
+            mdtz__gte = mdtz,
             people_id = people_id,
             bu_id = bu_id,
             client_id = client_id
         ).select_related('people', 'bu', 'client', 'verifiedby', 'peventtype', 'geofence', 'shift').values(
-            'uuid', 'people_id', 'client_id', 'bu_id','shift_id', 'verifiedby_id', 'geofence_id',
+            'uuid', 'people_id', 'client_id', 'bu_id','shift_id', 'verifiedby_id', 'geofence_id', 'id',
             'peventtype_id', 'transportmodes', 'punchintime', 'punchouttime', 'datefor', 'distance',
-            'duration', 'expamt', 'accuracy', 'deviceid', 'startlocation', 'endlocation', 'journeypath',
+            'duration', 'expamt', 'accuracy', 'deviceid', 'startlocation', 'endlocation', 'ctzoffset',
             'remarks', 'facerecognitionin', 'facerecognitionout', 'otherlocation', 'reference'
         )
         return qset or self.none()

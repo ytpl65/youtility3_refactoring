@@ -207,7 +207,7 @@ def perform_tasktourupdate(self, file, request=None, db='default', bg=False):
 
 
 @app.task(bind = True, default_retry_delay = 300, max_retries = 5)
-def perform_insertrecord(self, file, request = None, db='default', filebased = True, bg=False):
+def perform_insertrecord(self, file, request = None, db='default', filebased = True, bg=False, peopleid=None, peoplename=None):
     """
     Insert records in specified tablename.
 
@@ -234,7 +234,7 @@ def perform_insertrecord(self, file, request = None, db='default', filebased = T
             for record in data:
                 tablename = record.pop('tablename')
                 obj = insertrecord(record, tablename)
-                if tablename == 'ticket' and isinstance(obj, Ticket): utils.store_ticket_history(obj, request)
+                if tablename == 'ticket' and isinstance(obj, Ticket): utils.store_ticket_history(obj, peopleid, peoplename)
                 if hasattr(obj, 'geojson'): save_addr_for_point(obj)
                 allconditions = [
                     hasattr(obj, 'peventtype'), hasattr(obj, 'endlocation'), 
@@ -591,7 +591,7 @@ def call_service_based_on_filename(data, filename, db='default', request=None):
     log.info(f'filename before calling {filename}')
     if filename == 'insertRecord.gz':
         log.info("calling insertrecord. service..")
-        return perform_insertrecord.delay(file=data, db = db, bg=True, request=request)
+        return perform_insertrecord.delay(file=data, db = db, bg=True, peopleid=request.user.id, peoplename=request.user.peoplename)
     if filename == 'updateTaskTour.gz':
         log.info("calling updateTaskTour service..")
         return perform_tasktourupdate.delay(file=data, db = db, bg=True)
