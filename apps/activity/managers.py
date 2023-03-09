@@ -265,7 +265,7 @@ class JobneedManager(models.Manager):
         return total, total, qset
 
     def get_last10days_jobneedtasks(self, related, fields, request):
-        R = request.GET
+        R, S = request.GET, request.session
         P = json.loads(R['params'])
         qobjs = self.select_related(*related).annotate(
             assignedto = Case(
@@ -273,13 +273,16 @@ class JobneedManager(models.Manager):
                 When(Q(people_id=1) | Q(people_id__isnull =  True), then=Concat(F('pgroup__groupname'), V(' [GROUP]'))),
                 ),
             ).filter(
-            bu_id__in = request.session['assignedsites'],
+            bu_id__in = S['assignedsites'],
+            client_id = S['client_id'],
             plandatetime__date__gte = P['from'],
             plandatetime__date__lte = P['to'],
             identifier = 'TASK'
         ).exclude(parent__jobdesc = 'NONE', jobdesc = 'NONE').values(*fields).order_by('-plandatetime')
         if P.get('jobstatus') and P['jobstatus'] != 'TOTALSCHEDULED':
             qobjs = qobjs.filter(jobstatus = P['jobstatus'])
+        if P.get('alerts') and P.get('alerts') == 'TASK':
+            qobjs = qobjs.filter(alerts=True)
         return qobjs or self.none()
 
     def get_assetmaintainance_list(self, request, related, fields):
@@ -370,19 +373,20 @@ class JobneedManager(models.Manager):
         return qset, atts or self.none()        
 
     def get_internaltourlist_jobneed(self, request, related, fields):
-        R = request.GET
+        R, S = request.GET, request.session
         P = json.loads(R['params'])
-        ic(P)
-        qset = self.annotate(
-            assignedto = Case(
+        assignedto = {'assignedto' : Case(
                 When(Q(pgroup_id=1) | Q(pgroup_id__isnull =  True), then=Concat(F('people__peoplename'), V(' [PEOPLE]'))),
                 When(Q(people_id=1) | Q(people_id__isnull =  True), then=Concat(F('pgroup__groupname'), V(' [GROUP]'))),
-                ),
+                )}
+        qobjs = self.annotate(
+            **assignedto
             ).select_related(
                             *related).filter(
-                                bu_id__in = request.session['assignedsites'],
-                                client_id = request.session['client_id'],
-                                parent_id=1,
+                                Q(Q(parent_id__in = [1, -1]) | Q(parent_id__isnull=True)),
+                                bu_id__in = S['assignedsites'],
+                                client_id = S['client_id'],
+                                #parent_id=1,
                                 plandatetime__date__gte = P['from'],
                                 plandatetime__date__lte = P['to'],
                                 jobtype="SCHEDULE",
@@ -391,23 +395,35 @@ class JobneedManager(models.Manager):
                         id=1
                         ).values(*fields).order_by('-plandatetime')
         if P.get('jobstatus') and P['jobstatus'] != 'TOTALSCHEDULED':
-            qset = qset.filter(jobstatus = P['jobstatus'])
-        return qset or self.none()
+            qobjs = qobjs.filter(jobstatus = P['jobstatus'])
+        
+        if P.get('alerts') and P.get('alerts') == 'TOUR':
+            qobjs = self.filter(
+            bu_id__in = S['assignedsites'],
+            plandatetime__date__gte = P['from'],
+            plandatetime__date__lte = P['to'],
+            client_id = S['client_id'],
+            alerts=True,
+            identifier="INTERNALTOUR"
+        ).select_related(*related).annotate(**assignedto).values(*fields)
+            ic('called')
+        return qobjs or self.none()
     
     
     def get_externaltourlist_jobneed(self, request, related, fields):
         fields = ['id', 'plandatetime', 'expirydatetime', 'performedby__peoplename', 'jobstatus',
                   'jobdesc', 'people__peoplename', 'pgroup__groupname', 'gracetime', 'ctzoffset', 'assignedto']
-        R = request.GET
+        R, S = request.GET, request.session
         P = json.loads(R['params'])
-        qset = self.annotate(
-            assignedto = Case(
+        assignedto = {'assignedto' : Case(
                 When(Q(pgroup_id=1) | Q(pgroup_id__isnull =  True), then=Concat(F('people__peoplename'), V(' [PEOPLE]'))),
                 When(Q(people_id=1) | Q(people_id__isnull =  True), then=Concat(F('pgroup__groupname'), V(' [GROUP]'))),
-                ),
+                )}
+        qset = self.annotate(
+            **assignedto
             ).select_related(
                 *related).filter(
-                    bu_id__in = request.session['assignedsites'],
+                    bu_id__in = S['assignedsites'],
                     parent_id=1,
                     plandatetime__date__gte = P['from'],
                     plandatetime__date__lte =  P['to'],
@@ -419,12 +435,21 @@ class JobneedManager(models.Manager):
                         ).values(*fields).order_by('-cdtz') 
         if P.get('jobstatus') and P['jobstatus'] != 'TOTALSCHEDULED':
             qset = qset.filter(jobstatus = P['jobstatus'])
+        if P.get('alerts') and P.get('alerts') == 'ROUTEPLAN':
+            qset = self.filter(
+            bu_id__in = S['assignedsites'],
+            plandatetime__date__gte = P['from'],
+            plandatetime__date__lte = P['to'],
+            client_id = S['client_id'],
+            alerts=True,
+            identifier="EXTERNALTOUR"
+        ).select_related(*related).annotate(**assignedto).values(*fields)
         return qset or self.none()
 
     def get_tourdetails(self, R):
         qset = self.select_related(
             'parent', 'asset', 'qset').filter(parent_id = R['parent_id']).values(
-                'asset__assetname', 'asset__id', 'qset__id',
+                'asset__assetname', 'asset__id', 'qset__id', 'ctzoffset',
                 'qset__qsetname', 'plandatetime', 'expirydatetime',
                 'gracetime', 'seqno', 'jobstatus', 'id'
             ).order_by('seqno')
@@ -505,21 +530,26 @@ class JobneedManager(models.Manager):
     
     def get_ppm_listview(self, request, fields, related):
         S, R = request.session, request.GET
-        pd1 = R.get('pd1', datetime.now() - timedelta(days=7))
-        pd2 = R.get('pd2', datetime.now())
-        qset = self.annotate(
+        P = json.loads(R['params'])
+        ic(P)
+
+        qobjs = self.annotate(
             assignedto = Case(
                 When(pgroup_id=1, then=Concat(F('people__peoplename'), V(' [PEOPLE]'))),
                 When(people_id=1, then=Concat(F('pgroup__groupname'), V(' [GROUP]'))),
             )).filter(
-                ~Q(id=1),
-                identifier='PPM',
-                client_id = S['client_id'],
-                plandatetime__date__gte = pd1,
-                plandatetime__date__lte = pd2,
-                job__enable = True
+            Q(Q(parent_id__in = [1, -1]) | Q(parent_id__isnull=True)),
+            bu_id__in = S['assignedsites'],
+            identifier = 'PPM',
+            plandatetime__date__gte = P['from'],
+            plandatetime__date__lte = P['to'],
+            client_id = S['client_id']
             ).select_related(*related).values(*fields)
-        return qset or self.none()
+        if P.get('jobstatus') and P['jobstatus'] not in ['TOTALSCHEDULED', 'NONE']:
+            qobjs = qobjs.filter(jobstatus = P['jobstatus'])
+        if P.get('alerts') and P.get('alerts') == 'PPM':
+            qobjs = qobjs.filter(alerts=True)
+        return qobjs or self.none()
     
 
     
@@ -571,8 +601,8 @@ class JobneedManager(models.Manager):
         task_alerts = qset.filter( Q(Q(parent_id__in = [1, -1]) | Q(parent_id__isnull=True)), identifier='TASK').count()
         tour_alerts = qset.filter(identifier='INTERNALTOUR').count()
         route_alerts = qset.filter(identifier='EXTERNALTOUR').count()
-        chart_arr =  [task_alerts, tour_alerts, route_alerts]
-        ic(chart_arr)
+        ppm_alerts = qset.filter(identifier='PPM').count()
+        chart_arr =  [task_alerts, ppm_alerts, tour_alerts, route_alerts ]
         return chart_arr, sum(chart_arr)
     
     def get_expired_jobs(self):
@@ -601,6 +631,28 @@ class JobneedManager(models.Manager):
         )
         ic(str(qset.query))
         return qset or self.none()
+    
+    def get_ppmchart_data(self, request):
+        S, R = request.session, request.GET
+        total_schd = self.filter(
+            Q(Q(parent_id__in = [1, -1]) | Q(parent_id__isnull=True)),
+            bu_id__in = S['assignedsites'],
+            identifier = 'PPM',
+            plandatetime__date__gte = R['from'],
+            plandatetime__date__lte = R['upto'],
+            client_id = S['client_id']
+        ).values()
+        ic(total_schd.filter(jobstatus='ASSIGNED').count(),
+            total_schd.filter(jobstatus='COMPLETED').count(),
+            total_schd.filter(jobstatus='AUTOCLOSED').count(),
+            total_schd.count())
+        return [
+            total_schd.filter(jobstatus='ASSIGNED').count(),
+            total_schd.filter(jobstatus='COMPLETED').count(),
+            total_schd.filter(jobstatus='AUTOCLOSED').count(),
+            total_schd.count(),
+        ]
+        
         
     
     
@@ -634,25 +686,27 @@ class AttachmentManager(models.Manager):
         "return attachments of given jobneed uuid"
         qset = self.filter(
             attachmenttype__in = ['ATTACHMENT', 'SIGN'], owner = owneruuid).order_by('filepath').values(
-                'id', 'filepath', 'filename'
+                'id', 'filepath', 'filename', 'size'
             )
         return qset or self.none()
     
     
-    def create_att_record(self, request, filepath, filename):
+    def create_att_record(self, request, filename, filepath):
         R, S = request.POST, request.session
         from apps.onboarding.models import TypeAssist
-        ta = TypeAssist.objects.filter(taname = R['ownername'])
+        ta = TypeAssist.objects.filter(taname = R['ownername']).first()
+        size = request.FILES.get('img').size if request.FILES.get('img') else 0
         PostData = {'filepath':filepath, 'filename':filename, 'owner':R['ownerid'], 'bu_id':S['bu_id'],
-                'attachmenttype':R['attachmenttype'], 'ownername_id':ta[0].id,
+                'attachmenttype':R['attachmenttype'], 'ownername_id':ta.id,
                 'cuser':request.user, 'muser':request.user, 'cdtz':utils.getawaredatetime(datetime.now(), R['ctzoffset']),
-                'mdtz':utils.getawaredatetime(datetime.now(), R['ctzoffset'])}
+                'mdtz':utils.getawaredatetime(datetime.now(), R['ctzoffset']), 'size':size}
         try:
             qset = self.create(**PostData)
+            count = self.filter(owner = R['ownerid']).count()
         except Exception:
             log.error("Attachment record creation failed...", exc_info=True)
             return {'error':'Upload attachment Failed'}
-        return {'filepath':qset.filepath, 'filename':qset.filename.name, 'id':qset.id} if qset else self.none()
+        return {'filepath':qset.filepath, 'filename':qset.filename.name, 'id':qset.id, 'ownername':qset.ownername.tacode, 'attcount': count} if qset else self.none()
 
     def get_attforuuids(self, uuids):
         return self.filter(owner__in = uuids) or self.none()
@@ -684,7 +738,12 @@ class AttachmentManager(models.Manager):
         return {'attd_in_out': list(attqset), 'eventlog_in_out': list(eventlogqset), 'default_img_path': list(defaultimgqset)}
     
 
-
+    def get_attachements_for_mob(self, ownerid):
+        qset = self.get_att_given_owner(ownerid)
+        qset = qset.annotate(
+            file = Concat(V(settings.MEDIA_URL), F('filepath'), Cast('filename', output_field=models.CharField()) )
+        ).values_list('file', flat=True)
+        return qset or self.none()
 
     
         
@@ -793,7 +852,7 @@ class AssetManager(models.Manager):
         
         series = [
             {'name':'Working', 'data':working},     
-            {'name':'Maintainence', 'data':mnt},
+            {'name':'Maintenance', 'data':mnt},
             {'name':'Standby', 'data':stb},
             {'name':'Scrapped', 'data':scp},
         ]
@@ -845,7 +904,7 @@ class JobneedDetailsManager(models.Manager):
 
     def get_e_tour_checklist_details(self, jobneedid):
         qset = self.filter(jobneed_id=jobneedid).select_related('question').values(
-            'question__quesname', 'answertype', 'min', 'max', 'id',
+            'question__quesname', 'answertype', 'min', 'max', 'id', 'ctzoffset',
             'options', 'alerton', 'ismandatory', 'seqno','answer', 'alerts'
         ).order_by('seqno')
         return qset or self.none()
@@ -870,7 +929,7 @@ class JobneedDetailsManager(models.Manager):
         qset = self.filter(
             jobneed_id = taskid
         ).select_related('question').values('question__quesname', 'answertype', 'min', 'max', 'id',
-            'options', 'alerton', 'ismandatory', 'seqno','answer').order_by('seqno')
+            'options', 'alerton', 'ismandatory', 'seqno','answer', 'alerts').order_by('seqno')
         return qset or self.none()
     
     def get_ppm_details(self, request):
@@ -1133,8 +1192,8 @@ class WorkpermitManager(models.Manager):
     use_in_migrations = True
     
     def get_workpermitlist(self, request):
-        from apps.core.raw_queries import query
-        qset = self.raw(query['workpermitlist'], [request.session['bu_id']])
+        from apps.core.raw_queries import get_query
+        qset = self.raw(get_query('workpermitlist'), [request.session['bu_id']])
         return qset or self.none()
     
     

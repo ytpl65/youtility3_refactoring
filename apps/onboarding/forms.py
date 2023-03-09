@@ -70,8 +70,11 @@ class TypeAssistForm(SuperTypeAssistForm):
     def __init__(self, *args, **kwargs):
         """Initializes form"""
         self.request = kwargs.pop('request', None)
+        S = self.request.session
         super().__init__(*args, **kwargs)
         self.fields['enable'].initial = True
+        #filters for dropdown fields
+        self.fields['tatype'].queryset = obm.TypeAssist.objects.filter(enable = True, client_id = S['client_id'])
         utils.initailize_form_fields(self)
 
     def is_valid(self) -> bool:
@@ -140,18 +143,21 @@ class BtForm(forms.ModelForm):
         """Initializes form"""
         self.client = kwargs.pop('client', False)
         self.request = kwargs.pop('request', False)
+        S = self.request.session
         super().__init__(*args, **kwargs)
         if self.client:
             self.fields['identifier'].initial = obm.TypeAssist.objects.get(tacode='CLIENT').id
+            self.fields['identifier'].required= True
+        
+        #filters for dropdown fields
         self.fields['identifier'].queryset = obm.TypeAssist.objects.filter(Q(tacode='CLIENT') if self.client else Q(tatype__tacode="BVIDENTIFIER"))
-        self.fields['identifier'].required= True
-        self.fields['butype'].queryset = obm.TypeAssist.objects.filter(tatype__tacode="SITETYPE")
+        self.fields['butype'].queryset = obm.TypeAssist.objects.filter(tatype__tacode="SITETYPE", client_id = S['client_id'])
         qset = obm.Bt.objects.get_whole_tree(self.request.session['client_id'])
         self.fields['parent'].queryset = obm.Bt.objects.filter(id__in = qset)
         self.fields['controlroom'].choices = pm.People.objects.controlroomchoices(self.request)
         self.fields['siteincharge'].queryset = pm.People.objects.filter(
             Q(designation__tacode__in = ['AO', 'AM', 'BM', 'BOM', 'ABM']) | Q(worktype__tacode__in = ['AO', 'AM', 'BM', 'BOM', 'ABM']),
-            client_id = self.request.session['client_id'])
+            client_id = self.request.session['client_id'], enable=True, isverified=True)
         utils.initailize_form_fields(self)
 
     def is_valid(self) -> bool:
@@ -232,7 +238,7 @@ class ShiftForm(forms.ModelForm):
     class Meta:
         model = obm.Shift
         fields = ['shiftname', 'starttime', 'endtime', 'ctzoffset',
-        'nightshiftappicable', 'shiftduration', 'captchafreq']
+        'nightshiftappicable', 'shiftduration', 'designation', 'captchafreq', 'peoplecount', ]
         labels={
             'shiftname': 'Shift Name',
             'starttime': 'Start Time',
@@ -440,7 +446,7 @@ class ClentForm(BuPrefForm):
 class ImportForm(forms.Form):
     TABLECHOICES = [
         ('PEOPLE', 'People'),
-        ('BU', 'Buisiness Unit'),
+        ('BU', 'Business Unit'),
         ('SHIFT', 'Shift'),
         ('ASSET', 'Asset'),
         ('QUESTION', 'Question'),

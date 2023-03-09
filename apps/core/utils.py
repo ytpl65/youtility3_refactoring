@@ -325,7 +325,7 @@ def decrypt(obscured: bytes) -> bytes:
 
 def save_capsinfo_inside_session(people, request):
     logger.info('save_capsinfo_inside_session... STARTED')
-    from apps.core.raw_queries import query
+    from apps.core.raw_queries import get_query
     from apps.peoples.models import Capability
     web, mob, portlet, report = putils.create_caps_choices_for_peopleform(request.user.client)
     request.session['client_webcaps'] = web
@@ -333,7 +333,7 @@ def save_capsinfo_inside_session(people, request):
     request.session['client_portletcaps'] = list(portlet)
     request.session['client_reportcaps'] = list(report)
     
-    caps = Capability.objects.raw(query['get_web_caps_for_client'])
+    caps = Capability.objects.raw(get_query('get_web_caps_for_client'))
     request.session['people_webcaps'] = putils.make_choices(people.people_extras['webcapability'], caps)
     request.session['people_mobcaps'] = list(Capability.objects.filter(capscode__in = people.people_extras['mobilecapability'], cfor='MOB').values_list('capscode', 'capsname')) 
     request.session['people_reportcaps'] = list(Capability.objects.filter(capscode__in = people.people_extras['reportcapability'], cfor='REPORT').values_list('capscode', 'capsname')) 
@@ -1300,25 +1300,11 @@ def isValidEMEI(n):
     # String for finding length
     s = str(n)
     l = len(s)
- 
-    # If length is not 15 then IMEI is Invalid
+
     if l != 15:
         return False
     return True
- 
-    # d = 0
-    # sum = 0
-    # for i in range(15, 0, -1):
-    #     d = int(n % 10)
-    #     if i % 2 == 0:
- 
-    #         # Doubling every alternate digit
-    #         d = 2 * d
- 
-    #     # Finding sum of the digits
-    #     sum = sum + sumDig(d)
-    #     n = n / 10
-    # return (sum % 10 == 0)
+
     
 def verify_mobno(mobno):
     import phonenumbers as pn
@@ -1367,26 +1353,23 @@ def upload(request):
     if 'img' not in request.FILES:
         return
     foldertype = request.POST["foldertype"]
-    if foldertype in ["task", "internaltour", "externaltour", "ticket", "incidentreport"]:
-        tabletype, activity_name = "transaction", "JOBNEED"
-    elif foldertype in ["visitorlog"]:
-        tabletype, activity_name = "transaction", "VISITORLOG"
-    elif foldertype in ["conveyance"]:
-        tabletype, activity_name = "transaction", "CONVEYANCE"
+    if foldertype in ["task", "internaltour", "externaltour", "ticket", "incidentreport", 'visitorlog', 'conveyance']:
+        tabletype, activity_name = "transaction", foldertype.upper()
 
     if tabletype == 'transaction':
         fmonth = str(datetime.now().strftime("%b"))
         fyear = str(datetime.now().year)
         peopleid = request.POST["peopleid"]
-        home_dir = settings.MEDIA_URL
-        fullpath = f'{home_dir}transaction/{peopleid}/{activity_name/{fyear}/{fmonth}}'
+        home_dir = settings.MEDIA_ROOT
+        fullpath = f'{home_dir}/transaction/{peopleid}/{activity_name}/{fyear}/{fmonth}/'
+        ic(fullpath)
         fextension = os.path.splitext(request.FILES['img'].name)[1]
         filename = parser.parse(str(datetime.now())).strftime('%d_%b_%Y_%H%M%S') + fextension
 
 
-        if not os.path.exists(fullpath):
+        if not os.path.exists(fullpath):    
             os.makedirs(fullpath)
-        fileurl = f'{fullpath}/{filename}'
+        fileurl = f'{fullpath}{filename}'
         try:
             if not os.path.exists(fileurl):
                 with open(fileurl, 'wb') as temp_file:
@@ -1436,8 +1419,10 @@ def get_action_on_ticket_states(prev_tkt, current_state):
         if prev_state['assignedtogroup'] != current_state['assignedtogroup']:
             actions.append(f'''Ticket Is Reassigned From "{prev_state['assignedtogroup']}" To "{current_state['assignedtogroup']}"''')
         
-        if prev_state['comments'] != current_state['comments']:
+        if prev_state['comments'] != current_state['comments'] and current_state['comments'] not in ['None', None]:
             actions.append(f'''New Comments "{current_state['comments']}" are added after "{prev_state['comments']}"''')
+        if prev_state['level'] != current_state['level']:
+            actions.append(f'''Ticket level is changed from {prev_state['level']} to {current_state["level"]}''')
         return actions
     return ["Ticket Created"]
         
@@ -1446,12 +1431,12 @@ def get_action_on_ticket_states(prev_tkt, current_state):
 
 from django.utils import timezone
 
-def store_ticket_history(instance, request, peopleid=None, peoplename=None):
+def store_ticket_history(instance, request=None, user = None):
     logger.info("saving ticket history has started....")
     # Get the current time
     now = timezone.now().replace(microsecond=0, second=0)
-    peopleid = request.user.id if request else peopleid
-    peoplename = request.user.peoplename if request else peoplename
+    peopleid = request.user.id if request else user.id
+    peoplename = request.user.peoplename if request else user.peoplename
     
     # Get the current state of the ticket
     current_state = {
@@ -1461,7 +1446,9 @@ def store_ticket_history(instance, request, peopleid=None, peoplename=None):
         "comments":instance.comments,
         "status":instance.status,
         "priority":instance.priority,
-        "location":instance.location.locname
+        "location":instance.location.locname,
+        'level':instance.level,
+        'isescalated':instance.isescalated
     }
 
     # Get the previous state of the ticket, if it exists
@@ -1471,14 +1458,20 @@ def store_ticket_history(instance, request, peopleid=None, peoplename=None):
     
     # Create a dictionary to represent the changes made to the ticket
     history_item = {
-        "people_id"     :peopleid,
+        "people_id"     : peopleid,
         "when"          : str(now),
         "who"           : peoplename,
+        "assignto"      : instance.assignedtogroup.groupname if instance.assignedtopeople_id in [1, None] else instance.assignedtopeople.peoplename,
         "action"        : "created",
         "details"       : details,
         "previous_state": current_state,
     }
 
+    logger.debug(
+        f"{instance.mdtz=} {instance.cdtz=} {ticketstate=} {details=}"
+    )
+    
+    
     # Check if there have been any changes to the ticket
     if instance.mdtz > instance.cdtz and  ticketstate and  ticketstate[-1]['previous_state'] != current_state:
         history_item['action'] = "updated"
@@ -1487,12 +1480,15 @@ def store_ticket_history(instance, request, peopleid=None, peoplename=None):
         ticket_history = instance.ticketlog["ticket_history"]
         ticket_history.append(history_item)
         instance.ticketlog = {"ticket_history": ticket_history}
+        logger.info("changes have been made to ticket")
     elif instance.mdtz > instance.cdtz:
         history_item['details'] = 'No changes detected'
         history_item['action'] = 'updated'
         instance.ticketlog['ticket_history'].append(history_item)
+        logger.info("no changed detected")
     else:
         instance.ticketlog['ticket_history'] = [history_item]    
+        logger.info("new ticket is created..")
     instance.save()
     logger.info("saving ticket history ended...")
     

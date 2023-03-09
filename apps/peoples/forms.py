@@ -7,6 +7,7 @@ from django.urls import reverse
 
 
 import apps.peoples.models as pm  # people-models
+import apps.activity.models as am
 import apps.onboarding.models as om  # onboarding-models
 from django_select2 import forms as s2forms
 from apps.core import utils
@@ -118,14 +119,14 @@ class PeopleForm(forms.ModelForm):
         fields = ['peoplename', 'peoplecode',  'peopleimg',  'mobno',      'email',
                   'loginid',      'dateofbirth', 'enable',   'deviceid',   'gender',
                   'peopletype',   'dateofjoin',  'department', 'dateofreport', 'worktype',
-                  'designation',  'reportto',   'bu', 'isadmin', 'ctzoffset',]
+                  'designation',  'reportto',   'bu', 'isadmin', 'ctzoffset', 'location']
         labels = {
             'peoplename': 'Name',        'loginid'    : 'Login Id',        'email'       : 'Email',
             'peopletype': 'Employee Type', 'reportto'   : 'Report to',       'designation' : 'Designation',
             'gender'    : 'Gender',      'dateofbirth': 'Date of Birth',   'enable'      : 'Enable',
             'department': 'Department',  'dateofjoin' : 'Date of Joining', 'dateofreport': 'Date of Release',
             'deviceid'  : 'Device Id',   'bu'         : "Site",            'isadmin'     : "Is Admin",
-            'worktype':'Work Type'
+            'worktype':'Work Type', 'location':"Posting"
         }
 
         widgets = {
@@ -146,19 +147,19 @@ class PeopleForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         """Initializes form add atttibutes and classes here."""
         self.request = kwargs.pop('request', None)
+        S = self.request.session
         super().__init__(*args, **kwargs)
-        self.fields['peopletype'].queryset = om.TypeAssist.objects.filter(
-            tatype__tacode="PEOPLETYPE")
-        self.fields['worktype'].choices = om.TypeAssist.objects.filter(
-            tatype__tacode="WORKTYPE").values_list('id', 'tacode')
-        self.fields['department'].queryset = om.TypeAssist.objects.filter(
-            tatype__tacode="DEPARTMENT")
-        self.fields['designation'].choices = om.TypeAssist.objects.filter(
-            tatype__tacode="DESIGNATION").values_list('id', 'taname')
         self.fields['dateofbirth'].input_formats  = settings.DATE_INPUT_FORMATS
         self.fields['dateofreport'].input_formats = settings.DATE_INPUT_FORMATS
         self.fields['dateofjoin'].input_formats   = settings.DATE_INPUT_FORMATS
         self.fields['dateofjoin'].required        = False
+        
+        #filters for dropdown fields
+        self.fields['peopletype'].queryset = om.TypeAssist.objects.filter(tatype__tacode="PEOPLETYPE", client_id = S['client_id'], enable=True)
+        self.fields['worktype'].choices = om.TypeAssist.objects.filter(tatype__tacode="WORKTYPE", client_id = S['client_id'], enable=True).values_list('id', 'tacode')
+        self.fields['department'].queryset = om.TypeAssist.objects.filter(tatype__tacode="DEPARTMENT", client_id = S['client_id'], enable=True)
+        self.fields['designation'].choices = om.TypeAssist.objects.filter(tatype__tacode="DESIGNATION", client_id = S['client_id'], enable=True).values_list('id', 'taname')
+        self.fields['bu'].queryset = om.Bt.objects.filter(id__in = S['assignedsites'])
         utils.initailize_form_fields(self)
 
     def is_valid(self) -> bool:
@@ -282,11 +283,13 @@ class SiteGroupForm(PgroupForm):
 class PeopleGroupForm(PgroupForm):
     def __init__(self, *args, **kwargs):
         self.request = kwargs.pop('request')
+        S = self.request.session
         super().__init__(*args, **kwargs)
         utils.initailize_form_fields(self)
         site = self.request.user.bu.bucode if self.request.user.bu else ""
         self.fields['identifier'].initial = om.TypeAssist.objects.get(tacode='PEOPLEGROUP')
-        ic(self.request)
+        
+        #filter for dropdown fields
         self.fields['peoples'].choices = pm.People.objects.peoplechoices_for_pgroupform(self.request)
 
 class PgbelongingForm(forms.ModelForm):
@@ -389,8 +392,8 @@ class PeopleExtrasForm(forms.Form):
         session = kwargs.pop('session')
         request = kwargs.pop('request')
         super().__init__(*args, **kwargs)
-        self.fields['assignsitegroup'].choices = pm.Pgroup.objects.get_assignedsitegroup_forclient(session['client_id'])
-        self.fields['tempincludes'].choices = pm.Pgroup.objects.get_assignedsitegroup_forclient(session['client_id'])
+        self.fields['assignsitegroup'].choices = pm.Pgroup.objects.get_assignedsitegroup_forclient(session['client_id']. self.request)
+        self.fields['tempincludes'].choices = am.QuestionSet.objects.filter(type = 'SITEREPORTTEMPLATE', bu_id__in = session['assignedsites']).values_list('id', 'qsetname')
         web, mob, portlet, report = create_caps_choices_for_peopleform(request.user.client)
         if not (session['is_superadmin']):
             self.fields['webcapability'].choices     = session['people_webcaps'] or  web
@@ -400,13 +403,10 @@ class PeopleExtrasForm(forms.Form):
         else:
             # if superadmin is logged in
             from .utils import get_caps_choices
-            self.fields['webcapability'].choices    = get_caps_choices(cfor = pm.Capability.Cfor.WEB)
-            self.fields['mobilecapability'].choices = get_caps_choices(
-                cfor = pm.Capability.Cfor.MOB)
-            self.fields['portletcapability'].choices = get_caps_choices(
-                cfor = pm.Capability.Cfor.PORTLET)
-            self.fields['reportcapability'].choices = get_caps_choices(
-                cfor = pm.Capability.Cfor.REPORT)
+            self.fields['webcapability'].choices     = get_caps_choices(cfor = pm.Capability.Cfor.WEB)
+            self.fields['mobilecapability'].choices  = get_caps_choices(cfor = pm.Capability.Cfor.MOB)
+            self.fields['portletcapability'].choices = get_caps_choices(cfor = pm.Capability.Cfor.PORTLET)
+            self.fields['reportcapability'].choices  = get_caps_choices(cfor = pm.Capability.Cfor.REPORT)
         utils.initailize_form_fields(self)
 
     def is_valid(self) -> bool:

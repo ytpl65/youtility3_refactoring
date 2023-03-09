@@ -152,20 +152,22 @@ class ContractDetail(BaseModel, TenantAwareModel):
         return self.contract.contractname
 
 class Shift(BaseModel, TenantAwareModel):
-    # id= models.BigIntegerField(primary_key = True)
-    bu                   = models.ForeignKey('Bt', verbose_name='Buisiness View', null = True, on_delete = models.RESTRICT,related_name="shift_bu")
-    shiftname            = models.CharField(max_length = 50, verbose_name="Name")
-    shiftduration        = models.IntegerField(null = True, verbose_name="Shift Duration")
-    starttime            = models.TimeField(verbose_name="Start time")
-    endtime              = models.TimeField(verbose_name='End time')
+    bu                  = models.ForeignKey('Bt', verbose_name='Buisiness View', null = True, on_delete = models.RESTRICT, related_name="shift_bu")
+    client              = models.ForeignKey('Bt', verbose_name='Buisiness View', null = True, on_delete = models.RESTRICT, related_name="shift_client")
+    shiftname           = models.CharField(max_length = 50, verbose_name="Name")
+    shiftduration       = models.IntegerField(null = True, verbose_name="Shift Duration")
+    designation         = models.ForeignKey('TypeAssist', verbose_name='Buisiness View', null=True, blank=True, on_delete = models.RESTRICT)
+    peoplecount         = models.IntegerField(null=True, blank=True, verbose_name='People Count')
+    starttime           = models.TimeField(verbose_name="Start time")
+    endtime             = models.TimeField(verbose_name='End time')
     nightshiftappicable = models.BooleanField(default = True, verbose_name="Night Shift Applicable")
-    captchafreq          = models.IntegerField(default = 10, null = True)
-    enable               = models.BooleanField(verbose_name='Enable', default = True)
+    captchafreq         = models.IntegerField(default = 10, null = True)
+    enable              = models.BooleanField(verbose_name='Enable', default = True)
 
     class Meta(BaseModel.Meta):
         db_table = 'shift'
         constraints = [models.UniqueConstraint(
-            fields=['shiftname', 'bu'], name='shiftname_bu_uk')]
+            fields=['shiftname', 'bu', 'designation', 'client'], name='shiftname_bu_desgn_client_uk')]
         get_latest_by = ['mdtz', 'cdtz']
 
     def __str__(self):

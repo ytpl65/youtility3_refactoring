@@ -262,7 +262,7 @@ class Job(BaseModel, TenantAwareModel):
     shift           = models.ForeignKey("onboarding.Shift", verbose_name = _("Shift"), on_delete = models.RESTRICT, null = True, related_name="job_shifts")
     starttime       = models.TimeField(_("Start time"), auto_now = False, auto_now_add = False, null = True)
     endtime         = models.TimeField(_("End time"), auto_now = False, auto_now_add = False, null = True)
-    ticketcategory  = models.ForeignKey("onboarding.TypeAssist", verbose_name = _("Ticket Category"), on_delete = models.RESTRICT, null = True, blank = True, related_name="job_tktcategories")
+    ticketcategory  = models.ForeignKey("onboarding.TypeAssist", verbose_name = _("Notify Category"), on_delete = models.RESTRICT, null = True, blank = True, related_name="job_tktcategories")
     scantype        = models.CharField(_("Scan Type"), max_length = 50, choices = Scantype.choices)
     frequency       = models.CharField(verbose_name = _("Frequency type"), null = True, max_length = 55, choices = Frequency.choices, default = Frequency.NONE.value)
     other_info      = models.JSONField(_("Other info"), default = other_info, blank = True, encoder = DjangoJSONEncoder)
@@ -278,8 +278,8 @@ class Job(BaseModel, TenantAwareModel):
         constraints         = [
             models.UniqueConstraint(
                 fields=['jobname', 'asset',
-                        'qset', 'parent', 'identifier'],
-                name='jobname_asset_qset_id_parent_identifier_uk'
+                        'qset', 'parent', 'identifier', 'client'],
+                name='jobname_asset_qset_id_parent_identifier_client_uk'
             ),
             models.CheckConstraint(
                 check = models.Q(gracetime__gte = 0),
@@ -363,7 +363,7 @@ class Asset(BaseModel, TenantAwareModel):
         verbose_name        = 'Asset'
         verbose_name_plural = 'Assets'
         
-        
+                
 
     def __str__(self):
         return f'{self.assetname} ({self.assetcode})'
@@ -399,15 +399,6 @@ class Jobneed(BaseModel, TenantAwareModel):
         COMPLETED          = ('COMPLETED', 'Completed')
         INPROGRESS         = ('INPROGRESS', 'Inprogress')
         PARTIALLYCOMPLETED = ('PARTIALLYCOMPLETED', 'Partially Completed')
-        RESOLVED           = ("RESOLVED",  "Resolved")
-        OPEN               = ("OPEN",      "Open")
-        CANCELLED          = ("CANCELLED", "Cancelled")
-        ESCALATED          = ("ESCALATED", "Escalated")
-        NEW                = ("NEW",       "New")
-        MAINTENANCE        = ("MAINTENANCE", "Maintenance")
-        STANDBY            = ("STANDBY", "Standby")
-        WORKING            = ("WORKING", "Working")
-        SCRAPPED           = ("SCRAPPED", "Scrapped")
 
 
 
@@ -455,7 +446,7 @@ class Jobneed(BaseModel, TenantAwareModel):
     seqno            = models.SmallIntegerField(_("Sl No."))
     client           = models.ForeignKey("onboarding.Bt", verbose_name = _("Client"), on_delete= models.RESTRICT, null = True, blank = True, related_name='jobneed_clients')
     bu               = models.ForeignKey("onboarding.Bt", verbose_name = _("Site"), on_delete = models.RESTRICT, null = True, blank = True, related_name='jobneedf_bus')
-    ticketcategory   = models.ForeignKey("onboarding.TypeAssist", verbose_name = _("Ticket Category"), null= True, blank = True, on_delete = models.RESTRICT)
+    ticketcategory   = models.ForeignKey("onboarding.TypeAssist", verbose_name = _("Notify Category"), null= True, blank = True, on_delete = models.RESTRICT)
     othersite        = models.CharField(_("Other Site"), max_length = 100, default = None, null = True)
     multifactor      = models.DecimalField(_("Multiplication Factor"), default = 1, max_digits = 10, decimal_places = 6)
     raisedby         = models.CharField(_("Raised by"), max_length = 55, default="", null = True)
@@ -544,6 +535,7 @@ class Attachment(BaseModel, TenantAwareModel):
     datetime       = models.DateTimeField(editable = True, default = datetime.utcnow)
     attachmenttype = models.CharField(choices = AttachmentType.choices, max_length = 55, default = AttachmentType.NONE.value)
     gpslocation    = PointField(_('GPS Location'),null = True, geography = True, srid = 4326)
+    size           = models.IntegerField(null=True)
 
     objects = AttachmentManager()
     class Meta(BaseModel.Meta):

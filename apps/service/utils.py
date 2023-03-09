@@ -207,7 +207,8 @@ def perform_tasktourupdate(self, file, request=None, db='default', bg=False):
 
 
 @app.task(bind = True, default_retry_delay = 300, max_retries = 5)
-def perform_insertrecord(self, file, request = None, db='default', filebased = True, bg=False, peopleid=None, peoplename=None):
+def perform_insertrecord(self, file, request = None, db='default', filebased = True, bg=False, userid=None):
+    log.info(f"request:{request.user.peoplename}")
     """
     Insert records in specified tablename.
 
@@ -234,7 +235,9 @@ def perform_insertrecord(self, file, request = None, db='default', filebased = T
             for record in data:
                 tablename = record.pop('tablename')
                 obj = insertrecord(record, tablename)
-                if tablename == 'ticket' and isinstance(obj, Ticket): utils.store_ticket_history(obj, peopleid, peoplename)
+                user = get_user_instance(userid or request.user.id)
+                if tablename == 'ticket' and isinstance(obj, Ticket): utils.store_ticket_history(
+                    instance = obj, request=request, user=user)
                 if hasattr(obj, 'geojson'): save_addr_for_point(obj)
                 allconditions = [
                     hasattr(obj, 'peventtype'), hasattr(obj, 'endlocation'), 
@@ -551,7 +554,6 @@ def alert_observation(jobneed, atts=False):
                 log.info('Attachments are going to attach')
                 #add attachments to msg
                 msg = add_attachments(jobneed, msg)
-                pass
             msg.send()
             log.info(f"Alert mail sent to {recipents} with subject {subject}")
     except Exception as e:
@@ -587,11 +589,11 @@ def save_addr_for_point(obj):
         obj.geojson['endlocation'] = get_readable_addr_from_point(obj.endlocation)
     obj.save()
     
-def call_service_based_on_filename(data, filename, db='default', request=None):
+def call_service_based_on_filename(data, filename, db='default', request=None, user=None):
     log.info(f'filename before calling {filename}')
     if filename == 'insertRecord.gz':
         log.info("calling insertrecord. service..")
-        return perform_insertrecord.delay(file=data, db = db, bg=True, peopleid=request.user.id, peoplename=request.user.peoplename)
+        return perform_insertrecord.delay(file=data, db = db, bg=True, userid=user)
     if filename == 'updateTaskTour.gz':
         log.info("calling updateTaskTour service..")
         return perform_tasktourupdate.delay(file=data, db = db, bg=True)
@@ -602,4 +604,9 @@ def call_service_based_on_filename(data, filename, db='default', request=None):
         log.info("calling adhocRecord service..")
         return perform_adhocmutation.delay(file=data, db = db, bg=True)
     
-    
+
+
+def get_user_instance(id):
+    log.info(f"people id: {id} type: {type(id)}")
+    from apps.peoples.models import People
+    return People.objects.get(id = int(id))

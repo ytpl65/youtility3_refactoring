@@ -22,6 +22,7 @@ import apps.activity.utils as av_utils
 import apps.onboarding.forms as obf
 import apps.onboarding.models as obm
 import apps.peoples.models as pm
+from apps.service.tasks import get_model_or_form
 import logging
 import mimetypes
 from datetime import datetime, timedelta
@@ -831,6 +832,17 @@ class Attachments(LoginRequiredMixin, View):
     def get(self, request, *args, **kwargs):
         R, P = request.GET, self.params
         ic(R)
+        if R.get('action') == 'delete_att'  and R.get('id'):
+            res = P['model'].objects.filter(id=R['id']).delete()
+            if R['ownername'].lower() in ['ticket', 'jobneed', 'jobneeddetails']:
+                #update attachment count
+                model = get_model_or_form(R['ownername'].lower())
+                model.objects.filter(uuid = R['ownerid']).update(
+                    attachmentcount = P['model'].objects.filter(owner = R['ownerid']).count()
+                )
+                log.info('attachment count updated')
+            return rp.JsonResponse({'result':res}, status=200)
+        
         if R.get('action') == 'get_attachments_of_owner' and R.get('owner'):
             objs = P['model'].objects.get_att_given_owner(R['owner'])   
             return rp.JsonResponse({'data':list(objs)}, status=200)
@@ -845,12 +857,17 @@ class Attachments(LoginRequiredMixin, View):
     
     def post(self, request, *args, **kwargs):
         R, P = request.POST, self.params
-        ic(R, request.FILES)
+        ic(P)
         if 'img' in request.FILES:
-            isUploaded, filename, filepath, docnumber = utils.upload(request)
+            isUploaded, filename, filepath = utils.upload(request)
+            filepath = filepath.replace(settings.MEDIA_ROOT, "")
             if isUploaded:
-                data = P['model'].objects.create_att_record(request, filename, filepath)
-
+                if data := P['model'].objects.create_att_record(request, filename, filepath):
+                    #update attachment count
+                    if data['ownername'].lower() in ['ticket' ,'jobneed', 'jobneeddetails']:
+                        model = get_model_or_form(data['ownername'].lower())
+                        model.objects.filter(uuid = R['ownerid']).update(attachmentcount = data['attcount'])
+                        log.info('attachment count updated')
                 return rp.JsonResponse(data, status = 200, safe=False)
         return rp.JsonResponse({'error':"Invalid Request"}, status=404)
 
@@ -1336,17 +1353,10 @@ class PPMView(LoginRequiredMixin, View):
         }
         if R.get('template'): return render(request, P['template_list'], context=cxt)
         
-        if R.get('action') == 'jobneed_ppmlist':
-            objs = P['model_jn'].objects.get_ppm_listview(request, P['fields'], P['related'])
-            return  rp.JsonResponse(data = {'data':list(objs)})
         
         if R.get('action') == 'job_ppmlist':
             objs = P['model'].objects.get_jobppm_listview(request)
             return  rp.JsonResponse(data = {'data':list(objs)})
-        
-        if R.get('action') == 'get_ppmtask_details' and R.get('taskid'):
-            objs = am.JobneedDetails.objects.get_ppm_details(request)
-            return rp.JsonResponse({"data":list(objs)})
         
         # return questionset_form empty
         if R.get('action', None) == 'form':
@@ -1357,6 +1367,15 @@ class PPMView(LoginRequiredMixin, View):
         if R.get('action', None) == "delete" and R.get('id', None):
             return utils.render_form_for_delete(request, P, True)
 
+
+        # return form with instance
+        elif R.get('action') == "getppm_jobneedform" and  R.get('id', None):
+            obj = am.Jobneed.objects.get(id = R['id'])
+            cxt = {'ppmjobneedform': P['form_jn'](instance = obj, request=request),
+                   'msg': "PPM Jobneed Update Requested"}
+            return render(request, P['template_form_jn'], context = cxt)
+        
+        
         # return form with instance
         elif R.get('action') == "getppm_jobneedform" and  R.get('id', None):
             obj = am.Jobneed.objects.get(id = R['id'])
@@ -1370,6 +1389,92 @@ class PPMView(LoginRequiredMixin, View):
             cxt = {'ppmform': P['form'](instance = ppm, request=request),
                    'msg': "PPM Update Requested"}
             return render(request, P['template_form'], context = cxt)
+    
+    def post(self, request, *args, **kwargs):
+        resp, create = None, True
+        data = QueryDict(request.POST.get('formData'))
+        ic(data)
+        try:
+            if request.POST.get('action') == 'runScheduler':
+                from apps.service.tasks import create_ppm_job
+                return create_ppm_job(request.POST.get('job_id'))
+            if pk := request.POST.get('pk', None):
+                msg, create = "ppm view", False
+                people = utils.get_model_obj(pk, request,  self.P)
+                form = self.P['form'](data, request=request, instance = people)
+            else:
+                form = self.P['form'](data, request = request)
+            ic(form.instance.id)
+            if form.is_valid():
+                resp = self.handle_valid_form(form, request, create)
+            else:
+                ic(form.errors)
+                cxt = {'errors': form.errors}
+                resp = utils.handle_invalid_form(request, self.P, cxt)
+        except Exception:
+            resp = utils.handle_Exception(request)
+        return resp
+
+    @staticmethod
+    def handle_valid_form(form, request ,create):
+        logger.info('ppm form is valid')
+        from apps.core.utils import handle_intergrity_error
+        
+        try:
+            ic(request.POST, request.FILES)
+            ppm = form.save()
+            ppm = putils.save_userinfo(
+                ppm, request.user, request.session, create = create)
+            logger.info("ppm form saved")
+            data = {'pk':ppm.id}
+            return rp.JsonResponse(data, status = 200)
+        except IntegrityError:
+            return handle_intergrity_error('PPM')
+        
+        
+class PPMJobneedView(LoginRequiredMixin, View):
+    P = {
+        'template_list':'activity/ppm/ppm_jobneed_list.html',
+        'template_form':'activity/ppm/jobneed_ppmform.html',
+        'model':am.Jobneed,
+        'related':['asset', 'qset', 'people', 'pgroup'],
+        'fields':['plandatetime', 'expirydatetime', 'gracetime', 'asset__assetname', 
+                  'assignedto', 'performedby__peoplename', 'jobdesc', 'frequency', 
+                  'qset__qsetname', 'id', 'ctzoffset', 'jobstatus'],
+        'form':af.PPMFormJobneed,
+    }
+    
+    def get(self, request, *args, **kwargs):
+        R, P = request.GET, self.P
+        ic(R)
+        # first load the template
+        cxt = {
+            'status_options':[
+                ('COMPLETED', 'Completed'),
+                ('AUTOCLOSED', 'AutoClosed'),
+                ('ASSIGNED', 'Assigned'),
+            ]
+        }
+        if R.get('template'): return render(request, P['template_list'], context=cxt)
+        
+        if R.get('action') == 'jobneed_ppmlist':
+            objs = P['model'].objects.get_ppm_listview(request, P['fields'], P['related'])
+            return  rp.JsonResponse(data = {'data':list(objs)})
+        
+        if R.get('action') == 'get_ppmtask_details' and R.get('taskid'):
+            objs = am.JobneedDetails.objects.get_ppm_details(request)
+            return rp.JsonResponse({"data":list(objs)})
+        
+        if R.get('action', None) == "delete" and R.get('id', None):
+            return utils.render_form_for_delete(request, P, True)
+
+        # return form with instance
+        elif R.get('action') == "getppm_jobneedform" and  R.get('id', None):
+            obj = am.Jobneed.objects.get(id = R['id'])
+            cxt = {'ppmjobneedform': P['form'](instance = obj, request=request),
+                   'msg': "PPM Jobneed Update Requested"}
+            return render(request, P['template_form'], context = cxt)
+        
     
     def post(self, request, *args, **kwargs):
         resp, create = None, True
@@ -1408,7 +1513,5 @@ class PPMView(LoginRequiredMixin, View):
             return rp.JsonResponse(data, status = 200)
         except IntegrityError:
             return handle_intergrity_error('PPM')
-        
-        
 
         

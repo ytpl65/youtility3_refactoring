@@ -31,6 +31,7 @@ class TicketManager(models.Manager):
     def get_tickets_listview(self, request):
         R, S = request.GET, request.session
         P = json.loads(R['params'])
+        ic(P)
         qset = self.filter(
             cdtz__date__gte = P['from'],
             cdtz__date__lte = P['to'],
@@ -40,9 +41,13 @@ class TicketManager(models.Manager):
             'id', 'cdtz', 'bu__buname', 'status', 'bu__bucode', 'isescalated',
             'cuser__peoplename', 'cuser__peoplecode', 'ticketdesc', 'ctzoffset'
         )
+        if P.get('status'):
+            qset = qset.filter(status =P['status'])
         return qset or self.none()
-    
+        
     def get_tickets_for_mob(self, peopleid, buid, clientid, mdtz, ctzoffset):
+        from apps.activity.models import Attachment
+        
         if not isinstance(mdtz, datetime):
             mdtz = datetime.strptime(mdtz, "%Y-%m-%d %H:%M:%S") - timedelta(minutes=ctzoffset)
             
@@ -57,15 +62,32 @@ class TicketManager(models.Manager):
             ).values(
                 'id', 'uuid', 'ticketdesc', 'assignedtopeople_id', 'assignedtogroup_id', 'comments', 'bu_id', 'client_id', 'priority', 'ticketcategory_id', 'location_id', 'modifieddatetime', 'level', 'status',
                 'performedby_id', 'events', 'isescalated', 'ticketsource', 'cuser_id', 'muser_id', 'cdtz', 'mdtz', 'ctzoffset', 'attachmentcount',
-                
             )
         return qset or self.none()
     
     def get_ticketlist_for_escalation(self):
         from apps.core import utils, raw_queries
-        return utils.runrawsql(raw_queries['get_ticketlist_for_escalation']) or self.none()
+        return utils.runrawsql(raw_queries.get_query('get_ticketlist_for_escalation')) or self.none()
 
-
+    def get_ticket_stats_for_dashboard(self, request):
+        # sourcery skip: avoid-builtin-shadow
+        S, R = request.session, request.GET
+        ic(R)
+        qset = self.filter(
+            bu_id__in = S['assignedsites'],
+            cdtz__date__gte = R['from'],
+            cdtz__date__lte = R['upto'],
+            client_id = S['client_id'],
+            ticketsource = 'USERDEFINED'
+        )
+        new       = qset.filter(status = 'NEW').count()
+        open      = qset.filter(status = 'OPEN').count()
+        cancelled = qset.filter(status = 'CANCELLED').count()
+        resolved  = qset.filter(status = 'RESOLVED').count()
+        stats = [new, resolved, open, cancelled]
+        ic(stats)
+        return stats, sum(stats)
+        
 
 class ESCManager(models.Manager):
     use_in_migrations=True

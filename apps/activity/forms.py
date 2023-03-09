@@ -52,14 +52,17 @@ class QuestionForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):  # sourcery skip: use-named-expression
         """Initializes form add atttibutes and classes here."""
         self.request = kwargs.pop('request', None)
+        S = self.request.session
         super().__init__(*args, **kwargs)
-
-        
         self.fields['min'].initial       = None
         self.fields['max'].initial       = None
         self.fields['category'].required = False
         self.fields['unit'].required     = False
         self.fields['alerton'].required  = False
+        
+        #filters for dropdown fields
+        self.fields['unit'].queryset = om.TypeAssist.objects.select_related('tatype').filter(tatype__tacode = 'QUESTIONUNIT', client_id = S['client_id'])
+        self.fields['category'].queryset = om.TypeAssist.objects.select_related('tatype').filter(tatype__tacode = 'QUESTIONCATEGORY', client_id = S['client_id'])
         
         if self.instance.id:
             ac_utils.initialize_alertbelow_alertabove(self.instance, self)
@@ -412,14 +415,18 @@ class CheckpointForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         """Initializes form add atttibutes and classes here."""
         self.request = kwargs.pop('request', None)
+        S = self.request.session
         super(CheckpointForm, self).__init__(*args, **kwargs)
         self.fields['identifier'].initial = 'CHECKPOINT'
         self.fields['type'].required = False
         self.fields['identifier'].widget.attrs = {"style": "display:none"}
-        self.fields['location'].queryset = am.Location.objects.filter(
-            Q(enable = True) | Q(loccode='NONE'),
-            bu_id__in = self.request.session['assignedsites'])
+        
+        #filters for dropdown fields
+        self.fields['location'].queryset = am.Location.objects.filter(Q(enable = True) | Q(loccode='NONE'), bu_id__in = S['assignedsites'])
+        self.fields['type'].queryset = om.TypeAssist.objects.filter(client_id = S['client_id'], tatype__tacode = 'CHECKPOINTTYPE')
         utils.initailize_form_fields(self)
+
+        
         
         
     def clean(self):
@@ -510,7 +517,7 @@ class JobForm(forms.ModelForm):
 
         labels = {
             'jobname'   : 'Name',            'fromdate'      : 'Valid From',
-            'uptodate' : 'Valid To',     'cron'        : 'Cron Expression', 'ticketcategory': 'Ticket Catgory',
+            'uptodate' : 'Valid To',     'cron'        : 'Cron Expression', 'ticketcategory': 'Notify Catgory',
             'grace_time': 'Grace Time',   'planduration': 'Plan Duration',   'scan_type'      : 'Scan Type',
             'priority'  : 'Priority',     'people'    : 'People',          'pgroup'        : 'Group',          
             'qset_id'   : 'Question Set', 'shift'       : "Shift",           'asset'        : 'Asset',
@@ -578,7 +585,8 @@ class JobNeedForm(forms.ModelForm):
             'gpslocation'   : forms.TextInput
         }
         label = {
-            'endtime': 'End Time'
+            'endtime': 'End Time',
+            'ticketcategory':"Notify Category"
         }
 
 class AdhocTaskForm(JobNeedForm):
@@ -595,7 +603,7 @@ class AdhocTaskForm(JobNeedForm):
             'jobstatus': 'Task Status',
             'scantype': 'ScanType',
             'gpslocation': 'GPS Location',
-            'ticketcategory': 'Ticket Category',
+            'ticketcategory': 'Notify Category',
             'performedby': 'Performed By',
             'people': 'People',
             'qset': 'Question Set',
@@ -663,23 +671,26 @@ class AssetForm(forms.ModelForm):
     
     def __init__(self, *args, **kwargs):
         self.request = kwargs.pop('request')
+        S = self.request.session
         super().__init__(*args, **kwargs)
         self.fields['enable'].widget.attrs = {'checked':False} if self.instance.id else {'checked':True}
         self.fields['assetcode'].widget.attrs = {'style':"text-transform:uppercase"}
-        utils.initailize_form_fields(self)
+        
         self.fields['identifier'].widget.attrs = {'style':"display:none"}
         self.fields['identifier'].initial      = 'ASSET'
         self.fields['capacity'].required       = False
         self.fields['servprov'].required       = False
-        self.fields['parent'].queryset         = am.Asset.objects.filter(~Q(runningstatus='SCRAPPED'), identifier='ASSET', bu_id__in = self.request.session['assignedsites'])
-        self.fields['location'].queryset        = am.Location.objects.filter(~Q(locstatus='SCRAPPED'), bu_id__in = self.request.session['assignedsites'])
-        self.fields['type'].queryset           = om.TypeAssist.objects.filter(Q(tatype__tacode__in = ['ASSETTYPE', 'ASSET_TYPE']))
-        self.fields['category'].queryset       = om.TypeAssist.objects.filter(Q(tatype__tacode__in = ['ASSETCATEGORY', 'ASSET_CATEGORY']))
-        self.fields['subcategory'].queryset    = om.TypeAssist.objects.filter(Q(tatype__tacode__in = ['ASSETSUBCATEGORY', 'ASSET_SUBCATEGORY']))
-        self.fields['unit'].queryset           = om.TypeAssist.objects.filter(Q(tatype__tacode__in = ['ASSETUNIT', 'ASSET_UNIT', 'UNIT']))
-        self.fields['brand'].queryset          = om.TypeAssist.objects.filter(Q(tatype__tacode__in = ['ASSETBRAND', 'ASSET_BRAND', 'BRAND']))
-        self.fields['servprov'].queryset       = om.Bt.objects.filter(id__in = self.request.session['assignedsites'], isserviceprovider = True, enable=True)
-       
+        
+        #filters for dropdown fields
+        self.fields['parent'].queryset         = am.Asset.objects.filter(~Q(runningstatus='SCRAPPED'), identifier='ASSET', bu_id__in = S['assignedsites'])
+        self.fields['location'].queryset       = am.Location.objects.filter(~Q(locstatus='SCRAPPED'), bu_id__in = S['assignedsites'])
+        self.fields['type'].queryset           = om.TypeAssist.objects.filter(Q(tatype__tacode__in = ['ASSETTYPE', 'ASSET_TYPE']), client_id = S['client_id'])
+        self.fields['category'].queryset       = om.TypeAssist.objects.filter(Q(tatype__tacode__in = ['ASSETCATEGORY', 'ASSET_CATEGORY']), client_id = S['client_id'])
+        self.fields['subcategory'].queryset    = om.TypeAssist.objects.filter(Q(tatype__tacode__in = ['ASSETSUBCATEGORY', 'ASSET_SUBCATEGORY']), client_id = S['client_id'])
+        self.fields['unit'].queryset           = om.TypeAssist.objects.filter(Q(tatype__tacode__in = ['ASSETUNIT', 'ASSET_UNIT', 'UNIT']), client_id = S['client_id'])
+        self.fields['brand'].queryset          = om.TypeAssist.objects.filter(Q(tatype__tacode__in = ['ASSETBRAND', 'ASSET_BRAND', 'BRAND']), client_id = S['client_id'])
+        self.fields['servprov'].queryset       = om.Bt.objects.filter(id__in = S['assignedsites'], isserviceprovider = True, enable=True)
+        utils.initailize_form_fields(self)
         
         
     
@@ -751,11 +762,12 @@ class AssetExtrasForm(forms.Form):
     
     def __init__(self, *args, **kwargs):
         self.request = kwargs.pop('request')
+        S = self.request.session
         super().__init__(*args, **kwargs)
+        self.fields['service'].choices = om.TypeAssist.objects.filter(client_id = S['client_id'], tacode__in = ['SERVICE_TYPE','ASSETSERVICE', 'ASSET_SERVICE' 'SERVICETYPE']).values_list('id', 'tacode')
+        self.fields['meter'].choices = om.TypeAssist.objects.filter(client_id = S['client_id'], tacode__in = ['ASSETMETER', 'ASSET_METER']).values_list('id', 'tacode')  
         utils.initailize_form_fields(self)
-        self.fields['service'].choices = om.TypeAssist.objects.filter(tacode__in = ['SERVICE_TYPE','ASSETSERVICE', 'ASSET_SERVICE' 'SERVICETYPE']).values_list('id', 'tacode')
-        self.fields['meter'].choices = om.TypeAssist.objects.filter(tacode__in = ['ASSETMETER', 'ASSET_METER']).values_list('id', 'tacode')  
-
+    
     def clean(self):
         cd = super().clean() #cleaned_data
         if (cd['sfdate'] and cd['stdate']) and cd['sfdate'] > cd['stdate']:
@@ -786,10 +798,16 @@ class LocationForm(forms.ModelForm):
     
     def __init__(self, *args, **kwargs):
         self.request = kwargs.pop('request', False)
+        S = self.request.session
         super().__init__(*args, **kwargs)
-        self.fields['type'].queryset = om.TypeAssist.objects.filter(tatype__tacode__in = ['LOCATIONTYPE', 'LOCATION_TYPE'])
         self.fields['loccode'].widget.attrs = {'style':"text-transform:uppercase"}
+        
+        #filters for dropdown fields
+        self.fields['parent'].queryset = am.Location.objects.filter(client_id = S['client_id'], bu_id__in = S['assignedsites'])
+        self.fields['type'].queryset = om.TypeAssist.objects.filter(client_id = S['client_id'], tatype__tacode = 'LOCAIONTYPE')
         utils.initailize_form_fields(self)
+        
+        
         
     def clean(self):
         super().clean()
@@ -828,10 +846,15 @@ class LocationForm(forms.ModelForm):
         return cd
         
 class PPMForm(forms.ModelForm):
+    timeInChoices      = [('MINS', 'Minute'),('HRS', 'Hour'), ('DAYS', 'Day'), ('WEEKS', 'Week')]
     ASSIGNTO_CHOICES   = [('PEOPLE', 'People'), ('GROUP', 'Group')]
     FREQUENCY_CHOICES   = [('WEEKLY', 'Weekly'),('FORTNIGHTLY', 'Fortnight'), ('BIMONTHLY', 'Bimonthly'),
                            ("QUARTERLY", "Quarterly"), ('MONTHLY', 'Monthly'),('HALFYEARLY', 'Half Yearly'),
                            ('YEARLY', 'Yearly')]
+    
+    planduration_type  = forms.ChoiceField(choices = timeInChoices, initial='MIN', widget = s2forms.Select2Widget)
+    gracetime_type     = forms.ChoiceField(choices = timeInChoices, initial='MIN', widget = s2forms.Select2Widget)
+    expirytime_type    = forms.ChoiceField(choices = timeInChoices, initial='MIN', widget = s2forms.Select2Widget)
     frequency = forms.ChoiceField(choices=FREQUENCY_CHOICES, label="Frequency", widget=s2forms.Select2Widget)
     assign_to          = forms.ChoiceField(choices = ASSIGNTO_CHOICES, initial="PEOPLE")
     required_css_class = "required"
@@ -848,7 +871,7 @@ class PPMForm(forms.ModelForm):
             'asset':'Asset', 'qset':"Question Set", 'people':"People", 
             'scantype':'Scantype', 'priority':'Priority',
             'jobdesc':'Description', 'jobname':"Name", 'planduration':"Plan Duration",
-            'expirytime':'Exp time', 'cron':"Cron Exp", 'ticketcategory':'Ticket Category',
+            'expirytime':'Exp time', 'cron':"Cron Exp", 'ticketcategory':'Notify Category',
             'fromdate':'Valid From', 'uptdate':'Valid To', 'pgroup':'Group', 
             'assign_to':'Assign to'
         }
@@ -864,14 +887,58 @@ class PPMForm(forms.ModelForm):
     
     def __init__(self, *args, **kwargs):
         self.request = kwargs.pop('request')
+        S = self.request.session
         super().__init__(*args, **kwargs)
-        utils.initailize_form_fields(self)
+        
         self.fields['asset'].required = True
         self.fields['qset'].required = True
         self.fields['identifier'].initial = 'PPM'
         self.fields['identifier'].widget.attrs = {'style':"display:none"}
-        self.fields['ticketcategory'].queryset = om.TypeAssist.objects.filter(tatype__tacode="TICKETCATEGORY")
+        
+        #filters for dropdown fields
+        self.fields['ticketcategory'].queryset = om.TypeAssist.objects.filter(tatype__tacode="NOTIFYCATEGORY", client_id = S['client_id'])
+        self.fields['qset'].queryset = am.QuestionSet.objects.filter(bu_id = S['bu_id'], type = 'CHECKLIST' )
+        self.fields['people'].queryset = pm.People.objects.filter(enable=True, isverified=True, bu_id = S['bu_id'])
+        self.fields['pgroup'].queryset = pm.Pgroup.objects.filter(identifier__tacode = 'PEOPLEGROUP', enable=True, bu_id = S['bu_id'])
+        self.fields['asset'].queryset = am.Asset.objects.filter(identifier__in = ['ASSET'], client_id = S['client_id'])
+        utils.initailize_form_fields(self)
+    
+    def clean(self):
+        cd          = self.cleaned_data
+        times_names = ['planduration', 'expirytime', 'gracetime']
+        types_names = ['planduration_type', 'expirytime_type', 'gracetime_type']
+        
+        
+        times = [cd.get(time) for time in times_names]
+        types = [cd.get(type) for type in types_names]
+        for time, type, name in zip(times, types, times_names):
+            cd[name] = self.convertto_mins(type, time)
+        self.cleaned_data = self.check_nones(cd)
 
+            
+    
+    def check_nones(self, cd):
+        fields = {
+            'parent':'get_or_create_none_job',
+            'people': 'get_or_create_none_people',
+            'pgroup': 'get_or_create_none_pgroup',
+            'asset' : 'get_or_create_none_asset'}
+        for field, func in fields.items():
+            if cd.get(field) in [None, ""]:
+                cd[field] = getattr(utils, func)()
+        return cd      
+    
+    @staticmethod
+    def convertto_mins(_type, _time):
+        ic("called")
+        ic(_type, _time)
+        if _type == 'HRS':
+            ic("converted")
+            return _time * 60
+        if _type == 'WEEKS':
+            ic('converted')
+            return _time *7 * 24 * 60
+        return _time * 24 * 60 if _type == 'DAYS' else _time
 
 class PPMFormJobneed(forms.ModelForm):
     ASSIGNTO_CHOICES   = [('PEOPLE', 'People'), ('GROUP', 'Group')]
@@ -889,7 +956,7 @@ class PPMFormJobneed(forms.ModelForm):
         labels = {
             'asset':'Asset', 'qset':"Question Set", 'people':"People", 
             'scantype':'Scantype', 'priority':'Priority',
-            'jobdesc':'Description', 'ticketcategory':'Ticket Category',
+            'jobdesc':'Description', 'ticketcategory':'Notify Category',
             'fromdate':'Valid From', 'uptdate':'Valid To', 'pgroup':'Group', 
             'assign_to':'Assign to'
         }
@@ -906,5 +973,5 @@ class PPMFormJobneed(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         self.request = kwargs.pop('request')
         super().__init__(*args, **kwargs)
+        self.fields['ticketcategory'].queryset = om.TypeAssist.objects.filter(tatype__tacode="NOTIFYCATEGORY")
         utils.initailize_form_fields(self)
-        self.fields['ticketcategory'].queryset = om.TypeAssist.objects.filter(tatype__tacode="TICKETCATEGORY")

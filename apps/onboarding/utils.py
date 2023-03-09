@@ -95,8 +95,8 @@ def get_choice(li):
 def get_webcaps_choices():  # sourcery skip: merge-list-append
     '''Populates parent data in parent-multi-select field'''
     from apps.peoples.models import Capability
-    from ..core.raw_queries import query
-    parent_menus = Capability.objects.raw(query['get_web_caps_for_client'])
+    from ..core.raw_queries import get_query
+    parent_menus = Capability.objects.raw(get_query('get_web_caps_for_client'))
     for i in parent_menus:
         print(f'depth: {i.depth} tacode {i.tacode} path {i.path}')
     choices, temp = [], []

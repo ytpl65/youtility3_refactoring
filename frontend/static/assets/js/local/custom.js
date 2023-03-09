@@ -782,7 +782,7 @@ function validate_optionsField() {
   }
 }
 
-function showToastMsg(msg, icon, position="top-end") {
+function showToastMsg(msg, icon, position="bottom-end") {
   return Swal.fire({
     toast: true,
     html: `<strong>${msg}</strong>`,
@@ -1321,6 +1321,54 @@ $(document).ready(() => {
     autocomplete();
   }
 });
+
+function setUpDropzone(params){
+  var myDropzone = new Dropzone(params.formId, {
+      url:params.uploadUrl,
+      paramName: "img",
+      maxFiles: 5,
+      maxFileSize: 3,
+      addRemoveLinks: true,
+  });
+
+  myDropzone.on("sending", function(file, xhr, formData) {
+      formData.append("csrfmiddlewaretoken", params.csrftoken);
+      formData.append("foldertype", params.foldertype);
+      formData.append("ownername", params.ownername);
+      formData.append("attachmenttype", params.attachmenttype);
+      formData.append("peopleid", params.peopleid);
+      formData.append("ctzoffset", params.ctzoffset);
+      formData.append("ownerid", params.ownerid);
+  });
+
+  // Handle file upload
+  myDropzone.on("success", function(file, response) {
+    file.id =  response.id
+  });
+
+  //handle remove item
+  myDropzone.on("removedfile", function(file) {
+    fire_ajax_get({url:params.uploadUrl, data:{'id':file.id, action:'delete_att', ownerid:params.ownerid, ownername:params.ownername}})
+      .done((data, status, xhr) => {
+        console.log(data)
+      })
+      .fail((xhr, status, error) => {
+        console.log(error)
+      })
+  });
+
+  if(params.create_or_update === "update"){
+    fire_ajax_get({url:params.uploadUrl, data:{owner:params.ownerid, action:"get_attachments_of_owner"}})
+    .done((resp, status, xhr) => {
+      for(let i=0; i<resp.data.length; i++){
+        let file = {name:resp.data[i].filename, accepted:true, id:resp.data[i].id, size:resp.data[i].size}
+        let filepath = `${params.media_url}${resp.data[i].filepath.replace('youtility4_media/', "")}${resp.data[i].filename}`
+        myDropzone.displayExistingFile(file, filepath)
+      }
+    })
+  }
+}
+
 //============================================== END DOCUMENT READY ===========================================//
 
 

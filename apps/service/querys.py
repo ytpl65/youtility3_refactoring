@@ -1,6 +1,6 @@
 import graphene
 from apps.core import utils
-from apps.activity.models import JobneedDetails, Question, QuestionSet, QuestionSetBelonging, Location
+from apps.activity.models import JobneedDetails, Question, QuestionSet, QuestionSetBelonging, Location, Attachment
 from apps.y_helpdesk.models import Ticket
 from apps.onboarding.models import GeofenceMaster, Bt
 from apps.peoples.models import Pgbelonging, Pgroup, People
@@ -95,6 +95,9 @@ class Query(graphene.ObjectType):
                                  buid = graphene.Int(),
                                  clientid = graphene.Int(),
                                  mdtz = graphene.String(required=True))
+    
+    get_attachments = graphene.Field(SelectOutputType, 
+                                     owner = graphene.String(required=True))
 
     verifyclient = graphene.Field(VerifyClientOutput, clientcode = graphene.String(required = True))
 
@@ -120,7 +123,14 @@ class Query(graphene.ObjectType):
     def resolve_checkquery(self, info):
         msg="vaishu is bitch"
         return VerifyClientOutput(msg = msg)
-
+    
+    def resolve_get_attachments(self, info, owner):
+        log.info("request for attachments")
+        data = Attachment.objects.get_attachements_for_mob(owner)
+        records, count, msg = utils.get_select_output(data)
+        log.info(f'{count} objects returned...')
+        return SelectOutputType(nrows = count,  records = records,msg = msg)
+    
     @staticmethod
     def resolve_tabyid(self, info, id):
         log.info('\n\nrequest for typeassist data...')

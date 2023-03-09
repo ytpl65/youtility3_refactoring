@@ -86,7 +86,8 @@ class TicketView(LoginRequiredMixin, View):
         R, P = request.GET, self.params
         
         if R.get('action') == 'form':
-            cxt = {'ticketform':P['form'](request=request)}
+            import uuid
+            cxt = {'ticketform':P['form'](request=request), 'ownerid' : uuid.uuid4()}
             return render(request, P['template'], cxt)
         
         if R.get('template') == 'true':
@@ -101,7 +102,7 @@ class TicketView(LoginRequiredMixin, View):
             if ticket.status == Ticket.Status.NEW.value:
                 ticket.status = Ticket.Status.OPEN.value
                 ticket.save()
-            cxt = {'ticketform':P['form'](instance=ticket, request=request)}
+            cxt = {'ticketform':P['form'](instance=ticket, request=request), 'ownerid': ticket.uuid}
             return render(request, P['template'], cxt)
         
     
@@ -125,8 +126,11 @@ class TicketView(LoginRequiredMixin, View):
         
     def handle_valid_form(self, form, request):
         try:
-            ticket = form.save()
-            ticket = putils.save_userinfo(ticket, request.user, request.session)
+            ticket = form.save(commit=False)
+            ticket.uuid = request.POST.get('uuid')
+            ic(request.POST.get('uuid'))
+            bu = ticket.bu_id if request.POST.get('pk') else None
+            ticket = putils.save_userinfo(ticket, request.user, request.session, bu=bu)
             utils.store_ticket_history(ticket, request)
             return rp.JsonResponse({'pk':ticket.id}, status=200)
         except IntegrityError as e:

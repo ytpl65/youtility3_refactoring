@@ -64,3 +64,11 @@ class TestForm(forms.Form):
     firstname  = forms.CharField(max_length=10, required=False)
     lastname   = forms.CharField(max_length=10, required=True)
     middlename = forms.CharField(max_length=10, required=True)
+
+
+
+
+class ReportBuilderForm(forms.Form):
+    model = forms.ChoiceField(label="Model", widget=s2forms.Select2Widget, help_text="Select a model where you want data from")
+    columns = forms.MultipleChoiceField(label="Coumns", widget=s2forms.Select2MultipleWidget, help_text="Select columns required in the report")
+    

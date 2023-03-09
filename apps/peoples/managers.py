@@ -336,9 +336,10 @@ class PgroupManager(models.Manager):
         qset = qset[start:start+length]
         return total, total, qset
 
-    def get_assignedsitegroup_forclient(self, clientid):
+    def get_assignedsitegroup_forclient(self, clientid, request):
         qset = self.filter(
             client_id = clientid,
+            bu_id__in = request.session['assignedsites'],
             identifier__tacode = 'SITEGROUP'
             ).values_list('id', 'groupname')
         return qset or self.none()

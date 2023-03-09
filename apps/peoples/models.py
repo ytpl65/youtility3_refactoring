@@ -105,6 +105,7 @@ class People(AbstractBaseUser, PermissionsMixin, TenantAwareModel, BaseModel):
     peopleimg     = models.ImageField(_("peopleimg"), upload_to = upload_peopleimg, default="master/people/blank.png", null = True, blank = True)
     peoplecode    = models.CharField(_("Code"), max_length = 50)
     peoplename    = models.CharField(_("Name"), max_length = 120)
+    location      = models.ForeignKey("activity.Location",  verbose_name= _('Location'), on_delete=models.RESTRICT, null=True, blank=True)
     loginid       = models.CharField(_("Login Id"), max_length = 50, unique = True, null = True, blank = True)
     isadmin       = models.BooleanField(_("Is Admin"), default = False)
     is_staff      = models.BooleanField(_('staff status'), default = False)
@@ -141,7 +142,7 @@ class People(AbstractBaseUser, PermissionsMixin, TenantAwareModel, BaseModel):
             models.UniqueConstraint(
                 fields=['loginid', 'bu'], name='people_loginid_bu_uk'),
             models.UniqueConstraint(
-                fields=['loginid', 'mobno', 'email'], name='loginid_mobno_email_uk'),
+                fields=['loginid', 'mobno', 'email', 'bu'], name='loginid_mobno_email_bu_uk'),
         ]
 
     def __str__(self) -> str:

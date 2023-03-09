@@ -20,6 +20,7 @@ from intelliwiz_config.celery import app
 from celery import shared_task
 from celery.utils.log import get_task_logger
 from datetime import timedelta, datetime, timezone
+from apps.core.raw_queries import get_query
 log = get_task_logger('django')
 import json
 
@@ -47,10 +48,13 @@ def make_square(path1, path2):
         # Get the aspect ratio
         width, height = img1.size
         aspect_ratio = width / height
+        log.info(f"aspect ratio of image 1 is {aspect_ratio}")
         # If the aspect ratio is not 1:1
         if aspect_ratio != 1:
             # Resize the image to make it square
-            img1 = img1.resize((height, height))
+            new_size = (min(width, height), min(width, height))
+            img1 = img1.resize(new_size)
+            log.info(f'new aspect ratio of image1  is {new_size[0]} x {new_size[1]}')
         # Save the new square image
         img1 = correct_image_orientation(img1)
         img1.save(path1)
@@ -58,8 +62,11 @@ def make_square(path1, path2):
         img2 = Image.open(path2)
         width, height = img2.size
         aspect_ratio = width / height
+        log.info(f"aspect ratio of image 2 is {aspect_ratio}")
         if aspect_ratio != 1:
-            img2 = img2.resize((height, height))
+            new_size = (min(width, height), min(width, height))
+            img2 = img2.resize(new_size)
+            log.info(f'new aspect ratio of image2 is {new_size[0]} x {new_size[1]}')
         
         img2 = correct_image_orientation(img2)
         img2.save(path2)
@@ -69,6 +76,7 @@ def make_square(path1, path2):
         print("Error: One or both of the provided files are not images.")
     except Exception as e:
         print("Error: An unknown error occurred. while performing make_square(path1, path2)",e)
+
 
 
 def insertrecord(record, tablename):
@@ -519,6 +527,8 @@ def save_parent_childs(sz, jn_parent_serializer, child, M, db):
 @app.task(bind = True, default_retry_delay = 300, max_retries = 5, name='Face recognition')
 def perform_facerecognition_bgt(self, pel_uuid, peopleid, db='default'):
     # sourcery skip: remove-redundant-except-handler
+    result = {'story':"perform_facerecognition_bgt()\n","traceback":""}
+    result['story'] += f"inputs are {pel_uuid = } {peopleid = }, {db = }\n"
     try:
         log.info("perform_facerecognition ...start [+]")
         with transaction.atomic(using=utils.get_current_db_name()):
@@ -530,17 +540,22 @@ def perform_facerecognition_bgt(self, pel_uuid, peopleid, db='default'):
                 people_obj = People.objects.get(id=peopleid)
                 default_peopleimg = f'{settings.MEDIA_ROOT}/{people_obj.peopleimg.url.replace("/youtility4_media/", "")}'
                 if default_peopleimg and pel_att.people_event_pic:
-                    log.info(f"default image path:{default_peopleimg} and uploaded file path:{pel_att.people_event_pic}")
+                    images_info = f"default image path:{default_peopleimg} and uploaded file path:{pel_att.people_event_pic}"
+                    log.info(f'{images_info}')
+                    result['story'] += f'{images_info}\n'
                     from deepface import DeepFace
                     make_square(default_peopleimg, pel_att.people_event_pic)
                     fr_results = DeepFace.verify(img1_path=default_peopleimg, img2_path=pel_att.people_event_pic, enforce_detection=False)
                     log.info(f"deepface verification completed and results are {fr_results}")
+                    result['story'] += f"deepface verification completed and results are {fr_results}\n"
                     if PeopleEventlog.objects.update_fr_results(fr_results, pel_uuid, peopleid, db):
                         log.info("updation of fr_results in peopleeventlog is completed...")
     except ValueError as v:
         log.error("face recogntion image not found or face is not there...", exc_info = True)
+        result['traceback'] += f'{tb.format_exc()}'
     except Exception as e:
         log.error("something went wrong! while performing face-recogntion in background", exc_info = True)
+        result['traceback'] += f'{tb.format_exc()}'
         self.retry(e)
         raise
 
@@ -633,33 +648,39 @@ def perform_adhocmutation_bgt(self, data, db='default'):
 @shared_task(name="schedule_ppm_jobs")
 def create_ppm_job(jobid=None):
     F, d = {}, []
-    resp = {'story':"", 'traceback':""}
+    #resp = {'story':"", 'traceback':""}
     startdtz = enddtz = msg = resp = None
     from apps.activity.models import Job, Asset
     from apps.schedhuler.utils import (calculate_startdtz_enddtz_for_ppm, get_datetime_list,
                                        insert_into_jn_and_jnd, get_readable_dates, create_ppm_reminder)
+    result = {'story':"", "traceback":""}
     
     try:
+        #atomic transaction
         with transaction.atomic(using=utils.get_current_db_name()):
-            jobs = Job.objects.filter(
-                ~Q(jobname='NONE'),
-                ~Q(asset__runningstatus = Asset.RunningStatus.SCRAPPED),
-                identifier = Job.Identifier.PPM.value,
-                parent_id = 1
-            ).select_related('asset', 'pgroup', 'cuser', 'muser', 'people', 'qset').values(
-                *utils.JobFields.fields
-            )
             if jobid:
-                jobs = jobs.filter(id = jobid).values(*utils.JobFields.fields)
+                jobs = Job.objects.filter(id = jobid).values(*utils.JobFields.fields)
+            else:
+                jobs = Job.objects.filter(
+                    ~Q(jobname='NONE'),
+                    ~Q(asset__runningstatus = Asset.RunningStatus.SCRAPPED),
+                    identifier = Job.Identifier.PPM.value,
+                    parent_id = 1
+                ).select_related('asset', 'pgroup', 'cuser', 'muser', 'people', 'qset').values(
+                    *utils.JobFields.fields
+                )
+            
 
 
             if not jobs:
                 msg = "No jobs found schedhuling terminated"
+                result['story'] += f"{msg}\n"
                 log.warning(f"{msg}", exc_info = True)
             total_jobs = len(jobs)
 
             if total_jobs > 0 and jobs is not None:
                 log.info("processing jobs started found:= '%s' jobs", (len(jobs)))
+                result['story'] += f"total jobs found {total_jobs}\n"
                 for job in jobs:
                     startdtz, enddtz = calculate_startdtz_enddtz_for_ppm(job)
                     log.debug(f"Jobs to be schedhuled from startdatetime {startdtz} to enddatetime {enddtz}")
@@ -679,11 +700,14 @@ def create_ppm_job(jobid=None):
                         })
                 create_ppm_reminder(d)
                 if F:
+                    result['story'] += f'create_ppm_job failed job schedule list {pformat(F)}\n'
                     log.info(f"create_ppm_job Failed job schedule list:={pformat(F)}")
                     for key, value in list(F.items()):
                         log.info(f"create_ppm_job job_id: {key} | cron: {value}")
     except Exception as e:
         log.error("something went wrong create_ppm_job", exc_info=True)
+        
+    return resp if jobid else None
         
                 
 @shared_task(name="send_reminder_emails")
@@ -859,155 +883,123 @@ def autoclose_job():
     return resp
 
 
-def TicketEscalation():
+
+def update_ticket_log(id, item, result):
     try:
-        updateT= []
-        ids=""
-        core_utils.set_db_for_router('npl')
-        status=am.Ticket.Status.ESCALATED
-        logger.info("Escalated escalated")
-        sqlquery = av_raw_queries.getQuery("ticketlist")
-        print("ticketlist", sqlquery)
-        with connections['npl'].cursor() as cursor: 
-            cursor = connections['npl'].cursor()
-            records = av_utils.converttodict(cursor,sqlquery)
-            print("length of records",len(records))
-            ids, updateT = getescalationdata(records, ids, status , updateT) 
-            updateticket(cursor,records,ids,updateT)
-    except  Exception as e:
-        logger.error("TicketEscalation error: %s", (e)) 
-        
-def updateticket(cursor,records,ids,updateT):
+        t = Ticket.objects.get(id=id)
+        t.ticketlog['ticket_history'].append(item)
+        t.save()
+        result['story']+="ticketlog saved"
+    except Exception as e:
+        log.error("something went wron while saving ticketlog", exc_info=True)
+        result['traceback'] = f"{tb.format_exc()}"
+    return result
+
+def send_escalation_ticket_email(tkt, result):
+    #get records for email sending
+    records = utils.runrawsql(get_query('ticketmail'), [tkt['id']])
+    from django.template.loader import render_to_string
+    from django.conf import settings
+    from django.core.mail import  EmailMessage
     try:
-        print("updateT", updateT)
-        updateQuery= """UPDATE ticket AS t 
-                        SET status = e.status, level = e.level, mdtz =  e.mdtz::timestamp with time zone,
-                            modifieddatetime= e.modifieddatetime::timestamp with time zone ,
-                            assignedtopeople_id = e.assignedperson_id, assignedtogroup_id = e.assignedtogroup_id, 
-                            ticketlog = e.json_dictionary::json 
-                        FROM (VALUES %s) AS e(status, level, mdtz, modifieddatetime, assignedperson_id, assignedtogroup_id ,json_dictionary, id)
-                        WHERE t.id = e.id::BIGINT;"""             
-        print("length of records",len(records))
-        if len(records) > 0:
-            updateQuery= "".join(str(cursor.mogrify(updateQuery, (x,)), 'utf-8') for x in updateT)
-            updateQuery= " ".join(updateQuery.split())
-            # print(updateQuery, updateQuery)
-            cursor.execute(updateQuery)
-            sqlquery = av_raw_queries.getQuery("ticketmail")
-            sqlQuery= sqlquery % ids.replace(",","",1)
-            tdata= av_utils.converttodict(cursor, sqlQuery)
-            print("sqlquery",tdata, type(tdata))
-            sendEscalationTicketMail(tdata, 'None', 'CRON')
-            print("ticketmail query",tdata)
-    except  Exception as e:
-        logger.error("updateticket error: %s", (e)) 
-        
-def sendEscalationTicketMail(D, oper, param):
-    try:
-        if len(D) <= 0:
-            return
-        email_from = password = toaddr = body = subject= tdstyle = asset = location = ticketlog = ""
-        tdstyle= "style='background:#ABE7ED;font-weight:bold;font-size:14px;'"
-        email_from = settings.EMAIL_HOST_USER
-        for d in D:
-            asset, location, ticketlog = ticketassetlocationdata(d)    
-            print("sendEscalationTicketMail  asset, location ", asset, location)
-            toaddr= d["creatoremail"].replace(" ", "") if d["creatorid"] != 1 else ""
-            toaddr= d["modifiermail"].replace(" ", "") if d["modifierid"] != 1 else ""
-            toaddr += f', {d["peopleemail"].replace(" ", "")}' if d["assignedtopeople_id"] not in [1, " ", None] else ""
-            toaddr += f', {d["pgroupemail"].replace(" ", "")}' if d["assignedtogroup_id"] not in [1, " ", None, "" ] else ""
-            if param.strip('') in ['WEB', 'MOBILE']:
-                print("param web", param)
-                if oper.strip('') == 'add':
-                    subject = f'New Ticket : Ticket Number {str(d["ticketno"])}'
-                if oper.strip('') == 'edit': 
-                    subject = f'Ticket Updated: Ticket Number {str(d["ticketno"])} - Site Name {str(d["buname"])}'
-            if param.strip('') == 'CRON':
-                subject = f'Escalation Level {str(d["level"])}: Ticket Number {str(d["ticketno"])}'
-                print("param cronnn", param)
-                toaddr += f', {d["notifyemail"].replace(" ", "")}' if d["notify"]  not in [1, " ", None, "" ] else ""
-            body = "" + "<table style='background:#EEF1F5;' cellpadding=8 cellspacing=2>"
-            body += "<tr> <td align='right' %s>%s</td> <td> %s    </td> </tr>" % (tdstyle, "Description", str(d["ticketdesc"]))
-            body += "<tr> <td align='right' %s>%s</td> <td> %s    </td> </tr>" % (tdstyle, "Template", str(d["tescalationtemplate"]))
-            body += "<tr> <td align='right' %s>%s</td> <td> %s    </td> </tr>" % (tdstyle, "Priority", str(d["priority"]))
-            body += "<tr> <td align='right' %s>%s</td> <td> %s    </td> </tr>" % (tdstyle, "Status", str(d["status"]) if d["level"] != '0' else str(d["status"]) + " - " + str(d["level"]))
-            body += "<tr> <td align='right' %s>%s</td> <td> %s    </td> </tr>" % (tdstyle, "Created On", str(d["cdtz"] + datetime.timedelta(hours=5, minutes=30))[:19])
-            if asset not in['NONE'] or location not in ["NONE"]:
-                body += "<tr> <td align='right' %s>%s</td> <td> %s    </td> </tr>" % (tdstyle, "Asset/Smartplace", str(asset))
-                # body += "<tr> <td align='right' %s>%s</td> <td> %s    </td> </tr>" % (tdstyle, "Location", str(location))
-            if oper.strip('') not in ['add', 'None']: 
-                body += "<tr> <td align='right' %s>%s</td><td>%s</td></tr>" % (tdstyle, "Modified By", str(d["modifiername"]))
-                body += "<tr> <td align='right' %s>%s</td><td>%s</td></tr>" % (tdstyle, "Modified On", str(d["modifiedon"] + datetime.timedelta(hours=5, minutes=30))[:19])
-            body += "<tr> <td align='right' %s>%s</td> <td> %s    </td> </tr>" % (tdstyle, "Assigned To", str(d["peoplename"]) if (d["assignedtopeople_id"] not in [1, " ", None]) else str(d["groupname"]))
-            body += "<tr> <td align='right' %s>%s</td> <td> %s    </td> </tr>" % (tdstyle, "Comments", "NA" if d["comments"] == '' else str(d["comments"]))
-            if oper.strip('') == 'None': 
-                body += "<tr> <td align='right' %s>%s</td> <td> %s    </td> </tr>" % (tdstyle, "Escalation Details", "NA" if d["body"] == '' else str(d["body"]))
-                body += "<tr> <td align='right' %s>%s</td> <td> %s %s </td> </tr>" % (tdstyle, "Escalated In", "" if d["frequencyvalue"] is None else d["frequencyvalue"], "" if d["frequency"] is None else str(d["frequency"]))
-            body += "<tr> <td align='right' %s>%s</td> <td> %s    </td> </tr>" % (tdstyle, "Next Escalation", str(d["next_escalation"]))
-            body+= "</table>"
-            print("sendEscalationTicketMail",toaddr.split(','), toaddr)
-            toaddress = [x.strip(' ') for x in toaddr.split(',')]
-            print("sendEscalationTicketMail",toaddress)
-            send_mail(subject, '', email_from, toaddress, fail_silently=False,html_message=body)
-    except  Exception as e:
-        logger.error("TicketEscalation error: %s", (e)) 
- 
-def ticketassetlocationdata(d):
-    try:
-        asset = location = ""
-        if type(d["ticketlog"]) is str:
-            d["ticketlog"] = json.loads(d["ticketlog"])
-        print("ticketlog",d["ticketlog"] , type(d["ticketlog"]))
-        print("ticketlog", d["ticketlog"]['statusjbdata'])
-        if len(d["ticketlog"]['statusjbdata']) > 0:
-            for i in d["ticketlog"]['statusjbdata']:
-                asset = json.loads(i)['asset']
-                location = json.loads(i)['location']
-                break   
-    except  Exception as e:
-        logger.error("getescalationdata error: %s", (e))   
-    return asset, location, d["ticketlog"]
-                      
-def getescalationdata(records, ids, status ,updateT):
-    try:    
-        assignedto = 'NONE'
-        for td in records:
-            print("getescalationdata", td)
-            print("getescalationdata", type(td['ticketlog']), td['ticketlog'])
-            asset, location, tlog = ticketassetlocationdata(td)
-            print("getescalationdata  asset, location ", asset, location, type(asset))
-            ids += f',{td["id"]} '
-            if (td["escgrpid"] =='1' and td["escpersonid"] =='1'):
-                print("if",td["groupname"], td["peoplename"] ,td["escgroupname"],td["escpeoplename"])
-                assignedperson_id =td["assignedtopeople"]
-                assignedtogroup_id =td["assignedtogroup"]
-                assignedto = assignedto
-            else:
-                assignedperson_id=td["escpersonid"]
-                assignedtogroup_id =td["escgrpid"]
-                if str(td["escgroupname"]) not in ["None", "NONE"]:
-                    assignedto=td["escgroupname"]
-                elif str(td["escpeoplename"]) not in ["None", "NONE"]:
-                    assignedto=td["escpeoplename"]
-                else:
-                    assignedto = assignedto
-                print("else",td["groupname"], td["peoplename"] ,td["escgroupname"],td["escpeoplename"])
-            ticketlog = {
-                "performedby": "",
-                "status": f"{status}-" + str(td["level"] + 1),
-                "datetime": datetime.datetime.now().strftime(
-                    "%Y-%m-%d %H:%M:%S"
-                ),
-                "comments": str(td["comments"]),
-                "assignedto": assignedto,
-                "asset": str(asset), "location": str(location)  # change this with actual values.
+        for rec in records:
+            subject = f"Escalation Level {rec['level']}: Ticket Number {rec['id']}"
+            toemails = []
+            if rec['creatorid'] != 1: toemails.append(rec['creatoremail'])
+            if rec['modifierid'] != 1: toemails.append(rec['modifiermail'])
+            if rec['assignedtopeople_id'] not in [1, None]: toemails.append(rec['peopleemail'])
+            if rec['assignedtogroup_id'] not in [1, None]: toemails.append(rec['pgroupemail'])
+            if rec['notify'] not in [1, None, ""]: toemails.append(rec['notifyemail'].replace(" ", ''))
+            msg = EmailMessage()
+            context = {
+                'desc'       : rec['ticketdesc'],
+                'template'   : rec['tescalationtemplate'],
+                'priority'   : rec['priority'],
+                'status'     : rec['status'],
+                'createdon'  : str(rec['cdtz'] + timedelta(hours=5, minutes=30))[:19],
+                'modifiedon' : str(rec['mdtz'] + timedelta(hours=5, minutes=30))[:19],
+                'modifiedby' : rec['modifiername'],
+                'assignedto' : str(rec["peoplename"]) if (rec["assignedtopeople_id"] not in [1, " ", None]) else str(rec["groupname"]),
+                'comments'   : "NA" if rec["comments"] == '' else str(rec["comments"]),
+                'isescalated': "True",
+                'escdetails' : "NA" if rec["body"] == '' else str(rec["body"]),
+                'escin'      : f'{rec["frequencyvalue"]} {rec["frequency"]}',
+                'level'      : rec['level'],
+                'next_esc'   : rec['next_escalation'],
+                'subject'    : subject
             }
-            print("ticketlog",ticketlog,  tlog)
-            # json_dictionary = json.loads(td["ticketlog"])
-            json_dictionary = tlog
-            for key in json_dictionary:
-                json_dictionary[key].append(json.dumps(ticketlog, default=str))
-            updateT.append((status,td["level"]+1, str(td['exp_time']), str(td['exp_time']), assignedperson_id, assignedtogroup_id ,json.dumps(json_dictionary), td["id"]))   
-    except  Exception as e:
-        logger.error("getescalationdata error: %s", (e))             
-    return ids, updateT  
+            html_message = render_to_string('ticket_email.html', context=context)
+            msg.body = html_message
+            msg.subject = subject
+            msg.from_email = settings.EMAIL_HOST_USER
+            msg.content_subtype = 'html'
+            msg.to = toemails
+            msg.send()
+            log.info(f"mail sent, record_id:{rec['id']}")
+    except Exception as e:
+        log.error("something went wrong while sending escalation email", exc_info=True)
+        result['traceback'] = tb.format_exc()
+    return result
+                
+            
+            
+            
+
+
+def update_ticket_data(tickets, result):
+    from django.utils import timezone
+    now = timezone.now().replace(microsecond=0, second=0)
+    import json
+    if tickets: result['story']+="updating ticket data started"
+    for tkt in tickets:
+        ic(tkt)
+        #update tkt level, mdtz, modigiedon
+        if tkt['escgrpid'] in [1, '1', None] and tkt['escpersonid'] in [1, '1', None]:
+            assignedperson_id = tkt['assignedtopeople']
+            assignedtogroup_id = tkt['assignedtogroup']
+        else:
+            assignedperson_id = tkt['escpersonid']
+            assignedtogroup_id = tkt['escgrpid']
+        ticketlog = json.loads(tkt['ticketlog'])
+        history_item = {
+            "people_id"     :tkt['cuser_id'],
+            "when"          : str(now),
+            "who"           : tkt['who'],
+            "action"        : "created",
+            "details"       : [f"Ticket is escalated from level {tkt['level']} to {tkt['level']+1}"],
+            "previous_state": ticketlog['ticket_history'][-1]['previous_state'] if ticketlog['ticket_history'] else {},
+        }
+
+        if t := Ticket.objects.filter(id=tkt['id']).update(
+            mdtz=tkt['exp_time'],
+            modifieddatetime=tkt['exp_time'],
+            level=tkt['level'] + 1,
+            assignedtopeople_id=assignedperson_id,
+            assignedtogroup_id=assignedtogroup_id,
+            isescalated=True,
+        ):
+            
+            result['story'] += f"ticket updated with these values mdtz & modifieddatetime \
+            {tkt['exp_time']} {tkt['level'] = } {assignedperson_id = } {assignedtogroup_id = } level= {tkt['level']+1}"
+            result = update_ticket_log(tkt['id'], history_item, result)
+            result = send_escalation_ticket_email(tkt, result)
+    return result
+        
+
+
+
+@shared_task(name="ticket_escalation")
+def ticket_escalation():
+    result = {}
+
+    try:
+        #get all records of tickets which can be escalated
+        tickets = utils.runrawsql(get_query('get_ticketlist_for_escalation'))
+        result['story'] = f"Total tickets found for escalation are {len(tickets)}\n"
+        #update ticket_history, assignments to people & groups, level, mdtz, modifiedon
+        result = update_ticket_data(tickets, result)
+    except Exception as e:
+        log.error("somwthing went wrong while ticket escalation", exc_info=True)
+        result['traceback'] = tb.format_exc()
+    return result
+        

@@ -2,6 +2,7 @@ from django import forms
 from .models import Ticket, EscalationMatrix
 from apps.onboarding.models import TypeAssist
 from apps.core import utils
+from apps.peoples.models import Pgroup
 
 class TicketForm(forms.ModelForm):
     required_css_class = "required"
@@ -10,12 +11,12 @@ class TicketForm(forms.ModelForm):
         model = Ticket
         fields = [
             'ticketdesc', 'assignedtopeople', 'assignedtogroup', 'priority', 'ctzoffset',
-            'ticketcategory', 'status', 'comments', 'location', 'cuser', 'cdtz',
+            'ticketcategory', 'status', 'comments', 'location', 'cdtz',
             'isescalated', 'ticketsource'
         ]
         labels = {
-            'assignedtopeople':'People', 'assignedtogroup':"User Group", 'ticketdesc':"Subject",
-            'cuser':"Created By", 'cdtz':"Created On", 'ticketcategory':"Queue",
+            'assignedtopeople':'User', 'assignedtogroup':"User Group", 'ticketdesc':"Subject",
+            'cdtz':"Created On", 'ticketcategory':"Queue",
             "isescalated":"Is Escalated"
         }
         widgets={
@@ -27,7 +28,9 @@ class TicketForm(forms.ModelForm):
     
     def __init__(self, *args, **kwargs):
         self.request = kwargs.pop('request')
+        S = self.request.session
         super().__init__(*args, **kwargs)
+        self.fields['assignedtogroup'].queryset = Pgroup.objects.filter(bu_id__in = S['assignedsites'], identifier__tacode__in = ['PEOPLEGROUP', 'PEOPLE_GROUP'])
         utils.initailize_form_fields(self)
         self.fields['assignedtogroup'].required=True
         self.fields['ticketdesc'].required=True

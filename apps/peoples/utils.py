@@ -14,7 +14,7 @@ def save_jsonform(peoplepref_form, p):
         logger.info('saving jsonform ...')
         ic(peoplepref_form.cleaned_data)
         for k in ['blacklist', 'assignsitegroup', 'tempincludes', 'currentaddress', 'permanentaddress',
-                     'showalltemplates', 'showtemplatebasedonfilter', 'mobilecapability',
+                     'showalltemplates', 'showtemplatebasedonfilter', 'mobilecapability', 'isemergencycontact',
                      'portletcapability', 'reportcapability', 'webcapability']:
             p.people_extras[k] = peoplepref_form.cleaned_data.get(k)
     except Exception:
@@ -46,6 +46,7 @@ def get_people_prefform(people, session, request):
                 'webcapability',
                 'currentaddress',
                 'permanentaddress',
+                'isemergencycontact'
             )
         }
 
@@ -59,11 +60,17 @@ def get_people_prefform(people, session, request):
 
 def save_cuser_muser(instance, user, create=None):
     from django.utils import timezone
+    #instance is already created
+    logger.debug(f"while saving cuser and muser {instance.muser = } {instance.cuser = } {instance.mdtz = } {instance.cdtz = }")
     if instance.cuser is not None:
+        logger.info("instance is already created")
         instance.muser = user
         instance.mdtz = timezone.now().replace(microsecond=0)
+    #instance is being created
     else:
+        logger.info("instance is being created")
         instance.cuser = instance.muser = user
+        instance.cdtz = instance.mdtz = timezone.now().replace(microsecond=0)
     return instance
 
 
@@ -97,6 +104,7 @@ def save_userinfo(instance, user, session, client=None, bu=None, create=True):
                 instance, user, session, client, bu)
             instance = save_cuser_muser(instance, user)
             instance.save()
+            logger.info(f"while saving cdtz and mdtz id {instance.cdtz=} {instance.mdtz=}")
             logger.info(f'{msg} DONE')
         except (KeyError, ObjectDoesNotExist):
             instance.tenant = None
@@ -145,7 +153,7 @@ def save_tenant_client_info(request):
 
 def get_caps_from_db():
     from apps.peoples.models import Capability
-    from apps.core.raw_queries import query
+    from apps.core.raw_queries import get_query
     web, mob, portlet, report = [], [], [], []
     
     web     = cache.get('webcaps')
@@ -154,7 +162,7 @@ def get_caps_from_db():
     report  = cache.get('reportcaps')
     
     if not web:
-        web = Capability.objects.raw(query['get_web_caps_for_client'])
+        web = Capability.objects.raw(get_query('get_web_caps_for_client'))
         web = get_cap_choices_for_clientform(web, Capability.Cfor.WEB)
         cache.set('webcaps', web, 1*60)
     if not mob:
@@ -176,7 +184,7 @@ def create_caps_choices_for_clientform():
 
 def create_caps_choices_for_peopleform(client):
     from apps.peoples.models import Capability
-    from apps.core.raw_queries import query
+    from apps.core.raw_queries import get_query
 
     web, mob, portlet, report = [], [], [], []
     
@@ -187,7 +195,7 @@ def create_caps_choices_for_peopleform(client):
     
     if client:
         if not web:
-            caps = Capability.objects.raw(query['get_web_caps_for_client'])
+            caps = Capability.objects.raw(get_query('get_web_caps_for_client'))
             web = make_choices(client.bupreferences['webcapability'], caps)
             cache.set('webcaps', web, 1*60)
         if not mob:
@@ -320,9 +328,9 @@ def get_caps_choices(client=None, cfor=None,  session=None, people=None):
     '''get choices for capability clientform 
         or save choices in session'''
     from apps.peoples.models import Capability
-    from apps.core.raw_queries import query
+    from apps.core.raw_queries import get_query
     from icecream import ic
-    caps = Capability.objects.raw(query['get_web_caps_for_client'])
+    caps = Capability.objects.raw(get_query('get_web_caps_for_client'))
     # for cap in caps:
     # print(f'Code {cap.capscode} Depth {cap.depth}')
     if cfor == Capability.Cfor.MOB:
@@ -333,7 +341,7 @@ def get_caps_choices(client=None, cfor=None,  session=None, people=None):
         logger.debug('got caps from cache...')
     if not caps:
         logger.debug('got caps from db...')
-        caps = Capability.objects.raw(query['get_web_caps_for_client'])
+        caps = Capability.objects.raw(get_query('get_web_caps_for_client'))
         cache.set('caps', caps, 1*60)
         logger.debug('results are stored in cache... DONE')
 
@@ -370,19 +378,18 @@ def save_pgroupbelonging(pg, request):
     dbg("saving pgbelonging for pgroup %s", (pg))
     from apps.onboarding.models import Bt
     peoples = request.POST.getlist('peoples[]')
-    ic(peoples)
-    client = Bt.objects.get(id=int(request.session['client_id']))
-    site = Bt.objects.get(id=int(request.session['bu_id']))
+    S = request.session
+    #delete old grouop info
+    ic(pm.Pgbelonging.objects.filter(pgroup = pg).delete())
     if peoples:
         try:
-            print('request>POST', dict(request.POST), peoples)
             for i, item in enumerate(peoples):
                 people = pm.People.objects.get(id=int(item))
                 pgb = pm.Pgbelonging.objects.create(
                     pgroup=pg,
                     people=people,
-                    client=client,
-                    bu=site
+                    client_id=S['client_id'],
+                    bu_id=S['bu_id']
                 )
                 if request.session.get('wizard_data'):
                     request.session['wizard_data']['pgbids'].append(pgb.id)

@@ -964,152 +964,6 @@ class GetTaskFormJobneed(LoginRequiredMixin, View):
         log.info("saving tasks datasource[jobneed]")
 
 
-
-class Ticket(LoginRequiredMixin, View):
-    model = am.Jobneed
-    form_class = scd_forms.TicketForm
-    template_path = 'schedhuler/ticket_form.html'
-    initial = {
-        'starttime'  : datetime.utcnow().replace(microsecond = 0),
-        'endtime'    : datetime.utcnow().replace(microsecond = 0),
-        'frequency'  : am.Jobneed.Frequency.NONE,
-        'gpslocation': '0.0,0.0',
-        'scantype'   : am.Jobneed.Scantype.NONE,
-        'jobstatus'  : am.Jobneed.JobStatus.NEW,
-        'priority'   : am.Jobneed.Priority.MEDIUM,
-    }
-
-    def get(self, request, *args, **kwargs):
-        log.info('create ticket requested!')
-        if request.GET.get('delete_ticket'):
-            self.delete_ticket(self, request)
-        cxt = {
-            'ticketform':self.form_class(initial = self.initial)
-        }
-        return render(request, self.template_path, context = cxt)
-
-    def post(self, request, *args, **kwargs):
-        log.info('ticket form submitted!')
-        data, create = QueryDict(request.POST['formData']), True
-        utils.display_post_data(data)
-        if pk := request.POST.get('pk', None):
-            obj = utils.get_model_obj(pk, request, {'model': self.model})
-            form = self.form_class(
-                instance = obj, data = data, initial = self.initial)
-            log.info("retrieved existing ticket whose ticketno:= '%s'", (obj.ticketno))
-            create = False
-        else:
-            form = self.form_class(data = data, initial = self.initial)
-            log.info("new ticket submitted following is the form-data:\n%s\n", (pformat(form.data)))
-        response = None
-        try:
-            with transaction.atomic(using = utils.get_current_db_name()):
-                if form.is_valid():
-                    response = self.process_valid_form(request, form, create)
-                else:
-                    response = self.process_invalid_form(
-                        form)
-        except Exception:
-            log.critical(
-                "failed to process form, something went wrong", exc_info = True)
-            response = rp.JsonResponse(
-                {'errors': 'Failed to process form, something went wrong'}, status = 404)
-        return response
-
-    def process_valid_form(self, request, form, create):
-        resp = None
-        try:
-            ticket             = form.save(commit = False)
-            ticket.qset_id      = -1
-            ticket.performedby_id = -1
-            ticket.pgroup_id     = -1
-            ticket.parent_id      = -1
-            ticket.job_id       = -1
-            ticket.save()
-            ticket = putils.save_userinfo(ticket, request.user, create = create)
-        except Exception as ex:
-            log.critical("ticket form is processing failed", exc_info = True)
-            resp = rp.JsonResponse(
-                {'error': "saving schd_taskform failed..."}, status = 404)
-            raise ex
-        else:
-            log.info("ticket form is processed successfully")
-            resp = rp.JsonResponse({'jobdesc': ticket.jobdesc,
-                'url': reverse("schedhuler:update_ticket", args=[ticket.id])},
-                status = 200)
-        log.info("ticket form processing/saving [ END ]")
-        return resp
-
-    @staticmethod
-    def process_invalid_form(form):
-        log.info(
-            "processing invalidt ticket form sending errors to the client [ START ]")
-        cxt = {"errors": form.errors}
-        log.info(
-            "processing invalidt ticket form sending errors to the client [ END ]")
-        return rp.JsonResponse(cxt, status = 404)
-
-    def delete_ticket(self, request):
-        raise NotImplementedError()
-
-class RetriveTickets(LoginRequiredMixin, View):
-    model = am.Jobneed
-    template_path = 'schedhuler/ticket_list.html'
-    fields = [
-        'cdtz', 'ticketno', 'bu__buname', 'pgroup__name',
-        'jobdesc', 'people__peoplename',  'performedby__peoplename',
-        'ticketcategory__taname', 'expirydatetime', 'jobstatus', 'priority',
-        'cuser__peoplename', 'id']
-    related = [
-        'pgroup', 'people', 'cuser',
-        'performedby', 'bu', 'ticketcategory']
-
-    def get(self, request, *args, **kwargs):
-        '''returns the paginated results from db'''
-        response = None
-        try:
-            log.info('Retrieve Ticket view')
-            objects = self.model.objects.select_related(
-                *self.related).filter(
-                    ~Q(jobdesc='NONE'), parent__jobdesc='NONE', identifier='TICKET'
-            ).values(*self.fields).order_by('-cdtz')
-            log.info(f'Ticket objects {len(objects)} retrieved from db' if objects else "No Records!")
-
-            cxt = self.paginate_results(request, objects)
-            log.info('Results paginated'if objects else "")
-            response = render(request, self.template_path, context = cxt)
-        except EmptyResultSet:
-            log.warning('empty objects retrieved', exc_info = True)
-            response = render(request, self.template_path, context = cxt)
-            messages.error(request, 'List view not found',
-                           'alert alert-danger')
-        except Exception:
-            log.critical(
-                'something went wrong', exc_info = True)
-            messages.error(request, 'Something went wrong',
-                           "alert alert-danger")
-            response = redirect('/dashboard')
-        return response
-
-    @staticmethod
-    def paginate_results(request, objects):
-        '''paginate the results'''
-        log.info('Pagination Start'if objects else "")
-        from .filters import TicketListFilter
-        if request.GET:
-            objects = TicketListFilter(request.GET, queryset = objects).qs
-        filterform = TicketListFilter().form
-        page = request.GET.get('page', 1)
-        paginator = Paginator(objects, 25)
-        try:
-            ticket_list = paginator.page(page)
-        except PageNotAnInteger:
-            ticket_list = paginator.page(1)
-        except EmptyPage:
-            ticket_list = paginator.page(paginator.num_pages)
-        return {'ticket_list': ticket_list, 'ticket_filter': filterform}
-
-
 class JobneedTours(LoginRequiredMixin, View):
     params = {
         'model'        : am.Jobneed,
@@ -1118,7 +972,7 @@ class JobneedTours(LoginRequiredMixin, View):
         'fields'       : ['jobdesc', 'people__peoplename', 'pgroup__groupname', 'id', 'ctzoffset',
             'plandatetime', 'expirydatetime', 'jobstatus', 'gracetime', 'performedby__peoplename', 'assignedto'],
         'related': ['pgroup',  'ticketcategory', 'asset', 'client',
-               'frequency', 'job', 'qset', 'people', 'parent', 'bu'],
+                'job', 'qset', 'people', 'parent', 'bu'],
         'form_class':scd_forms.I_TourFormJobneed,
         'subform' : scd_forms.Child_I_TourFormJobneed,
         'initial': {
@@ -1152,10 +1006,10 @@ class JobneedTours(LoginRequiredMixin, View):
         
         if R.get('id'):
             obj = P['model'].objects.get(id = R['id'])
-            form = P['form_class'](instance = obj, initial = P['initial'])
+            form = P['form_class'](instance = obj, initial = P['initial'], request=request)
             log.info("object retrieved %s", (obj.jobdesc))
             checkpoints = self.get_checkpoints(P, obj = obj)
-            cxt = {'internaltourform': form, 'child_internaltour': P['subform'](prefix='child'), 'edit': True,
+            cxt = {'internaltourform': form, 'child_internaltour': P['subform'](prefix='child', request=request), 'edit': True,
                 'checkpoints': checkpoints}
             return render(request, P['template_form'], context = cxt)
     
@@ -1170,7 +1024,7 @@ class JobneedTours(LoginRequiredMixin, View):
                 'people', 'job', 'client', 'bu',
                 'ticketcategory'
             ).filter(parent_id = obj.id).values(
-                'asset__assetname', 'asset__id', 'qset__id',
+                'asset__assetname', 'asset__id', 'qset__id', 'ctzoffset',
                 'qset__qsetname', 'plandatetime', 'expirydatetime',
                 'gracetime', 'seqno', 'jobstatus', 'id').order_by('seqno')
 
@@ -1192,7 +1046,7 @@ class JobneedExternalTours(LoginRequiredMixin, View):
         'fields'       : ['jobdesc', 'people__peoplename', 'pgroup__groupname', 'id', 'ctzoffset','bu__buname', 'bu__solid',
             'plandatetime', 'expirydatetime', 'jobstatus', 'gracetime', 'performedby__peoplename', 'seqno', 'qset__qsetname'],
         'related': ['pgroup',  'ticketcategory', 'asset', 'client',
-               'frequency', 'job', 'qset', 'people', 'parent', 'bu'],
+             'job', 'qset', 'people', 'parent', 'bu'],
         'form_class': scd_forms.E_TourFormJobneed,
         'initial'   : {
             'identifier': am.Jobneed.Identifier.EXTERNALTOUR,

@@ -9,6 +9,7 @@ urlpatterns = [
     path('checkpoint/', views.Checkpoint.as_view(), name='checkpoint'),
     path('smartplace/', views.Smartplace.as_view(), name='smartplace'),
     path('ppm/', views.PPMView.as_view(), name='ppm'),
+    path('ppm_jobneed/', views.PPMJobneedView.as_view(), name='ppmjobneed'),
     path('asset/', views.Asset.as_view(), name='asset'),
     path('location/', views.LocationView.as_view(), name='location'),
     path('delete_qsb/', views.deleteQSB, name='delete_qsb'),

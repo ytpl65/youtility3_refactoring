@@ -155,14 +155,31 @@ class PELManager(models.Manager):
         if not isinstance(mdtz, datetime):
             mdtz = datetime.strptime(mdtz, "%Y-%m-%d %H:%M:%S")
         qset = self.filter(
-            mdtz__gte = mdtz,
+            datefor__gte = mdtz,
             people_id = people_id,
             bu_id = bu_id,
-            client_id = client_id
-        ).select_related('people', 'bu', 'client', 'verifiedby', 'peventtype', 'geofence', 'shift').values(
+            client_id = client_id,
+            peventtype__tacode__in = ['SELF', 'MARK']
+        ).select_related('people', 'bu', 'client', 'verifiedby', 'peventtype', 'geofence', 'shift').order_by('-datefor').values(
             'uuid', 'people_id', 'client_id', 'bu_id','shift_id', 'verifiedby_id', 'geofence_id', 'id',
             'peventtype_id', 'transportmodes', 'punchintime', 'punchouttime', 'datefor', 'distance',
             'duration', 'expamt', 'accuracy', 'deviceid', 'startlocation', 'endlocation', 'ctzoffset',
             'remarks', 'facerecognitionin', 'facerecognitionout', 'otherlocation', 'reference'
+        )
+        return qset or self.none()
+    
+    def get_sos_listview(self, request):
+        R, S = request.GET, request.session
+        P = json.loads(R['params'])
+        qset = self.filter(
+            bu_id__in = S['assignedsites'],
+            client_id = S['client_id'],
+            peventtype__tacode='SOS',
+            datefor__gte = P['from'],
+            datefor__lte = P['to']
+        ).select_related('people', 'bu').values(
+            'id', 'ctzoffset', 'people__peoplename', 'cdtz',
+            'people__peoplecode', 'people__mobno', 'people__email',
+            'bu__buname'
         )
         return qset or self.none()

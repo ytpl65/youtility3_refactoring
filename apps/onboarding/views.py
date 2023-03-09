@@ -28,6 +28,7 @@ from apps.onboarding import admin as ob_admin
 from django.db import IntegrityError
 import apps.activity.models as am
 import apps.attendance.models as atm
+from apps.y_helpdesk.models import Ticket
 from pprint import pformat
 CACHE_TTL = getattr(settings, 'CACHE_TTL', DEFAULT_TIMEOUT)
 logger = logging.getLogger('django')
@@ -1820,6 +1821,8 @@ class RPDashboard(LoginRequiredMixin, View):
             from itertools import chain
             asset_chart_arr, asset_chart_total = am.Asset.objects.get_assetchart_data(request)
             alert_chart_arr, alert_chart_total = am.Jobneed.objects.get_alertchart_data(request)
+            ticket_chart_arr, ticket_chart_total = Ticket.objects.get_ticket_stats_for_dashboard(request)
+            ppmtask_arr = am.Jobneed.objects.get_ppmchart_data(request)
             task_arr = am.Jobneed.objects.get_taskchart_data(request)
             tour_arr = am.Jobneed.objects.get_tourchart_data(request)
 
@@ -1830,6 +1833,11 @@ class RPDashboard(LoginRequiredMixin, View):
                     'completed_tasks_count' : task_arr[1],
                     'autoclosed_tasks_count': task_arr[2],
                     
+                    'totalschd_ppmtasks_count' : ppmtask_arr[-1],
+                    'assigned_ppmtasks_count'  : ppmtask_arr[0],
+                    'completed_ppmtasks_count' : ppmtask_arr[1],
+                    'autoclosed_ppmtasks_count': ppmtask_arr[2],
+                    
                     'totalscheduled_tours_count'    : tour_arr[-1],
                     'completed_tours_count'         : tour_arr[0],
                     'inprogress_tours_count'        : tour_arr[1],
@@ -1837,8 +1845,11 @@ class RPDashboard(LoginRequiredMixin, View):
                     
                     'assetchartdata'        : asset_chart_arr,
                     'alertchartdata'        : alert_chart_arr,
+                    'ticketchartdata'        : ticket_chart_arr,
+                    
                     'assetchart_total_count': asset_chart_total,
                     'alertchart_total_count': alert_chart_total,
+                    'ticketchart_total_count': ticket_chart_total,
                     
                     'sos_count'    : P['pel_model'].objects.get_sos_count_forcard(request),
                     'IR_count'     : P['jn_model'].objects.get_ir_count_forcard(request),

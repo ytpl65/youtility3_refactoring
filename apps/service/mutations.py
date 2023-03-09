@@ -285,7 +285,8 @@ class SyncMutation(graphene.Mutation):
         import zipfile
         from apps.service.utils import call_service_based_on_filename
         try:
-            log.info(f"sync inputs: totalrecords:{totalrecords} filesize:{filesize} typeof file:{type(file)}")
+            id = file.name.split('_')[1].split('.')[0]
+            log.info(f"sync inputs: totalrecords:{totalrecords} filesize:{filesize} typeof file:{type(file)} by user with id {id}")
             db = get_current_db_name()
             log.info(f'the type of file is {type(file)}')
             with zipfile.ZipFile(file) as zip:
@@ -297,7 +298,7 @@ class SyncMutation(graphene.Mutation):
                         data = tasks.get_json_data(f)
                         # raise ValueError
                         TR += len(data)
-                        call_service_based_on_filename(data, file.filename, db = db, request=info.context)
+                        call_service_based_on_filename(data, file.filename, db = db, request=info.context, user=id)
                         ic(data)
                 if filesize !=  zipsize:
                     log.error(f"file size is not matched with the actual zipfile {filesize} x {zipsize}")
@@ -310,5 +311,7 @@ class SyncMutation(graphene.Mutation):
             return SyncMutation(rc = 1)
         else:
             return SyncMutation(rc = 0)
+
+
 
 

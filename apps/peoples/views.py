@@ -852,9 +852,9 @@ class PeopleView(LoginRequiredMixin, View):
 
         # return cap_form empty
         if R.get('action', None) == 'form':
-            cxt = {'peopleform': self.params['form_class'](),
+            cxt = {'peopleform': self.params['form_class'](request=request),
                    'pref_form': self.params['json_form'](session = request.session, request=request),
-                   'ta_form': obf.TypeAssistForm(auto_id = False),
+                   'ta_form': obf.TypeAssistForm(auto_id = False, request=request),
                    'msg': "create people requested"}
             resp = render(request, self.params['template_form'], cxt)
 
@@ -867,9 +867,9 @@ class PeopleView(LoginRequiredMixin, View):
         elif R.get('id', None):
             from .utils import get_people_prefform
             people = utils.get_model_obj(R['id'], request, self.params)
-            cxt = {'peopleform': self.params['form_class'](instance = people),
+            cxt = {'peopleform': self.params['form_class'](instance = people, request=request),
                    'pref_form': get_people_prefform(people, request.session, request),
-                   'ta_form': obf.TypeAssistForm(auto_id = False),
+                   'ta_form': obf.TypeAssistForm(auto_id = False, request=request),
                    'msg': "update people requested"}
             resp = render(request, self.params['template_form'], context = cxt)
         return resp
@@ -882,7 +882,7 @@ class PeopleView(LoginRequiredMixin, View):
             if pk := request.POST.get('pk', None):
                 msg, create = "people_view", False  
                 people = utils.get_model_obj(pk, request,  self.params)
-                form = self.params['form_class'](data, request.FILES, instance = people)
+                form = self.params['form_class'](data, request.FILES, instance = people, request=request)
             else:
                 form = self.params['form_class'](data, request = request)
             ic(form.instance.id)

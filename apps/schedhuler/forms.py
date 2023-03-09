@@ -26,6 +26,7 @@ class Schd_I_TourJobForm(JobForm):
     def __init__(self, *args, **kwargs):
         """Initializes form add atttibutes and classes here."""
         self.request = kwargs.pop('request', None)
+        S = self.request.session
         super().__init__(*args, **kwargs)
         self.fields['fromdate'].input_formats  = settings.DATETIME_INPUT_FORMATS
         self.fields['uptodate'].input_formats  = settings.DATETIME_INPUT_FORMATS
@@ -34,11 +35,13 @@ class Schd_I_TourJobForm(JobForm):
         self.fields['starttime'].widget.attrs   = {"style": "display:none"}
         self.fields['endtime'].widget.attrs     = {"style": "display:none"}
         self.fields['frequency'].widget.attrs   = {"style": "display:none"}
-        self.fields['ticketcategory'].queryset = ob.TypeAssist.objects.filter(tatype__tacode="TICKETCATEGORY")
-        self.fields['pgroup'].queryset = pm.Pgroup.objects.filter(bu_id__in = self.request.session['assignedsites'], identifier__tacode__in = ['PEOPLEGROUP', 'PEOPLE_GROUP'])
-        self.fields['people'].queryset = pm.People.objects.filter(bu_id__in = self.request.session['assignedsites'], client_id = self.request.session['client_id'])
-        #self.fields['asset'].queryset = am.Asset.objects.filter(~Q(runningstatus='SCRAPPED'), identifier__in =["ASSET", 'CHECKPOINT'], client_id = self.request.session['client_id'])
+        
+        #filters for dropdowm fields
+        self.fields['ticketcategory'].queryset = ob.TypeAssist.objects.filter(tatype__tacode="NOTIFYCATEGORY", client_id = S['client_id'])
+        self.fields['pgroup'].queryset = pm.Pgroup.objects.filter(bu_id__in = S['assignedsites'], identifier__tacode__in = ['PEOPLEGROUP', 'PEOPLE_GROUP'])
+        self.fields['people'].queryset = pm.People.objects.filter(bu_id__in = S['assignedsites'], client_id = S['client_id'])
         utils.initailize_form_fields(self)
+        
 
     def clean(self):
         super().clean()
@@ -97,6 +100,8 @@ class SchdChild_I_TourJobForm(JobForm): # job
         self.request = kwargs.pop('request', None)
         super().__init__(*args, **kwargs)
         self.fields['seqno'].widget.attrs = {'readonly':True}
+        
+        #filters for dropdown fields
         self.fields['qset'].queryset = am.QuestionSet.objects.get_proper_checklist_for_scheduling(self.request, ['CHECKLIST', 'QUESTIONSET'])
         self.fields['asset'].queryset = am.Asset.objects.filter(identifier__in = ['CHECKPOINT', "ASSET"], client_id = self.request.session['client_id'])
         utils.initailize_form_fields(self)
@@ -109,11 +114,19 @@ class I_TourFormJobneed(JobNeedForm): # jobneed
     assign_to          = forms.ChoiceField(choices = ASSIGNTO_CHOICES, initial="PEOPLE")
     timeIn             = forms.ChoiceField(choices = timeInChoices, initial='MIN', widget = s2forms.Select2Widget)
     required_css_class = "required"
+    
+    # class Meta:
+    #     model = am.Jobneed
+    #     fields = ['identifier', 'frequency', 'parent', 'jobdesc', 'asset', 'ticketcategory',
+    #               'qset',  'people', 'pgroup', 'priority', 'scantype', 'multifactor',
+    #               'jobstatus', 'plandatetime', 'expirydatetime', 'gracetime', 'starttime',
+    #               'endtime', 'performedby', 'gpslocation', 'cuser', 'raisedby', 'remarks', 'ctzoffset']
 
 
     def __init__(self, *args, **kwargs):
         """Initializes form add atttibutes and classes here."""
         self.request = kwargs.pop('request', None)
+        S = self.request.session
         super().__init__(*args, **kwargs)
         self.fields['plandatetime'].input_formats   = settings.DATETIME_INPUT_FORMATS
         self.fields['expirydatetime'].input_formats = settings.DATETIME_INPUT_FORMATS
@@ -123,7 +136,7 @@ class I_TourFormJobneed(JobNeedForm): # jobneed
         self.fields['performedby'].widget.attrs    = {"disabled": "disabled"}
         self.fields['qset'].label = 'QuestionSet'
         self.fields['asset'].label = 'Asset/Smartplace'
-        self.fields['ticketcategory'].queryset     = ob.TypeAssist.objects.filter(tatype__tacode="TICKETCATEGORY")
+        self.fields['ticketcategory'].widget.queryset = ob.TypeAssist.objects.filter(tatype__tacode="NOTIFYCATEGORY", client_id = S['client_id'])
         utils.initailize_form_fields(self)
 
     def is_valid(self) -> bool:
@@ -161,7 +174,12 @@ class Child_I_TourFormJobneed(JobNeedForm):# jobneed
         fields =['qset', 'asset', 'plandatetime', 'expirydatetime', 'gracetime']
 
     def __init__(self, *args, **kwargs):
+        self.request = kwargs.pop('request', None)
+        S = self.request.session
         super().__init__(*args, **kwargs)
+        #filters for dropdown fields
+        self.fields['qset'].queryset = am.QuestionSet.objects.filter(type = 'CHECKLIST', bu_id = S['bu_id'])
+        self.fields['asset'].queryset = am.Asset.objects.filter(bu_id = S['bu_id'], identifier__in = ['CHECKPOINT', 'ASSET'] )
         utils.initailize_form_fields(self)
 
 
@@ -169,6 +187,8 @@ class TaskFormJobneed(I_TourFormJobneed):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.request = kwargs.pop('request', None)
+        S = self.request.session
         self.fields['jobdesc'].required = True
         utils.initailize_form_fields(self)
         if not self.instance.id:
@@ -206,18 +226,14 @@ class Schd_E_TourJobForm(JobForm):
 
     def __init__(self, *args, **kwargs):
         self.request = kwargs.pop('request', None)
+        S = self.request.session
         super().__init__(*args, **kwargs)
         self.fields['israndom'].widget.attrs['class'] = 'btdeciders'
         self.fields['tourfrequency'].widget.attrs['class'] = 'btdeciders'
         self.fields['fromdate'].input_formats  = settings.DATETIME_INPUT_FORMATS
         self.fields['uptodate'].input_formats  = settings.DATETIME_INPUT_FORMATS
         self.fields['ticketcategory'].initial  = ob.TypeAssist.objects.get(tacode='AUTOCLOSED')
-        self.fields['sgroup'].queryset  = pm.Pgroup.objects.filter(identifier__tacode="SITEGROUP", bu_id__in = self.request.session['assignedsites'],)
-        self.fields['people'].queryset  = pm.People.objects.filter(bu_id__in = self.request.session['assignedsites'], client_id = self.request.session['client_id'])
-        self.fields['pgroup'].queryset = pm.Pgroup.objects.filter(bu_id__in = self.request.session['assignedsites'], identifier__tacode__in = ['PEOPLEGROUP', 'PEOPLE_GROUP'])
         self.fields['sgroup'].required  = True
-        self.fields['qset'].queryset  = am.QuestionSet.objects.get_proper_checklist_for_scheduling(self.request, ['CHECKLIST'])
-        ic(self.fields['qset'].queryset)
         self.fields['identifier'].widget.attrs = {"style": "display:none"}
         self.fields['expirytime'].widget.attrs = {"style": "display:none"}
         self.fields['starttime'].widget.attrs  = {"style": "display:none"}
@@ -226,6 +242,14 @@ class Schd_E_TourJobForm(JobForm):
         self.fields['priority'].widget.attrs   = {"style": "display:none"}
         self.fields['scantype'].widget.attrs   = {"style": "display:none"}
         self.fields['seqno'].widget.attrs      = {"style": "display:none"}
+        
+        #filters for dropdown fields
+        self.fields['qset'].queryset  = am.QuestionSet.objects.get_proper_checklist_for_scheduling(self.request, ['RPCHECKLIST'])
+        self.fields['ticketcategory'].queryset  = ob.TypeAssist.objects.filter(tatype__tacode='NOTIFYCATEGORY',client_id = S['client_id'])
+        self.fields['sgroup'].queryset  = pm.Pgroup.objects.filter(identifier__tacode="SITEGROUP", bu_id__in = S['assignedsites'],)
+        self.fields['people'].queryset  = pm.People.objects.filter(bu_id__in = S['assignedsites'], client_id = S['client_id'])
+        self.fields['pgroup'].queryset = pm.Pgroup.objects.filter(bu_id__in = S['assignedsites'], identifier__tacode__in = ['PEOPLEGROUP', 'PEOPLE_GROUP'])
+
         utils.initailize_form_fields(self)
         
     def clean(self):
@@ -258,7 +282,7 @@ class EditAssignedSiteForm(forms.Form):
 
 class SchdTaskFormJob(JobForm):
     ASSIGNTO_CHOICES   = [('PEOPLE', 'People'), ('GROUP', 'Group')]
-    timeInChoices      = [('MIN', 'Min'),('HRS', 'Hour'), ('DAY', 'Day')]
+    timeInChoices      = [('MINS', 'Min'),('HRS', 'Hour'), ('DAYS', 'Day')]
     required_css_class = "required"
 
     planduration_type  = forms.ChoiceField(choices = timeInChoices, initial='MIN', widget = s2forms.Select2Widget)
@@ -280,6 +304,7 @@ class SchdTaskFormJob(JobForm):
 
     def __init__(self, *args, **kwargs):
         self.request = kwargs.pop('request')
+        S = self.request.session
         super(SchdTaskFormJob, self).__init__(*args, **kwargs)
         self.fields['fromdate'].input_formats  = settings.DATETIME_INPUT_FORMATS
         self.fields['uptodate'].input_formats  = settings.DATETIME_INPUT_FORMATS
@@ -288,29 +313,31 @@ class SchdTaskFormJob(JobForm):
         self.fields['starttime'].widget.attrs  = {"style": "display:none"}
         self.fields['endtime'].widget.attrs    = {"style": "display:none"}
         self.fields['frequency'].widget.attrs  = {"style": "display:none"}
-        self.fields['expirytime'].label        = 'Grace Time After'
-        self.fields['gracetime'].label         = 'Grace Time Before'
-        self.fields['ticketcategory'].queryset = ob.TypeAssist.objects.filter(tatype__tacode="TICKETCATEGORY")
+        self.fields['expirytime'].label        = 'Grace Time (After)'
+        self.fields['gracetime'].label         = 'Grace Time (Before)'
+        
+        #filters for dropdown fields
+        self.fields['ticketcategory'].queryset = ob.TypeAssist.objects.filter(tatype__tacode="NOTIFYCATEGORY", client_id = S['client_id'])
         self.fields['qset'].queryset = am.QuestionSet.objects.get_proper_checklist_for_scheduling(self.request, ['CHECKLIST'])
-        self.fields['asset'].queryset = am.Asset.objects.filter(~Q(runningstatus='SCRAPPED'), identifier__in =["ASSET", 'CHECKPOINT'], client_id = self.request.session['client_id'])
-        self.fields['pgroup'].queryset = pm.Pgroup.objects.filter(bu_id__in = self.request.session['assignedsites'], identifier__tacode__in = ['PEOPLEGROUP', 'PEOPLE_GROUP'])
-        self.fields['people'].queryset = pm.People.objects.filter(bu_id__in = self.request.session['assignedsites'], client_id = self.request.session['client_id'])
+        self.fields['asset'].queryset = am.Asset.objects.filter(~Q(runningstatus='SCRAPPED'), identifier__in =["ASSET", 'CHECKPOINT'], client_id = S['client_id'])
+        self.fields['pgroup'].queryset = pm.Pgroup.objects.filter(bu_id__in = S['assignedsites'], identifier__tacode__in = ['PEOPLEGROUP', 'PEOPLE_GROUP'])
+        self.fields['people'].queryset = pm.People.objects.filter(bu_id__in = S['assignedsites'], client_id = S['client_id'])
         utils.initailize_form_fields(self)
 
     def clean(self):
         cd          = self.cleaned_data
         times_names = ['planduration', 'expirytime', 'gracetime']
-        types_names = ['planduration_type', 'expirytime', 'gracetime']
+        types_names = ['planduration_type', 'expirytime_type', 'gracetime_type']
         self.cleaned_data = self.check_nones(self.cleaned_data)
         
         times = [cd.get(time) for time in times_names]
         types = [cd.get(type) for type in types_names]
-        for time, type in zip(times, types):
-            self.cleaned_data[time] = self.convertto_mins(type, time)
+        for time, type, name in zip(times, types, times_names):
+            self.cleaned_data[name] = self.convertto_mins(type, time)
 
     @staticmethod
     def convertto_mins(_type, _time):
-        if _type == 'HOURS':
+        if _type == 'HRS':
             return _time * 60
         return _time * 24 * 60 if _type == 'DAYS' else _time
     
@@ -346,6 +373,7 @@ class TicketForm(JobNeedForm):
     def __init__(self, *args, **kwargs):
         """Initializes form add atttibutes and classes here."""
         self.request = kwargs.pop('request', None)
+        S = self.request.session
         super(TicketForm, self).__init__(*args, **kwargs)
         self.fields['plandatetime'].input_formats   = settings.DATETIME_INPUT_FORMATS
         self.fields['expirydatetime'].input_formats = settings.DATETIME_INPUT_FORMATS
@@ -354,7 +382,13 @@ class TicketForm(JobNeedForm):
             self.fields['ticketno'].widget.attrs  = {'disabled': 'disabled', 'readonly': 'readonly'}
         self.fields['cuser'].required = False
         self.fields['asset'].label = 'Location'
-        self.fields['ticketcategory'].queryset     = ob.TypeAssist.objects.filter(tatype__tacode="TICKETCATEGORY")
+        
+        #filters for dropdown fields
+        self.fields['ticketcategory'].queryset     = ob.TypeAssist.objects.filter(tatype__tacode="TICKETCATEGORY", client_id = S['client_id'], enable=True)
+        self.fields['assignedtopeople'].queryset = pm.People.objects.filter(bu_id__in = S['assignedsites'], isverified=True, enable=True)
+        self.fields['assignedtogroup'].queryset = pm.Pgroup.objects.filter(bu_id__in = S['assignedsites'], identifier__tacode = 'PEOPLEGROUP', enable=True)
+        self.fields['location'].queryset = am.Location.objects.filter(bu_id__in = S['assignedsites'], enable=True)
+        self.fields['asset'].queryset = am.Asset.objects.filter(bu_id__in = S['assignedsites'], enable=True, identifier__in = ['ASSET', 'CHECKPOINT'])
         utils.initailize_form_fields(self)
 
     def is_valid(self) -> bool:

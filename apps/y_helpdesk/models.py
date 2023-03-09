@@ -51,6 +51,7 @@ class Ticket(BaseModel, TenantAwareModel):
     priority         = models.CharField(_("Priority"), max_length=50, choices=Priority.choices, null=True, blank=True)
     ticketcategory   = models.ForeignKey('onboarding.TypeAssist', null=True, blank=True, related_name="ticketcategory_types", on_delete=models.RESTRICT)
     location         = models.ForeignKey('activity.Location', null=True, blank=True, on_delete=models.RESTRICT)
+    asset            = models.ForeignKey('activity.Asset', null=True, blank=True, on_delete=models.RESTRICT)
     modifieddatetime = models.DateTimeField(default=timezone.now)
     level            = models.IntegerField(default=0)
     status           = models.CharField(_("Status"), max_length=50, choices=Status.choices,null=True, blank=True, default=Status.NEW.value)
@@ -59,7 +60,7 @@ class Ticket(BaseModel, TenantAwareModel):
     events           = models.TextField(null=True, blank=True)
     isescalated      = models.BooleanField(default=False)
     ticketsource     = models.CharField(max_length=50, choices=TicketSource.choices, null=True, blank=True)
-    attachmentcount = models.IntegerField(null=True)
+    attachmentcount  = models.IntegerField(null=True)
 
     objects = TicketManager() 
     
