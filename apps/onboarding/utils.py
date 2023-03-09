@@ -55,7 +55,6 @@ def get_tatype_choices(superadmin = False):
 
 def update_children_tree(instance, newcode, newtype, whole = False):
     """Updates tree of child bu tree's"""
-    from apps.core.raw_queries import query
     try:
         childs = Bt.objects.get_all_bu_of_client(instance.id)
         ic(instance.id, childs)

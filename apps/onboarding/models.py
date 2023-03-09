@@ -4,7 +4,7 @@ from django.contrib.gis.db.models import PolygonField
 from django.db import models
 from apps.tenants.models import TenantAwareModel
 from apps.peoples.models import BaseModel
-from .managers import BtManager, TypeAssistManager, GeofenceManager
+from .managers import BtManager, TypeAssistManager, GeofenceManager, ShiftManager
 from django.core.serializers.json import DjangoJSONEncoder
 from django.utils.translation import gettext_lazy as _
 from django.contrib.gis.db.models import PointField
@@ -164,6 +164,7 @@ class Shift(BaseModel, TenantAwareModel):
     captchafreq         = models.IntegerField(default = 10, null = True)
     enable              = models.BooleanField(verbose_name='Enable', default = True)
 
+    objects = ShiftManager()
     class Meta(BaseModel.Meta):
         db_table = 'shift'
         constraints = [models.UniqueConstraint(

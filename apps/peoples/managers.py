@@ -324,7 +324,8 @@ class PgroupManager(models.Manager):
             ~Q(groupname = 'NONE'), 
             enable = True,
             identifier__tacode = 'SITEGROUP',
-            client_id = S['client_id']
+            client_id = S['client_id'],
+            bu_id = S['bu_id']
         ).select_related('identifier').values(*fields).order_by(dir)
 
         total = qset.count()
@@ -339,7 +340,7 @@ class PgroupManager(models.Manager):
     def get_assignedsitegroup_forclient(self, clientid, request):
         qset = self.filter(
             client_id = clientid,
-            bu_id__in = request.session['assignedsites'],
+            bu_id__in = request.session['bu_id'],
             identifier__tacode = 'SITEGROUP'
             ).values_list('id', 'groupname')
         return qset or self.none()

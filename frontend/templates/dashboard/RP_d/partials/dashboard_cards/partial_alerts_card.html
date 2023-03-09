@@ -1,12 +1,66 @@
 var donutChartOptions = {
-    series: _alertChartSeries,
+    series: _alertChartSeries && _alertChartSeries.length > 0 ? _alertChartSeries : undefined,
     chart:{
         type:'donut',
-        height:270,
+        height:400,
+        width:400,
         toolbar:{
           show:true
-        }
+        },
+        zoom: {
+      enabled: true
     },
+    events: {
+                dataPointSelection: function(event, chartContext, config) {
+                let filters = {from:_from_pd,  to:_to_pd}
+                
+                switch(config.dataPointIndex){
+                  case 0:
+                  window.open('{{ url("schedhuler:jobneedtasks") }}?template=true', '_blank');
+                  filters['alerts']='TASK'
+                  break;
+                  case 1:
+                  window.open('{{ url("activity:ppmjobneed") }}?template=true', '_blank');
+                  filters['alerts'] = 'PPM'
+                  break;
+                  case 2:
+                  window.open('{{ url("schedhuler:jobneedtours") }}?template=true', '_blank');
+                  filters['alerts'] = 'TOUR'
+                  break;
+                  case 3:
+                  window.open('{{ url("schedhuler:jobneedexternaltours") }}?template=true', '_blank');
+                  filters['alerts'] = 'ROUTEPLAN'
+                  break;
+
+                }
+                localStorage.setItem('alertsFilters', JSON.stringify(filters))
+                }
+  }
+
+    },
+  responsive: [{
+    breakpoint: 480,
+    options: {
+      legend: {
+        position: 'bottom',
+        offsetX: -10,
+        offsetY: 0
+      }
+    }
+  }],
+    noData: {
+    text: 'No data available.',
+    align: 'center',
+    verticalAlign: 'middle',
+    offsetX: 0,
+    offsetY: 0,
+    style: {
+      color: 'red',
+      fontSize: '14px',
+      fontFamily: undefined
+    }
+  },
+  
     responsive:[{
     breakpoint: 480,
     options: {
@@ -17,8 +71,9 @@ var donutChartOptions = {
       }
     }
   }],
-  legend:{
-    position:'right'
+  legend: {
+    position: 'right',
+    offsetY: 40
   },
   plotOptions:{
     pie: {
@@ -33,7 +88,7 @@ var donutChartOptions = {
       }
     }
   },
-  labels:['Task Alerts', 'Tour Alerts', 'Route Alerts']
+  labels:['Task Alerts', 'PPM Alerts', 'Tour Alerts', 'Route Alerts']
 
 }
 

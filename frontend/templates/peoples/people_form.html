@@ -363,18 +363,18 @@ People
                     <!----- END ERROR FIELD  ------->
                 </div>
                 <!--LABEL FIELD-->
+                <label class="" for="id_dateofjoin">Posting</label>
+                <!--INPUT GROUP-->
+                <div class="col-md-4">
+                    {{ peopleform.location }}
+                    <!--HELP TEXT-->
+                    <!----- BEGIN ERROR FIELD  ------->
+                    {{ peopleform.location.errors }}
+                    <!----- END ERROR FIELD  ------->
+                </div>
+                <!--LABEL FIELD-->
                 <!------------Checkboxes Rendering Last --------------------->
-                <div class="booleans col-md-12 d-flex justify-content-sm-between mt-5">
-                    {% if peopleform.instance.password %}
-                        <button type="button" id="change_pass" class="btn btn-sm col-md-2 btn-primary rounded-1" data-bs-target='#paswd_change_alert'
-                            data-bs-toggle="modal">Change Password
-                            <span class="svg-icon svg-icon-2">
-                                <span class="material-icons h-19px" style="vertical-align: middle; font-size: 19px;">
-                                    lock
-                                </span>
-                            </span>
-                        </button>
-                    {% endif %}
+                <div class="booleans col-md-6 d-flex justify-content-sm-between mt-5">
                     {% if request.user.isadmin %}
                     <!--ENABLE CHECKBOX -->
                     <label for = id_isenable class="form-check-label bool col-form-label me-5 text-sm-right">Enable
@@ -462,7 +462,16 @@ People
             </div>
             <!--END-Add More Details --->
         {% endif %}
-
+    {% if peopleform.instance.password %}
+        <button type="button" id="change_pass" class="btn btn-sm col-md-2 btn-primary rounded-1" data-bs-target='#paswd_change_alert'
+            data-bs-toggle="modal">Change Password
+            <span class="svg-icon svg-icon-2">
+                <span class="material-icons h-19px" style="vertical-align: middle; font-size: 19px;">
+                    lock
+                </span>
+            </span>
+        </button>
+    {% endif %}
 
     <!--END FIRST ROW-->
     <div class="mb-4 row" id="workinfo" style="display:none;">

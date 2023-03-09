@@ -151,11 +151,14 @@ PPM Form
         </div>
 
         <div class="col-md-6">
-            <div class="input-group mb-3">
+            <div class="input-group mb-3 gy-3">
                 <div class="col-md-4">
                     {{ ppmform.planduration.label_tag() }}
                 </div>
-                <div class="col-md-8">
+                <div class="col-md-4">
+                    {{ ppmform.planduration_type }}
+                </div>
+                <div class="col-md-4">
                     {{ ppmform.planduration }}
                 </div>
             </div>
@@ -163,7 +166,10 @@ PPM Form
                 <div class="col-md-4">
                     {{ ppmform.gracetime.label_tag() }}
                 </div>
-                <div class="col-md-8">
+                <div class="col-md-4">
+                    {{ ppmform.gracetime_type }}
+                </div>
+                <div class="col-md-4">
                     {{ ppmform.gracetime }}
                 </div>
             </div>
@@ -171,7 +177,10 @@ PPM Form
                 <div class="col-md-4">
                     {{ ppmform.expirytime.label_tag() }}
                 </div>
-                <div class="col-md-8">
+                <div class="col-md-4">
+                    {{ ppmform.expirytime_type }}
+                </div>
+                <div class="col-md-4">
                     {{ ppmform.expirytime }}
                 </div>
             </div>
@@ -239,7 +248,6 @@ PPM Form
             </div>
         </div>
     </div>
-
 </div>
 {% endblock extras %}
 
@@ -247,6 +255,9 @@ PPM Form
 {% block ajax_page_actions %}
     <div class="form-actions">
         {% if ppmform.instance.id %}
+        <button type="button" id="runScheduler"  class="btn btn-sm btn-info btn-hover-scale">
+            Run Scheduler&nbsp;<i class="far fa-clock"></i>
+        </button>
         <button type="submit" id="submitTour" form="id_ppmform" class="btn btn-sm btn-primary btn-hover-scale">
             Update&nbsp;<i class="fas fa-cloud-upload-alt"></i>
         </button>
@@ -326,9 +337,11 @@ function properCron(cron){
 
     var jobid = "{{ ppmform.instance.id }}"
     var editior, table;
+    var formSaved = false;
 
 
 $(document).ready(() => {
+    formSaved = true
     //set ctzoffset
   	$("#id_ctzoffset").val(-new Date().getTimezoneOffset())
 
@@ -408,6 +421,7 @@ $(document).ready(() => {
                 fire_ajax_form_post(params, payLoad)
                 .done((data, status, xhr) => { //function to submit post request
                     show_successful_save_alert(update= id != 'None' ? true : false)
+                    formSaved = true
                     window.setTimeout(function() {
                         window.location.href = `{{ url('activity:ppm') }}?id=${data.pk}`;
                     }, 2000);
@@ -504,6 +518,47 @@ $(document).ready(() => {
         $("#reminder_config_wrapper .dt-button").removeClass('disabled')
         showHideSelectField(assignto)
     }
+    $("#id_ppmform").change(() => {
+            formSaved = false;
+        })
+
+    $("#runScheduler").click(function() {
+            if(!formSaved){
+                alertuser_to_saveform({fs: "17px", cl: "red"})
+            }else{
+                Swal.fire({
+                    title: "Are you sure?",
+                    text: "Run Task Scheduler, you won't be able to revert this!",
+                    icon: "warning",
+                    showCancelButton:true,
+                    confirmButtonText: "Schedule it!"
+                }).then((result) => {
+                    if(result.isConfirmed){
+                        const params = {url: "{{ url('activity:ppm') }}"}
+                        var payLoad = {job_id: '{{ ppmform.instance.id }}',
+                        csrfmiddlewaretoken: '{{ csrf_token }}',
+                        action:"runScheduler"}
+                        fire_ajax_form_post(params, payLoad)
+                        .done((data, status, xhr) => {
+                            Swal.fire({
+                                showConfirmButton:false,
+                                timer:1500,
+                                icon: 'success',
+                                title:data['msg']
+                            })
+                        })
+                        .fail((xhr, status, error) => {
+                            Swal.fire({
+                                showConfirmButton:false,
+                                icon: "error",
+                                timer:1500,
+                                title: "Failed to schedhule!"
+                            })
+                        })
+                    }
+                })
+            }
+        })
 
 
 })

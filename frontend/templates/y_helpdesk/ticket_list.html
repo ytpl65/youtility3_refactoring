@@ -33,6 +33,12 @@ Ticket List
     var to_pd = moment().format('YYYY-MM-DD')
     params = {from:from_pd, to:to_pd}
 
+    const table_filters = localStorage.getItem('ticketstats_filter')
+    if(table_filters){
+        params = JSON.parse(table_filters)
+        localStorage.clear()
+    }
+
     function reloadTable(table, filters){
         params = filters
         table.ajax.reload()
@@ -89,7 +95,7 @@ Ticket List
 					$(row).addClass('disabled-record text-white')
 				}
 			},
-            ordering:[[0, 'asc']],
+            order:[[0, 'desc']],
 			dom       : `<'row' <'col-sm-6 d-flex justify-content-start'f> <'col-sm-6 d-flex justify-content-end'B> >rt<'row'
 			<'col-sm-6'l> <'col-sm-6'p><'col-sm-12 d-flex justify-content-center'i>>`,
 			buttons:[

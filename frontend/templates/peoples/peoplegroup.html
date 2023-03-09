@@ -62,13 +62,6 @@ People Group Lists
 	}
 
 	$(document).ready(function () {
-		new ClipboardJS('.btn-copy');
-		$("input").keypress(function(event) {
-			if (event.which == 13) {
-				event.preventDefault();
-				$(formFilter).submit();
-			}
-		});
         //beforeSend of capability ajax request 
         function BeforeSend(){
             $(modal_id).modal("show");
@@ -111,7 +104,10 @@ People Group Lists
 						})
 					}
 				}
-			]
+			],
+			select: {
+                    style: 'single'
+                }
 		})
 		$('.btn').removeClass('dt-button')
 
@@ -142,13 +138,6 @@ People Group Lists
 
 		//update row (form-view)
 		$('#pgroup_table tbody').on('click', 'tr', function(e){
-			if ($(this).hasClass('selected')) {
-				$(this).removeClass('selected');
-			} else {
-				table.$('tr.selected').removeClass('selected');
-				$(this).addClass('selected');
-			}
-			
 			var d = table.row( this ).data();
 			e.preventDefault();
 			var id = d.id

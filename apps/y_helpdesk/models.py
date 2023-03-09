@@ -26,14 +26,17 @@ class Ticket(BaseModel, TenantAwareModel):
         LOW    = ('LOW', 'Low')
         MEDIUM = ('MEDIUM', 'Medium')
         HIGH   = ('HIGH', 'High')
+
         
         
 
     class Status(models.TextChoices):
-        NEW      = ('NEW', 'New')
-        CANCEL   = ('CANCELLED', 'Cancel')
-        RESOLVED = ('RESOLVED', 'Resolved')
-        OPEN     = ('OPEN', 'Open')
+        NEW      = ('NEW', 'New')#ticket is created
+        CANCEL   = ('CANCELLED', 'Cancel')#ticket is cancelled
+        RESOLVED = ('RESOLVED', 'Resolved') #ticket is resolved 
+        OPEN     = ('OPEN', 'Open') #tickte is opened
+        ONHOLD = ('ONHOLD', 'On Hold') #ticket is opened but need more info before resolve
+        CLOSED = ('CLOSED', 'Closed') #ticket is closed by the created user
 
     class TicketSource(models.TextChoices):
         SYSTEMGENERATED = ('SYSTEMGENERATED', 'New Generated')

@@ -3,7 +3,7 @@ from .models import Ticket, EscalationMatrix
 from apps.onboarding.models import TypeAssist
 from apps.core import utils
 from apps.peoples.models import Pgroup
-
+from apps.activity.models import Location
 class TicketForm(forms.ModelForm):
     required_css_class = "required"
 
@@ -30,8 +30,6 @@ class TicketForm(forms.ModelForm):
         self.request = kwargs.pop('request')
         S = self.request.session
         super().__init__(*args, **kwargs)
-        self.fields['assignedtogroup'].queryset = Pgroup.objects.filter(bu_id__in = S['assignedsites'], identifier__tacode__in = ['PEOPLEGROUP', 'PEOPLE_GROUP'])
-        utils.initailize_form_fields(self)
         self.fields['assignedtogroup'].required=True
         self.fields['ticketdesc'].required=True
         self.fields['ticketcategory'].required=True
@@ -39,7 +37,12 @@ class TicketForm(forms.ModelForm):
         self.fields['comments'].required=False
         self.fields['ticketsource'].initial=Ticket.TicketSource.USERDEFINED
         self.fields['ticketsource'].widget.attrs = {'style':"display:none"}
-        self.fields['ticketcategory'].queryset = TypeAssist.objects.filter(tatype__tacode='TICKETCATEGORY')
+        
+        #filters for dropdown fields
+        self.fields['assignedtogroup'].queryset = Pgroup.objects.filter(bu_id = S['bu_id'], identifier__tacode__in = ['PEOPLEGROUP', 'PEOPLE_GROUP'], enable=True)
+        self.fields['ticketcategory'].queryset = TypeAssist.objects.filter(tatype__tacode='TICKETCATEGORY', client_id = S{'client_id'})
+        self.fields['location'].queryset = Location.objects.filter(bu_id = S['bu_id'], enable=True).exclude(loccode='NONE')
+        utils.initailize_form_fields(self)
         if not self.instance.id:
             self.fields['status'].initial = 'NEW'
     

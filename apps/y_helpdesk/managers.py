@@ -35,7 +35,7 @@ class TicketManager(models.Manager):
         qset = self.filter(
             cdtz__date__gte = P['from'],
             cdtz__date__lte = P['to'],
-            bu_id__in = S['assignedsites'],
+            bu_id = S['bu_id'],
             ticketsource = 'USERDEFINED'
         ).select_related('assignedtopeople', 'assignedtogroup', 'bu').values(
             'id', 'cdtz', 'bu__buname', 'status', 'bu__bucode', 'isescalated',

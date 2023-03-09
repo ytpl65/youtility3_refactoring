@@ -846,14 +846,15 @@ class PeopleView(LoginRequiredMixin, View):
             objs = self.params['model'].objects.select_related(
                 *self.params['related']).filter(
                     ~Q(peoplecode='NONE'), 
-                    client_id = request.session['client_id']
+                    client_id = request.session['client_id'],
+                    bu_id = request.session['bu_id']
             ).values(*self.params['fields'])
             return rp.JsonResponse(data = {'data':list(objs)}, status = 200)
 
         # return cap_form empty
         if R.get('action', None) == 'form':
             cxt = {'peopleform': self.params['form_class'](request=request),
-                   'pref_form': self.params['json_form'](session = request.session, request=request),
+                   'pref_form': self.params['json_form'](request=request),
                    'ta_form': obf.TypeAssistForm(auto_id = False, request=request),
                    'msg': "create people requested"}
             resp = render(request, self.params['template_form'], cxt)
@@ -868,7 +869,7 @@ class PeopleView(LoginRequiredMixin, View):
             from .utils import get_people_prefform
             people = utils.get_model_obj(R['id'], request, self.params)
             cxt = {'peopleform': self.params['form_class'](instance = people, request=request),
-                   'pref_form': get_people_prefform(people, request.session, request),
+                   'pref_form': get_people_prefform(people, request),
                    'ta_form': obf.TypeAssistForm(auto_id = False, request=request),
                    'msg': "update people requested"}
             resp = render(request, self.params['template_form'], context = cxt)
@@ -941,7 +942,7 @@ class PeopleGroup(LoginRequiredMixin, View):
         if R.get('action', None) == 'list' or R.get('search_term'):
             objs = self.params['model'].objects.select_related(
                  *self.params['related']).filter(
-                    ~Q(id=-1), enable = True, identifier__tacode='PEOPLEGROUP', client_id = request.session['client_id']
+                    ~Q(id=-1), enable = True, bu_id = request.session['bu_id'], identifier__tacode='PEOPLEGROUP', client_id = request.session['client_id']
             ).values(*self.params['fields']).order_by('-mdtz')
             return  rp.JsonResponse(data = {'data':list(objs)})
 

@@ -19,7 +19,7 @@ urlpatterns = [
 
     path('typeassist/', views.TypeAssistView.as_view(), name="typeassist"),
     path('super_typeassist/', views.SuperTypeAssist.as_view(), name="super_typeassist"),
-    path('shift/', views.Shift.as_view(), name="shift"),
+    path('shift/', views.ShiftView.as_view(), name="shift"),
     path('editor/', views.EditorTa.as_view(), name="editortypeassist"),
     path('wizard/',  include(wizard_url_patterns1)),
 

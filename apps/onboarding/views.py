@@ -1270,7 +1270,7 @@ class TypeAssistView(LoginRequiredMixin, View):
 
 
 
-class Shift(LoginRequiredMixin, View):
+class ShiftView(LoginRequiredMixin, View):
     params = {
         'form_class': obforms.ShiftForm,
         'template_form': 'onboarding/partials/partial_shiftform.html',
@@ -1281,27 +1281,15 @@ class Shift(LoginRequiredMixin, View):
         'form_initials': {} }
 
     def get(self, request, *args, **kwargs):
-        R, resp = request.GET, None
+        R, resp, P = request.GET, None, self.params
 
         # first load the template
         if R.get('template'): return render(request, self.params['template_list'])
         # then load the table with objects for table_view
-        if R.get('action', None) == 'list' or R.get('search_term'):
-            objs = self.params['model'].objects.select_related(
-                *self.params['related']).filter(
-                    enable = True,
-            ).values(*self.params['fields'])
-            count = objs.count()
-            logger.info(f'Shift objects {count or "No Records!"} retrieved from db')
-            if count:
-                objects, filtered = utils.get_paginated_results(
-                    R, objs, count, self.params['fields'], self.params['related'], self.params['model'])
-                logger.info('Results paginated'if count else "")
-
+        if R.get('action', None) == 'list':
+            objs = self.params['model'].objects.shift_listview(request, P['related'], P['fields'])
             resp = rp.JsonResponse(data = {
-                'draw':R['draw'], 'recordsTotal':count,
-                'data' : list(objects), 
-                'recordsFiltered': filtered
+                'data' : list(objs), 
             }, status = 200, safe = False)
 
         elif R.get('action', None) == 'form':
@@ -1658,7 +1646,7 @@ class Client(LoginRequiredMixin, View):
         if R.get('id', None):
             obj = utils.get_model_obj(int(R['id']), request, self.params)
             cxt = {'clientform':self.params['form_class'](request = request, instance = obj),
-                    'edit':True, 'ta_form': obforms.TypeAssistForm(auto_id = False),
+                    'edit':True, 'ta_form': obforms.TypeAssistForm(auto_id = False, request=request),
                 'clientprefsform': get_bt_prefform(obj)}
             return render(request, self.params['template_form'], context = cxt)
     

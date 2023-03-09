@@ -37,6 +37,11 @@ External Tour List
     var to_pd = moment().format('YYYY-MM-DD')
     params = {from:from_pd, to:to_pd}
 
+    const table_filters = localStorage.getItem('routes_filter') ? localStorage.getItem('routes_filter') : localStorage.getItem('alertsFilters')
+    if(table_filters){
+        params = JSON.parse(table_filters)
+        localStorage.clear()
+    }
     function reloadTable(table, filters){
         params = filters
         table.ajax.reload()
@@ -92,13 +97,6 @@ External Tour List
 					}
 				}
 			],
-            initComplete:function(settings, json){
-                const table_filters = localStorage.getItem('routes_filter')
-                if(table_filters){
-                    reloadTable(table, JSON.parse(table_filters))
-                    localStorage.clear()
-                }
-            }
         
         })
 

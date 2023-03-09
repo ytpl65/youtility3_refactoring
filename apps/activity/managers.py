@@ -39,7 +39,7 @@ class QuestionSetManager(models.Manager):
     def get_configured_sitereporttemplates(self, request, related, fields, type):
         S = request.session
         qset = self.select_related(
-            *related).filter(enable = True, type=type, client_id = S['client_id'], bu_id__in = S['assignedsites'], parent_id=1).values(*fields)
+            *related).filter(enable = True, type=type, client_id = S['client_id'], bu_id = S['bu_id'], parent_id=1).values(*fields)
         qset = self.clean_fields(qset)
         return qset or self.none()
     
@@ -109,7 +109,7 @@ class QuestionSetManager(models.Manager):
         qset = self.filter(
             ~Q(qsetname='NONE'),
             type='CHECKLIST',
-            bu_id__in = S['assignedsites'],
+            bu_id = S['bu_id'],
             client_id = S['client_id']
         ).select_related(*related).values(*fields)
         return qset or self.none()
@@ -787,7 +787,7 @@ class AssetManager(models.Manager):
         if id:
             qset = qset.filter(enable=True, identifier='CHECKPOINT',id=id).values(*fields)[0]
         else:
-            qset = qset.filter(enable=True, identifier='CHECKPOINT', bu_id__in = S['assignedsites'], client_id = S['client_id']).values(*fields)
+            qset = qset.filter(enable=True, identifier='CHECKPOINT', bu_id = S['bu_id'], client_id = S['client_id']).values(*fields)
         if(P not in ['null', None]):
             P = json.loads(P)
             qset = qset.filter(runningstatus = P['status'])
@@ -804,7 +804,7 @@ class AssetManager(models.Manager):
         if id:
             qset = qset.filter(enable=True, identifier='SMARTPLACE',id=id).values(*fields)[0]
         else:
-            qset = qset.filter(enable=True, identifier='SMARTPLACE', bu_id__in = S['assignedsites'], client_id = S['client_id']).values(*fields)
+            qset = qset.filter(enable=True, identifier='SMARTPLACE', bu_id = S['bu_id'], client_id = S['client_id']).values(*fields)
         return qset or self.none()
     
     def get_assetlistview(self, related, fields, request):
@@ -814,7 +814,7 @@ class AssetManager(models.Manager):
         ic(request.GET)
         qset = self.annotate(gps = AsGeoJSON('gpslocation')).filter(
             ~Q(assetcode='NONE'),
-            bu_id__in = S['assignedsites'],
+            bu_id = S['bu_id'],
             client_id = S['client_id'],
             identifier='ASSET'
         ).select_related(*related).values(*fields)
@@ -1205,7 +1205,7 @@ class LocationManager(models.Manager):
         P = request.GET['params']
         qset = self.filter(
             ~Q(loccode='NONE'),
-            bu_id__in = S['assignedsites'],
+            bu_id = S['bu_id'],
             client_id = S['client_id'],
         ).select_related(*related).values(*fields)
         if(P not in ['null', None]):

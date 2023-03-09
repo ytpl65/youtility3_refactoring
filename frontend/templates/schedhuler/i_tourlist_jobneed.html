@@ -38,7 +38,7 @@ Tour List
     var to_pd = moment().format('YYYY-MM-DD')
     params = {from:from_pd, to:to_pd}
 
-    const table_filters = localStorage.getItem('tourstats_filter')
+    const table_filters = localStorage.getItem('tourstats_filter')? localStorage.getItem('tourstats_filter') : localStorage.getItem('alertsFilters')
     if(table_filters){
         params = JSON.parse(table_filters)
         localStorage.clear()

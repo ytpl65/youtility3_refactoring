@@ -233,21 +233,24 @@ class ShiftForm(forms.ModelForm):
         'max_hrs_exceed': "Maximum hours in a shift cannot be greater than 12hrs",
         "min_hrs_required": "Minimum hours of a shift should be atleast 5hrs"
     }
-    shiftduration = forms.CharField(widget = forms.TextInput(attrs={'readonly':True}), required = False)
+    shiftduration = forms.CharField(widget = forms.TextInput(attrs={'readonly':True}), label="Duration", required = False)
 
     class Meta:
         model = obm.Shift
         fields = ['shiftname', 'starttime', 'endtime', 'ctzoffset',
         'nightshiftappicable', 'shiftduration', 'designation', 'captchafreq', 'peoplecount', ]
         labels={
-            'shiftname': 'Shift Name',
-            'starttime': 'Start Time',
-            'endtime': 'End Time',
-            'capcthafreq': 'Captcha Frequency'
+            'shiftname'  : 'Shift Name',
+            'starttime'  : 'Start Time',
+            'endtime'    : 'End Time',
+            'captchafreq': 'Captcha Frequency',
+            'designation': "Designation",
+            'peoplecount': "People Count",
         }
         widgets ={
             'shiftname':forms.TextInput(attrs={'placeholder': "Enter shift name"}),
-            'nightshiftappicable':forms.CheckboxInput(attrs={'onclick': "return false"})
+            'nightshiftappicable':forms.CheckboxInput(attrs={'onclick': "return false"}),
+            'designation': s2forms.Select2Widget
         }
 
     def __init__(self, *args, **kwargs):

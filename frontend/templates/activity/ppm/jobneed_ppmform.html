@@ -10,8 +10,8 @@
 {% block pagebreadcumb %}
 <!--will call parent contents -->
 {{ super() }}
-<li class="breadcrumb-item pe-3"><a href="{{ url('schedhuler:jobneedtasks') }}?template=true" class="pe-3">Tasks</a></li>
-<li class="breadcrumb-item pe-3"><a href="javascript:void(0)" class="pe-3">Task Form</a></li>
+<li class="breadcrumb-item pe-3"><a href="{{ url('activity:ppmjobneed') }}?template=true" class="pe-3">PPM List</a></li>
+<li class="breadcrumb-item pe-3"><a href="javascript:void(0)" class="pe-3">PPM</a></li>
 {% endblock pagebreadcumb %}
 <!-------------------------- END PAGE BREADCUMB ------------------------->
 
@@ -39,6 +39,8 @@ Task Form
 {% block form %}
 <form action="">
     <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
+    <input type="hidden" name="{{ ppmjobneedform.ctzoffset.name }}" id = "{{ ppmjobneedform.ctzoffset.auto_id }}" value="-1">
+    
     <div class="row gy-3">
         <div class="col-md-6">
             <div class="input-group mb-3">
@@ -224,15 +226,15 @@ Task Form
 
 <script>
     //set the variables which are gonna used in attachment.js file for fetching attachments against the owner
-    var attachmentUrl = '{{ url("activity:attachments") }}'
-    var attachementDatasource = 'jobneedattachment'
-    var attachmentOwner = '{{ ppmjobneedform.instance.uuid }}'
-    var csrf = '{{ csrf_token }}'
-    var ownername = "Jobneed"
-    var id = ""
-    var folderType = 'task'
-    var isDefault= "False";
-    var docnumber=1;
+    var attachmentParams = {
+        attachmentUrl  : '{{ url("activity:attachments") }}',
+        attachmentOwner: '{{ ppmjobneedform.instance.uuid }}',
+        csrf           : '{{ csrf_token }}',
+        ownername      : "Jobneed",
+        folderType     : 'ppm',
+        media_url      : '{{ MEDIA_URL }}',
+        peopleid       : "{{ request.user.id }}"
+    }
 
 </script>
 <script src="{{ static('assets/js/local/attachment.js') }}" type="text/javascript"></script>
@@ -262,6 +264,15 @@ Task Form
     }
 
     $(document).ready(() => {
+        // Disable checkboxes
+        $("input[type='checkbox']").prop("disabled", true);
+
+        // Disable text fields
+        $("input, textarea").prop("disabled", true);
+
+        // Disable select2 fields (assuming select2 has been initialized)
+        $(".django-select2, .form-select").select2({"disabled": 'readonly'})
+        
         //assignto toggle
         if ('{{ ppmjobneedform.instance.id }}' == ('None' || "")) {
             showHideSelectField('PEOPLE')
@@ -269,6 +280,8 @@ Task Form
             var assignto = '{{ ppmjobneedform.instance.people }}' == ('None' || "") ? "GROUP" : "PEOPLE"
             showHideSelectField(assignto)
         }
+        //set ctzoffset
+  	    $("#id_ctzoffset").val(-new Date().getTimezoneOffset())
 
         //datetime widget configurations
         $("#id_plandatetime, #id_expirydatetime").flatpickr({
@@ -279,7 +292,7 @@ Task Form
 
         table = $("#task_details").DataTable({
             ajax:{
-                url:`{{ url('activity:ppm') }}?action=get_ppmtask_details&taskid=${taskid}`
+                url:`{{ url('activity:ppmjobneed') }}?action=get_ppmtask_details&taskid=${taskid}`
             },
             columns:[
                 {data:'id', visible:false},

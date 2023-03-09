@@ -389,17 +389,17 @@ class PeopleExtrasForm(forms.Form):
 
     
     def __init__(self, *args, **kwargs):
-        session = kwargs.pop('session')
-        request = kwargs.pop('request')
+        self.request = kwargs.pop('request')
+        S = self.request.session
         super().__init__(*args, **kwargs)
-        self.fields['assignsitegroup'].choices = pm.Pgroup.objects.get_assignedsitegroup_forclient(session['client_id']. self.request)
-        self.fields['tempincludes'].choices = am.QuestionSet.objects.filter(type = 'SITEREPORTTEMPLATE', bu_id__in = session['assignedsites']).values_list('id', 'qsetname')
-        web, mob, portlet, report = create_caps_choices_for_peopleform(request.user.client)
-        if not (session['is_superadmin']):
-            self.fields['webcapability'].choices     = session['people_webcaps'] or  web
-            self.fields['mobilecapability'].choices  = session['people_mobcaps'] or mob
-            self.fields['portletcapability'].choices = session['people_portletcaps'] or portlet
-            self.fields['reportcapability'].choices  = session['people_reportcaps'] or report
+        self.fields['assignsitegroup'].choices = pm.Pgroup.objects.get_assignedsitegroup_forclient(S['client_id'], self.request)
+        self.fields['tempincludes'].choices = am.QuestionSet.objects.filter(type = 'SITEREPORTTEMPLATE', bu_id__in = S['assignedsites']).values_list('id', 'qsetname')
+        web, mob, portlet, report = create_caps_choices_for_peopleform(self.request.user.client)
+        if not (S['is_superadmin']):
+            self.fields['webcapability'].choices     = S['people_webcaps'] or  web
+            self.fields['mobilecapability'].choices  = S['people_mobcaps'] or mob
+            self.fields['portletcapability'].choices = S['people_portletcaps'] or portlet
+            self.fields['reportcapability'].choices  = S['people_reportcaps'] or report
         else:
             # if superadmin is logged in
             from .utils import get_caps_choices

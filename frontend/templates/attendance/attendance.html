@@ -149,6 +149,11 @@ td { padding: 6px; border: 1px solid #CCC; }
         params = filters
         table.ajax.reload()
     }
+    const table_filters = localStorage.getItem('attds_filter')
+    if(table_filters){
+        params = JSON.parse(table_filters)
+        localStorage.clear()
+    }
 
     $(document).ready(function () {
         
@@ -218,14 +223,7 @@ td { padding: 6px; border: 1px solid #CCC; }
                 }
             ],
             buttons: [
-                {
-                    text:'Advanced Search &nbsp;<i class="fas fa-search"></i>',
-                    className:"btn btn-sm btn-warning btn-hover-rise",
-                    action:function(e, dt, node, config){
-                        $("#modal_adv_search").modal('show')
-                    }
 
-                },
                 {
                     text: "Add New Attendance &nbsp;<i class='fas fa-plus ch4'></i>",
                     className: "btn btn-sm btn-primary btn-hover-rise",
@@ -246,13 +244,6 @@ td { padding: 6px; border: 1px solid #CCC; }
                 }
 
             ],
-            initComplete:function(settings, json){
-                const table_filters = localStorage.getItem('attds_filter')
-                if(table_filters){
-                    reloadTable(table, JSON.parse(table_filters))
-                    localStorage.clear()
-                }
-            },
             select: {
                     style: 'single'
                 }

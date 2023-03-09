@@ -1329,6 +1329,7 @@ function setUpDropzone(params){
       maxFiles: 5,
       maxFileSize: 3,
       addRemoveLinks: true,
+      accepedFiles:['mp4', 'png', 'jpeg', 'jpg', 'xlsx', 'xlx', 'pdf']
   });
 
   myDropzone.on("sending", function(file, xhr, formData) {
@@ -1348,13 +1349,18 @@ function setUpDropzone(params){
 
   //handle remove item
   myDropzone.on("removedfile", function(file) {
-    fire_ajax_get({url:params.uploadUrl, data:{'id':file.id, action:'delete_att', ownerid:params.ownerid, ownername:params.ownername}})
-      .done((data, status, xhr) => {
-        console.log(data)
-      })
-      .fail((xhr, status, error) => {
-        console.log(error)
-      })
+    show_alert_before_delete('File')
+    .then((res) => {
+      if(res.isConfirmed){
+        fire_ajax_get({url:params.uploadUrl, data:{'id':file.id, action:'delete_att', ownerid:params.ownerid, ownername:params.ownername}})
+        .done((data, status, xhr) => {
+          console.log(data)
+        })
+        .fail((xhr, status, error) => {
+          console.log(error)
+        })
+      }
+    })
   });
 
   if(params.create_or_update === "update"){

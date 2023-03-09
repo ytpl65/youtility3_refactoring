@@ -32,11 +32,13 @@ Task List
     var to_pd = moment().format('YYYY-MM-DD')
     params = {from:from_pd, to:to_pd}
 
-    const table_filters = localStorage.getItem('taskstats_filter')
+    var table_filters = localStorage.getItem('taskstats_filter') ? localStorage.getItem('taskstats_filter') : localStorage.getItem('alertsFilters')
+
     if(table_filters){
         params = JSON.parse(table_filters)
         localStorage.clear()
     }
+    
 
 
     function reloadTable(table, filters){

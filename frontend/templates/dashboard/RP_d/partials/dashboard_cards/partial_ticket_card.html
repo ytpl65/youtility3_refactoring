@@ -1,0 +1,71 @@
+var ticketoptions = {
+series: _tktChartSeries,
+chart: {
+height: '300px',
+width:"100%",
+type: 'pie',
+toolbar: {
+show: true
+},
+events:{
+dataPointSelection: function(event, chartContext, config) {
+console.log(config)
+let filters = {from:_from_pd, to:_to_pd}
+switch(config.dataPointIndex){
+case 0:
+window.open('{{ url("helpdesk:ticket") }}?template=true', '_blank');
+filters['status']='NEW'
+break;
+case 1:
+window.open('{{ url("helpdesk:ticket") }}?template=true', '_blank');
+filters['status'] = 'RESOLVED'
+break;
+case 2:
+window.open('{{ url("helpdesk:ticket") }}?template=true', '_blank');
+filters['status'] = 'OPEN'
+break;
+case 3:
+window.open('{{ url("helpdesk:ticket") }}?template=true', '_blank');
+filters['status'] = 'CANCELLED'
+break;
+
+}
+localStorage.setItem('ticketstats_filter', JSON.stringify(filters))
+}
+}
+},
+responsive: [{
+breakpoint: 480,
+options: {
+legend: {
+position: 'bottom',
+offsetX: -10,
+offsetY: 0
+}
+}
+}],
+labels: ['New', 'Resolved', 'Open', 'Cancelled'],
+fill: {
+opacity: 1
+},
+stroke: {
+width: 1,
+colors: undefined
+},
+yaxis: {
+show: false
+},
+legend: {
+position: 'bottom'
+},
+plotOptions: {
+polarArea: {
+rings: {
+strokeWidth: 0
+},
+spokes: {
+strokeWidth: 0
+},
+}
+},
+};

@@ -26,7 +26,7 @@ def save_jsonform(peoplepref_form, p):
         return True
 
 
-def get_people_prefform(people, session, request):
+def get_people_prefform(people,  request):
     try:
         logger.info('people prefform (json form) retrieving...')
         from .forms import PeopleExtrasForm
@@ -55,7 +55,7 @@ def get_people_prefform(people, session, request):
         raise
     else:
         logger.info('people prefform (json form) retrieved... DONE')
-        return PeopleExtrasForm(data=d, session=session, request=request)
+        return PeopleExtrasForm(data=d, request=request)
 
 
 def save_cuser_muser(instance, user, create=None):

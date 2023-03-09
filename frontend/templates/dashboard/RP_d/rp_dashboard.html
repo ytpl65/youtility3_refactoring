@@ -33,31 +33,50 @@
 
 <!------------------------------ START PAGE BODY CONTAINER -------------------------->
 {% block pagebody_container %}
-
-
-<div class="row d-flex gy-3 justify-content-around">
-    <div class="col-xl-3 col-lg-6 col-sm-12" id="tasks_card">
+<div class="row gy-3">
+    <div class="col-xl-3 col-md-4 col-lg-6 col-sm-12" id="tasks_card">
         {% include "dashboard/RP_d/partials/dashboard_cards/partial_taskstats_card.html" %}
     </div>
-    <div class="col-xl-4 col-lg-6 h-xl-75 col-sm-12">
+    <div class="col-xl-3 col-md-4  col-lg-6 h-xl-75 col-sm-12">
         <div class="card card-flush h-lg-100">
-            <div class="card-header py-2 mb-3">
-                <h3 class="card-title align-items-start flex-column">
-                    <span class="card-label fw-bold y-primary"  style="color: #01579b;">Assets Status</span>
+            <div class="card-header  mb-3">
+                <h3 class="card-title align-items-start flex-column pt-9">
+                    <span class="card-label fw-bold y-primary fw-bold fs-1"  style="color: #01579b;">Assets Status</span>
                     {# <span class="text-gray-400 mt-1 fw-semibold fs-6">Total <span id="total_assets"></span> Assets and <span id="total_locations"></span> locations</span> #}
                 </h3>
             </div>
-            <div class="card-body pb-0 pt-7 ps-6 mt-n12">
+            <div class="card-body pb-0 pt-7 px-2 mt-n12">
                 <div id="assets_status_chart"></div>
             </div>
 
         </div>
     </div>
-    <div class="col-xl-3 col-lg-6 col-sm-12" id="tasks_card">
+    <div class="col-xl-3 col-md-4 accordion-buttoncol-lg-6 col-sm-12" id="tour_card">
         {% include "dashboard/RP_d/partials/dashboard_cards/partial_guardtour_card.html" %}
     </div>
-    <div class="card col-xl-2 col-lg-6 col-sm-12">
-        <div class="row mt-2">
+    <div class="col-xl-3  col-md-4  col-lg-6 h-xl-75 col-sm-12">
+        <div class="card card-flush h-lg-100">
+            <div class="card-header mb-3">
+                <h3 class="card-title align-items-start pt-9 flex-column">
+                    <span class="card-label fw-bold fs-1"  style="color: #01579b;">Alerts</span>
+                    {# <span class="text-gray-400 mt-1 fw-semibold fs-6">Total <span id="total_alerts"></span> Alerts</span> #}
+                </h3>
+            </div>
+            <div class="card-body pb-0 pt-7 ps-6" style="height: 350px;">
+                <div class="alerts_not_found">
+                    <span>No Data Found <i class="bi bi-exclamation-circle text-danger fs-5"></i></span>
+                    <div>From&nbsp;<span class="from"></span> to&nbsp; <span class="upto"></span></div>
+                </div>
+                <div id="alerts_donut_chart"></div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-3 col-md-4  col-lg-6 col-sm-12" id="ppmtasks_card">
+        {% include "dashboard/RP_d/partials/dashboard_cards/partial_ppm_card.html" %}
+    </div>
+    <div class="card col-xl-3 col-md-4 col-lg-6 col-sm-12">
+        <div class="card-body mt-0 p-2">
+            <div class="row">
             <div class="col-lg-12 portlet d-none mb-2" id="PORTLET_SOS_ALERTS">
                 <div class="counter  bg-gray-100 bg-opacity-60 mt-3 mb-2 rounded-3 p-2" >
                     <div class="d-flex count-item justify-content-between" >
@@ -112,23 +131,30 @@
                 </div>
             </div>
         </div>
+        </div>
+        
     </div>
-</div>
-<div class="row mt-3">
-<div class="col-xl-4 col-lg-6 h-xl-75 col-sm-12">
+    <div class="col-xl-3 col-lg-6 h-xl-75 col-sm-12">
         <div class="card card-flush h-lg-100">
-            <div class="card-header py-2 mb-3">
-                <h3 class="card-title align-items-start flex-column">
-                    <span class="card-label fw-bold"  style="color: #01579b;">Alerts</span>
-                    <span class="text-gray-400 mt-1 fw-semibold fs-6">Total <span id="total_alerts"></span> Alerts</span>
+            <div class="card-header  mb-3">
+                <h3 class="card-title align-items-start flex-column pt-9">
+                    <span class="card-label fw-bold y-primary fw-bold fs-1"  style="color: #01579b;">Ticket Metrics</span>
+                    {# <span class="text-gray-400 mt-1 fw-semibold fs-6">Total <span id="total_assets"></span> Assets and <span id="total_locations"></span> locations</span> #}
                 </h3>
             </div>
-            <div class="card-body pb-0 pt-7 ps-6 mt-n12">
-                <div id="alerts_donut_chart"></div>
+            <div class="card-body pb-0 pt-7 px-2 ps-6" style="height: 350px;">
+                <div class="tickets_not_found">
+                    <span>No Data Found <i class="bi bi-exclamation-circle text-danger fs-5"></i></span>
+                    <div>From&nbsp;<span class="from"></span> to&nbsp; <span class="upto"></span></div>
+                </div>
+                <div id="tickets_status_chart"></div>
             </div>
         </div>
     </div>
-</div>
+
+    
+</div> <!--main row-->
+
 
 
 
@@ -148,6 +174,8 @@
     var from, upto, map;
     var assets_status_counts=null;
     var total_number_of_assets=null;
+    
+    
 
     function showMap(row){
         let gps = ['NONE', '0.0,0.0', ""].includes(row['gps']) ? null : JSON.parse(row['gps'])
@@ -185,55 +213,23 @@
 
 
 <script>
-    //Global Modifications here
-    
-    //var base = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    //maxZoom: 19,
-    //attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-    //})
-    
-    //map = L.map('map', {
-    //    layers:[base],
-    //    center: new L.LatLng(21.7679, 78.8718),
-    //    zoom:5,
-    //    fullscreenControl: true,
-    //    fullscreenControlOptions: { // optional
-    //        title:"Show me the fullscreen !",
-    //        titleCancel:"Exit fullscreen mode"
-    //    }
-    //})
-    //Gloval vars used by below scripts
+
     var _taskJobstatus = null;
     var _popUpTable = null;
     var _dataTableConfig = null;
     var _db_cardtype = null;
     var _assetChart = null;
     var _alertChart = null;
+    var _tktChart = null;
     var _from_pd = moment().format('YYYY-MM-DD');
     var _to_pd = moment().format('YYYY-MM-DD')
     var _assetChartSeries;
     var _alertChartSeries;
+    var _tktChartSeries;
+
 
 
     $(document).ready(() => {
-        // check if the browser supports the HTML5 Geolocation API
-        //if ("geolocation" in navigator) {
-        //    // if the browser supports the HTML5 Geolocation API, get the current location
-        //    navigator.geolocation.getCurrentPosition(function(position) {
-        //    console.log("[position.coords.latitude, position.coords.longitude]")
-        //    // create a marker at the current location
-        //    var marker = L.marker([position.coords.latitude, position.coords.longitude]).addTo(map).bindPopup("you are here").openPopup()
-        //    map.flyTo([position.coords.latitude, position.coords.longitude], 18, {
-        //        animate: true,
-        //        duration: 1.0
-        //    });
-        //});
-        //} else {
-        //    // if the browser does not support the HTML5 Geolocation API, display an error message
-        //    console.error("browser not enabled the gps location permission")
-        //    map.setView([21.7679, 78.8718], 5)
-        //}   
-
 
         //show only assigned portlet caps
         if("{{ request.user.is_superuser }}" == 'False'){
@@ -260,49 +256,78 @@
         .done((data, status, xhr) => {
             console.log(data.counts)
             let data_ = data.counts
+            //task portlet 
             $("#tasks_completed").html(data_.completed_tasks_count)
             $("#tasks_autoclosed").html(data_.autoclosed_tasks_count)
             $("#tasks_pending").html(data_.assigned_tasks_count)
             $("#tasks_scheduled").html(data_.totalschd_tasks_count)
+            
+            //ppm portlet
+            $("#ppmtasks_completed").html(data_.completed_ppmtasks_count)
+            $("#ppmtasks_autoclosed").html(data_.autoclosed_ppmtasks_count)
+            $("#ppmtasks_pending").html(data_.assigned_ppmtasks_count)
+            $("#ppmtasks_scheduled").html(data_.totalschd_ppmtasks_count)
+            
+            //internal tour portlet
             $("#tours_completed").html(data_.completed_tours_count)
             $("#tours_scheduled").html(data_.totalscheduled_tours_count)
             $("#tours_inprogress").html(data_.inprogress_tours_count)
             $("#tours_partiallycompleted").html(data_.partiallycompleted_tours_count)
+            
+            //asset portlet
             $("#total_assets").html(data_.assetchart_total_count)
             $("#total_alerts").html(data_.alertchart_total_count)
+            
+            //other portlet
             $("#ir_count").html(data_.IR_count)
             $("#route_count").html(data_.route_count)
             $("#sos_count").html(data_.sos_count)   
             $("#att_count").html(data_.FR_fail_count)
             
             
+            
 
             let assetCharData = data_.assetchartdata
             let alertsChartData = data_.alertchartdata
+            let ticketsChartData = data_.ticketchartdata
             if(_assetChart !== null && _alertChart !== null){
                 _assetChart.updateSeries(assetCharData)
                 _alertChart.updateSeries(alertsChartData)
+                _tktChart.updateSeries(ticketsChartData)
             }else{
                 _assetChartSeries = assetCharData
                 _alertChartSeries = alertsChartData
+                _tktChartSeries = ticketsChartData
                 //script related to chart of asset status card loaded with this file
                 {% include "dashboard/RP_d/partials/dashboard_cards/partial_assets_card.html" %}
                 {% include "dashboard/RP_d/partials/dashboard_cards/partial_alerts_card.html" %}
+                {% include "dashboard/RP_d/partials/dashboard_cards/partial_ticket_card.html" %}
                 _assetChart = new ApexCharts(document.querySelector("#assets_status_chart"), barChartOptions);
                 _alertChart = new ApexCharts(document.querySelector("#alerts_donut_chart"), donutChartOptions);
+                _tktChart = new ApexCharts(document.querySelector("#tickets_status_chart"), ticketoptions);
                 
                 
                 setTimeout(function() {
                     _assetChart.render()
                     _alertChart.render()
+                    _tktChart.render()
                 }, 200); 
             }
+
+            //display msg of no data
+            data_.alertchart_total_count === 0 ? $('.alerts_not_found').show() : $('.alerts_not_found').hide()
+            data_.ticketchart_total_count === 0 ? $('.tickets_not_found').show() : $('.tickets_not_found').hide()
+            
+            $('.from').html(_from_pd)
+            $('.upto').html(_to_pd)
         })
         .fail((xhr, status, error) => {
             console.log(xhr)
-        }) 
+        })
+        
 
     }
+    
     
 
     $(document).ready(() => {
@@ -313,13 +338,10 @@
             _from_pd = picker.startDate.format('YYYY-MM-DD');
             _to_pd = picker.endDate.format('YYYY-MM-DD');
             getStatsForDashboard()
+            console.log(picker.startDate.format('YYYY-MM-DD'), picker.endDate.format('YYYY-MM-DD'))
+            
         })
         
-        //$('.count-item').on('click', function() {
-        //var cardType = $(this).find('[data-cardtype]').attr('data-cardtype');
-        //console.log("new method", cardType);
-        //});
-
 
         $(".count-item").on('click', function() {
             let cardType = $(this).find('[data-cardtype]').attr('data-cardtype');
@@ -329,7 +351,7 @@
             switch (cardType) {
                 case 'SOSALERTS':
                 localStorage.setItem('sos_alerts_filter', JSON.stringify(filterData))
-                location.reload()
+                window.open('{{ url("attendance:attendance_view") }}?template=sos_template')
                 break;
                 case 'INCREPORTS':
                 localStorage.setItem('incident_reports_filter', JSON.stringify(filterData))
@@ -346,6 +368,10 @@
                 case 'TASKSTATS':
                 localStorage.setItem('taskstats_filter', JSON.stringify(filterData))
                 window.open('{{ url("schedhuler:jobneedtasks") }}?template=true', '_blank');
+                break;
+                case 'PPMTASKSTATS':
+                localStorage.setItem('ppmstats_filter', JSON.stringify(filterData))
+                window.open('{{ url("activity:ppmjobneed") }}?template=true', '_blank');
                 break;
                 case 'TOURSTATS':
                 localStorage.setItem('tourstats_filter', JSON.stringify(filterData))

@@ -244,15 +244,15 @@ Internal Tour
 <script src="{{ static('assets/plugins/custom/Editor-2.0.8/js/editor.select2.js') }}" type="text/javascript"></script>
 <script>
     //set the variables which are gonna used in attachment.js file for fetching attachments against the owner
-    var attachmentUrl = '{{ url("activity:attachments") }}'
-    var attachementDatasource = 'jobneedattachment'
-    var attachmentOwner = '{{ internaltourform.instance.uuid }}'
-    var csrf = '{{ csrf_token }}'
-    var ownername = "Jobneed"
-    var id = ""
-    var folderType = 'internaltour'
-    var isDefault= "False";
-    var docnumber=1;
+    var attachmentParams = {
+        attachmentUrl  : '{{ url("activity:attachments") }}',
+        attachmentOwner: '{{ internaltourform.instance.uuid }}',
+        csrf           : '{{ csrf_token }}',
+        ownername      : "Jobneed",
+        folderType     : 'internaltour',
+        media_url      : '{{ MEDIA_URL }}',
+        peopleid       : "{{ request.user.id }}"
+    }
 </script>
 <script src="{{ static('assets/js/local/attachment.js') }}" type="text/javascript"></script>
 <script>
@@ -363,10 +363,20 @@ Internal Tour
         clearSelection("#DTE_Field_alerton")
         clearSelection("#DTE_Field_question")
     }
+    //display readable form of gpslocation
+    $('#id_gpslocation').val("{{ internaltourform.instance.geojson['gpslocation'] }}")
 
     
 
     $(document).ready(() => {
+        // Disable checkboxes
+        $("input[type='checkbox']").prop("disabled", true);
+
+        // Disable text fields
+        $("input, textarea").prop("disabled", true);
+
+        // Disable select2 fields (assuming select2 has been initialized)
+        $(".django-select2, .form-select").select2({"disabled": 'readonly'})
         //set ctzoffset
   	    $("#id_ctzoffset").val(-new Date().getTimezoneOffset())
         
@@ -451,7 +461,8 @@ Internal Tour
                 {title:'Details',data:null, defaultContent:null, render:function(data, type, row, meta){
                         return  `<button class="btn btn-link p-0" onClick='showCpDetails(${row['id']})'>View Details</button>`
                     }
-                }
+                },
+                {data:'ctzoffset', visible:false}
             ],
             ordering:false,
             deferRender: true,
@@ -496,8 +507,14 @@ Internal Tour
                     {data: null, title:'Attachments', render:function(data, type, row, meta){
                         return `<a href="javascript:void(0)"  onClick='showAttachmentDetails(${row['id']}, "jnd")'>View</a>`
                     }
-                    }
+                    },
+                    {data:'alerts', visible:false},
                 ],
+                createdRow:function(row, data, dataIndex){
+                    if(data['alerts'] === true){
+                        $(row).addClass('text-danger')
+                    }
+                },
                 ordering:false,
                 deferRender: true,
                 scrollX: true,

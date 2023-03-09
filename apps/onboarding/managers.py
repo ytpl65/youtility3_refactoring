@@ -332,3 +332,20 @@ class GeofenceManager(models.Manager):
             text = Concat('peoplename', V(' ('), 'peoplecode', V(')'))
         ).values('text', 'id').distinct()
         return qset or self.none()  
+    
+    
+class ShiftManager(models.Manager):
+    use_in_migrations: True
+    
+    def shift_listview(self, request, related, fields):
+        S = request.session
+        return self.filter(
+            ~Q(shiftname='NONE'),
+            client_id = S['client_id'],
+            bu_id = S['bu_id'],
+        ).annotate(
+        dsgn = Concat(F('designation__taname'), V(' ('), F('designation__tacode'), V(')'))    
+        ).select_related('designation').values(
+            'id', 'shiftname', 'dsgn', 'starttime',
+            'endtime', 'nightshiftappicable'
+        ) or self.none()

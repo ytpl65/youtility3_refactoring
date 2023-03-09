@@ -15,7 +15,7 @@
 
 <!------ BEGIN FORM TITLE ------->
 {% block form_title %}
-Ticket
+Ticket - {{ ticketform.instance.id }}
 {% endblock form_title %}
 <!------ END FORM TITLE -------->
 
@@ -28,7 +28,7 @@ Ticket
 <!---------- END NON FIELD ERRORS --------->
 
 {% block form %}
-<form action="{{ url('schedhuler:create_ticket') }}" method="post" id="ticketform">
+<form  method="post" id="ticketform">
     <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
     <input type="hidden" name="{{ ticketform.ctzoffset.name }}" id = "{{ ticketform.ctzoffset.auto_id }}" value="-1">
     {{ ticketform.ticketsource }}
@@ -97,10 +97,10 @@ Ticket
             </div>
             <div class="input-group mb-3">
                 <div class="pt-3 col-md-3">
-                    {{ ticketform.cuser.label_tag() }}
+                    <label > Created By</label>
                 </div>
                 <div class="col-md-9"  data-bs-toggle="tooltip" data-bs-custom-class="tooltip-dark" data-bs-placement="top" title="This field displays the name of the user who created this ticket">
-                    {{ ticketform.cuser }}
+                    <input type="text" readonly name="cuser" class="form-control" value="{{ ticketform.instance.cuser }}">
                 </div>
             </div>
             <div class="input-group mb-3">
@@ -129,20 +129,28 @@ Ticket
             </div>
        </div>
     </div>
-    {{ fileupoad() }}
 </form>
 {% endblock form %}
 
 
 {% block extras %}
+    {{ fileupoad() }}
 {% if ticketform.instance.id is not none %}
     <br><hr>
     <div class="mt-7 tab-pane">
         <p class="ch4">Ticket History&nbsp;<i class="bi bi-clock-fill fs-5"></i></p>
-        <div class="scroll hover-scroll h-300px">
-        {% for item in ticketform.instance.ticketlog['ticket_history'] %}
+        <div class="scroll hover-scroll h-300px bg-light-dark p-2 border rounded-2">
+        {% for item in ticketform.instance.ticketlog['ticket_history']|reverse %}
+            {% if item['details'] != 'No changes detected'  %}
             <div class="d-flex align-items-center mb-6">
-            <span data-kt-element="bullet" class="bullet bullet-vertical d-flex align-items-center min-h-20px mh-100 me-4 bg-primary"></span>
+                {# <span data-kt-element="bullet" class="bullet bullet-vertical d-flex align-items-center min-h-20px mh-100 me-4 bg-primary"></span> #}
+                <i class="bi bi-pencil-square fs-4 me-2"></i>
+                {% if item['isescalated'] is true %}
+                    <div class="text-gray-800 fw-semibold fs-6 me-5">
+                    {{ item['when'] |string_to_datetime(ticketform.instance.ctzoffset) }} &nbsp; &nbsp;<span class="text-primary fs-5">{{ item['details'][0] }}</span> 
+                    </div>
+                {% else %}
+                
                 <div class="fliex-grow-1 me-5 d-flex">
                     <!-- DATETIME --->
                     <div class="text-gray-800 fw-semibold fs-6 me-5">
@@ -160,9 +168,10 @@ Ticket
                         &nbsp;Comments&nbsp;&nbsp;
                         <span class="fs-6 text-gray-800">{{ item['previous_state']['comments'] }}</span>
                     </div>
-
                 </div>
+                {% endif %}
             </div>
+            {% endif %}
         {% endfor %}
         </div>
     </div>
@@ -225,6 +234,9 @@ Ticket
             var assignto = '{{ticketform.instance.assignedtopeople}}' == ('None' || "") ? "GROUP" : "PEOPLE"
             showHideSelectField(assignto)
             $('#id_status option[value="NEW"]').remove();
+            if("{{ ticketform.instance.cuser_id }}" !== "{{ request.user.id }}"){
+                $('#id_status option[value="CLOSED"]').remove();
+            }
         }
         $("#id_cuser").select2({"disabled": 'readonly'})
         $("#id_cdtz").prop('readonly', true)
@@ -246,7 +258,7 @@ Ticket
             const params   = { url: $(form).attr("action"), modal: false }
             const formtype = '{{ticketform.instance.id}}' == 'None' ? "create" : "update" //form-type (create/update)      
             const id       = '{{ ticketform.instance.id }}'                                          
-            var   payLoad  = { formData: $("#ticketform").serialize(),csrfmiddlewaretoken: '{{ csrf_token }}' }
+            var   payLoad  = { formData: $("#ticketform").serialize(),csrfmiddlewaretoken: '{{ csrf_token }}', 'uuid':"{{ ownerid }}" }
             
             if (formtype === 'update') {
                 var newPayLoad = { ...payLoad, 'pk': id }
@@ -275,8 +287,20 @@ Ticket
             })
         })
 
-        //get dropzone object
-        var dropzone = getDropzoneObject()
+        setUpDropzone({
+            foldertype:"ticket",
+            ownername:'Ticket',
+            attachmenttype:"ATTACHMENT",
+            uploadUrl:"{{ url('activity:attachments') }}",
+            csrftoken:  "{{ csrf_token }}",
+            ctzoffset:$("#id_ctzoffset").val(),
+            formId:"#dropzone_file", 
+            peopleid: "{{ request.user.id }}",
+            ownerid:"{{ ownerid }}",
+            create_or_update:'{{ ticketform.instance.id }}' == 'None' ? "create" : "update",
+            media_url: "{{ MEDIA_URL }}"
+        })
+        
         
 
 
