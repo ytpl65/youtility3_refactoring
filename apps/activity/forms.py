@@ -255,7 +255,7 @@ class ChecklistForm(MasterQsetForm):
         self.request = kwargs.pop('request', None)
         super().__init__(*args, **kwargs)
         self.fields['type'].initial        = 'CHECKLIST'
-        self.fields['type'].widget.attrs   = {"style": "display:none;"}
+        #self.fields['type'].widget.attrs   = {"style": "display:none;"}
         if not self.instance.id:
             self.fields['site_grp_includes'].initial = 1
             self.fields['site_type_includes'].initial = 1
@@ -617,6 +617,8 @@ class AdhocTaskForm(JobNeedForm):
         self.fields['plandatetime'].input_formats  = settings.DATETIME_INPUT_FORMATS
         self.fields['expirydatetime'].input_formats  = settings.DATETIME_INPUT_FORMATS
         self.fields['gpslocation'].required  = False
+        #filters for dropdown fields
+        self.fields['ticketcategory'].queryset = om.TypeAssist.objects.filter_for_dd_notifycategory_field(self.request, sitewise=True)
         utils.initailize_form_fields(self)
 
 
@@ -655,7 +657,7 @@ class AssetForm(forms.ModelForm):
             'assetcode':'Code', 'assetname':'Name', 'runningstatus':'Status',
             'type':'Type', 'category':'Category', 'subcategory':'Sub Category',
             'brand':'Brand', 'unit':'Unit', 'capacity':'Capacity', 'servprov':'Service Provider',
-            'parent':'Belongs To', 'gpslocation':'GPS', 'location':'Belongs to location'
+            'parent':'Belongs To', 'gpslocation':'GPS', 'location':'Location'
         }
         widgets={
             'brand'        : s2forms.Select2Widget,
@@ -667,6 +669,7 @@ class AssetForm(forms.ModelForm):
             'type'         : s2forms.Select2Widget,
             'parent'       : s2forms.Select2Widget,
             'location'     : s2forms.Select2Widget,
+            'identifier':forms.TextInput(attrs={'style':"display:none;"})
         }
     
     def __init__(self, *args, **kwargs):
@@ -896,11 +899,11 @@ class PPMForm(forms.ModelForm):
         self.fields['identifier'].widget.attrs = {'style':"display:none"}
         
         #filters for dropdown fields
-        self.fields['ticketcategory'].queryset = om.TypeAssist.objects.filter(tatype__tacode="NOTIFYCATEGORY", client_id = S['client_id'])
-        self.fields['qset'].queryset = am.QuestionSet.objects.filter(bu_id = S['bu_id'], type = 'CHECKLIST' )
-        self.fields['people'].queryset = pm.People.objects.filter(enable=True, isverified=True, bu_id = S['bu_id'])
-        self.fields['pgroup'].queryset = pm.Pgroup.objects.filter(identifier__tacode = 'PEOPLEGROUP', enable=True, bu_id = S['bu_id'])
-        self.fields['asset'].queryset = am.Asset.objects.filter(identifier__in = ['ASSET'], client_id = S['client_id'])
+        self.fields['ticketcategory'].queryset = om.TypeAssist.objects.filter_for_dd_notifycategory_field(self.request, sitewise=True)
+        self.fields['qset'].queryset = am.QuestionSet.objects.filter_for_dd_qset_field(self.request, ['CHECKLIST'], sitewise=True)
+        self.fields['people'].queryset = pm.People.objects.filter_for_dd_people_field(self.request, sitewise=True)
+        self.fields['pgroup'].queryset = pm.Pgroup.objects.filter_for_dd_pgroup_field(self.request, sitewise=True)
+        self.fields['asset'].queryset = am.Asset.objects.filter_for_dd_asset_field(self.request, ['ASSET'], sitewise=True)
         utils.initailize_form_fields(self)
     
     def clean(self):
@@ -973,5 +976,9 @@ class PPMFormJobneed(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         self.request = kwargs.pop('request')
         super().__init__(*args, **kwargs)
-        self.fields['ticketcategory'].queryset = om.TypeAssist.objects.filter(tatype__tacode="NOTIFYCATEGORY")
+        self.fields['ticketcategory'].queryset = om.TypeAssist.objects.filter_for_dd_notifycategory_field(self.request, sitewise=True)
+        self.fields['qset'].queryset = am.QuestionSet.objects.filter_for_dd_qset_field(self.request, ['CHECKLIST'], sitewise=True)
+        self.fields['people'].queryset = pm.People.objects.filter_for_dd_people_field(self.request, sitewise=True)
+        self.fields['pgroup'].queryset = pm.Pgroup.objects.filter_for_dd_pgroup_field(self.request, sitewise=True)
+        self.fields['asset'].queryset = am.Asset.objects.filter_for_dd_asset_field(self.request, ['ASSET'], sitewise=True)
         utils.initailize_form_fields(self)

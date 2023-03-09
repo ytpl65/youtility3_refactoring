@@ -21,7 +21,8 @@ class TicketForm(forms.ModelForm):
         }
         widgets={
             'comments' : forms.Textarea(attrs={'rows': 2, 'cols': 40}),
-            'isescalated':forms.TextInput(attrs={'readonly':True})
+            'isescalated':forms.TextInput(attrs={'readonly':True}),
+            'ticketsource':forms.TextInput(attrs={'style':"display:none"})
         }
         
 
@@ -36,12 +37,11 @@ class TicketForm(forms.ModelForm):
         self.fields['priority'].required=True
         self.fields['comments'].required=False
         self.fields['ticketsource'].initial=Ticket.TicketSource.USERDEFINED
-        self.fields['ticketsource'].widget.attrs = {'style':"display:none"}
         
         #filters for dropdown fields
-        self.fields['assignedtogroup'].queryset = Pgroup.objects.filter(bu_id = S['bu_id'], identifier__tacode__in = ['PEOPLEGROUP', 'PEOPLE_GROUP'], enable=True)
-        self.fields['ticketcategory'].queryset = TypeAssist.objects.filter(tatype__tacode='TICKETCATEGORY', client_id = S{'client_id'})
-        self.fields['location'].queryset = Location.objects.filter(bu_id = S['bu_id'], enable=True).exclude(loccode='NONE')
+        self.fields['assignedtogroup'].queryset = Pgroup.objects.filter_for_dd_pgroup_field(self.request, sitewise=True)
+        self.fields['ticketcategory'].queryset = TypeAssist.objects.filter(tatype__tacode='TICKETCATEGORY', client_id = S['client_id'], enable=True, bu_id = S['bu_id'])
+        self.fields['location'].queryset = Location.objects.filter_for_dd_location_field(self.request, sitewise=True)
         utils.initailize_form_fields(self)
         if not self.instance.id:
             self.fields['status'].initial = 'NEW'

@@ -887,7 +887,7 @@ class PeopleView(LoginRequiredMixin, View):
             else:
                 form = self.params['form_class'](data, request = request)
             ic(form.instance.id)
-            jsonform = self.params['json_form'](data, session = request.session, request=request)
+            jsonform = self.params['json_form'](data,  request=request)
             if form.is_valid() and jsonform.is_valid():
                 resp = self.handle_valid_form(form, jsonform, request, create)
             else:
@@ -942,7 +942,7 @@ class PeopleGroup(LoginRequiredMixin, View):
         if R.get('action', None) == 'list' or R.get('search_term'):
             objs = self.params['model'].objects.select_related(
                  *self.params['related']).filter(
-                    ~Q(id=-1), enable = True, bu_id = request.session['bu_id'], identifier__tacode='PEOPLEGROUP', client_id = request.session['client_id']
+                    ~Q(id=-1), bu_id = request.session['bu_id'], identifier__tacode='PEOPLEGROUP', client_id = request.session['client_id']
             ).values(*self.params['fields']).order_by('-mdtz')
             return  rp.JsonResponse(data = {'data':list(objs)})
 

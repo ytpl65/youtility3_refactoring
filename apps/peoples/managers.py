@@ -163,7 +163,22 @@ class PeopleManager(BaseUserManager):
         ).values('id', 'text')
         ic(qset)
         return qset or self.none()
-        
+    
+    
+    def filter_for_dd_people_field(self, request, choices=False, sitewise=False):
+        S = request.session
+        qset = self.filter(
+            bu_id__in = S['assignedsites'],
+            client_id = S['client_id'],
+            enable=True,
+            isverified=True,
+        )
+        if sitewise:
+            qset = qset.filter(bu_id = S['bu_id'])
+        if choices:
+            qset = qset.annotate(text = Concat(F('peoplename'), V(' ('), F('peoplecode'), V(')'))).values_list('id', 'text')
+        return qset or self.none()
+            
 
 
 
@@ -266,7 +281,8 @@ class PgblngManager(models.Manager):
                     ).values('buname', 'bucode', 'buid').order_by('assignsites_id').distinct('assignsites_id')
 
             buids = qset.values_list('buid', flat=True)
-            ic(buids)
+            peopleqset = peopleqset.values('buname', 'bucode', 'buid')
+            qset = qset.union(peopleqset)
             
             if qset and makechoice:
                 qset = qset.annotate(text = Concat(F('buname'), V(' ('), F('bucode'), V(')'))).values_list('buid', 'text')
@@ -340,7 +356,7 @@ class PgroupManager(models.Manager):
     def get_assignedsitegroup_forclient(self, clientid, request):
         qset = self.filter(
             client_id = clientid,
-            bu_id__in = request.session['bu_id'],
+            bu_id = request.session['bu_id'],
             identifier__tacode = 'SITEGROUP'
             ).values_list('id', 'groupname')
         return qset or self.none()
@@ -357,3 +373,19 @@ class PgroupManager(models.Manager):
             text = F('groupname')
         ).values('id', 'text')
         return qset or self.none()
+    
+    
+    def filter_for_dd_pgroup_field(self, request, choices=False, sitewise=False):
+        S = request.session
+        qset = self.filter(
+            enable=True,
+            client_id = S['client_id'],
+            bu_id__in = S['assignedsites'],
+            identifier__tacode = 'PGROUP'
+        )
+        if sitewise:
+            qset = qset.filter(bu_id = S['bu_id'])
+        if choices:
+            qset = qset.values_list('id', 'groupname')
+        return qset or self.none()
+        

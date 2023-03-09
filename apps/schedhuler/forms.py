@@ -37,9 +37,9 @@ class Schd_I_TourJobForm(JobForm):
         self.fields['frequency'].widget.attrs   = {"style": "display:none"}
         
         #filters for dropdowm fields
-        self.fields['ticketcategory'].queryset = ob.TypeAssist.objects.filter(tatype__tacode="NOTIFYCATEGORY", client_id = S['client_id'])
-        self.fields['pgroup'].queryset = pm.Pgroup.objects.filter(bu_id__in = S['assignedsites'], identifier__tacode__in = ['PEOPLEGROUP', 'PEOPLE_GROUP'])
-        self.fields['people'].queryset = pm.People.objects.filter(bu_id__in = S['assignedsites'], client_id = S['client_id'])
+        self.fields['ticketcategory'].queryset = ob.TypeAssist.objects.filter_for_dd_notifycategory_field(self.request, sitewise=True)
+        self.fields['pgroup'].queryset = pm.Pgroup.objects.filter_for_dd_pgroup_field(self.request, sitewise=True)
+        self.fields['people'].queryset = pm.People.objects.filter_for_dd_people_field(self.request, sitewise=True)
         utils.initailize_form_fields(self)
         
 
@@ -134,9 +134,10 @@ class I_TourFormJobneed(JobNeedForm): # jobneed
         self.fields['starttime'].widget.attrs       = {"disabled": "disabled"}
         self.fields['endtime'].widget.attrs         = {"disabled": "disabled"}
         self.fields['performedby'].widget.attrs    = {"disabled": "disabled"}
-        self.fields['qset'].label = 'QuestionSet'
+        self.fields['qset'].label = 'Checklist'
         self.fields['asset'].label = 'Asset/Smartplace'
-        self.fields['ticketcategory'].widget.queryset = ob.TypeAssist.objects.filter(tatype__tacode="NOTIFYCATEGORY", client_id = S['client_id'])
+        
+        self.fields['ticketcategory'].widget.queryset = ob.TypeAssist.objects.filter_for_dd_notifycategory_field(self.request, sitewise=True)
         utils.initailize_form_fields(self)
 
     def is_valid(self) -> bool:
@@ -178,8 +179,8 @@ class Child_I_TourFormJobneed(JobNeedForm):# jobneed
         S = self.request.session
         super().__init__(*args, **kwargs)
         #filters for dropdown fields
-        self.fields['qset'].queryset = am.QuestionSet.objects.filter(type = 'CHECKLIST', bu_id = S['bu_id'])
-        self.fields['asset'].queryset = am.Asset.objects.filter(bu_id = S['bu_id'], identifier__in = ['CHECKPOINT', 'ASSET'] )
+        self.fields['qset'].queryset = am.QuestionSet.objects.filter_for_dd_qset_field(self.request, ['CHECKLIST'], sitewise=True)
+        self.fields['asset'].queryset = am.Asset.objects.filter_for_dd_asset_field(self.request, ['CHECKPOINT', 'ASSET'], sitewise=True)
         utils.initailize_form_fields(self)
 
 
@@ -245,10 +246,10 @@ class Schd_E_TourJobForm(JobForm):
         
         #filters for dropdown fields
         self.fields['qset'].queryset  = am.QuestionSet.objects.get_proper_checklist_for_scheduling(self.request, ['RPCHECKLIST'])
-        self.fields['ticketcategory'].queryset  = ob.TypeAssist.objects.filter(tatype__tacode='NOTIFYCATEGORY',client_id = S['client_id'])
-        self.fields['sgroup'].queryset  = pm.Pgroup.objects.filter(identifier__tacode="SITEGROUP", bu_id__in = S['assignedsites'],)
-        self.fields['people'].queryset  = pm.People.objects.filter(bu_id__in = S['assignedsites'], client_id = S['client_id'])
-        self.fields['pgroup'].queryset = pm.Pgroup.objects.filter(bu_id__in = S['assignedsites'], identifier__tacode__in = ['PEOPLEGROUP', 'PEOPLE_GROUP'])
+        self.fields['ticketcategory'].queryset  = ob.TypeAssist.objects.filter_for_dd_notifycategory_field(self.request)
+        self.fields['sgroup'].queryset  = pm.Pgroup.objects.filter(identifier__tacode="SITEGROUP", bu_id__in = S['assignedsites'], enable=True)
+        self.fields['people'].queryset  = pm.People.objects.filter_for_dd_people_field(self.request)
+        self.fields['pgroup'].queryset = pm.Pgroup.objects.filter_for_dd_pgroup_field(self.request)
 
         utils.initailize_form_fields(self)
         
@@ -317,11 +318,11 @@ class SchdTaskFormJob(JobForm):
         self.fields['gracetime'].label         = 'Grace Time (Before)'
         
         #filters for dropdown fields
-        self.fields['ticketcategory'].queryset = ob.TypeAssist.objects.filter(tatype__tacode="NOTIFYCATEGORY", client_id = S['client_id'])
-        self.fields['qset'].queryset = am.QuestionSet.objects.get_proper_checklist_for_scheduling(self.request, ['CHECKLIST'])
-        self.fields['asset'].queryset = am.Asset.objects.filter(~Q(runningstatus='SCRAPPED'), identifier__in =["ASSET", 'CHECKPOINT'], client_id = S['client_id'])
-        self.fields['pgroup'].queryset = pm.Pgroup.objects.filter(bu_id__in = S['assignedsites'], identifier__tacode__in = ['PEOPLEGROUP', 'PEOPLE_GROUP'])
-        self.fields['people'].queryset = pm.People.objects.filter(bu_id__in = S['assignedsites'], client_id = S['client_id'])
+        self.fields['ticketcategory'].queryset = ob.TypeAssist.objects.filter_for_dd_notifycategory_field(self.request, sitewise=True)
+        self.fields['qset'].queryset = am.QuestionSet.objects.filter_for_dd_qset_field(self.request, ['CHECKLIST'], sitewise=True)
+        self.fields['asset'].queryset = am.Asset.objects.filter_for_dd_asset_field(self.request, identifiers =["ASSET", 'CHECKPOINT'], sitewise=True)
+        self.fields['pgroup'].queryset = pm.Pgroup.objects.filter_for_dd_pgroup_field(self.request, sitewise=True)
+        self.fields['people'].queryset = pm.People.objects.filter_for_dd_people_field(self.request, sitewise=True)
         utils.initailize_form_fields(self)
 
     def clean(self):
@@ -384,11 +385,11 @@ class TicketForm(JobNeedForm):
         self.fields['asset'].label = 'Location'
         
         #filters for dropdown fields
-        self.fields['ticketcategory'].queryset     = ob.TypeAssist.objects.filter(tatype__tacode="TICKETCATEGORY", client_id = S['client_id'], enable=True)
-        self.fields['assignedtopeople'].queryset = pm.People.objects.filter(bu_id__in = S['assignedsites'], isverified=True, enable=True)
-        self.fields['assignedtogroup'].queryset = pm.Pgroup.objects.filter(bu_id__in = S['assignedsites'], identifier__tacode = 'PEOPLEGROUP', enable=True)
-        self.fields['location'].queryset = am.Location.objects.filter(bu_id__in = S['assignedsites'], enable=True)
-        self.fields['asset'].queryset = am.Asset.objects.filter(bu_id__in = S['assignedsites'], enable=True, identifier__in = ['ASSET', 'CHECKPOINT'])
+        self.fields['ticketcategory'].queryset     = ob.TypeAssist.objects.filter(tatype__tacode="TICKETCATEGORY", client_id = S['client_id'], bu_id = S['bu_id'], enable=True)
+        self.fields['assignedtopeople'].queryset = pm.People.objects.filter_for_dd_people_field(self.request, sitewise=True)
+        self.fields['assignedtogroup'].queryset = pm.Pgroup.objects.filter_for_dd_pgroup_field(self.request, sitewise=True)
+        self.fields['location'].queryset = am.Location.objects.filter_for_dd_location_field(self.request, sitewise=True)
+        self.fields['asset'].queryset = am.Asset.objects.filter_for_dd_asset_field(self.request, ['ASSET', 'CHECKPOINT'], sitewise=True)
         utils.initailize_form_fields(self)
 
     def is_valid(self) -> bool:

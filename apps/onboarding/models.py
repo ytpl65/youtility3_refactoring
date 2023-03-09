@@ -98,7 +98,7 @@ class Bt(BaseModel, TenantAwareModel, HeirarchyModel):
         get_latest_by = ["mdtz", 'cdtz']
 
     def __str__(self) -> str:
-        return self.buname
+        return f'{self.buname} ({self.bucode})'
 
     def get_absolute_wizard_url(self):
         return reverse("onboarding:wiz_bu_update", kwargs={"pk": self.pk})
@@ -234,7 +234,7 @@ class TypeAssist(BaseModel, TenantAwareModel):
         ]
 
     def __str__(self):
-        return self.taname
+        return f'{self.taname} ({self.tacode})'
 
     def get_absolute_url(self):
         return reverse("onboarding:ta_update", kwargs={"pk": self.pk})

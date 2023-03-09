@@ -50,10 +50,10 @@ Location Form
             </div>
             <div class="input-group mb-3">
                 <div class="col-md-4">
-                    {{ locationform.type.label_tag() }}
+                    {{ locationform.locstatus.label_tag() }}
                 </div>
                 <div class="col-md-8">
-                    {{ locationform.type }}
+                    {{ locationform.locstatus }}
                 </div>
             </div>
             <div class="d-flex">
@@ -68,15 +68,7 @@ Location Form
             </div>
             </div>
          <div class="col-md-6">
-            <div class="input-group mb-3">
-                <div class="col-md-4">
-                    {{ locationform.locstatus.label_tag() }}
-                </div>
-                <div class="col-md-8">
-                    {{ locationform.locstatus }}
-                </div>
-            </div>
-            <div class="input-group mb-3">
+             <div class="input-group mb-3">
                 <div class="col-md-4">
                     {{ locationform.parent.label_tag() }}
                 </div>
@@ -84,6 +76,15 @@ Location Form
                     {{ locationform.parent }}
                 </div>
             </div>
+            <div class="input-group mb-3">
+                <div class="col-md-4">
+                    {{ locationform.type.label_tag() }}
+                </div>
+                <div class="col-md-8">
+                    {{ locationform.type }}
+                </div>
+            </div>
+           
             <div class="input-group mb-3">
                 <div class="col-md-4">
                     <label for="id_gpslocation" class="col-form-label text-sm-right">GPS Location:

@@ -62,6 +62,9 @@ Scheduled Tours
                 {title: 'Gracetime', data: 'gracetime'},
                 {title: 'Exp. Time', data: 'expirytime'},
             ],
+            rowReorder: {
+                dataSrc: 'jobname',
+            },
             columnDefs:[
                 {targets:0, data: 'id', visible:false, searchable:false},
                 {
@@ -76,7 +79,7 @@ Scheduled Tours
                     return  convert_to_local(type, data, row)
                 }}
             ],
-            order:[[3, 'desc']],
+            select:true,
             buttons:[
 				{
 					text:`Schedule Tour &nbsp;<i class='fas fa-plus ch4'></i></a>`,

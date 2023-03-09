@@ -85,6 +85,11 @@ People Group Lists
 				{data: "enable"},
 				{data: 'id', visible:false, defaultContent: ""}
 			],
+			createdRow:function(row, data, dataIndex){
+				if(data['enable'] === false){
+					$(row).addClass('disabled-record text-white')
+				}
+			},
 			buttons:[
 				{
 					text:`Add New ${viewname} &nbsp;<i class='fas fa-plus ch4'></i></a>`,

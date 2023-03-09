@@ -706,7 +706,7 @@ class Location(BaseModel, TenantAwareModel):
     objects = LocationManager()
     
     def __str__(self) -> str:
-        return f'({self.loccode}) {self.locname}'
+        return f'{self.locname} ({self.loccode})'
     
     class Meta(BaseModel.Meta):
         db_table = 'location'

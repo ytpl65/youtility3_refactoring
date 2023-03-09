@@ -285,6 +285,22 @@ class TypeAssistManager(models.Manager):
                 'assignedperson_id', 'assignedgroup_id'
             )) or []
         return []
+    
+    def filter_for_dd_notifycategory_field(self, request, choices=False, sitewise=False):
+        S = request.session
+        qset = self.filter(
+            client_id = S['client_id'],
+            bu_id__in = S['assignedsites'],
+            tatype__tacode = 'NOTIFYCATEGORY',
+            enable=True
+        )
+        if sitewise:
+            qset = qset.filter(bu_id = S['bu_id'])
+        if choices:
+            qset = qset.annotate(text = Concat(F('taname'), V(' ('), F('tacode'), V(')'))).values_list(
+                'id', 'text'
+            )
+        return qset or self.none()
 
 
 

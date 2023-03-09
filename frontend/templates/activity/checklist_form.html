@@ -36,7 +36,6 @@ Checklist Form
     <form action="" method="post" id="id_qsetform" action="{{ url('activity:checklist') }}">
     <input type="hidden" name="pk" id="pk" value="{{ checklistform.instance.pk }}">
     <div class="d-none">
-    {{ checklistform.type }}
     </div>
     <input type="hidden" name="{{ checklistform.ctzoffset.name }}" id = "{{ checklistform.ctzoffset.auto_id }}" value="-1">
         <div class="alert alert-danger alert-dismissible fade show" id="nonfield_errors" role="alert"
@@ -46,9 +45,15 @@ Checklist Form
         </div>
         <!--============================== QuestionSet FORM FIELDS START =============================-->
         <div class="row mb-3 gy-3">
+            <label for="{{ checklistform.type.id_for_label }}" class="required col-md-2">Type:</label>
+            <div class="col-md-4">
+                {{ checklistform.type }}
+                {{ checklistform.type.errors }}
+            </div>
             <!--Qusetion Set Name Start-->
-            <label for="{{ checklistform.qsetname.id_for_label }}" class="required col-md-1 col-sm-1">Name:</label>
-            <div class="col-md-11 col-sm-11">
+
+            <label for="{{ checklistform.qsetname.id_for_label }}" class="required col-md-2 col-sm-2">Name:</label>
+            <div class="col-md-4 col-sm-4">
                 {{ checklistform.qsetname }}
                 {{ checklistform.qsetname.errors }}
             </div>

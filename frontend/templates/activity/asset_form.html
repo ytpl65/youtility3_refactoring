@@ -59,29 +59,21 @@ Asset Form
             </div>
             
             
-            <div class="input-group mb-3">
-                <div class="col-md-4">
-                    <label for="id_gpslocation" class="col-form-label text-sm-right">GPS Location:
-                        <span class="material-icons-outlined h-19px" data-bs-toggle="tooltip" data-bs-custom-class="tooltip"
-                            data-bs-placement="top" style="vertical-align: middle; font-size: 19px;"
-                            title="Longitude & latitude cordinates of the buisiness unit">
-                            info
-                        </span>
-                    </label>
-                </div>
-                <div class="col-md-8">
-                    <div class="d-flex d-inline">
-                        <input type="text" name="gpslocation" readonly placeholder="Latitude, Longitude" geom_type="POINT" class="form-control" id="id_gpslocation">
-                        <button type='button' class="btn btn-sm btn-secondary rounded-right rounded-1" style="height:3.2rem;" id="id_setgps">GPS</button>
-                    </div>
-                </div>
-            </div>
+            
             <div class="input-group mb-3">
                 <div class="col-md-4">
                     {{ assetform.location.label_tag() }}
                 </div>
                 <div class="col-md-8">
                     {{ assetform.location }}
+                </div>
+            </div>
+            <div class="input-group mb-3">
+                <div class="col-md-4">
+                    {{ assetform.parent.label_tag() }}
+                </div>
+                <div class="col-md-8">
+                    {{ assetform.parent }}
                 </div>
             </div>
         </div>
@@ -103,12 +95,17 @@ Asset Form
                     {{ assetform.type }}
                 </div>
             </div>
+            
             <div class="input-group mb-3">
                 <div class="col-md-4">
-                    {{ assetform.parent.label_tag() }}
+                    <label for="id_gpslocation" class="col-form-label text-sm-right">GPS:
+                    </label>
                 </div>
                 <div class="col-md-8">
-                    {{ assetform.parent }}
+                    <div class="d-flex d-inline">
+                        <input type="text" name="gpslocation" readonly placeholder="Latitude, Longitude" geom_type="POINT" class="form-control" id="id_gpslocation">
+                        <button type='button' class="btn btn-sm btn-secondary rounded-right rounded-1" style="height:3.2rem;" id="id_setgps">GPS</button>
+                    </div>
                 </div>
             </div>
             <div class="d-flex justify-content-start">

@@ -125,6 +125,18 @@ class QuestionSetManager(models.Manager):
             questionsetbelonging=None
         )
         return qset or self.none()
+    
+    def filter_for_dd_qset_field(self, request, type, choices=False, sitewise=False):
+        S = request.session
+        qset =self.filter(
+            enable=True,
+            client_id  = S['client_id'],
+            bu_id__in = S['assignedsites'],
+            type__in = type
+        )
+        if sitewise: qset = qset.filter(bu_id = S['bu_id'])
+        if choices: qset = qset.values_list('id', 'qsetname')
+        return qset or self.none()
         
     
     
@@ -859,6 +871,19 @@ class AssetManager(models.Manager):
         
         return series, sum(list(map(sum, zip(*[working, mnt, stb, scp]))))
     
+    def filter_for_dd_asset_field(self, request, identifiers, choices=False, sitewise=False):
+        S = request.session
+        qset = self.filter(
+            ~Q(runningstatus='SCRAPPED'),
+            enable=True, 
+            client_id = S['client_id'],
+            bu_id__in = S['assignedsites'],
+            identifier__in = identifiers,
+        )
+        if sitewise: qset = qset.filter(bu_id = S['bu_id'])
+        if choices: qset = qset.annotate(text = Concat(F('assetname'), V(' ('), F('assetcode'), V(')'))).values_list('id', 'text')
+        return qset or self.none()
+    
     
 
 
@@ -1223,4 +1248,18 @@ class LocationManager(models.Manager):
         qset = self.select_related(*related).filter(
             Q(mdtz__gte = mdtz) & Q(bu_id__in=[buid])  & Q(enable=True)
             ).values(*fields)
+        return qset or self.none()
+    
+    def filter_for_dd_location_field(self, request, choices=False, sitewise=False):
+        S = request.session
+        qset = self.filter(
+            enable=True,
+            client_id = S['client_id'],
+            bu_id__in = S['assignedsites'],
+        )
+        if sitewise: qset = qset.filter(bu_id = S['bu_id'])
+        if choices: qset = qset.annotate(
+            text = Concat(F('locname'), V(' ('), F('loccode'), V(')'))).values_list(
+                'id', 'text'
+            )
         return qset or self.none()
