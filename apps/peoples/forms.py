@@ -66,6 +66,7 @@ class LoginForm(forms.Form):
     
     def get_user(self, username):
         try:
+            ic(username)
             return pm.People.objects.get(Q(loginid = username) | Q(email = username) | Q(mobno = username))
         except pm.People.DoesNotExist as e:
             raise forms.ValidationError("User not found with these UserName") from e
@@ -130,7 +131,7 @@ class PeopleForm(forms.ModelForm):
         }
 
         widgets = {
-            'mobno'       : forms.TextInput(attrs={'placeholder': 'Eg:- 91XXXXXXXXXX, 44XXXXXXXXX'}),
+            'mobno'       : forms.TextInput(attrs={'placeholder': 'Eg:- +91XXXXXXXXXX, +44XXXXXXXXX'}),
             'peoplename'  : forms.TextInput(attrs={'placeholder': 'Enter people name'}),
             'loginid'     : forms.TextInput(attrs={'placeholder': 'Enter text not including any spaces'}),
             'dateofbirth' : forms.DateInput,
@@ -159,7 +160,8 @@ class PeopleForm(forms.ModelForm):
         self.fields['worktype'].choices = om.TypeAssist.objects.filter(tatype__tacode="WORKTYPE", client_id = S['client_id'], enable=True).values_list('id', 'tacode')
         self.fields['department'].queryset = om.TypeAssist.objects.filter(tatype__tacode="DEPARTMENT", client_id = S['client_id'], enable=True)
         self.fields['designation'].choices = om.TypeAssist.objects.filter(tatype__tacode="DESIGNATION", client_id = S['client_id'], enable=True).values_list('id', 'taname')
-        self.fields['bu'].queryset = om.Bt.objects.filter(id__in = S['assignedsites'])
+        self.fields['bu'].queryset = om.Bt.objects.filter(id__in = S['assignedsites'])# add query for isadmin
+
         utils.initailize_form_fields(self)
 
     def is_valid(self) -> bool:
@@ -393,7 +395,7 @@ class PeopleExtrasForm(forms.Form):
         S = self.request.session
         super().__init__(*args, **kwargs)
         self.fields['assignsitegroup'].choices = pm.Pgroup.objects.get_assignedsitegroup_forclient(S['client_id'], self.request)
-        self.fields['tempincludes'].choices = am.QuestionSet.objects.filter(type = 'SITEREPORTTEMPLATE', bu_id__in = S['assignedsites']).values_list('id', 'qsetname')
+        self.fields['tempincludes'].choices = am.QuestionSet.objects.filter(type = 'SITEREPORT', bu_id__in = S['assignedsites']).values_list('id', 'qsetname')
         web, mob, portlet, report = create_caps_choices_for_peopleform(self.request.user.client)
         if not (S['is_superadmin']):
             self.fields['webcapability'].choices     = S['people_webcaps'] or  web

@@ -79,14 +79,14 @@ def site_type_includes():
 class QuestionSet(BaseModel, TenantAwareModel):
     class Type(models.TextChoices):
         CHECKLIST                = "CHECKLIST",                _('Checklist')
-        INCIDENTREPORTTEMPLATE   = "INCIDENTREPORTTEMPLATE",   _('Incident Report Template')
-        SITEREPORTTEMPLATE       = "SITEREPORTTEMPLATE",       _('Site Report Template')
-        WORKPERMITTEMPLATE       = "WORKPERMITTEMPLATE",       _('Work Permit Template')
-        RETURNWORKPERMITTEMPLATE = "RETURNWORKPERMITTEMPLATE", _('Return Work Permit Template')
-        KPITEMPLATE              = "KPITEMPLATE",              _('Kpi Template')
-        SCRAPPEDTEMPLATE         = "SCRAPPEDTEMPLATE",         _('Scrapped Template')
+        INCIDENTREPORTTEMPLATE   = "INCIDENTREPORT",   _('Incident Report')
+        SITEREPORTTEMPLATE       = "SITEREPORT",       _('Site Report')
+        WORKPERMITTEMPLATE       = "WORKPERMIT",       _('Work Permit')
+        RETURNWORKPERMITTEMPLATE = "RETURNWORKPERMIT", _('Return Work Permit')
+        KPITEMPLATE              = "KPITEMPLATE",              _('Kpi')
+        SCRAPPEDTEMPLATE         = "SCRAPPEDTEMPLATE",         _('Scrapped')
         ASSETAUDIT               = "ASSETAUDIT",               _('Asset Audit')
-        MAINTENANCETEMPLATE      = "MAINTENANCETEMPLATE",      _('Maintenance Template')
+        MAINTENANCETEMPLATE      = "MAINTENANCETEMPLATE",      _('Maintenance')
         ASSETMAINTENANCE         = "ASSETMAINTENANCE",         _('Asset Maintenance')
         QUESTIONSET              = "QUESTIONSET",              _('Question Set')
 
@@ -102,7 +102,7 @@ class QuestionSet(BaseModel, TenantAwareModel):
     client             = models.ForeignKey("onboarding.Bt", verbose_name = _("Client"), on_delete = models.RESTRICT, related_name='qset_clients', null = True, blank = True)
     site_grp_includes  = ArrayField(models.CharField(max_length = 50, blank = True), null = True, blank = True, verbose_name= _("Site Group Includes"))
     site_type_includes = ArrayField(models.CharField(max_length = 50, blank = True), null = True, blank = True, verbose_name= _("Site Type Includes"))
-    url                = models.CharField(_("Url"), max_length = 250, null = True, blank = True)
+    url                = models.CharField(_("Url"), max_length = 250, null = True, blank = True, default="NONE")
 
     objects = QuestionSetManager()
 
@@ -147,11 +147,11 @@ class QuestionSetBelonging(BaseModel, TenantAwareModel):
         NONE        = ("NONE", "NONE")
         
     class AvptType(models.TextChoices):
-        BACKCAMPIC    = "BACKCAMPIC"   , _('Back Camera Pic')
-        FRONTCAMPIC        = "FRONTCAMPIC"       , _('Front Camera Pic')
-        AUDIO    = "AUDIO"   , _('Audio')
-        VIDEO     = "VIDEO"    , _("Video")
-        NONE = ("NONE", "NONE")
+        BACKCAMPIC  = "BACKCAMPIC",  _('Back Camera Pic')
+        FRONTCAMPIC = "FRONTCAMPIC", _('Front Camera Pic')
+        AUDIO       = "AUDIO",       _('Audio')
+        VIDEO       = "VIDEO",       _("Video")
+        NONE        = ("NONE", "NONE")
 
     # id               = models.BigIntegerField(_("QSB Id"), primary_key = True)
     ismandatory       = models.BooleanField(_("Is Manadatory"))
@@ -362,6 +362,12 @@ class Asset(BaseModel, TenantAwareModel):
         db_table            = 'asset'
         verbose_name        = 'Asset'
         verbose_name_plural = 'Assets'
+        constraints         = [
+            models.UniqueConstraint(
+                fields = ['assetcode', 'client'],
+                name='assetcode_client_uk'
+            ),
+        ]
         
                 
 
@@ -711,3 +717,9 @@ class Location(BaseModel, TenantAwareModel):
     class Meta(BaseModel.Meta):
         db_table = 'location'
         get_latest_by = ["mdtz", 'cdtz']
+        constraints         = [
+            models.UniqueConstraint(
+                fields = ['loccode', 'client'],
+                name='loccode_client_uk'
+            ),
+        ]

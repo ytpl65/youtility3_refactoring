@@ -68,10 +68,11 @@
                 <div class="col-md-2">
                     {{ shift_form.captchafreq }}
                 </div>
-                <div class="col-md-3 pt-4 form-check form-switch form-check-solid">
-                    <label for="{{ shift_form.nightshiftappicable.id_for_label }}" 
-                    class="form-check-label bool text-sm-right">{{ shift_form.nightshiftappicable }}&nbsp;&nbsp;{{ shift_form.nightshiftappicable.label }}</label>
-                </div>
+                 <div class="booleans form-check col-md-4 d-flex justify-content-sm-between mt-5">
+                <label for={{ shift_form.nightshiftappicable.id_for_label }}
+                    class="form-check-label bool col-form-label me-5 text-sm-right">{{ shift_form.nightshiftappicable }}
+                    &nbsp{{ shift_form.nightshiftappicable.label }}</label>
+            </div>
         </div>
     </div>
 </form>
@@ -102,6 +103,7 @@
         let mins = parseInt(val, 10);
         $("#id_shiftduration").val(formatMins(mins))
     }
+    var nightshiftWarn = false;
     
 
     $(document).ready(function () {
@@ -148,6 +150,7 @@
                     $("#id_nightshift_appicable").prop('checked', false)
                 }
             })
+            nightshiftWarn=true;
         }
 
         //total shift duration
@@ -157,7 +160,7 @@
             var duration = moment.duration(et.diff(st)).asMinutes()
             if (duration < 0) {
                 duration = 1440 + duration
-                alertUser()
+                nightshiftWarn === false ? alertUser() : {}
             } else {
                 $("#id_nightshift_appicable").prop('checked', false)
             }

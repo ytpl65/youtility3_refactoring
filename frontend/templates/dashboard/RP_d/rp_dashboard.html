@@ -74,65 +74,58 @@
     <div class="col-xl-3 col-md-4  col-lg-6 col-sm-12" id="ppmtasks_card">
         {% include "dashboard/RP_d/partials/dashboard_cards/partial_ppm_card.html" %}
     </div>
-    <div class="card col-xl-3 col-md-4 col-lg-6 col-sm-12">
-        <div class="card-body mt-0 p-2">
-            <div class="row">
-            <div class="col-lg-12 portlet d-none mb-2" id="PORTLET_SOS_ALERTS">
-                <div class="counter  bg-gray-100 bg-opacity-60 mt-3 mb-2 rounded-3 p-2" >
-                    <div class="d-flex count-item justify-content-between" >
+    <div class="col-xl-3 col-md-4 col-lg-6 col-sm-12">
+        <div class="mt-0 p-2">
+            <div class="row card col-lg-12 portlet d-none mb-2" id="PORTLET_SOS_ALERTS">
+                <div class="counter card-body bg-gray-100 bg-opacity-60 mt-3 mb-2 rounded-3 p-2">
+                    <div class="d-flex count-item justify-content-between">
                         <i class="fas p-4 align-middle yiconpadd yicon text-danger fa-exclamation-triangle"></i>
                         <div class="pe-3" data-cardtype='SOSALERTS'>
-                            <h6  
-                                class="pb-1 y-primary  timer count-title text-end count-number" id="sos_count">
-                               
+                            <h6 class="pb-1 y-primary  timer count-title text-end count-number" id="sos_count">
+
                             </h6>
                             <p class="h4 text-gray-500 fw-semibold fs-6">SOS Alerts</p>
                         </div>
                     </div>
                 </div>
             </div>
-            <div class="col-lg-12 portlet d-none mb-2" id="PORTLET_INCIDENTREPORTS">
-                <div class="counter  bg-gray-100 bg-opacity-60  p-2 mb-2 rounded-3 ">
-                    <div class="d-flex count-item justify-content-between" >
+            <div class="row card col-lg-12 portlet d-none mb-2" id="PORTLET_INCIDENTREPORTS">
+                <div class="card-body counter  bg-gray-100 bg-opacity-60  p-2 mb-2 rounded-3 ">
+                    <div class="d-flex count-item justify-content-between">
                         {# <i class="fas p-4 yiconpadd yicon fa-clipboard-user y-primary fs-1"></i> #}
                         <i class="fas p-4 yiconpadd yicon text-start text-warning fa-file-medical-alt"></i>
                         <div class="pe-3" data-cardtype='INCREPORTS'>
-                            <h6 
-                                class="pb-1 y-primary text-end timer count-title count-number" id="ir_count"></h6>
+                            <h6 class="pb-1 y-primary text-end timer count-title count-number" id="ir_count"></h6>
                             <p class="h4 text-gray-500 fw-semibold fs-6">Incident Reports</p>
                         </div>
                     </div>
                 </div>
             </div>
-        </div>
-        <div class="row">
-            <div class="col-lg-12 portlet d-none mb-2" id="PORTLET_FR_FAILURES">
-                <div class="counter  bg-gray-100 bg-opacity-60  p-2 mb-2 rounded-3">
-                    <div class="d-flex count-item justify-content-between" >
+            <div class="row card col-lg-12 portlet d-none mb-2" id="PORTLET_FR_FAILURES">
+                <div class="card-body counter  bg-gray-100 bg-opacity-60  p-2 mb-2 rounded-3">
+                    <div class="d-flex count-item justify-content-between">
                         <i class="bi bi-person-bounding-box yiconpadd yicon p-4 y-primary"></i>
                         <div class="pe-3" data-cardtype='ATTENDANCE'>
-                            <h6  
-                                class="pb-1 y-primary  text-end timer count-title count-number" id="att_count"></h6>
+                            <h6 class="pb-1 y-primary  text-end timer count-title count-number" id="att_count"></h6>
                             <p class="h4 text-gray-500 fw-semibold fs-6">Attendance</p>
                         </div>
                     </div>
                 </div>
             </div>
-            <div class="col-lg-12 portlet d-none " id="PORTLET_ROUTES">
-                <div class="counter  bg-gray-100 bg-opacity-60 p-2  mb-2 rounded-3">
+            <div class="row card col-lg-12 portlet d-none " id="PORTLET_ROUTES">
+                <div class="card-body counter  bg-gray-100 bg-opacity-60 p-2  mb-2 rounded-3">
                     <div class="d-flex count-item justify-content-between">
                         <i class="fas yicon yiconpadd text-success p-4 fa-route"></i>
-                        <div class="pe-3"  data-cardtype='ROUTES'>
-                            <h6 
-                                class="pb-1 y-primary text-end timer count-title count-number" id="route_count"></h6>
+                        <div class="pe-3" data-cardtype='ROUTES'>
+                            <h6 class="pb-1 y-primary text-end timer count-title count-number" id="route_count">
+                            </h6>
                             <p class="h4 text-gray-500 fw-semibold fs-6">Routes</p>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
-        </div>
-        
+
     </div>
     <div class="col-xl-3 col-lg-6 h-xl-75 col-sm-12">
         <div class="card card-flush h-lg-100">

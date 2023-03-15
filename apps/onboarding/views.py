@@ -1085,15 +1085,14 @@ def handle_pop_forms(request):
     form_dict = {
         'ta_form': obforms.TypeAssistForm,
     }
-    form = form_dict[form_name](request.POST)
+    form = form_dict[form_name](request.POST, request=request)
     ic(request.POST)
     if not form.is_valid():
         ic(form.errors)
         return JsonResponse({'saved': False, 'errors': form.errors})
     ta = form.save(commit = False)
     ta.enable=True
-    t = TypeAssist.objects.filter(tacode = ta.tacode)
-    ta = t[0] if len(t) else form.save(commit = True)
+    form.save(commit = True)
     save_userinfo(ta, request.user, request.session)
     if request.session.get('wizard_data'):
         request.session['wizard_data']['taids'].append(ta.id)
@@ -1158,7 +1157,7 @@ class SuperTypeAssist(LoginRequiredMixin, View):
             if pk:
                 msg = "supertypeassist_view"
                 form = utils.get_instance_for_update(
-                    data, self.params, msg, int(pk))
+                    data, self.params, msg, int(pk), {'request':request})
                 print(form.data)
                 create = False
             else:
@@ -1200,7 +1199,7 @@ class TypeAssistView(LoginRequiredMixin, View):
 
 
     def get(self, request, *args, **kwargs):
-        R, resp = request.GET, None
+        R,S, resp = request.GET, request.session, None
         ic(R)
         # first load the template
         if R.get('template'): return render(request, self.params['template_list'])
@@ -1209,7 +1208,7 @@ class TypeAssistView(LoginRequiredMixin, View):
             ic(self.params)
             objs = self.params['model'].objects.select_related(
                  *self.params['related']).filter(
-                    ~Q(tacode='NONE'), ~Q(tatype__tacode='NONE'), enable=True
+                    ~Q(tacode='NONE'), ~Q(tatype__tacode='NONE'), Q(client_id = S['client_id']) | Q(cuser_id=1), enable=True, 
              ).values(*self.params['fields'])
             return  rp.JsonResponse(data = {'data':list(objs)})
 
@@ -1240,7 +1239,7 @@ class TypeAssistView(LoginRequiredMixin, View):
             if pk:
                 msg = "typeassist_view"
                 form = utils.get_instance_for_update(
-                    data, self.params, msg, int(pk))
+                    data, self.params, msg, int(pk), {'request':request})
                 print(form.data)
                 create = False
             else:
@@ -1317,7 +1316,7 @@ class ShiftView(LoginRequiredMixin, View):
             if pk:
                 msg = "shift_view"
                 form = utils.get_instance_for_update(
-                    data, self.params, msg, int(pk))
+                    data, self.params, msg, int(pk), {'request':request})
                 create = False
             else:
                 form = self.params['form_class'](data, request = request)
@@ -1614,9 +1613,9 @@ class Client(LoginRequiredMixin, View):
             return  rp.JsonResponse(data = {'data':list(objs)})
 
         if R.get('action', None) == 'form':
-            cxt = {'clientform': P['form_class'](client = True),
+            cxt = {'clientform': P['form_class'](client = True, request=request),
                'clientprefsform': P['json_form'](),
-               'ta_form': obforms.TypeAssistForm(auto_id = False)
+               'ta_form': obforms.TypeAssistForm(auto_id = False, request=request)
                }
             return render(request, P['template_form'], context = cxt)
 
@@ -1726,7 +1725,7 @@ class BtView(LoginRequiredMixin, View):
 
         elif R.get('action', None) == 'form':
             cxt = {'buform': self.params['form_class'](request = request),
-                   'ta_form': obforms.TypeAssistForm(auto_id = False),
+                   'ta_form': obforms.TypeAssistForm(auto_id = False, request=request),
                    'msg': "create bu requested"}
             return render(request, self.params['template_form'], context = cxt)
 
@@ -1736,7 +1735,7 @@ class BtView(LoginRequiredMixin, View):
         elif R.get('id', None):
             obj = utils.get_model_obj(int(R['id']), request, self.params)
             initial = {'controlroom':obj.bupreferences.get('controlroom') }
-            cxt = {'ta_form':obforms.TypeAssistForm(auto_id = False),
+            cxt = {'ta_form':obforms.TypeAssistForm(auto_id = False, request=request),
                    'buform': self.params['form_class'](request = request, instance = obj, initial=initial)}
         return render(request, self.params['template_form'], context = cxt)
 

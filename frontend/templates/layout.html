@@ -505,6 +505,14 @@
   }
 
   $(document).ready(function() {
+    /*$('.modal-content').resizable({
+      minHeight: 300,
+      minWidth: 400
+
+    });*/
+   
+
+     $('.modal-dialog, .DTED_Lightbox_Content').draggable();
     $("#id_assignesite").select2({
       dropdownParent: $("#popup_switch_site")
     });

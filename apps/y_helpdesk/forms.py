@@ -2,8 +2,8 @@ from django import forms
 from .models import Ticket, EscalationMatrix
 from apps.onboarding.models import TypeAssist
 from apps.core import utils
-from apps.peoples.models import Pgroup
-from apps.activity.models import Location
+from apps.peoples.models import Pgroup, People
+from apps.activity.models import Location, Asset
 class TicketForm(forms.ModelForm):
     required_css_class = "required"
 
@@ -12,12 +12,12 @@ class TicketForm(forms.ModelForm):
         fields = [
             'ticketdesc', 'assignedtopeople', 'assignedtogroup', 'priority', 'ctzoffset',
             'ticketcategory', 'status', 'comments', 'location', 'cdtz',
-            'isescalated', 'ticketsource'
+            'isescalated', 'ticketsource', 'asset'
         ]
         labels = {
             'assignedtopeople':'User', 'assignedtogroup':"User Group", 'ticketdesc':"Subject",
             'cdtz':"Created On", 'ticketcategory':"Queue",
-            "isescalated":"Is Escalated"
+            "isescalated":"Is Escalated", 'asset':'Asset/Checkpoint'
         }
         widgets={
             'comments' : forms.Textarea(attrs={'rows': 2, 'cols': 40}),
@@ -31,7 +31,7 @@ class TicketForm(forms.ModelForm):
         self.request = kwargs.pop('request')
         S = self.request.session
         super().__init__(*args, **kwargs)
-        self.fields['assignedtogroup'].required=True
+        self.fields['assignedtogroup'].required=False
         self.fields['ticketdesc'].required=True
         self.fields['ticketcategory'].required=True
         self.fields['priority'].required=True
@@ -40,11 +40,14 @@ class TicketForm(forms.ModelForm):
         
         #filters for dropdown fields
         self.fields['assignedtogroup'].queryset = Pgroup.objects.filter_for_dd_pgroup_field(self.request, sitewise=True)
+        self.fields['assignedtopeople'].queryset = People.objects.filter_for_dd_people_field(self.request, sitewise=True)
         self.fields['ticketcategory'].queryset = TypeAssist.objects.filter(tatype__tacode='TICKETCATEGORY', client_id = S['client_id'], enable=True, bu_id = S['bu_id'])
         self.fields['location'].queryset = Location.objects.filter_for_dd_location_field(self.request, sitewise=True)
+        self.fields['asset'].queryset = Asset.objects.filter_for_dd_asset_field(self.request, ['ASSET', 'CHECKPOINT'], sitewise=True)
         utils.initailize_form_fields(self)
         if not self.instance.id:
             self.fields['status'].initial = 'NEW'
+            #self.fields['assignedtogroup'] = utils.get_or_create_none_pgroup()
     
     def clean(self):
         super().clean()

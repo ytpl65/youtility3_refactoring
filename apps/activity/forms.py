@@ -244,25 +244,59 @@ class QsetBelongingForm(forms.ModelForm):
             except ValidationError as e:
                 self._update_errors(e)
 
-class ChecklistForm(MasterQsetForm):
+class ChecklistForm(forms.ModelForm):
+    required_css_class = "required"
+    error_msg = {
+        'invalid_name'  : "[Invalid name] Only these special characters [-, _, @, #] are allowed in name field",
+    }
+    assetincludes = forms.MultipleChoiceField(
+        required = True, label='Checkpoint', widget = s2forms.Select2MultipleWidget)
+    site_type_includes = forms.MultipleChoiceField(widget=s2forms.Select2MultipleWidget, label="Site Types", required=False)
+    buincludes         = forms.MultipleChoiceField(widget=s2forms.Select2MultipleWidget, label='Site Includes', required=False)
+    site_grp_includes  = forms.MultipleChoiceField(widget=s2forms.Select2MultipleWidget, label='Site groups', required=False)
+    
     class Meta:
         model = am.QuestionSet
         fields = ['qsetname', 'enable', 'type', 'ctzoffset', 'assetincludes',
-                  'site_type_includes', 'buincludes', 'site_grp_includes']
+                  'site_type_includes', 'buincludes', 'site_grp_includes', 'parent']
+        widgets = {
+            'parent':forms.TextInput(attrs={'style':'display:none'}),
+        }
 
 
     def __init__(self, *args, **kwargs):
         self.request = kwargs.pop('request', None)
         super().__init__(*args, **kwargs)
         self.fields['type'].initial        = 'CHECKLIST'
+        self.fields['parent'].required = False
         #self.fields['type'].widget.attrs   = {"style": "display:none;"}
         if not self.instance.id:
             self.fields['site_grp_includes'].initial = 1
             self.fields['site_type_includes'].initial = 1
             self.fields['buincludes'].initial = 1
             self.fields['assetincludes'].initial = 1
+        else: self.fields['type'].required = False
+        
+        self.fields['site_type_includes'].choices = om.TypeAssist.objects.filter(Q(tatype__tacode = "SITETYPE") | Q(tacode='NONE')).values_list('id', 'taname')
+        bulist = om.Bt.objects.get_all_bu_of_client(self.request.session['client_id'])
+        self.fields['buincludes'].choices = pm.Pgbelonging.objects.get_assigned_sites_to_people(self.request.user.id, makechoice=True)
+        self.fields['site_grp_includes'].choices = pm.Pgroup.objects.filter(
+            Q(groupname='NONE') |  Q(identifier__tacode='SITEGROUP') & Q(bu_id__in = bulist)).values_list('id', 'groupname')
         self.fields['assetincludes'].choices = ac_utils.get_assetsmartplace_choices(self.request, ['CHECKPOINT'])
         utils.initailize_form_fields(self)
+        
+    def clean(self):
+        super().clean()
+        self.cleaned_data = self.check_nones(self.cleaned_data)
+        
+    def check_nones(self, cd):
+        fields = {
+            'parent':'get_or_create_none_qset'
+            }
+        for field, func in fields.items():
+            if cd.get(field) in [None, ""]:
+                cd[field] = getattr(utils, func)()
+        return cd  
 
 
 class QuestionSetForm(MasterQsetForm):
@@ -886,6 +920,7 @@ class PPMForm(forms.ModelForm):
             'priority'      : s2forms.Select2Widget,
             'scantype'      : s2forms.Select2Widget,
             'ticketcategory': s2forms.Select2Widget,
+            'identifier':forms.TextInput(attrs={'style':"display:none;"})
         }
     
     def __init__(self, *args, **kwargs):

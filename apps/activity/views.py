@@ -41,7 +41,7 @@ class Question(LoginRequiredMixin, View):
         'related'      : ['unit'],
         'model'        : am.Question,
         'filter'       : aft.QuestionFilter,
-        'fields'       : ['id', 'quesname', 'answertype', 'isworkflow', 'unit__tacode', ],
+        'fields'       : ['id', 'quesname', 'answertype', 'isworkflow', 'unit__tacode', 'cdtz', 'cuser__peoplename' ],
         'form_initials': {
         'answertype'   : am.Question.AnswerType.DROPDOWN,
         'category'     : 1,                               'unit': 1}
@@ -711,10 +711,9 @@ class QsetNQsetBelonging(LoginRequiredMixin, View):
             objs = am.Question.objects.get_questiondetails(R['questionid'])
             return rp.JsonResponse({'qsetbng':list(objs)}, status=200)
         
-        if R.get('action') == 'get_questions_of_qset' and R.get('qset_id') not in [None, 'None']:
+        if R.get('action') == 'get_questions_of_qset':
             objs = P['qsb'].objects.get_questions_of_qset(R)
             return rp.JsonResponse({'data':list(objs)}, status=200)
-        return rp.JsonResponse({'data':[]}, status=200)
 
         
     

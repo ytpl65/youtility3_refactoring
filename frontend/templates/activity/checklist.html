@@ -2,14 +2,14 @@
 
 <!---- BEGIN CARD TITLE ------>
 {% block card_title %}
-Checklist List
+Questionset List
 {% endblock card_title %}
 <!----- END CARD TITLE -------->
 
 <!------------------------------------ BEGIN PAGE BREADCUMBS ------------------------------------>
 {% block pagebreadcumb %}
 {{ super() }}
-<li class="breadcrumb-item pe-3"><a href="javascript:void(0)" class="pe-3">Checklist List</a></li>
+<li class="breadcrumb-item pe-3"><a href="javascript:void(0)" class="pe-3">Questionset List</a></li>
 {% endblock pagebreadcumb %}
 <!------------------------------------- END PAGE BREADCUMBS ------------------------------------->
 
@@ -67,8 +67,8 @@ Checklist List
 			columns:[
 				{data: 'id', visible:false},
 				{data: 'ctzoffset', visible:false},
-				{data: 'type', visible:false},
 				{data: 'qsetname', title:'Name'},
+				{data: 'type', title:"Type"},
 				{data: 'cdtz', title:"Created Date"},
 				{data: 'mdtz', title:"Modified Date"},
 			],
@@ -77,7 +77,7 @@ Checklist List
 			columnDefs:[
 				{targets:0, data: "id", visible:false, searchable:false, orderable:false },
 				{
-					targets: 3,
+					targets: 2,
 					data   : 'qsetname',
 					render : function ( data, type, row, meta ) {
 						let formUrl = "{{ url('activity:checklist') }}"

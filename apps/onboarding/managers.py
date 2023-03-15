@@ -170,13 +170,13 @@ class BtManager(models.Manager):
                     'fieldErrors':[{'name':'email', 'status':"Please Enter Correct Email Address!"}]}
         
         if R['action'] == 'create':
-            if pm.People.objects.filter(peoplecode=R['peoplecode'].upper()).exists():
+            if pm.People.objects.filter(peoplecode=R['peoplecode'].upper(),  client_id = S['client_id']).exists():
                 return {'data':list(self.none()), 'error':'People code already exists'}
             
-            if pm.People.objects.filter(loginid = R['loginid']).exists():
+            if pm.People.objects.filter(loginid = R['loginid'], client_id = S['client_id'] ).exists():
                 return {'data':list(self.none()), 'error':'Login id already exists'}
             
-            if pm.People.objects.filter(email = R['email']).exists():
+            if pm.People.objects.filter(email = R['email'], client_id = S['client_id']).exists():
                 return {'data':list(self.none()), 'error':'Email already exists'}
             
             ID = pm.People.objects.create(**PostData).id
@@ -289,13 +289,14 @@ class TypeAssistManager(models.Manager):
     def filter_for_dd_notifycategory_field(self, request, choices=False, sitewise=False):
         S = request.session
         qset = self.filter(
-            client_id = S['client_id'],
-            bu_id__in = S['assignedsites'],
+            client_id__in = [S['client_id'], 1],
+            bu_id__in = S['assignedsites'] + [1],
             tatype__tacode = 'NOTIFYCATEGORY',
             enable=True
         )
+        ic(qset)
         if sitewise:
-            qset = qset.filter(bu_id = S['bu_id'])
+            qset = qset.filter(bu_id__in = [S['bu_id'], 1])
         if choices:
             qset = qset.annotate(text = Concat(F('taname'), V(' ('), F('tacode'), V(')'))).values_list(
                 'id', 'text'

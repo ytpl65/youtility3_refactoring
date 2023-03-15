@@ -7,7 +7,7 @@
 {% endblock extra_css %}
 
 {% block form_title %}
-Checklist Form
+Questionset Form
 {% endblock form_title %}
 
 
@@ -15,8 +15,8 @@ Checklist Form
 {% block pagebreadcumb %}
 <!--will call parent contents -->
 {{ super() }}
-<li class="breadcrumb-item pe-3"><a href="{{ url('activity:checklist') }}?template=true" class="pe-3">Checklist List</a></li>
-<li class="breadcrumb-item pe-3"><a href="javascript:void(0)" class="pe-3">Checklist Form</a></li>
+<li class="breadcrumb-item pe-3"><a href="{{ url('activity:checklist') }}?template=true" class="pe-3">Questionset List</a></li>
+<li class="breadcrumb-item pe-3"><a href="javascript:void(0)" class="pe-3">Questionset Form</a></li>
 {% endblock pagebreadcumb %}
 <!-------------------------- END PAGE BREADCUMB ------------------------->
 
@@ -33,10 +33,11 @@ Checklist Form
 
 {% block form %}
 
-    <form action="" method="post" id="id_qsetform" action="{{ url('activity:checklist') }}">
+    <form action="" method="post" id="id_qsetform">
     <input type="hidden" name="pk" id="pk" value="{{ checklistform.instance.pk }}">
     <div class="d-none">
     </div>
+    {{ checklistform.parent }}
     <input type="hidden" name="{{ checklistform.ctzoffset.name }}" id = "{{ checklistform.ctzoffset.auto_id }}" value="-1">
         <div class="alert alert-danger alert-dismissible fade show" id="nonfield_errors" role="alert"
             style="display:none">
@@ -131,16 +132,15 @@ Checklist Form
     <!--============================== QuestionSet FORM FIELDS END ============================-->
 
 {% block extras %}
-<div class="row section_asdquestions">
+<div class="row report_section" style="display:none;">
     <div class="card">
-        <div class="card-header">
-            <h3 class="card-title">
-                Assigned Questions&nbsp;<i class="fas fa-layer-group ch4"></i>
-            </h3>
-        </div>
         <div class="card-body">
-            <table id="assigned_ques_table" class="display cell-border compact hover nowrap">
+            <h4 class="ch4 sections">#List Of Sections</h4>
+            <table id="tabSitereports" class="display sections cell-border compact hover">
             </table>
+            <br>
+            <h4 class="ch4 ">#Assigned Questions</h4>
+            <table id="tabchildReport" class="display compact hover"></table>
         </div>
     </div>
 </div>
@@ -156,10 +156,12 @@ Checklist Form
 <script>
     //$('.optionGrp').hide()
     $('form').find("label").addClass("col-md-1 col-sm-1")
-    var optionTag = null
-    var table = null
-    var editor = null
+    var childTable = null
+    var selectedType = null
+    var childEditor = null
+    var template_id=null
     var seqno = 0
+    const templates = ['SITEREPORT', 'INCIDENTREPORT']
 
     //delete typeassist 
     function deleteChecklist(elemt){
@@ -190,6 +192,91 @@ Checklist Form
         $(id).empty().trigger("change");
     }
 
+
+    function showSectionConfiguration(){
+         //editor section table
+        parentEditor = new $.fn.dataTable.Editor({
+            table: "#tabSitereports",
+            ajax: {
+                url:"{{ url('activity:qset_qsetblng') }}",
+                data:function(d){
+                    let currentRow = getCurrentEditingRow(parentEditor, parentTable)
+                    console.log(currentRow)
+                    d.parent_id = template_id
+                    d.questionset = true
+                    d.csrfmiddlewaretoken = '{{ csrf_token }}'
+                    d.ctzoffset = $("#id_ctzoffset").val()
+                    d.pk = currentRow !== 'None' ? currentRow['id'] : currentRow
+                    console.log(d.pk)
+                    d.qsetname = $('#DTE_Field_qsetname').val()
+                    d.type = 'SITEREPORTTEMPLATE'
+                    d.seqno = $('#DTE_Field_seqno').val()
+                }
+            },
+            idSrc:  'id',
+            fields:[
+                {label: 'SNo', name: "seqno", type:"text"},
+                {label: 'Section', name: "qsetname"}
+            ]
+        });
+
+        //PARENT EDITOR ON OPEN EVENT
+        parentEditor.on('open', function(e, mode, action){
+            $(".DTE_Field").addClass('p-1') // add required classes
+            if(action == 'create'){
+                parentEditor.field('seqno').set(parentTable.data().count() + 1)
+            }
+            
+        })
+
+        //datatable configuration tabSiteReports       
+            parentTable = $("#tabSitereports").DataTable({
+                ajax:{
+                    url: `{{ url('reports:config_sitereport_template') }}?action=get_sections&parent_id=${template_id}`,
+                },
+                responsive: true,
+                searching:false,
+                ordering:false,
+                paging:false,
+                dom:`<'row' <'col-sm-6 d-flex justify-content-start'f> <'col-sm-6 d-flex justify-content-end'B> >rt<'row'
+                <'col-sm-6'l> <'col-sm-6'p><'col-sm-12 d-flex justify-content-center'i>>`,
+                columns     : [
+                    {data: 'id', defaultContent:null, visible:false},
+                    {title: "SNo", data: 'seqno', width:"5%"},
+                    {title: "Section", data: 'qsetname'},
+                    {title: "Count", width: "15%", defaultContent:null, data:'qcount'},
+                ],
+                buttons:[
+                    {text:'<i class="fas fa-sync-alt text-dark"></i>', titleAttr:'Refresh Data', className:'refreshBtnParent'},
+                    { extend: "create", editor: parentEditor },
+                    { extend: "edit",   editor: parentEditor },
+                    { extend: "remove", editor: parentEditor }
+                ],
+                select: {
+                    style: 'single'
+                }
+            })
+
+            parentTable.on('select', function () {
+                childTable.ajax.reload();
+                $("#tabchildReport_wrapper .buttons-create").removeClass('disabled')
+                $("#tabchildReport_wrapper .refreshBtn").removeClass('disabled')
+            } );
+            
+            parentTable.on( 'deselect', function () {
+                childTable.ajax.reload();
+                $("#tabchildReport_wrapper .buttons-create").addClass('disabled')
+                $("#tabchildReport_wrapper .refreshBtn").addClass('disabled')
+                $("#tabchildReport_wrapper .buttons-create").attr({'data-toggle':"tooltip", 'data-placement':"top", 'title':"Select Section First"})
+            } );
+
+            $('.refreshBtnParent').click(() => {
+                parentTable.ajax.reload();
+            })
+
+
+    }
+
     $(document).ready(() => {
         console.log($("#pk").val())
         
@@ -198,10 +285,18 @@ Checklist Form
         })
 
         if ($("#pk").val() === "None"){
-            $(".section_asdquestions").hide()   
+            //$(".report_section").hide()   
         }else{
-            $(".section_asdquestions").show()
+            $(".report_section").show()
             template_id = $("#pk").val() //update global variable
+            $("#id_type").select2({"disabled": 'readonly'})
+            selectedType = getSelectedValue("#id_type", val=true)
+            if ([...templates].includes(selectedType)){
+                $(".report_section .sections").show()
+                showSectionConfiguration()
+
+            }else{$(".report_section .sections").hide()}
+            
         }
         
         //remove class to label which was added from above
@@ -211,12 +306,18 @@ Checklist Form
         $("#id_ctzoffset").val(-new Date().getTimezoneOffset())
         //Qset Belonging ("List of Assigned Questions")
         // Datatable configuration 
-        editor = new $.fn.dataTable.Editor({
-            table: '#assigned_ques_table',
+        childEditor = new $.fn.dataTable.Editor({
+            table: '#tabchildReport',
             ajax: {
                 url:"{{ url('activity:qset_qsetblng') }}",
                 data:function(d){
-                    editorAjaxData(d, editor, table, '{{ checklistform.instance.id }}', '{{ csrf_token }}')
+                    if([...templates].includes(selectedType)){
+                        var selected = parentTable.row( {selected:true} )
+                        var qset_id = selected.data() ? selected.data().id : null
+                    }else{
+                        var qset_id = '{{ checklistform.instance.id }}'
+                    }
+                    editorAjaxData(d, childEditor, childTable, qset_id, '{{ csrf_token }}')
                 }
             },
             idSrc:  'pk',
@@ -230,12 +331,17 @@ Checklist Form
             }
         })
 
-        table = $("#assigned_ques_table").DataTable({
+        childTable = $("#tabchildReport").DataTable({
                 ajax:{
                     url:"{{ url('activity:qset_qsetblng') }}?action=get_questions_of_qset",
                     type:'get',
                     data:function(d){
-                        d.qset_id = "{{ checklistform.instance.id }}"
+                        if([...templates].includes(selectedType)){
+                        var selected = parentTable.row( {selected:true} )
+                        d.qset_id = selected.data() ? selected.data().id : null
+                        }else{
+                            d.qset_id = '{{ checklistform.instance.id }}'
+                        }
                     }
                 },
                 responsive:true,
@@ -249,26 +355,25 @@ Checklist Form
                 order:[[0, 'desc']],
                 buttons:[
                 {text:'<i class="fas fa-sync-alt text-dark"></i>', titleAttr:'Refresh Data', className:'refreshBtn'},
-                    { extend: "create", editor: editor },
-                    { extend: "edit",   editor: editor },
-                    { extend: "remove", editor: editor }
+                    { extend: "create", editor: childEditor },
+                    { extend: "edit",   editor: childEditor },
+                    { extend: "remove", editor: childEditor }
                 ],
                 select: {
                     style: 'single'
                 }
             })
-        console.log(editor, "editor")
         
-        editor.on('open', function(e, mode, action){
+        childEditor.on('open', function(e, mode, action){
             // on change options set alerton
-            editorOnOpenActions('{{ url("activity:qset_qsetblng") }}', editor, table, action)
+            editorOnOpenActions('{{ url("activity:qset_qsetblng") }}', childEditor, childTable, action)
         })
 
-        editor.on('opened', function(e, mode, action){
+        childEditor.on('opened', function(e, mode, action){
             editorOnOpenedActions()
         })
 
-        editor.on('preSubmit', function(e, o, action){
+        childEditor.on('preSubmit', function(e, o, action){
             if(action !== 'remove' && this.field('answertype').val() == 'NUMERIC'){
                 let min = this.field('min')
                 let max = this.field('max')
@@ -330,12 +435,18 @@ Checklist Form
 
          
             $('.refreshBtn').click(() => {
-                var selected = table.rows().data();
+                var selected = childTable.rows().data();
                 console.log(selected)
                 if(selected.count()){
-                    table.ajax.reload();
+                    childTable.ajax.reload();
                 }
             })
+            if([...templates].includes(selectedType)){
+                $("#tabchildReport_wrapper .buttons-create").addClass('disabled')//on page load disable new button of child table
+                $("#tabchildReport_wrapper .buttons-create").attr({'data-toggle':"tooltip", 'data-placement':"top", 'title':"Select Section First"})
+
+            }
+
 
     }) //DOCUMENT.READY END
 </script>

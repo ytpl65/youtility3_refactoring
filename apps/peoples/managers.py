@@ -171,8 +171,9 @@ class PeopleManager(BaseUserManager):
             bu_id__in = S['assignedsites'],
             client_id = S['client_id'],
             enable=True,
-            isverified=True,
+            #isverified=True,
         )
+        ic(qset)
         if sitewise:
             qset = qset.filter(bu_id = S['bu_id'])
         if choices:
@@ -200,7 +201,7 @@ class CapabilityManager(models.Manager):
         return self.filter(cfor = cfor, parent__capscode = parent) if parent else None
     
     def get_caps(self, cfor):
-        qset = self.filter(cfor = cfor).values_list('capscode', 'capsname')
+        qset = self.filter(cfor = cfor, enable=True).values_list('capscode', 'capsname')
         return qset or self.none()
 
 
@@ -378,11 +379,10 @@ class PgroupManager(models.Manager):
     def filter_for_dd_pgroup_field(self, request, choices=False, sitewise=False):
         S = request.session
         qset = self.filter(
-            enable=True,
-            client_id = S['client_id'],
-            bu_id__in = S['assignedsites'],
-            identifier__tacode = 'PGROUP'
+            (Q(groupname='NONE')| Q(enable=True) & Q(client_id = S['client_id']) & Q(bu_id__in = S['assignedsites']) & Q(identifier__tacode = 'PEOPLEGROUP'))
         )
+        ic(qset)
+        
         if sitewise:
             qset = qset.filter(bu_id = S['bu_id'])
         if choices:

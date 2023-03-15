@@ -236,8 +236,11 @@ function init_alerton() {
 
 function handle_rendering_of_menus(session) {
   const exceptions = {
-    config: "#configuration",
-    admin: "#admin",
+    tracking: "#TRACKING",
+    admin: "#ADMIN",
+    onboarding: "#ONBOARDING",
+    companysetup:"#COMPANYSETUP",
+    sitesurvey:"#SITESURVEY"
   };
   if (session["is_superadmin"]) {
     //show every item if user is superadmin
@@ -247,40 +250,40 @@ function handle_rendering_of_menus(session) {
 
     //if user is admin show client webcaps else people webcaps
     caps = session['people_webcaps'].length ? session['people_webcaps'] : session["client_webcaps"];
-    //console.log(session["people_webcaps"].length);
-    //console.log("caps length ",caps.length);
-    //console.log("caps ", caps);
+
 
     //for every cap
     for (var i = 0; i < caps.length; i++) {
-      parent = caps[i][0];
-      childs = caps[i][1];
+      code = caps[i][0];
 
-      if (parent.startsWith("CONFIG_") || parent.startsWith("CONFIG")) {
-        first_show_parent(exceptions["config"]);
-      } else if (parent.startsWith("ADMIN_") || parent.startsWith("ADMIN")) {
-        first_show_parent(exceptions["admin"]);
+      if (code.includes("TR_") && $(exceptions["tracking"]).is(':hidden')) {
+        $(exceptions["tracking"]).show();
+        $(`${exceptions["tracking"]} .menu-item`).hide()
+      } 
+      if (code.includes("SS_") && $(exceptions["sitesurvey"]).is(':hidden')) {
+        $(exceptions["sitesurvey"]).show();
+        $(`${exceptions["sitesurvey"]} .menu-item`).hide()
+      } 
+      
+      if (code.includes("AD_") && $(exceptions["admin"]).is(':hidden')) {
+        $(exceptions["admin"]).show();
+        $(`${exceptions["admin"]} .menu-item`).hide()
+      }
+      
+      if (code.includes("OB_") && $(exceptions["onboarding"]).is(':hidden')) {
+        $(exceptions["onboarding"]).show();
+        $(`${exceptions["onboarding"]} .menu-item`).hide()
+      }
+      
+      if (code.includes("CS_") && $(exceptions["companysetup"]).is(':hidden')) {
+        $(exceptions["companysetup"]).show();
+        $(`${exceptions["companysetup"]} .menu-item`).hide()
       }
 
-      //replace spaces with underscores if there any...
-      parent = parent.replace(" ", "_");
-      //creating parent id
-      parent_id = "#".concat(parent.toLowerCase());
+      menu_id = "#".concat(code.toUpperCase());
 
       //first show the parent
-      $(parent_id).show();
-
-      //first hide all sub-items within parent
-      parent_items = parent_id + " .menu-item";
-      $(parent_items).hide();
-
-      //then showing every child assigned inside that parent
-      for (var j = 0; j < childs.length; j++) {
-        child = childs[j][0];
-        child_id = "#".concat(child.toUpperCase());
-
-        $(child_id).show();
-      }
+      $(menu_id).show();
     }
   }
 }
@@ -754,10 +757,10 @@ function column_filtering(targets) {
   };
 }
 //return selected value of a field
-function getSelectedValue(id) {
+function getSelectedValue(id, val=false) {
   var data = $(id).select2("data")[0];
   if (typeof data !== "undefined") {
-    return data.text;
+    return val ? data.id : data.text;
   }
   return "NONE";
 }
@@ -1380,7 +1383,7 @@ function setUpDropzone(params){
 
 //============================================== QSB EDITOR FUNCTIONS START===========================================//
 function getCurrentEditingRow(editor, table){
-  return table.row({selected:true}).data()
+  return table.row({selected:true}).data() || 'None'
 }
   
 

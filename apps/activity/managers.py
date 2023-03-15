@@ -107,10 +107,11 @@ class QuestionSetManager(models.Manager):
         R, S = request.GET, request.session
         
         qset = self.filter(
+            Q(parent_id__isnull=True) | Q(parent_id=1),
             ~Q(qsetname='NONE'),
-            type='CHECKLIST',
+            #type='CHECKLIST',
             bu_id = S['bu_id'],
-            client_id = S['client_id']
+            client_id = S['client_id'], 
         ).select_related(*related).values(*fields)
         return qset or self.none()
     
@@ -278,7 +279,7 @@ class JobneedManager(models.Manager):
 
     def get_last10days_jobneedtasks(self, related, fields, request):
         R, S = request.GET, request.session
-        P = json.loads(R['params'])
+        P = json.loads(R.get('params'))
         qobjs = self.select_related(*related).annotate(
             assignedto = Case(
                 When(Q(pgroup_id=1) | Q(pgroup_id__isnull =  True), then=Concat(F('people__peoplename'), V(' [PEOPLE]'))),
@@ -361,7 +362,7 @@ class JobneedManager(models.Manager):
     def get_incidentreportlist(self, request):
         "Transaction List View"
         from apps.peoples.models import Pgbelonging
-        from apps.activity.models import Attachment
+        from apps.activity.models import Attachment, QuestionSet
         R = request.GET
         P = json.loads(R['params'])
         sites = Pgbelonging.objects.get_assigned_sites_to_people(request.user.id)
@@ -375,7 +376,7 @@ class JobneedManager(models.Manager):
             uuidtext = Cast('uuid', output_field=models.CharField())
         ).filter(
             Q(Q(parent_id__in = [1, -1]) | Q(parent_id__isnull=True)),
-            plandatetime__date__gte =P['from'], plandatetime__date__lte = P['to'], identifier='INCIDENTREPORT', bu_id__in = buids).values(
+            plandatetime__date__gte =P['from'], plandatetime__date__lte = P['to'], identifier = QuestionSet.Type.INCIDENTREPORTTEMPLATE, bu_id__in = buids).values(
             'id', 'plandatetime', 'jobdesc', 'bu_id', 'buname', 'gps', 'jobstatus', 'performedby__peoplename', 'uuidtext', 'remarks', 'geojson__gpslocation',
             'identifier', 'parent_id'
         )
@@ -386,7 +387,7 @@ class JobneedManager(models.Manager):
 
     def get_internaltourlist_jobneed(self, request, related, fields):
         R, S = request.GET, request.session
-        P = json.loads(R['params'])
+        P = json.loads(R.get('params'))
         assignedto = {'assignedto' : Case(
                 When(Q(pgroup_id=1) | Q(pgroup_id__isnull =  True), then=Concat(F('people__peoplename'), V(' [PEOPLE]'))),
                 When(Q(people_id=1) | Q(people_id__isnull =  True), then=Concat(F('pgroup__groupname'), V(' [GROUP]'))),
@@ -515,13 +516,14 @@ class JobneedManager(models.Manager):
         return self.none()
 
     def get_ir_count_forcard(self, request):
+        from apps.activity.models import QuestionSet
         R, S = request.GET, request.session
         pd1 = R.get('from', datetime.now().date())
         pd2 = R.get('upto', datetime.now().date())
         return self.filter(
             Q(Q(parent_id__in = [1, -1]) | Q(parent_id__isnull=True)),
             bu_id__in = S['assignedsites'],
-            identifier = 'INCIDENTREPORT',
+            identifier = QuestionSet.Type.INCIDENTREPORTTEMPLATE,
             plandatetime__date__gte = pd1,
             plandatetime__date__lte = pd2,
             client_id = S['client_id'],
@@ -542,7 +544,7 @@ class JobneedManager(models.Manager):
     
     def get_ppm_listview(self, request, fields, related):
         S, R = request.session, request.GET
-        P = json.loads(R['params'])
+        P = json.loads(R.get('params'))
         ic(P)
 
         qobjs = self.annotate(
@@ -705,6 +707,7 @@ class AttachmentManager(models.Manager):
     
     def create_att_record(self, request, filename, filepath):
         R, S = request.POST, request.session
+        ic(R)
         from apps.onboarding.models import TypeAssist
         ta = TypeAssist.objects.filter(taname = R['ownername']).first()
         size = request.FILES.get('img').size if request.FILES.get('img') else 0
@@ -791,7 +794,7 @@ class AssetManager(models.Manager):
     
     def get_checkpointlistview(self, request, related, fields, id=None):
         S = request.session
-        P = request.GET['params']
+        P = request.GET.get('params')
         qset = self.annotate(
             gps = AsWKT('gpslocation')
         ).select_related(*related)
@@ -1019,6 +1022,7 @@ class QsetBlngManager(models.Manager):
         
     
     def get_questions_of_qset(self, R):
+        if R['qset_id'] in ['None', None, ""]: return self.none()
         qset = self.annotate(quesname = F('question__quesname')).filter(
             qset_id = R['qset_id']).select_related('question').values(
                 'pk', 'quesname', 'answertype', 'min', 'max','question_id',

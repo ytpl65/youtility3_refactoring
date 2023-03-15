@@ -184,10 +184,10 @@ class Pgroup(BaseModel, TenantAwareModel):
         db_table = 'pgroup'
         constraints = [
             models.UniqueConstraint(
-                fields=['groupname', 'identifier'],
+                fields=['groupname', 'identifier', 'client'],
                 name='pgroup_groupname_bu_client_identifier_key'),
             models.UniqueConstraint(
-                fields=['groupname', 'identifier'],
+                fields=['groupname', 'identifier', 'client'],
                 name='pgroup_groupname_bu_identifier_key')
         ]
         get_latest_by = ["mdtz", 'cdtz']
@@ -215,7 +215,7 @@ class Pgbelonging(BaseModel, TenantAwareModel):
         db_table = 'pgbelonging'
         constraints = [
             models.UniqueConstraint(
-                fields=['pgroup', 'people', 'assignsites'],
+                fields=['pgroup', 'people', 'assignsites', 'client'],
                 name='pgbelonging_pgroup_people_bu_assignsites_client')
         ]
         get_latest_by = ["mdtz", 'cdtz']
@@ -248,7 +248,7 @@ class Capability(BaseModel, TenantAwareModel):
         get_latest_by = ["mdtz", 'cdtz']
         constraints = [
             models.UniqueConstraint(
-                fields=['capscode', 'cfor'],
+                fields=['capscode', 'cfor', 'client'],
                 name="capability_caps_cfor_uk"), ]
 
     def __str__(self) -> str:

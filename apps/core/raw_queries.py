@@ -4,7 +4,7 @@ def get_query(q):
                                                 WITH RECURSIVE cap(id, capsname, capscode, parent_id, cfor, depth, path, xpath) AS (
                                                 SELECT id, capsname, capscode, parent_id, cfor, 1::INT AS depth, capability.capscode::TEXT AS path, capability.id::text as xpath
                                                 FROM capability
-                                                WHERE id = 1
+                                                WHERE id = 1 and cfor='WEB'
                                                 UNION ALL
                                                 SELECT ch.id, ch.capsname, ch.capscode, ch.parent_id, ch.cfor, rt.depth + 1 AS depth, (rt.path || '->' || ch.capscode::TEXT), (xpath||'>'||ch.id||rt.depth + 1)
                                                 FROM capability ch INNER JOIN cap rt ON rt.id = ch.parent_id)

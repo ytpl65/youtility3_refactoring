@@ -15,7 +15,7 @@
 
 <!------ BEGIN FORM TITLE ------->
 {% block form_title %}
-Ticket - {{ ticketform.instance.id }}
+Ticket {% if  ticketform.instance.id is not none  %}- {{ ticketform.instance.id }}{% endif %} 
 {% endblock form_title %}
 <!------ END FORM TITLE -------->
 
@@ -81,6 +81,14 @@ Ticket - {{ ticketform.instance.id }}
                 </div>
                 <div class="col-md-9" data-bs-toggle="tooltip" data-bs-custom-class="tooltip-dark" data-bs-placement="top" title="Select the group that this ticket should be assigned to">
                     {{ ticketform.assignedtogroup }}
+                </div>
+            </div>
+            <div class="input-group mb-3">
+                <div class="pt-3 col-md-3">
+                    {{ ticketform.asset.label_tag() }}
+                </div>
+                <div class="col-md-9" data-bs-toggle="tooltip" data-bs-custom-class="tooltip-dark" data-bs-placement="top" title="Select the asset if the ticket is associated to asset/checkpoint">
+                    {{ ticketform.asset }}
                 </div>
             </div>
 

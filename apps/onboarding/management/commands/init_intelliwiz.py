@@ -131,16 +131,21 @@ class Command(BaseCommand):
                     break
 
             except utils.RecordsAlreadyExist as ex:
-                self.stdout.write(self.style.WARNING('Database with this alias "%s" is not empty so cannot create -1 extries operation terminated!' % db))
+                self.stdout.write(
+                    self.style.WARNING(
+                        f'Database with this alias "{db}" is not empty so cannot create -1 extries operation terminated!'
+                    )
+                )
 
             except utils.NoDbError:
                 self.stdout.write(
                     self.style.ERROR(
-                        "Database with this alias '%s' not exist operation can't be performed"%(db)))
+                        f"Database with this alias '{db}' not exist operation can't be performed"
+                    )
+                )
 
             except IntegrityError as e:
-                log.warning("IntegrityError occured Retrying Again", exc_info = False)
-                continue
+                pass
             except Exception as e:
                 self.stdout.write(self.style.ERROR("something went wrong...!"))
                 log.error('FAILED init_intelliwiz', exc_info = True)

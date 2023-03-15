@@ -71,7 +71,7 @@ class MasterReportTemplateList(LoginRequiredMixin, View):
             return render(request, self.template_path)
         try:
             objects = am.QuestionSet.objects.filter(
-                type='SITEREPORTTEMPLATE'
+                type='SITEREPORT'
             ).values('id', 'qsetname', 'enable')
             count = objects.count()
             if count:
@@ -480,7 +480,7 @@ class ConfigWorkPermitReportTemplate(LoginRequiredMixin, View):
                 ic(pk)
                 msg = f'{self.label}_view'
                 form = utils.get_instance_for_update(
-                    data, P, msg, int(pk))
+                    data, P, msg, int(pk), {'request':request})
                 create = False
             else:
                 form = P['form_class'](data, request = request)

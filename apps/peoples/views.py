@@ -147,7 +147,7 @@ class CreatePeople(LoginRequiredMixin, View):
         from apps.onboarding.forms import TypeAssistForm
         cxt = {'peopleform': self.form_class(),
                'pref_form': self.jsonform(session = request.session),
-               'ta_form': TypeAssistForm(auto_id = False)}
+               'ta_form': TypeAssistForm(auto_id = False, request=request)}
         return render(request, self.template_path, context = cxt)
 
     def post(self, request, *args, **kwargs):
@@ -181,7 +181,7 @@ class CreatePeople(LoginRequiredMixin, View):
                 logger.info('Form is not valid')
                 cxt = {'peopleform': peopleform,
                        'pref_form': peoplepref_form,
-                       'edit': True, 'ta_form': obf.TypeAssistForm(auto_id = False)}
+                       'edit': True, 'ta_form': obf.TypeAssistForm(auto_id = False, request=request)}
                 response = render(request, self.template_path, context = cxt)
         except Exception:
             logger.critical(
@@ -190,7 +190,7 @@ class CreatePeople(LoginRequiredMixin, View):
                            "alert alert-danger")
             cxt = {'peopleform': peopleform,
                    'pref_form': peoplepref_form,
-                   'edit': True, 'ta_form': obf.TypeAssistForm(auto_id = False)}
+                   'edit': True, 'ta_form': obf.TypeAssistForm(auto_id = False, request=request)}
             response = render(request, self.template_path, context = cxt)
         return response
 
@@ -756,7 +756,7 @@ class Capability(LoginRequiredMixin, View):
             self.params.update(d)
             objs = self.params['model'].objects.select_related(
                 *self.params['related']).filter(
-                    ~Q(capscode='NONE'), enable = True
+                    ~Q(capscode='NONE')
             ).values(*self.params['fields'])
             resp = rp.JsonResponse(data = {
                 'data' : list(objs)
@@ -791,7 +791,7 @@ class Capability(LoginRequiredMixin, View):
             if pk:
                 msg, create = "capability_view", False
                 form = utils.get_instance_for_update(
-                    data, self.params, msg, int(pk))
+                    data, self.params, msg, int(pk), {'request':request})
                 print(form.data)
 
             else:

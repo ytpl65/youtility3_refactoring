@@ -73,8 +73,8 @@ class TypeAssistForm(SuperTypeAssistForm):
         S = self.request.session
         super().__init__(*args, **kwargs)
         self.fields['enable'].initial = True
-        #filters for dropdown fields
-        self.fields['tatype'].queryset = obm.TypeAssist.objects.filter(enable = True, client_id = S['client_id'])
+        ic(obm.TypeAssist.objects.filter(enable = True, client_id__in =  [S['client_id'], 1]))
+        self.fields['tatype'].queryset = obm.TypeAssist.objects.filter(enable = True, client_id__in =  [S['client_id'], 1])
         utils.initailize_form_fields(self)
 
     def is_valid(self) -> bool:
@@ -143,6 +143,7 @@ class BtForm(forms.ModelForm):
         """Initializes form"""
         self.client = kwargs.pop('client', False)
         self.request = kwargs.pop('request', False)
+        ic(self.request)
         S = self.request.session
         super().__init__(*args, **kwargs)
         if self.client:
@@ -256,13 +257,16 @@ class ShiftForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         """Initializes form"""
         self.request = kwargs.pop('request', None)
+        S = self.request.session
         super().__init__(*args, **kwargs)
         self.fields['nightshiftappicable'].initial = False
+        
+        self.fields['designation'].queryset = obm.TypeAssist.objects.filter(tatype__tacode='DESIGNATION', client_id__in = [S['client_id'], 1])
         utils.initailize_form_fields(self)
 
     def clean_shiftname(self):
         if val := self.cleaned_data.get('shiftname'):
-            return val.upper()
+            return val
 
     def clean_shiftduration(self):
         if val := self.cleaned_data.get('shiftduration'):
@@ -404,7 +408,7 @@ class ClentForm(BuPrefForm):
         super().__init__(*args, **kwargs)
         utils.initailize_form_fields(self)
         web, mob, portlet, report = create_caps_choices_for_clientform()
-        
+        ic(web)
         self.fields['webcapability'].choices = web
         self.fields['mobilecapability'].choices = mob
         self.fields['reportcapability'].choices = report

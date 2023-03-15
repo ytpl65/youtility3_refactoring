@@ -238,7 +238,7 @@ def perform_insertrecord(self, file, request = None, db='default', filebased = T
                 user = get_user_instance(userid or request.user.id)
                 if tablename == 'ticket' and isinstance(obj, Ticket): utils.store_ticket_history(
                     instance = obj, request=request, user=user)
-                if hasattr(obj, 'geojson'): save_addr_for_point(obj)
+                #if hasattr(obj, 'geojson'): save_addr_for_point(obj)
                 allconditions = [
                     hasattr(obj, 'peventtype'), hasattr(obj, 'endlocation'), 
                     hasattr(obj, 'punchintime'), hasattr(obj, 'punchouttime')]

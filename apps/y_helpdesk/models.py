@@ -72,7 +72,7 @@ class Ticket(BaseModel, TenantAwareModel):
         get_latest_by = ["cdtz", 'mdtz']
         constraints         = [
             models.UniqueConstraint(
-                fields=['bu', 'id'],
+                fields=['bu', 'id', 'client'],
                 name='bu_id_uk'
             )
         ]

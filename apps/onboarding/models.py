@@ -226,10 +226,10 @@ class TypeAssist(BaseModel, TenantAwareModel):
         db_table = 'typeassist'
         constraints = [
             models.UniqueConstraint(
-                fields=['tacode', 'tatype'], name='code_unique'
+                fields=['tacode', 'tatype', 'client'], name='code_unique'
             ),
             models.UniqueConstraint(
-                fields=['tacode'], condition=Q(tatype=None), name='code_unique2'
+                fields=['tacode', 'client'], condition=Q(tatype=None), name='code_unique2'
             )
         ]
 

@@ -155,25 +155,26 @@ def get_caps_from_db():
     from apps.peoples.models import Capability
     from apps.core.raw_queries import get_query
     web, mob, portlet, report = [], [], [], []
-    
+    cache_ttl = 20
     web     = cache.get('webcaps')
     mob     = cache.get('mobcaps')
     portlet = cache.get('portletcaps')
     report  = cache.get('reportcaps')
     
+    
     if not web:
-        web = Capability.objects.raw(get_query('get_web_caps_for_client'))
-        web = get_cap_choices_for_clientform(web, Capability.Cfor.WEB)
-        cache.set('webcaps', web, 1*60)
+        web = Capability.objects.get_caps(cfor=Capability.Cfor.WEB)
+        ic(web)
+        cache.set('webcaps', web, cache_ttl)
     if not mob:
         mob = Capability.objects.get_caps(cfor=Capability.Cfor.MOB)
-        cache.set('mobcaps', mob, 1*60)
+        cache.set('mobcaps', mob, cache_ttl)
     if not portlet:
         portlet = Capability.objects.get_caps(cfor=Capability.Cfor.PORTLET)
-        cache.set('portletcaps', portlet, 1*60)
+        cache.set('portletcaps', portlet, cache_ttl)
     if not report:
         report = Capability.objects.get_caps(cfor=Capability.Cfor.REPORT)
-        cache.set('reportcaps', report, 1*60)
+        cache.set('reportcaps', report, cache_ttl)
     return web, mob, portlet, report
     
     
@@ -195,20 +196,20 @@ def create_caps_choices_for_peopleform(client):
     
     if client:
         if not web:
-            caps = Capability.objects.raw(get_query('get_web_caps_for_client'))
-            web = make_choices(client.bupreferences['webcapability'], caps)
+            web = Capability.objects.filter(
+                capscode__in = client.bupreferences['webcapability'], cfor=Capability.Cfor.WEB, enable=True).values_list('capscode', 'capsname')
             cache.set('webcaps', web, 1*60)
         if not mob:
             mob = Capability.objects.filter(
-                capscode__in = client.bupreferences['mobilecapability'], cfor=Capability.Cfor.MOB).values_list('capscode', 'capsname')
+                capscode__in = client.bupreferences['mobilecapability'], cfor=Capability.Cfor.MOB, enable=True).values_list('capscode', 'capsname')
             cache.set('mobcaps', mob, 1*60)
         if not portlet:
             portlet = Capability.objects.filter(
-                capscode__in = client.bupreferences['portletcapability'], cfor=Capability.Cfor.PORTLET).values_list('capscode', 'capsname')
+                capscode__in = client.bupreferences['portletcapability'], cfor=Capability.Cfor.PORTLET, enable=True).values_list('capscode', 'capsname')
             cache.set('portletcaps', portlet, 1*60)
         if not report:
             report = Capability.objects.filter(
-                capscode__in = client.bupreferences['reportcapability'], cfor=Capability.Cfor.REPORT).values_list('capscode', 'capsname')
+                capscode__in = client.bupreferences['reportcapability'], cfor=Capability.Cfor.REPORT, enable=True).values_list('capscode', 'capsname')
             cache.set('reportcaps', report, 1*60)
     return web, mob, portlet, report
 
@@ -243,20 +244,22 @@ def make_choices(caps_assigned, caps, fromclient=False):
     choices, parent_menus,  tmp = [], [], []
     logger.info('making choices started ...')
     for i in range(1, len(caps)):
-        if caps[i].capscode in caps_assigned and caps[i].depth == 3:
-            tmp.append(caps[i])
-        if tmp and caps[i].depth == 2 and caps[i-1].depth == 3:
-            choice, menucode = get_choice(tmp, queryset=True)
-            print(choice, menucode)
-            parent_menus.append(menucode)
-            choices.append(choice)
-            tmp = []
-        if i == (len(caps)-1) and choices:
-            choice, menucode = get_choice(tmp, queryset=True)
-            print(choice, menucode)
-            parent_menus.append(menucode)
-            choices.append(choice)
+        if i.cfor == 'WEB':
+            if caps[i].capscode in caps_assigned and caps[i].depth == 3:
+                tmp.append(caps[i])
+            if tmp and caps[i].depth == 2 and caps[i-1].depth == 3:
+                choice, menucode = get_choice(tmp, queryset=True)
+                print(choice, menucode)
+                parent_menus.append(menucode)
+                choices.append(choice)
+                tmp = []
+            if i == (len(caps)-1) and choices:
+                choice, menucode = get_choice(tmp, queryset=True)
+                print(choice, menucode)
+                parent_menus.append(menucode)
+                choices.append(choice)
     if choices:
+        ic(choices)
         logger.debug('choices are made and returned... DONE')
     return choices, parent_menus
 
@@ -285,17 +288,19 @@ def get_cap_choices_for_clientform(caps, cfor):
     choices, temp = [], []
     logger.debug('collecting caps choices for client form...')
     for i in range(1, len(caps)):
-        if caps[i].depth in [3, 2]:
-            # print(caps[i].depth)
-            if caps[i-1].depth == 3 and caps[i].depth == 2 and caps[i-1].cfor == cfor:
-                choices.append(get_choice(temp))
-                temp = []
-                temp.append(caps[i])
-            else:
-                if caps[i].cfor == cfor:
-                    temp.append(caps[i])
-                if i == len(caps)-1 and choices:
+        if caps[i].cfor == 'WEB':
+            ic(caps[i].capscode, caps[i].depth, caps[i].path, caps[i].parent_id)
+            if caps[i].depth in [3, 2]:
+                # print(caps[i].depth)
+                if caps[i-1].depth == 3 and caps[i].depth == 2 and caps[i-1].cfor == cfor:
                     choices.append(get_choice(temp))
+                    temp = []
+                    temp.append(caps[i])
+                else:
+                    if caps[i].cfor == cfor:
+                        temp.append(caps[i])
+                    if i == len(caps)-1 and choices:
+                        choices.append(get_choice(temp))
     if choices:
         logger.debug('caps collected and returned... DONE')
     return choices

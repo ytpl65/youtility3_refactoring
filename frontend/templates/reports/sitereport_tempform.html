@@ -181,7 +181,7 @@ Site Report Template
                     d.pk = currentRow !== 'None' ? currentRow['id'] : currentRow
                     console.log(d.pk)
                     d.qsetname = $('#DTE_Field_qsetname').val()
-                    d.type = 'SITEREPORTTEMPLATE'
+                    d.type = 'SITEREPORT'
                     d.seqno = $('#DTE_Field_seqno').val()
                 }
             },
@@ -218,10 +218,6 @@ Site Report Template
         })
 
 
-        //PARENT EDITOR ON PRE-OPEN EVENT
-        parentEditor.on('preOpen', function(e, mode, action){
-            
-        })
 
         //PARENT EDITOR ON OPEN EVENT
         parentEditor.on('open', function(e, mode, action){
@@ -232,17 +228,6 @@ Site Report Template
             
         })
         
-        //PARENT EDITOR ON OPENED EVENT
-        parentEditor.on('opened', function(e, mode, action){
-            
-        })
-
-
-        //CHILD EDITOR ON PRE-OPEN EVENT
-        childEditor.on('preOpen', function(e, mode, action){
-            
-        })
-
         //CHILD EDITOR ON OPEN EVENT
         childEditor.on('open', function(e, mode, action){
             // on change options set alerton

@@ -33,6 +33,10 @@ app.conf.beat_schedule = {
     "ticket_escalation_every_30min":{
         'task':'ticket_escalation',
         'schedule':crontab(minute='*/30')
+    },
+    "send_ticket_email":{
+        'task':'send_ticket_email',
+        'schedule':crontab(minute='*/30')
     }
 
 }

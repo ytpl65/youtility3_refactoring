@@ -328,13 +328,13 @@ def save_capsinfo_inside_session(people, request):
     from apps.core.raw_queries import get_query
     from apps.peoples.models import Capability
     web, mob, portlet, report = putils.create_caps_choices_for_peopleform(request.user.client)
-    request.session['client_webcaps'] = web
+    request.session['client_webcaps'] = list(web)
     request.session['client_mobcaps'] = list(mob)
     request.session['client_portletcaps'] = list(portlet)
     request.session['client_reportcaps'] = list(report)
     
     caps = Capability.objects.raw(get_query('get_web_caps_for_client'))
-    request.session['people_webcaps'] = putils.make_choices(people.people_extras['webcapability'], caps)
+    request.session['people_webcaps'] = list(Capability.objects.filter(capscode__in = people.people_extras['webcapability'], cfor='WEB').values_list('capscode', 'capsname')) 
     request.session['people_mobcaps'] = list(Capability.objects.filter(capscode__in = people.people_extras['mobilecapability'], cfor='MOB').values_list('capscode', 'capsname')) 
     request.session['people_reportcaps'] = list(Capability.objects.filter(capscode__in = people.people_extras['reportcapability'], cfor='REPORT').values_list('capscode', 'capsname')) 
     request.session['people_portletcaps'] = list(Capability.objects.filter(capscode__in = people.people_extras['portletcapability'], cfor='PORTLET').values_list('capscode', 'capsname')) 
@@ -1432,6 +1432,7 @@ def get_action_on_ticket_states(prev_tkt, current_state):
 from django.utils import timezone
 
 def store_ticket_history(instance, request=None, user = None):
+    from apps.service.tasks import send_ticket_email
     logger.info("saving ticket history has started....")
     # Get the current time
     now = timezone.now().replace(microsecond=0, second=0)
@@ -1487,7 +1488,8 @@ def store_ticket_history(instance, request=None, user = None):
         instance.ticketlog['ticket_history'].append(history_item)
         logger.info("no changed detected")
     else:
-        instance.ticketlog['ticket_history'] = [history_item]    
+        instance.ticketlog['ticket_history'] = [history_item]
+        send_ticket_email.delay(id=instance.id)
         logger.info("new ticket is created..")
     instance.save()
     logger.info("saving ticket history ended...")

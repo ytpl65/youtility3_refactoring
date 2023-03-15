@@ -108,6 +108,7 @@ class TicketView(LoginRequiredMixin, View):
     
     def post(self, request, *args, **kwargs):
         R, P, data = request.POST, self.params, QueryDict(request.POST['formData'])
+        ic(R)
 
         try:
             with transaction.atomic(using = utils.get_current_db_name()):

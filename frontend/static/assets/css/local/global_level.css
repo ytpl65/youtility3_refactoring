@@ -516,3 +516,7 @@ select[readonly].select2-hidden-accessible + .select2-container .select2-selecti
 .d-flex > .y-active{
     border-bottom: 3px solid red;
 }
+
+.modal-content.ui-resizable, .DTED_Lightbox_Content.ui-resizeable {
+    overflow: scroll;
+  }
