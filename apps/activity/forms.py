@@ -283,7 +283,7 @@ class ChecklistForm(forms.ModelForm):
         bulist = om.Bt.objects.get_all_bu_of_client(self.request.session['client_id'])
         self.fields['buincludes'].choices = pm.Pgbelonging.objects.get_assigned_sites_to_people(self.request.user.id, makechoice=True)
         self.fields['site_grp_includes'].choices = pm.Pgroup.objects.filter(
-            Q(groupname='NONE') |  Q(identifier__tacode='SITEGROUP') & Q(bu_id__in = bulist) | Q(client_id = S['client_id'])).values_list('id', 'groupname')
+            Q(groupname='NONE') |  Q(identifier__tacode='SITEGROUP') & Q(bu_id__in = bulist) & Q(client_id = S['client_id'])).values_list('id', 'groupname')
         self.fields['assetincludes'].choices = ac_utils.get_assetsmartplace_choices(self.request, ['CHECKPOINT'])
         utils.initailize_form_fields(self)
         

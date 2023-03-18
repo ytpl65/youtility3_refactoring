@@ -47,7 +47,6 @@ class SignIn(View):
     @never_cache
     def get(self, request, *args, **kwargs):
         logger.info('SignIn View')
-        request.session.set_test_cookie()
         form = LoginForm()
         return render(request, self.template_path, context={'loginform': form})
 
@@ -74,7 +73,7 @@ class SignIn(View):
                     #response = redirect('onboarding:wizard_delete') if request.session.get('wizard_data') else redirect('/dashboard')
                     logger.info(
                         'Login Successfull for people "%s" with loginid "%s" client "%s" site "%s"', people.peoplename, people.loginid, people.client.buname if people.client else "None", people.bu.buname if people.bu else "None")
-                    utils.save_user_session(request, request.user)
+                    utils.save_user_session(request, request.user, ctzoffset= request.POST.get('ctzoffset', 0))
                     display_user_session_info(request.session)
                     logger.info(f"User logged in {request.user.peoplecode}")
                     if request.session.get('bu_id') in [1, None]: return redirect('peoples:no_site')

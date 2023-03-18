@@ -198,19 +198,20 @@ def create_caps_choices_for_peopleform(client):
         if not web:
             web = Capability.objects.filter(
                 capscode__in = client.bupreferences['webcapability'], cfor=Capability.Cfor.WEB, enable=True).values_list('capscode', 'capsname')
-            cache.set('webcaps', web, 1*60)
+            cache.set('webcaps', web, 30)
         if not mob:
             mob = Capability.objects.filter(
                 capscode__in = client.bupreferences['mobilecapability'], cfor=Capability.Cfor.MOB, enable=True).values_list('capscode', 'capsname')
-            cache.set('mobcaps', mob, 1*60)
+            cache.set('mobcaps', mob, 30)
         if not portlet:
             portlet = Capability.objects.filter(
                 capscode__in = client.bupreferences['portletcapability'], cfor=Capability.Cfor.PORTLET, enable=True).values_list('capscode', 'capsname')
-            cache.set('portletcaps', portlet, 1*60)
+            cache.set('portletcaps', portlet, 30)
+            ic(portlet)
         if not report:
             report = Capability.objects.filter(
                 capscode__in = client.bupreferences['reportcapability'], cfor=Capability.Cfor.REPORT, enable=True).values_list('capscode', 'capsname')
-            cache.set('reportcaps', report, 1*60)
+            cache.set('reportcaps', report, 30)
     return web, mob, portlet, report
 
 

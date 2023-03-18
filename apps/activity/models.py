@@ -82,7 +82,7 @@ class QuestionSet(BaseModel, TenantAwareModel):
         INCIDENTREPORTTEMPLATE   = "INCIDENTREPORT",      _('Incident Report')
         SITEREPORTTEMPLATE       = "SITEREPORT",          _('Site Report')
         WORKPERMITTEMPLATE       = "WORKPERMIT",          _('Work Permit')
-        RETURNWORKPERMITTEMPLATE = "RETURNWORKPERMIT",    _('Return Work Permit')
+        RETURNWORKPERMITTEMPLATE = "RETURN_WORK_PERMIT",    _('Return Work Permit')
         KPITEMPLATE              = "KPITEMPLATE",         _('Kpi')
         SCRAPPEDTEMPLATE         = "SCRAPPEDTEMPLATE",    _('Scrapped')
         ASSETAUDIT               = "ASSETAUDIT",          _('Asset Audit')

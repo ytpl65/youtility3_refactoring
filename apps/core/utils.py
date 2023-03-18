@@ -344,13 +344,14 @@ def save_capsinfo_inside_session(people, request):
 
 
 
-def save_user_session(request, people):
+def save_user_session(request, people, ctzoffset=None):
     '''save user info in session'''
     from django.conf import settings
     from django.core.exceptions import ObjectDoesNotExist
 
     try:
         logger.info('saving user data into the session ... STARTED')
+        if ctzoffset: request.session['ctzoffset'] = ctzoffset
         if people.is_superuser is True:
             request.session['is_superadmin'] = True
             session = request.session

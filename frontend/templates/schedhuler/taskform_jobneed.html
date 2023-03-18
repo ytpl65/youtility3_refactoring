@@ -305,6 +305,16 @@ Task Form
     $('#id_gpslocation').val("{{ taskformjobneed.instance.geojson['gpslocation'] }}")
     
     $(document).ready(() => {
+        
+        
+        //assignto toggle
+        if ('{{ taskformjobneed.instance.id }}' === 'None') {
+            showHideSelectField('PEOPLE')
+        }else{
+            var assignto = '{{ taskformjobneed.instance.people_id }}'  == '1' ? "GROUP" : "PEOPLE"
+            showHideSelectField(assignto)
+        }
+
         // Disable checkboxes
         $("input[type='checkbox']").prop("disabled", true);
 
@@ -314,13 +324,6 @@ Task Form
         // Disable select2 fields (assuming select2 has been initialized)
         $(".django-select2, .form-select").select2({"disabled": 'readonly'})
         
-        //assignto toggle
-        if ('{{ taskformjobneed.instance.id }}' === 'None') {
-            showHideSelectField('PEOPLE')
-        }else{
-            var assignto = '{{ taskformjobneed.instance.people }}'  == '1' ? "GROUP" : "PEOPLE"
-            showHideSelectField(assignto)
-        }
         //datetime widget configurations
         $("#id_plandatetime, #id_expirydatetime").flatpickr({
             enableTime: true,
