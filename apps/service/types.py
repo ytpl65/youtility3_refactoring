@@ -74,6 +74,7 @@ class VerifyClientOutput(graphene.ObjectType):
     rc        = graphene.Int(default_value = 0)
     msg       = graphene.String()
     url = graphene.String(default_value = "")
+    client_id = graphene.Int()
 
 class LoginResponseType(DjangoObjectType):
     tenantid = graphene.Int()
@@ -120,9 +121,10 @@ class PgroupType(DjangoObjectType):
 
 
 class AuthInput(graphene.InputObjectType):
-    loginid     = graphene.String(required = True)
-    password    = graphene.String(required = True)
-    deviceid    = graphene.String(required = True)
+    clientcode = graphene.String(required = True)
+    loginid    = graphene.String(required = True)
+    password   = graphene.String(required = True)
+    deviceid   = graphene.String(required = True)
 
 class AuthOutput(graphene.ObjectType):
     isauthenticated = graphene.Boolean()

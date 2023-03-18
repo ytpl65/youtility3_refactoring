@@ -11,6 +11,7 @@ class Messages:
     WRONGCREDS     = "Incorrect Username or Password"
     NOTREGISTERED  = "Device Not Registered"
     NOSITE = "User site not found"
+    NOTBELONGSTOCLIENT = "UserNotInThisClient"
 
 def LoginUser(response, request):
     if response['isauthenticated']:
@@ -35,11 +36,13 @@ def auth_check(info, input, returnUser, uclientip = None):
     from django.contrib.auth import authenticate
     from graphql import GraphQLError
     try:
-        user = authenticate(
-            info.context,
-            username = input.loginid,
-            password = input.password)
-        if not user: raise ValueError
+        if valid_user := People.objects.select_related('client').filter(loginid = input.loginid, client__bucode = input.clientcode).exists():
+            user = authenticate(
+                info.context,
+                username = input.loginid,
+                password = input.password)
+            if not user: raise ValueError
+        else: raise GraphQLError(Messages.NOTBELONGSTOCLIENT)
     except ValueError as e:
         raise GraphQLError(Messages.WRONGCREDS) from e
     else:
@@ -55,14 +58,6 @@ def auth_check(info, input, returnUser, uclientip = None):
 
         if user.deviceid in [-1, '-1'] or input.deviceid in [-1, '-1']:
             allowAccess=True
-        # elif input.deviceid != user.deviceid:
-        #     raise GraphQLError(Messages.MULTIDEVICES)
-
-        # if user.deviceid not in ('-1', input.deviceid):
-        #     isAuth  = False
-        #     raise GraphQLError(Messages.MULTIDEVICES)
-
-
         allowAccess = True
         if allowAccess:
             if user.client.enable and user.enable:

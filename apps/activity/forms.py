@@ -266,6 +266,7 @@ class ChecklistForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         self.request = kwargs.pop('request', None)
+        S = self.request.session
         super().__init__(*args, **kwargs)
         self.fields['type'].initial        = 'CHECKLIST'
         self.fields['parent'].required = False
@@ -275,19 +276,22 @@ class ChecklistForm(forms.ModelForm):
             self.fields['site_type_includes'].initial = 1
             self.fields['buincludes'].initial = 1
             self.fields['assetincludes'].initial = 1
-        else: self.fields['type'].required = False
+        else: 
+            self.fields['type'].required = False
         
-        self.fields['site_type_includes'].choices = om.TypeAssist.objects.filter(Q(tatype__tacode = "SITETYPE") | Q(tacode='NONE')).values_list('id', 'taname')
+        self.fields['site_type_includes'].choices = om.TypeAssist.objects.filter(Q(tatype__tacode = "SITETYPE") | Q(tacode='NONE') | Q(client_id = S['client_id']), enable=True).values_list('id', 'taname')
         bulist = om.Bt.objects.get_all_bu_of_client(self.request.session['client_id'])
         self.fields['buincludes'].choices = pm.Pgbelonging.objects.get_assigned_sites_to_people(self.request.user.id, makechoice=True)
         self.fields['site_grp_includes'].choices = pm.Pgroup.objects.filter(
-            Q(groupname='NONE') |  Q(identifier__tacode='SITEGROUP') & Q(bu_id__in = bulist)).values_list('id', 'groupname')
+            Q(groupname='NONE') |  Q(identifier__tacode='SITEGROUP') & Q(bu_id__in = bulist) | Q(client_id = S['client_id'])).values_list('id', 'groupname')
         self.fields['assetincludes'].choices = ac_utils.get_assetsmartplace_choices(self.request, ['CHECKPOINT'])
         utils.initailize_form_fields(self)
         
     def clean(self):
         super().clean()
         self.cleaned_data = self.check_nones(self.cleaned_data)
+        if self.instance.id:
+            self.cleaned_data['type'] = self.instance.type
         
     def check_nones(self, cd):
         fields = {
@@ -473,18 +477,7 @@ class CheckpointForm(forms.ModelForm):
             self.cleaned_data['gpslocation'] = self.clean_gpslocation(data.get('gpslocation', 'NONE'))
         return self.cleaned_data
 
-    def clean_gpslocation(self, val):
-        if gps := val:
-            if gps == 'NONE': return GEOSGeometry(f'SRID=4326;POINT({0.0} {0.0})')
-            regex = '^([-+]?)([\d]{1,2})(((\.)(\d+)(,)))(\s*)(([-+]?)([\d]{1,3})((\.)(\d+))?)$'
-            gps = gps.replace('(', '').replace(')', '')
-            if not re.match(regex, gps):
-               raise forms.ValidationError(self.error_msg['invalid_latlng'])
-            gps.replace(' ', '')
-            lat, lng = gps.split(',')
-            gps = GEOSGeometry(f'SRID=4326;POINT({lng} {lat})')
-        return gps
-        
+    
         
     def clean_assetcode(self):
         self.cleaned_data['gpslocation'] = self.data.get('gpslocation')

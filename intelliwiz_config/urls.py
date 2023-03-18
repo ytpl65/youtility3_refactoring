@@ -32,6 +32,7 @@ urlpatterns = [
     path('dashboard/', login_required(TemplateView.as_view(template_name='layout.html')), name='home'),
     path('admin/', admin.site.urls),
     path('onboarding/', include('apps.onboarding.urls')),
+    path('work_order_management/', include('apps.work_order_management.urls')),
     path('peoples/', include('apps.peoples.urls')),
     path('', include('apps.attendance.urls')),
     path('activity/', include('apps.activity.urls')),

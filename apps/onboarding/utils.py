@@ -14,7 +14,7 @@ def save_json_from_bu_prefsform(bt, buprefsform):
         for k, _ in bt.bupreferences.items():
             if k in ('validimei', 'validip', 'reliveronpeoplecount',
                      'pvideolength', 'usereliver', 'webcapability', 'mobilecapability',
-                     'reportcapability', 'portletcapability'):
+                     'reportcapability', 'portletcapability', 'ispermitneeded'):
                 bt.bupreferences[k] = buprefsform.cleaned_data.get(k)
     except Exception:
         logger.error("save json from buprefsform... FAILED", exc_info = True)
@@ -37,6 +37,7 @@ def get_bu_prefform(bt):
                 'reliveronpeoplecount',
                 'pvideolength',
                 'userreliver',
+                'ispermitneeded'
             )
         }
 

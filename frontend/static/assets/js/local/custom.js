@@ -38,6 +38,10 @@ function getDropzoneObject(){
   });
 }
 
+function getArrayFromString(input_str){
+ return  [undefined, "", null].includes(input_str) ? [] : input_str.split(",").map(word => word.trim());
+}
+
 
 function populateQsetForm(questionid, url){
   debugger;
@@ -52,8 +56,8 @@ function populateQsetForm(questionid, url){
           $('#DTE_Field_avpttype').val(qsetbng.avpttype)
           $('#DTE_Field_isavpt').val(`${qsetbng.isavpt}`)
           if(qsetbng.options && qsetbng.alerton){
-              let optionArr = qsetbng.options.replaceAll(' ', '').split(',')
-              let alertonArr = qsetbng.alerton.replaceAll(' ', '').split(',')
+              let optionArr = getArrayFromString(qsetbng.options)
+              let alertonArr = getArrayFromString(qsetbng.alerton)
               let selected = performIntersection(optionArr, alertonArr)
               load_alerton_field(optionArr, selected, "#DTE_Field_alerton")
           } if(qsetbng.alerton){
@@ -240,7 +244,9 @@ function handle_rendering_of_menus(session) {
     admin: "#ADMIN",
     onboarding: "#ONBOARDING",
     companysetup:"#COMPANYSETUP",
-    sitesurvey:"#SITESURVEY"
+    sitesurvey:"#SITESURVEY",
+    helpdesk:"#HELPDESK",
+    scheduling:"#SCHEDULING"
   };
   if (session["is_superadmin"]) {
     //show every item if user is superadmin
@@ -273,11 +279,20 @@ function handle_rendering_of_menus(session) {
       if (code.includes("OB_") && $(exceptions["onboarding"]).is(':hidden')) {
         $(exceptions["onboarding"]).show();
         $(`${exceptions["onboarding"]} .menu-item`).hide()
+        $("#COMPANYSETUP").show()
       }
       
-      if (code.includes("CS_") && $(exceptions["companysetup"]).is(':hidden')) {
+      /*if (code.includes("CS_") && $(exceptions["companysetup"]).is(':hidden')) {
         $(exceptions["companysetup"]).show();
         $(`${exceptions["companysetup"]} .menu-item`).hide()
+      }*/
+      if (code.includes("SHD_") && $(exceptions["scheduling"]).is(':hidden')) {
+        $(exceptions["scheduling"]).show();
+        $(`${exceptions["scheduling"]} .menu-item`).hide()
+      }
+      if (code.includes("HD_") && $(exceptions["helpdesk"]).is(':hidden')) {
+        $(exceptions["helpdesk"]).show();
+        $(`${exceptions["helpdesk"]} .menu-item`).hide()
       }
 
       menu_id = "#".concat(code.toUpperCase());
@@ -1497,6 +1512,22 @@ function editorOnOpenedActions(){
     }else{
         clearSelection("#DTE_Field_alerton")
     }
+  })
+
+  $("#DTE_Field_alerton .selection").focus(function(){
+    console.log("worked")
+      if($("#DTE_Field_alerton option").length === 0){
+        let optArrr = getArrayFromString($("#DTE_Field_options").val())
+        for (let i = 0; i < optArrr.length; i++) {
+          var data = { id: optArrr[i], text: optArrr[i] };
+          var opt = new Option(data.text, data.id, false, false);
+          $('#DTE_Field_alerton').append(opt).trigger('change')
+        }
+      }
+  })
+
+  $("#DTE_Field_alerton").on('hover', function(){
+    console.log("hovered")
   })
 }
 

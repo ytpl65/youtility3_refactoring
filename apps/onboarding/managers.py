@@ -183,7 +183,7 @@ class BtManager(models.Manager):
         
         elif R['action'] == 'edit':
             PostData.pop('cuser')
-            PostData.pop('mdtz')
+            PostData.pop('cdtz')
             updated = pm.People.objects.filter(pk=R['pk']).update(**PostData)
             if updated: ID = R['pk']
         else:

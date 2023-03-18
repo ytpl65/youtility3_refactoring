@@ -66,13 +66,13 @@ Task Form
         <div class="col-md-4">
             <div class="form-check form-check-inline">
                 <input type="radio" class="form-check-input" name={{ taskformjobneed.assign_to.name }}
-                    id="{{ taskformjobneed.assign_to.auto_id }}1" value="PEOPLE" checked
+                     id="id_peopleradio"  value="PEOPLE" checked
                     onchange="showHideSelectField('PEOPLE')">
                 <label class="form-check-label" for="{{ taskformjobneed.assign_to.auto_id }}">People</label>
             </div>
             <div class="form-check form-check-inline">
                 <input type="radio" class="form-check-input" name={{ taskformjobneed.assign_to.name }}
-                    id="{{ taskformjobneed.assign_to.auto_id }}2" value="GROUP" onchange="showHideSelectField('GROUP')">
+                    id="id_groupradio" value="GROUP" onchange="showHideSelectField('GROUP')">
                 <label class="form-check-label" for="{{ taskformjobneed.assign_to.auto_id }}">Group</label>
             </div>
         </div>
@@ -283,11 +283,15 @@ Task Form
         if (val == "PEOPLE") {
             //$("#aatopdiv").show();
             $(".people").show();
+            $("#id_peopleradio").attr('checked', 'checked')
             $(".pgroup").hide();
-        }else {
+            $("#id_pgroup").val(1)
+        } else {
             //$("#aatopdiv").hide();
             $(".pgroup").show();
+            $("#id_groupradio").attr('checked', 'checked')
             $(".people").hide();
+            $("#id_people").val(1)
         }
     }
 
@@ -311,10 +315,10 @@ Task Form
         $(".django-select2, .form-select").select2({"disabled": 'readonly'})
         
         //assignto toggle
-        if ('{{ taskformjobneed.instance.id }}' == ('None' || "")) {
+        if ('{{ taskformjobneed.instance.id }}' === 'None') {
             showHideSelectField('PEOPLE')
         }else{
-            var assignto = '{{ taskformjobneed.instance.people }}' == ('None' || "") ? "GROUP" : "PEOPLE"
+            var assignto = '{{ taskformjobneed.instance.people }}'  == '1' ? "GROUP" : "PEOPLE"
             showHideSelectField(assignto)
         }
         //datetime widget configurations

@@ -259,8 +259,8 @@ class Query(graphene.ObjectType):
     def resolve_verifyclient(self,info, clientcode):
         try:
             utils.set_db_for_router(clientcode.lower())
-            Bt.objects.get(bucode = clientcode.upper(), enable = True)
-            return VerifyClientOutput(msg = "VALID", url = f'{clientcode.lower()}.youtility.in')
+            bt = Bt.objects.get(bucode = clientcode.upper(), enable = True)
+            return VerifyClientOutput(msg = "VALID", url = f'{clientcode.lower()}.youtility.in', client_id = bt.id)
         except utils.NoDbError as ex:
             try:
                 utils.set_db_for_router('default')

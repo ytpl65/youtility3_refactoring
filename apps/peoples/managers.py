@@ -171,7 +171,7 @@ class PeopleManager(BaseUserManager):
             bu_id__in = S['assignedsites'],
             client_id = S['client_id'],
             enable=True,
-            #isverified=True,
+            isverified=True,
         )
         ic(qset)
         if sitewise:

@@ -1804,8 +1804,6 @@ class RPDashboard(LoginRequiredMixin, View):
     def get_all_dashboard_counts(self, request, P):
         R, S = request.GET, request.session
         if R['from'] and R['upto']:
-            from django.db.models import Q, F, Count
-            from itertools import chain
             asset_chart_arr, asset_chart_total = am.Asset.objects.get_assetchart_data(request)
             alert_chart_arr, alert_chart_total = am.Jobneed.objects.get_alertchart_data(request)
             ticket_chart_arr, ticket_chart_total = Ticket.objects.get_ticket_stats_for_dashboard(request)
@@ -1830,12 +1828,12 @@ class RPDashboard(LoginRequiredMixin, View):
                     'inprogress_tours_count'        : tour_arr[1],
                     'partiallycompleted_tours_count': tour_arr[2],
                     
-                    'assetchartdata'        : asset_chart_arr,
-                    'alertchartdata'        : alert_chart_arr,
-                    'ticketchartdata'        : ticket_chart_arr,
+                    'assetchartdata' : asset_chart_arr,
+                    'alertchartdata' : alert_chart_arr,
+                    'ticketchartdata': ticket_chart_arr,
                     
-                    'assetchart_total_count': asset_chart_total,
-                    'alertchart_total_count': alert_chart_total,
+                    'assetchart_total_count' : asset_chart_total,
+                    'alertchart_total_count' : alert_chart_total,
                     'ticketchart_total_count': ticket_chart_total,
                     
                     'sos_count'    : P['pel_model'].objects.get_sos_count_forcard(request),
@@ -1847,7 +1845,7 @@ class RPDashboard(LoginRequiredMixin, View):
                 
 
 class FileUpload(LoginRequiredMixin, View):
-    
-    
+
+
     def post(self, request, *args, **kwargs):
         pass

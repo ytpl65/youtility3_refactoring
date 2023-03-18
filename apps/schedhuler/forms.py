@@ -103,7 +103,7 @@ class SchdChild_I_TourJobForm(JobForm): # job
         
         #filters for dropdown fields
         self.fields['qset'].queryset = am.QuestionSet.objects.get_proper_checklist_for_scheduling(self.request, ['CHECKLIST', 'QUESTIONSET'])
-        self.fields['asset'].queryset = am.Asset.objects.filter(identifier__in = ['CHECKPOINT', "ASSET"], client_id = self.request.session['client_id'])
+        self.fields['asset'].queryset = am.Asset.objects.filter(identifier__in = ['CHECKPOINT', "ASSET"], client_id = self.request.session['client_id'], enable=True)
         utils.initailize_form_fields(self)
 
 

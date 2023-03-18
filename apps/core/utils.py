@@ -1175,6 +1175,8 @@ class RecordsAlreadyExist(Error):
 class NoRecordsFound(Error):
     pass
 
+class NotBelongsToTheClient(Error):
+    pass
 
 def getawaredatetime(dt, offset):
     from datetime import datetime, timedelta, timezone

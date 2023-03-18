@@ -120,40 +120,6 @@
                     <span class="menu-title">People Near Asset</span>
                 </a>
             </div>
-            {# <div class="menu-item" style="display:none;" id="TR_CCTVEVENTS">
-                <a class="menu-link" href="apps/customers/getting-started.html">
-                    <span class="menu-bullet">
-                        <span class="bullet bullet-dot"></span>
-                    </span>
-                    <span class="menu-title">CCTV Events</span>
-                </a>
-            </div> #}
-            {# <div data-kt-menu-trigger="click" id="TR_TRACKINGMOBILESUSERTIMELINE" class="menu-item menu-accordion"
-                style="display:none;">
-                <span class="menu-link">
-                    <span class="menu-title">Mobile User TimeLine</span>
-                    <span class="menu-arrow text-white mb-1"></span>
-                </span>
-                <div class="menu-sub menu-sub-accordion" kt-hidden-height="116"
-                    style="display: none; overflow: hidden;">
-                    <div class="menu-item" id="TR_CALENDAR">
-                        <a class="menu-link" href="apps/customers/getting-started.html">
-                            <span class="menu-bullet">
-                                <span class="bullet bullet-dot"></span>
-                            </span>
-                            <span class="menu-title">Calendar</span>
-                        </a>
-                    </div>
-                    <div class="menu-item" id="TR_CHART">
-                        <a class="menu-link" href="apps/customers/getting-started.html">
-                            <span class="menu-bullet">
-                                <span class="bullet bullet-dot"></span>
-                            </span>
-                            <span class="menu-title">Chart</span>
-                        </a>
-                    </div>
-                </div>
-            </div> #}
         </div>
     </div>
     <div data-kt-menu-trigger="click" id="ONBOARDING" class="menu-item menu-accordion" style="display:none;">
@@ -168,8 +134,8 @@
             <span class="menu-title">Onboarding</span>
             <span class="menu-arrow text-white mb-1"></span>
         </span>
-        <div class="menu-sub menu-sub-accordion" kt-hidden-height="116" style="display: none; overflow: hidden;">
-            <div data-kt-menu-trigger="click" class="menu-item menu-accordion" style="display:none;" id="COMPANYSETUP">
+        <div class="menu-sub menu-sub-accordion" kt-hidden-height="116" style="overflow: hidden;">
+            <div data-kt-menu-trigger="click" class="menu-item menu-accordion" style="" id="COMPANYSETUP">
                 <span class="menu-link">
                     <span class="menu-icon">
                         <!--begin::Svg Icon | path: icons/duotone/Communication/Group.svg-->
@@ -182,7 +148,7 @@
                     <span class="menu-arrow text-white mb-1"></span>
                 </span>
                 <div class="menu-sub menu-sub-accordion" kt-hidden-height="116"
-                    style="display: none; overflow: hidden;">
+                    style="overflow: hidden;">
                     <div class="menu-item" id="OB_CS_BUSINESSVIEW">
                         <a class="menu-link" href="{{ url('onboarding:bu_list') }}?template=true">
                             <span class="menu-bullet">
@@ -268,6 +234,14 @@
                         <span class="bullet bullet-dot"></span>
                     </span>
                     <span class="menu-title">Questionset</span>
+                </a>
+            </div>
+            <div class="menu-item" id="OB_VENDOR">
+                <a class="menu-link" href="{{ url('work_order_management:vendor') }}?template=true">
+                    <span class="menu-bullet">
+                        <span class="bullet bullet-dot"></span>
+                    </span>
+                    <span class="menu-title">Vendor</span>
                 </a>
             </div>
         </div>

@@ -122,6 +122,7 @@ class QuestionSetManager(models.Manager):
             bu_id__in = S['assignedsites'],
             client_id = S['client_id'],
             type__in = types,
+            enable=True
         ).select_related('bu' ,'client', 'parent').exclude(
             questionsetbelonging=None
         )
@@ -522,7 +523,7 @@ class JobneedManager(models.Manager):
         pd2 = R.get('upto', datetime.now().date())
         return self.filter(
             Q(Q(parent_id__in = [1, -1]) | Q(parent_id__isnull=True)),
-            bu_id__in = S['assignedsites'],
+            bu_id = S['bu_id'],
             identifier = QuestionSet.Type.INCIDENTREPORTTEMPLATE,
             plandatetime__date__gte = pd1,
             plandatetime__date__lte = pd2,
@@ -535,7 +536,7 @@ class JobneedManager(models.Manager):
         pd2 = R.get('upto', datetime.now().date())
         return self.filter(
             Q(Q(parent_id__in = [1, -1]) | Q(parent_id__isnull=True)),
-            bu_id__in = S['assignedsites'],
+            bu_id = S['bu_id'],
             client_id = S['client_id'],
             plandatetime__date__gte = pd1,
             plandatetime__date__lte = pd2,
@@ -571,7 +572,7 @@ class JobneedManager(models.Manager):
         S, R = request.session, request.GET
         total_schd = self.filter(
             Q(Q(parent_id__in = [1, -1]) | Q(parent_id__isnull=True)),
-            bu_id__in = S['assignedsites'],
+            bu_id = S['bu_id'],
             identifier = 'TASK',
             plandatetime__date__gte = R['from'],
             plandatetime__date__lte = R['upto'],
@@ -605,7 +606,7 @@ class JobneedManager(models.Manager):
     def get_alertchart_data(self, request):
         S, R = request.session, request.GET
         qset = self.filter(
-            bu_id__in = S['assignedsites'],
+            bu_id = S['bu_id'],
             plandatetime__date__gte = R['from'],
             plandatetime__date__lte = R['upto'],
             client_id = S['client_id'],
@@ -650,7 +651,7 @@ class JobneedManager(models.Manager):
         S, R = request.session, request.GET
         total_schd = self.filter(
             Q(Q(parent_id__in = [1, -1]) | Q(parent_id__isnull=True)),
-            bu_id__in = S['assignedsites'],
+            bu_id = S['bu_id'],
             identifier = 'PPM',
             plandatetime__date__gte = R['from'],
             plandatetime__date__lte = R['upto'],
@@ -846,22 +847,22 @@ class AssetManager(models.Manager):
         from apps.activity.models import Location
         
         working = [
-        self.filter(runningstatus = 'WORKING', bu_id__in = S['assignedsites'], identifier = 'ASSET', client_id=S['client_id']).values('id').order_by('assetcode').distinct('assetcode').count(),
-        self.filter(runningstatus = 'WORKING', bu_id__in = S['assignedsites'], identifier = 'CHECKPOINT', client_id=S['client_id']).values('id').order_by('assetcode').distinct('assetcode').count(),
-        Location.objects.filter(locstatus = 'WORKING', bu_id__in = S['assignedsites'], client_id=S['client_id']).values('id').order_by('loccode').distinct('loccode').count()]
+        self.filter(runningstatus = 'WORKING', bu_id = S['bu_id'], identifier = 'ASSET', client_id=S['client_id']).values('id').order_by('assetcode').distinct('assetcode').count(),
+        self.filter(runningstatus = 'WORKING', bu_id = S['bu_id'], identifier = 'CHECKPOINT', client_id=S['client_id']).values('id').order_by('assetcode').distinct('assetcode').count(),
+        Location.objects.filter(locstatus = 'WORKING', bu_id = S['bu_id'], client_id=S['client_id']).values('id').order_by('loccode').distinct('loccode').count()]
         mnt = [
-        self.filter(runningstatus = 'MAINTENANCE', bu_id__in = S['assignedsites'], identifier = 'ASSET', client_id=S['client_id']).values('id').order_by('assetcode').distinct('assetcode').count(),
-        self.filter(runningstatus = 'MAINTENANCE', bu_id__in = S['assignedsites'], identifier = 'CHECKPOINT', client_id=S['client_id']).values('id').order_by('assetcode').distinct('assetcode').count(),
-        Location.objects.filter(locstatus = 'MAINTENANCE', bu_id__in = S['assignedsites'], client_id=S['client_id']).values('id').order_by('loccode').distinct('loccode').count()
+        self.filter(runningstatus = 'MAINTENANCE', bu_id = S['bu_id'], identifier = 'ASSET', client_id=S['client_id']).values('id').order_by('assetcode').distinct('assetcode').count(),
+        self.filter(runningstatus = 'MAINTENANCE', bu_id = S['bu_id'], identifier = 'CHECKPOINT', client_id=S['client_id']).values('id').order_by('assetcode').distinct('assetcode').count(),
+        Location.objects.filter(locstatus = 'MAINTENANCE', bu_id = S['bu_id'], client_id=S['client_id']).values('id').order_by('loccode').distinct('loccode').count()
         ]
         stb = [
-        self.filter(runningstatus = 'STANDBY', bu_id__in = S['assignedsites'], identifier = 'ASSET', client_id=S['client_id']).values('id').order_by('assetcode').distinct('assetcode').count(),
-        self.filter(runningstatus = 'STANDBY', bu_id__in = S['assignedsites'], identifier = 'CHECKPOINT', client_id=S['client_id']).values('id').order_by('assetcode').distinct('assetcode').count(),
-        Location.objects.filter(locstatus = 'STANDBY', bu_id__in = S['assignedsites'], client_id=S['client_id']).values('id').order_by('loccode').distinct('loccode').count()
+        self.filter(runningstatus = 'STANDBY', bu_id = S['bu_id'], identifier = 'ASSET', client_id=S['client_id']).values('id').order_by('assetcode').distinct('assetcode').count(),
+        self.filter(runningstatus = 'STANDBY', bu_id = S['bu_id'], identifier = 'CHECKPOINT', client_id=S['client_id']).values('id').order_by('assetcode').distinct('assetcode').count(),
+        Location.objects.filter(locstatus = 'STANDBY', bu_id = S['bu_id'], client_id=S['client_id']).values('id').order_by('loccode').distinct('loccode').count()
         ]
         scp = [
-        self.filter(runningstatus = 'SCRAPPED', bu_id__in = S['assignedsites'], identifier = 'ASSET', client_id=S['client_id']).values('id').order_by('assetcode').distinct('assetcode').count(),
-        self.filter(runningstatus = 'SCRAPPED', bu_id__in = S['assignedsites'], identifier = 'CHECKPOINT', client_id=S['client_id']).values('id').order_by('assetcode').distinct('assetcode').count(),
+        self.filter(runningstatus = 'SCRAPPED', bu_id = S['bu_id'], identifier = 'ASSET', client_id=S['client_id']).values('id').order_by('assetcode').distinct('assetcode').count(),
+        self.filter(runningstatus = 'SCRAPPED', bu_id = S['bu_id'], identifier = 'CHECKPOINT', client_id=S['client_id']).values('id').order_by('assetcode').distinct('assetcode').count(),
         0
         ]
         
@@ -1008,7 +1009,7 @@ class QsetBlngManager(models.Manager):
         
         elif R['action'] == 'edit':
             PostData.pop('cuser')
-            PostData.pop('mdtz')
+            PostData.pop('cdtz')
             updated = self.filter(pk=R['pk']).update(**PostData)
             ic(updated)
             if updated: ID = R['pk']

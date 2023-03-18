@@ -586,6 +586,7 @@ $(document).ready(() => {
         },
         fixedHeader: true,
         responsive: true,
+        rowReorder: true,
         columns:[
             ...getAsgdsitesTabColumnConfig()
         ],
@@ -595,8 +596,9 @@ $(document).ready(() => {
             style:    'single',
             selector: 'tr'
         },
-        order:[[1, 'asc']],
-        ordering:false,
+        order:[[0, 'asc']],
+        ordering:true,
+        searching:false,
         footerCallback:function(row, data, start, end, display){
             var api = this.api();
             setFooter(api)

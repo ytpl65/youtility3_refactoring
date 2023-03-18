@@ -229,6 +229,10 @@ Questionset Form
             
         })
 
+        parentEditor.on('opened', function(e, moed, action){
+            $('.DTED_Lightbox_Content').draggable()
+        })
+
         //datatable configuration tabSiteReports       
             parentTable = $("#tabSitereports").DataTable({
                 ajax:{
@@ -344,24 +348,26 @@ Questionset Form
                         }
                     }
                 },
+                order: [[0, "asc"]],
+                ordering: true,
+                //rowReorder:true,
                 responsive:true,
-                ordering:false,
                 searching:false,
                 dom:`<'row' <'col-sm-6 d-flex justify-content-start'f> <'col-sm-6 d-flex justify-content-end'B> >rt<'row'
                 <'col-sm-6'l> <'col-sm-6'p><'col-sm-12 d-flex justify-content-center'i>>`,
                 columns:[
                     ...QSBTableColumnsConfig()
                 ],
-                order:[[0, 'desc']],
                 buttons:[
                 {text:'<i class="fas fa-sync-alt text-dark"></i>', titleAttr:'Refresh Data', className:'refreshBtn'},
                     { extend: "create", editor: childEditor },
                     { extend: "edit",   editor: childEditor },
                     { extend: "remove", editor: childEditor }
                 ],
-                select: {
-                    style: 'single'
-                }
+                select:{
+                    style:'single',
+                    selector: "td:not(:first-child)"
+                },
             })
         
         childEditor.on('open', function(e, mode, action){
@@ -371,6 +377,7 @@ Questionset Form
 
         childEditor.on('opened', function(e, mode, action){
             editorOnOpenedActions()
+            $('.DTED_Lightbox_Content').draggable()
         })
 
         childEditor.on('preSubmit', function(e, o, action){

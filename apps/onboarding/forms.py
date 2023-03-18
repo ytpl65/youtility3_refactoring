@@ -380,6 +380,7 @@ class BuPrefForm(forms.Form):
     tag                      = forms.CharField(max_length = 200, required = False)
     siteopentime             = forms.TimeField(required = False, label="Site Open Time")
     nearby_emergencycontacts = forms.CharField(max_length = 500, required = False)
+    ispermitneeded = forms.BooleanField(initial = False, required=False)
 
 
 

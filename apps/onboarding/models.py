@@ -60,7 +60,8 @@ def bu_defaults():
         'maxadmins': 5,
         'address':"",
         'permissibledistance': 0,
-        'controlroom':[]
+        'controlroom':[],
+        'ispermitneeded':False
     }
 
 class Bt(BaseModel, TenantAwareModel, HeirarchyModel):

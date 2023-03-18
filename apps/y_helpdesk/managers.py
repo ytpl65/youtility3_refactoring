@@ -74,7 +74,7 @@ class TicketManager(models.Manager):
         S, R = request.session, request.GET
         ic(R)
         qset = self.filter(
-            bu_id__in = S['assignedsites'],
+            bu_id = S['bu_id'],
             cdtz__date__gte = R['from'],
             cdtz__date__lte = R['upto'],
             client_id = S['client_id'],

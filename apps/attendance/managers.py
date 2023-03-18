@@ -132,7 +132,7 @@ class PELManager(models.Manager):
         pd1 = R.get('from', datetime.now().date())
         pd2 = R.get('upto', datetime.now().date())
         return self.filter(
-            bu_id__in = S['assignedsites'],
+            bu_id = S['bu_id'],
             client_id = S['client_id'],
             peventtype__tacode='SOS',
             datefor__gte = pd1,
@@ -144,7 +144,7 @@ class PELManager(models.Manager):
         pd1 = R.get('from', datetime.now().date())
         pd2 = R.get('upto', datetime.now().date())
         return self.filter(
-            bu_id__in = S['assignedsites'],
+            bu_id = S['bu_id'],
             client_id = S['client_id'],
             datefor__gte = pd1,
             datefor__lte = pd2,
