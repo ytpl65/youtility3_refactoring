@@ -14,7 +14,8 @@ from apps.reminder.models import Reminder
 import random
 from intelliwiz_config.celery import app
 from celery import shared_task
-log = getLogger('__main__')
+from celery.utils.log import get_task_logger
+log = get_task_logger('__main__')
 
 
 def get_service_requirements(R):
@@ -134,6 +135,8 @@ def calculate_route_details(R, job):
         chekpoints[endp]['breaktime'] = breaktime
     return chekpoints
 
+
+@shared_task(name="create_job()")
 def create_job(jobs = None):
     startdtz = enddtz = msg = resp = None
     F, d = {}, []
