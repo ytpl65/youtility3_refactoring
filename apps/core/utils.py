@@ -368,6 +368,7 @@ def save_user_session(request, people, ctzoffset=None):
             logger.info('saving user data into the session ... DONE')
         request.session['assignedsites'] = list(pm.Pgbelonging.objects.get_assigned_sites_to_people(people.id).values_list('buid', flat=True))
         request.session['clientcode'] = request.user.client.bucode
+        request.session['clientname'] = request.user.client.buname
         request.session['sitename'] = request.user.bu.buname
         request.session['sitecode'] = request.user.bu.bucode
         request.session['google_maps_secret_key'] = settings.GOOGLE_MAP_SECRET_KEY

@@ -292,7 +292,7 @@ class SchdTaskFormJob(JobForm):
     assign_to          = forms.ChoiceField(choices = ASSIGNTO_CHOICES, initial="PEOPLE")
 
     class Meta(JobForm.Meta):
-        exclude = ['shift']
+        exclude = ['shift'] 
         JobForm.Meta.widgets.update({
             'identifier'    : forms.TextInput(attrs={'style': 'display:none;'}),
             'starttime'     : forms.TextInput(attrs={'style': 'display:none;'}),

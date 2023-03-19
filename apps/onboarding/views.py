@@ -1193,7 +1193,7 @@ class TypeAssistView(LoginRequiredMixin, View):
         'partial_form': 'onboarding/partials/partial_ta_form.html',
         'related': ['parent',  'cuser', 'muser'],
         'model': TypeAssist,
-        'fields': ['id', 'tacode',
+        'fields': ['id', 'tacode','cdtz',
               'taname', 'tatype__tacode', 'cuser__peoplecode'],
         'form_initials': {} }
 
