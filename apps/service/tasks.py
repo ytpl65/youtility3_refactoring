@@ -798,14 +798,14 @@ def get_escalation_of_ticket(tkt):
     return []
 
 @shared_task(name="auto_close_jobs")
-def autoclose_job():
+def autoclose_job(jobneedid = None):
     from django.template.loader import render_to_string
     from django.conf import settings
     from django.core.mail import  EmailMessage
     try:
         #get all expired jobs
         resp = {'story':"", 'traceback':""}
-        expired = Jobneed.objects.get_expired_jobs()
+        expired = Jobneed.objects.get_expired_jobs(id=jobneedid)
         resp['story'] += f'total expired jobs = {len(expired)}\n'
         context = {}
         with transaction.atomic(using=utils.get_current_db_name()):

@@ -1,11 +1,13 @@
 import graphene
 from apps.core import utils
 from apps.activity.models import JobneedDetails, Question, QuestionSet, QuestionSetBelonging, Location, Attachment
+from apps.work_order_management.models import Vendor
 from apps.y_helpdesk.models import Ticket
 from apps.onboarding.models import GeofenceMaster, Bt
 from apps.peoples.models import Pgbelonging, Pgroup, People
 from apps.attendance.models import PeopleEventlog
 from django.db import connections
+from django.db.models import Q
 from collections import namedtuple
 from logging import getLogger
 log = getLogger('django')
@@ -102,6 +104,12 @@ class Query(graphene.ObjectType):
     verifyclient = graphene.Field(VerifyClientOutput, clientcode = graphene.String(required = True))
 
     checkquery = graphene.Field(VerifyClientOutput)
+    
+    get_vendors = graphene.Field(SelectOutputType,
+                                 clientid = graphene.Int(required=True),
+                                 mdtz = graphene.String(required=True),
+                                 buid = graphene.Int(required=True),
+                                 ctzoffset = graphene.Int(required=True))
     
     @staticmethod
     def resolve_tadata(self, info, keys, **kwargs):
@@ -279,6 +287,12 @@ class Query(graphene.ObjectType):
         log.info(f'total {count} objects returned')
         return SelectOutputType(nrows = count, records = records,msg = msg)
         
+    def resolve_get_vendors(self, info, clientid, mdtz, buid, ctzoffset):
+        log.info(f'\n\nrequest for get_vendors inputs :{clientid = } {mdtz = } {buid = } {ctzoffset = }')
+        data = Vendor.objects.get_vendors_for_mobile(info.context, clientid, mdtz, buid, ctzoffset)
+        records, count, msg = utils.get_select_output(data)
+        log.info(f'total {count} objects returned')
+        return SelectOutputType(nrows = count, records = records,msg = msg)
 
 
 def get_db_rows(sql, args = None):

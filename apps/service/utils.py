@@ -105,7 +105,6 @@ def update_record(details, jobneed_record, JnModel, JndModel):
 
 def update_jobneeddetails(jobneeddetails, JndModel):
     try:
-        
         if jobneeddetails:
             updated = 0
             log.info(f'total {len(jobneeddetails)} JND records found')

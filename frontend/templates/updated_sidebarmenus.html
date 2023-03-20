@@ -337,6 +337,37 @@
         </div>
     </div>
 
+    <!---WORK PERMIT--->
+    <div class="menu-item" id="WORKPERMIT" style="display:none;">
+        <a class="menu-link" href="{{ url('onboarding:rp_dashboard') }}">
+            <span class="menu-icon">
+                <!--begin::Svg Icon | path: icons/duotone/Communication/Group.svg-->
+                <span class="svg-icon svg-icon-2">
+                    <span class="material-icons">
+                        badge
+                    </span>
+                </span>
+                <!--end::Svg Icon-->
+            </span>
+            <span class="menu-title">Work Permit</span>
+        </a>
+    </div>
+    <!---WORK ORDER--->
+    <div class="menu-item" id="WORKORDER" style="display:none;">
+        <a class="menu-link" href="{{ url('onboarding:rp_dashboard') }}">
+            <span class="menu-icon">
+                <!--begin::Svg Icon | path: icons/duotone/Communication/Group.svg-->
+                <span class="svg-icon svg-icon-2">
+                    <span class="material-icons">
+                        receipt_long
+                    </span>
+                </span>
+                <!--end::Svg Icon-->
+            </span>
+            <span class="menu-title">Work Order</span>
+        </a>
+    </div>
+
 
     <div data-kt-menu-trigger="click" id="ADMIN" class="menu-item menu-accordion" style="display:none;">
         <span class="menu-link">
@@ -359,7 +390,7 @@
                     <span class="menu-title">TypeAssist</span>
                 </a>
             </div>
-            {# <div class="menu-item" id="IMPORT">
+            <div class="menu-item" id="AD_IMPORT">
                 <a class="menu-link" href="{{ url('onboarding:import') }}?action=form">
                     <span class="menu-bullet">
                         <span class="bullet bullet-dot"></span>
@@ -367,7 +398,7 @@
                     <span class="menu-title">Import</span>
                 </a>
             </div>
-            <div class="menu-item" id="EXPORT">
+            {# <div class="menu-item" id="EXPORT">
                 <a class="menu-link" href="{{ url('activity:questionset') }}?template=true&type=QUESTIONSET">
                     <span class="menu-bullet">
                         <span class="bullet bullet-dot"></span>

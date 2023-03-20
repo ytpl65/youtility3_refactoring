@@ -395,7 +395,8 @@ def save_pgroupbelonging(pg, request):
                     pgroup=pg,
                     people=people,
                     client_id=S['client_id'],
-                    bu_id=S['bu_id']
+                    bu_id=S['bu_id'],
+                    assignsites_id = 1
                 )
                 if request.session.get('wizard_data'):
                     request.session['wizard_data']['pgbids'].append(pgb.id)

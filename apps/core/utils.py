@@ -1503,10 +1503,10 @@ def get_email_addresses(people_ids, group_ids=None, buids=None):
     from apps.peoples.models import People, Pgbelonging
     
     p_emails = list(People.objects.filter(
-        id__in = people_ids
+        ~Q(peoplecode='NONE'), id__in = people_ids
     ).values_list('email', flat=True))
     g_emails = list(Pgbelonging.objects.select_related('pgroup').filter(
-        pgroup_id__in = group_ids,
+        ~Q(people_id=1), pgroup_id__in = group_ids, assignsites_id = 1
     ).values_list('people__email', flat=True))
     return list(set(p_emails + g_emails)) or []
     

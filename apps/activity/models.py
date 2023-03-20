@@ -88,8 +88,9 @@ class QuestionSet(BaseModel, TenantAwareModel):
         ASSETAUDIT               = "ASSETAUDIT",          _('Asset Audit')
         MAINTENANCETEMPLATE      = "MAINTENANCETEMPLATE", _('Maintenance')
         ASSETMAINTENANCE         = "ASSETMAINTENANCE",    _('Asset Maintenance')
+        WORKORDER               = "WORK_ORDER",         _('Work Order')
+        
 
-    # id            = models.BigIntegerField(primary_key = True)
     qsetname           = models.CharField(_("QuestionSet Name"), max_length = 200)
     enable             = models.BooleanField(_("Enable"), default = True)
     assetincludes      = ArrayField(models.CharField(max_length = 50, blank = True), null = True, blank = True, verbose_name= _("Asset Includes"))

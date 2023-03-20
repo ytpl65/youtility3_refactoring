@@ -56,27 +56,25 @@ const formid          = "#vendorform"
 
 //form validations
 function form_validate(){
-    const validator = new JustValidate('#vendorform', { errorFieldCssClass: 'is-invalid' });
-    validator
+    const validator = new JustValidate('#vendorform', { errorFieldCssClass: 'is-invalid', validateBeforeSubmitting: true});
+    return validator
     .addField('#id_code', [
-                { rule:"customRegexp", value:/^[a-zA-Z0-9_-]+$/ },
+                { rule:"customRegexp", value:/^[a-zA-Z0-9_-]+$/ ,errorMessage:"Code should not contain special characters and spaces"},
                 { rule:'minLength', value:3 },
                 { rule:'required'},
                 { rule:'maxLength', value:15 }
+
             ])
     .addField('#id_email', [
-                { rule:'customRegexp', value:/^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/},
+                { rule:'customRegexp', value:/^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/, errorMessage:"Not a valid format" },
                 { rule:'required'},
             ])
     .addField('#id_mobno', [
-                { rule:"customRegexp", value:/^\+\d{1,3}\-\d{1,13}$/ },
+                { rule:"customRegexp", value:/^\+\d{1,3}\d{1,13}$/, errorMessage:"Not a valid format it should be like: +<code>xxxxxxxxx"},
                 { rule:'minLength', value:10 },
                 { rule:'required'},
                 { rule:'maxLength', value:15 }
-            ])
-    .onSuccess((e) => {
-                $('#vendorform').submit()
-            })
+            ])	
 }
 
 //global var
@@ -199,8 +197,11 @@ function form_validate(){
 
 
 $(document).ready(() => {
-    //formvalidations on document ready
     
+    //beforeSend of question ajax request 
+	function vendorBeforeSend() {
+		$(modal_id).modal("show");
+	}
 
     table = $("#vendor_table").DataTable({
         ajax:{
@@ -266,7 +267,8 @@ $(document).ready(() => {
             if(!(id)){ return}
             const params = {
                 'modal_id':modal_id,
-                url:`${urlname}?id=${id}`
+                url:`${urlname}?id=${id}`,
+				beforeSend:vendorBeforeSend
             }
             fire_ajax_get(params)
             .done((data, status, xhr) => {
@@ -278,54 +280,6 @@ $(document).ready(() => {
 				})
         }
     })
-
-
-    $(modal_id).on('submit', "#vendorform", function(e){
-        var form = $(this)
-        e.preventDefault()
-        const params = { url:urlname, modal:true } //capability view
-        const id = $("#pk").val() //form instance id
-        var payLoad = {formData:form.serialize(), csrfmiddlewaretoken: '{{ csrf_token }}'}//payload for post request
-        if(id != 'None'){
-            var newPayLoad = {...payLoad, 'pk':id}
-            payLoad = newPayLoad
-        }
-        fire_ajax_form_post(params, payLoad)
-        .done((data, status, xhr) => { //function to submit post request
-            console.log("data ", data)
-            $("#modal-vendor").modal("hide");
-            if(id!=='None'){
-                table.row('.selected').data(data.row).draw()
-            }else{
-                table.row.add(data.row).draw()
-            }
-            show_successful_save_alert(update= id != 'None' ? true : false)
-        })
-
-
-    })
-
-    //delete ajax request 
-	function deleteVendor(elemt){
-		var id = $(elemt).attr("data-id");
-		show_alert_before_delete('Vendor')
-		.then((result) => {
-			if(result.isConfirmed){ //delete requested by user
-				const params = {url:`${urlname}?action=delete&id=${id}` }
-                fire_ajax_get(params)
-                .done((data, status, xhr) => {
-                    show_successful_delete_alert() //defined in customjs
-					$(modal_id).modal("hide")
-					table.row({selected:true}).remove().draw();
-                })
-                .fail((xhr, status, error) => {
-                    show_error_alert('Something went wrong!');
-                })
-			}
-		})
-	}
-
-
 })
 
 </script>

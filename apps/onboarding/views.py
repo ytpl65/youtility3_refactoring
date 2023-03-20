@@ -10,7 +10,7 @@ from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.views import View
 from django.db.models import Q, RestrictedError
 from django.contrib import messages
-from django.http import response as rp
+from django.http import response as rp, HttpResponse
 from django.core.cache.backends.base import DEFAULT_TIMEOUT
 from django.db.utils import IntegrityError
 from django.conf import settings
@@ -30,6 +30,7 @@ import apps.activity.models as am
 import apps.attendance.models as atm
 from apps.y_helpdesk.models import Ticket
 from pprint import pformat
+from tablib import Dataset
 CACHE_TTL = getattr(settings, 'CACHE_TTL', DEFAULT_TIMEOUT)
 logger = logging.getLogger('django')
 
@@ -1549,18 +1550,33 @@ class BulkImportData(LoginRequiredMixin, View):
         'form':obforms.ImportForm,
         'template':'onboarding/import.html'
     }
-    
+    header_mapping = {
+        'TYPEASSIST':['ID', 'Name', 'Code', 'Type', 'tenant', 'BV', 'Client']
+    }
+
     def get(self, request, *args, **kwargs):
         R, P = request.GET, self.params
+        
         if (R.get('action') == 'form'):
             cxt = {'importform': P['form']()}
             return render(request, P['template'], cxt)
+        
+        if (R.get('action') == 'downloadTemplate') and R.get('template'):
+            column_headers = BulkImportData.header_mapping.get(R['template'])
+            ic(column_headers)
+            data = Dataset()
+            data.headers = column_headers
+            response = HttpResponse(content_type='application/vnd.ms-excel')
+            response['Content-Disposition'] = 'attachment; filename="template.xlsx"'
+            response.write(data.export('xlsx'))
+            return response
+
         
     def post(self, request, *args, **kwargs):
         R, P = request.POST, self.params
         form = P['form'](R, request.FILES)
         if form.is_valid():
-            from tablib import Dataset
+            
             table = form.cleaned_data.get('table')
             file = request.FILES['importfile']
             dataset = Dataset().load(file)

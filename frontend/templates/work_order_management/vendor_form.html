@@ -60,7 +60,7 @@
                 <div class="col-md-4">
                     {{ vendor_form.code.label_tag() }}
                 </div>
-                <div class="col-md-8">
+                <div class="col-md-8" data-bs-toggle="tooltip" data-bs-placement="top" title="Enter text without any special chars, and spaces">
                     {{ vendor_form.code }}
                 </div>
             </div>
@@ -68,7 +68,7 @@
                 <div class="col-md-4">
                     {{ vendor_form.name.label_tag() }}
                 </div>
-                <div class="col-md-8">
+                <div class="col-md-8" data-bs-toggle="tooltip" data-bs-placement="top" title="vendor Na">
                     {{ vendor_form.name }}
                 </div>
             </div>
@@ -155,13 +155,33 @@
 </script>
 <script src="{{ static('assets/js/local/maps.js') }}"></script>
 <script>
+    //delete ajax request 
+	function deleteVendor(elemt){
+		var id = $(elemt).attr("data-id");
+		show_alert_before_delete('Vendor')
+		.then((result) => {
+			if(result.isConfirmed){ //delete requested by user
+				const params = {url:`${urlname}?action=delete&id=${id}` }
+                fire_ajax_get(params)
+                .done((data, status, xhr) => {
+                    show_successful_delete_alert() //defined in customjs
+					$(modal_id).modal("hide")
+					table.row({selected:true}).remove().draw();
+                })
+                .fail((xhr, status, error) => {
+                    show_error_alert('Something went wrong!');
+                })
+			}
+		})
+	}
+
+
+
 $(document).ready(() => {
     //set ctzoffset
     $("#id_ctzoffset").val(-new Date().getTimezoneOffset())
 
-    form_validate()
-
-    //onclick id_setgps open popup open-map
+    //onclick id_setgps open popp open-map
     $("#id_setgps").click(function(){
         $("#open_map").modal('show');
         initMap("map");
@@ -186,6 +206,30 @@ $(document).ready(() => {
     if("{{ vendor_form.instance.id }}" !== 'None'){
         $("#id_gpslocation").val("{{ vendor_form.instance.gpslocation.coords[::-1] if vendor_form.instance.gpslocation is not none else 'NONE' }}")
     }
+    
+    form_validate()
+    .onSuccess(e => {
+        var form = $("#vendorform")
+        //e.preventDefault()
+        const params = { url:urlname, modal:true } //capability view
+        const id = $("#pk").val() //form instance id
+        var payLoad = {formData:form.serialize(), csrfmiddlewaretoken: '{{ csrf_token }}'}//payload for post request
+        if(id != 'None'){
+            var newPayLoad = {...payLoad, 'pk':id}
+            payLoad = newPayLoad
+        }
+        fire_ajax_form_post(params, payLoad)
+        .done((data, status, xhr) => { //function to submit post request
+            console.log("data ", data)
+            $("#modal-vendor").modal("hide");
+            if(id!=='None'){
+                table.row('.selected').data(data.row).draw()
+            }else{
+                table.row.add(data.row).draw()
+            }
+            show_successful_save_alert(update= id != 'None' ? true : false)
+        })
+    })
 
 })
 

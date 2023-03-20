@@ -620,31 +620,36 @@ class JobneedManager(models.Manager):
         chart_arr =  [task_alerts, ppm_alerts, tour_alerts, route_alerts ]
         return chart_arr, sum(chart_arr)
     
-    def get_expired_jobs(self):
-        qset = self.select_related(
-            'bu', 'client', 'people', 'qset', 'pgroup', 'sgroup',
-            'performedby', 'asset', 'ticketcategory', 'job', 'parent'
-        ).annotate(
-            assignedto = Case(
-                When(pgroup_id=1, then=Concat(F('people__peoplename'), V(' [PEOPLE]'))),
-                When(people_id=1, then=Concat(F('pgroup__groupname'), V(' [GROUP]'))),
-            )    
-        ).filter(
-            ~Q(id=1),
-            ~Q(jobstatus__in = ['COMPLETED', 'PARTIALLYCOMPLETED']),
-            ~Q(other_info__autoclosed_by_server = True),
-            ~Q(Q(jobstatus = 'AUTOCLOSED') & Q(other_info__email_sent = True))|
-            ~Q(Q(jobstatus = 'AUTOCLOSED') & Q(other_info__ticket_generated = True)),
-            Q(parent_id = 1), Q(identifier__in = ['TASK', 'INTERNALTOUR', 'PPM', 'EXTERRNALTOUR', "SITEREPORT"]),
-            expirydatetime__gte=datetime.now(timezone.utc) - timedelta(days=1),
-            expirydatetime__lte=datetime.now(timezone.utc),            
-        ).values(
+    def get_expired_jobs(self, id=None):
+        annotation = { 'assignedto' : Case(
+                    When(pgroup_id=1, then=Concat(F('people__peoplename'), V(' [PEOPLE]'))),
+                    When(people_id=1, then=Concat(F('pgroup__groupname'), V(' [GROUP]'))),
+                )    }
+        related_fields = ['bu', 'client', 'people', 'qset', 'pgroup', 'sgroup',
+                'performedby', 'asset', 'ticketcategory', 'job', 'parent']
+        if not id:
+            qset = self.select_related(
+                *related_fields
+            ).annotate(
+               **annotation
+            ).filter(
+                ~Q(id=1),
+                ~Q(jobstatus__in = ['COMPLETED', 'PARTIALLYCOMPLETED']),
+                ~Q(other_info__autoclosed_by_server = True),
+                ~Q(Q(jobstatus = 'AUTOCLOSED') & Q(other_info__email_sent = True))|
+                ~Q(Q(jobstatus = 'AUTOCLOSED') & Q(other_info__ticket_generated = True)),
+                Q(parent_id = 1), Q(identifier__in = ['TASK', 'INTERNALTOUR', 'PPM', 'EXTERRNALTOUR', "SITEREPORT"]),
+                expirydatetime__gte=datetime.now(timezone.utc) - timedelta(days=1),
+                expirydatetime__lte=datetime.now(timezone.utc),            
+            )
+        else:
+            qset = self.filter(id=id).annotate(**annotation).select_related(*related_fields)
+        qset = qset.values(
             'assignedto', 'bu__buname', 'pgroup__groupname', 'cuser__peoplename',
             'people__peoplename', 'expirydatetime', 'plandatetime', 'pgroup_id', 'people_id',
             'cuser_id', 'muser_id', 'priority', 'identifier', 'ticketcategory__tacode', 'id',
             'job_id', 'jobdesc', 'ctzoffset', 'client_id', 'bu_id', 'ticketcategory_id', 'ticketcategory__taname'
         )
-        ic(str(qset.query))
         return qset or self.none()
     
     def get_ppmchart_data(self, request):

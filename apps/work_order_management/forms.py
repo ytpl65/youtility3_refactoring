@@ -1,10 +1,12 @@
 from django import forms
 from django.core.exceptions import ValidationError
 from django.db.models import Q
-from .models import Vendor
+from .models import Vendor, Wom
 from apps.core import utils
 from django.http import QueryDict
 from django.contrib.gis.geos import GEOSGeometry
+import django_select2.forms as s2forms
+from datetime import datetime
 
 
 
@@ -23,7 +25,8 @@ class VendorForm(forms.ModelForm):
             'email':"Email"
         }
         widgets = {
-            'address':forms.Textarea(attrs={'rows':2})
+            'address':forms.Textarea(attrs={'rows':4}),
+            'code':forms.TextInput(attrs={'style': "text-transform: uppercase;"})
         }
     
     def __init__(self, *args, **kwargs):
@@ -53,3 +56,28 @@ class VendorForm(forms.ModelForm):
             lat, lng = gps.split(',')
             gps = GEOSGeometry(f'SRID=4326;POINT({lng} {lat})')
         return gps
+    
+    def clean_code(self):
+        return val.upper() if (val := self.cleaned_data.get('code')) else val
+    
+
+class WorkOrderForm(forms.ModelForm):
+    required_css_class = "required"
+    
+    class Meta:
+        model = Wom
+        fields = ['description', 'plandatetime', 'expirydatetime', 'gracetime', 'asset', 'location',
+                  'priority', 'qset', 'ticketcategory', 'categories', 'vendor', 'workstatus']
+        
+        widgets = {'categories':s2forms.Select2MultipleWidget,
+                   'vendor'    : s2forms.Select2Widget,
+                   'workstatus': s2forms.Select2Widget, }
+        
+    def __init__(self, *args, **kwargs):
+        self.request = kwargs.pop('request', None)
+        S = self.request.session
+        super().__init__(*args, **kwargs)
+        utils.initailize_form_fields(self)
+        if not self.instance.id:
+            self.fields['workstatus'].initial = Wom.Workstatus.ASSIGNED
+            self.fields['plandatetime'].initial = datetime.now()

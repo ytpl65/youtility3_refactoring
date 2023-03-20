@@ -350,11 +350,14 @@ function display_form_errors(errors) {
           "Please resolve the following errors!",
           "alert alert-danger"
         );
-        field.addClass("is-invalid");
-        field = field.parent().hasClass("d-flex") ? field.parent() : field;
-        $(error).insertAfter(field);
+        if(!field.hasClass("is-invalid")){
+          field.addClass("is-invalid");
+          field = field.parent().hasClass("d-flex") ? field.parent() : field;
+          $(error).insertAfter(field);
 
-        field.next("p").css({ color: "red", "font-size": "15px" });
+          field.next("p").css({ color: "red", "font-size": "15px" });
+        }
+        
       }
     }
   }
@@ -461,12 +464,16 @@ function display_modelform_errors(errors) {
       lookup = "[name='" + key + "']";
       field = $(".modal-body").find(lookup);
       if ($(field).is("select") === true) {
-        $(field).next().find(".select2-selection").addClass("is-invalid");
-        var tag = $(field).next();
-        $(error).insertAfter(tag);
+        if($(field).next().find(".select2-selection").hasClass("is-invalid")){
+          $(field).next().find(".select2-selection").addClass("is-invalid");
+          var tag = $(field).next();
+          $(error).insertAfter(tag);
+        }
       } else {
-        $(field).addClass("is-invalid");
-        $(error).insertAfter(field);
+        if(!$(field).hasClass("is-invalid")){
+          $(field).addClass("is-invalid");
+          $(error).insertAfter(field);
+        }
       }
     }
   }

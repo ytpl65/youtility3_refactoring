@@ -74,7 +74,6 @@ Task List
                 {targets:1, data: 'plandatetime', render:function(data, type, row, meta){
                     return `<a href="${urlname}?id=${row['id']}">${convert_to_local(type, data, row)}</a>`
                 }},
-
                 {targets:[1], render:function(data, type, row, meta){
                     return convert_to_local(type, data, row)
                 }},
@@ -84,7 +83,6 @@ Task List
                 {targets:6, render:function(data, type, row, meta){
                     return `${data} mins`
                 }},
-
             ],
             order:[[1, 'desc']],
             buttons:[
