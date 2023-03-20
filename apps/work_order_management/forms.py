@@ -6,8 +6,7 @@ from apps.core import utils
 from django.http import QueryDict
 from django.contrib.gis.geos import GEOSGeometry
 import django_select2.forms as s2forms
-from datetime import datetime
-
+from django.utils import timezone
 
 
 class VendorForm(forms.ModelForm):
@@ -80,4 +79,4 @@ class WorkOrderForm(forms.ModelForm):
         utils.initailize_form_fields(self)
         if not self.instance.id:
             self.fields['workstatus'].initial = Wom.Workstatus.ASSIGNED
-            self.fields['plandatetime'].initial = datetime.now()
+            self.fields['plandatetime'].initial = timezone.now()
