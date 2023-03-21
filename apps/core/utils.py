@@ -26,6 +26,7 @@ import apps.activity.models as am
 import apps.onboarding.models as ob
 import apps.peoples.utils as putils
 from apps.peoples import models as pm
+from apps.work_order_management.models  import Wom
 from apps.tenants.models import Tenant
 
 logger = logging.getLogger('__main__')
@@ -565,7 +566,7 @@ def save_msg(request):
 def initailize_form_fields(form):
     for visible in form.visible_fields():
         if visible.widget_type in ['text', 'textarea', 'datetime', 'time', 'number', 'date','email', 'decimal']:
-            visible.field.widget.attrs['class'] = 'form-control'
+            visible.field.widget.attrs['class'] = 'form-control form-control-solid'
         elif visible.widget_type in ['radio', 'checkbox']:
             visible.field.widget.attrs['class'] = 'form-check-input'
         elif visible.widget_type in ['select2', 'select', 'select2multiple', 'modelselect2', 'modelselect2multiple']:
@@ -702,6 +703,20 @@ def get_or_create_none_jobneed():
             'expirydatetime': date,   'gracetime': 0,
             'receivedonserver': date,   'seqno': -1,
             'scantype': "NONE", 'id': 1
+        }
+    )
+    return obj
+
+def get_or_create_none_wom():
+    from datetime import datetime, timezone
+    date = datetime(1970, 1, 1, 00, 00, 00).replace(tzinfo=timezone.utc)
+    obj, _ = Wom.objects.get_or_create(
+        id=1,
+        defaults={
+            'description': "NONE", 'plandatetime': date,
+            'expirydatetime': date,
+            'id': 1, 'worlpermit':Wom.WorkPermitStatus.NOTNEED,
+            'attachmentcount':0, 'priority':Wom.Priority.LOW,
         }
     )
     return obj
@@ -1357,7 +1372,7 @@ def upload(request):
     if 'img' not in request.FILES:
         return
     foldertype = request.POST["foldertype"]
-    if foldertype in ["task", "internaltour", "externaltour", "ticket", "incidentreport", 'visitorlog', 'conveyance']:
+    if foldertype in ["task", "internaltour", "externaltour", "ticket", "incidentreport", 'visitorlog', 'conveyance', 'workorder']:
         tabletype, activity_name = "transaction", foldertype.upper()
 
     if tabletype == 'transaction':

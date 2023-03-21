@@ -32,7 +32,7 @@ from .tasks import (
     get_or_create_dir)
 from django.db import transaction
 from logging import getLogger
-log = getLogger('django')
+log = getLogger('mobile_service_log')
 from .types import ServiceOutputType
 from django.db.utils import IntegrityError
 from apps.service import serializers as sz

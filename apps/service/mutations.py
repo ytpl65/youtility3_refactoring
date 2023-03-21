@@ -23,7 +23,7 @@ from django.views import View
 
 from logging import getLogger
 import traceback as tb
-log = getLogger('django')
+log = getLogger('mobile_service_log')
 
 
 class LoginUser(graphene.Mutation):

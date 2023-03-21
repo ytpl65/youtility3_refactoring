@@ -436,7 +436,7 @@ class Schd_E_TourFormJob(LoginRequiredMixin, View):
             'identifier':am.Job.Identifier.EXTERNALTOUR,
             'starttime':time(00,00,00),
             'endtime':time(00,00,00),
-            'priority':am.Job.Priority.HIGH,
+            'priority':am.Job.Priority.HIGH,    
             'expirytime':0
         }
     }

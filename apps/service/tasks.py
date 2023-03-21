@@ -4,6 +4,7 @@ from apps.attendance.models import PeopleEventlog
 from apps.activity.models import (Jobneed, JobneedDetails, Attachment, Asset, DeviceEventlog)
 from apps.y_helpdesk.models import Ticket, EscalationMatrix
 from apps.onboarding.models import TypeAssist
+from apps.work_order_management.models import Wom, WomDetails
 from apps.peoples.models import People
 from apps.attendance.models import Tracking
 from apps.core import utils
@@ -21,7 +22,7 @@ from celery import shared_task
 from celery.utils.log import get_task_logger
 from datetime import timedelta, datetime, timezone
 from apps.core.raw_queries import get_query
-log = get_task_logger('django')
+log = get_task_logger('mobile_service_log')
 import json
 
 def correct_image_orientation(img):
@@ -104,6 +105,8 @@ def get_model_or_form(tablename):
     if tablename == 'asset': return Asset
     if tablename == 'tracking': return Tracking
     if tablename == 'typeassist': return TypeAssist
+    if tablename == 'wom': return Wom
+    if tablename == 'womdetails': return WomDetails
 
 
 def get_or_create_dir(path):

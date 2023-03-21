@@ -7,6 +7,7 @@ import logging
 import json
 logger = logging.getLogger('__main__')
 
+
 class VendorManager(models.Manager):
     use_in_migrations = True
     
@@ -33,3 +34,25 @@ class VendorManager(models.Manager):
         ).values()
         
         return qset or self.none()
+
+
+class WorkOrderManager(models.Manager):
+    use_in_migrations = True
+    
+    def get_workorder_list(self, request, fields, related):
+        from .models import Wom
+        S = request.session
+        P = json.loads(request.GET['params'])
+        qset = self.filter(
+            cdtz__date__gte = P['from'],
+            cdtz__date__lte = P['to'],
+            client_id = S['client_id'],
+            workpermit = Wom.WorkPermitStatus.NOTNEED
+        ).select_related(*related).values(
+            *fields
+        )
+        return qset or self.none()
+    
+    
+    
+    

@@ -1,1 +1,229 @@
+{% extends "base_form.html" %}
 
+<!---- BEGIN PAGE TITLE ---->
+{% block title %}
+Client Form
+{% endblock title %}
+<!---- END PAGE TITLE ----->
+
+<!--- START CSS -->
+{% block extra_css %}
+<link  href="{{ static('assets/plugins/custom/DataTables/datatables.min.css') }}" rel="stylesheet" type="text/css"/>
+<link  href="{{ static('assets/plugins/custom/Editor-2.0.8/css/editor.dataTables.min.css') }}" rel="stylesheet" type="text/css"/>
+{{ woform.media.css }}
+{% endblock extra_css %} 
+<!--- END CSS -->
+
+<!-------------------------- BEGIN PAGE BREADCUMB ----------------------->
+{% block pagebreadcumb %}
+{{ super() }}
+<li class="breadcrumb-item pe-3"><a href="{{ url('onboarding:client') }}?template=true" class="pe-3">Work order List</a></li>
+<li class="breadcrumb-item pe-3"><a href="javascript:void(0)" class="pe-3">Work Order Form</a></li>
+{% endblock pagebreadcumb %}
+<!-------------------------- END PAGE BREADCUMB ------------------------->
+
+
+<!------ BEGIN FORM TITLE ------->
+{% block form_title %}
+Work Order
+{% endblock form_title %}
+<!------ END FORM TITLE -------->
+
+
+<!--------- BEGIN NON FIELD ERRORS -------->
+{% block nonfield_errors %}
+<div class="alert alert-danger" id="nonfield_errors"role="alert" style="display:none">
+    <strong>Error</strong> <span></span>
+</div>
+{% endblock nonfield_errors %}
+<!---------- END NON FIELD ERRORS --------->
+
+
+<!-------------- BEGIN FORM ------------------->
+{% block form %}
+<form action="" method="post" id="id_woform">
+    <!-------------------------- CSRF MIDDLEWARE TOKEN --------------------->
+    <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
+    <input type="hidden" name="{{ woform.ctzoffset.name }}" id = "{{ woform.ctzoffset.auto_id }}" value="-1">
+    <input type="hidden" name="pk" id="pk" value="{{ woform.instance.id }}">
+        <div class="mb-3 row g-3 gx-6">
+            <div class="col-md-6">
+                <div class="input-group  mb-3">
+                    <div class="col-md-4 col-sm-12 pt-2">
+                        {{ woform.description.label_tag() }}
+                    </div>
+                    <div class="col-md-8 col-sm-12 ">
+                        {{ woform.description }}
+                    </div>
+                </div>
+
+                <div class="input-group mb-3">
+                    <div class="col-md-4 col-sm-12 pt-2">
+                        {{ woform.plandatetime.label_tag() }}
+                    </div>
+                    <div class="col-md-8 col-sm-12">
+                        {{ woform.plandatetime }}
+                    </div>
+                </div>
+                <div class="input-group mb-3">
+                    <div class="col-md-4 col-sm-12 pt-2">
+                        {{ woform.expirydatetime.label_tag() }}
+                    </div>
+                    <div class="col-md-8 col-sm-12">
+                        {{ woform.expirydatetime }}
+                    </div>
+                </div>
+                <div class="input-group mb-3">
+                    <div class="col-md-4 col-sm-12 pt-2">
+                        {{ woform.gracetime.label_tag() }}
+                    </div>
+                    <div class="col-md-2 col-sm-2 pe-2">
+                        {{ woform.gracetime_type }}
+                    </div>
+                    <div class="col-md-6 col-sm-10">
+                        {{ woform.gracetime }}
+                    </div>
+                </div>
+
+            </div>
+            <div class="col-md-6 col-sm-12">
+                <div class="input-group mb-3">
+                    <div class="col-md-4 col-sm-12 pt-2">
+                        {{ woform.vendor.label_tag() }}
+                    </div>
+                    <div class="col-md-8 col-sm-12">
+                        {{ woform.vendor }}
+                </div>
+                </div>
+                <div class="input-group mb-3">
+                    <div class="col-md-4 col-sm-12 pt-2">
+                        {{ woform.priority.label_tag() }}
+                    </div>
+                    <div class="col-md-8 col-sm-12">
+                        {{ woform.priority }}
+                    </div>
+                </div>
+                <div class="input-group mb-3">
+                    <div class="col-md-4 col-sm-12 pt-2">
+                        {{ woform.asset.label_tag() }}
+                    </div>
+                    <div class="col-md-8 col-sm-12">
+                        {{ woform.asset }}
+                    </div>
+                </div>
+                <div class="input-group mb-3">
+                    <div class="col-md-4 col-sm-12 pt-2">
+                        {{ woform.location.label_tag() }}
+                    </div>
+                    <div class="col-md-8 col-sm-12">
+                        {{ woform.location }}
+                    </div>
+                </div>
+                <div class="input-group mb-3">
+                    <div class="col-md-4 col-sm-12 pt-2">
+                        {{ woform.ticketcategory.label_tag() }}
+                    </div>
+                    <div class="col-md-8 col-sm-12">
+                        {{ woform.ticketcategory }}
+                    </div>
+                </div>
+            </div>
+        </div>
+</form>
+{% endblock form %}
+<!-------------- END FORM ------------------->
+
+<!------------------- BEGIN FORM PAGE ACTIONS --------------->
+{% block page_actions %}
+    {% if edit is defined %}
+        {{ form_update('id_woform', popup_id="delete_alert") }}
+    {% else %}
+        {{ form_create('id_woform') }}
+    {% endif %}
+{% endblock page_actions %}
+<!------------------- END FORM PAGE ACTIONS --------------->
+
+
+{% block extras %}
+ {{ fileupoad() }}
+{% endblock extras %}
+
+
+{% block extra_scripts %}
+{{ woform.media.js }}
+
+
+<script>
+const urlname = "{{ url('work_order_management:workorder') }}"
+
+$(document).ready(function() {
+    //set ctzoffset
+  	$("#id_ctzoffset").val(-new Date().getTimezoneOffset())
+    
+     $('#btn_clear').click((e) => {
+        e.preventDefault()
+        location.href = `${urlname}?action=list`
+    })
+    //ADD CALENDER TO DATE FIELDS WITH FLAT-PICKR PLUGIN
+    $("#id_plandatetime, #id_expirydatetime").flatpickr({
+        enableTime: true,
+        time_24hr: true,
+        dateFormat: 'd-M-Y H:i'
+    })
+    //file upload
+    setUpDropzone({
+            foldertype:"workorder",
+            ownername:'Work Order',
+            attachmenttype:"ATTACHMENT",
+            uploadUrl:"{{ url('activity:attachments') }}",
+            csrftoken:  "{{ csrf_token }}",
+            ctzoffset:$("#id_ctzoffset").val(),
+            formId:"#dropzone_file", 
+            peopleid: "{{ request.user.id }}",
+            ownerid:"{{ ownerid }}",
+            create_or_update:'{{ woform.instance.id }}' == 'None' ? "create" : "update",
+            media_url: "{{ MEDIA_URL }}"
+        })
+
+    
+        //on submit form post request
+        $("#id_woform").submit((e) => {
+            e.preventDefault()
+            var form = $(this);
+            const params   = { url: $(form).attr("action"), modal: false }
+            const formtype = '{{woform.instance.id}}' == 'None' ? "create" : "update" //form-type (create/update)      
+            const id       = '{{ woform.instance.id }}'                                          
+            var   payLoad  = { formData: $("#id_woform").serialize(),csrfmiddlewaretoken: '{{ csrf_token }}', 'uuid':"{{ ownerid }}" }
+            
+            if (formtype === 'update') {
+                var newPayLoad = { ...payLoad, 'pk': id }
+                    payLoad    = newPayLoad
+            }
+            submit_form_alert("<b class='text-warning fs-2'>Note: This will send an email to vendor!<b>").then((res) => {
+                if(res.isConfirmed){
+                    fire_ajax_form_post(params, payLoad)
+                    .done((data, status, xhr) => {
+                        Swal.fire(
+                            `Ticket Form saved`,
+                            `Ticket Form with this name <strong>${data.jobdesc}</strong> has been saved successfully`,
+                            'success'
+                        ).then(function () {
+                            location.href = `${urlname}?template=true`;
+                        })
+                    })
+                    .fail((xhr, status, error) => {
+                        console.log(xhr)
+                        if(!typeof(xhr.responseJSON.errors) === 'object'){
+                            show_error_alert(xhr.responseJSON.errors, "Failed to save!")
+                        }else{}
+                        
+                    })
+                }
+            })
+        })
+
+    
+
+})
+</script>
+{% endblock extra_scripts %}

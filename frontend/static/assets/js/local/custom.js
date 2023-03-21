@@ -419,9 +419,10 @@ function show_alert_before_update(data) {
   });
 }
 
-function submit_form_alert() {
+function submit_form_alert(text=null) {
   return Swal.fire({
     title: "Submit Form?",
+    html:text,
     icon: "question",
     showCancelButton: true,
     confirmButtonText: "Yes, Submit",

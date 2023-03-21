@@ -1,0 +1,109 @@
+{% extends "base_list.html" %}
+
+<!---- BEGIN CARD TITLE ------>
+{% block card_title %}
+Workorder List
+{% endblock card_title %}
+<!----- END CARD TITLE -------->
+
+{% block extra_css %}
+{% endblock extra_css %}
+
+<!------------------------------------ BEGIN PAGE BREADCUMBS ------------------------------------>
+{% block pagebreadcumb %}
+{{ super() }}
+<li class="breadcrumb-item pe-3"><a href="javascript:void(0)" class="pe-3">Workorder List</a></li>
+{% endblock pagebreadcumb %}
+<!------------------------------------- END PAGE BREADCUMBS ------------------------------------->
+
+<!-------------------------------------------- BEGIN TABLE ------------------------------------------->
+{% block table %}
+<table id="wotable" class="display compact cell-border rounded" style="width:100%">
+</table>
+{% endblock table %}
+<!-------------------------------------------- END TABLE ------------------------------------------->
+
+
+{% block extra_scripts %}
+<script>
+    var table = null;
+    const table_id   = "#wotable"
+    const urlname = "{{ url('work_order_management:workorder') }}"
+    var params=null;
+    var from_pd = moment().subtract(7, 'days').format('YYYY-MM-DD');
+    var to_pd = moment().format('YYYY-MM-DD')
+    params = {from:from_pd, to:to_pd}
+    const table_filters = localStorage.getItem('workorderstats_filter')
+    if(table_filters){
+        params = JSON.parse(table_filters)
+        localStorage.clear()
+    }
+    function reloadTable(table, filters){
+        params = filters
+        table.ajax.reload()
+    }
+
+    $(document).ready(function (){
+        table = $(table_id).DataTable({
+            ajax:{
+                url:`${urlname}?action=list`,
+                data:function(d){
+                    d.params = JSON.stringify(params)
+                }
+            },
+            columns:[
+                {visible : false, data:"id"},
+                {visible : false, data:"ctzoffset"},
+                {title:"Description", data:"description"},
+                {title:"Plan Datetime", data:"plandatetime"},
+                {title:"Exp. Datetime", data:"expirydatetime"},
+                {title:"Vendor", data:"vendor__name"},
+                {title:"Status", data:"workstatus"},
+                {title:"Created By", data:"cuser__peoplename"},
+                {title:"Created On", data:"cdtz"},
+            ],
+            deferRender: true,
+			responsive : true,
+            createdRow:function(row, data, dataIndex){
+				if(data['enable'] === false){
+					$(row).addClass('disabled-record text-white')
+				}
+			},
+            language: {
+				searchPlaceholder: "Search keyword"
+			},
+            columnDefs:[
+                {targets:[3,4,8],  render:function(data, type, row, meta){
+                    return convert_to_local(type, data, row)
+                }},
+                {targets:[2],  render:function(data, type, row, meta){
+					return `<a href=${urlname}?id=${row['id']}>${data}</a>`}
+				},
+            ],
+            dom       : `<'row' <'col-sm-6 d-flex justify-content-start'f> <'col-sm-6 d-flex justify-content-end'B> >rt<'row'
+			<'col-sm-6'l> <'col-sm-6'p><'col-sm-12 d-flex justify-content-center'i>>`,
+
+            buttons:[
+                {
+					text     : `Add New &nbsp;<i class='fas fa-plus ch4'></i></a>`,
+					className: "btn btn-sm btn-light-primary",
+					//action for add_new_button 
+					action: function(e, dt, node, config){
+						location.href =  `${urlname}?action=form`
+					}
+				}
+            ]
+        })
+
+        initDateRangeHtml()
+         initDateRange("#id_daterange").on('apply.daterangepicker', function(e, picker){
+            from_pd = picker.startDate.format('YYYY-MM-DD');
+            to_pd = picker.endDate.format('YYYY-MM-DD');
+            let filters = {from:from_pd, to:to_pd}
+            reloadTable(table, filters)
+         })
+    })
+
+
+</script>
+{% endblock extra_scripts %}
