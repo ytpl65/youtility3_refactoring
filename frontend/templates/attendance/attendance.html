@@ -195,6 +195,7 @@ td { padding: 6px; border: 1px solid #CCC; }
                 {data:'punchouttime', title:'Out Time'},
                 {data:'id',  searchable:false, title:'FR Status'},
                 { data:'uuid',  visible:false, searchable:false},
+                { data:'peventtype__tacode',  visible:false, searchable:false},
             ], 
             columnDefs:[
                 {targets:6, render:function(data, type, row, meta){return utc_to_local(row['ctzoffset'], data, 'YYYY-MM-DD')}
@@ -206,20 +207,20 @@ td { padding: 6px; border: 1px solid #CCC; }
                     return convert_to_local(type, data, row)}
                 },
                 {targets:[3], render:function(data, type, row, meta){
-                    if(['Self Attendance', 'Mark Attendance'].includes(row['peventtype__taname'])){
+                    if(['SELF', 'MARK'].includes(row['peventtype__tacode'])){
                         if(!row['punchintime']){ return '--'}
                         return data === false ? '<span class="badge badge-danger">Not Matched</span>' : '<span class="badge badge-success">Matched</span>'
                     }return '--'
                 }},
                 { targets: 4, render:function(data, type, row, meta){
-                    if(['Self Attendance', 'Mark Attendance'].includes(row['peventtype__taname'])){
+                    if(['SELF', 'MARK'].includes(row['peventtype__tacode'])){
                         if(!row['punchouttime']){ return '<span class="badge badge-warning">Pending</span>'}
                         return data === false ? '<span class="badge badge-danger">Not Matched</span>' : '<span class="badge badge-success">Matched</span>'
                     }return '--'
                 }
                 },
                 {targets:9, render:function(data, type, row, meta){
-                    return ['Self Attendance', 'Mark Attendance'].includes(row['peventtype__taname']) ? `<button type="button" class="btn p-0 btn-link" onClick="getFRStatus('${row['uuid']}');event.stopPropagation();">FR Status</button>` : '--'}
+                    return ['SELF', 'MARK'].includes(row['peventtype__tacode']) ? `<button type="button" class="btn p-0 btn-link" onClick="getFRStatus('${row['uuid']}');event.stopPropagation();">FR Status</button>` : '--'}
                 }
             ],
             buttons: [

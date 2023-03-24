@@ -29,7 +29,7 @@
             Dear {{ vendorname }}, <br>
 
             I hope this email finds you well.
-            I am reaching out to request a work order #{{ workorderid }} for the following project/task: {{ description }}.
+            I am reaching out to request a work order #{{ workorderid }} for the following project/task: "{{ description }}".
             <br>
 
             Please find the following work order details and
@@ -74,14 +74,14 @@
                 </tbody>
             </table><br>
             If you are interested in proceeding with the work order, click on 
-            <a href="{{ url('work_order_management:reply_workorder') }}?action=accepted&womid={{workorderid}}" target="_blank">Accepted</a><br>
+            <a href="{{ HOST }}{{ url('work_order_management:reply_workorder') }}?action=accepted&womid={{workorderid}}" target="_blank">Accepted</a><br>
             <hr>
             If you are not interested in proceeding with the work order, 
             please let us know your reasons for declining it so that we can explore alternative options.
-            <a href="{{ url('work_order_management:reply_workorder') }}?action=declined&womid={{workorderid}}"  target="_blank">Decline</a>
+            <a href="{{ HOST }}{{ url('work_order_management:reply_workorder') }}?action=declined&womid={{workorderid}}"  target="_blank">Declined</a>
             <hr>
             Please click on this link to submit the work order details, since you have completed the work
-            <a href="{{ url('work_order_management:reply_workorder') }}?action=request_for_submit_wod&womid={{workorderid}}"  target="_blank">Submit Workorder Details</a>
+            <a href="{{ HOST }}{{ url('work_order_management:reply_workorder') }}?action=request_for_submit_wod&womid={{workorderid}}"  target="_blank">Submit Workorder Details</a>
         </p>
     </body>
 </html>

@@ -263,18 +263,15 @@ Work Order
         }
         payLoad = newPayLoad
       }
-      submit_form_alert("<b class='text-warning fs-2'>Note: This will send an email to vendor!<b>").then((
+      submit_form_alert("<b class='text-primary fs-2'>Note: This will send an email to vendor!<b>").then((
         res) => {
           if (res.isConfirmed) {
             fire_ajax_form_post(params, payLoad)
               .done((data, status, xhr) => {
-                Swal.fire(
-                  `Ticket Form saved`,
-                  `Ticket Form with this name <strong>${data.jobdesc}</strong> has been saved successfully`,
-                  'success'
-                ).then(function () {
-                  location.href = `${urlname}?template=true`;
-                })
+                show_successful_save_alert(update= id != 'None' ? true : false)
+                window.setTimeout(function() {
+                    window.location.href = `${urlname}?id=${data.pk}`;
+                }, 2000);
               })
               .fail((xhr, status, error) => {
                 console.log(xhr)

@@ -187,7 +187,7 @@ class WorkOrderView(LoginRequiredMixin, View):
                 workorder, request.user, request.session, create = create)
             logger.info("workorder form saved")
             data = {'msg': f"{workorder.id}",
-            'row': Wom.objects.values(*self.params['fields']).get(id = workorder.id)}
+            'row': Wom.objects.values(*self.params['fields']).get(id = workorder.id), 'pk':workorder.id}
             logger.debug(data)
 
             return rp.JsonResponse(data, status = 200)

@@ -34,7 +34,8 @@ def notify_wo_creation(id):
             'cuseremail'    : wo.cuser.email,
             'cusername'     : wo.cuser.peoplename,
             'cdtz'          : wo.cdtz + timedelta(minutes=wo.ctzoffset),
-            'token'         : wo.other_data['token']
+            'token'         : wo.other_data['token'],
+            'HOST'          : settings.HOST 
         }
         if atts := check_attachments_if_any(wo):
             attachments = [f"{settings.MEDIA_ROOT}/{att['filepath']}{att['filename']}" for att in atts]

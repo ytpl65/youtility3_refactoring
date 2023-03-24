@@ -31,8 +31,6 @@ from .tasks import (
     get_json_data, get_model_or_form,
     get_or_create_dir)
 from django.db import transaction
-from logging import getLogger
-log = getLogger('mobile_service_log')
 from .types import ServiceOutputType
 from django.db.utils import IntegrityError
 from apps.service import serializers as sz
@@ -46,6 +44,8 @@ from apps.y_helpdesk.models import Ticket
 from intelliwiz_config.celery import app
 from django.conf import settings
 from celery.utils.log import get_task_logger
+log = get_task_logger('mobile_service_log')
+
 from apps.work_order_management import utils as wutils
 
 

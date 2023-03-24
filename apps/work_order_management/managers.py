@@ -16,7 +16,7 @@ class VendorManager(models.Manager):
         if R.get('params'): P = json.loads(R.get('params', {}))
         
         qobjs =  self.select_related(*related).filter(
-            bu_id = S['bu_id'],
+            #bu_id = S['bu_id'],
             client_id = S['client_id'],
             enable=True
         ).values(*fields)
