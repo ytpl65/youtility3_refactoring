@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- BEGIN GLOBAL STYLESHEETS BUNDLE (used by all pages) -->
+    <link href="{{ static('assets/plugins/global/plugins.bundle.css') }}" rel="stylesheet" type="text/css" />
+    <link href="{{ static('assets/css/style.bundle.css') }}" rel="stylesheet" type="text/css" />
+    <link href="{{ static('assets/plugins/custom/jquery-ui/jquery-ui.min.css') }}" rel="stylesheet" type="text/css" />
+
+</head>
+<body>
+    <div class="container">
+        <div class="row justify-content-center align-middle">
+            <div class="col-xs-12 col-sm-10 col-md-8">
+                <div class="card">
+                    {% if wod_saved is defined %}
+                    <div class="alert alert-success" role="alert">
+                        <h4 class="alert-heading">Well done!</h4>
+                        <p>"Thank you for completing the work order details for the work order. Your valuable feedback
+                         will help us improve our services and better meet your needs in the future. We appreciate 
+                         your time and look forward to working with you again."</p>
+                        <hr>
+                    </div>
+                    {% else %}
+                    <div class="card-header">
+                        <h3>{{ qsetname }}</h3>
+                    </div>
+
+                    <div class="card-body">
+                        <form action="{{ url('work_order_management:reply_workorder') }}">
+                            <input type="hidden" name="ctzoffset" id="id_ctzoffset">
+                            <input type="hidden" name="womid"  value="{{ womid }}">
+                            <input type="hidden" name="action" id="save_work_order_details">
+                            <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
+                            {% set type_input_map = {'MULTILINE':'textarea', 'CHECKBOX':'select', 'DROPDOWN':'select', 'SINGLELINE':"text", 
+                            'DATE':'date', 'EMAILID':'email', 'TIME':'time' 'RATING':'range'
+                            } %}
+                            {% for ques in qsb %}
+                                {% if ques.isavpt %}
+                                <div class="mb-3">
+                                    <label for="" class="form-label">{{ ques.question.quesname }}</label>
+                                    <input type="file" capture="user" name="{{ ques.id }}_{{ ques.answertype }}" id ="{{ ques.id }}" accept="image/*" class="form-control" >
+                                </div>
+                                {% else if ques.answertype == 'SINGLELINE' %}
+                                <div class="mb-3">
+                                    <label for="" class="form-label">{{ ques.question.quesname }}</label>
+                                    <input type="text" class="form-control" name="{{ ques.id }}_{{ ques.answertype }}" id ="{{ ques.id }}">
+                                </div>
+                                {% else if ques.answertype == 'MULTILINE' %}
+                                <div class="mb-3">
+                                    <label for="" class="form-label">{{ ques.question.quesname }}</label>
+                                   <textarea  rows="5"  class="form-control" name="{{ ques.id }}_{{ ques.answertype }}" id ="{{ ques.id }}"></textarea>
+                                </div>
+                                {% else if ques.answertype == 'EMAILID' %}
+                                <div class="mb-3">
+                                    <label for="" class="form-label">{{ ques.question.quesname }}</label>
+                                   <input type="email"  class="form-control"  name="{{ ques.id }}_{{ ques.answertype }}" id ="{{ ques.id }}" >
+                                </div>
+                                {% else if ques.answertype == 'TIME' %}
+                                <div class="mb-3">
+                                    <label for="" class="form-label">{{ ques.question.quesname }}</label>
+                                   <input type="text"   class="form-control" name="{{ ques.id }}_{{ ques.answertype }}" id ="{{ ques.id }}" >
+                                </div>
+                                {% else if ques.answertype == 'NUMERIC' %}
+                                <div class="mb-3">
+                                    <label for="" class="form-label">{{ ques.question.quesname }}</label>
+                                   <input type="number"   class="form-control" name="{{ ques.id }}_{{ ques.answertype }}" id ="{{ ques.id }}" >
+                                </div>
+                                {% else if ques.answertype == 'RATING' %}
+                                <div class="mb-3">
+                                    <label for="" class="form-label">{{ ques.question.quesname }}</label>
+                                   <input type="text"   class="form-control" name="{{ ques.id }}_{{ ques.answertype }}" id ="{{ ques.id }}" >
+                                </div>
+                                {% else if ques.answertype == 'DATE' %}
+                                <div class="mb-3">
+                                    <label for="" class="form-label">{{ ques.question.quesname }}</label>
+                                   <input type="date"  class="form-control" name="{{ ques.id }}_{{ ques.answertype }}" id ="{{ ques.id }}" >
+                                </div>
+                                {% else if ques.answertype in  ['CHECKBOX', 'DROPDOWN'] %}
+                                <div class="mb-3">
+                                    <label for="" class="form-label">{{ ques.question.quesname }}</label>
+                                   <select  name="{{ ques.id }}_{{ ques.answertype }}" id ="{{ ques.id }}">
+                                   <option value="">Please select an operation</option>
+                                   {% set options = ques.options.split(',') %}
+                                   {% for opt in options %}
+                                    <option value="{{ opt }}">{{ opt }}</option>
+                                   {% endfor %}
+                                   </select>
+                                </div>
+                                {% endif %}
+                            {% endfor %}
+                            <button type="submit" class="btn btn-sm btn-success">Submit details</button>
+                        </form>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        
+        </div>
+    </div>
+    <!-- BEGIN  GLOBAL JS BUNDLE (used by all pages) -->
+    <script src="{{ static('assets/plugins/global/plugins.bundle.js') }}"></script>
+    <script src="{{ static('assets/js/scripts.bundle.js') }}"></script>
+    <script src="{{ static('assets/plugins/custom/jquery-ui/jquery-ui.min.js') }}"></script>
+    <!-- END  GLOBAL JS BUNDLE (used by all pages) -->
+
+    <script>
+    $(document).ready(() => {
+        //set ctzoffset
+        $("#id_ctzoffset").val(-new Date().getTimezoneOffset())
+    })
+
+
+    </script>
+
+</body>
+</html>

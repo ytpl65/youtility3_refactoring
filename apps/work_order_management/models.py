@@ -17,6 +17,14 @@ def geojson():
     return {
         'gpslocation':""
     }
+    
+def other_data():
+    return {
+        'token':None,
+        'created_at':None,
+        'token_expiration':5, #min
+        'reply_from_vendor':""
+    }
 
 class Wom(BaseModel, TenantAwareModel):
     class Workstatus(models.TextChoices):
@@ -36,32 +44,32 @@ class Wom(BaseModel, TenantAwareModel):
         LOW    = ('LOW', 'Low')
         MEDIUM = ('MEDIUM', 'Medium')
     
-    uuid             = models.UUIDField(unique = True, editable = True, blank = True, default = uuid.uuid4)
-    description      = models.CharField(_("Job Description"), max_length = 200)
-    plandatetime     = models.DateTimeField(_("Plan date time"), auto_now = False, auto_now_add = False)
-    expirydatetime   = models.DateTimeField(_("Expiry date time"), auto_now = False, auto_now_add = False)
-    gracetime        = models.IntegerField(_("Grace time"), null=True, blank=True)
-    starttime        = models.DateTimeField( _("Start time"), auto_now = False, auto_now_add = False, null = True)
-    endtime          = models.DateTimeField(_("Start time"), auto_now = False, auto_now_add = False, null = True)
-    gpslocation      = PointField(_('GPS Location'),null = True, geography = True, srid = 4326)
-    asset            = models.ForeignKey("activity.Asset", verbose_name = _("Asset"), on_delete= models.RESTRICT, null = True, blank = True, related_name='wo_assets')
-    location         = models.ForeignKey('activity.Location', verbose_name=_('Location'), on_delete=models.RESTRICT, null=True, blank=True)
-    workstatus       = models.CharField('Job Status', choices = Workstatus.choices, default=Workstatus.ASSIGNED,  max_length = 60, null = True)
-    workpermit       = models.CharField(_('Work Permit'), choices=WorkPermitStatus.choices, default=WorkPermitStatus.NOTNEED, max_length=35)
-    priority         = models.CharField(_("Priority"), max_length = 50, choices = Priority.choices)
-    qset             = models.ForeignKey("activity.QuestionSet", verbose_name = _("QuestionSet"), on_delete  = models.RESTRICT, null = True, blank = True)
-    vendor           = models.ForeignKey('Vendor', null=True, blank=False, on_delete=models.RESTRICT, verbose_name='Vendor')
-    performedby      = models.CharField(max_length=55, verbose_name='Performed By', )
-    parent           = models.ForeignKey("self", verbose_name = _("Belongs to"),  on_delete  = models.RESTRICT,  null = True, blank = True)
-    alerts           = models.BooleanField(_("Alerts"), default = False, null = True)
-    client           = models.ForeignKey("onboarding.Bt", verbose_name = _("Client"), on_delete= models.RESTRICT, null = True, blank = True, related_name='wo_clients')
-    bu               = models.ForeignKey("onboarding.Bt", verbose_name = _("Site"), on_delete = models.RESTRICT, null = True, blank = True, related_name='wo_bus')
-    ticketcategory   = models.ForeignKey("onboarding.TypeAssist", verbose_name = _("Notify Category"), null= True, blank = True, on_delete = models.RESTRICT)
-    ismailsent       = models.BooleanField(_('Is Mail Sent'), default= False)
-    isdenied       = models.BooleanField(_('Is Denied'), default= False)
-    geojson = models.JSONField(verbose_name=_('Geo Json'), default=geojson, null=False)
-    attachmentcount  = models.IntegerField(_('Attachment Count'), default = 0)
-    categories       = ArrayField(models.CharField(max_length = 50, blank = True), null = True, blank = True, verbose_name= _("Categories"))
+    uuid            = models.UUIDField(unique = True, editable = True, blank = True, default = uuid.uuid4)
+    description     = models.CharField(_("Job Description"), max_length = 200)
+    plandatetime    = models.DateTimeField(_("Plan date time"), auto_now = False, auto_now_add = False)
+    expirydatetime  = models.DateTimeField(_("Expiry date time"), auto_now = False, auto_now_add = False)
+    starttime       = models.DateTimeField( _("Start time"), auto_now = False, auto_now_add = False, null = True)
+    endtime         = models.DateTimeField(_("Start time"), auto_now = False, auto_now_add = False, null = True)
+    gpslocation     = PointField(_('GPS Location'),null = True, geography = True, srid = 4326)
+    asset           = models.ForeignKey("activity.Asset", verbose_name = _("Asset"), on_delete= models.RESTRICT, null = True, blank = True, related_name='wo_assets')
+    location        = models.ForeignKey('activity.Location', verbose_name=_('Location'), on_delete=models.RESTRICT, null=True, blank=True)
+    workstatus      = models.CharField('Job Status', choices = Workstatus.choices, default=Workstatus.ASSIGNED,  max_length = 60, null = True)
+    workpermit      = models.CharField(_('Work Permit'), choices=WorkPermitStatus.choices, default=WorkPermitStatus.NOTNEED, max_length=35)
+    priority        = models.CharField(_("Priority"), max_length = 50, choices = Priority.choices)
+    qset            = models.ForeignKey("activity.QuestionSet", verbose_name = _("QuestionSet"), on_delete  = models.RESTRICT, null = True, blank = True)
+    vendor          = models.ForeignKey('Vendor', null=True, blank=False, on_delete=models.RESTRICT, verbose_name='Vendor')
+    performedby     = models.CharField(max_length=55, verbose_name='Performed By', )
+    parent          = models.ForeignKey("self", verbose_name = _("Belongs to"),  on_delete  = models.RESTRICT,  null = True, blank = True)
+    alerts          = models.BooleanField(_("Alerts"), default = False, null = True)
+    client          = models.ForeignKey("onboarding.Bt", verbose_name = _("Client"), on_delete= models.RESTRICT, null = True, blank = True, related_name='wo_clients')
+    bu              = models.ForeignKey("onboarding.Bt", verbose_name = _("Site"), on_delete = models.RESTRICT, null = True, blank = True, related_name='wo_bus')
+    ticketcategory  = models.ForeignKey("onboarding.TypeAssist", verbose_name = _("Notify Category"), null= True, blank = True, on_delete = models.RESTRICT)
+    ismailsent      = models.BooleanField(_('Is Mail Sent'), default= False)
+    isdenied        = models.BooleanField(_('Is Denied'), default= False)
+    geojson         = models.JSONField(verbose_name=_('Geo Json'), default=geojson, null=True)
+    other_data      = models.JSONField(verbose_name=_('Other Data'), default=other_data, null=True)
+    attachmentcount = models.IntegerField(_('Attachment Count'), default = 0)
+    categories      = ArrayField(models.CharField(max_length = 50, blank = True), null = True, blank = True, verbose_name= _("Categories"))
 
     objects = WorkOrderManager()
     

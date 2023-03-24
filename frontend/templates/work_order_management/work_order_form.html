@@ -17,7 +17,7 @@ Client Form
 <!-------------------------- BEGIN PAGE BREADCUMB ----------------------->
 {% block pagebreadcumb %}
 {{ super() }}
-<li class="breadcrumb-item pe-3"><a href="{{ url('onboarding:client') }}?template=true" class="pe-3">Work order List</a></li>
+<li class="breadcrumb-item pe-3"><a href="{{ url('work_order_management:workorder') }}?template=true" class="pe-3">Work order List</a></li>
 <li class="breadcrumb-item pe-3"><a href="javascript:void(0)" class="pe-3">Work Order Form</a></li>
 {% endblock pagebreadcumb %}
 <!-------------------------- END PAGE BREADCUMB ------------------------->
@@ -75,16 +75,12 @@ Work Order
                 </div>
                 <div class="input-group mb-3">
                     <div class="col-md-4 col-sm-12 pt-2">
-                        {{ woform.gracetime.label_tag() }}
+                        {{ woform.qset.label_tag() }}
                     </div>
-                    <div class="col-md-2 col-sm-2 pe-2">
-                        {{ woform.gracetime_type }}
-                    </div>
-                    <div class="col-md-6 col-sm-10">
-                        {{ woform.gracetime }}
+                    <div class="col-md-8 col-sm-12">
+                        {{ woform.qset }}
                     </div>
                 </div>
-
             </div>
             <div class="col-md-6 col-sm-12">
                 <div class="input-group mb-3">
@@ -127,6 +123,15 @@ Work Order
                         {{ woform.ticketcategory }}
                     </div>
                 </div>
+                <div class="input-group mb-3">
+                    <div class="col-md-4 col-sm-12 pt-2">
+                        <label for="">Is Email Sent</label>
+                    </div>
+                    <div class="col-md-8 col-sm-12 mt-2">
+                        {{ woform.instance.ismailsent }}
+                    </div>
+                </div>
+
             </div>
         </div>
 </form>

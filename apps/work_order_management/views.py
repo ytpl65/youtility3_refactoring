@@ -3,7 +3,8 @@ from django.db import IntegrityError, transaction
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.views.generic.base import View
 from .forms import VendorForm, WorkOrderForm
-from .models import Vendor, Wom
+from .models import Vendor, Wom, WomDetails
+from apps.activity.models import QuestionSetBelonging
 from django.http import Http404, QueryDict, response as rp, HttpResponse
 from apps.core  import utils
 from apps.peoples import utils as putils
@@ -123,6 +124,11 @@ class WorkOrderView(LoginRequiredMixin, View):
         # handle delete request
         elif R.get('action', None) == "delete" and R.get('id', None):
             resp = utils.render_form_for_delete(request, P, True)
+            
+        elif R.get('action') == 'send_workorder_email':
+            from .utils import notify_wo_creation
+            notify_wo_creation(id = R['id'])
+            return rp.JsonResponse({'msg':"Email sent successfully"}, status=200)
         
         # return form with instance
         elif R.get('id', None):
@@ -156,16 +162,107 @@ class WorkOrderView(LoginRequiredMixin, View):
     def handle_valid_form(self, form,  request, create):
         logger.info('workorder form is valid')
         try:
+            import secrets
+            from django.utils import timezone
+            from .utils import notify_wo_creation
             workorder = form.save(commit=False)
             workorder.uuid = request.POST.get('uuid')
+            workorder.other_data['created_at'] = timezone.now().strftime('%d-%b-%Y %H:%M:%S')
+            workorder.other_data['token'] = secrets.token_urlsafe(16)
+            if not workorder.ismailsent:
+                notify_wo_creation(id=workorder.id)
+                workorder.ismailsent = True
             workorder = putils.save_userinfo(
                 workorder, request.user, request.session, create = create)
             logger.info("workorder form saved")
             data = {'msg': f"{workorder.id}",
             'row': Wom.objects.values(*self.params['fields']).get(id = workorder.id)}
             logger.debug(data)
+
             return rp.JsonResponse(data, status = 200)
         except (IntegrityError, pg_errs.UniqueViolation):
             return utils.handle_intergrity_error('WorkOrder')
+        
+        
+
+class ReplyWorkOrder(View):
+    params = {
+        'template':'work_order_management/reply_workorder.html',
+        'template_emailform':'work_order_management/wod_email_form.html',
+        'model':Wom,
+    }
+
+    def get(self,request, *args, **kwargs):
+        R = request.GET
+        try:
+            if  R['action'] == 'accepted' and R['womid']:
+                wo = Wom.objects.get(id = R['womid'])
+                wo.workstatus = Wom.Workstatus.INPROGRESS
+                wo.save()
+                cxt = {'accepted':True, 'wo':wo}
+                return render(request, self.params['template'], context=cxt)
+            
+            if  R['action'] == 'declined' and R['womid']:
+                wo = Wom.objects.get(id = R['womid'])
+                wo.isdenied = True
+                wo.workstatus = Wom.Workstatus.CANCELLED
+                wo.save()
+                cxt = {'declined':True, 'wo':wo}
+                return render(request, self.params['template'], context=cxt)
+            
+            if R['action'] == 'request_for_submit_wod':
+                #check for work is already inprogress
+                wo = Wom.objects.get(id = R['womid'])
+                if wo.workstatus == Wom.Workstatus.INPROGRESS:
+                    wo.workstatus = Wom.Workstatus.COMPLETED
+                    wo.save()
+                    questions =  QuestionSetBelonging.objects.filter(qset_id = wo.qset_id).select_related('question')
+                    cxt = {'qsetname':wo.qset.qsetname, 'qsb':questions, 'womid':wo.id}
+                    return render(request, self.params['template_emailform'], cxt)
+                return HttpResponse("Sorry the work is yet to be completed")
+                
+        except wo['model'].DoesNotExist as e:
+                return HttpResponse("The page you are looking for is not found")
+        
+    def post(self, request, *args, **kwargs):
+        R = request.POST
+        try:
+            wo = self.params['model'].objects.get(id=R['womid'])
+            if R.get('action') == 'reply_form':
+                    #changes in db
+                    wo.isdenied = True
+                    wo.other_data['reply_from_vendor'] = R['reply_from_vendor']
+                    wo.save()
+                    return render(request, self.params['template'])
+            if R.get('action') == 'save_work_order_details':
+                self.save_work_order_details(R, wo)
+                return render(request, self.params['template_emailform'], {'wod_saved':True})
+        except wo['model'].DoesNotExist as e:
+            return HttpResponse("The page you are looking for is not found")
+    
+    def save_work_order_details(self, R, wo):
+        for k, v in R.items():
+            if k not in ['ctzoffset', 'womid', 'action', 'csrfmiddlewaretoken'] and '_' in k:
+                qsb_id = k.split('_')[0]
+                qsb_obj = QuestionSetBelonging.objects.filter(id = qsb_id).select_related('question').first()
+                WomDetails.objects.create(
+                    seqno       = qsb_obj.seqno,
+                    question_id = qsb_obj.question_id,
+                    answertype  = qsb_obj.answertype,
+                    answer      = v,
+                    isavpt      = qsb_obj.isavpt,
+                    options     = qsb_obj.options,
+                    min         = qsb_obj.min,
+                    max         = qsb_obj.max,
+                    alerton     = qsb_obj.alerton,
+                    ismandatory = qsb_obj.ismandatory,
+                    wom_id      = wo.id,
+                    alerts      = qsb_obj.alerts,
+                    client_id   = qsb_obj.client_id,
+                    bu_id       = qsb_obj.bu_id,
+                    cuser_id    = 1,
+                    muser_id    = 1,
+                )
+            
         
         

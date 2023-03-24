@@ -1,7 +1,7 @@
 from django import forms
 from django.core.exceptions import ValidationError
 from django.db.models import Q
-from .models import Vendor, Wom
+from .models import Vendor, Wom, WomDetails
 from apps.core import utils
 from django.http import QueryDict
 from django.contrib.gis.geos import GEOSGeometry
@@ -63,51 +63,37 @@ class VendorForm(forms.ModelForm):
 
 class WorkOrderForm(forms.ModelForm):
     required_css_class = "required"
-    timeInChoices      = [('MINS', 'Min'),('HRS', 'Hour'), ('DAYS', 'Day')]
     
-    gracetime_type     = forms.ChoiceField(choices = timeInChoices, initial='MIN', widget = s2forms.Select2Widget)
 
     
     class Meta:
         model = Wom
-        fields = ['description', 'plandatetime', 'expirydatetime', 'gracetime', 'asset', 'location',
+        fields = ['description', 'plandatetime', 'expirydatetime',  'asset', 'location', 'qset',
                   'priority', 'qset', 'ticketcategory', 'categories', 'vendor', 'ctzoffset']
         
         widgets = {'categories':s2forms.Select2MultipleWidget,
                    'vendor'    : s2forms.Select2Widget,
-                   'description':forms.Textarea(attrs={'rows':3})
+                   'description':forms.Textarea(attrs={'rows':4, 'placeholder':"Enter detailed description of work to be done..."})
                    }
         labels = {
             'description':'Description',
+            'qset':'Question Set'
         }
         
     def __init__(self, *args, **kwargs):
         self.request = kwargs.pop('request', None)
         S = self.request.session
         super().__init__(*args, **kwargs)
+        self.fields['qset'].required = True
+        
+        
         self.fields['ticketcategory'].queryset = om.TypeAssist.objects.filter_for_dd_notifycategory_field(self.request, sitewise=True)
         self.fields['asset'].queryset = am.Asset.objects.filter_for_dd_asset_field(self.request, ['ASSET'], sitewise=True)
         self.fields['vendor'].queryset = Vendor.objects.filter(enable=True, client_id = S['client_id'])
+        self.fields['qset'].queryset = am.QuestionSet.objects.filter(client_id = S['client_id'], enable=True, type = am.QuestionSet.Type.WORKORDER) 
         utils.initailize_form_fields(self)
         if not self.instance.id:
             self.fields['plandatetime'].initial = timezone.now()
             self.fields['priority'].initial = Wom.Priority.LOW  
             self.fields['ticketcategory'].initial = om.TypeAssist.objects.get(tacode='AUTOCLOSED', tatype__tacode = 'NOTIFYCATEGORY')
     
-    
-    def clean(self):
-        super().clean()
-        cd          = self.cleaned_data
-        times_names = ['gracetime']
-        types_names = ['gracetime_type']
-        
-        times = [cd.get(time) for time in times_names]
-        types = [cd.get(type) for type in types_names]
-        for time, type, name in zip(times, types, times_names):
-            self.cleaned_data[name] = self.convertto_mins(type, time)
-            
-    @staticmethod
-    def convertto_mins(_type, _time):
-        if _type == 'HRS':
-            return _time * 60
-        return _time * 24 * 60 if _type == 'DAYS' else _time

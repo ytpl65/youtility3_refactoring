@@ -1517,12 +1517,37 @@ def store_ticket_history(instance, request=None, user = None):
 def get_email_addresses(people_ids, group_ids=None, buids=None):
     from apps.peoples.models import People, Pgbelonging
     
-    p_emails = list(People.objects.filter(
-        ~Q(peoplecode='NONE'), id__in = people_ids
-    ).values_list('email', flat=True))
-    g_emails = list(Pgbelonging.objects.select_related('pgroup').filter(
-        ~Q(people_id=1), pgroup_id__in = group_ids, assignsites_id = 1
-    ).values_list('people__email', flat=True))
+    p_emails, g_emails = [],[]
+    if people_ids:
+        p_emails = list(People.objects.filter(
+            ~Q(peoplecode='NONE'), id__in = people_ids
+        ).values_list('email', flat=True))
+    if group_ids:
+        g_emails = list(Pgbelonging.objects.select_related('pgroup').filter(
+            ~Q(people_id=1), pgroup_id__in = group_ids, assignsites_id = 1
+        ).values_list('people__email', flat=True))
     return list(set(p_emails + g_emails)) or []
     
+    
+    
+
+def send_email(subject, body, to, from_email=None, atts=None):
+    if atts is None: atts = []
+    from django.core.mail import EmailMessage
+    from django.conf import settings
+
+    logger.info('email sending process started')
+    msg = EmailMessage()
+    msg.subject = subject
+    logger.info(f'subject of email is {subject}')
+    msg.body = body
+    msg.from_email = from_email or settings.EMAIL_HOST_USER
+    msg.to = to
+    logger.info(f'recipents of email are  {to}')
+    msg.content_subtype= 'html'
+    for attachment in atts:
+        msg.attach_file(attachment)
+    if atts: logger.info(f'Total {len(atts)} found and added to the message')
+    msg.send()
+    logger.info('email successfully sent')
     
