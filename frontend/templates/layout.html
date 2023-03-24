@@ -33,32 +33,47 @@
 {% endmacro %}
 <!------------------- END PAGINATOR MACRO ------------------------>
 
-{% macro fileupoad() %}
+{% macro fileupoad(create) %}
 <!--begin::Form-->
-<form class="form"  action="" method="post">
-    <!--begin::Input group-->
-    <div class="fv-row">
-        <!--begin::Dropzone-->
-        <div class="dropzone d-flex justify-content-start" id="dropzone_file">
-            <!--begin::Message-->
-            <div class="dz-message needsclick">
+<div class="accordion" id="kt_accordion_1">
+  <div class="accordion-item">
+    <h2 class="accordion-header" id="kt_accordion_1_header_1">
+      <button class="accordion-button fs-4 fw-semibold" type="button" data-bs-toggle="collapse"
+        data-bs-target="#kt_accordion_1_body_1" aria-expanded="true" aria-controls="kt_accordion_1_body_1">
+        View or Add Attachments
+      </button>
+    </h2>
+    <div id="kt_accordion_1_body_1" class="accordion-collapse collapse" aria-labelledby="kt_accordion_1_header_1"
+      data-bs-parent="#kt_accordion_1">
+      <div class="accordion-body">
+        <form class="form" action="" method="post">
+          <!--begin::Input group-->
+          <div class="fv-row">
+            <!--begin::Dropzone-->
+            <div class="dropzone d-flex justify-content-start" id="dropzone_file">
+              <!--begin::Message-->
+              <div class="dz-message needsclick">
                 <!--begin::Icon-->
                 <i class="bi bi-file-earmark-arrow-up text-primary fs-3x"></i>
                 <!--end::Icon-->
 
                 <!--begin::Info-->
                 <div class="ms-4">
-                    <h3 class="fs-5 fw-bold text-gray-900 mb-1">Drop files here or click to upload.</h3>
-                    <span class="fs-7 fw-semibold text-gray-400">Upload up to 5 files</span>
+                  <h3 class="fs-5 fw-bold text-gray-900 mb-1">Drop files here or click to upload.</h3>
+                  <span class="fs-7 fw-semibold text-gray-400">Upload up to 5 files</span>
                 </div>
                 <!--end::Info-->
+              </div>
             </div>
-        </div>
-        <!--end::Dropzone-->
+            <!--end::Dropzone-->
+          </div>
+          <!--end::Input group-->
+        </form>
+        <!--end::Form-->
+      </div>
     </div>
-    <!--end::Input group-->
-</form>
-<!--end::Form-->
+  </div>
+</div>
 {% endmacro %}
 
 <!------------------ BEGIN FORM CREATE MACRO ----------------------->

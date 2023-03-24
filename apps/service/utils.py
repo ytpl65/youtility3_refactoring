@@ -46,7 +46,7 @@ from apps.y_helpdesk.models import Ticket
 from intelliwiz_config.celery import app
 from django.conf import settings
 from celery.utils.log import get_task_logger
-from apps.work_order_management import utils
+from apps.work_order_management import utils as wutils
 
 
 def insertrecord(record, tablename):
@@ -238,7 +238,7 @@ def perform_insertrecord(self, file, request = None, db='default', filebased = T
                 user = get_user_instance(userid or request.user.id)
                 if tablename == 'ticket' and isinstance(obj, Ticket): utils.store_ticket_history(
                     instance = obj, request=request, user=user)
-                if tablename == 'wom': utils.notify_wo_creation(id = obj.id)
+                if tablename == 'wom': wutils.notify_wo_creation(id = obj.id)
                 allconditions = [
                     hasattr(obj, 'peventtype'), hasattr(obj, 'endlocation'), 
                     hasattr(obj, 'punchintime'), hasattr(obj, 'punchouttime')]

@@ -1385,6 +1385,8 @@ function setUpDropzone(params){
         .fail((xhr, status, error) => {
           console.log(error)
         })
+      }else{
+        location.reload(); 
       }
     })
   });

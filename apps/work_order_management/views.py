@@ -99,6 +99,7 @@ class WorkOrderView(LoginRequiredMixin, View):
         'template_list': 'work_order_management/work_order_list.html',
         'related'      : ['vendor', 'cuser'],
         'model'        : Wom,
+        'model_jnd'    : WomDetails,
         'fields'       : ['id', 'ctzoffset', 'cuser__peoplename', 'cuser__peoplecode', 'plandatetime', 'cdtz',
                           'expirydatetime', 'priority', 'description', 'vendor__name', 'categories', 'workstatus']
     }
@@ -129,6 +130,16 @@ class WorkOrderView(LoginRequiredMixin, View):
             from .utils import notify_wo_creation
             notify_wo_creation(id = R['id'])
             return rp.JsonResponse({'msg':"Email sent successfully"}, status=200)
+        
+        if R.get('action') == 'getAttachmentJND':
+            att =  self.params['model_jnd'].objects.getAttachmentJND(R['id'])
+            return rp.JsonResponse(data = {'data': list(att)})
+
+        if R.get('action') == 'get_wo_details' and R.get('womid'):
+            ic(R)
+            objs = self.params['model_jnd'].objects.get_wo_details(R['womid'])
+            return rp.JsonResponse({"data":list(objs)})
+        
         
         # return form with instance
         elif R.get('id', None):

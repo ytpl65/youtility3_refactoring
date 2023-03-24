@@ -863,7 +863,7 @@ class Attachments(LoginRequiredMixin, View):
             if isUploaded:
                 if data := P['model'].objects.create_att_record(request, filename, filepath):
                     #update attachment count
-                    if data['ownername'].lower() in ['ticket' ,'jobneed', 'jobneeddetails']:
+                    if data['ownername'].lower() in ['ticket' ,'jobneed', 'jobneeddetails', 'wom']:
                         model = get_model_or_form(data['ownername'].lower())
                         model.objects.filter(uuid = R['ownerid']).update(attachmentcount = data['attcount'])
                         log.info('attachment count updated')

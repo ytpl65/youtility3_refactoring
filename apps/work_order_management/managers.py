@@ -53,6 +53,22 @@ class WorkOrderManager(models.Manager):
         )
         return qset or self.none()
     
+
+class WOMDetailsManager(models.Manager):
+    use_in_migrations = True
+    def get_wo_details(self, womid):
+        if womid in [None, 'None', '']: return self.none()
+        qset = self.filter(
+            wom_id = womid
+        ).select_related('question').values('question__quesname', 'answertype', 'min', 'max', 'id',
+            'options', 'alerton', 'ismandatory', 'seqno','answer', 'alerts').order_by('seqno')
+        return qset or self.none()
+    
+    def getAttachmentJND(self, id):
+        if qset := self.filter(id=id).values('uuid'):
+            if atts := self.get_atts(qset[0]['uuid']):
+                return atts or self.none()
+        return self.none()
     
     
     

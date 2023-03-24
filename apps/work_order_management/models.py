@@ -9,7 +9,7 @@ from django.contrib.postgres.fields import ArrayField
 from apps.tenants.models import TenantAwareModel
 from django.conf import settings
 from django.utils.translation import gettext_lazy as _
-from .managers import VendorManager, WorkOrderManager
+from .managers import VendorManager, WorkOrderManager, WOMDetailsManager
 
 
 
@@ -54,6 +54,7 @@ class Wom(BaseModel, TenantAwareModel):
     asset           = models.ForeignKey("activity.Asset", verbose_name = _("Asset"), on_delete= models.RESTRICT, null = True, blank = True, related_name='wo_assets')
     location        = models.ForeignKey('activity.Location', verbose_name=_('Location'), on_delete=models.RESTRICT, null=True, blank=True)
     workstatus      = models.CharField('Job Status', choices = Workstatus.choices, default=Workstatus.ASSIGNED,  max_length = 60, null = True)
+    seqno           = models.SmallIntegerField(_("Serial No."), null=True)
     workpermit      = models.CharField(_('Work Permit'), choices=WorkPermitStatus.choices, default=WorkPermitStatus.NOTNEED, max_length=35)
     priority        = models.CharField(_("Priority"), max_length = 50, choices = Priority.choices)
     qset            = models.ForeignKey("activity.QuestionSet", verbose_name = _("QuestionSet"), on_delete  = models.RESTRICT, null = True, blank = True)
@@ -167,7 +168,7 @@ class WomDetails(BaseModel, TenantAwareModel):
     client          = models.ForeignKey("onboarding.Bt", verbose_name = _("Client"), on_delete= models.RESTRICT, null = True, blank = True, related_name='womdetails_clients')
     bu              = models.ForeignKey("onboarding.Bt", verbose_name = _("Site"), on_delete = models.RESTRICT, null = True, blank = True, related_name='womdetails_bus')
 
-    
+    objects = WOMDetailsManager()
     class Meta(BaseModel.Meta):
         db_table = 'womdetails'
         verbose_name = 'Wom Details'
