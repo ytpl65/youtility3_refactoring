@@ -13,7 +13,7 @@ import pytz
 def get_assetincludes_choices(request):
     S = request.session
     qset = av.Asset.objects.filter(
-         Q(identifier__in=['CHECKPOINT']) & Q(enable = True) &  Q(bu_id__in = S['assignedsites']) |  Q(assetcode='NONE')).select_related(
+         Q(identifier__in=['CHECKPOINT']) & Q(enable = True) &  Q(bu_id  = S['bu_id']) &  Q(assetcode='NONE')).select_related(
             'parent').annotate(
             checkpoint = Concat(
                 'assetname', Value(" ("), 'assetcode', Value(")")))
@@ -22,7 +22,7 @@ def get_assetincludes_choices(request):
 def get_assetsmartplace_choices(request, idfs):
     S = request.session
     qset = av.Asset.objects.filter(
-         Q(identifier__in = idfs) & Q(enable = True) &  Q(bu_id__in = S['assignedsites']) | Q(client_id = S['client_id']) |  Q(assetcode='NONE') ).select_related(
+         Q(identifier__in = idfs) & Q(enable = True) &  Q(bu_id= S['bu_id']) & Q(client_id = S['client_id']) |  Q(assetcode='NONE') ).select_related(
             'parent').annotate(
             checkpoint = Concat(
                 'assetname', Value(" ("), 'assetcode', Value(")")))
@@ -296,7 +296,7 @@ def list_viewdata(request, model, fields, kwargs):
 def save_assetjsonform(jsonform, asset):
     try:
         log.info('saving jsonform ...')
-        for k in ['tempcode', 'supplier', 'meter', 'invoice_no', 'invoice_date',
+        for k in ['tempcode', 'supplier', 'meter', 'invoice_no', 'invoice_date', 'is_nonengg_asset',
                      'service', 'sfdate', 'stdate', 'yom', 'msn', 'bill_val', 'ismeter',
                      'bill_date', 'purchase_date', 'inst_date', 'po_number', 'far_asset_id']:
             asset.asset_json[k] = jsonform.cleaned_data.get(k)
@@ -320,7 +320,7 @@ def get_asset_jsonform(people, request):
             in (
                 'tempcode', 'supplier', 'meter', 'invoice_no', 'invoice_date',
                 'service', 'sfdate', 'stdate', 'yom', 'msn', 'bill_val', 'ismeter',
-                'bill_date', 'purchase_date', 'inst_date', 'po_number', 'far_asset_id'
+                'bill_date', 'purchase_date', 'inst_date', 'po_number', 'far_asset_id','is_nonengg_asset'
             )
         }
 

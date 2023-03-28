@@ -44,6 +44,10 @@ def notify_wo_creation(id):
         send_email(
             subject=subject, body=html_message, to=emails, atts= attachments if atts else None
         )
+        wo.ismailsent = True
+        wo.save()
+    else:
+        log.info('object not found')
         
         
         

@@ -22,6 +22,27 @@
             background-color: #eaf1fb !important;
             font-weight: normal;
         }
+        .ybtn-success{
+            background-color: green;
+            text-decoration: none;
+            padding: 5px;
+            border-radius: 2px;
+            color: white !important;
+        }
+        .ybtn-warn{
+            background-color: orangered;
+            text-decoration: none;
+            padding: 5px;
+            border-radius: 2px;
+            color: white !important;
+        }
+        .ybtn-prime{
+            background-color: rgb(47, 143, 233);
+            text-decoration: none;
+            padding: 5px;
+            border-radius: 2px;
+            color: white !important;
+        }
     </style>
 </head>
     <body>
@@ -74,14 +95,20 @@
                 </tbody>
             </table><br>
             If you are interested in proceeding with the work order, click on 
-            <a href="{{ HOST }}{{ url('work_order_management:reply_workorder') }}?action=accepted&womid={{workorderid}}" target="_blank">Accepted</a><br>
+            <a class="ybtn-success" 
+            href="{{ HOST }}{{ url('work_order_management:reply_workorder') }}?action=accepted&womid={{workorderid}}" 
+            target="_blank">Accepted</a><br>
             <hr>
             If you are not interested in proceeding with the work order, 
             please let us know your reasons for declining it so that we can explore alternative options.
-            <a href="{{ HOST }}{{ url('work_order_management:reply_workorder') }}?action=declined&womid={{workorderid}}"  target="_blank">Declined</a>
+            <a class="ybtn-warn" 
+            href="{{ HOST }}{{ url('work_order_management:reply_workorder') }}?action=declined&womid={{workorderid}}" 
+             target="_blank">Declined</a>
             <hr>
             Please click on this link to submit the work order details, since you have completed the work
-            <a href="{{ HOST }}{{ url('work_order_management:reply_workorder') }}?action=request_for_submit_wod&womid={{workorderid}}"  target="_blank">Submit Workorder Details</a>
+            <a class="ybtn-prime"  
+            href="{{ HOST }}{{ url('work_order_management:reply_workorder') }}?action=request_for_submit_wod&womid={{workorderid}}"  
+            target="_blank">Submit Workorder Details</a>
         </p>
     </body>
 </html>

@@ -72,3 +72,20 @@ class ReportBuilderForm(forms.Form):
     model = forms.ChoiceField(label="Model", widget=s2forms.Select2Widget, help_text="Select a model where you want data from")
     columns = forms.MultipleChoiceField(label="Coumns", widget=s2forms.Select2MultipleWidget, help_text="Select columns required in the report")
     
+
+class ReportForm(forms.Form):
+    required_css_class = "required"
+    
+    report_name = forms.ChoiceField(label='Report Name', required=True)
+    site        = forms.ChoiceField(label='Site', required = True)
+    fromdate    = forms.DateField(label='From Date', required=True)
+    uptodate    = forms.DateField(label='To Date', required=True)
+
+    
+    def __init__(self, *args, **kwargs):
+        self.request = kwargs.pop('request', None)
+        S = self.request.session
+        super().__init__(*args, **kwargs)
+        self.fields['site'].choices = pm.Pgbelonging.objects.get_assigned_sites_to_people(S.get('_auth_user_id'), True)
+        self.fields['site'].initial = ""
+        utils.initailize_form_fields(self)

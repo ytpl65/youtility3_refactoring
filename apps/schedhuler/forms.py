@@ -115,12 +115,6 @@ class I_TourFormJobneed(JobNeedForm): # jobneed
     timeIn             = forms.ChoiceField(choices = timeInChoices, initial='MIN', widget = s2forms.Select2Widget)
     required_css_class = "required"
     
-    # class Meta:
-    #     model = am.Jobneed
-    #     fields = ['identifier', 'frequency', 'parent', 'jobdesc', 'asset', 'ticketcategory',
-    #               'qset',  'people', 'pgroup', 'priority', 'scantype', 'multifactor',
-    #               'jobstatus', 'plandatetime', 'expirydatetime', 'gracetime', 'starttime',
-    #               'endtime', 'performedby', 'gpslocation', 'cuser', 'raisedby', 'remarks', 'ctzoffset']
 
 
     def __init__(self, *args, **kwargs):

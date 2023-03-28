@@ -1060,7 +1060,7 @@ class JobManager(models.Manager):
             ).filter(
             Q(parent__jobname = 'NONE') | Q(parent_id = 1),
             ~Q(jobname='NONE') | ~Q(id=1),
-            bu_id__in = S['assignedsites'],
+            bu_id = S['bu_id'],
             client_id = S['client_id'],
             identifier__exact='INTERNALTOUR',
             enable=True
@@ -1086,7 +1086,7 @@ class JobManager(models.Manager):
             ).filter(
             ~Q(jobname='NONE') | ~Q(id=1),
             Q(parent__jobname = 'NONE') | Q(parent_id = 1),
-            bu_id__in = S['assignedsites'],
+            bu_id = S['bu_id'],
             client_id = S['client_id'],
             identifier = 'TASK',
         ).select_related(*related).values(*fields)
@@ -1193,6 +1193,7 @@ class JobManager(models.Manager):
             fromdate__date__gte = fromdt,
             fromdate__date__lte = uptpdt,
             client_id = S['client_id'],
+            bu_id = S['bu_id'],
             identifier = 'PPM',
             enable=True
         ).values('id', 'jobname', 'asset__assetname', 'qset__qsetname', 'assignedto',

@@ -1355,6 +1355,8 @@ function setUpDropzone(params){
       maxFiles: 5,
       maxFileSize: 3,
       addRemoveLinks: true,
+      resizeWidth:params.width || null,
+      resizeHeight:params.height || null,
       accepedFiles:['mp4', 'png', 'jpeg', 'jpg', 'xlsx', 'xlx', 'pdf']
   });
 
@@ -1601,7 +1603,7 @@ function QSBTableColumnsConfig(){
     {data:'pk', defaultContent:null, visible:false},
     {data:'ctzoffset', defaultContent:null, visible:false},
     {title: "SNo", data:'seqno', render:function(data, type, row, meta){
-        return meta.row + 1}
+        return data ? data : meta.row + 1}
     },
     {title: "Question", data: 'quesname'},
     {data: 'question_id', visible:false, defaultContent:null},

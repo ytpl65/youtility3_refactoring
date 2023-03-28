@@ -505,3 +505,16 @@ class ConfigWorkPermitReportTemplate(LoginRequiredMixin, View):
             return utils.handle_Exception(request)
         
 
+
+class ExportReports(LoginRequiredMixin, View):
+    P = {
+        'template_form':"reports/report_export_form.html",
+        'form':rp_forms.ReportForm
+        
+    }
+    
+    def get(self, request, *args, **kwargs):
+        R, P = request.GET, self.P
+        if R.get('template'):
+            cxt = {'form':P['form'](request=request)}
+            return render(request, P['template_form'], context=cxt)

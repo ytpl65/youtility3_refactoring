@@ -74,7 +74,7 @@
             </div>
              <div class="input-group mb-3">
                 <!--GPS LOCATION-->
-            <label for="id_gpslocation" class="col-md-4">Address:
+            <label for="id_gpslocation" class="col-md-4 required">Address:
                 <span class="material-icons-outlined h-19px" data-bs-toggle="tooltip" data-bs-custom-class="tooltip"
                     data-bs-placement="top" style="vertical-align: middle; font-size: 19px;"
                     title="Longitude & latitude cordinates of the business unit">
@@ -98,6 +98,7 @@
                 </div>
                 <div class="col-md-8">
                     {{ vendor_form.mobno }}
+                    <p class="fs-7">Enter country code followed by 10 digit mobile no, For eg: +91xxxxxxxxxx"</p>
                 </div>
             </div>
             <div class="input-group mb-3">

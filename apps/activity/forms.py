@@ -143,7 +143,7 @@ class MasterQsetForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         self.fields['type'].initial      = 'ASSET'
         self.fields['type'].widget.attrs = {"style": "display:none;"}
-        self.fields['site_type_includes'].choices = om.TypeAssist.objects.filter(Q(tatype__tacode = "SITETYPE") | Q(tacode='NONE')).values_list('id', 'taname')
+        self.fields['site_type_includes'].choices = om.TypeAssist.objects.filter(Q(tatype__tacode = "SITETYPE") | Q(tacode='NONE'), client_id = self.request.session['client_id']).values_list('id', 'taname')
         bulist = om.Bt.objects.get_all_bu_of_client(self.request.session['client_id'])
         self.fields['buincludes'].choices = pm.Pgbelonging.objects.get_assigned_sites_to_people(self.request.user.id, makechoice=True)
         self.fields['site_grp_includes'].choices = pm.Pgroup.objects.filter(
@@ -279,7 +279,7 @@ class ChecklistForm(forms.ModelForm):
         else: 
             self.fields['type'].required = False
         
-        self.fields['site_type_includes'].choices = om.TypeAssist.objects.filter(Q(tatype__tacode = "SITETYPE") | Q(tacode='NONE') | Q(client_id = S['client_id']), enable=True).values_list('id', 'taname')
+        self.fields['site_type_includes'].choices = om.TypeAssist.objects.filter(Q(tatype__tacode = "SITETYPE") | Q(tacode='NONE') & Q(client_id = S['client_id']), enable=True).values_list('id', 'taname')
         bulist = om.Bt.objects.get_all_bu_of_client(self.request.session['client_id'])
         self.fields['buincludes'].choices = pm.Pgbelonging.objects.get_assigned_sites_to_people(self.request.user.id, makechoice=True)
         self.fields['site_grp_includes'].choices = pm.Pgroup.objects.filter(
@@ -310,10 +310,12 @@ class QuestionSetForm(MasterQsetForm):
 
     def __init__(self, *args, **kwargs):
         self.request = kwargs.pop('request', None)
+        S  = self.request.session
         super().__init__(*args, **kwargs)
         self.fields['type'].initial          = 'QUESTIONSET'    
         self.fields['assetincludes'].label   = 'Asset/Smartplace'
         self.fields['assetincludes'].choices = ac_utils.get_assetsmartplace_choices(self.request, ['ASSET', 'SMARTPLACE'])
+        self.fields['site_type_includes'].choices = om.TypeAssist.objects.filter(tatype__tacode='SITETYPE', client_id = S['client_id']).values_list('id', 'tacode')
         self.fields['type'].widget.attrs     = {"style": "display:none;"}
         if not self.instance.id:
             self.fields['parent'].initial = 1
@@ -460,7 +462,7 @@ class CheckpointForm(forms.ModelForm):
         self.fields['identifier'].widget.attrs = {"style": "display:none"}
         
         #filters for dropdown fields
-        self.fields['location'].queryset = am.Location.objects.filter(Q(enable = True) | Q(loccode='NONE'), bu_id__in = S['assignedsites'])
+        self.fields['location'].queryset = am.Location.objects.filter(Q(enable = True) | Q(loccode='NONE'), bu_id = S['bu_id'])
         self.fields['type'].queryset = om.TypeAssist.objects.filter(client_id = S['client_id'], tatype__tacode = 'CHECKPOINTTYPE')
         utils.initailize_form_fields(self)
 
@@ -596,7 +598,7 @@ class JobNeedForm(forms.ModelForm):
         fields = ['identifier', 'frequency', 'parent', 'jobdesc', 'asset', 'ticketcategory',
                   'qset',  'people', 'pgroup', 'priority', 'scantype', 'multifactor',
                   'jobstatus', 'plandatetime', 'expirydatetime', 'gracetime', 'starttime',
-                  'endtime', 'performedby', 'gpslocation', 'cuser', 'raisedby', 'remarks', 'ctzoffset']
+                  'endtime', 'performedby', 'gpslocation', 'cuser', 'remarks', 'ctzoffset']
         widgets = {
             'ticketcategory': s2forms.Select2Widget,
             'scantype'      : s2forms.Select2Widget,
@@ -712,14 +714,14 @@ class AssetForm(forms.ModelForm):
         self.fields['servprov'].required       = False
         
         #filters for dropdown fields
-        self.fields['parent'].queryset         = am.Asset.objects.filter(~Q(runningstatus='SCRAPPED'), identifier='ASSET', bu_id__in = S['assignedsites'])
-        self.fields['location'].queryset       = am.Location.objects.filter(~Q(locstatus='SCRAPPED'), bu_id__in = S['assignedsites'])
+        self.fields['parent'].queryset         = am.Asset.objects.filter(~Q(runningstatus='SCRAPPED'), identifier='ASSET', bu_id = S['bu_id'])
+        self.fields['location'].queryset       = am.Location.objects.filter(~Q(locstatus='SCRAPPED'), bu_id = S['bu_id'])
         self.fields['type'].queryset           = om.TypeAssist.objects.filter(Q(tatype__tacode__in = ['ASSETTYPE', 'ASSET_TYPE']), client_id = S['client_id'])
         self.fields['category'].queryset       = om.TypeAssist.objects.filter(Q(tatype__tacode__in = ['ASSETCATEGORY', 'ASSET_CATEGORY']), client_id = S['client_id'])
         self.fields['subcategory'].queryset    = om.TypeAssist.objects.filter(Q(tatype__tacode__in = ['ASSETSUBCATEGORY', 'ASSET_SUBCATEGORY']), client_id = S['client_id'])
         self.fields['unit'].queryset           = om.TypeAssist.objects.filter(Q(tatype__tacode__in = ['ASSETUNIT', 'ASSET_UNIT', 'UNIT']), client_id = S['client_id'])
         self.fields['brand'].queryset          = om.TypeAssist.objects.filter(Q(tatype__tacode__in = ['ASSETBRAND', 'ASSET_BRAND', 'BRAND']), client_id = S['client_id'])
-        self.fields['servprov'].queryset       = om.Bt.objects.filter(id__in = S['assignedsites'], isserviceprovider = True, enable=True)
+        self.fields['servprov'].queryset       = om.Bt.objects.filter(id = S['bu_id'], isserviceprovider = True, enable=True)
         utils.initailize_form_fields(self)
         
         
@@ -751,7 +753,10 @@ class AssetForm(forms.ModelForm):
         if val := self.cleaned_data.get('assetcode'):
             if not self.instance.id and  am.Asset.objects.filter(assetcode = val).exists():
                 raise forms.ValidationError("Asset with this code already exist")
+            if ' ' in val:
+                raise forms.ValidationError("Spaces are not allowed")
             return val.upper()
+            
         return val
     
     def check_nones(self, cd):
@@ -773,6 +778,7 @@ class AssetForm(forms.ModelForm):
 class AssetExtrasForm(forms.Form):
     required_css_class = "required"
     ismeter =    forms.BooleanField(initial=False, required=False, label='Is Meter')
+    is_nonengg_asset =    forms.BooleanField(initial=False, required=False, label='Is Non Engg. Asset')
     tempcode      = forms.CharField(max_length=55, label='Temporary Code', required=False)
     supplier      = forms.CharField(max_length=55, label='Supplier', required=False)
     meter         = forms.ChoiceField(widget=s2forms.Select2Widget, label='Meter', required=False)
@@ -831,9 +837,8 @@ class LocationForm(forms.ModelForm):
         S = self.request.session
         super().__init__(*args, **kwargs)
         self.fields['loccode'].widget.attrs = {'style':"text-transform:uppercase"}
-        
         #filters for dropdown fields
-        self.fields['parent'].queryset = am.Location.objects.filter(client_id = S['client_id'], bu_id__in = S['assignedsites'])
+        self.fields['parent'].queryset = am.Location.objects.filter(client_id = S['client_id'], bu_id = S['bu_id'])
         self.fields['type'].queryset = om.TypeAssist.objects.filter(client_id = S['client_id'], tatype__tacode = 'LOCAIONTYPE')
         utils.initailize_form_fields(self)
         
@@ -864,6 +869,8 @@ class LocationForm(forms.ModelForm):
         if val:= self.cleaned_data['loccode']:
             if not self.instance.id and am.Location.objects.filter(loccode = val).exists():
                 raise forms.ValidationError("Location code already exist, choose different code")
+            if ' ' in val:
+                raise forms.ValidationError("Spaces are not allowed")
         return val.upper() if val else val
     
     def check_nones(self, cd):

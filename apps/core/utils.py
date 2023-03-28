@@ -1368,22 +1368,28 @@ def orderedRandom(arr, k):
 
 
 
-def upload(request):
+def upload(request, vendor=False):
     if 'img' not in request.FILES:
         return
     foldertype = request.POST["foldertype"]
     if foldertype in ["task", "internaltour", "externaltour", "ticket", "incidentreport", 'visitorlog', 'conveyance', 'workorder']:
         tabletype, activity_name = "transaction", foldertype.upper()
+    if foldertype in ['people', 'client']:
+        tabletype, activity_name = "master", foldertype.upper()
 
+    home_dir = settings.MEDIA_ROOT
+    fextension = os.path.splitext(request.FILES['img'].name)[1]
+    filename = parser.parse(str(datetime.now())).strftime('%d_%b_%Y_%H%M%S') + fextension
+    
     if tabletype == 'transaction':
         fmonth = str(datetime.now().strftime("%b"))
         fyear = str(datetime.now().year)
         peopleid = request.POST["peopleid"]
-        home_dir = settings.MEDIA_ROOT
         fullpath = f'{home_dir}/transaction/{peopleid}/{activity_name}/{fyear}/{fmonth}/'
-        ic(fullpath)
-        fextension = os.path.splitext(request.FILES['img'].name)[1]
-        filename = parser.parse(str(datetime.now())).strftime('%d_%b_%Y_%H%M%S') + fextension
+        
+    else:
+        fullpath = f'{home_dir}/master/{foldertype}'
+        
 
 
         if not os.path.exists(fullpath):    
@@ -1399,7 +1405,28 @@ def upload(request):
             return False, None, None
 
         return True, filename, fullpath 
-            
+    
+def upload_vendor_file(file, womid):
+    home_dir = settings.MEDIA_ROOT
+    fmonth = str(datetime.now().strftime("%b"))
+    fyear = str(datetime.now().year)
+    fullpath = f'{home_dir}/transaction/workorder_management/details/{fyear}/{fmonth}/'
+    fextension = os.path.splitext(file.name)[1]
+    filename = parser.parse(str(datetime.now())).strftime('%d_%b_%Y_%H%M%S') + f'womid_{womid}' + fextension
+    if not os.path.exists(fullpath):    
+        os.makedirs(fullpath)
+    fileurl = f'{fullpath}{filename}'
+    try:
+        if not os.path.exists(fileurl):
+            with open(fileurl, 'wb') as temp_file:
+                temp_file.write(file.read())
+                temp_file.close()
+    except Exception as e:
+        logger.error(e, exc_info=True)
+        return False, None, None
+
+    return True, filename, fullpath.replace(home_dir, '')
+        
                 
 
 def check_nones(none_fields, tablename, cleaned_data, json=False):

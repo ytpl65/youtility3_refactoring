@@ -65,7 +65,7 @@ def bu_defaults():
     }
 
 class Bt(BaseModel, TenantAwareModel, HeirarchyModel):
-
+    uuid = models.UUIDField(null=True)
     bucode              = models.CharField(_('Code'), max_length = 30)
     solid               = models.CharField(max_length=30, null=True, blank=True, verbose_name='Sol ID')
     siteincharge        = models.ForeignKey(settings.AUTH_USER_MODEL, verbose_name='Site Incharge', on_delete=models.RESTRICT, null=True, blank=True, related_name='siteincharge')

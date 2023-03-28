@@ -174,7 +174,7 @@ class WomDetails(BaseModel, TenantAwareModel):
         verbose_name = 'Wom Details'
         constraints = [
             models.UniqueConstraint(
-                fields = ['question', 'client'],
+                fields = ['question', 'client', 'wom'],
                 name="question_client"
             )
         ]

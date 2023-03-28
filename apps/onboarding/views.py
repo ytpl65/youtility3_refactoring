@@ -30,6 +30,7 @@ import apps.activity.models as am
 import apps.attendance.models as atm
 from apps.y_helpdesk.models import Ticket
 from pprint import pformat
+import uuid
 from tablib import Dataset
 CACHE_TTL = getattr(settings, 'CACHE_TTL', DEFAULT_TIMEOUT)
 logger = logging.getLogger('django')
@@ -1631,7 +1632,8 @@ class Client(LoginRequiredMixin, View):
         if R.get('action', None) == 'form':
             cxt = {'clientform': P['form_class'](client = True, request=request),
                'clientprefsform': P['json_form'](),
-               'ta_form': obforms.TypeAssistForm(auto_id = False, request=request)
+               'ta_form': obforms.TypeAssistForm(auto_id = False, request=request),
+               'ownerid': uuid.uuid4()
                }
             return render(request, P['template_form'], context = cxt)
 
@@ -1662,7 +1664,7 @@ class Client(LoginRequiredMixin, View):
             obj = utils.get_model_obj(int(R['id']), request, self.params)
             cxt = {'clientform':self.params['form_class'](request = request, instance = obj),
                     'edit':True, 'ta_form': obforms.TypeAssistForm(auto_id = False, request=request),
-                'clientprefsform': get_bt_prefform(obj)}
+                'clientprefsform': get_bt_prefform(obj), 'ownerid':obj.uuid}
             return render(request, self.params['template_form'], context = cxt)
     
     def post(self, request, *args, **kwargs):
@@ -1703,6 +1705,7 @@ class Client(LoginRequiredMixin, View):
         try:
             with transaction.atomic(using=utils.get_current_db_name()):
                 client = form.save()
+                client.uuid = request.POST.get('uuid')
                 if save_json_from_bu_prefsform(client, jsonform):
                     client = putils.save_userinfo(
                         client, request.user, request.session)

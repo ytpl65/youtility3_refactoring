@@ -33,6 +33,7 @@ class VendorForm(forms.ModelForm):
         self.request = kwargs.pop('request', None)
         S = self.request.session
         super().__init__(*args, **kwargs)
+        self.fields['address'].required = True
         utils.initailize_form_fields(self)
     
     def clean(self):

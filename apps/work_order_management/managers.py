@@ -70,5 +70,16 @@ class WOMDetailsManager(models.Manager):
                 return atts or self.none()
         return self.none()
     
+    def get_atts(self, uuid):
+        from apps.activity.models import Attachment
+        from django.conf import settings
+        if atts := Attachment.objects.annotate(
+            file = Concat(V(settings.MEDIA_URL, output_field=models.CharField()), F('filepath'),
+                          V('/'), Cast('filename', output_field=models.CharField()))
+            ).filter(owner = uuid).values(
+            'filepath', 'filename', 'attachmenttype', 'datetime',  'id', 'file'
+            ):return atts
+        return self.none()
+    
     
     

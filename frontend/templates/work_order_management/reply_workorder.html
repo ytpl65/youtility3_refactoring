@@ -11,11 +11,11 @@
     <link href="{{ static('assets/plugins/custom/jquery-ui/jquery-ui.min.css') }}" rel="stylesheet" type="text/css" />
 </head>
 <body>
-    <div class="container">
-        <div class="row justify-content-center align-middle">
+    <div class="container h-100">
+        <div class="row h-100 justify-content-center align-items-center">
             <div class="col-xs-12 col-sm-10 col-md-8 col-lg-6">
                 {% if accepted is defined %}
-                <div class="alert alert-success" role="alert">
+                <div class="alert alert-success shadow" role="alert">
                     <h4 class="alert-heading">Thank you!</h4>
                     <p> We appreciate your prompt response, for letting us know that you are interested in this work order #{{wo.id}} request.</p>
                     <hr>
@@ -23,9 +23,10 @@
                     that you will deliver high-quality work within the agreed-upon timelines.</p>
                 </div>
                 {% elif declined is defined %}
-                <form action="{{ url('work_order_management:reply_workorder') }}">
+                <form action="{{ url('work_order_management:reply_workorder') }}" method="post" class="shadow">
                     <input type="hidden" name="action" value="reply_form">
                     <input type="hidden" name="womid" value="{{ wo.id }}">
+                    <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
                     <div class="alert alert-success" role="alert">
                         <h4 class="alert-heading">Thank you!</h4>
                         <p>
@@ -39,11 +40,11 @@
                         <textarea name="reply_from_vendor" class="form-control" placeholder="Please specify your reasons" id="" cols="30" rows="6">
                         
                         </textarea>
-                        <button type="submit" class="btn btn-sm btn-success">Submit Response</button>
+                        <button type="submit" class="btn mt-3 btn-sm btn-success">Submit Response</button>
                     </div>
                 </form>       
                 {% else %} 
-                <div class="row text-center">
+                <div class="row text-center shadow">
                     <h1>You can close this tab</h1>
                 </div>
                 {% endif %}        

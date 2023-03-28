@@ -318,7 +318,8 @@ def asset_json():
         "invoice_no": "",
         "invoice_date": "",
         "far_asset_id": "",
-        "multifactor": 1
+        "multifactor": 1,
+        'is_nonengg_asset':False
     }
 
 
@@ -389,7 +390,8 @@ class Jobneed(BaseModel, TenantAwareModel):
         OTHER            = ('OTHER', 'Other')
         SITEREPORT       = ("SITEREPORT", "Site Report")
         INCIDENTREPORT   = ('INCIDENTREPORT', "Incident Report")
-        ASSETLOG         = ("ASSETLOG",	"Asset Log")
+        ASSETLOG          = ("ASSETLOG",	"Asset Log")
+        ASSETAUDIT        = ("ASSETAUDIT",	"Asset Audit")
         ASSETMAINTENANCE = ("ASSETMAINTENANCE",	"Asset Maintenance")
 
     class Scantype(models.TextChoices):
@@ -455,7 +457,6 @@ class Jobneed(BaseModel, TenantAwareModel):
     ticketcategory   = models.ForeignKey("onboarding.TypeAssist", verbose_name = _("Notify Category"), null= True, blank = True, on_delete = models.RESTRICT)
     othersite        = models.CharField(_("Other Site"), max_length = 100, default = None, null = True)
     multifactor      = models.DecimalField(_("Multiplication Factor"), default = 1, max_digits = 10, decimal_places = 6)
-    raisedby         = models.CharField(_("Raised by"), max_length = 55, default="", null = True)
     raisedtktflag    = models.BooleanField(_("RaiseTicketFlag"), default = False, null = True)
     ismailsent       = models.BooleanField(_('Is Mail Sent'), default= False)
     attachmentcount  = models.IntegerField(_('Attachment Count'), default = 0)

@@ -109,6 +109,7 @@ class BtForm(forms.ModelForm):
     controlroom = forms.MultipleChoiceField(widget=s2forms.Select2MultipleWidget, required=False, label='Control Room')
     permissibledistance = forms.IntegerField(required=False, label='Permissible Distance')
     address = forms.CharField(required=False, label='Address', max_length=500, widget=forms.Textarea(attrs={'rows': 2, 'cols': 15}))
+    clientlogo = forms.ImageField(required=True, label='Logo')
     
     class Meta:
         model  = obm.Bt

@@ -181,6 +181,20 @@ class PeopleManager(BaseUserManager):
         return qset or self.none()
             
 
+    def people_list_view(self, request, fields, related):
+        S  = request.session
+        if request.user.isadmin:
+            qset = self.filter(
+                ~Q(peoplecode='NONE'), 
+                client_id = S['client_id']).select_related(*related).values(*fields)
+        else:
+            qset = self.filter(
+                ~Q(peoplecode='NONE'), 
+                client_id = S['client_id'],
+                bu_id__in = S['assignedsites']
+            ).select_related(*related).values(*fields)
+        return qset or self.none()
+
 
 
 class CapabilityManager(models.Manager):
@@ -342,7 +356,6 @@ class PgroupManager(models.Manager):
             enable = True,
             identifier__tacode = 'SITEGROUP',
             client_id = S['client_id'],
-            bu_id = S['bu_id']
         ).select_related('identifier').values(*fields).order_by(dir)
 
         total = qset.count()
@@ -357,7 +370,6 @@ class PgroupManager(models.Manager):
     def get_assignedsitegroup_forclient(self, clientid, request):
         qset = self.filter(
             client_id = clientid,
-            bu_id = request.session['bu_id'],
             identifier__tacode = 'SITEGROUP'
             ).values_list('id', 'groupname')
         return qset or self.none()

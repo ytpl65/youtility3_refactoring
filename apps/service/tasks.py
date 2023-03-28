@@ -3,7 +3,7 @@ from apps.service import serializers as sz
 from apps.attendance.models import PeopleEventlog
 from apps.activity.models import (Jobneed, JobneedDetails, Attachment, Asset, DeviceEventlog)
 from apps.y_helpdesk.models import Ticket, EscalationMatrix
-from apps.onboarding.models import TypeAssist
+from apps.onboarding.models import TypeAssist, Bt
 from apps.work_order_management.models import Wom, WomDetails
 from apps.peoples.models import People
 from apps.attendance.models import Tracking
@@ -107,6 +107,7 @@ def get_model_or_form(tablename):
     if tablename == 'typeassist': return TypeAssist
     if tablename == 'wom': return Wom
     if tablename == 'womdetails': return WomDetails
+    if tablename == 'business unit': return Bt
 
 
 def get_or_create_dir(path):

@@ -1,0 +1,94 @@
+{% extends "base_form.html" %}
+
+<!---- BEGIN PAGE TITLE ---->
+{% block title %}
+Report Form
+{% endblock title %}
+<!---- END PAGE TITLE ----->
+
+{% block extra_css %}
+{{ form.media.css }}
+{% endblock extra_css %}
+
+
+{% block form_title %}
+Report Form
+{% endblock form_title %}
+
+<!-------------------------- BEGIN PAGE BREADCUMB ----------------------->
+{% block pagebreadcumb %}
+{{ super() }}
+<li class="breadcrumb-item pe-3"><a href="javascript:void(0)" class="pe-3">Report Form</a></li>
+{% endblock pagebreadcumb %}
+<!-------------------------- END PAGE BREADCUMB ------------------------->
+
+
+{% block form %}
+<form action="" id="report_form">
+  <!-------------------------- CSRF MIDDLEWARE TOKEN --------------------->
+  <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
+  <div class="row">
+    <div class="col-sm-12 col-md-6">
+      <div class="input-group mb-3">
+        <div class="col-md-4">
+          {{ form.report_name.label_tag() }}
+        </div>
+        <div class="col-md-8">
+          {{ form.report_name }}
+        </div>
+      </div>
+      <div class="input-group mb-3">
+        <div class="col-md-4">
+          {{ form.site.label_tag() }}
+        </div>
+        <div class="col-md-8">
+          {{ form.site }}
+        </div>
+      </div>
+      <div class="input-group mb-3">
+        <div class="col-md-4">
+          {{ form.fromdate.label_tag() }}
+        </div>
+        <div class="col-md-8">
+          {{ form.fromdate }}
+        </div>
+      </div>
+      <div class="input-group mb-3">
+        <div class="col-md-4">
+          {{ form.uptodate.label_tag() }}
+        </div>
+        <div class="col-md-8">
+          {{ form.uptodate }}
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="form-actions">
+    <button type="submit" form="report_form" class="btn btn-sm btn-primary btn-hover-scale">
+
+      Submit  &nbsp;<i class="fas fa-cloud-upload-alt"></i>
+    </button>
+    
+    <button type="button"  id="btn_clear"
+        class="btn btn-sm btn-secondary btn-hover-scale">
+        Clear&nbsp;<i class="fas fa-times"></i>
+    </button>
+
+</div>
+</form>
+{% endblock form %}
+
+{% block extra_scripts %}
+{{ form.media.js }}
+
+<script>
+  const urlname = "{{ url('reports:exportreports') }}"
+
+  $(document).ready(() => {
+    $("#btn_clear").click(() => {
+      location.href = `${urlname}?template=true`
+    })
+  })
+</script>
+
+{% endblock extra_scripts %}

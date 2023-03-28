@@ -10,6 +10,7 @@ from apps.core  import utils
 from apps.peoples import utils as putils
 import psycopg2.errors as pg_errs
 import logging
+from django.utils import timezone
 logger = logging.getLogger('__main__')
 log = logger
 # Create your views here.
@@ -180,11 +181,10 @@ class WorkOrderView(LoginRequiredMixin, View):
             workorder.uuid = request.POST.get('uuid')
             workorder.other_data['created_at'] = timezone.now().strftime('%d-%b-%Y %H:%M:%S')
             workorder.other_data['token'] = secrets.token_urlsafe(16)
-            if not workorder.ismailsent:
-                notify_wo_creation(id=workorder.id)
-                workorder.ismailsent = True
             workorder = putils.save_userinfo(
                 workorder, request.user, request.session, create = create)
+            if not workorder.ismailsent:
+                notify_wo_creation(id=workorder.id)
             logger.info("workorder form saved")
             data = {'msg': f"{workorder.id}",
             'row': Wom.objects.values(*self.params['fields']).get(id = workorder.id), 'pk':workorder.id}
@@ -209,6 +209,8 @@ class ReplyWorkOrder(View):
             if  R['action'] == 'accepted' and R['womid']:
                 wo = Wom.objects.get(id = R['womid'])
                 wo.workstatus = Wom.Workstatus.INPROGRESS
+                log.info("work order accepted by vendor")
+                wo.starttime = timezone.now()
                 wo.save()
                 cxt = {'accepted':True, 'wo':wo}
                 return render(request, self.params['template'], context=cxt)
@@ -217,6 +219,7 @@ class ReplyWorkOrder(View):
                 wo = Wom.objects.get(id = R['womid'])
                 wo.isdenied = True
                 wo.workstatus = Wom.Workstatus.CANCELLED
+                log.info(f'work order cancelled/denied by vendor')
                 wo.save()
                 cxt = {'declined':True, 'wo':wo}
                 return render(request, self.params['template'], context=cxt)
@@ -224,13 +227,17 @@ class ReplyWorkOrder(View):
             if R['action'] == 'request_for_submit_wod':
                 #check for work is already inprogress
                 wo = Wom.objects.get(id = R['womid'])
+                log.info(f'wo status {wo.workstatus}')
                 if wo.workstatus == Wom.Workstatus.INPROGRESS:
-                    wo.workstatus = Wom.Workstatus.COMPLETED
-                    wo.save()
-                    questions =  QuestionSetBelonging.objects.filter(qset_id = wo.qset_id).select_related('question')
+                    questions = QuestionSetBelonging.objects.filter(qset_id = wo.qset_id).select_related('question')
                     cxt = {'qsetname':wo.qset.qsetname, 'qsb':questions, 'womid':wo.id}
                     return render(request, self.params['template_emailform'], cxt)
-                return HttpResponse("Sorry the work is yet to be completed")
+                elif wo.workstatus == Wom.Workstatus.CANCELLED:
+                    return HttpResponse("Sorry the work order is cancelled already!")
+                elif wo.workstatus == Wom.Workstatus.ASSIGNED:
+                    return HttpResponse("Please accept the work order and start the work!")
+                elif wo.workstatus == Wom.Workstatus.COMPLETED:
+                    return HttpResponse("The work order are already submitted!")
                 
         except wo['model'].DoesNotExist as e:
                 return HttpResponse("The page you are looking for is not found")
@@ -246,17 +253,33 @@ class ReplyWorkOrder(View):
                     wo.save()
                     return render(request, self.params['template'])
             if R.get('action') == 'save_work_order_details':
-                self.save_work_order_details(R, wo)
+                self.save_work_order_details(R, wo, request)
+                log.info('form saved successfully')
                 return render(request, self.params['template_emailform'], {'wod_saved':True})
-        except wo['model'].DoesNotExist as e:
+        except self.params['model'].DoesNotExist as e:
             return HttpResponse("The page you are looking for is not found")
     
-    def save_work_order_details(self, R, wo):
-        for k, v in R.items():
+    def save_work_order_details(self, R, wo, request):
+        log.info(f'form post data {R}')
+        post_data = R.copy()
+        post_data.update(request.FILES)
+        log.info(f'postData = {post_data}')
+        for k, v in post_data.items():
+            log.debug(f'form name, value {k}, {v}')
             if k not in ['ctzoffset', 'womid', 'action', 'csrfmiddlewaretoken'] and '_' in k:
                 qsb_id = k.split('_')[0]
                 qsb_obj = QuestionSetBelonging.objects.filter(id = qsb_id).select_related('question').first()
-                WomDetails.objects.create(
+                if qsb_obj.answertype in ['CHECKBOX', 'DROPDOWN']:
+                    alerts = v in qsb_obj.alerton
+                elif qsb_obj.answertype in  ['NUMERIC'] and len(qsb_obj.alerton) > 0:
+                    alerton = qsb_obj.alerton.replace('>', '').replace('<', '').split(',')
+                    if len(alerton) > 1:
+                        _min, _max = alerton[0], alerton[1]
+                        alerts = float(v) < float(_min) or float(v) > float(_max)
+                else:
+                    alerts = False
+                
+                wod = WomDetails.objects.create(
                     seqno       = qsb_obj.seqno,
                     question_id = qsb_obj.question_id,
                     answertype  = qsb_obj.answertype,
@@ -268,12 +291,32 @@ class ReplyWorkOrder(View):
                     alerton     = qsb_obj.alerton,
                     ismandatory = qsb_obj.ismandatory,
                     wom_id      = wo.id,
-                    alerts      = qsb_obj.alerts,
+                    alerts      = alerts,
                     client_id   = qsb_obj.client_id,
                     bu_id       = qsb_obj.bu_id,
                     cuser_id    = 1,
                     muser_id    = 1,
                 )
-            
+                if qsb_obj.isavpt and request.FILES:
+                    isuploaded, filename, filepath = utils.upload_vendor_file(request.FILES[k], womid = wo.id)
+                    att = self.create_att_record(request.FILES[k], filename, filepath, wod)
+                    log.info(f'Is file uploaded {isuploaded} and attachment is created {att.id}')
+        wo.workstatus = Wom.Workstatus.COMPLETED
+        wo.endtime = timezone.now()
+        log.info('work order status changed to completed')
+        wo.save()
         
-        
+    
+    def create_att_record(self, file, filename, filepath, wod):
+        from apps.activity.models import Attachment
+        from apps.onboarding.models import TypeAssist
+        ownername = TypeAssist.objects.filter(tacode = 'WOMDETAILS').first()
+        return Attachment.objects.create(
+            filepath = filepath, filename = filename, 
+            size = file.size, owner = wod.uuid,
+            bu_id = wod.bu_id,
+            cuser_id = 1, muser_id = 1, cdtz = timezone.now(),
+            mdtz = timezone.now(), ctzoffset = wod.ctzoffset, 
+            attachmenttype = Attachment.AttachmentType.ATMT,
+            ownername_id = ownername.id, 
+        )

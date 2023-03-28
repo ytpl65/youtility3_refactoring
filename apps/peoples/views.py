@@ -846,12 +846,7 @@ class PeopleView(LoginRequiredMixin, View):
         # return cap_list data
         if R.get('action', None) == 'list' or R.get('search_term'):
 
-            objs = self.params['model'].objects.select_related(
-                *self.params['related']).filter(
-                    ~Q(peoplecode='NONE'), 
-                    client_id = request.session['client_id'],
-                    bu_id = request.session['bu_id']
-            ).values(*self.params['fields'])
+            objs = self.params['model'].objects.people_list_view(request, self.params['fields'], self.params['related'])
             return rp.JsonResponse(data = {'data':list(objs)}, status = 200)
 
         # return cap_form empty

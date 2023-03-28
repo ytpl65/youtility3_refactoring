@@ -60,7 +60,7 @@ Client
 
 <!-------------- BEGIN FORM ------------------->
 {% block form %}
-<form action="" method='post' id="id_clientform">
+<form action="" method='post' id="id_clientform" enctype="multipart/form-data" >
     <!-------------------------- CSRF MIDDLEWARE TOKEN --------------------->
     <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
     <input type="hidden" name="{{ clientform.ctzoffset.name }}" id = "{{ clientform.ctzoffset.auto_id }}" value="-1">
@@ -124,7 +124,7 @@ Client
             </div>
         </div>
 
-        <div class="col-md-4 offset-md-2 form-check form-switch form-check-solid">
+        <div class="col-md-2 offset-md-1 form-check form-switch form-check-solid">
             <div class="input-group mb-6">
                 <label for="{{ clientform.gpsenable.id_for_label }}" 
                 class="form-check-label bool text-sm-right">{{ clientform.gpsenable }}&nbsp;&nbsp;{{ clientform.gpsenable.label }}</label>
@@ -154,6 +154,13 @@ Client
                 class="form-check-label bool text-sm-right">{{ clientprefsform.ispermitneeded }}&nbsp;&nbsp;{{ clientprefsform.ispermitneeded.label }}</label>
             </div>
         </div>
+        <div class="col-sm-12 col-md-2">
+            {{ clientform.clientlogo.label_tag() }}
+            <div class="h-200px w-200px dropzone" id="dropzone_file">
+
+            </div>
+        </div>
+
     </div>
     <hr>
 </form>
@@ -499,6 +506,8 @@ Client
             }
         })
 
+        
+
         adminsEditor.on('open', function(e, mode, action){
             $(".DTE_Field").addClass('p-1') // add required classes
         })
@@ -640,6 +649,22 @@ Client
             }
         })
 
+        setUpDropzone({
+            foldertype:"client",
+            ownername:'Business Unit',
+            attachmenttype:"ATTACHMENT",
+            uploadUrl:"{{ url('activity:attachments') }}",
+            csrftoken:  "{{ csrf_token }}",
+            ctzoffset:$("#id_ctzoffset").val(),
+            formId:"#dropzone_file", 
+            peopleid: "{{ request.user.id }}",
+            ownerid:"{{ ownerid }}",
+            create_or_update:'{{ clientform.instance.id }}' == 'None' ? "create" : "update",
+            media_url: "{{ MEDIA_URL }}",
+            width:300,
+            height:400,
+        })
+
         
         //datatable  list of peoples
         tabListAdmins= $("#tabAdminUsers").DataTable({
@@ -685,7 +710,7 @@ Client
             var form = $(this);
             const params   = { url: $(form).attr("action"), modal: false }
             const id = "{{ clientform.instance.pk }}" //form instance id
-            var   payLoad  = {formData:$("#id_clientform").serialize(), csrfmiddlewaretoken: '{{ csrf_token }}'} 
+            var   payLoad  = {formData:$("#id_clientform").serialize(), csrfmiddlewaretoken: '{{ csrf_token }}', 'uuid':"{{ ownerid }}" } 
             if(id != 'None'){
                 var newPayLoad = {...payLoad, 'pk':id}
                 payLoad = newPayLoad

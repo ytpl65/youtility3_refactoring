@@ -337,35 +337,36 @@
         </div>
     </div>
 
-    <!---WORK PERMIT--->
-    <div class="menu-item" id="WORKPERMIT" style="display:none;">
-        <a class="menu-link" href="{{ url('onboarding:rp_dashboard') }}">
+        <div data-kt-menu-trigger="click" id="WOM" class="menu-item menu-accordion" style="display:none;">
+        <span class="menu-link">
             <span class="menu-icon">
                 <!--begin::Svg Icon | path: icons/duotone/Communication/Group.svg-->
                 <span class="svg-icon svg-icon-2">
-                    <span class="material-icons">
-                        badge
-                    </span>
+                    <span class="material-icons">receipt_long</span>
                 </span>
                 <!--end::Svg Icon-->
             </span>
-            <span class="menu-title">Work Permit</span>
-        </a>
-    </div>
-    <!---WORK ORDER--->
-    <div class="menu-item" id="WORKORDER" style="display:none;">
-        <a class="menu-link" href="{{ url('work_order_management:workorder') }}?template=true">
-            <span class="menu-icon">
-                <!--begin::Svg Icon | path: icons/duotone/Communication/Group.svg-->
-                <span class="svg-icon svg-icon-2">
-                    <span class="material-icons">
-                        receipt_long
+            <span class="menu-title">Work Order Management</span>
+            <span class="menu-arrow text-white mb-1"></span>
+        </span>
+        <div class="menu-sub menu-sub-accordion" kt-hidden-height="116" style="display: none; overflow: hidden;">
+            <div class="menu-item" id="AD_TYPEASSIST">
+                <a class="menu-link" href="{{ url('work_order_management:workorder') }}?template=true">
+                    <span class="menu-bullet">
+                        <span class="bullet bullet-dot"></span>
                     </span>
-                </span>
-                <!--end::Svg Icon-->
-            </span>
-            <span class="menu-title">Work Order</span>
-        </a>
+                    <span class="menu-title">Work Order</span>
+                </a>
+            </div>
+            <div class="menu-item" id="AD_IMPORT">
+                <a class="menu-link" href="{{ url('onboarding:rp_dashboard') }}">
+                    <span class="menu-bullet">
+                        <span class="bullet bullet-dot"></span>
+                    </span>
+                    <span class="menu-title">Work Permit</span>
+                </a>
+            </div>
+        </div>
     </div>
 
 
@@ -398,14 +399,14 @@
                     <span class="menu-title">Import</span>
                 </a>
             </div>
-            {# <div class="menu-item" id="EXPORT">
-                <a class="menu-link" href="{{ url('activity:questionset') }}?template=true&type=QUESTIONSET">
+            <div class="menu-item" id="AD_REPORTS">
+                <a class="menu-link" href="{{ url('reports:exportreports') }}?template=true">
                     <span class="menu-bullet">
                         <span class="bullet bullet-dot"></span>
                     </span>
-                    <span class="menu-title">Export</span>
+                    <span class="menu-title">Reports</span>
                 </a>
-            </div> #}
+            </div>
         </div>
     </div>
 
