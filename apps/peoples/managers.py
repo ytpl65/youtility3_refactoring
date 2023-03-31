@@ -297,6 +297,7 @@ class PgblngManager(models.Manager):
 
             buids = qset.values_list('buid', flat=True)
             peopleqset = peopleqset.values('buname', 'bucode', 'buid')
+            buids = buids.union(peopleqset.values_list('buid', flat=True))
             qset = qset.union(peopleqset)
             
             if qset and makechoice:

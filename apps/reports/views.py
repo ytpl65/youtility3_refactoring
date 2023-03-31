@@ -13,6 +13,7 @@ from apps.core import utils
 from apps.activity.forms import QsetBelongingForm
 from apps.reports import forms as rp_forms
 import logging
+import os
 log = logging.getLogger('__main__')
 # Create your views here.
 
@@ -503,14 +504,13 @@ class ConfigWorkPermitReportTemplate(LoginRequiredMixin, View):
                 return rp.JsonResponse({'parent_id':template.id}, status=200)
         except Exception:
             return utils.handle_Exception(request)
-        
+  
 
 
 class ExportReports(LoginRequiredMixin, View):
     P = {
         'template_form':"reports/report_export_form.html",
         'form':rp_forms.ReportForm
-        
     }
     
     def get(self, request, *args, **kwargs):
@@ -518,3 +518,59 @@ class ExportReports(LoginRequiredMixin, View):
         if R.get('template'):
             cxt = {'form':P['form'](request=request)}
             return render(request, P['template_form'], context=cxt)
+        
+    def post(self, request, *args, **kwargs):
+        R,P = request.POST, self.P
+        data = QueryDict(R['formData'])
+        form = P['form'](data = data, request=request)
+        form_data = form.data
+        data = self.load_the_report_from_jasper(form_data, request)
+        return rp.JsonResponse(status=200)
+        
+
+            
+
+    def load_the_report_from_jasper(self, form_data, request):
+        import tempfile
+        from pyreportjasper import PyReportJasper
+        from django.conf import settings
+        from platform import python_version
+        
+        log.info(f'inputs are as follows {form_data = } {request=}')
+        report_map = {
+            'TASK_SUMMARY':['DAILYTASKSUMMARYALL.jasper', 'DAILYTASKSUMMARYALL.jrxml']
+        }
+        S = request.session
+        REPORTS_DIR = os.path.join(os.path.abspath('apps/reports/jasper_reports'))
+        log.info(f'report dir {REPORTS_DIR = }')
+        input_file = os.path.join(REPORTS_DIR, report_map.get(form_data.get('report_name'))[1])
+        output_file = os.path.join(REPORTS_DIR, 'report')
+        log.info(f'{input_file = } {output_file = }')
+        pyreportjasper = PyReportJasper()
+        conn = {
+            'driver':'postgres',
+            'username':settings.DATABASES['default']['USER'],
+            'password':settings.DATABASES['default']['PASSWORD'],
+            'host':settings.DATABASES['default']['HOST'],
+            'database':settings.DATABASES['default']['NAME'],
+            'schema':'public',
+            'port':5432,
+            'jdbc_dir':settings.JDBC_DRIVER_PATH
+            
+        }
+        log.info(f'connection config {conn = }')
+        pyreportjasper.config(
+            input_file,
+            output_file,
+            output_formats=['pdf'],
+            db_connection=conn,
+            locale='en_US',
+            parameters={
+                'siteid':str(S['bu_id']), 'UserTimeZone':"Asia/Kolkata",
+                'logo_path':"/var/tmp/youtility4_media/master/client30_Mar_2023_214429.png",
+                'clientcode':S['clientcode'], 'clientid':str(S['client_id']), 'python_version':python_version()}
+        )
+        
+        pyreportjasper.process_report()
+        
+        

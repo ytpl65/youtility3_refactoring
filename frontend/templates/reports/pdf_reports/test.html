@@ -1,0 +1,64 @@
+{% extends "report_base.html" %}
+
+
+{% block client_logo %}
+<img src="{{ static('assets/media/images/logo-transparent.png') }}" alt="">
+{% endblock client_logo %}
+
+
+{% block client_details %}
+<p>{{ client_name }}</p>
+{% endblock client_details %}
+
+
+{% block app_logo %}
+<img src="{{ static('assets/media/images/logo.png') }}" alt="">
+{% endblock app_logo %}
+
+
+{% block table %}
+<table>
+<thead>
+    <tr>
+     <th>id</th>
+     <th>cdtz</th>
+     <th>mdtz</th>
+     <th>jobdesc</th>
+     <th>plandatetime</th>
+     <th>expirydatetime</th>
+     <th>gracetime</th>
+     <th>jobstatus</th>
+     <th>jobtype</th>
+     <th>priority</th>
+     <th>identifier</th>
+     <th>alerts</th>
+     <th>ismailsent</th>
+    </tr>
+</thead>
+
+<tbody>
+{% for row in rows %}
+<tr>
+    <td>{{ row['id'] }}</td>
+    <td>{{ row['cdtz'] }}</td>
+    <td>{{ row['mdtz'] }}</td>
+    <td>{{ row['jobdesc'] }}</td>
+    <td>{{ row['plandatetime'] }}</td>
+    <td>{{ row['expirydatetime'] }}</td>
+    <td>{{ row['gracetime'] }}</td>
+    <td>{{ row['jobstatus'] }}</td>
+    <td>{{ row['jobtype'] }}</td>
+    <td>{{ row['priority'] }}</td>
+    <td>{{ row['identifier'] }}</td>
+    <td>{{ row['alerts'] }}</td>
+    <td>{{ row['ismailsent'] }}</td>
+</tr>
+{% endfor %}
+</tbody>
+
+</table>
+
+
+
+
+{% endblock table %}

@@ -5,6 +5,7 @@ from apps.peoples import models as pm
 from apps.core import utils
 from django_select2 import forms as s2forms
 from django.db.models import Q
+from datetime import datetime, timedelta
 
 class MasterReportTemplate(forms.ModelForm):
     required_css_class = "required"
@@ -75,11 +76,29 @@ class ReportBuilderForm(forms.Form):
 
 class ReportForm(forms.Form):
     required_css_class = "required"
+    report_templates = [
+        ('', 'Select Report'),
+        ('TEST', 'Test' ),
+        ('TASK_SUMMARY', 'Task Summary'),
+        ('TASK_DETAILS', 'Task Details'),
+        ('TICKETLIST', 'Ticket List'),
+    ]
+    download_or_send_options = [
+        ('DOWNLOAD', 'Download'),
+        ('SEND', 'Send'),
+    ]
     
-    report_name = forms.ChoiceField(label='Report Name', required=True)
+    
+    
+    report_name = forms.ChoiceField(label='Report Name', required=True, choices=report_templates)
     site        = forms.ChoiceField(label='Site', required = True)
     fromdate    = forms.DateField(label='From Date', required=True)
     uptodate    = forms.DateField(label='To Date', required=True)
+    xls         = forms.BooleanField(label ='.xls', required=False)
+    xlsx        = forms.BooleanField(label ='.xlsx', required=False)
+    pdf         = forms.BooleanField(label ='.pdf', required=False, initial=True)
+    download    = forms.BooleanField(initial=True,label="Download", required=False)
+    email       = forms.BooleanField(initial=False,label="Email", required=False)
 
     
     def __init__(self, *args, **kwargs):
@@ -87,5 +106,20 @@ class ReportForm(forms.Form):
         S = self.request.session
         super().__init__(*args, **kwargs)
         self.fields['site'].choices = pm.Pgbelonging.objects.get_assigned_sites_to_people(S.get('_auth_user_id'), True)
-        self.fields['site'].initial = ""
+        self.fields['fromdate'].initial = self.get_default_range_of_dates()[0]
+        self.fields['uptodate'].initial = self.get_default_range_of_dates()[1]
         utils.initailize_form_fields(self)
+        
+    def get_default_range_of_dates(self):
+        today = datetime.now().date()
+        first_day_of_month = today.replace(day=1)
+        last_day_of_last_month = first_day_of_month - timedelta(days=1)
+        first_day_of_last_month = last_day_of_last_month.replace(day=1)
+        return first_day_of_last_month, last_day_of_last_month
+
+    def clean(self):
+        super().clean()
+        
+        if self.cleaned_data.get('pdf'):
+            self.cleaned_data['pdf'] = 'pdf'
+        #if self.cleaned_data.get('xls')

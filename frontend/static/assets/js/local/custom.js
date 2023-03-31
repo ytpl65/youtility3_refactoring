@@ -246,7 +246,8 @@ function handle_rendering_of_menus(session) {
     companysetup:"#COMPANYSETUP",
     sitesurvey:"#SITESURVEY",
     helpdesk:"#HELPDESK",
-    scheduling:"#SCHEDULING"
+    scheduling:"#SCHEDULING",
+    wom:"#WOM"
   };
   if (session["is_superadmin"]) {
     //show every item if user is superadmin
@@ -281,6 +282,11 @@ function handle_rendering_of_menus(session) {
         $(`${exceptions["onboarding"]} .menu-item`).hide()
         $("#COMPANYSETUP").show()
       }
+      if (code.includes("WOM_") && $(exceptions["wom"]).is(':hidden')) {
+        $(exceptions["wom"]).show();
+        $(`${exceptions["wom"]} .menu-item`).hide()
+      }
+
       
       /*if (code.includes("CS_") && $(exceptions["companysetup"]).is(':hidden')) {
         $(exceptions["companysetup"]).show();

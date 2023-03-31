@@ -1,0 +1,409 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="task_summary_report" pageWidth="1224" pageHeight="864" orientation="Landscape" whenNoDataType="NoDataSection" columnWidth="1184" leftMargin="20" rightMargin="20" topMargin="20" bottomMargin="20">
+	<property name="ireport.zoom" value="0.75"/>
+	<property name="ireport.x" value="0"/>
+	<property name="ireport.y" value="0"/>
+	<property name="ireport.jasperserver.reportUnit" value="/reports/fmsschedularreport/dell/task_summary_dell_all"/>
+	<property name="ireport.jasperserver.url" value="http://wso2.youtility.in:8080/youtility/services/repository"/>
+	<style name="Crosstab Data Text" hAlign="Center"/>
+	<parameter name="siteid" class="java.lang.String">
+		<defaultValueExpression><![CDATA[]]></defaultValueExpression>
+	</parameter>
+	<parameter name="siteid_value" class="java.lang.String" isForPrompting="false">
+		<defaultValueExpression><![CDATA[$P{siteid}!=null ? $P{siteid}.replaceAll("(\\w+)","'$1'"):""]]></defaultValueExpression>
+	</parameter>
+	<parameter name="userTimeZone" class="java.lang.String">
+		<defaultValueExpression><![CDATA["Asia/Kolkata"]]></defaultValueExpression>
+	</parameter>
+	<parameter name="userTimeZone_Value" class="java.lang.String" isForPrompting="false">
+		<defaultValueExpression><![CDATA[$P{userTimeZone}!=null ? $P{userTimeZone}:"Asia/Kolkata"]]></defaultValueExpression>
+	</parameter>
+	<parameter name="logo_path" class="java.lang.String"/>
+	<parameter name="clientcode" class="java.lang.String"/>
+	<parameter name="clientid" class="java.lang.String"/>
+	<queryString>
+		<![CDATA[select --z.*,
+sum(z.scheduled_task) over (partition by z.client) as total_scheduled_task,
+sum(z.task_performed) over (partition by z.client) as total_task_performed,
+sum(z.not_done_accepted) over (partition by z.client) as total_not_done_accepted,
+sum(z.task_not_performed) over (partition by z.client) as total_task_not_performed,
+sum(z.autoclose) over (partition by z.client) as total_autoclose,
+round((avg(COALESCE(z.percentage, 0)) over (partition by z.client)),2) as total_percentage,
+COALESCE(z.percentage,0) as percentage,
+z.task_date,
+z.client,
+z.last_using_date,
+z.not_done_accepted,
+z.autoclose,
+z.task_not_performed,
+z.task_performed,
+z.scheduled_task,
+z.is_task_scheduled,
+z.site,
+z.id,
+z.slno
+from
+(
+select
+	row_number() over (order by x.site) as slno,
+	x.id,
+	x.site,
+	case when (x.scheduled_task>0) then 'Yes' else 'No' end as "is_task_scheduled",
+	COALESCE(x.scheduled_task, 0) scheduled_task,
+	COALESCE(x.task_performed, 0) task_performed,
+	((COALESCE(x.scheduled_task, 0)-(COALESCE(x.task_performed, 0)+COALESCE(x.nd_accepted,0)))-COALESCE(x.autoclose,0)) as task_not_performed,
+	COALESCE(x.autoclose,0) as autoclose,
+	COALESCE(x.nd_accepted,0) as not_done_accepted,
+	x.last_using_date,
+	x.client as client,
+	x.datefor as task_date,
+	round( ( (COALESCE(x.task_performed, 0)::numeric + COALESCE(x.nd_accepted,0)::numeric )/
+	nullif(COALESCE(x.scheduled_task, 0)::numeric - (COALESCE(x.scheduled_task, 0)::numeric -
+	(COALESCE(x.task_performed, 0)::numeric + COALESCE(x.nd_accepted,0)::numeric + COALESCE(x.autoclose,0)::numeric)),0))*100, 2)::numeric as percentage
+from(
+select
+	bu.id,
+	(select buname from bt bu where id::text=$P{clientid}) as client,
+	bu.buname as site,
+	jobneed.datefor,
+	count(jobneed.id) as tot_task,
+	count(case when jobneed.jobtype ilike '%SCHEDULE%' then jobneed.jobtype end) as scheduled_task,
+	count(case when jobneed.jobtype ilike '%ADHOC%' then jobneed.jobtype end) as tot_adhoc,
+	count(case when (jobneed.jobtype ilike '%SCHEDULE%' AND jobneed.jobstatus ilike '%ASSIGNED%') then jobneed.jobstatus end) as tot_pending,
+	count(case when (jobneed.jobtype ilike '%SCHEDULE%' AND jobneed.jobstatus ilike '%AUTOCLOSED%') then jobneed.jobstatus end) as autoclose,
+	count(case when (jobneed.jobtype ilike '%SCHEDULE%' AND jobneed.jobstatus ilike '%COMPLETED%') then jobneed.jobstatus end) as task_performed,
+	count(case when (jobneed.jobtype ilike '%SCHEDULE%' AND jobneed.jobstatus ilike '%NOTDONEACCEPTED%') then jobneed.jobstatus end) as nd_accepted,
+	max(last_using_date) as last_using_date
+from (select id, (jobneed.plandatetime AT TIME ZONE '$P!{userTimeZone_Value}')::DATE as datefor, jobneed.jobtype, jobneed.jobstatus, bu_id from jobneed)jobneed
+inner join bt bu on bu.id=jobneed.bu_id
+left outer join (select pre.bu_id, max(pre.endtime AT TIME ZONE '$P!{userTimeZone_Value}') last_using_date
+				 from jobneed pre where 1=1 and pre.endtime::date<=cast(DATE 'yesterday' as date)
+		group by pre.bu_id) last_used on last_used.bu_id = jobneed.bu_id
+where
+	jobneed.id<> -1 and bu.id<>-1
+	and jobneed.datefor = ((now()  AT TIME ZONE '$P!{userTimeZone_Value}')-interval '1 day')::DATE
+	and jobneed.bu_id::text in ( $P!{siteid_value} )
+group by bu.id, bu.buname, jobneed.datefor
+order by bu.buname
+)x order by x.site) z]]>
+	</queryString>
+	<field name="slno" class="java.lang.Long"/>
+	<field name="id" class="java.lang.Long"/>
+	<field name="site" class="java.lang.String"/>
+	<field name="is_task_scheduled" class="java.lang.String"/>
+	<field name="scheduled_task" class="java.lang.Long"/>
+	<field name="task_performed" class="java.lang.Long"/>
+	<field name="task_not_performed" class="java.lang.Long"/>
+	<field name="autoclose" class="java.lang.Long"/>
+	<field name="not_done_accepted" class="java.lang.Long"/>
+	<field name="last_using_date" class="java.sql.Timestamp"/>
+	<field name="client" class="java.lang.String"/>
+	<field name="task_date" class="java.sql.Date"/>
+	<field name="percentage" class="java.math.BigDecimal"/>
+	<field name="total_scheduled_task" class="java.math.BigDecimal"/>
+	<field name="total_task_performed" class="java.math.BigDecimal"/>
+	<field name="total_not_done_accepted" class="java.math.BigDecimal"/>
+	<field name="total_task_not_performed" class="java.math.BigDecimal"/>
+	<field name="total_autoclose" class="java.math.BigDecimal"/>
+	<field name="total_percentage" class="java.math.BigDecimal"/>
+	<group name="client">
+		<groupExpression><![CDATA[$F{client}]]></groupExpression>
+		<groupFooter>
+			<band height="39">
+				<textField>
+					<reportElement x="321" y="7" width="139" height="29" forecolor="#000000"/>
+					<textElement textAlignment="Center" verticalAlignment="Middle">
+						<font size="14" isBold="true"/>
+					</textElement>
+					<textFieldExpression><![CDATA[$F{total_scheduled_task}]]></textFieldExpression>
+				</textField>
+				<textField>
+					<reportElement x="460" y="7" width="125" height="29" forecolor="#000000"/>
+					<textElement textAlignment="Center" verticalAlignment="Middle">
+						<font size="14" isBold="true"/>
+					</textElement>
+					<textFieldExpression><![CDATA[$F{total_task_performed}]]></textFieldExpression>
+				</textField>
+				<textField>
+					<reportElement x="715" y="7" width="107" height="29" forecolor="#000000"/>
+					<textElement textAlignment="Center" verticalAlignment="Middle">
+						<font size="14" isBold="true"/>
+					</textElement>
+					<textFieldExpression><![CDATA[$F{total_task_not_performed}]]></textFieldExpression>
+				</textField>
+				<textField isBlankWhenNull="true">
+					<reportElement x="917" y="7" width="123" height="29" forecolor="#000000"/>
+					<textElement textAlignment="Center" verticalAlignment="Middle">
+						<font size="14" isBold="true"/>
+					</textElement>
+					<textFieldExpression><![CDATA[$F{total_percentage}+" %"]]></textFieldExpression>
+				</textField>
+				<textField>
+					<reportElement x="822" y="7" width="95" height="29" forecolor="#000000"/>
+					<textElement textAlignment="Center" verticalAlignment="Middle">
+						<font size="14" isBold="true"/>
+					</textElement>
+					<textFieldExpression><![CDATA[$F{total_autoclose}]]></textFieldExpression>
+				</textField>
+				<staticText>
+					<reportElement x="0" y="7" width="321" height="29" forecolor="#000000"/>
+					<textElement textAlignment="Right" verticalAlignment="Middle">
+						<font size="14" isBold="true"/>
+					</textElement>
+					<text><![CDATA[TOTAL :  ]]></text>
+				</staticText>
+				<line>
+					<reportElement x="0" y="4" width="1184" height="1"/>
+					<graphicElement>
+						<pen lineWidth="0.5"/>
+					</graphicElement>
+				</line>
+				<line>
+					<reportElement x="0" y="38" width="1184" height="1"/>
+					<graphicElement>
+						<pen lineWidth="0.5"/>
+					</graphicElement>
+				</line>
+				<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+					<reportElement x="585" y="7" width="130" height="29"/>
+					<textElement textAlignment="Center" verticalAlignment="Middle">
+						<font size="14" isBold="true"/>
+					</textElement>
+					<textFieldExpression><![CDATA[$F{total_not_done_accepted}]]></textFieldExpression>
+				</textField>
+			</band>
+		</groupFooter>
+	</group>
+	<background>
+		<band splitType="Stretch"/>
+	</background>
+	<title>
+		<band height="57" splitType="Stretch">
+			<textField>
+				<reportElement x="91" y="0" width="934" height="35"/>
+				<textElement textAlignment="Center" verticalAlignment="Top">
+					<font size="22" isBold="true"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{client}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="91" y="35" width="557" height="22" forecolor="#7D7171"/>
+				<textElement textAlignment="Right" verticalAlignment="Middle" markup="none">
+					<font size="12" isBold="true"/>
+				</textElement>
+				<textFieldExpression><![CDATA["Task Summary Report for the Date ::  "]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true" pattern="dd-MMM-yyyy" isBlankWhenNull="true">
+				<reportElement x="648" y="35" width="377" height="22" forecolor="#7D7171"/>
+				<textElement verticalAlignment="Middle">
+					<font size="12" isBold="true"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{task_date}]]></textFieldExpression>
+			</textField>
+			<image onErrorType="Blank">
+				<reportElement x="0" y="0" width="91" height="57"/>
+				<imageExpression><![CDATA[$P{logo_path}+$P{clientcode}+".png"]]></imageExpression>
+			</image>
+			<image onErrorType="Blank">
+				<reportElement x="1025" y="0" width="159" height="57"/>
+				<imageExpression><![CDATA[$P{logo_path}+"YOUTILITY.png"]]></imageExpression>
+			</image>
+		</band>
+	</title>
+	<columnHeader>
+		<band height="45">
+			<staticText>
+				<reportElement stretchType="RelativeToBandHeight" mode="Opaque" x="0" y="0" width="39" height="45" backcolor="#E0E0E0"/>
+				<box topPadding="8"/>
+				<textElement verticalAlignment="Top">
+					<font size="12" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Sl.No]]></text>
+			</staticText>
+			<staticText>
+				<reportElement stretchType="RelativeToBandHeight" mode="Opaque" x="39" y="0" width="177" height="45" backcolor="#E0E0E0"/>
+				<box topPadding="8"/>
+				<textElement verticalAlignment="Top">
+					<font size="12" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Site]]></text>
+			</staticText>
+			<staticText>
+				<reportElement stretchType="RelativeToBandHeight" mode="Opaque" x="216" y="0" width="105" height="45" backcolor="#E0E0E0"/>
+				<box topPadding="8"/>
+				<textElement textAlignment="Center" verticalAlignment="Top">
+					<font size="12" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Tasks Scheduled?]]></text>
+			</staticText>
+			<staticText>
+				<reportElement stretchType="RelativeToBandHeight" mode="Opaque" x="321" y="0" width="139" height="45" backcolor="#E0E0E0"/>
+				<box topPadding="8"/>
+				<textElement textAlignment="Center" verticalAlignment="Top">
+					<font size="12" isBold="true"/>
+				</textElement>
+				<text><![CDATA[No of Tasks Scheduled	]]></text>
+			</staticText>
+			<staticText>
+				<reportElement stretchType="RelativeToBandHeight" mode="Opaque" x="460" y="0" width="125" height="45" backcolor="#E0E0E0"/>
+				<box topPadding="8"/>
+				<textElement textAlignment="Center" verticalAlignment="Top">
+					<font size="12" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Tasks Performed (Reading Taken)]]></text>
+			</staticText>
+			<staticText>
+				<reportElement stretchType="RelativeToBandHeight" mode="Opaque" x="715" y="0" width="107" height="45" backcolor="#E0E0E0"/>
+				<box topPadding="8"/>
+				<textElement textAlignment="Center" verticalAlignment="Top">
+					<font size="12" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Pending Tasks]]></text>
+			</staticText>
+			<staticText>
+				<reportElement stretchType="RelativeToBandHeight" mode="Opaque" x="1040" y="0" width="144" height="45" backcolor="#E0E0E0"/>
+				<box topPadding="8"/>
+				<textElement textAlignment="Center" verticalAlignment="Top">
+					<font size="12" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Last Reading Taken]]></text>
+			</staticText>
+			<staticText>
+				<reportElement stretchType="RelativeToBandHeight" mode="Opaque" x="917" y="0" width="123" height="45" backcolor="#E0E0E0"/>
+				<box topPadding="8"/>
+				<textElement textAlignment="Center">
+					<font size="12" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Tasks Completion Percentage]]></text>
+			</staticText>
+			<staticText>
+				<reportElement stretchType="RelativeToBandHeight" mode="Opaque" x="822" y="0" width="95" height="45" backcolor="#E0E0E0"/>
+				<box topPadding="8"/>
+				<textElement textAlignment="Center">
+					<font size="12" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Auto Closed Tasks]]></text>
+			</staticText>
+			<staticText>
+				<reportElement mode="Opaque" x="585" y="0" width="130" height="45" backcolor="#E0E0E0"/>
+				<box topPadding="8"/>
+				<textElement textAlignment="Center">
+					<font size="12" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Tasks Not Done (Accepted)]]></text>
+			</staticText>
+		</band>
+	</columnHeader>
+	<detail>
+		<band height="23">
+			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+				<reportElement stretchType="RelativeToBandHeight" x="715" y="0" width="107" height="22"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle"/>
+				<textFieldExpression><![CDATA[$F{task_not_performed}]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+				<reportElement stretchType="RelativeToBandHeight" x="460" y="0" width="125" height="22"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle"/>
+				<textFieldExpression><![CDATA[$F{task_performed}]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+				<reportElement stretchType="RelativeToBandHeight" x="321" y="0" width="139" height="22"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle"/>
+				<textFieldExpression><![CDATA[$F{scheduled_task}]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+				<reportElement stretchType="RelativeToBandHeight" x="216" y="0" width="105" height="22"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle"/>
+				<textFieldExpression><![CDATA[$F{is_task_scheduled}]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true" pattern="dd-MMM-yyyy hh:mm a" isBlankWhenNull="true">
+				<reportElement stretchType="RelativeToBandHeight" x="1040" y="0" width="144" height="22"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle"/>
+				<textFieldExpression><![CDATA[$F{last_using_date}]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+				<reportElement stretchType="RelativeToBandHeight" x="39" y="0" width="177" height="22"/>
+				<textElement verticalAlignment="Middle"/>
+				<textFieldExpression><![CDATA[$F{site}]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+				<reportElement stretchType="RelativeToBandHeight" x="0" y="0" width="39" height="22"/>
+				<textElement verticalAlignment="Middle"/>
+				<textFieldExpression><![CDATA[$F{slno}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement stretchType="RelativeToBandHeight" x="917" y="0" width="123" height="22"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle"/>
+				<textFieldExpression><![CDATA[$F{percentage}+" %"]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement stretchType="RelativeToBandHeight" x="822" y="0" width="95" height="22"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle"/>
+				<textFieldExpression><![CDATA[$F{autoclose}]]></textFieldExpression>
+			</textField>
+			<line>
+				<reportElement x="0" y="22" width="1184" height="1"/>
+				<graphicElement>
+					<pen lineWidth="0.25"/>
+				</graphicElement>
+			</line>
+			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+				<reportElement stretchType="RelativeToBandHeight" x="585" y="0" width="130" height="22"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle"/>
+				<textFieldExpression><![CDATA[$F{not_done_accepted}]]></textFieldExpression>
+			</textField>
+		</band>
+	</detail>
+	<pageFooter>
+		<band height="24">
+			<textField isStretchWithOverflow="true" pattern="dd-MMM-yyyy HH:mm" isBlankWhenNull="true">
+				<reportElement x="1059" y="4" width="125" height="20" forecolor="#999999"/>
+				<textElement verticalAlignment="Middle">
+					<font size="10" isBold="true"/>
+				</textElement>
+				<textFieldExpression><![CDATA[new java.util.Date()]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement x="822" y="4" width="237" height="20" forecolor="#999999"/>
+				<textElement textAlignment="Right" verticalAlignment="Middle">
+					<font size="10" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Generated On:  ]]></text>
+			</staticText>
+			<textField>
+				<reportElement x="1" y="4" width="80" height="20" forecolor="#999999"/>
+				<textElement textAlignment="Right" verticalAlignment="Middle"/>
+				<textFieldExpression><![CDATA["Page "+$V{PAGE_NUMBER}+" of"]]></textFieldExpression>
+			</textField>
+			<textField evaluationTime="Report">
+				<reportElement x="81" y="4" width="40" height="20" forecolor="#999999"/>
+				<textElement verticalAlignment="Middle"/>
+				<textFieldExpression><![CDATA[" " + $V{PAGE_NUMBER}]]></textFieldExpression>
+			</textField>
+			<line>
+				<reportElement x="0" y="3" width="1184" height="1"/>
+				<graphicElement>
+					<pen lineWidth="0.25"/>
+				</graphicElement>
+			</line>
+		</band>
+	</pageFooter>
+	<noData>
+		<band height="59">
+			<staticText>
+				<reportElement x="0" y="0" width="715" height="59"/>
+				<textElement textAlignment="Right" verticalAlignment="Middle">
+					<font size="24" isBold="true"/>
+				</textElement>
+				<text><![CDATA[No Task Scheduled for the Date : ]]></text>
+			</staticText>
+			<textField pattern="dd-MMM-yyyy">
+				<reportElement x="715" y="0" width="469" height="59"/>
+				<textElement verticalAlignment="Middle">
+					<font size="24" isBold="true"/>
+				</textElement>
+				<textFieldExpression><![CDATA[new java.util.Date()]]></textFieldExpression>
+			</textField>
+		</band>
+	</noData>
+</jasperReport>

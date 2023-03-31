@@ -30,51 +30,73 @@ Report Form
   <div class="row">
     <div class="col-sm-12 col-md-6">
       <div class="input-group mb-3">
-        <div class="col-md-4">
+        <div class="col-4">
           {{ form.report_name.label_tag() }}
         </div>
-        <div class="col-md-8">
+        <div class="col-8">
           {{ form.report_name }}
         </div>
       </div>
       <div class="input-group mb-3">
-        <div class="col-md-4">
+        <div class="col-4">
           {{ form.site.label_tag() }}
         </div>
-        <div class="col-md-8">
+        <div class="col-8">
           {{ form.site }}
         </div>
       </div>
       <div class="input-group mb-3">
-        <div class="col-md-4">
+        <div class="col-4">
           {{ form.fromdate.label_tag() }}
         </div>
-        <div class="col-md-8">
+        <div class="col-8">
           {{ form.fromdate }}
         </div>
       </div>
       <div class="input-group mb-3">
-        <div class="col-md-4">
+        <div class="col-4">
           {{ form.uptodate.label_tag() }}
         </div>
-        <div class="col-md-8">
+        <div class="col-8">
           {{ form.uptodate }}
         </div>
+      </div><br>
+    </div>
+    <div class="col-sm-5 col-md-2 offset-md-1 form-check form-switch form-check-solid">
+      <div class="input-group mb-6">
+        <label for="{{ form.xls.id_for_label }}"
+          class="form-check-label bool text-sm-right">{{ form.xls }}&nbsp;&nbsp;{{ form.xls.label }}</label>
+      </div><br>
+      <div class="input-group mb-6">
+        <label for="{{ form.xlsx.id_for_label }}"
+          class="form-check-label bool text-sm-right">{{ form.xlsx }}&nbsp;&nbsp;{{ form.xlsx.label }}</label>
+      </div><br>
+      <div class="input-group mb-6">
+        <label for="{{ form.pdf.id_for_label }}"
+          class="form-check-label bool text-sm-right">{{ form.pdf }}&nbsp;&nbsp;{{ form.pdf.label }}</label>
+      </div>
+    </div>
+    <div class="col-sm-5 col-md-2 form-check form-switch form-check-solid">
+      <div class="input-group mb-6">
+        <label for="{{ form.download.id_for_label }}"
+          class="form-check-label bool text-sm-right">{{ form.download }}&nbsp;&nbsp;{{ form.download.label }}</label>
+      </div>
+      <div class="input-group mb-6">
+        <label for="{{ form.email.id_for_label }}"
+          class="form-check-label bool text-sm-right">{{ form.email }}&nbsp;&nbsp;{{ form.email.label }}</label>
       </div>
     </div>
   </div>
   <div class="form-actions">
     <button type="submit" form="report_form" class="btn btn-sm btn-primary btn-hover-scale">
 
-      Submit  &nbsp;<i class="fas fa-cloud-upload-alt"></i>
-    </button>
-    
-    <button type="button"  id="btn_clear"
-        class="btn btn-sm btn-secondary btn-hover-scale">
-        Clear&nbsp;<i class="fas fa-times"></i>
+      Submit &nbsp;<i class="fas fa-cloud-upload-alt"></i>
     </button>
 
-</div>
+    <button type="button" id="btn_clear" class="btn btn-sm btn-secondary btn-hover-scale">
+      Clear&nbsp;<i class="fas fa-times"></i>
+    </button>
+  </div>
 </form>
 {% endblock form %}
 
@@ -87,6 +109,29 @@ Report Form
   $(document).ready(() => {
     $("#btn_clear").click(() => {
       location.href = `${urlname}?template=true`
+    })
+
+    $("#id_site").val(null).trigger('change') //clear default selection of site
+
+    $("#id_fromdate, #id_uptodate").flatpickr({
+            dateFormat: 'd-M-Y'
+        })
+
+
+    //on submit form post request
+    $("#report_form").submit((e) => {
+      e.preventDefault()
+      var form = $(this);
+      const params = { url: $(form).attr("action"), modal: false }
+      var payLoad = {formData:$("#report_form").serialize(), csrfmiddlewaretoken: '{{ csrf_token }}'}
+      fire_ajax_form_post(params, payLoad)
+      .done((data, status, xhr) => {
+        let url = "{{ url('reports:exportreports') }}"
+        show_successful_save_alert(false)
+        window.setTimeout(function() {
+          $("#btn_clear").click()
+        }, 2000);
+      })
     })
   })
 </script>

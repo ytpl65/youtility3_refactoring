@@ -659,7 +659,7 @@ class JobneedManager(models.Manager):
             bu_id = S['bu_id'],
             identifier = 'PPM',
             plandatetime__date__gte = R['from'],
-            plandatetime__date__lte = R['upto'],
+            plandatetime__date__lte = R['upto'],    
             client_id = S['client_id']
         ).values()
         ic(total_schd.filter(jobstatus='ASSIGNED').count(),

@@ -763,10 +763,14 @@ def create_ticket_for_autoclose(jobneedrecord, ticketdesc):
             bu_id=jobneedrecord['bu_id'],
             status="NEW",
             client_id=jobneedrecord['client_id'],
+            asset_id=jobneedrecord['asset_id'],
             ticketcategory_id=jobneedrecord['ticketcategory_id'],
             ticketsource=Ticket.TicketSource.SYSTEMGENERATED,
             ticketdesc=ticketdesc,
             priority=jobneedrecord['priority'],
+            assignedtopeople_id = jobneedrecord['people_id'],
+            assignedtogroup_id = jobneedrecord['pgroup_id']
+            
             
         )
         return Ticket.objects.filter(
@@ -853,8 +857,7 @@ def autoclose_job(jobneedid = None):
                     if rec['ticketcategory__tacode'] == 'RAISETICKETNOTIFY':
                         log.info("ticket needs to be generated")
                         context['show_ticket_body'] = True
-                        jobdesc = f'AUTOCLOSE {"TOUR" if rec["identifier"] in  ["INTERNALTOUR", "EXTERNALTOUR"] else rec["identifier"] } \
-                        planned on {pdate} not reported in time'
+                        jobdesc = f'AUTOCLOSED {"TOUR" if rec["identifier"] in  ["INTERNALTOUR", "EXTERNALTOUR"] else rec["identifier"] } planned on {pdate} not reported in time'
                         #DB OPERATION
                         ticket_data = create_ticket_for_autoclose(rec, jobdesc)
                         log.info(f'{ticket_data}')

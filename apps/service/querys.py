@@ -10,7 +10,7 @@ from django.db import connections
 from django.db.models import Q
 from collections import namedtuple
 from logging import getLogger
-log = getLogger('django')
+log = getLogger('mobile_service_log')
 import json
 from .types import (VerifyClientOutput,
 TypeAssist, SelectOutputType)
