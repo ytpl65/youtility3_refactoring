@@ -969,7 +969,7 @@ class JobneedTours(LoginRequiredMixin, View):
         'model'        : am.Jobneed,
         'template_path': 'schedhuler/i_tourlist_jobneed.html',
         'template_form': 'schedhuler/i_tourform_jobneed.html',
-        'fields'       : ['jobdesc', 'people__peoplename', 'pgroup__groupname', 'id', 'ctzoffset',
+        'fields'       : ['jobdesc', 'people__peoplename', 'pgroup__groupname', 'id', 'ctzoffset', 'jobtype',
             'plandatetime', 'expirydatetime', 'jobstatus', 'gracetime', 'performedby__peoplename', 'assignedto'],
         'related': ['pgroup',  'ticketcategory', 'asset', 'client',
                 'job', 'qset', 'people', 'parent', 'bu'],
@@ -1123,7 +1123,7 @@ class JobneedTasks(LoginRequiredMixin, View):
                     'jobdesc', 'people__peoplename', 'pgroup__groupname', 'id',
                     'plandatetime', 'expirydatetime', 'jobstatus', 'gracetime',
                     'performedby__peoplename', 'asset__assetname', 'qset__qsetname',
-                    'ctzoffset', 'assignedto'],
+                    'ctzoffset', 'assignedto', 'jobtype'],
         'related': [
                 'pgroup',  'ticketcategory', 'asset', 'client','ctzoffset',
                 'frequency', 'job', 'qset', 'people', 'parent', 'bu'],

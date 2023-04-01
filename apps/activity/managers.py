@@ -287,7 +287,7 @@ class JobneedManager(models.Manager):
                 When(Q(people_id=1) | Q(people_id__isnull =  True), then=Concat(F('pgroup__groupname'), V(' [GROUP]'))),
                 ),
             ).filter(
-            bu_id__in = S['assignedsites'],
+            bu_id = S['bu_id'],
             client_id = S['client_id'],
             plandatetime__date__gte = P['from'],
             plandatetime__date__lte = P['to'],

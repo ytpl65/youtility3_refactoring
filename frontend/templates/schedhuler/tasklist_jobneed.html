@@ -64,6 +64,7 @@ Task List
                 {data: 'plandatetime', title: "Plan Datetime"},
                 {data: 'jobdesc', title: 'Description'},
                 {data: 'jobstatus', title: 'Status'},
+                {data: 'jobtype', title: 'Type'},
                 {title: 'People/Group', data:'assignedto'},
                 {data: 'performedby__peoplename', title: 'Performed By'},
                 {data: 'gracetime', title: "Grace Time"},
@@ -77,7 +78,7 @@ Task List
                 {targets:[1], render:function(data, type, row, meta){
                     return convert_to_local(type, data, row)
                 }},
-                {targets:[7], render:function(data, type, row, meta){
+                {targets:[8], render:function(data, type, row, meta){
                     return convert_to_local(type, data, row)
                 }},
                 {targets:6, render:function(data, type, row, meta){
@@ -85,7 +86,7 @@ Task List
                 }},
             ],
             order:[[1, 'desc']],
-            buttons:[
+            buttons:['excel', 'pdf', 'csv',
 				{
 					text:`Apply filters &nbsp;<i class='fas fa-search ch4'></i></a>`,
 					className: "btn btn-sm btn-light btn-hover-rise",

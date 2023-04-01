@@ -74,17 +74,18 @@ Tour List
                     return `<a href="${urlname}?id=${row['id']}">${data}</a>`
                 }},
                 {data: 'jobstatus', title: 'Status'},
+                {data: 'jobtype', title: 'Type'},
                 {title: 'People/Group', defaultContent:null, data:'assignedto'},
                 {data: 'performedby__peoplename', title: 'Performed By'},
                 {data: 'gracetime', title: "Grace Time"},
                 {data: 'expirydatetime', title: "Expiry Datetime", render:function(data, type, row, meta){
                     return `<a href="${urlname}?id=${row['id']}">${convert_to_local(type, data, row)}</a>`
                 }}
-
             ],
             order:[[1, 'desc']],
             scrollCollapse: true,
             buttons:[
+                 'excel', 'pdf', 'csv',
 				{
 					text:`Apply filters &nbsp;<i class='fas fa-search ch4'></i></a>`,
 					className: "btn btn-sm btn-light btn-hover-rise",
