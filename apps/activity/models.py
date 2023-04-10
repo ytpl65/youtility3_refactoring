@@ -102,6 +102,7 @@ class QuestionSet(BaseModel, TenantAwareModel):
     client             = models.ForeignKey("onboarding.Bt", verbose_name = _("Client"), on_delete = models.RESTRICT, related_name='qset_clients', null = True, blank = True)
     site_grp_includes  = ArrayField(models.CharField(max_length = 50, blank = True), null = True, blank = True, verbose_name= _("Site Group Includes"))
     site_type_includes = ArrayField(models.CharField(max_length = 50, blank = True), null = True, blank = True, verbose_name= _("Site Type Includes"))
+    show_to_all_sites = models.BooleanField(_("Applicable to all sites"), default=False)
     url                = models.CharField(_("Url"), max_length = 250, null = True, blank = True, default="NONE")
 
     objects = QuestionSetManager()
@@ -644,7 +645,7 @@ class DeviceEventlog(BaseModel, models.Model):
     applicationversion     = models.CharField(_("App Version"), max_length = 50, default = 'NA')
     networkprovidername    = models.CharField(max_length=55, choices=NetworkProviderChoices.choices, default=NetworkProviderChoices.NONE.value)
     modelname              = models.CharField(_("Model Name"), max_length = 50, default = 'NA')
-    installedapps          = models.CharField(_("Installed Apps"), max_length = 500, default = 'NA')
+    installedapps          = models.CharField(_("Installed Apps"), max_length = 1000, default = 'NA')
     stepcount              = models.CharField(max_length = 55, default='No Steps')
 
     objects = DELManager()

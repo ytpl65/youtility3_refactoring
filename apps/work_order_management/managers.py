@@ -28,9 +28,10 @@ class VendorManager(models.Manager):
         mdtz = mdtz - timedelta(minutes=ctzoffset)
             
         qset = self.filter(
+            Q(bu_id = buid) | Q(show_to_all_sites = True),
             mdtz__gte = mdtz,
             client_id = clientid, 
-            bu_id = buid, 
+            
         ).values()
         
         return qset or self.none()

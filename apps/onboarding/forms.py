@@ -74,7 +74,7 @@ class TypeAssistForm(SuperTypeAssistForm):
         super().__init__(*args, **kwargs)
         self.fields['enable'].initial = True
         ic(obm.TypeAssist.objects.filter(enable = True, client_id__in =  [S['client_id'], 1]))
-        self.fields['tatype'].queryset = obm.TypeAssist.objects.filter(enable = True, client_id__in =  [S['client_id'], 1])
+        self.fields['tatype'].queryset = obm.TypeAssist.objects.filter((Q(cuser__is_superuser = True) | Q(client_id__in =  [S['client_id'], 1])), enable=True )
         utils.initailize_form_fields(self)
 
     def is_valid(self) -> bool:

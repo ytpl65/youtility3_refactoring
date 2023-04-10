@@ -54,7 +54,7 @@
 
 <body id="kt_body"
   class="header-fixed header-tablet-and-mobile-fixed toolbar-enabled toolbar-fixed toolbar-tablet-and-mobile-fixed aside-enabled aside-fixed"
-  style="--kt-toolbar-height:55px;--kt-toolbar-height-tablet-and-mobile:55px" data-kt-aside-minimize = 'on'>
+  style="--kt-toolbar-height:55px;--kt-toolbar-height-tablet-and-mobile:55px" data-kt-aside-minimize = 'off'>
   <input type="hidden" id="urlname" data-url = ''>
   {%- block body -%}
   
@@ -163,9 +163,9 @@
           closeOnSelect:false 
       })
      
-    $("body[data-kt-aside-minimize='on'] #kt_aside #kt_aside_menu").hover(function(){
+    /*$("body[data-kt-aside-minimize='on'] #kt_aside #kt_aside_menu").hover(function(){
         toggleAttribute()
-     });
+     });*/
 
      
 

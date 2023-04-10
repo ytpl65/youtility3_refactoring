@@ -87,16 +87,18 @@ class Wom(BaseModel, TenantAwareModel):
 
 
 class Vendor(BaseModel, TenantAwareModel):
-    uuid    = models.UUIDField(unique = True, editable = True, blank = True, default = uuid.uuid4)
-    code    = models.CharField(_("Code"), max_length=50, null=True, blank=False)
-    name    = models.CharField(_('Name'), max_length=55, null=True, blank=False)
-    address = models.TextField(max_length=500, verbose_name='Address', blank=True, null= True)
-    gpslocation      = PointField(_('GPS Location'),null = True, geography = True, srid = 4326)
-    enable = models.BooleanField(_("Enable"), default=True)
-    mobno   = models.CharField(_("Mob No"), max_length=15)
-    email   = models.CharField(_('Email'), max_length=100)
-    client           = models.ForeignKey("onboarding.Bt", verbose_name = _("Client"), on_delete= models.RESTRICT, null = True, blank = True, related_name='vendor_clients')
-    bu               = models.ForeignKey("onboarding.Bt", verbose_name = _("Site"), on_delete = models.RESTRICT, null = True, blank = True, related_name='vendor_bus')
+    uuid        = models.UUIDField(unique = True, editable = True, blank = True, default = uuid.uuid4)
+    code        = models.CharField(_("Code"), max_length=50, null=True, blank=False)
+    name        = models.CharField(_('Name'), max_length=55, null=True, blank=False)
+    type        = models.ForeignKey("onboarding.TypeAssist", verbose_name=_("Type"), null=True, on_delete=models.CASCADE)
+    address     = models.TextField(max_length=500, verbose_name='Address', blank=True, null= True)
+    gpslocation = PointField(_('GPS Location'),null = True, geography = True, srid = 4326)
+    enable      = models.BooleanField(_("Enable"), default=True)
+    mobno       = models.CharField(_("Mob No"), max_length=15)
+    email       = models.CharField(_('Email'), max_length=100)
+    client      = models.ForeignKey("onboarding.Bt", verbose_name = _("Client"), on_delete= models.RESTRICT, null = True, blank = True, related_name='vendor_clients')
+    bu          = models.ForeignKey("onboarding.Bt", verbose_name = _("Site"), on_delete = models.RESTRICT, null = True, blank = True, related_name='vendor_bus')
+    show_to_all_sites = models.BooleanField(_("Applicable to all sites"), default=False)
     
     objects = VendorManager()
     class Meta(BaseModel.Meta):
@@ -110,7 +112,7 @@ class Vendor(BaseModel, TenantAwareModel):
         ]
     
     def __str__(self) -> str:
-        return f'{self.name} ({self.code})'
+        return f'{self.name} ({self.code}{" - " + self.type.taname + ")" if self.type else ")"}'
 
     
 class Approver(BaseModel, TenantAwareModel):

@@ -45,7 +45,8 @@ def clean_record(record):
             record[k] = clean_text(v)
         elif k in ['gpslocation' , 'startlocation', 'endlocation']:
             record[k] = clean_point_field(v)
-        elif k in ['cdtz', 'mdtz', 'starttime', 'endtime', 'punchintime', 'punchouttime']:
+        elif k in ['cdtz', 'mdtz', 'starttime', 'endtime', 'punchintime',
+                   'punchouttime', 'plandatetime', 'expirydatetime']:
             record[k] = clean_datetimes(v, record['ctzoffset'])
         elif k in ['geofencecode']:
             record[k] = clean_code(v)

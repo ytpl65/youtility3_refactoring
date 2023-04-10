@@ -15,7 +15,7 @@ class VendorForm(forms.ModelForm):
 
     class Meta:
         model = Vendor
-        fields = ['code', 'name', 'address', 'mobno',
+        fields = ['code', 'name', 'address', 'mobno', 'type', 'show_to_all_sites',
                   'email', 'ctzoffset', 'enable', 'address']
         labels = {
             'code':"Code",
@@ -25,8 +25,10 @@ class VendorForm(forms.ModelForm):
             'email':"Email"
         }
         widgets = {
+            'name':forms.TextInput(attrs={'placeholder':'Enter Name...'}),
             'address':forms.Textarea(attrs={'rows':4}),
-            'code':forms.TextInput(attrs={'style': "text-transform: uppercase;"})
+            'code':forms.TextInput(attrs={'style': "text-transform: uppercase;", 'placeholder':"Enter characters without spaces..."}),
+            'type':s2forms.Select2Widget
         }
     
     def __init__(self, *args, **kwargs):
@@ -34,6 +36,8 @@ class VendorForm(forms.ModelForm):
         S = self.request.session
         super().__init__(*args, **kwargs)
         self.fields['address'].required = True
+        self.fields['type'].required = False
+        self.fields['type'].queryset = om.TypeAssist.objects.filter(tatype__tacode = 'VENDOR_TYPE', enable=True, client_id = S['client_id'])
         utils.initailize_form_fields(self)
     
     def clean(self):
@@ -65,7 +69,7 @@ class VendorForm(forms.ModelForm):
 class WorkOrderForm(forms.ModelForm):
     required_css_class = "required"
     
-
+    categories = forms.MultipleChoiceField(label='Queue', widget=s2forms.Select2MultipleWidget, required=False)
     
     class Meta:
         model = Wom
@@ -87,7 +91,7 @@ class WorkOrderForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         self.fields['qset'].required = True
         
-        
+        self.fields['categories'].choices = om.TypeAssist.objects.filter((Q(client_id = S['client_id']) | Q(cuser__is_superuser = True)), tatype__tacode = 'WORKORDER_CATEGORY', enable=True).values_list('tacode', 'taname')
         self.fields['ticketcategory'].queryset = om.TypeAssist.objects.filter_for_dd_notifycategory_field(self.request, sitewise=True)
         self.fields['asset'].queryset = am.Asset.objects.filter_for_dd_asset_field(self.request, ['ASSET'], sitewise=True)
         self.fields['vendor'].queryset = Vendor.objects.filter(enable=True, client_id = S['client_id'])

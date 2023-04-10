@@ -212,6 +212,9 @@ $(document).ready(() => {
             {visible:false, data:"id"},
             {title:"Code", data:"code"},
             {title:"Name", data:"name"},
+            {title:"Type", data:"type__taname", render:function(data, type, row, meta){
+				return data || '--'
+			}},
             {title:"Mob.#", data:"mobno"},
             {title:"Email", data:"email"},
             {title:"Created By", data:"cuser__peoplename"},

@@ -1,3 +1,123 @@
+from pprint import pformat
+from apps.attendance.models import PeopleEventlog
+from django.db import transaction
+from .types import ServiceOutputType
+from django.db.utils import IntegrityError
+from apps.service import serializers as sz
+from django.contrib.gis.geos import GEOSGeometry
+from apps.core import utils
+from .validators import clean_record
+from apps.activity.models import (Jobneed, JobneedDetails, Asset)
+import traceback as tb
+from django.core.mail import send_mail, EmailMessage
+from apps.y_helpdesk.models import Ticket
+from intelliwiz_config.celery import app
+from django.conf import settings
+from .auth import Messages as AM
+from django.apps import apps
+from logging import getLogger
+log = getLogger('mobile_service_log')   
+
+from apps.work_order_management import utils as wutils
+
+class Messages(AM):
+    INSERT_SUCCESS = "Inserted Successfully!"
+    UPDATE_SUCCESS = "Updated Successfully!"
+    IMPROPER_DATA = "Failed to insert incorrect tablname or size of columns and rows doesn't match",
+    WRONG_OPERATION = "Wrong operation 'id' is passed during insertion!"
+    DBERROR = "Integrity Error!"
+    INSERT_FAILED = "Failed to insert something went wrong!"
+    UPDATE_FAILED = "Failed to Update something went wrong!"
+    NOT_INTIATED = "Insert cannot be initated not provided necessary data"
+    UPLOAD_FAILED = "Upload Failed!"
+    NOTFOUND = "Unable to find people with this pelogid"
+    START = "Mutation start"
+    END = "Mutation end"
+    ADHOCFAILED = 'Adhoc service failed'
+    NODETAILS = ' Unable to find any details record against site/incident report'
+    REPORTSFAILED = 'Failed to generate jasper reports'
+    UPLOAD_SUCCESS = 'Uploaded Successfully!'
+
+
+# utility functions
+def insertrecord_json(records, tablename):
+    uuids = []
+    try:
+        if model := get_model_or_form(tablename):
+            for record in records:
+                record = json.loads(record)
+                record = json.loads(record)
+                record = clean_record(record)
+                log.info(f'record after cleaning\n {pformat(record)}')
+                try:
+                    obj = model.objects.get(uuid=record['uuid'])
+                    model.objects.filter(uuid=obj.uuid).update(**record)
+                    log.info("record is already exist so updating it now..")
+                    uuids.append(str(record['uuid']))
+                except model.DoesNotExist:
+                    log.info("record is not exist so creating new one..")
+                    model.objects.create(**record)
+                    uuids.append(str(record['uuid']))
+    except Exception as e:
+        log.error("something went wrong", exc_info=True)
+        raise e
+    return uuids
+
+
+
+def get_or_create_dir(path):
+    import os
+    created = True
+    if not os.path.exists(path):
+        os.makedirs(path)
+    else:
+        created = False
+    return created
+
+def get_json_data(file):
+    import gzip
+    import json
+    try:
+        # ic((file, type(file))
+        with gzip.open(file, 'rb') as f:
+            s = f.read().decode('utf-8')
+            s = s.replace("'", "")
+            if isTrackingRecord := s.startswith('{'):
+                log.info("Tracking record found")
+                arr = s.split('?')
+                s = json.dumps(arr)
+            return json.loads(s)
+    except Exception as e:
+        log.error("File unzipping error", exc_info=True)
+    return None, None
+
+
+def get_model_or_form(tablename):
+    if tablename == 'peopleeventlog':
+        return apps.get_model('attendance', 'PeopleEventlog')
+    if tablename == 'attachment':
+        return  apps.get_model('activity', 'Attachment')
+    if tablename == 'jobneed':
+        return apps.get_model('activity', 'Jobneed')
+    if tablename == 'jobneeddetails':
+        return apps.get_model('activity', 'JobneedDetails')
+    if tablename == 'deviceeventlog':
+        return apps.get_model('activity', 'DeviceEventlog')
+    if tablename == 'ticket':
+        return apps.get_model('y_helpdesk', 'Ticket')
+    if tablename == 'asset':
+        return  apps.get_model('activity', 'Asset')
+    if tablename == 'tracking':
+        return apps.get_model('attendance', 'Tracking')
+    if tablename == 'typeassist':
+        return apps.get_model('onboarding', 'TypeAssist')
+    if tablename == 'wom':
+        return apps.get_model('work_order_management', 'Wom')
+    if tablename == 'womdetails':
+        return apps.get_model('work_order_management', 'WomDetails')
+    if tablename == 'business unit':
+        return apps.get_model('onboarding', 'Bt')
+
 def get_object(uuid, model):
     try:
         return model.objects.get(uuid = uuid)
@@ -24,54 +144,22 @@ def write_file_to_dir(filebuffer, uploadedfilepath):
     log.info(f"file saved to {path}")
 
 
-from pprint import pformat
-from apps.attendance.models import PeopleEventlog
-from .tasks import Messages
-from .tasks import (
-    get_json_data, get_model_or_form,
-    get_or_create_dir)
-from django.db import transaction
-from .types import ServiceOutputType
-from django.db.utils import IntegrityError
-from apps.service import serializers as sz
-from django.contrib.gis.geos import GEOSGeometry
-from apps.core import utils
-from .validators import clean_record
-from apps.activity.models import (Jobneed, JobneedDetails, Asset)
-import traceback as tb
-from django.core.mail import send_mail, EmailMessage
-from apps.y_helpdesk.models import Ticket
-from intelliwiz_config.celery import app
-from django.conf import settings
-from celery.utils.log import get_task_logger
-log = get_task_logger('mobile_service_log')
-
-from apps.work_order_management import utils as wutils
-
-
 def insertrecord(record, tablename):
     try:
         if model := get_model_or_form(tablename):
             record = clean_record(record)
             log.info(f'record after cleaning\n {pformat(record)}')
-            obj = model.objects.get(uuid = record['uuid'])
-            model.objects.filter(uuid = obj.uuid).update(**record)
-            log.info("record is already exist so updating it now..")
-            return model.objects.get(uuid = record['uuid'])
-    except model.DoesNotExist:
-        log.info("record is not exist so creating new one..")
-        return model.objects.create(**record)
+            if model.objects.filter(uuid = record['uuid']).exists():
+                model.objects.filter(uuid = record['uuid']).update(**record)
+                log.info("record is already exist so updating it now..")
+                return model.objects.get(uuid = record['uuid'])
+            else:
+                log.info("record does not exist so creating it now..")
+                return model.objects.create(**record)        
     except Exception as e:
         log.error("something went wrong while inserting/updating record", exc_info = True)
         raise e
 
-
-def discardAccept(curr, prev):
-    pnt = GEOSGeometry(f'SRID=4326;POINT({curr[0]} {curr[1]})')
-    pnt2 = GEOSGeometry(f'SRID=4326;POINT({prev[0]} {prev[1]})')
-    dis = pnt.distance(pnt2) * 100
-    ic(dis)
-    return abs(dis) > 2
 
 
 def update_record(details, jobneed_record, JnModel, JndModel):
@@ -173,95 +261,6 @@ def save_parent_childs(sz, jn_parent_serializer, child, M):
         raise
 
 
-@app.task(bind = True, default_retry_delay = 300, max_retries = 5)
-def perform_tasktourupdate(self, file, request=None, db='default', bg=False):
-    rc, recordcount, traceback= 1, 0, 'NA'
-    instance, msg = None, ""
-
-    try:
-        data = file if bg else get_json_data(file)
-        log.info(f'data: {pformat(data)}')
-        if len(data) == 0: raise utils.NoRecordsFound
-        log.info(f'total {len(data)} records found for task tour update')
-        for record in data:
-            details = record.pop('details')
-            jobneed = record
-            with transaction.atomic(using = db):
-                if isupdated :=  update_record(details, jobneed, Jobneed, JobneedDetails):
-                    recordcount += 1
-                    log.info(f'{recordcount} task/tour updated successfully')
-        if len(data) == recordcount:
-            msg = Messages.UPDATE_SUCCESS
-            log.info(f'All {recordcount} task/tour records are updated successfully')
-            rc=0
-    except utils.NoRecordsFound as e:
-        log.warning('No records found for task/tour update', exc_info=True)
-        rc, traceback, msg = 1, tb.format_exc(), Messages.UPLOAD_FAILED
-    except IntegrityError as e:
-        log.error("Database Error", exc_info = True)
-        rc, traceback, msg = 1, tb.format_exc(), Messages.UPLOAD_FAILED
-    except Exception as e:
-        log.error('Something went wrong', exc_info = True)
-        rc, traceback, msg = 1, tb.format_exc(), Messages.UPLOAD_FAILED
-    return ServiceOutputType(rc = rc, msg = msg, recordcount = recordcount, traceback = traceback)
-
-
-@app.task(bind = True, default_retry_delay = 300, max_retries = 5)
-def perform_insertrecord(self, file, request = None, db='default', filebased = True, bg=False, userid=None):
-    log.info(f"request:{request.user.peoplename}")
-    """
-    Insert records in specified tablename.
-
-    Args:
-        file (file|json): file object| json data
-        tablename (str): name of table
-        request (http wsgi request, optional): request object. Defaults to None.
-        filebased (bool, optional): type of data, file (True) or json (False) Defaults to True.
-
-    Returns:
-        ServiceOutputType: rc, recordcount, msg, traceback
-    """
-    rc, recordcount, traceback= 1, 0, 'NA'
-    instance = None
-    try:
-        if bg:
-            data = file
-        else:
-            data = get_json_data(file) if filebased else [file]
-        
-        if len(data) == 0: raise utils.NoRecordsFound
-        with transaction.atomic(using = db):
-
-            for record in data:
-                tablename = record.pop('tablename')
-                obj = insertrecord(record, tablename)
-                user = get_user_instance(userid or request.user.id)
-                if tablename == 'ticket' and isinstance(obj, Ticket): utils.store_ticket_history(
-                    instance = obj, request=request, user=user)
-                if tablename == 'wom': wutils.notify_wo_creation(id = obj.id)
-                allconditions = [
-                    hasattr(obj, 'peventtype'), hasattr(obj, 'endlocation'), 
-                    hasattr(obj, 'punchintime'), hasattr(obj, 'punchouttime')]
-
-                if all(allconditions) and all([tablename == 'peopleeventlog',
-                        obj.peventtype.tacode in ('CONVEYANCE', 'AUDIT'),
-                        obj.endlocation,obj.punchouttime, obj.punchintime]):
-                    log.info("save line string is started")
-                    save_linestring_and_update_pelrecord(obj)
-                recordcount += 1
-                log.info(f'{recordcount} record inserted successfully')
-        if len(data) == recordcount:
-            msg = Messages.INSERT_SUCCESS
-            log.info(f'All {recordcount} records are inserted successfully')
-            rc=0
-    except utils.NoRecordsFound as e:
-        log.warning('No records found for insertrecord service', exc_info=True)
-        rc, traceback, msg = 1, tb.format_exc(), Messages.INSERT_FAILED
-    except Exception as e:
-        log.error("something went wrong!", exc_info = True)
-        msg, rc, traceback = Messages.INSERT_FAILED, 1, tb.format_exc()
-    return  ServiceOutputType(rc = rc, recordcount = recordcount, msg = msg, traceback = traceback)
-
 def save_linestring_and_update_pelrecord(obj):
     # sourcery skip: identity-comprehension
     from apps.attendance.models import Tracking
@@ -288,90 +287,7 @@ def save_linestring_and_update_pelrecord(obj):
         log.info('ERROR while saving line string', exc_info = True)
         raise
 
-@app.task(bind = True, default_retry_delay = 300, max_retries = 5)
-def perform_reportmutation(self, file, db= 'default', bg=False):
-    rc, recordcount, traceback= 1, 0, 'NA'
-    instance = None
-    try:
-        data = file if bg else get_json_data(file)
-        log.info(f'data: {pformat(data)}')
-        if len(data) == 0: raise utils.NoRecordsFound
-        for record in data:
-            child = record.pop('child', None)
-            parent = record
-            try:
-                with transaction.atomic(using = db):
-                    if child and len(child) > 0 and parent:
-                        jobneed_parent_post_data = parent
-                        jn_parent_serializer = sz.JobneedSerializer(data = clean_record(jobneed_parent_post_data))
-                        rc,  traceback, msg = save_parent_childs(sz, jn_parent_serializer, child, Messages)
-                        if rc == 0: recordcount += 1
-                        # ic((recordcount)
-                    else:
-                        log.error(Messages.NODETAILS)
-                        msg, rc = Messages.NODETAILS, 1
-            except Exception as e:
-                log.error('something went wrong while saving \
-                          parent and child for report mutations', exc_info = True)
-                raise
-        if len(data) == recordcount:
-            msg = Messages.UPDATE_SUCCESS
-            log.info(f'All {recordcount} report records are updated successfully')
-            rc=0
-    except utils.NoRecordsFound as e:
-        log.warning('No records found for report mutation', exc_info=True)
-        rc, traceback, msg = 1, tb.format_exc(), Messages.UPLOAD_FAILED
-    except Exception as e:
-        msg, traceback, rc = Messages.INSERT_FAILED, tb.format_exc(), 1
-        log.error('something went wrong', exc_info = True)
-    return ServiceOutputType(rc = rc, recordcount = recordcount, msg = msg, traceback = traceback)
 
-
-@app.task(bind = True, default_retry_delay = 300, max_retries = 5)
-def perform_adhocmutation(self, file, db='default', bg=False):  # sourcery skip: remove-empty-nested-block, remove-redundant-if, remove-redundant-pass
-    rc, recordcount, traceback, msg= 1, 0, 'NA', ""
-    try:
-        if bg:
-            data = file
-        elif not (data := get_json_data(file)):
-            raise utils.NoDataInTheFileError
-
-        log.info(f"{len(data)} Number of records found in the file")
-        for record in data:
-            details = record.pop('details')
-            jobneedrecord = record
-            ic(details)
-            ic(jobneedrecord)
-
-            with transaction.atomic(using = db):
-                if jobneedrecord['asset_id'] ==  1:
-                    # then it should be NEA
-                    assetobjs = Asset.objects.filter(bu_id = jobneedrecord['bu_id'],
-                                    assetcode = jobneedrecord['remarks'])
-                    jobneedrecord['asset_id']= 1 if assetobjs.count()  !=  1 else assetobjs[0].id
-                sqlQuery = "select * from fn_get_schedule_for_adhoc(%s, %s, %s, %s, %s)"
-                args = [jobneedrecord['plandatetime'], jobneedrecord['bu_id'], jobneedrecord['people_id'], jobneedrecord['asset_id'], jobneedrecord['qset_id']]
-                scheduletask = utils.runrawsql(sqlQuery, args, db = db)
-
-                # have to update to scheduled task
-                if(len(scheduletask) > 0):
-                    rc, traceback, msg, recordcount = update_adhoc_record(scheduletask, jobneedrecord, details)
-                # have to insert/create to adhoc task
-                else:
-                    rc, traceback, msg, recordcount = insert_adhoc_record(jobneedrecord, details)
-                if jobneedrecord['attachmentcount'] == 0:
-                    # TODO send_email for ADHOC 
-                    pass
-            # TODO send_email for Observation
-
-    except utils.NoDataInTheFileError as e:
-        rc, traceback = 1, tb.format_exc()
-        log.error('No data in the file error', exc_info = True)
-        raise
-    except Exception as e:
-        rc, traceback = 1, tb.format_exc()
-        log.error('something went wrong', exc_info = True)
-    return ServiceOutputType(rc = rc, recordcount = recordcount, msg = msg, traceback = traceback)
 
 
 def update_adhoc_record(scheduletask, jobneedrecord, details):
@@ -422,56 +338,6 @@ def insert_adhoc_record(jobneedrecord, details):
         rc, traceback = 1, jnsz.errors
     return rc, traceback, msg, recordcount
 
-def perform_uploadattachment(file,  record, biodata):
-    rc, traceback, resp = 0,  'NA', 0
-    recordcount = msg = None
-    ic(biodata)
-    # ic(file, tablename, record, type(record), biodata, type(biodata))
-    
-
-    file_buffer = file
-    filename    = biodata['filename']
-    peopleid    = biodata['people_id']
-    path        = biodata['path']
-    ownerid     = biodata['owner']
-    onwername   = biodata['ownername']
-    home_dir    = f'{settings.MEDIA_ROOT}/'
-    filepath    = home_dir + path
-    uploadfile  = f'{filepath}/{filename}'
-    db          = utils.get_current_db_name()
-    
-    log.info(f"file_buffer: '{file_buffer}' \n'onwername':{onwername}, \nownerid: '{ownerid}' \npeopleid: '{peopleid}' \npath: {path} \nhome_dir: '{home_dir}' \nfilepath: '{filepath}' \nuploadfile: '{uploadfile}'")
-    try:
-        with transaction.atomic(using = db):
-            iscreated = get_or_create_dir(filepath)
-            log.info(f'Is FilePath created? {iscreated}')
-            write_file_to_dir(file_buffer, uploadfile)
-            #send_alert_mails_if_any(obj)
-            rc, traceback, msg = 0, tb.format_exc(), Messages.UPLOAD_SUCCESS
-            recordcount = 1
-            log.info('file uploaded success')
-    except Exception as e:
-        rc, traceback, msg = 1, tb.format_exc(), Messages.UPLOAD_FAILED
-        log.error('something went wrong', exc_info = True)
-    try:
-        if record.get('localfilepath'): record.pop('localfilepath')
-        obj = insertrecord(record, 'attachment')
-        log.info(f'Attachment record inserted: {obj.filepath}')
-        
-        log.info(f"ownername:{onwername} and owner:{ownerid}")
-        model = get_model_or_form(onwername.lower())
-        eobj = model.objects.get(uuid=ownerid)
-        log.info(f"object retrived of type {type(eobj)}")
-        
-
-        if hasattr(eobj, 'peventtype'): log.info(f'Event Type: {eobj.peventtype.tacode}')
-        if hasattr(eobj, 'peventtype') and eobj.peventtype.tacode in ['SELF', 'MARK']:
-            from .tasks import perform_facerecognition_bgt
-            results = perform_facerecognition_bgt.delay(ownerid, peopleid, db)
-            log.warning(f"face recognition status {results.state}")
-    except Exception as e:
-        log.error('something went wrong while perform_uploadattachment', exc_info = True)
-    return ServiceOutputType(rc = rc, recordcount = recordcount, msg = msg, traceback = traceback)
 
 
 
@@ -530,7 +396,7 @@ def add_attachments(jobneed, msg):
 
 def alert_observation(jobneed, atts=False):
     from django.template.loader import render_to_string
-    
+
     try:
         if jobneed.alerts:
             recipents = get_email_recipients(jobneed)
@@ -541,7 +407,7 @@ def alert_observation(jobneed, atts=False):
             else:
                 subject = f"[READINGS ALERT] Site with Name: {jobneed.bu.buname} having checklist [{jobneed.qset.qsetname}] - readings out of range"
             context = get_context_for_mailtemplate(jobneed, subject)
-            
+
             html_message = render_to_string('observation_mail.html', context)
             log.info(f"Sending alert mail with subject {subject}")
             msg = EmailMessage()
@@ -557,7 +423,7 @@ def alert_observation(jobneed, atts=False):
             msg.send()
             log.info(f"Alert mail sent to {recipents} with subject {subject}")
     except Exception as e:
-        log.error(f"Error while sending alert mail", exc_info=True)
+        log.error("Error while sending alert mail", exc_info=True)
         
         
 
@@ -610,3 +476,245 @@ def get_user_instance(id):
     log.info(f"people id: {id} type: {type(id)}")
     from apps.peoples.models import People
     return People.objects.get(id = int(id))
+
+
+
+@app.task(bind = True, default_retry_delay = 300, max_retries = 5)
+def perform_tasktourupdate(self, file, request=None, db='default', bg=False):
+    rc, recordcount, traceback= 1, 0, 'NA'
+    instance, msg = None, ""
+
+    try:
+        log.info(
+            f"""perform_tasktourupdate(file = {file}, bg = {bg}, db = {db} runnning in {'background' if bg else "foreground"})"""
+        )
+        data = file if bg else get_json_data(file)
+        log.info(f'data: {pformat(data)}')
+        if len(data) == 0: raise utils.NoRecordsFound
+        log.info(f'total {len(data)} records found for task tour update')
+        for record in data:
+            details = record.pop('details')
+            jobneed = record
+            with transaction.atomic(using = db):
+                if isupdated :=  update_record(details, jobneed, Jobneed, JobneedDetails):
+                    recordcount += 1
+                    log.info(f'{recordcount} task/tour updated successfully')
+        if len(data) == recordcount:
+            msg = Messages.UPDATE_SUCCESS
+            log.info(f'All {recordcount} task/tour records are updated successfully')
+            rc=0
+    except utils.NoRecordsFound as e:
+        log.warning('No records found for task/tour update', exc_info=True)
+        rc, traceback, msg = 1, tb.format_exc(), Messages.UPLOAD_FAILED
+    except IntegrityError as e:
+        log.error("Database Error", exc_info = True)
+        rc, traceback, msg = 1, tb.format_exc(), Messages.UPLOAD_FAILED
+    except Exception as e:
+        log.error('Something went wrong', exc_info = True)
+        rc, traceback, msg = 1, tb.format_exc(), Messages.UPLOAD_FAILED
+    return ServiceOutputType(rc = rc, msg = msg, recordcount = recordcount, traceback = traceback)
+
+
+@app.task(bind = True, default_retry_delay = 300, max_retries = 5)
+def perform_insertrecord(self, file, request = None, db='default', filebased = True, bg=False, userid=None):
+    """
+    Insert records in specified tablename.
+
+    Args:
+        file (file|json): file object| json data
+        tablename (str): name of table
+        request (http wsgi request, optional): request object. Defaults to None.
+        filebased (bool, optional): type of data, file (True) or json (False) Defaults to True.
+
+    Returns:
+        ServiceOutputType: rc, recordcount, msg, traceback
+    """
+    rc, recordcount, traceback= 1, 0, 'NA'
+    instance = None
+    log.info(
+            f"""perform_insertrecord(file = {file}, bg = {bg}, db = {db}, filebased = {filebased} {request = } { userid = } runnning in {'background' if bg else "foreground"})"""
+        )
+    try:
+        
+        if bg:
+            data = file
+        else:
+            data = get_json_data(file) if filebased else [file]
+        log.info(f'data = {pformat(data)} and length of data {len(data)}')
+        
+        if len(data) == 0: raise utils.NoRecordsFound
+        with transaction.atomic(using = db):
+
+            for record in data:
+                tablename = record.pop('tablename')
+                obj = insertrecord(record, tablename)
+                user = get_user_instance(userid or request.user.id)
+                if tablename == 'ticket' and isinstance(obj, Ticket): utils.store_ticket_history(
+                    instance = obj, request=request, user=user)
+                if tablename == 'wom': wutils.notify_wo_creation(id = obj.id)
+                allconditions = [
+                    hasattr(obj, 'peventtype'), hasattr(obj, 'endlocation'), 
+                    hasattr(obj, 'punchintime'), hasattr(obj, 'punchouttime')]
+
+                if all(allconditions) and all([tablename == 'peopleeventlog',
+                        obj.peventtype.tacode in ('CONVEYANCE', 'AUDIT'),
+                        obj.endlocation,obj.punchouttime, obj.punchintime]):
+                    log.info("save line string is started")
+                    save_linestring_and_update_pelrecord(obj)
+                recordcount += 1
+                log.info(f'{recordcount} record inserted successfully')
+        if len(data) == recordcount:
+            msg = Messages.INSERT_SUCCESS
+            log.info(f'All {recordcount} records are inserted successfully')
+            rc=0
+    except utils.NoRecordsFound as e:
+        log.warning('No records found for insertrecord service', exc_info=True)
+        rc, traceback, msg = 1, tb.format_exc(), Messages.INSERT_FAILED
+    except Exception as e:
+        log.error("something went wrong!", exc_info = True)
+        msg, rc, traceback = Messages.INSERT_FAILED, 1, tb.format_exc()
+    return  ServiceOutputType(rc = rc, recordcount = recordcount, msg = msg, traceback = traceback)
+
+
+
+@app.task(bind = True, default_retry_delay = 300, max_retries = 5)
+def perform_reportmutation(self, file, db= 'default', bg=False):
+    rc, recordcount, traceback= 1, 0, 'NA'
+    instance = None
+    try:
+        log.info(
+            f"""perform_reportmutation(file = {file}, bg = {bg}, db = {db}, runnning in {'background' if bg else "foreground"})"""
+        )
+        data = file if bg else get_json_data(file)
+        log.info(f'data: {pformat(data)}')
+        if len(data) == 0: raise utils.NoRecordsFound
+        log.info(f"'data = {pformat(data)} {len(data)} Number of records found in the file")
+        for record in data:
+            child = record.pop('child', None)
+            parent = record
+            try:
+                with transaction.atomic(using = db):
+                    if child and len(child) > 0 and parent:
+                        jobneed_parent_post_data = parent
+                        jn_parent_serializer = sz.JobneedSerializer(data = clean_record(jobneed_parent_post_data))
+                        rc,  traceback, msg = save_parent_childs(sz, jn_parent_serializer, child, Messages)
+                        if rc == 0: recordcount += 1
+                        # ic((recordcount)
+                    else:
+                        log.error(Messages.NODETAILS)
+                        msg, rc = Messages.NODETAILS, 1
+            except Exception as e:
+                log.error('something went wrong while saving \
+                          parent and child for report mutations', exc_info = True)
+                raise
+        if len(data) == recordcount:
+            msg = Messages.UPDATE_SUCCESS
+            log.info(f'All {recordcount} report records are updated successfully')
+            rc=0
+    except utils.NoRecordsFound as e:
+        log.warning('No records found for report mutation', exc_info=True)
+        rc, traceback, msg = 1, tb.format_exc(), Messages.UPLOAD_FAILED
+    except Exception as e:
+        msg, traceback, rc = Messages.INSERT_FAILED, tb.format_exc(), 1
+        log.error('something went wrong', exc_info = True)
+    return ServiceOutputType(rc = rc, recordcount = recordcount, msg = msg, traceback = traceback)
+
+
+@app.task(bind = True, default_retry_delay = 300, max_retries = 5)
+def perform_adhocmutation(self, file, db='default', bg=False):  # sourcery skip: remove-empty-nested-block, remove-redundant-if, remove-redundant-pass
+    rc, recordcount, traceback, msg= 1, 0, 'NA', ""
+    try:
+        log.info(
+            f"""perform_adhocmutation(file = {file}, bg = {bg}, db = {db}, runnning in {'background' if bg else "foreground"})"""
+        )
+        if bg:
+            data = file
+        elif not (data := get_json_data(file)):
+            raise utils.NoDataInTheFileError
+        log.info(f"'data = {pformat(data)} {len(data)} Number of records found in the file")
+        for record in data:
+            details = record.pop('details')
+            jobneedrecord = record
+
+            with transaction.atomic(using = db):
+                if jobneedrecord['asset_id'] ==  1:
+                    # then it should be NEA
+                    assetobjs = Asset.objects.filter(bu_id = jobneedrecord['bu_id'],
+                                    assetcode = jobneedrecord['remarks'])
+                    jobneedrecord['asset_id']= 1 if assetobjs.count()  !=  1 else assetobjs[0].id
+                sqlQuery = "select * from fn_get_schedule_for_adhoc(%s, %s, %s, %s, %s)"
+                args = [jobneedrecord['plandatetime'], jobneedrecord['bu_id'], jobneedrecord['people_id'], jobneedrecord['asset_id'], jobneedrecord['qset_id']]
+                scheduletask = utils.runrawsql(sqlQuery, args, db = db)
+
+                # have to update to scheduled task
+                if(len(scheduletask) > 0):
+                    rc, traceback, msg, recordcount = update_adhoc_record(scheduletask, jobneedrecord, details)
+                # have to insert/create to adhoc task
+                else:
+                    rc, traceback, msg, recordcount = insert_adhoc_record(jobneedrecord, details)
+                if jobneedrecord['attachmentcount'] == 0:
+                    # TODO send_email for ADHOC 
+                    pass
+            # TODO send_email for Observation
+
+    except utils.NoDataInTheFileError as e:
+        rc, traceback = 1, tb.format_exc()
+        log.error('No data in the file error', exc_info = True)
+        raise
+    except Exception as e:
+        rc, traceback = 1, tb.format_exc()
+        log.error('something went wrong', exc_info = True)
+    return ServiceOutputType(rc = rc, recordcount = recordcount, msg = msg, traceback = traceback)
+
+
+def perform_uploadattachment(file,  record, biodata):
+    rc, traceback, resp = 0,  'NA', 0
+    recordcount = msg = None
+    # ic(file, tablename, record, type(record), biodata, type(biodata))
+    
+
+    file_buffer = file
+    filename    = biodata['filename']
+    peopleid    = biodata['people_id']
+    path        = biodata['path']
+    ownerid     = biodata['owner']
+    onwername   = biodata['ownername']
+    home_dir    = f'{settings.MEDIA_ROOT}/'
+    filepath    = home_dir + path
+    uploadfile  = f'{filepath}/{filename}'
+    db          = utils.get_current_db_name()
+    
+    log.info(f"file_buffer: '{file_buffer}' \n'onwername':{onwername}, \nownerid: '{ownerid}' \npeopleid: '{peopleid}' \npath: {path} \nhome_dir: '{home_dir}' \nfilepath: '{filepath}' \nuploadfile: '{uploadfile}'")
+    try:
+        with transaction.atomic(using = db):
+            iscreated = get_or_create_dir(filepath)
+            log.info(f'Is FilePath created? {iscreated}')
+            write_file_to_dir(file_buffer, uploadfile)
+            #send_alert_mails_if_any(obj)
+            rc, traceback, msg = 0, tb.format_exc(), Messages.UPLOAD_SUCCESS
+            recordcount = 1
+            log.info('file uploaded success')
+    except Exception as e:
+        rc, traceback, msg = 1, tb.format_exc(), Messages.UPLOAD_FAILED
+        log.error('something went wrong', exc_info = True)
+    try:
+        if record.get('localfilepath'): record.pop('localfilepath')
+        obj = insertrecord(record, 'attachment')
+        log.info(f'Attachment record inserted: {obj.filepath}')
+        
+        log.info(f"ownername:{onwername} and owner:{ownerid}")
+        model = get_model_or_form(onwername.lower())
+        eobj = model.objects.get(uuid=ownerid)
+        log.info(f"object retrived of type {type(eobj)}")
+        
+
+        if hasattr(eobj, 'peventtype'): log.info(f'Event Type: {eobj.peventtype.tacode}')
+        if hasattr(eobj, 'peventtype') and eobj.peventtype.tacode in ['SELF', 'MARK']:
+            from .tasks import perform_facerecognition_bgt
+            results = perform_facerecognition_bgt.delay(ownerid, peopleid, db)
+            log.warning(f"face recognition status {results.state}")
+    except Exception as e:
+        log.error('something went wrong while perform_uploadattachment', exc_info = True)
+    return ServiceOutputType(rc = rc, recordcount = recordcount, msg = msg, traceback = traceback)
+
+

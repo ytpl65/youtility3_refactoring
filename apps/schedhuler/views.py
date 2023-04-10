@@ -1182,9 +1182,9 @@ class SchdTasks(LoginRequiredMixin, View):
                 'frequency'   : am.Job.Frequency.NONE,
                 'scantype'    : am.Job.Scantype.QR,
                 'priority'    : am.Job.Priority.LOW,
-                'planduration': 5,
-                'gracetime'   : 5,
-                'expirytime'  : 5
+                'planduration': 0,
+                'gracetime'   : 0,
+                'expirytime'  : 0
             }
     }
 

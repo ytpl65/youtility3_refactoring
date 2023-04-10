@@ -1152,7 +1152,7 @@ class NoSite(View):
             request.session['bu_id'] = bu_id
             pm.People.objects.filter(id=request.user.id).update(bu_id=bu_id)
             ic(request.session['bu_id'])
-            return redirect('/dashboard')
+            return redirect('onboarding:rp_dashboard')
 
 
 def verifyemail(request):

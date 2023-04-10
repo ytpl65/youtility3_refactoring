@@ -11,18 +11,16 @@ from rest_framework.views import APIView
 from rest_framework.parsers import MultiPartParser, FileUploadParser, JSONParser
 from rest_framework.response import Response
 from django.core.serializers.json import DjangoJSONEncoder
-from . import tasks
 from . import types as ty
 from graphene_file_upload.scalars import Upload
 from rest_framework.permissions import AllowAny
 from pprint import pformat
 import zipfile
 import json
-import gzip
-from django.views import View
-
+from .utils import get_json_data
 from logging import getLogger
 import traceback as tb
+
 log = getLogger('mobile_service_log')
 
 
@@ -73,7 +71,6 @@ class LoginUser(graphene.Mutation):
 
         emergencycontacts = People.objects.get_emergencycontacts(user.bu_id, user.client_id)
         emergencyemails = People.objects.get_emergencyemails(user.bu_id, user.client_id)
-        ic(emergencycontacts, emergencyemails)
         qset = People.objects.annotate(
             loggername          = F('peoplename'),
             mobilecapability    = F('people_extras__mobilecapability'),
@@ -100,10 +97,8 @@ class LoginUser(graphene.Mutation):
         qsetList[0]['emergencyemails'] = str(qsetList[0]['emergencyemails']).replace('[', '').replace(']', '').replace("'", "")
         qsetList[0]['emergencycontacts'] = str(qsetList[0]['emergencycontacts']).replace('[', '').replace(']', '').replace("'", "")
         qsetList[0]['mobilecapability'] = str(qsetList[0]['mobilecapability']).replace('[', '').replace(']', '').replace("'", "")
-        
-        v = json.dumps(qsetList[0], cls = DjangoJSONEncoder)
-        ic(v)
-        return v
+
+        return json.dumps(qsetList[0], cls = DjangoJSONEncoder)
 
 
 
@@ -250,7 +245,7 @@ class InsertJsonMutation(graphene.Mutation):
     @classmethod
     def mutate(cls, root, info, jsondata, tablename):
         # sourcery skip: instance-method-first-arg-name
-        from .tasks import insertrecord_json
+        from .utils import insertrecord_json
         from apps.core.utils import get_current_db_name
         import json
         log.info('\n\ninsert jsondata mutations start[+]')
@@ -280,6 +275,7 @@ class SyncMutation(graphene.Mutation):
 
     @classmethod
     def mutate(cls, root, info, file, filesize, totalrecords):
+        # sourcery skip: avoid-builtin-shadow
         from apps.core.utils import get_current_db_name
         log.info("\n\nsync now mutation is running")
         import zipfile
@@ -290,16 +286,17 @@ class SyncMutation(graphene.Mutation):
             db = get_current_db_name()
             log.info(f'the type of file is {type(file)}')
             with zipfile.ZipFile(file) as zip:
+                log.debug(f'{file = }')
                 zipsize = TR = 0
                 for file in zip.filelist:
+                    log.debug(f'{file = }')
                     zipsize += file.file_size
                     log.info(f'filename: {file.filename} and size: {file.file_size}')
                     with zip.open(file) as f:
-                        data = tasks.get_json_data(f)
+                        data = get_json_data(f)
                         # raise ValueError
                         TR += len(data)
                         call_service_based_on_filename(data, file.filename, db = db, request=info.context, user=id)
-                        ic(data)
                 if filesize !=  zipsize:
                     log.error(f"file size is not matched with the actual zipfile {filesize} x {zipsize}")
                     raise cutils.FileSizeMisMatchError

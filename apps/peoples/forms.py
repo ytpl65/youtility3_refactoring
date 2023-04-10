@@ -78,8 +78,8 @@ class PeopleForm(forms.ModelForm):
     required_css_class = "required"
     error_msg = {
         'invalid_dates' : 'Date of birth & Date of join cannot be equal!',
-        'invalid_dates2': 'Date of birth cannot be greater than Date of join',
-        'invalid_dates3': 'Date of birth cannot be greater than Date of release',
+        'dob_should_less_doj': 'Date of birth cannot be greater than Date of join',
+        'dob_should_less_dor': 'Date of birth cannot be greater than Date of release',
         'invalid_id'    : 'Please choose a different loginid',
         'invalid_mobno' : 'Please enter mob no with country code first +XX',
         'invalid_mobno2': 'Please enter a valid mobile number',
@@ -157,11 +157,11 @@ class PeopleForm(forms.ModelForm):
         
         #filters for dropdown fields
         self.fields['peopletype'].queryset = om.TypeAssist.objects.filter(tatype__tacode="PEOPLETYPE", client_id = S['client_id'], enable=True)
-        self.fields['worktype'].choices = om.TypeAssist.objects.filter(tatype__tacode="WORKTYPE", client_id = S['client_id'], enable=True).values_list('id', 'tacode')
+        self.fields['worktype'].choices = om.TypeAssist.objects.get_choices_for_worktype(self.request)
         self.fields['department'].queryset = om.TypeAssist.objects.filter(tatype__tacode="DEPARTMENT", client_id = S['client_id'], enable=True)
         self.fields['designation'].choices = om.TypeAssist.objects.filter(tatype__tacode="DESIGNATION", client_id = S['client_id'], enable=True).values_list('id', 'taname')
         self.fields['bu'].queryset = om.Bt.objects.filter(id__in = S['assignedsites'])# add query for isadmin
-
+        self.fields['location'].queryset = am.Location.objects.filter(client_id = S['client_id'], enable=True)
         utils.initailize_form_fields(self)
 
     def is_valid(self) -> bool:
@@ -178,11 +178,11 @@ class PeopleForm(forms.ModelForm):
         if (dob and dor and doj):
             if dob == doj:
                 raise forms.ValidationError(self.error_msg['invalid_dates'])
-            if dob > doj:
+            if dob >= doj:
                 print(dob, doj)
-                raise forms.ValidationError(self.error_msg['invalid_dates2'])
-            if dob > dor:
-                raise forms.ValidationError(self.error_msg['invalid_dates3'])
+                raise forms.ValidationError(self.error_msg['dob_should_less_doj'])
+            if dob >= dor:
+                raise forms.ValidationError(self.error_msg['dob_should_less_dor'])
 
     # For field level validation define functions like clean_<func name>.
 
@@ -398,10 +398,10 @@ class PeopleExtrasForm(forms.Form):
         self.fields['tempincludes'].choices = am.QuestionSet.objects.filter(type = 'SITEREPORT', bu_id__in = S['assignedsites']).values_list('id', 'qsetname')
         web, mob, portlet, report = create_caps_choices_for_peopleform(self.request.user.client)
         if not (S['is_superadmin']):
-            self.fields['webcapability'].choices     = S['people_webcaps'] or  web
-            self.fields['mobilecapability'].choices  = S['people_mobcaps'] or mob
-            self.fields['portletcapability'].choices = S['people_portletcaps'] or portlet
-            self.fields['reportcapability'].choices  = S['people_reportcaps'] or report
+            self.fields['webcapability'].choices     = S['client_webcaps'] or  web
+            self.fields['mobilecapability'].choices  = S['client_mobcaps'] or mob
+            self.fields['portletcapability'].choices = S['client_portletcaps'] or portlet
+            self.fields['reportcapability'].choices  = S['client_reportcaps'] or report
         else:
             # if superadmin is logged in
             from .utils import get_caps_choices

@@ -257,7 +257,7 @@ class ChecklistForm(forms.ModelForm):
     
     class Meta:
         model = am.QuestionSet
-        fields = ['qsetname', 'enable', 'type', 'ctzoffset', 'assetincludes',
+        fields = ['qsetname', 'enable', 'type', 'ctzoffset', 'assetincludes', 'show_to_all_sites',
                   'site_type_includes', 'buincludes', 'site_grp_includes', 'parent']
         widgets = {
             'parent':forms.TextInput(attrs={'style':'display:none'}),
@@ -279,12 +279,12 @@ class ChecklistForm(forms.ModelForm):
         else: 
             self.fields['type'].required = False
         
-        self.fields['site_type_includes'].choices = om.TypeAssist.objects.filter(Q(tatype__tacode = "SITETYPE") | Q(tacode='NONE') & Q(client_id = S['client_id']), enable=True).values_list('id', 'taname')
+        self.fields['site_type_includes'].choices = om.TypeAssist.objects.filter((Q(tatype__tacode = "SITETYPE") | Q(tacode='NONE')) & Q(client_id = S['client_id']), enable=True).values_list('id', 'taname')
         bulist = om.Bt.objects.get_all_bu_of_client(self.request.session['client_id'])
         self.fields['buincludes'].choices = pm.Pgbelonging.objects.get_assigned_sites_to_people(self.request.user.id, makechoice=True)
         self.fields['site_grp_includes'].choices = pm.Pgroup.objects.filter(
             Q(groupname='NONE') |  Q(identifier__tacode='SITEGROUP') & Q(bu_id__in = bulist) & Q(client_id = S['client_id'])).values_list('id', 'groupname')
-        self.fields['assetincludes'].choices = ac_utils.get_assetsmartplace_choices(self.request, ['CHECKPOINT'])
+        self.fields['assetincludes'].choices = ac_utils.get_assetsmartplace_choices(self.request, ['CHECKPOINT', 'ASSET'])
         utils.initailize_form_fields(self)
         
     def clean(self):
@@ -779,7 +779,6 @@ class AssetExtrasForm(forms.Form):
     required_css_class = "required"
     ismeter =    forms.BooleanField(initial=False, required=False, label='Is Meter')
     is_nonengg_asset =    forms.BooleanField(initial=False, required=False, label='Is Non Engg. Asset')
-    tempcode      = forms.CharField(max_length=55, label='Temporary Code', required=False)
     supplier      = forms.CharField(max_length=55, label='Supplier', required=False)
     meter         = forms.ChoiceField(widget=s2forms.Select2Widget, label='Meter', required=False)
     invoice_no    = forms.CharField( max_length=55, required=False, label='Invoice No')

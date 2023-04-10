@@ -9,7 +9,7 @@ from icecream import ic
 class PeopleManager(BaseUserManager):
     use_in_migrations =  True
     fields = ['id', 'peoplecode', 'peoplename', 'loginid', 'isadmin', 'is_staff', 'isverified',
-              'enable', 'department_id', 'designation_id', 'peopletype_id', 'client_id', 
+              'enable', 'department_id', 'designation_id', 'peopletype_id', 'client_id', 'uuid',
               'bu_id', 'cuser_id', 'muser_id', 'reportto_id', 'deviceid', 'enable', 'mobno',
               'cdtz', 'mdtz', 'gender', 'dateofbirth', 'dateofjoin', 'tenant_id', 'ctzoffset']
     related = ['bu', 'client', 'peopletype', 'muser', 'cuser', 'reportto', 'department', 'designation']
@@ -354,7 +354,6 @@ class PgroupManager(models.Manager):
         qobjs, dir,  fields, length, start = utils.get_qobjs_dir_fields_start_length(R)
         qset = self.filter(
             ~Q(groupname = 'NONE'), 
-            enable = True,
             identifier__tacode = 'SITEGROUP',
             client_id = S['client_id'],
         ).select_related('identifier').values(*fields).order_by(dir)
@@ -370,6 +369,7 @@ class PgroupManager(models.Manager):
 
     def get_assignedsitegroup_forclient(self, clientid, request):
         qset = self.filter(
+             enable=True,
             client_id = clientid,
             identifier__tacode = 'SITEGROUP'
             ).values_list('id', 'groupname')

@@ -23,7 +23,7 @@ class VendorView(LoginRequiredMixin, View):
         'template_list': 'work_order_management/vendor_list.html',
         'related'      : ['cuser'],
         'model'        : Vendor,
-        'fields'       : ['code', 'name', 'mobno', 'email', 'cdtz',
+        'fields'       : ['code', 'name', 'mobno', 'email', 'cdtz', 'type__taname',
                           'cuser__peoplename', 'ctzoffset', 'id']
     }
 

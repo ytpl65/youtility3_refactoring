@@ -416,6 +416,7 @@ Client
             }
             //code text transform to uppercase while typing
             $("#DTE_Field_bucode").css("text-transform", "uppercase")
+            $('.DTED_Lightbox_Content').draggable()
         })
 
         //datatable  list of business units
@@ -513,6 +514,7 @@ Client
         })
 
         adminsEditor.on('opened', function(e, mode, action){
+            $('.DTED_Lightbox_Content').draggable()
             this.field('isadmin').disable()
         })
 
@@ -544,7 +546,7 @@ Client
                     if(!peoplename.val()){
                         console.log(peoplename.val(), "@@@@222")
                         peoplename.error('Please enter a name')
-                    }
+                    }DTED_Lightbox_Content
                     if(!email.val()){
                         console.log(email.val(), "@@@@222")
                         email.error('Please enter a email')

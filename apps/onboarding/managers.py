@@ -173,7 +173,7 @@ class BtManager(models.Manager):
             if pm.People.objects.filter(peoplecode=R['peoplecode'].upper(),  client_id = S['client_id']).exists():
                 return {'data':list(self.none()), 'error':'People code already exists'}
             
-            if pm.People.objects.filter(loginid = R['loginid'], client_id = S['client_id'] ).exists():
+            if pm.People.objects.filter(loginid = R['loginid']).exists():
                 return {'data':list(self.none()), 'error':'Login id already exists'}
             
             if pm.People.objects.filter(email = R['email'], client_id = S['client_id']).exists():
@@ -302,7 +302,16 @@ class TypeAssistManager(models.Manager):
                 'id', 'text'
             )
         return qset or self.none()
+    
 
+    def get_choices_for_worktype(self, request):
+        S = request.session
+        qset = self.annotate(custom_field=V('', output_field=models.CharField())).filter(
+            tatype__tacode="WORKTYPE", client_id = S['client_id'], enable=True
+        ).select_related('tatype').values_list('id', 'tacode')
+         # add an extra choice with empty strings
+        qset = [('','')] + list(qset)
+        return qset or self.none()
 
 
 class GeofenceManager(models.Manager):

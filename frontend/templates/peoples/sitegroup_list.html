@@ -47,6 +47,11 @@ Site Groups
                 },
                 {data: 'enable', title: 'Enable', orderable:false}
             ],
+            createdRow:function(row, data, dataIndex){
+				if(data['enable'] === false){
+					$(row).addClass('disabled-record text-white')
+				}
+			},
             buttons:[
                 {
                     text: 'Add New',

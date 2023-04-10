@@ -48,7 +48,6 @@ class PELManager(models.Manager):
             obj[0].peventlogextras = extras
             obj[0].facerecognitionin = extras['verified_in']
             obj[0].facerecognitionout = extras['verified_out']
-            obj[0].people_id = peopleid
             obj[0].save()
             return True
         return False

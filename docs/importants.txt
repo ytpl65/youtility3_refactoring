@@ -46,3 +46,8 @@ IMPORTANT NOTES
 1.BY DEFAULT PEOPLE PASSWORD IS <peoplecode>
 2. To give permission to the path : sudo chmod -R 777 /path/to/file or dir
 
+
+
+################################## BACKGROUND FUNCTIONS ############################################
+In the directory: background_tasks.tasks.py, apps.service.utils
+

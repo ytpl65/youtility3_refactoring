@@ -1,7 +1,9 @@
 # mysite/celery.py
+from __future__ import absolute_import, unicode_literals
 import os
 from celery import Celery
 from celery.schedules import crontab
+from django.conf import settings
 
 # Set the default Django settings module for the 'celery' program.
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'intelliwiz_config.settings')
@@ -12,10 +14,11 @@ app = Celery('intelliwiz_config')
 # the configuration object to child processes.
 # - namespace='CELERY' means all celery-related configuration keys
 #   should have a `CELERY_` prefix.
-app.config_from_object('django.conf:settings', namespace='CELERY')
+app.config_from_object(settings, namespace='CELERY')
 
 # Load task modules from all registered Django apps.
 app.autodiscover_tasks()
+app.conf.CELERYD_HIJACK_ROOT_LOGGER = False
 
 app.conf.beat_schedule = {
     "ppm_schedule_at_minute_3_past_hour_3_and_16":{
@@ -24,7 +27,7 @@ app.conf.beat_schedule = {
     },
     "reminder_emails_at_minute_10_past_every_8th_hour.":{
         'task':'send_reminder_emails',
-        'schedule': crontab(hour='*/8', minute='10'),#10 */8 * * *
+        'schedule': crontab(hour='*/8', minute='10'),
     },
     "auto_close_at_every_30_minute":{
         'task':'auto_close_jobs',
@@ -38,10 +41,6 @@ app.conf.beat_schedule = {
         'task':'create_job()',
         'schedule':crontab(minute='27', hour='*/8') #27 */8 * * *
     },
-    "send_ticket_email":{
-        'task':'send_ticket_email',
-        'schedule':crontab(minute='*/30')
-    }
 
 }
 

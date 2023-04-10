@@ -102,6 +102,10 @@ Questionset Form
                     class="form-check-label bool col-form-label me-5 text-sm-right">
                     {{ checklistform.enable.label }}: &nbsp; {{ checklistform.enable }}
                 </label>
+                <label for="{{ checklistform.show_to_all_sites.id_for_label }}"
+                    class="form-check-label bool col-form-label me-5 text-sm-right">
+                    {{ checklistform.show_to_all_sites.label }}: &nbsp; {{ checklistform.show_to_all_sites }}
+                </label>
             </div>
             <!-- Enable End -->
 
@@ -161,7 +165,7 @@ Questionset Form
     var childEditor = null
     var template_id=null
     var seqno = 0
-    const templates = ['SITEREPORT', 'INCIDENTREPORT', 'WORKPERMIT', 'WORKORDER']
+    const templates = ['SITEREPORT', 'INCIDENTREPORT', 'WORKPERMIT', 'WORK_ORDER']
 
     //delete typeassist 
     function deleteChecklist(elemt){

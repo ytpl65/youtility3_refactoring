@@ -447,22 +447,36 @@ def insert_into_jn_and_jnd(job, DT, resp):
     return status, resp
 
 def insert_into_jn_for_parent(job, params):
-    return am.Jobneed.objects.create(
-        job_id         = job['id'],         parent            = params['NONE_JN'],
-        jobdesc        = params['jobdesc'], plandatetime      = params['pdtz'],
-        expirydatetime = params['edtz'],    gracetime         = job['gracetime'],
-        asset_id       = job['asset_id'],   qset_id           = job['qset_id'],
-        ctzoffset      = job['ctzoffset'],  people_id         = params['people'],
-        pgroup_id      = job['pgroup_id'],  frequency         = 'NONE',
-        priority       = job['priority'],   jobstatus         = params['jobstatus'],
-        performedby    = params['NONE_P'],  jobtype           = params['jobtype'],
-        scantype       = job['scantype'],   identifier        = job['identifier'],
-        cuser_id       = job['cuser_id'],   muser_id          = job['muser_id'],
-        bu_id          = job['bu_id'],      ticketcategory_id = job['ticketcategory_id'],
-        gpslocation    = 'POINT(0.0 0.0)',  remarks           = '',
-        seqno          = 0,                 multifactor       = params['m_factor'],
-        client_id      = job['client_id'],  other_info        = job['other_info']
+    obj, _ = am.Jobneed.objects.get_or_create(
+        defaults={
+            'ctzoffset'        : job['ctzoffset'],
+            'priority'         : job['priority'],
+            'identifier'       : job['identifier'],
+            'gpslocation'      : 'POINT(0.0 0.0)',
+            'remarks'          : '',
+            'multifactor'      : params['m_factor'],
+            'client_id'        : job['client_id'],
+            'other_info'       : job['other_info'],
+            'cuser_id'         : job['cuser_id'],
+            'muser_id'         : job['muser_id'],
+            'ticketcategory_id': job['ticketcategory_id'],
+            'frequency'        : 'NONE',
+            'bu_id'            : job['bu_id'],
+            'seqno'            : 0,
+            'scantype'         : job['scantype'],
+            'gracetime'    : job['gracetime'],
+            'performedby'    : params['NONE_P'],
+            'jobstatus'      : params['jobstatus'],
+        },
+        job_id         = job['id'],           parent       = params['NONE_JN'],
+        jobdesc        = params['jobdesc'],   plandatetime = params['pdtz'],
+        expirydatetime = params['edtz'],
+        asset_id       = job['asset_id'],     qset_id      = job['qset_id'],
+        people_id      = params['people'],
+        pgroup_id      = job['pgroup_id'],
+        jobtype        = params['jobtype'],
     )
+    return obj
 
 
 

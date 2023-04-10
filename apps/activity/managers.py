@@ -32,7 +32,7 @@ class QuestionSetManager(models.Manager):
         return ""
 
     def get_qset_modified_after(self, mdtz, buid):
-        qset = self.select_related(*self.related).filter(Q(id = 1) | Q(mdtz__gte = mdtz) &  Q(bu_id = buid) & Q(enable=True)).values(*self.fields).order_by('-mdtz')
+        qset = self.select_related(*self.related).filter(Q(id = 1) | Q(mdtz__gte = mdtz) &  Q(bu_id = buid) | Q(show_to_all_sites = True) & Q(enable=True)).values(*self.fields).order_by('-mdtz')
         qset = self.clean_fields(qset)
         return qset or None
 
@@ -1251,8 +1251,9 @@ class LocationManager(models.Manager):
     
     def get_locations_modified_after(self, mdtz, buid, ctzoffset):
         related = ['client', 'cuser', 'muser', 'parent',  'tenant', 'type', 'bu']
-        fields = ['id', 'cdtz', 'mdtz', 'ctzoffset', 'loccode', 'locname', 'enable', 'iscritical', 'gpslocation', 'locstatus',  'bu_id',
-               'client_id', 'cuser_id', 'muser_id', 'parent_id',  'tenant_id', 'type_id']
+        fields = ['id', 'cdtz', 'mdtz', 'ctzoffset', 'loccode', 'locname', 'enable', 'iscritical', 
+               'client_id', 'cuser_id', 'muser_id', 'parent_id',  'tenant_id', 'type_id', 'uuid',
+               'gpslocation', 'locstatus',  'bu_id',]
         
         if not isinstance(mdtz, datetime):
             mdtz = datetime.strptime(mdtz, "%Y-%m-%d %H:%M:%S")

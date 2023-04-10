@@ -22,7 +22,7 @@ import apps.activity.utils as av_utils
 import apps.onboarding.forms as obf
 import apps.onboarding.models as obm
 import apps.peoples.models as pm
-from apps.service.tasks import get_model_or_form
+from apps.service.utils import get_model_or_form
 import logging
 import mimetypes
 from datetime import datetime, timedelta
@@ -126,7 +126,7 @@ class QuestionSet(LoginRequiredMixin, View):
         # first load the template
         if R.get('template'):
             return render(request, P['template_list'])
-        
+
         # return qset_list data
         if R.get('action', None) == 'list' or R.get('search_term'):
             objs = self.params['model'].objects.questionset_listview(request, P['fields'], P['related'])
@@ -136,16 +136,15 @@ class QuestionSet(LoginRequiredMixin, View):
         if R.get('action', None) == 'form':
             cxt = {
                 'questionsetform': self.params['form_class'](
-                    request = request,
-                    initial = self.params['form_initials']),
-                'msg': f"create questionset requested"}
+                    request=request, initial=self.params['form_initials']
+                ),
+                'msg': "create questionset requested",
+            }
             resp = render(request, self.params['template_form'], context = cxt)
 
-        # handle delete request
         elif R.get('action', None) == "delete" and R.get('id', None):
             resp = utils.render_form_for_delete(request, self.params, True)
 
-        # return form with instance
         elif R.get('id', None):
             log.info('detail view requested')
             obj = utils.get_model_obj(int(R['id']), request, self.params)
@@ -745,7 +744,6 @@ class MobileUserLog(LoginRequiredMixin, View):
         # then load the table with objects for table_view
         if R.get('action', None) == 'list' or R.get('search_term'):
             total, filtered, objs = self.params['model'].objects.get_mobileuserlog(request)
-            ic(utils.printsql(objs))
             return  rp.JsonResponse(data = {
                 'draw':R['draw'],
                 'data':list(objs),
