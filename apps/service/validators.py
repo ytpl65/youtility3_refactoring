@@ -1,3 +1,5 @@
+from logging import getLogger
+log = getLogger("mobile_service_log")
 def checkHex(s):
     return not any(((ch < '0' or ch > '9') and (ch < 'A' or ch > 'F')) for ch in s)
 
@@ -23,11 +25,14 @@ def clean_datetimes(val, offset):
     from datetime import datetime, timedelta, timezone
     tz = timezone(timedelta(minutes = int(offset)))
     if val:
+        log.info(f"beforing cleaning {val}")
         if val in ['None', 'NONE']:
             return None
         val = val.replace("+00:00", "")
         val = datetime.strptime(val, "%Y-%m-%d %H:%M:%S")
-        return val.replace(tzinfo = tz, microsecond = 0)
+        #val  = val - timedelta(minutes=int(offset))
+        val =  val.replace(tzinfo = tz, microsecond = 0)
+        log.info(f'after cleaning {val}')
     return val
 
 def clean_date(val):
@@ -46,7 +51,7 @@ def clean_record(record):
         elif k in ['gpslocation' , 'startlocation', 'endlocation']:
             record[k] = clean_point_field(v)
         elif k in ['cdtz', 'mdtz', 'starttime', 'endtime', 'punchintime',
-                   'punchouttime', 'plandatetime', 'expirydatetime']:
+                   'punchouttime']:
             record[k] = clean_datetimes(v, record['ctzoffset'])
         elif k in ['geofencecode']:
             record[k] = clean_code(v)

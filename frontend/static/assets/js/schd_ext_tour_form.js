@@ -93,7 +93,7 @@ function calculateAndDisplayRoute(data, routeFreq, optimize=false) {
           isDirectionSaved = true;
         } else {
           show_error_alert(
-            `Directions request failed due to ${status}`,
+            `Directions request failed due to ${status}, Please check your coordinates of your checkpoints`,
             "GMaps Error!"
           );
         }

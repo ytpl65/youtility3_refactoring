@@ -535,18 +535,20 @@ class JobForm(forms.ModelForm):
     freq_duration2 = forms.ChoiceField(
         choices = DURATION_CHOICES, required = False, initial='MIN', widget = s2forms.Select2Widget)
     jobdesc = forms.CharField(widget=forms.Textarea(attrs={'rows': 2, 'cols': 40}), label='Description', required=False)
+    cronstrue = forms.CharField(widget=forms.Textarea(attrs={'readonly':True, 'rows':2}), required=False) 
 
     class Meta:
         model = am.Job
-        fields = ['jobname', 'jobdesc', 'fromdate', 'uptodate', 'cron','sgroup',
-                    'identifier', 'planduration', 'gracetime', 'expirytime',
-                    'asset', 'priority', 'qset', 'pgroup', 'geofence', 'parent',
-                     'seqno', 'client', 'bu', 'starttime', 'endtime', 'ctzoffset',
-                    'frequency',  'scantype', 'ticketcategory', 'people', 'shift']
+        fields = [
+            'jobname', 'jobdesc', 'fromdate', 'uptodate', 'cron','sgroup',
+            'identifier', 'planduration', 'gracetime', 'expirytime',
+            'asset', 'priority', 'qset', 'pgroup', 'geofence', 'parent',
+            'seqno', 'client', 'bu', 'starttime', 'endtime', 'ctzoffset',
+            'frequency',  'scantype', 'ticketcategory', 'people', 'shift']
 
         labels = {
             'jobname'   : 'Name',            'fromdate'      : 'Valid From',
-            'uptodate' : 'Valid To',     'cron'        : 'Cron Expression', 'ticketcategory': 'Notify Catgory',
+            'uptodate' : 'Valid To',     'cron'        : 'Scheduler', 'ticketcategory': 'Notify Catgory',
             'grace_time': 'Grace Time',   'planduration': 'Plan Duration',   'scan_type'      : 'Scan Type',
             'priority'  : 'Priority',     'people'    : 'People',          'pgroup'        : 'Group',          
             'qset_id'   : 'Question Set', 'shift'       : "Shift",           'asset'        : 'Asset',
@@ -565,6 +567,7 @@ class JobForm(forms.ModelForm):
             'qset'          : s2forms.Select2Widget,
             'people'        : s2forms.Select2Widget,
             'bu'            : s2forms.Select2Widget,
+            'cron':forms.TextInput(attrs={'style':'display:none'})
         }
 
     def clean_from_date(self):
@@ -893,6 +896,8 @@ class PPMForm(forms.ModelForm):
     expirytime_type    = forms.ChoiceField(choices = timeInChoices, initial='MIN', widget = s2forms.Select2Widget)
     frequency = forms.ChoiceField(choices=FREQUENCY_CHOICES, label="Frequency", widget=s2forms.Select2Widget)
     assign_to          = forms.ChoiceField(choices = ASSIGNTO_CHOICES, initial="PEOPLE")
+    cronstrue = forms.CharField(widget=forms.Textarea(attrs={'readonly':True, 'rows':2}), required=False) 
+
     required_css_class = "required"
 
 
@@ -907,7 +912,7 @@ class PPMForm(forms.ModelForm):
             'asset':'Asset', 'qset':"Question Set", 'people':"People", 
             'scantype':'Scantype', 'priority':'Priority',
             'jobdesc':'Description', 'jobname':"Name", 'planduration':"Plan Duration",
-            'expirytime':'Exp time', 'cron':"Cron Exp", 'ticketcategory':'Notify Category',
+            'expirytime':'Exp time', 'cron':"Scheduler", 'ticketcategory':'Notify Category',
             'fromdate':'Valid From', 'uptdate':'Valid To', 'pgroup':'Group', 
             'assign_to':'Assign to'
         }

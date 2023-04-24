@@ -124,6 +124,7 @@ def update_ticket_data(tickets, result):
             {tkt['exp_time']} {tkt['level'] = } {assignedperson_id = } {assignedtogroup_id = } level= {tkt['level']+1}"
             result = update_ticket_log(tkt['id'], history_item, result)
             result = send_escalation_ticket_email(tkt, result)
+            result['id'].append(tkt['id'])
     return result
 
 
@@ -196,7 +197,7 @@ def update_ticket_log(id, item, result):
     return result
 
 
-def update_job_autoclose_status(record):
+def update_job_autoclose_status(record, resp):
     Jobneed = apps.get_model('activity', 'Jobneed')
     obj = Jobneed.objects.get(id=record['id'])
     obj.mdtz = datetime.now(timezone.utc)
@@ -205,6 +206,8 @@ def update_job_autoclose_status(record):
     obj.other_info['ticket_generated'] = record['ticketcategory__tacode'] == 'RAISETICKETNOTIFY'
     obj.other_info['autoclosed_by_server'] = True
     obj.save()
+    resp['id'].append(record['id'])
+    return resp
 
 
 def get_escalation_of_ticket(tkt):
@@ -249,3 +252,94 @@ def create_ticket_for_autoclose(jobneedrecord, ticketdesc):
         log.error(
             "something went wrong in create_ticket_for_autoclose", exc_info=True)
 
+
+def get_email_recipients(jobneed):
+    from apps.peoples.models import People
+    from apps.onboarding.models import Bt
+    
+    #get email of siteincharge
+    siemails = People.objects.get_siteincharge_emails(jobneed.bu_id)
+    #get email of client admins
+    adm_emails = People.objects.get_admin_emails(jobneed.client_id)
+    return list(siemails) + list(adm_emails)
+
+def get_context_for_mailtemplate(jobneed, subject):
+    from apps.activity.models import JobneedDetails
+    from datetime import timedelta
+    when = jobneed.endtime + timedelta(minutes=jobneed.ctzoffset)
+    return  {
+        'details'     : list(JobneedDetails.objects.get_e_tour_checklist_details(jobneedid=jobneed.id)),
+        'when'        : when.strftime("%d-%m-%Y %H:%M"),
+        'tourtype'    : jobneed.identifier,
+        'performedby' : jobneed.performedby.peoplename,
+        'site'        : jobneed.bu.buname,
+        'subject'     : subject,
+        'jobdesc': jobneed.jobdesc
+    }
+
+
+
+
+def add_attachments(jobneed, msg, result):
+    from django.conf import settings
+    JobneedDetails = apps.get_model('activity', 'JobneedDetails')
+    Jobneed = apps.get_model('activity', 'Jobneed')
+    JND = JobneedDetails.objects.filter(jobneed_id = jobneed.id)
+
+    jnd_atts = []
+    for jnd in JND:
+        if att := list(JobneedDetails.objects.getAttachmentJND(jnd.id)):
+            jnd_atts.append(att[0])
+    jn_atts = list(Jobneed.objects.getAttachmentJobneed(jobneed.id))
+    total_atts = jn_atts + jnd_atts
+    if total_atts: result['story'] += f'Total {total_atts} are added to the mail'
+    for att in total_atts:
+        msg.attach_file(f"{settings.MEDIA_ROOT}/{att['filepath']}{att['filename']}")
+        log.info("attachments are attached....")
+    return msg
+    
+
+def alert_observation(jobneed, atts=False):
+    from django.template.loader import render_to_string
+    from django.core.mail import EmailMessage
+    from django.conf import settings
+
+    try:
+        result = {'story':"", 'traceback':""}
+        if jobneed.alerts:
+            result['story'] += 'Sending Mail...'
+            recipents = get_email_recipients(jobneed)
+            if jobneed.identifier == 'EXTERNALTOUR':
+                subject = f"[READINGS ALERT] Site with Sol Id: [{jobneed.bu.solid}], {jobneed.bu.buname} having checklist [{jobneed.qset.qsetname}] - readings out of range"
+            elif jobneed.identifier == 'INTERNALTOUR':
+                subject = f"[READINGS ALERT] Checkpoint with Name: {jobneed.asset.assetname} at Site: {jobneed.bu.buname} having checklist [{jobneed.qset.qsetname}] - readings out of range"
+            else:
+                subject = f"[READINGS ALERT] Site with Name: {jobneed.bu.buname} having checklist [{jobneed.qset.qsetname}] - readings out of range"
+            context = get_context_for_mailtemplate(jobneed, subject)
+
+            html_message = render_to_string('observation_mail.html', context)
+            log.info(f"Sending alert mail with subject {subject}")
+            msg = EmailMessage()
+            msg.subject = subject
+            msg.body  = html_message
+            msg.from_email = settings.EMAIL_HOST_USER
+            msg.to = recipents
+            msg.content_subtype = 'html'
+            if atts:
+                log.info('Attachments are going to attach')
+                #add attachments to msg
+                msg = add_attachments(jobneed, msg)
+            msg.send()
+            log.info(f"Alert mail sent to {recipents} with subject {subject}")
+            result['story'] += 'Mail sent'
+        else:
+            result['story'] += "Alerts not found"
+    except Exception as e:
+        log.error("Error while sending alert mail", exc_info=True)
+        result['traceback'] += tb.format_exc()
+    return result
+        
+        
+
+def alert_deviation(uuid, ownername):
+    pass

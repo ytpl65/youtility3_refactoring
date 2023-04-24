@@ -171,7 +171,8 @@ Schedule Tour
                 </div>
                 <div class="col-md-8 d-flex">
                     <input type="text" name="{{ schdtourform.cron.name }}" value="{{ schdtourform.cron.value() }}"
-                        id="id_cron" readonly required class="form-control" maxlength="250" />
+                        id="id_cron" readonly required class="form-control d-none" maxlength="250" />
+                    {{ schdtourform.cronstrue }}
                     <a class="btn btn-circle btn-icon-only btn-default " id="cron_selector">
                         <i class="fa fa-clock fs-4 text-primary" aria-hidden="true"></i>
                     </a>
@@ -367,6 +368,7 @@ Schedule Tour
 
 <script src="{{ static('assets/js/jqCron.js') }}"></script>
 <script src="{{ static('assets/js/jqCron.en.js') }}"></script>
+<script src="{{ static('assets/js/local/cronstrue.min.js') }}"></script>
 <script>
     var table = null;
     const createUrl = "{{ url('schedhuler:create_tour') }}"
@@ -536,6 +538,10 @@ Schedule Tour
 		})
     }
 
+    function properCron(cron){
+        return cron === '* * * * *' ? false :true
+    }
+
     $(document).ready(() => {
         //set ctzoffset
   	    $("#id_ctzoffset").val(-new Date().getTimezoneOffset())
@@ -581,15 +587,17 @@ Schedule Tour
         })
 
         //hide the delete button when instance is not saved yet.
-        if ('{{schdtourform.instance.id}}' == ('None' || "")) {
+        if ('{{schdtourform.instance.id}}' == 'None') {
             $("#btn_del").hide()
         }
         //toggle people and pgroup field based on radio button value
-        if ('{{schdtourform.instance.id}}' == ('None' || "")) {
+        if ('{{schdtourform.instance.id}}' == 'None') {
             showHideSelectField('PEOPLE')
         }else{
             var assignto = '{{schdtourform.instance.people_id }}' == '1' ? "GROUP" : "PEOPLE"
             showHideSelectField(assignto)
+            //cron to readable format
+            $("#id_cronstrue").val(cronstrue.toString($("#id_cron").val()))
         }       
 
         $("#resetMiddleForm").click(() => {
@@ -719,6 +727,10 @@ Schedule Tour
         $("#btnSetCron").click(function(){
             var cron_val= $("#cron_selected_val").val();
             $("#id_cron").val(cron_val);
+            if(!properCron(cron_val)){
+                show_error_alert( "Please change your cron expression and update the job record.", "Problematic Cron")
+                return
+            }
             $('#cron_scheduler').modal('hide');
         });
 
@@ -748,6 +760,8 @@ Schedule Tour
                         bind_method: {
                             set: function($element, value) {
                             $element.val(value);
+                            //cron to readable format
+                            $("#id_cronstrue").val(cronstrue.toString(value))
                             }
                         }
                     });

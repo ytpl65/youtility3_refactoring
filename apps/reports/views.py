@@ -574,3 +574,8 @@ class ExportReports(LoginRequiredMixin, View):
         pyreportjasper.process_report()
         
         
+        
+def testRequest(request):
+    log.info(f'{pformat(request.GET)}')
+    
+    return rp.JsonResponse({'contextResponses':[]}, status=200)

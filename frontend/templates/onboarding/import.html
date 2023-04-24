@@ -35,12 +35,14 @@ Import Data
             <li class="list-group-item">File format of .xlsx should be used for seamless operation</li>
             <li class="list-group-item">Do not use any type of column formatting, only text to be used</li>
             <li class="list-group-item">It is mandatory to leave the first column empty</li>
+            <li class="list-group-item">If you want to enter nothing into the cell, then enter 'NONE'</li>
         </ol>
     </div>
     
     <div class="col-md-6">
         <form action="" method="post" id="id_import_form" enctype="multipart/form-data">
             <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
+
             <div class="row mb-3">
                 <div class="col-md-3 mb-3">
                     {{ importform.table.label_tag() }}
@@ -48,12 +50,12 @@ Import Data
                 <div class="col-md-9 mb-3">
                     {{ importform.table }}
                 </div>
-                <div class="col-md-3 mb-3">
+                {# <div class="col-md-3 mb-3">
                     <label for="">Download Template:</label>
-                </div>
+                </div> 
                 <div class="col-md-9 mb-3">
                     <button type="button"  class="btn btn-sm btn-secondary" id="btn_download">download</button>
-                </div>
+                </div>#}
                 <div class="col-md-3 mb-3">
                     {{ importform.importfile.label_tag() }}
                 </div>
@@ -78,6 +80,8 @@ Import Data
     const urlname = '{{ url("onboarding:import") }}'
 
     $(document).ready(function () {
+        //set ctzoffset
+        $("#id_ctzoffset").val(-new Date().getTimezoneOffset())
 
         //on click downnload template
         $('#btn_download').click(() => {
@@ -140,6 +144,11 @@ Import Data
                                 columnDefs:{targets: Array(res.no_of_cols).fill(null).map((_, i) => i), render:function(data, type, row, meta ){return data || '--'} }
                                 })
                             }
+                        }else{
+                            Swal.fire({
+                                title:`Number of records inserted: ${res.totalrows}`,
+                                icon:"success"
+                            })
                         }
                     },
                     error: function (xhr, status, error) {

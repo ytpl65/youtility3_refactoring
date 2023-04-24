@@ -8,7 +8,6 @@ from apps.peoples.models import Pgbelonging, Pgroup, People
 from apps.attendance.models import PeopleEventlog
 from django.db import connections
 from django.db.models import Q
-from .utils import hi_naveen
 from collections import namedtuple
 from logging import getLogger
 log = getLogger('mobile_service_log')
@@ -34,7 +33,6 @@ class Query(graphene.ObjectType):
                                              clientid = graphene.Int(required = True))
 
     get_jndmodifiedafter = graphene.Field(SelectOutputType,
-                                         mdtz = graphene.String(required = True),
                                          ctzoffset = graphene.Int(required = True),
                                          jobneedids = graphene.String(required = True))
 
@@ -164,17 +162,15 @@ class Query(graphene.ObjectType):
         return get_externaltouremodifiedafter(peopleid, buid, clientid)
 
     @staticmethod
-    def resolve_get_jndmodifiedafter(self, info, mdtz, ctzoffset, jobneedids):
-        log.info(f'\n\nrequest for jndmodifiedafter inputs : mdtz:{mdtz}, ctzoffset:{ctzoffset}, jobneedids:{jobneedids}')
-        mdtz = utils.getawaredatetime(mdtz, ctzoffset)
-        data = JobneedDetails.objects.get_jndmodifiedafter(mdtz, jobneedids)
+    def resolve_get_jndmodifiedafter(self, info, ctzoffset, jobneedids):
+        log.info(f'\n\nrequest for jndmodifiedafter inputs : ctzoffset:{ctzoffset}, jobneedids:{jobneedids}')
+        data = JobneedDetails.objects.get_jndmodifiedafter(jobneedids)
         records, count, msg = utils.get_select_output(data)
         log.info(f'{count} objects returned...')
         return SelectOutputType(nrows = count, records = records,msg = msg)
 
     @staticmethod
     def resolve_get_typeassistmodifiedafter(self, info, mdtz, ctzoffset, clientid):
-        #hi_naveen.delay()
         log.info(f'\n\nrequest for typeassist-modified-after inputs : mdtz:{mdtz}, ctzoffset:{ctzoffset}, clientid:{clientid}')
         mdtzinput = utils.getawaredatetime(mdtz, ctzoffset)
         data = TypeAssist.objects.get_typeassist_modified_after(mdtzinput, clientid)

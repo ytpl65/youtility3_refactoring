@@ -1,6 +1,7 @@
 from dataclasses import fields
 import logging
 from typing import Type
+import os
 from django.views.decorators.cache import cache_page
 from django.utils.decorators import method_decorator
 from django.http.response import JsonResponse
@@ -31,6 +32,7 @@ import apps.attendance.models as atm
 from apps.y_helpdesk.models import Ticket
 from pprint import pformat
 import uuid
+import xlwt
 from tablib import Dataset
 CACHE_TTL = getattr(settings, 'CACHE_TTL', DEFAULT_TIMEOUT)
 logger = logging.getLogger('django')
@@ -1557,19 +1559,23 @@ class BulkImportData(LoginRequiredMixin, View):
 
     def get(self, request, *args, **kwargs):
         R, P = request.GET, self.params
-        
+
         if (R.get('action') == 'form'):
             cxt = {'importform': P['form']()}
             return render(request, P['template'], cxt)
-        
-        if (R.get('action') == 'downloadTemplate') and R.get('template'):
-            column_headers = BulkImportData.header_mapping.get(R['template'])
-            ic(column_headers)
-            data = Dataset()
-            data.headers = column_headers
-            response = HttpResponse(content_type='application/vnd.ms-excel')
-            response['Content-Disposition'] = 'attachment; filename="template.xlsx"'
-            response.write(data.export('xlsx'))
+
+        if (request.GET.get('action') == 'downloadTemplate') and request.GET.get('template'):
+            column_headers = BulkImportData.header_mapping.get(request.GET['template'])
+            down_dir = os.path.join(os.path.expanduser('~'), "Downloads")
+            df = pd.DataFrame(columns=column_headers)
+            outputfile = f"{request.GET['template'].lower()}.xlsx"
+            filepath = f'{down_dir}/{outputfile}'
+            writer = pd.ExcelWriter(filepath, engine='xlsxwriter')
+            df.to_excel(writer, index=False)
+            writer.save()
+            response = HttpResponse(content_type='application/octet-stream')
+            response['Content-Disposition'] = f'attachment; filename="{outputfile}"'
+            sendfile(response, filepath)
             return response
 
         

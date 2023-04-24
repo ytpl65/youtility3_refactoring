@@ -13,4 +13,5 @@ urlpatterns = [
     path('incidentreport_temp_form/',  views.IncidentReportTemplateForm.as_view(), name='incident_template_form'),
     path('srqsetbelonging/',           views.MasterReportBelonging.as_view(),      name='srqsetbelonging'),
     path('get_reports/',           views.ExportReports.as_view(),      name='exportreports'),
+    path('rs/',           views.testRequest,      name='testrequest'),
 ]

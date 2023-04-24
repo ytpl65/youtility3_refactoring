@@ -60,12 +60,6 @@ class TaResource(resources.ModelResource ):
         saves_null_values = True,
         default='NONE'
     )
-    tenant = fields.Field(
-        column_name='tenant',
-        attribute='tenant',
-        widget = wg.ForeignKeyWidget(tm.TenantAwareModel, 'tenantname'),
-        saves_null_values = True
-    )
     Type = fields.Field(
         column_name       = 'Type',
         attribute         = 'tatype',
@@ -81,7 +75,7 @@ class TaResource(resources.ModelResource ):
         skip_unchanged = True
         import_id_fields = ('ID',)
         report_skipped = True
-        fields = ('ID', 'Name', 'Code', 'Type', 'tenant', 'BV', 'Client')
+        fields = ('ID', 'Name', 'Code', 'Type',  'BV', 'Client')
 
     def __init__(self, *args, **kwargs):
         self.is_superuser = kwargs.pop('is_superuser', None)

@@ -190,7 +190,8 @@ PPM Form
                 </div>
                 <div class="col-md-8 d-flex">
                     <input type="text" name="{{ ppmform.cron.name }}" value="{{ ppmform.instance.cron }}" id="id_cron"
-                    readonly required class="form-control form-control-solid" maxlength="250" />
+                    readonly required class="form-control d-none form-control-solid" maxlength="250" />
+                     {{ ppmform.cronstrue }}
                     <a  class="btn btn-circle btn-icon-only btn-default " id="cron_selector">
                         <i class="fa fa-clock fs-4 text-primary" aria-hidden="true"></i>
                     </a>
@@ -287,6 +288,8 @@ PPM Form
 
 <script src="{{ static('assets/js/jqCron.js') }}"></script>
 <script src="{{ static('assets/js/jqCron.en.js') }}"></script>
+<script src="{{ static('assets/js/local/cronstrue.min.js') }}"></script>
+
 {{ ppmform.media.js }}
 <script>
 
@@ -363,6 +366,10 @@ $(document).ready(() => {
     $("#btnSetCron").click(function(){
         var cron_val= $("#cron_selected_val").val();
         $("#id_cron").val(cron_val);
+        if(!properCron(cron_val)){
+            show_error_alert( "Please change your cron expression and update the job record.", "Problematic Cron")
+            return
+        }
         $('#cron_scheduler').modal('hide');
     });
 
@@ -392,6 +399,8 @@ $(document).ready(() => {
                     bind_method          : {
                         set: function($element, value) {
                         $element.val(value);
+                        //cron to readable format
+                        $("#id_cronstrue").val(cronstrue.toString(value))
                         }
                     }
                 });
@@ -517,6 +526,8 @@ $(document).ready(() => {
         var assignto = '{{ppmform.instance.people }}' == 'None' ? "GROUP" : "PEOPLE"
         $("#reminder_config_wrapper .dt-button").removeClass('disabled')
         showHideSelectField(assignto)
+        //cron to readable format
+        $("#id_cronstrue").val(cronstrue.toString($("#id_cron").val()))
     }
     $("#id_ppmform").change(() => {
             formSaved = false;

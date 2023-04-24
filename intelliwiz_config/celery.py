@@ -20,27 +20,5 @@ app.config_from_object(settings, namespace='CELERY')
 app.autodiscover_tasks()
 app.conf.CELERYD_HIJACK_ROOT_LOGGER = False
 
-app.conf.beat_schedule = {
-    "ppm_schedule_at_minute_3_past_hour_3_and_16":{
-        'task':'schedule_ppm_jobs',
-        'schedule': crontab(minute='3', hour='3,16'),#03 3,16 * * *
-    },
-    "reminder_emails_at_minute_10_past_every_8th_hour.":{
-        'task':'send_reminder_emails',
-        'schedule': crontab(hour='*/8', minute='10'),
-    },
-    "auto_close_at_every_30_minute":{
-        'task':'auto_close_jobs',
-        'schedule': crontab(minute='*/30'),
-    },
-    "ticket_escalation_every_30min":{
-        'task':'ticket_escalation',
-        'schedule':crontab(minute='*/30')
-    },
-    "create_job_at_minute_27_past_every_8th_hour.":{
-        'task':'create_job()',
-        'schedule':crontab(minute='27', hour='*/8') #27 */8 * * *
-    },
 
-}
 

@@ -463,7 +463,6 @@ class ImportForm(forms.Form):
         ('TYPEASSIST', 'TypeAssist'),
         ('CAPABILITY', 'Capability'),
     ]
-
     importfile = forms.FileField(required = True, label='Import File', max_length = 50, allow_empty_file = False)
     table = forms.ChoiceField(required = True, choices = TABLECHOICES, label='Select Type of Data', initial='TYPEASSISTS', widget=s2forms.Select2Widget)
 

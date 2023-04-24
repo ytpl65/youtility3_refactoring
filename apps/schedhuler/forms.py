@@ -205,7 +205,8 @@ class Schd_E_TourJobForm(JobForm):
 
     class Meta(JobForm.Meta):
         JobForm.Meta.labels.update({
-            'sgroup':'Route Name'
+            'sgroup':'Route Name',
+            'qset':'Question Set'
             }) 
         JobForm.Meta.widgets.update(
             {'identifier':forms.TextInput(attrs={'style': 'display:none;'}),
@@ -229,6 +230,7 @@ class Schd_E_TourJobForm(JobForm):
         self.fields['uptodate'].input_formats  = settings.DATETIME_INPUT_FORMATS
         self.fields['ticketcategory'].initial  = ob.TypeAssist.objects.get(tacode='AUTOCLOSED')
         self.fields['sgroup'].required  = True
+        self.fields['qset'].required  = True
         self.fields['identifier'].widget.attrs = {"style": "display:none"}
         self.fields['expirytime'].widget.attrs = {"style": "display:none"}
         self.fields['starttime'].widget.attrs  = {"style": "display:none"}

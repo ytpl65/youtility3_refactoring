@@ -62,7 +62,7 @@ class TicketManager(models.Manager):
             ).values(
                 'id', 'uuid', 'ticketdesc', 'assignedtopeople_id', 'assignedtogroup_id', 'comments', 'bu_id', 'client_id', 'priority', 
                 'events', 'isescalated', 'ticketsource', 'cuser_id', 'muser_id', 'cdtz', 'mdtz', 'ctzoffset', 'attachmentcount',
-                'ticketcategory_id', 'location_id', 'asset_id','modifieddatetime', 'level', 'status',
+                'ticketcategory_id', 'location_id', 'asset_id','modifieddatetime', 'level', 'status', 'identifier',
             )
         return qset or self.none()
     

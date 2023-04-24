@@ -146,7 +146,8 @@ Route Plan Setup&nbsp;<i class="fa fa-clock fs-4 text-primary" aria-hidden="true
                 </div>
                 <div class="col-md-8 d-flex">
                     <input type="text" name="{{ schdexternaltourform.cron.name }}" value="{{ schdexternaltourform.instance.cron }}" id="id_cron"
-                    readonly required class="form-control form-control-solid" maxlength="250" />
+                    readonly required class="form-control d-none form-control-solid" maxlength="250" />
+                    {{ schdexternaltourform.cronstrue }}
                     <a  class="btn btn-circle btn-icon-only btn-default " id="cron_selector">
                         <i class="fa fa-clock fs-4 text-primary" aria-hidden="true"></i>
                     </a>
@@ -308,6 +309,9 @@ Route Plan Setup&nbsp;<i class="fa fa-clock fs-4 text-primary" aria-hidden="true
             Save Tour&nbsp;<i class="fas fa-cloud-upload-alt"></i>
         </button>
         {% endif %}
+        <button type="submit" id="btn_clear" form="id_schdexternaltourform" class="btn btn-sm btn-secondary btn-hover-scale">
+            Clear&nbsp;<i class="fas fa-trash-alt"></i>
+        </button>
     </div>
 {% endblock ajax_page_actions %}
 
@@ -323,6 +327,8 @@ Route Plan Setup&nbsp;<i class="fa fa-clock fs-4 text-primary" aria-hidden="true
 <script src="{{ static('assets/plugins/custom/Editor-2.0.8/js/dataTables.editor.min.js') }}" type="text/javascript"></script>
 <script src="{{ static('assets/js/jqCron.js') }}"></script>
 <script src="{{ static('assets/js/jqCron.en.js') }}"></script>
+<script src="{{ static('assets/js/local/cronstrue.min.js') }}"></script>
+
 <script type="text/javascript">
     //FOR GLOBAL VARIABLE TO BE AVAILABLE BELOW SCRIPTS
     var _cronDates   = [];
@@ -547,6 +553,10 @@ var asgdsites_table    = null;
 var israndom = "{{ schdexternaltourform.instance.other_info['is_randomized'] }}"
 
 $(document).ready(() => {
+    $("#btn_clear").click(() => {
+        location.href = "{{ url('schedhuler:schd_external_tour') }}?action=form"
+    })
+    
     d2InitializeMap()
     //set ctzoffset
   	$("#id_ctzoffset").val(-new Date().getTimezoneOffset())
@@ -628,6 +638,8 @@ $(document).ready(() => {
         }else{
             disableFields("#id_tourfrequency, #id_breaktime")
         }
+        //cron to readable format
+        $("#id_cronstrue").val(cronstrue.toString($("#id_cron").val()))
     }
 
     //$(".btdeciders").change(function() {
@@ -699,6 +711,8 @@ $(document).ready(() => {
                     bind_method          : {
                         set: function($element, value) {
                         $element.val(value);
+                         //cron to readable format
+                        $("#id_cronstrue").val(cronstrue.toString(value))
                         }
                     }
                 });

@@ -132,7 +132,8 @@ Schedule Task
         </div>
         <div class="col-md-4 d-flex">
             <input type="text" name="{{ schdtaskform.cron.name }}" value="{{ schdtaskform.cron.value() }}" id="id_cron"
-             readonly required class="form-control form-control-solid" maxlength="250" />
+             readonly required class="form-control d-none form-control-solid" maxlength="250"/>
+            {{ schdtaskform.cronstrue }}
             <a  class="btn btn-circle btn-icon-only btn-default " id="cron_selector">
                 <i class="fa fa-clock fs-4 text-primary" aria-hidden="true"></i>
             </a>
@@ -285,10 +286,15 @@ Schedule Task
 {{ schdtaskform.media.js }}
 <script src="{{ static('assets/js/jqCron.js') }}"></script>
 <script src="{{ static('assets/js/jqCron.en.js') }}"></script>
+<script src="{{ static('assets/js/local/cronstrue.min.js') }}"></script>
 
 <script>
     // add classes to label tags.
     $('label').removeClass("col-form-label col-md-2 col-sm-2 text-sm-right")
+
+    function properCron(cron){
+    return cron === '* * * * *' ? false :true
+}
 
     function showHideSelectField(val) {
         if (val == "PEOPLE") {
@@ -308,6 +314,8 @@ Schedule Task
     var formSaved = false;
 
     $(document).ready(function(){
+
+
         //set ctzoffset
   	    $("#id_ctzoffset").val(-new Date().getTimezoneOffset())
         formSaved = true
@@ -317,6 +325,8 @@ Schedule Task
         }else{
             var assignto = '{{schdtaskform.instance.people_id }}' == '1' ? "GROUP" : "PEOPLE"
             showHideSelectField(assignto)
+            //cron to readable format
+            $("#id_cronstrue").val(cronstrue.toString($("#id_cron").val()))
         }
 
         //hide the delete button when instance is not saved yet.
@@ -337,6 +347,10 @@ Schedule Task
         $("#btnSetCron").click(function(){
             var cron_val= $("#cron_selected_val").val();
             $("#id_cron").val(cron_val);
+            if(!properCron(cron_val)){
+                show_error_alert( "Please change your cron expression and update the job record.", "Problematic Cron")
+                return
+            }
             $('#cron_scheduler').modal('hide');
         });
 
@@ -365,7 +379,9 @@ Schedule Task
                         bind_to: $('#cron_selected_val'),
                         bind_method: {
                             set: function($element, value) {
-                            $element.val(value);
+                                $element.val(value);
+                                //cron to readable format
+                                $("#id_cronstrue").val(cronstrue.toString(value))
                             }
                         }
                     });

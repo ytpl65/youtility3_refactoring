@@ -11,6 +11,7 @@ from apps.core.raw_queries import get_query
 from pprint import pformat
 from django.db.models import Q
 from django.conf import settings
+from django.utils import timezone
 log = getLogger('mobile_service_log')
 
 @app.task(bind=True, default_retry_delay=300, max_retries=5, name='Send Ticket email')
@@ -69,7 +70,7 @@ def autoclose_job(jobneedid=None):
     try:
         # get all expired jobs
         Jobneed = apps.get_model('activity', 'Jobneed')
-        resp = {'story': "", 'traceback': ""}
+        resp = {'story': "", 'traceback': "", 'id':[]}
         expired = Jobneed.objects.get_expired_jobs(id=jobneedid)
         resp['story'] += f'total expired jobs = {len(expired)}\n'
         context = {}
@@ -120,7 +121,7 @@ def autoclose_job(jobneedid=None):
                         # DB OPERATION
                         ticket_data = butils.create_ticket_for_autoclose(rec, jobdesc)
                         log.info(f'{ticket_data}')
-                        if esc := butils.get_escalation_of_ticket(ticket_data):
+                        if esc := butils.get_escalation_of_ticket(ticket_data) and esc['frequencyvalue'] and esc['frequency']:
                             context['escalation'] = True
                             context['next_escalation'] = f"{esc['frequencyvalue']} {esc['frequency']}"
                         created_at = ticket_data['cdtz'] + \
@@ -142,7 +143,7 @@ def autoclose_job(jobneedid=None):
                     msg.body = html_message
                     msg.send()
                     log.info(f"mail sent, record_id:{rec['id']}")
-                butils.update_job_autoclose_status(rec)
+                resp = butils.update_job_autoclose_status(rec, resp)
 
     except Exception as e:
         log.error(f'context in the template:{context}')
@@ -155,8 +156,7 @@ def autoclose_job(jobneedid=None):
 
 @shared_task(name="ticket_escalation")
 def ticket_escalation():
-    result = {}
-
+    result = {'story':"", 'traceback':"", 'id':[]}
     try:
         # get all records of tickets which can be escalated
         tickets = utils.runrawsql(get_query('get_ticketlist_for_escalation'))
@@ -174,14 +174,13 @@ def ticket_escalation():
 
 @shared_task(name="send_reminder_emails")
 def send_reminder_email():
-    # get all reminders which are not sent
     from django.template.loader import render_to_string
     from django.conf import settings
     from django.core.mail import EmailMessage
     from apps.reminder.models import Reminder
 
-    resp = {'story': "", "traceback": ""}
-    reminders = Reminder.objects.get_all_due_reminders()
+    resp = {'story': "", "traceback": "", 'id':[]}
+    reminders = Reminder.objects.get_all_due_reminders() # get all reminders which are not sent
     resp['story'] += f"total due reminders are: {len(reminders)}\n"
     log.info(f"total due reminders are {len(reminders)}")
     try:
@@ -192,25 +191,28 @@ def send_reminder_email():
             resp['story'] += f"emails recipents are as follows {emails}\n"
             recipents = list(set(emails + rem['mailids'].split(',')))
             subject = f"Reminder For {rem['job__jobname']}"
-            context = {'job': rem['job__jobname'], 'plandatetime': rem['pdate'], 'jobdesc': rem['job__jobdesc'],
-                       'creator': rem['cuser__peoplename'], 'modifier': rem['muser__peoplename']}
+            context = {'job': rem['job__jobname'], 'plandatetime': rem['pdate'], 'jobdesc': rem['job__jobdesc'], 'sitename':rem['bu__buname'],
+                       'creator': rem['cuser__peoplename'], 'modifier': rem['muser__peoplename'], 'subject':subject}
             html_message = render_to_string(
                 'reminder_mail.html', context=context)
             resp['story'] += f"context in email template is {context}\n"
             log.info(f"Sending reminder mail with subject {subject}")
+
             msg = EmailMessage()
             msg.subject = subject
             msg.body = html_message
             msg.from_email = settings.EMAIL_HOST_USER
             msg.to = recipents
             msg.content_subtype = 'html'
-            msg.send()
-            log.info(
-                f"Reminder mail sent to {recipents} with subject {subject}")
+            if is_mail_sent := msg.send(fail_silently=True): #returns 1 if mail sent successfully else 0
+                Reminder.objects.filter(id = rem['id']).update(status="SUCCESS", mdtz = timezone.now())
+            else:
+                Reminder.objects.filter(id = rem['id']).update(status="FAILED", mdtz = timezone.now())
+            resp['id'].append(rem['id'])
+            log.info(f"Reminder mail sent to {recipents} with subject {subject}")
     except Exception as e:
         log.error("Error while sending reminder email")
         resp['traceback'] = tb.format_exc()
-
     return resp
 
 
@@ -224,7 +226,7 @@ def create_ppm_job(jobid=None):
     from apps.activity.models import Job, Asset
     from apps.schedhuler.utils import (calculate_startdtz_enddtz_for_ppm, get_datetime_list,
                                        insert_into_jn_and_jnd, get_readable_dates, create_ppm_reminder)
-    result = {'story': "", "traceback": ""}
+    result = {'story': "", "traceback": "", 'id':[]}
 
     try:
         # atomic transaction
@@ -252,15 +254,19 @@ def create_ppm_job(jobid=None):
                 log.info("processing jobs started found:= '%s' jobs", (len(jobs)))
                 result['story'] += f"total jobs found {total_jobs}\n"
                 for job in jobs:
+                    result['story'] += f'\nprocessing job with id: {job["id"]}'
                     startdtz, enddtz = calculate_startdtz_enddtz_for_ppm(job)
                     log.debug(
                         f"Jobs to be schedhuled from startdatetime {startdtz} to enddatetime {enddtz}")
                     DT, is_cron, resp = get_datetime_list(
                         job['cron'], startdtz, enddtz, resp)
+                    if not DT: 
+                        resp =  {'msg':"Please check your Valid From and Valid To dates"}
+                        continue
                     log.debug(
                         "Jobneed will going to create for all this datetimes\n %s", (pformat(get_readable_dates(DT))))
                     if not is_cron:
-                        F[str(job['id'])] = job['cron']
+                        F[str(job['id'])] = {'cron':job['cron']}
                     status, resp = insert_into_jn_and_jnd(job, DT, resp)
                     if status:
                         d.append({
@@ -281,8 +287,9 @@ def create_ppm_job(jobid=None):
                             f"create_ppm_job job_id: {key} | cron: {value}")
     except Exception as e:
         log.error("something went wrong create_ppm_job", exc_info=True)
+        F[str(job['id'])] = {'tb':tb.format_exc()}
 
-    return resp if jobid else None
+    return resp , F, d, result
 
 
 @app.task(bind=True, default_retry_delay=300, max_retries=5, name='Face recognition')
@@ -296,12 +303,11 @@ def perform_facerecognition_bgt(self, pel_uuid, peopleid, db='default'):
             utils.set_db_for_router(db)
             if pel_uuid not in [None, 'NONE', '', 1] and peopleid not in [None, 'NONE', 1, ""]:
                 Attachment = apps.get_model('activity', 'Attachment')
-                # people event pic
-                pel_att = Attachment.objects.get_people_pic(pel_uuid, db)
-                # people default profile pic
-                People = apps.get_model('peoples', 'People')
+                pel_att = Attachment.objects.get_people_pic(pel_uuid, db) # people event pic
+                People = apps.get_model('peoples', 'People') # people default profile pic
                 people_obj = People.objects.get(id=peopleid)
                 default_peopleimg = f'{settings.MEDIA_ROOT}/{people_obj.peopleimg.url.replace("/youtility4_media/", "")}'
+                
                 if default_peopleimg and pel_att.people_event_pic:
                     images_info = f"default image path:{default_peopleimg} and uploaded file path:{pel_att.people_event_pic}"
                     log.info(f'{images_info}')
@@ -310,17 +316,13 @@ def perform_facerecognition_bgt(self, pel_uuid, peopleid, db='default'):
                     butils.make_square(default_peopleimg, pel_att.people_event_pic)
                     fr_results = DeepFace.verify(
                         img1_path=default_peopleimg, img2_path=pel_att.people_event_pic, enforce_detection=False)
-                    log.info(
-                        f"deepface verification completed and results are {fr_results}")
-                    result[
-                        'story'] += f"deepface verification completed and results are {fr_results}\n"
+                    log.info(f"deepface verification completed and results are {fr_results}")
+                    result['story'] += f"deepface verification completed and results are {fr_results}\n"
                     PeopleEventlog = apps.get_model('attendance', 'PeopleEventlog')
                     if PeopleEventlog.objects.update_fr_results(fr_results, pel_uuid, peopleid, db):
-                        log.info(
-                            "updation of fr_results in peopleeventlog is completed...")
+                        log.info("updation of fr_results in peopleeventlog is completed...")
     except ValueError as v:
-        log.error(
-            "face recogntion image not found or face is not there...", exc_info=True)
+        log.error("face recogntion image not found or face is not there...", exc_info=True)
         result['traceback'] += f'{tb.format_exc()}'
     except Exception as e:
         log.error(
@@ -328,3 +330,24 @@ def perform_facerecognition_bgt(self, pel_uuid, peopleid, db='default'):
         result['traceback'] += f'{tb.format_exc()}'
         self.retry(e)
         raise
+    return result
+
+
+
+@app.task(bind = True, default_retry_delay = 300, max_retries = 5, name = "alert_sendmail()")
+def alert_sendmail(self, id, event, atts=False):
+    '''
+    takes uuid, ownername (which is the model name) and event (observation or deviation)
+    gets the record from model if record has alerts set to true then send mail based on event
+    '''
+    Jobneed = apps.get_model('activity', 'Jobneed')
+    from .utils import alert_deviation, alert_observation
+    obj = Jobneed.objects.filter(id = id).first()
+    if event == 'observation' and obj: return alert_observation(obj, atts)
+    if event == 'deviation' and obj: return alert_deviation(obj, atts)
+
+
+@shared_task(bind=True, name="task_every_min()")
+def task_every_min(self):
+    from django.utils import timezone
+    return f"task completed at {timezone.now()}"

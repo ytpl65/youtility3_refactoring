@@ -122,18 +122,9 @@ $(document).ready(() => {
     // add classes to checkboxes.
     $(".booleans").addClass("form-check form-switch form-check-custom form-check-solid") 
 
-    //datatime widget
-    $("#attd_form").find("#id_punchintime, #id_punchouttime").flatpickr({
-    enableTime: true,
-    dateFormat: "Y-m-d H:i",
-    });
+    //datatime widge
+    $("#attd_form").find("#id_punchintime, #id_punchouttime", '#id_datefor').prop('readonly', true)
 
-    //date widget
-    $("#attd_form").find("#id_datefor").flatpickr({
-        enableTime: true,
-        time_24hr: true,
-        dateFormat: 'd-M-Y H:i'
-    });
     $(".modal").removeAttr("tabindex");
 })
 </script>

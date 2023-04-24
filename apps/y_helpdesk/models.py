@@ -28,7 +28,9 @@ class Ticket(BaseModel, TenantAwareModel):
         HIGH   = ('HIGH', 'High')
 
         
-        
+    class Identifier(models.TextChoices):
+        REQUEST = ('REQUEST', 'Request')
+        TICKET = ('TICKET', 'Ticket')
 
     class Status(models.TextChoices):
         NEW      = ('NEW', 'New')#ticket is created
@@ -49,6 +51,7 @@ class Ticket(BaseModel, TenantAwareModel):
     assignedtopeople = models.ForeignKey('peoples.People', null=True, blank=True, on_delete=models.RESTRICT, related_name="ticket_people")
     assignedtogroup  = models.ForeignKey('peoples.Pgroup', null=True, blank=True, on_delete=models.RESTRICT, related_name="ticket_grps")
     comments         = models.CharField(max_length=250, null=True)
+    identifier       = models.CharField(_("Identifier"), choices=Identifier.choices,  max_length=50, default=Identifier.TICKET.value)
     bu               = models.ForeignKey("onboarding.Bt", null=True,blank=True, on_delete=models.RESTRICT)
     client           = models.ForeignKey("onboarding.Bt", null=True,blank=True, on_delete=models.RESTRICT, related_name='ticket_clients')
     priority         = models.CharField(_("Priority"), max_length=50, choices=Priority.choices, null=True, blank=True)

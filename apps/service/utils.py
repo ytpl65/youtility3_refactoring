@@ -1,20 +1,19 @@
 from pprint import pformat
-from apps.attendance.models import PeopleEventlog
 from django.db import transaction
 from .types import ServiceOutputType
 from django.db.utils import IntegrityError
 from apps.service import serializers as sz
-from django.contrib.gis.geos import GEOSGeometry
 from apps.core import utils
 from .validators import clean_record
 from apps.activity.models import (Jobneed, JobneedDetails, Asset)
 import traceback as tb
-from django.core.mail import send_mail, EmailMessage
 from apps.y_helpdesk.models import Ticket
 from intelliwiz_config.celery import app
 from django.conf import settings
 from .auth import Messages as AM
 from django.apps import apps
+from background_tasks.tasks import alert_sendmail
+import json
 from logging import getLogger
 log = getLogger('mobile_service_log')   
 
@@ -180,8 +179,8 @@ def update_record(details, jobneed_record, JnModel, JndModel):
                 return True
             elif isJndUpdated := update_jobneeddetails(details, JndModel):
                 log.info('parent jobneed and its details are updated successully')
-                alert_sendmail(jobneed, 'observation', atts=True)
-                alert_sendmail(jobneed, 'deviation', atts=True)
+                alert_sendmail.delay(jobneed.id, 'observation', atts=True)
+                alert_sendmail.delay(jobneed.id, 'deviation', atts=True)
                 return True
         else: 
             log.error(f"parent jobneed record has some errors\n{jn_parent_serializer.errors} ", exc_info = True )
@@ -292,41 +291,44 @@ def save_linestring_and_update_pelrecord(obj):
 
 def update_adhoc_record(scheduletask, jobneedrecord, details):
     rc, recordcount, traceback, msg= 1, 0, 'NA', ""
-    jnid = scheduletask[0]['jobneedid']
+    log.info(f'jobneed record recieved: {pformat(jobneedrecord)}')
     recordcount += 1
-    obj = Jobneed.objects.get(id = jnid)
-    jobneedrecord.update({'performedby_id': jobneedrecord['people_id']})
-    record = clean_record(jobneedrecord)
-    jnsz = sz.JobneedSerializer(instance = obj,data = record)
-    if jnsz.is_valid(): 
-        isJnUpdated = jnsz.save()
-        rc=0
-    else:
-        rc, traceback, msg = 1, jnsz.errors, 'Operation Failed'
-
-    JND = JobneedDetails.objects.filter(jobneed_id = jnid).values()
+    Jobneed.objects.filter(id = scheduletask['id']).update(
+        performedby_id  = jobneedrecord['performedby_id'],
+        starttime       = jobneedrecord['starttime'],
+        endtime         = jobneedrecord['endtime'],
+        jobstatus       = jobneedrecord['jobstatus'],
+        remarks         = jobneedrecord['remarks'],
+        alerts          = jobneedrecord['alerts'],
+        attachmentcount = jobneedrecord['attachmentcount'],
+        mdtz            = jobneedrecord['mdtz'],
+        muser_id        = jobneedrecord['muser_id'])
+    log.info(f'record after updation {pformat(Jobneed.objects.filter(id =scheduletask["id"]).values())}')
+    log.info('schedule record updated')
+    
+    JND = JobneedDetails.objects.filter(jobneed_id = scheduletask['id']).values()
     for jnd in JND:
         for dtl in details:
             if jnd['question_id'] == dtl['question_id']:
-                obj = JobneedDetails.objects.get(uuid = dtl['uuid'])
+                obj = JobneedDetails.objects.get(id = jnd['id'])
                 record = clean_record(dtl)
                 jndsz = sz.JndSerializers(instance = obj, data = record)
                 if jndsz.is_valid():
                     jndsz.save()
     recordcount += 1
     rc=0
+    alert_sendmail.delay(scheduletask['id'], 'observation', atts=True)
     msg = "Scheduled Record (ADHOC) updated successfully!"
     return rc, traceback, msg, recordcount
 
 def insert_adhoc_record(jobneedrecord, details):
     rc, recordcount, traceback, msg= 1, 0, 'NA', ""
-    record = clean_record(jobneedrecord)
-    jnsz = sz.JobneedSerializer(data = record)
+    jnsz = sz.JobneedSerializer(data = jobneedrecord)
 
     if jnsz.is_valid():
-        jninstance = jnsz.save()
+        jn_instance = jnsz.save()
         for dtl in details:
-            dtl.update({'jobneed_id':jninstance.id})
+            dtl.update({'jobneed_id':jn_instance.id})
             record = clean_record(dtl)
             jndsz = sz.JndSerializers(data = record)
             if jndsz.is_valid():
@@ -334,101 +336,10 @@ def insert_adhoc_record(jobneedrecord, details):
         msg = "Record (ADHOC) inserted successfully!"
         recordcount += 1
         rc=0
+        alert_sendmail.delay(jn_instance.id, 'observation', atts=True)
     else:
         rc, traceback = 1, jnsz.errors
     return rc, traceback, msg, recordcount
-
-
-
-
-def get_email_recipients(jobneed):
-    from apps.peoples.models import People
-    from apps.onboarding.models import Bt
-    
-    #get email of siteincharge
-    siemails = People.objects.get_siteincharge_emails(jobneed.bu_id)
-    #get email of client admins
-    adm_emails = People.objects.get_admin_emails(jobneed.client_id)
-    return list(siemails) + list(adm_emails)
-    
-
-def get_context_for_mailtemplate(jobneed, subject):
-    from apps.activity.models import JobneedDetails
-    from datetime import timedelta
-    when = jobneed.endtime + timedelta(minutes=jobneed.ctzoffset)
-    return  {
-        'details'     : list(JobneedDetails.objects.get_e_tour_checklist_details(jobneedid=jobneed.id)),
-        'when'        : when.strftime("%d-%m-%Y %H:%M"),
-        'tourtype'    : jobneed.identifier,
-        'performedby' : jobneed.performedby.peoplename,
-        'site'        : jobneed.bu.buname,
-        'subject'     : subject,
-        'jobdesc': jobneed.jobdesc
-    }
-
-
-def alert_sendmail(obj, event, atts=False):
-    '''
-    takes uuid, ownername (which is the model name) and event (observation or deviation)
-    gets the record from model if record has alerts set to true then send mail based on event
-    '''
-    if event == 'observation': alert_observation(obj, atts)
-    if event == 'deviation': alert_deviation(obj, atts)
-
-
-def add_attachments(jobneed, msg):
-    from django.conf import settings
-    JND = JobneedDetails.objects.filter(jobneed_id = jobneed.id)
-
-    jnd_atts = []
-    for jnd in JND:
-        if att := list(JobneedDetails.objects.getAttachmentJND(jnd.id)):
-            jnd_atts.append(att[0])
-    jn_atts = list(Jobneed.objects.getAttachmentJobneed(jobneed.id))
-    total_atts = jn_atts + jnd_atts
-    for att in total_atts:
-        msg.attach_file(f"{settings.MEDIA_ROOT}/{att['filepath']}{att['filename']}")
-        log.info("attachments are attached....")
-    return msg
-    
-    
-
-
-def alert_observation(jobneed, atts=False):
-    from django.template.loader import render_to_string
-
-    try:
-        if jobneed.alerts:
-            recipents = get_email_recipients(jobneed)
-            if jobneed.identifier == 'EXTERNALTOUR':
-                subject = f"[READINGS ALERT] Site with Sol Id: [{jobneed.bu.solid}], {jobneed.bu.buname} having checklist [{jobneed.qset.qsetname}] - readings out of range"
-            elif jobneed.identifier == 'INTERNALTOUR':
-                subject = f"[READINGS ALERT] Checkpoint with Name: {jobneed.asset.assetname} at Site: {jobneed.bu.buname} having checklist [{jobneed.qset.qsetname}] - readings out of range"
-            else:
-                subject = f"[READINGS ALERT] Site with Name: {jobneed.bu.buname} having checklist [{jobneed.qset.qsetname}] - readings out of range"
-            context = get_context_for_mailtemplate(jobneed, subject)
-
-            html_message = render_to_string('observation_mail.html', context)
-            log.info(f"Sending alert mail with subject {subject}")
-            msg = EmailMessage()
-            msg.subject = subject
-            msg.body  = html_message
-            msg.from_email = settings.EMAIL_HOST_USER
-            msg.to = recipents
-            msg.content_subtype = 'html'
-            if atts:
-                log.info('Attachments are going to attach')
-                #add attachments to msg
-                msg = add_attachments(jobneed, msg)
-            msg.send()
-            log.info(f"Alert mail sent to {recipents} with subject {subject}")
-    except Exception as e:
-        log.error("Error while sending alert mail", exc_info=True)
-        
-        
-
-def alert_deviation(uuid, ownername):
-    pass
 
 
 
@@ -479,7 +390,7 @@ def get_user_instance(id):
 
 
 
-@app.task(bind = True, default_retry_delay = 300, max_retries = 5)
+@app.task(bind = True, default_retry_delay = 300, max_retries = 5, name = "perform_tasktourupdate()")
 def perform_tasktourupdate(self, file, request=None, db='default', bg=False):
     rc, recordcount, traceback= 1, 0, 'NA'
     instance, msg = None, ""
@@ -512,10 +423,11 @@ def perform_tasktourupdate(self, file, request=None, db='default', bg=False):
     except Exception as e:
         log.error('Something went wrong', exc_info = True)
         rc, traceback, msg = 1, tb.format_exc(), Messages.UPLOAD_FAILED
-    return ServiceOutputType(rc = rc, msg = msg, recordcount = recordcount, traceback = traceback)
+    results = ServiceOutputType(rc = rc, msg = msg, recordcount = recordcount, traceback = traceback)
+    return results.__dict__ if bg else results
 
 
-@app.task(bind = True, default_retry_delay = 300, max_retries = 5)
+@app.task(bind = True, default_retry_delay = 300, max_retries = 5, name = 'perform_insertrecord()')
 def perform_insertrecord(self, file, request = None, db='default', filebased = True, bg=False, userid=None):
     """
     Insert records in specified tablename.
@@ -535,13 +447,13 @@ def perform_insertrecord(self, file, request = None, db='default', filebased = T
             f"""perform_insertrecord(file = {file}, bg = {bg}, db = {db}, filebased = {filebased} {request = } { userid = } runnning in {'background' if bg else "foreground"})"""
         )
     try:
-        
+
         if bg:
             data = file
         else:
             data = get_json_data(file) if filebased else [file]
         log.info(f'data = {pformat(data)} and length of data {len(data)}')
-        
+
         if len(data) == 0: raise utils.NoRecordsFound
         with transaction.atomic(using = db):
 
@@ -573,11 +485,12 @@ def perform_insertrecord(self, file, request = None, db='default', filebased = T
     except Exception as e:
         log.error("something went wrong!", exc_info = True)
         msg, rc, traceback = Messages.INSERT_FAILED, 1, tb.format_exc()
-    return  ServiceOutputType(rc = rc, recordcount = recordcount, msg = msg, traceback = traceback)
+    results = ServiceOutputType(rc = rc, recordcount = recordcount, msg = msg, traceback = traceback)
+    return results.__dict__ if bg else results
 
 
 
-@app.task(bind = True, default_retry_delay = 300, max_retries = 5)
+@app.task(bind = True, default_retry_delay = 300, max_retries = 5,  name = 'perform_reportmutation')
 def perform_reportmutation(self, file, db= 'default', bg=False):
     rc, recordcount, traceback= 1, 0, 'NA'
     instance = None
@@ -617,10 +530,11 @@ def perform_reportmutation(self, file, db= 'default', bg=False):
     except Exception as e:
         msg, traceback, rc = Messages.INSERT_FAILED, tb.format_exc(), 1
         log.error('something went wrong', exc_info = True)
-    return ServiceOutputType(rc = rc, recordcount = recordcount, msg = msg, traceback = traceback)
+    results = ServiceOutputType(rc = rc, recordcount = recordcount, msg = msg, traceback = traceback)
+    return results.__dict__ if bg else results
 
 
-@app.task(bind = True, default_retry_delay = 300, max_retries = 5)
+@app.task(bind = True, default_retry_delay = 300, max_retries = 5, name = 'perform_adhocmutation')
 def perform_adhocmutation(self, file, db='default', bg=False):  # sourcery skip: remove-empty-nested-block, remove-redundant-if, remove-redundant-pass
     rc, recordcount, traceback, msg= 1, 0, 'NA', ""
     try:
@@ -642,21 +556,21 @@ def perform_adhocmutation(self, file, db='default', bg=False):  # sourcery skip:
                     assetobjs = Asset.objects.filter(bu_id = jobneedrecord['bu_id'],
                                     assetcode = jobneedrecord['remarks'])
                     jobneedrecord['asset_id']= 1 if assetobjs.count()  !=  1 else assetobjs[0].id
-                sqlQuery = "select * from fn_get_schedule_for_adhoc(%s, %s, %s, %s, %s)"
-                args = [jobneedrecord['plandatetime'], jobneedrecord['bu_id'], jobneedrecord['people_id'], jobneedrecord['asset_id'], jobneedrecord['qset_id']]
-                scheduletask = utils.runrawsql(sqlQuery, args, db = db)
+                
+                jobneedrecord = clean_record(jobneedrecord)
+                scheduletask = Jobneed.objects.get_schedule_for_adhoc(
+                    jobneedrecord['qset_id'], jobneedrecord['people_id'], jobneedrecord['asset_id'], jobneedrecord['bu_id'], jobneedrecord['starttime'], jobneedrecord['endtime'])
 
-                # have to update to scheduled task
-                if(len(scheduletask) > 0):
+                log.info(f"schedule task: {pformat(scheduletask)}")
+                log.info(f"jobneed record: {pformat(jobneedrecord)}")
+                # have to update to scheduled task/reconsilation
+                if(len(scheduletask) > 0) and scheduletask['identifier'] == 'TASK' :
+                    log.info("schedule task found, updating it now")
                     rc, traceback, msg, recordcount = update_adhoc_record(scheduletask, jobneedrecord, details)
                 # have to insert/create to adhoc task
                 else:
+                    log.info("schedule task not found, creating a new one")
                     rc, traceback, msg, recordcount = insert_adhoc_record(jobneedrecord, details)
-                if jobneedrecord['attachmentcount'] == 0:
-                    # TODO send_email for ADHOC 
-                    pass
-            # TODO send_email for Observation
-
     except utils.NoDataInTheFileError as e:
         rc, traceback = 1, tb.format_exc()
         log.error('No data in the file error', exc_info = True)
@@ -664,8 +578,8 @@ def perform_adhocmutation(self, file, db='default', bg=False):  # sourcery skip:
     except Exception as e:
         rc, traceback = 1, tb.format_exc()
         log.error('something went wrong', exc_info = True)
-    return ServiceOutputType(rc = rc, recordcount = recordcount, msg = msg, traceback = traceback)
-
+    results = ServiceOutputType(rc = rc, recordcount = recordcount, msg = msg, traceback = traceback)
+    return results.__dict__ if bg else results
 
 def perform_uploadattachment(file,  record, biodata):
     rc, traceback, resp = 0,  'NA', 0
@@ -710,7 +624,7 @@ def perform_uploadattachment(file,  record, biodata):
 
         if hasattr(eobj, 'peventtype'): log.info(f'Event Type: {eobj.peventtype.tacode}')
         if hasattr(eobj, 'peventtype') and eobj.peventtype.tacode in ['SELF', 'MARK']:
-            from .tasks import perform_facerecognition_bgt
+            from background_tasks.tasks import perform_facerecognition_bgt
             results = perform_facerecognition_bgt.delay(ownerid, peopleid, db)
             log.warning(f"face recognition status {results.state}")
     except Exception as e:

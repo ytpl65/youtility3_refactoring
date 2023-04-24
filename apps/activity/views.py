@@ -1393,8 +1393,9 @@ class PPMView(LoginRequiredMixin, View):
         ic(data)
         try:
             if request.POST.get('action') == 'runScheduler':
-                from apps.service.tasks import create_ppm_job
-                return create_ppm_job(request.POST.get('job_id'))
+                from background_tasks.tasks import create_ppm_job
+                resp, F, d, story =  create_ppm_job(request.POST.get('job_id'))
+                return rp.JsonResponse(resp, status=200)
             if pk := request.POST.get('pk', None):
                 msg, create = "ppm view", False
                 people = utils.get_model_obj(pk, request,  self.P)

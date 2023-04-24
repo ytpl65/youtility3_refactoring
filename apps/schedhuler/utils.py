@@ -12,6 +12,7 @@ from datetime import datetime, timezone, timedelta
 from django.db.models.query import QuerySet
 from apps.reminder.models import Reminder
 import random
+import traceback as tb
 from intelliwiz_config.celery import app
 from celery import shared_task
 from celery.utils.log import get_task_logger
@@ -139,54 +140,58 @@ def calculate_route_details(R, job):
 @shared_task(name="create_job()")
 def create_job(jobs = None):
     startdtz = enddtz = msg = resp = None
-    F, d = {}, []
+    result = {'F':{}, 'd':[], 'story':[], 'id':[]}
 
     from django.utils.timezone import get_current_timezone
     with transaction.atomic(using = utils.get_current_db_name()):
-        if not jobs:
-            jobs = am.Job.objects.filter(
-                ~Q(jobname='NONE'),
-                ~Q(asset__runningstatus = am.Asset.RunningStatus.SCRAPPED),
-                parent_id = 1,
-            ).select_related(
-                "asset", "pgroup",
-                "cuser", "muser", "qset", "people",
-            ).values(*utils.JobFields.fields)
+        try:
+            if not jobs:
+                jobs = am.Job.objects.filter(
+                    ~Q(jobname='NONE'),
+                    ~Q(asset__runningstatus = am.Asset.RunningStatus.SCRAPPED),
+                    parent_id = 1,
+                ).select_related(
+                    "asset", "pgroup",
+                    "cuser", "muser", "qset", "people",
+                ).values(*utils.JobFields.fields)
 
-        if not jobs:
-            msg = "No jobs found schedhuling terminated"
-            resp = rp.JsonResponse(f"{msg}", status = 404)
-            log.warning(f"{msg}", exc_info = True)
-            raise EmptyResultSet
-        total_jobs = len(jobs)
+            if not jobs:
+                msg = "No jobs found schedhuling terminated"
+                resp = {'msg':f"{msg}"}
+                log.warning(f"{msg}", exc_info = True)
+            total_jobs = len(jobs)
 
-        if total_jobs > 0 or jobs is not None:
-            log.info("processing jobs started found:= '%s' jobs", (len(jobs)))
-            for idx, job in enumerate(jobs):
-                startdtz, enddtz = calculate_startdtz_enddtz(job)
-                log.debug(f"Jobs to be schedhuled from startdatetime {startdtz} to enddatetime {enddtz}")
+            if total_jobs > 0 or jobs is not None:
+                log.info("\nprocessing jobs started found:= '%s' jobs", (len(jobs)))
+                for idx, job in enumerate(jobs):
+                    result['story'] += f'processing job with id: {job["id"]}'
+                    startdtz, enddtz = calculate_startdtz_enddtz(job)
+                    log.debug(f"Jobs to be schedhuled from startdatetime {startdtz} to enddatetime {enddtz}")
 
-                DT, is_cron, resp = get_datetime_list(job['cron'], startdtz, enddtz, resp)
-                if not DT: return rp.JsonResponse({'msg':"Please check your Valid From and Valid To dates"}, status = 404)
-                log.debug(
-                    "Jobneed will going to create for all this datetimes\n %s", (pformat(get_readable_dates(DT))))
-                if not is_cron: F[str(job['id'])] = job['cron']
-                status, resp = insert_into_jn_and_jnd(job, DT, resp)
-                if status:
-                    d.append({
-                        "job"   : job['id'],
-                        "jobname" : job['jobname'],
-                        "cron"    : job['cron'],
-                        "iscron"  : is_cron,
-                        "count"   : len(DT),
-                        "status"  : status
-                    })
-            if F:
-                log.info(f"create_job() Failed job schedule list:= {pformat(F)}")
-            log.info(f"createJob()[end-] [{idx} of {total_jobs - 1}] parent job:= {job['jobname']} | job:= {job['id']} | cron:= {job['cron']}")
-
-        ic("resp in createjob()", resp)
-    return resp
+                    DT, is_cron, resp = get_datetime_list(job['cron'], startdtz, enddtz, resp)
+                    if not DT: 
+                        resp =  {'msg':"Please check your Valid From and Valid To dates"}
+                        continue
+                    log.debug(
+                        "Jobneed will going to create for all this datetimes\n %s", (pformat(get_readable_dates(DT))))
+                    if not is_cron: result['F'][str(job['id'])] = {'cron':job['cron']}
+                    status, resp = insert_into_jn_and_jnd(job, DT, resp)
+                    if status:
+                        result['d'].append({
+                            "job"   : job['id'],
+                            "jobname" : job['jobname'],
+                            "cron"    : job['cron'],
+                            "iscron"  : is_cron,
+                            "count"   : len(DT),
+                            "status"  : status
+                        })
+                        result['id'].append(job['id'])
+                if result['F']:
+                    log.info(f"create_job() Failed job schedule list:= {pformat(F)}")
+                log.info(f"createJob()[end-] [{idx} of {total_jobs - 1}] parent job:= {job['jobname']} | job:= {job['id']} | cron:= {job['cron']}")
+        except Exception as e:
+            result['F'][str(job['id'])] = {'tb':tb.format_exc()}
+    return resp, result
 
 def display_jobs_date_info(cdtz, mdtz, fromdate, uptodate, ldtz):
     padd = "#"*8
@@ -270,22 +275,21 @@ def get_datetime_list(cron_exp, startdtz, enddtz, resp):
     except CroniterBadCronError as ex:
         isValidCron = False
         log.warning('Bad Cron error', exc_info = True)
-        resp =  rp.JsonResponse({"errors": "Bad Cron Error"}, status = 404)
+        resp =  {"errors": "Bad Cron Error"}
     except Exception as ex:
         log.error(
             'get_datetime_list(cron_exp, startdtz, enddtz) \
-            Exception: [cronexp:= %s]croniter bad cron error:= %s', cron_exp, str(ex))
-        resp = rp.JsonResponse({"errors": "Bad Cron Error"}, status = 404)
+            Exc(eption: [cronexp:= %s]croniter bad cron error:= %s', cron_exp, str(ex))
+        resp ={"errors": "Bad Cron Error"}
         isValidCron = False
         log.error(
             'get_datetime_list(cron_exp, startdtz, enddtz) ERROR: ', exc_info = True)
         raise ex from ex
     if DT:
         log.info(f'Datetime list calculated are as follows:= {pformat(DT, compact = True)}')
-    else: resp = rp.JsonResponse({"errors": "Unable to schedule task, check your 'Valid From' and 'Valid To'"}, status = 404)
+    else: resp = {"errors": "Unable to schedule task, check your 'Valid From' and 'Valid To'"}
 
     log.info("get_datetime_list(cron_exp, startdtz, enddtz) [end]")
-    ic("resp in get_datetime_list()", resp)
     return DT, isValidCron, resp
 
 def dt_local_to_utc(tzoffset, data, mob_or_web):
@@ -436,12 +440,12 @@ def insert_into_jn_and_jnd(job, DT, resp):
         except Exception as ex:
             status = 'failed'
             log.error('insert_into_jn_and_jnd() ERROR', exc_info = True)
-            resp = rp.JsonResponse({
-                "errors": "Failed to schedule jobs"}, status = 404)
+            resp = {
+                "errors": "Failed to schedule jobs"}
             raise ex from ex
         else:
             status = "success"
-            resp = rp.JsonResponse({'msg': f'{len(DT)} tasks scheduled successfully!', 'count':len(DT)}, status = 200)
+            resp = {'msg': f'{len(DT)} tasks scheduled successfully!', 'count':len(DT)}
 
         log.info("insert_into_jn_and_jnd() [ End ]")
     return status, resp
@@ -487,7 +491,7 @@ def insert_update_jobneeddetails(jnid, job, parent=False):
     tz = get_current_timezone()
     ic(parent, job['qset_id'])
     try:
-        am.JobneedDetails.objects.get(jobneed_id=jnid).delete()
+        am.JobneedDetails.objects.filter(jobneed_id=jnid).delete()
     except am.JobneedDetails.DoesNotExist:
         pass
     try:
@@ -797,7 +801,7 @@ def create_ppm_reminder(jobs):
         log.error("something went wrong inside create_ppm_reminder", exc_info=True)
 
 
-@shared_task(name="create_ppm_job")
+#@shared_task(name="create_ppm_job")
 def create_ppm_job(jobid=None):
     F, d = {}, []
     startdtz = enddtz = msg = resp = None
@@ -819,7 +823,6 @@ def create_ppm_job(jobid=None):
                 msg = "No jobs found schedhuling terminated"
                 resp = rp.JsonResponse(f"{msg}", status = 404)
                 log.warning(f"{msg}", exc_info = True)
-                raise EmptyResultSet
             total_jobs = len(jobs)
 
             if total_jobs > 0 and jobs is not None:

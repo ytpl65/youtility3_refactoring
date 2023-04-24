@@ -79,16 +79,17 @@ def site_type_includes():
 class QuestionSet(BaseModel, TenantAwareModel):
     class Type(models.TextChoices):
         CHECKLIST                = "CHECKLIST",           _('Checklist')
+        RPCHECKLIST              = "RPCHECKLIST",         _('RP Checklist')
         INCIDENTREPORTTEMPLATE   = "INCIDENTREPORT",      _('Incident Report')
         SITEREPORTTEMPLATE       = "SITEREPORT",          _('Site Report')
         WORKPERMITTEMPLATE       = "WORKPERMIT",          _('Work Permit')
-        RETURNWORKPERMITTEMPLATE = "RETURN_WORK_PERMIT",    _('Return Work Permit')
+        RETURNWORKPERMITTEMPLATE = "RETURN_WORK_PERMIT",  _('Return Work Permit')
         KPITEMPLATE              = "KPITEMPLATE",         _('Kpi')
         SCRAPPEDTEMPLATE         = "SCRAPPEDTEMPLATE",    _('Scrapped')
         ASSETAUDIT               = "ASSETAUDIT",          _('Asset Audit')
         MAINTENANCETEMPLATE      = "MAINTENANCETEMPLATE", _('Maintenance')
         ASSETMAINTENANCE         = "ASSETMAINTENANCE",    _('Asset Maintenance')
-        WORKORDER               = "WORK_ORDER",         _('Work Order')
+        WORKORDER                = "WORK_ORDER",          _('Work Order')
         
 
     qsetname           = models.CharField(_("QuestionSet Name"), max_length = 200)

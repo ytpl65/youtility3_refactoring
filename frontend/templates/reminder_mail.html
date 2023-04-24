@@ -7,21 +7,15 @@
         width: 100%;
     }
 
-    tr > td:first-child {
-        background-color: #eaf1fb;
-        text-align: left;
-        padding: 8px;
-        border: 1px solid #ddd;
-        color: black;
-    }
-
     td {
         padding: 8px;
         border: 1px solid #ddd;
         text-align: left;
+        color: #202124;
     }
-    p.text-muted{
-        color: rgba(24, 24, 24, 0.589);
+    .bgy {
+        background-color: #eaf1fb !important;
+        font-weight: normal;
     }
 </style>
 </head>
@@ -30,22 +24,22 @@
     <br>
     <table>
         <tr>
-        <td>Reminder For</td><td>{{ job }}</td>
+        <td class="bgy">Reminder For</td><td>{{ job }}</td>
         </tr>
         <tr>
-        <td>Scheduled Date</td><td>{{ plandateime }}</td>
+        <td class="bgy">Scheduled Date</td><td>{{ plandatetime }}</td>
         </tr>
         <tr>
-        <td>Site</td><td>{{ sitename }}</td>
+        <td class="bgy">Site</td><td>{{ sitename }}</td>
         </tr>
         <tr>
-        <td>Description</td><td>{{ jobdesc }}</td>
+        <td class="bgy">Description</td><td>{{ jobdesc }}</td>
         </tr>
         <tr>
-        <td>Created By</td><td>{{ creator }}</td>
+        <td class="bgy">Created By</td><td>{{ creator }}</td>
         </tr>
         <tr>
-        <td>Last Modified By</td><td>{{ modifier }}</td>
+        <td class="bgy">Last Modified By</td><td>{{ modifier }}</td>
         </tr>
     </table>
     <br>

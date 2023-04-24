@@ -645,7 +645,7 @@ class JobneedManager(models.Manager):
         else:
             qset = self.filter(id=id).annotate(**annotation).select_related(*related_fields)
         qset = qset.values(
-            'assignedto', 'bu__buname', 'pgroup__groupname', 'cuser__peoplename',
+            'assignedto', 'bu__buname', 'pgroup__groupname', 'cuser__peoplename', 'asset_id',
             'people__peoplename', 'expirydatetime', 'plandatetime', 'pgroup_id', 'people_id',
             'cuser_id', 'muser_id', 'priority', 'identifier', 'ticketcategory__tacode', 'id',
             'job_id', 'jobdesc', 'ctzoffset', 'client_id', 'bu_id', 'ticketcategory_id', 'ticketcategory__taname'
@@ -674,8 +674,45 @@ class JobneedManager(models.Manager):
         ]
         
         
-    
-    
+    def get_schedule_for_adhoc(self, qsetid, peopleid, assetid, buid, starttime, endtime):
+        qset =  self.filter(
+            ~Q(jobtype='ADHOC'),
+            qset_id = qsetid, 
+            people_id = peopleid,
+            asset_id = assetid,
+            bu_id = buid,
+            plandatetime__lte = starttime,
+            expirydatetime__gte = endtime,
+            identifier = 'TASK'
+        ).values().order_by('-mdtz').first()
+        return qset or self.none()
+        
+
+    def get_task_summary(self, request, params):
+        results = []
+        fromdate = datetime.strptime(params['from_date'], "%Y-%m-%d") #xxxx-xx-xx
+        uptodate = datetime.strptime(params['upto_date'], "%Y-%m-%d") #xxxx-xx-xx
+        current_date = fromdate
+        while(current_date <= uptodate):
+            qset = self.filter(
+                    bu_id = params['bu_id'],
+                    plandatetime__date = current_date,
+                    identifier = 'TASK'
+                ).select_related('bu')
+            tot_completed = qset.filter(jobtype = 'SCHEDULE', jobstatus = 'COMPLETED').count()
+            tot_scheduled = qset.filter(jobtype = 'SCHEDULE').count()
+            record = {
+                'total_jobs'     : qset.count(),
+                'total_scheduled': tot_scheduled,
+                'adhoc_jobs'     : qset.filter(jobtype='ADHOC').count(),
+                'completed_jobs' : tot_completed,
+                'closed_jobs'    : qset.filter(jobtype = 'SCHEDULE', jobstatus = 'AUTOCLOSED').count(),
+                'closed_jobs'    : qset.filter(jobtype = 'SCHEDULE', jobstatus = 'ASSIGNED').count(),
+                'percentage'     : round((tot_completed/tot_scheduled) * 100, ndigits=2)
+            }
+            results.append(record)
+            current_date = current_date + timedelta(days=1)
+        return results
         
 
 class AttachmentManager(models.Manager):
@@ -903,13 +940,12 @@ class JobneedDetailsManager(models.Manager):
               'cdtz', 'mdtz', 'avpttype',           
               'min', 'max', 'alerton', 'question_id', 'jobneed_id', 'alerts', 'cuser_id', 'muser_id', 'tenant_id']
 
-    def get_jndmodifiedafter(self, mdtz,jobneedid):
+    def get_jndmodifiedafter(self, jobneedid):
         if jobneedid:
             jobneedids = jobneedid.split(',')
             ic(jobneedids)
             qset = self.select_related(
                 *self.related).filter(
-                ~Q(id = 1), Q(mdtz = None) | Q( mdtz__gte = mdtz),
                 jobneed_id__in = jobneedids,
                ).values(
                     *self.fields)

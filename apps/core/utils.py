@@ -1017,6 +1017,7 @@ def save_common_stuff(request, instance, is_superuser=False):
         instance.mdtz = timezone.now().replace(microsecond=0)
     else:
         instance.cuser_id = instance.muser_id = userid
+    instance.ctzoffset = int(request.session['ctzoffset'])
     return instance
 
 
@@ -1152,7 +1153,6 @@ def namedtuplefetchall(cursor):
 def dictfetchall(cursor):
     "Return all rows from a cursor as a dict"
     columns = [col[0] for col in cursor.description]
-    ic(columns)
     return [
         dict(zip(columns, row))
         for row in cursor.fetchall()
@@ -1478,7 +1478,7 @@ def get_action_on_ticket_states(prev_tkt, current_state):
 from django.utils import timezone
 
 def store_ticket_history(instance, request=None, user = None):
-    from apps.service.tasks import send_ticket_email
+    from background_tasks.tasks import send_ticket_email
     logger.info("saving ticket history has started....")
     # Get the current time
     now = timezone.now().replace(microsecond=0, second=0)
@@ -1578,3 +1578,26 @@ def send_email(subject, body, to, from_email=None, atts=None):
     msg.send()
     logger.info('email successfully sent')
     
+    
+    
+def get_timezone(offset):  # sourcery skip: aware-datetime-for-utc
+    import pytz
+    from datetime import datetime, timedelta
+    # Convert the offset string to a timedelta object
+    offset = f'+{offset}' if offset > 0 else str(offset)
+    sign = offset[0] # The sign of the offset (+ or -)
+    mins = int(offset[1:])
+    delta = timedelta(minutes=mins) # The timedelta object
+    if sign == "-": # If the sign is negative, invert the delta
+        delta = -delta
+
+    # Loop through all the timezones and find the ones that match the offset
+    matching_zones = [] # A list to store the matching zones
+    for zone in pytz.all_timezones: # For each timezone
+        tz = pytz.timezone(zone) # Get the timezone object
+        utc_offset = tz.utcoffset(datetime.utcnow()) # Get the current UTC offset
+        if utc_offset == delta: # If the offset matches the input
+            matching_zones.append(zone) # Add the zone to the list
+
+    # Return the list of matching zones or None if no match found
+    return matching_zones if matching_zones else None
