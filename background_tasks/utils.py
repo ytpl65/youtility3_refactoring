@@ -206,6 +206,7 @@ def update_job_autoclose_status(record, resp):
     obj.other_info['ticket_generated'] = record['ticketcategory__tacode'] == 'RAISETICKETNOTIFY'
     obj.other_info['autoclosed_by_server'] = True
     obj.save()
+    log.info(f'jobneed object with id = {record["id"]} is autoclosed {obj.jobstatus = } {obj.other["email_sent"] = } {obj.other["ticket_generated"] = } {obj.other["autoclosed_by_server"] = }')
     resp['id'].append(record['id'])
     return resp
 
