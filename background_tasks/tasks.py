@@ -12,6 +12,9 @@ from pprint import pformat
 from django.db.models import Q
 from django.conf import settings
 from django.utils import timezone
+import requests
+import base64
+
 log = getLogger('mobile_service_log')
 
 @app.task(bind=True, default_retry_delay=300, max_retries=5, name='Send Ticket email')
@@ -351,3 +354,23 @@ def alert_sendmail(self, id, event, atts=False):
 def task_every_min(self):
     from django.utils import timezone
     return f"task completed at {timezone.now()}"
+
+
+@shared_task(bind=True)
+def execute_report(self, params, formdata):
+    try:
+        log.info("report execution started")
+        # prepare basic auth headers
+        username = settings.KNOWAGE_USERNAME
+        password = settings.KNOWAGE_PASS
+        auth_creds = base64.b64encode(f'{username}:{password}'.encode('utf-8')).decode('utf-8')
+        auth_headers = {'Authorization': f'Basic {auth_creds}'}
+        log.info(f'{auth_creds = }, {auth_headers = }')
+
+        #execute the report
+        report_execution_url = f"{settings.KNOWAGE_SERVER_URL}restful-services/2.0/documents/{formdata['report_name']}/content?outputType={formdata['format']}"
+        log.info(f'{report_execution_url = }, {params = }')
+        return requests.post(report_execution_url, headers=auth_headers, json=params)
+    except Exception as e:
+        log.error("report execution failed with exception ", exc_info=True)
+        

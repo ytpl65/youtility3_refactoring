@@ -251,6 +251,7 @@ class InsertJsonMutation(graphene.Mutation):
         log.info('\n\ninsert jsondata mutations start[+]')
         rc, traceback, resp, recordcount = 0,  'NA', 0, 0
         msg = ""
+        uuids = []
         try:
             db = get_current_db_name()
             log.info(f'=================== jsondata:============= \n{jsondata}')
@@ -259,6 +260,7 @@ class InsertJsonMutation(graphene.Mutation):
         except Exception as e:
             log.error('something went wrong', exc_info = True)
             msg, rc, traceback = 'Insert Failed!',1, tb.format_exc()
+        
         o = ty.ServiceOutputType(rc = rc, recordcount = recordcount, msg = msg, traceback = traceback, uuids=uuids)
         log.info(f"Response: {o.recordcount}, {o.msg}, {o.rc}, {o.traceback}")
         return InsertJsonMutation(output = o)

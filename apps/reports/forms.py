@@ -6,6 +6,7 @@ from apps.core import utils
 from django_select2 import forms as s2forms
 from django.db.models import Q
 from datetime import datetime, timedelta
+from django.conf import settings
 
 class MasterReportTemplate(forms.ModelForm):
     required_css_class = "required"
@@ -78,27 +79,31 @@ class ReportForm(forms.Form):
     required_css_class = "required"
     report_templates = [
         ('', 'Select Report'),
-        ('TEST', 'Test' ),
-        ('TASK_SUMMARY', 'Task Summary'),
+        (settings.KNOWAGE_REPORTS['TASKSUMMARY'], 'Task Summary'),
         ('TASK_DETAILS', 'Task Details'),
         ('TICKETLIST', 'Ticket List'),
     ]
     download_or_send_options = [
         ('DOWNLOAD', 'Download'),
-        ('SEND', 'Send'),
+        ('SEND', 'Send on my email'),
+    ]
+    format_types = [
+        ('xls', 'XLS'),
+        ('pdf', 'PDF'),
+        ('xlsx', 'XLSX'),
+        ('json', 'JSON'),
+        ('csv', 'CSV'),
     ]
     
     
     
-    report_name = forms.ChoiceField(label='Report Name', required=True, choices=report_templates)
-    site        = forms.ChoiceField(label='Site', required = True)
+    report_name = forms.ChoiceField(label='Report Name', required=True, choices=report_templates, initial='TASK_SUMMARY')
+    site        = forms.MultipleChoiceField(label='Site', required = True, widget=s2forms.Select2MultipleWidget)
     fromdate    = forms.DateField(label='From Date', required=True)
     uptodate    = forms.DateField(label='To Date', required=True)
-    xls         = forms.BooleanField(label ='.xls', required=False)
-    xlsx        = forms.BooleanField(label ='.xlsx', required=False)
-    pdf         = forms.BooleanField(label ='.pdf', required=False, initial=True)
-    download    = forms.BooleanField(initial=True,label="Download", required=False)
-    email       = forms.BooleanField(initial=False,label="Email", required=False)
+    format  = forms.ChoiceField(widget=s2forms.Select2Widget, label="Format", required=True, choices=format_types, initial='PDF')
+    export_type = forms.ChoiceField(widget=s2forms.Select2Widget, label='Get File with', required=True, choices=download_or_send_options, initial='DOWNLOAD')
+    ctzoffset = forms.IntegerField(required=False)
 
     
     def __init__(self, *args, **kwargs):
@@ -119,7 +124,5 @@ class ReportForm(forms.Form):
 
     def clean(self):
         super().clean()
-        
-        if self.cleaned_data.get('pdf'):
-            self.cleaned_data['pdf'] = 'pdf'
-        #if self.cleaned_data.get('xls')
+        cd = self.cleaned_data
+        self.cleaned_data['site'] = ','.join(cd['site'])

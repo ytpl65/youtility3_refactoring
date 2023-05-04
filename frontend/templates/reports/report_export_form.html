@@ -23,10 +23,23 @@ Report Form
 <!-------------------------- END PAGE BREADCUMB ------------------------->
 
 
+{% block nonfield_errors %}
+{% if messages %}
+{% for msg in messages %}
+<div class="alert {{ msg.tags }} w-100 alert-dismissible fade show" role="alert">
+ {{ msg }}
+  <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+</div>
+{% endfor %}
+{% endif %}
+
+{% endblock nonfield_errors %}
+
 {% block form %}
-<form action="" id="report_form">
+<form action="{{ url('reports:exportreports') }}" method="post" id="report_form">
   <!-------------------------- CSRF MIDDLEWARE TOKEN --------------------->
   <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
+  <input type="hidden" name="{{ form.ctzoffset.name }}" id = "{{ form.ctzoffset.auto_id }}" value="-1">
   <div class="row">
     <div class="col-sm-12 col-md-6">
       <div class="input-group mb-3">
@@ -41,7 +54,7 @@ Report Form
         <div class="col-4">
           {{ form.site.label_tag() }}
         </div>
-        <div class="col-8">
+        <div class="col-8">	
           {{ form.site }}
         </div>
       </div>
@@ -60,32 +73,26 @@ Report Form
         <div class="col-8">
           {{ form.uptodate }}
         </div>
-      </div><br>
-    </div>
-    <div class="col-sm-5 col-md-2 offset-md-1 form-check form-switch form-check-solid">
-      <div class="input-group mb-6">
-        <label for="{{ form.xls.id_for_label }}"
-          class="form-check-label bool text-sm-right">{{ form.xls }}&nbsp;&nbsp;{{ form.xls.label }}</label>
-      </div><br>
-      <div class="input-group mb-6">
-        <label for="{{ form.xlsx.id_for_label }}"
-          class="form-check-label bool text-sm-right">{{ form.xlsx }}&nbsp;&nbsp;{{ form.xlsx.label }}</label>
-      </div><br>
-      <div class="input-group mb-6">
-        <label for="{{ form.pdf.id_for_label }}"
-          class="form-check-label bool text-sm-right">{{ form.pdf }}&nbsp;&nbsp;{{ form.pdf.label }}</label>
       </div>
     </div>
-    <div class="col-sm-5 col-md-2 form-check form-switch form-check-solid">
-      <div class="input-group mb-6">
-        <label for="{{ form.download.id_for_label }}"
-          class="form-check-label bool text-sm-right">{{ form.download }}&nbsp;&nbsp;{{ form.download.label }}</label>
+	<div class="col-sm-12 col-md-6">
+		<div class="input-group mb-3">
+        <div class="col-4">
+          {{ form.format.label_tag() }}
+        </div>
+        <div class="col-8">
+          {{ form.format }}
+        </div>
       </div>
-      <div class="input-group mb-6">
-        <label for="{{ form.email.id_for_label }}"
-          class="form-check-label bool text-sm-right">{{ form.email }}&nbsp;&nbsp;{{ form.email.label }}</label>
+	  <div class="input-group mb-3">
+        <div class="col-4">
+          {{ form.export_type.label_tag() }}
+        </div>
+        <div class="col-8">
+          {{ form.export_type }}
+        </div>
       </div>
-    </div>
+	</div>
   </div>
   <div class="form-actions">
     <button type="submit" form="report_form" class="btn btn-sm btn-primary btn-hover-scale">
@@ -107,8 +114,11 @@ Report Form
   const urlname = "{{ url('reports:exportreports') }}"
 
   $(document).ready(() => {
+    //set ctzoffset
+    $("#id_ctzoffset").val(-new Date().getTimezoneOffset())
+      
     $("#btn_clear").click(() => {
-      location.href = `${urlname}?template=true`
+        location.href = `${urlname}?template=true`
     })
 
     $("#id_site").val(null).trigger('change') //clear default selection of site
@@ -116,23 +126,10 @@ Report Form
     $("#id_fromdate, #id_uptodate").flatpickr({
             dateFormat: 'd-M-Y'
         })
-
-
-    //on submit form post request
-    $("#report_form").submit((e) => {
-      e.preventDefault()
-      var form = $(this);
-      const params = { url: $(form).attr("action"), modal: false }
-      var payLoad = {formData:$("#report_form").serialize(), csrfmiddlewaretoken: '{{ csrf_token }}'}
-      fire_ajax_form_post(params, payLoad)
-      .done((data, status, xhr) => {
-        let url = "{{ url('reports:exportreports') }}"
-        show_successful_save_alert(false)
-        window.setTimeout(function() {
-          $("#btn_clear").click()
-        }, 2000);
+	
+	  $("[multiple]").select2({
+          closeOnSelect:false 
       })
-    })
   })
 </script>
 

@@ -1405,6 +1405,7 @@ function setUpDropzone(params){
       for(let i=0; i<resp.data.length; i++){
         let file = {name:resp.data[i].filename, accepted:true, id:resp.data[i].id, size:resp.data[i].size}
         let filepath = `${params.media_url}${resp.data[i].filepath.replace('youtility4_media/', "")}${resp.data[i].filename}`
+        console.log(file, filepath)
         myDropzone.displayExistingFile(file, filepath)
       }
     })

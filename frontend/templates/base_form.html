@@ -72,6 +72,17 @@
         <div class="card-body">
             <!--BEGIN CARD-HEADER-->
             <div class="card-header ps-0 d-flex justify-content-md-between" style="border: 0;">
+                
+                
+
+                <!-- BEGIN To render non-field-errors
+                of form use this block-->
+                {%- block nonfield_errors -%}
+
+                {% endblock nonfield_errors %}
+                <!-- END To render non-field-errors
+                of form use this block-->
+
                 <h4 class="card-title" style="color:#3a3b40de">
 
                     {%- block form_title -%}
@@ -99,16 +110,8 @@
                     <!--END To custom the icon 
                     adjacent to the form-title-->
 
+
                 </h4>
-
-                <!-- BEGIN To render non-field-errors
-                of form use this block-->
-                {%- block nonfield_errors -%}
-
-                {% endblock nonfield_errors %}
-                <!-- END To render non-field-errors
-                of form use this block-->
-
 
                 <!--keep empty-->
                 <div>

@@ -828,7 +828,6 @@ class Attachments(LoginRequiredMixin, View):
     
     def get(self, request, *args, **kwargs):
         R, P = request.GET, self.params
-        ic(R)
         if R.get('action') == 'delete_att'  and R.get('id'):
             res = P['model'].objects.filter(id=R['id']).delete()
             if R['ownername'].lower() in ['ticket', 'jobneed', 'jobneeddetails']:
@@ -854,7 +853,6 @@ class Attachments(LoginRequiredMixin, View):
     
     def post(self, request, *args, **kwargs):
         R, P = request.POST, self.params
-        ic(P)
         if 'img' in request.FILES:
             isUploaded, filename, filepath = utils.upload(request)
             filepath = filepath.replace(settings.MEDIA_ROOT, "")

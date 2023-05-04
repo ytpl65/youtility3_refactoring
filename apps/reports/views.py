@@ -5,7 +5,10 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db import transaction
 from django.views.generic.base import View
 from django.contrib import messages
-from django.http import JsonResponse, QueryDict, response as rp
+from django.http import JsonResponse, QueryDict, response as rp, FileResponse, HttpResponseRedirect
+from io import BytesIO
+from django.template.loader import render_to_string
+from weasyprint import HTML
 from django.urls import reverse
 from apps.activity  import models as am
 from apps.peoples import utils as putils
@@ -13,8 +16,13 @@ from apps.core import utils
 from apps.activity.forms import QsetBelongingForm
 from apps.reports import forms as rp_forms
 import logging
-import os
+from background_tasks.tasks import execute_report
+from django.contrib import messages as msg
+from django.apps import apps
+from django.urls import reverse_lazy
+from django.conf import settings
 log = logging.getLogger('__main__')
+
 # Create your views here.
 
 class RetriveSiteReports(LoginRequiredMixin, View):
@@ -504,7 +512,7 @@ class ConfigWorkPermitReportTemplate(LoginRequiredMixin, View):
                 return rp.JsonResponse({'parent_id':template.id}, status=200)
         except Exception:
             return utils.handle_Exception(request)
-  
+
 
 
 class ExportReports(LoginRequiredMixin, View):
@@ -521,61 +529,59 @@ class ExportReports(LoginRequiredMixin, View):
         
     def post(self, request, *args, **kwargs):
         R,P = request.POST, self.P
-        data = QueryDict(R['formData'])
+        data = R
         form = P['form'](data = data, request=request)
-        form_data = form.data
-        data = self.load_the_report_from_jasper(form_data, request)
-        return rp.JsonResponse(status=200)
-        
-
-            
-
-    def load_the_report_from_jasper(self, form_data, request):
-        import tempfile
-        from pyreportjasper import PyReportJasper
-        from django.conf import settings
-        from platform import python_version
-        
-        log.info(f'inputs are as follows {form_data = } {request=}')
-        report_map = {
-            'TASK_SUMMARY':['DAILYTASKSUMMARYALL.jasper', 'DAILYTASKSUMMARYALL.jrxml']
-        }
-        S = request.session
-        REPORTS_DIR = os.path.join(os.path.abspath('apps/reports/jasper_reports'))
-        log.info(f'report dir {REPORTS_DIR = }')
-        input_file = os.path.join(REPORTS_DIR, report_map.get(form_data.get('report_name'))[1])
-        output_file = os.path.join(REPORTS_DIR, 'report')
-        log.info(f'{input_file = } {output_file = }')
-        pyreportjasper = PyReportJasper()
-        conn = {
-            'driver':'postgres',
-            'username':settings.DATABASES['default']['USER'],
-            'password':settings.DATABASES['default']['PASSWORD'],
-            'host':settings.DATABASES['default']['HOST'],
-            'database':settings.DATABASES['default']['NAME'],
-            'schema':'public',
-            'port':5432,
-            'jdbc_dir':settings.JDBC_DRIVER_PATH
-            
-        }
-        log.info(f'connection config {conn = }')
-        pyreportjasper.config(
-            input_file,
-            output_file,
-            output_formats=['pdf'],
-            db_connection=conn,
-            locale='en_US',
-            parameters={
-                'siteid':str(S['bu_id']), 'UserTimeZone':"Asia/Kolkata",
-                'logo_path':"/var/tmp/youtility4_media/master/client30_Mar_2023_214429.png",
-                'clientcode':S['clientcode'], 'clientid':str(S['client_id']), 'python_version':python_version()}
-        )
-        
-        pyreportjasper.process_report()
-        
-        
-        
-def testRequest(request):
-    log.info(f'{pformat(request.GET)}')
+        if form.is_valid():
+            log.info('form is valid')
+            params = self.prepare_parameters(form.cleaned_data, request)
+            result = execute_report(params, form.cleaned_data)
+            if result.status_code == 200:
+                msg.success(request, "Report has been downloaded successfully")
+                file_buffer = BytesIO(result.content)
+                response = FileResponse(file_buffer)
+                response['Content-Disposition'] = f'attachment; filename="{form.cleaned_data["report_name"]}.{form.cleaned_data["format"]}"'
+                return response
+            else:
+                msg.error(request, "Failed to download the report, something went wrong")
+        else: msg.error(request, 'Request failed due to some errors in the form')
+        return HttpResponseRedirect(reverse('reports:exportreports'))
     
-    return rp.JsonResponse({'contextResponses':[]}, status=200)
+    def prepare_parameters(self, formdata, request):
+        log.info("prepare params started")
+        timezone = self.get_other_common_params(request)
+        common_params = [
+            {"urlName":"timezone", "values":[timezone]},
+            {"urlName":"connectionName", "values":[settings.KNOWAGE_DATASOURCE]},
+            {"urlName":"CompanyName", "values":[settings.COMPANYNAME]},
+            {"urlName":"ClientName", "values":[request.session['clientname']]}
+        ]
+        
+        params = {
+         settings.KNOWAGE_REPORTS['TASKSUMMARY']: [
+                {"urlName":"fromdate", "values":[formdata['fromdate'].strftime('%d/%m/%Y')]},
+                {"urlName":"uptodate", "values":[formdata['uptodate'].strftime('%d/%m/%Y')]},
+                {"urlName":"siteids", "values":[formdata['site']]},
+            ]
+        }
+        params.get(formdata.get('report_name')).extend(common_params)
+        log.info('params prepared and returned')
+        return params.get(formdata.get('report_name'))
+        
+        
+    def get_other_common_params(self, request):
+        from django.templatetags.static import static
+        S          = request.session
+        timezone   = utils.get_timezone(S['ctzoffset'])
+        Attachment = apps.get_model('activity', 'Attachment')
+        Bt         = apps.get_model('onboarding', 'Bt')
+        uuid       = Bt.objects.filter(id = S['client_id']).values('uuid').first()['uuid']
+        
+        applogo_url         = request.build_absolute_uri(static('assets/media/images/logo.png'))
+        clientlogo_att = Attachment.objects.get_att_given_owner(uuid, request)
+        clientlogo_filepath = settings.MEDIA_URL + clientlogo_att[0]['filepath'] + clientlogo_att[0]['filename']
+        clientlogo_url      = request.build_absolute_uri(clientlogo_filepath)
+        log.info("common parameters are returned")
+        return timezone
+        
+
+        

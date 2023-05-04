@@ -1388,7 +1388,7 @@ def upload(request, vendor=False):
         fullpath = f'{home_dir}/transaction/{peopleid}/{activity_name}/{fyear}/{fmonth}/'
         
     else:
-        fullpath = f'{home_dir}/master/{foldertype}'
+        fullpath = f'{home_dir}/master/{foldertype}/'
         
 
 
@@ -1397,6 +1397,7 @@ def upload(request, vendor=False):
         fileurl = f'{fullpath}{filename}'
         try:
             if not os.path.exists(fileurl):
+                ic(fileurl)
                 with open(fileurl, 'wb') as temp_file:
                     temp_file.write(request.FILES['img'].read())
                     temp_file.close()
@@ -1584,7 +1585,7 @@ def get_timezone(offset):  # sourcery skip: aware-datetime-for-utc
     import pytz
     from datetime import datetime, timedelta
     # Convert the offset string to a timedelta object
-    offset = f'+{offset}' if offset > 0 else str(offset)
+    offset = f'+{offset}' if int(offset) > 0 else str(offset)
     sign = offset[0] # The sign of the offset (+ or -)
     mins = int(offset[1:])
     delta = timedelta(minutes=mins) # The timedelta object
@@ -1600,4 +1601,4 @@ def get_timezone(offset):  # sourcery skip: aware-datetime-for-utc
             matching_zones.append(zone) # Add the zone to the list
 
     # Return the list of matching zones or None if no match found
-    return matching_zones if matching_zones else None
+    return matching_zones[0] if matching_zones else None

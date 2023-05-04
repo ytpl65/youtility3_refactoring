@@ -29,6 +29,7 @@ class Question(BaseModel, TenantAwareModel):
         RATING      = "RATING"     , _("Rating")
         PEOPLELIST  = "PEOPLELIST" , _("People List")
         SITELIST    = "SITELIST"   , _("Site List")
+        METERREADING = "METERREADING", _("Meter Reading")
     
     class AvptType(models.TextChoices):
         NONE  = "NONE",  _('NONE')
@@ -497,6 +498,8 @@ class JobneedDetails(BaseModel, TenantAwareModel):
         PEOPLELIST  = ("PEOPLELIST", "People List")
         SITELIST    = ("SITELIST", "Site List")
         NONE        = ("NONE", "NONE")
+        METERREADING = "METERREADING", _("Meter Reading")
+        
     
     class AvptType(models.TextChoices):
         BACKCAMPIC    = "BACKCAMPIC"   , _('Back Camera Pic')
@@ -534,6 +537,8 @@ class Attachment(BaseModel, TenantAwareModel):
         ATMT  = ("ATTACHMENT", "Attachment")
         REPLY = ("REPLY", "Reply")
         SIGN  = ("SIGN",  "SIGN")
+        METERREADING  = ("METERREADING",  "Meter Reading")
+        LOGFILES  = ("LOGFILES",  "Log Files")
 
     uuid           = models.UUIDField(unique = True, editable = True, blank = True, default = uuid.uuid4)
     filepath       = models.CharField(max_length = 100, null = True, blank = True)
@@ -545,6 +550,7 @@ class Attachment(BaseModel, TenantAwareModel):
     attachmenttype = models.CharField(choices = AttachmentType.choices, max_length = 55, default = AttachmentType.NONE.value)
     gpslocation    = PointField(_('GPS Location'),null = True, geography = True, srid = 4326)
     size           = models.IntegerField(null=True)
+    
 
     objects = AttachmentManager()
     class Meta(BaseModel.Meta):

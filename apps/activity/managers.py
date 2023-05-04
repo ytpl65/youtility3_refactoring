@@ -739,7 +739,7 @@ class AttachmentManager(models.Manager):
             ).using(db).values('ownername_id', 'ownername__tacode')
         return qset or self.none()
 
-    def get_att_given_owner(self, owneruuid):
+    def get_att_given_owner(self, owneruuid, request=None):
         "return attachments of given jobneed uuid"
         qset = self.filter(
             attachmenttype__in = ['ATTACHMENT', 'SIGN'], owner = owneruuid).order_by('filepath').values(

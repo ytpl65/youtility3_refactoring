@@ -147,6 +147,37 @@ def get_query(q):
                                              INNER JOIN typeassist tcattype ON ticket.ticketcategory_id = tcattype.id 
                                              LEFT JOIN escalationmatrix em ON ticket.ticketcategory_id = em.escalationtemplate_id  AND em.level=(ticket.level ) 
                                              WHERE ticket.id = %s;
+                                            ''',
+    'tasksummary':                          '''
+                                            WITH timezone_setting AS (
+                                                SELECT %s::text AS timezone
+                                            )
+
+                                            SELECT * , 
+                                                coalesce(round(x.tot_completed::numeric/nullif(x.tot_scheduled::numeric,0)*100,2),0) as perc
+                                            FROM (
+                                                SELECT
+                                                bu.id,
+                                                bu.buname as site,
+                                                (jobneed.plandatetime AT TIME ZONE tz.timezone)::DATE as planneddate,
+                                                count(jobneed.id)::numeric as tot_task,
+                                                count(case when jobneed.jobtype = 'SCHEDULE' then jobneed.jobtype end)::numeric as tot_scheduled,
+                                                count(case when jobneed.jobtype = 'ADHOC' then jobneed.jobtype end)::numeric as tot_adhoc,
+                                                count(case when jobneed.jobtype = 'SCHEDULE' and jobneed.jobstatus = 'ASSIGNED' then jobneed.jobstatus end)::numeric as tot_pending,
+                                                count(case when jobneed.jobtype = 'SCHEDULE' and jobneed.jobstatus = 'AUTOCLOSED' then jobneed.jobstatus end)::numeric as tot_closed,
+                                                count(case when jobneed.jobtype = 'SCHEDULE' and jobneed.jobstatus = 'COMPLETED' then jobneed.jobstatus end)::numeric as tot_completed
+                                                FROM jobneed
+                                                INNER JOIN bt bu ON bu.id=jobneed.bu_id
+                                                CROSS JOIN timezone_setting tz
+                                                WHERE
+                                                jobneed.identifier='TASK' AND
+                                                jobneed.id <> 1 AND
+                                                bu.id <> 1 AND
+                                                jobneed.bu_id IN (SELECT unnest(string_to_array(%s, ',')::integer[]))  AND
+                                                (jobneed.plandatetime AT TIME ZONE tz.timezone)::DATE BETWEEN %s AND %s
+                                                GROUP BY bu.id, bu.buname, (jobneed.plandatetime AT TIME ZONE tz.timezone)::DATE
+                                                ORDER BY bu.buname, (jobneed.plandatetime AT TIME ZONE tz.timezone)::DATE desc
+                                            ) x;
                                             '''
 
     }
