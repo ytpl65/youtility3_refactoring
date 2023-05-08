@@ -28,11 +28,11 @@ class QuestionSetManager(models.Manager):
             if qset := self.select_related(
                 *self.related).filter(buincludes__contains = bulist).values_list('id', flat = True):
                 return tuple(qset)
-                return ','.join(map(str, list(qset))).replace("'", '')
         return ""
 
-    def get_qset_modified_after(self, mdtz, buid):
-        qset = self.select_related(*self.related).filter(Q(id = 1) | Q(mdtz__gte = mdtz) &  Q(bu_id = buid) | Q(show_to_all_sites = True) & Q(enable=True)).values(*self.fields).order_by('-mdtz')
+    def get_qset_modified_after(self, mdtz, buid, clientid):
+        qset = self.select_related(*self.related).filter(
+            Q(id = 1) | Q(mdtz__gte = mdtz) &  Q(bu_id = buid) | (Q(show_to_all_sites = True) & Q(client_id = clientid))  & Q(enable=True)).values(*self.fields).order_by('-mdtz')
         qset = self.clean_fields(qset)
         return qset or None
 

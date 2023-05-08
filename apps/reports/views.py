@@ -5,7 +5,7 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db import transaction
 from django.views.generic.base import View
 from django.contrib import messages
-from django.http import JsonResponse, QueryDict, response as rp, FileResponse, HttpResponseRedirect
+from django.http import JsonResponse, QueryDict, response as rp, FileResponse, HttpResponseRedirect, HttpResponse
 from io import BytesIO
 from django.template.loader import render_to_string
 from weasyprint import HTML
@@ -536,14 +536,20 @@ class ExportReports(LoginRequiredMixin, View):
             params = self.prepare_parameters(form.cleaned_data, request)
             result = execute_report(params, form.cleaned_data)
             if result.status_code == 200:
-                msg.success(request, "Report has been downloaded successfully")
                 file_buffer = BytesIO(result.content)
-                response = FileResponse(file_buffer)
-                response['Content-Disposition'] = f'attachment; filename="{form.cleaned_data["report_name"]}.{form.cleaned_data["format"]}"'
+                if form.cleaned_data.get('format') == 'pdf':
+                    response = HttpResponse(file_buffer, content_type='application/pdf')
+                    filetype = 'inline'
+                else:
+                    response = FileResponse(file_buffer)
+                    filetype = 'attachment'
+                response['Content-Disposition'] = f'{filetype}; filename="{form.cleaned_data["report_name"]}.{form.cleaned_data["format"]}"'
                 return response
             else:
                 msg.error(request, "Failed to download the report, something went wrong")
-        else: msg.error(request, 'Request failed due to some errors in the form')
+        else: 
+            ic(form.errors)
+            return render(request, P['template_form'], context={'form':form})
         return HttpResponseRedirect(reverse('reports:exportreports'))
     
     def prepare_parameters(self, formdata, request):

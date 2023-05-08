@@ -88,11 +88,13 @@ class ReportForm(forms.Form):
         ('SEND', 'Send on my email'),
     ]
     format_types = [
-        ('xls', 'XLS'),
         ('pdf', 'PDF'),
         ('xlsx', 'XLSX'),
-        ('json', 'JSON'),
-        ('csv', 'CSV'),
+        ('xlsx', 'XLS'),
+        ('docx', 'DOCX'),
+        ('pptx', 'PPTX'),
+        ('ods', 'ODS'),
+        ('odt', 'ODT'), 
     ]
     
     
@@ -126,3 +128,10 @@ class ReportForm(forms.Form):
         super().clean()
         cd = self.cleaned_data
         self.cleaned_data['site'] = ','.join(cd['site'])
+        if cd['fromdate'] > cd['uptodate']: self.add_error('fromdate', 'From date cannot be greater than To date')
+        if cd['uptodate'] > cd['fromdate'] + timedelta(days=182):
+            err_msg = 'The difference between From date and To date should not be greater than 6 months'
+            self.add_error('fromdate', err_msg)
+            self.add_error('uptodate', err_msg)
+        return self.cleaned_data
+        

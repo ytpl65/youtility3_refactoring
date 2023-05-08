@@ -63,7 +63,8 @@ class Query(graphene.ObjectType):
     get_qsetmodifiedafter = graphene.Field(SelectOutputType,
                                           mdtz = graphene.String(required = True),
                                           ctzoffset = graphene.Int(required = True),
-                                          buid = graphene.Int(required = True))   
+                                          buid = graphene.Int(required = True),
+                                          clientid = graphene.Int(required=True))   
 
     get_qsetbelongingmodifiedafter = graphene.Field(SelectOutputType,
                                           mdtz = graphene.String(required = True),
@@ -215,10 +216,10 @@ class Query(graphene.ObjectType):
         return SelectOutputType(nrows = count, records = records,msg = msg)
 
     @staticmethod
-    def resolve_get_qsetmodifiedafter(self, info, mdtz, ctzoffset, buid):
-        log.info(f'\n\nrequest for qset-modified-after inputs : mdtz:{mdtz}, ctzoffset:{ctzoffset}, buid:{buid}')
+    def resolve_get_qsetmodifiedafter(self, info, mdtz, ctzoffset, buid, clientid):
+        log.info(f'\n\nrequest for qset-modified-after inputs : mdtz:{mdtz}, ctzoffset:{ctzoffset}, buid:{buid} , clientid: {clientid}')
         mdtzinput = utils.getawaredatetime(mdtz, ctzoffset)
-        data = QuestionSet.objects.get_qset_modified_after(mdtzinput, buid)
+        data = QuestionSet.objects.get_qset_modified_after(mdtzinput, buid, clientid)
         records, count, msg = utils.get_select_output(data)
         log.info(f'{count} objects returned...')
         return SelectOutputType(nrows = count, records = records,msg = msg)

@@ -36,7 +36,7 @@ Report Form
 {% endblock nonfield_errors %}
 
 {% block form %}
-<form action="{{ url('reports:exportreports') }}" method="post" id="report_form">
+<form action="{{ url('reports:exportreports') }}" class="validate" method="post" id="report_form">
   <!-------------------------- CSRF MIDDLEWARE TOKEN --------------------->
   <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
   <input type="hidden" name="{{ form.ctzoffset.name }}" id = "{{ form.ctzoffset.auto_id }}" value="-1">
@@ -62,16 +62,18 @@ Report Form
         <div class="col-4">
           {{ form.fromdate.label_tag() }}
         </div>
-        <div class="col-8">
+        <div class="col-8 fv-row">
           {{ form.fromdate }}
+          {{ form.fromdate.errors }}
         </div>
       </div>
       <div class="input-group mb-3">
         <div class="col-4">
           {{ form.uptodate.label_tag() }}
         </div>
-        <div class="col-8">
+        <div class="col-8 fv-row">
           {{ form.uptodate }}
+          {{ form.uptodate.errors }}
         </div>
       </div>
     </div>
@@ -109,7 +111,7 @@ Report Form
 
 {% block extra_scripts %}
 {{ form.media.js }}
-
+<script src="{{ static('assets/js/just-validate.production.min.js') }}"></script>
 <script>
   const urlname = "{{ url('reports:exportreports') }}"
 
@@ -124,10 +126,12 @@ Report Form
     $("#id_site").val(null).trigger('change') //clear default selection of site
 
     $("#id_fromdate, #id_uptodate").flatpickr({
-            dateFormat: 'd-M-Y'
-        })
-	
-	  $("[multiple]").select2({
+            dateFormat: 'd-M-Y',
+            //dateFormat: 'Y/m/d',
+            //altInput: true
+    })	
+	  
+    $("[multiple]").select2({
           closeOnSelect:false 
       })
   })

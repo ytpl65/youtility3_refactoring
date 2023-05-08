@@ -410,8 +410,10 @@ class Jobneed(BaseModel, TenantAwareModel):
         COMPLETED          = ('COMPLETED', 'Completed')
         INPROGRESS         = ('INPROGRESS', 'Inprogress')
         PARTIALLYCOMPLETED = ('PARTIALLYCOMPLETED', 'Partially Completed')
-
-
+        MAINTENANCE        = ("MAINTENANCE", "Maintenance")
+        STANDBY            = ("STANDBY", "Standby")
+        WORKING            = ("WORKING", "Working")
+        
 
     class JobType(models.TextChoices):
         SCHEDULE = ('SCHEDULE', 'Schedule')

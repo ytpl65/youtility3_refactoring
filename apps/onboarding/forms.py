@@ -130,7 +130,7 @@ class BtForm(forms.ModelForm):
             'enablesleepingguard': 'Enable Sleeping Guard',
             'deviceevent'        : 'Device Event Log',
             'solid'        : 'Sol Id',
-            'siteincharge':'Site Incharge'
+            'siteincharge':'Site Manager'   
         }
 
         widgets = { 

@@ -182,7 +182,7 @@ Business-View
 			{{ buform.butype.errors }}
 		</div>
 		<!--Site Incharge-->
-		<label for="id_siteincharge" class="col-form-label col-md-2 col-sm-2 text-sm-right">Site Incharge:
+		<label for="id_siteincharge" class="col-form-label col-md-2 col-sm-2 text-sm-right">Site Manager:
 		</label>
 		<div class="col-md-4">
 			<div class="d-flex flex-row">
@@ -319,7 +319,13 @@ Business-View
 		var list = ['SITE', 'Site (SITE)', 'Site']
 		if(list.includes(data)){
 				$(".site_type").show();
-		}else{$(".site_type").hide();}
+				$("label[for='id_siteincharge']").addClass("required")
+				$('#id_siteincharge').attr('required', true);
+		}else{
+			$(".site_type").hide();
+			$("label[for='id_siteincharge']").removeClass("required")
+			$('#id_siteincharge').attr('required', false);
+		}
 	}
 
 
