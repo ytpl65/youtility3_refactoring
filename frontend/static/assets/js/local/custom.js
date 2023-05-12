@@ -24,6 +24,17 @@ function getAddressOfPoint(geocoder, point, callback){
 
 }
 
+function toggleRequiredAttribute(id, set = true){
+  let label_field = `label[for='${id}']`
+  let field = `#${id}`
+  if(set){
+    $(label_field).addClass("required")
+    $(field).attr('required', true)
+  }else{
+    $(label_field).removeClass("required")
+    $(field).attr('required', false)
+  }
+}
 
 //upload file using dropzone
 function getDropzoneObject(){

@@ -82,7 +82,9 @@ People Group Lists
 						 return `<a href="#" class="ta-link" data-id=${row['id']} data-rowid=${meta.row}>${data}</a>`
 					}
 				},
-				{data: "enable"},
+				{data: "enable", render:function(data, type, row, meta){
+					return data === true ? '<i class="bi bi-check-circle-fill text-success"></i>': '<i class="bi bi-x-circle-fill text-danger"></i>'				
+				}},
 				{data: 'id', visible:false, defaultContent: ""}
 			],
 			createdRow:function(row, data, dataIndex){

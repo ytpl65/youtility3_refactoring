@@ -76,7 +76,7 @@ class Bt(BaseModel, TenantAwareModel, HeirarchyModel):
     butype              = models.ForeignKey('TypeAssist', on_delete = models.RESTRICT,  null = True, blank = True,  related_name="bu_butypes", verbose_name="Type")
     parent              = models.ForeignKey('self', null = True, blank = True, on_delete = models.RESTRICT, related_name="children", verbose_name="Belongs To")
     enable              = models.BooleanField(_("Enable"), default = True)
-    iswarehouse         = models.BooleanField(_("Is Warehouse"), default = False)
+    iswarehouse         = models.BooleanField(_("Warehouse"), default = False)
     gpsenable           = models.BooleanField(_("GPS Enable"), default = False)
     enablesleepingguard = models.BooleanField(_("Enable SleepingGuard"), default = False)
     skipsiteaudit       = models.BooleanField(_("Skip SiteAudit"), default = False)
@@ -84,8 +84,8 @@ class Bt(BaseModel, TenantAwareModel, HeirarchyModel):
     deviceevent         = models.BooleanField(_("Device Event"), default = False)
     pdist               = models.FloatField(_("Permissible Distance"), default = 0.0, blank = True, null = True)
     gpslocation         = PointField(_('GPS Location'),null = True, blank = True, geography = True, srid = 4326)
-    isvendor            = models.BooleanField(_("Is Vendor"), default = False)
-    isserviceprovider   = models.BooleanField(_("Is ServiceProvider"), default = False)
+    isvendor            = models.BooleanField(_("Vendor"), default = False)
+    isserviceprovider   = models.BooleanField(_("ServiceProvider"), default = False)
 
     objects = BtManager()
 

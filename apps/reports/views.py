@@ -16,11 +16,12 @@ from apps.core import utils
 from apps.activity.forms import QsetBelongingForm
 from apps.reports import forms as rp_forms
 import logging
-from background_tasks.tasks import execute_report
+from background_tasks.tasks import execute_report, send_report_on_email, create_report_history
 from django.contrib import messages as msg
 from django.apps import apps
 from django.urls import reverse_lazy
 from django.conf import settings
+import time, base64, sys, json
 log = logging.getLogger('__main__')
 
 # Create your views here.
@@ -531,26 +532,45 @@ class ExportReports(LoginRequiredMixin, View):
         R,P = request.POST, self.P
         data = R
         form = P['form'](data = data, request=request)
-        if form.is_valid():
-            log.info('form is valid')
-            params = self.prepare_parameters(form.cleaned_data, request)
-            result = execute_report(params, form.cleaned_data)
+        if not form.is_valid():
+            ic(form.errors, form.data)
+            return render(request, P['template_form'], context={'form':form})
+        log.info('form is valid')
+        formdata = form.cleaned_data
+        params = self.prepare_parameters(formdata, request)
+        result = execute_report(params, formdata)
+        log.info(f'Report form data {formdata}')
+        try:
             if result.status_code == 200:
-                file_buffer = BytesIO(result.content)
-                if form.cleaned_data.get('format') == 'pdf':
-                    response = HttpResponse(file_buffer, content_type='application/pdf')
-                    filetype = 'inline'
-                else:
-                    response = FileResponse(file_buffer)
-                    filetype = 'attachment'
-                response['Content-Disposition'] = f'{filetype}; filename="{form.cleaned_data["report_name"]}.{form.cleaned_data["format"]}"'
-                return response
+                if formdata.get('export_type') == 'SEND': #send on email
+                    log.info('report sending on mail')
+                    encoded_data = base64.b64encode(result.content)
+                    json_report_data = json.dumps({'report': encoded_data.decode('utf-8')})
+                    send_report_on_email.delay(formdata, json_report_data)
+                    time.sleep(2)
+                    msg.success(request, "Report has been sent on mail successfully")
+                    return render(request, P['template_form'], context={'form':form})
+                
+                if formdata.get('preview') == 'true': #preview report
+                    log.info('previewing the file')
+                    response = HttpResponse(result.content, content_type='application/pdf')
+                    response['Content-Disposition'] = 'attachment; filename="report.pdf"'
+                    return response
+                
+                response = FileResponse(BytesIO(result.content))
+                response['Content-Disposition'] = f'attachment; filename="{formdata["report_name"]}.{formdata["format"]}"'
+                return response #download report
             else:
                 msg.error(request, "Failed to download the report, something went wrong")
-        else: 
-            ic(form.errors)
+                return HttpResponseRedirect(reverse('reports:exportreports')) #report-export failure
+        except Exception as e:
+            log.error("something went wron in export reports", exc_info=True)
+            msg.error(request, "Failed to download the report, something went wrong")
             return render(request, P['template_form'], context={'form':form})
-        return HttpResponseRedirect(reverse('reports:exportreports'))
+        finally:
+            EI = sys.exc_info()
+            create_report_history.delay(formdata, request.user.id, request.session['bu_id'], EI)
+
     
     def prepare_parameters(self, formdata, request):
         log.info("prepare params started")
@@ -588,6 +608,3 @@ class ExportReports(LoginRequiredMixin, View):
         clientlogo_url      = request.build_absolute_uri(clientlogo_filepath)
         log.info("common parameters are returned")
         return timezone
-        
-
-        

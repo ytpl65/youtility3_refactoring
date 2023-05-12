@@ -61,7 +61,9 @@ $(document).ready(function () {
 				{data: 'locname', title: 'Name'},
 				{data: 'parent__locname', title: 'Belongs To', defaultContent:null},
 				{data: 'locstatus', title: 'Status'},
-				{data: 'enable', title: 'Enable'},
+				{data: 'enable', title: 'Enable', render:function(data, type, row, meta){
+					return data === true ? '<i class="bi bi-check-circle-fill text-success"></i>': '<i class="bi bi-x-circle-fill text-danger"></i>'				
+				}},
 			],
 			pageLength:14,
 			order:[[1, 'asc']],

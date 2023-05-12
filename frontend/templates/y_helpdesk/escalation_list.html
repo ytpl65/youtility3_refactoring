@@ -40,11 +40,14 @@ Escalation List
 			},
             columns:[
                 {data:'id', visible:false},
-                {title:'Category', data:'tacode', render:function(data, type, row, meta){
+                {data:'ctzoffset', visible:false},
+                {title:'Category', data:'taname', render:function(data, type, row, meta){
                     let url = "{{ url('helpdesk:escalationmatrix') }}"
                     return `<a href="${url}?id=${row['id']}">${data}</a>`
                 }},
-                {title:'Created on', data:'cdtz'},
+                {title:'Created on', data:'cdtz', render:function(data, type, row, meta){
+                    return convert_to_local(type, data, row)
+                }},
                 
             ],
             dom       : `<'row' <'col-sm-6 d-flex justify-content-start'f> <'col-sm-6 d-flex justify-content-end'B> >rt<'row'

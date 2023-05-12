@@ -50,10 +50,10 @@ Buisiness View
                 { "data": "id" },
                 { "data": "bucode" },
                 { "data": "buname" },
-                { "data": "identifier__tacode" },
+                { "data": "identifier__taname" },
                 { "data": "enable" },
-                { "data": "parent__bucode" },
-                { "data": "butype__tacode" },
+                { "data": "parent__buname" },
+                { "data": "butype__taname" },
             ],
 			columnDefs:[
 				{targets:0, visible:false, searchable:false, orderable:false},
@@ -67,6 +67,9 @@ Buisiness View
 				{targets:2, data:'buname', render:function(data, type, row, meta){
 					return `<a href={{ url('onboarding:bu') }}?id=${row['id']}>${data}</a>`}
 				},
+				{targets:4, data:"enable", render:function(data, type, row, meta){
+					return data === true ? '<i class="bi bi-check-circle-fill text-success"></i>': '<i class="bi bi-x-circle-fill text-danger"></i>'				
+				}}
 			],
 			createdRow:function(row, data, dataIndex){
 				if(data['enable'] === false){

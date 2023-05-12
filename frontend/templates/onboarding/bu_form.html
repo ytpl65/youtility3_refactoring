@@ -319,12 +319,10 @@ Business-View
 		var list = ['SITE', 'Site (SITE)', 'Site']
 		if(list.includes(data)){
 				$(".site_type").show();
-				$("label[for='id_siteincharge']").addClass("required")
-				$('#id_siteincharge').attr('required', true);
+				toggleRequiredAttribute('id_siteincharge')
 		}else{
 			$(".site_type").hide();
-			$("label[for='id_siteincharge']").removeClass("required")
-			$('#id_siteincharge').attr('required', false);
+			toggleRequiredAttribute('id_siteincharge', set = false)
 		}
 	}
 

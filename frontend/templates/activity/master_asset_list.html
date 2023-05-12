@@ -236,7 +236,9 @@ if(filters && filters.AssetType === 1){
 				{data:'parent__assetname', title:'Belongs to', visible:false},
 				{data:'location__locname', title:'Location'},
 				{data:'runningstatus', title:'Status'},
-				{data:'enable', title:'Enable'},
+				{data:'enable', title:'Enable', render:function(data, type, row, meta){
+					return data === true ? '<i class="bi bi-check-circle-fill text-success"></i>': '<i class="bi bi-x-circle-fill text-danger"></i>'				
+				}},
 				{data:'gps', title:'GPS'},
 				{data:'identifier', visible:false},
 			],

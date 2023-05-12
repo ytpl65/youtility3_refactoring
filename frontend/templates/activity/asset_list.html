@@ -88,6 +88,9 @@ $(document).ready(function () {
 				}},
 				{targets:[4,5], render:function(data, type, row, meta){
 					return data || 'NONE'
+				}},
+				{targets:7, data:"enable", render:function(data, type, row, meta){
+					return data === true ? '<i class="bi bi-check-circle-fill text-success"></i>': '<i class="bi bi-x-circle-fill text-danger"></i>'				
 				}}
 
 			],

@@ -69,7 +69,7 @@ class LoginForm(forms.Form):
             ic(username)
             return pm.People.objects.get(Q(loginid = username) | Q(email = username) | Q(mobno = username))
         except pm.People.DoesNotExist as e:
-            raise forms.ValidationError("User not found with these UserName") from e
+            raise forms.ValidationError("Login credentials incorrect. Please check the Username or Password") from e
             
     
     
@@ -126,7 +126,7 @@ class PeopleForm(forms.ModelForm):
             'peopletype': 'Employee Type', 'reportto'   : 'Report to',       'designation' : 'Designation',
             'gender'    : 'Gender',      'dateofbirth': 'Date of Birth',   'enable'      : 'Enable',
             'department': 'Department',  'dateofjoin' : 'Date of Joining', 'dateofreport': 'Date of Release',
-            'deviceid'  : 'Device Id',   'bu'         : "Site",            'isadmin'     : "Is Admin",
+            'deviceid'  : 'Device Id',   'bu'         : "Site",            'isadmin'     : "Admin",
             'worktype':'Work Type', 'location':"Posting"
         }
 
@@ -382,7 +382,7 @@ class PeopleExtrasForm(forms.Form):
     showtemplatebasedonfilter = forms.BooleanField(initial = False, required = False, label="Display site wise templates")
     blacklist                 = forms.BooleanField(initial = False, required = False)
     alertmails                = forms.BooleanField(initial=False , label='Alert Mails', required=False)
-    isemergencycontact        = forms.BooleanField(initial=False , label='Is Emergency Contact', required=False)
+    isemergencycontact        = forms.BooleanField(initial=False , label='Emergency Contact', required=False)
     assignsitegroup           = forms.MultipleChoiceField(required = False, label="Site Group", widget = s2forms.Select2MultipleWidget)
     tempincludes              = forms.MultipleChoiceField(required = False, label="Template", widget = s2forms.Select2MultipleWidget)
     mlogsendsto               = forms.CharField(max_length = 25, required = False)

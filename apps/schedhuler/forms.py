@@ -197,7 +197,7 @@ class Schd_E_TourJobForm(JobForm):
     ASSIGNTO_CHOICES   = [('PEOPLE', 'People'), ('GROUP', 'Group')]
     timeInChoices = [('MIN', 'Min'),('HRS', 'Hours')]
     assign_to          = forms.ChoiceField(choices = ASSIGNTO_CHOICES, initial="PEOPLE")
-    israndom = forms.BooleanField(initial=False, label="Is Random Tour", required=False)
+    israndom = forms.BooleanField(initial=False, label="Random Tour", required=False)
     tourfrequency = forms.IntegerField(min_value=1, max_value=3, initial=1, label='Frequency', required=False)
     breaktime = forms.IntegerField(label='Frequency', required=False)
     required_css_class = "required"

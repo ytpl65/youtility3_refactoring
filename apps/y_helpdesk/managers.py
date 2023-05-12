@@ -143,7 +143,7 @@ class ESCManager(models.Manager):
             bu_id__in = S['assignedsites'],
             tatype__tacode__in = ['TICKETCATEGORY', 'TICKET_CATEGORY']
         ).values(
-            'tacode', 'cdtz', 'id'
+            'taname', 'cdtz', 'id', 'ctzoffset'
         )
         return qset or self.none()
     

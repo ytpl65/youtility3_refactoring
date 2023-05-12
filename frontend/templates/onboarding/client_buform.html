@@ -432,7 +432,9 @@ Client
                 {data: 'identifier_id', visible: false, defaulContent:null},
                 {data: 'parent__buname', title: 'Belongs to'},
                 {data: 'parent_id', visible: false, defaulContent:null},
-                {data: 'enable', title: 'Enable'},
+                {data: 'enable', title: 'Enable', render:function(data, type, row, meta){
+					return data === true ? '<i class="bi bi-check-circle-fill text-success"></i>': '<i class="bi bi-x-circle-fill text-danger"></i>'				
+				}},
 
             ],
             dom:`<'row' <'col-sm-6 d-flex justify-content-start'f> <'col-sm-6 d-flex justify-content-end'B> >rt<'row'
@@ -486,7 +488,7 @@ Client
                 {label: 'Mobile', name: 'mobno', data: 'mobno', fieldInfo:"Enter country code followed by 10 digit mobile no, For eg: +91xxxxxxxxxx"},
                 {label: 'Date Of Birth', name: 'dateofbirth', data: 'dateofbirth', type:'datetime', fieldInfo:"Select or Enter date of birth in yyyy-mm-dd format"},
                 {label: 'Date Of Join', name: 'dateofjoin', data: 'dateofjoin', type:'datetime'},
-                {label: 'Is Admin', name: 'isadmin', data: 'isadmin',type: 'select', def:1, readonly:true,
+                {label: 'Admin', name: 'isadmin', data: 'isadmin',type: 'select', def:1, readonly:true,
                 options:   [
                     { label: 'True', value: 1 },
                     { label: 'False', value: 0 }
@@ -685,7 +687,7 @@ Client
                 {data: 'dateofbirth', title: 'Date Of Birth', visible:false},
                 {data: 'dateofjoin', title: 'Date Of Join', visible:false},
                 {data: 'gender', title: 'Gender'},
-                {data: 'isadmin', title: 'Is Admin'},
+                {data: 'isadmin', title: 'Admin'},
 
             ],
             dom:`<'row' <'col-sm-6 d-flex justify-content-start'f> <'col-sm-6 d-flex justify-content-end'B> >rt<'row'

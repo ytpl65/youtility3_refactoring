@@ -39,7 +39,7 @@ class QuestionForm(forms.ModelForm):
             'min'       : 'Min Value',
             'max'       : 'Max Value',
             'alerton'   : 'Alert On',
-            'isworkflow': 'Is used in workflow?',
+            'isworkflow': 'used in workflow?',
         }
 
         widgets = {
@@ -391,7 +391,7 @@ class SmartPlaceForm(forms.ModelForm):
                   'type', 'parent', 'iscritical', 'enable']
         labels = {
             'assetcode':'Code', 'assetname':'Name', 'enable':'Enable',
-            'type': 'Type', 'iscritical':'Is Critical', 'runningstatus':"Status",
+            'type': 'Type', 'iscritical':'Critical', 'runningstatus':"Status",
             'parent':'Belongs To'
         }
 
@@ -780,8 +780,8 @@ class AssetForm(forms.ModelForm):
 
 class AssetExtrasForm(forms.Form):
     required_css_class = "required"
-    ismeter =    forms.BooleanField(initial=False, required=False, label='Is Meter')
-    is_nonengg_asset =    forms.BooleanField(initial=False, required=False, label='Is Non Engg. Asset')
+    ismeter =    forms.BooleanField(initial=False, required=False, label='Meter')
+    is_nonengg_asset =    forms.BooleanField(initial=False, required=False, label='Non Engg. Asset')
     supplier      = forms.CharField(max_length=55, label='Supplier', required=False)
     meter         = forms.ChoiceField(widget=s2forms.Select2Widget, label='Meter', required=False)
     invoice_no    = forms.CharField( max_length=55, required=False, label='Invoice No')

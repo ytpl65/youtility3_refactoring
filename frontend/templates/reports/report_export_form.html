@@ -39,7 +39,8 @@ Report Form
 <form action="{{ url('reports:exportreports') }}" class="validate" method="post" id="report_form">
   <!-------------------------- CSRF MIDDLEWARE TOKEN --------------------->
   <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
-  <input type="hidden" name="{{ form.ctzoffset.name }}" id = "{{ form.ctzoffset.auto_id }}" value="-1">
+  <input type="hidden" name="{{ form.ctzoffset.name }}" id="{{ form.ctzoffset.auto_id }}" value="-1">
+  {{ form.preview }}
   <div class="row">
     <div class="col-sm-12 col-md-6">
       <div class="input-group mb-3">
@@ -54,7 +55,7 @@ Report Form
         <div class="col-4">
           {{ form.site.label_tag() }}
         </div>
-        <div class="col-8">	
+        <div class="col-8">
           {{ form.site }}
         </div>
       </div>
@@ -76,9 +77,11 @@ Report Form
           {{ form.uptodate.errors }}
         </div>
       </div>
+
+
     </div>
-	<div class="col-sm-12 col-md-6">
-		<div class="input-group mb-3">
+    <div class="col-sm-12 col-md-6">
+      <div class="input-group mb-3">
         <div class="col-4">
           {{ form.format.label_tag() }}
         </div>
@@ -86,7 +89,7 @@ Report Form
           {{ form.format }}
         </div>
       </div>
-	  <div class="input-group mb-3">
+      <div class="input-group mb-3">
         <div class="col-4">
           {{ form.export_type.label_tag() }}
         </div>
@@ -94,16 +97,43 @@ Report Form
           {{ form.export_type }}
         </div>
       </div>
-	</div>
-  </div>
+      <div class="input-group mb-3 d-none emailfile">
+        <div class="col-4">
+          {{ form.to_addr.label_tag() }}
+        </div>
+        <div class="col-8">
+          {{ form.to_addr }}
+        </div>
+      </div>
+      <div class="input-group mb-3 d-none emailfile">
+        <div class="col-4">
+          {{ form.cc.label_tag() }}
+        </div>
+        <div class="col-8">
+          {{ form.cc }}
+        </div>
+      </div>
+      <div class="input-group mb-3 d-none emailfile">
+        <div class="col-4">
+          {{ form.email_body.label_tag() }}
+        </div>
+        <div class="col-8">
+          {{ form.email_body }}
+        </div>
+      </div>
+    </div>
+  </div><br>
   <div class="form-actions">
     <button type="submit" form="report_form" class="btn btn-sm btn-primary btn-hover-scale">
-
       Submit &nbsp;<i class="fas fa-cloud-upload-alt"></i>
     </button>
 
     <button type="button" id="btn_clear" class="btn btn-sm btn-secondary btn-hover-scale">
       Clear&nbsp;<i class="fas fa-times"></i>
+    </button>
+    
+    <button type="button" id="btn_preview" class="btn btn-sm btn-primary btn-hover-scale">
+      Preview&nbsp;<i class="far fa-file-pdf"></i>
     </button>
   </div>
 </form>
@@ -126,14 +156,90 @@ Report Form
     $("#id_site").val(null).trigger('change') //clear default selection of site
 
     $("#id_fromdate, #id_uptodate").flatpickr({
-            dateFormat: 'd-M-Y',
-            //dateFormat: 'Y/m/d',
-            //altInput: true
+      dateFormat: 'd-M-Y'
     })	
 	  
     $("[multiple]").select2({
           closeOnSelect:false 
       })
+
+    //show preview button on format pdf only
+    $("#id_format").change((e) => {
+        if($("#id_format").val() !== 'pdf'){
+          $("#btn_preview").addClass('d-none')
+        }else{
+          $("#btn_preview").removeClass('d-none')
+        }
+    })
+    
+    //toggle email fields when export type EMAIL is selected
+    $("#id_export_type").change((e) => {
+      if($("#id_export_type").val() === 'SEND'){
+        $('.emailfile').removeClass('d-none')
+        toggleRequiredAttribute('id_cc')
+        toggleRequiredAttribute('id_to_addr')
+      }else{
+        toggleRequiredAttribute('id_cc', false)
+        toggleRequiredAttribute('id_to_addr', false)
+        $('.emailfile').addClass('d-none')
+      }
+    })
+
+    //on click preview button
+    $("#btn_preview").click((e) => {
+      $("#id_preview").val("true")
+      var formData = $("#report_form").serialize();
+
+      //send ajax request
+      $.ajax({
+        url:urlname,
+        type:"POST",
+        data:formData,
+        xhrFields: {
+          responseType: 'blob'
+        },
+        success:function(response){
+          // Create a Blob from the received binary data
+          var blob = new Blob([response], { type: 'application/pdf' });
+          // Create a temporary Object URL for the Blob
+          var objectUrl = URL.createObjectURL(blob);
+          // Open the Object URL in a new tab
+          window.open(objectUrl, "_blank");
+          // Release the Object URL after it's no longer needed
+          setTimeout(function() {
+            URL.revokeObjectURL(objectUrl);
+          }, 1000);
+        },
+        error:function(xhr, status, error){
+          show_error_alert("Something went wrong!", "Server Error")
+        }
+      })
+
+    })
+
+    // Create a function to handle the "select" and "unselect" events
+    function onSelectionChanged(e) {
+      console.log("e.target.id", e.target.id)
+        const otherSelect = e.target.id === 'id_cc' ? 'id_to_addr' : 'id_cc';
+        const otherSelectElement = $(`#${otherSelect}`);
+
+        if (e.type === 'select2:select') {
+            // Remove the selected option from the other dropdown
+            otherSelectElement.find(`option[value="${e.params.data.id}"]`).prop('selected', false);
+        } else {
+            // Deselect the option in the other dropdown
+            otherSelectElement.find(`option[value="${e.params.data.id}"]`).prop('selected', true);
+        }
+
+        // Trigger the change event to update the other dropdown
+        otherSelectElement.trigger('change');
+        console.log("event triggerd")
+    }
+
+    // Attach the event listeners
+    $('#id_cc, #id_to_addr').on('select2:select select2:unselect', onSelectionChanged);
+
+
   })
 </script>
 

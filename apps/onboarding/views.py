@@ -1730,8 +1730,8 @@ class BtView(LoginRequiredMixin, View):
         'template_list': 'onboarding/bu_list.html',
         'related': ['parent', 'identifier', 'butype'],
         'model': Bt,
-        'fields': ['id', 'bucode', 'buname', 'butree', 'identifier__tacode',
-              'enable', 'parent__bucode', 'butype__tacode'],
+        'fields': ['id', 'bucode', 'buname', 'butree', 'identifier__taname',
+              'enable', 'parent__buname', 'butype__taname'],
         'form_initials': {} }
 
     def get(self, request, *args, **kwargs):

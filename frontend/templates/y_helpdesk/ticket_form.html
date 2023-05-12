@@ -231,6 +231,19 @@ Ticket {% if  ticketform.instance.id is not none  %}- {{ ticketform.instance.id 
     }
 
     $(document).ready(function(){
+        //if ticket status is resolved or closed disabled all fields
+        if ('{{ticketform.instance.id}}' !== 'None') {
+            if(['CLOSED', 'RESOLVED'].includes($("#id_status").val())){
+                // Disable checkboxes
+                $("input[type='checkbox']").prop("disabled", true);
+                // Disable text fields
+                $("input, textarea").prop("disabled", true);
+
+                // Disable select2 fields (assuming select2 has been initialized)
+                $(".django-select2, .form-select").select2({"disabled": 'readonly'})
+            }
+        }
+
         //set ctzoffset
         $("#id_ctzoffset").val(-new Date().getTimezoneOffset())
         //toggle people and pgroup field based on radio button value
@@ -251,7 +264,7 @@ Ticket {% if  ticketform.instance.id is not none  %}- {{ ticketform.instance.id 
         $("#id_comments").val("")
 
         //hide the delete button when instance is not saved yet.
-        if ('{{ticketform.instance.id}}' == ('None' || "")) {
+        if ('{{ticketform.instance.id}}' == 'None') {
             $("#btn_del").hide()
         }
 
@@ -308,6 +321,18 @@ Ticket {% if  ticketform.instance.id is not none  %}- {{ ticketform.instance.id 
             create_or_update:'{{ ticketform.instance.id }}' == 'None' ? "create" : "update",
             media_url: "{{ MEDIA_URL }}"
         })
+
+        $('#id_status').on('select2:select', function (e) {
+        var selectedValue = e.params.data.id; // get the selected value
+        if (['CLOSED', 'RESOLVED'].includes(selectedValue)) {
+            var confirmation = confirm(`Are you sure you want to change the status to ${selectedValue}?`); // show confirmation message
+            if (!confirmation) {
+            // if user clicks "Cancel" in the confirmation dialog, deselect the option
+            location.href = "{{ url('helpdesk:ticket') }}?id={{ ticketform.instance.id }}"
+            
+            }
+        }
+        });
         
         
 

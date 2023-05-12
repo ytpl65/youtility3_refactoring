@@ -13,7 +13,7 @@ from logging import getLogger
 log = getLogger('mobile_service_log')
 import json
 from .types import (VerifyClientOutput,
-TypeAssist, SelectOutputType)
+TypeAssist, SelectOutputType, BasicOutput)
 
 class Query(graphene.ObjectType):
     tadata = graphene.Field(SelectOutputType, keys = graphene.List(graphene.String, required = True))
@@ -27,6 +27,7 @@ class Query(graphene.ObjectType):
                                              peopleid = graphene.Int(required = True),
                                              buid = graphene.Int(required = True),
                                              clientid = graphene.Int(required = True))
+    
     get_externaltourmodifiedafter = graphene.Field(SelectOutputType,
                                              peopleid = graphene.Int(required = True),
                                              buid = graphene.Int(required = True),
@@ -110,6 +111,21 @@ class Query(graphene.ObjectType):
                                  mdtz = graphene.String(required=True),
                                  buid = graphene.Int(required=True),
                                  ctzoffset = graphene.Int(required=True))
+    
+    send_email_verification_link = graphene.Field(BasicOutput,
+                                clientcode = graphene.String(required=True),
+                                loginid = graphene.String(required=True)
+                                )
+    @staticmethod
+    def resolve_send_email_verification_link(self, info, clientcode, loginid):
+        user = People.objects.filter(loginid = loginid, client__bucode = clientcode).first()
+        from django_email_verification import send_email
+        try:
+            send_email(user, info.context)
+            rc, msg = 0, "Success"
+        except Exception as e:
+            rc, msg = 1, "Failed"
+        return BasicOutput(rc=rc, msg=msg)
     
     @staticmethod
     def resolve_tadata(self, info, keys, **kwargs):

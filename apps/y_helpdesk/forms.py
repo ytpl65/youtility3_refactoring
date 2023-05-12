@@ -17,7 +17,7 @@ class TicketForm(forms.ModelForm):
         labels = {
             'assignedtopeople':'User', 'assignedtogroup':"User Group", 'ticketdesc':"Subject",
             'cdtz':"Created On", 'ticketcategory':"Queue",
-            "isescalated":"Is Escalated", 'asset':'Asset/Checkpoint'
+            "isescalated":"Escalated", 'asset':'Asset/Checkpoint'
         }
         widgets={
             'comments' : forms.Textarea(attrs={'rows': 2, 'cols': 40}),

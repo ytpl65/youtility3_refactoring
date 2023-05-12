@@ -140,7 +140,7 @@ def calculate_route_details(R, job):
 @shared_task(name="create_job()")
 def create_job(jobs = None):
     startdtz = enddtz = msg = resp = None
-    result = {'F':{}, 'd':[], 'story':[], 'id':[]}
+    result = {'F':{}, 'd':[], 'story':"", 'id':[]}
 
     from django.utils.timezone import get_current_timezone
     with transaction.atomic(using = utils.get_current_db_name()):

@@ -14,12 +14,13 @@ from django.conf import settings
 from django.utils import timezone
 import requests
 import base64
+from django.core.mail import EmailMessage
+
 
 log = getLogger('mobile_service_log')
 
 @app.task(bind=True, default_retry_delay=300, max_retries=5, name='Send Ticket email')
 def send_ticket_email(self, ticket=None, id=None):
-    from django.core.mail import EmailMessage
     from apps.y_helpdesk.models import Ticket
     from django.conf import settings
     from django.template.loader import render_to_string
@@ -69,7 +70,6 @@ def send_ticket_email(self, ticket=None, id=None):
 def autoclose_job(jobneedid=None):
     from django.template.loader import render_to_string
     from django.conf import settings
-    from django.core.mail import EmailMessage
     try:
         # get all expired jobs
         Jobneed = apps.get_model('activity', 'Jobneed')
@@ -83,7 +83,7 @@ def autoclose_job(jobneedid=None):
                 resp['story'] += f"processing record with id= {rec['id']}\n"
                 resp['story'] += f"record category is {rec['ticketcategory__tacode']}\n"
 
-                if rec['ticketcategory__tacode'] in ['AUTOCLOSENOTIFY', 'RAISETICKETNOTIFY']:
+                if rec['ticketcategory__tacode'] in ['AUTOCLOSENOTIFY', 'RAISETICKETNOTIFY']: 
 
                     log.info("notifying through email...")
                     pdate = rec["plandatetime"] + \
@@ -179,7 +179,6 @@ def ticket_escalation():
 def send_reminder_email():
     from django.template.loader import render_to_string
     from django.conf import settings
-    from django.core.mail import EmailMessage
     from apps.reminder.models import Reminder
 
     resp = {'story': "", "traceback": "", 'id':[]}
@@ -356,7 +355,7 @@ def task_every_min(self):
     return f"task completed at {timezone.now()}"
 
 
-@shared_task(bind=True)
+@shared_task(bind=True, name="Execute Report")
 def execute_report(self, params, formdata):
     try:
         log.info("report execution started")
@@ -373,4 +372,59 @@ def execute_report(self, params, formdata):
         return requests.post(report_execution_url, headers=auth_headers, json=params)
     except Exception as e:
         log.error("report execution failed with exception ", exc_info=True)
+
+
+@shared_task(bind=True, name="Send report on email")
+def send_report_on_email(self, formdata, json_report):
+    from io import BytesIO
+    import mimetypes, json
+    jsonresp = {"story":"", "traceback":""}
+    try:
+        jsonresp['story'] += f'formdata: {formdata}'
+        file_buffer = BytesIO()
+        jsonrep = json.loads(json_report)
+        report_content = base64.b64decode(jsonrep['report'])
+        file_buffer.write(report_content)
+        file_buffer.seek(0)
+        mime_type, encoding = mimetypes.guess_type(f'.{formdata["format"]}')
+        email = EmailMessage(
+            subject=f"Per your request, please find the report attached from {settings.COMPANYNAME}",
+            from_email=settings.EMAIL_HOST_USER,
+            to = formdata['to_addr'],
+            cc=formdata['cc'],
+            body = formdata.get('email_body'),
+        )
+        email.attach(
+            filename = f'{formdata["report_name"]}.{formdata["format"]}',
+            content=file_buffer.getvalue(),
+            mimetype=mime_type
+            )
+        email.send()
+        jsonresp['story'] += "email sent"
+    except Exception as e:
+        log.error("something went wrong while sending report on email", exc_info=True)
+        jsonresp['traceback'] = tb.format_exc()
+    return jsonresp
         
+@shared_task(bind=True, name = "Create report history")        
+def create_report_history(self, formdata, userid, buid, EI):
+    jsonresp = {'story':"", "traceback":""}
+    try:
+        ReportHistory = apps.get_model('reports', "ReportHistory")
+        obj = ReportHistory.objects.create(
+            traceback = EI[2] if EI[0] else None,
+            user_id = userid,
+            report_name = formdata['report_name'],
+            params = {"params":f"{formdata}"},
+            export_type = formdata['export_type'],
+            bu_id = buid,
+            ctzoffset = formdata['ctzoffset'],
+            cc_mails = formdata['cc'],
+            to_mails = formdata['to_addr'],
+            email_body = formdata['email_body'],
+        )
+        jsonresp['story'] += f"A Report history object created with pk: {obj.pk}"
+    except Exception as e:
+        log.error("something went wron while running create_report_history()", exc_info=True)
+        jsonresp['traceback'] += tb.format_exc()
+    return jsonresp

@@ -94,6 +94,7 @@ class WorkOrderForm(forms.ModelForm):
         self.fields['categories'].choices = om.TypeAssist.objects.filter((Q(client_id = S['client_id']) | Q(cuser__is_superuser = True)), tatype__tacode = 'WORKORDER_CATEGORY', enable=True).values_list('tacode', 'taname')
         self.fields['ticketcategory'].queryset = om.TypeAssist.objects.filter_for_dd_notifycategory_field(self.request, sitewise=True)
         self.fields['asset'].queryset = am.Asset.objects.filter_for_dd_asset_field(self.request, ['ASSET'], sitewise=True)
+        self.fields['location'].queryset = am.Location.objects.filter(Q(client_id = S['client_id']), bu_id = S['bu_id'])
         self.fields['vendor'].queryset = Vendor.objects.filter(enable=True, client_id = S['client_id'])
         self.fields['qset'].queryset = am.QuestionSet.objects.filter(client_id = S['client_id'], enable=True, type = am.QuestionSet.Type.WORKORDER) 
         utils.initailize_form_fields(self)

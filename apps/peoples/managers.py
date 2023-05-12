@@ -378,12 +378,12 @@ class PgroupManager(models.Manager):
     def getGroupsForEscForm(self, request):
         R, S = request.GET, request.session 
         qset = self.filter(
-            bu_id__in = S['assignedsites'],
+            bu_id = S['bu_id'],
             client_id = S['client_id'],
             identifier__tacode = 'PEOPLEGROUP'
         ).select_related('identifier', 'bu', 'client')
         qset = qset.filter(groupname__icontains = R['search']) if R.get('search') else qset
-        qset.annotate(
+        qset = qset.annotate(
             text = F('groupname')
         ).values('id', 'text')
         return qset or self.none()

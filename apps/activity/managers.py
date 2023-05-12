@@ -1,7 +1,8 @@
 from django.db import models
-from django.db.models.functions import Concat, Cast
+from django.utils.translation import ugettext as _
+from django.db.models.functions import Concat, Cast, Replace
 from django.db.models import CharField, Value as V, Subquery, OuterRef
-from django.db.models import Q, F, Count, Case, When
+from django.db.models import Q, F, Count, Case, When, QuerySet
 from django.contrib.gis.db.models.functions import  AsWKT, AsGeoJSON
 from datetime import datetime, timedelta, timezone
 from pyparsing import identbodychars
@@ -140,20 +141,30 @@ class QuestionSetManager(models.Manager):
         if choices: qset = qset.values_list('id', 'qsetname')
         return qset or self.none()
         
-    
-    
-
-    
-    
-
-    
 
 class QuestionManager(models.Manager):
     use_in_migrations = True
     fields = ['id', 'quesname', 'options', 'min', 'max', 'alerton', 'answertype', 'muser_id', 'cdtz', 'mdtz',
             'client_id', 'isworkflow', 'enable', 'category_id', 'cuser_id', 'unit_id' , 'tenant_id', 'ctzoffset']
     related = ['client', 'muser', 'cuser', 'category', 'unit']
+    
 
+    
+    def hrd(self): #hrd: human readable data 
+        # Create a list of When conditions for each AnswerType choice
+        conditions = [
+            When(answertype=db_value, then=V(display_value))
+            for db_value, display_value in self.model.AnswerType.choices
+        ]
+        
+        return self.get_queryset().annotate(
+            answertype_human_readable=Case(
+                *conditions,
+                default=V('Undefined'),
+                output_field=CharField()
+            )
+        )
+    
     def get_questions_modified_after(self, mdtz):
         mdtzinput = datetime.strptime(mdtz, "%Y-%m-%d %H:%M:%S")
         qset = self.select_related(*self.related).filter( mdtz__gte = mdtzinput, enable=True).values(*self.fields).order_by('-mdtz')
@@ -1035,7 +1046,7 @@ class QsetBlngManager(models.Manager):
         if R['answertype'] in ['DROPDOWN', 'CHECKBOX']:
             r['alerton'] = R['alerton'].replace('"', '').replace('[', '').replace(']', '')
         
-        elif R['answertype'] == 'NUMERIC':
+        elif R['answertype'] == 'NUMERIC' and (R['alertbelow'] or R['alertabove']):
             r['alerton'] = f"<{R['alertbelow']}, >{R['alertabove']}"
         
         PostData = {'qset_id':R['parent_id'], 'answertype':R['answertype'], 'min':r.get('min', '0.0'), 'max':r.get('max', '0.0'),

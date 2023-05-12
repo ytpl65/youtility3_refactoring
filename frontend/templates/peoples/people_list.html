@@ -37,8 +37,10 @@ People
 				{data: 'peoplename', title: 'Name'},
 				{data: 'peopletype__tacode', title: 'People Type'},
 				{data: 'bu__buname', title: 'Site'},
-				{data: 'isadmin', title: 'Is Admin'},
-				{data: 'enable', title: 'Enable'},
+				{data: 'isadmin', title: 'Admin'},
+				{data: 'enable', title: 'Enable', render:function(data, type, row, meta){
+					return data === true ? '<i class="bi bi-check-circle-fill text-success"></i>': '<i class="bi bi-x-circle-fill text-danger"></i>'				
+				}},
 				{data: 'email', title: 'Email'},
 				{data: 'mobno', title: 'Phone #'},
 			],

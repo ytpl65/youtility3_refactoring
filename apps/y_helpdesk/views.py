@@ -37,6 +37,7 @@ class EscalationMatrix(LoginRequiredMixin, View):
         
         if R.get('action') == 'loadGroups':
             qset = pm.Pgroup.objects.getGroupsForEscForm(request)
+            ic(qset)
             return rp.JsonResponse({'items':list(qset), 'total_count':len(qset)}, status=200)
         
         if R.get('template') == 'true':

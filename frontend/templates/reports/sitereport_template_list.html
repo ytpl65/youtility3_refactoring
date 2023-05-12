@@ -44,7 +44,9 @@ $(document).ready(function () {
             }
         ],
         columns:[
-            {data: 'id'},{data: 'qsetname', title: 'Site Report'}, {data: 'enable', title: 'Enable'}
+            {data: 'id'},{data: 'qsetname', title: 'Site Report'}, {data: 'enable', title: 'Enable', render:function(data, type, row, meta){
+					return data === true ? '<i class="bi bi-check-circle-fill text-success"></i>': '<i class="bi bi-x-circle-fill text-danger"></i>'				
+				}}
         ],
         buttons:[
             {

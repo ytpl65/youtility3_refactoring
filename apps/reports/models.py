@@ -25,6 +25,7 @@ class ReportHistory(models.Model):
     cc_mails    = models.TextField(max_length=250, null=True)
     to_mails    = models.TextField(max_length=250, null=True)
     email_body  = models.TextField(max_length=500, null=True)
+    traceback = models.CharField(max_length=1000, null=True)
     
     class Meta:
         db_table = 'report_history'

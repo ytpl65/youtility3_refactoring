@@ -1,5 +1,5 @@
 import graphene
-from  graphql_jwt.shortcuts import get_token, get_payload
+from  graphql_jwt.shortcuts import get_token, get_payload, get_refresh_token, create_refresh_token
 from graphql_jwt.decorators import login_required
 from graphene.types.generic import GenericScalar
 from graphql import GraphQLError
@@ -20,6 +20,7 @@ import json
 from .utils import get_json_data
 from logging import getLogger
 import traceback as tb
+from graphql_jwt import ObtainJSONWebToken
 
 log = getLogger('mobile_service_log')
 
@@ -33,6 +34,7 @@ class LoginUser(graphene.Mutation):
     payload = GenericScalar()
     msg     = graphene.String()
     shiftid = graphene.Int()
+    refreshtoken = graphene.String()
 
     class Arguments:
         input =  ty.AuthInput(required = True)
@@ -56,9 +58,10 @@ class LoginUser(graphene.Mutation):
         user.last_login = timezone.now()
         user.save()
         token = get_token(user)
+        request.jwt_refresh_token = create_refresh_token(user)
         log.info(f"user logged in successfully! {user.peoplename}")
         user = cls.get_user_json(user)
-        return LoginUser(token = token, user = user, payload = get_payload(token, request))
+        return LoginUser(token = token, user = user, payload = get_payload(token, request), refreshtoken = request.jwt_refresh_token.get_token())
 
     @classmethod
     def updateDeviceId(cls, user, input):

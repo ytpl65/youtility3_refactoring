@@ -135,7 +135,7 @@ Work Order
       </div>
       <div class="input-group mb-3">
         <div class="col-md-4 col-sm-12 pt-2">
-          <label for="">Is Email Sent</label>
+          <label for="">Email Sent</label>
         </div>
         <div class="col-md-8 col-sm-12 mt-2">
           {{ woform.instance.ismailsent }}
@@ -210,6 +210,17 @@ Work Order
   var womid = '{{woform.instance.id}}'
   var attachmentDetails;
 
+  function disableAllFields(){
+    // Disable checkboxes
+      $("input[type='checkbox']").prop("disabled", true);
+
+      // Disable text fields
+      $("input, textarea").prop("disabled", true);
+
+      // Disable select2 fields (assuming select2 has been initialized)
+      $(".django-select2, .form-select").select2({"disabled": 'readonly'})
+  }
+
   function showAttachmentDetails(id, from) {
     $('#id_attachmentdetails').modal('show')
     ajaxData.id = id
@@ -246,6 +257,10 @@ Work Order
       media_url: "{{ MEDIA_URL }}"
     })
 
+    if("{{ woform.instance.workstatus }}" === "COMPLETED"){
+      disableAllFields()
+    }
+
 
     //on submit form post request
     $("#id_woform").submit((e) => {
@@ -271,7 +286,7 @@ Work Order
         }
         payLoad = newPayLoad
       }
-      submit_form_alert("<b class='text-primary fs-2'>Note: This will send an email to vendor!<b>").then((
+      submit_form_alert("<b class='text-primary fs-2'>Note: This will send an email to the vendor!<b>").then((
         res) => {
           if (res.isConfirmed) {
             fire_ajax_form_post(params, payLoad)

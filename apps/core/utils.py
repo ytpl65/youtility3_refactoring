@@ -1369,6 +1369,7 @@ def orderedRandom(arr, k):
 
 
 def upload(request, vendor=False):
+    logger.info(f"{request.POST = }")
     if 'img' not in request.FILES:
         return
     foldertype = request.POST["foldertype"]
@@ -1376,10 +1377,12 @@ def upload(request, vendor=False):
         tabletype, activity_name = "transaction", foldertype.upper()
     if foldertype in ['people', 'client']:
         tabletype, activity_name = "master", foldertype.upper()
+    logger.info(f"Floder type: {foldertype} and activity Name: {activity_name}")
 
     home_dir = settings.MEDIA_ROOT
     fextension = os.path.splitext(request.FILES['img'].name)[1]
     filename = parser.parse(str(datetime.now())).strftime('%d_%b_%Y_%H%M%S') + fextension
+    logger.info(f'{filename = } {fextension = }')
     
     if tabletype == 'transaction':
         fmonth = str(datetime.now().strftime("%b"))
@@ -1389,23 +1392,26 @@ def upload(request, vendor=False):
         
     else:
         fullpath = f'{home_dir}/master/{foldertype}/'
-        
+    
+    logger.info(f'{fullpath = }')
 
 
-        if not os.path.exists(fullpath):    
-            os.makedirs(fullpath)
-        fileurl = f'{fullpath}{filename}'
-        try:
-            if not os.path.exists(fileurl):
-                ic(fileurl)
-                with open(fileurl, 'wb') as temp_file:
-                    temp_file.write(request.FILES['img'].read())
-                    temp_file.close()
-        except Exception as e:
-            logger.error(e, exc_info=True)
-            return False, None, None
+    if not os.path.exists(fullpath):    
+        os.makedirs(fullpath)
+    fileurl = f'{fullpath}{filename}'
+    logger.info(f"{fileurl = }")
+    try:
+        if not os.path.exists(fileurl):
+            ic(fileurl)
+            with open(fileurl, 'wb') as temp_file:
+                temp_file.write(request.FILES['img'].read())
+                temp_file.close()
+    except Exception as e:
+        logger.error(e, exc_info=True)
+        return False, None, None
 
-        return True, filename, fullpath 
+    logger.info(f"{filename = } {fullpath = }")
+    return True, filename, fullpath 
     
 def upload_vendor_file(file, womid):
     home_dir = settings.MEDIA_ROOT

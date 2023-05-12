@@ -45,7 +45,9 @@ Site Groups
                     },
                     title: "Group Name" 
                 },
-                {data: 'enable', title: 'Enable', orderable:false}
+                {data: 'enable', title: 'Enable', orderable:false, render:function(data, type, row, meta){
+					return data === true ? '<i class="bi bi-check-circle-fill text-success"></i>': '<i class="bi bi-x-circle-fill text-danger"></i>'				
+				}}
             ],
             createdRow:function(row, data, dataIndex){
 				if(data['enable'] === false){

@@ -150,15 +150,14 @@ class BtForm(forms.ModelForm):
             self.fields['identifier'].initial = obm.TypeAssist.objects.get(tacode='CLIENT').id
             self.fields['identifier'].required= True
         
+        self.fields['siteincharge'].initial = 1
         #filters for dropdown fields
         self.fields['identifier'].queryset = obm.TypeAssist.objects.filter(Q(tacode='CLIENT') if self.client else Q(tatype__tacode="BVIDENTIFIER"))
         self.fields['butype'].queryset = obm.TypeAssist.objects.filter(tatype__tacode="SITETYPE", client_id = S['client_id'])
         qset = obm.Bt.objects.get_whole_tree(self.request.session['client_id'])
         self.fields['parent'].queryset = obm.Bt.objects.filter(id__in = qset)
         self.fields['controlroom'].choices = pm.People.objects.controlroomchoices(self.request)
-        self.fields['siteincharge'].queryset = pm.People.objects.filter(
-            Q(designation__tacode__in = ['AO', 'AM', 'BM', 'BOM', 'ABM']) | Q(worktype__tacode__in = ['AO', 'AM', 'BM', 'BOM', 'ABM']),
-            client_id = self.request.session['client_id'], enable=True, isverified=True)
+        self.fields['siteincharge'].queryset = pm.People.objects.filter(Q(peoplecode ='NONE') | (Q(client_id = self.request.session['client_id']) & Q(enable=True) & Q(isverified=True)))
         utils.initailize_form_fields(self)
 
     def is_valid(self) -> bool:

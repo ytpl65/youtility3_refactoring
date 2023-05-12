@@ -394,8 +394,8 @@ Question set
 
                 if(!(min.isMultiValue()) && isNaN(parseInt(min.val(), 10))) {min.error('value of min must be number')}
                 if(!(max.isMultiValue()) && isNaN(parseInt(max.val(), 10))) {max.error('value of max must be number')}
-                if(!(alertbelow.isMultiValue()) && isNaN(parseInt(alertbelow.val()))) {alertbelow.error('value of alert below must be number')}
-                if(!(alertabove.isMultiValue()) && isNaN(parseInt(alertabove.val()))) {alertabove.error('value of alert above must be number')}
+                if(alertbelow.val() && isNaN(parseInt(alertbelow.val()))) {alertbelow.error('value of alert below must be number')}
+                if(alertabove.val() && isNaN(parseInt(alertabove.val()))) {alertabove.error('value of alert above must be number')}
 
                 if(!(min.isMultiValue() && max.isMultiValue()) && (parseInt(min.val(), 10) > parseInt(max.val(), 10)) ){
                     min.error('Min value must be smaller than Max value')

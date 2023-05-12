@@ -85,7 +85,7 @@ class ReportForm(forms.Form):
     ]
     download_or_send_options = [
         ('DOWNLOAD', 'Download'),
-        ('SEND', 'Send on my email'),
+        ('SEND', 'Email'),
     ]
     format_types = [
         ('pdf', 'PDF'),
@@ -103,9 +103,13 @@ class ReportForm(forms.Form):
     site        = forms.MultipleChoiceField(label='Site', required = True, widget=s2forms.Select2MultipleWidget)
     fromdate    = forms.DateField(label='From Date', required=True)
     uptodate    = forms.DateField(label='To Date', required=True)
-    format  = forms.ChoiceField(widget=s2forms.Select2Widget, label="Format", required=True, choices=format_types, initial='PDF')
+    format      = forms.ChoiceField(widget=s2forms.Select2Widget, label="Format", required=True, choices=format_types, initial='PDF')
     export_type = forms.ChoiceField(widget=s2forms.Select2Widget, label='Get File with', required=True, choices=download_or_send_options, initial='DOWNLOAD')
-    ctzoffset = forms.IntegerField(required=False)
+    cc          = forms.MultipleChoiceField(label='CC', required=False, widget=s2forms.Select2MultipleWidget)
+    to_addr     = forms.MultipleChoiceField(label="To", required=False, widget=s2forms.Select2MultipleWidget)
+    preview     = forms.CharField(widget=forms.HiddenInput,required=False, initial="false")
+    email_body  = forms.CharField(label='Email Body', max_length=500, required=False, widget=forms.Textarea(attrs={'rows':2}))
+    ctzoffset   = forms.IntegerField(required=False)
 
     
     def __init__(self, *args, **kwargs):
@@ -115,6 +119,8 @@ class ReportForm(forms.Form):
         self.fields['site'].choices = pm.Pgbelonging.objects.get_assigned_sites_to_people(S.get('_auth_user_id'), True)
         self.fields['fromdate'].initial = self.get_default_range_of_dates()[0]
         self.fields['uptodate'].initial = self.get_default_range_of_dates()[1]
+        self.fields['cc'].choices = pm.People.objects.filter(isverified=True, client_id = S['client_id']).values_list('email', 'peoplename')
+        self.fields['to_addr'].choices = pm.People.objects.filter(isverified=True, client_id = S['client_id']).values_list('email', 'peoplename')
         utils.initailize_form_fields(self)
         
     def get_default_range_of_dates(self):
@@ -133,5 +139,7 @@ class ReportForm(forms.Form):
             err_msg = 'The difference between From date and To date should not be greater than 6 months'
             self.add_error('fromdate', err_msg)
             self.add_error('uptodate', err_msg)
+        if cd['format'] != 'pdf': self.cleaned_data['preview'] = "false"
         return self.cleaned_data
-        
+    
+    
