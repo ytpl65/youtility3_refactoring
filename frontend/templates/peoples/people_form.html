@@ -54,7 +54,7 @@ People Form
             <div class="col-md-9">
                 <div class="d-flex">
                     <input type="password" class="form-control" name='new_password1'>
-                    <i class="fas fa-eye toggleeye"></i>
+                    <i class="fas text-white fa-eye toggleeye"></i>
                 </div>
                 <div class="password_fields" for="new_password1"></div>
             </div>
@@ -62,7 +62,7 @@ People Form
             <div class="col-md-9">
                 <div class="d-flex">
                     <input type="password" class="form-control" name='new_password2'>
-                    <i class="fas fa-eye toggleeye"></i>
+                    <i class="fas text-white fa-eye toggleeye"></i>
                 </div>
                 <div id="password_error" class="password_fields" for="new_password2"></div>
             </div>
@@ -71,7 +71,7 @@ People Form
 </div>
 <div class="modal-footer">
     <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Cancel</button>
-    <input form="passwordChangeForm" type="submit" value="Set Password" class="btn btn-sm btn-primary rounded-1" />
+    <input form="passwordChangeForm" type="submit" value="Set Password" class="btn btn-sm btn-primary2 rounded-1" />
 </div>
 {% endcall %}
 {% endif %}
@@ -88,7 +88,7 @@ People Form
     </div>
     <div class="modal-footer">
         <button type="button" class="btn btn-sm  btn-secondary rounded-1" data-bs-dismiss="modal">Close</button>
-        <input type="submit" class="btn btn-sm  btn-primary rounded-1" value="Sumbit" form="pop_peopletype_form" />
+        <input type="submit" class="btn btn-sm  btn-primary2 rounded-1" value="Sumbit" form="pop_peopletype_form" />
     </div>
 </form>
 {% endcall %}
@@ -104,7 +104,7 @@ People Form
     </div>
     <div class="modal-footer">
         <button type="button" class="btn btn-sm  btn-secondary rounded-1" data-bs-dismiss="modal">Close</button>
-        <input type="submit" class="btn btn-sm  btn-primary rounded-1" value="Sumbit" form="pop_worktype_form" />
+        <input type="submit" class="btn btn-sm  btn-primary2 rounded-1" value="Sumbit" form="pop_worktype_form" />
     </div>
 </form>
 {% endcall %}
@@ -120,7 +120,7 @@ People Form
     </div>
     <div class="modal-footer">
         <button type="button" class="btn btn-sm  btn-secondary rounded-1" data-bs-dismiss="modal">Close</button>
-        <input type="submit" class="btn btn-sm  btn-primary rounded-1" value="Sumbit" form="pop_dept_form" />
+        <input type="submit" class="btn btn-sm  btn-primary2 rounded-1" value="Sumbit" form="pop_dept_form" />
     </div>
 </form>
 {% endcall %}
@@ -136,7 +136,7 @@ People Form
     </div>
     <div class="modal-footer">
         <button type="button" class="btn btn-sm  btn-secondary rounded-1" data-bs-dismiss="modal">Close</button>
-        <input type="submit" class="btn btn-sm  btn-primary rounded-1" value="Sumbit" form="pop_desgn_form" />
+        <input type="submit" class="btn btn-sm  btn-primary2 rounded-1" value="Sumbit" form="pop_desgn_form" />
     </div>
 </form>
 {% endcall %}
@@ -152,7 +152,7 @@ People Form
     <div><p>Tip: Zoom in for accurate coordinates of address, place the marker and then set the coords.</p></div>
     <div></div>
     <div><a href="#" class="btn" id="close_setgps_perm" data-dismiss="modal">Close</a>
-    <a href="#" class="btn btn-primary" id="set_the_coords_perm">Set the coordinates</a></div>
+    <a href="#" class="btn btn-primary2" id="set_the_coords_perm">Set the coordinates</a></div>
     
 </div>
 {% endcall %}
@@ -168,7 +168,7 @@ People Form
     <div><p>Tip: Zoom in for accurate coordinates of address, place the marker and then set the coords.</p></div>
     <div></div>
     <div><a href="#" class="btn" id="close_setgps_curr" data-dismiss="modal">Close</a>
-    <a href="#" class="btn btn-primary" id="set_the_coords_curr">Set the coordinates</a></div>
+    <a href="#" class="btn btn-primary2" id="set_the_coords_curr">Set the coordinates</a></div>
     
 </div>
 {% endcall %}
@@ -394,6 +394,9 @@ People
                     <!--ALERTMAILS CHECKBOX -->
                     <label for = id_alertmails id="label_alertmails" class="form-check-label bool col-form-label me-5 text-sm-right">Alert Mails
                         &nbsp{{ pref_form.alertmails }}</label>
+                    <!--WORKPERMIT APPROVER CHECKBOX -->
+                    <label for = id_alertmails id="label_alertmails" class="form-check-label bool col-form-label me-5 text-sm-right">Work Permit Approver
+                        &nbsp{{ pref_form.isworkpermit_approver }}</label>
                 </div>
             </div>
             <!--END INNER ROW-->
@@ -463,7 +466,7 @@ People
             <!--END-Add More Details --->
         {% endif %}
     {% if peopleform.instance.password %}
-        <button type="button" id="change_pass" class="btn btn-sm col-md-2 btn-primary rounded-1" data-bs-target='#paswd_change_alert'
+        <button type="button" id="change_pass" class="btn btn-sm col-md-2 btn-primary2 rounded-1" data-bs-target='#paswd_change_alert'
             data-bs-toggle="modal">Change Password
             <span class="svg-icon svg-icon-2">
                 <span class="material-icons h-19px" style="vertical-align: middle; font-size: 19px;">

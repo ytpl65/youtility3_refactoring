@@ -62,21 +62,21 @@ Site Report Template
 {% block ajax_page_actions %}
 <div class="form-actions">
     {% if reporttemp_form.instance.id %}
-    <button type="submit" id="submitTour" form="sitereportTemplateForm" class="btn btn-sm btn-primary btn-hover-scale">
-        Update &nbsp;<i class="fas fa-cloud-upload-alt"></i>
+    <button type="submit" id="submitTour" form="sitereportTemplateForm" class="btn btn-sm btn-primary2 btn-hover-scale">
+        Update &nbsp;<i class="fas text-white fa-cloud-upload-alt"></i>
     </button>
 
     <button type="button" onclick="deleteReport(this)" data-id="{{ reporttemp_form.instance.id }}" id="deleteAttd"
         class="btn btn-sm btn-danger btn-hover-scale">
-        Delete&nbsp;<i class="fas fa-trash-alt"></i>
+        Delete&nbsp;<i class="fas text-white fa-trash-alt"></i>
     </button>
     {% else %}
-    <button type="submit" form="sitereportTemplateForm" class="btn btn-sm btn-primary btn-hover-scale">
-        Save &nbsp;<i class="fas fa-cloud-upload-alt"></i>
+    <button type="submit" form="sitereportTemplateForm" class="btn btn-sm btn-primary2 btn-hover-scale">
+        Save &nbsp;<i class="fas text-white fa-cloud-upload-alt"></i>
     </button>
     {% endif %}
     <button type="button" id="newform" class="btn btn-sm me-2 btn-secondary btn-hover-scale">
-        Clear&nbsp;<i class="fas fa-cloud-upload-alt"></i>
+        Clear&nbsp;<i class="fas  fa-cloud-upload-alt"></i>
     </button>
 </div>
 {% endblock ajax_page_actions %}
@@ -309,7 +309,7 @@ Site Report Template
                     {title: "Count", width: "15%", defaultContent:null, data:'qcount'},
                 ],
                 buttons:[
-                    {text:'<i class="fas fa-sync-alt text-dark"></i>', titleAttr:'Refresh Data', className:'refreshBtnParent'},
+                    {text:'<i class="fas text-white fa-sync-alt text-dark"></i>', titleAttr:'Refresh Data', className:'refreshBtnParent'},
                     { extend: "create", editor: parentEditor },
                     { extend: "edit",   editor: parentEditor },
                     { extend: "remove", editor: parentEditor }
@@ -342,7 +342,7 @@ Site Report Template
                     ...QSBTableColumnsConfig()
                 ],
                 buttons:[
-                {text:'<i class="fas fa-sync-alt text-dark"></i>', titleAttr:'Refresh Data', className:'refreshBtn disabled'},
+                {text:'<i class="fas text-white fa-sync-alt text-dark"></i>', titleAttr:'Refresh Data', className:'refreshBtn disabled'},
                     { extend: "create", editor: childEditor },
                     { extend: "edit",   editor: childEditor },
                     { extend: "remove", editor: childEditor }

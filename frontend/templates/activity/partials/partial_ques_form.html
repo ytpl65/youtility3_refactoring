@@ -10,7 +10,7 @@
     <input type="hidden" name="pk" id="pk" value="{{ ques_form.instance.pk }}">
     <div class="modal-header border-0">
         <h3 class="modal-title modal-heading" id="exampleModalLabel">Create Question <i
-                class="fas fa-poll-h fa-sm ch4"></i></h3>
+                class="fas text-white fa-poll-h fa-sm ch4"></i></h3>
         <button type="button" class="btn-sm btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
     </div>
     <div class="modal-body" id="partial">
@@ -103,19 +103,19 @@
 </form>
     <div class="modal-footer border-0 pt-0">
         <button type="button" class="btn btn-sm btn-secondary btn-hover-scale" data-bs-dismiss="modal">
-            Close <i class="fas fa-times"></i>
+            Close <i class="fas  fa-times"></i>
         </button>
         {% if ques_form.instance.id %}
-            <button type="submit" id="submit" form= "qsetbng_form" class="btn btn-sm btn-primary btn-hover-scale">
-                Update&nbsp;<i class="fas fa-cloud-upload-alt"></i>
+            <button type="submit" id="submit" form= "qsetbng_form" class="btn btn-sm btn-primary2 btn-hover-scale">
+                Update&nbsp;<i class="fas text-white fa-cloud-upload-alt"></i>
             </button>
             <button type="button" onclick="deleteQuestion(this)" data-id="{{ ques_form.instance.id }}" id="deleteAttd"
                 class="btn btn-sm btn-danger btn-hover-scale">
-                Delete&nbsp;<i class="fas fa-trash-alt"></i>
+                Delete&nbsp;<i class="fas text-white fa-trash-alt"></i>
             </button>
         {% else %}
-            <button type="submit"  form="qsetbng_form" class="btn btn-sm btn-primary btn-hover-scale">
-                Add&nbsp;<i class="fas fa-cloud-upload-alt"></i>
+            <button type="submit"  form="qsetbng_form" class="btn btn-sm btn-primary2 btn-hover-scale">
+                Add&nbsp;<i class="fas text-white fa-cloud-upload-alt"></i>
             </button>
         {% endif %}
     </div>

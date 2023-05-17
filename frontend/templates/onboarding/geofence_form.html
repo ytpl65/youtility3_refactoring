@@ -120,7 +120,7 @@ GeoFence
         </div>
       </div>
       <div class="card-toolbar">
-        <button class="btn btn-icon btn-active-color-primary" id="closeForm"><i class="fas fa-times"></i></button>
+        <button class="btn btn-icon btn-active-color-primary" id="closeForm"><i class="fas text-white fa-times"></i></button>
       </div>
     </div>
 
@@ -187,10 +187,10 @@ GeoFence
       <br><br>
       <div class="formcontrols mb-5">
         {% if geofenceform.instance.gfcode %}
-          <button type="submit" id="submit" form="geofence_form" class="btn btn-sm btn-primary btn-hover-scale">Update&nbsp;<i class="fas fa-cloud-upload-alt"></i></button>
-          <button type="button" onclick="deleteTa(this)" data-id="{{ geofenceform.instance.id }}" id="deleteCap" class="btn btn-sm btn-hover-scale btn-danger">Delete&nbsp;<i class="fas fa-trash-alt"></i></button>
+          <button type="submit" id="submit" form="geofence_form" class="btn btn-sm btn-primary2 btn-hover-scale">Update&nbsp;<i class="fas text-white fa-cloud-upload-alt"></i></button>
+          <button type="button" onclick="deleteTa(this)" data-id="{{ geofenceform.instance.id }}" id="deleteCap" class="btn btn-sm btn-hover-scale btn-danger">Delete&nbsp;<i class="fas text-white fa-trash-alt"></i></button>
         {% else %}
-          <button type="submit" form="geofence_form" class="btn btn-sm btn-primary btn-hover-scale">Submit&nbsp;<i class="fas fa-cloud-upload-alt"></i></button>
+          <button type="submit" form="geofence_form" class="btn btn-sm btn-primary2 btn-hover-scale">Submit&nbsp;<i class="fas text-white fa-cloud-upload-alt"></i></button>
         {% endif %}
       </div>
       
@@ -277,10 +277,10 @@ GeoFence
           <br><br>
           <div class="formcontrols mb-5">
             {% if geofenceform.instance.gfcode %}
-              <button type="submit" id="submit" form="geofence_form" class="btn btn-sm btn-primary btn-hover-scale">Update&nbsp;<i class="fas fa-cloud-upload-alt"></i></button>
-              <button type="button" onclick="deleteTa(this)" data-id="{{ geofenceform.instance.id }}" id="deleteCap" class="btn btn-sm btn-hover-scale btn-danger">Delete&nbsp;<i class="fas fa-trash-alt"></i></button>
+              <button type="submit" id="submit" form="geofence_form" class="btn btn-sm btn-primary2 btn-hover-scale">Update&nbsp;<i class="fas text-white fa-cloud-upload-alt"></i></button>
+              <button type="button" onclick="deleteTa(this)" data-id="{{ geofenceform.instance.id }}" id="deleteCap" class="btn btn-sm btn-hover-scale btn-danger">Delete&nbsp;<i class="fas text-white fa-trash-alt"></i></button>
             {% else %}
-              <button type="submit" form="geofence_form" class="btn btn-sm btn-primary btn-hover-scale">Submit&nbsp;<i class="fas fa-cloud-upload-alt"></i></button>
+              <button type="submit" form="geofence_form" class="btn btn-sm btn-primary2 btn-hover-scale">Submit&nbsp;<i class="fas text-white fa-cloud-upload-alt"></i></button>
             {% endif %}
           </div>
         </form>

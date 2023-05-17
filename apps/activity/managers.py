@@ -1270,15 +1270,7 @@ class DELManager(models.Manager):
         qset = qset[start:start+length]
         return total, total, qset
             
-            
-class WorkpermitManager(models.Manager):
-    use_in_migrations = True
-    
-    def get_workpermitlist(self, request):
-        from apps.core.raw_queries import get_query
-        qset = self.raw(get_query('workpermitlist'), [request.session['bu_id']])
-        return qset or self.none()
-    
+
     
 class LocationManager(models.Manager):
     use_in_migrations = True

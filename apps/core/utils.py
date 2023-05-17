@@ -373,6 +373,7 @@ def save_user_session(request, people, ctzoffset=None):
         request.session['sitename'] = request.user.bu.buname
         request.session['sitecode'] = request.user.bu.bucode
         request.session['google_maps_secret_key'] = settings.GOOGLE_MAP_SECRET_KEY
+        request.session['is_workpermit_approver'] = request.user.people_extras['isworkpermit_approver']
     except ObjectDoesNotExist:
         logger.error('object not found...', exc_info=True)
         raise
@@ -759,7 +760,7 @@ def get_or_create_none_asset():
         defaults={
             'assetcode': "NONE", 'assetname': 'NONE',
             'iscritical': False,  'identifier': 'NONE',
-            'runningstatus': 'SCRAPPED', 'id': 1
+            'id': 1
         }
     )
     return obj
@@ -1017,7 +1018,7 @@ def save_common_stuff(request, instance, is_superuser=False):
         instance.mdtz = timezone.now().replace(microsecond=0)
     else:
         instance.cuser_id = instance.muser_id = userid
-    instance.ctzoffset = int(request.session['ctzoffset'])
+    #instance.ctzoffset = int(request.session['ctzoffset'])
     return instance
 
 

@@ -2,7 +2,7 @@ from django.shortcuts import render
 from django.db import IntegrityError, transaction
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.views.generic.base import View
-from .forms import VendorForm, WorkOrderForm
+from .forms import VendorForm, WorkOrderForm, WorkPermitForm
 from .models import Vendor, Wom, WomDetails
 from apps.activity.models import QuestionSetBelonging
 from django.http import Http404, QueryDict, response as rp, HttpResponse
@@ -141,7 +141,6 @@ class WorkOrderView(LoginRequiredMixin, View):
             objs = self.params['model_jnd'].objects.get_wo_details(R['womid'])
             return rp.JsonResponse({"data":list(objs)})
         
-        
         # return form with instance
         elif R.get('id', None):
             obj = utils.get_model_obj(int(R['id']), request, P)
@@ -184,7 +183,8 @@ class WorkOrderView(LoginRequiredMixin, View):
             workorder = putils.save_userinfo(
                 workorder, request.user, request.session, create = create)
             if not workorder.ismailsent:
-                notify_wo_creation(id=workorder.id)
+                workorder = notify_wo_creation(id=workorder.id)
+            workorder.add_history()
             logger.info("workorder form saved")
             data = {'msg': f"{workorder.id}",
             'row': Wom.objects.values(*self.params['fields']).get(id = workorder.id), 'pk':workorder.id}
@@ -320,3 +320,74 @@ class ReplyWorkOrder(View):
             attachmenttype = Attachment.AttachmentType.ATMT,
             ownername_id = ownername.id, 
         )
+        
+        
+class WorkPermit(LoginRequiredMixin, View):
+    params = {
+        'template_list':'work_order_management/workpermit_list.html',
+        'template_form':'work_order_management/workpermit_form.html',
+        'model':Wom,
+        'form':WorkPermitForm,
+        'related':[],
+        'fields':['cdtz', 'id', 'other_data__wp_seqno', 'qset__qsetname', 'workpermit']
+    }
+    
+    def get(self, request, *args, **kwargs):
+        R, P = request.GET, self.params
+        ic(R)
+        # first load the template
+        if R.get('template'): return render(request, self.params['template_list'])
+        
+        # then load the table with objects for table_view
+        if R.get('action', None) == 'list' or R.get('search_term'):
+            objs = self.params['model'].objects.get_workpermitlist(request)
+            return  rp.JsonResponse(data = {
+                'data':list(objs)}, safe = False)
+            
+        elif R.get('action', None) == 'form':
+            import uuid
+            cxt = {'wpform': P['form'](request = request),
+                   'msg': "create workpermit requested", 'ownerid':uuid.uuid4()}
+            return render(request, P['template_form'], cxt)
+        
+        # return form with instance
+        elif R.get('id', None):
+            obj = utils.get_model_obj(int(R['id']), request, P)
+            cxt = {'wpform':P['form'](request=request, instance=obj), 'ownerid':obj.uuid}
+            return render(request, P['template_form'], cxt)
+        
+    
+    def post(self, request, *args, **kwargs):
+        R, P = request.POST, self.params
+        try:
+            data = QueryDict(R['formData']).copy()
+            if pk := R.get('pk', None):
+                wp = utils.get_model_obj(pk, request, P)
+                form = self.params['form'](
+                    data, instance = wp, request = request)
+                create = False
+            else:
+                form = self.params['form'](data, request = request)
+                create=True
+            if form.is_valid():
+                resp = self.handle_valid_form(form,  request, create)
+            else:
+                ic(form.cleaned_data, form.data, form.errors)
+                cxt = {'errors': form.errors}
+                resp = utils.handle_invalid_form(request, self.params, cxt)
+        except Exception:
+            resp = utils.handle_Exception(request)
+        return resp
+
+    def handle_valid_form(self, form, request, create=True):
+        workpermit = form.save(commit=False)
+        workpermit.uuid = request.POST.get('uuid')
+        workpermit = putils.save_userinfo(
+                workpermit, request.user, request.session, create = create)
+        data = {'msg': f"{workpermit.id}",
+            'row': Wom.objects.values(*self.params['fields']).get(id = workpermit.id), 'pk':workpermit.id}
+        logger.debug(data)
+        return rp.JsonResponse(data, status=200)
+        
+        
+            

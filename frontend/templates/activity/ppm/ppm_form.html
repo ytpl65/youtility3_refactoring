@@ -257,24 +257,24 @@ PPM Form
     <div class="form-actions">
         {% if ppmform.instance.id %}
         <button type="button" id="runScheduler"  class="btn btn-sm btn-info btn-hover-scale">
-            Run Scheduler&nbsp;<i class="far fa-clock"></i>
+            Run Scheduler&nbsp;<i class="far text-white fa-clock"></i>
         </button>
-        <button type="submit" id="submitTour" form="id_ppmform" class="btn btn-sm btn-primary btn-hover-scale">
-            Update&nbsp;<i class="fas fa-cloud-upload-alt"></i>
+        <button type="submit" id="submitTour" form="id_ppmform" class="btn btn-sm btn-primary2 btn-hover-scale">
+            Update&nbsp;<i class="fas text-white fa-cloud-upload-alt"></i>
         </button>
 
         <button type="button" onclick="deletePPM(this)" data-id="{{ ppmform.instance.id }}" id="deleteAttd"
             class="btn btn-sm btn-danger btn-hover-scale">
-            Delete&nbsp;<i class="fas fa-trash-alt"></i>
+            Delete&nbsp;<i class="fas text-white fa-trash-alt"></i>
         </button>
         {% else %}
-        <button type="submit" form="id_ppmform" class="btn btn-sm btn-primary btn-hover-scale">
-            Save&nbsp;<i class="fas fa-cloud-upload-alt"></i>
+        <button type="submit" form="id_ppmform" class="btn btn-sm btn-primary2 btn-hover-scale">
+            Save&nbsp;<i class="fas text-white fa-cloud-upload-alt"></i>
         </button>
         {% endif %}
         <button type="button"  id="btn_clear"
         class="btn btn-sm btn-secondary btn-hover-scale">
-        Clear&nbsp;<i class="fas fa-times"></i>
+        Clear&nbsp;<i class="fas  fa-times"></i>
     </button>
     </div>
 {% endblock ajax_page_actions %}

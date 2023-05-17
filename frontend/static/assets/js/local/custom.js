@@ -66,6 +66,10 @@ function populateQsetForm(questionid, url){
           $('#DTE_Field_options').val(qsetbng.options)
           $('#DTE_Field_avpttype').val(qsetbng.avpttype)
           $('#DTE_Field_isavpt').val(`${qsetbng.isavpt}`)
+          if($("#DTE_Field_isavpt").val() == 'true'){
+            $(".DTE_Field_Name_avpttype").show()
+          }
+          
           if(qsetbng.options && qsetbng.alerton){
               let optionArr = getArrayFromString(qsetbng.options)
               let alertonArr = getArrayFromString(qsetbng.alerton)

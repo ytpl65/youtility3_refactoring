@@ -220,7 +220,7 @@ Schedule Tour
 <div class="card card-bordered card-flush shadow-sm">
     <div class="card-header  collapsible cursor-pointer rotate" data-bs-toggle="collapse" data-bs-target="#kt_docs_card_collapsible">
         <h5 class="card-title modal-heading">
-            Assign Asset/Checkpoint and Checklist &nbsp;<i class="fas fs-3 text-primary fa-map-marker-alt"></i>
+            Assign Asset/Checkpoint and Checklist &nbsp;<i class="fas text-white fs-3 text-primary fa-map-marker-alt"></i>
         </h5>
     </div>
     <div id="kt_docs_card_collapsible" class="collapse show">
@@ -267,8 +267,8 @@ Schedule Tour
                     </button>
 
                     <button type="button" id="resetMiddleForm" style="display:none;"
-                        class="btn ms-2 btn-sm btn-primary btn-hover-scale">
-                        Reset&nbsp;<i class="fas fa-times"></i>
+                        class="btn ms-2 btn-sm btn-primary2 btn-hover-scale">
+                        Reset&nbsp;<i class="fas text-white fa-times"></i>
                     </button>
                 </div>
 
@@ -340,20 +340,20 @@ Schedule Tour
 <div class="form-actions">
     {% if schdtourform.instance.id %}
     <button type="button" id="runScheduler"  class="btn btn-sm btn-info btn-hover-scale">
-        Run Scheduler&nbsp;<i class="far fa-clock"></i>
+        Run Scheduler&nbsp;<i class="far text-white fa-clock"></i>
     </button>
     
-    <button type="submit" id="submitTour" form="id_schdtourform" class="btn btn-sm btn-primary btn-hover-scale">
-        Update Tour&nbsp;<i class="fas fa-cloud-upload-alt"></i>
+    <button type="submit" id="submitTour" form="id_schdtourform" class="btn btn-sm btn-primary2 btn-hover-scale">
+        Update Tour&nbsp;<i class="fas text-white fa-cloud-upload-alt"></i>
     </button>
 
     <button type="button" onclick="deleteMainJob(this)" data-id="{{ schdtourform.instance.id }}" id="deleteAttd"
         class="btn btn-sm btn-danger btn-hover-scale">
-        Delete&nbsp;<i class="fas fa-trash-alt"></i>
+        Delete&nbsp;<i class="fas text-white fa-trash-alt"></i>
     </button>
     {% else %}
-    <button type="submit" form="id_schdtourform" class="btn btn-sm btn-primary btn-hover-scale">
-        Save Tour&nbsp;<i class="fas fa-cloud-upload-alt"></i>
+    <button type="submit" form="id_schdtourform" class="btn btn-sm btn-primary2 btn-hover-scale">
+        Save Tour&nbsp;<i class="fas text-white fa-cloud-upload-alt"></i>
     </button>
     {% endif %}
 </div>

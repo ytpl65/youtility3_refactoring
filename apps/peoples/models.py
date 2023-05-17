@@ -40,6 +40,7 @@ def peoplejson():
         'alertmails'               : False,
         'currentaddress'          : "",
         'permanentaddress'        : "",
+        "isworkpermit_approver":  False
     }
 
 def upload_peopleimg(instance, filename):

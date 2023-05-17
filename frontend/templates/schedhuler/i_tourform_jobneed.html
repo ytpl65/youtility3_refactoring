@@ -27,7 +27,7 @@ Internal Tour
     Actions
 </button>
 <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton1">
-    <li><a class="dropdown-item" href="#" id="id_attachment"><i class="fas fa-paperclip"></i> &nbsp;Attachment</a></li>
+    <li><a class="dropdown-item" href="#" id="id_attachment"><i class="fas text-white fa-paperclip"></i> &nbsp;Attachment</a></li>
 </ul>
 {% endblock breadcumbactions %}
 
@@ -179,12 +179,12 @@ Internal Tour
 
 <div class="child-jobs">
     <h4 class="card-title modal-heading">
-        Tour Details &nbsp;<i class="fas fs-3 text-primary fa-directions"></i>
+        Tour Details &nbsp;<i class="fas text-white fs-3 text-primary fa-directions"></i>
     </h4><br>
     <table id="internal_tour" class="display cell-border" style="width:100%">
     </table><br>
     <h4 class="card-title modal-heading d-none">
-        Tour Answers &nbsp;<i class="fas fs-3 text-primary fa-directions"></i>
+        Tour Answers &nbsp;<i class="fas text-white fs-3 text-primary fa-directions"></i>
     </h4><br>
     <table id="tabTouranswers" class="display d-none cell-border" style="width:100%">
     </table>
@@ -201,13 +201,13 @@ Internal Tour
 <!---------- END NON FIELD ERRORS --------->
 
 {% block popup_alerts %}
-    {% call general_popup(title='Checklist Details <i class="fas fa-tasks ch4"></i>', popup_id="id_checklistdetails", modal_size='modal-xl') %}
+    {% call general_popup(title='Checklist Details <i class="fas text-white fa-tasks ch4"></i>', popup_id="id_checklistdetails", modal_size='modal-xl') %}
         <div class="modal-body">
             <table class="display cell-border" style="width:100%" id="tabChecklistDetails"></table>
         </div>
         
     {% endcall  %}
-    {% call general_popup(title='Attachment Details <i class="fas fa-paperclip ch4"></i>', popup_id="id_attachmentdetails", modal_size='modal-xl') %}
+    {% call general_popup(title='Attachment Details <i class="fas text-white fa-paperclip ch4"></i>', popup_id="id_attachmentdetails", modal_size='modal-xl') %}
         <div class="modal-body">
             <table class="display cell-border" style="width:100%" id="tabAttachmentDetails"></table>
         </div>
@@ -220,16 +220,16 @@ Internal Tour
 <div class="form-actions">
     {% if internaltourform.instance.jobstatus == "('ASSIGNED',)" %}
         {% if internaltourform.instance.id %}
-        <button type="button" id="submitInternalTour" form="internaltourform" class="btn btn-sm btn-primary btn-hover-scale">
+        <button type="button" id="submitInternalTour" form="internaltourform" class="btn btn-sm btn-primary2 btn-hover-scale">
         Update Tour
         </button>
         <button type="button" onclick="deleteMainJob(this)" data-id="{{ internaltourform.instance.id }}" id="deleteAttd"
             class="btn btn-sm btn-danger btn-hover-scale">
-            Delete&nbsp;<i class="fas fa-trash-alt"></i>
+            Delete&nbsp;<i class="fas text-white fa-trash-alt"></i>
         </button>
         {% else %}
-            <button type="submit" form="internaltourform" class="btn btn-sm btn-primary btn-hover-scale">
-                Save Tour&nbsp;<i class="fas fa-cloud-upload-alt"></i>
+            <button type="submit" form="internaltourform" class="btn btn-sm btn-primary2 btn-hover-scale">
+                Save Tour&nbsp;<i class="fas text-white fa-cloud-upload-alt"></i>
             </button>
         {% endif %}
     {% endif %}

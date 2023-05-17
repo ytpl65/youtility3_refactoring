@@ -47,7 +47,6 @@ thead tr th:last-child{
 table.dataTable.no-footer {
     border-bottom:1px solid #a9a9b7;
    }
-   
 td {word-wrap: break-word}
 
 thead > tr {
@@ -118,6 +117,14 @@ html, body {
 }
 #alert_msg, #non_field_error{
     letter-spacing: .1rem;
+}
+.btn-primary2{
+    background-color: #01579B;
+    color: white;
+}
+.btn-primary2:hover{
+    background-color: #1175c1;
+    color: white;
 }
 .float-right{
     float: right;

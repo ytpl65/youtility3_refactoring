@@ -4,7 +4,7 @@ from typing import Type
 import os
 from django.views.decorators.cache import cache_page
 from django.utils.decorators import method_decorator
-from django.http.response import JsonResponse
+from django.http.response import JsonResponse, FileResponse
 from django.shortcuts import redirect, render
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
@@ -31,8 +31,8 @@ import apps.activity.models as am
 import apps.attendance.models as atm
 from apps.y_helpdesk.models import Ticket
 from pprint import pformat
-import uuid
-import xlwt
+import uuid, tempfile
+import io, xlsxwriter, openpyxl
 from tablib import Dataset
 CACHE_TTL = getattr(settings, 'CACHE_TTL', DEFAULT_TIMEOUT)
 logger = logging.getLogger('django')
@@ -1538,7 +1538,10 @@ def get_geofence_from_point_radii(R):
 #                 )
 #             return rp.JsonResponse({'data':json.dumps(data),}, status=404)
 #         return rp.JsonResponse({'totalrows':res.total_rows}, status=200)
-
+class FileRemovalResponse(FileResponse):
+    def close(self):
+        super().close()
+        os.remove(self.filename)
 
 
 class BulkImportData(LoginRequiredMixin, View):
@@ -1565,17 +1568,25 @@ class BulkImportData(LoginRequiredMixin, View):
             return render(request, P['template'], cxt)
 
         if (request.GET.get('action') == 'downloadTemplate') and request.GET.get('template'):
-            column_headers = BulkImportData.header_mapping.get(request.GET['template'])
-            down_dir = os.path.join(os.path.expanduser('~'), "Downloads")
-            df = pd.DataFrame(columns=column_headers)
-            outputfile = f"{request.GET['template'].lower()}.xlsx"
-            filepath = f'{down_dir}/{outputfile}'
-            writer = pd.ExcelWriter(filepath, engine='xlsxwriter')
-            df.to_excel(writer, index=False)
-            writer.save()
-            response = HttpResponse(content_type='application/octet-stream')
-            response['Content-Disposition'] = f'attachment; filename="{outputfile}"'
-            sendfile(response, filepath)
+            import pandas as pd
+                    # Define DataFrame with headers
+            df = pd.DataFrame(columns=['Column1', 'Column2', 'Column3'])
+
+            # Create a temporary file
+            fd, path = tempfile.mkstemp(suffix='.xlsx')
+
+            try:
+                # Write DataFrame to the Excel file
+                df.to_excel(path, index=False, engine='openpyxl')
+
+                # Create a FileResponse to send it to the user
+                response = FileResponse(open(path, 'rb'), content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+                response['Content-Disposition'] = 'attachment; filename=Columns.xlsx'
+
+            finally:
+                os.close(fd)
+                os.remove(path)
+
             return response
 
         

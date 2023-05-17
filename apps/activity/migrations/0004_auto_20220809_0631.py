@@ -11,12 +11,6 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.AlterModelManagers(
-            name='workpermit',
-            managers=[
-                ('objects', apps.activity.managers.WorkpermitManager()),
-            ],
-        ),
         migrations.AlterField(
             model_name='questionset',
             name='type',

@@ -574,24 +574,19 @@ class ExportReports(LoginRequiredMixin, View):
     
     def prepare_parameters(self, formdata, request):
         log.info("prepare params started")
-        timezone = self.get_other_common_params(request)
+        timezone, client_logo_url = self.get_other_common_params(request)
         common_params = [
             {"urlName":"timezone", "values":[timezone]},
             {"urlName":"connectionName", "values":[settings.KNOWAGE_DATASOURCE]},
             {"urlName":"CompanyName", "values":[settings.COMPANYNAME]},
-            {"urlName":"ClientName", "values":[request.session['clientname']]}
+            {"urlName":"clientname", "values":[request.session['clientname']]},
+            {"urlName":"clientlogopath", "values":[client_logo_url]},
         ]
         
-        params = {
-         settings.KNOWAGE_REPORTS['TASKSUMMARY']: [
-                {"urlName":"fromdate", "values":[formdata['fromdate'].strftime('%d/%m/%Y')]},
-                {"urlName":"uptodate", "values":[formdata['uptodate'].strftime('%d/%m/%Y')]},
-                {"urlName":"siteids", "values":[formdata['site']]},
-            ]
-        }
-        params.get(formdata.get('report_name')).extend(common_params)
+        report_params = self.return_report_params(formdata)
+        report_params.extend(common_params)
         log.info('params prepared and returned')
-        return params.get(formdata.get('report_name'))
+        return report_params
         
         
     def get_other_common_params(self, request):
@@ -607,4 +602,16 @@ class ExportReports(LoginRequiredMixin, View):
         clientlogo_filepath = settings.MEDIA_URL + clientlogo_att[0]['filepath'] + clientlogo_att[0]['filename']
         clientlogo_url      = request.build_absolute_uri(clientlogo_filepath)
         log.info("common parameters are returned")
-        return timezone
+        return timezone, clientlogo_url
+
+    def return_report_params(self, formdata):
+        if formdata.get('report_name') in [settings.KNOWAGE_REPORTS['TASKSUMMARY'],settings.KNOWAGE_REPORTS['TOURSUMMARY'],
+                        settings.KNOWAGE_REPORTS['LISTOFTASKS'],settings.KNOWAGE_REPORTS['LISTOFINTERNALTOURS'],
+                        settings.KNOWAGE_REPORTS['PPMSUMMARY'],settings.KNOWAGE_REPORTS['LISTOFTICKETS'], settings.KNOWAGE_REPORTS['WORKORDERLIST']]:
+            return [
+                 {"urlName":"fromdate", "values":[formdata['fromdate'].strftime('%d/%m/%Y')]},
+                {"urlName":"uptodate", "values":[formdata['uptodate'].strftime('%d/%m/%Y')]},
+                {"urlName":"siteids", "values":[formdata['site']]},
+            ]
+            
+        

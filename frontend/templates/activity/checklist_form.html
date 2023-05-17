@@ -112,21 +112,21 @@ Question set
 
             <div class="d-flex justify-content-end">
                 {% if checklistform.instance.id %}
-                <button type="submit" id="submit" form="id_qsetform" class="btn btn-sm btn-primary me-2 btn-hover-scale">
-                    Update&nbsp;<i class="fas fa-cloud-upload-alt"></i>
+                <button type="submit" id="submit" form="id_qsetform" class="btn btn-sm btn-primary2 me-2 btn-hover-scale">
+                    Update&nbsp;<i class="fas text-white fa-cloud-upload-alt"></i>
                 </button>
 
                 <button type="button" onclick="deleteChecklist(this)" data-id="{{ checklistform.instance.id }}" id="deleteAttd"
                     class="btn btn-sm me-2 btn-danger btn-hover-scale">
-                    Delete&nbsp;<i class="fas fa-trash-alt"></i>
+                    Delete&nbsp;<i class="fas text-white fa-trash-alt"></i>
                 </button>
                 {% else %}
-                <button type="submit" form="id_qsetform" class="btn btn-sm me-2 btn-primary btn-hover-scale">
-                    Save&nbsp;<i class="fas fa-cloud-upload-alt"></i>
+                <button type="submit" form="id_qsetform" class="btn btn-sm me-2 btn-primary2 btn-hover-scale">
+                    Save&nbsp;<i class="fas text-white fa-cloud-upload-alt"></i>
                 </button>
                 {% endif %}
                 <button type="button" id="newform" class="btn btn-sm me-2 btn-secondary btn-hover-scale">
-                    Clear&nbsp;<i class="fas fa-cloud-upload-alt"></i>
+                    Clear&nbsp;<i class="fas text-white fa-cloud-upload-alt"></i>
                 </button>
             </div>
         </div>
@@ -255,7 +255,7 @@ Question set
                     {title: "Count", width: "15%", defaultContent:null, data:'qcount'},
                 ],
                 buttons:[
-                    {text:'<i class="fas fa-sync-alt text-dark"></i>', titleAttr:'Refresh Data', className:'refreshBtnParent'},
+                    {text:'<i class="fas text-white fa-sync-alt text-dark"></i>', titleAttr:'Refresh Data', className:'refreshBtnParent'},
                     { extend: "create", editor: parentEditor },
                     { extend: "edit",   editor: parentEditor },
                     { extend: "remove", editor: parentEditor }
@@ -363,7 +363,7 @@ Question set
                     ...QSBTableColumnsConfig()
                 ],
                 buttons:[
-                {text:'<i class="fas fa-sync-alt text-dark"></i>', titleAttr:'Refresh Data', className:'refreshBtn'},
+                {text:'<i class="fas text-white fa-sync-alt text-dark"></i>', titleAttr:'Refresh Data', className:'refreshBtn'},
                     { extend: "create", editor: childEditor },
                     { extend: "edit",   editor: childEditor },
                     { extend: "remove", editor: childEditor }

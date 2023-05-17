@@ -150,21 +150,21 @@
                             {% if wd['prev_url'] != "" %}
                             {% set PREV_URL = url(wd['prev_url'], args=[wd['prev_inst']]) if wd['prev_inst'] else url(wd['prev_url']) %}
                                 <!---PREVIOUS FORM BTN ---->
-                                <a href="{{ PREV_URL }}" class="btn btn-sm btn-primary rounded-1" data-bs-toggle="tooltip"
-                                data-bs-placement="top" data-bs-dimiss="click" title="proceed to previous step"><i class="fas fa-backward"></i>Previous</a>
+                                <a href="{{ PREV_URL }}" class="btn btn-sm btn-primary2 rounded-1" data-bs-toggle="tooltip"
+                                data-bs-placement="top" data-bs-dimiss="click" title="proceed to previous step"><i class="fas text-white fa-backward"></i>Previous</a>
                             {% endif %}
 
                             {% set NEXT_URL = url(wd['next_url'], args=[wd['next_inst']]) if wd['next_inst'] else url(wd['next_url']) %}
                                 <!---NEXT FORM BTN ---->
-                                <a href="{{ NEXT_URL }}" class="btn btn-sm btn-primary rounded-1" id="next_btn"
+                                <a href="{{ NEXT_URL }}" class="btn btn-sm btn-primary2 rounded-1" id="next_btn"
                                     data-bs-toggle="tooltip" data-bs-placement="top" title="proceed to next step">Next <i
-                                        class="fas fa-forward"></i></a>
+                                        class="fas text-white fa-forward"></i></a>
 
                             {% set wd = request.session['wizard_data'] %}
                             {% if not wd['wizard_completed'] %}
                                 <button type="button" id="id_quitwizard" class="btn btn-sm btn-danger" data-bs-toggle="tooltip"
                                     data-bs-dimiss="click" data-bs-placement="top" title="delete the wizard and its data">Quit
-                                    Wizard <i class="fas fa-trash-alt"></i></button>
+                                    Wizard <i class="fas text-white fa-trash-alt"></i></button>
                             {% endif %}
                         </div>
                         
@@ -174,23 +174,23 @@
                             <button type="submit" class="btn btn-sm  btn-success rounded-1" data-bs-toggle="tooltip"
                                 data-bs-placement="top" data-bs-dimiss="click"
                                 title="submit form before proceeding to next step" id="save_wizard_form"
-                                form="{{ wd['formid'] }}">Submit <i class="fas fa-cloud-upload-alt"></i></button>
+                                form="{{ wd['formid'] }}">Submit <i class="fas text-white fa-cloud-upload-alt"></i></button>
                             <!---SKIP FORM BTN ---->
                             {% set NEXT_URL = url(wd['next_url'], args=[wd['next_inst']]) if wd['next_inst'] else url(wd['next_url']) %}
                         <a href="{{ NEXT_URL }}"  data-bs-toggle="tooltip"
                                 data-bs-placement="top" data-bs-dimiss="click" title="skip this step"
-                                class="btn btn-sm btn-secondary rounded-1">Skip <i class="fas fa-ban"></i></a>
+                                class="btn btn-sm btn-secondary rounded-1">Skip <i class="fas  fa-ban"></i></a>
                             
                             {% if  wd['current_inst'] != None and edit is defined %}
                                 <!---ADD-MORE FORM BTN ---->
                                 <a href="{{ url(wd['current_url']) }}"  data-bs-toggle="tooltip"
                                 data-bs-placement="top" data-bs-dimiss="click" title="create more entries"
-                                class="btn btn-sm btn-primary rounded-1">Add More <i
-                                        class="fas fa-plus"></i></a>
+                                class="btn btn-sm btn-primary2 rounded-1">Add More <i
+                                        class="fas text-white fa-plus"></i></a>
                                 <!---DELETE FORM BTN ---->
                                 <a href="{{ url(wd['del_url'], args=[wd['current_inst']]) }}" id="delete_form" data-bs-toggle="tooltip"
                                 data-bs-placement="top" data-bs-dimiss="click" title="delete this entry"
-                                    class="btn btn-sm btn-danger rounded-1">Delete <i class="fas fa-trash-alt"></i></a>
+                                    class="btn btn-sm btn-danger rounded-1">Delete <i class="fas text-white fa-trash-alt"></i></a>
                             {% endif %}
                         </div>
                     </div>

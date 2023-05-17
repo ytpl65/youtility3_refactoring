@@ -91,7 +91,7 @@ Question List
 			dom       :`<'row' <'col-sm-6 d-flex justify-content-start'f> <'col-sm-6 d-flex justify-content-end'B> >rt<'row'
 			 <'col-sm-6'l> <'col-sm-6'p><'col-sm-12 d-flex justify-content-center'i>>`,
 			buttons: [{
-				text: `Add New ${viewname} &nbsp;<i class='fas fa-plus ch4'></i></a>`,
+				text: `Add New ${viewname} &nbsp;<i class='fas text-white fa-plus ch4'></i></a>`,
 				className: "btn btn-sm btn-light-primary btn-hover-rise",
 				//action for add_new_button 
 				action: function (e, dt, node, config) {
@@ -131,6 +131,10 @@ Question List
 				.done((data, status, xhr) => {
 					$(modalcontent_id).attr('data-form', 'update')
 					$(`${modal_id} .modal-content`).html(data.html_form)
+					if($("#id_isavpt").is(':checked')){
+						$(".avpttype").removeClass("d-none")
+					}
+					
 				})
 				.fail((xhr, status, error) => {
 					show_error_alert('Something went wrong!') //defined in custom.js

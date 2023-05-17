@@ -2,7 +2,7 @@ import uuid
 from apps.peoples.models import BaseModel
 from apps.activity.managers import (AssetManager, AttachmentManager,
 JobManager, JobneedDetailsManager, QsetBlngManager, QuestionManager, LocationManager,
-QuestionSetManager, JobneedManager, DELManager, WorkpermitManager)
+QuestionSetManager, JobneedManager, DELManager)
 from apps.tenants.models import TenantAwareModel
 from django.utils.translation import gettext_lazy as _
 from django.core.serializers.json import DjangoJSONEncoder
@@ -347,7 +347,7 @@ class Asset(BaseModel, TenantAwareModel):
     gpslocation   = PointField(_('GPS Location'), null = True, geography = True, srid = 4326, blank = True)
     parent        = models.ForeignKey("self", verbose_name = _( "Belongs to"), on_delete = models.RESTRICT, null = True, blank = True)
     identifier    = models.CharField( _('Asset Identifier'), choices = Identifier.choices, max_length = 55, default = Identifier.NONE.value)
-    runningstatus = models.CharField(_('Running Status'), choices = RunningStatus.choices, max_length = 55)
+    runningstatus = models.CharField(_('Running Status'), choices = RunningStatus.choices, max_length = 55, null=True)
     type          = models.ForeignKey("onboarding.TypeAssist", verbose_name = _("Type"), on_delete = models.RESTRICT, null = True, blank = True, related_name='asset_types')
     client        = models.ForeignKey("onboarding.Bt", verbose_name = _("Client"), on_delete = models.RESTRICT, null = True, blank = True, related_name='asset_clients')
     bu            = models.ForeignKey("onboarding.Bt", verbose_name = _("Site"), on_delete = models.RESTRICT, null = True, blank = True, related_name='asset_bus')
@@ -689,7 +689,6 @@ class WorkPermit(BaseModel, models.Model):
     attcount   = models.IntegerField(_("Attachment Count"), null=True)
     
     
-    objects = WorkpermitManager()
     class Meta(BaseModel.Meta):
         db_table = 'workpermit'
         get_latest_by = ["mdtz", 'cdtz']

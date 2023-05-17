@@ -85,7 +85,7 @@ def get_query(q):
                                             INNER JOIN people pb ON workpermit.approvedby_id=pb.id
                                             INNER JOIN bt ON workpermit.bu_id=bt.id
                                             INNER JOIN questionset qset ON workpermit.wptype_id=qset.id
-                                            LEFT JOIN attachment ON workpermit.uuid=attachment.owner 
+                                            LEFT JOIN attachment ON workpermit.uuid::text=attachment.owner 
 
                                             WHERE workpermit.parent_id=1 
                                             AND 1=1 AND attachment.attachmenttype = 'ATTACHMENT'

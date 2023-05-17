@@ -79,7 +79,7 @@
             <div class="row card col-lg-12 portlet d-none  mb-2 p-2" id="PORTLET_SOS_ALERTS">
                 <div class="counter card-body bg-gray-100 bg-opacity-60 p-2 rounded-3">
                     <div class="d-flex count-item justify-content-between">
-                        <i class="fas align-middle p-4 yiconpadd yicon text-danger fa-exclamation-triangle"></i>
+                        <i class="fas text-white align-middle p-4 yiconpadd yicon text-danger fa-exclamation-triangle"></i>
                         <div class="pe-3" data-cardtype='SOSALERTS'>
                             <h6 class="pb-1 y-primary  timer count-title text-end count-number" id="sos_count">
 
@@ -92,8 +92,8 @@
             <div class="row card col-lg-12 portlet d-none mb-2 p-2" id="PORTLET_INCIDENTREPORTS">
                 <div class="card-body counter  bg-gray-100 bg-opacity-60  p-2 rounded-3 ">
                     <div class="d-flex count-item justify-content-between">
-                        {# <i class="fas p-4 yiconpadd yicon fa-clipboard-user y-primary fs-1"></i> #}
-                        <i class="fas p-4 yiconpadd yicon text-start text-warning fa-file-medical-alt"></i>
+                        {# <i class="fas text-white p-4 yiconpadd yicon fa-clipboard-user y-primary fs-1"></i> #}
+                        <i class="fas text-white p-4 yiconpadd yicon text-start text-warning fa-file-medical-alt"></i>
                         <div class="pe-3" data-cardtype='INCREPORTS'>
                             <h6 class="pb-1 y-primary text-end timer count-title count-number" id="ir_count"></h6>
                             <p class="h4 text-gray-500 fw-semibold fs-6">Incident Reports</p>
@@ -115,7 +115,7 @@
             <div class="row card col-lg-12 portlet d-none mb-2 p-2" id="PORTLET_ROUTES">
                 <div class="card-body counter  bg-gray-100 bg-opacity-60 p-2 rounded-3">
                     <div class="d-flex count-item justify-content-between">
-                        <i class="fas yicon yiconpadd text-success p-4 fa-route"></i>
+                        <i class="fas text-white yicon yiconpadd text-success p-4 fa-route"></i>
                         <div class="pe-3" data-cardtype='ROUTES'>
                             <h6 class="pb-1 y-primary text-end timer count-title count-number" id="route_count">
                             </h6>
@@ -189,7 +189,7 @@
         map.flyTo([lat, lng], 18, {
             animate: true,
             duration:1.0
-        })  
+        })              
         }else{
             show_error_alert("Not a coordinates, unable to plot on map!", 'Not Found')
         }

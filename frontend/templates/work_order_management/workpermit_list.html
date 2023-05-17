@@ -1,0 +1,103 @@
+{% extends "base_list.html" %}
+
+<!---- BEGIN CARD TITLE ------>
+{% block card_title %}
+WorkPermit List
+{% endblock card_title %}
+<!----- END CARD TITLE -------->
+
+{% block extra_css %}
+{% endblock extra_css %}
+
+<!------------------------------------ BEGIN PAGE BREADCUMBS ------------------------------------>
+{% block pagebreadcumb %}
+{{ super() }}
+<li class="breadcrumb-item pe-3"><a href="javascript:void(0)" class="pe-3">Work Permit List</a></li>
+{% endblock pagebreadcumb %}
+<!------------------------------------- END PAGE BREADCUMBS ------------------------------------->
+
+
+{% block table %}
+<table id="wp_list" class="display compact cell-border" style="width:100%">
+</table>
+{% endblock table %}
+
+{% block extra_scripts %}
+<script>
+//if you want to modifiy here, then modify in custom.js initDateRange also
+    var params = null
+    var from_pd = moment().subtract(7, 'days').format('YYYY-MM-DD');
+    var to_pd = moment().format('YYYY-MM-DD')
+    params = {from:from_pd, to:to_pd}
+
+    var table_filters = localStorage.getItem('wpstats_filter') ? localStorage.getItem('wpstats_filter') : localStorage.getItem('alertsFilters')
+
+    if(table_filters){
+        params = JSON.parse(table_filters)
+        localStorage.clear()
+    }
+
+
+$(document).ready(function(){
+    urlname = "{{ url('work_order_management:work_permit') }}"
+
+    table = $("#wp_list").DataTable({
+        ajax:{
+            url:'{{ url("work_order_management:work_permit") }}?action=list',
+            data:function(d){
+                d.params = JSON.stringify(params)
+            }
+        },
+        pageLength:50,
+        deferRender:true,
+        responsive:true,
+        lengthMenu:[[10,20,30], [10,20,30]],
+        dom:`<'row' <'col-sm-6 d-flex justify-content-start'<'customfields'>f> <'col-sm-6 d-flex justify-content-end'B> >rt<'row'
+            <'col-sm-6'l> <'col-sm-6'p><'col-sm-12 d-flex justify-content-center'i>>`,
+        columns:[
+            { data:'id', visible:false, searchable:false},
+            {title:'Plandatetime', data:'cdtz'},
+            {title:'Permit No', data:'other_data__wp_seqno', width:"10%"},
+            {title:'Work Permit Report', data:'qset__qsetname'},
+            {title:'Approval', data:'workpermit'},
+            {title:'Status', data:'workstatus'},
+            {title:'Action', data:null, defaultContent:"N/A"}
+        ],
+        columnDefs:[
+            {targets:1, render:function(data, type, row, meta){
+                    return convert_to_local(type, data, row)
+                }},
+            {targets:3, render:function(data, type, row, meta){
+                return  `<a href="${urlname}?id=${row['id']}">${data}</a>`
+            }},
+        ],
+        buttons:[
+            {
+                text: 'Add New',
+                className: "btn btn-sm btn-light-primary add_new",
+                action:function(e, dt, node, config){
+                    location.href = '{{ url("work_order_management:work_permit") }}?action=form'
+                }
+            }
+        ]
+    })
+    //add input field to the datatables dom
+    initDateRangeHtml()
+    initDateRange("#id_daterange").on('apply.daterangepicker', function(e, picker){
+        from_pd = picker.startDate.format('YYYY-MM-DD');
+        to_pd = picker.endDate.format('YYYY-MM-DD');
+        let filters = {from:from_pd, to:to_pd}
+        reloadTable(table, filters)
+    })
+    $('.btn').removeClass('dt-button')
+
+    if(session['is_workpermit_approver'] === true){
+        $(".add_new").hide()
+    }
+
+
+})
+
+</script>
+
+{% endblock extra_scripts %}

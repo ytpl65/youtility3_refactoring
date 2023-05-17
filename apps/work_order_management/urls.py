@@ -4,5 +4,6 @@ app_name = 'work_order_management'
 urlpatterns = [
     path('vendor/', views.VendorView.as_view(), name="vendor"),
     path('work_order/',views.WorkOrderView.as_view(), name='workorder' ),
-    path('replyworkorder/', views.ReplyWorkOrder.as_view(), name='reply_workorder')
+    path('replyworkorder/', views.ReplyWorkOrder.as_view(), name='reply_workorder'),
+    path('workpermit/', views.WorkPermit.as_view(), name='work_permit'),
 ]

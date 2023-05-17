@@ -8,7 +8,7 @@
 <form action="" method="post" id="id_peopleform">
 	<div class="modal-header border-0">
 		<h3 class="modal-title modal-heading" id="exampleModalLabel">Create People <i
-				class="fas fa-poll-h fa-sm ch4"></i></h3>
+				class="fas text-white fa-poll-h fa-sm ch4"></i></h3>
 		<button type="button" class="btn-sm btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
 	</div>
 	<div class="modal-body" id="partial">
@@ -193,7 +193,7 @@
 							Admin
 							&nbsp{{ peopleform.isadmin }}</label>
 						{% if peopleform.instance.id %}
-						<button type="button" id="change_pass" class="btn btn-sm  btn-primary rounded-1"
+						<button type="button" id="change_pass" class="btn btn-sm  btn-primary2 rounded-1"
 							data-bs-target='#paswd_change_alert' data-bs-toggle="modal">Change Password
 							<span class="svg-icon svg-icon-2">
 								<span class="material-icons h-19px" style="vertical-align: middle; font-size: 19px;">
@@ -431,16 +431,15 @@
 			</section>
 		</div>
 		<div class="modal-footer border-0 pt-0">
-			<button type="button" class="btn btn-sm btn-secondary btn-hover-scale" data-bs-dismiss="modal">Close <i
-					class="fas fa-times"></i></button>
+			<button type="button" class="btn btn-sm btn-secondary btn-hover-scale" data-bs-dismiss="modal">Close <i class="fas fa-times"></i></button>
 			{% if peopleform.instance.peoplecode %}
-			<button type="submit" id="submit" class="btn btn-sm btn-primary btn-hover-scale">Update&nbsp;<i
-					class="fas fa-cloud-upload-alt"></i></button>
+			<button type="submit" id="submit" class="btn btn-sm btn-primary2 btn-hover-scale">Update&nbsp;<i
+					class="fas text-white fa-cloud-upload-alt"></i></button>
 			<button type="button" onclick="deletePeople(this)" data-id="{{ peopleform.instance.id }}" id="deleteCap"
-				class="btn btn-sm btn-hover-scale btn-danger">Delete&nbsp;<i class="fas fa-trash-alt"></i></button>
+				class="btn btn-sm btn-hover-scale btn-danger">Delete&nbsp;<i class="fas text-white fa-trash-alt"></i></button>
 			{% else %}
-			<button type="submit" class="btn btn-sm btn-primary btn-hover-scale">Add&nbsp;<i
-					class="fas fa-cloud-upload-alt"></i></button>
+			<button type="submit" class="btn btn-sm btn-primary2 btn-hover-scale">Add&nbsp;<i
+					class="fas text-white fa-cloud-upload-alt"></i></button>
 			{% endif %}
 		</div>
 </form>

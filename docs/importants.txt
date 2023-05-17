@@ -1,3 +1,5 @@
+
+
 ###################### NONE ENTRIES SHOULD BE PRESENT IN FOLLOWING TABLES: ######################
 
 1. People
@@ -51,3 +53,8 @@ IMPORTANT NOTES
 ################################## BACKGROUND FUNCTIONS ############################################
 In the directory: background_tasks.tasks.py, apps.service.utils
 
+
+
+############ upadate json field add new key/value to it eg for people table
+UPDATE people 
+SET people_extras = jsonb_set(people_extras::jsonb, '{isworkpermit_approver}', 'false', true);

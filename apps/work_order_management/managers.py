@@ -54,6 +54,21 @@ class WorkOrderManager(models.Manager):
         )
         return qset or self.none()
     
+    def get_workpermitlist(self, request):
+        R, S = request.GET, request.session
+        P = json.loads(R.get('params', "{}"))
+        
+        qobjs = self.filter(
+            ~Q(workpermit__in =  ['NOT_REQUIRED', 'NOTREQUIRED']),
+            parent_id = 1,
+            client_id = S['client_id'],
+            cdtz__date__gte = P['from'],
+            cdtz__date__lte = P['to'],
+        ).values('cdtz', 'other_data__wp_seqno', 'qset__qsetname', 'workpermit', 'workstatus', 'id')
+        return qobjs or self.none()
+         
+            
+    
 
 class WOMDetailsManager(models.Manager):
     use_in_migrations = True

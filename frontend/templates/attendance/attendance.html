@@ -80,11 +80,11 @@ td { padding: 6px; border: 1px solid #CCC; }
     </div>
 </div>
 <div class="modal-footer">
-    <button type="button" class="btn btn-sm btn-primary" data-bs-dismiss="modal">OK</button>
+    <button type="button" class="btn btn-sm btn-primary2" data-bs-dismiss="modal">OK</button>
 </div>
 {% endcall %}
 
-{% call general_popup(popup_id = 'modal_adv_search',modal_size="modal-lg", title="Search with criteria &nbsp;<i class='fas text-primary fa-search ch4'></i>") %}
+{% call general_popup(popup_id = 'modal_adv_search',modal_size="modal-lg", title="Search with criteria &nbsp;<i class='fas text-white text-primary fa-search ch4'></i>") %}
 <div class="modal-body">
 <div id="myFilter" style="height: 100%;" class="d-block"></div>
 </div>
@@ -189,7 +189,7 @@ td { padding: 6px; border: 1px solid #CCC; }
                 {data:'people__peoplename', title:'People'},
                 {data:'facerecognitionin', title:'FR IN'},
                 {data:'facerecognitionout', title:'FR OUT'},
-                {data:'verifiedby__peoplename', title:'Verifie By'},
+                {data:'verifiedby__peoplename', title:'Verified By'},
                 {data:'datefor', title:'Date For'},
                 {data:'punchintime', title:'In Time'},
                 {data:'punchouttime', title:'Out Time'},
@@ -221,13 +221,16 @@ td { padding: 6px; border: 1px solid #CCC; }
                 },
                 {targets:9, render:function(data, type, row, meta){
                     return ['SELF', 'MARK'].includes(row['peventtype__tacode']) ? `<button type="button" class="btn p-0 btn-link" onClick="getFRStatus('${row['uuid']}');event.stopPropagation();">FR Status</button>` : '--'}
-                }
+                },
+                {targets:2,data:"people__peoplename", render:function(data, type, row, meta){
+                    return data === 'NONE' ? 'Unknown' : data
+                }}
             ],
             buttons: [
 
                 {
-                    text: "Add New Attendance &nbsp;<i class='fas fa-plus ch4'></i>",
-                    className: "btn btn-sm btn-primary btn-hover-rise",
+                    text: "Add New Attendance &nbsp;<i class='fas text-white fa-plus ch4'></i>",
+                    className: "btn btn-sm btn-primary2 btn-hover-rise",
                     //action for add_new_button
                     action: function (e, dt, node, config) {
                         const params = {

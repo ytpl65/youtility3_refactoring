@@ -1,4 +1,5 @@
 from django.db import models
+from django.forms.models import model_to_dict
 
 # Create your models here.
 import uuid
@@ -23,12 +24,20 @@ def other_data():
         'token':None,
         'created_at':None,
         'token_expiration':5, #min
-        'reply_from_vendor':""
+        'reply_from_vendor':"",
+        'wp_seqno':0
+    }
+    
+def wo_history_json():
+    return {
+        "wo_history":[],
+        "wp_history":[]
     }
 
 class Wom(BaseModel, TenantAwareModel):
     class Workstatus(models.TextChoices):
         ASSIGNED   = ('ASSIGNED', 'Assigned')
+        REASSIGNED   = ('RE_ASSIGNED', 'Re-Assigned')
         COMPLETED  = ('COMPLETED', 'Completed')
         INPROGRESS = ('INPROGRESS', 'Inprogress')
         CANCELLED  = ('CANCELLED', 'Cancelled')
@@ -37,7 +46,7 @@ class Wom(BaseModel, TenantAwareModel):
         NOTNEED   = ('NOT_REQUIRED', 'Not Required')
         APPROVED  = ('APPROVED', 'Approved')
         REJECTED = ('REJECTED', 'Rejected')
-        PARTIALLY_APPROVED  = ('PARTIALLY_APPROVED', 'Partially Approved')
+        PENDING  = ('PENDING', 'Pending')
         
     class Priority(models.TextChoices):
         HIGH   = ('HIGH', 'High')
@@ -46,8 +55,8 @@ class Wom(BaseModel, TenantAwareModel):
     
     uuid            = models.UUIDField(unique = True, editable = True, blank = True, default = uuid.uuid4)
     description     = models.CharField(_("Job Description"), max_length = 200)
-    plandatetime    = models.DateTimeField(_("Plan date time"), auto_now = False, auto_now_add = False)
-    expirydatetime  = models.DateTimeField(_("Expiry date time"), auto_now = False, auto_now_add = False)
+    plandatetime    = models.DateTimeField(_("Plan date time"), auto_now = False, auto_now_add = False, null=True)
+    expirydatetime  = models.DateTimeField(_("Expiry date time"), auto_now = False, auto_now_add = False, null=True)
     starttime       = models.DateTimeField( _("Start time"), auto_now = False, auto_now_add = False, null = True)
     endtime         = models.DateTimeField(_("Start time"), auto_now = False, auto_now_add = False, null = True)
     gpslocation     = PointField(_('GPS Location'),null = True, geography = True, srid = 4326)
@@ -55,6 +64,7 @@ class Wom(BaseModel, TenantAwareModel):
     location        = models.ForeignKey('activity.Location', verbose_name=_('Location'), on_delete=models.RESTRICT, null=True, blank=True)
     workstatus      = models.CharField('Job Status', choices = Workstatus.choices, default=Workstatus.ASSIGNED,  max_length = 60, null = True)
     seqno           = models.SmallIntegerField(_("Serial No."), null=True)
+    approvers       = ArrayField(models.CharField(max_length = 70, blank = True), null = True, blank = True, verbose_name= _("Approvers"))
     workpermit      = models.CharField(_('Work Permit'), choices=WorkPermitStatus.choices, default=WorkPermitStatus.NOTNEED, max_length=35)
     priority        = models.CharField(_("Priority"), max_length = 50, choices = Priority.choices)
     qset            = models.ForeignKey("activity.QuestionSet", verbose_name = _("QuestionSet"), on_delete  = models.RESTRICT, null = True, blank = True)
@@ -71,8 +81,16 @@ class Wom(BaseModel, TenantAwareModel):
     other_data      = models.JSONField(verbose_name=_('Other Data'), default=other_data, null=True)
     attachmentcount = models.IntegerField(_('Attachment Count'), default = 0)
     categories      = ArrayField(models.CharField(max_length = 50, blank = True), null = True, blank = True, verbose_name= _("Categories"))
-
+    wo_history      = models.JSONField(encoder=DjangoJSONEncoder, default=wo_history_json)
+    
     objects = WorkOrderManager()
+    
+    def add_history(self):
+        self.wo_history['wo_history'].append(
+            model_to_dict(self, exclude=['wo_history', 'workpermit', 'gpslocation'])
+        )
+        self.save()
+    
     
     class Meta(BaseModel.Meta):
         db_table = "wom"

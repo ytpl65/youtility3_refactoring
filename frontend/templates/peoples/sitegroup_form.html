@@ -52,20 +52,20 @@ Site Group
 {% block ajax_page_actions %}
     <div class="form-actions">
         {% if sitegrpform.instance.id %}
-        <button type="submit" id="submitTour" form="sitegrp_form" class="btn btn-sm btn-primary btn-hover-scale">
-            Update&nbsp;<i class="fas fa-cloud-upload-alt"></i>
+        <button type="submit" id="submitTour" form="sitegrp_form" class="btn btn-sm btn-primary2 btn-hover-scale">
+            Update&nbsp;<i class="fas text-white fa-cloud-upload-alt"></i>
         </button>
         <button type="button" id="clearForm" class="btn btn-sm btn-secondary btn-hover-scale">
-            Clear&nbsp;<i class="fas fa-times-circle"></i>
+            Clear&nbsp;<i class="fas  fa-times-circle"></i>
         </button>
 
         <button type="button" onclick="isSiteGrpDeleted({{ sitegrpform.instance.id }})" data-id="{{ sitegrpform.instance.id }}" id="deleteAttd"
             class="btn btn-sm btn-danger btn-hover-scale">
-            Delete&nbsp;<i class="fas fa-trash-alt"></i>
+            Delete&nbsp;<i class="fas text-white fa-trash-alt"></i>
         </button>
         {% else %}
-        <button type="submit" form="sitegrp_form" class="btn btn-sm btn-primary btn-hover-scale">
-            Save&nbsp;<i class="fas fa-cloud-upload-alt"></i>
+        <button type="submit" form="sitegrp_form" class="btn btn-sm btn-primary2 btn-hover-scale">
+            Save&nbsp;<i class="fas text-white fa-cloud-upload-alt"></i>
         </button>
         {% endif %}
     </div>
@@ -76,12 +76,12 @@ Site Group
 <div class="card col-sm-6">
     <div class="card-header">
         <h3 class="card-title">
-            All Sites&nbsp;<i class="fas fa-layer-group ch4"></i>
+            All Sites&nbsp;<i class="fas text-white fa-layer-group ch4"></i>
         </h3>
         <div class="card-toolbar me-3">
             <select name="choice" id="custom_butype" style="width:50%" class="form-select form-select-solid"></select>
             <button type="button" id="btn_assign_sites" class="btn btn-sm btn-secondary btn-hover-scale">
-                Assign&nbsp;<i class="fas fa-arrow-right"></i>
+                Assign&nbsp;<i class="fas  fa-arrow-right"></i>
             </button>
         </div>
     </div>
@@ -94,7 +94,7 @@ Site Group
 <div class="card col-sm-6">
     <div class="card-header">
         <h3 class="card-title">
-            Assigned Sites &nbsp;<i class="fas ch4 fa-sm fa-paste"></i>
+            Assigned Sites &nbsp;<i class="fas text-white ch4 fa-sm fa-paste"></i>
         </h3>
     </div>
     <div class="card-body">
@@ -256,7 +256,7 @@ Site Group
                         if(row['13'] != null){
                             return ""
                         }else{
-                            return '<a href="#" onClick="return false;"><i class="fas text-dark fa-trash-alt fs-3"></i></a>'
+                            return '<a href="#" onClick="return false;"><i class="fas text-white text-dark fa-trash-alt fs-3"></i></a>'
                         }
                     },
                 defaultContent: '',

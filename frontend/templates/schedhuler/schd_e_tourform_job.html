@@ -230,7 +230,7 @@ Route Plan Setup&nbsp;<i class="fa fa-clock fs-4 text-primary" aria-hidden="true
         <div class="col">
             <div class="card card-flush my-shadow">
                 <div class="card-header">
-                    <h3 class="card-title">Site Checkpoints &nbsp;<i class="fas ch4 fa-sm fa-paste"></i></h3>
+                    <h3 class="card-title">Site Checkpoints &nbsp;<i class="fas text-white ch4 fa-sm fa-paste"></i></h3>
                     <div class="card-toolbar gap-5 d-md-flex justify-content-md-end">
                         {% if schdexternaltourform.instance.id %}
                         <button type="button" class="btn btn-sm btn-hover-scale btn-warning" id="getfromgroup"
@@ -239,17 +239,17 @@ Route Plan Setup&nbsp;<i class="fa fa-clock fs-4 text-primary" aria-hidden="true
                         </button>
                         {% endif %}
                         
-                        <button type="button" class="btn btn-sm btn-hover-scale btn-primary non-random" id="btnGetRoute"
+                        <button type="button" class="btn btn-sm btn-hover-scale btn-primary2 non-random" id="btnGetRoute"
                             data-bs-custom-class="tooltip-dark" data-bs-toggle="tooltip" data-bs-placement="top" title="Get Route">
-                            <i class="fas fa-map-marker-alt fa-lg"></i>
+                            <i class="fas text-white fa-map-marker-alt fa-lg"></i>
                         </button>
                         <button type="button" class="btn btn-hover-scale btn-sm btn-info non-random"  id="btnSaveRoute"
                             data-bs-custom-class="tooltip-dark" data-bs-toggle="tooltip" data-bs-placement="top" title="Save Route">
-                            <i class="fas fa-save fa-lg"></i>
+                            <i class="fas text-white fa-save fa-lg"></i>
                         </button>
                         <button type="button" class="btn btn-hover-scale btn-sm btn-secondary non-random" id="btnCalculateRoute"
                             data-bs-custom-class="tooltip-dark" data-bs-toggle="tooltip" data-bs-placement="top" title="Calculate Route">
-                            <i class="fas fa-calculator fa-lg"></i>
+                            <i class="fas  fa-calculator fa-lg"></i>
                         </button>
                     </div>
                 </div>
@@ -293,24 +293,24 @@ Route Plan Setup&nbsp;<i class="fa fa-clock fs-4 text-primary" aria-hidden="true
     <div class="form-actions">
         {% if schdexternaltourform.instance.id %}
         <button type="button" id="runScheduler"  class="btn btn-sm btn-info btn-hover-scale">
-            Run Scheduler&nbsp;<i class="far fa-clock"></i>
+            Run Scheduler&nbsp;<i class="far text-white fa-clock"></i>
         </button>
         
-        <button type="submit" id="submitTour" form="id_schdexternaltourform" class="btn btn-sm btn-primary btn-hover-scale">
-            Update Tour&nbsp;<i class="fas fa-cloud-upload-alt"></i>
+        <button type="submit" id="submitTour" form="id_schdexternaltourform" class="btn btn-sm btn-primary2 btn-hover-scale">
+            Update Tour&nbsp;<i class="fas text-white fa-cloud-upload-alt"></i>
         </button>
 
         <button type="button" onclick="deleteMainJob(this)" data-id="{{ schdexternaltourform.instance.id }}" id="deleteAttd"
             class="btn btn-sm btn-danger btn-hover-scale">
-            Delete&nbsp;<i class="fas fa-trash-alt"></i>
+            Delete&nbsp;<i class="fas text-white fa-trash-alt"></i>
         </button>
         {% else %}
-        <button type="submit" form="id_schdexternaltourform" class="btn btn-sm btn-primary btn-hover-scale">
-            Save Tour&nbsp;<i class="fas fa-cloud-upload-alt"></i>
+        <button type="submit" form="id_schdexternaltourform" class="btn btn-sm btn-primary2 btn-hover-scale">
+            Save Tour&nbsp;<i class="fas text-white fa-cloud-upload-alt"></i>
         </button>
         {% endif %}
         <button type="submit" id="btn_clear" form="id_schdexternaltourform" class="btn btn-sm btn-secondary btn-hover-scale">
-            Clear&nbsp;<i class="fas fa-trash-alt"></i>
+            Clear&nbsp;<i class="fas  fa-trash-alt"></i>
         </button>
     </div>
 {% endblock ajax_page_actions %}

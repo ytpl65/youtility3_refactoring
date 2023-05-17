@@ -8,7 +8,7 @@
 <form action="" method="post" id="attd_form">
 <input type="hidden" name="{{ attd_form.ctzoffset.name }}" id = "{{ attd_form.ctzoffset.auto_id }}" value="-1">
     <div class="modal-header border-0">
-		<h3 class="modal-title modal-heading" id="exampleModalLabel">Create Attendance <i class="fas fa-poll-h fa-sm ch4"></i></h3>
+		<h3 class="modal-title modal-heading" id="exampleModalLabel">Create Attendance <i class="fas text-white fa-poll-h fa-sm ch4"></i></h3>
 		<button type="button" class="btn-sm btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
 	</div>
 
@@ -98,12 +98,12 @@
 	</div>
 
     <div class="modal-footer border-0 pt-0">
-		<button type="button" class="btn btn-sm btn-secondary closeit" data-bs-dismiss="modal">Close <i class="fas fa-times"></i></button>
+		<button type="button" class="btn btn-sm btn-secondary closeit" data-bs-dismiss="modal">Close <i class="fas  fa-times"></i></button>
 		{% if attd_form.instance.id %}
-		<button type="submit" id="submit" class="btn btn-sm btn-primary">Update&nbsp;<i class="fas fa-cloud-upload-alt"></i></button>
-		<button type="button" onclick="deleteAttendance(this)" data-id="{{ attd_form.instance.id }}" id="deleteAttd" class="btn btn-sm btn-danger">Delete&nbsp;<i class="fas fa-trash-alt"></i></button>
+		<button type="submit" id="submit" class="btn btn-sm btn-primary2">Update&nbsp;<i class="fas text-white fa-cloud-upload-alt"></i></button>
+		<button type="button" onclick="deleteAttendance(this)" data-id="{{ attd_form.instance.id }}" id="deleteAttd" class="btn btn-sm btn-danger">Delete&nbsp;<i class="fas text-white fa-trash-alt"></i></button>
 		{% else %}
-		<button type="submit" class="btn btn-sm btn-primary">Add&nbsp;<i class="fas fa-cloud-upload-alt"></i></button>
+		<button type="submit" class="btn btn-sm btn-primary2">Add&nbsp;<i class="fas text-white fa-cloud-upload-alt"></i></button>
 		{% endif %}
 	</div>
 </form>

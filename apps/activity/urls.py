@@ -21,7 +21,6 @@ urlpatterns = [
     path('mobileuserlogs/', views.MobileUserLog.as_view(), name='mobileuserlogs'),
     path('mobileuserdetails/', views.MobileUserDetails.as_view(), name='mobileuserdetails'),
     path('peoplenearassets/', views.PeopleNearAsset.as_view(), name='peoplenearasset'),
-    path('workpermit/', views.WorkPermit.as_view(), name='workpermit'),
     path('attachments/', views.Attachments.as_view(), name='attachments'),
     path('previewImage/', views.PreviewImage.as_view(), name='previewImage'),
     path('get_assignedsites/', views.GetAssignedSites.as_view(), name='get_assignedsites'),

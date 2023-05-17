@@ -120,7 +120,7 @@ Location Form
 		<div><p>Tip: Zoom in for accurate coordinates of address, place the marker and then set the coords.</p></div>
 		<div></div>
 		<div><a href="#" class="btn" id="close_setgps" data-dismiss="modal">Close</a>
-		<a href="#" class="btn btn-primary" id="set_the_coords">Set the coordinates</a></div>
+		<a href="#" class="btn btn-primary2" id="set_the_coords">Set the coordinates</a></div>
 		
 	</div>
 	{% endcall %}
@@ -128,23 +128,23 @@ Location Form
 
 {% block ajax_page_actions %}
 <div class="form-actions">
-    <button type="submit" form="locationform" class="btn btn-sm btn-primary btn-hover-scale">
+    <button type="submit" form="locationform" class="btn btn-sm btn-primary2 btn-hover-scale">
         {% if locationform.instance.id %}
         Update
         {% else %}
         Save
         {% endif %}
-        &nbsp;<i class="fas fa-cloud-upload-alt"></i>
+        &nbsp;<i class="fas text-white fa-cloud-upload-alt"></i>
     </button>
     
     <button type="button"  id="btn_clear"
         class="btn btn-sm btn-secondary btn-hover-scale">
-        Clear&nbsp;<i class="fas fa-times"></i>
+        Clear&nbsp;<i class="fas  fa-times"></i>
     </button>
     {% if locationform.instance.id %}
     <button type="button" onclick="deleteLocation(this)" data-id="{{ locationform.instance.id }}" id="id_deleteLocation"
         class="btn btn-sm btn-danger btn-hover-scale">
-        Delete&nbsp;<i class="fas fa-trash-alt"></i>
+        Delete&nbsp;<i class="fas text-white fa-trash-alt"></i>
     </button>
     {% endif %}
 

@@ -13,7 +13,7 @@
 <input type="hidden" name="pk" id = "pk" value="{{ master_assetform.instance.id }}">
     <div class="modal-header border-0">
         <h3 class="modal-title modal-heading" id="exampleModalLabel">Create {{ label }} <i
-                class="fas fa-poll-h fa-sm ch4"></i>
+                class="fas text-white fa-poll-h fa-sm ch4"></i>
                 </h3>
         <button type="button" class="btn-sm btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
     </div>
@@ -115,21 +115,21 @@
     <div class="modal-footer border-0 pt-0">
         <button type="button" class="btn btn-sm btn-secondary btn-hover-scale"
          data-bs-dismiss="modal">
-            Close <i class="fas fa-times"></i>
+            Close <i class="fas  fa-times"></i>
         </button>
         {% if master_assetform.instance.id %}
-            <button type="submit" id="submit" class="btn btn-sm btn-primary btn-hover-scale">
-                Update&nbsp;<i class="fas fa-cloud-upload-alt"></i>
+            <button type="submit" id="submit" class="btn btn-sm btn-primary2 btn-hover-scale">
+                Update&nbsp;<i class="fas text-white fa-cloud-upload-alt"></i>
             </button>
             
             <button type="button" onclick="deleteCheckpoint(this)"
              data-id="{{ master_assetform.instance.id }}" id="deleteCp"
                 class="btn btn-sm btn-danger btn-hover-scale">
-                Delete&nbsp;<i class="fas fa-trash-alt"></i>
+                Delete&nbsp;<i class="fas text-white fa-trash-alt"></i>
             </button>
         {% else %}
-            <button type="submit" class="btn btn-sm btn-primary btn-hover-scale">
-                Add&nbsp;<i class="fas fa-cloud-upload-alt"></i>
+            <button type="submit" class="btn btn-sm btn-primary2 btn-hover-scale">
+                Add&nbsp;<i class="fas text-white fa-cloud-upload-alt"></i>
             </button>
         {% endif %}
     </div>
@@ -159,7 +159,7 @@
 		<div><p>Tip: Zoom in for accurate coordinates of address, place the marker and then set the coords.</p></div>
 		<div></div>
 		<div><a href="#" class="btn" id="close_setgps" data-dismiss="modal">Close</a>
-		<a href="#" class="btn btn-primary" id="set_the_coords">Set the coordinates</a></div>
+		<a href="#" class="btn btn-primary2" id="set_the_coords">Set the coordinates</a></div>
 		
 	</div>
 	{% endcall %}

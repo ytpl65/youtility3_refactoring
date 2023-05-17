@@ -801,24 +801,7 @@ class PeopleNearAsset(LoginRequiredMixin, View):
                 'data':list(objs)}, safe = False)
             
 
-class WorkPermit(LoginRequiredMixin, View):
-    params = {
-        'template_list':'activity/workpermit_list.html',
-        'model':am.WorkPermit,
-        'related':[],
-        'fields':['id', 'assetcode', 'assetname', 'identifier', 'gpslocation']
-    }
-    
-    def get(self, request, *args, **kwargs):
-        R, P = request.GET, self.params
-        # first load the template
-        if R.get('template'): return render(request, self.params['template_list'])
-        
-        # then load the table with objects for table_view
-        if R.get('action', None) == 'list' or R.get('search_term'):
-            objs = self.params['model'].objects.get_workpermitlist(request)
-            return  rp.JsonResponse(data = {
-                'data':list(objs)}, safe = False)
+
             
 
 class Attachments(LoginRequiredMixin, View):

@@ -138,7 +138,20 @@ Work Order
           <label for="">Email Sent</label>
         </div>
         <div class="col-md-8 col-sm-12 mt-2">
-          {{ woform.instance.ismailsent }}
+          {{ woform.ismailsent }}
+          {% if woform.instance.ismailsent %}
+            <i class="bi bi-check-circle-fill  fs-3 text-success"></i>
+          {% else %}
+          <i class="bi bi-x-circle-fill fs-3 text-danger"></i>
+          {% endif %} 
+        </div>
+      </div>
+      <div class="input-group mb-3">
+        <div class="col-md-4 col-sm-12 pt-2">
+          {{ woform.workstatus.label_tag() }}
+        </div>
+        <div class="col-md-8 col-sm-12 mt-2">
+          {{ woform.workstatus }}
         </div>
       </div>
 
@@ -164,7 +177,7 @@ Work Order
 <div class="row">
   <div class="card">
     <div class="card-header ps-0 mb-0">
-      <h4 class="ch4">Work Order Details&nbsp;<i class="fas fa-layer-group ch4"></i></h4>
+      <h4 class="ch4">Work Order Details&nbsp;<i class="fas text-white fa-layer-group ch4"></i></h4>
     </div>
     <div class="card-body pt-0">
       <table id="wo_details" class="display cell-border compact hover nowrap"></table>
@@ -174,7 +187,7 @@ Work Order
 {% endblock extras %}
 
 {% block popup_alerts %}
-{% call general_popup(title='Attachment Details <i class="fas fa-paperclip ch4"></i>', popup_id="id_attachmentdetails", modal_size='modal-xl') %}
+{% call general_popup(title='Attachment Details <i class="fas text-white fa-paperclip ch4"></i>', popup_id="id_attachmentdetails", modal_size='modal-xl') %}
 <div class="modal-body">
   <table class="display cell-border" style="width:100%" id="tabAttachmentDetails"></table>
 </div>
@@ -262,6 +275,35 @@ Work Order
     }
 
 
+    //when user tries to change the vendor the select field
+    $('#id_vendor').on('select2:selecting', function(e) {
+      var data = e.params.args.data;
+        if ("{{ woform.instance.id }}" !== "None" && data.id !== "{{ woform.instance.vendor_id }}") {
+          Swal.fire({
+            title: 'Do you want change the vendor?',
+            text:"Please note: Changing the vendor selection will result in the status being set to REASSIGNED and require re-creating the work order",
+            showDenyButton: true,
+            showCancelButton: false,
+            confirmButtonText: 'Yes, change',
+            denyButtonText: `Don't change`,
+          }).then(( result ) => {
+            /* Read more about isConfirmed, isDenied below */
+            if (result.isConfirmed) {
+              Swal.fire('Vendor Changed!', '', 'success')
+              $("#id_workstatus").val('RE_ASSIGNED')
+              $("#id_ismailsent").val("False")
+            } else if (result.isDenied) {
+              e.preventDefault();
+            }
+          })
+        }else{
+          $("#id_workstatus").val("{{ woform.instance.workstatus }}")
+        }
+    });
+
+    
+
+
     //on submit form post request
     $("#id_woform").submit((e) => {
       e.preventDefault()
@@ -270,8 +312,7 @@ Work Order
         url: $(form).attr("action"),
         modal: false
       }
-      const formtype = '{{woform.instance.id}}' == 'None' ? "create" :
-        "update" //form-type (create/update)      
+      const formtype = '{{woform.instance.id}}' == 'None' ? "create" : "update" //form-type (create/update)      
       const id = '{{ woform.instance.id }}'
       var payLoad = {
         formData: $("#id_woform").serialize(),

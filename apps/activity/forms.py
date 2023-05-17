@@ -655,23 +655,6 @@ class AdhocTaskForm(JobNeedForm):
 
 
 
-class WorkPermit(forms.ModelForm):
-    required_css_class = "required"
-    class Meta:
-        model = am.WorkPermit
-        fields = ['wptype', 'seqno']
-        labels={
-            'wptype':'Permit to work',
-            'seqno':'Seq No'
-        }
-        widgets = {
-            'wptype':s2forms.Select2Widget
-        }
-    def __init__(self, *args, **kwargs):
-        self.request = kwargs.pop('request')
-        super().__init__(*args, **kwargs)
-        utils.initailize_form_fields(self)
-        self.fields['wptype'].queryset = am.QuestionSet.objects.filter(type='WORKPERMITTEMPLATE')
 
 
 class AssetForm(forms.ModelForm):

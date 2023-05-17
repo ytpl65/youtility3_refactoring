@@ -519,7 +519,8 @@ def insert_into_jnd(qsb, job, jnid, parent=False):
             min        = obj.min,        alerton     = obj.alerton,
             options    = obj.options,    jobneed_id  = jnid,
             cuser_id   = job['cuser_id'],   muser_id    = job['muser_id'],
-            ctzoffset  = job['ctzoffset'], answer = answer)
+            ctzoffset  = job['ctzoffset'], answer = answer,
+            isavpt = obj.isavpt, avpttype = obj.avpttype)
     log.info("insert_into_jnd() [END]")
 
 def extract_seq(R):

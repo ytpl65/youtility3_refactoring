@@ -80,8 +80,12 @@ class ReportForm(forms.Form):
     report_templates = [
         ('', 'Select Report'),
         (settings.KNOWAGE_REPORTS['TASKSUMMARY'], 'Task Summary'),
-        ('TASK_DETAILS', 'Task Details'),
-        ('TICKETLIST', 'Ticket List'),
+        (settings.KNOWAGE_REPORTS['TOURSUMMARY'], 'Tour Summary'),
+        (settings.KNOWAGE_REPORTS['LISTOFTASKS'], 'List of Tasks'),
+        (settings.KNOWAGE_REPORTS['LISTOFINTERNALTOURS'], 'List of Internal Tours'),
+        (settings.KNOWAGE_REPORTS['PPMSUMMARY'], 'PPM Summary'),
+        (settings.KNOWAGE_REPORTS['LISTOFTICKETS'], 'List of Tickets'),
+        (settings.KNOWAGE_REPORTS['WORKORDERLIST'], 'Work Order List'),
     ]
     download_or_send_options = [
         ('DOWNLOAD', 'Download'),

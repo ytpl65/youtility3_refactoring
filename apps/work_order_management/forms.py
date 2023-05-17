@@ -73,16 +73,20 @@ class WorkOrderForm(forms.ModelForm):
     
     class Meta:
         model = Wom
-        fields = ['description', 'plandatetime', 'expirydatetime',  'asset', 'location', 'qset',
-                  'priority', 'qset', 'ticketcategory', 'categories', 'vendor', 'ctzoffset']
+        fields = ['description', 'plandatetime', 'expirydatetime',  'asset', 'location', 'qset', 'ismailsent',
+                  'priority', 'qset', 'ticketcategory', 'categories', 'vendor', 'ctzoffset', 'workstatus']
         
         widgets = {'categories':s2forms.Select2MultipleWidget,
                    'vendor'    : s2forms.Select2Widget,
-                   'description':forms.Textarea(attrs={'rows':4, 'placeholder':"Enter detailed description of work to be done..."})
+                   'description':forms.Textarea(attrs={'rows':4, 'placeholder':"Enter detailed description of work to be done..."}),
+                   'workstatus':forms.TextInput(attrs={'readonly':True}),
+                   'ismailsent':forms.HiddenInput()
                    }
         labels = {
             'description':'Description',
-            'qset':'Question Set'
+            'qset':'Question Set',
+            'workstatus':"Status",
+           
         }
         
     def __init__(self, *args, **kwargs):
@@ -95,7 +99,8 @@ class WorkOrderForm(forms.ModelForm):
         self.fields['ticketcategory'].queryset = om.TypeAssist.objects.filter_for_dd_notifycategory_field(self.request, sitewise=True)
         self.fields['asset'].queryset = am.Asset.objects.filter_for_dd_asset_field(self.request, ['ASSET'], sitewise=True)
         self.fields['location'].queryset = am.Location.objects.filter(Q(client_id = S['client_id']), bu_id = S['bu_id'])
-        self.fields['vendor'].queryset = Vendor.objects.filter(enable=True, client_id = S['client_id'])
+        self.fields['vendor'].queryset = Vendor.objects.filter(
+            Q(enable=True) & Q(client_id = S['client_id']) & Q(bu_id = S['bu_id']) | (Q(client_id = S['client_id']) & Q(show_to_all_sites = True)))
         self.fields['qset'].queryset = am.QuestionSet.objects.filter(client_id = S['client_id'], enable=True, type = am.QuestionSet.Type.WORKORDER) 
         utils.initailize_form_fields(self)
         if not self.instance.id:
@@ -103,3 +108,27 @@ class WorkOrderForm(forms.ModelForm):
             self.fields['priority'].initial = Wom.Priority.LOW  
             self.fields['ticketcategory'].initial = om.TypeAssist.objects.get(tacode='AUTOCLOSED', tatype__tacode = 'NOTIFYCATEGORY')
     
+    
+
+class WorkPermitForm(forms.ModelForm):
+    required_css_class = "required"
+    seqno = forms.IntegerField(label="Seq. #", required=False, widget=forms.TextInput(attrs={'readonly':True}))
+    class Meta:
+        model = Wom
+        fields = ['qset', 'seqno', 'ctzoffset']
+        labels={
+            'qset':'Permit to work',
+            'seqno':'Seq No'
+        }
+        widgets = {
+            'wptype':s2forms.Select2Widget
+            
+        }
+    def __init__(self, *args, **kwargs):
+        self.request = kwargs.pop('request')
+        S = self.request.session
+        super().__init__(*args, **kwargs)
+        utils.initailize_form_fields(self)
+        
+        self.fields['qset'].queryset = am.QuestionSet.objects.filter(
+            type='WORKPERMIT', client_id = S['client_id'], bu_id = S['bu_id'], enable=True)

@@ -46,6 +46,7 @@ def notify_wo_creation(id):
         )
         wo.ismailsent = True
         wo.save()
+        return wo
     else:
         log.info('object not found')
         
