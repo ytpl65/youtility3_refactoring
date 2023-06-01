@@ -15,7 +15,7 @@ Scheduled Tasks
 
 <!-------------------------------------------- BEGIN Schedhuled External Tour TABLE ------------------------------------------->
 {% block table %}
-<table id="schd_task_table" class="display cell-border compact hover" style="width:100%">
+<table id="schd_task_table" class="display cell-border compact" style="width:100%">
     <thead class="fw-bold fs-6">
     </thead>
     <tbody></tbody>
@@ -39,7 +39,7 @@ Scheduled Tasks
 			responsive: true,
             deferRender: true,
             columns:[
-                {data: 'id', visible:false, searchable:false},
+                {data: 'id', visible:false, searchable:false, className:'noVis'},
                 {data: 'jobname', title: "Name"},
                 {data: 'asset__assetname', title: "Asset"},
                 {data: 'qset__qsetname', title: 'Checklist'},
@@ -68,9 +68,18 @@ Scheduled Tasks
                 }}
             ],
             buttons:[
+                "searchBuilder",
+                dataTablesPDFConfig(
+                    'Site: {{ request.user.bu.buname }}\nScheduled Task List',
+                    [1,2,3,4,5,6,7,8,9]
+                ),
+                dataTablesExcelConfig(
+                    'Site: {{ request.user.bu.buname }}\nScheduled Task List',
+                    [1,2,3,4,5,6,7,8,9]
+                ),
+                dataTablesColumnVisibilityConfig(),
 				{
-					text:`Add New &nbsp;<i class='fas text-white fa-plus ch4'></i></a>`,
-					className: "btn btn-sm btn-light-primary btn-hover-rise",
+					text:`Add New &nbsp;<i class='fas text-dark fa-plus'></i></a>`,
 					//action for add_new_button 
 					action: function(e, dt, node, config){
         				window.location.href = "{{ url('schedhuler:jobschdtasks') }}?action=form";

@@ -10,6 +10,7 @@ from django.utils.translation import gettext_lazy as _
 from django.contrib.gis.db.models import PointField
 from django.contrib.postgres.fields import ArrayField
 from django.db.models import Q
+import uuid
 # Create your models here.
 
 class HeirarchyModel(models.Model):

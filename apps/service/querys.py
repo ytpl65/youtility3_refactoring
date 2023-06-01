@@ -17,7 +17,7 @@ TypeAssist, SelectOutputType, BasicOutput)
 
 class Query(graphene.ObjectType):
     tadata = graphene.Field(SelectOutputType, keys = graphene.List(graphene.String, required = True))
-    # tabyid = graphene.Field(TyType, id = graphene.String())
+    
     get_assetdetails = graphene.Field(SelectOutputType,
                                       mdtz = graphene.String(required = True),
                                       ctzoffset = graphene.Int(required = True),

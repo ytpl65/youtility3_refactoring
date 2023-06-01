@@ -197,7 +197,10 @@ def other_info():
         'deviation':False,
         'ticket_generated':False,
         'email_sent':False,
-        'autoclosed_by_server':False
+        'autoclosed_by_server':False,
+        'acknowledged_by':'',
+        'isAcknowledged':False,
+        'istimebound':True
     }
 
 def geojson_jobnjobneed():
@@ -522,6 +525,7 @@ class JobneedDetails(BaseModel, TenantAwareModel):
     min             = models.DecimalField(_("Min"), max_digits = 18,  decimal_places = 4, null = True)
     max             = models.DecimalField(_("Max"), max_digits = 18, decimal_places = 4, null = True)
     alerton         = models.CharField( _("Alert On"), null = True, blank = True, max_length = 50)
+    qset            = models.ForeignKey(QuestionSet, verbose_name=('Question Set'), null=True, blank=True, on_delete=models.RESTRICT, related_name='questions_qset')
     ismandatory     = models.BooleanField(_("Mandatory"), default = True)
     jobneed         = models.ForeignKey("activity.Jobneed", verbose_name = _( "Jobneed"), null = True, blank = True, on_delete = models.RESTRICT)
     alerts          = models.BooleanField(_("Alerts"), default = False)
@@ -733,3 +737,24 @@ class Location(BaseModel, TenantAwareModel):
                 name='loccode_client_uk'
             ),
         ]
+        
+        
+class AssetLog(models.Model):
+    uuid        = models.UUIDField(unique = True, editable = True, blank = True, default = uuid.uuid4)
+    oldstatus   = models.CharField(_("Old Status"), max_length=50, null=True)
+    newstatus   = models.CharField(_("New Status"), max_length=50)
+    asset       = models.ForeignKey("activity.Asset", verbose_name=_("Asset"), on_delete=models.RESTRICT, null=True)
+    people      = models.ForeignKey(settings.AUTH_USER_MODEL, verbose_name=_("People"), on_delete=models.RESTRICT, null=True)
+    bu          = models.ForeignKey("onboarding.Bt", verbose_name=_("Bu"), on_delete=models.RESTRICT, null=True)
+    client      = models.ForeignKey("onboarding.Bt", verbose_name=_("Client"), on_delete=models.CASCADE, related_name='assetlog_client', null=True)
+    cdtz        = models.DateTimeField(_("Created On"), null=True)
+    gpslocation = PointField(_('GPS Location'), null = True, geography = True, srid = 4326, blank = True)
+    ctzoffset   = models.IntegerField(_("TimeZone"), default=-1)
+    
+    class Meta:
+        db_table = 'assetlog'
+
+    def __str__(self):
+        return f'{self.oldstatus} - {self.newstatus}'
+    
+    

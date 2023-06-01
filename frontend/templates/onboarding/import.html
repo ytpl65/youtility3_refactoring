@@ -71,6 +71,17 @@ Import Data
 {% endblock form %}
 
 
+{% block extras %}
+<table>
+<thead>
+{% for th in columns %}
+
+{% endfor %}
+</thead>
+</table>
+{% endblock extras %}
+
+
 {% block extra_scripts %}
 <script src="{{ static('assets/plugins/custom/DataTables/datatables.min.js') }}" type="text/javascript"></script>
 <script>
@@ -139,9 +150,9 @@ Import Data
                                 table.destroy()
                             }else{
                               table =  $('#import_datatable').DataTable({
-                                data:res.data,
-                                columns:res.columns,
-                                columnDefs:{targets: Array(res.no_of_cols).fill(null).map((_, i) => i), render:function(data, type, row, meta ){return data || '--'} }
+                                    data:res.data,
+                                    columns:res.columns,
+                                    columnDefs:{targets: Array(res.no_of_cols).fill(null).map((_, i) => i), render:function(data, type, row, meta ){return data || '--'} }
                                 })
                             }
                         }else{

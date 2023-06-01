@@ -123,9 +123,9 @@ class PeopleResource(resources.ModelResource):
 
     class Meta:
         model = pm.People
-        skip_unchanged = False
+        skip_unchanged = True
         report_skipped = True
-        import_id_fields = ('ID','Code')
+        import_id_fields = ('ID','Code', 'LoginId')
         fields = [
             'ID', 'Code', 'Name', 'LoginId', 'Designation', 'Department', 'MobNo', 'Email', 'deviceid',
             'Site', 'DateOfJoin', 'date_of_release', 'DateOfBirth', 'Gender', 'PeopleType','WorkType', 'Enable',

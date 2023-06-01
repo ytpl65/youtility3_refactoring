@@ -1120,11 +1120,11 @@ class JobneedTasks(LoginRequiredMixin, View):
         'model'        : am.Jobneed,
         'model_jnd'        : am.JobneedDetails,
         'template_path':  'schedhuler/tasklist_jobneed.html',
-        'fields'       : [
-                    'jobdesc', 'people__peoplename', 'pgroup__groupname', 'id',
-                    'plandatetime', 'expirydatetime', 'jobstatus', 'gracetime',
-                    'performedby__peoplename', 'asset__assetname', 'qset__qsetname',
-                    'ctzoffset', 'assignedto', 'jobtype'],
+        'fields': [
+                'jobdesc', 'people__peoplename', 'pgroup__groupname', 'id',
+                'plandatetime', 'expirydatetime', 'jobstatus', 'gracetime',
+                'performedby__peoplename', 'asset__assetname', 'qset__qsetname',
+                'ctzoffset', 'assignedto', 'jobtype', 'ticketcategory__taname', 'other_info__isAcknowledged'],
         'related': [
                 'pgroup',  'ticketcategory', 'asset', 'client','ctzoffset',
                 'frequency', 'job', 'qset', 'people', 'parent', 'bu'],
@@ -1133,33 +1133,42 @@ class JobneedTasks(LoginRequiredMixin, View):
     }
 
     def get(self, request, *args, **kwargs):
-        R = request.GET
+        R, P = request.GET, self.params
         ic(R)
 
         # first load the template
-        if R.get('template'): return render(request, self.params['template_path'])
+        if R.get('template'): return render(request, P['template_path'])
 
         # then load the table with objects for table_view
         if R.get('action', None) == 'list' or R.get('search_term'):
-            p = self.params
-            objs = self.params['model'].objects.get_last10days_jobneedtasks(
-                p['related'], p['fields'], request)
+            objs = P['model'].objects.get_task_list_jobneed(
+                P['related'], P['fields'], request)
             return rp.JsonResponse(data = {'data':list(objs)})
+        
         if R.get('action') == 'getAttachmentJND':
-            att =  self.params['model_jnd'].objects.getAttachmentJND(R['id'])
+            att =  P['model_jnd'].objects.getAttachmentJND(R['id'])
             return rp.JsonResponse(data = {'data': list(att)})
+
+        
+        if R.get('action') == 'get_task_details' and R.get('taskid'):
+            objs = P['model_jnd'].objects.get_task_details(R['taskid'])
+            return rp.JsonResponse({"data":list(objs)})
+        
+        if R.get('action') == 'acknowledgeAutoCloseTask':
+            obj = P['model'].objects.filter(id = R['id']).first()
+            obj.other_info['isAcknowledged'] = True
+            obj.other_info['acknowledged_by'] = request.user.peoplecode
+            obj.save()  
+            objs = P['model'].objects.get_task_list_jobneed(P['related'], P['fields'], request, obj.id)
+            return rp.JsonResponse({'row':objs[0]}, status = 200)
 
         # load form with instance
         if R.get('id'):
-            obj = utils.get_model_obj(int(R['id']), request, self.params)
-            cxt = {'taskformjobneed':self.params['form_class'](request = request, instance = obj),
+            obj = utils.get_model_obj(int(R['id']), request, P)
+            cxt = {'taskformjobneed':P['form_class'](request = request, instance = obj),
                     'edit':True}
-            return render(request, self.params['template_form'], context = cxt)
+            return render(request, P['template_form'], context = cxt)
 
-        if R.get('action') == 'get_task_details' and R.get('taskid'):
-            objs = self.params['model_jnd'].objects.get_task_details(R['taskid'])
-            return rp.JsonResponse({"data":list(objs)})
-        
         
 
 
@@ -1363,6 +1372,7 @@ class InternalTourScheduling(LoginRequiredMixin, View):
                 ic(form.data)
                 job = form.save(commit = False)
                 job.parent_id = job.asset_id = job.qset_id = 1
+                job.other_info['istimebound'] = form.cleaned_data['istimebound']
                 job.save()
                 job = putils.save_userinfo(job, request.user, request.session)
                 self.save_checpoints_for_tour(assigned_checkpoints, job, request)

@@ -388,7 +388,7 @@ class PeopleExtrasForm(forms.Form):
     mlogsendsto               = forms.CharField(max_length = 25, required = False)
     currentaddress            = forms.CharField(required = False, widget=forms.Textarea(attrs={'rows': 2, 'cols': 15}))
     permanentaddress          = forms.CharField(required = False,  widget=forms.Textarea(attrs={'rows': 2, 'cols': 15}))
-    isworkpermit_approver     = forms.BooleanField(initial=False, required=False, label="Work Permit Approver")
+    isworkpermit_approver     = forms.BooleanField(initial=False, required=False, label="Approver")
 
     
     def __init__(self, *args, **kwargs):

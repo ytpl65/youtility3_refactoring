@@ -29,8 +29,8 @@ class Attendance(LoginRequiredMixin, View):
         'model': atdm.PeopleEventlog,
         'filter': AttendanceFilter,
         'form_initials':{},
-        'fields': ['id', 'people__peoplename', 'verifiedby__peoplename', 'peventtype__taname','peventtype__tacode', 'bu__buname', 'datefor','uuid',
-                   'punchintime', 'punchouttime', 'facerecognitionin', 'facerecognitionout','shift__shiftname', 'ctzoffset', 'peventlogextras']}
+        'fields': ['id', 'people__peoplename', 'people__peoplecode', 'verifiedby__peoplename', 'peventtype__taname','peventtype__tacode', 'bu__buname', 'datefor','uuid',
+                   'punchintime', 'punchouttime', 'facerecognitionin', 'facerecognitionout','shift__shiftname', 'ctzoffset', 'peventlogextras', 'sL', 'eL']}
 
     def get(self, request, *args, **kwargs):
         R, P, resp = request.GET, self.params, None

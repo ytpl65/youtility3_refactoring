@@ -660,6 +660,7 @@ class AdhocTaskForm(JobNeedForm):
 class AssetForm(forms.ModelForm):
     required_css_class = "required"
     enable = forms.BooleanField(required=False, initial=True, label='Enable')
+    status_field = forms.ChoiceField(choices=am.Asset.RunningStatus.choices, label = 'Duration of Selected Status', required=False, widget=s2forms.Select2Widget)
     
     class Meta:
         model = am.Asset

@@ -97,13 +97,21 @@ Ticket List
 				}
 			},
             order:[[0, 'desc']],
-			dom       : `<'row' <'col-sm-6 d-flex justify-content-start'f> <'col-sm-6 d-flex justify-content-end'B> >rt<'row'
-			<'col-sm-6'l> <'col-sm-6'p><'col-sm-12 d-flex justify-content-center'i>>`,
+			dom       : `<'row' <'col-sm-6 d-flex justify-content-start'<'customfields'>f> <'col-sm-6 d-flex justify-content-end'B> >rt<'row'
+            <'col-sm-6'l> <'col-sm-6'p><'col-sm-12 d-flex justify-content-center'i>>`,
 			buttons:[
-                'csv', 'excel', 'pdf',
+                "searchBuilder",
+                dataTablesPDFConfig(
+                    'Site: {{ request.user.bu.buname }}\n Ticket List',
+                    [1,2,3,4,5,6,7, 8]
+                ),
+                dataTablesExcelConfig(
+                    'Site: {{ request.user.bu.buname }}\n Ticket List',
+                    [1,2,3,4,5,6,7, 8]
+                ),
+                dataTablesColumnVisibilityConfig(),
 				{
-					text     : `Add New &nbsp;<i class='fas text-white fa-plus ch4'></i></a>`,
-					className: "btn btn-sm btn-light-primary",
+					text     : `Add New &nbsp;<i class='fas text-dark fa-plus'></i></a>`,
 					//action for add_new_button 
 					action: function(e, dt, node, config){
 						location.href =  "{{ url('helpdesk:ticket') }}?action=form"

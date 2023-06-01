@@ -65,7 +65,7 @@ Tour List
 			 <'col-sm-6'l> <'col-sm-6'p><'col-sm-12 d-flex justify-content-center'i>>`,
             //ordering:false,
             columns:[
-                {data: 'id', visible:false, searchable:false},
+                {data: 'id', visible:false, searchable:false, className:'noVis'},
                 {data: 'plandatetime', title: "Plan Datetime", render:function(data, type, row, meta){
                     //return `<a href="${urlname}?id=${row['id']}">${data}</a>`
                     return `<a href="${urlname}?id=${row['id']}">${convert_to_local(type, data, row)}</a>`
@@ -85,16 +85,16 @@ Tour List
             order:[[1, 'desc']],
             scrollCollapse: true,
             buttons:[
-                 'excel', 'pdf', 'csv',
-				{
-					text:`Apply filters &nbsp;<i class='fas text-white fa-search ch4'></i></a>`,
-					className: "btn btn-sm btn-light btn-hover-rise",
-					//action for add_new_button 
-					action: function(e, dt, node, config){
-                        //This will send the page to the location specified
-        				submitFormFilter()
-					}
-				}
+                "searchBuilder",
+                dataTablesPDFConfig(
+                    'Site: {{ request.user.bu.buname }}\nTour List',
+                    [1,2,3,4,5,6,7,8]
+                ),
+                dataTablesExcelConfig(
+                    'Site: {{ request.user.bu.buname }}\nTour List',
+                    [1,2,3,4,5,6,7,8]
+                ),
+                dataTablesColumnVisibilityConfig(),
 			],      
         })
 

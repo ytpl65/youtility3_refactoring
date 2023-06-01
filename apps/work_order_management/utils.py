@@ -52,4 +52,20 @@ def notify_wo_creation(id):
         
         
         
-        
+def check_all_approved(womid, usercode):
+    w = Wom.objects.filter(id = womid).first()
+    all_approved = True
+    for approver in w.other_data['wp_approvers']:
+        if approver['name'] == usercode:
+            approver['status'] = 'APPROVED'
+        if approver['status'] != 'APPROVED':
+            all_approved = False
+    w.save()
+    return all_approved
+    
+def reject_workpermit(womid, usercode):
+    w = Wom.objects.filter(id = womid).first()
+    for approver in w.other_data['wp_approvers']:
+        if approver['name'] == usercode:
+            approver['status'] = 'REJECTED'
+    w.save()

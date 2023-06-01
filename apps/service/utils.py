@@ -96,6 +96,8 @@ def get_model_or_form(tablename):
         return apps.get_model('attendance', 'PeopleEventlog')
     if tablename == 'attachment':
         return  apps.get_model('activity', 'Attachment')
+    if tablename == 'assetlog':
+        return  apps.get_model('activity', 'AssetLog')
     if tablename == 'jobneed':
         return apps.get_model('activity', 'Jobneed')
     if tablename == 'jobneeddetails':
@@ -623,7 +625,7 @@ def perform_uploadattachment(file,  record, biodata):
         
 
         if hasattr(eobj, 'peventtype'): log.info(f'Event Type: {eobj.peventtype.tacode}')
-        if hasattr(eobj, 'peventtype') and eobj.peventtype.tacode in ['SELF', 'MARK']:
+        if hasattr(eobj, 'peventtype') and eobj.peventtype.tacode in ['SELF', 'MARK', 'MARKATTENDANCE', 'SELFATTENDANCE']:
             from background_tasks.tasks import perform_facerecognition_bgt
             results = perform_facerecognition_bgt.delay(ownerid, peopleid, db)
             log.warning(f"face recognition status {results.state}")

@@ -289,14 +289,18 @@ class JobneedManager(models.Manager):
         qset = qset[start:start+length]
         return total, total, qset
 
-    def get_last10days_jobneedtasks(self, related, fields, request):
+    def get_task_list_jobneed(self, related, fields, request, id=None):
+        annotations = {'assignedto':Case(
+                When(Q(pgroup_id=1) | Q(pgroup_id__isnull =  True), then=Concat(F('people__peoplename'), V(' [PEOPLE]'))),
+                When(Q(people_id=1) | Q(people_id__isnull =  True), then=Concat(F('pgroup__groupname'), V(' [GROUP]'))),
+                )}
+        if id:
+            return self.filter(id = id).annotate(**annotations).select_related(*related).values(*fields) or self.none()
+        
         R, S = request.GET, request.session
         P = json.loads(R.get('params'))
         qobjs = self.select_related(*related).annotate(
-            assignedto = Case(
-                When(Q(pgroup_id=1) | Q(pgroup_id__isnull =  True), then=Concat(F('people__peoplename'), V(' [PEOPLE]'))),
-                When(Q(people_id=1) | Q(people_id__isnull =  True), then=Concat(F('pgroup__groupname'), V(' [GROUP]'))),
-                ),
+            **annotations
             ).filter(
             bu_id = S['bu_id'],
             client_id = S['client_id'],
@@ -941,6 +945,17 @@ class AssetManager(models.Manager):
         if choices: qset = qset.annotate(text = Concat(F('assetname'), V(' ('), F('assetcode'), V(')'))).values_list('id', 'text')
         return qset or self.none()
     
+    def get_period_of_assetstatus(self, assetid, status):
+        from apps.core.raw_queries import get_query
+        query = get_query("asset_status_period")
+        qset = utils.runrawsql(
+            query, [status, status, assetid]
+        )
+        ic(qset)
+        if not qset: return f"The Asset has not yet undergone any {status.lower()} period."
+        if qset and  qset[0]['total_duration']:
+            return utils.format_timedelta(qset[0]['total_duration'])
+        
     
 
 
@@ -1036,42 +1051,44 @@ class QsetBlngManager(models.Manager):
     
     def handle_questionpostdata(self, request):
         R, S, Id, r = request.POST, request.session, None, {}
-        ic(R)
         r['ismandatory'] = R.get('ismandatory', False) == 'true'
         r['isavpt'] = R.get('isavpt', False) == 'true'
         r['options'] = R['options'].replace('"', '').replace('[', '').replace(']', '')
         r['min'] = 0.0 if R['min'] == "" else R['min']
         r['max'] = 0.0 if R['max'] == "" else R['max']
-        
+
         if R['answertype'] in ['DROPDOWN', 'CHECKBOX']:
             r['alerton'] = R['alerton'].replace('"', '').replace('[', '').replace(']', '')
-        
+
         elif R['answertype'] == 'NUMERIC' and (R['alertbelow'] or R['alertabove']):
             r['alerton'] = f"<{R['alertbelow']}, >{R['alertabove']}"
-        
+
         PostData = {'qset_id':R['parent_id'], 'answertype':R['answertype'], 'min':r.get('min', '0.0'), 'max':r.get('max', '0.0'),
                 'alerton':r.get('alerton'), 'ismandatory':r['ismandatory'], 'question_id': R['question_id'],
                 'isavpt':r['isavpt'], 'avpttype':R['avpttype'],
                 'options':r.get('options'), 'seqno':R['seqno'], 'client_id':S['client_id'], 'bu_id':S['bu_id'],
                 'cuser':request.user, 'muser':request.user, 'cdtz':utils.getawaredatetime(datetime.now(), R['ctzoffset']),
                 'mdtz':utils.getawaredatetime(datetime.now(), R['ctzoffset'])}
-        
         if R['action'] == 'create':
+            if self.filter(
+                qset_id = PostData['qset_id'], question_id = PostData['question_id'],
+                client_id = PostData['client_id'], bu_id = PostData['bu_id']).exists():
+                return {'data':list(self.none()), 'error':'Warning: You are trying to add the same question again!'}
             ID = self.create(**PostData).id
-        
+
         elif R['action'] == 'edit':
             PostData.pop('cuser')
             PostData.pop('cdtz')
-            updated = self.filter(pk=R['pk']).update(**PostData)
-            ic(updated)
-            if updated: ID = R['pk']
+            if updated := self.filter(pk=R['pk']).update(**PostData):
+                ID = R['pk']
         else:
             self.filter(pk=R['pk']).delete()
-            return self.none()
-        
-        return self.filter(id=ID).annotate(quesname=F('question__quesname')
+            return {'data':list(self.none())}
+
+        qset =  self.filter(id=ID).annotate(quesname=F('question__quesname')
         ).values('pk', 'seqno', 'quesname', 'answertype', 'min', 'question_id', 'ctzoffset',
                  'max', 'options', 'alerton', 'ismandatory', 'isavpt', 'avpttype') or self.none()
+        return {'data':list(qset)}
         
     
     def get_questions_of_qset(self, R):

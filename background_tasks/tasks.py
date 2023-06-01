@@ -1,12 +1,12 @@
 from intelliwiz_config.celery import app
 from celery import shared_task
-from  background_tasks import utils as butils
+from background_tasks import utils as butils
 from apps.core import utils
 from django.apps import apps
 from logging import getLogger
 from django.db import transaction
 from datetime import timedelta
-import traceback as tb 
+import traceback as tb
 from apps.core.raw_queries import get_query
 from pprint import pformat
 from django.db.models import Q
@@ -18,6 +18,7 @@ from django.core.mail import EmailMessage
 
 
 log = getLogger('mobile_service_log')
+
 
 @app.task(bind=True, default_retry_delay=300, max_retries=5, name='Send Ticket email')
 def send_ticket_email(self, ticket=None, id=None):
@@ -35,17 +36,17 @@ def send_ticket_email(self, ticket=None, id=None):
             log.info(f"email addresses of recipents: {emails}")
             updated_or_created = "Created" if ticket.cdtz == ticket.mdtz else "Updated"
             context = {
-                'subject'   : f"Ticket with #{ticket.id} is {updated_or_created} at site: {ticket.bu.buname}",
-                'desc'      : ticket.ticketdesc,
-                'template'  : ticket.ticketcategory.taname,
-                'status'    : ticket.status,
-                'createdon' : ticket.cdtz.strftime("%Y-%m-%d %H:%M:%S"),
+                'subject': f"Ticket with #{ticket.id} is {updated_or_created} at site: {ticket.bu.buname}",
+                'desc': ticket.ticketdesc,
+                'template': ticket.ticketcategory.taname,
+                'status': ticket.status,
+                'createdon': ticket.cdtz.strftime("%Y-%m-%d %H:%M:%S"),
                 'modifiedon': ticket.mdtz.strftime("%Y-%m-%d %H:%M:%S"),
                 'modifiedby': ticket.muser.peoplename,
                 'assignedto': ticket.assignedtogroup.groupname if ticket.assignedtopeople_id in [None, 1] else ticket.assignedtopeople.peoplename,
-                'comments'  : ticket.comments,
-                "priority"  : ticket.priority,
-                'level'     : ticket.level
+                'comments': ticket.comments,
+                "priority": ticket.priority,
+                'level': ticket.level
             }
             log.info(f'context for email template: {context}')
             html_message = render_to_string('ticket_email.html', context)
@@ -65,7 +66,6 @@ def send_ticket_email(self, ticket=None, id=None):
     return resp
 
 
-
 @shared_task(name="auto_close_jobs")
 def autoclose_job(jobneedid=None):
     from django.template.loader import render_to_string
@@ -73,7 +73,7 @@ def autoclose_job(jobneedid=None):
     try:
         # get all expired jobs
         Jobneed = apps.get_model('activity', 'Jobneed')
-        resp = {'story': "", 'traceback': "", 'id':[]}
+        resp = {'story': "", 'traceback': "", 'id': []}
         expired = Jobneed.objects.get_expired_jobs(id=jobneedid)
         resp['story'] += f'total expired jobs = {len(expired)}\n'
         context = {}
@@ -83,7 +83,7 @@ def autoclose_job(jobneedid=None):
                 resp['story'] += f"processing record with id= {rec['id']}\n"
                 resp['story'] += f"record category is {rec['ticketcategory__tacode']}\n"
 
-                if rec['ticketcategory__tacode'] in ['AUTOCLOSENOTIFY', 'RAISETICKETNOTIFY']: 
+                if rec['ticketcategory__tacode'] in ['AUTOCLOSENOTIFY', 'RAISETICKETNOTIFY']:
 
                     log.info("notifying through email...")
                     pdate = rec["plandatetime"] + \
@@ -122,7 +122,8 @@ def autoclose_job(jobneedid=None):
                         context['show_ticket_body'] = True
                         jobdesc = f'AUTOCLOSED {"TOUR" if rec["identifier"] in  ["INTERNALTOUR", "EXTERNALTOUR"] else rec["identifier"] } planned on {pdate} not reported in time'
                         # DB OPERATION
-                        ticket_data = butils.create_ticket_for_autoclose(rec, jobdesc)
+                        ticket_data = butils.create_ticket_for_autoclose(
+                            rec, jobdesc)
                         log.info(f'{ticket_data}')
                         if esc := butils.get_escalation_of_ticket(ticket_data) and esc['frequencyvalue'] and esc['frequency']:
                             context['escalation'] = True
@@ -156,10 +157,9 @@ def autoclose_job(jobneedid=None):
     return resp
 
 
-
 @shared_task(name="ticket_escalation")
 def ticket_escalation():
-    result = {'story':"", 'traceback':"", 'id':[]}
+    result = {'story': "", 'traceback': "", 'id': []}
     try:
         # get all records of tickets which can be escalated
         tickets = utils.runrawsql(get_query('get_ticketlist_for_escalation'))
@@ -172,17 +172,15 @@ def ticket_escalation():
     return result
 
 
-
-
-
 @shared_task(name="send_reminder_emails")
 def send_reminder_email():
     from django.template.loader import render_to_string
     from django.conf import settings
     from apps.reminder.models import Reminder
 
-    resp = {'story': "", "traceback": "", 'id':[]}
-    reminders = Reminder.objects.get_all_due_reminders() # get all reminders which are not sent
+    resp = {'story': "", "traceback": "", 'id': []}
+    # get all reminders which are not sent
+    reminders = Reminder.objects.get_all_due_reminders()
     resp['story'] += f"total due reminders are: {len(reminders)}\n"
     log.info(f"total due reminders are {len(reminders)}")
     try:
@@ -193,8 +191,8 @@ def send_reminder_email():
             resp['story'] += f"emails recipents are as follows {emails}\n"
             recipents = list(set(emails + rem['mailids'].split(',')))
             subject = f"Reminder For {rem['job__jobname']}"
-            context = {'job': rem['job__jobname'], 'plandatetime': rem['pdate'], 'jobdesc': rem['job__jobdesc'], 'sitename':rem['bu__buname'],
-                       'creator': rem['cuser__peoplename'], 'modifier': rem['muser__peoplename'], 'subject':subject}
+            context = {'job': rem['job__jobname'], 'plandatetime': rem['pdate'], 'jobdesc': rem['job__jobdesc'], 'sitename': rem['bu__buname'],
+                       'creator': rem['cuser__peoplename'], 'modifier': rem['muser__peoplename'], 'subject': subject}
             html_message = render_to_string(
                 'reminder_mail.html', context=context)
             resp['story'] += f"context in email template is {context}\n"
@@ -206,18 +204,20 @@ def send_reminder_email():
             msg.from_email = settings.EMAIL_HOST_USER
             msg.to = recipents
             msg.content_subtype = 'html'
-            if is_mail_sent := msg.send(fail_silently=True): #returns 1 if mail sent successfully else 0
-                Reminder.objects.filter(id = rem['id']).update(status="SUCCESS", mdtz = timezone.now())
+            # returns 1 if mail sent successfully else 0
+            if is_mail_sent := msg.send(fail_silently=True):
+                Reminder.objects.filter(id=rem['id']).update(
+                    status="SUCCESS", mdtz=timezone.now())
             else:
-                Reminder.objects.filter(id = rem['id']).update(status="FAILED", mdtz = timezone.now())
+                Reminder.objects.filter(id=rem['id']).update(
+                    status="FAILED", mdtz=timezone.now())
             resp['id'].append(rem['id'])
-            log.info(f"Reminder mail sent to {recipents} with subject {subject}")
+            log.info(
+                f"Reminder mail sent to {recipents} with subject {subject}")
     except Exception as e:
         log.error("Error while sending reminder email")
         resp['traceback'] = tb.format_exc()
     return resp
-
-
 
 
 @shared_task(name="schedule_ppm_jobs")
@@ -228,7 +228,7 @@ def create_ppm_job(jobid=None):
     from apps.activity.models import Job, Asset
     from apps.schedhuler.utils import (calculate_startdtz_enddtz_for_ppm, get_datetime_list,
                                        insert_into_jn_and_jnd, get_readable_dates, create_ppm_reminder)
-    result = {'story': "", "traceback": "", 'id':[]}
+    result = {'story': "", "traceback": "", 'id': []}
 
     try:
         # atomic transaction
@@ -262,13 +262,14 @@ def create_ppm_job(jobid=None):
                         f"Jobs to be schedhuled from startdatetime {startdtz} to enddatetime {enddtz}")
                     DT, is_cron, resp = get_datetime_list(
                         job['cron'], startdtz, enddtz, resp)
-                    if not DT: 
-                        resp =  {'msg':"Please check your Valid From and Valid To dates"}
+                    if not DT:
+                        resp = {
+                            'msg': "Please check your Valid From and Valid To dates"}
                         continue
                     log.debug(
                         "Jobneed will going to create for all this datetimes\n %s", (pformat(get_readable_dates(DT))))
                     if not is_cron:
-                        F[str(job['id'])] = {'cron':job['cron']}
+                        F[str(job['id'])] = {'cron': job['cron']}
                     status, resp = insert_into_jn_and_jnd(job, DT, resp)
                     if status:
                         d.append({
@@ -289,9 +290,9 @@ def create_ppm_job(jobid=None):
                             f"create_ppm_job job_id: {key} | cron: {value}")
     except Exception as e:
         log.error("something went wrong create_ppm_job", exc_info=True)
-        F[str(job['id'])] = {'tb':tb.format_exc()}
+        F[str(job['id'])] = {'tb': tb.format_exc()}
 
-    return resp , F, d, result
+    return resp, F, d, result
 
 
 @app.task(bind=True, default_retry_delay=300, max_retries=5, name='Face recognition')
@@ -305,26 +306,34 @@ def perform_facerecognition_bgt(self, pel_uuid, peopleid, db='default'):
             utils.set_db_for_router(db)
             if pel_uuid not in [None, 'NONE', '', 1] and peopleid not in [None, 'NONE', 1, ""]:
                 Attachment = apps.get_model('activity', 'Attachment')
-                pel_att = Attachment.objects.get_people_pic(pel_uuid, db) # people event pic
-                People = apps.get_model('peoples', 'People') # people default profile pic
+                pel_att = Attachment.objects.get_people_pic(
+                    pel_uuid, db)  # people event pic
+                # people default profile pic
+                People = apps.get_model('peoples', 'People')
                 people_obj = People.objects.get(id=peopleid)
                 default_peopleimg = f'{settings.MEDIA_ROOT}/{people_obj.peopleimg.url.replace("/youtility4_media/", "")}'
-                
+
                 if default_peopleimg and pel_att.people_event_pic:
                     images_info = f"default image path:{default_peopleimg} and uploaded file path:{pel_att.people_event_pic}"
                     log.info(f'{images_info}')
                     result['story'] += f'{images_info}\n'
                     from deepface import DeepFace
-                    butils.make_square(default_peopleimg, pel_att.people_event_pic)
+                    butils.make_square(default_peopleimg,
+                                       pel_att.people_event_pic)
                     fr_results = DeepFace.verify(
-                        img1_path=default_peopleimg, img2_path=pel_att.people_event_pic, enforce_detection=False)
-                    log.info(f"deepface verification completed and results are {fr_results}")
-                    result['story'] += f"deepface verification completed and results are {fr_results}\n"
-                    PeopleEventlog = apps.get_model('attendance', 'PeopleEventlog')
+                        img1_path=default_peopleimg, img2_path=pel_att.people_event_pic, enforce_detection=True, detector_backend='ssd')
+                    log.info(
+                        f"deepface verification completed and results are {fr_results}")
+                    result[
+                        'story'] += f"deepface verification completed and results are {fr_results}\n"
+                    PeopleEventlog = apps.get_model(
+                        'attendance', 'PeopleEventlog')
                     if PeopleEventlog.objects.update_fr_results(fr_results, pel_uuid, peopleid, db):
-                        log.info("updation of fr_results in peopleeventlog is completed...")
+                        log.info(
+                            "updation of fr_results in peopleeventlog is completed...")
     except ValueError as v:
-        log.error("face recogntion image not found or face is not there...", exc_info=True)
+        log.error(
+            "face recogntion image not found or face is not there...", exc_info=True)
         result['traceback'] += f'{tb.format_exc()}'
     except Exception as e:
         log.error(
@@ -335,8 +344,7 @@ def perform_facerecognition_bgt(self, pel_uuid, peopleid, db='default'):
     return result
 
 
-
-@app.task(bind = True, default_retry_delay = 300, max_retries = 5, name = "alert_sendmail()")
+@app.task(bind=True, default_retry_delay=300, max_retries=5, name="alert_sendmail()")
 def alert_sendmail(self, id, event, atts=False):
     '''
     takes uuid, ownername (which is the model name) and event (observation or deviation)
@@ -344,9 +352,11 @@ def alert_sendmail(self, id, event, atts=False):
     '''
     Jobneed = apps.get_model('activity', 'Jobneed')
     from .utils import alert_deviation, alert_observation
-    obj = Jobneed.objects.filter(id = id).first()
-    if event == 'observation' and obj: return alert_observation(obj, atts)
-    if event == 'deviation' and obj: return alert_deviation(obj, atts)
+    obj = Jobneed.objects.filter(id=id).first()
+    if event == 'observation' and obj:
+        return alert_observation(obj, atts)
+    if event == 'deviation' and obj:
+        return alert_deviation(obj, atts)
 
 
 @shared_task(bind=True, name="task_every_min()")
@@ -362,11 +372,12 @@ def execute_report(self, params, formdata):
         # prepare basic auth headers
         username = settings.KNOWAGE_USERNAME
         password = settings.KNOWAGE_PASS
-        auth_creds = base64.b64encode(f'{username}:{password}'.encode('utf-8')).decode('utf-8')
+        auth_creds = base64.b64encode(
+            f'{username}:{password}'.encode('utf-8')).decode('utf-8')
         auth_headers = {'Authorization': f'Basic {auth_creds}'}
         log.info(f'{auth_creds = }, {auth_headers = }')
 
-        #execute the report
+        # execute the report
         report_execution_url = f"{settings.KNOWAGE_SERVER_URL}restful-services/2.0/documents/{formdata['report_name']}/content?outputType={formdata['format']}"
         log.info(f'{report_execution_url = }, {params = }')
         return requests.post(report_execution_url, headers=auth_headers, json=params)
@@ -377,8 +388,9 @@ def execute_report(self, params, formdata):
 @shared_task(bind=True, name="Send report on email")
 def send_report_on_email(self, formdata, json_report):
     from io import BytesIO
-    import mimetypes, json
-    jsonresp = {"story":"", "traceback":""}
+    import mimetypes
+    import json
+    jsonresp = {"story": "", "traceback": ""}
     try:
         jsonresp['story'] += f'formdata: {formdata}'
         file_buffer = BytesIO()
@@ -390,41 +402,90 @@ def send_report_on_email(self, formdata, json_report):
         email = EmailMessage(
             subject=f"Per your request, please find the report attached from {settings.COMPANYNAME}",
             from_email=settings.EMAIL_HOST_USER,
-            to = formdata['to_addr'],
+            to=formdata['to_addr'],
             cc=formdata['cc'],
-            body = formdata.get('email_body'),
+            body=formdata.get('email_body'),
         )
         email.attach(
-            filename = f'{formdata["report_name"]}.{formdata["format"]}',
+            filename=f'{formdata["report_name"]}.{formdata["format"]}',
             content=file_buffer.getvalue(),
             mimetype=mime_type
-            )
+        )
         email.send()
         jsonresp['story'] += "email sent"
     except Exception as e:
-        log.error("something went wrong while sending report on email", exc_info=True)
+        log.error(
+            "something went wrong while sending report on email", exc_info=True)
         jsonresp['traceback'] = tb.format_exc()
     return jsonresp
-        
-@shared_task(bind=True, name = "Create report history")        
+
+
+@shared_task(bind=True, name="Create report history")
 def create_report_history(self, formdata, userid, buid, EI):
-    jsonresp = {'story':"", "traceback":""}
+    jsonresp = {'story': "", "traceback": ""}
     try:
         ReportHistory = apps.get_model('reports', "ReportHistory")
         obj = ReportHistory.objects.create(
-            traceback = EI[2] if EI[0] else None,
-            user_id = userid,
-            report_name = formdata['report_name'],
-            params = {"params":f"{formdata}"},
-            export_type = formdata['export_type'],
-            bu_id = buid,
-            ctzoffset = formdata['ctzoffset'],
-            cc_mails = formdata['cc'],
-            to_mails = formdata['to_addr'],
-            email_body = formdata['email_body'],
+            traceback=EI[2] if EI[0] else None,
+            user_id=userid,
+            report_name=formdata['report_name'],
+            params={"params": f"{formdata}"},
+            export_type=formdata['export_type'],
+            bu_id=buid,
+            ctzoffset=formdata['ctzoffset'],
+            cc_mails=formdata['cc'],
+            to_mails=formdata['to_addr'],
+            email_body=formdata['email_body'],
         )
         jsonresp['story'] += f"A Report history object created with pk: {obj.pk}"
     except Exception as e:
-        log.error("something went wron while running create_report_history()", exc_info=True)
+        log.error(
+            "something went wron while running create_report_history()", exc_info=True)
+        jsonresp['traceback'] += tb.format_exc()
+    return jsonresp
+
+
+@shared_task(bind=True, name="Create Workpermit email notification")
+def send_email_notification_for_wp(self, womid, qsetid, approvers, client_id, bu_id):
+    jsonresp = {'story': "", "traceback": ""}
+    try:
+        from django.apps import apps
+        from django.template.loader import render_to_string
+        QuestionSet = apps.get_model('activity', 'QuestionSet')
+        People = apps.get_model('peoples', 'People')
+        wp_details = []
+        sections_qset = QuestionSet.objects.filter(
+            parent_id=qsetid).order_by('seqno')
+        for section in sections_qset:
+            sq = {
+                "qsetname": section.qsetname,
+                "seqno": section.seqno,
+                'details': section.qset_answers.filter(wom_id=womid).values(
+                    'question__quesname', 'answer').order_by('seqno')
+            }
+            wp_details.append(sq)
+        jsonresp['story'] += f"\n{wp_details}"
+        if wp_details:
+            qset = People.objects.filter(peoplecode__in = approvers)
+            for p in qset.values('email', 'id'):
+                log.info(f"sending email to {p['email'] = }")
+                jsonresp['story'] += f"sending email to {p['email'] = }"
+                msg = EmailMessage()
+                msg.subject = "Following Work Permit needs your action"
+                msg.to = [p['email']]
+                msg.from_email = settings.EMAIL_HOST_USER
+                cxt = {'sections': wp_details, 'peopleid':p['id'],
+                    "HOST": settings.HOST, "workpermitid": womid}
+                html = render_to_string(
+                    'work_order_management/workpermit_approver_action.html', context=cxt)
+                msg.body = html
+                msg.content_subtype = 'html'
+                msg.send()
+                log.info(f"email sent to {p['email'] = }")
+                jsonresp['story'] += f"email sent to {p['email'] = }"
+        jsonresp['story'] += f"A Workpermit email sent of pk: {womid}"
+    except Exception as e:
+        log.error(
+            "something went wron while running create_report_history()", exc_info=True)
         jsonresp['traceback'] += tb.format_exc()
     return jsonresp

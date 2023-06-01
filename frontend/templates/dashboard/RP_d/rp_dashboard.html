@@ -337,10 +337,11 @@
         
 
         $(".count-item").on('click', function() {
+            debugger;
             let cardType = $(this).find('[data-cardtype]').attr('data-cardtype');
             let jobstatus = $(this).find('[data-jobstatus]').attr('data-jobstatus');
             let filterData = {cardType:cardType, jobstatus:jobstatus, from:_from_pd, to:_to_pd}
-            console.log(filterData, "&&&")
+            console.log(filterData, cardType, jobstatus, "&&&")
             switch (cardType) {
                 case 'SOSALERTS':
                 localStorage.setItem('sos_alerts_filter', JSON.stringify(filterData))

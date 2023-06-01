@@ -69,6 +69,17 @@ Asset Form
                     {{ assetform.parent }}
                 </div>
             </div>
+            <div class="input-group mb-3 assetstatus">
+                <div class="col-md-4">
+                    {{ assetform.status_field.label_tag() }}
+                </div>
+                <div class="col-md-3">
+                    {{ assetform.status_field }}
+                </div>
+                <div class="col-md-5">
+                    <p id="status_fetched" class="ms-2 mb-0 pt-4 text-primary2 fs-7 text-decoration-underline"></p>
+                </div>
+            </div>
         </div>
         <div class="col-md-6">
             <div class="input-group mb-3">
@@ -351,6 +362,7 @@ Asset Form
 {{ assetform.media.js }}
 <script>
     var map, userMarker, currinfowindow, currAddr;
+    const urlname = "{{ url('activity:asset') }}"
 
     function getLatLng() {
         var gps =
@@ -435,6 +447,7 @@ Asset Form
         //hide the delete button when instance is not saved yet.
         if ('{{assetform.instance.id}}' == 'None') {
             $("#btn_del").hide()
+            $(".assetstatus").hide()
 
         } else {
             $("#id_gpslocation").val(
@@ -469,6 +482,23 @@ Asset Form
                         window.location.href = `{{ url('activity:asset') }}?id=${data.pk}`;
                     }, 2000);
                 })
+        })
+        
+        //fetch asset status period
+        $("#id_status_field").on('change', () => {
+            //get request
+            let status = $("#id_status_field").val()
+            if(status === "{{ assetform.instance.runningstatus }}"){
+                $("#status_fetched").html(`The Asset is currently undergoing ${status.toLowerCase()}`)
+            }else{
+                let id = "{{ assetform.instance.pk }}"
+                fire_ajax_get({url:`${urlname}?fetchStatus=${status}&id=${id}`})
+                .done((data, status, xhr) => {
+                    console.log(data)
+                    $("#status_fetched").html(data.period)
+                })
+            }
+            
         })
 
 

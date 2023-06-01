@@ -47,7 +47,7 @@ Buisiness View
 			},
 			pageLength:50,
 			columns     : [
-                { "data": "id" },
+                { "data": "id", className:'noVis' },
                 { "data": "bucode" },
                 { "data": "buname" },
                 { "data": "identifier__taname" },
@@ -79,9 +79,19 @@ Buisiness View
 			dom       : `<'row' <'col-sm-6 d-flex justify-content-start'f> <'col-sm-6 d-flex justify-content-end'B> >rt<'row'
 			<'col-sm-6'l> <'col-sm-6'p><'col-sm-12 d-flex justify-content-center'i>>`,
 			buttons:[
+				"searchBuilder",
+                dataTablesPDFConfig(
+                    title = `Site: {{request.user.bu.buname}}\n Task List`,
+                    columns = [1,2,3,4,5,6]
+                ),
+                dataTablesExcelConfig(
+                    title = `Site: {{request.user.bu.buname}}\n Task List`,
+                    columns = [1,2,3,4,5,6]
+                ),
+                dataTablesColumnVisibilityConfig(),
 				{
-					text     : `Add New &nbsp;<i class='fas text-white fa-plus ch4'></i></a>`,
-					className: "btn btn-sm btn-light-primary",
+					text     : `Add New &nbsp;<i class='fas text-dark fs-6 fa-plus'></i></a>`,
+					//className: "btn btn-sm btn-light-primary",
 					//action for add_new_button 
 					action: function(e, dt, node, config){
 						location.href =  "{{ url('onboarding:bu') }}?action=form"

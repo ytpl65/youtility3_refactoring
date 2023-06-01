@@ -264,14 +264,7 @@ Task Form
     }
 
     $(document).ready(() => {
-        // Disable checkboxes
-        $("input[type='checkbox']").prop("disabled", true);
-
-        // Disable text fields
-        $("input, textarea").prop("disabled", true);
-
-        // Disable select2 fields (assuming select2 has been initialized)
-        $(".django-select2, .form-select").select2({"disabled": 'readonly'})
+        makeReadonlyFields()
         
         //assignto toggle
         if ('{{ ppmjobneedform.instance.id }}' == ('None' || "")) {

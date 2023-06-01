@@ -429,7 +429,7 @@ def insert_into_jn_and_jnd(job, DT, resp):
                     log.info(f"createJob() parent jobneed:= {jn.id}")
                     if crontype in (am.Job.Identifier.INTERNALTOUR.value, am.Job.Identifier.EXTERNALTOUR.value):
                         edtz = create_child_tasks(
-                            job, pdtz, people, jn.id, jobstatus, jobtype)
+                            job, pdtz, people, jn.id, jobstatus, jobtype, jn.other_info)
                         if edtz is not None:
                             jn = am.Jobneed.objects.filter(id = jn.id).update(
                                 expirydatetime = edtz
@@ -451,7 +451,7 @@ def insert_into_jn_and_jnd(job, DT, resp):
     return status, resp
 
 def insert_into_jn_for_parent(job, params):
-    obj, _ = am.Jobneed.objects.get_or_create(
+    obj, _ = am.Jobneed.objects.update_or_create(
         defaults={
             'ctzoffset'        : job['ctzoffset'],
             'priority'         : job['priority'],
@@ -471,15 +471,17 @@ def insert_into_jn_for_parent(job, params):
             'gracetime'    : job['gracetime'],
             'performedby'    : params['NONE_P'],
             'jobstatus'      : params['jobstatus'],
+            'plandatetime': params['pdtz'],
+            'expirydatetime': params['edtz']
         },
         job_id         = job['id'],           parent       = params['NONE_JN'],
-        jobdesc        = params['jobdesc'],   plandatetime = params['pdtz'],
-        expirydatetime = params['edtz'],
-        asset_id       = job['asset_id'],     qset_id      = job['qset_id'],
+        jobdesc        = params['jobdesc'],qset_id      = job['qset_id'],
+        asset_id       = job['asset_id'],     
         people_id      = params['people'],
         pgroup_id      = job['pgroup_id'],
         jobtype        = params['jobtype'],
     )
+    ic("iscreated", _)
     return obj
 
 
@@ -540,7 +542,7 @@ def check_sequence_of_prevjobneed(job, current_seq):
 
 
 
-def create_child_tasks(job, _pdtz, _people, jnid, _jobstatus, _jobtype):
+def create_child_tasks(job, _pdtz, _people, jnid, _jobstatus, _jobtype, parent_other_info):
     try:
         prev_edtz = None
         NONE_P  = utils.get_or_create_none_people()
@@ -557,7 +559,7 @@ def create_child_tasks(job, _pdtz, _people, jnid, _jobstatus, _jobtype):
         
         params = {'_jobdesc': "", 'jnid':jnid, 'pdtz':None, 'edtz':None,
                   '_people':_people, '_jobstatus':_jobstatus, '_jobtype':_jobtype,
-                  'm_factor':None, 'idx':None, 'NONE_P':NONE_P}
+                  'm_factor':None, 'idx':None, 'NONE_P':NONE_P, 'parent_other_info':parent_other_info}
         L = list(R)
         if job['other_info']['is_randomized'] in ['True', True] and len(R) > 1:
             #randomize data if it is random tour job
@@ -622,7 +624,7 @@ def insert_into_jn_for_child(job, params, r):
                 gpslocation    = 'SRID=4326;POINT(0.0 0.0)', remarks           = '',
                 seqno          = params['idx'],              multifactor       = params['m_factor'],
                 performedby    = params['NONE_P'],           ctzoffset         = r['ctzoffset'],
-                people_id      = params['_people'],
+                people_id      = params['_people'],          other_info = params['parent_other_info']
             )
     except Exception:
         log.error("insert_into_jn_for_child[]", exc_info=True)
@@ -650,6 +652,7 @@ def job_fields(job, checkpoint, external = False):
         jsonData = {
             'distance'      : checkpoint['distance'],
             'breaktime'     : checkpoint['breaktime'],
+            'istimebound'   : job['other_info']['istimebound'],
             'is_randomized' : job['other_info']['is_randomized'],
             'tour_frequency': job['other_info']['tour_frequency']}
         data['jobname']    = f"{checkpoint['bu__buname']} :: {job['jobname']}"

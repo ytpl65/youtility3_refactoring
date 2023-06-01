@@ -12,6 +12,13 @@ $(document).on({
 //   endBlockUi();
 // })
 
+//check if a normal select field is enhanced by select2
+function isSelect2(element) {
+  var instance = jQuery(element).data('select2');
+  return instance !== undefined;
+}
+
+
 function getAddressOfPoint(geocoder, point, callback){
   geocoder.geocode({ location: point })
   .then((res) => {
@@ -22,6 +29,81 @@ function getAddressOfPoint(geocoder, point, callback){
     }
   })
 
+}
+
+function simplifyData(e, data, action) {
+  if (action !== 'remove') {
+      var rowData = data.data;
+      var simplifiedData = {};
+
+      for (var key in rowData) {
+          var row = rowData[key];
+          for (var field in row) {
+              simplifiedData[field] = row[field];
+          }
+      }
+
+      data.data = simplifiedData;
+  }
+}
+
+function dataTablesExcelConfig(title, columns){
+  return {
+    extend:'excelHtml5',
+    text:'<i class="bi bi-file-earmark-excel-fill text-success fs-5"></i>',
+    titleAttr:'EXCEL',
+    title:title,
+    exportOptions: {
+        modifier: {
+            page: 'all'
+        },
+        columns:columns
+    },
+  }
+} 
+
+
+function dataTablesPDFConfig(title, columns){
+  return {
+    extend: 'pdfHtml5',
+    text:'<i class="bi text-danger fs-5 bi-file-earmark-pdf-fill"></i>', 
+    titleAttr: 'PDF',
+    exportOptions: {
+        modifier: {
+            page: 'all'
+        },
+        columns:columns
+    },
+    header: true,
+    title: title,
+    orientation: 'landscape',
+    customize: function(doc) {
+        doc.defaultStyle.fontSize = 8;
+        doc.styles.tableHeader.fontSize = 9;
+    }
+  }
+}
+
+function dataTablesColumnVisibilityConfig(){
+  return {
+            extend: 'colvis',
+            columns: ':not(.noVis)',
+            collectionLayout: 'fixed columns',
+            collectionTitle: 'Column visibility control',
+            text:'<i class="bi bi-gear-fill fs-4 text-dark"></i>',
+            titleAttr:'Select columns to be included',
+            postfixButtons: [ 'colvisRestore' ]
+        }
+}
+
+function makeReadonlyFields(){
+    // Disable checkboxes
+    $("input[type='checkbox']").prop("disable=d", true);
+    // Disable text fields
+    $("input, textarea").prop("readonly", 'readonly');
+    $('select').prop('disabled', true);
+    // Disable select2 fields (assuming select2 has been initialized)
+    $("select.django-select2").select2({"disabled": 'readonly'})
 }
 
 function toggleRequiredAttribute(id, set = true){
@@ -349,6 +431,32 @@ function handle_alerts_msgs(msg, alertype) {
   }
 }
 
+function display_field_error(key, value){
+  let error = "<p class='errors'>" + value + "</p>";
+  let fieldselector = "[name='" + key + "']";
+  var field = $(fieldselector);
+  if (field.is(":visible")) {
+    handle_alerts_msgs(
+      "Please resolve the following errors!",
+      "alert alert-danger"
+    );
+    if (field.is("select") === true) {
+      if(!field.next().find(".select2-selection").hasClass("is-invalid")){
+        field.next().find(".select2-selection").addClass("is-invalid");
+        var tag = field.next();
+        $(error).insertAfter(tag);
+      }
+    } else {
+      if(!field.hasClass("is-invalid")){
+        field.addClass("is-invalid");
+        $(error).insertAfter(field);
+      }
+    }
+    
+  }
+}
+
+
 function display_form_errors(errors) {
 
   $("p.errors").remove();
@@ -363,23 +471,7 @@ function display_form_errors(errors) {
         console.log("errors has non field errors");
         display_non_field_errors(errors['__all__']); //non-field errors
       }
-      let error = "<p class='errors'>" + errors[key] + "</p>";
-      let fieldselector = "[name='" + key + "']";
-      var field = $(fieldselector);
-      if (field.is(":visible")) {
-        handle_alerts_msgs(
-          "Please resolve the following errors!",
-          "alert alert-danger"
-        );
-        if(!field.hasClass("is-invalid")){
-          field.addClass("is-invalid");
-          field = field.parent().hasClass("d-flex") ? field.parent() : field;
-          $(error).insertAfter(field);
-
-          field.next("p").css({ color: "red", "font-size": "15px" });
-        }
-        
-      }
+      display_field_error(key, errors[key])
     }
   }
 }
@@ -440,9 +532,10 @@ function show_alert_before_update(data) {
   });
 }
 
-function submit_form_alert(text=null) {
+function submit_form_alert(text=null, title=null) {
+  console.log(title)
   return Swal.fire({
-    title: "Submit Form?",
+    title: title || "Submit Form?",
     html:text,
     icon: "question",
     showCancelButton: true,
@@ -471,6 +564,24 @@ function display_non_field_errors(errors) {
   $("#nonfield_errors > span").text(errstr);
 }
 
+function display_modelfield_error(key, value){
+  error = "<p class='errors'>" + value + "</p>";
+  lookup = "[name='" + key + "']";
+  field = $(".modal-body").find(lookup);
+  if ($(field).is("select") === true) {
+    if($(field).next().find(".select2-selection").hasClass("is-invalid")){
+      $(field).next().find(".select2-selection").addClass("is-invalid");
+      var tag = $(field).next();
+      $(error).insertAfter(tag);
+    }
+  } else {
+    if(!$(field).hasClass("is-invalid")){
+      $(field).addClass("is-invalid");
+      $(error).insertAfter(field);
+    }
+  }
+}
+
 function display_modelform_errors(errors) {
   $("p.errors").remove();
   //non field errors
@@ -482,21 +593,7 @@ function display_modelform_errors(errors) {
   }  else {
     //field errors
     for (let key in errors) {
-      error = "<p class='errors'>" + errors[key] + "</p>";
-      lookup = "[name='" + key + "']";
-      field = $(".modal-body").find(lookup);
-      if ($(field).is("select") === true) {
-        if($(field).next().find(".select2-selection").hasClass("is-invalid")){
-          $(field).next().find(".select2-selection").addClass("is-invalid");
-          var tag = $(field).next();
-          $(error).insertAfter(tag);
-        }
-      } else {
-        if(!$(field).hasClass("is-invalid")){
-          $(field).addClass("is-invalid");
-          $(error).insertAfter(field);
-        }
-      }
+      display_modelfield_error(key, errors[key])
     }
   }
 }

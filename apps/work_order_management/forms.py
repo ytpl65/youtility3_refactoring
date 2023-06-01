@@ -1,7 +1,7 @@
 from django import forms
 from django.core.exceptions import ValidationError
 from django.db.models import Q
-from .models import Vendor, Wom, WomDetails
+from .models import Vendor, Wom, WomDetails, Vendor
 from apps.core import utils
 from django.http import QueryDict
 from django.contrib.gis.geos import GEOSGeometry
@@ -9,6 +9,8 @@ import django_select2.forms as s2forms
 from django.utils import timezone
 from apps.onboarding import models as om
 from apps.activity import models as am
+from apps.work_order_management.models import Approver
+from apps.peoples.models import Pgbelonging, People
 
 class VendorForm(forms.ModelForm):
     required_css_class = "required"
@@ -112,10 +114,11 @@ class WorkOrderForm(forms.ModelForm):
 
 class WorkPermitForm(forms.ModelForm):
     required_css_class = "required"
-    seqno = forms.IntegerField(label="Seq. #", required=False, widget=forms.TextInput(attrs={'readonly':True}))
+    seqno = forms.IntegerField(label="Seq. Number", required=False, widget=forms.TextInput(attrs={'readonly':True}))
+    approvers = forms.MultipleChoiceField(widget=s2forms.Select2MultipleWidget, label="Approvers")
     class Meta:
         model = Wom
-        fields = ['qset', 'seqno', 'ctzoffset']
+        fields = ['qset', 'seqno', 'ctzoffset', 'workpermit', 'performedby', 'parent', 'approvers', 'vendor']
         labels={
             'qset':'Permit to work',
             'seqno':'Seq No'
@@ -129,6 +132,47 @@ class WorkPermitForm(forms.ModelForm):
         S = self.request.session
         super().__init__(*args, **kwargs)
         utils.initailize_form_fields(self)
-        
+        self.fields['approvers'].choices = Approver.objects.get_approver_options_wp(self.request).values_list('people__peoplecode', 'people__peoplename')
         self.fields['qset'].queryset = am.QuestionSet.objects.filter(
             type='WORKPERMIT', client_id = S['client_id'], bu_id = S['bu_id'], enable=True)
+        self.fields['vendor'].queryset = Vendor.objects.filter(Q(bu_id = S['bu_id']) | Q(show_to_all_sites = True))
+        
+        
+        
+class ApproverForm(forms.ModelForm):
+    required_css_class = "required"
+    approverfor = forms.MultipleChoiceField(widget=s2forms.Select2MultipleWidget, required=True)
+    sites = forms.MultipleChoiceField(widget=s2forms.Select2MultipleWidget, required=False)
+    class Meta:
+        model = Approver
+        fields = ['approverfor', 'forallsites', 'sites', 'people', 'ctzoffset']
+        widgets = {
+            'people':s2forms.Select2Widget
+        }
+        labels = {
+            'approverfor':'Approver For',
+            'forallsites':'Applicable to all sites',
+            'people':'Approver'
+        }
+        
+    def __init__(self, *args, **kwargs):
+        self.request = kwargs.pop('request')
+        S = self.request.session
+        super().__init__(*args, **kwargs)
+        utils.initailize_form_fields(self)
+        self.fields['approverfor'].choices = om.TypeAssist.objects.filter(
+            client_id = S['client_id'], tatype__tacode = 'APPROVERFOR'
+        ).values_list('tacode', 'taname')
+        self.fields['sites'].choices = Pgbelonging.objects.get_assigned_sites_to_people(
+            self.request.user.id, makechoice=True)
+        self.fields['people'].queryset = People.objects.filter(
+            client_id = S['client_id'], isverified=True, enable=True
+        )
+        
+    def clean(self):
+        cd = super().clean()
+        if cd['forallsites'] == True:
+            self.cleaned_data['sites'] = None
+        if cd ['sites'] not in (None, ""):
+            self.cleaned_data['forallsites'] = False
+        return self.cleaned_data

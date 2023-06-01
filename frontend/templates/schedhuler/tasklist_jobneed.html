@@ -1,5 +1,17 @@
 {% extends "base_list.html" %}
 
+{% block extra_css %}
+<style>
+td.selected { background-color: yellow; }
+td:not(:last-child) { cursor: pointer; }
+td { padding: 6px; border: 1px solid #CCC; }
+tr{
+    font-size: 11px;
+}
+</style> 
+
+{% endblock extra_css %}
+
 <!---- BEGIN CARD TITLE ------>
 {% block card_title %}
 Task List
@@ -15,7 +27,7 @@ Task List
 
 <!-------------------------------------------- BEGIN TABLE ------------------------------------------->
 {% block table %}
-<table id="task_table_jobneed" class="display cell-border" style="width:100%">
+<table id="task_table_jobneed" class="display compact cell-border" style="width:100%">
 </table>
 {% endblock table %}
 <!-------------------------------------------- END TABLE ------------------------------------------->
@@ -45,6 +57,27 @@ Task List
         params = filters
         table.ajax.reload()
     }
+
+    function acknowdgeAutocloseTask(indexes){
+        var rowData = table.rows(indexes).data();
+        fire_ajax_get(
+            { url:`${urlname}?action=acknowledgeAutoCloseTask&id=${rowData[0]['id']}`}
+        ).done((data, status, xhr) => {
+            console.info("Row Achnkowledged")
+            table.rows(indexes).data(data.row).draw()
+        })
+    }
+
+    function alertOnAcknowledgement(){
+        return Swal.fire({
+            icon:'warning',
+            title:"Are you sure!",
+            text:`By selecting this row, you are acknowledging 
+                        that you have reviewed and understand the details contained
+                        within it. Are you sure you want to proceed?`,
+            showCancelButton:true
+        })
+    }
     
     $(document).ready(function (){
         //datatable initialization
@@ -60,15 +93,18 @@ Task List
             dom:`<'row' <'col-sm-6 d-flex justify-content-start'<'customfields'>f> <'col-sm-6 d-flex justify-content-end'B> >rt<'row'
             <'col-sm-6'l> <'col-sm-6'p><'col-sm-12 d-flex justify-content-center'i>>`,
             columns:[
-                {data: 'id'},
+                {data: 'id', className:"noVis"},
                 {data: 'plandatetime', title: "Plan Datetime"},
                 {data: 'jobdesc', title: 'Description'},
                 {data: 'jobstatus', title: 'Status'},
                 {data: 'jobtype', title: 'Type'},
+                {data: 'ticketcategory__taname', title: 'Notify Category'},
                 {title: 'People/Group', data:'assignedto'},
                 {data: 'performedby__peoplename', title: 'Performed By'},
                 {data: 'gracetime', title: "Grace Time"},
-                {data: 'expirydatetime', title: "Expiry Datetime"}
+                {data: 'expirydatetime', title: "Expiry Datetime"},
+                {data:null, width:'4%',defaultContent:'', title:'Seen', className:'select-checkbox noVis'},
+                {visible:false, className:'noVis', data:'other_info__isAcknowledged'}
             ],
             columnDefs:[
                 {targets:0, data: 'id', visible:false, searchable:false},
@@ -78,27 +114,37 @@ Task List
                 {targets:[1], render:function(data, type, row, meta){
                     return convert_to_local(type, data, row)
                 }},
-                {targets:[8], render:function(data, type, row, meta){
+                {targets:[9], render:function(data, type, row, meta){
                     return convert_to_local(type, data, row)
                 }},
-                {targets:7, render:function(data, type, row, meta){
+                {targets:8, render:function(data, type, row, meta){
                     return `${data} mins`
                 }},
             ],
+            createdRow:function(row, data, dataIndex){
+                if(!['AUTOCLOSED', 'Auto Closed'].includes(data['jobstatus'])){
+                    $(row).find('td.select-checkbox').removeClass('select-checkbox');
+                }
+                if(data['other_info__isAcknowledged']){
+                    $(row).addClass('selected')
+                }
+            },
+            select:{
+                style:'multi'
+            },
             order:[[1, 'desc']],
-            buttons:['excel', 'pdf', 'csv',
-				{
-					text:`Apply filters &nbsp;<i class='fas text-white fa-search ch4'></i></a>`,
-					className: "btn btn-sm btn-light btn-hover-rise",
-					//action for add_new_button 
-					action: function(e, dt, node, config){
-                        //This will send the page to the location specified
-        				submitFormFilter()
-					}
-				}
+            buttons:[
+                "searchBuilder",
+                dataTablesPDFConfig(
+                    title = `Site: {{request.user.bu.buname}}\n Task List`,
+                    columns = [1,2,3,4,5,6,7,8,9]
+                ),
+                dataTablesExcelConfig(
+                    title = `Site: {{request.user.bu.buname}}\n Task List`,
+                    columns = [1,2,3,4,5,6,7,8,9]
+                ),
+                dataTablesColumnVisibilityConfig()         
 			],
-
-        
         })
         //table.ajax.data = {'action':'list', "pd1":from_pd, "pd2":to_pd}
         //table.ajax.reload()
@@ -113,6 +159,33 @@ Task List
          })
 		//END STYLING DATATABLE
 
+        // Flag to check if the deselection is being done programmatically
+        var alreadyAsked = false;
+        table.on('deselect', function(e, dt, type, indexes){
+            var rowData = table.rows(indexes).data();
+            if(rowData[0]['other_info__isAcknowledged'] === true){
+                table.rows(indexes).select();
+            }
+        })
+
+        table.on('select', function(e, dt, type, indexes) {
+            var rowData = table.rows(indexes).data()
+            console.log(rowData[0]["other_info__isAcknowledged"])
+            if(rowData[0]["other_info__isAcknowledged"] === true){return}
+            if (!alreadyAsked) {
+                alertOnAcknowledgement()
+                .then((res) => {
+                    if(!res.isConfirmed){
+                        table.rows(indexes).deselect();
+                    }else{
+                        acknowdgeAutocloseTask(indexes)
+                        alreadyAsked = true
+                    }
+                })
+            }else {
+                acknowdgeAutocloseTask(indexes)
+            }
+        });
     })
 </script>
 {% endblock extra_scripts %}

@@ -68,8 +68,7 @@ $(document).ready(function(){
         responsive : true,
         buttons:[
             {
-                text:`Add New &nbsp;<i class='fas text-white fa-plus ch4'></i></a>`,
-                className: 'btn btn-sm btn-light-primary',
+                text:`Add New &nbsp;<i class='fas text-dark fa-plus'></i></a>`,
                 action: function(e, dt, node, config){
                     window.location.href = "{{ url('activity:adhoctasks') }}?action=form";
                 }

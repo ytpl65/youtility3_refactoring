@@ -66,7 +66,7 @@ Scheduled Tours
                 dataSrc: 'jobname',
             },
             columnDefs:[
-                {targets:0, data: 'id', visible:false, searchable:false},
+                {targets:0, data: 'id', visible:false, searchable:false, className:'noVis'},
                 {
                     targets:1, data: 'jobname', render: function (data, type, row, meta){
                         return `<a href="${urlname}?id=${row['id']}">${data}</a>`
@@ -81,9 +81,18 @@ Scheduled Tours
             ],
             select:true,
             buttons:[
+                "searchBuilder",
+                dataTablesPDFConfig(
+                    'Site: {{ request.user.bu.buname }}\nScheduled Internal Tour List',
+                    [1,2,3,4,5,6,7]
+                ),
+                dataTablesExcelConfig(
+                    'Site: {{ request.user.bu.buname }}\nScheduled Internal Tour List',
+                    [1,2,3,4,5,6,7]
+                ),
+                dataTablesColumnVisibilityConfig(),
 				{
-					text:`Schedule Tour &nbsp;<i class='fas text-white fa-plus ch4'></i></a>`,
-					className: "btn btn-sm btn-light-primary btn-hover-rise",
+					text:`Schedule Tour &nbsp;<i class='fas text-dark fa-plus'></i></a>`,
 					//action for add_new_button 
 					action: function(e, dt, node, config){
                         //This will send the page to the location specified

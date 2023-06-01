@@ -183,11 +183,13 @@ class PeopleManager(BaseUserManager):
 
     def people_list_view(self, request, fields, related):
         S  = request.session
+        ic(S['client_id'], S['assignedsites'])
         if request.user.isadmin:
             qset = self.filter(
                 ~Q(peoplecode='NONE'), 
                 client_id = S['client_id']).select_related(*related).values(*fields)
         else:
+            
             qset = self.filter(
                 ~Q(peoplecode='NONE'), 
                 client_id = S['client_id'],
@@ -286,7 +288,6 @@ class PgblngManager(models.Manager):
             if makechoice:
                 qset = qset.annotate(text = Concat(F('buname'), V(' ('), F('bucode'), V(')'))).values_list('buid', 'text')
         else:
-            #get groupids assigned to people
             assigned_sitegroup_ids = People.objects.filter(id = peopleid).values_list('people_extras__assignsitegroup', flat=True)
 
             #get sites assigned to groupids
@@ -296,11 +297,13 @@ class PgblngManager(models.Manager):
                     ).values('buname', 'bucode', 'buid').order_by('assignsites_id').distinct('assignsites_id')
 
             buids = qset.values_list('buid', flat=True)
-            peopleqset = peopleqset.values('buname', 'bucode', 'buid')
-            buids = buids.union(peopleqset.values_list('buid', flat=True))
+            peopleqset = peopleqset.values('buname', 'bucode', 'bu_id') # use 'bu_id' here
+            buids = buids.union(peopleqset.values_list('bu_id', flat=True)) # use 'bu_id' here
             qset = qset.union(peopleqset)
+            ic("outside", qset)
             
             if qset and makechoice:
+                ic("inside", qset)
                 qset = qset.annotate(text = Concat(F('buname'), V(' ('), F('bucode'), V(')'))).values_list('buid', 'text')
             
             #return for mobile service

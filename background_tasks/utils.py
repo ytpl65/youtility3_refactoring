@@ -8,6 +8,8 @@ from django.apps import apps
 log = getLogger('mobile_service_log')
 
 def correct_image_orientation(img):
+    # Initialize orientation with a default value
+    orientation = 1
     # Check the current orientation
     if hasattr(img, '_getexif'):
         orientation = 0x0112
@@ -329,7 +331,7 @@ def alert_observation(jobneed, atts=False):
             if atts:
                 log.info('Attachments are going to attach')
                 #add attachments to msg
-                msg = add_attachments(jobneed, msg)
+                msg = add_attachments(jobneed, msg, result)
             msg.send()
             log.info(f"Alert mail sent to {recipents} with subject {subject}")
             result['story'] += 'Mail sent'

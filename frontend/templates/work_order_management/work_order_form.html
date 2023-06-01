@@ -163,11 +163,20 @@ Work Order
 
 <!------------------- BEGIN FORM PAGE ACTIONS --------------->
 {% block page_actions %}
-{% if edit is defined %}
-{{ form_update('id_woform', popup_id="delete_alert") }}
-{% else %}
-{{ form_create('id_woform') }}
-{% endif %}
+<div class="d-flex align-items-center py-1">
+  <div id="form_actions">
+    <!--Save Button-->
+    <button type="submit" form="id_woform" id="form_update" class="btn btn-sm  btn-primary2 rounded-1">Save&nbsp;<i
+        class="fas text-white fa-cloud-upload-alt"></i></button>
+    <!--Clear Button-->
+    <a href="#" class="btn btn-sm  btn-secondary rounded-1" id='btn_clear'>Clear&nbsp;<i
+        class="fas  fa-times-circle"></i></a>
+    <a href="#" class="btn btn-sm  btn-success rounded-1" id='btn_close'>Close&nbsp;<i
+        class="fas  fa-times-circle"></i></a>
+    <!-- Action Button -->
+    
+  </div>
+</div>
 {% endblock page_actions %}
 <!------------------- END FORM PAGE ACTIONS --------------->
 
@@ -300,6 +309,40 @@ Work Order
           $("#id_workstatus").val("{{ woform.instance.workstatus }}")
         }
     });
+
+    $("#btn_close").click((e) => {
+            if("{{ woform.instance.workstatus }}" === "CLOSED"){
+              Swal.fire({
+                icon: 'warning',
+                title: 'Work order is already closed!',
+                showConfirmButton: false,
+                timer: 1500
+              })
+            }else{
+                          //appprove workpermit
+            submit_form_alert(text=null, title = 'Close Work Order!').then((res) => {
+                if(res.isConfirmed){
+                    let womid = "{{ woform.instance.id }}"
+                    fire_ajax_get({
+                        url:`${urlname}?action=close_wo&womid=${womid}`,
+                    }).done((data, status, xhr) => {
+
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Work Order has been closed',
+                            showConfirmButton: false,
+                            timer: 1500
+                        })
+                        window.setTimeout(function(){
+                            window.location.href = `${urlname}?id={{ woform.instance.id }}`;
+                        }, 1500)
+                    
+                    })
+                }
+            })
+            }
+
+        })
 
     
 

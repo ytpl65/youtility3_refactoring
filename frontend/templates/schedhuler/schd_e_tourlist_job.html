@@ -55,7 +55,7 @@ ext_schdtour_list = 'External ScheduleTour List',
                 {title: 'Exp. Time', data: 'expirytime'},
             ],
             columnDefs:[
-                {targets:0, data: 'id', visible: 'false', searchable:false },
+                {targets:0, data: 'id', visible: 'false', searchable:false, className:'noVis' },
                 {targets:1, data: 'jobname', render:function(data, type, row, meta){
                     let urlname = "{{ url('schedhuler:schd_external_tour') }}"
                     return `<a href="${urlname}?id=${row['id']}">${data}</a>`
@@ -76,9 +76,18 @@ ext_schdtour_list = 'External ScheduleTour List',
             dom:`<'row' <'col-sm-6 d-flex justify-content-start'f> <'col-sm-6 d-flex justify-content-end'B> >rt<'row'
 			 <'col-sm-6'l> <'col-sm-6'p><'col-sm-12 d-flex justify-content-center'i>>`,
             buttons:[
+                "searchBuilder",
+                dataTablesPDFConfig(
+                    'Site: {{ request.user.bu.buname }}\nScheduled Route Plan List',
+                    [1,2,3,4,5,6,7,8,9]
+                ),
+                dataTablesExcelConfig(
+                    'Site: {{ request.user.bu.buname }}\nScheduled Route Plan List',
+                    [1,2,3,4,5,6,7,8,9]
+                ),
+                dataTablesColumnVisibilityConfig(),
 				{
-					text:`Add New &nbsp;<i class='fas text-white fa-plus ch4'></i></a>`,
-					className: "btn btn-sm btn-light-primary btn-hover-rise",
+					text:`Add New &nbsp;<i class='fas text-dark fa-plus'></i></a>`,
 					//action for add_new_button 
 					action: function(e, dt, node, config){
         				window.location.href = "{{ url('schedhuler:schd_external_tour') }}?action=form";

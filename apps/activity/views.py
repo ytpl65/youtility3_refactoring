@@ -723,7 +723,7 @@ class QsetNQsetBelonging(LoginRequiredMixin, View):
             return rp.JsonResponse({'data':list(data)}, status = 200, safe=False)
         if R.get('question'):
             data = P['qsb'].objects.handle_questionpostdata(request)
-            return rp.JsonResponse({'data':list(data)}, status = 200, safe=False)
+            return rp.JsonResponse(data, status = 200, safe=False)
         
         
 class MobileUserLog(LoginRequiredMixin, View):
@@ -1168,6 +1168,10 @@ class Asset(LoginRequiredMixin,View):
         
         if R.get('action', None) == "delete" and R.get('id', None):
             return utils.render_form_for_delete(request, P, True)
+        
+        if R.get('fetchStatus') not in ["", None]:
+            period = am.Asset.objects.get_period_of_assetstatus(R['id'], R['fetchStatus'])
+            return rp.JsonResponse({'period':period}, status=200)
         
         # return form with instance
         elif R.get('id', None):

@@ -39,7 +39,7 @@ Escalation List
 				searchPlaceholder: "Search keyword"
 			},
             columns:[
-                {data:'id', visible:false},
+                {data:'id', visible:false, className:"noVis"},
                 {data:'ctzoffset', visible:false},
                 {title:'Category', data:'taname', render:function(data, type, row, meta){
                     let url = "{{ url('helpdesk:escalationmatrix') }}"
@@ -53,9 +53,18 @@ Escalation List
             dom       : `<'row' <'col-sm-6 d-flex justify-content-start'f> <'col-sm-6 d-flex justify-content-end'B> >rt<'row'
 			<'col-sm-6'l> <'col-sm-6'p><'col-sm-12 d-flex justify-content-center'i>>`,
             buttons:[
+				"searchBuilder",
+                dataTablesPDFConfig(
+                    title = `Site: {{request.user.bu.buname}}\n Escalation List`,
+                    columns = [2,3]
+                ),
+                dataTablesExcelConfig(
+                    title = `Site: {{request.user.bu.buname}}\n Escalation List`,
+                    columns = [2,3]
+                ),
+                dataTablesColumnVisibilityConfig(),
 				{
-					text     : `Add New &nbsp;<i class='fas text-white fa-plus ch4'></i></a>`,
-					className: "btn btn-sm btn-light-primary",
+					text     : `Add New &nbsp;<i class='fas text-dark fa-plus'></i></a>`,
 					//action for add_new_button 
 					action: function(e, dt, node, config){
 						location.href =  "{{ url('helpdesk:escalationmatrix') }}?action=form"

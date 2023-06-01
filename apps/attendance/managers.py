@@ -65,7 +65,9 @@ class PELManager(models.Manager):
         R, S = request.GET, request.session
         P = json.loads(R['params'])
         ic(P)
-        qset = self.select_related(*related).filter(
+        qset = self.select_related(*related).annotate(
+            sL = AsGeoJSON('startlocation'), eL = AsGeoJSON('endlocation')
+            ).filter(
             bu_id__in = S['assignedsites'],
             client_id = S['client_id'],
             datefor__gte = P['from'],
@@ -147,7 +149,7 @@ class PELManager(models.Manager):
             client_id = S['client_id'],
             datefor__gte = pd1,
             datefor__lte = pd2,
-            peventtype__tacode__in = ['SELF', 'SELFATTENDANCE']
+            peventtype__tacode__in = ['SELF', 'SELFATTENDANCE', 'MARKATTENDANCE', "MARK"]
         ).count() or 0
     
     def get_attendance_history(self, mdtz, people_id, bu_id, client_id, ctzoffset):

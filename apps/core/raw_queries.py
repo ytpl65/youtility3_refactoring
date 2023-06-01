@@ -178,6 +178,18 @@ def get_query(q):
                                                 GROUP BY bu.id, bu.buname, (jobneed.plandatetime AT TIME ZONE tz.timezone)::DATE
                                                 ORDER BY bu.buname, (jobneed.plandatetime AT TIME ZONE tz.timezone)::DATE desc
                                             ) x;
+                                            ''',
+    'asset_status_period':                  '''
+                                            SELECT asset_id, (SUM(standby_duration) || ' seconds')::interval  AS total_duration
+                                            FROM (
+                                                SELECT asset_id,
+                                                    EXTRACT(EPOCH FROM (
+                                                        lead(cdtz) OVER (PARTITION BY asset_id ORDER BY cdtz) - cdtz
+                                                    )) AS standby_duration  -- This will give the duration in seconds
+                                                FROM assetlog
+                                                WHERE (oldstatus = %s OR newstatus = %s) and asset_id = %s
+                                            ) sub
+                                            GROUP BY asset_id;
                                             '''
 
     }

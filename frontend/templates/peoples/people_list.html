@@ -33,16 +33,16 @@ People
 				url: "{{ url('peoples:people') }}?action=list"
 			},
 			columns:[
-				{data: 'id', visible:false, defaultContent: ""},
+				{data: 'id', visible:false, defaultContent: "", className:'noVis'},
+				{data:"peoplecode", title:"Code"},
 				{data: 'peoplename', title: 'Name'},
 				{data: 'peopletype__tacode', title: 'People Type'},
 				{data: 'bu__buname', title: 'Site'},
 				{data: 'isadmin', title: 'Admin'},
-				{data: 'enable', title: 'Enable', render:function(data, type, row, meta){
-					return data === true ? '<i class="bi bi-check-circle-fill text-success"></i>': '<i class="bi bi-x-circle-fill text-danger"></i>'				
-				}},
+				{data: 'enable', title: 'Enable'},
 				{data: 'email', title: 'Email'},
 				{data: 'mobno', title: 'Phone #'},
+				
 			],
 			pageLength:50,
 			order:[[1, 'asc'], [3, 'asc']],
@@ -51,9 +51,12 @@ People
 			dom:`<'row' <'col-sm-6 d-flex justify-content-start'f> <'col-sm-6 d-flex justify-content-end'B> >rt<'row'
 			 <'col-sm-6'l> <'col-sm-6'p><'col-sm-12 d-flex justify-content-center'i>>`,
 			columnDefs:[
-				{targets:1, data: 'peoplename', render:function(data, type, row, meta){
+				{targets:2, data: 'peoplename', render:function(data, type, row, meta){
 					let updateUrl = "{{ url('peoples:people') }}"
 					return `<a href=${updateUrl}?id=${row['id']}>${data}</a>`
+				}},
+				{targets:[5,6], render:function(data, type, row, meta){
+					return data === true ? '<i class="bi bi-check-circle-fill text-success"></i>': '<i class="bi bi-x-circle-fill text-danger"></i>'				
 				}}
 			],
 			createdRow:function(row, data, dataIndex){
@@ -62,6 +65,16 @@ People
 				}
 			},
 			buttons:[
+				"searchBuilder",
+                dataTablesPDFConfig(
+                    title = `Site: {{request.user.bu.buname}}\n People List`,
+                    columns = [1,2,3,4,5,6,7,8]
+                ),
+                dataTablesExcelConfig(
+                    title = `Site: {{request.user.bu.buname}}\n People List`,
+                    columns = [1,2,3,4,5,6,7,8]
+                ),
+                dataTablesColumnVisibilityConfig()    ,
 				{
 					text     : `Add New &nbsp;<i class='fas text-white fa-plus ch4'></i></a>`,
 					className: "btn btn-sm btn-light-primary",

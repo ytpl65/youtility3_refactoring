@@ -165,7 +165,7 @@ Question set
     var childEditor = null
     var template_id=null
     var seqno = 0
-    const templates = ['SITEREPORT', 'INCIDENTREPORT', 'WORKPERMIT', 'WORK_ORDER']
+    const templates = ['SITEREPORT', 'INCIDENTREPORT', 'WORKPERMIT']
 
     //delete typeassist 
     function deleteChecklist(elemt){
@@ -198,7 +198,7 @@ Question set
 
 
     function showSectionConfiguration(){
-         //editor section table
+        //editor section table
         parentEditor = new $.fn.dataTable.Editor({
             table: "#tabSitereports",
             ajax: {

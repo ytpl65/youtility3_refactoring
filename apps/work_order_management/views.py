@@ -2,13 +2,17 @@ from django.shortcuts import render
 from django.db import IntegrityError, transaction
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.views.generic.base import View
-from .forms import VendorForm, WorkOrderForm, WorkPermitForm
-from .models import Vendor, Wom, WomDetails
-from apps.activity.models import QuestionSetBelonging
+from .forms import VendorForm, WorkOrderForm, WorkPermitForm, ApproverForm
+from .models import Vendor, Wom, WomDetails, Approver
+from apps.peoples.models import People
+from apps.activity.models import QuestionSetBelonging, QuestionSet
+from background_tasks.tasks import send_email_notification_for_wp
 from django.http import Http404, QueryDict, response as rp, HttpResponse
 from apps.core  import utils
 from apps.peoples import utils as putils
 import psycopg2.errors as pg_errs
+from django.template.loader import render_to_string
+from apps.work_order_management.utils import check_all_approved, reject_workpermit
 import logging
 from django.utils import timezone
 logger = logging.getLogger('__main__')
@@ -122,7 +126,12 @@ class WorkOrderView(LoginRequiredMixin, View):
             cxt = {'woform': P['form_class'](request = request),
                    'msg': "create workorder requested", 'ownerid':uuid.uuid4()}
             resp =  render(request, P['template_form'], cxt)
-
+        
+        #close the work order
+        elif R.get('action') == 'close_wo' and R.get('womid'):
+            Wom.objects.filter(id = R['womid']).update(workstatus = 'CLOSED')
+            return rp.JsonResponse({'pk':R['womid']}, status=200)
+        
         # handle delete request
         elif R.get('action', None) == "delete" and R.get('id', None):
             resp = utils.render_form_for_delete(request, P, True)
@@ -208,6 +217,7 @@ class ReplyWorkOrder(View):
         try:
             if  R['action'] == 'accepted' and R['womid']:
                 wo = Wom.objects.get(id = R['womid'])
+                if wo.workstatus == Wom.Workstatus.COMPLETED: return HttpResponse("The work order are already submitted!")
                 wo.workstatus = Wom.Workstatus.INPROGRESS
                 log.info("work order accepted by vendor")
                 wo.starttime = timezone.now()
@@ -217,6 +227,7 @@ class ReplyWorkOrder(View):
             
             if  R['action'] == 'declined' and R['womid']:
                 wo = Wom.objects.get(id = R['womid'])
+                if wo.workstatus == Wom.Workstatus.COMPLETED: return HttpResponse("The work order are already submitted!")
                 wo.isdenied = True
                 wo.workstatus = Wom.Workstatus.CANCELLED
                 log.info(f'work order cancelled/denied by vendor')
@@ -326,35 +337,66 @@ class WorkPermit(LoginRequiredMixin, View):
     params = {
         'template_list':'work_order_management/workpermit_list.html',
         'template_form':'work_order_management/workpermit_form.html',
+        'partial_form':'work_order_management/partial_wp_questionform.html',
+        'email_template':'work_order_management/workpermit_approver_action.html',
         'model':Wom,
         'form':WorkPermitForm,
         'related':[],
-        'fields':['cdtz', 'id', 'other_data__wp_seqno', 'qset__qsetname', 'workpermit']
+        'fields':['cdtz', 'id', 'other_data__wp_seqno', 'qset__qsetname', 'workpermit', 'cuser__peoplename']
     }
     
     def get(self, request, *args, **kwargs):
         R, P = request.GET, self.params
         ic(R)
         # first load the template
-        if R.get('template'): return render(request, self.params['template_list'])
+        if R.get('template'):
+            return render(request, self.params['template_list'])
         
         # then load the table with objects for table_view
-        if R.get('action', None) == 'list' or R.get('search_term'):
+        action = R.get('action')
+        if action == 'list' or R.get('search_term'):
             objs = self.params['model'].objects.get_workpermitlist(request)
-            return  rp.JsonResponse(data = {
-                'data':list(objs)}, safe = False)
+            return rp.JsonResponse(data={'data': list(objs)}, safe=False)
+
+        if action == 'approve_wp' and R.get('womid'):
+            if is_all_approved := check_all_approved(R['womid'], request.user.peoplecode):
+                Wom.objects.filter(id=R['womid']).update(workpermit=Wom.WorkPermitStatus.APPROVED.value)
+            return rp.JsonResponse(data={'status': 'Approved'}, status=200)
+
+        if action == 'reject_wp' and R.get('womid'):
+            Wom.objects.filter(id=R['womid']).update(workpermit=Wom.WorkPermitStatus.REJECTED.value)
+            reject_workpermit(R['womid'], request.user.peoplecode)
+            return rp.JsonResponse(data={'status': 'Approved'}, status=200)
             
-        elif R.get('action', None) == 'form':
+        if action == 'form':
             import uuid
-            cxt = {'wpform': P['form'](request = request),
-                   'msg': "create workpermit requested", 'ownerid':uuid.uuid4()}
+            cxt = {'wpform': P['form'](request=request), 'msg': "create workpermit requested", 'ownerid': uuid.uuid4()}
             return render(request, P['template_form'], cxt)
         
-        # return form with instance
-        elif R.get('id', None):
+        if action == 'approver_list':
+            objs = Wom.objects.get_approver_list(R['womid'])
+            return rp.JsonResponse({'data': objs}, status=200)
+        
+        if R.get('qsetid'):
+            import uuid
+            wp_details = Wom.objects.get_workpermit_details(request, R['qsetid'])
+            form = P['form'](request=request, initial={'qset': R['qsetid'], 'approvers': R['approvers'].split(',')})
+            context = {"wp_details": wp_details, 'wpform': form, 'ownerid': uuid.uuid4()}
+            return render(request, P['template_form'], context=context)
+        
+        if action == 'get_answers_of_template' and R.get('qsetid') and R.get('womid'):
+            wp_answers = Wom.objects.get_wp_answers(R['qsetid'], R['womid'])
+            questionsform = render_to_string(P['partial_form'], context={"wp_details": wp_answers})
+            return rp.JsonResponse({'html': questionsform}, status=200)
+
+         # return form with instance
+        if 'id' in R:
+            # get work permit questionnaire
             obj = utils.get_model_obj(int(R['id']), request, P)
-            cxt = {'wpform':P['form'](request=request, instance=obj), 'ownerid':obj.uuid}
+            wp_answers = Wom.objects.get_wp_answers(obj.qset_id, obj.id)
+            cxt = {'wpform': P['form'](request=request, instance=obj), 'ownerid': obj.uuid, 'wp_details': wp_answers}
             return render(request, P['template_form'], cxt)
+
         
     
     def post(self, request, *args, **kwargs):
@@ -372,7 +414,6 @@ class WorkPermit(LoginRequiredMixin, View):
             if form.is_valid():
                 resp = self.handle_valid_form(form,  request, create)
             else:
-                ic(form.cleaned_data, form.data, form.errors)
                 cxt = {'errors': form.errors}
                 resp = utils.handle_invalid_form(request, self.params, cxt)
         except Exception:
@@ -380,14 +421,179 @@ class WorkPermit(LoginRequiredMixin, View):
         return resp
 
     def handle_valid_form(self, form, request, create=True):
+        S = request.session
         workpermit = form.save(commit=False)
         workpermit.uuid = request.POST.get('uuid')
         workpermit = putils.save_userinfo(
-                workpermit, request.user, request.session, create = create)
-        data = {'msg': f"{workpermit.id}",
-            'row': Wom.objects.values(*self.params['fields']).get(id = workpermit.id), 'pk':workpermit.id}
-        logger.debug(data)
-        return rp.JsonResponse(data, status=200)
+            workpermit, request.user, request.session, create = create)
+        workpermit = self.save_approvers_injson(workpermit)
+        #save workpermit details
+        self.create_workpermit_details(request.POST, workpermit, request)
+        send_email_notification_for_wp.delay(workpermit.id, workpermit.qset_id, workpermit.approvers, S['client_id'], S['bu_id'])
+        return rp.JsonResponse({'pk':workpermit.id})
+    
+    
+    def save_approvers_injson(self, wp):
+        wp_approvers = [
+            {'name': approver, 'status': 'PENDING'} for approver in wp.approvers
+        ]
+        wp.other_data['wp_approvers'] = wp_approvers
+        wp.save()
+        return wp
         
-        
+    
+    def create_workpermit_details(self, R, wom,  request):
+        log.info(f'form post data {R}')
+        S = request.session
+        formdata = QueryDict(request.POST['workpermitdetails']).copy()
+        for k,v in formdata.items():
+            log.debug(f'form name, value {k}, {v}')
+            if k not in ['ctzoffset', 'wom_id', 'action', 'csrfmiddlewaretoken'] and '_' in k:
+                ids = k.split('_')
+                qsb_id = ids[0]
+                qset_id = ids[1]
+                qsb_obj = QuestionSetBelonging.objects.filter(id = qsb_id).first()
+                if qsb_obj.answertype in ['CHECKBOX', 'DROPDOWN']:
+                    alerts = v in qsb_obj.alerton
+                elif qsb_obj.answertype in  ['NUMERIC'] and len(qsb_obj.alerton) > 0:
+                    alerton = qsb_obj.alerton.replace('>', '').replace('<', '').split(',')
+                    if len(alerton) > 1:
+                        _min, _max = alerton[0], alerton[1]
+                        alerts = float(v) < float(_min) or float(v) > float(_max)
+                else:
+                    alerts = False
+                
+                
+                lookup_args = {
+                    'wom_id':wom.id,
+                    'question_id':qsb_obj.question_id,
+                    'client_id':S['client_id'],
+                    'qset_id':qset_id
+                }
+                default_data = {
+                    'seqno'       : qsb_obj.seqno,
+                    'answertype'  : qsb_obj.answertype,
+                    'answer'      : v,
+                    'isavpt'      : qsb_obj.isavpt,
+                    'options'     : qsb_obj.options,
+                    'min'         : qsb_obj.min,
+                    'max'         : qsb_obj.max,
+                    'alerton'     : qsb_obj.alerton,
+                    'ismandatory' : qsb_obj.ismandatory,
+                    'alerts'      : alerts,
+                    'bu_id'       : qsb_obj.bu_id,
+                    'cuser_id'    : request.user.id,
+                    'muser_id'    : request.user.id,
+                }
+                data = lookup_args | default_data
+                WomDetails.objects.create(
+                    **data
+                )
+    
             
+            
+
+class ReplyWorkPermit(View):
+    P = {
+        'email_template': "work_order_management/workpermit_server_reply.html",
+        'model':Wom,
+    }
+    
+    def get(self, request, *args, **kwargs):
+        R, P = request.GET, self.P
+        if R.get('action') == "accepted" and R.get('womid') and R.get('peopleid'):
+            log.info("work permit accepted")
+            wp = Wom.objects.filter(id = R['womid']).first()
+            p = People.objects.filter(id = R['peopleid']).first()
+            if is_all_approved := check_all_approved(R['womid'], p.peoplecode):
+                Wom.objects.filter(id = R['womid']).update(workpermit = Wom.WorkPermitStatus.APPROVED.value)
+            cxt = {'status': Wom.WorkPermitStatus.APPROVED.value, 'action_acknowledged':True, 'seqno':wp.other_data['wp_seqno']}
+            log.info("work permit accepted through email")
+            return render(request, P['email_template'], context=cxt)
+        
+        elif R.get('action') == "rejected" and R.get('womid')  and R.get('peopleid'):
+            log.info("work permit rejected")
+            wp = Wom.objects.filter(id = R['womid']).first()
+            p = People.objects.filter(id = R['peopleid']).first()
+            wp.workpermit = Wom.WorkPermitStatus.REJECTED.value
+            wp.save()
+            reject_workpermit(R['womid'], p.peoplecode)
+            cxt = {'status': Wom.WorkPermitStatus.REJECTED.value, 'action_acknowledged':True, 'seqno':wp.other_data['wp_seqno']}
+            log.info('work permit rejected through email')
+            return render(request, P['email_template'], context=cxt)
+        
+        
+
+class ApproverView(LoginRequiredMixin, View):
+    params = {
+        'form_class'   : ApproverForm,
+        'template_form': 'work_order_management/approver_form.html',
+        'template_list': 'work_order_management/approver_list.html',
+        'related'      : ['people', 'cuser'],
+        'model'        : Approver,
+        'fields'       : ['approverfor', 'id','sites', 'cuser__peoplename', 'people__peoplename', 'forallsites']
+    }
+
+    def get(self, request, *args, **kwargs):
+        R, resp, P = request.GET, None, self.params
+
+        # return cap_list data
+        if R.get('template'): return render(request, P['template_list'])
+        if R.get('action', None) == 'list':
+            objs = P['model'].objects.get_approver_list(request, P['fields'], P['related'])
+            return  rp.JsonResponse(data = {'data':list(objs)})
+            
+
+        # return cap_form empty
+        elif R.get('action', None) == 'form':
+            cxt = {'approver_form': P['form_class'](request = request),
+                   'msg': "create approver requested"}
+            resp = utils.render_form(request, P, cxt)
+
+        # handle delete request
+        elif R.get('action', None) == "delete" and R.get('id', None):
+            resp = utils.render_form_for_delete(request, P, False)
+        
+        # return form with instance
+        elif R.get('id', None):
+            obj = utils.get_model_obj(int(R['id']), request, P)
+            resp = utils.render_form_for_update(
+                request, P, 'approver_form', obj)
+        return resp
+
+    def post(self, request, *args, **kwargs):
+        resp, create = None, True
+        try:
+            data = QueryDict(request.POST['formData']).copy()
+            if pk := request.POST.get('pk', None):
+                msg = "approver_view"
+                ven = utils.get_model_obj(pk, request, self.params)
+                form = self.params['form_class'](
+                    data, instance = ven, request = request)
+                create = False
+            else:
+                form = self.params['form_class'](data, request = request)
+            if form.is_valid():
+                resp = self.handle_valid_form(form,  request, create)
+            else:
+                ic(form.cleaned_data, form.data, form.errors)
+                cxt = {'errors': form.errors}
+                resp = utils.handle_invalid_form(request, self.params, cxt)
+        except Exception:
+            resp = utils.handle_Exception(request)
+        return resp
+
+    def handle_valid_form(self, form,  request, create):
+        logger.info('vendor form is valid')
+        try:
+            approver = form.save(commit=False)
+            approver = putils.save_userinfo(
+                approver, request.user, request.session, create = create)
+            logger.info("approver form saved")
+            data = {'msg': f"{approver.people.peoplename}",
+            'row': Approver.objects.values(*self.params['fields']).get(id = approver.id)}
+            logger.debug(data)
+            return rp.JsonResponse(data, status = 200)
+        except (IntegrityError, pg_errs.UniqueViolation):
+            return utils.handle_intergrity_error('Question')
+        

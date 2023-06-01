@@ -11,6 +11,9 @@ Attendance
 td.selected { background-color: yellow; }
 td:not(:last-child) { cursor: pointer; }
 td { padding: 6px; border: 1px solid #CCC; }
+tr{
+    font-size: 10px;
+}
 </style>
 {% endblock extra_css %}
 
@@ -23,7 +26,7 @@ td { padding: 6px; border: 1px solid #CCC; }
 
 {% block table %}
 <!--------------------------BEGIN TABLE------------------------------>
-<table id="attd_table" class="display cell-border" style="width:100%">
+<table id="attd_table" class="display nowrap" style="width:100%">
 </table>
 <!--------------------------END TABLE------------------------------>
 
@@ -150,9 +153,21 @@ td { padding: 6px; border: 1px solid #CCC; }
         table.ajax.reload()
     }
     const table_filters = localStorage.getItem('attds_filter')
+    console.log(table_filters)
     if(table_filters){
         params = JSON.parse(table_filters)
         localStorage.clear()
+    }
+
+    function matchStatus(row, data){
+        if(['SELF', 'MARK'].includes(row['peventtype__tacode'])){
+            if([null, "", 'NONE'].includes(row['punchouttime'])){
+                return '<span class="badge badge-warning">Pending</span>'
+            }
+            if(![null, "", 'NONE'].includes(row['punchintime'])){
+                return data === false ? '<span class="badge badge-danger">Not Matched</span>' : '<span class="badge badge-success">Matched</span>'
+            }
+        }return '--'
     }
 
     $(document).ready(function () {
@@ -176,7 +191,7 @@ td { padding: 6px; border: 1px solid #CCC; }
             
             dom: `<'row' <'col-sm-6 d-flex justify-content-start'<'customfields'>f> <'col-sm-6 d-flex justify-content-end'B> >rt<'row'
 			 <'col-sm-6'l> <'col-sm-6'p><'col-sm-12 d-flex justify-content-center'i>>`,
-            order:[[7, 'desc']],
+            order:[[10, 'desc']],
             //ordering: false,
             columnDefs:[
                 {targets:[6,7], render:function(data, type, row, meta){
@@ -184,73 +199,68 @@ td { padding: 6px; border: 1px solid #CCC; }
                 }
             ],
             columns:[
-                {data:'peventtype__taname', title:'Type'},
-                {data:'bu__buname', title:'Site Name'},
-                {data:'people__peoplename', title:'People'},
-                {data:'facerecognitionin', title:'FR IN'},
-                {data:'facerecognitionout', title:'FR OUT'},
-                {data:'verifiedby__peoplename', title:'Verified By'},
-                {data:'datefor', title:'Date For'},
-                {data:'punchintime', title:'In Time'},
-                {data:'punchouttime', title:'Out Time'},
-                {data:'id',  searchable:false, title:'FR Status'},
-                { data:'uuid',  visible:false, searchable:false},
-                { data:'peventtype__tacode',  visible:false, searchable:false},
+                {data:'peventtype__taname', title:'Type', width:"5%"},//0
+                {data:'bu__buname', title:'Site Name'},//1
+                { data:'people__peoplecode',  title:"Code"},//2
+                {data:'people__peoplename', title:'People'},//3
+                {data:'facerecognitionin', title:'FR IN', width:"3%"},//4
+                {data:'sL', title:'Att IN'},//5
+                {data:'facerecognitionout', title:'FR OUT'},//6
+                {data:'eL', title:'Att OUT'},//7
+                {data:'verifiedby__peoplename', title:'Verified By', width:"5%"},//8
+                {data:'datefor', title:'Date For'},//9
+                {data:'punchintime', title:'In Time'},//10
+                {data:'punchouttime', title:'Out Time'},//11
+                {data:'id',  searchable:false, title:'FR Status'},//12
+                { data:'uuid',  visible:false, searchable:false, className:'noVis'},//13
+                { data:'peventtype__tacode',  visible:false, searchable:false, className:'noVis'},//14
+                
             ], 
             columnDefs:[
-                {targets:6, render:function(data, type, row, meta){return utc_to_local(row['ctzoffset'], data, 'YYYY-MM-DD')}
+                {targets:9, render:function(data, type, row, meta){return utc_to_local(row['ctzoffset'], data, 'YYYY-MM-DD')}
                 },
-                {targets:7, render:function(data, type, row, meta){
+                {targets:10, render:function(data, type, row, meta){
                     return convert_to_local(type, data, row)}
                 },
-                {targets:8, render:function(data, type, row, meta){
+                {targets:11, render:function(data, type, row, meta){
                     return convert_to_local(type, data, row)}
                 },
-                {targets:[3], render:function(data, type, row, meta){
-                    if(['SELF', 'MARK'].includes(row['peventtype__tacode'])){
-                        if(!row['punchintime']){ return '--'}
-                        return data === false ? '<span class="badge badge-danger">Not Matched</span>' : '<span class="badge badge-success">Matched</span>'
-                    }return '--'
+                {targets:[6], render:function(data, type, row, meta){
+                    return matchStatus(row, data)
                 }},
-                { targets: 4, render:function(data, type, row, meta){
-                    if(['SELF', 'MARK'].includes(row['peventtype__tacode'])){
-                        if(!row['punchouttime']){ return '<span class="badge badge-warning">Pending</span>'}
-                        return data === false ? '<span class="badge badge-danger">Not Matched</span>' : '<span class="badge badge-success">Matched</span>'
-                    }return '--'
-                }
-                },
-                {targets:9, render:function(data, type, row, meta){
+                {targets:[4], render:function(data, type, row, meta){
+                    return data === false ? '<span class="badge badge-danger">Not Matched</span>' : '<span class="badge badge-success">Matched</span>'
+                }},
+                {targets:12, render:function(data, type, row, meta){
                     return ['SELF', 'MARK'].includes(row['peventtype__tacode']) ? `<button type="button" class="btn p-0 btn-link" onClick="getFRStatus('${row['uuid']}');event.stopPropagation();">FR Status</button>` : '--'}
                 },
-                {targets:2,data:"people__peoplename", render:function(data, type, row, meta){
-                    return data === 'NONE' ? 'Unknown' : data
+                {targets:3,data:"people__peoplename", render:function(data, type, row, meta){
+                    return data === 'NONE' ? 'Unknown' : `${data}`
+                }},
+                {targets:[5], render:function(data, type, row, meta){
+                    let coords = typeof data === 'string' && data.length > 0 ? JSON.parse(data): 'NONE'
+                    return coords !== 'NONE' ? `${coords['coordinates'][1]}, ${coords['coordinates'][0]}` : coords
+                }},
+                {targets:[7], render:function(data, type, row, meta){
+                    let coords = typeof data === 'string' && data.length > 0 ? JSON.parse(data): 'NONE'
+                    return coords !== 'NONE' ? `${coords['coordinates'][1]}, ${coords['coordinates'][0]}` : coords
                 }}
             ],
             buttons: [
-
-                {
-                    text: "Add New Attendance &nbsp;<i class='fas text-white fa-plus ch4'></i>",
-                    className: "btn btn-sm btn-primary2 btn-hover-rise",
-                    //action for add_new_button
-                    action: function (e, dt, node, config) {
-                        const params = {
-                            modal_id: "#modal-attd",
-                            url: "{{ url('attendance:attendance_view') }}?action=form",
-                            beforeSend: attdBeforeSend}
-                        fire_ajax_get(params)
-                        .done((data, status, xhr) => {
-                            $("#modal-attd .modal-content").html(data.html_form)
-                        })
-                        .fail((xhr, status, error) => {
-                            show_error_alert('Something went wrong!')
-                        })
-                    }
-                }
-
+                "searchBuilder",
+                dataTablesPDFConfig(
+                    'Site: {{ request.user.bu.buname }}\nAttendance List',
+                    [0,1,2,3,4,5,6,7,8,9,10,11,14]
+                ),
+                dataTablesExcelConfig(
+                    'Site: {{ request.user.bu.buname }}\nAttendance List',
+                    [0,1,2,3,4,5,6,7,8,9,10,11,14]
+                ),
+                dataTablesColumnVisibilityConfig(),
             ],
             select: {
-                    style: 'single'
-                }
+                style: 'single'
+            }
         })
         
         //add input field to the datatables dom
@@ -341,7 +351,6 @@ td { padding: 6px; border: 1px solid #CCC; }
             $("#modal_fr_status").modal("show");
             e.stopPropagation()
         })
-        
 
     })//END document.ready()
 

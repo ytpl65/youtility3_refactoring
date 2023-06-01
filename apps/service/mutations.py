@@ -89,7 +89,7 @@ class LoginUser(graphene.Mutation):
             sitename            = F('bu__buname'),
             ).values(
                 'loggername',  'mobilecapability',
-                'enablesleepingguard',
+                'enablesleepingguard','peopleimg',
                 'skipsiteaudit', 'deviceevent', 'pvideolength',
                 'client_id', 'bu_id', 'mobno', 'email', 'isverified',
                 'deviceid', 'id', 'enable', 'isadmin', 'peoplecode', 'dateofjoin',
@@ -302,6 +302,7 @@ class SyncMutation(graphene.Mutation):
                         # raise ValueError
                         TR += len(data)
                         call_service_based_on_filename(data, file.filename, db = db, request=info.context, user=id)
+                log.info(f"file size given: {filesize = } and calculated {zipsize = }")
                 if filesize !=  zipsize:
                     log.error(f"file size is not matched with the actual zipfile {filesize} x {zipsize}")
                     raise cutils.FileSizeMisMatchError

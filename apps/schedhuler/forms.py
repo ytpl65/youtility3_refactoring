@@ -12,6 +12,7 @@ import apps.onboarding.models as ob
 class Schd_I_TourJobForm(JobForm):
     ASSIGNTO_CHOICES   = [('PEOPLE', 'People'), ('GROUP', 'Group')]
     assign_to          = forms.ChoiceField(choices = ASSIGNTO_CHOICES, initial="PEOPLE")
+    istimebound = forms.BooleanField(initial=True, required=False, label="Is Time Bound")
     required_css_class = "required"
 
     class Meta(JobForm.Meta):
@@ -28,6 +29,8 @@ class Schd_I_TourJobForm(JobForm):
         self.request = kwargs.pop('request', None)
         S = self.request.session
         super().__init__(*args, **kwargs)
+        if self.instance.id:
+            self.fields['istimebound'].initial = self.instance.other_info['istimebound']
         self.fields['fromdate'].input_formats  = settings.DATETIME_INPUT_FORMATS
         self.fields['uptodate'].input_formats  = settings.DATETIME_INPUT_FORMATS
         self.fields['identifier'].widget.attrs  = {"style": "display:none"}

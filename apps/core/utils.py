@@ -367,6 +367,7 @@ def save_user_session(request, people, ctzoffset=None):
             request.session['is_admin'] = people.isadmin
             save_capsinfo_inside_session(people, request)
             logger.info('saving user data into the session ... DONE')
+        ic(pm.Pgbelonging.objects.get_assigned_sites_to_people(people.id).values_list('buid', flat=True))
         request.session['assignedsites'] = list(pm.Pgbelonging.objects.get_assigned_sites_to_people(people.id).values_list('buid', flat=True))
         request.session['clientcode'] = request.user.client.bucode
         request.session['clientname'] = request.user.client.buname
@@ -1609,3 +1610,22 @@ def get_timezone(offset):  # sourcery skip: aware-datetime-for-utc
 
     # Return the list of matching zones or None if no match found
     return matching_zones[0] if matching_zones else None
+
+
+def format_timedelta(td):
+    if not td: return None
+    total_seconds = int(td.total_seconds())
+    days, remainder = divmod(total_seconds, 60*60*24)
+    hours, remainder = divmod(remainder, 60*60)
+    minutes, seconds = divmod(remainder, 60)
+
+    result = ""
+    if days > 0:
+        result += f"{days} day{'s' if days != 1 else ''}, "
+    if hours > 0:
+        result += f"{hours} hour{'s' if hours != 1 else ''}, "
+    if minutes > 0:
+        result += f"{minutes} minute{'s' if minutes != 1 else ''}, "
+    if seconds > 0 or len(result) == 0:
+        result += f"{seconds} second{'s' if seconds != 1 else ''}"
+    return result.rstrip(', ')

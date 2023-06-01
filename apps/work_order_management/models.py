@@ -10,7 +10,8 @@ from django.contrib.postgres.fields import ArrayField
 from apps.tenants.models import TenantAwareModel
 from django.conf import settings
 from django.utils.translation import gettext_lazy as _
-from .managers import VendorManager, WorkOrderManager, WOMDetailsManager
+from django.conf import settings
+from .managers import VendorManager, WorkOrderManager, WOMDetailsManager, ApproverManager
 
 
 
@@ -25,7 +26,8 @@ def other_data():
         'created_at':None,
         'token_expiration':5, #min
         'reply_from_vendor':"",
-        'wp_seqno':0
+        'wp_seqno':0,
+        'wp_approvers':[]
     }
     
 def wo_history_json():
@@ -41,6 +43,7 @@ class Wom(BaseModel, TenantAwareModel):
         COMPLETED  = ('COMPLETED', 'Completed')
         INPROGRESS = ('INPROGRESS', 'Inprogress')
         CANCELLED  = ('CANCELLED', 'Cancelled')
+        CLOSED  = ('CLOSED', 'Closed')
         
     class WorkPermitStatus(models.TextChoices):
         NOTNEED   = ('NOT_REQUIRED', 'Not Required')
@@ -132,17 +135,7 @@ class Vendor(BaseModel, TenantAwareModel):
     def __str__(self) -> str:
         return f'{self.name} ({self.code}{" - " + self.type.taname + ")" if self.type else ")"}'
 
-    
-class Approver(BaseModel, TenantAwareModel):
-    people = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.RESTRICT, null=True, verbose_name=_('User'))
-    wom    = models.ForeignKey(Wom, verbose_name=_("Work Order"), on_delete=models.RESTRICT, null=True)
-    client = models.ForeignKey("onboarding.Bt", verbose_name = _("Client"), on_delete= models.RESTRICT, null = True, blank = True, related_name='approver_clients')
-    bu     = models.ForeignKey("onboarding.Bt", verbose_name = _("Site"), on_delete = models.RESTRICT, null = True, blank = True, related_name='approver_bus')
-
-    class Meta(BaseModel.Meta):
-        db_table = 'approver'
-        verbose_name = 'Approver'
-    
+        
 
 
 class WomDetails(BaseModel, TenantAwareModel):
@@ -174,6 +167,7 @@ class WomDetails(BaseModel, TenantAwareModel):
     seqno           = models.SmallIntegerField(_('SL #'))
     question        = models.ForeignKey("activity.Question", verbose_name=_(""), on_delete=models.RESTRICT)
     answertype      = models.CharField(_("Answer Type"), max_length=50, choices=AnswerType.choices, null=True)
+    qset            = models.ForeignKey("activity.QuestionSet", on_delete=models.RESTRICT, null=True, blank=True, related_name='qset_answers')
     answer          = models.CharField(_("Answer"), max_length = 250, default="", null = True)
     isavpt          = models.BooleanField(_("Attachement Required"), default = False)
     avpttype        = models.CharField(_("Attachment Type"), max_length = 50, choices = AvptType.choices, null=True, blank=True)
@@ -196,5 +190,25 @@ class WomDetails(BaseModel, TenantAwareModel):
             models.UniqueConstraint(
                 fields = ['question', 'client', 'wom'],
                 name="question_client"
+            )
+        ]
+        
+
+class Approver(BaseModel):
+    approverfor = ArrayField(models.CharField(max_length = 50, blank = True), null = True, blank = True, verbose_name= _("Approvers"))
+    sites       = ArrayField(models.CharField(max_length = 50, blank = True), null = True, blank = True, verbose_name= _("Sites"))
+    forallsites = models.BooleanField(_("For all sites"), default=True)
+    people      = models.ForeignKey(settings.AUTH_USER_MODEL, verbose_name=_("Approver"), on_delete=models.RESTRICT, null=True)
+    bu          = models.ForeignKey("onboarding.Bt", verbose_name=_(""), on_delete=models.RESTRICT, null=True)
+    objects     = ApproverManager()
+    
+    
+    class Meta(BaseModel.Meta):
+        db_table = 'approver'
+        verbose_name = 'approver'
+        constraints = [
+            models.UniqueConstraint(
+                fields=['people', 'approverfor', 'sites'],
+                name = 'people_approverfor_forallsites_sites_uk'
             )
         ]

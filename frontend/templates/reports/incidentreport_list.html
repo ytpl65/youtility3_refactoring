@@ -80,7 +80,7 @@ params = {from:from_pd, to:to_pd}
             dom:`<'row' <'col-sm-6 d-flex justify-content-start'<'customfields'>f> <'col-sm-6 d-flex justify-content-end'B> >rt<'row'
             <'col-sm-6'l> <'col-sm-6'p><'col-sm-12 d-flex justify-content-center'i>>`,
             columns     : [
-                { data: "id", visible:false, searchable:false },
+                { data: "id", visible:false, searchable:false, className:'noVis' },
                 { data: "plandatetime", title:'Plan Datetime' },
                 { data: "jobdesc", title:'Site Report' },
                 { data: "performedby__peoplename", title:'Surveyor' },
@@ -100,7 +100,18 @@ params = {from:from_pd, to:to_pd}
                     return convert_to_local(type, data, row)}
                 },
             ],
-            buttons:[],
+            buttons:[
+                "searchBuilder",
+                dataTablesPDFConfig(
+                    title = `Site: {{request.user.bu.buname}}\n Incident Report List`,
+                    columns = [1,2,3,4,5,7]
+                ),
+                dataTablesExcelConfig(
+                    title = `Site: {{request.user.bu.buname}}\n Incident Report List`,
+                    columns = [1,2,3,4,5,7]
+                ),
+                dataTablesColumnVisibilityConfig()    
+            ],
             initComplete:function(settings, json){
                 const table_filters = localStorage.getItem('incident_reports_filter')
                 if(table_filters){
