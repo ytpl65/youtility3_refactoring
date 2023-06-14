@@ -140,6 +140,16 @@ class QuestionSetManager(models.Manager):
         if sitewise: qset = qset.filter(bu_id = S['bu_id'])
         if choices: qset = qset.values_list('id', 'qsetname')
         return qset or self.none()
+    
+    def get_qsets_for_tour(self, request):
+        R, S = request.GET, request.session
+        search_term = R.get('search')
+        qset = self.filter(client_id = S['client_id'], bu_id = S['bu_id'], enable=True)
+        qset = qset.filter(qsetname = search_term) if search_term else qset
+        qset = qset.annotate(
+                text = F('qsetname')).values(
+                    'id', 'text')
+        return qset or self.none()
         
 
 class QuestionManager(models.Manager):
@@ -662,7 +672,7 @@ class JobneedManager(models.Manager):
         qset = qset.values(
             'assignedto', 'bu__buname', 'pgroup__groupname', 'cuser__peoplename', 'asset_id',
             'people__peoplename', 'expirydatetime', 'plandatetime', 'pgroup_id', 'people_id',
-            'cuser_id', 'muser_id', 'priority', 'identifier', 'ticketcategory__tacode', 'id',
+            'cuser_id', 'muser_id', 'priority', 'identifier', 'ticketcategory__tacode', 'id', 'qset_id',
             'job_id', 'jobdesc', 'ctzoffset', 'client_id', 'bu_id', 'ticketcategory_id', 'ticketcategory__taname'
         )
         return qset or self.none()
@@ -728,6 +738,61 @@ class JobneedManager(models.Manager):
             results.append(record)
             current_date = current_date + timedelta(days=1)
         return results
+    
+
+    def get_events_for_calendar(self,request):
+        R, S = request.GET, request.session
+        d = {'Tasks':'TASK', 'PPM':"PPM", 'Tours':'INTERNALTOUR', 'Route Plan':'EXTERNALTOUR'}
+        start_date = datetime.strptime(R['start'], "%Y-%m-%dT%H:%M:%S%z").date()
+        end_date = datetime.strptime(R['end'], "%Y-%m-%dT%H:%M:%S%z").date()
+    
+        qset = self.annotate(
+            start=Cast(F('plandatetime'), output_field=CharField()),
+            end=Cast(F('expirydatetime'), output_field=CharField()),
+            title = F('jobdesc'),
+            color = Case(
+                When(jobstatus__exact =  'AUTOCLOSED', then = V('#ff6161')),
+                When(jobstatus__exact = 'COMPLETED', then= V( '#779f6f')),
+                When(jobstatus__exact = 'PARTIALLYCOMPLETED', then= V( '#009C94')),
+                When(jobstatus__exact = 'INPROGRESS', then= V( '#ffcc27')),
+                When(jobstatus__exact = 'ASSIGNED', then=V('#0080FF')),
+                output_field=CharField()
+            )
+        ).filter(
+            identifier = d.get(R['eventType']),
+            plandatetime__date__gte = start_date,
+            plandatetime__date__lte = end_date,
+            client_id = S['client_id'],
+            bu_id = S['bu_id']
+        ).values('id','start', 'end', 'title', 'color')
+        return qset or self.none()
+    
+    def get_event_details(self, request):
+        R,S = request.GET, request.session
+        from django.apps import apps
+        d = {'Tasks':'TASK', 'PPM':"PPM", 'Tours':'INTERNALTOUR', 'Route Plan':'EXTERNALTOUR'}
+        
+        qset = self.annotate(
+            assignto = Case(
+                    When(pgroup_id=1, then=Concat(F('people__peoplename'), V(' [PEOPLE]'))),
+                    When(people_id=1, then=Concat(F('pgroup__groupname'), V(' [GROUP]'))),
+                ),
+            performedby_name = F('performedby__peoplename'),
+            place = AsGeoJSON('gpslocation'),
+            site = F('bu__buname'),
+            assetname = F('asset__assetname'),
+            qsetname = F('qset__qsetname'),
+            location = F('asset__location__locname'),
+            location_id = F('asset__location__id'),
+            desc = F('jobdesc')
+        ).filter(id = R['id']).values(
+            'assignto', 'performedby_name','place', 'performedby__peopleimg','bu_id',
+            'site', 'assetname', 'qsetname', 'location', 'desc', 'qset_id', 'asset_id',
+            'location_id', 'performedby_id').first()
+        
+        return qset
+            
+            
         
 
 class AttachmentManager(models.Manager):
@@ -957,7 +1022,16 @@ class AssetManager(models.Manager):
             return utils.format_timedelta(qset[0]['total_duration'])
         
     
-
+    def get_asset_checkpoints_for_tour(self, request):
+        R, S = request.GET, request.session
+        search_term = R.get('search')
+        qset = self.filter(client_id = S['client_id'], bu_id = S['bu_id'], enable=True)
+        qset = qset.filter(assetname = search_term) if search_term else qset
+        qset = qset.annotate(
+                text = F('assetname')).values(
+                    'id', 'text')
+        return qset or self.none()
+    
 
 class JobneedDetailsManager(models.Manager):
     use_in_migrations = True
@@ -1264,8 +1338,44 @@ class JobManager(models.Manager):
                  'uptodate', 'planduration', 'gracetime', 'expirytime', 'fromdate')
         ic(qset)
         return qset or self.none()
-
     
+    def handle_save_checkpoint_guardtour(self, request):
+        R, S = request.POST, request.session
+        """handle post data submitted from geofence add people form"""
+        from apps.schedhuler import utils as sutils
+        parent_job = self.filter(id = R['parentid']).values().first()
+        cdtz = datetime.now(tz = timezone.utc)
+        mdtz = datetime.now(tz = timezone.utc)
+        ic(R)
+        checkpoint = {
+            'expirytime' : R['expirytime'],
+            'qsetid': R['qset_id'],
+            'assetid':R['asset_id'],
+            'seqno':R['seqno'],
+            'qsetname':R['qsetname']
+        }
+        child_job = sutils.job_fields(parent_job, checkpoint)
+        try:
+        
+            if R['action'] == 'create':
+                if self.filter(
+                    qset_id = checkpoint['qsetid'], asset_id = checkpoint['assetid'],
+                    parent_id = parent_job['id']).exists():
+                    return {'data':list(self.none()), 'error':'Warning: Record already added!'}
+                ID = self.create(**child_job, cuser = request.user, muser = request.user, cdtz = cdtz, mdtz = mdtz).id
+            elif R['action'] == 'edit':
+                if updated := self.filter(pk=R['pk']).update(**child_job, muser = request.user, mdtz = mdtz):
+                    ID = R['pk']
+            else:
+                self.filter(pk = R['pk']).delete()
+                return {'data':list(self.none()),}
+            qset = self.filter(pk = ID).values('seqno', 'qset__qsetname', 'asset__assetname', 'expirytime', 'pk')
+            return {'data':list(qset)}
+        except Exception  as e:
+            return {'data':[], 'error':"Somthing went Wrong!"}
+    
+
+
 
 
 class DELManager(models.Manager):
@@ -1329,5 +1439,34 @@ class LocationManager(models.Manager):
         if choices: qset = qset.annotate(
             text = Concat(F('locname'), V(' ('), F('loccode'), V(')'))).values_list(
                 'id', 'text'
+            )
+        return qset or self.none()
+    
+    def get_assets_of_location(self, request):
+        R,S = request.GET, request.session
+        obj = self.filter(id = R['locationid']).first()
+        qset = obj.asset_set.annotate(
+            text = Concat(F('assetname'), V(' ('), F('assetcode'), V(')'), output_field=CharField())
+        ).filter(bu_id = S['bu_id']).values('id', 'text')
+        return qset or self.none()
+    
+    
+class AssetLogManager(models.Manager):
+    use_in_migrations = True
+    
+    def get_asset_logs(self, request):
+        R,S = request.GET, request.session
+        P = json.loads(R.get('params'))
+        qset = self.filter(
+            client_id = S['client_id'],
+            cdtz__date__gte = P['from'],
+            cdtz__date__lte = P['to'],
+            bu_id = S['bu_id']
+        ).select_related(
+            'asset', 'people'
+        ).order_by(
+            'asset__assetname').values(
+            'cdtz', 'id','asset__assetname', 'oldstatus', 'newstatus',
+            'people__peoplename', 'ctzoffset' 
             )
         return qset or self.none()

@@ -72,7 +72,9 @@ $(document).ready(function () {
 			pageLength:14,
 			order:[[1, 'asc']],
 			deferRender:true,
-			responsive:true,
+			scrollY: 300,
+            scrollCollapse: true,
+            scrollX:true,
 			dom:`<'row' <'col-sm-6 d-flex justify-content-start'f> <'col-sm-6 d-flex justify-content-end'B> >rt<'row'
 			 <'col-sm-6'l> <'col-sm-6'p><'col-sm-12 d-flex justify-content-center'i>>`,
 			columnDefs:[
@@ -101,13 +103,22 @@ $(document).ready(function () {
 			},
 			buttons:[
 				"searchBuilder",
+				{
+					text:'<i class="bi bi-file-bar-graph-fill text-primary"></i>',
+					titleAttr:"Asset Logs",
+					action: function(e, dt, node, config){
+						return location.href = "{{ url('activity:assetlogs') }}?template=true"
+					}
+				},
                 dataTablesPDFConfig(
                     title = `Site: {{request.user.bu.buname}}\n Asset List`,
-                    columns = [1,2,3,4,5,6,7]
+                    columns = [1,2,3,4,5,6,7],
+					filename = 'asset_list'
                 ),
                 dataTablesExcelConfig(
                     title = `Site: {{request.user.bu.buname}}\n Asset List`,
-                    columns = [1,2,3,4,5,6,7]
+                    columns = [1,2,3,4,5,6,7],
+					filename = 'asset_list'
                 ),
                 dataTablesColumnVisibilityConfig(),
 				{
@@ -117,14 +128,6 @@ $(document).ready(function () {
 						return location.href = "{{ url('activity:asset') }}?action=form"
 					}
 				},
-				{
-					text     : `Refresh &nbsp;<i class="bi bi-arrow-clockwise text-dark"></i></a>`,
-					//action for add_new_button 
-					action: function(e, dt, node, config){
-						params=null
-						table.ajax.reload()
-					}
-				}
 			],
 		})
 	});

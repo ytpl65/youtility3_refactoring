@@ -1,5 +1,15 @@
 {% extends "base_list.html" %}
 
+
+{% block extra_css %}
+<style>
+tr {
+    font-size: 11px;
+    height: 100%;
+}
+</style>
+{% endblock extra_css %}
+
 <!------------------------------------ BEGIN PAGE BREADCUMBS ------------------------------------>
 {% block pagebreadcumb %}
 {{ super() }}
@@ -14,7 +24,7 @@ Conveyance List
 <!----- END CARD TITLE -------->
 
 {% block table %}
-<table id="conveyance_table"  class="display cell-border compact hover" style="width:100%">
+<table id="conveyance_table"  class="display cell-border compact" style="width:100%">
     <thead  class="fw-bold fs-6"></thead>
 </table>
 {% endblock table %}
@@ -33,6 +43,19 @@ aria-labelledby="exampleModalLabel" data-bs-backdrop="static" id="modal-te">
 {% block extra_scripts %}
 <script>
     var table = null;
+    var params=null;
+    var from_pd = moment().subtract(7, 'days').format('YYYY-MM-DD');
+    var to_pd = moment().format('YYYY-MM-DD')
+    params = {from:from_pd, to:to_pd}
+    const table_filters = localStorage.getItem('womstats_filter')
+    if(table_filters){
+        params = JSON.parse(table_filters)
+        localStorage.clear()
+    }
+    function reloadTable(table, filters){
+        params = filters
+        table.ajax.reload()
+    }
 	const modal_id        = "#modal-te"
 	const modalcontent_id = "#te_content"
 	const table_id        = "#conveyance_table"
@@ -52,28 +75,29 @@ $(document).ready(() => {
         ajax:{
             url: "{{ url('attendance:conveyance') }}?action=list",
             data:function(d){
-                d.fields = ['id', 'bu__buname', 'people__peoplename', 'people__peoplecode',
-                    'bu__bucode', 'punchintime', 'punchouttime', 'transportmodes', 'distance',
-                'duration', 'expamt', 'ctzoffset']
+                    d.params = JSON.stringify(params)
                 }
         },
-        pageLength:50,
         deferRender: true,
-        lengthMenu:[[20, 30, 40],[20, 30, 40]],
-        dom:`<'row' <'col-sm-6 d-flex justify-content-start'f> <'col-sm-6 d-flex justify-content-end'B> >rt<'row' <'col-sm-6'l> <'col-sm-6'p><'col-sm-12 d-flex justify-content-center'i>>`,
+        scrollY: 300,
+        scrollCollapse: true,
+        scrollX:true,
+        dom: `<'row' <'col-sm-6 d-flex justify-content-start'<'customfields'>f> <'col-sm-6 d-flex justify-content-end'B> >rt<'row'
+            <'col-sm-6'l> <'col-sm-6'p><'col-sm-12 d-flex justify-content-center'i>>`,
         columns:[
-            {visible:false, data: 'id', searchable:false, orderable:false, defaultContent: ""},
+            {visible:false, data: 'id', searchable:false, orderable:false, className:"noVis",defaultContent: ""}, //0
             {data: 'bu__buname', title: 'Site Name', render:function ( data, type, row, meta ) {
                 return `<p data-placement="top" data-toggle="tooltip"  
                 data-bs-placement="right"  class="pe-auto"
                 title=${row['bu__bucode']}>${row['bu__buname']}</p>`;
-            }},
+            }}, //1
             {data: 'people__peoplename', title: 'People', render:function ( data, type, row, meta ) {
                 return `<a href=${formUrl}?id=${row['id']}>${data}</a>`
-            }},
-            {data: 'people__peoplecode', visible:false, searchable:false, orderable:false },
-            {data: 'bu__bucode', visible:false, searchable:false, orderable:false },
-            {data: 'punchintime', title: 'Start Time', render:function(data, type, row, meta){
+            }}, //2
+            {data: 'people__peoplecode', title:"People Code", visible:false, searchable:false, orderable:false }, //3
+            {data: 'bu__bucode', visible:false, title:"Bu Code", searchable:false, orderable:false }, //4
+            
+            {data: 'punchintime', title: 'Start Time', width:"10%", render:function(data, type, row, meta){
                 if(type === "sort" || type === "type"){
                     return data;
                 }
@@ -83,8 +107,8 @@ $(document).ready(() => {
                     return data ? datetime : '-';
                 }return data
                 
-            } },
-            {data: 'punchouttime', title: 'End Time', render:function(data,type,row,meta){
+            } }, //5
+            {data: 'punchouttime', title: 'End Time',  width:"10%", render:function(data,type,row,meta){
                 if(type === "sort" || type === "type"){
                     return data ? data: '-';
                 }
@@ -92,24 +116,53 @@ $(document).ready(() => {
                     let datetime = moment(data, 'YYYY-MM-DDTHH:mm:ss').add(row['ctzoffset'], 'm').format("DD-MMM-YYYY HH:mm")
                     return data ? datetime : '-';
                 }return data
-            } },
-            {data: 'transportmodes', title: 'Transport Modes' },
-            {data: 'distance', title: 'Distance' },
-            {data: 'duration', title: 'Duration' },
-            {data: 'expamt', title: 'Amount' },
+            } }, //6
+            {data: 'start', visible:false, title:"Start Location", searchable:false, orderable:false }, //7
+            {data: 'end', visible:false, title:"End Location", searchable:false, orderable:false }, //8
+            {data: 'transportmodes', title: 'Transport Modes' }, //9
+            {data: 'distance', title: 'Distance (Kms)', width:'10%' }, //10
+            {data: 'duration', title: 'Duration (Mins)',  width:'10%' }, //11
+            {data: 'expamt', title: 'Amount',  width:'10%' }, //12
         ],
-        //columnDefs:[{
-        //    targets:[5,6, 7],
-        //    orderable:false,
-        //}],
+        columnDefs:[{
+            targets:[8,7],
+            render:function(data, type, row, meta){
+                if(isValidJSON(data)){
+                    let parsedJson = JSON.parse(data)
+                    return parsedJson['coordinates'].reverse()
+
+                }
+            }
+        }],
         order:[[5, 'desc']],
         buttons:[{
             text: 'Add New',
-            className: 'btn btn-sm btn-light-primary',
+            className: 'btn btn-sm btn-light-primary d-none',
             action:function(e, dt, node, config){
                 location.href = "{{ url('attendance:conveyance') }}?action=form"
             }
-        }]
+        },    
+        "searchBuilder",
+        dataTablesPDFConfig(
+            title = `Site: {{request.user.bu.buname}}\n Travel Expense List`,
+            columns = [1,2,3,4,5,6,7,8,9,10,11,12],
+            filename = 'conveyance_list'
+        ),
+        dataTablesExcelConfig(
+            title = `Site: {{request.user.bu.buname}}\n Travel Expense List`,
+            columns = [1,2,3,4,5,6,7,8,9,10,11,12],
+            filename = 'conveyance_list'
+        ),
+        dataTablesColumnVisibilityConfig(),
+        ]
+    })
+
+    initDateRangeHtml()
+    initDateRange("#id_daterange").on('apply.daterangepicker', function(e, picker){
+        from_pd = picker.startDate.format('YYYY-MM-DD');
+        to_pd = picker.endDate.format('YYYY-MM-DD');
+        let filters = {from:from_pd, to:to_pd}
+        reloadTable(table, filters)
     })
 
     $('.btn').removeClass('dt-button')

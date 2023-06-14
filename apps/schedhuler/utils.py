@@ -451,8 +451,7 @@ def insert_into_jn_and_jnd(job, DT, resp):
     return status, resp
 
 def insert_into_jn_for_parent(job, params):
-    obj, _ = am.Jobneed.objects.update_or_create(
-        defaults={
+    defaults={
             'ctzoffset'        : job['ctzoffset'],
             'priority'         : job['priority'],
             'identifier'       : job['identifier'],
@@ -473,7 +472,9 @@ def insert_into_jn_for_parent(job, params):
             'jobstatus'      : params['jobstatus'],
             'plandatetime': params['pdtz'],
             'expirydatetime': params['edtz']
-        },
+        }
+    obj = am.Jobneed.objects.create(
+        **defaults,
         job_id         = job['id'],           parent       = params['NONE_JN'],
         jobdesc        = params['jobdesc'],qset_id      = job['qset_id'],
         asset_id       = job['asset_id'],     
@@ -481,7 +482,6 @@ def insert_into_jn_for_parent(job, params):
         pgroup_id      = job['pgroup_id'],
         jobtype        = params['jobtype'],
     )
-    ic("iscreated", _)
     return obj
 
 

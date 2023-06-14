@@ -5,6 +5,7 @@ from apps.core import utils
 from apps.activity.models import Attachment
 from apps.peoples.models import Pgbelonging
 from itertools import chain
+from django.utils.dateparse import parse_date
 import json
 import logging
 log = logging.getLogger('__main__')
@@ -75,15 +76,20 @@ class PELManager(models.Manager):
             peventtype__tacode__in = ['SELF', 'SELFATTENDANCE', 'MARK', 'MRKATTENDANCE']
         ).exclude(id=1).values(*fields).order_by('-datefor')
         return qset or self.none()
-    
-    
 
-    def get_lastmonth_conveyance(self, R):
-        now = datetime.now()
-        qset = self.select_related('bu', 'people').filter(  
+    def get_lastmonth_conveyance(self, request, fields, related):
+        R, S = request.GET, request.session
+        P = json.loads(R['params'])
+        ic(P)
+        qset = self.select_related('bu', 'people').annotate(
+            start = AsGeoJSON('startlocation'),
+            end = AsGeoJSON('endlocation')
+            ).filter(  
                 peventtype__tacode = 'CONVEYANCE',
-                punchintime__date__gte = (now - timedelta(days = 30)).date()
-            ).exclude(endlocation__isnull = True).values(*R.getlist('fields[]')).order_by('-punchintime')
+                punchintime__date__gte = P['from'],
+                punchintime__date__lte = P['to'],
+                client_id = S["client_id"]
+            ).exclude(endlocation__isnull = True).select_related(*related).values(*fields).order_by('-punchintime')
         return qset or self.none()
 
     def getjourneycoords(self, id):
@@ -183,4 +189,23 @@ class PELManager(models.Manager):
             'people__peoplecode', 'people__mobno', 'people__email',
             'bu__buname'
         )
+        return qset or self.none()
+    
+    def get_people_event_log_punch_ins(self, datefor, buid):
+        given_date = parse_date(datefor)
+        previous_date = given_date - timedelta(days=1) 
+        qset = self.filter(
+            datefor__range = (previous_date, given_date),
+            punchouttime__isnull = True,
+            bu_id = buid
+        ).select_related(
+            'client', 'bu', 'shift', 'verifiedby',
+            'geofence', 'peventtype'
+        ).values(
+            'uuid', 'people_id', 'client_id', 'bu_id','shift_id', 'verifiedby_id', 'geofence_id', 'id',
+            'peventtype_id', 'transportmodes', 'punchintime', 'punchouttime', 'datefor', 'distance',
+            'cuser_id', 'muser_id', 'cdtz', 'mdtz',
+            'duration', 'expamt', 'accuracy', 'deviceid', 'startlocation', 'endlocation', 'ctzoffset',
+            'remarks', 'facerecognitionin', 'facerecognitionout', 'otherlocation', 'reference', 'tenant_id'
+        ).order_by('punchintime')
         return qset or self.none()

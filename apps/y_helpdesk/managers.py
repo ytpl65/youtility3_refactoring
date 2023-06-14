@@ -36,10 +36,10 @@ class TicketManager(models.Manager):
             cdtz__date__gte = P['from'],
             cdtz__date__lte = P['to'],
             bu_id = S['bu_id'],
-            ticketsource = 'USERDEFINED'
-        ).select_related('assignedtopeople', 'assignedtogroup', 'bu').values(
+        ).select_related('assignedtopeople', 'assignedtogroup', 'bu', 'ticketcategory').values(
             'id', 'cdtz', 'bu__buname', 'status', 'bu__bucode', 'isescalated',
-            'cuser__peoplename', 'cuser__peoplecode', 'ticketdesc', 'ctzoffset'
+            'cuser__peoplename', 'cuser__peoplecode', 'ticketdesc', 'ctzoffset',
+            'ticketsource', 'ticketcategory__taname'
         )
         if P.get('status'):
             qset = qset.filter(status =P['status'])
@@ -62,7 +62,7 @@ class TicketManager(models.Manager):
             ).values(
                 'id', 'uuid', 'ticketdesc', 'assignedtopeople_id', 'assignedtogroup_id', 'comments', 'bu_id', 'client_id', 'priority', 
                 'events', 'isescalated', 'ticketsource', 'cuser_id', 'muser_id', 'cdtz', 'mdtz', 'ctzoffset', 'attachmentcount',
-                'ticketcategory_id', 'location_id', 'asset_id','modifieddatetime', 'level', 'status', 'identifier',
+                'ticketcategory_id', 'location_id', 'asset_id','modifieddatetime', 'level', 'status', 'identifier', 'qset_id'
             )
         return qset or self.none()
     

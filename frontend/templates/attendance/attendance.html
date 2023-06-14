@@ -187,19 +187,19 @@ tr{
 			},
             pageLength:14,
             deferRender: true,
-			responsive : true,
-            
             dom: `<'row' <'col-sm-6 d-flex justify-content-start'<'customfields'>f> <'col-sm-6 d-flex justify-content-end'B> >rt<'row'
 			 <'col-sm-6'l> <'col-sm-6'p><'col-sm-12 d-flex justify-content-center'i>>`,
             order:[[10, 'desc']],
-            //ordering: false,
             columnDefs:[
                 {targets:[6,7], render:function(data, type, row, meta){
                     return convert_to_local(type, data, row)}
                 }
             ],
+            scrollY: 300,
+            scrollCollapse: true,
+            scrollX:true,
             columns:[
-                {data:'peventtype__taname', title:'Type', width:"5%"},//0
+                {data:'peventtype__taname', title:'Type', width:"4%"},//0
                 {data:'bu__buname', title:'Site Name'},//1
                 { data:'people__peoplecode',  title:"Code"},//2
                 {data:'people__peoplename', title:'People'},//3
@@ -214,6 +214,7 @@ tr{
                 {data:'id',  searchable:false, title:'FR Status'},//12
                 { data:'uuid',  visible:false, searchable:false, className:'noVis'},//13
                 { data:'peventtype__tacode',  visible:false, searchable:false, className:'noVis'},//14
+                { data:'people__location__locname',  title:"Location",visible:false, searchable:false,},//15
                 
             ], 
             columnDefs:[
@@ -249,12 +250,14 @@ tr{
             buttons: [
                 "searchBuilder",
                 dataTablesPDFConfig(
-                    'Site: {{ request.user.bu.buname }}\nAttendance List',
-                    [0,1,2,3,4,5,6,7,8,9,10,11,14]
+                    `Site: {{ request.user.bu.buname }}\nAttendance List`,
+                    [0,1,2,3,4,5,6,7,8,9,10,11,14],
+                    filename = "attendance_list"
                 ),
                 dataTablesExcelConfig(
                     'Site: {{ request.user.bu.buname }}\nAttendance List',
-                    [0,1,2,3,4,5,6,7,8,9,10,11,14]
+                    [0,1,2,3,4,5,6,7,8,9,10,11,14],
+                    filename = "attendance_list"
                 ),
                 dataTablesColumnVisibilityConfig(),
             ],
@@ -271,6 +274,7 @@ tr{
             let filters = {from:from_pd, to:to_pd}
             reloadTable(table, filters)
         })
+
         
         //BEGIN STYLING DATATABLE
         $("th > input").addClass('form-control')

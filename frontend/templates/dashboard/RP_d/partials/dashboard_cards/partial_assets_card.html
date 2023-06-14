@@ -6,7 +6,16 @@ var barChartOptions = {
     width:"100%",
     stacked: true,
     toolbar: {
-      show: true
+      show: true,
+      customIcons:[{
+icon: '<img src="{{ static('assets/media/images/logo.png') }}" width="20">',
+index: 4,
+title: 'tooltip of the icon',
+class: 'custom-icon',
+click: function (chart, options, e) {
+  console.log("clicked custom-icon")
+}
+}],
     },
     zoom: {
       enabled: true

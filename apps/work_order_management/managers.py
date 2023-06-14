@@ -71,6 +71,8 @@ class WorkOrderManager(models.Manager):
         ).select_related(*related).values(
             *fields
         )
+        if P.get('status'):
+            qset = qset.filter(workstatus =P['status'])
         return qset or self.none()
     
     def get_workpermitlist(self, request):
@@ -103,14 +105,16 @@ class WorkOrderManager(models.Manager):
         return wp_details or self.none()
     
     def get_wp_answers(self, qsetid, womid):
+        
+        childwoms = self.filter(parent_id = womid).order_by('seqno')
         ic(qsetid, womid)
         QuestionSet = apps.get_model('activity', 'QuestionSet')
         wp_details = []
         sections_qset = QuestionSet.objects.filter(parent_id = qsetid).order_by('seqno')
-        for section in sections_qset:
+        for childwom in childwoms:
             sq = {
-                "section":section.qsetname,
-                "sectionID":section.seqno,
+                "section":childwom.description,
+                "sectionID":childwom.seqno,
                 'questions':section.qset_answers.filter(wom_id = womid).values(
                     'question__quesname', 'answertype', 'answer', 'qset_id',
                     'min', 'max', 'options', 'id', 'ismandatory').order_by('seqno')
@@ -127,7 +131,60 @@ class WorkOrderManager(models.Manager):
         ).values('other_data').first()
         return obj['other_data']['wp_approvers'] or []
     
+    
+    def get_wom_status_chart(self, request):
+        S,R = request.session, request.GET
+        qset = self.filter(
+            bu_id = S['bu_id'],
+            client_id = S['client_id'],
+            cdtz__date__gte = R['from'],
+            cdtz__date__lte = R['upto'],
+            workpermit = 'NOT_REQUIRED'
+        )
+        assigned    = qset.filter(workstatus = 'ASSIGNED').count()
+        re_assigned = qset.filter(workstatus = 'RE_ASSIGNED').count()
+        completed   = qset.filter(workstatus = 'COMPLETED').count()
+        cancelled   = qset.filter(workstatus = 'CANCELLED').count()
+        inprogress  = qset.filter(workstatus = 'INPROGRESS').count()
+        closed      = qset.filter(workstatus = 'CLOSED').count()
+        
+        stats = [assigned, re_assigned, completed, inprogress,closed, cancelled]
+        return stats, sum(stats)
+    
+    
+    def get_events_for_calendar(self, request):
+        from apps.work_order_management.models import Wom
+        S,R = request.session, request.GET
+        
+        start_date = datetime.strptime(R['start'], "%Y-%m-%dT%H:%M:%S%z").date()
+        end_date = datetime.strptime(R['end'], "%Y-%m-%dT%H:%M:%S%z").date()
 
+        qset = self.annotate(
+            start=Cast(F('plandatetime'), output_field=CharField()),
+            end=Cast(F('expirydatetime'), output_field=CharField()),
+            title = Case(When(workpermit = 'NOT_REQUIRED', then = F('description') ), default=F('qset__qsetname'), output_field=CharField()),
+            color = Case(
+                When(workstatus__exact = Wom.Workstatus.CANCELLED, then = V('#727272')),
+                When(workstatus__exact = Wom.Workstatus.REASSIGNED, then= V( '#004679')),
+                When(workstatus__exact = Wom.Workstatus.INPROGRESS, then= V( '#b87707')),
+                When(workstatus__exact = Wom.Workstatus.CLOSED, then= V( '#13780e')),
+                When(workstatus__exact = Wom.Workstatus.COMPLETED, then=V('#0d96ab')),
+                When(workstatus__exact = Wom.Workstatus.ASSIGNED, then=V('#a14020')),
+                output_field=CharField()
+            )
+        ).filter(
+            cdtz__date__gte = start_date,
+            cdtz__date__lte = end_date,
+            bu_id = S['bu_id'],
+            client_id = S['client_id']
+        )
+        
+        if R['eventType'] == 'Work Orders':
+            qset = qset.filter(workpermit = Wom.WorkPermitStatus.NOTNEED)
+        else:
+            qset = qset.filter(~Q(workpermit = Wom.WorkPermitStatus.NOTNEED))
+        qset = qset.values('id', 'start', 'end', 'title','color')
+        return qset or self.none()
         
             
             

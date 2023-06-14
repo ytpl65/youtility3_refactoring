@@ -60,6 +60,10 @@ class Query(graphene.ObjectType):
     get_questionsmodifiedafter = graphene.Field(SelectOutputType, 
                                                mdtz = graphene.String(required = True),
                                                ctzoffset = graphene.Int(required = True))
+    
+    get_people_event_log_punch_ins = graphene.Field(SelectOutputType,
+                                                    datefor = graphene.String(required=True),
+                                                    buid = graphene.Int(required=True))
 
     get_qsetmodifiedafter = graphene.Field(SelectOutputType,
                                           mdtz = graphene.String(required = True),
@@ -306,6 +310,13 @@ class Query(graphene.ObjectType):
     def resolve_get_vendors(self, info, clientid, mdtz, buid, ctzoffset):
         log.info(f'\n\nrequest for get_vendors inputs :{clientid = } {mdtz = } {buid = } {ctzoffset = }')
         data = Vendor.objects.get_vendors_for_mobile(info.context, clientid, mdtz, buid, ctzoffset)
+        records, count, msg = utils.get_select_output(data)
+        log.info(f'total {count} objects returned')
+        return SelectOutputType(nrows = count, records = records,msg = msg)
+    
+    def resolve_get_people_event_log_punch_ins(self, info, datefor,  buid):
+        log.info(f'request get_people_event_log_punch_ins inputs are : {datefor = }  {buid = }')
+        data = PeopleEventlog.objects.get_people_event_log_punch_ins(datefor,  buid)
         records, count, msg = utils.get_select_output(data)
         log.info(f'total {count} objects returned')
         return SelectOutputType(nrows = count, records = records,msg = msg)

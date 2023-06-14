@@ -30,7 +30,7 @@ class Attendance(LoginRequiredMixin, View):
         'filter': AttendanceFilter,
         'form_initials':{},
         'fields': ['id', 'people__peoplename', 'people__peoplecode', 'verifiedby__peoplename', 'peventtype__taname','peventtype__tacode', 'bu__buname', 'datefor','uuid',
-                   'punchintime', 'punchouttime', 'facerecognitionin', 'facerecognitionout','shift__shiftname', 'ctzoffset', 'peventlogextras', 'sL', 'eL']}
+                   'punchintime', 'punchouttime', 'facerecognitionin', 'facerecognitionout','shift__shiftname', 'ctzoffset', 'peventlogextras', 'sL', 'eL', 'people__location__locname']}
 
     def get(self, request, *args, **kwargs):
         R, P, resp = request.GET, self.params, None
@@ -115,9 +115,10 @@ class Conveyance(LoginRequiredMixin, View):
     model = atdm.PeopleEventlog,
     params = {
         'fields': [
-            'punch_intime', 'punch_outtime', 'bu__buname', 
+            'punchintime', 'punchouttime', 'bu__buname', 'ctzoffset',
             'bu__bucode', 'people__peoplename', 'people__peoplecode',
-            'transportmodes', 'distance', 'duration', 'expamt'],
+            'transportmodes', 'distance', 'duration', 'expamt', 'id', 
+            'start', 'end'],
         'template_list': 'attendance/travel_expense.html',
         'template_form': 'attendance/travel_expense_form.html',
         'related'      : ['bu', 'people'],
@@ -132,7 +133,8 @@ class Conveyance(LoginRequiredMixin, View):
 
         # then load the table with objects for table_view
         if R.get('action', None) == 'list' or R.get('search_term'):
-            objs = self.params['model'].objects.get_lastmonth_conveyance(R)
+            objs = self.params['model'].objects.get_lastmonth_conveyance(
+                request, self.params['fields'], self.params['related'] )
             ic(utils.printsql(objs))
             resp = rp.JsonResponse(data = {'data':list(objs)})
 

@@ -6,6 +6,7 @@ from .forms import TicketForm, EscalationForm
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.views import View
 from django.http import response as rp
+from apps.activity.models import Location
 from apps.core import utils
 from django.db import transaction
 from django.http.request import QueryDict
@@ -96,7 +97,7 @@ class TicketView(LoginRequiredMixin, View):
         
         if R.get('action') == 'list':
             objs = P['model'].objects.get_tickets_listview(request)
-            return rp.JsonResponse({'data':list(objs)}, status=200)
+            return rp.JsonResponse({'data':list(objs)}, status=200)        
         
         if R.get('id'):
             ticket = utils.get_model_obj(R['id'], request, P)

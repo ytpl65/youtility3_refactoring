@@ -54,7 +54,9 @@ $(document).ready(function(){
         },
         pageLength:50,
         deferRender:true,
-        responsive:true,
+        scrollY: 300,
+        scrollCollapse: true,
+        scrollX:true,
         lengthMenu:[[10,20,30], [10,20,30]],
         dom:`<'row' <'col-sm-6 d-flex justify-content-start'<'customfields'>f> <'col-sm-6 d-flex justify-content-end'B> >rt<'row'
             <'col-sm-6'l> <'col-sm-6'p><'col-sm-12 d-flex justify-content-center'i>>`,
@@ -92,11 +94,13 @@ $(document).ready(function(){
             "searchBuilder",
                 dataTablesPDFConfig(
                     title = `Site: {{request.user.bu.buname}}\n Work Permit List`,
-                    columns = [1,2,3,4,5,6,7,8,9]
+                    columns = [1,2,3,4,5,6,7,8,9],
+                    filename = "workpermit_list"
                 ),
                 dataTablesExcelConfig(
                     title = `Site: {{request.user.bu.buname}}\n Work Permit List`,
-                    columns = [1,2,3,4,5,6,7,8,9]
+                    columns = [1,2,3,4,5,6,7,8,9],
+                    filename = "workpermit_list"
                 ),
                 dataTablesColumnVisibilityConfig(),
             {

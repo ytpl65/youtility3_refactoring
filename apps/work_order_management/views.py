@@ -105,7 +105,7 @@ class WorkOrderView(LoginRequiredMixin, View):
         'related'      : ['vendor', 'cuser'],
         'model'        : Wom,
         'model_jnd'    : WomDetails,
-        'fields'       : ['id', 'ctzoffset', 'cuser__peoplename', 'cuser__peoplecode', 'plandatetime', 'cdtz',
+        'fields'       : ['id', 'ctzoffset', 'cuser__peoplename', 'cuser__peoplecode', 'plandatetime', 'cdtz', 'bu__buname',
                           'expirydatetime', 'priority', 'description', 'vendor__name', 'categories', 'workstatus']
     }
 
@@ -440,7 +440,35 @@ class WorkPermit(LoginRequiredMixin, View):
         wp.other_data['wp_approvers'] = wp_approvers
         wp.save()
         return wp
-        
+    
+    def create_child_wom(self, wom, qset_id):
+        qset = QuestionSet.objects.get(id =qset_id)
+        return Wom.objects.create(
+            parent_id      = wom.id,
+            description    = qset.qsetname,
+            plandatetime   = wom.plandatetime,
+            expirydatetime = wom.expirydatetime,
+            starttime      = wom.starttime,
+            gpslocation    = wom.gpslocation,
+            asset          = wom.asset,
+            location       = wom.location,
+            workstatus     = wom.workstatus,
+            seqno          = qset.seqno,
+            approvers      = wom.approvers,
+            workpermit     = wom.workpermit,
+            priority       = wom.priority,
+            vendor         = wom.vendor,
+            performedby    = wom.performedby,
+            alerts         = wom.alerts,
+            client         = wom.client,
+            bu             = wom.bu,
+            ticketcategory = wom.ticketcategory,
+            other_data     = wom.other_data,
+            qset           = qset,
+            cuser          = wom.cuser,
+            muser          = wom.muser,
+            ctzoffset      = wom.ctzoffset
+        )
     
     def create_workpermit_details(self, R, wom,  request):
         log.info(f'form post data {R}')
@@ -462,10 +490,12 @@ class WorkPermit(LoginRequiredMixin, View):
                         alerts = float(v) < float(_min) or float(v) > float(_max)
                 else:
                     alerts = False
+                    
+                childwom = self.create_child_wom(wom, qset_id)
                 
                 
                 lookup_args = {
-                    'wom_id':wom.id,
+                    'wom_id':childwom.id,
                     'question_id':qsb_obj.question_id,
                     'client_id':S['client_id'],
                     'qset_id':qset_id

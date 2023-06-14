@@ -15,6 +15,8 @@ from django.utils import timezone
 import requests
 import base64
 from django.core.mail import EmailMessage
+from django.templatetags.static import static
+
 
 
 log = getLogger('mobile_service_log')
@@ -312,14 +314,14 @@ def perform_facerecognition_bgt(self, pel_uuid, peopleid, db='default'):
                 People = apps.get_model('peoples', 'People')
                 people_obj = People.objects.get(id=peopleid)
                 default_peopleimg = f'{settings.MEDIA_ROOT}/{people_obj.peopleimg.url.replace("/youtility4_media/", "")}'
-
+                default_peopleimg = static('assets/media/images/blank.png') if default_peopleimg.endswith('blank.png') else default_peopleimg  
                 if default_peopleimg and pel_att.people_event_pic:
                     images_info = f"default image path:{default_peopleimg} and uploaded file path:{pel_att.people_event_pic}"
                     log.info(f'{images_info}')
                     result['story'] += f'{images_info}\n'
                     from deepface import DeepFace
-                    butils.make_square(default_peopleimg,
-                                       pel_att.people_event_pic)
+                    # butils.make_square(default_peopleimg,
+                    #                    pel_att.people_event_pic)
                     fr_results = DeepFace.verify(
                         img1_path=default_peopleimg, img2_path=pel_att.people_event_pic, enforce_detection=True, detector_backend='ssd')
                     log.info(

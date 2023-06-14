@@ -1,0 +1,99 @@
+{% extends "base_list.html" %}
+
+<!---- BEGIN CARD TITLE ------>
+{% block card_title %}
+Asset Status History
+{% endblock card_title %}
+<!---- END CARD TITLE -------->
+
+<!----------- BEGIN PAGE BREADCUMBS ----------->
+{% block pagebreadcumb %}
+{{ super() }}
+<li class="breadcrumb-item pe-3"><a href="javascript:void(0)" class="pe-3">Asset Status History</a></li>
+{% endblock pagebreadcumb %}
+<!----------- END PAGE BREADCUMBS ------------->
+
+
+<!------------------ BEGIN PEOPLE TABLE ------------------------->
+{% block table %}
+<div class="table-responsive">
+    <table id="assetlog_table" class="display compact cell-border" style="width:100%">
+	</table>
+</div>
+{% endblock table %}
+
+
+{% block extra_scripts %}
+<script>
+    //if you want to modifiy here, then modify in custom.js initDateRange also
+    var params = null
+    var from_pd = moment().subtract(7, 'days').format('YYYY-MM-DD');
+    var to_pd = moment().format('YYYY-MM-DD')
+    params = {from:from_pd, to:to_pd}
+
+
+    function reloadTable(table, filters){
+        params = filters
+        table.ajax.reload()
+    }
+
+
+    $(document).ready(function(){
+    var table = $("#assetlog_table").DataTable({
+        ajax:{
+            url:"{{ url('activity:assetlogs') }}?action=asset_log",
+            data:function(d){
+                    d.params = JSON.stringify(params)
+                }
+        },
+        deferRender: true,
+        scrollY: 300,
+        scrollCollapse: true,
+        scrollX:true,
+        pageLength:25,
+        dom:`<'row' <'col-sm-6 d-flex justify-content-start'<'customfields'>f> <'col-sm-6 d-flex justify-content-end'B> >rt<'row'
+            <'col-sm-6'l> <'col-sm-6'p><'col-sm-12 d-flex justify-content-center'i>>`,
+        columns:[
+            {data:"id", visible:false, className:"noVis"},
+            {data:"cdtz", title:"Created On", width:"15%"},
+            {data:"asset__assetname", title:"Name",},
+            {data:"oldstatus", title:"Old Status", width:"9%"},
+            {data:"newstatus", title:"New Status", width:"9%"},
+            {data:"people__peoplename", title:"User"},
+            {data:'ctzoffset', visible:false, className:'noVis'}
+        ],
+        order:[[1, 'asc']],
+        columnDefs:[
+            {targets:1, render:function(data, type, row, meta){
+                return convert_to_local(type, data, row)
+            }}
+        ],
+        buttons:[
+            "searchBuilder",
+                dataTablesPDFConfig(
+                    title = `Site: {{request.user.bu.buname}}\n Asset Status History`,
+                    columns = [1,2,3,4,5],
+                    filename="asset_status_history"
+                ),
+                dataTablesExcelConfig(
+                    title = `Site: {{request.user.bu.buname}}\n Asset Status History`,
+                    columns = [1,2,3,4,5],
+                    filename="asset_status_history"
+                ),
+                dataTablesColumnVisibilityConfig()      
+        ]
+    })
+
+        //add input field to the datatables dom
+            initDateRangeHtml()
+            initDateRange("#id_daterange").on('apply.daterangepicker', function(e, picker){
+            from_pd = picker.startDate.format('YYYY-MM-DD');
+            to_pd = picker.endDate.format('YYYY-MM-DD');
+            let filters = {from:from_pd, to:to_pd}
+            reloadTable(table, filters)
+            })
+    
+    })
+
+</script>
+{% endblock extra_scripts %}
