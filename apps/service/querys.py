@@ -66,6 +66,11 @@ class Query(graphene.ObjectType):
                                                     datefor = graphene.String(required=True),
                                                     buid = graphene.Int(required=True))
 
+    
+    get_people_event_log_punch_ins = graphene.Field(SelectOutputType,
+                                                    datefor = graphene.String(required=True),
+                                                    buid = graphene.Int(required=True))
+
     get_qsetmodifiedafter = graphene.Field(SelectOutputType,
                                           mdtz = graphene.String(required = True),
                                           ctzoffset = graphene.Int(required = True),

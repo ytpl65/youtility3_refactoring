@@ -48,6 +48,7 @@ function simplifyData(e, data, action) {
 }
 
 function dataTablesExcelConfig(title, columns,filename, moreConfig={}){
+function dataTablesExcelConfig(title, columns,filename, moreConfig={}){
   return {
     extend:'excelHtml5',
     text:'<i class="bi bi-file-earmark-excel-fill text-success fs-5"></i>',

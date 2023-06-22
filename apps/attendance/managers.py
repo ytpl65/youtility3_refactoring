@@ -7,6 +7,7 @@ from apps.peoples.models import Pgbelonging
 from django.db.models import Case, When, Value as V, CharField, F
 from itertools import chain
 from django.utils.dateparse import parse_date
+from django.utils.dateparse import parse_date
 import json
 import logging
 log = logging.getLogger('__main__')
