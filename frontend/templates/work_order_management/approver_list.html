@@ -61,7 +61,9 @@ const formid          = "#approverform"
                 {title:"Created By", data:"cuser__peoplename"},
             ],
             deferRender:true,
-            responsive:true,
+            scrollY: 300,
+            scrollCollapse: true,
+            scrollX:true,
             columnDefs:[
             ],
             dom :`<'row' <'col-sm-6 d-flex justify-content-start'f> <'col-sm-6 d-flex justify-content-end'B> >rt<'row'
@@ -73,11 +75,13 @@ const formid          = "#approverform"
                 "searchBuilder",
                 dataTablesPDFConfig(
                     title = `Site: {{request.user.bu.buname}}\n Approver List`,
-                    columns = [1,2,3,4,5]
+                    columns = [1,2,3,4,5],
+                    filename = 'approver_list'
                 ),
                 dataTablesExcelConfig(
                     title = `Site: {{request.user.bu.buname}}\n Approver List`,
-                    columns = [1,2,3,4,5]
+                    columns = [1,2,3,4,5],
+                    filename = 'approver_list'
                 ),
                 dataTablesColumnVisibilityConfig(),
                 {   

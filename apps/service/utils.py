@@ -1,23 +1,28 @@
-from pprint import pformat
-from django.db import transaction
-from .types import ServiceOutputType
-from django.db.utils import IntegrityError
-from apps.service import serializers as sz
-from apps.core import utils
-from .validators import clean_record
-from apps.activity.models import (Jobneed, JobneedDetails, Asset)
-import traceback as tb
-from apps.y_helpdesk.models import Ticket
-from intelliwiz_config.celery import app
-from django.conf import settings
-from .auth import Messages as AM
-from django.apps import apps
-from background_tasks.tasks import alert_sendmail
 import json
+import traceback as tb
 from logging import getLogger
+from pprint import pformat
+
+from django.apps import apps
+from django.conf import settings
+from django.db import transaction
+from django.db.utils import IntegrityError
+
+from apps.activity.models import Asset, Jobneed, JobneedDetails
+from apps.core import utils
+from apps.service import serializers as sz
+from apps.y_helpdesk.models import Ticket
+from background_tasks.tasks import alert_sendmail
+from intelliwiz_config.celery import app
+
+from .auth import Messages as AM
+from .types import ServiceOutputType
+from .validators import clean_record
+
 log = getLogger('mobile_service_log')   
 
 from apps.work_order_management import utils as wutils
+
 
 class Messages(AM):
     INSERT_SUCCESS = "Inserted Successfully!"
@@ -264,8 +269,9 @@ def save_parent_childs(sz, jn_parent_serializer, child, M):
 
 def save_linestring_and_update_pelrecord(obj):
     # sourcery skip: identity-comprehension
-    from apps.attendance.models import Tracking
     from django.contrib.gis.geos import LineString
+
+    from apps.attendance.models import Tracking
     try:
 
         bet_objs = Tracking.objects.filter(reference = obj.uuid).order_by('receiveddate')
@@ -398,6 +404,7 @@ def perform_tasktourupdate(self, file, request=None, db='default', bg=False):
     instance, msg = None, ""
 
     try:
+        log.info("%s" % pformat(file))
         log.info(
             f"""perform_tasktourupdate(file = {file}, bg = {bg}, db = {db} runnning in {'background' if bg else "foreground"})"""
         )
@@ -445,9 +452,7 @@ def perform_insertrecord(self, file, request = None, db='default', filebased = T
     """
     rc, recordcount, traceback= 1, 0, 'NA'
     instance = None
-    log.info(
-            f"""perform_insertrecord(file = {file}, bg = {bg}, db = {db}, filebased = {filebased} {request = } { userid = } runnning in {'background' if bg else "foreground"})"""
-        )
+    log.info(f"""perform_insertrecord(file = {file}, bg = {bg}, db = {db}, filebased = {filebased} {request = } { userid = } runnning in {'background' if bg else "foreground"})""")
     try:
 
         if bg:

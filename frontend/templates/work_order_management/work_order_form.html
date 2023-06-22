@@ -111,20 +111,21 @@ Work Order
       </div>
       <div class="input-group mb-3">
         <div class="col-md-4 col-sm-12 pt-2">
-          {{ woform.asset.label_tag() }}
-        </div>
-        <div class="col-md-8 col-sm-12">
-          {{ woform.asset }}
-        </div>
-      </div>
-      <div class="input-group mb-3">
-        <div class="col-md-4 col-sm-12 pt-2">
           {{ woform.location.label_tag() }}
         </div>
         <div class="col-md-8 col-sm-12">
           {{ woform.location }}
         </div>
       </div>
+      <div class="input-group mb-3">
+        <div class="col-md-4 col-sm-12 pt-2">
+          {{ woform.asset.label_tag() }}
+        </div>
+        <div class="col-md-8 col-sm-12">
+          {{ woform.asset }}
+        </div>
+      </div>
+      
       <div class="input-group mb-3">
         <div class="col-md-4 col-sm-12 pt-2">
           {{ woform.ticketcategory.label_tag() }}
@@ -282,6 +283,12 @@ Work Order
     if("{{ woform.instance.workstatus }}" === "COMPLETED"){
       disableAllFields()
     }
+
+    //on change location change asset options
+    $("#id_location").change(() => {
+            let locationid = $('#id_location').val();
+            getAssetsOfLocation(locationid, '{{ url("activity:location") }}')
+        });
 
 
     //when user tries to change the vendor the select field

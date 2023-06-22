@@ -65,20 +65,14 @@ Import Data
             </div>
             <button type="button" class="btn btn-sm btn-primary2" id="btn_importdata">Import Data</button>
         </form>
-        <table id="import_datatable"></table>
     </div>
 </div>
 {% endblock form %}
 
 
 {% block extras %}
-<table>
-<thead>
-{% for th in columns %}
-
-{% endfor %}
-</thead>
-</table>
+<hr>
+<table id="import_datatable" class="display"></table>
 {% endblock extras %}
 
 
@@ -94,21 +88,30 @@ Import Data
         //set ctzoffset
         $("#id_ctzoffset").val(-new Date().getTimezoneOffset())
 
-        //on click downnload template
+        //on click download template
         $('#btn_download').click(() => {
-            let params = {url:urlname, data:{action:"downloadTemplate", template:$("#id_table").val()} }
-            fire_ajax_get(params)
-            .done((data, status, xhr) => {
-                var blob = new Blob([xhr], {type: 'application/vnd.ms-excel'})
-                var link = document.createElement('a');
-                link.href = window.URL.createObjectURL(blob);
-                link.download = 'template.xlsx';
-                link.click();
+            let table = $("#id_table").val();
+            let url = `${urlname}?action=downloadTemplate&template=${table}`;
+
+            fetch(url, {
+                method: 'GET'
             })
-            .error((xhr, status, error) => {
-                console.log(error)
+            .then(response => {
+                // extract filename from Content-Disposition header
+                let filename = response.headers.get('Content-Disposition').split('=')[1];
+                filename = filename.replace(/"/g, '');  // Remove quotes if they exist
+
+                return response.blob().then(data => {
+                    var link = document.createElement('a');
+                    link.href = window.URL.createObjectURL(data);
+                    link.download = filename;
+                    link.click();
+                });
             })
-        })
+            .catch(error => console.log(error));
+        });
+
+
 
         //submit form with data-file
         $("#btn_importdata").click(() => {
@@ -142,30 +145,63 @@ Import Data
                     processData: false,
                     type: 'POST',
                     success: function (res) {
-                        
-                        console.log(res)
-                        if(res.rc === 1){
-                            //initialize table with errors
-                            if(table){
-                                table.destroy()
-                            }else{
-                              table =  $('#import_datatable').DataTable({
-                                    data:res.data,
-                                    columns:res.columns,
-                                    columnDefs:{targets: Array(res.no_of_cols).fill(null).map((_, i) => i), render:function(data, type, row, meta ){return data || '--'} }
-                                })
+                        if (res.rc === 1) {
+                            // Initialize table with errors
+                            if (table) {
+                                table.destroy();
                             }
-                        }else{
+                            table = $('#import_datatable').DataTable({
+                                data: res.data,
+                                columns: res.columns,
+                                columnDefs: [
+                                    {
+                                        targets: Array(res.no_of_cols).fill(null).map((_, i) => i),
+                                        render: function (data, type, row, meta) {
+                                            return data || '--';
+                                        }
+                                    },
+                                    {
+                                        targets: -1,
+                                        render: function (data, type, row, meta) {
+                                            if (row.error) {
+                                                return `<span class="error-tooltip" data-toggle="tooltip" data-placement="top" title="${row.error}">Error</span>`;
+                                            }
+                                            return '';
+                                        }
+                                    }
+                                ]
+                            });
+                            
+                            // Enable Bootstrap tooltips
+                            $('[data-toggle="tooltip"]').tooltip();
+                            
+                            // Add event listener to confirm button
+                            $('#confirm_import_button').click(function () {
+                                Swal.fire({
+                                    title: 'Confirm Import',
+                                    text: 'Are you sure you want to import the data?',
+                                    icon: 'question',
+                                    showCancelButton: true,
+                                    confirmButtonText: 'Import',
+                                    cancelButtonText: 'Cancel'
+                                }).then(function (result) {
+                                    if (result.isConfirmed) {
+                                        // Perform import
+                                        performImport();
+                                    }
+                                });
+                            });
+                        } else {
                             Swal.fire({
-                                title:`Number of records inserted: ${res.totalrows}`,
-                                icon:"success"
-                            })
+                                title: `Number of records inserted: ${res.totalrows}`,
+                                icon: 'success'
+                            });
                         }
                     },
                     error: function (xhr, status, error) {
-                        console.log(xhr)
+                        console.log(xhr);
                     }
-                })
+                });
             })
         })
 

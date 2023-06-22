@@ -30,6 +30,7 @@ from django.db import IntegrityError
 import apps.activity.models as am
 import apps.attendance.models as atm
 from apps.y_helpdesk.models import Ticket
+from apps.work_order_management.models import Wom
 from pprint import pformat
 import uuid, tempfile
 import io, xlsxwriter, openpyxl
@@ -1548,7 +1549,7 @@ class BulkImportData(LoginRequiredMixin, View):
     params = {
         'model_resource_map':{
             'TYPEASSIST':ob_admin.TaResource,
-            'BU':ob_admin.BtResource,
+            'BV':ob_admin.BtResource,
             'PEOPLEGROUP':people_admin.PeopleResource,
             'SITEGROUP':people_admin.SiteGroupResource,
             'CAPABILITY':people_admin.Capability,
@@ -1557,70 +1558,115 @@ class BulkImportData(LoginRequiredMixin, View):
         'template':'onboarding/import.html'
     }
     header_mapping = {
-        'TYPEASSIST':['ID', 'Name', 'Code', 'Type', 'tenant', 'BV', 'Client']
+        'TYPEASSIST':[ 'Name*', 'Code*', 'Type*', 'BV*', 'Client*']
     }
 
     def get(self, request, *args, **kwargs):
         R, P = request.GET, self.params
 
         if (R.get('action') == 'form'):
-            cxt = {'importform': P['form']()}
+            cxt = {'importform': P['form'](initial = {'table':"TYPEASSIST"})}
             return render(request, P['template'], cxt)
 
         if (request.GET.get('action') == 'downloadTemplate') and request.GET.get('template'):
             import pandas as pd
-                    # Define DataFrame with headers
-            df = pd.DataFrame(columns=['Column1', 'Column2', 'Column3'])
+            from io import BytesIO
+            columns = self.header_mapping.get(R['template'])
+            df = pd.DataFrame(columns=columns)
+            # Write DataFrame to an in-memory BytesIO object
+            buffer = BytesIO()
+            df.to_excel(buffer, index=False, engine='openpyxl')
+            buffer.seek(0)
+            ic(R['template'], columns)
+            return FileResponse(
+                buffer, as_attachment=True, filename=f'{R["template"]}.xlsx'
+            )
+            
+    def post(self, request, *args, **kwargs):
+        R,P = request.POST, self.params
+        ic(R)
+        form = P['form'](R, request.FILES)
+        if not form.is_valid():
+            return rp.JsonResponse({'errors': form.errors}, status=404)
+        
+        table = form.cleaned_data.get('table')
+        file = request.FILES['importfile']
+        dataset = Dataset().load(file)
+        res = P['model_resource_map'][table](request=request)
+        try:
+            results = res.import_data(
+                dataset=dataset, dry_run=True, raise_errors=False
+            )
+            if results.has_errors():
+                data = []
+                for rowerr in results.row_errors():
+                    row_data = {'rowno': rowerr[0]}
+                    errors = []
+                    for err in rowerr[1]:
+                        errors.append(str(err.error))
+                        row_data |= err.row
+                    row_data['error'] = '<br>'.join(errors)
+                    data.append(row_data)
 
-            # Create a temporary file
-            fd, path = tempfile.mkstemp(suffix='.xlsx')
+                columns = [{'title': col, 'data': col} for col in data[0].keys()] if data else []
+                no_of_cols = len(data[0].keys()) if data else 0
+                ic(data, columns, no_of_cols)
+                return rp.JsonResponse({'data': data, 'columns': columns, 'no_of_cols': no_of_cols, 'rc': 1}, status=200)
+            else:
+                columns = [{'title':col, 'data':col} for col in dataset.dict[0].keys()] if dataset.dict else []
+                
+                return rp.JsonResponse({'totalrows': results.total_rows,'columns':columns, 'preview_data': dataset._data}, status=200)
+        except Exception as e:
+            logger.error("error", exc_info=True)
+            return rp.JsonResponse({"error":"something went wrong!"}, status = 500)
 
-            try:
-                # Write DataFrame to the Excel file
-                df.to_excel(path, index=False, engine='openpyxl')
 
-                # Create a FileResponse to send it to the user
-                response = FileResponse(open(path, 'rb'), content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
-                response['Content-Disposition'] = 'attachment; filename=Columns.xlsx'
-
-            finally:
-                os.close(fd)
-                os.remove(path)
-
-            return response
+            
 
         
-    def post(self, request, *args, **kwargs):
-        R, P = request.POST, self.params
-        form = P['form'](R, request.FILES)
-        if form.is_valid():
-            
-            table = form.cleaned_data.get('table')
-            file = request.FILES['importfile']
-            dataset = Dataset().load(file)
-            res = P['model_resource_map'][table](request=request)
-            ic(res)
-            try:
-                results = res.import_data(
-                    dataset = dataset, dry_run = False, raise_errors = False,
-                collect_failed_rows = True, use_transactions = True
-                )
-                if results.has_errors():
-                    data = []
-                    for rowerr in results.row_errors():
-                        data.extend(
-                            {'rowno': rowerr[0], 'error': str(err.error)} | err.row
-                            for err in rowerr[1]
-                        )
-                    columns = [{'title':col, 'data':col } for col in data[0].keys()]
-                    no_of_cols = len(data[0].keys()) if data else 0
+    # def post(self, request, *args, **kwargs):
+    #     R, P = request.POST, self.params
+    #     form = P['form'](R, request.FILES)
 
-                    return rp.JsonResponse(
-                        {'data':data, 'columns':columns, 'no_of_cols':no_of_cols, 'rc':1}, status=200)
-                return rp.JsonResponse({'totalrows':results.total_rows, 'rc':0}, status=200)
-            except Exception as e:
-                logger.error("something went wrong while bulk importing data", e)
-        return rp.JsonResponse({'errors':form.errors}, status=404)
+    #     if form.is_valid():
+    #         table = form.cleaned_data.get('table')
+    #         file = request.FILES['importfile']
+    #         dataset = Dataset().load(file)
+    #         res = P['model_resource_map'][table](request=request)
+
+    #         try:
+    #             results = res.import_data(
+    #                 dataset=dataset, dry_run=True, raise_errors=False,
+    #                 collect_failed_rows=True, use_transactions=True
+    #             )
+                
+
+    #             if results.has_errors():
+    #                 data = []
+    #                 for rowerr in results.row_errors():
+    #                     row_data = {'rowno': rowerr[0]}
+    #                     errors = []
+    #                     for err in rowerr[1]:
+    #                         errors.append(str(err.error))
+    #                         row_data |= err.row
+    #                     row_data['error'] = '<br>'.join(errors)
+    #                     data.append(row_data)
+
+    #                 columns = [{'title': col, 'data': col} for col in data[0].keys()] if data else []
+    #                 no_of_cols = len(data[0].keys()) if data else 0
+
+    #                 return rp.JsonResponse({'data': data, 'columns': columns, 'no_of_cols': no_of_cols, 'rc': 1}, status=200)
+
+    #             # Data is error-free, waiting for confirmation
+    #             return rp.JsonResponse({'confirm': True}, status=200)
+
+    #         except Exception as e:
+    #             logger.error("Something went wrong while bulk importing data", e)
+
+    #    return rp.JsonResponse({'errors': form.errors}, status=404)
+
+
+
 
 
 class Client(LoginRequiredMixin, View):
@@ -1742,7 +1788,7 @@ class BtView(LoginRequiredMixin, View):
         'related': ['parent', 'identifier', 'butype'],
         'model': Bt,
         'fields': ['id', 'bucode', 'buname', 'butree', 'identifier__taname',
-              'enable', 'parent__buname', 'butype__taname'],
+              'enable', 'parent__buname', 'butype__taname', 'solid'],
         'form_initials': {} }
 
     def get(self, request, *args, **kwargs):
@@ -1843,6 +1889,7 @@ class RPDashboard(LoginRequiredMixin, View):
             asset_chart_arr, asset_chart_total = am.Asset.objects.get_assetchart_data(request)
             alert_chart_arr, alert_chart_total = am.Jobneed.objects.get_alertchart_data(request)
             ticket_chart_arr, ticket_chart_total = Ticket.objects.get_ticket_stats_for_dashboard(request)
+            wom_chart_arr, wom_chart_total = Wom.objects.get_wom_status_chart(request)
             ppmtask_arr = am.Jobneed.objects.get_ppmchart_data(request)
             task_arr = am.Jobneed.objects.get_taskchart_data(request)
             tour_arr = am.Jobneed.objects.get_tourchart_data(request)
@@ -1867,10 +1914,12 @@ class RPDashboard(LoginRequiredMixin, View):
                     'assetchartdata' : asset_chart_arr,
                     'alertchartdata' : alert_chart_arr,
                     'ticketchartdata': ticket_chart_arr,
+                    'womchartdata': wom_chart_arr,
                     
                     'assetchart_total_count' : asset_chart_total,
                     'alertchart_total_count' : alert_chart_total,
                     'ticketchart_total_count': ticket_chart_total,
+                    'wom_total_count': wom_chart_total,
                     
                     'sos_count'    : P['pel_model'].objects.get_sos_count_forcard(request),
                     'IR_count'     : P['jn_model'].objects.get_ir_count_forcard(request),

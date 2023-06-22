@@ -5,6 +5,8 @@ from django.db.models.functions import Concat, Cast
 from django.contrib.gis.db.models.functions import  AsGeoJSON
 from django.utils.translation import ugettext_lazy as _
 from icecream import ic
+import logging
+log = logging.getLogger('django')
 
 class PeopleManager(BaseUserManager):
     use_in_migrations =  True
@@ -148,8 +150,7 @@ class PeopleManager(BaseUserManager):
         S = request.session
         qset = self.select_related('client', 'bu').filter(
             enable=True,
-            isverified=True,
-            bu_id__in = S['assignedsites'],
+                bu_id__in = S['assignedsites'],
             client_id=S['client_id'],            
         ).annotate(peopletext = Concat(F('peoplename'), V(' ('), F('peoplecode'), V(')'))).values_list('id', 'peopletext')
         return qset or self.none()
@@ -238,7 +239,8 @@ class PgblngManager(models.Manager):
         qset = self.select_related('pgroup').filter(pgroup_id = id).annotate(
             buname = F('assignsites__buname'),
             buid = F('assignsites__id'),
-        ).values('buname', 'buid')
+            solid = F('assignsites__solid')
+        ).values('buname', 'buid', 'solid' )
         return qset or self.none()
     
     def get_sitesfromgroup(self, job, force=False):
@@ -279,35 +281,45 @@ class PgblngManager(models.Manager):
         ).filter(id = peopleid)
 
         if peopleqset and peopleqset[0].isadmin:
+            log.info("people is admin")
             #return all sites of client
             bulist_ids = list(Bt.objects.get_all_sites_of_client(clientid=peopleqset[0].client_id).values_list('id', flat=True))
             #return for mobile service
-            if forservice: return Bt.objects.annotate(bu_id=F('id')).filter(id__in = bulist_ids).select_related('identifier', 'butype', 'cuser', 'muser').values(*bufields) or Bt.objects.none()
+            if forservice:
+                log.info("rerturing all sites of client, since user is admin")
+                return Bt.objects.annotate(bu_id=F('id')).filter(id__in = bulist_ids).select_related('identifier', 'butype', 'cuser', 'muser').values(*bufields) or Bt.objects.none()
             qset = Bt.objects.filter(Q(id__in = bulist_ids) & Q(identifier__tacode='SITE') | Q(id=1)).annotate(buid = F('id')).values('buid', 'bucode', 'buname')
             #return as a dropdown choices
             if makechoice:
+                log.info("make choice requested")
                 qset = qset.annotate(text = Concat(F('buname'), V(' ('), F('bucode'), V(')'))).values_list('buid', 'text')
         else:
-            assigned_sitegroup_ids = People.objects.filter(id = peopleid).values_list('people_extras__assignsitegroup', flat=True)
+            assigned_sitegroup_ids = People.objects.filter(id = peopleid).values('people_extras__assignsitegroup').first()
+            log.info(f"user assigned sites are { assigned_sitegroup_ids = }")
 
             #get sites assigned to groupids
             qset = self.select_related('assignsites').filter(
-                pgroup_id__in = assigned_sitegroup_ids[0]).annotate(
+                pgroup_id__in = assigned_sitegroup_ids['people_extras__assignsitegroup']).annotate(
                     buname = F('assignsites__buname'), bucode=F('assignsites__bucode'), buid = F('assignsites_id')
                     ).values('buname', 'bucode', 'buid').order_by('assignsites_id').distinct('assignsites_id')
 
             buids = qset.values_list('buid', flat=True)
-            peopleqset = peopleqset.values('buname', 'bucode', 'bu_id') # use 'bu_id' here
-            buids = buids.union(peopleqset.values_list('bu_id', flat=True)) # use 'bu_id' here
+            log.info(f"sites assigned to people {buids}")
+            peopleqset = peopleqset.values('buname', 'bucode', 'buid') # use 'bu_id' here
+            buids = buids.union(peopleqset.values_list('buid', flat=True)) # use 'bu_id' here
             qset = qset.union(peopleqset)
-            ic("outside", qset)
+            log.info(f"qset {qset = }")
             
             if qset and makechoice:
                 ic("inside", qset)
+                log.info("make choice requested")
                 qset = qset.annotate(text = Concat(F('buname'), V(' ('), F('bucode'), V(')'))).values_list('buid', 'text')
             
             #return for mobile service
-            if forservice: return Bt.objects.annotate(bu_id=F('id')).filter(id__in = buids).select_related('identifier', 'butype', 'cuser', 'muser').values(*bufields) or Bt.objects.none()
+            if forservice:
+                qset =  Bt.objects.annotate(bu_id=F('id')).filter(id__in = buids).select_related('identifier', 'butype', 'cuser', 'muser').values(*bufields) or Bt.objects.none()
+                log.info(f"mobile service response requested {qset = }")
+                return qset
         return qset or self.none()
 
     

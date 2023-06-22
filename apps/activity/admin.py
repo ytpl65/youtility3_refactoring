@@ -2,53 +2,88 @@ from import_export import resources, fields
 from import_export import widgets as wg
 import apps.onboarding.models as om
 import apps.activity.models as am
+from import_export.admin import ImportExportModelAdmin
+from django.contrib import admin
+from django.db.utils import IntegrityError
+from apps.core import utils
+from import_export.results import RowResult
+
+
 
 # Register your models here.
+def default_ta():
+    return utils.get_or_create_none_typeassist()[0]
 
 class QuestionResource(resources.ModelResource):
     Unit = fields.Field(
         column_name       = 'Unit',
         attribute         = 'unit',
         widget            = wg.ForeignKeyWidget(om.TypeAssist, 'tacode'),
-        saves_null_values = True
+        saves_null_values = True,
+        default=default_ta
     )
     Category = fields.Field(
         column_name       = 'Category',
         attribute         = 'category',
         widget            = wg.ForeignKeyWidget(om.TypeAssist, 'tacode'),
-        saves_null_values = True
+        saves_null_values = True,
+        default=default_ta
     )
     Client = fields.Field(
         column_name='Client',
         attribute='client',
         widget = wg.ForeignKeyWidget(om.Bt, 'bucode'),
-        default='NONE'
+        default=utils.get_or_create_none_bv
     )
-    BV = fields.Field(
-        column_name='BV',
-        attribute='bu',
-        widget = wg.ForeignKeyWidget(om.Bt, 'bucode'),
-        saves_null_values = True,
-        default='NONE'
-    )
-    ID         = fields.Field(attribute='id')
-    AlertON    = fields.Field(attribute='alerton', column_name='Alert On')
-    Options    = fields.Field(attribute='options', column_name='Options')
-    Name       = fields.Field(attribute='quesname')
-    Type       = fields.Field(attribute='answertype')
-    Min        = fields.Field(attribute='min')
-    Max        = fields.Field(attribute='max')
-    Enable     = fields.Field(attribute='enable')
-    isworkflow = fields.Field(attribute='isworkflow', column_name="Is Work Flow")
+
+    ID      = fields.Field(attribute='id', column_name='ID')
+    AlertON = fields.Field(attribute='alerton', column_name='Alert On')
+    Options = fields.Field(attribute='options', column_name='Options')
+    Name    = fields.Field(attribute='quesname', column_name='Name')
+    Type    = fields.Field(attribute='answertype', column_name='Type')
+    Min     = fields.Field(attribute='min', column_name='Min')
+    Max     = fields.Field(attribute='max', column_name='Max')
+    Enable  = fields.Field(attribute='enable', default=True)
+    IsAvpt  = fields.Field(attribute='isavpt', column_name='Is AVPT', default=False, widget=wg.BooleanWidget())
+    AttType = fields.Field(attribute='avpttype', column_name='AVPT Type', saves_null_values=True)
 
     class Meta:
         model = am.Question
         skip_unchanged = True
-        import_id_fields = ('ID', 'Name', 'Type', 'Client')
+        import_id_fields = ('Name', 'Type', 'Client',)
         report_skipped = True
-        fields = ('ID', 'Name', 'Type',  'Unit', 'Options', 'BV', 'Enable',
-                  'Client', 'Min', 'Max', 'AlertON', 'isworkflow', 'Category')
+        fields = ['Name', 'Type',  'Unit', 'Options',  'Enable', 'IsAvpt', 'AttType',
+                  'Client', 'Min', 'Max', 'AlertON', 'isworkflow', 'Category']
+    
+    
+    def __init__(self, *args, **kwargs):
+        self.request = kwargs.pop('request', None)
+        super(QuestionResource, self).__init__(*args, **kwargs)
+    
+    
+    def before_save_instance(self, instance, using_transactions, dry_run):
+        """
+        Perform any necessary actions before saving the instance.
+        Handle the IntegrityError exception explicitly.
+        """
+        try:
+            utils.save_common_stuff(self.request, instance)
+        except IntegrityError as e:
+            pass
 
+
+@admin.register(am.Question)
+class QuestionAdmin(ImportExportModelAdmin):
+    resource_class = QuestionResource
+    list_display = ['id','quesname']
+    
+    def get_resource_kwargs(self, request, *args, **kwargs):
+        return {'request': request}
+    
+    def get_queryset(self, request):
+        return am.Question.objects.select_related().all()
+    
+    
 class AssetResource(resources.ModelResource):
     Client = fields.Field(
         column_name = 'Client',

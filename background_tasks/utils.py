@@ -4,7 +4,7 @@ from apps.core import utils
 from apps.core.raw_queries import get_query
 import traceback as tb
 from django.apps import apps
-
+from PIL import Image
 log = getLogger('mobile_service_log')
 
 def correct_image_orientation(img):
@@ -26,7 +26,7 @@ def correct_image_orientation(img):
 
 
 def make_square(path1, path2):
-    from PIL import Image
+    
     try:
         # Open the first image
         img1 = Image.open(path1)
@@ -42,7 +42,7 @@ def make_square(path1, path2):
             log.info(
                 f'new aspect ratio of image1  is {new_size[0]} x {new_size[1]}')
         # Save the new square image
-        img1 = correct_image_orientation(img1)
+        #img1 = correct_image_orientation(img1)
         img1.save(path1)
         # Repeat the process for the second image
         img2 = Image.open(path2)
@@ -241,7 +241,8 @@ def create_ticket_for_autoclose(jobneedrecord, ticketdesc):
             ticketdesc=ticketdesc,
             priority=jobneedrecord['priority'],
             assignedtopeople_id=jobneedrecord['people_id'],
-            assignedtogroup_id=jobneedrecord['pgroup_id']
+            assignedtogroup_id=jobneedrecord['pgroup_id'],
+            qset_id = jobneedrecord['qset_id']
 
 
         )

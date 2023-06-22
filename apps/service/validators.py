@@ -56,3 +56,10 @@ def clean_record(record):
         elif k in ['geofencecode']:
             record[k] = clean_code(v)
     return record
+
+
+def clean_string(input_string, code=False):
+    cleaned_string = ' '.join(input_string.split())
+    if code:
+        cleaned_string = cleaned_string.replace(' ', '_').upper()
+    return cleaned_string

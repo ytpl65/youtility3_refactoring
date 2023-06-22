@@ -4,24 +4,40 @@ from import_export import resources, fields
 from import_export import widgets as wg
 from import_export.admin import ImportExportModelAdmin
 import apps.tenants.models as tm
+from apps.service.validators import clean_point_field, clean_string
 from apps.peoples import models as pm
 from .forms import (BtForm, ShiftForm, )
 import apps.onboarding.models as om
 from apps.core import utils
 
-class BaseFieldSet1:
-    bu = fields.Field(
-        column_name='bu',
+class BaseResource(resources.ModelResource):
+    CLIENT = fields.Field(
+        column_name='Client*',
+        attribute='client',
+        widget = wg.ForeignKeyWidget(om.Bt, 'bucode'),
+        default='NONE'
+    )
+    BV = fields.Field(
+        column_name='BV*',
         attribute='bu',
         widget = wg.ForeignKeyWidget(om.Bt, 'bucode'),
-        saves_null_values = True)
-
-    tenant = fields.Field(
-        column_name='tenant',
-        attribute='tenant',
-        widget = wg.ForeignKeyWidget(tm.TenantAwareModel, 'tenantname'),
-        saves_null_values = True
+        saves_null_values = True,
+        default='NONE'
     )
+    
+
+    
+    def __init__(self, *args, **kwargs):
+        self.is_superuser = kwargs.pop('is_superuser', None)
+        self.request = kwargs.pop('request', None)
+        super().__init__(*args, **kwargs)
+        
+    def before_save_instance(self, instance, using_transactions, dry_run):
+        utils.save_common_stuff(self.request, instance, self.is_superuser)
+        super().before_save_instance(instance, using_transactions, dry_run)
+
+    
+
 
 class BaseFieldSet2:
     client = fields.Field(
@@ -45,49 +61,41 @@ class BaseFieldSet2:
     )
 
 
-
-class TaResource(resources.ModelResource ):
-    Client = fields.Field(
-        column_name='Client',
-        attribute='client',
-        widget = wg.ForeignKeyWidget(om.Bt, 'bucode'),
-        default='NONE'
-    )
-    BV = fields.Field(
-        column_name='BV',
-        attribute='bu',
-        widget = wg.ForeignKeyWidget(om.Bt, 'bucode'),
-        saves_null_values = True,
-        default='NONE'
-    )
-    Type = fields.Field(
-        column_name       = 'Type',
+class TaResource(BaseResource):
+    
+    TYPE = fields.Field(
+        column_name       = 'Type*',
         attribute         = 'tatype',
+        default           = om.TypeAssist, 
         widget            = wg.ForeignKeyWidget(om.TypeAssist, 'tacode'),
         saves_null_values = True
     )
-    Code = fields.Field(attribute='tacode')
-    Name = fields.Field(attribute='taname')
-    ID   = fields.Field(attribute='id')
+    CODE = fields.Field(attribute='tacode', column_name='Code*')
+    NAME = fields.Field(attribute='taname', column_name='Name*')
+    ID   = fields.Field(attribute='id', column_name='ID')
 
     class Meta:
         model = om.TypeAssist
         skip_unchanged = True
-        import_id_fields = ('ID',)
+        import_id_fields = ('CLIENT', 'CODE', 'ID') 
         report_skipped = True
-        fields = ('ID', 'Name', 'Code', 'Type',  'BV', 'Client')
+        fields = ('NAME', 'CODE', 'TYPE',  'BV', 'CLIENT')
 
-    def __init__(self, *args, **kwargs):
-        self.is_superuser = kwargs.pop('is_superuser', None)
-        self.request = kwargs.pop('request', None)
-        super(TaResource, self).__init__(*args, **kwargs)
 
-    def before_save_instance(self, instance, using_transactions, dry_run):
-        instance.tacode = instance.tacode.upper()
-        utils.save_common_stuff(self.request, instance, self.is_superuser)
+    def before_import_row(self, row, row_number, **kwargs):
+        row['Code*'] = clean_string(row.get('Code*', 'NONE'), code=True)
+        row['Name*'] = clean_string(row.get('Name*', "NONE"))
+        return super().before_import_row(row, row_number=row_number, **kwargs)
 
-    def skip_row(self, instance, original):
-        return om.TypeAssist.objects.filter(tacode = instance.tacode).exists()
+    def before_save_instance(self, instance, using_transactions, d7ry_run=False):
+        utils.save_common_stuff(self.request, instance)
+        
+    def skip_row(self, instance, original, row, import_validation_errors=None):
+        ic("running")
+        ic(row['Code*'])
+        super().skip_row(instance, original, row, import_validation_errors=None)
+        return row['Code*'] in [None, ""]
+        
 
 
 @admin.register(om.TypeAssist)
@@ -104,47 +112,63 @@ class TaAdmin(ImportExportModelAdmin):
         return om.TypeAssist.objects.select_related(
             'tatype', 'cuser', 'muser', 'bu', 'client', 'tenant').all()
 
-class BtResource(resources.ModelResource, BaseFieldSet1):
-    bu = None
+class BtResource(BaseResource):
+    CLIENT = BV = None
     BelongsTo = fields.Field(
         column_name='Belongs To',
+        default=utils.get_or_create_none_bv,
         attribute='parent',
         widget = wg.ForeignKeyWidget(om.Bt, 'bucode'))
 
     BuType = fields.Field(
-        column_name='Bu Type',
+        column_name='Site Type',
+        default=utils.get_or_create_none_typeassist,
         attribute='butype',
         widget = wg.ForeignKeyWidget(om.TypeAssist, 'tacode'))
 
     tenant = fields.Field(
-        column_name='tenant',
+        column_name='Tenant',
+        default=utils.get_or_create_none_tenant,
         attribute='tenant',
         widget = wg.ForeignKeyWidget(tm.Tenant, 'tenantname'))
 
     Identifier = fields.Field(
-        column_name='Identifier',
+        column_name='Type',
         attribute='identifier',
+        default=utils.get_or_create_none_typeassist(),
         widget = wg.ForeignKeyWidget(om.TypeAssist, 'tacode'))
     
-    ID   = fields.Field(attribute='id')
-    Code = fields.Field(attribute='bucode')
-    Name = fields.Field(attribute='buname')
+    ID   = fields.Field(attribute='id', column_name="ID")
+    Code = fields.Field(attribute='bucode', column_name='Code*')
+    Name = fields.Field(attribute='buname', column_name='Name')
+    GPS = fields.Field(attribute='gpslocation', column_name='GPS Location', saves_null_values=True)
+    SOLID = fields.Field(attribute='solid', column_name='Sol Id')
+    Enable = fields.Field(attribute='enable', column_name='Enable', default=True)
 
     class Meta:
         model = om.Bt
+        start_row=6
         skip_unchanged = True
         import_id_fields = ('ID', 'Code')
         report_skipped = True
         fields = (
-            'ID', 'Name', 'Code', 'BuType',
+            'ID', 'Name', 'Code', 'BuType', 'SOLID', 
+            'Enable', 'GPS',
             'Identifier', 'BelongsTo', 'tenant',)
 
     def __init__(self, *args, **kwargs):
         self.request = kwargs.pop('request', None)
         super(BtResource, self).__init__(*args, **kwargs)
+    
+    def before_import_row(self, row, **kwargs):
+        ic(row)
+        # self._gpslocation = clean_point_field(row['GPS Location'])
+        # self._solid = clean_point_field(row['Sol Id'])
 
     def before_save_instance(self, instance, using_transactions, dry_run):
         instance.bucode = instance.bucode.upper()
+        instance.gpslocation = self._gpslocation
+        instance.solid = int(self._solid)
         utils.save_common_stuff(self.request, instance)
 
     def get_queryset(self):
@@ -211,7 +235,7 @@ class ShiftAdmin(ImportExportModelAdmin):
                     'starttime', 'endtime', 'nightshiftappicable')
     list_display_links = ('shiftname',)
 
-class SitePeopleResource(resources.ModelResource, BaseFieldSet1):
+class SitePeopleResource(resources.ModelResource, BaseFieldSet2):
 
     people = fields.Field(
         column_name='people',

@@ -333,6 +333,12 @@ Ticket {% if  ticketform.instance.id is not none  %}- {{ ticketform.instance.id 
             }
         }
         });
+
+        $("#id_location").change(() => {
+            let locationid = $('#id_location').val();
+            getAssetsOfLocation(locationid, '{{ url("activity:location") }}')
+        });
+
         
         
 

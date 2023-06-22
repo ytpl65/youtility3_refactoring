@@ -8,6 +8,7 @@ from apps.peoples.models import Pgbelonging, Pgroup, People
 from apps.attendance.models import PeopleEventlog
 from django.db import connections
 from django.db.models import Q
+from pprint import pformat
 from collections import namedtuple
 from logging import getLogger
 log = getLogger('mobile_service_log')
@@ -60,6 +61,10 @@ class Query(graphene.ObjectType):
     get_questionsmodifiedafter = graphene.Field(SelectOutputType, 
                                                mdtz = graphene.String(required = True),
                                                ctzoffset = graphene.Int(required = True))
+    
+    get_people_event_log_punch_ins = graphene.Field(SelectOutputType,
+                                                    datefor = graphene.String(required=True),
+                                                    buid = graphene.Int(required=True))
 
     get_qsetmodifiedafter = graphene.Field(SelectOutputType,
                                           mdtz = graphene.String(required = True),
@@ -308,6 +313,14 @@ class Query(graphene.ObjectType):
         data = Vendor.objects.get_vendors_for_mobile(info.context, clientid, mdtz, buid, ctzoffset)
         records, count, msg = utils.get_select_output(data)
         log.info(f'total {count} objects returned')
+        return SelectOutputType(nrows = count, records = records,msg = msg)
+    
+    def resolve_get_people_event_log_punch_ins(self, info, datefor,  buid):
+        log.info(f'request get_people_event_log_punch_ins inputs are : {datefor = }  {buid = }')
+        data = PeopleEventlog.objects.get_people_event_log_punch_ins(datefor,  buid)
+        records, count, msg = utils.get_select_output(data)
+        log.info(f'total {count} objects returned')
+        log.info("%s"%(pformat(records)))
         return SelectOutputType(nrows = count, records = records,msg = msg)
 
 

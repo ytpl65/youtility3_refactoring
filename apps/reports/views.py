@@ -562,7 +562,7 @@ class ExportReports(LoginRequiredMixin, View):
                 return response #download report
             else:
                 msg.error(request, "Failed to download the report, something went wrong")
-                return HttpResponseRedirect(reverse('reports:exportreports')) #report-export failure
+                return HttpResponseRedirect(reverse('reports:exportreports') + "?template=true") #report-export failure
         except Exception as e:
             log.error("something went wron in export reports", exc_info=True)
             msg.error(request, "Failed to download the report, something went wrong")

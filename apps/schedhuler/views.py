@@ -891,7 +891,7 @@ class RetrieveTasksJobneed(LoginRequiredMixin, View):
                 , ~Q(jobdesc='NONE') , Q(plandatetime__gte = dt)
                 ,Q(identifier = am.Jobneed.Identifier.TASK)
             ).values(*self.fields).order_by('-plandatetime')
-            log.info('tasks objects %s retrieved from db' %
+            log.info('tasks objects %s retrieved from db' % 
                      (len(objects)) if objects else "No Records!")
             cxt = self.paginate_results(request, objects)
             log.info('Results paginated' if objects else "")
@@ -1305,8 +1305,8 @@ class InternalTourScheduling(LoginRequiredMixin, View):
             'identifier': am.Job.Identifier.INTERNALTOUR,
             'priority'  : am.Job.Priority.LOW,
             'scantype'  : am.Job.Scantype.QR,
-            'gracetime' : 5,
-            'planduration' : 5,
+            'gracetime' : 0,
+            'planduration' : 0,
             'fromdate'  : datetime.combine(date.today(), time(00, 00, 00)),
             'uptodate'  : datetime.combine(date.today(), time(23, 00, 00)) + timedelta(days = 2),
         },
@@ -1319,14 +1319,29 @@ class InternalTourScheduling(LoginRequiredMixin, View):
         # return template
         if R.get('template') == 'true':
             return render(request, P['template_list'])
+        
+        if R.get('action') == 'loadTourCheckpoints':
+            if R['parentid'] != 'None':
+                objs = P['model'].objects.filter(parent_id = R['parentid']).select_related('asset', 'qset').values(
+                    'pk', 'qset__qsetname', 'asset__assetname', 'seqno', 'expirytime'
+                )
+            else: objs = P['model'].objects.none()
+            return rp.JsonResponse({'data':list(objs)})
+        
+        if R.get('action') == 'loadAssetChekpointsForSelectField':
+            objs = am.Asset.objects.get_asset_checkpoints_for_tour(request)
+            return rp.JsonResponse({'items':list(objs), 'total_count':len(objs)}, status = 200)
+        
+        if R.get('action') == 'loadQuestionSetsForSelectField':
+            objs = am.QuestionSet.objects.get_qsets_for_tour(request)
+            return rp.JsonResponse({'items':list(objs), 'total_count':len(objs)}, status = 200)
 
         if R.get('id'):
             obj = utils.get_model_obj(int(R['id']), request, P)
             log.info(f'object retrieved {obj}')
             form        = P['form_class'](instance = obj, request=request)
-            checkpoints = self.get_checkpoints(obj, P)
-            cxt = {'schdtourform': form, 'childtour_form': P['subform'](request=request), 'edit': True,
-                   'checkpoints': checkpoints}
+            cxt = {'schdtourform': form, 'edit': True,
+                   }
             return render(request, P['template_form'], cxt)
         
         # return resp to delete request
@@ -1340,13 +1355,15 @@ class InternalTourScheduling(LoginRequiredMixin, View):
             return rp.JsonResponse({'data':list(objs)}, status = 200)
         
         if R.get('action') == 'form':
-            cxt = {'schdtourform':P['form_class'](request = request, initial = P['initial']),
-                    'childtour_form':P['subform'](request=request)}
+            cxt = {'schdtourform':P['form_class'](request = request, initial = P['initial'])}
             return render(request, P['template_form'], cxt)
 
     def post(self, request, *args, **kwargs):
-        R, P = request.GET, self.params
+        R, P = request.POST, self.params
         pk, data = request.POST.get('pk', None), QueryDict(request.POST.get('formData'))
+        if R.get('postType') == 'saveCheckpoint':
+            data = P['model'].objects.handle_save_checkpoint_guardtour(request)
+            return rp.JsonResponse(data, status = 200, safe=False)
         try:
             if pk:
                 msg = 'internal scheduler tour'
@@ -1375,7 +1392,7 @@ class InternalTourScheduling(LoginRequiredMixin, View):
                 job.other_info['istimebound'] = form.cleaned_data['istimebound']
                 job.save()
                 job = putils.save_userinfo(job, request.user, request.session)
-                self.save_checpoints_for_tour(assigned_checkpoints, job, request)
+                #self.save_checpoints_for_tour(assigned_checkpoints, job, request)
                 log.info('guard tour  and its checkpoints saved success...')
                 return rp.JsonResponse({'jobname': job.jobname,
                     'url': f'{reverse("schedhuler:schd_internal_tour")}?id={job.id}'},
@@ -1387,59 +1404,59 @@ class InternalTourScheduling(LoginRequiredMixin, View):
 
 
 
-    def save_checpoints_for_tour(self, checkpoints, job, request):
-        try:
-            log.info(f"saving Checkpoints found {len(checkpoints)} [started]")
-            ic(checkpoints)
-            CP = {}
-            job = am.Job.objects.filter(id = job.id).values()[0]
-            self.params['model'].objects.filter(parent_id = job['id']).delete()
-            count=0
-            for cp in checkpoints:
-                CP['expirytime'] = cp[5]
-                CP['qsetname'] = cp[4]
-                CP['assetid']    = cp[1]
-                CP['qsetid']     = cp[3]
-                CP['seqno']       = cp[0]
-                obj = am.Job.objects.create(
-                    **sutils.job_fields(job, CP)
-                )
-                putils.save_userinfo(obj, request.user, request.session)
-                count+=1
-            if count == len(checkpoints):
-                log.info('all checkpoints saved successfully')
-        except Exception as ex:
-            log.error(
-                "failed to insert checkpoints, something went wrong", exc_info = True)
-            raise ex
-        else:
-            log.info("inserting checkpoints finished...")
+    # def save_checpoints_for_tour(self, checkpoints, job, request):
+    #     try:
+    #         log.info(f"saving Checkpoints found {len(checkpoints)} [started]")
+    #         ic(checkpoints)
+    #         CP = {}
+    #         job = am.Job.objects.filter(id = job.id).values()[0]
+    #         self.params['model'].objects.filter(parent_id = job['id']).delete()
+    #         count=0
+    #         for cp in checkpoints:
+    #             CP['expirytime'] = cp[5]
+    #             CP['qsetname'] = cp[4]
+    #             CP['assetid']    = cp[1]
+    #             CP['qsetid']     = cp[3]
+    #             CP['seqno']       = cp[0]
+    #             obj = am.Job.objects.create(
+    #                 **sutils.job_fields(job, CP)
+    #             )
+    #             putils.save_userinfo(obj, request.user, request.session)
+    #             count+=1
+    #         if count == len(checkpoints):
+    #             log.info('all checkpoints saved successfully')
+    #     except Exception as ex:
+    #         log.error(
+    #             "failed to insert checkpoints, something went wrong", exc_info = True)
+    #         raise ex
+    #     else:
+    #         log.info("inserting checkpoints finished...")
 
-    @staticmethod
-    def get_checkpoints(obj, P):
-        log.info("getting checkpoints started...")
-        checkpoints = None
-        try:
-            checkpoints = P['model'].objects.select_related(
-                'parent', 'asset', 'qset', 'pgroup',
-                'people',
-            ).filter(parent_id = obj.id).annotate(
-                assetname = F('asset__assetname'),
-                qsetname = F('qset__qsetname')
-                ).values(
-                'seqno',
-                'assetname',
-                'asset_id',
-                'qsetname',
-                'qset_id',
-                'expirytime',
-                'id')
-        except Exception:
-            log.critical("something went wrong", exc_info = True)
-            raise
-        else:
-            log.info("checkpoints retrieved returned success")
-        return checkpoints
+    # @staticmethod
+    # def get_checkpoints(obj, P):
+    #     log.info("getting checkpoints started...")
+    #     checkpoints = None
+    #     try:
+    #         checkpoints = P['model'].objects.select_related(
+    #             'parent', 'asset', 'qset', 'pgroup',
+    #             'people',
+    #         ).filter(parent_id = obj.id).annotate(
+    #             assetname = F('asset__assetname'),
+    #             qsetname = F('qset__qsetname')
+    #             ).values(
+    #             'seqno',
+    #             'assetname',
+    #             'asset_id',
+    #             'qsetname',
+    #             'qset_id',
+    #             'expirytime',
+    #             'id')
+    #     except Exception:
+    #         log.critical("something went wrong", exc_info = True)
+    #         raise
+    #     else:
+    #         log.info("checkpoints retrieved returned success")
+    #     return checkpoints
 
 
 class ExternalTourScheduling(LoginRequiredMixin, View):

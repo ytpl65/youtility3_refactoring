@@ -45,6 +45,9 @@ tr.even td {
 .dataTable thead th {
 background-color:#01579b;
 }
+.fs-9{
+    font-size: 7px;
+}
 
 .btn:not(.btn-outline):not(.btn-dashed):not(.border-hover):not(.border-active):not(.btn-flush):not(.btn-icon){
     padding: 7px;
@@ -498,6 +501,25 @@ tr.disabled-record td a {
     color: #01579B;
 }
 
+.dataTables_scrollBody table thead {
+    visibility: hidden;
+    line-height: 0px;
+}
+
+@media screen and (min-width: 721px) and (max-width: 1280px) {
+    table thead tr th, table tbody tr td {
+        font-size: 10px;
+    }
+}
+
+table.dataTable tbody th,
+table.dataTable tbody td {
+    white-space: nowrap;
+}
+
+
+
+
 .aside-dark .menu .menu-item .menu-link{
     color: white;
 }
@@ -547,3 +569,19 @@ select[readonly].select2-hidden-accessible + .select2-container .select2-selecti
 .modal-content.ui-resizable, .DTED_Lightbox_Content.ui-resizeable {
     overflow: scroll;
   }
+
+  .responsive-image {
+    max-width: 100%;
+    height: auto;
+  }
+
+  .custom-list-group {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    width: 100%;
+  }
+  .custom-list-group > li:nth-child(2) {
+    flex-basis: 48%;
+  }
+  

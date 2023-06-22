@@ -833,8 +833,8 @@ class PeopleView(LoginRequiredMixin, View):
         'related': ['peopletype', 'bu'],
         'model': pm.People,
         'filter': pft.PeopleFilter,
-        'fields': ['id', 'peoplecode', 'peoplename', 'peopletype__tacode', 'bu__buname',
-                   'isadmin', 'enable', 'email', 'mobno'],
+        'fields': ['id', 'peoplecode', 'peoplename', 'peopletype__taname', 'bu__buname',
+                   'isadmin', 'enable', 'email', 'mobno', 'department__taname', 'designation__taname'],
         'form_initials': {'initial': {}}}
 
     def get(self, request, *args, **kwargs):

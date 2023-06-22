@@ -663,7 +663,7 @@ def get_client_from_hostname(request):
 
 
 def get_or_create_none_tenant():
-    return Tenant.objects.get_or_create(id=1, defaults={'tenantname': 'Intelliwiz', 'subdomain_prefix': 'intelliwiz'})
+    return Tenant.objects.get_or_create(id=1, defaults={'tenantname': 'Intelliwiz', 'subdomain_prefix': 'intelliwiz'})[0]
 
 
 def get_or_create_none_job():
@@ -1136,12 +1136,16 @@ def get_qobjs_dir_fields_start_length(R):
     return qobjs, dir,  fields, length, start
 
 
-def runrawsql(sql, args=None, db='default', named=False):
-    "Runs raw sql return namedtup[le or dict type results"
+def runrawsql(sql, args=None, db='default', named=False, count=False):
+    "Runs raw sql return namedtuple or dict type results"
     from django.db import connections
     cursor = connections[db].cursor()
     cursor.execute(sql, args)
-    return namedtuplefetchall(cursor) if named else dictfetchall(cursor)
+    if count:
+        return cursor.rowcount
+    else:
+        return namedtuplefetchall(cursor) if named else dictfetchall(cursor)
+
 
 
 def namedtuplefetchall(cursor):
@@ -1629,3 +1633,24 @@ def format_timedelta(td):
     if seconds > 0 or len(result) == 0:
         result += f"{seconds} second{'s' if seconds != 1 else ''}"
     return result.rstrip(', ')
+
+
+def convert_seconds_to_human_readable(seconds):
+    # Calculate the time units
+    minutes, sec = divmod(seconds, 60)
+    hours, minutes = divmod(minutes, 60)
+    days, hours = divmod(hours, 24)
+
+    # Create a human readable string
+    result = []
+    if days:
+        result.append(f"{int(days)} day{'s' if days > 1 else ''}")
+    if hours:
+        result.append(f"{int(hours)} hour{'s' if hours > 1 else ''}")
+    if minutes:
+        result.append(f"{int(minutes)} minute{'s' if minutes > 1 else ''}")
+    if sec:
+        result.append(f"{sec:.2f} second{'s' if sec > 1 else ''}") # limit decimal places to 2
+    
+    return ", ".join(result)
+

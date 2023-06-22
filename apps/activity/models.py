@@ -2,7 +2,7 @@ import uuid
 from apps.peoples.models import BaseModel
 from apps.activity.managers import (AssetManager, AttachmentManager,
 JobManager, JobneedDetailsManager, QsetBlngManager, QuestionManager, LocationManager,
-QuestionSetManager, JobneedManager, DELManager)
+QuestionSetManager, JobneedManager, DELManager, AssetLogManager)
 from apps.tenants.models import TenantAwareModel
 from django.utils.translation import gettext_lazy as _
 from django.core.serializers.json import DjangoJSONEncoder
@@ -38,7 +38,7 @@ class Question(BaseModel, TenantAwareModel):
         AUDIO       = "AUDIO",       _('Audio')
         VIDEO       = "VIDEO",       _("Video")
 
-    quesname   = models.CharField(_("Name"), max_length = 200)
+    quesname   = models.CharField(_("Name"), max_length = 500)
     options    = models.TextField(_('Options'), max_length = 2000, null = True)
     min        = models.DecimalField(_("Min"), null = True, blank = True, max_digits = 18, decimal_places = 2, default = 0.00)
     max        = models.DecimalField( _('Max'), null = True, blank = True, max_digits = 18, decimal_places = 2, default = 0.00)
@@ -88,7 +88,6 @@ class QuestionSet(BaseModel, TenantAwareModel):
         KPITEMPLATE              = "KPITEMPLATE",         _('Kpi')
         SCRAPPEDTEMPLATE         = "SCRAPPEDTEMPLATE",    _('Scrapped')
         ASSETAUDIT               = "ASSETAUDIT",          _('Asset Audit')
-        MAINTENANCETEMPLATE      = "MAINTENANCETEMPLATE", _('Maintenance')
         ASSETMAINTENANCE         = "ASSETMAINTENANCE",    _('Asset Maintenance')
         WORKORDER                = "WORK_ORDER",          _('Work Order')
         
@@ -463,6 +462,7 @@ class Jobneed(BaseModel, TenantAwareModel):
     client           = models.ForeignKey("onboarding.Bt", verbose_name = _("Client"), on_delete= models.RESTRICT, null = True, blank = True, related_name='jobneed_clients')
     bu               = models.ForeignKey("onboarding.Bt", verbose_name = _("Site"), on_delete = models.RESTRICT, null = True, blank = True, related_name='jobneedf_bus')
     ticketcategory   = models.ForeignKey("onboarding.TypeAssist", verbose_name = _("Notify Category"), null= True, blank = True, on_delete = models.RESTRICT)
+    ticket           = models.ForeignKey("y_helpdesk.Ticket", verbose_name=_("Ticket"), on_delete=models.RESTRICT, null=True, blank=True, related_name='jobneed_ticket')
     othersite        = models.CharField(_("Other Site"), max_length = 100, default = None, null = True)
     multifactor      = models.DecimalField(_("Multiplication Factor"), default = 1, max_digits = 10, decimal_places = 6)
     raisedtktflag    = models.BooleanField(_("RaiseTicketFlag"), default = False, null = True)
@@ -485,6 +485,12 @@ class Jobneed(BaseModel, TenantAwareModel):
                 name='jobneed_gracetime_gte_0_ck'
             ),
         ]
+        
+    def save(self, *args, **kwargs):
+        if self.ticket_id is None:
+            self.ticket_id = 1
+        super().save(*args, **kwargs)
+
 
 class JobneedDetails(BaseModel, TenantAwareModel):
     class AnswerType(models.TextChoices):
@@ -513,7 +519,6 @@ class JobneedDetails(BaseModel, TenantAwareModel):
         VIDEO     = "VIDEO"    , _("Video")
         NONE = ("NONE", "NONE")
 
-# id              = models.BigIntegerField(_("Jobneed details"), primary_key = True)
     uuid            = models.UUIDField(unique = True, editable = True, blank = True, default = uuid.uuid4)
     seqno           = models.SmallIntegerField(_("SL No."))
     question        = models.ForeignKey("activity.Question", verbose_name = _("Question"),  null = True, blank = True, on_delete = models.RESTRICT)
@@ -750,6 +755,8 @@ class AssetLog(models.Model):
     cdtz        = models.DateTimeField(_("Created On"), null=True)
     gpslocation = PointField(_('GPS Location'), null = True, geography = True, srid = 4326, blank = True)
     ctzoffset   = models.IntegerField(_("TimeZone"), default=-1)
+    
+    objects = AssetLogManager()
     
     class Meta:
         db_table = 'assetlog'

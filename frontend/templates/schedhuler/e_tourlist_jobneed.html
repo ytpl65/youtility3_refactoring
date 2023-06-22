@@ -60,7 +60,9 @@ External Tour List
             },
             language: { search: "", searchPlaceholder:"Serch keywords..." },
 			deferRender: true,
-			responsive : true,  
+			scrollY: 300,
+            scrollCollapse: true,
+            scrollX:true, 
             dom:`<'row' <'col-sm-6 d-flex justify-content-start'<'customfields'>f> <'col-sm-6 d-flex justify-content-end'B> >rt<'row'
 			 <'col-sm-6'l> <'col-sm-6'p><'col-sm-12 d-flex justify-content-center'i>>`,
             //ordering:false,
@@ -90,11 +92,13 @@ External Tour List
                 "searchBuilder",
                 dataTablesPDFConfig(
                     'Site: {{ request.user.bu.buname }}\Route Plan List',
-                    [1,2,3,4,5,6,7]
+                    [1,2,3,4,5,6,7],
+                    filename="routeplan_list"
                 ),
                 dataTablesExcelConfig(
                     'Site: {{ request.user.bu.buname }}\Route Plan List',
-                    [1,2,3,4,5,6,7]
+                    [1,2,3,4,5,6,7],
+                    filename = "routeplan_list"
                 ),
                 dataTablesColumnVisibilityConfig(),
 			],

@@ -190,7 +190,7 @@ Site Group
                 url: "{{ url('peoples:sitegroup') }}?action=allsites",
                 data:function ( d ) {
                     d.sel_butype = current_sel_butype;
-                    d.fields = ['buid', 'buname', 'parent__buname', 'identifier__tacode'];
+                    d.fields = ['buid', 'buname', 'parent__buname', 'identifier__tacode', 'solid'];
                     d.pk = $("#id_pk").val();
                 },
                 dataSrc:function(resp){
@@ -204,9 +204,10 @@ Site Group
             ordering: false,
             deferRender: true,
             columns:[
-                {data:null, defaultContent: '', orderable:true, className: 'select-checkbox', width: "2%"},
-                {data: 'buid', visible:false, orderable:false, defaultContent: ""},
+                {data:null, defaultContent: '', orderable:true, className: 'select-checkbox noVis', width: "2%"},
+                {data: 'buid', visible:false, orderable:false, defaultContent: "", className:"noVis"},
                 {data: 'buname', title: "Site Name"},
+                {data: 'solid', title: 'Sol Id', visible:false},
                 {data: "parent__buname", title: "Belongs to"},
                 {data: 'identifier__tacode', title: "Type"},
             ],
@@ -214,8 +215,12 @@ Site Group
                 style:    'multi',
                 selector: 'tr'
             },
-            dom :  `<'row' <'col-sm-12 d-flex justify-content-start'f> ><'row' <'col-sm-12'rtlp>>`,
-            buttons:[],
+            dom :  `<'row' <'col-sm-6 d-flex justify-content-start'f> <'col-sm-6 d-flex justify-content-end'B> >rt<'row'
+			<'col-sm-6'l> <'col-sm-6'><'col-sm-12 d-flex justify-content-center'i>>`,
+            buttons:[
+                
+                dataTablesColumnVisibilityConfig(),
+            ],
             pageLength:25
 
         })
@@ -245,13 +250,15 @@ Site Group
         tabAssigned_sites = $("#assigned_sites").DataTable({
             fixedHeader: true,
             responsive: true,
-            dom: "rt",
+            dom: `<'row' <'col-sm-6 d-flex justify-content-start'f> <'col-sm-6 d-flex justify-content-end'B> >rt<'row'
+			<'col-sm-6'l> <'col-sm-6'p><'col-sm-12 d-flex justify-content-center'i>>`,
             order: [[ 1, 'asc' ]],
             columns:[
-                {data: 'buid', visible:false, orderable:false, defaultContent: "", render:function(data, type, full, meta){
+                {data: 'buid', visible:false, orderable:false, className:"noVis",defaultContent: "", render:function(data, type, full, meta){
                     return data == undefined ? "" :data
                 }},
                 {data: 'buname', title: 'Site Name'},
+                {data: 'solid', title: 'Sol Id', visible:false},
                 {data:function(row, type, val, meta){
                         if(row['13'] != null){
                             return ""
@@ -261,19 +268,37 @@ Site Group
                     },
                 defaultContent: '',
                 orderable:false,
-                className: "remove text-center",
+                className: "remove text-center noVis",
                 targets:12,
                 width: "5%"}
             ],
-            buttons:[],
+            buttons:[
+                dataTablesPDFConfig(
+                    title = `Site: {{request.user.bu.buname}}\n Assigned Sites`,
+                    columns = [1,2],
+					filename = "{{ sitegrpform.instance.groupname }}",
+                    mode = "portrait"
+                ),
+                dataTablesExcelConfig(
+                    title = `Site: {{request.user.bu.buname}}\n Assigned Sites`,
+                    columns = [1,2],
+					filename = "{{ sitegrpform.instance.groupname }}",
+                    mode = "portrait"
+                ),
+                dataTablesColumnVisibilityConfig(),
+            ],
             
         })
 
         //reduce size of search bar
+        $(".dataTables_filter label > input").css('width', '16rem')
+
         
         if("{{ sitegrpform.instance.id }}" != 'None'){
             console.log('checkig...')
             loadAssignedSitesIfThereAny(tabAssigned_sites, "{{ sitegrpform.instance.id }}")
+        }else{
+            $("#assigned_sites_wrapper .dt-button").addClass('disabled')
         }
         //ON CLICK TRASH ICON REMOVE ROW
         $('#assigned_sites').on('click', '.remove', function () {

@@ -54,7 +54,7 @@
 
 <body id="kt_body"
   class="header-fixed header-tablet-and-mobile-fixed toolbar-enabled toolbar-fixed toolbar-tablet-and-mobile-fixed aside-enabled aside-fixed"
-  style="--kt-toolbar-height:55px;--kt-toolbar-height-tablet-and-mobile:55px" data-kt-aside-minimize = 'off'>
+  style="--kt-toolbar-height:55px;--kt-toolbar-height-tablet-and-mobile:55px" data-kt-aside-minimize = 'on'>
   <input type="hidden" id="urlname" data-url = ''>
   {%- block body -%}
   
@@ -192,8 +192,8 @@
 </body>
 
 <!---------------------- SWITCH SITE MODAL -------------------------->
-<div class="modal" tabindex="-1" role="dialog" id="popupshow_Attachment">
-    <div class="modal-dialog" role="document">
+<div class="modal" tabindex="-1" role="dialog" id="popupshow_Attachment" data-bs-backdrop="static">
+    <div class="modal-dialog modal-dialog-centered" role="document">
       <div class="modal-content">
         <div class="modal-body">
         <div id="carouselExampleIndicators" class="carousel slide" data-bs-ride="carousel">
@@ -214,8 +214,8 @@
       </div>
     </div>
     </div>
-    <div id="popup_switch_site" class="modal fade" aria-hidden="true">
-      <div class="modal-dialog">
+    <div id="popup_switch_site" class="modal fade" aria-hidden="true" data-bs-backdrop="static">
+      <div class="modal-dialog modal-dialog-centered">
           <div class="modal-content">
               <div class="modal-header">
                 <h4 class="modal-title bold">Switch Site</h4>

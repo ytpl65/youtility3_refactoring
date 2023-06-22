@@ -70,12 +70,13 @@ class JobneedSerializer(serializers.ModelSerializer):
     pgroup_id         = serializers.IntegerField()
     people_id         = serializers.IntegerField()
     qset_id           = serializers.IntegerField()
-    cuser_id           = serializers.IntegerField()
-    muser_id           = serializers.IntegerField()
+    cuser_id          = serializers.IntegerField()
+    muser_id          = serializers.IntegerField()
+    ticket_id         = serializers.IntegerField()
 
     class Meta:
         model = Jobneed
-        exclude = ['receivedonserver', 'other_info', 'parent', 'people', 'pgroup', 'qset', 'geojson',
+        exclude = ['receivedonserver', 'other_info', 'parent', 'people', 'pgroup', 'qset', 'geojson', 'ticket',
                    'asset', 'job', 'performedby', 'client', 'bu', 'ticketcategory', 'cuser', 'muser', 'id' ]        
 
 class PELSerializer(serializers.ModelSerializer):

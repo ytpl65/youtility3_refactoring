@@ -36,7 +36,9 @@ Scheduled Tasks
             ajax:{
                 url: "{{ url('schedhuler:jobschdtasks') }}?action=list"
             },
-			responsive: true,
+			scrollY: 300,
+            scrollCollapse: true,
+            scrollX:true,
             deferRender: true,
             columns:[
                 {data: 'id', visible:false, searchable:false, className:'noVis'},
@@ -71,11 +73,13 @@ Scheduled Tasks
                 "searchBuilder",
                 dataTablesPDFConfig(
                     'Site: {{ request.user.bu.buname }}\nScheduled Task List',
-                    [1,2,3,4,5,6,7,8,9]
+                    [1,2,3,4,5,6,7,8,9],
+                    filename = 'schd_task_list'
                 ),
                 dataTablesExcelConfig(
                     'Site: {{ request.user.bu.buname }}\nScheduled Task List',
-                    [1,2,3,4,5,6,7,8,9]
+                    [1,2,3,4,5,6,7,8,9],
+                    filename = 'schd_task_list'
                 ),
                 dataTablesColumnVisibilityConfig(),
 				{

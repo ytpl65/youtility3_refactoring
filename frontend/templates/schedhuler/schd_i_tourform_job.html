@@ -231,103 +231,21 @@ Schedule Tour
         </div>
     </div>
 </form>
-
-<br><br>
-<div class="card card-bordered card-flush shadow-sm">
-    <div class="card-header  collapsible cursor-pointer rotate" data-bs-toggle="collapse" data-bs-target="#kt_docs_card_collapsible">
-        <h5 class="card-title modal-heading">
-            Assign Asset/Checkpoint and Checklist &nbsp;<i class="fas text-white fs-3 text-primary fa-map-marker-alt"></i>
-        </h5>
-    </div>
-    <div id="kt_docs_card_collapsible" class="collapse show">
-        <div class="card-body">
-            <form action="" id="createchildjob_form" method="post">
-                <div class="row mb-3 gy-3">
-                    <div class="col-md-1">
-                        <label for="{{ childtour_form.asset.id_for_label }}"
-                            class="required">{{ childtour_form.asset.label }}:</label>
-                    </div>
-                    <div class="col-md-5">
-                        {{ childtour_form.asset }}
-                        {{ childtour_form.asset.errors }}
-                    </div>
-                    
-                    <div class="col-md-1">
-                        <label for="{{ childtour_form.qset.id_for_label }}"
-                            class="required">{{ childtour_form.qset.label }}:</label>
-                    </div>
-
-                    <div class="col-md-5">
-                        {{ childtour_form.qset }}
-                        {{ childtour_form.qset.errors }}
-                    </div>
-                </div>
-                <div class="row mb-3 gy-3">
-                    <div class="col-md-1">
-                        <label for="{{ childtour_form.expirytime.id_for_label }}"
-                            class="required">{{ childtour_form.expirytime.label }}:</label>
-                    </div>
-                    {# <div class="col-md-2">
-                        {{ childtour_form.timeIn }}
-                    </div> #}
-                    <div class="col-md-3">
-                        {{ childtour_form.expirytime }}
-                    </div>
-                </div>
-
-                <!-- ADD/DELETE/RESET BUTTONS OF MIDDLE FORM -->
-                <div class="d-flex justify-content-end">
-                    <button type="submit" id="addQuestion" form="createchildjob_form"
-                        class="btn btn-sm btn-success me-2 btn-hover-scale">
-                        Add&nbsp;<i class="fa fa-plus" aria-hidden="true"></i>
-                    </button>
-
-                    <button type="button" id="resetMiddleForm" style="display:none;"
-                        class="btn ms-2 btn-sm btn-primary2 btn-hover-scale">
-                        Reset&nbsp;<i class="fas text-white fa-times"></i>
-                    </button>
-                </div>
-
-                <hr>
-
-                <div class="card">
-                    <div class="card-body">
-                        <h4 class="card-title modal-heading">Checkpoint and Checklist Mapping</h4>
-                        <div class="table-responsive">
-                            <table id="checkpoints_tour" class="display compact cell-border" style="width:100%">
-                                <thead>
-                                    <th>#</th>
-                                    <th>CheckpointId</th>
-                                    <th>Asset/Checkpoint</th>
-                                    <th>ChecklistId</th>
-                                    <th>Checklist</th>
-                                    <th>Expiry time (Min)</th>
-                                </thead>
-                                <tbody>
-                                    {% if checkpoints is defined %}
-                                    {% for checkpoint in checkpoints %}
-                                    <tr>
-                                        <td>{{ checkpoint['seqno'] }}</td>
-                                        <td>{{ checkpoint['asset_id'] }}</td>
-                                        <td>{{ checkpoint['assetname'] }}</td>
-                                        <td>{{ checkpoint['qset_id'] }}</td>
-                                        <td>{{ checkpoint['qsetname'] }}</td>
-                                        <td>{{ checkpoint['expirytime'] }}</td>
-                                    </tr>
-                                    {% endfor %}
-                                    {% else %}
-                                    {% endif %}
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-            </form>
-        </div>
-
-    </div>
-</div>
 {% endblock form %}
+
+
+
+{% block extras %}
+<br><br>
+<div class="row">
+    <h4 class="ch4">Assign Checkpoints</h4>
+    <table id="tourCheckpoints" class="display compact hover row-bordered"></table>
+    <br>    
+</div>
+
+
+
+{% endblock extras %}
 
 {% block popup_alerts %}
     {% call general_popup(popup_id = "cron_scheduler", title="Cron Scheduler", modal_size='modal-lg') %}
@@ -361,11 +279,6 @@ Schedule Tour
     
     <button type="submit" id="submitTour" form="id_schdtourform" class="btn btn-sm btn-primary2 btn-hover-scale">
         Update Tour&nbsp;<i class="fas text-white fa-cloud-upload-alt"></i>
-    </button>
-
-    <button type="button" onclick="deleteMainJob(this)" data-id="{{ schdtourform.instance.id }}" id="deleteAttd"
-        class="btn btn-sm btn-danger btn-hover-scale">
-        Delete&nbsp;<i class="fas text-white fa-trash-alt"></i>
     </button>
     {% else %}
     <button type="submit" form="id_schdtourform" class="btn btn-sm btn-primary2 btn-hover-scale">
@@ -415,87 +328,6 @@ Schedule Tour
         return "NONE"
     }
 
-    //collect checkpoints data for insertion in 
-    //table -> "Checpoint and Checklist Mapping"
-    function getCheckpointFormdata() {
-        console.log("Getting question formdata ")
-        var formData = {}
-        formData['seqno'] = $("#createchildjob_form #id_slno").val()
-        formData['qset_id'] = $("#createchildjob_form #id_qset").val()
-        formData['asset_id'] = $("#createchildjob_form #id_asset").val()
-        formData['expirytime'] = $("#createchildjob_form #id_expirytime").val()
-        formData['qset'] = getSelectedValue("#createchildjob_form #id_qset")
-        formData['asset'] = getSelectedValue("#createchildjob_form #id_asset")
-
-        console.log("formData", formData)
-        return formData
-    }
-
-    function resetForm() {
-        $("#createchildjob_form #id_expirytime").val("")
-        $("#createchildjob_form #id_qset, #createchildjob_form #id_asset").val(null).trigger('change');
-    }
-
-    function processValidForm() {
-        data = getCheckpointFormdata();
-        rowdata = [-1, data.asset_id, data.asset, data.qset_id, data.qset, data.expirytime]
-        table.row('.toupdate').remove().draw(false);
-        isduplicate = check_for_duplicates(table, rowdata)
-        if (!isduplicate) {
-            table.row.add(rowdata).draw()
-            resetForm()
-            //adjustForm(table)
-            $("#deleteCheckpoint").hide();
-        } else {
-            let heading = "Duplicate Record"
-            let msg = "This type ('Checkpoint and QuestionSet') record is already exist"
-            show_error_alert(msg, heading)
-        }
-    }
-
-    //checks duplicates before inserting into 
-    //datatable -> "List of Assigned Questions" 
-    function check_for_duplicates(table, dataToInsert) {
-        console.log("check_for_duplicates [start]")
-        var tableData = table.rows().data().toArray();
-        console.log(tableData)
-        for (var row in tableData) {
-            if (tableData[row][1] === dataToInsert[1]) {
-                return true
-            }
-        }
-        return false
-    }
-
-    function checkTourWoCheckpoints(table) {
-
-        rows = table.rows().data().toArray()
-        return rows.length < 1 //returns true if qset w/o questions else false
-    }
-
-    function adjustSlnoInTable() {
-        console.log("rows adjsuting")
-        var tableData = table.rows().data().toArray();
-        table.rows().remove().draw();
-        var seq = 0
-        for (var row in tableData) {
-            seq++
-            tableData[row][0] = seq
-        }
-        table.rows.add(tableData).draw()
-        console.log("rows adjusted")
-    }
-
-    function update_checkpoint_form(data, fortable = false) {
-        $("#createchildjob_form #id_slno").val(parseInt(data[0]), 10)
-        $("#createchildjob_form #id_asset").val(data[1]).change()
-        $("#createchildjob_form #id_qset").val(data[3]).change()
-        $("#createchildjob_form #id_expirytime").val(data[5])
-        console.log("while updating", data.id_alertbelow, data.id_alertabove)
-        $('#resetMiddleForm').show()
-        
-
-    }
 
     function deleteCheckpointRequest(checpointid, checklistid, job) {
         var deleted = false
@@ -512,14 +344,6 @@ Schedule Tour
                 show_error_alert('Something went wrong!')
             })
         return deleted
-    }
-    //alerts user for saving the form without checkpoints
-    function tourWoCheckpointsSetAlert() {
-        console.log("fired already")
-        return show_error_alert(
-            'You have not submitted any Checkpoints yet, for this Tour.',
-            title = "Tour Without Checkpoints"
-        )
     }
 
     function addRemoveClass(ele){
@@ -562,49 +386,99 @@ Schedule Tour
         //set ctzoffset
   	    $("#id_ctzoffset").val(-new Date().getTimezoneOffset())
         //Checkpoints & Checklist Mapping 
-        // Datatable configuration 
-        table = $('#checkpoints_tour').DataTable({
-            responsive: true,
-            fixedHeader: true,
-            paging: false,
-            lengthChange: false,
-            order: [
-                [0, "asc"]
-            ],
-            rowReorder:true,
-            scrollCollapse: true,
-            sDom: `<'row' <'col-sm-6 d-flex justify-content-start'f> <'col-sm-6 d-flex justify-content-end'B> >rt<'row'
-                <'col-sm-6'l> <'col-sm-6'p><'col-sm-12 d-flex justify-content-center'i>>`,
-            searching:false,
-            buttons:[],
-            ordering: true,
-            select:{
-                style:'os',
-                selector: "td:not(:first-child)"
+
+        editor = new $.fn.dataTable.Editor({
+            table:"#tourCheckpoints",
+            ajax:{
+                url:"{{ url('schedhuler:schd_internal_tour') }}",
+                data:function(d){
+                    d.csrfmiddlewaretoken = "{{ csrf_token }}"
+                    d.seqno = $("#DTE_Field_seqno").val()
+                    d.pk = editor.field('pk').val()
+                    d.asset_id = $("#DTE_Field_asset").val()
+                    d.qset_id = $("#DTE_Field_qset").val()
+                    d.expirytime = $("#DTE_Field_expirytime").val()
+                    d.ctzoffset = $("#id_ctzoffset").val()
+                    d.postType = 'saveCheckpoint'
+                    d.parentid = '{{schdtourform.instance.id}}'
+                    d.qsetname = $("#DTE_Field_qset").text()
+                
+                }
             },
-            columnDefs: [{
-                    "width": "5%",
-                    "targets": [0]
-                },
-                {
-                    "width": "9%",
-                    "targets": [5]
-                },
-                {
-                    orderable: false,
-                    targets: [1, 2, 4,5]
-                },
-                {
-                    "targets": [1, 3],
-                    "visible": false,
-                    "searchable": false
-                },
+            idSrc:  'pk',
+            fields:[
+                {data:'pk', type:'hidden', name:'pk', def:'None'},
+                {label: 'Seq No', name: 'seqno', type: 'text', data:'<seqno></seqno>'},
+                {label: 'Asset/Checkpoint', name: 'asset', type: 'select', data:'asset__assetname'},
+                {label: 'Question Set', name: 'qset', type: 'select', data:'qset__qsetname'},
+                {label: 'Expiry Time', name: 'expirytime', type: 'text', data:'expirytime', def:0},
             ]
+        })
+
+        editor.on('open', function(e, mode, action){
+            $(".DTE_Field").addClass('p-1') // add css to form fields
+            if(action == 'create' || action == "edit"){
+                // initialize select field question
+            $("#DTE_Field_asset, #DTE_Field_qset").addClass("form-control form-select") // add css to alerton form field
+
+                let url = "{{ url('schedhuler:schd_internal_tour') }}"
+                init_select_field({
+                    url: `${url}?action=loadAssetChekpointsForSelectField`,
+                    id: "#DTE_Field_asset",
+                    item: 'Assets'
+                })
+                
+                init_select_field({
+                    url: `${url}?action=loadQuestionSetsForSelectField`,
+                    id: "#DTE_Field_qset",
+                    item: 'Assets'
+                })
+            }
+              if(action == "create"){
+                console.log(table.data().count(), '*************')
+                editor.field('seqno').set(table.data().count() + 1) //update seqno for new entry
+
+            }
+        })
+
+
+
+        table = $("#tourCheckpoints").DataTable({
+            ajax:{
+                url:"{{ url('schedhuler:schd_internal_tour') }}?action=loadTourCheckpoints&parentid={{ schdtourform.instance.id }}",
+            },
+            order:[0, 'asc'],
+            ordering:false,
+            responsive:true,
+            dom:'Brt',
+            columns:[
+                {title:'SNo.', data:"seqno"},
+                {title:'SNo.', data:"pk", visible:false},
+                {title:'Asset/Checkpoint', data:'asset__assetname'},
+                {title:'Checklist', data:'qset__qsetname'},
+                {title:'Expiry Time', data:'expirytime'}
+            ],
+            columnDefs:[
+                {targets:0, render:function(data, type, row, meta){
+                    return data ? data : meta.row + 1
+                }}
+            ],
+            select:{
+                style:'single'
+            },
+            buttons:[
+                    { extend: "create", editor: editor },
+                    { extend: "edit",   editor: editor },
+                    { extend: "remove", editor: editor }
+                ],
         })
 
         //hide the delete button when instance is not saved yet.
         if ('{{schdtourform.instance.id}}' == 'None') {
             $("#btn_del").hide()
+            $("#tourCheckpoints_wrapper .buttons-create").addClass('disabled')
+        }else{
+            $("#tourCheckpoints_wrapper .buttons-create").removeClass('disabled')
         }
         //toggle people and pgroup field based on radio button value
         if ('{{schdtourform.instance.id}}' == 'None') {
@@ -614,20 +488,9 @@ Schedule Tour
             showHideSelectField(assignto)
             //cron to readable format
             $("#id_cronstrue").val(cronstrue.toString($("#id_cron").val()))
+            
         }       
 
-        $("#resetMiddleForm").click(() => {
-            resetForm();
-            $(this).hide()
-        })
-
-        //on submitting the questionset-blng form populate the table
-        // "Checkpoint & Checklist Mapping"
-        $('#createchildjob_form').on('submit', function (e) {
-            e.preventDefault()
-            processValidForm()
-            adjustSlnoInTable()
-        });
 
         //on click on table row populate the above question form for update
         table.on('select', function () {
@@ -660,10 +523,7 @@ Schedule Tour
         })
 
         $("#id_schdtourform").on('submit', function (e) {
-            if (checkTourWoCheckpoints(table)) {
-                e.preventDefault();
-                tourWoCheckpointsSetAlert()
-            } else {
+
                 var form = $(this);
                 e.preventDefault()
                 const params = {
@@ -703,8 +563,6 @@ Schedule Tour
                     }
                     
                 })
-                
-            }
         })
 
         $("#runScheduler").click(function() {

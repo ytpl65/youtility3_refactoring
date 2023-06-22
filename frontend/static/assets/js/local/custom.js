@@ -47,23 +47,25 @@ function simplifyData(e, data, action) {
   }
 }
 
-function dataTablesExcelConfig(title, columns){
+function dataTablesExcelConfig(title, columns,filename, moreConfig={}){
   return {
     extend:'excelHtml5',
     text:'<i class="bi bi-file-earmark-excel-fill text-success fs-5"></i>',
     titleAttr:'EXCEL',
     title:title,
+    filename:filename,
     exportOptions: {
         modifier: {
             page: 'all'
         },
         columns:columns
     },
+    ...moreConfig
   }
 } 
 
 
-function dataTablesPDFConfig(title, columns){
+function dataTablesPDFConfig(title, columns, filename, mode='landscape', moreConfig={}){
   return {
     extend: 'pdfHtml5',
     text:'<i class="bi text-danger fs-5 bi-file-earmark-pdf-fill"></i>', 
@@ -76,11 +78,13 @@ function dataTablesPDFConfig(title, columns){
     },
     header: true,
     title: title,
-    orientation: 'landscape',
+    filename:filename,
+    orientation: mode,
     customize: function(doc) {
-        doc.defaultStyle.fontSize = 8;
-        doc.styles.tableHeader.fontSize = 9;
-    }
+        doc.defaultStyle.fontSize = 7;
+        doc.styles.tableHeader.fontSize = 7;
+    },
+    ...moreConfig
   }
 }
 
@@ -135,6 +139,29 @@ function getArrayFromString(input_str){
  return  [undefined, "", null].includes(input_str) ? [] : input_str.split(",").map(word => word.trim());
 }
 
+
+function getAssetsOfLocation(locationid, url){
+  fire_ajax_get({
+    url: `${url}?action=loadAssets&locationid=${locationid}`
+})
+    .done((data, status, xhr) => {
+    // Remove existing options
+    var asset_select = $("#id_asset");
+    asset_select.empty();
+
+    // Add the first option
+    var firstOption = new Option("--------------------", "");
+    asset_select.append(firstOption);
+
+    // Add new options to the select element
+    data.options.forEach(function (option) {
+        var newOption = new Option(option.text, option.id);
+        asset_select.append(newOption);
+    });
+
+    asset_select.trigger('change');
+    });
+}
 
 function populateQsetForm(questionid, url){
   debugger;
@@ -688,6 +715,16 @@ function auto_select_the_newly_created(field_id, data) {
     var newOption = new Option(data.tacode, data.id, true, true);
     // Append it to the select
     $(field_id).append(newOption).trigger("change");
+  }
+}
+
+//return true if valid json string else false
+function isValidJSON(jsonString) {
+  try {
+    JSON.parse(jsonString);
+    return true;
+  } catch (error) {
+    return false;
   }
 }
 
@@ -1527,6 +1564,29 @@ function setUpDropzone(params){
 //============================================== END DOCUMENT READY ===========================================//
 
 
+function convertSecondsToHumanReadable(seconds) {
+  // Calculate the time units
+  let days = Math.floor(seconds / (24*60*60));
+  let hours = Math.floor(seconds % (24*60*60) / (60*60));
+  let minutes = Math.floor(seconds % (60*60) / 60);
+  let sec = Number(seconds % 60).toFixed(2);  // limit decimal places to 2
+
+  // Create a human readable string
+  let result = [];
+  if (days)
+      result.push(days + " day" + (days == 1 ? "" : "s"));
+  if (hours)
+      result.push(hours + " hour" + (hours == 1 ? "" : "s"));
+  if (minutes)
+      result.push(minutes + " minute" + (minutes == 1 ? "" : "s"));
+  if (sec)
+      result.push(sec + " second" + (sec == 1 ? "" : "s"));
+  
+  return result.join(", ");
+}
+
+
+
 //============================================== QSB EDITOR FUNCTIONS START===========================================//
 function getCurrentEditingRow(editor, table){
   return table.row({selected:true}).data() || 'None'
@@ -1634,6 +1694,7 @@ function editorOnOpenActions(url, editor, table, action){
       initializeQSBForm(table, editor)
   }
 }
+
 
 function editorOnOpenedActions(){
   $("#DTE_Field_options").on('focusout', function(){

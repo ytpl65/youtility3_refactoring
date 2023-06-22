@@ -165,7 +165,9 @@ class PeopleResource(resources.ModelResource):
     
     
     def skip_row(self, instance, original):
-        return pm.People.objects.filter(peoplecode = instance.peoplecode).exists()
+        return pm.People.objects.filter(
+            peoplecode = instance.peoplecode,
+            client_id = self.request.client.id).exists()
 
 @admin.register(People)
 class PeopleAdmin(ImportExportModelAdmin):

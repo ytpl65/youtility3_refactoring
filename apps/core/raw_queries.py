@@ -190,7 +190,77 @@ def get_query(q):
                                                 WHERE (oldstatus = %s OR newstatus = %s) and asset_id = %s
                                             ) sub
                                             GROUP BY asset_id;
-                                            '''
+                                            ''',
+    'all_asset_status_duration':            '''
+                                            WITH status_periods AS (
+                                            SELECT
+                                                asset_id,
+                                                newstatus,
+                                                asset.assetname as assetname,
+                                                assetlog.cdtz AS period_start,
+                                                COALESCE(LEAD(assetlog.cdtz) OVER (PARTITION BY asset_id ORDER BY assetlog.cdtz), CURRENT_TIMESTAMP) AS period_end
+                                            FROM assetlog
+                                            INNER JOIN asset on asset_id = asset.id
+                                            where assetlog.client_id = %s and assetlog.bu_id = %s
+                                            ),
+                                            status_durations AS (
+                                            SELECT
+                                                asset_id,
+												assetname,
+                                                newstatus,
+                                                SUM(EXTRACT(EPOCH FROM (period_end - period_start))) AS duration_seconds,
+                                                MAX(period_end) AS max_period_end
+                                            FROM status_periods
+                                            GROUP BY asset_id, assetname, newstatus
+                                            )
+                                            SELECT
+                                            asset_id,
+                                            assetname,
+                                            newstatus,
+                                            duration_seconds,
+                                            CASE 
+                                                WHEN max_period_end = CURRENT_TIMESTAMP THEN 'till_now'
+                                                ELSE CAST(INTERVAL '1 second' * duration_seconds AS VARCHAR)
+                                            END AS duration_interval
+                                            FROM status_durations
+                                            ORDER BY asset_id, newstatus
+                                            ''',
+    'all_asset_status_duration_count':      '''
+                                            SELECT COUNT(*) FROM (
+                                                 WITH status_periods AS (
+                                            SELECT
+                                                asset_id,
+                                                newstatus,
+                                                asset.assetname as assetname,
+                                                assetlog.cdtz AS period_start,
+                                                COALESCE(LEAD(assetlog.cdtz) OVER (PARTITION BY asset_id ORDER BY assetlog.cdtz), CURRENT_TIMESTAMP) AS period_end
+                                            FROM assetlog
+                                            INNER JOIN asset on asset_id = asset.id
+                                            where assetlog.client_id = %s and assetlog.bu_id = %s
+                                            ),
+                                            status_durations AS (
+                                            SELECT
+                                                asset_id,
+												assetname,
+                                                newstatus,
+                                                SUM(EXTRACT(EPOCH FROM (period_end - period_start))) AS duration_seconds,
+                                                MAX(period_end) AS max_period_end
+                                            FROM status_periods
+                                            GROUP BY asset_id, assetname, newstatus
+                                            )
+                                            SELECT
+                                            asset_id,
+                                            assetname,
+                                            newstatus,
+                                            duration_seconds,
+                                            CASE 
+                                                WHEN max_period_end = CURRENT_TIMESTAMP THEN 'till_now'
+                                                ELSE CAST(INTERVAL '1 second' * duration_seconds AS VARCHAR)
+                                            END AS duration_interval
+                                            FROM status_durations
+                                            ORDER BY asset_id, newstatus
+                                            ) AS SUBQUERY
+                                            ''',
 
     }
     return query.get(q)

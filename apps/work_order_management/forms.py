@@ -88,6 +88,7 @@ class WorkOrderForm(forms.ModelForm):
             'description':'Description',
             'qset':'Question Set',
             'workstatus':"Status",
+            'asset':"Asset/Checkpoint"
            
         }
         
@@ -99,7 +100,7 @@ class WorkOrderForm(forms.ModelForm):
         
         self.fields['categories'].choices = om.TypeAssist.objects.filter((Q(client_id = S['client_id']) | Q(cuser__is_superuser = True)), tatype__tacode = 'WORKORDER_CATEGORY', enable=True).values_list('tacode', 'taname')
         self.fields['ticketcategory'].queryset = om.TypeAssist.objects.filter_for_dd_notifycategory_field(self.request, sitewise=True)
-        self.fields['asset'].queryset = am.Asset.objects.filter_for_dd_asset_field(self.request, ['ASSET'], sitewise=True)
+        self.fields['asset'].queryset = am.Asset.objects.filter_for_dd_asset_field(self.request, ['ASSET', 'CHECKPOINT'], sitewise=True)
         self.fields['location'].queryset = am.Location.objects.filter(Q(client_id = S['client_id']), bu_id = S['bu_id'])
         self.fields['vendor'].queryset = Vendor.objects.filter(
             Q(enable=True) & Q(client_id = S['client_id']) & Q(bu_id = S['bu_id']) | (Q(client_id = S['client_id']) & Q(show_to_all_sites = True)))
@@ -121,7 +122,8 @@ class WorkPermitForm(forms.ModelForm):
         fields = ['qset', 'seqno', 'ctzoffset', 'workpermit', 'performedby', 'parent', 'approvers', 'vendor']
         labels={
             'qset':'Permit to work',
-            'seqno':'Seq No'
+            'seqno':'Seq No',
+            
         }
         widgets = {
             'wptype':s2forms.Select2Widget

@@ -216,10 +216,12 @@ if(filters && filters.AssetType === 1){
 				$(formFilter).submit();
 			}
 		});
-        //beforeSend of capability ajax request 
+        
+		//beforeSend of capability ajax request 
         function checkpointBeforeSend(){
             $(modal_id).modal("show");
         }
+		
 		//datatable initialization
         table = $(table_id).DataTable({
 			ajax:{
@@ -230,17 +232,17 @@ if(filters && filters.AssetType === 1){
 			},
 			pageLength:50,
 			columns:[
-				{data:'id', visible:false, searchable:false},
+				{data:'id', visible:false, searchable:false, className:'noVis'},
 				{data:'assetcode', title:'Code'},
 				{data:'assetname', title:'Name'},
-				{data:'parent__assetname', title:'Belongs to', visible:false},
+				{data:'parent__assetname', title:'Belongs to', visible:false, className:'noVis'},
 				{data:'location__locname', title:'Location'},
 				{data:'runningstatus', title:'Status'},
 				{data:'enable', title:'Enable', render:function(data, type, row, meta){
 					return data === true ? '<i class="bi bi-check-circle-fill text-success"></i>': '<i class="bi bi-x-circle-fill text-danger"></i>'				
 				}},
 				{data:'gps', title:'GPS'},
-				{data:'identifier', visible:false},
+				{data:'identifier', visible:false, className:'noVis'},
 			],
 			responsive: true,
 			columnDefs:[
@@ -261,7 +263,6 @@ if(filters && filters.AssetType === 1){
 				{targets:[4,5], render:function(data, type, row, meta){
 					return data || 'NONE'
 				}}
-
 			],
             dom:`<'row' <'col-sm-6 d-flex justify-content-start'f> <'col-sm-6 d-flex justify-content-end'B> >rt<'row'
 			 <'col-sm-6'l> <'col-sm-6'p><'col-sm-12 d-flex justify-content-center'i>>`,
@@ -272,8 +273,21 @@ if(filters && filters.AssetType === 1){
 				}
 			},
 			buttons:[
+				"searchBuilder",
+                dataTablesPDFConfig(
+                    title = `Site: {{request.user.bu.buname}}\n Checkpoint List`,
+                    columns = [1,2,3,4,5,6,7],
+					filename = "checkpoint_list"
+                ),
+                dataTablesExcelConfig(
+                    title = `Site: {{request.user.bu.buname}}\n Checkpoint List`,
+                    columns = [1,2,3,4,5,6,7],
+					filename = "checkpoint_list"
+                ),
+                dataTablesColumnVisibilityConfig(),
+
 				{
-					text:`Add New ${viewname} &nbsp;<i class='fas text-dark fa-plus ch4'></i></a>`,
+					text:`Add New &nbsp;<i class='fas text-dark fa-plus ch4'></i></a>`,
 					//action for add_new_button 
 					action: function(e, dt, node, config){
                         const params = {
@@ -289,15 +303,7 @@ if(filters && filters.AssetType === 1){
 						})
 					}
 				},
-				{
-					text     : `Refresh &nbsp;<i class="bi bi-arrow-clockwise"></i></a>`,
-					className: "btn btn-sm btn-light-primary",
-					//action for add_new_button 
-					action: function(e, dt, node, config){
-						params=null
-						table.ajax.reload()
-					}
-				}
+
 			],
 			select: {
                     style: 'single'

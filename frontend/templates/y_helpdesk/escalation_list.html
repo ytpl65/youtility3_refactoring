@@ -56,11 +56,13 @@ Escalation List
 				"searchBuilder",
                 dataTablesPDFConfig(
                     title = `Site: {{request.user.bu.buname}}\n Escalation List`,
-                    columns = [2,3]
+                    columns = [2,3],
+                    filename = "escalation_list"
                 ),
                 dataTablesExcelConfig(
                     title = `Site: {{request.user.bu.buname}}\n Escalation List`,
-                    columns = [2,3]
+                    columns = [2,3],
+                    filename = "escalation_list"
                 ),
                 dataTablesColumnVisibilityConfig(),
 				{

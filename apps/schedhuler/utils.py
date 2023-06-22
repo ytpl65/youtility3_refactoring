@@ -138,22 +138,25 @@ def calculate_route_details(R, job):
 
 
 @shared_task(name="create_job()")
-def create_job(jobs = None):
+def create_job(jobids = None):
     startdtz = enddtz = msg = resp = None
     result = {'F':{}, 'd':[], 'story':"", 'id':[]}
 
     from django.utils.timezone import get_current_timezone
     with transaction.atomic(using = utils.get_current_db_name()):
         try:
-            if not jobs:
-                jobs = am.Job.objects.filter(
-                    ~Q(jobname='NONE'),
-                    ~Q(asset__runningstatus = am.Asset.RunningStatus.SCRAPPED),
-                    parent_id = 1,
-                ).select_related(
-                    "asset", "pgroup",
-                    "cuser", "muser", "qset", "people",
-                ).values(*utils.JobFields.fields)
+            jobs = am.Job.objects.filter(
+                ~Q(jobname='NONE'),
+                ~Q(asset__runningstatus = am.Asset.RunningStatus.SCRAPPED),
+                parent_id = 1,
+            ).select_related(
+                "asset", "pgroup",
+                "cuser", "muser", "qset", "people",
+            ).values(*utils.JobFields.fields)
+            if jobids:
+                jobs = jobs.filter(id__in = jobids)
+            
+
 
             if not jobs:
                 msg = "No jobs found schedhuling terminated"
@@ -451,8 +454,7 @@ def insert_into_jn_and_jnd(job, DT, resp):
     return status, resp
 
 def insert_into_jn_for_parent(job, params):
-    obj, _ = am.Jobneed.objects.update_or_create(
-        defaults={
+    defaults={
             'ctzoffset'        : job['ctzoffset'],
             'priority'         : job['priority'],
             'identifier'       : job['identifier'],
@@ -473,7 +475,9 @@ def insert_into_jn_for_parent(job, params):
             'jobstatus'      : params['jobstatus'],
             'plandatetime': params['pdtz'],
             'expirydatetime': params['edtz']
-        },
+        }
+    obj = am.Jobneed.objects.create(
+        **defaults,
         job_id         = job['id'],           parent       = params['NONE_JN'],
         jobdesc        = params['jobdesc'],qset_id      = job['qset_id'],
         asset_id       = job['asset_id'],     
@@ -481,7 +485,6 @@ def insert_into_jn_for_parent(job, params):
         pgroup_id      = job['pgroup_id'],
         jobtype        = params['jobtype'],
     )
-    ic("iscreated", _)
     return obj
 
 

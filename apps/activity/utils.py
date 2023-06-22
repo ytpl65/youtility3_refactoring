@@ -70,9 +70,8 @@ def initialize_alertbelow_alertabove(instance, form):
         s2 = s1.replace(",", "")
         s3 = s2.replace("<", "")
         li = s3.split(" ")
-        print(li)
-        form.fields['alertbelow'].initial = float(li[0])
-        form.fields['alertabove'].initial = float(li[1])
+        form.fields['alertbelow'].initial = float(li[0]) if len(li) > 0 else None
+        form.fields['alertabove'].initial = float(li[1]) if len(li) > 1 else None
 
 def init_assetincludes(form):
     form.fields['assetincludes'].initial = form.instance.assetincldes
