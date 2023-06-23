@@ -14,138 +14,140 @@ $(document).on({
 
 //check if a normal select field is enhanced by select2
 function isSelect2(element) {
-  var instance = jQuery(element).data('select2');
+  var instance = jQuery(element).data("select2");
   return instance !== undefined;
 }
 
-
-function getAddressOfPoint(geocoder, point, callback){
-  geocoder.geocode({ location: point })
-  .then((res) => {
+function getAddressOfPoint(geocoder, point, callback) {
+  geocoder.geocode({ location: point }).then((res) => {
     if (res.results[0]) {
-      var formattedAddr = res.results[0].formatted_address
-      formattedAddr += ` | Coordinates: (${point.lat}, ${point.lng})`
-      callback(formattedAddr)
+      var formattedAddr = res.results[0].formatted_address;
+      formattedAddr += ` | Coordinates: (${point.lat}, ${point.lng})`;
+      callback(formattedAddr);
     }
-  })
-
+  });
 }
 
 function simplifyData(e, data, action) {
-  if (action !== 'remove') {
-      var rowData = data.data;
-      var simplifiedData = {};
+  if (action !== "remove") {
+    var rowData = data.data;
+    var simplifiedData = {};
 
-      for (var key in rowData) {
-          var row = rowData[key];
-          for (var field in row) {
-              simplifiedData[field] = row[field];
-          }
+    for (var key in rowData) {
+      var row = rowData[key];
+      for (var field in row) {
+        simplifiedData[field] = row[field];
       }
+    }
 
-      data.data = simplifiedData;
+    data.data = simplifiedData;
   }
 }
 
-function dataTablesExcelConfig(title, columns,filename, moreConfig={}){
-function dataTablesExcelConfig(title, columns,filename, moreConfig={}){
+function dataTablesExcelConfig(title, columns, filename, moreConfig = {}) {
   return {
-    extend:'excelHtml5',
-    text:'<i class="bi bi-file-earmark-excel-fill text-success fs-5"></i>',
-    titleAttr:'EXCEL',
-    title:title,
-    filename:filename,
+    extend: "excelHtml5",
+    text: '<i class="bi bi-file-earmark-excel-fill text-success fs-5"></i>',
+    titleAttr: "EXCEL",
+    title: title,
+    filename: filename,
     exportOptions: {
-        modifier: {
-            page: 'all'
-        },
-        columns:columns
+      modifier: {
+        page: "all",
+      },
+      columns: columns,
     },
-    ...moreConfig
-  }
-} 
+    ...moreConfig,
+  };
+}
 
-
-function dataTablesPDFConfig(title, columns, filename, mode='landscape', moreConfig={}){
+function dataTablesPDFConfig(
+  title,
+  columns,
+  filename,
+  mode = "landscape",
+  moreConfig = {}
+) {
   return {
-    extend: 'pdfHtml5',
-    text:'<i class="bi text-danger fs-5 bi-file-earmark-pdf-fill"></i>', 
-    titleAttr: 'PDF',
+    extend: "pdfHtml5",
+    text: '<i class="bi text-danger fs-5 bi-file-earmark-pdf-fill"></i>',
+    titleAttr: "PDF",
     exportOptions: {
-        modifier: {
-            page: 'all'
-        },
-        columns:columns
+      modifier: {
+        page: "all",
+      },
+      columns: columns,
     },
     header: true,
     title: title,
-    filename:filename,
+    filename: filename,
     orientation: mode,
-    customize: function(doc) {
-        doc.defaultStyle.fontSize = 7;
-        doc.styles.tableHeader.fontSize = 7;
+    customize: function (doc) {
+      doc.defaultStyle.fontSize = 7;
+      doc.styles.tableHeader.fontSize = 7;
     },
-    ...moreConfig
-  }
+    ...moreConfig,
+  };
 }
 
-function dataTablesColumnVisibilityConfig(){
+function dataTablesColumnVisibilityConfig() {
   return {
-            extend: 'colvis',
-            columns: ':not(.noVis)',
-            collectionLayout: 'fixed columns',
-            collectionTitle: 'Column visibility control',
-            text:'<i class="bi bi-gear-fill fs-4 text-dark"></i>',
-            titleAttr:'Select columns to be included',
-            postfixButtons: [ 'colvisRestore' ]
-        }
+    extend: "colvis",
+    columns: ":not(.noVis)",
+    collectionLayout: "fixed columns",
+    collectionTitle: "Column visibility control",
+    text: '<i class="bi bi-gear-fill fs-4 text-dark"></i>',
+    titleAttr: "Select columns to be included",
+    postfixButtons: ["colvisRestore"],
+  };
 }
 
-function makeReadonlyFields(){
-    // Disable checkboxes
-    $("input[type='checkbox']").prop("disable=d", true);
-    // Disable text fields
-    $("input, textarea").prop("readonly", 'readonly');
-    $('select').prop('disabled', true);
-    // Disable select2 fields (assuming select2 has been initialized)
-    $("select.django-select2").select2({"disabled": 'readonly'})
+function makeReadonlyFields() {
+  // Disable checkboxes
+  $("input[type='checkbox']").prop("disable=d", true);
+  // Disable text fields
+  $("input, textarea").prop("readonly", "readonly");
+  $("select").prop("disabled", true);
+  // Disable select2 fields (assuming select2 has been initialized)
+  $("select.django-select2").select2({ disabled: "readonly" });
 }
 
-function toggleRequiredAttribute(id, set = true){
-  let label_field = `label[for='${id}']`
-  let field = `#${id}`
-  if(set){
-    $(label_field).addClass("required")
-    $(field).attr('required', true)
-  }else{
-    $(label_field).removeClass("required")
-    $(field).attr('required', false)
+function toggleRequiredAttribute(id, set = true) {
+  let label_field = `label[for='${id}']`;
+  let field = `#${id}`;
+  if (set) {
+    $(label_field).addClass("required");
+    $(field).attr("required", true);
+  } else {
+    $(label_field).removeClass("required");
+    $(field).attr("required", false);
   }
 }
 
 //upload file using dropzone
-function getDropzoneObject(){
+function getDropzoneObject() {
   return new Dropzone("#dropzone_file", {
     url: fileUploadUrl,
     paramName: "file",
     maxFiles: 5,
     maxFileSize: 10,
     addRemoveLinks: true,
-    accept: function (file, done) { console.log(file, done);
-    }
+    accept: function (file, done) {
+      console.log(file, done);
+    },
   });
 }
 
-function getArrayFromString(input_str){
- return  [undefined, "", null].includes(input_str) ? [] : input_str.split(",").map(word => word.trim());
+function getArrayFromString(input_str) {
+  return [undefined, "", null].includes(input_str)
+    ? []
+    : input_str.split(",").map((word) => word.trim());
 }
 
-
-function getAssetsOfLocation(locationid, url){
+function getAssetsOfLocation(locationid, url) {
   fire_ajax_get({
-    url: `${url}?action=loadAssets&locationid=${locationid}`
-})
-    .done((data, status, xhr) => {
+    url: `${url}?action=loadAssets&locationid=${locationid}`,
+  }).done((data, status, xhr) => {
     // Remove existing options
     var asset_select = $("#id_asset");
     asset_select.empty();
@@ -156,92 +158,101 @@ function getAssetsOfLocation(locationid, url){
 
     // Add new options to the select element
     data.options.forEach(function (option) {
-        var newOption = new Option(option.text, option.id);
-        asset_select.append(newOption);
+      var newOption = new Option(option.text, option.id);
+      asset_select.append(newOption);
     });
 
-    asset_select.trigger('change');
-    });
+    asset_select.trigger("change");
+  });
 }
 
-function populateQsetForm(questionid, url){
+function populateQsetForm(questionid, url) {
   debugger;
-  const params = {url:`${url}?action=getquestion&questionid=${questionid}`, modal:false}
-  fire_ajax_get(params)
-  .done((data, status, xhr) => {
-      if(status == 'success'){
-          const qsetbng = data.qsetbng[0]
-          $('#DTE_Field_min').val(qsetbng.min)
-          $('#DTE_Field_max').val(qsetbng.max)
-          $('#DTE_Field_options').val(qsetbng.options)
-          $('#DTE_Field_avpttype').val(qsetbng.avpttype)
-          $('#DTE_Field_isavpt').val(`${qsetbng.isavpt}`)
-          if($("#DTE_Field_isavpt").val() == 'true'){
-            $(".DTE_Field_Name_avpttype").show()
-          }
-          
-          if(qsetbng.options && qsetbng.alerton){
-              let optionArr = getArrayFromString(qsetbng.options)
-              let alertonArr = getArrayFromString(qsetbng.alerton)
-              let selected = performIntersection(optionArr, alertonArr)
-              load_alerton_field(optionArr, selected, "#DTE_Field_alerton")
-          } if(qsetbng.alerton){
-              adjust_above_below(qsetbng.alerton, for_table=false, foreditor=true)
-          }
+  const params = {
+    url: `${url}?action=getquestion&questionid=${questionid}`,
+    modal: false,
+  };
+  fire_ajax_get(params).done((data, status, xhr) => {
+    if (status == "success") {
+      const qsetbng = data.qsetbng[0];
+      $("#DTE_Field_min").val(qsetbng.min);
+      $("#DTE_Field_max").val(qsetbng.max);
+      $("#DTE_Field_options").val(qsetbng.options);
+      $("#DTE_Field_avpttype").val(qsetbng.avpttype);
+      $("#DTE_Field_isavpt").val(`${qsetbng.isavpt}`);
+      if ($("#DTE_Field_isavpt").val() == "true") {
+        $(".DTE_Field_Name_avpttype").show();
       }
-  })
+
+      if (qsetbng.options && qsetbng.alerton) {
+        let optionArr = getArrayFromString(qsetbng.options);
+        let alertonArr = getArrayFromString(qsetbng.alerton);
+        let selected = performIntersection(optionArr, alertonArr);
+        load_alerton_field(optionArr, selected, "#DTE_Field_alerton");
+      }
+      if (qsetbng.alerton) {
+        adjust_above_below(
+          qsetbng.alerton,
+          (for_table = false),
+          (foreditor = true)
+        );
+      }
+    }
+  });
 }
 
-function getDirectionConfig(data){
+function getDirectionConfig(data) {
   //start point
-  var start = data['path'][0]
+  var start = data["path"][0];
   //end point
-  var end = data['path'][data['path'].length - 1]
+  var end = data["path"][data["path"].length - 1];
   //waypoints
-  var inBetweenPoints = data['waypoints']
-  console.log(inBetweenPoints.length)
-  var waypoints=[]
+  var inBetweenPoints = data["waypoints"];
+  console.log(inBetweenPoints.length);
+  var waypoints = [];
   for (let i = 0; i < inBetweenPoints.length; i++) {
-      waypoints.push({
-        location: inBetweenPoints[i],
-        stopover: false,
-      });
+    waypoints.push({
+      location: inBetweenPoints[i],
+      stopover: false,
+    });
   }
 
-  
   return {
     travelMode: "DRIVING",
     origin: start,
     destination: end,
     //waypoints: waypoints,
-    transitOptions:{
-      arrivalTime: new Date(data['punchintime']),
-      departureTime: new Date(data['punchouttime']),
+    transitOptions: {
+      arrivalTime: new Date(data["punchintime"]),
+      departureTime: new Date(data["punchouttime"]),
       //modes:['OTHER']//data['transportmodes'],
-    }
-  }
+    },
+  };
 }
 
-
-function getRoute(directionService, directionConfig, callback){
-  directionService.route(directionConfig).then((response) => {
-    callback(response)
-  }).catch((e) => console.error(e));
+function getRoute(directionService, directionConfig, callback) {
+  directionService
+    .route(directionConfig)
+    .then((response) => {
+      callback(response);
+    })
+    .catch((e) => console.error(e));
 }
 
-
-function clearAllMarkers(markers){
+function clearAllMarkers(markers) {
   // Clear out the old markers.
   markers.forEach((marker) => {
     marker.setMap(null);
   });
 }
 
-
 //creating environment for wizhaard
 function make_env_for_wizard(session) {
   $(document).ready(function () {
-    if (session.hasOwnProperty('wizard_data') && session['wizard_data'] !== null) {
+    if (
+      session.hasOwnProperty("wizard_data") &&
+      session["wizard_data"] !== null
+    ) {
       //minimize sidebar
       //$('#kt_body').attr('data-kt-aside-minimize', 'on')
       //hide the pagebreadcumb
@@ -252,23 +263,25 @@ function make_env_for_wizard(session) {
         "none"
       );
     }
-  })
+  });
 }
 
-function validateCode(bucode){
+function validateCode(bucode) {
   // validate bucode return false bucode has special characters and contains space
   var regex = /^[a-zA-Z0-9]+$/;
-  if(!regex.test(bucode)){
-      return false;
-  }return true;
+  if (!regex.test(bucode)) {
+    return false;
+  }
+  return true;
 }
 
-function validateEmail(email){
+function validateEmail(email) {
   //validate email return false if email is invalid
   var regex = /^([a-zA-Z0-9_\-\.]+)@([a-zA-Z0-9_\-\.]+)\.([a-zA-Z]{2,5})$/;
-  if(!regex.test(email)){
-      return false;
-  }return true
+  if (!regex.test(email)) {
+    return false;
+  }
+  return true;
 }
 
 function validatePhone(phone) {
@@ -298,13 +311,13 @@ function removeRequiredAttr(cls) {
     $("#id_min, #id_max").removeAttr("required");
     $("#id_options").attr("required", true);
     $("label[for='id_options']").addClass("required");
-    console.log("removed...")
+    console.log("removed...");
   } else if (cls === "optionGrp") {
     $("#id_options").removeAttr("required");
     $("label[for='id_options']").removeClass("required");
     $("#id_min, #id_max").attr("required", true);
     $("label[for='id_min'], label[for='id_max']").addClass("required");
-    console.log("added again...")
+    console.log("added again...");
   } else {
     $("#id_options, #id_alerton, #id_min, #id_max").removeAttr("required");
   }
@@ -326,9 +339,9 @@ function showHideFields(selected) {
       $(".optionGrp").show();
       $(".numeric").hide();
       removeRequiredAttr("numeric");
-    }else if (selectedText.toUpperCase() === 'RATING'){
-      $('.numeric').hide()
-      $('.rating.numeric').show();
+    } else if (selectedText.toUpperCase() === "RATING") {
+      $(".numeric").hide();
+      $(".rating.numeric").show();
       $(".optionGrp").hide();
       removeRequiredAttr("optionGrp");
     } else {
@@ -368,11 +381,11 @@ function handle_rendering_of_menus(session) {
     tracking: "#TRACKING",
     admin: "#ADMIN",
     onboarding: "#ONBOARDING",
-    companysetup:"#COMPANYSETUP",
-    sitesurvey:"#SITESURVEY",
-    helpdesk:"#HELPDESK",
-    scheduling:"#SCHEDULING",
-    wom:"#WOM"
+    companysetup: "#COMPANYSETUP",
+    sitesurvey: "#SITESURVEY",
+    helpdesk: "#HELPDESK",
+    scheduling: "#SCHEDULING",
+    wom: "#WOM",
   };
   if (session["is_superadmin"]) {
     //show every item if user is superadmin
@@ -381,49 +394,49 @@ function handle_rendering_of_menus(session) {
     /*======show menu-item based on user or client capabilites======*/
 
     //if user is admin show client webcaps else people webcaps
-    caps = session['people_webcaps'].length ? session['people_webcaps'] : session["client_webcaps"];
-
+    caps = session["people_webcaps"].length
+      ? session["people_webcaps"]
+      : session["client_webcaps"];
 
     //for every cap
     for (var i = 0; i < caps.length; i++) {
       code = caps[i][0];
 
-      if (code.includes("TR_") && $(exceptions["tracking"]).is(':hidden')) {
+      if (code.includes("TR_") && $(exceptions["tracking"]).is(":hidden")) {
         $(exceptions["tracking"]).show();
-        $(`${exceptions["tracking"]} .menu-item`).hide()
-      } 
-      if (code.includes("SS_") && $(exceptions["sitesurvey"]).is(':hidden')) {
+        $(`${exceptions["tracking"]} .menu-item`).hide();
+      }
+      if (code.includes("SS_") && $(exceptions["sitesurvey"]).is(":hidden")) {
         $(exceptions["sitesurvey"]).show();
-        $(`${exceptions["sitesurvey"]} .menu-item`).hide()
-      } 
-      
-      if (code.includes("AD_") && $(exceptions["admin"]).is(':hidden')) {
-        $(exceptions["admin"]).show();
-        $(`${exceptions["admin"]} .menu-item`).hide()
-      }
-      
-      if (code.includes("OB_") && $(exceptions["onboarding"]).is(':hidden')) {
-        $(exceptions["onboarding"]).show();
-        $(`${exceptions["onboarding"]} .menu-item`).hide()
-        $("#COMPANYSETUP").show()
-      }
-      if (code.includes("WOM_") && $(exceptions["wom"]).is(':hidden')) {
-        $(exceptions["wom"]).show();
-        $(`${exceptions["wom"]} .menu-item`).hide()
+        $(`${exceptions["sitesurvey"]} .menu-item`).hide();
       }
 
-      
+      if (code.includes("AD_") && $(exceptions["admin"]).is(":hidden")) {
+        $(exceptions["admin"]).show();
+        $(`${exceptions["admin"]} .menu-item`).hide();
+      }
+
+      if (code.includes("OB_") && $(exceptions["onboarding"]).is(":hidden")) {
+        $(exceptions["onboarding"]).show();
+        $(`${exceptions["onboarding"]} .menu-item`).hide();
+        $("#COMPANYSETUP").show();
+      }
+      if (code.includes("WOM_") && $(exceptions["wom"]).is(":hidden")) {
+        $(exceptions["wom"]).show();
+        $(`${exceptions["wom"]} .menu-item`).hide();
+      }
+
       /*if (code.includes("CS_") && $(exceptions["companysetup"]).is(':hidden')) {
         $(exceptions["companysetup"]).show();
         $(`${exceptions["companysetup"]} .menu-item`).hide()
       }*/
-      if (code.includes("SHD_") && $(exceptions["scheduling"]).is(':hidden')) {
+      if (code.includes("SHD_") && $(exceptions["scheduling"]).is(":hidden")) {
         $(exceptions["scheduling"]).show();
-        $(`${exceptions["scheduling"]} .menu-item`).hide()
+        $(`${exceptions["scheduling"]} .menu-item`).hide();
       }
-      if (code.includes("HD_") && $(exceptions["helpdesk"]).is(':hidden')) {
+      if (code.includes("HD_") && $(exceptions["helpdesk"]).is(":hidden")) {
         $(exceptions["helpdesk"]).show();
-        $(`${exceptions["helpdesk"]} .menu-item`).hide()
+        $(`${exceptions["helpdesk"]} .menu-item`).hide();
       }
 
       menu_id = "#".concat(code.toUpperCase());
@@ -459,7 +472,7 @@ function handle_alerts_msgs(msg, alertype) {
   }
 }
 
-function display_field_error(key, value){
+function display_field_error(key, value) {
   let error = "<p class='errors'>" + value + "</p>";
   let fieldselector = "[name='" + key + "']";
   var field = $(fieldselector);
@@ -469,26 +482,23 @@ function display_field_error(key, value){
       "alert alert-danger"
     );
     if (field.is("select") === true) {
-      if(!field.next().find(".select2-selection").hasClass("is-invalid")){
+      if (!field.next().find(".select2-selection").hasClass("is-invalid")) {
         field.next().find(".select2-selection").addClass("is-invalid");
         var tag = field.next();
         $(error).insertAfter(tag);
       }
     } else {
-      if(!field.hasClass("is-invalid")){
+      if (!field.hasClass("is-invalid")) {
         field.addClass("is-invalid");
         $(error).insertAfter(field);
       }
     }
-    
   }
 }
 
-
 function display_form_errors(errors) {
-
   $("p.errors").remove();
-  if (typeof errors == 'string') {
+  if (typeof errors == "string") {
     console.log("errors is a string");
     display_non_field_errors([errors]);
   }
@@ -497,9 +507,9 @@ function display_form_errors(errors) {
     if (Object.prototype.hasOwnProperty.call(errors, key)) {
       if (Object.prototype.hasOwnProperty.call(errors, "__all__")) {
         console.log("errors has non field errors");
-        display_non_field_errors(errors['__all__']); //non-field errors
+        display_non_field_errors(errors["__all__"]); //non-field errors
       }
-      display_field_error(key, errors[key])
+      display_field_error(key, errors[key]);
     }
   }
 }
@@ -560,11 +570,11 @@ function show_alert_before_update(data) {
   });
 }
 
-function submit_form_alert(text=null, title=null) {
-  console.log(title)
+function submit_form_alert(text = null, title = null) {
+  console.log(title);
   return Swal.fire({
     title: title || "Submit Form?",
-    html:text,
+    html: text,
     icon: "question",
     showCancelButton: true,
     confirmButtonText: "Yes, Submit",
@@ -592,18 +602,18 @@ function display_non_field_errors(errors) {
   $("#nonfield_errors > span").text(errstr);
 }
 
-function display_modelfield_error(key, value){
+function display_modelfield_error(key, value) {
   error = "<p class='errors'>" + value + "</p>";
   lookup = "[name='" + key + "']";
   field = $(".modal-body").find(lookup);
   if ($(field).is("select") === true) {
-    if($(field).next().find(".select2-selection").hasClass("is-invalid")){
+    if ($(field).next().find(".select2-selection").hasClass("is-invalid")) {
       $(field).next().find(".select2-selection").addClass("is-invalid");
       var tag = $(field).next();
       $(error).insertAfter(tag);
     }
   } else {
-    if(!$(field).hasClass("is-invalid")){
+    if (!$(field).hasClass("is-invalid")) {
       $(field).addClass("is-invalid");
       $(error).insertAfter(field);
     }
@@ -618,10 +628,10 @@ function display_modelform_errors(errors) {
     errors instanceof String
   ) {
     display_non_field_errors(errors.__all__);
-  }  else {
+  } else {
     //field errors
     for (let key in errors) {
-      display_modelfield_error(key, errors[key])
+      display_modelfield_error(key, errors[key]);
     }
   }
 }
@@ -632,7 +642,7 @@ function fire_ajax_form_post(params, payload) {
     type: "post",
     data: payload,
   }).fail((xhr, status, error) => {
-    console.log("xhr", xhr)
+    console.log("xhr", xhr);
     if (
       typeof xhr.responseJSON.errors === "object" ||
       typeof xhr.responseJSON.errors === "string"
@@ -646,7 +656,7 @@ function fire_ajax_form_post(params, payload) {
   });
 }
 
-function fire_ajax_fileform_post(params, payload){
+function fire_ajax_fileform_post(params, payload) {
   return $.ajax({
     url: params["url"],
     type: "post",
@@ -654,7 +664,7 @@ function fire_ajax_fileform_post(params, payload){
     processData: false,
     contentType: false,
   }).fail((xhr, status, error) => {
-    console.log("xhr", xhr)
+    console.log("xhr", xhr);
     if (
       typeof xhr.responseJSON.errors === "object" ||
       typeof xhr.responseJSON.errors === "string"
@@ -857,34 +867,33 @@ function performIntersection(arr1, arr2) {
 }
 
 function load_alerton_field(optionsData, selected, id_ele) {
-  console.log("id_ele", id_ele)
+  console.log("id_ele", id_ele);
   $(id_ele).empty();
   for (let i = 0; i < optionsData.length; i++) {
     var data = { id: optionsData[i], text: optionsData[i] };
     var opt = new Option(data.text, data.id, false, false);
     $(id_ele).append(opt).trigger("change");
   }
-  console.log("selected", selected)
-  console.log("id_ele", id_ele)
+  console.log("selected", selected);
+  console.log("id_ele", id_ele);
   $(id_ele).val(selected).trigger("change");
 }
 
-function initialize_alerton_field(
-  _optionsData,
-  alertonData,
-  cleaned,
-  id
-) {
+function initialize_alerton_field(_optionsData, alertonData, cleaned, id) {
   if (!cleaned && _optionsData.length) {
     optionsData = _optionsData.split(",");
   }
-  optionsData = typeof _optionsData == 'string' ? _optionsData.split(",") : _optionsData;
-  console.log(alertonData, "alertondata1")
+  optionsData =
+    typeof _optionsData == "string" ? _optionsData.split(",") : _optionsData;
+  console.log(alertonData, "alertondata1");
   if (optionsData.length) {
-    alertonData =  alertonData.length > 0 && typeof alertonData == 'string' ? alertonData.split(",") : alertonData;
-    console.log(alertonData , optionsData, "alertondata")
+    alertonData =
+      alertonData.length > 0 && typeof alertonData == "string"
+        ? alertonData.split(",")
+        : alertonData;
+    console.log(alertonData, optionsData, "alertondata");
     let selected = performIntersection(optionsData, alertonData);
-    console.log(selected, "selected")
+    console.log(selected, "selected");
     load_alerton_field(optionsData, selected, id);
   }
 }
@@ -936,7 +945,7 @@ function column_filtering(targets) {
   };
 }
 //return selected value of a field
-function getSelectedValue(id, val=false) {
+function getSelectedValue(id, val = false) {
   var data = $(id).select2("data")[0];
   if (typeof data !== "undefined") {
     return val ? data.id : data.text;
@@ -964,7 +973,7 @@ function validate_optionsField() {
   }
 }
 
-function showToastMsg(msg, icon, position="bottom-end") {
+function showToastMsg(msg, icon, position = "bottom-end") {
   return Swal.fire({
     toast: true,
     html: `<strong>${msg}</strong>`,
@@ -1013,9 +1022,9 @@ function get_question_formdata() {
   formData["id_ismandatory"] = $("#id_ismandatory").is(":checked");
   formData["id_question"] = getSelectedValue("#id_question");
   formData["question_id"] = $("#id_question").val();
-  formData['isavpt'] = $("#id_isavpt").is(':checked')
-  formData['avpttype'] = $('#id_avpttype').val()
-  formData["id_options"] = $("#id_options").val() 
+  formData["isavpt"] = $("#id_isavpt").is(":checked");
+  formData["avpttype"] = $("#id_avpttype").val();
+  formData["id_options"] = $("#id_options").val();
 
   $("#id_alerton").empty();
 
@@ -1034,7 +1043,6 @@ function cleanOptionsField(tag) {
 //clean the form data before inserting it into
 //"List of Assigned Questions"
 function cleanData(data) {
-
   //clean question
   if (data.id_question !== "NONE") {
     data.id_question = data.id_question.split(" | ")[0];
@@ -1055,8 +1063,10 @@ function cleanData(data) {
     data = adjust_above_below(data, (for_table = true));
     data.id_options = "";
   } else if (
-    data.id_answertype !== "NUMERIC" && data.id_answertype !== "CHECKBOX" &&
-    data.id_answertype !== "DROPDOWN" && data.id_answertype !== 'RATING'
+    data.id_answertype !== "NUMERIC" &&
+    data.id_answertype !== "CHECKBOX" &&
+    data.id_answertype !== "DROPDOWN" &&
+    data.id_answertype !== "RATING"
   ) {
     data.id_min = data.id_max = "0.0";
     data.id_alerton = [];
@@ -1065,8 +1075,8 @@ function cleanData(data) {
   return data;
 }
 
-function adjust_above_below(data, for_table = false, foreditor=false) {
-  console.log(data, foreditor)
+function adjust_above_below(data, for_table = false, foreditor = false) {
+  console.log(data, foreditor);
   if (
     typeof data.id_alertbelow !== "undefined" ||
     (typeof data.id_alertabove !== "undefined" && for_table)
@@ -1080,11 +1090,15 @@ function adjust_above_below(data, for_table = false, foreditor=false) {
     (data.includes("&gt;") && !for_table)
   ) {
     var nums = data.split(", ");
-    if(foreditor){
-      console.log(foreditor)
-      $("#DTE_Field_alertbelow").val(parseFloat(nums[0].replace(/[^0-9\.]+/g, "")));
-      $("#DTE_Field_alertabove").val(parseFloat(nums[1].replace(/[^0-9\.]+/g, "")));
-    }else{
+    if (foreditor) {
+      console.log(foreditor);
+      $("#DTE_Field_alertbelow").val(
+        parseFloat(nums[0].replace(/[^0-9\.]+/g, ""))
+      );
+      $("#DTE_Field_alertabove").val(
+        parseFloat(nums[1].replace(/[^0-9\.]+/g, ""))
+      );
+    } else {
       $("#id_alertbelow").val(parseFloat(nums[0].replace(/[^0-9\.]+/g, "")));
       $("#id_alertabove").val(parseFloat(nums[1].replace(/[^0-9\.]+/g, "")));
     }
@@ -1106,16 +1120,19 @@ function update_options_field(data, optionTag) {
 }
 
 function update_qsetblng_form(data, optionTag, fortable = false) {
-
   $("#id_slno").val(parseInt(data[0], 10));
-  $("select[name='question']")
-    .val(data[2]).trigger("change");
+  $("select[name='question']").val(data[2]).trigger("change");
   $("#id_answertype").val(data[3]);
   $("#id_min").val(data[4]);
   $("#id_max").val(data[5]);
   $("#id_options").val(data[6]);
   //update_options_field(data[6], optionTag);
-  initialize_alerton_field(data[6], data[7], cleaned = true, id = "#id_alerton");
+  initialize_alerton_field(
+    data[6],
+    data[7],
+    (cleaned = true),
+    (id = "#id_alerton")
+  );
   data[8] = data[8] === "True" ? true : false;
   $("#id_ismandatory").attr("checked", data[8]);
   adjust_above_below(data[7], fortable);
@@ -1140,8 +1157,7 @@ function check_for_duplicates(table, dataToInsert) {
   return false;
 }
 
-
-function check_for_duplicate_record(table, key, colIndex){
+function check_for_duplicate_record(table, key, colIndex) {
   var tableData = table.rows().data().toArray();
 
   for (var row in tableData) {
@@ -1151,7 +1167,6 @@ function check_for_duplicate_record(table, key, colIndex){
   }
   return false;
 }
-
 
 //process the valid form
 function processValidForm() {
@@ -1170,7 +1185,7 @@ function processValidForm() {
     data.id_alerton,
     data.id_ismandatory,
     data.isavpt,
-    data.avpttype
+    data.avpttype,
   ];
   table.row(".toupdate").remove().draw(false);
 
@@ -1285,8 +1300,10 @@ function convert_to_local(type, data, row) {
   return data;
 }
 
-function utc_to_local(offset, datetime, format=null){
-  return moment(datetime, format ? format : "YYYY-MM-DDTHH:mm:ss").add(offset, 'm').format(format ? "DD-MMM-YYYY" :"DD-MMM-YYYY HH:mm")
+function utc_to_local(offset, datetime, format = null) {
+  return moment(datetime, format ? format : "YYYY-MM-DDTHH:mm:ss")
+    .add(offset, "m")
+    .format(format ? "DD-MMM-YYYY" : "DD-MMM-YYYY HH:mm");
 }
 
 function initDatetimes(ids) {
@@ -1350,9 +1367,9 @@ function init_select_field(kwargs) {
   }
 }
 
-function initDateRangeHtml(id=null, range_ele=null) {
-  let ele = (id !== null) ? id : 'div.customfields'
-  let range_id = (range_ele !== null) ? range_ele : 'id_daterange'
+function initDateRangeHtml(id = null, range_ele = null) {
+  let ele = id !== null ? id : "div.customfields";
+  let range_id = range_ele !== null ? range_ele : "id_daterange";
   $(ele).html(`<div class="input-group pe-4 mt-2">
             <span class="input-group-text" id="basic-addon1">From: </span>
             <input type="text" id="${range_id}"class="form-control">
@@ -1360,12 +1377,15 @@ function initDateRangeHtml(id=null, range_ele=null) {
 }
 
 //global date range picker
-function initDateRange(element, start=null, end=null) {
+function initDateRange(element, start = null, end = null) {
   //console.log("element", element, ">> ", $(element));
   return $(element).daterangepicker(
     {
       opens: "right",
-      startDate: start === null ? moment().subtract(7, "days") : moment(start, "YYYY-MM-DD"), //moment().subtract(7, 'days'),
+      startDate:
+        start === null
+          ? moment().subtract(7, "days")
+          : moment(start, "YYYY-MM-DD"), //moment().subtract(7, 'days'),
       endDate: end === null ? moment() : moment(end, "YYYY-MM-DD"),
       //minDate: '01/01/2012',
       //maxDate: '12/31/2014',
@@ -1504,411 +1524,518 @@ $(document).ready(() => {
   }
 });
 
-function setUpDropzone(params){
+function setUpDropzone(params) {
   var myDropzone = new Dropzone(params.formId, {
-      url:params.uploadUrl,
-      paramName: "img",
-      maxFiles: 5,
-      maxFileSize: 3,
-      addRemoveLinks: true,
-      resizeWidth:params.width || null,
-      resizeHeight:params.height || null,
-      accepedFiles:['mp4', 'png', 'jpeg', 'jpg', 'xlsx', 'xlx', 'pdf']
+    url: params.uploadUrl,
+    paramName: "img",
+    maxFiles: 5,
+    maxFileSize: 3,
+    addRemoveLinks: true,
+    resizeWidth: params.width || null,
+    resizeHeight: params.height || null,
+    accepedFiles: ["mp4", "png", "jpeg", "jpg", "xlsx", "xlx", "pdf"],
   });
 
-  myDropzone.on("sending", function(file, xhr, formData) {
-      formData.append("csrfmiddlewaretoken", params.csrftoken);
-      formData.append("foldertype", params.foldertype);
-      formData.append("ownername", params.ownername);
-      formData.append("attachmenttype", params.attachmenttype);
-      formData.append("peopleid", params.peopleid);
-      formData.append("ctzoffset", params.ctzoffset);
-      formData.append("ownerid", params.ownerid);
+  myDropzone.on("sending", function (file, xhr, formData) {
+    formData.append("csrfmiddlewaretoken", params.csrftoken);
+    formData.append("foldertype", params.foldertype);
+    formData.append("ownername", params.ownername);
+    formData.append("attachmenttype", params.attachmenttype);
+    formData.append("peopleid", params.peopleid);
+    formData.append("ctzoffset", params.ctzoffset);
+    formData.append("ownerid", params.ownerid);
   });
 
   // Handle file upload
-  myDropzone.on("success", function(file, response) {
-    file.id =  response.id
+  myDropzone.on("success", function (file, response) {
+    file.id = response.id;
   });
 
   //handle remove item
-  myDropzone.on("removedfile", function(file) {
-    show_alert_before_delete('File')
-    .then((res) => {
-      if(res.isConfirmed){
-        fire_ajax_get({url:params.uploadUrl, data:{'id':file.id, action:'delete_att', ownerid:params.ownerid, ownername:params.ownername}})
-        .done((data, status, xhr) => {
-          console.log(data)
+  myDropzone.on("removedfile", function (file) {
+    show_alert_before_delete("File").then((res) => {
+      if (res.isConfirmed) {
+        fire_ajax_get({
+          url: params.uploadUrl,
+          data: {
+            id: file.id,
+            action: "delete_att",
+            ownerid: params.ownerid,
+            ownername: params.ownername,
+          },
         })
-        .fail((xhr, status, error) => {
-          console.log(error)
-        })
-      }else{
-        location.reload(); 
+          .done((data, status, xhr) => {
+            console.log(data);
+          })
+          .fail((xhr, status, error) => {
+            console.log(error);
+          });
+      } else {
+        location.reload();
       }
-    })
+    });
   });
 
-  if(params.create_or_update === "update"){
-    fire_ajax_get({url:params.uploadUrl, data:{owner:params.ownerid, action:"get_attachments_of_owner"}})
-    .done((resp, status, xhr) => {
-      for(let i=0; i<resp.data.length; i++){
-        let file = {name:resp.data[i].filename, accepted:true, id:resp.data[i].id, size:resp.data[i].size}
-        let filepath = `${params.media_url}${resp.data[i].filepath.replace('youtility4_media/', "")}${resp.data[i].filename}`
-        console.log(file, filepath)
-        myDropzone.displayExistingFile(file, filepath)
+  if (params.create_or_update === "update") {
+    fire_ajax_get({
+      url: params.uploadUrl,
+      data: { owner: params.ownerid, action: "get_attachments_of_owner" },
+    }).done((resp, status, xhr) => {
+      for (let i = 0; i < resp.data.length; i++) {
+        let file = {
+          name: resp.data[i].filename,
+          accepted: true,
+          id: resp.data[i].id,
+          size: resp.data[i].size,
+        };
+        let filepath = `${params.media_url}${resp.data[i].filepath.replace(
+          "youtility4_media/",
+          ""
+        )}${resp.data[i].filename}`;
+        console.log(file, filepath);
+        myDropzone.displayExistingFile(file, filepath);
       }
-    })
+    });
   }
 }
 
 //============================================== END DOCUMENT READY ===========================================//
 
-
 function convertSecondsToHumanReadable(seconds) {
   // Calculate the time units
-  let days = Math.floor(seconds / (24*60*60));
-  let hours = Math.floor(seconds % (24*60*60) / (60*60));
-  let minutes = Math.floor(seconds % (60*60) / 60);
-  let sec = Number(seconds % 60).toFixed(2);  // limit decimal places to 2
+  let days = Math.floor(seconds / (24 * 60 * 60));
+  let hours = Math.floor((seconds % (24 * 60 * 60)) / (60 * 60));
+  let minutes = Math.floor((seconds % (60 * 60)) / 60);
+  let sec = Number(seconds % 60).toFixed(2); // limit decimal places to 2
 
   // Create a human readable string
   let result = [];
-  if (days)
-      result.push(days + " day" + (days == 1 ? "" : "s"));
-  if (hours)
-      result.push(hours + " hour" + (hours == 1 ? "" : "s"));
-  if (minutes)
-      result.push(minutes + " minute" + (minutes == 1 ? "" : "s"));
-  if (sec)
-      result.push(sec + " second" + (sec == 1 ? "" : "s"));
-  
+  if (days) result.push(days + " day" + (days == 1 ? "" : "s"));
+  if (hours) result.push(hours + " hour" + (hours == 1 ? "" : "s"));
+  if (minutes) result.push(minutes + " minute" + (minutes == 1 ? "" : "s"));
+  if (sec) result.push(sec + " second" + (sec == 1 ? "" : "s"));
+
   return result.join(", ");
 }
 
-
-
 //============================================== QSB EDITOR FUNCTIONS START===========================================//
-function getCurrentEditingRow(editor, table){
-  return table.row({selected:true}).data() || 'None'
+function getCurrentEditingRow(editor, table) {
+  return table.row({ selected: true }).data() || "None";
 }
-  
 
-function hideAndShowFields(selected, editor){
-  if(typeof selected !== 'undefined'){
-      if(selected === 'DROPDOWN' || selected === 'CHECKBOX' && typeof selected !== 'undefined'){
-          editor.hide(['min', 'max', 'alertbelow', 'alertabove'], false).show(['alerton', 'options'], false)
-      }else if (selected === 'RATING'){
-          editor.hide(['alerton', 'options', 'alertbelow', 'alertabove'], false).show(['min', 'max'], false)
-      }else if(selected === 'NUMERIC'){
-          editor.hide(['alerton', 'options'], false).show(['min', 'max', 'alertbelow', 'alertabove'], false)
-      }else{
-          editor.hide(['alerton', 'options', 'min', 'max', 'alertabove', 'alertbelow'])
-      }
+function hideAndShowFields(selected, editor) {
+  if (typeof selected !== "undefined") {
+    if (
+      selected === "DROPDOWN" ||
+      (selected === "CHECKBOX" && typeof selected !== "undefined")
+    ) {
+      editor
+        .hide(["min", "max", "alertbelow", "alertabove"], false)
+        .show(["alerton", "options"], false);
+    } else if (selected === "RATING") {
+      editor
+        .hide(["alerton", "options", "alertbelow", "alertabove"], false)
+        .show(["min", "max"], false);
+    } else if (selected === "NUMERIC") {
+      editor
+        .hide(["alerton", "options"], false)
+        .show(["min", "max", "alertbelow", "alertabove"], false);
+    } else {
+      editor.hide([
+        "alerton",
+        "options",
+        "min",
+        "max",
+        "alertabove",
+        "alertbelow",
+      ]);
+    }
   }
 }
 
-function appenAlerton(options){
-  clearSelection("#DTE_Field_alerton")
-  for(let i=0; i<options.length; i++){
-      
-      if ($('#DTE_Field_alerton').find("option[value='" + options[i] + "']").length) {
-          //$('#DTE_Field_alerton').val(options[i]).trigger('change');
-      } else { 
-          // Create a DOM Option and pre-select by default
-          var newOption = new Option(options[i], options[i], false, false);
-          // Append it to the select
-          $('#DTE_Field_alerton').append(newOption).trigger('change');
-      } 
+function appenAlerton(options) {
+  clearSelection("#DTE_Field_alerton");
+  for (let i = 0; i < options.length; i++) {
+    if (
+      $("#DTE_Field_alerton").find("option[value='" + options[i] + "']").length
+    ) {
+      //$('#DTE_Field_alerton').val(options[i]).trigger('change');
+    } else {
+      // Create a DOM Option and pre-select by default
+      var newOption = new Option(options[i], options[i], false, false);
+      // Append it to the select
+      $("#DTE_Field_alerton").append(newOption).trigger("change");
+    }
   }
 }
 
-function clearSelection(id){
+function clearSelection(id) {
   //$(id).val(null).trigger('change');
   $(id).empty().trigger("change");
 }
 
-function clearForm(editor){
-  ['min', 'max', 'alertbelow', 'alertabove', 'options'].forEach((ele) => {
-      editor.field(ele).val('')
-  })
-  clearSelection("#DTE_Field_alerton")
-  clearSelection("#DTE_Field_question")
+function clearForm(editor) {
+  ["min", "max", "alertbelow", "alertabove", "options"].forEach((ele) => {
+    editor.field(ele).val("");
+  });
+  clearSelection("#DTE_Field_alerton");
+  clearSelection("#DTE_Field_question");
 }
 
-
-function editorOnOpenActions(url, editor, table, action){
+function editorOnOpenActions(url, editor, table, action) {
   // on change options set alerton
-  if(action === 'create' || action === 'edit'){
-    $(".DTE_Form_Buttons").append('<button type="button" class="btn btn-primary" id="btnLoad">Load Question Data</button>')
+  if (action === "create" || action === "edit") {
+    $(".DTE_Form_Buttons").append(
+      '<button type="button" class="btn btn-primary" id="btnLoad">Load Question Data</button>'
+    );
 
     //onclick load button call populateQsetForm function
-    $("#btnLoad").on('click', function(){
-        populateQsetForm($("#DTE_Field_question").val(), url)
-    })
-    
-    $('[data-dte-e="form"]').attr('id', 'id_childform') // add id to form
-    $(".DTE_Field").addClass('p-1') // add css to form fields
-    $("#DTE_Field_alerton, #DTE_Field_question").addClass("form-control form-select") // add css to alerton form field
+    $("#btnLoad").on("click", function () {
+      populateQsetForm($("#DTE_Field_question").val(), url);
+    });
 
-    
+    $('[data-dte-e="form"]').attr("id", "id_childform"); // add id to form
+    $(".DTE_Field").addClass("p-1"); // add css to form fields
+    $("#DTE_Field_alerton, #DTE_Field_question").addClass(
+      "form-control form-select"
+    ); // add css to alerton form field
 
     // initialize select field question
     init_select_field({
-        url: `${url}?action=loadQuestions`,
-        id: "#DTE_Field_question",
-        item: 'Questoins'
-    })
-    
+      url: `${url}?action=loadQuestions`,
+      id: "#DTE_Field_question",
+      item: "Questoins",
+    });
+
     // initialize select field alerton
     init_select_field({
-        id:'#DTE_Field_alerton',
-        client:true,
-        closeOnSelect:false,
-        multiple:true
-    })
+      id: "#DTE_Field_alerton",
+      client: true,
+      closeOnSelect: false,
+      multiple: true,
+    });
 
     // on change question select field, autoselect type field
     $("#DTE_Field_question.form-select").on("change", function () {
-        var _selectedText = getSelectedValue("#DTE_Field_question");
-        var selected = _selectedText.split(" | ")[1]
-        //hide/show fields based on selected text..
-        hideAndShowFields(selected, editor)
-        editor.field('answertype').val(selected)
-        //populateQsetForm($("#DTE_Field_question").val())
-    })
+      var _selectedText = getSelectedValue("#DTE_Field_question");
+      var selected = _selectedText.split(" | ")[1];
+      //hide/show fields based on selected text..
+      hideAndShowFields(selected, editor);
+      editor.field("answertype").val(selected);
+      //populateQsetForm($("#DTE_Field_question").val())
+    });
   }
-  if(action == "create"){
-    editor.field('seqno').set(table.data().count() + 1) //update seqno for new entry
-    clearForm(editor)
+  if (action == "create") {
+    editor.field("seqno").set(table.data().count() + 1); //update seqno for new entry
+    clearForm(editor);
 
     //if isavpt is checked show attachment type field else hide it
     $("#DTE_Field_isavpt").on("change", function () {
-        if($("#DTE_Field_isavpt").val() == 'true'){
-            $(".DTE_Field_Name_avpttype").show()
-        }else{
-            $(".DTE_Field_Name_avpttype").hide()
-        }
-    })
-  }
-  if(action == 'edit'){
-      initializeQSBForm(table, editor)
-  }
-}
-
-
-function editorOnOpenedActions(){
-  $("#DTE_Field_options").on('focusout', function(){
-    var options  = $(this).val()
-    if(options.length > 0){
-        appenAlerton(options.replaceAll(', ', ',').split(','))
-    }else{
-        clearSelection("#DTE_Field_alerton")
-    }
-  })
-
-  $("#DTE_Field_alerton .selection").focus(function(){
-    console.log("worked")
-      if($("#DTE_Field_alerton option").length === 0){
-        let optArrr = getArrayFromString($("#DTE_Field_options").val())
-        for (let i = 0; i < optArrr.length; i++) {
-          var data = { id: optArrr[i], text: optArrr[i] };
-          var opt = new Option(data.text, data.id, false, false);
-          $('#DTE_Field_alerton').append(opt).trigger('change')
-        }
+      if ($("#DTE_Field_isavpt").val() == "true") {
+        $(".DTE_Field_Name_avpttype").show();
+      } else {
+        $(".DTE_Field_Name_avpttype").hide();
       }
-  })
-
-  $("#DTE_Field_alerton").on('hover', function(){
-    console.log("hovered")
-  })
+    });
+  }
+  if (action == "edit") {
+    initializeQSBForm(table, editor);
+  }
 }
 
-function editorFieldsConfig(){
+function editorOnOpenedActions() {
+  $("#DTE_Field_options").on("focusout", function () {
+    var options = $(this).val();
+    if (options.length > 0) {
+      appenAlerton(options.replaceAll(", ", ",").split(","));
+    } else {
+      clearSelection("#DTE_Field_alerton");
+    }
+  });
+
+  $("#DTE_Field_alerton .selection").focus(function () {
+    console.log("worked");
+    if ($("#DTE_Field_alerton option").length === 0) {
+      let optArrr = getArrayFromString($("#DTE_Field_options").val());
+      for (let i = 0; i < optArrr.length; i++) {
+        var data = { id: optArrr[i], text: optArrr[i] };
+        var opt = new Option(data.text, data.id, false, false);
+        $("#DTE_Field_alerton").append(opt).trigger("change");
+      }
+    }
+  });
+
+  $("#DTE_Field_alerton").on("hover", function () {
+    console.log("hovered");
+  });
+}
+
+function editorFieldsConfig() {
   return [
-  {data:'pk', type:'hidden', name:'pk', def:'None'},
-  {label:'SNo.', name:"seqno", type:'text', data:'seqno'},
-  {label: 'Question', name: 'question', type: 'select', data:'question'},
-  {label: 'Type', name: 'answertype', type: 'readonly', data:'answertype'},
-  {label: 'Min', name: 'min', type: 'text', def:null},
-  {label: 'Max', name: 'max', type: 'text', def:null},
-  {label: 'Alert below', name: 'alertbelow', type: 'text', def:null},
-  {label: 'Alert above', name: 'alertabove', type: 'text', def:null},
-  {label: 'Option', name: 'options', type:'text', fieldInfo:"Enter text ',' (comma) separated"},
-  {label: 'Alert On', name: 'alerton', type:'select'},
-  {label: 'Mandatory', name: 'ismandatory', type: 'select', def:1,
-  options:   [
-      { label: 'True', value: true },
-      { label: 'False', value: false }
-  ]},
-  {label: 'Is Attachment Required', name: 'isavpt', type: 'select', def:false,
-  options:   [
-      { label: 'True', value: true },
-      { label: 'False', value: false }
-  ]},
-  {label: 'Attachment Type', name: 'avpttype', type: 'select', def:'BACKCAMPIC',
-  options:   [
-      { label: 'NONE', value: 'NONE' },
-      { label: 'Back Camera Pic', value: 'BACKCAMPIC' },
-      { label: 'Front Camera Pic', value: 'FRONTCAMPIC' },
-      { label: 'Audio', value: 'AUDIO' },
-      { label: 'Video', value: 'VIDEO' },
-  ]},
-]
+    { data: "pk", type: "hidden", name: "pk", def: "None" },
+    { label: "SNo.", name: "seqno", type: "text", data: "seqno" },
+    { label: "Question", name: "question", type: "select", data: "question" },
+    { label: "Type", name: "answertype", type: "readonly", data: "answertype" },
+    { label: "Min", name: "min", type: "text", def: null },
+    { label: "Max", name: "max", type: "text", def: null },
+    { label: "Alert below", name: "alertbelow", type: "text", def: null },
+    { label: "Alert above", name: "alertabove", type: "text", def: null },
+    {
+      label: "Option",
+      name: "options",
+      type: "text",
+      fieldInfo: "Enter text ',' (comma) separated",
+    },
+    { label: "Alert On", name: "alerton", type: "select" },
+    {
+      label: "Mandatory",
+      name: "ismandatory",
+      type: "select",
+      def: 1,
+      options: [
+        { label: "True", value: true },
+        { label: "False", value: false },
+      ],
+    },
+    {
+      label: "Is Attachment Required",
+      name: "isavpt",
+      type: "select",
+      def: false,
+      options: [
+        { label: "True", value: true },
+        { label: "False", value: false },
+      ],
+    },
+    {
+      label: "Attachment Type",
+      name: "avpttype",
+      type: "select",
+      def: "BACKCAMPIC",
+      options: [
+        { label: "NONE", value: "NONE" },
+        { label: "Back Camera Pic", value: "BACKCAMPIC" },
+        { label: "Front Camera Pic", value: "FRONTCAMPIC" },
+        { label: "Audio", value: "AUDIO" },
+        { label: "Video", value: "VIDEO" },
+      ],
+    },
+  ];
 }
 
-function editorAjaxData(d, editor, table, parentid, csrf){
-  let currentRow = getCurrentEditingRow(editor, table)
-  console.log(currentRow)
+function editorAjaxData(d, editor, table, parentid, csrf) {
+  let currentRow = getCurrentEditingRow(editor, table);
+  console.log(currentRow);
   d.parent_id = parentid;
-  d.csrfmiddlewaretoken = csrf
-  d.question = true
-  d.alerton = JSON.stringify($("#DTE_Field_alerton").val())
-  d.question_id = $("#DTE_Field_question").val()
-  d.min = $("#DTE_Field_min").val()
-  d.max = $("#DTE_Field_max").val()
-  d.alertbelow = $("#DTE_Field_alertbelow").val()
-  d.alertabove = $("#DTE_Field_alertabove").val()
-  d.answertype = $("#DTE_Field_answertype").val()
-  d.seqno = $("#DTE_Field_seqno").val()
-  d.ismandatory = $("#DTE_Field_ismandatory").val()
-  d.options = $("#DTE_Field_options").val()
-  d.isavpt = $("#DTE_Field_isavpt").val()
-  d.avpttype = $("#DTE_Field_avpttype").val()
-  d.pk = currentRow ? currentRow['pk'] : currentRow
-  d.ctzoffset = $("#id_ctzoffset").val()
+  d.csrfmiddlewaretoken = csrf;
+  d.question = true;
+  d.alerton = JSON.stringify($("#DTE_Field_alerton").val());
+  d.question_id = $("#DTE_Field_question").val();
+  d.min = $("#DTE_Field_min").val();
+  d.max = $("#DTE_Field_max").val();
+  d.alertbelow = $("#DTE_Field_alertbelow").val();
+  d.alertabove = $("#DTE_Field_alertabove").val();
+  d.answertype = $("#DTE_Field_answertype").val();
+  d.seqno = $("#DTE_Field_seqno").val();
+  d.ismandatory = $("#DTE_Field_ismandatory").val();
+  d.options = $("#DTE_Field_options").val();
+  d.isavpt = $("#DTE_Field_isavpt").val();
+  d.avpttype = $("#DTE_Field_avpttype").val();
+  d.pk = currentRow ? currentRow["pk"] : currentRow;
+  d.ctzoffset = $("#id_ctzoffset").val();
 }
 
-function QSBTableColumnsConfig(){
+function QSBTableColumnsConfig() {
   return [
-    {data:'pk', defaultContent:null, visible:false},
-    {data:'ctzoffset', defaultContent:null, visible:false},
-    {title: "SNo", data:'seqno', render:function(data, type, row, meta){
-        return data ? data : meta.row + 1}
+    { data: "pk", defaultContent: null, visible: false },
+    { data: "ctzoffset", defaultContent: null, visible: false },
+    {
+      title: "SNo",
+      data: "seqno",
+      render: function (data, type, row, meta) {
+        return data ? data : meta.row + 1;
+      },
     },
-    {title: "Question", data: 'quesname'},
-    {data: 'question_id', visible:false, defaultContent:null},
-    {title: "Question Type", data: 'answertype'},
-    {title: "Min", data: 'min', render:function(data, type, row, meta){
-        return row['answertype'] !== 'NUMERIC' ? 'NA' : data}
+    { title: "Question", data: "quesname" },
+    { data: "question_id", visible: false, defaultContent: null },
+    { title: "Question Type", data: "answertype" },
+    {
+      title: "Min",
+      data: "min",
+      render: function (data, type, row, meta) {
+        return row["answertype"] !== "NUMERIC" ? "NA" : data;
+      },
     },
-    {title: "Max", data: 'max', render:function(data, type, row, meta){
-        return row['answertype'] !== 'NUMERIC'  ? 'NA' : data}
+    {
+      title: "Max",
+      data: "max",
+      render: function (data, type, row, meta) {
+        return row["answertype"] !== "NUMERIC" ? "NA" : data;
+      },
     },
-    {title: "Option", data: 'options', render:function(data, type, row, meta){
-        return row['answertype'] !== 'CHECKBOX' && row['answertype'] !== 'DROPDOWN' ? 'NA' : data}
+    {
+      title: "Option",
+      data: "options",
+      render: function (data, type, row, meta) {
+        return row["answertype"] !== "CHECKBOX" &&
+          row["answertype"] !== "DROPDOWN"
+          ? "NA"
+          : data;
+      },
     },
-    {title: "Alert On", data: 'alerton', render:function(data, type, row, meta){
-        return row['answertype'] == 'CHECKBOX' || row['answertype'] == 'DROPDOWN' || row['answertype'] == 'NUMERIC' ? data : 'NA'}
+    {
+      title: "Alert On",
+      data: "alerton",
+      render: function (data, type, row, meta) {
+        return row["answertype"] == "CHECKBOX" ||
+          row["answertype"] == "DROPDOWN" ||
+          row["answertype"] == "NUMERIC"
+          ? data
+          : "NA";
+      },
     },
-    {title: "Mandatory", data: 'ismandatory'},
-    {visible: false, data: 'isavpt'},
-    {visible: false, data: 'avpttype'},
-  ]
+    { title: "Mandatory", data: "ismandatory" },
+    { visible: false, data: "isavpt" },
+    { visible: false, data: "avpttype" },
+  ];
 }
 
-function editorPreSubmitActions(editor, action){
-  if(action !== 'remove' && editor.field('answertype').val() == 'NUMERIC'){
-    let min = editor.field('min')
-    let max = editor.field('max')
-    let alertbelow = editor.field('alertbelow')
-    let alertabove = editor.field('alertabove')
-    console.log(!min.isMultiValue(), isNaN(parseInt(min.val(), 10)) == NaN)
+function editorPreSubmitActions(editor, action) {
+  if (action !== "remove" && editor.field("answertype").val() == "NUMERIC") {
+    let min = editor.field("min");
+    let max = editor.field("max");
+    let alertbelow = editor.field("alertbelow");
+    let alertabove = editor.field("alertabove");
+    console.log(!min.isMultiValue(), isNaN(parseInt(min.val(), 10)) == NaN);
 
-    if(!(min.isMultiValue()) && isNaN(parseInt(min.val(), 10))) {min.error('value of min must be number')}
-    if(!(max.isMultiValue()) && isNaN(parseInt(max.val(), 10))) {max.error('value of max must be number')}
-    if(!(alertbelow.isMultiValue()) && isNaN(parseInt(alertbelow.val()))) {alertbelow.error('value of alert below must be number')}
-    if(!(alertabove.isMultiValue()) && isNaN(parseInt(alertabove.val()))) {alertabove.error('value of alert above must be number')}
+    if (!min.isMultiValue() && isNaN(parseInt(min.val(), 10))) {
+      min.error("value of min must be number");
+    }
+    if (!max.isMultiValue() && isNaN(parseInt(max.val(), 10))) {
+      max.error("value of max must be number");
+    }
+    if (!alertbelow.isMultiValue() && isNaN(parseInt(alertbelow.val()))) {
+      alertbelow.error("value of alert below must be number");
+    }
+    if (!alertabove.isMultiValue() && isNaN(parseInt(alertabove.val()))) {
+      alertabove.error("value of alert above must be number");
+    }
 
-    if(!(min.isMultiValue() && max.isMultiValue()) && (parseInt(min.val(), 10) > parseInt(max.val(), 10)) ){
-        min.error('Min value must be smaller than Max value')
+    if (
+      !(min.isMultiValue() && max.isMultiValue()) &&
+      parseInt(min.val(), 10) > parseInt(max.val(), 10)
+    ) {
+      min.error("Min value must be smaller than Max value");
     }
-    if(!(min.isMultiValue() && alertbelow.isMultiValue()) && (parseInt(alertbelow.val(), 10) < parseInt(min.val(), 10)) ){
-        alertbelow.error('Alert Below value must be greater than Min value')
+    if (
+      !(min.isMultiValue() && alertbelow.isMultiValue()) &&
+      parseInt(alertbelow.val(), 10) < parseInt(min.val(), 10)
+    ) {
+      alertbelow.error("Alert Below value must be greater than Min value");
     }
-    if(!(max.isMultiValue() && alertabove.isMultiValue()) && (parseInt(alertabove.val())  > parseInt(max.val(), 10)) ){
-        max.error('Alert Above value must be smaller than Max value')
+    if (
+      !(max.isMultiValue() && alertabove.isMultiValue()) &&
+      parseInt(alertabove.val()) > parseInt(max.val(), 10)
+    ) {
+      max.error("Alert Above value must be smaller than Max value");
     }
-    if(!(alertbelow.isMultiValue() && alertabove.isMultiValue()) && (parseInt(alertbelow.val(), 10) > parseInt(alertabove.val(), 10)) ){
-        alertabove.error('Alert Below value must be smaller than Alert Above value')
+    if (
+      !(alertbelow.isMultiValue() && alertabove.isMultiValue()) &&
+      parseInt(alertbelow.val(), 10) > parseInt(alertabove.val(), 10)
+    ) {
+      alertabove.error(
+        "Alert Below value must be smaller than Alert Above value"
+      );
     }
     // If any error was reported, cancel the submission so it can be corrected
-    if ( editor.inError() ) {
-        return false;
+    if (editor.inError()) {
+      return false;
     }
-  }else if(editor.field('answertype').val() == 'DROPDOWN' || editor.field('answertype').val() == 'CHECKBOX'){
-      let alerton = editor.field('alerton')
-      let options = editor.field('options')
-      if(!options.isMultiValue() && !options.val()){options.error('options must be given')}
-      if ( editor.inError() ) {
-          return false;
-      }
+  } else if (
+    editor.field("answertype").val() == "DROPDOWN" ||
+    editor.field("answertype").val() == "CHECKBOX"
+  ) {
+    let alerton = editor.field("alerton");
+    let options = editor.field("options");
+    if (!options.isMultiValue() && !options.val()) {
+      options.error("options must be given");
+    }
+    if (editor.inError()) {
+      return false;
+    }
   }
 }
 
+function initializeQSBForm(table, editor) {
+  var data = getCurrentEditingRow(editor, table);
+  if (data !== "None") {
+    console.log(data, "data");
+    hideAndShowFields(data.answertype, editor);
+    //init question
+    var newOption = new Option(
+      data.quesname.split(" | ")[0],
+      data.question_id,
+      true,
+      true
+    );
+    $("#DTE_Field_question").append(newOption);
 
-function initializeQSBForm(table, editor){
-  var data = getCurrentEditingRow(editor, table)
-        if(data!=='None'){
-            console.log(data, "data")
-            hideAndShowFields(data.answertype, editor)
-            //init question
-            var newOption = new Option(data.quesname.split(' | ')[0], data.question_id, true, true);
-            $('#DTE_Field_question').append(newOption);
-            
-            //init type
-            var _selectedText = getSelectedValue("#DTE_Field_question")
-            editor.field('answertype').val(_selectedText.split(" | ")[1])
-            
-            //init options
-            //editor.field('options').val(data.options)
-            
-            //init alerton
-            var options = data.options ? data.options.replaceAll(', ', ',').split(',') : []
-            if(options.length > 0){
-                appenAlerton(options)
-                let alerton = data.alerton ? data.alerton.replaceAll(', ', ',').replaceAll('" ', '"').split(',') : []
-                $("#DTE_Field_alerton").val(alerton).trigger('change')
-            }
-            
-            if(data.answertype === 'NUMERIC' && data.alerton.length > 0){
-                //init max
-                editor.field('max').val(data.max)
-                //init min
-                editor.field('min').val(data.min)
-                //init alertbelow and alertabove
-                let alerton = data.alerton
-                let aa = alerton.split(',')[1].replaceAll('>', '') //alert-above
-                let ab = alerton.split(',')[0].replaceAll('<', '') //alert-below
-                editor.field('alertbelow').val(ab)
-                editor.field('alertabove').val(aa)
-            }
-            //init isavpt & avpttype
-            editor.field('isavpt').val(data.isavpt)
-            editor.field('ismandatory').val(data.ismandatory)
-            editor.field('avpttype').val(data.avpttype)
-        }
+    //init type
+    var _selectedText = getSelectedValue("#DTE_Field_question");
+    editor.field("answertype").val(_selectedText.split(" | ")[1]);
+
+    //init options
+    //editor.field('options').val(data.options)
+
+    //init alerton
+    var options = data.options
+      ? data.options.replaceAll(", ", ",").split(",")
+      : [];
+    if (options.length > 0) {
+      appenAlerton(options);
+      let alerton = data.alerton
+        ? data.alerton.replaceAll(", ", ",").replaceAll('" ', '"').split(",")
+        : [];
+      $("#DTE_Field_alerton").val(alerton).trigger("change");
+    }
+
+    if (data.answertype === "NUMERIC" && data.alerton.length > 0) {
+      //init max
+      editor.field("max").val(data.max);
+      //init min
+      editor.field("min").val(data.min);
+      //init alertbelow and alertabove
+      let alerton = data.alerton;
+      let aa = alerton.split(",")[1].replaceAll(">", ""); //alert-above
+      let ab = alerton.split(",")[0].replaceAll("<", ""); //alert-below
+      editor.field("alertbelow").val(ab);
+      editor.field("alertabove").val(aa);
+    }
+    //init isavpt & avpttype
+    editor.field("isavpt").val(data.isavpt);
+    editor.field("ismandatory").val(data.ismandatory);
+    editor.field("avpttype").val(data.avpttype);
+  }
 }
 
-function modifyWidgets(element, time=false, date=false, datetime=false){
-  if(time){
+function modifyWidgets(element, time = false, date = false, datetime = false) {
+  if (time) {
     $(element).flatpickr({
       enableTime: true,
       noCalendar: true,
       dateFormat: "H:i",
-      time_24hr: true
-    })
-  }else if(date){
+      time_24hr: true,
+    });
+  } else if (date) {
     $(element).flatpickr({
-      dateFormat: 'd-M-Y'
-    })
-  }
-  else{
+      dateFormat: "d-M-Y",
+    });
+  } else {
     $(element).flatpickr({
       enableTime: false,
       noCalendar: false,
       dateFormat: "Y-m-d",
-    })
+    });
   }
 }
 

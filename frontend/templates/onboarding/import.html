@@ -7,6 +7,13 @@
     .vl {
         border-right: 1px solid grey;
     }
+
+    table.dataTable tbody tr.error_row td, .dataTables_scrollBody table thead tr th{
+        background-color: rgb(255, 204, 207)!important;
+    }
+    table.dataTable tbody tr.valid_row td,  .dataTables_scrollBody table thead tr th{
+        background-color: rgb(182, 255, 182)!important;
+    }
 </style>
 
 <div class="vl"></div>
@@ -72,7 +79,7 @@ Import Data
 
 {% block extras %}
 <hr>
-<table id="import_datatable" class="display"></table>
+<table id="import_datatable" class="display compact"></table>
 {% endblock extras %}
 
 
@@ -153,23 +160,22 @@ Import Data
                             table = $('#import_datatable').DataTable({
                                 data: res.data,
                                 columns: res.columns,
+                                dom:'rtip',
+                                deferRender: true,
+                                responsive:True,
+                                pageLength:10,
                                 columnDefs: [
+                                    {targets:0, data:'Row#', width:"9%"},
                                     {
                                         targets: Array(res.no_of_cols).fill(null).map((_, i) => i),
                                         render: function (data, type, row, meta) {
                                             return data || '--';
                                         }
-                                    },
-                                    {
-                                        targets: -1,
-                                        render: function (data, type, row, meta) {
-                                            if (row.error) {
-                                                return `<span class="error-tooltip" data-toggle="tooltip" data-placement="top" title="${row.error}">Error</span>`;
-                                            }
-                                            return '';
-                                        }
                                     }
-                                ]
+                                ],
+                                rowCallback: function(row, data, index) {
+                                    $(row).addClass('error_row');
+                                }
                             });
                             
                             // Enable Bootstrap tooltips
@@ -192,9 +198,32 @@ Import Data
                                 });
                             });
                         } else {
-                            Swal.fire({
-                                title: `Number of records inserted: ${res.totalrows}`,
-                                icon: 'success'
+                            table = $('#import_datatable').DataTable({
+                                data: res.preview_data,
+                                columns: res.columns,
+                                columnDefs: [
+                                    {
+                                        targets: Array(res.no_of_cols).fill(null).map((_, i) => i),
+                                        render: function (data, type, row, meta) {
+                                            return data || '--';
+                                        }
+                                    },
+                                    {
+                                        targets: -1,
+                                        render: function (data, type, row, meta) {
+                                            if (row.error) {
+                                                return `<span class="error-tooltip" data-toggle="tooltip" data-placement="top" title="${row.error}">Error</span>`;
+                                            }
+                                            return '';
+                                        }
+                                    }
+                                ],
+                                "rowCallback": function(row, data, index) {
+                                    $(row).addClass('valid_row');
+                                },
+                                buttons:[
+
+                                ]
                             });
                         }
                     },
