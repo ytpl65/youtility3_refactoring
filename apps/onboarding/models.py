@@ -111,48 +111,6 @@ class Bt(BaseModel, TenantAwareModel, HeirarchyModel):
         if self.siteincharge is None: self.siteincharge= utils.get_or_create_none_people()
         if self.butype is None: self.butype = utils.get_none_typeassist()
 
-class Contract(BaseModel, TenantAwareModel):
-    bu               = models.ForeignKey('Bt', null = True, on_delete = models.RESTRICT,  related_name='contract_bu', verbose_name='Site')
-    customer         = models.ForeignKey('Bt', null = True, on_delete = models.RESTRICT, related_name='contract_customer', verbose_name='Customer')
-    contractname       = models.CharField(max_length = 50)
-    contractstartdate = models.DateField(null = True)
-    contractenddate   = models.DateField(null = True)
-    enable             = models.BooleanField(default = True)
-    isaddposting       = models.BooleanField(default = False)
-    revno              = models.IntegerField()
-    remarks            = models.CharField(null = True, max_length = 50)
-
-    class Meta(BaseModel.Meta):
-        db_table = 'contract'
-        constraints = [
-            models.UniqueConstraint(
-                fields=['contractname', 'revno', 'bu'],
-                name='cname_revno_bu_uk'),
-            models.CheckConstraint(
-                check = models.Q(revno__gte = 0),
-                name='revno_gte_0_ck')]
-        get_latest_by = ["mdtz", 'cdtz']
-
-    def __str__(self):
-        return self.contractname
-
-class ContractDetail(BaseModel, TenantAwareModel):
-    contract  = models.ForeignKey('Contract', null = True, on_delete = models.RESTRICT, related_name="cd_contract", verbose_name='Contract')
-    worktype    = models.ForeignKey('TypeAssist', null = True, on_delete = models.RESTRICT, related_name="cd_worktype", verbose_name='Work Type')
-    quantity    = models.IntegerField()
-    cdstartdate = models.DateTimeField(null = True)
-    cdenddate   = models.DateField(null = True)
-
-    class Meta(BaseModel.Meta):
-        db_table = 'contractdetails'
-        constraints = [
-            models.CheckConstraint(
-                check = models.Q(quantity__gte = 0),
-                name='qty_gte_0_ck')]
-
-    def __str__(self):
-        return self.contract.contractname
-
 class Shift(BaseModel, TenantAwareModel):
     bu                  = models.ForeignKey('Bt', verbose_name='Buisiness View', null = True, on_delete = models.RESTRICT, related_name="shift_bu")
     client              = models.ForeignKey('Bt', verbose_name='Buisiness View', null = True, on_delete = models.RESTRICT, related_name="shift_client")
@@ -178,40 +136,6 @@ class Shift(BaseModel, TenantAwareModel):
 
     def get_absolute_wizard_url(self):
         return reverse("onboarding:wiz_shift_update", kwargs={"pk": self.pk})
-
-class SitePeople(BaseModel, TenantAwareModel):
-    # id= models.BigIntegerField(primary_key = True)
-    bu                  = models.ForeignKey('Bt', null = True, on_delete = models.RESTRICT, related_name="sp_bu")
-    people              = models.ForeignKey(settings.AUTH_USER_MODEL, null = True, on_delete = models.RESTRICT,  related_name="sp_people")
-    reportto            = models.ForeignKey(settings.AUTH_USER_MODEL, null = True,on_delete = models.RESTRICT,  related_name="sp_reportto")
-    shift               = models.ForeignKey('Shift', null = True, on_delete = models.RESTRICT, related_name="sp_shift")
-    worktype            = models.ForeignKey('TypeAssist', null = True, on_delete = models.RESTRICT,  related_name="sp_worktype")
-    contract            = models.ForeignKey('Contract', null = True, on_delete = models.RESTRICT, related_name="sp_contract")
-    contractdetail      = models.ForeignKey('ContractDetail', null = True, on_delete = models.RESTRICT, related_name="sp_contractdetail")
-    fromdt              = models.DateField()
-    uptodt              = models.DateField()
-    siteowner           = models.BooleanField(default = False)
-    seqno                = models.IntegerField(default = 1)
-    posting_revision    = models.IntegerField(default = 1)
-    webcapability       = models.CharField(null = True, max_length = 1000)
-    mobilecapability    = models.CharField(null = True, max_length = 1000)
-    reportcapability    = models.CharField(null = True, max_length = 1000)
-    enable              = models.BooleanField(default = True)
-    emergencycontact    = models.BooleanField(null = True, default = False)
-    ackdate             = models.DateTimeField(null = True, auto_now_add = True)
-    isreliver           = models.BooleanField(null = True, default = False)
-    checkpost           = models.BigIntegerField(null = True)
-    enablesleepingguard = models.BooleanField(default = False)
-
-    class Meta(BaseModel.Meta):
-        db_table = 'sitepeople'
-        constraints = [
-            models.UniqueConstraint(fields=['people', 'bu', 'posting_revision', 'contract', 'seqno'],
-                                    name='people_bu_postrev_contr_slno_uk')]
-        get_latest_by = ["mdtz", 'cdtz']
-
-    def __str__(self):
-        return self.people.peoplecode
 
 class TypeAssist(BaseModel, TenantAwareModel):
     # id= models.BigIntegerField(primary_key = True)
@@ -269,26 +193,6 @@ def wizard_default():
 
 def formData_default():
     return {'form_id': {}}
-
-class WizardDraft(models.Model):
-    # id= models.BigIntegerField(primary_key = True)
-    createdby   = models.OneToOneField(settings.AUTH_USER_MODEL, null = True, blank = True, on_delete = models.CASCADE, related_name="created_by")
-    cdtz        = models.DateTimeField(auto_now_add = True, auto_now = False)
-    mdtz        = models.DateTimeField(auto_now = True)
-    bu          = models.ForeignKey("Bt", null = True, blank = True,on_delete = models.CASCADE, related_name='wiz_bus')
-    wizard_data = models.JSONField(null = True, default = wizard_default,  encoder = DjangoJSONEncoder, blank = True)
-    formdata   = models.JSONField( null = True, default = formData_default,  encoder = DjangoJSONEncoder, blank = True)
-
-    class Meta:
-        db_table = 'wizarddraft'
-        constraints = [
-            models.UniqueConstraint(
-                fields=['createdby', 'id'], name="draft_per_user")
-        ]
-        get_latest_by = ['mdtz']
-
-    def __str__(self):
-        return f"{self.id}--{self.createdby.peoplecode}"
 
 class GeofenceMaster(BaseModel):
     # id= models.BigIntegerField(primary_key = True)

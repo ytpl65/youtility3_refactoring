@@ -193,7 +193,7 @@ def create_job(jobids = None):
                     log.info(f"create_job() Failed job schedule list:= {pformat(F)}")
                 log.info(f"createJob()[end-] [{idx} of {total_jobs - 1}] parent job:= {job['jobname']} | job:= {job['id']} | cron:= {job['cron']}")
         except Exception as e:
-            result['F'][str(job['id'])] = {'tb':tb.format_exc()}
+            log.error("something went wrong!", exc_info=True)
     return resp, result
 
 def display_jobs_date_info(cdtz, mdtz, fromdate, uptodate, ldtz):

@@ -439,6 +439,17 @@ Schedule Tour
                 editor.field('seqno').set(table.data().count() + 1) //update seqno for new entry
 
             }
+            if(action == 'edit'){
+                var data = getCurrentEditingRow(editor, table);
+                //init question
+                var newOption = new Option(
+                data.quesname.split(" | ")[0],
+                data.question_id,
+                true,
+                true
+                );
+                $("#DTE_Field_question").append(newOption);
+            }
         })
 
 
@@ -492,35 +503,6 @@ Schedule Tour
         }       
 
 
-        //on click on table row populate the above question form for update
-        table.on('select', function () {
-            if (table.rows().data().length > 0) {
-                show_alert_before_update("Checkpoint").then((result) => {
-                    if (result.isConfirmed) {
-                        addRemoveClass(this)
-                        console.log(table.row({'selected':true}).data())
-                        update_checkpoint_form(table.row({'selected':true}).data(), fortable =
-                            false)
-                        $(this).addClass('toupdate');
-                        $("#deleteQuestion").show()
-                    }else if(result.isDenied){
-                        //delete checkpoint request
-                        addRemoveClass(this)
-                        const isDeleted = false
-                        console.log("delete initiated")
-                        if ('{{ schdtourform.instance.id }}' !== ('None' || "")) {
-                            data = table.row({'selected':true}).data()
-                            console.log(data)
-                            isDeleted = deleteCheckpointRequest(data[1], data[3], "{{ schdtourform.instance.id }}")
-                        }
-                        if(isDeleted){
-                            table.row({'selected':true}).remove().draw();
-                            adjustSlnoInTable()
-                        }
-                    }
-                })
-            }
-        })
 
         $("#id_schdtourform").on('submit', function (e) {
 

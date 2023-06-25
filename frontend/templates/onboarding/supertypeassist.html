@@ -58,11 +58,13 @@ Super TypeAssist List
 				url: '{{ url("onboarding:super_typeassist") }}?action=list',
 			},
 			columns     : [
-                { "data": "id" },
+                { "data": "id" , className:'noVis'},
                 { "data": "tacode", title: "Code" },
                 { "data": "taname", title: 'Name' },
                 { "data": "tatype__tacode", title: 'Type' },
                 { "data": "cuser__peoplecode", title: 'Created by' },
+                { "data": "client__bucode", title: 'Client' },
+                { "data": "bu__bucode", title: 'Bu' },
             ],
 			deferRender: true,
 			responsive : true,
@@ -79,6 +81,18 @@ Super TypeAssist List
 			dom       :`<'row' <'col-sm-6 d-flex justify-content-start'f> <'col-sm-6 d-flex justify-content-end'B> >rt<'row'
 			 <'col-sm-6'l> <'col-sm-6'p><'col-sm-12 d-flex justify-content-center'i>>`,
 			buttons:[
+				 dataTablesColumnVisibilityConfig(),
+				"searchBuilder",
+                dataTablesPDFConfig(
+                    title = `Site: {{request.user.bu.buname}}\n TypeAssist List`,
+                    columns = [1,2,3,4,5,6],
+                    filename="ta_list"
+                ),
+                dataTablesExcelConfig(
+                    title = `Site: {{request.user.bu.buname}}\n TypeAssist List`,
+                    columns = [1,2,3,4,5,6],
+                    filename="ta_list"
+                ),
 				{
 					text     : `Add New &nbsp;<i class='fas text-white fa-plus ch4'></i></a>`,
 					className: "btn btn-sm btn-light-primary",

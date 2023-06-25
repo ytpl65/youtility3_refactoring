@@ -289,46 +289,14 @@ class ShiftForm(forms.ModelForm):
 
 
 
-class SitePeopleForm(forms.ModelForm):
-    required_css_class = 'required'
-    error_msg = {
-        'invalid_code' : "Spaces are not allowed in [Code]",
-        'invalid_code2': "[Invalid code] Only ('-', '_') special characters are allowed",
-        'invalid_code3': "[Invalid code] Code should not endwith '.' ",
-    }
-    class Meta:
-        model = obm.SitePeople
-        fields = ['contract', 'people', 'worktype', 'shift',
-                 'reportto', 'webcapability', 'mobilecapability',
-                'reportcapability', 'fromdt', 'uptodt', 'siteowner',
-                'enable', 'enablesleepingguard', 'ctzoffset']
-
-    def __init__(self, *args, **kwargs):
-        """Initializes form"""
-        super().__init__(*args, **kwargs)
-        utils.initailize_form_fields(self)
 
 
-class ContractForm(forms.ModelForm):
-    class Meta:
-        model = obm.Contract
-        fields = []
-
-    def __init__(self, *args, **kwargs):
-        """Initializes form"""
-        super(ContractForm, self).__init__(*args, **kwargs)
-        utils.initailize_form_fields(self)
 
 
-class ContractDetailForm(forms.ModelForm):
-    class Meta:
-        model = obm.ContractDetail
-        fields = []
+        
 
-    def __init__(self, *args, **kwargs):
-        """Initializes form"""
-        super().__init__(*args, **kwargs)
-        utils.initailize_form_fields(self)
+
+
 
 
 class GeoFenceForm(forms.ModelForm):

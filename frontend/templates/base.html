@@ -73,11 +73,6 @@
   // tojson filter converts python datatypes to json datatypes.
   var   session            = {{ dict(request.session) |default ("") | tojson }}
   console.log("session", session)
-  const newWizardUrl       = "{{ url('onboarding:wizard_view') }}"
-  const deleteWizardUrl    = "{{ url('onboarding:wizard_delete') }}"
-  const WizardViewUrl      = "{{ url('onboarding:wizard_view') }}"
-  const saveAsDraftUrl     = "{{ url('onboarding:save_asdraft') }}"
-  const deleteFromDraftUrl = "{{ url('onboarding:delete_from_draft') }}"
   const fileUploadUrl = "{{ url('onboarding:file_upload') }}"
 
   var dontBlock = false;

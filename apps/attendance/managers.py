@@ -201,7 +201,8 @@ class PELManager(models.Manager):
         qset = self.filter(
             datefor__range = (previous_date, given_date),
             punchouttime__isnull = True,
-            bu_id = buid
+            bu_id = buid,
+            peventtype__tacode__in = ['MARK', 'MARKATTENDANCE']
         ).select_related(
             'client', 'bu', 'shift', 'verifiedby',
             'geofence', 'peventtype'

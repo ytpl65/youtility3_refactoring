@@ -238,9 +238,10 @@ class PgblngManager(models.Manager):
     def get_assigned_sitesto_sitegrp(self, id):
         qset = self.select_related('pgroup').filter(pgroup_id = id).annotate(
             buname = F('assignsites__buname'),
+            bucode = F('assignsites__bucode'),
             buid = F('assignsites__id'),
             solid = F('assignsites__solid')
-        ).values('buname', 'buid', 'solid' )
+        ).values('buname', 'buid', 'solid', 'bucode')
         return qset or self.none()
     
     def get_sitesfromgroup(self, job, force=False):

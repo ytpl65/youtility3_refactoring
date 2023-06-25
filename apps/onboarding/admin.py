@@ -9,6 +9,7 @@ from apps.peoples import models as pm
 from .forms import (BtForm, ShiftForm, )
 import apps.onboarding.models as om
 from apps.core import utils
+from django.core.exceptions import ObjectDoesNotExist
 
 class BaseResource(resources.ModelResource):
     CLIENT = fields.Field(
@@ -72,12 +73,12 @@ class TaResource(BaseResource):
     )
     CODE = fields.Field(attribute='tacode', column_name='Code*')
     NAME = fields.Field(attribute='taname', column_name='Name*')
-    ID   = fields.Field(attribute='id', column_name='ID')
+    #ID   = fields.Field(attribute='id', column_name='ID')
 
     class Meta:
         model = om.TypeAssist
         skip_unchanged = True
-        import_id_fields = ('CLIENT', 'CODE', 'ID') 
+        import_id_fields = ('CLIENT', 'CODE') 
         report_skipped = True
         fields = ('NAME', 'CODE', 'TYPE',  'BV', 'CLIENT')
 
@@ -85,16 +86,16 @@ class TaResource(BaseResource):
     def before_import_row(self, row, row_number, **kwargs):
         row['Code*'] = clean_string(row.get('Code*', 'NONE'), code=True)
         row['Name*'] = clean_string(row.get('Name*', "NONE"))
-        return super().before_import_row(row, row_number=row_number, **kwargs)
+        super().before_import_row(row, **kwargs)
 
     def before_save_instance(self, instance, using_transactions, d7ry_run=False):
         utils.save_common_stuff(self.request, instance)
         
     def skip_row(self, instance, original, row, import_validation_errors=None):
-        ic("running")
-        ic(row['Code*'])
         super().skip_row(instance, original, row, import_validation_errors=None)
         return row['Code*'] in [None, ""]
+    
+    
         
 
 
@@ -135,7 +136,7 @@ class BtResource(BaseResource):
     Identifier = fields.Field(
         column_name='Type',
         attribute='identifier',
-        default=utils.get_or_create_none_typeassist(),
+        default=utils.get_or_create_none_typeassist,
         widget = wg.ForeignKeyWidget(om.TypeAssist, 'tacode'))
     
     ID   = fields.Field(attribute='id', column_name="ID")
@@ -235,43 +236,4 @@ class ShiftAdmin(ImportExportModelAdmin):
                     'starttime', 'endtime', 'nightshiftappicable')
     list_display_links = ('shiftname',)
 
-class SitePeopleResource(resources.ModelResource, BaseFieldSet2):
 
-    people = fields.Field(
-        column_name='people',
-        attribute='people',
-        widget = wg.ForeignKeyWidget(pm.People, 'peoplecode')
-    )
-    reportto = fields.Field(
-        column_name='reportto',
-        attribute='reportto',
-        widget = wg.ForeignKeyWidget(pm.People, 'peoplecode'))
-
-    shift = fields.Field(
-        column_name='shift',
-        attribute='shift',
-        widget = wg.ForeignKeyWidget(om.Shift, 'shiftname'))
-    worktype = fields.Field(
-        column_name='worktype',
-        attribute='worktype',
-        widget = wg.ForeignKeyWidget(om.TypeAssist, 'tacode')
-    )
-    contract = fields.Field(
-        column_name='contract',
-        attribute='contract',
-        widget = wg.ForeignKeyWidget(om.Contract, 'contractname'))
-
-    contractdetail = fields.Field(
-        column_name='contractdetail',
-        attribute='contractdetail',
-        widget = wg.ForeignKeyWidget(om.ContractDetail, 'pk'))
-
-    class Meta:
-        model = om.SitePeople
-        skip_unchanged = True
-        import_id_fields = ('id',)
-        report_skipped = True
-        fields = ('id', 'fromdt', 'uptodt', 'siteowner', 'seqno', 'reportcapability',
-                  'posting_revision', 'nightshiftappicable', 'webcapability',
-                  'reportcapability', 'mobilecapability', 'enable', ' emergencycontact',
-                  'ackdate', 'isreliver', 'checkpost', 'enablesleepingguard')

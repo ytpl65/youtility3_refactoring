@@ -640,8 +640,8 @@ def run_internal_tour_scheduler(request):
                 log.info(f"checkpoint saved {obj.jobname}")
             log.info("saving checkpoints ended...")
         log.info(f"{padd} create_job(jobs) {padd}")
-        res, cons_result= sutils.create_job(jobs)
-        resp = rp.JsonResponse(res, status=200)
+        res, cons_result= sutils.create_job([jobs[0]['id']])
+        resp = rp.JsonResponse(res, status=200, safe=False)
     else:
         msg = "Job not found unable to schedhule"
         log.error(f"{msg}", exc_info = True)

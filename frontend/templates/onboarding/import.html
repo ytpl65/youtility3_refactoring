@@ -9,10 +9,10 @@
     }
 
     table.dataTable tbody tr.error_row td, .dataTables_scrollBody table thead tr th{
-        background-color: rgb(255, 204, 207)!important;
+        background-color: rgb(246, 218, 220)!important;
     }
     table.dataTable tbody tr.valid_row td,  .dataTables_scrollBody table thead tr th{
-        background-color: rgb(182, 255, 182)!important;
+        background-color: rgb(219, 248, 219)!important;
     }
 </style>
 
@@ -91,6 +91,84 @@ Import Data
     var table = null;
     const urlname = '{{ url("onboarding:import") }}'
 
+    function getFormData(){
+        var fd = new FormData();
+        fd.append('table', $("#id_table").val())
+        const input = $('#id_importfile')[0].files[0] //document.querySelector('#id_importfile');
+        fd.append('importfile', input);
+        fd.append('csrfmiddlewaretoken', '{{ csrf_token }}');
+        return fd
+    }
+
+    function ConfirmImport(fd){
+        fd.append('action', 'confirmImport') 
+        $.ajax({
+            url:urlname,
+            data: fd,
+            contentType: false,
+            processData: false,
+            type: 'POST',
+            success:function(res){
+                Swal.fire({
+                    icon: "success",
+                    title: `Total ${res.totalrows} inserted successfully!`,
+                    showConfirmButton: false,
+                    timer: 1500,
+                });
+            },
+            error:function(xhr, status, error){
+                show_error_alert("Somthing went wrong!")
+            }
+        })
+    }
+
+    // Function to handle AJAX request
+    const makeAjaxRequest = (url, fd) => {
+        return $.ajax({
+            url: url,
+            data: fd,
+            contentType: false,
+            processData: false,
+            type: 'POST',
+        });
+    }
+    // Function to create DataTable
+    const createDataTable = (id, data, columns, no_of_cols, rowClass, buttons = null) => {
+        // If table exists, destroy it before creating a new one
+        if ($.fn.dataTable.isDataTable(id)) {
+            $(id).DataTable().destroy();
+        }
+
+        let options = {
+            data: data,
+            columns: columns,
+            dom: buttons ? 'Brtip' : 'rtip',
+            deferRender: true,
+            responsive:true,
+            pageLength:10,
+            columnDefs: [
+                {targets:0, data:'Row#', width:"9%"},
+                {
+                    targets: Array(no_of_cols).fill(null).map((_, i) => i),
+                    render: function (data, type, row, meta) {
+                        return data || '--';
+                    }
+                }
+            ],
+            rowCallback: function(row, data, index) {
+                $(row).addClass(rowClass);
+            }
+        };
+
+        // Add buttons if provided
+        if(buttons) options.buttons = buttons;
+
+        return $(id).DataTable(options);
+    }
+
+
+
+
     $(document).ready(function () {
         //set ctzoffset
         $("#id_ctzoffset").val(-new Date().getTimezoneOffset())
@@ -121,139 +199,44 @@ Import Data
 
 
         //submit form with data-file
+        // Function to handle button click
         $("#btn_importdata").click(() => {
-            var fd = new FormData();
-            fd.append('table', $("#id_table").val())
-            const input = $('#id_importfile')[0].files[0] //document.querySelector('#id_importfile');
-            fd.append('importfile', input);
-            fd.append('csrfmiddlewaretoken', '{{ csrf_token }}');
-
-
+            var fd = getFormData();
             const params = {
                 url: urlname,
                 modal: false
             }
-            const payLoad = {
-                formData: fd,
-                csrfmiddlewaretoken: '{{ csrf_token }}'
-            }
 
             Swal.fire({
                 title: "Submit",
-                text: 'Are you sure the the file you uploading has correct data?',
+                text: 'Are you sure the file you are uploading has correct data?',
                 icon: 'question',
                 showCancelButton: true,
                 confirmButtonText: 'Yes Upload it!'
-            }).then((res) => {
-                $.ajax({
-                    url: params.url,
-                    data: fd,
-                    contentType: false,
-                    processData: false,
-                    type: 'POST',
-                    success: function (res) {
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    makeAjaxRequest(params.url, fd)
+                    .done((res) => {
                         if (res.rc === 1) {
-                            // Initialize table with errors
-                            if (table) {
-                                table.destroy();
-                            }
-                            table = $('#import_datatable').DataTable({
-                                data: res.data,
-                                columns: res.columns,
-                                dom:'rtip',
-                                deferRender: true,
-                                responsive:True,
-                                pageLength:10,
-                                columnDefs: [
-                                    {targets:0, data:'Row#', width:"9%"},
-                                    {
-                                        targets: Array(res.no_of_cols).fill(null).map((_, i) => i),
-                                        render: function (data, type, row, meta) {
-                                            return data || '--';
-                                        }
-                                    }
-                                ],
-                                rowCallback: function(row, data, index) {
-                                    $(row).addClass('error_row');
-                                }
-                            });
-                            
-                            // Enable Bootstrap tooltips
-                            $('[data-toggle="tooltip"]').tooltip();
-                            
-                            // Add event listener to confirm button
-                            $('#confirm_import_button').click(function () {
-                                Swal.fire({
-                                    title: 'Confirm Import',
-                                    text: 'Are you sure you want to import the data?',
-                                    icon: 'question',
-                                    showCancelButton: true,
-                                    confirmButtonText: 'Import',
-                                    cancelButtonText: 'Cancel'
-                                }).then(function (result) {
-                                    if (result.isConfirmed) {
-                                        // Perform import
-                                        performImport();
-                                    }
-                                });
-                            });
+                            createDataTable('#import_datatable', res.data, res.columns, res.no_of_cols, 'error_row');
                         } else {
-                            table = $('#import_datatable').DataTable({
-                                data: res.preview_data,
-                                columns: res.columns,
-                                columnDefs: [
-                                    {
-                                        targets: Array(res.no_of_cols).fill(null).map((_, i) => i),
-                                        render: function (data, type, row, meta) {
-                                            return data || '--';
-                                        }
-                                    },
-                                    {
-                                        targets: -1,
-                                        render: function (data, type, row, meta) {
-                                            if (row.error) {
-                                                return `<span class="error-tooltip" data-toggle="tooltip" data-placement="top" title="${row.error}">Error</span>`;
-                                            }
-                                            return '';
-                                        }
+                            createDataTable('#import_datatable', res.preview_data, res.columns, res.no_of_cols, 'valid_row', [
+                                {
+                                    text:"Confirm Import", 
+                                    action:function(e, dt, node, config){
+                                        ConfirmImport(getFormData())
                                     }
-                                ],
-                                "rowCallback": function(row, data, index) {
-                                    $(row).addClass('valid_row');
-                                },
-                                buttons:[
-
-                                ]
-                            });
+                                }
+                            ]);
                         }
-                    },
-                    error: function (xhr, status, error) {
-                        console.log(xhr);
-                    }
-                });
-            })
-        })
-
-        if ($.fn.DataTable.isDataTable('#import_data_table')) {
-            table = $('#import_data_table').DataTable();
-            table.destroy();
-            $('#import_data_table').empty();
-        }
-
-        //DataTable configuration
-        $("#import_data_table").DataTable({
-            data: JSON.parse(DATA),
-            columns: JSON.parse(_columns),
-            deferRender: true,
-            ordering: false,
-            responsive: true,
-            dom: `<'row' >rt<'row'>`,
-            columnDefs: [{
-                targets: 0,
-                visible: false,
-                defaultContent: null
-            }]
-        })
+                    })
+                    .fail((xhr, status, error) => {
+                        console.log(error)
+                        show_error_alert("Something went wrong")
+                    });
+                }
+            });
+        });
     })
 </script>
 {% endblock extra_scripts %}

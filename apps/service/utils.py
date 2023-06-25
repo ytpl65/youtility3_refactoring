@@ -25,22 +25,22 @@ from apps.work_order_management import utils as wutils
 
 
 class Messages(AM):
-    INSERT_SUCCESS = "Inserted Successfully!"
-    UPDATE_SUCCESS = "Updated Successfully!"
-    IMPROPER_DATA = "Failed to insert incorrect tablname or size of columns and rows doesn't match",
+    INSERT_SUCCESS  = "Inserted Successfully!"
+    UPDATE_SUCCESS  = "Updated Successfully!"
+    IMPROPER_DATA   = "Failed to insert incorrect tablname or size of columns and rows doesn't match",
     WRONG_OPERATION = "Wrong operation 'id' is passed during insertion!"
-    DBERROR = "Integrity Error!"
-    INSERT_FAILED = "Failed to insert something went wrong!"
-    UPDATE_FAILED = "Failed to Update something went wrong!"
-    NOT_INTIATED = "Insert cannot be initated not provided necessary data"
-    UPLOAD_FAILED = "Upload Failed!"
-    NOTFOUND = "Unable to find people with this pelogid"
-    START = "Mutation start"
-    END = "Mutation end"
-    ADHOCFAILED = 'Adhoc service failed'
-    NODETAILS = ' Unable to find any details record against site/incident report'
-    REPORTSFAILED = 'Failed to generate jasper reports'
-    UPLOAD_SUCCESS = 'Uploaded Successfully!'
+    DBERROR         = "Integrity Error!"
+    INSERT_FAILED   = "Failed to insert something went wrong!"
+    UPDATE_FAILED   = "Failed to Update something went wrong!"
+    NOT_INTIATED    = "Insert cannot be initated not provided necessary data"
+    UPLOAD_FAILED   = "Upload Failed!"
+    NOTFOUND        = "Unable to find people with this pelogid"
+    START           = "Mutation start"
+    END             = "Mutation end"
+    ADHOCFAILED     = 'Adhoc service failed'
+    NODETAILS       = ' Unable to find any details record against site/incident report'
+    REPORTSFAILED   = 'Failed to generate jasper reports'
+    UPLOAD_SUCCESS  = 'Uploaded Successfully!'
 
 
 # utility functions
