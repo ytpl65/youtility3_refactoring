@@ -1,5 +1,5 @@
 *.pyc
-my_project_visualized.png
+frontend/static/assets/media/images/my_project_visualized.png
 docs/importants.txt
 .gitignore
 docs/importants.txt

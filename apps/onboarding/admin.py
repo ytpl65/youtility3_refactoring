@@ -82,7 +82,12 @@ class TaResource(BaseResource):
         report_skipped = True
         fields = ('NAME', 'CODE', 'TYPE',  'BV', 'CLIENT')
 
-
+        
+    def __init__(self, *args, **kwargs):
+        super(TaResource, self).__init__(*args, **kwargs)
+        self.is_superuser = kwargs.pop('is_superuser', None)
+        self.request = kwargs.pop('request', None)
+    
     def before_import_row(self, row, row_number, **kwargs):
         row['Code*'] = clean_string(row.get('Code*', 'NONE'), code=True)
         row['Name*'] = clean_string(row.get('Name*', "NONE"))

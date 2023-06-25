@@ -766,7 +766,15 @@ def get_or_create_none_asset():
     )
     return obj
 
-
+def get_or_create_none_ticket():
+    from apps.y_helpdesk.models import Ticket
+    obj, _ = Ticket.objects.get_or_create(
+        id=1,
+        defaults={
+            'ticketdesc':'NONE'
+        }
+    )
+    return obj
 
 
 
@@ -780,6 +788,7 @@ def create_none_entries():
         if not iscreated:
             return
         get_or_create_none_people()
+        get_or_create_none_ticket()
         get_or_create_none_bv()
         get_or_create_none_cap()
         get_or_create_none_pgroup()

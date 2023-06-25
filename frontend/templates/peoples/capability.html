@@ -90,6 +90,12 @@ Capability List
 				}
 			],
 			buttons:[
+					dataTablesExcelConfig(
+                    title = `Site: {{request.user.bu.buname}}\n Task List`,
+                    columns = [1,2,3,4],
+                    filename="task_list"
+                ),
+
 				{
 					text:`Add New ${viewname} &nbsp;<i class='fas text-dark fa-plus'></i></a>`,
 					//action for add_new_button 

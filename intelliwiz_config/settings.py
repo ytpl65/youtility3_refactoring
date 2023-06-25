@@ -297,7 +297,7 @@ DATE_INPUT_FORMATS = [
 # https://docs.djangoproject.com/en/3.2/howto/static-files/
 
 STATIC_URL = '/static/'
-STATIC_ROOT = '/var/www/redmine.youtility.in/static'
+STATIC_ROOT =  env("STATIC_ROOT")
 STATICFILES_DIRS = [os.path.join(BASE_DIR, 'frontend/static')]
 
 # Default primary key field type

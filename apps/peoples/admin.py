@@ -365,7 +365,8 @@ class CapabilityResource(resources.ModelResource):
         instance.capscode = instance.capscode.upper()
         utils.save_common_stuff(self.request, instance, self.is_superuser)
 
-    def skip_row(self, instance, original):
+    def skip_row(self, instance, original, row, import_validation_errors=None):
+        super().skip_row(instance, original, row, import_validation_errors=None)
         return Capability.objects.filter(capscode = instance.capscode, cfor = instance.cfor).exists()
     
 @admin.register(Capability)
