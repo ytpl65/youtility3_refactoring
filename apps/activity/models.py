@@ -719,7 +719,7 @@ class Location(BaseModel, TenantAwareModel):
     loccode     = models.CharField(_("Asset Code"), max_length = 50, unique=True)
     locname     = models.CharField(_("Asset Name"), max_length = 250)
     enable      = models.BooleanField(_("Enable"), default = True)
-    iscritical  = models.BooleanField(_("Critical"))
+    iscritical  = models.BooleanField(_("Critical"), default=False)
     gpslocation = PointField(_('GPS Location'), null = True, geography = True, srid = 4326, blank = True)
     parent      = models.ForeignKey("self", verbose_name = _( "Belongs to"), on_delete = models.RESTRICT, null = True, blank = True)
     locstatus   = models.CharField(_('Running Status'), choices = LocationStatus.choices, max_length = 55)

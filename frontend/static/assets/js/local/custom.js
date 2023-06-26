@@ -28,6 +28,18 @@ function getAddressOfPoint(geocoder, point, callback) {
   });
 }
 
+function pluginsForFormValidations(){
+  return {
+    trigger: new FormValidation.plugins.Trigger(),
+    bootstrap: new FormValidation.plugins.Bootstrap5({
+        rowSelector: '.fv-row',
+        eleInvalidClass: 'is-invalid',
+        eleValidClass: '',
+        eleValidatedClass:'was-validated'
+    })
+  }
+}
+
 function simplifyData(e, data, action) {
   if (action !== "remove") {
     var rowData = data.data;

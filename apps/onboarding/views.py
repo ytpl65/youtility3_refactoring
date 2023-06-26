@@ -45,7 +45,7 @@ def get_caps(request):  # sourcery skip: extract-method
             child = Capability.objects.get_child_data(i, cfor)
             childs.extend({'capscode': j.capscode} for j in child)
         logger.info(f'childs = [] {childs}')
-        returnrp.JsonResponse(data=childs, safe=False)
+        return rp.JsonResponse(data=childs, safe=False)
 
 
 def handle_pop_forms(request):
@@ -59,7 +59,7 @@ def handle_pop_forms(request):
     ic(request.POST)
     if not form.is_valid():
         ic(form.errors)
-        returnrp.JsonResponse({'saved': False, 'errors': form.errors})
+        return rp.JsonResponse({'saved': False, 'errors': form.errors})
     ta = form.save(commit=False)
     ta.enable = True
     form.save(commit=True)
@@ -67,7 +67,7 @@ def handle_pop_forms(request):
     if request.session.get('wizard_data'):
         request.session['wizard_data']['taids'].append(ta.id)
         print(ta.id)
-    returnrp.JsonResponse({'saved': True, 'id': ta.id, 'tacode': ta.tacode})
+    return rp.JsonResponse({'saved': True, 'id': ta.id, 'tacode': ta.tacode})
 
 # -------------------- END Client View Classes ------------------------------#
 
@@ -343,7 +343,7 @@ class EditorTa(LoginRequiredMixin, View):
             objects, filtered = utils.get_paginated_results(
                 R, objs, count, self.fields, self.related, self.model)
             logger.info('Results paginated'if count else "")
-        returnrp.JsonResponse(
+        return rp.JsonResponse(
             data={
                 'draw': R['draw'], 'recordsTotal': count,
                 'data': list(objects),
@@ -435,7 +435,7 @@ class GeoFence(LoginRequiredMixin, View):
                 self.save_geofence_field(gf, geofence)
                 gf = putils.save_userinfo(gf, request.user, request.session)
                 logger.info("geofence form saved")
-                returnrp.JsonResponse(data={'pk': gf.id}, status=200)
+                return rp.JsonResponse(data={'pk': gf.id}, status=200)
         except IntegrityError:
             return handle_intergrity_error("GeoFence")
 
@@ -513,7 +513,7 @@ class BulkImportData(LoginRequiredMixin, View):
             df.to_excel(buffer, index=False, engine='openpyxl')
             buffer.seek(0)
             ic(R['template'], columns)
-            return FileResponse(
+            return rp.FileResponse(
                 buffer, as_attachment=True, filename=f'{R["template"]}.xlsx'
             )
 

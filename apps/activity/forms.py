@@ -279,7 +279,7 @@ class ChecklistForm(forms.ModelForm):
         else: 
             self.fields['type'].required = False
         
-        self.fields['site_type_includes'].choices = om.TypeAssist.objects.filter((Q(tatype__tacode = "SITETYPE") | Q(tacode='NONE')) & Q(client_id = S['client_id']), enable=True).values_list('id', 'taname')
+        self.fields['site_type_includes'].choices = om.TypeAssist.objects.filter(Q(tacode='NONE') |  Q(client_id = S['client_id']) & Q(tatype__tacode = "SITETYPE"),  enable=True).values_list('id', 'taname')
         bulist = om.Bt.objects.get_all_bu_of_client(self.request.session['client_id'])
         self.fields['buincludes'].choices = pm.Pgbelonging.objects.get_assigned_sites_to_people(self.request.user.id, makechoice=True)
         self.fields['site_grp_includes'].choices = pm.Pgroup.objects.filter(

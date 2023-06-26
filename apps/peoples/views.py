@@ -286,6 +286,7 @@ class PeopleView(LoginRequiredMixin, View):
         ic(data)
         try:
             if pk := request.POST.get('pk', None):
+                ic("got pk")
                 msg, create = "people_view", False  
                 people = utils.get_model_obj(pk, request,  self.params)
                 form = self.params['form_class'](data, files = request.FILES, instance = people, request=request)
@@ -297,9 +298,8 @@ class PeopleView(LoginRequiredMixin, View):
             else:
                 cxt = {'errors': form.errors}
                 if jsonform.errors:
-                    cxt.update({'errors': jsonform.errors})
+                    cxt['errors'] = jsonform.errors
                 resp = utils.handle_invalid_form(request, self.params, cxt)
-            ic(cxt['errors'])
         except Exception:
             resp = utils.handle_Exception(request)
         return resp

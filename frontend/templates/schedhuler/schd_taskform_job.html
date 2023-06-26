@@ -50,7 +50,7 @@ Schedule Task
             <label for={{ schdtaskform.jobname.id_for_label }}
                 class="required">{{ schdtaskform.jobname.label }}:</label>
         </div>
-        <div class="col-md-4">
+        <div class="col-md-4 fv-row">
             {{ schdtaskform.jobname }}
             {{ schdtaskform.jobname.errors }}
         </div>
@@ -74,7 +74,7 @@ Schedule Task
             <label for={{ schdtaskform.jobdesc.id_for_label }}
                 class="">{{ schdtaskform.jobdesc.label }}:</label>
         </div>
-        <div class="col-md-4">
+        <div class="col-md-4 fv-row">
             {{ schdtaskform.jobdesc }}
             {{ schdtaskform.jobdesc.errors }}
         </div>
@@ -98,7 +98,7 @@ Schedule Task
             <label for={{ schdtaskform.asset.id_for_label }}
                 class="required">{{ schdtaskform.asset.label }}:</label>
         </div>
-        <div class="col-md-4">
+        <div class="col-md-4 fv-row">
             {{ schdtaskform.asset }}
             {{ schdtaskform.asset.errors }}
         </div>
@@ -117,11 +117,11 @@ Schedule Task
         </div>
         
         <!--QUESTIONSET-->
-        <div class="col-md-2">
+        <div class="col-md-2 fv-row">
             <label for={{ schdtaskform.qset.id_for_label }}
                 class=" required">{{ schdtaskform.qset.label }}:</label>
         </div>
-        <div class="col-md-4">
+        <div class="col-md-4 fv-row">
             {{ schdtaskform.qset }}
             {{ schdtaskform.qset.errors }}
         </div>
@@ -130,13 +130,15 @@ Schedule Task
         <div class="col-md-2">
             <label for="{{ schdtaskform.cron.id_for_label }}" class="required">{{ schdtaskform.cron.label }}:</label>
         </div>
-        <div class="col-md-4 d-flex">
-            <input type="text" name="{{ schdtaskform.cron.name }}" value="{{ schdtaskform.cron.value() }}" id="id_cron"
-             readonly required class="form-control d-none form-control-solid" maxlength="250"/>
-            {{ schdtaskform.cronstrue }}
-            <a  class="btn btn-circle btn-icon-only btn-default " id="cron_selector">
-                <i class="fa fa-clock fs-4 text-primary" aria-hidden="true"></i>
-            </a>
+        <div class="col-md-4 fv-row">
+            <div class="d-flex">
+                <input type="text" name="{{ schdtaskform.cron.name }}" value="{{ schdtaskform.cron.value() }}" id="id_cron"
+                readonly required class="form-control d-none form-control-solid" maxlength="250"/>
+                {{ schdtaskform.cronstrue }}
+                <a  class="btn btn-circle btn-icon-only btn-default " id="cron_selector">
+                    <i class="fa fa-clock fs-4 text-primary" aria-hidden="true"></i>
+                </a>
+            </div>
             {{ schdtaskform.cron.errors }}
         </div>
         
@@ -227,7 +229,7 @@ Schedule Task
             <label for={{ schdtaskform.ticketcategory.id_for_label }}
                 class=" required">{{ schdtaskform.ticketcategory.label }}:</label>
         </div>
-        <div class="col-md-4">
+        <div class="col-md-4 fv-row">
             {{ schdtaskform.ticketcategory }}
             {{ schdtaskform.ticketcategory.errors }}
         </div>
@@ -287,6 +289,61 @@ Schedule Task
 <script src="{{ static('assets/js/jqCron.js') }}"></script>
 <script src="{{ static('assets/js/jqCron.en.js') }}"></script>
 <script src="{{ static('assets/js/local/cronstrue.min.js') }}"></script>
+
+<script>
+//////////////////////// form validatoins /////////////////////////////
+var formValidator = FormValidation.formValidation(
+    document.getElementById('schdtaskform'), {
+        fields:{
+            'jobname':{
+                validators:{
+                    notEmpty:{
+                        message:"This field is required"
+                    }
+                }
+            },
+            'asset':{
+                validators:{
+                     notEmpty: {
+                        message: 'Please select an option'
+                    },
+                }
+            },
+            'qset':{
+                validators:{
+                     notEmpty: {
+                        message: 'Please select an option'
+                    },
+
+                }
+            },
+            'ticketcategory':{
+                validators:{
+                    notEmpty: {
+                        message: 'Please select an option'
+                    },
+                }
+            },
+            'cron':{
+                validators:{
+                    callback:{
+                        callback:function(input){
+                            if(input.value == '* * * * *' || input.value == ""){
+                                return {valid:false, message:"This field is required"}
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        plugins:{
+            ...pluginsForFormValidations()
+        }
+    })
+
+
+</script>
+
 
 <script>
     // add classes to label tags.
@@ -393,38 +450,44 @@ Schedule Task
         //on submit form post request
         $("#schdtaskform").submit((e) => {
             e.preventDefault()
-            var form = $(this);
-            const params   = { url: "{{ url('schedhuler:jobschdtasks') }}", modal: false }
-            const formtype = '{{schdtaskform.instance.id}}' == 'None' ? "create" : "update"         
-            const id       = '{{schdtaskform.instance.id}}'                                          
-            var   payLoad  = { formData: $("#schdtaskform").serialize(),csrfmiddlewaretoken: '{{ csrf_token }}' }
-            
-            if (formtype === 'update') {
-                var newPayLoad = { ...payLoad, 'pk': id }
-                    payLoad    = newPayLoad
-            }
-            submit_form_alert().then((res) => {
-                if(res.isConfirmed){
-                    console.log(payLoad, "payload")
-                    fire_ajax_form_post(params, payLoad)
-                    .done((data, status, xhr) => {
-                        Swal.fire(
-                            `Task Form saved`,
-                            `Task Form with this name <strong>${data.jobname}</strong> has been saved successfully`,
-                            'success'
-                        ).then(function () {
-                            formSaved = true
-                            window.location.replace(data.url);
-                        })
-                    })
-                    .fail((xhr, status, error) => {
-                        console.log(xhr)
-                        if(!typeof(xhr.responseJSON.errors) === 'object'){
-                            show_error_alert(xhr.responseJSON.errors, "Failed to save!")
-                        }else{}
-                        
+            formValidator.validate().then(function (status){
+                console.log("form is ", status)
+                if(status === 'Valid'){
+                    var form = $(this);
+                    const params   = { url: "{{ url('schedhuler:jobschdtasks') }}", modal: false }
+                    const formtype = '{{schdtaskform.instance.id}}' == 'None' ? "create" : "update"         
+                    const id       = '{{schdtaskform.instance.id}}'                                          
+                    var   payLoad  = { formData: $("#schdtaskform").serialize(),csrfmiddlewaretoken: '{{ csrf_token }}' }
+                    
+                    if (formtype === 'update') {
+                        var newPayLoad = { ...payLoad, 'pk': id }
+                            payLoad    = newPayLoad
+                    }
+                    submit_form_alert().then((res) => {
+                        if(res.isConfirmed){
+                            console.log(payLoad, "payload")
+                            fire_ajax_form_post(params, payLoad)
+                            .done((data, status, xhr) => {
+                                Swal.fire(
+                                    `Task Form saved`,
+                                    `Task Form with this name <strong>${data.jobname}</strong> has been saved successfully`,
+                                    'success'
+                                ).then(function () {
+                                    formSaved = true
+                                    window.location.replace(data.url);
+                                })
+                            })
+                            .fail((xhr, status, error) => {
+                                console.log(xhr)
+                                if(!typeof(xhr.responseJSON.errors) === 'object'){
+                                    show_error_alert(xhr.responseJSON.errors, "Failed to save!")
+                                }else{}
+                                
+                            })
+                        }
                     })
                 }
+                
             })
         })
 

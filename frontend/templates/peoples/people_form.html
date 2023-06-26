@@ -20,7 +20,7 @@ People Form
 <!-------------------------- BEGIN PAGE BREADCUMB ----------------------->
 {% block pagebreadcumb %}
 {{ super() }}
-<li class="breadcrumb-item pe-3"><a href="{{ url('peoples:people_list') }}" class="pe-3">People List</a></li>
+<li class="breadcrumb-item pe-3"><a href="{{ url('peoples:people') }}?template=true" class="pe-3">People List</a></li>
 <li class="breadcrumb-item pe-3"><a href="javascript:void(0)" class="pe-3">People Form</a></li>
 {% endblock pagebreadcumb %}
 <!-------------------------- END PAGE BREADCUMB ------------------------->

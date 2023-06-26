@@ -93,7 +93,7 @@ class TaResource(BaseResource):
         row['Name*'] = clean_string(row.get('Name*', "NONE"))
         super().before_import_row(row, **kwargs)
 
-    def before_save_instance(self, instance, using_transactions, d7ry_run=False):
+    def before_save_instance(self, instance, using_transactions, dry_run=False):
         utils.save_common_stuff(self.request, instance, self.is_superuser)
         
     def skip_row(self, instance, original, row, import_validation_errors=None):

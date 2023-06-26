@@ -7,7 +7,7 @@
 {% endblock extra_css %}
 
 {% block form_title %}
-Question set
+Question Set
 {% endblock form_title %}
 
 
@@ -15,8 +15,8 @@ Question set
 {% block pagebreadcumb %}
 <!--will call parent contents -->
 {{ super() }}
-<li class="breadcrumb-item pe-3"><a href="{{ url('activity:checklist') }}?template=true" class="pe-3">Questionset List</a></li>
-<li class="breadcrumb-item pe-3"><a href="javascript:void(0)" class="pe-3">Questionset Form</a></li>
+<li class="breadcrumb-item pe-3"><a href="{{ url('activity:checklist') }}?template=true" class="pe-3">Question Set List</a></li>
+<li class="breadcrumb-item pe-3"><a href="javascript:void(0)" class="pe-3">Question Set Form</a></li>
 {% endblock pagebreadcumb %}
 <!-------------------------- END PAGE BREADCUMB ------------------------->
 
@@ -290,6 +290,11 @@ Question set
         
         $("#newform").click(() => {
             location.href = "{{ url('activity:checklist') }}?action=form"
+        })
+
+        //sets closeonSelect to false for multiple-select fields
+        $("select[multiple]").select2({
+            closeOnSelect:false 
         })
 
         if ($("#pk").val() === "None"){

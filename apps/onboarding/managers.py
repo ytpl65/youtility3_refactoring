@@ -289,14 +289,14 @@ class TypeAssistManager(models.Manager):
     def filter_for_dd_notifycategory_field(self, request, choices=False, sitewise=False):
         S = request.session
         qset = self.filter(
+            Q(bu_id__in = S['assignedsites'] + [1],) | Q(bu_id__isnull = True),
             client_id__in = [S['client_id'], 1],
-            bu_id__in = S['assignedsites'] + [1],
             tatype__tacode = 'NOTIFYCATEGORY',
             enable=True
         )
         ic(qset)
         if sitewise:
-            qset = qset.filter(bu_id__in = [S['bu_id'], 1])
+            qset = qset.filter(Q(bu_id__in = [S['bu_id'], 1]) | Q(bu_id__isnull=True))
         if choices:
             qset = qset.annotate(text = Concat(F('taname'), V(' ('), F('tacode'), V(')'))).values_list(
                 'id', 'text'

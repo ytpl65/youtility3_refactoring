@@ -59,7 +59,7 @@ function form_validate(){
     const validator = new JustValidate('#vendorform', { errorFieldCssClass: 'is-invalid', validateBeforeSubmitting: true});
     return validator
     .addField('#id_code', [
-                { rule:"customRegexp", value:/^[a-zA-Z0-9_-]+$/ ,errorMessage:"Code should not contain special characters and spaces"},
+                { rule:"customRegexp", value:/^[a-zA-Z0-9_-]+$/ ,errorMessage:"Code should not contain spaces and any special characters other than _(underscore) and -(hyphen), which are allowed"},
                 { rule:'minLength', value:3 },
                 { rule:'required'},
                 { rule:'maxLength', value:15 }

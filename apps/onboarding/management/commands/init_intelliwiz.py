@@ -69,7 +69,7 @@ def insert_default_entries():
         with open(filepath, 'rb') as f:
             default_types = Dataset().load(f)
             resource = Resource(is_superuser=True)
-            resource.import_data(default_types, dry_run = False, raise_errors = True)
+            resource.import_data(default_types, dry_run=False, use_transactions=True, raise_errors = True)
 
 def create_superuser(client, site):
     user = People.objects.create(

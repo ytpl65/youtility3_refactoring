@@ -261,12 +261,11 @@ def local_to_utc(data, offset, mobile_web):
 
 
 def get_or_create_none_people(using=None):
-    obj, _ = pm.People.objects.filter(Q(peoplecode='NONE') | Q(peoplename='NONE')).get_or_create(
-        id=1,
+    obj, _ = pm.People.objects.get_or_create(
+        peoplecode='NONE', peoplename = 'NONE',
         defaults={
-            'peoplecode': 'NONE', 'peoplename': 'NONE',
             'email': "none@youtility.in", 'dateofbirth': '1111-1-1',
-            'dateofjoin': "1111-1-1", 'id': 1
+            'dateofjoin': "1111-1-1",
         }
     )
     return obj
@@ -281,18 +280,16 @@ def get_none_typeassist():
 
 def get_or_create_none_pgroup():
     obj, _ = pm.Pgroup.objects.get_or_create(
-        id=1,
-        defaults={
-            'groupname': "NONE", 'id': 1
-        }
+        groupname="NONE",
+        defaults={},
     )
     return obj
 
+
 def get_or_create_none_location():
     obj, _ = am.Location.objects.get_or_create(
-        id=1,
+        loccode= "NONE", locname = 'NONE',
         defaults={
-            'loccode': "NONE", 'id': 1, 'locname':'NONE',
             'locstatus':'SCRAPPED'
             }
     )
@@ -301,10 +298,8 @@ def get_or_create_none_location():
 
 def get_or_create_none_cap():
     obj, _ = pm.Capability.objects.get_or_create(
-        id=1,
-        defaults={
-            'capscode': "NONE", 'capsname': 'NONE', 'id': 1
-        }
+        capscode = "NONE", capsname = 'NONE',
+        defaults={}
     )
     return obj
 
@@ -630,20 +625,16 @@ def hostname_from_request(request):
 
 def get_or_create_none_bv():
     obj, _ = ob.Bt.objects.get_or_create(
-        id=1,
-        defaults={
-            'bucode': "NONE", 'buname': "NONE", 'id': 1,
-        }
+        bucode = "NONE", buname = "NONE",
+        defaults={}
     )
     return obj
 
 
 def get_or_create_none_typeassist():
     obj, iscreated = ob.TypeAssist.objects.get_or_create(
-        id=1,
-        defaults={
-            'tacode': "NONE", 'taname': "NONE", 'id': 1
-        }
+        tacode= "NONE", taname= "NONE",
+        defaults={}
     )
     return obj, iscreated
 
@@ -663,16 +654,15 @@ def get_client_from_hostname(request):
 
 
 def get_or_create_none_tenant():
-    return Tenant.objects.get_or_create(id=1, defaults={'tenantname': 'Intelliwiz', 'subdomain_prefix': 'intelliwiz'})[0]
+    return Tenant.objects.get_or_create(tenantname = 'Intelliwiz', subdomain_prefix = 'intelliwiz',defaults={})[0]
 
 
 def get_or_create_none_job():
     from datetime import datetime, timezone
     date = datetime(1970, 1, 1, 00, 00, 00).replace(tzinfo=timezone.utc)
     obj, _ = am.Job.objects.get_or_create(
-        id=1,
+        jobname= 'NONE',    jobdesc= 'NONE',
         defaults={
-            'jobname': 'NONE',    'jobdesc': 'NONE',
             'fromdate': date,      'uptodate': date,
             'cron': "no_cron", 'lastgeneratedon': date,
             'planduration': 0,         'expirytime': 0,
@@ -686,9 +676,8 @@ def get_or_create_none_job():
 
 def get_or_create_none_gf():
     obj, _ = ob.GeofenceMaster.objects.get_or_create(
-        id=1,
+        gfcode= 'NONE', gfname= 'NONE',
         defaults={
-            'gfcode': 'NONE', 'gfname': 'NONE',
             'alerttext': 'NONE', 'enable': False
         }
     )
@@ -699,12 +688,11 @@ def get_or_create_none_jobneed():
     from datetime import datetime, timezone
     date = datetime(1970, 1, 1, 00, 00, 00).replace(tzinfo=timezone.utc)
     obj, _ = am.Jobneed.objects.get_or_create(
-        id=1,
+        jobdesc= "NONE",  scantype= "NONE", seqno= -1,
         defaults={
-            'jobdesc': "NONE", 'plandatetime': date,
+            'plandatetime': date,
             'expirydatetime': date,   'gracetime': 0,
-            'receivedonserver': date,   'seqno': -1,
-            'scantype': "NONE", 'id': 1
+            'receivedonserver': date,  
         }
     )
     return obj
@@ -713,11 +701,9 @@ def get_or_create_none_wom():
     from datetime import datetime, timezone
     date = datetime(1970, 1, 1, 00, 00, 00).replace(tzinfo=timezone.utc)
     obj, _ = Wom.objects.get_or_create(
-        id=1,
+        description= "NONE", expirydatetime= date, plandatetime =  date,
         defaults={
-            'description': "NONE", 'plandatetime': date,
-            'expirydatetime': date,
-            'id': 1, 'worlpermit':Wom.WorkPermitStatus.NOTNEED,
+            'worlpermit':Wom.WorkPermitStatus.NOTNEED,
             'attachmentcount':0, 'priority':Wom.Priority.LOW,
         }
     )
@@ -726,18 +712,16 @@ def get_or_create_none_wom():
 
 def get_or_create_none_qset():
     obj, _ = am.QuestionSet.objects.get_or_create(
-        id=1,
-        defaults={
-            'qsetname': "NONE", 'id': 1}
+        qsetname = "NONE",
+        defaults={}
     )
     return obj
 
 
 def get_or_create_none_question():
     obj, _ = am.Question.objects.get_or_create(
-        id=1,
-        defaults={
-            'quesname': "NONE", 'id': 1}
+        quesname = "NONE", 
+        defaults={}
     )
     return obj
 
@@ -745,34 +729,29 @@ def get_or_create_none_question():
 def get_or_create_none_qsetblng():
     'A None qsetblng with seqno -1'
     obj, _ = am.QuestionSetBelonging.objects.get_or_create(
-        id=1,
+       answertype = 'NONE', 
+        ismandatory =  False, seqno = -1,
     defaults={
             'qset': get_or_create_none_qset(),
             'question': get_or_create_none_question(),
-            'answertype': 'NONE', 'id': 1,
-            'ismandatory': False, 'seqno': -1}
+            }
     )
     return obj
 
 
 def get_or_create_none_asset():
     obj, _ = am.Asset.objects.get_or_create(
-        id=1,
-        defaults={
-            'assetcode': "NONE", 'assetname': 'NONE',
-            'iscritical': False,  'identifier': 'NONE',
-            'id': 1
-        }
+        assetcode = "NONE", assetname = 'NONE',
+        identifier = 'NONE',
+        defaults={'iscritical': False}
     )
     return obj
 
 def get_or_create_none_ticket():
     from apps.y_helpdesk.models import Ticket
     obj, _ = Ticket.objects.get_or_create(
-        id=1,
-        defaults={
-            'ticketdesc':'NONE'
-        }
+        ticketdesc = 'NONE',
+        defaults = {}
     )
     return obj
 

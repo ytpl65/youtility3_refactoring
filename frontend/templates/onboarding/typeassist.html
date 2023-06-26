@@ -58,7 +58,7 @@ TypeAssist List
 				url: '{{ url("onboarding:typeassist") }}?action=list',
 			},
 			columns     : [
-                { "data": "id" },
+                { "data": "id", className:'noVis' },
                 { "data": "tacode", title: "Code" },
                 { "data": "taname", title: 'Name' },
                 { "data": "tatype__tacode", title: 'Type' },
@@ -84,6 +84,18 @@ TypeAssist List
 			dom       :`<'row' <'col-sm-6 d-flex justify-content-start'f> <'col-sm-6 d-flex justify-content-end'B> >rt<'row'
 			 <'col-sm-6'l> <'col-sm-6'p><'col-sm-12 d-flex justify-content-center'i>>`,
 			buttons:[
+				"searchBuilder",
+                dataTablesPDFConfig(
+                    title = `Site: {{request.user.bu.buname}}\n TypeAssist List`,
+                    columns = [1,2,3,4],
+                    filename="typeassist_list"
+                ),
+                dataTablesExcelConfig(
+                    title = `Site: {{request.user.bu.buname}}\n TypeAssist List`,
+                    columns = [1,2,3,4],
+                    filename="typeassist_list"
+                ),
+                dataTablesColumnVisibilityConfig(),
 				{
 					text     : `Add New &nbsp;<i class='fas text-white fa-plus ch4'></i></a>`,
 					className: "btn btn-sm btn-light-primary",
