@@ -94,7 +94,7 @@ class TaResource(BaseResource):
         super().before_import_row(row, **kwargs)
 
     def before_save_instance(self, instance, using_transactions, d7ry_run=False):
-        utils.save_common_stuff(self.request, instance)
+        utils.save_common_stuff(self.request, instance, self.is_superuser)
         
     def skip_row(self, instance, original, row, import_validation_errors=None):
         super().skip_row(instance, original, row, import_validation_errors=None)
