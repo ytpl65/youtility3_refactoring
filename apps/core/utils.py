@@ -362,8 +362,7 @@ def save_user_session(request, people, ctzoffset=None):
             request.session['is_admin'] = people.isadmin
             save_capsinfo_inside_session(people, request)
             logger.info('saving user data into the session ... DONE')
-        ic(pm.Pgbelonging.objects.get_assigned_sites_to_people(people.id).values_list('buid', flat=True))
-        request.session['assignedsites'] = list(pm.Pgbelonging.objects.get_assigned_sites_to_people(people.id).values_list('buid', flat=True))
+        request.session['assignedsites'] = list(pm.Pgbelonging.objects.get_assigned_sites_to_people(people.id))
         request.session['clientcode'] = request.user.client.bucode
         request.session['clientname'] = request.user.client.buname
         request.session['sitename'] = request.user.bu.buname

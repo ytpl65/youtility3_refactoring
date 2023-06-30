@@ -883,7 +883,7 @@ class GetAssignedSites(LoginRequiredMixin, View):
     def get(self, request):
         print("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%55")
         try:
-            if data := pm.Pgbelonging.objects.get_assigned_sites_to_people(request.user.id).values_list('buid', flat=True):
+            if data := pm.Pgbelonging.objects.get_assigned_sites_to_people(request.user.id):
                 ic(data)
                 sites    = obm.Bt.objects.filter(id__in = data).values('id', 'bucode','buname')
                 ic(sites)

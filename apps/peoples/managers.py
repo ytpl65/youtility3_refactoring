@@ -267,61 +267,115 @@ class PgblngManager(models.Manager):
                         'distance':None, 'jobid':None, 'assetid':1, 'breaktime':None})
         return qset or self.none()
     
+    
+    def make_choices_of_sites(self, ids):
+        from apps.onboarding.models import Bt
+        qset = Bt.objects.annotate(
+            text = Concat(F('buname'), V(' ('), F('bucode'), V(')'))
+        ).filter(
+            id__in = ids
+        ).values_list('id', 'text')
+        return qset or self.none()
+    
+    def return_sites_for_service(self, ids, fields):
+        from apps.onboarding.models import Bt
+        qset = Bt.objects.filter(
+            id__in = ids
+        ).annotate(
+        bu_id = F('id')
+        ).values(*fields)
+        return qset or self.none()
+        
+    
     def get_assigned_sites_to_people(self, peopleid, makechoice=False, forservice=False):
-        "returns sites assigned to people"
         from apps.peoples.models import People
         from apps.onboarding.models import Bt
-        bufields = [
-            'buname', 'bucode', 'bu_id', 'butype_id', 'enable', 'cdtz', 'mdtz', 'siteincharge_id',
-            'cuser_id', 'muser_id', 'skipsiteaudit', 'identifier_id', 'bupreferences'
-        ]
-
-        #get default site assigned to people
-        peopleqset = People.objects.annotate(
-            buname= F('bu__buname'), bucode=F('bu__bucode'), buid = F('bu_id')
-        ).filter(id = peopleid)
-
-        if peopleqset and peopleqset[0].isadmin:
-            log.info("people is admin")
-            #return all sites of client
-            bulist_ids = list(Bt.objects.get_all_sites_of_client(clientid=peopleqset[0].client_id).values_list('id', flat=True))
-            #return for mobile service
-            if forservice:
-                log.info("rerturing all sites of client, since user is admin")
-                return Bt.objects.annotate(bu_id=F('id')).filter(id__in = bulist_ids).select_related('identifier', 'butype', 'cuser', 'muser').values(*bufields) or Bt.objects.none()
-            qset = Bt.objects.filter(Q(id__in = bulist_ids) & Q(identifier__tacode='SITE') | Q(id=1)).annotate(buid = F('id')).values('buid', 'bucode', 'buname')
-            #return as a dropdown choices
-            if makechoice:
-                log.info("make choice requested")
-                qset = qset.annotate(text = Concat(F('buname'), V(' ('), F('bucode'), V(')'))).values_list('buid', 'text')
+        
+        
+        # get default site of people
+        people = People.objects.filter(id=peopleid).first()
+        
+        # if people is admin
+        if people and people.isadmin:
+            bu_ids = list(Bt.objects.get_all_sites_of_client(clientid=people.client_id).values_list('id', flat=True))
         else:
             assigned_sitegroup_ids = People.objects.filter(id = peopleid).values('people_extras__assignsitegroup').first()
-            log.info(f"user assigned sites are { assigned_sitegroup_ids = }")
-
             #get sites assigned to groupids
-            qset = self.select_related('assignsites').filter(
-                pgroup_id__in = assigned_sitegroup_ids['people_extras__assignsitegroup']).annotate(
-                    buname = F('assignsites__buname'), bucode=F('assignsites__bucode'), buid = F('assignsites_id')
-                    ).values('buname', 'bucode', 'buid').order_by('assignsites_id').distinct('assignsites_id')
+            bu_ids = list(self.select_related('assignsites').filter(
+                pgroup_id__in = assigned_sitegroup_ids['people_extras__assignsitegroup']).values_list('assignsites_id', flat=True))
+        
+        # total site are: assgined + default
+        total_assigned_sites = bu_ids + [people.bu_id]
+        
+        # for dropdown choices
+        if makechoice: return self.make_choices_of_sites(total_assigned_sites)
+        
+        # for mobile service
+        if forservice: return self.return_sites_for_service(
+            total_assigned_sites, ['buname', 'bucode', 'bu_id', 'butype_id','enable', 'cdtz', 'mdtz', 'siteincharge_id',
+            'cuser_id', 'muser_id', 'skipsiteaudit', 'identifier_id', 'bupreferences'])
+        
+        # for others
+        return total_assigned_sites
+            
+            
+    
+    
+    # def get_assigned_sites_to_people(self, peopleid, makechoice=False, forservice=False):
+    #     "returns sites assigned to people"
+    #     from apps.peoples.models import People
+    #     from apps.onboarding.models import Bt
+    #     bufields = [
+    #         'buname', 'bucode', 'bu_id', 'butype_id', 'enable', 'cdtz', 'mdtz', 'siteincharge_id',
+    #         'cuser_id', 'muser_id', 'skipsiteaudit', 'identifier_id', 'bupreferences'
+    #     ]
 
-            buids = qset.values_list('buid', flat=True)
-            log.info(f"sites assigned to people {buids}")
-            peopleqset = peopleqset.values('buname', 'bucode', 'buid') # use 'bu_id' here
-            buids = buids.union(peopleqset.values_list('buid', flat=True)) # use 'bu_id' here
-            qset = qset.union(peopleqset)
-            log.info(f"qset {qset = }")
+    #     #get default site assigned to people
+    #     peopleqset = People.objects.annotate(
+    #         buname= F('bu__buname'), bucode=F('bu__bucode'), buid = F('bu_id')
+    #     ).filter(id = peopleid)
+
+    #     if peopleqset and peopleqset[0].isadmin:
+    #         log.info("people is admin")
+    #         #return all sites of client
+    #         bulist_ids = list(Bt.objects.get_all_sites_of_client(clientid=peopleqset[0].client_id).values_list('id', flat=True))
+    #         #return for mobile service
+    #         if forservice:
+    #             log.info("rerturing all sites of client, since user is admin")
+    #             return Bt.objects.annotate(bu_id=F('id')).filter(id__in = bulist_ids).select_related('identifier', 'butype', 'cuser', 'muser').values(*bufields) or Bt.objects.none()
+    #         qset = Bt.objects.filter(Q(id__in = bulist_ids) & Q(identifier__tacode='SITE') | Q(id=1)).annotate(buid = F('id')).values('buid', 'bucode', 'buname')
+    #         #return as a dropdown choices
+    #         if makechoice:
+    #             log.info("make choice requested")
+    #             qset = qset.annotate(text = Concat(F('buname'), V(' ('), F('bucode'), V(')'))).values_list('buid', 'text')
+    #     else:
+    #         assigned_sitegroup_ids = People.objects.filter(id = peopleid).values('people_extras__assignsitegroup').first()
+    #         log.info(f"user assigned sites are { assigned_sitegroup_ids = }")
+
+    #         #get sites assigned to groupids
+    #         qset = self.select_related('assignsites').filter(
+    #             pgroup_id__in = assigned_sitegroup_ids['people_extras__assignsitegroup']).annotate(
+    #                 buname = F('assignsites__buname'), bucode=F('assignsites__bucode'), buid = F('assignsites_id')
+    #                 ).values('buname', 'bucode', 'buid').order_by('assignsites_id').distinct('assignsites_id')
+
+    #         buids = qset.values_list('buid', flat=True)
+    #         log.info(f"sites assigned to people {buids}")
+    #         peopleqset = peopleqset.values('buname', 'bucode', 'buid') # use 'bu_id' here
+    #         buids = buids.union(peopleqset.values_list('buid', flat=True)) # use 'bu_id' here
+    #         qset = qset.union(peopleqset)
+    #         log.info(f"qset {qset = }")
             
-            if qset and makechoice:
-                ic("inside", qset)
-                log.info("make choice requested")
-                qset = qset.annotate(text = Concat(F('buname'), V(' ('), F('bucode'), V(')'))).values_list('buid', 'text')
+    #         if qset and makechoice:
+    #             ic("inside", qset)
+    #             log.info("make choice requested")
+    #             qset = qset.annotate(text = Concat(F('buname'), V(' ('), F('bucode'), V(')'))).values_list('buid', 'text')
             
-            #return for mobile service
-            if forservice:
-                qset =  Bt.objects.annotate(bu_id=F('id')).filter(id__in = buids).select_related('identifier', 'butype', 'cuser', 'muser').values(*bufields) or Bt.objects.none()
-                log.info(f"mobile service response requested {qset = }")
-                return qset
-        return qset or self.none()
+    #         #return for mobile service
+    #         if forservice:
+    #             qset =  Bt.objects.annotate(bu_id=F('id')).filter(id__in = buids).select_related('identifier', 'butype', 'cuser', 'muser').values(*bufields) or Bt.objects.none()
+    #             log.info(f"mobile service response requested {qset = }")
+    #             return qset
+    #     return qset or self.none()
     
     
     # def get_assigned_sites_to_people(self, peopleid, makechoice=False, forservice=False):

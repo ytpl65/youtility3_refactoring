@@ -10,8 +10,6 @@ import json
 from apps.core.utils import basic_user_setup
 
 
-
-
 @pytest.mark.django_db  # Required for DB access
 class TestAttendanceView(TestCase):
     def setUp(self):
@@ -23,7 +21,6 @@ class TestAttendanceView(TestCase):
         session = self.client.session
         session.update(session_data)
         session.save()
-
         
     def test_attendance_get_template(self):
         print(dict(self.client.session))
@@ -36,9 +33,6 @@ class TestAttendanceView(TestCase):
         self.assertEqual(response.status_code, 200)
     
     def test_attendance_action_sos_list_view(self):
-        print(dict(self.client.session))
         params = json.dumps({'from':'2023-05-01', 'to':'2023-05-30'})
         response = self.client.get(self.url, data={'action':'sos_list_view', 'params':params})
         self.assertEqual(response.status_code, 200)
-        
-        
