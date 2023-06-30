@@ -50,7 +50,7 @@ class SignIn(View):
         return render(request, self.template_path, context={'loginform': form})
 
     def post(self, request, *args, **kwargs):
-        from .utils import  display_user_session_info
+        from .utils import display_user_session_info
         form, response = LoginForm(request.POST), None
         ic(request.POST)
         logger.info('form submitted')
@@ -100,6 +100,7 @@ class SignIn(View):
             response = render(request, self.template_path, context = cxt)
         return response
 
+
 class SignOut(LoginRequiredMixin, View):
     @staticmethod
     def get(request, *args, **kwargs):
@@ -109,11 +110,12 @@ class SignOut(LoginRequiredMixin, View):
             logger.info("User logged out DONE!")
             response = redirect("/")
         except Exception:
-            logger.error('unable to log out user', exc_info = True)
+            logger.error('unable to log out user', exc_info=True)
             messages.warning(request, 'Unable to log out user...',
                              'alert alert-danger')
             response = redirect('/dashboard')
         return response
+
 
 class ChangePeoplePassword(LoginRequiredMixin, View):
     template_path = 'peoples/people_form.html'
@@ -126,7 +128,7 @@ class ChangePeoplePassword(LoginRequiredMixin, View):
         from django.contrib.auth.forms import SetPasswordForm
         from django.http import JsonResponse
         id, response = request.POST.get('people'), None
-        people = People.objects.get(id = id)
+        people = People.objects.get(id=id)
         form = SetPasswordForm(people, request.POST)
         if form.is_valid():
             form.save()
@@ -137,8 +139,10 @@ class ChangePeoplePassword(LoginRequiredMixin, View):
                                      'status': 500})
         return response
 
+
 def delete_master(request, params):
     raise NotImplementedError()
+
 
 class Capability(LoginRequiredMixin, View):
     params = {
@@ -158,7 +162,8 @@ class Capability(LoginRequiredMixin, View):
         R, resp, objects, filtered = request.GET, None, [], 0
 
         # first load the template
-        if R.get('template'): return render(request, self.params['template_list'])
+        if R.get('template'):
+            return render(request, self.params['template_list'])
 
         # return cap_list data
         if R.get('action', None) == 'list' or R.get('search_term'):
@@ -168,13 +173,13 @@ class Capability(LoginRequiredMixin, View):
                 *self.params['related']).filter(
                     ~Q(capscode='NONE')
             ).values(*self.params['fields'])
-            resp = rp.JsonResponse(data = {
-                'data' : list(objs)
-            }, status = 200, safe = False)
+            resp = rp.JsonResponse(data={
+                'data': list(objs)
+            }, status=200, safe=False)
 
         # return cap_form empty
         elif R.get('action', None) == 'form':
-            cxt = {'cap_form': self.params['form_class'](request = request),
+            cxt = {'cap_form': self.params['form_class'](request=request),
                    'msg': "create capability requested"}
             resp = utils.render_form(request, self.params, cxt)
 
@@ -201,11 +206,11 @@ class Capability(LoginRequiredMixin, View):
             if pk:
                 msg, create = "capability_view", False
                 form = utils.get_instance_for_update(
-                    data, self.params, msg, int(pk), {'request':request})
+                    data, self.params, msg, int(pk), {'request': request})
                 print(form.data)
 
             else:
-                form = self.params['form_class'](data, request = request)
+                form = self.params['form_class'](data, request=request)
             if form.is_valid():
                 resp = self.handle_valid_form(form, request, create)
             else:
@@ -222,14 +227,16 @@ class Capability(LoginRequiredMixin, View):
 
         try:
             cap = form.save()
-            putils.save_userinfo(cap, request.user, request.session, create = create)
+            putils.save_userinfo(
+                cap, request.user, request.session, create=create)
             logger.info("capability form saved")
             data = {'success': "Record has been saved successfully",
-                    'row':pm.Capability.objects.values(
-                        *self.params['fields']).get(id = cap.id)}
-            return rp.JsonResponse(data, status = 200)
+                    'row': pm.Capability.objects.values(
+                        *self.params['fields']).get(id=cap.id)}
+            return rp.JsonResponse(data, status=200)
         except IntegrityError:
             return handle_intergrity_error("Capability")
+
 
 class PeopleView(LoginRequiredMixin, View):
     params = {
@@ -253,14 +260,15 @@ class PeopleView(LoginRequiredMixin, View):
         # return cap_list data
         if R.get('action', None) == 'list' or R.get('search_term'):
 
-            objs = self.params['model'].objects.people_list_view(request, self.params['fields'], self.params['related'])
-            return rp.JsonResponse(data = {'data':list(objs)}, status = 200)
+            objs = self.params['model'].objects.people_list_view(
+                request, self.params['fields'], self.params['related'])
+            return rp.JsonResponse(data={'data': list(objs)}, status=200)
 
         # return cap_form empty
         if R.get('action', None) == 'form':
             cxt = {'peopleform': self.params['form_class'](request=request),
                    'pref_form': self.params['json_form'](request=request),
-                   'ta_form': obf.TypeAssistForm(auto_id = False, request=request),
+                   'ta_form': obf.TypeAssistForm(auto_id=False, request=request),
                    'msg': "create people requested"}
             resp = render(request, self.params['template_form'], cxt)
 
@@ -273,11 +281,11 @@ class PeopleView(LoginRequiredMixin, View):
         elif R.get('id', None):
             from .utils import get_people_prefform
             people = utils.get_model_obj(R['id'], request, self.params)
-            cxt = {'peopleform': self.params['form_class'](instance = people, request=request),
+            cxt = {'peopleform': self.params['form_class'](instance=people, request=request),
                    'pref_form': get_people_prefform(people, request),
-                   'ta_form': obf.TypeAssistForm(auto_id = False, request=request),
+                   'ta_form': obf.TypeAssistForm(auto_id=False, request=request),
                    'msg': "update people requested"}
-            resp = render(request, self.params['template_form'], context = cxt)
+            resp = render(request, self.params['template_form'], context=cxt)
         return resp
 
     def post(self, request, *args, **kwargs):
@@ -287,11 +295,12 @@ class PeopleView(LoginRequiredMixin, View):
         try:
             if pk := request.POST.get('pk', None):
                 ic("got pk")
-                msg, create = "people_view", False  
+                msg, create = "people_view", False
                 people = utils.get_model_obj(pk, request,  self.params)
-                form = self.params['form_class'](data, files = request.FILES, instance = people, request=request)
+                form = self.params['form_class'](
+                    data, files=request.FILES, instance=people, request=request)
             else:
-                form = self.params['form_class'](data, request = request)
+                form = self.params['form_class'](data, request=request)
             jsonform = self.params['json_form'](data,  request=request)
             if form.is_valid() and jsonform.is_valid():
                 resp = self.handle_valid_form(form, jsonform, request, create)
@@ -305,10 +314,10 @@ class PeopleView(LoginRequiredMixin, View):
         return resp
 
     @staticmethod
-    def handle_valid_form(form, jsonform, request ,create):
+    def handle_valid_form(form, jsonform, request, create):
         logger.info('people form is valid')
         from apps.core.utils import handle_intergrity_error
-        
+
         try:
             ic(request.POST, request.FILES)
             people = form.save()
@@ -319,58 +328,61 @@ class PeopleView(LoginRequiredMixin, View):
             if putils.save_jsonform(jsonform, people):
                 buid = people.bu.id if people.bu else None
                 people = putils.save_userinfo(
-                    people, request.user, request.session, create = create, bu = buid)
+                    people, request.user, request.session, create=create, bu=buid)
                 logger.info("people form saved")
-            data = {'pk':people.id}
-            return rp.JsonResponse(data, status = 200)
+            data = {'pk': people.id}
+            return rp.JsonResponse(data, status=200)
         except IntegrityError:
             return handle_intergrity_error('People')
 
+
 class PeopleGroup(LoginRequiredMixin, View):
     params = {
-        'form_class'   : pf.PeopleGroupForm,
+        'form_class': pf.PeopleGroupForm,
         'template_form': 'peoples/partials/partial_pgroup_form.html',
         'template_list': 'peoples/peoplegroup.html',
-        'partial_form' : 'peoples/partials/partial_pgroup_form.html',
-        'related'      : ['identifier'],
-        'model'        : pm.Pgroup,
-        'fields'       : ['groupname', 'enable', 'id'],
+        'partial_form': 'peoples/partials/partial_pgroup_form.html',
+        'related': ['identifier'],
+        'model': pm.Pgroup,
+        'fields': ['groupname', 'enable', 'id'],
         'form_initials': {}
     }
 
     def get(self, request, *args, **kwargs):
         R, resp, objects, filtered = request.GET, None, [], 0
         # first load the template
-        if R.get('template'): return render(request, self.params['template_list'])
+        if R.get('template'):
+            return render(request, self.params['template_list'])
 
         # return list data
         if R.get('action', None) == 'list' or R.get('search_term'):
             objs = self.params['model'].objects.select_related(
-                 *self.params['related']).filter(
-                    ~Q(id=-1), bu_id = request.session['bu_id'], identifier__tacode='PEOPLEGROUP', client_id = request.session['client_id']
+                *self.params['related']).filter(
+                ~Q(id=-1), bu_id=request.session['bu_id'], identifier__tacode='PEOPLEGROUP', client_id=request.session['client_id']
             ).values(*self.params['fields']).order_by('-mdtz')
-            return  rp.JsonResponse(data = {'data':list(objs)})
+            return rp.JsonResponse(data={'data': list(objs)})
 
         # return form empty
         if R.get('action', None) == 'form':
             ic('fksnfksnfkjsdkjfsjdfkamsdfkmaskf')
-            cxt = {'pgroup_form': self.params['form_class'](request = request),
+            cxt = {'pgroup_form': self.params['form_class'](request=request),
                    'msg': "create people group requested"}
             resp = utils.render_form(request, self.params, cxt)
 
         # handle delete request
         elif R.get('action', None) == "delete" and R.get('id', None):
             obj = utils.get_model_obj(R['id'], request, self.params)
-            pm.Pgbelonging.objects.filter(pgroup = obj).delete()
+            pm.Pgbelonging.objects.filter(pgroup=obj).delete()
             resp = utils.render_form_for_delete(request, self.params, False)
 
         # return form with instance
         elif R.get('id', None):
             obj = utils.get_model_obj(int(R['id']), request, self.params)
             peoples = pm.Pgbelonging.objects.filter(
-                pgroup = obj).values_list('people', flat = True)
+                pgroup=obj).values_list('people', flat=True)
             ic(peoples)
-            FORM = self.params['form_class'](request = request, instance = obj, initial = {'peoples':list(peoples)})
+            FORM = self.params['form_class'](request=request, instance=obj, initial={
+                                             'peoples': list(peoples)})
             resp = utils.render_form_for_update(
                 request, self.params, "pgroup_form", obj, FORM=FORM)
         print(f'return resp={resp}')
@@ -383,10 +395,10 @@ class PeopleGroup(LoginRequiredMixin, View):
             if pk := request.POST.get('pk', None):
                 msg = "pgroup_view"
                 form = utils.get_instance_for_update(
-                    data, self.params, msg, int(pk), kwargs = {'request':request})
-                create= False
+                    data, self.params, msg, int(pk), kwargs={'request': request})
+                create = False
             else:
-                form = self.params['form_class'](data, request = request)
+                form = self.params['form_class'](data, request=request)
 
             if form.is_valid():
                 resp = self.handle_valid_form(form, request, create)
@@ -401,89 +413,93 @@ class PeopleGroup(LoginRequiredMixin, View):
         logger.info('pgroup form is valid')
         from apps.core.utils import handle_intergrity_error
         try:
-            pg = form.save(commit = False)
-            putils.save_userinfo(pg, request.user, request.session, create = create)
+            pg = form.save(commit=False)
+            putils.save_userinfo(
+                pg, request.user, request.session, create=create)
             save_pgroupbelonging(pg, request)
             logger.info("people group form saved")
-            data = {'row': Pgroup.objects.values(*self.params['fields']).get(id = pg.id)}
-            return rp.JsonResponse(data, status = 200)
+            data = {'row': Pgroup.objects.values(
+                *self.params['fields']).get(id=pg.id)}
+            return rp.JsonResponse(data, status=200)
         except IntegrityError:
             return handle_intergrity_error("Pgroup")
 
 
 class SiteGroup(LoginRequiredMixin, View):
     params = {
-        'form_class'   : pf.SiteGroupForm,
+        'form_class': pf.SiteGroupForm,
         'template_form': 'peoples/sitegroup_form.html',
         'template_list': 'peoples/sitegroup_list.html',
-        'related'      : ['identifier'],
-        'model'        : pm.Pgroup,
-        'fields'       : ['groupname', 'enable', 'id'],
+        'related': ['identifier'],
+        'model': pm.Pgroup,
+        'fields': ['groupname', 'enable', 'id'],
         'form_initials': {}
     }
 
     def get(self, request, *args, **kwargs):
         R, resp, objects, filtered = request.GET, None, [], 0
         # first load the template
-        if R.get('template'): return render(request, self.params['template_list'])
+        if R.get('template'):
+            return render(request, self.params['template_list'])
 
         # for list view of group
         if R.get('action') == 'list':
-            total, filtered, objs = pm.Pgroup.objects.list_view_sitegrp(R, request)
-            logger.info('SiteGroup objects %s retrieved from db', (total or "No Records!"))
+            total, filtered, objs = pm.Pgroup.objects.list_view_sitegrp(
+                R, request)
+            logger.info('SiteGroup objects %s retrieved from db',
+                        (total or "No Records!"))
             utils.printsql(objs)
-            resp = rp.JsonResponse(data = { 
-                'draw':R['draw'],
-                'data':list(objs),
-                'recordsFiltered':filtered,
-                'recordsTotal':total
+            resp = rp.JsonResponse(data={
+                'draw': R['draw'],
+                'data': list(objs),
+                'recordsFiltered': filtered,
+                'recordsTotal': total
             })
             return resp
 
         # to populate all sites table
         if R.get('action', None) == 'allsites':
-            objs, idfs  = Bt.objects.get_bus_idfs(R, request=request, idf= R['sel_butype'])
+            objs, idfs = Bt.objects.get_bus_idfs(
+                R, request=request, idf=R['sel_butype'])
 
-            resp = rp.JsonResponse(data = {
-                'data':list(objs),
-                'idfs':list(idfs)
+            resp = rp.JsonResponse(data={
+                'data': list(objs),
+                'idfs': list(idfs)
             })
             return resp
 
         if R.get('action') == "loadSites":
             data = Pgbelonging.objects.get_assigned_sitesto_sitegrp(R['id'])
             print(data)
-            resp = rp.JsonResponse(data = {
-                'assigned_sites':list(data),
+            resp = rp.JsonResponse(data={
+                'assigned_sites': list(data),
             })
             return resp
 
         # form without instance to create new data
         if R.get('action', None) == 'form':
             # options = self.get_options()
-            cxt = {'sitegrpform': self.params['form_class'](request = request),
+            cxt = {'sitegrpform': self.params['form_class'](request=request),
                    'msg': "create site group requested"}
-            return render(request, self.params['template_form'], context = cxt)
-        
+            return render(request, self.params['template_form'], context=cxt)
+
         # handle delete request
         if R.get('action', None) == "delete" and R.get('id', None):
             ic('here')
             obj = utils.get_model_obj(R['id'])
-            pm.Pgbelonging.objects.filter(pgroup_id = obj.id).delete()
-            return rp.JsonResponse(data = None, status = 200)
+            pm.Pgbelonging.objects.filter(pgroup_id=obj.id).delete()
+            return rp.JsonResponse(data=None, status=200)
 
         # form with instance to load existing data
         if R.get('id', None):
             obj = utils.get_model_obj(int(R['id']), request, self.params)
             sites = pm.Pgbelonging.objects.filter(
-                pgroup = obj).values_list('assignsites', flat = True)
+                pgroup=obj).values_list('assignsites', flat=True)
             ic(sites)
-            cxt = {'sitegrpform': self.params['form_class'](request = request, instance = obj),
+            cxt = {'sitegrpform': self.params['form_class'](request=request, instance=obj),
                    'assignedsites': sites}
-            resp = render(request, self.params['template_form'], context = cxt)
+            resp = render(request, self.params['template_form'], context=cxt)
             return resp
-
-        
 
     def post(self, request, *args, **kwargs):
         import json
@@ -495,16 +511,16 @@ class SiteGroup(LoginRequiredMixin, View):
             if pk not in [None, 'None']:
                 msg = "pgroup_view"
                 form = utils.get_instance_for_update(
-                    data, self.params, msg, int(pk), kwargs = {'request':request})
-                create= False
+                    data, self.params, msg, int(pk), kwargs={'request': request})
+                create = False
             else:
-                form = self.params['form_class'](data, request = request)
+                form = self.params['form_class'](data, request=request)
 
             if form.is_valid():
                 resp = self.handle_valid_form(form, assignedSites, request)
             else:
                 cxt = {'errors': form.errors}
-                resp = utils.handle_invalid_form(request, self.params, cxt)    
+                resp = utils.handle_invalid_form(request, self.params, cxt)
         except Exception:
             resp = utils.handle_Exception(request)
         return resp
@@ -513,14 +529,14 @@ class SiteGroup(LoginRequiredMixin, View):
         logger.info('pgroup form is valid')
         from apps.core.utils import handle_intergrity_error
         try:
-            with transaction.atomic(using = utils.get_current_db_name()):
-                pg = form.save(commit = False)
+            with transaction.atomic(using=utils.get_current_db_name()):
+                pg = form.save(commit=False)
                 putils.save_userinfo(pg, request.user, request.session)
                 self.save_assignedSites(pg, assignedSites, request)
                 logger.info("people group form saved")
                 data = {'success': "Record has been saved successfully",
-                        'pk': pg.pk, 'row':model_to_dict(pg)}
-                return rp.JsonResponse(data, status = 200)
+                        'pk': pg.pk, 'row': model_to_dict(pg)}
+                return rp.JsonResponse(data, status=200)
         except IntegrityError:
             return handle_intergrity_error("Pgroup")
 
@@ -534,23 +550,22 @@ class SiteGroup(LoginRequiredMixin, View):
         self.resest_assignedsites(pg)
         for site in sitesArray:
             pgb = pm.Pgbelonging(
-                pgroup         = pg,
-                people_id      = 1,
-                assignsites_id = site['buid'],
-                client_id      = S['client_id'],
-                bu_id          = S['bu_id'],
-                tenant_id      = S.get('tenantid', 1)
+                pgroup=pg,
+                people_id=1,
+                assignsites_id=site['buid'],
+                client_id=S['client_id'],
+                bu_id=S['bu_id'],
+                tenant_id=S.get('tenantid', 1)
             )
             putils.save_userinfo(pgb, request.user, request.session)
 
 
-
 class NoSite(View):
     def get(self, request):
-        
-        cxt = {'nositeform':pf.NoSiteForm(session=request.session)}
+
+        cxt = {'nositeform': pf.NoSiteForm(session=request.session)}
         return render(request, 'peoples/nosite.html', cxt)
-    
+
     def post(self, request):
         form = pf.NoSiteForm(request.POST, session=request.session)
         if form.is_valid():
@@ -563,13 +578,16 @@ class NoSite(View):
 
 
 def verifyemail(request):
-    logger.info('verify email requested for user id %s', request.GET.get('userid'))
-    user = People.objects.get(id = request.GET.get('userid'))
+    logger.info('verify email requested for user id %s',
+                request.GET.get('userid'))
+    user = People.objects.get(id=request.GET.get('userid'))
     try:
         send_email(user)
-        messages.success(request, 'Verification email has been sent to your email address','alert alert-success')
+        messages.success(
+            request, 'Verification email has been sent to your email address', 'alert alert-success')
         logger.info("message sent to %s", user.email)
     except Exception as e:
-        messages.error(request, 'Unable to send verification email', 'alert alert-danger')
+        messages.error(
+            request, 'Unable to send verification email', 'alert alert-danger')
         logger.error("email verification failed", exc_info=True)
     return redirect('login')

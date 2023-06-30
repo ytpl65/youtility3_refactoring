@@ -36,7 +36,7 @@ class QuestionResource(resources.ModelResource):
         default=utils.get_or_create_none_bv
     )
 
-    ID      = fields.Field(attribute='id', column_name='ID')
+    #ID      = fields.Field(attribute='id', column_name='ID')
     AlertON = fields.Field(attribute='alerton', column_name='Alert On')
     Options = fields.Field(attribute='options', column_name='Options')
     Name    = fields.Field(attribute='quesname', column_name='Name')
@@ -50,7 +50,7 @@ class QuestionResource(resources.ModelResource):
     class Meta:
         model = am.Question
         skip_unchanged = True
-        import_id_fields = ('Name', 'Type', 'Client',)
+        import_id_fields = ('Name', 'Type', 'Client')
         report_skipped = True
         fields = ['Name', 'Type',  'Unit', 'Options',  'Enable', 'IsAvpt', 'AttType',
                   'Client', 'Min', 'Max', 'AlertON', 'isworkflow', 'Category']

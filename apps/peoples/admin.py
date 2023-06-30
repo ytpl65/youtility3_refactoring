@@ -52,25 +52,25 @@ class PeopleResource(resources.ModelResource):
     Department = fields.Field(
         column_name='Department',
         attribute='department',
-        widget = TypeAssistFKW(om.TypeAssist, 'taname'),
+        widget = TypeAssistFKW(om.TypeAssist, 'tacode'),
         default=default_ta
     )
     Designation = fields.Field(
         column_name='Designation',
         attribute='designation',
-        widget = TypeAssistFKW(om.TypeAssist, 'taname'),
+        widget = TypeAssistFKW(om.TypeAssist, 'tacode'),
         default=default_ta
     )
     PeopleType = fields.Field(
         column_name='Employee Type',
         attribute='peopletype',
-        widget = TypeAssistFKW(om.TypeAssist, 'taname'),
+        widget = TypeAssistFKW(om.TypeAssist, 'tacode'),
         default=default_ta
     )
     WorkType = fields.Field(
         column_name='Work Type',
         attribute='worktype',
-        widget = wg.ForeignKeyWidget(om.TypeAssist, 'taname'),
+        widget = wg.ForeignKeyWidget(om.TypeAssist, 'tacode'),
         default=default_ta
     )
     Reportto = fields.Field(
@@ -125,7 +125,7 @@ class PeopleResource(resources.ModelResource):
         model = pm.People
         skip_unchanged = True
         report_skipped = True
-        import_id_fields = ('ID','Code', 'LoginId')
+        import_id_fields = ('ID','Code', 'LoginId', 'Client')
         fields = [
             'ID', 'Code', 'Name', 'LoginId', 'Designation', 'Department', 'MobNo', 'Email', 'deviceid',
             'Site', 'DateOfJoin', 'date_of_release', 'DateOfBirth', 'Gender', 'PeopleType','WorkType', 'Enable',
@@ -137,7 +137,8 @@ class PeopleResource(resources.ModelResource):
         super(PeopleResource, self).__init__(*args, **kwargs)
         
     def before_import_row(self, row, **kwargs):
-        self._mobilecaps         = row["Mobile Capability"].split(",") if row.get('Mobile Capability') else []
+        self._mobilecaps         = row["Mobile Capability"].split(",") if row.get('Mobile Capability') else [], 
+        ic(self._mobilecaps, row['Mobile Capability'])
         self._reportcaps         = row["Report Capability"].split(",") if row.get('Report Capability') else []
         self._webcaps            = row["Web Capability"].split(",") if row.get('Web Capability') else []
         self._portletcaps        = row["Portlet Capability"].split(",") if row.get('Portlet Capability') else []
@@ -164,10 +165,10 @@ class PeopleResource(resources.ModelResource):
         save_people_passwd(instance)
     
     
-    def skip_row(self, instance, original):
+    def skip_row(self, instance, original, row, import_validation_errors=None):
         return pm.People.objects.filter(
             peoplecode = instance.peoplecode,
-            client_id = self.request.client.id).exists()
+            client_id = instance.client.id).exists()
 
 @admin.register(People)
 class PeopleAdmin(ImportExportModelAdmin):
@@ -196,8 +197,7 @@ class PeopleAdmin(ImportExportModelAdmin):
         return {'request': request}
 
     def get_queryset(self, request):
-        return pm.People.objects.select_related(
-            'peopletype', 'cuser', 'muser', 'client', 'bu').all()
+        return pm.People.objects.select_related().all()
 
 class PeopleGroupResource(resources.ModelResource):
     Client = fields.Field(

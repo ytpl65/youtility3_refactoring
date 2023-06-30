@@ -35,7 +35,9 @@
   
 
   <!-- END PAGE LEVEL STYLESHEETS -->
+  
   <title>
+
   {%- block title -%}
   
   {% endblock title %}
@@ -50,11 +52,43 @@
 {% endblock extra_css %}
 <!----END FOR PAGE_LEVEL ---->
 <link href="{{ static('assets/css/local/global_level.css') }}" rel="stylesheet" type="text/css" />
+<style>
+  #loading-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  #loading-spinner {
+    border: 8px solid #f3f3f3;
+    border-top: 8px solid #3498db;
+    border-radius: 50%;
+    width: 60px;
+    height: 60px;
+    animation: spin 2s linear infinite;
+  }
+  
+  @keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+  
+
+</style>
 </head>
 
 <body id="kt_body"
   class="header-fixed header-tablet-and-mobile-fixed toolbar-enabled toolbar-fixed toolbar-tablet-and-mobile-fixed aside-enabled aside-fixed"
   style="--kt-toolbar-height:55px;--kt-toolbar-height-tablet-and-mobile:55px" data-kt-aside-minimize = 'on'>
+
+  
   <input type="hidden" id="urlname" data-url = ''>
   {%- block body -%}
   

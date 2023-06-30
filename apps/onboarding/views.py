@@ -493,7 +493,7 @@ class BulkImportData(LoginRequiredMixin, View):
         'template': 'onboarding/import.html'
     }
     header_mapping = {
-        'TYPEASSIST': ['Name*', 'Code*', 'Type*', 'BV*', 'Client*']
+        'TYPEASSIST': ['ID', 'Name*', 'Code*', 'Type*', 'BV*', 'Client*']
     }
 
     def get(self, request, *args, **kwargs):
@@ -566,11 +566,13 @@ class BulkImportData(LoginRequiredMixin, View):
         res = self.params['model_resource_map'][table](request=request)
         return res, dataset
 
-    def get_readable_error(self, errors):
-        if(isinstance(errors, ObjectDoesNotExist)):
+    def get_readable_error(self, error):
+        ic(dir(error))
+        if(isinstance(error, ObjectDoesNotExist)):
             return "Related values does not exist, please check your data."
-        if(isinstance(errors, IntegrityError)):
+        if(isinstance(error, IntegrityError)):
             return "Record already exist, please check your data."
+        return str(error)
 
 class Client(LoginRequiredMixin, View):
     params = {

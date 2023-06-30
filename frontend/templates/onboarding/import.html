@@ -133,11 +133,14 @@ Import Data
         });
     }
     // Function to create DataTable
-    const createDataTable = (id, data, columns, no_of_cols, rowClass, buttons = null) => {
+    const createDataTable = (id, data, columns, no_of_cols, rowClass, buttons = null, errors=false) => {
         // If table exists, destroy it before creating a new one
         if ($.fn.dataTable.isDataTable(id)) {
             $(id).DataTable().destroy();
         }
+
+        let config = {targets:0, data:'Row#', width:"9%", defaultContent:null}
+        let error_config = errors ?  config : {}
 
         let options = {
             data: data,
@@ -147,13 +150,13 @@ Import Data
             responsive:true,
             pageLength:10,
             columnDefs: [
-                {targets:0, data:'Row#', width:"9%"},
+                error_config,
                 {
                     targets: Array(no_of_cols).fill(null).map((_, i) => i),
                     render: function (data, type, row, meta) {
                         return data || '--';
                     }
-                }
+                },
             ],
             rowCallback: function(row, data, index) {
                 $(row).addClass(rowClass);
@@ -218,7 +221,7 @@ Import Data
                     makeAjaxRequest(params.url, fd)
                     .done((res) => {
                         if (res.rc === 1) {
-                            createDataTable('#import_datatable', res.data, res.columns, res.no_of_cols, 'error_row');
+                            createDataTable('#import_datatable', res.data, res.columns, res.no_of_cols, 'error_row', buttons = null, errors=true);
                         } else {
                             createDataTable('#import_datatable', res.preview_data, res.columns, res.no_of_cols, 'valid_row', [
                                 {

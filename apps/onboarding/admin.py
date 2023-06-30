@@ -78,7 +78,7 @@ class TaResource(BaseResource):
     class Meta:
         model = om.TypeAssist
         skip_unchanged = True
-        import_id_fields = ('CLIENT', 'CODE') 
+        import_id_fields = ('CLIENT', 'CODE', 'TYPE') 
         report_skipped = True
         fields = ('NAME', 'CODE', 'TYPE',  'BV', 'CLIENT')
 
@@ -144,8 +144,14 @@ class BtResource(BaseResource):
         default=utils.get_or_create_none_typeassist,
         widget = wg.ForeignKeyWidget(om.TypeAssist, 'tacode'))
     
-    ID   = fields.Field(attribute='id', column_name="ID")
-    Code = fields.Field(attribute='bucode', column_name='Code*')
+    Sitemanager = fields.Field(
+        column_name='Site Manager',
+        attribute='siteincharge',
+        default=utils.get_or_create_none_people,
+        widget = wg.ForeignKeyWidget(pm.People, 'peoplecode'))
+    
+    #ID   = fields.Field(attribute='id', column_name="ID")
+    Code = fields.Field(attribute='bucode', column_name='Code')
     Name = fields.Field(attribute='buname', column_name='Name')
     GPS = fields.Field(attribute='gpslocation', column_name='GPS Location', saves_null_values=True)
     SOLID = fields.Field(attribute='solid', column_name='Sol Id')
@@ -153,23 +159,22 @@ class BtResource(BaseResource):
 
     class Meta:
         model = om.Bt
-        start_row=6
         skip_unchanged = True
-        import_id_fields = ('ID', 'Code')
+        import_id_fields = ('Code',)
         report_skipped = True
         fields = (
-            'ID', 'Name', 'Code', 'BuType', 'SOLID', 
+            'Name', 'Code', 'BuType', 'SOLID', 
             'Enable', 'GPS',
             'Identifier', 'BelongsTo', 'tenant',)
 
     def __init__(self, *args, **kwargs):
-        self.request = kwargs.pop('request', None)
         super(BtResource, self).__init__(*args, **kwargs)
+        self.request = kwargs.pop('request', None)
+        
     
     def before_import_row(self, row, **kwargs):
-        ic(row)
-        # self._gpslocation = clean_point_field(row['GPS Location'])
-        # self._solid = clean_point_field(row['Sol Id'])
+        self._gpslocation = clean_point_field(row['GPS Location'])
+        self._solid = row['Sol Id']
 
     def before_save_instance(self, instance, using_transactions, dry_run):
         instance.bucode = instance.bucode.upper()

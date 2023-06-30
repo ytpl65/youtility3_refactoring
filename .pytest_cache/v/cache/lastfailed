@@ -1,4 +1,8 @@
 {
-  "apps/onboarding/tests/test_views.py::test_ta_create": true,
+  "apps/attendance/tests.py::TestAttendanceView::test_attendance_action_sos_list_view": true,
+  "apps/attendance/tests.py::TestAttendanceView::test_user_logged_in": true,
+  "apps/peoples/tests.py::TestLogin::test_valid_form_with_enabled_cookies_and_valid_credentials": true,
+  "apps/peoples/tests.py::TestSignIn::test_failed_post": true,
+  "apps/peoples/tests.py::TestSignIn::test_successful_post": true,
   "apps/peoples/tests/test_views.py::test_signin2": true
 }

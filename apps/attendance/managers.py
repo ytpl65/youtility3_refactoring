@@ -68,7 +68,7 @@ class PELManager(models.Manager):
     
     def get_peopleevents_listview(self, related,fields,request):
         R, S = request.GET, request.session
-        P = json.loads(R['params'])
+        P = json.loads(R.get('params'))
         ic(P)
         qset = self.select_related(*related).annotate(
             sL = AsGeoJSON('startlocation'), eL = AsGeoJSON('endlocation')

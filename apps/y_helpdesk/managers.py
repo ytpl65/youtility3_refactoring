@@ -60,7 +60,7 @@ class TicketManager(models.Manager):
                 bu_id = buid,
                 client_id = clientid,
             ).values(
-                'id', 'uuid', 'ticketdesc', 'assignedtopeople_id', 'assignedtogroup_id', 'comments', 'bu_id', 'client_id', 'priority', 
+                'id', 'ticketno', 'uuid', 'ticketdesc', 'assignedtopeople_id', 'assignedtogroup_id', 'comments', 'bu_id', 'client_id', 'priority', 
                 'events', 'isescalated', 'ticketsource', 'cuser_id', 'muser_id', 'cdtz', 'mdtz', 'ctzoffset', 'attachmentcount',
                 'ticketcategory_id', 'location_id', 'asset_id','modifieddatetime', 'level', 'status', 'identifier', 'qset_id'
             )

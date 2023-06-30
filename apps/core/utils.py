@@ -1480,7 +1480,21 @@ from django.utils import timezone
 
 def store_ticket_history(instance, request=None, user = None):
     from background_tasks.tasks import send_ticket_email
-    logger.info("saving ticket history has started....")
+    # from apps.y_helpdesk.models import Ticket
+    # logger.info("saving ticket history has started....")
+    # peopleid = request.user.id if request else user.id
+    # peoplename = request.user.peoplename if request else user.peoplename
+    # #if ticket is created and status is NEW
+    # if instance.status == Ticket.Status.NEW:
+    #     history_item = f'{peoplename} created a ticket of subject: "{instance.ticketdesc}" \
+    #     at location: "{instance.location.locaname}" with priority: {instance.priority} assigned to {instance.assignedtopeople.peoplename}'
+    #     if instance.comments and instance.comments != 'None':
+    #         history_item += f" and commented: {instance.comments}"
+    # else:
+        
+    #     history_item = f'{peoplename} opened the ticket'
+        
+    
     # Get the current time
     now = timezone.now().replace(microsecond=0, second=0)
     peopleid = request.user.id if request else user.id
@@ -1642,3 +1656,58 @@ def convert_seconds_to_human_readable(seconds):
     
     return ", ".join(result)
 
+
+def create_client_site():
+    from apps.onboarding.models import Bt, TypeAssist
+    client_type = TypeAssist.objects.create(
+        tacode='CLIENT', taname = 'Client'
+    )
+    site_type = TypeAssist.objects.create(
+        tacode='SITE', taname = 'Site', 
+    )
+    client = Bt.objects.create(
+        bucode='TESTCLIENT', buname='Test Client',
+        identifier=client_type
+    )
+    site = Bt.objects.create(
+        bucode = 'TESTBT', buname = 'Test Bt',
+        identifier = site_type, parent = client
+    )
+    return client, site
+
+
+
+def create_user():
+    from django.contrib.auth import get_user_model
+    User = get_user_model()
+    user = User.objects.create(
+            loginid='testuser',
+            dateofbirth='2022-05-22', peoplecode='TESTUSER',
+            peoplename='Test User', email="testuser@gmail.com",
+            isverified = True)
+    user.set_password('testpassword')
+    user.save()
+    return user
+    
+
+
+def basic_user_setup():
+    '''
+    create user, site and client and 
+    login the user and return the request
+    '''
+    from django.urls import reverse
+    from django.test import Client
+    client = Client()
+    client.get(reverse('login'))
+    user = create_user()
+    _client, _site, = create_client_site()
+    user.client = _client
+    user.bu = _site
+    user.save()
+    
+    response = client.post(
+    reverse('login'), 
+    data = {'username':'testuser', 'password':'testpassword', 'timezone':330})
+    
+    return response.wsgi_request
