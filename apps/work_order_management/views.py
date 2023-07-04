@@ -250,7 +250,7 @@ class ReplyWorkOrder(View):
                 elif wo.workstatus == Wom.Workstatus.COMPLETED:
                     return HttpResponse("The work order are already submitted!")
                 
-        except wo['model'].DoesNotExist as e:
+        except self.params['model'].DoesNotExist as e:
                 return HttpResponse("The page you are looking for is not found")
         
     def post(self, request, *args, **kwargs):

@@ -1664,11 +1664,11 @@ def create_client_site():
     site_type, _ = TypeAssist.objects.get_or_create(
         tacode='SITE', taname = 'Site', 
     )
-    client = Bt.objects.create(
+    client, _ = Bt.objects.get_or_create(
         bucode='TESTCLIENT', buname='Test Client',
         identifier=client_type, id=4
     )
-    site = Bt.objects.create(
+    site, _ = Bt.objects.get_or_create(
         bucode = 'TESTBT', buname = 'Test Bt',
         identifier = site_type, parent = client,
         id=5
@@ -1680,7 +1680,7 @@ def create_client_site():
 def create_user():
     from django.contrib.auth import get_user_model
     User = get_user_model()
-    user = User.objects.create(
+    user, _ = User.objects.get_or_create(
             loginid='testuser', id=4,
             dateofbirth='2022-05-22', peoplecode='TESTUSER',
             peoplename='Test User', email="testuser@gmail.com",

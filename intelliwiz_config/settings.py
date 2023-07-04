@@ -494,3 +494,4 @@ KNOWAGE_REPORTS = {
     'WORKORDERLIST':'WorkOrderList',
 }
 
+TEST_RUNNER = 'intelliwiz_config.test_runner.MyTestRunner'

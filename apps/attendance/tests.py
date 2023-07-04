@@ -58,16 +58,6 @@ def create_attendance_instance():
 @pytest.mark.django_db  # Required for DB access
 class TestAttendanceView(TestCase):
     
-    @classmethod
-    def setUpClass(cls):
-        # override this method for setting up
-        # things whole class wide
-        
-        super().setUpClass()
-        # start automated initialization
-        from django.core.management import call_command
-        call_command('init_intelliwiz', 'default')
-    
     
     def setUp(self):
         # override this method setting up
@@ -166,3 +156,17 @@ class TestAttendanceView(TestCase):
         ic(response.json())
         assert response.status_code == 404
         
+
+
+class ConveyanceView(TestCase):
+    def setUp(self):
+        # override this method setting up
+        # things for every test case method wise
+        
+        self.client = basic_user_setup()
+        self.url = reverse('attendance:conveyance')
+    
+    def test_conveyance_get_template(self):
+        print(dict(self.client.session))
+        response = self.client.get(self.url, data={'template':'true'})
+        assert response.status_code == 200
