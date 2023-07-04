@@ -104,7 +104,7 @@ class Attendance(LoginRequiredMixin, View):
             putils.save_userinfo(attd, request.user, request.session, create)
             logger.info("attendance form saved")
             data = {'success': "Record has been saved successfully",
-                    'type': attd.peventtype}
+                    'type': attd.peventtype.tacode}
             return rp.JsonResponse(data, status = 200)
         except IntegrityError:
             return putils.handle_intergrity_error('Attendance')

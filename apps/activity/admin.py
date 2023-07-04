@@ -6,7 +6,9 @@ from import_export.admin import ImportExportModelAdmin
 from django.contrib import admin
 from django.db.utils import IntegrityError
 from apps.core import utils
+from apps.service.validators import clean_code, clean_string
 from import_export.results import RowResult
+from django.core.exceptions import ValidationError
 
 
 
@@ -30,17 +32,17 @@ class QuestionResource(resources.ModelResource):
         default=default_ta
     )
     Client = fields.Field(
-        column_name='Client',
+        column_name='Client*',
         attribute='client',
         widget = wg.ForeignKeyWidget(om.Bt, 'bucode'),
         default=utils.get_or_create_none_bv
     )
 
-    #ID      = fields.Field(attribute='id', column_name='ID')
+    ID      = fields.Field(attribute='id', column_name='ID')
     AlertON = fields.Field(attribute='alerton', column_name='Alert On')
     Options = fields.Field(attribute='options', column_name='Options')
-    Name    = fields.Field(attribute='quesname', column_name='Name')
-    Type    = fields.Field(attribute='answertype', column_name='Type')
+    Name    = fields.Field(attribute='quesname', column_name='Name*')
+    Type    = fields.Field(attribute='answertype', column_name='Type*')
     Min     = fields.Field(attribute='min', column_name='Min')
     Max     = fields.Field(attribute='max', column_name='Max')
     Enable  = fields.Field(attribute='enable', default=True)
@@ -50,26 +52,42 @@ class QuestionResource(resources.ModelResource):
     class Meta:
         model = am.Question
         skip_unchanged = True
-        import_id_fields = ('Name', 'Type', 'Client')
+        import_id_fields = ['ID']
         report_skipped = True
         fields = ['Name', 'Type',  'Unit', 'Options',  'Enable', 'IsAvpt', 'AttType',
-                  'Client', 'Min', 'Max', 'AlertON', 'isworkflow', 'Category']
+                  'ID', 'Client', 'Min', 'Max', 'AlertON', 'isworkflow', 'Category']
     
     
     def __init__(self, *args, **kwargs):
-        self.request = kwargs.pop('request', None)
         super(QuestionResource, self).__init__(*args, **kwargs)
+        self.is_superuser = kwargs.pop('is_superuser', None)
+        self.request = kwargs.pop('request', None)
     
-    
-    def before_save_instance(self, instance, using_transactions, dry_run):
-        """
-        Perform any necessary actions before saving the instance.
-        Handle the IntegrityError exception explicitly.
-        """
-        try:
-            utils.save_common_stuff(self.request, instance)
-        except IntegrityError as e:
-            pass
+    def before_import_row(self, row, row_number, **kwargs):
+        row['Code*'] = clean_string(row.get('Code*', 'NONE'), code=True)
+        row['Name*'] = clean_string(row.get('Name*', "NONE"))
+        # check required fields
+        if row['Code*'] in ['', None]: raise ValidationError("Code* is required field")
+        if row['Type*'] in ['', None]: raise ValidationError("Type* is required field")
+        if row['Name*'] in ['', None]: raise ValidationError("Name* is required field")
+        
+        # code validation
+        regex, value = "^[a-zA-Z0-9\-_]*$", row['Code*']
+        if " " in value: raise ValidationError("Please enter text without any spaces")
+        if  not re.match(regex, value):
+            raise ValidationError("Please enter valid text avoid any special characters except [_, -]")
+
+        # unique record check
+        if om.TypeAssist.objects.select_related().filter(
+            tacode=row['Code*'], tatype__tacode=row['Type*'],
+            client__bucode = row['Client*']).exists():
+            raise ValidationError(f"Record with these values already exist {', '.join(row.values())}")
+        
+
+        super().before_import_row(row, **kwargs)
+
+    def before_save_instance(self, instance, using_transactions, dry_run=False):
+        utils.save_common_stuff(self.request, instance, self.is_superuser)
 
 
 @admin.register(am.Question)

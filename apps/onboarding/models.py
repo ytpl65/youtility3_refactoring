@@ -154,9 +154,6 @@ class TypeAssist(BaseModel, TenantAwareModel):
             models.UniqueConstraint(
                 fields=['tacode', 'tatype', 'client'], name='code_unique'
             ),
-            models.UniqueConstraint(
-                fields=['tacode', 'client'], condition=Q(tatype=None), name='code_unique2'
-            )
         ]
 
     def __str__(self):

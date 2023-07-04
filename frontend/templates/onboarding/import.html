@@ -14,6 +14,33 @@
     table.dataTable tbody tr.valid_row td,  .dataTables_scrollBody table thead tr th{
         background-color: rgb(219, 248, 219)!important;
     }
+#loading-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+#loading-spinner {
+  border: 8px solid #f3f3f3;
+  border-top: 8px solid #3498db;
+  border-radius: 50%;
+  width: 60px;
+  height: 60px;
+  animation: spin 2s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
 </style>
 
 <div class="vl"></div>
@@ -35,6 +62,10 @@ Import Data
 <!------ END FORM TITLE -------->
 
 {% block form %}
+<div id="loading-overlay">
+  <div id="loading-spinner"></div>
+</div>
+
 <div class="row gx-8">
     <div class="col-md-6">
         <p class="ch4 y-primary mb-2">Please follow the instructions before uploading any data:</p>
@@ -66,8 +97,9 @@ Import Data
                 <div class="col-md-3 mb-3">
                     {{ importform.importfile.label_tag() }}
                 </div>
-                <div class="col-md-9 mb-3">
+                <div class="col-md-9 mb-3 fv-row">
                     {{ importform.importfile }}
+                    <div class="text-muted">Max file size is 700kb</div>
                 </div>
             </div>
             <button type="button" class="btn btn-sm btn-primary2" id="btn_importdata">Import Data</button>
@@ -169,7 +201,12 @@ Import Data
         return $(id).DataTable(options);
     }
 
+    var loadingOverlay = document.getElementById('loading-overlay');
 
+    window.addEventListener('load', function() {
+    // Hide the loading overlay when the tab has finished loading
+    loadingOverlay.style.display = 'none';
+    });
 
 
     $(document).ready(function () {
@@ -203,7 +240,7 @@ Import Data
 
         //submit form with data-file
         // Function to handle button click
-        $("#btn_importdata").click(() => {
+        $("#btn_importdata").click((e) => {
             var fd = getFormData();
             const params = {
                 url: urlname,
@@ -218,28 +255,37 @@ Import Data
                 confirmButtonText: 'Yes Upload it!'
             }).then((result) => {
                 if (result.isConfirmed) {
-                    makeAjaxRequest(params.url, fd)
-                    .done((res) => {
-                        if (res.rc === 1) {
-                            createDataTable('#import_datatable', res.data, res.columns, res.no_of_cols, 'error_row', buttons = null, errors=true);
-                        } else {
-                            createDataTable('#import_datatable', res.preview_data, res.columns, res.no_of_cols, 'valid_row', [
-                                {
-                                    text:"Confirm Import", 
-                                    action:function(e, dt, node, config){
-                                        ConfirmImport(getFormData())
-                                    }
-                                }
-                            ]);
-                        }
-                    })
-                    .fail((xhr, status, error) => {
-                        console.log(error)
-                        show_error_alert("Something went wrong")
-                    });
+                    localStorage.setItem('table', $('#id_table').val())
+                    $("#id_import_form").submit()
                 }
             });
         });
+
+        /////////////////// form validations ///////////////////
+        FormValidation.formValidation(
+            document.getElementById('id_import_form'),{
+                fields:{
+                    importfile:{
+                        validators:{
+                            notEmpty:{
+                                message:'This field cannot be empty'
+                            },
+                            file:{
+                                extension:'xls,xlsx',
+                                type:'application/vnd.ms-excel',
+                                message:'Uploaded file is not valid!',
+                                maxSize:700000,
+                                maxFiles:1,
+                                type:'application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+                            }
+                        }
+                    }
+                },
+                plugins:{
+                    ...pluginsForFormValidations()
+                }
+            }
+        )
     })
 </script>
 {% endblock extra_scripts %}

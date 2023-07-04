@@ -69,7 +69,7 @@ class PeopleEventlog(BaseModel, TenantAwareModel):
     facerecognitionin  = models.BooleanField(_("Enable Face-Recognition In"), default = False, null=True, blank=True)
     facerecognitionout = models.BooleanField(_("Enable Face-Recognition Out"), default = False, null=True, blank=True)
     peventlogextras    = models.JSONField(_("peventlogextras"), encoder = DjangoJSONEncoder, default = peventlog_json)
-    otherlocation      = models.CharField(_("Other Location"), max_length = 50, default = None)
+    otherlocation      = models.CharField(_("Other Location"), max_length = 50, null=True)
     reference          = models.CharField('Reference', max_length = 55, null = True)
     geojson            = models.JSONField(default=pel_geojson, null=True, blank=True)
 

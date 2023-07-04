@@ -9,7 +9,8 @@ from apps.peoples import models as pm
 from .forms import (BtForm, ShiftForm, )
 import apps.onboarding.models as om
 from apps.core import utils
-from django.core.exceptions import ObjectDoesNotExist
+from django.core.exceptions import ValidationError
+import re
 
 class BaseResource(resources.ModelResource):
     CLIENT = fields.Field(
@@ -73,12 +74,12 @@ class TaResource(BaseResource):
     )
     CODE = fields.Field(attribute='tacode', column_name='Code*')
     NAME = fields.Field(attribute='taname', column_name='Name*')
-    #ID   = fields.Field(attribute='id', column_name='ID')
+    ID   = fields.Field(attribute='id', column_name='ID')
 
-    class Meta:
+    class Meta: 
         model = om.TypeAssist
         skip_unchanged = True
-        import_id_fields = ('CLIENT', 'CODE', 'TYPE') 
+        import_id_fields = ['ID']
         report_skipped = True
         fields = ('NAME', 'CODE', 'TYPE',  'BV', 'CLIENT')
 
@@ -91,14 +92,29 @@ class TaResource(BaseResource):
     def before_import_row(self, row, row_number, **kwargs):
         row['Code*'] = clean_string(row.get('Code*', 'NONE'), code=True)
         row['Name*'] = clean_string(row.get('Name*', "NONE"))
+        # check required fields
+        if row['Code*'] in ['', None]: raise ValidationError("Code* is required field")
+        if row['Type*'] in ['', None]: raise ValidationError("Type* is required field")
+        if row['Name*'] in ['', None]: raise ValidationError("Name* is required field")
+        
+        # code validation
+        regex, value = "^[a-zA-Z0-9\-_]*$", row['Code*']
+        if " " in value: raise ValidationError("Please enter text without any spaces")
+        if  not re.match(regex, value):
+            raise ValidationError("Please enter valid text avoid any special characters except [_, -]")
+
+        # unique record check
+        if om.TypeAssist.objects.select_related().filter(
+            tacode=row['Code*'], tatype__tacode=row['Type*'],
+            client__bucode = row['Client*']).exists():
+            raise ValidationError(f"Record with these values already exist {', '.join(row.values())}")
+        
+
         super().before_import_row(row, **kwargs)
 
     def before_save_instance(self, instance, using_transactions, dry_run=False):
         utils.save_common_stuff(self.request, instance, self.is_superuser)
         
-    def skip_row(self, instance, original, row, import_validation_errors=None):
-        super().skip_row(instance, original, row, import_validation_errors=None)
-        return row['Code*'] in [None, ""]
     
     
         
@@ -121,13 +137,13 @@ class TaAdmin(ImportExportModelAdmin):
 class BtResource(BaseResource):
     CLIENT = BV = None
     BelongsTo = fields.Field(
-        column_name='Belongs To',
+        column_name='Belongs To*',
         default=utils.get_or_create_none_bv,
         attribute='parent',
         widget = wg.ForeignKeyWidget(om.Bt, 'bucode'))
 
     BuType = fields.Field(
-        column_name='Site Type',
+        column_name='Site Type*',
         default=utils.get_or_create_none_typeassist,
         attribute='butype',
         widget = wg.ForeignKeyWidget(om.TypeAssist, 'tacode'))
@@ -139,20 +155,20 @@ class BtResource(BaseResource):
         widget = wg.ForeignKeyWidget(tm.Tenant, 'tenantname'))
 
     Identifier = fields.Field(
-        column_name='Type',
+        column_name='Type*',
         attribute='identifier',
         default=utils.get_or_create_none_typeassist,
         widget = wg.ForeignKeyWidget(om.TypeAssist, 'tacode'))
     
     Sitemanager = fields.Field(
-        column_name='Site Manager',
+        column_name='Site Manager*',
         attribute='siteincharge',
         default=utils.get_or_create_none_people,
         widget = wg.ForeignKeyWidget(pm.People, 'peoplecode'))
     
-    #ID   = fields.Field(attribute='id', column_name="ID")
-    Code = fields.Field(attribute='bucode', column_name='Code')
-    Name = fields.Field(attribute='buname', column_name='Name')
+    ID   = fields.Field(attribute='id', column_name="ID")
+    Code = fields.Field(attribute='bucode', column_name='Code*')
+    Name = fields.Field(attribute='buname', column_name='Name*')
     GPS = fields.Field(attribute='gpslocation', column_name='GPS Location', saves_null_values=True)
     SOLID = fields.Field(attribute='solid', column_name='Sol Id')
     Enable = fields.Field(attribute='enable', column_name='Enable', default=True)
@@ -160,33 +176,52 @@ class BtResource(BaseResource):
     class Meta:
         model = om.Bt
         skip_unchanged = True
-        import_id_fields = ('Code',)
+        import_id_fields = ['ID']
         report_skipped = True
         fields = (
             'Name', 'Code', 'BuType', 'SOLID', 
-            'Enable', 'GPS',
+            'Enable', 'GPS', 'ID',
             'Identifier', 'BelongsTo', 'tenant',)
 
     def __init__(self, *args, **kwargs):
         super(BtResource, self).__init__(*args, **kwargs)
+        self.is_superuser = kwargs.pop('is_superuser', None)
         self.request = kwargs.pop('request', None)
         
     
     def before_import_row(self, row, **kwargs):
+        row['Code*'] = clean_string(row.get('Code*', 'NONE'), code=True)
+        row['Name*'] = clean_string(row.get('Name*', "NONE"))
         self._gpslocation = clean_point_field(row['GPS Location'])
         self._solid = row['Sol Id']
+        # check required fields
+        if row['Code*'] in ['', None]: raise ValidationError("Code* is required field")
+        if row['Type*'] in ['', None]: raise ValidationError("Type* is required field")
+        if row['Name*'] in ['', None]: raise ValidationError("Name* is required field")
+        if row['Belongs To*'] in ['', None]: raise ValidationError("Name* is required field")
+        
+        # code validation
+        regex, value = "^[a-zA-Z0-9\-_]*$", row['Code*']
+        if " " in value: raise ValidationError("Please enter text without any spaces")
+        if  not re.match(regex, value):
+            raise ValidationError("Please enter valid text avoid any special characters except [_, -]")
+        
+        # unique record check
+        if om.Bt.objects.select_related().filter(
+            bucode=row['Code*'], parent__bucode=row['Belongs To*'],
+            identifier__tacode = row['Type*']).exists():
+            raise ValidationError(f"Record with these values already exist {', '.join(row.values())}")
+        
+        super().before_import_row(row, **kwargs)
+
 
     def before_save_instance(self, instance, using_transactions, dry_run):
-        instance.bucode = instance.bucode.upper()
         instance.gpslocation = self._gpslocation
         instance.solid = int(self._solid)
         utils.save_common_stuff(self.request, instance)
 
     def get_queryset(self):
-        return om.Bt.objects.select_related(
-            'identifier', 'parent', 'butype',
-            'tenant', 
-        ).all()
+        return om.Bt.objects.select_related().all()
 
 @admin.register(om.Bt)
 class BtAdmin(ImportExportModelAdmin):
@@ -211,7 +246,7 @@ class ShiftResource(resources.ModelResource):
         attribute='client',
         widget = wg.ForeignKeyWidget(om.Bt, 'bucode'),
         default='NONE'
-    )
+    )    
     BV = fields.Field(
         column_name='BV',
         attribute='bu',

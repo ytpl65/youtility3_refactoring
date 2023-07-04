@@ -5,7 +5,7 @@ from django.db.models import Q
 
 @receiver(pre_save, sender=Ticket)
 def set_serial_no_for_ticket(sender, instance, **kwargs):
-    if instance.id is None:  # if seqno is not set yet
+    if instance.id is None and instance.ticketdesc !='NONE':  # if seqno is not set yet
         #ic(instance.other_data)
         latest_record = sender.objects.filter(~Q(ticketdesc='NONE') & ~Q(ticketno__isnull=True), client=instance.client, bu = instance.bu).order_by('-cdtz').first()
         #ic(latest_record.id)

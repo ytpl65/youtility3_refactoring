@@ -64,7 +64,7 @@ class PELManager(models.Manager):
             owner=qset[0]['uuid']).values(
                 'filepath', 'filename', 'attachmenttype', 'datetime', 'gpslocation'):
             return list(chain(qset, atts))
-        return list(self.none)
+        return list(self.none())
     
     def get_peopleevents_listview(self, related,fields,request):
         R, S = request.GET, request.session

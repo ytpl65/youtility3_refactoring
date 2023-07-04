@@ -1658,19 +1658,20 @@ def convert_seconds_to_human_readable(seconds):
 
 def create_client_site():
     from apps.onboarding.models import Bt, TypeAssist
-    client_type = TypeAssist.objects.create(
+    client_type, _ = TypeAssist.objects.get_or_create(
         tacode='CLIENT', taname = 'Client'
     )
-    site_type = TypeAssist.objects.create(
+    site_type, _ = TypeAssist.objects.get_or_create(
         tacode='SITE', taname = 'Site', 
     )
     client = Bt.objects.create(
         bucode='TESTCLIENT', buname='Test Client',
-        identifier=client_type
+        identifier=client_type, id=4
     )
     site = Bt.objects.create(
         bucode = 'TESTBT', buname = 'Test Bt',
-        identifier = site_type, parent = client
+        identifier = site_type, parent = client,
+        id=5
     )
     return client, site
 
@@ -1680,7 +1681,7 @@ def create_user():
     from django.contrib.auth import get_user_model
     User = get_user_model()
     user = User.objects.create(
-            loginid='testuser',
+            loginid='testuser', id=4,
             dateofbirth='2022-05-22', peoplecode='TESTUSER',
             peoplename='Test User', email="testuser@gmail.com",
             isverified = True)
@@ -1692,21 +1693,38 @@ def create_user():
 
 def basic_user_setup():
     '''
-    create user, site and client and 
-    login the user and return the request
+    sets up the basic user setup
+    and returns the client
     '''
     from django.urls import reverse
     from django.test import Client
-    client = Client()
-    client.get(reverse('login'))
+    
+    # create user, client and site and assign (client, site) it to user
     user = create_user()
     _client, _site, = create_client_site()
     user.client = _client
     user.bu = _site
     user.save()
     
+    # initialize the test client
+    client = Client()
+    
+    # request the login page, this sets up test_cookies like browser
+    client.get(reverse('login'))
+    
+    # post request to login, this saves the session data for the user
     response = client.post(
     reverse('login'), 
     data = {'username':'testuser', 'password':'testpassword', 'timezone':330})
+
+    # get request from the response
+    request = response.wsgi_request
     
-    return response.wsgi_request
+    # simulate the login of the client
+    client.login(**{'username':'testuser', 'password':'testpassword', 'timezone':330})
+    
+    # update the default session data with user session data got from post request
+    session = client.session
+    session.update(dict(request.session))
+    session.save()
+    return client

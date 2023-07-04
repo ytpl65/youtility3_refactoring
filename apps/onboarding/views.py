@@ -500,6 +500,7 @@ class BulkImportData(LoginRequiredMixin, View):
         R, P = request.GET, self.params
 
         if (R.get('action') == 'form'):
+            self.remove_temp_file(request)
             cxt = {'importform': P['form'](initial={'table': "TYPEASSIST"})}
             return render(request, P['template'], cxt)
 
@@ -521,9 +522,10 @@ class BulkImportData(LoginRequiredMixin, View):
         R, P = request.POST, self.params
         ic(R)
         form = P['form'](R, request.FILES)
-        if not form.is_valid():
+        if not form.is_valid() and R['action'] != 'confirmImport':
             return rp.JsonResponse({'errors': form.errors}, status=404)
         res, dataset = self.get_resource_and_dataset(request, form)
+        ic(res, dataset)
         if R.get('action') == 'confirmImport':
             results = res.import_data(dataset = dataset, dry_run = False, raise_errors = False)
             return rp.JsonResponse({'totalrows':results.total_rows}, status = 200)
@@ -531,38 +533,26 @@ class BulkImportData(LoginRequiredMixin, View):
             try:
                 results = res.import_data(
                     dataset=dataset, dry_run=True, raise_errors=False, use_transactions=True)
-                ic(res.get_error_result_class())
-                if results.has_errors():
-                    data = []
-                    for rowerr in results.row_errors():
-                        
-                        row_data = {'Row#': rowerr[0]}
-                        errors = []
-                        for err in rowerr[1]:
-                            ic(dir(err))
-                            readable_error = self.get_readable_error(err.error)
-                            errors.append(readable_error)
-                            row_data |= err.row
-                        row_data['Error'] = '<br>'.join(errors)
-                        data.append(row_data)
-
-                    columns = [{'title': col, 'data': col}
-                            for col in data[0].keys()] if data else []
-                    no_of_cols = len(data[0].keys()) if data else 0
-                    return rp.JsonResponse({'data': data, 'columns': columns, 'no_of_cols': no_of_cols, 'rc': 1}, status=200)
-                else:
-                    columns = [{'title': col}
-                            for col in dataset.dict[0].keys()] if dataset.dict else []
-                    preview_data = [list(row) for row in dataset._data]
-                    return rp.JsonResponse({'totalrows': results.total_rows, 'columns': columns, 'preview_data': preview_data}, status=200)
+                return render(request, 'onboarding/imported_data.html', {'result':results})
             except Exception as e:
                 logger.error("error", exc_info=True)
                 return rp.JsonResponse({"error": "something went wrong!"}, status=500)
     
     def get_resource_and_dataset(self, request, form):
         table = form.cleaned_data.get('table')
-        file = request.FILES['importfile']
-        dataset = Dataset().load(file)
+        if request.POST.get('action') == 'confirmImport':
+            tempfile = request.session['temp_file_name']
+            with open(tempfile, 'rb') as file:
+                dataset = Dataset().load(file)
+        else:
+            file = request.FILES['importfile']
+            dataset = Dataset().load(file)
+            #save to temp storage
+            import tempfile
+            with tempfile.NamedTemporaryFile(delete=False) as tf:
+                for chunk in file.chunks():
+                    tf.write(chunk)
+                request.session['temp_file_name'] = tf.name
         res = self.params['model_resource_map'][table](request=request)
         return res, dataset
 
@@ -573,6 +563,16 @@ class BulkImportData(LoginRequiredMixin, View):
         if(isinstance(error, IntegrityError)):
             return "Record already exist, please check your data."
         return str(error)
+    
+    def remove_temp_file(self, request):
+        filename = request.session.get('temp_file_name', '')
+        try:
+            os.remove(filename)
+        except FileNotFoundError:
+            print(f"The file {filename} does not exist.")
+        except Exception as e:
+            print(f"An error occurred while trying to remove the file {filename}: {str(e)}")
+
 
 class Client(LoginRequiredMixin, View):
     params = {

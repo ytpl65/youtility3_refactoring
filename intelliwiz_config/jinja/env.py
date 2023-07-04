@@ -5,6 +5,10 @@ from django.contrib import messages
 from widget_tweaks.templatetags import widget_tweaks as wt
 from datetime import  datetime, timedelta
 
+def linebreaks(val):
+    val = val.replace('\n', '<br>')
+    return f"<p>{val}</p>"
+
 
 
 def debug(info):
@@ -32,6 +36,7 @@ class JinjaEnvironment(Environment):
         self.globals['current_year'] = datetime.now().date().year
         self.globals['url'] = reverse
         self.filters["debug"] = debug
+        self.filters["linebreaks"] = linebreaks
         self.globals['get_msgs'] = messages.get_messages
         self.filters['add_class']  = wt.add_class   
         self.filters['set_attr']  = wt.set_attr 

@@ -12,6 +12,7 @@ from datetime import datetime
 from django.contrib.gis.db.models import PointField
 from django.utils import timezone
 from django.conf import settings
+from ..core import utils
 
 # Create your models here.
 class Question(BaseModel, TenantAwareModel):
@@ -488,7 +489,7 @@ class Jobneed(BaseModel, TenantAwareModel):
         
     def save(self, *args, **kwargs):
         if self.ticket_id is None:
-            self.ticket_id = 1
+            self.ticket_id = utils.get_or_create_none_ticket().id
         super().save(*args, **kwargs)
 
 
