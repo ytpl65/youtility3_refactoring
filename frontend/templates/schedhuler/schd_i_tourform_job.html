@@ -408,7 +408,7 @@ Schedule Tour
             idSrc:  'pk',
             fields:[
                 {data:'pk', type:'hidden', name:'pk', def:'None'},
-                {label: 'Seq No', name: 'seqno', type: 'text', data:'<seqno></seqno>'},
+                {label: 'Seq No', name: 'seqno', type: 'text', data:'seqno'},
                 {label: 'Asset/Checkpoint', name: 'asset', type: 'select', data:'asset__assetname'},
                 {label: 'Question Set', name: 'qset', type: 'select', data:'qset__qsetname'},
                 {label: 'Expiry Time', name: 'expirytime', type: 'text', data:'expirytime', def:0},
@@ -441,14 +441,29 @@ Schedule Tour
             }
             if(action == 'edit'){
                 var data = getCurrentEditingRow(editor, table);
-                //init question
+                //init qset
                 var newOption = new Option(
-                data.quesname.split(" | ")[0],
-                data.question_id,
+                data.qset__qsetname,
+                data.qset_id,
                 true,
                 true
                 );
-                $("#DTE_Field_question").append(newOption);
+                $("#DTE_Field_qset").append(newOption);
+                
+                //init asset
+                var newOption = new Option(
+                data.asset__assetname,
+                data.asset_id,
+                true,
+                true
+                );
+                $("#DTE_Field_asset").append(newOption);
+
+                //init expirytime
+                //editor.field('expirytime').append(data.expirytime)
+
+                //init seqno
+                //editor.field('seqno').val(data.seqno)
             }
         })
 
@@ -466,7 +481,9 @@ Schedule Tour
                 {title:'SNo.', data:"seqno"},
                 {title:'SNo.', data:"pk", visible:false},
                 {title:'Asset/Checkpoint', data:'asset__assetname'},
-                {title:'Checklist', data:'qset__qsetname'},
+                {visible:false, data:'asset_id'},
+                { title:'Checklist', data:'qset__qsetname'},
+                {visible:false,  data:'qset_id'},
                 {title:'Expiry Time', data:'expirytime'}
             ],
             columnDefs:[

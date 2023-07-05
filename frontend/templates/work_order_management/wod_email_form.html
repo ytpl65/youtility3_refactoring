@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 
@@ -41,81 +42,7 @@
                             'DATE':'date', 'EMAILID':'email', 'TIME':'time',  'RATING':'range'} %}
                             {% for ques in qsb %}
 
-
-                            {% if ques.isavpt %}
-                            <div class="mb-3 input-group ">
-                                <label for=""
-                                    class="form-label mt-2 {% if ques.ismandatory %} required {% endif %}">{{ ques.question.quesname }}:&nbsp;</label>
-                                <input type="file" capture="user" name="{{ ques.id }}_{{ ques.answertype }}"
-                                    id="{{ ques.id }}" accept="image/*" {% if ques.ismandatory %} required {% endif %}
-                                    class="form-control ms-3">
-                            </div>
-                            {% elif ques.answertype == 'SINGLELINE' %}
-                            <div class="mb-3 input-group ">
-                                <label for=""
-                                    class="form-label mt-2 {% if ques.ismandatory %} required {% endif %}">{{ ques.question.quesname }}:&nbsp;</label>
-                                <input type="text" class="form-control ms-3" name="{{ ques.id }}_{{ ques.answertype }}"
-                                    {% if ques.ismandatory %} required {% endif %} id="{{ ques.id }}">
-                            </div>
-                            {% elif ques.answertype == 'MULTILINE' %}
-                            <div class="input-group  mb-3">
-                                <label for=""
-                                    class="form-label mt-2 {% if ques.ismandatory %} required {% endif %}">{{ ques.question.quesname }}:&nbsp;</label>
-                                <textarea rows="5" class="form-control ms-3" name="{{ ques.id }}_{{ ques.answertype }}"
-                                    {% if ques.ismandatory %} required {% endif %} id="{{ ques.id }}"></textarea>
-
-                            </div>
-                            {% elif ques.answertype == 'EMAILID' %}
-                            <div class="input-group  mb-3">
-
-                                <label for=""
-                                    class="form-label mt-2 {% if ques.ismandatory %} required {% endif %}">{{ ques.question.quesname }}:&nbsp;</label>
-
-                                <input type="email" class="form-control ms-3" {% if ques.ismandatory %} required
-                                    {% endif %} name="{{ ques.id }}_{{ ques.answertype }}" id="{{ ques.id }}">
-
-                            </div>
-                            {% elif ques.answertype == 'TIME' %}
-                            <div class="input-group  mb-3">
-
-                                <label for=""
-                                    class="form-label mt-2 {% if ques.ismandatory %} required {% endif %}">{{ ques.question.quesname }}:&nbsp;</label>
-
-                                <input type="text" class="form-control ms-3" {% if ques.ismandatory %} required
-                                    {% endif %} name="{{ ques.id }}_{{ ques.answertype }}" id="{{ ques.id }}">
-
-                            </div>
-                            {% elif ques.answertype == 'NUMERIC' %}
-                            <div class="input-group  mb-3">
-
-                                <label for=""
-                                    class="form-label mt-2 {% if ques.ismandatory %} required {% endif %}">{{ ques.question.quesname }}:&nbsp;</label>
-
-                                <input type="number" class="form-control ms-3" {% if ques.ismandatory %} required
-                                    {% endif %} name="{{ ques.id }}_{{ ques.answertype }}" id="{{ ques.id }}">
-
-                            </div>
-                            {% elif ques.answertype == 'RATING' %}
-                            <div class="input-group  mb-3">
-
-                                <label for=""
-                                    class="form-label mt-2 {% if ques.ismandatory %} required {% endif %}">{{ ques.question.quesname }}:&nbsp;</label>
-
-                                <input type="text" class="form-control ms-3" {% if ques.ismandatory %} required
-                                    {% endif %} name="{{ ques.id }}_{{ ques.answertype }}" id="{{ ques.id }}">
-
-                            </div>
-                            {% elif ques.answertype == 'DATE' %}
-                            <div class="input-group  mb-3">
-
-                                <label for=""
-                                    class="form-label mt-2 {% if ques.ismandatory %} required {% endif %}">{{ ques.question.quesname }}:&nbsp;</label>
-
-                                <input type="date" class="form-control ms-3" {% if ques.ismandatory %} required
-                                    {% endif %} name="{{ ques.id }}_{{ ques.answertype }}" id="{{ ques.id }}">
-
-                            </div>
-                            {% elif ques.answertype in  ['CHECKBOX', 'DROPDOWN'] %}
+                            {% if ques.answertype in  ['CHECKBOX', 'DROPDOWN'] %}
                             <div class="input-group  mb-3">
 
                                 <label for=""
@@ -130,6 +57,111 @@
                                     <option value="{{ opt }}">{{ opt }}</option>
                                     {% endfor %}
                                 </select>
+                                {% if ques.isavpt %}
+                                    <input type="file" capture="user" name="{{ ques.id }}-{{ ques.answertype }}"
+                                    id="{{ ques.id }}_avpt" accept="image/*" {% if ques.ismandatory %} required {% endif %}
+                                    class="form-control ms-3">
+                                {% endif %}
+                            </div>
+                            {%elif ques.answertype == 'SINGLELINE' %}
+                            <div class="mb-3 input-group ">
+                                <label for=""
+                                    class="form-label mt-2 {% if ques.ismandatory %} required {% endif %}">{{ ques.question.quesname }}:&nbsp;</label>
+                                <input type="text" class="form-control ms-3" name="{{ ques.id }}_{{ ques.answertype }}"
+                                    {% if ques.ismandatory %} required {% endif %} id="{{ ques.id }}">
+                                {% if ques.isavpt %}
+                                    <input type="file" capture="user" name="{{ ques.id }}-{{ ques.answertype }}"
+                                    id="{{ ques.id }}_avpt" accept="image/*" {% if ques.ismandatory %} required {% endif %}
+                                    class="form-control ms-3">
+                                {% endif %}
+                            </div>
+                            {% elif ques.answertype == 'MULTILINE' %}
+                            <div class="input-group  mb-3">
+                                <label for=""
+                                    class="form-label mt-2 {% if ques.ismandatory %} required {% endif %}">{{ ques.question.quesname }}:&nbsp;</label>
+                                <textarea rows="5" class="form-control ms-3" name="{{ ques.id }}_{{ ques.answertype }}"
+                                    {% if ques.ismandatory %} required {% endif %} id="{{ ques.id }}"></textarea>
+                                {% if ques.isavpt %}
+                                    <input type="file" capture="user" name="{{ ques.id }}-{{ ques.answertype }}"
+                                    id="{{ ques.id }}_avpt" accept="image/*" {% if ques.ismandatory %} required {% endif %}
+                                    class="form-control ms-3">
+                                {% endif %}
+
+                            </div>
+                            {% elif ques.answertype == 'EMAILID' %}
+                            <div class="input-group  mb-3">
+
+                                <label for=""
+                                    class="form-label mt-2 {% if ques.ismandatory %} required {% endif %}">{{ ques.question.quesname }}:&nbsp;</label>
+
+                                <input type="email" class="form-control ms-3" {% if ques.ismandatory %} required
+                                    {% endif %} name="{{ ques.id }}_{{ ques.answertype }}" id="{{ ques.id }}">
+                                {% if ques.isavpt %}
+                                    <input type="file" capture="user" name="{{ ques.id }}-{{ ques.answertype }}"
+                                    id="{{ ques.id }}_avpt" accept="image/*" {% if ques.ismandatory %} required {% endif %}
+                                    class="form-control ms-3">
+                                {% endif %}
+
+                            </div>
+                            {% elif ques.answertype == 'TIME' %}
+                            <div class="input-group  mb-3">
+
+                                <label for=""
+                                    class="form-label mt-2 {% if ques.ismandatory %} required {% endif %}">{{ ques.question.quesname }}:&nbsp;</label>
+
+                                <input type="text" class="form-control ms-3" {% if ques.ismandatory %} required
+                                    {% endif %} name="{{ ques.id }}_{{ ques.answertype }}" id="{{ ques.id }}">
+                                {% if ques.isavpt %}
+                                    <input type="file" capture="user" name="{{ ques.id }}-{{ ques.answertype }}"
+                                    id="{{ ques.id }}_avpt" accept="image/*" {% if ques.ismandatory %} required {% endif %}
+                                    class="form-control ms-3">
+                                {% endif %}
+
+                            </div>
+                            {% elif ques.answertype == 'NUMERIC' %}
+                            <div class="input-group  mb-3">
+
+                                <label for=""
+                                    class="form-label mt-2 {% if ques.ismandatory %} required {% endif %}">{{ ques.question.quesname }}:&nbsp;</label>
+
+                                <input type="number" class="form-control ms-3" {% if ques.ismandatory %} required
+                                    {% endif %} name="{{ ques.id }}_{{ ques.answertype }}" id="{{ ques.id }}">
+                                {% if ques.isavpt %}
+                                    <input type="file" capture="user" name="{{ ques.id }}-{{ ques.answertype }}"
+                                    id="{{ ques.id }}_avpt" accept="image/*" {% if ques.ismandatory %} required {% endif %}
+                                    class="form-control ms-3">
+                                {% endif %}
+
+                            </div>
+                            {% elif ques.answertype == 'RATING' %}
+                            <div class="input-group  mb-3">
+
+                                <label for=""
+                                    class="form-label mt-2 {% if ques.ismandatory %} required {% endif %}">{{ ques.question.quesname }}:&nbsp;</label>
+
+                                <input type="text" class="form-control ms-3" {% if ques.ismandatory %} required
+                                    {% endif %} name="{{ ques.id }}_{{ ques.answertype }}" id="{{ ques.id }}">
+                                {% if ques.isavpt %}
+                                    <input type="file" capture="user" name="{{ ques.id }}-{{ ques.answertype }}"
+                                    id="{{ ques.id }}_avpt" accept="image/*" {% if ques.ismandatory %} required {% endif %}
+                                    class="form-control ms-3">
+                                {% endif %}
+
+                            </div>
+                            {% elif ques.answertype == 'DATE' %}
+                            <div class="input-group  mb-3">
+
+                                <label for=""
+                                    class="form-label mt-2 {% if ques.ismandatory %} required {% endif %}">{{ ques.question.quesname }}:&nbsp;</label>
+
+                                <input type="date" class="form-control ms-3" {% if ques.ismandatory %} required
+                                    {% endif %} name="{{ ques.id }}_{{ ques.answertype }}" id="{{ ques.id }}">
+                                {% if ques.isavpt %}
+                                    <input type="file" capture="user" name="{{ ques.id }}-{{ ques.answertype }}"
+                                    id="{{ ques.id }}_avpt" accept="image/*" {% if ques.ismandatory %} required {% endif %}
+                                    class="form-control ms-3">
+                                {% endif %}
+
                             </div>
                             {% endif %}
                             {% endfor %}

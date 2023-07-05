@@ -99,10 +99,6 @@ class TestAttendanceView(TestCase):
         assert response.status_code == 200
     
     
-    def test_attendance_get_fr_status(self):
-        #needs to work on code
-        pass
-    
     def test_attendance_delete_request(self):
         response = self.client.get(self.url, data = {'action':"delete", 'id':self.pel.id})
         assert response.status_code == 200

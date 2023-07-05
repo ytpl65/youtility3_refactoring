@@ -309,6 +309,7 @@ class ReplyWorkOrder(View):
                     muser_id    = 1,
                 )
                 if qsb_obj.isavpt and request.FILES:
+                    k = f'{qsb_id}-{qsb_obj.answertype}'
                     isuploaded, filename, filepath = utils.upload_vendor_file(request.FILES[k], womid = wo.id)
                     att = self.create_att_record(request.FILES[k], filename, filepath, wod)
                     log.info(f'Is file uploaded {isuploaded} and attachment is created {att.id}')

@@ -1323,7 +1323,7 @@ class InternalTourScheduling(LoginRequiredMixin, View):
         if R.get('action') == 'loadTourCheckpoints':
             if R['parentid'] != 'None':
                 objs = P['model'].objects.filter(parent_id = R['parentid']).select_related('asset', 'qset').values(
-                    'pk', 'qset__qsetname', 'asset__assetname', 'seqno', 'expirytime'
+                    'pk', 'qset__qsetname', 'asset__assetname', 'seqno', 'expirytime', 'asset_id', 'qset_id'
                 ).order_by('seqno')
             else: objs = P['model'].objects.none()
             return rp.JsonResponse({'data':list(objs)})
