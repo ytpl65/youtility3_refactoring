@@ -101,8 +101,8 @@ class TicketView(LoginRequiredMixin, View):
         
         if R.get('id'):
             ticket = utils.get_model_obj(R['id'], request, P)
-            if ticket.status == Ticket.Status.NEW.value:
-                ticket.status = Ticket.Status.OPEN.value
+            if ticket.status == Ticket.Status.NEW.value and ticket.cuser != request.user:
+                ticket.status, ticket.muser = Ticket.Status.OPEN.value, request.user
                 ticket.save()
             cxt = {'ticketform':P['form'](instance=ticket, request=request), 'ownerid': ticket.uuid}
             return render(request, P['template'], cxt)
@@ -110,8 +110,6 @@ class TicketView(LoginRequiredMixin, View):
     
     def post(self, request, *args, **kwargs):
         R, P, data = request.POST, self.params, QueryDict(request.POST['formData'])
-        ic(R)
-
         try:
             with transaction.atomic(using = utils.get_current_db_name()):
                 if pk:=R.get('pk'):

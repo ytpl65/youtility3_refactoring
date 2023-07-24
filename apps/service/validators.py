@@ -1,4 +1,6 @@
 from logging import getLogger
+from croniter import croniter, CroniterBadCronError
+import re
 log = getLogger("mobile_service_log")
 def checkHex(s):
     return not any(((ch < '0' or ch > '9') and (ch < 'A' or ch > 'F')) for ch in s)
@@ -14,12 +16,14 @@ def clean_point_field(val):
     return GEOSGeometry(val)
 
 def clean_code(val):
-    val = str(val)
-    return val.uppper()
+    if val:
+        val = str(val)
+        return val.uppper()
 
 def clean_text(val):
-    val = str(val)
-    return val.title()            
+    if val:
+        val = str(val)
+        return val.title()            
 
 def clean_datetimes(val, offset):
     from datetime import datetime, timedelta, timezone
@@ -59,7 +63,28 @@ def clean_record(record):
 
 
 def clean_string(input_string, code=False):
+    if not input_string: return
     cleaned_string = ' '.join(input_string.split())
     if code:
         cleaned_string = cleaned_string.replace(' ', '_').upper()
     return cleaned_string
+
+def validate_email(email):
+    if email:
+        # Regular expression for validating an Email
+        regex = '^[a-z0-9]+[\._]?[a-z0-9]+[@]\w+[.]\w{2,3}$'
+        # Using re to validate an Email
+        return bool((re.search(regex,email)))
+    
+def clean_array_string(string):
+    if string:
+        string = string.replace(' ', '')
+        return string.split(',')
+    return []
+
+def validate_cron(cron):
+    try:
+        croniter(cron)
+        return True
+    except ValueError:
+        return False

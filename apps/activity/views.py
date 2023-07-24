@@ -870,23 +870,19 @@ class PreviewImage(LoginRequiredMixin, View):
 class GetAllSites(LoginRequiredMixin, View):
    
     def get(self, request):
-        print("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%55")
         try:
             qset = obm.Bt.objects.get_all_sites_of_client(request.session['client_id'])
             sites = qset.values('id', 'bucode','buname')
             return rp.JsonResponse(list(sites), status=200)
         except Exception as e:
             logger.error("get_allsites() exception: %s", e)
-        return rp.JsonResponse({'error':"Invalid Request"}, status=404)       
+        return rp.JsonResponse({'error':"Invalid Request"}, status=404)
 
 class GetAssignedSites(LoginRequiredMixin, View):
     def get(self, request):
-        print("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%55")
         try:
             if data := pm.Pgbelonging.objects.get_assigned_sites_to_people(request.user.id):
-                ic(data)
                 sites    = obm.Bt.objects.filter(id__in = data).values('id', 'bucode','buname')
-                ic(sites)
                 return rp.JsonResponse(list(sites), status=200, safe=False)
         except Exception as e:
             logger.error("get_assignedsites() exception: %s", e)
@@ -1320,6 +1316,11 @@ class CalendarView(View):
                 from apps.work_order_management.models import Wom
                 events  = Wom.objects.get_events_for_calendar(request)
                 return rp.JsonResponse(list(events), safe=False)
+            
+            if R.get('eventType') in ['Tickets']:
+                from apps.y_helpdesk.models import Ticket
+                events = Ticket.objects.get_events_for_calendar(request)
+                return rp.JsonResponse(list(events), safe=False)
         return render(request, 'activity/testCalendar.html')
         
     
@@ -1340,3 +1341,19 @@ class AssetLogView(LoginRequiredMixin, View):
         if R.get('action') == 'asset_log':
             data = P['model'].objects.get_asset_logs(request)
             return rp.JsonResponse(data, status=200)
+        
+
+def get_list_of_peoples(request):
+    if request.method == 'POST':
+        return
+    Model = apps.get_model('activity', request.GET['model'])
+    obj = Model.objects.get(id=request.GET['id'])
+    Pgbelonging = apps.get_model('peoples', 'Pgbelonging')
+    data = Pgbelonging.objects.filter(
+        Q(assignsites_id = 1) | Q(assignsites__isnull=True),
+        pgroup_id = obj.pgroup_id
+    ).values('people__peoplecode', 'people__peoplename', 'id') or Pgbelonging.objects.none()
+    return rp.JsonResponse({'data':list(data)}, status=200)
+    
+    
+    

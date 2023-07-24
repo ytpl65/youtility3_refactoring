@@ -809,6 +809,34 @@ const deniedDraft = (callback) => {
   });
 };
 
+function initializeListOfPeoplesModal(ajaxData, urlname){
+  $('#id_people_list').on('shown.bs.modal', function (event) {
+    $.fn.dataTable.tables({visible: true, api: true}).columns.adjust();
+    $('#id_people_list').modal({
+        keyboard: false
+    })
+    peopleList = $("#tabListOfPeoples").DataTable({
+      ajax:{
+        url:urlname,
+        data:function(d){
+          return $.extend(d, ajaxData)
+        }
+      },
+      retrieve: true,
+      columns:[
+        {data:'id', visible:false},
+        {data:'people__peoplecode', title:'Code'},
+        {data:'people__peoplename', title:'Name'}
+      ],
+      ordering:false, 
+      deferRender: true,
+      scrollX: true,
+      dom:'rti',
+    })
+  })
+
+}
+
 const get_the_wizard = (response) => {
   Swal.fire(wizardOpenedFromDraft).then(() => {
     window.location.href = response.url;

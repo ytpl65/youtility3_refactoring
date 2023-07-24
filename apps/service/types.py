@@ -77,6 +77,7 @@ class VerifyClientOutput(graphene.ObjectType):
 class BasicOutput(graphene.ObjectType):
     rc = graphene.Int(default_value=0)
     msg = graphene.String()
+    email = graphene.String()
 
 class LoginResponseType(DjangoObjectType):
     tenantid = graphene.Int()

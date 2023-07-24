@@ -12,6 +12,15 @@ tr{
 
 {% endblock extra_css %}
 
+{% block popup_alerts %}
+    {% call general_popup(title='List of Peoples', popup_id='id_people_list', modal_size='modal-md') %}
+            <div class="modal-body">
+                <table class="display cell-border" style="width:100%" id="tabListOfPeoples"></table>
+            </div>
+    {% endcall %}
+{% endblock popup_alerts %}
+
+
 <!---- BEGIN CARD TITLE ------>
 {% block card_title %}
 Task List
@@ -35,6 +44,8 @@ Task List
 {% block extra_scripts %}
 <script>
     var table = null;
+    var peopleList = null;
+    var ajaxData = {}
     const formFilter = '#task_filter_jobneed'
     const table_id = '#task_table_jobneed'
     const urlname = "{{ url('schedhuler:jobneedtasks') }}"
@@ -78,6 +89,13 @@ Task List
             showCancelButton:true
         })
     }
+
+    function showListOfPeoples(id, from){
+        $('#id_people_list').modal('show')
+        ajaxData.id=id
+        ajaxData.model = from
+        peopleList.ajax.reload()
+    }
     
     $(document).ready(function (){
         //datatable initialization
@@ -102,7 +120,13 @@ Task List
                 {data: 'jobstatus', title: 'Status'},
                 {data: 'jobtype', title: 'Type'},
                 {data: 'ticketcategory__taname', title: 'Notify Category'},
-                {title: 'People/Group', data:'assignedto'},
+                {title: 'People/Group', data:'assignedto', render:function(data, type, row, meta){
+                    if(data.includes('[GROUP]')){
+                        return `<a href="javascript:void(0)"  onClick='showListOfPeoples(${row['id']}, "Jobneed")'>${data}</a>`
+                    }else{
+                        return data
+                    }
+                }},
                 {data: 'performedby__peoplename', title: 'Performed By'},
                 {data: 'gracetime', title: "Grace Time"},
                 {data: 'expirydatetime', title: "Expiry Datetime"},
@@ -192,6 +216,8 @@ Task List
                 acknowdgeAutocloseTask(indexes)
             }
         });
+
+        initializeListOfPeoplesModal(ajaxData, "{{ url('activity:list_of_peoples') }}")
     })
 </script>
 {% endblock extra_scripts %}

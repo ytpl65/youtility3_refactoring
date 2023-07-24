@@ -15,7 +15,7 @@
 
 <!------ BEGIN FORM TITLE ------->
 {% block form_title %}
-Ticket {% if  ticketform.instance.id is not none  %}- {{ ticketform.instance.id }}{% endif %} 
+Ticket {% if  ticketform.instance.id is not none  %}- {{ ticketform.instance.ticketno }}{% endif %} 
 {% endblock form_title %}
 <!------ END FORM TITLE -------->
 
@@ -338,11 +338,6 @@ Ticket {% if  ticketform.instance.id is not none  %}- {{ ticketform.instance.id 
             let locationid = $('#id_location').val();
             getAssetsOfLocation(locationid, '{{ url("activity:location") }}')
         });
-
-        
-        
-
-
     })
 
 </script>

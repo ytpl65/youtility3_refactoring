@@ -226,9 +226,9 @@ class MasterReportBelonging(LoginRequiredMixin, View):
         R = request.GET
         if R.get('dataSource') == 'sitereporttemplate'  and R.get('parent'):
             objs = self.model.objects.filter(
-                parent = int(R['parent'])
+                parent_id = int(R['parent'])
             ).values(
-                'id', 'qsetname', 'asset_id', 'enable', 'seqno', 'parent',
+                'id', 'qsetname',  'enable', 'seqno', 'parent_id',
                 'type', 'bu_id', 'buincludes', 'assetincludes', 'site_grp_includes',
                 'site_type_includes'
             )

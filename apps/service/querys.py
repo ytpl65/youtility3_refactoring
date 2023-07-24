@@ -135,7 +135,7 @@ class Query(graphene.ObjectType):
             rc, msg = 0, "Success"
         except Exception as e:
             rc, msg = 1, "Failed"
-        return BasicOutput(rc=rc, msg=msg)
+        return BasicOutput(rc=rc, msg=msg, email = user.email)
     
     @staticmethod
     def resolve_tadata(self, info, keys, **kwargs):

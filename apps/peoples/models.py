@@ -54,7 +54,8 @@ def upload_peopleimg(instance, filename):
         foldertype = 'people'
         basedir = fyear = fmonth = None
         basedir = "master"
-        filepath = join(basedir, foldertype, full_filename)
+        client = f'{instance.client.bucode}_{instance.client_id}'
+        filepath = join(basedir, client, foldertype, full_filename)
         filepath = str(filepath).lower()
         fullpath = filepath
     except Exception:

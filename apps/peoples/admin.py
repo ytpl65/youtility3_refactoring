@@ -8,7 +8,7 @@ from import_export.admin import ImportExportModelAdmin
 from django.db.models import Q
 from .models import People,  Pgroup, Pgbelonging, Capability
 from django.core.exceptions import ValidationError
-from apps.service.validators import clean_string, clean_point_field
+from apps.service.validators import clean_string, clean_point_field, clean_array_string
 from django.contrib import admin
 import logging
 import re
@@ -20,16 +20,30 @@ def save_people_passwd(user):
     paswd = f'{user.loginid}@youtility' if not user.password else user.password
     user.set_password(paswd)
     
-class TypeAssistFKW(wg.ForeignKeyWidget):
+class TypeAssistEmployeeTypeFKW(wg.ForeignKeyWidget):
     def get_queryset(self, value, row, *args, **kwargs):
-        return self.model.objects.filter(
-            Q(client__bucode__exact=row["Client"])
+        return self.model.objects.select_related().filter(
+            Q(client__bucode__exact=row["Client*"]),
+            tatype__tacode__exact = 'PEOPLETYPE'
         )
-
-class CustomFiedWidget(wg.Widget):
-    def clean(self, value, row, *args, **kwargs):
-        ic("calling")
-        return value
+class TypeAssistWorkTypeFKW(wg.ForeignKeyWidget):
+    def get_queryset(self, value, row, *args, **kwargs):
+        return self.model.objects.select_related().filter(
+            Q(client__bucode__exact=row["Client*"]),
+            tatype__tacode__exact = 'WORKTYPE'
+        )
+class TypeAssistDepartmentFKW(wg.ForeignKeyWidget):
+    def get_queryset(self, value, row, *args, **kwargs):
+        return self.model.objects.select_related().filter(
+            Q(client__bucode__exact=row["Client*"]),
+            tatype__tacode__exact = 'DEPARTMENT'
+        )
+class TypeAssistDesignationFKW(wg.ForeignKeyWidget):
+    def get_queryset(self, value, row, *args, **kwargs):
+        return self.model.objects.select_related().filter(
+            Q(client__bucode__exact=row["Client*"]),
+            tatype__tacode__exact = 'DESIGNATION'
+        )
     
 
 
@@ -55,25 +69,25 @@ class PeopleResource(resources.ModelResource):
     Department = fields.Field(
         column_name='Department',
         attribute='department',
-        widget = TypeAssistFKW(om.TypeAssist, 'tacode'),
+        widget = TypeAssistDepartmentFKW(om.TypeAssist, 'tacode'),
         default=default_ta
     )
     Designation = fields.Field(
         column_name='Designation',
         attribute='designation',
-        widget = TypeAssistFKW(om.TypeAssist, 'tacode'),
+        widget = TypeAssistDesignationFKW(om.TypeAssist, 'tacode'),
         default=default_ta
     )
     PeopleType = fields.Field(
         column_name='Employee Type*',
         attribute='peopletype',
-        widget = TypeAssistFKW(om.TypeAssist, 'tacode'),
+        widget = TypeAssistEmployeeTypeFKW(om.TypeAssist, 'tacode'),
         default=default_ta
     )
     WorkType = fields.Field(
         column_name='Work Type',
         attribute='worktype',
-        widget = wg.ForeignKeyWidget(om.TypeAssist, 'tacode'),
+        widget = TypeAssistWorkTypeFKW(om.TypeAssist, 'tacode'),
         default=default_ta
     )
     Reportto = fields.Field(
@@ -100,13 +114,10 @@ class PeopleResource(resources.ModelResource):
         widget = wg.DateWidget()
     )
     
-    
-    
 
     ID                 = fields.Field(attribute='id', column_name='ID')
     Code               = fields.Field(attribute='peoplecode', column_name='Code*')
-    deviceid           = fields.Field(attribute='deviceid', column_name='Device Id')
-    Password           = fields.Field(attribute='password', column_name='Password', default=None)
+    deviceid           = fields.Field(attribute='deviceid', column_name='Device Id', default=-1)
     Name               = fields.Field(attribute='peoplename', column_name='Name*')
     LoginId            = fields.Field(attribute='loginid', column_name='Login ID*')
     MobNo              = fields.Field(attribute='mobno', column_name='Mob No*')
@@ -114,7 +125,7 @@ class PeopleResource(resources.ModelResource):
     Gender             = fields.Field(attribute='gender', column_name='Gender*')
     Enable             = fields.Field(widget=wg.BooleanWidget(), attribute='enable', default=True)
     isemergencycontact = fields.Field(widget=wg.BooleanWidget(), default=False, column_name='Emergency Contact')
-    alertmails         = fields.Field(widget=CustomFiedWidget(), default=False, column_name='Alert Emails')
+    alertmails         = fields.Field(default=False, column_name='Alert Emails')
     mobilecaps         = fields.Field(default='NONE', column_name='Mobile Capability')
     reportcaps         = fields.Field(default='NONE', column_name='Report Capability')
     webcaps            = fields.Field(default='NONE', column_name='Web Capability')
@@ -122,7 +133,6 @@ class PeopleResource(resources.ModelResource):
     permanentaddr      = fields.Field(default='NONE', column_name='Permanent Address')
     portletcaps        = fields.Field(default='NONE', column_name='Portlet Capability')
     blacklist          = fields.Field(widget=wg.BooleanWidget(), default=False, column_name='Blacklist')
-    IsAdmin            = fields.Field(attribute='isadmin', column_name='Is Admin', widget=wg.BooleanWidget(), default=False)
 
     class Meta:
         model = pm.People
@@ -132,7 +142,7 @@ class PeopleResource(resources.ModelResource):
         fields = [
             'ID', 'Code', 'Name', 'LoginId', 'Designation', 'Department', 'MobNo', 'Email', 'deviceid',
             'Site', 'DateOfJoin', 'date_of_release', 'DateOfBirth', 'Gender', 'PeopleType','WorkType', 'Enable',
-            'IsAdmin', 'Client', 'Password', 'isemergencycontact', 'alertmails', 'mobilecaps', 'reportcaps', 'webcaps',
+            'Client', 'isemergencycontact', 'alertmails', 'mobilecaps', 'reportcaps', 'webcaps',
             'portletcaps', 'blacklist', 'currentaddr', 'permanentaddr', 'Reportto']
 
     def __init__(self, *args, **kwargs):
@@ -143,10 +153,10 @@ class PeopleResource(resources.ModelResource):
         
     def before_import_row(self, row, **kwargs):
         self.validations(row)
-        self._mobilecaps         = row["Mobile Capability"].split(",") if row.get('Mobile Capability') else [], 
-        self._reportcaps         = row["Report Capability"].split(",") if row.get('Report Capability') else []
-        self._webcaps            = row["Web Capability"].split(",") if row.get('Web Capability') else []
-        self._portletcaps        = row["Portlet Capability"].split(",") if row.get('Portlet Capability') else []
+        self._mobilecaps         = clean_array_string(row['Mobile Capability']) if row.get('Mobile Capability') else [], 
+        self._reportcaps         = clean_array_string(row["Report Capability"]) if row.get('Report Capability') else []
+        self._webcaps            = clean_array_string(row["Web Capability"]) if row.get('Web Capability') else []
+        self._portletcaps        = clean_array_string(row["Portlet Capability"]) if row.get('Portlet Capability') else []
         self._alertmails         = row.get('Alert Emails') or False
         self._blacklist          = row.get('Blacklist') or False
         self._currentaddr        = row.get('Current Address', "")
@@ -180,7 +190,12 @@ class PeopleResource(resources.ModelResource):
         if " " in value: raise ValidationError("Please enter text without any spaces")
         if  not re.match(regex, value):
             raise ValidationError("Please enter valid text avoid any special characters except [_, -]")
-
+        
+        # mob no validation
+        if not utils.verify_mobno(str(row.get('Mob No*', -1))):
+            raise ValidationError("Mob No* is not valid")
+        else: row['Mob No*'] = row['Mob No*'] if '+' in row['Mob No*'] else f'+{row["Mob No*"]}'
+        
         # unique record check
         if People.objects.select_related().filter(
             loginid=row['Login ID*'], peoplecode=row['Code*'],
@@ -218,63 +233,9 @@ class PeopleAdmin(ImportExportModelAdmin):
     def get_queryset(self, request):
         return pm.People.objects.select_related().all()
 
-class PeopleGroupResource(resources.ModelResource):
-    Client = fields.Field(
-        column_name='Client*',
-        attribute='client',
-        widget = wg.ForeignKeyWidget(om.Bt, 'bucode'),
-        default=utils.get_or_create_none_bv
-    )
-    BV = fields.Field(
-        column_name='Site*',
-        attribute='bu',
-        widget = wg.ForeignKeyWidget(om.Bt, 'bucode'),
-        saves_null_values = True,
-        default=utils.get_or_create_none_bv
-    )
-    Identifier = fields.Field(
-        column_name='Type*',
-        attribute='identifier',
-        widget=wg.ForeignKeyWidget(om.TypeAssist, 'tacode'),
-        default='PEOPLEGROUP'
-    )
-    ID = fields.Field(attribute='id', column_name='ID')
-    Enable = fields.Field(attribute='enable', column_name='Enable', widget=wg.BooleanWidget(), default=True)
-    Name = fields.Field(attribute='groupname', column_name='Group Name*')
-    
-    class Meta:
-        model = pm.Pgroup
-        skip_unchanged = True,
-        import_id_fields = ['ID']
-        report_skipped = True,
-        fields = ['ID', 'Client', 'BV', 'Identifier', 'Enable', 'Name']
-        
-    def __init__(self, *args, **kwargs):
-        super(PeopleGroupResource, self).__init__(*args, **kwargs)
-        self.is_superuser = kwargs.pop('is_superuser', None)
-        self.request = kwargs.pop('request', None)
-    
-    def before_import_row(self, row, row_number, **kwargs):
-        row['Name*'] = clean_string(row.get('Name*', "NONE"))
-        # check required fields
-        if row['Type*'] in ['', None]: raise ValidationError("Type* is required field")
-        if row['Name*'] in ['', None]: raise ValidationError("Name* is required field")
-        
-
-        # unique record check
-        if Pgroup.objects.select_related().filter(
-            groupname=row['Name*'], identifier__tacode=row['Type*'],
-            client__bucode = row['Client*']).exists():
-            raise ValidationError(f"Record with these values already exist {', '.join(row.values())}")
-        
-
-        super().before_import_row(row, **kwargs)
-
-    def before_save_instance(self, instance, using_transactions, dry_run=False):
-        utils.save_common_stuff(self.request, instance, self.is_superuser)   
 
 
-class SiteGroupResource(resources.ModelResource):
+class GroupResource(resources.ModelResource):
     Client = fields.Field(
         column_name='Client*',
         attribute='client',
@@ -292,7 +253,6 @@ class SiteGroupResource(resources.ModelResource):
         attribute='identifier',
         column_name='Type*',
         widget=wg.ForeignKeyWidget(om.TypeAssist, 'tacode'),
-        default='SITEGROUP'
     )
     ID = fields.Field(attribute='id', column_name='ID')
     Enable = fields.Field(attribute='enable', column_name='Enable', widget=wg.BooleanWidget(), default=True)
@@ -303,27 +263,32 @@ class SiteGroupResource(resources.ModelResource):
         skip_unchanged = True
         import_id_fields = ['ID']
         report_skipped = True,
-        fields = ['ID', 'Client', 'BV', 'Identifier', 'Enable', 'Name']
+        fields = ['ID', 'Client', 'BV','Identifier', 'Enable', 'Name']
     
     def __init__(self, *args, **kwargs):
-        super(SiteGroupResource, self).__init__(*args, **kwargs)
+        super(GroupResource, self).__init__(*args, **kwargs)
         self.is_superuser = kwargs.pop('is_superuser', None)
         self.request = kwargs.pop('request', None)
     
     def before_import_row(self, row, row_number, **kwargs):
         row['Name*'] = clean_string(row.get('Name*', "NONE"))
         # check required fields
-        if row['Type*'] in ['', None]: raise ValidationError("Type* is required field")
-        if row['Name*'] in ['', None]: raise ValidationError("Name* is required field")
+        if row.get('Name*') in ['', None]: raise ValidationError(
+            {'Name*': "This field is required"})
+        if row.get('Type*') in ['', None]: raise ValidationError(
+            {'Type*':'This field is required'}
+        )
         
+        if row['Type*'] not in ['PEOPLEGROUP', 'SITEGROUP']:
+            raise ValidationError({
+                'Type*':"The value must be from ['PEOPLEGROUP', 'SITEGROUP']"
+            })
 
         # unique record check
         if Pgroup.objects.select_related().filter(
             groupname=row['Name*'], identifier__tacode=row['Type*'],
             client__bucode = row['Client*']).exists():
             raise ValidationError(f"Record with these values already exist {', '.join(row.values())}")
-        
-
         super().before_import_row(row, **kwargs)
 
     def before_save_instance(self, instance, using_transactions, dry_run=False):
@@ -339,8 +304,8 @@ class SiteGroupResource(resources.ModelResource):
 
 
 @admin.register(Pgroup)
-class PeoplegroupAdmin(ImportExportModelAdmin):
-    resource_class = PeopleGroupResource
+class GroupAdmin(ImportExportModelAdmin):
+    resource_class = GroupResource
     fields = ['groupname', 'enable',
               'identifier', 'client', 'bu']
     list_display = ['id', 'groupname',
@@ -348,38 +313,85 @@ class PeoplegroupAdmin(ImportExportModelAdmin):
     list_display_links = ['groupname', 'enable', 'identifier']
 
 
-# @admin.register(Pgroup)
-# class SitegroupAdmin(ImportExportModelAdmin):
-#     resource_class = SiteGroupResource
-#     fields = ['groupname', 'enable',
-#               'identifier', 'client', 'bu']
-#     list_display = ['id', 'groupname',
-#                     'enable', 'identifier', 'client', 'bu']
-#     list_display_links = ['groupname', 'enable', 'identifier']
+class PgroupFKW(wg.ForeignKeyWidget):
+    def get_queryset(self, value, row, *args, **kwargs):
+        return self.model.objects.select_related().filter(
+            Q(client__bucode__exact=row["Client*"]),
+        )
+class PeopleFKW(wg.ForeignKeyWidget):
+    def get_queryset(self, value, row, *args, **kwargs):
+        return self.model.objects.select_related().filter(
+            Q(client__bucode__exact=row["Client*"]),
+        )
+class SiteFKW(wg.ForeignKeyWidget):
+    def get_queryset(self, value, row, *args, **kwargs):
+        return self.model.objects.select_related().filter(
+            Q(client__bucode__exact=row["Client*"]),
+        )
 
-
-class PgbelongingResource(resources.ModelResource, BaseFieldSet2):
-    pgroup = fields.Field(
-        column_name='pgroup',
+class GroupBelongingResource(resources.ModelResource):
+    CLIENT = fields.Field(
+        column_name='Client*',
+        attribute='client',
+        widget = wg.ForeignKeyWidget(om.Bt, 'bucode'),
+        default=utils.get_or_create_none_bv
+    )
+    BV = fields.Field(
+        column_name='Site*',
+        attribute='bu',
+        widget = wg.ForeignKeyWidget(om.Bt, 'bucode'),
+        saves_null_values = True,
+        default=utils.get_or_create_none_bv
+    )
+    GROUP = fields.Field(
+        column_name='Group Name*',
         attribute='pgroup',
-        widget = wg.ForeignKeyWidget(pm.Pgroup, 'name')
+        widget = PgroupFKW(pm.Pgroup, 'groupname'),
+        default=utils.get_or_create_none_pgroup
     )
-    people = fields.Field(
-        column_name='people',
+    PEOPLE = fields.Field(
+        column_name='Of People',
         attribute='people',
-        widget = wg.ForeignKeyWidget(pm.People, 'peoplecode')
+        widget=PeopleFKW(pm.People, 'peoplecode'),
+        default=utils.get_or_create_none_people
     )
-
+    SITE = fields.Field(
+        column_name='Of Site',
+        widget= SiteFKW(om.Bt, 'bucode'),
+        attribute='assignsites',
+        default=utils.get_or_create_none_bv
+    )
+    ID = fields.Field(attribute='id')
     class Meta:
         model = pm.Pgbelonging
         skip_unchanged = True
         report_skipped = True
-        fields = ['pgroup', 'people', 'isgrouplead',
-                  'assignsites', 'client', 'bu', 'cuser', 'muser']
+        import_id_fields = ['ID']
+        fields = ['GROUP', 'PEOPLE', 'CLIENT', 'BV', 'SITE']
+
+    def __init__(self, *args, **kwargs):
+        super(GroupBelongingResource, self).__init__(*args, **kwargs)
+        self.is_superuser = kwargs.pop('is_superuser', None)
+        self.request = kwargs.pop('request', None)
+    
+    def before_import_row(self, row, row_number, **kwargs):
+        if row.get('Group Name*') in ['', 'NONE', None]: raise ValidationError({'Group Name':"This field is required"})
+        if row.get('Of Site') in ['', 'NONE', None] and row.get('Of People') in ['', 'NONE', None]:
+            raise ValidationError("Either Site or People should be set, both cannot be None")
+        
+        # unique record check
+        if pm.Pgbelonging.objects.select_related().filter(
+            people__peoplecode=row['Of People'], pgroup__groupname=row['Group Name*'],
+            client__bucode = row['Client*'], assignsites__bucode = row['Site*']).exists():
+            raise ValidationError(f"Record with these values already exist {row.values()}")
+        super().before_import_row(row, **kwargs)
+    
+    
+
 
 @admin.register(Pgbelonging)
 class PgbelongingAdmin(ImportExportModelAdmin):
-    resource_class = PgbelongingResource
+    resource_class = GroupBelongingResource
     fields = ['id', 'pgroup', 'people',
               'isgrouplead', 'assignsites', 'bu', 'client']
     list_display = ['id', 'pgroup', 'people',

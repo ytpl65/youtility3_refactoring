@@ -506,7 +506,6 @@ class SiteGroup(LoginRequiredMixin, View):
         data = QueryDict(request.POST['formData'])
         assignedSites = json.loads(request.POST['assignedSites'])
         pk = data.get('pk', None)
-        ic(data)
         try:
             if pk not in [None, 'None']:
                 msg = "pgroup_view"

@@ -6,6 +6,14 @@ Scheduled Tasks
 {% endblock card_title %}
 <!----- END CARD TITLE -------->
 
+{% block popup_alerts %}
+    {% call general_popup(title='List of Peoples', popup_id='id_people_list', modal_size='modal-md') %}
+            <div class="modal-body">
+                <table class="display cell-border" style="width:100%" id="tabListOfPeoples"></table>
+            </div>
+    {% endcall %}
+{% endblock popup_alerts %}
+
 <!------------------------------------ BEGIN PAGE BREADCUMBS ------------------------------------>
 {% block pagebreadcumb %}
 {{ super() }}
@@ -27,8 +35,16 @@ Scheduled Tasks
 {% block extra_scripts %}
 <script>
 	var table        = null;
+    var peopleList = null;
+    var ajaxData = {}
 	//const table_id   = "#schd_task_table"
     const formUrl    = "{{ url('schedhuler:jobschdtasks') }}"
+    function showListOfPeoples(id, from){
+        $('#id_people_list').modal('show')
+        ajaxData.id=id
+        ajaxData.model = from
+        peopleList.ajax.reload()
+    }
 
     $(document).ready(function (){
         //datatable initialization
@@ -45,7 +61,13 @@ Scheduled Tasks
                 {data: 'jobname', title: "Name"},
                 {data: 'asset__assetname', title: "Asset"},
                 {data: 'qset__qsetname', title: 'Checklist'},
-                {data: 'assignedto', title:"People/Group", defaultContent:null},
+                {data: 'assignedto', title:"People/Group", defaultContent:null, render:function(data, type, row, meta){
+                    if(data.includes('[GROUP]')){
+                        return `<a href="javascript:void(0)"  onClick='showListOfPeoples(${row['id']}, "Job")'>${data}</a>`
+                    }else{
+                        return data
+                    }
+                }},
                 {data: 'fromdate', title: "From"},
                 {data: 'uptodate', title: 'To'},
                 {data: 'planduration', title: 'Duration'},
@@ -92,6 +114,8 @@ Scheduled Tasks
 			]
         
         })
+
+        initializeListOfPeoplesModal(ajaxData, "{{ url('activity:list_of_peoples') }}")
     })
 
 </script>

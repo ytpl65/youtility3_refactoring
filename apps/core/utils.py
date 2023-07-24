@@ -998,12 +998,13 @@ def clean_record(record):
     return record
 
 
-def save_common_stuff(request, instance, is_superuser=False):
+def save_common_stuff(request, instance, is_superuser=False, ctzoffset=-1):
     from django.utils import timezone
     userid = 1 if is_superuser else request.user.id
     if instance.cuser is not None:
         instance.muser_id = userid
         instance.mdtz = timezone.now().replace(microsecond=0)
+        instance.ctzoffset = ctzoffset
     else:
         instance.cuser_id = instance.muser_id = userid
     #instance.ctzoffset = int(request.session['ctzoffset'])
@@ -1026,53 +1027,6 @@ def get_record_from_input(input):
 
 # import face_recognition
 
-
-# GLOBAL
-ImageFile.LOAD_TRUNCATED_IMAGES = True
-
-
-def fr(imagePath1, imagePath2):
-
-    result = msg = None
-    image1 = image2 = None
-    status = False
-    try:
-        if os.path.exists(imagePath1):
-            image1 = face_recognition.load_image_file(imagePath1)
-
-            if os.path.exists(imagePath2):
-                image2 = face_recognition.load_image_file(imagePath2)
-
-                # Image Path1 Encoding
-                # after_image1_encoding= face_recognition.face_encodings(image1)[0]
-                after_image1_encoding = face_recognition.face_encodings(image1)
-                after_image1_encoding = after_image1_encoding[0] if len(
-                    after_image1_encoding) > 0 else None
-                # storyline(A, "python_fr.fr() after_image1_encoding: %s", after_image1_encoding)
-
-                # Image Path2 Encoding
-                # after_image2_encoding= face_recognition.face_encodings(image2)[0]
-                after_image2_encoding = face_recognition.face_encodings(image2)
-                after_image2_encoding = after_image2_encoding[0] if len(
-                    after_image2_encoding) > 0 else None
-                # storyline(A, "python_fr.fr() after_image2_encoding: %s", after_image2_encoding)
-
-                if (after_image1_encoding is not None and after_image2_encoding is not None):
-                    result = face_recognition.compare_faces(
-                        [after_image1_encoding], after_image2_encoding, tolerance=0.5)
-                    status = result[0]
-                    msg = f'Face recognition {"success." if status else "failed."}'
-                else:
-                    msg = "Face recognition failed."
-            else:
-                msg = "Unable to find image to be matched."
-        else:
-            msg = "Default people image not found. Please upload default image for people and try again."
-    except Exception as e:
-        logger.error(
-            f"Face Recongition of {imagePath1} {imagePath2}", exc_info=True)
-        raise Exception
-    return status, msg
 
 
 def alert_observation(pk, event):
@@ -1207,84 +1161,6 @@ def failed(self):
     self.stdout.write(self.style.ERROR("FAILED"))
 
 
-# def upload(request):
-#     import os
-#     from datetime import datetime
-
-#     from dateutil import parser
-#     ic('upload(request)')
-#     filename = filepath = docnumber = None
-#     isUploaded = False
-#     ownerid = isDefault = foldertype = attachmenttype = None
-#     if request.POST["docnumber"]:
-#         docnumber = request.POST["docnumber"]
-#         foldertype = request.POST["foldertype"]
-#         ownerid = request.POST["ownerid"]
-#         peopleid = request.POST["peopleid"]
-#         if "img" in request.FILES:
-#             home_dir = basedir = tablename = fyear = fmonth = None
-#             home_dir = ("~") + "/"
-#             fyear = str(datetime.now().year)
-#             fmonth = str(datetime.now().strftime("%b"))
-#             fextension = os.path.splitext(request.FILES["img"].name)[1]
-#             filename = parser.parse(str(datetime.now())).strftime(
-#                 '%d_%b_%Y_%H%M%S') + fextension
-#             if foldertype in ["task", "internaltour", "externaltour", "ticket", "incidentreport"]:
-#                 basedir, tablename = "transaction", "JOBNEED"
-#             elif foldertype in ["visitorlog"]:
-#                 basedir, tablename = "transaction", "VISITORLOG"
-#             elif foldertype in ["conveyance"]:
-#                 basedir, tablename = "transaction", "CONVEYANCE"
-#             elif foldertype in ["personlogger"]:
-#                 basedir, tablename = "transaction", "personlogger"
-#                 doctype = request.POST["doctype"]
-#                 filename = doctype + fextension
-#             else:#youtility4_media/transaction/38/CONVEYANCE/2022/Nov/
-#                 basedir = "master"
-#                 if request.POST["isDefault"] == "True" and request.POST["foldertype"] == "people":
-#                     filename = f"default{fextension}"
-#                 elif request.POST["isDefault"] == "True" and request.POST["foldertype"] == "asset" or request.POST["foldertype"] == "smartplace" or request.POST["foldertype"] == "location" or request.POST["foldertype"] == "checkpoint" or request.POST["foldertype"] == "nonengineeringassets":
-#                     filename = ownerid + fextension
-#                 else:
-#                     filename = request.FILES['img'].name
-
-#             if basedir == "transaction":
-#                 filepath = "youtility4_media" + "/" + basedir + "/" + fyear + "/" + \
-#                     fmonth + "/" + tablename + "/" + foldertype + "/" + ownerid
-#             else:
-#                 filepath = "youtility4_media" + "/" + basedir + "/" + foldertype + "/" + ownerid
-
-#             filepath = str(filepath).lower()  # convert to lower-case
-#             fullpath = home_dir + filepath
-#             ic(fullpath)
-#             if not os.path.exists(fullpath):
-#                 os.makedirs(fullpath)
-#                 pass
-
-#             if foldertype in ["personlogger"] and \
-#                     request.POST["doctype"] is not None and \
-#                     request.POST["doctype"] != "None":
-#                 filename = request.POST["doctype"] + fextension
-
-#             uploadedfileurl = fullpath + "/" + filename
-#             ic(uploadedfileurl)
-#             try:
-#                 if not os.path.exists(uploadedfileurl):
-#                     with open(uploadedfileurl, 'wb') as temp_file:
-#                         temp_file.write(request.FILES['img'].read())
-#                         temp_file.close()
-#                     pass
-#                 isUploaded = True
-#                 ic(isUploaded)
-#             except Exception:
-#                 isUploaded = False
-#         else:
-#             if "doctype" in request.POST and request.POST["doctype"] is not None and request.POST["doctype"] != "None":
-#                 filename = request.POST["doctype"] + fextension
-#             filepath = "NONE"
-#     return isUploaded, str(filename), str(filepath), str(docnumber)
-
-
 class JobFields:
     fields = [
         'id', 'jobname', 'jobdesc', 'geofence_id', 'cron',
@@ -1363,6 +1239,7 @@ def orderedRandom(arr, k):
 
 def upload(request, vendor=False):
     logger.info(f"{request.POST = }")
+    S = request.session
     if 'img' not in request.FILES:
         return
     foldertype = request.POST["foldertype"]
@@ -1381,10 +1258,10 @@ def upload(request, vendor=False):
         fmonth = str(datetime.now().strftime("%b"))
         fyear = str(datetime.now().year)
         peopleid = request.POST["peopleid"]
-        fullpath = f'{home_dir}/transaction/{peopleid}/{activity_name}/{fyear}/{fmonth}/'
+        fullpath = f'{home_dir}/transaction/{S["clientcode"]}_{S["client_id"]}/{peopleid}/{activity_name}/{fyear}/{fmonth}/'
         
     else:
-        fullpath = f'{home_dir}/master/{foldertype}/'
+        fullpath = f'{home_dir}/master/{S["clientcode"]}_{S["client_id"]}/{foldertype}/'
     
     logger.info(f'{fullpath = }')
 
@@ -1479,20 +1356,7 @@ from django.utils import timezone
 
 def store_ticket_history(instance, request=None, user = None):
     from background_tasks.tasks import send_ticket_email
-    # from apps.y_helpdesk.models import Ticket
-    # logger.info("saving ticket history has started....")
-    # peopleid = request.user.id if request else user.id
-    # peoplename = request.user.peoplename if request else user.peoplename
-    # #if ticket is created and status is NEW
-    # if instance.status == Ticket.Status.NEW:
-    #     history_item = f'{peoplename} created a ticket of subject: "{instance.ticketdesc}" \
-    #     at location: "{instance.location.locaname}" with priority: {instance.priority} assigned to {instance.assignedtopeople.peoplename}'
-    #     if instance.comments and instance.comments != 'None':
-    #         history_item += f" and commented: {instance.comments}"
-    # else:
-        
-    #     history_item = f'{peoplename} opened the ticket'
-        
+       
     
     # Get the current time
     now = timezone.now().replace(microsecond=0, second=0)
@@ -1728,3 +1592,23 @@ def basic_user_setup():
     session.update(dict(request.session))
     session.save()
     return client
+
+def get_changed_keys(dict1, dict2):
+    """
+    This function takes two dictionaries as input and returns a list of keys 
+    where the corresponding values have changed from the first dictionary to the second.
+    """
+
+    # Handle edge cases where either of the inputs is not a dictionary
+    if not isinstance(dict1, dict) or not isinstance(dict2, dict):
+        raise TypeError("Both arguments should be of dict type")
+
+    # Create a list to hold keys with changed values
+    changed_keys = []
+
+    # Compare values of common keys in the dictionaries
+    for key in dict1.keys() & dict2.keys():
+        if dict1[key] != dict2[key]:
+            changed_keys.append(key)
+
+    return changed_keys

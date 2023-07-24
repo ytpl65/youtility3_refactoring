@@ -343,7 +343,7 @@ GRAPHQL_JWT = {
     "JWT_LONG_RUNNING_REFRESH_TOKEN": True,
 }
 
-
+ADMINS = [('youtility_staff', "naveen.sargam@youtility.in")]
 
 # LOGGING CONF...
 import logging.config
@@ -377,6 +377,11 @@ LOGGING_CONFIG_ = {
             'maxBytes': 15728640,
             'backupCount': 10,
             'formatter': 'coloured',
+        },
+        'mail_admins': {
+            'level': 'ERROR',
+            'class': 'django.utils.log.AdminEmailHandler',
+            'include_html': False,
         }
     },
     'loggers': { 

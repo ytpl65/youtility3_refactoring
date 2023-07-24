@@ -371,7 +371,7 @@ class Asset(BaseModel, TenantAwareModel):
         verbose_name_plural = 'Assets'
         constraints         = [
             models.UniqueConstraint(
-                fields = ['assetcode', 'client'],
+                fields = ['assetcode', 'bu', 'client'],
                 name='assetcode_client_uk'
             ),
         ]
@@ -471,7 +471,7 @@ class Jobneed(BaseModel, TenantAwareModel):
     attachmentcount  = models.IntegerField(_('Attachment Count'), default = 0)
     other_info       = models.JSONField(_("Other info"), default = other_info, blank = True, encoder = DjangoJSONEncoder)
     geojson          = models.JSONField(default = geojson_jobnjobneed, blank = True,null=True, encoder = DjangoJSONEncoder)
-    deviation        = models.BooleanField(_("Deviation"), default = False, null=True)
+    deviation        = models.BooleanField(_("Deviation"), default = False, null=True)  
 
 
     objects = JobneedManager()
@@ -739,8 +739,8 @@ class Location(BaseModel, TenantAwareModel):
         get_latest_by = ["mdtz", 'cdtz']
         constraints         = [
             models.UniqueConstraint(
-                fields = ['loccode', 'client'],
-                name='loccode_client_uk'
+                fields = ['loccode', 'bu','client'],
+                name='loccode_bu_client_uk'
             ),
         ]
         

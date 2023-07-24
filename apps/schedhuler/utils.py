@@ -149,6 +149,7 @@ def create_job(jobids = None):
                 ~Q(jobname='NONE'),
                 ~Q(asset__runningstatus = am.Asset.RunningStatus.SCRAPPED),
                 parent_id = 1,
+                enable = True
             ).select_related(
                 "asset", "pgroup",
                 "cuser", "muser", "qset", "people",
@@ -547,7 +548,7 @@ def check_sequence_of_prevjobneed(job, current_seq):
 
 def create_child_tasks(job, _pdtz, _people, jnid, _jobstatus, _jobtype, parent_other_info):
     try:
-        prev_edtz = None
+        prev_edtz, tour_freq = None, None
         NONE_P  = utils.get_or_create_none_people()
         from django.utils.timezone import get_current_timezone
         tz = get_current_timezone()
@@ -569,9 +570,11 @@ def create_child_tasks(job, _pdtz, _people, jnid, _jobstatus, _jobtype, parent_o
             random.shuffle(L)
             R = calculate_route_details(L, job)
         elif job['other_info']['tour_frequency'] and int(job['other_info']['tour_frequency']) > 1:
+            tour_freq = int(job['other_info']['tour_frequency'])
             R = calculate_route_details(L, job)
             
         prev_edtz = _pdtz
+        brektime_idx = len(R)//tour_freq
         for idx, r in enumerate(R):
             log.info(f"create_child_tasks() [{idx}] child job:= {r['jobname']} | job:= {r['id']} | cron:= {r['cron']}")
 
@@ -587,7 +590,10 @@ def create_child_tasks(job, _pdtz, _people, jnid, _jobstatus, _jobtype, parent_o
             params['_jobdesc'] = jobdescription
             
             
-            pdtz = params['pdtz'] = prev_edtz + timedelta(minutes=r['expirytime'])
+            if job['other_info']['tour_frequency'] and int(job['other_info']['tour_frequency']) > 1 and job['other_info']['breaktime'] and brektime_idx == idx:
+                pdtz = params['pdtz'] = prev_edtz + timedelta(minutes=int(job['other_info']['breaktime']) + r['expirytime'])
+            else:
+                pdtz = params['pdtz'] = prev_edtz + timedelta(minutes=r['expirytime'])
             edtz = params['edtz'] = pdtz + timedelta(minutes=job['planduration'] + job['gracetime'])
             prev_edtz = edtz
             #if idx == 0:
@@ -640,7 +646,7 @@ def job_fields(job, checkpoint, external = False):
     data =  {
         'jobname'     : f"{checkpoint.get('bu__buname', '')} :: {job['jobname']}",       'jobdesc'          : f"{checkpoint.get('bu__buname', '')} :: {job['jobname']} :: {checkpoint['qsetname']}",
         'cron'        : job['cron'],                                                    'identifier'       : job['identifier'],
-        'expirytime'  : int(checkpoint['expirytime']),                                  'lastgeneratedon'  : job['lastgeneratedon'],
+            'expirytime'  : int(checkpoint['expirytime']),                                  'lastgeneratedon'  : job['lastgeneratedon'],
         'priority'    : job['priority'],                                                'qset_id'          : checkpoint['qsetid'],
         'pgroup_id'   : job['pgroup_id'],                                               'geofence'         : job['geofence_id'],
         'endtime'     : datetime.strptime(checkpoint.get('endtime', "00:00"), "%H:%M"), 'ticketcategory_id': job['ticketcategory_id'],
@@ -649,7 +655,8 @@ def job_fields(job, checkpoint, external = False):
         'asset_id'    : checkpoint['assetid'],                                          'frequency'        : job['frequency'],
         'people_id'   : job['people_id'],                                               'starttime'        : datetime.strptime(checkpoint.get('starttime', "00:00"), "%H:%M"),
         'parent_id'   : job['id'],                                                      'seqno'            : checkpoint['seqno'],
-        'scantype'    : job['scantype'],                                                'ctzoffset'        : job['ctzoffset']
+        'scantype'    : job['scantype'],                                                'ctzoffset'        : job['ctzoffset'],
+        'bu_id': job['bu_id'], 'client_id':job['client_id']
     }
     if external:
         jsonData = {

@@ -83,13 +83,13 @@ External Tour
                 <div class="col-md-8">
                     <div class="form-check form-check-inline">
                         <input type="radio" class="form-check-input" name={{ externaltourform.assign_to.name }}
-                            id="{{ externaltourform.assign_to.auto_id }}1" value="PEOPLE" checked
+                            id="id_peopleradio" value="PEOPLE" checked
                             onchange="showHideSelectField('PEOPLE')">
                         <label class="form-check-label" for="{{ externaltourform.assign_to.auto_id }}">People</label>
                     </div>
                     <div class="form-check form-check-inline">
                         <input type="radio" class="form-check-input" name={{ externaltourform.assign_to.name }}
-                            id="{{ externaltourform.assign_to.auto_id }}2" value="GROUP" onchange="showHideSelectField('GROUP')">
+                            id="id_groupradio" value="GROUP" onchange="showHideSelectField('GROUP')">
                         <label class="form-check-label" for="{{ externaltourform.assign_to.auto_id }}">Group</label>
                     </div>
                 </div>
@@ -321,11 +321,15 @@ var israndom = "{{ externaltourform.instance.other_info['is_randomized'] }}";
         if (val == "PEOPLE") {
             //$("#aatopdiv").show();
             $(".people").show();
+            $("#id_peopleradio").attr('checked', 'checked')
             $(".pgroup").hide();
+            $("#id_pgroup").val(1)
         } else {
             //$("#aatopdiv").hide();
             $(".pgroup").show();
+            $("#id_groupradio").attr('checked', 'checked')
             $(".people").hide();
+            $("#id_people").val(1)
         }
     }
 
@@ -373,7 +377,7 @@ var israndom = "{{ externaltourform.instance.other_info['is_randomized'] }}";
         if ('{{externaltourform.instance.id}}' === 'None') {
             showHideSelectField('PEOPLE')
         }else{
-            var assignto = '{{externaltourform.instance.people}}' == ('None' || "") ? "GROUP" : "PEOPLE"
+            var assignto = '{{externaltourform.instance.people_id}}' == '1' ? "GROUP" : "PEOPLE"
             showHideSelectField(assignto)
         }
         //display gpslocatoin in readable format

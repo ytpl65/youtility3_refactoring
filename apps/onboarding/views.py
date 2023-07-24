@@ -19,11 +19,13 @@ import apps.onboarding.forms as obforms
 import apps.peoples.utils as putils
 from apps.peoples import admin as people_admin
 from apps.onboarding import admin as ob_admin
+from apps.activity import admin as av_admin
 from django.db import IntegrityError
 import apps.activity.models as am
 import apps.attendance.models as atm
 from apps.y_helpdesk.models import Ticket
 from apps.work_order_management.models import Wom
+from apps.work_order_management.admin import VendorResource
 from django.core.exceptions import ObjectDoesNotExist
 from pprint import pformat
 import uuid
@@ -480,29 +482,90 @@ class FileRemovalResponse(rp.FileResponse):
         os.remove(self.filename)
 
 
-class BulkImportData(LoginRequiredMixin, View):
-    params = {
-        'model_resource_map': {
-            'TYPEASSIST': ob_admin.TaResource,
-            'BV': ob_admin.BtResource,
-            'PEOPLEGROUP': people_admin.PeopleResource,
-            'SITEGROUP': people_admin.SiteGroupResource,
-            'CAPABILITY': people_admin.Capability,
-        },
-        'form': obforms.ImportForm,
-        'template': 'onboarding/import.html'
-    }
-    header_mapping = {
-        'TYPEASSIST': ['ID', 'Name*', 'Code*', 'Type*', 'BV*', 'Client*']
-    }
+# Mapping Constants
+MODEL_RESOURCE_MAP = {
+    'TYPEASSIST'          : ob_admin.TaResource,
+    'BU'                  : ob_admin.BtResource,
+    'QUESTION'            : av_admin.QuestionResource,
+    'LOCATION'            : av_admin.LocationResource,
+    'PEOPLE'              : people_admin.PeopleResource,
+    'GROUP'               : people_admin.GroupResource,
+    'GROUPBELONGING'      : people_admin.GroupBelongingResource,
+    'ASSET'               : av_admin.AssetResource,
+    'VENDOR'              : VendorResource,
+    'QUESTIONSET'         : av_admin.QuestionSetResource,
+    'QUESTIONSETBELONGING': av_admin.QuestionSetBelongingResource,
+}
 
+# Header Mapping
+HEADER_MAPPING  = {
+    'TYPEASSIST': [
+        'Name*', 'Code*', 'Type*', 'BV*', 'Client*'],
+    
+    'PEOPLE': [
+        'Code*', 'Name*', 'Employee Type*', 'Login ID*', 'Gender*',
+        'Mob No*', 'Email*', 'Date of Birth*', 'Date of Join*', 'Client*', 
+        'Site*', 'Designation', 'Department', 'Work Type', 'Report To',
+        'Date of Release', 'Device Id', 'Is Emergency Contact',
+        'Mobile Capability', 'Report Capability', 'Web Capability', 'Portlet Capability',
+        'Current Address', 'Blacklist',  'Alert Mails'],
+    
+    'BU': [
+        'Code*', 'Name*', 'Belongs To*', 'Site Type*', 'Type*', \
+        'Site Manager*', 'Sol Id', 'Enable', 'GPS Location'],
+    
+    'QUESTION':[
+        'Question Name*','Answer Type*', 'Min', 'Max','Alert Above', 'Alert Below', 'Is WorkFlow',
+        'Options', 'Alert On', 'Enable', 'Is AVPT' ,'AVPT Type','Client*', 'Unit', 'Category'],
+    
+    'ASSET':[
+        'Code*', 'Name*', 'Running Status*', 'Identifier*','Is Critical',
+        'Client*', 'BV*', 'Capacity', 'BelongsTo*', 'Type',  'GPS Location',
+        'Category', 'SubCategory', 'Brand', 'Unit', 'Service Provider',
+        'Enable'
+    ],
+    'GROUP':[
+        'Group Name*', 'Type*', 'Client*', 'Site*', 'Enable'
+    ],
+    'GROUPBELONGING':[
+      'Group Name*', 'Of People', "Of Site", 'Client*', 'Site*'  
+    ],
+
+    'VENDOR':[
+        'Code*', 'Name*', 'Type*', 'Status*', 'Address*', 'Email*',
+        'Mob No*', 'Site*', 'Client*', 'GPS Location', 'Enable'
+    ],
+    'LOCATION':[
+        'Code*', 'Name*', 'Type*', 'Status*', 'Is Critical', 'Belongs To*',
+        'Mob No*', 'Site*', 'Client*', 'GPS Location', 'Enable'
+    ],
+    'QUESTIONSET':[
+        'Question Set Name*', 'Type*', 'Asset Includes', 'Site Includes', 'Site*',
+        'Client*', 'Site Group Includes', 'Site Type Includes', 'Show To All Sites', 
+        'URL'
+    ],
+    'QUESTIONSETBELONGING':[
+        'Question Name*', 'Question Set*', 'Client*', 'Site*', 'Answer Type*',
+        'Seq No*', 'Is AVPT', 'Min', 'Max', 'Alert Above', 'Alert Below', 'Options',
+        'Alert On', 'Is Mandatory', 'AVPT Type',
+    ]
+}
+
+class ParameterMixin:
+    mode_resource_map = MODEL_RESOURCE_MAP
+    form = obforms.ImportForm
+    template = 'onboarding/import.html'
+    header_mapping = HEADER_MAPPING
+    
+class BulkImportData(LoginRequiredMixin,ParameterMixin, View):
+    
     def get(self, request, *args, **kwargs):
-        R, P = request.GET, self.params
-
+        R = request.GET
+        ic(self.form)
         if (R.get('action') == 'form'):
             self.remove_temp_file(request)
-            cxt = {'importform': P['form'](initial={'table': "TYPEASSIST"})}
-            return render(request, P['template'], cxt)
+            cxt = {'importform': self.form(initial={'table': "TYPEASSIST"})}
+            return render(request, self.template, cxt)
 
         if (request.GET.get('action') == 'downloadTemplate') and request.GET.get('template'):
             import pandas as pd
@@ -519,9 +582,9 @@ class BulkImportData(LoginRequiredMixin, View):
             )
 
     def post(self, request, *args, **kwargs):
-        R, P = request.POST, self.params
+        R = request.POST
         ic(R)
-        form = P['form'](R, request.FILES)
+        form = self.form(R, request.FILES)
         if not form.is_valid() and R['action'] != 'confirmImport':
             return rp.JsonResponse({'errors': form.errors}, status=404)
         res, dataset = self.get_resource_and_dataset(request, form)
@@ -553,7 +616,7 @@ class BulkImportData(LoginRequiredMixin, View):
                 for chunk in file.chunks():
                     tf.write(chunk)
                 request.session['temp_file_name'] = tf.name
-        res = self.params['model_resource_map'][table](request=request)
+        res = self.mode_resource_map[table](request=request, ctzoffset = form.cleaned_data.get('ctzoffset'))
         return res, dataset
 
     def get_readable_error(self, error):
@@ -711,7 +774,7 @@ class BtView(LoginRequiredMixin, View):
             objs = self.params['model'].objects.select_related(
                 *self.params['related']).filter(
                     id__in=buids
-            ).exclude(identifier__tacode='CLIENT').values(*self.params['fields'])
+            ).exclude(identifier__tacode='CLIENT').values(*self.params['fields']).order_by('buname')
             return rp.JsonResponse(data={'data': list(objs)})
 
         elif R.get('action', None) == 'form':

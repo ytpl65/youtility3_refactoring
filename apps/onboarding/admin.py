@@ -38,7 +38,8 @@ class BaseResource(resources.ModelResource):
         utils.save_common_stuff(self.request, instance, self.is_superuser)
         super().before_save_instance(instance, using_transactions, dry_run)
 
-    
+def default_ta():
+    return utils.get_or_create_none_typeassist()[0]
 
 
 class BaseFieldSet2:
@@ -63,7 +64,20 @@ class BaseFieldSet2:
     )
 
 
-class TaResource(BaseResource):
+class TaResource(resources.ModelResource):
+    CLIENT = fields.Field(
+        column_name='Client*',
+        attribute='client',
+        widget = wg.ForeignKeyWidget(om.Bt, 'bucode'),
+        default='NONE'
+    )
+    BV = fields.Field(
+        column_name='BV*',
+        attribute='bu',
+        widget = wg.ForeignKeyWidget(om.Bt, 'bucode'),
+        saves_null_values = True,
+        default='NONE'
+    )
     
     TYPE = fields.Field(
         column_name       = 'Type*',
@@ -134,7 +148,7 @@ class TaAdmin(ImportExportModelAdmin):
         return om.TypeAssist.objects.select_related(
             'tatype', 'cuser', 'muser', 'bu', 'client', 'tenant').all()
 
-class BtResource(BaseResource):
+class BtResource(resources.ModelResource):
     CLIENT = BV = None
     BelongsTo = fields.Field(
         column_name='Belongs To*',
@@ -144,7 +158,7 @@ class BtResource(BaseResource):
 
     BuType = fields.Field(
         column_name='Site Type*',
-        default=utils.get_or_create_none_typeassist,
+        default=default_ta,
         attribute='butype',
         widget = wg.ForeignKeyWidget(om.TypeAssist, 'tacode'))
 
@@ -157,7 +171,7 @@ class BtResource(BaseResource):
     Identifier = fields.Field(
         column_name='Type*',
         attribute='identifier',
-        default=utils.get_or_create_none_typeassist,
+        default=default_ta,
         widget = wg.ForeignKeyWidget(om.TypeAssist, 'tacode'))
     
     Sitemanager = fields.Field(
@@ -217,7 +231,7 @@ class BtResource(BaseResource):
 
     def before_save_instance(self, instance, using_transactions, dry_run):
         instance.gpslocation = self._gpslocation
-        instance.solid = int(self._solid)
+        instance.solid = int(self._solid) if self._solid else None
         utils.save_common_stuff(self.request, instance)
 
     def get_queryset(self):

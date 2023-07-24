@@ -352,7 +352,7 @@ class WorkPermit(LoginRequiredMixin, View):
         # first load the template
         if R.get('template'):
             return render(request, self.params['template_list'])
-        
+
         # then load the table with objects for table_view
         action = R.get('action')
         if action == 'list' or R.get('search_term'):
@@ -368,34 +368,36 @@ class WorkPermit(LoginRequiredMixin, View):
             Wom.objects.filter(id=R['womid']).update(workpermit=Wom.WorkPermitStatus.REJECTED.value)
             reject_workpermit(R['womid'], request.user.peoplecode)
             return rp.JsonResponse(data={'status': 'Approved'}, status=200)
-            
+
         if action == 'form':
             import uuid
             cxt = {'wpform': P['form'](request=request), 'msg': "create workpermit requested", 'ownerid': uuid.uuid4()}
             return render(request, P['template_form'], cxt)
-        
+
         if action == 'approver_list':
             objs = Wom.objects.get_approver_list(R['womid'])
             return rp.JsonResponse({'data': objs}, status=200)
-        
+
         if R.get('qsetid'):
             import uuid
             wp_details = Wom.objects.get_workpermit_details(request, R['qsetid'])
             form = P['form'](request=request, initial={'qset': R['qsetid'], 'approvers': R['approvers'].split(',')})
             context = {"wp_details": wp_details, 'wpform': form, 'ownerid': uuid.uuid4()}
             return render(request, P['template_form'], context=context)
-        
+
         if action == 'get_answers_of_template' and R.get('qsetid') and R.get('womid'):
             wp_answers = Wom.objects.get_wp_answers(R['qsetid'], R['womid'])
             questionsform = render_to_string(P['partial_form'], context={"wp_details": wp_answers})
             return rp.JsonResponse({'html': questionsform}, status=200)
 
-         # return form with instance
         if 'id' in R:
             # get work permit questionnaire
             obj = utils.get_model_obj(int(R['id']), request, P)
             wp_answers = Wom.objects.get_wp_answers(obj.qset_id, obj.id)
             cxt = {'wpform': P['form'](request=request, instance=obj), 'ownerid': obj.uuid, 'wp_details': wp_answers}
+            if obj.workstatus == Wom.Workstatus.COMPLETED:
+                rwp_details = Wom.objects.get_return_wp_details()
+                cxt['rwp_details'] = rwp_details
             return render(request, P['template_form'], cxt)
 
         
@@ -444,32 +446,37 @@ class WorkPermit(LoginRequiredMixin, View):
     
     def create_child_wom(self, wom, qset_id):
         qset = QuestionSet.objects.get(id =qset_id)
-        return Wom.objects.create(
-            parent_id      = wom.id,
-            description    = qset.qsetname,
-            plandatetime   = wom.plandatetime,
-            expirydatetime = wom.expirydatetime,
-            starttime      = wom.starttime,
-            gpslocation    = wom.gpslocation,
-            asset          = wom.asset,
-            location       = wom.location,
-            workstatus     = wom.workstatus,
-            seqno          = qset.seqno,
-            approvers      = wom.approvers,
-            workpermit     = wom.workpermit,
-            priority       = wom.priority,
-            vendor         = wom.vendor,
-            performedby    = wom.performedby,
-            alerts         = wom.alerts,
-            client         = wom.client,
-            bu             = wom.bu,
-            ticketcategory = wom.ticketcategory,
-            other_data     = wom.other_data,
-            qset           = qset,
-            cuser          = wom.cuser,
-            muser          = wom.muser,
-            ctzoffset      = wom.ctzoffset
-        )
+        if childwom := Wom.objects.filter(
+            parent_id=wom.id, qset_id=qset.id, seqno=qset.seqno
+        ).first():
+            return childwom
+        else:
+            return Wom.objects.create(
+                parent_id      = wom.id,
+                description    = qset.qsetname,
+                plandatetime   = wom.plandatetime,
+                expirydatetime = wom.expirydatetime,
+                starttime      = wom.starttime,
+                gpslocation    = wom.gpslocation,
+                asset          = wom.asset,
+                location       = wom.location,
+                workstatus     = wom.workstatus,
+                seqno          = qset.seqno,
+                approvers      = wom.approvers,
+                workpermit     = wom.workpermit,
+                priority       = wom.priority,
+                vendor         = wom.vendor,
+                performedby    = wom.performedby,
+                alerts         = wom.alerts,
+                client         = wom.client,
+                bu             = wom.bu,
+                ticketcategory = wom.ticketcategory,
+                other_data     = wom.other_data,
+                qset           = qset,
+                cuser          = wom.cuser,
+                muser          = wom.muser,
+                ctzoffset      = wom.ctzoffset
+            )
     
     def create_workpermit_details(self, R, wom,  request):
         log.info(f'form post data {R}')

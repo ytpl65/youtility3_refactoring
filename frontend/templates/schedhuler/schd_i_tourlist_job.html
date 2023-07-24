@@ -31,16 +31,31 @@ Scheduled Tours
 		</div>
 	</div>
 </div>
+
+{% call general_popup(title='List of Peoples', popup_id='id_people_list', modal_size='modal-md') %}
+            <div class="modal-body">
+                <table class="display cell-border" style="width:100%" id="tabListOfPeoples"></table>
+            </div>
+    {% endcall %}
 {% endblock popup_alerts %}
 
 <!--------- BEGIN EXTRA SCRIPTS ----------------------------->
 {% block extra_scripts %}
 <script>
 	var table           = null;
+    var peopleList = null;
+    var ajaxData = {}
 	const formFilter      = "#schdtour_filter"
 	const table_id        = "#schdtour_table"
 	const formid          = "#id_schdtourform"
     const urlname = "{{ url('schedhuler:schd_internal_tour') }}"
+    
+    function showListOfPeoples(id, from){
+        $('#id_people_list').modal('show')
+        ajaxData.id=id
+        ajaxData.model = from
+        peopleList.ajax.reload()
+    }
 
     $(document).ready(function (){
         //datatable initialization
@@ -57,7 +72,13 @@ Scheduled Tours
             columns:[
                 {data: 'id', defaultContent:null},
                 {data: 'jobname', title: "Name"},
-                {data: 'assignedto', title:"People/Group", defaultContent:null},
+                {data: 'assignedto', title:"People/Group", defaultContent:null, render:function(data, type, row, meta){
+                    if(data.includes('[GROUP]')){
+                        return `<a href="javascript:void(0)"  onClick='showListOfPeoples(${row['id']}, "Job")'>${data}</a>`
+                    }else{
+                        return data
+                    }
+                }},
                 {title: 'From', data: 'fromdate'},
                 {title: 'To', data: 'uptodate'},
                 {title: 'Duration', data: 'planduration'},
@@ -106,6 +127,7 @@ Scheduled Tours
 			]
         
         })
+        initializeListOfPeoplesModal(ajaxData, "{{ url('activity:list_of_peoples') }}")
 
         //BEGIN STYLING DATATABLE
 		$("th > input").addClass('form-control')

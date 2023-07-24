@@ -5,6 +5,7 @@ from django.utils import timezone
 from django.conf import settings
 from django.utils.translation import gettext_lazy as _
 from django.core.serializers.json import DjangoJSONEncoder
+from django.forms.models import model_to_dict
 import uuid
 class TicketNumberField(models.AutoField):
     def get_next_value(self, model, created, value, using):
@@ -69,7 +70,24 @@ class Ticket(BaseModel, TenantAwareModel):
     ticketsource     = models.CharField(max_length=50, choices=TicketSource.choices, null=True, blank=True)
     attachmentcount  = models.IntegerField(null=True)
 
-    objects = TicketManager() 
+    objects = TicketManager()
+    
+    def add_history(self):
+        self.ticketlog['ticket_history'].append(
+            {'record': model_to_dict(self, exclude=['ticketlog', 'uuid', 'id', 'ctzoffset'])}) 
+    
+     
+    def get_changed_keys(self, dict1, dict2):
+        """
+        This function takes two dictionaries as input and returns a list of keys 
+        where the corresponding values have changed from the first dictionary to the second.
+        """
+
+        # Handle edge cases where either of the inputs is not a dictionary
+        if not isinstance(dict1, dict) or not isinstance(dict2, dict):
+            raise TypeError("Both arguments should be of dict type")
+
+        return [key for key in dict1.keys() & dict2.keys() if dict1[key] != dict2[key]]
     
     class Meta(BaseModel.Meta):
         db_table      = 'ticket'

@@ -172,7 +172,6 @@ class PeopleManager(BaseUserManager):
             bu_id__in = S['assignedsites'],
             client_id = S['client_id'],
             enable=True,
-            isverified=True,
         )
         ic(qset)
         if sitewise:
@@ -188,14 +187,14 @@ class PeopleManager(BaseUserManager):
         if request.user.isadmin:
             qset = self.filter(
                 ~Q(peoplecode='NONE'), 
-                client_id = S['client_id']).select_related(*related).values(*fields)
+                client_id = S['client_id']).select_related(*related).values(*fields).order_by('peoplename')
         else:
             
             qset = self.filter(
                 ~Q(peoplecode='NONE'), 
                 client_id = S['client_id'],
                 bu_id__in = S['assignedsites']
-            ).select_related(*related).values(*fields)
+            ).select_related(*related).values(*fields).order_by('peoplename')
         return qset or self.none()
 
 

@@ -1,7 +1,8 @@
 from django.db import models
 from datetime import datetime, timezone, timedelta
 import json
-from django.db.models import Q
+from django.db.models import Q, When, Case, F, CharField, Value as V
+from django.db.models.functions import Cast
 from apps.onboarding.models import TypeAssist
 from apps.peoples.models import Pgbelonging
 
@@ -37,7 +38,7 @@ class TicketManager(models.Manager):
             cdtz__date__lte = P['to'],
             bu_id = S['bu_id'],
         ).select_related('assignedtopeople', 'assignedtogroup', 'bu', 'ticketcategory').values(
-            'id', 'cdtz', 'bu__buname', 'status', 'bu__bucode', 'isescalated',
+            'id','ticketno', 'cdtz', 'bu__buname', 'status', 'bu__bucode', 'isescalated',
             'cuser__peoplename', 'cuser__peoplecode', 'ticketdesc', 'ctzoffset',
             'ticketsource', 'ticketcategory__taname'
         )
@@ -88,7 +89,34 @@ class TicketManager(models.Manager):
         stats = [new, resolved, open, cancelled]
         ic(stats)
         return stats, sum(stats)
+    
+    def get_events_for_calendar(self, request):
+        S,R = request.session, request.GET
+        start_date = datetime.strptime(R['start'], "%Y-%m-%dT%H:%M:%S%z").date()
+        end_date = datetime.strptime(R['end'], "%Y-%m-%dT%H:%M:%S%z").date()
         
+        qset = self.annotate(
+            start=Cast(F('cdtz'), output_field=CharField()),
+            end=Cast(F('modifieddatetime'), output_field=CharField()),
+            title = F('ticketdesc'),
+            color = Case(
+                When(status__exact = self.model.Status.CANCEL, then = V('#727272')),
+                When(status__exact = self.model.Status.ONHOLD, then= V( '#b87707')),
+                When(status__exact = self.model.Status.CLOSED, then= V( '#13780e')),
+                When(status__exact = self.model.Status.RESOLVED, then=V('#0d96ab')),
+                When(status__exact = self.model.Status.NEW, then=V('#a14020')),
+                When(status__exact = self.model.Status.OPEN, then=V('#004679')),
+                output_field=CharField()
+            )
+        ).select_related().filter(
+            cdtz__date__gte = start_date,
+            cdtz__date__lte = end_date,
+            bu_id = S['bu_id'],
+            client_id = S['client_id']
+        )
+        qset = qset.values('id', 'start', 'end', 'title','color')
+        return qset or self.none()
+
 
 class ESCManager(models.Manager):
     use_in_migrations=True

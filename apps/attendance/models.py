@@ -90,7 +90,7 @@ class Tracking(models.Model):
     # id           = models.BigIntegerField(primary_key = True)
     uuid          = models.UUIDField(unique = True, editable = True, blank = True, default = uuid.uuid4)
     deviceid      = models.CharField(max_length = 40)
-    gpslocation   = PointField(geography = True, srid = 4326)
+    gpslocation   = PointField(geography = True,null=True, srid = 4326)
     receiveddate  = models.DateTimeField(editable = True, null = True)
     people        = models.ForeignKey(settings.AUTH_USER_MODEL, null = True, blank = True, on_delete = models.RESTRICT, verbose_name='People')
     transportmode = models.CharField(max_length = 55)

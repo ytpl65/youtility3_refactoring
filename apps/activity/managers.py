@@ -1,8 +1,8 @@
 from django.db import models
 from django.utils.translation import ugettext as _
 from django.db.models.functions import Concat, Cast, Replace
-from django.db.models import CharField, Value as V, Subquery, OuterRef
-from django.db.models import Q, F, Count, Case, When, QuerySet
+from django.db.models import CharField, Value as V, Subquery, OuterRef, Exists
+from django.db.models import Q, F, Count, Case, When,  ExpressionWrapper, DateField
 from django.contrib.gis.db.models.functions import  AsWKT, AsGeoJSON
 from datetime import datetime, timedelta, timezone
 from django.core.paginator import Paginator
@@ -131,13 +131,18 @@ class QuestionSetManager(models.Manager):
         return qset or self.none()
     
     def filter_for_dd_qset_field(self, request, type, choices=False, sitewise=False):
+        from apps.activity.models import QuestionSetBelonging
+        has_questions = QuestionSetBelonging.objects.filter(qset=OuterRef('pk')).values('pk')
         S = request.session
-        qset =self.filter(
+        qset = self.annotate(
+            has_questions=Exists(has_questions)
+        ).filter(
             enable=True,
-            client_id  = S['client_id'],
-            bu_id__in = S['assignedsites'],
-            type__in = type
-        )
+            client_id=S['client_id'],
+            bu_id__in=S['assignedsites'],
+            type__in=type,
+            has_questions=True
+        ).order_by('qsetname')
         if sitewise: qset = qset.filter(bu_id = S['bu_id'])
         if choices: qset = qset.values_list('id', 'qsetname')
         return qset or self.none()
@@ -804,8 +809,6 @@ class JobneedManager(models.Manager):
         
         return qset
             
-            
-        
 
 class AttachmentManager(models.Manager):
     use_in_migrations = True
@@ -1017,7 +1020,7 @@ class AssetManager(models.Manager):
             client_id = S['client_id'],
             bu_id__in = S['assignedsites'],
             identifier__in = identifiers,
-        )
+        ).order_by('assetname')
         if sitewise: qset = qset.filter(bu_id = S['bu_id'])
         if choices: qset = qset.annotate(text = Concat(F('assetname'), V(' ('), F('assetcode'), V(')'))).values_list('id', 'text')
         return qset or self.none()
@@ -1366,7 +1369,8 @@ class JobManager(models.Manager):
             'seqno':R['seqno'],
             'qsetname':R['qsetname']
         }
-        child_job = sutils.job_fields(parent_job, checkpoint)
+        if not  R['action'] == 'remove':
+            child_job = sutils.job_fields(parent_job, checkpoint)
         try:
         
             if R['action'] == 'create':
@@ -1374,16 +1378,19 @@ class JobManager(models.Manager):
                     qset_id = checkpoint['qsetid'], asset_id = checkpoint['assetid'],
                     parent_id = parent_job['id']).exists():
                     return {'data':list(self.none()), 'error':'Warning: Record already added!'}
-                ID = self.create(**child_job, cuser = request.user, muser = request.user, cdtz = cdtz, mdtz = mdtz).id
+                ic("creating checkpoint with following data:", child_job)
+                ID = self.create(**child_job, cuser = request.user, muser = request.user,
+                                 cdtz = cdtz, mdtz = mdtz).id
             elif R['action'] == 'edit':
                 if updated := self.filter(pk=R['pk']).update(**child_job, muser = request.user, mdtz = mdtz):
                     ID = R['pk']
             else:
                 self.filter(pk = R['pk']).delete()
                 return {'data':list(self.none()),}
-            qset = self.filter(pk = ID).values('seqno', 'qset__qsetname', 'asset__assetname', 'expirytime', 'pk')
+            qset = self.filter(pk = ID).values('seqno', 'qset__qsetname', 'asset__assetname', 'expirytime', 'pk', 'asset_id', 'qset_id')
             return {'data':list(qset)}
         except Exception  as e:
+            log.error("something went wrong", exc_info=True)
             return {'data':[], 'error':"Somthing went Wrong!"}
     
 
@@ -1446,7 +1453,7 @@ class LocationManager(models.Manager):
             enable=True,
             client_id = S['client_id'],
             bu_id__in = S['assignedsites'],
-        )
+        ).order_by('locname')
         if sitewise: qset = qset.filter(bu_id = S['bu_id'])
         if choices: qset = qset.annotate(
             text = Concat(F('locname'), V(' ('), F('loccode'), V(')'))).values_list(

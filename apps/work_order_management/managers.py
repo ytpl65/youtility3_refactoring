@@ -104,6 +104,24 @@ class WorkOrderManager(models.Manager):
             wp_details.append(sq)
         return wp_details or self.none()
     
+    def get_return_wp_details(self, request):
+        S = request.session
+        QuestionSet = apps.get_model('activity', 'QuestionSet')
+        section_qset = QuestionSet.objects.filter(type='RETURN_WORK_PERMIT')
+        rwp_details = []
+        for section in section_qset:
+            sq = {
+                "section":section.qsetname,
+                "sectionID":section.seqno,
+                'questions':section.questionsetbelonging_set.values(
+                    'question__quesname', 'answertype', 'qset_id',
+                    'min', 'max', 'options', 'id', 'ismandatory').order_by('seqno')
+            }
+            rwp_details.append(sq)
+        return rwp_details or self.none()
+            
+        
+    
     def get_wp_answers(self, qsetid, womid):
         
         childwoms = self.filter(parent_id = womid).order_by('seqno')
@@ -115,7 +133,7 @@ class WorkOrderManager(models.Manager):
             sq = {
                 "section":childwom.description,
                 "sectionID":childwom.seqno,
-                'questions':section.qset_answers.filter(wom_id = womid).values(
+                'questions':childwom.qset_answers.filter(wom_id = womid).values(
                     'question__quesname', 'answertype', 'answer', 'qset_id',
                     'min', 'max', 'options', 'id', 'ismandatory').order_by('seqno')
             }
