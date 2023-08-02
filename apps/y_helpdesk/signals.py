@@ -7,7 +7,7 @@ from django.db.models import Q
 def set_serial_no_for_ticket(sender, instance, **kwargs):
     if instance.id is None and instance.ticketdesc !='NONE':  # if seqno is not set yet
         #ic(instance.other_data)
-        latest_record = sender.objects.filter(~Q(ticketdesc='NONE') & ~Q(ticketno__isnull=True), client=instance.client, bu = instance.bu).order_by('-cdtz').first()
+        latest_record = sender.objects.filter(~Q(ticketdesc='NONE') & ~Q(ticketno__isnull=True), client=instance.client, bu = instance.bu).order_by('-id').first()
         #ic(latest_record.id)
         if latest_record is None:
             # This is the first record for the client
@@ -15,4 +15,3 @@ def set_serial_no_for_ticket(sender, instance, **kwargs):
         else:
             next_no = int(latest_record.ticketno.split('#')[1]) + 1
             instance.ticketno = f'{instance.bu.bucode}#{next_no}'
-        ic(instance.ticketno)
