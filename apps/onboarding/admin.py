@@ -71,13 +71,6 @@ class TaResource(resources.ModelResource):
         widget = wg.ForeignKeyWidget(om.Bt, 'bucode'),
         default='NONE'
     )
-    BV = fields.Field(
-        column_name='BV*',
-        attribute='bu',
-        widget = wg.ForeignKeyWidget(om.Bt, 'bucode'),
-        saves_null_values = True,
-        default='NONE'
-    )
     
     TYPE = fields.Field(
         column_name       = 'Type*',
@@ -95,7 +88,7 @@ class TaResource(resources.ModelResource):
         skip_unchanged = True
         import_id_fields = ['ID']
         report_skipped = True
-        fields = ('NAME', 'CODE', 'TYPE',  'BV', 'CLIENT')
+        fields = ('NAME', 'CODE', 'TYPE', 'CLIENT')
 
         
     def __init__(self, *args, **kwargs):
@@ -149,7 +142,6 @@ class TaAdmin(ImportExportModelAdmin):
             'tatype', 'cuser', 'muser', 'bu', 'client', 'tenant').all()
 
 class BtResource(resources.ModelResource):
-    CLIENT = BV = None
     BelongsTo = fields.Field(
         column_name='Belongs To*',
         default=utils.get_or_create_none_bv,

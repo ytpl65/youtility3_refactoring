@@ -247,9 +247,10 @@ class ShiftView(LoginRequiredMixin, View):
         'form_class': obforms.ShiftForm,
         'template_form': 'onboarding/partials/partial_shiftform.html',
         'template_list': 'onboarding/shift.html',
-        'related': ['parent',  'cuser', 'muser'],
+        'related': ['parent',  'cuser', 'muser', 'bu'],
         'model': Shift,
-        'fields': ['id', 'shiftname', 'starttime', 'endtime', 'nightshiftappicable'],
+        'fields': ['id', 'shiftname', 'starttime', 'endtime', 'nightshiftappicable',
+                   'bu__bucode', 'bu__buname'],
         'form_initials': {}}
 
     def get(self, request, *args, **kwargs):
@@ -500,7 +501,7 @@ MODEL_RESOURCE_MAP = {
 # Header Mapping
 HEADER_MAPPING  = {
     'TYPEASSIST': [
-        'Name*', 'Code*', 'Type*', 'BV*', 'Client*'],
+        'Name*', 'Code*', 'Type*', 'Client*'],
     
     'PEOPLE': [
         'Code*', 'Name*', 'Employee Type*', 'Login ID*', 'Gender*',
@@ -838,7 +839,7 @@ class BtView(LoginRequiredMixin, View):
             return handle_intergrity_error("Bu")
 
 
-class RPDashboard(LoginRequiredMixin, View):
+class DashboardView(LoginRequiredMixin, View):
     P = {
         "RP": "dashboard/RP_d/rp_dashboard.html",
         "pel_model": atm.PeopleEventlog,
@@ -855,7 +856,7 @@ class RPDashboard(LoginRequiredMixin, View):
             return render(request, P['RP'])
         except Exception as e:
             logger.error(
-                "something went wrong RPDashboard view", exc_info=True)
+                "something went wrong DashboardView view", exc_info=True)
 
     def get_all_dashboard_counts(self, request, P):
         R, S = request.GET, request.session
@@ -902,7 +903,8 @@ class RPDashboard(LoginRequiredMixin, View):
                     'sos_count': P['pel_model'].objects.get_sos_count_forcard(request),
                     'IR_count': P['jn_model'].objects.get_ir_count_forcard(request),
                     'FR_fail_count': P['pel_model'].objects.get_frfail_count_forcard(request),
-                    'route_count': P['jn_model'].objects.get_schdroutes_count_forcard(request)
+                    'route_count': P['jn_model'].objects.get_schdroutes_count_forcard(request),
+                    'diversion_count': P['pel_model'].objects.get_diversion_count(request, count=True)
                 }
             }
 

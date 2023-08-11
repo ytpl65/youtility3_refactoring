@@ -131,7 +131,7 @@ class BtManager(models.Manager):
                 'mdtz':utils.getawaredatetime(datetime.now(), R['ctzoffset'])}
         
         if R['action'] == 'create':
-            if self.filter(bucode=R['bucode'].upper()).exists():
+            if self.filter(bucode=R['bucode'].upper(), parent_id = R['parent'] ).exists():
                 return {'data':list(self.none()), 'error':'Bu code already exists'}
             ID = self.create(**PostData).id
         
