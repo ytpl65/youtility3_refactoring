@@ -20,7 +20,7 @@ import environ
 env = environ.Env()
 
 ENVPATH = os.path.join(os.path.abspath('intelliwiz_config/envs'))
-environ.Env.read_env(os.path.join(ENVPATH, '.env.dev'), overwrite=True) #rename it '.env.prod' for production
+environ.Env.read_env(os.path.join(ENVPATH, '.env.prod'), overwrite=True) #rename it '.env.prod' for production
 
 
 def check_path(path):
@@ -43,7 +43,7 @@ ENCRYPT_KEY = env('ENCRYPT_KEY')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True    
 
-ALLOWED_HOSTS = ['.localhost', 'django-local.youtility.in','redmine.youtility.in', '192.168.1.254', '192.168.1.33', 'barfi.youtility.in']
+ALLOWED_HOSTS = ['.localhost', 'demo.youtility.in']
 
 # Application definition
 
