@@ -17,7 +17,6 @@ class VendorManager(models.Manager):
         if R.get('params'): P = json.loads(R.get('params', {}))
         
         qobjs =  self.select_related(*related).filter(
-            #bu_id = S['bu_id'],
             client_id = S['client_id'],
             enable=True
         ).values(*fields)
@@ -44,7 +43,6 @@ class ApproverManager(models.Manager):
         R,S  = request.GET, request.session
         qobjs =  self.select_related(*related).filter(
             bu_id = S['bu_id'],
-            
         ).values(*fields)
         return qobjs or self.none()
     
@@ -64,10 +62,10 @@ class WorkOrderManager(models.Manager):
         S = request.session
         P = json.loads(request.GET['params'])
         qset = self.filter(
-            cdtz__date__gte = P['from'],
-            cdtz__date__lte = P['to'],
-            client_id = S['client_id'],
-            workpermit = Wom.WorkPermitStatus.NOTNEED
+            cdtz__date__gte=P['from'],
+            cdtz__date__lte=P['to'],
+            client_id=S['client_id'],
+            workpermit=Wom.WorkPermitStatus.NOTNEED
         ).select_related(*related).values(
             *fields
         )
@@ -153,7 +151,7 @@ class WorkOrderManager(models.Manager):
     def get_wom_status_chart(self, request):
         S,R = request.session, request.GET
         qset = self.filter(
-            bu_id = S['bu_id'],
+            bu_id__in = S['assignedsites'],
             client_id = S['client_id'],
             cdtz__date__gte = R['from'],
             cdtz__date__lte = R['upto'],

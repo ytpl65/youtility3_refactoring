@@ -44,8 +44,11 @@ class TypeAssistDesignationFKW(wg.ForeignKeyWidget):
             Q(client__bucode__exact=row["Client*"]),
             tatype__tacode__exact = 'DESIGNATION'
         )
-    
-
+class BVForeignKeyWidget(wg.ForeignKeyWidget):
+    def get_queryset(self, value, row, *args, **kwargs):
+        client = om.Bt.objects.filter(bucode=row['Client*']).first()
+        bu_ids = om.Bt.objects.get_whole_tree(client.id)
+        return self.model.objects.filter(id__in=bu_ids)
 
 def default_ta():
     return utils.get_or_create_none_typeassist()[0]
@@ -61,7 +64,7 @@ class PeopleResource(resources.ModelResource):
     BV = fields.Field(
         column_name='Site*',
         attribute='bu',
-        widget = wg.ForeignKeyWidget(om.Bt, 'bucode'),
+        widget = BVForeignKeyWidget(om.Bt, 'bucode'),
         saves_null_values = True,
         default=utils.get_or_create_none_bv
     )
@@ -153,7 +156,7 @@ class PeopleResource(resources.ModelResource):
         
     def before_import_row(self, row, **kwargs):
         self.validations(row)
-        self._mobilecaps         = clean_array_string(row['Mobile Capability']) if row.get('Mobile Capability') else [], 
+        self._mobilecaps         = clean_array_string(row['Mobile Capability']) if row.get('Mobile Capability') else []
         self._reportcaps         = clean_array_string(row["Report Capability"]) if row.get('Report Capability') else []
         self._webcaps            = clean_array_string(row["Web Capability"]) if row.get('Web Capability') else []
         self._portletcaps        = clean_array_string(row["Portlet Capability"]) if row.get('Portlet Capability') else []

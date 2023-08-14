@@ -117,9 +117,9 @@ class QuestionSet(LoginRequiredMixin, View):
         'form_class'   : af.QuestionSetForm,
         'template_form': 'activity/questionset_form.html',
         'template_list' : 'activity/questionset.html',
-        'related'      : ['unit'],
+        'related'      : ['unit', 'bu'],
         'model'        : am.QuestionSet,
-        'fields'       : ['qsetname', 'type', 'id', 'ctzoffset', 'cdtz', 'mdtz'],
+        'fields'       : ['qsetname', 'type', 'id', 'ctzoffset', 'cdtz', 'mdtz', 'bu__buname', 'bu__bucode'],
         'form_initials': { 'type':'QUESTIONSET'}
     }
 
@@ -313,10 +313,10 @@ class Checklist(LoginRequiredMixin, View):
         'form_class'   : af.ChecklistForm,
         'template_form': 'activity/checklist_form.html',
         'template_list' : 'activity/checklist.html',
-        'related'      : ['unit'],
+        'related'      : ['unit', 'bu'],
         'model'        : am.QuestionSet,
         'filter'       : aft.MasterQsetFilter,
-        'fields'       : ['qsetname', 'type', 'id', 'ctzoffset', 'cdtz', 'mdtz'],
+        'fields'       : ['qsetname', 'type', 'id', 'ctzoffset', 'cdtz', 'mdtz', 'bu__bucode', 'bu__buname'],
         'form_initials': { 'type':'CHECKLIST'}
     }
     
@@ -450,14 +450,14 @@ def deleteQSB(request):
 class Checkpoint(LoginRequiredMixin, View):
     params = {
         'form_class': af.CheckpointForm,
-        'template_form': 'activity/partials/partial_masterasset_form.html',
-        'template_list': 'activity/master_asset_list.html',
-        'partial_form': 'peoples/partials/partial_masterasset_form.html',
-        'partial_list': 'peoples/partials/master_asset_list.html',
-        'related': ['parent', 'type'],
+        'template_form': 'activity/partials/partial_checkpoint_form.html',
+        'template_list': 'activity/checkpoint_list.html',
+        'partial_form': 'peoples/partials/partial_checkpoint_form.html',
+        'partial_list': 'peoples/partials/chekpoint_list.html',
+        'related': ['parent', 'type', 'bu', 'location'],
         'model': am.Asset,
         'fields': ['assetname', 'assetcode', 'runningstatus', 'identifier','location__locname',
-                   'parent__assetname', 'gps', 'id', 'enable'],
+                   'parent__assetname', 'gps', 'id', 'enable', 'bu__buname', 'bu__bucode'],
         'form_initials': {'runningstatus': 'WORKING',
                           'identifier': 'CHECKPOINT',
                           'iscritical': False, 'enable': True}
@@ -925,9 +925,10 @@ class Asset(LoginRequiredMixin,View):
         'model':am.Asset,
         'form':af.AssetForm,
         'jsonform':af.AssetExtrasForm,
-        'related':['parent'],
-        'fields':['assetcode', 'assetname', 'id', 'parent__assetname',
-                  'runningstatus', 'enable', 'gps', 'identifier', 'location__locname']
+        'related':['parent', 'location', 'bu'],
+        'fields':['assetcode', 'assetname', 'id', 'parent__assetname','bu__bucode',
+                  'runningstatus', 'enable', 'gps', 'identifier', 'location__locname',
+                  'bu__buname']
     }
     
     def get(self, request, *args, **kwargs):
@@ -1017,9 +1018,9 @@ class LocationView(LoginRequiredMixin, View):
         'template_list':'activity/location_list.html',
         'model':am.Location,
         'form':af.LocationForm,
-        'related':['parent'],
+        'related':['parent', 'bu'],
         'fields':['id', 'loccode', 'locname', 'parent__locname',
-                  'locstatus', 'enable']
+                  'locstatus', 'enable', 'bu__bucode', 'bu__buname']
     }
     
     def get(self, request, *args, **kwargs):
@@ -1102,10 +1103,10 @@ class PPMView(LoginRequiredMixin, View):
         'template_form_jn':'activity/ppm/jobneed_ppmform.html',
         'model_jn':am.Jobneed,
         'model':am.Job,
-        'related':['asset', 'qset', 'people', 'pgroup'],
+        'related':['asset', 'qset', 'people', 'pgroup', 'bu'],
         'fields':['plandatetime', 'expirydatetime', 'gracetime', 'asset__assetname', 
                   'assignedto', 'performedby__peoplename', 'jobdesc', 'frequency', 
-                  'qset__qsetname', 'id', 'ctzoffset'],
+                  'qset__qsetname', 'id', 'ctzoffset', 'bu__bucode', 'bu__buname'],
         'form':af.PPMForm,
         'form_jn':af.PPMFormJobneed
     }
@@ -1207,10 +1208,10 @@ class PPMJobneedView(LoginRequiredMixin, View):
         'template_list':'activity/ppm/ppm_jobneed_list.html',
         'template_form':'activity/ppm/jobneed_ppmform.html',
         'model':am.Jobneed,
-        'related':['asset', 'qset', 'people', 'pgroup'],
+        'related':['asset', 'qset', 'people', 'pgroup', 'bu'],
         'fields':['plandatetime', 'expirydatetime', 'gracetime', 'asset__assetname', 
                   'assignedto', 'performedby__peoplename', 'jobdesc', 'frequency', 
-                  'qset__qsetname', 'id', 'ctzoffset', 'jobstatus'],
+                  'qset__qsetname', 'id', 'ctzoffset', 'jobstatus', 'bu__bucode', 'bu__buname'],
         'form':af.PPMFormJobneed,
     }
     

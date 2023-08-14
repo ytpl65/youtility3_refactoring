@@ -1,11 +1,3 @@
-from django.db.models.signals import post_save
-from django.dispatch import receiver
-from .models import People
-from rt import exceptions as rt_exc, rest2
-import requests
-from django.conf import settings
-
-
 
 # @receiver(post_save, sender=People)
 # def on_create_or_update_people_update_ticket_user(sender, instance, created, **kwargs):

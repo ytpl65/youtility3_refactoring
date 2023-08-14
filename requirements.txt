@@ -20,6 +20,7 @@ click-plugins==1.1.1
 click-repl==0.3.0
 colorama==0.4.6
 colorlog==6.4.1
+croniter==1.1.0
 cron-descriptor==1.4.0
 cssselect2==0.7.0
 deepface==0.0.74
@@ -95,6 +96,7 @@ protobuf==4.23.3
 psycopg2-binary==2.9.3
 pyasn1==0.5.0
 pyasn1-modules==0.3.0
+phonenumbers==8.12.28
 pycparser==2.21
 pydantic==1.9.0
 pydyf==0.6.0

@@ -105,7 +105,9 @@ Tour List
                 {data: 'gracetime', title: "Grace Time"},
                 {data: 'expirydatetime', title: "Expiry Datetime", render:function(data, type, row, meta){
                     return `<a href="${urlname}?id=${row['id']}">${convert_to_local(type, data, row)}</a>`
-                }}
+                }},
+                {data:"bu__buname", title:"Site"},
+                {data:"bu__bucode", title:"Site Code", visible:false},
             ],
             order:[[1, 'desc']],
             scrollCollapse: true,

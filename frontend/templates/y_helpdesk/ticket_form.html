@@ -192,7 +192,7 @@ Ticket {% if  ticketform.instance.id is not none  %}- {{ ticketform.instance.tic
     <button type="submit" id="submitTour" form="ticketform" class="btn btn-sm btn-primary2 btn-hover-scale">
         Update&nbsp;<i class="fas text-white fa-cloud-upload-alt"></i>
     </button>
-    <button type="submit" id="clearForm" class="btn btn-sm btn-secondary btn-hover-scale">
+    <button type='button' id="clearForm" class="btn btn-sm btn-secondary btn-hover-scale">
         Clear&nbsp;<i class="fas fa-cloud-upload-alt"></i>
     </button>
 
@@ -248,7 +248,7 @@ Ticket {% if  ticketform.instance.id is not none  %}- {{ ticketform.instance.tic
         $("#id_ctzoffset").val(-new Date().getTimezoneOffset())
         //toggle people and pgroup field based on radio button value
 
-        if ('{{ticketform.instance.id}}' == ('None' || "")) {
+        if ('{{ticketform.instance.id}}' === 'None') {
             $("#id_status").select2({"disabled": 'readonly'})
             showHideSelectField('PEOPLE')
         }else{

@@ -304,7 +304,7 @@ Route Plan Setup&nbsp;<i class="fa fa-clock fs-4 text-primary" aria-hidden="true
             Save Tour&nbsp;<i class="fas text-white fa-cloud-upload-alt"></i>
         </button>
         {% endif %}
-        <button type="submit" id="btn_clear" form="id_schdexternaltourform" class="btn btn-sm btn-secondary btn-hover-scale">
+        <button type="button" id="btn_clear" form="id_schdexternaltourform" class="btn btn-sm btn-secondary btn-hover-scale">
             Clear&nbsp;<i class="fas  fa-trash-alt"></i>
         </button>
     </div>
@@ -549,7 +549,10 @@ var israndom = "{{ schdexternaltourform.instance.other_info['is_randomized'] }}"
 
 $(document).ready(() => {
     $("#btn_clear").click(() => {
-        location.href = "{{ url('schedhuler:schd_external_tour') }}?action=form"
+        if(confirm("Are you sure you want to clear the current form?")){
+            location.href = "{{ url('schedhuler:schd_external_tour') }}?action=form"
+        }
+        
     })
     
     d2InitializeMap()
@@ -562,12 +565,29 @@ $(document).ready(() => {
 
     editor = new $.fn.dataTable.Editor( {
         table: "#assigned_sites",
-        fields: [{
+        ajax:{
+            url:"{{ url('schedhuler:schd_external_tour') }}",
+            data:function(d){
+                let currentRow = getCurrentEditingRow(editor, asgdsites_table)
+                d.csrfmiddlewaretoken = "{{ csrf_token }}"
+                d.parent_id = "{{ schdexternaltourform.instance.id }}"
+                d.seqno = $("#DTE_Field_seqno").val()
+                d.qsetname = $("#DTE_Field_qsetname").text()
+                d.qset_id = $("#DTE_Field_qsetname").val()
+                d.jobid = currentRow !== 'None' ? currentRow['jobid'] : currentRow
+                d.postType = 'saveCheckpoint'
+            }
+        },
+        fields: [
+            {
                 label: "Checklist",
                 name: "qsetname",
                 type:'select',
                 data:'qsetname',    
-            },],
+            },
+            {label:"Seq No.", name:'seqno', type:'text', data:'seqno'},
+            {def:"None", name:'jobid', type:'hidden', data:'jobid'},
+            ],
         idSrc: 'jobid'
     });
 
@@ -583,6 +603,22 @@ $(document).ready(() => {
             id: "#DTE_Field_qsetname",
             item: 'Checklist',
         })
+
+        if(action == 'edit'){
+            var data = getCurrentEditingRow(editor, asgdsites_table);
+            //init qset
+            var newOption = new Option(
+            data.qsetname,
+            data.qsetid,
+            true,
+            true
+            );
+            $("#DTE_Field_qsetname").append(newOption);
+        }
+    })
+
+    editor.on('postEdit', function(e, json, data, id){
+        $("#btnGetRoute").click()
     })
 
     asgdsites_table = $("#assigned_sites").DataTable({
@@ -591,7 +627,6 @@ $(document).ready(() => {
         },
         fixedHeader: true,
         responsive: true,
-        rowReorder: true,
         columns:[
             ...getAsgdsitesTabColumnConfig()
         ],
@@ -631,40 +666,11 @@ $(document).ready(() => {
             disableFields(".non-random")
             isRouteSaved=true
         }else{
-            disableFields("#id_tourfrequency, #id_breaktime")
+            disableFields("#id_tourfrequency, #id_breaktime, #id_israndom")
         }
         //cron to readable format
         $("#id_cronstrue").val(cronstrue.toString($("#id_cron").val()))
     }
-
-    //$(".btdeciders").change(function() {
-    //    if(parseInt($("#id_tourfrequency").val(), 10) > 1 && $("#id_israndom").is(":checked")){
-    //        enableFields("#id_breaktime")
-    //    }else{disableFields("#id_breaktime")}
-    //    
-    //    if($("#id_israndom").is(":checked")){
-    //        enableFields("#id_tourfrequency, #id_breaktime")
-    //    }else{disableFields("#id_tourfrequency, #id_breaktime")}
-    //})
-
-    //if(!$("#id_israndom").is(":checked")){
-    //    //disable breaktime & frequency
-    //    $("#id_breaktime, #id_tourfrequency").attr('disabled','disabled');
-    //    //enable non-random buttons
-    //    $(".non-random").removeAttr('disabled');
-    //}else{
-    //    //enable breaktime & frequency
-    //    $("#id_breaktime, #id_tourfrequency").removeAttr('disabled');
-    //    $(".non-random").attr('disabled','disabled');
-    //    isRouteSaved=true
-    //}
-    
-    //if(parseInt($("#id_tourfrequency").val()) > 1){
-    //    $("#id_breaktime").removeAttr('disabled');
-    //}else{
-    //    $("#id_breaktime").val('0')
-    //    $("#id_breaktime").attr('disabled','disabled');
-    //}
 
     //ADD CALENDER TO DATE FIELDS WITH FLAT-PICKR PLUGIN
     $("#id_fromdate, #id_uptodate").flatpickr({

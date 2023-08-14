@@ -181,6 +181,7 @@ def update_record(details, jobneed_record, JnModel, JndModel):
             jobneed = jn_parent_serializer.save()
             jobneed.geojson['gpslocation'] = get_readable_addr_from_point(jobneed.gpslocation)
             jobneed.save()
+            log.debug(f'after saving the record jobneed_id {jobneed.id} cdtz {jobneed.cdtz} mdtz = {jobneed.mdtz} starttime = {jobneed.starttime} endtime = {jobneed.endtime}')
             log.info("parent jobneed is valid and saved successfully")
             if jobneed.jobstatus == 'AUTOCLOSED' and len(details) == 0:
                 return True
@@ -463,7 +464,6 @@ def perform_insertrecord(self, file, request = None, db='default', filebased = T
 
         if len(data) == 0: raise utils.NoRecordsFound
         with transaction.atomic(using = db):
-
             for record in data:
                 tablename = record.pop('tablename')
                 obj = insertrecord(record, tablename)
@@ -480,6 +480,7 @@ def perform_insertrecord(self, file, request = None, db='default', filebased = T
                         obj.endlocation,obj.punchouttime, obj.punchintime]):
                     log.info("save line string is started")
                     save_linestring_and_update_pelrecord(obj)
+                check_for_sitecrisis(obj, tablename, user)
                 recordcount += 1
                 log.info(f'{recordcount} record inserted successfully')
         if len(data) == recordcount:
@@ -495,6 +496,75 @@ def perform_insertrecord(self, file, request = None, db='default', filebased = T
     results = ServiceOutputType(rc = rc, recordcount = recordcount, msg = msg, traceback = traceback)
     return results.__dict__ if bg else results
 
+
+def check_for_tour_track(obj, tablename):
+    allconditions = [
+        hasattr(obj, 'peventtype'), hasattr(obj, 'endlocation'), 
+        hasattr(obj, 'punchintime'), hasattr(obj, 'punchouttime')]
+
+    if all(allconditions) and all([tablename == 'peopleeventlog',
+            obj.peventtype.tacode in ('CONVEYANCE', 'AUDIT'),
+            obj.endlocation,obj.punchouttime, obj.punchintime]):
+        log.info("save line string is started")
+        save_linestring_and_update_pelrecord(obj)
+
+
+def check_for_sitecrisis(obj, tablename, user):
+    if tablename == 'peopleeventlog':
+        model = apps.get_model('attendance', 'PeopleEventlog')
+        if obj.peventtype.tacode in model.objects.get_sitecrisis_types():
+            log.info("Site Crisis found raising a ticket")
+            Ticket = apps.get_model('y_helpdesk', 'Ticket')
+            ESM = apps.get_model('y_helpdesk', 'EscalationMatrix')
+            # generate ticket sitecrisis appeared
+            esc = ESM.objects.select_related('escalationtemplate').filter(
+                escalationtemplate__tacode='SITECRISIS',
+                escalationtemplate__tatype__tacode='TICKETCATEGORY',
+                bu_id=user.bu_id
+            ).order_by('level').first()
+            if esc:
+                raise_ticket(Ticket, user, esc)
+                log.info("Ticket raised")
+            else:
+                esc = create_escalation_matrix_for_sitecrisis(ESM, user)
+                log.info("Escalation was not set, so created one")
+                raise_ticket(Ticket, user, esc)
+                log.info("Ticket raised")
+                
+                
+
+def raise_ticket(Ticket, user, esc):
+    
+    Ticket.objects.create(
+        ticketdesc=f'[SITE CRISIS] raised by {user.peoplename} at site: {user.bu.buname}',
+        assignedtopeople=esc.assignedperson,
+        assignedtogroup_id=1,
+        identifier=Ticket.Identifier.TICKET,
+        client=user.client,
+        bu=user.bu,
+        priority=Ticket.Priority.HIGH,
+        ticketcategory_id=esc.escalationtemplate_id,
+        level=1,
+        status=Ticket.Status.NEW,
+        isescalated=False,
+        ticketsource=Ticket.TicketSource.SYSTEMGENERATED
+    )
+
+def create_escalation_matrix_for_sitecrisis(ESM, user):
+    People = apps.get_model('peoples', 'People')
+    assigneduser = People.objects.get_sitemanager_or_emergencycontact(user.bu)
+    if assigneduser:
+        TypeAssist = apps.get_model('onboarding', 'TypeAssist')
+        site_crisis_obj = TypeAssist.objects.filter(tacode='SITECRISIS', tatype__tacode='TICKETCATEGORY').first()
+        return ESM.objects.create(
+            cuser=user, muser=user, level=1, job_id=1, 
+            frequency='MINUTE', frequencyvalue=30, assignedfor='PEOPLE',
+            bu=user.bu, client=user.client, escalationtemplate = site_crisis_obj,
+            assignedperson=assigneduser, assignedgroup_id=1
+        )
+
+            
+    
 
 
 @app.task(bind = True, default_retry_delay = 300, max_retries = 5,  name = 'perform_reportmutation')
@@ -611,7 +681,6 @@ def perform_uploadattachment(file,  record, biodata):
             iscreated = get_or_create_dir(filepath)
             log.info(f'Is FilePath created? {iscreated}')
             write_file_to_dir(file_buffer, uploadfile)
-            #send_alert_mails_if_any(obj)
             rc, traceback, msg = 0, tb.format_exc(), Messages.UPLOAD_SUCCESS
             recordcount = 1
             log.info('file uploaded success')
@@ -623,13 +692,7 @@ def perform_uploadattachment(file,  record, biodata):
         obj = insertrecord(record, 'attachment')
         log.info(f'Attachment record inserted: {obj.filepath}')
         
-        log.info(f"ownername:{onwername} and owner:{ownerid}")
-        model = get_model_or_form(onwername.lower())
-        eobj = model.objects.get(uuid=ownerid)
-        log.info(f"object retrived of type {type(eobj)}")
-        
-
-        if hasattr(eobj, 'peventtype'): log.info(f'Event Type: {eobj.peventtype.tacode}')
+        eobj = log_event_info(onwername, ownerid)
         if hasattr(eobj, 'peventtype') and eobj.peventtype.tacode in ['SELF', 'MARK', 'MARKATTENDANCE', 'SELFATTENDANCE']:
             from background_tasks.tasks import perform_facerecognition_bgt
             results = perform_facerecognition_bgt.delay(ownerid, peopleid, db)
@@ -639,3 +702,10 @@ def perform_uploadattachment(file,  record, biodata):
     return ServiceOutputType(rc = rc, recordcount = recordcount, msg = msg, traceback = traceback)
 
 
+def log_event_info(onwername, ownerid):
+    log.info(f"ownername:{onwername} and owner:{ownerid}")
+    model = get_model_or_form(onwername.lower())
+    eobj = model.objects.get(uuid=ownerid)
+    log.info(f"object retrived of type {type(eobj)}")
+    if hasattr(eobj, 'peventtype'): log.info(f'Event Type: {eobj.peventtype.tacode}')
+    return eobj

@@ -67,12 +67,14 @@ Question Set List
             scrollCollapse: true,
             scrollX:true,
 			columns:[
-				{data: 'id', visible:false},
-				{data: 'ctzoffset', visible:false},
+				{data: 'id', visible:false, className:'noVis'},
+				{data: 'ctzoffset', visible:false, className:'noVis'},
 				{data: 'qsetname', title:'Name'},
 				{data: 'type', title:"Type"},
 				{data: 'cdtz', title:"Created Date"},
 				{data: 'mdtz', title:"Modified Date"},
+				{data: 'bu__bucode', title:"Site Code", visible:false},
+				{data: 'bu__buname', title:"Site"},
 			],
 			dom       : `<'row' <'col-sm-6 d-flex justify-content-start'f> <'col-sm-6 d-flex justify-content-end'B> >rt<'row'
 			 <'col-sm-6'l> <'col-sm-6'p><'col-sm-12 d-flex justify-content-center'i>>`,
@@ -97,6 +99,18 @@ Question Set List
 			],
 
 			buttons:[
+			 "searchBuilder",
+			 dataTablesPDFConfig(
+                    title = `Site: {{request.user.bu.buname}}\n Question Set List`,
+                    columns = [2,3,4,5,6,7],
+                    filename="qset_list"
+                ),
+                dataTablesExcelConfig(
+                    title = `Site: {{request.user.bu.buname}}\n Question Set List`,
+                    columns = [2,3,4,5,6,7],
+                    filename="qset_list"
+                ),
+                dataTablesColumnVisibilityConfig(),
 				{
 					text:`Add New Checklist &nbsp;<i class='fas text-dark fa-plus'></i></a>`,
 					//action for add_new_button 

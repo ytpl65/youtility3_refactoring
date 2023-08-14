@@ -109,11 +109,13 @@ class QuestionSetManager(models.Manager):
         R, S = request.GET, request.session
         
         qset = self.filter(
-            Q(parent_id__isnull=True) | Q(parent_id=1),
-            ~Q(qsetname='NONE'),
-            #type='CHECKLIST',
-            bu_id = S['bu_id'],
-            client_id = S['client_id'], 
+            Q(type='RPCHECKLIST') & Q(bu_id__in = S['assignedsites'])
+            |
+            Q( Q(parent_id__isnull=True) | Q(parent_id=1), ~Q(qsetname='NONE'),
+            Q(bu_id = S['bu_id']),
+            Q(client_id = S['client_id']), 
+            )
+            
         ).select_related(*related).values(*fields)
         return qset or self.none()
     
@@ -563,9 +565,9 @@ class JobneedManager(models.Manager):
         R, S = request.GET, request.session
         pd1 = R.get('from', datetime.now().date())
         pd2 = R.get('upto', datetime.now().date())
-        return self.filter(
+        return self.select_related('bu', 'parent').filter(
             Q(Q(parent_id__in = [1, -1]) | Q(parent_id__isnull=True)),
-            bu_id = S['bu_id'],
+            bu_id__in = S['assignedsites'],
             identifier = QuestionSet.Type.INCIDENTREPORTTEMPLATE,
             plandatetime__date__gte = pd1,
             plandatetime__date__lte = pd2,
@@ -576,9 +578,9 @@ class JobneedManager(models.Manager):
         R, S = request.GET, request.session
         pd1 = R.get('from', datetime.now().date())
         pd2 = R.get('upto', datetime.now().date())
-        return self.filter(
+        return self.select_related('bu', 'parent').filter(
             Q(Q(parent_id__in = [1, -1]) | Q(parent_id__isnull=True)),
-            bu_id = S['bu_id'],
+            bu_id__in = S['assignedsites'],
             client_id = S['client_id'],
             plandatetime__date__gte = pd1,
             plandatetime__date__lte = pd2,
@@ -590,7 +592,7 @@ class JobneedManager(models.Manager):
         P = json.loads(R.get('params'))
         ic(P)
 
-        qobjs = self.annotate(
+        qobjs = self.select_related('people','bu', 'pgroup', 'client').annotate(
             assignedto = Case(
                 When(pgroup_id=1, then=Concat(F('people__peoplename'), V(' [PEOPLE]'))),
                 When(people_id=1, then=Concat(F('pgroup__groupname'), V(' [GROUP]'))),
@@ -612,9 +614,9 @@ class JobneedManager(models.Manager):
     
     def get_taskchart_data(self, request):
         S, R = request.session, request.GET
-        total_schd = self.filter(
+        total_schd = self.select_related('bu', 'parent').filter(
             Q(Q(parent_id__in = [1, -1]) | Q(parent_id__isnull=True)),
-            bu_id = S['bu_id'],
+            bu_id__in = S['assignedsites'],
             identifier = 'TASK',
             plandatetime__date__gte = R['from'],
             plandatetime__date__lte = R['upto'],
@@ -630,7 +632,7 @@ class JobneedManager(models.Manager):
     
     def get_tourchart_data(self, request):
         S, R = request.session, request.GET
-        total_schd = self.filter(
+        total_schd = self.select_related('parent', 'bu').filter(
             Q(Q(parent_id__in = [1, -1]) | Q(parent_id__isnull=True)),
             bu_id__in = S['assignedsites'],
             identifier = 'INTERNALTOUR',
@@ -647,8 +649,8 @@ class JobneedManager(models.Manager):
     
     def get_alertchart_data(self, request):
         S, R = request.session, request.GET
-        qset = self.filter(
-            bu_id = S['bu_id'],
+        qset = self.select_related('bu', 'parent').filter(
+            bu_id__in = S['assignedsites'],
             plandatetime__date__gte = R['from'],
             plandatetime__date__lte = R['upto'],
             client_id = S['client_id'],
@@ -696,9 +698,9 @@ class JobneedManager(models.Manager):
     
     def get_ppmchart_data(self, request):
         S, R = request.session, request.GET
-        total_schd = self.filter(
+        total_schd = self.select_related('bu', 'parent').filter(
             Q(Q(parent_id__in = [1, -1]) | Q(parent_id__isnull=True)),
-            bu_id = S['bu_id'],
+            bu_id__in = S['assignedsites'],
             identifier = 'PPM',
             plandatetime__date__gte = R['from'],
             plandatetime__date__lte = R['upto'],    
@@ -940,7 +942,7 @@ class AssetManager(models.Manager):
         if id:
             qset = qset.filter(enable=True, identifier='CHECKPOINT',id=id).values(*fields)[0]
         else:
-            qset = qset.filter(enable=True, identifier='CHECKPOINT', bu_id = S['bu_id'], client_id = S['client_id']).values(*fields)
+            qset = qset.filter(enable=True, identifier='CHECKPOINT', bu_id=S['bu_id'], client_id = S['client_id']).values(*fields)
         if(P not in ['null', None]):
             P = json.loads(P)
             qset = qset.filter(runningstatus = P['status'])
@@ -984,23 +986,77 @@ class AssetManager(models.Manager):
         from apps.activity.models import Location
         
         working = [
-        self.filter(runningstatus = 'WORKING', bu_id = S['bu_id'], identifier = 'ASSET', client_id=S['client_id']).values('id').order_by('assetcode').distinct('assetcode').count(),
-        self.filter(runningstatus = 'WORKING', bu_id = S['bu_id'], identifier = 'CHECKPOINT', client_id=S['client_id']).values('id').order_by('assetcode').distinct('assetcode').count(),
-        Location.objects.filter(locstatus = 'WORKING', bu_id = S['bu_id'], client_id=S['client_id']).values('id').order_by('loccode').distinct('loccode').count()]
+            self.select_related('bu', 'client').filter(
+                runningstatus = 'WORKING', bu_id__in = S['assignedsites'],
+                identifier = 'ASSET', client_id=S['client_id']).values('id').order_by(
+                    'assetcode').distinct('assetcode').count(),
+            
+            self.select_related(
+                'bu', 'client').filter(
+                    runningstatus = 'WORKING', bu_id__in = S['assignedsites'],
+                    identifier = 'CHECKPOINT', client_id=S['client_id']
+                    ).values('id').order_by('assetcode').distinct(
+                        'assetcode').count(),
+            Location.objects.select_related(
+                'bu', 'client').filter(
+                    locstatus = 'WORKING', bu_id__in = S['assignedsites'],
+                    client_id=S['client_id']).values('id').order_by(
+                        'loccode').distinct('loccode').count()
+        ]
+        
+        
         mnt = [
-        self.filter(runningstatus = 'MAINTENANCE', bu_id = S['bu_id'], identifier = 'ASSET', client_id=S['client_id']).values('id').order_by('assetcode').distinct('assetcode').count(),
-        self.filter(runningstatus = 'MAINTENANCE', bu_id = S['bu_id'], identifier = 'CHECKPOINT', client_id=S['client_id']).values('id').order_by('assetcode').distinct('assetcode').count(),
-        Location.objects.filter(locstatus = 'MAINTENANCE', bu_id = S['bu_id'], client_id=S['client_id']).values('id').order_by('loccode').distinct('loccode').count()
+            self.select_related(
+                'bu', 'client').filter(
+                    runningstatus = 'MAINTENANCE', bu_id__in = S['assignedsites'],
+                    identifier = 'ASSET', client_id=S['client_id']
+                    ).values('id').order_by('assetcode').distinct(
+                        'assetcode').count(),
+            self.select_related(
+                'bu', 'client').filter(
+                    runningstatus = 'MAINTENANCE', bu_id__in = S['assignedsites'],
+                    identifier = 'CHECKPOINT', client_id=S['client_id']
+                    ).values('id').order_by('assetcode').distinct(
+                        'assetcode').count(),
+            Location.objects.select_related(
+                'bu', 'client').filter(
+                    locstatus = 'MAINTENANCE', bu_id__in = S['assignedsites'],
+                    client_id=S['client_id']).values('id').order_by(
+                        'loccode').distinct('loccode').count()
         ]
         stb = [
-        self.filter(runningstatus = 'STANDBY', bu_id = S['bu_id'], identifier = 'ASSET', client_id=S['client_id']).values('id').order_by('assetcode').distinct('assetcode').count(),
-        self.filter(runningstatus = 'STANDBY', bu_id = S['bu_id'], identifier = 'CHECKPOINT', client_id=S['client_id']).values('id').order_by('assetcode').distinct('assetcode').count(),
-        Location.objects.filter(locstatus = 'STANDBY', bu_id = S['bu_id'], client_id=S['client_id']).values('id').order_by('loccode').distinct('loccode').count()
+            self.select_related(
+                'bu', 'client').filter(
+                    runningstatus = 'STANDBY', bu_id__in = S['assignedsites'],
+                    identifier = 'ASSET', client_id=S['client_id']
+                    ).values('id').order_by('assetcode').distinct(
+                        'assetcode').count(),
+            self.select_related(
+                'bu', 'client').filter(
+                    runningstatus = 'STANDBY', bu_id__in = S['assignedsites'],
+                    identifier = 'CHECKPOINT', client_id=S['client_id']
+                    ).values('id').order_by('assetcode').distinct(
+                        'assetcode').count(),
+            
+            Location.objects.select_related(
+                'bu', 'client').filter(
+                    locstatus = 'STANDBY', bu_id__in = S['assignedsites'],
+                    client_id=S['client_id']).values(
+                        'id').order_by('loccode').distinct('loccode').count()
         ]
         scp = [
-        self.filter(runningstatus = 'SCRAPPED', bu_id = S['bu_id'], identifier = 'ASSET', client_id=S['client_id']).values('id').order_by('assetcode').distinct('assetcode').count(),
-        self.filter(runningstatus = 'SCRAPPED', bu_id = S['bu_id'], identifier = 'CHECKPOINT', client_id=S['client_id']).values('id').order_by('assetcode').distinct('assetcode').count(),
-        0
+            self.select_related(
+                'bu', 'client').filter(
+                    runningstatus = 'SCRAPPED', bu_id__in = S['assignedsites'],
+                    identifier = 'ASSET', client_id=S['client_id']
+                    ).values('id').order_by('assetcode').distinct(
+                        'assetcode').count(),
+            self.select_related(
+                'bu', 'client').filter(
+                    runningstatus = 'SCRAPPED', bu_id__in = S['assignedsites'],
+                    identifier = 'CHECKPOINT', client_id=S['client_id']
+                    ).values('id').order_by('assetcode').distinct('assetcode').count(),
+            0
         ]
         
         series = [
@@ -1213,7 +1269,7 @@ class JobManager(models.Manager):
             ).filter(
             Q(parent__jobname = 'NONE') | Q(parent_id = 1),
             ~Q(jobname='NONE') | ~Q(id=1),
-            bu_id = S['bu_id'],
+            bu_id__in = S['assignedsites'],
             client_id = S['client_id'],
             identifier__exact='INTERNALTOUR',
             enable=True
@@ -1239,7 +1295,7 @@ class JobManager(models.Manager):
             ).filter(
             ~Q(jobname='NONE') | ~Q(id=1),
             Q(parent__jobname = 'NONE') | Q(parent_id = 1),
-            bu_id = S['bu_id'],
+            bu_id__in = S['assignedsites'],
             client_id = S['client_id'],
             identifier = 'TASK',
         ).select_related(*related).values(*fields)
@@ -1267,8 +1323,12 @@ class JobManager(models.Manager):
         ic(utils.printsql(qset))
         return qset or self.none()
 
-    def get_sitecheckpoints_exttour(self, job):
-        ic(job)
+    def get_sitecheckpoints_exttour(self, job, child_jobid = None):
+        fields = ['id',
+            'breaktime', 'distance', 'starttime', 'expirytime',
+            'qsetid', 'jobid', 'assetid', 'seqno', 'jobdesc',
+            'bu__buname', 'buid', 'bu__gpslocation', 'endtime', 'duration',
+            'qsetname', 'solid']
         qset = self.annotate(
             qsetid = F('qset_id'), assetid = F('asset_id'),
             jobid = F('id'), bu__gpslocation = AsGeoJSON('bu__gpslocation'),
@@ -1279,13 +1339,9 @@ class JobManager(models.Manager):
             solid = F('bu__solid'),
             qsetname=F('qset__qsetname')
             
-        ).filter(parent_id=job['id']).select_related('asset', 'qset',).values(
-            'id',
-            'breaktime', 'distance', 'starttime', 'expirytime',
-            'qsetid', 'jobid', 'assetid', 'seqno', 'jobdesc',
-            'bu__buname', 'buid', 'bu__gpslocation', 'endtime', 'duration',
-            'qsetname', 'solid'
-        ).order_by('seqno')
+        ).filter(parent_id=job['id']).select_related('asset', 'qset',).values(*fields).order_by('seqno')
+        if child_jobid: 
+            return qset.filter(jobid = child_jobid).values(*fields).order_by('seqno') or self.none()
         return qset or self.none()
     
     def get_people_assigned_to_geofence(self, geofenceid):
@@ -1346,7 +1402,7 @@ class JobManager(models.Manager):
             fromdate__date__gte = fromdt,
             fromdate__date__lte = uptpdt,
             client_id = S['client_id'],
-            bu_id = S['bu_id'],
+            bu_id__in = S['assignedsites'],
             identifier = 'PPM',
             enable=True
         ).values('id', 'jobname', 'asset__assetname', 'qset__qsetname', 'assignedto',
@@ -1389,6 +1445,22 @@ class JobManager(models.Manager):
                 return {'data':list(self.none()),}
             qset = self.filter(pk = ID).values('seqno', 'qset__qsetname', 'asset__assetname', 'expirytime', 'pk', 'asset_id', 'qset_id')
             return {'data':list(qset)}
+        except Exception  as e:
+            log.error("something went wrong", exc_info=True)
+            return {'data':[], 'error':"Somthing went Wrong!"}
+    
+    def handle_save_checkpoint_sitetour(self, request):
+        R, S = request.POST, request.session
+        """handle post data submitted from route plan edit adgn checkpoint form"""
+        try:
+            mdtz = datetime.now(tz = timezone.utc)
+            if R['action'] == 'edit':
+                child_job_post_data = {'seqno':R['seqno'], 'qset_id':R['qset_id']}
+                if updated := self.filter(id=R['jobid']).update(**child_job_post_data, muser = request.user, mdtz = mdtz):
+                    ID = R['jobid']
+                    qset = self.get_sitecheckpoints_exttour({'id':R['parent_id']}, ID)
+                    return {'data':list(qset)}
+                return {'data':[]}
         except Exception  as e:
             log.error("something went wrong", exc_info=True)
             return {'data':[], 'error':"Somthing went Wrong!"}

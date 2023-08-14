@@ -63,10 +63,10 @@ Asset Form
 
             <div class="input-group mb-3">
                 <div class="col-md-4">
-                    {{ assetform.parent.label_tag() }}
+                    {{ assetform.location.label_tag() }}
                 </div>
                 <div class="col-md-8">
-                    {{ assetform.parent }}
+                    {{ assetform.location }}
                 </div>
             </div>
             <div class="input-group mb-3 assetstatus">
@@ -105,12 +105,13 @@ Asset Form
                     </div>
                 </div>
             </div>
+            
             <div class="input-group mb-3">
                 <div class="col-md-4">
-                    {{ assetform.location.label_tag() }}
+                    {{ assetform.parent.label_tag() }}
                 </div>
                 <div class="col-md-8">
-                    {{ assetform.location }}
+                    {{ assetform.parent }}
                 </div>
             </div>
             <div class="d-flex justify-content-start">

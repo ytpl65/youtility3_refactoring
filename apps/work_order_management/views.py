@@ -102,11 +102,11 @@ class WorkOrderView(LoginRequiredMixin, View):
         'form_class'   : WorkOrderForm,
         'template_form': 'work_order_management/work_order_form.html',
         'template_list': 'work_order_management/work_order_list.html',
-        'related'      : ['vendor', 'cuser'],
+        'related'      : ['vendor', 'cuser', 'bu'],
         'model'        : Wom,
         'model_jnd'    : WomDetails,
         'fields'       : ['id', 'ctzoffset', 'cuser__peoplename', 'cuser__peoplecode', 'plandatetime', 'cdtz', 'bu__buname',
-                          'expirydatetime', 'priority', 'description', 'vendor__name', 'categories', 'workstatus']
+                          'expirydatetime', 'priority', 'description', 'vendor__name', 'categories', 'workstatus', 'bu__bucode']
     }
 
     def get(self, request, *args, **kwargs):
@@ -146,7 +146,6 @@ class WorkOrderView(LoginRequiredMixin, View):
             return rp.JsonResponse(data = {'data': list(att)})
 
         if R.get('action') == 'get_wo_details' and R.get('womid'):
-            ic(R)
             objs = self.params['model_jnd'].objects.get_wo_details(R['womid'])
             return rp.JsonResponse({"data":list(objs)})
         
@@ -342,8 +341,8 @@ class WorkPermit(LoginRequiredMixin, View):
         'email_template':'work_order_management/workpermit_approver_action.html',
         'model':Wom,
         'form':WorkPermitForm,
-        'related':[],
-        'fields':['cdtz', 'id', 'other_data__wp_seqno', 'qset__qsetname', 'workpermit', 'cuser__peoplename']
+        'related':['qset', 'cuser', 'bu'],
+        'fields':['cdtz', 'id', 'other_data__wp_seqno', 'qset__qsetname', 'workpermit', 'cuser__peoplename', 'bu__bucode', 'bu__buname']
     }
     
     def get(self, request, *args, **kwargs):
@@ -569,7 +568,7 @@ class ApproverView(LoginRequiredMixin, View):
         'template_list': 'work_order_management/approver_list.html',
         'related'      : ['people', 'cuser'],
         'model'        : Approver,
-        'fields'       : ['approverfor', 'id','sites', 'cuser__peoplename', 'people__peoplename', 'forallsites']
+        'fields'       : ['approverfor', 'id','sites', 'cuser__peoplename', 'people__peoplename', 'forallsites', 'bu__buname', 'bu__bucode']
     }
 
     def get(self, request, *args, **kwargs):

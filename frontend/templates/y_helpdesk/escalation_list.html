@@ -48,6 +48,8 @@ Escalation List
                 {title:'Created on', data:'cdtz', render:function(data, type, row, meta){
                     return convert_to_local(type, data, row)
                 }},
+                {title:"Site", data:"bu__buname"},
+                {title:"Site Code", data:"bu__bucode", visible:false},
                 
             ],
             dom       : `<'row' <'col-sm-6 d-flex justify-content-start'f> <'col-sm-6 d-flex justify-content-end'B> >rt<'row'

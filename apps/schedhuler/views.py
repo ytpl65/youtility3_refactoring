@@ -20,6 +20,7 @@ from django.db.models.deletion import RestrictedError
 from django.urls import reverse
 import json
 from django.contrib.gis.db.models.functions import  AsWKT, AsGeoJSON
+from django.views.decorators.http import require_http_methods
 log = logging.getLogger('__main__')
 # Create your views here.
 
@@ -614,41 +615,60 @@ class Retrive_E_ToursJob(LoginRequiredMixin, View):
         return {'ext_schdtour_list': schdtour_list, 'ext_schdtour_filter': filterform}
 
 
+@require_http_methods(["POST"])
 def run_internal_tour_scheduler(request):
-    if request.method != 'POST' or request.POST is None:
-        return Http404
-    padd = "#"*10
-    log.info(f"{padd} run_guardtour_scheduler initiated [START] {padd}")
-    R, job_id, resp = request.POST, request.POST.get('job_id'), None
-    ic(R)
-    if (
-        jobs := am.Job.objects.filter(id = job_id).select_related(
-            "asset","pgroup",'sgroup',
-            "cuser","muser","qset","people").values(*utils.JobFields.fields)
-    ):
-        #check if it is random external tour
-        if jobs[0]['other_info']['is_randomized'] in [True, 'true'] and R.get('action')=='saveCheckpoints':
-            log.info('tour type random is going to schedule')
-            #save checkpoints
-            checkpoints =  json.loads(R.get('checkpoints'))
-            am.Job.objects.filter(parent_id = jobs[0]['id']).delete()
-            log.info("saving checkpoints startted...")
-            for cp in checkpoints:
-                obj = am.Job.objects.create(
-                    **sutils.job_fields(jobs[0], cp, external=True))
-                putils.save_userinfo(obj, request.user, request.session, bu=cp['buid'])
-                log.info(f"checkpoint saved {obj.jobname}")
-            log.info("saving checkpoints ended...")
-        log.info(f"{padd} create_job(jobs) {padd}")
-        res, cons_result= sutils.create_job([jobs[0]['id']])
-        resp = rp.JsonResponse(res, status=200, safe=False)
-    else:
-        msg = "Job not found unable to schedhule"
-        log.error(f"{msg}", exc_info = True)
-        resp = rp.JsonResponse({"errors": msg}, status = 404)
-    log.info(f"{padd} run_guardtour_scheduler initiated [END] {padd}")
-    ic("resp in run_internal_tour_scheduler()", resp)
+    """Schedules an internal tour based on the POST request."""
+
+    job_id = request.POST.get('job_id')
+    action = request.POST.get('action')
+    checkpoints = json.loads(request.POST.get('checkpoints', '[]'))
+
+    # Start structured logging
+    log.info('run_guardtour_scheduler initiated', extra={'phase': 'START', 'job_id': job_id})
+
+    # Validate inputs
+    if not job_id:
+        log.error('Job ID not found in request', extra={'request': request.POST})
+        return rp.JsonResponse({"errors": "Job ID not found"}, status=404)
+
+    # Fetch the Job
+    job = _get_job(job_id)
+
+    if job is None:
+        log.error('Job not found in database', extra={'job_id': job_id})
+        return rp.JsonResponse({"errors": "Job not found"}, status=404)
+
+    # Handle Randomized External Tour
+    if job['other_info']['is_randomized'] in [True, 'true'] and action == 'saveCheckpoints':
+        log.info('Tour type random is going to schedule', extra={'job': job})
+        _handle_random_external_tour(job, checkpoints, request)
+
+    # Create a new job
+    response, _ = sutils.create_job([job['id']])
+    resp = rp.JsonResponse(response, status=200, safe=False)
+
+    # End logging
+    log.info('run_guardtour_scheduler ended', extra={'phase': 'END', 'job_id': job_id, 'response': resp})
+
     return resp
+
+def _get_job(job_id):
+    """Fetch a job from the database by its ID"""
+    jobs = am.Job.objects.filter(id=job_id).select_related(
+        "asset", "pgroup", 'sgroup', "cuser", "muser", "qset", "people").values(*utils.JobFields.fields)
+    return jobs[0] if jobs else None
+
+def _handle_random_external_tour(job, checkpoints, request):
+    """Handle a randomized external tour"""
+    am.Job.objects.filter(parent_id=job['id']).delete()
+    log.info("saving checkpoints started...", extra={'job': job})
+    
+    for checkpoint in checkpoints:
+        obj = am.Job.objects.create(**sutils.job_fields(job, checkpoint, external=True))
+        putils.save_userinfo(obj, request.user, request.session, bu=checkpoint['buid'])
+        log.info(f"checkpoint saved", extra={'checkpoint': obj.jobname})
+    
+    log.info("saving checkpoints ended...", extra={'job': job})
 
 def get_cron_datetime(request):
     if request.method != 'GET':
@@ -971,7 +991,8 @@ class JobneedTours(LoginRequiredMixin, View):
         'template_path': 'schedhuler/i_tourlist_jobneed.html',
         'template_form': 'schedhuler/i_tourform_jobneed.html',
         'fields'       : ['jobdesc', 'people__peoplename', 'pgroup__groupname', 'id', 'ctzoffset', 'jobtype',
-            'plandatetime', 'expirydatetime', 'jobstatus', 'gracetime', 'performedby__peoplename', 'assignedto'],
+            'plandatetime', 'expirydatetime', 'jobstatus', 'gracetime', 'performedby__peoplename', 'assignedto',
+            'bu__buname', 'bu__bucode'],
         'related': ['pgroup',  'ticketcategory', 'asset', 'client',
                 'job', 'qset', 'people', 'parent', 'bu'],
         'form_class':scd_forms.I_TourFormJobneed,
@@ -1123,7 +1144,7 @@ class JobneedTasks(LoginRequiredMixin, View):
         'fields': [
                 'jobdesc', 'people__peoplename', 'pgroup__groupname', 'id',
                 'plandatetime', 'expirydatetime', 'jobstatus', 'gracetime',
-                'performedby__peoplename', 'asset__assetname', 'qset__qsetname',
+                'performedby__peoplename', 'asset__assetname', 'qset__qsetname','bu__buname', 'bu__bucode',
                 'ctzoffset', 'assignedto', 'jobtype', 'ticketcategory__taname', 'other_info__isAcknowledged'],
         'related': [
                 'pgroup',  'ticketcategory', 'asset', 'client','ctzoffset',
@@ -1179,8 +1200,8 @@ class SchdTasks(LoginRequiredMixin, View):
         'fields'       : ['jobname', 'people__peoplename', 'pgroup__groupname',
                         'fromdate', 'uptodate', 'qset__qsetname', 'asset__assetname',
                         'planduration', 'gracetime', 'expirytime', 'id', 'ctzoffset',
-                        'assignedto'],
-        'related'      : ['pgroup', 'people', 'asset'],
+                        'assignedto', 'bu__buname', 'bu__bucode'],
+        'related'      : ['pgroup', 'people', 'asset', 'bu'],
         'form_class': scd_forms.SchdTaskFormJob,
         'template_form': 'schedhuler/schd_taskform_job.html',
         'initial': {
@@ -1297,7 +1318,7 @@ class InternalTourScheduling(LoginRequiredMixin, View):
         'form_class'   : scd_forms.Schd_I_TourJobForm,
         'subform'      : scd_forms.SchdChild_I_TourJobForm,
         'model'        : am.Job,
-        'related'      : ['pgroup', 'people'],
+        'related'      : ['pgroup', 'people', 'bu'],
         'initial'      : {
             'starttime' : time(00, 00, 00),
             'endtime'   : time(00, 00, 00),
@@ -1311,7 +1332,7 @@ class InternalTourScheduling(LoginRequiredMixin, View):
             'uptodate'  : datetime.combine(date.today(), time(23, 00, 00)) + timedelta(days = 2),
         },
         'fields'       : ['id', 'jobname', 'people__peoplename', 'pgroup__groupname', 'fromdate', 'uptodate',
-                        'planduration', 'gracetime', 'expirytime', 'assignedto']
+                        'planduration', 'gracetime', 'expirytime', 'assignedto', 'bu__bucode', 'bu__buname']
     }
 
     def get(self, request, *args, **kwargs):
@@ -1545,6 +1566,9 @@ class ExternalTourScheduling(LoginRequiredMixin, View):
         pk, R = request.POST.get('pk', None), request.POST
         formData = QueryDict(request.POST.get('formData'))
         try:
+            if R.get('postType') == 'saveCheckpoint':
+                data =  am.Job.objects.handle_save_checkpoint_sitetour(request)
+                return rp.JsonResponse(data, status = 200, safe=False)
             if R.get('action')=='saveCheckpoints':
                 checkpoints =  json.loads(R.get('checkpoints'))
                 return self.saveCheckpointsinJob(R, checkpoints, P, request)

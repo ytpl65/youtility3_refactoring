@@ -342,9 +342,9 @@ class PeopleGroup(LoginRequiredMixin, View):
         'template_form': 'peoples/partials/partial_pgroup_form.html',
         'template_list': 'peoples/peoplegroup.html',
         'partial_form': 'peoples/partials/partial_pgroup_form.html',
-        'related': ['identifier'],
+        'related': ['identifier', 'bu'],
         'model': pm.Pgroup,
-        'fields': ['groupname', 'enable', 'id'],
+        'fields': ['groupname', 'enable', 'id', 'bu__buname', 'bu__bucode'],
         'form_initials': {}
     }
 

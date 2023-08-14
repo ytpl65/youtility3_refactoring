@@ -93,5 +93,7 @@ class EscalationForm(forms.ModelForm):
         self.request = kwargs.pop('request')
         super().__init__(*args, **kwargs)
         utils.initailize_form_fields(self)
-        self.fields['escalationtemplate'].queryset = TypeAssist.objects.filter(
-            tatype__tacode__in = ['TICKETCATEGORY', 'TICKET_CATEGORY'])
+        self.fields['escalationtemplate'].queryset = TypeAssist.objects.select_related('tatype').filter(
+            tatype__tacode__in = ['TICKETCATEGORY', 'TICKET_CATEGORY'],
+            bu_id__in = self.request.session['assignedsites'] + [1]
+        )

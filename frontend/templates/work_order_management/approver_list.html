@@ -59,6 +59,8 @@ const formid          = "#approverform"
                     return data === true ? '<i class="bi bi-check-circle-fill text-success"></i>': '<i class="bi bi-x-circle-fill text-danger"></i>' 
                 }},
                 {title:"Created By", data:"cuser__peoplename"},
+                {title:"Site", data:"bu__buname", visible:false},
+                {title:"Site Code", data:"bu__bucode", visible:false},
             ],
             deferRender:true,
             scrollY: 300,

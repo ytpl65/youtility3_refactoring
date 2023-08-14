@@ -23,6 +23,7 @@ class Attendance(LoginRequiredMixin, View):
         'template_form': 'attendance/partials/partial_attendance_form.html',
         'template_list': 'attendance/attendance.html',
         'template_list_sos': 'attendance/sos_list.html',
+        'template_list_site_diversions': 'attendance/site_diversions.html',
         'partial_form': 'attendance/partials/partial_attendance_form.html',
         'partial_list': 'attendance/partials/partial_attendance_list.html',
         'related': ['people', 'client', 'bu', 'verifiedby', 'geofence', 'peventtype'],
@@ -36,12 +37,17 @@ class Attendance(LoginRequiredMixin, View):
         R, P, resp = request.GET, self.params, None
 
         if R.get('template') == 'sos_template': return render(request, P['template_list_sos'])
+        if R.get('template') == 'site_diversions': return render(request, P['template_list_site_diversions'])
         
         if R.get('template'): return render(request, self.params['template_list'])
         # return attendance_list data
         
         if R.get('action') == 'sos_list_view':
             objs = self.params['model'].objects.get_sos_listview(request)
+            return rp.JsonResponse({'data':list(objs)}, status=200)
+        
+        if R.get('action') == 'get_site_diversion_list':
+            objs = self.params['model'].objects.get_diversion_count(request)
             return rp.JsonResponse({'data':list(objs)}, status=200)
         
         if R.get('action', None) == 'list' or R.get('search_term'):

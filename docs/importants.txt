@@ -58,3 +58,16 @@ In the directory: background_tasks.tasks.py, apps.service.utils
 ############ upadate json field add new key/value to it eg for people table
 UPDATE people 
 SET people_extras = jsonb_set(people_extras::jsonb, '{isworkpermit_approver}', 'false', true);
+
+
+(youtility4) redmine@redmine:/etc/systemd/system$ cat gunicorn.socket
+[Unit]
+Description=gunicorn socket
+
+[Socket]
+ListenStream=/run/gunicorn.sock
+SocketUser=redmine
+SocketGroup=nginx
+SocketMode=0660
+[Install]
+WantedBy=sockets.target

@@ -11,6 +11,7 @@ from import_export.results import RowResult
 import re
 from django.core.exceptions import ValidationError
 from django.apps import apps
+from apps.peoples.admin import BVForeignKeyWidget
 
 
 
@@ -167,7 +168,7 @@ class QuestionSetResource(resources.ModelResource):
     BV = fields.Field(
         column_name='Site*',
         attribute='bu',
-        widget = wg.ForeignKeyWidget(om.Bt, 'bucode'),
+        widget = BVForeignKeyWidget(om.Bt, 'bucode'),
         default=utils.get_or_create_none_bv
     )
     ID               = fields.Field(attribute='id', column_name='ID')
@@ -281,7 +282,7 @@ class QuestionSetBelongingResource(resources.ModelResource):
     BV = fields.Field(
         column_name='Site*',
         attribute='bu',
-        widget = wg.ForeignKeyWidget(om.Bt, 'bucode'),
+        widget = BVForeignKeyWidget(om.Bt, 'bucode'),
         default=utils.get_or_create_none_bv
     )
     
@@ -402,7 +403,7 @@ class AssetResource(resources.ModelResource):
     BV = fields.Field(
         column_name       = 'BV*',
         attribute         = 'bu',
-        widget            = wg.ForeignKeyWidget(om.Bt, 'bucode'),
+        widget            = BVForeignKeyWidget(om.Bt, 'bucode'),
         saves_null_values = True,
         default           = utils.get_or_create_none_bv
     )
@@ -521,7 +522,7 @@ class LocationResource(resources.ModelResource):
     BV = fields.Field(
         column_name       = 'Site*',
         attribute         = 'bu',
-        widget            = wg.ForeignKeyWidget(om.Bt, 'bucode'),
+        widget            = BVForeignKeyWidget(om.Bt, 'bucode'),
         saves_null_values = True,
         default           = utils.get_or_create_none_bv
     )

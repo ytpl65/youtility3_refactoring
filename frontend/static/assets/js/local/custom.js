@@ -28,6 +28,11 @@ function getAddressOfPoint(geocoder, point, callback) {
   });
 }
 
+function parseGeoJson(data){
+    let coords = typeof data === 'string' && data.length > 0 ? JSON.parse(data): 'NONE'
+    return coords !== 'NONE' ? `${coords['coordinates'][1]}, ${coords['coordinates'][0]}` : coords
+}
+
 function pluginsForFormValidations(){
   return {
     trigger: new FormValidation.plugins.Trigger(),

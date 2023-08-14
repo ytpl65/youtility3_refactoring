@@ -73,6 +73,8 @@ Scheduled Tasks
                 {data: 'planduration', title: 'Duration'},
                 {data: 'gracetime', title: 'Gracetime'},
                 {data: 'expirytime', title: 'Expirytime'},
+                {data: 'bu__buname', title: 'Site'},
+                {data: 'bu__bucode', title: 'Site Code', visible:false},
             ],
             order:[[5, 'desc']],
             dom:`<'row' <'col-sm-6 d-flex justify-content-start'f> <'col-sm-6 d-flex justify-content-end'B> >rt<'row'
@@ -95,12 +97,12 @@ Scheduled Tasks
                 "searchBuilder",
                 dataTablesPDFConfig(
                     'Site: {{ request.user.bu.buname }}\nScheduled Task List',
-                    [1,2,3,4,5,6,7,8,9],
+                    [1,2,3,4,5,6,7,8,9,10,11],
                     filename = 'schd_task_list'
                 ),
                 dataTablesExcelConfig(
                     'Site: {{ request.user.bu.buname }}\nScheduled Task List',
-                    [1,2,3,4,5,6,7,8,9],
+                    [1,2,3,4,5,6,7,8,9,10,11],
                     filename = 'schd_task_list'
                 ),
                 dataTablesColumnVisibilityConfig(),

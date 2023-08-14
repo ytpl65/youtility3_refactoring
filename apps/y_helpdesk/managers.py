@@ -76,7 +76,7 @@ class TicketManager(models.Manager):
         S, R = request.session, request.GET
         ic(R)
         qset = self.filter(
-            bu_id = S['bu_id'],
+            bu_id__in = S['assignedsites'],
             cdtz__date__gte = R['from'],
             cdtz__date__lte = R['upto'],
             client_id = S['client_id'],
@@ -168,10 +168,10 @@ class ESCManager(models.Manager):
         R, S = request.GET, request.session
         from apps.onboarding.models import TypeAssist
         qset = TypeAssist.objects.filter(
-            bu_id__in = S['assignedsites'],
+            bu_id__in = S['assignedsites'] + [1],
             tatype__tacode__in = ['TICKETCATEGORY', 'TICKET_CATEGORY']
-        ).values(
-            'taname', 'cdtz', 'id', 'ctzoffset'
+        ).select_related('tatype', 'bu').values(
+            'taname', 'cdtz', 'id', 'ctzoffset', 'bu__buname', 'bu__bucode'
         )
         return qset or self.none()
     

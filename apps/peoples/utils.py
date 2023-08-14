@@ -409,16 +409,3 @@ def save_pgroupbelonging(pg, request):
         else:
             dbg("saving pgbelonging for pgroup %s DONE", (pg))
 
-# def encrypt(txt):
-#     from django.conf import settings
-#     from cryptography.fernet import Fernet
-#     import base64
-#     # convert integer etc to string first
-#     txt = str(txt)
-#     # get the key from settings
-#     cipher_suite = Fernet(settings.ENCRYPT_KEY) # key should be byte
-#     # # input should be byte, so convert the text to byte
-#     encrypted_text = cipher_suite.encrypt(txt.encode('ascii'))
-#     # encode to urlsafe base64 format
-#     encrypted_text = base64.urlsafe_b64encode(encrypted_text).decode("ascii")
-#     return encrypted_text

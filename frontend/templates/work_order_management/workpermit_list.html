@@ -67,7 +67,9 @@ $(document).ready(function(){
             {title:'Work Permit Report', data:'qset__qsetname'},
             {title:'Approval', data:'workpermit'},
             {title:'Status', data:'workstatus'},
-            {title:'Action', data:null, defaultContent:"N/A"}
+            {title:'Action', data:null, defaultContent:"N/A"},
+            {title:'Site', data:'bu__buname'},
+            {title:'Site Code', data:'bu__bucode', visible:false},
         ],
         columnDefs:[
             {targets:1, render:function(data, type, row, meta){
@@ -94,12 +96,12 @@ $(document).ready(function(){
             "searchBuilder",
                 dataTablesPDFConfig(
                     title = `Site: {{request.user.bu.buname}}\n Work Permit List`,
-                    columns = [1,2,3,4,5,6,7,8,9],
+                    columns = [1,2,3,4,5,6,7,8,9,10,11],    
                     filename = "workpermit_list"
                 ),
                 dataTablesExcelConfig(
                     title = `Site: {{request.user.bu.buname}}\n Work Permit List`,
-                    columns = [1,2,3,4,5,6,7,8,9],
+                    columns = [1,2,3,4,5,6,7,8,9,10,11],
                     filename = "workpermit_list"
                 ),
                 dataTablesColumnVisibilityConfig(),

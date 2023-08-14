@@ -84,6 +84,8 @@ Scheduled Tours
                 {title: 'Duration', data: 'planduration'},
                 {title: 'Gracetime', data: 'gracetime'},
                 {title: 'Exp. Time', data: 'expirytime'},
+                {title: 'Site', data: 'bu__buname'},
+                {title: 'Site Code', data: 'bu__bucode', visible:false},
             ],
             rowReorder: {
                 dataSrc: 'jobname',
@@ -107,12 +109,12 @@ Scheduled Tours
                 "searchBuilder",
                 dataTablesPDFConfig(
                     'Site: {{ request.user.bu.buname }}\nScheduled Internal Tour List',
-                    [1,2,3,4,5,6,7],
+                    [1,2,3,4,5,6,7,8,9],
                     filename="schd_tour_list"
                 ),
                 dataTablesExcelConfig(
                     'Site: {{ request.user.bu.buname }}\nScheduled Internal Tour List',
-                    [1,2,3,4,5,6,7],
+                    [1,2,3,4,5,6,7,8,9],
                     filename="schd_tour_list"
                 ),
                 dataTablesColumnVisibilityConfig(),

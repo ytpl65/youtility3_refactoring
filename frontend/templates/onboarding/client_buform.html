@@ -278,7 +278,7 @@ Client
 
     function validateEmail(email){
         //validate email return false if email is invalid
-        var regex = /^([a-zA-Z0-9_\-\.]+)@([a-zA-Z0-9_\-\.]+)\.([a-zA-Z]{2,5})$/;
+        var regex = /^[a-zA-Z0-9.!#$%&'*+/=?^_{|}~-]+@a-zA-Z0-9?(?:.a-zA-Z0-9?)*$/;
         if(!regex.test(email)){
             return false;
         }return true

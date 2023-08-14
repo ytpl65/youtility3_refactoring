@@ -64,6 +64,8 @@ $(document).ready(function () {
 				{data: 'enable', title: 'Enable', render:function(data, type, row, meta){
 					return data === true ? '<i class="bi bi-check-circle-fill text-success"></i>': '<i class="bi bi-x-circle-fill text-danger"></i>'				
 				}},
+				{data:'bu__bucode', title:'Site Code', visible:false},
+				{data:'bu__buname', title:'Site'}
 			],
 			pageLength:14,
 			order:[[1, 'asc']],
@@ -98,12 +100,12 @@ $(document).ready(function () {
 				"searchBuilder",
                 dataTablesPDFConfig(
                     title = `Site: {{request.user.bu.buname}}\n Location List`,
-                    columns = [1,2,3,4,5],
+                    columns = [1,2,3,4,5,6,7],
 					filename = 'location_list'
                 ),
                 dataTablesExcelConfig(
                     title = `Site: {{request.user.bu.buname}}\n Location List`,
-                    columns = [1,2,3,4,5],
+                    columns = [1,2,3,4,5,6,7],
 					filename = 'location_list'
                 ),
                 dataTablesColumnVisibilityConfig(),

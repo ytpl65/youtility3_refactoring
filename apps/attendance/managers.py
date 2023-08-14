@@ -2,9 +2,10 @@ from datetime import timedelta, datetime, date
 from django.db import models
 from django.contrib.gis.db.models.functions import AsGeoJSON, AsWKT
 from apps.core import utils
-from apps.activity.models import Attachment
+from apps.activity.models import Attachment, Jobneed
 from apps.peoples.models import Pgbelonging
 from django.db.models import Case, When, Value as V, CharField, F
+from django.db.models.functions import Cast
 from itertools import chain
 from django.utils.dateparse import parse_date
 from django.utils.dateparse import parse_date
@@ -143,7 +144,7 @@ class PELManager(models.Manager):
         pd1 = R.get('from', datetime.now().date())
         pd2 = R.get('upto', datetime.now().date())
         return self.filter(
-            bu_id = S['bu_id'],
+            bu_id__in = S['assignedsites'],
             client_id = S['client_id'],
             peventtype__tacode='SOS',
             datefor__gte = pd1,
@@ -155,22 +156,21 @@ class PELManager(models.Manager):
         pd1 = R.get('from', datetime.now().date())
         pd2 = R.get('upto', datetime.now().date())
         return self.filter(
-            bu_id = S['bu_id'],
+            bu_id__in = S['assignedsites'],
             client_id = S['client_id'],
             datefor__gte = pd1,
             datefor__lte = pd2,
             peventtype__tacode__in = ['SELF', 'SELFATTENDANCE', 'MARKATTENDANCE', "MARK"]
         ).count() or 0
     
-    def get_attendance_history(self, mdtz, people_id, bu_id, client_id, ctzoffset):
-        if not isinstance(mdtz, datetime):
-            mdtz = datetime.strptime(mdtz, "%Y-%m-%d %H:%M:%S")
+    def get_peopleeventlog_history(self, fromdate, todate, people_id, bu_id, client_id, ctzoffset, peventtypeid):
         qset = self.filter(
-            datefor__gte = mdtz,
+            datefor__gte = fromdate,
+            datefor__lte = todate,
             people_id = people_id,
             bu_id = bu_id,
             client_id = client_id,
-            peventtype__tacode__in = ['SELF', 'MARK']
+            peventtype_id__in = [peventtypeid]
         ).select_related('people', 'bu', 'client', 'verifiedby', 'peventtype', 'geofence', 'shift').order_by('-datefor').values(
             'uuid', 'people_id', 'client_id', 'bu_id','shift_id', 'verifiedby_id', 'geofence_id', 'id',
             'peventtype_id', 'transportmodes', 'punchintime', 'punchouttime', 'datefor', 'distance',
@@ -188,7 +188,7 @@ class PELManager(models.Manager):
             peventtype__tacode='SOS',
             datefor__gte = P['from'],
             datefor__lte = P['to']
-        ).select_related('people', 'bu').values(
+        ).select_related('people', 'bu', 'peventtype').values(
             'id', 'ctzoffset', 'people__peoplename', 'cdtz',
             'people__peoplecode', 'people__mobno', 'people__email',
             'bu__buname'
@@ -217,3 +217,42 @@ class PELManager(models.Manager):
              for entry in qset:
                 entry['transportmodes'] = 'NONE'
         return qset or self.none()
+    
+    def get_diversion_count(self, request, count=False):
+        R,S = request.GET, request.session
+        pd1 = R.get('from', datetime.now().date())
+        pd2 = R.get('upto', datetime.now().date())
+        
+        pel_qset = self.select_related('people').filter(
+            Q(startlocation__isnull=False),
+            peventtype__tacode='DIVERSION',
+            datefor__gte = pd1,
+            datefor__lte = pd2,
+        ).annotate(
+        start_gps = AsGeoJSON('startlocation'),
+        end_gps = AsGeoJSON('endlocation'))
+        
+        fields = [
+            'people__peoplename', 'start_gps', 'end_gps','reference',
+            'datefor' ,'punchintime', 'punchouttime', 'ctzoffset',
+            'id']
+        jn_qset = Jobneed.objects.annotate(
+            jobneed_id = F('id'),
+            uuidtext = Cast('uuid', output_field=models.CharField())).filter(
+            uuidtext__in=pel_qset.values_list('reference', flat=True),
+        ).values('jobdesc', 'jobneed_id')
+        ic(jn_qset)
+        pel_qset = pel_qset.values(*fields)
+        qset = list(chain(pel_qset, jn_qset))
+        if count: return len(qset) or 0
+        return qset or self.none()
+
+    def get_sitecrisis_types(self):
+        from apps.onboarding.models import TypeAssist
+        qset =  TypeAssist.objects.filter(
+            tatype__tacode = 'SITECRISIS'
+        ).select_related('tatype').values_list('tacode', flat=True)
+        return qset or []
+        
+        
+        

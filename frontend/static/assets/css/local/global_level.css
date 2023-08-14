@@ -3,6 +3,9 @@ html * {
     font-family: 'Roboto', sans-serif;
     font-weight: 400;
 }
+body {
+    font-size: 80%;
+}
 .menu-item.menu-accordion.show {
     border-left: 4px solid #489edb;
 }
@@ -583,5 +586,9 @@ select[readonly].select2-hidden-accessible + .select2-container .select2-selecti
   }
   .custom-list-group > li:nth-child(2) {
     flex-basis: 48%;
+  }
+
+  .text-purple{
+    color: purple;
   }
   

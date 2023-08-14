@@ -1,6 +1,6 @@
 from django.db.models import Q, F, Subquery
 from django.core.exceptions import EmptyResultSet
-from django.db import transaction
+from django.db import transaction, DatabaseError
 from django.http import response as rp
 import apps.activity.models as am
 from apps.y_helpdesk.models import Ticket, EscalationMatrix
@@ -9,6 +9,7 @@ from pprint import pformat
 from random import shuffle
 from apps.core import utils
 from datetime import datetime, timezone, timedelta
+from django.utils import timezone as dtimezone
 from django.db.models.query import QuerySet
 from apps.reminder.models import Reminder
 import random
@@ -17,125 +18,6 @@ from intelliwiz_config.celery import app
 from celery import shared_task
 from celery.utils.log import get_task_logger
 log = get_task_logger('__main__')
-
-
-def get_service_requirements(R):
-    """
-    returns startpoint, endpoint, waypoints
-    required for directions api
-    """
-    if R:
-        startp = {"lat":float(R[0]['cplocation'].coords[1]),
-                  "lng":float(R[0]['cplocation'].coords[0])}
-
-        endp = {"lat":float(R[-1]['cplocation'].coords[1]),
-               "lng":float(R[-1]['cplocation'].coords[0])}
-        waypoints=[]
-        for i in range(1, len(R)-1):
-            lat, lng = R[i]['cplocation'].coords[1], R[i]['cplocation'].coords[0]
-            waypoints.append(
-                {"lat":lat, "lng":lng}
-            )
-        return startp, endp, waypoints
-
-
-def get_frequencied_data(DDE, data, f, breaktime):
-    """
-    Randomize data based on frequency
-    """
-    import copy
-
-    R, dataCopy = [], copy.deepcopy(data)
-    for _ in range(f-1):
-        R=data
-        R+=reversedFPoints(DDE, dataCopy, breaktime)
-
-
-def convertto_namedtuple(A,records, freq, btime):
-    """
-    converts dict to namedtuple
-    """
-    rec, C = [], records[0].keys()
-    from collections import namedtuple
-    for i, item in enumerate(records):
-        record = namedtuple("Record", C)
-        item["seqno"] = i+1
-        item["jobname"] = f"[{str(item['seqno'])}]-{item['jobname']}"
-        tr = tuple(item.values())
-        rec.append(record(**dict(list(zip(C, tr)))))
-    
-    if freq>1 or btime!=0:
-        rec[0] = rec[0]._replace(distance=0) 
-        rec[0] = rec[0]._replace(expirytime=0)
-        rec[0] = rec[0]._replace(breaktime=0)
-    return rec
-
-    
-def reversedFPoints(DDE, data, breaktime):
-    
-    R, j= [], 0
-    DDE = DDE[::-1]
-    for i in reversed(range(len(data))):
-        if (i == len(data)-1):
-            data[i]['distance'] = data[i]['duration'] = data[i]['expirytime'] = data[i]['breaktime'] = 0
-        else:
-            data[i]['distance'], data[i]['duration'], data[i]['expirytime'] = DDE[j]
-            j+=1
-        R.append(data[i])
-    R[-1]['breaktime'] = breaktime
-    return R
-
-
-def calculate_route_details(R, job):
-    data = R
-    ic(data)
-    import googlemaps
-    gmaps = googlemaps.Client(key='AIzaSyDVbA53nxHKUOHdyIqnVPD01aOlTitfVO0')
-    startpoint, endpoint, waypoints = get_service_requirements(data)
-    directions = gmaps.directions(mode='driving', waypoints=waypoints, origin=startpoint, destination=endpoint, optimize_waypoints=True)
-
-    directions = gmaps.directions(mode='driving', waypoints=waypoints, origin=startpoint, destination=endpoint, optimize_waypoints=True)
-
-    waypoint_order = directions[0]["waypoint_order"]
-    ic(waypoint_order)
-    freq, breaktime = job['other_info']['tour_frequency'], job['other_info']['breaktime']
-
-    data[0]['seqno'] = 0 + 1
-    #startpoint
-    chekpoints = [data[0]]
-    chekpoints[0]['distance'] = 0
-    chekpoints[0]["duration"] = 0
-    chekpoints[0]["expirytime"] = 0
-    
-    #waypoints
-    for i, item in enumerate(waypoint_order):
-        data[i + 1]['seqno'] = i + 1 + 1
-        chekpoints.append(data[item + 1])
-    
-    #endpoint
-    data[len(data)-1]["seqno"] = len(data)-1+1    
-    chekpoints.append(data[len(data)-1])
-    
-    legs = directions[0]["legs"]
-    j = 1
-    DDE = []
-    for i, item in enumerate(legs):
-        l=[]
-        chekpoints[j]['distance']=round(float(item['distance']["value"]/1000), 2)
-        l.append(chekpoints[j]["distance"])
-        chekpoints[j]['duration']=float(legs[i]["duration"]["value"])
-        l.append(chekpoints[j]['duration'])
-        chekpoints[j]['expirytime']=int(legs[i]["duration"]["value"]/60)
-        l.append(chekpoints[j]['expirytime'])
-        DDE.append(l)
-        j += 1
-    if freq and freq > 1:
-        checkpoints = get_frequencied_data(DDE, chekpoints, freq, breaktime)
-    if freq and freq > 1 and breaktime != 0:
-        endp = int(len(chekpoints) / freq)
-        chekpoints[endp]['breaktime'] = breaktime
-    return chekpoints
-
 
 @shared_task(name="create_job()")
 def create_job(jobids = None):
@@ -197,18 +79,6 @@ def create_job(jobids = None):
             log.error("something went wrong!", exc_info=True)
     return resp, result
 
-def display_jobs_date_info(cdtz, mdtz, fromdate, uptodate, ldtz):
-    padd = "#"*8
-    log.info(f"{padd} display_jobs_date_info [start] {padd}")
-    log.info(f"created-on:= [{cdtz}] modified-on:=[{mdtz}]")
-    log.info(f"valid-from:= [{fromdate}] valid-upto:=[{uptodate}]")
-    log.info(f"before lastgeneratedon:= [{ldtz}]")
-    log.info(f"{padd} display_jobs_date_info [end] {padd}")
-
-def get_readable_dates(dt_list):
-    if (isinstance(dt_list, list)):
-        return [dt.strftime("%d-%b-%Y %H:%M") for dt in dt_list]
-
 def calculate_startdtz_enddtz(job):
     """
     this function determines or calculates what is 
@@ -225,22 +95,13 @@ def calculate_startdtz_enddtz(job):
     vfrom        = job['fromdate'].replace(microsecond = 0, tzinfo = tz)  + timedelta(minutes = ctzoffset)
     vupto        = job['uptodate'].replace(microsecond = 0, tzinfo = tz) + timedelta(minutes = ctzoffset)
     ldtz         = job['lastgeneratedon'].replace(microsecond = 0, tzinfo = tz) + timedelta(minutes = ctzoffset)
-    # job['ctzoffset']     = job['ctzoffset']
-    # tzoffset     = job['ctzoffset'] 
-    # cdtz         = job['cdtz'].replace(microsecond = 0) 
-    # mdtz         = job['mdtz'].replace(microsecond = 0)  
-    # vfrom        = job['fromdate'].replace(microsecond = 0)  
-    # vupto        = job['uptodate'].replace(microsecond = 0) 
-    # ldtz         = job['lastgeneratedon'].replace(microsecond = 0) 
-    # display_jobs_date_info(cdtz, mdtz, vfrom, vupto, ldtz)
     current_date= datetime.utcnow().replace(tzinfo=timezone.utc).replace(microsecond=0)
     current_date= current_date.replace(tzinfo = tz) + timedelta(minutes= ctzoffset)
-    #current_date= current_date + timedelta(minutes= ctzoffset)
 
     if mdtz > cdtz:
         ldtz = current_date
         # delete all old record
-        del_job(job['id'])
+        delete_old_jobs(job['id'])
     startdtz = vfrom
 
     if ldtz > vfrom:
@@ -294,101 +155,8 @@ def get_datetime_list(cron_exp, startdtz, enddtz, resp):
     else: resp = {"errors": "Unable to schedule task, check your 'Valid From' and 'Valid To'"}
 
     log.info("get_datetime_list(cron_exp, startdtz, enddtz) [end]")
-    return DT, isValidCron, resp
+    return list(set(DT)), isValidCron, resp
 
-def dt_local_to_utc(tzoffset, data, mob_or_web):
-    log.info('dt_local_to_utc [start]')
-    dtlist= udt= cdt= dateFormate= None
-    dateRegexMobile= r"[0-9]{4}-[0-9]{2}-[0-9]{02} [0-9]{02}:[0-9]{02}:[0-9]{02}"
-    dateRegexWeb= r"[0-9]{2}-[A-Za-z]{3}-[0-9]{4} [0-9]{02}:[0-9]{02}"
-    dateFormatMobile= "%Y-%m-%d %H:%M:%S"
-    dateFormatWeb= "%d-%b-%Y %H:%M"
-
-    if isinstance(data, dict):
-        handle_dict_of_datetimes(dateFormatMobile, dateFormatWeb, data, tzoffset,
-                                 dateRegexMobile, dateRegexWeb, mob_or_web)
-
-    else:
-        handle_list_of_datetimes(dateFormatMobile, dateFormatWeb, data,  tzoffset,
-                                 dateRegexMobile, dateRegexWeb, mob_or_web)
-    return data
-
-def handle_dict_of_datetimes(dateFormatMobile, dateFormatWeb, data, tzoffset,
-                            dateRegexMobile, dateRegexWeb, mob_or_web):
-    import re
-    for key, value in data.items():
-        value= str(value)
-        if mob_or_web.lower() == "mobile":
-            dtlist= re.findall(dateRegexMobile, value)
-            dateFormate= dateFormatMobile
-        elif (
-            mob_or_web.lower() != "mobile"
-            and mob_or_web.lower() == "web"
-            or mob_or_web.lower() != "mobile"
-            and mob_or_web.lower() != "web"
-            and mob_or_web.lower() == "cron"
-        ):
-            dtlist= re.findall(dateRegexWeb, value)
-            dateFormate= dateFormatWeb
-        if dtlist := list(set(dtlist)):
-            log.info(f"dt_local_to_utc got all date: {dtlist}")
-            try:
-                tzoffset= int(tzoffset)
-                for item_ in dtlist:
-                    udt= cdt= None
-                    try:
-                        udt = (
-                            datetime.strptime(
-                                str(item_), dateFormate
-                            )
-                            .replace(tzinfo = timezone.utc)
-                            .replace(microsecond = 0)
-                        )
-                        cdt= udt - timedelta(minutes= tzoffset)
-                        data[key] = str(data[key]).replace(str(item_), str(cdt))
-                    except Exception as ex:
-                        log.error("datetime parsing error", exc_info = True)
-                        raise
-            except ValueError:
-                log.error("tzoffset parsing error", exc_info = True)
-                raise
-
-def handle_list_of_datetimes(dateFormatMobile, dateFormatWeb, data, tzoffset,
-                            dateRegexMobile, dateRegexWeb, mob_or_web):
-    import re
-    if mob_or_web.lower() == "mobile":
-        dtlist= re.findall(dateRegexMobile, str(data))
-        dateFormate= dateFormatMobile
-    elif (
-        mob_or_web.lower() != "mobile"
-        and mob_or_web.lower() == "web"
-        or mob_or_web.lower() != "mobile"
-        and mob_or_web.lower() != "web"
-        and mob_or_web.lower() == "cron"
-    ):
-        dtlist= re.findall(dateRegexWeb, data)
-        dateFormate= dateFormatWeb
-    if dtlist := list(set(dtlist)):
-        log.info(f"got all date {dtlist}")
-        try:
-            tzoffset= int(tzoffset)
-            for item in dtlist:
-                udt= cdt= None
-                try:
-                    udt = (
-                        datetime.strptime(str(item), dateFormate)
-                        .replace(tzinfo = timezone.utc)
-                        .replace(microsecond = 0)
-                    )
-
-                    cdt= udt - timedelta(minutes= tzoffset)
-                    data = str(data).replace(str(item), str(cdt))
-                except Exception as ex:
-                    log.error("datetime parsing error", exc_info = True)
-                    raise
-        except ValueError:
-            log.error("tzoffset parsing error", exc_info = True)
-            raise
 
 def insert_into_jn_and_jnd(job, DT, resp):
     """
@@ -453,7 +221,9 @@ def insert_into_jn_and_jnd(job, DT, resp):
 
         log.info("insert_into_jn_and_jnd() [ End ]")
     return status, resp
-
+    
+    
+    
 def insert_into_jn_for_parent(job, params):
     defaults={
             'ctzoffset'        : job['ctzoffset'],
@@ -489,7 +259,7 @@ def insert_into_jn_for_parent(job, params):
     return obj
 
 
-
+    
 def insert_update_jobneeddetails(jnid, job, parent=False):
     # sourcery skip: use-contextlib-suppress
     log.info("insert_update_jobneeddetails() [START]")
@@ -511,44 +281,11 @@ def insert_update_jobneeddetails(jnid, job, parent=False):
     except Exception:
         raise
     log.info("insert_update_jobneeddetails() [END]")
-
-
-
-def insert_into_jnd(qsb, job, jnid, parent=False):
-    log.info("insert_into_jnd() [START]")
-    qset = qsb if isinstance(qsb, QuerySet) else [qsb]
-    for obj in qset:
-        answer = 'NONE' if parent else None
-        am.JobneedDetails.objects.create(
-            seqno      = obj.seqno,      question_id = obj.question_id,
-            answertype = obj.answertype, max         = obj.max,
-            min        = obj.min,        alerton     = obj.alerton,
-            options    = obj.options,    jobneed_id  = jnid,
-            cuser_id   = job['cuser_id'],   muser_id    = job['muser_id'],
-            ctzoffset  = job['ctzoffset'], answer = answer,
-            isavpt = obj.isavpt, avpttype = obj.avpttype)
-    log.info("insert_into_jnd() [END]")
-
-def extract_seq(R):
-    return [r['seqno'] for r in R]
-
-
-def check_sequence_of_prevjobneed(job, current_seq):
-    previousJobneedParent = am.Jobneed.objects.filter(job_id=job['id'], parent_id=1).order_by('-id')
-    if previousJobneedParent.count() > 1:
-        seqnos = am.Jobneed.objects.filter(parent_id = previousJobneedParent.values_list('id', flat=True)[1]).values_list('seqno', flat=True)
-        ic(utils.printsql(seqnos))
-        ic(seqnos)
-        return list(seqnos) == current_seq
-    return False
     
-    
-
-
 
 def create_child_tasks(job, _pdtz, _people, jnid, _jobstatus, _jobtype, parent_other_info):
     try:
-        prev_edtz, tour_freq = None, None
+        prev_edtz, tour_freq = None, 1
         NONE_P  = utils.get_or_create_none_people()
         from django.utils.timezone import get_current_timezone
         tz = get_current_timezone()
@@ -569,6 +306,7 @@ def create_child_tasks(job, _pdtz, _people, jnid, _jobstatus, _jobtype, parent_o
             #randomize data if it is random tour job
             random.shuffle(L)
             R = calculate_route_details(L, job)
+            tour_freq = int(job['other_info']['tour_frequency'])
         elif job['other_info']['tour_frequency'] and int(job['other_info']['tour_frequency']) > 1:
             tour_freq = int(job['other_info']['tour_frequency'])
             R = calculate_route_details(L, job)
@@ -617,112 +355,135 @@ def create_child_tasks(job, _pdtz, _people, jnid, _jobstatus, _jobtype, parent_o
         return edtz
 
 
-def insert_into_jn_for_child(job, params, r):
-    try:
-        jn = am.Jobneed.objects.create(
-                job_id         = job['id'],                     parent_id         = params['jnid'],
-                jobdesc        = params['_jobdesc'],         plandatetime      = params['pdtz'],
-                expirydatetime = params['edtz'],             gracetime         = job['gracetime'],
-                asset_id       = r['asset_id'],                 qset_id           = r['qset_id'],
-                pgroup_id      = job['pgroup_id'],              frequency         = 'NONE',
-                priority       = r['priority'],                 jobstatus         = params['_jobstatus'],
-                client_id      = r['client_id'],                jobtype           = params['_jobtype'],
-                scantype       = job['scantype'],               identifier        = job['identifier'],
-                cuser_id       = r['cuser_id'],                 muser_id          = r['muser_id'],
-                bu_id          = r['bu_id'],                    ticketcategory_id = r['ticketcategory_id'],
-                gpslocation    = 'SRID=4326;POINT(0.0 0.0)', remarks           = '',
-                seqno          = params['idx'],              multifactor       = params['m_factor'],
-                performedby    = params['NONE_P'],           ctzoffset         = r['ctzoffset'],
-                people_id      = params['_people'],          other_info = params['parent_other_info']
+
+
+def calculate_route_details(R, job):
+    data = R
+    ic(data)
+    import googlemaps
+    gmaps = googlemaps.Client(key='AIzaSyDVbA53nxHKUOHdyIqnVPD01aOlTitfVO0')
+    startpoint, endpoint, waypoints = get_service_requirements(data)
+    directions = gmaps.directions(mode='driving', waypoints=waypoints, origin=startpoint, destination=endpoint, optimize_waypoints=True)
+
+    directions = gmaps.directions(mode='driving', waypoints=waypoints, origin=startpoint, destination=endpoint, optimize_waypoints=True)
+
+    waypoint_order = directions[0]["waypoint_order"]
+    ic(waypoint_order)
+    freq, breaktime = job['other_info']['tour_frequency'], job['other_info']['breaktime']
+
+    data[0]['seqno'] = 0 + 1
+    #startpoint
+    chekpoints = [data[0]]
+    chekpoints[0]['distance'] = 0
+    chekpoints[0]["duration"] = 0
+    chekpoints[0]["expirytime"] = 0
+    
+    #waypoints
+    for i, item in enumerate(waypoint_order):
+        data[i + 1]['seqno'] = i + 1 + 1
+        chekpoints.append(data[item + 1])
+    
+    #endpoint
+    data[len(data)-1]["seqno"] = len(data)-1+1    
+    chekpoints.append(data[len(data)-1])
+    
+    legs = directions[0]["legs"]
+    j = 1
+    DDE = []
+    for i, item in enumerate(legs):
+        l=[]
+        chekpoints[j]['distance']=round(float(item['distance']["value"]/1000), 2)
+        l.append(chekpoints[j]["distance"])
+        chekpoints[j]['duration']=float(legs[i]["duration"]["value"])
+        l.append(chekpoints[j]['duration'])
+        chekpoints[j]['expirytime']=int(legs[i]["duration"]["value"]/60)
+        l.append(chekpoints[j]['expirytime'])
+        DDE.append(l)
+        j += 1
+    if freq and freq > 1:
+        checkpoints = get_frequencied_data(DDE, chekpoints, freq, breaktime)
+    if freq and freq > 1 and breaktime != 0:
+        endp = int(len(chekpoints) / freq)
+        chekpoints[endp]['breaktime'] = breaktime
+    return chekpoints
+    
+    
+    
+def reversedFPoints(DDE, data, breaktime):
+    
+    R, j= [], 0
+    DDE = DDE[::-1]
+    for i in reversed(range(len(data))):
+        if (i == len(data)-1):
+            data[i]['distance'] = data[i]['duration'] = data[i]['expirytime'] = data[i]['breaktime'] = 0
+        else:
+            data[i]['distance'], data[i]['duration'], data[i]['expirytime'] = DDE[j]
+            j+=1
+        R.append(data[i])
+    R[-1]['breaktime'] = breaktime
+    return R
+    
+    
+def get_frequencied_data(DDE, data, f, breaktime):
+    """
+    Randomize data based on frequency
+    """
+    import copy
+
+    R, dataCopy = [], copy.deepcopy(data)
+    for _ in range(f-1):
+        R=data
+        R+=reversedFPoints(DDE, dataCopy, breaktime)
+        
+        
+        
+
+def get_service_requirements(R):
+    """
+    returns startpoint, endpoint, waypoints
+    required for directions api
+    """
+    if R:
+        startp = {"lat":float(R[0]['cplocation'].coords[1]),
+                  "lng":float(R[0]['cplocation'].coords[0])}
+
+        endp = {"lat":float(R[-1]['cplocation'].coords[1]),
+               "lng":float(R[-1]['cplocation'].coords[0])}
+        waypoints=[]
+        for i in range(1, len(R)-1):
+            lat, lng = R[i]['cplocation'].coords[1], R[i]['cplocation'].coords[0]
+            waypoints.append(
+                {"lat":lat, "lng":lng}
             )
-    except Exception:
-        log.error("insert_into_jn_for_child[]", exc_info=True)
-        raise
-    else:
-        return jn
+        return startp, endp, waypoints
 
 
-def job_fields(job, checkpoint, external = False):
-    data =  {
-        'jobname'     : f"{checkpoint.get('bu__buname', '')} :: {job['jobname']}",       'jobdesc'          : f"{checkpoint.get('bu__buname', '')} :: {job['jobname']} :: {checkpoint['qsetname']}",
-        'cron'        : job['cron'],                                                    'identifier'       : job['identifier'],
-            'expirytime'  : int(checkpoint['expirytime']),                                  'lastgeneratedon'  : job['lastgeneratedon'],
-        'priority'    : job['priority'],                                                'qset_id'          : checkpoint['qsetid'],
-        'pgroup_id'   : job['pgroup_id'],                                               'geofence'         : job['geofence_id'],
-        'endtime'     : datetime.strptime(checkpoint.get('endtime', "00:00"), "%H:%M"), 'ticketcategory_id': job['ticketcategory_id'],
-        'fromdate'    : job['fromdate'],                                                'uptodate'         : job['uptodate'],
-        'planduration': job['planduration'],                                            'gracetime'        : job['gracetime'],
-        'asset_id'    : checkpoint['assetid'],                                          'frequency'        : job['frequency'],
-        'people_id'   : job['people_id'],                                               'starttime'        : datetime.strptime(checkpoint.get('starttime', "00:00"), "%H:%M"),
-        'parent_id'   : job['id'],                                                      'seqno'            : checkpoint['seqno'],
-        'scantype'    : job['scantype'],                                                'ctzoffset'        : job['ctzoffset'],
-        'bu_id': job['bu_id'], 'client_id':job['client_id']
-    }
-    if external:
-        jsonData = {
-            'distance'      : checkpoint['distance'],
-            'breaktime'     : checkpoint['breaktime'],
-            'istimebound'   : job['other_info']['istimebound'],
-            'is_randomized' : job['other_info']['is_randomized'],
-            'tour_frequency': job['other_info']['tour_frequency']}
-        data['jobname']    = f"{checkpoint['bu__buname']} :: {job['jobname']}"
-        data['jobdesc']    = f"{checkpoint.get('bu__buname', '')} :: {job['jobname']} :: {checkpoint['qsetname']}"
-        data['other_info'] = jsonData
-    return data
 
-def to_local(val):
-    from django.utils.timezone import get_current_timezone
-    return val.astimezone(get_current_timezone()).strftime('%d-%b-%Y %H:%M')
+def delete_old_jobs(job_id, ppm=False):
+    """
+    Delete old jobs and related data based on the given job ID.
+    """
+    # Get a list of related job IDs and include the given ID if ppm is True.
+    job_ids = am.Job.objects.filter(parent_id=job_id).values_list('id', flat=True)
+    job_ids = [job_id] + list(job_ids)
 
-def delete_from_job(job, checkpointId, checklistId):
-    try:
-        am.Job.objects.get(
-            parent     = int(job),
-            asset_id = int(checkpointId),
-            qset_id  = int(checklistId)).delete()
-    except Exception:
-        log.error('delete_from_job() raised  error', exc_info=True)
-        raise
+    # Set the old date to 1970-01-01 00:00:00 UTC.
+    old_date = datetime(1970, 1, 1, 0, 0, 0, tzinfo=timezone.utc)
 
-def delete_from_jobneed(parentjob, checkpointId, checklistId):
-    try:
-        am.Jobneed.objects.get(
-            parent     = int(parentjob),
-            asset_id = int(checkpointId),
-            qset_id  = int(checklistId)).delete()
-    except Exception:
-        log.error("delete_from_jobneed() raised error", exc_info=True)
-        raise
+    # Update jobneeddetails
+    jobneed_ids = am.Jobneed.objects.filter(plandatetime__gt=dtimezone.now(), job_id__in=job_ids).values_list('id', flat=True)
+    jnd_count = am.JobneedDetails.objects.filter(jobneed_id__in=jobneed_ids).update(cdtz=old_date, mdtz=old_date)
 
-def update_lastgeneratedon(job, pdtz):
-    try:
-        log.info('update_lastgeneratedon [start]')
-        if rec := am.Job.objects.filter(id = job['id']).update(
-            lastgeneratedon = pdtz
-        ):
-            log.info(f"after lastgenreatedon:={pdtz}")
-        log.info('update_lastgeneratedon [end]')
-    except Exception:
-        log.error("update_lastgeneratedon() raised error", exc_info=True)
-        raise
+    # Update jobneeds
+    jn_count = am.Jobneed.objects.filter(
+        job_id__in=job_ids, plandatetime__gt=dtimezone.now()).update(
+            cdtz=old_date, mdtz=old_date, plandatetime=old_date, expirydatetime=old_date)
 
-def send_email_notication(err):
-    raise NotImplementedError()
+    # Update job
+    am.Job.objects.filter(id=job_id).update(cdtz=F('mdtz'))
 
-def del_job(id, ppm=False):
-    log.info("deleting old jobs start[+]")
-    jobs = am.Job.objects.filter(parent_id__in = [id]).exclude(id=1).values()
-    if ppm: jobs = am.Job.objects.filter(id = id).values()
-    jobids = [job['id'] for job in jobs]
-    #update jobneedetails and jobneed
-    olddate = datetime(1970, 1, 1, 0, 0, 0, tzinfo=timezone.utc)
-    oldjobneeds = am.Jobneed.objects.filter(plandatetime__gt = datetime.now(timezone.utc), job_id__in = jobids).values_list("id", flat=True)
-    jndcount = am.JobneedDetails.objects.filter(jobneed_id__in = oldjobneeds).update(cdtz = olddate, mdtz=olddate)
-    jncount = am.Jobneed.objects.filter(job_id__in=jobids, plandatetime__gt=datetime.now(timezone.utc)).update(cdtz=olddate, mdtz=olddate, plandatetime=olddate, expirydatetime=olddate)
-    log.info("total jobneedetails deleted: %s", jndcount)
-    log.info("total jobneed deleted: %s", jncount)
-    am.Job.objects.filter(id=id).exclude(id=1).update(cdtz = F('mdtz'))
-    log.info("deleting old jobs end[-]")
+    # Log the results
+    log.info('Deleted %s jobneedetails and %s jobneeds for job ID %s', jnd_count, jn_count, job_id)
 
 
 def del_ppm_reminder(jobid):
@@ -745,7 +506,7 @@ def calculate_startdtz_enddtz_for_ppm(job):
 
     if mdtz > cdtz:
         ldtz = current_date
-        del_job(job['id'], True)
+        delete_old_jobs(job['id'], True)
         del_ppm_reminder(job['id'])
 
     startdtz = max(current_date, vfrom)
@@ -894,3 +655,119 @@ def send_reminder_email():
             log.info(f"Reminder mail sent to {recipents} with subject {subject}")
     except Exception as e:
         log.error("Error while sending reminder email")
+        
+        
+def send_email_notication(err):
+    raise NotImplementedError()
+
+
+def job_fields(job, checkpoint, external = False):
+    data =  {
+        'jobname'     : f"{checkpoint.get('bu__buname', '')} :: {job['jobname']}",       'jobdesc'          : f"{checkpoint.get('bu__buname', '')} :: {job['jobname']} :: {checkpoint['qsetname']}",
+        'cron'        : job['cron'],                                                    'identifier'       : job['identifier'],
+            'expirytime'  : int(checkpoint['expirytime']),                                  'lastgeneratedon'  : job['lastgeneratedon'],
+        'priority'    : job['priority'],                                                'qset_id'          : checkpoint['qsetid'],
+        'pgroup_id'   : job['pgroup_id'],                                               'geofence'         : job['geofence_id'],
+        'endtime'     : datetime.strptime(checkpoint.get('endtime', "00:00"), "%H:%M"), 'ticketcategory_id': job['ticketcategory_id'],
+        'fromdate'    : job['fromdate'],                                                'uptodate'         : job['uptodate'],
+        'planduration': job['planduration'],                                            'gracetime'        : job['gracetime'],
+        'asset_id'    : checkpoint['assetid'],                                          'frequency'        : job['frequency'],
+        'people_id'   : job['people_id'],                                               'starttime'        : datetime.strptime(checkpoint.get('starttime', "00:00"), "%H:%M"),
+        'parent_id'   : job['id'],                                                      'seqno'            : checkpoint['seqno'],
+        'scantype'    : job['scantype'],                                                'ctzoffset'        : job['ctzoffset'],
+        'bu_id': job['bu_id'], 'client_id':job['client_id']
+    }
+    if external:
+        jsonData = {
+            'distance'      : checkpoint['distance'],
+            'breaktime'     : checkpoint['breaktime'],
+            'istimebound'   : job['other_info']['istimebound'],
+            'is_randomized' : job['other_info']['is_randomized'],
+            'tour_frequency': job['other_info']['tour_frequency']}
+        data['jobname']    = f"{checkpoint['bu__buname']} :: {job['jobname']}"
+        data['jobdesc']    = f"{checkpoint.get('bu__buname', '')} :: {job['jobname']} :: {checkpoint['qsetname']}"
+        data['other_info'] = jsonData
+    return data
+
+def to_local(val):
+    from django.utils.timezone import get_current_timezone
+    return val.astimezone(get_current_timezone()).strftime('%d-%b-%Y %H:%M')
+
+def delete_from_job(job, checkpointId, checklistId):
+    try:
+        am.Job.objects.get(
+            parent     = int(job),
+            asset_id = int(checkpointId),
+            qset_id  = int(checklistId)).delete()
+    except Exception:
+        log.error('delete_from_job() raised  error', exc_info=True)
+        raise
+
+def delete_from_jobneed(parentjob, checkpointId, checklistId):
+    try:
+        am.Jobneed.objects.get(
+            parent     = int(parentjob),
+            asset_id = int(checkpointId),
+            qset_id  = int(checklistId)).delete()
+    except Exception:
+        log.error("delete_from_jobneed() raised error", exc_info=True)
+        raise
+
+def update_lastgeneratedon(job, pdtz):
+    try:
+        log.info('update_lastgeneratedon [start]')
+        if rec := am.Job.objects.filter(id = job['id']).update(
+            lastgeneratedon = pdtz
+        ):
+            log.info(f"after lastgenreatedon:={pdtz}")
+        log.info('update_lastgeneratedon [end]')
+    except Exception:
+        log.error("update_lastgeneratedon() raised error", exc_info=True)
+        raise
+    
+def get_readable_dates(dt_list):
+    if (isinstance(dt_list, list)):
+        return [dt.strftime("%d-%b-%Y %H:%M") for dt in dt_list]
+    
+    
+
+def insert_into_jnd(qsb, job, jnid, parent=False):
+    log.info("insert_into_jnd() [START]")
+    qset = qsb if isinstance(qsb, QuerySet) else [qsb]
+    for obj in qset:
+        answer = 'NONE' if parent else None
+        am.JobneedDetails.objects.create(
+            seqno      = obj.seqno,      question_id = obj.question_id,
+            answertype = obj.answertype, max         = obj.max,
+            min        = obj.min,        alerton     = obj.alerton,
+            options    = obj.options,    jobneed_id  = jnid,
+            cuser_id   = job['cuser_id'],   muser_id    = job['muser_id'],
+            ctzoffset  = job['ctzoffset'], answer = answer,
+            isavpt = obj.isavpt, avpttype = obj.avpttype)
+    log.info("insert_into_jnd() [END]")
+    
+
+
+def insert_into_jn_for_child(job, params, r):
+    try:
+        jn = am.Jobneed.objects.create(
+                job_id         = job['id'],                     parent_id         = params['jnid'],
+                jobdesc        = params['_jobdesc'],         plandatetime      = params['pdtz'],
+                expirydatetime = params['edtz'],             gracetime         = job['gracetime'],
+                asset_id       = r['asset_id'],                 qset_id           = r['qset_id'],
+                pgroup_id      = job['pgroup_id'],              frequency         = 'NONE',
+                priority       = r['priority'],                 jobstatus         = params['_jobstatus'],
+                client_id      = r['client_id'],                jobtype           = params['_jobtype'],
+                scantype       = job['scantype'],               identifier        = job['identifier'],
+                cuser_id       = r['cuser_id'],                 muser_id          = r['muser_id'],
+                bu_id          = r['bu_id'],                    ticketcategory_id = r['ticketcategory_id'],
+                gpslocation    = 'SRID=4326;POINT(0.0 0.0)', remarks           = '',
+                seqno          = params['idx'],              multifactor       = params['m_factor'],
+                performedby    = params['NONE_P'],           ctzoffset         = r['ctzoffset'],
+                people_id      = params['_people'],          other_info = params['parent_other_info']
+            )
+    except Exception:
+        log.error("insert_into_jn_for_child[]", exc_info=True)
+        raise
+    else:
+        return jn

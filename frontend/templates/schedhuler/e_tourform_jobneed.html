@@ -437,6 +437,11 @@ var israndom = "{{ externaltourform.instance.other_info['is_randomized'] }}";
             dom: `<'row' <'col-sm-6 d-flex justify-content-start'f> <'col-sm-6 d-flex justify-content-end'B> >rt<'row'
 			 <'col-sm-6'l> <'col-sm-6'p><'col-sm-12 d-flex justify-content-center'i>>`,
             buttons:[],
+            createdRow:function(row, data, dataIndex){
+                        if(data['alerts'] === true){
+                            $(row).addClass('text-danger')
+                        }
+                    },
             initComplete: function( settings, json ) {
             if('{{ externaltourform.instance.id }}' !== 'None'){
                 data = asgdsites_table.rows().data().toArray() 
@@ -465,6 +470,8 @@ var israndom = "{{ externaltourform.instance.other_info['is_randomized'] }}";
                     return  $.extend(d, ajaxData);
                     }
                 },
+                scrollY: 300,
+                responsive:true,
                 retrieve: true,
                 columns:[
                     {data:'id', visible:false},
@@ -482,6 +489,11 @@ var israndom = "{{ externaltourform.instance.other_info['is_randomized'] }}";
                     }
                 ],
                 ordering:false,
+                createdRow:function(row, data, dataIndex){
+                        if(data['alerts'] === true){
+                            $(row).addClass('text-danger')
+                        }
+                    },
                 deferRender: true,
                 scrollX: true,
                 dom: `<'row' <'col-sm-6 d-flex justify-content-start'f> <'col-sm-6 d-flex justify-content-end'B> >rt<'row'

@@ -51,7 +51,14 @@ class Schd_I_TourJobForm(JobForm):
         cd = self.cleaned_data
         if cd['people'] is None and cd['pgroup'] is None:
             raise forms.ValidationError('Cannot be proceed assigned tour to either people or group.')
+        times_names = ['planduration', 'gracetime']
+        types_names = ['planduration_type',  'gracetime_type']
         self.cleaned_data = self.check_nones(self.cleaned_data)
+        
+        times = [cd.get(time) for time in times_names]
+        types = [cd.get(type) for type in types_names]
+        for time, type, name in zip(times, types, times_names):
+            self.cleaned_data[name] = self.convertto_mins(type, time)
         
     
 
@@ -71,6 +78,11 @@ class Schd_I_TourJobForm(JobForm):
         utils.apply_error_classes(self)
         return result
     
+    @staticmethod
+    def convertto_mins(_type, _time):
+        if _type == 'HRS':
+            return _time * 60
+        return _time * 24 * 60 if _type == 'DAYS' else _time
     
     def check_nones(self, cd):
         fields = {

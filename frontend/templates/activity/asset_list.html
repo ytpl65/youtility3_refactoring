@@ -67,6 +67,8 @@ $(document).ready(function () {
 				{data: 'location__locname', title: 'Location'},
 				{data: 'runningstatus', title: 'Status'},
 				{data: 'enable', title: 'Enable'},
+				{data:"bu__buname", title:'Site', visible:false},
+				{data:"bu__bucode", title:'Site Code', visible:false}
 
 			],
 			pageLength:14,
@@ -112,12 +114,12 @@ $(document).ready(function () {
 				},
                 dataTablesPDFConfig(
                     title = `Site: {{request.user.bu.buname}}\n Asset List`,
-                    columns = [1,2,3,4,5,6,7],
+                    columns = [1,2,3,4,5,6,7, 8,9],
 					filename = 'asset_list'
                 ),
                 dataTablesExcelConfig(
                     title = `Site: {{request.user.bu.buname}}\n Asset List`,
-                    columns = [1,2,3,4,5,6,7],
+                    columns = [1,2,3,4,5,6,7, 8,9],
 					filename = 'asset_list'
                 ),
                 dataTablesColumnVisibilityConfig(),

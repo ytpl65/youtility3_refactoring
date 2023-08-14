@@ -132,9 +132,10 @@
                     </div>
                 </div>
             </div>
+            
         </div>
-
     </div>
+    
     <div class="db_portlet col-xl-3 col-lg-6 h-xl-75 col-sm-12 d-none" data-portlet-id ="10" id="TICKETSCARD">
         <div class="card card-flush h-lg-100">
             <div class="card-header  mb-3">
@@ -166,6 +167,22 @@
                     <div>From&nbsp;<span class="from"></span> to&nbsp; <span class="upto"></span></div>
                 </div>
                 <div id="wom_status_chart"></div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-3 col-md-4 col-lg-6 col-sm-12">
+        <div class="mt-0 p-2">
+            <div class="db_portlet row card col-lg-12 portlet mb-2 p-2 d-none" data-portlet-id ="9" id="PORTLET_SITEDIVERSION">
+                <div class="card-body counter  bg-gray-100 bg-opacity-60 p-2 rounded-3">
+                    <div class="d-flex count-item justify-content-between">
+                        <i class="fas  yicon yiconpadd text-purple p-4 fa-code-branch"></i>
+                        <div class="pe-3" data-cardtype='SITEDIVERSION'>
+                            <h6 class="pb-1 y-primary text-end timer count-title count-number" id="diversion_count">0
+                            </h6>
+                            <p class="h4 text-gray-500 fw-semibold fs-6">Site Diversions</p>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -427,6 +444,10 @@
                 case 'ROUTES':
                 localStorage.setItem('routes_filter', JSON.stringify(filterData))
                 window.open("{{ url('schedhuler:jobneedexternaltours') }}?template=true", '_blank');
+                break;
+                case 'SITEDIVERSION':
+                localStorage.setItem('site_diversion_stats_filters', JSON.stringify(filterData))
+                window.open("{{ url('attendance:attendance_view') }}?template=site_diversions", '_blank');
                 break;
                 case 'ATTENDANCE':
                 localStorage.setItem('attds_filter', JSON.stringify(filterData))

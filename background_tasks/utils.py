@@ -243,8 +243,6 @@ def create_ticket_for_autoclose(jobneedrecord, ticketdesc):
             assignedtopeople_id=jobneedrecord['people_id'],
             assignedtogroup_id=jobneedrecord['pgroup_id'],
             qset_id = jobneedrecord['qset_id']
-
-
         )
         return Ticket.objects.filter(
             id=tkt.id

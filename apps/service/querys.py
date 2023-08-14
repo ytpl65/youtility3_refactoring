@@ -61,12 +61,7 @@ class Query(graphene.ObjectType):
     get_questionsmodifiedafter = graphene.Field(SelectOutputType, 
                                                mdtz = graphene.String(required = True),
                                                ctzoffset = graphene.Int(required = True))
-    
-    get_people_event_log_punch_ins = graphene.Field(SelectOutputType,
-                                                    datefor = graphene.String(required=True),
-                                                    buid = graphene.Int(required=True))
 
-    
     get_people_event_log_punch_ins = graphene.Field(SelectOutputType,
                                                     datefor = graphene.String(required=True),
                                                     buid = graphene.Int(required=True))
@@ -91,12 +86,16 @@ class Query(graphene.ObjectType):
     get_gfs_for_siteids = graphene.Field(SelectOutputType,
                                  siteids = graphene.List(graphene.Int))
 
-    get_attendance_history = graphene.Field(SelectOutputType,
-                                            mdtz = graphene.String(required = True),
-                                            ctzoffset = graphene.Int(required = True),
-                                            peopleid = graphene.Int(required=True),
-                                            buid = graphene.Int(required=True),
-                                            clientid = graphene.Int(required=True),
+    get_peopleeventlog_history = graphene.Field(
+        SelectOutputType,
+        fromdate = graphene.String(required=True),
+        todate = graphene.String(required=True),
+                                            ctzoffset=graphene.Int(required=True),
+                                            peopleid=graphene.Int(required=True),
+                                            buid=graphene.Int(required=True),
+                                            clientid=graphene.Int(required=True),
+                                            peventtypeid=graphene.Int(required=True),
+            
                                             )
     getsitelist  = graphene.Field(SelectOutputType,
                                  clientid = graphene.Int(required = True),
@@ -306,9 +305,9 @@ class Query(graphene.ObjectType):
             return VerifyClientOutput(rc = 1, msg="INVALID")
         
     
-    def resolve_get_attendance_history(self, info, mdtz, peopleid, buid, clientid, ctzoffset):
-        log.info(f'\n\nrequest for getgeofence inputs : {mdtz = }  {peopleid = } {buid = } { clientid = }')
-        data = PeopleEventlog.objects.get_attendance_history(mdtz, peopleid, buid, clientid, ctzoffset)
+    def resolve_get_peopleeventlog_history(self, info, fromdate, todate, peopleid, buid, clientid, ctzoffset, peventtypeid):
+        log.info(f'\n\nrequest for getgeofence inputs : {fromdate = } {todate=} {peopleid = } {buid = } { clientid = }')
+        data = PeopleEventlog.objects.get_peopleeventlog_history(fromdate, todate, peopleid, buid, clientid, ctzoffset, peventtypeid)
         records, count, msg = utils.get_select_output(data)
         log.info(f'total {count} objects returned')
         return SelectOutputType(nrows = count, records = records,msg = msg)
@@ -347,7 +346,6 @@ def get_db_rows(sql, args = None):
     msg = f"Total {len(data)} records fetched successfully!"
     count = len(data)
     log.info(f'{count} objects returned...')
-    ic(count)
     return SelectOutputType(records = data_json, msg = msg, nrows = count)
 
 def get_jobneedmodifiedafter(peopleid, siteid, clientid):

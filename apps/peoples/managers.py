@@ -196,7 +196,13 @@ class PeopleManager(BaseUserManager):
                 bu_id__in = S['assignedsites']
             ).select_related(*related).values(*fields).order_by('peoplename')
         return qset or self.none()
-
+    
+    def get_sitemanager_or_emergencycontact(self, bu):
+        from apps.onboarding.models import Bt
+        if Bt.objects.filter(
+            ~Q(siteincharge_id=1), id=bu.id, siteincharge__isnull=False).exists():
+            return bu.siteincharge
+        return self.filter(people_extras__isemergencycontact=True, bu_id=bu.id).first()
 
 
 class CapabilityManager(models.Manager):
