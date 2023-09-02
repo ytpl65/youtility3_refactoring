@@ -55,9 +55,10 @@ def auth_check(info, input, returnUser, uclientip = None):
             clientIpList = people_validips.replace(" ", "").split(",")
             if uclientip is not None and uclientip not in clientIpList:
                 allowAccess = isAuth  = False
-
+        
         if user.deviceid in [-1, '-1'] or input.deviceid in [-1, '-1']:
             allowAccess=True
+        elif user.deviceid != input.deviceid: raise GraphQLError(Messages.MULTIDEVICES)
         allowAccess = True
         if allowAccess:
             if user.client.enable and user.enable:
