@@ -179,8 +179,6 @@ class WomDetails(BaseModel, TenantAwareModel):
     wom             = models.ForeignKey(Wom, verbose_name = _( "Jobneed"), null = True, blank = True, on_delete = models.RESTRICT)
     alerts          = models.BooleanField(_("Alerts"), default = False)
     attachmentcount = models.IntegerField(_('Attachment count'), default = 0)
-    client          = models.ForeignKey("onboarding.Bt", verbose_name = _("Client"), on_delete= models.RESTRICT, null = True, blank = True, related_name='womdetails_clients')
-    bu              = models.ForeignKey("onboarding.Bt", verbose_name = _("Site"), on_delete = models.RESTRICT, null = True, blank = True, related_name='womdetails_bus')
 
     objects = WOMDetailsManager()
     class Meta(BaseModel.Meta):
@@ -188,7 +186,7 @@ class WomDetails(BaseModel, TenantAwareModel):
         verbose_name = 'Wom Details'
         constraints = [
             models.UniqueConstraint(
-                fields = ['question', 'client', 'wom'],
+                fields = ['question', 'wom'],
                 name="question_client"
             )
         ]
@@ -200,6 +198,7 @@ class Approver(BaseModel):
     forallsites = models.BooleanField(_("For all sites"), default=True)
     people      = models.ForeignKey(settings.AUTH_USER_MODEL, verbose_name=_("Approver"), on_delete=models.RESTRICT, null=True)
     bu          = models.ForeignKey("onboarding.Bt", verbose_name=_(""), on_delete=models.RESTRICT, null=True)
+    client      = models.ForeignKey('onboarding.Bt', on_delete=models.RESTRICT, null=True, related_name='approver_clients')
     objects     = ApproverManager()
     
     

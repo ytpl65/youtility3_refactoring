@@ -176,7 +176,7 @@ class BtResource(resources.ModelResource):
     Code = fields.Field(attribute='bucode', column_name='Code*')
     Name = fields.Field(attribute='buname', column_name='Name*')
     GPS = fields.Field(attribute='gpslocation', column_name='GPS Location', saves_null_values=True)
-    SOLID = fields.Field(attribute='solid', column_name='Sol Id')
+    SOLID = fields.Field(attribute='solid', column_name='Sol Id', widget=wg.CharWidget())
     Enable = fields.Field(attribute='enable', column_name='Enable', default=True)
 
     class Meta:

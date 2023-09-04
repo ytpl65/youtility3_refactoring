@@ -165,7 +165,7 @@ class TypeAssistView(LoginRequiredMixin, View):
         'template_form': 'onboarding/partials/partial_ta_form.html',
         'template_list': 'onboarding/typeassist.html',
         'partial_form': 'onboarding/partials/partial_ta_form.html',
-        'related': ['parent',  'cuser', 'muser'],
+        'related': ['parent','tatype', 'cuser', 'muser'],
         'model': TypeAssist,
         'fields': ['id', 'tacode', 'cdtz',
                    'taname', 'tatype__tacode', 'cuser__peoplecode'],
@@ -538,10 +538,10 @@ HEADER_MAPPING  = {
     ],
     'LOCATION':[
         'Code*', 'Name*', 'Type*', 'Status*', 'Is Critical', 'Belongs To*',
-        'Mob No*', 'Site*', 'Client*', 'GPS Location', 'Enable'
+        'Site*', 'Client*', 'GPS Location', 'Enable'
     ],
     'QUESTIONSET':[
-        'Question Set Name*', 'Type*', 'Asset Includes', 'Site Includes', 'Site*',
+        'Seq No', 'Question Set Name*', 'Belongs To*', 'Type*', 'Asset Includes', 'Site Includes', 'Site*',
         'Client*', 'Site Group Includes', 'Site Type Includes', 'Show To All Sites', 
         'URL'
     ],
@@ -904,7 +904,8 @@ class DashboardView(LoginRequiredMixin, View):
                     'IR_count': P['jn_model'].objects.get_ir_count_forcard(request),
                     'FR_fail_count': P['pel_model'].objects.get_frfail_count_forcard(request),
                     'route_count': P['jn_model'].objects.get_schdroutes_count_forcard(request),
-                    'diversion_count': P['pel_model'].objects.get_diversion_count(request, count=True)
+                    'diversion_count': P['pel_model'].objects.get_diversion_countorlist(request, count=True),
+                    'sitecrisis_count': P['pel_model'].objects.get_sitecrisis_countorlist(request, count=True)
                 }
             }
 

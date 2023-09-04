@@ -30,6 +30,7 @@ urlpatterns = [
     path('jobneedtasks/', views.JobneedTasks.as_view(), name='jobneedtasks'),
     path('jobschdtasks/', views.SchdTasks.as_view(), name='jobschdtasks'),
     path('schedule-internal-tour', views.InternalTourScheduling.as_view(), name='schd_internal_tour'),
-    path('schedule-external-tour', views.ExternalTourScheduling.as_view(), name='schd_external_tour')
+    path('schedule-external-tour', views.ExternalTourScheduling.as_view(), name='schd_external_tour'),
+    path('site_tour_tracking/', views.ExternalTourTracking.as_view(), name="site_tour_tracking")
 
 ]

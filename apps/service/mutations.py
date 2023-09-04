@@ -72,8 +72,10 @@ class LoginUser(graphene.Mutation):
         from django.db.models import F
         import json
 
-        emergencycontacts = People.objects.get_emergencycontacts(user.bu_id, user.client_id)
-        emergencyemails = People.objects.get_emergencyemails(user.bu_id, user.client_id)
+        emergencycontacts = set(People.objects.get_emergencycontacts(user.bu_id, user.client_id))
+        emergencyemails = set(People.objects.get_emergencyemails(user.bu_id, user.client_id))
+        log.info(f"emergencycontact: {pformat(emergencycontacts)}")
+        log.info(f"emergencyemails: {pformat(emergencyemails)}")
         qset = People.objects.annotate(
             loggername          = F('peoplename'),
             mobilecapability    = F('people_extras__mobilecapability'),
@@ -91,7 +93,7 @@ class LoginUser(graphene.Mutation):
                 'loggername',  'mobilecapability',
                 'enablesleepingguard','peopleimg',
                 'skipsiteaudit', 'deviceevent', 'pvideolength',
-                'client_id', 'bu_id', 'mobno', 'email', 'isverified',
+                'client_id', 'bu_id', 'mobno', 'email', 'isverified',   
                 'deviceid', 'id', 'enable', 'isadmin', 'peoplecode', 'dateofjoin',
                 'tenant_id', 'loginid', 'clientcode', 'clientname', 'sitecode',
                 'sitename', 'clientenable', 'isgpsenable').filter(id = user.id)

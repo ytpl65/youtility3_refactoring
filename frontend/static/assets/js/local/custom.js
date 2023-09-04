@@ -29,8 +29,8 @@ function getAddressOfPoint(geocoder, point, callback) {
 }
 
 function parseGeoJson(data){
-    let coords = typeof data === 'string' && data.length > 0 ? JSON.parse(data): 'NONE'
-    return coords !== 'NONE' ? `${coords['coordinates'][1]}, ${coords['coordinates'][0]}` : coords
+  let coords = typeof data === 'string' && data.length > 0 ? JSON.parse(data): 'NONE'
+  return coords !== 'NONE' ? `${coords['coordinates'][1]}, ${coords['coordinates'][0]}` : 'NONE'
 }
 
 function pluginsForFormValidations(){
@@ -119,6 +119,18 @@ function dataTablesColumnVisibilityConfig() {
   };
 }
 
+function makeRangeReadonly(selector) {
+  var rangeInput = document.querySelector(selector);
+  if (rangeInput && rangeInput.type === 'range') {
+    rangeInput.addEventListener('mousedown', preventDefaultEvent);
+    rangeInput.addEventListener('keydown', preventDefaultEvent);
+  }
+}
+
+function preventDefaultEvent(event) {
+  event.preventDefault();
+} 
+
 function makeReadonlyFields() {
   // Disable checkboxes
   $("input[type='checkbox']").prop("disable=d", true);
@@ -127,6 +139,16 @@ function makeReadonlyFields() {
   $("select").prop("disabled", true);
   // Disable select2 fields (assuming select2 has been initialized)
   $("select.django-select2").select2({ disabled: "readonly" });
+}
+
+function makeReadonlyFieldsUnderClass(className) {
+  // Disable checkboxes
+  $("." + className + " input[type='checkbox']").prop("disabled", true);
+  // Disable text fields
+  $("." + className + " input, ." + className + " textarea").prop("readonly", true);
+  $("." + className + " select").prop("disabled", true);
+  // Disable select2 fields (assuming select2 has been initialized)
+  $("." + className + " select.django-select2").select2({ disabled: true });
 }
 
 function toggleRequiredAttribute(id, set = true) {

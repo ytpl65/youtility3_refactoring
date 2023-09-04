@@ -250,7 +250,7 @@ def insert_into_jn_for_parent(job, params):
     obj = am.Jobneed.objects.create(
         **defaults,
         job_id         = job['id'],           parent       = params['NONE_JN'],
-        jobdesc        = params['jobdesc'],qset_id      = job['qset_id'],
+        jobdesc        = params['jobdesc'],   qset_id      = job['qset_id'],
         asset_id       = job['asset_id'],     
         people_id      = params['people'],
         pgroup_id      = job['pgroup_id'],
@@ -334,13 +334,7 @@ def create_child_tasks(job, _pdtz, _people, jnid, _jobstatus, _jobtype, parent_o
                 pdtz = params['pdtz'] = prev_edtz + timedelta(minutes=r['expirytime'])
             edtz = params['edtz'] = pdtz + timedelta(minutes=job['planduration'] + job['gracetime'])
             prev_edtz = edtz
-            #if idx == 0:
-            #    pdtz = params['pdtz'] = prev_edtz
-            #else:
-            #    pdtz = params['pdtz'] = prev_edtz + \
-            #        timedelta(minutes = r['expirytime'] + job['gracetime'])
-            #edtz = params['edtz'] = pdtz + timedelta(minutes = mins)
-            #prev_edtz = edtz
+
             
             params['idx'] = idx
             jn = insert_into_jn_for_child(job, params, r)

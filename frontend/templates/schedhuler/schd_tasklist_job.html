@@ -107,7 +107,8 @@ Scheduled Tasks
                 ),
                 dataTablesColumnVisibilityConfig(),
 				{
-					text:`Add New &nbsp;<i class='fas text-dark fa-plus'></i></a>`,
+					text     : `Schedule New &nbsp;<i class='fas fa-plus ch4'></i></a>`,
+					className: "btn btn-sm border border-primary btn-light-primary add_new_task",
 					//action for add_new_button 
 					action: function(e, dt, node, config){
         				window.location.href = "{{ url('schedhuler:jobschdtasks') }}?action=form";

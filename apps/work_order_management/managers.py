@@ -2,6 +2,8 @@ from django.db import models
 from django.db.models.functions import Concat, Cast
 from django.db.models import CharField, Value as V
 from django.db.models import Q, F, Count, Case, When
+from django.contrib.gis.db.models.functions import   AsGeoJSON
+from django.conf import settings
 from datetime import datetime, timedelta
 import logging
 import json
@@ -52,6 +54,22 @@ class ApproverManager(models.Manager):
             text = F('people__peoplename'),
         ).filter(approverfor__contains = ['WORKPERMIT'], bu_id = S['bu_id']).values('id', 'text')
         return qset or self.none()
+    
+    def get_approver_list_for_mobile(self, buid, clientid):
+        qset = self.select_related().filter(
+            Q(bu_id=buid) | Q(forallsites=True), client_id=clientid
+        ).annotate(
+            peoplecode=F('people__peoplecode'),
+            peoplename=F('people__peoplename')).values(
+                'id', 'cdtz', 'mdtz', 'cuser_id', 'muser_id', 'ctzoffset', 'bu_id',
+                'client_id', 'people_id', 'peoplename', 'peoplecode', 'forallsites',
+                'approverfor', 'sites'
+            )
+        if qset:
+            for obj in qset:
+                obj['approverfor'] = ','.join(obj['approverfor'] or "")
+                obj['sites'] = ','.join(obj['sites'] or "")
+        return qset or self.none()
 
 
 class WorkOrderManager(models.Manager):
@@ -76,14 +94,14 @@ class WorkOrderManager(models.Manager):
     def get_workpermitlist(self, request):
         R, S = request.GET, request.session
         P = json.loads(R.get('params', "{}"))
-        ic(P)
-        qobjs = self.filter(
+        qobjs = self.select_related('cuser', 'bu', 'qset').filter(
             ~Q(workpermit__in =  ['NOT_REQUIRED', 'NOTREQUIRED']),
             parent_id = 1,
             client_id = S['client_id'],
             cdtz__date__gte = P['from'],
             cdtz__date__lte = P['to'],
-        ).values('cdtz', 'other_data__wp_seqno', 'qset__qsetname', 'workpermit', 'workstatus', 'id', 'cuser__peoplename')
+        ).values('cdtz', 'other_data__wp_seqno', 'qset__qsetname', 'workpermit', 'ctzoffset',
+                 'workstatus', 'id', 'cuser__peoplename', 'bu__buname', 'bu__bucode')
         return qobjs or self.none()
          
     def get_workpermit_details(self, request, wp_qset_id):
@@ -105,10 +123,10 @@ class WorkOrderManager(models.Manager):
     def get_return_wp_details(self, request):
         S = request.session
         QuestionSet = apps.get_model('activity', 'QuestionSet')
-        section_qset = QuestionSet.objects.filter(type='RETURN_WORK_PERMIT')
+        sections_qset = QuestionSet.objects.filter(~Q(parent_id = 1), parent__type='RETURN_WORK_PERMIT', client_id=S['client_id']).order_by('seqno')
         rwp_details = []
-        for section in section_qset:
-            sq = {
+        for section in sections_qset:
+            sq={
                 "section":section.qsetname,
                 "sectionID":section.seqno,
                 'questions':section.questionsetbelonging_set.values(
@@ -123,15 +141,13 @@ class WorkOrderManager(models.Manager):
     def get_wp_answers(self, qsetid, womid):
         
         childwoms = self.filter(parent_id = womid).order_by('seqno')
-        ic(qsetid, womid)
         QuestionSet = apps.get_model('activity', 'QuestionSet')
         wp_details = []
-        sections_qset = QuestionSet.objects.filter(parent_id = qsetid).order_by('seqno')
         for childwom in childwoms:
             sq = {
                 "section":childwom.description,
                 "sectionID":childwom.seqno,
-                'questions':childwom.qset_answers.filter(wom_id = womid).values(
+                'questions':childwom.womdetails_set.values(
                     'question__quesname', 'answertype', 'answer', 'qset_id',
                     'min', 'max', 'options', 'id', 'ismandatory').order_by('seqno')
             }
@@ -200,6 +216,44 @@ class WorkOrderManager(models.Manager):
         else:
             qset = qset.filter(~Q(workpermit = Wom.WorkPermitStatus.NOTNEED))
         qset = qset.values('id', 'start', 'end', 'title','color')
+        return qset or self.none()
+    
+    
+    def get_attachments(self, id):
+        if qset := self.filter(id=id).values('uuid'):
+            if atts := self.get_atts(qset[0]['uuid']):
+                return atts or self.none()
+        return self.none()
+
+    
+    def get_atts(self, uuid):
+        from apps.activity.models import Attachment
+        if atts := Attachment.objects.annotate(
+            file = Concat(V(settings.MEDIA_URL, output_field=models.CharField()),
+                          F('filepath'),
+                          V('/'), Cast('filename', output_field=models.CharField())),
+            location = AsGeoJSON('gpslocation')
+            ).filter(owner = uuid).values(
+            'filepath', 'filename', 'attachmenttype', 'datetime', 'location', 'id', 'file'
+            ):return atts
+        return self.none()
+    
+    def get_wom_records_for_mobile(self, fromdate, todate, peopleid, workpermit, buid, clientid, parentid):
+        from apps.peoples.models import People
+        people = People.objects.get(id=peopleid)
+        workpermit_statuses = workpermit.replace(', ', ',').split(',')
+        qset = self.select_related().annotate(
+            permitno = F('other_data__wp_seqno')
+            ).filter(
+            Q(cuser_id = peopleid) | Q(muser_id=peopleid) | Q(approvers__contains = [people.peoplecode]),
+            cdtz__date__gte = fromdate,
+            cdtz__date__lte = todate,
+            workpermit__in = workpermit_statuses,
+            bu_id = buid,
+            client_id = clientid,
+            parent_id=parentid
+        ).values()
+        print(str(qset.query))
         return qset or self.none()
         
             

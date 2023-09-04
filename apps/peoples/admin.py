@@ -360,7 +360,7 @@ class GroupBelongingResource(resources.ModelResource):
     )
     SITE = fields.Field(
         column_name='Of Site',
-        widget= SiteFKW(om.Bt, 'bucode'),
+        widget= BVForeignKeyWidget(om.Bt, 'bucode'),
         attribute='assignsites',
         default=utils.get_or_create_none_bv
     )
@@ -382,6 +382,9 @@ class GroupBelongingResource(resources.ModelResource):
         if row.get('Of Site') in ['', 'NONE', None] and row.get('Of People') in ['', 'NONE', None]:
             raise ValidationError("Either Site or People should be set, both cannot be None")
         
+        ic(pm.Pgbelonging.objects.select_related().filter(
+            people__peoplecode=row['Of People'], pgroup__groupname=row['Group Name*'],
+            client__bucode = row['Client*'], assignsites__bucode = row['Site*']).exists())
         # unique record check
         if pm.Pgbelonging.objects.select_related().filter(
             people__peoplecode=row['Of People'], pgroup__groupname=row['Group Name*'],

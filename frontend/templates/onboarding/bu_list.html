@@ -96,8 +96,8 @@ Buisiness View
                 ),
                 dataTablesColumnVisibilityConfig(),
 				{
-					text     : `Add New &nbsp;<i class='fas text-dark fs-6 fa-plus'></i></a>`,
-					//className: "btn btn-sm btn-light-primary",
+					text     : `Add New &nbsp;<i class='fas fs-6 fa-plus'></i></a>`,
+					className: "btn btn-sm btn-light-primary border border-primary",
 					//action for add_new_button 
 					action: function(e, dt, node, config){
 						location.href =  "{{ url('onboarding:bu') }}?action=form"

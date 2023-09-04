@@ -32,12 +32,12 @@ class TicketManager(models.Manager):
     def get_tickets_listview(self, request):
         R, S = request.GET, request.session
         P = json.loads(R['params'])
-        ic(P)
         qset = self.filter(
             cdtz__date__gte = P['from'],
             cdtz__date__lte = P['to'],
             bu_id = S['bu_id'],
-        ).select_related('assignedtopeople', 'assignedtogroup', 'bu', 'ticketcategory').values(
+        ).select_related(
+            'assignedtopeople', 'assignedtogroup', 'bu', 'ticketcategory').values(
             'id','ticketno', 'cdtz', 'bu__buname', 'status', 'bu__bucode', 'isescalated',
             'cuser__peoplename', 'cuser__peoplecode', 'ticketdesc', 'ctzoffset',
             'ticketsource', 'ticketcategory__taname'

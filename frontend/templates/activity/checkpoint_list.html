@@ -290,7 +290,8 @@ if(filters && filters.AssetType === 1){
                 dataTablesColumnVisibilityConfig(),
 
 				{
-					text:`Add New &nbsp;<i class='fas text-dark fa-plus ch4'></i></a>`,
+					text     : `Add New &nbsp;<i class='fas fa-plus ch4'></i></a>`,
+					className: "btn btn-sm border border-primary btn-light-primary add_new_checkpoint",
 					//action for add_new_button 
 					action: function(e, dt, node, config){
                         const params = {

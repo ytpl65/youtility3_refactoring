@@ -62,7 +62,13 @@ var table= null
                 {data:'cdtz', title:"Date Time"},
                 {data:'people__mobno', title:"People Contact"},
                 {data:'people__email', title:"People Email"},
+                {data:null, title:'Attachments', className:'noVis', render:function(data, type, row, meta){
+                    let file = `{{ MEDIA_URL }}${row.filepath.replace('youtility4_media/', "")}/${row.filename}`
+                    return `<a href="${file}" target="_blank"><i class="fas fa-file-video text-primary fs-3"></i></a>`
+                }},
                 {data:'ctzoffset', visible:false},
+                {data:'filename', visible:false, className:'noVis'},
+                {data:'filepath', visible:false, className:'noVis'},
             ],
             columnDefs:[
                 {targets:[4], render:function(data, type, row, meta){

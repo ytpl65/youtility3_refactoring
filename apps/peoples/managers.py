@@ -66,7 +66,7 @@ class PeopleManager(BaseUserManager):
 
     def get_emergencyemails(self, siteid, clientid):
         "returns emails of people with given assigned siteid"
-        qset = self.filter(bu_id = siteid, client_id = clientid).values_list('email', flat = True)
+        qset = self.filter(bu_id = siteid, client_id = clientid, people_extras__isemergencycontact = True).values_list('email', flat = True)
         return qset or self.none()
     
     def controlroomchoices(self, request):

@@ -1077,7 +1077,6 @@ class JobneedExternalTours(LoginRequiredMixin, View):
 
     def get(self, request, *args, **kwargs):
         R, P = request.GET, self.params
-        ic(R)
         # first load the template
         if R.get('template'): return render(request, P['template_path'])
 
@@ -1667,3 +1666,17 @@ class JobneednJNDEditor(LoginRequiredMixin, View):
         if R.get('question'):
             data = P['qsb'].objects.handle_questionpostdata(request)
             return rp.JsonResponse({'data':list(data)}, status = 200, safe=False)
+
+
+
+class ExternalTourTracking(LoginRequiredMixin, View):
+    model = am.Jobneed
+    template = 'schedhuler/site_tour_tracking.html'
+    
+    def get(self,  request, *args, **kwargs):
+        R = request.GET
+        if R.get('action') == 'get_checkpoints':
+            checkpoints, info, path, latestloc = self.model.objects.get_latlng_of_checkpoints(R['jobneed_id'])
+            return rp.JsonResponse(
+                {'checkpoints':checkpoints, 'info':info, 'path':path, 'latestloc':latestloc}, status=200, safe=False)
+        return render(request, self.template, {'jobneed_id':R['jobneed_id']})

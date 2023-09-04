@@ -1243,7 +1243,7 @@ def upload(request, vendor=False):
     if 'img' not in request.FILES:
         return
     foldertype = request.POST["foldertype"]
-    if foldertype in ["task", "internaltour", "externaltour", "ticket", "incidentreport", 'visitorlog', 'conveyance', 'workorder']:
+    if foldertype in ["task", "internaltour", "externaltour", "ticket", "incidentreport", 'visitorlog', 'conveyance', 'workorder', 'workpermit']:
         tabletype, activity_name = "transaction", foldertype.upper()
     if foldertype in ['people', 'client']:
         tabletype, activity_name = "master", foldertype.upper()

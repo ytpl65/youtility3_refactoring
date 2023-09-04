@@ -189,11 +189,17 @@ class PELManager(models.Manager):
             datefor__gte = P['from'],
             datefor__lte = P['to']
         ).select_related('people', 'bu', 'peventtype').values(
-            'id', 'ctzoffset', 'people__peoplename', 'cdtz',
+            'id', 'ctzoffset', 'people__peoplename', 'cdtz', 'uuid',
             'people__peoplecode', 'people__mobno', 'people__email',
             'bu__buname'
         )
-        return qset or self.none()
+        uuids = qset.annotate(owner_uuid = Cast('uuid', output_field=models.CharField())).values_list(
+            'owner_uuid', flat=True
+        )
+        from apps.activity.models import Attachment
+        att_qset = Attachment.objects.get_attforuuids(uuids).values('filepath', 'filename')
+        merged_qset = [{**obj1, **obj2} for obj1, obj2 in zip(qset, att_qset)]
+        return merged_qset or self.none()
     
     def get_people_event_log_punch_ins(self, datefor, buid):
         given_date = parse_date(datefor)
@@ -218,7 +224,7 @@ class PELManager(models.Manager):
                 entry['transportmodes'] = 'NONE'
         return qset or self.none()
     
-    def get_diversion_count(self, request, count=False):
+    def get_diversion_countorlist(self, request, count=False):
         R,S = request.GET, request.session
         pd1 = R.get('from', datetime.now().date())
         pd2 = R.get('upto', datetime.now().date())
@@ -228,6 +234,7 @@ class PELManager(models.Manager):
             peventtype__tacode='DIVERSION',
             datefor__gte = pd1,
             datefor__lte = pd2,
+            bu_id__in = S['assignedsites']
         ).annotate(
         start_gps = AsGeoJSON('startlocation'),
         end_gps = AsGeoJSON('endlocation'))
@@ -253,6 +260,36 @@ class PELManager(models.Manager):
             tatype__tacode = 'SITECRISIS'
         ).select_related('tatype').values_list('tacode', flat=True)
         return qset or []
+    
+    def get_sitecrisis_countorlist(self, request, count=False):
+        R,S = request.GET, request.session
+        pd1 = R.get('from', datetime.now().date())
+        pd2 = R.get('upto', datetime.now().date())
+        
+        pel_qset = self.select_related('people', 'bu').filter(
+            Q(startlocation__isnull=False),
+            peventtype__tacode__in=self.get_sitecrisis_types(),
+            datefor__gte = pd1,
+            datefor__lte = pd2,
+            bu_id__in = S['assignedsites']
+        ).annotate(
+        gps = AsGeoJSON('startlocation'),
+        )
+        
+        fields = [
+            'people__peoplename','people__peoplecode', 'gps', 'reference',
+            'cdtz' ,'bu__buname', 'bu__bucode', 'ctzoffset', 'people__mobno',
+            'people__email', 'uuid',
+            'id']
+        pel_qset = pel_qset.values(*fields)
+        uuids = pel_qset.annotate(owner_uuid = Cast('uuid', output_field=models.CharField())).values_list(
+            'owner_uuid', flat=True
+        )
+        from apps.activity.models import Attachment
+        att_qset = Attachment.objects.get_attforuuids(uuids).values('filepath', 'filename')
+        merged_qset = [{**obj1, **obj2} for obj1, obj2 in zip(pel_qset, att_qset)]
+        if count: return len(pel_qset) or 0
+        return merged_qset or self.none()
         
         
         

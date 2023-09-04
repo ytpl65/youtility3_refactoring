@@ -513,7 +513,10 @@ Client
         
 
         adminsEditor.on('open', function(e, mode, action){
-            $(".DTE_Field").addClass('p-1') // add required classes
+            $(".DTE_Field").addClass('p-1')
+            $("#DTE_Field_dateofbirth, #DTE_Field_dateofjoin").flatpickr({
+                dateFormat: 'Y-m-d'
+            })
         })
 
         adminsEditor.on('opened', function(e, mode, action){
