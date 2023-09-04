@@ -61,7 +61,7 @@ class LoginForm(forms.Form):
             raise forms.ValidationError(message)
     
     def check_user_hassite(self, user):
-        if not user.bu or user.people_extras['assignsitegroup']:
+        if user.bu is None and len(user.people_extras['assignsitegroup']) == 0:
             raise forms.ValidationError("User has no site assigned")
     
     def get_user(self, username):
