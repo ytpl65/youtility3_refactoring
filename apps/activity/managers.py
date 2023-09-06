@@ -441,7 +441,6 @@ class JobneedManager(models.Manager):
                                 #parent_id=1,
                                 plandatetime__date__gte = P['from'],
                                 plandatetime__date__lte = P['to'],
-                                jobtype="SCHEDULE",
                                 identifier='INTERNALTOUR'
                         ).exclude(
                         id=1
@@ -467,10 +466,12 @@ class JobneedManager(models.Manager):
                   'jobdesc', 'people__peoplename', 'pgroup__groupname', 'gracetime', 'ctzoffset', 'assignedto']
         R, S = request.GET, request.session
         P = json.loads(R['params'])
-        assignedto = {'assignedto' : Case(
+        assignedto = {
+            'assignedto' : Case(
                 When(Q(pgroup_id=1) | Q(pgroup_id__isnull =  True), then=Concat(F('people__peoplename'), V(' [PEOPLE]'))),
                 When(Q(people_id=1) | Q(people_id__isnull =  True), then=Concat(F('pgroup__groupname'), V(' [GROUP]'))),
-                )}
+                ),
+                }
         qset = self.annotate(
             **assignedto
             ).select_related(

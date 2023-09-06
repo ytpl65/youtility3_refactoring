@@ -281,8 +281,8 @@ def save_linestring_and_update_pelrecord(obj):
             ls = LineString(line, srid = 4326)
             # transform spherical mercator projection system
             ls.transform(3857)
-            d = round(ls.length / 1000)
-            obj.distance = d
+            #d = round(ls.length / 1000)
+            #obj.distance = d
             ls.transform(4326)
             obj.journeypath = ls
             obj.geojson['startlocation'] = get_readable_addr_from_point(obj.startlocation)
