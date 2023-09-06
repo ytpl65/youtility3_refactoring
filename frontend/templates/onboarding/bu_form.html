@@ -346,6 +346,8 @@ Business-View
 		})
 	}
 
+	
+
 
 	$(document).ready(function () {
 		//onclick id_setgps open popup open-map
@@ -365,7 +367,9 @@ Business-View
 			$("#id_gpslocation").val(lat + ', ' + lng);
 			const geocoder = new google.maps.Geocoder()
 			getAddressOfPoint(geocoder, {lat:lat, lng:lng}, (address) => {
-				$("#id_address").val(address)
+				$("#id_address").val(address.formattedAddress)
+				localStorage.setItem("address", JSON.stringify(address))
+
 			})
 			$("#open_map").modal('hide');
 		});
@@ -438,7 +442,8 @@ Business-View
             e.preventDefault()
             const params = {url: "{{ url('onboarding:bu') }}", modal:false}
             const id = "{{ buform.instance.pk }}"
-            var payLoad = {formData:form.serialize(), csrfmiddlewaretoken: '{{ csrf_token }}'}//payload for post request
+            var payLoad = {formData:form.serialize(), csrfmiddlewaretoken: '{{ csrf_token }}', address:localStorage.getItem("address")}//payload for post request
+		
             if(id != 'None'){
 				var newPayLoad = {...payLoad, 'pk':id}
 				payLoad = newPayLoad

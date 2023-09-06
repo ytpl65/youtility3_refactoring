@@ -128,7 +128,7 @@ class QuestionSetManager(models.Manager):
             type__in = types,
             enable=True
         ).select_related('bu' ,'client', 'parent').exclude(
-            questionsetbelonging=None
+            questionsetbelonging=None,
         )
         return qset or self.none()
     
@@ -152,23 +152,13 @@ class QuestionSetManager(models.Manager):
     def get_qsets_for_tour(self, request):
         R, S = request.GET, request.session
         search_term = R.get('search')
-        qset = self.filter(client_id = S['client_id'], bu_id = S['bu_id'], enable=True)
+        qset = self.filter(client_id = S['client_id'], bu_id = S['bu_id'], enable=True, type=self.model.Type.CHECKLIST)
         qset = qset.filter(qsetname = search_term) if search_term else qset
         qset = qset.annotate(
                 text = F('qsetname')).values(
                     'id', 'text')
         return qset or self.none()
         
-    
-    def get_qsets_for_tour(self, request):
-        R, S = request.GET, request.session
-        search_term = R.get('search')
-        qset = self.filter(client_id = S['client_id'], bu_id = S['bu_id'], enable=True)
-        qset = qset.filter(qsetname = search_term) if search_term else qset
-        qset = qset.annotate(
-                text = F('qsetname')).values(
-                    'id', 'text')
-        return qset or self.none()
         
 
 class QuestionManager(models.Manager):
@@ -483,7 +473,7 @@ class JobneedManager(models.Manager):
             **assignedto
             ).select_related(
                 *related).filter(
-                    bu_id__in = S['assignedsites'],
+                    Q(bu_id__in = S['assignedsites']) | Q(sgroup_id__in = S['assignedsitegroups']),
                     parent_id=1,
                     plandatetime__date__gte = P['from'],
                     plandatetime__date__lte =  P['to'],
@@ -497,7 +487,7 @@ class JobneedManager(models.Manager):
             qset = qset.filter(jobstatus = P['jobstatus'])
         if P.get('alerts') and P.get('alerts') == 'ROUTEPLAN':
             qset = self.filter(
-            bu_id__in = S['assignedsites'],
+            Q(bu_id__in = S['assignedsites']) | Q(sgroup_id__in = S['assignedsitegroups']),
             plandatetime__date__gte = P['from'],
             plandatetime__date__lte = P['to'],
             client_id = S['client_id'],
@@ -532,7 +522,7 @@ class JobneedManager(models.Manager):
 
     
     def get_ext_checkpoints_jobneed(self, request, related, fields):
-        fields+=['distance', 'duration', 'bu__gpslocation']
+        fields+=['distance', 'duration', 'bu__gpslocation', 'receivedonserver']
         ic(fields)
         qset  = self.annotate(distance=F('other_info__distance'),
                               bu__gpslocation = AsGeoJSON('bu__gpslocation'),
@@ -582,7 +572,7 @@ class JobneedManager(models.Manager):
         pd2 = R.get('upto', datetime.now().date())
         return self.select_related('bu', 'parent').filter(
             Q(Q(parent_id__in = [1, -1]) | Q(parent_id__isnull=True)),
-            bu_id__in = S['assignedsites'],
+            Q(bu_id__in = S['assignedsites']) | Q(sgroup_id__in = S['assignedsitegroups']),
             client_id = S['client_id'],
             plandatetime__date__gte = pd1,
             plandatetime__date__lte = pd2,

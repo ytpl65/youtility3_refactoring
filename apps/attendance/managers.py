@@ -228,8 +228,11 @@ class PELManager(models.Manager):
         R,S = request.GET, request.session
         pd1 = R.get('from', datetime.now().date())
         pd2 = R.get('upto', datetime.now().date())
-        
-        pel_qset = self.select_related('people').filter(
+        fields = [
+            'people__peoplename', 'start_gps', 'end_gps','reference',
+            'datefor' ,'punchintime', 'punchouttime', 'ctzoffset',
+            'id']
+        qset = self.select_related('people').filter(
             Q(startlocation__isnull=False),
             peventtype__tacode='DIVERSION',
             datefor__gte = pd1,
@@ -237,22 +240,8 @@ class PELManager(models.Manager):
             bu_id__in = S['assignedsites']
         ).annotate(
         start_gps = AsGeoJSON('startlocation'),
-        end_gps = AsGeoJSON('endlocation'))
-        
-        fields = [
-            'people__peoplename', 'start_gps', 'end_gps','reference',
-            'datefor' ,'punchintime', 'punchouttime', 'ctzoffset',
-            'id']
-        jn_qset = Jobneed.objects.annotate(
-            jobneed_id = F('id'),
-            uuidtext = Cast('uuid', output_field=models.CharField())).filter(
-            uuidtext__in=pel_qset.values_list('reference', flat=True),
-        ).values('jobdesc', 'jobneed_id')
-        ic(jn_qset)
-        pel_qset = pel_qset.values(*fields)
-        qset = list(chain(pel_qset, jn_qset))
-        if count: return len(qset) or 0
-        return qset or self.none()
+        end_gps = AsGeoJSON('endlocation')).values(*fields)
+        return list(qset) or self.none()
 
     def get_sitecrisis_types(self):
         from apps.onboarding.models import TypeAssist

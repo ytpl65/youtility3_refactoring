@@ -149,7 +149,7 @@ class BtResource(resources.ModelResource):
         widget = wg.ForeignKeyWidget(om.Bt, 'bucode'))
 
     BuType = fields.Field(
-        column_name='Site Type*',
+        column_name='Site Type',
         default=default_ta,
         attribute='butype',
         widget = wg.ForeignKeyWidget(om.TypeAssist, 'tacode'))
@@ -176,6 +176,10 @@ class BtResource(resources.ModelResource):
     Code = fields.Field(attribute='bucode', column_name='Code*')
     Name = fields.Field(attribute='buname', column_name='Name*')
     GPS = fields.Field(attribute='gpslocation', column_name='GPS Location', saves_null_values=True)
+    Address = fields.Field(column_name='Address', widget=wg.CharWidget(), saves_null_values=True)
+    State = fields.Field(column_name='State', widget=wg.CharWidget(), saves_null_values=True)
+    City = fields.Field(column_name='City', widget=wg.CharWidget(), saves_null_values=True)
+    Country = fields.Field(column_name='Country', widget=wg.CharWidget(), saves_null_values=True)
     SOLID = fields.Field(attribute='solid', column_name='Sol Id', widget=wg.CharWidget())
     Enable = fields.Field(attribute='enable', column_name='Enable', default=True)
 
@@ -186,7 +190,8 @@ class BtResource(resources.ModelResource):
         report_skipped = True
         fields = (
             'Name', 'Code', 'BuType', 'SOLID', 
-            'Enable', 'GPS', 'ID',
+            'Enable', 'GPS', 'ID','Address', 'State',
+            'City', 'Country',
             'Identifier', 'BelongsTo', 'tenant',)
 
     def __init__(self, *args, **kwargs):
@@ -200,6 +205,11 @@ class BtResource(resources.ModelResource):
         row['Name*'] = clean_string(row.get('Name*', "NONE"))
         self._gpslocation = clean_point_field(row['GPS Location'])
         self._solid = row['Sol Id']
+        self._address = row['Address']
+        self._state = row['State']
+        self._city = row['City']
+        self._country = row['Country']
+        self._latlng = row['GPS Location']
         # check required fields
         if row['Code*'] in ['', None]: raise ValidationError("Code* is required field")
         if row['Type*'] in ['', None]: raise ValidationError("Type* is required field")
@@ -223,6 +233,11 @@ class BtResource(resources.ModelResource):
 
     def before_save_instance(self, instance, using_transactions, dry_run):
         instance.gpslocation = self._gpslocation
+        instance.bupreferences['address'] = self._address
+        instance.bupreferences['address2'] = {
+            'city':self._city, 'country':self._country,
+            'state':self._state, 'formattedAddress':self._address,
+            'latlng':self._latlng}
         instance.solid = int(self._solid) if self._solid else None
         utils.save_common_stuff(self.request, instance)
 

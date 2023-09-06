@@ -29,6 +29,7 @@ from apps.work_order_management.admin import VendorResource
 from django.core.exceptions import ObjectDoesNotExist
 from pprint import pformat
 import uuid
+import json
 from tablib import Dataset
 CACHE_TTL = getattr(settings, 'CACHE_TTL', DEFAULT_TIMEOUT)
 logger = logging.getLogger('django')
@@ -504,7 +505,7 @@ HEADER_MAPPING  = {
         'Name*', 'Code*', 'Type*', 'Client*'],
     
     'PEOPLE': [
-        'Code*', 'Name*', 'Employee Type*', 'Login ID*', 'Gender*',
+        'Code*', 'Name*', 'Employee Type*', 'Login ID*', 'Password*', 'Gender*',
         'Mob No*', 'Email*', 'Date of Birth*', 'Date of Join*', 'Client*', 
         'Site*', 'Designation', 'Department', 'Work Type', 'Report To',
         'Date of Release', 'Device Id', 'Is Emergency Contact',
@@ -512,8 +513,8 @@ HEADER_MAPPING  = {
         'Current Address', 'Blacklist',  'Alert Mails'],
     
     'BU': [
-        'Code*', 'Name*', 'Belongs To*', 'Site Type*', 'Type*', \
-        'Site Manager*', 'Sol Id', 'Enable', 'GPS Location'],
+        'Code*', 'Name*', 'Belongs To*', 'Site Type', 'Type*', \
+        'Site Manager*', 'Sol Id', 'Enable', 'GPS Location', 'Address', 'State', 'Country', 'City'],
     
     'QUESTION':[
         'Question Name*','Answer Type*', 'Min', 'Max','Alert Above', 'Alert Below', 'Is WorkFlow',
@@ -797,10 +798,9 @@ class BtView(LoginRequiredMixin, View):
     def post(self, request, *args, **kwargs):
         resp, create = None, True
         try:
-            print(request.POST)
+            ic(request.POST)
             data = QueryDict(request.POST['formData'])
             pk = request.POST.get('pk', None)
-            print(pk, type(pk))
             if pk:
                 msg = "bu_view"
                 obj = utils.get_model_obj(pk, request, self.params)
@@ -831,6 +831,7 @@ class BtView(LoginRequiredMixin, View):
             bu.bupreferences['permissibledistance'] = form.cleaned_data['permissibledistance']
             bu.bupreferences['controlroom'] = form.cleaned_data['controlroom']
             bu.bupreferences['address'] = form.cleaned_data['address']
+            bu.bupreferences['address2'] = json.loads(request.POST.get('address'))
             putils.save_userinfo(
                 bu, request.user, request.session, create=create)
             logger.info("bu form saved")

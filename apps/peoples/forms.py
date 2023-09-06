@@ -61,7 +61,7 @@ class LoginForm(forms.Form):
             raise forms.ValidationError(message)
     
     def check_user_hassite(self, user):
-        if not user.bu or user.people_extras['assignsitegroup']:
+        if user.bu is None and len(user.people_extras['assignsitegroup']) == 0:
             raise forms.ValidationError("User has no site assigned")
     
     def get_user(self, username):
@@ -211,7 +211,7 @@ class PeopleForm(forms.ModelForm):
 
     def clean_peoplename(self):
         if value := self.cleaned_data.get('peoplename'):
-            regex = "^[a-zA-Z0-9\-_@#\(\|\)&]*$"
+            regex = "^[a-zA-Z0-9\-_@#\(\|\)& ]*$"
             if not re.match(regex, value):
                 raise forms.ValidationError(self.error_msg['invalid_name'])
         return value

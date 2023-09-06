@@ -1565,6 +1565,7 @@ class ExternalTourScheduling(LoginRequiredMixin, View):
         pk, R = request.POST.get('pk', None), request.POST
         formData = QueryDict(request.POST.get('formData'))
         try:
+            ic(formData)
             if R.get('postType') == 'saveCheckpoint':
                 data =  am.Job.objects.handle_save_checkpoint_sitetour(request)
                 return rp.JsonResponse(data, status = 200, safe=False)
@@ -1575,7 +1576,6 @@ class ExternalTourScheduling(LoginRequiredMixin, View):
                 msg = 'external scheduler tour'
                 form = utils.get_instance_for_update(
                     formData, P, msg, int(pk), kwargs = {'request':request})
-                ic(form.data)
             else:
                 form = P['form_class'](formData, request=request)
             if form.is_valid():
@@ -1594,9 +1594,10 @@ class ExternalTourScheduling(LoginRequiredMixin, View):
                 job = form.save(commit=False)
                 if request.POST.get('pk'):
                     am.Job.objects.filter(parent_id = job.id).update(qset_id = job.qset_id)
-                job.other_info['tour_frequency'] = form.cleaned_data['tourfrequency']
-                job.other_info['is_randomized'] = form.cleaned_data['israndom']
-                job.other_info['breaktime'] = form.cleaned_data['breaktime']
+                if not request.POST.get('pk'):
+                    job.other_info['tour_frequency'] = form.cleaned_data['tourfrequency']
+                    job.other_info['is_randomized'] = form.cleaned_data['israndom']
+                    job.other_info['breaktime'] = form.cleaned_data['breaktime']
                 job.save()
                 job = putils.save_userinfo(job, request.user,request.session)
                 #self.save_checkpoints_injob_fromgroup(job, P)
@@ -1609,7 +1610,6 @@ class ExternalTourScheduling(LoginRequiredMixin, View):
     @staticmethod
     def saveCheckpointsinJob(R, checkpoints, P, request):
         try:
-            ic(checkpoints)
             job = am.Job.objects.filter(id = int(R['job_id'])).values()[0]
             P['model'].objects.filter(parent_id = job['id']).delete()
             count=0

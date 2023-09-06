@@ -183,7 +183,7 @@ Route Plan Setup&nbsp;<i class="fa fa-clock fs-4 text-primary" aria-hidden="true
                     </div>
                     <div class="form-floating col-md-4 fv-row">
                         {{ schdexternaltourform.breaktime }}
-                        <label for="id_breaktime">Breaktime (In Mins)</label>
+                        <label for="id_breaktime">Breaktime (mins)</label>
                     </div>
             </div>
         </div>
@@ -618,7 +618,7 @@ $(document).ready(() => {
     })
 
     editor.on('postEdit', function(e, json, data, id){
-        $("#btnGetRoute").click()
+        //$("#btnGetRoute").click()
     })
 
     asgdsites_table = $("#assigned_sites").DataTable({
@@ -659,7 +659,7 @@ $(document).ready(() => {
         
     }else{
         checkDirectionsSaved2()
-        var assignto = '{{schdexternaltourform.instance.people_id }}' == '1' ? "GROUP" : "PEOPLE"
+        var assignto = ['1', 'None'].includes('{{schdexternaltourform.instance.people_id }}') ? "GROUP" : "PEOPLE"
         showHideSelectField(assignto)
         if($("#id_israndom").is(":checked")){
             enableFields("#id_tourfrequency, #id_breaktime")

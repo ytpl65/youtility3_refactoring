@@ -21,9 +21,34 @@ function isSelect2(element) {
 function getAddressOfPoint(geocoder, point, callback) {
   geocoder.geocode({ location: point }).then((res) => {
     if (res.results[0]) {
-      var formattedAddr = res.results[0].formatted_address;
-      formattedAddr += ` | Coordinates: (${point.lat}, ${point.lng})`;
-      callback(formattedAddr);
+      const addressComponents = res.results[0].address_components;
+      let city = "";
+      let state = "";
+      let country = "";
+      let formattedAddress = "";
+
+      for (let i = 0; i < addressComponents.length; i++) {
+        const types = addressComponents[i].types;
+
+        if (types.includes("locality")) {
+          city = addressComponents[i].long_name;
+        } else if (types.includes("administrative_area_level_1")) {
+          state = addressComponents[i].long_name;
+        } else if (types.includes("country")) {
+          country = addressComponents[i].long_name;
+        }
+      }
+
+      formattedAddress = res.results[0].formatted_address;
+
+      const address = {
+        city: city,
+        state: state,
+        country: country,
+        formattedAddress: formattedAddress,
+        latlng: `${point.lat}, ${point.lng}`,
+      };
+      callback(address);
     }
   });
 }

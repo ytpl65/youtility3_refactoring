@@ -118,6 +118,15 @@ Site Group
     </div>
     <div class="card-body">
         <table id="assigned_sites"class="display cel-border compact hover nowrap">
+            <thead>
+                <tr>
+                    <th></th>
+                    <th>Site Name</th>
+                    <th>Code</th>
+                    <th>Sol ID</th>
+                    <th id="deleteAll"><i class="fas text-light fa-trash-alt"></i></th>
+                </tr>
+            </thead>
         </table>
     </div>
 </div>
@@ -232,14 +241,6 @@ Site Group
                 {data: "parent__buname", title: "Belongs to"},
                 {data: 'identifier__tacode', title: "Type"},
             ],
-            columnDefs:[
-                {targets:0, render:function(data, type, row, meta){
-                    if(type === 'display'){
-                        data = '<div class="checkbox"><input type="checkbox" class="dt-checkboxes"><label></label></div>';
-                    }
-                    //return data
-                }}
-            ],
             select: {
                 style:    'multi',
                 selector: 'tr'
@@ -264,6 +265,15 @@ Site Group
             }
             
         })
+
+        $('#selectAllCheckBox').on('click', function() {
+            if ($('#selectAllCheckBox').is(':checked')) {
+                tabAllsites.rows().select();
+            }
+            else {
+                tabAllsites.rows().deselect();
+            }
+        });
         
         
         
@@ -345,6 +355,10 @@ Site Group
             }
 
         });
+        //ON CLICK DELETE ALL ASSIGNED SITES
+        $("#deleteAll").click(() => {
+            tabAssigned_sites.rows().remove().draw()
+        })
 
         //submit form
 		$("#sitegrp_form").on('submit', function(e) {

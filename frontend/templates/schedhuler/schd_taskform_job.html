@@ -235,7 +235,6 @@ Schedule Task
         </div>
     </div>
 </form>
-{{ reset_form_btn(id="#schdtaskform") }}
 <br><br>
 
 {% endblock form %}
@@ -272,15 +271,14 @@ Schedule Task
         Update Task&nbsp;<i class="fas text-white fa-cloud-upload-alt"></i>
     </button>
 
-    <button type="button" onclick="deleteMainJob(this)" data-id="{{ schdtaskform.instance.id }}" id="deleteAttd"
-        class="btn btn-sm btn-danger btn-hover-scale">
-        Delete&nbsp;<i class="fas text-white fa-trash-alt"></i>
-    </button>
     {% else %}
     <button type="submit" form="schdtaskform" class="btn btn-sm btn-primary2 btn-hover-scale">
         Save&nbsp;<i class="fas text-white fa-cloud-upload-alt"></i>
     </button>
     {% endif %}
+    <button type="button" id="btn_clear" class="btn btn-sm btn-secondary btn-hover-scale">
+        Clear&nbsp;<i class="fas  fa-times"></i>
+    </button>
 </div>
 {% endblock ajax_page_actions %}
 
@@ -532,6 +530,10 @@ var formValidator = FormValidation.formValidation(
                     }
                 })
             }
+        })
+
+        $("#btn_clear").click(() => {
+            location.href = "{{ url('schedhuler:jobschdtasks') }}?action=form"
         })
     })
 </script>
