@@ -152,7 +152,9 @@ class QuestionSetManager(models.Manager):
     def get_qsets_for_tour(self, request):
         R, S = request.GET, request.session
         search_term = R.get('search')
-        qset = self.filter(client_id = S['client_id'], bu_id = S['bu_id'], enable=True)
+        qset = self.filter(
+            client_id = S['client_id'], bu_id = S['bu_id'], enable=True,
+            type=self.model.Type.CHECKLIST)
         qset = qset.filter(qsetname = search_term) if search_term else qset
         qset = qset.annotate(
                 text = F('qsetname')).values(
@@ -160,15 +162,7 @@ class QuestionSetManager(models.Manager):
         return qset or self.none()
         
     
-    def get_qsets_for_tour(self, request):
-        R, S = request.GET, request.session
-        search_term = R.get('search')
-        qset = self.filter(client_id = S['client_id'], bu_id = S['bu_id'], enable=True)
-        qset = qset.filter(qsetname = search_term) if search_term else qset
-        qset = qset.annotate(
-                text = F('qsetname')).values(
-                    'id', 'text')
-        return qset or self.none()
+
         
 
 class QuestionManager(models.Manager):
