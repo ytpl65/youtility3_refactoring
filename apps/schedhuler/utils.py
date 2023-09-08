@@ -742,7 +742,7 @@ def insert_into_jn_for_child(job, params, r):
                 scantype       = job['scantype'],               identifier        = job['identifier'],
                 cuser_id       = r['cuser_id'],                 muser_id          = r['muser_id'],
                 bu_id          = r['bu_id'],                    ticketcategory_id = r['ticketcategory_id'],
-                gpslocation    = 'SRID=4326;POINT(0.0 0.0)', remarks           = '',
+                gpslocation    = r['cplocation'], remarks           = '',
                 seqno          = params['idx'],              multifactor       = params['m_factor'],
                 performedby    = params['NONE_P'],           ctzoffset         = r['ctzoffset'],
                 people_id      = params['_people'],          other_info = params['parent_other_info']

@@ -241,7 +241,7 @@ class PELManager(models.Manager):
         ).annotate(
         start_gps = AsGeoJSON('startlocation'),
         end_gps = AsGeoJSON('endlocation')).values(*fields)
-        return list(qset) or self.none()
+        return list(qset) or list(self.none())
 
     def get_sitecrisis_types(self):
         from apps.onboarding.models import TypeAssist
@@ -278,7 +278,7 @@ class PELManager(models.Manager):
         att_qset = Attachment.objects.get_attforuuids(uuids).values('filepath', 'filename')
         merged_qset = [{**obj1, **obj2} for obj1, obj2 in zip(pel_qset, att_qset)]
         if count: return len(pel_qset) or 0
-        return merged_qset or self.none()
+        return merged_qset or []
         
         
         
