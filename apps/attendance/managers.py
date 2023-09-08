@@ -222,7 +222,7 @@ class PELManager(models.Manager):
         if qset:
              for entry in qset:
                 entry['transportmodes'] = 'NONE'
-        return qset or self.none()
+        return qset or []
     
     def get_diversion_countorlist(self, request, count=False):
         R,S = request.GET, request.session
@@ -241,7 +241,7 @@ class PELManager(models.Manager):
         ).annotate(
         start_gps = AsGeoJSON('startlocation'),
         end_gps = AsGeoJSON('endlocation')).values(*fields)
-        return list(qset) or self.none()
+        return list(qset) or []
 
     def get_sitecrisis_types(self):
         from apps.onboarding.models import TypeAssist

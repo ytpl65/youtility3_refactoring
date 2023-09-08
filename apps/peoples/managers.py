@@ -317,7 +317,7 @@ class PgblngManager(models.Manager):
         # for mobile service
         if forservice: return self.return_sites_for_service(
             total_assigned_sites, ['buname', 'bucode', 'bu_id', 'butype_id','enable', 'cdtz', 'mdtz', 'siteincharge_id',
-            'cuser_id', 'muser_id', 'skipsiteaudit', 'identifier_id', 'bupreferences'])
+            'cuser_id', 'muser_id', 'skipsiteaudit', 'identifier_id', 'bupreferences', 'solid'])
         
         # for others
         return total_assigned_sites
