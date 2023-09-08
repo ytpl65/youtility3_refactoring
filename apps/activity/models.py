@@ -9,7 +9,7 @@ from django.core.serializers.json import DjangoJSONEncoder
 from django.contrib.postgres.fields import ArrayField
 from django.db import models
 from datetime import datetime
-from django.contrib.gis.db.models import PointField
+from django.contrib.gis.db.models import PointField, LineStringField
 from django.utils import timezone
 from django.conf import settings
 from ..core import utils
@@ -171,7 +171,6 @@ class QuestionSetBelonging(BaseModel, TenantAwareModel):
     client            = models.ForeignKey("onboarding.Bt", verbose_name = _("Client"), on_delete = models.RESTRICT, null = True, blank = True, related_name='qsetbelong_client')
     alertmails_sendto = models.JSONField( _("Alert mails send to"), encoder = DjangoJSONEncoder, default = alertmails_sendto)
     bu                = models.ForeignKey("onboarding.Bt", verbose_name = _("Site"), on_delete = models.RESTRICT, null = True, blank = True, related_name='qsetbelong_bu')
-    client            = models.ForeignKey("onboarding.Bt", verbose_name = _("Client"), on_delete = models.RESTRICT, null = True, blank = True, related_name='qsetbelong_client')
 
     objects = QsetBlngManager()
     class Meta(BaseModel.Meta):
@@ -443,6 +442,7 @@ class Jobneed(BaseModel, TenantAwareModel):
     starttime        = models.DateTimeField( _("Start time"), auto_now = False, auto_now_add = False, null = True)
     endtime          = models.DateTimeField(_("Start time"), auto_now = False, auto_now_add = False, null = True)
     gpslocation      = PointField(_('GPS Location'),null = True, geography = True, srid = 4326)
+    journeypath      = LineStringField(geography = True, null = True)
     remarks          = models.CharField(_("Remark"), max_length = 200, null = True, blank = True)
     asset            = models.ForeignKey("activity.Asset", verbose_name = _("Asset"), on_delete= models.RESTRICT, null = True, blank = True, related_name='jobneed_assets')
     frequency        = models.CharField(verbose_name = _("Frequency type"), null = True, max_length = 55, choices = Frequency.choices, default = Frequency.NONE.value)

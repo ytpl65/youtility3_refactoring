@@ -17,7 +17,7 @@ log = logging.getLogger('__main__')
 
 def save_people_passwd(user):
     log.info('Password is created by system... DONE')
-    paswd = f'{user.loginid}@youtility' if not user.password else user.password
+    paswd = f'{user.loginid}' if not user.password else user.password
     user.set_password(paswd)
     
 class TypeAssistEmployeeTypeFKW(wg.ForeignKeyWidget):
@@ -123,6 +123,7 @@ class PeopleResource(resources.ModelResource):
     deviceid           = fields.Field(attribute='deviceid', column_name='Device Id', default=-1)
     Name               = fields.Field(attribute='peoplename', column_name='Name*')
     LoginId            = fields.Field(attribute='loginid', column_name='Login ID*')
+    Password            = fields.Field(attribute='password', column_name='Password*')
     MobNo              = fields.Field(attribute='mobno', column_name='Mob No*')
     Email              = fields.Field(attribute='email', column_name='Email*')
     Gender             = fields.Field(attribute='gender', column_name='Gender*')
@@ -146,7 +147,7 @@ class PeopleResource(resources.ModelResource):
             'ID', 'Code', 'Name', 'LoginId', 'Designation', 'Department', 'MobNo', 'Email', 'deviceid',
             'Site', 'DateOfJoin', 'date_of_release', 'DateOfBirth', 'Gender', 'PeopleType','WorkType', 'Enable',
             'Client', 'isemergencycontact', 'alertmails', 'mobilecaps', 'reportcaps', 'webcaps',
-            'portletcaps', 'blacklist', 'currentaddr', 'permanentaddr', 'Reportto']
+            'portletcaps', 'blacklist', 'currentaddr', 'permanentaddr', 'Reportto', 'Password']
 
     def __init__(self, *args, **kwargs):
         super(PeopleResource, self).__init__(*args, **kwargs)
@@ -360,7 +361,7 @@ class GroupBelongingResource(resources.ModelResource):
     )
     SITE = fields.Field(
         column_name='Of Site',
-        widget= SiteFKW(om.Bt, 'bucode'),
+        widget= BVForeignKeyWidget(om.Bt, 'bucode'),
         attribute='assignsites',
         default=utils.get_or_create_none_bv
     )
@@ -382,6 +383,9 @@ class GroupBelongingResource(resources.ModelResource):
         if row.get('Of Site') in ['', 'NONE', None] and row.get('Of People') in ['', 'NONE', None]:
             raise ValidationError("Either Site or People should be set, both cannot be None")
         
+        ic(pm.Pgbelonging.objects.select_related().filter(
+            people__peoplecode=row['Of People'], pgroup__groupname=row['Group Name*'],
+            client__bucode = row['Client*'], assignsites__bucode = row['Site*']).exists())
         # unique record check
         if pm.Pgbelonging.objects.select_related().filter(
             people__peoplecode=row['Of People'], pgroup__groupname=row['Group Name*'],

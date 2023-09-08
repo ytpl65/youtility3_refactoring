@@ -48,7 +48,7 @@ class Ticket(BaseModel, TenantAwareModel):
 
     uuid             = models.UUIDField(unique = True, editable = True, blank = True, default = uuid.uuid4)
     ticketno         = models.CharField(unique=True, null=True, blank=False, max_length=200) 
-    ticketdesc       = models.CharField(max_length=250)
+    ticketdesc       = models.TextField()
     assignedtopeople = models.ForeignKey('peoples.People', null=True, blank=True, on_delete=models.RESTRICT, related_name="ticket_people")
     assignedtogroup  = models.ForeignKey('peoples.Pgroup', null=True, blank=True, on_delete=models.RESTRICT, related_name="ticket_grps")
     comments         = models.CharField(max_length=250, null=True)

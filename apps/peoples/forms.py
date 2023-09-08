@@ -190,7 +190,7 @@ class PeopleForm(forms.ModelForm):
     def clean_peoplecode(self):
         import re
         if value := self.cleaned_data.get('peoplecode'):
-            regex = "^[a-zA-Z0-9\-_]*$"
+            regex = "^[a-zA-Z0-9\-_#]*$"
             if " " in value:
                 raise forms.ValidationError(self.error_msg['invalid_code'])
             if not re.match(regex, value):
@@ -211,7 +211,7 @@ class PeopleForm(forms.ModelForm):
 
     def clean_peoplename(self):
         if value := self.cleaned_data.get('peoplename'):
-            regex = "^[a-zA-Z0-9\-_@#\(\|\) ]*$"
+            regex = "^[a-zA-Z0-9\-_@#\(\|\)& ]*$"
             if not re.match(regex, value):
                 raise forms.ValidationError(self.error_msg['invalid_name'])
         return value
@@ -244,10 +244,11 @@ class PgroupForm(forms.ModelForm):
 
     class Meta:
         model = pm.Pgroup
-        fields = ['groupname', 'enable', 'identifier', 'ctzoffset']
+        fields = ['groupname', 'grouplead', 'enable', 'identifier', 'ctzoffset']
         labels = {
             'name': 'Name',
-            'enable': 'Enable'
+            'enable': 'Enable',
+            'grouplead':'Group Lead'
         }
         widgets = {
             'groupname': forms.TextInput(attrs={
@@ -278,9 +279,11 @@ class SiteGroupForm(PgroupForm):
 
     def __init__(self, *args, **kwargs):
         self.request = kwargs.pop('request')
+        S = self.request.session
         super().__init__(*args, **kwargs)
         utils.initailize_form_fields(self)
         self.fields['identifier'].initial = om.TypeAssist.objects.get(tacode='SITEGROUP')
+        self.fields['grouplead'].queryset = pm.People.objects.filter(bu_id__in = S['assignedsites'], enable=True)
 
 
 class PeopleGroupForm(PgroupForm):
@@ -389,7 +392,6 @@ class PeopleExtrasForm(forms.Form):
     mlogsendsto               = forms.CharField(max_length = 25, required = False)
     currentaddress            = forms.CharField(required = False, widget=forms.Textarea(attrs={'rows': 2, 'cols': 15}))
     permanentaddress          = forms.CharField(required = False,  widget=forms.Textarea(attrs={'rows': 2, 'cols': 15}))
-    isworkpermit_approver     = forms.BooleanField(initial=False, required=False, label="Approver")
 
     
     def __init__(self, *args, **kwargs):

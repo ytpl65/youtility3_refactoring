@@ -112,123 +112,123 @@ class Question(LoginRequiredMixin, View):
         except (IntegrityError, pg_errs.UniqueViolation):
             return utils.handle_intergrity_error('Question')
 
-class QuestionSet(LoginRequiredMixin, View):
-    params = {
-        'form_class'   : af.QuestionSetForm,
-        'template_form': 'activity/questionset_form.html',
-        'template_list' : 'activity/questionset.html',
-        'related'      : ['unit', 'bu'],
-        'model'        : am.QuestionSet,
-        'fields'       : ['qsetname', 'type', 'id', 'ctzoffset', 'cdtz', 'mdtz', 'bu__buname', 'bu__bucode'],
-        'form_initials': { 'type':'QUESTIONSET'}
-    }
+# class QuestionSet(LoginRequiredMixin, View):
+#     params = {
+#         'form_class'   : af.QuestionSetForm,
+#         'template_form': 'activity/questionset_form.html',
+#         'template_list' : 'activity/questionset.html',
+#         'related'      : ['unit', 'bu'],
+#         'model'        : am.QuestionSet,
+#         'fields'       : ['qsetname', 'type', 'id', 'ctzoffset', 'cdtz', 'mdtz', 'bu__buname', 'bu__bucode'],
+#         'form_initials': { 'type':'QUESTIONSET'}
+#     }
 
-    def get(self, request, *args, **kwargs):
-        R, P, resp = request.GET, self.params, None
-        # first load the template
-        if R.get('template'):
-            return render(request, P['template_list'])
+#     def get(self, request, *args, **kwargs):
+#         R, P, resp = request.GET, self.params, None
+#         # first load the template
+#         if R.get('template'):
+#             return render(request, P['template_list'])
 
-        # return qset_list data
-        if R.get('action', None) == 'list' or R.get('search_term'):
-            objs = self.params['model'].objects.questionset_listview(request, P['fields'], P['related'])
-            return  rp.JsonResponse(data = {'data':list(objs)})
+#         # return qset_list data
+#         if R.get('action', None) == 'list' or R.get('search_term'):
+#             objs = self.params['model'].objects.questionset_listview(request, P['fields'], P['related'])
+#             return  rp.JsonResponse(data = {'data':list(objs)})
 
-        # return questionset_form empty
-        if R.get('action', None) == 'form':
-            cxt = {
-                'questionsetform': self.params['form_class'](
-                    request=request, initial=self.params['form_initials']
-                ),
-                'msg': "create questionset requested",
-            }
-            resp = render(request, self.params['template_form'], context = cxt)
+#         # return questionset_form empty
+#         if R.get('action', None) == 'form':
+#             cxt = {
+#                 'questionsetform': self.params['form_class'](
+#                     request=request, initial=self.params['form_initials']
+#                 ),
+#                 'msg': "create questionset requested",
+#             }
+#             resp = render(request, self.params['template_form'], context = cxt)
 
-        elif R.get('action', None) == "delete" and R.get('id', None):
-            resp = utils.render_form_for_delete(request, self.params, True)
+#         elif R.get('action', None) == "delete" and R.get('id', None):
+#             resp = utils.render_form_for_delete(request, self.params, True)
 
-        elif R.get('id', None):
-            log.info('detail view requested')
-            obj = utils.get_model_obj(int(R['id']), request, self.params)
-            cxt = {'questionsetform': self.params['form_class'](request = request, instance = obj)}
-            resp = render(request, self.params['template_form'], context = cxt)
-            log.debug(resp)
-        return resp
+#         elif R.get('id', None):
+#             log.info('detail view requested')
+#             obj = utils.get_model_obj(int(R['id']), request, self.params)
+#             cxt = {'questionsetform': self.params['form_class'](request = request, instance = obj)}
+#             resp = render(request, self.params['template_form'], context = cxt)
+#             log.debug(resp)
+#         return resp
 
-    def post(self, request, *args, **kwargs):
-        resp, create = None, True
-        try:
-            logger.debug(pformat(request.POST))
-            data = QueryDict(request.POST['formData'])
-            ic(data)
-            if pk := request.POST.get('pk', None):
-                logger.debug("form is with instance")
-                msg = 'questionset'
-                form = utils.get_instance_for_update(
-                    data, self.params, msg, int(pk), {'request':request})
-                logger.debug(pformat(form.data, width = 41, compact = True))
-                create = False
-            else:
-                logger.debug("form is without instance")
-                form = self.params['form_class'](data, request = request)
-            if form.is_valid():
-                resp = self.handle_valid_form(form, request, create)
-            else:
-                cxt = {'errors': form.errors}
-                resp = utils.handle_invalid_form(request, self.params, cxt)
-        except Exception:
-            resp = utils.handle_Exception(request)
-        return resp
+#     def post(self, request, *args, **kwargs):
+#         resp, create = None, True
+#         try:
+#             logger.debug(pformat(request.POST))
+#             data = QueryDict(request.POST['formData'])
+#             ic(data)
+#             if pk := request.POST.get('pk', None):
+#                 logger.debug("form is with instance")
+#                 msg = 'questionset'
+#                 form = utils.get_instance_for_update(
+#                     data, self.params, msg, int(pk), {'request':request})
+#                 logger.debug(pformat(form.data, width = 41, compact = True))
+#                 create = False
+#             else:
+#                 logger.debug("form is without instance")
+#                 form = self.params['form_class'](data, request = request)
+#             if form.is_valid():
+#                 resp = self.handle_valid_form(form, request, create)
+#             else:
+#                 cxt = {'errors': form.errors}
+#                 resp = utils.handle_invalid_form(request, self.params, cxt)
+#         except Exception:
+#             resp = utils.handle_Exception(request)
+#         return resp
 
-    @staticmethod
-    def get_questions_for_form(qset):
-        try:
-            questions = list(am.QuestionSetBelonging.objects.select_related(
-                "question").filter(qset_id = qset).values(
-                'ismandatory', 'seqno', 'max', 'min', 'alerton','isavpt', 'avpttype',
-                'options', 'question__quesname', 'answertype', 'question__id'
-            ))
-        except Exception:
-            logger.critical("Something went wrong", exc_info = True)
-            raise
-        else:
-            return questions
+#     @staticmethod
+#     def get_questions_for_form(qset):
+#         try:
+#             questions = list(am.QuestionSetBelonging.objects.select_related(
+#                 "question").filter(qset_id = qset).values(
+#                 'ismandatory', 'seqno', 'max', 'min', 'alerton','isavpt', 'avpttype',
+#                 'options', 'question__quesname', 'answertype', 'question__id'
+#             ))
+#         except Exception:
+#             logger.critical("Something went wrong", exc_info = True)
+#             raise
+#         else:
+#             return questions
 
-    def handle_valid_form(self, form, request, create):
-        logger.info('questionset form is valid')
-        try:
-            with transaction.atomic(using=utils.get_current_db_name()):
-                #assigned_questions = json.loads(
-                #    request.POST.get("asssigned_questions"))
-                ic(form.data)
-                qset = form.save()
-                putils.save_userinfo(qset, request.user,
-                                    request.session, create = create)
-                logger.info('questionset form is valid')
-                fields = {'qset': qset.id, 'qsetname': qset.qsetname,
-                        'client': qset.client_id}
-                #self.save_qset_belonging(request, assigned_questions, fields)
-                data = {'success': "Record has been saved successfully",
-                        'parent_id':qset.id
-                        }
-                return rp.JsonResponse(data, status = 200)
-        except IntegrityError:
-            return utils.handle_intergrity_error('Question Set')
+#     def handle_valid_form(self, form, request, create):
+#         logger.info('questionset form is valid')
+#         try:
+#             with transaction.atomic(using=utils.get_current_db_name()):
+#                 #assigned_questions = json.loads(
+#                 #    request.POST.get("asssigned_questions"))
+#                 ic(form.data)
+#                 qset = form.save()
+#                 putils.save_userinfo(qset, request.user,
+#                                     request.session, create = create)
+#                 logger.info('questionset form is valid')
+#                 fields = {'qset': qset.id, 'qsetname': qset.qsetname,
+#                         'client': qset.client_id}
+#                 #self.save_qset_belonging(request, assigned_questions, fields)
+#                 data = {'success': "Record has been saved successfully",
+#                         'parent_id':qset.id
+#                         }
+#                 return rp.JsonResponse(data, status = 200)
+#         except IntegrityError:
+#             return utils.handle_intergrity_error('Question Set')
 
-    @staticmethod
-    def save_qset_belonging(request, assigned_questions, fields):
-        try:
-            logger.info("saving QuestoinSet Belonging [started]")
-            logger.info(f'{" " * 4} saving QuestoinSet Belonging found {len(assigned_questions)} questions')
+#     @staticmethod
+#     def save_qset_belonging(request, assigned_questions, fields):
+#         try:
+#             logger.info("saving QuestoinSet Belonging [started]")
+#             logger.info(f'{" " * 4} saving QuestoinSet Belonging found {len(assigned_questions)} questions')
 
-            logger.debug(
-                f"\nassigned_questoins, {pformat(assigned_questions, depth = 1, width = 60)}, qset {fields['qset']}")
-            av_utils.insert_questions_to_qsetblng(
-                assigned_questions, am.QuestionSetBelonging, fields, request)
-            logger.info("saving QuestionSet Belongin [Ended]")
-        except Exception:
-            logger.critical("Something went wrong", exc_info = True)
-            raise
+#             logger.debug(
+#                 f"\nassigned_questoins, {pformat(assigned_questions, depth = 1, width = 60)}, qset {fields['qset']}")
+#             av_utils.insert_questions_to_qsetblng(
+#                 assigned_questions, am.QuestionSetBelonging, fields, request)
+#             logger.info("saving QuestionSet Belongin [Ended]")
+#         except Exception:
+#             logger.critical("Something went wrong", exc_info = True)
+#             raise
 
 class MasterAsset(LoginRequiredMixin, View):
     params = {
@@ -308,11 +308,11 @@ class MasterAsset(LoginRequiredMixin, View):
     def handle_valid_form(self, form, request, create):
         raise NotImplementedError()
 
-class Checklist(LoginRequiredMixin, View):
+class QuestionSet(LoginRequiredMixin, View):
     params = {
         'form_class'   : af.ChecklistForm,
-        'template_form': 'activity/checklist_form.html',
-        'template_list' : 'activity/checklist.html',
+        'template_form': 'activity/questionset_form.html',
+        'template_list' : 'activity/questionset_list.html',
         'related'      : ['unit', 'bu'],
         'model'        : am.QuestionSet,
         'filter'       : aft.MasterQsetFilter,
@@ -528,86 +528,86 @@ class Checkpoint(LoginRequiredMixin, View):
         except IntegrityError:
             return utils.handle_intergrity_error('Checkpoint')
 
-class Smartplace(LoginRequiredMixin, View):
-    params = {
-        'form_class': af.SmartPlaceForm,
-        'template_form': 'activity/partials/partial_masterasset_form.html',
-        'template_list': 'activity/master_asset_list.html',
-        'partial_form': 'peoples/partials/partial_masterasset_form.html',
-        'partial_list': 'peoples/partials/master_asset_list.html',
-        'related': ['parent', 'type'],
-        'model': am.Asset,
-        'fields': ['assetname', 'assetcode', 'runningstatus', 'identifier',
-                   'parent__assetname', 'gps', 'id', 'enable'],
-        'form_initials': {'runningstatus': 'WORKING',
-                          'identifier': 'SMARTPLACE',
-                          'iscritical': False, 'enable': True}
-    }
+# class Smartplace(LoginRequiredMixin, View):
+#     params = {
+#         'form_class': af.SmartPlaceForm,
+#         'template_form': 'activity/partials/partial_masterasset_form.html',
+#         'template_list': 'activity/master_asset_list.html',
+#         'partial_form': 'peoples/partials/partial_masterasset_form.html',
+#         'partial_list': 'peoples/partials/master_asset_list.html',
+#         'related': ['parent', 'type'],
+#         'model': am.Asset,
+#         'fields': ['assetname', 'assetcode', 'runningstatus', 'identifier',
+#                    'parent__assetname', 'gps', 'id', 'enable'],
+#         'form_initials': {'runningstatus': 'WORKING',
+#                           'identifier': 'SMARTPLACE',
+#                           'iscritical': False, 'enable': True}
+#     }
     
-    def get(self, request, *args, **kwargs):
-        R, resp, P = request.GET, None, self.params
+#     def get(self, request, *args, **kwargs):
+#         R, resp, P = request.GET, None, self.params
 
-        # first load the template
-        if R.get('template'): return render(request, P['template_list'], {'label':"Smartplace"})
-        # return qset_list data
-        if R.get('action', None) == 'list':
-            objs = P['model'].objects.get_smartplacelistview(request, P['related'], P['fields'])
-            return  rp.JsonResponse(data = {'data':list(objs)})
+#         # first load the template
+#         if R.get('template'): return render(request, P['template_list'], {'label':"Smartplace"})
+#         # return qset_list data
+#         if R.get('action', None) == 'list':
+#             objs = P['model'].objects.get_smartplacelistview(request, P['related'], P['fields'])
+#             return  rp.JsonResponse(data = {'data':list(objs)})
 
-        # return questionset_form empty
-        if R.get('action', None) == 'form':
-            P['form_initials'].update({
-                'type': 1,
-                'parent': 1})
-            cxt = {'master_assetform': P['form_class'](request=request, initial=P['form_initials']),
-                   'msg': "create Smartplace requested",
-                   'label': "Smartplace"}
+#         # return questionset_form empty
+#         if R.get('action', None) == 'form':
+#             P['form_initials'].update({
+#                 'type': 1,
+#                 'parent': 1})
+#             cxt = {'master_assetform': P['form_class'](request=request, initial=P['form_initials']),
+#                    'msg': "create Smartplace requested",
+#                    'label': "Smartplace"}
 
-            resp = utils.render_form(request, P, cxt)
+#             resp = utils.render_form(request, P, cxt)
 
-        elif R.get('action', None) == "delete" and R.get('id', None):
-            resp = utils.render_form_for_delete(request, P, True)
-        elif R.get('id', None):
-            obj = utils.get_model_obj(int(R['id']), request, P)
-            cxt = {'label': "Smartplace"}
-            resp = utils.render_form_for_update(
-                request, P, 'master_assetform', obj, extra_cxt = cxt)
-        return resp
+#         elif R.get('action', None) == "delete" and R.get('id', None):
+#             resp = utils.render_form_for_delete(request, P, True)
+#         elif R.get('id', None):
+#             obj = utils.get_model_obj(int(R['id']), request, P)
+#             cxt = {'label': "Smartplace"}
+#             resp = utils.render_form_for_update(
+#                 request, P, 'master_assetform', obj, extra_cxt = cxt)
+#         return resp
 
-    def post(self, request, *args, **kwargs):
-        resp, create, P = None, False, self.params
-        try:
-            data = QueryDict(request.POST['formData'])
-            if pk := request.POST.get('pk', None):
-                msg = 'Smartplace_view'
-                form = utils.get_instance_for_update(
-                    data, P, msg, int(pk),  kwargs={'request':request})
-                create = False
-            else:
-                form = P['form_class'](data, request = request)
-            if form.is_valid():
-                resp = self.handle_valid_form(form, request, create)
-            else:
-                cxt = {'errors': form.errors}
-                resp = utils.handle_invalid_form(request, P, cxt)
-        except Exception:
-            resp = utils.handle_Exception(request)
-        return resp
+#     def post(self, request, *args, **kwargs):
+#         resp, create, P = None, False, self.params
+#         try:
+#             data = QueryDict(request.POST['formData'])
+#             if pk := request.POST.get('pk', None):
+#                 msg = 'Smartplace_view'
+#                 form = utils.get_instance_for_update(
+#                     data, P, msg, int(pk),  kwargs={'request':request})
+#                 create = False
+#             else:
+#                 form = P['form_class'](data, request = request)
+#             if form.is_valid():
+#                 resp = self.handle_valid_form(form, request, create)
+#             else:
+#                 cxt = {'errors': form.errors}
+#                 resp = utils.handle_invalid_form(request, P, cxt)
+#         except Exception:
+#             resp = utils.handle_Exception(request)
+#         return resp
 
-    def handle_valid_form(self, form, request, create):
-        logger.info('smarplace form is valid')
-        P = self.params
-        try:
-            sp = form.save(commit=False)
-            sp.gpslocation = form.cleaned_data['gpslocation']
-            putils.save_userinfo(
-                sp, request.user, request.session, create = create)
-            logger.info("smartplace form saved")
-            data = {'msg': f"{sp.assetcode}",
-            'row': am.Asset.objects.get_smartplacelistview(request, P['related'], P['fields'], id=sp.id)}
-            return rp.JsonResponse(data, status = 200)
-        except IntegrityError:
-            return utils.handle_intergrity_error('Smartplace')
+#     def handle_valid_form(self, form, request, create):
+#         logger.info('smarplace form is valid')
+#         P = self.params
+#         try:
+#             sp = form.save(commit=False)
+#             sp.gpslocation = form.cleaned_data['gpslocation']
+#             putils.save_userinfo(
+#                 sp, request.user, request.session, create = create)
+#             logger.info("smartplace form saved")
+#             data = {'msg': f"{sp.assetcode}",
+#             'row': am.Asset.objects.get_smartplacelistview(request, P['related'], P['fields'], id=sp.id)}
+#             return rp.JsonResponse(data, status = 200)
+#         except IntegrityError:
+#             return utils.handle_intergrity_error('Smartplace')
 
 
 class AdhocTasks(LoginRequiredMixin, View):

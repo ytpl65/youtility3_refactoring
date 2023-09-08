@@ -302,8 +302,6 @@ class ReplyWorkOrder(View):
                     ismandatory = qsb_obj.ismandatory,
                     wom_id      = wo.id,
                     alerts      = alerts,
-                    client_id   = qsb_obj.client_id,
-                    bu_id       = qsb_obj.bu_id,
                     cuser_id    = 1,
                     muser_id    = 1,
                 )
@@ -347,7 +345,6 @@ class WorkPermit(LoginRequiredMixin, View):
     
     def get(self, request, *args, **kwargs):
         R, P = request.GET, self.params
-        ic(R)
         # first load the template
         if R.get('template'):
             return render(request, self.params['template_list'])
@@ -388,14 +385,19 @@ class WorkPermit(LoginRequiredMixin, View):
             wp_answers = Wom.objects.get_wp_answers(R['qsetid'], R['womid'])
             questionsform = render_to_string(P['partial_form'], context={"wp_details": wp_answers})
             return rp.JsonResponse({'html': questionsform}, status=200)
+        
+        if action == 'getAttachments':
+            att =  P['model'].objects.get_attachments(R['id'])
+            return rp.JsonResponse(data = {'data': list(att)})
 
         if 'id' in R:
             # get work permit questionnaire
             obj = utils.get_model_obj(int(R['id']), request, P)
             wp_answers = Wom.objects.get_wp_answers(obj.qset_id, obj.id)
             cxt = {'wpform': P['form'](request=request, instance=obj), 'ownerid': obj.uuid, 'wp_details': wp_answers}
-            if obj.workstatus == Wom.Workstatus.COMPLETED:
-                rwp_details = Wom.objects.get_return_wp_details()
+            if obj.workpermit == Wom.WorkPermitStatus.APPROVED and obj.workstatus != Wom.Workstatus.COMPLETED:
+                rwp_details = Wom.objects.get_return_wp_details(request)
+                log.info(f"return work permit details are as follows: {rwp_details}")
                 cxt['rwp_details'] = rwp_details
             return render(request, P['template_form'], cxt)
 
@@ -404,13 +406,22 @@ class WorkPermit(LoginRequiredMixin, View):
     def post(self, request, *args, **kwargs):
         R, P = request.POST, self.params
         try:
-            data = QueryDict(R['formData']).copy()
+            
+            if R.get('action') == 'submit_return_workpermit':
+                wom = Wom.objects.get(id = R['wom_id'])
+                return_wp_formdata = QueryDict(request.POST['return_work_permit_formdata']).copy()
+                self.create_workpermit_details(R['wom_id'], wom, request, return_wp_formdata)
+                wom.workstatus = Wom.Workstatus.COMPLETED
+                wom.save()
+                return rp.JsonResponse({'pk':wom.id})
             if pk := R.get('pk', None):
+                data = QueryDict(R['formData']).copy()
                 wp = utils.get_model_obj(pk, request, P)
                 form = self.params['form'](
                     data, instance = wp, request = request)
                 create = False
             else:
+                data = QueryDict(R['formData']).copy()
                 form = self.params['form'](data, request = request)
                 create=True
             if form.is_valid():
@@ -418,7 +429,7 @@ class WorkPermit(LoginRequiredMixin, View):
             else:
                 cxt = {'errors': form.errors}
                 resp = utils.handle_invalid_form(request, self.params, cxt)
-        except Exception:
+        except Exception as e:
             resp = utils.handle_Exception(request)
         return resp
 
@@ -430,7 +441,8 @@ class WorkPermit(LoginRequiredMixin, View):
             workpermit, request.user, request.session, create = create)
         workpermit = self.save_approvers_injson(workpermit)
         #save workpermit details
-        self.create_workpermit_details(request.POST, workpermit, request)
+        formdata = QueryDict(request.POST['workpermitdetails']).copy()
+        self.create_workpermit_details(request.POST, workpermit, request, formdata)
         send_email_notification_for_wp.delay(workpermit.id, workpermit.qset_id, workpermit.approvers, S['client_id'], S['bu_id'])
         return rp.JsonResponse({'pk':workpermit.id})
     
@@ -448,8 +460,10 @@ class WorkPermit(LoginRequiredMixin, View):
         if childwom := Wom.objects.filter(
             parent_id=wom.id, qset_id=qset.id, seqno=qset.seqno
         ).first():
+            log.info(f"wom already exist with qset_id {qset_id} so returning it")
             return childwom
         else:
+            log.info(f'creating wom for qset_id {qset_id}')
             return Wom.objects.create(
                 parent_id      = wom.id,
                 description    = qset.qsetname,
@@ -477,10 +491,10 @@ class WorkPermit(LoginRequiredMixin, View):
                 ctzoffset      = wom.ctzoffset
             )
     
-    def create_workpermit_details(self, R, wom,  request):
-        log.info(f'form post data {R}')
+    def create_workpermit_details(self, R, wom,  request, formdata):
+        log.info(f'creating wp_details started {R}')
         S = request.session
-        formdata = QueryDict(request.POST['workpermitdetails']).copy()
+        
         for k,v in formdata.items():
             log.debug(f'form name, value {k}, {v}')
             if k not in ['ctzoffset', 'wom_id', 'action', 'csrfmiddlewaretoken'] and '_' in k:
@@ -504,7 +518,6 @@ class WorkPermit(LoginRequiredMixin, View):
                 lookup_args = {
                     'wom_id':childwom.id,
                     'question_id':qsb_obj.question_id,
-                    'client_id':S['client_id'],
                     'qset_id':qset_id
                 }
                 default_data = {
@@ -518,7 +531,6 @@ class WorkPermit(LoginRequiredMixin, View):
                     'alerton'     : qsb_obj.alerton,
                     'ismandatory' : qsb_obj.ismandatory,
                     'alerts'      : alerts,
-                    'bu_id'       : qsb_obj.bu_id,
                     'cuser_id'    : request.user.id,
                     'muser_id'    : request.user.id,
                 }
@@ -526,8 +538,9 @@ class WorkPermit(LoginRequiredMixin, View):
                 WomDetails.objects.create(
                     **data
                 )
+                log.info(f"wom detail is created for the for the child wom: {childwom.description}")
     
-            
+
             
 
 class ReplyWorkPermit(View):

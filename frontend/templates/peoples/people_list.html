@@ -36,9 +36,9 @@ People
 				{data: 'id', visible:false, defaultContent: "", className:'noVis'},
 				{data:"peoplecode", title:"Code"},
 				{data: 'peoplename', title: 'Name'},
-				{data: 'designation__taname', title: 'Designation'},
-				{data: 'department__taname', title: 'Department'},
-				{data: 'peopletype__taname', title: 'People Type'},
+				{data: 'designation__taname', title: 'Designation', visible:false},
+				{data: 'department__taname', title: 'Department', visible:false},
+				{data: 'peopletype__taname', title: 'Employee Type', visible:false},
 				{data: 'bu__buname', title: 'Site', },
 				{data: 'isadmin', title: 'Admin', visible:false, className:'noVis'},
 				{data: 'enable', title: 'Enable'},
@@ -80,10 +80,10 @@ People
                     columns = [1,2,3,4,5,6,7,8],
 					filename = 'people_list'
                 ),
-                dataTablesColumnVisibilityConfig()    ,
+                dataTablesColumnVisibilityConfig(),
 				{
-					text     : `Add New &nbsp;<i class='fas text-white fa-plus ch4'></i></a>`,
-					className: "btn btn-sm btn-light-primary",
+					text     : `Add New &nbsp;<i class='fas fa-plus ch4'></i></a>`,
+					className: "btn btn-sm border border-primary btn-light-primary add_new_people",
 					//action for add_new_button 
 					action: function(e, dt, node, config){
 						return location.href = "{{ url('peoples:people') }}?action=form"
@@ -91,7 +91,12 @@ People
 				}
 			]
 		})
+		//hide add new button for non-admin peoples
+		if(!session.is_admin){
+			$('.add_new_people').hide()
+		}
 	});
+	
 </script>
 {% endblock extra_scripts %}
 <!-------- END EXTRA SCRIPTS --------->

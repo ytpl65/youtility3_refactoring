@@ -363,6 +363,7 @@ def save_user_session(request, people, ctzoffset=None):
             save_capsinfo_inside_session(people, request)
             logger.info('saving user data into the session ... DONE')
         request.session['assignedsites'] = list(pm.Pgbelonging.objects.get_assigned_sites_to_people(people.id))
+        request.session['assignedsitegroups'] = people.people_extras['assignsitegroup']
         request.session['clientcode'] = request.user.client.bucode
         request.session['clientname'] = request.user.client.buname
         request.session['sitename'] = request.user.bu.buname
@@ -1243,7 +1244,7 @@ def upload(request, vendor=False):
     if 'img' not in request.FILES:
         return
     foldertype = request.POST["foldertype"]
-    if foldertype in ["task", "internaltour", "externaltour", "ticket", "incidentreport", 'visitorlog', 'conveyance', 'workorder']:
+    if foldertype in ["task", "internaltour", "externaltour", "ticket", "incidentreport", 'visitorlog', 'conveyance', 'workorder', 'workpermit']:
         tabletype, activity_name = "transaction", foldertype.upper()
     if foldertype in ['people', 'client']:
         tabletype, activity_name = "master", foldertype.upper()

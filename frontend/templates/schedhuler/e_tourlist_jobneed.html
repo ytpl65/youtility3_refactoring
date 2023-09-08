@@ -62,6 +62,11 @@ External Tour List
         ajaxData.model = from
         peopleList.ajax.reload()
     }
+    function openFullScreenMap() {
+      var url = 'https://www.openstreetmap.org';
+      var windowFeatures = 'menubar=yes,location=yes,resizable=yes,scrollbars=yes,status=yes';
+      window.open(url, '_blank', windowFeatures);
+    }
 
     $(document).ready(function (){
 
@@ -74,9 +79,9 @@ External Tour List
                     d.params = JSON.stringify(params)
                 }
             },
-            language: { search: "", searchPlaceholder:"Serch keywords..." },
+            language: { search: "", searchPlaceholder:"Search keywords..." },
 			deferRender: true,
-			scrollY: 300,
+			scrollY: 500,
             scrollCollapse: true,
             scrollX:true, 
             dom:`<'row' <'col-sm-6 d-flex justify-content-start'<'customfields'>f> <'col-sm-6 d-flex justify-content-end'B> >rt<'row'
@@ -84,31 +89,43 @@ External Tour List
             //ordering:false,
             columns:[
                 {data: 'id', visible:false, searchable:false, className:'noVis'},
-                {data: 'plandatetime', title: "Plan Datetime",
-                 render:function(data, type, row, meta){
-                  return `<a href="${urlname}?id=${row['id']}">${convert_to_local(type, data, row)}</a>`
-                }
-                },
-                {data: 'jobdesc', title: 'Description', render:function(data, type, row, meta){
-                    return `<a href="${urlname}?id=${row['id']}">${data}</a>`
-                }},
+                {data: 'plandatetime', title: "Plan Datetime"},
+                {data: 'jobdesc', title: 'Description'},
                 {data: 'jobstatus', title: 'Status'},
-                {title: 'People/Group', defaultContent:null, data:'assignedto', render:function(data, type, row, meta){
+                {title: 'People/Group', defaultContent:null, data:'assignedto'},
+                {data: 'performedby__peoplename', title: 'Performed By'},
+                {data: 'gracetime', title: "Grace Time"},
+                {data: 'expirydatetime', title: "Expiry Datetime"},
+                {data:'gps', title:"Track", className:"noVis"},
+            ],
+            order:[[1, 'desc']],
+            columnDefs:[
+                {targets:[1], render:function(data, type, row, meta){
+                  return `<a href="${urlname}?id=${row['id']}">${convert_to_local(type, data, row)}</a>`
+                }},
+                {targets:[7], render:function(data, type, row, meta){
+                  return `<a href="${urlname}?id=${row['id']}">${convert_to_local(type, data, row)}</a>`
+                }},
+                {targets:[2], render:function(data, type, row, meta){
+                   return `<a href="${urlname}?id=${row['id']}">${data}</a>`
+                }},
+                {targets:[4], render:function(data, type, row, meta){
                     if(data.includes('[GROUP]')){
                         return `<a href="javascript:void(0)"  onClick='showListOfPeoples(${row['id']}, "Jobneed")'>${data}</a>`
                     }else{
                         return data
                     }
                 }},
-                {data: 'performedby__peoplename', title: 'Performed By'},
-                {data: 'gracetime', title: "Grace Time"},
-                {data: 'expirydatetime', title: "Expiry Datetime",
-                     render:function(data, type, row, meta){
-                    return convert_to_local(type, data, row)
-                }
-                }
+                {targets:[8], render:function(data, type, row, meta){
+                    let coords = parseGeoJson(data)
+                    if(row['jobstatus'] !== 'ASSIGNED'){
+                        let lat = coords.split(', ')[0]
+                        let lng = coords.split(', ')[1]
+                        return `<a href="{{ url('schedhuler:site_tour_tracking') }}?jobneed_id=${row['id']}" target='_blank'>View on map</a>`
+                    }
+                    return '--'
+                }}
             ],
-            order:[[1, 'desc']],
             scrollCollapse: true,
             buttons:[
                 "searchBuilder",

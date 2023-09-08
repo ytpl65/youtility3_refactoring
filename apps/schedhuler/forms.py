@@ -221,7 +221,9 @@ class Schd_E_TourJobForm(JobForm):
     class Meta(JobForm.Meta):
         JobForm.Meta.labels.update({
             'sgroup':'Route Name',
-            'qset':'Question Set'
+            'qset':'Question Set',
+            'planduration':"Plan Duration (mins)",
+            'gracetime':"Grace Time (mins)"
             }) 
         JobForm.Meta.widgets.update(
             {'identifier':forms.TextInput(attrs={'style': 'display:none;'}),
@@ -267,8 +269,20 @@ class Schd_E_TourJobForm(JobForm):
     def clean(self):
         super().clean()
         cd = self.cleaned_data
+        self.cleaned_data = self.check_nones(self.cleaned_data)
         if cd['people'] is None and cd['pgroup'] is None:
             raise forms.ValidationError('Cannot be proceed assigned tour to either people or group.')
+    
+    def check_nones(self, cd):
+        fields = {
+            'parent':'get_or_create_none_job',
+            'people': 'get_or_create_none_people',
+            'pgroup': 'get_or_create_none_pgroup',
+            }
+        for field, func in fields.items():
+            if cd.get(field) in [None, ""]:
+                cd[field] = getattr(utils, func)()
+        return cd
         
         
     def clean_cron(self):

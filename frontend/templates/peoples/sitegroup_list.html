@@ -56,7 +56,8 @@ Site Groups
 			},
             buttons:[
                 {
-                    text: 'Add New',
+                    text     : `Add New &nbsp;<i class='fas fa-plus ch4'></i></a>`,
+					className: "btn btn-sm border border-primary btn-light-primary add_new_sitegroup",
                     action:function(e, dt, node, config){
                         location.href = '{{ url("peoples:sitegroup") }}?action=form'
                     }

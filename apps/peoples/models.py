@@ -175,6 +175,7 @@ class PermissionGroup(Group):
 class Pgroup(BaseModel, TenantAwareModel):
     # id= models.BigIntegerField(_("Groupid"), primary_key = True, auto_created=)
     groupname  = models.CharField(_('Name'), max_length = 250)
+    grouplead = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.RESTRICT,  related_name="pgroup_groupleads")
     enable     = models.BooleanField(_('Enable'), default = True)
     identifier = models.ForeignKey('onboarding.TypeAssist', verbose_name='Identifier', null = True, blank = True, on_delete = models.RESTRICT, related_name="pgroup_idfs")
     bu       = models.ForeignKey("onboarding.Bt", verbose_name='BV', null = True, blank = True, on_delete = models.RESTRICT, related_name='pgroup_bus')

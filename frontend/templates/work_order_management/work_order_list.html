@@ -102,7 +102,8 @@ Workorder List
                 ),
                 dataTablesColumnVisibilityConfig(),
                 {
-					text     : `Add New &nbsp;<i class='fas text-dark fa-plus'></i></a>`,
+					text     : `Add New &nbsp;<i class='fas fa-plus ch4'></i></a>`,
+					className: "btn btn-sm border border-primary btn-light-primary add_new_workorder",
 					//action for add_new_button 
 					action: function(e, dt, node, config){
 						location.href =  `${urlname}?action=form`

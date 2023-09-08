@@ -78,8 +78,9 @@ tr{
                 { "data": "status", title:"Status", width:'8%' },
                 { "data": "cuser__peoplename", title:"Created By", width:"13%"},
                 { "data": "cuser__peoplecode",visible:false},
+                {data:'ctzoffset', visible:false, className:'noVis'}
             ],
-			columnDefs:[
+        columnDefs:[
 				{targets:[6],  render:function(data, type, row, meta){
 					return `<a href={{ url('helpdesk:ticket') }}?id=${row['id']}>${data}</a>`}
 				},
@@ -122,7 +123,8 @@ tr{
                 ),
                 dataTablesColumnVisibilityConfig(),
 				{
-					text     : `Add New &nbsp;<i class='fas text-dark fa-plus'></i></a>`,
+					text     : `Add New &nbsp;<i class='fas fa-plus ch4'></i></a>`,
+					className: "btn btn-sm border border-primary btn-light-primary add_new_ticket",
 					//action for add_new_button 
 					action: function(e, dt, node, config){
 						location.href =  "{{ url('helpdesk:ticket') }}?action=form"

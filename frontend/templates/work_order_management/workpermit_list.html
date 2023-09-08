@@ -54,9 +54,9 @@ $(document).ready(function(){
         },
         pageLength:50,
         deferRender:true,
+        responsive:true,
         scrollY: 300,
-        scrollCollapse: true,
-        scrollX:true,
+        scrollCollapse:true,
         lengthMenu:[[10,20,30], [10,20,30]],
         dom:`<'row' <'col-sm-6 d-flex justify-content-start'<'customfields'>f> <'col-sm-6 d-flex justify-content-end'B> >rt<'row'
             <'col-sm-6'l> <'col-sm-6'p><'col-sm-12 d-flex justify-content-center'i>>`,
@@ -70,6 +70,7 @@ $(document).ready(function(){
             {title:'Action', data:null, defaultContent:"N/A"},
             {title:'Site', data:'bu__buname'},
             {title:'Site Code', data:'bu__bucode', visible:false},
+            {visible:false, data:"ctzoffset", className:'noVis'}
         ],
         columnDefs:[
             {targets:1, render:function(data, type, row, meta){
@@ -106,7 +107,8 @@ $(document).ready(function(){
                 ),
                 dataTablesColumnVisibilityConfig(),
             {
-                text: 'Add New',
+                text     : `Add New &nbsp;<i class='fas fa-plus ch4'></i></a>`,
+					className: "btn btn-sm border border-primary btn-light-primary add_new_wp",
                 action:function(e, dt, node, config){
                     location.href = '{{ url("work_order_management:work_permit") }}?action=form'
                 }

@@ -60,6 +60,7 @@ def bu_defaults():
         "nearbyemergencycontacts": [],
         'maxadmins': 5,
         'address':"",
+        'address2':None,
         'permissibledistance': 0,
         'controlroom':[],
         'ispermitneeded':False

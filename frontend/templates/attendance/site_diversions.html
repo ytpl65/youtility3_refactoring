@@ -93,7 +93,6 @@ Site Diversion List
             columns:[
                 {data: 'id', className:"noVis"},
                 {data: 'datefor', title: "Plan Datetime"},
-                {data: 'jobdesc', title: 'Route Plan'},
                 {data: 'people__peoplename', title: 'Performed By'},
                 {data: 'start_gps', title: "Diversion Start At", render:function(data, type, row, meta){
                     return handleGPSLocation(data)
@@ -104,7 +103,6 @@ Site Diversion List
                 {data:'punchintime', title:"Start Time"},
                 {data:'punchouttime', title:"End Time"},
                 {data:'ctzoffset', visible:false, className:"noVis"},
-                {data: 'jobneed_id', className:"noVis"},
             ],
             columnDefs:[
                 {targets:0, data: 'id', visible:false, searchable:false},

@@ -179,7 +179,23 @@
                         <div class="pe-3" data-cardtype='SITEDIVERSION'>
                             <h6 class="pb-1 y-primary text-end timer count-title count-number" id="diversion_count">0
                             </h6>
-                            <p class="h4 text-gray-500 fw-semibold fs-6">Site Diversions</p>
+                            <p class="h4 text-gray-500 fw-semibold fs-6">Site Diversions Alerts</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-3 col-md-4 col-lg-6 col-sm-12">
+        <div class="mt-0 p-2">
+            <div class="db_portlet row card col-lg-12 portlet mb-2 p-2 d-none" data-portlet-id ="9" id="PORTLET_SITECRISIS">
+                <div class="card-body counter  bg-gray-100 bg-opacity-60 p-2 rounded-3">
+                    <div class="d-flex count-item justify-content-between">
+                        <i class="fas  yicon yiconpadd text-danger p-4 fa-dumpster-fire"></i>
+                        <div class="pe-3" data-cardtype='SITECRISIS'>
+                            <h6 class="pb-1 y-primary text-end timer count-title count-number" id="sitecrisis_count">0
+                            </h6>   
+                            <p class="h4 text-gray-500 fw-semibold fs-6">Site Crisis Alerts</p>
                         </div>
                     </div>
                 </div>
@@ -343,6 +359,8 @@
             $("#route_count").html(data_.route_count)
             $("#sos_count").html(data_.sos_count)   
             $("#att_count").html(data_.FR_fail_count)
+            $("#diversion_count").html(data_.diversion_count)
+            $("#sitecrisis_count").html(data_.sitecrisis_count)
             
             
             
@@ -448,6 +466,10 @@
                 case 'SITEDIVERSION':
                 localStorage.setItem('site_diversion_stats_filters', JSON.stringify(filterData))
                 window.open("{{ url('attendance:attendance_view') }}?template=site_diversions", '_blank');
+                break;
+                case 'SITECRISIS':
+                localStorage.setItem('sitecrisis_stats_filters', JSON.stringify(filterData))
+                window.open("{{ url('attendance:attendance_view') }}?template=sitecrisis", '_blank');
                 break;
                 case 'ATTENDANCE':
                 localStorage.setItem('attds_filter', JSON.stringify(filterData))

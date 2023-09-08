@@ -9,6 +9,7 @@ from django.db import transaction
 from django.db.utils import IntegrityError
 
 from apps.activity.models import Asset, Jobneed, JobneedDetails
+from apps.work_order_management.models import Wom
 from apps.core import utils
 from apps.service import serializers as sz
 from apps.y_helpdesk.models import Ticket
@@ -224,28 +225,40 @@ def update_jobneeddetails(jobneeddetails, JndModel):
         raise
 
 
-def save_parent_childs(sz, jn_parent_serializer, child, M):
+def save_parent_childs(sz, jn_parent_serializer, child, M, tablename, is_return_wp):
     log.info("save_parent_childs ............start")
     try:
         rc,  traceback= 0,  'NA'
         instance = None
         if jn_parent_serializer.is_valid():
-            parent = jn_parent_serializer.save()
+            if not is_return_wp:
+                parent = jn_parent_serializer.save()
+            if is_return_wp:
+                wom = Wom.objects.get(id = jn_parent_serializer.validated_data.get('parent_id'))
+                wom.workstatus = Wom.Workstatus.COMPLETED
+                wom.save()
+                log.info('Return workpermit found parent wrapper ignored and only childs are considered')
+            
             log.info('parent record for report mutation saved')
             allsaved = 0
             log.info(f'Total {len(child)} child records found for report mutation')
             for ch in child:
                 details = ch.pop('details')
                 log.info(f'Total {len(details)} detail records found for the chid with this uuid:{ch["uuid"]}')
-                ch.update({'parent_id':parent.id})
-                child_serializer = sz.JobneedSerializer(data = clean_record(ch))
+                parent_id = jn_parent_serializer.validated_data.get('parent_id') if is_return_wp else parent.id
+                ch.update({'parent_id':parent_id})
+                switchedSerializer = sz.WomSerializer if tablename == 'wom' else sz.JobneedSerializer
+                log.info(f'switched serializer is {switchedSerializer}')
+                child_serializer = switchedSerializer(data = clean_record(ch))
 
                 if child_serializer.is_valid():
                     child_instance = child_serializer.save()
                     log.info(f"child record with this uuid: {child_instance.uuid} saved for report mutation")
                     for dtl in details:
-                        dtl.update({'jobneed_id':child_instance.id})
-                        ch_detail_serializer = sz.JndSerializers(data = clean_record(dtl))
+                        dtl.update({'wom_id':child_instance.id} if tablename == 'wom' else {'jobneed_id':child_instance.id})
+                        switchedDetailSerializer = sz.WomDetailsSerializers if tablename == 'wom' else sz.JndSerializers
+                        log.info(f'switched serializer is {switchedDetailSerializer}')
+                        ch_detail_serializer = switchedDetailSerializer(data = clean_record(dtl))
                         if ch_detail_serializer.is_valid():
                             ch_detail_serializer.save()
                         else:
@@ -288,7 +301,7 @@ def save_linestring_and_update_pelrecord(obj):
             obj.geojson['startlocation'] = get_readable_addr_from_point(obj.startlocation)
             obj.geojson['endlocation'] = get_readable_addr_from_point(obj.endlocation)
             obj.save()
-            #bet_objs.delete()
+                #bet_objs.delete()
             log.info("save linestring is saved..")
             
     except Exception as e:
@@ -419,6 +432,7 @@ def perform_tasktourupdate(self, file, request=None, db='default', bg=False):
             with transaction.atomic(using = db):
                 if isupdated :=  update_record(details, jobneed, Jobneed, JobneedDetails):
                     recordcount += 1
+                    save_journeypath_field(jobneed)
                     log.info(f'{recordcount} task/tour updated successfully')
         if len(data) == recordcount:
             msg = Messages.UPDATE_SUCCESS
@@ -436,6 +450,33 @@ def perform_tasktourupdate(self, file, request=None, db='default', bg=False):
     results = ServiceOutputType(rc = rc, msg = msg, recordcount = recordcount, traceback = traceback)
     return results.__dict__ if bg else results
 
+
+def save_journeypath_field(jobneed):
+    if jobneed.get('parent_id') == 1 \
+    and jobneed.get('jobstatus') in ('COMPLETED', 'PARTIALLYCOMPLETED') \
+    and jobneed.get('identifier') == 'EXTERNALTOUR':
+        from django.contrib.gis.geos import LineString
+        from apps.attendance.models import Tracking
+        try:
+            log.info("saving line string started")
+            sitetour =  Jobneed.objects.get(uuid=jobneed.get('uuid'))
+            between_latlngs = Tracking.objects.filter(reference = jobneed.get('uuid')).order_by('receiveddate')
+            line = [[coord for coord in obj.gpslocation] for obj in between_latlngs]
+            if len(line) > 1:
+                ls = LineString(line, srid = 4326)
+                # transform spherical mercator projection system
+                ls.transform(4326)
+                sitetour.journeypath = ls
+                sitetour.save()
+                between_latlngs.delete()
+                log.info("save linestring is saved..")
+        except Exception as e:
+            log.info('ERROR while saving line string', exc_info = True)
+            raise
+        else:
+            sitetour =  Jobneed.objects.get(uuid=jobneed.get('uuid'))
+            log.info(f"line string saved printing it {pformat(sitetour.journeypath)}")
+        
 
 @app.task(bind = True, default_retry_delay = 300, max_retries = 5, name = 'perform_insertrecord()')
 def perform_insertrecord(self, file, request = None, db='default', filebased = True, bg=False, userid=None):
@@ -523,7 +564,7 @@ def check_for_sitecrisis(obj, tablename, user):
                 bu_id=user.bu_id
             ).order_by('level').first()
             if esc:
-                raise_ticket(Ticket, user, esc)
+                raise_ticket(Ticket, user, esc, obj)
                 log.info("Ticket raised")
             else:
                 esc = create_escalation_matrix_for_sitecrisis(ESM, user)
@@ -533,10 +574,10 @@ def check_for_sitecrisis(obj, tablename, user):
                 
                 
 
-def raise_ticket(Ticket, user, esc):
+def raise_ticket(Ticket, user, esc, obj):
     
     Ticket.objects.create(
-        ticketdesc=f'[SITE CRISIS] raised by {user.peoplename} at site: {user.bu.buname}',
+        ticketdesc=f'{obj.remarks}',
         assignedtopeople=esc.assignedperson,
         assignedtogroup_id=1,
         identifier=Ticket.Identifier.TICKET,
@@ -547,7 +588,8 @@ def raise_ticket(Ticket, user, esc):
         level=1,
         status=Ticket.Status.NEW,
         isescalated=False,
-        ticketsource=Ticket.TicketSource.SYSTEMGENERATED
+        ticketsource=Ticket.TicketSource.SYSTEMGENERATED,
+        ctzoffset=obj.ctzoffset
     )
 
 def create_escalation_matrix_for_sitecrisis(ESM, user):
@@ -580,16 +622,19 @@ def perform_reportmutation(self, file, db= 'default', bg=False):
         if len(data) == 0: raise utils.NoRecordsFound
         log.info(f"'data = {pformat(data)} {len(data)} Number of records found in the file")
         for record in data:
+            tablename = record.pop('tablename', None)
+            is_return_workpermit = record.pop('isreturnwp', None)
             child = record.pop('child', None)
             parent = record
             try:
+                switchedSerializer = sz.WomSerializer if tablename == 'wom' else sz.JobneedSerializer
                 with transaction.atomic(using = db):
                     if child and len(child) > 0 and parent:
                         jobneed_parent_post_data = parent
-                        jn_parent_serializer = sz.JobneedSerializer(data = clean_record(jobneed_parent_post_data))
-                        rc,  traceback, msg = save_parent_childs(sz, jn_parent_serializer, child, Messages)
+                        jn_parent_serializer = switchedSerializer(data = clean_record(jobneed_parent_post_data))
+                        log.info(f'switched serializer is {switchedSerializer}')
+                        rc,  traceback, msg = save_parent_childs(sz, jn_parent_serializer, child, Messages, tablename, is_return_workpermit)
                         if rc == 0: recordcount += 1
-                        # ic((recordcount)
                     else:
                         log.error(Messages.NODETAILS)
                         msg, rc = Messages.NODETAILS, 1

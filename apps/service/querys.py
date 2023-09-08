@@ -1,14 +1,14 @@
 import graphene
 from apps.core import utils
 from apps.activity.models import JobneedDetails, Question, QuestionSet, QuestionSetBelonging, Location, Attachment
-from apps.work_order_management.models import Vendor
+from apps.work_order_management.models import Vendor, Approver, Wom
 from apps.y_helpdesk.models import Ticket
 from apps.onboarding.models import GeofenceMaster, Bt
 from apps.peoples.models import Pgbelonging, Pgroup, People
 from apps.attendance.models import PeopleEventlog
 from django.db import connections
 from django.db.models import Q
-from pprint import pformat
+from apps.work_order_management.utils import check_all_approved, reject_workpermit
 from collections import namedtuple
 from logging import getLogger
 log = getLogger('mobile_service_log')
@@ -85,6 +85,12 @@ class Query(graphene.ObjectType):
 
     get_gfs_for_siteids = graphene.Field(SelectOutputType,
                                  siteids = graphene.List(graphene.Int))
+    
+    get_approvers = graphene.Field(
+        SelectOutputType,
+        buid = graphene.Int(required = True),
+        clientid = graphene.Int(required = True),
+    )
 
     get_peopleeventlog_history = graphene.Field(
         SelectOutputType,
@@ -121,6 +127,25 @@ class Query(graphene.ObjectType):
                                  buid = graphene.Int(required=True),
                                  ctzoffset = graphene.Int(required=True))
     
+    get_wom_records = graphene.Field(SelectOutputType,
+                                workpermit = graphene.String(required=True),
+                                peopleid = graphene.Int(required=True),
+                                 buid = graphene.Int(),
+                                 parentid = graphene.Int(),
+                                 clientid = graphene.Int(),
+                                 fromdate = graphene.String(required=True),
+        todate = graphene.String(required=True),
+                                     )
+
+    approve_workpermit = graphene.Field(SelectOutputType,
+                                id = graphene.Int(required=True),
+                                peopleid = graphene.Int(required=True),
+                                        )
+    reject_workpermit = graphene.Field(SelectOutputType,
+                                id = graphene.Int(required=True),
+                                peopleid = graphene.Int(required=True),
+                                        )
+    
     send_email_verification_link = graphene.Field(BasicOutput,
                                 clientcode = graphene.String(required=True),
                                 loginid = graphene.String(required=True)
@@ -134,17 +159,45 @@ class Query(graphene.ObjectType):
             rc, msg = 0, "Success"
         except Exception as e:
             rc, msg = 1, "Failed"
+            log.error("something went wrong", exc_info=True)
         return BasicOutput(rc=rc, msg=msg, email = user.email)
     
     @staticmethod
     def resolve_tadata(self, info, keys, **kwargs):
         log.info('\n\nrequest for typeassist data...')
-        
         data = TypeAssist.objects.values(*keys)
         records, count, msg = utils.get_select_output(data)
         log.info(f'{count} objects returned...')
         return SelectOutputType(nrows = count, ncols = len(keys), records = records,msg = msg)
     
+    @staticmethod
+    def resolve_approve_workpermit(self, info, id, peopleid):
+        log.info("request for change wom status")
+        log.info(f"inputs are {id = } {peopleid = }")
+        try:
+            p = People.objects.filter(id = peopleid).first()
+            if is_all_approved := check_all_approved(id, p.peoplecode):
+                    updated = Wom.objects.filter(id=id).update(workpermit=Wom.WorkPermitStatus.APPROVED.value)
+            rc, msg = 0, "success"
+        except Exception as e:
+            log.error("something went wrong!", exc_info=True)
+            rc, msg = 1, "failed"
+        return BasicOutput(rc=rc, msg=msg)
+    
+    @staticmethod
+    def resolve_reject_workpermit(self, info, id, peopleid):
+        try:
+            p = People.objects.filter(id=peopleid).first()
+            w = Wom.objects.filter(id=id).first()
+            Wom.objects.filter(id=id).update(workpermit=Wom.WorkPermitStatus.REJECTED.value)
+            reject_workpermit(id, p.peoplecode)
+            rc, msg = 0, "success"
+        except Exception as e:
+            log.error("something went wrong", exc_info=True)
+            rc, msg = 1, "failed"
+        return BasicOutput(rc=rc, msg=msg)
+        
+        
     @staticmethod
     def resolve_get_tickets(self, info, peopleid, ctzoffset, buid, clientid, mdtz):
         log.info('request for get_tickets')
@@ -324,9 +377,21 @@ class Query(graphene.ObjectType):
         data = PeopleEventlog.objects.get_people_event_log_punch_ins(datefor,  buid)
         records, count, msg = utils.get_select_output(data)
         log.info(f'total {count} objects returned')
-        log.info("%s"%(pformat(records)))
         return SelectOutputType(nrows = count, records = records,msg = msg)
-
+    
+    def resolve_get_approvers(self, info, buid, clientid):
+        log.info(f'request get_approvers inputs are : {buid = } {clientid = }')
+        data = Approver.objects.get_approver_list_for_mobile(buid, clientid)
+        records, count, msg = utils.get_select_output(data)
+        log.info(f'total {count} objects returned')
+        return SelectOutputType(nrows = count, records = records,msg = msg)
+    
+    def resolve_get_wom_records(self, info, fromdate, todate, peopleid, workpermit, buid, clientid, parentid):
+        log.info(f'request get_approvers inputs are : {buid = } {clientid = } {peopleid = } {parentid = } {workpermit = } {fromdate = } {todate = }')
+        data = Wom.objects.get_wom_records_for_mobile(fromdate, todate, peopleid, workpermit, buid, clientid, parentid)
+        records, count, msg = utils.get_select_output(data)
+        log.info(f'total {count} objects returned')
+        return SelectOutputType(nrows = count, records = records,msg = msg)
 
 def get_db_rows(sql, args = None):
     import json

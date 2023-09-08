@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from apps.activity.models import JobneedDetails
 import apps.service.validators as vs
+from apps.work_order_management.models import Wom, WomDetails
 from apps.activity.models import Jobneed
 class Messages:
     AUTHFAILED     = "Authentication Failed "
@@ -28,6 +29,16 @@ class Messages:
     REPORTSFAILED   = 'Failed to generate jasper reports'
     NOTABLEFOUND    = 'Unable to find table!'
 
+
+
+class StringToListField(serializers.ListField):
+    def to_internal_value(self, data):
+        if isinstance(data, str):
+            # Clean the string and convert it to a list
+            cleaned_data = data.split(',')
+            return super().to_internal_value(cleaned_data)
+
+        return super().to_internal_value(data)
 
 class InsertSerializer(serializers.Serializer):
 
@@ -59,6 +70,16 @@ class JndSerializers(serializers.ModelSerializer):
         model = JobneedDetails
         exclude = ['question', 'jobneed', 'cuser', 'muser']
 
+class WomDetailsSerializers(serializers.ModelSerializer):
+    wom_id  = serializers.IntegerField()
+    question_id = serializers.IntegerField()
+    qset_id           = serializers.IntegerField()
+    cuser_id    = serializers.IntegerField()
+    muser_id    = serializers.IntegerField()
+    class Meta:
+        model = WomDetails
+        exclude = ['question', 'qset', 'wom', 'cuser', 'muser']
+
 class JobneedSerializer(serializers.ModelSerializer):
     asset_id          = serializers.IntegerField()
     job_id            = serializers.IntegerField()
@@ -77,7 +98,26 @@ class JobneedSerializer(serializers.ModelSerializer):
     class Meta:
         model = Jobneed
         exclude = ['receivedonserver', 'other_info', 'parent', 'people', 'pgroup', 'qset', 'geojson', 'ticket',
-                   'asset', 'job', 'performedby', 'client', 'bu', 'ticketcategory', 'cuser', 'muser', 'id' ]        
+                   'asset', 'job', 'performedby', 'client', 'bu', 'ticketcategory', 'cuser', 'muser', 'id', 'journeypath']        
+
+class WomSerializer(serializers.ModelSerializer):
+    asset_id          = serializers.IntegerField()
+    location_id            = serializers.IntegerField()
+    vendor_id    = serializers.IntegerField()
+    client_id         = serializers.IntegerField()
+    bu_id             = serializers.IntegerField()
+    ticketcategory_id = serializers.IntegerField()
+    parent_id         = serializers.IntegerField()
+    qset_id           = serializers.IntegerField()
+    cuser_id          = serializers.IntegerField()
+    muser_id          = serializers.IntegerField()
+    categories = StringToListField()
+    approvers = StringToListField()
+
+    class Meta:
+        model = Wom
+        exclude = [ 'parent', 'qset', 'vendor', 'location',
+                   'asset',  'client', 'bu', 'ticketcategory', 'cuser', 'muser', 'id' ]        
 
 class PELSerializer(serializers.ModelSerializer):
     pass

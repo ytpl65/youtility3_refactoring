@@ -182,7 +182,7 @@
 	const formFilter      = "#master_asset_filter"
 	const table_id        = "#checkpoint_table"
 	const formid          = "#id_checkpointform"
-	const urlname         = "{{ label }}" == 'Smartplace' ? "{{ url('activity:smartplace') }}" : "{{ url('activity:checkpoint') }}"
+	const urlname         = "{{ url('activity:checkpoint') }}"
 	const viewname        = "{{ label }}"
 	const rowlink         = "a.cp-link"
 	var params = null;
@@ -290,7 +290,8 @@ if(filters && filters.AssetType === 1){
                 dataTablesColumnVisibilityConfig(),
 
 				{
-					text:`Add New &nbsp;<i class='fas text-dark fa-plus ch4'></i></a>`,
+					text     : `Add New &nbsp;<i class='fas fa-plus ch4'></i></a>`,
+					className: "btn btn-sm border border-primary btn-light-primary add_new_checkpoint",
 					//action for add_new_button 
 					action: function(e, dt, node, config){
                         const params = {

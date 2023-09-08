@@ -1077,7 +1077,6 @@ class JobneedExternalTours(LoginRequiredMixin, View):
 
     def get(self, request, *args, **kwargs):
         R, P = request.GET, self.params
-        ic(R)
         # first load the template
         if R.get('template'): return render(request, P['template_path'])
 
@@ -1566,6 +1565,7 @@ class ExternalTourScheduling(LoginRequiredMixin, View):
         pk, R = request.POST.get('pk', None), request.POST
         formData = QueryDict(request.POST.get('formData'))
         try:
+            ic(formData)
             if R.get('postType') == 'saveCheckpoint':
                 data =  am.Job.objects.handle_save_checkpoint_sitetour(request)
                 return rp.JsonResponse(data, status = 200, safe=False)
@@ -1576,7 +1576,6 @@ class ExternalTourScheduling(LoginRequiredMixin, View):
                 msg = 'external scheduler tour'
                 form = utils.get_instance_for_update(
                     formData, P, msg, int(pk), kwargs = {'request':request})
-                ic(form.data)
             else:
                 form = P['form_class'](formData, request=request)
             if form.is_valid():
@@ -1595,9 +1594,10 @@ class ExternalTourScheduling(LoginRequiredMixin, View):
                 job = form.save(commit=False)
                 if request.POST.get('pk'):
                     am.Job.objects.filter(parent_id = job.id).update(qset_id = job.qset_id)
-                job.other_info['tour_frequency'] = form.cleaned_data['tourfrequency']
-                job.other_info['is_randomized'] = form.cleaned_data['israndom']
-                job.other_info['breaktime'] = form.cleaned_data['breaktime']
+                if not request.POST.get('pk'):
+                    job.other_info['tour_frequency'] = form.cleaned_data['tourfrequency']
+                    job.other_info['is_randomized'] = form.cleaned_data['israndom']
+                    job.other_info['breaktime'] = form.cleaned_data['breaktime']
                 job.save()
                 job = putils.save_userinfo(job, request.user,request.session)
                 #self.save_checkpoints_injob_fromgroup(job, P)
@@ -1610,7 +1610,6 @@ class ExternalTourScheduling(LoginRequiredMixin, View):
     @staticmethod
     def saveCheckpointsinJob(R, checkpoints, P, request):
         try:
-            ic(checkpoints)
             job = am.Job.objects.filter(id = int(R['job_id'])).values()[0]
             P['model'].objects.filter(parent_id = job['id']).delete()
             count=0
@@ -1667,3 +1666,17 @@ class JobneednJNDEditor(LoginRequiredMixin, View):
         if R.get('question'):
             data = P['qsb'].objects.handle_questionpostdata(request)
             return rp.JsonResponse({'data':list(data)}, status = 200, safe=False)
+
+
+
+class ExternalTourTracking(LoginRequiredMixin, View):
+    model = am.Jobneed
+    template = 'schedhuler/site_tour_tracking.html'
+    
+    def get(self,  request, *args, **kwargs):
+        R = request.GET
+        if R.get('action') == 'get_checkpoints':
+            checkpoints, info, path, latestloc = self.model.objects.get_latlng_of_checkpoints(R['jobneed_id'])
+            return rp.JsonResponse(
+                {'checkpoints':checkpoints, 'info':info, 'path':path, 'latestloc':latestloc}, status=200, safe=False)
+        return render(request, self.template, {'jobneed_id':R['jobneed_id']})

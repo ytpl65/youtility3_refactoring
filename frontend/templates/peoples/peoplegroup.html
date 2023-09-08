@@ -2,14 +2,14 @@
 
 <!---- BEGIN CARD TITLE ------>
 {% block card_title %}
-People Group Lists
+People Groups
 {% endblock card_title %}
 <!---- END CARD TITLE -------->
 
 <!----------- BEGIN PAGE BREADCUMBS ----------->
 {% block pagebreadcumb %}
 {{ super() }}
-<li class="breadcrumb-item pe-3"><a href="javascript:void(0)" class="pe-3">People Group List</a></li>
+<li class="breadcrumb-item pe-3"><a href="javascript:void(0)" class="pe-3">People Groups</a></li>
 {% endblock pagebreadcumb %}
 <!----------- END PAGE BREADCUMBS ------------->
 
@@ -102,8 +102,8 @@ People Group Lists
                 dataTablesColumnVisibilityConfig(),
 
 				{
-					text:`Add New ${viewname} &nbsp;<i class='fas text-white fa-plus ch4'></i></a>`,
-					className: "btn btn-sm btn-light-primary",
+					text     : `Add New &nbsp;<i class='fas fa-plus ch4'></i></a>`,
+					className: "btn btn-sm border border-primary btn-light-primary add_new_pgroup",
 					//action for add_new_button 
 					action: function(e, dt, node, config){
 						const params = {

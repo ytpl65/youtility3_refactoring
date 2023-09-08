@@ -1,8 +1,8 @@
 from django.db import models
 from django.utils.translation import ugettext as _
-from django.db.models.functions import Concat, Cast, Replace
+from django.db.models.functions import Concat, Cast
 from django.db.models import CharField, Value as V, Subquery, OuterRef, Exists
-from django.db.models import Q, F, Count, Case, When,  ExpressionWrapper, DateField
+from django.db.models import Q, F, Count, Case, When
 from django.contrib.gis.db.models.functions import  AsWKT, AsGeoJSON
 from datetime import datetime, timedelta, timezone
 from django.core.paginator import Paginator
@@ -128,7 +128,7 @@ class QuestionSetManager(models.Manager):
             type__in = types,
             enable=True
         ).select_related('bu' ,'client', 'parent').exclude(
-            questionsetbelonging=None
+            questionsetbelonging=None,
         )
         return qset or self.none()
     
@@ -152,9 +152,7 @@ class QuestionSetManager(models.Manager):
     def get_qsets_for_tour(self, request):
         R, S = request.GET, request.session
         search_term = R.get('search')
-        qset = self.filter(
-            client_id = S['client_id'], bu_id = S['bu_id'], enable=True,
-            type=self.model.Type.CHECKLIST)
+        qset = self.filter(client_id = S['client_id'], bu_id = S['bu_id'], enable=True, type=self.model.Type.CHECKLIST)
         qset = qset.filter(qsetname = search_term) if search_term else qset
         qset = qset.annotate(
                 text = F('qsetname')).values(
@@ -162,7 +160,15 @@ class QuestionSetManager(models.Manager):
         return qset or self.none()
         
     
-
+    def get_qsets_for_tour(self, request):
+        R, S = request.GET, request.session
+        search_term = R.get('search')
+        qset = self.filter(client_id = S['client_id'], bu_id = S['bu_id'], enable=True)
+        qset = qset.filter(qsetname = search_term) if search_term else qset
+        qset = qset.annotate(
+                text = F('qsetname')).values(
+                    'id', 'text')
+        return qset or self.none()
         
 
 class QuestionManager(models.Manager):
@@ -462,7 +468,7 @@ class JobneedManager(models.Manager):
     
     
     def get_externaltourlist_jobneed(self, request, related, fields):
-        fields = ['id', 'plandatetime', 'expirydatetime', 'performedby__peoplename', 'jobstatus',
+        fields = ['id', 'plandatetime', 'expirydatetime', 'performedby__peoplename', 'jobstatus','gps',
                   'jobdesc', 'people__peoplename', 'pgroup__groupname', 'gracetime', 'ctzoffset', 'assignedto']
         R, S = request.GET, request.session
         P = json.loads(R['params'])
@@ -471,12 +477,13 @@ class JobneedManager(models.Manager):
                 When(Q(pgroup_id=1) | Q(pgroup_id__isnull =  True), then=Concat(F('people__peoplename'), V(' [PEOPLE]'))),
                 When(Q(people_id=1) | Q(people_id__isnull =  True), then=Concat(F('pgroup__groupname'), V(' [GROUP]'))),
                 ),
+            'gps':AsGeoJSON('gpslocation')
                 }
         qset = self.annotate(
             **assignedto
             ).select_related(
                 *related).filter(
-                    bu_id__in = S['assignedsites'],
+                    Q(bu_id__in = S['assignedsites']) | Q(sgroup_id__in = S['assignedsitegroups']),
                     parent_id=1,
                     plandatetime__date__gte = P['from'],
                     plandatetime__date__lte =  P['to'],
@@ -490,7 +497,7 @@ class JobneedManager(models.Manager):
             qset = qset.filter(jobstatus = P['jobstatus'])
         if P.get('alerts') and P.get('alerts') == 'ROUTEPLAN':
             qset = self.filter(
-            bu_id__in = S['assignedsites'],
+            Q(bu_id__in = S['assignedsites']) | Q(sgroup_id__in = S['assignedsitegroups']),
             plandatetime__date__gte = P['from'],
             plandatetime__date__lte = P['to'],
             client_id = S['client_id'],
@@ -525,7 +532,7 @@ class JobneedManager(models.Manager):
 
     
     def get_ext_checkpoints_jobneed(self, request, related, fields):
-        fields+=['distance', 'duration', 'bu__gpslocation']
+        fields+=['distance', 'duration', 'bu__gpslocation', 'receivedonserver']
         ic(fields)
         qset  = self.annotate(distance=F('other_info__distance'),
                               bu__gpslocation = AsGeoJSON('bu__gpslocation'),
@@ -575,7 +582,7 @@ class JobneedManager(models.Manager):
         pd2 = R.get('upto', datetime.now().date())
         return self.select_related('bu', 'parent').filter(
             Q(Q(parent_id__in = [1, -1]) | Q(parent_id__isnull=True)),
-            bu_id__in = S['assignedsites'],
+            Q(bu_id__in = S['assignedsites']) | Q(sgroup_id__in = S['assignedsitegroups']),
             client_id = S['client_id'],
             plandatetime__date__gte = pd1,
             plandatetime__date__lte = pd2,
@@ -805,6 +812,77 @@ class JobneedManager(models.Manager):
             'location_id', 'performedby_id').first()
         
         return qset
+    
+    def get_latlng_of_checkpoints(self, jobneed_id):
+        qset = self.filter(parent_id=jobneed_id).annotate(
+            gps = AsGeoJSON('gpslocation')
+        ).values('gps', 'seqno', 'starttime', 'endtime', 'jobdesc', 'qset__qsetname', 'ctzoffset', 'jobstatus')
+        checkpoints, info = [], []
+        for q in qset:
+            gps = json.loads(q['gps'])
+            checkpoints.append([[gps['coordinates'][1], gps['coordinates'][0]], q['seqno']])
+            info.append(
+                {
+                    "starttime": self.formatted_datetime(q['starttime'], q['ctzoffset']),
+                    "endtime":self.formatted_datetime(q['endtime'], q['ctzoffset']),
+                    "jobdesc": q['jobdesc'],
+                    "qsetname": q['qset__qsetname'],
+                    "seqno":q['seqno'],
+                    'jobstatus':q['jobstatus']
+                })
+        path = self.get_path_of_checkpoints(jobneed_id)
+        latest_loc = self.get_latest_location_of_rider(jobneed_id)
+        return checkpoints, info, path, latest_loc
+    
+    def get_path_of_checkpoints(self, jobneed_id):
+        site_tour_parent = self.annotate(path=AsGeoJSON('journeypath')).filter(id=jobneed_id).first()
+        if site_tour_parent.jobstatus in  (self.model.JobStatus.COMPLETED , self.model.JobStatus.PARTIALLYCOMPLETED) and site_tour_parent.path:
+            geodict = json.loads(site_tour_parent.path)
+            return [[lat,lng] for lng, lat in geodict['coordinates']]
+            
+        elif site_tour_parent.jobstatus == self.model.JobStatus == self.model.JobStatus.INPROGRESS:
+            from apps.attendance.models import Tracking
+            between_latlngs = Tracking.objects.filter(reference = site_tour_parent.uuid).order_by('receiveddate')
+            return [[obj.gpslocation.y , obj.gpslocation.x] for obj in between_latlngs]
+        else:
+            return None
+        
+    def get_latest_location_of_rider(self, jobneed_id):
+        site_tour = self.filter(id=jobneed_id).first()
+        
+        if site_tour.jobstatus not in (self.model.JobStatus.PARTIALLYCOMPLETED, self.model.JobStatus.COMPLETED):
+            return None
+
+        from apps.activity.models import DeviceEventlog
+        from apps.attendance.models import Tracking
+
+        people = site_tour.performedby
+        devl = DeviceEventlog.objects.filter(people_id=people.id).order_by('-receivedon').first()
+        trac = Tracking.objects.filter(people_id=people.id).order_by('-receiveddate').first()
+
+        # Choose the most recent event based on timestamp
+        if not devl and not trac:
+            return None
+
+        if not trac or (devl and devl.receivedon > trac.receiveddate):
+            event = devl
+            time_key = 'receivedon'
+        else:
+            event = trac
+            time_key = 'receiveddate'
+        
+        return {
+            'peoplename': people.peoplename,
+            'mobno': people.mobno,
+            'email': people.email,
+            'time': self.formatted_datetime(getattr(event, time_key), site_tour.ctzoffset),
+            'gps': [event.gpslocation.y, event.gpslocation.x]
+        }
+
+    def formatted_datetime(self, dtime, ctzoffset):
+        if not dtime: return "--"
+        dtz = dtime + timedelta(minutes=int(ctzoffset))
+        return dtz.strftime('%d-%b-%Y %H:%M:%S')
             
 
 class AttachmentManager(models.Manager):
@@ -1435,6 +1513,7 @@ class JobManager(models.Manager):
             elif R['action'] == 'edit':
                 if updated := self.filter(pk=R['pk']).update(**child_job, muser = request.user, mdtz = mdtz):
                     ID = R['pk']
+                    self.filter(pk=R['parentid']).update(mdtz=datetime.utcnow())
             else:
                 self.filter(pk = R['pk']).delete()
                 return {'data':list(self.none()),}

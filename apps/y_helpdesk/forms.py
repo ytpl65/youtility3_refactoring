@@ -22,7 +22,8 @@ class TicketForm(forms.ModelForm):
         widgets={
             'comments' : forms.Textarea(attrs={'rows': 2, 'cols': 40}),
             'isescalated':forms.TextInput(attrs={'readonly':True}),
-            'ticketsource':forms.TextInput(attrs={'style':"display:none"})
+            'ticketsource':forms.TextInput(attrs={'style':"display:none"}),
+            'ticketdesc':forms.Textarea(attrs={'rows':3})
         }
         
 

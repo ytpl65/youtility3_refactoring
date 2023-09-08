@@ -46,6 +46,14 @@ Site Group
             </div>
         </div>
     </div>
+    <div class="row">
+        <div class="col-sm-2">
+            {{ sitegrpform.grouplead.label_tag() }}
+        </div>
+        <div class="col-md-6">
+            {{ sitegrpform.grouplead }}
+        </div>
+    </div>
 </form><br><hr><br>
 {% endblock form %}
 
@@ -88,6 +96,17 @@ Site Group
     <div class="card-body">
         
         <table id="all_sites" class="display cell-border compact hover nowrap">
+        <thead>
+                <tr>
+                    <th class="select-checkbox"><input id="selectAllCheckBox" type="checkbox"></th>
+                    <th></th>
+                    <th>Site Name</th>
+                    <th>Code</th>
+                    <th>SOL ID</th>
+                    <th>Belongs To</th>
+                    <th>Type</th>
+                </tr>
+            </thead>
         </table>
     </div>
 </div>
@@ -98,7 +117,17 @@ Site Group
         </h3>
     </div>
     <div class="card-body">
-        <table id="assigned_sites"class="display cel-border compact hover nowrap"></table>
+        <table id="assigned_sites"class="display cel-border compact hover nowrap">
+            <thead>
+                <tr>
+                    <th></th>
+                    <th>Site Name</th>
+                    <th>Code</th>
+                    <th>Sol ID</th>
+                    <th id="deleteAll"><i class="fas text-light fa-trash-alt"></i></th>
+                </tr>
+            </thead>
+        </table>
     </div>
 </div>
 </div>
@@ -236,6 +265,15 @@ Site Group
             }
             
         })
+
+        $('#selectAllCheckBox').on('click', function() {
+            if ($('#selectAllCheckBox').is(':checked')) {
+                tabAllsites.rows().select();
+            }
+            else {
+                tabAllsites.rows().deselect();
+            }
+        });
         
         
         
@@ -317,6 +355,10 @@ Site Group
             }
 
         });
+        //ON CLICK DELETE ALL ASSIGNED SITES
+        $("#deleteAll").click(() => {
+            tabAssigned_sites.rows().remove().draw()
+        })
 
         //submit form
 		$("#sitegrp_form").on('submit', function(e) {

@@ -69,7 +69,8 @@ $(document).ready(function(){
 			 <'col-sm-6'l> <'col-sm-6'p><'col-sm-12 d-flex justify-content-center'i>>`,
 			buttons:[
 				{
-                    text: 'Add New',
+                    text     : `Add New &nbsp;<i class='fas fa-plus ch4'></i></a>`,
+					className: "btn btn-sm border border-primary btn-light-primary add_new_geofence",
                     action:function(e, dt, node, config){   
                         location.href = '{{ url("onboarding:geofence") }}?action=form'
                     }

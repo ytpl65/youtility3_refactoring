@@ -22,7 +22,7 @@ log = get_task_logger('__main__')
 @shared_task(name="create_job()")
 def create_job(jobids = None):
     startdtz = enddtz = msg = resp = None
-    result = {'F':{}, 'd':[], 'story':"", 'id':[]}
+    result = {'story':[]}
 
     from django.utils.timezone import get_current_timezone
     with transaction.atomic(using = utils.get_current_db_name()):
@@ -50,7 +50,6 @@ def create_job(jobids = None):
             if total_jobs > 0 or jobs is not None:
                 log.info("\nprocessing jobs started found:= '%s' jobs", (len(jobs)))
                 for idx, job in enumerate(jobs):
-                    result['story'] += f'processing job with id: {job["id"]}'
                     startdtz, enddtz = calculate_startdtz_enddtz(job)
                     log.debug(f"Jobs to be schedhuled from startdatetime {startdtz} to enddatetime {enddtz}")
 
@@ -60,21 +59,8 @@ def create_job(jobids = None):
                         continue
                     log.debug(
                         "Jobneed will going to create for all this datetimes\n %s", (pformat(get_readable_dates(DT))))
-                    if not is_cron: result['F'][str(job['id'])] = {'cron':job['cron']}
                     status, resp = insert_into_jn_and_jnd(job, DT, resp)
-                    if status:
-                        result['d'].append({
-                            "job"   : job['id'],
-                            "jobname" : job['jobname'],
-                            "cron"    : job['cron'],
-                            "iscron"  : is_cron,
-                            "count"   : len(DT),
-                            "status"  : status
-                        })
-                        result['id'].append(job['id'])
-                if result['F']:
-                    log.info(f"create_job() Failed job schedule list:= {pformat(F)}")
-                log.info(f"createJob()[end-] [{idx} of {total_jobs - 1}] parent job:= {job['jobname']} | job:= {job['id']} | cron:= {job['cron']}")
+                    result['story'].append(resp)
         except Exception as e:
             log.error("something went wrong!", exc_info=True)
     return resp, result
@@ -165,7 +151,7 @@ def insert_into_jn_and_jnd(job, DT, resp):
         in 'DT' list.
     """
     log.info("insert_into_jn_and_jnd() [ start ]")
-    status, resp   = None, None
+    status, resp, tracebackExp   = None, None, None
     if len(DT) > 0:
         try:
             # required variables
@@ -211,13 +197,14 @@ def insert_into_jn_and_jnd(job, DT, resp):
             update_lastgeneratedon(job, pdtz)
         except Exception as ex:
             status = 'failed'
+            tracebackExp = tb.format_exc()
             log.error('insert_into_jn_and_jnd() ERROR', exc_info = True)
             resp = {
                 "errors": "Failed to schedule jobs"}
             raise ex from ex
         else:
             status = "success"
-            resp = {'msg': f'{len(DT)} tasks scheduled successfully!', 'count':len(DT)}
+            resp = {'msg': f'{len(DT)} tasks scheduled successfully!', 'count':len(DT), 'job_id':job['id'], 'traceback':tracebackExp}
 
         log.info("insert_into_jn_and_jnd() [ End ]")
     return status, resp
@@ -250,8 +237,8 @@ def insert_into_jn_for_parent(job, params):
     obj = am.Jobneed.objects.create(
         **defaults,
         job_id         = job['id'],           parent       = params['NONE_JN'],
-        jobdesc        = params['jobdesc'],qset_id      = job['qset_id'],
-        asset_id       = job['asset_id'],     
+        jobdesc        = params['jobdesc'],   qset_id      = job['qset_id'],
+        asset_id       = job['asset_id'],     sgroup_id = job['sgroup_id'],
         people_id      = params['people'],
         pgroup_id      = job['pgroup_id'],
         jobtype        = params['jobtype'],
@@ -334,13 +321,7 @@ def create_child_tasks(job, _pdtz, _people, jnid, _jobstatus, _jobtype, parent_o
                 pdtz = params['pdtz'] = prev_edtz + timedelta(minutes=r['expirytime'])
             edtz = params['edtz'] = pdtz + timedelta(minutes=job['planduration'] + job['gracetime'])
             prev_edtz = edtz
-            #if idx == 0:
-            #    pdtz = params['pdtz'] = prev_edtz
-            #else:
-            #    pdtz = params['pdtz'] = prev_edtz + \
-            #        timedelta(minutes = r['expirytime'] + job['gracetime'])
-            #edtz = params['edtz'] = pdtz + timedelta(minutes = mins)
-            #prev_edtz = edtz
+
             
             params['idx'] = idx
             jn = insert_into_jn_for_child(job, params, r)

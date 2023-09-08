@@ -81,6 +81,7 @@ class QuestionResource(resources.ModelResource):
         super().before_import_row(row, **kwargs)
     
     def check_required_fields(self, row):
+        ic(row)
         required_fields = ['Answer Type*', 'Question Name*',  'Client*']
         for field in required_fields:
             if row.get(field) in ['', None]:
@@ -171,7 +172,15 @@ class QuestionSetResource(resources.ModelResource):
         widget = BVForeignKeyWidget(om.Bt, 'bucode'),
         default=utils.get_or_create_none_bv
     )
+    
+    BelongsTo = fields.Field(
+        column_name='Belongs To*',
+        default=utils.get_or_create_none_qset,
+        attribute='parent',
+        widget = wg.ForeignKeyWidget(am.QuestionSet, 'qsetname'))
+    
     ID               = fields.Field(attribute='id', column_name='ID')
+    SEQNO            = fields.Field(attribute='seqno', column_name="Seq No")
     QSETNAME         = fields.Field(attribute='qsetname', column_name='Question Set Name*')
     Type             = fields.Field(attribute='type', column_name='Type*')
     ASSETINCLUDES    = fields.Field(attribute='assetincludes', column_name='Asset Includes', default=[])
@@ -187,7 +196,7 @@ class QuestionSetResource(resources.ModelResource):
         import_id_fields = ['ID']
         report_skipped = True
         fields = ['Question Set Name*', 'ASSETINCLUDES', 'SITEINCLUDES', 'SITEGRPINCLUDES', 'SITETYPEINCLUDES', 
-                  'SHOWTOALLSITES', 'URL', 'BV', 'CLIENT', 'Type']
+                  'SHOWTOALLSITES', 'URL', 'BV', 'CLIENT', 'Type', 'BelongsTo', 'SEQNO']
 
     def __init__(self, *args, **kwargs):
         super(QuestionSetResource, self).__init__(*args, **kwargs)
@@ -233,7 +242,7 @@ class QuestionSetResource(resources.ModelResource):
         # unique record check
         if am.QuestionSet.objects.select_related().filter(
             qsetname=row['Question Set Name*'], type=row['Type*'],
-            client__bucode = row['Client*']).exists():
+            client__bucode = row['Client*'], parent__qsetname = row['Belongs To*']).exists():
             raise ValidationError(f"Record with these values already exist {row.values()}")
 
             
@@ -544,7 +553,7 @@ class LocationResource(resources.ModelResource):
     )
     
     ID = fields.Field(attribute='id')
-    ENABLE = fields.Field(attribute='enable', column_name='Enable')
+    ENABLE = fields.Field(attribute='enable', column_name='Enable', default=True)
     CODE = fields.Field(attribute='loccode', column_name='Code*')
     NAME = fields.Field(attribute='locname', column_name='Name*')
     RS = fields.Field(attribute='locstatus',column_name='Status*')
@@ -589,4 +598,3 @@ class LocationResource(resources.ModelResource):
         
     def before_save_instance(self, instance, using_transactions, dry_run=False):
         utils.save_common_stuff(self.request, instance, self.is_superuser)
-        

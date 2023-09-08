@@ -34,8 +34,8 @@ logger = logging.getLogger('django')
 class SignIn(View):
     template_path = 'peoples/login.html'
     error_msgs = {
-        'invalid-details': "Sorry that didn't work <br> try again \
-                            with proper username and password",
+        'invalid-details': "Sorry that didn't work <br> please try again \
+                            with the proper username and password.",
         'invalid-cookies': 'Please enable cookies in your browser...',
         'auth-error': 'Authentication failed of user with loginid = %s\
                             password = %s',
@@ -570,7 +570,9 @@ class NoSite(View):
         if form.is_valid():
             ic(request.session['bu_id'])
             bu_id = form.cleaned_data['site']
+            bu = Bt.objects.get(id=bu_id)
             request.session['bu_id'] = bu_id
+            request.session['sitename'] = bu.buname
             pm.People.objects.filter(id=request.user.id).update(bu_id=bu_id)
             ic(request.session['bu_id'])
             return redirect('onboarding:rp_dashboard')
