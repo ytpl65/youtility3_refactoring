@@ -20,7 +20,7 @@ import environ
 env = environ.Env()
 
 ENVPATH = os.path.join(os.path.abspath('intelliwiz_config/envs'))
-environ.Env.read_env(os.path.join(ENVPATH, '.env.prod'), overwrite=True) #rename it '.env.prod' for production
+environ.Env.read_env(os.path.join(ENVPATH, '.env.dev'), overwrite=True) #rename it '.env.prod' for production
 
 
 def check_path(path):
@@ -43,7 +43,7 @@ ENCRYPT_KEY = env('ENCRYPT_KEY')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True    
 
-ALLOWED_HOSTS = ['.localhost', 'demo.youtility.in']
+ALLOWED_HOSTS = ['.localhost', 'demo.youtility.in', 'redmine.youtility.in']
 
 # Application definition
 
@@ -501,13 +501,3 @@ KNOWAGE_REPORTS = {
 
 TEST_RUNNER = 'intelliwiz_config.test_runner.MyTestRunner'
 
-
-CLIENT_DOMAINS = {
-    'R_REDMINE'  : 'redmine.youtility.in',
-    'R_TOURTRAX' : 'redmine.youtility.in',
-    'R_SUKHI'    : 'redmine.youtility.in',
-    'R_CAPGEMINI': 'redmine.youtility.in',
-    'D_SUKHI'    : 'demo.youtility.in',
-    'D_CAPGEMINI': 'demo.youtility.in',
-    'SUKHI'      : 'sg.youtility.in',
-}

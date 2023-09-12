@@ -532,10 +532,12 @@ class JobneedManager(models.Manager):
 
     
     def get_ext_checkpoints_jobneed(self, request, related, fields):
-        fields+=['distance', 'duration', 'bu__gpslocation', 'receivedonserver']
+        fields+=['distance', 'duration', 'bu__gpslocation', 'performedtime']
         ic(fields)
-        qset  = self.annotate(distance=F('other_info__distance'),
-                              bu__gpslocation = AsGeoJSON('bu__gpslocation'),
+        qset  = self.annotate(
+            distance=F('other_info__distance'),
+            performedtime = F("endtime"),
+            bu__gpslocation = AsGeoJSON('bu__gpslocation'),
             duration = V(None, output_field=models.CharField(null=True))).select_related(*related).filter(
             parent_id = request.GET['parent_id'],
             identifier = 'EXTERNALTOUR',
@@ -814,6 +816,7 @@ class JobneedManager(models.Manager):
         return qset
     
     def get_latlng_of_checkpoints(self, jobneed_id):
+        
         qset = self.filter(parent_id=jobneed_id).annotate(
             gps = AsGeoJSON('gpslocation')
         ).values('gps', 'seqno', 'starttime', 'endtime', 'jobdesc', 'qset__qsetname', 'ctzoffset', 'jobstatus')
@@ -849,17 +852,17 @@ class JobneedManager(models.Manager):
         
     def get_latest_location_of_rider(self, jobneed_id):
         site_tour = self.filter(id=jobneed_id).first()
-        
-        if site_tour.jobstatus not in (self.model.JobStatus.PARTIALLYCOMPLETED, self.model.JobStatus.COMPLETED):
-            return None
-
         from apps.activity.models import DeviceEventlog
         from apps.attendance.models import Tracking
-
-        people = site_tour.performedby
+        
+        if site_tour.performedby and site_tour.performedby_id != 1:
+            people = site_tour.performedby
+        elif site_tour.people and site_tour.people_id != 1:
+            people = site_tour.people
+        else:
+            people = site_tour.sgroup.grouplead
         devl = DeviceEventlog.objects.filter(people_id=people.id).order_by('-receivedon').first()
         trac = Tracking.objects.filter(people_id=people.id).order_by('-receiveddate').first()
-
         # Choose the most recent event based on timestamp
         if not devl and not trac:
             return None

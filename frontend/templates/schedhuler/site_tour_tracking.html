@@ -118,8 +118,21 @@
             serialNumber++
             var loc = new L.LatLng(...latlng[0]);
             bounds.extend(loc)
-            var marker = new L.Marker(loc);
+            let iconUrlMap = {
+                'COMPLETED':"{{ static('assets/plugins/custom/leaflet/images/marker-icon-lightgreen.png') }}",
+                'ASSIGNED':"{{ static('assets/plugins/custom/leaflet/images/marker-icon.png') }}",
+                'AUTOCLOSED':"{{ static('assets/plugins/custom/leaflet/images/marker-icon-red.png') }}",
+            }
+            let iconOptions = {
+                iconUrl:iconUrlMap[info[idx]['jobstatus']],
+                shadowUrl:"{{ static('assets/plugins/custom/leaflet/images/marker-shadow.png') }}",
+            }
+            let customIcon = L.icon(iconOptions)
+            
+            //checkpoint marker
+            var marker = new L.Marker(loc, {icon:customIcon});
             marker.bindPopup(popUpContent);
+ 
             // Add the mouseover event listener to open the popup on hover
             marker.on('mouseover', function (e) {
             this.openPopup();
@@ -133,8 +146,15 @@
         })
         //polyline
         if(path){
-            var polyline = L.polyline(path, {color:'red'}).addTo(map)
-            map.fitBounds(polyline.getBounds())
+            path.forEach(function(latlng){
+                // Create a marker with a circular icon for each coordinate
+                var marker = L.circleMarker([latlng[0], latlng[1]], {
+                    color: 'red',
+                    fillColor: '#f03',
+                    fillOpacity: 0.5,
+                    radius: 10
+                }).addTo(map);
+            })
         }else{
             map.fitBounds(bounds)
         }
