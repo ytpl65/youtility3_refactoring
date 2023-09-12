@@ -1,4 +1,6 @@
 *.pyc
+intelliwiz_config/settings.py
+intelliwiz_config/envs/*
 frontend/static/assets/media/images/my_project_visualized.png
 docs/importants.txt
 .gitignore
@@ -12,4 +14,3 @@ fr.ipynb
 project_nb.ipynb
 .pytest_cache
 .git-credentials
-intelliwiz_config/settings.py
