@@ -843,7 +843,7 @@ class JobneedManager(models.Manager):
             geodict = json.loads(site_tour_parent.path)
             return [[lat,lng] for lng, lat in geodict['coordinates']]
             
-        elif site_tour_parent.jobstatus == self.model.JobStatus == self.model.JobStatus.INPROGRESS:
+        elif site_tour_parent.jobstatus ==  self.model.JobStatus.INPROGRESS:
             from apps.attendance.models import Tracking
             between_latlngs = Tracking.objects.filter(reference = site_tour_parent.uuid).order_by('receiveddate')
             return [[obj.gpslocation.y , obj.gpslocation.x] for obj in between_latlngs]

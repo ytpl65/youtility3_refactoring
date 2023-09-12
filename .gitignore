@@ -12,3 +12,4 @@ fr.ipynb
 project_nb.ipynb
 .pytest_cache
 .git-credentials
+intelliwiz_config/settings.py

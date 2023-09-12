@@ -72,13 +72,10 @@
         </table>
         `
         var loc = new L.LatLng(...latestloc['gps']);
-        var personIcon =  L.divIcon(
+        var personIcon =  L.icon(
             {
-            className: 'person-icon',
-            html: `
-                <div style="width: 38px; height: 95px; display: flex; align-items: center; justify-content: center; position: relative;">
-                    <i class="fas fa-biking text-danger fa-3x"></i></div>`,
-            iconSize: [38, 95],
+            iconUrl: "{{ static('assets/plugins/custom/leaflet/images/motor-biker-3d.png') }}",
+            iconSize: [58, 58],
             shadowUrl:"{{ static('assets/plugins/custom/leaflet/images/marker-shadow.png') }}",
             iconAnchor: [19, 47]
             }
@@ -155,9 +152,9 @@
                     radius: 10
                 }).addTo(map);
             })
-        }else{
-            map.fitBounds(bounds)
         }
+        map.fitBounds(bounds)
+        
         //plot user latest fetched location
         plotLocation(latestloc)
         
