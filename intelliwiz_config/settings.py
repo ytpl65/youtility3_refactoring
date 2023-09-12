@@ -500,3 +500,14 @@ KNOWAGE_REPORTS = {
 }
 
 TEST_RUNNER = 'intelliwiz_config.test_runner.MyTestRunner'
+
+
+CLIENT_DOMAINS = {
+    'R_REDMINE'  : 'redmine.youtility.in',
+    'R_TOURTRAX' : 'redmine.youtility.in',
+    'R_SUKHI'    : 'redmine.youtility.in',
+    'R_CAPGEMINI': 'redmine.youtility.in',
+    'D_SUKHI'    : 'demo.youtility.in',
+    'D_CAPGEMINI': 'demo.youtility.in',
+    'SUKHI'      : 'sg.youtility.in',
+}

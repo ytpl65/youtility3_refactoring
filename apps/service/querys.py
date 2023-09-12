@@ -345,17 +345,12 @@ class Query(graphene.ObjectType):
     def resolve_verifyclient(self,info, clientcode):
         try:
             utils.set_db_for_router(clientcode.lower())
-            bt = Bt.objects.get(bucode = clientcode.upper(), enable = True)
-            return VerifyClientOutput(msg = "VALID", url = f'{clientcode.lower()}.youtility.in', client_id = bt.id)
-        except utils.NoDbError as ex:
-            try:
-                utils.set_db_for_router('default')
-                Bt.objects.get(bucode = clientcode.upper())
-                return VerifyClientOutput(msg = "VALID", url = f'{clientcode.lower()}.youtility.in')
-            except Bt.DoesNotExist as ex:
-                return VerifyClientOutput(rc = 1, msg="INVALID")
-        except Bt.DoesNotExist as ex:
-            return VerifyClientOutput(rc = 1, msg="INVALID")
+            url = utils.get_appropriate_client_url(clientcode)
+            return VerifyClientOutput(msg = "VALID", url=url)
+        except Exception as ex:
+            log.error("something went wrong!", exc_info=True)
+            return VerifyClientOutput(msg='INVALID', url=None, rc=1)
+        
         
     
     def resolve_get_peopleeventlog_history(self, info, fromdate, todate, peopleid, buid, clientid, ctzoffset, peventtypeid):

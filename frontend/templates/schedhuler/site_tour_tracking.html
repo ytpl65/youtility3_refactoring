@@ -180,18 +180,13 @@
         }
     )
     .done((data, status, xhr) => {
+        console.log(data)
         var checkpoints = data.checkpoints
         addCheckpointsToMap(checkpoints, data.info, data.path, data.latestloc)
 
     })
     .fail((xhr, status, error) => {
         console.log("something went wrong", error)
-    })
-
-    
-    
-
-        
-
+    })    
 </script>
 {% endblock extra_scripts %}

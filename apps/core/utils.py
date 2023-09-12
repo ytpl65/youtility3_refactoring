@@ -36,6 +36,9 @@ def get_current_year():
     return datetime.now().year
 
 
+def get_appropriate_client_url(client_code):
+    return settings.CLIENT_DOMAINS.get(client_code)
+
 class CustomJsonEncoderWithDistance(JSONEncoder):
     def default(self, obj):
         if isinstance(obj, Distance):
