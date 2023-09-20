@@ -1,5 +1,5 @@
 *.pyc
-intelliwiz_config/settings.py
+intelliwiz_config/settings.py*
 intelliwiz_config/envs/*
 frontend/static/assets/media/images/my_project_visualized.png
 docs/importants.txt
