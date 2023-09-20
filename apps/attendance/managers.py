@@ -70,7 +70,6 @@ class PELManager(models.Manager):
     def get_peopleevents_listview(self, related,fields,request):
         R, S = request.GET, request.session
         P = json.loads(R.get('params'))
-        ic(P)
         qset = self.select_related(*related).annotate(
             sL = AsGeoJSON('startlocation'), eL = AsGeoJSON('endlocation')
             ).filter(
@@ -85,7 +84,6 @@ class PELManager(models.Manager):
     def get_lastmonth_conveyance(self, request, fields, related):
         R, S = request.GET, request.session
         P = json.loads(R['params'])
-        ic(P)
         qset = self.select_related('bu', 'people').annotate(
             start = AsGeoJSON('startlocation'),
             end = AsGeoJSON('endlocation')
@@ -161,7 +159,7 @@ class PELManager(models.Manager):
             datefor__gte = pd1,
             datefor__lte = pd2,
             peventtype__tacode__in = ['SELF', 'SELFATTENDANCE', 'MARKATTENDANCE', "MARK"]
-        ).count() or 0
+        ).exclude(id=1).count() or 0
     
     def get_peopleeventlog_history(self, fromdate, todate, people_id, bu_id, client_id, ctzoffset, peventtypeid):
         qset = self.filter(

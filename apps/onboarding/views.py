@@ -831,7 +831,8 @@ class BtView(LoginRequiredMixin, View):
             bu.bupreferences['permissibledistance'] = form.cleaned_data['permissibledistance']
             bu.bupreferences['controlroom'] = form.cleaned_data['controlroom']
             bu.bupreferences['address'] = form.cleaned_data['address']
-            bu.bupreferences['address2'] = json.loads(request.POST.get('address'))
+            bu.bupreferences['address2'] = json.loads(
+                "{}" if request.POST.get('address') == "" else request.POST['address'])
             putils.save_userinfo(
                 bu, request.user, request.session, create=create)
             logger.info("bu form saved")
