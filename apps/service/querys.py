@@ -344,8 +344,8 @@ class Query(graphene.ObjectType):
     @staticmethod
     def resolve_verifyclient(self,info, clientcode):
         try:
-            utils.set_db_for_router(clientcode.lower())
             url = utils.get_appropriate_client_url(clientcode)
+            if not url: raise Exception
             return VerifyClientOutput(msg = "VALID", url=url)
         except Exception as ex:
             log.error("something went wrong!", exc_info=True)
