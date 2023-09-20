@@ -181,7 +181,7 @@ tr{
                     d.params = JSON.stringify(params)
                 }
 			},
-            pageLength:14,
+            pageLength:1000,
             deferRender: true,
             dom: `<'row' <'col-sm-6 d-flex justify-content-start'<'customfields'>f> <'col-sm-6 d-flex justify-content-end'B> >rt<'row'
 			 <'col-sm-6'l> <'col-sm-6'p><'col-sm-12 d-flex justify-content-center'i>>`,
@@ -191,7 +191,8 @@ tr{
                     return convert_to_local(type, data, row)}
                 }
             ],
-            scrollY: 300,
+            scrollY: 340,
+            responsive:true,
             scrollCollapse: true,
             scrollX:true,
             columns:[
@@ -236,11 +237,19 @@ tr{
                 }},
                 {targets:[5], render:function(data, type, row, meta){
                     let coords = typeof data === 'string' && data.length > 0 ? JSON.parse(data): 'NONE'
-                    return coords !== 'NONE' ? `${coords['coordinates'][1]}, ${coords['coordinates'][0]}` : coords
+                    if(coords !== 'NONE'){
+                            let lat = coords['coordinates'][1]
+                            let lng = coords['coordinates'][0]
+                            return `<a href="https://www.google.com/maps?q=${lat},${lng}" target="_blank">${lat},${lng}</a>`
+                    }return coords
                 }},
                 {targets:[7], render:function(data, type, row, meta){
                     let coords = typeof data === 'string' && data.length > 0 ? JSON.parse(data): 'NONE'
-                    return coords !== 'NONE' ? `${coords['coordinates'][1]}, ${coords['coordinates'][0]}` : coords
+                    if(coords !== 'NONE'){
+                            let lat = coords['coordinates'][1]
+                            let lng = coords['coordinates'][0]
+                            return `<a href="https://www.google.com/maps?q=${lat},${lng}" target="_blank">${lat},${lng}</a>`
+                    }return coords
                 }}
             ],
             buttons: [
