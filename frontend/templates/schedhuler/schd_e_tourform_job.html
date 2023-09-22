@@ -625,7 +625,10 @@ $(document).ready(() => {
         ajax:{
             url:"{{ url('schedhuler:schd_external_tour') }}?action=get_sitesfromgroup&id={{schdexternaltourform.instance.id}}", 
         },
-        fixedHeader: true,
+        scrollY: 150,
+        paging:false,
+        scrollCollapse: true,
+        pageLength:50,
         responsive: true,
         columns:[
             ...getAsgdsitesTabColumnConfig()
@@ -725,6 +728,7 @@ $(document).ready(() => {
     $("#getfromgroup").click((e) => {
         e.preventDefault()
         forceGetFromGroup()
+        $("#btnSaveRoute").click()
     })
 
 
@@ -749,7 +753,15 @@ $(document).ready(() => {
             return
         }
         else{
-        submit_form_alert().then((res) => {
+        let totalCheckpoints = asgdsites_table.rows().count()
+        let israndomTour = $("#id_israndom").is(":checked") ? "Yes" :"No"
+        let breaktime = $('#id_breaktime').val()
+        let frequency = $("#id_tourfrequency").val()
+        var text = `The Route Plan behaviour is depend on these values:<br>
+                    <br>Total Checkpoints: &nbsp;${totalCheckpoints},&nbsp;
+                    Random Tour: &nbsp;${israndomTour}<br>Frequency:&nbsp; ${frequency},&nbsp;Breaktime: &nbsp;${breaktime}<br><br>
+                    Please check and confirm if you are ok with it` 
+        submit_form_alert(text=text).then((res) => {
             if(res.isConfirmed){
                 var form = $(this);
                 const params = { url: "{{ url('schedhuler:schd_external_tour') }}", modal:false } 

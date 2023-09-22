@@ -218,12 +218,13 @@ function d2DrawMarker(
   }
   var infoWindowHtml = "";
   const status_color_code = {'ASSIGNED':"00bfff", 'AUTOCLOSED':"FB6D3E", 'COMPLETED':"7AD308"}
+  let colorcode = status_color_code[row['jobstatus']] ?  status_color_code[row['jobstatus']] : '00bfff'
   var markerC = new google.maps.Marker({
     map: d2map,
     title: row["bu__buname"],
     position: new google.maps.LatLng(latlng[1], latlng[0]),
     icon:
-      `https://chart.googleapis.com/chart?chst=d_map_spin&chld=0.8|0|${status_color_code[row['jobstatus']]}|10|b|` +
+      `https://chart.googleapis.com/chart?chst=d_map_spin&chld=0.8|0|${colorcode}|10|b|` +
       (idx+1),
   });
   google.maps.event.addListener(markerC, "click", function () {

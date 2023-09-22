@@ -1394,7 +1394,7 @@ class JobManager(models.Manager):
         ).select_related('pgroup', 'sgroup', 'people').values(
             'assignedto', 'sitegrpname', 'israndomized', 'tourfrequency',
             'breaktime', 'deviation', 'fromdate', 'uptodate', 'gracetime',
-            'expirytime', 'planduration','jobname', 'id'
+            'expirytime', 'planduration','jobname', 'id', 'ctzoffset'
         ).order_by('-mdtz')
         ic(utils.printsql(qset))
         return qset or self.none()
