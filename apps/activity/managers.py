@@ -496,14 +496,17 @@ class JobneedManager(models.Manager):
         if P.get('jobstatus') and P['jobstatus'] != 'TOTALSCHEDULED':
             qset = qset.filter(jobstatus = P['jobstatus'])
         if P.get('alerts') and P.get('alerts') == 'ROUTEPLAN':
+            alert_qset = self.filter(
+                Q(bu_id__in = S['assignedsites']) | Q(sgroup_id__in = S['assignedsitegroups']),
+                plandatetime__date__gte = P['from'],
+                plandatetime__date__lte = P['to'],
+                client_id = S['client_id'],
+                alerts=True,
+                identifier="EXTERNALTOUR"
+            ).select_related(*related)
+            alert_qset_parents = list(set(alert_qset.values_list('parent_id', flat=True)))
             qset = self.filter(
-            Q(bu_id__in = S['assignedsites']) | Q(sgroup_id__in = S['assignedsitegroups']),
-            plandatetime__date__gte = P['from'],
-            plandatetime__date__lte = P['to'],
-            client_id = S['client_id'],
-            alerts=True,
-            identifier="EXTERNALTOUR"
-        ).select_related(*related).annotate(**assignedto).values(*fields)
+                id__in = alert_qset_parents).annotate(**assignedto).values(*fields)
         return qset or self.none()
 
     def get_tourdetails(self, R):
@@ -663,7 +666,8 @@ class JobneedManager(models.Manager):
         
         task_alerts = qset.filter( Q(Q(parent_id__in = [1, -1]) | Q(parent_id__isnull=True)), identifier='TASK').count()
         tour_alerts = qset.filter(identifier='INTERNALTOUR').count()
-        route_alerts = qset.filter(identifier='EXTERNALTOUR').count()
+        route_alerts = self.filter(
+            id__in = qset.values_list('parent_id', flat=True)).count()
         ppm_alerts = qset.filter(identifier='PPM').count()
         chart_arr =  [task_alerts, ppm_alerts, tour_alerts, route_alerts ]
         return chart_arr, sum(chart_arr)
