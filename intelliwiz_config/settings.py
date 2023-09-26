@@ -381,7 +381,7 @@ LOGGING_CONFIG_ = {
         'mail_admins': {
             'level': 'ERROR',
             'class': 'django.utils.log.AdminEmailHandler',
-            'include_html': False,
+            'include_html': True,
         }
     },
     'loggers': { 
@@ -401,7 +401,7 @@ LOGGING_CONFIG_ = {
             'propagate': False
         },
         'mobile_service_log':{
-            'handlers': ['default', 'serviceLogs'],
+            'handlers': ['default', 'serviceLogs', 'mail_admins'],
             'level': 'DEBUG',
             'propagate': False
         }               
