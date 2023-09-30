@@ -227,9 +227,6 @@
         if("{{ master_assetform.instance.id }}" !== 'None'){
             $("#id_gpslocation").val("{{ master_assetform.instance.gpslocation.coords[::-1] if master_assetform.instance.gpslocation is not none else 'NONE' }}")
         }
-
-
-
     })
 
 

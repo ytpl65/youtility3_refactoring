@@ -391,17 +391,17 @@ LOGGING_CONFIG_ = {
             'propagate': False 
         },
         'django': { 
-            'handlers': ['default', 'filelogs'],
+            'handlers': ['default', 'filelogs', 'mail_admins'],
             'level': 'INFO',
             'propagate': False
         },
         '__main__': {  # if __name__ == '__main__'
-            'handlers': ['default', 'filelogs'],
+            'handlers': ['default', 'filelogs', 'mail_admins'],
             'level': 'DEBUG',
             'propagate': False
         },
         'mobile_service_log':{
-            'handlers': ['default', 'serviceLogs'],
+            'handlers': ['default', 'serviceLogs', 'mail_admins'],
             'level': 'DEBUG',
             'propagate': False
         }               
@@ -414,7 +414,7 @@ if not check_path(LOGGING_CONFIG_['handlers']['serviceLogs']['filename']):
     raise ValueError(f"`{LOGGING_CONFIG_['handlers']['serviceLogs']['filename']}` not readable and writable")
 logging.config.dictConfig(LOGGING_CONFIG_)
 
-# LOGIN URL NAME... 
+# LOGIN URL NAME...
 LOGIN_URL = 'login'
 
 

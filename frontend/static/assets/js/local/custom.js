@@ -660,7 +660,7 @@ function show_alert_before_update_jn(data) {
 function display_non_field_errors(errors) {
   console.log(errors, "errors");
   $("#nonfield_errors").hide();
-  var errstr = errors[0];
+  var errstr = typeof errors === 'object' ? errors[0] : errors;
 
   $("#nonfield_errors").show();
   $("#nonfield_errors > span").text(errstr);
@@ -689,9 +689,9 @@ function display_modelform_errors(errors) {
   //non field errors
   if (
     Object.prototype.hasOwnProperty.call(errors, "__all__") ||
-    errors instanceof String
+    typeof errors == "string" 
   ) {
-    display_non_field_errors(errors.__all__);
+    display_non_field_errors(errors.__all__ || errors);
   } else {
     //field errors
     for (let key in errors) {
