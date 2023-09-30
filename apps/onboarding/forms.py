@@ -56,7 +56,7 @@ class SuperTypeAssistForm(forms.ModelForm):
 
     def clean_tacode(self):
         value = self.cleaned_data.get('tacode')
-        regex = "^[a-zA-Z0-9\-_]*$"
+        regex = "^[a-zA-Z0-9\-_()#]*$"
         if " " in value: raise forms.ValidationError(self.error_msg['invalid_code'])
         if  not re.match(regex, value):
             raise forms.ValidationError(self.error_msg['invalid_code2'])
@@ -186,7 +186,7 @@ class BtForm(forms.ModelForm):
     def clean_bucode(self):
         self.cleaned_data['gpslocation'] = self.data.get('gpslocation')
         if value := self.cleaned_data.get('bucode'):
-            regex = "^[a-zA-Z0-9\-_]*$"
+            regex = "^[a-zA-Z0-9\-_#()]*$"
             if " " in value: raise forms.ValidationError(self.error_msg['invalid_bucode'])
             if  not re.match(regex, value):
                 raise forms.ValidationError(self.error_msg['invalid_bucode2'])

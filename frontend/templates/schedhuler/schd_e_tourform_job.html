@@ -187,7 +187,6 @@ Route Plan Setup&nbsp;<i class="fa fa-clock fs-4 text-primary" aria-hidden="true
                     </div>
             </div>
         </div>
-
     </div>
 </form>
 <br><hr><br>
@@ -755,12 +754,12 @@ $(document).ready(() => {
         else{
         let totalCheckpoints = asgdsites_table.rows().count()
         let israndomTour = $("#id_israndom").is(":checked") ? "Yes" :"No"
-        let breaktime = $('#id_breaktime').val()
-        let frequency = $("#id_tourfrequency").val()
-        var text = `The Route Plan behaviour is depend on these values:<br>
-                    <br>Total Checkpoints: &nbsp;${totalCheckpoints},&nbsp;
-                    Random Tour: &nbsp;${israndomTour}<br>Frequency:&nbsp; ${frequency},&nbsp;Breaktime: &nbsp;${breaktime}<br><br>
-                    Please check and confirm if you are ok with it` 
+        let breaktime = $('#id_breaktime').val() ? $("#id_breaktime").val() : "Not Provided"
+        let frequency = $("#id_tourfrequency").val() ? $("#id_tourfrequency").val() : "Not Provided"
+        var text = `The Route Plan scheduling depends on these parameters:<br>
+                    <br>
+                    Random Tour Generation: &nbsp;${israndomTour}<br>Route Frequency:&nbsp; ${frequency}<br>Breaktime: &nbsp;${breaktime}<br><br>
+                    Please check these parameters and confirm if they are acceptable or require any changes. ` 
         submit_form_alert(text=text).then((res) => {
             if(res.isConfirmed){
                 var form = $(this);

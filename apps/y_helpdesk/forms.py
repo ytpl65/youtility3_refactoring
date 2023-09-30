@@ -1,4 +1,5 @@
 from django import forms
+from django.db.models import Q
 from .models import Ticket, EscalationMatrix
 from apps.onboarding.models import TypeAssist
 from apps.core import utils
@@ -95,6 +96,7 @@ class EscalationForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         utils.initailize_form_fields(self)
         self.fields['escalationtemplate'].queryset = TypeAssist.objects.select_related('tatype').filter(
+            Q(bu_id__in = self.request.session['assignedsites'] + [1] ) | Q(cuser_id=1) | Q(cuser__is_superuser=True),
             tatype__tacode__in = ['TICKETCATEGORY', 'TICKET_CATEGORY'],
-            bu_id__in = self.request.session['assignedsites'] + [1]
+            
         )

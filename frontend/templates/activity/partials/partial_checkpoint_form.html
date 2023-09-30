@@ -41,6 +41,13 @@
                 {{ master_assetform.assetname.errors }}
             </div>
             <!--CHeckpoint Name End-->
+            <!--CHeckpoint Belongs To Start-->
+            <label for="{{ master_assetform.parent.id_for_label }}" class="col-md-1">Belongs To:</label>
+            <div class="col-md-11">
+                {{ master_assetform.parent }}
+                {{ master_assetform.parent.errors }}
+            </div>
+            <!--CHeckpoint Belongs To End-->
             
             <!--Running Status Start-->
             <label for="{{ master_assetform.runningstatus.id_for_label }}" class="required col-md-1">Status:</label>

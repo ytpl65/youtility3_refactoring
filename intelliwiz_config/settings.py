@@ -401,7 +401,7 @@ LOGGING_CONFIG_ = {
             'propagate': False
         },
         'mobile_service_log':{
-            'handlers': ['default', 'serviceLogs', 'mail_admins'],
+            'handlers': ['default', 'serviceLogs'],
             'level': 'DEBUG',
             'propagate': False
         }               

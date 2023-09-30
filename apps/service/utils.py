@@ -559,7 +559,7 @@ def check_for_sitecrisis(obj, tablename, user):
             ESM = apps.get_model('y_helpdesk', 'EscalationMatrix')
             # generate ticket sitecrisis appeared
             esc = ESM.objects.select_related('escalationtemplate').filter(
-                escalationtemplate__tacode='SITECRISIS',
+                escalationtemplate__tacode='TC_SITECRISIS',
                 escalationtemplate__tatype__tacode='TICKETCATEGORY',
                 bu_id=user.bu_id
             ).order_by('level').first()
@@ -569,7 +569,7 @@ def check_for_sitecrisis(obj, tablename, user):
             else:
                 esc = create_escalation_matrix_for_sitecrisis(ESM, user)
                 log.info("Escalation was not set, so created one")
-                raise_ticket(Ticket, user, esc)
+                raise_ticket(Ticket, user, esc, obj)
                 log.info("Ticket raised")
                 
                 

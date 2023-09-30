@@ -47,7 +47,7 @@
 	<div class="modal-footer border-0 pt-0">
 		<button type="button" class="btn btn-sm btn-secondary btn-hover-scale" data-bs-dismiss="modal">Close <i class="fas  fa-times"></i></button>
 		{% if ta_form.instance.tacode %}
-		{% if ta_form.instance.cuser.peoplecode != 'NONE'%}
+		{% if ta_form.instance.cuser.peoplecode != 'NONE' or request.user.is_superuser %}
 		<button type="submit" id="submit" form="id_taform" class="btn btn-sm btn-primary2 btn-hover-scale">Update&nbsp;<i class="fas text-white fa-cloud-upload-alt"></i></button>
 		<button type="button" onclick="deleteTa(this)" data-id="{{ ta_form.instance.id }}" id="deleteCap" class="btn btn-sm btn-hover-scale btn-danger">Delete&nbsp;<i class="fas text-white fa-trash-alt"></i></button>
 		{% endif %}

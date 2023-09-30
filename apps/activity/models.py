@@ -342,7 +342,7 @@ class Asset(BaseModel, TenantAwareModel):
         SCRAPPED    = ("SCRAPPED", "Scrapped")
 
     uuid          = models.UUIDField(unique = True, editable = True, blank = True, default = uuid.uuid4)
-    assetcode     = models.CharField(_("Asset Code"), max_length = 50, unique=True)
+    assetcode     = models.CharField(_("Asset Code"), max_length = 50)
     assetname     = models.CharField(_("Asset Name"), max_length = 250)
     enable        = models.BooleanField(_("Enable"), default = True)
     iscritical    = models.BooleanField(_("Critical"))
@@ -717,7 +717,7 @@ class Location(BaseModel, TenantAwareModel):
         SCRAPPED    = ("SCRAPPED", "Scrapped")
     
     uuid        = models.UUIDField(unique = True, editable = True, blank = True, default = uuid.uuid4)
-    loccode     = models.CharField(_("Asset Code"), max_length = 50, unique=True)
+    loccode     = models.CharField(_("Asset Code"), max_length = 50)
     locname     = models.CharField(_("Asset Name"), max_length = 250)
     enable      = models.BooleanField(_("Enable"), default = True)
     iscritical  = models.BooleanField(_("Critical"), default=False)

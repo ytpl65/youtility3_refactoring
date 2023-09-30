@@ -272,11 +272,10 @@ class PELManager(models.Manager):
         uuids = pel_qset.annotate(owner_uuid = Cast('uuid', output_field=models.CharField())).values_list(
             'owner_uuid', flat=True
         )
+        ic(pel_qset, uuids)
         from apps.activity.models import Attachment
         att_qset = Attachment.objects.get_attforuuids(uuids).values('filepath', 'filename')
+        ic(att_qset)
         merged_qset = [{**obj1, **obj2} for obj1, obj2 in zip(pel_qset, att_qset)]
         if count: return len(pel_qset) or 0
         return merged_qset or []
-        
-        
-        

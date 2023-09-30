@@ -98,7 +98,7 @@ class PeopleForm(forms.ModelForm):
 
     # defines validator which validates peoplecode
     alpha_special = RegexValidator(
-        regex='[a-zA-Z0-9_\-]',
+        regex='[a-zA-Z0-9_\-()#]',
         message="Only this special characters are allowed -, _ ",
         code='invalid_code')
 

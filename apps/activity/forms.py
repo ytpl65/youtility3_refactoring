@@ -441,7 +441,7 @@ class CheckpointForm(forms.ModelForm):
 
     class Meta:
         model = am.Asset
-        fields = ['assetcode', 'assetname', 'runningstatus',
+        fields = ['assetcode', 'assetname', 'runningstatus', 'parent',
             'iscritical', 'enable', 'identifier', 'ctzoffset', 'type', 'location']
         widgets = {
             'location':s2forms.Select2Widget,
@@ -449,7 +449,7 @@ class CheckpointForm(forms.ModelForm):
             'parent':s2forms.Select2Widget,
             'runningstatus':s2forms.Select2Widget
         }
-        labels = {'location':'Location'}
+        labels = {'location':'Location', 'parent':'Belongs To'}
         
 
     def __init__(self, *args, **kwargs):
@@ -457,12 +457,16 @@ class CheckpointForm(forms.ModelForm):
         self.request = kwargs.pop('request', None)
         S = self.request.session
         super(CheckpointForm, self).__init__(*args, **kwargs)
+        self.fields['assetcode'].widget.attrs = {'style':"text-transform:uppercase"}
+        if self.instance.id is None:
+            self.fields['parent'].initial = 1
         self.fields['identifier'].initial = 'CHECKPOINT'
         self.fields['type'].required = False
         self.fields['identifier'].widget.attrs = {"style": "display:none"}
         
         #filters for dropdown fields
         self.fields['location'].queryset = am.Location.objects.filter(Q(enable = True) | Q(loccode='NONE'), bu_id = S['bu_id'])
+        self.fields['parent'].queryset = am.Asset.objects.filter(Q(enable=True)| Q(assetcode='NONE'), bu_id = S['bu_id'])
         self.fields['type'].queryset = om.TypeAssist.objects.filter(client_id = S['client_id'], tatype__tacode = 'CHECKPOINTTYPE')
         utils.initailize_form_fields(self)
 
@@ -477,6 +481,8 @@ class CheckpointForm(forms.ModelForm):
         if self.cleaned_data.get('gpslocation'):
             data = QueryDict(self.request.POST['formData'])
             self.cleaned_data['gpslocation'] = self.clean_gpslocation(data.get('gpslocation', 'NONE'))
+        if self.cleaned_data['assetcode'] == self.cleaned_data['parent'].assetcode:
+            raise forms.ValidationError("Code and Belongs To cannot be same!")
         return self.cleaned_data
 
     
@@ -485,7 +491,7 @@ class CheckpointForm(forms.ModelForm):
         self.cleaned_data['gpslocation'] = self.data.get('gpslocation')
         import re
         if value := self.cleaned_data.get('assetcode'):
-            regex = "^[a-zA-Z0-9\-_]*$"
+            regex = "^[a-zA-Z0-9\-_()#)]*$"
             if " " in value: raise forms.ValidationError(self.error_msg['invalid_assetcode'])
             if  not re.match(regex, value):
                 raise forms.ValidationError(self.error_msg['invalid_assetcode2'])
@@ -722,6 +728,8 @@ class AssetForm(forms.ModelForm):
         if self.cleaned_data.get('gpslocation'):
             data = QueryDict(self.request.POST['formData'])
             self.cleaned_data['gpslocation'] = self.clean_gpslocation(data.get('gpslocation', 'NONE'))
+        if self.cleaned_data['assetcode'] == self.cleaned_data['parent'].assetcode:
+            raise forms.ValidationError("Code and Belongs To cannot be same!")
         return self.cleaned_data
     
     def clean_gpslocation(self, val):
@@ -738,7 +746,7 @@ class AssetForm(forms.ModelForm):
     
     def clean_assetcode(self):
         if val := self.cleaned_data.get('assetcode'):
-            if not self.instance.id and  am.Asset.objects.filter(assetcode = val).exists():
+            if not self.instance.id and  am.Asset.objects.filter(assetcode = val, client_id = self.request.session['client_id']).exists():
                 raise forms.ValidationError("Asset with this code already exist")
             if ' ' in val:
                 raise forms.ValidationError("Spaces are not allowed")
@@ -837,6 +845,8 @@ class LocationForm(forms.ModelForm):
         if self.cleaned_data.get('gpslocation'):
             data = QueryDict(self.request.POST['formData'])
             self.cleaned_data['gpslocation'] = self.clean_gpslocation(data.get('gpslocation', 'NONE'))
+        if self.cleaned_data['loccode'] == self.cleaned_data['parent'].loccode:
+            raise forms.ValidationError("Code and Belongs To cannot be same!")
         return self.cleaned_data
 
     def clean_gpslocation(self, val):
@@ -853,7 +863,7 @@ class LocationForm(forms.ModelForm):
     
     def clean_loccode(self):
         if val:= self.cleaned_data['loccode']:
-            if not self.instance.id and am.Location.objects.filter(loccode = val).exists():
+            if not self.instance.id and am.Location.objects.filter(loccode = val, client_id=self.request.session['client_id']).exists():
                 raise forms.ValidationError("Location code already exist, choose different code")
             if ' ' in val:
                 raise forms.ValidationError("Spaces are not allowed")
