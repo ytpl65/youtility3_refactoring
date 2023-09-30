@@ -121,7 +121,7 @@ def get_assignedsitedata(request):
         bu_list.append(request.user.bu_id)
         print("xxx", data.query ,bu_list)
     except Exception as e:
-        log.error("get_assignedsitedata() exception: %s", (e))
+        log.critical("get_assignedsitedata() exception: %s", (e))
         bu_list.append(request.user.bu_id)  
     return bu_list
 
@@ -211,7 +211,7 @@ def sendTicketMail(ticketid, oper):
         records = [{'cdtz': record.createdon, 'ticketlog': record.ticketlog, 'modifiedon': record.modifiedon, 'status': record.status, 'ticketdesc': record.ticketdesc, 'ticketno': record.ticketno, 'creatoremail': record.creatoremail, 'modifiermail': record.modifiermail, 'modifiername': record.modifiername, 'peopleemail': record.peopleemail, 'pgroupemail': record.pgroupemail, 'tescalationtemplate': record.tescalationtemplate, 'priority': record.priority, 'peoplename': record.peoplename, 'next_escalation': record.next_escalation, 'creatorid': record.creatorid, 'modifierid': record.modifierid, 'assignedtopeople_id': record.assignedtopeople_id, 'assignedtogroup_id': record.assignedtogroup_id, 'groupname': record.groupname, 'buname': record.buname, 'level': record.level, 'comments':record.comments} for record in ticketdata]
         sendEscalationTicketMail(records, oper, 'WEB')
     except Exception as e:
-        logger.error("sendTicketMail() exception: %s", e)
+        logger.critical("sendTicketMail() exception: %s", e)
         
 
 def savejsonbdata(request, id_id, asset, location):
@@ -300,7 +300,7 @@ def save_assetjsonform(jsonform, asset):
                      'bill_date', 'purchase_date', 'inst_date', 'po_number', 'far_asset_id']:
             asset.asset_json[k] = jsonform.cleaned_data.get(k)
     except Exception:
-        log.error(
+        log.critical(
             'save_jsonform(jsonform, p)... FAILED', exc_info=True)
         raise
     else:
@@ -324,7 +324,7 @@ def get_asset_jsonform(people, request):
         }
 
     except Exception:
-        log.error('get_asset_jsonform(people)... FAILED', exc_info=True)
+        log.critical('get_asset_jsonform(people)... FAILED', exc_info=True)
         raise
     else:
         log.info('people prefform (json form) retrieved... DONE')

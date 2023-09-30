@@ -244,7 +244,7 @@ def local_to_utc(data, offset, mobile_web):
                 dt_utc = local_dt.astimezone(pytz.UTC).replace(microsecond=0)
                 data[k] = dt_utc.strftime(format)
         except Exception:
-            logger.error("datetime parsing ERROR", exc_info=True)
+            logger.critical("datetime parsing ERROR", exc_info=True)
             raise
         else:
             return data
@@ -257,7 +257,7 @@ def local_to_utc(data, offset, mobile_web):
                 dt = dt_utc.strftime(format)
                 newdata.append(dt)
         except Exception:
-            logger.error("datetime parsing ERROR", exc_info=True)
+            logger.critical("datetime parsing ERROR", exc_info=True)
             raise
         else:
             return newdata
@@ -489,6 +489,7 @@ def delete_object(request, model, lookup, ids, temp,
         cxt = {form_name: form, jsonformname: jsonform, 'edit': True}
         res = scts.render(request, temp, context=cxt)
     except Exception:
+        logger.critical("something went wrong!", exc_info=True)
         msg.error(request, '[ERROR] Something went wrong',
                   "alert alert-danger")
         cxt = {form_name: form, jsonformname: jsonform, 'edit': True}
@@ -503,7 +504,7 @@ def delete_unsaved_objects(model, ids):
                 'Found unsaved objects in session going to be deleted...')
             model.objects.filter(pk__in=ids).delete()
         except Exception:
-            logger.error('delete_unsaved_objects failed', exc_info=True)
+            logger.critical('delete_unsaved_objects failed', exc_info=True)
             raise
         else:
             logger.info('Unsaved objects are deleted...DONE')
@@ -1281,7 +1282,7 @@ def upload(request, vendor=False):
                 temp_file.write(request.FILES['img'].read())
                 temp_file.close()
     except Exception as e:
-        logger.error(e, exc_info=True)
+        logger.critical(e, exc_info=True)
         return False, None, None
 
     logger.info(f"{filename = } {fullpath = }")
@@ -1303,7 +1304,7 @@ def upload_vendor_file(file, womid):
                 temp_file.write(file.read())
                 temp_file.close()
     except Exception as e:
-        logger.error(e, exc_info=True)
+        logger.critical(e, exc_info=True)
         return False, None, None
 
     return True, filename, fullpath.replace(home_dir, '')

@@ -307,7 +307,7 @@ def get_datetime_list(cron_exp, startdtz, enddtz):
     except Exception as ex:
         is_valid_cron = False
         error_message = {"msg": "Bad Cron Error"}
-        log.error(f"Error in get_datetime_list for cron expression '{cron_exp}': {str(ex)}", exc_info=True)
+        log.critical(f"Error in get_datetime_list for cron expression '{cron_exp}': {str(ex)}", exc_info=True)
         raise ex from ex
 
     if datetimes:
@@ -369,7 +369,7 @@ def handle_dict_of_datetimes(dateFormatMobile, dateFormatWeb, data, tzoffset,
                         cdt= udt - timedelta(minutes= tzoffset)
                         data[key] = str(data[key]).replace(str(item_), str(cdt))
                     except Exception as ex:
-                        log.error("datetime parsing error", exc_info = True)
+                        log.critical("datetime parsing error", exc_info = True)
                         raise
             except ValueError:
                 log.error("tzoffset parsing error", exc_info = True)
@@ -406,7 +406,7 @@ def handle_list_of_datetimes(dateFormatMobile, dateFormatWeb, data, tzoffset,
                     cdt= udt - timedelta(minutes= tzoffset)
                     data = str(data).replace(str(item), str(cdt))
                 except Exception as ex:
-                    log.error("datetime parsing error", exc_info = True)
+                    log.critical("datetime parsing error", exc_info = True)
                     raise
         except ValueError:
             log.error("tzoffset parsing error", exc_info = True)
@@ -474,7 +474,7 @@ def insert_into_jn_and_jnd(job, datetimes):
                 update_jobneed_expiry(job, jobneed, crontype, pdtz, people, jobstatus, jobtype)
             update_lastgeneratedon(job, pdtz)
         except Exception as ex:
-            log.error('Error inserting into jobneed and jobneed-details', exc_info=True)
+            log.critical('Error inserting into jobneed and jobneed-details', exc_info=True)
             return 'failed', {"msg": "Failed to schedule jobs"}
 
         log.info(f"{len(datetimes)} tasks scheduled successfully!")
@@ -635,7 +635,7 @@ def create_child_tasks(job, initial_plan_datetime, assigned_people, jobneed_id, 
             insert_update_jobneeddetails(jobneed.id, job_data)
 
     except Exception as e:
-        log.error(f"An error occurred while creating child tasks - {str(e)}", exc_info=True)
+        log.critical(f"An error occurred while creating child tasks - {str(e)}", exc_info=True)
         raise
 
     log.info(f"Finished creating child tasks for Job: {job}.")
@@ -719,7 +719,7 @@ def insert_into_jn_for_child(job, params, r):
                 people_id      = params['_people'],          other_info = params['parent_other_info']
             )
     except Exception:
-        log.error("insert_into_jn_for_child[]", exc_info=True)
+        log.critical("insert_into_jn_for_child[]", exc_info=True)
         raise
     else:
         return jn
@@ -764,7 +764,7 @@ def delete_from_job(job, checkpointId, checklistId):
             asset_id = int(checkpointId),
             qset_id  = int(checklistId)).delete()
     except Exception:
-        log.error('delete_from_job() raised  error', exc_info=True)
+        log.critical('delete_from_job() raised  error', exc_info=True)
         raise
 
 def delete_from_jobneed(parentjob, checkpointId, checklistId):
@@ -774,7 +774,7 @@ def delete_from_jobneed(parentjob, checkpointId, checklistId):
             asset_id = int(checkpointId),
             qset_id  = int(checklistId)).delete()
     except Exception:
-        log.error("delete_from_jobneed() raised error", exc_info=True)
+        log.critical("delete_from_jobneed() raised error", exc_info=True)
         raise
 
 def update_lastgeneratedon(job, pdtz):
@@ -786,7 +786,7 @@ def update_lastgeneratedon(job, pdtz):
             log.info(f"after lastgenreatedon:={pdtz}")
         log.info('update_lastgeneratedon [end]')
     except Exception:
-        log.error("update_lastgeneratedon() raised error", exc_info=True)
+        log.critical("update_lastgeneratedon() raised error", exc_info=True)
         raise
 
 def send_email_notication(err):
@@ -907,7 +907,7 @@ def create_ppm_reminder(jobs):
                         mailids        = r.notify
                     )
     except Exception as e:
-        log.error("something went wrong inside create_ppm_reminder", exc_info=True)
+        log.critical("something went wrong inside create_ppm_reminder", exc_info=True)
 
 
 #@shared_task(name="create_ppm_job")
@@ -959,7 +959,7 @@ def create_ppm_job(jobid=None):
                     for key, value in list(F.items()):
                         log.info(f"create_ppm_job job_id: {key} | cron: {value}")
     except Exception as e:
-        log.error("something went wrong create_ppm_job", exc_info=True)
+        log.critical("something went wrong create_ppm_job", exc_info=True)
         
                 
 
@@ -988,4 +988,4 @@ def send_reminder_email():
             msg.send()
             log.info(f"Reminder mail sent to {recipents} with subject {subject}")
     except Exception as e:
-        log.error("Error while sending reminder email")
+        log.critical("Error while sending reminder email")

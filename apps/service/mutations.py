@@ -50,7 +50,7 @@ class LoginUser(graphene.Mutation):
             log.warning("login mutations end [-]")
             return output
         except Exception as exc:
-            log.error(exc, exc_info = True)
+            log.critical(exc, exc_info = True)
             raise GraphQLError(exc) from exc
 
     @classmethod
@@ -204,7 +204,7 @@ class UploadAttMutaion(graphene.Mutation):
                 o.recordcount = recordcount
                 return UploadAttMutaion(output = o)
         except Exception as e:
-            log.error(f"Exception: {e}", exc_info=True)
+            log.critical(f"Exception: {e}", exc_info=True)
             return UploadAttMutaion(output = ty.ServiceOutputType(rc = 1, recordcount = 0, msg = 'Upload Failed', traceback = tb.format_exc()))
 
 
@@ -263,7 +263,7 @@ class InsertJsonMutation(graphene.Mutation):
             uuids = insertrecord_json(jsondata, tablename)
             recordcount, msg = 1, 'Inserted Successfully'
         except Exception as e:
-            log.error('something went wrong', exc_info = True)
+            log.critical('something went wrong', exc_info = True)
             msg, rc, traceback = 'Insert Failed!',1, tb.format_exc()
         
         o = ty.ServiceOutputType(rc = rc, recordcount = recordcount, msg = msg, traceback = traceback, uuids=uuids)
@@ -312,7 +312,7 @@ class SyncMutation(graphene.Mutation):
                     log.error(f"totalrecords is not matched with th actual totalrecords after extraction... {totalrecords} x {TR}")
                     raise cutils.TotalRecordsMisMatchError
         except Exception:
-            log.error("something went wrong!", exc_info = True)
+            log.critical("something went wrong!", exc_info = True)
             return SyncMutation(rc = 1)
         else:
             return SyncMutation(rc = 0)

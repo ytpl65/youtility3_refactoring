@@ -939,7 +939,7 @@ class AttachmentManager(models.Manager):
             qset = self.create(**PostData)
             count = self.filter(owner = R['ownerid']).count()
         except Exception:
-            log.error("Attachment record creation failed...", exc_info=True)
+            log.critical("Attachment record creation failed...", exc_info=True)
             return {'error':'Upload attachment Failed'}
         return {'filepath':qset.filepath, 'filename':qset.filename.name, 'id':qset.id, 'ownername':qset.ownername.tacode, 'attcount': count} if qset else self.none()
 
@@ -1527,7 +1527,7 @@ class JobManager(models.Manager):
             qset = self.filter(pk = ID).values('seqno', 'qset__qsetname', 'asset__assetname', 'expirytime', 'pk', 'asset_id', 'qset_id')
             return {'data':list(qset)}
         except Exception  as e:
-            log.error("something went wrong", exc_info=True)
+            log.critical("something went wrong", exc_info=True)
             return {'data':[], 'error':"Somthing went Wrong!"}
     
     def handle_save_checkpoint_sitetour(self, request):
@@ -1543,7 +1543,7 @@ class JobManager(models.Manager):
                     return {'data':list(qset)}
                 return {'data':[]}
         except Exception  as e:
-            log.error("something went wrong", exc_info=True)
+            log.critical("something went wrong", exc_info=True)
             return {'data':[], 'error':"Somthing went Wrong!"}
     
 

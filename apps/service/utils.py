@@ -64,7 +64,7 @@ def insertrecord_json(records, tablename):
                     model.objects.create(**record)
                     uuids.append(str(record['uuid']))
     except Exception as e:
-        log.error("something went wrong", exc_info=True)
+        log.critical("something went wrong", exc_info=True)
         raise e
     return uuids
 
@@ -93,7 +93,7 @@ def get_json_data(file):
                 s = json.dumps(arr)
             return json.loads(s)
     except Exception as e:
-        log.error("File unzipping error", exc_info=True)
+        log.critical("File unzipping error", exc_info=True)
     return None, None
 
 
@@ -164,7 +164,7 @@ def insertrecord(record, tablename):
                 log.info("record does not exist so creating it now..")
                 return model.objects.create(**record)        
     except Exception as e:
-        log.error("something went wrong while inserting/updating record", exc_info = True)
+        log.critical("something went wrong while inserting/updating record", exc_info = True)
         raise e
 
 
@@ -194,7 +194,7 @@ def update_record(details, jobneed_record, JnModel, JndModel):
         else: 
             log.error(f"parent jobneed record has some errors\n{jn_parent_serializer.errors} ", exc_info = True )
     except Exception:
-        log.error("update_record failed", exc_info = True)
+        log.critical("update_record failed", exc_info = True)
         raise
     return False
 
@@ -221,7 +221,7 @@ def update_jobneeddetails(jobneeddetails, JndModel):
             else:
                 log.warning(f'failed to update all {len(jobneeddetails)} JND records')
     except Exception as e:
-        log.error('jobneed details record failed to save', exc_info= True)
+        log.critical('jobneed details record failed to save', exc_info= True)
         raise
 
 
@@ -277,7 +277,7 @@ def save_parent_childs(sz, jn_parent_serializer, child, M, tablename, is_return_
         log.info("save_parent_childs ............end")
         return rc, traceback, msg
     except Exception:
-        log.error("something went wrong",exc_info = True)
+        log.critical("something went wrong",exc_info = True)
         raise
 
 
@@ -305,7 +305,7 @@ def save_linestring_and_update_pelrecord(obj):
             log.info("save linestring is saved..")
             
     except Exception as e:
-        log.info('ERROR while saving line string', exc_info = True)
+        log.critical('ERROR while saving line string', exc_info = True)
         raise
 
 
@@ -376,7 +376,7 @@ def get_readable_addr_from_point(point):
         log.info("Not a valid point, returned empty string")
         return ""
     except Exception as e:
-        log.error("something went wrong while reverse geocoding", exc_info=True)
+        log.critical("something went wrong while reverse geocoding", exc_info=True)
         return ""
     
 def save_addr_for_point(obj):
@@ -445,7 +445,7 @@ def perform_tasktourupdate(self, file, request=None, db='default', bg=False):
         log.error("Database Error", exc_info = True)
         rc, traceback, msg = 1, tb.format_exc(), Messages.UPLOAD_FAILED
     except Exception as e:
-        log.error('Something went wrong', exc_info = True)
+        log.critical('Something went wrong', exc_info = True)
         rc, traceback, msg = 1, tb.format_exc(), Messages.UPLOAD_FAILED
     results = ServiceOutputType(rc = rc, msg = msg, recordcount = recordcount, traceback = traceback)
     return results.__dict__ if bg else results
@@ -471,7 +471,7 @@ def save_journeypath_field(jobneed):
                 between_latlngs.delete()
                 log.info("save linestring is saved..")
         except Exception as e:
-            log.info('ERROR while saving line string', exc_info = True)
+            log.critical('ERROR while saving line string', exc_info = True)
             raise
         else:
             sitetour =  Jobneed.objects.get(uuid=jobneed.get('uuid'))
@@ -532,7 +532,7 @@ def perform_insertrecord(self, file, request = None, db='default', filebased = T
         log.warning('No records found for insertrecord service', exc_info=True)
         rc, traceback, msg = 1, tb.format_exc(), Messages.INSERT_FAILED
     except Exception as e:
-        log.error("something went wrong!", exc_info = True)
+        log.critical("something went wrong!", exc_info = True)
         msg, rc, traceback = Messages.INSERT_FAILED, 1, tb.format_exc()
     results = ServiceOutputType(rc = rc, recordcount = recordcount, msg = msg, traceback = traceback)
     return results.__dict__ if bg else results
@@ -651,7 +651,7 @@ def perform_reportmutation(self, file, db= 'default', bg=False):
         rc, traceback, msg = 1, tb.format_exc(), Messages.UPLOAD_FAILED
     except Exception as e:
         msg, traceback, rc = Messages.INSERT_FAILED, tb.format_exc(), 1
-        log.error('something went wrong', exc_info = True)
+        log.critical('something went wrong', exc_info = True)
     results = ServiceOutputType(rc = rc, recordcount = recordcount, msg = msg, traceback = traceback)
     return results.__dict__ if bg else results
 
@@ -699,7 +699,7 @@ def perform_adhocmutation(self, file, db='default', bg=False):  # sourcery skip:
         raise
     except Exception as e:
         rc, traceback = 1, tb.format_exc()
-        log.error('something went wrong', exc_info = True)
+        log.critical('something went wrong', exc_info = True)
     results = ServiceOutputType(rc = rc, recordcount = recordcount, msg = msg, traceback = traceback)
     return results.__dict__ if bg else results
 
@@ -731,7 +731,7 @@ def perform_uploadattachment(file,  record, biodata):
             log.info('file uploaded success')
     except Exception as e:
         rc, traceback, msg = 1, tb.format_exc(), Messages.UPLOAD_FAILED
-        log.error('something went wrong', exc_info = True)
+        log.critical('something went wrong', exc_info = True)
     try:
         if record.get('localfilepath'): record.pop('localfilepath')
         obj = insertrecord(record, 'attachment')
@@ -743,7 +743,7 @@ def perform_uploadattachment(file,  record, biodata):
             results = perform_facerecognition_bgt.delay(ownerid, peopleid, db)
             log.warning(f"face recognition status {results.state}")
     except Exception as e:
-        log.error('something went wrong while perform_uploadattachment', exc_info = True)
+        log.critical('something went wrong while perform_uploadattachment', exc_info = True)
     return ServiceOutputType(rc = rc, recordcount = recordcount, msg = msg, traceback = traceback)
 
 

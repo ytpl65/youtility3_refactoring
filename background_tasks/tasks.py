@@ -63,7 +63,7 @@ def send_ticket_email(self, ticket=None, id=None):
         else:
             log.info('ticket not found no emails will send')
     except Exception as e:
-        log.error("Error while sending ticket email")
+        log.critical("Error while sending ticket email")
         resp['traceback'] = tb.format_exc()
     return resp
 
@@ -152,7 +152,7 @@ def autoclose_job(jobneedid=None):
                 resp = butils.update_job_autoclose_status(rec, resp)
 
     except Exception as e:
-        log.error(f'context in the template:{context}')
+        log.critical(f'context in the template:{context}')
         log.error(
             "something went wrong while running autoclose_job()", exc_info=True)
         resp['traceback'] += f"{tb.format_exc()}"
@@ -169,7 +169,7 @@ def ticket_escalation():
         # update ticket_history, assignments to people & groups, level, mdtz, modifiedon
         result = butils.update_ticket_data(tickets, result)
     except Exception as e:
-        log.error("somwthing went wrong while ticket escalation", exc_info=True)
+        log.critical("somwthing went wrong while ticket escalation", exc_info=True)
         result['traceback'] = tb.format_exc()
     return result
 
@@ -217,7 +217,7 @@ def send_reminder_email():
             log.info(
                 f"Reminder mail sent to {recipents} with subject {subject}")
     except Exception as e:
-        log.error("Error while sending reminder email")
+        log.critical("Error while sending reminder email")
         resp['traceback'] = tb.format_exc()
     return resp
 
@@ -291,7 +291,7 @@ def create_ppm_job(jobid=None):
                         log.info(
                             f"create_ppm_job job_id: {key} | cron: {value}")
     except Exception as e:
-        log.error("something went wrong create_ppm_job", exc_info=True)
+        log.critical("something went wrong create_ppm_job", exc_info=True)
         F[str(job['id'])] = {'tb': tb.format_exc()}
 
     return resp, F, d, result
@@ -336,7 +336,7 @@ def perform_facerecognition_bgt(self, pel_uuid, peopleid, db='default'):
             "face recogntion image not found or face is not there...", exc_info=True)
         result['traceback'] += f'{tb.format_exc()}'
     except Exception as e:
-        log.error(
+        log.critical(
             "something went wrong! while performing face-recogntion in background", exc_info=True)
         result['traceback'] += f'{tb.format_exc()}'
         self.retry(e)
@@ -382,7 +382,7 @@ def execute_report(self, params, formdata):
         log.info(f'{report_execution_url = }, {params = }')
         return requests.post(report_execution_url, headers=auth_headers, json=params)
     except Exception as e:
-        log.error("report execution failed with exception ", exc_info=True)
+        log.critical("report execution failed with exception ", exc_info=True)
 
 
 @shared_task(bind=True, name="Send report on email")
@@ -414,7 +414,7 @@ def send_report_on_email(self, formdata, json_report):
         email.send()
         jsonresp['story'] += "email sent"
     except Exception as e:
-        log.error(
+        log.critical(
             "something went wrong while sending report on email", exc_info=True)
         jsonresp['traceback'] = tb.format_exc()
     return jsonresp
@@ -439,7 +439,7 @@ def create_report_history(self, formdata, userid, buid, EI):
         )
         jsonresp['story'] += f"A Report history object created with pk: {obj.pk}"
     except Exception as e:
-        log.error(
+        log.critical(
             "something went wron while running create_report_history()", exc_info=True)
         jsonresp['traceback'] += tb.format_exc()
     return jsonresp
@@ -485,7 +485,7 @@ def send_email_notification_for_wp(self, womid, qsetid, approvers, client_id, bu
                 jsonresp['story'] += f"email sent to {p['email'] = }"
         jsonresp['story'] += f"A Workpermit email sent of pk: {womid}"
     except Exception as e:
-        log.error(
+        log.critical(
             "something went wron while running create_report_history()", exc_info=True)
         jsonresp['traceback'] += tb.format_exc()
     return jsonresp

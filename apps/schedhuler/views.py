@@ -692,7 +692,7 @@ def get_cron_datetime(request):
         res = rp.JsonResponse({'rows':DT}, status = 200)
     except Exception as ex:
         msg = "croniter bad cron error"
-        log.error(msg, exc_info = True)
+        log.critical(msg, exc_info = True)
         res = rp.JsonResponse({'errors':msg}, status = 404)
     return res
 
@@ -1418,7 +1418,7 @@ class InternalTourScheduling(LoginRequiredMixin, View):
                     'url': f'{reverse("schedhuler:schd_internal_tour")}?id={job.id}'},
                     status = 200)
         except Exception as ex:
-            log.info("error handling valid form", exc_info = True)
+            log.critical("error handling valid form", exc_info = True)
             raise ex
 
 
@@ -1603,7 +1603,7 @@ class ExternalTourScheduling(LoginRequiredMixin, View):
                 #self.save_checkpoints_injob_fromgroup(job, P)
                 return rp.JsonResponse({'pk':job.id}, status = 200)
         except Exception as ex:
-            log.error("external tour form, handle valid form failed", exc_info = True)
+            log.critical("external tour form, handle valid form failed", exc_info = True)
             return utils.handle_Exception(request)
 
         
@@ -1624,7 +1624,7 @@ class ExternalTourScheduling(LoginRequiredMixin, View):
                 return rp.JsonResponse({'count':count, 'data':list(objs)}, status = 200 )
             return rp.JsonResponse({"error":"Checkpoints not saved"}, status = 400)
         except Exception:
-            log.error("something went wrong...", exc_info=True)
+            log.critical("something went wrong...", exc_info=True)
             raise
         
 

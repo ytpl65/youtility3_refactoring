@@ -18,7 +18,7 @@ def save_jsonform(peoplepref_form, p):
                      'portletcapability', 'reportcapability', 'webcapability', 'isworkpermit_approver']:
             p.people_extras[k] = peoplepref_form.cleaned_data.get(k)
     except Exception:
-        logger.error(
+        logger.critical(
             'save_jsonform(peoplepref_form, p)... FAILED', exc_info=True)
         raise
     else:
@@ -53,7 +53,7 @@ def get_people_prefform(people,  request):
         }
 
     except Exception:
-        logger.error('get_people_prefform(people)... FAILED', exc_info=True)
+        logger.critical('get_people_prefform(people)... FAILED', exc_info=True)
         raise
     else:
         logger.info('people prefform (json form) retrieved... DONE')
@@ -125,7 +125,7 @@ def validate_emailadd(val):
         if not user.exists():
             raise forms.ValidationError("User with this email doesn't exist")
     except Exception:
-        logger.error('validate_emailadd(val)... FAILED', exc_info=True)
+        logger.critical('validate_emailadd(val)... FAILED', exc_info=True)
         raise
 
 
@@ -150,7 +150,7 @@ def save_tenant_client_info(request):
         request.session['bu_id'] = request.user.bu.id
         logger.info('saving tenant & client info into the session...DONE')
     except Exception:
-        logger.error('save_tenant_client_info failed', exc_info=True)
+        logger.critical('save_tenant_client_info failed', exc_info=True)
         raise
 
 def get_caps_from_db():
@@ -405,6 +405,7 @@ def save_pgroupbelonging(pg, request):
                 save_cuser_muser(pgb, request.user)
         except Exception:
             dbg("saving pgbelonging for pgroup %s FAILED", (pg))
+            logger.critical("somthing went wrong", exc_info=True)
             raise
         else:
             dbg("saving pgbelonging for pgroup %s DONE", (pg))

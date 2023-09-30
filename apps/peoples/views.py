@@ -110,7 +110,7 @@ class SignOut(LoginRequiredMixin, View):
             logger.info("User logged out DONE!")
             response = redirect("/")
         except Exception:
-            logger.error('unable to log out user', exc_info=True)
+            logger.critical('unable to log out user', exc_info=True)
             messages.warning(request, 'Unable to log out user...',
                              'alert alert-danger')
             response = redirect('/dashboard')
@@ -590,5 +590,5 @@ def verifyemail(request):
     except Exception as e:
         messages.error(
             request, 'Unable to send verification email', 'alert alert-danger')
-        logger.error("email verification failed", exc_info=True)
+        logger.critical("email verification failed", exc_info=True)
     return redirect('login')

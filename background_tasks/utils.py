@@ -179,7 +179,7 @@ def send_escalation_ticket_email(tkt, result):
             msg.send()
             log.info(f"mail sent, record_id:{rec['id']}")
     except Exception as e:
-        log.error(
+        log.critical(
             "something went wrong while sending escalation email", exc_info=True)
         result['traceback'] = tb.format_exc()
     return result
@@ -194,7 +194,7 @@ def update_ticket_log(id, item, result):
         t.save()
         result['story'] += "ticketlog saved"
     except Exception as e:
-        log.error("something went wron while saving ticketlog", exc_info=True)
+        log.critical("something went wron while saving ticketlog", exc_info=True)
         result['traceback'] = f"{tb.format_exc()}"
     return result
 
@@ -251,7 +251,7 @@ def create_ticket_for_autoclose(jobneedrecord, ticketdesc):
             'cdtz', 'ctzoffset'
         ).first()
     except Exception as e:
-        log.error(
+        log.critical(
             "something went wrong in create_ticket_for_autoclose", exc_info=True)
 
 
@@ -337,7 +337,7 @@ def alert_observation(jobneed, atts=False):
         else:
             result['story'] += "Alerts not found"
     except Exception as e:
-        log.error("Error while sending alert mail", exc_info=True)
+        log.critical("Error while sending alert mail", exc_info=True)
         result['traceback'] += tb.format_exc()
     return result
         

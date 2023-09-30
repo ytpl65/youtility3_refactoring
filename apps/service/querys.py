@@ -159,7 +159,7 @@ class Query(graphene.ObjectType):
             rc, msg = 0, "Success"
         except Exception as e:
             rc, msg = 1, "Failed"
-            log.error("something went wrong", exc_info=True)
+            log.critical("something went wrong", exc_info=True)
         return BasicOutput(rc=rc, msg=msg, email = user.email)
     
     @staticmethod
@@ -180,7 +180,7 @@ class Query(graphene.ObjectType):
                     updated = Wom.objects.filter(id=id).update(workpermit=Wom.WorkPermitStatus.APPROVED.value)
             rc, msg = 0, "success"
         except Exception as e:
-            log.error("something went wrong!", exc_info=True)
+            log.critical("something went wrong!", exc_info=True)
             rc, msg = 1, "failed"
         return BasicOutput(rc=rc, msg=msg)
     
@@ -193,7 +193,7 @@ class Query(graphene.ObjectType):
             reject_workpermit(id, p.peoplecode)
             rc, msg = 0, "success"
         except Exception as e:
-            log.error("something went wrong", exc_info=True)
+            log.critical("something went wrong", exc_info=True)
             rc, msg = 1, "failed"
         return BasicOutput(rc=rc, msg=msg)
         
@@ -348,7 +348,7 @@ class Query(graphene.ObjectType):
             if not url: raise Exception
             return VerifyClientOutput(msg = "VALID", url=url)
         except Exception as ex:
-            log.error("something went wrong!", exc_info=True)
+            log.critical("something went wrong!", exc_info=True)
             return VerifyClientOutput(msg='INVALID', url=None, rc=1)
         
         

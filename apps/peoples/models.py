@@ -59,7 +59,7 @@ def upload_peopleimg(instance, filename):
         filepath = str(filepath).lower()
         fullpath = filepath
     except Exception:
-        logger.error(
+        logger.critical(
             'upload_peopleimg(instance, filename)... FAILED', exc_info = True)
     else:
         logger.info('people image uploaded... DONE')

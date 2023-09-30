@@ -457,7 +457,7 @@ class GeoFence(LoginRequiredMixin, View):
             gf.geofence = pg
             gf.save()
         except Exception:
-            logger.error('geofence polygon field saving error', exc_info=True)
+            logger.critical('geofence polygon field saving error', exc_info=True)
             raise
 
 
@@ -473,7 +473,7 @@ def get_geofence_from_point_radii(R):
             return rp.JsonResponse(data={'geojson': utils.getformatedjson(geofence)}, status=200)
         return rp.JsonResponse(data={'errors': "Invalid data provided unable to compute geofence!"}, status=404)
     except Exception:
-        logger.error(
+        logger.critical(
             "something went wrong while computing geofence..", exc_info=True)
         return rp.JsonResponse(data={'errors': 'something went wrong while computing geofence!'}, status=404)
 
@@ -600,7 +600,7 @@ class BulkImportData(LoginRequiredMixin,ParameterMixin, View):
                     dataset=dataset, dry_run=True, raise_errors=False, use_transactions=True)
                 return render(request, 'onboarding/imported_data.html', {'result':results})
             except Exception as e:
-                logger.error("error", exc_info=True)
+                logger.critical("error", exc_info=True)
                 return rp.JsonResponse({"error": "something went wrong!"}, status=500)
     
     def get_resource_and_dataset(self, request, form):
@@ -817,7 +817,7 @@ class BtView(LoginRequiredMixin, View):
                 ic(len(form.errors), form.errors.get('gpslocation'))
                 resp = utils.handle_invalid_form(request, self.params, cxt)
         except Exception:
-            logger.error("BU saving error!", exc_info=True)
+            logger.critical("BU saving error!", exc_info=True)
             resp = utils.handle_Exception(request)
         return resp
 
@@ -857,7 +857,7 @@ class DashboardView(LoginRequiredMixin, View):
                 return rp.JsonResponse(objs, status=200)
             return render(request, P['RP'])
         except Exception as e:
-            logger.error(
+            logger.critical(
                 "something went wrong DashboardView view", exc_info=True)
 
     def get_all_dashboard_counts(self, request, P):

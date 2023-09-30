@@ -125,6 +125,6 @@ class Command(BaseCommand):
                 pass
 
             except Exception as e:
-                log.error('FAILED init_intelliwiz', exc_info = True)
+                log.critical('FAILED init_intelliwiz', exc_info = True)
 
            

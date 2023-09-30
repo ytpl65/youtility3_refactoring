@@ -62,7 +62,7 @@ def create_job(jobids = None):
                     status, resp = insert_into_jn_and_jnd(job, DT, resp)
                     result['story'].append(resp)
         except Exception as e:
-            log.error("something went wrong!", exc_info=True)
+            log.critical("something went wrong!", exc_info=True)
     return resp, result
 
 def calculate_startdtz_enddtz(job):
@@ -128,7 +128,7 @@ def get_datetime_list(cron_exp, startdtz, enddtz, resp):
         log.warning('Bad Cron error', exc_info = True)
         resp =  {"errors": "Bad Cron Error"}
     except Exception as ex:
-        log.error(
+        log.critical(
             'get_datetime_list(cron_exp, startdtz, enddtz) \
             Exc(eption: [cronexp:= %s]croniter bad cron error:= %s', cron_exp, str(ex))
         resp ={"errors": "Bad Cron Error"}
@@ -198,7 +198,7 @@ def insert_into_jn_and_jnd(job, DT, resp):
         except Exception as ex:
             status = 'failed'
             tracebackExp = tb.format_exc()
-            log.error('insert_into_jn_and_jnd() ERROR', exc_info = True)
+            log.critical('insert_into_jn_and_jnd() ERROR', exc_info = True)
             resp = {
                 "errors": "Failed to schedule jobs"}
             raise ex from ex
@@ -328,7 +328,7 @@ def create_child_tasks(job, _pdtz, _people, jnid, _jobstatus, _jobtype, parent_o
             ic(r)
             insert_update_jobneeddetails(jn.id, r)
     except Exception:
-        log.error(
+        log.critical(
             "create_child_tasks() ERROR failed to create task's", exc_info = True)
         raise
     else:
@@ -554,7 +554,7 @@ def create_ppm_reminder(jobs):
                         mailids        = r.notify
                     )
     except Exception as e:
-        log.error("something went wrong inside create_ppm_reminder", exc_info=True)
+        log.critical("something went wrong inside create_ppm_reminder", exc_info=True)
 
 
 #@shared_task(name="create_ppm_job")
@@ -606,7 +606,7 @@ def create_ppm_job(jobid=None):
                     for key, value in list(F.items()):
                         log.info(f"create_ppm_job job_id: {key} | cron: {value}")
     except Exception as e:
-        log.error("something went wrong create_ppm_job", exc_info=True)
+        log.critical("something went wrong create_ppm_job", exc_info=True)
         
                 
 
@@ -635,7 +635,7 @@ def send_reminder_email():
             msg.send()
             log.info(f"Reminder mail sent to {recipents} with subject {subject}")
     except Exception as e:
-        log.error("Error while sending reminder email")
+        log.critical("Error while sending reminder email")
         
         
 def send_email_notication(err):
@@ -681,7 +681,7 @@ def delete_from_job(job, checkpointId, checklistId):
             asset_id = int(checkpointId),
             qset_id  = int(checklistId)).delete()
     except Exception:
-        log.error('delete_from_job() raised  error', exc_info=True)
+        log.critical('delete_from_job() raised  error', exc_info=True)
         raise
 
 def delete_from_jobneed(parentjob, checkpointId, checklistId):
@@ -691,7 +691,7 @@ def delete_from_jobneed(parentjob, checkpointId, checklistId):
             asset_id = int(checkpointId),
             qset_id  = int(checklistId)).delete()
     except Exception:
-        log.error("delete_from_jobneed() raised error", exc_info=True)
+        log.critical("delete_from_jobneed() raised error", exc_info=True)
         raise
 
 def update_lastgeneratedon(job, pdtz):
@@ -703,7 +703,7 @@ def update_lastgeneratedon(job, pdtz):
             log.info(f"after lastgenreatedon:={pdtz}")
         log.info('update_lastgeneratedon [end]')
     except Exception:
-        log.error("update_lastgeneratedon() raised error", exc_info=True)
+        log.critical("update_lastgeneratedon() raised error", exc_info=True)
         raise
     
 def get_readable_dates(dt_list):
