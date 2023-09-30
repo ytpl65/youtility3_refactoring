@@ -664,7 +664,7 @@ class DeviceEventlog(BaseModel, models.Model):
     applicationversion     = models.CharField(_("App Version"), max_length = 50, default = 'NA')
     networkprovidername    = models.CharField(max_length=55, choices=NetworkProviderChoices.choices, default=NetworkProviderChoices.NONE.value)
     modelname              = models.CharField(_("Model Name"), max_length = 50, default = 'NA')
-    installedapps          = models.CharField(_("Installed Apps"), max_length = 1000, default = 'NA')
+    installedapps          = models.TextField(_("Installed Apps"), default = 'NA')
     stepcount              = models.CharField(max_length = 55, default='No Steps')
 
     objects = DELManager()
