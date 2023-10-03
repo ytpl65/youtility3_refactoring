@@ -1485,8 +1485,8 @@ class JobManager(models.Manager):
             bu_id__in = S['assignedsites'],
             identifier = 'PPM',
             enable=True
-        ).values('id', 'jobname', 'asset__assetname', 'qset__qsetname', 'assignedto',
-                 'uptodate', 'planduration', 'gracetime', 'expirytime', 'fromdate')
+        ).values('id', 'jobname', 'asset__assetname', 'qset__qsetname', 'assignedto', 'bu__bucode',
+                 'uptodate', 'planduration', 'gracetime', 'expirytime', 'fromdate', 'bu__buname')
         ic(qset)
         return qset or self.none()
     

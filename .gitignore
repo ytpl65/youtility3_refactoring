@@ -17,3 +17,5 @@ project_nb.ipynb
 .docker.env
 nginx.conf
 .gitignore
+logs
+staticfiles
