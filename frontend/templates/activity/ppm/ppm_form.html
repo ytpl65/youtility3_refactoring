@@ -300,12 +300,17 @@ function showHideSelectField(val) {
         $("#id_peopleradio").attr('checked', 'checked')
         $("#id_pgroup").val(1)
         $(".pgroup").hide();
+        toggleRequiredAttribute("id_people")
+        toggleRequiredAttribute("id_pgroup", set=false)
+
     } else {
         //$("#aatopdiv").hide();
         $(".pgroup").show();
         $("#id_groupradio").attr('checked', 'checked')
         $(".people").hide();
         $("#id_people").val(1)
+        toggleRequiredAttribute("id_pgroup")
+        toggleRequiredAttribute("id_people", set=false)
     }
 }
 
@@ -523,7 +528,7 @@ $(document).ready(() => {
         showHideSelectField('PEOPLE')
         $("#reminder_config_wrapper .dt-button").addClass('disabled')
     }else{
-        var assignto = '{{ppmform.instance.people }}' == 'None' ? "GROUP" : "PEOPLE"
+        var assignto = ['1', 'None'].includes('{{ppmform.instance.people_id }}') ? "GROUP" : "PEOPLE"
         $("#reminder_config_wrapper .dt-button").removeClass('disabled')
         showHideSelectField(assignto)
         //cron to readable format

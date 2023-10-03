@@ -346,12 +346,16 @@ function showHideSelectField(val) {
         $("#id_peopleradio").attr('checked', 'checked')
         $("#id_pgroup").val(1)
         $(".pgroup").hide();
+        toggleRequiredAttribute("id_people")
+        toggleRequiredAttribute("id_pgroup", set=false)
     } else {
         //$("#aatopdiv").hide();
         $(".pgroup").show();
         $("#id_groupradio").attr('checked', 'checked')
         $(".people").hide();
         $("#id_people").val(1)
+        toggleRequiredAttribute("id_pgroup")
+        toggleRequiredAttribute("id_people", set=false)
     }
 }
 

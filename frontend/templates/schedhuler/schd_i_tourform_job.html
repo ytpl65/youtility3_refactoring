@@ -311,12 +311,16 @@ Schedule Tour
             $("#id_peopleradio").attr('checked', 'checked')
             $("#id_pgroup").val(1)
             $(".pgroup").hide();
+            toggleRequiredAttribute("id_people")
+            toggleRequiredAttribute("id_pgroup", set=false)
         } else {
             //$("#aatopdiv").hide();
             $(".pgroup").show();
             $("#id_groupradio").attr('checked', 'checked')
             $(".people").hide();
             $("#id_people").val(1)
+            toggleRequiredAttribute("id_pgroup")
+            toggleRequiredAttribute("id_people", set=false)
         }
     }
     //return selected value of a field
@@ -505,19 +509,16 @@ Schedule Tour
         if ('{{schdtourform.instance.id}}' == 'None') {
             $("#btn_del").hide()
             $("#tourCheckpoints_wrapper .buttons-create").addClass('disabled')
-        }else{
-            $("#tourCheckpoints_wrapper .buttons-create").removeClass('disabled')
-        }
-        //toggle people and pgroup field based on radio button value
-        if ('{{schdtourform.instance.id}}' == 'None') {
+            //toggle people and pgroup field based on radio button value
             showHideSelectField('PEOPLE')
         }else{
-            var assignto = '{{schdtourform.instance.people_id }}' == '1' ? "GROUP" : "PEOPLE"
+            $("#tourCheckpoints_wrapper .buttons-create").removeClass('disabled')
+            //toggle people and pgroup field based on radio button value
+            var assignto = ['1', 'None'].includes('{{schdtourform.instance.people_id }}') == '1' ? "GROUP" : "PEOPLE"
             showHideSelectField(assignto)
             //cron to readable format
             $("#id_cronstrue").val(cronstrue.toString($("#id_cron").val()))
-            
-        }       
+        }
 
 
 

@@ -150,7 +150,7 @@ Schedule Task
         <div class="col-md-4">
             <div class="form-check form-check-inline">
                 <input type="radio" class="form-check-input" name={{ schdtaskform.assign_to.name }}
-                    id="id_peopleradio" value="PEOPLE" checked
+                    id="id_peopleradio" value="PEOPLE"
                     onchange="showHideSelectField('PEOPLE')">
                 <label class="form-check-label" for="{{ schdtaskform.assign_to.auto_id }}">People</label>
             </div>
@@ -358,12 +358,16 @@ var formValidator = FormValidation.formValidation(
             $("#id_peopleradio").attr('checked', 'checked')
             $(".pgroup").hide();
             $("#id_pgroup").val(1)
+            toggleRequiredAttribute("id_people")
+            toggleRequiredAttribute("id_pgroup", set=false)
         } else {
             //$("#aatopdiv").hide();
             $(".pgroup").show();
             $("#id_groupradio").attr('checked', 'checked')
             $(".people").hide();
             $("#id_people").val(1)
+            toggleRequiredAttribute("id_pgroup")
+            toggleRequiredAttribute("id_people", set=false)
         }
     }
     var formSaved = false;
@@ -378,7 +382,7 @@ var formValidator = FormValidation.formValidation(
         if ('{{schdtaskform.instance.id}}' === 'None') {
             showHideSelectField('PEOPLE')
         }else{
-            var assignto = '{{schdtaskform.instance.people_id }}' == '1' ? "GROUP" : "PEOPLE"
+            var assignto = ['1', 'None'].includes('{{schdtaskform.instance.people_id }}') ? "GROUP" : "PEOPLE"
             showHideSelectField(assignto)
             //cron to readable format
             $("#id_cronstrue").val(cronstrue.toString($("#id_cron").val()))
