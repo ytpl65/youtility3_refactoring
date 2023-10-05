@@ -312,7 +312,7 @@ class PgblngManager(models.Manager):
         total_assigned_sites = bu_ids + [people.bu_id]
         
         # for dropdown choices
-        if makechoice: return self.make_choices_of_sites(total_assigned_sites)
+        if makechoice: return self.make_choices_of_sites(total_assigned_sites + [1])
         
         # for mobile service
         if forservice: return self.return_sites_for_service(

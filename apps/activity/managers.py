@@ -1067,19 +1067,19 @@ class AssetManager(models.Manager):
         
         working = [
             self.select_related('bu', 'client').filter(
-                runningstatus = 'WORKING', bu_id__in = S['assignedsites'],
+                runningstatus = 'WORKING', bu_id = S['bu_id'],
                 identifier = 'ASSET', client_id=S['client_id']).values('id').order_by(
                     'assetcode').distinct('assetcode').count(),
             
             self.select_related(
                 'bu', 'client').filter(
-                    runningstatus = 'WORKING', bu_id__in = S['assignedsites'],
+                    runningstatus = 'WORKING', bu_id = S['bu_id'],
                     identifier = 'CHECKPOINT', client_id=S['client_id']
                     ).values('id').order_by('assetcode').distinct(
                         'assetcode').count(),
             Location.objects.select_related(
                 'bu', 'client').filter(
-                    locstatus = 'WORKING', bu_id__in = S['assignedsites'],
+                    locstatus = 'WORKING', bu_id = S['bu_id'],
                     client_id=S['client_id']).values('id').order_by(
                         'loccode').distinct('loccode').count()
         ]
@@ -1088,52 +1088,52 @@ class AssetManager(models.Manager):
         mnt = [
             self.select_related(
                 'bu', 'client').filter(
-                    runningstatus = 'MAINTENANCE', bu_id__in = S['assignedsites'],
+                    runningstatus = 'MAINTENANCE', bu_id = S['bu_id'],
                     identifier = 'ASSET', client_id=S['client_id']
                     ).values('id').order_by('assetcode').distinct(
                         'assetcode').count(),
             self.select_related(
                 'bu', 'client').filter(
-                    runningstatus = 'MAINTENANCE', bu_id__in = S['assignedsites'],
+                    runningstatus = 'MAINTENANCE', bu_id = S['bu_id'],
                     identifier = 'CHECKPOINT', client_id=S['client_id']
                     ).values('id').order_by('assetcode').distinct(
                         'assetcode').count(),
             Location.objects.select_related(
                 'bu', 'client').filter(
-                    locstatus = 'MAINTENANCE', bu_id__in = S['assignedsites'],
+                    locstatus = 'MAINTENANCE', bu_id = S['bu_id'],
                     client_id=S['client_id']).values('id').order_by(
                         'loccode').distinct('loccode').count()
         ]
         stb = [
             self.select_related(
                 'bu', 'client').filter(
-                    runningstatus = 'STANDBY', bu_id__in = S['assignedsites'],
+                    runningstatus = 'STANDBY', bu_id = S['bu_id'],
                     identifier = 'ASSET', client_id=S['client_id']
                     ).values('id').order_by('assetcode').distinct(
                         'assetcode').count(),
             self.select_related(
                 'bu', 'client').filter(
-                    runningstatus = 'STANDBY', bu_id__in = S['assignedsites'],
+                    runningstatus = 'STANDBY', bu_id = S['bu_id'],
                     identifier = 'CHECKPOINT', client_id=S['client_id']
                     ).values('id').order_by('assetcode').distinct(
                         'assetcode').count(),
             
             Location.objects.select_related(
                 'bu', 'client').filter(
-                    locstatus = 'STANDBY', bu_id__in = S['assignedsites'],
+                    locstatus = 'STANDBY', bu_id = S['bu_id'],
                     client_id=S['client_id']).values(
                         'id').order_by('loccode').distinct('loccode').count()
         ]
         scp = [
             self.select_related(
                 'bu', 'client').filter(
-                    runningstatus = 'SCRAPPED', bu_id__in = S['assignedsites'],
+                    runningstatus = 'SCRAPPED', bu_id = S['bu_id'],
                     identifier = 'ASSET', client_id=S['client_id']
                     ).values('id').order_by('assetcode').distinct(
                         'assetcode').count(),
             self.select_related(
                 'bu', 'client').filter(
-                    runningstatus = 'SCRAPPED', bu_id__in = S['assignedsites'],
+                    runningstatus = 'SCRAPPED', bu_id = S['bu_id'],
                     identifier = 'CHECKPOINT', client_id=S['client_id']
                     ).values('id').order_by('assetcode').distinct('assetcode').count(),
             0

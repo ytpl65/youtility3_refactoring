@@ -231,17 +231,20 @@ def insert_into_jn_for_parent(job, params):
             'gracetime'    : job['gracetime'],
             'performedby'    : params['NONE_P'],
             'jobstatus'      : params['jobstatus'],
-            'plandatetime': params['pdtz'],
-            'expirydatetime': params['edtz']
+            'jobdesc' : params['jobdesc'],
+            'qset_id' : params['qset_id'],
+            'sgroup_id' : params['sgroup_id'],
+            'asset_id' : params['asset_id'],
+            'people_id' : params['people_id'],
+            'pgroup_id' : params['pgroup_id'],
+            'parent' : params['NONE_JN'],
         }
-    obj = am.Jobneed.objects.create(
-        **defaults,
-        job_id         = job['id'],           parent       = params['NONE_JN'],
-        jobdesc        = params['jobdesc'],   qset_id      = job['qset_id'],
-        asset_id       = job['asset_id'],     sgroup_id = job['sgroup_id'],
-        people_id      = params['people'],
-        pgroup_id      = job['pgroup_id'],
+    obj = am.Jobneed.objects.update_or_create(
+        defaults=defaults,
+        job_id         = job['id'],
         jobtype        = params['jobtype'],
+        plandatetime = params['pdtz'],
+        expirydatetime = params['edtz']
     )
     return obj
 

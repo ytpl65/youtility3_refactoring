@@ -166,15 +166,15 @@ Ticket {% if  ticketform.instance.id is not none  %}- {{ ticketform.instance.tic
                     </div>
                     <!-- Location & Prioirity -->
                     <div class="text-gray-600 fw-semibold fs-6 me-3">
-                    <div><span class="text-gray-500 fw-semibold">Location &nbsp;&nbsp;</span><span class="text-gray-800 fw-semibold">{{ item['previous_state']['location'] }}</span> 
-                    <span class="text-gray-500 fw-semibold">&nbsp;&nbsp;Priority &nbsp;&nbsp;</span><span class="text-gray-800 fw-semibold">{{ item['previous_state']['priority'] }}</span></div>
+                    <div><span class="text-gray-500 fw-semibold">Location &nbsp;&nbsp;</span><span class="text-gray-800 fw-semibold">{{ item['previous_state'].get('location', '--') }}</span> 
+                    <span class="text-gray-500 fw-semibold">&nbsp;&nbsp;Priority &nbsp;&nbsp;</span><span class="text-gray-800 fw-semibold">{{ item['previous_state'].get('priority', '--') }}</span></div>
                     </div>
                     <!-- User -->
                     <div class="text-gray-600 fw-semibold fs-6">
                         User&nbsp;&nbsp;
                         <a href="{{ url('peoples:people') }}?id={{ item['people_id'] }}">{{ item['who'] }}</a>
                         &nbsp;Comments&nbsp;&nbsp;
-                        <span class="fs-6 text-gray-800">{{ item['previous_state']['comments'] }}</span>
+                        <span class="fs-6 text-gray-800">{{ item['previous_state'].get('comments', '--') }}</span>
                     </div>
                 </div>
                 {% endif %}

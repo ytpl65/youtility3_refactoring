@@ -86,8 +86,9 @@ class TicketManager(models.Manager):
         open      = qset.filter(status = 'OPEN').count()
         cancelled = qset.filter(status = 'CANCELLED').count()
         resolved  = qset.filter(status = 'RESOLVED').count()
-        stats = [new, resolved, open, cancelled]
-        ic(stats)
+        closed  = qset.filter(status = 'CLOSED').count()
+        onhold  = qset.filter(status = 'ONHOLD').count()
+        stats = [new, resolved, open, cancelled, closed, onhold]
         return stats, sum(stats)
     
     def get_events_for_calendar(self, request):
