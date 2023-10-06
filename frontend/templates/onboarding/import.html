@@ -69,11 +69,8 @@ Import Data
 <div class="row gx-8">
     <div class="col-md-6">
         <p class="ch4 y-primary mb-2">Please follow the instructions before uploading any data:</p>
-        <ol class="list-group ps-2 list-group-numbered">
-            <li class="list-group-item">File format of .xlsx should be used for seamless operation</li>
-            <li class="list-group-item">Do not use any type of column formatting, only text to be used</li>
-            <li class="list-group-item">It is mandatory to leave the first column empty</li>
-            <li class="list-group-item">If you want to enter nothing into the cell, then enter 'NONE'</li>
+        <ol class="list-group ps-2 list-group-numbered" id="instructions">
+            {# <li class="list-group-item">File format of .xlsx should be used for seamless operation</li> #}
         </ol>
     </div>
     
@@ -122,6 +119,7 @@ Import Data
     var _columns = {{columns |default ("[]") | tojson }}
     const DATA = {{ data |default ("[]") | tojson }}
     var table = null;
+    var instructions = null;
     const urlname = '{{ url("onboarding:import") }}'
 
     function getFormData(){
@@ -131,6 +129,26 @@ Import Data
         fd.append('importfile', input);
         fd.append('csrfmiddlewaretoken', '{{ csrf_token }}');
         return fd
+    }
+    function showInstructionsList(instructions){
+        $("#instructions").html("")
+        for (var key in instructions){
+            if(instructions.hasOwnProperty(key)){
+                if(typeof instructions[key] === "string"){
+                    let value = instructions[key]
+                    value = value.replace("$", `<div class="text-info bg-light">`)
+                    value = value.replace("&", "<div>")
+                    $("#instructions").append(`<li class="list-group-item">${value}</li>`)
+                }
+                else if(typeof instructions[key] ==="object" && instructions[key].length > 0){
+                    instructions[key].forEach((str) => {
+                        str = str.replace("$", `<div class="text-info bg-light">`)
+                        str = str.replace("&", "<div>")
+                        $("#instructions").append(`<li class="list-group-item">${str}</li>`)
+                    })
+                }                
+            }
+        }
     }
 
     function ConfirmImport(fd){
@@ -287,6 +305,22 @@ Import Data
                 }
             }
         )
+        //show instruction dynamically
+        if(isValidJSON(`{{ instructions }}`)){
+            instructions = JSON.parse(`{{ instructions }}`)
+            showInstructionsList(instructions)
+        }
+        $("#id_table").on('change', (e) => {
+            fire_ajax_get({
+                url:"{{ url('onboarding:import') }}",
+                data:{action:"getInstructions", tablename: $("#id_table").val()}
+            }).done((data, xhr, status) => {
+                showInstructionsList(data.instructions)
+            })
+        })
+
+
+
     })
 </script>
 {% endblock extra_scripts %}

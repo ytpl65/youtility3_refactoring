@@ -1617,3 +1617,76 @@ def get_changed_keys(dict1, dict2):
             changed_keys.append(key)
 
     return changed_keys
+
+class Instructions(object):
+    def __init__(self, tablename):
+        from apps.onboarding.views import MODEL_RESOURCE_MAP, HEADER_MAPPING
+        
+        if tablename is None: raise ValueError("The tablename argument is required")
+        self.tablename = tablename
+        self.model_source_map = MODEL_RESOURCE_MAP
+        self.header_mapping = HEADER_MAPPING
+        
+    def field_choices_map(self, choice_field):
+        from django.apps import apps
+        Question             = apps.get_model("activity", 'Question')
+        Asset                = apps.get_model("activity", 'Asset')
+        Location             = apps.get_model("activity", 'Location')
+        QuestionSet          = apps.get_model("activity", 'QuestionSet')
+        return {
+            "Answer Type*": [choice[0] for choice in Question.AnswerType.choices],
+            'AVPT Type' : [choice[0] for choice in Question.AvptType.choices],
+            'Identifier*' : [choice[0] for choice in Asset.Identifier.choices],
+            'Running Status*' : [choice[0] for choice in Asset.RunningStatus.choices],
+            'Status*' : [choice[0] for choice in Location.LocationStatus.choices],
+            'Type*' : ['SITEGROUP', 'PEOPLEGROUP'],
+            'QuestionSet Type*' : [choice[0] for choice in QuestionSet.Type.choices],
+        }.get(choice_field)
+    
+    def get_insructions(self):
+        general_instructions = self.get_general_instructions()
+        column_names = self.get_column_names()
+        valid_choices = self.get_valid_choices_if_any()
+        format_info = self.get_valid_format_info()
+        
+        return  {
+            'general_instructions': general_instructions,
+            'column_names':"Columns: ${}&".format(', '.join(column_names)) ,
+            'valid_choices':valid_choices,
+            'format_info':format_info
+        }
+    
+    def get_general_instructions(self):
+        return [
+            "Make sure you correctly selected the type of data that you wanna import in bulk. before clicking 'download'",
+            "Make sure while filling data in file, your column header does not contain value other than columns mentioned below."
+        ]
+    
+    
+    def get_column_names(self):
+        return self.header_mapping.get(self.tablename)
+        
+    
+    def get_valid_choices_if_any(self):
+        table_choice_field_map = {
+            "QUESTION": ['AnswerType*', 'AVPT Type'],
+            "QUESTIONSET":['QuestionSet Type*'],
+            'ASSET':['Identifier*', 'Running Status*'],
+            'GROUP':['Type*'],
+            'LOCATION': ['Status*']
+            }
+        if self.tablename in table_choice_field_map:
+            valid_choices = []
+            for choice_field in table_choice_field_map.get(self.tablename):
+                instruction_str = f'Valid values for column: {choice_field} ${", ".join(self.field_choices_map(choice_field))}&'
+                valid_choices.append(instruction_str)
+            return valid_choices
+        return []
+    
+    def get_valid_format_info(self):
+        return [
+            'Valid Date Format: $%Y-%m-%d For example: 1998-06-22&',
+            'Valid Mobile No Format: $[ country code ][ rest of number ] For example: 910123456789&' ,
+            'Valid Time Format: $%H:%M:%S For example: 23:55:00&',
+            'Valid Date Time Format: $%Y-%m-%d %H:%M:%S For example: 1998-06-22 23:55:00&'
+            ]

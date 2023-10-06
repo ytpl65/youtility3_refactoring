@@ -534,7 +534,7 @@ HEADER_MAPPING  = {
     ],
 
     'VENDOR':[
-        'Code*', 'Name*', 'Type*', 'Status*', 'Address*', 'Email*',
+        'Code*', 'Name*', 'Type*', 'Address*', 'Email*',
         'Mob No*', 'Site*', 'Client*', 'GPS Location', 'Enable'
     ],
     'LOCATION':[
@@ -542,7 +542,7 @@ HEADER_MAPPING  = {
         'Site*', 'Client*', 'GPS Location', 'Enable'
     ],
     'QUESTIONSET':[
-        'Seq No', 'Question Set Name*', 'Belongs To*', 'Type*', 'Asset Includes', 'Site Includes', 'Site*',
+        'Seq No', 'Question Set Name*', 'Belongs To*', 'QuestionSet Type*', 'Asset Includes', 'Site Includes', 'Site*',
         'Client*', 'Site Group Includes', 'Site Type Includes', 'Show To All Sites', 
         'URL'
     ],
@@ -566,8 +566,17 @@ class BulkImportData(LoginRequiredMixin,ParameterMixin, View):
         ic(self.form)
         if (R.get('action') == 'form'):
             self.remove_temp_file(request)
-            cxt = {'importform': self.form(initial={'table': "TYPEASSIST"})}
+            inst = utils.Instructions(tablename='TYPEASSIST')
+            instructions = json.dumps(inst.get_insructions())
+            ic(instructions)
+            cxt = {'importform': self.form(initial={'table': "TYPEASSIST"}), 'instructions':instructions}
             return render(request, self.template, cxt)
+        
+        if R.get('action') == 'getInstructions':
+            inst = utils.Instructions(tablename=R.get('tablename'))
+            instructions = inst.get_insructions()
+            ic(instructions)
+            return rp.JsonResponse({'instructions':instructions}, status=200)
 
         if (request.GET.get('action') == 'downloadTemplate') and request.GET.get('template'):
             import pandas as pd

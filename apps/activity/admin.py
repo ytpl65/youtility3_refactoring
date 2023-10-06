@@ -182,7 +182,7 @@ class QuestionSetResource(resources.ModelResource):
     ID               = fields.Field(attribute='id', column_name='ID')
     SEQNO            = fields.Field(attribute='seqno', column_name="Seq No")
     QSETNAME         = fields.Field(attribute='qsetname', column_name='Question Set Name*')
-    Type             = fields.Field(attribute='type', column_name='Type*')
+    Type             = fields.Field(attribute='type', column_name='QuestionSet Type*')
     ASSETINCLUDES    = fields.Field(attribute='assetincludes', column_name='Asset Includes', default=[])
     SITEINCLUDES     = fields.Field(attribute='siteincludes', column_name='Site Includes', default=[])
     SITEGRPINCLUDES  = fields.Field(attribute='site_grp_includes', column_name='Site Group Includes', default=[])
@@ -210,7 +210,7 @@ class QuestionSetResource(resources.ModelResource):
         super().before_import_row(row, **kwargs)
 
     def check_required_fields(self, row):
-        required_fields = ['Type*', 'Question Set Name*']
+        required_fields = ['QuestionSet Type*', 'Question Set Name*']
         for field in required_fields:
             if not row.get(field):
                 raise ValidationError({field: f"{field} is a required field"})
@@ -241,7 +241,7 @@ class QuestionSetResource(resources.ModelResource):
     def unique_record_check(self, row):
         # unique record check
         if am.QuestionSet.objects.select_related().filter(
-            qsetname=row['Question Set Name*'], type=row['Type*'],
+            qsetname=row['Question Set Name*'], type=row['QuestionSet Type*'],
             client__bucode = row['Client*'], parent__qsetname = row['Belongs To*']).exists():
             raise ValidationError(f"Record with these values already exist {row.values()}")
 
