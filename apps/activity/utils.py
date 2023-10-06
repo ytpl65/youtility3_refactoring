@@ -121,7 +121,7 @@ def get_assignedsitedata(request):
         bu_list.append(request.user.bu_id)
         print("xxx", data.query ,bu_list)
     except Exception as e:
-        log.critical("get_assignedsitedata() exception: %s", (e))
+        log.critical("get_assignedsitedata() exception: %s", exc_info=True)
         bu_list.append(request.user.bu_id)  
     return bu_list
 

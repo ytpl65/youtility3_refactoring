@@ -988,4 +988,4 @@ def send_reminder_email():
             msg.send()
             log.info(f"Reminder mail sent to {recipents} with subject {subject}")
     except Exception as e:
-        log.critical("Error while sending reminder email")
+        log.critical("Error while sending reminder email", exc_info=True)

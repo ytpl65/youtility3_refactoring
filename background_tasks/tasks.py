@@ -63,7 +63,7 @@ def send_ticket_email(self, ticket=None, id=None):
         else:
             log.info('ticket not found no emails will send')
     except Exception as e:
-        log.critical("Error while sending ticket email")
+        log.critical("Error while sending ticket email", exc_info=True)
         resp['traceback'] = tb.format_exc()
     return resp
 
@@ -152,7 +152,7 @@ def autoclose_job(jobneedid=None):
                 resp = butils.update_job_autoclose_status(rec, resp)
 
     except Exception as e:
-        log.critical(f'context in the template:{context}')
+        log.critical(f'context in the template:{context}', exc_info=True)
         log.error(
             "something went wrong while running autoclose_job()", exc_info=True)
         resp['traceback'] += f"{tb.format_exc()}"
@@ -217,7 +217,7 @@ def send_reminder_email():
             log.info(
                 f"Reminder mail sent to {recipents} with subject {subject}")
     except Exception as e:
-        log.critical("Error while sending reminder email")
+        log.critical("Error while sending reminder email", exc_info=True)
         resp['traceback'] = tb.format_exc()
     return resp
 

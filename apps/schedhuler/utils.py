@@ -130,7 +130,7 @@ def get_datetime_list(cron_exp, startdtz, enddtz, resp):
     except Exception as ex:
         log.critical(
             'get_datetime_list(cron_exp, startdtz, enddtz) \
-            Exc(eption: [cronexp:= %s]croniter bad cron error:= %s', cron_exp, str(ex))
+            Exc(eption: [cronexp:= %s]croniter bad cron error:= %s', cron_exp, str(ex), exc_info=True)
         resp ={"errors": "Bad Cron Error"}
         isValidCron = False
         log.error(
@@ -638,7 +638,7 @@ def send_reminder_email():
             msg.send()
             log.info(f"Reminder mail sent to {recipents} with subject {subject}")
     except Exception as e:
-        log.critical("Error while sending reminder email")
+        log.critical("Error while sending reminder email", exc_info=True)
         
         
 def send_email_notication(err):
