@@ -672,7 +672,6 @@ def get_or_create_none_job():
             'planduration': 0,         'expirytime': 0,
             'gracetime': 0,         'priority': 'LOW',
             'seqno': -1,        'scantype': 'SKIP',
-            'id': 1
         }
     )
     return obj

@@ -1185,14 +1185,14 @@ function adjust_above_below(data, for_table = false, foreditor = false) {
     if (foreditor) {
       console.log(foreditor);
       $("#DTE_Field_alertbelow").val(
-        parseFloat(nums[0].replace(/[^0-9\.]+/g, ""))
+        parseFloat(nums[0].replace(/[^0-9\.-]+/g, ""))
       );
       $("#DTE_Field_alertabove").val(
-        parseFloat(nums[1].replace(/[^0-9\.]+/g, ""))
+        parseFloat(nums[1].replace(/[^0-9\.-]+/g, ""))
       );
     } else {
-      $("#id_alertbelow").val(parseFloat(nums[0].replace(/[^0-9\.]+/g, "")));
-      $("#id_alertabove").val(parseFloat(nums[1].replace(/[^0-9\.]+/g, "")));
+      $("#id_alertbelow").val(parseFloat(nums[0].replace(/[^0-9\.-]+/g, "")));
+      $("#id_alertabove").val(parseFloat(nums[1].replace(/[^0-9\.-]+/g, "")));
     }
   }
 }
