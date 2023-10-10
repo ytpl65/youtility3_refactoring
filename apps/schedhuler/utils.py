@@ -171,8 +171,8 @@ def insert_into_jn_and_jnd(job, DT, resp):
             people = job['people_id']
             params   = {
                 'jobstatus':jobstatus, 'jobtype':jobtype, 'route_name':job['sgroup__groupname'],
-                'm_factor':multiplication_factor, 'people':people,
-                'NONE_P':NONE_P, 'jobdesc':jobdesc, 'NONE_JN':NONE_JN}
+                'm_factor':multiplication_factor, 'people':people, 'qset_id':job['qset_id'],
+                'NONE_P':NONE_P, 'jobdesc':jobdesc, 'NONE_JN':NONE_JN, 'sgroup_id':job['sgroup_id']}
             UTC_DT = utils.to_utc(DT)
             for dt in UTC_DT:
                 dt = dt.strftime("%Y-%m-%d %H:%M")

@@ -11,6 +11,7 @@ from django.db.utils import IntegrityError
 from apps.activity.models import Asset, Jobneed, JobneedDetails
 from apps.work_order_management.models import Wom
 from apps.core import utils
+from apps.core import exceptions as excp
 from apps.service import serializers as sz
 from apps.y_helpdesk.models import Ticket
 from background_tasks.tasks import alert_sendmail
@@ -424,7 +425,7 @@ def perform_tasktourupdate(self, file, request=None, db='default', bg=False):
         )
         data = file if bg else get_json_data(file)
         log.info(f'data: {pformat(data)}')
-        if len(data) == 0: raise utils.NoRecordsFound
+        if len(data) == 0: raise excp.NoRecordsFound
         log.info(f'total {len(data)} records found for task tour update')
         for record in data:
             details = record.pop('details')
@@ -438,7 +439,7 @@ def perform_tasktourupdate(self, file, request=None, db='default', bg=False):
             msg = Messages.UPDATE_SUCCESS
             log.info(f'All {recordcount} task/tour records are updated successfully')
             rc=0
-    except utils.NoRecordsFound as e:
+    except excp.NoRecordsFound as e:
         log.warning('No records found for task/tour update', exc_info=True)
         rc, traceback, msg = 1, tb.format_exc(), Messages.UPLOAD_FAILED
     except IntegrityError as e:
@@ -503,7 +504,7 @@ def perform_insertrecord(self, file, request = None, db='default', filebased = T
             data = get_json_data(file) if filebased else [file]
         log.info(f'data = {pformat(data)} and length of data {len(data)}')
 
-        if len(data) == 0: raise utils.NoRecordsFound
+        if len(data) == 0: raise excp.NoRecordsFound
         with transaction.atomic(using = db):
             for record in data:
                 tablename = record.pop('tablename')
@@ -528,7 +529,7 @@ def perform_insertrecord(self, file, request = None, db='default', filebased = T
             msg = Messages.INSERT_SUCCESS
             log.info(f'All {recordcount} records are inserted successfully')
             rc=0
-    except utils.NoRecordsFound as e:
+    except excp.NoRecordsFound as e:
         log.warning('No records found for insertrecord service', exc_info=True)
         rc, traceback, msg = 1, tb.format_exc(), Messages.INSERT_FAILED
     except Exception as e:
@@ -619,7 +620,7 @@ def perform_reportmutation(self, file, db= 'default', bg=False):
         )
         data = file if bg else get_json_data(file)
         log.info(f'data: {pformat(data)}')
-        if len(data) == 0: raise utils.NoRecordsFound
+        if len(data) == 0: raise excp.NoRecordsFound
         log.info(f"'data = {pformat(data)} {len(data)} Number of records found in the file")
         for record in data:
             tablename = record.pop('tablename', None)
@@ -646,7 +647,7 @@ def perform_reportmutation(self, file, db= 'default', bg=False):
             msg = Messages.UPDATE_SUCCESS
             log.info(f'All {recordcount} report records are updated successfully')
             rc=0
-    except utils.NoRecordsFound as e:
+    except excp.NoRecordsFound as e:
         log.warning('No records found for report mutation', exc_info=True)
         rc, traceback, msg = 1, tb.format_exc(), Messages.UPLOAD_FAILED
     except Exception as e:
@@ -666,7 +667,7 @@ def perform_adhocmutation(self, file, db='default', bg=False):  # sourcery skip:
         if bg:
             data = file
         elif not (data := get_json_data(file)):
-            raise utils.NoDataInTheFileError
+            raise excp.NoDataInTheFileError
         log.info(f"'data = {pformat(data)} {len(data)} Number of records found in the file")
         for record in data:
             details = record.pop('details')
@@ -693,7 +694,7 @@ def perform_adhocmutation(self, file, db='default', bg=False):  # sourcery skip:
                 else:
                     log.info("schedule task not found, creating a new one")
                     rc, traceback, msg, recordcount = insert_adhoc_record(jobneedrecord, details)
-    except utils.NoDataInTheFileError as e:
+    except excp.NoDataInTheFileError as e:
         rc, traceback = 1, tb.format_exc()
         log.error('No data in the file error', exc_info = True)
         raise
