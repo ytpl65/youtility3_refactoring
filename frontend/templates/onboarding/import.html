@@ -136,13 +136,13 @@ Import Data
             if(instructions.hasOwnProperty(key)){
                 if(typeof instructions[key] === "string"){
                     let value = instructions[key]
-                    value = value.replace("$", `<div class="text-info bg-light">`)
+                    value = value.replace("$", `<div class="text-primary2 bg-light">`)
                     value = value.replace("&", "<div>")
                     $("#instructions").append(`<li class="list-group-item">${value}</li>`)
                 }
                 else if(typeof instructions[key] ==="object" && instructions[key].length > 0){
                     instructions[key].forEach((str) => {
-                        str = str.replace("$", `<div class="text-info bg-light">`)
+                        str = str.replace("$", `<div class="text-primary2 bg-light">`)
                         str = str.replace("&", "<div>")
                         $("#instructions").append(`<li class="list-group-item">${str}</li>`)
                     })
