@@ -269,20 +269,28 @@ Work Permit Form
             location.href = `${urlname}?action=form`
         })
 
+        let now = new Date();
+
+        // Set start of day (00:00)
+        let startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0);
+
+        // Set end of day (23:59)
+        let endOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59);
+
         //initilize datetimes
         $(".datetimes").flatpickr({
             enableTime: true,
             time_24hr: true,
             dateFormat: 'd-M-Y H:i',
-            minDate:new Date(),
-            maxDate:new Date()
+            minDate:startOfDay,
+            maxDate:endOfDay
         })
 
         //load the questionaire of selected template
         $("#load_questions").click((e) => {
             let qsetid = $("#id_qset").val()
             let approvers = $("#id_approvers").val()
-            if(approvers.length == 0){ 
+            if(approvers.length == 0){
                 display_field_error('approvers', 'At least one approver needed!')
                 return
             }
