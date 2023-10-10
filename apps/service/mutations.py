@@ -4,7 +4,7 @@ from graphql_jwt.decorators import login_required
 from graphene.types.generic import GenericScalar
 from graphql import GraphQLError
 from apps.service import utils as sutils
-from apps.core import utils as cutils
+from apps.core import utils as cutils, exceptions as excp
 from apps.peoples.models import People
 from django.utils import timezone
 from rest_framework.views import APIView
@@ -21,6 +21,7 @@ from .utils import get_json_data
 from logging import getLogger
 import traceback as tb
 from graphql_jwt import ObtainJSONWebToken
+from apps.core import exceptions as excp
 
 log = getLogger('mobile_service_log')
 
@@ -49,9 +50,15 @@ class LoginUser(graphene.Mutation):
             cls.updateDeviceId(user, input)
             log.warning("login mutations end [-]")
             return output
-        except Exception as exc:
-            log.critical(exc, exc_info = True)
+        except (excp.MultiDevicesError, excp.NoClientPeopleError, excp.NoSiteError,
+            excp.NotBelongsToClientError, excp.NotRegisteredError) as exc:
+            log.warning(exc, exc_info=True)
             raise GraphQLError(exc) from exc
+
+        except Exception as exc:
+            log.critical(exc, exc_info=True)
+            raise GraphQLError(exc) from exc
+
 
     @classmethod
     def returnUser(cls, user, request):
@@ -307,10 +314,10 @@ class SyncMutation(graphene.Mutation):
                 log.info(f"file size given: {filesize = } and calculated {zipsize = }")
                 if filesize !=  zipsize:
                     log.error(f"file size is not matched with the actual zipfile {filesize} x {zipsize}")
-                    raise cutils.FileSizeMisMatchError
+                    raise excp.FileSizeMisMatchError
                 if TR !=  totalrecords:
                     log.error(f"totalrecords is not matched with th actual totalrecords after extraction... {totalrecords} x {TR}")
-                    raise cutils.TotalRecordsMisMatchError
+                    raise excp.TotalRecordsMisMatchError
         except Exception:
             log.critical("something went wrong!", exc_info = True)
             return SyncMutation(rc = 1)

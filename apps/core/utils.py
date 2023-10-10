@@ -28,6 +28,7 @@ import apps.peoples.utils as putils
 from apps.peoples import models as pm
 from apps.work_order_management.models  import Wom
 from apps.tenants.models import Tenant
+from apps.core import exceptions as excp
 
 logger = logging.getLogger('__main__')
 dbg = logging.getLogger('__main__').debug
@@ -827,7 +828,7 @@ def set_db_for_router(db):
     dbs = settings.DATABASES
     if db not in dbs:
         print('raised')
-        raise NoDbError("Database with this alias not exist!")
+        raise excp.NoDbError("Database with this alias not exist!")
     setattr(THREAD_LOCAL, "DB", db)
 
 
@@ -1118,33 +1119,7 @@ def getformatedjson(geofence=None, jsondata=None, rettype=dict):
     return result if rettype == dict else json.dumps(result)
 
 
-class Error(Exception):
-    pass
 
-
-class NoDataInTheFileError(Error):
-    pass
-
-
-class FileSizeMisMatchError(Error):
-    pass
-
-
-class TotalRecordsMisMatchError(Error):
-    pass
-
-
-class NoDbError(Error):
-    pass
-
-
-class RecordsAlreadyExist(Error):
-    pass
-class NoRecordsFound(Error):
-    pass
-
-class NotBelongsToTheClient(Error):
-    pass
 
 def getawaredatetime(dt, offset):
     from datetime import datetime, timedelta, timezone
@@ -1617,7 +1592,7 @@ def get_changed_keys(dict1, dict2):
 
     return changed_keys
 
-class Instructions(object):
+class Instructions(object): 
     def __init__(self, tablename):
         from apps.onboarding.views import MODEL_RESOURCE_MAP, HEADER_MAPPING
         
@@ -1668,7 +1643,7 @@ class Instructions(object):
     
     def get_valid_choices_if_any(self):
         table_choice_field_map = {
-            "QUESTION": ['AnswerType*', 'AVPT Type'],
+            "QUESTION": ['Answer Type*', 'AVPT Type'],
             "QUESTIONSET":['QuestionSet Type*'],
             'ASSET':['Identifier*', 'Running Status*'],
             'GROUP':['Type*'],

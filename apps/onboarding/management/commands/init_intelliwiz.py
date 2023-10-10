@@ -2,6 +2,7 @@ from django.core.management.base import BaseCommand
 from django.db import transaction
 from django.db.utils import IntegrityError
 from apps.core import utils
+from apps.core import exceptions as excp
 from apps.onboarding.models import Bt, TypeAssist
 from apps.peoples.models import People
 from apps.onboarding.admin import TaResource
@@ -112,11 +113,11 @@ class Command(BaseCommand):
                 create_sql_functions(db=db)
                 break  # operation was successful, break the loop
 
-            except utils.RecordsAlreadyExist as ex:
+            except excp.RecordsAlreadyExist as ex:
                 self.stdout.write(self.style.WARNING(f'Database with this alias "{db}" is not empty. Operation terminated!'))
                 break
 
-            except utils.NoDbError:
+            except excp.NoDbError:
                 self.stdout.write(self.style.ERROR(f"Database with alias '{db}' does not exist. Operation cannot be performed."))
                 break
 
