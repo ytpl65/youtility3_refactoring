@@ -1633,7 +1633,8 @@ class Instructions(object):
     def get_general_instructions(self):
         return [
             "Make sure you correctly selected the type of data that you wanna import in bulk. before clicking 'download'",
-            "Make sure while filling data in file, your column header does not contain value other than columns mentioned below."
+            "Make sure while filling data in file, your column header does not contain value other than columns mentioned below.",
+            "The column names marker asterisk (*) are mandatory to fill"
         ]
     
     
@@ -1659,8 +1660,8 @@ class Instructions(object):
     
     def get_valid_format_info(self):
         return [
-            'Valid Date Format: $%Y-%m-%d For example: 1998-06-22&',
+            'Valid Date Format: $YYYY-MM-DD For example: 1998-06-22&',
             'Valid Mobile No Format: $[ country code ][ rest of number ] For example: 910123456789&' ,
-            'Valid Time Format: $%H:%M:%S For example: 23:55:00&',
-            'Valid Date Time Format: $%Y-%m-%d %H:%M:%S For example: 1998-06-22 23:55:00&'
+            'Valid Time Format: $HH:MM:SS For example: 23:55:00&',
+            'Valid Date Time Format: $YYYY-MM-DD HH:MM:SS For example: 1998-06-22 23:55:00&'
             ]

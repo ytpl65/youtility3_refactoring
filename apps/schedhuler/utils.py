@@ -234,9 +234,9 @@ def insert_into_jn_for_parent(job, params):
             'jobdesc' : params['jobdesc'],
             'qset_id' : params['qset_id'],
             'sgroup_id' : params['sgroup_id'],
-            'asset_id' : params['asset_id'],
-            'people_id' : params['people_id'],
-            'pgroup_id' : params['pgroup_id'],
+            'asset_id' : job['asset_id'],
+            'people_id' : job['people_id'],
+            'pgroup_id' : job['pgroup_id'],
             'parent' : params['NONE_JN'],
         }
     obj = am.Jobneed.objects.update_or_create(
