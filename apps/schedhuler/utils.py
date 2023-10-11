@@ -239,7 +239,7 @@ def insert_into_jn_for_parent(job, params):
             'pgroup_id' : job['pgroup_id'],
             'parent' : params['NONE_JN'],
         }
-    obj = am.Jobneed.objects.update_or_create(
+    obj, _ = am.Jobneed.objects.update_or_create(
         defaults=defaults,
         job_id         = job['id'],
         jobtype        = params['jobtype'],
