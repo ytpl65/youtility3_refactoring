@@ -42,8 +42,10 @@ class TicketManager(models.Manager):
             'cuser__peoplename', 'cuser__peoplecode', 'ticketdesc', 'ctzoffset',
             'ticketsource', 'ticketcategory__taname'
         )
-        if P.get('status'):
+        if P.get('status') and P.get('status') != 'SYSTEMGENERATED':
             qset = qset.filter(status =P['status'])
+        if P.get('status') == 'SYSTEMGENERATED':
+            qset = qset.filter(ticketsource='SYSTEMGENERATED')
         return qset or self.none()
         
     def get_tickets_for_mob(self, peopleid, buid, clientid, mdtz, ctzoffset):
@@ -74,21 +76,22 @@ class TicketManager(models.Manager):
     def get_ticket_stats_for_dashboard(self, request):
         # sourcery skip: avoid-builtin-shadow
         S, R = request.session, request.GET
-        ic(R)
         qset = self.filter(
             bu_id__in = S['assignedsites'],
             cdtz__date__gte = R['from'],
             cdtz__date__lte = R['upto'],
             client_id = S['client_id'],
-            ticketsource = 'USERDEFINED'
         )
-        new       = qset.filter(status = 'NEW').count()
-        open      = qset.filter(status = 'OPEN').count()
-        cancelled = qset.filter(status = 'CANCELLED').count()
-        resolved  = qset.filter(status = 'RESOLVED').count()
-        closed  = qset.filter(status = 'CLOSED').count()
-        onhold  = qset.filter(status = 'ONHOLD').count()
-        stats = [new, resolved, open, cancelled, closed, onhold]
+        user_generated = qset.filter(ticketsource = 'USERDEFINED')
+        sys_generated = qset.filter(ticketsource = 'SYSTEMGENERATED')
+        new       = user_generated.filter(status = 'NEW').count()
+        open      = user_generated.filter(status = 'OPEN').count()
+        cancelled = user_generated.filter(status = 'CANCELLED').count()
+        resolved  = user_generated.filter(status = 'RESOLVED').count()
+        closed  = user_generated.filter(status = 'CLOSED').count()
+        onhold  = user_generated.filter(status = 'ONHOLD').count()
+        autoclosed = sys_generated.count()
+        stats = [new, resolved, open, cancelled, closed, onhold, autoclosed]
         return stats, sum(stats)
     
     def get_events_for_calendar(self, request):

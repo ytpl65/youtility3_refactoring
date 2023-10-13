@@ -68,13 +68,13 @@
             <tbody>
                 {% for section in sections %}
                 <tr>
-                    <td colspan="3" class="bgy fw-bold text-center">{{section['seqno']}}. {{ section['qsetname'] }}</td>
+                    <td colspan="3" class="bgy fw-bold text-center">{{section['sectionID']}}. {{ section['section'] }}</td>
                 </tr>
-                {% for questions in section['details'] %}
+                {% for question in section['questions'] %}
                 <tr>
                     <td width="5%" class="fw-bold">{{ loop.index }}</td>
-                    <td class="fw-bold">{{ questions['question__quesname'] }}</td>
-                    <td>{{ questions['answer'] }}</td>
+                    <td class="fw-bold">{{ question['question__quesname'] }}</td>
+                    <td>{{ question['answer'] }}</td>
                 </tr>
                 {% endfor %}
                 {% endfor %}

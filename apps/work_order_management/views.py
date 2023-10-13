@@ -12,7 +12,7 @@ from apps.core  import utils
 from apps.peoples import utils as putils
 import psycopg2.errors as pg_errs
 from django.template.loader import render_to_string
-from apps.work_order_management.utils import check_all_approved, reject_workpermit
+from apps.work_order_management.utils import check_all_approved, reject_workpermit, save_approvers_injson
 import logging
 from django.utils import timezone
 logger = logging.getLogger('__main__')
@@ -439,21 +439,12 @@ class WorkPermit(LoginRequiredMixin, View):
         workpermit.uuid = request.POST.get('uuid')
         workpermit = putils.save_userinfo(
             workpermit, request.user, request.session, create = create)
-        workpermit = self.save_approvers_injson(workpermit)
+        workpermit = save_approvers_injson(workpermit)
         #save workpermit details
         formdata = QueryDict(request.POST['workpermitdetails']).copy()
         self.create_workpermit_details(request.POST, workpermit, request, formdata)
         send_email_notification_for_wp.delay(workpermit.id, workpermit.qset_id, workpermit.approvers, S['client_id'], S['bu_id'])
         return rp.JsonResponse({'pk':workpermit.id})
-    
-    
-    def save_approvers_injson(self, wp):
-        wp_approvers = [
-            {'name': approver, 'status': 'PENDING'} for approver in wp.approvers
-        ]
-        wp.other_data['wp_approvers'] = wp_approvers
-        wp.save()
-        return wp
     
     def create_child_wom(self, wom, qset_id):
         qset = QuestionSet.objects.get(id =qset_id)

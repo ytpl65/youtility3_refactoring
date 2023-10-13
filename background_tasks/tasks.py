@@ -31,14 +31,14 @@ def send_ticket_email(self, ticket=None, id=None):
         if not ticket and id:
             ticket = Ticket.objects.get(id=id)
         if ticket:
-            log.info(f"ticket found with ticket id: {ticket.id}")
+            log.info(f"ticket found with ticket id: {ticket.ticketno}")
             log.info("ticket email sending start ")
             resp = {}
             emails = butils.get_email_recipents_for_ticket(ticket)
             log.info(f"email addresses of recipents: {emails}")
             updated_or_created = "Created" if ticket.cdtz == ticket.mdtz else "Updated"
             context = {
-                'subject': f"Ticket with #{ticket.id} is {updated_or_created} at site: {ticket.bu.buname}",
+                'subject': f"Ticket with #{ticket.ticketno} is {updated_or_created} at site: {ticket.bu.buname}",
                 'desc': ticket.ticketdesc,
                 'template': ticket.ticketcategory.taname,
                 'status': ticket.status,
@@ -134,7 +134,7 @@ def autoclose_job(jobneedid=None):
                             timedelta(minutes=ticket_data['ctzoffset'])
                         created_at = created_at.strftime("%d-%b-%Y %H:%M")
 
-                        context['ticketno'] = ticket_data['id']
+                        context['ticketno'] = ticket_data['ticketno']
                         context['tjobdesc'] = jobdesc
                         context['categoryname'] = rec['ticketcategory__taname']
                         context['priority'] = rec['priority']
@@ -451,19 +451,10 @@ def send_email_notification_for_wp(self, womid, qsetid, approvers, client_id, bu
     try:
         from django.apps import apps
         from django.template.loader import render_to_string
-        QuestionSet = apps.get_model('activity', 'QuestionSet')
+        Wom = apps.get_model('work_order_management', 'Wom')
         People = apps.get_model('peoples', 'People')
-        wp_details = []
-        sections_qset = QuestionSet.objects.filter(
-            parent_id=qsetid).order_by('seqno')
-        for section in sections_qset:
-            sq = {
-                "qsetname": section.qsetname,
-                "seqno": section.seqno,
-                'details': section.qset_answers.filter(wom_id=womid).values(
-                    'question__quesname', 'answer').order_by('seqno')
-            }
-            wp_details.append(sq)
+        wp_details = Wom.objects.get_wp_answers(qsetid, womid)
+        wp_obj = Wom.objects.get(id=womid)
         jsonresp['story'] += f"\n{wp_details}"
         if wp_details:
             qset = People.objects.filter(peoplecode__in = approvers)
@@ -471,7 +462,7 @@ def send_email_notification_for_wp(self, womid, qsetid, approvers, client_id, bu
                 log.info(f"sending email to {p['email'] = }")
                 jsonresp['story'] += f"sending email to {p['email'] = }"
                 msg = EmailMessage()
-                msg.subject = "Following Work Permit needs your action"
+                msg.subject = f"Following Work Permit #{wp_obj.other_data['wp_seqno']} needs your action"
                 msg.to = [p['email']]
                 msg.from_email = settings.EMAIL_HOST_USER
                 cxt = {'sections': wp_details, 'peopleid':p['id'],

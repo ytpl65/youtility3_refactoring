@@ -16,6 +16,7 @@ from apps.service import serializers as sz
 from apps.y_helpdesk.models import Ticket
 from background_tasks.tasks import alert_sendmail
 from intelliwiz_config.celery import app
+from apps.work_order_management.utils import save_approvers_injson
 
 from .auth import Messages as AM
 from .types import ServiceOutputType
@@ -512,7 +513,9 @@ def perform_insertrecord(self, file, request = None, db='default', filebased = T
                 user = get_user_instance(userid or request.user.id)
                 if tablename == 'ticket' and isinstance(obj, Ticket): utils.store_ticket_history(
                     instance = obj, request=request, user=user)
-                if tablename == 'wom': wutils.notify_wo_creation(id = obj.id)
+                if tablename == 'wom':
+                    wutils.notify_wo_creation(id = obj.id)
+                    save_approvers_injson(obj)
                 allconditions = [
                     hasattr(obj, 'peventtype'), hasattr(obj, 'endlocation'), 
                     hasattr(obj, 'punchintime'), hasattr(obj, 'punchouttime')]

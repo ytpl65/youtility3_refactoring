@@ -100,7 +100,7 @@ def get_query(q):
     'get_ticketlist_for_escalation':        '''
                                             SELECT DISTINCT *,ticket.cdtz + INTERVAL '1 minute' * esclation.calcminute as exp_time FROM 
                                             
-                                            (SELECT ticket.id, ticketdesc, ticket.comments, ticket.cdtz, ticket.mdtz, ticket.ticketcategory_id as tescalationtemplate, ticket.status, ticket.bu_id as tbu, 
+                                            (SELECT ticket.id, ticket.ticketno, ticketdesc, ticket.comments, ticket.cdtz, ticket.mdtz, ticket.ticketcategory_id as tescalationtemplate, ticket.status, ticket.bu_id as tbu, 
                                             people.peoplename, pgroup.groupname, ticket.assignedtopeople_id as assignedtopeople, 
                                             ticket.assignedtogroup_id as assignedtogroup,ticket.ticketlog,ticket.level, creator.id as cuser_id,  creator.peoplename as who FROM ticket  
                                             LEFT JOIN people ON (ticket.assignedtopeople_id = people.id) 
@@ -123,7 +123,7 @@ def get_query(q):
                                             WHERE (ticket.level+1) = esclation.eslevel  AND ticket.tescalationtemplate = esclation.escalationtemplate_id AND ticket.cdtz + INTERVAL  '1 minute' * esclation.calcminute < now()
                                             ''',
     'ticketmail':                           '''
-                                            SELECT ticket.id, ticket.ticketlog, ticket.comments, ticket.ticketdesc, ticket.cdtz, 
+                                            SELECT ticket.id, ticket.ticketno, ticket.ticketlog, ticket.comments, ticket.ticketdesc, ticket.cdtz, 
                                              ticket.status,
                                              em.level, em.frequency, em.frequencyvalue, em.body, em.notify,  em.assignedperson_id as escperson,em.assignedgroup_id as escgrp, 
                                              CASE WHEN em.frequency = 'MINUTE' THEN ticket.cdtz + INTERVAL '1 minute' * em.frequencyvalue  

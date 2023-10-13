@@ -411,7 +411,7 @@ class JobneedManager(models.Manager):
         R = request.GET
         P = json.loads(R['params'])
         sites = Pgbelonging.objects.get_assigned_sites_to_people(request.user.id)
-        buids = sites.values_list('buid', flat=True)
+        buids = sites
         qset = self.annotate(
             buname = Case(
                 When(Q(Q(othersite__isnull=True) | Q(othersite = "") | Q(othersite = 'NONE')), then=F('bu__buname')),

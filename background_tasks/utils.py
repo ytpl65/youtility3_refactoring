@@ -139,7 +139,7 @@ def send_escalation_ticket_email(tkt, result):
     from django.core.mail import EmailMessage
     try:
         for rec in records:
-            subject = f"Escalation Level {rec['level']}: Ticket Number {rec['id']}"
+            subject = f"Escalation Level {rec['level']}: Ticket Number {rec['ticketno']}"
             toemails = []
             if rec['creatorid'] != 1:
                 toemails.append(rec['creatoremail'])
@@ -247,7 +247,7 @@ def create_ticket_for_autoclose(jobneedrecord, ticketdesc):
         return Ticket.objects.filter(
             id=tkt.id
         ).select_related('bu', 'client', 'escalationtemplate').values(
-            'ticketcategory_id', 'client_id', 'level', 'bu_id', 'id',
+            'ticketcategory_id', 'client_id', 'level', 'bu_id', 'ticketno',
             'cdtz', 'ctzoffset'
         ).first()
     except Exception as e:
