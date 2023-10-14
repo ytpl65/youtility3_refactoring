@@ -365,14 +365,14 @@ LOGGING_CONFIG_ = {
         },
         'filelogs': {
             'class': 'logging.handlers.RotatingFileHandler',
-            'filename':'server.log',
+            'filename':f'{env("LOG_ROOT")}/mobileservice.log',
             'maxBytes': 15728640,
             'backupCount': 10,
             'formatter': 'coloured',
         },
         'serviceLogs':{
             'class': 'logging.handlers.RotatingFileHandler',
-            'filename':'mobileservice.log',
+            'filename':f'{env("LOG_ROOT")}/mobileservice.log',
             'maxBytes': 15728640,
             'backupCount': 10,
             'formatter': 'coloured',
