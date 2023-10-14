@@ -515,7 +515,7 @@ def perform_insertrecord(self, file, request = None, db='default', filebased = T
                     instance = obj, request=request, user=user)
                 if tablename == 'wom':
                     wutils.notify_wo_creation(id = obj.id)
-                    save_approvers_injson(obj)
+                    obj = save_approvers_injson(obj)
                 allconditions = [
                     hasattr(obj, 'peventtype'), hasattr(obj, 'endlocation'), 
                     hasattr(obj, 'punchintime'), hasattr(obj, 'punchouttime')]

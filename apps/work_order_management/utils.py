@@ -71,9 +71,11 @@ def reject_workpermit(womid, usercode):
     w.save()
     
 def save_approvers_injson(wp):
+    log.info("saving approvers started")
     wp_approvers = [
         {'name': approver, 'status': 'PENDING'} for approver in wp.approvers
     ]
     wp.other_data['wp_approvers'] = wp_approvers
     wp.save()
+    log.info("saving approvers ended")
     return wp

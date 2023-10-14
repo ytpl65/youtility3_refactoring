@@ -1015,3 +1015,11 @@ class PPMFormJobneed(forms.ModelForm):
         self.fields['pgroup'].queryset = pm.Pgroup.objects.filter_for_dd_pgroup_field(self.request, sitewise=True)
         self.fields['asset'].queryset = am.Asset.objects.filter_for_dd_asset_field(self.request, ['ASSET'], sitewise=True)
         utils.initailize_form_fields(self)
+        
+class AssetComparisionForm(forms.Form):
+    asset_type = forms.ChoiceField(label="Asset Type", required=True)
+    asset = forms.ChoiceField(label="Asset", required=True)
+    qset = forms.ChoiceField(label="Question Set", required=True)
+    question = forms.ChoiceField(label="Question", required=True)
+    fromdate = forms.DateTimeField(label='From', required=True)
+    
