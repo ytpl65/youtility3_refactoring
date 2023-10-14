@@ -68,7 +68,6 @@ INSTALLED_APPS = [
     'rest_framework',
     'django_celery_beat',
     'django_celery_results',
-    'leaflet',
     'corsheaders',
 
     # local apps
@@ -366,14 +365,14 @@ LOGGING_CONFIG_ = {
         },
         'filelogs': {
             'class': 'logging.handlers.RotatingFileHandler',
-            'filename':f'{env("LOG_ROOT")}/youtility4.log',
+            'filename':'server.log',
             'maxBytes': 15728640,
             'backupCount': 10,
             'formatter': 'coloured',
         },
         'serviceLogs':{
             'class': 'logging.handlers.RotatingFileHandler',
-            'filename':f'{env("LOG_ROOT")}/mobileservice.log',
+            'filename':'mobileservice.log',
             'maxBytes': 15728640,
             'backupCount': 10,
             'formatter': 'coloured',

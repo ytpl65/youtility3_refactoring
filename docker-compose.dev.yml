@@ -1,0 +1,53 @@
+services:
+  db:
+    image: postgis/postgis:14-3.4-alpine
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    environment:
+      POSTGRES_DB: youtility4db
+      POSTGRES_USER: youtilitydba
+      POSTGRES_PASSWORD: $$sysadmin!!
+
+  redis:
+    image: redis:7.2.1
+    command: redis-server
+
+
+  web:
+    build:
+      context: .
+      target: development
+    command: python manage.py runserver 0.0.0.0:8000
+    volumes:
+      - .:/home/linux/app
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+      - redis
+
+  celery:
+    build: 
+      context: .
+      target: development
+    command: celery -A intelliwiz_config worker --loglevel=info --logfile=/home/linux/app/celery_logs/celery.log
+    volumes:
+      - celery_log_volume:/home/linux/app/celery_logs
+    depends_on:
+      - db
+      - redis
+  
+  celery_beat:
+    build:
+      context: .
+      target: development
+    command: celery -A intelliwiz_config beat --loglevel=info --logfile=/home/linux/app/celery_logs/celery_b.log
+    volumes:
+      - celery_log_volume:/home/linux/app/celery_logs
+    depends_on:
+      - db
+      - redis
+
+volumes:
+  postgres_data:
+  celery_log_volume:
