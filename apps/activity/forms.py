@@ -1018,8 +1018,16 @@ class PPMFormJobneed(forms.ModelForm):
         
 class AssetComparisionForm(forms.Form):
     asset_type = forms.ChoiceField(label="Asset Type", required=True)
-    asset = forms.ChoiceField(label="Asset", required=True)
-    qset = forms.ChoiceField(label="Question Set", required=True)
-    question = forms.ChoiceField(label="Question", required=True)
+    asset = forms.ChoiceField(label="Asset", required=True, choices=[])
+    qset = forms.ChoiceField(label="Question Set", required=True, choices=[])
+    question = forms.ChoiceField(label="Question", required=True, choices=[])
     fromdate = forms.DateTimeField(label='From', required=True)
+    uptodate = forms.DateTimeField(label='To', required=True)
+    
+    def __init__(self, *args, **kwargs):
+        self.request = kwargs.pop('request')
+        super().__init__(*args, **kwargs)
+        self.fields['asset_type'].choices = am.Asset.objects.get_asset_types_choices(self.request)
+        
+        
     

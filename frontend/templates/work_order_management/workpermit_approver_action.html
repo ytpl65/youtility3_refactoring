@@ -1,28 +1,18 @@
-<!DOCTYPE html5>
+<!DOCTYPE html>
 <html lang="en">
 
 <head>
-    <meta charset="UTF-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    
     <style>
         table {
             border-collapse: collapse;
             table-layout: auto;
-            border-width: 1px;
-            border-style: solid;
-            border-color: #d4d4d4;
-
         }
-
         td {
             padding: 8px;
-            border: 1px solid #d4d4d4;
+            border: 1px solid #ddd;
             text-align: left;
             color: #202124;
         }
-
         .bgy {
             background-color: #eaf1fb !important;
             font-weight: normal;
@@ -64,7 +54,7 @@
 <body>
         <p>
         Please review the following work permit details and approve or reject as appropriate.
-        <table class="table table-sm">
+        <table>
             <tbody>
                 {% for section in sections %}
                 <tr>

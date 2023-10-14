@@ -14,7 +14,7 @@ from apps.core import utils
 from apps.core import exceptions as excp
 from apps.service import serializers as sz
 from apps.y_helpdesk.models import Ticket
-from background_tasks.tasks import alert_sendmail
+from background_tasks.tasks import alert_sendmail, send_email_notification_for_wp
 from intelliwiz_config.celery import app
 from apps.work_order_management.utils import save_approvers_injson
 
@@ -237,6 +237,7 @@ def save_parent_childs(sz, jn_parent_serializer, child, M, tablename, is_return_
                 if hasattr(parent, 'parent_id') and tablename == 'wom' and parent.workpermit != 'NOT_REQUIRED' and parent.parent_id ==1:
                     #workpermit parent record
                     parent = save_approvers_injson(parent)
+                    send_email_notification_for_wp.delay(parent.id, parent.qset_id, parent.approvers, parent.client_id, parent.bu_id)
             if is_return_wp:
                 wom = Wom.objects.get(id = jn_parent_serializer.validated_data.get('parent_id'))
                 wom.workstatus = Wom.Workstatus.COMPLETED
