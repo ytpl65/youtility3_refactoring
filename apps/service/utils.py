@@ -228,13 +228,15 @@ def update_jobneeddetails(jobneeddetails, JndModel):
 
 
 def save_parent_childs(sz, jn_parent_serializer, child, M, tablename, is_return_wp):
-    log.info("save_parent_childs ............start")
     try:
         rc,  traceback= 0,  'NA'
         instance = None
         if jn_parent_serializer.is_valid():
             if not is_return_wp:
                 parent = jn_parent_serializer.save()
+                if hasattr(parent, 'parent_id') and tablename == 'wom' and parent.workpermit != 'NOT_REQUIRED' and parent.parent_id ==1:
+                    #workpermit parent record
+                    parent = save_approvers_injson(parent)
             if is_return_wp:
                 wom = Wom.objects.get(id = jn_parent_serializer.validated_data.get('parent_id'))
                 wom.workstatus = Wom.Workstatus.COMPLETED
@@ -515,7 +517,6 @@ def perform_insertrecord(self, file, request = None, db='default', filebased = T
                     instance = obj, request=request, user=user)
                 if tablename == 'wom':
                     wutils.notify_wo_creation(id = obj.id)
-                    obj = save_approvers_injson(obj)
                 allconditions = [
                     hasattr(obj, 'peventtype'), hasattr(obj, 'endlocation'), 
                     hasattr(obj, 'punchintime'), hasattr(obj, 'punchouttime')]
