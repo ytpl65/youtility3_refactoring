@@ -449,6 +449,7 @@ function handle_rendering_of_menus(session) {
     sitesurvey: "#SITESURVEY",
     helpdesk: "#HELPDESK",
     scheduling: "#SCHEDULING",
+    comparisions: "#COMPARISIONS",
     wom: "#WOM",
   };
   if (session["is_superadmin"]) {
@@ -478,6 +479,10 @@ function handle_rendering_of_menus(session) {
       if (code.includes("AD_") && $(exceptions["admin"]).is(":hidden")) {
         $(exceptions["admin"]).show();
         $(`${exceptions["admin"]} .menu-item`).hide();
+      }
+      if (code.includes("CMP_") && $(exceptions["comparisions"]).is(":hidden")) {
+        $(exceptions["comparisions"]).show();
+        $(`${exceptions["comparisions"]} .menu-item`).hide();
       }
 
       if (code.includes("OB_") && $(exceptions["onboarding"]).is(":hidden")) {
