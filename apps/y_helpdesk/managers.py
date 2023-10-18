@@ -173,6 +173,7 @@ class ESCManager(models.Manager):
         from apps.onboarding.models import TypeAssist
         qset = TypeAssist.objects.filter(
             Q(bu_id__in = S['assignedsites'] + [1]) | Q(cuser_id=1) | Q(cuser__is_superuser=True),
+            client_id = S['client_id'],
             tatype__tacode__in = ['TICKETCATEGORY', 'TICKET_CATEGORY']
         ).select_related('tatype', 'bu').values(
             'taname', 'cdtz', 'id', 'ctzoffset', 'bu__buname', 'bu__bucode'

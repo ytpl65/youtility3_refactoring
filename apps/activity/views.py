@@ -1011,9 +1011,9 @@ class PPMJobneedView(LoginRequiredMixin, View):
         'template_list':'activity/ppm/ppm_jobneed_list.html',
         'template_form':'activity/ppm/jobneed_ppmform.html',
         'model':am.Jobneed,
-        'related':['asset', 'qset', 'people', 'pgroup', 'bu'],
+        'related':['asset', 'qset', 'people', 'pgroup', 'bu', 'job'],
         'fields':['plandatetime', 'expirydatetime', 'gracetime', 'asset__assetname', 
-                  'assignedto', 'performedby__peoplename', 'jobdesc', 'frequency', 
+                  'assignedto', 'performedby__peoplename', 'jobdesc', 'job__frequency', 
                   'qset__qsetname', 'id', 'ctzoffset', 'jobstatus', 'bu__bucode', 'bu__buname'],
         'form':af.PPMFormJobneed,
     }
@@ -1158,6 +1158,52 @@ def get_list_of_peoples(request):
         pgroup_id = obj.pgroup_id
     ).values('people__peoplecode', 'people__peoplename', 'id') or Pgbelonging.objects.none()
     return rp.JsonResponse({'data':list(data)}, status=200)
+
+
+class AssetComparisionView(LoginRequiredMixin, View):
+    template = 'activity/asset_comparision.html'
+    form = af.AssetComparisionForm
     
-    
-    
+    def get(self, request, *args, **kwargs):
+        R, S = request.GET, request.session
+        ic(R)
+        if R.get('template'):
+            cxt = {'asset_cmp_form': self.form(request=request)}
+            return render(request, self.template, cxt)
+        
+        if R.get('action') == 'get_assets' and R.get('of_type'):
+            qset = am.Asset.objects.filter(
+                client_id=S['client_id'],
+                bu_id = S['bu_id'],
+                type_id=R['of_type']).values('id', 'assetname').distinct()
+            return rp.JsonResponse(
+                data={'options':list(qset)}, status=200
+            )
+        if R.get('action') == 'get_qsets' and R.getlist('of_assets[]'):
+            qset = am.QuestionSet.objects.filter(
+                client_id=S['client_id'],
+                bu_id = S['bu_id'],
+                type__in=['CHECKLIST', 'ASSETMAINTENANCE'],
+                parent_id=1,
+                enable=True,
+                assetincludes__contains=R.getlist('of_assets[]')).values('id', 'qsetname').distinct()
+            return rp.JsonResponse(
+                data={'options':list(qset)}, status=200
+            )
+        if R.get('action') == 'get_questions' and R.getlist('of_qset'):
+            qset = am.QuestionSetBelonging.objects.filter(
+                client_id=S['client_id'],
+                bu_id = S['bu_id'],
+                answertype='NUMERIC',
+                qset_id=R.get('of_qset')).select_related('question').values('question_id', 'question__quesname').distinct()
+            ic(str(qset.query))
+            return rp.JsonResponse(
+                data={'options':list(qset)}, status=200
+            )
+        
+        if R.get('action') == 'get_data_for_graph' and R.get('formData'):
+            formData = QueryDict(R['formData'])
+            ic(formData)
+            data = am.JobneedDetails.objects.get_asset_comparision(request, formData)
+            return rp.JsonResponse({'series':data}, status=200, safe=False)
+            

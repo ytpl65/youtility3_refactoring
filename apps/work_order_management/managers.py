@@ -242,8 +242,14 @@ class WorkOrderManager(models.Manager):
         from apps.peoples.models import People
         people = People.objects.get(id=peopleid)
         workpermit_statuses = workpermit.replace(', ', ',').split(',')
+        fields = ['cuser_id', 'muser_id', 'cdtz', 'mdtz', 'ctzoffset','description', 'uuid', 'plandatetime',
+                  'expirydatetime', 'starttime', 'endtime', 'gpslocation', 'location_id', 'asset_id',
+                  'workstatus', 'workpermit', 'priority','parent_id', 'alerts', 'permitno', 'approverstatus', 
+                  'performedby','ismailsent', 'isdenied', 'client_id', 'bu_id', 'approvers', 'id']
+        
         qset = self.select_related().annotate(
-            permitno = F('other_data__wp_seqno')
+            permitno = F('other_data__wp_seqno'),
+            approverstatus = F('other_data__wp_approvers')
             ).filter(
             Q(cuser_id = peopleid) | Q(muser_id=peopleid) | Q(approvers__contains = [people.peoplecode]),
             cdtz__date__gte = fromdate,
@@ -252,7 +258,7 @@ class WorkOrderManager(models.Manager):
             bu_id = buid,
             client_id = clientid,
             parent_id=parentid
-        ).values()
+        ).values(*fields)
         print(str(qset.query))
         return qset or self.none()
         

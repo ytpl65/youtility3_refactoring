@@ -1142,7 +1142,7 @@ class JobneedTasks(LoginRequiredMixin, View):
         'template_path':  'schedhuler/tasklist_jobneed.html',
         'fields': [
                 'jobdesc', 'people__peoplename', 'pgroup__groupname', 'id',
-                'plandatetime', 'expirydatetime', 'jobstatus', 'gracetime',
+                'plandatetime', 'expirydatetime', 'jobstatus', 'gracetime','asset__assetname',
                 'performedby__peoplename', 'asset__assetname', 'qset__qsetname','bu__buname', 'bu__bucode',
                 'ctzoffset', 'assignedto', 'jobtype', 'ticketcategory__taname', 'other_info__isAcknowledged'],
         'related': [

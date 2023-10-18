@@ -19,3 +19,4 @@ nginx.conf
 .gitignore
 logs
 staticfiles
+.vscode

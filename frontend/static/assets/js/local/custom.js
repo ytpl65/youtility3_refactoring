@@ -1482,7 +1482,7 @@ function initDateRange(element, start = null, end = null) {
       //minDate: '01/01/2012',
       //maxDate: '12/31/2014',
       dateLimit: {
-        days: 90,
+        days: 92,
       },
       showDropdowns: true,
       showWeekNumbers: true,

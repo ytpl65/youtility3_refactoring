@@ -28,5 +28,6 @@ urlpatterns = [
     path('switchsite/', views.SwitchSite.as_view(), name='switchsite'),
     path('testcalendar/', views.CalendarView.as_view(), name='calendar'),
     path('assetlog/', views.AssetLogView.as_view(), name="assetlogs"),
-    path('list_of_peoples/', views.get_list_of_peoples, name="list_of_peoples")
+    path('list_of_peoples/', views.get_list_of_peoples, name="list_of_peoples"),
+    path('comparision/', views.AssetComparisionView.as_view(), name="comparision")
 ]

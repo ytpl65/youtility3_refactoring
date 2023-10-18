@@ -311,6 +311,7 @@ DATABASE_ROUTERS = ['apps.tenants.middlewares.TenantDbRouter']
 INTERNAL_IPS = [
     # ...
     '127.0.0.1',
+    '192.168.1.254',
     # ...
 ]
 
@@ -365,7 +366,7 @@ LOGGING_CONFIG_ = {
         },
         'filelogs': {
             'class': 'logging.handlers.RotatingFileHandler',
-            'filename':f'{env("LOG_ROOT")}/mobileservice.log',
+            'filename':f'{env("LOG_ROOT")}/youtility4.log',
             'maxBytes': 15728640,
             'backupCount': 10,
             'formatter': 'coloured',
@@ -387,20 +388,20 @@ LOGGING_CONFIG_ = {
         '': {  # root logger
             'handlers': ['default'],
             'level': 'WARNING',
-            'propagate': False 
+            'propagate': True 
         },
         'django': { 
-            'handlers': ['default', 'filelogs', 'mail_admins'],
+            'handlers': ['default', 'filelogs'],
             'level': 'INFO',
             'propagate': False
         },
         '__main__': {  # if __name__ == '__main__'
-            'handlers': ['default', 'filelogs', 'mail_admins'],
+            'handlers': ['default', 'filelogs'],
             'level': 'DEBUG',
             'propagate': False
         },
         'mobile_service_log':{
-            'handlers': ['default', 'serviceLogs', 'mail_admins'],
+            'handlers': ['default', 'serviceLogs'],
             'level': 'DEBUG',
             'propagate': False
         }               

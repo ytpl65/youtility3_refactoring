@@ -890,6 +890,8 @@ class JobneedManager(models.Manager):
         if not dtime: return "--"
         dtz = dtime + timedelta(minutes=int(ctzoffset))
         return dtz.strftime('%d-%b-%Y %H:%M:%S')
+    
+
             
 
 class AttachmentManager(models.Manager):
@@ -1255,6 +1257,48 @@ class JobneedDetailsManager(models.Manager):
     
     def get_ppm_details(self, request):
         return self.get_task_details(request.GET.get('taskid'))
+
+    def get_asset_comparision(self, request, formData):
+        S = request.session
+        qset = self.filter(
+            jobneed__identifier='TASK',
+            jobneed__jobstatus='COMPLETED',
+            jobneed__plandatetime__date__gte=formData.get('fromdate'),
+            jobneed__plandatetime__date__lte=formData.get('uptodate'),
+            jobneed__bu_id=S['bu_id'],
+            answertype='NUMERIC',
+            question_id=formData.get('question'),
+            jobneed__client_id=S['client_id']            
+        ).annotate(
+            plandatetime = F('jobneed__plandatetime'),
+            starttime = F('jobneed__starttime'),
+            jobdesc = F('jobneed__jobdesc'),
+            asset_id = F('jobneed__asset_id'),
+            assetcode = F('jobneed__asset__assetcode'),
+            assetname = F('jobneed__asset__assetname'),
+            questionname = F('question__quesname'),
+            bu_id=F('jobneed__bu_id'),
+            buname=F('jobneed__bu__buname'),
+            answer_as_float=Cast('answer', models.FloatField())
+        ).select_related('jobneed').values(
+            "plandatetime", 'starttime', 'jobdesc',
+            'asset_id', 'assetcode', 'questionname',
+            'bu_id', 'buname', 'answer_as_float')
+        
+        ic(str(qset.query))
+        
+        series = []
+        from django.apps import apps
+        Asset = apps.get_model('activity', 'Asset')
+        for asset_id in formData.getlist('asset'):
+            series.append(
+                {
+                    'name':Asset.objects.get(id=asset_id).assetname,
+                    'data':list(qset.filter(jobneed__asset_id=asset_id).values_list('starttime', 'answer_as_float'))
+                }
+            )
+        ic(series)
+        return series
         
 
 
@@ -1472,17 +1516,13 @@ class JobManager(models.Manager):
     
     def get_jobppm_listview(self, request):
         R, S = request.GET, request.session
-        fromdt = R.get('from', datetime.now() - timedelta(days=7))
-        uptpdt = R.get('upto', datetime.now())
         qset = self.annotate(
             assignedto = Case(
                 When(pgroup_id=1, then=Concat(F('people__peoplename'), V(' [PEOPLE]'))),
                 When(people_id=1, then=Concat(F('pgroup__groupname'), V(' [GROUP]'))),
             )).filter(
-            fromdate__date__gte = fromdt,
-            fromdate__date__lte = uptpdt,
             client_id = S['client_id'],
-            bu_id__in = S['assignedsites'],
+            bu_id = S['bu_id'],
             identifier = 'PPM',
             enable=True
         ).values('id', 'jobname', 'asset__assetname', 'qset__qsetname', 'assignedto', 'bu__bucode',

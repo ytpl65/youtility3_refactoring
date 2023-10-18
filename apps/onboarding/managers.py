@@ -312,6 +312,16 @@ class TypeAssistManager(models.Manager):
          # add an extra choice with empty strings
         qset = [('','')] + list(qset)
         return qset or self.none()
+    
+    def get_asset_types_choices(self, request):
+        S = request.session
+        
+        qset = self.select_related('tatype').filter(
+            client_id = S['client_id'],
+            tatype__tacode = 'ASSETTYPE').values_list('id', 'tacode').distinct()
+        # add an extra choice with empty strings
+        qset = [('','')] + list(qset)
+        return qset
 
 
 class GeofenceManager(models.Manager):

@@ -447,6 +447,7 @@ def create_report_history(self, formdata, userid, buid, EI):
 
 @shared_task(bind=True, name="Create Workpermit email notification")
 def send_email_notification_for_wp(self, womid, qsetid, approvers, client_id, bu_id):
+    log.info(f"{womid = } {qsetid = } {approvers = } {client_id = } {bu_id = }")
     jsonresp = {'story': "", "traceback": ""}
     try:
         from django.apps import apps

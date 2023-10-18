@@ -1017,17 +1017,20 @@ class PPMFormJobneed(forms.ModelForm):
         utils.initailize_form_fields(self)
         
 class AssetComparisionForm(forms.Form):
-    asset_type = forms.ChoiceField(label="Asset Type", required=True)
-    asset = forms.ChoiceField(label="Asset", required=True, choices=[])
-    qset = forms.ChoiceField(label="Question Set", required=True, choices=[])
-    question = forms.ChoiceField(label="Question", required=True, choices=[])
-    fromdate = forms.DateTimeField(label='From', required=True)
-    uptodate = forms.DateTimeField(label='To', required=True)
+    required_css_class = "required"
+    
+    asset_type = forms.ChoiceField(label="Asset Type", required=True, choices=[], widget=s2forms.Select2Widget)
+    asset = forms.ChoiceField(label="Asset", required=True, choices=[], widget=s2forms.Select2MultipleWidget)
+    qset = forms.ChoiceField(label="Question Set", required=True, choices=[], widget=s2forms.Select2Widget)
+    question = forms.ChoiceField(label="Question", required=True, choices=[], widget=s2forms.Select2Widget)
+    fromdate = forms.DateField(label='From', required=True)
+    uptodate = forms.DateField(label='To', required=True)
     
     def __init__(self, *args, **kwargs):
         self.request = kwargs.pop('request')
         super().__init__(*args, **kwargs)
-        self.fields['asset_type'].choices = am.Asset.objects.get_asset_types_choices(self.request)
+        self.fields['asset_type'].choices = om.TypeAssist.objects.get_asset_types_choices(self.request)
+        utils.initailize_form_fields(self)
         
         
     
