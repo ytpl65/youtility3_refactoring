@@ -110,41 +110,54 @@ Asset Comparision
       var options = {
             series: [],
             chart: {
-            type   : 'line',
-            stacked: false,
-            height : 350,
-            zoom   : {
-                type          : 'x',
-                enabled       : true,
-                autoScaleYaxis: true
+                type   : 'line',
+                stacked: false,
+                height : 350,
+                zoom   : {
+                    type          : 'x',
+                    enabled       : true,
+                    autoScaleYaxis: true
+                },
+                toolbar: {
+                    autoSelected: 'zoom'
+                }
             },
-            toolbar: {
-                autoSelected: 'zoom'
-            }
+            noData: {
+                text: 'No data available!',
+                align: 'center',
+                verticalAlign: 'middle',
+                offsetX: 0,
+                offsetY: 0,
+                style: {
+                color: '#01579b',
+                fontSize: '16px',
+                fontFamily: undefined
+                }
             },
+            
             dataLabels: {
-            enabled: true
+                enabled: true
             },
             markers: {
-            size: 1,
+                size: 1,
             },
             title: {
-            text : 'Asset Comparision Line Chart',
-            align: 'left'
+                text : 'Asset Comparision Line Chart',
+                align: 'left'
             },
             stroke: {
                 curve: 'straight'
             },
             yaxis: {
-            title: {
-                text: 'Anwer'
-            },
+                title: {
+                    text: 'Anwer'
+                },
             },
             xaxis: {
-            type: 'datetime',
+                type: 'datetime',
             },
             tooltip: {
-            shared: false,
+                shared: false,
             }
         };  
 
