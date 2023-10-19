@@ -139,9 +139,9 @@ class WorkOrderManager(models.Manager):
         
     
     def get_wp_answers(self, qsetid, womid):
-        
+        logger.info(f"{womid = } {qsetid = }")
         childwoms = self.filter(parent_id = womid).order_by('seqno')
-        QuestionSet = apps.get_model('activity', 'QuestionSet')
+        logger.info(f"{childwoms = }")
         wp_details = []
         for childwom in childwoms:
             sq = {
@@ -153,6 +153,7 @@ class WorkOrderManager(models.Manager):
             }
             ic(sq)
             wp_details.append(sq)
+        logger.info(f"{wp_details = }")
         return wp_details or self.none()
     
 

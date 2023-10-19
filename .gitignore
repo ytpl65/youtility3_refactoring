@@ -1,4 +1,5 @@
 # Ignore all hidden files and folders, except for the `.git` folder.
+.
 !.git
 
 # Ignore all virtual environment files and folders.

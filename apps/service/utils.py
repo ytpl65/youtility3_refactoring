@@ -234,10 +234,6 @@ def save_parent_childs(sz, jn_parent_serializer, child, M, tablename, is_return_
         if jn_parent_serializer.is_valid():
             if not is_return_wp:
                 parent = jn_parent_serializer.save()
-                if hasattr(parent, 'parent_id') and tablename == 'wom' and parent.workpermit != 'NOT_REQUIRED' and parent.parent_id ==1:
-                    #workpermit parent record
-                    parent = save_approvers_injson(parent)
-                    send_email_notification_for_wp.delay(parent.id, parent.qset_id, parent.approvers, parent.client_id, parent.bu_id)
             if is_return_wp:
                 wom = Wom.objects.get(id = jn_parent_serializer.validated_data.get('parent_id'))
                 wom.workstatus = Wom.Workstatus.COMPLETED
@@ -276,6 +272,12 @@ def save_parent_childs(sz, jn_parent_serializer, child, M, tablename, is_return_
             if allsaved == len(child):
                 msg= M.INSERT_SUCCESS
                 log.info(f'All {allsaved} child records saved successfully')
+                #log.info(f'{parent.id = } {parent.uuid = } {parent.description}')
+                if hasattr(parent, 'parent_id') and tablename == 'wom' and parent.workpermit != 'NOT_REQUIRED' and parent.parent_id ==1:
+                    #workpermit parent record
+                    parent = save_approvers_injson(parent)
+                    log.info(f'{parent.id = } {parent.uuid = } {parent.description}')
+                    send_email_notification_for_wp.delay(parent.id, parent.qset_id, parent.approvers, parent.client_id, parent.bu_id)
         else:
             log.error(jn_parent_serializer.errors)
             traceback, msg, rc = str(jn_parent_serializer.errors), M.INSERT_FAILED, 1
