@@ -101,7 +101,7 @@ class WorkOrderManager(models.Manager):
             cdtz__date__gte = P['from'],
             cdtz__date__lte = P['to'],
         ).values('cdtz', 'other_data__wp_seqno', 'qset__qsetname', 'workpermit', 'ctzoffset',
-                 'workstatus', 'id', 'cuser__peoplename', 'bu__buname', 'bu__bucode')
+                 'workstatus', 'id', 'cuser__peoplename', 'bu__buname', 'bu__bucode').order_by('-cdtz')
         return qobjs or self.none()
          
     def get_workpermit_details(self, request, wp_qset_id):
