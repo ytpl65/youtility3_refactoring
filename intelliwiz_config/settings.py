@@ -489,7 +489,6 @@ KNOWAGE_SERVER_URL = env('KNOWAGE_SERVER_URL')
 KNOWAGE_DATASOURCE = 'Redmine Database'
 COMPANYNAME = 'Youtility Technologies Pvt. Ltd.'
 KNOWAGE_REPORTS = {
-    # 'KEY' : 'DOCUMENT_LABEL USED IN KNOWAGESERVER'
     'TASKSUMMARY':'TaskSummary',
     'TOURSUMMARY':"TourSummary",
     'LISTOFTASKS':'ListOfTasks',
@@ -497,6 +496,7 @@ KNOWAGE_REPORTS = {
     'PPMSUMMARY':'PPMSummary',
     'LISTOFTICKETS':'ListOfTickets',
     'WORKORDERLIST':'WorkOrderList',
+    'SITEREPORT':'siteReport',
 }
 
 TEST_RUNNER = 'intelliwiz_config.test_runner.MyTestRunner'

@@ -86,6 +86,7 @@ class ReportForm(forms.Form):
         (settings.KNOWAGE_REPORTS['PPMSUMMARY'], 'PPM Summary'),
         (settings.KNOWAGE_REPORTS['LISTOFTICKETS'], 'List of Tickets'),
         (settings.KNOWAGE_REPORTS['WORKORDERLIST'], 'Work Order List'),
+        (settings.KNOWAGE_REPORTS['SITEREPORT'], 'Site Report'),
     ]
     download_or_send_options = [
         ('DOWNLOAD', 'Download'),
@@ -104,7 +105,8 @@ class ReportForm(forms.Form):
     
     
     report_name = forms.ChoiceField(label='Report Name', required=True, choices=report_templates, initial='TASK_SUMMARY')
-    site        = forms.MultipleChoiceField(label='Site', required = True, widget=s2forms.Select2MultipleWidget)
+    site        = forms.ChoiceField(label='Site', required = True, widget=s2forms.Select2Widget)
+    sitegroup   = forms.ChoiceField(label="Site Group", required=True, widget=s2forms.Select2Widget)
     fromdate    = forms.DateField(label='From Date', required=True)
     uptodate    = forms.DateField(label='To Date', required=True)
     format      = forms.ChoiceField(widget=s2forms.Select2Widget, label="Format", required=True, choices=format_types, initial='PDF')
@@ -121,6 +123,7 @@ class ReportForm(forms.Form):
         S = self.request.session
         super().__init__(*args, **kwargs)
         self.fields['site'].choices = pm.Pgbelonging.objects.get_assigned_sites_to_people(S.get('_auth_user_id'), True)
+        self.fields['sitegroup'].choices = pm.Pgroup.objects.filter(identifier__tacode="SITEGROUP", bu_id__in = S['assignedsites'], enable=True).values_list('id', 'groupname')
         self.fields['fromdate'].initial = self.get_default_range_of_dates()[0]
         self.fields['uptodate'].initial = self.get_default_range_of_dates()[1]
         self.fields['cc'].choices = pm.People.objects.filter(isverified=True, client_id = S['client_id']).values_list('email', 'peoplename')

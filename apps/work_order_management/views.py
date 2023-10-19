@@ -557,6 +557,8 @@ class ReplyWorkPermit(View):
         elif R.get('action') == "rejected" and R.get('womid')  and R.get('peopleid'):
             log.info("work permit rejected")
             wp = Wom.objects.filter(id = R['womid']).first()
+            if wp.workpermit == Wom.WorkPermitStatus.APPROVED:
+                return render(request, P['email_template'], context={'alreadyapproved':True})
             p = People.objects.filter(id = R['peopleid']).first()
             wp.workpermit = Wom.WorkPermitStatus.REJECTED.value
             wp.save()

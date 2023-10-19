@@ -61,6 +61,14 @@ Report Form
       </div>
       <div class="input-group mb-3">
         <div class="col-4">
+          {{ form.sitegroup.label_tag() }}
+        </div>
+        <div class="col-8">
+          {{ form.sitegroup }}
+        </div>
+      </div>
+      <div class="input-group mb-3">
+        <div class="col-4">
           {{ form.fromdate.label_tag() }}
         </div>
         <div class="col-8 fv-row">
@@ -146,6 +154,8 @@ Report Form
   const urlname = "{{ url('reports:exportreports') }}"
 
   $(document).ready(() => {
+    report_names = JSON.parse('{{ report_names }}')
+    console.log(report_names)
     //set ctzoffset
     $("#id_ctzoffset").val(-new Date().getTimezoneOffset())
       
@@ -183,6 +193,15 @@ Report Form
         toggleRequiredAttribute('id_to_addr', false)
         $('.emailfile').addClass('d-none')
       }
+    })
+
+    $("#id_report_name").change(() => {
+      let selected = $("#id_report_name").val()
+      report_names.forEach((item) => {
+        if(selected === item[0]){
+          
+        }
+      })
     })
 
     //on click preview button

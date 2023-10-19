@@ -525,7 +525,8 @@ class ExportReports(LoginRequiredMixin, View):
     def get(self, request, *args, **kwargs):
         R, P = request.GET, self.P
         if R.get('template'):
-            cxt = {'form':P['form'](request=request)}
+            report_names = json.dumps(P['form'].report_templates)
+            cxt = {'form':P['form'](request=request), 'report_names':report_names}
             return render(request, P['template_form'], context=cxt)
         
     def post(self, request, *args, **kwargs):
@@ -533,7 +534,6 @@ class ExportReports(LoginRequiredMixin, View):
         data = R
         form = P['form'](data = data, request=request)
         if not form.is_valid():
-            ic(form.errors, form.data)
             return render(request, P['template_form'], context={'form':form})
         log.info('form is valid')
         formdata = form.cleaned_data
