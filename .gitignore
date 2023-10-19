@@ -1,22 +1,39 @@
-*.pyc
-intelliwiz_config/settings.py*
-intelliwiz_config/envs/*
-frontend/static/assets/media/images/my_project_visualized.png
-docs/importants.txt
-.gitignore
-docs/importants.txt
-manage.py
-.env
-testPython.py
-df.ipynb
-test.ipynb
-fr.ipynb
-project_nb.ipynb
-.pytest_cache
+# Ignore all hidden files and folders, except for the `.git` folder.
+!.git
+
+# Ignore all virtual environment files and folders.
+.venv/
+.vscode/
 .git-credentials
-.docker.env
-nginx.conf
-.gitignore
+__pycache__/
+.pytest_cache/
+.ipynb_checkpoints/
+*.dev
+*.prod
+*.toml
+*.ipynb
+
+
+#ignore settings file
+intelliwiz_config/
+!intelliwiz_config/*.py
+
+# Ignore all static and media files and folders.
+frontend/
+!frontend/templates
+!frontend/static/assets/css
+!frontend/static/assets/js
+
+# Ignore all log files.
 logs
-staticfiles
-.vscode
+*.log
+
+# Ignore all compiled files.
+*.pyc
+*.pyo
+
+# Ignore all test data.
+test_data/
+
+# Ignore any other files or folders that are not relevant to the project.
+docs
