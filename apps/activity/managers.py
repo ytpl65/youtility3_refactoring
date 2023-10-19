@@ -1300,6 +1300,48 @@ class JobneedDetailsManager(models.Manager):
         ic(series)
         return series
         
+    def get_parameter_comparision(self, request, formData):
+        S = request.session
+        qset = self.filter(
+            jobneed__identifier='TASK',
+            jobneed__jobstatus='COMPLETED',
+            jobneed__plandatetime__date__gte=formData.get('fromdate'),
+            jobneed__plandatetime__date__lte=formData.get('uptodate'),
+            jobneed__bu_id=S['bu_id'],
+            answertype='NUMERIC',
+            jobneed__asset_id=formData.get('asset'),
+            jobneed__client_id=S['client_id']            
+        ).annotate(
+            plandatetime = F('jobneed__plandatetime'),
+            starttime = F('jobneed__starttime'),
+            jobdesc = F('jobneed__jobdesc'),
+            asset_id = F('jobneed__asset_id'),
+            assetcode = F('jobneed__asset__assetcode'),
+            assetname = F('jobneed__asset__assetname'),
+            questionname = F('question__quesname'),
+            bu_id=F('jobneed__bu_id'),
+            buname=F('jobneed__bu__buname'),
+            answer_as_float=Cast('answer', models.FloatField())
+        ).select_related('jobneed').values(
+            "plandatetime", 'starttime', 'jobdesc',
+            'asset_id', 'assetcode', 'questionname',
+            'bu_id', 'buname', 'answer_as_float')
+        
+        ic(str(qset.query))
+        
+        series = []
+        from django.apps import apps
+        Question = apps.get_model('activity', 'Question')
+        for question_id in formData.getlist('question'):
+            series.append(
+                {
+                    'name':Question.objects.get(id=question_id).quesname,
+                    'data':list(qset.filter(question_id=question_id).values_list('starttime', 'answer_as_float'))
+                }
+            )
+        ic(series)
+        return series
+        pass
 
 
 class QsetBlngManager(models.Manager):

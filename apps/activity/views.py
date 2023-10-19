@@ -1207,3 +1207,46 @@ class AssetComparisionView(LoginRequiredMixin, View):
             data = am.JobneedDetails.objects.get_asset_comparision(request, formData)
             return rp.JsonResponse({'series':data}, status=200, safe=False)
             
+            
+class ParameterComparisionView(LoginRequiredMixin, View):
+    template = 'activity/parameter_comparision.html'
+    form = af.ParameterComparisionForm
+    
+    def get(self, request, *args, **kwargs):
+        R, S = request.GET, request.session
+        ic(R)
+        if R.get('template'):
+            cxt = {'asset_param_form': self.form(request=request)}
+            return render(request, self.template, cxt)
+        
+        if R.get('action') == 'get_assets' and R.get('of_type'):
+            qset = am.Asset.objects.filter(
+                client_id=S['client_id'],
+                bu_id = S['bu_id'],
+                type_id=R['of_type']).values('id', 'assetname').distinct()
+            return rp.JsonResponse(
+                data={'options':list(qset)}, status=200
+            )
+        
+        if R.get('action') == 'get_questions':
+            questionsets = am.QuestionSet.objects.filter(
+                client_id=S['client_id'],
+                bu_id = S['bu_id'],
+                type__in=['CHECKLIST', 'ASSETMAINTENANCE'],
+                parent_id=1,
+                enable=True,
+                assetincludes__contains=[R.get('of_asset')]).values_list('id', flat=True).distinct()
+            qset = am.QuestionSetBelonging.objects.filter(
+                client_id=S['client_id'],
+                bu_id = S['bu_id'],
+                answertype='NUMERIC',
+                qset_id__in=questionsets).select_related('question').values('question_id', 'question__quesname').distinct()
+            return rp.JsonResponse(
+                data={'options':list(qset)}, status=200
+            )
+        
+        if R.get('action') == 'get_data_for_graph' and R.get('formData'):
+            formData = QueryDict(R['formData'])
+            ic(formData)
+            data = am.JobneedDetails.objects.get_parameter_comparision(request, formData)
+            return rp.JsonResponse({'series':data}, status=200, safe=False)

@@ -29,5 +29,6 @@ urlpatterns = [
     path('testcalendar/', views.CalendarView.as_view(), name='calendar'),
     path('assetlog/', views.AssetLogView.as_view(), name="assetlogs"),
     path('list_of_peoples/', views.get_list_of_peoples, name="list_of_peoples"),
-    path('comparision/', views.AssetComparisionView.as_view(), name="comparision")
+    path('comparision/', views.AssetComparisionView.as_view(), name="comparision"),
+    path('param_comparision/', views.ParameterComparisionView.as_view(), name="param_comparision")
 ]
