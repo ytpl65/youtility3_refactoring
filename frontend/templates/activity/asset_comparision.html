@@ -242,6 +242,8 @@ Asset Comparision
                 })
             })
         })
+        var chart = new ApexCharts(document.querySelector(".line-chart-asset-cmp"), options);
+        chart.render()
 
         //on load click
         $("#btn-load").click((e) => {
@@ -249,10 +251,14 @@ Asset Comparision
                 url:"{{ url('activity:comparision') }}",
                 data:{action:"get_data_for_graph", formData:$("#asset_cmp_form").serialize()}
             }).done((data, status, xhr) => {
-                options.series = data.series
-                options.yaxis.title.text = getSelectedValue("#id_question")
-                var chart = new ApexCharts(document.querySelector(".line-chart-asset-cmp"), options);
-                chart.render();
+                chart.updateOptions({
+                    yaxis:{
+                        title:{
+                            text: getSelectedValue("#id_question")
+                        }
+                    }
+                })
+                chart.updateSeries(data.series)
             })
         })
         
