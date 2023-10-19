@@ -273,7 +273,7 @@ def save_parent_childs(sz, jn_parent_serializer, child, M, tablename, is_return_
                 msg= M.INSERT_SUCCESS
                 log.info(f'All {allsaved} child records saved successfully')
                 #log.info(f'{parent.id = } {parent.uuid = } {parent.description}')
-                if hasattr(parent, 'parent_id') and tablename == 'wom' and parent.workpermit != 'NOT_REQUIRED' and parent.parent_id ==1:
+                if not is_return_wp and  hasattr(parent, 'parent_id') and tablename == 'wom' and parent.workpermit != 'NOT_REQUIRED' and parent.parent_id ==1:
                     #workpermit parent record
                     parent = save_approvers_injson(parent)
                     log.info(f'{parent.id = } {parent.uuid = } {parent.description}')
