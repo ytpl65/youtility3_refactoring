@@ -41,7 +41,7 @@ class VendorResource(resources.ModelResource):
         default=default_ta
     )
     
-    SHOWTOALLSITES = fields.Field(attribute='show_to_all_sites', column_name='Show to all sites', default=False)
+    SHOWTOALLSITES = fields.Field(attribute='show_to_all_sites', column_name='Applicable to All Sites', default=False)
     ID             = fields.Field(attribute='id')
     CODE           = fields.Field(attribute='code', column_name='Code*')
     NAME           = fields.Field(attribute='name', column_name='Name*')
@@ -58,7 +58,7 @@ class VendorResource(resources.ModelResource):
         report_skipped = True
         fields = [
             'CODE', 'NAME', 'GPS', 'CLIENT', 'BV', 'EMAIL',
-            'MOB', 'ENABLE', 'ADDRESS']
+            'MOB', 'ENABLE', 'ADDRESS', 'SHOWTOALLSITES']
         
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

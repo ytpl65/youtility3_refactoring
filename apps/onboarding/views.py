@@ -534,7 +534,7 @@ HEADER_MAPPING  = {
     ],
 
     'VENDOR':[
-        'Code*', 'Name*', 'Type*', 'Address*', 'Email*',
+        'Code*', 'Name*', 'Type*', 'Address*', 'Email*', 'Applicable to All Sites',
         'Mob No*', 'Site*', 'Client*', 'GPS Location', 'Enable'
     ],
     'LOCATION':[

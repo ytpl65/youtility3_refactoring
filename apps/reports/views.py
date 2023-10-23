@@ -525,8 +525,15 @@ class ExportReports(LoginRequiredMixin, View):
     def get(self, request, *args, **kwargs):
         R, P = request.GET, self.P
         if R.get('template'):
+            form = P['form'](request=request)
             report_names = json.dumps(P['form'].report_templates)
-            cxt = {'form':P['form'](request=request), 'report_names':report_names}
+            fields_map = json.dumps(form.get_fields_report_map())
+            ic(fields_map)
+            cxt = {
+                'form':form,
+                'report_names':report_names,
+                'fields_map':fields_map
+            }
             return render(request, P['template_form'], context=cxt)
         
     def post(self, request, *args, **kwargs):
@@ -612,6 +619,12 @@ class ExportReports(LoginRequiredMixin, View):
                  {"urlName":"fromdate", "values":[formdata['fromdate'].strftime('%d/%m/%Y')]},
                 {"urlName":"uptodate", "values":[formdata['uptodate'].strftime('%d/%m/%Y')]},
                 {"urlName":"siteids", "values":[formdata['site']]},
+            ]
+        if formdata.get('report_name') == settings.KNOWAGE_REPORTS['SITEREPORT']:
+            return [
+                {"urlName":"fromdate", "values":[formdata['fromdate'].strftime('%d/%m/%Y')]},
+                {"urlName":"uptodate", "values":[formdata['uptodate'].strftime('%d/%m/%Y')]},
+                {"urlName":"sgroupids", "values":[formdata['sitegroup']]},
             ]
             
         

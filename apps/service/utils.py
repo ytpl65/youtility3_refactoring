@@ -236,6 +236,7 @@ def save_parent_childs(sz, jn_parent_serializer, child, M, tablename, is_return_
                 parent = jn_parent_serializer.save()
             if is_return_wp:
                 wom = Wom.objects.get(id = jn_parent_serializer.validated_data.get('parent_id'))
+                seqno = Wom.objects.filter(parent_id=wom.id).order_by('-seqno').first().seqno + 1
                 wom.workstatus = Wom.Workstatus.COMPLETED
                 wom.save()
                 log.info('Return workpermit found parent wrapper ignored and only childs are considered')
@@ -253,6 +254,9 @@ def save_parent_childs(sz, jn_parent_serializer, child, M, tablename, is_return_
                 child_serializer = switchedSerializer(data = clean_record(ch))
 
                 if child_serializer.is_valid():
+                    if is_return_wp:
+                        child_serializer.validated_data['seqno'] = seqno
+                        seqno+=1
                     child_instance = child_serializer.save()
                     log.info(f"child record with this uuid: {child_instance.uuid} saved for report mutation")
                     for dtl in details:

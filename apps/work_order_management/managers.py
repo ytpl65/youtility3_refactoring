@@ -259,7 +259,7 @@ class WorkOrderManager(models.Manager):
             bu_id = buid,
             client_id = clientid,
             parent_id=parentid
-        ).values(*fields)
+        ).values(*fields).order_by('-cdtz')
         print(str(qset.query))
         return qset or self.none()
         

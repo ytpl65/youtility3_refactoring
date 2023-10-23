@@ -36,96 +36,182 @@ Report Form
 {% endblock nonfield_errors %}
 
 {% block form %}
-<form action="{{ url('reports:exportreports') }}" class="validate" method="post" id="report_form">
+<form action="{{ url('reports:exportreports') }}" class="validate"  novalidate="novalidate" method="post" id="report_form">
   <!-------------------------- CSRF MIDDLEWARE TOKEN --------------------->
   <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
   <input type="hidden" name="{{ form.ctzoffset.name }}" id="{{ form.ctzoffset.auto_id }}" value="-1">
   {{ form.preview }}
   <div class="row">
-    <div class="col-sm-12 col-md-6">
+    <div class="">
       <div class="input-group mb-3">
-        <div class="col-4">
+        <div class="col-2">
           {{ form.report_name.label_tag() }}
         </div>
-        <div class="col-8">
+        <div class="col-5">
           {{ form.report_name }}
         </div>
       </div>
-      <div class="input-group mb-3">
-        <div class="col-4">
+      <div class="input-group datafield d-none mb-3">
+        <div class="col-2">
           {{ form.site.label_tag() }}
         </div>
-        <div class="col-8">
+        <div class="col-5">
           {{ form.site }}
         </div>
       </div>
-      <div class="input-group mb-3">
-        <div class="col-4">
+      <div class="input-group datafield d-none mb-3">
+        <div class="col-2">
+          {{ form.peoplegroup.label_tag() }}
+        </div>
+        <div class="col-5">
+          {{ form.peoplegroup }}
+        </div>
+      </div>
+      <div class="input-group datafield d-none mb-3">
+        <div class="col-2">
+          {{ form.people.label_tag() }}
+        </div>
+        <div class="col-5">
+          {{ form.people }}
+        </div>
+      </div>
+      <div class="input-group datafield d-none mb-3">
+        <div class="col-2">
+          {{ form.assettype.label_tag() }}
+        </div>
+        <div class="col-5">
+          {{ form.assettype }}
+        </div>
+      </div>
+      <div class="input-group datafield d-none mb-3">
+        <div class="col-2">
+          {{ form.asset.label_tag() }}
+        </div>
+        <div class="col-5">
+          {{ form.asset }}
+        </div>
+      </div>
+      <div class="input-group datafield d-none mb-3">
+        <div class="col-2">
+          {{ form.qset.label_tag() }}
+        </div>
+        <div class="col-5">
+          {{ form.qset }}
+        </div>
+      </div>
+      <div class="input-group datafield d-none mb-3">
+        <div class="col-2">
+          {{ form.checkpoint_type.label_tag() }}
+        </div>
+        <div class="col-5">
+          {{ form.checkpoint_type }}
+        </div>
+      </div>
+      <div class="input-group datafield d-none mb-3">
+        <div class="col-2">
+          {{ form.checkpoint.label_tag() }}
+        </div>
+        <div class="col-5">
+          {{ form.checkpoint }}
+        </div>
+      </div>
+      <div class="input-group datafield d-none mb-3">
+        <div class="col-2">
+          {{ form.ticketcategory.label_tag() }}
+        </div>
+        <div class="col-5">
+          {{ form.ticketcategory }}
+        </div>
+      </div>
+      <div class="input-group datafield d-none mb-3">
+        <div class="col-2">
           {{ form.sitegroup.label_tag() }}
         </div>
-        <div class="col-8">
+        <div class="col-5">
           {{ form.sitegroup }}
         </div>
       </div>
-      <div class="input-group mb-3">
-        <div class="col-4">
+      <div class="input-group datafield d-none mb-3">
+        <div class="col-2">
+          {{ form.qrsize.label_tag() }}
+        </div>
+        <div class="col-5">
+          {{ form.qrsize }}
+        </div>
+      </div>
+      <div class="input-group datafield d-none mb-3">
+        <div class="col-2">
           {{ form.fromdate.label_tag() }}
         </div>
-        <div class="col-8 fv-row">
+        <div class="col-5 fv-row">
           {{ form.fromdate }}
           {{ form.fromdate.errors }}
         </div>
       </div>
-      <div class="input-group mb-3">
-        <div class="col-4">
+      <div class="input-group datafield d-none mb-3">
+        <div class="col-2">
+          {{ form.fromdatetime.label_tag() }}
+        </div>
+        <div class="col-5 fv-row">
+          {{ form.fromdatetime }}
+          {{ form.fromdatetime.errors }}
+        </div>
+      </div>
+      <div class="input-group datafield d-none mb-3">
+        <div class="col-2">
           {{ form.uptodate.label_tag() }}
         </div>
-        <div class="col-8 fv-row">
+        <div class="col-5 fv-row">
           {{ form.uptodate }}
           {{ form.uptodate.errors }}
         </div>
       </div>
-
-
-    </div>
-    <div class="col-sm-12 col-md-6">
+      <div class="input-group datafield d-none mb-3">
+        <div class="col-2">
+          {{ form.uptodatetime.label_tag() }}
+        </div>
+        <div class="col-5 fv-row">
+          {{ form.uptodatetime }}
+          {{ form.uptodatetime.errors }}
+        </div>
+      </div>
       <div class="input-group mb-3">
-        <div class="col-4">
+        <div class="col-2">
           {{ form.format.label_tag() }}
         </div>
-        <div class="col-8">
+        <div class="col-5">
           {{ form.format }}
         </div>
       </div>
       <div class="input-group mb-3">
-        <div class="col-4">
+        <div class="col-2">
           {{ form.export_type.label_tag() }}
         </div>
-        <div class="col-8">
+        <div class="col-5">
           {{ form.export_type }}
         </div>
       </div>
       <div class="input-group mb-3 d-none emailfile">
-        <div class="col-4">
+        <div class="col-2">
           {{ form.to_addr.label_tag() }}
         </div>
-        <div class="col-8">
+        <div class="col-5">
           {{ form.to_addr }}
         </div>
       </div>
       <div class="input-group mb-3 d-none emailfile">
-        <div class="col-4">
+        <div class="col-2">
           {{ form.cc.label_tag() }}
         </div>
-        <div class="col-8">
+        <div class="col-5">
           {{ form.cc }}
         </div>
       </div>
       <div class="input-group mb-3 d-none emailfile">
-        <div class="col-4">
+        <div class="col-2">
           {{ form.email_body.label_tag() }}
         </div>
-        <div class="col-8">
+        <div class="col-5">
           {{ form.email_body }}
         </div>
       </div>
@@ -154,8 +240,9 @@ Report Form
   const urlname = "{{ url('reports:exportreports') }}"
 
   $(document).ready(() => {
-    report_names = JSON.parse('{{ report_names }}')
-    console.log(report_names)
+    var report_names = JSON.parse('{{ report_names }}')
+    var fields_map = JSON.parse('{{ fields_map }}')
+    console.log(fields_map)
     //set ctzoffset
     $("#id_ctzoffset").val(-new Date().getTimezoneOffset())
       
@@ -235,28 +322,100 @@ Report Form
       })
 
     })
+    //shows only fields which are required for a 
+    //retport selected
+    function toggleInputGroups(ids) {
+      $(".datafield").addClass('d-none')
+      ids.forEach(id => {
+        const element = document.getElementById(id);
 
-    // Create a function to handle the "select" and "unselect" events
-    function onSelectionChanged(e) {
-      console.log("e.target.id", e.target.id)
-        const otherSelect = e.target.id === 'id_cc' ? 'id_to_addr' : 'id_cc';
-        const otherSelectElement = $(`#${otherSelect}`);
+        if (element) { // Check if element exists
+          const closestInputGroup = element.closest(".input-group");
 
-        if (e.type === 'select2:select') {
-            // Remove the selected option from the other dropdown
-            otherSelectElement.find(`option[value="${e.params.data.id}"]`).prop('selected', false);
-        } else {
-            // Deselect the option in the other dropdown
-            otherSelectElement.find(`option[value="${e.params.data.id}"]`).prop('selected', true);
+          // Toggle visibility by adding or removing "d-none" class
+          if (closestInputGroup.classList.contains("d-none")) {
+            closestInputGroup.classList.remove("d-none");
+          } else {
+            closestInputGroup.classList.add("d-none");
+          }
         }
-
-        // Trigger the change event to update the other dropdown
-        otherSelectElement.trigger('change');
-        console.log("event triggerd")
+      });
     }
 
-    // Attach the event listeners
-    $('#id_cc, #id_to_addr').on('select2:select select2:unselect', onSelectionChanged);
+  //if selected to dont show in cc
+  function onSelectionChanged(e) {
+      console.log("e.target.id", e.target.id);
+      const currentSelect = e.target.id;
+      const otherSelect = currentSelect === 'id_cc' ? 'id_to_addr' : 'id_cc';
+      const otherSelectElement = $(`#${otherSelect}`);
+      const currentSelectElement = $(`#${currentSelect}`);
+
+      if (e.type === 'select2:select') {
+          // Hide the selected option from the other dropdown
+          otherSelectElement.find(`option[value="${e.params.data.id}"]`).hide();
+      } else {
+          // Show the deselected option in the other dropdown
+          otherSelectElement.find(`option[value="${e.params.data.id}"]`).show();
+      }
+
+      // If you still want to update the other select based on the current select
+      otherSelectElement.find(`option[value="${e.params.data.id}"]`).prop('selected', false);
+
+      // Trigger the change event to update the other dropdown
+      otherSelectElement.trigger('change');
+      console.log("event triggered");
+  }
+
+  //hide fields whcih are invisible and hide fields which are 
+  // passed as argument
+  function hideSpecifiedAndNotVisibleFields(fields){
+    const form = $("#report_form")
+    form.find(":input, select").each(function() {
+      var field = $(this)
+      if(!field.is(":visible") && field.prop('required')){
+        //set required to false
+        field.prop('required', false)
+      }
+    })
+    fields.forEach((id) => {
+      //remove required attirbute
+      toggleRequiredAttribute(id, set=false)
+    })
+  }
+
+
+  // Attach the event listeners
+  $('#id_cc, #id_to_addr').on('select2:select select2:unselect', onSelectionChanged);
+
+  //hide/show fields based on report_name
+  $("#id_report_name").change((e) => {
+    let selected = getSelectedValue("#id_report_name")
+    console.log("selected", selected)
+    hideSpecifiedAndNotVisibleFields(fields_map[selected])
+    switch(selected){
+      case 'Task Summary':
+      case 'Tour Summary':
+      case 'List of Internal Tours':
+      case 'PPM Summary':
+      case 'Work Order List':
+        console.log("event triggered")
+        toggleInputGroups(["id_site", "id_fromdate", "id_uptodate"])
+        break
+
+      case 'List of Tasks':
+        toggleInputGroups(['id_site', 'id_fromdate', 'id_uptodate', 'id_peoplegroup', 'id_people'])
+        break
+      
+      case 'List of Tickets':
+        toggleInputGroups(["id_site", "id_fromdate", "id_uptodate", 'id_people', 'id_ticketcategory'])
+        break
+      
+      case 'Site Report':
+        toggleInputGroups(['id_site', 'id_fromdate', 'id_uptodate', 'id_sitegroup', 'id_people'])
+        break
+    }
+  })
+
 
 
   })
