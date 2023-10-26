@@ -528,7 +528,6 @@ class ExportReports(LoginRequiredMixin, View):
             form = P['form'](request=request)
             report_names = json.dumps(P['form'].report_templates)
             fields_map = json.dumps(form.get_fields_report_map())
-            ic(fields_map)
             cxt = {
                 'form':form,
                 'report_names':report_names,
@@ -540,8 +539,13 @@ class ExportReports(LoginRequiredMixin, View):
         R,P = request.POST, self.P
         data = R
         form = P['form'](data = data, request=request)
+        report_names = json.dumps(P['form'].report_templates)
+        fields_map = json.dumps(form.get_fields_report_map())
         if not form.is_valid():
-            return render(request, P['template_form'], context={'form':form})
+            print("form is not valid", form.errors)
+            return render(request, P['template_form'], context={
+                'form':form, 'report_names':report_names,
+                'fields_map':fields_map})
         log.info('form is valid')
         formdata = form.cleaned_data
         params = self.prepare_parameters(formdata, request)
@@ -556,7 +560,7 @@ class ExportReports(LoginRequiredMixin, View):
                     send_report_on_email.delay(formdata, json_report_data)
                     time.sleep(2)
                     msg.success(request, "Report has been sent on mail successfully")
-                    return render(request, P['template_form'], context={'form':form})
+                    return render(request, P['template_form'], context={'form':form, 'report_names':report_names, 'fields_map':fields_map})
                 
                 if formdata.get('preview') == 'true': #preview report
                     log.info('previewing the file')
@@ -573,7 +577,7 @@ class ExportReports(LoginRequiredMixin, View):
         except Exception as e:
             log.error("something went wron in export reports", exc_info=True)
             msg.error(request, "Failed to download the report, something went wrong")
-            return render(request, P['template_form'], context={'form':form})
+            return render(request, P['template_form'], context={'form':form, 'report_names':report_names, 'fields_map':fields_map})
         finally:
             EI = sys.exc_info()
             create_report_history.delay(formdata, request.user.id, request.session['bu_id'], EI)
@@ -606,7 +610,11 @@ class ExportReports(LoginRequiredMixin, View):
         
         applogo_url         = request.build_absolute_uri(static('assets/media/images/logo.png'))
         clientlogo_att = Attachment.objects.get_att_given_owner(uuid, request)
-        clientlogo_filepath = settings.MEDIA_URL + clientlogo_att[0]['filepath'] + clientlogo_att[0]['filename']
+        if clientlogo_att:
+            clientlogo_filepath = settings.MEDIA_URL + clientlogo_att[0]['filepath'] + clientlogo_att[0]['filename']
+        else:
+            clientlogo_filepath = "No Client Logo"
+        
         clientlogo_url      = request.build_absolute_uri(clientlogo_filepath)
         log.info("common parameters are returned")
         return timezone, clientlogo_url

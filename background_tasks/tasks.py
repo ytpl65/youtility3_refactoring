@@ -379,6 +379,7 @@ def execute_report(self, params, formdata):
 
         # execute the report
         report_execution_url = f"{settings.KNOWAGE_SERVER_URL}restful-services/2.0/documents/{formdata['report_name']}/content?outputType={formdata['format']}"
+        print(f'{report_execution_url = }, {params = }')
         log.info(f'{report_execution_url = }, {params = }')
         return requests.post(report_execution_url, headers=auth_headers, json=params)
     except Exception as e:

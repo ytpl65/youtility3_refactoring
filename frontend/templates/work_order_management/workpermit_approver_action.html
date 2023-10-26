@@ -2,6 +2,9 @@
 <html lang="en">
 
 <head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
         table {
             border-collapse: collapse;
@@ -52,8 +55,7 @@
 </head>
 
 <body>
-        <p>
-        Please review the following work permit details and approve or reject as appropriate.
+        <p>Please review the following work permit details and approve or reject as appropriate.</p>
         <table>
             <tbody>
                 {% for section in sections %}
@@ -62,24 +64,29 @@
                 </tr>
                 {% for question in section['questions'] %}
                 <tr>
-                    <td width="5%" class="fw-bold">{{ loop.index }}</td>
-                    <td class="fw-bold">{{ question['question__quesname'] }}</td>
+                    <td width="5%" class="fw-bold bgy">{{ loop.index }}</td>
+                    <td class="fw-bold bgy">{{ question['question__quesname'] }}</td>
                     <td>{{ question['answer'] }}</td>
                 </tr>
                 {% endfor %}
                 {% endfor %}
             </tbody>
-        </table><br>
-        If the work permit details meet your requirements, please proceed with approve it with the 
+        </table>
+        <br>
+
+
+        If the work permit details meet your requirements, please proceed with approve it with the
         <a style="margin-right:20px" class="ybtn-success"
         href="{{ HOST }}{{ url('work_order_management:reply_workpermit') }}?action=accepted&womid={{workpermitid}}&peopleid={{ peopleid }}"
-        target="_blank">Approve, it</a><br><hr>
-        Conversely, if any information doesn't meet your requirements you can reject it with.
+        target="_blank">Approve, it</a><br>
+        
+        <hr>
+        
+        Conversely, if any information doesn't meet your requirements you can reject it with
         <a class="ybtn-warn"
         href="{{ HOST }}{{ url('work_order_management:reply_workpermit') }}?action=rejected&womid={{workpermitid}}&peopleid={{ peopleid }}"
         target="_blank">Reject, it</a>
 
-        </p>
 
 </body>
 

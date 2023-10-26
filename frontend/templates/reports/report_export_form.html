@@ -24,6 +24,15 @@ Report Form
 
 
 {% block nonfield_errors %}
+{% if form.non_field_errors %}
+  {% for err in form.non_field_errors() %}
+    <div class="alert alert-danger w-100 alert-dismissible fade show">
+      {{ err }}
+      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+  {% endfor %}
+{% endif %}
+
 {% if messages %}
 {% for msg in messages %}
 <div class="alert {{ msg.tags }} w-100 alert-dismissible fade show" role="alert">
@@ -32,7 +41,6 @@ Report Form
 </div>
 {% endfor %}
 {% endif %}
-
 {% endblock nonfield_errors %}
 
 {% block form %}
@@ -57,6 +65,16 @@ Report Form
         </div>
         <div class="col-5">
           {{ form.site }}
+          {{ form.site.errors }}
+        </div>
+      </div>
+        <div class="input-group datafield d-none mb-3">
+        <div class="col-2">
+          {{ form.sitegroup.label_tag() }}
+        </div>
+        <div class="col-5">
+          {{ form.sitegroup }}
+          {{ form.sitegroup.errors }}
         </div>
       </div>
       <div class="input-group datafield d-none mb-3">
@@ -65,6 +83,7 @@ Report Form
         </div>
         <div class="col-5">
           {{ form.peoplegroup }}
+          {{ form.peoplegroup.errors }}
         </div>
       </div>
       <div class="input-group datafield d-none mb-3">
@@ -73,6 +92,7 @@ Report Form
         </div>
         <div class="col-5">
           {{ form.people }}
+          {{ form.people.errors }}
         </div>
       </div>
       <div class="input-group datafield d-none mb-3">
@@ -81,6 +101,7 @@ Report Form
         </div>
         <div class="col-5">
           {{ form.assettype }}
+          {{ form.assettype.errors }}
         </div>
       </div>
       <div class="input-group datafield d-none mb-3">
@@ -89,6 +110,7 @@ Report Form
         </div>
         <div class="col-5">
           {{ form.asset }}
+          {{ form.asset.errors }}
         </div>
       </div>
       <div class="input-group datafield d-none mb-3">
@@ -97,6 +119,7 @@ Report Form
         </div>
         <div class="col-5">
           {{ form.qset }}
+          {{ form.qset.errors }}
         </div>
       </div>
       <div class="input-group datafield d-none mb-3">
@@ -105,6 +128,7 @@ Report Form
         </div>
         <div class="col-5">
           {{ form.checkpoint_type }}
+          {{ form.checkpoint_type.errors }}
         </div>
       </div>
       <div class="input-group datafield d-none mb-3">
@@ -113,6 +137,7 @@ Report Form
         </div>
         <div class="col-5">
           {{ form.checkpoint }}
+          {{ form.checkpoint.errors }}
         </div>
       </div>
       <div class="input-group datafield d-none mb-3">
@@ -121,22 +146,17 @@ Report Form
         </div>
         <div class="col-5">
           {{ form.ticketcategory }}
+          {{ form.ticketcategory.errors }}
         </div>
       </div>
-      <div class="input-group datafield d-none mb-3">
-        <div class="col-2">
-          {{ form.sitegroup.label_tag() }}
-        </div>
-        <div class="col-5">
-          {{ form.sitegroup }}
-        </div>
-      </div>
+
       <div class="input-group datafield d-none mb-3">
         <div class="col-2">
           {{ form.qrsize.label_tag() }}
         </div>
         <div class="col-5">
           {{ form.qrsize }}
+          {{ form.qrsize.errors }}
         </div>
       </div>
       <div class="input-group datafield d-none mb-3">
@@ -213,6 +233,7 @@ Report Form
         </div>
         <div class="col-5">
           {{ form.email_body }}
+          {{ form.email_body.errors }}
         </div>
       </div>
     </div>
@@ -242,7 +263,6 @@ Report Form
   $(document).ready(() => {
     var report_names = JSON.parse('{{ report_names }}')
     var fields_map = JSON.parse('{{ fields_map }}')
-    console.log(fields_map)
     //set ctzoffset
     $("#id_ctzoffset").val(-new Date().getTimezoneOffset())
       
@@ -282,19 +302,12 @@ Report Form
       }
     })
 
-    $("#id_report_name").change(() => {
-      let selected = $("#id_report_name").val()
-      report_names.forEach((item) => {
-        if(selected === item[0]){
-          
-        }
-      })
-    })
 
     //on click preview button
     $("#btn_preview").click((e) => {
       $("#id_preview").val("true")
       var formData = $("#report_form").serialize();
+      
 
       //send ajax request
       $.ajax({
@@ -344,7 +357,6 @@ Report Form
 
   //if selected to dont show in cc
   function onSelectionChanged(e) {
-      console.log("e.target.id", e.target.id);
       const currentSelect = e.target.id;
       const otherSelect = currentSelect === 'id_cc' ? 'id_to_addr' : 'id_cc';
       const otherSelectElement = $(`#${otherSelect}`);
@@ -363,34 +375,19 @@ Report Form
 
       // Trigger the change event to update the other dropdown
       otherSelectElement.trigger('change');
-      console.log("event triggered");
   }
 
   //hide fields whcih are invisible and hide fields which are 
   // passed as argument
   function hideSpecifiedAndNotVisibleFields(fields){
-    const form = $("#report_form")
-    form.find(":input, select").each(function() {
-      var field = $(this)
-      if(!field.is(":visible") && field.prop('required')){
-        //set required to false
-        field.prop('required', false)
-      }
-    })
     fields.forEach((id) => {
       //remove required attirbute
-      toggleRequiredAttribute(id, set=false)
+      toggleRequiredAttribute(id, set=true)
     })
   }
 
-
-  // Attach the event listeners
-  $('#id_cc, #id_to_addr').on('select2:select select2:unselect', onSelectionChanged);
-
-  //hide/show fields based on report_name
-  $("#id_report_name").change((e) => {
-    let selected = getSelectedValue("#id_report_name")
-    console.log("selected", selected)
+  function hideAndShowFieldsBasedOnReport(selected){
+    if(selected === "Select Report") return
     hideSpecifiedAndNotVisibleFields(fields_map[selected])
     switch(selected){
       case 'Task Summary':
@@ -398,7 +395,6 @@ Report Form
       case 'List of Internal Tours':
       case 'PPM Summary':
       case 'Work Order List':
-        console.log("event triggered")
         toggleInputGroups(["id_site", "id_fromdate", "id_uptodate"])
         break
 
@@ -411,14 +407,24 @@ Report Form
         break
       
       case 'Site Report':
-        toggleInputGroups(['id_site', 'id_fromdate', 'id_uptodate', 'id_sitegroup', 'id_people'])
+        toggleInputGroups(['id_fromdate', 'id_uptodate', 'id_sitegroup', 'id_people'])
         break
     }
+  }
+
+  //on load for selected report_name
+  hideAndShowFieldsBasedOnReport(getSelectedValue("#id_report_name"))
+
+
+  // Attach the event listeners
+  $('#id_cc, #id_to_addr').on('select2:select select2:unselect', onSelectionChanged);
+
+  //hide/show fields based on report_name
+  $("#id_report_name").change((e) => {
+    let selected = getSelectedValue("#id_report_name")
+    hideAndShowFieldsBasedOnReport(selected)
   })
-
-
-
   })
 </script>
 
-{% endblock extra_scripts %}
+{% endblock extra_scripts %}hideSpecifiedAndNotVisibleFields

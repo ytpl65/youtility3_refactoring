@@ -101,22 +101,22 @@ class ReportForm(forms.Form):
     
     # data fields
     report_name     = forms.ChoiceField(label='Report Name', required=True, choices=report_templates, initial='TASK_SUMMARY')
-    site            = forms.ChoiceField(label='Site', required = True, widget=s2forms.Select2Widget)
-    sitegroup       = forms.ChoiceField(label="Site Group", required=True, widget=s2forms.Select2Widget)
-    fromdate        = forms.DateField(label='From Date', required=True)
-    fromdatetime    = forms.DateTimeField(label='From Date Time', required=True)
-    uptodate        = forms.DateField(label='To Date', required=True)
-    uptodatetime    = forms.DateTimeField(label='To Date Time', required=True)
-    asset           = forms.CharField(label="Asset", widget=s2forms.Select2Widget)
-    qset            = forms.CharField(label="Question Set", widget=s2forms.Select2Widget)
-    assettype       = forms.CharField(label="Asset Type", widget=s2forms.Select2Widget)
-    checkpoint      = forms.CharField(label='Checkpoint', widget=s2forms.Select2Widget)
-    checkpoint_type = forms.CharField(label='Checkpoint Type', widget=s2forms.Select2Widget)
-    ticketcategory  = forms.CharField(label='Ticket Category', widget=s2forms.Select2MultipleWidget)
-    peoplegroup     = forms.CharField(label="People Group", widget=s2forms.Select2Widget)
-    people          = forms.CharField(label="People", widget=s2forms.Select2Widget)
-    qrsize          = forms.CharField(label="QR Size", widget=s2forms.Select2Widget)
-    assetcategory   = forms.CharField(label="Asset Ca   tegory", widget=s2forms.Select2TagWidget)
+    site            = forms.ChoiceField(label='Site', required = False, widget=s2forms.Select2Widget)
+    sitegroup       = forms.ChoiceField(label="Site Group", required=False, widget=s2forms.Select2Widget)
+    fromdate        = forms.DateField(label='From Date', required=False)
+    fromdatetime    = forms.DateTimeField(label='From Date Time', required=False)
+    uptodate        = forms.DateField(label='To Date', required=False)
+    uptodatetime    = forms.DateTimeField(label='To Date Time', required=False)
+    asset           = forms.CharField(label="Asset", widget=s2forms.Select2Widget, required=False)
+    qset            = forms.CharField(label="Question Set", widget=s2forms.Select2Widget, required=False)
+    assettype       = forms.CharField(label="Asset Type", widget=s2forms.Select2Widget, required=False)
+    checkpoint      = forms.CharField(label='Checkpoint', widget=s2forms.Select2Widget, required=False)
+    checkpoint_type = forms.CharField(label='Checkpoint Type', widget=s2forms.Select2Widget, required=False)
+    ticketcategory  = forms.CharField(label='Ticket Category', widget=s2forms.Select2MultipleWidget, required=False)
+    peoplegroup     = forms.CharField(label="People Group", widget=s2forms.Select2Widget, required=False)
+    people          = forms.CharField(label="People", widget=s2forms.Select2Widget, required=False)
+    qrsize          = forms.CharField(label="QR Size", widget=s2forms.Select2Widget, required=False)
+    assetcategory   = forms.CharField(label="Asset Ca   tegory", widget=s2forms.Select2TagWidget, required=False)
     
     #other form fields
     format      = forms.ChoiceField(widget=s2forms.Select2Widget, label="Format", required=True, choices=format_types, initial='PDF')
@@ -151,20 +151,24 @@ class ReportForm(forms.Form):
         return first_day_of_last_month, last_day_of_last_month
 
     def clean(self):
+        ic("cleaned")
         super().clean()
         cd = self.cleaned_data
-        self.cleaned_data['site'] = ','.join(cd['site'])
-        if cd['report_name'] == settings.KNOWAGE_REPORTS['SITEREPORT'] and cd.get('people') is None and cd.get('sitegroup') is None:
-            raise forms.ValidationError(f"Both Site Group and People cannot be empty, when the report is {cd.get('report_name')}")
+        self.cleaned_data['site'] = ','.join(cd.get('site', ""))
+        if cd['report_name'] == settings.KNOWAGE_REPORTS['SITEREPORT'] and cd.get('people') in ["", None] and cd.get('sitegroup') in ["", None]:
+            raise forms.ValidationError(
+                f"Both Site Group and People cannot be empty, when the report is {cd.get('report_name')}")
         
-        if cd.get('report_name') == settings.KNOWAGE_REPORTS['LISTOFTICKETS'] and cd.get('people') is None and cd.get('ticketcategory') is None:
-            raise forms.ValidationError(f"Both Ticket Category and People cannot be empty, when the report is {cd.get('report_name')}")
+        if cd.get('report_name') == settings.KNOWAGE_REPORTS['LISTOFTICKETS'] and cd.get('people') in ["", None] and cd.get('ticketcategory') in ["", None]:
+            raise forms.ValidationError(
+                f"Both Ticket Category and People cannot be empty, when the report is {cd.get('report_name')}")
         
-        if cd.get('report_name') == settings.KNOWAGE_REPORTS['LISTOFTASKS'] and cd.get('people') is None and cd.get('peoplegroup') is None:
-            raise forms.ValidationError(f"Both People Group and People cannot be empty, when the report is {cd.get('report_name')}")
+        if cd.get('report_name') == settings.KNOWAGE_REPORTS['LISTOFTASKS'] and cd.get('people') in ["", None] and cd.get('peoplegroup') in ["", None]:
+            raise forms.ValidationError(
+                f"Both People Group and People cannot be empty, when the report is {cd.get('report_name')}")
         
-        if cd['fromdate'] > cd['uptodate']: self.add_error('fromdate', 'From date cannot be greater than To date')
-        if cd['uptodate'] > cd['fromdate'] + timedelta(days=182):
+        if cd.get("fromdate") and cd['fromdate'] > cd['uptodate']: self.add_error('fromdate', 'From date cannot be greater than To date')
+        if cd.get('uptodate') and cd['uptodate'] > cd['fromdate'] + timedelta(days=182):
             err_msg = 'The difference between From date and To date should not be greater than 6 months'
             self.add_error('fromdate', err_msg)
             self.add_error('uptodate', err_msg)
@@ -173,19 +177,17 @@ class ReportForm(forms.Form):
     
     def get_fields_report_map(self):
         '''
-        by default all felds are required, but this method
-        tells which are not required even they are shown to 
-        user.
+        a map of required fields for a type of report
         '''
         return {
-            'Task Summary': [],
-            'Tour Summary': [],
-            'Work Order List': [],
-            'List of Tasks': ['id_peoplegroup', 'id_people'],
-            'List of Internal Tours':[],
-            'PPM Summary': [],
-            'List of Tickets':['id_people', 'id_ticketcategory'],
-            'Site Report':['id_people', 'id_sitegroup']
+            'Task Summary': ['id_site', 'id_fromdate', 'id_uptodate'],
+            'Tour Summary': ['id_site', 'id_fromdate', 'id_uptodate'],
+            'Work Order List': ['id_site', 'id_fromdate', 'id_uptodate'],
+            'List of Tasks': ['id_site', 'id_fromdate', 'id_uptodate'],
+            'List of Internal Tours':['id_site', 'id_fromdate', 'id_uptodate'],
+            'PPM Summary': ['id_site', 'id_fromdate', 'id_uptodate'],
+            'List of Tickets':['id_site', 'id_fromdate', 'id_uptodate'],
+            'Site Report':['id_sitegroup', 'id_fromdate', 'id_uptodate']
         }
 
     
