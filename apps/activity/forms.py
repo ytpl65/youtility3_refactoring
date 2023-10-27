@@ -936,7 +936,7 @@ class PPMForm(forms.ModelForm):
         self.fields['qset'].queryset = am.QuestionSet.objects.filter_for_dd_qset_field(self.request, ['CHECKLIST'], sitewise=True)
         self.fields['people'].queryset = pm.People.objects.filter_for_dd_people_field(self.request, sitewise=True)
         self.fields['pgroup'].queryset = pm.Pgroup.objects.filter_for_dd_pgroup_field(self.request, sitewise=True)
-        self.fields['asset'].queryset = am.Asset.objects.filter_for_dd_asset_field(self.request, ['ASSET'], sitewise=True)
+        self.fields['asset'].queryset = am.Asset.objects.filter_for_dd_asset_field(self.request, ['ASSET', 'CHECKPOINT'], sitewise=True)
         utils.initailize_form_fields(self)
     
     def clean(self):
