@@ -159,16 +159,7 @@ class QuestionSetManager(models.Manager):
                     'id', 'text')
         return qset or self.none()
         
-    
-    def get_qsets_for_tour(self, request):
-        R, S = request.GET, request.session
-        search_term = R.get('search')
-        qset = self.filter(client_id = S['client_id'], bu_id = S['bu_id'], enable=True)
-        qset = qset.filter(qsetname = search_term) if search_term else qset
-        qset = qset.annotate(
-                text = F('qsetname')).values(
-                    'id', 'text')
-        return qset or self.none()
+
         
 
 class QuestionManager(models.Manager):
@@ -622,12 +613,12 @@ class JobneedManager(models.Manager):
     def get_taskchart_data(self, request):
         S, R = request.session, request.GET
         total_schd = self.select_related('bu', 'parent').filter(
-            Q(Q(parent_id__in = [1, -1]) | Q(parent_id__isnull=True)),
-            bu_id__in = S['assignedsites'],
-            identifier = 'TASK',
-            plandatetime__date__gte = R['from'],
-            plandatetime__date__lte = R['upto'],
-            client_id = S['client_id']
+            Q(Q(parent_id__in=[1, -1]) | Q(parent_id__isnull=True)),
+            bu_id__in=S['assignedsites'],
+            identifier='TASK',
+            plandatetime__date__gte=R['from'],
+            plandatetime__date__lte=R['upto'],
+            client_id=S['client_id']
         ).values()
         return [
             total_schd.filter(jobstatus='ASSIGNED').count(),
@@ -640,12 +631,12 @@ class JobneedManager(models.Manager):
     def get_tourchart_data(self, request):
         S, R = request.session, request.GET
         total_schd = self.select_related('parent', 'bu').filter(
-            Q(Q(parent_id__in = [1, -1]) | Q(parent_id__isnull=True)),
-            bu_id__in = S['assignedsites'],
-            identifier = 'INTERNALTOUR',
-            plandatetime__date__gte = R['from'],
-            plandatetime__date__lte = R['upto'],
-            client_id = S['client_id']
+            Q(Q(parent_id__in=[1, -1]) | Q(parent_id__isnull=True)),
+            bu_id__in=S['assignedsites'],
+            identifier='INTERNALTOUR',
+            plandatetime__date__gte=R['from'],
+            plandatetime__date__lte=R['upto'],
+            client_id=S['client_id']
         ).values()
         return [
             total_schd.filter(jobstatus='COMPLETED').count(),
