@@ -40,7 +40,7 @@ class BtManager(models.Manager):
         Returns all sites of a given clientid
         """
         all_buids = self.get_all_bu_of_client(clientid)
-        return self.filter(id__in = all_buids, identifier__tacode = 'SITE') or self.none()
+        return self.select_related().filter(id__in = all_buids, identifier__tacode = 'SITE') or self.none()
     
 
     def find_site(self, clientid, sitecode):

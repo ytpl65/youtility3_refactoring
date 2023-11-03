@@ -159,7 +159,7 @@ class QuestionSetManager(models.Manager):
                     'id', 'text')
         return qset or self.none()
         
-
+    
         
 
 class QuestionManager(models.Manager):
@@ -332,6 +332,7 @@ class JobneedManager(models.Manager):
             qobjs = qobjs.filter(jobstatus = P['jobstatus'])
         if P.get('alerts') and P.get('alerts') == 'TASK':
             qobjs = qobjs.filter(alerts=True)
+        ic(str(qobjs.query))
         return qobjs or self.none()
 
     def get_assetmaintainance_list(self, request, related, fields):
@@ -1142,17 +1143,34 @@ class AssetManager(models.Manager):
         return series, sum(list(map(sum, zip(*[working, mnt, stb, scp]))))
     
     def filter_for_dd_asset_field(self, request, identifiers, choices=False, sitewise=False):
-        S = request.session
-        qset = self.filter(
-            ~Q(runningstatus='SCRAPPED'),
-            enable=True, 
-            client_id = S['client_id'],
-            bu_id__in = S['assignedsites'],
-            identifier__in = identifiers,
-        ).order_by('assetname')
-        if sitewise: qset = qset.filter(bu_id = S['bu_id'])
-        if choices: qset = qset.annotate(text = Concat(F('assetname'), V(' ('), F('assetcode'), V(')'))).values_list('id', 'text')
+        client_id = request.session.get('client_id')
+        assigned_sites = request.session.get('assignedsites')
+        bu_id = request.session.get('bu_id')
+
+        base_filters = {
+            "enable": True,
+            "client_id": client_id,
+            "bu_id__in": assigned_sites,
+            "identifier__in": identifiers,
+            
+        }
+        if sitewise and bu_id:
+            base_filters["bu_id"] = bu_id
+
+        qset = self.filter(~Q(runningstatus='SCRAPPED'), **base_filters).order_by('assetname')
+
+        if choices:
+            qset = (
+                qset.annotate(
+                    text=Concat(
+                        F('assetname'), V(' ('), F('assetcode'), V(')')
+                    )
+                )
+                .values_list('id', 'text')
+            )
+
         return qset or self.none()
+
     
     def get_period_of_assetstatus(self, assetid, status):
         from apps.core.raw_queries import get_query

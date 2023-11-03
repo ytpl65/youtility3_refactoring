@@ -20,6 +20,8 @@ from django.db.models.deletion import RestrictedError
 from django.urls import reverse
 import json
 from django.contrib.gis.db.models.functions import  AsWKT, AsGeoJSON
+from django.utils.decorators import method_decorator
+from django.views.decorators.cache import cache_page
 from django.views.decorators.http import require_http_methods
 log = logging.getLogger('__main__')
 # Create your views here.
@@ -1217,7 +1219,7 @@ class SchdTasks(LoginRequiredMixin, View):
                 'expirytime'  : 0
             }
     }
-
+    @method_decorator(cache_page(3))
     def get(self, request, *args, **kwargs):
         R, P = request.GET, self.params
         # first load the template

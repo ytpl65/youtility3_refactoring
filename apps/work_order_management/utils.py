@@ -40,7 +40,7 @@ def notify_wo_creation(id):
         if atts := check_attachments_if_any(wo):
             attachments = [f"{settings.MEDIA_ROOT}/{att['filepath']}{att['filename']}" for att in atts]
         
-        html_message = render_to_string('work_order_email.html', context=context)
+        html_message = render_to_string('work_order_management/work_order_email.html', context=context)
         send_email(
             subject=subject, body=html_message, to=emails, atts= attachments if atts else None
         )

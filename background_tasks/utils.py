@@ -170,7 +170,7 @@ def send_escalation_ticket_email(tkt, result):
                 'subject': subject
             }
             html_message = render_to_string(
-                'ticket_email.html', context=context)
+                'y_helpdesk/ticket_email.html', context=context)
             msg.body = html_message
             msg.subject = subject
             msg.from_email = settings.EMAIL_HOST_USER
@@ -319,7 +319,7 @@ def alert_observation(jobneed, atts=False):
                 subject = f"[READINGS ALERT] Site with Name: {jobneed.bu.buname} having checklist [{jobneed.qset.qsetname}] - readings out of range"
             context = get_context_for_mailtemplate(jobneed, subject)
 
-            html_message = render_to_string('observation_mail.html', context)
+            html_message = render_to_string('activity/observation_mail.html', context)
             log.info(f"Sending alert mail with subject {subject}")
             msg = EmailMessage()
             msg.subject = subject
