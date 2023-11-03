@@ -636,3 +636,13 @@ class ExportReports(LoginRequiredMixin, View):
             ]
             
         
+
+class DesignReport(LoginRequiredMixin, View):
+    # change this file according to your design
+    design_file = "task_summary.html" 
+    
+    
+    def get(self, request):
+        R = request.GET
+        return render(request, self.design_file)
+        
