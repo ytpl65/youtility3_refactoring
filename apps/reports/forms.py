@@ -96,6 +96,7 @@ class ReportForm(forms.Form):
         ('pdf', 'PDF'),
         ('xlsx', 'XLSX'),
         ('xlsx', 'XLS'),
+        ('html', 'HTML'),
     ]
     
     

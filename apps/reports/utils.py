@@ -7,7 +7,7 @@ from django.http import HttpResponse
 from apps.activity.models import Attachment
 from django.conf import settings
 from apps.onboarding.models import Bt
-
+from django.shortcuts import render
 
 
 
@@ -108,10 +108,10 @@ class BaseReportsExport(object):
         return response
     
     def get_html_output(self):
+        ic(self.context)
         html_output = render_to_string(self.design_file, context=self.context, request=self.request)
         if self.returnfile: return html_output
-        response = HttpResponse(html_output, content_type='text/html')
-        response['Content-Disposition'] = f'attachment; filename="{self.filename}.html"'
+        response = render(self.request, self.design_file, self.context)
         return response
     
     def get_json_output(self):

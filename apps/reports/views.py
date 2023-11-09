@@ -672,12 +672,12 @@ class ExportReports2(LoginRequiredMixin, View):
                 'fields_map':fields_map})
         log.info('form is valid')
         formdata = form.cleaned_data
-        return self.export_report(formdata, session)
+        return self.export_report(formdata, session, request)
         
-    def export_report(self, formdata, session):
+    def export_report(self, formdata, session, request):
         report_essentials = rutils.ReportEssentials(formdata=formdata, session=session)
         ReportFormat = report_essentials.get_report_export_object()
-        report = ReportFormat(filename=formdata['report_name'], client_id=session['client_id'], formdata=formdata)
+        report = ReportFormat(filename=formdata['report_name'], client_id=session['client_id'], formdata=formdata, request=request)
         return report.execute()
         
 

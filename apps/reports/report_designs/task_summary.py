@@ -48,13 +48,12 @@ class TaskSummaryReport(BaseReportsExport):
     
     def execute(self):
         export_format = self.formdata.get('format')
-        if export_format not in ['pdf', 'html']:
+        if export_format in ['pdf', 'html']:
             self.set_context_data()
         else:
             self.set_additional_content()
             self.set_data()
         if export_format == 'pdf':
-            self.set_context_data()
             return self.get_pdf_output()
         elif export_format == 'xls':
             return self.get_xls_output()
