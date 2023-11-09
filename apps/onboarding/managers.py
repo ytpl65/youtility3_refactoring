@@ -1,9 +1,9 @@
 from datetime import datetime
 from urllib import request
 from django.db import models
-from django.db.models import Q, F
+from django.db.models import Q, F, ExpressionWrapper
 import apps.peoples.models as pm
-from django.db.models.functions import Concat
+from django.db.models.functions import Concat, Cast
 from django.db.models import Value as V
 from apps.core import utils
 
@@ -240,6 +240,25 @@ class BtManager(models.Manager):
                     bucode__in=['NONE', 'YTPL']).distinct().values(*fields)
             return qset or self.none()
         return self.none()
+    
+    def get_sample_data(self):
+        from datetime import timedelta
+        annotated_queryset =  self.annotate(
+            createdTime = ExpressionWrapper(
+                F('cdtz') + timedelta(minutes=330),
+                output_field=models.DateTimeField()
+            )
+        )
+        # Convert the DateTimeField to a string
+        annotated_queryset = annotated_queryset.annotate(
+            createdTimeStr=Cast(
+                F('createdTime'), output_field=models.CharField()
+            )
+        ).values(
+            "id", "solid", 'bucode', 'buname', 'identifier__tacode', 'ctzoffset',
+            'createdTimeStr', 'parent__bucode', 'enable'
+        ).order_by('id')
+        return annotated_queryset
 
     
 
