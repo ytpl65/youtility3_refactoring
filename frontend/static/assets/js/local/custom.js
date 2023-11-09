@@ -556,7 +556,10 @@ function display_field_error(key, value) {
         var tag = field.next();
         $(error).insertAfter(tag);
       }
-    } else {
+    } else if(field.parent().hasClass("d-flex")) {
+      let newField = field.parent('.d-flex')
+      $(error).insertAfter(newField)
+    }else {
       if (!field.hasClass("is-invalid")) {
         field.addClass("is-invalid");
         $(error).insertAfter(field);
@@ -681,7 +684,10 @@ function display_modelfield_error(key, value) {
       var tag = $(field).next();
       $(error).insertAfter(tag);
     }
-  } else {
+  } else if(field.parent().hasClass("d-flex")) {
+    let newField = field.parent('.d-flex')
+    $(error).insertAfter(newField)
+  }else {
     if (!$(field).hasClass("is-invalid")) {
       $(field).addClass("is-invalid");
       $(error).insertAfter(field);
