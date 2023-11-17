@@ -455,7 +455,6 @@ class JobneedManager(models.Manager):
             alerts=True,
             identifier="INTERNALTOUR"
         ).select_related(*related).annotate(**assignedto).values(*fields)
-            ic('called')
         return qobjs or self.none()
     
     
