@@ -25,7 +25,7 @@ frontend/
 !frontend/static/assets/css
 !frontend/static/assets/js
 
-# Ignore all log files.
+# Ignore all log files..en
 logs
 *.log
 
