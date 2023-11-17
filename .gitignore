@@ -38,3 +38,4 @@ test_data/
 
 # Ignore any other files or folders that are not relevant to the project.
 docs
+intelliwiz_config/envs
