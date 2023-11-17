@@ -95,8 +95,9 @@ class ReportForm(forms.Form):
     format_types = [
         ('pdf', 'PDF'),
         ('xlsx', 'XLSX'),
-        ('xlsx', 'XLS'),
         ('html', 'HTML'),
+        ('json', 'JSON'),
+        ('csv', 'CSV'),
     ]
     
     

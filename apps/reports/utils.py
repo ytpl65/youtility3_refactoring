@@ -2,17 +2,23 @@ from weasyprint import HTML, CSS
 from weasyprint.text.fonts import FontConfiguration
 from io import BytesIO
 from django.template.loader import render_to_string
+from django_weasyprint.views import WeasyTemplateResponseMixin
 import pandas as pd
 from django.http import HttpResponse
 from apps.activity.models import Attachment
 from django.conf import settings
 from apps.onboarding.models import Bt
 from django.shortcuts import render
+import logging
+from decimal import Decimal
+log = logging.getLogger('__main__')
 
 
 
-
-class BaseReportsExport(object):
+class BaseReportsExport(WeasyTemplateResponseMixin):
+    pdf_stylesheets = [
+        settings.STATIC_ROOT + 'assets/css/local/reports.css'
+    ]
     '''
     A class which contains logic for Report Exports
     irrespective of report design and type. 
@@ -32,52 +38,32 @@ class BaseReportsExport(object):
     
     
     def get_pdf_output(self):
+        log.info("pdf is executing")
         html_string = render_to_string(self.design_file, context=self.context, request=self.request)
         html = HTML(string=html_string)
-        css = CSS(filename='frontend/static/assets/css/local/reports.css')
+        css = CSS(filename='frontend/static/assets/css/local/reports.css', base_url=settings.STATIC_ROOT)
         font_config = FontConfiguration()
         pdf_output = html.write_pdf(stylesheets=[css], font_config=font_config)
         if self.returnfile: return pdf_output
         response = HttpResponse(
             pdf_output, content_type='application/pdf'
         )
-        response['Content-Disposition'] = f'filename="{self.filename}.pdf"'
+        response['Content-Disposition'] = f'attachment; filename="{self.filename}.pdf"'
         return response
+    
+    def excel_layout(self, worksheet, workbook, df, writer, output):
+        log.info("designing the layout...")
     
     
     def get_excel_output(self):
-        df = pd.DataFrame(list(self.data))
-        
-        # Create a Pandas Excel writer using XlsxWriter as the engine and BytesIO as file-like object
-        output = BytesIO()
-        writer = pd.ExcelWriter(output, engine='xlsxwriter')
-        df.to_excel(writer, index=False, sheet_name='Sheet1', startrow=2, header=True)
-        
-        # Get the xlsxwriter workbook and worksheet objects
-        workbook = writer.book
-        worksheet = writer.sheets['Sheet1']
-        
-        # Autofit the columns to fit the data
-        for i, width in enumerate(self.get_col_widths(df)):
-            worksheet.set_column(i, i, width)
-            
-        # Define the format for the merged cell
-        merge_format = workbook.add_format({
-            'bg_color': '#c1c1c1',
-            'bold': True,
-        })
-        
-        worksheet.merge_range("A1:E1", self.additional_content, merge_format)
-        
-        # Close the Pandas Excel writer and output the Excel file
-        writer.save()
-
-        # Rewind the buffer
-        output.seek(0)
+        worksheet, workbook, df, writer, output = self.set_data_excel()
+        output = self.excel_layout(workbook=workbook, worksheet=worksheet,
+                          df=df, writer=writer, output=output)
         return output
     
     
     def get_xls_output(self):
+        log.info("xls is executing")
         output = self.get_excel_output()
         if self.returnfile: return output
         response = HttpResponse(
@@ -85,9 +71,11 @@ class BaseReportsExport(object):
             content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
         )
         response['Content-Disposition'] = f'attachment; filename="{self.filename}.xls"'
+        return response
     
     
     def get_xlsx_output(self):
+        log.info("xlsx is executing")
         output = self.get_excel_output()
         if self.returnfile: return output
         response = HttpResponse(
@@ -95,12 +83,14 @@ class BaseReportsExport(object):
             content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
         )
         response['Content-Disposition'] = f'attachment; filename="{self.filename}.xlsx"'
+        return response
         
     
     def get_csv_output(self):
+        log.info("csv is executing")
         df = pd.DataFrame(data=list(self.data))
         output = BytesIO()
-        df.to_csv(output, index=False)
+        df.to_csv(output, index=False, date_format='yyyy-mmm-dd')
         output.seek(0)
         if self.returnfile: return output
         response = HttpResponse(output, content_type='text/csv')
@@ -108,16 +98,17 @@ class BaseReportsExport(object):
         return response
     
     def get_html_output(self):
-        ic(self.context)
+        log.info("html is executing")
         html_output = render_to_string(self.design_file, context=self.context, request=self.request)
         if self.returnfile: return html_output
         response = render(self.request, self.design_file, self.context)
         return response
     
     def get_json_output(self):
+        log.info("json is executing")
         df = pd.DataFrame(list(self.data))
         output = BytesIO()
-        df.to_json(output, orient='records')
+        df.to_json(output, orient='records', date_format='iso')
         output.seek(0)
         if self.returnfile: return output
         # Create the HttpResponse object with JSON content type and file name
@@ -142,6 +133,31 @@ class BaseReportsExport(object):
         """
         return [max([len(str(s)) for s in dataframe[col].values] + [len(col)]) for col in dataframe.columns]
 
+    
+    def set_data_excel(self):
+        df = pd.DataFrame(list(self.data))
+        # Convert the Decimal objects to floats using the float() function
+        df = df.applymap(lambda x: float(x) if isinstance(x, Decimal) else x)
+        
+        # Create a Pandas Excel writer using XlsxWriter as the engine and BytesIO as file-like object
+        output = BytesIO()
+        writer = pd.ExcelWriter(output, engine='xlsxwriter',  datetime_format="mmm d yyyy hh:mm:ss", date_format="mmm dd yyyy",)
+        df.to_excel(writer, index=False, sheet_name='Sheet1', startrow=2, header=False)
+        
+        # Get the xlsxwriter workbook and worksheet objects
+        workbook = writer.book
+        worksheet = writer.sheets['Sheet1']
+        return worksheet, workbook, df, writer, output
+    
+    def write_custom_mergerange(self, worksheet, workbook, custom_merge_ranges):
+        for merge_item in custom_merge_ranges:
+            format = workbook.add_format = merge_item['format']
+            range = merge_item['range']
+            content = merge_item.get('content')
+            worksheet.merge_range(range, content, format)
+        return worksheet, workbook
+                
+            
 
 class ReportEssentials(object):
     '''

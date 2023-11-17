@@ -2,6 +2,7 @@ from apps.reports.utils import BaseReportsExport
 from apps.core.utils import runrawsql, get_timezone
 from apps.core.report_queries import get_query
 from apps.onboarding.models import Bt
+from django.conf import settings
 
 class TaskSummaryReport(BaseReportsExport):
     report_title = "Task Summary"
@@ -17,13 +18,15 @@ class TaskSummaryReport(BaseReportsExport):
         context data is the info that is passed in templates
         used for pdf reports
         '''
+        sitename = Bt.objects.get(id=self.formdata['site']).buname
         self.set_args_required_for_query()
         self.context = {
+            'base_path': settings.BASE_DIR,
             'data' : runrawsql(get_query(self.report_name), args=self.args),
             'report_title': self.report_title,
             'client_logo':self.get_client_logo(),
             'app_logo':self.ytpl_applogo,
-            'report_subtitle':f"From: {self.formdata.get('fromdate')} To {self.formdata.get('uptodate')}"
+            'report_subtitle':f"Site: {sitename}, From: {self.formdata.get('fromdate')} To {self.formdata.get('uptodate')}"
         }
         
     def set_args_required_for_query(self):
@@ -38,13 +41,61 @@ class TaskSummaryReport(BaseReportsExport):
         '''
         setting the data which is shown on report
         '''
-        ic(self.report_name)
         self.set_args_required_for_query()
         self.data = runrawsql(get_query(self.report_name), args=self.args)
+
         
     def set_additional_content(self):
         bt = Bt.objects.filter(id=self.client_id).values('id', 'buname').first()
         self.additional_content = f"Client: {bt['buname']}; Report: {self.report_title}; From: {self.formdata['fromdate']} To: {self.formdata['uptodate']}"
+        
+
+    def excel_layout(self, worksheet, workbook, df, writer, output):
+        super().excel_layout(worksheet, workbook, df, writer, output)
+        #overriding to design the excel file
+        
+        length = len(df)
+        # Autofit the columns to fit the data
+        # for i, width in enumerate(self.get_col_widths(df)):
+        #     worksheet.set_column(i, i, width)
+        
+        # Add a header format.
+        header_format = workbook.add_format(
+            {
+                "valign": "middle",
+                "fg_color": "#01579b",
+                'font_color':'white'
+            }
+        )
+        max_row, max_col = df.shape
+        
+        # Create a list of column headers, to use in add_table().
+        column_settings = [{"header": column} for column in df.columns]
+        
+        # Add the Excel table structure. Pandas will add the data.
+        worksheet.add_table(1, 0, max_row, max_col - 1, {"columns": column_settings})
+        
+        # Make the columns wider for clarity.
+        worksheet.set_column(0, max_col - 1, 12)
+
+        # Write the column headers with the defined format.
+        for col_num, value in enumerate(df.columns.values):
+            worksheet.write(1, col_num, value, header_format)
+            
+        # Define the format for the merged cell
+        merge_format = workbook.add_format({
+            'bg_color': '#E2F4FF',
+        })
+        # Title of xls/xlsx report
+        worksheet.merge_range("A1:F1", self.additional_content, merge_format)
+
+        # Close the Pandas Excel writer and output the Excel file
+        writer.save()
+
+        # Rewind the buffer
+        output.seek(0)
+        return output
+    
     
     def execute(self):
         export_format = self.formdata.get('format')

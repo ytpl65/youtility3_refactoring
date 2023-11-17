@@ -12,6 +12,6 @@ urlpatterns = [
     path('sitereport_temp_form/',      views.SiteReportTemplateForm.as_view(),     name='sitereport_template_form'),
     path('incidentreport_temp_form/',  views.IncidentReportTemplateForm.as_view(), name='incident_template_form'),
     path('srqsetbelonging/',           views.MasterReportBelonging.as_view(),      name='srqsetbelonging'),
-    path('get_reports/',           views.ExportReports2.as_view(),      name='exportreports'),
+    path('get_reports/',           views.ExportReports.as_view(),      name='exportreports'),
     path('design/',           views.DesignReport.as_view(),      name='design'),
 ]

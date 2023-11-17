@@ -307,8 +307,6 @@ Report Form
     $("#btn_preview").click((e) => {
       $("#id_preview").val("true")
       var formData = $("#report_form").serialize();
-      
-
       //send ajax request
       $.ajax({
         url:urlname,

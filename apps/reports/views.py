@@ -25,6 +25,7 @@ from django.urls import reverse_lazy
 from django.conf import settings
 import pandas as pd, xlsxwriter
 from apps.reports import utils as rutils
+from django_weasyprint.views import WeasyTemplateView
 import time, base64, sys, json
 log = logging.getLogger('__main__')
 
@@ -520,127 +521,8 @@ class ConfigWorkPermitReportTemplate(LoginRequiredMixin, View):
 
 
 
+    
 class ExportReports(LoginRequiredMixin, View):
-    P = {
-        'template_form':"reports/report_export_form.html",
-        'form':rp_forms.ReportForm
-    }
-    
-    def get(self, request, *args, **kwargs):
-        R, P = request.GET, self.P
-        if R.get('template'):
-            form = P['form'](request=request)
-            report_names = json.dumps(P['form'].report_templates)
-            fields_map = json.dumps(form.get_fields_report_map())
-            cxt = {
-                'form':form,
-                'report_names':report_names,
-                'fields_map':fields_map
-            }
-            return render(request, P['template_form'], context=cxt)
-        
-    def post(self, request, *args, **kwargs):
-        R,P = request.POST, self.P
-        data = R
-        form = P['form'](data = data, request=request)
-        report_names = json.dumps(P['form'].report_templates)
-        fields_map = json.dumps(form.get_fields_report_map())
-        if not form.is_valid():
-            print("form is not valid", form.errors)
-            return render(request, P['template_form'], context={
-                'form':form, 'report_names':report_names,
-                'fields_map':fields_map})
-        log.info('form is valid')
-        formdata = form.cleaned_data
-        params = self.prepare_parameters(formdata, request)
-        result = execute_report(params, formdata)
-        log.info(f'Report form data {formdata}')
-        try:
-            if result.status_code == 200:
-                if formdata.get('export_type') == 'SEND': #send on email
-                    log.info('report sending on mail')
-                    encoded_data = base64.b64encode(result.content)
-                    json_report_data = json.dumps({'report': encoded_data.decode('utf-8')})
-                    send_report_on_email.delay(formdata, json_report_data)
-                    time.sleep(2)
-                    msg.success(request, "Report has been sent on mail successfully")
-                    return render(request, P['template_form'], context={'form':form, 'report_names':report_names, 'fields_map':fields_map})
-                
-                if formdata.get('preview') == 'true': #preview report
-                    log.info('previewing the file')
-                    response = HttpResponse(result.content, content_type='application/pdf')
-                    response['Content-Disposition'] = 'attachment; filename="report.pdf"'
-                    return response
-                
-                response = FileResponse(BytesIO(result.content))
-                response['Content-Disposition'] = f'attachment; filename="{formdata["report_name"]}.{formdata["format"]}"'
-                return response #download report
-            else:
-                msg.error(request, "Failed to download the report, something went wrong")
-                return HttpResponseRedirect(reverse('reports:exportreports') + "?template=true") #report-export failure
-        except Exception as e:
-            log.error("something went wron in export reports", exc_info=True)
-            msg.error(request, "Failed to download the report, something went wrong")
-            return render(request, P['template_form'], context={'form':form, 'report_names':report_names, 'fields_map':fields_map})
-        finally:
-            EI = sys.exc_info()
-            create_report_history.delay(formdata, request.user.id, request.session['bu_id'], EI)
-
-    
-    def prepare_parameters(self, formdata, request):
-        log.info("prepare params started")
-        timezone, client_logo_url = self.get_other_common_params(request)
-        common_params = [
-            {"urlName":"timezone", "values":[timezone]},
-            {"urlName":"connectionName", "values":[settings.KNOWAGE_DATASOURCE]},
-            {"urlName":"CompanyName", "values":[settings.COMPANYNAME]},
-            {"urlName":"clientname", "values":[request.session['clientname']]},
-            {"urlName":"clientlogopath", "values":[client_logo_url]},
-        ]
-        
-        report_params = self.return_report_params(formdata)
-        report_params.extend(common_params)
-        log.info('params prepared and returned')
-        return report_params
-        
-        
-    def get_other_common_params(self, request):
-        from django.templatetags.static import static
-        S          = request.session
-        timezone   = utils.get_timezone(S['ctzoffset'])
-        Attachment = apps.get_model('activity', 'Attachment')
-        Bt         = apps.get_model('onboarding', 'Bt')
-        uuid       = Bt.objects.filter(id = S['client_id']).values('uuid').first()['uuid']
-        
-        applogo_url         = request.build_absolute_uri(static('assets/media/images/logo.png'))
-        clientlogo_att = Attachment.objects.get_att_given_owner(uuid, request)
-        if clientlogo_att:
-            clientlogo_filepath = settings.MEDIA_URL + clientlogo_att[0]['filepath'] + clientlogo_att[0]['filename']
-        else:
-            clientlogo_filepath = "No Client Logo"
-        
-        clientlogo_url      = request.build_absolute_uri(clientlogo_filepath)
-        log.info("common parameters are returned")
-        return timezone, clientlogo_url
-
-    def return_report_params(self, formdata):
-        if formdata.get('report_name') in [settings.KNOWAGE_REPORTS['TASKSUMMARY'],settings.KNOWAGE_REPORTS['TOURSUMMARY'],
-                        settings.KNOWAGE_REPORTS['LISTOFTASKS'],settings.KNOWAGE_REPORTS['LISTOFINTERNALTOURS'],
-                        settings.KNOWAGE_REPORTS['PPMSUMMARY'],settings.KNOWAGE_REPORTS['LISTOFTICKETS'], settings.KNOWAGE_REPORTS['WORKORDERLIST']]:
-            return [
-                 {"urlName":"fromdate", "values":[formdata['fromdate'].strftime('%d/%m/%Y')]},
-                {"urlName":"uptodate", "values":[formdata['uptodate'].strftime('%d/%m/%Y')]},
-                {"urlName":"siteids", "values":[formdata['site']]},
-            ]
-        if formdata.get('report_name') == settings.KNOWAGE_REPORTS['SITEREPORT']:
-            return [
-                {"urlName":"fromdate", "values":[formdata['fromdate'].strftime('%d/%m/%Y')]},
-                {"urlName":"uptodate", "values":[formdata['uptodate'].strftime('%d/%m/%Y')]},
-                {"urlName":"sgroupids", "values":[formdata['sitegroup']]},
-            ]
-            
-    
-class ExportReports2(LoginRequiredMixin, View):
     PARAMS = {
         'template_form':"reports/report_export_form.html",
         'form':rp_forms.ReportForm
@@ -648,16 +530,15 @@ class ExportReports2(LoginRequiredMixin, View):
     
     def get(self, request, *args, **kwargs):
         R, P = request.GET, self.PARAMS
-        if R.get('template'):
-            form = P['form'](request=request)
-            report_names = json.dumps(P['form'].report_templates)
-            fields_map = json.dumps(form.get_fields_report_map())
-            cxt = {
-                'form':form,
-                'report_names':report_names,
-                'fields_map':fields_map
-            }
-            return render(request, P['template_form'], context=cxt)
+        form = P['form'](request=request)
+        report_names = json.dumps(P['form'].report_templates)
+        fields_map = json.dumps(form.get_fields_report_map())
+        cxt = {
+            'form':form,
+            'report_names':report_names,
+            'fields_map':fields_map
+        }
+        return render(request, P['template_form'], context=cxt)
     
     def post(self, request, *args, **kwargs):
         form_data, P = request.POST, self.PARAMS
@@ -672,12 +553,15 @@ class ExportReports2(LoginRequiredMixin, View):
                 'fields_map':fields_map})
         log.info('form is valid')
         formdata = form.cleaned_data
+        log.info("Formdata submitted by user %s"%(pformat(formdata)))
         return self.export_report(formdata, session, request)
         
     def export_report(self, formdata, session, request):
         report_essentials = rutils.ReportEssentials(formdata=formdata, session=session)
+        log.info("report essentials %s"%(report_essentials))
         ReportFormat = report_essentials.get_report_export_object()
         report = ReportFormat(filename=formdata['report_name'], client_id=session['client_id'], formdata=formdata, request=request)
+        log.info("Report Format intialized, %s"%(report))
         return report.execute()
         
 
@@ -785,6 +669,3 @@ class DesignReport(LoginRequiredMixin, View):
         """
         return [max([len(str(s)) for s in dataframe[col].values] + [len(col)]) for col in dataframe.columns]
 
-    
-    
-        
