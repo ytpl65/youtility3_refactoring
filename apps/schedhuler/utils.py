@@ -244,7 +244,10 @@ def insert_into_jn_for_parent(job, params):
         job_id         = job['id'],
         jobtype        = params['jobtype'],
         plandatetime = params['pdtz'],
-        expirydatetime = params['edtz']
+        expirydatetime = params['edtz'],
+        parent = params['NONE_JN'],
+        jobstatus = params['jobstatus'],
+        performedby = params['NONE_P'],
     )
     return obj
 
