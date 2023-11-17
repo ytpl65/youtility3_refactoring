@@ -1333,7 +1333,8 @@ class InternalTourScheduling(LoginRequiredMixin, View):
             'uptodate'  : datetime.combine(date.today(), time(23, 00, 00)) + timedelta(days = 2),
         },
         'fields'       : ['id', 'jobname', 'people__peoplename', 'pgroup__groupname', 'fromdate', 'uptodate',
-                        'planduration', 'gracetime', 'expirytime', 'assignedto', 'bu__bucode', 'bu__buname']
+                        'planduration', 'gracetime', 'expirytime', 'assignedto', 'bu__bucode', 'bu__buname',
+                        'ctzoffset']
     }
 
     def get(self, request, *args, **kwargs):
