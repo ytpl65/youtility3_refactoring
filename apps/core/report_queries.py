@@ -43,7 +43,7 @@ def get_query(query):
                 SELECT
                 bu.id,
                 bu.buname as "Site",
-                (jobneed.plandatetime AT TIME ZONE tz.timezone)::DATE as "Planned Date",
+                (jobneed.plandatetime AT TIME ZONE tz.timezone)::DATE as "Date",
                 count(jobneed.id)::numeric as "Total Tours",
             count(case when jobneed.jobtype='SCHEDULE' then jobneed.jobtype end) as "Total Scheduled",
             count(case when jobneed.jobtype='ADHOC' then jobneed.jobtype end) as "Total Adhoc",

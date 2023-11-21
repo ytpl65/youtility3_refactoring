@@ -4,15 +4,16 @@ from apps.core.report_queries import get_query
 from apps.onboarding.models import Bt
 from django.conf import settings
 
-class TaskSummaryReport(BaseReportsExport):
-    report_title = "Task Summary"
-    design_file = "reports/pdf_reports/task_summary.html"
+
+class TourSummaryReport(BaseReportsExport):
+    report_title = "Tour Summary"
+    design_file = "reports/pdf_reports/tour_summary.html"
     ytpl_applogo =  'frontend/static/assets/media/images/logo.png'
-    report_name = 'TaskSummary'
+    report_name = 'TourSummary'
     
     def __init__(self, filename, client_id, request=None, context=None, data=None, additional_content=None, returnfile=False, formdata=None):
         super().__init__(filename, client_id, design_file=self.design_file, request=request, context=context, data=data, additional_content=additional_content, returnfile=returnfile, formdata=formdata)
-    
+
     def set_context_data(self):
         '''
         context data is the info that is passed in templates
@@ -28,7 +29,8 @@ class TaskSummaryReport(BaseReportsExport):
             'app_logo':self.ytpl_applogo,
             'report_subtitle':f"Site: {sitename}, From: {self.formdata.get('fromdate')} To {self.formdata.get('uptodate')}"
         }
-        
+    
+    
     def set_args_required_for_query(self):
         self.args = [
             get_timezone(self.formdata['ctzoffset']),
@@ -43,12 +45,11 @@ class TaskSummaryReport(BaseReportsExport):
         '''
         self.set_args_required_for_query()
         self.data = runrawsql(get_query(self.report_name), args=self.args)
-
         
+    
     def set_additional_content(self):
         bt = Bt.objects.filter(id=self.client_id).values('id', 'buname').first()
         self.additional_content = f"Client: {bt['buname']}; Report: {self.report_title}; From: {self.formdata['fromdate']} To: {self.formdata['uptodate']}"
-        
 
     def excel_layout(self, worksheet, workbook, df, writer, output):
         super().excel_layout(worksheet, workbook, df, writer, output)
@@ -91,8 +92,7 @@ class TaskSummaryReport(BaseReportsExport):
         # Rewind the buffer
         output.seek(0)
         return output
-    
-    
+
     def execute(self):
         export_format = self.formdata.get('format')
         # context needed for pdf, html
@@ -118,4 +118,3 @@ class TaskSummaryReport(BaseReportsExport):
             return self.get_html_output()
         else:
             return self.get_json_output()
-        

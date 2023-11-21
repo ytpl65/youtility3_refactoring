@@ -38,12 +38,12 @@ class BaseReportsExport(WeasyTemplateResponseMixin):
     
     
     def get_pdf_output(self):
-        log.info("pdf is executing")
+        log.info(f"pdf is executing {self.request.build_absolute_uri()}")
         html_string = render_to_string(self.design_file, context=self.context, request=self.request)
-        html = HTML(string=html_string)
-        css = CSS(filename='frontend/static/assets/css/local/reports.css', base_url=settings.STATIC_ROOT)
+        html = HTML(string=html_string, base_url=self.request.build_absolute_uri())
+        css = CSS(filename='frontend/static/assets/css/local/reports.css')
         font_config = FontConfiguration()
-        pdf_output = html.write_pdf(stylesheets=[css], font_config=font_config)
+        pdf_output = html.write_pdf(stylesheets=[css], font_config=font_config, presentational_hints=True)
         if self.returnfile: return pdf_output
         response = HttpResponse(
             pdf_output, content_type='application/pdf'
@@ -181,9 +181,11 @@ class ReportEssentials(object):
     def get_report_export_object(self):
         # Report Design Files
         from apps.reports.report_designs.task_summary import TaskSummaryReport
+        from apps.reports.report_designs.tour_summary import TourSummaryReport
         
         return {
-            self.TaskSummary: TaskSummaryReport
+            self.TaskSummary: TaskSummaryReport,
+            self.TourSummary:TourSummaryReport
         }.get(self.report_name)
     
         

@@ -523,7 +523,7 @@ class ConfigWorkPermitReportTemplate(LoginRequiredMixin, View):
 
 
     
-class ExportReports(LoginRequiredMixin, View):
+class DownloadReports(LoginRequiredMixin, View):
     PARAMS = {
         'template_form':"reports/report_export_form.html",
         'form':rp_forms.ReportForm

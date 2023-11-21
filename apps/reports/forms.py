@@ -153,7 +153,6 @@ class ReportForm(forms.Form):
         return first_day_of_last_month, last_day_of_last_month
 
     def clean(self):
-        ic("cleaned")
         super().clean()
         cd = self.cleaned_data
         self.cleaned_data['site'] = ','.join(cd.get('site', ""))

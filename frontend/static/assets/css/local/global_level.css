@@ -3,8 +3,8 @@ html * {
     font-family: 'Roboto', sans-serif;
     font-weight: 400;
 }
-body {
-    font-size: 80%;
+div {
+    zoom:98.5%
 }
 .menu-item.menu-accordion.show {
     border-left: 4px solid #489edb;

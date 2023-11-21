@@ -104,7 +104,7 @@ class Schd_I_TourJobForm(JobForm):
     def clean_cronstrue(self):
         if val := self.cleaned_data.get('cron'):
             if val.startswith("*"):
-                raise forms.ValidationError(f"Warning Every Minute Scheduling Not Allowed!")
+                raise forms.ValidationError(f"Warning: Scheduling every minute is not allowed!")
             return val
         raise forms.ValidationError("Invalid Cron")
 
@@ -300,7 +300,7 @@ class Schd_E_TourJobForm(JobForm):
     def clean_cronstrue(self):
         if val := self.cleaned_data.get('cron'):
             if val.startswith("*"):
-                raise forms.ValidationError(f"Warning Every Minute Scheduling Not Allowed!")
+                raise forms.ValidationError(f"Warning: Scheduling every minute is not allowed!")
             return val
         raise forms.ValidationError("Invalid Cron")
 
@@ -399,7 +399,7 @@ class SchdTaskFormJob(JobForm):
     def clean_cronstrue(self):
         if val := self.cleaned_data.get('cron'):
             if val.startswith("*"):
-                raise forms.ValidationError(f"Warning Every Minute Scheduling Not Allowed!")
+                raise forms.ValidationError(f"Warning: Scheduling every minute is not allowed!")
             return val
         raise forms.ValidationError("Invalid Cron")
 
