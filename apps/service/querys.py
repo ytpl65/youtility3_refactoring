@@ -64,7 +64,8 @@ class Query(graphene.ObjectType):
 
     get_people_event_log_punch_ins = graphene.Field(SelectOutputType,
                                                     datefor = graphene.String(required=True),
-                                                    buid = graphene.Int(required=True))
+                                                    buid = graphene.Int(required=True),
+                                                    peopleid = graphene.Int(required=True))
 
     get_qsetmodifiedafter = graphene.Field(SelectOutputType,
                                           mdtz = graphene.String(required = True),
@@ -138,11 +139,11 @@ class Query(graphene.ObjectType):
                                      )
 
     approve_workpermit = graphene.Field(SelectOutputType,
-                                id = graphene.Int(required=True),
+                                wom_uuid = graphene.String(required=True),
                                 peopleid = graphene.Int(required=True),
                                         )
     reject_workpermit = graphene.Field(SelectOutputType,
-                                id = graphene.Int(required=True),
+                                wom_uuid = graphene.String(required=True),
                                 peopleid = graphene.Int(required=True),
                                         )
     
@@ -171,13 +172,13 @@ class Query(graphene.ObjectType):
         return SelectOutputType(nrows = count, ncols = len(keys), records = records,msg = msg)
     
     @staticmethod
-    def resolve_approve_workpermit(self, info, id, peopleid):
+    def resolve_approve_workpermit(self, info, wom_uuid, peopleid):
         log.info("request for change wom status")
-        log.info(f"inputs are {id = } {peopleid = }")
+        log.info(f"inputs are {wom_uuid = } {peopleid = }")
         try:
             p = People.objects.filter(id = peopleid).first()
-            if is_all_approved := check_all_approved(id, p.peoplecode):
-                    updated = Wom.objects.filter(id=id).update(workpermit=Wom.WorkPermitStatus.APPROVED.value)
+            if is_all_approved := check_all_approved(wom_uuid, p.peoplecode):
+                    updated = Wom.objects.filter(uuid=wom_uuid).update(workpermit=Wom.WorkPermitStatus.APPROVED.value)
             rc, msg = 0, "success"
         except Exception as e:
             log.critical("something went wrong!", exc_info=True)
@@ -185,12 +186,12 @@ class Query(graphene.ObjectType):
         return BasicOutput(rc=rc, msg=msg)
     
     @staticmethod
-    def resolve_reject_workpermit(self, info, id, peopleid):
+    def resolve_reject_workpermit(self, info, wom_uuid, peopleid):
         try:
             p = People.objects.filter(id=peopleid).first()
-            w = Wom.objects.filter(id=id).first()
-            Wom.objects.filter(id=id).update(workpermit=Wom.WorkPermitStatus.REJECTED.value)
-            reject_workpermit(id, p.peoplecode)
+            #w = Wom.objects.filter(id=id).first()
+            Wom.objects.filter(uuid=wom_uuid).update(workpermit=Wom.WorkPermitStatus.REJECTED.value)
+            reject_workpermit(wom_uuid, p.peoplecode)
             rc, msg = 0, "success"
         except Exception as e:
             log.critical("something went wrong", exc_info=True)
@@ -367,9 +368,9 @@ class Query(graphene.ObjectType):
         log.info(f'total {count} objects returned')
         return SelectOutputType(nrows = count, records = records,msg = msg)
     
-    def resolve_get_people_event_log_punch_ins(self, info, datefor,  buid):
-        log.info(f'request get_people_event_log_punch_ins inputs are : {datefor = }  {buid = }')
-        data = PeopleEventlog.objects.get_people_event_log_punch_ins(datefor,  buid)
+    def resolve_get_people_event_log_punch_ins(self, info, datefor,  buid, peopleid):
+        log.info(f'request get_people_event_log_punch_ins inputs are : {datefor = }  {buid = } {peopleid = }')
+        data = PeopleEventlog.objects.get_people_event_log_punch_ins(datefor,  buid, peopleid)
         records, count, msg = utils.get_select_output(data)
         log.info(f'total {count} objects returned')
         return SelectOutputType(nrows = count, records = records,msg = msg)

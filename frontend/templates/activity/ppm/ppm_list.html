@@ -1,4 +1,4 @@
-{% extends "base_list.html" %}
+{% extends "globals/base_list.html" %}
 
 {% block card_title %}
  PPM List
@@ -50,105 +50,12 @@
         $("div.jobstatusSelect").append(html)
     }
 
-    function initJobneedPPM() {
-        // Initialize table 1
-        jnppm_table = $("#jobneedppm_table").DataTable({
-            ajax:{
-                url:"{{ url('activity:ppm') }}?action=jobneed_ppmlist",
-                data:function(d){
-                    d.sel_jobstatus = current_sel_jobstatus
-                    d.pd1 = from_pd,
-                    d.pd2 = to_pd
-                }
-            },
-            deferRenderer:true,
-            search      : {return: true},
-            language: {
-                search:"",
-                searchPlaceholder: 'Enter search term here...'
-            },
-            pageLength:19,
-            lengthMenu: [[10, 20, 30], [10, 20, 30]],
-            dom:`<'row' <'col-sm-6 d-flex justify-content-start'<'jobstatusSelect d-flex align-items-center mt-2 me-2'><'customfields'>f>  <'col-sm-6 d-flex justify-content-end'B> >rt<'row'
-			 <'col-sm-6'l> <'col-sm-6'p><'col-sm-12 d-flex justify-content-center'i>>`,
-            columns:[
-                {data:'id', visible:false},
-                {data:'plandatetime', title:'Plandatetime'},
-                {data:'jobdesc', title:'Description', visible:false},
-                {title: 'People/Group', data:'assignedto'},
-                {data: 'performedby__peoplename', title: 'Performed By'},
-                {data: 'asset__assetname', title: 'Asset/SmartPlace'},
-                {data: 'qset__qsetname', title: 'Questionset'},
-                {data:'frequency', title:"Frequency"},
-                {data:'expirydatetime', title:"Exp Datetime"},
-                {data:'gracetime', title:"Gracetime"},
-                {data:'ctzoffset', visible:false},
-                {data:'bu__buname', title:'Site'},
-                {data:'bu__bucode', visible:false, title:"Site Code"}
-            ],
-            columnDefs:[
-                {targets:[1], render:function(data, type, row, meta){
-                    return convert_to_local(type, data, row)
-                }},
-                {targets:[8], render:function(data, type, row, meta){
-                    return convert_to_local(type, data, row)
-                }},
-                {targets:[3], render:function(data, type, row, meta){
-                    let url = `{{ url('activity:ppm') }}?action=getppm_jobneedform&id=${row['id']}`
-                    return `<a href="${url}">${data}</a>`
-                }}
-            ],
-            buttons:[
-                "searchBuilder",
-                dataTablesPDFConfig(
-                    title = `Site: {{request.user.bu.buname}}\n PPM List`,
-                    columns = [1,2,3,4,5,6,7,8,9, 10, 11],
-                    filename = 'ppm_list'
-                ),
-                dataTablesExcelConfig(
-                    title = `Site: {{request.user.bu.buname}}\n PPM List`,
-                    columns = [1,2,3,4,5,6,7,8,9, 10, 11],
-                    filename = 'ppm_list'
-                ),
-                dataTablesColumnVisibilityConfig()
-            ],
-            initComplete:function(){
-                //populate dropdown field
-                $("#custom_jobstatus").change(() => {
-                    var jobstatus = $("#custom_jobstatus").val()
-                    if(jobstatus !=  current_sel_jobstatus){
-                        current_sel_jobstatus = jobstatus
-                        jnppm_table.ajax.reload()
-                    }
-                })
-            }
-        })
-
-        //add input field to the datatables dom
-        initDateRangeHtml()
-        initSelectField()
-        initDateRange("#id_daterange").on('apply.daterangepicker', function(e, picker){
-            from_pd = picker.startDate.format('YYYY-MM-DD');
-            to_pd = picker.endDate.format('YYYY-MM-DD');
-            //table = 
-            jnppm_table.ajax.reload()
-        })
-        $("#schedule_ppm").removeClass("border-bottom")
-        $("#jobppm_table").hide()
-        jb_table ? jb_table.destroy() : {}
-        $("#ppm_planner").addClass("border-bottom")
-        $("#jobneedppm_table").show()
-    }
 
     function initJobPPM() {
         // Initialize table 2
         jb_table = $("#jobppm_table").DataTable({
             ajax:{
                 url:"{{ url('activity:ppm') }}?action=job_ppmlist",
-                data:function(d){
-                    d.from = from_pd,
-                    d.upto = to_pd
-                }
             },
             deferRenderer:true,
             search      : {return: true},
@@ -210,18 +117,6 @@
                 }
             ]
         })
-        initDateRangeHtml('div.customfields2', 'id_daterange2')
-        initDateRange("#id_daterange2").on('apply.daterangepicker', function(e, picker){
-            from_pd = picker.startDate.format('YYYY-MM-DD');
-            to_pd = picker.endDate.format('YYYY-MM-DD');
-            //table = 
-            jb_table.ajax.reload()
-        })
-            $("#ppm_planner").removeClass("border-bottom")
-            $("#jobneedppm_table").hide()
-            jnppm_table ? jnppm_table.destroy() : {}
-            $("#schedule_ppm").addClass("border-bottom")
-            $("#jobppm_table").show()
     }
 
 
@@ -230,13 +125,6 @@
         
         
         initJobPPM()
-
-        $("#ppm_planner").click(() => {
-            jnppm_table ? jnppm_table.ajax.reload() : initJobneedPPM()
-        })
-        $("#schedule_ppm").click(() => {
-            jb_table ? jb_table.ajax.reload() : initJobPPM()
-        })
         
     })
 </script>

@@ -449,6 +449,7 @@ function handle_rendering_of_menus(session) {
     sitesurvey: "#SITESURVEY",
     helpdesk: "#HELPDESK",
     scheduling: "#SCHEDULING",
+    comparisions: "#COMPARISIONS",
     wom: "#WOM",
   };
   if (session["is_superadmin"]) {
@@ -478,6 +479,10 @@ function handle_rendering_of_menus(session) {
       if (code.includes("AD_") && $(exceptions["admin"]).is(":hidden")) {
         $(exceptions["admin"]).show();
         $(`${exceptions["admin"]} .menu-item`).hide();
+      }
+      if (code.includes("CMP_") && $(exceptions["comparisions"]).is(":hidden")) {
+        $(exceptions["comparisions"]).show();
+        $(`${exceptions["comparisions"]} .menu-item`).hide();
       }
 
       if (code.includes("OB_") && $(exceptions["onboarding"]).is(":hidden")) {
@@ -551,7 +556,10 @@ function display_field_error(key, value) {
         var tag = field.next();
         $(error).insertAfter(tag);
       }
-    } else {
+    } else if(field.parent().hasClass("d-flex")) {
+      let newField = field.parent('.d-flex')
+      $(error).insertAfter(newField)
+    }else {
       if (!field.hasClass("is-invalid")) {
         field.addClass("is-invalid");
         $(error).insertAfter(field);
@@ -676,7 +684,10 @@ function display_modelfield_error(key, value) {
       var tag = $(field).next();
       $(error).insertAfter(tag);
     }
-  } else {
+  } else if(field.parent().hasClass("d-flex")) {
+    let newField = field.parent('.d-flex')
+    $(error).insertAfter(newField)
+  }else {
     if (!$(field).hasClass("is-invalid")) {
       $(field).addClass("is-invalid");
       $(error).insertAfter(field);
@@ -1482,7 +1493,7 @@ function initDateRange(element, start = null, end = null) {
       //minDate: '01/01/2012',
       //maxDate: '12/31/2014',
       dateLimit: {
-        days: 90,
+        days: 92,
       },
       showDropdowns: true,
       showWeekNumbers: true,

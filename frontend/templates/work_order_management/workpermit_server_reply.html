@@ -15,11 +15,18 @@
 <div class="container h-100">
         <div class="row h-100 justify-content-center align-items-center">
             <div class="col-xs-12 col-sm-10 col-md-8 col-lg-6">
+                    {% if alreadyapproved is defined %}
                     <div class="alert alert-success shadow" role="alert">
                         <h4 class="alert-heading">Thank you!</h4>
-                        <p> We appreciate your prompt response, for letting us know that the work permit
-                            with request # {{ seqno }} has been {{ status }}</p>
+                        <p>This Workpermit is already approved by you!</p>
                     </div>
+                    {% else %}
+                    
+                    <div class="alert alert-success shadow" role="alert">
+                        <h4 class="alert-heading">Thank you for your response!</h4>
+                        <p>Work Permit # {{ seqno }} has been {{ status }}</p>
+                    </div>
+                    {% endif %}
             </div>
         </div>
     </div>

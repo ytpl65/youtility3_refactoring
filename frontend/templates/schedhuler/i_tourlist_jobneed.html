@@ -1,4 +1,4 @@
-{% extends "base_list.html" %}
+{% extends "globals/base_list.html" %}
 
 <!---- BEGIN CARD TITLE ------>
 {% block card_title %}
@@ -108,6 +108,7 @@ Tour List
                 }},
                 {data:"bu__buname", title:"Site"},
                 {data:"bu__bucode", title:"Site Code", visible:false},
+                {data:"ctzoffset", visible:false, className:'noVis'},
             ],
             order:[[1, 'desc']],
             scrollCollapse: true,

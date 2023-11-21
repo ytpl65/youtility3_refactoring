@@ -1,4 +1,4 @@
-    {% extends "base_list.html" %}
+    {% extends "globals/base_list.html" %}
 
 <!---- BEGIN CARD TITLE ------>
 {% block card_title %}
@@ -86,6 +86,7 @@ Scheduled Tours
                 {title: 'Exp. Time', data: 'expirytime'},
                 {title: 'Site', data: 'bu__buname'},
                 {title: 'Site Code', data: 'bu__bucode', visible:false},
+                {data: 'ctzoffset', visible:false, className:"noVis"},
             ],
             rowReorder: {
                 dataSrc: 'jobname',

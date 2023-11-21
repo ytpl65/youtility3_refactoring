@@ -59,6 +59,8 @@ class Schd_I_TourJobForm(JobForm):
         types = [cd.get(type) for type in types_names]
         for time, type, name in zip(times, types, times_names):
             self.cleaned_data[name] = self.convertto_mins(type, time)
+        if cd['fromdate'] > cd['uptodate']:
+            raise forms.ValidationError({"uptodate":"Valid To cannot be less than Valid From."})
         
     
 
@@ -98,6 +100,13 @@ class Schd_I_TourJobForm(JobForm):
     @staticmethod
     def clean_slno():
         return -1
+    
+    def clean_cronstrue(self):
+        if val := self.cleaned_data.get('cron'):
+            if val.startswith("*"):
+                raise forms.ValidationError(f"Warning Every Minute Scheduling Not Allowed!")
+            return val
+        raise forms.ValidationError("Invalid Cron")
 
 
         
@@ -272,6 +281,9 @@ class Schd_E_TourJobForm(JobForm):
         self.cleaned_data = self.check_nones(self.cleaned_data)
         if cd['people'] is None and cd['pgroup'] is None:
             raise forms.ValidationError('Cannot be proceed assigned tour to either people or group.')
+        if cd['fromdate'] > cd['uptodate']:
+            raise forms.ValidationError({"uptodate":"Valid To cannot be less than Valid From."})
+        
     
     def check_nones(self, cd):
         fields = {
@@ -285,8 +297,10 @@ class Schd_E_TourJobForm(JobForm):
         return cd
         
         
-    def clean_cron(self):
+    def clean_cronstrue(self):
         if val := self.cleaned_data.get('cron'):
+            if val.startswith("*"):
+                raise forms.ValidationError(f"Warning Every Minute Scheduling Not Allowed!")
             return val
         raise forms.ValidationError("Invalid Cron")
 
@@ -360,6 +374,10 @@ class SchdTaskFormJob(JobForm):
         types = [cd.get(type) for type in types_names]
         for time, type, name in zip(times, types, times_names):
             self.cleaned_data[name] = self.convertto_mins(type, time)
+        if cd['people'] is None and cd['pgroup'] is None:
+            raise forms.ValidationError('Cannot be proceed assigned tour to either people or group.')
+        if cd['fromdate'] > cd['uptodate']:
+            raise forms.ValidationError({"uptodate":"Valid To cannot be less than Valid From."})
 
     @staticmethod
     def convertto_mins(_type, _time):
@@ -377,7 +395,14 @@ class SchdTaskFormJob(JobForm):
             if cd.get(field) in [None, ""]:
                 cd[field] = getattr(utils, func)()
         return cd      
-       
+    
+    def clean_cronstrue(self):
+        if val := self.cleaned_data.get('cron'):
+            if val.startswith("*"):
+                raise forms.ValidationError(f"Warning Every Minute Scheduling Not Allowed!")
+            return val
+        raise forms.ValidationError("Invalid Cron")
+
 
 
 

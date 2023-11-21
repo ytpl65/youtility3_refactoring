@@ -1,4 +1,4 @@
-{% extends "base_form.html" %}
+{% extends "globals/base_form.html" %}
 
 {% block extra_css %}
 <link  href="{{ static('assets/plugins/custom/DataTables/datatables.min.css') }}" rel="stylesheet" type="text/css"/>
@@ -111,8 +111,7 @@ $(document).ready(() => {
                 ]},
                 {label: 'People', name: "assignedperson", type:"select"},
                 {label: 'Group', name: "assignedgroup", type:"select"},
-                {label: 'Frequency', name: "frequency", type:"select", def:"MINUTE", options:[
-                    {label:'Minute', value:"MINUTE"},
+                {label: 'Frequency', name: "frequency", type:"select", def:"DAY", options:[
                     {label:'Hour', value:"HOUR"},
                     {label:'Day', value:"DAY"},
                     {label:'Week', value:"WEEK"},

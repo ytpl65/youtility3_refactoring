@@ -199,14 +199,15 @@ class PELManager(models.Manager):
         merged_qset = [{**obj1, **obj2} for obj1, obj2 in zip(qset, att_qset)]
         return merged_qset or self.none()
     
-    def get_people_event_log_punch_ins(self, datefor, buid):
+    def get_people_event_log_punch_ins(self, datefor, buid, peopleid):
+        type = ['MARK', 'MARKATTENDANCE'] if peopleid == -1 else ['SELF', 'SELFATTENDANCE']
         given_date = parse_date(datefor)
         previous_date = given_date - timedelta(days=1) 
         qset = self.filter(
             datefor__range = (previous_date, given_date),
             punchouttime__isnull = True,
             bu_id = buid,
-            peventtype__tacode__in = ['MARK', 'MARKATTENDANCE']
+            peventtype__tacode__in = type
         ).select_related(
             'client', 'bu', 'shift', 'verifiedby',
             'geofence', 'peventtype'
@@ -272,6 +273,7 @@ class PELManager(models.Manager):
         uuids = pel_qset.annotate(owner_uuid = Cast('uuid', output_field=models.CharField())).values_list(
             'owner_uuid', flat=True
         )
+        ic(pel_qset)
         from apps.activity.models import Attachment
         att_qset = Attachment.objects.get_attforuuids(uuids).values('filepath', 'filename')
         merged_qset = [{**obj1, **obj2} for obj1, obj2 in zip(pel_qset, att_qset)]

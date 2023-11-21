@@ -160,15 +160,6 @@ class QuestionSetManager(models.Manager):
         return qset or self.none()
         
     
-    def get_qsets_for_tour(self, request):
-        R, S = request.GET, request.session
-        search_term = R.get('search')
-        qset = self.filter(client_id = S['client_id'], bu_id = S['bu_id'], enable=True)
-        qset = qset.filter(qsetname = search_term) if search_term else qset
-        qset = qset.annotate(
-                text = F('qsetname')).values(
-                    'id', 'text')
-        return qset or self.none()
         
 
 class QuestionManager(models.Manager):
@@ -341,6 +332,7 @@ class JobneedManager(models.Manager):
             qobjs = qobjs.filter(jobstatus = P['jobstatus'])
         if P.get('alerts') and P.get('alerts') == 'TASK':
             qobjs = qobjs.filter(alerts=True)
+        ic(str(qobjs.query))
         return qobjs or self.none()
 
     def get_assetmaintainance_list(self, request, related, fields):
@@ -463,7 +455,6 @@ class JobneedManager(models.Manager):
             alerts=True,
             identifier="INTERNALTOUR"
         ).select_related(*related).annotate(**assignedto).values(*fields)
-            ic('called')
         return qobjs or self.none()
     
     
@@ -622,12 +613,12 @@ class JobneedManager(models.Manager):
     def get_taskchart_data(self, request):
         S, R = request.session, request.GET
         total_schd = self.select_related('bu', 'parent').filter(
-            Q(Q(parent_id__in = [1, -1]) | Q(parent_id__isnull=True)),
-            bu_id__in = S['assignedsites'],
-            identifier = 'TASK',
-            plandatetime__date__gte = R['from'],
-            plandatetime__date__lte = R['upto'],
-            client_id = S['client_id']
+            Q(Q(parent_id__in=[1, -1]) | Q(parent_id__isnull=True)),
+            bu_id__in=S['assignedsites'],
+            identifier='TASK',
+            plandatetime__date__gte=R['from'],
+            plandatetime__date__lte=R['upto'],
+            client_id=S['client_id']
         ).values()
         return [
             total_schd.filter(jobstatus='ASSIGNED').count(),
@@ -640,12 +631,12 @@ class JobneedManager(models.Manager):
     def get_tourchart_data(self, request):
         S, R = request.session, request.GET
         total_schd = self.select_related('parent', 'bu').filter(
-            Q(Q(parent_id__in = [1, -1]) | Q(parent_id__isnull=True)),
-            bu_id__in = S['assignedsites'],
-            identifier = 'INTERNALTOUR',
-            plandatetime__date__gte = R['from'],
-            plandatetime__date__lte = R['upto'],
-            client_id = S['client_id']
+            Q(Q(parent_id__in=[1, -1]) | Q(parent_id__isnull=True)),
+            bu_id__in=S['assignedsites'],
+            identifier='INTERNALTOUR',
+            plandatetime__date__gte=R['from'],
+            plandatetime__date__lte=R['upto'],
+            client_id=S['client_id']
         ).values()
         return [
             total_schd.filter(jobstatus='COMPLETED').count(),
@@ -890,6 +881,8 @@ class JobneedManager(models.Manager):
         if not dtime: return "--"
         dtz = dtime + timedelta(minutes=int(ctzoffset))
         return dtz.strftime('%d-%b-%Y %H:%M:%S')
+    
+
             
 
 class AttachmentManager(models.Manager):
@@ -1149,17 +1142,34 @@ class AssetManager(models.Manager):
         return series, sum(list(map(sum, zip(*[working, mnt, stb, scp]))))
     
     def filter_for_dd_asset_field(self, request, identifiers, choices=False, sitewise=False):
-        S = request.session
-        qset = self.filter(
-            ~Q(runningstatus='SCRAPPED'),
-            enable=True, 
-            client_id = S['client_id'],
-            bu_id__in = S['assignedsites'],
-            identifier__in = identifiers,
-        ).order_by('assetname')
-        if sitewise: qset = qset.filter(bu_id = S['bu_id'])
-        if choices: qset = qset.annotate(text = Concat(F('assetname'), V(' ('), F('assetcode'), V(')'))).values_list('id', 'text')
+        client_id = request.session.get('client_id')
+        assigned_sites = request.session.get('assignedsites')
+        bu_id = request.session.get('bu_id')
+
+        base_filters = {
+            "enable": True,
+            "client_id": client_id,
+            "bu_id__in": assigned_sites,
+            "identifier__in": identifiers,
+            
+        }
+        if sitewise and bu_id:
+            base_filters["bu_id"] = bu_id
+
+        qset = self.filter(~Q(runningstatus='SCRAPPED'), **base_filters).order_by('assetname')
+
+        if choices:
+            qset = (
+                qset.annotate(
+                    text=Concat(
+                        F('assetname'), V(' ('), F('assetcode'), V(')')
+                    )
+                )
+                .values_list('id', 'text')
+            )
+
         return qset or self.none()
+
     
     def get_period_of_assetstatus(self, assetid, status):
         from apps.core.raw_queries import get_query
@@ -1255,7 +1265,91 @@ class JobneedDetailsManager(models.Manager):
     
     def get_ppm_details(self, request):
         return self.get_task_details(request.GET.get('taskid'))
+
+    def get_asset_comparision(self, request, formData):
+        S = request.session
+        qset = self.filter(
+            jobneed__identifier='TASK',
+            jobneed__jobstatus='COMPLETED',
+            jobneed__plandatetime__date__gte=formData.get('fromdate'),
+            jobneed__plandatetime__date__lte=formData.get('uptodate'),
+            jobneed__bu_id=S['bu_id'],
+            answertype='NUMERIC',
+            question_id=formData.get('question'),
+            jobneed__client_id=S['client_id']            
+        ).annotate(
+            plandatetime = F('jobneed__plandatetime'),
+            starttime = F('jobneed__starttime'),
+            jobdesc = F('jobneed__jobdesc'),
+            asset_id = F('jobneed__asset_id'),
+            assetcode = F('jobneed__asset__assetcode'),
+            assetname = F('jobneed__asset__assetname'),
+            questionname = F('question__quesname'),
+            bu_id=F('jobneed__bu_id'),
+            buname=F('jobneed__bu__buname'),
+            answer_as_float=Cast('answer', models.FloatField())
+        ).select_related('jobneed').values(
+            "plandatetime", 'starttime', 'jobdesc',
+            'asset_id', 'assetcode', 'questionname',
+            'bu_id', 'buname', 'answer_as_float')
         
+        ic(str(qset.query))
+        
+        series = []
+        from django.apps import apps
+        Asset = apps.get_model('activity', 'Asset')
+        for asset_id in formData.getlist('asset'):
+            series.append(
+                {
+                    'name':Asset.objects.get(id=asset_id).assetname,
+                    'data':list(qset.filter(jobneed__asset_id=asset_id).values_list('starttime', 'answer_as_float'))
+                }
+            )
+        ic(series)
+        return series
+        
+    def get_parameter_comparision(self, request, formData):
+        S = request.session
+        qset = self.filter(
+            jobneed__identifier='TASK',
+            jobneed__jobstatus='COMPLETED',
+            jobneed__plandatetime__date__gte=formData.get('fromdate'),
+            jobneed__plandatetime__date__lte=formData.get('uptodate'),
+            jobneed__bu_id=S['bu_id'],
+            answertype='NUMERIC',
+            jobneed__asset_id=formData.get('asset'),
+            jobneed__client_id=S['client_id']            
+        ).annotate(
+            plandatetime = F('jobneed__plandatetime'),
+            starttime = F('jobneed__starttime'),
+            jobdesc = F('jobneed__jobdesc'),
+            asset_id = F('jobneed__asset_id'),
+            assetcode = F('jobneed__asset__assetcode'),
+            assetname = F('jobneed__asset__assetname'),
+            questionname = F('question__quesname'),
+            bu_id=F('jobneed__bu_id'),
+            buname=F('jobneed__bu__buname'),
+            answer_as_float=Cast('answer', models.FloatField())
+        ).select_related('jobneed').values(
+            "plandatetime", 'starttime', 'jobdesc',
+            'asset_id', 'assetcode', 'questionname',
+            'bu_id', 'buname', 'answer_as_float')
+        
+        ic(str(qset.query))
+        
+        series = []
+        from django.apps import apps
+        Question = apps.get_model('activity', 'Question')
+        for question_id in formData.getlist('question'):
+            series.append(
+                {
+                    'name':Question.objects.get(id=question_id).quesname,
+                    'data':list(qset.filter(question_id=question_id).values_list('starttime', 'answer_as_float'))
+                }
+            )
+        ic(series)
+        return series
+        pass
 
 
 class QsetBlngManager(models.Manager):
@@ -1472,17 +1566,13 @@ class JobManager(models.Manager):
     
     def get_jobppm_listview(self, request):
         R, S = request.GET, request.session
-        fromdt = R.get('from', datetime.now() - timedelta(days=7))
-        uptpdt = R.get('upto', datetime.now())
         qset = self.annotate(
             assignedto = Case(
                 When(pgroup_id=1, then=Concat(F('people__peoplename'), V(' [PEOPLE]'))),
                 When(people_id=1, then=Concat(F('pgroup__groupname'), V(' [GROUP]'))),
             )).filter(
-            fromdate__date__gte = fromdt,
-            fromdate__date__lte = uptpdt,
             client_id = S['client_id'],
-            bu_id__in = S['assignedsites'],
+            bu_id = S['bu_id'],
             identifier = 'PPM',
             enable=True
         ).values('id', 'jobname', 'asset__assetname', 'qset__qsetname', 'assignedto', 'bu__bucode',

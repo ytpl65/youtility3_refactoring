@@ -239,12 +239,13 @@ def insert_into_jn_for_parent(job, params):
             'pgroup_id' : job['pgroup_id'],
             'parent' : params['NONE_JN'],
         }
-    obj, _ = am.Jobneed.objects.update_or_create(
+    obj, _ = am.Jobneed.objects.get_or_create(
         defaults=defaults,
         job_id         = job['id'],
         jobtype        = params['jobtype'],
         plandatetime = params['pdtz'],
-        expirydatetime = params['edtz']
+        expirydatetime = params['edtz'],
+        parent = params['NONE_JN'],
     )
     return obj
 
@@ -255,7 +256,6 @@ def insert_update_jobneeddetails(jnid, job, parent=False):
     log.info("insert_update_jobneeddetails() [START]")
     from django.utils.timezone import get_current_timezone
     tz = get_current_timezone()
-    ic(parent, job['qset_id'])
     try:
         am.JobneedDetails.objects.filter(jobneed_id=jnid).delete()
     except am.JobneedDetails.DoesNotExist:
@@ -285,7 +285,7 @@ def create_child_tasks(job, _pdtz, _people, jnid, _jobstatus, _jobtype, parent_o
             ).filter(
             parent_id = job['id']).order_by(
                 'seqno').values(*utils.JobFields.fields, 'cplocation', 'sgroup__groupname', 'bu__solid', 'bu__buname')
-        ic(R)
+
         log.info(f"create_child_tasks() total child job:={len(R)}")
         
         params = {'_jobdesc': "", 'jnid':jnid, 'pdtz':None, 'edtz':None,
@@ -328,7 +328,6 @@ def create_child_tasks(job, _pdtz, _people, jnid, _jobstatus, _jobtype, parent_o
             
             params['idx'] = idx
             jn = insert_into_jn_for_child(job, params, r)
-            ic(r)
             insert_update_jobneeddetails(jn.id, r)
     except Exception:
         log.critical(
@@ -343,7 +342,6 @@ def create_child_tasks(job, _pdtz, _people, jnid, _jobstatus, _jobtype, parent_o
 
 def calculate_route_details(R, job):
     data = R
-    ic(data)
     import googlemaps
     gmaps = googlemaps.Client(key='AIzaSyDVbA53nxHKUOHdyIqnVPD01aOlTitfVO0')
     startpoint, endpoint, waypoints = get_service_requirements(data)
@@ -352,7 +350,6 @@ def calculate_route_details(R, job):
     directions = gmaps.directions(mode='driving', waypoints=waypoints, origin=startpoint, destination=endpoint, optimize_waypoints=True)
 
     waypoint_order = directions[0]["waypoint_order"]
-    ic(waypoint_order)
     freq, breaktime = job['other_info']['tour_frequency'], job['other_info']['breaktime']
 
     data[0]['seqno'] = 0 + 1

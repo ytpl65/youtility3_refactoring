@@ -58,6 +58,8 @@ def clean_record(record):
             record[k] = clean_datetimes(v, record['ctzoffset'])
         elif k in ['geofencecode']:
             record[k] = clean_code(v)
+        elif k in ['approvers', 'categories', 'transportmodes', 'approverfor', 'sites']:
+            record[k] = clean_array_string(v, service=True)
     return record
 
 
@@ -75,7 +77,7 @@ def validate_email(email):
         # Using re to validate an Email
         return bool((re.search(regex,email)))
     
-def clean_array_string(string):
+def clean_array_string(string, service=False):
     if string:
         string = string.replace(' ', '')
         return string.split(',')

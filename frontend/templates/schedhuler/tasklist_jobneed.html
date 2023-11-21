@@ -1,4 +1,4 @@
-{% extends "base_list.html" %}
+{% extends "globals/base_list.html" %}
 
 {% block extra_css %}
 <style>
@@ -127,6 +127,7 @@ Task List
                         return data
                     }
                 }},
+                {title:"Asset/Checkpoint", data:"asset__assetname"},
                 {data: 'performedby__peoplename', title: 'Performed By'},
                 {data: 'gracetime', title: "Grace Time"},
                 {data: 'expirydatetime', title: "Expiry Datetime"},
@@ -143,10 +144,10 @@ Task List
                 {targets:[1], render:function(data, type, row, meta){
                     return convert_to_local(type, data, row)
                 }},
-                {targets:[9], render:function(data, type, row, meta){
+                {targets:[10], render:function(data, type, row, meta){
                     return convert_to_local(type, data, row)
                 }},
-                {targets:8, render:function(data, type, row, meta){
+                {targets:9, render:function(data, type, row, meta){
                     return `${data} mins`
                 }},
             ],

@@ -1,4 +1,4 @@
-{% extends "base_list.html" %}
+{% extends "globals/base_list.html" %}
 
 <!---- BEGIN CARD TITLE ------>
 {% block card_title %}
@@ -83,9 +83,9 @@ PPM List
                 {data:'jobstatus', title:'Status'},
                 {title: 'People/Group', data:'assignedto'},
                 {data: 'performedby__peoplename', title: 'Performed By'},
-                {data: 'asset__assetname', title: 'Asset/SmartPlace'},
+                {data: 'asset__assetname', title: 'Asset/Checkpoint'},
                 {data: 'qset__qsetname', title: 'Questionset'},
-                {data:'frequency', title:"Frequency"},
+                {data:'job__frequency', title:"Frequency"},
                 {data:'expirydatetime', title:"Exp Datetime"},
                 {data:'gracetime', title:"Gracetime"},
                 {data:'ctzoffset', visible:false, className:'noVis'},

@@ -51,7 +51,7 @@ def send_ticket_email(self, ticket=None, id=None):
                 'level': ticket.level
             }
             log.info(f'context for email template: {context}')
-            html_message = render_to_string('ticket_email.html', context)
+            html_message = render_to_string('y_helpdesk/ticket_email.html', context)
             msg = EmailMessage()
             msg.body = html_message
             msg.to = emails
@@ -144,7 +144,7 @@ def autoclose_job(jobneedid=None):
                         context['tkt_assignedto'] = rec['assignedto']
 
                     html_message = render_to_string(
-                        'autoclose_mail.html', context=context)
+                        'activity/autoclose_mail.html', context=context)
                     resp['story'] += f"context in email template is {context}\n"
                     msg.body = html_message
                     msg.send()
@@ -196,7 +196,7 @@ def send_reminder_email():
             context = {'job': rem['job__jobname'], 'plandatetime': rem['pdate'], 'jobdesc': rem['job__jobdesc'], 'sitename': rem['bu__buname'],
                        'creator': rem['cuser__peoplename'], 'modifier': rem['muser__peoplename'], 'subject': subject}
             html_message = render_to_string(
-                'reminder_mail.html', context=context)
+                'activity/reminder_mail.html', context=context)
             resp['story'] += f"context in email template is {context}\n"
             log.info(f"Sending reminder mail with subject {subject}")
 
@@ -379,6 +379,7 @@ def execute_report(self, params, formdata):
 
         # execute the report
         report_execution_url = f"{settings.KNOWAGE_SERVER_URL}restful-services/2.0/documents/{formdata['report_name']}/content?outputType={formdata['format']}"
+        print(f'{report_execution_url = }, {params = }')
         log.info(f'{report_execution_url = }, {params = }')
         return requests.post(report_execution_url, headers=auth_headers, json=params)
     except Exception as e:

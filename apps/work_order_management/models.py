@@ -83,7 +83,7 @@ class Wom(BaseModel, TenantAwareModel):
     geojson         = models.JSONField(verbose_name=_('Geo Json'), default=geojson, null=True)
     other_data      = models.JSONField(verbose_name=_('Other Data'), default=other_data, null=True)
     attachmentcount = models.IntegerField(_('Attachment Count'), default = 0)
-    categories      = ArrayField(models.CharField(max_length = 50, blank = True), null = True, blank = True, verbose_name= _("Categories"))
+    categories      = ArrayField(models.CharField(max_length = 50, blank = True, default=""), default = list)
     wo_history      = models.JSONField(encoder=DjangoJSONEncoder, default=wo_history_json)
     
     objects = WorkOrderManager()

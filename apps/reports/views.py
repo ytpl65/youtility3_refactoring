@@ -8,19 +8,25 @@ from django.contrib import messages
 from django.http import JsonResponse, QueryDict, response as rp, FileResponse, HttpResponseRedirect, HttpResponse
 from io import BytesIO
 from django.template.loader import render_to_string
-from weasyprint import HTML
+from django.templatetags.static import static
+from weasyprint import HTML, CSS
+from weasyprint.text.fonts import FontConfiguration
 from django.urls import reverse
 from apps.activity  import models as am
 from apps.peoples import utils as putils
 from apps.core import utils
 from apps.activity.forms import QsetBelongingForm
 from apps.reports import forms as rp_forms
-import logging
+import logging, subprocess, os
+import logging, subprocess, os
 from background_tasks.tasks import execute_report, send_report_on_email, create_report_history
 from django.contrib import messages as msg
 from django.apps import apps
 from django.urls import reverse_lazy
 from django.conf import settings
+import pandas as pd, xlsxwriter
+from apps.reports import utils as rutils
+from django_weasyprint.views import WeasyTemplateView
 import time, base64, sys, json
 log = logging.getLogger('__main__')
 
@@ -516,102 +522,151 @@ class ConfigWorkPermitReportTemplate(LoginRequiredMixin, View):
 
 
 
+    
 class ExportReports(LoginRequiredMixin, View):
-    P = {
+    PARAMS = {
         'template_form':"reports/report_export_form.html",
         'form':rp_forms.ReportForm
     }
     
     def get(self, request, *args, **kwargs):
-        R, P = request.GET, self.P
-        if R.get('template'):
-            cxt = {'form':P['form'](request=request)}
-            return render(request, P['template_form'], context=cxt)
-        
+        R, P = request.GET, self.PARAMS
+        form = P['form'](request=request)
+        report_names = json.dumps(P['form'].report_templates)
+        fields_map = json.dumps(form.get_fields_report_map())
+        cxt = {
+            'form':form,
+            'report_names':report_names,
+            'fields_map':fields_map
+        }
+        return render(request, P['template_form'], context=cxt)
+    
     def post(self, request, *args, **kwargs):
-        R,P = request.POST, self.P
-        data = R
-        form = P['form'](data = data, request=request)
+        form_data, P = request.POST, self.PARAMS
+        session = dict(request.session)
+        form = P['form'](data = form_data, request=request)
+        report_names = json.dumps(P['form'].report_templates)
+        fields_map = json.dumps(form.get_fields_report_map())
         if not form.is_valid():
-            ic(form.errors, form.data)
-            return render(request, P['template_form'], context={'form':form})
+            print("form is not valid", form.errors)
+            return render(request, P['template_form'], context={
+                'form':form, 'report_names':report_names,
+                'fields_map':fields_map})
         log.info('form is valid')
         formdata = form.cleaned_data
-        params = self.prepare_parameters(formdata, request)
-        result = execute_report(params, formdata)
-        log.info(f'Report form data {formdata}')
-        try:
-            if result.status_code == 200:
-                if formdata.get('export_type') == 'SEND': #send on email
-                    log.info('report sending on mail')
-                    encoded_data = base64.b64encode(result.content)
-                    json_report_data = json.dumps({'report': encoded_data.decode('utf-8')})
-                    send_report_on_email.delay(formdata, json_report_data)
-                    time.sleep(2)
-                    msg.success(request, "Report has been sent on mail successfully")
-                    return render(request, P['template_form'], context={'form':form})
-                
-                if formdata.get('preview') == 'true': #preview report
-                    log.info('previewing the file')
-                    response = HttpResponse(result.content, content_type='application/pdf')
-                    response['Content-Disposition'] = 'attachment; filename="report.pdf"'
-                    return response
-                
-                response = FileResponse(BytesIO(result.content))
-                response['Content-Disposition'] = f'attachment; filename="{formdata["report_name"]}.{formdata["format"]}"'
-                return response #download report
-            else:
-                msg.error(request, "Failed to download the report, something went wrong")
-                return HttpResponseRedirect(reverse('reports:exportreports') + "?template=true") #report-export failure
-        except Exception as e:
-            log.error("something went wron in export reports", exc_info=True)
-            msg.error(request, "Failed to download the report, something went wrong")
-            return render(request, P['template_form'], context={'form':form})
-        finally:
-            EI = sys.exc_info()
-            create_report_history.delay(formdata, request.user.id, request.session['bu_id'], EI)
+        log.info("Formdata submitted by user %s"%(pformat(formdata)))
+        return self.export_report(formdata, session, request)
+        
+    def export_report(self, formdata, session, request):
+        report_essentials = rutils.ReportEssentials(formdata=formdata, session=session)
+        log.info("report essentials %s"%(report_essentials))
+        ReportFormat = report_essentials.get_report_export_object()
+        report = ReportFormat(filename=formdata['report_name'], client_id=session['client_id'], formdata=formdata, request=request)
+        log.info("Report Format intialized, %s"%(report))
+        return report.execute()
+        
 
+class DesignReport(LoginRequiredMixin, View):
+    # change this file according to your design
+    design_file = "reports/pdf_reports/testdesign.html" 
     
-    def prepare_parameters(self, formdata, request):
-        log.info("prepare params started")
-        timezone, client_logo_url = self.get_other_common_params(request)
-        common_params = [
-            {"urlName":"timezone", "values":[timezone]},
-            {"urlName":"connectionName", "values":[settings.KNOWAGE_DATASOURCE]},
-            {"urlName":"CompanyName", "values":[settings.COMPANYNAME]},
-            {"urlName":"clientname", "values":[request.session['clientname']]},
-            {"urlName":"clientlogopath", "values":[client_logo_url]},
-        ]
-        
-        report_params = self.return_report_params(formdata)
-        report_params.extend(common_params)
-        log.info('params prepared and returned')
-        return report_params
-        
-        
-    def get_other_common_params(self, request):
-        from django.templatetags.static import static
-        S          = request.session
-        timezone   = utils.get_timezone(S['ctzoffset'])
-        Attachment = apps.get_model('activity', 'Attachment')
-        Bt         = apps.get_model('onboarding', 'Bt')
-        uuid       = Bt.objects.filter(id = S['client_id']).values('uuid').first()['uuid']
-        
-        applogo_url         = request.build_absolute_uri(static('assets/media/images/logo.png'))
-        clientlogo_att = Attachment.objects.get_att_given_owner(uuid, request)
-        clientlogo_filepath = settings.MEDIA_URL + clientlogo_att[0]['filepath'] + clientlogo_att[0]['filename']
-        clientlogo_url      = request.build_absolute_uri(clientlogo_filepath)
-        log.info("common parameters are returned")
-        return timezone, clientlogo_url
+    
+    def get(self, request):
+        R = request.GET  # Presuming you will use this for something later
+        if R.get('text') == 'html': return render(request, self.design_file)
+        html_string = render_to_string(self.design_file, request=request)
+        # pandoc rendering
+        if R.get('text') == 'pandoc': return self.render_using_pandoc(html_string)
+        # excel file
+        if R.get('text') == 'xl':
+            from apps.onboarding.models import Bt
+            data = Bt.objects.get_sample_data()
+            return self.render_excelfile(data)
+        # defalult weasyprint
+        return self.render_using_weasyprint(html_string)
 
-    def return_report_params(self, formdata):
-        if formdata.get('report_name') in [settings.KNOWAGE_REPORTS['TASKSUMMARY'],settings.KNOWAGE_REPORTS['TOURSUMMARY'],
-                        settings.KNOWAGE_REPORTS['LISTOFTASKS'],settings.KNOWAGE_REPORTS['LISTOFINTERNALTOURS'],
-                        settings.KNOWAGE_REPORTS['PPMSUMMARY'],settings.KNOWAGE_REPORTS['LISTOFTICKETS'], settings.KNOWAGE_REPORTS['WORKORDERLIST']]:
-            return [
-                 {"urlName":"fromdate", "values":[formdata['fromdate'].strftime('%d/%m/%Y')]},
-                {"urlName":"uptodate", "values":[formdata['uptodate'].strftime('%d/%m/%Y')]},
-                {"urlName":"siteids", "values":[formdata['site']]},
-            ]
-            
+    def render_using_weasyprint(self, html_string):
+        html = HTML(string=html_string)
+        # Specify the path to your local CSS file
+        css = CSS(filename='frontend/static/assets/css/local/reports.css')
+        font_config = FontConfiguration()
+        pdf = html.write_pdf(stylesheets=[css], font_config=font_config)
+        response = HttpResponse(pdf, content_type='application/pdf')
+        response['Content-Disposition'] = 'filename="report.pdf"'
+        return response
+    
+    def render_using_pandoc(self, html_string):
+        with open("temp.html", "w") as file:
+            file.write(html_string)
+
+        # Specify the path to your local CSS file
+        command = [
+            'pandoc',
+            'temp.html',
+            '-o',
+            'output.pdf',
+            '--css=frontend/static/assets/css/local/reports.css',
+            '--pdf-engine=xelatex'  # Replace with your preferred PDF engine
+        ]
+        subprocess.run(command)
+
+        with open("output.pdf", "rb") as file:
+            pdf = file.read()
         
+        # Delete the temporary files
+        os.remove("temp.html")
+        os.remove("output.pdf")
+
+        response = HttpResponse(pdf, content_type='application/pdf')
+        response['Content-Disposition'] = 'filename="report.pdf"'
+
+        return response
+    
+
+    def render_excelfile(self, data):
+        # Format data as a Pandas DataFrame
+        df = pd.DataFrame(list(data))
+
+        # Create a Pandas Excel writer using XlsxWriter as the engine and BytesIO as file-like object
+        output = BytesIO()
+        writer = pd.ExcelWriter(output, engine='xlsxwriter')
+        df.to_excel(writer, sheet_name='Sheet1', index=False, startrow=2, header=True)
+
+        # Get the xlsxwriter workbook and worksheet objects
+        workbook = writer.book
+        worksheet = writer.sheets['Sheet1']
+
+        # Autofit the columns to fit the data
+        for i, width in enumerate(self.get_col_widths(df)):
+            worksheet.set_column(i, i, width)
+
+        # Define the format for the merged cell
+        merge_format = workbook.add_format({
+            'bg_color': '#c1c1c1',
+            'bold': True,
+        })
+
+        # Write the additional content with the defined format
+        additional_content = "Client: Capgemini,  Report: Task Summary,  From 01-Jan-2023 To 30-Jan-2023"
+        worksheet.merge_range("A1:E1", additional_content, merge_format)
+
+        # Close the Pandas Excel writer and output the Excel file
+        writer.save()
+
+        # Rewind the buffer
+        output.seek(0)
+
+        # Set up the HTTP response with the appropriate Excel headers
+        response = HttpResponse(
+            output, 
+            content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        )
+        response['Content-Disposition'] = 'attachment; filename="downloaded_data.xlsx"'
+        return response
+
+    def get_col_widths(self, dataframe):
+        """
+        Get the maximum width of each column in a Pandas DataFrame.
+        """
+        return [max([len(str(s)) for s in dataframe[col].values] + [len(col)]) for col in dataframe.columns]
+

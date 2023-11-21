@@ -356,13 +356,15 @@ class WorkPermit(LoginRequiredMixin, View):
             return rp.JsonResponse(data={'data': list(objs)}, safe=False)
 
         if action == 'approve_wp' and R.get('womid'):
-            if is_all_approved := check_all_approved(R['womid'], request.user.peoplecode):
+            wom = P['model'].objects.get(id=R['womid'])
+            if is_all_approved := check_all_approved(wom.uuid, request.user.peoplecode):
                 Wom.objects.filter(id=R['womid']).update(workpermit=Wom.WorkPermitStatus.APPROVED.value)
             return rp.JsonResponse(data={'status': 'Approved'}, status=200)
 
         if action == 'reject_wp' and R.get('womid'):
+            wom = P['model'].objects.get(id=R['womid'])
             Wom.objects.filter(id=R['womid']).update(workpermit=Wom.WorkPermitStatus.REJECTED.value)
-            reject_workpermit(R['womid'], request.user.peoplecode)
+            reject_workpermit(wom.uuid, request.user.peoplecode)
             return rp.JsonResponse(data={'status': 'Approved'}, status=200)
 
         if action == 'form':
@@ -546,7 +548,7 @@ class ReplyWorkPermit(View):
             log.info("work permit accepted")
             wp = Wom.objects.filter(id = R['womid']).first()
             p = People.objects.filter(id = R['peopleid']).first()
-            if is_all_approved := check_all_approved(R['womid'], p.peoplecode):
+            if is_all_approved := check_all_approved(wp.uuid, p.peoplecode):
                 Wom.objects.filter(id = R['womid']).update(workpermit = Wom.WorkPermitStatus.APPROVED.value)
             cxt = {'status': Wom.WorkPermitStatus.APPROVED.value, 'action_acknowledged':True, 'seqno':wp.other_data['wp_seqno']}
             log.info("work permit accepted through email")
@@ -555,10 +557,12 @@ class ReplyWorkPermit(View):
         elif R.get('action') == "rejected" and R.get('womid')  and R.get('peopleid'):
             log.info("work permit rejected")
             wp = Wom.objects.filter(id = R['womid']).first()
+            if wp.workpermit == Wom.WorkPermitStatus.APPROVED:
+                return render(request, P['email_template'], context={'alreadyapproved':True})
             p = People.objects.filter(id = R['peopleid']).first()
             wp.workpermit = Wom.WorkPermitStatus.REJECTED.value
             wp.save()
-            reject_workpermit(R['womid'], p.peoplecode)
+            reject_workpermit(wp.uuid, p.peoplecode)
             cxt = {'status': Wom.WorkPermitStatus.REJECTED.value, 'action_acknowledged':True, 'seqno':wp.other_data['wp_seqno']}
             log.info('work permit rejected through email')
             return render(request, P['email_template'], context=cxt)

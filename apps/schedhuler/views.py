@@ -20,6 +20,8 @@ from django.db.models.deletion import RestrictedError
 from django.urls import reverse
 import json
 from django.contrib.gis.db.models.functions import  AsWKT, AsGeoJSON
+from django.utils.decorators import method_decorator
+from django.views.decorators.cache import cache_page
 from django.views.decorators.http import require_http_methods
 log = logging.getLogger('__main__')
 # Create your views here.
@@ -1142,7 +1144,7 @@ class JobneedTasks(LoginRequiredMixin, View):
         'template_path':  'schedhuler/tasklist_jobneed.html',
         'fields': [
                 'jobdesc', 'people__peoplename', 'pgroup__groupname', 'id',
-                'plandatetime', 'expirydatetime', 'jobstatus', 'gracetime',
+                'plandatetime', 'expirydatetime', 'jobstatus', 'gracetime','asset__assetname',
                 'performedby__peoplename', 'asset__assetname', 'qset__qsetname','bu__buname', 'bu__bucode',
                 'ctzoffset', 'assignedto', 'jobtype', 'ticketcategory__taname', 'other_info__isAcknowledged'],
         'related': [
@@ -1217,7 +1219,7 @@ class SchdTasks(LoginRequiredMixin, View):
                 'expirytime'  : 0
             }
     }
-
+    @method_decorator(cache_page(3))
     def get(self, request, *args, **kwargs):
         R, P = request.GET, self.params
         # first load the template
@@ -1331,7 +1333,8 @@ class InternalTourScheduling(LoginRequiredMixin, View):
             'uptodate'  : datetime.combine(date.today(), time(23, 00, 00)) + timedelta(days = 2),
         },
         'fields'       : ['id', 'jobname', 'people__peoplename', 'pgroup__groupname', 'fromdate', 'uptodate',
-                        'planduration', 'gracetime', 'expirytime', 'assignedto', 'bu__bucode', 'bu__buname']
+                        'planduration', 'gracetime', 'expirytime', 'assignedto', 'bu__bucode', 'bu__buname',
+                        'ctzoffset']
     }
 
     def get(self, request, *args, **kwargs):

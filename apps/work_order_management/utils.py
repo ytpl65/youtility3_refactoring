@@ -40,7 +40,7 @@ def notify_wo_creation(id):
         if atts := check_attachments_if_any(wo):
             attachments = [f"{settings.MEDIA_ROOT}/{att['filepath']}{att['filename']}" for att in atts]
         
-        html_message = render_to_string('work_order_email.html', context=context)
+        html_message = render_to_string('work_order_management/work_order_email.html', context=context)
         send_email(
             subject=subject, body=html_message, to=emails, atts= attachments if atts else None
         )
@@ -52,8 +52,8 @@ def notify_wo_creation(id):
         
         
         
-def check_all_approved(womid, usercode):
-    w = Wom.objects.filter(id = womid).first()
+def check_all_approved(womuuid, usercode):
+    w = Wom.objects.filter(uuid = womuuid).first()
     all_approved = True
     for approver in w.other_data['wp_approvers']:
         if approver['name'] == usercode:
@@ -63,8 +63,8 @@ def check_all_approved(womid, usercode):
     w.save()
     return all_approved
     
-def reject_workpermit(womid, usercode):
-    w = Wom.objects.filter(id = womid).first()
+def reject_workpermit(womuuid, usercode):
+    w = Wom.objects.filter(uuid = womuuid).first()
     for approver in w.other_data['wp_approvers']:
         if approver['name'] == usercode:
             approver['status'] = 'REJECTED'

@@ -234,12 +234,9 @@ def save_parent_childs(sz, jn_parent_serializer, child, M, tablename, is_return_
         if jn_parent_serializer.is_valid():
             if not is_return_wp:
                 parent = jn_parent_serializer.save()
-                if hasattr(parent, 'parent_id') and tablename == 'wom' and parent.workpermit != 'NOT_REQUIRED' and parent.parent_id ==1:
-                    #workpermit parent record
-                    parent = save_approvers_injson(parent)
-                    send_email_notification_for_wp.delay(parent.id, parent.qset_id, parent.approvers, parent.client_id, parent.bu_id)
             if is_return_wp:
                 wom = Wom.objects.get(id = jn_parent_serializer.validated_data.get('parent_id'))
+                seqno = Wom.objects.filter(parent_id=wom.id).order_by('-seqno').first().seqno + 1
                 wom.workstatus = Wom.Workstatus.COMPLETED
                 wom.save()
                 log.info('Return workpermit found parent wrapper ignored and only childs are considered')
@@ -257,6 +254,9 @@ def save_parent_childs(sz, jn_parent_serializer, child, M, tablename, is_return_
                 child_serializer = switchedSerializer(data = clean_record(ch))
 
                 if child_serializer.is_valid():
+                    if is_return_wp:
+                        child_serializer.validated_data['seqno'] = seqno
+                        seqno+=1
                     child_instance = child_serializer.save()
                     log.info(f"child record with this uuid: {child_instance.uuid} saved for report mutation")
                     for dtl in details:
@@ -276,6 +276,12 @@ def save_parent_childs(sz, jn_parent_serializer, child, M, tablename, is_return_
             if allsaved == len(child):
                 msg= M.INSERT_SUCCESS
                 log.info(f'All {allsaved} child records saved successfully')
+                #log.info(f'{parent.id = } {parent.uuid = } {parent.description}')
+                if not is_return_wp and  hasattr(parent, 'parent_id') and tablename == 'wom' and parent.workpermit != 'NOT_REQUIRED' and parent.parent_id ==1:
+                    #workpermit parent record
+                    parent = save_approvers_injson(parent)
+                    log.info(f'{parent.id = } {parent.uuid = } {parent.description}')
+                    send_email_notification_for_wp.delay(parent.id, parent.qset_id, parent.approvers, parent.client_id, parent.bu_id)
         else:
             log.error(jn_parent_serializer.errors)
             traceback, msg, rc = str(jn_parent_serializer.errors), M.INSERT_FAILED, 1

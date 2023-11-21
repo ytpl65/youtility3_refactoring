@@ -100,7 +100,7 @@ class WorkOrderManager(models.Manager):
             client_id = S['client_id'],
             cdtz__date__gte = P['from'],
             cdtz__date__lte = P['to'],
-        ).values('cdtz', 'other_data__wp_seqno', 'qset__qsetname', 'workpermit', 'ctzoffset',
+        ).order_by('-other_data__wp_seqno').values('cdtz', 'other_data__wp_seqno', 'qset__qsetname', 'workpermit', 'ctzoffset',
                  'workstatus', 'id', 'cuser__peoplename', 'bu__buname', 'bu__bucode')
         return qobjs or self.none()
          
@@ -139,9 +139,9 @@ class WorkOrderManager(models.Manager):
         
     
     def get_wp_answers(self, qsetid, womid):
-        
+        logger.info(f"{womid = } {qsetid = }")
         childwoms = self.filter(parent_id = womid).order_by('seqno')
-        QuestionSet = apps.get_model('activity', 'QuestionSet')
+        logger.info(f"{childwoms = }")
         wp_details = []
         for childwom in childwoms:
             sq = {
@@ -153,6 +153,7 @@ class WorkOrderManager(models.Manager):
             }
             ic(sq)
             wp_details.append(sq)
+        logger.info(f"{wp_details = }")
         return wp_details or self.none()
     
 
@@ -242,8 +243,14 @@ class WorkOrderManager(models.Manager):
         from apps.peoples.models import People
         people = People.objects.get(id=peopleid)
         workpermit_statuses = workpermit.replace(', ', ',').split(',')
+        fields = ['cuser_id', 'muser_id', 'cdtz', 'mdtz', 'ctzoffset','description', 'uuid', 'plandatetime',
+                  'expirydatetime', 'starttime', 'endtime', 'gpslocation', 'location_id', 'asset_id',
+                  'workstatus', 'workpermit', 'priority','parent_id', 'alerts', 'permitno', 'approverstatus', 
+                  'performedby','ismailsent', 'isdenied', 'client_id', 'bu_id', 'approvers', 'id']
+        
         qset = self.select_related().annotate(
-            permitno = F('other_data__wp_seqno')
+            permitno = F('other_data__wp_seqno'),
+            approverstatus = F('other_data__wp_approvers')
             ).filter(
             Q(cuser_id = peopleid) | Q(muser_id=peopleid) | Q(approvers__contains = [people.peoplecode]),
             cdtz__date__gte = fromdate,
@@ -252,7 +259,7 @@ class WorkOrderManager(models.Manager):
             bu_id = buid,
             client_id = clientid,
             parent_id=parentid
-        ).values()
+        ).values(*fields).order_by('-cdtz')
         print(str(qset.query))
         return qset or self.none()
         

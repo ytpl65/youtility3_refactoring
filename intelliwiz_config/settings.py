@@ -35,7 +35,6 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 
 
-
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = env('SECRET_KEY')
 ENCRYPT_KEY = env('ENCRYPT_KEY')
@@ -43,7 +42,7 @@ ENCRYPT_KEY = env('ENCRYPT_KEY')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True    
 
-ALLOWED_HOSTS = ['.localhost', 'demo.youtility.in', 'redmine.youtility.in', '127.0.0.1' ]
+ALLOWED_HOSTS = ['.localhost', 'demo.youtility.in', 'redmine.youtility.in', '192.168.1.254']
 
 # Application definition
 
@@ -311,6 +310,7 @@ DATABASE_ROUTERS = ['apps.tenants.middlewares.TenantDbRouter']
 INTERNAL_IPS = [
     # ...
     '127.0.0.1',
+    '192.168.1.254',
     # ...
 ]
 
@@ -365,7 +365,7 @@ LOGGING_CONFIG_ = {
         },
         'filelogs': {
             'class': 'logging.handlers.RotatingFileHandler',
-            'filename':f'{env("LOG_ROOT")}/mobileservice.log',
+            'filename':f'{env("LOG_ROOT")}/youtility4.log',
             'maxBytes': 15728640,
             'backupCount': 10,
             'formatter': 'coloured',
@@ -387,20 +387,20 @@ LOGGING_CONFIG_ = {
         '': {  # root logger
             'handlers': ['default'],
             'level': 'WARNING',
-            'propagate': False 
+            'propagate': True 
         },
         'django': { 
-            'handlers': ['default', 'filelogs', 'mail_admins'],
+            'handlers': ['default', 'filelogs'],
             'level': 'INFO',
             'propagate': False
         },
         '__main__': {  # if __name__ == '__main__'
-            'handlers': ['default', 'filelogs', 'mail_admins'],
+            'handlers': ['default', 'filelogs'],
             'level': 'DEBUG',
             'propagate': False
         },
         'mobile_service_log':{
-            'handlers': ['default', 'serviceLogs', 'mail_admins'],
+            'handlers': ['default', 'serviceLogs'],
             'level': 'DEBUG',
             'propagate': False
         }               
@@ -485,10 +485,9 @@ HOST = env('HOST')
 KNOWAGE_USERNAME = env('KNOWAGE_USERNAME')
 KNOWAGE_PASS = env('KNOWAGE_PASS')
 KNOWAGE_SERVER_URL = env('KNOWAGE_SERVER_URL')
-KNOWAGE_DATASOURCE = 'Redmine Database'
+KNOWAGE_DATASOURCE = 'Demo-Instance'
 COMPANYNAME = 'Youtility Technologies Pvt. Ltd.'
 KNOWAGE_REPORTS = {
-    # 'KEY' : 'DOCUMENT_LABEL USED IN KNOWAGESERVER'
     'TASKSUMMARY':'TaskSummary',
     'TOURSUMMARY':"TourSummary",
     'LISTOFTASKS':'ListOfTasks',
@@ -496,7 +495,17 @@ KNOWAGE_REPORTS = {
     'PPMSUMMARY':'PPMSummary',
     'LISTOFTICKETS':'ListOfTickets',
     'WORKORDERLIST':'WorkOrderList',
+    'SITEREPORT':'siteReport',
 }
 
 TEST_RUNNER = 'intelliwiz_config.test_runner.MyTestRunner'
 
+CLIENT_DOMAINS = {
+    'R_REDMINE'  : 'redmine.youtility.in',
+    'R_TOURTRAX' : 'redmine.youtility.in',
+    'R_SUKHI'    : 'redmine.youtility.in',
+    'R_CAPGEMINI': 'redmine.youtility.in',
+    'D_SUKHI'    : 'demo.youtility.in',
+    'D_CAPGEMINI': 'demo.youtility.in',
+    'SUKHI'      : 'sg.youtility.in',
+}
