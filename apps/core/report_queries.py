@@ -273,5 +273,110 @@ def get_query(query):
             AND (wom.cdtz AT TIME ZONE tz.timezone)::DATE BETWEEN %s AND %s
             GROUP BY wom.id, bu.id, bu.buname, p.peoplename, v.name, (wom.plandatetime AT TIME ZONE tz.timezone)::DATE
             ORDER BY bu.buname, (wom.plandatetime AT TIME ZONE tz.timezone)::DATE desc
+            ''',
+        'SiteReport':
+            '''
+            WITH timezone_setting AS (
+                SELECT %s::text AS timezone
+            ),
+            jnd_p AS (
+                SELECT 
+                    id AS ct_id,
+                    jobdesc AS ct_jobdesc,
+                    qset_id AS ct_qset_id,
+                    bu_id AS ct_bu_id,
+                    asset_id AS ct_asset_id,
+                    starttime AT TIME ZONE tz.timezone AS ct_starttime,
+                    endtime AT TIME ZONE tz.timezone AS ct_endtime,
+                    performedby_id AS ct_performedby_id,
+                    plandatetime AT TIME ZONE tz.timezone AS ct_plandatetime
+                FROM 
+                    jobneed
+                CROSS JOIN 
+                    timezone_setting AS tz
+                WHERE 
+                    parent_id IS NOT NULL 
+                    AND parent_id = 1
+                    AND client_id = %s
+                    AND sgroup_id IN (SELECT unnest(string_to_array(%s, ',')::integer[]))
+                    AND (jobneed.plandatetime AT TIME ZONE tz.timezone)::DATE BETWEEN %s AND %s
+            )
+
+            SELECT 
+                jnd.jobdesc AS jobdesc,
+                bt.solid, 
+                bt.bucode, 
+                bt.buname,
+                Max(qset.qsetname) AS qsetname,
+                Max(asset.assetname) AS assetname,
+                Max(butype.taname) AS butype,
+                jnd.starttime AT TIME ZONE tz.timezone AS starttime,
+                jnd.endtime AT TIME ZONE tz.timezone AS endtime,
+                jnd_p.ct_plandatetime AS date_of_visit,
+                Max(to_char(jnd_p.ct_plandatetime,'HH24:MI:SS')) AS time_of_visit,
+                Max(ST_X(ST_PointFromText(ST_AsText(jnd.gpslocation), 4326))) AS longitude,
+                Max(ST_Y(ST_PointFromText(ST_AsText(jnd.gpslocation), 4326))) AS latitude,
+                people.peoplecode AS RPID,
+                people.peoplename AS RP_Officer,
+                people.mobno AS contact_no,
+                Max(bt.bupreferences->>'address') AS address,
+                Max(bt.bupreferences->'address2'->>'state') AS state,
+                -- Add your CASE statements here for each condition 
+                -- Example:
+                Max(CASE WHEN upper(question.quesname)='FASCIA WORKING' THEN jnds.answer END) AS "fascia working",
+                Max(CASE WHEN upper(question.quesname)='FASCIA WORKING' THEN jnds.answer END) AS "fascia working",
+            Max(CASE WHEN upper(question.quesname)='LOLLY POP WORKING' THEN jnds.answer END) AS "lolly pop working",
+            Max(CASE WHEN upper(question.quesname)='ATM MACHINE COUNT' THEN jnds.answer END) AS "atm machine count",
+            Max(CASE WHEN upper(question.quesname)='AC IN ATM COOLING' THEN jnds.answer END) AS "ac in atm cooling",
+            Max(CASE WHEN upper(question.quesname)='ATM BACK ROOM LOCKED' THEN jnds.answer END) AS "atm back room locked",
+            Max(CASE WHEN upper(question.quesname)='UPS ROOM BEHIND ATM LOBBY ALL SAFE' THEN jnds.answer END) AS "ups room behind atm lobby all safe",
+            Max(CASE WHEN upper(question.quesname)='BRANCH SHUTTER DAMAGED' THEN jnds.answer END) AS "branch shutter damaged",
+            Max(CASE WHEN upper(question.quesname)='BRANCH PERIPHERY ROUND TAKEN' THEN jnds.answer END) AS "branch periphery round taken",
+            Max(CASE WHEN upper(question.quesname)='AC ODU AND COPPER PIPE INTACT' THEN jnds.answer END) AS "ac odu and copper pipe intact",
+            Max(CASE WHEN upper(question.quesname)='ANY WATER LOGGING OR FIRE IN VICINITY' THEN jnds.answer END) AS "any water logging or fire in vicinity",
+            Max(CASE WHEN upper(question.quesname)='FE AVAILABLE IN ATM LOBBY' THEN jnds.answer END) AS "fe available in atm lobby",
+            Max(CASE WHEN upper(question.quesname)='DG DOOR LOCKED' THEN jnds.answer END) AS "dg door locked",
+            Max(CASE WHEN upper(question.quesname)='DAMAGE TO ATM LOBBY' THEN jnds.answer END) AS "damage to atm lobby",
+            Max(CASE WHEN upper(question.quesname)='ANY OTHER OBSERVATION' THEN jnds.answer END) AS "any other observation",
+            Max(pgroup.groupname) as routename
+
+            FROM 
+                jnd_p
+            INNER JOIN 
+                jobneed AS jnd ON jnd_p.ct_id=jnd.parent_id
+            INNER JOIN 
+                jobneeddetails jnds ON jnd.id=jnds.jobneed_id
+            INNER JOIN 
+                question ON question.id=jnds.question_id
+            INNER JOIN 
+                bt ON bt.id=jnd.bu_id
+            INNER JOIN 
+                asset ON asset.id=jnd.asset_id
+            INNER JOIN 
+                questionset AS qset ON qset.id=jnd.qset_id
+            INNER JOIN 
+                people ON people.id=jnd.performedby_id
+            LEFT JOIN 
+                pgroup ON pgroup.id=jnd.sgroup_id
+            INNER JOIN 
+                typeassist AS butype ON butype.id=bt.butype_id
+            CROSS JOIN 
+                timezone_setting tz
+            WHERE 
+                upper(qset.qsetname)='SITE REPORT'
+                AND jnds.answer IS NOT NULL
+
+            GROUP BY 
+                jnd.jobdesc, 
+                bt.solid, 
+                bt.bucode, 
+                bt.buname, 
+                people.peoplecode, 
+                people.peoplename, 
+                people.mobno,
+                jnd.starttime, 
+                jnd.endtime, 
+                jnd_p.ct_plandatetime, 
+                tz.timezone;
             '''
     }.get(query)

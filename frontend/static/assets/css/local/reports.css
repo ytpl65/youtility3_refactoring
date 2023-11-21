@@ -1,0 +1,97 @@
+@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;600;700&display=swap');
+:root{
+    --column-bg-color:#01579b;
+    --row-bg-color:#eff7fc;
+    --body-font: 'Roboto', sans-serif;
+    --subtle-black: #555555
+}
+
+
+
+#subtitle{
+    font-weight: 600;
+    color:var(--subtle-black)
+}
+
+#title{
+    display: flex;
+    justify-content: flex-end;
+    margin-right: 4.5rem;
+}
+
+#title > div > p {
+    margin: 5px;
+}
+
+#main_title {
+    text-align: center;
+    color: var(--column-bg-color);
+    font-weight: bold;
+    font-size: large;
+}
+
+@media print {
+    @page {
+        margin: 0.3in;
+        margin-bottom: 0.3in;
+        size: landscape;
+        
+        @bottom-right {
+            content: "Page " counter(page) " of " counter(pages);
+            font-family: var(--body-font);
+            font-size: 0.7rem;
+            color: var(--subtle-black);
+        };
+      
+        @bottom-left {
+            content: "By: Youtility Technologies Pvt Ltd";
+            font-family: var(--body-font);
+            font-size: 0.7rem;
+            color: var(--subtle-black);
+        }
+    }
+}
+
+tbody > tr:nth-child(even){
+    background-color: var(--row-bg-color);
+}
+
+thead > tr {
+    background-color: var(--column-bg-color);
+}
+thead > tr > th{
+    color: var(--row-bg-color);
+    font-size: 0.9rem;
+    padding:0.2rem
+}
+body {
+  font-family: var(--body-font)
+}
+
+table{
+    border-radius: 0.2rem;
+}
+
+#page_header{
+    display: flex;
+    justify-content: space-between;
+}
+
+.logos{
+    width: 6rem;
+    height: 3rem;
+}
+
+.companylogo{
+    height: 3rem;
+    width: 3rem;
+}
+
+.totalrow > td {
+    font-weight: 600;
+    color: var(--subtle-black)
+}
+
+.totalrow{
+    background-color: var(--column-bg-color);
+}
