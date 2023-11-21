@@ -162,8 +162,8 @@ Work Permit Form
     {% if rwp_details is defined %}
     <div class="d-flex justify-content-between align-items-center mb-3">
         <div class="d-flex justify-content-between">
-            <h3 class="">Return Work Permit Details</h3>
-            <a href="javascript:void(0)" id="submit_rwp" class="ms-2 pt-0 text-decoration-underline">Submit</a>
+            <h3 class="">Return Work Permit Details&nbsp;</h3>
+            <button type = "submit" href="javascript:void(0)" form = "rwp_details_form" id="submit_rwp" style="border: none; background: none; text-decoration: underline; cursor: pointer; color: blue;" ><strong>Submit</strong></a>
         </div>
         
         <div class="d-flex">
@@ -174,7 +174,7 @@ Work Permit Form
         </div>
     </div>
     <div id="rwp_details_container">
-        <form action="" method="post" id="rwp_details_form" autocomplete="on" >
+        <form method="post" id="rwp_details_form" autocomplete="on" >
             <div class="sections accordion" id="rwp_details">
                 <!--RETURN WORKPERMIT-->
                 {{ plot_sections_questions(rwp_details, "rwp_details", "rwp_section") }}
@@ -286,6 +286,8 @@ Work Permit Form
             maxDate:endOfDay
         })
 
+        //$(".datetimes").removeAttr('readonly', true)
+
         //load the questionaire of selected template
         $("#load_questions").click((e) => {
             let qsetid = $("#id_qset").val()
@@ -392,7 +394,8 @@ Work Permit Form
         })
 
         //submit rwp_details
-        $("#submit_rwp").click( (e) => {
+        $("#rwp_details_form").submit( (e) => {
+            e.preventDefault();
             if(confirm("Are you sure, you want to submit?")){
                 const params = {
                     url:urlname,
