@@ -182,10 +182,12 @@ class ReportEssentials(object):
         # Report Design Files
         from apps.reports.report_designs.task_summary import TaskSummaryReport
         from apps.reports.report_designs.tour_summary import TourSummaryReport
+        from apps.reports.report_designs.ppm_summary import PPMSummaryReport
         
         return {
             self.TaskSummary: TaskSummaryReport,
-            self.TourSummary:TourSummaryReport
+            self.TourSummary:TourSummaryReport,
+            self.PPMSummary:PPMSummaryReport
         }.get(self.report_name)
     
         

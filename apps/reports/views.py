@@ -453,7 +453,6 @@ class ConfigWorkPermitReportTemplate(LoginRequiredMixin, View):
 
     def get(self, request, *args, **kwargs):
         R, P = request.GET, self.params
-        ic(R)
         if R.get('template'):return render(request, P['template_list'])
 
         if R.get('action') == 'list':
@@ -493,7 +492,6 @@ class ConfigWorkPermitReportTemplate(LoginRequiredMixin, View):
         try:
             data = QueryDict(request.POST['formData'])
             if pk := request.POST.get('pk', None):
-                ic(pk)
                 msg = f'{self.label}_view'
                 form = utils.get_instance_for_update(
                     data, P, msg, int(pk), {'request':request})
