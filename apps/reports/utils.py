@@ -171,6 +171,7 @@ class ReportEssentials(object):
     ListOfTasks = 'ListOfTasks'
     ListOfTickets = 'ListOfTickets'
     PPMSummary = 'PPMSummary'
+    SiteReport = 'SiteReport'
     
     def __init__(self, formdata,  request=None, session=None):
         self.report_name = formdata.get('report_name')
@@ -183,12 +184,14 @@ class ReportEssentials(object):
         from apps.reports.report_designs.task_summary import TaskSummaryReport
         from apps.reports.report_designs.tour_summary import TourSummaryReport
         from apps.reports.report_designs.ppm_summary import PPMSummaryReport
+        from apps.reports.report_designs.sitereport import SiteReportFormat
         from apps.reports.report_designs.list_of_task import ListofTaskReport
         
         return {
             self.TaskSummary: TaskSummaryReport,
             self.TourSummary:TourSummaryReport,
             self.PPMSummary:PPMSummaryReport,
+            self.SiteReport:SiteReportFormat,,
             self.ListOfTasks:ListofTaskReport
         }.get(self.report_name)
     

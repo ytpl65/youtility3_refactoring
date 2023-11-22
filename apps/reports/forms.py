@@ -79,14 +79,14 @@ class ReportForm(forms.Form):
     required_css_class = "required"
     report_templates = [
         ('', 'Select Report'),
-        (settings.KNOWAGE_REPORTS['TASKSUMMARY'], 'Task Summary'),
-        (settings.KNOWAGE_REPORTS['TOURSUMMARY'], 'Tour Summary'),
-        (settings.KNOWAGE_REPORTS['LISTOFTASKS'], 'List of Tasks'),
-        (settings.KNOWAGE_REPORTS['LISTOFINTERNALTOURS'], 'List of Internal Tours'),
-        (settings.KNOWAGE_REPORTS['PPMSUMMARY'], 'PPM Summary'),
-        (settings.KNOWAGE_REPORTS['LISTOFTICKETS'], 'List of Tickets'),
-        (settings.KNOWAGE_REPORTS['WORKORDERLIST'], 'Work Order List'),
-        (settings.KNOWAGE_REPORTS['SITEREPORT'], 'Site Report'),
+        ('TaskSummary', 'Task Summary'),
+        ('TourSummary', 'Tour Summary'),
+        ('ListOfTasks', 'List of Tasks'),
+        ('ListOfInternalTours', 'List of Internal Tours'),
+        ('PPMSummary', 'PPM Summary'),
+        ('ListOfTickets', 'List of Tickets'),
+        ('WorkOrderList', 'Work Order List'),
+        ('SiteReport', 'Site Report'),
     ]
     download_or_send_options = [
         ('DOWNLOAD', 'Download'),
@@ -139,6 +139,8 @@ class ReportForm(forms.Form):
             identifier__tacode="SITEGROUP",
             bu_id__in = S['assignedsites'],
             enable=True).values_list('id', 'groupname'))
+        self.fields['peoplegroup'] = pm.Pgroup.objects.filter_for_dd_pgroup_field(self.request, sitewise=True, choices=True)
+        self.fields['people'] = pm.People.objects.filter_for_dd_people_field(self.request, sitewise=True, choices=True)
         self.fields['fromdate'].initial = self.get_default_range_of_dates()[0]
         self.fields['uptodate'].initial = self.get_default_range_of_dates()[1]
         self.fields['cc'].choices = pm.People.objects.filter(isverified=True, client_id = S['client_id']).values_list('email', 'peoplename')
