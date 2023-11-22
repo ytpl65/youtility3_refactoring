@@ -171,12 +171,12 @@ def get_query(query):
             )
             SELECT
             assettype as "Asset Type",
-            count(assettype) as tot_sch,
+            count(assettype) as "Total PPM Scheduled",
             sum(case when ((endtime AT TIME ZONE tz.timezone) <= (expirydatetime AT TIME ZONE tz.timezone) and jobstatus='COMPLETED') then 1 else 0 end) as "Completed On Time",
             sum(case when ((endtime AT TIME ZONE tz.timezone) > (expirydatetime AT TIME ZONE tz.timezone) and jobstatus='COMPLETED') then 1 else 0 end) as "Completed After Schedule",
             sum(case when jobstatus = 'AUTOCLOSED' then 1 else 0 end) as "PPM Missed",
             round((sum(case when ((endtime AT TIME ZONE tz.timezone) <= (expirydatetime AT TIME ZONE tz.timezone) and jobstatus='COMPLETED') then 1 else 0 end)::numeric/ NULLIF(count(jobstatus)::numeric,0)) * 100,2) as "Percentage",
-            site
+            buname as "Site Name"
             FROM (SELECT jobneed.id,
                 atype.taname AS assettype,
                 jobneed.jobdesc,
@@ -185,7 +185,7 @@ def get_query(query):
                 jobneed.expirydatetime,
                 jobneed.jobstatus,
                 jobneed.identifier,
-                bu.buname AS "Site Name",
+                bu.buname,
                 jobneed.bu_id as buid,
                 jobneed.people_id as peopleid
             FROM jobneed
@@ -200,7 +200,7 @@ def get_query(query):
             WHERE 1=1
             and buid IN (SELECT unnest(string_to_array(%s, ',')::integer[])) 
             AND (jobneed.plandatetime AT TIME ZONE tz.timezone)::DATE BETWEEN %s AND %s
-            GROUP BY site, assettype
+            GROUP BY buname, assettype
 
             ''',
         "ListOfTickets":
