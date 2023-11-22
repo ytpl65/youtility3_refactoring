@@ -191,7 +191,7 @@ class ReportEssentials(object):
             self.TaskSummary: TaskSummaryReport,
             self.TourSummary:TourSummaryReport,
             self.PPMSummary:PPMSummaryReport,
-            self.SiteReport:SiteReportFormat,,
+            self.SiteReport:SiteReportFormat,
             self.ListOfTasks:ListofTaskReport
         }.get(self.report_name)
     

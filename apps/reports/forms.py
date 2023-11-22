@@ -115,8 +115,8 @@ class ReportForm(forms.Form):
     checkpoint      = forms.CharField(label='Checkpoint', widget=s2forms.Select2Widget, required=False)
     checkpoint_type = forms.CharField(label='Checkpoint Type', widget=s2forms.Select2Widget, required=False)
     ticketcategory  = forms.CharField(label='Ticket Category', widget=s2forms.Select2MultipleWidget, required=False)
-    peoplegroup     = forms.CharField(label="People Group", widget=s2forms.Select2Widget, required=False)
-    people          = forms.CharField(label="People", widget=s2forms.Select2Widget, required=False)
+    peoplegroup     = forms.ChoiceField(label="People Group", widget=s2forms.Select2Widget, required=False, choices=[])
+    people          = forms.ChoiceField(label="People", widget=s2forms.Select2Widget, required=False, choices=[])
     qrsize          = forms.CharField(label="QR Size", widget=s2forms.Select2Widget, required=False)
     assetcategory   = forms.CharField(label="Asset Ca   tegory", widget=s2forms.Select2TagWidget, required=False)
     
@@ -139,8 +139,8 @@ class ReportForm(forms.Form):
             identifier__tacode="SITEGROUP",
             bu_id__in = S['assignedsites'],
             enable=True).values_list('id', 'groupname'))
-        self.fields['peoplegroup'] = pm.Pgroup.objects.filter_for_dd_pgroup_field(self.request, sitewise=True, choices=True)
-        self.fields['people'] = pm.People.objects.filter_for_dd_people_field(self.request, sitewise=True, choices=True)
+        self.fields['peoplegroup'].choices = pm.Pgroup.objects.filter_for_dd_pgroup_field(self.request, sitewise=True, choices=True)
+        self.fields['people'].choices = pm.People.objects.filter_for_dd_people_field(self.request, sitewise=True, choices=True)
         self.fields['fromdate'].initial = self.get_default_range_of_dates()[0]
         self.fields['uptodate'].initial = self.get_default_range_of_dates()[1]
         self.fields['cc'].choices = pm.People.objects.filter(isverified=True, client_id = S['client_id']).values_list('email', 'peoplename')
