@@ -436,8 +436,6 @@ class ConfigIncidentReportTemplate(LoginRequiredMixin, View):
         except Exception:
             return utils.handle_Exception(request)
 
-
-
 class ConfigWorkPermitReportTemplate(LoginRequiredMixin, View):
     params = {
         'template_form': "reports/workpermitreport_tempform.html",

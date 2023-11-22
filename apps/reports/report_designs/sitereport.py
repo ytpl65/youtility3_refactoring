@@ -2,9 +2,10 @@ from apps.reports.utils import BaseReportsExport
 from apps.core.utils import runrawsql, get_timezone
 from apps.core.report_queries import get_query
 from apps.onboarding.models import Bt
+from apps.peoples.models import Pgroup
 from django.conf import settings
 
-class TaskSummaryReport(BaseReportsExport):
+class SiteReportFormat(BaseReportsExport):
     report_title = "Site Report"
     design_file = "reports/pdf_reports/sitereport.html"
     ytpl_applogo =  'frontend/static/assets/media/images/logo.png'
@@ -18,7 +19,7 @@ class TaskSummaryReport(BaseReportsExport):
         context data is the info that is passed in templates
         used for pdf/html reports
         '''
-        sitename = Bt.objects.get(id=self.formdata['site']).buname
+        routename = Pgroup.objects.get(id=self.formdata['sitegroup']).groupname
         self.set_args_required_for_query()
         self.context = {
             'base_path': settings.BASE_DIR,
@@ -26,13 +27,14 @@ class TaskSummaryReport(BaseReportsExport):
             'report_title': self.report_title,
             'client_logo':self.get_client_logo(),
             'app_logo':self.ytpl_applogo,
-            'report_subtitle':f"Site: {sitename}, From: {self.formdata.get('fromdate')} To {self.formdata.get('uptodate')}"
+            'report_subtitle':f"Route Name: {routename}, From: {self.formdata.get('fromdate')} To {self.formdata.get('uptodate')}"
         }
         
     def set_args_required_for_query(self):
         self.args = [
             get_timezone(self.formdata['ctzoffset']),
-            self.formdata['site'],
+            self.client_id,
+            self.formdata['sitegroup'],
             self.formdata['fromdate'].strftime('%d/%m/%Y'),
             self.formdata['uptodate'].strftime('%d/%m/%Y'),    
             ]
@@ -43,6 +45,7 @@ class TaskSummaryReport(BaseReportsExport):
         '''
         self.set_args_required_for_query()
         self.data = runrawsql(get_query(self.report_name), args=self.args)
+        ic(self.data)
 
         
     def set_additional_content(self):

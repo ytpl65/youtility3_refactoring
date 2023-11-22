@@ -79,14 +79,14 @@ class ReportForm(forms.Form):
     required_css_class = "required"
     report_templates = [
         ('', 'Select Report'),
-        (settings.KNOWAGE_REPORTS['TASKSUMMARY'], 'Task Summary'),
-        (settings.KNOWAGE_REPORTS['TOURSUMMARY'], 'Tour Summary'),
-        (settings.KNOWAGE_REPORTS['LISTOFTASKS'], 'List of Tasks'),
-        (settings.KNOWAGE_REPORTS['LISTOFINTERNALTOURS'], 'List of Internal Tours'),
-        (settings.KNOWAGE_REPORTS['PPMSUMMARY'], 'PPM Summary'),
-        (settings.KNOWAGE_REPORTS['LISTOFTICKETS'], 'List of Tickets'),
-        (settings.KNOWAGE_REPORTS['WORKORDERLIST'], 'Work Order List'),
-        (settings.KNOWAGE_REPORTS['SITEREPORT'], 'Site Report'),
+        ('TaskSummary', 'Task Summary'),
+        ('TourSummary', 'Tour Summary'),
+        ('ListOfTasks', 'List of Tasks'),
+        ('ListOfInternalTours', 'List of Internal Tours'),
+        ('PPMSummary', 'PPM Summary'),
+        ('ListOfTickets', 'List of Tickets'),
+        ('WorkOrderList', 'Work Order List'),
+        ('SiteReport', 'Site Report'),
     ]
     download_or_send_options = [
         ('DOWNLOAD', 'Download'),
