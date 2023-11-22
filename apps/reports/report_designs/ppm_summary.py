@@ -58,7 +58,8 @@ class PPMSummaryReport(BaseReportsExport):
     def excel_layout(self, worksheet, workbook, df, writer, output):
         super().excel_layout(worksheet, workbook, df, writer, output)
         #overriding to design the excel file
-    
+        #df = df[['Site Name', 'Asset Type',	'Total PPM Scheduled',	'Completed On Time',	'Completed After Schedule',	'PPM Missed',	'Percentage']]
+
         
         # Add a header format.
         header_format = workbook.add_format(
@@ -77,8 +78,7 @@ class PPMSummaryReport(BaseReportsExport):
         # Add the Excel table structure. Pandas will add the data.)
         worksheet.add_table(1, 0, max_row, max_col - 1, {"columns": column_settings})
         
-        # Make the columns wider for clarity.
-        worksheet.set_column(0, max_col - 1, 12)
+        worksheet.autofit()
 
         # Write the column headers with the defined format.
         for col_num, value in enumerate(df.columns.values):

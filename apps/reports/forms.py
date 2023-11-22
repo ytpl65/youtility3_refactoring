@@ -139,6 +139,8 @@ class ReportForm(forms.Form):
             identifier__tacode="SITEGROUP",
             bu_id__in = S['assignedsites'],
             enable=True).values_list('id', 'groupname'))
+        self.fields['peoplegroup'] = pm.Pgroup.objects.filter_for_dd_pgroup_field(self.request, sitewise=True, choices=True)
+        self.fields['people'] = pm.People.objects.filter_for_dd_people_field(self.request, sitewise=True, choices=True)
         self.fields['fromdate'].initial = self.get_default_range_of_dates()[0]
         self.fields['uptodate'].initial = self.get_default_range_of_dates()[1]
         self.fields['cc'].choices = pm.People.objects.filter(isverified=True, client_id = S['client_id']).values_list('email', 'peoplename')
