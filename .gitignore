@@ -19,8 +19,6 @@ __pycache__/
 intelliwiz_config/
 !intelliwiz_config/*.py
 
-# Ignore all static and media files and folders.
-
 
 # Ignore all log files..en
 logs
