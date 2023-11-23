@@ -82,7 +82,7 @@ class ReportForm(forms.Form):
         ('TaskSummary', 'Task Summary'),
         ('TourSummary', 'Tour Summary'),
         ('ListOfTasks', 'List of Tasks'),
-        ('ListOfInternalTours', 'List of Internal Tours'),
+        ('ListOfTours', 'List of Internal Tours'),
         ('PPMSummary', 'PPM Summary'),
         ('ListOfTickets', 'List of Tickets'),
         ('WorkOrderList', 'Work Order List'),
@@ -115,8 +115,8 @@ class ReportForm(forms.Form):
     checkpoint      = forms.CharField(label='Checkpoint', widget=s2forms.Select2Widget, required=False)
     checkpoint_type = forms.CharField(label='Checkpoint Type', widget=s2forms.Select2Widget, required=False)
     ticketcategory  = forms.CharField(label='Ticket Category', widget=s2forms.Select2MultipleWidget, required=False)
-    peoplegroup     = forms.CharField(label="People Group", widget=s2forms.Select2Widget, required=False)
-    people          = forms.CharField(label="People", widget=s2forms.Select2Widget, required=False)
+    peoplegroup     = forms.ChoiceField(label="People Group", choices=[], widget=s2forms.Select2Widget, required=False)
+    people          = forms.ChoiceField(label="People", choices=[], widget=s2forms.Select2Widget,  required=False)
     qrsize          = forms.CharField(label="QR Size", widget=s2forms.Select2Widget, required=False)
     assetcategory   = forms.CharField(label="Asset Ca   tegory", widget=s2forms.Select2TagWidget, required=False)
     
@@ -139,13 +139,14 @@ class ReportForm(forms.Form):
             identifier__tacode="SITEGROUP",
             bu_id__in = S['assignedsites'],
             enable=True).values_list('id', 'groupname'))
-        self.fields['peoplegroup'] = pm.Pgroup.objects.filter_for_dd_pgroup_field(self.request, sitewise=True, choices=True)
-        self.fields['people'] = pm.People.objects.filter_for_dd_people_field(self.request, sitewise=True, choices=True)
+        self.fields['peoplegroup'].choices = pm.Pgroup.objects.filter_for_dd_pgroup_field(self.request, sitewise=True, choices=True)
+        self.fields['people'].choices = pm.People.objects.filter_for_dd_people_field(self.request, sitewise=True, choices=True)
         self.fields['fromdate'].initial = self.get_default_range_of_dates()[0]
         self.fields['uptodate'].initial = self.get_default_range_of_dates()[1]
         self.fields['cc'].choices = pm.People.objects.filter(isverified=True, client_id = S['client_id']).values_list('email', 'peoplename')
         self.fields['to_addr'].choices = pm.People.objects.filter(isverified=True, client_id = S['client_id']).values_list('email', 'peoplename')
         utils.initailize_form_fields(self)
+        
         
     def get_default_range_of_dates(self):
         today = datetime.now().date()
@@ -162,13 +163,10 @@ class ReportForm(forms.Form):
             raise forms.ValidationError(
                 f"Both Site Group and People cannot be empty, when the report is {cd.get('report_name')}")
         
-        if cd.get('report_name') == settings.KNOWAGE_REPORTS['LISTOFTICKETS'] and cd.get('people') in ["", None] and cd.get('ticketcategory') in ["", None]:
-            raise forms.ValidationError(
-                f"Both Ticket Category and People cannot be empty, when the report is {cd.get('report_name')}")
+        # if cd.get('report_name') == settings.KNOWAGE_REPORTS['LISTOFTICKETS'] and cd.get('people') in ["", None] and cd.get('ticketcategory') in ["", None]:
+        #     raise forms.ValidationError(
+        #         f"Both Ticket Category and People cannot be empty, when the report is {cd.get('report_name')}")
         
-        if cd.get('report_name') == settings.KNOWAGE_REPORTS['LISTOFTASKS'] and cd.get('people') in ["", None] and cd.get('peoplegroup') in ["", None]:
-            raise forms.ValidationError(
-                f"Both People Group and People cannot be empty, when the report is {cd.get('report_name')}")
         
         if cd.get("fromdate") and cd['fromdate'] > cd['uptodate']: self.add_error('fromdate', 'From date cannot be greater than To date')
         if cd.get('uptodate') and cd['uptodate'] > cd['fromdate'] + timedelta(days=182):
