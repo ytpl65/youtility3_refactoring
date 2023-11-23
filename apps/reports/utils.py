@@ -139,9 +139,11 @@ class BaseReportsExport(WeasyTemplateResponseMixin):
         # Convert the Decimal objects to floats using the float() function
         df = df.applymap(lambda x: float(x) if isinstance(x, Decimal) else x)
         print(df['Planned Date Time'])
-        df['Planned Date Time'] = pd.to_datetime(df['Planned Date Time'])
-        df['plandatetime'] = pd.to_datetime(df['plandatetime'])
-        df['Expiry Date Time'] = pd.to_datetime(df['Expiry Date Time'])
+        df['Planned Date Time'] = df['Planned Date Time'].apply(lambda x: str(x))
+        df['Expiry Date Time'] = df['Expiry Date Time'].apply(lambda x: str(x))
+
+        print(df['Planned Date Time'].dtype)
+
 
         # Create a Pandas Excel writer using XlsxWriter as the engine and BytesIO as file-like object
         output = BytesIO()
