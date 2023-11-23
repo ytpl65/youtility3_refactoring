@@ -158,7 +158,6 @@ class ReportForm(forms.Form):
     def clean(self):
         super().clean()
         cd = self.cleaned_data
-        self.cleaned_data['site'] = ','.join(cd.get('site', ""))
         if cd['report_name'] == settings.KNOWAGE_REPORTS['SITEREPORT'] and cd.get('people') in ["", None] and cd.get('sitegroup') in ["", None]:
             raise forms.ValidationError(
                 f"Both Site Group and People cannot be empty, when the report is {cd.get('report_name')}")
