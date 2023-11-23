@@ -5,11 +5,11 @@ from apps.onboarding.models import Bt
 from django.conf import settings
 
 
-class ListofTaskReport(BaseReportsExport):
-    report_title = "List of Task"
-    design_file = "reports/pdf_reports/list_of_task.html"
+class ListofTourReport(BaseReportsExport):
+    report_title = "List of Tour"
+    design_file = "reports/pdf_reports/list_of_tours.html"
     ytpl_applogo =  'frontend/static/assets/media/images/logo.png'
-    report_name = 'ListOfTasks'
+    report_name = 'ListOfTours'
 
     def __init__(self, filename, client_id, request=None, context=None, data=None, additional_content=None, returnfile=False, formdata=None):
         super().__init__(filename, client_id, design_file=self.design_file, request=request, context=context, data=data, additional_content=additional_content, returnfile=returnfile, formdata=formdata)

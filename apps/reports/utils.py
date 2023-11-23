@@ -138,7 +138,11 @@ class BaseReportsExport(WeasyTemplateResponseMixin):
         df = pd.DataFrame(list(self.data))
         # Convert the Decimal objects to floats using the float() function
         df = df.applymap(lambda x: float(x) if isinstance(x, Decimal) else x)
-        
+        print(df['Planned Date Time'])
+        df['Planned Date Time'] = pd.to_datetime(df['Planned Date Time'])
+        df['plandatetime'] = pd.to_datetime(df['plandatetime'])
+        df['Expiry Date Time'] = pd.to_datetime(df['Expiry Date Time'])
+
         # Create a Pandas Excel writer using XlsxWriter as the engine and BytesIO as file-like object
         output = BytesIO()
         writer = pd.ExcelWriter(output, engine='xlsxwriter',  datetime_format="mmm d yyyy hh:mm:ss", date_format="mmm dd yyyy",)
@@ -172,6 +176,8 @@ class ReportEssentials(object):
     ListOfTickets = 'ListOfTickets'
     PPMSummary = 'PPMSummary'
     SiteReport = 'SiteReport'
+    ListOfTours = 'ListOfTours'
+
     
     def __init__(self, formdata,  request=None, session=None):
         self.report_name = formdata.get('report_name')
@@ -186,13 +192,16 @@ class ReportEssentials(object):
         from apps.reports.report_designs.ppm_summary import PPMSummaryReport
         from apps.reports.report_designs.sitereport import SiteReportFormat
         from apps.reports.report_designs.list_of_task import ListofTaskReport
-        
+        from apps.reports.report_designs.list_of_tickets import ListofTicketReport
+        from apps.reports.report_designs.list_of_tours import ListofTourReport
         return {
             self.TaskSummary: TaskSummaryReport,
             self.TourSummary:TourSummaryReport,
             self.PPMSummary:PPMSummaryReport,
             self.SiteReport:SiteReportFormat,
-            self.ListOfTasks:ListofTaskReport
+            self.ListOfTasks:ListofTaskReport,
+            self.ListOfTickets:ListofTicketReport,
+            self.ListOfTours:ListofTourReport
         }.get(self.report_name)
     
         

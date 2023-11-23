@@ -82,7 +82,7 @@ class ReportForm(forms.Form):
         ('TaskSummary', 'Task Summary'),
         ('TourSummary', 'Tour Summary'),
         ('ListOfTasks', 'List of Tasks'),
-        ('ListOfInternalTours', 'List of Internal Tours'),
+        ('ListOfTours', 'List of Internal Tours'),
         ('PPMSummary', 'PPM Summary'),
         ('ListOfTickets', 'List of Tickets'),
         ('WorkOrderList', 'Work Order List'),
@@ -147,6 +147,7 @@ class ReportForm(forms.Form):
         self.fields['to_addr'].choices = pm.People.objects.filter(isverified=True, client_id = S['client_id']).values_list('email', 'peoplename')
         utils.initailize_form_fields(self)
         
+        
     def get_default_range_of_dates(self):
         today = datetime.now().date()
         first_day_of_month = today.replace(day=1)
@@ -162,13 +163,10 @@ class ReportForm(forms.Form):
             raise forms.ValidationError(
                 f"Both Site Group and People cannot be empty, when the report is {cd.get('report_name')}")
         
-        if cd.get('report_name') == settings.KNOWAGE_REPORTS['LISTOFTICKETS'] and cd.get('people') in ["", None] and cd.get('ticketcategory') in ["", None]:
-            raise forms.ValidationError(
-                f"Both Ticket Category and People cannot be empty, when the report is {cd.get('report_name')}")
+        # if cd.get('report_name') == settings.KNOWAGE_REPORTS['LISTOFTICKETS'] and cd.get('people') in ["", None] and cd.get('ticketcategory') in ["", None]:
+        #     raise forms.ValidationError(
+        #         f"Both Ticket Category and People cannot be empty, when the report is {cd.get('report_name')}")
         
-        if cd.get('report_name') == settings.KNOWAGE_REPORTS['LISTOFTASKS'] and cd.get('people') in ["", None] and cd.get('peoplegroup') in ["", None]:
-            raise forms.ValidationError(
-                f"Both People Group and People cannot be empty, when the report is {cd.get('report_name')}")
         
         if cd.get("fromdate") and cd['fromdate'] > cd['uptodate']: self.add_error('fromdate', 'From date cannot be greater than To date')
         if cd.get('uptodate') and cd['uptodate'] > cd['fromdate'] + timedelta(days=182):

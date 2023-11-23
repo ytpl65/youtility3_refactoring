@@ -27,7 +27,7 @@ class Attendance(LoginRequiredMixin, View):
         'template_list_sitecrisis': 'attendance/sitecrisis_list.html',
         'partial_form': 'attendance/partials/partial_attendance_form.html',
         'partial_list': 'attendance/partials/partial_attendance_list.html',
-        'related': ['peventtype'],
+        'related': ['people', 'bu', 'verifiedby', 'peventtype', 'shift'],
         'model': atdm.PeopleEventlog,
         'filter': AttendanceFilter,
         'form_initials':{},

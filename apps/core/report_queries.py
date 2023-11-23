@@ -125,7 +125,6 @@ def get_query(query):
                 (jobneed.plandatetime AT TIME ZONE tz.timezone)::DATE as "Planned Date Time",
             jobneed.id as jobneedid,
             jobneed.identifier,
-            (jobneed.plandatetime AT TIME ZONE tz.timezone) as plandatetime,
             jobneed.jobdesc as "Description",
             case
                     when jobneed.people_id <> 1 then people.peoplename
@@ -137,7 +136,7 @@ def get_query(query):
             jobneed.performedby_id as "Performed By",
             jobneed.qset_id as qsetname,
             (jobneed.expirydatetime AT TIME ZONE tz.timezone) as "Expiry Date Time",
-            jobneed.gracetime,
+            jobneed.gracetime as "Gracetime",
             bu.buname as site,
             jobneed.scantype,
             jobneed.receivedonserver,
@@ -147,7 +146,7 @@ def get_query(query):
             jobneed.gpslocation,
             jobneed.qset_id,
             jobneed.remarks,
-            asset.assetname,
+            asset.assetname as "Asset",
             questionset.qsetname as "Question Set",
             people.peoplename
                 FROM jobneed
@@ -211,12 +210,12 @@ def get_query(query):
 
             SELECT
                 t.id AS "Ticket No",
-                t.cdtz AS created_on as "Created On ",
+                t.cdtz AS "Created On",
                 t.mdtz AS "Modied On",
                 t.status as "Status",
                 t.ticketdesc as "Description",
                 t.priority as "Priority",
-                ta.taname AS ticketcategory as "Ticket Category",
+                ta.taname AS "Ticket Category",
                 CASE
                     WHEN t.status IN ('RESOLVED', 'CLOSED') THEN TO_CHAR((t.mdtz - t.cdtz), 'HH24:MI:SS')
                     WHEN t.status = 'CANCELLED' THEN 'NA'
@@ -230,7 +229,7 @@ def get_query(query):
                 CASE
                     WHEN t.assignedtogroup_id IS NULL OR t.assignedtogroup_id = 1 THEN p1.peoplename
                     ELSE p2.groupname
-                END AS assignedto as "Assigned To",
+                END AS "Assigned To",
                 p3.peoplename AS "Created By",
                 p4.peoplename AS modified_by
             FROM
