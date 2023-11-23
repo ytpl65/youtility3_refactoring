@@ -57,6 +57,9 @@ class SiteReportFormat(BaseReportsExport):
         super().excel_layout(worksheet, workbook, df, writer, output)
         ic(df.columns)
         #overriding to design the excel file
+        
+        ic(df[['DATE OF VISIT', 'starttime']])
+        ic(df['DATE OF VISIT'].dtype)
         # Add a header format.
         header_format = workbook.add_format(
             {

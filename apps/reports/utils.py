@@ -52,6 +52,9 @@ class BaseReportsExport(WeasyTemplateResponseMixin):
         return response
     
     def excel_layout(self, worksheet, workbook, df, writer, output):
+        '''
+        This method is get overriden in inherited/child class
+        '''
         log.info("designing the layout...")
     
     
@@ -134,17 +137,18 @@ class BaseReportsExport(WeasyTemplateResponseMixin):
         return [max([len(str(s)) for s in dataframe[col].values] + [len(col)]) for col in dataframe.columns]
 
     
+    def excel_columns(self, df):
+        '''
+        Override this method in inherited class
+        '''
+        pass
+    
+    
     def set_data_excel(self):
         df = pd.DataFrame(list(self.data))
         # Convert the Decimal objects to floats using the float() function
         df = df.applymap(lambda x: float(x) if isinstance(x, Decimal) else x)
-        print(df['Planned Date Time'])
-        df['Planned Date Time'] = df['Planned Date Time'].apply(lambda x: str(x))
-        df['Expiry Date Time'] = df['Expiry Date Time'].apply(lambda x: str(x))
-
-        print(df['Planned Date Time'].dtype)
-
-
+        df = self.excel_columns(df)
         # Create a Pandas Excel writer using XlsxWriter as the engine and BytesIO as file-like object
         output = BytesIO()
         writer = pd.ExcelWriter(output, engine='xlsxwriter',  datetime_format="mmm d yyyy hh:mm:ss", date_format="mmm dd yyyy",)

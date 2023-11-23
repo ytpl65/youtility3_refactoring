@@ -2,7 +2,7 @@
 
 
 {% block header_start %}
-<img src="{{ client_logo }}" alt="Capgemini" class="logos">
+<img src="{{ client_logo }}" width="0.25rem" height="0.25rem" alt="Capgemini" class="logos">
 {% endblock header_start %}
 
 
@@ -36,9 +36,9 @@ thead tr th, tbody tr td {
 <table id="listoftours" style="width:100%">
     <thead>
         <tr>
-            <th scope="col">Planned Date Time</th>
+            <th scope="col">Planned Date</th>
             <th scope="col">Description</th>
-            <th scope="col">Assign To</th>
+            <th scope="col">Assigned To</th>
             <th scope="col">Status</th>
             <th scope="col">Expiry</th>
             <th scope="col">Grace Time</th>
@@ -48,9 +48,9 @@ thead tr th, tbody tr td {
     <tbody>
         {% for row in data %}
         <tr>
-            <td>{{ row['Planned Date Time'] }}</td>
+            <td>{{ row['Planned Date'] }}</td>
             <td>{{ row['Description'] }}</td>
-            <td>{{ row['assignedto'] }}</td>
+            <td>{{ row['Assigned To'] }}</td>
             <td>{{ row['Status'] }}</td>
             <td>{{ row['Expiry Date Time'] }}</td>
             <td>{{ row['Gracetime'] }}</td>

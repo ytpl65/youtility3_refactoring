@@ -122,27 +122,26 @@ def get_query(query):
                 SELECT
                 bu.id,
                 bu.buname as "site",
-                (jobneed.plandatetime AT TIME ZONE tz.timezone)::DATE as "Planned Date Time",
+                (jobneed.plandatetime AT TIME ZONE tz.timezone)::DATE as "Planned Date",
             jobneed.id as jobneedid,
             jobneed.identifier,
             jobneed.jobdesc as "Description",
             case
                     when jobneed.people_id <> 1 then people.peoplename
                     when jobneed.pgroup_id <> 1 then pgroup.groupname
-                    else 'NONE' end as assignedto,
+                    else 'NONE' end as "Assigned To",
             jobneed.jobtype,
             jobneed.jobstatus as "Status",
             jobneed.asset_id,
-            jobneed.performedby_id as "Performed By",
+            performedpeople.peoplename as "Performed By",
             jobneed.qset_id as qsetname,
-            (jobneed.expirydatetime AT TIME ZONE tz.timezone) as "Expiry Date Time",
+            CAST(jobneed.expirydatetime AT TIME ZONE tz.timezone AS TIMESTAMP WITHOUT TIME ZONE) as "Expiry Date Time",
             jobneed.gracetime as "Gracetime",
             bu.buname as site,
             jobneed.scantype,
-            jobneed.receivedonserver,
             jobneed.priority,
-            (jobneed.starttime AT TIME ZONE tz.timezone) as starttime ,
-            (jobneed.endtime AT TIME ZONE tz.timezone) as endtime,
+            CAST(jobneed.starttime AT TIME ZONE tz.timezone AS TIMESTAMP WITHOUT TIME ZONE),
+            CAST(jobneed.endtime AT TIME ZONE tz.timezone AS TIMESTAMP WITHOUT TIME ZONE),
             jobneed.gpslocation,
             jobneed.qset_id,
             jobneed.remarks,
@@ -154,6 +153,7 @@ def get_query(query):
             INNER JOIN asset ON asset.id=jobneed.asset_id
             INNER JOIN questionset ON questionset.id=jobneed.qset_id
             INNER JOIN people on jobneed.people_id=people.id
+            INNER JOIN people performedpeople on jobneed.performedby_id=people.id
             inner join pgroup on pgroup.id=jobneed.pgroup_id
                 CROSS JOIN timezone_setting tz
                 WHERE jobneed.identifier='INTERNALTOUR'
