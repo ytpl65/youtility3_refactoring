@@ -19,11 +19,6 @@ __pycache__/
 intelliwiz_config/
 !intelliwiz_config/*.py
 
-# Ignore all static and media files and folders.
-frontend/
-!frontend/templates
-!frontend/static/assets/css
-!frontend/static/assets/js
 
 # Ignore all log files..en
 logs
