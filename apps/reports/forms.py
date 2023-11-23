@@ -115,8 +115,8 @@ class ReportForm(forms.Form):
     checkpoint      = forms.CharField(label='Checkpoint', widget=s2forms.Select2Widget, required=False)
     checkpoint_type = forms.CharField(label='Checkpoint Type', widget=s2forms.Select2Widget, required=False)
     ticketcategory  = forms.CharField(label='Ticket Category', widget=s2forms.Select2MultipleWidget, required=False)
-    peoplegroup     = forms.ChoiceField(label="People Group", choices=[], widget=s2forms.Select2Widget, required=False)
-    people          = forms.ChoiceField(label="People", choices=[], widget=s2forms.Select2Widget,  required=False)
+    peoplegroup     = forms.ChoiceField(label="People Group", widget=s2forms.Select2Widget, required=False, choices=[])
+    people          = forms.ChoiceField(label="People", widget=s2forms.Select2Widget, required=False, choices=[])
     qrsize          = forms.CharField(label="QR Size", widget=s2forms.Select2Widget, required=False)
     assetcategory   = forms.CharField(label="Asset Ca   tegory", widget=s2forms.Select2TagWidget, required=False)
     

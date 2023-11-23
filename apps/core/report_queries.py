@@ -303,7 +303,8 @@ def get_query(query):
 
             SELECT 
                 jnd.jobdesc AS jobdesc,
-                bt.solid as"SOL ID", 
+                bt.solid as"SOL ID",
+                Max(pgroup.groupname) as "ROUTE NAME",
                 bt.bucode as "SITE CODE", 
                 bt.buname as "SITE NAME",
                 Max(qset.qsetname) AS qsetname,
@@ -329,14 +330,13 @@ def get_query(query):
             Max(CASE WHEN upper(question.quesname)='ATM BACK ROOM LOCKED' THEN jnds.answer END) AS "ATM BACK ROOM LOCKED",
             Max(CASE WHEN upper(question.quesname)='UPS ROOM BEHIND ATM LOBBY ALL SAFE' THEN jnds.answer END) AS "UPS ROOM BEHIND ATM LOBBY ALL SAFE",
             Max(CASE WHEN upper(question.quesname)='BRANCH SHUTTER DAMAGED' THEN jnds.answer END) AS "BRANCH SHUTTER DAMAGED",
-            Max(CASE WHEN upper(question.quesname)='BRANCH PERIPHERY ROUND TAKEN' THEN jnds.answer END) AS "BRANCH PHERIPHERI ROUND TAKEN",
+            Max(CASE WHEN upper(question.quesname)='BRANCH PERIPHERY ROUND TAKEN' THEN jnds.answer END) AS "BRANCH PERIPHERY ROUND TAKEN",
             Max(CASE WHEN upper(question.quesname)='AC ODU AND COPPER PIPE INTACT' THEN jnds.answer END) AS "AC ODU AND COPPER PIPE INTACT",
-            Max(CASE WHEN upper(question.quesname)='ANY WATER LOGGING OR FIRE IN VICINITY' THEN jnds.answer END) AS "ANY WATTER LOGGING OR FIRE IN VICINITY",
+            Max(CASE WHEN upper(question.quesname)='ANY WATER LOGGING OR FIRE IN VICINITY' THEN jnds.answer END) AS "ANY WATER LOGGING OR FIRE IN VICINITY",
             Max(CASE WHEN upper(question.quesname)='FE AVAILABLE IN ATM LOBBY' THEN jnds.answer END) AS "FE AVAILABLE IN ATM LOBBY",
             Max(CASE WHEN upper(question.quesname)='DG DOOR LOCKED' THEN jnds.answer END) AS "DG DOOR LOCKED",
             Max(CASE WHEN upper(question.quesname)='DAMAGE TO ATM LOBBY' THEN jnds.answer END) AS "DAMAGE TO ATM LOBBY",
-            Max(CASE WHEN upper(question.quesname)='ANY OTHER OBSERVATION' THEN jnds.answer END) AS "ATM OTHER OBSERVATION",
-            Max(pgroup.groupname) as "ROUTE NAME"
+            Max(CASE WHEN upper(question.quesname)='ANY OTHER OBSERVATION' THEN jnds.answer END) AS "ANY OTHER OBSERVATION"
 
             FROM 
                 jnd_p

@@ -55,15 +55,14 @@ class SiteReportFormat(BaseReportsExport):
 
     def excel_layout(self, worksheet, workbook, df, writer, output):
         super().excel_layout(worksheet, workbook, df, writer, output)
+        ic(df.columns)
         #overriding to design the excel file
-    
-        
         # Add a header format.
         header_format = workbook.add_format(
             {
                 "valign": "middle",
                 "fg_color": "#01579b",
-                'font_color':'white'
+                'font_color':'white'    
             }
         )
         max_row, max_col = df.shape
@@ -75,7 +74,7 @@ class SiteReportFormat(BaseReportsExport):
         worksheet.add_table(1, 0, max_row, max_col - 1, {"columns": column_settings})
         
         # Make the columns wider for clarity.
-        worksheet.set_column(0, max_col - 1, 12)
+        worksheet.autofit()
 
         # Write the column headers with the defined format.
         for col_num, value in enumerate(df.columns.values):
