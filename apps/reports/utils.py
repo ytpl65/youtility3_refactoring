@@ -92,8 +92,9 @@ class BaseReportsExport(WeasyTemplateResponseMixin):
     def get_csv_output(self):
         log.info("csv is executing")
         df = pd.DataFrame(data=list(self.data))
+        df = self.excel_columns(df)
         output = BytesIO()
-        df.to_csv(output, index=False, date_format='yyyy-mmm-dd')
+        df.to_csv(output, index=False, date_format='%Y-%m-%d %H:%M:%S')
         output.seek(0)
         if self.returnfile: return output
         response = HttpResponse(output, content_type='text/csv')
@@ -183,6 +184,7 @@ class ReportEssentials(object):
     PPMSummary = 'PPMSummary'
     SiteReport = 'SiteReport'
     ListOfTours = 'ListOfTours'
+    WorkOrderList = 'WorkOrderList'
 
     
     def __init__(self, formdata,  request=None, session=None):
@@ -200,6 +202,7 @@ class ReportEssentials(object):
         from apps.reports.report_designs.list_of_task import ListofTaskReport
         from apps.reports.report_designs.list_of_tickets import ListofTicketReport
         from apps.reports.report_designs.list_of_tours import ListofTourReport
+        from apps.reports.report_designs.work_order_list import WorkOrderList
         return {
             self.TaskSummary: TaskSummaryReport,
             self.TourSummary:TourSummaryReport,
@@ -207,7 +210,8 @@ class ReportEssentials(object):
             self.SiteReport:SiteReportFormat,
             self.ListOfTasks:ListofTaskReport,
             self.ListOfTickets:ListofTicketReport,
-            self.ListOfTours:ListofTourReport
+            self.ListOfTours:ListofTourReport,
+            self.WorkOrderList:WorkOrderList
         }.get(self.report_name)
     
         

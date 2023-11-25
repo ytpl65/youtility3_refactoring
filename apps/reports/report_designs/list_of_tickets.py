@@ -53,6 +53,12 @@ class ListofTicketReport(BaseReportsExport):
         bt = Bt.objects.filter(id=self.client_id).values('id', 'buname').first()
         self.additional_content = f"Client: {bt['buname']}; Report: {self.report_title}; From: {self.formdata['fromdate']} To: {self.formdata['uptodate']}"
 
+    def excel_columns(self, df):
+        df = df[['Ticket No','Description', 'Priority','Ticket Category',
+                 'Status','Assigned To','Created On', 'Created By','TAT','Modied On'
+                 ]]
+        return df
+
 
     def excel_layout(self, worksheet, workbook, df, writer, output):
         super().excel_layout(worksheet, workbook, df, writer, output)

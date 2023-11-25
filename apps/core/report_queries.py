@@ -259,7 +259,7 @@ def get_query(query):
                 SELECT %s ::text AS timezone
             )
 
-            SELECT wom.id as wo_id, wom.cdtz as "Created On", wom.description as "Description", wom.plandatetime as "Planned Date Time", wom.endtime as "Completed On",
+            SELECT wom.id as "wo_id", wom.cdtz as "Created On", wom.description as "Description", wom.plandatetime as "Planned Date Time", wom.endtime as "Completed On",
             array_to_string(wom.categories, ',') as "Categories", p.peoplename as "Created By", wom.workstatus as "Status", v.name as "Vendor Name", INITCAP(priority) as "Priority", bu.buname as "Site"
             from wom
             inner join people p on p.id = wom.cuser_id
