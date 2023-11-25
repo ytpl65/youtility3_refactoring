@@ -391,6 +391,9 @@ class WorkPermit(LoginRequiredMixin, View):
         if action == 'getAttachments':
             att =  P['model'].objects.get_attachments(R['id'])
             return rp.JsonResponse(data = {'data': list(att)})
+        
+        if action == 'printReport':
+            return self.send_report(R)
 
         if 'id' in R:
             # get work permit questionnaire
@@ -533,6 +536,10 @@ class WorkPermit(LoginRequiredMixin, View):
                 )
                 log.info(f"wom detail is created for the for the child wom: {childwom.description}")
     
+    
+    def send_report(self, R):
+        #from apps.reports.report_designs.coldworkpermit
+        pass
 
             
 

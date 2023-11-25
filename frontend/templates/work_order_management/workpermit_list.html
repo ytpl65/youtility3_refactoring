@@ -68,8 +68,8 @@ $(document).ready(function(){
             {title:'Work Permit Report', data:'qset__qsetname'},
             {title:'Approval', data:'workpermit'},
             {title:'Status', data:'workstatus'},
-            {title:'Action', data:null, defaultContent:"N/A"},
             {title:'Site', data:'bu__buname'},
+            {title:'Action', data:null, defaultContent:"N/A"},
             {title:'Site Code', data:'bu__bucode', visible:false},
             {visible:false, data:"ctzoffset", className:'noVis'}
         ],
@@ -92,6 +92,11 @@ $(document).ready(function(){
             {targets:5, render:function(data, type, row, meta){
                 if(data === 'ASSIGNED'){return `<span class="badge fs-9 badge-secondary">${data}</span>`}
                 else if (data === 'COMPLETED'){return `<span class="badge fs-9 badge-success">${data}</span>`}
+            }},
+            {targets:7, render:function(data, type, row, meta){
+                if(row['workstatus'] == 'COMPLETED'){
+                    return '<a href="#" class="edit-link">Report&nbsp;<i class="bi text-danger fs-5 bi-file-earmark-pdf-fill"></i></a>';
+                }return 'N/A'
             }}
         ],
         buttons:[
@@ -129,6 +134,17 @@ $(document).ready(function(){
     if(session['is_workpermit_approver'] === true){
         $(".add_new").hide()
     }
+    $('#wp_list tbody').on('click', '.edit-link', function () {
+    var data = table.row($(this).parents('tr')).data();
+    $.ajax({
+        url: '{{ url("work_order_management:work_permit") }}?action=printReport',
+        type: 'GET',
+        data: data,
+        success: function (response) {
+            console.log("Success")
+        }
+    });
+});
 })
 
 </script>

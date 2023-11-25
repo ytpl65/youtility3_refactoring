@@ -168,8 +168,8 @@ class ReportForm(forms.Form):
         
         
         if cd.get("fromdate") and cd['fromdate'] > cd['uptodate']: self.add_error('fromdate', 'From date cannot be greater than To date')
-        if cd.get('uptodate') and cd['uptodate'] > cd['fromdate'] + timedelta(days=182):
-            err_msg = 'The difference between From date and To date should not be greater than 6 months'
+        if cd.get('uptodate') and cd['uptodate'] > cd['fromdate'] + timedelta(days=31):
+            err_msg = 'The difference between From date and To date should not be greater than 1 a month'
             self.add_error('fromdate', err_msg)
             self.add_error('uptodate', err_msg)
         if cd['format'] != 'pdf': self.cleaned_data['preview'] = "false"

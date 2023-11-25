@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="{{ static('assets/css/local/reports.css') }}" rel="stylesheet" type="text/css" />
+    <title>Workpermit</title>
+    {% block inline_css %}
+    
+    {% endblock inline_css %}
+</head>
+<body>
+    <header id="page_header">
+            <div>
+      {% block header_start %}
+
+      {% endblock header_start %}
+    </div>
+    <div>
+      {% block header_center %}
+
+      {% endblock header_center %}
+    </div>
+    <div>
+      {% block header_end %}
+
+      {% endblock header_end %}
+    </div>
+    </header>
+
+    <main>
+        <div>
+            {% block wp_info %}
+            
+            {% endblock wp_info %}
+        </div>
+
+        <div>
+            {% block wp_sections %}
+            
+            {% endblock wp_sections %}
+        </div>
+        <div>
+            {% block rwp_section %}
+            
+            {% endblock rwp_section %}
+        </div>
+        <div>
+            {% block notes %}
+            
+            {% endblock notes %}
+        </div>
+        <div>
+            {% block note_to_contractor %}
+            
+            {% endblock note_to_contractor %}
+
+        </div>
+        <div>
+            {% block footer %}
+            
+            {% endblock footer %}
+        </div>
+    </main>
+
+</body>
+</html>
