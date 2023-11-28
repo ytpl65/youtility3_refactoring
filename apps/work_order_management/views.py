@@ -384,7 +384,7 @@ class WorkPermit(LoginRequiredMixin, View):
             return render(request, P['template_form'], context=context)
 
         if action == 'get_answers_of_template' and R.get('qsetid') and R.get('womid'):
-            wp_answers = Wom.objects.get_wp_answers(R['qsetid'], R['womid'])
+            wp_answers = Wom.objects.get_wp_answers(R['womid'])
             questionsform = render_to_string(P['partial_form'], context={"wp_details": wp_answers})
             return rp.JsonResponse({'html': questionsform}, status=200)
         
@@ -398,7 +398,7 @@ class WorkPermit(LoginRequiredMixin, View):
         if 'id' in R:
             # get work permit questionnaire
             obj = utils.get_model_obj(int(R['id']), request, P)
-            wp_answers = Wom.objects.get_wp_answers(obj.qset_id, obj.id)
+            wp_answers = Wom.objects.get_wp_answers(obj.id)
             cxt = {'wpform': P['form'](request=request, instance=obj), 'ownerid': obj.uuid, 'wp_details': wp_answers}
             if obj.workpermit == Wom.WorkPermitStatus.APPROVED and obj.workstatus != Wom.Workstatus.COMPLETED:
                 rwp_details = Wom.objects.get_return_wp_details(request)

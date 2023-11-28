@@ -29,9 +29,19 @@
 
 {% block wp_info %}
 <div>
-    <span>Work Permit Type:</span>{{ " "*5 }} <span class"w-100">{{ wp_info['type'] }}</span>
+    <span>Work Permit Type:</span>{{ " "*5 }} <span class"w-100">{{ report_subtitle }}</span>
 </div>
+{% if wp_info  %}
+
+{% for info in wp_info['questions'] %}
 <div>
+    <span>{{ info['question__quesname'] }}</span>{{ " "*5 }} <span
+        class"w-100">{{ info['answer'] }}</span>
+</div>
+{% endfor %}
+
+
+{# <div>
     <span>Name of Capgemini Authorized Personnel Issuing Permit:</span>{{ " "*5 }} <span
         class"w-100">{{ wp_info['issuer'] }}</span>
 </div>
@@ -62,7 +72,10 @@
 </div>
 <div>
     <span>Work Description:</span><span>{{" "*5}}</span><span>{{ wp_info['work_desc'] }}</span>
-</div>
+</div> #}
+
+
+{% endif %}
 {% endblock wp_info %}
 
 
@@ -71,7 +84,7 @@
     {% for section in wp_sections %}
         <thead>
             <tr>
-                <th>{{ section['qsetname'] }}</th>
+                <th>{{ section['section'] }}</th>
                 <th>YES</th>
                 <th>NO</th>
                 <th>N/A</th>
@@ -80,7 +93,7 @@
         {% for question in section['questions'] %}
         <tbody>
             <tr>
-                <td>{{ question['quesname'] }}</td>
+                <td>{{ question['question__quesname'] }}</td>
                 {% if question['answer']|upper == 'YES' %}
                     <td>YES</td>
                 {% else %}
@@ -107,10 +120,10 @@
 
 
 {% block rwp_section %}
-<p>{{ rwp_info['qsetname'] }}</p>
+<p>{{ rwp_info['section'] }}</p>
 {% for question in rwp_info['questions'] %}
 <div>
-<span>{{ question['quesname'] }}&nbsp;:</span>{{" "*5}}<span class="w-100">{{ question['answer'] }}</span>
+<span>{{ question['question__quesname'] }}&nbsp;:</span>{{" "*5}}<span class="w-100">{{ question['answer'] }}</span>
 </div>
 {% endfor %}
 {% endblock rwp_section %}

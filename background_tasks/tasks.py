@@ -454,7 +454,7 @@ def send_email_notification_for_wp(self, womid, qsetid, approvers, client_id, bu
         from django.template.loader import render_to_string
         Wom = apps.get_model('work_order_management', 'Wom')
         People = apps.get_model('peoples', 'People')
-        wp_details = Wom.objects.get_wp_answers(qsetid, womid)
+        wp_details = Wom.objects.get_wp_answers(womid)
         wp_obj = Wom.objects.get(id=womid)
         jsonresp['story'] += f"\n{wp_details}"
         if wp_details:
