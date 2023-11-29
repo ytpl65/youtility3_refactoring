@@ -1,0 +1,71 @@
+{% extends "reports/pdf_reports/workpermit_base.html" %}
+
+{% block inline_css %}
+<style>
+</style>
+{% endblock inline_css %}
+
+
+
+{% block header_center %}
+<div id="title">
+    <div>
+        <p id="main_title">{{ main_title }}</p>
+        <p id="subtitle">{{ report_subtitle }}</p>
+    </div>
+</div>
+{% endblock header_center %}
+
+
+{% block wp_info %}
+<div class="mr ">
+    <span style="color:rgb(47, 47, 47); font-weight:500">Work Permit Type:</span>{{ "&nbsp;"*5 }} <span
+        class="w-100 dashed-text">{{ report_subtitle }}</span>
+</div>
+{% if wp_info  %}
+
+{% for info in wp_info['questions'] %}
+<div class="mr">
+    <span style="color:rgb(47,47,47); font-weight:500">{{ info['question__quesname'] }}:</span>{{ "&nbsp;"*5 }} <span
+        class="w-100 dashed-text" style="width: 100%;">{{ info['answer'] }}</span>
+</div>
+{% endfor %}
+{% endif %}
+{% endblock wp_info %}
+
+
+{% block wp_sections %}
+<table id="wp_sections">
+    {% for section in wp_sections %}
+    <thead>
+        <tr>
+            <th>{{ section['section'] }}</th>
+            <th>OPTIONS</th>
+            <th>ANSWERED</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for question in section['questions'] %}
+        <tr>
+            <td>{{ question['question__quesname'] }}</td>
+            {% set current_options = question['options'].replace(',', ' / ') %}
+            <td>{{ current_options }}</td>
+            <td>{{ question['answer'] }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+    {% endfor %}
+</table>
+{% endblock wp_sections %}
+
+
+
+{% block rwp_section %}
+<p style="font-weight: 500;">{{ rwp_info['section'] }}</p>
+{% for question in rwp_info['questions'] %}
+<div class="mr">
+    <span style="color: rgb(47, 47, 47); font-weight:500">{{ question['question__quesname'] }}&nbsp;:</span>{{" "*5}}<span
+        class="w-100">{{ question['answer'] }}</span>
+</div>
+{% endfor %}
+{% endblock rwp_section %}

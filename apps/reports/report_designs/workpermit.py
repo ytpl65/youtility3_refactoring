@@ -51,3 +51,28 @@ class ColdWorkPermit(WorkPermit):
     ytpl_applogo =  'frontend/static/assets/media/images/logo.png'
     report_name = 'ColdWorkPermit'
     
+class HotWorkPermit(WorkPermit):
+    report_title = 'HOT WORK PERMIT'
+    design_file = "reports/pdf_reports/hot_workpermit.html"
+    ytpl_applogo =  'frontend/static/assets/media/images/logo.png'
+    report_name = 'HotWorkPermit'
+
+class HeightWorkPermit(WorkPermit):
+    report_title = 'HEIGHT WORK PERMIT'
+    design_file = "reports/pdf_reports/height_workpermit.html"
+    ytpl_applogo =  'frontend/static/assets/media/images/logo.png'
+    report_name = 'HeightWorkPermit'
+
+class ConfinedWorkPermit(WorkPermit):
+    report_title = 'CONFINED WORK PERMIT'
+    design_file = "reports/pdf_reports/confined_workpermit.html"
+    ytpl_applogo =  'frontend/static/assets/media/images/logo.png'
+    report_name = 'ConfinedWorkPermit'
+
+class ElectricalWorkPermit(WorkPermit):
+    report_title = 'ELECTRICAL WORK PERMIT'
+    design_file = "reports/pdf_reports/electrical_workpermit.html"
+    ytpl_applogo =  'frontend/static/assets/media/images/logo.png'
+    report_name = 'ElectricalWorkPermit'
+
+    
