@@ -34,10 +34,11 @@
 
 
 {% block table %}
-<table id="Sitevisitreport" style="width:100%">
+<table id="sitevisitreport" style="width:100%">
     <thead>
         <tr>
             <th scope="col">Sr.No.</th>
+            <th scope="col">Question Set</th>
             <th scope="col">Question</th>
             <th scope="col">Answer</th>
         </tr>
@@ -45,9 +46,10 @@
     <tbody>
         {% for row in data %}
         <tr>
-            <td>{{ row['SEQNO'] }}</td>
-            <td>{{ row['QUESTION'] }}</td>
-            <td>{{ row['ANSWER'] }}</td>
+            <td>{{ row['Sr.no'] }}</td>
+            <td>{{ row['Question Set'] }}</td>
+            <td>{{ row['Question'] }}</td>
+            <td>{{ row['Answer'] }}</td>
         </tr>
         {% endfor %}
     </tbody>
