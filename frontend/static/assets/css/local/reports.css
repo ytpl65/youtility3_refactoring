@@ -6,6 +6,17 @@
     --subtle-black: #555555
 }
 
+.ul-text{
+    text-decoration: underline;
+}
+
+.dashed-text{
+    text-decoration: dashed;
+}
+
+.italic-ft{
+    font-style: italic;
+}
 
 
 #subtitle{

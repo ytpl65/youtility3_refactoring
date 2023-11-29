@@ -15,6 +15,7 @@ from django.template.loader import render_to_string
 from apps.work_order_management.utils import check_all_approved, reject_workpermit, save_approvers_injson
 import logging
 from django.utils import timezone
+from apps.reports import utils as rutils
 logger = logging.getLogger('__main__')
 log = logger
 # Create your views here.
@@ -393,7 +394,7 @@ class WorkPermit(LoginRequiredMixin, View):
             return rp.JsonResponse(data = {'data': list(att)})
         
         if action == 'printReport':
-            return self.send_report(R)
+            return self.send_report(R, request)
 
         if 'id' in R:
             # get work permit questionnaire
@@ -536,10 +537,23 @@ class WorkPermit(LoginRequiredMixin, View):
                 )
                 log.info(f"wom detail is created for the for the child wom: {childwom.description}")
     
+    def getReportFormatBasedOnWorkpermitType(self, R):
+        from apps.reports.report_designs import workpermit as wp
+        return {
+            'COLD WORK PERMIT':wp.ColdWorkPermit
+        }.get(R['qset__qsetname'])
     
-    def send_report(self, R):
+    
+    def send_report(self, R, request):
         #from apps.reports.report_designs.coldworkpermit
-        pass
+        from apps.reports.report_designs import workpermit
+        report_essentials = rutils.ReportEssentials(formdata=R, session=request.session)
+        log.info("report essentials %s"%(report_essentials))
+        ReportFormat = self.getReportFormatBasedOnWorkpermitType(R)
+        report = ReportFormat(
+            filename=R['qset__qsetname'], client_id=request.session['client_id'], formdata=R, request=request)
+        return report.execute()
+        
 
             
 

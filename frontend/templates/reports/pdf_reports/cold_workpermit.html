@@ -2,16 +2,6 @@
 
 {% block inline_css %}
 <style>
-    table {
-        width: 100%;
-        border-collapse: collapse;
-    }
-
-    th,
-    td {
-        padding: 8px;
-        text-align: left;
-    }
 </style>
 {% endblock inline_css %}
 
@@ -28,53 +18,18 @@
 
 
 {% block wp_info %}
-<div>
-    <span>Work Permit Type:</span>{{ " "*5 }} <span class"w-100">{{ report_subtitle }}</span>
+<div class="mr ">
+    <span style="color:rgb(47, 47, 47); font-weight:500">Work Permit Type:</span>{{ "&nbsp;"*5 }} <span
+        class="w-100 dashed-text">{{ report_subtitle }}</span>
 </div>
 {% if wp_info  %}
 
 {% for info in wp_info['questions'] %}
-<div>
-    <span>{{ info['question__quesname'] }}</span>{{ " "*5 }} <span
-        class"w-100">{{ info['answer'] }}</span>
+<div class="mr">
+    <span style="color:rgb(47,47,47); font-weight:500">{{ info['question__quesname'] }}:</span>{{ "&nbsp;"*5 }} <span
+        class="w-100 dashed-text" style="width: 100%;">{{ info['answer'] }}</span>
 </div>
 {% endfor %}
-
-
-{# <div>
-    <span>Name of Capgemini Authorized Personnel Issuing Permit:</span>{{ " "*5 }} <span
-        class"w-100">{{ wp_info['issuer'] }}</span>
-</div>
-<div>
-    <span>Vendor's Employee Name:</span>{{ " "*5 }} <span class"w-100">{{ wp_info['vendor_employee'] }}</span>
-</div>
-<div>
-    <span>Contractor's (Name, Address):</span>{{ " "*5 }} <span class"w-100">{{ wp_info['contractor'] }},&nbsp;
-        {{ wp_info['contractor_mobno']}}</span>
-</div>
-<div>
-    <table>
-        <tr>
-            <th width="30%">Name of People Working:</th>
-            <td>{{ wp_info['peoples_working'][0] }}</td>
-        </tr>
-        {% for people in range(1, wp_info['peoples_working']|count) %}
-        <tr>
-            <td></td>
-            <td>{{ people }}</td>
-        </tr>
-        {% endfor %}
-    </table>
-</div>
-<div>
-    <span>This Permit is Valid from</span>{{ " "*5 }} <span id="validfrom">{{ wp_info['validfrom'] }}&nbsp;Hrs</span>
-    <span>To</span> <span id="validupto">{{ wp_info['validupto'] }}&nbsp;Hrs</span>
-</div>
-<div>
-    <span>Work Description:</span><span>{{" "*5}}</span><span>{{ wp_info['work_desc'] }}</span>
-</div> #}
-
-
 {% endif %}
 {% endblock wp_info %}
 
@@ -82,83 +37,35 @@
 {% block wp_sections %}
 <table id="wp_sections">
     {% for section in wp_sections %}
-        <thead>
-            <tr>
-                <th>{{ section['section'] }}</th>
-                <th>YES</th>
-                <th>NO</th>
-                <th>N/A</th>
-            </tr>
-        </thead>
+    <thead>
+        <tr>
+            <th>{{ section['section'] }}</th>
+            <th>OPTIONS</th>
+            <th>ANSWERED</th>
+        </tr>
+    </thead>
+    <tbody>
         {% for question in section['questions'] %}
-        <tbody>
-            <tr>
-                <td>{{ question['question__quesname'] }}</td>
-                {% if question['answer']|upper == 'YES' %}
-                    <td>YES</td>
-                {% else %}
-                    <td></td>
-                {% endif %}
-                {% if question['answer']|upper == 'NO' %}
-                    <td>NO</td>
-                {% else %}
-                    <td></td>
-                {% endif %}
-                {% if question['answer']|upper == 'N/A' %}
-                    <td>N/A</td>
-                {% else %}
-                    <td></td>
-                {% endif %}
-            </tr>
-        </tbody>
+        <tr>
+            <td>{{ question['question__quesname'] }}</td>
+            {% set current_options = question['options'].replace(',', ' / ') %}
+            <td>{{ current_options }}</td>
+            <td>{{ question['answer'] }}</td>
+        </tr>
         {% endfor %}
+    </tbody>
     {% endfor %}
-    
-
 </table>
 {% endblock wp_sections %}
 
 
+
 {% block rwp_section %}
-<p>{{ rwp_info['section'] }}</p>
+<p style="font-weight: 500;">{{ rwp_info['section'] }}</p>
 {% for question in rwp_info['questions'] %}
-<div>
-<span>{{ question['question__quesname'] }}&nbsp;:</span>{{" "*5}}<span class="w-100">{{ question['answer'] }}</span>
+<div class="mr">
+    <span style="color: rgb(47, 47, 47); font-weight:500">{{ question['question__quesname'] }}&nbsp;:</span>{{" "*5}}<span
+        class="w-100">{{ question['answer'] }}</span>
 </div>
 {% endfor %}
 {% endblock rwp_section %}
-
-{% block notes %}
-<p class="b-200">Note</p>
-<div>
-<span>(A)&nbsp;</span><span>This Supervisor must check that the work has been completed as required and that the
-area has been made safe before signing off the permit.</span>
-</div>
-<div>
-<span>(B)&nbsp;</span><span>The vendor should inform the site engineer about the work status. The site engineer will check the work
-and close the work permit in the system.</span>
-</div>
-<div>
-<span>(A)&nbsp;</span><span>The requester must ensure that the e copy of this work permit must be available with
-personal working at all the time in premises.</span>
-</div>
-<div>
-<span>(A)&nbsp;</span><span>EMERGENCY CONTACT NUMBER: 1800 267 4001.</span>
-</div>
-{% endblock notes %}
-
-
-{% block note_to_contractor %}
-<p>Note to Contractor</p>
-<p>It is the contractor's responsibility to ensure the safety and health of its employee at all times. This
-hazard analysis and work permit is provided by Capgemini as a courtesy, and may not necessarily
-reflect all the hazards associated with proposed work.</p>
-{% endblock note_to_contractor %}
-
-
-{% block footer %}
-<div>
-<div>Version 2.0 01st July 2021</div>
-<div>Approved By: GES Admin</div>
-</div>
-{% endblock footer %}

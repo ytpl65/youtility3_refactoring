@@ -564,7 +564,7 @@ class DownloadReports(LoginRequiredMixin, View):
 
 class DesignReport(LoginRequiredMixin, View):
     # change this file according to your design
-    design_file = "reports/pdf_reports/testdesign.html" 
+    design_file = "reports/pdf_reports/testdesign.html"
     
     
     def get(self, request):

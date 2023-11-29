@@ -4,6 +4,7 @@ from apps.core.report_queries import get_query
 from apps.onboarding.models import Bt
 from apps.work_order_management.models import Wom
 from django.conf import settings
+from django.http.response import JsonResponse
 
 class WorkPermit(BaseReportsExport):
     
@@ -15,8 +16,6 @@ class WorkPermit(BaseReportsExport):
         context data is the info that is passed in templates
         used for pdf/html reports
         '''
-        sitename = Bt.objects.get(id=self.formdata['site']).buname
-        self.set_args_required_for_query()
         wp_info, wp_sections, rwp_section, sitename = Wom.objects.wp_data_for_report(self.formdata.get('id'))
         self.context = {
             'base_path': settings.BASE_DIR,
@@ -24,11 +23,10 @@ class WorkPermit(BaseReportsExport):
             'report_subtitle':self.report_title,
             'wp_info' : wp_info,
             'wp_sections': wp_sections,
-            'rwp_section':rwp_section,
+            'rwp_info':rwp_section,
             'report_title': self.report_title,
             'client_logo':self.get_client_logo(),
             'app_logo':self.ytpl_applogo,
-            'report_subtitle':f"Site: {sitename}, From: {self.formdata.get('fromdate')} To {self.formdata.get('uptodate')}"
         }
 
 
@@ -41,6 +39,8 @@ class WorkPermit(BaseReportsExport):
             ]
 
     def execute(self):
+        self.set_context_data()
+        #return self.get_html_output()
         return self.get_pdf_output()
 
 

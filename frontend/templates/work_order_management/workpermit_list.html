@@ -140,8 +140,25 @@ $(document).ready(function(){
         url: '{{ url("work_order_management:work_permit") }}?action=printReport',
         type: 'GET',
         data: data,
+        xhrFields: {
+          responseType: 'blob'
+        },
         success: function (response) {
-            console.log("Success")
+            var blob = new Blob([response], { type: 'application/pdf' });
+            var objectUrl = URL.createObjectURL(blob);
+            window.open(objectUrl, "_blank");
+            URL.revokeObjectURL(objectUrl);
+
+            /*// Open a new tab
+            var newTab = window.open();
+
+            // Write the HTML content to the new tab
+            newTab.document.open();
+            newTab.document.write(response);
+            newTab.document.close();*/
+        },
+        error:function(xhr, status, error){
+          show_error_alert("Something went wrong!", "Server Error")
         }
     });
 });
