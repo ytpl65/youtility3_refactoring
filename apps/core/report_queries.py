@@ -210,8 +210,8 @@ def get_query(query):
 
             SELECT
                 t.id AS "Ticket No",
-                t.cdtz AS "Created On",
-                t.mdtz AS "Modied On",
+                t.cdtz AT TIME ZONE tz.timezone AS "Created On",
+                t.mdtz AT TIME ZONE tz.timezone AS "Modied On",
                 t.status as "Status",
                 t.ticketdesc as "Description",
                 t.priority as "Priority",
@@ -259,8 +259,15 @@ def get_query(query):
                 SELECT %s ::text AS timezone
             )
 
-            SELECT wom.id as "wo_id", wom.cdtz as "Created On", wom.description as "Description", wom.plandatetime as "Planned Date Time", wom.endtime as "Completed On",
-            array_to_string(wom.categories, ',') as "Categories", p.peoplename as "Created By", wom.workstatus as "Status", v.name as "Vendor Name", INITCAP(priority) as "Priority", bu.buname as "Site"
+            SELECT wom.id as "wo_id",
+            wom.cdtz AT TIME ZONE tz.timezone as "Created On",
+            wom.description as "Description", 
+            wom.plandatetime AT TIME ZONE tz.timezone as "Planned Date Time", 
+            wom.endtime as "Completed On",
+            array_to_string(wom.categories, ',') as "Categories", 
+            p.peoplename as "Created By", 
+            wom.workstatus as "Status", 
+            v.name as "Vendor Name", INITCAP(priority) as "Priority", bu.buname as "Site"
             from wom
             inner join people p on p.id = wom.cuser_id
             inner join vendor v  on v.id  = wom.vendor_id
@@ -270,7 +277,7 @@ def get_query(query):
             AND wom.bu_id <> 1 AND wom.qset_id <> 1
             AND wom.bu_id IN (SELECT unnest(string_to_array(%s, ',')::integer[]))
             AND (wom.cdtz AT TIME ZONE tz.timezone)::DATE BETWEEN %s AND %s
-            GROUP BY wom.id, bu.id, bu.buname, p.peoplename, v.name, (wom.plandatetime AT TIME ZONE tz.timezone)::DATE
+            GROUP BY wom.id,bu.id, bu.buname, p.peoplename, v.name, tz.timezone,(wom.plandatetime AT TIME ZONE tz.timezone)::DATE
             ORDER BY bu.buname, (wom.plandatetime AT TIME ZONE tz.timezone)::DATE desc
             ''',
         'SiteReport':
@@ -376,5 +383,5 @@ def get_query(query):
                 jnd.endtime, 
                 jnd_p.ct_plandatetime, 
                 tz.timezone;
-            '''
+            ''',
     }.get(query)

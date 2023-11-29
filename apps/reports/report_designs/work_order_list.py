@@ -83,6 +83,7 @@ class WorkOrderList(BaseReportsExport):
         
         # Make the columns wider for clarity.
         worksheet.set_column(0, max_col - 1, 12)
+        worksheet.autofit()
 
         # Write the column headers with the defined format.
         for col_num, value in enumerate(df.columns.values):

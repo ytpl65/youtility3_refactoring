@@ -78,7 +78,7 @@ class PPMSummaryReport(BaseReportsExport):
         
         # Add the Excel table structure. Pandas will add the data.)
         worksheet.add_table(1, 0, max_row, max_col - 1, {"columns": column_settings})
-        
+        worksheet.set_column(0, max_col - 1, 12)
         worksheet.autofit()
 
         # Write the column headers with the defined format.
