@@ -4,7 +4,7 @@
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <link href="{{ static('assets/css/local/reports.css') }}" rel="stylesheet" type="text/css" />
+        <link href="{{ static('assets/css/local/reports.css') }}?v=2" rel="stylesheet" type="text/css" />
         <title>Workpermit</title>
         <style>
             table {
@@ -34,15 +34,27 @@
             p {
                 font-size: 0.8rem;
             }
+            .bold-label{
+                color: rgb(47, 47, 47);
+                font-weight: 600;
+            }
+            .subtle-black{
+                color: rgb(47, 47, 47);;
+            }
 
             #title {
                 margin-right: 0;
             }
 
-            th,
-            td {
-                padding: 8px;
+            #wp_sections th,
+            #wp_sections td {
+                padding: 7px;
                 text-align: left;
+                border: 1px solid rgb(146, 146, 146);
+            }
+
+            #peoples  tr {
+                background: none;
             }
 
             .italic-ft {

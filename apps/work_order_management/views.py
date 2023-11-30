@@ -540,15 +540,11 @@ class WorkPermit(LoginRequiredMixin, View):
     def getReportFormatBasedOnWorkpermitType(self, R):
         from apps.reports.report_designs import workpermit as wp
         return {
-            'COLD WORK PERMIT':wp.ColdWorkPermit
+            'COLD WORK PERMIT':wp.ColdWorkPermit,
         }.get(R['qset__qsetname'])
     
     
     def send_report(self, R, request):
-        #from apps.reports.report_designs.coldworkpermit
-        from apps.reports.report_designs import workpermit
-        report_essentials = rutils.ReportEssentials(formdata=R, session=request.session)
-        log.info("report essentials %s"%(report_essentials))
         ReportFormat = self.getReportFormatBasedOnWorkpermitType(R)
         report = ReportFormat(
             filename=R['qset__qsetname'], client_id=request.session['client_id'], formdata=R, request=request)
