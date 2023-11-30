@@ -416,7 +416,8 @@ class WorkPermit(LoginRequiredMixin, View):
             if R.get('action') == 'submit_return_workpermit':
                 wom = Wom.objects.get(id = R['wom_id'])
                 return_wp_formdata = QueryDict(request.POST['return_work_permit_formdata']).copy()
-                self.create_workpermit_details(R['wom_id'], wom, request, return_wp_formdata)
+                rwp_seqno =Wom.objects.filter(parent_id=R['wom_id']).count() + 1
+                self.create_workpermit_details(R['wom_id'], wom, request, return_wp_formdata, rwp_seqno=rwp_seqno)
                 wom.workstatus = Wom.Workstatus.COMPLETED
                 wom.save()
                 return rp.JsonResponse({'pk':wom.id})
@@ -452,7 +453,7 @@ class WorkPermit(LoginRequiredMixin, View):
         send_email_notification_for_wp.delay(workpermit.id, workpermit.qset_id, workpermit.approvers, S['client_id'], S['bu_id'])
         return rp.JsonResponse({'pk':workpermit.id})
     
-    def create_child_wom(self, wom, qset_id):
+    def create_child_wom(self, wom, qset_id, rwp_seqno=None):
         qset = QuestionSet.objects.get(id =qset_id)
         if childwom := Wom.objects.filter(
             parent_id=wom.id, qset_id=qset.id, seqno=qset.seqno
@@ -471,7 +472,7 @@ class WorkPermit(LoginRequiredMixin, View):
                 asset          = wom.asset,
                 location       = wom.location,
                 workstatus     = wom.workstatus,
-                seqno          = qset.seqno,
+                seqno          = rwp_seqno or qset.seqno,
                 approvers      = wom.approvers,
                 workpermit     = wom.workpermit,
                 priority       = wom.priority,
@@ -488,7 +489,7 @@ class WorkPermit(LoginRequiredMixin, View):
                 ctzoffset      = wom.ctzoffset
             )
     
-    def create_workpermit_details(self, R, wom,  request, formdata):
+    def create_workpermit_details(self, R, wom,  request, formdata, rwp_seqno=None):
         log.info(f'creating wp_details started {R}')
         S = request.session
         
@@ -509,7 +510,7 @@ class WorkPermit(LoginRequiredMixin, View):
                 else:
                     alerts = False
                     
-                childwom = self.create_child_wom(wom, qset_id)
+                childwom = self.create_child_wom(wom, qset_id, rwp_seqno=rwp_seqno)
                 
                 
                 lookup_args = {
