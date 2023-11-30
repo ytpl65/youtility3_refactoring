@@ -384,4 +384,27 @@ def get_query(query):
                 jnd_p.ct_plandatetime, 
                 tz.timezone;
             ''',
+        'SiteVisitReport':
+            '''
+            WITH timezone_setting AS (
+                SELECT %s::text AS timezone
+            ),
+
+            SELECT 
+                jnd.seqno AS "Sr.no",
+                q.quesname AS "Question",
+                qs.qsetname AS "Question Set",
+                jnd.answer AS "Answer",
+                jnd.cdtz AT TIME ZONE tz.timezone as "Created On"
+            FROM 
+                JobneedDetails jnd
+                INNER JOIN Question q ON jnd.question_id = q.id
+                INNER JOIN QuestionSet qs ON q.qset_id = qs.id
+                CROSS JOIN timezone_setting tz
+            WHERE
+                jnd.jobneed_id IN (SELECT unnest(string_to_array(%s, ',')::integer[]))
+                AND (jnd.cdtz AT TIME ZONE tz.timezone)::DATE BETWEEN %s AND %s
+            ORDER BY 
+                qs.qsetname, jnd.seqno;
+            '''
     }.get(query)
