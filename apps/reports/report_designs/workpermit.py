@@ -63,11 +63,11 @@ class HeightWorkPermit(WorkPermit):
     ytpl_applogo =  'frontend/static/assets/media/images/logo.png'
     report_name = 'HeightWorkPermit'
 
-class ConfinedWorkPermit(WorkPermit):
-    report_title = 'CONFINED WORK PERMIT'
-    design_file = "reports/pdf_reports/confined_workpermit.html"
+class ConfinedSpaceWorkPermit(WorkPermit):
+    report_title = 'CONFINED SPACE WORK PERMIT'
+    design_file = "reports/pdf_reports/confined_space_workpermit.html"
     ytpl_applogo =  'frontend/static/assets/media/images/logo.png'
-    report_name = 'ConfinedWorkPermit'
+    report_name = 'ConfinedSpaceWorkPermit'
 
 class ElectricalWorkPermit(WorkPermit):
     report_title = 'ELECTRICAL WORK PERMIT'

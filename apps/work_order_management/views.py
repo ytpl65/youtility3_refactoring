@@ -543,7 +543,7 @@ class WorkPermit(LoginRequiredMixin, View):
             'COLD WORK PERMIT':wp.ColdWorkPermit,
             'HOT WORK PERMIT':wp.HotWorkPermit,
             'HEIGHT WORK PERMIT':wp.HeightWorkPermit,
-            'CONFINED WORK PERMIT':wp.ConfinedWorkPermit,
+            'CONFINED SPACE WORK PERMIT':wp.ConfinedSpaceWorkPermit,
             'ELECTRICAL WORK PERMIT':wp.ElectricalWorkPermit
         }.get(R['qset__qsetname'])
     
