@@ -87,6 +87,7 @@ class ReportForm(forms.Form):
         ('ListOfTickets', 'List of Tickets'),
         ('WorkOrderList', 'Work Order List'),
         ('SiteReport', 'Site Report'),
+        ('PeopleQR', 'People-QR'),
     ]
     download_or_send_options = [
         ('DOWNLOAD', 'Download'),
@@ -98,6 +99,11 @@ class ReportForm(forms.Form):
         ('html', 'HTML'),
         ('json', 'JSON'),
         ('csv', 'CSV'),
+    ]
+    SIZES = [
+        ('100x100', 'Small'),
+        ('300x300', 'Medium'),
+        ('500x500', 'Large'), 
     ]
     
     
@@ -117,7 +123,7 @@ class ReportForm(forms.Form):
     ticketcategory  = forms.CharField(label='Ticket Category', widget=s2forms.Select2MultipleWidget, required=False)
     peoplegroup     = forms.ChoiceField(label="People Group", widget=s2forms.Select2Widget, required=False, choices=[])
     people          = forms.ChoiceField(label="People", widget=s2forms.Select2Widget, required=False, choices=[])
-    qrsize          = forms.CharField(label="QR Size", widget=s2forms.Select2Widget, required=False)
+    qrsize          = forms.ChoiceField(label="QR Size", widget=s2forms.Select2Widget, choices=SIZES, required=False)
     assetcategory   = forms.CharField(label="Asset Ca   tegory", widget=s2forms.Select2TagWidget, required=False)
     
     #other form fields
@@ -187,7 +193,8 @@ class ReportForm(forms.Form):
             'List of Internal Tours':['id_site', 'id_fromdate', 'id_uptodate'],
             'PPM Summary': ['id_site', 'id_fromdate', 'id_uptodate'],
             'List of Tickets':['id_site', 'id_fromdate', 'id_uptodate'],
-            'Site Report':['id_sitegroup', 'id_fromdate', 'id_uptodate']
+            'Site Report':['id_sitegroup', 'id_fromdate', 'id_uptodate'],
+            'People-QR':[],
         }
 
     
