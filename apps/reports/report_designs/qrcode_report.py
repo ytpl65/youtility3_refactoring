@@ -36,4 +36,4 @@ class PeopleQR(QRCodeBaseReport):
     
     def set_data(self):
         from apps.peoples.models import People
-        Pe
+        pass
