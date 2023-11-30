@@ -456,7 +456,7 @@ class WorkPermit(LoginRequiredMixin, View):
     def create_child_wom(self, wom, qset_id, rwp_seqno=None):
         qset = QuestionSet.objects.get(id =qset_id)
         if childwom := Wom.objects.filter(
-            parent_id=wom.id, qset_id=qset.id, seqno=qset.seqno
+            parent_id=wom.id, qset_id=qset.id, seqno=rwp_seqno or qset.seqno
         ).first():
             log.info(f"wom already exist with qset_id {qset_id} so returning it")
             return childwom
