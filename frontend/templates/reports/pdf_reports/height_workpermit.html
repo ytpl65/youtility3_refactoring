@@ -2,10 +2,32 @@
 
 {% block inline_css %}
 <style>
+.logos{
+    width: 5.8rem;
+    height: 3.8rem;
+}
+#subtitle{
+    background-color: #01579b;
+    color:white;
+    padding-left: 80px;
+    padding-right: 80px;
+    padding-top: 6px;
+    padding-bottom: 6px;
+    border-radius: 25px;
+}
 </style>
 {% endblock inline_css %}
 
+{% block header_start %}
+<img src="{{ client_logo }}" alt="{{ client_logo }}" class="logos">
+{% endblock header_start %}
 
+
+{% block header_end %}
+<div>
+    <img src="{{ static('assets/media/images/reportlogo.png') }}" alt="SPS" class="companylogo">
+</div>
+{% endblock header_end %}
 
 {% block header_center %}
 <div id="title">
@@ -18,42 +40,60 @@
 
 
 {% block wp_info %}
-<div class="mr ">
-    <span style="color:rgb(47, 47, 47); font-weight:500">Work Permit Type:</span>{{ "&nbsp;"*5 }} <span
-        class="w-100 dashed-text">{{ report_subtitle }}</span>
-</div>
-{% if wp_info  %}
+    <div class="mr ">
+        <span>Work Permit Type:</span>{{ "&nbsp;"*5 }} <span
+            class="dashed-text bold-label" >{{ report_subtitle }}</span>
+    </div>
+    {% if wp_info  %}
+        {% for info in wp_info['questions'] %}
+            {% if info['question__quesname'] != 'Name Of People Working' %}
+            <div class="mr">
+                <span>{{ info['question__quesname'] }}:</span>{{ "&nbsp;"*5 }} <span
+                    class="subtle-black dashed-text" style="width: 100%;">{{ info['answer'] }}</span>
+            </div>
+            {% else %}
+                {% set peoples = info['answer'].split(', ') %}
+                <table id="peoples">
+                    <tr>
+                        <td width="30%" class="subtle-black">Name of People Working:</td>
+                        <td class="subtle-black dashed-text">1. &nbsp;{{peoples[0] }}</td>
+                    </tr>
+                    {% for i in range(1, peoples|count) %}
+                    <tr>
+                        <td></td>
+                        <td class="subtle-black dashed-text">{{ loop.index + 1 }}. &nbsp;{{ peoples[i] }}</td>
+                    </tr>
+                    {% endfor %}
+                </table>
+            {% endif %}
 
-{% for info in wp_info['questions'] %}
-<div class="mr">
-    <span style="color:rgb(47,47,47); font-weight:500">{{ info['question__quesname'] }}:</span>{{ "&nbsp;"*5 }} <span
-        class="w-100 dashed-text" style="width: 100%;">{{ info['answer'] }}</span>
-</div>
-{% endfor %}
-{% endif %}
+        {% endfor %}
+    {% endif %}
 {% endblock wp_info %}
 
 
 {% block wp_sections %}
 <table id="wp_sections">
     {% for section in wp_sections %}
-    <thead>
-        <tr>
-            <th>{{ section['section'] }}</th>
-            <th>OPTIONS</th>
-            <th>ANSWERED</th>
-        </tr>
-    </thead>
-    <tbody>
-        {% for question in section['questions'] %}
-        <tr>
-            <td>{{ question['question__quesname'] }}</td>
-            {% set current_options = question['options'].replace(',', ' / ') %}
-            <td>{{ current_options }}</td>
-            <td>{{ question['answer'] }}</td>
-        </tr>
-        {% endfor %}
-    </tbody>
+        {% if section['section'] != 'EMAIL' %}
+        <thead>
+            <tr>
+                <th>{{ section['section'] }}</th>
+                <th>OPTIONS</th>
+                <th>ANSWERED</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for question in section['questions'] %}
+            <tr>
+                <td>{{ question['question__quesname'] }}</td>
+                {% set current_options = question['options'].replace(',', ' / ') %}
+                <td>{{ current_options }}</td>
+                <td>{{ question['answer'] }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+        {% endif %}
     {% endfor %}
 </table>
 {% endblock wp_sections %}
