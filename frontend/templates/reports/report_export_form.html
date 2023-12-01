@@ -25,18 +25,18 @@ Report Form
 
 {% block nonfield_errors %}
 {% if form.non_field_errors %}
-  {% for err in form.non_field_errors() %}
-    <div class="alert alert-danger w-100 alert-dismissible fade show">
-      {{ err }}
-      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-    </div>
-  {% endfor %}
+{% for err in form.non_field_errors() %}
+<div class="alert alert-danger w-100 alert-dismissible fade show">
+  {{ err }}
+  <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+</div>
+{% endfor %}
 {% endif %}
 
 {% if messages %}
 {% for msg in messages %}
 <div class="alert {{ msg.tags }} w-100 alert-dismissible fade show" role="alert">
- {{ msg }}
+  {{ msg }}
   <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
 </div>
 {% endfor %}
@@ -44,7 +44,8 @@ Report Form
 {% endblock nonfield_errors %}
 
 {% block form %}
-<form action="{{ url('reports:exportreports') }}" class="validate"  novalidate="novalidate" method="post" id="report_form">
+<form action="{{ url('reports:exportreports') }}" class="validate" novalidate="novalidate" method="post"
+  id="report_form">
   <!-------------------------- CSRF MIDDLEWARE TOKEN --------------------->
   <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
   <input type="hidden" name="{{ form.ctzoffset.name }}" id="{{ form.ctzoffset.auto_id }}" value="-1">
@@ -59,7 +60,27 @@ Report Form
           {{ form.report_name }}
         </div>
       </div>
+      <!--SITE/GROUP-->
       <div class="input-group datafield d-none mb-3">
+        <div class="col-2">
+          <label for={{ form.site_or_people.id_for_label }} class="required">{{ form.site_or_people.label }}:</label>
+        </div>
+        <div class="col-5" id=id_site_or_people>
+          <div class="form-check form-check-inline">
+            <input type="radio" class="form-check-input" name={{ form.site_or_people.name }} id="id_peopleradio"
+              value="PEOPLE" onchange="showHideSelectField('PEOPLE')">
+            <label class="form-check-label" for="id_peopleradio">People</label>
+          </div>
+          <div class="form-check form-check-inline">
+            <input type="radio" class="form-check-input" name={{ form.site_or_people.name }} id="id_siteradio"
+              value="SITE" onchange="showHideSelectField('SITE')">
+            <label class="form-check-label" for="id_siteradio">Site</label>
+          </div>
+        </div>
+      </div>
+
+      <!--SITE-->
+      <div class="input-group datafield site d-none mb-3">
         <div class="col-2">
           {{ form.site.label_tag() }}
         </div>
@@ -68,7 +89,8 @@ Report Form
           {{ form.site.errors }}
         </div>
       </div>
-        <div class="input-group datafield d-none mb-3">
+      <!--SITEGROUP-->
+      <div class="input-group datafield d-none mb-3">
         <div class="col-2">
           {{ form.sitegroup.label_tag() }}
         </div>
@@ -77,6 +99,7 @@ Report Form
           {{ form.sitegroup.errors }}
         </div>
       </div>
+      <!--PEOPLEGROUP-->
       <div class="input-group datafield d-none mb-3">
         <div class="col-2">
           {{ form.peoplegroup.label_tag() }}
@@ -86,7 +109,8 @@ Report Form
           {{ form.peoplegroup.errors }}
         </div>
       </div>
-      <div class="input-group datafield d-none mb-3">
+      <!--PEOPLE-->
+      <div class="input-group datafield people d-none mb-3">
         <div class="col-2">
           {{ form.people.label_tag() }}
         </div>
@@ -113,6 +137,7 @@ Report Form
           {{ form.assettype.errors }}
         </div>
       </div>
+      <!--ASSET-->
       <div class="input-group datafield d-none mb-3">
         <div class="col-2">
           {{ form.asset.label_tag() }}
@@ -122,6 +147,7 @@ Report Form
           {{ form.asset.errors }}
         </div>
       </div>
+      <!--Qset-->
       <div class="input-group datafield d-none mb-3">
         <div class="col-2">
           {{ form.qset.label_tag() }}
@@ -131,6 +157,7 @@ Report Form
           {{ form.qset.errors }}
         </div>
       </div>
+      <!--CHECKPOINT_TYPE-->
       <div class="input-group datafield d-none mb-3">
         <div class="col-2">
           {{ form.checkpoint_type.label_tag() }}
@@ -140,6 +167,7 @@ Report Form
           {{ form.checkpoint_type.errors }}
         </div>
       </div>
+      <!--CHECKPOINT-->
       <div class="input-group datafield d-none mb-3">
         <div class="col-2">
           {{ form.checkpoint.label_tag() }}
@@ -149,6 +177,7 @@ Report Form
           {{ form.checkpoint.errors }}
         </div>
       </div>
+      <!--TICKETCATEGORY-->
       <div class="input-group datafield d-none mb-3">
         <div class="col-2">
           {{ form.ticketcategory.label_tag() }}
@@ -158,7 +187,7 @@ Report Form
           {{ form.ticketcategory.errors }}
         </div>
       </div>
-
+      <!--qrsize-->
       <div class="input-group datafield d-none mb-3">
         <div class="col-2">
           {{ form.qrsize.label_tag() }}
@@ -168,6 +197,7 @@ Report Form
           {{ form.qrsize.errors }}
         </div>
       </div>
+      <!--FROMDATE-->
       <div class="input-group datafield d-none mb-3">
         <div class="col-2">
           {{ form.fromdate.label_tag() }}
@@ -177,6 +207,7 @@ Report Form
           {{ form.fromdate.errors }}
         </div>
       </div>
+      <!--FROMDATETIME-->
       <div class="input-group datafield d-none mb-3">
         <div class="col-2">
           {{ form.fromdatetime.label_tag() }}
@@ -186,6 +217,7 @@ Report Form
           {{ form.fromdatetime.errors }}
         </div>
       </div>
+      <!--UPTODATE-->
       <div class="input-group datafield d-none mb-3">
         <div class="col-2">
           {{ form.uptodate.label_tag() }}
@@ -195,6 +227,7 @@ Report Form
           {{ form.uptodate.errors }}
         </div>
       </div>
+      <!--UPTODATETIME-->
       <div class="input-group datafield d-none mb-3">
         <div class="col-2">
           {{ form.uptodatetime.label_tag() }}
@@ -204,6 +237,7 @@ Report Form
           {{ form.uptodatetime.errors }}
         </div>
       </div>
+      <!--FORMAT-->
       <div class="input-group mb-3">
         <div class="col-2">
           {{ form.format.label_tag() }}
@@ -212,6 +246,7 @@ Report Form
           {{ form.format }}
         </div>
       </div>
+      <!--EXPORT_TYPE-->
       <div class="input-group mb-3">
         <div class="col-2">
           {{ form.export_type.label_tag() }}
@@ -220,6 +255,7 @@ Report Form
           {{ form.export_type }}
         </div>
       </div>
+      <!--to_addr-->
       <div class="input-group mb-3 d-none emailfile">
         <div class="col-2">
           {{ form.to_addr.label_tag() }}
@@ -228,6 +264,7 @@ Report Form
           {{ form.to_addr }}
         </div>
       </div>
+      <!--CC-->
       <div class="input-group mb-3 d-none emailfile">
         <div class="col-2">
           {{ form.cc.label_tag() }}
@@ -236,6 +273,7 @@ Report Form
           {{ form.cc }}
         </div>
       </div>
+      <!--email_body-->
       <div class="input-group mb-3 d-none emailfile">
         <div class="col-2">
           {{ form.email_body.label_tag() }}
@@ -255,7 +293,7 @@ Report Form
     <button type="button" id="btn_clear" class="btn btn-sm btn-secondary btn-hover-scale">
       Clear&nbsp;<i class="fas  fa-times"></i>
     </button>
-    
+
     <button type="button" id="btn_preview" class="btn btn-sm btn-primary2 btn-hover-scale">
       Preview&nbsp;<i class="far text-white fa-file-pdf"></i>
     </button>
@@ -269,42 +307,72 @@ Report Form
 <script>
   const urlname = "{{ url('reports:exportreports') }}"
 
+  function showHideSelectField(val) {
+    if (val == "PEOPLE") {
+      //$("#aatopdiv").show();
+      if ($(".people").is(":hidden")) {
+            $(".people").show();
+        }
+      $("#id_peopleradio").attr('checked', 'checked')
+      $(".site").hide();
+      $("#id_site").val(1)
+      toggleRequiredAttribute("id_people")
+      toggleRequiredAttribute("id_site", set = false)
+    } else {
+      //$("#aatopdiv").hide();
+      if ($(".site").is(":hidden")) {
+          $(".site").show();
+      }
+      $(".site").removeAttr("style");
+
+      $("#id_siteradio").attr('checked', 'checked')
+      $(".people").hide();
+      $("#id_people").val(1)
+      toggleRequiredAttribute("id_site")
+      toggleRequiredAttribute("id_people", set = false)
+    }
+  }
+  var formSaved = false;
+
   $(document).ready(() => {
     var report_names = JSON.parse('{{ report_names }}')
     var fields_map = JSON.parse('{{ fields_map }}')
     //set ctzoffset
     $("#id_ctzoffset").val(-new Date().getTimezoneOffset())
-      
+
+    
+    //cron to readable format
+
     $("#btn_clear").click(() => {
-        location.href = `${urlname}?template=true`
+      location.href = `${urlname}?template=true`
     })
 
     $("#id_site").val(null).trigger('change') //clear default selection of site
 
     $("#id_fromdate, #id_uptodate").flatpickr({
       dateFormat: 'd-M-Y'
-    })	
-	  
+    })
+
     $("[multiple]").select2({
-          closeOnSelect:false 
-      })
+      closeOnSelect: false
+    })
 
     //show preview button on format pdf only
     $("#id_format").change((e) => {
-        if($("#id_format").val() !== 'pdf'){
-          $("#btn_preview").addClass('d-none')
-        }else{
-          $("#btn_preview").removeClass('d-none')
-        }
+      if ($("#id_format").val() !== 'pdf') {
+        $("#btn_preview").addClass('d-none')
+      } else {
+        $("#btn_preview").removeClass('d-none')
+      }
     })
-    
+
     //toggle email fields when export type EMAIL is selected
     $("#id_export_type").change((e) => {
-      if($("#id_export_type").val() === 'SEND'){
+      if ($("#id_export_type").val() === 'SEND') {
         $('.emailfile').removeClass('d-none')
         toggleRequiredAttribute('id_cc')
         toggleRequiredAttribute('id_to_addr')
-      }else{
+      } else {
         toggleRequiredAttribute('id_cc', false)
         toggleRequiredAttribute('id_to_addr', false)
         $('.emailfile').addClass('d-none')
@@ -318,13 +386,13 @@ Report Form
       var formData = $("#report_form").serialize();
       //send ajax request
       $.ajax({
-        url:urlname,
-        type:"POST",
-        data:formData,
+        url: urlname,
+        type: "POST",
+        data: formData,
         xhrFields: {
           responseType: 'blob'
         },
-        success:function(response){
+        success: function (response) {
           // Create a Blob from the received binary data
           var blob = new Blob([response], { type: 'application/pdf' });
           // Create a temporary Object URL for the Blob
@@ -332,11 +400,11 @@ Report Form
           // Open the Object URL in a new tab
           window.open(objectUrl, "_blank");
           // Release the Object URL after it's no longer needed
-          setTimeout(function() {
+          setTimeout(function () {
             URL.revokeObjectURL(objectUrl);
           }, 1000);
         },
-        error:function(xhr, status, error){
+        error: function (xhr, status, error) {
           show_error_alert("Something went wrong!", "Server Error")
         }
       })
@@ -362,19 +430,19 @@ Report Form
       });
     }
 
-  //if selected to dont show in cc
-  function onSelectionChanged(e) {
+    //if selected to dont show in cc
+    function onSelectionChanged(e) {
       const currentSelect = e.target.id;
       const otherSelect = currentSelect === 'id_cc' ? 'id_to_addr' : 'id_cc';
       const otherSelectElement = $(`#${otherSelect}`);
       const currentSelectElement = $(`#${currentSelect}`);
 
       if (e.type === 'select2:select') {
-          // Hide the selected option from the other dropdown
-          otherSelectElement.find(`option[value="${e.params.data.id}"]`).hide();
+        // Hide the selected option from the other dropdown
+        otherSelectElement.find(`option[value="${e.params.data.id}"]`).hide();
       } else {
-          // Show the deselected option in the other dropdown
-          otherSelectElement.find(`option[value="${e.params.data.id}"]`).show();
+        // Show the deselected option in the other dropdown
+        otherSelectElement.find(`option[value="${e.params.data.id}"]`).show();
       }
 
       // If you still want to update the other select based on the current select
@@ -382,58 +450,61 @@ Report Form
 
       // Trigger the change event to update the other dropdown
       otherSelectElement.trigger('change');
-  }
-
-  //hide fields whcih are invisible and hide fields which are 
-  // passed as argument
-  function hideSpecifiedAndNotVisibleFields(fields){
-    fields.forEach((id) => {
-      //remove required attirbute
-      toggleRequiredAttribute(id, set=true)
-    })
-  }
-
-  function hideAndShowFieldsBasedOnReport(selected){
-    if(selected === "Select Report") return
-    hideSpecifiedAndNotVisibleFields(fields_map[selected])
-    switch(selected){
-      case 'Task Summary':
-      case 'Tour Summary':
-      case 'List of Internal Tours':
-      case 'PPM Summary':
-      case 'Work Order List':
-        toggleInputGroups(["id_site", "id_fromdate", "id_uptodate"])
-        break
-
-      case 'List of Tasks':
-        toggleInputGroups(['id_site', 'id_fromdate', 'id_uptodate', 'id_peoplegroup', 'id_people'])
-        break
-      
-      case 'List of Tickets':
-        toggleInputGroups(["id_site", "id_fromdate", "id_uptodate", 'id_people', 'id_ticketcategory'])
-        break
-      
-      case 'Site Report':
-        toggleInputGroups(['id_fromdate', 'id_uptodate', 'id_sitegroup', 'id_people'])
-        break
-      case 'People-QR':
-        toggleInputGroups(['id_site', 'id_mult_people', 'id_qrsize'])
-        break
     }
-  }
 
-  //on load for selected report_name
-  hideAndShowFieldsBasedOnReport(getSelectedValue("#id_report_name"))
+    //hide fields whcih are invisible and hide fields which are 
+    // passed as argument
+    function hideSpecifiedAndNotVisibleFields(fields) {
+      fields.forEach((id) => {
+        //remove required attirbute
+        toggleRequiredAttribute(id, set = true)
+      })
+    }
+
+    function hideAndShowFieldsBasedOnReport(selected) {
+      if (selected === "Select Report") return
+      hideSpecifiedAndNotVisibleFields(fields_map[selected])
+      switch (selected) {
+        case 'Task Summary':
+        case 'Tour Summary':
+        case 'List of Internal Tours':
+        case 'PPM Summary':
+        case 'Work Order List':
+          toggleInputGroups(["id_site", "id_fromdate", "id_uptodate"])
+          break
+
+        case 'List of Tasks':
+          toggleInputGroups(['id_site', 'id_fromdate', 'id_uptodate', 'id_peoplegroup', 'id_people'])
+          break
+
+        case 'List of Tickets':
+          toggleInputGroups(["id_site", "id_fromdate", "id_uptodate", 'id_people', 'id_ticketcategory'])
+          break
+
+        case 'Site Report':
+          toggleInputGroups(['id_fromdate', 'id_uptodate', 'id_sitegroup', 'id_people'])
+          break
+        case 'People-QR':
+          //toggle people and pgroup field based on radio button value
+          showHideSelectField('SITE')
+          toggleInputGroups(['id_site', 'id_people', 'id_qrsize', 'id_site_or_people'])
+
+          break
+      }
+    }
+
+    //on load for selected report_name
+    hideAndShowFieldsBasedOnReport(getSelectedValue("#id_report_name"))
 
 
-  // Attach the event listeners
-  $('#id_cc, #id_to_addr').on('select2:select select2:unselect', onSelectionChanged);
+    // Attach the event listeners
+    $('#id_cc, #id_to_addr').on('select2:select select2:unselect', onSelectionChanged);
 
-  //hide/show fields based on report_name
-  $("#id_report_name").change((e) => {
-    let selected = getSelectedValue("#id_report_name")
-    hideAndShowFieldsBasedOnReport(selected)
-  })
+    //hide/show fields based on report_name
+    $("#id_report_name").change((e) => {
+      let selected = getSelectedValue("#id_report_name")
+      hideAndShowFieldsBasedOnReport(selected)
+    })
   })
 </script>
 
