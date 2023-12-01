@@ -106,6 +106,7 @@ class ReportForm(forms.Form):
         ('500x500', 'Large'), 
     ]
     
+    People_or_Site_CHOICES = [('PEOPLE', 'People'), ('SITE', 'Site')]
     
     # data fields
     report_name     = forms.ChoiceField(label='Report Name', required=True, choices=report_templates, initial='TASK_SUMMARY')
@@ -124,7 +125,8 @@ class ReportForm(forms.Form):
     peoplegroup     = forms.ChoiceField(label="People Group", widget=s2forms.Select2Widget, required=False, choices=[])
     people          = forms.ChoiceField(label="People", widget=s2forms.Select2Widget, required=False, choices=[])
     qrsize          = forms.ChoiceField(label="QR Size", widget=s2forms.Select2Widget, choices=SIZES, required=False)
-    assetcategory   = forms.CharField(label="Asset Ca   tegory", widget=s2forms.Select2TagWidget, required=False)
+    assetcategory   = forms.CharField(label="Asset Category", widget=s2forms.Select2TagWidget, required=False)
+    site_or_people  = forms.ChoiceField(label="Site/People", widget=s2forms.Select2Widget,choices=People_or_Site_CHOICES, required=False)
     
     #other form fields
     format      = forms.ChoiceField(widget=s2forms.Select2Widget, label="Format", required=True, choices=format_types, initial='PDF')
@@ -194,7 +196,7 @@ class ReportForm(forms.Form):
             'PPM Summary': ['id_site', 'id_fromdate', 'id_uptodate'],
             'List of Tickets':['id_site', 'id_fromdate', 'id_uptodate'],
             'Site Report':['id_sitegroup', 'id_fromdate', 'id_uptodate'],
-            'People-QR':[],
+            'People-QR':['id_site', 'id_people', 'id_qrsize','id_site_or_people'],
         }
 
     
