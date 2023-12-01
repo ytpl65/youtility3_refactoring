@@ -101,9 +101,9 @@ class ReportForm(forms.Form):
         ('csv', 'CSV'),
     ]
     SIZES = [
-        ('100x100', 'Small'),
-        ('300x300', 'Medium'),
-        ('500x500', 'Large'), 
+        (100, 'Small'),
+        (200, 'Medium'),
+        (300, 'Large'), 
     ]
     
     
@@ -123,7 +123,8 @@ class ReportForm(forms.Form):
     ticketcategory  = forms.CharField(label='Ticket Category', widget=s2forms.Select2MultipleWidget, required=False)
     peoplegroup     = forms.ChoiceField(label="People Group", widget=s2forms.Select2Widget, required=False, choices=[])
     people          = forms.ChoiceField(label="People", widget=s2forms.Select2Widget, required=False, choices=[])
-    qrsize          = forms.ChoiceField(label="QR Size", widget=s2forms.Select2Widget, choices=SIZES, required=False)
+    mult_people          = forms.ChoiceField(label="People", widget=s2forms.Select2MultipleWidget, required=False, choices=[])
+    qrsize          = forms.ChoiceField(label="QR Size", widget=s2forms.Select2Widget, choices=SIZES, initial=50, required=False)
     assetcategory   = forms.CharField(label="Asset Ca   tegory", widget=s2forms.Select2TagWidget, required=False)
     
     #other form fields
@@ -146,7 +147,7 @@ class ReportForm(forms.Form):
             bu_id__in = S['assignedsites'],
             enable=True).values_list('id', 'groupname'))
         self.fields['peoplegroup'].choices = pm.Pgroup.objects.filter_for_dd_pgroup_field(self.request, sitewise=True, choices=True)
-        self.fields['people'].choices = pm.People.objects.filter_for_dd_people_field(self.request, sitewise=True, choices=True)
+        self.fields['people'].choices = self.fields['mult_people'].choices = pm.People.objects.filter_for_dd_people_field(self.request, sitewise=True, choices=True)
         self.fields['fromdate'].initial = self.get_default_range_of_dates()[0]
         self.fields['uptodate'].initial = self.get_default_range_of_dates()[1]
         self.fields['cc'].choices = pm.People.objects.filter(isverified=True, client_id = S['client_id']).values_list('email', 'peoplename')

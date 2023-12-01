@@ -406,5 +406,10 @@ def get_query(query):
                 AND (jnd.cdtz AT TIME ZONE tz.timezone)::DATE BETWEEN %s AND %s
             ORDER BY 
                 qs.qsetname, jnd.seqno;
+            ''',
+        'PeopleQR':
+            '''
+            select distinct people.peoplename, people.peoplecode from people
+            where people.client_id = %s %s %s
             '''
     }.get(query)

@@ -97,6 +97,15 @@ Report Form
       </div>
       <div class="input-group datafield d-none mb-3">
         <div class="col-2">
+          {{ form.mult_people.label_tag() }}
+        </div>
+        <div class="col-5">
+          {{ form.mult_people }}
+          {{ form.mult_people.errors }}
+        </div>
+      </div>
+      <div class="input-group datafield d-none mb-3">
+        <div class="col-2">
           {{ form.assettype.label_tag() }}
         </div>
         <div class="col-5">
@@ -408,7 +417,7 @@ Report Form
         toggleInputGroups(['id_fromdate', 'id_uptodate', 'id_sitegroup', 'id_people'])
         break
       case 'People-QR':
-        toggleInputGroups(['id_site', 'id_people', 'id_qrsize'])
+        toggleInputGroups(['id_site', 'id_mult_people', 'id_qrsize'])
         break
     }
   }

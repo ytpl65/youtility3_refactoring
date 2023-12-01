@@ -4,29 +4,45 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
-    .flex-container {
+    .grid-container {
         display: flex;
         flex-wrap: wrap;
+        height:max-content;
+    }
+    .nodata-container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 300px;
         background-color: DodgerBlue;
+    }
+    @page{
+        size: portrait;
+        margin: 0cm;
+        
+        @bottom-right:{
+            content:""
         }
-
-    .flex-container > div {
-        background-color: #f1f1f1;
-        width: 100px;
-        margin: 10px;
-        text-align: center;
-        line-height: 75px;
-        font-size: 30px;
+        @bottom-left:{
+            content:""
         }
+    }
     </style>
 </head>
 <body>
-    <div class="flex-container">
-        {% for code in codes %}
+    {% if qr_file_paths  %}
+    <div class="grid-container">
+        {% for img_src, qset in qr_file_paths|zip(names_and_codes) %}
         <div>
-            <img src="" alt="">
+            <img src="{{ img_src }}" width="{{ size }}px" height="{{ size }}px" style="margin: 1.2rem; margin-bottom:0" >
+            <p style="margin:0;text-align:center;font-size:10px">{{ qset['peoplecode'] }}</p>
         </div>
         {% endfor %}
     </div>
+    {% else %}
+        <div class="nodata-container">
+            <div>No Data Available</div>
+        </div>
+    {% endif %}
 </body>
 </html>
