@@ -39,7 +39,7 @@
         {% for img_src, qset in qr_file_paths|zip(names_and_codes) %}
         <div>
             <img src="{{ img_src }}" width="{{ size }}px" height="{{ size }}px" style="margin: 1.2rem; margin-bottom:0" >
-            <p style="margin:0;text-align:center;font-size:10px">{{ qset['peoplecode'] }}</p>
+            <p style="margin:0;text-align:center;font-size:10px">{{ qset['code'] }}</p>
         </div>
         {% endfor %}
     </div>
