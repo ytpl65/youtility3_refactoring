@@ -38,7 +38,6 @@ class BaseReportsExport(WeasyTemplateResponseMixin):
     
     
     def get_pdf_output(self):
-        ic(self.design_file)
         log.info(f"pdf is executing {self.request.build_absolute_uri()}")
         html_string = render_to_string(self.design_file, context=self.context, request=self.request)
         html = HTML(string=html_string, base_url=self.request.build_absolute_uri())

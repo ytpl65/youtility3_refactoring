@@ -697,7 +697,6 @@ class Client(LoginRequiredMixin, View):
                       'parent__buname', 'enable', 'parent_id']
             objs = P['model'].objects.get_allsites_of_client(
                 request.GET.get('id'), fields=fields)
-            ic(objs)
             return rp.JsonResponse(data={'data': list(objs)})
 
         if R.get('action') == 'getadmins':
@@ -730,7 +729,6 @@ class Client(LoginRequiredMixin, View):
                     data, request.FILES, instance=client, request=request)
             else:
                 form = P['form_class'](data, request=request)
-            ic(form.instance.id)
             jsonform = P['json_form'](data, session=request.session)
             if form.is_valid() and jsonform.is_valid():
                 resp = self.handle_valid_form(form, jsonform, request)
@@ -862,7 +860,6 @@ class DashboardView(LoginRequiredMixin, View):
         try:
             if R.get('action') == 'getCounts':
                 objs = self.get_all_dashboard_counts(request, P)
-                ic(objs)
                 return rp.JsonResponse(objs, status=200)
             return render(request, P['RP'])
         except Exception as e:

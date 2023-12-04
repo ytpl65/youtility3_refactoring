@@ -544,7 +544,6 @@ class DownloadReports(LoginRequiredMixin, View):
         report_names = json.dumps(P['form'].report_templates)
         fields_map = json.dumps(form.get_fields_report_map())
         if not form.is_valid():
-            print("form is not valid", form.errors)
             return render(request, P['template_form'], context={
                 'form':form, 'report_names':report_names,
                 'fields_map':fields_map})
