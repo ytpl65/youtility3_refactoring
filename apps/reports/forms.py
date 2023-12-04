@@ -88,6 +88,8 @@ class ReportForm(forms.Form):
         ('WorkOrderList', 'Work Order List'),
         ('SiteReport', 'Site Report'),
         ('PeopleQR', 'People-QR'),
+        ('AssetQR', 'Asset-QR'),
+        ('CheckpointQR', 'Checkpoint-QR'),
     ]
     download_or_send_options = [
         ('DOWNLOAD', 'Download'),
@@ -101,7 +103,7 @@ class ReportForm(forms.Form):
         ('csv', 'CSV'),
     ]
     SIZES = [
-        (100, 'Small'),
+        (120, 'Small'),
         (200, 'Medium'),
         (300, 'Large'), 
     ]
@@ -124,8 +126,8 @@ class ReportForm(forms.Form):
     ticketcategory  = forms.CharField(label='Ticket Category', widget=s2forms.Select2MultipleWidget, required=False)
     peoplegroup     = forms.ChoiceField(label="People Group", widget=s2forms.Select2Widget, required=False, choices=[])
     people          = forms.ChoiceField(label="People", widget=s2forms.Select2Widget, required=False, choices=[])
-    mult_people          = forms.ChoiceField(label="People", widget=s2forms.Select2MultipleWidget, required=False, choices=[])
-    qrsize          = forms.ChoiceField(label="QR Size", widget=s2forms.Select2Widget, choices=SIZES, initial=50, required=False)
+    mult_people          = forms.MultipleChoiceField(label="People", widget=s2forms.Select2MultipleWidget, required=False, choices=[])
+    qrsize          = forms.ChoiceField(label="QR Size", widget=s2forms.Select2Widget, choices=SIZES, initial=120, required=False)
     assetcategory   = forms.CharField(label="Asset Category", widget=s2forms.Select2TagWidget, required=False)
     site_or_people  = forms.ChoiceField(label="Site/People", widget=s2forms.Select2Widget,choices=People_or_Site_CHOICES, required=False)
     
@@ -197,7 +199,7 @@ class ReportForm(forms.Form):
             'PPM Summary': ['id_site', 'id_fromdate', 'id_uptodate'],
             'List of Tickets':['id_site', 'id_fromdate', 'id_uptodate'],
             'Site Report':['id_sitegroup', 'id_fromdate', 'id_uptodate'],
-            'People-QR':['id_site', 'id_people', 'id_qrsize','id_site_or_people'],
+            'People-QR':[]#['id_site', 'id_mult_people', 'id_qrsize','id_site_or_people'],
         }
 
     

@@ -7,7 +7,9 @@
     .grid-container {
         display: flex;
         flex-wrap: wrap;
-        height:max-content;
+        justify-content: space-between;
+        align-items: baseline;
+        align-content:space-around;
     }
     .nodata-container {
         display: flex;
@@ -18,7 +20,9 @@
     }
     @page{
         size: portrait;
-        margin: 0cm;
+        margin: 0;
+        margin-bottom: 3cm;
+        padding-bottom: 3cm;
         
         @bottom-right:{
             content:""

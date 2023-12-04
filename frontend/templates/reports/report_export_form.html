@@ -110,7 +110,7 @@ Report Form
         </div>
       </div>
       <!--PEOPLE-->
-      <div class="input-group datafield people d-none mb-3">
+      <div class="input-group datafield  d-none mb-3">
         <div class="col-2">
           {{ form.people.label_tag() }}
         </div>
@@ -119,7 +119,7 @@ Report Form
           {{ form.people.errors }}
         </div>
       </div>
-      <div class="input-group datafield d-none mb-3">
+      <div class="input-group datafield people d-none mb-3">
         <div class="col-2">
           {{ form.mult_people.label_tag() }}
         </div>
@@ -316,7 +316,7 @@ Report Form
       $("#id_peopleradio").attr('checked', 'checked')
       $(".site").hide();
       $("#id_site").val(1)
-      toggleRequiredAttribute("id_people")
+      toggleRequiredAttribute("id_mult_people")
       toggleRequiredAttribute("id_site", set = false)
     } else {
       //$("#aatopdiv").hide();
@@ -327,9 +327,9 @@ Report Form
 
       $("#id_siteradio").attr('checked', 'checked')
       $(".people").hide();
-      $("#id_people").val(1)
+      $("#id_mult_people").val(1)
       toggleRequiredAttribute("id_site")
-      toggleRequiredAttribute("id_people", set = false)
+      toggleRequiredAttribute("id_mult_people", set = false)
     }
   }
   var formSaved = false;
@@ -487,8 +487,7 @@ Report Form
         case 'People-QR':
           //toggle people and pgroup field based on radio button value
           showHideSelectField('SITE')
-          toggleInputGroups(['id_site', 'id_people', 'id_qrsize', 'id_site_or_people'])
-
+          toggleInputGroups(['id_site', 'id_mult_people', 'id_qrsize', 'id_site_or_people'])
           break
       }
     }

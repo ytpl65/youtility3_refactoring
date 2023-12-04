@@ -63,8 +63,8 @@ class QRCodeBaseReport(BaseReportsExport):
     def execute(self):
         self.set_data()
         self.set_context_data()
-        return self.get_pdf_output()
         #return self.get_html_output()
+        return self.get_pdf_output()
         
     
 
@@ -77,11 +77,13 @@ class PeopleQR(QRCodeBaseReport):
         peoples = self.formdata.get('mult_people')
         self.size = self.formdata.get('qrsize')
         filters = {'client_id':self.client_id}
-        if site:
+        ic(peoples)
+        if site and site != '1':
             filters.update({'bu_id':site})
         else:
-            filters.update({'id__in':peoples.split(',')})
-        qset = People.objects.filter(**filters).distinct().values("peoplecode", 'peoplename').order_by('peoplecode')
+            filters.update({'id__in':peoples})
+        qset = People.objects.filter(**filters).values("peoplecode", 'peoplename').order_by('id')
+        ic(qset, self.client_id, str(qset.query))
         self.data = qset.values_list('peoplecode', flat=True)
         self.peoplenames_and_codes = qset
     
