@@ -141,7 +141,6 @@ class Conveyance(LoginRequiredMixin, View):
         if R.get('action', None) == 'list' or R.get('search_term'):
             objs = self.params['model'].objects.get_lastmonth_conveyance(
                 request, self.params['fields'], self.params['related'] )
-            ic(utils.printsql(objs))
             resp = rp.JsonResponse(data = {'data':list(objs)})
 
         # return cap_form empty for creation
@@ -181,7 +180,6 @@ class Conveyance(LoginRequiredMixin, View):
                 create = False
             else:
                 form = self.params['form_class'](data, request = request)
-            ic(form.data)
             if form.is_valid():
                 resp = self.handle_valid_form(form, request, create)
             else:
@@ -224,7 +222,6 @@ class GeofenceTracking(LoginRequiredMixin, View):
         # then load the table with objects for table_view
         if R.get('action', None) == 'list' or R.get('search_term'):
             total, filtered, objs = self.params['model'].objects.get_geofencetracking(request)
-            ic(utils.printsql(objs))
             return  rp.JsonResponse(data = {
                 'draw':R['draw'],
                 'data':list(objs),
