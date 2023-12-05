@@ -912,15 +912,14 @@ class AttachmentManager(models.Manager):
     def get_att_given_owner(self, owneruuid, request=None):
         "return attachments of given jobneed uuid"
         qset = self.filter(
-            attachmenttype__in = ['ATTACHMENT', 'SIGN'], owner = owneruuid).order_by('filepath').values(
-                'id', 'filepath', 'filename', 'size'
+            attachmenttype__in = ['ATTACHMENT', 'SIGN'], owner = owneruuid).order_by('cdtz').values(
+                'id', 'filepath', 'filename', 'size', 'cdtz', 'cuser__peoplename'
             )
         return qset or self.none()
     
     
     def create_att_record(self, request, filename, filepath):
         R, S = request.POST, request.session
-        ic(R)
         from apps.onboarding.models import TypeAssist
         ta = TypeAssist.objects.filter(taname = R['ownername']).first()
         size = request.FILES.get('img').size if request.FILES.get('img') else 0

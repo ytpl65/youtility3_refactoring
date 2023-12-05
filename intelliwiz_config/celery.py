@@ -43,5 +43,9 @@ app.conf.beat_schedule = {
         'task':'create_job()',
         'schedule':crontab(minute='27', hour='*/8') #27 */8 * * *
     },
+    "upload-old-files-to-cloud-storage":{
+        'task':'upload-old-files-to-cloud-storage',
+        'schedule':crontab(minute=0, hour=0, day_of_week='monday')
+    }
 
 }
