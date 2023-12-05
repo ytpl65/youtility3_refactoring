@@ -5,6 +5,7 @@ import qrcode
 from qrcode.image.svg import SvgImage
 from tempfile import NamedTemporaryFile
 import os, io, base64
+from django.db.models import F
 import shutil
 from django.conf import settings
 
@@ -63,8 +64,8 @@ class QRCodeBaseReport(BaseReportsExport):
     def execute(self):
         self.set_data()
         self.set_context_data()
-        #return self.get_html_output()
         return self.get_pdf_output()
+        #return self.get_html_output()
         
     
 
@@ -77,14 +78,12 @@ class PeopleQR(QRCodeBaseReport):
         peoples = self.formdata.get('mult_people')
         self.size = self.formdata.get('qrsize')
         filters = {'client_id':self.client_id}
-        ic(peoples)
-        if site and site != '1':
+        if site:
             filters.update({'bu_id':site})
         else:
-            filters.update({'id__in':peoples})
-        qset = People.objects.filter(**filters).values("peoplecode", 'peoplename').order_by('id')
-        ic(qset, self.client_id, str(qset.query))
-        self.data = qset.values_list('peoplecode', flat=True)
+            filters.update({'id__in':peoples.split(',')})
+        qset = People.objects.annotate(name = F('peoplename'),code = F('peoplecode')).filter(**filters).distinct().values("code", 'name').order_by('code')
+        self.data = qset.values_list('code', flat=True)
         self.peoplenames_and_codes = qset
     
     def set_context_data(self):
@@ -96,5 +95,65 @@ class PeopleQR(QRCodeBaseReport):
             'size':self.size,
             'names_and_codes':self.peoplenames_and_codes})
     
+class AssetQR(QRCodeBaseReport):
+    report_name = 'AssetQR'
+    
+    def set_data(self):
+        from apps.activity.models import Asset
+        site = self.formdata.get('site')
+        assettype = self.formdata.get('assettype')
+        assetcategory = self.formdata.get('assetcategory')
+        self.size = self.formdata.get('qrsize')
+        filters = {'client_id':self.client_id}
+        if site:
+            filters.update({'bu_id':site})
+        if assettype:
+            filters.update({'type':assettype})
+        if assetcategory:
+            filters.update({'category':assetcategory})
+        qset = Asset.objects.annotate(
+            code = F('assetcode'),name = F('assetname')
+        ).filter(**filters, identifier = 'ASSET').distinct().values("code","name").order_by('code')
+        self.data = qset.values_list('code', flat=True)
+        self.assetcodes_and_names = qset
+    
+    def set_context_data(self):
+        super().set_context_data()
+        qr_code_images = self.generate_qr_code_images(self.data, size=self.size)
+        self.context.update({
+            'qr_type':'assets',
+            'qr_file_paths': qr_code_images,
+            'size':self.size,
+            'names_and_codes':self.assetcodes_and_names})    
         
-            
+
+class CheckpointQR(QRCodeBaseReport):
+    report_name = 'CheckpointQR'
+
+    def set_data(self):
+        from apps.activity.models import Asset
+        site = self.formdata.get('site')
+        checkpoint_type = self.formdata.get('checkpoint_type')
+        self.size = self.formdata.get('qrsize')
+        filters = {'client_id':self.client_id}
+        if site:
+            filters.update({'bu_id':site})
+        if checkpoint_type:
+            filters.update({'type':checkpoint_type})
+        qset = Asset.objects.annotate(
+            code=F('assetcode'), name=F('assetname')
+                ).filter(**filters, identifier='CHECKPOINT').distinct().values("code", "name"
+                                                                               ).order_by('code')
+        self.data = qset.values_list('code', flat=True)
+        self.checkpointcodes_and_names = qset
+
+    def set_context_data(self):
+        super().set_context_data()
+        qr_code_images = self.generate_qr_code_images(self.data, size=self.size)
+        self.context.update({
+            'qr_type':'checkpoint',
+            'qr_file_paths': qr_code_images,
+            'size':self.size,
+            'names_and_codes':self.checkpointcodes_and_names})  
+
+ 

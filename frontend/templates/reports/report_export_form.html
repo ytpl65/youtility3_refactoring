@@ -187,6 +187,16 @@ Report Form
           {{ form.ticketcategory.errors }}
         </div>
       </div>
+      <!--ASSETCATEGORY-->
+      <div class="input-group datafield d-none mb-3">
+        <div class="col-2">
+          {{ form.assetcategory.label_tag() }}
+        </div>
+        <div class="col-5">
+          {{ form.assetcategory }}
+          {{ form.assetcategory.errors }}
+        </div>
+      </div>
       <!--qrsize-->
       <div class="input-group datafield d-none mb-3">
         <div class="col-2">
@@ -488,6 +498,12 @@ Report Form
           //toggle people and pgroup field based on radio button value
           showHideSelectField('SITE')
           toggleInputGroups(['id_site', 'id_mult_people', 'id_qrsize', 'id_site_or_people'])
+          break
+        case 'Asset-QR':  
+          toggleInputGroups(['id_site','id_assettype','id_assetcategory', 'id_qrsize'])
+          break
+        case 'Checkpoint-QR':  
+          toggleInputGroups(['id_site','id_checkpoint_type', 'id_qrsize'])
           break
       }
     }
