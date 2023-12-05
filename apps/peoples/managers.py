@@ -162,7 +162,6 @@ class PeopleManager(BaseUserManager):
         qset = qset.annotate(
             text = Concat(F('peoplename'), V(' ('), F('peoplecode'), V(')'))
         ).values('id', 'text')
-        ic(qset)
         return qset or self.none()
     
     
@@ -173,7 +172,6 @@ class PeopleManager(BaseUserManager):
             client_id = S['client_id'],
             enable=True,
         )
-        ic(qset)
         if sitewise:
             qset = qset.filter(bu_id = S['bu_id'])
         if choices:

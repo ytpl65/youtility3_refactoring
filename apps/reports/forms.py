@@ -120,15 +120,15 @@ class ReportForm(forms.Form):
     uptodatetime    = forms.DateTimeField(label='To Date Time', required=False)
     asset           = forms.CharField(label="Asset", widget=s2forms.Select2Widget, required=False)
     qset            = forms.CharField(label="Question Set", widget=s2forms.Select2Widget, required=False)
-    assettype       = forms.CharField(label="Asset Type", widget=s2forms.Select2Widget, required=False)
+    assettype       = forms.ChoiceField(label="Asset Type", widget=s2forms.Select2Widget, required=False)
     checkpoint      = forms.CharField(label='Checkpoint', widget=s2forms.Select2Widget, required=False)
     checkpoint_type = forms.CharField(label='Checkpoint Type', widget=s2forms.Select2Widget, required=False)
     ticketcategory  = forms.CharField(label='Ticket Category', widget=s2forms.Select2MultipleWidget, required=False)
     peoplegroup     = forms.ChoiceField(label="People Group", widget=s2forms.Select2Widget, required=False, choices=[])
     people          = forms.ChoiceField(label="People", widget=s2forms.Select2Widget, required=False, choices=[])
-    mult_people          = forms.MultipleChoiceField(label="People", widget=s2forms.Select2MultipleWidget, required=False, choices=[])
+    mult_people     = forms.MultipleChoiceField(label="People", widget=s2forms.Select2MultipleWidget, required=False, choices=[])
     qrsize          = forms.ChoiceField(label="QR Size", widget=s2forms.Select2Widget, choices=SIZES, initial=120, required=False)
-    assetcategory   = forms.CharField(label="Asset Category", widget=s2forms.Select2TagWidget, required=False)
+    assetcategory   = forms.ChoiceField(label="Asset Category", widget=s2forms.Select2Widget, required=False)
     site_or_people  = forms.ChoiceField(label="Site/People", widget=s2forms.Select2Widget,choices=People_or_Site_CHOICES, required=False)
     
     #other form fields
@@ -152,6 +152,8 @@ class ReportForm(forms.Form):
             enable=True).values_list('id', 'groupname'))
         self.fields['peoplegroup'].choices = pm.Pgroup.objects.filter_for_dd_pgroup_field(self.request, sitewise=True, choices=True)
         self.fields['people'].choices = self.fields['mult_people'].choices = pm.People.objects.filter_for_dd_people_field(self.request, sitewise=True, choices=True)
+        self.fields['assettype'].choices  = am.Asset.objects.asset_type_choices_for_report(self.request)
+        self.fields['assetcategory'].choices = am.Asset.objects.asset_category_choices_for_report(self.request)
         self.fields['fromdate'].initial = self.get_default_range_of_dates()[0]
         self.fields['uptodate'].initial = self.get_default_range_of_dates()[1]
         self.fields['cc'].choices = pm.People.objects.filter(isverified=True, client_id = S['client_id']).values_list('email', 'peoplename')
@@ -199,7 +201,9 @@ class ReportForm(forms.Form):
             'PPM Summary': ['id_site', 'id_fromdate', 'id_uptodate'],
             'List of Tickets':['id_site', 'id_fromdate', 'id_uptodate'],
             'Site Report':['id_sitegroup', 'id_fromdate', 'id_uptodate'],
-            'People-QR':[]#['id_site', 'id_mult_people', 'id_qrsize','id_site_or_people'],
+            'People-QR':[],#['id_site', 'id_mult_people', 'id_qrsize','id_site_or_people'],
+            'Asset-QR':['id_site', 'id_asset','id_assettype', 'id_qrsize'],
+            'Checkpoint-QR':['id_site', 'id_qrsize']
         }
 
     

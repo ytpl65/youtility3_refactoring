@@ -500,9 +500,10 @@ Report Form
           toggleInputGroups(['id_site', 'id_mult_people', 'id_qrsize', 'id_site_or_people'])
           break
         case 'Asset-QR':  
-          //toggle people and pgroup field based on radio button value
-          toggleInputGroups(['id_site', 'id_asset','id_assettype','id_assetcategory', 'id_qrsize'])
-          toggleInputGroups(['id_site', 'id_mult_people', 'id_qrsize', 'id_site_or_people'])
+          toggleInputGroups(['id_site','id_assettype','id_assetcategory', 'id_qrsize'])
+          break
+        case 'Checkpoint-QR':  
+          toggleInputGroups(['id_site','id_checkpoint_type', 'id_qrsize'])
           break
       }
     }
