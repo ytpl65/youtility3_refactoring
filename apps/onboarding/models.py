@@ -10,6 +10,7 @@ from django.utils.translation import gettext_lazy as _
 from django.contrib.gis.db.models import PointField
 from django.contrib.postgres.fields import ArrayField
 from django.db.models import Q
+from django.utils import timezone
 import uuid
 # Create your models here.
 
@@ -216,3 +217,18 @@ class GeofenceMaster(BaseModel):
 
     def __str__(self):
         return f'{self.gfname} ({self.gfname})'
+
+
+
+class DownTimeHistory(BaseModel):
+    reason = models.TextField(_("Downtime Reason"))
+    starttime = models.DateTimeField(_("Start"), default=timezone.now().replace(microsecond = 0))
+    endtime = models.DateTimeField(_("End"),  default=timezone.now().replace(microsecond = 0))
+    
+    class Meta(BaseModel.Meta):
+        db_table = 'downtime_history'
+        get_latest_by = ['mdtz']
+
+    
+    def __str__(self):
+        return self.reason
