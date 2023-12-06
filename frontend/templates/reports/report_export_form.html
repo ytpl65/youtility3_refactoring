@@ -505,6 +505,9 @@ Report Form
         case 'Checkpoint-QR':  
           toggleInputGroups(['id_site','id_checkpoint_type', 'id_qrsize'])
           break
+        case 'Assetwise Task Status':
+          toggleInputGroups(['id_site', "id_fromdate", "id_uptodate"])
+          break
       }
     }
 

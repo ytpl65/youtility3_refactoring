@@ -90,6 +90,7 @@ class ReportForm(forms.Form):
         ('PeopleQR', 'People-QR'),
         ('AssetQR', 'Asset-QR'),
         ('CheckpointQR', 'Checkpoint-QR'),
+        ('AssetwiseTaskStatus','Assetwise Task Status')
     ]
     download_or_send_options = [
         ('DOWNLOAD', 'Download'),
@@ -201,9 +202,10 @@ class ReportForm(forms.Form):
             'PPM Summary': ['id_site', 'id_fromdate', 'id_uptodate'],
             'List of Tickets':['id_site', 'id_fromdate', 'id_uptodate'],
             'Site Report':['id_sitegroup', 'id_fromdate', 'id_uptodate'],
-            'People-QR':[],#['id_site', 'id_mult_people', 'id_qrsize','id_site_or_people'],
+            'People-QR':['id_site', 'id_mult_people', 'id_qrsize','id_site_or_people'],
             'Asset-QR':['id_site', 'id_asset','id_assettype', 'id_qrsize'],
-            'Checkpoint-QR':['id_site', 'id_qrsize']
+            'Checkpoint-QR':['id_site', 'id_qrsize'],
+            'Assetwise Task Status': ['id_site', 'id_fromdate', 'id_uptodate']
         }
 
     

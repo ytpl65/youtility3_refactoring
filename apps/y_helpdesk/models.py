@@ -113,7 +113,7 @@ class EscalationMatrix(BaseModel, TenantAwareModel):
 
     # id                = models.BigIntegerField(primary_key = True)
     body               = models.CharField(max_length = 500, null = True)
-    job = models.ForeignKey("activity.Job", verbose_name=_("Job"),null=True, on_delete=models.RESTRICT)
+    job                = models.ForeignKey("activity.Job", verbose_name=_("Job"),null=True, on_delete=models.RESTRICT)
     level              = models.IntegerField(null = True, blank = True)
     frequency          = models.CharField(max_length = 10, default='DAY', choices = Frequency.choices)
     frequencyvalue     = models.IntegerField(null = True, blank = True)

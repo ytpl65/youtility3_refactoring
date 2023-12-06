@@ -411,5 +411,32 @@ def get_query(query):
             '''
             select distinct people.peoplename, people.peoplecode from people
             where people.client_id = %s %s %s
+            ''',
+        'Assetwisetaskstatus':
+            '''
+            WITH timezone_setting AS (
+                SELECT %s::text AS timezone
+            )
+
+            SELECT 
+                Asset.id ,
+                Asset.assetname AS "Asset Name",
+                COUNT(CASE WHEN jobneed.jobstatus = 'AUTOCLOSED' THEN 1 END) AS "AutoClosed",
+                COUNT(CASE WHEN jobneed.jobstatus = 'COMPLETED' THEN 1 END) AS "Completed",
+                COUNT(CASE WHEN jobneed.jobstatus IN ('AUTOCLOSED', 'COMPLETED') THEN 1 END) AS "Total Tasks"
+            FROM 
+                Asset
+            LEFT JOIN 
+                jobneed ON Asset.id = jobneed.asset_id
+			CROSS JOIN 
+                timezone_setting AS tz
+            WHERE
+				Asset.identifier = 'ASSET' AND
+                Asset.id <> 1 AND
+                jobneed.bu_id IN (SELECT unnest(string_to_array(%s, ',')::integer[]))
+                AND (jobneed.plandatetime AT TIME ZONE tz.timezone)::DATE BETWEEN %s AND %s
+            GROUP BY 
+                Asset.assetname,asset.id
+            
             '''
     }.get(query)
