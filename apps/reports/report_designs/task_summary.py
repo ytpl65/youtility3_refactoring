@@ -44,6 +44,12 @@ class TaskSummaryReport(BaseReportsExport):
         self.set_args_required_for_query()
         self.data = runrawsql(get_query(self.report_name), args=self.args)
 
+    def excel_columns(self,df):
+        df = df[['Planned Date','Total Tasks','Total Scheduled','Total Adhoc',
+                 'Total Completed','Not Performed','Total Pending',
+                 'Total Closed','Percentage']]
+        return df
+
         
     def set_additional_content(self):
         bt = Bt.objects.filter(id=self.client_id).values('id', 'buname').first()

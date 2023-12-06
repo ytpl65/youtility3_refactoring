@@ -138,8 +138,7 @@ class WorkOrderManager(models.Manager):
             
         
     
-    def get_wp_answers(self, qsetid, womid):
-        logger.info(f"{womid = } {qsetid = }")
+    def get_wp_answers(self, womid):
         childwoms = self.filter(parent_id = womid).order_by('seqno')
         logger.info(f"{childwoms = }")
         wp_details = []
@@ -151,7 +150,6 @@ class WorkOrderManager(models.Manager):
                     'question__quesname', 'answertype', 'answer', 'qset_id',
                     'min', 'max', 'options', 'id', 'ismandatory').order_by('seqno')
             }
-            ic(sq)
             wp_details.append(sq)
         logger.info(f"{wp_details = }")
         return wp_details or self.none()
@@ -262,13 +260,16 @@ class WorkOrderManager(models.Manager):
         ).values(*fields).order_by('-cdtz')
         print(str(qset.query))
         return qset or self.none()
-        
-            
-            
-            
-        
-            
     
+    def wp_data_for_report(self, id):
+        site = self.filter(id=id).first().bu
+        wp_answers = self.get_wp_answers(id)
+        wp_info = wp_answers[0]
+        wp_answers.pop(0)
+        rwp_section = wp_answers.pop(-1)
+        wp_sections = wp_answers
+        return wp_info, wp_sections, rwp_section, site.buname
+        
 
 class WOMDetailsManager(models.Manager):
     use_in_migrations = True

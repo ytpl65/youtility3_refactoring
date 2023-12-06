@@ -15,6 +15,7 @@ from django.template.loader import render_to_string
 from apps.work_order_management.utils import check_all_approved, reject_workpermit, save_approvers_injson
 import logging
 from django.utils import timezone
+from apps.reports import utils as rutils
 logger = logging.getLogger('__main__')
 log = logger
 # Create your views here.
@@ -384,18 +385,21 @@ class WorkPermit(LoginRequiredMixin, View):
             return render(request, P['template_form'], context=context)
 
         if action == 'get_answers_of_template' and R.get('qsetid') and R.get('womid'):
-            wp_answers = Wom.objects.get_wp_answers(R['qsetid'], R['womid'])
+            wp_answers = Wom.objects.get_wp_answers(R['womid'])
             questionsform = render_to_string(P['partial_form'], context={"wp_details": wp_answers})
             return rp.JsonResponse({'html': questionsform}, status=200)
         
         if action == 'getAttachments':
             att =  P['model'].objects.get_attachments(R['id'])
             return rp.JsonResponse(data = {'data': list(att)})
+        
+        if action == 'printReport':
+            return self.send_report(R, request)
 
         if 'id' in R:
             # get work permit questionnaire
             obj = utils.get_model_obj(int(R['id']), request, P)
-            wp_answers = Wom.objects.get_wp_answers(obj.qset_id, obj.id)
+            wp_answers = Wom.objects.get_wp_answers(obj.id)
             cxt = {'wpform': P['form'](request=request, instance=obj), 'ownerid': obj.uuid, 'wp_details': wp_answers}
             if obj.workpermit == Wom.WorkPermitStatus.APPROVED and obj.workstatus != Wom.Workstatus.COMPLETED:
                 rwp_details = Wom.objects.get_return_wp_details(request)
@@ -412,7 +416,8 @@ class WorkPermit(LoginRequiredMixin, View):
             if R.get('action') == 'submit_return_workpermit':
                 wom = Wom.objects.get(id = R['wom_id'])
                 return_wp_formdata = QueryDict(request.POST['return_work_permit_formdata']).copy()
-                self.create_workpermit_details(R['wom_id'], wom, request, return_wp_formdata)
+                rwp_seqno =Wom.objects.filter(parent_id=R['wom_id']).count() + 1
+                self.create_workpermit_details(R['wom_id'], wom, request, return_wp_formdata, rwp_seqno=rwp_seqno)
                 wom.workstatus = Wom.Workstatus.COMPLETED
                 wom.save()
                 return rp.JsonResponse({'pk':wom.id})
@@ -448,10 +453,10 @@ class WorkPermit(LoginRequiredMixin, View):
         send_email_notification_for_wp.delay(workpermit.id, workpermit.qset_id, workpermit.approvers, S['client_id'], S['bu_id'])
         return rp.JsonResponse({'pk':workpermit.id})
     
-    def create_child_wom(self, wom, qset_id):
+    def create_child_wom(self, wom, qset_id, rwp_seqno=None):
         qset = QuestionSet.objects.get(id =qset_id)
         if childwom := Wom.objects.filter(
-            parent_id=wom.id, qset_id=qset.id, seqno=qset.seqno
+            parent_id=wom.id, qset_id=qset.id, seqno=rwp_seqno or qset.seqno
         ).first():
             log.info(f"wom already exist with qset_id {qset_id} so returning it")
             return childwom
@@ -467,7 +472,7 @@ class WorkPermit(LoginRequiredMixin, View):
                 asset          = wom.asset,
                 location       = wom.location,
                 workstatus     = wom.workstatus,
-                seqno          = qset.seqno,
+                seqno          = rwp_seqno or qset.seqno,
                 approvers      = wom.approvers,
                 workpermit     = wom.workpermit,
                 priority       = wom.priority,
@@ -484,7 +489,7 @@ class WorkPermit(LoginRequiredMixin, View):
                 ctzoffset      = wom.ctzoffset
             )
     
-    def create_workpermit_details(self, R, wom,  request, formdata):
+    def create_workpermit_details(self, R, wom,  request, formdata, rwp_seqno=None):
         log.info(f'creating wp_details started {R}')
         S = request.session
         
@@ -505,7 +510,7 @@ class WorkPermit(LoginRequiredMixin, View):
                 else:
                     alerts = False
                     
-                childwom = self.create_child_wom(wom, qset_id)
+                childwom = self.create_child_wom(wom, qset_id, rwp_seqno=rwp_seqno)
                 
                 
                 lookup_args = {
@@ -533,6 +538,23 @@ class WorkPermit(LoginRequiredMixin, View):
                 )
                 log.info(f"wom detail is created for the for the child wom: {childwom.description}")
     
+    def getReportFormatBasedOnWorkpermitType(self, R):
+        from apps.reports.report_designs import workpermit as wp
+        return {
+            'COLD WORK PERMIT':wp.ColdWorkPermit,
+            'HOT WORK PERMIT':wp.HotWorkPermit,
+            'HEIGHT WORK PERMIT':wp.HeightWorkPermit,
+            'CONFINED SPACE WORK PERMIT':wp.ConfinedSpaceWorkPermit,
+            'ELECTRICAL WORK PERMIT':wp.ElectricalWorkPermit
+        }.get(R['qset__qsetname'])
+    
+    
+    def send_report(self, R, request):
+        ReportFormat = self.getReportFormatBasedOnWorkpermitType(R)
+        report = ReportFormat(
+            filename=R['qset__qsetname'], client_id=request.session['client_id'], formdata=R, request=request)
+        return report.execute()
+        
 
             
 

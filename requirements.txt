@@ -74,7 +74,7 @@ django-taggit==2.0.0
 django-timezone-field==5.0
 django-user-accounts==3.2.0
 Django-Verify-Email==2.0.3
-django-weasyprint==2.2.1
+#django-weasyprint==2.2.1
 django-widget-tweaks==1.4.9
 djangorestframework==3.13.1
 djantic==0.7.0

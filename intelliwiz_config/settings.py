@@ -509,3 +509,5 @@ CLIENT_DOMAINS = {
     'D_CAPGEMINI': 'demo.youtility.in',
     'SUKHI'      : 'sg.youtility.in',
 }
+
+BUCKET = 'prod-attachment-sukhi-group'

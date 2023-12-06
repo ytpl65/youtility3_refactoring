@@ -52,6 +52,9 @@ class BaseReportsExport(WeasyTemplateResponseMixin):
         return response
     
     def excel_layout(self, worksheet, workbook, df, writer, output):
+        '''
+        This method is get overriden in inherited/child class
+        '''
         log.info("designing the layout...")
     
     
@@ -89,8 +92,9 @@ class BaseReportsExport(WeasyTemplateResponseMixin):
     def get_csv_output(self):
         log.info("csv is executing")
         df = pd.DataFrame(data=list(self.data))
+        df = self.excel_columns(df)
         output = BytesIO()
-        df.to_csv(output, index=False, date_format='yyyy-mmm-dd')
+        df.to_csv(output, index=False, date_format='%Y-%m-%d %H:%M:%S')
         output.seek(0)
         if self.returnfile: return output
         response = HttpResponse(output, content_type='text/csv')
@@ -134,15 +138,18 @@ class BaseReportsExport(WeasyTemplateResponseMixin):
         return [max([len(str(s)) for s in dataframe[col].values] + [len(col)]) for col in dataframe.columns]
 
     
+    def excel_columns(self, df):
+        '''
+        Override this method in inherited class
+        '''
+        pass
+    
+    
     def set_data_excel(self):
         df = pd.DataFrame(list(self.data))
         # Convert the Decimal objects to floats using the float() function
         df = df.applymap(lambda x: float(x) if isinstance(x, Decimal) else x)
-        print(df['Planned Date Time'])
-        df['Planned Date Time'] = pd.to_datetime(df['Planned Date Time'])
-        df['plandatetime'] = pd.to_datetime(df['plandatetime'])
-        df['Expiry Date Time'] = pd.to_datetime(df['Expiry Date Time'])
-
+        df = self.excel_columns(df)
         # Create a Pandas Excel writer using XlsxWriter as the engine and BytesIO as file-like object
         output = BytesIO()
         writer = pd.ExcelWriter(output, engine='xlsxwriter',  datetime_format="mmm d yyyy hh:mm:ss", date_format="mmm dd yyyy",)
@@ -177,6 +184,11 @@ class ReportEssentials(object):
     PPMSummary = 'PPMSummary'
     SiteReport = 'SiteReport'
     ListOfTours = 'ListOfTours'
+    WorkOrderList = 'WorkOrderList'
+    SiteVisitReport = 'SiteVisitReport'
+    PeopleQR = 'PeopleQR'
+    AssetQR = 'AssetQR'
+    CheckpointQR = 'CheckpointQR'
 
     
     def __init__(self, formdata,  request=None, session=None):
@@ -194,6 +206,11 @@ class ReportEssentials(object):
         from apps.reports.report_designs.list_of_task import ListofTaskReport
         from apps.reports.report_designs.list_of_tickets import ListofTicketReport
         from apps.reports.report_designs.list_of_tours import ListofTourReport
+        from apps.reports.report_designs.work_order_list import WorkOrderList
+        from apps.reports.report_designs.site_visit_report import SiteVisitReport
+        from apps.reports.report_designs.qrcode_report import PeopleQR
+        from apps.reports.report_designs.qrcode_report import AssetQR
+        from apps.reports.report_designs.qrcode_report import CheckpointQR
         return {
             self.TaskSummary: TaskSummaryReport,
             self.TourSummary:TourSummaryReport,
@@ -201,7 +218,12 @@ class ReportEssentials(object):
             self.SiteReport:SiteReportFormat,
             self.ListOfTasks:ListofTaskReport,
             self.ListOfTickets:ListofTicketReport,
-            self.ListOfTours:ListofTourReport
+            self.ListOfTours:ListofTourReport,
+            self.WorkOrderList:WorkOrderList,
+            self.SiteVisitReport:SiteVisitReport,
+            self.PeopleQR:PeopleQR,
+            self.AssetQR:AssetQR,
+            self.CheckpointQR:CheckpointQR
         }.get(self.report_name)
     
         

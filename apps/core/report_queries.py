@@ -122,27 +122,26 @@ def get_query(query):
                 SELECT
                 bu.id,
                 bu.buname as "site",
-                (jobneed.plandatetime AT TIME ZONE tz.timezone)::DATE as "Planned Date Time",
+                (jobneed.plandatetime AT TIME ZONE tz.timezone)::DATE as "Planned Date",
             jobneed.id as jobneedid,
             jobneed.identifier,
             jobneed.jobdesc as "Description",
             case
                     when jobneed.people_id <> 1 then people.peoplename
                     when jobneed.pgroup_id <> 1 then pgroup.groupname
-                    else 'NONE' end as assignedto,
+                    else 'NONE' end as "Assigned To",
             jobneed.jobtype,
             jobneed.jobstatus as "Status",
             jobneed.asset_id,
-            jobneed.performedby_id as "Performed By",
+            performedpeople.peoplename as "Performed By",
             jobneed.qset_id as qsetname,
-            (jobneed.expirydatetime AT TIME ZONE tz.timezone) as "Expiry Date Time",
+            CAST(jobneed.expirydatetime AT TIME ZONE tz.timezone AS TIMESTAMP WITHOUT TIME ZONE) as "Expiry Date Time",
             jobneed.gracetime as "Gracetime",
             bu.buname as site,
             jobneed.scantype,
-            jobneed.receivedonserver,
             jobneed.priority,
-            (jobneed.starttime AT TIME ZONE tz.timezone) as starttime ,
-            (jobneed.endtime AT TIME ZONE tz.timezone) as endtime,
+            CAST(jobneed.starttime AT TIME ZONE tz.timezone AS TIMESTAMP WITHOUT TIME ZONE),
+            CAST(jobneed.endtime AT TIME ZONE tz.timezone AS TIMESTAMP WITHOUT TIME ZONE),
             jobneed.gpslocation,
             jobneed.qset_id,
             jobneed.remarks,
@@ -154,6 +153,7 @@ def get_query(query):
             INNER JOIN asset ON asset.id=jobneed.asset_id
             INNER JOIN questionset ON questionset.id=jobneed.qset_id
             INNER JOIN people on jobneed.people_id=people.id
+            INNER JOIN people performedpeople on jobneed.performedby_id=people.id
             inner join pgroup on pgroup.id=jobneed.pgroup_id
                 CROSS JOIN timezone_setting tz
                 WHERE jobneed.identifier='INTERNALTOUR'
@@ -210,8 +210,8 @@ def get_query(query):
 
             SELECT
                 t.id AS "Ticket No",
-                t.cdtz AS "Created On",
-                t.mdtz AS "Modied On",
+                t.cdtz AT TIME ZONE tz.timezone AS "Created On",
+                t.mdtz AT TIME ZONE tz.timezone AS "Modied On",
                 t.status as "Status",
                 t.ticketdesc as "Description",
                 t.priority as "Priority",
@@ -259,8 +259,15 @@ def get_query(query):
                 SELECT %s ::text AS timezone
             )
 
-            SELECT wom.id as wo_id, wom.cdtz as "Created On", wom.description as "Description", wom.plandatetime as "Planned Date Time", wom.endtime as "Completed On",
-            array_to_string(wom.categories, ',') as "Categories", p.peoplename as "Created By", wom.workstatus as "Status", v.name as "Vendor Name", INITCAP(priority) as "Priority", bu.buname as "Site"
+            SELECT wom.id as "wo_id",
+            wom.cdtz AT TIME ZONE tz.timezone as "Created On",
+            wom.description as "Description", 
+            wom.plandatetime AT TIME ZONE tz.timezone as "Planned Date Time", 
+            wom.endtime as "Completed On",
+            array_to_string(wom.categories, ',') as "Categories", 
+            p.peoplename as "Created By", 
+            wom.workstatus as "Status", 
+            v.name as "Vendor Name", INITCAP(priority) as "Priority", bu.buname as "Site"
             from wom
             inner join people p on p.id = wom.cuser_id
             inner join vendor v  on v.id  = wom.vendor_id
@@ -270,7 +277,7 @@ def get_query(query):
             AND wom.bu_id <> 1 AND wom.qset_id <> 1
             AND wom.bu_id IN (SELECT unnest(string_to_array(%s, ',')::integer[]))
             AND (wom.cdtz AT TIME ZONE tz.timezone)::DATE BETWEEN %s AND %s
-            GROUP BY wom.id, bu.id, bu.buname, p.peoplename, v.name, (wom.plandatetime AT TIME ZONE tz.timezone)::DATE
+            GROUP BY wom.id,bu.id, bu.buname, p.peoplename, v.name, tz.timezone,(wom.plandatetime AT TIME ZONE tz.timezone)::DATE
             ORDER BY bu.buname, (wom.plandatetime AT TIME ZONE tz.timezone)::DATE desc
             ''',
         'SiteReport':
@@ -376,5 +383,33 @@ def get_query(query):
                 jnd.endtime, 
                 jnd_p.ct_plandatetime, 
                 tz.timezone;
+            ''',
+        'SiteVisitReport':
+            '''
+            WITH timezone_setting AS (
+                SELECT %s::text AS timezone
+            ),
+
+            SELECT 
+                jnd.seqno AS "Sr.no",
+                q.quesname AS "Question",
+                qs.qsetname AS "Question Set",
+                jnd.answer AS "Answer",
+                jnd.cdtz AT TIME ZONE tz.timezone as "Created On"
+            FROM 
+                JobneedDetails jnd
+                INNER JOIN Question q ON jnd.question_id = q.id
+                INNER JOIN QuestionSet qs ON q.qset_id = qs.id
+                CROSS JOIN timezone_setting tz
+            WHERE
+                jnd.jobneed_id IN (SELECT unnest(string_to_array(%s, ',')::integer[]))
+                AND (jnd.cdtz AT TIME ZONE tz.timezone)::DATE BETWEEN %s AND %s
+            ORDER BY 
+                qs.qsetname, jnd.seqno;
+            ''',
+        'PeopleQR':
+            '''
+            select distinct people.peoplename, people.peoplecode from people
+            where people.client_id = %s %s %s
             '''
     }.get(query)

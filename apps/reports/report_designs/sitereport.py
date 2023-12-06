@@ -45,7 +45,6 @@ class SiteReportFormat(BaseReportsExport):
         '''
         self.set_args_required_for_query()
         self.data = runrawsql(get_query(self.report_name), args=self.args)
-        ic(self.data)
 
         
     def set_additional_content(self):
@@ -55,8 +54,8 @@ class SiteReportFormat(BaseReportsExport):
 
     def excel_layout(self, worksheet, workbook, df, writer, output):
         super().excel_layout(worksheet, workbook, df, writer, output)
-        ic(df.columns)
         #overriding to design the excel file
+        
         # Add a header format.
         header_format = workbook.add_format(
             {

@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <link href="{{ static('assets/css/local/reports.css') }}?v=2" rel="stylesheet" type="text/css" />
+        <title>Workpermit</title>
+        <style>
+            table {
+                width: 100%;
+                border-collapse: collapse;
+            }
+
+            .mr {
+                margin-bottom: 7px;
+            }
+
+            @page {
+                size: legal;
+
+                @bottom-left: {
+                    content: ""
+                }
+
+                @bottom-right: {
+                    content: ""
+                }
+            }
+
+            span,
+            th,
+            td,
+            p {
+                font-size: 0.8rem;
+            }
+            .bold-label{
+                color: rgb(47, 47, 47);
+                font-weight: 600;
+            }
+            .subtle-black{
+                color: rgb(47, 47, 47);;
+            }
+
+            #title {
+                margin-right: 0;
+            }
+
+            #wp_sections th,
+            #wp_sections td {
+                padding: 7px;
+                text-align: left;
+                border: 1px solid rgb(146, 146, 146);
+            }
+
+            #peoples  tr {
+                background: none;
+            }
+
+            .italic-ft {
+                font-style: italic;
+            }
+
+            .dashed-text {
+                border-bottom: 1px dashed;
+            }
+
+            .flex-between {
+                display: flex;
+                justify-content: space-between;
+            }
+        </style>
+        {% block inline_css %}
+
+        {% endblock inline_css %}
+
+    </head>
+
+    <body>
+        <header id="page_header">
+            <div>
+                {% block header_start %}
+
+                {% endblock header_start %}
+            </div>
+            <div>
+                {% block header_center %}
+
+                {% endblock header_center %}
+            </div>
+            <div>
+                {% block header_end %}
+
+                {% endblock header_end %}
+            </div>
+        </header>
+
+        <main>
+            <div>
+                {% block wp_info %}
+
+                {% endblock wp_info %}
+            </div>
+
+            <div>
+                {% block wp_sections %}
+
+                {% endblock wp_sections %}
+            </div>
+            <div>
+                {% block rwp_section %}
+
+                {% endblock rwp_section %}
+            </div>
+            <div class="notes">
+                {% block notes %}
+                <hr>
+                <p class="b-200 ul-text">Note:</p>
+                <div>
+                    <p class="italic-ft">(A)&nbsp;This Supervisor must check that the work has been completed as
+                        required and that the
+                        area has been made safe before signing off the permit.</p>
+                </div>
+                <div>
+                    <p class="italic-ft">(B)&nbsp;The vendor should inform the site engineer about the work status. The
+                        site engineer
+                        will check the work
+                        and close the work permit in the system.</p>
+                </div>
+                <div>
+                    <p class="italic-ft">(C)&nbsp;The requester must ensure that the e copy of this work permit must be
+                        available with
+                        personal working at all the time in premises.</p>
+                </div>
+                <div>
+                    <p class="italic-ft">(D)&nbsp;EMERGENCY CONTACT NUMBER: 1800 267 4001.</p>
+                </div>
+                {% endblock notes %}
+            </div>
+            <div>
+                {% block note_to_contractor %}
+                <p class="ul-text">Note to Contractor:</p>
+                <p class="italic-ft">It is the responsibility of the contractor to ensure the safety and health of its
+                    employees at all times.
+                    This hazard analysis and work permit are provided as a courtesy and may not necessarily reflect all
+                    the hazards associated with the proposed work.</p>
+                {% endblock note_to_contractor %}
+
+            </div>
+            <div>
+
+            </div>
+        </main>
+        <footer>
+            {% block footer %}
+            <div class="flex-between">
+                <span>Version 2.0 01st July 2021</span>
+                <span>Approved By: GES Admin</span>
+            </div>
+            {% endblock footer %}
+        </footer>
+
+    </body>
+
+</html>

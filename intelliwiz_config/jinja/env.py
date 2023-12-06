@@ -9,7 +9,8 @@ def linebreaks(val):
     val = val.replace('\n', '<br>')
     return f"<p>{val}</p>"
 
-
+def custom_zip(list1, list2):
+    return zip(list1,list2)
 
 def debug(info):
     print("Printing=============", info)
@@ -40,6 +41,7 @@ class JinjaEnvironment(Environment):
         self.globals['get_msgs'] = messages.get_messages
         self.filters['add_class']  = wt.add_class   
         self.filters['set_attr']  = wt.set_attr 
+        self.filters['zip']  = custom_zip 
         self.filters['addlabel_class']  = wt.add_label_class 
         self.filters['to_local']  = to_local
         self.filters['string_to_datetime']  = string_to_datetime

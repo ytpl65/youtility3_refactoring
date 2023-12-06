@@ -51,6 +51,12 @@ class TourSummaryReport(BaseReportsExport):
         bt = Bt.objects.filter(id=self.client_id).values('id', 'buname').first()
         self.additional_content = f"Client: {bt['buname']}; Report: {self.report_title}; From: {self.formdata['fromdate']} To: {self.formdata['uptodate']}"
 
+    def excel_columns(self, df):
+        df = df[['Date','Total Tours','Total Scheduled','Total Adhoc','Total Completed'
+                 ,'Total Pending','Total Closed','Percentage']]
+        return df
+
+
     def excel_layout(self, worksheet, workbook, df, writer, output):
         super().excel_layout(worksheet, workbook, df, writer, output)
         #overriding to design the excel file

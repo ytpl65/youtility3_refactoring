@@ -16,6 +16,7 @@ import requests
 import base64
 from django.core.mail import EmailMessage
 from django.templatetags.static import static
+from .move_files_to_GCS import move_files_to_GCS, del_empty_dir, get_files
 from io import BytesIO
 
 
@@ -454,7 +455,7 @@ def send_email_notification_for_wp(self, womid, qsetid, approvers, client_id, bu
         from django.template.loader import render_to_string
         Wom = apps.get_model('work_order_management', 'Wom')
         People = apps.get_model('peoples', 'People')
-        wp_details = Wom.objects.get_wp_answers(qsetid, womid)
+        wp_details = Wom.objects.get_wp_answers(womid)
         wp_obj = Wom.objects.get(id=womid)
         jsonresp['story'] += f"\n{wp_details}"
         if wp_details:
@@ -481,3 +482,21 @@ def send_email_notification_for_wp(self, womid, qsetid, approvers, client_id, bu
             "something went wron while running create_report_history()", exc_info=True)
         jsonresp['traceback'] += tb.format_exc()
     return jsonresp
+
+@shared_task(bind=True, name="upload-old-files-to-cloud-storage")
+def move_media_to_cloud_storage(self):
+    resp = {}
+    try:
+        log.info("move_media_to_cloud_storage execution started [+]")
+        directory_path = f'{settings.MEDIA_ROOT}/transactions/'
+        path_list = get_files(directory_path)
+        move_files_to_GCS(path_list, settings.BUCKET)
+        del_empty_dir(directory_path)
+        pass
+    except Exception as exc:
+        log.critical(
+            "something went wron while running create_report_history()", exc_info=True)
+        resp['traceback'] = tb.format_exc() 
+    else:
+        resp['msg'] = "Completed without any errors"
+    return resp

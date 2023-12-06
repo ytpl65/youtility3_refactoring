@@ -5,15 +5,16 @@ from apps.onboarding.models import Bt
 from django.conf import settings
 
 
-class PPMSummaryReport(BaseReportsExport):
-    report_title = "PPM Summary"
-    design_file = "reports/pdf_reports/ppm_summary.html"
-    ytpl_applogo = 'frontend/static/assets/media/images/logo.png'
-    report_name = 'PPMSummary'
+class WorkOrderList(BaseReportsExport):
+    report_title = "work_order_list"
+    design_file = "reports/pdf_reports/work_order_list.html"
+    ytpl_applogo =  'frontend/static/assets/media/images/logo.png'
+    report_name = 'WorkOrderList'
 
     def __init__(self, filename, client_id, request=None, context=None, data=None, additional_content=None, returnfile=False, formdata=None):
         super().__init__(filename, client_id, design_file=self.design_file, request=request, context=context, data=data, additional_content=additional_content, returnfile=returnfile, formdata=formdata)
 
+    
     def set_context_data(self):
         '''
         context data is the info that is passed in templates
@@ -30,7 +31,7 @@ class PPMSummaryReport(BaseReportsExport):
             'report_subtitle':f"Site: {sitename}, From: {self.formdata.get('fromdate')} To {self.formdata.get('uptodate')}"
         }
 
-    
+
     def set_args_required_for_query(self):
         self.args = [
             get_timezone(self.formdata['ctzoffset']),
@@ -39,7 +40,7 @@ class PPMSummaryReport(BaseReportsExport):
             self.formdata['uptodate'].strftime('%d/%m/%Y'),    
             ]
         
-    
+
     def set_data(self):
         '''
         setting the data which is shown on report
@@ -52,17 +53,18 @@ class PPMSummaryReport(BaseReportsExport):
         bt = Bt.objects.filter(id=self.client_id).values('id', 'buname').first()
         self.additional_content = f"Client: {bt['buname']}; Report: {self.report_title}; From: {self.formdata['fromdate']} To: {self.formdata['uptodate']}"
 
-    def excel_columns(self,df):
-        df = df[['Site Name','Asset Type','Total PPM Scheduled','Completed On Time',
-                 'Completed After Schedule','PPM Missed','Percentage']]
+    def excel_columns(self, df):
+        df = df[['wo_id', 'Created On','Created By','Planned Date Time',
+                 'Description','Completed On','Priority',
+                 'Status','Site','Vendor Name'
+                 ]]
         return df
+
 
     def excel_layout(self, worksheet, workbook, df, writer, output):
         super().excel_layout(worksheet, workbook, df, writer, output)
         #overriding to design the excel file
-        #df = df[['Site Name', 'Asset Type',	'Total PPM Scheduled',	'Completed On Time',	'Completed After Schedule',	'PPM Missed',	'Percentage']]
 
-        
         # Add a header format.
         header_format = workbook.add_format(
             {
@@ -72,12 +74,14 @@ class PPMSummaryReport(BaseReportsExport):
             }
         )
         max_row, max_col = df.shape
-        
+
         # Create a list of column headers, to use in add_table().
         column_settings = [{"header": column} for column in df.columns]
         
-        # Add the Excel table structure. Pandas will add the data.)
+        # Add the Excel table structure. Pandas will add the data.
         worksheet.add_table(1, 0, max_row, max_col - 1, {"columns": column_settings})
+        
+        # Make the columns wider for clarity.
         worksheet.set_column(0, max_col - 1, 12)
         worksheet.autofit()
 

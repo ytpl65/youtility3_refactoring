@@ -912,15 +912,14 @@ class AttachmentManager(models.Manager):
     def get_att_given_owner(self, owneruuid, request=None):
         "return attachments of given jobneed uuid"
         qset = self.filter(
-            attachmenttype__in = ['ATTACHMENT', 'SIGN'], owner = owneruuid).order_by('filepath').values(
-                'id', 'filepath', 'filename', 'size'
+            attachmenttype__in = ['ATTACHMENT', 'SIGN'], owner = owneruuid).order_by('cdtz').values(
+                'id', 'filepath', 'filename', 'size', 'cdtz', 'cuser__peoplename'
             )
         return qset or self.none()
     
     
     def create_att_record(self, request, filename, filepath):
         R, S = request.POST, request.session
-        ic(R)
         from apps.onboarding.models import TypeAssist
         ta = TypeAssist.objects.filter(taname = R['ownername']).first()
         size = request.FILES.get('img').size if request.FILES.get('img') else 0
@@ -993,6 +992,27 @@ class AssetManager(models.Manager):
         ).select_related(
             *self.related
         ).values(*self.fields) or self.none()
+    
+    def asset_type_choices_for_report(self, request):
+        S = request.session
+        qset = self.filter(
+            bu_id = S['bu_id'],
+            client_id = S['client_id']
+        ).select_related('type').values_list(
+            'type_id', 'type__taname'
+        ).distinct('type_id').order_by('type_id')
+        return qset or self.none()
+    
+    def asset_category_choices_for_report(self, request):
+        S = request.session
+        qset = self.filter(
+            bu_id = S['bu_id'],
+            client_id = S['client_id']
+        ).select_related('category').values_list(
+            'category_id', 'category__taname'
+        ).distinct('category_id').order_by('category_id')
+        return qset or self.none()
+
 
     def get_schedule_task_for_adhoc(self, params):
         qset = self.raw("select * from fn_get_schedule_for_adhoc")
@@ -1039,7 +1059,6 @@ class AssetManager(models.Manager):
         
         S = request.session
         P = request.GET['params']
-        ic(request.GET)
         qset = self.annotate(gps = AsGeoJSON('gpslocation')).filter(
             ~Q(assetcode='NONE'),
             bu_id = S['bu_id'],
@@ -1177,7 +1196,6 @@ class AssetManager(models.Manager):
         qset = utils.runrawsql(
             query, [status, status, assetid]
         )
-        ic(qset)
         if not qset: return f"The Asset has not yet undergone any {status.lower()} period."
         if qset and  qset[0]['total_duration']:
             return utils.format_timedelta(qset[0]['total_duration'])

@@ -54,6 +54,11 @@ class ListofTourReport(BaseReportsExport):
         self.additional_content = f"Client: {bt['buname']}; Report: {self.report_title}; From: {self.formdata['fromdate']} To: {self.formdata['uptodate']}"
 
 
+    def excel_columns(self, df):
+        df = df[['Planned Date', 'Description', 'Assigned To', 'Status', 
+                 'Expiry Date Time', 'Gracetime', 'Performed By', ]]
+        return df
+    
     def excel_layout(self, worksheet, workbook, df, writer, output):
         super().excel_layout(worksheet, workbook, df, writer, output)
         #overriding to design the excel file
@@ -76,6 +81,7 @@ class ListofTourReport(BaseReportsExport):
         
         # Make the columns wider for clarity.
         worksheet.set_column(0, max_col - 1, 12)
+        worksheet.autofit()
 
         # Write the column headers with the defined format.
         for col_num, value in enumerate(df.columns.values):
