@@ -152,7 +152,9 @@ class QuestionSetManager(models.Manager):
     def get_qsets_for_tour(self, request):
         R, S = request.GET, request.session
         search_term = R.get('search')
-        qset = self.filter(client_id = S['client_id'], bu_id = S['bu_id'], enable=True, type=self.model.Type.CHECKLIST)
+        qset = self.filter(
+            Q(Q(client_id = S['client_id']), Q(bu_id = S['bu_id']), Q(enable=True), Q(type=self.model.Type.CHECKLIST)) |
+            Q(id=1))
         qset = qset.filter(qsetname = search_term) if search_term else qset
         qset = qset.annotate(
                 text = F('qsetname')).values(
@@ -1605,7 +1607,6 @@ class JobManager(models.Manager):
         parent_job = self.filter(id = R['parentid']).values().first()
         cdtz = datetime.now(tz = timezone.utc)
         mdtz = datetime.now(tz = timezone.utc)
-        ic(R)
         checkpoint = {
             'expirytime' : R['expirytime'],
             'qsetid': R['qset_id'],

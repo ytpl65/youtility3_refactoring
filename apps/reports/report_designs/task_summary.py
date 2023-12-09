@@ -9,6 +9,8 @@ class TaskSummaryReport(BaseReportsExport):
     design_file = "reports/pdf_reports/task_summary.html"
     ytpl_applogo =  'frontend/static/assets/media/images/logo.png'
     report_name = 'TaskSummary'
+    supported_formats = ['all']
+    fields = ['site*', 'fromdate*', 'uptodate*']
     
     def __init__(self, filename, client_id, request=None, context=None, data=None, additional_content=None, returnfile=False, formdata=None):
         super().__init__(filename, client_id, design_file=self.design_file, request=request, context=context, data=data, additional_content=additional_content, returnfile=returnfile, formdata=formdata)

@@ -46,6 +46,9 @@ class Wom(BaseModel, TenantAwareModel):
         CLOSED  = ('CLOSED', 'Closed')
         
     class WorkPermitStatus(models.TextChoices):
+        '''
+        if value is NOT_REQURED it is 
+        '''
         NOTNEED   = ('NOT_REQUIRED', 'Not Required')
         APPROVED  = ('APPROVED', 'Approved')
         REJECTED = ('REJECTED', 'Rejected')
@@ -62,7 +65,7 @@ class Wom(BaseModel, TenantAwareModel):
     expirydatetime  = models.DateTimeField(_("Expiry date time"), auto_now = False, auto_now_add = False, null=True)
     starttime       = models.DateTimeField( _("Start time"), auto_now = False, auto_now_add = False, null = True)
     endtime         = models.DateTimeField(_("Start time"), auto_now = False, auto_now_add = False, null = True)
-    gpslocation     = PointField(_('GPS Location'),null = True, geography = True, srid = 4326)
+    gpslocation     = PointField(_('GPS Location'),null = True, blank=True, geography = True, srid = 4326)
     asset           = models.ForeignKey("activity.Asset", verbose_name = _("Asset"), on_delete= models.RESTRICT, null = True, blank = True, related_name='wo_assets')
     location        = models.ForeignKey('activity.Location', verbose_name=_('Location'), on_delete=models.RESTRICT, null=True, blank=True)
     workstatus      = models.CharField('Job Status', choices = Workstatus.choices, default=Workstatus.ASSIGNED,  max_length = 60, null = True)
@@ -113,7 +116,7 @@ class Vendor(BaseModel, TenantAwareModel):
     name        = models.CharField(_('Name'), max_length=55, null=True, blank=False)
     type        = models.ForeignKey("onboarding.TypeAssist", verbose_name=_("Type"), null=True, on_delete=models.CASCADE)
     address     = models.TextField(max_length=500, verbose_name='Address', blank=True, null= True)
-    gpslocation = PointField(_('GPS Location'),null = True, geography = True, srid = 4326)
+    gpslocation = PointField(_('GPS Location'),null = True, blank=True, geography = True, srid = 4326)
     enable      = models.BooleanField(_("Enable"), default=True)
     mobno       = models.CharField(_("Mob No"), max_length=15)
     email       = models.CharField(_('Email'), max_length=100)

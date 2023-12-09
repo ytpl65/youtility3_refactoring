@@ -441,9 +441,10 @@ class Jobneed(BaseModel, TenantAwareModel):
     receivedonserver = models.DateTimeField(_("Recived on server"), auto_now = False, auto_now_add = True)
     starttime        = models.DateTimeField( _("Start time"), auto_now = False, auto_now_add = False, null = True)
     endtime          = models.DateTimeField(_("Start time"), auto_now = False, auto_now_add = False, null = True)
-    gpslocation      = PointField(_('GPS Location'),null = True, geography = True, srid = 4326)
-    journeypath      = LineStringField(geography = True, null = True)
-    remarks          = models.CharField(_("Remark"), max_length = 200, null = True, blank = True)
+    gpslocation      = PointField(_('GPS Location'),null = True, blank=True, geography = True, srid = 4326)
+    journeypath      = LineStringField(geography = True, null = True, blank=True)
+    remarks          = models.TextField(_("Remark"), null = True, blank = True)
+    remarkstype     = models.ForeignKey("onboarding.TypeAssist", on_delete=models.RESTRICT, null=True, blank=True, related_name='remark_types')
     asset            = models.ForeignKey("activity.Asset", verbose_name = _("Asset"), on_delete= models.RESTRICT, null = True, blank = True, related_name='jobneed_assets')
     frequency        = models.CharField(verbose_name = _("Frequency type"), null = True, max_length = 55, choices = Frequency.choices, default = Frequency.NONE.value)
     job              = models.ForeignKey("activity.Job", verbose_name = _("Job"), on_delete  = models.RESTRICT, null = True, blank = True, related_name='jobs')
@@ -471,7 +472,7 @@ class Jobneed(BaseModel, TenantAwareModel):
     attachmentcount  = models.IntegerField(_('Attachment Count'), default = 0)
     other_info       = models.JSONField(_("Other info"), default = other_info, blank = True, encoder = DjangoJSONEncoder)
     geojson          = models.JSONField(default = geojson_jobnjobneed, blank = True,null=True, encoder = DjangoJSONEncoder)
-    deviation        = models.BooleanField(_("Deviation"), default = False, null=True)  
+    deviation        = models.BooleanField(_("Deviation"), default = False, null=True)
 
 
     objects = JobneedManager()
@@ -560,7 +561,7 @@ class Attachment(BaseModel, TenantAwareModel):
     bu             = models.ForeignKey("onboarding.Bt", null = True,blank = True, on_delete = models.RESTRICT)
     datetime       = models.DateTimeField(editable = True, default = datetime.utcnow)
     attachmenttype = models.CharField(choices = AttachmentType.choices, max_length = 55, default = AttachmentType.NONE.value)
-    gpslocation    = PointField(_('GPS Location'),null = True, geography = True, srid = 4326)
+    gpslocation    = PointField(_('GPS Location'),null = True, blank=True, geography = True, srid = 4326)
     size           = models.IntegerField(null=True)
     
 
@@ -648,7 +649,7 @@ class DeviceEventlog(BaseModel, models.Model):
     locationserviceenabled = models.BooleanField(_("Location Serivice Enabled"),default=False)
     islocationmocked       = models.BooleanField(_("Location Spoofed"),default=False)
     locationpermission     = models.CharField(max_length=25, choices=LocationAllowedChoices.choices, default=LocationAllowedChoices.NONE.value)
-    gpslocation            = PointField(null=True, srid=4326,geography = True)
+    gpslocation            = PointField(null=True, srid=4326, blank=True, geography = True)
     accuracy               = models.CharField(max_length=25, default="-")
     altitude               = models.CharField(max_length=25, default='-')
     bu                     = models.ForeignKey("onboarding.Bt", null = True,blank = True, on_delete = models.RESTRICT)

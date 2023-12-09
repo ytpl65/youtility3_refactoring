@@ -77,6 +77,11 @@ class BasicOutput(graphene.ObjectType):
     rc = graphene.Int(default_value=0)
     msg = graphene.String()
     email = graphene.String()
+    
+class DowntimeResponse(graphene.ObjectType):
+    message = graphene.String()
+    startDateTime = graphene.String(default_value="")
+    endDateTime = graphene.String(default_value="")
 
 class LoginResponseType(DjangoObjectType):
     tenantid = graphene.Int()

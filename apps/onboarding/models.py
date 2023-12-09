@@ -222,8 +222,9 @@ class GeofenceMaster(BaseModel):
 
 class DownTimeHistory(BaseModel):
     reason = models.TextField(_("Downtime Reason"))
-    starttime = models.DateTimeField(_("Start"), default=timezone.now().replace(microsecond = 0))
-    endtime = models.DateTimeField(_("End"),  default=timezone.now().replace(microsecond = 0))
+    starttime = models.DateTimeField(_("Start"), default=timezone.now)
+    endtime = models.DateTimeField(_("End"),  default=timezone.now)
+    client        = models.ForeignKey("onboarding.Bt",null = True, verbose_name = _("Client"), on_delete = models.RESTRICT)
     
     class Meta(BaseModel.Meta):
         db_table = 'downtime_history'

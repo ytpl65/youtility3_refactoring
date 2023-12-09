@@ -607,7 +607,8 @@ class JobNeedForm(forms.ModelForm):
         fields = ['identifier', 'frequency', 'parent', 'jobdesc', 'asset', 'ticketcategory',
                   'qset',  'people', 'pgroup', 'priority', 'scantype', 'multifactor',
                   'jobstatus', 'plandatetime', 'expirydatetime', 'gracetime', 'starttime',
-                  'endtime', 'performedby', 'gpslocation', 'cuser', 'remarks', 'ctzoffset']
+                  'endtime', 'performedby', 'gpslocation', 'cuser', 'remarks', 'ctzoffset',
+                  'remarkstype']
         widgets = {
             'ticketcategory': s2forms.Select2Widget,
             'scantype'      : s2forms.Select2Widget,
@@ -620,7 +621,8 @@ class JobNeedForm(forms.ModelForm):
             'remarks'       : forms.Textarea(attrs={'rows': 2, 'cols': 40}),
             'jobstatus'     : s2forms.Select2Widget,
             'performedby'   : s2forms.Select2Widget,
-            'gpslocation'   : forms.TextInput
+            'gpslocation'   : forms.TextInput,
+            'remarks_type' : s2forms.Select2Widget
         }
         label = {
             'endtime': 'End Time',

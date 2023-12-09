@@ -94,10 +94,11 @@ class JobneedSerializer(serializers.ModelSerializer):
     cuser_id          = serializers.IntegerField()
     muser_id          = serializers.IntegerField()
     ticket_id         = serializers.IntegerField()
+    remarkstype_id   = serializers.IntegerField()
 
     class Meta:
         model = Jobneed
-        exclude = ['receivedonserver', 'other_info', 'parent', 'people', 'pgroup', 'qset', 'geojson', 'ticket',
+        exclude = ['receivedonserver', 'other_info', 'parent', 'people', 'pgroup', 'qset', 'geojson', 'ticket', 'remarkstype',
                    'asset', 'job', 'performedby', 'client', 'bu', 'ticketcategory', 'cuser', 'muser', 'id', 'journeypath']        
 
 class WomSerializer(serializers.ModelSerializer):

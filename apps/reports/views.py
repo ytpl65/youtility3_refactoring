@@ -522,11 +522,14 @@ class ConfigWorkPermitReportTemplate(LoginRequiredMixin, View):
 class DownloadReports(LoginRequiredMixin, View):
     PARAMS = {
         'template_form':"reports/report_export_form.html",
-        'form':rp_forms.ReportForm
+        'form':rp_forms.ReportForm,
+        'ReportEssentials':rutils.ReportEssentials,
     }
     
     def get(self, request, *args, **kwargs):
         R, P = request.GET, self.PARAMS
+        if R.get('action') == 'form_behaviour':
+            return self.form_behaviour(R)
         form = P['form'](request=request)
         report_names = json.dumps(P['form'].report_templates)
         fields_map = json.dumps(form.get_fields_report_map())
@@ -550,16 +553,20 @@ class DownloadReports(LoginRequiredMixin, View):
         log.info('form is valid')
         formdata = form.cleaned_data
         log.info("Formdata submitted by user %s"%(pformat(formdata)))
-        return self.export_report(formdata, session, request)
+        return self.export_report(formdata, session, request, form)
         
-    def export_report(self, formdata, session, request):
-        report_essentials = rutils.ReportEssentials(formdata=formdata, session=session)
+    def export_report(self, formdata, session, request, form):
+        report_essentials = rutils.ReportEssentials(report_name=formdata['report_name'])
         log.info("report essentials %s"%(report_essentials))
         ReportFormat = report_essentials.get_report_export_object()
-        report = ReportFormat(filename=formdata['report_name'], client_id=session['client_id'], formdata=formdata, request=request)
+        report = ReportFormat(filename=formdata['report_name'], client_id=session['client_id'], formdata=formdata, request=request, form=form)
         log.info("Report Format intialized, %s"%(report))
         return report.execute()
-        
+    
+    def form_behaviour(self, R):
+        report_essentials = self.PARAMS['ReportEssentials'](report_name=R['report_name'])
+        return rp.JsonResponse({'behaviour':report_essentials.behaviour_json})
+    
 
 class DesignReport(LoginRequiredMixin, View):
     # change this file according to your design

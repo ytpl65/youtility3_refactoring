@@ -7,8 +7,10 @@ import pandas as pd
 from django.http import HttpResponse
 from apps.activity.models import Attachment
 from django.conf import settings
+from django.shortcuts import render
 from apps.onboarding.models import Bt
 from django.shortcuts import render
+from .forms import ReportForm
 import logging
 from decimal import Decimal
 log = logging.getLogger('__main__')
@@ -16,16 +18,20 @@ log = logging.getLogger('__main__')
 
 
 class BaseReportsExport(WeasyTemplateResponseMixin):
-    pdf_stylesheets = [
-        settings.STATIC_ROOT + 'assets/css/local/reports.css'
-    ]
     '''
     A class which contains logic for Report Exports
     irrespective of report design and type. 
     '''
+    
+    pdf_stylesheets = [
+        settings.STATIC_ROOT + 'assets/css/local/reports.css'
+    ]
+    no_data_error = "No Data"
+    report_export_form = ReportForm
+    
     def __init__(self, filename, client_id, design_file=None, request=None, context=None,
                  data=None, additional_content=None,
-                 returnfile=False,  formdata=None):       
+                 returnfile=False,  formdata=None, form=None):       
         self.design_file = design_file
         self.request = request
         self.context = context
@@ -35,6 +41,14 @@ class BaseReportsExport(WeasyTemplateResponseMixin):
         self.additional_content=additional_content
         self.filename = filename
         self.returnfile = returnfile
+        self.form=form
+        
+    def handle_no_data(self, func):
+        def wrapper(*args, **kwargs):
+            if self.form and not self.data:
+                self.form.add_error(None, self.no_data_error)
+                return render(self.request, self.report_form_template, {'form':self.form})
+            result = func(*args, **kwargs)
     
     
     def get_pdf_output(self):
@@ -192,11 +206,8 @@ class ReportEssentials(object):
     AssetwiseTaskStatus = 'AssetwiseTaskStatus'
 
     
-    def __init__(self, formdata,  request=None, session=None):
-        self.report_name = formdata.get('report_name')
-        self.request = request
-        self.session = dict(request.session) if request else session
-        self.form_data = formdata
+    def __init__(self, report_name):
+        self.report_name = report_name
 
     def get_report_export_object(self):
         # Report Design Files
@@ -228,5 +239,13 @@ class ReportEssentials(object):
             self.CheckpointQR:CheckpointQR,
             self.AssetwiseTaskStatus:AssetwiseTaskStatus
         }.get(self.report_name)
+    
+    @property
+    def behaviour_json(self):
+        report = self.get_report_export_object()
+        return {
+            'supported_formats': report.supported_formats,
+            'fields':report.fields
+        }
     
         

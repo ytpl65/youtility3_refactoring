@@ -173,6 +173,22 @@ Internal Tour
             {{ internaltourform.gpslocation.errors }}
         </div>
     </div>
+    <div class="row mb-3">
+            <div class="col-md-2">
+                <label for={{ internaltourform.remarkstype.id_for_label }} class="">{{ internaltourform.remarkstype.label }}:</label>
+            </div>
+            <div class="col-md-4">
+                {{ internaltourform.remarkstype }}
+                {{ internaltourform.remarkstype.errors }}
+            </div>
+            <div class="col-md-2">
+                <label for={{ internaltourform.remarks.id_for_label }} class="">{{ internaltourform.remarks.label }}:</label>
+            </div>
+            <div class="col-md-4">
+                {{ internaltourform.remarks }}
+                {{ internaltourform.remarks.errors }}
+            </div>
+    </div>
 </form>
 
 <br><br>

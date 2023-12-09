@@ -521,7 +521,12 @@ Report Form
     //hide/show fields based on report_name
     $("#id_report_name").change((e) => {
       let selected = getSelectedValue("#id_report_name")
-      hideAndShowFieldsBasedOnReport(selected)
+      fire_ajax_get({
+        url:urlname,
+        data: {'action':'form_behaviour', 'report_name':selected}
+      }).done((data, status, error) => {
+        
+      })
     })
   })
 </script>

@@ -437,10 +437,24 @@ Schedule Tour
                     id: "#DTE_Field_qset",
                     item: 'Assets'
                 })
+                
+                $("#DTE_Field_qset").change(()=>{
+                    var text = getSelectedValue("#DTE_Field_qset")
+                    console.log(text)
+                    if(text === 'NONE'){
+                        let msg = 
+                        'We see you are attempting to add a question set without any questions\n' +
+                        'Please confirm if you intend to submit an empty set by clicking OK'
+                        if(!confirm(msg)){
+                            $('#DTE_Field_qset').val(null)
+                        }
+                    }
+                })
             }
               if(action == "create"){
-                console.log(table.data().count(), '*************')
                 editor.field('seqno').set(table.data().count() + 1) //update seqno for new entry
+                $("#DTE_Field_asset").val(null)
+                $("#DTE_Field_qset").val(null)
 
             }
             if(action == 'edit'){
@@ -462,12 +476,6 @@ Schedule Tour
                 true
                 );
                 $("#DTE_Field_asset").append(newOption);
-
-                //init expirytime
-                //editor.field('expirytime').append(data.expirytime)
-
-                //init seqno
-                //editor.field('seqno').val(data.seqno)
             }
         })
 
@@ -654,7 +662,6 @@ Schedule Tour
             time_24hr: true,
             dateFormat: 'd-M-Y H:S'
         })
-        debugger;
     })
 </script>
 {% endblock extra_scripts %}

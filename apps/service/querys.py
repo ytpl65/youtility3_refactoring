@@ -3,7 +3,7 @@ from apps.core import utils
 from apps.activity.models import JobneedDetails, Question, QuestionSet, QuestionSetBelonging, Location, Attachment
 from apps.work_order_management.models import Vendor, Approver, Wom
 from apps.y_helpdesk.models import Ticket
-from apps.onboarding.models import GeofenceMaster, Bt
+from apps.onboarding.models import GeofenceMaster, Bt, DownTimeHistory
 from apps.peoples.models import Pgbelonging, Pgroup, People
 from apps.attendance.models import PeopleEventlog
 from django.db import connections
@@ -11,9 +11,11 @@ from django.db.models import Q
 from apps.work_order_management.utils import check_all_approved, reject_workpermit
 from collections import namedtuple
 from logging import getLogger
+from datetime import datetime, timedelta
+from django.utils import timezone
 log = getLogger('mobile_service_log')
 import json
-from .types import (VerifyClientOutput,
+from .types import (VerifyClientOutput, DowntimeResponse,
 TypeAssist, SelectOutputType, BasicOutput)
 
 class Query(graphene.ObjectType):
@@ -151,6 +153,12 @@ class Query(graphene.ObjectType):
                                 clientcode = graphene.String(required=True),
                                 loginid = graphene.String(required=True)
                                 )
+    get_superadmin_message = graphene.Field(
+        DowntimeResponse,
+        client_id = graphene.Int(required=True)
+    )
+    
+    
     @staticmethod
     def resolve_send_email_verification_link(self, info, clientcode, loginid):
         user = People.objects.filter(loginid = loginid, client__bucode = clientcode).first()
@@ -388,6 +396,19 @@ class Query(graphene.ObjectType):
         records, count, msg = utils.get_select_output(data)
         log.info(f'total {count} objects returned')
         return SelectOutputType(nrows = count, records = records,msg = msg)
+    
+    def resolve_get_superadmin_message(self, info, client_id):
+        log.info(f'resolve_get_superadmin_message {client_id = }')
+        record = DownTimeHistory.objects.filter(client_id=client_id).values('reason', 'starttime', 'endtime').order_by('-cdtz').first()
+        if timezone.now() < record['endtime']:
+            return DowntimeResponse(
+                message=record['reason'],
+                startDateTime=record['starttime'],
+                endDateTime = record['endtime'])
+        else:
+            return DowntimeResponse(
+                message=""
+            )
 
 def get_db_rows(sql, args = None):
     import json
@@ -407,6 +428,8 @@ def get_db_rows(sql, args = None):
     msg = f"Total {len(data)} records fetched successfully!"
     count = len(data)
     log.info(f'{count} objects returned...')
+    for rec in data:
+        ic(rec['id'])
     return SelectOutputType(records = data_json, msg = msg, nrows = count)
 
 def get_jobneedmodifiedafter(peopleid, siteid, clientid):

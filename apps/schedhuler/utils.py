@@ -239,7 +239,7 @@ def insert_into_jn_for_parent(job, params):
             'pgroup_id' : job['pgroup_id'],
             'parent' : params['NONE_JN'],
         }
-    obj, _ = am.Jobneed.objects.get_or_create(
+    obj, iscreated = am.Jobneed.objects.get_or_create(
         defaults=defaults,
         job_id         = job['id'],
         jobtype        = params['jobtype'],
@@ -247,6 +247,7 @@ def insert_into_jn_for_parent(job, params):
         expirydatetime = params['edtz'],
         parent = params['NONE_JN'],
     )
+    log.info("{}".format("record is created" if iscreated else "record is not created"))
     return obj
 
 
@@ -262,10 +263,7 @@ def insert_update_jobneeddetails(jnid, job, parent=False):
         pass
     try:
         qsb = utils.get_or_create_none_qsetblng() if parent else am.QuestionSetBelonging.objects.select_related('question').filter(qset_id=job['qset_id']).order_by('seqno').values_list(named=True)
-        if not qsb:
-            log.error("No Checklist Found failed to schedhule job", exc_info=True)
-            raise EmptyResultSet
-        else:
+        if qsb:
             log.info(f'Checklist found with {len(qsb) if isinstance(qsb, QuerySet) else 1} questions in it.')
             insert_into_jnd(qsb, job, jnid, parent)
     except Exception:
