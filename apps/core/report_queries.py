@@ -444,33 +444,37 @@ def get_query(query):
             WITH timezone_setting AS (
                 SELECT %s ::text AS timezone
             )
-
             SELECT * ,
-                coalesce(round(x."Total Completed"::numeric/nullif(x."Total Tours"::numeric,0)*100,2),0) as "Percentage"
-            FROM (
-                SELECT
-                bu.id,
-                client.buname as "client"
-                bu.buname as "Site",
-                (jobneed.plandatetime AT TIME ZONE tz.timezone)::DATE as "Date",
-                count(jobneed.id)::numeric as "Total Tours",
-            count(case when jobneed.jobtype='SCHEDULE' then jobneed.jobtype end) as "Total Scheduled",
-            count(case when jobneed.jobtype='ADHOC' then jobneed.jobtype end) as "Total Adhoc",
-            count(case when jobneed.jobstatus='ASSIGNED' then jobneed.jobstatus end) as "Total Pending",
-            count(case when jobneed.jobstatus='AUTOCLOSED' then jobneed.jobstatus end) as "Total Closed",
-            count(case when jobneed.jobstatus='COMPLETED' then jobneed.jobstatus end) as "Total Completed"
-
-                FROM jobneed
-                INNER JOIN bt bu ON bu.id=jobneed.bu_id
-                CROSS JOIN timezone_setting tz
-                WHERE
-                jobneed.identifier='INTERNALTOUR'
-                AND jobneed.id <> 1
-                AND bu.id <> 1
-                AND jobneed.bu_id IN (SELECT unnest(string_to_array(%s, ',')::integer[]))  
-                AND (jobneed.plandatetime AT TIME ZONE tz.timezone)::DATE BETWEEN %s AND %s
-                GROUP BY bu.id, bu.buname, (jobneed.plandatetime AT TIME ZONE tz.timezone)::DATE
-                ORDER BY bu.buname, (jobneed.plandatetime AT TIME ZONE tz.timezone)::DATE desc
+                        CASE 
+                            WHEN "No of Checkpoints" = 0 THEN 0
+                            ELSE (CAST("Completed" AS FLOAT) / "No of Checkpoints") * 100
+                            END AS "Percentage"
+                        FROM (
+            SELECT 
+                client_table.buname AS "Client Name",
+                site_table.buname AS "Site Name",
+                jn.jobdesc AS "Description",
+                (jn.plandatetime AT TIME ZONE tz.timezone)::DATE AS "Start Time",
+                (jn.expirydatetime AT TIME ZONE tz.timezone)::DATE as "End Time",
+                jn.remarks as "Comments",
+                type.taname as "Comments Type",
+                (SELECT COUNT(*) FROM jobneed AS jn_child WHERE jn_child.parent_id = jn.id) AS "No of Checkpoints",
+                (SELECT COUNT(*) FROM jobneed AS jn_child_completed WHERE jn_child_completed.parent_id = jn.id AND jn_child_completed.jobstatus = 'COMPLETED') AS "Completed",
+                (SELECT COUNT(*) FROM jobneed AS jn_child_missed WHERE jn_child_missed.parent_id = jn.id AND jn_child_missed.jobstatus = 'ASSIGNED') AS "Missed"
+            FROM 
+                jobneed AS jn
+            JOIN 
+                bt AS client_table ON jn.client_id = client_table.id
+            JOIN 
+                
+                bt AS site_table ON jn.bu_id = site_table.id
+            JOIN typeassist type ON type.id=jn.remarkstype_id
+            cross join timezone_setting tz
+            WHERE 
+                jn.parent_id = 1 AND
+                jn.identifier = 'INTERNALTOUR' AND
+                jn.bu_id IN (SELECT unnest(string_to_array(%s, ',')::integer[])) 
+                AND (jn.plandatetime AT TIME ZONE tz.timezone)::DATE BETWEEN %s AND %s
             ) as x
             '''
     }.get(query)

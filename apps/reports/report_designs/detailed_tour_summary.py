@@ -5,11 +5,13 @@ from apps.onboarding.models import Bt
 from django.conf import settings
 
 
-class TourSummaryReport(BaseReportsExport):
+class DetailedTourSummaryReport(BaseReportsExport):
     report_title = "Detailed Tour Summary"
     design_file = "reports/pdf_reports/detailed_tour_summary.html"
     ytpl_applogo =  'frontend/static/assets/media/images/logo.png'
     report_name = 'DetailedTourSummary'
+    unsupported_formats = ['None']
+    fields = ['site*', 'fromdate*', 'uptodate*']
     
     def __init__(self, filename, client_id, request=None, context=None, data=None, additional_content=None, returnfile=False, formdata=None):
         super().__init__(filename, client_id, design_file=self.design_file, request=request, context=context, data=data, additional_content=additional_content, returnfile=returnfile, formdata=formdata)
@@ -52,8 +54,8 @@ class TourSummaryReport(BaseReportsExport):
         self.additional_content = f"Client: {bt['buname']}; Report: {self.report_title}; From: {self.formdata['fromdate']} To: {self.formdata['uptodate']}"
 
     def excel_columns(self, df):
-        df = df[['Date','Total Tours','Total Scheduled','Total Adhoc','Total Completed'
-                 ,'Total Pending','Total Closed','Percentage']]
+        df = df[['client','Site','JobDesc','StartDate','EndDate','no_of_checkpoints'
+                 ,'COMPLETED','ASSIGNED','Percentage','Comments']]
         return df
 
 

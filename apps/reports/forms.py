@@ -90,7 +90,8 @@ class ReportForm(forms.Form):
         ('PeopleQR', 'People-QR'),
         ('AssetQR', 'Asset-QR'),
         ('CheckpointQR', 'Checkpoint-QR'),
-        ('AssetwiseTaskStatus','Assetwise Task Status')
+        ('AssetwiseTaskStatus','Assetwise Task Status'),
+        ('DetailedTourSummary','Detailed Tour Summary')
     ]
     download_or_send_options = [
         ('DOWNLOAD', 'Download'),
@@ -206,7 +207,8 @@ class ReportForm(forms.Form):
             'People-QR':['id_site', 'id_mult_people', 'id_qrsize','id_site_or_people'],
             'Asset-QR':['id_site', 'id_asset','id_assettype', 'id_qrsize'],
             'Checkpoint-QR':['id_site', 'id_qrsize'],
-            'Assetwise Task Status': ['id_site', 'id_fromdate', 'id_uptodate']
+            'Assetwise Task Status': ['id_site', 'id_fromdate', 'id_uptodate'],
+            'Detailed Tour Summary':[]
         }
 
     
