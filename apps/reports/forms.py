@@ -90,7 +90,8 @@ class ReportForm(forms.Form):
         ('PeopleQR', 'People-QR'),
         ('AssetQR', 'Asset-QR'),
         ('CheckpointQR', 'Checkpoint-QR'),
-        ('AssetwiseTaskStatus','Assetwise Task Status')
+        ('AssetwiseTaskStatus','Assetwise Task Status'),
+        ('DetailedTourSummary','Detailed Tour Summary')
     ]
     download_or_send_options = [
         ('DOWNLOAD', 'Download'),

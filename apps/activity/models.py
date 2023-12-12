@@ -328,7 +328,7 @@ def asset_json():
     }
 
 
-class Asset(BaseModel, TenantAwareModel):
+class Asset(BaseModel,TenantAwareModel):
     class Identifier(models.TextChoices):
        NONE       = ("NONE", "None")
        ASSET      = ("ASSET", "Asset")

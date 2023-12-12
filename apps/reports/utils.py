@@ -198,6 +198,7 @@ class ReportEssentials(object):
     AssetQR = 'AssetQR'
     CheckpointQR = 'CheckpointQR'
     AssetwiseTaskStatus = 'AssetwiseTaskStatus'
+    DetailedTourSummary = 'DetailedTourSummary'
 
     
     def __init__(self, report_name):
@@ -218,6 +219,7 @@ class ReportEssentials(object):
         from apps.reports.report_designs.qrcode_report import AssetQR
         from apps.reports.report_designs.qrcode_report import CheckpointQR
         from apps.reports.report_designs.assetwise_task_status import AssetwiseTaskStatus
+        from apps.reports.report_designs.detailed_tour_summary import DetailedTourSummaryReport
         return {
             self.TaskSummary: TaskSummaryReport,
             self.TourSummary:TourSummaryReport,
@@ -231,7 +233,8 @@ class ReportEssentials(object):
             self.PeopleQR:PeopleQR,
             self.AssetQR:AssetQR,
             self.CheckpointQR:CheckpointQR,
-            self.AssetwiseTaskStatus:AssetwiseTaskStatus
+            self.AssetwiseTaskStatus:AssetwiseTaskStatus,
+            self.DetailedTourSummary:DetailedTourSummaryReport
         }.get(self.report_name)
     
     @property

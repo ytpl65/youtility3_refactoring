@@ -438,5 +438,43 @@ def get_query(query):
             GROUP BY 
                 Asset.assetname,asset.id
             
+            ''',
+            "DetailedTourSummary":
+            '''
+            WITH timezone_setting AS (
+                SELECT %s ::text AS timezone
+            )
+            SELECT * ,
+                        CASE 
+                            WHEN "No of Checkpoints" = 0 THEN 0
+                            ELSE (CAST("Completed" AS FLOAT) / "No of Checkpoints") * 100
+                            END AS "Percentage"
+                        FROM (
+            SELECT 
+                client_table.buname AS "Client Name",
+                site_table.buname AS "Site Name",
+                jn.jobdesc AS "Description",
+                (jn.plandatetime AT TIME ZONE tz.timezone)::DATE AS "Start Time",
+                (jn.expirydatetime AT TIME ZONE tz.timezone)::DATE as "End Time",
+                jn.remarks as "Comments",
+                type.taname as "Comments Type",
+                (SELECT COUNT(*) FROM jobneed AS jn_child WHERE jn_child.parent_id = jn.id) AS "No of Checkpoints",
+                (SELECT COUNT(*) FROM jobneed AS jn_child_completed WHERE jn_child_completed.parent_id = jn.id AND jn_child_completed.jobstatus = 'COMPLETED') AS "Completed",
+                (SELECT COUNT(*) FROM jobneed AS jn_child_missed WHERE jn_child_missed.parent_id = jn.id AND jn_child_missed.jobstatus = 'ASSIGNED') AS "Missed"
+            FROM 
+                jobneed AS jn
+            JOIN 
+                bt AS client_table ON jn.client_id = client_table.id
+            JOIN 
+                
+                bt AS site_table ON jn.bu_id = site_table.id
+            JOIN typeassist type ON type.id=jn.remarkstype_id
+            cross join timezone_setting tz
+            WHERE 
+                jn.parent_id = 1 AND
+                jn.identifier = 'INTERNALTOUR' AND
+                jn.bu_id IN (SELECT unnest(string_to_array(%s, ',')::integer[])) 
+                AND (jn.plandatetime AT TIME ZONE tz.timezone)::DATE BETWEEN %s AND %s
+            ) as x
             '''
     }.get(query)

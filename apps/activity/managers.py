@@ -25,7 +25,6 @@ class QuestionSetManager(models.Manager):
 
     def get_template_list(self, bulist):
         bulist = bulist.split(',') if isinstance(bulist, str) else bulist
-        ic(bulist)
         if bulist:
             if qset := self.select_related(
                 *self.related).filter(buincludes__contains = bulist).values_list('id', flat = True):
@@ -422,7 +421,8 @@ class JobneedManager(models.Manager):
         atts = Attachment.objects.filter(
             owner__in = qset.values_list('uuidtext', flat=True)
         ).values('filepath', 'filename')
-        return qset, atts or self.none()        
+        return qset, atts or self.none() 
+        
 
     def get_internaltourlist_jobneed(self, request, related, fields):
         R, S = request.GET, request.session
@@ -432,7 +432,10 @@ class JobneedManager(models.Manager):
                 When(Q(people_id=1) | Q(people_id__isnull =  True), then=Concat(F('pgroup__groupname'), V(' [GROUP]'))),
                 )}
         qobjs = self.annotate(
-            **assignedto
+            **assignedto,client_name=F('client__buname'),site_name=F('bu__buname'),
+            no_of_checkpoints=Count('jobneed', distinct=True),
+            completed=Count('jobneed', filter=Q(jobneed__jobstatus='COMPLETED'), distinct=True),
+            missed=Count('jobneed', filter=Q(jobneed__jobstatus='ASSIGNED'), distinct=True)
             ).select_related(
                             *related).filter(
                                 Q(Q(parent_id__in = [1, -1]) | Q(parent_id__isnull=True)),
