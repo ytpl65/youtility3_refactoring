@@ -446,6 +446,7 @@ function handle_rendering_of_menus(session) {
   const exceptions = {
     tracking: "#TRACKING",
     admin: "#ADMIN",
+    reports:'#REPORTS',
     onboarding: "#ONBOARDING",
     companysetup: "#COMPANYSETUP",
     sitesurvey: "#SITESURVEY",
@@ -481,6 +482,10 @@ function handle_rendering_of_menus(session) {
       if (code.includes("AD_") && $(exceptions["admin"]).is(":hidden")) {
         $(exceptions["admin"]).show();
         $(`${exceptions["admin"]} .menu-item`).hide();
+      }
+      if (code.includes("RP_") && $(exceptions["reports"]).is(":hidden")) {
+        $(exceptions["reports"]).show();
+        $(`${exceptions["reports"]} .menu-item`).hide();
       }
       if (code.includes("CMP_") && $(exceptions["comparisions"]).is(":hidden")) {
         $(exceptions["comparisions"]).show();

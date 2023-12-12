@@ -418,25 +418,6 @@ Report Form
       })
 
     })
-    //shows only fields which are required for a 
-    //retport selected
-    function toggleInputGroups(ids) {
-      $(".datafield").addClass('d-none')
-      ids.forEach(id => {
-        const element = document.getElementById(id);
-
-        if (element) { // Check if element exists
-          const closestInputGroup = element.closest(".input-group");
-
-          // Toggle visibility by adding or removing "d-none" class
-          if (closestInputGroup.classList.contains("d-none")) {
-            closestInputGroup.classList.remove("d-none");
-          } else {
-            closestInputGroup.classList.add("d-none");
-          }
-        }
-      });
-    }
 
     //if selected to dont show in cc
     function onSelectionChanged(e) {
@@ -460,57 +441,6 @@ Report Form
       otherSelectElement.trigger('change');
     }
 
-    //hide fields whcih are invisible and hide fields which are 
-    // passed as argument
-    function hideSpecifiedAndNotVisibleFields(fields) {
-      fields.forEach((id) => {
-        //remove required attirbute
-        toggleRequiredAttribute(id, set = true)
-      })
-    }
-
-    function hideAndShowFieldsBasedOnReport(selected) {
-      if (selected === "Select Report") return
-      hideSpecifiedAndNotVisibleFields(fields_map[selected])
-      switch (selected) {
-        case 'Task Summary':
-        case 'Tour Summary':
-        case 'List of Internal Tours':
-        case 'PPM Summary':
-        case 'Work Order List':
-          toggleInputGroups(["id_site", "id_fromdate", "id_uptodate"])
-          break
-
-        case 'List of Tasks':
-          toggleInputGroups(['id_site', 'id_fromdate', 'id_uptodate', 'id_peoplegroup', 'id_people'])
-          break
-
-        case 'List of Tickets':
-          toggleInputGroups(["id_site", "id_fromdate", "id_uptodate", 'id_people', 'id_ticketcategory'])
-          break
-
-        case 'Site Report':
-          toggleInputGroups(['id_fromdate', 'id_uptodate', 'id_sitegroup', 'id_people'])
-          break
-        case 'People-QR':
-          //toggle people and pgroup field based on radio button value
-          showHideSelectField('SITE')
-          toggleInputGroups(['id_site', 'id_mult_people', 'id_qrsize', 'id_site_or_people'])
-          break
-        case 'Asset-QR':  
-          toggleInputGroups(['id_site','id_assettype','id_assetcategory', 'id_qrsize'])
-          break
-        case 'Checkpoint-QR':  
-          toggleInputGroups(['id_site','id_checkpoint_type', 'id_qrsize'])
-          break
-        case 'Assetwise Task Status':
-          toggleInputGroups(['id_site', "id_fromdate", "id_uptodate"])
-          break
-      }
-    }
-
-    //on load for selected report_name
-    hideAndShowFieldsBasedOnReport(getSelectedValue("#id_report_name"))
 
   function dynamicFormBehaviour(data) {
       $('.datafield').addClass('d-none')

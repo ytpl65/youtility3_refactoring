@@ -533,8 +533,6 @@ class DownloadReports(LoginRequiredMixin, View):
         if R.get('action') == 'form_behaviour':
             return self.form_behaviour(R)
         form = P['form'](request=request)
-        report_names = json.dumps(P['form'].report_templates)
-        fields_map = json.dumps(form.get_fields_report_map())
         cxt = {
             'form':form,
         }
@@ -675,3 +673,18 @@ class DesignReport(LoginRequiredMixin, View):
         """
         return [max([len(str(s)) for s in dataframe[col].values] + [len(col)]) for col in dataframe.columns]
 
+
+
+class ScheduleEmailReport(LoginRequiredMixin, View):
+    PARAMS = {
+        'template_form':"reports/schedule_email_report.html",
+        'form':rp_forms.EmailReportForm,
+        'ReportEssentials':rutils.ReportEssentials,
+        "nodata":"No data found matching your report criteria.\
+        Please check your entries and try generating the report again"
+    }
+    
+    def get(self, request, *args, **kwargs):
+        form = self.PARAMS['form'](request=request)
+        cxt = {'form':form}
+        return render(request, self.PARAMS['template_form'], context=cxt)

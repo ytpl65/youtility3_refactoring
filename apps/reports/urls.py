@@ -14,4 +14,5 @@ urlpatterns = [
     path('srqsetbelonging/',           views.MasterReportBelonging.as_view(),          name='srqsetbelonging'),
     path('get_reports/',               views.DownloadReports.as_view(),                name='exportreports'),
     path('design/',                    views.DesignReport.as_view(),                   name='design'),
+    path('schedule-email-report/',     views.ScheduleEmailReport.as_view(),            name='schedule_email_report'),
 ]

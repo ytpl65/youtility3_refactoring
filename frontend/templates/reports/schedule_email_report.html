@@ -1,0 +1,25 @@
+{% extends "globals/base_form.html" %}
+
+
+<!---- BEGIN PAGE TITLE ---->
+{% block title %}
+Schedule Report Form
+{% endblock title %}
+<!---- END PAGE TITLE ----->
+
+{% block extra_css %}
+{{ form.media.css }}
+{% endblock extra_css %}
+
+
+{% block form_title %}
+Schedule Report Form
+{% endblock form_title %}
+
+<!-------------------------- BEGIN PAGE BREADCUMB ----------------------->
+{% block pagebreadcumb %}
+{{ super() }}
+<li class="breadcrumb-item pe-3"><a href="javascript:void(0)" class="pe-3">Schedule Report Form
+</a></li>
+{% endblock pagebreadcumb %}
+<!-------------------------- END PAGE BREADCUMB ------------------------->

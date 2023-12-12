@@ -457,30 +457,11 @@
                     <span class="menu-title">Bulk Import Data</span>
                 </a>
             </div>
-            <div class="menu-item" id="AD_REPORTS">
-                <a class="menu-link" href="{{ url('reports:exportreports') }}">
-                    <span class="menu-bullet">
-                        <span class="bullet bullet-dot"></span>
-                    </span>
-                    <span class="menu-title">Download Reports</span>
-                </a>
-            </div>
         </div>
     </div>
 
-    <div class="menu-item" id="REPORTS" style="display:none;">
-        <a class="menu-link" href="{{ url('onboarding:rp_dashboard') }}">
-            <span class="menu-icon">
-                <!--begin::Svg Icon | path: icons/duotone/Communication/Group.svg-->
-                <span class="svg-icon svg-icon-2">
-                    <span class="material-icons">summarize</span>
-                </span>
-                <!--end::Svg Icon-->
-            </span>
-            <span class="menu-title">Reports</span>
-        </a>
-    </div>
-    {# <div data-kt-menu-trigger="click" id="SITESURVEY" class="menu-item menu-accordion" style="display:none;">
+
+    <div data-kt-menu-trigger="click" id="REPORTS" class="menu-item menu-accordion" style="display:none;">
     <span class="menu-link">
       <span class="menu-icon">
         <!--begin::Svg Icon | path: icons/duotone/Communication/Group.svg-->
@@ -491,28 +472,28 @@
         </span>
         <!--end::Svg Icon-->
       </span>
-      <span class="menu-title">Site Survey</span>
+      <span class="menu-title">Reports</span>
       <span class="menu-arrow"></span>
     </span>
     <div class="menu-sub menu-sub-accordion" kt-hidden-height="116" style="display: none; overflow: hidden;">
-      <div class="menu-item" id="SITEREPORT">
-        <a class="menu-link" href="{{ url('reports:sitereport_list') }}?template=true">
+      <div class="menu-item" id="RP_DOWNLOAD">
+        <a class="menu-link" href="{{ url('reports:exportreports') }}">
           <span class="menu-bullet">
             <span class="bullet bullet-dot"></span>
           </span>
-          <span class="menu-title">Site Visit</span>
+          <span class="menu-title">Download Report</span>
         </a>
       </div>
-      <div class="menu-item" id="CONVEYANCE">
-        <a class="menu-link" href="{{ url('attendance:conveyance') }}?template=true">
+      <div class="menu-item" id="RP_SCHEDULE">
+        <a class="menu-link" href="{{ url('reports:schedule_email_report') }}">
           <span class="menu-bullet">
             <span class="bullet bullet-dot"></span>
           </span>
-          <span class="menu-title">Conveyance</span>
+          <span class="menu-title">Schedule Report</span>
         </a>
       </div>
     </div>
-  </div> #}
+  </div>
     {% if request.user.is_superuser %}
 
 

@@ -176,38 +176,47 @@ class ReportForm(forms.Form):
         if cd['report_name'] == settings.KNOWAGE_REPORTS['SITEREPORT'] and cd.get('people') in ["", None] and cd.get('sitegroup') in ["", None]:
             raise forms.ValidationError(
                 f"Both Site Group and People cannot be empty, when the report is {cd.get('report_name')}")
-        
-        # if cd.get('report_name') == settings.KNOWAGE_REPORTS['LISTOFTICKETS'] and cd.get('people') in ["", None] and cd.get('ticketcategory') in ["", None]:
-        #     raise forms.ValidationError(
-        #         f"Both Ticket Category and People cannot be empty, when the report is {cd.get('report_name')}")
-        
-        
+                
         if cd.get("fromdate") and cd['fromdate'] > cd['uptodate']: self.add_error('fromdate', 'From date cannot be greater than To date')
         if cd.get('uptodate') and cd['uptodate'] > cd['fromdate'] + timedelta(days=31):
             err_msg = 'The difference between From date and To date should not be greater than 1 a month'
             self.add_error('fromdate', err_msg)
             self.add_error('uptodate', err_msg)
-        if cd['format'] != 'pdf': self.cleaned_data['preview'] = "false"
+        if cd.get('format') != 'pdf': self.cleaned_data['preview'] = "false"
         return self.cleaned_data
     
-    def get_fields_report_map(self):
-        '''
-        a map of required fields for a type of report
-        '''
-        return {
-            'Task Summary': ['id_site', 'id_fromdate', 'id_uptodate'],
-            'Tour Summary': ['id_site', 'id_fromdate', 'id_uptodate'],
-            'Work Order List': ['id_site', 'id_fromdate', 'id_uptodate'],
-            'List of Tasks': ['id_site', 'id_fromdate', 'id_uptodate'],
-            'List of Internal Tours':['id_site', 'id_fromdate', 'id_uptodate'],
-            'PPM Summary': ['id_site', 'id_fromdate', 'id_uptodate'],
-            'List of Tickets':['id_site', 'id_fromdate', 'id_uptodate'],
-            'Site Report':['id_sitegroup', 'id_fromdate', 'id_uptodate'],
-            'People-QR':['id_site', 'id_mult_people', 'id_qrsize','id_site_or_people'],
-            'Asset-QR':['id_site', 'id_asset','id_assettype', 'id_qrsize'],
-            'Checkpoint-QR':['id_site', 'id_qrsize'],
-            'Assetwise Task Status': ['id_site', 'id_fromdate', 'id_uptodate']
-        }
+    
+    
+class EmailReportForm(forms.Form):
+    required_css_class = 'required'
+    report_templates   = ReportForm.report_templates
+    
+    ctzoffset       = forms.IntegerField(required=True)
+    report_type     = forms.ChoiceField(label="Report Type",required=True, choices=report_templates)
+    report_name     = forms.CharField(label='Report Name', max_length=55, required=True)
+    report_cron     = forms.CharField(label='Frequency', max_length=10, required=True)
+    report_sendtime = forms.TimeField(label='Send Out Time', required=True)
+    cc              = forms.MultipleChoiceField(label='CC', required=False, widget=s2forms.Select2MultipleWidget)
+    to_addr         = forms.MultipleChoiceField(label="To", required=False, widget=s2forms.Select2MultipleWidget)
 
     
+    
+    
+    def __init__(self, *args, **kwargs):
+        self.request = kwargs.pop('request', None)
+        self.S = self.request.session
+        super().__init__(*args, **kwargs)
+        self.fields['cc'].choices = self.choices_for_cc()
+        self.fields['to_addr'].choices = self.choices_for_toaddr()
+
+    def choices_for_cc(self):
+        return pm.People.objects.filter(
+            isverified=True, client_id = self.S['client_id']).values_list(
+                'email', 'peoplename')
+    
+    def choices_for_toaddr(self):
+        return pm.People.objects.filter(
+            isverified=True, client_id = self.S['client_id']).values_list(
+                'email', 'peoplename')
+            
     
