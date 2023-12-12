@@ -1,0 +1,63 @@
+{% extends "reports/pdf_reports/tabular_base.html" %}
+
+{% block header_start %}
+<img src="{{ client_logo }}" alt="Capgemini" class="logos">
+{% endblock header_start %}
+
+{% block header_end %}
+<div>
+<img src="{{ static('assets/media/images/reportlogo.png') }}" class="companylogo">
+</div>
+
+{% endblock header_end %}
+
+{% block header_center %}
+<div id="title">
+    <div>
+        <p id="main_title">{{ report_title }}</p>
+        <p id="subtitle">{{ report_subtitle }}</p>
+    </div>
+</div>
+{% endblock header_center %}
+
+
+
+{% block table %}
+<table id="detailedtoursummary" style="width:100%">
+    <thead>
+        <tr>
+            <th scope="col">Client</th>
+            <th scope="col">Site</th>
+            <th scope="col">Tour</th>
+            <th scope="col">PlanDate Time</th>
+            <th scope="col">EndDate Time</th>
+            <th scope="col">Checkpoint</th>
+            <th scope="col">Completed</th>
+            <th scope="col">Missed</th>
+            <th scope="col">Comments</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for row in data %}
+        <tr>
+            <td>{{ row['Date'] }}</td>
+            <td>{{ row['Total Tours'] }}</td>
+            <td>{{ row['Total Scheduled'] }}</td>
+            <td>{{ row['Total Adhoc'] }}</td>
+            <td>{{ row['Total Completed'] }}</td>
+            <td>{{ row['Total Pending'] }}</td>
+            <td>{{ row['Total Closed'] }}</td>
+            <td>{{ row['Percentage'] }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock table %}
+
+
+
+{% block summary %}
+{% endblock summary %}
+
+{% block script %}
+{% endblock script %}

@@ -40,7 +40,7 @@ Tour List
     var ajaxData = {}
     const formFilter = '#internaltour_filter'
     const table_id = '#internaltour_table'
-    const urlname = "{{ url('schedhuler:jobneedtours') }}"
+const urlname = "{{ url('schedhuler:jobneedtours') }}"
 
     //if you want to modifiy here, then modify in custom.js initDateRange also
     var params=null
@@ -75,23 +75,31 @@ Tour List
                     d.params = JSON.stringify(params)
                 }
             },
-            pageLength:10,
-            responsive:true,
-            language: { search: "", searchPlaceholder:"Serch keywords..." },
+            language: { search: "", searchPlaceholder:"Serch keywords..." },    
 			deferRender: true,
+             lengthMenu: [ 10, 20, 50,100 ],
+            pageLength: 10,
             dom:`<'row' <'col-sm-6 d-flex justify-content-start'<'customfields'>f> <'col-sm-6 d-flex justify-content-end'B> >rt<'row'
 			 <'col-sm-6'l> <'col-sm-6'p><'col-sm-12 d-flex justify-content-center'i>>`,
             //ordering:false,
             columns:[
                 {data: 'id', visible:false, searchable:false, className:'noVis'},
-                {data: 'plandatetime', title: "Plan Datetime", render:function(data, type, row, meta){
-                    //return `<a href="${urlname}?id=${row['id']}">${data}</a>`
-                    return `<a href="${urlname}?id=${row['id']}">${convert_to_local(type, data, row)}</a>`
-                }},
+                {data:"client__buname", title:"Client", visible:false},
+                {data:"bu__buname", title:"Site"},
                 {data: 'jobdesc', title: 'Description', render:function(data, type, row, meta){
                     return `<a href="${urlname}?id=${row['id']}">${data}</a>`
                 }},
+                {data: 'plandatetime', title: "Start DateTime", render:function(data, type, row, meta){
+                    //return `<a href="${urlname}?id=${row['id']}">${data}</a>`
+                    return `<a href="${urlname}?id=${row['id']}">${convert_to_local(type, data, row)}</a>`
+                }},
+                {data: 'expirydatetime', title: "End Datetime", render:function(data, type, row, meta){
+                    return `<a href="${urlname}?id=${row['id']}">${convert_to_local(type, data, row)}</a>`
+                }},
+                {data:"no_of_checkpoints", title:"Checkpoints/Assets"},
                 {data: 'jobstatus', title: 'Status'},
+                {data:"completed",title:"Completed"},
+                {data:"missed",title:"Missed"},
                 {data: 'jobtype', title: 'Type'},
                 {title: 'People/Group', defaultContent:null, data:'assignedto', render:function(data, type, row, meta){
                     if(data.includes('[GROUP]')){
@@ -100,12 +108,13 @@ Tour List
                         return data
                     }
                 }},
-                {data: 'performedby__peoplename', title: 'Performed By'},
-                {data: 'gracetime', title: "Grace Time"},
-                {data: 'expirydatetime', title: "Expiry Datetime", render:function(data, type, row, meta){
-                    return `<a href="${urlname}?id=${row['id']}">${convert_to_local(type, data, row)}</a>`
+                {data: 'endtime', title: "Performed On", render:function(data, type, row, meta){
+                    if (data === null) {return "--";} 
+                    else { 
+                    return `<a href="${urlname}?id=${row['id']}">${convert_to_local(type, data, row)}</a>`}
                 }},
-                {data:"bu__buname", title:"Site"},
+                {data: 'performedby__peoplename', title: 'Performed By'},
+                {# {data: 'gracetime', title: "Grace Time"}, #}
                 {data:"bu__bucode", title:"Site Code", visible:false},
                 {data:"ctzoffset", visible:false, className:'noVis'},
             ],

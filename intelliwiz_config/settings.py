@@ -469,8 +469,8 @@ SECURE_SSL_REDIRECT=False
 
 DATA_UPLOAD_MAX_MEMORY_SIZE = int(env('DATA_UPLOAD_MAX_MEMORY_SIZE'))
 NOTEBOOK_ARGUMENTS = [
-    '--ip', '192.168.1.254',
-    '--port', '8001',
+    '--ip', '192.168.1.33',
+    '--port', '8002',
 ]
 
 

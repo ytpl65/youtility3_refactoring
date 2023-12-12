@@ -438,5 +438,39 @@ def get_query(query):
             GROUP BY 
                 Asset.assetname,asset.id
             
+            ''',
+            "DetailedTourSummary":
+            '''
+            WITH timezone_setting AS (
+                SELECT %s ::text AS timezone
+            )
+
+            SELECT * ,
+                coalesce(round(x."Total Completed"::numeric/nullif(x."Total Tours"::numeric,0)*100,2),0) as "Percentage"
+            FROM (
+                SELECT
+                bu.id,
+                client.buname as "client"
+                bu.buname as "Site",
+                (jobneed.plandatetime AT TIME ZONE tz.timezone)::DATE as "Date",
+                count(jobneed.id)::numeric as "Total Tours",
+            count(case when jobneed.jobtype='SCHEDULE' then jobneed.jobtype end) as "Total Scheduled",
+            count(case when jobneed.jobtype='ADHOC' then jobneed.jobtype end) as "Total Adhoc",
+            count(case when jobneed.jobstatus='ASSIGNED' then jobneed.jobstatus end) as "Total Pending",
+            count(case when jobneed.jobstatus='AUTOCLOSED' then jobneed.jobstatus end) as "Total Closed",
+            count(case when jobneed.jobstatus='COMPLETED' then jobneed.jobstatus end) as "Total Completed"
+
+                FROM jobneed
+                INNER JOIN bt bu ON bu.id=jobneed.bu_id
+                CROSS JOIN timezone_setting tz
+                WHERE
+                jobneed.identifier='INTERNALTOUR'
+                AND jobneed.id <> 1
+                AND bu.id <> 1
+                AND jobneed.bu_id IN (SELECT unnest(string_to_array(%s, ',')::integer[]))  
+                AND (jobneed.plandatetime AT TIME ZONE tz.timezone)::DATE BETWEEN %s AND %s
+                GROUP BY bu.id, bu.buname, (jobneed.plandatetime AT TIME ZONE tz.timezone)::DATE
+                ORDER BY bu.buname, (jobneed.plandatetime AT TIME ZONE tz.timezone)::DATE desc
+            ) as x
             '''
     }.get(query)
