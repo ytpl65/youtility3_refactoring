@@ -193,9 +193,10 @@ class EmailReportForm(forms.Form):
     report_templates   = ReportForm.report_templates
     
     ctzoffset       = forms.IntegerField(required=True)
-    report_type     = forms.ChoiceField(label="Report Type",required=True, choices=report_templates)
+    report_type     = forms.ChoiceField(label="Report Type",required=True, widget=s2forms.Select2Widget, choices=report_templates)
     report_name     = forms.CharField(label='Report Name', max_length=55, required=True)
-    report_cron     = forms.CharField(label='Frequency', max_length=10, required=True)
+    cron     = forms.CharField(label='Frequency', max_length=10, required=True, initial='* * * *')
+    cronstrue = forms.CharField(widget=forms.Textarea(attrs={'readonly':True, 'rows':2}), required=False) 
     report_sendtime = forms.TimeField(label='Send Out Time', required=True)
     cc              = forms.MultipleChoiceField(label='CC', required=False, widget=s2forms.Select2MultipleWidget)
     to_addr         = forms.MultipleChoiceField(label="To", required=False, widget=s2forms.Select2MultipleWidget)
@@ -209,6 +210,7 @@ class EmailReportForm(forms.Form):
         super().__init__(*args, **kwargs)
         self.fields['cc'].choices = self.choices_for_cc()
         self.fields['to_addr'].choices = self.choices_for_toaddr()
+        utils.initailize_form_fields(self)
 
     def choices_for_cc(self):
         return pm.People.objects.filter(

@@ -204,7 +204,7 @@ class PeopleResource(resources.ModelResource):
         if People.objects.select_related().filter(
             loginid=row['Login ID*'], peoplecode=row['Code*'],
             bu__bucode = row['Site*']).exists():
-            raise ValidationError(f"Record with these values already exist {', '.join(row.values())}")
+            raise ValidationError(f"Record with the se values already exist {', '.join(row.values())}")
     
 
 
