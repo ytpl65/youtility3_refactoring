@@ -127,6 +127,8 @@ function dataTablesPDFConfig(
     customize: function (doc) {
       doc.defaultStyle.fontSize = 7;
       doc.styles.tableHeader.fontSize = 7;
+      doc.content[1].table.widths = 
+        Array(doc.content[1].table.body[0].length + 1).join('*').split('');
     },
     ...moreConfig,
   };

@@ -31,7 +31,7 @@ class BaseReportsExport(WeasyTemplateResponseMixin):
     
     def __init__(self, filename, client_id, design_file=None, request=None, context=None,
                  data=None, additional_content=None,
-                 returnfile=False,  formdata=None, form=None):       
+                 returnfile=False,  formdata=None):       
         self.design_file = design_file
         self.request = request
         self.context = context
@@ -41,14 +41,8 @@ class BaseReportsExport(WeasyTemplateResponseMixin):
         self.additional_content=additional_content
         self.filename = filename
         self.returnfile = returnfile
-        self.form=form
         
-    def handle_no_data(self, func):
-        def wrapper(*args, **kwargs):
-            if self.form and not self.data:
-                self.form.add_error(None, self.no_data_error)
-                return render(self.request, self.report_form_template, {'form':self.form})
-            result = func(*args, **kwargs)
+    
     
     
     def get_pdf_output(self):
@@ -244,7 +238,7 @@ class ReportEssentials(object):
     def behaviour_json(self):
         report = self.get_report_export_object()
         return {
-            'supported_formats': report.supported_formats,
+            'unsupported_formats': report.unsupported_formats,
             'fields':report.fields
         }
     

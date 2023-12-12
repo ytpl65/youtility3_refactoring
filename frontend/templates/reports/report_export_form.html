@@ -345,8 +345,6 @@ Report Form
   var formSaved = false;
 
   $(document).ready(() => {
-    var report_names = JSON.parse('{{ report_names }}')
-    var fields_map = JSON.parse('{{ fields_map }}')
     //set ctzoffset
     $("#id_ctzoffset").val(-new Date().getTimezoneOffset())
 
@@ -514,18 +512,54 @@ Report Form
     //on load for selected report_name
     hideAndShowFieldsBasedOnReport(getSelectedValue("#id_report_name"))
 
+  function dynamicFormBehaviour(data) {
+      $('.datafield').addClass('d-none')
+      const { fields, unsupported_formats } = data.behaviour;
+
+      // Function to toggle visibility and required attribute
+      function toggleFieldBehavior(fieldname) {
+          const id = 'id_' + fieldname.replace('*', '');
+          const $element = $('#' + id);
+
+          if ($element.length > 0) {
+              const closestInputGroup = $element.closest(".input-group");
+              closestInputGroup.toggleClass("d-none");
+              
+              if (fieldname.includes('*')) {
+                  toggleRequiredAttribute(id, set = true);
+              }
+          }
+      }
+
+      // Toggle behavior for each field
+      fields.forEach(fieldname => toggleFieldBehavior(fieldname));
+
+      // Hide options based on unsupported formats
+      if (unsupported_formats[0] !== 'None') {
+          $("#id_format option").each(function() {
+              const optionValue = $(this).val();
+              if (optionValue && unsupported_formats.includes(optionValue)) {
+                  $(this).prop('disabled', true);
+              }
+          });
+      }
+  }
+
 
     // Attach the event listeners
     $('#id_cc, #id_to_addr').on('select2:select select2:unselect', onSelectionChanged);
 
     //hide/show fields based on report_name
     $("#id_report_name").change((e) => {
-      let selected = getSelectedValue("#id_report_name")
+      let selected = $("#id_report_name").val()
       fire_ajax_get({
         url:urlname,
         data: {'action':'form_behaviour', 'report_name':selected}
       }).done((data, status, error) => {
-        
+        if(selected === 'PeopleQR'){
+          showHideSelectField('SITE')
+        }
+        dynamicFormBehaviour(data)
       })
     })
   })

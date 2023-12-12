@@ -71,12 +71,11 @@ $(document).ready(function () {
 				{data:"bu__bucode", title:'Site Code', visible:false}
 
 			],
-			pageLength:14,
 			order:[[1, 'asc']],
 			deferRender:true,
-			scrollY: 300,
-            scrollCollapse: true,
-            scrollX:true,
+			responsive:true,
+			pageLength:14,
+			lengthMenu: [14, 20, 50, 100],
 			dom:`<'row' <'col-sm-6 d-flex justify-content-start'f> <'col-sm-6 d-flex justify-content-end'B> >rt<'row'
 			 <'col-sm-6'l> <'col-sm-6'p><'col-sm-12 d-flex justify-content-center'i>>`,
 			columnDefs:[

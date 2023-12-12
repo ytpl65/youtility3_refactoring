@@ -45,7 +45,9 @@ Buisiness View
 			language: {
 				searchPlaceholder: "Search keyword"
 			},
-			pageLength:50,
+			responsive:true,
+			pageLength:10,
+			lengthMenu: [10, 20, 50, 100],
 			columns     : [
                 { "data": "id", className:'noVis' },
                 { "data": "bucode" },
@@ -56,9 +58,6 @@ Buisiness View
                 { "data": "parent__buname" },
                 { "data": "butype__taname" },
             ],
-			scrollY: 300,
-            scrollCollapse: true,
-            scrollX:true,
 			columnDefs:[
 				{targets:0, visible:false, searchable:false, orderable:false},
 				{

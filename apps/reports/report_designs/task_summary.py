@@ -9,7 +9,7 @@ class TaskSummaryReport(BaseReportsExport):
     design_file = "reports/pdf_reports/task_summary.html"
     ytpl_applogo =  'frontend/static/assets/media/images/logo.png'
     report_name = 'TaskSummary'
-    supported_formats = ['all']
+    unsupported_formats = ['None']
     fields = ['site*', 'fromdate*', 'uptodate*']
     
     def __init__(self, filename, client_id, request=None, context=None, data=None, additional_content=None, returnfile=False, formdata=None):
@@ -30,6 +30,7 @@ class TaskSummaryReport(BaseReportsExport):
             'app_logo':self.ytpl_applogo,
             'report_subtitle':f"Site: {sitename}, From: {self.formdata.get('fromdate')} To {self.formdata.get('uptodate')}"
         }
+        return len(self.context['data']) > 0
         
     def set_args_required_for_query(self):
         self.args = [
@@ -45,6 +46,7 @@ class TaskSummaryReport(BaseReportsExport):
         '''
         self.set_args_required_for_query()
         self.data = runrawsql(get_query(self.report_name), args=self.args)
+        return len(self.data) > 0
 
     def excel_columns(self,df):
         df = df[['Planned Date','Total Tasks','Total Scheduled','Total Adhoc',
@@ -106,10 +108,13 @@ class TaskSummaryReport(BaseReportsExport):
         export_format = self.formdata.get('format')
         # context needed for pdf, html
         if export_format in ['pdf', 'html']:
-            self.set_context_data()
+            has_data = self.set_context_data()
         else:
             self.set_additional_content()
-            self.set_data()
+            has_data = self.set_data()
+        
+        if not has_data:
+            return None
         
         # preview in pdf
         if self.formdata.get('preview') == 'true':

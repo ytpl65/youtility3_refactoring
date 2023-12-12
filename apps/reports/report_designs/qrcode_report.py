@@ -71,6 +71,8 @@ class QRCodeBaseReport(BaseReportsExport):
 
 class PeopleQR(QRCodeBaseReport):
     report_name = 'PeopleQR'
+    fields = ['site', 'mult_people', 'qrsize*', 'site_or_people*']
+    unsupported_formats = ['xlsx', 'csv', 'json']
     
     def set_data(self):
         from apps.peoples.models import People
@@ -97,6 +99,8 @@ class PeopleQR(QRCodeBaseReport):
     
 class AssetQR(QRCodeBaseReport):
     report_name = 'AssetQR'
+    fields = ['site*','assettype*','assetcategory', 'qrsize*']
+    unsupported_formats = ['xlsx', 'csv', 'json']
     
     def set_data(self):
         from apps.activity.models import Asset
@@ -129,6 +133,8 @@ class AssetQR(QRCodeBaseReport):
 
 class CheckpointQR(QRCodeBaseReport):
     report_name = 'CheckpointQR'
+    fields = ['site*','checkpoint_type*', 'qrsize*']
+    unsupported_formats = ['xlsx', 'csv', 'json']
 
     def set_data(self):
         from apps.activity.models import Asset

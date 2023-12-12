@@ -10,6 +10,8 @@ class AssetwiseTaskStatus(BaseReportsExport):
     design_file = "reports/pdf_reports/assetwise_task_status.html"
     ytpl_applogo =  'frontend/static/assets/media/images/logo.png'
     report_name = 'Assetwisetaskstatus'
+    fields = ['site*', "fromdate*", "uptodate*"]
+    unsupported_formats = ['None']
 
     def __init__(self, filename, client_id, request=None, context=None, data=None, additional_content=None, returnfile=False, formdata=None):
         super().__init__(filename, client_id, design_file=self.design_file, request=request, context=context, data=data, additional_content=additional_content, returnfile=returnfile, formdata=formdata)
@@ -50,7 +52,7 @@ class AssetwiseTaskStatus(BaseReportsExport):
 
 
     def set_additional_content(self):
-        bt = Bt.objects.filter(id=self.client_id).values('id', 'buname').first()
+        bt = Bt.objects.filter(id=self.client_id).values('id*', 'buname*').first*()
         self.additional_content = f"Client: {bt['buname']}; Report: {self.report_title}; From: {self.formdata['fromdate']} To: {self.formdata['uptodate']}"
 
     def excel_columns(self, df):

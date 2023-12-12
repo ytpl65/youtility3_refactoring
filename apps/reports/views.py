@@ -524,6 +524,8 @@ class DownloadReports(LoginRequiredMixin, View):
         'template_form':"reports/report_export_form.html",
         'form':rp_forms.ReportForm,
         'ReportEssentials':rutils.ReportEssentials,
+        "nodata":"No data found matching your report criteria.\
+        Please check your entries and try generating the report again"
     }
     
     def get(self, request, *args, **kwargs):
@@ -535,8 +537,6 @@ class DownloadReports(LoginRequiredMixin, View):
         fields_map = json.dumps(form.get_fields_report_map())
         cxt = {
             'form':form,
-            'report_names':report_names,
-            'fields_map':fields_map
         }
         return render(request, P['template_form'], context=cxt)
     
@@ -548,8 +548,7 @@ class DownloadReports(LoginRequiredMixin, View):
         fields_map = json.dumps(form.get_fields_report_map())
         if not form.is_valid():
             return render(request, P['template_form'], context={
-                'form':form, 'report_names':report_names,
-                'fields_map':fields_map})
+                'form':form})
         log.info('form is valid')
         formdata = form.cleaned_data
         log.info("Formdata submitted by user %s"%(pformat(formdata)))
@@ -559,9 +558,13 @@ class DownloadReports(LoginRequiredMixin, View):
         report_essentials = rutils.ReportEssentials(report_name=formdata['report_name'])
         log.info("report essentials %s"%(report_essentials))
         ReportFormat = report_essentials.get_report_export_object()
-        report = ReportFormat(filename=formdata['report_name'], client_id=session['client_id'], formdata=formdata, request=request, form=form)
+        report = ReportFormat(filename=formdata['report_name'], client_id=session['client_id'], formdata=formdata, request=request)
         log.info("Report Format intialized, %s"%(report))
-        return report.execute()
+        if response :=  report.execute():
+            return response
+        form.add_error(None, self.PARAMS['nodata'])
+        return render(request, self.PARAMS['template_form'], {'form':form})
+        
     
     def form_behaviour(self, R):
         report_essentials = self.PARAMS['ReportEssentials'](report_name=R['report_name'])

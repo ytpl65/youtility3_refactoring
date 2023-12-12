@@ -1,6 +1,6 @@
 import graphene
 from apps.core import utils
-from apps.activity.models import JobneedDetails, Question, QuestionSet, QuestionSetBelonging, Location, Attachment
+from apps.activity.models import JobneedDetails, Question, QuestionSet, QuestionSetBelonging, Location, Attachment, Jobneed
 from apps.work_order_management.models import Vendor, Approver, Wom
 from apps.y_helpdesk.models import Ticket
 from apps.onboarding.models import GeofenceMaster, Bt, DownTimeHistory
@@ -137,7 +137,7 @@ class Query(graphene.ObjectType):
                                  parentid = graphene.Int(),
                                  clientid = graphene.Int(),
                                  fromdate = graphene.String(required=True),
-        todate = graphene.String(required=True),
+                                todate = graphene.String(required=True),
                                      )
 
     approve_workpermit = graphene.Field(SelectOutputType,
@@ -242,7 +242,10 @@ class Query(graphene.ObjectType):
     @staticmethod
     def resolve_get_jobneedmodifiedafter(self, info, peopleid, buid, clientid):
         log.info(f'\n\nrequest for jobneed-modified-after inputs: peopleid:{peopleid}, buid:{buid}, clientid:{clientid}')
-        return get_jobneedmodifiedafter(peopleid, buid, clientid)
+        data = Jobneed.objects.get_job_needs(peopleid, buid, clientid)
+        records, count, msg = utils.get_select_output(data)
+        log.info(f'{count} objects returned...')
+        return SelectOutputType(nrows = count,  records = records,msg = msg)
     
     @staticmethod
     def resolve_get_externaltourmodifiedafter(self, info, peopleid, buid, clientid):
@@ -429,7 +432,7 @@ def get_db_rows(sql, args = None):
     count = len(data)
     log.info(f'{count} objects returned...')
     for rec in data:
-        ic(rec['id'])
+        ic(rec['plandatetime'])
     return SelectOutputType(records = data_json, msg = msg, nrows = count)
 
 def get_jobneedmodifiedafter(peopleid, siteid, clientid):

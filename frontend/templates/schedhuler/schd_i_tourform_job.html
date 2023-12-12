@@ -300,6 +300,7 @@ Schedule Tour
 <script src="{{ static('assets/js/local/cronstrue.min.js') }}"></script>
 <script>
     var table = null;
+    var editor = null;
     const createUrl = "{{ url('schedhuler:create_tour') }}"
     // add classes to label tags.
     $('label').removeClass("col-form-label col-md-2 col-sm-2 text-sm-right")
@@ -396,9 +397,10 @@ Schedule Tour
             ajax:{
                 url:"{{ url('schedhuler:schd_internal_tour') }}",
                 data:function(d){
+                    let currentRow = getCurrentEditingRow(editor, table)
                     d.csrfmiddlewaretoken = "{{ csrf_token }}"
                     d.seqno = $("#DTE_Field_seqno").val()
-                    d.pk = editor.field('pk').val()
+                    d.pk = currentRow !== 'None' ? currentRow['pk'] : currentRow
                     d.asset_id = $("#DTE_Field_asset").val()
                     d.qset_id = $("#DTE_Field_qset").val()
                     d.expirytime = $("#DTE_Field_expirytime").val()

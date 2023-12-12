@@ -884,6 +884,41 @@ class JobneedManager(models.Manager):
         dtz = dtime + timedelta(minutes=int(ctzoffset))
         return dtz.strftime('%d-%b-%Y %H:%M:%S')
     
+    def get_job_needs(self, people_id, bu_id, client_id):
+        fields = [
+            'id', 'jobdesc', 'plandatetime', 'expirydatetime', 'gracetime', 
+            'receivedonserver', 'starttime', 'endtime', 'gpslocation', 
+            'remarks', 'cdtz', 'mdtz', 'pgroup_id','asset_id', 'cuser_id', 'frequency', 
+            'job_id', 'jobstatus', 'jobtype', 'muser_id', 'performedby_id', 
+            'priority', 'qset_id', 'scantype', 'people_id', 'attachmentcount', 'identifier', 'parent_id',  
+            'bu_id', 'client_id', 'seqno', 'ticketcategory_id', 'ctzoffset', 'multifactor',
+            'uuid', 'istimebound', 'ticket_id','remarkstype_id'
+        ]
+        # Retrieve group IDs from Pgbelonging
+        group_ids = pm.Pgbelonging.objects.filter(
+            people_id=people_id
+        ).exclude(
+            pgroup_id=-1
+        ).values_list('pgroup_id', flat=True)
+
+        # Construct the filter conditions for the job needs
+        today = datetime.now().date()
+        tomorrow = today + timedelta(days=1)
+
+        job_needs_filter = (
+            Q(bu_id=bu_id) &
+            Q(client_id=client_id) &
+            ~Q(identifier__in=['TICKET', 'EXTERNALTOUR']) &
+            (Q(people_id=people_id) | Q(cuser_id=people_id) | Q(muser_id=people_id) | Q(pgroup_id__in=group_ids)) &
+            (Q(plandatetime__date__range=[today, tomorrow]) | Q(plandatetime__lte=datetime.now(), expirydatetime__gte=datetime.now()))
+        )
+
+        # Query for job needs with the constructed filters
+        job_needs = self.annotate(
+            istimebound = F('other_info__istimebound')).filter(job_needs_filter).values(*fields)
+
+        return job_needs
+    
 
             
 

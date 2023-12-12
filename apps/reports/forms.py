@@ -97,6 +97,7 @@ class ReportForm(forms.Form):
         ('SEND', 'Email'),
     ]
     format_types = [
+        ('', 'Select Format'),
         ('pdf', 'PDF'),
         ('xlsx', 'XLSX'),
         ('html', 'HTML'),
@@ -133,7 +134,7 @@ class ReportForm(forms.Form):
     site_or_people  = forms.ChoiceField(label="Site/People", widget=s2forms.Select2Widget,choices=People_or_Site_CHOICES, required=False)
     
     #other form fields
-    format      = forms.ChoiceField(widget=s2forms.Select2Widget, label="Format", required=True, choices=format_types, initial='PDF')
+    format      = forms.ChoiceField(widget=s2forms.Select2Widget, label="Format", required=True, choices=format_types)
     export_type = forms.ChoiceField(widget=s2forms.Select2Widget, label='Get File with', required=True, choices=download_or_send_options, initial='DOWNLOAD')
     cc          = forms.MultipleChoiceField(label='CC', required=False, widget=s2forms.Select2MultipleWidget)
     to_addr     = forms.MultipleChoiceField(label="To", required=False, widget=s2forms.Select2MultipleWidget)
