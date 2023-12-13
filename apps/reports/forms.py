@@ -95,7 +95,9 @@ class ReportForm(forms.Form):
         ('AssetQR', 'Asset-QR'),
         ('CheckpointQR', 'Checkpoint-QR'),
         ('AssetwiseTaskStatus','Assetwise Task Status'),
-        ('DetailedTourSummary','Detailed Tour Summary')
+        ('StaticDetailedTourSummary','Static Detailed Tour Summary'),
+        ('DynamicDetailedTourSummary','Dynamic Detailed Tour Summary'),
+        ('TourDetails','Tour Details')
     ]
     download_or_send_options = [
         ('DOWNLOAD', 'Download'),

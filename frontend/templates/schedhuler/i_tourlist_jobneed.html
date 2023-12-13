@@ -89,11 +89,11 @@ const urlname = "{{ url('schedhuler:jobneedtours') }}"
                 {data: 'jobdesc', title: 'Description', render:function(data, type, row, meta){
                     return `<a href="${urlname}?id=${row['id']}">${data}</a>`
                 }},
-                {data: 'plandatetime', title: "Start DateTime", render:function(data, type, row, meta){
+                {data: 'plandatetime', title: "Plan DateTime", render:function(data, type, row, meta){
                     //return `<a href="${urlname}?id=${row['id']}">${data}</a>`
                     return `<a href="${urlname}?id=${row['id']}">${convert_to_local(type, data, row)}</a>`
                 }},
-                {data: 'expirydatetime', title: "End Datetime", render:function(data, type, row, meta){
+                {data: 'expirydatetime', title: "Expiry Datetime", render:function(data, type, row, meta){
                     return `<a href="${urlname}?id=${row['id']}">${convert_to_local(type, data, row)}</a>`
                 }},
                 {data:"no_of_checkpoints", title:"Checkpoints/Assets"},
