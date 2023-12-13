@@ -114,7 +114,7 @@ function dataTablesPDFConfig(
     extend: "pdfHtml5",
     text: '<i class="bi text-danger fs-5 bi-file-earmark-pdf-fill"></i>',
     titleAttr: "PDF",
-    exportOptions: {
+    exportOptions: { 
       modifier: {
         page: "all",
       },
@@ -734,6 +734,8 @@ function fire_ajax_form_post(params, payload) {
       } else {
         display_form_errors(xhr.responseJSON.errors);
       }
+    }else{
+      show_error_alert("Something went wrong at server!", "ERROR")
     }
   });
 }
@@ -2150,3 +2152,37 @@ function modifyWidgets(element, time = false, date = false, datetime = false) {
 }
 
 //============================================== QSB EDITOR FUNCTIONS END===========================================//
+
+
+function dynamicFormBehaviour(data, forschedule=false) {
+  $('.datafield').addClass('d-none')
+  const { fields, unsupported_formats } = data.behaviour;
+
+  // Function to toggle visibility and required attribute
+  function toggleFieldBehavior(fieldname) {
+      const id = 'id_' + fieldname.replace('*', '');
+      const $element = $('#' + id);
+
+      if ($element.length > 0) {
+          const closestInputGroup = $element.closest(".input-group");
+          closestInputGroup.toggleClass("d-none");
+          
+          if (fieldname.includes('*')) {
+              toggleRequiredAttribute(id, set = true);
+          }
+      }
+  }
+
+  // Toggle behavior for each field
+  fields.forEach(fieldname => toggleFieldBehavior(fieldname));
+
+  // Hide options based on unsupported formats
+  if (unsupported_formats[0] !== 'None') {
+      $("#id_format option").each(function() {
+          const optionValue = $(this).val();
+          if (optionValue && unsupported_formats.includes(optionValue)) {
+              $(this).prop('disabled', true);
+          }
+      });
+  }
+}

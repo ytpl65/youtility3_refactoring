@@ -3,7 +3,7 @@ from django.conf import settings
 from django.utils import timezone
 from django.core.serializers.json import DjangoJSONEncoder
 from django.utils.translation import gettext_lazy as _
-
+from apps.peoples.models import BaseModel
 
 def now():
     return timezone.now().replace(microsecond = 0)
@@ -32,3 +32,34 @@ class ReportHistory(models.Model):
     
     def __str__(self):
         return f'User: {self.user.peoplename} Report: {self.report_name}'
+    
+def now():
+    return timezone.now().replace(microsecond = 0)
+
+class ScheduleReport(BaseModel):
+    REPORT_TEMPLATES = [
+        ('', 'Select Report'),
+        ('TaskSummary', 'Task Summary'),
+        ('TourSummary', 'Tour Summary'),
+        ('ListOfTasks', 'List of Tasks'),
+        ('ListOfTours', 'List of Internal Tours'),
+        ('PPMSummary', 'PPM Summary'),
+        ('ListOfTickets', 'List of Tickets'),
+        ('WorkOrderList', 'Work Order List'),
+        ('SiteReport', 'Site Report'),
+        ('PeopleQR', 'People-QR'),
+        ('AssetQR', 'Asset-QR'),
+        ('CheckpointQR', 'Checkpoint-QR'),
+        ('AssetwiseTaskStatus','Assetwise Task Status'),
+        ('DetailedTourSummary','Detailed Tour Summary')
+    ]
+    report_type = models.CharField(_("Report Type"), max_length=50, choices=REPORT_TEMPLATES)
+    report_name = models.CharField(_("Report Name"), max_length=55)
+    cron = models.CharField(_("Scheduler"), max_length=50, default='* * * * *')
+    report_sendtime = models.TimeField(_("Send Time"), auto_now=False, auto_now_add=False)
+    cc = models.TextField(_("CC"), blank=True )
+    to_addr = models.TextField(_('To Address'), blank=True)
+    enable = models.BooleanField(_("Enable"), default=True)
+    lastgeneratedon = models.DateTimeField(_("Last Generated On"), default=now)
+    report_params = models.JSONField(null=True, blank=True, default={'report_params':{}})
+    

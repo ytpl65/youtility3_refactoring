@@ -26,6 +26,7 @@ from django.urls import reverse_lazy
 from django.conf import settings
 import pandas as pd, xlsxwriter
 from apps.reports import utils as rutils
+from .models import ScheduleReport
 from django_weasyprint.views import WeasyTemplateView
 import time, base64, sys, json
 log = logging.getLogger('__main__')
@@ -676,15 +677,42 @@ class DesignReport(LoginRequiredMixin, View):
 
 
 class ScheduleEmailReport(LoginRequiredMixin, View):
-    PARAMS = {
+    P = {
         'template_form':"reports/schedule_email_report.html",
         'form':rp_forms.EmailReportForm,
+        'popup_form':rp_forms.ReportForm,
+        'model':ScheduleReport,
         'ReportEssentials':rutils.ReportEssentials,
         "nodata":"No data found matching your report criteria.\
         Please check your entries and try generating the report again"
     }
     
     def get(self, request, *args, **kwargs):
-        form = self.PARAMS['form'](request=request)
-        cxt = {'form':form}
-        return render(request, self.PARAMS['template_form'], context=cxt)
+        R = request.GET
+        if R.get('id'):
+            obj = utils.get_model_obj(R['id'], request, {'model': self.P['model']})
+            params_initial = obj.report_params
+            cxt = {
+                'form':self.P['form'](instance=obj, request = request),
+                'popup_form':self.P['popup_form'](request=request, initial=params_initial)}
+            return render(request, self.P['template_form'], cxt)
+        form = self.P['form'](request=request)
+        form2 = self.P['popup_form'](request=request)
+        cxt = {'form':form, 'popup_form': form2}
+        return render(request, self.P['template_form'], context=cxt)
+    
+    def post(self, request, *args, **kwargs):
+        data = QueryDict(request.POST['formData'])
+        form = self.P['form'](data=data,request=request)
+        if form.is_valid():
+            report_params = data.get('report_params')
+            ic(report_params)
+            obj = form.save(commit=False)
+            obj = putils.save_userinfo(obj, request.user, request.session)
+            obj.report_params = report_params
+            obj.save()
+        else:
+            cxt = {'errors': form.errors}
+            return utils.handle_invalid_form(request, self.P, cxt)
+        
+        

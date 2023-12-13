@@ -7,6 +7,7 @@ from django_select2 import forms as s2forms
 from django.db.models import Q
 from datetime import datetime, timedelta
 from django.conf import settings
+from apps.reports.models import ScheduleReport
 
 class MasterReportTemplate(forms.ModelForm):
     required_css_class = "required"
@@ -74,6 +75,9 @@ class ReportBuilderForm(forms.Form):
     model = forms.ChoiceField(label="Model", widget=s2forms.Select2Widget, help_text="Select a model where you want data from")
     columns = forms.MultipleChoiceField(label="Coumns", widget=s2forms.Select2MultipleWidget, help_text="Select columns required in the report")
     
+
+def get_report_templates():
+    return  
 
 class ReportForm(forms.Form):
     required_css_class = "required"
@@ -187,39 +191,21 @@ class ReportForm(forms.Form):
         return self.cleaned_data
     
     
-    
-class EmailReportForm(forms.Form):
-    required_css_class = 'required'
-    report_templates   = ReportForm.report_templates
-    
-    ctzoffset       = forms.IntegerField(required=True)
-    report_type     = forms.ChoiceField(label="Report Type",required=True, widget=s2forms.Select2Widget, choices=report_templates)
-    report_name     = forms.CharField(label='Report Name', max_length=55, required=True)
-    cron     = forms.CharField(label='Frequency', max_length=10, required=True, initial='* * * *')
-    cronstrue = forms.CharField(widget=forms.Textarea(attrs={'readonly':True, 'rows':2}), required=False) 
-    report_sendtime = forms.TimeField(label='Send Out Time', required=True)
-    cc              = forms.MultipleChoiceField(label='CC', required=False, widget=s2forms.Select2MultipleWidget)
-    to_addr         = forms.MultipleChoiceField(label="To", required=False, widget=s2forms.Select2MultipleWidget)
 
+class EmailReportForm(forms.ModelForm):
+    required_css_class = 'required'
     
-    
-    
+    cronstrue = forms.CharField(widget=forms.Textarea(attrs={'readonly':True, 'rows':2}), required=False)
+    class Meta:
+        fields = ['report_type', 'report_name', 'cron', 'report_sendtime', 'enable', 'ctzoffset']
+        model = ScheduleReport
+        labels = {
+            'cron':'Frequency'
+        }
+        
     def __init__(self, *args, **kwargs):
         self.request = kwargs.pop('request', None)
         self.S = self.request.session
         super().__init__(*args, **kwargs)
-        self.fields['cc'].choices = self.choices_for_cc()
-        self.fields['to_addr'].choices = self.choices_for_toaddr()
         utils.initailize_form_fields(self)
-
-    def choices_for_cc(self):
-        return pm.People.objects.filter(
-            isverified=True, client_id = self.S['client_id']).values_list(
-                'email', 'peoplename')
-    
-    def choices_for_toaddr(self):
-        return pm.People.objects.filter(
-            isverified=True, client_id = self.S['client_id']).values_list(
-                'email', 'peoplename')
-            
     

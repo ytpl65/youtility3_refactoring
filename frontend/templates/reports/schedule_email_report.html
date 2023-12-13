@@ -9,6 +9,7 @@ Schedule Report Form
 
 {% block extra_css %}
 {{ form.media.css }}
+{{ popup_form.media.css }}
 <link rel="stylesheet" href="{{ static('assets/css/jqCron.css') }}" type="text/css">
 {% endblock extra_css %}
 
@@ -58,6 +59,7 @@ Schedule Report Form
             </div>
             <div class="col-5">
                 {{ form.report_type }}
+                <a class="ms-2 d-none" href="javascript:void(0)" id="see_parameters">see parameters</a>
             </div>
         </div>
         <div class="input-group mb-3">
@@ -68,44 +70,33 @@ Schedule Report Form
                 {{ form.report_name }}
             </div>
         </div>
+        
+        <div class="input-group mb-3">
+            <div class="col-2">
+                {{ form.report_sendtime.label_tag() }}
+            </div>
+            <div class="col-1 d-flex">
+                {{ form.report_sendtime }} <h5 class="mt-4">&nbsp;&nbsp;Hrs.</h5>
+            </div>
+        </div>
         <!--CRON-->
         <div class="col-md-2">
             <label for="{{ form.cron.id_for_label }}" class="required">{{ form.cron.label }}:</label>
         </div>
         <div class="col-md-5 fv-row mb-3">
             <div class="d-flex">
-                <input type="text" name="{{ form.cron.name }}"  id="id_cron"
+                <input type="text" name="{{ form.cron.name }}" value="{{ form.instance.cron }}" id="id_cron"
                 readonly required class="form-control d-none form-control-solid" maxlength="250"/>
                 {{ form.cronstrue }}
-                <a  class="btn btn-circle btn-icon-only btn-default " id="cron_selector">
+                <a  class="btn btn-circle btn-icon-only btn-default" id="cron_selector">
                     <i class="fa fa-clock fs-4 text-primary"></i>
                 </a>
             </div>
             {{ form.cron.errors }}
         </div>
-        <div class="input-group mb-3">
-            <div class="col-2">
-                {{ form.report_sendtime.label_tag() }}
-            </div>
-            <div class="col-5">
-                {{ form.report_sendtime }}
-            </div>
-        </div>
-        <div class="input-group mb-3">
-            <div class="col-2">
-                {{ form.to_addr.label_tag() }}
-            </div>
-            <div class="col-5">
-                {{ form.to_addr }}
-            </div>
-        </div>
-        <div class="input-group mb-3">
-            <div class="col-2">
-                {{ form.cc.label_tag() }}
-            </div>
-            <div class="col-5">
-                {{ form.cc }}
-            </div>
+        <div class="input-group mb-6 col-md-2  form-check form-switch form-check-solid">
+            <label for="{{ form.enable.id_for_label }}" 
+            class="form-check-label bool text-sm-right">{{ form.enable.label }}&nbsp;&nbsp;{{ form.enable }}</label>
         </div>
     </div>
     <div class="form-actions">
@@ -140,11 +131,24 @@ Schedule Report Form
             <button type="button" id="btnSetCron"  class="btn btn-sm  btn-success rounded-1">Set</button>
         </div>
     {% endcall %}
+
+    {% call general_popup(popup_id='parameters_form', title="Set Report Parameters", modal_size="modal-lg") %}
+        <div class="modal-body">
+        <form action="#" id="form_parameters">
+            {{ report_parameters_form(popup_form) }}
+        </form>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-sm btn-secondary" id="btnClearParams">Clear</button>
+            <button type="button" id="btnSetParams"  data-bs-dismiss="modal" class="btn btn-sm  btn-success rounded-1">Set Parameters</button>
+        </div>
+    {% endcall %}   
 {% endblock popup_alerts %}
 
 
 {% block extra_scripts %}
 {{ form.media.js }}
+{{ popup_form.media.js }}
 <script src="{{ static('assets/js/jqCron.js') }}"></script>
 <script src="{{ static('assets/js/jqCron.en.js') }}"></script>
 <script src="{{ static('assets/js/local/cronstrue.min.js') }}"></script>
@@ -160,6 +164,20 @@ Schedule Report Form
         $("#btn_clear").click(() => {
             location.href = `${urlname}?template=true`
         })
+        $("#parameters_form").find("select").select2({
+            dropdownParent: $('#parameters_form')
+        })
+        
+
+        $('#btnClearParams').click(function() {
+            // Clear all Select2 fields
+            $('#parameters_form select').each(function() {
+                $(this).val(null).trigger('change')
+            });
+
+            // Clear all text fields
+            $('#parameters_form input[type="text"]').val(null);
+        });
 
         //after cron set hide the modal
         $("#btnSetCron").click(function(){
@@ -177,19 +195,19 @@ Schedule Report Form
             var old_cron_val= $("#id_cron").val();
             $('#cron_selected_val').val(old_cron_val);
             if(old_cron_val == '') old_cron_val="* * * *";
-            console.log("@@@@",old_cron_val);
             if(old_cron_val != ''){
                 $(function(){
                     $('.jqCronEditor').html('');
                     $('.jqCronEditor').jqCron({
                         multiple_dom: true,
-                        multiple_month: true,
-                        multiple_mins: true,
-                        multiple_dow: true,
-                        multiple_time_hours: true,
-                        multiple_time_minutes: true,
+                        enabled_hour:false,
+                        multiple_month: false,
+                        multiple_mins: false,
+                        multiple_dow: false,
+                        multiple_time_hours: false,
+                        multiple_time_minutes: false,
                         default_period: 'week',
-                        default_value: old_cron_val,
+                        default_value: "* * * *",
                         no_reset_button: false,
                         lang: 'en',
                         numeric_zero_pad: true,
@@ -206,6 +224,74 @@ Schedule Report Form
             }
             $('#cron_scheduler').modal('show');
         });
+
+        //hide some report types which are not appropriate for scheduling
+            $("#id_report_type option").each(function() {
+                const optionValue = $(this).val();
+                const report_types = ['PeopleQR', 'AssetQR', 'CheckpointQR' ]
+                if (optionValue && report_types.includes(optionValue)) {
+                    $(this).prop('disabled', true);
+                }
+            });
+
+        //on report type selected show parameters form
+        $("#id_report_type").change((e) => {
+            let selected = $("#id_report_type").val()
+            console.log("event triggered", selected)
+            if (!["", null, undefined].includes(selected)){
+                //show popup
+                $('#parameters_form').modal('show');
+                $("#see_parameters").removeClass('d-none')
+                //fire ajax
+                fire_ajax_get({
+                    url:"{{ url('reports:exportreports') }}",
+                    data: {'action':'form_behaviour', 'report_name':selected}
+                }).done((data, status, error) => {
+                    if(selected === 'PeopleQR'){
+                    showHideSelectField('SITE')
+                    }
+                    dynamicFormBehaviour(data)
+                })
+            }else{
+                $("#see_parameters").addClass('d-none')
+            }
+        })
+
+        //on click see parameters show pop up
+        $("#see_parameters").click(() => {
+            $("#parameters_form").modal("show")
+        })
+
+        $('#id_report_sendtime').flatpickr({
+            enableTime: true,
+            noCalendar: true,
+            dateFormat: "H:i",
+            time_24hr: true,
+        })
+
+        //submit post request
+        $("#report_schedule_form").on("submit", (e) => {
+            const params  = { url: urlname, modal: false }
+            var   payLoad = {
+                formData           : $("#report_schedule_form").serialize(),
+                csrfmiddlewaretoken: '{{ csrf_token }}',
+                report_params      : $("#form_parameters").serialize()
+            }
+            
+            const id = $("#pk").val()
+            e.preventDefault()
+            if(id != 'None'){
+                var newPayLoad = {...payLoad, 'pk':id}
+                payLoad = newPayLoad
+            }
+            fire_ajax_form_post(params, payLoad)
+            .done((data, status, xhr) => {
+                show_successful_save_alert(update= id != 'None' ? true : false)
+                window.setTimeout(function() {
+                    window.location.href = `${urlname}?id=${data.pk}`;
+                }, 2000);
+            })
+        })
     })
 </script>
 {% endblock extra_scripts %}

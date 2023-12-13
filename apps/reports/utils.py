@@ -17,6 +17,7 @@ log = logging.getLogger('__main__')
 
 
 
+
 class BaseReportsExport(WeasyTemplateResponseMixin):
     '''
     A class which contains logic for Report Exports

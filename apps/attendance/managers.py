@@ -1,4 +1,5 @@
 from datetime import timedelta, datetime, date
+from django.utils import timezone
 from django.db import models
 from django.contrib.gis.db.models.functions import AsGeoJSON, AsWKT
 from apps.core import utils
@@ -279,3 +280,24 @@ class PELManager(models.Manager):
         merged_qset = [{**obj1, **obj2} for obj1, obj2 in zip(pel_qset, att_qset)]
         if count: return len(pel_qset) or 0
         return merged_qset or []
+
+    def get_sitevisited_log(self, clientid, peopleid, ctzoffset):
+        seven_days_ago = (datetime.now() + timedelta(minutes=ctzoffset)) - timedelta(days=7)
+        return self.get_queryset().filter(
+            people_id=peopleid,
+            client_id=clientid,
+            punchouttime__lte=seven_days_ago,
+            peventtype__tacode='SITEVISIT',  # assuming 'tacode' is a field in TypeAssist
+        ).select_related(
+            'peventtype', 'bu'
+        ).annotate(
+            buname = F('bu__buname'),
+            bucode = F('bu__bucode')
+            
+            ).values(
+            'bu_id',
+            'punchintime', 'punchouttime',
+            'ctzoffset', 'buname', 'bucode',
+            'otherlocation',
+        ) or self.none()
+

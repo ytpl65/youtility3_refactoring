@@ -157,6 +157,10 @@ class Query(graphene.ObjectType):
         DowntimeResponse,
         client_id = graphene.Int(required=True)
     )
+    get_site_visited_log = graphene.Field(SelectOutputType,
+                                 clientid = graphene.Int(required = True),
+                                 peopleid = graphene.Int(required = True),
+                                 ctzoffset = graphene.Int(required=True))
     
     
     @staticmethod
@@ -412,6 +416,12 @@ class Query(graphene.ObjectType):
             return DowntimeResponse(
                 message=""
             )
+    def resolve_get_site_visited_log(self, info, clientid, peopleid, ctzoffset):
+        log.info(f'resolve_get_sitevisited_log {clientid = } {peopleid = } {ctzoffset = }')
+        data = PeopleEventlog.objects.get_sitevisited_log(clientid, peopleid, ctzoffset)
+        records, count, msg = utils.get_select_output(data)
+        log.info(f'total {count} objects returned')
+        return SelectOutputType(nrows = count, records = records,msg = msg)
 
 def get_db_rows(sql, args = None):
     import json
