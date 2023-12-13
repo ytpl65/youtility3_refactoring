@@ -36,6 +36,10 @@ class ReportHistory(models.Model):
 def now():
     return timezone.now().replace(microsecond = 0)
 
+
+def report_params_json():
+    return {'report_params':{}}
+
 class ScheduleReport(BaseModel):
     REPORT_TEMPLATES = [
         ('', 'Select Report'),
@@ -61,5 +65,5 @@ class ScheduleReport(BaseModel):
     to_addr = models.TextField(_('To Address'), blank=True)
     enable = models.BooleanField(_("Enable"), default=True)
     lastgeneratedon = models.DateTimeField(_("Last Generated On"), default=now)
-    report_params = models.JSONField(null=True, blank=True, default={'report_params':{}})
+    report_params = models.JSONField(null=True, blank=True, default=report_params_json)
     

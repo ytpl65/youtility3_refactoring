@@ -706,7 +706,6 @@ class ScheduleEmailReport(LoginRequiredMixin, View):
         form = self.P['form'](data=data,request=request)
         if form.is_valid():
             report_params = data.get('report_params')
-            ic(report_params)
             obj = form.save(commit=False)
             obj = putils.save_userinfo(obj, request.user, request.session)
             obj.report_params = report_params
