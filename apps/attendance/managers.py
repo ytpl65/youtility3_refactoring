@@ -295,6 +295,7 @@ class PELManager(models.Manager):
             bucode = F('bu__bucode')
             
             ).values(
+            'id',
             'bu_id',
             'punchintime', 'punchouttime',
             'ctzoffset', 'buname', 'bucode',
