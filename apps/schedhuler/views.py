@@ -1392,6 +1392,7 @@ class InternalTourScheduling(LoginRequiredMixin, View):
                 msg = 'internal scheduler tour'
                 form = utils.get_instance_for_update(
                     data, P, msg, int(pk), kwargs = {'request':request})
+                self.updatecheckpoints(pk)
             else:
                 form = P['form_class'](data, request = request)
             if form.is_valid():
@@ -1424,6 +1425,11 @@ class InternalTourScheduling(LoginRequiredMixin, View):
             log.critical("error handling valid form", exc_info = True)
             raise ex
 
+    def updatecheckpoints(self, pk):
+        job = am.Job.objects.get(id=pk)
+        am.Job.objects.filter(
+            parent_id=pk).update(
+                people_id=job.people_id, pgroup_id=job.pgroup_id)
 
 
 
@@ -1596,7 +1602,10 @@ class ExternalTourScheduling(LoginRequiredMixin, View):
             with transaction.atomic(using = utils.get_current_db_name()):
                 job = form.save(commit=False)
                 if request.POST.get('pk'):
-                    am.Job.objects.filter(parent_id = job.id).update(qset_id = job.qset_id)
+                    am.Job.objects.filter(parent_id = job.id).update(
+                        qset_id = job.qset_id,
+                        people_id= job.people_id,
+                        pgroup_id=job.pgroup_id)
                 if not request.POST.get('pk'):
                     job.other_info['tour_frequency'] = form.cleaned_data['tourfrequency']
                     job.other_info['is_randomized'] = form.cleaned_data['israndom']

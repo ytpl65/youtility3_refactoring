@@ -21,6 +21,8 @@ Schedule Report Form
 <!-------------------------- BEGIN PAGE BREADCUMB ----------------------->
 {% block pagebreadcumb %}
 {{ super() }}
+<li class="breadcrumb-item pe-3"><a href="{{ url('reports:schedule_email_report') }}?template=true" class="pe-3">Scheduled Report List
+    </a></li>
 <li class="breadcrumb-item pe-3"><a href="javascript:void(0)" class="pe-3">Schedule Report Form
     </a></li>
 {% endblock pagebreadcumb %}
@@ -52,6 +54,7 @@ Schedule Report Form
 <form action="" method="post" class="validate" id="report_schedule_form">
     <input type="hidden" name="{{ form.ctzoffset.name }}" id="{{ form.ctzoffset.auto_id }}" value="-1">
     <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
+    <input type="hidden" name="pk" id="pk" value="{{ form.instance.pk }}">
     <div class="row">
         <div class="input-group mb-3">
             <div class="col-2">
@@ -93,6 +96,22 @@ Schedule Report Form
                 </a>
             </div>
             {{ form.cron.errors }}
+        </div>
+        <div class="input-group mb-3">
+            <div class="col-2">
+                {{ form.cc.label_tag() }}
+            </div>
+            <div class="col-5">
+                {{ form.cc }}
+            </div>
+        </div>
+        <div class="input-group mb-3">
+            <div class="col-2">
+                {{ form.to_addr.label_tag() }}
+            </div>
+            <div class="col-5">
+                {{ form.to_addr }}
+            </div>
         </div>
         <div class="input-group mb-6 col-md-2  form-check form-switch form-check-solid">
             <label for="{{ form.enable.id_for_label }}" 
@@ -158,6 +177,10 @@ Schedule Report Form
         return cron === '* * * * *' ? false :true
     }
     $(document).ready(() => {
+        if("{{ form.instance.id }}" !== "None"){
+            //cron to readable format
+            $("#id_cronstrue").val(cronstrue.toString($("#id_cron").val()))
+        }
         //set ctzoffset
         $("#id_ctzoffset").val(-new Date().getTimezoneOffset())
 
@@ -224,6 +247,34 @@ Schedule Report Form
             }
             $('#cron_scheduler').modal('show');
         });
+
+        $("#id_cc, #id_to_addr").djangoSelect2({
+            closeOnSelect:false
+        })
+        //if selected to dont show in cc
+        function onSelectionChanged(e) {
+            const currentSelect = e.target.id;
+            const otherSelect = currentSelect === 'id_cc' ? 'id_to_addr' : 'id_cc';
+            const otherSelectElement = $(`#${otherSelect}`);
+            const currentSelectElement = $(`#${currentSelect}`);
+
+            if (e.type === 'select2:select') {
+                // Hide the selected option from the other dropdown
+                otherSelectElement.find(`option[value="${e.params.data.id}"]`).hide();
+            } else {
+                // Show the deselected option in the other dropdown
+                otherSelectElement.find(`option[value="${e.params.data.id}"]`).show();
+            }
+
+            // If you still want to update the other select based on the current select
+            otherSelectElement.find(`option[value="${e.params.data.id}"]`).prop('selected', false);
+
+            // Trigger the change event to update the other dropdown
+            otherSelectElement.trigger('change');
+        }
+
+        // Attach the event listeners
+        $('#id_cc, #id_to_addr').on('select2:select select2:unselect', onSelectionChanged);
 
         //hide some report types which are not appropriate for scheduling
             $("#id_report_type option").each(function() {

@@ -4,6 +4,7 @@ from django.utils import timezone
 from django.core.serializers.json import DjangoJSONEncoder
 from django.utils.translation import gettext_lazy as _
 from apps.peoples.models import BaseModel
+from django.contrib.postgres.fields import ArrayField
 
 def now():
     return timezone.now().replace(microsecond = 0)
@@ -33,8 +34,6 @@ class ReportHistory(models.Model):
     def __str__(self):
         return f'User: {self.user.peoplename} Report: {self.report_name}'
     
-def now():
-    return timezone.now().replace(microsecond = 0)
 
 
 def report_params_json():
@@ -61,9 +60,11 @@ class ScheduleReport(BaseModel):
     report_name = models.CharField(_("Report Name"), max_length=55)
     cron = models.CharField(_("Scheduler"), max_length=50, default='* * * * *')
     report_sendtime = models.TimeField(_("Send Time"), auto_now=False, auto_now_add=False)
-    cc = models.TextField(_("CC"), blank=True )
-    to_addr = models.TextField(_('To Address'), blank=True)
+    cc      = ArrayField(models.CharField(max_length = 90, blank = True, null=True), null = True, blank = True, verbose_name= _("Email-CC"))
+    to_addr = ArrayField(models.CharField(max_length = 90, blank = True, null=True), null = True, blank = True, verbose_name= _("Email=TO"))
     enable = models.BooleanField(_("Enable"), default=True)
     lastgeneratedon = models.DateTimeField(_("Last Generated On"), default=now)
     report_params = models.JSONField(null=True, blank=True, default=report_params_json)
+    bu          = models.ForeignKey('onboarding.Bt', null=True, on_delete=models.RESTRICT, related_name='schd_sites')
+    client          = models.ForeignKey('onboarding.Bt', null=True, on_delete=models.RESTRICT, related_name='schd_clients')
     

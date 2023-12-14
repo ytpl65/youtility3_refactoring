@@ -1,0 +1,78 @@
+{% extends "globals/base_list.html" %}
+
+<!---- BEGIN CARD TITLE ------>
+{% block card_title %}
+Scheduled Report List
+{% endblock card_title %}
+<!----- END CARD TITLE -------->
+
+<!------------------------------------ BEGIN PAGE BREADCUMBS ------------------------------------>
+{% block pagebreadcumb %}
+{{ super() }}
+<li class="breadcrumb-item pe-3"><a href="javascript:void(0)" class="pe-3">Scheduled Report List
+</a></li>
+{% endblock pagebreadcumb %}
+<!------------------------------------- END PAGE BREADCUMBS ------------------------------------->
+
+{% block table %}
+    <!------------------ BEGIN TABLE --------------------->
+    <table id="schd_report_table" class="display compact cell-border row-border" style="width:100%">
+    </table>
+    <!------------------ END TABLE --------------------->
+
+{% endblock table %}
+<!------------------ --------------------------END BU TABLE ------------------------------------------------->
+
+
+{% block extra_scripts %}
+<script src="{{ static('assets/js/local/cronstrue.min.js') }}"></script>
+<script>
+var table = null;
+var urlname = "{{ url('reports:schedule_email_report') }}"
+
+	$(document).ready(function () {
+        table = $("#schd_report_table").DataTable({
+            ajax:{
+                url:`${urlname}?action=list`
+            },
+            columns:[
+                {data:'id', className:'noVis'},
+                {data:'report_type', title:'Report Type'},
+                {data:'report_name', title:'Report Name'},
+                {data:'report_sendtime', title:'Send Out time'},
+                {data:'enable', title:'Enable'},
+                {data:'cron', title:'Frequecy', render:function(data, type, row, meta){
+                    if(data){
+                        return cronstrue.toString(data)
+                    }return 'NA'
+                }},
+                {data:'to_addr', title:'Email-To', render:function(data, type, row, meta){
+                    if(data){
+                        return data.join([separator = ', '])
+                    }
+                }},
+                {data:'cc', title:'Email-CC', render:function(data, type, row, meta){
+                    if(data){
+                        return data.join([separator = ', '])
+                    }
+                }},
+                
+            ],
+            buttons:[
+                {
+					text     : `Add New &nbsp;<i class='fas fa-plus ch4'></i></a>`,
+					className: "btn btn-sm border border-primary btn-light-primary add_new_type",
+					//action for add_new_button 
+					action: function(e, dt, node, config){
+                        location.href = `${urlname}action=form`
+					}
+				}
+            ]
+        })
+
+    })
+
+
+
+</script>
+{% endblock extra_scripts %}
