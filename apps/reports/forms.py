@@ -195,17 +195,28 @@ class ReportForm(forms.Form):
 class EmailReportForm(forms.ModelForm):
     required_css_class = 'required'
     
+    cc          = forms.MultipleChoiceField(label='Email-CC', required=False, widget=s2forms.Select2MultipleWidget)
+    to_addr     = forms.MultipleChoiceField(label="Email-To", required=False, widget=s2forms.Select2MultipleWidget)
     cronstrue = forms.CharField(widget=forms.Textarea(attrs={'readonly':True, 'rows':2}), required=False)
     class Meta:
-        fields = ['report_type', 'report_name', 'cron', 'report_sendtime', 'enable', 'ctzoffset']
+        fields = ['report_type', 'report_name', 'cron', 'report_sendtime',
+                  'enable', 'ctzoffset', 'to_addr', 'cc']
         model = ScheduleReport
         labels = {
             'cron':'Frequency'
+        
         }
         
     def __init__(self, *args, **kwargs):
         self.request = kwargs.pop('request', None)
         self.S = self.request.session
         super().__init__(*args, **kwargs)
+        self.fields['cc'].choices = pm.People.objects.filter(isverified=True, client_id = self.S['client_id']).values_list('email', 'peoplename')
+        self.fields['to_addr'].choices = pm.People.objects.filter(isverified=True, client_id = self.S['client_id']).values_list('email', 'peoplename')
+
         utils.initailize_form_fields(self)
+    
+
+        
+        
     

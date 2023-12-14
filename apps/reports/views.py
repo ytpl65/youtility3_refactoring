@@ -679,6 +679,7 @@ class DesignReport(LoginRequiredMixin, View):
 class ScheduleEmailReport(LoginRequiredMixin, View):
     P = {
         'template_form':"reports/schedule_email_report.html",
+        'template_list':"reports/schedule_email_list.html",
         'form':rp_forms.EmailReportForm,
         'popup_form':rp_forms.ReportForm,
         'model':ScheduleReport,
@@ -688,7 +689,8 @@ class ScheduleEmailReport(LoginRequiredMixin, View):
     }
     
     def get(self, request, *args, **kwargs):
-        R = request.GET
+        R, S = request.GET, request.session
+        if R.get('template'): return render(request, self.P['template_list'])
         if R.get('id'):
             obj = utils.get_model_obj(R['id'], request, {'model': self.P['model']})
             params_initial = obj.report_params
@@ -696,22 +698,28 @@ class ScheduleEmailReport(LoginRequiredMixin, View):
                 'form':self.P['form'](instance=obj, request = request),
                 'popup_form':self.P['popup_form'](request=request, initial=params_initial)}
             return render(request, self.P['template_form'], cxt)
-        form = self.P['form'](request=request)
-        form2 = self.P['popup_form'](request=request)
-        cxt = {'form':form, 'popup_form': form2}
-        return render(request, self.P['template_form'], context=cxt)
+        if R.get('action') == 'list':
+            data = self.P['model'].objects.filter(bu_id=S['bu_id']).values()
+            return rp.JsonResponse({'data':data}, status=200)
+        
+        if R.get('action') == 'form':
+            form = self.P['form'](request=request)
+            form2 = self.P['popup_form'](request=request)
+            cxt = {'form':form, 'popup_form': form2}
+            return render(request, self.P['template_form'], context=cxt)
+        
+        
     
     def post(self, request, *args, **kwargs):
         data = QueryDict(request.POST['formData'])
+        report_params = QueryDict(request.POST['report_params'])
         form = self.P['form'](data=data,request=request)
         if form.is_valid():
-            report_params = data.get('report_params')
             obj = form.save(commit=False)
             obj = putils.save_userinfo(obj, request.user, request.session)
             obj.report_params = report_params
             obj.save()
+            return rp.JsonResponse({'pk':obj.id}, status=200)
         else:
             cxt = {'errors': form.errors}
             return utils.handle_invalid_form(request, self.P, cxt)
-        
-        

@@ -441,8 +441,6 @@ def get_db_rows(sql, args = None):
     msg = f"Total {len(data)} records fetched successfully!"
     count = len(data)
     log.info(f'{count} objects returned...')
-    for rec in data:
-        ic(rec['plandatetime'])
     return SelectOutputType(records = data_json, msg = msg, nrows = count)
 
 def get_jobneedmodifiedafter(peopleid, siteid, clientid):

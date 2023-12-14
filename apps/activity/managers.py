@@ -1655,7 +1655,6 @@ class JobManager(models.Manager):
         if not  R['action'] == 'remove':
             child_job = sutils.job_fields(parent_job, checkpoint)
         try:
-        
             if R['action'] == 'create':
                 if self.filter(
                     qset_id = checkpoint['qsetid'], asset_id = checkpoint['assetid'],
