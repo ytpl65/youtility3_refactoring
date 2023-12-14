@@ -1427,9 +1427,10 @@ class InternalTourScheduling(LoginRequiredMixin, View):
 
     def updatecheckpoints(self, pk):
         job = am.Job.objects.get(id=pk)
-        am.Job.objects.filter(
+        updated = am.Job.objects.filter(
             parent_id=pk).update(
                 people_id=job.people_id, pgroup_id=job.pgroup_id)
+        log.info("checkpoints also updated according to parent record %s"%(updated))
 
 
 
