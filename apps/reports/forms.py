@@ -97,7 +97,8 @@ class ReportForm(forms.Form):
         ('AssetwiseTaskStatus','Assetwise Task Status'),
         ('StaticDetailedTourSummary','Static Detailed Tour Summary'),
         ('DynamicDetailedTourSummary','Dynamic Detailed Tour Summary'),
-        ('TourDetails','Tour Details')
+        ('DynamicTourDetails','Dynamic Tour Details'),
+        ('StaticTourDetails','Static Tour Details')
     ]
     download_or_send_options = [
         ('DOWNLOAD', 'Download'),

@@ -541,11 +541,11 @@ class WorkPermit(LoginRequiredMixin, View):
     def getReportFormatBasedOnWorkpermitType(self, R):
         from apps.reports.report_designs import workpermit as wp
         return {
-            'COLD WORK PERMIT':wp.ColdWorkPermit,
-            'HOT WORK PERMIT':wp.HotWorkPermit,
-            'HEIGHT WORK PERMIT':wp.HeightWorkPermit,
-            'CONFINED SPACE WORK PERMIT':wp.ConfinedSpaceWorkPermit,
-            'ELECTRICAL WORK PERMIT':wp.ElectricalWorkPermit
+            'Cold Work Permit':wp.ColdWorkPermit,
+            'Hot Work Permit':wp.HotWorkPermit,
+            'Height Work Permit':wp.HeightWorkPermit,
+            'Confined Space Work Permit':wp.ConfinedSpaceWorkPermit,
+            'Electrical Work Permit':wp.ElectricalWorkPermit
         }.get(R['qset__qsetname'])
     
     

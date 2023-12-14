@@ -4,16 +4,77 @@ from apps.core.report_queries import get_query
 from apps.onboarding.models import Bt
 from django.conf import settings
 
-class TourDetailReport(BaseReportsExport):
-    report_title = "Tour Details"
-    design_file = "reports/pdf_reports/tour_details.html"
+class DynamicTourDetailReport(BaseReportsExport):
+    report_title = "Dynamic Tour Details"
+    design_file = "reports/pdf_reports/dynamic_tour_details.html"
     ytpl_applogo =  'frontend/static/assets/media/images/logo.png'
-    report_name = 'TourDetails'
+    report_name = 'DynamicTourDetails'
     unsupported_formats = ['None']
     fields = ['site*', 'fromdate*', 'uptodate*']
     
     def __init__(self, filename, client_id, request=None, context=None, data=None, additional_content=None, returnfile=False, formdata=None):
         super().__init__(filename, client_id, design_file=self.design_file, request=request, context=context, data=data, additional_content=additional_content, returnfile=returnfile, formdata=formdata)
+    
+    def get_data(self):
+        from django.db.models import Prefetch
+        from datetime import datetime, timedelta
+        from apps.activity.models import Jobneed
+
+        # Your imports here
+
+        # Given values
+        identifier = 'INTERNALTOUR'
+        time_bound = False
+
+        # Fetch parent jobneeds
+        parents = Jobneed.objects.filter(
+            identifier=identifier,
+            plandatetime__date__gte=self.formdata['fromdate'],
+            plandatetime__date__lte=self.formdata['uptodate'],
+            bu_id=self.formdata['site'],
+            parent_id=1,
+            other_info__istimebound=False
+        )
+
+        # Prefetch the child jobneed records (checkpoints)
+        children_prefetch = Prefetch(
+            'jobneed_set',
+            queryset=Jobneed.objects.select_related('asset')
+        )
+
+        # Apply the prefetch to the query
+        parents = parents.prefetch_related(children_prefetch)
+
+        # Manually construct the data structure for Excel rendering
+        excel_data = []
+        for parent in parents:
+            offset = timedelta(minutes=parent.bu.ctzoffset)
+            parent_data = {
+                'Status': parent.jobstatus,
+                'Tour/Route':parent.jobdesc,
+                'Assigned To':parent.people.peoplename,
+                'Performed By':parent.performedby.peoplename,
+                'Start Datetime': parent.plandatetime + offset,
+                'End Datetime': parent.expirydatetime + offset,
+                # Include other necessary fields here
+            }
+
+            # Add child data
+            parent_data['checkpoints'] = []
+            for child in parent.jobneed_set.all():  # Accessing the related set of child objects
+                child_data = {
+                    'assetname': child.asset.assetname if child.asset else None,
+                    'jobstatus': child.jobstatus,
+                    'starttime': (child.starttime + offset) if child.starttime else None,
+                    'endtime': (child.endtime + offset) if child.endtime else None,
+                    # Include other necessary fields here
+                }
+                parent_data['checkpoints'].append(child_data)
+
+            excel_data.append(parent_data)
+        return excel_data
+    
+    
     
     def set_context_data(self):
         '''
@@ -24,7 +85,7 @@ class TourDetailReport(BaseReportsExport):
         self.set_args_required_for_query()
         self.context = {
             'base_path': settings.BASE_DIR,
-            'data' : runrawsql(get_query(self.report_name), args=self.args),
+            'data' : self.get_data(),
             'report_title': self.report_title,
             'client_logo':self.get_client_logo(),
             'app_logo':self.ytpl_applogo,

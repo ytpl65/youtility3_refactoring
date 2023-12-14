@@ -58,12 +58,14 @@
             }
 
             .italic-ft {
-                font-style: italic;
+                font-style: ;
             }
 
             .dashed-text {
                 border-bottom: 1px dashed;
             }
+
+
 
             .flex-between {
                 display: flex;
@@ -139,8 +141,8 @@
             </div>
             <div>
                 {% block note_to_contractor %}
-                <p class="ul-text">Note to Contractor:</p>
-                <p class="italic-ft">It is the responsibility of the contractor to ensure the safety and health of its
+                <p class="ul-text" style="font-style:italic;">Note to Contractor:</p>
+                <p class="italic-ft" style="font-style:italic;">It is the responsibility of the contractor to ensure the safety and health of its
                     employees at all times.
                     This hazard analysis and work permit are provided as a courtesy and may not necessarily reflect all
                     the hazards associated with the proposed work.</p>
@@ -154,7 +156,9 @@
         <footer>
             {% block footer %}
             <div class="flex-between">
-                <span>Version 2.0 01st July 2021</span>
+                <div class = "version_id">
+                    <p style="font-style:italic;">Version 2.0 01st July 2021</p>
+                </div>    
                 <span>Approved By: GES Admin</span>
             </div>
             {% endblock footer %}

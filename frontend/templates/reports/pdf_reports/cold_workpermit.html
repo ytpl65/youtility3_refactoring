@@ -9,11 +9,16 @@
 #subtitle{
     background-color: #01579b;
     color:white;
-    padding-left: 80px;
-    padding-right: 80px;
+    padding-left: 20px;
+    padding-right: 20px;
     padding-top: 6px;
     padding-bottom: 6px;
     border-radius: 25px;
+    font-size: 20px;
+    text-align: center;
+    white-space: nowrap;
+    display:flex;
+    justify-content: center;
 }
 </style>
 {% endblock inline_css %}
@@ -33,7 +38,7 @@
 <div id="title">
     <div>
         <p id="main_title">{{ main_title }}</p>
-        <p id="subtitle">{{ report_subtitle }}</p>
+        <p id="subtitle">Work Permit And Entry Request</p>
     </div>
 </div>
 {% endblock header_center %}
@@ -41,12 +46,12 @@
 
 {% block wp_info %}
     <div class="mr ">
-        <span>Work Permit Type:</span>{{ "&nbsp;"*5 }} <span
+        <span>Document Type:</span>{{ "&nbsp;"*5 }} <span
             class="dashed-text bold-label" >{{ report_subtitle }}</span>
     </div>
     {% if wp_info  %}
         {% for info in wp_info['questions'] %}
-            {% if info['question__quesname'] != 'Name Of People Working' %}
+            {% if info['question__quesname'] != 'Name Of People Working/Visiting' %}
             <div class="mr">
                 <span>{{ info['question__quesname'] }}:</span>{{ "&nbsp;"*5 }} <span
                     class="subtle-black dashed-text" style="width: 100%;">{{ info['answer'] }}</span>

@@ -1,0 +1,195 @@
+from apps.reports.utils import BaseReportsExport
+from apps.core.utils import runrawsql, get_timezone
+from apps.core.report_queries import get_query
+from apps.onboarding.models import Bt
+from django.conf import settings
+
+class StaticTourDetailReport(BaseReportsExport):
+    report_title = "Static Tour Details"
+    design_file = "reports/pdf_reports/static_tour_details.html"
+    ytpl_applogo =  'frontend/static/assets/media/images/logo.png'
+    report_name = 'StaticTourDetails'
+    unsupported_formats = ['None']
+    fields = ['site*', 'fromdate*', 'uptodate*']
+    
+    def __init__(self, filename, client_id, request=None, context=None, data=None, additional_content=None, returnfile=False, formdata=None):
+        super().__init__(filename, client_id, design_file=self.design_file, request=request, context=context, data=data, additional_content=additional_content, returnfile=returnfile, formdata=formdata)
+    
+    def get_data(self):
+        from django.db.models import Prefetch
+        from datetime import datetime, timedelta
+        from apps.activity.models import Jobneed
+
+        # Your imports here
+
+        # Given values
+        identifier = 'INTERNALTOUR'
+        time_bound = True
+
+        # Fetch parent jobneeds
+        parents = Jobneed.objects.filter(
+            identifier=identifier,
+            plandatetime__date__gte=self.formdata['fromdate'],
+            plandatetime__date__lte=self.formdata['uptodate'],
+            bu_id=self.formdata['site'],
+            parent_id=1,
+            other_info__istimebound=True
+        )
+
+        # Prefetch the child jobneed records (checkpoints)
+        children_prefetch = Prefetch(
+            'jobneed_set',
+            queryset=Jobneed.objects.select_related('asset')
+        )
+
+        # Apply the prefetch to the query
+        parents = parents.prefetch_related(children_prefetch)
+
+        # Manually construct the data structure for Excel rendering
+        excel_data = []
+        for parent in parents:
+            offset = timedelta(minutes=parent.bu.ctzoffset)
+            parent_data = {
+                'Status': parent.jobstatus,
+                'Tour/Route':parent.jobdesc,
+                'Assigned To':parent.people.peoplename,
+                'Performed By':parent.performedby.peoplename,
+                'Start Datetime': parent.plandatetime + offset,
+                'End Datetime': parent.expirydatetime + offset,
+                # Include other necessary fields here
+            }
+
+            # Add child data
+            parent_data['checkpoints'] = []
+            for child in parent.jobneed_set.all():  # Accessing the related set of child objects
+                child_data = {
+                    'assetname': child.asset.assetname if child.asset else None,
+                    'jobstatus': child.jobstatus,
+                    'starttime': (child.starttime + offset) if child.starttime else None,
+                    'endtime': (child.endtime + offset) if child.endtime else None,
+                    # Include other necessary fields here
+                }
+                parent_data['checkpoints'].append(child_data)
+
+            excel_data.append(parent_data)
+        return excel_data
+    
+    
+    
+    def set_context_data(self):
+        '''
+        context data is the info that is passed in templates
+        used for pdf/html reports
+        '''
+        sitename = Bt.objects.get(id=self.formdata['site']).buname
+        self.set_args_required_for_query()
+        self.context = {
+            'base_path': settings.BASE_DIR,
+            'data' : self.get_data(),
+            'report_title': self.report_title,
+            'client_logo':self.get_client_logo(),
+            'app_logo':self.ytpl_applogo,
+            'report_subtitle':f"Site: {sitename}, From: {self.formdata.get('fromdate')} To {self.formdata.get('uptodate')}"
+        }
+        return len(self.context['data']) > 0
+        
+    def set_args_required_for_query(self):
+        self.args = [
+            get_timezone(self.formdata['ctzoffset']),
+            self.formdata['site'],
+            self.formdata['fromdate'].strftime('%d/%m/%Y'),
+            self.formdata['uptodate'].strftime('%d/%m/%Y'),    
+            ]
+    
+    def set_data(self):
+        '''
+        setting the data which is shown on report
+        '''
+        self.set_args_required_for_query()
+        self.data = runrawsql(get_query(self.report_name), args=self.args)
+        return len(self.data) > 0
+
+    def excel_columns(self,df):
+        df = df[['Tour Name','Checkpoint Name','Start Datetime','End Datetime',
+                 'Status','Performed On']]
+        return df
+
+        
+    def set_additional_content(self):
+        bt = Bt.objects.filter(id=self.client_id).values('id', 'buname').first()
+        self.additional_content = f"Client: {bt['buname']}; Report: {self.report_title}; From: {self.formdata['fromdate']} To: {self.formdata['uptodate']}"
+        
+
+    def excel_layout(self, worksheet, workbook, df, writer, output):
+        super().excel_layout(worksheet, workbook, df, writer, output)
+        #overriding to design the excel file
+    
+        
+        # Add a header format.
+        header_format = workbook.add_format(
+            {
+                "valign": "middle",
+                "fg_color": "#01579b",
+                'font_color':'white'
+            }
+        )
+        max_row, max_col = df.shape
+        
+        # Create a list of column headers, to use in add_table().
+        column_settings = [{"header": column} for column in df.columns]
+        
+        # Add the Excel table structure. Pandas will add the data.
+        worksheet.add_table(1, 0, max_row, max_col - 1, {"columns": column_settings})
+        
+        # Make the columns wider for clarity.
+        # worksheet.set_column(0, max_col - 1, 12)
+        worksheet.autofit()
+
+        # Write the column headers with the defined format.
+        for col_num, value in enumerate(df.columns.values):
+            worksheet.write(1, col_num, value, header_format)
+            
+        # Define the format for the merged cell
+        merge_format = workbook.add_format({
+            'bg_color': '#E2F4FF',
+        })
+        # Title of xls/xlsx report
+        worksheet.merge_range("A1:F1", self.additional_content, merge_format)
+
+        # Close the Pandas Excel writer and output the Excel file
+        writer.save()
+
+        # Rewind the buffer
+        output.seek(0)
+        return output
+    
+    
+    def execute(self):
+        export_format = self.formdata.get('format')
+        # context needed for pdf, html
+        if export_format in ['pdf', 'html']:
+            has_data = self.set_context_data()
+        else:
+            self.set_additional_content()
+            has_data = self.set_data()
+        
+        if not has_data:
+            return None
+        
+        # preview in pdf
+        if self.formdata.get('preview') == 'true':
+            export_format = 'pdf'
+        
+        if export_format == 'pdf':
+            return self.get_pdf_output()
+        elif export_format == 'xls':
+            return self.get_xls_output()
+        elif export_format == 'xlsx':
+            return self.get_xlsx_output()
+        elif export_format == 'csv':
+            return self.get_csv_output()
+        elif export_format == 'html':
+            return self.get_html_output()
+        else:
+            return self.get_json_output()
+        
