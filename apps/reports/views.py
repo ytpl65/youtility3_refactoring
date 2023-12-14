@@ -543,8 +543,6 @@ class DownloadReports(LoginRequiredMixin, View):
         form_data, P = request.POST, self.PARAMS
         session = dict(request.session)
         form = P['form'](data = form_data, request=request)
-        report_names = json.dumps(P['form'].report_templates)
-        fields_map = json.dumps(form.get_fields_report_map())
         if not form.is_valid():
             return render(request, P['template_form'], context={
                 'form':form})

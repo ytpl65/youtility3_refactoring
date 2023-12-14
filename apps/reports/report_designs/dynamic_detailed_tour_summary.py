@@ -5,11 +5,11 @@ from apps.onboarding.models import Bt
 from django.conf import settings
 
 
-class DetailedTourSummaryReport(BaseReportsExport):
-    report_title = "Detailed Tour Summary"
-    design_file = "reports/pdf_reports/detailed_tour_summary.html"
+class DynamicDetailedTourSummaryReport(BaseReportsExport):
+    report_title = "Dynamic Detailed Tour Summary"
+    design_file = "reports/pdf_reports/dynamic_detailed_tour_summary.html"
     ytpl_applogo =  'frontend/static/assets/media/images/logo.png'
-    report_name = 'DetailedTourSummary'
+    report_name = 'DynamicDetailedTourSummary'
     unsupported_formats = ['None']
     fields = ['site*', 'fromdate*', 'uptodate*']
     
@@ -54,8 +54,8 @@ class DetailedTourSummaryReport(BaseReportsExport):
         self.additional_content = f"Client: {bt['buname']}; Report: {self.report_title}; From: {self.formdata['fromdate']} To: {self.formdata['uptodate']}"
 
     def excel_columns(self, df):
-        df = df[['client','Site','JobDesc','StartDate','EndDate','no_of_checkpoints'
-                 ,'COMPLETED','ASSIGNED','Percentage','Comments']]
+        df = df[['Client Name','Site Name','Description','Start Time','End Time','No of Checkpoints'
+                 ,'Completed','Missed','Percentage','Comments Type','Comments']]
         return df
 
 

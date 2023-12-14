@@ -120,36 +120,27 @@ def get_query(query):
                 SELECT %s ::text AS timezone
             )
                 SELECT
-                bu.id,
-                bu.buname as "site",
-                (jobneed.plandatetime AT TIME ZONE tz.timezone)::DATE as "Planned Date",
-            jobneed.id as jobneedid,
-            jobneed.identifier,
-            jobneed.jobdesc as "Description",
+--                 bu.id,
+				client_table.buname AS "Client",
+                bu.buname as "Site",
+				jobneed.jobdesc as "Tour/Route",
+                (jobneed.plandatetime AT TIME ZONE tz.timezone)::timestamp as "Planned Datetime",
+				(jobneed.expirydatetime AT TIME ZONE tz.timezone)::timestamp as "Expiry Datetime",
             case
                     when jobneed.people_id <> 1 then people.peoplename
                     when jobneed.pgroup_id <> 1 then pgroup.groupname
                     else 'NONE' end as "Assigned To",
-            jobneed.jobtype,
+            jobneed.jobtype as "JobType",
             jobneed.jobstatus as "Status",
-            jobneed.asset_id,
+			(jobneed.endtime AT TIME ZONE tz.timezone)::timestamp as "Performed On",
             performedpeople.peoplename as "Performed By",
-            jobneed.qset_id as qsetname,
-            CAST(jobneed.expirydatetime AT TIME ZONE tz.timezone AS TIMESTAMP WITHOUT TIME ZONE) as "Expiry Date Time",
-            jobneed.gracetime as "Gracetime",
-            bu.buname as site,
-            jobneed.scantype,
-            jobneed.priority,
-            CAST(jobneed.starttime AT TIME ZONE tz.timezone AS TIMESTAMP WITHOUT TIME ZONE),
-            CAST(jobneed.endtime AT TIME ZONE tz.timezone AS TIMESTAMP WITHOUT TIME ZONE),
-            jobneed.gpslocation,
-            jobneed.qset_id,
-            jobneed.remarks,
-            asset.assetname as "Asset",
-            questionset.qsetname as "Question Set",
-            people.peoplename
+			CASE 
+				WHEN jobneed.other_info ->> 'istimebound' = 'true' THEN 'Static'
+				ELSE 'Dynamic' 
+			END as "Is Time Bound"
                 FROM jobneed
                 INNER JOIN bt bu ON bu.id=jobneed.bu_id
+                INNER JOIN bt AS client_table ON jobneed.client_id = client_table.id
             INNER JOIN asset ON asset.id=jobneed.asset_id
             INNER JOIN questionset ON questionset.id=jobneed.qset_id
             INNER JOIN people on jobneed.people_id=people.id
@@ -439,7 +430,7 @@ def get_query(query):
                 Asset.assetname,asset.id
             
             ''',
-            "DetailedTourSummary":
+            "StaticDetailedTourSummary":
             '''
             WITH timezone_setting AS (
                 SELECT %s ::text AS timezone
@@ -447,7 +438,7 @@ def get_query(query):
             SELECT * ,
                         CASE 
                             WHEN "No of Checkpoints" = 0 THEN 0
-                            ELSE (CAST("Completed" AS FLOAT) / "No of Checkpoints") * 100
+                            ELSE ROUND((CAST("Completed" AS FLOAT) / "No of Checkpoints") * 100)
                             END AS "Percentage"
                         FROM (
             SELECT 
@@ -470,11 +461,86 @@ def get_query(query):
                 bt AS site_table ON jn.bu_id = site_table.id
             JOIN typeassist type ON type.id=jn.remarkstype_id
             cross join timezone_setting tz
-            WHERE 
+            WHERE
+                jn.other_info ->> 'istimebound' = 'true' AND
                 jn.parent_id = 1 AND
                 jn.identifier = 'INTERNALTOUR' AND
+
+                jn.bu_id IN (SELECT unnest(string_to_array(%s, ',')::integer[])) 
+                AND (jn.plandatetime AT TIME ZONE tz.timezone)::DATE BETWEEN %s AND %s
+            ) as x
+            ''',
+            "DynamicDetailedTourSummary":
+            '''
+            WITH timezone_setting AS (
+                SELECT %s ::text AS timezone
+            )
+            SELECT * ,
+                        CASE 
+                            WHEN "No of Checkpoints" = 0 THEN 0
+                            ELSE ROUND((CAST("Completed" AS FLOAT) / "No of Checkpoints") * 100)
+                            END AS "Percentage"
+                        FROM (
+            SELECT 
+                client_table.buname AS "Client Name",
+                site_table.buname AS "Site Name",
+                jn.jobdesc AS "Description",
+                (jn.plandatetime AT TIME ZONE tz.timezone)::DATE AS "Start Time",
+                (jn.expirydatetime AT TIME ZONE tz.timezone)::DATE as "End Time",
+                jn.remarks as "Comments",
+                type.taname as "Comments Type",
+                (SELECT COUNT(*) FROM jobneed AS jn_child WHERE jn_child.parent_id = jn.id) AS "No of Checkpoints",
+                (SELECT COUNT(*) FROM jobneed AS jn_child_completed WHERE jn_child_completed.parent_id = jn.id AND jn_child_completed.jobstatus = 'COMPLETED') AS "Completed",
+                (SELECT COUNT(*) FROM jobneed AS jn_child_missed WHERE jn_child_missed.parent_id = jn.id AND jn_child_missed.jobstatus = 'ASSIGNED') AS "Missed"
+            FROM 
+                jobneed AS jn
+            JOIN 
+                bt AS client_table ON jn.client_id = client_table.id
+            JOIN 
+                
+                bt AS site_table ON jn.bu_id = site_table.id
+            JOIN typeassist type ON type.id=jn.remarkstype_id
+            cross join timezone_setting tz
+            WHERE
+                jn.other_info ->> 'istimebound' = 'false' AND
+                jn.parent_id = 1 AND
+                jn.identifier = 'INTERNALTOUR' AND
+
                 jn.bu_id IN (SELECT unnest(string_to_array(%s, ',')::integer[])) 
                 AND (jn.plandatetime AT TIME ZONE tz.timezone)::DATE BETWEEN %s AND %s
             ) as x
             '''
+            # "TourDetails":
+            # '''
+            # WITH timezone_setting AS (
+            #     SELECT %s ::text AS timezone
+            # )
+
+            # SELECT * 
+            # FROM (
+            #     SELECT
+			# 	jobneed.jobdesc as "Tour Name",
+			# 	Max(asset.assetname) AS "Checkpoint Name",
+			# 	(jobneed.plandatetime AT TIME ZONE tz.timezone)::timestamp as "Start Datetime",
+			# 	(jobneed.expirydatetime AT TIME ZONE tz.timezone)::timestamp as "End Datetime",
+			# 	jobneed.jobstatus as "Status",
+			# 	CASE
+			# 		WHEN jobneed.endtime IS NOT NULL THEN TO_CHAR(jobneed.endtime AT TIME ZONE tz.timezone, 'HH24:MI:SS')
+			# 		ELSE '--'
+			# 	END AS "Performed On"
+            #     	FROM jobneed
+            #     INNER JOIN bt bu ON bu.id=jobneed.bu_id
+			# 	INNER JOIN asset ON asset.id=jobneed.asset_id
+            #     CROSS JOIN timezone_setting tz
+            #     WHERE
+            #     jobneed.identifier='INTERNALTOUR'
+            #     AND jobneed.id <> 1
+            #     AND bu.id <> 1
+            #     AND jobneed.bu_id IN (SELECT unnest(string_to_array(%s, ',')::integer[]))  
+            #     AND (jobneed.plandatetime AT TIME ZONE tz.timezone)::DATE BETWEEN %s AND %s
+            #     GROUP BY bu.id, bu.buname,jobneed.jobdesc,tz.timezone,jobneed.expirydatetime,jobneed.plandatetime,jobneed.jobstatus,jobneed.endtime, (jobneed.plandatetime AT TIME ZONE tz.timezone)::DATE
+            #     ORDER BY bu.buname, (jobneed.plandatetime AT TIME ZONE tz.timezone)::DATE desc
+            # ) as x
+
+            # '''
     }.get(query)

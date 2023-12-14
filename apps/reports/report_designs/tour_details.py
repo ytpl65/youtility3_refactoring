@@ -4,18 +4,16 @@ from apps.core.report_queries import get_query
 from apps.onboarding.models import Bt
 from django.conf import settings
 
-
-class ListofTourReport(BaseReportsExport):
-    report_title = "List of Tour"
-    design_file = "reports/pdf_reports/list_of_tours.html"
+class TourDetailReport(BaseReportsExport):
+    report_title = "Tour Details"
+    design_file = "reports/pdf_reports/tour_details.html"
     ytpl_applogo =  'frontend/static/assets/media/images/logo.png'
-    report_name = 'ListOfTours'
+    report_name = 'TourDetails'
     unsupported_formats = ['None']
     fields = ['site*', 'fromdate*', 'uptodate*']
-
+    
     def __init__(self, filename, client_id, request=None, context=None, data=None, additional_content=None, returnfile=False, formdata=None):
         super().__init__(filename, client_id, design_file=self.design_file, request=request, context=context, data=data, additional_content=additional_content, returnfile=returnfile, formdata=formdata)
-
     
     def set_context_data(self):
         '''
@@ -32,8 +30,8 @@ class ListofTourReport(BaseReportsExport):
             'app_logo':self.ytpl_applogo,
             'report_subtitle':f"Site: {sitename}, From: {self.formdata.get('fromdate')} To {self.formdata.get('uptodate')}"
         }
-
-
+        return len(self.context['data']) > 0
+        
     def set_args_required_for_query(self):
         self.args = [
             get_timezone(self.formdata['ctzoffset']),
@@ -41,30 +39,31 @@ class ListofTourReport(BaseReportsExport):
             self.formdata['fromdate'].strftime('%d/%m/%Y'),
             self.formdata['uptodate'].strftime('%d/%m/%Y'),    
             ]
-        
-
+    
     def set_data(self):
         '''
         setting the data which is shown on report
         '''
         self.set_args_required_for_query()
         self.data = runrawsql(get_query(self.report_name), args=self.args)
+        return len(self.data) > 0
 
+    def excel_columns(self,df):
+        df = df[['Tour Name','Checkpoint Name','Start Datetime','End Datetime',
+                 'Status','Performed On']]
+        return df
 
+        
     def set_additional_content(self):
         bt = Bt.objects.filter(id=self.client_id).values('id', 'buname').first()
         self.additional_content = f"Client: {bt['buname']}; Report: {self.report_title}; From: {self.formdata['fromdate']} To: {self.formdata['uptodate']}"
+        
 
-
-    def excel_columns(self, df):
-        df = df[['Client', 'Site', 'Tour/Route', 'Planned Datetime', 
-                 'Expiry Datetime', 'Assigned To', 'JobType','Status','Performed On','Performed By', 'Is Time Bound']]
-        return df
-    
     def excel_layout(self, worksheet, workbook, df, writer, output):
         super().excel_layout(worksheet, workbook, df, writer, output)
         #overriding to design the excel file
-
+    
+        
         # Add a header format.
         header_format = workbook.add_format(
             {
@@ -74,7 +73,7 @@ class ListofTourReport(BaseReportsExport):
             }
         )
         max_row, max_col = df.shape
-
+        
         # Create a list of column headers, to use in add_table().
         column_settings = [{"header": column} for column in df.columns]
         
@@ -82,7 +81,7 @@ class ListofTourReport(BaseReportsExport):
         worksheet.add_table(1, 0, max_row, max_col - 1, {"columns": column_settings})
         
         # Make the columns wider for clarity.
-        worksheet.set_column(0, max_col - 1, 12)
+        # worksheet.set_column(0, max_col - 1, 12)
         worksheet.autofit()
 
         # Write the column headers with the defined format.
@@ -103,15 +102,18 @@ class ListofTourReport(BaseReportsExport):
         output.seek(0)
         return output
     
-
+    
     def execute(self):
         export_format = self.formdata.get('format')
         # context needed for pdf, html
         if export_format in ['pdf', 'html']:
-            self.set_context_data()
+            has_data = self.set_context_data()
         else:
             self.set_additional_content()
-            self.set_data()
+            has_data = self.set_data()
+        
+        if not has_data:
+            return None
         
         # preview in pdf
         if self.formdata.get('preview') == 'true':
@@ -129,3 +131,4 @@ class ListofTourReport(BaseReportsExport):
             return self.get_html_output()
         else:
             return self.get_json_output()
+        

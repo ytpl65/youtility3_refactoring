@@ -5,18 +5,17 @@ from apps.onboarding.models import Bt
 from django.conf import settings
 
 
-class ListofTourReport(BaseReportsExport):
-    report_title = "List of Tour"
-    design_file = "reports/pdf_reports/list_of_tours.html"
+class StaticDetailedTourSummaryReport(BaseReportsExport):
+    report_title = "Static Detailed Tour Summary"
+    design_file = "reports/pdf_reports/static_detailed_tour_summary.html"
     ytpl_applogo =  'frontend/static/assets/media/images/logo.png'
-    report_name = 'ListOfTours'
+    report_name = 'StaticDetailedTourSummary'
     unsupported_formats = ['None']
     fields = ['site*', 'fromdate*', 'uptodate*']
-
+    
     def __init__(self, filename, client_id, request=None, context=None, data=None, additional_content=None, returnfile=False, formdata=None):
         super().__init__(filename, client_id, design_file=self.design_file, request=request, context=context, data=data, additional_content=additional_content, returnfile=returnfile, formdata=formdata)
 
-    
     def set_context_data(self):
         '''
         context data is the info that is passed in templates
@@ -32,8 +31,8 @@ class ListofTourReport(BaseReportsExport):
             'app_logo':self.ytpl_applogo,
             'report_subtitle':f"Site: {sitename}, From: {self.formdata.get('fromdate')} To {self.formdata.get('uptodate')}"
         }
-
-
+    
+    
     def set_args_required_for_query(self):
         self.args = [
             get_timezone(self.formdata['ctzoffset']),
@@ -41,30 +40,30 @@ class ListofTourReport(BaseReportsExport):
             self.formdata['fromdate'].strftime('%d/%m/%Y'),
             self.formdata['uptodate'].strftime('%d/%m/%Y'),    
             ]
-        
-
+    
     def set_data(self):
         '''
         setting the data which is shown on report
         '''
         self.set_args_required_for_query()
         self.data = runrawsql(get_query(self.report_name), args=self.args)
-
-
+        
+    
     def set_additional_content(self):
         bt = Bt.objects.filter(id=self.client_id).values('id', 'buname').first()
         self.additional_content = f"Client: {bt['buname']}; Report: {self.report_title}; From: {self.formdata['fromdate']} To: {self.formdata['uptodate']}"
 
-
     def excel_columns(self, df):
-        df = df[['Client', 'Site', 'Tour/Route', 'Planned Datetime', 
-                 'Expiry Datetime', 'Assigned To', 'JobType','Status','Performed On','Performed By', 'Is Time Bound']]
+        df = df[['Client Name','Site Name','Description','Start Time','End Time','No of Checkpoints'
+                 ,'Completed','Missed','Percentage','Comments Type','Comments']]
         return df
-    
+
+
     def excel_layout(self, worksheet, workbook, df, writer, output):
         super().excel_layout(worksheet, workbook, df, writer, output)
         #overriding to design the excel file
-
+    
+        
         # Add a header format.
         header_format = workbook.add_format(
             {
@@ -74,7 +73,7 @@ class ListofTourReport(BaseReportsExport):
             }
         )
         max_row, max_col = df.shape
-
+        
         # Create a list of column headers, to use in add_table().
         column_settings = [{"header": column} for column in df.columns]
         
@@ -82,9 +81,10 @@ class ListofTourReport(BaseReportsExport):
         worksheet.add_table(1, 0, max_row, max_col - 1, {"columns": column_settings})
         
         # Make the columns wider for clarity.
-        worksheet.set_column(0, max_col - 1, 12)
+        #worksheet.set_column(0, max_col - 1, 12)
         worksheet.autofit()
-
+        
+        
         # Write the column headers with the defined format.
         for col_num, value in enumerate(df.columns.values):
             worksheet.write(1, col_num, value, header_format)
@@ -102,7 +102,6 @@ class ListofTourReport(BaseReportsExport):
         # Rewind the buffer
         output.seek(0)
         return output
-    
 
     def execute(self):
         export_format = self.formdata.get('format')
