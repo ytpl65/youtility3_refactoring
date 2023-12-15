@@ -223,7 +223,8 @@ class ReportEssentials(object):
         from apps.reports.report_designs.qrcode_report import CheckpointQR
         from apps.reports.report_designs.assetwise_task_status import AssetwiseTaskStatus
         from apps.reports.report_designs.static_detailed_tour_summary import StaticDetailedTourSummaryReport
-        from apps.reports.report_designs.tour_details import TourDetailReport
+        from apps.reports.report_designs.dynamic_tour_details import DynamicTourDetailReport
+        from apps.reports.report_designs.static_tour_details import StaticTourDetailReport
         from apps.reports.report_designs.dynamic_detailed_tour_summary import DynamicDetailedTourSummaryReport
 
         return {
@@ -242,7 +243,8 @@ class ReportEssentials(object):
             self.AssetwiseTaskStatus:AssetwiseTaskStatus,
             self.StaticDetailedTourSummary:StaticDetailedTourSummaryReport,
             self.DynamicDetailedTourSummary:DynamicDetailedTourSummaryReport,
-            self.TourDetails:TourDetailReport
+            self.StaticTourDetails:StaticTourDetailReport,
+            self.DynamicTourDetails:DynamicTourDetailReport
         }.get(self.report_name)
     
     @property
