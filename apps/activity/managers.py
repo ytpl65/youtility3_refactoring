@@ -19,7 +19,7 @@ log = logger
 class QuestionSetManager(models.Manager):
     use_in_migrations = True
     fields = ['id', 'cuser_id', 'muser_id', 'ctzoffset', 'bu_id', 'client_id', 'cdtz', 'mdtz',
-              'parent_id', 'qsetname', 'enable', 'assetincludes',
+              'parent_id', 'qsetname', 'enable', 'assetincludes', 'show_to_all_sites',
               'buincludes', 'seqno', 'url', 'type' , 'tenant_id']
     related = ['cuser', 'muser', 'client', 'bu', 'parent', 'asset', 'type']
 

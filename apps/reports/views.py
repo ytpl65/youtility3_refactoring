@@ -698,7 +698,7 @@ class ScheduleEmailReport(LoginRequiredMixin, View):
             return render(request, self.P['template_form'], cxt)
         if R.get('action') == 'list':
             data = self.P['model'].objects.filter(bu_id=S['bu_id']).values()
-            return rp.JsonResponse({'data':data}, status=200)
+            return rp.JsonResponse({'data':list(data)}, status=200)
         
         if R.get('action') == 'form':
             form = self.P['form'](request=request)

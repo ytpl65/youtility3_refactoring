@@ -35,12 +35,19 @@ var urlname = "{{ url('reports:schedule_email_report') }}"
             ajax:{
                 url:`${urlname}?action=list`
             },
+            dom:`<'row' <'col-sm-6 d-flex justify-content-start'f> <'col-sm-6 d-flex justify-content-end'B> >rt<'row'
+			 <'col-sm-6'l> <'col-sm-6'p><'col-sm-12 d-flex justify-content-center'i>>`,
             columns:[
-                {data:'id', className:'noVis'},
+                {data:'id', className:'noVis', visible:false},
                 {data:'report_type', title:'Report Type'},
-                {data:'report_name', title:'Report Name'},
+                {data:'report_name', title:'Report Name', render:function(data, type, row, meta){
+                    return `<a href="${urlname}?id=${row['id']}">${data}</a>`
+                }},
                 {data:'report_sendtime', title:'Send Out time'},
-                {data:'enable', title:'Enable'},
+                {data:'enable', title:'Enable', render:function(data, type, row, meta){
+                    if(data){return "Yes"}
+                    return "No"
+                }},
                 {data:'cron', title:'Frequecy', render:function(data, type, row, meta){
                     if(data){
                         return cronstrue.toString(data)
@@ -49,12 +56,12 @@ var urlname = "{{ url('reports:schedule_email_report') }}"
                 {data:'to_addr', title:'Email-To', render:function(data, type, row, meta){
                     if(data){
                         return data.join([separator = ', '])
-                    }
+                    }return "NA"
                 }},
                 {data:'cc', title:'Email-CC', render:function(data, type, row, meta){
                     if(data){
                         return data.join([separator = ', '])
-                    }
+                    }return "NA"
                 }},
                 
             ],
@@ -64,7 +71,7 @@ var urlname = "{{ url('reports:schedule_email_report') }}"
 					className: "btn btn-sm border border-primary btn-light-primary add_new_type",
 					//action for add_new_button 
 					action: function(e, dt, node, config){
-                        location.href = `${urlname}action=form`
+                        location.href = `${urlname}?action=form`
 					}
 				}
             ]

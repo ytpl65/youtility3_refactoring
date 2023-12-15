@@ -119,8 +119,8 @@ Schedule Report Form
         </div>
     </div>
     <div class="form-actions">
-        <button type="submit" form="report_schedule_form" class="btn btn-sm btn-primary2 btn-hover-scale">
-            Submit &nbsp;<i class="fas text-white fa-cloud-upload-alt"></i>
+        <button type="submit" id="btnFormSubmit" form="report_schedule_form" class="btn btn-sm btn-primary2 btn-hover-scale">
+            <span>Submit</span> &nbsp;<i class="fas text-white fa-cloud-upload-alt"></i>
         </button>
 
         <button type="button" id="btn_clear" class="btn btn-sm btn-secondary btn-hover-scale">
@@ -180,6 +180,9 @@ Schedule Report Form
         if("{{ form.instance.id }}" !== "None"){
             //cron to readable format
             $("#id_cronstrue").val(cronstrue.toString($("#id_cron").val()))
+            $("#see_parameters").removeClass('d-none')
+            $("#btnFormSubmit span").html("Update")
+
         }
         //set ctzoffset
         $("#id_ctzoffset").val(-new Date().getTimezoneOffset())
@@ -224,6 +227,7 @@ Schedule Report Form
                     $('.jqCronEditor').jqCron({
                         multiple_dom: true,
                         enabled_hour:false,
+                        enabled_year:false,
                         multiple_month: false,
                         multiple_mins: false,
                         multiple_dow: false,
@@ -285,6 +289,20 @@ Schedule Report Form
                 }
             });
 
+        $("#parameters_form").on('shown.bs.modal', function(e) {
+            let selected = $("#id_report_type").val()
+            //fire ajax
+            fire_ajax_get({
+                url:"{{ url('reports:exportreports') }}",
+                data: {'action':'form_behaviour', 'report_name':selected}
+            }).done((data, status, error) => {
+                if(selected === 'PeopleQR'){
+                    showHideSelectField('SITE')
+                }
+                dynamicFormBehaviour(data)
+            })
+        })
+
         //on report type selected show parameters form
         $("#id_report_type").change((e) => {
             let selected = $("#id_report_type").val()
@@ -293,16 +311,6 @@ Schedule Report Form
                 //show popup
                 $('#parameters_form').modal('show');
                 $("#see_parameters").removeClass('d-none')
-                //fire ajax
-                fire_ajax_get({
-                    url:"{{ url('reports:exportreports') }}",
-                    data: {'action':'form_behaviour', 'report_name':selected}
-                }).done((data, status, error) => {
-                    if(selected === 'PeopleQR'){
-                    showHideSelectField('SITE')
-                    }
-                    dynamicFormBehaviour(data)
-                })
             }else{
                 $("#see_parameters").addClass('d-none')
             }
