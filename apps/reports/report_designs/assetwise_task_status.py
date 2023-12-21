@@ -52,7 +52,7 @@ class AssetwiseTaskStatus(BaseReportsExport):
 
 
     def set_additional_content(self):
-        bt = Bt.objects.filter(id=self.client_id).values('id*', 'buname*').first*()
+        bt = Bt.objects.filter(id=self.client_id).values('id', 'buname').first()
         self.additional_content = f"Client: {bt['buname']}; Report: {self.report_title}; From: {self.formdata['fromdate']} To: {self.formdata['uptodate']}"
 
     def excel_columns(self, df):

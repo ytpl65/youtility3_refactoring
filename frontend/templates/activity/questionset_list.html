@@ -61,11 +61,12 @@ Question Set List
 			ajax:{
 				url: "{{ url('activity:checklist') }}?action=list&type=CHECKLIST"
 			},
-			pageLength:50,
+			lengthMenu: [ 10, 20, 50,100 ],
+			pageLength:10,
             deferRender: true,
-			scrollY: 300,
+			{# scrollY: 300,
             scrollCollapse: true,
-            scrollX:true,
+            scrollX:true, #}
 			columns:[
 				{data: 'id', visible:false, className:'noVis'},
 				{data: 'ctzoffset', visible:false, className:'noVis'},

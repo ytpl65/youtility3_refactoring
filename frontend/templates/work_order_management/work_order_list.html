@@ -66,9 +66,11 @@ Workorder List
                 
             ],
             deferRender: true,
-            scrollY: 300,
+            {# scrollY: 300,
             scrollCollapse: true,
-            scrollX:true,
+            scrollX:true, #}
+            lengthMenu: [ 10, 20, 50,100 ],
+            pageLength: 10,
             createdRow:function(row, data, dataIndex){
 				if(data['enable'] === false){
 					$(row).addClass('disabled-record text-white')

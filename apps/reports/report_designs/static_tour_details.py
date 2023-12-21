@@ -1,5 +1,6 @@
 from apps.reports.utils import BaseReportsExport
 from apps.core.utils import runrawsql, get_timezone
+from django.utils import timezone as dtimezone
 from apps.core.report_queries import get_query
 from apps.onboarding.models import Bt
 from django.conf import settings
@@ -49,27 +50,73 @@ class StaticTourDetailReport(BaseReportsExport):
         excel_data = []
         for parent in parents:
             offset = timedelta(minutes=parent.bu.ctzoffset)
+
+            if dtimezone.is_aware(parent.plandatetime):
+                plandatetime_naive = dtimezone.make_naive(parent.plandatetime, dtimezone.utc)
+            else:
+                plandatetime_naive = parent.plandatetime
+
+            if dtimezone.is_aware(parent.expirydatetime):
+                expirydatetime_naive = dtimezone.make_naive(parent.expirydatetime, dtimezone.utc)
+            else:
+                expirydatetime_naive = parent.expirydatetime
+
+            plandatetime_naive += offset
+            expirydatetime_naive += offset
+
             parent_data = {
                 'Status': parent.jobstatus,
                 'Tour/Route':parent.jobdesc,
                 'Assigned To':parent.people.peoplename,
                 'Performed By':parent.performedby.peoplename,
-                'Start Datetime': parent.plandatetime + offset,
-                'End Datetime': parent.expirydatetime + offset,
+                'Start Datetime': plandatetime_naive,
+                'End Datetime': expirydatetime_naive
                 # Include other necessary fields here
             }
 
             # Add child data
+            checkpoints = parent.jobneed_set.all()
             parent_data['checkpoints'] = []
-            for child in parent.jobneed_set.all():  # Accessing the related set of child objects
+            passed_count = 0
+            missed_count = 0
+            # parent_data['checkpoints'] = []
+            for child in checkpoints:  # Accessing the related set of child objects
+                offset = timedelta(minutes=parent.bu.ctzoffset)
+
+                if child.starttime and dtimezone.is_aware(child.starttime):
+                    starttime_naive = dtimezone.make_naive(child.starttime, dtimezone.utc)
+                else:
+                    starttime_naive = child.starttime
+
+                if child.endtime and dtimezone.is_aware(child.endtime):
+                    endtime_naive = dtimezone.make_naive(child.endtime, dtimezone.utc)
+                else:
+                    endtime_naive = child.endtime
+
+                if starttime_naive and endtime_naive:
+                    starttime_naive += offset
+                    endtime_naive += offset
+
                 child_data = {
                     'assetname': child.asset.assetname if child.asset else None,
                     'jobstatus': child.jobstatus,
-                    'starttime': (child.starttime + offset) if child.starttime else None,
-                    'endtime': (child.endtime + offset) if child.endtime else None,
+                    'starttime': starttime_naive if child.starttime else None,
+                    'endtime': endtime_naive if child.starttime else None,
                     # Include other necessary fields here
                 }
                 parent_data['checkpoints'].append(child_data)
+                if child.jobstatus == 'COMPLETED':
+                    passed_count += 1
+                elif child.jobstatus == 'ASSIGNED':
+                    missed_count += 1
+            total_checkpoints = len(checkpoints)
+            parent_data['Count of Checkpoint'] = total_checkpoints
+            parent_data['Passed Count'] = passed_count
+            parent_data['Missed Count'] = missed_count
+
+            # Calculate ratios
+            parent_data['Passed Ratio'] = (passed_count / total_checkpoints * 100) if total_checkpoints > 0 else 0
+            parent_data['Missed Ratio'] = (missed_count / total_checkpoints * 100) if total_checkpoints > 0 else 0
 
             excel_data.append(parent_data)
         return excel_data
@@ -105,13 +152,13 @@ class StaticTourDetailReport(BaseReportsExport):
         '''
         setting the data which is shown on report
         '''
-        self.set_args_required_for_query()
-        self.data = runrawsql(get_query(self.report_name), args=self.args)
+        
+        self.data = self.get_data()
         return len(self.data) > 0
 
     def excel_columns(self,df):
-        df = df[['Tour Name','Checkpoint Name','Start Datetime','End Datetime',
-                 'Status','Performed On']]
+        df = df[['Tour/Route','checkpoints','Start Datetime','End Datetime','Status',
+                 'Assigned To','Performed By']]
         return df
 
         
@@ -119,42 +166,74 @@ class StaticTourDetailReport(BaseReportsExport):
         bt = Bt.objects.filter(id=self.client_id).values('id', 'buname').first()
         self.additional_content = f"Client: {bt['buname']}; Report: {self.report_title}; From: {self.formdata['fromdate']} To: {self.formdata['uptodate']}"
         
+        
 
     def excel_layout(self, worksheet, workbook, df, writer, output):
         super().excel_layout(worksheet, workbook, df, writer, output)
-        #overriding to design the excel file
-    
-        
-        # Add a header format.
-        header_format = workbook.add_format(
-            {
-                "valign": "middle",
-                "fg_color": "#01579b",
-                'font_color':'white'
-            }
-        )
-        max_row, max_col = df.shape
-        
-        # Create a list of column headers, to use in add_table().
-        column_settings = [{"header": column} for column in df.columns]
-        
-        # Add the Excel table structure. Pandas will add the data.
-        worksheet.add_table(1, 0, max_row, max_col - 1, {"columns": column_settings})
-        
-        # Make the columns wider for clarity.
-        # worksheet.set_column(0, max_col - 1, 12)
-        worksheet.autofit()
 
-        # Write the column headers with the defined format.
-        for col_num, value in enumerate(df.columns.values):
-            worksheet.write(1, col_num, value, header_format)
+        df = df.rename(columns={'Tour/Route':'Tour Name','checkpoints':'Checkpoint Name','Start Datetime': 'Start Datetime','End Datetime':'End Datetime','Status':'Status',
+                 'Assigned To':'Assigned To','Performed By':'Performed By'})
+
+        import xlsxwriter
+        worksheet.autofit()
+        header_format = workbook.add_format({'bold': True, 'bg_color': '#01579B', 'border': 1, 'color': 'white', 'font_size': 10})
+        tour_cell_format = workbook.add_format({'bold': True, 'bg_color': '#eff7fc', 'border': 1, 'font_size': 10})
+        parent_row_format = workbook.add_format({'bg_color': '#eff7fc', 'border': 1, 'font_size': 10, 'num_format': 'yyyy-mm-dd hh:mm:ss'})
+        child_row_format = workbook.add_format({'font_size': 10, 'num_format': 'yyyy-mm-dd hh:mm:ss'})
+        count_row_format = workbook.add_format({'border': 1, 'font_size': 10, 'bold': True, 'bg_color': '#eff7fc', 'font_size': 10})
+        merge_format = workbook.add_format({ 'bg_color': '#E2F4FF',})
+
+        worksheet.merge_range("B1:H1", self.additional_content, merge_format)
+
+        headers = df
+        
+        #worksheet.write_row('B2', headers, header_format)
+
+        worksheet.autofit()
+        datetime_format = workbook.add_format({'num_format': 'yyyy-mm-dd hh:mm:ss'})
+
+
+        row_num = 2
+        for tour in self.data:
+            worksheet.autofit()
+            worksheet.write_row(f'B{row_num}', headers, header_format)
+            # Write parent row
+            worksheet.merge_range(f'B{row_num +1}:C{row_num +1}', tour["Tour/Route"], tour_cell_format)
+            worksheet.write_row(row_num, 3, [tour["Start Datetime"], tour["End Datetime"], tour["Status"], tour["Assigned To"], tour["Performed By"]], parent_row_format)
+            row_num += 1
+
+            for cp in tour["checkpoints"]:
+                worksheet.autofit()
+                worksheet.write(row_num, 2, cp["assetname"], child_row_format)
+
+                if cp["starttime"] is None and cp['endtime'] is None:
+                    time_status = ["Not Started", "Not Started", cp["jobstatus"]]
+                else:
+                    time_status = [cp["starttime"], cp["endtime"], cp["jobstatus"]]
+
+                worksheet.write_row(row_num, 3, time_status, child_row_format)
+                row_num += 1
+
+            worksheet.write(row_num, 1, "", count_row_format)
+            worksheet.write(row_num, 2, "Checkpoints count", count_row_format)
+            worksheet.write(row_num, 3, tour["Count of Checkpoint"], count_row_format)
+            worksheet.write(row_num, 4, "Passed Percentage", count_row_format)
+            worksheet.write(row_num, 5, tour["Passed Ratio"], count_row_format)
+            worksheet.write(row_num, 6, "Missed Percentage", count_row_format)
+            worksheet.write(row_num, 7, tour["Missed Ratio"], count_row_format)
+            row_num += 1
+
+            worksheet.write(row_num, 1, "", count_row_format)
+            worksheet.write(row_num, 2, "", count_row_format)
+            worksheet.write(row_num, 3, "", count_row_format)
+            worksheet.write(row_num, 4, "Passed Percentage", count_row_format)
+            worksheet.write(row_num, 5, tour["Passed Ratio"], count_row_format)
+            worksheet.write(row_num, 6, "Missed Percentage", count_row_format)
+            worksheet.write(row_num, 7, tour["Missed Ratio"], count_row_format)
+            row_num += 1
+
+            row_num += 4
             
-        # Define the format for the merged cell
-        merge_format = workbook.add_format({
-            'bg_color': '#E2F4FF',
-        })
-        # Title of xls/xlsx report
-        worksheet.merge_range("A1:F1", self.additional_content, merge_format)
 
         # Close the Pandas Excel writer and output the Excel file
         writer.save()
@@ -183,9 +262,9 @@ class StaticTourDetailReport(BaseReportsExport):
         if export_format == 'pdf':
             return self.get_pdf_output()
         elif export_format == 'xls':
-            return self.get_xls_output()
+            return self.get_xls_output(orm = True)
         elif export_format == 'xlsx':
-            return self.get_xlsx_output()
+            return self.get_xlsx_output(orm = True)
         elif export_format == 'csv':
             return self.get_csv_output()
         elif export_format == 'html':

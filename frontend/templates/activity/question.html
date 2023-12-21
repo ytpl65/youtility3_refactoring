@@ -68,7 +68,8 @@ Question List
 			ajax:{
 				url:"{{ url('activity:question') }}?action=list"
 			},
-			pageLength:50,
+			lengthMenu: [ 10, 20, 50,100 ],
+			pageLength:10,
 			columns     : [
                 { "data": "id", className:"noVis" },
                 { "data": "quesname", title: "Name" },
@@ -77,9 +78,9 @@ Question List
                 { "data": "isworkflow", title: 'Workflow', visible:false },	
             ],
 			deferRender: true,
-			scrollY: 300,
+			{# scrollY: 300,
             scrollCollapse: true,
-            scrollX:true,
+            scrollX:true, #}
 			columnDefs:[
 				{targets:0, data: "id", visible:false, searchable:false, orderable:false},
 				{
