@@ -203,6 +203,8 @@ class ReportEssentials(object):
     StaticDetailedTourSummary  = 'StaticDetailedTourSummary'
     TourDetails                = 'TourDetails'
     DynamicDetailedTourSummary = 'DynamicDetailedTourSummary'
+    StaticTourDetails          = 'StaticTourDetails'
+    DynamicTourDetails         = 'DynamicTourDetails'
 
     
     def __init__(self, report_name):
@@ -227,6 +229,7 @@ class ReportEssentials(object):
         from apps.reports.report_designs.dynamic_tour_details import DynamicTourDetailReport
         from apps.reports.report_designs.static_tour_details import StaticTourDetailReport
         from apps.reports.report_designs.dynamic_detailed_tour_summary import DynamicDetailedTourSummaryReport
+        
 
         return {
             self.TaskSummary: TaskSummaryReport,
