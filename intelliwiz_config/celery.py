@@ -52,11 +52,11 @@ app.conf.beat_schedule = {
     },
     "send_report_genererated_on_mail":{
         'task':'send_generated_report_onmail',
-        'schedule':crontab(minute='*/30'),
+        'schedule':crontab(minute='*/27'),
     },
-    # "create-reports-scheduled":{
-    #     'task':'create_reports_bg',
-    #     'schedule':crontab(minute='*/2')
-    # }
+    "create-reports-scheduled":{
+        'task':'create_reports_bg',
+        'schedule':crontab(minute='22', hour='*/8') #22 */8 * * *
+    }
 
 }
