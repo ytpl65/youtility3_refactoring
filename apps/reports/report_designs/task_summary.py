@@ -64,7 +64,6 @@ class TaskSummaryReport(BaseReportsExport):
         super().excel_layout(worksheet, workbook, df, writer, output)
         #overriding to design the excel file
     
-        
         # Add a header format.
         header_format = workbook.add_format(
             {

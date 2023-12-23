@@ -70,16 +70,16 @@ class BaseReportsExport(WeasyTemplateResponseMixin):
         log.info("designing the layout...")
     
     
-    def get_excel_output(self):
-        worksheet, workbook, df, writer, output = self.set_data_excel()
+    def get_excel_output(self, orm):
+        worksheet, workbook, df, writer, output = self.set_data_excel(orm=orm)
         output = self.excel_layout(workbook=workbook, worksheet=worksheet,
                           df=df, writer=writer, output=output)
         return output
     
     
-    def get_xls_output(self):
+    def get_xls_output(self, orm=False):
         log.info("xls is executing")
-        output = self.get_excel_output()
+        output = self.get_excel_output(orm=orm)
         if self.returnfile: return output
         response = HttpResponse(
             output,
@@ -89,9 +89,9 @@ class BaseReportsExport(WeasyTemplateResponseMixin):
         return response
     
     
-    def get_xlsx_output(self):
+    def get_xlsx_output(self, orm=False):
         log.info("xlsx is executing")
-        output = self.get_excel_output()
+        output = self.get_excel_output(orm=orm)
         if self.returnfile: return output
         response = HttpResponse(
             output,
@@ -157,19 +157,20 @@ class BaseReportsExport(WeasyTemplateResponseMixin):
         pass
     
     
-    def set_data_excel(self):
+    def set_data_excel(self, orm=False):
         df = pd.DataFrame(list(self.data))
         # Convert the Decimal objects to floats using the float() function
         df = df.applymap(lambda x: float(x) if isinstance(x, Decimal) else x)
         df = self.excel_columns(df)
         # Create a Pandas Excel writer using XlsxWriter as the engine and BytesIO as file-like object
         output = BytesIO()
-        writer = pd.ExcelWriter(output, engine='xlsxwriter',  datetime_format="mmm d yyyy hh:mm:ss", date_format="mmm dd yyyy",)
-        df.to_excel(writer, index=False, sheet_name='Sheet1', startrow=2, header=False)
-        
-        # Get the xlsxwriter workbook and worksheet objects
+        writer = pd.ExcelWriter(output, engine='xlsxwriter',  datetime_format='yyyy-mm-dd hh:mm:ss', date_format="mm dd yyyy",)
         workbook = writer.book
-        worksheet = writer.sheets['Sheet1']
+        if orm:
+            worksheet = workbook.add_worksheet('Sheet1')
+        else:
+            df.to_excel(writer, index=False, sheet_name='Sheet1', startrow=2, header=False)
+            worksheet = writer.sheets['Sheet1']
         return worksheet, workbook, df, writer, output
     
     def write_custom_mergerange(self, worksheet, workbook, custom_merge_ranges):
@@ -207,6 +208,8 @@ class ReportEssentials(object):
     StaticTourDetails          = 'StaticTourDetails'
     DynamicTourDetails         = 'DynamicTourDetails'
     DynamicDetailedTourSummary = 'DynamicDetailedTourSummary'
+    StaticTourDetails          = 'StaticTourDetails'
+    DynamicTourDetails         = 'DynamicTourDetails'
 
     
     def __init__(self, report_name):
@@ -231,6 +234,7 @@ class ReportEssentials(object):
         from apps.reports.report_designs.dynamic_tour_details import DynamicTourDetailReport
         from apps.reports.report_designs.static_tour_details import StaticTourDetailReport
         from apps.reports.report_designs.dynamic_detailed_tour_summary import DynamicDetailedTourSummaryReport
+        
 
         return {
             self.TaskSummary: TaskSummaryReport,

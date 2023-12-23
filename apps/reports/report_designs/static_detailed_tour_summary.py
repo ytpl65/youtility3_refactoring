@@ -63,6 +63,11 @@ class StaticDetailedTourSummaryReport(BaseReportsExport):
         super().excel_layout(worksheet, workbook, df, writer, output)
         #overriding to design the excel file
     
+        df = df.rename(columns={'Client Name': 'Client', 'Site Name': 'Site', 'Description': 'Tour', 
+                                'Start Time': 'Planned Date Time', 'End Time': 'Expiry Date Time', 
+                                'No of Checkpoints': 'Checkpoints', 'Completed': 'Completed', 
+                                'Missed': 'Missed', 'Percentage': 'Percentage', 'Comments Type': 'Comments Type',
+                                'Comments':'Comments'})
         
         # Add a header format.
         header_format = workbook.add_format(
@@ -94,7 +99,7 @@ class StaticDetailedTourSummaryReport(BaseReportsExport):
             'bg_color': '#E2F4FF',
         })
         # Title of xls/xlsx report
-        worksheet.merge_range("A1:F1", self.additional_content, merge_format)
+        worksheet.merge_range("A1:K1", self.additional_content, merge_format)
 
         # Close the Pandas Excel writer and output the Excel file
         writer.save()

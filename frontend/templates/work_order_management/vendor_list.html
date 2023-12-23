@@ -207,7 +207,8 @@ $(document).ready(() => {
         ajax:{
             url:`${urlname}?action=list`
         },
-        pageLength:50,
+		lengthMenu: [ 10, 20, 50,100 ],
+        pageLength:10,
         columns:[
             {visible:false, data:"id", className:'noVis'},
             {title:"Code", data:"code"},

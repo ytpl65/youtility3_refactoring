@@ -95,7 +95,7 @@ class ListofTicketReport(BaseReportsExport):
             'bg_color': '#E2F4FF',
         })
         # Title of xls/xlsx report
-        worksheet.merge_range("A1:F1", self.additional_content, merge_format)
+        worksheet.merge_range("A1:G1", self.additional_content, merge_format)
 
         # Close the Pandas Excel writer and output the Excel file
         writer.save()

@@ -55,6 +55,11 @@ Report Form
       <div class="input-group mb-3">
         <div class="col-2">
           {{ form.report_name.label_tag() }}
+          <span class="material-icons-outlined h-19px" data-bs-toggle="tooltip" data-bs-custom-class="tooltip"
+				    data-bs-placement="right" style="vertical-align: middle; font-size: 19px;"
+            title=" select the desired report to download from the drop-down menu">
+            info
+          </span>
         </div>
         <div class="col-5">
           {{ form.report_name }}
@@ -83,6 +88,11 @@ Report Form
       <div class="input-group datafield site d-none mb-3">
         <div class="col-2">
           {{ form.site.label_tag() }}
+          <span class="material-icons-outlined h-19px" data-bs-toggle="tooltip" data-bs-custom-class="tooltip"
+				    data-bs-placement="right" style="vertical-align: middle; font-size: 19px;"
+            title="Select the site from the drop-down menu for which you would like to download the report">
+            info
+          </span>
         </div>
         <div class="col-5">
           {{ form.site }}
@@ -93,6 +103,11 @@ Report Form
       <div class="input-group datafield d-none mb-3">
         <div class="col-2">
           {{ form.sitegroup.label_tag() }}
+          <span class="material-icons-outlined h-19px" data-bs-toggle="tooltip" data-bs-custom-class="tooltip"
+				    data-bs-placement="right" style="vertical-align: middle; font-size: 19px;"
+            title="Select the desired site group from the dropdown menu to generate your report for the selected site group.">
+            info
+          </span>
         </div>
         <div class="col-5">
           {{ form.sitegroup }}
@@ -103,6 +118,11 @@ Report Form
       <div class="input-group datafield d-none mb-3">
         <div class="col-2">
           {{ form.peoplegroup.label_tag() }}
+          <span class="material-icons-outlined h-19px" data-bs-toggle="tooltip" data-bs-custom-class="tooltip"
+				    data-bs-placement="right" style="vertical-align: middle; font-size: 19px;"
+            title="Select the desired people group from the dropdown menu to generate your report for the selected people group.">
+            info
+          </span>
         </div>
         <div class="col-5">
           {{ form.peoplegroup }}
@@ -113,6 +133,11 @@ Report Form
       <div class="input-group datafield  d-none mb-3">
         <div class="col-2">
           {{ form.people.label_tag() }}
+          <span class="material-icons-outlined h-19px" data-bs-toggle="tooltip" data-bs-custom-class="tooltip"
+				    data-bs-placement="right" style="vertical-align: middle; font-size: 19px;"
+            title="Select the desired people from the dropdown menu to generate your report for the selected people.">
+            info
+          </span>
         </div>
         <div class="col-5">
           {{ form.people }}
@@ -181,6 +206,11 @@ Report Form
       <div class="input-group datafield d-none mb-3">
         <div class="col-2">
           {{ form.ticketcategory.label_tag() }}
+          <span class="material-icons-outlined h-19px" data-bs-toggle="tooltip" data-bs-custom-class="tooltip"
+				    data-bs-placement="right" style="vertical-align: middle; font-size: 19px;"
+            title="Select the desired Ticket Category from the dropdown menu to generate your report for the selected ticket category.">
+            info
+          </span>
         </div>
         <div class="col-5">
           {{ form.ticketcategory }}
@@ -201,6 +231,11 @@ Report Form
       <div class="input-group datafield d-none mb-3">
         <div class="col-2">
           {{ form.qrsize.label_tag() }}
+          <span class="material-icons-outlined h-19px" data-bs-toggle="tooltip" data-bs-custom-class="tooltip"
+				    data-bs-placement="right" style="vertical-align: middle; font-size: 19px;"
+            title="Select the desired QR SIZE from the dropdown menu to generate your QR report.">
+            info
+          </span>
         </div>
         <div class="col-5">
           {{ form.qrsize }}
@@ -211,6 +246,11 @@ Report Form
       <div class="input-group datafield d-none mb-3">
         <div class="col-2">
           {{ form.fromdate.label_tag() }}
+          <span class="material-icons-outlined h-19px" data-bs-toggle="tooltip" data-bs-custom-class="tooltip"
+				    data-bs-placement="right" style="vertical-align: middle; font-size: 19px;"
+            title="Select the desired start date for the report generation">
+            info
+          </span>
         </div>
         <div class="col-5 fv-row">
           {{ form.fromdate }}
@@ -221,6 +261,7 @@ Report Form
       <div class="input-group datafield d-none mb-3">
         <div class="col-2">
           {{ form.fromdatetime.label_tag() }}
+          
         </div>
         <div class="col-5 fv-row">
           {{ form.fromdatetime }}
@@ -231,6 +272,11 @@ Report Form
       <div class="input-group datafield d-none mb-3">
         <div class="col-2">
           {{ form.uptodate.label_tag() }}
+          <span class="material-icons-outlined h-19px" data-bs-toggle="tooltip" data-bs-custom-class="tooltip"
+				    data-bs-placement="right" style="vertical-align: middle; font-size: 19px;"
+            title="Select the desired UpTo date for the report generation">
+            info
+          </span>
         </div>
         <div class="col-5 fv-row">
           {{ form.uptodate }}
@@ -251,6 +297,11 @@ Report Form
       <div class="input-group mb-3">
         <div class="col-2">
           {{ form.format.label_tag() }}
+          <span class="material-icons-outlined h-19px" data-bs-toggle="tooltip" data-bs-custom-class="tooltip"
+				    data-bs-placement="right" style="vertical-align: middle; font-size: 19px;"
+            title="Select your preferred file format to download the report">
+            info
+          </span>
         </div>
         <div class="col-5">
           {{ form.format }}
@@ -260,6 +311,11 @@ Report Form
       <div class="input-group mb-3">
         <div class="col-2">
           {{ form.export_type.label_tag() }}
+          <span class="material-icons-outlined h-19px" data-bs-toggle="tooltip" data-bs-custom-class="tooltip"
+				    data-bs-placement="right" style="vertical-align: middle; font-size: 19px;"
+            title=" Select from the drop-down menu whether 'DOWNLOAD' you would like to download the report directly or 'EMAIL' have it emailed to you">
+            info
+          </span>
         </div>
         <div class="col-5">
           {{ form.export_type }}
@@ -454,7 +510,7 @@ Report Form
 
       // Function to toggle visibility and required attribute
       function toggleFieldBehavior(fieldname) {
-          const id = 'id_' + fieldname.replace('*', '');
+          const id = 'id_' + fieldname.replace('*','');
           const $element = $('#' + id);
 
           if ($element.length > 0) {
