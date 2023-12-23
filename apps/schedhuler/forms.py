@@ -12,7 +12,7 @@ import apps.onboarding.models as ob
 class Schd_I_TourJobForm(JobForm):
     ASSIGNTO_CHOICES   = [('PEOPLE', 'People'), ('GROUP', 'Group')]
     assign_to          = forms.ChoiceField(choices = ASSIGNTO_CHOICES, initial="PEOPLE")
-    istimebound = forms.BooleanField(initial=True, required=False, label="Is Time Bound")
+    istimebound = forms.BooleanField(initial=True, required=False, label="Is Time Restricted")
     required_css_class = "required"
 
     class Meta(JobForm.Meta):

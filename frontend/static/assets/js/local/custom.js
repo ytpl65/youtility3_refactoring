@@ -454,6 +454,7 @@ function handle_rendering_of_menus(session) {
     scheduling: "#SCHEDULING",
     comparisions: "#COMPARISIONS",
     wom: "#WOM",
+    calendar: "#CALENDAR",
   };
   if (session["is_superadmin"]) {
     //show every item if user is superadmin
@@ -513,6 +514,10 @@ function handle_rendering_of_menus(session) {
       if (code.includes("HD_") && $(exceptions["helpdesk"]).is(":hidden")) {
         $(exceptions["helpdesk"]).show();
         $(`${exceptions["helpdesk"]} .menu-item`).hide();
+      }
+      if (code.includes("CALENDAR_") && $(exceptions["calendar"]).is(":hidden")) {
+        $(exceptions["calendar"]).show();
+        $(`${exceptions["calendar"]} .menu-item`).hide();
       }
 
       menu_id = "#".concat(code.toUpperCase());

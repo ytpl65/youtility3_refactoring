@@ -168,8 +168,11 @@ class Query(graphene.ObjectType):
         user = People.objects.filter(loginid = loginid, client__bucode = clientcode).first()
         from django_email_verification import send_email
         try:
-            send_email(user, info.context)
-            rc, msg = 0, "Success"
+            if user:
+                send_email(user, info.context)
+                rc, msg = 0, "Success"
+            else:
+                rc, msg = 1, "Failed"
         except Exception as e:
             rc, msg = 1, "Failed"
             log.critical("something went wrong", exc_info=True)
