@@ -263,7 +263,7 @@ USE_I18N = True
 USE_L10N = False
 
 USE_TZ = True
-
+TIME_ZONE = 'UTC'
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/3.2/howto/static-files/
 
@@ -377,6 +377,13 @@ LOGGING_CONFIG_ = {
             'backupCount': 10,
             'formatter': 'coloured',
         },
+        'reportslog':{
+            'class': 'logging.handlers.RotatingFileHandler',
+            'filename':f'{env("LOG_ROOT")}/reports.log',
+            'maxBytes': 15728640,
+            'backupCount': 10,
+            'formatter': 'coloured',
+        },
         'mail_admins': {
             'level': 'ERROR',
             'class': 'django.utils.log.AdminEmailHandler',
@@ -390,17 +397,22 @@ LOGGING_CONFIG_ = {
             'propagate': True 
         },
         'django': { 
-            'handlers': ['default', 'filelogs'],
+            'handlers': ['default', 'filelogs', 'mail_admins'],
             'level': 'INFO',
             'propagate': False
         },
         '__main__': {  # if __name__ == '__main__'
-            'handlers': ['default', 'filelogs'],
+            'handlers': ['default', 'filelogs', 'mail_admins'],
             'level': 'DEBUG',
             'propagate': False
         },
         'mobile_service_log':{
-            'handlers': ['default', 'serviceLogs'],
+            'handlers': ['default', 'serviceLogs', 'mail_admins'],
+            'level': 'DEBUG',
+            'propagate': False
+        },               
+        'reports':{
+            'handlers': ['default', 'reportslog'],
             'level': 'DEBUG',
             'propagate': False
         }               
@@ -469,7 +481,7 @@ SECURE_SSL_REDIRECT=False
 
 DATA_UPLOAD_MAX_MEMORY_SIZE = int(env('DATA_UPLOAD_MAX_MEMORY_SIZE'))
 NOTEBOOK_ARGUMENTS = [
-    '--ip', '192.168.1.33',
+    '--ip', '192.168.1.254',
     '--port', '8002',
 ]
 
@@ -511,3 +523,4 @@ CLIENT_DOMAINS = {
 }
 
 BUCKET = 'prod-attachment-sukhi-group'
+TEMP_REPORTS_GENERATED = env('TEMP_REPORTS_GENERATED')

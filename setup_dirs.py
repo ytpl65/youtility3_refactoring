@@ -4,7 +4,8 @@ import os
 DIRS = [
     "/var/tmp/youtility4_media",
     "/var/tmp/youtility4_logs",
-    "/var/log/youtility4"
+    "/var/log/youtility4",
+    "/var/www/redmine.youtility.in/tmp_reports"
 ]
 
 # Create directories and set permissions

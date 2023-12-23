@@ -678,7 +678,7 @@ class ScheduleEmailReport(LoginRequiredMixin, View):
     P = {
         'template_form':"reports/schedule_email_report.html",
         'template_list':"reports/schedule_email_list.html",
-        'form':rp_forms.EmailReportForm,
+        'form_class':rp_forms.EmailReportForm,
         'popup_form':rp_forms.ReportForm,
         'model':ScheduleReport,
         'ReportEssentials':rutils.ReportEssentials,
@@ -693,7 +693,7 @@ class ScheduleEmailReport(LoginRequiredMixin, View):
             obj = utils.get_model_obj(R['id'], request, {'model': self.P['model']})
             params_initial = obj.report_params
             cxt = {
-                'form':self.P['form'](instance=obj, request = request),
+                'form':self.P['form_class'](instance=obj, request = request),
                 'popup_form':self.P['popup_form'](request=request, initial=params_initial)}
             return render(request, self.P['template_form'], cxt)
         if R.get('action') == 'list':
@@ -701,7 +701,7 @@ class ScheduleEmailReport(LoginRequiredMixin, View):
             return rp.JsonResponse({'data':list(data)}, status=200)
         
         if R.get('action') == 'form':
-            form = self.P['form'](request=request)
+            form = self.P['form_class'](request=request)
             form2 = self.P['popup_form'](request=request)
             cxt = {'form':form, 'popup_form': form2}
             return render(request, self.P['template_form'], context=cxt)
@@ -711,7 +711,13 @@ class ScheduleEmailReport(LoginRequiredMixin, View):
     def post(self, request, *args, **kwargs):
         data = QueryDict(request.POST['formData'])
         report_params = QueryDict(request.POST['report_params'])
-        form = self.P['form'](data=data,request=request)
+        P = self.P
+        if pk := request.POST.get('pk', None):
+            msg = f"updating record with id {pk}"
+            form = utils.get_instance_for_update(
+                data, P, msg, int(pk), {'request':request})
+        else:
+            form = P['form_class'](data, request = request)
         if form.is_valid():
             obj = form.save(commit=False)
             obj = putils.save_userinfo(obj, request.user, request.session)

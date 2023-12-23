@@ -8,6 +8,7 @@ from django.db.models import Q
 from datetime import datetime, timedelta
 from django.conf import settings
 from apps.reports.models import ScheduleReport
+from enum import Enum
 
 class MasterReportTemplate(forms.ModelForm):
     required_css_class = "required"
@@ -179,8 +180,8 @@ class ReportForm(forms.Form):
         return first_day_of_last_month, last_day_of_last_month
 
     def clean(self):
-        super().clean()
-        cd = self.cleaned_data
+        cd = super().clean()
+        ic(cd)
         if cd['report_name'] == settings.KNOWAGE_REPORTS['SITEREPORT'] and cd.get('people') in ["", None] and cd.get('sitegroup') in ["", None]:
             raise forms.ValidationError(
                 f"Both Site Group and People cannot be empty, when the report is {cd.get('report_name')}")
@@ -196,18 +197,25 @@ class ReportForm(forms.Form):
     
 
 class EmailReportForm(forms.ModelForm):
+    class CronType(Enum):
+        """Enum for different cron expression types."""
+        DAILY = "daily"
+        WEEKLY = "weekly"
+        MONTHLY = "monthly"
+        UNKNOWN = "unknown"
     required_css_class = 'required'
+    WORKINGDAYS_CHOICES = ScheduleReport.WORKINGDAYS
     
     cc          = forms.MultipleChoiceField(label='Email-CC', required=False, widget=s2forms.Select2MultipleWidget)
     to_addr     = forms.MultipleChoiceField(label="Email-To", required=False, widget=s2forms.Select2MultipleWidget)
     cronstrue = forms.CharField(widget=forms.Textarea(attrs={'readonly':True, 'rows':2}), required=False)
+    #coveringperiod = forms.ChoiceField(label="Site/People", widget=s2forms.Select2Widget,choices=WORKINGDAYS_CHOICES, required=False)
     class Meta:
         fields = ['report_type', 'report_name', 'cron', 'report_sendtime',
-                  'enable', 'ctzoffset', 'to_addr', 'cc']
+                  'enable', 'ctzoffset', 'to_addr', 'cc', 'crontype']
         model = ScheduleReport
         labels = {
             'cron':'Frequency'
-        
         }
         
     def __init__(self, *args, **kwargs):
@@ -218,6 +226,34 @@ class EmailReportForm(forms.ModelForm):
         self.fields['to_addr'].choices = pm.People.objects.filter(isverified=True, client_id = self.S['client_id']).values_list('email', 'peoplename')
 
         utils.initailize_form_fields(self)
+    
+    def clean(self):
+        cd = super().clean()
+        cd.update({'crontype':self.cron_type(cd['cron'])})
+        return cd
+    
+
+
+    def cron_type(self, cron_expr):
+        fields = cron_expr.split()
+        if len(fields) != 5:
+            return self.CronType.UNKNOWN.value
+
+        # Check for daily cron expressions
+        if all(field == "*" for field in fields[2:]):
+            return self.CronType.DAILY.value
+
+        # Revised check for weekly cron expressions
+        elif fields[2] == "*" and fields[3] == "*" and fields[4] in map(str, range(0, 8)):
+            return self.CronType.WEEKLY.value
+
+        # Revised check for monthly cron expressions
+        elif fields[2] in map(str, range(1, 32)) and fields[3] == "*" and fields[4] == "*":
+            return self.CronType.MONTHLY.value
+
+        # Otherwise, return unknown
+        else:
+            return self.CronType.UNKNOWN.value
     
 
         

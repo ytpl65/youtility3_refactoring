@@ -16,6 +16,9 @@ app = Celery('intelliwiz_config')
 #   should have a `CELERY_` prefix.
 app.config_from_object(settings, namespace='CELERY')
 
+# Explicitly set the timezone for Celery
+app.conf.timezone = 'UTC'
+
 # Load task modules from all registered Django apps.
 app.autodiscover_tasks()
 app.conf.CELERYD_HIJACK_ROOT_LOGGER = False
@@ -46,6 +49,10 @@ app.conf.beat_schedule = {
     "upload-old-files-to-cloud-storage":{
         'task':'upload-old-files-to-cloud-storage',
         'schedule':crontab(minute=0, hour=0, day_of_week='monday')
+    },
+    "create-reports-scheduled":{
+        'task':'create_reports_bg',
+        'schedule':crontab(minute='*/2')
     }
 
 }

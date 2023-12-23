@@ -14,19 +14,23 @@ class ReportHistory(models.Model):
     class ExportType(models.TextChoices):
         D = ('DOWNLOAD', 'Download')
         E = ('EMAIL', 'Email')
+        S = ('SCHEDULED', 'Scheduled')
     
     user        = models.ForeignKey(settings.AUTH_USER_MODEL, verbose_name=_(""), on_delete=models.RESTRICT)
     datetime    = models.DateTimeField(default= now)
     export_type = models.CharField(max_length=55, default=ExportType.D.value)
     report_name = models.CharField(max_length=100)
     params      = models.JSONField(encoder=DjangoJSONEncoder, null=True)
-    format      = models.CharField(max_length=55, default='pdf')
     bu          = models.ForeignKey('onboarding.Bt', null=True, on_delete=models.RESTRICT)
+    client      = models.ForeignKey('onboarding.Bt', null=True, on_delete=models.RESTRICT, related_name='rh_clients')
+    cdtz        = models.DateTimeField(_('cdtz'), default = now)
+    mdtz        = models.DateTimeField(_('mdtz'), default = now)
+    has_data    = models.BooleanField(_("Has Data in Report"), default=True)
     ctzoffset   = models.IntegerField(_("TimeZone"), default=-1)
     cc_mails    = models.TextField(max_length=250, null=True)
     to_mails    = models.TextField(max_length=250, null=True)
     email_body  = models.TextField(max_length=500, null=True)
-    traceback = models.CharField(max_length=1000, null=True)
+    traceback   = models.TextField(null=True)
     
     class Meta:
         db_table = 'report_history'
@@ -56,15 +60,29 @@ class ScheduleReport(BaseModel):
         ('AssetwiseTaskStatus','Assetwise Task Status'),
         ('DetailedTourSummary','Detailed Tour Summary')
     ]
-    report_type = models.CharField(_("Report Type"), max_length=50, choices=REPORT_TEMPLATES)
-    report_name = models.CharField(_("Report Name"), max_length=55)
-    cron = models.CharField(_("Scheduler"), max_length=50, default='* * * * *')
+    
+    WORKINGDAYS = [
+        ('5', 'Monday - Friday'),
+        ('6', 'Monday - Saturday'),
+    ]
+    
+    
+    report_type     = models.CharField(_("Report Type"), max_length=50, choices=REPORT_TEMPLATES)
+    report_name     = models.CharField(_("Report Name"), max_length=55)
+    workingdays     = models.CharField(_("Working Days"), max_length=1, blank=True, null=True, choices=WORKINGDAYS)
+    cron            = models.CharField(_("Scheduler"), max_length=50, default='* * * * *')
     report_sendtime = models.TimeField(_("Send Time"), auto_now=False, auto_now_add=False)
-    cc      = ArrayField(models.CharField(max_length = 90, blank = True, null=True), null = True, blank = True, verbose_name= _("Email-CC"))
-    to_addr = ArrayField(models.CharField(max_length = 90, blank = True, null=True), null = True, blank = True, verbose_name= _("Email=TO"))
-    enable = models.BooleanField(_("Enable"), default=True)
-    lastgeneratedon = models.DateTimeField(_("Last Generated On"), default=now)
-    report_params = models.JSONField(null=True, blank=True, default=report_params_json)
-    bu          = models.ForeignKey('onboarding.Bt', null=True, on_delete=models.RESTRICT, related_name='schd_sites')
+    cc              = ArrayField(models.CharField(max_length = 90, blank = True, null=True), null = True, blank = True, verbose_name= _("Email-CC"))
+    to_addr         = ArrayField(models.CharField(max_length = 90, blank = True, null=True), null = True, blank = True, verbose_name= _("Email=TO"))
+    enable          = models.BooleanField(_("Enable"), default=True)
+    crontype        = models.CharField(_("Cron Type"), max_length=50, null=True, blank=True)
+    fromdatetime    = models.DateTimeField(_("Last Generated On"), null=True)
+    uptodatetime    = models.DateTimeField(_("Next Scheduled On"), null=True)
+    lastgeneratedon = models.DateTimeField(_("Last Generated On"), null=True)
+    report_params   = models.JSONField(null=True, blank=True, default=report_params_json)
+    bu              = models.ForeignKey('onboarding.Bt', null=True, on_delete=models.RESTRICT, related_name='schd_sites')
     client          = models.ForeignKey('onboarding.Bt', null=True, on_delete=models.RESTRICT, related_name='schd_clients')
     
+    
+    class Meta:
+        db_table = 'schedule_report'

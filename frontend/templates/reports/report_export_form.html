@@ -360,6 +360,10 @@ Report Form
     $("#id_fromdate, #id_uptodate").flatpickr({
       dateFormat: 'd-M-Y'
     })
+    $("#id_fromdatetime, #id_uptodatetime").flatpickr({
+      dateFormat: 'd-M-Y H:i',
+      enableTime:true
+    })
 
     $("[multiple]").select2({
       closeOnSelect: false

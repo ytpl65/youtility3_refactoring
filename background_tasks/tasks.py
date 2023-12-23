@@ -17,6 +17,7 @@ import base64
 from django.core.mail import EmailMessage
 from django.templatetags.static import static
 from .move_files_to_GCS import move_files_to_GCS, del_empty_dir, get_files
+from .report_tasks import get_scheduled_reports_fromdb, generate_scheduled_report
 from io import BytesIO
 
 
@@ -499,4 +500,19 @@ def move_media_to_cloud_storage(self):
         resp['traceback'] = tb.format_exc() 
     else:
         resp['msg'] = "Completed without any errors"
+    return resp
+
+@shared_task(name='create_reports_bg')
+def create_scheduled_reports():
+    resp = dict()
+    try:
+        data = get_scheduled_reports_fromdb()
+        log.info(f"Found {len(data)} for reports for generation in background")
+        if data:
+            for record in data:
+                generate_scheduled_report(record)
+        resp['msg'] = f'Total {len(data)} reports generated at {timezone.now()}'
+    except Exception as e:
+        resp['traceback'] = tb.format_exc()
+        log.critical("Error while creating report:", exc_info=True)
     return resp

@@ -6,6 +6,7 @@ from django_weasyprint.views import WeasyTemplateResponseMixin
 import pandas as pd
 from django.http import HttpResponse
 from apps.activity.models import Attachment
+from django.contrib.staticfiles import finders
 from django.conf import settings
 from django.shortcuts import render
 from apps.onboarding.models import Bt
@@ -47,10 +48,11 @@ class BaseReportsExport(WeasyTemplateResponseMixin):
     
     
     def get_pdf_output(self):
-        log.info(f"pdf is executing {self.request.build_absolute_uri()}")
-        html_string = render_to_string(self.design_file, context=self.context, request=self.request)
-        html = HTML(string=html_string, base_url=self.request.build_absolute_uri())
-        css = CSS(filename='frontend/static/assets/css/local/reports.css')
+        log.info(f"pdf is executing {settings.HOST}")
+        html_string = render_to_string(self.design_file, context=self.context)
+        html = HTML(string=html_string, base_url=settings.HOST)
+        css_path = finders.find('assets/css/local/reports.css')
+        css = CSS(filename=css_path)
         font_config = FontConfiguration()
         pdf_output = html.write_pdf(stylesheets=[css], font_config=font_config, presentational_hints=True)
         if self.returnfile: return pdf_output
@@ -59,6 +61,7 @@ class BaseReportsExport(WeasyTemplateResponseMixin):
         )
         response['Content-Disposition'] = f'attachment; filename="{self.filename}.pdf"'
         return response
+    
     
     def excel_layout(self, worksheet, workbook, df, writer, output):
         '''
@@ -112,7 +115,7 @@ class BaseReportsExport(WeasyTemplateResponseMixin):
     
     def get_html_output(self):
         log.info("html is executing")
-        html_output = render_to_string(self.design_file, context=self.context, request=self.request)
+        html_output = render_to_string(self.design_file, context=self.context)
         if self.returnfile: return html_output
         response = render(self.request, self.design_file, self.context)
         return response
@@ -201,6 +204,8 @@ class ReportEssentials(object):
     AssetwiseTaskStatus        = 'AssetwiseTaskStatus'
     StaticDetailedTourSummary  = 'StaticDetailedTourSummary'
     TourDetails                = 'TourDetails'
+    StaticTourDetails          = 'StaticTourDetails'
+    DynamicTourDetails         = 'DynamicTourDetails'
     DynamicDetailedTourSummary = 'DynamicDetailedTourSummary'
 
     

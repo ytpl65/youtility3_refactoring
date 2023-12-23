@@ -74,6 +74,27 @@ Schedule Report Form
             </div>
         </div>
         
+        {# <div class="input-group mb-3">
+            <div class="col-md-2">
+            <label for={{ form.coveringperiod.id_for_label }}
+                    class="required">{{ form.coveringperiod.label }}:</label>
+            </div>
+            <div class="col-md-5">
+                <div class="form-check form-check-inline">
+                    <input type="radio" class="form-check-input" name={{ form.coveringperiod.name }}
+                        id="id_cronradio" value="CRON"
+                        onchange="showHideSelectField('CRON')">
+                    <label class="form-check-label" for="{{ form.coveringperiod.auto_id }}">Something Else</label>
+                </div>
+                <div class="form-check form-check-inline">
+                    <input type="radio" class="form-check-input" name={{ form.coveringperiod.name }}
+                        id="id_workingdaysradio" value="WORKINGDAYS" onchange="showHideSelectField('WORKINGDAYS')">
+                    <label class="form-check-label" for="{{ form.coveringperiod.auto_id }}">Working Days</label>
+                </div>
+            </div>
+        </div> #}
+        
+        
         <div class="input-group mb-3">
             <div class="col-2">
                 {{ form.report_sendtime.label_tag() }}
