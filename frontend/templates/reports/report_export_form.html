@@ -347,6 +347,8 @@ Report Form
   $(document).ready(() => {
     //set ctzoffset
     $("#id_ctzoffset").val(-new Date().getTimezoneOffset())
+    
+    getFieldsFromServer()
 
     
     //cron to readable format
@@ -479,13 +481,9 @@ Report Form
       }
   }
 
-
-    // Attach the event listeners
-    $('#id_cc, #id_to_addr').on('select2:select select2:unselect', onSelectionChanged);
-
-    //hide/show fields based on report_name
-    $("#id_report_name").change((e) => {
-      let selected = $("#id_report_name").val()
+  function getFieldsFromServer(){
+    let selected = $("#id_report_name").val()
+    if(!['', null, undefined].includes(selected)){
       fire_ajax_get({
         url:urlname,
         data: {'action':'form_behaviour', 'report_name':selected}
@@ -495,7 +493,19 @@ Report Form
         }
         dynamicFormBehaviour(data)
       })
+    }
+  }
+
+
+    // Attach the event listeners
+    $('#id_cc, #id_to_addr').on('select2:select select2:unselect', onSelectionChanged);
+
+    //hide/show fields based on report_name
+    $("#id_report_name").change((e) => {
+      getFieldsFromServer()
     })
+
+    
   })
 </script>
 

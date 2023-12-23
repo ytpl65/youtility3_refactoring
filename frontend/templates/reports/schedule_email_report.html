@@ -30,14 +30,9 @@ Schedule Report Form
 
 
 {% block nonfield_errors %}
-{% if form.non_field_errors %}
-{% for err in form.non_field_errors() %}
-<div class="alert alert-danger w-100 alert-dismissible fade show">
-    {{ err }}
-    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+<div class="alert alert-danger" id="nonfield_errors"role="alert" style="display:none">
+    <strong>Error:&nbsp;</strong> <span></span>
 </div>
-{% endfor %}
-{% endif %}
 
 {% if messages %}
 {% for msg in messages %}
@@ -74,27 +69,60 @@ Schedule Report Form
             </div>
         </div>
         
-        {# <div class="input-group mb-3">
+        <div class="input-group mb-3">
             <div class="col-md-2">
-            <label for={{ form.coveringperiod.id_for_label }}
-                    class="required">{{ form.coveringperiod.label }}:</label>
+            <label for={{ form.frequencytype.id_for_label }}
+                    class="required">{{ form.frequencytype.label }}:</label>
             </div>
             <div class="col-md-5">
                 <div class="form-check form-check-inline">
-                    <input type="radio" class="form-check-input" name={{ form.coveringperiod.name }}
-                        id="id_cronradio" value="CRON"
-                        onchange="showHideSelectField('CRON')">
-                    <label class="form-check-label" for="{{ form.coveringperiod.auto_id }}">Something Else</label>
+                    <input type="radio" class="form-check-input" name={{ form.frequencytype.name }}
+                        id="id_workingdaysradio" value="workingdays" onchange="showHideSelectField('workingdays')">
+                    <label class="form-check-label" for="{{ form.frequencytype.auto_id }}">Working Days</label>
                 </div>
                 <div class="form-check form-check-inline">
-                    <input type="radio" class="form-check-input" name={{ form.coveringperiod.name }}
-                        id="id_workingdaysradio" value="WORKINGDAYS" onchange="showHideSelectField('WORKINGDAYS')">
-                    <label class="form-check-label" for="{{ form.coveringperiod.auto_id }}">Working Days</label>
+                    <input type="radio" class="form-check-input" name={{ form.frequencytype.name }}
+                        id="id_cronradio" value="somethingelse"
+                        onchange="showHideSelectField('somethingelse')">
+                    <label class="form-check-label" for="{{ form.frequencytype.auto_id }}">Something Else</label>
                 </div>
             </div>
-        </div> #}
+        </div>
         
         
+        
+        <div class="input-group mb-3 workingdays">
+            <div class="col-md-2">
+                <label for="{{ form.workingdays.id_for_label }}" class="required">{{ form.workingdays.label }}:</label>
+            </div>
+            <div class="col-md-5 mb-3">
+                <div class="row">
+                    <div class="col-md-6">
+                        {{ form.workingdays }}
+                    </div>
+                    <div class="col-md-6">
+                        {{ form.workingperiod }}
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!--CRON-->
+        <div class="input-group mb-3 somethingelse">
+            <div class="col-md-2">
+                <label for="{{ form.cron.id_for_label }}" class="required">{{ form.cron.label }}:</label>
+            </div>
+            <div class="col-md-5 fv-row mb-3">
+                <div class="d-flex">
+                    <input type="text" name="{{ form.cron.name }}" value="{{ form.instance.cron }}" id="id_cron"
+                    readonly required class="form-control d-none form-control-solid" maxlength="250"/>
+                    {{ form.cronstrue }}
+                    <a  class="btn btn-circle btn-icon-only btn-default" id="cron_selector">
+                        <i class="fa fa-clock fs-4 text-primary"></i>
+                    </a>
+                </div>
+                {{ form.cron.errors }}
+            </div>
+        </div>
         <div class="input-group mb-3">
             <div class="col-2">
                 {{ form.report_sendtime.label_tag() }}
@@ -102,21 +130,6 @@ Schedule Report Form
             <div class="col-1 d-flex">
                 {{ form.report_sendtime }} <h5 class="mt-4">&nbsp;&nbsp;Hrs.</h5>
             </div>
-        </div>
-        <!--CRON-->
-        <div class="col-md-2">
-            <label for="{{ form.cron.id_for_label }}" class="required">{{ form.cron.label }}:</label>
-        </div>
-        <div class="col-md-5 fv-row mb-3">
-            <div class="d-flex">
-                <input type="text" name="{{ form.cron.name }}" value="{{ form.instance.cron }}" id="id_cron"
-                readonly required class="form-control d-none form-control-solid" maxlength="250"/>
-                {{ form.cronstrue }}
-                <a  class="btn btn-circle btn-icon-only btn-default" id="cron_selector">
-                    <i class="fa fa-clock fs-4 text-primary"></i>
-                </a>
-            </div>
-            {{ form.cron.errors }}
         </div>
         <div class="input-group mb-3">
             <div class="col-2">
@@ -197,13 +210,44 @@ Schedule Report Form
     function properCron(cron){
         return cron === '* * * * *' ? false :true
     }
+    function showHideSelectField(val) {
+        if (val == "workingdays") {
+            $(".workingdays").show()
+            $("#id_workingdaysradio").attr('checked', 'checked')
+            $(".somethingelse").hide()
+            $("#id_cronsrtue").val("")
+            toggleRequiredAttribute("id_workingdays")
+            toggleRequiredAttribute("id_workingperiod")
+            toggleRequiredAttribute("id_cronstrue", set=false)
+        } else {
+            //$("#aatopdiv").hide();
+            $(".somethingelse").show();
+            $("#id_cronradio").attr('checked', 'checked')
+            $(".workingdays").hide();
+            $("#id_workingdays").val(null)
+            toggleRequiredAttribute("id_cronsrtue")
+            toggleRequiredAttribute("id_workingdays", set=false)
+        }
+    }
     $(document).ready(() => {
+        //toggle people and pgroup field based on radio button value
+
         if("{{ form.instance.id }}" !== "None"){
             //cron to readable format
             $("#id_cronstrue").val(cronstrue.toString($("#id_cron").val()))
             $("#see_parameters").removeClass('d-none')
             $("#btnFormSubmit span").html("Update")
+            var assignto = ['1', 'None', null, ""].includes('{{form.instance.workingdays }}') ? "somethingelse" : "workingdays"
+            showHideSelectField(assignto)
+            if($('#id_workingdaysradio').val() == "workingdays"){
+                let timeArr  = $("#id_cron").val().split(" ")
+                let workingperiod = `${timeArr[1]}:${timeArr[0]}`
+                $("#id_workingperiod").val(workingperiod)
+            }
+            
 
+        }else{
+            showHideSelectField('workingdays')
         }
         //set ctzoffset
         $("#id_ctzoffset").val(-new Date().getTimezoneOffset())
@@ -342,7 +386,7 @@ Schedule Report Form
             $("#parameters_form").modal("show")
         })
 
-        $('#id_report_sendtime').flatpickr({
+        $('#id_report_sendtime, #id_workingperiod').flatpickr({
             enableTime: true,
             noCalendar: true,
             dateFormat: "H:i",
@@ -371,6 +415,16 @@ Schedule Report Form
                     window.location.href = `${urlname}?id=${data.pk}`;
                 }, 2000);
             })
+        })
+        $("#id_workingperiod").change((e) => {
+            console.log("changed")
+            let time = $("#id_workingperiod").val()
+            if($("#id_workingadays").val() != ""){
+                let workingdays = $("#id_workingdays").val()
+                const timeArr = time.split(':')
+                let cronexp = `${timeArr[1]} ${timeArr[0]} * * 1,${workingdays}`
+                $("#id_cron").val(cronexp)
+            }
         })
     })
 </script>

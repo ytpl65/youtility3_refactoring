@@ -50,9 +50,13 @@ app.conf.beat_schedule = {
         'task':'upload-old-files-to-cloud-storage',
         'schedule':crontab(minute=0, hour=0, day_of_week='monday')
     },
-    "create-reports-scheduled":{
-        'task':'create_reports_bg',
-        'schedule':crontab(minute='*/2')
-    }
+    "send_report_genererated_on_mail":{
+        'task':'send_generated_report_onmail',
+        'schedule':crontab(minute='*/30'),
+    },
+    # "create-reports-scheduled":{
+    #     'task':'create_reports_bg',
+    #     'schedule':crontab(minute='*/2')
+    # }
 
 }

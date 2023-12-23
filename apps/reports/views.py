@@ -19,7 +19,7 @@ from apps.activity.forms import QsetBelongingForm
 from apps.reports import forms as rp_forms
 import logging, subprocess, os
 import logging, subprocess, os
-from background_tasks.tasks import execute_report, send_report_on_email, create_report_history
+from background_tasks.tasks import send_report_on_email, create_report_history
 from django.contrib import messages as msg
 from django.apps import apps
 from django.urls import reverse_lazy
@@ -28,6 +28,7 @@ import pandas as pd, xlsxwriter
 from apps.reports import utils as rutils
 from .models import ScheduleReport
 from django_weasyprint.views import WeasyTemplateView
+from django.db import IntegrityError
 import time, base64, sys, json
 log = logging.getLogger('__main__')
 
@@ -542,6 +543,7 @@ class DownloadReports(LoginRequiredMixin, View):
     def post(self, request, *args, **kwargs):
         form_data, P = request.POST, self.PARAMS
         session = dict(request.session)
+        ic(form_data)
         form = P['form'](data = form_data, request=request)
         if not form.is_valid():
             return render(request, P['template_form'], context={
@@ -712,18 +714,23 @@ class ScheduleEmailReport(LoginRequiredMixin, View):
         data = QueryDict(request.POST['formData'])
         report_params = QueryDict(request.POST['report_params'])
         P = self.P
-        if pk := request.POST.get('pk', None):
-            msg = f"updating record with id {pk}"
-            form = utils.get_instance_for_update(
-                data, P, msg, int(pk), {'request':request})
-        else:
-            form = P['form_class'](data, request = request)
-        if form.is_valid():
-            obj = form.save(commit=False)
-            obj = putils.save_userinfo(obj, request.user, request.session)
-            obj.report_params = report_params
-            obj.save()
-            return rp.JsonResponse({'pk':obj.id}, status=200)
-        else:
-            cxt = {'errors': form.errors}
+        try:
+            if pk := request.POST.get('pk', None):
+                msg = f"updating record with id {pk}"
+                form = utils.get_instance_for_update(
+                    data, P, msg, int(pk), {'request':request})
+            else:
+                form = P['form_class'](data, request = request)
+            if form.is_valid():
+                obj = form.save(commit=False)
+                obj = putils.save_userinfo(obj, request.user, request.session)
+                obj.report_params = report_params
+                obj.save()
+                return rp.JsonResponse({'pk':obj.id}, status=200)
+            else:
+                cxt = {'errors': form.errors}
+                return utils.handle_invalid_form(request, self.P, cxt)
+        except IntegrityError as e: 
+            log.info("Integrity error occured")
+            cxt = {'errors': "Scheduled report with these criteria is already exist"}
             return utils.handle_invalid_form(request, self.P, cxt)

@@ -182,17 +182,17 @@ class ReportForm(forms.Form):
     def clean(self):
         cd = super().clean()
         ic(cd)
-        if cd['report_name'] == settings.KNOWAGE_REPORTS['SITEREPORT'] and cd.get('people') in ["", None] and cd.get('sitegroup') in ["", None]:
+        if cd['report_name'] == 'SiteReport' and cd.get('people') in ["", None] and cd.get('sitegroup') in ["", None]:
             raise forms.ValidationError(
                 f"Both Site Group and People cannot be empty, when the report is {cd.get('report_name')}")
                 
-        if cd.get("fromdate") and cd['fromdate'] > cd['uptodate']: self.add_error('fromdate', 'From date cannot be greater than To date')
-        if cd.get('uptodate') and cd['uptodate'] > cd['fromdate'] + timedelta(days=31):
+        if cd.get("fromdate") and cd.get('fromdate') > cd.get('uptodate'): self.add_error('fromdate', 'From date cannot be greater than To date')
+        if cd.get('uptodate') and cd.get('uptodate') > cd.get('fromdate') + timedelta(days=31):
             err_msg = 'The difference between From date and To date should not be greater than 1 a month'
             self.add_error('fromdate', err_msg)
             self.add_error('uptodate', err_msg)
         if cd.get('format') != 'pdf': self.cleaned_data['preview'] = "false"
-        return self.cleaned_data
+        return cd
     
     
 
@@ -202,20 +202,28 @@ class EmailReportForm(forms.ModelForm):
         DAILY = "daily"
         WEEKLY = "weekly"
         MONTHLY = "monthly"
-        UNKNOWN = "unknown"
+        WORKINGDAYS = "workingdays"
     required_css_class = 'required'
     WORKINGDAYS_CHOICES = ScheduleReport.WORKINGDAYS
+    frequencytypes = [
+        ('workingdays', 'Working Days'),
+        ('somethingelse', 'Something Else')
+    ]
+
     
-    cc          = forms.MultipleChoiceField(label='Email-CC', required=False, widget=s2forms.Select2MultipleWidget)
-    to_addr     = forms.MultipleChoiceField(label="Email-To", required=False, widget=s2forms.Select2MultipleWidget)
-    cronstrue = forms.CharField(widget=forms.Textarea(attrs={'readonly':True, 'rows':2}), required=False)
-    #coveringperiod = forms.ChoiceField(label="Site/People", widget=s2forms.Select2Widget,choices=WORKINGDAYS_CHOICES, required=False)
+    cc            = forms.MultipleChoiceField(label='Email-CC', required=False, widget=s2forms.Select2MultipleWidget)
+    to_addr       = forms.MultipleChoiceField(label="Email-To", required=False, widget=s2forms.Select2MultipleWidget)
+    cronstrue     = forms.CharField(widget=forms.Textarea(attrs={'readonly':True, 'rows':2}), required=False)
+    frequencytype = forms.ChoiceField(label="Frequency Type", widget=s2forms.Select2Widget, choices=frequencytypes, required=False)
+    workingdays   = forms.ChoiceField(label="Working Days", widget=s2forms.Select2Widget,choices=WORKINGDAYS_CHOICES, required=False)
+    workingperiod = forms.TimeField(label="Period", required=False)
+    
     class Meta:
         fields = ['report_type', 'report_name', 'cron', 'report_sendtime',
-                  'enable', 'ctzoffset', 'to_addr', 'cc', 'crontype']
+                  'enable', 'ctzoffset', 'to_addr', 'cc', 'crontype', 'workingdays']
         model = ScheduleReport
         labels = {
-            'cron':'Frequency'
+            'cron':'Scheduler'
         }
         
     def __init__(self, *args, **kwargs):
@@ -253,7 +261,7 @@ class EmailReportForm(forms.ModelForm):
 
         # Otherwise, return unknown
         else:
-            return self.CronType.UNKNOWN.value
+            return self.CronType.WORKINGDAYS.value
     
 
         

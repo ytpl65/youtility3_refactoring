@@ -1415,7 +1415,7 @@ def get_email_addresses(people_ids, group_ids=None, buids=None):
     
     
 
-def send_email(subject, body, to, from_email=None, atts=None):
+def send_email(subject, body, to, from_email=None, atts=None, cc=None):
     if atts is None: atts = []
     from django.core.mail import EmailMessage
     from django.conf import settings
@@ -1427,6 +1427,7 @@ def send_email(subject, body, to, from_email=None, atts=None):
     msg.body = body
     msg.from_email = from_email or settings.EMAIL_HOST_USER
     msg.to = to
+    if cc: msg.cc = cc
     logger.info(f'recipents of email are  {to}')
     msg.content_subtype= 'html'
     for attachment in atts:

@@ -13,16 +13,18 @@ from django.db.models import Q
 from django.conf import settings
 from django.utils import timezone
 import requests
-import base64
+import base64, os
 from django.core.mail import EmailMessage
+from apps.reports.models import ScheduleReport
 from django.templatetags.static import static
 from .move_files_to_GCS import move_files_to_GCS, del_empty_dir, get_files
-from .report_tasks import get_scheduled_reports_fromdb, generate_scheduled_report
+from .report_tasks import (
+    get_scheduled_reports_fromdb, generate_scheduled_report, handle_error,  
+    walk_directory, get_report_record, check_time_of_report, remove_reportfile)
 from io import BytesIO
 
 
 log = getLogger('mobile_service_log')
-
 
 @app.task(bind=True, default_retry_delay=300, max_retries=5, name='Send Ticket email')
 def send_ticket_email(self, ticket=None, id=None):
@@ -367,26 +369,6 @@ def task_every_min(self):
     return f"task completed at {timezone.now()}"
 
 
-@shared_task(bind=True, name="Execute Report")
-def execute_report(self, params, formdata):
-    try:
-        log.info("report execution started")
-        # prepare basic auth headers
-        username = settings.KNOWAGE_USERNAME
-        password = settings.KNOWAGE_PASS
-        auth_creds = base64.b64encode(
-            f'{username}:{password}'.encode('utf-8')).decode('utf-8')
-        auth_headers = {'Authorization': f'Basic {auth_creds}'}
-        log.info(f'{auth_creds = }, {auth_headers = }')
-
-        # execute the report
-        report_execution_url = f"{settings.KNOWAGE_SERVER_URL}restful-services/2.0/documents/{formdata['report_name']}/content?outputType={formdata['format']}"
-        print(f'{report_execution_url = }, {params = }')
-        log.info(f'{report_execution_url = }, {params = }')
-        return requests.post(report_execution_url, headers=auth_headers, json=params)
-    except Exception as e:
-        log.critical("report execution failed with exception ", exc_info=True)
-
 
 @shared_task(bind=True, name="Send report on email")
 def send_report_on_email(self, formdata, json_report):
@@ -504,15 +486,59 @@ def move_media_to_cloud_storage(self):
 
 @shared_task(name='create_reports_bg')
 def create_scheduled_reports():
+    state_map = {'not_generated':0, 'skipped':0, 'generated':0, 'processed':0}
+
     resp = dict()
     try:
         data = get_scheduled_reports_fromdb()
         log.info(f"Found {len(data)} for reports for generation in background")
         if data:
             for record in data:
-                generate_scheduled_report(record)
-        resp['msg'] = f'Total {len(data)} reports generated at {timezone.now()}'
+                state_map = generate_scheduled_report(record, state_map)
+        resp['msg'] = f'Total {len(data)} report/reports processed at {timezone.now()}'
     except Exception as e:
         resp['traceback'] = tb.format_exc()
         log.critical("Error while creating report:", exc_info=True)
+    state_map['processed'] = len(data)
+    resp['state_map'] = state_map
     return resp
+
+
+
+
+
+@shared_task(name="send_generated_report_onmail")
+def send_generated_report_on_mail():
+    story = {
+        'start_time': timezone.now(),
+        'files_processed': 0,
+        'emails_sent': 0,
+        'errors': [],
+    }
+
+    try:
+        for file in walk_directory(settings.TEMP_REPORTS_GENERATED):
+           
+            story['files_processed'] += 1
+            sendmail, filename_without_extension = check_time_of_report(file)
+            if sendmail:
+                if record := get_report_record(filename_without_extension):
+                    utils.send_email(
+                    subject='Test Subject',
+                        body='Test Body',
+                        to=record.to_addr,
+                        cc=record.cc,
+                        atts=[file]
+                    )
+                    story['emails_sent'] += 1
+                    #file deletion
+                    story = remove_reportfile(file, story)
+                else:
+                    log.info(f"No record found for file {os.path.basename(file)}")
+            else:
+                log.info("No files to send at this moment")
+    except Exception as e:
+       story['errors'].append(handle_error(e))
+       log.critical("something went wrong", exc_info=True)
+    story['end_time'] = timezone.now()
+    return story

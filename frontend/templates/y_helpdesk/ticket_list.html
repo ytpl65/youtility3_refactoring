@@ -94,10 +94,12 @@ tr{
                 }},
                 {targets:8, data: 'runningstatus',  render:function(data, type, row, meta){
 					if(data === 'CANCELLED'){return `<span class="badge badge-danger">${data}</span>`}
+					if(data === 'ONHOLD'){return `<span class="badge badge-info">${data}</span>`}
 					if(data === 'NEW'){return `<span class="badge badge-primary">${data}</span>`}
 					if(data === 'OPEN'){return `<span class="badge badge-orange">${data}</span>`}
 					if(data === 'RESOLVED'){return `<span class="badge badge-success">${data}</span>`}
 					if(data === 'CLOSED'){return `<span class="badge badge-secondary">${data}</span>`}
+                    return data
 				}},
 			],
 			createdRow:function(row, data, dataIndex){

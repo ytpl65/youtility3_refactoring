@@ -342,7 +342,7 @@ GRAPHQL_JWT = {
     "JWT_LONG_RUNNING_REFRESH_TOKEN": True,
 }
 
-ADMINS = [('youtility_staff', "naveen.sargam@youtility.in")]
+ADMINS = [('wed_dev', "naveen.sargam@youtility.in")]
 
 # LOGGING CONF...
 import logging.config
@@ -385,7 +385,7 @@ LOGGING_CONFIG_ = {
             'formatter': 'coloured',
         },
         'mail_admins': {
-            'level': 'ERROR',
+            'level': 'CRITICAL',
             'class': 'django.utils.log.AdminEmailHandler',
             'include_html': True,
         }
@@ -493,22 +493,6 @@ JDBC_DRIVER_PATH = env('JDBC_DRIVER_PATH')
 HOST = env('HOST')
 
 
-# Knowage server details
-KNOWAGE_USERNAME = env('KNOWAGE_USERNAME')
-KNOWAGE_PASS = env('KNOWAGE_PASS')
-KNOWAGE_SERVER_URL = env('KNOWAGE_SERVER_URL')
-KNOWAGE_DATASOURCE = 'Demo-Instance'
-COMPANYNAME = 'Youtility Technologies Pvt. Ltd.'
-KNOWAGE_REPORTS = {
-    'TASKSUMMARY':'TaskSummary',
-    'TOURSUMMARY':"TourSummary",
-    'LISTOFTASKS':'ListOfTasks',
-    'LISTOFINTERNALTOURS':'ListOfInternalTours',
-    'PPMSUMMARY':'PPMSummary',
-    'LISTOFTICKETS':'ListOfTickets',
-    'WORKORDERLIST':'WorkOrderList',
-    'SITEREPORT':'siteReport',
-}
 
 TEST_RUNNER = 'intelliwiz_config.test_runner.MyTestRunner'
 

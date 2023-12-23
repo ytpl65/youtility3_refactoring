@@ -68,6 +68,7 @@ class ScheduleReport(BaseModel):
     
     
     report_type     = models.CharField(_("Report Type"), max_length=50, choices=REPORT_TEMPLATES)
+    filename        = models.CharField(max_length=200, null=True)
     report_name     = models.CharField(_("Report Name"), max_length=55)
     workingdays     = models.CharField(_("Working Days"), max_length=1, blank=True, null=True, choices=WORKINGDAYS)
     cron            = models.CharField(_("Scheduler"), max_length=50, default='* * * * *')
@@ -84,5 +85,15 @@ class ScheduleReport(BaseModel):
     client          = models.ForeignKey('onboarding.Bt', null=True, on_delete=models.RESTRICT, related_name='schd_clients')
     
     
-    class Meta:
+    class Meta(BaseModel.Meta):
         db_table = 'schedule_report'
+        constraints = [
+            models.UniqueConstraint(
+                fields=['cron', 'report_type', 'bu', 'report_params'],
+                name="cron_report_type_report_params_uk"
+            ),
+            models.UniqueConstraint(
+                fields=['cron', 'report_type', 'bu', 'workingdays', 'report_params'],
+                name="cron_report_type_workindays_report_params_uk"
+            )
+        ]
