@@ -99,7 +99,8 @@ class ReportForm(forms.Form):
         ('StaticDetailedTourSummary','Static Detailed Tour Summary'),
         ('DynamicDetailedTourSummary','Dynamic Detailed Tour Summary'),
         ('DynamicTourDetails','Dynamic Tour Details'),
-        ('StaticTourDetails','Static Tour Details')
+        ('StaticTourDetails','Static Tour Details'),
+        ('SiteVisitReport','SiteVisitReport')
     ]
     download_or_send_options = [
         ('DOWNLOAD', 'Download'),
