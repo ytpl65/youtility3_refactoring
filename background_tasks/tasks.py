@@ -466,8 +466,8 @@ def send_email_notification_for_wp(self, womid, qsetid, approvers, client_id, bu
         jsonresp['traceback'] += tb.format_exc()
     return jsonresp
 
-@shared_task(bind=True, name="upload-old-files-to-cloud-storage")
-def move_media_to_cloud_storage(self):
+@shared_task(name="upload-old-files-to-cloud-storage")
+def move_media_to_cloud_storage():
     resp = {}
     try:
         log.info("move_media_to_cloud_storage execution started [+]")
