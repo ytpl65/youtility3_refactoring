@@ -45,11 +45,11 @@ class PELManager(models.Manager):
             log.info('retrived obj punchintime: %s and punchoutime: %s', obj[0].punchintime, obj[0].punchouttime)
             extras = obj[0].peventlogextras
             if obj[0].punchintime and extras['distance_in'] is None:
-                extras['verified_in'] = result['verified']
+                extras['verified_in'] = bool(result['verified'])
                 extras['distance_in'] = result['distance']
             elif obj[0].punchouttime and extras['distance_out'] is None:
                 log.info('no punchintime found')
-                extras['verified_out'] = result['verified']
+                extras['verified_out'] = bool(result['verified'])
                 extras['distance_out'] = result['distance']
 
             obj[0].peventlogextras = extras

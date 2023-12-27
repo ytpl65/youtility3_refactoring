@@ -56,12 +56,11 @@ def insertrecord_json(records, tablename):
                 record = json.loads(record)
                 record = clean_record(record)
                 log.info(f'record after cleaning\n {pformat(record)}')
-                try:
-                    obj = model.objects.get(uuid=record['uuid'])
-                    model.objects.filter(uuid=obj.uuid).update(**record)
+                if model.objects.filter(uuid=record['uuid']).exists():
+                    model.objects.filter(uuid=record['uuid']).update(**record)
                     log.info("record is already exist so updating it now..")
                     uuids.append(str(record['uuid']))
-                except model.DoesNotExist:
+                else:
                     log.info("record is not exist so creating new one..")
                     model.objects.create(**record)
                     uuids.append(str(record['uuid']))
@@ -161,7 +160,7 @@ def insertrecord(record, tablename):
             if model.objects.filter(uuid = record['uuid']).exists():
                 model.objects.filter(uuid = record['uuid']).update(**record)
                 log.info("record is already exist so updating it now..")
-                return model.objects.get(uuid = record['uuid'])
+                return model.objects.filter(uuid = record['uuid']).first()
             else:
                 log.info("record does not exist so creating it now..")
                 return model.objects.create(**record)        
@@ -606,10 +605,10 @@ def raise_ticket(Ticket, user, esc, obj):
 
 def create_escalation_matrix_for_sitecrisis(ESM, user):
     People = apps.get_model('peoples', 'People')
-    assigneduser = People.objects.get_sitemanager_or_emergencycontact(user.bu)
+    assigneduser = People.objects.get_sitemanager_or_emergencycontact(user.bu) or user.bu.cuser
     if assigneduser:
         TypeAssist = apps.get_model('onboarding', 'TypeAssist')
-        site_crisis_obj = TypeAssist.objects.filter(tacode='SITECRISIS', tatype__tacode='TICKETCATEGORY').first()
+        site_crisis_obj = TypeAssist.objects.filter(tacode='TC_SITECRISIS', tatype__tacode='TICKETCATEGORY').first()
         return ESM.objects.create(
             cuser=user, muser=user, level=1, job_id=1, 
             frequency='MINUTE', frequencyvalue=30, assignedfor='PEOPLE',

@@ -51,7 +51,7 @@ class LoginUser(graphene.Mutation):
             log.warning("login mutations end [-]")
             return output
         except (excp.MultiDevicesError, excp.NoClientPeopleError, excp.NoSiteError,
-            excp.NotBelongsToClientError, excp.NotRegisteredError) as exc:
+            excp.NotBelongsToClientError, excp.NotRegisteredError, excp.WrongCredsError) as exc:
             log.warning(exc, exc_info=True)
             raise GraphQLError(exc) from exc
 
@@ -260,7 +260,7 @@ class InsertJsonMutation(graphene.Mutation):
         from .utils import insertrecord_json
         from apps.core.utils import get_current_db_name
         import json
-        log.info('\n\ninsert jsondata mutations start[+]')
+        log.info('\n\n\ninsert jsondata mutations start[+]')
         rc, traceback, resp, recordcount = 0,  'NA', 0, 0
         msg = ""
         uuids = []
@@ -274,7 +274,7 @@ class InsertJsonMutation(graphene.Mutation):
             msg, rc, traceback = 'Insert Failed!',1, tb.format_exc()
         
         o = ty.ServiceOutputType(rc = rc, recordcount = recordcount, msg = msg, traceback = traceback, uuids=uuids)
-        log.info(f"Response: {o.recordcount}, {o.msg}, {o.rc}, {o.traceback}")
+        log.info(f"\n\n\nResponse: {o.recordcount}, {o.msg}, {o.rc}, {o.traceback}")
         return InsertJsonMutation(output = o)
 
 

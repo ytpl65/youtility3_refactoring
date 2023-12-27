@@ -259,6 +259,7 @@ class Query(graphene.ObjectType):
         log.info(f'\n\nrequest for exttour-jobneed-modified-after inputs : peopleid:{peopleid}, buid:{buid}, clientid:{clientid}')
         return get_externaltouremodifiedafter(peopleid, buid, clientid)
 
+
     @staticmethod
     def resolve_get_jndmodifiedafter(self, info, ctzoffset, jobneedids):
         log.info(f'\n\nrequest for jndmodifiedafter inputs : ctzoffset:{ctzoffset}, jobneedids:{jobneedids}')

@@ -2,7 +2,7 @@ from django.db import models
 from django.utils.translation import ugettext as _
 from django.db.models.functions import Concat, Cast
 from django.db.models import CharField, Value as V, Subquery, OuterRef, Exists
-from django.db.models import Q, F, Count, Case, When
+from django.db.models import Q, F, Count, Case, When, Func
 from django.contrib.gis.db.models.functions import  AsWKT, AsGeoJSON
 from datetime import datetime, timedelta, timezone
 from django.core.paginator import Paginator
@@ -919,6 +919,37 @@ class JobneedManager(models.Manager):
         # Query for job needs with the constructed filters
         job_needs = self.annotate(
             istimebound = F('other_info__istimebound')).filter(job_needs_filter).values(*fields)
+
+        return job_needs
+
+    def get_external_tour_job_needs(self, people_id, bu_id, client_id):
+        from django.utils import timezone as dtimezone
+        # Get group IDs associated with the person
+        group_ids = pm.Pgbelonging.objects.filter(people_id=people_id).values_list('pgroup_id', flat=True)
+
+        # Current date and time
+        now = dtimezone.now()
+
+        # Query JobNeed model
+        job_needs = self.filter(
+            # Timezone offset and date computations
+            plandatetime__date__range=(now.date(), now.date() + timedelta(days=1)),
+            expirydatetime__gte=now,
+            # Filter by client, identifier, and people/groups
+            client_id=client_id,
+            identifier='EXTERNALTOUR',
+            pgroup_id__in=group_ids,
+        ).annotate(
+            # Using F expressions to handle timezone offset
+            adjusted_plandatetime=Func(F('plandatetime'), V(1), V('minute') * F('ctzoffset'), function='DATEADD'),
+        ).values(
+            'id', 'jobdesc', 'plandatetime', 'expirydatetime', 'gracetime', 'receivedonserver',
+            'starttime', 'endtime', 'gpslocation', 'remarks', 'cdtz', 'mdtz', 'pgroup_id',
+            'asset_id', 'cuser_id', 'frequency', 'job_id', 'jobstatus', 'jobtype', 'muser_id',
+            'performedby_id', 'priority', 'qset_id', 'scantype', 'people_id', 'attachmentcount',
+            'identifier', 'parent_id', 'bu_id', 'client_id', 'seqno', 'ticketcategory_id',
+            'ctzoffset', 'multifactor', 'uuid'
+        )
 
         return job_needs
     
