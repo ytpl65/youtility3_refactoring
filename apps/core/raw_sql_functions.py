@@ -9,32 +9,33 @@ def get_sqlfunctions():
                         _peopleid bigint,
                         _buid bigint,
                         _clientid bigint)
-                        RETURNS TABLE(id bigint, jobdesc character varying, plandatetime timestamp with time zone, expirydatetime timestamp with time zone, gracetime integer, receivedonserver timestamp with time zone, starttime timestamp with time zone, endtime timestamp with time zone, gpslocation geography, remarks character varying, cdtz timestamp with time zone, mdtz timestamp with time zone, pgroup_id bigint, asset_id bigint, cuser_id bigint, frequency character varying, job_id bigint, jobstatus character varying, jobtype character varying, muser_id bigint, performedby_id bigint, priority character varying, qset_id bigint, scantype character varying, people_id bigint, attachmentcount integer, identifier character varying, parent_id bigint, bu_id bigint, client_id bigint, seqno smallint, ticketcategory_id bigint, ctzoffset integer, multifactor numeric, uuid uuid, istimebound text, ticket_id bigint, remarkstype_id bigint) 
+                        RETURNS TABLE(id bigint, jobdesc character varying, plandatetime timestamp with time zone, expirydatetime timestamp with time zone, gracetime integer, receivedonserver timestamp with time zone, starttime timestamp with time zone, endtime timestamp with time zone, gpslocation geography, remarks text, cdtz timestamp with time zone, mdtz timestamp with time zone, pgroup_id bigint, asset_id bigint, cuser_id bigint, frequency character varying, job_id bigint, jobstatus character varying, jobtype character varying, muser_id bigint, performedby_id bigint, priority character varying, qset_id bigint, scantype character varying, people_id bigint, attachmentcount integer, identifier character varying, parent_id bigint, bu_id bigint, client_id bigint, seqno smallint, ticketcategory_id bigint, ctzoffset integer, multifactor numeric, uuid uuid, istimebound text, ticket_id bigint, remarkstype_id bigint) 
                         LANGUAGE 'plpgsql'
                         COST 100
                         VOLATILE PARALLEL UNSAFE
                         ROWS 1000
 
                     AS $BODY$
-                    DECLARE 
-                        groupids        TEXT;
-                    BEGIN 
-                        SELECT ARRAY(SELECT pgbelonging.pgroup_id as pg_id FROM pgbelonging WHERE pgbelonging.people_id=_peopleid AND pgbelonging.pgroup_id <> -1)::TEXT INTO groupids;
+                                        DECLARE 
+                                            groupids        TEXT;
+                                        BEGIN 
+                                            SELECT ARRAY(SELECT pgbelonging.pgroup_id as pg_id FROM pgbelonging WHERE pgbelonging.people_id=_peopleid AND pgbelonging.pgroup_id <> -1)::TEXT INTO groupids;
 
-                        RETURN QUERY
-                        SELECT jn.id, jn.jobdesc, jn.plandatetime, jn.expirydatetime, jn.gracetime, jn.receivedonserver, jn.starttime, jn.endtime, jn.gpslocation, 
-                            jn.remarks, jn.cdtz, jn.mdtz, jn.pgroup_id,jn.asset_id, jn.cuser_id, jn.frequency, jn.job_id, jn.jobstatus, jn.jobtype, jn.muser_id, jn.performedby_id, 
-                            jn.priority, jn.qset_id, jn.scantype, jn.people_id, jn.attachmentcount, jn.identifier, jn.parent_id,  
-                            jn.bu_id, jn.client_id, jn.seqno, jn.ticketcategory_id, jn.ctzoffset, jn.multifactor, jn.uuid, jn.other_info ->> 'istimebound' as istimebound,
-                            jn.ticket_id, jn.remarks_type_id
-                        FROM jobneed jn
-                        WHERE (( jn.plandatetime + INTERVAL '1 MINUTE' * jn.ctzoffset)::DATE BETWEEN (current_date) AND (current_date + 1) 
-                            OR (now() BETWEEN jn.plandatetime AND jn.expirydatetime)) 
-                        AND jn.bu_id = _buid AND jn.client_id = _clientid
-                        AND (jn.identifier NOT IN ('TICKET','EXTERNALTOUR'))
-                        AND (jn.people_id = _peopleid OR jn.cuser_id=_peopleid OR jn.muser_id=_peopleid OR jn.pgroup_id=any( groupids ::BIGINT[]))
-                        GROUP BY jn.id;
-                    END
+                                            RETURN QUERY
+                                            SELECT jn.id, jn.jobdesc, jn.plandatetime, jn.expirydatetime, jn.gracetime, jn.receivedonserver, jn.starttime, jn.endtime, jn.gpslocation, 
+                                                jn.remarks, jn.cdtz, jn.mdtz, jn.pgroup_id,jn.asset_id, jn.cuser_id, jn.frequency, jn.job_id, jn.jobstatus, jn.jobtype, jn.muser_id, jn.performedby_id, 
+                                                jn.priority, jn.qset_id, jn.scantype, jn.people_id, jn.attachmentcount, jn.identifier, jn.parent_id,  
+                                                jn.bu_id, jn.client_id, jn.seqno, jn.ticketcategory_id, jn.ctzoffset, jn.multifactor, jn.uuid, jn.other_info ->> 'istimebound' as istimebound,
+                                                jn.ticket_id,jn.remarkstype_id
+                                            FROM jobneed jn
+                                            WHERE (( jn.plandatetime + INTERVAL '1 MINUTE' * jn.ctzoffset)::DATE BETWEEN (current_date) AND (current_date + 1) 
+                                                OR (now() BETWEEN jn.plandatetime AND jn.expirydatetime)) 
+                                            AND jn.bu_id = _buid AND jn.client_id = _clientid
+                                            AND (jn.identifier NOT IN ('TICKET','EXTERNALTOUR'))
+                                            AND (jn.people_id = _peopleid OR jn.cuser_id=_peopleid OR jn.muser_id=_peopleid OR jn.pgroup_id=any( groupids ::BIGINT[]))
+                                            GROUP BY jn.id;
+                                        END
+                                        
                     $BODY$;
 
                     ALTER FUNCTION public.fun_getjobneed(bigint, bigint, bigint)
@@ -43,38 +44,38 @@ def get_sqlfunctions():
                     """,
     'fun_getexttourjobneed':"""
                             -- FUNCTION: public.fun_getexttourjobneed(bigint, bigint, bigint)
-
                             -- DROP FUNCTION IF EXISTS public.fun_getexttourjobneed(bigint, bigint, bigint);
 
                             CREATE OR REPLACE FUNCTION public.fun_getexttourjobneed(
                                 _peopleid bigint,
                                 _buid bigint,
                                 _clientid bigint)
-                                RETURNS TABLE(id bigint, jobdesc character varying, plandatetime timestamp with time zone, expirydatetime timestamp with time zone, gracetime integer, receivedonserver timestamp with time zone, starttime timestamp with time zone, endtime timestamp with time zone, gpslocation geography, remarks character varying, cdtz timestamp with time zone, mdtz timestamp with time zone, pgroup_id bigint, asset_id bigint, cuser_id bigint, frequency character varying, job_id bigint, jobstatus character varying, jobtype character varying, muser_id bigint, performedby_id bigint, priority character varying, qset_id bigint, scantype character varying, people_id bigint, attachmentcount integer, identifier character varying, parent_id bigint, bu_id bigint, client_id bigint, seqno smallint, ticketcategory_id bigint, ctzoffset integer, multifactor numeric, uuid uuid) 
+                                RETURNS TABLE(id bigint, jobdesc character varying, plandatetime timestamp with time zone, expirydatetime timestamp with time zone, gracetime integer, receivedonserver timestamp with time zone, starttime timestamp with time zone, endtime timestamp with time zone, gpslocation geography, remarks text, cdtz timestamp with time zone, mdtz timestamp with time zone, pgroup_id bigint, asset_id bigint, cuser_id bigint, frequency character varying, job_id bigint, jobstatus character varying, jobtype character varying, muser_id bigint, performedby_id bigint, priority character varying, qset_id bigint, scantype character varying, people_id bigint, attachmentcount integer, identifier character varying, parent_id bigint, bu_id bigint, client_id bigint, seqno smallint, ticketcategory_id bigint, ctzoffset integer, multifactor numeric, uuid uuid) 
                                 LANGUAGE 'plpgsql'
                                 COST 100
                                 VOLATILE PARALLEL UNSAFE
                                 ROWS 1000
 
                             AS $BODY$
-                            DECLARE 
-                                groupids        TEXT;
-                            BEGIN 
-                                SELECT ARRAY(SELECT pgbelonging.pgroup_id as pg_id FROM pgbelonging WHERE pgbelonging.people_id=_peopleid AND pgbelonging.pgroup_id <> -1)::TEXT INTO groupids;
+                                                        DECLARE 
+                                                            groupids        TEXT;
+                                                        BEGIN 
+                                                            SELECT ARRAY(SELECT pgbelonging.pgroup_id as pg_id FROM pgbelonging WHERE pgbelonging.people_id=_peopleid AND pgbelonging.pgroup_id <> -1)::TEXT INTO groupids;
 
-                                RETURN QUERY
-                                SELECT jn.id, jn.jobdesc, jn.plandatetime, jn.expirydatetime, jn.gracetime, jn.receivedonserver, jn.starttime, jn.endtime, jn.gpslocation, 
-                                    jn.remarks, jn.cdtz, jn.mdtz, jn.pgroup_id,jn.asset_id, jn.cuser_id, jn.frequency, jn.job_id, jn.jobstatus, jn.jobtype, jn.muser_id, jn.performedby_id, 
-                                    jn.priority, jn.qset_id, jn.scantype, jn.people_id, jn.attachmentcount, jn.identifier, jn.parent_id,  
-                                    jn.bu_id, jn.client_id, jn.seqno, jn.ticketcategory_id, jn.ctzoffset, jn.multifactor, jn.uuid
-                                FROM jobneed jn
-                                WHERE (( jn.plandatetime + INTERVAL '1 MINUTE' * jn.ctzoffset)::DATE BETWEEN (current_date) AND (current_date + 1) 
-                                    OR (now() BETWEEN jn.plandatetime AND jn.expirydatetime)) 
-                                AND jn.client_id = _clientid
-                                AND (jn.identifier = 'EXTERNALTOUR')
-                                AND (jn.people_id = _peopleid OR jn.cuser_id=_peopleid OR jn.muser_id=_peopleid OR jn.pgroup_id=any( groupids ::BIGINT[]))
-                                GROUP BY jn.id;
-                            END
+                                                            RETURN QUERY
+                                                            SELECT jn.id, jn.jobdesc, jn.plandatetime, jn.expirydatetime, jn.gracetime, jn.receivedonserver, jn.starttime, jn.endtime, jn.gpslocation, 
+                                                                jn.remarks, jn.cdtz, jn.mdtz, jn.pgroup_id,jn.asset_id, jn.cuser_id, jn.frequency, jn.job_id, jn.jobstatus, jn.jobtype, jn.muser_id, jn.performedby_id, 
+                                                                jn.priority, jn.qset_id, jn.scantype, jn.people_id, jn.attachmentcount, jn.identifier, jn.parent_id,  
+                                                                jn.bu_id, jn.client_id, jn.seqno, jn.ticketcategory_id, jn.ctzoffset, jn.multifactor, jn.uuid
+                                                            FROM jobneed jn
+                                                            WHERE (( jn.plandatetime + INTERVAL '1 MINUTE' * jn.ctzoffset)::DATE BETWEEN (current_date) AND (current_date + 1) 
+                                                                OR (now() BETWEEN jn.plandatetime AND jn.expirydatetime)) 
+                                                            AND jn.client_id = _clientid
+                                                            AND (jn.identifier = 'EXTERNALTOUR')
+                                                            AND (jn.people_id = _peopleid OR jn.cuser_id=_peopleid OR jn.muser_id=_peopleid OR jn.pgroup_id=any( groupids ::BIGINT[]))
+                                                            GROUP BY jn.id;
+                                                        END
+                                                        
                             $BODY$;
 
                             ALTER FUNCTION public.fun_getexttourjobneed(bigint, bigint, bigint)

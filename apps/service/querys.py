@@ -365,8 +365,11 @@ class Query(graphene.ObjectType):
     def resolve_verifyclient(self,info, clientcode):
         try:
             url = utils.get_appropriate_client_url(clientcode)
-            if not url: raise Exception
+            if not url: raise ValueError
             return VerifyClientOutput(msg = "VALID", url=url)
+        except ValueError as e:
+            log.error(f"url not found for the specified {clientcode=}")
+            return VerifyClientOutput(msg='INVALID', url=None, rc=1)
         except Exception as ex:
             log.critical("something went wrong!", exc_info=True)
             return VerifyClientOutput(msg='INVALID', url=None, rc=1)

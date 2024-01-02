@@ -387,7 +387,7 @@ LOGGING_CONFIG_ = {
         'mail_admins': {
             'level': 'CRITICAL',
             'class': 'django.utils.log.AdminEmailHandler',
-            'include_html': True,
+            'include_html': False,
         }
     },
     'loggers': { 

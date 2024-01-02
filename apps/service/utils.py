@@ -2,6 +2,7 @@ import json
 import traceback as tb
 from logging import getLogger
 from pprint import pformat
+from io import BytesIO
 
 from django.apps import apps
 from django.conf import settings
@@ -64,6 +65,8 @@ def insertrecord_json(records, tablename):
                     log.info("record is not exist so creating new one..")
                     model.objects.create(**record)
                     uuids.append(str(record['uuid']))
+    except IntegrityError as e:
+        log.info(f"record already exist in {tablename}")
     except Exception as e:
         log.critical("something went wrong", exc_info=True)
         raise e
@@ -82,20 +85,32 @@ def get_or_create_dir(path):
 
 def get_json_data(file):
     import gzip
-    import json
     try:
-        # ic((file, type(file))
-        with gzip.open(file, 'rb') as f:
-            s = f.read().decode('utf-8')
+        # Check if the file is a BytesIO object
+        if not isinstance(file, BytesIO):
+            log.error("Uploaded file is not a BytesIO object.")
+            return None, None
+
+        # Open the file in binary mode
+        with gzip.GzipFile(fileobj=file) as f:
+            s = f.read().decode('utf-8', errors='ignore')
             s = s.replace("'", "")
-            if isTrackingRecord := s.startswith('{'):
+            if s.startswith('{'):
                 log.info("Tracking record found")
                 arr = s.split('?')
                 s = json.dumps(arr)
-            return json.loads(s)
+            else:
+                log.warning("File does not start with '{'")
+                return None, None
     except Exception as e:
         log.critical("File unzipping error", exc_info=True)
-    return None, None
+        return None, None
+
+    try:
+        return json.loads(s), s
+    except json.JSONDecodeError:
+        log.error("Invalid JSON in file.")
+        return None, None
 
 
 def get_model_or_form(tablename):
@@ -163,7 +178,9 @@ def insertrecord(record, tablename):
                 return model.objects.filter(uuid = record['uuid']).first()
             else:
                 log.info("record does not exist so creating it now..")
-                return model.objects.create(**record)        
+                return model.objects.create(**record)
+    except IntegrityError as e:
+        log.info(f"record already exist in {tablename}")
     except Exception as e:
         log.critical("something went wrong while inserting/updating record", exc_info = True)
         raise e
@@ -516,25 +533,26 @@ def perform_insertrecord(self, file, request = None, db='default', filebased = T
         if len(data) == 0: raise excp.NoRecordsFound
         with transaction.atomic(using = db):
             for record in data:
-                tablename = record.pop('tablename')
-                obj = insertrecord(record, tablename)
-                user = get_user_instance(userid or request.user.id)
-                if tablename == 'ticket' and isinstance(obj, Ticket): utils.store_ticket_history(
-                    instance = obj, request=request, user=user)
-                if tablename == 'wom':
-                    wutils.notify_wo_creation(id = obj.id)
-                allconditions = [
-                    hasattr(obj, 'peventtype'), hasattr(obj, 'endlocation'), 
-                    hasattr(obj, 'punchintime'), hasattr(obj, 'punchouttime')]
+                if record:
+                    tablename = record.pop('tablename')
+                    obj = insertrecord(record, tablename)
+                    user = get_user_instance(userid or request.user.id)
+                    if tablename == 'ticket' and isinstance(obj, Ticket): utils.store_ticket_history(
+                        instance = obj, request=request, user=user)
+                    if tablename == 'wom':
+                        wutils.notify_wo_creation(id = obj.id)
+                    allconditions = [
+                        hasattr(obj, 'peventtype'), hasattr(obj, 'endlocation'), 
+                        hasattr(obj, 'punchintime'), hasattr(obj, 'punchouttime')]
 
-                if all(allconditions) and all([tablename == 'peopleeventlog',
-                        obj.peventtype.tacode in ('CONVEYANCE', 'AUDIT'),
-                        obj.endlocation,obj.punchouttime, obj.punchintime]):
-                    log.info("save line string is started")
-                    save_linestring_and_update_pelrecord(obj)
-                check_for_sitecrisis(obj, tablename, user)
-                recordcount += 1
-                log.info(f'{recordcount} record inserted successfully')
+                    if all(allconditions) and all([tablename == 'peopleeventlog',
+                            obj.peventtype.tacode in ('CONVEYANCE', 'AUDIT'),
+                            obj.endlocation,obj.punchouttime, obj.punchintime]):
+                        log.info("save line string is started")
+                        save_linestring_and_update_pelrecord(obj)
+                    check_for_sitecrisis(obj, tablename, user)
+                    recordcount += 1
+                    log.info(f'{recordcount} record inserted successfully')
         if len(data) == recordcount:
             msg = Messages.INSERT_SUCCESS
             log.info(f'All {recordcount} records are inserted successfully')

@@ -40,15 +40,22 @@ Tour List
     var ajaxData = {}
     const formFilter = '#internaltour_filter'
     const table_id = '#internaltour_table'
-const urlname = "{{ url('schedhuler:jobneedtours') }}"
+    const urlname = "{{ url('schedhuler:jobneedtours') }}"
 
     //if you want to modifiy here, then modify in custom.js initDateRange also
     var params=null
     var from_pd = moment().subtract(7, 'days').format('YYYY-MM-DD');
     var to_pd = moment().format('YYYY-MM-DD')
     params = {from:from_pd, to:to_pd}
-
-    const table_filters = localStorage.getItem('tourstats_filter')? localStorage.getItem('tourstats_filter') : localStorage.getItem('alertsFilters')
+    var table_filters=null
+    
+    if(localStorage.getItem("dynamic_tours_filter")){
+        table_filters = localStorage.getItem('dynamic_tours_filter')
+    }else if(localStorage.getItem('tourstats_filter')){
+        table_filters = localStorage.getItem('tourstats_filter')
+    }else{
+        table_filters = localStorage.getItem('alertsFilters')
+    }
     if(table_filters){
         params = JSON.parse(table_filters)
         localStorage.clear()

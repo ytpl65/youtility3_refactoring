@@ -431,35 +431,32 @@ class JobneedManager(models.Manager):
                 When(Q(pgroup_id=1) | Q(pgroup_id__isnull =  True), then=Concat(F('people__peoplename'), V(' [PEOPLE]'))),
                 When(Q(people_id=1) | Q(people_id__isnull =  True), then=Concat(F('pgroup__groupname'), V(' [GROUP]'))),
                 )}
+        if P.get('dynamic'):
+            conditional_filters = {'other_info__isdynamic':True}
+        else:
+            conditional_filters = {'plandatetime__date__gte':P['from'], 'plandatetime__date__lte':P['to']}
         qobjs = self.annotate(
             **assignedto,client_name=F('client__buname'),site_name=F('bu__buname'),
             no_of_checkpoints=Count('jobneed', distinct=True),
             completed=Count('jobneed', filter=Q(jobneed__jobstatus='COMPLETED'), distinct=True),
             missed=Count('jobneed', filter=Q(jobneed__jobstatus='ASSIGNED'), distinct=True)
             ).select_related(
-                            *related).filter(
-                                Q(Q(parent_id__in = [1, -1]) | Q(parent_id__isnull=True)),
-                                bu_id__in = S['assignedsites'],
-                                client_id = S['client_id'],
-                                #parent_id=1,
-                                plandatetime__date__gte = P['from'],
-                                plandatetime__date__lte = P['to'],
-                                identifier='INTERNALTOUR'
-                        ).exclude(
-                        id=1
-                        ).values(*fields).order_by('-plandatetime')
+                *related).filter(
+                    Q(Q(parent_id__in = [1, -1]) | Q(parent_id__isnull=True)),
+                    bu_id__in = S['assignedsites'],
+                    client_id = S['client_id'],
+                    identifier='INTERNALTOUR',
+                    **conditional_filters
+            ).exclude(
+            id=1
+            ).values(*fields).order_by('-plandatetime')
         if P.get('jobstatus') and P['jobstatus'] != 'TOTALSCHEDULED':
             qobjs = qobjs.filter(jobstatus = P['jobstatus'])
         
         if P.get('alerts') and P.get('alerts') == 'TOUR':
-            qobjs = self.filter(
-            bu_id__in = S['assignedsites'],
-            plandatetime__date__gte = P['from'],
-            plandatetime__date__lte = P['to'],
-            client_id = S['client_id'],
+            qobjs = qobjs.filter(
             alerts=True,
-            identifier="INTERNALTOUR"
-        ).select_related(*related).annotate(**assignedto).values(*fields)
+        ).values(*fields)
         return qobjs or self.none()
     
     
@@ -653,6 +650,7 @@ class JobneedManager(models.Manager):
     def get_alertchart_data(self, request):
         S, R = request.session, request.GET
         qset = self.select_related('bu', 'parent').filter(
+            Q(Q(parent_id__in = [1, -1]) | Q(parent_id__isnull=True)),
             bu_id__in = S['assignedsites'],
             plandatetime__date__gte = R['from'],
             plandatetime__date__lte = R['upto'],
@@ -895,7 +893,7 @@ class JobneedManager(models.Manager):
             'job_id', 'jobstatus', 'jobtype', 'muser_id', 'performedby_id', 
             'priority', 'qset_id', 'scantype', 'people_id', 'attachmentcount', 'identifier', 'parent_id',  
             'bu_id', 'client_id', 'seqno', 'ticketcategory_id', 'ctzoffset', 'multifactor',
-            'uuid', 'istimebound', 'ticket_id','remarkstype_id'
+            'uuid', 'istimebound', 'ticket_id','remarkstype_id', 'isdynamic'
         ]
         # Retrieve group IDs from Pgbelonging
         group_ids = pm.Pgbelonging.objects.filter(
@@ -913,12 +911,14 @@ class JobneedManager(models.Manager):
             Q(client_id=client_id) &
             ~Q(identifier__in=['TICKET', 'EXTERNALTOUR']) &
             (Q(people_id=people_id) | Q(cuser_id=people_id) | Q(muser_id=people_id) | Q(pgroup_id__in=group_ids)) &
-            (Q(plandatetime__date__range=[today, tomorrow]) | Q(plandatetime__lte=datetime.now(), expirydatetime__gte=datetime.now()))
+            (Q(plandatetime__date__range=[today, tomorrow]) | Q(plandatetime__lte=datetime.now(), expirydatetime__gte=datetime.now())) |
+            Q(other_info__isdynamic=True)
         )
 
         # Query for job needs with the constructed filters
         job_needs = self.annotate(
-            istimebound = F('other_info__istimebound')).filter(job_needs_filter).values(*fields)
+            istimebound = F('other_info__istimebound'),
+            isdynamic=F('other_info__isdynamic')).filter(job_needs_filter).values(*fields)
 
         return job_needs
 
@@ -952,7 +952,17 @@ class JobneedManager(models.Manager):
         )
 
         return job_needs
-    
+
+    def get_dynamic_tour_count(self, request):
+        S = request.session
+        jobneeds = self.filter(
+            other_info__isdynamic=True,
+            parent_id__in = [1,-1,None],
+            identifier='INTERNALTOUR',
+            client_id = S['client_id'],
+            bu_id__in = S['assignedsites']
+        ).count()
+        return jobneeds or 0
 
             
 
@@ -1683,6 +1693,7 @@ class JobManager(models.Manager):
             'seqno':R['seqno'],
             'qsetname':R['qsetname']
         }
+        ic(R)
         if not  R['action'] == 'remove':
             child_job = sutils.job_fields(parent_job, checkpoint)
         try:

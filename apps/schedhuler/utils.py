@@ -19,6 +19,44 @@ from celery import shared_task
 from celery.utils.log import get_task_logger
 log = get_task_logger('__main__')
 
+def create_dynamic_job(jobids=None):
+    try:
+        jobs = am.Job.objects.filter(
+            ~Q(jobname='NONE'),
+            ~Q(asset__runningstatus = am.Asset.RunningStatus.SCRAPPED),
+            parent_id = 1,
+            enable = True,
+            other_info__isdynamic=True
+        ).select_related('asset').values(*utils.JobFields.fields)
+        if jobids:
+            jobs = jobs.filter(id__in = jobids)
+        for job in jobs:
+            asset = am.Asset.objects.get(id = job['asset_id'])
+            jobstatus = 'ASSIGNED'
+            jobtype = 'SCHEDULE'
+            people = job['people_id']
+            multiplication_factor = asset.asset_json['multifactor']
+            NONE_JN  = utils.get_or_create_none_jobneed()
+            NONE_P   = utils.get_or_create_none_people()
+            params = {
+                'm_factor':multiplication_factor,'jobtype':jobtype,
+                'jobstatus':jobstatus, 'NONE_JN':NONE_JN, 'NONE_P':NONE_P,
+                'jobdesc':job['jobname'], 'people':people,
+                'sgroup_id':job['sgroup_id'], 'qset_id':job['qset_id'],
+            }
+            with transaction.atomic(using=utils.get_current_db_name()):
+                jn = insert_into_jn_dynamic_for_parent(job, params)
+                insert_update_jobneeddetails(jn.id, job, parent = True)
+                resp = create_child_dynamic_tasks(job,people, jn.id, jobstatus, jobtype, jn.other_info)
+                return resp
+    except Exception as e:
+        log.error("something went wrong in dynamic tour scheduling", exc_info=True)
+        return {"errors":"Something Went Wrong!"}
+    
+    
+
+
+
 @shared_task(name="create_job()")
 def create_job(jobids = None):
     startdtz = enddtz = msg = resp = None
@@ -29,9 +67,11 @@ def create_job(jobids = None):
         try:
             jobs = am.Job.objects.filter(
                 ~Q(jobname='NONE'),
+                ~Q(cron='* * * * *'),
                 ~Q(asset__runningstatus = am.Asset.RunningStatus.SCRAPPED),
                 parent_id = 1,
-                enable = True
+                enable = True,
+                other_info__isdynamic=False,
             ).select_related(
                 "asset", "pgroup",
                 "cuser", "muser", "qset", "people",
@@ -209,7 +249,42 @@ def insert_into_jn_and_jnd(job, DT, resp):
         log.info("insert_into_jn_and_jnd() [ End ]")
     return status, resp
     
-    
+def insert_into_jn_dynamic_for_parent(job, params):
+    defaults={
+            'ctzoffset'        : job['ctzoffset'],
+            'priority'         : job['priority'],
+            'identifier'       : job['identifier'],
+            'gpslocation'      : 'POINT(0.0 0.0)',
+            'remarks'          : '',
+            'multifactor'      : params['m_factor'],
+            'client_id'        : job['client_id'],
+            'other_info'       : job['other_info'],
+            'cuser_id'         : job['cuser_id'],
+            'muser_id'         : job['muser_id'],
+            'ticketcategory_id': job['ticketcategory_id'],
+            'frequency'        : 'NONE',
+            'bu_id'            : job['bu_id'],
+            'seqno'            : 0,
+            'scantype'         : job['scantype'],
+            'gracetime'    : job['gracetime'],
+            'performedby'    : params['NONE_P'],
+            'jobstatus'      : params['jobstatus'],
+            'jobdesc' : params['jobdesc'],
+            'qset_id' : params['qset_id'],
+            'sgroup_id' : params['sgroup_id'],
+            'asset_id' : job['asset_id'],
+            'people_id' : job['people_id'],
+            'pgroup_id' : job['pgroup_id'],
+            'parent' : params['NONE_JN'],
+        }
+    obj = am.Jobneed.objects.create(
+        job_id         = job['id'],
+        jobtype        = params['jobtype'],
+        **defaults
+    )
+    return obj
+
+
     
 def insert_into_jn_for_parent(job, params):
     defaults={
@@ -335,6 +410,48 @@ def create_child_tasks(job, _pdtz, _people, jnid, _jobstatus, _jobtype, parent_o
         log.info("create_child_tasks() successfully created [ END ]")
         return edtz
 
+
+def create_child_dynamic_tasks(job,  _people, jnid, _jobstatus, _jobtype, parent_other_info):
+    try:
+        prev_edtz, tour_freq = None, 1
+        NONE_P  = utils.get_or_create_none_people()
+        from django.utils.timezone import get_current_timezone
+        tz = get_current_timezone()
+        mins = pdtz = edtz = None
+        R = am.Job.objects.annotate(
+            cplocation = F('bu__gpslocation')
+            ).filter(
+            parent_id = job['id']).order_by(
+                'seqno').values(*utils.JobFields.fields, 'cplocation', 'sgroup__groupname', 'bu__solid', 'bu__buname')
+
+        log.info(f"create_child_tasks() total child job:={len(R)}")
+        
+        params = {'_jobdesc': "", 'jnid':jnid, 'pdtz':None, 'edtz':None,
+                  '_people':_people, '_jobstatus':_jobstatus, '_jobtype':_jobtype,
+                  'm_factor':None, 'idx':None, 'NONE_P':NONE_P, 'parent_other_info':parent_other_info}
+            
+        for idx, r in enumerate(R):
+            log.info(f"create_child_tasks() [{idx}] child job:= {r['jobname']} | job:= {r['id']} | cron:= {r['cron']}")
+
+            asset = am.Asset.objects.get(id = r['asset_id'])
+            params['m_factor'] = asset.asset_json['multifactor']
+            jobdescription = f"{r['asset__assetname']} - {r['jobname']}"
+            
+
+            mins = job['planduration'] + r['expirytime'] + job['gracetime']
+            params['_people'] = r['people_id']
+            params['_jobdesc'] = jobdescription
+
+            params['idx'] = idx
+            jn = insert_into_jn_for_child(job, params, r)
+            insert_update_jobneeddetails(jn.id, r)
+    except Exception:
+        log.critical(
+            "create_child_tasks() ERROR failed to create task's", exc_info = True)
+        return {'errors':"Failed to schedule Tour"}
+    else:
+        log.info("create_child_tasks() successfully created [ END ]")
+        return {'msg':"Dynamic Tour Scheduled!"}
 
 
 
@@ -727,7 +844,7 @@ def insert_into_jnd(qsb, job, jnid, parent=False):
     
 
 
-def insert_into_jn_for_child(job, params, r):
+def  insert_into_jn_for_child(job, params, r):
     try:
         jn = am.Jobneed.objects.create(
                 job_id         = job['id'],                     parent_id         = params['jnid'],

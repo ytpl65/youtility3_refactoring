@@ -132,7 +132,7 @@ Schedule Tour
                 </div>
             </div>
             <div class="input-group">
-                <div class="col-md-4  mb-6">
+                <div class="mb-6">
                     <label for="{{ schdtourform.istimebound.id_for_label }}"
                         class="form-check-label bool text-sm-right">{{ schdtourform.istimebound.label }}
                         <span class="material-icons-outlined h-19px" data-bs-toggle="tooltip"
@@ -143,14 +143,28 @@ Schedule Tour
                         </span>
                     </label>
                 </div>
-                <div class="col-md-8 form-check form-switch form-check-solid">
+                <div class="ms-4 form-check form-switch form-check-solid">
                     {{ schdtourform.istimebound }}
+                </div>
+                <div class="mx-6">
+                    <label for="{{ schdtourform.isdynamic.id_for_label }}"
+                        class="form-check-label bool text-sm-right">{{ schdtourform.isdynamic.label }}
+                        <span class="material-icons-outlined h-19px" data-bs-toggle="tooltip"
+                            data-bs-custom-class="tooltip" data-bs-placement="top"
+                            style="vertical-align: middle; font-size: 19px;"
+                            title="Uncheck the checkbox if tour can be perform without any time restrictions">
+                            info
+                        </span>
+                    </label>
+                </div>
+                <div class="ms-4 form-check form-switch form-check-solid">
+                    {{ schdtourform.isdynamic }}
                 </div>
             </div>
 
         </div>
         <div class="col-md-6">
-            <div class="input-group mb-3">
+            <div class="input-group mb-3 dynamic_">
                 <div class="col-md-4">
                     <label for={{ schdtourform.planduration.id_for_label }}
                         class="required">{{ schdtourform.planduration.label }}:</label>
@@ -165,7 +179,7 @@ Schedule Tour
                 </div>
             </div>
 
-            <div class="input-group mb-3">
+            <div class="input-group mb-3 dynamic_">
                 <div class="col-md-4">
                     <label for={{ schdtourform.gracetime.id_for_label }}
                         class="required">{{ schdtourform.gracetime.label }}:</label>
@@ -180,7 +194,7 @@ Schedule Tour
                 </div>
             </div>
 
-            <div class="input-group mb-3">
+            <div class="input-group mb-3 dynamic_">
                 <div class="col-md-4">
                     <label for="{{ schdtourform.cron.id_for_label }}"
                         class="required">{{ schdtourform.cron.label }}:</label>
@@ -196,7 +210,7 @@ Schedule Tour
                 </div>
             </div>
 
-            <div class="input-group mb-3">
+            <div class="input-group mb-3 dynamic_">
                 <div class="col-md-4">
                     <label for="{{ schdtourform.fromdate.id_for_label }}"
                         class="required">{{ schdtourform.fromdate.label }}:</label>
@@ -207,7 +221,7 @@ Schedule Tour
                 </div>
             </div>
 
-            <div class="input-group mb-3">
+            <div class="input-group mb-3 dynamic_">
                 <div class="col-md-4">
                     <label for="{{ schdtourform.uptodate.id_for_label }}"
                         class="required">{{ schdtourform.uptodate.label }}:</label>
@@ -386,6 +400,25 @@ Schedule Tour
     function properCron(cron){
         return cron === '* * * * *' ? false :true
     }
+    function handleDynamicCheckbox(element){
+        if($(element).is(":checked")){
+            // Disable fields
+            $("#id_planduration, #id_gracetime, #id_cron, #id_fromdate, #id_uptodate, #cron_selector, #id_cronstrue").attr("disabled", "disabled")
+            set = false
+            $("#id_istimebound").prop("checked", false)
+            $(".dynamic_").addClass("d-none")
+        }else{
+            set=true
+            $("#id_planduration, #id_gracetime, #id_cron, #id_fromdate, #id_uptodate, #cron_selector, #id_cronstrue").removeAttr("disabled")
+            $(".dynamic_").removeClass("d-none")
+            $("#id_istimebound").prop("checked", true)
+        }
+        toggleRequiredAttribute('id_planduration', set=set)
+        toggleRequiredAttribute('id_gracetime', set=set)
+        toggleRequiredAttribute('id_cron', set=set)
+        toggleRequiredAttribute('id_fromdate', set=set)
+        toggleRequiredAttribute('id_uptodate', set=set)
+    }
 
     $(document).ready(() => {
         //set ctzoffset
@@ -420,6 +453,26 @@ Schedule Tour
                 {label: 'Expiry Time', name: 'expirytime', type: 'text', data:'expirytime', def:0},
             ]
         })
+        function handleEmptyChecklist(e) {
+            var text = getSelectedValue("#DTE_Field_qset");
+            console.log(text);
+            if (text === 'NONE') {
+                let msg =
+                    'We see you are attempting to add a question set without any questions\n' +
+                    'Please confirm if you intend to submit an empty set by clicking OK';
+                if (!confirm(msg)) {
+                    $('#DTE_Field_qset').val(null).trigger('change');
+                    return false
+                }
+            }
+        }
+
+        editor.on('preSubmit', function (e, mode, action) {
+            if (action === 'create' || action === 'edit') {
+                return handleEmptyChecklist(e);
+            }
+        });
+
 
         editor.on('open', function(e, mode, action){
             $(".DTE_Field").addClass('p-1') // add css to form fields
@@ -440,18 +493,6 @@ Schedule Tour
                     item: 'Assets'
                 })
                 
-                $("#DTE_Field_qset").change(()=>{
-                    var text = getSelectedValue("#DTE_Field_qset")
-                    console.log(text)
-                    if(text === 'NONE'){
-                        let msg = 
-                        'We see you are attempting to add a question set without any questions\n' +
-                        'Please confirm if you intend to submit an empty set by clicking OK'
-                        if(!confirm(msg)){
-                            $('#DTE_Field_qset').val(null)
-                        }
-                    }
-                })
             }
               if(action == "create"){
                 editor.field('seqno').set(table.data().count() + 1) //update seqno for new entry
@@ -480,6 +521,12 @@ Schedule Tour
                 $("#DTE_Field_asset").append(newOption);
             }
         })
+
+        //isdynamic is true disable appropriate fields
+        $('#id_isdynamic').change(function(){
+            var set=null
+            handleDynamicCheckbox("#id_isdynamic")
+        });
 
 
 
@@ -521,6 +568,7 @@ Schedule Tour
             $("#tourCheckpoints_wrapper .buttons-create").addClass('disabled')
             //toggle people and pgroup field based on radio button value
             showHideSelectField('PEOPLE')
+            
         }else{
             $("#tourCheckpoints_wrapper .buttons-create").removeClass('disabled')
             //toggle people and pgroup field based on radio button value
@@ -528,6 +576,10 @@ Schedule Tour
             showHideSelectField(assignto)
             //cron to readable format
             $("#id_cronstrue").val(cronstrue.toString($("#id_cron").val()))
+            if($("#id_isdynamic").is(":checked")){
+                $("#id_isdynamic").attr("disabled", 'disabled')
+                handleDynamicCheckbox("#id_isdynamic")
+            }
         }
 
 
@@ -592,7 +644,7 @@ Schedule Tour
                             showConfirmButton:false,
                             timer:1500,
                             icon: 'success',
-                            title:  `${data.count} Tours scheduled successfully!`
+                            title:  data.count ? `${data.count} Tours scheduled successfully!` : data.msg
                         })
                     })
                     .fail((xhr, status, error) => {

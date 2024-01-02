@@ -645,9 +645,13 @@ def run_internal_tour_scheduler(request):
         log.info('Tour type random is going to schedule', extra={'job': job})
         _handle_random_external_tour(job, checkpoints, request)
 
-    # Create a new job
-    response, _ = sutils.create_job([job['id']])
-    resp = rp.JsonResponse(response, status=200, safe=False)
+    if job['other_info']['isdynamic']:
+        resp = sutils.create_dynamic_job([job['id']])
+        resp = rp.JsonResponse(resp, status=200, safe=False)
+    else:
+        # Create a new job
+        response, _ = sutils.create_job([job['id']])
+        resp = rp.JsonResponse(response, status=200, safe=False)
 
     # End logging
     log.info('run_guardtour_scheduler ended', extra={'phase': 'END', 'job_id': job_id, 'response': resp})
@@ -1414,6 +1418,7 @@ class InternalTourScheduling(LoginRequiredMixin, View):
                 job = form.save(commit = False)
                 job.parent_id = job.asset_id = job.qset_id = 1
                 job.other_info['istimebound'] = form.cleaned_data['istimebound']
+                job.other_info['isdynamic'] = form.cleaned_data['isdynamic']
                 job.save()
                 job = putils.save_userinfo(job, request.user, request.session)
                 #self.save_checpoints_for_tour(assigned_checkpoints, job, request)

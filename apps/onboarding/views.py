@@ -913,7 +913,8 @@ class DashboardView(LoginRequiredMixin, View):
                     'FR_fail_count': P['pel_model'].objects.get_frfail_count_forcard(request),
                     'route_count': P['jn_model'].objects.get_schdroutes_count_forcard(request),
                     'diversion_count': P['pel_model'].objects.get_diversion_countorlist(request, count=True),
-                    'sitecrisis_count': P['pel_model'].objects.get_sitecrisis_countorlist(request, count=True)
+                    'sitecrisis_count': P['pel_model'].objects.get_sitecrisis_countorlist(request, count=True),
+                    'dynamic_tour_count':P['jn_model'].objects.get_dynamic_tour_count(request)
                 }
             }
 

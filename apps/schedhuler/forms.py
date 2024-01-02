@@ -8,11 +8,14 @@ from django.db.models import Q
 import apps.activity.models as am
 import apps.peoples.models as pm
 import apps.onboarding.models as ob
+from django.utils import timezone as dtimezone
+from datetime import datetime
 
 class Schd_I_TourJobForm(JobForm):
     ASSIGNTO_CHOICES   = [('PEOPLE', 'People'), ('GROUP', 'Group')]
     assign_to          = forms.ChoiceField(choices = ASSIGNTO_CHOICES, initial="PEOPLE")
     istimebound = forms.BooleanField(initial=True, required=False, label="Is Time Restricted")
+    isdynamic = forms.BooleanField(initial=False, required=False, label="Is Dynamic")
     required_css_class = "required"
 
     class Meta(JobForm.Meta):
@@ -31,6 +34,11 @@ class Schd_I_TourJobForm(JobForm):
         super().__init__(*args, **kwargs)
         if self.instance.id:
             self.fields['istimebound'].initial = self.instance.other_info['istimebound']
+            self.fields['isdynamic'].initial = self.instance.other_info['isdynamic']
+        if 'isdynamic' in self.data or (self.instance.id and  self.instance.other_info['isdynamic']):
+            if self.data.get('isdynamic') or (self.instance.id and self.instance.other_info['isdynamic']):
+                for field in ['planduration', 'gracetime', 'cron', 'fromdate', 'uptodate']:
+                    self.fields[field].required=False
         self.fields['fromdate'].input_formats  = settings.DATETIME_INPUT_FORMATS
         self.fields['uptodate'].input_formats  = settings.DATETIME_INPUT_FORMATS
         self.fields['identifier'].widget.attrs  = {"style": "display:none"}
@@ -57,10 +65,16 @@ class Schd_I_TourJobForm(JobForm):
         
         times = [cd.get(time) for time in times_names]
         types = [cd.get(type) for type in types_names]
-        for time, type, name in zip(times, types, times_names):
-            self.cleaned_data[name] = self.convertto_mins(type, time)
-        if cd['fromdate'] > cd['uptodate']:
+        if times and types:
+            for time, type, name in zip(times, types, times_names):
+                self.cleaned_data[name] = self.convertto_mins(type, time)
+        if cd.get('fromdate') and cd.get('uptodate') and cd['fromdate'] > cd['uptodate']:
             raise forms.ValidationError({"uptodate":"Valid To cannot be less than Valid From."})
+        if cd.get('isdynamic'):
+            cd['fromdate'] = dtimezone.now()
+            cd['uptodate'] = datetime(9999, 12, 30, 23, 59)
+            cd['planduration'] = cd['gracetime'] = cd['expirytime'] = 0
+        return cd
         
     
 
@@ -102,14 +116,11 @@ class Schd_I_TourJobForm(JobForm):
         return -1
     
     def clean_cronstrue(self):
-        if val := self.cleaned_data.get('cron'):
+        if self.cleaned_data.get('cron') and not self.cleaned_data.get('isdynamic'):
+            val = self.cleaned_data.get('cron')
             if val.startswith("*"):
                 raise forms.ValidationError(f"Warning: Scheduling every minute is not allowed!")
             return val
-        raise forms.ValidationError("Invalid Cron")
-
-
-        
 
 
 class SchdChild_I_TourJobForm(JobForm): # job

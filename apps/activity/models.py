@@ -199,7 +199,8 @@ def other_info():
         'autoclosed_by_server':False,
         'acknowledged_by':'',
         'isAcknowledged':False,
-        'istimebound':True
+        'istimebound':True,
+        'isdynamic':False
     }
 
 def geojson_jobnjobneed():
@@ -435,8 +436,8 @@ class Jobneed(BaseModel, TenantAwareModel):
 
     uuid             = models.UUIDField(unique = True, editable = True, blank = True, default = uuid.uuid4)
     jobdesc          = models.CharField(_("Job Description"), max_length = 200)
-    plandatetime     = models.DateTimeField(_("Plan date time"), auto_now = False, auto_now_add = False)
-    expirydatetime   = models.DateTimeField(_("Expiry date time"), auto_now = False, auto_now_add = False)
+    plandatetime     = models.DateTimeField(_("Plan date time"), auto_now = False, auto_now_add = False, null=True)
+    expirydatetime   = models.DateTimeField(_("Expiry date time"), auto_now = False, auto_now_add = False, null=True)
     gracetime        = models.IntegerField(_("Grace time"))
     receivedonserver = models.DateTimeField(_("Recived on server"), auto_now = False, auto_now_add = True)
     starttime        = models.DateTimeField( _("Start time"), auto_now = False, auto_now_add = False, null = True)
