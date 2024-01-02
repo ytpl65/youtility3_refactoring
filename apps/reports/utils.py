@@ -12,7 +12,8 @@ from django.shortcuts import render
 from apps.onboarding.models import Bt
 from django.shortcuts import render
 from .forms import ReportForm
-import logging
+from .models import ReportHistory
+import logging, json
 from decimal import Decimal
 log = logging.getLogger('__main__')
 
@@ -265,3 +266,22 @@ class ReportEssentials(object):
         }
     
         
+def create_report_history(
+    has_data, params, report_name, export_type, 
+    user_id, ctzoffset, bu_id, client_id, traceback=None, cc=None,
+    to=None, email_body=None, 
+):
+    return ReportHistory.objects.create(
+        has_data=has_data,
+        params=json.dump(params),
+        bu_id=bu_id,
+        client_id=client_id,
+        report_name=report_name,
+        user_id=user_id,
+        ctzoffset=ctzoffset,
+        cc_mails=cc,
+        to_mails=to,
+        email_body=email_body,
+        traceback=traceback,
+        export_type=export_type
+    )

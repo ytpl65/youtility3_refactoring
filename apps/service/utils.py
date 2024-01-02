@@ -454,13 +454,14 @@ def perform_tasktourupdate(self, file, request=None, db='default', bg=False):
         if len(data) == 0: raise excp.NoRecordsFound
         log.info(f'total {len(data)} records found for task tour update')
         for record in data:
-            details = record.pop('details')
-            jobneed = record
-            with transaction.atomic(using = db):
-                if isupdated :=  update_record(details, jobneed, Jobneed, JobneedDetails):
-                    recordcount += 1
-                    save_journeypath_field(jobneed)
-                    log.info(f'{recordcount} task/tour updated successfully')
+            if record:
+                details = record.pop('details')
+                jobneed = record
+                with transaction.atomic(using = db):
+                    if isupdated :=  update_record(details, jobneed, Jobneed, JobneedDetails):
+                        recordcount += 1
+                        save_journeypath_field(jobneed)
+                        log.info(f'{recordcount} task/tour updated successfully')
         if len(data) == recordcount:
             msg = Messages.UPDATE_SUCCESS
             log.info(f'All {recordcount} task/tour records are updated successfully')
@@ -651,26 +652,27 @@ def perform_reportmutation(self, file, db= 'default', bg=False):
         if len(data) == 0: raise excp.NoRecordsFound
         log.info(f"'data = {pformat(data)} {len(data)} Number of records found in the file")
         for record in data:
-            tablename = record.pop('tablename', None)
-            is_return_workpermit = record.pop('isreturnwp', None)
-            child = record.pop('child', None)
-            parent = record
-            try:
-                switchedSerializer = sz.WomSerializer if tablename == 'wom' else sz.JobneedSerializer
-                with transaction.atomic(using = db):
-                    if child and len(child) > 0 and parent:
-                        jobneed_parent_post_data = parent
-                        jn_parent_serializer = switchedSerializer(data = clean_record(jobneed_parent_post_data))
-                        log.info(f'switched serializer is {switchedSerializer}')
-                        rc,  traceback, msg = save_parent_childs(sz, jn_parent_serializer, child, Messages, tablename, is_return_workpermit)
-                        if rc == 0: recordcount += 1
-                    else:
-                        log.error(Messages.NODETAILS)
-                        msg, rc = Messages.NODETAILS, 1
-            except Exception as e:
-                log.error('something went wrong while saving \
-                          parent and child for report mutations', exc_info = True)
-                raise
+            if record:
+                tablename = record.pop('tablename', None)
+                is_return_workpermit = record.pop('isreturnwp', None)
+                child = record.pop('child', None)
+                parent = record
+                try:
+                    switchedSerializer = sz.WomSerializer if tablename == 'wom' else sz.JobneedSerializer
+                    with transaction.atomic(using = db):
+                        if child and len(child) > 0 and parent:
+                            jobneed_parent_post_data = parent
+                            jn_parent_serializer = switchedSerializer(data = clean_record(jobneed_parent_post_data))
+                            log.info(f'switched serializer is {switchedSerializer}')
+                            rc,  traceback, msg = save_parent_childs(sz, jn_parent_serializer, child, Messages, tablename, is_return_workpermit)
+                            if rc == 0: recordcount += 1
+                        else:
+                            log.error(Messages.NODETAILS)
+                            msg, rc = Messages.NODETAILS, 1
+                except Exception as e:
+                    log.error('something went wrong while saving \
+                            parent and child for report mutations', exc_info = True)
+                    raise
         if len(data) == recordcount:
             msg = Messages.UPDATE_SUCCESS
             log.info(f'All {recordcount} report records are updated successfully')
@@ -698,30 +700,31 @@ def perform_adhocmutation(self, file, db='default', bg=False):  # sourcery skip:
             raise excp.NoDataInTheFileError
         log.info(f"'data = {pformat(data)} {len(data)} Number of records found in the file")
         for record in data:
-            details = record.pop('details')
-            jobneedrecord = record
+            if record:
+                details = record.pop('details')
+                jobneedrecord = record
 
-            with transaction.atomic(using = db):
-                if jobneedrecord['asset_id'] ==  1:
-                    # then it should be NEA
-                    assetobjs = Asset.objects.filter(bu_id = jobneedrecord['bu_id'],
-                                    assetcode = jobneedrecord['remarks'])
-                    jobneedrecord['asset_id']= 1 if assetobjs.count()  !=  1 else assetobjs[0].id
-                
-                jobneedrecord = clean_record(jobneedrecord)
-                scheduletask = Jobneed.objects.get_schedule_for_adhoc(
-                    jobneedrecord['qset_id'], jobneedrecord['people_id'], jobneedrecord['asset_id'], jobneedrecord['bu_id'], jobneedrecord['starttime'], jobneedrecord['endtime'])
+                with transaction.atomic(using = db):
+                    if jobneedrecord['asset_id'] ==  1:
+                        # then it should be NEA
+                        assetobjs = Asset.objects.filter(bu_id = jobneedrecord['bu_id'],
+                                        assetcode = jobneedrecord['remarks'])
+                        jobneedrecord['asset_id']= 1 if assetobjs.count()  !=  1 else assetobjs[0].id
+                    
+                    jobneedrecord = clean_record(jobneedrecord)
+                    scheduletask = Jobneed.objects.get_schedule_for_adhoc(
+                        jobneedrecord['qset_id'], jobneedrecord['people_id'], jobneedrecord['asset_id'], jobneedrecord['bu_id'], jobneedrecord['starttime'], jobneedrecord['endtime'])
 
-                log.info(f"schedule task: {pformat(scheduletask)}")
-                log.info(f"jobneed record: {pformat(jobneedrecord)}")
-                # have to update to scheduled task/reconsilation
-                if(len(scheduletask) > 0) and scheduletask['identifier'] == 'TASK' :
-                    log.info("schedule task found, updating it now")
-                    rc, traceback, msg, recordcount = update_adhoc_record(scheduletask, jobneedrecord, details)
-                # have to insert/create to adhoc task
-                else:
-                    log.info("schedule task not found, creating a new one")
-                    rc, traceback, msg, recordcount = insert_adhoc_record(jobneedrecord, details)
+                    log.info(f"schedule task: {pformat(scheduletask)}")
+                    log.info(f"jobneed record: {pformat(jobneedrecord)}")
+                    # have to update to scheduled task/reconsilation
+                    if(len(scheduletask) > 0) and scheduletask['identifier'] == 'TASK' :
+                        log.info("schedule task found, updating it now")
+                        rc, traceback, msg, recordcount = update_adhoc_record(scheduletask, jobneedrecord, details)
+                    # have to insert/create to adhoc task
+                    else:
+                        log.info("schedule task not found, creating a new one")
+                        rc, traceback, msg, recordcount = insert_adhoc_record(jobneedrecord, details)
     except excp.NoDataInTheFileError as e:
         rc, traceback = 1, tb.format_exc()
         log.error('No data in the file error', exc_info = True)
