@@ -442,7 +442,7 @@ def get_user_instance(id):
 @app.task(bind = True, default_retry_delay = 300, max_retries = 5, name = "perform_tasktourupdate()")
 def perform_tasktourupdate(self, file, request=None, db='default', bg=False):
     rc, recordcount, traceback= 1, 0, 'NA'
-    instance, msg = None, ""
+    instance, msg = None, Messages.UPDATE_FAILED
 
     try:
         log.info("%s" % pformat(file))
@@ -520,7 +520,8 @@ def perform_insertrecord(self, file, request = None, db='default', filebased = T
     Returns:
         ServiceOutputType: rc, recordcount, msg, traceback
     """
-    rc, recordcount, traceback= 1, 0, 'NA'
+    rc, recordcount, traceback, msg = 1, 0, 'NA', Messages.INSERT_FAILED
+    
     instance = None
     log.info(f"""perform_insertrecord(file = {file}, bg = {bg}, db = {db}, filebased = {filebased} {request = } { userid = } runnning in {'background' if bg else "foreground"})""")
     try:
@@ -563,7 +564,7 @@ def perform_insertrecord(self, file, request = None, db='default', filebased = T
         rc, traceback, msg = 1, tb.format_exc(), Messages.INSERT_FAILED
     except Exception as e:
         log.critical("something went wrong!", exc_info = True)
-        msg, rc, traceback = Messages.INSERT_FAILED, 1, tb.format_exc()
+        traceback =  tb.format_exc()
     results = ServiceOutputType(rc = rc, recordcount = recordcount, msg = msg, traceback = traceback)
     return results.__dict__ if bg else results
 
@@ -641,7 +642,7 @@ def create_escalation_matrix_for_sitecrisis(ESM, user):
 
 @app.task(bind = True, default_retry_delay = 300, max_retries = 5,  name = 'perform_reportmutation')
 def perform_reportmutation(self, file, db= 'default', bg=False):
-    rc, recordcount, traceback= 1, 0, 'NA'
+    rc, recordcount, traceback, msg= 1, 0, 'NA', Messages.INSERT_FAILED
     instance = None
     try:
         log.info(
@@ -689,7 +690,7 @@ def perform_reportmutation(self, file, db= 'default', bg=False):
 
 @app.task(bind = True, default_retry_delay = 300, max_retries = 5, name = 'perform_adhocmutation')
 def perform_adhocmutation(self, file, db='default', bg=False):  # sourcery skip: remove-empty-nested-block, remove-redundant-if, remove-redundant-pass
-    rc, recordcount, traceback, msg= 1, 0, 'NA', ""
+    rc, recordcount, traceback, msg= 1, 0, 'NA', Messages.INSERT_FAILED
     try:
         log.info(
             f"""perform_adhocmutation(file = {file}, bg = {bg}, db = {db}, runnning in {'background' if bg else "foreground"})"""
@@ -736,8 +737,8 @@ def perform_adhocmutation(self, file, db='default', bg=False):  # sourcery skip:
     return results.__dict__ if bg else results
 
 def perform_uploadattachment(file,  record, biodata):
-    rc, traceback, resp = 0,  'NA', 0
-    recordcount = msg = None
+    rc, traceback, resp = 1,  'NA', 0
+    recordcount, msg = None, Messages.UPLOAD_FAILED
     # ic(file, tablename, record, type(record), biodata, type(biodata))
     
 

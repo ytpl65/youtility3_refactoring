@@ -261,8 +261,8 @@ class InsertJsonMutation(graphene.Mutation):
         from apps.core.utils import get_current_db_name
         import json
         log.info('\n\n\ninsert jsondata mutations start[+]')
-        rc, traceback, resp, recordcount = 0,  'NA', 0, 0
-        msg = ""
+        rc, traceback, resp, recordcount = 1,  'NA', 0, 0
+        msg = 'Insert Failed!'
         uuids = []
         try:
             db = get_current_db_name()
