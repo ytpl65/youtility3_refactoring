@@ -3,6 +3,7 @@ import apps.peoples.utils as putils
 from django.db.models import Q, F
 from django.contrib import messages
 from django.core.exceptions import EmptyResultSet
+from django.db.utils import IntegrityError
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.http import Http404, QueryDict, response as rp
 from django.shortcuts import redirect, render
@@ -1293,6 +1294,8 @@ class SchdTasks(LoginRequiredMixin, View):
             job.save()
             job = putils.save_userinfo(job, request.user, request.session)
             log.info('task form saved success...')
+        except IntegrityError as ex:
+            return utils.handle_intergrity_error("Task")
         except Exception as ex:
             log.critical("task form is processing failed", exc_info = True)
             resp = rp.JsonResponse(
@@ -1414,18 +1417,18 @@ class InternalTourScheduling(LoginRequiredMixin, View):
         try:
             with transaction.atomic(using = utils.get_current_db_name()):
                 assigned_checkpoints = json.loads(data)
-                ic(form.data)
                 job = form.save(commit = False)
                 job.parent_id = job.asset_id = job.qset_id = 1
                 job.other_info['istimebound'] = form.cleaned_data['istimebound']
                 job.other_info['isdynamic'] = form.cleaned_data['isdynamic']
                 job.save()
                 job = putils.save_userinfo(job, request.user, request.session)
-                #self.save_checpoints_for_tour(assigned_checkpoints, job, request)
                 log.info('guard tour  and its checkpoints saved success...')
                 return rp.JsonResponse({'jobname': job.jobname,
                     'url': f'{reverse("schedhuler:schd_internal_tour")}?id={job.id}'},
                     status = 200)
+        except IntegrityError as ex:
+            return utils.handle_intergrity_error("Tour")
         except Exception as ex:
             log.critical("error handling valid form", exc_info = True)
             raise ex
@@ -1620,6 +1623,8 @@ class ExternalTourScheduling(LoginRequiredMixin, View):
                 job = putils.save_userinfo(job, request.user,request.session)
                 #self.save_checkpoints_injob_fromgroup(job, P)
                 return rp.JsonResponse({'pk':job.id}, status = 200)
+        except IntegrityError as ex:
+            return utils.handle_intergrity_error("Task")
         except Exception as ex:
             log.critical("external tour form, handle valid form failed", exc_info = True)
             return utils.handle_Exception(request)
