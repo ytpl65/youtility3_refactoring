@@ -27,7 +27,7 @@ class JobneedFilter(dfs.FilterSet):
             'identifier', 'frequency',    'parent',         'jobdesc',   'asset', 'ticketcategory',
             'qset',     'people',     'pgroup',        'priority',  'scantype',
             'jobstatus',  'plandatetime', 'expirydatetime', 'gracetime', 'starttime', 'cdtz',
-            'endtime',    'performedby',   'cuser',     'muser',     'raisedby',
+            'endtime',    'performedby',   'cuser',     'muser', 
             'bu',              
         ]
 

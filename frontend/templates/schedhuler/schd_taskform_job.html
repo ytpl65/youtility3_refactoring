@@ -1,4 +1,4 @@
-{% extends "base_form.html" %}
+{% extends "globals/base_form.html" %}
 
 {% block extra_css %}
 {{ schdtaskform.media.css }}
@@ -9,14 +9,14 @@
 {% block pagebreadcumb %}
 <!--will call parent contents -->
 {{ super() }}
-<li class="breadcrumb-item pe-3"><a href="{{ url('schedhuler:jobschdtasks') }}?template=true" class="pe-3">Schedhuled Tasks</a></li>
-<li class="breadcrumb-item pe-3"><a href="javascript:void(0)" class="pe-3">Schedhule Task Form</a></li>
+<li class="breadcrumb-item pe-3"><a href="{{ url('schedhuler:jobschdtasks') }}?template=true" class="pe-3">Scheduled Tasks</a></li>
+<li class="breadcrumb-item pe-3"><a href="javascript:void(0)" class="pe-3">Schedule Task Setup</a></li>
 {% endblock pagebreadcumb %}
 <!-------------------------- END PAGE BREADCUMB ------------------------->
 
 <!------ BEGIN FORM TITLE ------->
 {% block form_title %}
-Schedhule Task
+Schedule Task
 {% endblock form_title %}
 <!------ END FORM TITLE -------->
 
@@ -50,7 +50,7 @@ Schedhule Task
             <label for={{ schdtaskform.jobname.id_for_label }}
                 class="required">{{ schdtaskform.jobname.label }}:</label>
         </div>
-        <div class="col-md-4">
+        <div class="col-md-4 fv-row">
             {{ schdtaskform.jobname }}
             {{ schdtaskform.jobname.errors }}
         </div>
@@ -72,9 +72,9 @@ Schedhule Task
         <!--JOBDESCRIPTION-->
         <div class="col-md-2">
             <label for={{ schdtaskform.jobdesc.id_for_label }}
-                class="required">{{ schdtaskform.jobdesc.label }}:</label>
+                class="">{{ schdtaskform.jobdesc.label }}:</label>
         </div>
-        <div class="col-md-4">
+        <div class="col-md-4 fv-row">
             {{ schdtaskform.jobdesc }}
             {{ schdtaskform.jobdesc.errors }}
         </div>
@@ -98,7 +98,7 @@ Schedhule Task
             <label for={{ schdtaskform.asset.id_for_label }}
                 class="required">{{ schdtaskform.asset.label }}:</label>
         </div>
-        <div class="col-md-4">
+        <div class="col-md-4 fv-row">
             {{ schdtaskform.asset }}
             {{ schdtaskform.asset.errors }}
         </div>
@@ -117,11 +117,11 @@ Schedhule Task
         </div>
         
         <!--QUESTIONSET-->
-        <div class="col-md-2">
+        <div class="col-md-2 fv-row">
             <label for={{ schdtaskform.qset.id_for_label }}
                 class=" required">{{ schdtaskform.qset.label }}:</label>
         </div>
-        <div class="col-md-4">
+        <div class="col-md-4 fv-row">
             {{ schdtaskform.qset }}
             {{ schdtaskform.qset.errors }}
         </div>
@@ -130,12 +130,15 @@ Schedhule Task
         <div class="col-md-2">
             <label for="{{ schdtaskform.cron.id_for_label }}" class="required">{{ schdtaskform.cron.label }}:</label>
         </div>
-        <div class="col-md-4 d-flex">
-            <input type="text" name="{{ schdtaskform.cron.name }}" value="{{ schdtaskform.cron.value() }}" id="id_cron"
-             readonly required class="form-control form-control-solid" maxlength="250" />
-            <a  class="btn btn-circle btn-icon-only btn-default " id="cron_selector">
-                <i class="fa fa-clock fs-4 text-primary" aria-hidden="true"></i>
-            </a>
+        <div class="col-md-4 fv-row">
+            <div class="d-flex">
+                <input type="text" name="{{ schdtaskform.cron.name }}" value="{{ schdtaskform.cron.value() }}" id="id_cron"
+                readonly required class="form-control d-none form-control-solid" maxlength="250"/>
+                {{ schdtaskform.cronstrue }}
+                <a  class="btn btn-circle btn-icon-only btn-default " id="cron_selector">
+                    <i class="fa fa-clock fs-4 text-primary" aria-hidden="true"></i>
+                </a>
+            </div>
             {{ schdtaskform.cron.errors }}
         </div>
         
@@ -147,13 +150,13 @@ Schedhule Task
         <div class="col-md-4">
             <div class="form-check form-check-inline">
                 <input type="radio" class="form-check-input" name={{ schdtaskform.assign_to.name }}
-                    id="{{ schdtaskform.assign_to.auto_id }}1" value="PEOPLE" checked
+                    id="id_peopleradio" value="PEOPLE"
                     onchange="showHideSelectField('PEOPLE')">
                 <label class="form-check-label" for="{{ schdtaskform.assign_to.auto_id }}">People</label>
             </div>
             <div class="form-check form-check-inline">
                 <input type="radio" class="form-check-input" name={{ schdtaskform.assign_to.name }}
-                    id="{{ schdtaskform.assign_to.auto_id }}2" value="GROUP" onchange="showHideSelectField('GROUP')">
+                    id="id_groupradio" value="GROUP" onchange="showHideSelectField('GROUP')">
                 <label class="form-check-label" for="{{ schdtaskform.assign_to.auto_id }}">Group</label>
             </div>
         </div>
@@ -226,19 +229,18 @@ Schedhule Task
             <label for={{ schdtaskform.ticketcategory.id_for_label }}
                 class=" required">{{ schdtaskform.ticketcategory.label }}:</label>
         </div>
-        <div class="col-md-4">
+        <div class="col-md-4 fv-row">
             {{ schdtaskform.ticketcategory }}
             {{ schdtaskform.ticketcategory.errors }}
         </div>
     </div>
 </form>
-{{ reset_form_btn(id="#schdtaskform") }}
 <br><br>
 
 {% endblock form %}
 
 {% block popup_alerts %}
-    {% call general_popup(popup_id = "cron_scheduler", title="Cron Scheduler <i class='fas fa-clock'></i>", modal_size='modal-lg') %}
+    {% call general_popup(popup_id = "cron_scheduler", title="Cron Scheduler <i class='fas text-white fa-clock'></i>", modal_size='modal-lg') %}
         <div class="modal-body">
             <div class="row">
                 <div class="col-md-12">
@@ -262,22 +264,21 @@ Schedhule Task
 <div class="form-actions">
     {% if schdtaskform.instance.id %}
     <button type="button" id="runScheduler"  class="btn btn-sm btn-info btn-hover-scale">
-        Run Scheduler&nbsp;<i class="far fa-clock"></i>
+        Run Scheduler&nbsp;<i class="far text-white fa-clock"></i>
     </button>
     
-    <button type="submit" id="submitTour" form="schdtaskform" class="btn btn-sm btn-primary btn-hover-scale">
-        Update Task&nbsp;<i class="fas fa-cloud-upload-alt"></i>
+    <button type="submit" id="submitTour" form="schdtaskform" class="btn btn-sm btn-primary2 btn-hover-scale">
+        Update Task&nbsp;<i class="fas text-white fa-cloud-upload-alt"></i>
     </button>
 
-    <button type="button" onclick="deleteMainJob(this)" data-id="{{ schdtaskform.instance.id }}" id="deleteAttd"
-        class="btn btn-sm btn-danger btn-hover-scale">
-        Delete&nbsp;<i class="fas fa-trash-alt"></i>
-    </button>
     {% else %}
-    <button type="submit" form="schdtaskform" class="btn btn-sm btn-primary btn-hover-scale">
-        Save&nbsp;<i class="fas fa-cloud-upload-alt"></i>
+    <button type="submit" form="schdtaskform" class="btn btn-sm btn-primary2 btn-hover-scale">
+        Save&nbsp;<i class="fas text-white fa-cloud-upload-alt"></i>
     </button>
     {% endif %}
+    <button type="button" id="btn_clear" class="btn btn-sm btn-secondary btn-hover-scale">
+        Clear&nbsp;<i class="fas  fa-times"></i>
+    </button>
 </div>
 {% endblock ajax_page_actions %}
 
@@ -285,25 +286,95 @@ Schedhule Task
 {{ schdtaskform.media.js }}
 <script src="{{ static('assets/js/jqCron.js') }}"></script>
 <script src="{{ static('assets/js/jqCron.en.js') }}"></script>
+<script src="{{ static('assets/js/local/cronstrue.min.js') }}"></script>
+
+<script>
+//////////////////////// form validations /////////////////////////////
+var formValidator = FormValidation.formValidation(
+    document.getElementById('schdtaskform'), {
+        fields:{
+            'jobname':{
+                validators:{
+                    notEmpty:{
+                        message:"This field is required"
+                    }
+                }
+            },
+            'asset':{
+                validators:{
+                     notEmpty: {
+                        message: 'Please select an option'
+                    },
+                }
+            },
+            'qset':{
+                validators:{
+                     notEmpty: {
+                        message: 'Please select an option'
+                    },
+
+                }
+            },
+            'ticketcategory':{
+                validators:{
+                    notEmpty: {
+                        message: 'Please select an option'
+                    },
+                }
+            },
+            'cron':{
+                validators:{
+                    callback:{
+                        callback:function(input){
+                            if(input.value == '* * * * *' || input.value == ""){
+                                return {valid:false, message:"This field is required"}
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        plugins:{
+            ...pluginsForFormValidations()
+        }
+    })
+
+
+</script>
+
 
 <script>
     // add classes to label tags.
     $('label').removeClass("col-form-label col-md-2 col-sm-2 text-sm-right")
 
+    function properCron(cron){
+    return cron === '* * * * *' ? false :true
+}
+
     function showHideSelectField(val) {
         if (val == "PEOPLE") {
             //$("#aatopdiv").show();
             $(".people").show();
+            $("#id_peopleradio").attr('checked', 'checked')
             $(".pgroup").hide();
+            $("#id_pgroup").val(1)
+            toggleRequiredAttribute("id_people")
+            toggleRequiredAttribute("id_pgroup", set=false)
         } else {
             //$("#aatopdiv").hide();
             $(".pgroup").show();
+            $("#id_groupradio").attr('checked', 'checked')
             $(".people").hide();
+            $("#id_people").val(1)
+            toggleRequiredAttribute("id_pgroup")
+            toggleRequiredAttribute("id_people", set=false)
         }
     }
     var formSaved = false;
 
     $(document).ready(function(){
+
+
         //set ctzoffset
   	    $("#id_ctzoffset").val(-new Date().getTimezoneOffset())
         formSaved = true
@@ -311,8 +382,10 @@ Schedhule Task
         if ('{{schdtaskform.instance.id}}' === 'None') {
             showHideSelectField('PEOPLE')
         }else{
-            var assignto = '{{schdtaskform.instance.people}}' in ['None' || ""] ? "GROUP" : "PEOPLE"
+            var assignto = ['1', 'None'].includes('{{schdtaskform.instance.people_id }}') ? "GROUP" : "PEOPLE"
             showHideSelectField(assignto)
+            //cron to readable format
+            $("#id_cronstrue").val(cronstrue.toString($("#id_cron").val()))
         }
 
         //hide the delete button when instance is not saved yet.
@@ -333,6 +406,10 @@ Schedhule Task
         $("#btnSetCron").click(function(){
             var cron_val= $("#cron_selected_val").val();
             $("#id_cron").val(cron_val);
+            if(!properCron(cron_val)){
+                show_error_alert( "Please change your cron expression and update the job record.", "Problematic Cron")
+                return
+            }
             $('#cron_scheduler').modal('hide');
         });
 
@@ -346,8 +423,8 @@ Schedhule Task
                 $(function(){
                     $('.jqCronEditor').html('');
                     $('.jqCronEditor').jqCron({
-                        enabled_minute: true,
                         multiple_dom: true,
+                        enabled_hour:false,
                         multiple_month: true,
                         multiple_mins: true,
                         multiple_dow: true,
@@ -361,7 +438,9 @@ Schedhule Task
                         bind_to: $('#cron_selected_val'),
                         bind_method: {
                             set: function($element, value) {
-                            $element.val(value);
+                                $element.val(value);
+                                //cron to readable format
+                                $("#id_cronstrue").val(cronstrue.toString(value))
                             }
                         }
                     });
@@ -373,37 +452,44 @@ Schedhule Task
         //on submit form post request
         $("#schdtaskform").submit((e) => {
             e.preventDefault()
-            var form = $(this);
-            const params   = { url: $(form).attr("action"), modal: false }
-            const formtype = '{{schdtaskform.instance.id}}' == 'None' ? "create" : "update"         
-            const id       = '{{schdtaskform.instance.id}}'                                          
-            var   payLoad  = { formData: $("#schdtaskform").serialize(),csrfmiddlewaretoken: '{{ csrf_token }}' }
-            
-            if (formtype === 'update') {
-                var newPayLoad = { ...payLoad, 'pk': id }
-                    payLoad    = newPayLoad
-            }
-            submit_form_alert().then((res) => {
-                if(res.isConfirmed){
-                    fire_ajax_form_post(params, payLoad)
-                    .done((data, status, xhr) => {
-                        Swal.fire(
-                            `Task Form saved`,
-                            `Task Form with this name <strong>${data.jobname}</strong> has been saved successfully`,
-                            'success'
-                        ).then(function () {
-                            formSaved = true
-                            window.location.replace(data.url);
-                        })
-                    })
-                    .fail((xhr, status, error) => {
-                        console.log(xhr)
-                        if(!typeof(xhr.responseJSON.errors) === 'object'){
-                            show_error_alert(xhr.responseJSON.errors, "Failed to save!")
-                        }else{}
-                        
+            formValidator.validate().then(function (status){
+                console.log("form is ", status)
+                if(status === 'Valid'){
+                    var form = $(this);
+                    const params   = { url: "{{ url('schedhuler:jobschdtasks') }}", modal: false }
+                    const formtype = '{{schdtaskform.instance.id}}' == 'None' ? "create" : "update"         
+                    const id       = '{{schdtaskform.instance.id}}'                                          
+                    var   payLoad  = { formData: $("#schdtaskform").serialize(),csrfmiddlewaretoken: '{{ csrf_token }}' }
+                    
+                    if (formtype === 'update') {
+                        var newPayLoad = { ...payLoad, 'pk': id }
+                            payLoad    = newPayLoad
+                    }
+                    submit_form_alert().then((res) => {
+                        if(res.isConfirmed){
+                            console.log(payLoad, "payload")
+                            fire_ajax_form_post(params, payLoad)
+                            .done((data, status, xhr) => {
+                                Swal.fire(
+                                    `Task Form saved`,
+                                    `Task Form with this name <strong>${data.jobname}</strong> has been saved successfully`,
+                                    'success'
+                                ).then(function () {
+                                    formSaved = true
+                                    window.location.replace(data.url);
+                                })
+                            })
+                            .fail((xhr, status, error) => {
+                                console.log(xhr)
+                                if(!typeof(xhr.responseJSON.errors) === 'object'){
+                                    show_error_alert(xhr.responseJSON.errors, "Failed to save!")
+                                }else{}
+                                
+                            })
+                        }
                     })
                 }
+                
             })
         })
 
@@ -425,7 +511,7 @@ Schedhule Task
                 }).then((result) => {
                     if(result.isConfirmed){
                         const params = {url: "{{ url('schedhuler:runJob') }}"}
-                        var payLoad = {job: '{{ schdtaskform.instance.id }}',
+                        var payLoad = {job_id: '{{ schdtaskform.instance.id }}',
                         csrfmiddlewaretoken: '{{ csrf_token }}'}
                         fire_ajax_form_post(params, payLoad)
                         .done((data, status, xhr) => {
@@ -448,6 +534,10 @@ Schedhule Task
                     }
                 })
             }
+        })
+
+        $("#btn_clear").click(() => {
+            location.href = "{{ url('schedhuler:jobschdtasks') }}?action=form"
         })
     })
 </script>

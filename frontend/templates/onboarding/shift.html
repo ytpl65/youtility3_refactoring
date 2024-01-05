@@ -1,4 +1,4 @@
-{% extends "base_list.html" %}
+{% extends "globals/base_list.html" %}
 
 <!---- BEGIN CARD TITLE ------>
 {% block card_title %}
@@ -41,6 +41,7 @@ Shift List
 	const rowlink         = "a.shift-link"
 	
 	$(document).ready(function () {
+		
 
         //beforeSend of capability ajax request 
         function ShiftBeforeSend(){
@@ -51,20 +52,14 @@ Shift List
 			ajax: {
                 url    : '{{ url("onboarding:shift") }}?action=list',
             },
-			serverSide : true,
-			processing : true,
+			deferRender: true,
 			responsive : true,
-			fixedHeader: true,
-			language   : {
-                search           : "_INPUT_",
-                searchPlaceholder: "Search ..",
-				processing: "Getting Data"},
-            search    : {return: true},
+			pageLength:19,
             lengthMenu: [[10, 20, 30], [10, 20, 30]],
-            dom       : `<'row' <'col-sm-6 d-flex justify-content-start'f> <'col-sm-6 d-flex justify-content-end'B> >rt<'row'
+			dom       :`<'row' <'col-sm-6 d-flex justify-content-start'f> <'col-sm-6 d-flex justify-content-end'B> >rt<'row'
 			 <'col-sm-6'l> <'col-sm-6'p><'col-sm-12 d-flex justify-content-center'i>>`,
 			columns     : [
-                { "data": "id", 'visible':false, 'searchable':false, 'orderable':false},
+                { "data": "id", 'visible':false, className:'noVis'},
                 { "data": "shiftname" , 'title': 'Name',
                     'render':function(data, type, row, meta){
                         return `<a href="#" class="shift-link" data-id=${row['id']} data-rowid=${meta.row}>${data}</a>`
@@ -77,11 +72,25 @@ Shift List
                         return data === true ? "True": "False"
                     } 
                 },
+				{data:"bu__buname", title:"Site", visible:false},
+				{data:'bu__bucode', title:"Site Code", visible:false}
             ],
 			buttons:[
+				'searchBuilder',
+				dataTablesPDFConfig(
+                    title = `Site: {{request.user.bu.buname}}\n Shift List`,
+                    columns = [1,2,3,4,5,6],
+                    filename="shift_list"
+                ),
+                dataTablesExcelConfig(
+                    title = `Site: {{request.user.bu.buname}}\n Shift List`,
+                    columns = [1,2,3,4,5,6],
+                    filename="shift_list"
+                ),
+                dataTablesColumnVisibilityConfig(),
 				{
 					text     : `Add New &nbsp;<i class='fas fa-plus ch4'></i></a>`,
-					className: "btn btn-sm btn-light-primary",
+					className: "btn btn-sm border border-primary btn-light-primary add_new_shift",
 					//action for add_new_button 
 					action: function(e, dt, node, config){
                         const params = {
@@ -98,7 +107,10 @@ Shift List
 						})
 					}
 				}
-			]
+			],
+			select: {
+				style:"single"
+			}
 		})
 		$('.btn').removeClass('dt-button')
 		
@@ -111,10 +123,9 @@ Shift List
 			var form = $(this);
 			e.preventDefault()
 			const params = { url:urlname, modal:true } //capability view
-			const formtype = $(modalcontent_id).attr('data-form') //form-type (create/update)
-			const id = $(modalcontent_id).attr('data-id') //form instance id
+			const id = $("#pk").val()//form instance id
 			var payLoad = {formData:form.serialize(), csrfmiddlewaretoken: '{{ csrf_token }}'}//payload for post request
-			if(formtype === 'update'){
+			if(id != 'None'){
 				var newPayLoad = {...payLoad, 'pk':id}
 				payLoad = newPayLoad
 			}
@@ -122,36 +133,37 @@ Shift List
 			.done((data, status, xhr) => { //function to submit post request
 				console.log("data ", data)
 				$(modal_id).modal("hide");
-				table.row.add(data.row).draw()
-				var isupdated = formtype === 'update' ? true : false
-				show_successful_save_alert(update = isupdated)
+				if(id!=='None'){
+					table.row('.selected').data(data.row).draw()
+				}else{
+					table.row.add(data.row).draw()
+				}
+				show_successful_save_alert(update= id != 'None' ? true : false)
 			})
 		})
 
-		//update row (form-view)
-		$("tbody").click(rowlink,  (e) => {
-			console.log(e)
-			e.preventDefault();
-			var id = $(e.originalEvent.originalTarget).attr('data-id');
-			var rowid = $(e.originalEvent.originalTarget).attr('data-rowid');
-			if (!(id && rowid)){ return }
-			$(modalcontent_id).attr('data-rowid', rowid)
-			$(modalcontent_id).attr('data-id', id)
-			console.log("id ", id)
-			console.log("table ", table)
-			const params = {
-				'modal_id'    : modal_id,
-				'url'         : `${urlname}?id=${id}`,
-				'beforeSend'  : ShiftBeforeSend }
-			fire_ajax_get(params)
-			.done((data, status, xhr) => {
-				$(modalcontent_id).attr('data-form', 'update')
-				$(`${modal_id} .modal-content`).html(data.html_form)
-			})
-			.fail((xhr, status, error) => {
-				show_error_alert('Something went wrong!') //defined in custom.js
-			})
+		table.on('select', function(e, dt, type, indexes){
+			if(type === 'row'){
+				var id = table.rows(indexes).data().pluck('id')[0]
+				if (!(id)){ return }
+				e.preventDefault();
+				const params = {
+					'modal_id': modal_id,
+					'url': `${urlname}?id=${id}`,
+					beforeSend: ShiftBeforeSend
+				}
+				fire_ajax_get(params)
+				.done((data, status, xhr) => {
+					$(modalcontent_id).attr('data-form', 'update')
+					$(`${modal_id} .modal-content`).html(data.html_form)
+				})
+				.fail((xhr, status, error) => {
+					show_error_alert('Something went wrong!') //defined in custom.js
+				})
+			}
 		})
+
+
 	}); //END document.ready()
 
 	//delete ajax request 
@@ -182,10 +194,7 @@ Shift List
 				if(status){
 					show_successful_delete_alert() //defined in customjs
 					$(modal_id).modal("hide")
-					//delete row from table
-					row_index = parseInt($(modalcontent_id).attr('data-rowid'), 10)
-					console.log(row_index, "row index")
-					table.row(row_index).remove().draw(false);
+					table.row('.selected').remove().draw()
 				}else{
 					show_error_alert('Something went wrong!');
 				}

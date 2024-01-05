@@ -2,6 +2,7 @@ from django.core.management.base import BaseCommand
 from django.db import transaction
 from django.db.utils import IntegrityError
 from apps.core import utils
+from apps.core import exceptions as excp
 from pprint import pformat
 import logging
 log = logging.getLogger('__main__')
@@ -104,10 +105,10 @@ class Command(BaseCommand):
                 utils.set_db_for_router(db)
                 execute_tasks(db, self)
                 break
-            except utils.NoDbError as e:
+            except excp.NoDbError as e:
                 self.stdout.write(self.style.ERROR("Database with this alias '%s' not exist operation can't be performed" % db))
                 break
-            except utils.RecordsAlreadyExist as e:
+            except excp.RecordsAlreadyExist as e:
                 self.stdout.write(self.style.WARNING('Database with this alias "%s" is not empty so cannot create -1 extries operation terminated!' % db))
                 break
             except IntegrityError as e:

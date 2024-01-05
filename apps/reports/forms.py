@@ -4,6 +4,11 @@ from apps.onboarding import models as om
 from apps.peoples import models as pm
 from apps.core import utils
 from django_select2 import forms as s2forms
+from django.db.models import Q
+from datetime import datetime, timedelta
+from django.conf import settings
+from apps.reports.models import ScheduleReport
+from enum import Enum
 
 class MasterReportTemplate(forms.ModelForm):
     required_css_class = "required"
@@ -21,6 +26,15 @@ class MasterReportTemplate(forms.ModelForm):
         labels = {
             'qsetname':'Template Name',
         }
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['site_type_includes'].choices = om.TypeAssist.objects.filter(Q(tatype__tacode = "SITETYPE") | Q(tacode='NONE')).values_list('id', 'taname')
+        bulist = om.Bt.objects.get_all_sites_of_client(self.request.session['client_id']).values_list('id', flat=True)
+        self.fields['buincludes'].choices = pm.Pgbelonging.objects.get_assigned_sites_to_people(self.request.user.id, makechoice=True)
+        self.fields['site_grp_includes'].choices = pm.Pgroup.objects.filter(
+            Q(groupname='NONE') |  Q(identifier__tacode='SITEGROUP') & Q(bu_id__in = bulist)).values_list('id', 'groupname')
+        
 
 
 class SiteReportTemplate(MasterReportTemplate):
@@ -29,25 +43,24 @@ class SiteReportTemplate(MasterReportTemplate):
         self.request = kwargs.pop('request')
         super().__init__(*args, **kwargs)
         utils.initailize_form_fields(self)
-        self.fields['site_type_includes'].choices = om.Bt.objects.filter(butype__tacode = "BVTYPE").values_list('id', 'buname')
-        bulist = om.Bt.objects.get_bu_list_ids(self.request.session['client_id'])
-        self.fields['buincludes'].choices = om.Bt.objects.filter(id__in = bulist, identifier__tacode='SITE').values_list('id', 'buname')
-        self.fields['site_grp_includes'].choices = pm.Pgroup.objects.filter(
-            identifier__tacode='SITEGROUP', bu_id__in = bulist).values_list('id', 'groupname')
-        self.fields['type'].widget.attrs = {'style': 'display:none'}
         self.fields['type'].initial = am.QuestionSet.Type.SITEREPORTTEMPLATE
+        self.fields['type'].widget.attrs = {'style': 'display:none'}
+        if not self.instance.id:
+            self.fields['site_grp_includes'].initial = 1
+            self.fields['site_type_includes'].initial = 1
+            self.fields['buincludes'].initial = 1
 
 class IncidentReportTemplate(MasterReportTemplate):
-    class Meta(MasterReportTemplate.Meta):
-        exclude = ['showto_allsites', 'site_grp_includes', 'site_type_includes']
+    
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields['site_type_includes'].queryset = om.TypeAssist.objects.filter(
-            tatype__tacode='SITETYPE')
-        self.fields['type'].widget.attrs = {'style': 'display:none'}
         self.fields['type'].initial = am.QuestionSet.Type.INCIDENTREPORTTEMPLATE
         utils.initailize_form_fields(self)
+        if not self.instance.id:
+            self.fields['site_grp_includes'].initial = 1
+            self.fields['site_type_includes'].initial = 1
+            self.fields['buincludes'].initial = 1
 
 
 
@@ -55,3 +68,202 @@ class TestForm(forms.Form):
     firstname  = forms.CharField(max_length=10, required=False)
     lastname   = forms.CharField(max_length=10, required=True)
     middlename = forms.CharField(max_length=10, required=True)
+
+
+
+
+class ReportBuilderForm(forms.Form):
+    model = forms.ChoiceField(label="Model", widget=s2forms.Select2Widget, help_text="Select a model where you want data from")
+    columns = forms.MultipleChoiceField(label="Coumns", widget=s2forms.Select2MultipleWidget, help_text="Select columns required in the report")
+    
+
+def get_report_templates():
+    return  
+
+class ReportForm(forms.Form):
+    required_css_class = "required"
+    report_templates = [
+        ('', 'Select Report'),
+        ('TaskSummary', 'Task Summary'),
+        ('TourSummary', 'Tour Summary'),
+        ('ListOfTasks', 'List of Tasks'),
+        ('ListOfTours', 'List of Internal Tours'),
+        ('PPMSummary', 'PPM Summary'),
+        ('ListOfTickets', 'List of Tickets'),
+        ('WorkOrderList', 'Work Order List'),
+        ('SiteReport', 'Site Report'),
+        ('PeopleQR', 'People-QR'),
+        ('AssetQR', 'Asset-QR'),
+        ('CheckpointQR', 'Checkpoint-QR'),
+        ('AssetwiseTaskStatus','Assetwise Task Status'),
+        ('StaticDetailedTourSummary','Static Detailed Tour Summary'),
+        ('DynamicDetailedTourSummary','Dynamic Detailed Tour Summary'),
+        ('DynamicTourDetails','Dynamic Tour Details'),
+        ('StaticTourDetails','Static Tour Details')
+    ]
+    download_or_send_options = [
+        ('DOWNLOAD', 'Download'),
+        ('SEND', 'Email'),
+    ]
+    format_types = [
+        ('', 'Select Format'),
+        ('pdf', 'PDF'),
+        ('xlsx', 'XLSX'),
+        ('html', 'HTML'),
+        ('json', 'JSON'),
+        ('csv', 'CSV'),
+    ]
+    SIZES = [
+        (120, 'Small'),
+        (200, 'Medium'),
+        (300, 'Large'), 
+    ]
+    
+    People_or_Site_CHOICES = [('PEOPLE', 'People'), ('SITE', 'Site')]
+    
+    # data fields
+    report_name     = forms.ChoiceField(label='Report Name', required=True, choices=report_templates, initial='TASK_SUMMARY')
+    site            = forms.ChoiceField(label='Site', required = False, widget=s2forms.Select2Widget)
+    sitegroup       = forms.ChoiceField(label="Site Group", required=False, widget=s2forms.Select2Widget)
+    fromdate        = forms.DateField(label='From Date', required=False)
+    fromdatetime    = forms.DateTimeField(label='From Date Time', required=False)
+    uptodate        = forms.DateField(label='To Date', required=False)
+    uptodatetime    = forms.DateTimeField(label='To Date Time', required=False)
+    asset           = forms.CharField(label="Asset", widget=s2forms.Select2Widget, required=False)
+    qset            = forms.CharField(label="Question Set", widget=s2forms.Select2Widget, required=False)
+    assettype       = forms.ChoiceField(label="Asset Type", widget=s2forms.Select2Widget, required=False)
+    checkpoint      = forms.CharField(label='Checkpoint', widget=s2forms.Select2Widget, required=False)
+    checkpoint_type = forms.CharField(label='Checkpoint Type', widget=s2forms.Select2Widget, required=False)
+    ticketcategory  = forms.CharField(label='Ticket Category', widget=s2forms.Select2MultipleWidget, required=False)
+    peoplegroup     = forms.ChoiceField(label="People Group", widget=s2forms.Select2Widget, required=False, choices=[])
+    people          = forms.ChoiceField(label="People", widget=s2forms.Select2Widget, required=False, choices=[])
+    mult_people     = forms.MultipleChoiceField(label="People", widget=s2forms.Select2MultipleWidget, required=False, choices=[])
+    qrsize          = forms.ChoiceField(label="QR Size", widget=s2forms.Select2Widget, choices=SIZES, initial=120, required=False)
+    assetcategory   = forms.ChoiceField(label="Asset Category", widget=s2forms.Select2Widget, required=False)
+    site_or_people  = forms.ChoiceField(label="Site/People", widget=s2forms.Select2Widget,choices=People_or_Site_CHOICES, required=False)
+    
+    #other form fields
+    format      = forms.ChoiceField(widget=s2forms.Select2Widget, label="Format", required=True, choices=format_types)
+    export_type = forms.ChoiceField(widget=s2forms.Select2Widget, label='Get File with', required=True, choices=download_or_send_options, initial='DOWNLOAD')
+    cc          = forms.MultipleChoiceField(label='CC', required=False, widget=s2forms.Select2MultipleWidget)
+    to_addr     = forms.MultipleChoiceField(label="To", required=False, widget=s2forms.Select2MultipleWidget)
+    preview     = forms.CharField(widget=forms.HiddenInput,required=False, initial="false")
+    email_body  = forms.CharField(label='Email Body', max_length=500, required=False, widget=forms.Textarea(attrs={'rows':2}))
+    ctzoffset   = forms.IntegerField(required=False)
+
+    
+    def __init__(self, *args, **kwargs):
+        self.request = kwargs.pop('request', None)
+        S = self.request.session
+        super().__init__(*args, **kwargs)
+        self.fields['site'].choices = pm.Pgbelonging.objects.get_assigned_sites_to_people(S.get('_auth_user_id'), True)
+        self.fields['sitegroup'].choices = [("", "")] + list(pm.Pgroup.objects.filter(
+            identifier__tacode="SITEGROUP",
+            bu_id__in = S['assignedsites'],
+            enable=True).values_list('id', 'groupname'))
+        self.fields['peoplegroup'].choices = pm.Pgroup.objects.filter_for_dd_pgroup_field(self.request, sitewise=True, choices=True)
+        self.fields['people'].choices = self.fields['mult_people'].choices = pm.People.objects.filter_for_dd_people_field(self.request, sitewise=True, choices=True)
+        self.fields['assettype'].choices  = am.Asset.objects.asset_type_choices_for_report(self.request)
+        self.fields['assetcategory'].choices = am.Asset.objects.asset_category_choices_for_report(self.request)
+        self.fields['fromdate'].initial = self.get_default_range_of_dates()[0]
+        self.fields['uptodate'].initial = self.get_default_range_of_dates()[1]
+        self.fields['cc'].choices = pm.People.objects.filter(isverified=True, client_id = S['client_id']).values_list('email', 'peoplename')
+        self.fields['to_addr'].choices = pm.People.objects.filter(isverified=True, client_id = S['client_id']).values_list('email', 'peoplename')
+        utils.initailize_form_fields(self)
+        
+        
+    def get_default_range_of_dates(self):
+        today = datetime.now().date()
+        first_day_of_month = today.replace(day=1)
+        last_day_of_last_month = first_day_of_month - timedelta(days=1)
+        first_day_of_last_month = last_day_of_last_month.replace(day=1)
+        return first_day_of_last_month, last_day_of_last_month
+
+    def clean(self):
+        cd = super().clean()
+        ic(cd)
+        if cd['report_name'] == 'SiteReport' and cd.get('people') in ["", None] and cd.get('sitegroup') in ["", None]:
+            raise forms.ValidationError(
+                f"Both Site Group and People cannot be empty, when the report is {cd.get('report_name')}")
+                
+        if cd.get("fromdate") and cd.get('fromdate') > cd.get('uptodate'): self.add_error('fromdate', 'From date cannot be greater than To date')
+        if cd.get('uptodate') and cd.get('uptodate') > cd.get('fromdate') + timedelta(days=31):
+            err_msg = 'The difference between From date and To date should not be greater than 1 a month'
+            self.add_error('fromdate', err_msg)
+            self.add_error('uptodate', err_msg)
+        if cd.get('format') != 'pdf': self.cleaned_data['preview'] = "false"
+        return cd
+    
+    
+
+class EmailReportForm(forms.ModelForm):
+    class CronType(Enum):
+        """Enum for different cron expression types."""
+        DAILY = "daily"
+        WEEKLY = "weekly"
+        MONTHLY = "monthly"
+        WORKINGDAYS = "workingdays"
+    required_css_class = 'required'
+    WORKINGDAYS_CHOICES = ScheduleReport.WORKINGDAYS
+    frequencytypes = [
+        ('workingdays', 'Working Days'),
+        ('somethingelse', 'Something Else')
+    ]
+
+    
+    cc            = forms.MultipleChoiceField(label='Email-CC', required=False, widget=s2forms.Select2MultipleWidget)
+    to_addr       = forms.MultipleChoiceField(label="Email-To", required=False, widget=s2forms.Select2MultipleWidget)
+    cronstrue     = forms.CharField(widget=forms.Textarea(attrs={'readonly':True, 'rows':2}), required=False)
+    frequencytype = forms.ChoiceField(label="Frequency Type", widget=s2forms.Select2Widget, choices=frequencytypes, required=False)
+    workingdays   = forms.ChoiceField(label="Working Days", widget=s2forms.Select2Widget,choices=WORKINGDAYS_CHOICES, required=False)
+    workingperiod = forms.TimeField(label="Period", required=False)
+    
+    class Meta:
+        fields = ['report_type', 'report_name', 'cron', 'report_sendtime',
+                  'enable', 'ctzoffset', 'to_addr', 'cc', 'crontype', 'workingdays']
+        model = ScheduleReport
+        labels = {
+            'cron':'Scheduler'
+        }
+        
+    def __init__(self, *args, **kwargs):
+        self.request = kwargs.pop('request', None)
+        self.S = self.request.session
+        super().__init__(*args, **kwargs)
+        self.fields['cc'].choices = pm.People.objects.filter(isverified=True, client_id = self.S['client_id']).values_list('email', 'peoplename')
+        self.fields['to_addr'].choices = pm.People.objects.filter(isverified=True, client_id = self.S['client_id']).values_list('email', 'peoplename')
+
+        utils.initailize_form_fields(self)
+    
+    def clean(self):
+        cd = super().clean()
+        cd.update({'crontype':self.cron_type(cd['cron'])})
+        return cd
+    
+
+
+    def cron_type(self, cron_expr):
+        fields = cron_expr.split()
+        if len(fields) != 5:
+            return self.CronType.UNKNOWN.value
+
+        # Check for daily cron expressions
+        if all(field == "*" for field in fields[2:]):
+            return self.CronType.DAILY.value
+
+        # Revised check for weekly cron expressions
+        elif fields[2] == "*" and fields[3] == "*" and fields[4] in map(str, range(0, 8)):
+            return self.CronType.WEEKLY.value
+
+        # Revised check for monthly cron expressions
+        elif fields[2] in map(str, range(1, 32)) and fields[3] == "*" and fields[4] == "*":
+            return self.CronType.MONTHLY.value
+
+        # Otherwise, return unknown
+        else:
+            return self.CronType.WORKINGDAYS.value
+    
+
+        
+        
+    

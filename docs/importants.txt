@@ -1,3 +1,5 @@
+
+
 ###################### NONE ENTRIES SHOULD BE PRESENT IN FOLLOWING TABLES: ######################
 
 1. People
@@ -40,3 +42,32 @@ IMPORTANT COMMANDS
 2.START CELERY WORKER $ celery -A intelliwiz_config worker -l debug
 3.KILL ANY PROCESS BY ITS PORT $ sudo fuser -k <PORT_NO>/tcp
 4.START REDIS SERVER: $ sudo service redis-server  {start|stop|restart|force-reload|status
+
+
+IMPORTANT NOTES
+1.BY DEFAULT PEOPLE PASSWORD IS <peoplecode>
+2. To give permission to the path : sudo chmod -R 777 /path/to/file or dir
+
+
+
+################################## BACKGROUND FUNCTIONS ############################################
+In the directory: background_tasks.tasks.py, apps.service.utils
+
+
+
+############ upadate json field add new key/value to it eg for people table ############
+UPDATE people 
+SET people_extras = jsonb_set(people_extras::jsonb, '{isworkpermit_approver}', 'false', true);
+
+
+(youtility4) redmine@redmine:/etc/systemd/system$ cat gunicorn.socket
+[Unit]
+Description=gunicorn socket
+
+[Socket]
+ListenStream=/run/gunicorn.sock
+SocketUser=redmine
+SocketGroup=nginx
+SocketMode=0660
+[Install]
+WantedBy=sockets.target

@@ -1,4 +1,4 @@
-    {% extends "base_form.html" %}
+{% extends "globals/base_form.html" %}
 
 {% block extra_css %}
 <link  href="{{ static('assets/plugins/custom/DataTables/datatables.min.css') }}" rel="stylesheet" type="text/css"/>
@@ -11,27 +11,22 @@
 {% block pagebreadcumb %}
 <!--will call parent contents -->
 {{ super() }}
-<li class="breadcrumb-item pe-3"><a href="{{ url('schedhuler:retrieve_externaltours') }}" class="pe-3">Schedhuled Tours</a></li>
-<li class="breadcrumb-item pe-3"><a href="javascript:void(0)" class="pe-3">External-Tour Form</a></li>
+<li class="breadcrumb-item pe-3"><a href="{{ url('schedhuler:retrieve_externaltours') }}" class="pe-3">Routes</a></li>
+<li class="breadcrumb-item pe-3"><a href="javascript:void(0)" class="pe-3">Route Plan Setup</a></li>
 {% endblock pagebreadcumb %}
 <!-------------------------- END PAGE BREADCUMB ------------------------->
 
 <!------ BEGIN FORM TITLE ------->
 {% block custom_title %}
-Schedhule External-Tour&nbsp;<i class="fa fa-clock fs-4 text-primary" aria-hidden="true"></i>
+Route Plan Setup&nbsp;<i class="fa fa-clock fs-4 text-primary" aria-hidden="true"></i>
 {% endblock custom_title %}
 <!------ END FORM TITLE -------->
 
 <!--------- BEGIN NON FIELD ERRORS -------->
 {% block nonfield_errors %}
-{% if schdexternaltourform.non_field_errors() %}
-<div id="non_field_error" class="alert alert-danger" style="width: 73%;">
-    {% for error in schdexternaltourform.non_field_errors() %}
-    <strong>Error</strong> <span>{{ error }}</span>
-    {% endfor %}
-    <button type="button" class="btn-close flt-right" data-bs-dismiss="alert" aria-label="Close"></button>
+<div class="alert alert-danger" id="nonfield_errors"role="alert" style="display:none">
+    <strong>Error: </strong> <span></span>
 </div>
-{% endif %}
 {% endblock nonfield_errors %}
 <!---------- END NON FIELD ERRORS --------->
 
@@ -46,7 +41,6 @@ Schedhule External-Tour&nbsp;<i class="fa fa-clock fs-4 text-primary" aria-hidde
         {{ schdexternaltourform.priority }}
         {{ schdexternaltourform.starttime }}
         {{ schdexternaltourform.endtime }}
-        {{ schdexternaltourform.scantype }}
         {{ schdexternaltourform.expirytime }}
         {{ schdexternaltourform.frequency }}
         {{ schdexternaltourform.ticketcategory }}
@@ -119,6 +113,14 @@ Schedhule External-Tour&nbsp;<i class="fa fa-clock fs-4 text-primary" aria-hidde
                     {{ schdexternaltourform.qset }}
                 </div>
             </div>
+            <div class="input-group mb-3">
+                <div class="col-md-4">
+                    {{ schdexternaltourform.scantype.label_tag() }}
+                </div>
+                <div class="col-md-8">
+                    {{ schdexternaltourform.scantype }}
+                </div>
+            </div>
         </div>
 
         <div class="col-md-6">
@@ -143,8 +145,9 @@ Schedhule External-Tour&nbsp;<i class="fa fa-clock fs-4 text-primary" aria-hidde
                     <label for="{{ schdexternaltourform.cron.id_for_label }}" class="required">{{ schdexternaltourform.cron.label }}:</label>
                 </div>
                 <div class="col-md-8 d-flex">
-                    <input type="text" name="{{ schdexternaltourform.cron.name }}" value="{{ schdexternaltourform.cron.value() }}" id="id_cron"
-                    readonly required class="form-control form-control-solid" maxlength="250" />
+                    <input type="text" name="{{ schdexternaltourform.cron.name }}" value="{{ schdexternaltourform.instance.cron }}" id="id_cron"
+                    readonly required class="form-control d-none form-control-solid" maxlength="250" />
+                    {{ schdexternaltourform.cronstrue }}
                     <a  class="btn btn-circle btn-icon-only btn-default " id="cron_selector">
                         <i class="fa fa-clock fs-4 text-primary" aria-hidden="true"></i>
                     </a>
@@ -174,17 +177,16 @@ Schedhule External-Tour&nbsp;<i class="fa fa-clock fs-4 text-primary" aria-hidde
                     {{ schdexternaltourform.israndom }}
                     &nbsp;&nbsp;{{ schdexternaltourform.israndom.label }}</label>
                 </div>
-                    <div class="form-floating col-md-4">
+                    <div class="form-floating col-md-4 fv-row">
                         {{ schdexternaltourform.tourfrequency }}
                         <label for="id_tourfrequency">Frequency</label>
                     </div>
-                    <div class="form-floating col-md-4">
+                    <div class="form-floating col-md-4 fv-row">
                         {{ schdexternaltourform.breaktime }}
-                        <label for="id_breaktime">Breaktime (In Mins)</label>
+                        <label for="id_breaktime">Breaktime (mins)</label>
                     </div>
             </div>
         </div>
-
     </div>
 </form>
 <br><hr><br>
@@ -227,20 +229,26 @@ Schedhule External-Tour&nbsp;<i class="fa fa-clock fs-4 text-primary" aria-hidde
         <div class="col">
             <div class="card card-flush my-shadow">
                 <div class="card-header">
-                    <h3 class="card-title">Site Checkpoints &nbsp;<i class="fas ch4 fa-sm fa-paste"></i></h3>
+                    <h3 class="card-title">Site Checkpoints &nbsp;<i class="fas text-white ch4 fa-sm fa-paste"></i></h3>
                     <div class="card-toolbar gap-5 d-md-flex justify-content-md-end">
-                        <button type="button" id="btnRandomTour"  data-toggle="modal" data-target="#randomTourModal" class="btn red sbold">Random Tour &nbsp<i class="fa fa-random"></i></button>
-                        <button type="button" class="btn btn-sm btn-hover-scale btn-primary non-random" id="btnGetRoute"
+                        {% if schdexternaltourform.instance.id %}
+                        <button type="button" class="btn btn-sm btn-hover-scale btn-warning" id="getfromgroup"
+                            data-bs-custom-class="tooltip-dark" data-bs-toggle="tooltip" data-bs-placement="top" title="Get From Group">
+                            <i class="fab fa-get-pocket fa-lg"></i>
+                        </button>
+                        {% endif %}
+                        
+                        <button type="button" class="btn btn-sm btn-hover-scale btn-primary2 non-random" id="btnGetRoute"
                             data-bs-custom-class="tooltip-dark" data-bs-toggle="tooltip" data-bs-placement="top" title="Get Route">
-                            <i class="fas fa-map-marker-alt fa-lg"></i>
+                            <i class="fas text-white fa-map-marker-alt fa-lg"></i>
                         </button>
                         <button type="button" class="btn btn-hover-scale btn-sm btn-info non-random"  id="btnSaveRoute"
                             data-bs-custom-class="tooltip-dark" data-bs-toggle="tooltip" data-bs-placement="top" title="Save Route">
-                            <i class="fas fa-save fa-lg"></i>
+                            <i class="fas text-white fa-save fa-lg"></i>
                         </button>
                         <button type="button" class="btn btn-hover-scale btn-sm btn-secondary non-random" id="btnCalculateRoute"
                             data-bs-custom-class="tooltip-dark" data-bs-toggle="tooltip" data-bs-placement="top" title="Calculate Route">
-                            <i class="fas fa-calculator fa-lg"></i>
+                            <i class="fas  fa-calculator fa-lg"></i>
                         </button>
                     </div>
                 </div>
@@ -284,25 +292,26 @@ Schedhule External-Tour&nbsp;<i class="fa fa-clock fs-4 text-primary" aria-hidde
     <div class="form-actions">
         {% if schdexternaltourform.instance.id %}
         <button type="button" id="runScheduler"  class="btn btn-sm btn-info btn-hover-scale">
-            Run Scheduler&nbsp;<i class="far fa-clock"></i>
+            Run Scheduler&nbsp;<i class="far text-white fa-clock"></i>
         </button>
         
-        <button type="submit" id="submitTour" form="id_schdexternaltourform" class="btn btn-sm btn-primary btn-hover-scale">
-            Update Tour&nbsp;<i class="fas fa-cloud-upload-alt"></i>
-        </button>
-
-        <button type="button" onclick="deleteMainJob(this)" data-id="{{ schdexternaltourform.instance.id }}" id="deleteAttd"
-            class="btn btn-sm btn-danger btn-hover-scale">
-            Delete&nbsp;<i class="fas fa-trash-alt"></i>
+        <button type="submit" id="submitTour" form="id_schdexternaltourform" class="btn btn-sm btn-primary2 btn-hover-scale">
+            Update Tour&nbsp;<i class="fas text-white fa-cloud-upload-alt"></i>
         </button>
         {% else %}
-        <button type="submit" form="id_schdexternaltourform" class="btn btn-sm btn-primary btn-hover-scale">
-            Save Tour&nbsp;<i class="fas fa-cloud-upload-alt"></i>
+        <button type="submit" form="id_schdexternaltourform" class="btn btn-sm btn-primary2 btn-hover-scale">
+            Save Tour&nbsp;<i class="fas text-white fa-cloud-upload-alt"></i>
         </button>
         {% endif %}
+        <button type="button" id="btn_clear" form="id_schdexternaltourform" class="btn btn-sm btn-secondary btn-hover-scale">
+            Clear&nbsp;<i class="fas  fa-trash-alt"></i>
+        </button>
     </div>
 {% endblock ajax_page_actions %}
 
+{% block base_script %}
+
+{% endblock base_script %}
 
 {% block extra_scripts %}
 {{ schdexternaltourform.media.js }}
@@ -312,6 +321,8 @@ Schedhule External-Tour&nbsp;<i class="fa fa-clock fs-4 text-primary" aria-hidde
 <script src="{{ static('assets/plugins/custom/Editor-2.0.8/js/dataTables.editor.min.js') }}" type="text/javascript"></script>
 <script src="{{ static('assets/js/jqCron.js') }}"></script>
 <script src="{{ static('assets/js/jqCron.en.js') }}"></script>
+<script src="{{ static('assets/js/local/cronstrue.min.js') }}"></script>
+
 <script type="text/javascript">
     //FOR GLOBAL VARIABLE TO BE AVAILABLE BELOW SCRIPTS
     var _cronDates   = [];
@@ -335,12 +346,16 @@ function showHideSelectField(val) {
         $("#id_peopleradio").attr('checked', 'checked')
         $("#id_pgroup").val(1)
         $(".pgroup").hide();
+        toggleRequiredAttribute("id_people")
+        toggleRequiredAttribute("id_pgroup", set=false)
     } else {
         //$("#aatopdiv").hide();
         $(".pgroup").show();
         $("#id_groupradio").attr('checked', 'checked')
         $(".people").hide();
         $("#id_people").val(1)
+        toggleRequiredAttribute("id_pgroup")
+        toggleRequiredAttribute("id_people", set=false)
     }
 }
 
@@ -351,6 +366,27 @@ function getSelectedValue(id) {
         return data.text
     }
     return "NONE"
+}
+
+function checkBreaktimeWithFreq(){
+    return FormValidation.formValidation(document.querySelector("#id_schdexternaltourform"), {
+        fields:{
+            'breaktime':{
+                validators:{
+                    callback:function(inpuyt){
+                        var freq = $("#id_tourfrequency").val()
+                        var breaktime = $("#id_breaktime").val()
+                        if(freq > 1 && breaktime == 0){
+                            return {
+                                valid:false,
+                                message:"Break time cannot be 0"
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    })
 }
 
 //check & return data from table
@@ -368,8 +404,13 @@ function getAsgdsitesTabColumnConfig(){
             }
         },
         {data:'buid', visible:false, searchable:false},
-        {data:'buname', title:'Site'},
-        {data:'gpslocation', title:'GPS', visible:false},
+        {data:'solid', searchable:false, title:'Sol ID'},
+        {data:'bu__buname', title:'Site'},
+        {data:'bu__gpslocation', title:'GPS', title:'GPS', render:function(data, type, row, meta){
+            let coords = typeof data === 'string' && data.length > 0 ? JSON.parse(data): 'NONE'
+            return coords !== 'NONE' ? `${coords['coordinates'][1]}, ${coords['coordinates'][0]}` : coords
+            }
+        },
         {title:'Start', defaultContent:null, data:'starttime', render:function(data, type, row, meta){
                 return data === null ? '--' : data
             }
@@ -387,12 +428,11 @@ function getAsgdsitesTabColumnConfig(){
             }
         },
         {data:'qsetid', visible:false,targets:11, searchable:false},
-        {data:'qsetname', targets:10, title:'Checklist'},
+        {data:'qsetname', targets:10, title:'Checklist', visible:true},
         {data:'jobid', visible:false, defaultContent:null, searchable:false},
         {data:'expirytime', visible:false, defaultContent:null, searchable:false},
         {data:'assetid', visible:false, defaultContent:null, searchable:false},
         {data:'breaktime', visible:false, defaultContent:null, searchable:false},
-
     ]
 }
 
@@ -425,28 +465,34 @@ function disableFields(elements){
     $(elements).attr('disabled', 'disabled')
 }
 
+function properCron(cron){
+    return cron === '* * * * *' ? false :true
+}
+
 
 //UPDATE CRONDATETIME ON CRON CHANGE
 function updateCronDate(){
-    console.log("called")
-    var cron = $("#id_cron").val()
-    var params = {'url':`{{ url('schedhuler:getCronDateTime') }}?cron=${cron}`,
-    'beforeSend':function(){}} 
-    fire_ajax_get(params)
-    .done((data, status, xhr) => {
-        if(data.rows.length > 0){
-            _cronDates = data.rows
-        }else{
-            _cronDates= [new Date(new Date().setHours(0, 0, 0))];
-        }
-        reCaclTime()
-        console.log(_cronDates, "_cronDates")
-        
-    })
-    .fail((xhr, status, error) => {
-        
-        show_error_alert(xhr.responseJSON.errors, "Bad Cron!")
-    })
+        console.log("called")
+        var cron = $("#id_cron").val()
+        var params = {'url':`{{ url('schedhuler:getCronDateTime') }}?cron=${cron}`,
+        'beforeSend':function(){}
+        } 
+        fire_ajax_get(params)
+        .done((data, status, xhr) => {
+            if(data.rows.length > 0){
+                _cronDates = data.rows
+            }else{
+                _cronDates= [new Date(new Date().setHours(0, 0, 0))];
+            }
+            reCaclTime()
+            console.log(_cronDates, "_cronDates")
+            
+        })
+        .fail((xhr, status, error) => {
+            
+            show_error_alert(xhr.responseJSON.errors, "Bad Cron!")
+        })
+    
 }
 
     //delete tour 
@@ -455,99 +501,154 @@ function updateCronDate(){
 		show_alert_before_delete("External Tour")
 		.then((result) => {
 			if(result.isConfirmed){ //delete requested by user
-				status = isETourDeleted(id) //fire's request
-				console.log("status ", status)
-				if(status){
-					show_successful_delete_alert() //defined in customjs
+				let urlname = "{{ url('schedhuler:schd_external_tour') }}"
+                const params = {url:`${urlname}?action=delete&id=${id}`, 'beforeSend':function (){} }
+                fire_ajax_get(params)
+                .done((data, status, xhr) => {
+                    show_successful_delete_alert() //defined in customjs
                     window.setTimeout(function() {
-                        window.location.href = `{{ url('schedhuler:schd_external_tour') }}?action=form`;
+                        window.location.href = "{{ url('schedhuler:schd_external_tour') }}?action=form";
                     }, 2000);
-
-				}else{
-					show_error_alert('Something went wrong!');
-				}
+                })
+                .fail((xhr, status, error) => {
+                    let err = typeof xhr.responseJSON.errors == 'string' ? xhr.responseJSON.errors : 'Something went wrong!'
+                    show_error_alert(err) //defined in custom.js
+                })
 			}
 		})
 	}
 
-     //delete ajax request 
-	function isETourDeleted(id){ 
-        let urlname = "{{ url('schedhuler:schd_external_tour') }}"
-		const params = {url:`${urlname}?action=delete&id=${id}`, 'beforeSend':function (){} }
-		fire_ajax_get(params)
-		.done((data, status, xhr) => {
-			if(!xhr.status === 200){
-				return false
-			}
-			return true
-		})
-		.fail((xhr, status, error) => {
-			show_error_alert('Something went wrong!') //defined in custom.js
-			return false
-		})
-	}
+function forceGetFromGroup(){
+    var sitegrp_id = '{{ schdexternaltourform.instance.sgroup_id }}'
+    var id = '{{ schdexternaltourform.instance.id }}'
+    const params = {url:`{{ url('schedhuler:schd_external_tour') }}?action=forcegetfromgroup&sgroup_id=${sitegrp_id}&id=${id}`, 'beforeSend':function (){} }
+    fire_ajax_get(params)
+    .done((data, status, xhr) => {
+        if(!xhr.status === 200){
+            return false
+        }
+        asgdsites_table.clear().rows.add(data.rows).draw()
+        $("#btnGetRoute").click()
+    })
+    .fail((xhr, status, error) => {
+        console.log(xhr.responseJSON.errors)
+        show_error_alert('Something went wrong!') //defined in custom.js
+        return false
+    })
+}
+function checklistSelected(){
+    var checklist = $("#id_checklist").val()
+    if(checklist){
+        return true
+    }return false
+}
 
 var d2bounds           = new google.maps.LatLngBounds();
 var d2infowindow       = new google.maps.InfoWindow({content: "",maxWidth: 350});
 var d2PolyLine         = undefined;
 var allsites_table     = null;
 var asgdsites_table    = null;
+var israndom = "{{ schdexternaltourform.instance.other_info['is_randomized'] }}"
 
 $(document).ready(() => {
+    $("#btn_clear").click(() => {
+        if(confirm("Are you sure you want to clear the current form?")){
+            location.href = "{{ url('schedhuler:schd_external_tour') }}?action=form"
+        }
+        
+    })
+    
     d2InitializeMap()
     //set ctzoffset
   	$("#id_ctzoffset").val(-new Date().getTimezoneOffset())
 
     //addclass btdeciders
-    $("#id_tourfrequency, #id_israndom").addClass('btdeciders')
+    //$("#id_tourfrequency, #id_israndom").addClass('btdeciders')
     
 
     editor = new $.fn.dataTable.Editor( {
         table: "#assigned_sites",
-        fields: [{
+        ajax:{
+            url:"{{ url('schedhuler:schd_external_tour') }}",
+            data:function(d){
+                let currentRow = getCurrentEditingRow(editor, asgdsites_table)
+                d.csrfmiddlewaretoken = "{{ csrf_token }}"
+                d.parent_id = "{{ schdexternaltourform.instance.id }}"
+                d.seqno = $("#DTE_Field_seqno").val()
+                d.qsetname = $("#DTE_Field_qsetname").text()
+                d.qset_id = $("#DTE_Field_qsetname").val()
+                d.jobid = currentRow !== 'None' ? currentRow['jobid'] : currentRow
+                d.postType = 'saveCheckpoint'
+            }
+        },
+        fields: [
+            {
                 label: "Checklist",
                 name: "qsetname",
                 type:'select',
                 data:'qsetname',    
-            },],
+            },
+            {label:"Seq No.", name:'seqno', type:'text', data:'seqno'},
+            {def:"None", name:'jobid', type:'hidden', data:'jobid'},
+            ],
         idSrc: 'jobid'
     });
 
     //CHILD EDITOR ON OPEN EVENT
-        editor.on('open', function(e, mode, action){
-            $(".DTE_Field").addClass('p-1') 
-            if(action === 'create' || action === 'edit'){
-                $("#DTE_Field_qsetname").addClass("form-control form-select") // add css to alerton form field
-            }
-            // initialize select field question
-            init_select_field({
-                url: "{{ url('schedhuler:schd_external_tour') }}?action=loadChecklist",
-                id: "#DTE_Field_qsetname",
-                item: 'Checklist',
-            })
+    editor.on('open', function(e, mode, action){
+        $(".DTE_Field").addClass('p-1') 
+        if(action === 'create' || action === 'edit'){
+            $("#DTE_Field_qsetname").addClass("form-control form-select") // add css to alerton form field
+        }
+        // initialize select field question
+        init_select_field({
+            url: "{{ url('schedhuler:schd_external_tour') }}?action=loadChecklist",
+            id: "#DTE_Field_qsetname",
+            item: 'Checklist',
         })
+
+        if(action == 'edit'){
+            var data = getCurrentEditingRow(editor, asgdsites_table);
+            //init qset
+            var newOption = new Option(
+            data.qsetname,
+            data.qsetid,
+            true,
+            true
+            );
+            $("#DTE_Field_qsetname").append(newOption);
+        }
+    })
+
+    editor.on('postEdit', function(e, json, data, id){
+        //$("#btnGetRoute").click()
+    })
 
     asgdsites_table = $("#assigned_sites").DataTable({
         ajax:{
-            url:"{{ url('schedhuler:schd_external_tour') }}?action=get_sitesfromgroup&id={{schdexternaltourform.instance.id}}",    
+            url:"{{ url('schedhuler:schd_external_tour') }}?action=get_sitesfromgroup&id={{schdexternaltourform.instance.id}}", 
         },
-        fixedHeader: true,
+        scrollY: 150,
+        paging:false,
+        scrollCollapse: true,
+        pageLength:50,
         responsive: true,
         columns:[
             ...getAsgdsitesTabColumnConfig()
         ],
         dom: `<'row' <'col-sm-6 d-flex justify-content-start'f> <'col-sm-6 d-flex justify-content-end'B> >rt<'row'
 			 <'col-sm-6'l> <'col-sm-6'p><'col-sm-12 d-flex justify-content-center'i>>`,
-        order: [[ 1, 'asc' ]],
-        ordering:false,
         select: {
             style:    'single',
             selector: 'tr'
         },
+        //order:[[0, 'asc']],
+        ordering:true,
+        searching:false,
         footerCallback:function(row, data, start, end, display){
-                            var api = this.api();
-                            setFooter(api)
-                        },
+            var api = this.api();
+            setFooter(api)
+        },
         buttons: [
             { extend: "edit",   editor: editor },
         ],
@@ -556,7 +657,7 @@ $(document).ready(() => {
                 $("#btnGetRoute").click()
             }
         }
-    }) 
+    })
 
     //toggle people and pgroup field based on radio button value
     if ('{{schdexternaltourform.instance.id}}' === 'None') {
@@ -564,50 +665,20 @@ $(document).ready(() => {
         
     }else{
         checkDirectionsSaved2()
-        var assignto = '{{schdexternaltourform.instance.people }}' == 'None' ? "GROUP" : "PEOPLE"
+        var assignto = ['1', 'None'].includes('{{schdexternaltourform.instance.people_id }}') ? "GROUP" : "PEOPLE"
         showHideSelectField(assignto)
         if($("#id_israndom").is(":checked")){
             enableFields("#id_tourfrequency, #id_breaktime")
             disableFields(".non-random")
             isRouteSaved=true
         }else{
-            disableFields("#id_tourfrequency, #id_breaktime")
+            disableFields("#id_tourfrequency, #id_breaktime, #id_israndom")
         }
+        //cron to readable format
+        $("#id_cronstrue").val(cronstrue.toString($("#id_cron").val()))
     }
 
-    $(".btdeciders").change(function() {
-        if(parseInt($("#id_tourfrequency").val(), 10) > 1 && $("#id_israndom").is(":checked")){
-            enableFields("#id_breaktime")
-        }else{disableFields("#id_breaktime")}
-        
-        if($("#id_israndom").is(":checked")){
-            enableFields("#id_tourfrequency, #id_breaktime")
-        }else{disableFields("#id_tourfrequency, #id_breaktime")}
-    })
-
-    if(!$("#id_israndom").is(":checked")){
-        //disable breaktime & frequency
-        $("#id_breaktime, #id_tourfrequency").attr('disabled','disabled');
-        //enable non-random buttons
-        $(".non-random").removeAttr('disabled');
-    }else{
-        //enable breaktime & frequency
-        $("#id_breaktime, #id_tourfrequency").removeAttr('disabled');
-        $(".non-random").attr('disabled','disabled');
-        isRouteSaved=true
-        debugger;
-    }
-    if(parseInt($("#id_tourfrequency").val()) > 1){
-        $("#id_breaktime").removeAttr('disabled');
-    }else{
-        $("#id_breaktime").val('0')
-        $("#id_breaktime").attr('disabled','disabled');
-    }
-
-    
-
-
-     //ADD CALENDER TO DATE FIELDS WITH FLAT-PICKR PLUGIN
+    //ADD CALENDER TO DATE FIELDS WITH FLAT-PICKR PLUGIN
     $("#id_fromdate, #id_uptodate").flatpickr({
         enableTime: true,
         time_24hr: true,
@@ -647,6 +718,8 @@ $(document).ready(() => {
                     bind_method          : {
                         set: function($element, value) {
                         $element.val(value);
+                         //cron to readable format
+                        $("#id_cronstrue").val(cronstrue.toString(value))
                         }
                     }
                 });
@@ -655,6 +728,14 @@ $(document).ready(() => {
         $('#cron_scheduler').modal('show');
     });
 
+    $("#getfromgroup").click((e) => {
+        e.preventDefault()
+        forceGetFromGroup()
+        $("#btnSaveRoute").click()
+    })
+
+
+
     //ON CLICK GET ROUTE
     $("#btnGetRoute").click(() => {
         console.log("button clicked")
@@ -662,7 +743,7 @@ $(document).ready(() => {
         routeFreq = $("#tour_frequency").val()
         if(data.length > 0){
             d2ClearMarker()
-            calculateAndDisplayRoute(data, routeFreq)
+            calculateAndDisplayRoute(data, routeFreq, optimize=true)
             
         }
     })
@@ -670,7 +751,20 @@ $(document).ready(() => {
     //submit main form
     $("#id_schdexternaltourform").on('submit', function(e) {
         e.preventDefault();
-        submit_form_alert().then((res) => {
+        if(!properCron($("#id_cron").val())){
+            show_error_alert( "Please change your cron expression and update the job record.", "Problematic Cron")
+            return
+        }
+        else{
+        let totalCheckpoints = asgdsites_table.rows().count()
+        let israndomTour = $("#id_israndom").is(":checked") ? "Yes" :"No"
+        let breaktime = $('#id_breaktime').val() ? $("#id_breaktime").val() : "Not Provided"
+        let frequency = $("#id_tourfrequency").val() ? $("#id_tourfrequency").val() : "Not Provided"
+        var text = `The Route Plan scheduling depends on these parameters:<br>
+                    <br>
+                    Random Tour Generation: &nbsp;${israndomTour}<br>Route Frequency:&nbsp; ${frequency}<br>Breaktime: &nbsp;${breaktime}<br><br>
+                    Please check these parameters and confirm if they are acceptable or require any changes. ` 
+        submit_form_alert(text=text).then((res) => {
             if(res.isConfirmed){
                 var form = $(this);
                 const params = { url: "{{ url('schedhuler:schd_external_tour') }}", modal:false } 
@@ -690,9 +784,7 @@ $(document).ready(() => {
                 })
             }
 
-        })
-        
-			
+        })}
     })
 
     //ON SAVE-ROUTE CLICK
@@ -711,7 +803,7 @@ $(document).ready(() => {
                     var payLoad = {'checkpoints':JSON.stringify(asgdsites_table.rows().data().toArray()),
                     csrfmiddlewaretoken: '{{ csrf_token }}',
                     action:'saveCheckpoints',
-                    parent_id: '{{schdexternaltourform.instance.id}}'}
+                    job_id: '{{schdexternaltourform.instance.id}}'}
                     fire_ajax_form_post(params, payLoad)
                     .done((data, status, xhr) => {
                         asgdsites_table.rows().remove().draw()
@@ -737,7 +829,12 @@ $(document).ready(() => {
     })
 
     $("#runScheduler").click(function() {
-        if(checkRouteSaved() === true){
+        debugger;
+        if(!properCron($("#id_cron").val())){
+            show_error_alert( "Please change your cron expression and update the job record.", "Problematic Cron")
+            return
+        }
+        if(checkRouteSaved() === true ){
             Swal.fire({
                 title: "Are you sure?",
                 text: "Run Tour Scheduler, you won't be able to revert this!",
@@ -748,7 +845,7 @@ $(document).ready(() => {
                 if(result.isConfirmed){
                     const params = {url: "{{ url('schedhuler:runJob') }}"}
                     var payLoad = {
-                        job: '{{ schdexternaltourform.instance.id }}',
+                        job_id: '{{ schdexternaltourform.instance.id }}',
                         csrfmiddlewaretoken: '{{ csrf_token }}'
                     }
                     if($("#id_israndom").is(":checked")){
@@ -761,7 +858,7 @@ $(document).ready(() => {
                             showConfirmButton:false,
                             timer:1500,
                             icon: 'success',
-                            title: `${data.count} Tours schedhuled successfully!`
+                            title: `${data.count} Tours scheduled successfully!`
                         })
                         $('#lblIsRTour').html('No');
                     })
@@ -769,7 +866,7 @@ $(document).ready(() => {
                         Swal.fire({
                             showConfirmButton:true,
                             icon: "error",
-                            title: "Failed to schedhule!",
+                            title: "Failed to schedule!",
                             text:xhr.responseJSON.msg
                         })
                     })

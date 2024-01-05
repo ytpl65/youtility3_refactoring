@@ -5,15 +5,33 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db import transaction
 from django.views.generic.base import View
 from django.contrib import messages
-from django.http import JsonResponse, QueryDict, response as rp
+from django.http import JsonResponse, QueryDict, response as rp, FileResponse, HttpResponseRedirect, HttpResponse
+from io import BytesIO
+from django.template.loader import render_to_string
+from django.templatetags.static import static
+from weasyprint import HTML, CSS
+from weasyprint.text.fonts import FontConfiguration
 from django.urls import reverse
 from apps.activity  import models as am
 from apps.peoples import utils as putils
 from apps.core import utils
 from apps.activity.forms import QsetBelongingForm
 from apps.reports import forms as rp_forms
-import logging
+import logging, subprocess, os
+import logging, subprocess, os
+from background_tasks.tasks import send_report_on_email, create_report_history
+from django.contrib import messages as msg
+from django.apps import apps
+from django.urls import reverse_lazy
+from django.conf import settings
+import pandas as pd, xlsxwriter
+from apps.reports import utils as rutils
+from .models import ScheduleReport
+from django_weasyprint.views import WeasyTemplateView
+from django.db import IntegrityError
+import time, base64, sys, json
 log = logging.getLogger('__main__')
+
 # Create your views here.
 
 class RetriveSiteReports(LoginRequiredMixin, View):
@@ -28,7 +46,7 @@ class RetriveSiteReports(LoginRequiredMixin, View):
         try:
             objs = self.model.objects.get_sitereportlist(request)
             utils.printsql(objs)
-            response = rp.JsonResponse({'data':list(objs)}, status = 200)
+            response = rp.JsonResponse({'data':list(objs)}, status = 200, encoder=utils.CustomJsonEncoderWithDistance)
         except Exception:
             log.critical(
                 'something went wrong', exc_info = True)
@@ -38,6 +56,25 @@ class RetriveSiteReports(LoginRequiredMixin, View):
         return response
 
 
+class RetriveIncidentReports(LoginRequiredMixin, View):
+    model = am.Jobneed
+    template_path = 'reports/incidentreport_list.html'
+
+    def get(self, request, *args, **kwargs):
+        '''returns the paginated results from db'''
+        response, requestData= None, request.GET
+        if requestData.get('template'):
+            return render(request, self.template_path)
+        try:
+            objs, atts = self.model.objects.get_incidentreportlist(request)
+            response = rp.JsonResponse({'data':list(objs), 'atts':list(atts)}, status = 200)
+        except Exception:
+            log.critical(
+                'something went wrong', exc_info = True)
+            messages.error(request, 'Something went wrong',
+                           "alert alert-danger")
+            response = redirect('/dashboard')
+        return response
 
 class MasterReportTemplateList(LoginRequiredMixin, View):
     model         = am.QuestionSet
@@ -52,7 +89,7 @@ class MasterReportTemplateList(LoginRequiredMixin, View):
             return render(request, self.template_path)
         try:
             objects = am.QuestionSet.objects.filter(
-                type='SITEREPORTTEMPLATE'
+                type='SITEREPORT'
             ).values('id', 'qsetname', 'enable')
             count = objects.count()
             if count:
@@ -97,9 +134,9 @@ class MasterReportForm(LoginRequiredMixin, View):
                 import json
                 pk = R['id'] or kwargs.get('id')
                 obj = self.model.objects.get(id = pk)
-                self.initial.update({
-                    'buincludes': [8,6],
-                })
+                # self.initial.update({
+                #     'buincludes': [8,6],
+                # })
                 form = self.form_class(instance = obj, initial = self.initial, request = request)
                 cxt = {'reporttemp_form':form, 'qsetbng':self.subform()}
                 return render(request, self.template_path, context = cxt)
@@ -197,9 +234,9 @@ class MasterReportBelonging(LoginRequiredMixin, View):
         R = request.GET
         if R.get('dataSource') == 'sitereporttemplate'  and R.get('parent'):
             objs = self.model.objects.filter(
-                parent = int(R['parent'])
+                parent_id = int(R['parent'])
             ).values(
-                'id', 'qsetname', 'asset_id', 'enable', 'seqno', 'parent',
+                'id', 'qsetname',  'enable', 'seqno', 'parent_id',
                 'type', 'bu_id', 'buincludes', 'assetincludes', 'site_grp_includes',
                 'site_type_includes'
             )
@@ -262,17 +299,13 @@ class ConfigSiteReportTemplate(LoginRequiredMixin, View):
 
         if R.get('action') == 'list':
             objs =  P['model'].objects.get_configured_sitereporttemplates(
-                    P['related'], P['fields'],P['initial']['type']
+                    request, P['related'], P['fields'],P['initial']['type']
                 )
             return rp.JsonResponse({'data':list(objs)}, status = 200)
         
         if R.get('action') == 'form':
             cxt = {'reporttemp_form':P['form_class'](initial = P['initial'], request = request), 'test':rp_forms.TestForm}
             return render(request, P['template_form'], cxt)
-
-        if R.get('action') =='loadQuestions':
-            qset =  am.Question.objects.questions_of_client(request, R)
-            return rp.JsonResponse({'items':list(qset), 'total_count':len(qset)}, status = 200)
         
         if R.get('action') == 'get_sections':
             parent_id = 0 if R['parent_id'] == 'undefined' else R['parent_id']
@@ -340,13 +373,11 @@ class ConfigIncidentReportTemplate(LoginRequiredMixin, View):
 
     def get(self, request, *args, **kwargs):
         R, P = request.GET, self.params
-        ic(R)
         if R.get('template'):return render(request, P['template_list'])
 
         if R.get('action') == 'list':
             objs =  P['model'].objects.get_configured_sitereporttemplates(
-                    P['related'], P['fields'], P['initial']['type']
-                )
+                    request, P['related'], P['fields'], P['initial']['type'])
             return rp.JsonResponse({'data':list(objs)}, status = 200)
         
         if R.get('action') == 'form':
@@ -407,8 +438,6 @@ class ConfigIncidentReportTemplate(LoginRequiredMixin, View):
         except Exception:
             return utils.handle_Exception(request)
 
-
-
 class ConfigWorkPermitReportTemplate(LoginRequiredMixin, View):
     params = {
         'template_form': "reports/workpermitreport_tempform.html",
@@ -424,7 +453,6 @@ class ConfigWorkPermitReportTemplate(LoginRequiredMixin, View):
 
     def get(self, request, *args, **kwargs):
         R, P = request.GET, self.params
-        ic(R)
         if R.get('template'):return render(request, P['template_list'])
 
         if R.get('action') == 'list':
@@ -464,10 +492,9 @@ class ConfigWorkPermitReportTemplate(LoginRequiredMixin, View):
         try:
             data = QueryDict(request.POST['formData'])
             if pk := request.POST.get('pk', None):
-                ic(pk)
                 msg = f'{self.label}_view'
                 form = utils.get_instance_for_update(
-                    data, P, msg, int(pk))
+                    data, P, msg, int(pk), {'request':request})
                 create = False
             else:
                 form = P['form_class'](data, request = request)
@@ -490,5 +517,220 @@ class ConfigWorkPermitReportTemplate(LoginRequiredMixin, View):
                 return rp.JsonResponse({'parent_id':template.id}, status=200)
         except Exception:
             return utils.handle_Exception(request)
-        
 
+
+
+    
+class DownloadReports(LoginRequiredMixin, View):
+    PARAMS = {
+        'template_form':"reports/report_export_form.html",
+        'form':rp_forms.ReportForm,
+        'ReportEssentials':rutils.ReportEssentials,
+        "nodata":"No data found matching your report criteria.\
+        Please check your entries and try generating the report again"
+    }
+    
+    def get(self, request, *args, **kwargs):
+        R, P = request.GET, self.PARAMS
+        if R.get('action') == 'form_behaviour':
+            return self.form_behaviour(R)
+        form = P['form'](request=request)
+        cxt = {
+            'form':form,
+        }
+        return render(request, P['template_form'], context=cxt)
+    
+    def post(self, request, *args, **kwargs):
+        form_data, P = request.POST, self.PARAMS
+        session = dict(request.session)
+        ic(form_data)
+        form = P['form'](data = form_data, request=request)
+        if not form.is_valid():
+            return render(request, P['template_form'], context={
+                'form':form})
+        log.info('form is valid')
+        formdata = form.cleaned_data
+        log.info("Formdata submitted by user %s"%(pformat(formdata)))
+        return self.export_report(formdata, session, request, form)
+        
+    def export_report(self, formdata, session, request, form):
+        report_essentials = rutils.ReportEssentials(report_name=formdata['report_name'])
+        log.info("report essentials %s"%(report_essentials))
+        ReportFormat = report_essentials.get_report_export_object()
+        report = ReportFormat(filename=formdata['report_name'], client_id=session['client_id'], formdata=formdata, request=request)
+        log.info("Report Format intialized, %s"%(report))
+        if response :=  report.execute():
+            return response
+        form.add_error(None, self.PARAMS['nodata'])
+        return render(request, self.PARAMS['template_form'], {'form':form})
+        
+    
+    def form_behaviour(self, R):
+        report_essentials = self.PARAMS['ReportEssentials'](report_name=R['report_name'])
+        return rp.JsonResponse({'behaviour':report_essentials.behaviour_json})
+    
+
+class DesignReport(LoginRequiredMixin, View):
+    # change this file according to your design
+    design_file = "reports/pdf_reports/testdesign.html"
+    
+    
+    def get(self, request):
+        R = request.GET  # Presuming you will use this for something later
+        if R.get('text') == 'html': return render(request, self.design_file)
+        html_string = render_to_string(self.design_file, request=request)
+        # pandoc rendering
+        if R.get('text') == 'pandoc': return self.render_using_pandoc(html_string)
+        # excel file
+        if R.get('text') == 'xl':
+            from apps.onboarding.models import Bt
+            data = Bt.objects.get_sample_data()
+            return self.render_excelfile(data)
+        # defalult weasyprint
+        return self.render_using_weasyprint(html_string)
+
+    def render_using_weasyprint(self, html_string):
+        html = HTML(string=html_string)
+        # Specify the path to your local CSS file
+        css = CSS(filename='frontend/static/assets/css/local/reports.css')
+        font_config = FontConfiguration()
+        pdf = html.write_pdf(stylesheets=[css], font_config=font_config)
+        response = HttpResponse(pdf, content_type='application/pdf')
+        response['Content-Disposition'] = 'filename="report.pdf"'
+        return response
+    
+    def render_using_pandoc(self, html_string):
+        with open("temp.html", "w") as file:
+            file.write(html_string)
+
+        # Specify the path to your local CSS file
+        command = [
+            'pandoc',
+            'temp.html',
+            '-o',
+            'output.pdf',
+            '--css=frontend/static/assets/css/local/reports.css',
+            '--pdf-engine=xelatex'  # Replace with your preferred PDF engine
+        ]
+        subprocess.run(command)
+
+        with open("output.pdf", "rb") as file:
+            pdf = file.read()
+        
+        # Delete the temporary files
+        os.remove("temp.html")
+        os.remove("output.pdf")
+
+        response = HttpResponse(pdf, content_type='application/pdf')
+        response['Content-Disposition'] = 'filename="report.pdf"'
+
+        return response
+    
+
+    def render_excelfile(self, data):
+        # Format data as a Pandas DataFrame
+        df = pd.DataFrame(list(data))
+
+        # Create a Pandas Excel writer using XlsxWriter as the engine and BytesIO as file-like object
+        output = BytesIO()
+        writer = pd.ExcelWriter(output, engine='xlsxwriter')
+        df.to_excel(writer, sheet_name='Sheet1', index=False, startrow=2, header=True)
+
+        # Get the xlsxwriter workbook and worksheet objects
+        workbook = writer.book
+        worksheet = writer.sheets['Sheet1']
+
+        # Autofit the columns to fit the data
+        for i, width in enumerate(self.get_col_widths(df)):
+            worksheet.set_column(i, i, width)
+
+        # Define the format for the merged cell
+        merge_format = workbook.add_format({
+            'bg_color': '#c1c1c1',
+            'bold': True,
+        })
+
+        # Write the additional content with the defined format
+        additional_content = "Client: Capgemini,  Report: Task Summary,  From 01-Jan-2023 To 30-Jan-2023"
+        worksheet.merge_range("A1:E1", additional_content, merge_format)
+
+        # Close the Pandas Excel writer and output the Excel file
+        writer.save()
+
+        # Rewind the buffer
+        output.seek(0)
+
+        # Set up the HTTP response with the appropriate Excel headers
+        response = HttpResponse(
+            output, 
+            content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        )
+        response['Content-Disposition'] = 'attachment; filename="downloaded_data.xlsx"'
+        return response
+
+    def get_col_widths(self, dataframe):
+        """
+        Get the maximum width of each column in a Pandas DataFrame.
+        """
+        return [max([len(str(s)) for s in dataframe[col].values] + [len(col)]) for col in dataframe.columns]
+
+
+
+class ScheduleEmailReport(LoginRequiredMixin, View):
+    P = {
+        'template_form':"reports/schedule_email_report.html",
+        'template_list':"reports/schedule_email_list.html",
+        'form_class':rp_forms.EmailReportForm,
+        'popup_form':rp_forms.ReportForm,
+        'model':ScheduleReport,
+        'ReportEssentials':rutils.ReportEssentials,
+        "nodata":"No data found matching your report criteria.\
+        Please check your entries and try generating the report again"
+    }
+    
+    def get(self, request, *args, **kwargs):
+        R, S = request.GET, request.session
+        if R.get('template'): return render(request, self.P['template_list'])
+        if R.get('id'):
+            obj = utils.get_model_obj(R['id'], request, {'model': self.P['model']})
+            params_initial = obj.report_params
+            cxt = {
+                'form':self.P['form_class'](instance=obj, request = request),
+                'popup_form':self.P['popup_form'](request=request, initial=params_initial)}
+            return render(request, self.P['template_form'], cxt)
+        if R.get('action') == 'list':
+            data = self.P['model'].objects.filter(bu_id=S['bu_id']).values()
+            return rp.JsonResponse({'data':list(data)}, status=200)
+        
+        if R.get('action') == 'form':
+            form = self.P['form_class'](request=request)
+            form2 = self.P['popup_form'](request=request)
+            cxt = {'form':form, 'popup_form': form2}
+            return render(request, self.P['template_form'], context=cxt)
+        
+        
+    
+    def post(self, request, *args, **kwargs):
+        data = QueryDict(request.POST['formData'])
+        report_params = QueryDict(request.POST['report_params'])
+        P = self.P
+        try:
+            if pk := request.POST.get('pk', None):
+                msg = f"updating record with id {pk}"
+                form = utils.get_instance_for_update(
+                    data, P, msg, int(pk), {'request':request})
+            else:
+                form = P['form_class'](data, request = request)
+            if form.is_valid():
+                obj = form.save(commit=False)
+                obj = putils.save_userinfo(obj, request.user, request.session)
+                obj.report_params = report_params
+                obj.save()
+                return rp.JsonResponse({'pk':obj.id}, status=200)
+            else:
+                cxt = {'errors': form.errors}
+                return utils.handle_invalid_form(request, self.P, cxt)
+        except IntegrityError as e: 
+            log.info("Integrity error occured")
+            cxt = {'errors': "Scheduled report with these criteria is already exist"}
+            return utils.handle_invalid_form(request, self.P, cxt)

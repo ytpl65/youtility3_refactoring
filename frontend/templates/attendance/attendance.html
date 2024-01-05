@@ -1,10 +1,21 @@
-{% extends "base_list.html" %}
+{% extends "globals/base_list.html" %}
 
 <!---- BEGIN CARD TITLE ------>
 {% block card_title %}
 Attendance
 {% endblock card_title %}
 <!----- END CARD TITLE -------->
+
+{% block extra_css %}
+<style>
+td.selected { background-color: yellow; }
+td:not(:last-child) { cursor: pointer; }
+td { padding: 6px; border: 1px solid #CCC; }
+tr{
+    font-size: 10px;
+}
+</style>
+{% endblock extra_css %}
 
 <!------------------------------------ BEGIN PAGE BREADCUMBS ------------------------------------>
 {% block pagebreadcumb %}
@@ -15,17 +26,7 @@ Attendance
 
 {% block table %}
 <!--------------------------BEGIN TABLE------------------------------>
-<table id="attd_table" class="display cell-border" style="width:100%">
-    <thead class="fw-bold fs-6">
-        <th>Type</th>
-        <th>Site Name</th>
-        <th>People</th>
-        <th>Face Recognition</th>
-        <th>Verified By</th>
-        <th>Date For</th>
-        <th>In Time</th>
-        <th>Out Time</th>
-    </thead>
+<table id="attd_table" class="display nowrap" style="width:100%">
 </table>
 <!--------------------------END TABLE------------------------------>
 
@@ -41,16 +42,133 @@ Attendance
         </div>
     </div>
 </div>
+
+{% call general_popup(popup_id = 'modal_fr_status', title = 'Face Recognition Details', modal_size='modal-lg') %}
+<div class="modal-body py-0">
+    <div class="row">
+        <div class="card-group">
+            <div class="card" style="width: 18rem;">
+                <img src="" class="card-img-top" alt="" id="attd_in_img" style="width: 252px;height: 300px;object-fit:cover">
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item" id="fr_in"></li>
+                    <li class="list-group-item"id="fr_metric"></li>
+                    <li class="list-group-item"id="fr_ppl"></li>
+                    <li class="list-group-item"id="fr_date"></li>
+                </ul>
+            </div>
+            <div class="card" style="width: 18rem;">
+                <img src="" class="card-img-top" alt="" id="default_people_img" style="width: 252px;height: 300px;object-fit:cover">
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item">Default Profile Image</li>
+                    <li class="list-group-item"id='taken_on'></li>
+                    <li class="list-group-item"id="cuser"></li>
+                    <li class="list-group-item pe-0"id="modified_on"></li>
+                    <li class="list-group-item"id="muser"></li>
+                </ul>
+            </div>
+            <div class="card" style="width: 18rem;">
+                <img src="" class="card-img-top" alt="" id="attd_out_img" style="width: 252px;height: 300px;object-fit:cover">
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item" id="fr_in2"></li>
+                    <li class="list-group-item"id="fr_metric2"></li>
+                    <li class="list-group-item"id="fr_ppl2"></li>
+                    <li class="list-group-item"id="fr_date2"></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="modal-footer">
+    <button type="button" class="btn btn-sm btn-primary2" data-bs-dismiss="modal">OK</button>
+</div>
+{% endcall %}
+
+{% call general_popup(popup_id = 'modal_adv_search',modal_size="modal-lg", title="Search with criteria &nbsp;<i class='fas text-white text-primary fa-search ch4'></i>") %}
+<div class="modal-body">
+<div id="myFilter" style="height: 100%;" class="d-block"></div>
+</div>
+{% endcall %}
+
 {% endblock popup_alerts %}
 
 <!--------- BEGIN EXTRA SCRIPTS ----------------------------->
 {% block extra_scripts %}
 <script>
     var table = null;
-    $(document).ready(function () {
-        new ClipboardJS('btn-copy')
-        
+    function getReadableTextForINOUT(details){
+        if(details){
+            console.log(details, "details")
+            let verifiedInValuye = details['peventlogextras']['distance_in'] ? Math.round((1-details['peventlogextras']['distance_in'])*100) : 'N/A'
+            $("#fr_in").html(`Face Recognition: ${verifiedInValuye}%`)
+            let verifiedOutValuye = details['peventlogextras']['distance_out'] ? Math.round((1-details['peventlogextras']['distance_out'])*100) : 'N/A'
+            $("#fr_in2").html(`Face Recognition: ${verifiedOutValuye}%`)
+            let threshold = details['peventlogextras']['threshold'] ? details['peventlogextras']['threshold']: 'N/A'
+            $("#thresold, #thresold2").html(`Threshold Used: 0.90`)
+            let metric = details['peventlogextras']['similarity_metric'] ? details['peventlogextras']['similarity_metric'].toUpperCase(): 'N/A'
+            $("#fr_metric, #fr_metric2").html(`Metric Used: ${metric}`)
+            let ingps = details['startgps'] ? JSON.parse(details['startgps'])['coordinates'] : 'N/A'
+            let outgps = details['endgps'] ?  JSON.parse(details['endgps'])['coordinates'] : 'N/A'
+            let ondate = details['datefor'] ? details['datefor'] : 'N/A'
+            $("#fr_date, #fr_date2").html(`Captured Date: ${ondate}`)
+            let createdby = details['createdby'] ? details['createdby'] : 'N/A'
+            $("#fr_ppl, #fr_ppl2").html(`Performed By: ${createdby}`)
+        }
+        return null
+    }
 
+    function getFRStatus(data){
+        fire_ajax_get({url:`{{ url('activity:previewImage') }}?action=getFRStatus&uuid=${data}`,})
+        .done((data, status, xhr) => {
+            const NA = "Information not available"
+            const filepathIN = data['attd_in_out'].length ? `{{MEDIA_URL}}${data['attd_in_out'][0]['filepath'].replace('youtility4_media/', '')}/${data['attd_in_out'][0]['filename']}` : "{{ static('assets/media/images/blank.png') }}"
+            const filepathOUT = data['attd_in_out'].length > 1 ? `{{MEDIA_URL}}${data['attd_in_out'][1]['filepath'].replace('youtility4_media/', '')}/${data['attd_in_out'][1]['filename']}` : "{{ static('assets/media/images/blank.png') }}"
+            const defaultIMG =  data['default_img_path'].length ? `{{MEDIA_URL}}${data['default_img_path'][0]['peopleimg'].replace('youtility4_media/', '')}` : "{{ static('assets/media/images/blank.png') }}"
+            
+            $("#attd_in_img").attr('src', filepathIN)
+            $("#attd_out_img").attr('src', filepathOUT)
+            $("#default_people_img").attr('src', defaultIMG)
+            $("#modal_fr_status").modal("show");
+            getReadableTextForINOUT(data['eventlog_in_out'].length > 0 ? data['eventlog_in_out'][0] : null)
+            $("#taken_on").html(`Take on: ${utc_to_local(data['default_img_path'][0]['ctzoffset'], data['default_img_path'][0]['cdtz'])}`)
+            $("#cuser").html(`Onboarded By: ${data['default_img_path'][0]['cuser__peoplename']}`)
+            $("#modified_on").html(`Last Updated on: ${utc_to_local(data['default_img_path'][0]['ctzoffset'], data['default_img_path'][0]['mdtz'])}`)
+            $("#muser").html(`Modified By: ${data['default_img_path'][0]['muser__peoplename']}`)
+        })
+        .fail((xhr, status, error) =>  {
+            console.log(error)
+        })
+    }
+    //if you want to modifiy here, then modify in custom.js initDateRange also
+    var params=null
+    var from_pd = moment().subtract(7, 'days').format('YYYY-MM-DD');
+    var to_pd = moment().format('YYYY-MM-DD')
+    params = {from:from_pd, to:to_pd}
+
+    function reloadTable(table, filters){
+        params = filters
+        table.ajax.reload()
+    }
+    const table_filters = localStorage.getItem('attds_filter')
+    console.log(table_filters)
+    if(table_filters){
+        params = JSON.parse(table_filters)
+        localStorage.clear()
+    }
+
+    function matchStatus(row, data){
+        if(['SELF', 'MARK'].includes(row['peventtype__tacode'])){
+            if([null, "", 'NONE'].includes(row['punchouttime'])){
+                return '<span class="badge badge-warning">Pending</span>'
+            }
+            if(![null, "", 'NONE'].includes(row['punchintime'])){
+                return data === false ? '<span class="badge badge-danger">Not Matched</span>' : '<span class="badge badge-success">Matched</span>'
+            }
+        }return '--'
+    }
+
+    $(document).ready(function () {
+        
+        new ClipboardJS('btn-copy')
         //beforeSend of capability ajax request 
         function attdBeforeSend() {
             $("#modal-attd").modal("show");
@@ -59,68 +177,110 @@ Attendance
         table = $('#attd_table').DataTable({
             ajax:{
 				url: '{{ url("attendance:attendance_view") }}?action=list',
+                data:function(d){
+                    d.params = JSON.stringify(params)
+                }
 			},
+            pageLength:1000,
             deferRender: true,
-			responsive : true,
-            
-            dom: `<'row' <'col-sm-6 d-flex justify-content-start'f> <'col-sm-6 d-flex justify-content-end'B> >rt<'row'
+            dom: `<'row' <'col-sm-6 d-flex justify-content-start'<'customfields'>f> <'col-sm-6 d-flex justify-content-end'B> >rt<'row'
 			 <'col-sm-6'l> <'col-sm-6'p><'col-sm-12 d-flex justify-content-center'i>>`,
-            ordering: false,
+            order:[[10, 'desc']],
             columnDefs:[
                 {targets:[6,7], render:function(data, type, row, meta){
-                    return convert_to_local(type, data, row)
-                }}
+                    return convert_to_local(type, data, row)}
+                }
             ],
+            scrollY: 340,
+            responsive:true,
+            scrollCollapse: true,
+            scrollX:true,
             columns:[
-                {targets:[0], data:'peventtype__tacode'},
-                {targets:[1], data:'bu__buname'},
-                {targets:[2], data:'people__peoplename'},
-                {targets:[3], data:'facerecognition'},
-                {targets:[4], data:'verifiedby__peoplename'},
-                {targets:[5], data:'datefor'},
-                {targets:[6], data:'punchintime'},
-                {targets:[7], data:'punchouttime'},
-                {targets:[8], data:'id', visible:false, searchable:false},
-            ],
+                {data:'peventtype__taname', title:'Type', width:"4%"},//0
+                {data:'bu__buname', title:'Site Name'},//1
+                { data:'people__peoplecode',  title:"Code"},//2
+                {data:'people__peoplename', title:'People'},//3
+                {data:'facerecognitionin', title:'FR IN', width:"3%"},//4
+                {data:'sL', title:'Att IN'},//5
+                {data:'facerecognitionout', title:'FR OUT'},//6
+                {data:'eL', title:'Att OUT'},//7
+                {data:'verifiedby__peoplename', title:'Verified By', width:"5%"},//8
+                {data:'datefor', title:'Date For'},//9
+                {data:'punchintime', title:'In Time'},//10
+                {data:'punchouttime', title:'Out Time'},//11
+                {data:'id',  searchable:false, title:'FR Status'},//12
+                { data:'uuid',  visible:false, searchable:false, className:'noVis'},//13
+                { data:'peventtype__tacode',  visible:false, searchable:false, className:'noVis'},//14
+                { data:'people__location__locname',  title:"Location",visible:false, searchable:false,},//15
+                
+            ], 
             columnDefs:[
-                //targets:[1, 2], render:function(data, type, row, meta){
-                //    let urlname = '{{ url("attendance:attendance_view") }}'
-                //    return `<a href=${urlname}?id=${row['id']}>${data}</a>`
-                //}},
-                {targets:6, render:function(data, type, row, meta){
-                    return convert_to_local(type, data, row)
+                {targets:9, render:function(data, type, row, meta){return utc_to_local(row['ctzoffset'], data, 'YYYY-MM-DD')}
+                },
+                {targets:10, render:function(data, type, row, meta){
+                    return convert_to_local(type, data, row)}
+                },
+                {targets:11, render:function(data, type, row, meta){
+                    return convert_to_local(type, data, row)}
+                },
+                {targets:[6], render:function(data, type, row, meta){
+                    return matchStatus(row, data)
                 }},
-                {targets:7, render:function(data, type, row, meta){
-                    return convert_to_local(type, data, row)
+                {targets:[4], render:function(data, type, row, meta){
+                    return data === false ? '<span class="badge badge-danger">Not Matched</span>' : '<span class="badge badge-success">Matched</span>'
                 }},
-                {targets:3, render:function(data, type, row, meta){
-                    return data === false ? 'Not Matched' : 'Matched'
+                {targets:12, render:function(data, type, row, meta){
+                    return ['SELF', 'MARK'].includes(row['peventtype__tacode']) ? `<button type="button" class="btn p-0 btn-link" onClick="getFRStatus('${row['uuid']}');event.stopPropagation();">FR Status</button>` : '--'}
+                },
+                {targets:3,data:"people__peoplename", render:function(data, type, row, meta){
+                    return data === 'NONE' ? 'Unknown' : `${data}`
+                }},
+                {targets:[5], render:function(data, type, row, meta){
+                    let coords = typeof data === 'string' && data.length > 0 ? JSON.parse(data): 'NONE'
+                    if(coords !== 'NONE'){
+                            let lat = coords['coordinates'][1]
+                            let lng = coords['coordinates'][0]
+                            return `<a href="https://www.google.com/maps?q=${lat},${lng}" target="_blank">${lat},${lng}</a>`
+                    }return coords
+                }},
+                {targets:[7], render:function(data, type, row, meta){
+                    let coords = typeof data === 'string' && data.length > 0 ? JSON.parse(data): 'NONE'
+                    if(coords !== 'NONE'){
+                            let lat = coords['coordinates'][1]
+                            let lng = coords['coordinates'][0]
+                            return `<a href="https://www.google.com/maps?q=${lat},${lng}" target="_blank">${lat},${lng}</a>`
+                    }return coords
                 }}
-                ],
+            ],
             buttons: [
-            {
-                text: "Add New Attendance &nbsp;<i class='fas fa-plus ch4'></i>",
-                className: "btn btn-sm btn-light-primary btn-hover-rise",
-                //action for add_new_button
-                action: function (e, dt, node, config) {
-                    const params = {
-                        modal_id: "#modal-attd",
-                        url: "{{ url('attendance:attendance_view') }}?action=form",
-                        beforeSend: attdBeforeSend}
-                    fire_ajax_get(params)
-                    .done((data, status, xhr) => {
-                        $("#modal-attd .modal-content").html(data.html_form)
-                    })
-                    .fail((xhr, status, error) => {
-                            show_error_alert('Something went wrong!')
-                    })
-                }}, 
-
+                "searchBuilder",
+                dataTablesPDFConfig(
+                    `Site: {{ request.user.bu.buname }}\nAttendance List`,
+                    [0,1,2,3,4,5,6,7,8,9,10,11,14],
+                    filename = "attendance_list"
+                ),
+                dataTablesExcelConfig(
+                    'Site: {{ request.user.bu.buname }}\nAttendance List',
+                    [0,1,2,3,4,5,6,7,8,9,10,11,14],
+                    filename = "attendance_list"
+                ),
+                dataTablesColumnVisibilityConfig(),
             ],
             select: {
-                    style: 'single'
-                }
+                style: 'single'
+            }
         })
+        
+        //add input field to the datatables dom
+        initDateRangeHtml()
+        initDateRange("#id_daterange").on('apply.daterangepicker', function(e, picker){
+            from_pd = picker.startDate.format('YYYY-MM-DD');
+            to_pd = picker.endDate.format('YYYY-MM-DD');
+            let filters = {from:from_pd, to:to_pd}
+            reloadTable(table, filters)
+        })
+
+        
         //BEGIN STYLING DATATABLE
         $("th > input").addClass('form-control')
         $("th > input").css('height', '35px')
@@ -157,6 +317,10 @@ Attendance
 			})
 		})
 
+        $("table tr td").click(function() {
+            $(".selected").removeClass("selected");
+            $(this).closest("tr").find("td").not(":last-child").addClass("selected");
+        });
         
 
         table.on('select', function(){
@@ -180,16 +344,22 @@ Attendance
         $(".booleans").addClass("form-check form-switch form-check-custom form-check-solid") 
 
         //datatime widget
-        $("#id_punchintime, #id_punchouttime").flatpickr({
-            enableTime: true,
-            dateFormat: "Y-m-d H:i",
-        });
+        //$("#id_punchintime, #id_punchouttime").flatpickr({
+        //    enableTime: true,
+        //    dateFormat: "Y-m-d H:i",
+        //});
 
         //date widget
         $("#id_datefor").flatpickr({
             dateFormat: 'd M Y'
         });
-        
+
+        //on click  fr_status_btn open modal fr_status
+        $("#fr_status_btn").click(function(e){
+            e.preventDefault()
+            $("#modal_fr_status").modal("show");
+            e.stopPropagation()
+        })
 
     })//END document.ready()
 

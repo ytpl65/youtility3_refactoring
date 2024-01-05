@@ -2,6 +2,8 @@ import logging
 from apps.peoples import models as pm
 from apps.tenants.models import Tenant
 from apps.peoples import utils as putils
+from apps.core import utils
+from django.core.cache import cache
 logger = logging.getLogger('__main__')
 
 dbg = logging.getLogger('__main__').debug
@@ -10,13 +12,13 @@ dbg = logging.getLogger('__main__').debug
 def save_jsonform(peoplepref_form, p):
     try:
         logger.info('saving jsonform ...')
-        for k, v in p.people_extras.items():
-            if k in ('blacklist', 'assignsitegroup', 'tempincludes',
-                     'showalltemplates', 'showtemplatebasedonfilter', 'mobilecapability',
-                     'portletcapability', 'reportcapability', 'webcapability'):
-                p.people_extras[k] = peoplepref_form.cleaned_data[k]
+        ic(peoplepref_form.cleaned_data)
+        for k in ['blacklist', 'assignsitegroup', 'tempincludes', 'currentaddress', 'permanentaddress',
+                     'showalltemplates', 'showtemplatebasedonfilter', 'mobilecapability', 'isemergencycontact',
+                     'portletcapability', 'reportcapability', 'webcapability', 'isworkpermit_approver']:
+            p.people_extras[k] = peoplepref_form.cleaned_data.get(k)
     except Exception:
-        logger.error(
+        logger.critical(
             'save_jsonform(peoplepref_form, p)... FAILED', exc_info=True)
         raise
     else:
@@ -24,7 +26,7 @@ def save_jsonform(peoplepref_form, p):
         return True
 
 
-def get_people_prefform(people, session):
+def get_people_prefform(people,  request):
     try:
         logger.info('people prefform (json form) retrieving...')
         from .forms import PeopleExtrasForm
@@ -42,24 +44,35 @@ def get_people_prefform(people, session):
                 'portletcapability',
                 'reportcapability',
                 'webcapability',
+                'currentaddress',
+                'permanentaddress',
+                'isemergencycontact',
+                'isworkpermit_approver'
+                
             )
         }
 
     except Exception:
-        logger.error('get_people_prefform(people)... FAILED', exc_info=True)
+        logger.critical('get_people_prefform(people)... FAILED', exc_info=True)
         raise
     else:
         logger.info('people prefform (json form) retrieved... DONE')
-        return PeopleExtrasForm(data=d, session=session)
+        return PeopleExtrasForm(data=d, request=request)
 
 
 def save_cuser_muser(instance, user, create=None):
     from django.utils import timezone
+    #instance is already created
+    logger.debug(f"while saving cuser and muser {instance.muser = } {instance.cuser = } {instance.mdtz = } {instance.cdtz = }")
     if instance.cuser is not None:
+        logger.info("instance is already created")
         instance.muser = user
         instance.mdtz = timezone.now().replace(microsecond=0)
+    #instance is being created
     else:
+        logger.info("instance is being created")
         instance.cuser = instance.muser = user
+        instance.cdtz = instance.mdtz = timezone.now().replace(microsecond=0)
     return instance
 
 
@@ -68,8 +81,12 @@ def save_client_tenantid(instance, user, session, client=None, bu=None):
     tenantid = session.get('tenantid')
     if bu is None:
         bu = session.get('bu_id')
-    if client is None:
-        client = session.get('client_id')
+    
+    if hasattr(instance, 'client_id'):
+        client = session.get('client_id') if instance.client_id  in [1, None] else instance.client_id
+    if client is None: session.get('client_id')
+    
+    logger.info('client_id from session: %s', client)
     instance.tenant_id = tenantid
     instance.client_id = client
     instance.bu_id = bu
@@ -89,6 +106,7 @@ def save_userinfo(instance, user, session, client=None, bu=None, create=True):
                 instance, user, session, client, bu)
             instance = save_cuser_muser(instance, user)
             instance.save()
+            logger.info(f"while saving cdtz and mdtz id {instance.cdtz=} {instance.mdtz=}")
             logger.info(f'{msg} DONE')
         except (KeyError, ObjectDoesNotExist):
             instance.tenant = None
@@ -107,7 +125,7 @@ def validate_emailadd(val):
         if not user.exists():
             raise forms.ValidationError("User with this email doesn't exist")
     except Exception:
-        logger.error('validate_emailadd(val)... FAILED', exc_info=True)
+        logger.critical('validate_emailadd(val)... FAILED', exc_info=True)
         raise
 
 
@@ -125,75 +143,86 @@ def validate_mobileno(val):
 
 
 def save_tenant_client_info(request):
-    from apps.core.utils import hostname_from_request, get_tenants_map
     from apps.onboarding.models import Bt
     try:
         logger.info('saving tenant & client info into the session...STARTED')
-        hostname = hostname_from_request(request)
-        clientcodeMap = get_tenants_map()
-        clientcode = clientcodeMap.get(hostname)
-        request.session['hostname'] = hostname
-        client = Bt.objects.get(bucode=clientcode.upper()
-                                if clientcode else "SPS")
-        # tenant = Tenant.objects.get(id = client.tenant.id)#
-        #request.session['tenantid'] = tenant.id
         request.session['client_id'] = request.user.client.id
         request.session['bu_id'] = request.user.bu.id
         logger.info('saving tenant & client info into the session...DONE')
     except Exception:
-        logger.error('save_tenant_client_info failed', exc_info=True)
+        logger.critical('save_tenant_client_info failed', exc_info=True)
         raise
-    else:
-        return client
+
+def get_caps_from_db():
+    from apps.peoples.models import Capability
+    from apps.core.raw_queries import get_query
+    web, mob, portlet, report = [], [], [], []
+    cache_ttl = 20
+    web     = cache.get('webcaps')
+    mob     = cache.get('mobcaps')
+    portlet = cache.get('portletcaps')
+    report  = cache.get('reportcaps')
+    
+    
+    if not web:
+        web = Capability.objects.get_caps(cfor=Capability.Cfor.WEB)
+        ic(web)
+        cache.set('webcaps', web, cache_ttl)
+    if not mob:
+        mob = Capability.objects.get_caps(cfor=Capability.Cfor.MOB)
+        cache.set('mobcaps', mob, cache_ttl)
+    if not portlet:
+        portlet = Capability.objects.get_caps(cfor=Capability.Cfor.PORTLET)
+        cache.set('portletcaps', portlet, cache_ttl)
+    if not report:
+        report = Capability.objects.get_caps(cfor=Capability.Cfor.REPORT)
+        cache.set('reportcaps', report, cache_ttl)
+    return web, mob, portlet, report
+    
+    
+def create_caps_choices_for_clientform():
+    #get caps from db 
+    return get_caps_from_db()
 
 
-# def get_choice(li, queryset = False):
-#     '''return tuple for making choices
-#         according to django synatax
-#     '''
-#     code = None
-#     if li:
-#         if not queryset:
-#             label = li[0].capsname
-#             t = (label, [])
-#             for i in li[1:]:
-#                 t[1].append((i.capscode, i.capsname))
-#         else:
-#             label, code = li[0].parent.capsname, li[0].parent.capscode
-#             t = (label, [])
-#             for i in li:
-#                 t[1].append((i.capscode, i.capsname))
+def create_caps_choices_for_peopleform(client):
+    from apps.peoples.models import Capability
+    from apps.core.raw_queries import get_query
 
-#         tuple(t[1])
-#         return t, code
+    web, mob, portlet, report = [], [], [], []
+    
+    web     = cache.get('webcaps')
+    mob     = cache.get('mobcaps')
+    portlet = cache.get('portletcaps')
+    report  = cache.get('reportcaps')
+    
+    if client:
+        if not web:
+            web = Capability.objects.filter(
+                capscode__in = client.bupreferences['webcapability'], cfor=Capability.Cfor.WEB, enable=True).values_list('capscode', 'capsname')
+            cache.set('webcaps', web, 30)
+        if not mob:
+            mob = Capability.objects.filter(
+                capscode__in = client.bupreferences['mobilecapability'], cfor=Capability.Cfor.MOB, enable=True).values_list('capscode', 'capsname')
+            cache.set('mobcaps', mob, 30)
+        if not portlet:
+            portlet = Capability.objects.filter(
+                capscode__in = client.bupreferences['portletcapability'], cfor=Capability.Cfor.PORTLET, enable=True).values_list('capscode', 'capsname')
+            cache.set('portletcaps', portlet, 30)
+            ic(portlet)
+        if not report:
+            report = Capability.objects.filter(
+                capscode__in = client.bupreferences['reportcapability'], cfor=Capability.Cfor.REPORT, enable=True).values_list('capscode', 'capsname')
+            cache.set('reportcaps', report, 30)
+    return web, mob, portlet, report
 
-# def get_cap_choices_for_clientform(caps, cfor):
-#     # sourcery skip: merge-list-append
-#     choices, temp = [], []
-#     logger.debug('collecting caps choices for client form...')
-#     for i in range(1, len(caps)):
-#         if caps[i].depth in [3, 2]:
-#             if caps[i-1].depth == 3 and caps[i].depth == 2 and caps[i-1].cfor == cfor:
-#                 choice, _  = get_choice(temp)
-#                 choices.append(choice)
-#                 temp = []
-#                 temp.append(caps[i])
-#             else:
-#                 if caps[i].cfor == cfor:
-#                     temp.append(caps[i])
-#                 if i == len(caps)-1 and choices:
-#                     choice, _  = get_choice(temp)
-#                     choices.append(choice)
-#     if choices:
-#         logger.debug('caps collected and returned... DONE')
-#     return choices
-
-# this will return choices for heirarchical choices for select2 dropdowns
 
 
 def save_caps_inside_session_for_people_client(people, caps, session, client):
     logger.debug(
         'saving capabilities info inside session for people and client...')
+    #if client and people:
+    #    session['people_mobcaps'] = make_choices(client.bu_preferences['mobilecapability'], fromclient=True) 
     session['people_webcaps'] = make_choices(
         people.people_extras['webcapability'], caps)
     session['people_mobcaps'] = make_choices(
@@ -214,24 +243,26 @@ def save_caps_inside_session_for_people_client(people, caps, session, client):
         'capabilities info saved in session for people and client... DONE')
 
 
-def make_choices(caps_assigned, caps):
+def make_choices(caps_assigned, caps, fromclient=False):
     choices, parent_menus,  tmp = [], [], []
     logger.info('making choices started ...')
     for i in range(1, len(caps)):
-        if caps[i].capscode in caps_assigned and caps[i].depth == 3:
-            tmp.append(caps[i])
-        if tmp and caps[i].depth == 2 and caps[i-1].depth == 3:
-            choice, menucode = get_choice(tmp, queryset=True)
-            print(choice, menucode)
-            parent_menus.append(menucode)
-            choices.append(choice)
-            tmp = []
-        if i == (len(caps)-1) and choices:
-            choice, menucode = get_choice(tmp, queryset=True)
-            print(choice, menucode)
-            parent_menus.append(menucode)
-            choices.append(choice)
+        if i.cfor == 'WEB':
+            if caps[i].capscode in caps_assigned and caps[i].depth == 3:
+                tmp.append(caps[i])
+            if tmp and caps[i].depth == 2 and caps[i-1].depth == 3:
+                choice, menucode = get_choice(tmp, queryset=True)
+                print(choice, menucode)
+                parent_menus.append(menucode)
+                choices.append(choice)
+                tmp = []
+            if i == (len(caps)-1) and choices:
+                choice, menucode = get_choice(tmp, queryset=True)
+                print(choice, menucode)
+                parent_menus.append(menucode)
+                choices.append(choice)
     if choices:
+        ic(choices)
         logger.debug('choices are made and returned... DONE')
     return choices, parent_menus
 
@@ -260,17 +291,19 @@ def get_cap_choices_for_clientform(caps, cfor):
     choices, temp = [], []
     logger.debug('collecting caps choices for client form...')
     for i in range(1, len(caps)):
-        if caps[i].depth in [3, 2]:
-            # print(caps[i].depth)
-            if caps[i-1].depth == 3 and caps[i].depth == 2 and caps[i-1].cfor == cfor:
-                choices.append(get_choice(temp))
-                temp = []
-                temp.append(caps[i])
-            else:
-                if caps[i].cfor == cfor:
-                    temp.append(caps[i])
-                if i == len(caps)-1 and choices:
+        if caps[i].cfor == 'WEB':
+            ic(caps[i].capscode, caps[i].depth, caps[i].path, caps[i].parent_id)
+            if caps[i].depth in [3, 2]:
+                # print(caps[i].depth)
+                if caps[i-1].depth == 3 and caps[i].depth == 2 and caps[i-1].cfor == cfor:
                     choices.append(get_choice(temp))
+                    temp = []
+                    temp.append(caps[i])
+                else:
+                    if caps[i].cfor == cfor:
+                        temp.append(caps[i])
+                    if i == len(caps)-1 and choices:
+                        choices.append(get_choice(temp))
     if choices:
         logger.debug('caps collected and returned... DONE')
     return choices
@@ -303,10 +336,9 @@ def get_caps_choices(client=None, cfor=None,  session=None, people=None):
     '''get choices for capability clientform 
         or save choices in session'''
     from apps.peoples.models import Capability
-    from apps.core.raw_queries import query
-    from django.core.cache import cache
+    from apps.core.raw_queries import get_query
     from icecream import ic
-    caps = Capability.objects.raw(query['get_web_caps_for_client'])
+    caps = Capability.objects.raw(get_query('get_web_caps_for_client'))
     # for cap in caps:
     # print(f'Code {cap.capscode} Depth {cap.depth}')
     if cfor == Capability.Cfor.MOB:
@@ -317,7 +349,7 @@ def get_caps_choices(client=None, cfor=None,  session=None, people=None):
         logger.debug('got caps from cache...')
     if not caps:
         logger.debug('got caps from db...')
-        caps = Capability.objects.raw(query['get_web_caps_for_client'])
+        caps = Capability.objects.raw(get_query('get_web_caps_for_client'))
         cache.set('caps', caps, 1*60)
         logger.debug('results are stored in cache... DONE')
 
@@ -325,11 +357,7 @@ def get_caps_choices(client=None, cfor=None,  session=None, people=None):
         # return choices for client form
         return get_cap_choices_for_clientform(caps, cfor)
 
-    if session and people and client:
-        putils.save_caps_inside_session_for_people_client(
-            people, caps, session, client)
 
-# TODO Rename this here and in `get_caps_choices`
 
 
 def save_user_paswd(user):
@@ -358,41 +386,27 @@ def save_pgroupbelonging(pg, request):
     dbg("saving pgbelonging for pgroup %s", (pg))
     from apps.onboarding.models import Bt
     peoples = request.POST.getlist('peoples[]')
-    ic(peoples)
-    client = Bt.objects.get(id=int(request.session['client_id']))
-    site = Bt.objects.get(id=int(request.session['bu_id']))
-    tenant = Tenant.objects.get(id=int(request.session['tenantid']))
+    S = request.session
+    #delete old grouop info
+    ic(pm.Pgbelonging.objects.filter(pgroup = pg).delete())
     if peoples:
         try:
-            print('request>POST', dict(request.POST), peoples)
             for i, item in enumerate(peoples):
                 people = pm.People.objects.get(id=int(item))
                 pgb = pm.Pgbelonging.objects.create(
                     pgroup=pg,
                     people=people,
-                    client=client,
-                    tenant=tenant,
-                    bu=site
+                    client_id=S['client_id'],
+                    bu_id=S['bu_id'],
+                    assignsites_id = 1
                 )
                 if request.session.get('wizard_data'):
                     request.session['wizard_data']['pgbids'].append(pgb.id)
                 save_cuser_muser(pgb, request.user)
         except Exception:
             dbg("saving pgbelonging for pgroup %s FAILED", (pg))
+            logger.critical("somthing went wrong", exc_info=True)
             raise
         else:
             dbg("saving pgbelonging for pgroup %s DONE", (pg))
 
-# def encrypt(txt):
-#     from django.conf import settings
-#     from cryptography.fernet import Fernet
-#     import base64
-#     # convert integer etc to string first
-#     txt = str(txt)
-#     # get the key from settings
-#     cipher_suite = Fernet(settings.ENCRYPT_KEY) # key should be byte
-#     # # input should be byte, so convert the text to byte
-#     encrypted_text = cipher_suite.encrypt(txt.encode('ascii'))
-#     # encode to urlsafe base64 format
-#     encrypted_text = base64.urlsafe_b64encode(encrypted_text).decode("ascii")
-#     return encrypted_text

@@ -4,24 +4,43 @@ from import_export import resources, fields
 from import_export import widgets as wg
 from import_export.admin import ImportExportModelAdmin
 import apps.tenants.models as tm
+from apps.service.validators import clean_point_field, clean_string
 from apps.peoples import models as pm
 from .forms import (BtForm, ShiftForm, )
 import apps.onboarding.models as om
 from apps.core import utils
+from django.core.exceptions import ValidationError
+import re
 
-class BaseFieldSet1:
-    bu = fields.Field(
-        column_name='bu',
+class BaseResource(resources.ModelResource):
+    CLIENT = fields.Field(
+        column_name='Client*',
+        attribute='client',
+        widget = wg.ForeignKeyWidget(om.Bt, 'bucode'),
+        default='NONE'
+    )
+    BV = fields.Field(
+        column_name='BV*',
         attribute='bu',
         widget = wg.ForeignKeyWidget(om.Bt, 'bucode'),
-        saves_null_values = True)
-
-    tenant = fields.Field(
-        column_name='tenant',
-        attribute='tenant',
-        widget = wg.ForeignKeyWidget(tm.TenantAwareModel, 'tenantname'),
-        saves_null_values = True
+        saves_null_values = True,
+        default='NONE'
     )
+    
+
+    
+    def __init__(self, *args, **kwargs):
+        self.is_superuser = kwargs.pop('is_superuser', None)
+        self.request = kwargs.pop('request', None)
+        super().__init__(*args, **kwargs)
+        
+    def before_save_instance(self, instance, using_transactions, dry_run):
+        utils.save_common_stuff(self.request, instance, self.is_superuser)
+        super().before_save_instance(instance, using_transactions, dry_run)
+
+def default_ta():
+    return utils.get_or_create_none_typeassist()[0]
+
 
 class BaseFieldSet2:
     client = fields.Field(
@@ -45,56 +64,67 @@ class BaseFieldSet2:
     )
 
 
-
-class TaResource(resources.ModelResource ):
-    Client = fields.Field(
-        column_name='Client',
+class TaResource(resources.ModelResource):
+    CLIENT = fields.Field(
+        column_name='Client*',
         attribute='client',
         widget = wg.ForeignKeyWidget(om.Bt, 'bucode'),
         default='NONE'
     )
-    BV = fields.Field(
-        column_name='BV',
-        attribute='bu',
-        widget = wg.ForeignKeyWidget(om.Bt, 'bucode'),
-        saves_null_values = True,
-        default='NONE'
-    )
-    tenant = fields.Field(
-        column_name='tenant',
-        attribute='tenant',
-        widget = wg.ForeignKeyWidget(tm.TenantAwareModel, 'tenantname'),
-        saves_null_values = True
-    )
-    Type = fields.Field(
-        column_name       = 'Type',
+    
+    TYPE = fields.Field(
+        column_name       = 'Type*',
         attribute         = 'tatype',
+        default           = om.TypeAssist, 
         widget            = wg.ForeignKeyWidget(om.TypeAssist, 'tacode'),
         saves_null_values = True
     )
-    Code = fields.Field(attribute='tacode')
-    Name = fields.Field(attribute='taname')
-    ID   = fields.Field(attribute='id')
+    CODE = fields.Field(attribute='tacode', column_name='Code*')
+    NAME = fields.Field(attribute='taname', column_name='Name*')
+    ID   = fields.Field(attribute='id', column_name='ID')
 
-    class Meta:
+    class Meta: 
         model = om.TypeAssist
         skip_unchanged = True
-        import_id_fields = ('ID',)
+        import_id_fields = ['ID']
         report_skipped = True
-        fields = ('ID', 'Name', 'Code', 'Type', 'tenant', 'BV', 'Client')
+        fields = ('NAME', 'CODE', 'TYPE', 'CLIENT')
 
+        
     def __init__(self, *args, **kwargs):
+        super(TaResource, self).__init__(*args, **kwargs)
         self.is_superuser = kwargs.pop('is_superuser', None)
         self.request = kwargs.pop('request', None)
-        super(TaResource, self).__init__(*args, **kwargs)
+    
+    def before_import_row(self, row, row_number, **kwargs):
+        row['Code*'] = clean_string(row.get('Code*', 'NONE'), code=True)
+        row['Name*'] = clean_string(row.get('Name*', "NONE"))
+        # check required fields
+        if row['Code*'] in ['', None]: raise ValidationError("Code* is required field")
+        if row['Type*'] in ['', None]: raise ValidationError("Type* is required field")
+        if row['Name*'] in ['', None]: raise ValidationError("Name* is required field")
+        
+        # code validation
+        regex, value = "^[a-zA-Z0-9\-_]*$", row['Code*']
+        if " " in value: raise ValidationError("Please enter text without any spaces")
+        if  not re.match(regex, value):
+            raise ValidationError("Please enter valid text avoid any special characters except [_, -]")
 
-    def before_save_instance(self, instance, using_transactions, dry_run):
-        instance.tacode = instance.tacode.upper()
+        # unique record check
+        if om.TypeAssist.objects.select_related().filter(
+            tacode=row['Code*'], tatype__tacode=row['Type*'],
+            client__bucode = row['Client*']).exists():
+            raise ValidationError(f"Record with these values already exist {', '.join(row.values())}")
+        
+
+        super().before_import_row(row, **kwargs)
+
+    def before_save_instance(self, instance, using_transactions, dry_run=False):
         utils.save_common_stuff(self.request, instance, self.is_superuser)
-
-    def skip_row(self, instance, original):
-        ic(instance.tacode)
-        return om.TypeAssist.objects.filter(tacode = instance.tacode).exists()
+        
+    
+    
+        
 
 
 @admin.register(om.TypeAssist)
@@ -111,54 +141,108 @@ class TaAdmin(ImportExportModelAdmin):
         return om.TypeAssist.objects.select_related(
             'tatype', 'cuser', 'muser', 'bu', 'client', 'tenant').all()
 
-class BtResource(resources.ModelResource, BaseFieldSet1):
-    bu = None
+class BtResource(resources.ModelResource):
     BelongsTo = fields.Field(
-        column_name='Belongs To',
+        column_name='Belongs To*',
+        default=utils.get_or_create_none_bv,
         attribute='parent',
         widget = wg.ForeignKeyWidget(om.Bt, 'bucode'))
 
     BuType = fields.Field(
-        column_name='Bu Type',
+        column_name='Site Type',
+        default=default_ta,
         attribute='butype',
         widget = wg.ForeignKeyWidget(om.TypeAssist, 'tacode'))
 
     tenant = fields.Field(
-        column_name='tenant',
+        column_name='Tenant',
+        default=utils.get_or_create_none_tenant,
         attribute='tenant',
         widget = wg.ForeignKeyWidget(tm.Tenant, 'tenantname'))
 
     Identifier = fields.Field(
-        column_name='Identifier',
+        column_name='Type*',
         attribute='identifier',
+        default=default_ta,
         widget = wg.ForeignKeyWidget(om.TypeAssist, 'tacode'))
     
-    ID   = fields.Field(attribute='id')
-    Code = fields.Field(attribute='bucode')
-    Name = fields.Field(attribute='buname')
+    Sitemanager = fields.Field(
+        column_name='Site Manager*',
+        attribute='siteincharge',
+        default=utils.get_or_create_none_people,
+        widget = wg.ForeignKeyWidget(pm.People, 'peoplecode'))
+    
+    ID   = fields.Field(attribute='id', column_name="ID")
+    Code = fields.Field(attribute='bucode', column_name='Code*')
+    Name = fields.Field(attribute='buname', column_name='Name*')
+    GPS = fields.Field(attribute='gpslocation', column_name='GPS Location', saves_null_values=True)
+    Address = fields.Field(column_name='Address', widget=wg.CharWidget(), saves_null_values=True)
+    State = fields.Field(column_name='State', widget=wg.CharWidget(), saves_null_values=True)
+    City = fields.Field(column_name='City', widget=wg.CharWidget(), saves_null_values=True)
+    Country = fields.Field(column_name='Country', widget=wg.CharWidget(), saves_null_values=True)
+    SOLID = fields.Field(attribute='solid', column_name='Sol Id', widget=wg.CharWidget())
+    Enable = fields.Field(attribute='enable', column_name='Enable', default=True)
 
     class Meta:
         model = om.Bt
         skip_unchanged = True
-        import_id_fields = ('ID', 'Code')
+        import_id_fields = ['ID']
         report_skipped = True
         fields = (
-            'ID', 'Name', 'Code', 'BuType',
+            'Name', 'Code', 'BuType', 'SOLID', 
+            'Enable', 'GPS', 'ID','Address', 'State',
+            'City', 'Country',
             'Identifier', 'BelongsTo', 'tenant',)
 
     def __init__(self, *args, **kwargs):
-        self.request = kwargs.pop('request', None)
         super(BtResource, self).__init__(*args, **kwargs)
+        self.is_superuser = kwargs.pop('is_superuser', None)
+        self.request = kwargs.pop('request', None)
+        
+    
+    def before_import_row(self, row, **kwargs):
+        row['Code*'] = clean_string(row.get('Code*', 'NONE'), code=True)
+        row['Name*'] = clean_string(row.get('Name*', "NONE"))
+        self._gpslocation = clean_point_field(row['GPS Location'])
+        self._solid = row['Sol Id']
+        self._address = row['Address']
+        self._state = row['State']
+        self._city = row['City']
+        self._country = row['Country']
+        self._latlng = row['GPS Location']
+        # check required fields
+        if row['Code*'] in ['', None]: raise ValidationError("Code* is required field")
+        if row['Type*'] in ['', None]: raise ValidationError("Type* is required field")
+        if row['Name*'] in ['', None]: raise ValidationError("Name* is required field")
+        if row['Belongs To*'] in ['', None]: raise ValidationError("Name* is required field")
+        
+        # code validation
+        regex, value = "^[a-zA-Z0-9\-_]*$", row['Code*']
+        if " " in value: raise ValidationError("Please enter text without any spaces")
+        if  not re.match(regex, value):
+            raise ValidationError("Please enter valid text avoid any special characters except [_, -]")
+        
+        # unique record check
+        if om.Bt.objects.select_related().filter(
+            bucode=row['Code*'], parent__bucode=row['Belongs To*'],
+            identifier__tacode = row['Type*']).exists():
+            raise ValidationError(f"Record with these values already exist {', '.join(row.values())}")
+        
+        super().before_import_row(row, **kwargs)
+
 
     def before_save_instance(self, instance, using_transactions, dry_run):
-        instance.bucode = instance.bucode.upper()
+        instance.gpslocation = self._gpslocation
+        instance.bupreferences['address'] = self._address
+        instance.bupreferences['address2'] = {
+            'city':self._city, 'country':self._country,
+            'state':self._state, 'formattedAddress':self._address,
+            'latlng':self._latlng}
+        instance.solid = int(self._solid) if self._solid else None
         utils.save_common_stuff(self.request, instance)
 
     def get_queryset(self):
-        return om.Bt.objects.select_related(
-            'identifier', 'parent', 'butype',
-            'tenant', 
-        ).all()
+        return om.Bt.objects.select_related().all()
 
 @admin.register(om.Bt)
 class BtAdmin(ImportExportModelAdmin):
@@ -183,7 +267,7 @@ class ShiftResource(resources.ModelResource):
         attribute='client',
         widget = wg.ForeignKeyWidget(om.Bt, 'bucode'),
         default='NONE'
-    )
+    )    
     BV = fields.Field(
         column_name='BV',
         attribute='bu',
@@ -218,43 +302,4 @@ class ShiftAdmin(ImportExportModelAdmin):
                     'starttime', 'endtime', 'nightshiftappicable')
     list_display_links = ('shiftname',)
 
-class SitePeopleResource(resources.ModelResource, BaseFieldSet1):
 
-    people = fields.Field(
-        column_name='people',
-        attribute='people',
-        widget = wg.ForeignKeyWidget(pm.People, 'peoplecode')
-    )
-    reportto = fields.Field(
-        column_name='reportto',
-        attribute='reportto',
-        widget = wg.ForeignKeyWidget(pm.People, 'peoplecode'))
-
-    shift = fields.Field(
-        column_name='shift',
-        attribute='shift',
-        widget = wg.ForeignKeyWidget(om.Shift, 'shiftname'))
-    worktype = fields.Field(
-        column_name='worktype',
-        attribute='worktype',
-        widget = wg.ForeignKeyWidget(om.TypeAssist, 'tacode')
-    )
-    contract = fields.Field(
-        column_name='contract',
-        attribute='contract',
-        widget = wg.ForeignKeyWidget(om.Contract, 'contractname'))
-
-    contractdetail = fields.Field(
-        column_name='contractdetail',
-        attribute='contractdetail',
-        widget = wg.ForeignKeyWidget(om.ContractDetail, 'pk'))
-
-    class Meta:
-        model = om.SitePeople
-        skip_unchanged = True
-        import_id_fields = ('id',)
-        report_skipped = True
-        fields = ('id', 'fromdt', 'uptodt', 'siteowner', 'seqno', 'reportcapability',
-                  'posting_revision', 'nightshiftappicable', 'webcapability',
-                  'reportcapability', 'mobilecapability', 'enable', ' emergencycontact',
-                  'ackdate', 'isreliver', 'checkpost', 'enablesleepingguard')

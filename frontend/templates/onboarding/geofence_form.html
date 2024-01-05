@@ -1,7 +1,8 @@
-{% extends "layout.html" %}
+{% extends "globals/layout.html" %}
 
 {% block extra_css %}
 <link  href="{{ static('assets/plugins/custom/DataTables/datatables.min.css') }}" rel="stylesheet" type="text/css"/>
+<link  href="{{ static('assets/plugins/custom/Editor-2.0.8/css/editor.dataTables.min.css') }}" rel="stylesheet" type="text/css"/>
 {# {{ geofenceform.media.css }} #}
 <style>
   #description {
@@ -23,8 +24,8 @@
   }
   #map{
     position: fixed !important; 
-    height: 80% !important;
-    width: 92% !important;
+    height: 75% !important;
+    width: 45% !important;
   }
 
   .pac-card {
@@ -104,22 +105,22 @@ GeoFence
 
 {% block pagebody_container %}
 <!---Start Drawer --->
-<div id="geofence_form_drawer"
+{# <div id="geofence_form_drawer"
   data-kt-drawer="true"
   data-kt-drawer-activate="true" 
   data-kt-drawer-toggle="#togglemapform" 
   data-kt-drawer-close="#closeform"
   data-kt-drawer-direction="start"
-  data-kt-drawer-width="700px">
+  data-kt-drawer-width="100%">
   <div class="card w-100 rounded-0">
     <div class="card-header">
       <div class="card-title">
         <div class="d-flex justify-content-center flex-column me-3">
-          <p class="fs-4 fw-bolder text-gray-900 text-hover-primary me-1 lh-1">Conveyance Form</p>
+          <p class="fs-4 fw-bolder text-gray-900 text-hover-primary me-1 lh-1">Geofence Form</p>
         </div>
       </div>
       <div class="card-toolbar">
-        <button class="btn btn-icon btn-active-color-primary" id="closeForm"><i class="fas fa-times"></i></button>
+        <button class="btn btn-icon btn-active-color-primary" id="closeForm"><i class="fas text-white fa-times"></i></button>
       </div>
     </div>
 
@@ -140,6 +141,14 @@ GeoFence
           </div>
           <div class="col-md-9">
               {{ geofenceform.gfname }}
+          </div>
+      </div>
+      <div class="input-group mb-3">
+          <div class="col-md-3">
+              {{ geofenceform.bu.label_tag() }}
+          </div>
+          <div class="col-md-9">
+              {{ geofenceform.bu }}
           </div>
       </div>
       <div class="input-group mb-3">
@@ -176,97 +185,115 @@ GeoFence
           </div>
       </div>
       <br><br>
-      {% if geofenceform.instance.gfcode %}
-        <button type="submit" id="submit" form="geofence_form" class="btn btn-sm btn-primary btn-hover-scale">Update&nbsp;<i class="fas fa-cloud-upload-alt"></i></button>
-        <button type="button" onclick="deleteTa(this)" data-id="{{ geofenceform.instance.id }}" id="deleteCap" class="btn btn-sm btn-hover-scale btn-danger">Delete&nbsp;<i class="fas fa-trash-alt"></i></button>
-      {% else %}
-        <button type="submit" form="geofence_form" class="btn btn-sm btn-primary btn-hover-scale">Submit&nbsp;<i class="fas fa-cloud-upload-alt"></i></button>
-      {% endif %}
-      {# <div class="input-group mb-3">
-          <div class="col-md-4">
-              <p>Create GeoFence with Radius</p>
-          </div>
-          <input type="number" min='0', max='100', class="me-3" id = "gf_radius" name="gf_radius" style="width:15%">
-          <a href="#" id="btnCreateGF" class="btn btn-link btn-color-dark btn-active-color-primary me-5 mb-2"><u>Create GeoFence</u></a>
-          <a href="#" id="btnClearGF" onclick="clearGeoFence()" class="btn btn-link btn-color-dark btn-active-color-primary me-5 mb-2"><u>Clear GeoFence</u></a>
-      </div> #}
-
-    </form>
+      <div class="formcontrols mb-5">
+        {% if geofenceform.instance.gfcode %}
+          <button type="submit" id="submit" form="geofence_form" class="btn btn-sm btn-primary2 btn-hover-scale">Update&nbsp;<i class="fas text-white fa-cloud-upload-alt"></i></button>
+          <button type="button" onclick="deleteTa(this)" data-id="{{ geofenceform.instance.id }}" id="deleteCap" class="btn btn-sm btn-hover-scale btn-danger">Delete&nbsp;<i class="fas text-white fa-trash-alt"></i></button>
+        {% else %}
+          <button type="submit" form="geofence_form" class="btn btn-sm btn-primary2 btn-hover-scale">Submit&nbsp;<i class="fas text-white fa-cloud-upload-alt"></i></button>
+        {% endif %}
+      </div>
       
-    {# <input type="text" name="pk" id="pk" style="display:none;">
-      <div class="row">
-          <div class="col-md-6">
-              <div class="input-group mb-3">
-                  <div class="col-md-4">
-                      {{ geofenceform.gfcode.label_tag() }}
-                  </div>
-                  <div class="col-md-8">
-                      {{ geofenceform.gfcode }}
-                  </div>
+      <table id="assignedpeople" class=""></table>
+    </form><br><hr><br>
+  </div>
+  
+</div> #}
+
+<div class="row">
+  <div class="col-md-6 map-div">
+    <!---Start Google Maps -->
+      <div id="map"></div>
+    <!---End Google Maps -->
+  </div>
+  <div class="col-md-6 form-div">
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">
+          <p class="fs-4 ch-4 text-gray-900 text-hover-primary me-1 lh-1">Geofence Form</p>
+        </div>
+      </div>
+      <div class="card-body pt-0">
+        <form  action="{{ url('onboarding:geofence') }}" method="post" id="geofence_form" class="card-body">
+          <input type="text" name="pk" id="id_pk" style="display:none;" value = "{{ geofenceform.instance.id }}">
+          <input type="hidden" name="{{ geofenceform.ctzoffset.name }}" id = "{{ geofenceform.ctzoffset.auto_id }}" value="-1">
+          <div class="input-group mb-3">
+              <div class="col-md-3">
+                  {{ geofenceform.gfcode.label_tag() }}
               </div>
-              <div class="input-group mb-3">
-                  <div class="col-md-4">
-                      {{ geofenceform.gfname.label_tag() }}
-                  </div>
-                  <div class="col-md-8">
-                      {{ geofenceform.gfname }}
-                  </div>
-              </div>
-              <div class="input-group mb-3">
-                  <div class="booleans d-flex justify-content-sm-between mt-5
-                      form-check form-switch form-check-custom form-check-solid">
-                      <label for="{{ geofenceform.enable.id_for_label }}"
-                          class="form-check-label bool col-form-label me-5 text-sm-right">
-                          {{ geofenceform.enable.label }}: &nbsp; {{ geofenceform.enable }}
-                      </label>
-                  </div>
-              </div>
-          </div>
-          <div class="col-md-6">
-              <div class="input-group mb-3">
-                  <div class="col-md-4">
-                      {{ geofenceform.alerttopeople.label_tag() }}
-                  </div>
-                  <div class="col-md-8">
-                      {{ geofenceform.alerttopeople }}
-                  </div>
-              </div>
-              <div class="input-group mb-3">
-                  <div class="col-md-4">
-                      {{ geofenceform.alerttogroup.label_tag() }}
-                  </div>
-                  <div class="col-md-8">
-                      {{ geofenceform.alerttogroup }}
-                  </div>
-              </div>
-              <div class="input-group mb-3">
-                  <div class="col-md-4">
-                      {{ geofenceform.alerttext.label_tag() }}
-                  </div>
-                  <div class="col-md-8">
-                      {{ geofenceform.alerttext }}
-                  </div>
-              </div>
-              <div class="input-group mb-3">
-                  <div class="col-md-4">
-                      <p>Create GeoFence with Radius</p>
-                  </div>
-                  <input type="number" min='0', max='100', class="me-3" id = "gf_radius" name="gf_radius" style="width:15%">
-                  <a href="#" id="btnCreateGF" class="btn btn-link btn-color-dark btn-active-color-primary me-5 mb-2"><u>Create GeoFence</u></a>
-                  <a href="#" id="btnClearGF" onclick="clearGeoFence()" class="btn btn-link btn-color-dark btn-active-color-primary me-5 mb-2"><u>Clear GeoFence</u></a>
+              <div class="col-md-9">
+                  {{ geofenceform.gfcode }}
               </div>
           </div>
-      </div> #}
+          <div class="input-group mb-3">
+              <div class="col-md-3">
+                  {{ geofenceform.gfname.label_tag() }}
+              </div>
+              <div class="col-md-9">
+                  {{ geofenceform.gfname }}
+              </div>
+          </div>
+          <div class="input-group mb-3">
+              <div class="col-md-3">
+                  {{ geofenceform.bu.label_tag() }}
+              </div>
+              <div class="col-md-9">
+                  {{ geofenceform.bu }}
+              </div>
+          </div>
+          <div class="input-group mb-3">
+              <div class="col-md-3">
+                  {{ geofenceform.alerttopeople.label_tag() }}
+              </div>
+              <div class="col-md-9">
+                  {{ geofenceform.alerttopeople }}
+              </div>
+          </div>
+          <div class="input-group mb-3">
+              <div class="col-md-3">
+                  {{ geofenceform.alerttogroup.label_tag() }}
+              </div>
+              <div class="col-md-9">
+                  {{ geofenceform.alerttogroup }}
+              </div>
+          </div>
+          <div class="input-group mb-3">
+              <div class="col-md-3">
+                  {{ geofenceform.alerttext.label_tag() }}
+              </div>
+              <div class="col-md-9">
+                  {{ geofenceform.alerttext }}
+              </div>
+          </div>
+          <div class="input-group mb-3">
+              <div class="booleans d-flex justify-content-sm-between mt-5
+                  form-check form-switch form-check-custom form-check-solid">
+                  <label for="{{ geofenceform.enable.id_for_label }}"
+                      class="form-check-label bool col-form-label me-5 text-sm-right">
+                      {{ geofenceform.enable.label }}: &nbsp; {{ geofenceform.enable }}
+                  </label>
+              </div>
+          </div>
+          <br><br>
+          <div class="formcontrols mb-5">
+            {% if geofenceform.instance.gfcode %}
+              <button type="submit" id="submit" form="geofence_form" class="btn btn-sm btn-primary2 btn-hover-scale">Update&nbsp;<i class="fas text-white fa-cloud-upload-alt"></i></button>
+              <button type="button" onclick="deleteTa(this)" data-id="{{ geofenceform.instance.id }}" id="deleteCap" class="btn btn-sm btn-hover-scale btn-danger">Delete&nbsp;<i class="fas text-white fa-trash-alt"></i></button>
+            {% else %}
+              <button type="submit" form="geofence_form" class="btn btn-sm btn-primary2 btn-hover-scale">Submit&nbsp;<i class="fas text-white fa-cloud-upload-alt"></i></button>
+            {% endif %}
+          </div>
+        </form>
+        <hr>
+        <div class="tableview d-none">
+          <table id="assignedpeople" class=""></table>
+        </div>
+      </div>
+    </div>
   </div>
 </div>
 
-<!---Start Google Maps -->
-  <div class="card">
-    <div class="card-body">
-      <div id="map"></div>
-    </div>
-  </div>
-<!---End Google Maps -->
+
 
 <!-- End Drawer --->
 {% endblock pagebody_container %}
@@ -274,13 +301,18 @@ GeoFence
 
 {% block extra_scripts %}
 {{ geofenceform.media.js }}
+<script src="{{ static('assets/plugins/custom/DataTables/datatables.min.js') }}" type="text/javascript"></script>
+<script src="{{ static('assets/plugins/custom/DataTables/Select-1.3.4/js/dataTables.select.min.js') }}" type="text/javascript"></script>
+<script src="{{ static('assets/plugins/custom/Editor-2.0.8/js/dataTables.editor.min.js') }}" type="text/javascript"></script>
+<script src="{{ static('assets/plugins/custom/Editor-2.0.8/js/editor.select2.js') }}" type="text/javascript"></script>
+
 <script
-      src="https://maps.googleapis.com/maps/api/js?key=AIzaSyC3PUZCB7u2PiV8whHeAshweOPIK_d690o&callback=initAutocomplete&libraries=places&v=weekly"
+      src="https://maps.googleapis.com/maps/api/js?key=AIzaSyC3PUZCB7u2PiV8whHeAshweOPIK_d690o&libraries=places&v=weekly"
       defer
     ></script>
 <script>
 var service;
-var map;
+var map, table;
 var userMarker;
 var infowindow;
 var lastRadius;
@@ -331,15 +363,20 @@ function clearGeoFence(){
 }
 
 function placeMarker(location) {
-  if ( userMarker ) {
+  if(userMarker){
     userMarker.setPosition(location);
-  } else {
+    userMarker.setMap(map);
+    userMarker.setIcon('http://maps.google.com/mapfiles/ms/icons/red-dot.png')
+    userMarker.setDraggable(true);
+  }else{
     userMarker = new google.maps.Marker({
-      position: location,
-      map: map,
-      icon: 'http://maps.google.com/mapfiles/ms/icons/blue-dot.png'
-    });
+    position: location,
+    map: map,
+    icon: 'http://maps.google.com/mapfiles/ms/icons/blue-dot.png',
+    draggable:true
+  });
   }
+
 }
 
 function drawGeofenceOnMap(data, dynamicZoom = false){
@@ -410,21 +447,21 @@ function initAutocomplete() {
   const createGFBtn = document.createElement('button')
   createGFBtn.id = 'btnCreateGF'
   createGFBtn.textContent = "Create Geofence"
-  createGFBtn.className = "btn btn-secondary rounded-pill ms-2 mb-2"
+  createGFBtn.className = "btn btn-secondary  ms-2 mb-2"
   createGFBtn.title = "Click to create the Geofence";
 
   //clear geofence button
   const clearGFBtn = document.createElement('button')
   clearGFBtn.id = 'btnClearGF'
   clearGFBtn.textContent = "Clear Geofence"
-  clearGFBtn.className = "btn btn-secondary rounded-pill ms-2 mb-2"
+  clearGFBtn.className = "btn btn-secondary  ms-2 mb-2"
   clearGFBtn.title = "Click to clear the Geofence";
 
   //create new geofence
   const createNewBtn =  document.createElement('button')
   createNewBtn.id = 'btnCreateNew'
   createNewBtn.textContent = "Create New"
-  createNewBtn.className = "btn btn-secondary rounded-pill ms-2"
+  createNewBtn.className = "btn btn-secondary  ms-2"
   createNewBtn.title = "Click to create a new geofence from start";
 
 
@@ -432,16 +469,12 @@ function initAutocomplete() {
   const controlDiv = document.createElement('DIV');
   controlDiv.id = "search_rad_controls";
 
-  //edit-form button
-  const editFormBtn = document.createElement('button')
-  editFormBtn.id = 'togglemapform'
-  editFormBtn.textContent = 'Edit Form'
-  editFormBtn.className = "btn btn-secondary rounded-pill ms-2"
+
 
   // Create the search box and link it to the UI element.
   const controlInput = document.createElement('input');
   controlInput.id = "pac-input";
-  controlInput.className = "controls mt-2 rounded-pill"
+  controlInput.className = "controls mt-2"
   controlInput.placeholder = 'Search any keyword..'
 
   //Create a number input element
@@ -450,11 +483,11 @@ function initAutocomplete() {
   radiusInput.type = 'number'
   radiusInput.min = '0'
   radiusInput.max = '100'
-  radiusInput.className = "ms-2 rounded-end"
+  radiusInput.className = "ms-2"
   radiusInput.placeholder = "Enter Radius"
+  radiusInput.style.width = "100px"
 
   // Append everything to the wrapper div
-  controlDiv.appendChild(editFormBtn);
   controlDiv.appendChild(controlInput);
   controlDiv.appendChild(radiusInput);
 
@@ -481,36 +514,6 @@ function initAutocomplete() {
 
   infoWindow = new google.maps.InfoWindow();
 
-  const locationButton = document.createElement("button");
-
-  locationButton.textContent = "Pan to Current Location";
-  locationButton.classList.add("custom-map-control-button");
-  map.controls[google.maps.ControlPosition.TOP_CENTER].push(locationButton);
-  
-    locationButton.addEventListener("click", () => {  
-    // Try HTML5 geolocation.
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          const pos = {
-            lat: position.coords.latitude,
-            lng: position.coords.longitude,
-          };
-
-          infoWindow.setPosition(pos);
-          infoWindow.setContent("Location found.");
-          infoWindow.open(map);
-          map.setCenter(pos);
-        },
-        () => {
-          handleLocationError(true, infoWindow, map.getCenter());
-        }
-      );
-    } else {
-      // Browser doesn't support Geolocation
-      handleLocationError(false, infoWindow, map.getCenter());
-    }
-  });
   // Bias the SearchBox results towards current map's viewport.
   map.addListener("bounds_changed", () => {
     searchBox.setBounds(map.getBounds());
@@ -553,7 +556,8 @@ function initAutocomplete() {
           icon,
           title: place.name,
           position: place.geometry.location,
-          animation:google.maps.Animation.DROP
+          animation:google.maps.Animation.DROP,
+          draggable: true,
         })
       
       // Create a marker for each place.
@@ -575,6 +579,7 @@ function initAutocomplete() {
       }
     });
     map.fitBounds(bounds);
+    userMarker = markers.length ? markers[0] : null
     
     
     
@@ -596,9 +601,19 @@ function handleLocationError(browserHasGeolocation, infoWindow, pos) {
   infoWindow.open(map);
 }
 
-
-window.initAutocomplete = initAutocomplete;
+function getCurrentEditingRow(editor, table){
+    var rowModifier = editor.modifier();
+    return rowModifier ? table.row(rowModifier).data() : 'None'
+}
+//window.initAutocomplete = initAutocomplete;
 $(document).ready(() => {
+  //instruction to save form after editing the geofence
+  Swal.fire(
+    'Instructions for creating geofence record',
+    '1.After editing the geoFence through the map.<br>2.Click on "Edit Form" fill the information then submit the form, it will save the record permanently',
+    'info'
+  )
+  initAutocomplete()
   //set ctzoffset
   $("#id_ctzoffset").val(-new Date().getTimezoneOffset())
     $("#btnCreateGF").click(() => {
@@ -613,7 +628,7 @@ $(document).ready(() => {
         let longitude = userMarker.getPosition().lng()
         var latlng = `${latitude},${longitude}`
 
-        data = {lat:latitude, lng:longitude, radii:radius, action: 'drawgeofence'}
+        data = {lat:latitude, lng:longitude, radii:radius, action: 'drawgxeofence'}
         const params = {data:data, beforeSend:function(){}, url: "{{ url('onboarding:geofence') }}?action=formdrawgeofence"}
         
         if(typeof latlng!= 'undefined' && lastPoint === latlng && lastRadius === radius){
@@ -628,7 +643,7 @@ $(document).ready(() => {
           })
           .done((data, status, xhr) => {
             drawGeofenceOnMap(data)
-            showToastMsg('Geofence created successfully!', 'success')
+            showToastMsg('Geofence created successfully!, you can proceed to save this geofence through "Edit Form"', 'success', position='center')
           })
         }
       }
@@ -688,7 +703,117 @@ $(document).ready(() => {
       var geofencedata = JSON.parse(geofencejson)
       drawGeofenceOnMap({'geojson':geofencedata}, true)
     }
-    
+
+    editor = new $.fn.dataTable.Editor({
+      table: "#assignedpeople",
+      ajax:{
+        url:"{{ url('onboarding:geofence') }}?perform=editAssignedpeople",
+        type:'GET',
+        data:function(d){
+          let currentrow = getCurrentEditingRow(editor, table)
+            d.csrfmiddlewaretoken = '{{ csrf_token }}'
+            d.pk                  = currentrow !== 'None' ? currentrow['pk'] : currentrow
+            d.people__peoplename  = getSelectedValue("#DTE_Field_people__peoplename")
+            d.people_id           = $("#DTE_Field_people__peoplename").val()
+            d.gfcode              = $("#id_gfcode").val()
+            d.gfname              = $("#id_gfname").val()
+            d.geofence_id         = $("#id_pk").val()
+            d.fromdate            = $("#DTE_Field_fromdate").val()
+            d.uptodate            = $("#DTE_Field_uptodate").val()
+            d.starttime           = $("#DTE_Field_starttime").val()
+            d.endtime             = $("#DTE_Field_endtime").val()
+            d.bu_id = '{{ geofenceform.instance.bu_id }}'
+        }
+      },
+      idSrc:'pk',
+      fields:[
+        {data:'pk', type:'hidden', name:'pk', def:'None'},
+        {data:'people__peoplename', name:'people__peoplename', label:'People Name', type:'select'},
+        {data:'people__peoplecode', name:'people__peoplecode', type:'hidden'},
+        {data:"fromdate", name:'fromdate', label:'From Date', type:'readonly'},
+        {data:'uptodate', name:'uptodate', label:'Up To Date', type:'readonly'},
+        {data:'starttime', name:'starttime', label:'Start Time', type:'readonly'},
+        {data:'endtime', name:'endtime', label:'End Time', type:'readonly'},
+      ],
+      formOptions:{
+        main:{
+          onReturn:false
+        }
+      }
+    })
+
+    table = $("#assignedpeople").DataTable({
+      ajax:{url:`{{ url("onboarding:geofence") }}?action=getAssignedPeople&id={{ geofenceform.instance.id }}`},
+      columns:[
+        {data:'pk', visible:false },
+        {data:'people__peoplename', title:"Name", render:function(data, type, row){
+          return `${data} (${row['people__peoplecode']})`
+          }
+        },
+        {data:'people__peoplecode', title:"Code", visible:false},
+        {data:'people_id', visible:false, defaultContent:null},
+        {data:'fromdate', title:"Valid From"},
+        {data:'uptodate', title:"Valid to"},
+        {data:'starttime', title:"Start Time"},
+        {data:'endtime', title:"End Time"},
+      ],
+      deferRender: true,
+      dom:'Brtp',
+      buttons:[
+        { extend: "create", editor: editor },
+        { extend: "edit",   editor: editor },
+        { extend: "remove", editor: editor }
+      ],
+      select:true,
+    })
+
+    editor.on('open', function(e, mode, action){
+      $(".DTE_Field").addClass('p-1')
+      
+      modifyWidgets('#DTE_Field_starttime, #DTE_Field_endtime', time=true)
+      modifyWidgets("#DTE_Field_fromdate, #DTE_Field_uptodate", time=false, date=true)
+      
+      if(action == 'create' || action == 'edit'){
+        $("#DTE_Field_people__peoplename").addClass("form-control form-select")
+        init_select_field({
+          url: "{{ url('onboarding:geofence') }}?action=loadPeoples",
+          id: "#DTE_Field_people__peoplename",
+          item:'People'
+        })
+      }
+      if(action == 'edit'){
+        data = getCurrentEditingRow(editor, table)
+        console.log("$$$$$$$$$$$", data)
+        var newOption = new Option(data.people__peoplename, data.people_id, true, true);
+        $('#DTE_Field_people__peoplename').append(newOption);
+      }
+    })
+
+    editor.on('preSubmit', function(e, o, action){
+      var fromdate = Date.parse(this.field('fromdate').val())
+      var uptodate = Date.parse(this.field('uptodate').val())
+      var starttime = moment(this.field('starttime').val(), 'HH:mm')
+      var endtime = moment(this.field('endtime').val(), 'HH:mm')
+      
+      if(action !== 'remove'){
+        if(check_for_duplicate_record(table, this.field('people__peoplename').val(), 1)){
+          editor.error(`Record already exists for ${this.field('people__peoplename').val()}`)
+        }
+        if(fromdate > uptodate){
+          this.field('fromdate').error('From date should be less than up to date')
+        }
+        if(starttime > endtime){
+          this.field('starttime').error('Start time should be less than end time')
+        }
+        if ( this.inError() ) {
+          return false;
+        }
+      }
+    })
+
+    if("{{ geofenceform.instance.id }}" !== 'None'){
+      $(".tableview").removeClass('d-none')
+    }
 
 })
 

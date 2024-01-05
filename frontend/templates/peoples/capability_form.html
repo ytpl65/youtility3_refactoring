@@ -1,4 +1,4 @@
-{% extends "base_form.html" %}
+{% extends "globals/base_form.html" %}
 
 <!---- BEGIN PAGE TITLE ---->
 {% block title %}
@@ -44,14 +44,9 @@ Capability Form
 
 <!--------- BEGIN NON FIELD ERRORS -------->
 {% block nonfield_errors %}
-{% if cap_form.non_field_errors() %}
-<div id="non_field_error" class="alert alert-danger" style="width: 73%;">
-	{% for error in cap_form.non_field_errors() %}
-	{{ error }}
-	{% endfor %}
-	<button type="button" class="btn-close flt-right" data-bs-dismiss="alert" aria-label="Close"></button>
+<div class="alert alert-danger" id="nonfield_errors"role="alert" style="display:none">
+    <strong>Error</strong> <span></span>
 </div>
-{% endif %}
 {% endblock nonfield_errors %}
 <!---------- END NON FIELD ERRORS --------->
 
@@ -105,6 +100,9 @@ Capability Form
 		if ('{{cap_form.instance.capscode}}' == ('None' || "")) {
 			$("#btn_del").hide()
 		}
+		$("#btn_clear").click(() => {
+			location.href = "{{ url('peoples:capability') }}?action=form"
+		})
 		
 		//submit ajax form
 		$("#savebtn, #form_update").click((e) => {

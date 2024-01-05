@@ -1,4 +1,4 @@
-{% extends "base_list.html" %}
+{% extends "globals/base_list.html" %}
 
 <!---- BEGIN CARD TITLE ------>
 {% block card_title %}
@@ -7,6 +7,7 @@ Site Report List
 <!----- END CARD TITLE -------->
 
 {% block extra_css %}
+{{ load_leaflet_tags() }}
 {% endblock extra_css %}
 
 <!------------------------------------ BEGIN PAGE BREADCUMBS ------------------------------------>
@@ -35,6 +36,16 @@ Site Report List
         <!--Attachemts List here -->
     </div>
     {% endcall %}
+
+
+    <!--Render Location on Leaflet Map -->
+    {% call general_popup(popup_id = "leafletmap", title="GPS Location") %}
+        <div class="modal-body">
+            <h4 class="ch4">Location where sitereport filled!</h4>
+            <div id="map" style="height: 400px;"></div>
+        </div>
+    {% endcall %}
+
 {% endblock popup_alerts %}
 
 <!-------------------------------------------- BEGIN TABLE ------------------------------------------->
@@ -47,6 +58,7 @@ Site Report List
 {% block extra_scripts %}
 <script>
     var   table      = null;
+    var map;
     const formFilter = '#sitereport_filter'
     const table_id   = "#sitereport_table"
     var sectionTable;
@@ -59,6 +71,11 @@ Site Report List
     function showSectionAnswers(templateData){
         $("#report_details").modal('show')
         $("#tabSectionDetails").DataTable().ajax.reload();
+    }
+
+    //show point on map
+    function showMap(lng, lat){
+        console.log("coords ", lng, lat)
     }
 
 
@@ -88,6 +105,7 @@ Site Report List
                 }
             },
             search      : {return: true},
+            pageLength:19,
             lengthMenu: [[10, 20, 30], [10, 20, 30]],
             dom:`<'row' <'col-sm-6 d-flex justify-content-start'<'customfields'>f> <'col-sm-6 d-flex justify-content-end'B> >rt<'row'
             <'col-sm-6'l> <'col-sm-6'p><'col-sm-12 d-flex justify-content-center'i>>`,
@@ -95,11 +113,18 @@ Site Report List
                 { "data": "id", visible:false, searchable:false },
                 { "data": "plandatetime", title:'Plan Datetime' },
                 { "data": "jobdesc", title:'Site Report'},
-                { "data": "people__peoplename", title:'Surveyor' },
+                { "data": "performedby__peoplename", title:'Surveyor' },
                 { "data": "buname", title:'SiteName' },
+                { "data": "starttime", title:'Startime' },
+                { "data": "endtime", title:'Endtime' },
                 { "data": "jobstatus", title:'Status' },
-                { "data": "gps" , title:'GPS', defaultContent:null},
-                { "data": "distance", title:'Distance', visible:false},
+                { "data": "gps" , title:'GPS', defaultContent:null, render:function(data, type, row, meta){
+                    let gps = JSON.parse(data)
+                    let coords = gps.coordinates == '0,0' ? '' : gps.coordinates
+                    return `<a href="javascript:void(0)" onclick="showMap(${coords})">${coords}</a>`
+                }
+                },
+                { "data": "distance", title:'Distance', visible:true},
                 { "data": "remarks", title:'Remarks' },
                 {data:null, visible:false, orderable:false, defaultContent:null, title:'Action'},
             ],
@@ -150,6 +175,9 @@ Site Report List
             buttons:[]
         })
         $('.btn').removeClass('dt-button')
+
+        //load map on bootstrap modal
+        //map = L.map('map').set
 
 
 

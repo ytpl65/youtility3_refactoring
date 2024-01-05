@@ -1,4 +1,4 @@
-{% extends 'base_list.html' %}
+{% extends 'globals/base_list.html' %}
 
 <!----------- BEGIN PAGE BREADCUMBS ----------->
 {% block pagebreadcumb %}
@@ -7,6 +7,11 @@
 {% endblock pagebreadcumb %}
 <!----------- END PAGE BREADCUMBS ------------->
 
+<!---- BEGIN CARD TITLE ------>
+{% block card_title %}
+Site Groups
+{% endblock card_title %}
+<!----- END CARD TITLE -------->
 
 
 {% block table %}
@@ -40,12 +45,19 @@
                     },
                     title: "Group Name" 
                 },
-                {data: 'enable', title: 'Enable', orderable:false}
+                {data: 'enable', title: 'Enable', orderable:false, render:function(data, type, row, meta){
+					return data === true ? '<i class="bi bi-check-circle-fill text-success"></i>': '<i class="bi bi-x-circle-fill text-danger"></i>'				
+				}}
             ],
+            createdRow:function(row, data, dataIndex){
+				if(data['enable'] === false){
+					$(row).addClass('disabled-record text-white')
+				}
+			},
             buttons:[
                 {
-                    text: 'Add New',
-                    className: "btn btn-sm btn-light-primary",
+                    text     : `Add New &nbsp;<i class='fas fa-plus ch4'></i></a>`,
+					className: "btn btn-sm border border-primary btn-light-primary add_new_sitegroup",
                     action:function(e, dt, node, config){
                         location.href = '{{ url("peoples:sitegroup") }}?action=form'
                     }

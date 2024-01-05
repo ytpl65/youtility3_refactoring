@@ -46649,3 +46649,5 @@ swal.mixin({
 });
 
 //# sourceMappingURL=plugins.bundle.js.map
+
+//ApexChart

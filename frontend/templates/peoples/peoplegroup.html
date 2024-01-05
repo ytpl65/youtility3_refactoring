@@ -1,15 +1,15 @@
-{% extends "base_list.html" %}
+{% extends "globals/base_list.html" %}
 
 <!---- BEGIN CARD TITLE ------>
 {% block card_title %}
-People Group Lists
+People Groups
 {% endblock card_title %}
 <!---- END CARD TITLE -------->
 
 <!----------- BEGIN PAGE BREADCUMBS ----------->
 {% block pagebreadcumb %}
 {{ super() }}
-<li class="breadcrumb-item pe-3"><a href="javascript:void(0)" class="pe-3">People Group List</a></li>
+<li class="breadcrumb-item pe-3"><a href="javascript:void(0)" class="pe-3">People Groups</a></li>
 {% endblock pagebreadcumb %}
 <!----------- END PAGE BREADCUMBS ------------->
 
@@ -18,13 +18,6 @@ People Group Lists
 {% block table %}
 <div class="table-responsive">
     <table id="pgroup_table" class="display cell-border hover compact" style="width:100%">
-        <thead class="fw-bold fs-6">
-            <th>Name</th>
-            <th>Enable</th>
-			<th></th>
-        </thead>
-		<tbody>
-		</tbody>
     </table>
 </div>
 {% endblock table %}
@@ -62,13 +55,6 @@ People Group Lists
 	}
 
 	$(document).ready(function () {
-		new ClipboardJS('.btn-copy');
-		$("input").keypress(function(event) {
-			if (event.which == 13) {
-				event.preventDefault();
-				$(formFilter).submit();
-			}
-		});
         //beforeSend of capability ajax request 
         function BeforeSend(){
             $(modal_id).modal("show");
@@ -83,19 +69,41 @@ People Group Lists
             dom       : `<'row' <'col-sm-6 d-flex justify-content-start'f> <'col-sm-6 d-flex justify-content-end'B> >rt<'row'
 			 <'col-sm-6'l> <'col-sm-6'p><'col-sm-12 d-flex justify-content-center'i>>`,
 			columns:[
-				{
+				{	title:'Group Name',
 					data: "groupname",
 					render:function(data, type, row, meta){
 						 return `<a href="#" class="ta-link" data-id=${row['id']} data-rowid=${meta.row}>${data}</a>`
 					}
 				},
-				{data: "enable"},
-				{data: 'id', visible:false, defaultContent: ""}
+				{data: "enable",title:"Enable", render:function(data, type, row, meta){
+					return data === true ? '<i class="bi bi-check-circle-fill text-success"></i>': '<i class="bi bi-x-circle-fill text-danger"></i>'				
+				}},
+				{data: 'id', visible:false, defaultContent: "", className:'noVis'},
+				{data:'bu__buname', title:'Site', visible:false},
+				{data:'bu__bucode', title:'Site Code', visible:false}
 			],
+			createdRow:function(row, data, dataIndex){
+				if(data['enable'] === false){
+					$(row).addClass('disabled-record text-white')
+				}
+			},
 			buttons:[
+				"searchBuilder",
+				dataTablesPDFConfig(
+                    title = `Site: {{request.user.bu.buname}}\n People Group List`,
+                    columns = [0,1,3,4],
+					filename = "people_group_list"
+                ),
+                dataTablesExcelConfig(
+                    title = `Site: {{request.user.bu.buname}}\n People Group List`,
+                    columns = [0,1,3,4],
+					filename = "people_group_list"
+                ),
+                dataTablesColumnVisibilityConfig(),
+
 				{
-					text:`Add New ${viewname} &nbsp;<i class='fas fa-plus ch4'></i></a>`,
-					className: "btn btn-sm btn-light-primary",
+					text     : `Add New &nbsp;<i class='fas fa-plus ch4'></i></a>`,
+					className: "btn btn-sm border border-primary btn-light-primary add_new_pgroup",
 					//action for add_new_button 
 					action: function(e, dt, node, config){
 						const params = {
@@ -111,7 +119,10 @@ People Group Lists
 						})
 					}
 				}
-			]
+			],
+			select: {
+                    style: 'single'
+                }
 		})
 		$('.btn').removeClass('dt-button')
 
@@ -142,13 +153,6 @@ People Group Lists
 
 		//update row (form-view)
 		$('#pgroup_table tbody').on('click', 'tr', function(e){
-			if ($(this).hasClass('selected')) {
-				$(this).removeClass('selected');
-			} else {
-				table.$('tr.selected').removeClass('selected');
-				$(this).addClass('selected');
-			}
-			
 			var d = table.row( this ).data();
 			e.preventDefault();
 			var id = d.id
@@ -197,11 +201,9 @@ People Group Lists
 					show_successful_delete_alert() //defined in customjs
 					$(modal_id).modal("hide")
 					//delete row from table
-					row_index = parseInt($(modalcontent_id).attr('data-rowid'), 10)
-					console.log(row_index, "row index")
-					table.row(row_index).remove().draw();
+					table.row('.selected').remove().draw();
 				}else{
-					show_error_alert('Something went wrong!');
+					show_error_alert( 'Something went wrong!');
 				}
 			}
 		})

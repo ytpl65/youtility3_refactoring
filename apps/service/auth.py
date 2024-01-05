@@ -1,6 +1,7 @@
-
+from apps.core.exceptions import (
+    NoClientPeopleError,MultiDevicesError, NotRegisteredError,
+    WrongCredsError, NoSiteError, NotBelongsToClientError)
 from apps.peoples.models import People
-
 class Messages:
     AUTHFAILED     = "Authentication Failed "
     AUTHSUCCESS    = "Authentication Successfull"
@@ -10,6 +11,8 @@ class Messages:
     MULTIDEVICES   = "Cannot login on multiple devices, Please logout from the other device"
     WRONGCREDS     = "Incorrect Username or Password"
     NOTREGISTERED  = "Device Not Registered"
+    NOSITE = "User site not found"
+    NOTBELONGSTOCLIENT = "UserNotInThisClient"
 
 def LoginUser(response, request):
     if response['isauthenticated']:
@@ -26,19 +29,25 @@ def LogOutUser(response, request):
             )
         ic(request.user)
 
+def check_user_site(user):
+    return user.bu_id not in [1, None, 'NONE', 'None']
+
 
 def auth_check(info, input, returnUser, uclientip = None):
     from django.contrib.auth import authenticate
-    from graphql import GraphQLError
+    from graphql.error import GraphQLError
     try:
-        user = authenticate(
-            info.context,
-            username = input.loginid,
-            password = input.password)
-        if not user: raise ValueError
+        if valid_user := People.objects.select_related('client').filter(loginid = input.loginid, client__bucode = input.clientcode).exists():
+            user = authenticate(
+                info.context,
+                username = input.loginid,
+                password = input.password)
+            if not user: raise ValueError
+        else: raise NotBelongsToClientError(Messages.NOTBELONGSTOCLIENT)
     except ValueError as e:
-        raise GraphQLError(Messages.WRONGCREDS) from e
+        raise WrongCredsError(Messages.WRONGCREDS) from e
     else:
+        if not check_user_site(user): raise NoSiteError(Messages.NOSITE)
         allowAccess = isValidDevice = isUniqueDevice = True
         people_validips = user.client.bupreferences['validip']
         people_validimeis = user.client.bupreferences["validimei"].replace(" ", "").split(",")
@@ -47,16 +56,16 @@ def auth_check(info, input, returnUser, uclientip = None):
             clientIpList = people_validips.replace(" ", "").split(",")
             if uclientip is not None and uclientip not in clientIpList:
                 allowAccess = isAuth  = False
-        if user.deviceid in ('-1', input.deviceid): allowAccess = True
-        else:
-            if input.deviceid not in people_validimeis: isValidDevice = False
-            isAuth  = False
-            # raise GraphQLError(Messages.MULTIDEVICES)
-            allowAccess = True
+        
+        if user.deviceid in [-1, '-1'] or input.deviceid in [-1, '-1']:
+            allowAccess=True
+        elif user.deviceid != input.deviceid: raise MultiDevicesError(Messages.MULTIDEVICES)
+        allowAccess = True
         if allowAccess:
             if user.client.enable and user.enable:
                 return returnUser(user, info.context), user
-            raise GraphQLError(Messages.NOCLIENTPEOPLE)
+            else:
+                raise NoClientPeopleError(Messages.NOCLIENTPEOPLE)
 
 def authenticate_user(input, request, msg, returnUser):
     loginid = input.loginid
@@ -67,17 +76,17 @@ def authenticate_user(input, request, msg, returnUser):
     from django.contrib.auth import authenticate
 
     user = authenticate(request, username = loginid, password = password)
-    if not user: raise GraphQLError(msg.WRONGCREDS)
+    if not user: raise WrongCredsError(msg.WRONGCREDS)
     valid_imeis = user.client.bupreferences["validimei"].replace(" ", "").split(",")
 
     if not user:
-        raise GraphQLError(msg.WRONGCREDS)
+        raise WrongCredsError(msg.WRONGCREDS)
     if deviceid != '-1' and user.deviceid == '-1':
         if all([user.client.enable, user.enable, user.isverified]):
             return returnUser(user, request), user
-        raise GraphQLError(msg.NOCLIENTPEOPLE)
+        raise NoClientPeopleError(msg.NOCLIENTPEOPLE)
     if deviceid not in valid_imeis:
-        raise GraphQLError(msg.NOTREGISTERED)
+        raise NotRegisteredError(msg.NOTREGISTERED)
     if deviceid != user.deviceid:
-        raise GraphQLError(msg.MULTIDEVICES)
+        raise MultiDevicesError(msg.MULTIDEVICES)
     return returnUser(user, request), user

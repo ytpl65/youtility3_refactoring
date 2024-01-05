@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        table {
+            border-collapse: collapse;
+            table-layout: auto;
+        }
+        td {
+            padding: 8px;
+            border: 1px solid #ddd;
+            text-align: left;
+            color: #202124;
+        }
+        .bgy {
+            background-color: #eaf1fb !important;
+            font-weight: normal;
+        }   
+
+        .ybtn-success {
+            background-color:rgb(95 179 0);
+            text-decoration: none;
+            padding: 5px;
+            border-radius: 5px;
+            color: white !important;
+        }
+
+        .ybtn-warn {
+            background-color: rgb(255, 166, 92);
+            text-decoration: none;
+            padding: 5px;
+            color: white !important;
+            border-radius: 5px;
+        }
+
+        .ybtn-prime {
+            background-color:linear-gradient(180deg, #a3ff6b 0%, #55ff2a 100%);
+            text-decoration: none;
+            padding: 5px;
+            border-radius: 2px;
+            color: white !important;
+            border-radius: 4px;
+        }
+        .text-center {
+            text-align: center;
+        }
+        .fw-bold {
+            font-weight: bold;
+        }
+    </style>
+</head>
+
+<body>
+        <p>Please review the following work permit details and approve or reject as appropriate.</p>
+        <table>
+            <tbody>
+                {% for section in sections %}
+                <tr>
+                    <td colspan="3" class="bgy fw-bold text-center">{{section['sectionID']}}. {{ section['section'] }}</td>
+                </tr>
+                {% for question in section['questions'] %}
+                <tr>
+                    <td width="5%" class="fw-bold bgy">{{ loop.index }}</td>
+                    <td class="fw-bold bgy">{{ question['question__quesname'] }}</td>
+                    <td>{{ question['answer'] }}</td>
+                </tr>
+                {% endfor %}
+                {% endfor %}
+            </tbody>
+        </table>
+        <br>
+
+
+        If the work permit details meet your requirements, please proceed with approve it with the
+        <a style="margin-right:20px" class="ybtn-success"
+        href="{{ HOST }}{{ url('work_order_management:reply_workpermit') }}?action=accepted&womid={{workpermitid}}&peopleid={{ peopleid }}"
+        target="_blank">Approve, it</a><br>
+        
+        <hr>
+        
+        Conversely, if any information doesn't meet your requirements you can reject it with
+        <a class="ybtn-warn"
+        href="{{ HOST }}{{ url('work_order_management:reply_workpermit') }}?action=rejected&womid={{workpermitid}}&peopleid={{ peopleid }}"
+        target="_blank">Reject, it</a>
+
+
+</body>
+
+</html>

@@ -1,10 +1,18 @@
-{% extends "base_list.html" %}
+{% extends "globals/base_list.html" %}
 
 <!---- BEGIN CARD TITLE ------>
 {% block card_title %}
-Schedhuled Tasks
+Scheduled Tasks
 {% endblock card_title %}
 <!----- END CARD TITLE -------->
+
+{% block popup_alerts %}
+    {% call general_popup(title='List of Peoples', popup_id='id_people_list', modal_size='modal-md') %}
+            <div class="modal-body">
+                <table class="display cell-border" style="width:100%" id="tabListOfPeoples"></table>
+            </div>
+    {% endcall %}
+{% endblock popup_alerts %}
 
 <!------------------------------------ BEGIN PAGE BREADCUMBS ------------------------------------>
 {% block pagebreadcumb %}
@@ -15,7 +23,7 @@ Schedhuled Tasks
 
 <!-------------------------------------------- BEGIN Schedhuled External Tour TABLE ------------------------------------------->
 {% block table %}
-<table id="schd_task_table" class="display cell-border compact hover" style="width:100%">
+<table id="schd_task_table" class="display cell-border compact" style="width:100%">
     <thead class="fw-bold fs-6">
     </thead>
     <tbody></tbody>
@@ -27,8 +35,16 @@ Schedhuled Tasks
 {% block extra_scripts %}
 <script>
 	var table        = null;
+    var peopleList = null;
+    var ajaxData = {}
 	//const table_id   = "#schd_task_table"
     const formUrl    = "{{ url('schedhuler:jobschdtasks') }}"
+    function showListOfPeoples(id, from){
+        $('#id_people_list').modal('show')
+        ajaxData.id=id
+        ajaxData.model = from
+        peopleList.ajax.reload()
+    }
 
     $(document).ready(function (){
         //datatable initialization
@@ -36,20 +52,33 @@ Schedhuled Tasks
             ajax:{
                 url: "{{ url('schedhuler:jobschdtasks') }}?action=list"
             },
-			responsive: true,
+			{# scrollY: 300,
+            scrollCollapse: true,
+            scrollX:true, #}
             deferRender: true,
+            lengthMenu: [ 10, 20, 50,100 ],
+            pageLength: 10,
             columns:[
-                {data: 'id', visible:false, searchable:false},
+                {data: 'id', visible:false, searchable:false, className:'noVis'},
                 {data: 'jobname', title: "Name"},
                 {data: 'asset__assetname', title: "Asset"},
-                {data: 'qset__qsetname', title: 'Question Set'},
-                {title: 'People/Group', data:null},
+                {data: 'qset__qsetname', title: 'Checklist'},
+                {data: 'assignedto', title:"People/Group", defaultContent:null, render:function(data, type, row, meta){
+                    if(data.includes('[GROUP]')){
+                        return `<a href="javascript:void(0)"  onClick='showListOfPeoples(${row['id']}, "Job")'>${data}</a>`
+                    }else{
+                        return data
+                    }
+                }},
                 {data: 'fromdate', title: "From"},
                 {data: 'uptodate', title: 'To'},
                 {data: 'planduration', title: 'Duration'},
                 {data: 'gracetime', title: 'Gracetime'},
                 {data: 'expirytime', title: 'Expirytime'},
+                {data: 'bu__buname', title: 'Site'},
+                {data: 'bu__bucode', title: 'Site Code', visible:false},
             ],
+            order:[[5, 'desc']],
             dom:`<'row' <'col-sm-6 d-flex justify-content-start'f> <'col-sm-6 d-flex justify-content-end'B> >rt<'row'
 			 <'col-sm-6'l> <'col-sm-6'p><'col-sm-12 d-flex justify-content-center'i>>`,
             columnDefs:[
@@ -62,19 +91,26 @@ Schedhuled Tasks
                 {data: 'jobname', targets: 1, render:function(data, type, row, meta){
                     return `<a href="${formUrl}?id=${row['id']}">${data}</a>`
                 }},
-                {targets:4, render:function(data, type, row, meta){
-                    let peoplename = row['people__peoplename']
-                    let groupname = row['pgroup__groupname']
-                    return peoplename ?  peoplename : groupname
-                }},
                 {targets:[7,8,9], render:function(data, type, row, meta){
                     return `${data} mins`
                 }}
             ],
             buttons:[
+                "searchBuilder",
+                dataTablesPDFConfig(
+                    'Site: {{ request.user.bu.buname }}\nScheduled Task List',
+                    [1,2,3,4,5,6,7,8,9,10,11],
+                    filename = 'schd_task_list'
+                ),
+                dataTablesExcelConfig(
+                    'Site: {{ request.user.bu.buname }}\nScheduled Task List',
+                    [1,2,3,4,5,6,7,8,9,10,11],
+                    filename = 'schd_task_list'
+                ),
+                dataTablesColumnVisibilityConfig(),
 				{
-					text:`Add New &nbsp;<i class='fas fa-plus ch4'></i></a>`,
-					className: "btn btn-sm btn-light-primary btn-hover-rise",
+					text     : `Schedule New &nbsp;<i class='fas fa-plus ch4'></i></a>`,
+					className: "btn btn-sm border border-primary btn-light-primary add_new_task",
 					//action for add_new_button 
 					action: function(e, dt, node, config){
         				window.location.href = "{{ url('schedhuler:jobschdtasks') }}?action=form";
@@ -83,6 +119,8 @@ Schedhuled Tasks
 			]
         
         })
+
+        initializeListOfPeoplesModal(ajaxData, "{{ url('activity:list_of_peoples') }}")
     })
 
 </script>

@@ -1,4 +1,4 @@
-{% extends "base_form.html" %}
+{% extends "globals/base_form.html" %}
 
 <!--BEGIN PAGE TITLE-->
 {% block title %}
@@ -63,8 +63,11 @@ Conveyance
                 <div class="col-md-4 mb-3">
                     {{ conveyanceform.duration.label_tag() }}
                 </div>
-                <div class="col-md-8">
+                <div class="col-md-6">
                     {{ conveyanceform.duration }}
+                </div>
+                <div class="col-md-2 ps-2 d-flex align-items-end">
+                    <h4>Minutes</h4>
                 </div>
             </div>
             
@@ -75,7 +78,7 @@ Conveyance
                 <div class="col-md-6 d-flex d-inline">
                     {{ conveyanceform.distance }}
                 </div>
-                <div class="col-md-2 d-flex align-items-end">
+                <div class="col-md-2 ps-2 d-flex align-items-end">
                     <h4>Kms</h4>
                 </div>
             </div>
@@ -126,10 +129,30 @@ Conveyance
 </form>
 {% endblock form %}
 
+{% block popup_alerts %}
+{{ mainattachment() }}
+{% endblock popup_alerts %}
+
+
+
 {% block extras %}
 <div class ="card shadow-lg" id="journeymap">
     <div class="card-header mb-0">
-        <p class="card-title ch4">Conveyance Journey Path &nbsp;&nbsp;<i class="fas fa-map-marked-alt ch4"></i></p>
+        <p class="card-title ch4">Conveyance Journey Path &nbsp;&nbsp;<i class="fas text-white fa-map-marked-alt ch4"></i></p>
+        <div class="card-toolbar d-none">
+            <div class="form-check">
+                <input class="form-check-input" type="radio" name="Route" id="actual_route">
+                <label class="form-check-label pe-2" for="actual_route">
+                    Actual Performed
+                </label>
+                </div>
+                <div class="form-check">
+                <input class="form-check-input" type="radio" name="Route" id="google_route" checked>
+                <label class="form-check-label" for="google_route">
+                    Google Recommended
+                </label>
+            </div>
+        </div>
     </div>
     <div class="card-body">
         <div id="map" style="height:450px"></div>
@@ -146,15 +169,43 @@ Conveyance
     {% endif %}
 {% endblock page_actions %}
 
+
+{% block breadcumbactions %}
+<button class="btn btn-secondary dropdown-toggle" type="button" id="id_actions" data-bs-toggle="dropdown" aria-expanded="false">
+    Actions
+</button>
+<ul class="dropdown-menu" aria-labelledby="dropdownMenuButton1">
+    <li><a class="dropdown-item" href="#" id="id_attachment"><i class="fas text-white fa-paperclip"></i> &nbsp;Attachment</a></li>
+</ul>
+{% endblock breadcumbactions %}
+
+{% block base_script %}
+
+{% endblock base_script %}
 {% block extra_scripts %}
-<script
-    src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDVbA53nxHKUOHdyIqnVPD01aOlTitfVO0&callback=initAutocomplete&libraries=places&v=weekly"
-    defer
-></script>
+<script>
+    //set the variables which are gonna used in attachment.js file for fetching attachments against the owner
+    var attachmentUrl = '{{ url("activity:attachments") }}'
+    var media_url = '{{MEDIA_URL}}'
+    var attachementDatasource = 'peopleeventlog'
+    var attachmentOwner = '{{ conveyanceform.instance.uuid }}'
+    var csrf = '{{ csrf_token }}'
+    var ownername = "Jobneed"
+    var id = ""
+    var folderType = 'internaltour'
+    var isDefault= "False";
+    var docnumber=1;
+</script>
+<script src="{{ static('assets/plugins/custom/DataTables/datatables.min.js') }}" type="text/javascript"></script>
+<script src="{{ static('assets/js/local/attachment.js') }}" type="text/javascript"></script>
+<script type="text/javascript" defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyC3PUZCB7u2PiV8whHeAshweOPIK_d690o&libraries=places&callback=initAutocomplete"></script>
 <script>
 //global vars
 var map;
-
+var lineCoords;
+var googleMapsResp;
+var actualResp;
+var directionsRenderer 
 //initialize map
 function initAutocomplete(){
     map = new google.maps.Map(document.getElementById("map"), {
@@ -162,6 +213,49 @@ function initAutocomplete(){
         zoom: 6,
         mapTypeId: "roadmap",
     });
+    const directionsService = new google.maps.DirectionsService();
+    directionsRenderer = new google.maps.DirectionsRenderer({
+        map:map, suppressMarkers: true
+    });
+    const geocoder = new google.maps.Geocoder();
+
+    
+        getJourneyCoords("{{ conveyanceform.instance.id }}")
+        .done((resp, status, xhr) => {
+            var startpoint = {lat: parseFloat("{{ conveyanceform.instance.startlocation.y }}"), lng:parseFloat("{{ conveyanceform.instance.startlocation.x }}")}
+            var endpoint = {lat:parseFloat("{{ conveyanceform.instance.endlocation.y }}"), lng:parseFloat("{{ conveyanceform.instance.endlocation.x }}")}
+            let start = "{{ conveyanceform.instance.geojson['startlocation'] }}"
+            let end = "{{ conveyanceform.instance.geojson['endlocation'] }}"
+            //let end = 
+            if(start === "" || end === ""){
+                getAddressOfPoint(geocoder, startpoint, function(addr){
+                $("#id_startlocation").val(addr)
+                })
+                getAddressOfPoint(geocoder, endpoint, function(addr){
+                    $("#id_endlocation").val(addr)
+                })
+            }else{
+                $("#id_startlocation").val(start)
+                $("#id_endlocation").val(end)
+            }
+            
+            if(resp.obj.length > 0){
+                actualResp = resp
+                //drawConveyancePath(resp)
+                plotPoints(resp)
+                var dirConfig = getDirectionConfig(resp.obj[0])
+                getRoute(directionsService, dirConfig, function(response) {
+                    console.log(response, "response")
+                    googleMapsResp = response
+                    directionsRenderer.setDirections(response)
+                })
+            }
+        })
+        .fail((xhr, status, error) => {
+            console.log(error)
+        })
+        directionsRenderer.setMap(map);
+    
 }
 
 //get journey coords
@@ -171,43 +265,59 @@ function getJourneyCoords(id){
         url:`${formUrl}?action=getpath&conid=${id}`,
         beforeSend:function(){}
     }
-    fire_ajax_get(params)
-    .fail((xhr, status, error) => {
-
-    })
-    .done((data, status, xhr) => {
-        drawConveyancePath(data)
-    })
+    return fire_ajax_get(params)
 }
 
 function addMarker(location, map, label){
   return new google.maps.Marker({
     position:location,
-    label:label,
+    label:{
+        text:label,
+        color:'#FFFFFF'
+    },
     map:map
   })
 }
 
+function plotPoints(data){
+    const locations = data.obj[0].path
+    for(i=0; i<locations.length; i++){
+        marker = new google.maps.Marker({
+            position: new google.maps.LatLng(locations[i].lat, locations[i].lng),
+            map: map,
+            icon: {
+                path: google.maps.SymbolPath.CIRCLE,
+                scale: 2,
+                fillOpacity: 0.5,
+                strokeWeight: 1,
+                fillColor: '#9F2B68',
+                strokeColor: '#9F2B68',
+            }
+        });
+    }
+}
+
+
 //draw path on google map
 function drawConveyancePath(data){
-    console.log(data, "$$$$$$")
-    const journeyPath = new google.maps.Polyline({
-    path: data.obj[0].path,
-    geodesic: true,
-    strokeColor: "#FF0000",
-    strokeOpacity: 1.0,
-    strokeWeight: 2,
-  });
-    
-    var bounds = new google.maps.LatLngBounds()
-    journeyPath.getPath().forEach(function(element,index){bounds.extend(element)})
-    map.fitBounds(bounds)
-    journeyPath.setMap(map);
-
-    const InfoString = 
+    if(data && data['obj'].length > 0){
+        const journeyPath = new google.maps.Polyline({
+            path: data.obj[0].path,
+            geodesic: true,
+            strokeColor: "#F57F17",
+            strokeOpacity: 1.0,
+            strokeWeight: 5,
+        }); 
+        
+        var bounds = new google.maps.LatLngBounds()
+        journeyPath.getPath().forEach(function(element,index){bounds.extend(element)})
+        map.fitBounds(bounds)
+        journeyPath.setMap(map);
+        
+        const InfoString = 
             `<div class="card text-dark bg-secondary" style="max-width: 18rem;">
                 <div class="card-body p-0">
-                    <h5>Start Point</h5>
+                    <h5>{0} Point</h5>
                     <table class="table-secondary">
                         {% if conveyanceform.instance.id %}
                         <tbody>
@@ -225,44 +335,43 @@ function drawConveyancePath(data){
                 </div>
             </div>`
 
-     const startInfo = new google.maps.InfoWindow({
-        content: InfoString,
-        maxWidth: 700
-    });
-    
-    const endInfo = new google.maps.InfoWindow({
-        content: InfoString,
-        maxWidth: 700
-    });
-
-
-    //start marker
-    startMarker = addMarker(data.obj[0].path[0], map, 'S')
-    //end marker
-    endMarker = addMarker(data.obj[0].path[data.obj[0].path.length - 1], map, 'E')
-
-    startMarker.addListener("click", () => {
-        startInfo.open({
-        anchor: startMarker,
-        map,
-        shouldFocus: false,
+        const startInfo = new google.maps.InfoWindow({
+            content: InfoString,
+            maxWidth: 700
         });
-    });
-    endMarker.addListener('click', () => {
-        endInfo.open({
-            anchor: endMarker,
+        
+
+        const endInfo = new google.maps.InfoWindow({
+            content: InfoString,
+            maxWidth: 700
+        });
+
+
+        //start marker
+        startMarker = addMarker(data.obj[0].path[0], map, 'S')
+        //end marker
+        endMarker = addMarker(data.obj[0].path[data.obj[0].path.length - 1], map, 'E')
+
+        startMarker.addListener("click", () => {
+            startInfo.open({
+            anchor: startMarker,
             map,
             shouldFocus: false,
+            });
         });
-    })
-
- 
-
+        endMarker.addListener('click', () => {
+            endInfo.open({
+                anchor: endMarker,
+                map,
+                shouldFocus: false,
+            });
+        })
+    }
+    
 }
 
 if("{{ conveyanceform.instance.id }}" != "None"){
     window.initAutocomplete = initAutocomplete;
-    getJourneyCoords("{{ conveyanceform.instance.id }}")
 }else{
     $("#journeymap").hide()
 }
@@ -280,8 +389,19 @@ if("{{ conveyanceform.instance.id }}" != "None"){
 
 
 $(document).ready(function(){
+    //disable all fields if user is not superuser
+    if("{{ request.user.is_superuser }}" !== 'True'){
+        $("input, textarea, select").attr('disabled', "disabled")
+    }
+
+
+    $("#btn_del").hide()
     //set ctzoffset
   	$("#id_ctzoffset").val(-new Date().getTimezoneOffset())
+
+    $("#btn_clear").click(() => {
+        location.href = "{{ url('attendance:conveyance') }}?action=form"
+    })
     //submit form
     $("#conveyanceform").on('submit',  function(e) {
         e.preventDefault()
@@ -309,6 +429,24 @@ $(document).ready(function(){
         })
         
     })
+
+    //on click google_route radio checked directionsRenderer setMap to googleMapsResp
+    $("#google_route").on('change', () => {
+        if($("#google_route").is(':checked')){
+            console.log('changed......')
+            directionsRenderer.setDirections(null)
+            drawConveyancePath(null)
+        }else{
+            directionsRenderer.setDirections(null)
+            drawConveyancePath(actualResp)
+        }
+    })
+
+
+
+
+
+
 })
 </script>
 {% endblock extra_scripts %}

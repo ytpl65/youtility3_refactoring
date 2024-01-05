@@ -1,4 +1,4 @@
-{% extends "base_list.html" %}
+{% extends "globals/base_list.html" %}
 
 {% block card_title %}
 Preview Submissions
@@ -133,12 +133,12 @@ Preview Submissions
 
     {% if not data['ppgroups'] %}
     <!--check previous form id's in session, then load that with the instance -->
-    <a href="{{ url('peoples:wiz_pgroup_form') }}" class="mx-2 btn btn-sm btn-primary rounded-1">
+    <a href="{{ url('peoples:wiz_pgroup_form') }}" class="mx-2 btn btn-sm btn-primary2 rounded-1">
         Previous</a>
     {% else %}
     <!--if previous form id's not in session, then load that form empty-->
     <a href="{{ url('peoples:wiz_pgroup_update', args=[data['ppgroups'][-1] ]) }}"
-        class="mx-2 btn btn-sm btn-primary rounded-1">Previous</a>
+        class="mx-2 btn btn-sm btn-primary2 rounded-1">Previous</a>
     {% endif %}
     <button type="button" class="btn btn-sm btn-success" id="saveWizard">Save Wizard</button>
 </div>

@@ -1,4 +1,4 @@
-{% extends "base_list.html" %}
+{% extends "globals/base_list.html" %}
 
 <!---- BEGIN CARD TITLE ------>
 {% block card_title %}
@@ -42,6 +42,7 @@ $(document).ready(function(){
                         d.pd2 = to_pd
                     }
         },
+        pageLength:50,
         columns     : [
             { "data": "id", visible:false },
             { "data": "plandatetime" , title: "PlanDatetime"},
@@ -67,8 +68,7 @@ $(document).ready(function(){
         responsive : true,
         buttons:[
             {
-                text:`Add New &nbsp;<i class='fas fa-plus ch4'></i></a>`,
-                className: 'btn btn-sm btn-light-primary',
+                text:`Add New &nbsp;<i class='fas text-dark fa-plus'></i></a>`,
                 action: function(e, dt, node, config){
                     window.location.href = "{{ url('activity:adhoctasks') }}?action=form";
                 }

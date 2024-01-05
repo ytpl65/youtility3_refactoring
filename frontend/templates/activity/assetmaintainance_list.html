@@ -1,4 +1,4 @@
-{% extends "base_list.html" %}
+{% extends "globals/base_list.html" %}
 
 <!---- BEGIN CARD TITLE ------>
 {% block card_title %}
@@ -29,6 +29,7 @@ $(document).ready(function(){
         ajax:{
             url:`${urlname}?action=list`
         },
+        pageLength:50,
         deferRender:true,
         responsive:true,
         dom:`<'row' <'col-sm-6 d-flex justify-content-start'f> <'col-sm-6 d-flex justify-content-end'B> >rt<'row'

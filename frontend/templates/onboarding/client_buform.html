@@ -1,4 +1,4 @@
-{% extends "base_form.html" %}
+{% extends "globals/base_form.html" %}
 {% from "onboarding/partials/partial_ta_form.html" import typeassist_form with context %}
 
 <!---- BEGIN PAGE TITLE ---->
@@ -11,7 +11,7 @@ Client Form
 {% block extra_css %}
 <link  href="{{ static('assets/plugins/custom/DataTables/datatables.min.css') }}" rel="stylesheet" type="text/css"/>
 <link  href="{{ static('assets/plugins/custom/Editor-2.0.8/css/editor.dataTables.min.css') }}" rel="stylesheet" type="text/css"/>
-{% endblock extra_css %}
+{% endblock extra_css %} 
 <!--- END CSS -->
 
 <!-------------------------- BEGIN PAGE BREADCUMB ----------------------->
@@ -36,7 +36,7 @@ Client Form
     </div>
     <div class="modal-footer">
         <button type="button" class="btn btn-sm  btn-secondary rounded-1" data-bs-dismiss="modal">Close</button>
-        <input type="submit" class="btn btn-sm  btn-primary rounded-1" value="Sumbit" form="pop_butype_form" />
+        <input type="submit" class="btn btn-sm  btn-primary2 rounded-1" value="Sumbit" form="pop_butype_form" />
     </div>
 </form>
 {% endcall %}
@@ -60,7 +60,7 @@ Client
 
 <!-------------- BEGIN FORM ------------------->
 {% block form %}
-<form action="" method='post' id="id_clientform">
+<form action="" method='post' id="id_clientform" enctype="multipart/form-data" >
     <!-------------------------- CSRF MIDDLEWARE TOKEN --------------------->
     <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
     <input type="hidden" name="{{ clientform.ctzoffset.name }}" id = "{{ clientform.ctzoffset.auto_id }}" value="-1">
@@ -115,24 +115,16 @@ Client
                 </div>
             </div>
             <div class="input-group mb-3">
-                <div class="col-md-4">
+                <div class="col-md-4 pt-2">
                     {{ clientprefsform.pvideolength.label_tag() }}
                 </div>
-                <div class="col-md-8">
+                <div class="col-md-8 pe-2">
                     {{ clientprefsform.pvideolength }}
-                </div>
-            </div>
-            <div class="input-group mb-3">
-                <div class="col-md-4">
-                    {{ clientprefsform.validimei.label_tag() }}
-                </div>
-                <div class="col-md-8">
-                    {{ clientprefsform.validimei }}
                 </div>
             </div>
         </div>
 
-        <div class="col-md-4 offset-md-2 form-check form-switch form-check-solid">
+        <div class="col-md-2 offset-md-1 form-check form-switch form-check-solid">
             <div class="input-group mb-6">
                 <label for="{{ clientform.gpsenable.id_for_label }}" 
                 class="form-check-label bool text-sm-right">{{ clientform.gpsenable }}&nbsp;&nbsp;{{ clientform.gpsenable.label }}</label>
@@ -157,7 +149,18 @@ Client
                 <label for="{{ clientprefsform.usereliver.id_for_label }}" 
                 class="form-check-label bool text-sm-right">{{ clientprefsform.usereliver }}&nbsp;&nbsp;{{ clientprefsform.usereliver.label }}</label>
             </div>
+            <div class="input-group mb-6">
+                <label for="{{ clientprefsform.ispermitneeded.id_for_label }}" 
+                class="form-check-label bool text-sm-right">{{ clientprefsform.ispermitneeded }}&nbsp;&nbsp;{{ clientprefsform.ispermitneeded.label }}</label>
+            </div>
         </div>
+        <div class="col-sm-12 col-md-2">
+            <label for="">Client Logo</label>
+            <div class="h-200px w-200px dropzone" id="dropzone_file">
+
+            </div>
+        </div>
+
     </div>
     <hr>
 </form>
@@ -187,13 +190,13 @@ Client
     </div>
 </div>
 <br>
-<!--List of Buisiness Units --->
+<!--List of business units --->
 <div class="row">
 
 <div class="card">
     <div class="card-header p-0">
         <div class="card-title">
-            List of Sites&nbsp;<i class="fas fa-table ch4"></i>
+            List of Sites&nbsp;<i class="fas text-white fa-table ch4"></i>
         </div>
     </div>
     <div class="card-body">
@@ -203,11 +206,15 @@ Client
 <div class="card">
     <div class="card-header p-0">
         <div class="card-title">
-            List of Admin/Users&nbsp;<i class="fas fa-table ch4"></i>
+            List of Admin/Users&nbsp;<i class="fas text-white fa-table ch4"></i>
         </div>
     </div>
     <div class="card-body">
         <table id="tabAdminUsers" class="display cell-border compact hover"></table>
+        <div class="card-footer ps-0">
+            <p class="text-primary">Note: Select site from list of sites where you want to create a site-admin</p>
+            <p class="text-primary"><b>Note:</b>Default password for new admin-user is { Login ID }@123</p> 
+        </div>
     </div>
 </div>
 </div>
@@ -252,6 +259,56 @@ Client
             $('#DTE_Field_identifier').append(newOption).trigger('change');
         }
     }
+
+    function validateCode(bucode){
+        // validate bucode return false bucode has special characters and contains space
+        var regex = /^[a-zA-Z0-9_]+$/;
+        if(!regex.test(bucode)){
+            return false;
+        }return true;
+    }
+    
+    function validateName(name){
+        // validate bucode return false bucode has special characters and contains space
+        var regex = /^[a-zA-Z0-9_\-@#\.]+$/;
+        if(!regex.test(name)){
+            return false;
+        }return true;
+    }
+
+    function validateEmail(email){
+        //validate email return false if email is invalid
+
+        var regex = /^(([^<>()[\]\\.,;:\s@\"]+(\.[^<>()[\]\\.,;:\s@\"]+)*)|(\".+\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
+        if(!regex.test(email)){
+            return false;
+        }return true
+    }
+
+    function validatePhone(phone) {
+        var regex = /^[\+]?[(]?[0-9]{3}[)]?[-\s\.]?[0-9]{3}[-\s\.]?[0-9]{4,6}$/im;
+        if (!regex.test(phone)) {
+            return false;
+        }
+        return true;
+    }
+    function validateLoginid(loginid){
+        //validate loginid return false if loginid is invalid
+        var regex = /^[a-zA-Z0-9@#_\.\-\_]+$/;
+        if(!regex.test(loginid)){
+            return false;
+        }return true
+    }
+
+    function validateDate(date){
+        //validate date return false if date is invalid
+        var regex = /^\d{4}-\d{2}-\d{2}$/;
+        if(!regex.test(date)){
+            return false;
+        }return true
+    }
+
+
     $(document).ready(function () {
         //set ctzoffset
   	    $("#id_ctzoffset").val(-new Date().getTimezoneOffset())
@@ -267,7 +324,17 @@ Client
         $("#id_portletcapability").attr("form", "id_clientform")
         $("#id_mobilecapability").attr("form", "id_clientform")
 
-
+        //on usereliver checked make reliveronpeoplecount required and class required to its label field
+        $("#id_usereliver").change(function(){
+            console.log("chaged....")
+            if($(this).is(":checked")){
+                $("#id_reliveronpeoplecount").attr("required", true)
+                $("label[for='id_reliveronpeoplecount']").addClass("required")
+            }else{
+                $("#id_reliveronpeoplecount").attr("required", false)
+                $("label[for='id_reliveronpeoplecount']").removeClass("required")
+            }
+        })
 
         // submit the popup-butype-taform for validation and saving in db.
         $('#pop_butype_form').on('submit', sumit_popup_form({
@@ -350,6 +417,7 @@ Client
             }
             //code text transform to uppercase while typing
             $("#DTE_Field_bucode").css("text-transform", "uppercase")
+            $('.DTED_Lightbox_Content').draggable()
         })
 
         //datatable  list of business units
@@ -365,7 +433,9 @@ Client
                 {data: 'identifier_id', visible: false, defaulContent:null},
                 {data: 'parent__buname', title: 'Belongs to'},
                 {data: 'parent_id', visible: false, defaulContent:null},
-                {data: 'enable', title: 'Enable'},
+                {data: 'enable', title: 'Enable', render:function(data, type, row, meta){
+					return data === true ? '<i class="bi bi-check-circle-fill text-success"></i>': '<i class="bi bi-x-circle-fill text-danger"></i>'				
+				}},
 
             ],
             dom:`<'row' <'col-sm-6 d-flex justify-content-start'f> <'col-sm-6 d-flex justify-content-end'B> >rt<'row'
@@ -380,6 +450,11 @@ Client
             ],
             select: {
                 style: 'single'
+            },
+            createdRow:function(row, data, dataIndex){
+                if(data.enable === false){
+                    $(row).addClass('disabled-record text-white')
+                }
             }
         })
         
@@ -388,12 +463,10 @@ Client
             ajax: {
                 url:"{{ url('onboarding:client') }}",
                 data:function(d){
-                    var selected = tabListBus.row( { selected: true } )
-                    if(selected.any()){
                         let currentRow = getCurrentEditingRow(adminsEditor, tabListAdmins)
                         d.pk = currentRow !== 'None' ? currentRow['id'] : currentRow
                         d.csrfmiddlewaretoken = '{{ csrf_token }}'
-                        d.site_id = selected.data().id;
+                        d.client_id = '{{ clientform.instance.id }}'
                         d.ctzoffset = $("#id_ctzoffset").val()
                         d.peoplecode = $('#DTE_Field_peoplecode').val()
                         d.peoplename = $('#DTE_Field_peoplename').val()
@@ -405,19 +478,18 @@ Client
                         d.dateofbirth = $('#DTE_Field_dateofbirth').val()
                         d.dateofjoin = $('#DTE_Field_dateofjoin').val()
                         d.adminspostdata=true
-                    }
                     
                 }
             },
             fields:[
                 {label: 'Name', name: 'peoplename', data: 'peoplename'},
-                {label: 'Code', name: 'peoplecode', data: 'peoplecode'},
+                {label: 'Code', name: 'peoplecode', data: 'peoplecode', fieldInfo:'Enter text without any spaces and special characters'},
                 {label: 'Email', name: 'email', data: 'email'},
                 {label: 'Login ID', name: 'loginid', data: 'loginid'},
-                {label: 'Mobile', name: 'mobno', data: 'mobno'},
-                {label: 'Date Of Birth', name: 'dateofbirth', data: 'dateofbirth', type:'datetime'},
+                {label: 'Mobile', name: 'mobno', data: 'mobno', fieldInfo:"Enter country code followed by 10 digit mobile no, For eg: +91xxxxxxxxxx"},
+                {label: 'Date Of Birth', name: 'dateofbirth', data: 'dateofbirth', type:'datetime', fieldInfo:"Select or Enter date of birth in yyyy-mm-dd format"},
                 {label: 'Date Of Join', name: 'dateofjoin', data: 'dateofjoin', type:'datetime'},
-                {label: 'Is Admin', name: 'isadmin', data: 'isadmin',type: 'select', def:1,
+                {label: 'Admin', name: 'isadmin', data: 'isadmin',type: 'select', def:1, readonly:true,
                 options:   [
                     { label: 'True', value: 1 },
                     { label: 'False', value: 0 }
@@ -438,31 +510,119 @@ Client
             }
         })
 
+        
+
         adminsEditor.on('open', function(e, mode, action){
-            $(".DTE_Field").addClass('p-1') // add required classes
+            $(".DTE_Field").addClass('p-1')
+            $("#DTE_Field_dateofbirth, #DTE_Field_dateofjoin").flatpickr({
+                dateFormat: 'Y-m-d'
+            })
+        })
+
+        adminsEditor.on('opened', function(e, mode, action){
+            $('.DTED_Lightbox_Content').draggable()
+            this.field('isadmin').disable()
         })
 
         //adminsEditor form validations
         adminsEditor.on('preSubmit', function(e, o, action){
-            if(action !== 'remove'){
-                var peoplename = this.field('peoplename')
-                var peoplecode = this.field('peoplecode')
-                var email = this.field('email')
-                var loginid = this.field('loginid')
-                var mobno = this.field('mobno')
-                var dateofbirth = this.field('dateofbirth')
-                var dateofjoin = this.field('dateofjoin')
-                var isadmin = this.field('isadmin')
+            var peoplename = this.field('peoplename')
+            var peoplecode = this.field('peoplecode')
+            var email = this.field('email')
+            var loginid = this.field('loginid')
+            var mobno = this.field('mobno')
+            var dateofbirth = this.field('dateofbirth')
+            var dateofjoin = this.field('dateofjoin')
+            var isadmin = this.field('isadmin')
+            if(action == "create"){
+                //check for duplicates in the table
+                tabListAdmins.column(1).data().filter(function(value, index){
+                    if(value === peoplecode.val() || value === loginid.val()){
+                        bucode.error('Peoplecode or loginid with this value already exists')
+                    }
+                })
+                if(this.inError()){
+                    return false
+                }
             }
+            if(action !== 'remove'){
+
+                if(!(peoplecode.isMultiValue() || peoplename.isMultiValue() || mobno.isMultiValue() ||
+                 loginid.isMultiValue() || dateofbirth.isMultiValue() || dateofjoin.isMultiValue())){
+                    if(!peoplename.val()){
+                        console.log(peoplename.val(), "@@@@222")
+                        peoplename.error('Please enter a name')
+                    }
+                    if(!email.val()){
+                        console.log(email.val(), "@@@@222")
+                        email.error('Please enter a email')
+                    }else{
+                        if(!validateEmail(email.val())){
+                            email.error('Please enter a valid email address')
+                        }
+                    }
+                    if(!mobno.val()){
+                        console.log(mobno.val(), "@@@@222")
+                        mobno.error('Please enter a mobno')
+                    }else{
+                        if(!validatePhone(mobno.val())){
+                            mobno.error('Please enter a valid Mobile number')
+                        }
+                    }
+                    if(!peoplecode.val()){
+                        console.log(peoplecode.val(), "@@@@222")
+                        peoplecode.error('Please enter a code')
+                    }else{
+                        if(!validateCode(peoplecode.val())){
+                            peoplecode.error('Please enter a valid code only alphabets numbers and underscore allowed')
+                        }
+                    }
+                    if(!loginid.val()){
+                        console.log(loginid.val(), "@@@@222")
+                        loginid.error('Please enter a loginid')
+                    }
+                    if(!dateofbirth.val()){
+                        console.log(dateofbirth.val(), "@@@@222")
+                        dateofbirth.error('Please enter a dateofbirth')
+                    }else{
+                        if(!validateDate(dateofbirth.val())){
+                            dateofbirth.error('Please enter a valid "Date of birth" in yyyy-mm-dd format')
+                        }
+                    }
+                    if(!dateofjoin.val()){
+                        console.log(dateofjoin.val(), "@@@@222")
+                        dateofjoin.error('Please enter a dateofjoin')
+                    }else{
+                        if(!validateDate(dateofjoin.val())){
+                            dateofjoin.error('Please enter a valid "Date of join" in yyyy-mm-dd format')
+                        }
+                    }
+                }
+                if(this.inError()){
+                    return false
+                }
+            }
+
         })
 
         //listbu_editor form validations
         listbu_editor.on('preSubmit', function(e, o, action){
+            var buname = this.field('buname')
+            var bucode = this.field('bucode')
+            var identifier = this.field('identifier')
+            var parent = this.field('parent')
+            if(action == "create"){
+                //check for duplicates in the table
+                tabListBus.column(1).data().filter(function(value, index){
+                    if(value === bucode.val()){
+                        bucode.error('Site with this code already exists')
+                    }
+                })
+                if(this.inError()){
+                    return false
+                }
+            }
             if(action !== 'remove'){
-                var buname = this.field('buname')
-                var bucode = this.field('bucode')
-                var identifier = this.field('identifier')
-                var parent = this.field('parent')
                 if(!(buname.isMultiValue() || bucode.isMultiValue() || identifier.isMultiValue() || parent.isMultiValue())){
                     if(!buname.val()){
                         console.log(buname.val(), "@@@@222")
@@ -471,6 +631,11 @@ Client
                     if(!bucode.val()){
                         console.log(bucode.val(), "@@@@222")
                         bucode.error('Please enter a code')
+                    }else{
+                        //validate budcode
+                        if(!validateCode(bucode.val())){
+                            bucode.error('Please enter a valid code - alphabets, numbers and underscore allowed')
+                        }
                     }
                     if(!$("#DTE_Field_identifier").val()){
                         console.log(identifier.val(), "@@@@222")
@@ -481,16 +646,7 @@ Client
                         parent.error('Please select a parent')
                     }
                     
-                    //check for duplicates in the table
-                    tabListBus.column(1).data().filter(function(value, index){
-                        if(value === bucode.val()){
-                            bucode.error('Site with this code already exists')
-                        }
-                    })
-                    //dont allow special characters and spaces in the bucode, except '-, _'
-                    if(!bucode.val().match(/^[a-zA-Z0-9_-]+$/)){
-                        bucode.error('Please enter a valid code')
-                    }
+                    
                     if(this.inError()){
                         return false
                     }
@@ -501,23 +657,41 @@ Client
             }
         })
 
+        setUpDropzone({
+            foldertype:"client",
+            ownername:'Business Unit',
+            attachmenttype:"ATTACHMENT",
+            uploadUrl:"{{ url('activity:attachments') }}",
+            csrftoken:  "{{ csrf_token }}",
+            ctzoffset:$("#id_ctzoffset").val(),
+            formId:"#dropzone_file", 
+            peopleid: "{{ request.user.id }}",
+            ownerid:"{{ ownerid }}",
+            create_or_update:'{{ clientform.instance.id }}' == 'None' ? "create" : "update",
+            media_url: "{{ MEDIA_URL }}",
+            width:300,
+            height:400,
+        })
+
         
         //datatable  list of peoples
         tabListAdmins= $("#tabAdminUsers").DataTable({
             ajax:{
-                url: `{{ url('onboarding:client') }}?action=getadmins&id={{ clientform.instance.id }}`
+                url: `{{ url('onboarding:client') }}?action=getadmins&clientid={{ clientform.instance.id }}`,
+                data:function(d){
+            }
             },
             columns:[
                 {data: 'id', defaulContent: "", visible:false},
                 {data: 'peoplecode', title: 'Code'},
                 {data: 'peoplename', title: 'Name'},
-                {data: 'loginid', title: 'Login'},
+                {data: 'loginid', title: 'Login ID'},
                 {data: 'email', title: 'Email'},
                 {data: 'mobno', title: 'Mobile'},
                 {data: 'dateofbirth', title: 'Date Of Birth', visible:false},
                 {data: 'dateofjoin', title: 'Date Of Join', visible:false},
                 {data: 'gender', title: 'Gender'},
-                {data: 'isadmin', title: 'Is Admin'},
+                {data: 'isadmin', title: 'Admin'},
 
             ],
             dom:`<'row' <'col-sm-6 d-flex justify-content-start'f> <'col-sm-6 d-flex justify-content-end'B> >rt<'row'
@@ -535,18 +709,8 @@ Client
             }
         })
         $("#tabAdminUsers_wrapper .buttons-create").addClass('disabled')//on page load disable new button of child table
-        $("#tabAdminUsers_wrapper .buttons-create").attr({'data-toggle':"tooltip", 'data-placement':"top", 'title':"Select Site First"})
 
 
-        tabListBus.on( 'select', function () {
-            $("#tabAdminUsers_wrapper .buttons-create").removeClass('disabled')
-
-        } );
-        
-        tabListBus.on( 'deselect', function () {
-            $("#tabAdminUsers_wrapper .buttons-create").addClass('disabled')
-            $("#tabAdminUsers_wrapper .buttons-create").attr({'data-toggle':"tooltip", 'data-placement':"top", 'title':"Select Section First"})
-        } );
 
         //on submit form post request
         $("#id_clientform").submit((e) => {
@@ -554,7 +718,7 @@ Client
             var form = $(this);
             const params   = { url: $(form).attr("action"), modal: false }
             const id = "{{ clientform.instance.pk }}" //form instance id
-            var   payLoad  = {formData:$("#id_clientform").serialize(), csrfmiddlewaretoken: '{{ csrf_token }}'} 
+            var   payLoad  = {formData:$("#id_clientform").serialize(), csrfmiddlewaretoken: '{{ csrf_token }}', 'uuid':"{{ ownerid }}" } 
             if(id != 'None'){
                 var newPayLoad = {...payLoad, 'pk':id}
                 payLoad = newPayLoad
@@ -569,13 +733,12 @@ Client
             })
         })
         //delete ajax request 
-        function isClientDeleted(id){ 
+        function isClientDeleted(id){
             let urlname = "{{ url('onboarding:client') }}"
             const params = {url:`${urlname}?action=delete&id=${id}`}
             fire_ajax_get(params)
             .done((data, status, xhr) => {
                 if(!xhr.status === 200){
-                    console.log("deleted...")
                     return false
                 }
                 return true
@@ -606,6 +769,15 @@ Client
                 })
             }
         })
+        
+
+        //disable the create button of sites table
+        $("#tabListBu_wrapper .buttons-create").addClass('disabled')
+        //if client form instance  not equal to None then enable the create button of sites table
+        if("{{ clientform.instance.pk }}" != 'None'){
+            $("#tabListBu_wrapper .buttons-create").removeClass('disabled')
+            $("#tabAdminUsers_wrapper .buttons-create").removeClass('disabled')
+        }
     })
 </script>
 {% endblock extra_scripts %}

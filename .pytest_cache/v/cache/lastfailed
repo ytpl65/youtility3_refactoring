@@ -1,4 +1,0 @@
-{
-  "apps/onboarding/tests/test_views.py::test_ta_create": true,
-  "apps/peoples/tests/test_views.py::test_signin2": true
-}

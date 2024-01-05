@@ -51,7 +51,7 @@ function spreadColNames() {
   return [
     { name: "bu", targets: 1 },
     { name: "buname", targets: 2 },
-    { name: "gpslocation", targets: 3 },
+    { name: "bu__gpslocation", targets: 3 },
     { name: "distance", targets: 6 },
     { name: "duration", targets: 7 },
     { name: "breaktime", targets: 8 },
@@ -79,31 +79,21 @@ function updateAssignedSitesTable(btime, checkListId, checkListName) {
   asgdsites_table.row(".selected").data(newData).draw();
 }
 
-function calculateAndDisplayRoute(data, routeFreq) {
+function calculateAndDisplayRoute(data, routeFreq, optimize=false) {
   if (data.length > 1) {
-    if (routeFreq > 1) {
-      //copy first obj
-
-      let copiedFirstObject = JSON.parse(JSON.stringify(data[0]));
-      data[data.length] = copiedFirstObject;
-    }
-
     directionService.route(
-      getDirectionConfig(data),
+      getDirectionConfig(data, optimize),
       function (response, status) {
         if (status === "OK") {
           data = calculateLatLngPoints(response, data, routeFreq);
           data = calculateDistanceDuration(response, data);
-          fpoint = ManageFrequenciedRoutes(data, routeFreq);
-          var rowData = routeFreq > 1 ? fpoint : data;
-          //data = checkFrequenciedData(R[0], routeFreq, R[1], $("#id_breaktime").val())
+          var rowData = data//routeFreq > 1 ? fpoint : data;
           reloadAssignedSitesTable(rowData);
           reCaclTime();
           isDirectionSaved = true;
         } else {
-          //google maps fetching error
           show_error_alert(
-            `Directions request failed due to ${status}`,
+            `Directions request failed due to ${status}, Please check your coordinates of your checkpoints`,
             "GMaps Error!"
           );
         }
@@ -112,9 +102,9 @@ function calculateAndDisplayRoute(data, routeFreq) {
   }
 }
 
-function getDirectionConfig(data) {
-  var gpsStartCoords = JSON.parse(data[0]["gpslocation"])["coordinates"];
-  var gpsEndCoords = JSON.parse(data[data.length - 1]["gpslocation"])[
+function getDirectionConfig(data, optimize) {
+  var gpsStartCoords = JSON.parse(data[0]["bu__gpslocation"])["coordinates"];
+  var gpsEndCoords = JSON.parse(data[data.length - 1]["bu__gpslocation"])[
     "coordinates"
   ];
 
@@ -126,7 +116,15 @@ function getDirectionConfig(data) {
 
   var wayPoints = [];
   for (var i = 1; i < data.length - 1; i++) {
-    let wpCoords = JSON.parse(data[i]["gpslocation"])["coordinates"];
+    if(!data[i]['bu__gpslocation']){
+      Swal.fire(
+        'No coordinates found!',
+        'Some of your checkpoints has not assigned GPG coords yet.',
+        'warning'
+      )
+      break
+    }
+    let wpCoords = JSON.parse(data[i]["bu__gpslocation"])["coordinates"];
     wayPoints.push({
       location: new google.maps.LatLng(
         Number(wpCoords[1]),
@@ -141,7 +139,7 @@ function getDirectionConfig(data) {
     destination: endPoint,
     waypoints: wayPoints,
     travelMode: "DRIVING",
-    optimizeWaypoints: true,
+    optimizeWaypoints: optimize,
   };
 }
 
@@ -207,7 +205,7 @@ function d2DrawMarker(
   no = null,
   left = null
 ) {
-  var latlng = JSON.parse(row["gpslocation"])["coordinates"];
+  var latlng = JSON.parse(row["bu__gpslocation"])["coordinates"];
   if (end && routeFreq > 1) {
     var max = idx + 1;
     nStr = `${max - idx},${max}`;
@@ -219,20 +217,21 @@ function d2DrawMarker(
     nStr = `${idx + 1}`;
   }
   var infoWindowHtml = "";
+  const status_color_code = {'ASSIGNED':"00bfff", 'AUTOCLOSED':"FB6D3E", 'COMPLETED':"7AD308"}
+  let colorcode = status_color_code[row['jobstatus']] ?  status_color_code[row['jobstatus']] : '00bfff'
   var markerC = new google.maps.Marker({
     map: d2map,
-    title: row["buname"],
+    title: row["bu__buname"],
     position: new google.maps.LatLng(latlng[1], latlng[0]),
-    //icon:     "https://chart.googleapis.com/chart?chst=d_map_spin&chld=0.8|0|00bfff|10|b|" + (idx + 1),
     icon:
-      "https://chart.googleapis.com/chart?chst=d_map_spin&chld=0.8|0|00bfff|10|b|" +
-      nStr,
+      `https://chart.googleapis.com/chart?chst=d_map_spin&chld=0.8|0|${colorcode}|10|b|` +
+      (idx+1),
   });
   google.maps.event.addListener(markerC, "click", function () {
     //var infoWindowHtml= '<h3 style="background-color: #FFF8C9;font-weight:bold;">' + row['buname'] + '</h3>';
     var infoWindowHtml =
       "<span style= 'font-weight: bold;font-size:16px'>" +
-      row["buname"] +
+      row["bu__buname"] +
       "</span>";
     d2infowindow.setContent(infoWindowHtml);
     d2infowindow.open(d2map, markerC);
@@ -322,6 +321,7 @@ function ManageFrequenciedRoutes(data, routeFreq) {
 
 function reloadAssignedSitesTable(data) {
   asgdsites_table.rows().remove().draw();
+  console.log(data, "data")
   asgdsites_table.rows.add(data).draw();
 }
 
@@ -460,7 +460,7 @@ function populateTourDetailsCard(params) {
   );
   $("#lblTourFrequency").html($("#id_tourfrequency").val());
   $("#lblBreakTime").html($("#id_breaktime").val());
-  $("#lblIsRTour").html($("#id_israndom").is(":checked") ? "Yes" : "No");
+  $("#lblIsRTour").html(israndom);
 
   asgdsites_table.rows.add(params.data).draw();
 }
@@ -475,7 +475,6 @@ function setShiftMin(_shift) {
 
     _shiftMinute = stime > etime ? 1440 + etime - stime : etime - stime;
 
-    //$("#lblSTime").html(_shiftMinute + " Min");
     $("#lblSTime").html(secondsToString(_shiftMinute * 60));
   }
 }

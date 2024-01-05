@@ -2,27 +2,43 @@
 DEFINE FUNCTIONS AND CLASSES WERE CAN BE USED GLOBALLY.
 '''
 import ast
-import threading
-from PIL import ImageFile
-import os.path
 import json
+import logging
+import os.path
+import threading
+import random
+from pprint import pformat
+from datetime import datetime
+from dateutil import parser
+
 import django.shortcuts as scts
 from django.contrib import messages as msg
-from django.template.loader import render_to_string
-from django.http import JsonResponse, response as rp
-from django.db.models import Q
-import apps.peoples.utils as putils
-from pprint import pformat
-from apps.peoples import models as pm
-from apps.tenants.models import Tenant
-import logging
-from rest_framework.utils.encoders import JSONEncoder
 from django.contrib.gis.measure import Distance
-import apps.onboarding.models as ob
+from django.db.models import Q
+from django.http import JsonResponse
+from django.http import response as rp
+from django.template.loader import render_to_string
+from PIL import ImageFile
+from rest_framework.utils.encoders import JSONEncoder
+from django.conf import settings
+
 import apps.activity.models as am
+import apps.onboarding.models as ob
+import apps.peoples.utils as putils
+from apps.peoples import models as pm
+from apps.work_order_management.models  import Wom
+from apps.tenants.models import Tenant
+from apps.core import exceptions as excp
+
 logger = logging.getLogger('__main__')
 dbg = logging.getLogger('__main__').debug
 
+def get_current_year():
+    return datetime.now().year
+
+
+def get_appropriate_client_url(client_code):
+    return settings.CLIENT_DOMAINS.get(client_code)
 
 class CustomJsonEncoderWithDistance(JSONEncoder):
     def default(self, obj):
@@ -72,8 +88,8 @@ def handle_Exception(request, force_return=None):
 
 def handle_RestrictedError(request):
     data = {'errors': "Unable to delete, due to dependencies"}
-    logger.warning("%s", data['error'], exc_info=True)
-    msg.error(request, data['error'], "alert-danger")
+    logger.warning("%s", data['errors'], exc_info=True)
+    msg.error(request, data['errors'], "alert-danger")
     return rp.JsonResponse(data, status=404)
 
 
@@ -90,14 +106,14 @@ def handle_intergrity_error(name):
     return rp.JsonResponse({'errors': msg}, status=404)
 
 
-def render_form_for_update(request, params, formname, obj, extra_cxt=None):
+def render_form_for_update(request, params, formname, obj, extra_cxt=None, FORM=None):
     if extra_cxt is None:
         extra_cxt = {}
     logger.info("render form for update")
     try:
         logger.info(f"object retrieved '{obj}'")
-        F = params['form_class'](
-            instance=obj, request=request, initial=params['form_initials'])
+        F = FORM or params['form_class'](
+            instance=obj, request=request)
         C = {formname: F, 'edit': True} | extra_cxt
 
         html = render_to_string(params['template_form'], C, request)
@@ -129,6 +145,23 @@ def render_form_for_delete(request, params, master=False):
         return handle_Exception(request, params)
 
 
+def clean_gpslocation( val):
+    import re
+
+    from django.contrib.gis.geos import GEOSGeometry
+    from django.forms import ValidationError
+
+    if gps := val:
+        if gps == 'NONE': return None
+        regex = '^([-+]?)([\d]{1,2})(((\.)(\d+)(,)))(\s*)(([-+]?)([\d]{1,3})((\.)(\d+))?)$'
+        gps = gps.replace('(', '').replace(')', '')
+        if not re.match(regex, gps):
+            raise ValidationError("Invalid GPS location")
+        gps.replace(' ', '')
+        lat, lng = gps.split(',')
+        gps = GEOSGeometry(f'SRID=4326;POINT({lng} {lat})')
+    return gps
+
 def render_grid(request, params, msg, objs, extra_cxt=None):
     if extra_cxt is None:
         extra_cxt = {}
@@ -155,8 +188,7 @@ def render_grid(request, params, msg, objs, extra_cxt=None):
 
 
 def paginate_results(request, objs, params):
-    from django.core.paginator import (Paginator,
-                                       EmptyPage, PageNotAnInteger)
+    from django.core.paginator import EmptyPage, PageNotAnInteger, Paginator
 
     logger.info('paginate results'if objs else "")
     if request.GET:
@@ -179,6 +211,7 @@ def get_instance_for_update(postdata, params, msg, pk, kwargs=None):
     logger.info("%s", msg)
     obj = params['model'].objects.get(id=pk)
     logger.info(f"object retrieved '{obj}'")
+    ic(kwargs)
     return params['form_class'](postdata, instance=obj, **kwargs)
 
 
@@ -200,6 +233,7 @@ def get_model_obj(pk, request, params):
 def local_to_utc(data, offset, mobile_web):
     # sourcery skip: avoid-builtin-shadow
     from datetime import datetime, timedelta
+
     import pytz
     dateFormatMobile = "%Y-%m-%d %H:%M:%S"
     dateFormatWeb = "%d-%b-%Y %H:%M"
@@ -211,7 +245,7 @@ def local_to_utc(data, offset, mobile_web):
                 dt_utc = local_dt.astimezone(pytz.UTC).replace(microsecond=0)
                 data[k] = dt_utc.strftime(format)
         except Exception:
-            logger.error("datetime parsing ERROR", exc_info=True)
+            logger.critical("datetime parsing ERROR", exc_info=True)
             raise
         else:
             return data
@@ -224,65 +258,100 @@ def local_to_utc(data, offset, mobile_web):
                 dt = dt_utc.strftime(format)
                 newdata.append(dt)
         except Exception:
-            logger.error("datetime parsing ERROR", exc_info=True)
+            logger.critical("datetime parsing ERROR", exc_info=True)
             raise
         else:
             return newdata
 
 
 def get_or_create_none_people(using=None):
-    obj, _ = pm.People.objects.filter(Q(peoplecode='NONE') | Q(peoplename='NONE')).get_or_create(
-        id=1,
+    obj, _ = pm.People.objects.get_or_create(
+        peoplecode='NONE', peoplename = 'NONE',
         defaults={
-            'peoplecode': 'NONE', 'peoplename': 'NONE',
             'email': "none@youtility.in", 'dateofbirth': '1111-1-1',
-            'dateofjoin': "1111-1-1", 'id': 1
+            'dateofjoin': "1111-1-1",
         }
     )
     return obj
 
+def get_none_typeassist():
+    try:
+        return ob.TypeAssist.objects.get(id=1)
+    except ob.TypeAssist.DoesNotExist:
+        o, _ = get_or_create_none_typeassist()
+        return o
+
 
 def get_or_create_none_pgroup():
     obj, _ = pm.Pgroup.objects.get_or_create(
-        id=1,
+        groupname="NONE",
+        defaults={},
+    )
+    return obj
+
+
+def get_or_create_none_location():
+    obj, _ = am.Location.objects.get_or_create(
+        loccode= "NONE", locname = 'NONE',
         defaults={
-            'groupname': "NONE", 'id': 1
-        }
+            'locstatus':'SCRAPPED'
+            }
     )
     return obj
 
 
 def get_or_create_none_cap():
     obj, _ = pm.Capability.objects.get_or_create(
-        id=1,
-        defaults={
-            'capscode': "NONE", 'capsname': 'NONE', 'id': 1
-        }
+        capscode = "NONE", capsname = 'NONE',
+        defaults={}
     )
     return obj
 
 
 def encrypt(data: bytes) -> bytes:
     import zlib
-    from base64 import urlsafe_b64encode as b64e, urlsafe_b64decode as b64d
+    from base64 import urlsafe_b64decode as b64d
+    from base64 import urlsafe_b64encode as b64e
     data = bytes(data, 'utf-8')
     return b64e(zlib.compress(data, 9))
 
 
 def decrypt(obscured: bytes) -> bytes:
     import zlib
-    from base64 import urlsafe_b64encode as b64e, urlsafe_b64decode as b64d
+    from base64 import urlsafe_b64decode as b64d
+    from base64 import urlsafe_b64encode as b64e
     byte_val = zlib.decompress(b64d(obscured))
     return byte_val.decode('utf-8')
 
+def save_capsinfo_inside_session(people, request):
+    logger.info('save_capsinfo_inside_session... STARTED')
+    from apps.core.raw_queries import get_query
+    from apps.peoples.models import Capability
+    web, mob, portlet, report = putils.create_caps_choices_for_peopleform(request.user.client)
+    request.session['client_webcaps'] = list(web)
+    request.session['client_mobcaps'] = list(mob)
+    request.session['client_portletcaps'] = list(portlet)
+    request.session['client_reportcaps'] = list(report)
+    
+    caps = Capability.objects.raw(get_query('get_web_caps_for_client'))
+    request.session['people_webcaps'] = list(Capability.objects.filter(capscode__in = people.people_extras['webcapability'], cfor='WEB').values_list('capscode', 'capsname')) 
+    request.session['people_mobcaps'] = list(Capability.objects.filter(capscode__in = people.people_extras['mobilecapability'], cfor='MOB').values_list('capscode', 'capsname')) 
+    request.session['people_reportcaps'] = list(Capability.objects.filter(capscode__in = people.people_extras['reportcapability'], cfor='REPORT').values_list('capscode', 'capsname')) 
+    request.session['people_portletcaps'] = list(Capability.objects.filter(capscode__in = people.people_extras['portletcapability'], cfor='PORTLET').values_list('capscode', 'capsname')) 
+    logger.info('save_capsinfo_inside_session... DONE')
+    
+    
 
-def save_user_session(request, people):
+
+
+def save_user_session(request, people, ctzoffset=None):
     '''save user info in session'''
-    from django.core.exceptions import ObjectDoesNotExist
     from django.conf import settings
+    from django.core.exceptions import ObjectDoesNotExist
 
     try:
         logger.info('saving user data into the session ... STARTED')
+        if ctzoffset: request.session['ctzoffset'] = ctzoffset
         if people.is_superuser is True:
             request.session['is_superadmin'] = True
             session = request.session
@@ -292,15 +361,19 @@ def save_user_session(request, people):
             logger.info(request.session['is_superadmin'])
             putils.save_tenant_client_info(request)
         else:
-            client = putils.save_tenant_client_info(request)
+            putils.save_tenant_client_info(request)
             request.session['is_superadmin'] = people.peoplecode == 'SUPERADMIN'
             request.session['is_admin'] = people.isadmin
-            #request.session['assigned_siteids'] = Bt.objects.get_sitelist_web(request.session['client_id'], request.user.id)
-            # get cap choices and save in session data
-            putils.get_caps_choices(
-                client=client, session=request.session, people=people)
+            save_capsinfo_inside_session(people, request)
             logger.info('saving user data into the session ... DONE')
+        request.session['assignedsites'] = list(pm.Pgbelonging.objects.get_assigned_sites_to_people(people.id))
+        request.session['assignedsitegroups'] = people.people_extras['assignsitegroup']
+        request.session['clientcode'] = request.user.client.bucode
+        request.session['clientname'] = request.user.client.buname
+        request.session['sitename'] = request.user.bu.buname
+        request.session['sitecode'] = request.user.bu.bucode
         request.session['google_maps_secret_key'] = settings.GOOGLE_MAP_SECRET_KEY
+        request.session['is_workpermit_approver'] = request.user.people_extras['isworkpermit_approver']
     except ObjectDoesNotExist:
         logger.error('object not found...', exc_info=True)
         raise
@@ -417,6 +490,7 @@ def delete_object(request, model, lookup, ids, temp,
         cxt = {form_name: form, jsonformname: jsonform, 'edit': True}
         res = scts.render(request, temp, context=cxt)
     except Exception:
+        logger.critical("something went wrong!", exc_info=True)
         msg.error(request, '[ERROR] Something went wrong',
                   "alert alert-danger")
         cxt = {form_name: form, jsonformname: jsonform, 'edit': True}
@@ -431,7 +505,7 @@ def delete_unsaved_objects(model, ids):
                 'Found unsaved objects in session going to be deleted...')
             model.objects.filter(pk__in=ids).delete()
         except Exception:
-            logger.error('delete_unsaved_objects failed', exc_info=True)
+            logger.critical('delete_unsaved_objects failed', exc_info=True)
             raise
         else:
             logger.info('Unsaved objects are deleted...DONE')
@@ -493,8 +567,8 @@ def save_msg(request):
 
 def initailize_form_fields(form):
     for visible in form.visible_fields():
-        if visible.widget_type in ['text', 'textarea', 'datetime', 'time', 'number', 'email', 'decimal']:
-            visible.field.widget.attrs['class'] = 'form-control'
+        if visible.widget_type in ['text', 'textarea', 'datetime', 'time', 'number', 'date','email', 'decimal']:
+            visible.field.widget.attrs['class'] = 'form-control form-control-solid'
         elif visible.widget_type in ['radio', 'checkbox']:
             visible.field.widget.attrs['class'] = 'form-check-input'
         elif visible.widget_type in ['select2', 'select', 'select2multiple', 'modelselect2', 'modelselect2multiple']:
@@ -512,17 +586,22 @@ def apply_error_classes(form):
 
 
 def to_utc(date, format=None):
+    logger.info("to_utc() start [+]")
     import pytz
     if isinstance(date, list) and date:
+        logger.info(f'found total {len(date)} datetimes')
+        logger.info(f"before conversion datetimes {date}")
         dtlist = []
         for dt in date:
             dt = dt.astimezone(pytz.utc).replace(
                 microsecond=0, tzinfo=pytz.utc)
             dtlist.append(dt)
+        logger.info(f"after conversion datetime list returned {dtlist=}")
         return dtlist
     dt = date.astimezone(pytz.utc).replace(microsecond=0, tzinfo=pytz.utc)
     if format:
         dt.strftime(format)
+    logger.info("to_utc() end [-]")
     return dt
 
 # MAPPING OF HOSTNAME:DATABASE ALIAS NAME
@@ -535,7 +614,8 @@ def get_tenants_map():
         'capgemini.youtility.local' : 'capgemini',
         'dell.youtility.local'      : 'dell',
         'icicibank.youtility.local' : 'icicibank',
-        'redmine.youtility.in' : 'icicibank',
+        'redmine.youtility.in' : 'sps',
+        'django-local.youtility.in' : 'default',
         'barfi.youtility.in'        : 'icicibank',
         'intelliwiz.youtility.in'   : 'default',
         'testdb.youtility.local'    : 'testDB'
@@ -550,20 +630,16 @@ def hostname_from_request(request):
 
 def get_or_create_none_bv():
     obj, _ = ob.Bt.objects.get_or_create(
-        id=1,
-        defaults={
-            'bucode': "NONE", 'buname': "NONE", 'id': 1,
-        }
+        bucode = "NONE", buname = "NONE",
+        defaults={}
     )
     return obj
 
 
 def get_or_create_none_typeassist():
     obj, iscreated = ob.TypeAssist.objects.get_or_create(
-        id=1,
-        defaults={
-            'tacode': "NONE", 'taname': "NONE", 'id': 1
-        }
+        tacode= "NONE", taname= "NONE",
+        defaults={}
     )
     return obj, iscreated
 
@@ -572,7 +648,6 @@ def get_or_create_none_typeassist():
 
 def tenant_db_from_request(request):
     hostname = hostname_from_request(request)
-    print(f"Hostname from Request:{hostname}")
     tenants_map = get_tenants_map()
     return tenants_map.get(hostname, 'default')
 
@@ -584,22 +659,20 @@ def get_client_from_hostname(request):
 
 
 def get_or_create_none_tenant():
-    return Tenant.objects.get_or_create(id=1, defaults={'tenantname': 'Intelliwiz', 'subdomain_prefix': 'intelliwiz'})
+    return Tenant.objects.get_or_create(tenantname = 'Intelliwiz', subdomain_prefix = 'intelliwiz',defaults={})[0]
 
 
 def get_or_create_none_job():
     from datetime import datetime, timezone
     date = datetime(1970, 1, 1, 00, 00, 00).replace(tzinfo=timezone.utc)
     obj, _ = am.Job.objects.get_or_create(
-        id=1,
+        jobname= 'NONE',    jobdesc= 'NONE',
         defaults={
-            'jobname': 'NONE',    'jobdesc': 'NONE',
             'fromdate': date,      'uptodate': date,
             'cron': "no_cron", 'lastgeneratedon': date,
             'planduration': 0,         'expirytime': 0,
             'gracetime': 0,         'priority': 'LOW',
             'seqno': -1,        'scantype': 'SKIP',
-            'id': 1
         }
     )
     return obj
@@ -607,9 +680,8 @@ def get_or_create_none_job():
 
 def get_or_create_none_gf():
     obj, _ = ob.GeofenceMaster.objects.get_or_create(
-        id=1,
+        gfcode= 'NONE', gfname= 'NONE',
         defaults={
-            'gfcode': 'NONE', 'gfname': 'NONE',
             'alerttext': 'NONE', 'enable': False
         }
     )
@@ -620,12 +692,23 @@ def get_or_create_none_jobneed():
     from datetime import datetime, timezone
     date = datetime(1970, 1, 1, 00, 00, 00).replace(tzinfo=timezone.utc)
     obj, _ = am.Jobneed.objects.get_or_create(
-        id=1,
+        jobdesc= "NONE",  scantype= "NONE", seqno= -1,
         defaults={
-            'jobdesc': "NONE", 'plandatetime': date,
+            'plandatetime': date,
             'expirydatetime': date,   'gracetime': 0,
-            'receivedonserver': date,   'seqno': -1,
-            'scantype': "NONE", 'id': 1
+            'receivedonserver': date,  
+        }
+    )
+    return obj
+
+def get_or_create_none_wom():
+    from datetime import datetime, timezone
+    date = datetime(1970, 1, 1, 00, 00, 00).replace(tzinfo=timezone.utc)
+    obj, _ = Wom.objects.get_or_create(
+        description= "NONE", expirydatetime= date, plandatetime =  date,
+        defaults={
+            'worlpermit':Wom.WorkPermitStatus.NOTNEED,
+            'attachmentcount':0, 'priority':Wom.Priority.LOW,
         }
     )
     return obj
@@ -633,44 +716,49 @@ def get_or_create_none_jobneed():
 
 def get_or_create_none_qset():
     obj, _ = am.QuestionSet.objects.get_or_create(
-        id=1,
-        defaults={
-            'qsetname': "NONE", 'id': 1}
+        qsetname = "NONE",
+        defaults={}
     )
     return obj
 
 
 def get_or_create_none_question():
     obj, _ = am.Question.objects.get_or_create(
-        id=1,
-        defaults={
-            'quesname': "NONE", 'id': 1}
+        quesname = "NONE", 
+        defaults={}
     )
     return obj
 
 
 def get_or_create_none_qsetblng():
+    'A None qsetblng with seqno -1'
     obj, _ = am.QuestionSetBelonging.objects.get_or_create(
-        id=1,
-        defaults={
+       answertype = 'NONE', 
+        ismandatory =  False, seqno = -1,
+    defaults={
             'qset': get_or_create_none_qset(),
             'question': get_or_create_none_question(),
-            'answertype': 'NUMERIC', 'id': 1,
-            'ismandatory': False, 'seqno': -1}
+            }
     )
     return obj
 
 
 def get_or_create_none_asset():
     obj, _ = am.Asset.objects.get_or_create(
-        id=1,
-        defaults={
-            'assetcode': "NONE", 'assetname': 'NONE',
-            'iscritical': False,  'identifier': 'NONE',
-            'runningstatus': 'SCRAPPED', 'id': 1
-        }
+        assetcode = "NONE", assetname = 'NONE',
+        identifier = 'NONE',
+        defaults={'iscritical': False}
     )
     return obj
+
+def get_or_create_none_ticket():
+    from apps.y_helpdesk.models import Ticket
+    obj, _ = Ticket.objects.get_or_create(
+        ticketdesc = 'NONE',
+        defaults = {}
+    )
+    return obj
+
 
 
 def create_none_entries():
@@ -683,6 +771,7 @@ def create_none_entries():
         if not iscreated:
             return
         get_or_create_none_people()
+        get_or_create_none_ticket()
         get_or_create_none_bv()
         get_or_create_none_cap()
         get_or_create_none_pgroup()
@@ -739,7 +828,7 @@ def set_db_for_router(db):
     dbs = settings.DATABASES
     if db not in dbs:
         print('raised')
-        raise NoDbError("Database with this alias not exist!")
+        raise excp.NoDbError("Database with this alias not exist!")
     setattr(THREAD_LOCAL, "DB", db)
 
 
@@ -914,14 +1003,16 @@ def clean_record(record):
     return record
 
 
-def save_common_stuff(request, instance, is_superuser=False):
+def save_common_stuff(request, instance, is_superuser=False, ctzoffset=-1):
     from django.utils import timezone
     userid = 1 if is_superuser else request.user.id
     if instance.cuser is not None:
         instance.muser_id = userid
         instance.mdtz = timezone.now().replace(microsecond=0)
+        instance.ctzoffset = ctzoffset
     else:
         instance.cuser_id = instance.muser_id = userid
+    #instance.ctzoffset = int(request.session['ctzoffset'])
     return instance
 
 
@@ -941,53 +1032,6 @@ def get_record_from_input(input):
 
 # import face_recognition
 
-
-# GLOBAL
-ImageFile.LOAD_TRUNCATED_IMAGES = True
-
-
-def fr(imagePath1, imagePath2):
-
-    result = msg = None
-    image1 = image2 = None
-    status = False
-    try:
-        if os.path.exists(imagePath1):
-            image1 = face_recognition.load_image_file(imagePath1)
-
-            if os.path.exists(imagePath2):
-                image2 = face_recognition.load_image_file(imagePath2)
-
-                # Image Path1 Encoding
-                # after_image1_encoding= face_recognition.face_encodings(image1)[0]
-                after_image1_encoding = face_recognition.face_encodings(image1)
-                after_image1_encoding = after_image1_encoding[0] if len(
-                    after_image1_encoding) > 0 else None
-                # storyline(A, "python_fr.fr() after_image1_encoding: %s", after_image1_encoding)
-
-                # Image Path2 Encoding
-                # after_image2_encoding= face_recognition.face_encodings(image2)[0]
-                after_image2_encoding = face_recognition.face_encodings(image2)
-                after_image2_encoding = after_image2_encoding[0] if len(
-                    after_image2_encoding) > 0 else None
-                # storyline(A, "python_fr.fr() after_image2_encoding: %s", after_image2_encoding)
-
-                if (after_image1_encoding is not None and after_image2_encoding is not None):
-                    result = face_recognition.compare_faces(
-                        [after_image1_encoding], after_image2_encoding, tolerance=0.5)
-                    status = result[0]
-                    msg = f'Face recognition {"success." if status else "failed."}'
-                else:
-                    msg = "Face recognition failed."
-            else:
-                msg = "Unable to find image to be matched."
-        else:
-            msg = "Default people image not found. Please upload default image for people and try again."
-    except Exception as e:
-        logger.error(
-            f"Face Recongition of {imagePath1} {imagePath2}", exc_info=True)
-        raise Exception
-    return status, msg
 
 
 def alert_observation(pk, event):
@@ -1038,12 +1082,16 @@ def get_qobjs_dir_fields_start_length(R):
     return qobjs, dir,  fields, length, start
 
 
-def runrawsql(sql, args=None, db='default', named=False):
-    "Runs raw sql return namedtup[le or dict type results"
+def runrawsql(sql, args=None, db='default', named=False, count=False):
+    "Runs raw sql return namedtuple or dict type results"
     from django.db import connections
     cursor = connections[db].cursor()
     cursor.execute(sql, args)
-    return namedtuplefetchall(cursor) if named else dictfetchall(cursor)
+    if count:
+        return cursor.rowcount
+    else:
+        return namedtuplefetchall(cursor) if named else dictfetchall(cursor)
+
 
 
 def namedtuplefetchall(cursor):
@@ -1071,28 +1119,6 @@ def getformatedjson(geofence=None, jsondata=None, rettype=dict):
     return result if rettype == dict else json.dumps(result)
 
 
-class Error(Exception):
-    pass
-
-
-class NoDataInTheFileError(Error):
-    pass
-
-
-class FileSizeMisMatchError(Error):
-    pass
-
-
-class TotalRecordsMisMatchError(Error):
-    pass
-
-
-class NoDbError(Error):
-    pass
-
-
-class RecordsAlreadyExist(Error):
-    pass
 
 
 def getawaredatetime(dt, offset):
@@ -1114,87 +1140,11 @@ def failed(self):
     self.stdout.write(self.style.ERROR("FAILED"))
 
 
-def upload(request):
-    import os
-    from dateutil import parser
-    from datetime import datetime
-    ic('upload(request)')
-    filename = filepath = docnumber = None
-    isUploaded = False
-    ownerid = isDefault = foldertype = attachmenttype = None
-    if request.POST["docnumber"]:
-        docnumber = request.POST["docnumber"]
-        foldertype = request.POST["foldertype"]
-        ownerid = request.POST["ownerid"]
-        if "img" in request.FILES:
-            home_dir = basedir = tablename = fyear = fmonth = None
-            home_dir = ("~") + "/"
-            fyear = str(datetime.now().year)
-            fmonth = str(datetime.now().strftime("%b"))
-            fextension = os.path.splitext(request.FILES["img"].name)[1]
-            filename = parser.parse(str(datetime.now())).strftime(
-                '%d_%b_%Y_%H%M%S') + fextension
-            if foldertype in ["task", "internaltour", "externaltour", "ticket", "incidentreport"]:
-                basedir, tablename = "transaction", "jobneed"
-            elif foldertype in ["visitorlog"]:
-                basedir, tablename = "transaction", "visitorlog"
-            elif foldertype in ["conveyance"]:
-                basedir, tablename = "transaction", "conveyance"
-            elif foldertype in ["personlogger"]:
-                basedir, tablename = "transaction", "personlogger"
-                doctype = request.POST["doctype"]
-                filename = doctype + fextension
-            else:
-                basedir = "master"
-                if request.POST["isDefault"] == "True" and request.POST["foldertype"] == "people":
-                    filename = f"default{fextension}"
-                elif request.POST["isDefault"] == "True" and request.POST["foldertype"] == "asset" or request.POST["foldertype"] == "smartplace" or request.POST["foldertype"] == "location" or request.POST["foldertype"] == "checkpoint" or request.POST["foldertype"] == "nonengineeringassets":
-                    filename = ownerid + fextension
-                else:
-                    filename = request.FILES['img'].name
-
-            if basedir == "transaction":
-                filepath = "youtility4_media" + "/" + basedir + "/" + fyear + "/" + \
-                    fmonth + "/" + tablename + "/" + foldertype + "/" + ownerid
-            else:
-                filepath = "youtility4_media" + "/" + basedir + "/" + foldertype + "/" + ownerid
-
-            filepath = str(filepath).lower()  # convert to lower-case
-            fullpath = home_dir + filepath
-            ic(fullpath)
-            if not os.path.exists(fullpath):
-                os.makedirs(fullpath)
-                pass
-
-            if foldertype in ["personlogger"] and \
-                    request.POST["doctype"] is not None and \
-                    request.POST["doctype"] != "None":
-                filename = request.POST["doctype"] + fextension
-
-            uploadedfileurl = fullpath + "/" + filename
-            ic(uploadedfileurl)
-            try:
-                if not os.path.exists(uploadedfileurl):
-                    with open(uploadedfileurl, 'wb') as temp_file:
-                        temp_file.write(request.FILES['img'].read())
-                        temp_file.close()
-                    pass
-                isUploaded = True
-                ic(isUploaded)
-            except Exception:
-                isUploaded = False
-        else:
-            if "doctype" in request.POST and request.POST["doctype"] is not None and request.POST["doctype"] != "None":
-                filename = request.POST["doctype"] + fextension
-            filepath = "NONE"
-    return isUploaded, str(filename), str(filepath), str(docnumber)
-
-
 class JobFields:
     fields = [
         'id', 'jobname', 'jobdesc', 'geofence_id', 'cron',
         'expirytime', 'identifier', 'cuser_id', 'muser_id','bu_id',
-        'client_id',
+        'client_id', 'sgroup__groupname',
         'pgroup_id', 'sgroup_id','ticketcategory_id', 'frequency',
         'starttime', 'endtime', 'seqno', 'ctzoffset', 'people_id',
         'asset_id', 'parent_id', 'scantype', 'planduration', 'fromdate',
@@ -1217,21 +1167,502 @@ def isValidEMEI(n):
     # String for finding length
     s = str(n)
     l = len(s)
- 
-    # If length is not 15 then IMEI is Invalid
+
     if l != 15:
         return False
- 
-    d = 0
-    sum = 0
-    for i in range(15, 0, -1):
-        d = (int)(n % 10)
-        if i % 2 == 0:
- 
-            # Doubling every alternate digit
-            d = 2 * d
- 
-        # Finding sum of the digits
-        sum = sum + sumDig(d)
-        n = n / 10
-    return (sum % 10 == 0)
+    return True
+
+    
+def verify_mobno(mobno):
+    import phonenumbers as pn
+    from phonenumbers.phonenumberutil import NumberParseException
+    try:
+        no = pn.parse(f'+{mobno}') if '+' not in mobno else pn.parse(mobno)
+        if not pn.is_valid_number(no):
+            return False
+    except NumberParseException as e:
+        return False
+    else: return True
+    
+    
+def verify_emailaddr(email):
+    from email_validator import EmailNotValidError, validate_email
+    try:
+        validate_email(email)
+        return True
+    except EmailNotValidError as e:
+        logger.warning('email is not valid')
+        return False
+        
+def verify_loginid(loginid):
+    import re
+    return bool(re.match(r"^[a-zA-Z0-9@#_\-\_]+$", loginid))
+    
+def verify_peoplename(peoplename):
+    import re
+    return bool(re.match(r"^[a-zA-Z0-9\-_@#\(\|\) ]*$", peoplename))
+
+
+def get_home_dir():
+    from django.conf import settings
+    ic(settings.MEDIA_ROOT)
+    return settings.MEDIA_ROOT
+
+
+def orderedRandom(arr, k):
+    if not len(arr) > 25: return arr
+    indices = random.sample(range(len(arr)), k)
+    return [arr[i] for i in sorted(indices)]    
+
+
+
+def upload(request, vendor=False):
+    logger.info(f"{request.POST = }")
+    S = request.session
+    if 'img' not in request.FILES:
+        return
+    foldertype = request.POST["foldertype"]
+    if foldertype in ["task", "internaltour", "externaltour", "ticket", "incidentreport", 'visitorlog', 'conveyance', 'workorder', 'workpermit']:
+        tabletype, activity_name = "transaction", foldertype.upper()
+    if foldertype in ['people', 'client']:
+        tabletype, activity_name = "master", foldertype.upper()
+    logger.info(f"Floder type: {foldertype} and activity Name: {activity_name}")
+
+    home_dir = settings.MEDIA_ROOT
+    fextension = os.path.splitext(request.FILES['img'].name)[1]
+    filename = parser.parse(str(datetime.now())).strftime('%d_%b_%Y_%H%M%S') + fextension
+    logger.info(f'{filename = } {fextension = }')
+    
+    if tabletype == 'transaction':
+        fmonth = str(datetime.now().strftime("%b"))
+        fyear = str(datetime.now().year)
+        peopleid = request.POST["peopleid"]
+        fullpath = f'{home_dir}/transaction/{S["clientcode"]}_{S["client_id"]}/{peopleid}/{activity_name}/{fyear}/{fmonth}/'
+        
+    else:
+        fullpath = f'{home_dir}/master/{S["clientcode"]}_{S["client_id"]}/{foldertype}/'
+    
+    logger.info(f'{fullpath = }')
+
+
+    if not os.path.exists(fullpath):    
+        os.makedirs(fullpath)
+    fileurl = f'{fullpath}{filename}'
+    logger.info(f"{fileurl = }")
+    try:
+        if not os.path.exists(fileurl):
+            ic(fileurl)
+            with open(fileurl, 'wb') as temp_file:
+                temp_file.write(request.FILES['img'].read())
+                temp_file.close()
+    except Exception as e:
+        logger.critical(e, exc_info=True)
+        return False, None, None
+
+    logger.info(f"{filename = } {fullpath = }")
+    return True, filename, fullpath 
+    
+def upload_vendor_file(file, womid):
+    home_dir = settings.MEDIA_ROOT
+    fmonth = str(datetime.now().strftime("%b"))
+    fyear = str(datetime.now().year)
+    fullpath = f'{home_dir}/transaction/workorder_management/details/{fyear}/{fmonth}/'
+    fextension = os.path.splitext(file.name)[1]
+    filename = parser.parse(str(datetime.now())).strftime('%d_%b_%Y_%H%M%S') + f'womid_{womid}' + fextension
+    if not os.path.exists(fullpath):    
+        os.makedirs(fullpath)
+    fileurl = f'{fullpath}{filename}'
+    try:
+        if not os.path.exists(fileurl):
+            with open(fileurl, 'wb') as temp_file:
+                temp_file.write(file.read())
+                temp_file.close()
+    except Exception as e:
+        logger.critical(e, exc_info=True)
+        return False, None, None
+
+    return True, filename, fullpath.replace(home_dir, '')
+        
+                
+
+def check_nones(none_fields, tablename, cleaned_data, json=False):
+    none_instance_map = {
+        'question':get_or_create_none_question,
+        'asset':get_or_create_none_asset,
+        'people': get_or_create_none_people,
+        'pgroup': get_or_create_none_pgroup,
+        'typeassist':get_or_create_none_typeassist
+    }
+
+    for field in none_fields:
+        cleaned_data[field] = 1 if json else none_instance_map[tablename]()
+    return cleaned_data
+
+
+def get_action_on_ticket_states(prev_tkt, current_state):
+    actions = []
+    if prev_tkt and prev_tkt[-1]['previous_state'] and current_state:
+        prev_state = prev_tkt[-1]['previous_state']
+        if prev_state['status'] != current_state['status']:
+            actions.append(f'''Status Changed From "{prev_state['status']}" To "{current_state['status']}"''')
+        
+        if prev_state['priority'] != current_state['priority']:
+            actions.append(f'''Priority Changed from "{prev_state['priority']}" To "{current_state['priority']}"''')
+        
+        if prev_state['location'] != current_state['location']:
+            actions.append(f'''Location Changed from "{prev_state['location']}" To "{current_state['location']}"''')
+        
+        if prev_state['ticketdesc'] != current_state['ticketdesc']:
+            actions.append(f'''Ticket Description Changed From "{prev_state['ticketdesc']}" To "{current_state['ticketdesc']}"''')
+        
+        if prev_state['assignedtopeople'] != current_state['assignedtopeople']:
+            actions.append(f'''Ticket Is Reassigned From "{prev_state['assignedtopeople']}" To "{current_state['assignedtopeople']}"''')
+        
+        if prev_state['assignedtogroup'] != current_state['assignedtogroup']:
+            actions.append(f'''Ticket Is Reassigned From "{prev_state['assignedtogroup']}" To "{current_state['assignedtogroup']}"''')
+        
+        if prev_state['comments'] != current_state['comments'] and current_state['comments'] not in ['None', None]:
+            actions.append(f'''New Comments "{current_state['comments']}" are added after "{prev_state['comments']}"''')
+        if prev_state['level'] != current_state['level']:
+            actions.append(f'''Ticket level is changed from {prev_state['level']} to {current_state["level"]}''')
+        return actions
+    return ["Ticket Created"]
+        
+    
+
+
+from django.utils import timezone
+
+def store_ticket_history(instance, request=None, user = None):
+    from background_tasks.tasks import send_ticket_email
+       
+    
+    # Get the current time
+    now = timezone.now().replace(microsecond=0, second=0)
+    peopleid = request.user.id if request else user.id
+    peoplename = request.user.peoplename if request else user.peoplename
+    
+    # Get the current state of the ticket
+    current_state = {
+        "ticketdesc": instance.ticketdesc,
+        "assignedtopeople": instance.assignedtopeople.peoplename,
+        "assignedtogroup": instance.assignedtogroup.groupname,
+        "comments":instance.comments,
+        "status":instance.status,
+        "priority":instance.priority,
+        "location":instance.location.locname,
+        'level':instance.level,
+        'isescalated':instance.isescalated
+    }
+
+    # Get the previous state of the ticket, if it exists
+    ticketstate = instance.ticketlog['ticket_history']
+    
+    details = get_action_on_ticket_states(ticketstate, current_state)
+    
+    # Create a dictionary to represent the changes made to the ticket
+    history_item = {
+        "people_id"     : peopleid,
+        "when"          : str(now),
+        "who"           : peoplename,
+        "assignto"      : instance.assignedtogroup.groupname if instance.assignedtopeople_id in [1, None] else instance.assignedtopeople.peoplename,
+        "action"        : "created",
+        "details"       : details,
+        "previous_state": current_state,
+    }
+
+    logger.debug(
+        f"{instance.mdtz=} {instance.cdtz=} {ticketstate=} {details=}"
+    )
+    
+    
+    # Check if there have been any changes to the ticket
+    if instance.mdtz > instance.cdtz and  ticketstate and  ticketstate[-1]['previous_state'] != current_state:
+        history_item['action'] = "updated"
+
+        # Append the history item to the ticket_history list within the ticketlog JSONField
+        ticket_history = instance.ticketlog["ticket_history"]
+        ticket_history.append(history_item)
+        instance.ticketlog = {"ticket_history": ticket_history}
+        logger.info("changes have been made to ticket")
+    elif instance.mdtz > instance.cdtz:
+        history_item['details'] = 'No changes detected'
+        history_item['action'] = 'updated'
+        instance.ticketlog['ticket_history'].append(history_item)
+        logger.info("no changed detected")
+    else:
+        instance.ticketlog['ticket_history'] = [history_item]
+        send_ticket_email.delay(id=instance.id)
+        logger.info("new ticket is created..")
+    instance.save()
+    logger.info("saving ticket history ended...")
+    
+
+def get_email_addresses(people_ids, group_ids=None, buids=None):
+    from apps.peoples.models import People, Pgbelonging
+    
+    p_emails, g_emails = [],[]
+    if people_ids:
+        p_emails = list(People.objects.filter(
+            ~Q(peoplecode='NONE'), id__in = people_ids
+        ).values_list('email', flat=True))
+    if group_ids:
+        g_emails = list(Pgbelonging.objects.select_related('pgroup').filter(
+            ~Q(people_id=1), pgroup_id__in = group_ids, assignsites_id = 1
+        ).values_list('people__email', flat=True))
+    return list(set(p_emails + g_emails)) or []
+    
+    
+    
+
+def send_email(subject, body, to, from_email=None, atts=None, cc=None):
+    if atts is None: atts = []
+    from django.core.mail import EmailMessage
+    from django.conf import settings
+
+    logger.info('email sending process started')
+    msg = EmailMessage()
+    msg.subject = subject
+    logger.info(f'subject of email is {subject}')
+    msg.body = body
+    msg.from_email = from_email or settings.EMAIL_HOST_USER
+    msg.to = to
+    if cc: msg.cc = cc
+    logger.info(f'recipents of email are  {to}')
+    msg.content_subtype= 'html'
+    for attachment in atts:
+        msg.attach_file(attachment)
+    if atts: logger.info(f'Total {len(atts)} found and added to the message')
+    msg.send()
+    logger.info('email successfully sent')
+    
+    
+    
+def get_timezone(offset):  # sourcery skip: aware-datetime-for-utc
+    import pytz
+    from datetime import datetime, timedelta
+    # Convert the offset string to a timedelta object
+    offset = f'+{offset}' if int(offset) > 0 else str(offset)
+    sign = offset[0] # The sign of the offset (+ or -)
+    mins = int(offset[1:])
+    delta = timedelta(minutes=mins) # The timedelta object
+    if sign == "-": # If the sign is negative, invert the delta
+        delta = -delta
+
+    # Loop through all the timezones and find the ones that match the offset
+    matching_zones = [] # A list to store the matching zones
+    for zone in pytz.all_timezones: # For each timezone
+        tz = pytz.timezone(zone) # Get the timezone object
+        utc_offset = tz.utcoffset(datetime.utcnow()) # Get the current UTC offset
+        if utc_offset == delta: # If the offset matches the input
+            matching_zones.append(zone) # Add the zone to the list
+
+    # Return the list of matching zones or None if no match found
+    return matching_zones[0] if matching_zones else None
+
+
+def format_timedelta(td):
+    if not td: return None
+    total_seconds = int(td.total_seconds())
+    days, remainder = divmod(total_seconds, 60*60*24)
+    hours, remainder = divmod(remainder, 60*60)
+    minutes, seconds = divmod(remainder, 60)
+
+    result = ""
+    if days > 0:
+        result += f"{days} day{'s' if days != 1 else ''}, "
+    if hours > 0:
+        result += f"{hours} hour{'s' if hours != 1 else ''}, "
+    if minutes > 0:
+        result += f"{minutes} minute{'s' if minutes != 1 else ''}, "
+    if seconds > 0 or len(result) == 0:
+        result += f"{seconds} second{'s' if seconds != 1 else ''}"
+    return result.rstrip(', ')
+
+
+def convert_seconds_to_human_readable(seconds):
+    # Calculate the time units
+    minutes, sec = divmod(seconds, 60)
+    hours, minutes = divmod(minutes, 60)
+    days, hours = divmod(hours, 24)
+
+    # Create a human readable string
+    result = []
+    if days:
+        result.append(f"{int(days)} day{'s' if days > 1 else ''}")
+    if hours:
+        result.append(f"{int(hours)} hour{'s' if hours > 1 else ''}")
+    if minutes:
+        result.append(f"{int(minutes)} minute{'s' if minutes > 1 else ''}")
+    if sec:
+        result.append(f"{sec:.2f} second{'s' if sec > 1 else ''}") # limit decimal places to 2
+    
+    return ", ".join(result)
+
+
+def create_client_site():
+    from apps.onboarding.models import Bt, TypeAssist
+    client_type, _ = TypeAssist.objects.get_or_create(
+        tacode='CLIENT', taname = 'Client'
+    )
+    site_type, _ = TypeAssist.objects.get_or_create(
+        tacode='SITE', taname = 'Site', 
+    )
+    client, _ = Bt.objects.get_or_create(
+        bucode='TESTCLIENT', buname='Test Client',
+        identifier=client_type, id=4
+    )
+    site, _ = Bt.objects.get_or_create(
+        bucode = 'TESTBT', buname = 'Test Bt',
+        identifier = site_type, parent = client,
+        id=5
+    )
+    return client, site
+
+
+
+def create_user():
+    from django.contrib.auth import get_user_model
+    User = get_user_model()
+    user, _ = User.objects.get_or_create(
+            loginid='testuser', id=4,
+            dateofbirth='2022-05-22', peoplecode='TESTUSER',
+            peoplename='Test User', email="testuser@gmail.com",
+            isverified = True)
+    user.set_password('testpassword')
+    user.save()
+    return user
+    
+
+
+def basic_user_setup():
+    '''
+    sets up the basic user setup
+    and returns the client
+    '''
+    from django.urls import reverse
+    from django.test import Client
+    
+    # create user, client and site and assign (client, site) it to user
+    user = create_user()
+    _client, _site, = create_client_site()
+    user.client = _client
+    user.bu = _site
+    user.save()
+    
+    # initialize the test client
+    client = Client()
+    
+    # request the login page, this sets up test_cookies like browser
+    client.get(reverse('login'))
+    
+    # post request to login, this saves the session data for the user
+    response = client.post(
+    reverse('login'), 
+    data = {'username':'testuser', 'password':'testpassword', 'timezone':330})
+
+    # get request from the response
+    request = response.wsgi_request
+    
+    # simulate the login of the client
+    client.login(**{'username':'testuser', 'password':'testpassword', 'timezone':330})
+    
+    # update the default session data with user session data got from post request
+    session = client.session
+    session.update(dict(request.session))
+    session.save()
+    return client
+
+def get_changed_keys(dict1, dict2):
+    """
+    This function takes two dictionaries as input and returns a list of keys 
+    where the corresponding values have changed from the first dictionary to the second.
+    """
+
+    # Handle edge cases where either of the inputs is not a dictionary
+    if not isinstance(dict1, dict) or not isinstance(dict2, dict):
+        raise TypeError("Both arguments should be of dict type")
+
+    # Create a list to hold keys with changed values
+    changed_keys = []
+
+    # Compare values of common keys in the dictionaries
+    for key in dict1.keys() & dict2.keys():
+        if dict1[key] != dict2[key]:
+            changed_keys.append(key)
+
+    return changed_keys
+
+class Instructions(object): 
+    def __init__(self, tablename):
+        from apps.onboarding.views import MODEL_RESOURCE_MAP, HEADER_MAPPING
+        
+        if tablename is None: raise ValueError("The tablename argument is required")
+        self.tablename = tablename
+        self.model_source_map = MODEL_RESOURCE_MAP
+        self.header_mapping = HEADER_MAPPING
+        
+    def field_choices_map(self, choice_field):
+        from django.apps import apps
+        Question             = apps.get_model("activity", 'Question')
+        Asset                = apps.get_model("activity", 'Asset')
+        Location             = apps.get_model("activity", 'Location')
+        QuestionSet          = apps.get_model("activity", 'QuestionSet')
+        return {
+            "Answer Type*": [choice[0] for choice in Question.AnswerType.choices],
+            'AVPT Type' : [choice[0] for choice in Question.AvptType.choices],
+            'Identifier*' : [choice[0] for choice in Asset.Identifier.choices],
+            'Running Status*' : [choice[0] for choice in Asset.RunningStatus.choices],
+            'Status*' : [choice[0] for choice in Location.LocationStatus.choices],
+            'Type*' : ['SITEGROUP', 'PEOPLEGROUP'],
+            'QuestionSet Type*' : [choice[0] for choice in QuestionSet.Type.choices],
+        }.get(choice_field)
+    
+    def get_insructions(self):
+        general_instructions = self.get_general_instructions()
+        column_names = self.get_column_names()
+        valid_choices = self.get_valid_choices_if_any()
+        format_info = self.get_valid_format_info()
+        
+        return  {
+            'general_instructions': general_instructions,
+            'column_names':"Columns: ${}&".format(', '.join(column_names)) ,
+            'valid_choices':valid_choices,
+            'format_info':format_info
+        }
+    
+    def get_general_instructions(self):
+        return [
+            "Make sure you correctly selected the type of data that you wanna import in bulk. before clicking 'download'",
+            "Make sure while filling data in file, your column header does not contain value other than columns mentioned below.",
+            "The column names marker asterisk (*) are mandatory to fill"
+        ]
+    
+    
+    def get_column_names(self):
+        return self.header_mapping.get(self.tablename)
+        
+    
+    def get_valid_choices_if_any(self):
+        table_choice_field_map = {
+            "QUESTION": ['Answer Type*', 'AVPT Type'],
+            "QUESTIONSET":['QuestionSet Type*'],
+            'ASSET':['Identifier*', 'Running Status*'],
+            'GROUP':['Type*'],
+            'LOCATION': ['Status*']
+            }
+        if self.tablename in table_choice_field_map:
+            valid_choices = []
+            for choice_field in table_choice_field_map.get(self.tablename):
+                instruction_str = f'Valid values for column: {choice_field} ${", ".join(self.field_choices_map(choice_field))}&'
+                valid_choices.append(instruction_str)
+            return valid_choices
+        return []
+    
+    def get_valid_format_info(self):
+        return [
+            'Valid Date Format: $YYYY-MM-DD For example: 1998-06-22&',
+            'Valid Mobile No Format: $[ country code ][ rest of number ] For example: 910123456789&' ,
+            'Valid Time Format: $HH:MM:SS For example: 23:55:00&',
+            'Valid Date Time Format: $YYYY-MM-DD HH:MM:SS For example: 1998-06-22 23:55:00&'
+            ]

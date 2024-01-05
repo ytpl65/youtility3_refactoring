@@ -11,7 +11,7 @@ class AttendanceForm(forms.ModelForm):
     class Meta:
         model = atdm.PeopleEventlog
         fields = ['people', 'datefor', 'ctzoffset', 'punchintime', 'punchouttime', 
-         'peventtype', 'verifiedby', 'remarks', 'shift', 'facerecognition']
+         'peventtype', 'verifiedby', 'remarks', 'shift', 'facerecognitionin', 'facerecognitionout']
         labels = {
             'people'        : 'People',
             'punchintime'    : 'In Time',
@@ -30,6 +30,7 @@ class AttendanceForm(forms.ModelForm):
             ),
             'shift'       : s2forms.Select2Widget,
             'peventtype'  : s2forms.Select2Widget,
+            
         }
 
     def __init__(self, *args, **kwargs):
@@ -72,7 +73,9 @@ class ConveyanceForm(forms.ModelForm):
         widgets = {
             'startlocation':forms.TextInput(),
             'endlocation':forms.TextInput(),
-            'transportmodes':s2forms.Select2MultipleWidget}
+            'transportmodes':s2forms.Select2MultipleWidget,
+            'startlocation':forms.Textarea(attrs={'rows': 3, 'cols': 20}),
+            'endlocation':forms.Textarea(attrs={'rows': 3, 'cols': 20}),}
         labels = {
             'expamt': 'Expense Amount',
             'transportmodes': 'Transport Modes',

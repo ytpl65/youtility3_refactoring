@@ -1,4 +1,4 @@
-{% extends "base_list.html" %}
+{% extends "globals/base_list.html" %}
 
 <!---- BEGIN CARD TITLE ------>
 {% block card_title %}
@@ -15,7 +15,7 @@ TypeAssist List
 
 {% block table %}
     <!------------------ BEGIN TABLE --------------------->
-    <table id="ta_table" class="display cell-border compact hover" style="width:100%">
+    <table id="ta_table" class="display compact cell-border row-border" style="width:100%">
     </table>
     <!------------------ END TABLE --------------------->
 
@@ -58,7 +58,7 @@ TypeAssist List
 				url: '{{ url("onboarding:typeassist") }}?action=list',
 			},
 			columns     : [
-                { "data": "id" },
+                { "data": "id", className:'noVis' },
                 { "data": "tacode", title: "Code" },
                 { "data": "taname", title: 'Name' },
                 { "data": "tatype__tacode", title: 'Type' },
@@ -66,6 +66,8 @@ TypeAssist List
             ],
 			deferRender: true,
 			responsive : true,
+			pageLength:19,
+			order:[[1, 'asc']],
 			columnDefs:[
 				{targets:0, data: "id", visible:false, searchable:false, orderable:false},
 				{
@@ -74,14 +76,29 @@ TypeAssist List
 					render : function ( data, type, row, meta ) {
 						return `<a href="#" class="ta-link" data-id=${row['id']} data-rowid=${meta.row}>${data}</a>`
 					}
-				}
+				},
+				{targets:4, data:"cuser__peoplecode", render:function(data, type, row, meta){
+					return data === 'NONE' ? "System" : data
+				}},
 			],
 			dom       :`<'row' <'col-sm-6 d-flex justify-content-start'f> <'col-sm-6 d-flex justify-content-end'B> >rt<'row'
 			 <'col-sm-6'l> <'col-sm-6'p><'col-sm-12 d-flex justify-content-center'i>>`,
 			buttons:[
+				"searchBuilder",
+                dataTablesPDFConfig(
+                    title = `Site: {{request.user.bu.buname}}\n TypeAssist List`,
+                    columns = [1,2,3,4],
+                    filename="typeassist_list"
+                ),
+                dataTablesExcelConfig(
+                    title = `Site: {{request.user.bu.buname}}\n TypeAssist List`,
+                    columns = [1,2,3,4],
+                    filename="typeassist_list"
+                ),
+                dataTablesColumnVisibilityConfig(),
 				{
 					text     : `Add New &nbsp;<i class='fas fa-plus ch4'></i></a>`,
-					className: "btn btn-sm btn-light-primary",
+					className: "btn btn-sm border border-primary btn-light-primary add_new_type",
 					//action for add_new_button 
 					action: function(e, dt, node, config){
                         const params = {
@@ -157,7 +174,7 @@ TypeAssist List
 	}); //END document.ready()
 
 	//delete ajax request 
-	function isTaDeleted(id){ 
+	function isTaDeleted(id){
 		console.log("id ", id)
 		const params = {url:`${urlname}?action=delete&id=${id}`, 'beforeSend':function () {}}
 		fire_ajax_get(params)

@@ -1,4 +1,4 @@
-{% extends "base_list.html" %}
+{% extends "globals/base_list.html" %}
 
 <!---- BEGIN CARD TITLE ------>
 {% block card_title %}
@@ -32,8 +32,10 @@ Client Lists
             ajax:{
                 url: "{{ url('onboarding:client') }}?action=list",
             },
+            pageLength:20,
             deferRender: true,
-			responsive : true,
+			responsive:true,
+            lengthMenu:[20,50,100],
             dom       : `<'row' <'col-sm-6 d-flex justify-content-start'f> <'col-sm-6 d-flex justify-content-end'B> >rt<'row'
 			             <'col-sm-6'l> <'col-sm-6'p><'col-sm-12 d-flex justify-content-center'i>>`,
             columns   : [
@@ -47,12 +49,18 @@ Client Lists
                     title: "Code" 
                 },
                 {data: 'buname', title: 'Name', orderable:false},
-                {data: 'enable', title: 'Enable', orderable:false}
+                {data: 'enable', title: 'Enable', orderable:false, render:function(data, type, row, meta){
+					return data === true ? '<i class="bi bi-check-circle-fill text-success"></i>': '<i class="bi bi-x-circle-fill text-danger"></i>'				
+				}}
             ],
+            createdRow:function(row, data, dataIndex){
+				if(data['enable'] === false){
+					$(row).addClass('disabled-record text-white')
+				}
+			},
             buttons:[
                 {
                     text: 'Add New',
-                    className: "btn btn-sm btn-light-primary",
                     action:function(e, dt, node, config){
                         location.href = '{{ url("onboarding:client") }}?action=form'
                     }

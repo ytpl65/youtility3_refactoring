@@ -1,3 +1,7 @@
+from logging import getLogger
+from croniter import croniter, CroniterBadCronError
+import re
+log = getLogger("mobile_service_log")
 def checkHex(s):
     return not any(((ch < '0' or ch > '9') and (ch < 'A' or ch > 'F')) for ch in s)
 
@@ -12,22 +16,26 @@ def clean_point_field(val):
     return GEOSGeometry(val)
 
 def clean_code(val):
-    val = str(val)
-    return val.uppper()
+    if val:
+        val = str(val)
+        return val.upper()
 
 def clean_text(val):
-    val = str(val)
-    return val.title()            
+    if val:
+        val = str(val)
+        return val         
 
 def clean_datetimes(val, offset):
     from datetime import datetime, timedelta, timezone
-    tz = timezone(timedelta(minutes = int(offset)))
+    
     if val:
-        if val in ['None', 'NONE']:
+        log.info(f"beforing cleaning {val}")
+        if val in ['None', 'NONE', ""]:
             return None
         val = val.replace("+00:00", "")
         val = datetime.strptime(val, "%Y-%m-%d %H:%M:%S")
-        return val.replace(tzinfo = tz, microsecond = 0)
+        val =  val.replace(tzinfo = timezone.utc, microsecond = 0)
+        log.info(f'after cleaning {val}')
     return val
 
 def clean_date(val):
@@ -45,8 +53,39 @@ def clean_record(record):
             record[k] = clean_text(v)
         elif k in ['gpslocation' , 'startlocation', 'endlocation']:
             record[k] = clean_point_field(v)
-        elif k in ['cdtz', 'mdtz', 'starttime', 'endtime', 'punchintime', 'punchouttime']:
+        elif k in ['cdtz', 'mdtz', 'starttime', 'endtime', 'punchintime',
+                   'punchouttime', 'plandatetime', 'expirydatetime']:
             record[k] = clean_datetimes(v, record['ctzoffset'])
         elif k in ['geofencecode']:
             record[k] = clean_code(v)
+        elif k in ['approvers', 'categories', 'transportmodes', 'approverfor', 'sites']:
+            record[k] = clean_array_string(v, service=True)
     return record
+
+
+def clean_string(input_string, code=False):
+    if not input_string: return
+    cleaned_string = ' '.join(input_string.split())
+    if code:
+        cleaned_string = cleaned_string.replace(' ', '_').upper()
+    return cleaned_string
+
+def validate_email(email):
+    if email:
+        # Regular expression for validating an Email
+        regex = '^[a-z0-9]+[\._]?[a-z0-9]+[@]\w+[.]\w{2,3}$'
+        # Using re to validate an Email
+        return bool((re.search(regex,email)))
+    
+def clean_array_string(string, service=False):
+    if string:
+        string = string.replace(' ', '')
+        return string.split(',')
+    return []
+
+def validate_cron(cron):
+    try:
+        croniter(cron)
+        return True
+    except ValueError:
+        return False

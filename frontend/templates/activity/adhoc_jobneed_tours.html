@@ -1,4 +1,4 @@
-{% extends "base_list.html" %}
+{% extends "globals/base_list.html" %}
 
 <!---- BEGIN CARD TITLE ------>
 {% block card_title %}
@@ -40,6 +40,7 @@ $(document).ready(function(){
                 d.pd2 = to_pd
             }
         },
+        pageLength:50,
         serverSide:true,
         fixedHeader:true,
         columnDefs:[

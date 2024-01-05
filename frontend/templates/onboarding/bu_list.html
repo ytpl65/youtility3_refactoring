@@ -1,15 +1,15 @@
-{% extends "base_list.html" %}
+{% extends "globals/base_list.html" %}
 
 <!---- BEGIN CARD TITLE ------>
 {% block card_title %}
-Buisiness Units
+Buisiness View
 {% endblock card_title %}
 <!----- END CARD TITLE -------->
 
 <!----------- BEGIN PAGE BREADCUMBS ----------->
 {% block pagebreadcumb %}
 {{ super() }}
-<li class="breadcrumb-item pe-3"><a href="{{ url('onboarding:bu_list') }}?template=true" class="pe-3">Bu List</a></li>
+<li class="breadcrumb-item pe-3"><a href="{{ url('onboarding:bu') }}?template=true" class="pe-3">BV List</a></li>
 {% endblock pagebreadcumb %}
 <!----------- END PAGE BREADCUMBS ------------->
 
@@ -20,14 +20,14 @@ Buisiness Units
 		<thead class="fw-bold fs-6">
 			<th>Id</th>
 			<th>Code</th>
+			<th>Sol Id</th>
 			<th>Name</th>
 			<th>Type</th>
 			<th>Enable</th>
 			<th>Belongs To</th>
 			<th>Site Type</th>
-			<th>Reporting Structure</th>
 		</thead>
-	</table>	
+	</table>
 </div>
 {% endblock table %}
 <!------------------ END BU TABLE --------------------------->
@@ -39,22 +39,24 @@ Buisiness Units
 		//BEGIN DATATABLE INITIALIZATION
 		var table = $('#bt_table').DataTable({
 			ajax:{
-				url: '{{ url("onboarding:bu_list") }}?action=list',
+				url: '{{ url("onboarding:bu") }}?action=list',
 			},
 			deferRender: true,
-			responsive : true,
 			language: {
 				searchPlaceholder: "Search keyword"
 			},
+			responsive:true,
+			pageLength:10,
+			lengthMenu: [10, 20, 50, 100],
 			columns     : [
-                { "data": "id" },
+                { "data": "id", className:'noVis' },
                 { "data": "bucode" },
+                { "data": "solid",	 visible:false, defaultContent:null},
                 { "data": "buname" },
-                { "data": "identifier__tacode" },
+                { "data": "identifier__taname" },
                 { "data": "enable" },
-                { "data": "parent__bucode" },
-                { "data": "butype__tacode" },
-                { "data": "butree" },
+                { "data": "parent__buname" },
+                { "data": "butype__taname" },
             ],
 			columnDefs:[
 				{targets:0, visible:false, searchable:false, orderable:false},
@@ -62,24 +64,51 @@ Buisiness Units
 					targets: 1,
 					data   : 'bucode',
 					render : function ( data, type, row, meta ) {
-						return `<a href="/onboarding/bu_form/${row['id']}">${data}</a>`
+						return `<a href={{ url('onboarding:bu') }}?id=${row['id']}>${data}</a>`
 					}
-				}
+				},
+				{targets:3, data:'buname', render:function(data, type, row, meta){
+					return `<a href={{ url('onboarding:bu') }}?id=${row['id']}>${data}</a>`}
+				},
+				{targets:5, data:"enable", render:function(data, type, row, meta){
+					return data === true ? '<i class="bi bi-check-circle-fill text-success"></i>': '<i class="bi bi-x-circle-fill text-danger"></i>'				
+				}}
 			],
+			createdRow:function(row, data, dataIndex){
+				if(data['enable'] === false){
+					$(row).addClass('disabled-record text-white')
+				}
+			},
 			dom       : `<'row' <'col-sm-6 d-flex justify-content-start'f> <'col-sm-6 d-flex justify-content-end'B> >rt<'row'
 			<'col-sm-6'l> <'col-sm-6'p><'col-sm-12 d-flex justify-content-center'i>>`,
 			buttons:[
+				"searchBuilder",
+                dataTablesPDFConfig(
+                    title = `Site: {{request.user.bu.buname}}\n Task List`,
+                    columns = [1,2,3,4,5,6,7],
+					filename = "bu_list"
+                ),
+                dataTablesExcelConfig(
+                    title = `Site: {{request.user.bu.buname}}\n Task List`,
+                    columns = [1,2,3,4,5,6,7],
+					filename = "bu_list"
+                ),
+                dataTablesColumnVisibilityConfig(),
 				{
-					text     : `Add New &nbsp;<i class='fas fa-plus ch4'></i></a>`,
-					className: "btn btn-sm btn-light-primary",
+					text     : `Add New &nbsp;<i class='fas fs-6 fa-plus'></i></a>`,
+					className: "btn btn-sm btn-light-primary border border-primary add_new_bu",
 					//action for add_new_button 
 					action: function(e, dt, node, config){
-						location.href =  "{{ url('onboarding:bu_form') }}"
+						location.href =  "{{ url('onboarding:bu') }}?action=form"
 					}
 				}
 			]	
 		})
 		//END DATATABLE INITIALIZATION
+		//hide add new button for non-admin peoples
+		if(!session.is_admin){
+			$('.add_new_bu').hide()
+		}
 
 	});
 </script>

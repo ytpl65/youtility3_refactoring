@@ -1,10 +1,18 @@
-{% extends "base_list.html" %}
+{% extends "globals/base_list.html" %}
 
 <!---- BEGIN CARD TITLE ------>
 {% block card_title %}
-Schedhuled External Tour List
+Routes 
 {% endblock card_title %}
 <!----- END CARD TITLE -------->
+
+{% block popup_alerts %}
+    {% call general_popup(title='List of Peoples', popup_id='id_people_list', modal_size='modal-md') %}
+            <div class="modal-body">
+                <table class="display cell-border" style="width:100%" id="tabListOfPeoples"></table>
+            </div>
+    {% endcall %}
+{% endblock popup_alerts %}
 
 <!-- 
 VARIABLE DEFINITIONS FOR DEVELOPERS
@@ -15,7 +23,8 @@ ext_schdtour_list = 'External ScheduleTour List',
 <!------------------------------------ BEGIN PAGE BREADCUMBS ------------------------------------>
 {% block pagebreadcumb %}
 {{ super() }}
-<li class="breadcrumb-item pe-3"><a href="javascript:void(0)" class="pe-3">Scheduled External Tour List</a></li>
+<li class="breadcrumb-item pe-3"><a href="javascript:void(0)" class="pe-3">Routes 
+</a></li>
 {% endblock pagebreadcumb %}
 <!------------------------------------- END PAGE BREADCUMBS ------------------------------------->
 
@@ -31,8 +40,17 @@ ext_schdtour_list = 'External ScheduleTour List',
 {% block extra_scripts %}
 <script>
 	var table           = null;
+    var peopleList = null;
+    var ajaxData = {}
 	const formFilter      = "#ext_schdtour_filter"
 	const table_id        = "#ext_schdtour_table"
+
+    function showListOfPeoples(id, from){
+        $('#id_people_list').modal('show')
+        ajaxData.id=id
+        ajaxData.model = from
+        peopleList.ajax.reload()
+    }
 
     $(document).ready(function (){
         //datatable initialization
@@ -44,41 +62,64 @@ ext_schdtour_list = 'External ScheduleTour List',
                 {data: 'id', visible:false},
                 {data: 'jobname', title: 'Name'},
                 {data: 'sitegrpname', title: 'Cluster'},
-                {data: 'assignedto', title:"People/Group", defaultContent:null},
-                {data:'israndomized', title:'Is Random'},
+                {data: 'assignedto', title:"People/Group", defaultContent:null, render:function(data, type, row, meta){
+                    if(data.includes('[GROUP]')){
+                        return `<a href="javascript:void(0)"  onClick='showListOfPeoples(${row['id']}, "Job")'>${data}</a>`
+                    }else{
+                        return data
+                    }
+                }},
+                {data:'israndomized', title:'Random'},
                 {data:'tourfrequency', title:'Frequency'},
                 {title: 'From', data: 'fromdate'},
                 {title: 'To', data: 'uptodate'},
                 {title: 'Duration', data: 'planduration'},
                 {title: 'Gracetime', data: 'gracetime'},
                 {title: 'Exp. Time', data: 'expirytime'},
+                {data: 'ctzoffset', visible:false, className:'noVis'},
             ],
             columnDefs:[
-                {targets:0, data: 'id', visible: 'false', searchable:false },
+                {targets:0, data: 'id', visible: 'false', searchable:false, className:'noVis' },
                 {targets:1, data: 'jobname', render:function(data, type, row, meta){
                     let urlname = "{{ url('schedhuler:schd_external_tour') }}"
                     return `<a href="${urlname}?id=${row['id']}">${data}</a>`
-                }},
-                //{targets:3, render:function(data, type, row, meta){
-                //    let peoplename = row['people__peoplename']
-                //    let groupname = row['pgroup__groupname']
-                //    return typeof peoplename in ['undefined', null] ? groupname : peoplename 
-                //}},
-                //{targets:6, render:function(data, type, row, meta){
-                //    return convert_to_local(type, data, row)
-                //}},
-                //{targets:7, render:function(data, type, row, meta){
-                //    return convert_to_local(type, data, row)
-                //}},
+                }
+                },
+                {targets:6, render:function(data, type, row, meta){
+                    return convert_to_local(type, data, row)
+                }
+                },
+                {targets:7, render:function(data, type, row, meta){
+                    return convert_to_local(type, data, row)
+                }
+                },
             ],
+            order:[[6, 'desc']],
             deferRender: true,
-			responsive: true,
+            {# lengthChange:false, #}
+			{# scrollY: 600,
+            scrollCollapse: true,
+            scrollX:true, #}
+            lengthMenu: [ 10, 20, 50,100 ],
+            pageLength: 10,
             dom:`<'row' <'col-sm-6 d-flex justify-content-start'f> <'col-sm-6 d-flex justify-content-end'B> >rt<'row'
 			 <'col-sm-6'l> <'col-sm-6'p><'col-sm-12 d-flex justify-content-center'i>>`,
             buttons:[
+                "searchBuilder",
+                dataTablesPDFConfig(
+                    'Site: {{ request.user.bu.buname }}\nScheduled Route Plan List',
+                    [1,2,3,4,5,6,7,8,9],
+                    filename="schd_routeplan_list"
+                ),
+                dataTablesExcelConfig(
+                    'Site: {{ request.user.bu.buname }}\nScheduled Route Plan List',
+                    [1,2,3,4,5,6,7,8,9],
+                    filename="schd_routeplan_list"
+                ),
+                dataTablesColumnVisibilityConfig(),
 				{
-					text:`Add New &nbsp;<i class='fas fa-plus ch4'></i></a>`,
-					className: "btn btn-sm btn-light-primary btn-hover-rise",
+					text     : `Schedule New &nbsp;<i class='fas fa-plus ch4'></i></a>`,
+					className: "btn btn-sm border border-primary btn-light-primary add_new_job",
 					//action for add_new_button 
 					action: function(e, dt, node, config){
         				window.location.href = "{{ url('schedhuler:schd_external_tour') }}?action=form";
@@ -87,6 +128,8 @@ ext_schdtour_list = 'External ScheduleTour List',
 			]
         
         })
+
+        initializeListOfPeoplesModal(ajaxData, "{{ url('activity:list_of_peoples') }}")
     })
 
 </script>

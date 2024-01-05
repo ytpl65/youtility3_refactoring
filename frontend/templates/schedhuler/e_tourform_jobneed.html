@@ -1,4 +1,4 @@
-{% extends "base_form.html" %}
+{% extends "globals/base_form.html" %}
 
 {% block extra_css %}
 <link  href="{{ static('assets/plugins/custom/DataTables/datatables.min.css') }}" rel="stylesheet" type="text/css"/>
@@ -29,7 +29,7 @@ External Tour
     Actions
 </button>
 <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton1">
-    <li><a class="dropdown-item" href="#" id="id_attachment"><i class="fas fa-paperclip"></i> &nbsp;Attachment</a></li>
+    <li><a class="dropdown-item" href="#" id="id_attachment"><i class="fas text-white fa-paperclip"></i> &nbsp;Attachment</a></li>
 </ul>
 {% endblock breadcumbactions %}
 
@@ -41,7 +41,23 @@ External Tour
 </div>
 {% endblock nonfield_errors %}
 <!---------- END NON FIELD ERRORS --------->
+{% block popup_alerts %}
+    {% call general_popup(title='Checklist Details <i class="fas text-white fa-tasks ch4"></i>', popup_id="id_checklistdetails", modal_size='modal-xl') %}
+        <div class="modal-body">
+            <table class="display cell-border" style="width:100%" id="tabChecklistDetails"></table>
+        </div>
+        
+    {% endcall  %}
+    {% call general_popup(title='Attachment Details <i class="fas text-white fa-paperclip ch4"></i>', popup_id="id_attachmentdetails", modal_size='modal-xl') %}
+        <div class="modal-body">
+            <table class="display cell-border" style="width:100%" id="tabAttachmentDetails"></table>
+        </div>
+        
+    {% endcall  %}
+{% endblock %}
+{% block base_script %}
 
+{% endblock base_script %}
 
 {% block form %}
 <form action="" method="post" id="externaltourform">
@@ -49,6 +65,9 @@ External Tour
     <input type="hidden" name="{{ externaltourform.ctzoffset.name }}" id = "{{ externaltourform.ctzoffset.auto_id }}" value="-1">
     <div class="row mb-3 gy-3">
         <div class="col-md-6">
+            <input type="hidden" name="tour_frequency" id="id_tourfrequency" value="{{ externaltourform.instance.other_info['tour_frequency'] }}">
+            <input type="hidden" name="israndom" id="id_israndom" value="{{ externaltourform.instance.other_info['is_randomized'] }}">
+            <input type="hidden" name="breaktime" id="id_breaktime" value="{{ externaltourform.instance.other_info['breaktime'] }}">
             <div class="input-group mb-3">
                 <div class="col-md-4">
                     {{ externaltourform.jobdesc.label_tag() }}
@@ -57,20 +76,20 @@ External Tour
                     {{ externaltourform.jobdesc }}
                 </div>
             </div>
-            <div class="input-group mb-3">
+            <div class="input-group mb-6">
                 <div class="col-md-4">
                     <label class="required">Assign to:</label>
                 </div>
                 <div class="col-md-8">
                     <div class="form-check form-check-inline">
                         <input type="radio" class="form-check-input" name={{ externaltourform.assign_to.name }}
-                            id="{{ externaltourform.assign_to.auto_id }}1" value="PEOPLE" checked
+                            id="id_peopleradio" value="PEOPLE" checked
                             onchange="showHideSelectField('PEOPLE')">
                         <label class="form-check-label" for="{{ externaltourform.assign_to.auto_id }}">People</label>
                     </div>
                     <div class="form-check form-check-inline">
                         <input type="radio" class="form-check-input" name={{ externaltourform.assign_to.name }}
-                            id="{{ externaltourform.assign_to.auto_id }}2" value="GROUP" onchange="showHideSelectField('GROUP')">
+                            id="id_groupradio" value="GROUP" onchange="showHideSelectField('GROUP')">
                         <label class="form-check-label" for="{{ externaltourform.assign_to.auto_id }}">Group</label>
                     </div>
                 </div>
@@ -113,6 +132,14 @@ External Tour
                 </div>
                 <div class="col-md-8">
                     {{ externaltourform.priority }}
+                </div>
+            </div>
+            <div class="input-group mb-3">
+                <div class="col-md-4">
+                    {{ externaltourform.gpslocation.label_tag() }}
+                </div>
+                <div class="col-md-8">
+                    {{ externaltourform.gpslocation }}
                 </div>
             </div>
         </div>
@@ -173,14 +200,6 @@ External Tour
                     {{ externaltourform.ticketcategory }}
                 </div>
             </div>
-            <div class="input-group mb-3">
-                <div class="col-md-4">
-                    {{ externaltourform.gpslocation.label_tag() }}
-                </div>
-                <div class="col-md-8">
-                    {{ externaltourform.gpslocation }}
-                </div>
-            </div>
         </div>
     </div>
 </form>
@@ -188,8 +207,8 @@ External Tour
 
 
 {% block extras %}
-<div class="row mb-3 card card-flush my-shadow p-4">
-    <table width="100%" class="card-body">
+<div class="row mb-3 card p-4">
+    <table width="100%" class="table">
         <tbody>
             <tr>
             <td style="padding:4px;"><span class="caption-subject bold font-red-mint" style="font-size:16px;">Total time in shift: </span></td>
@@ -221,7 +240,7 @@ External Tour
     <br>
     <div class="sitecheckpoints">
         <h4 class="card-title modal-heading">
-            Tour Details &nbsp;<i class="fas fs-3 text-primary fa-directions"></i>
+            Tour Details &nbsp;<i class="fas text-white fs-3 text-primary fa-directions"></i>
         </h4><br>
         <table id="external_tour" class="display cell-border" style="width:100%"></table>
         <br>
@@ -237,16 +256,16 @@ External Tour
 <div class="form-actions">
     {% if externaltourform.instance.jobstatus == "('ASSIGNED',)" %}
         {% if externaltourform.instance.id %}
-        <button type="button" id="submitInternalTour" form="externaltourform" class="btn btn-sm btn-primary btn-hover-scale">
+        <button type="button" id="submitInternalTour" form="externaltourform" class="btn btn-sm btn-primary2 btn-hover-scale">
         Update Tour
         </button>
         <button type="button" onclick="deleteMainJob(this)" data-id="{{ externaltourform.instance.id }}" id="deleteAttd"
             class="btn btn-sm btn-danger btn-hover-scale">
-            Delete&nbsp;<i class="fas fa-trash-alt"></i>
+            Delete&nbsp;<i class="fas text-white fa-trash-alt"></i>
         </button>
         {% else %}
-            <button type="submit" form="externaltourform" class="btn btn-sm btn-primary btn-hover-scale">
-                Save Tour&nbsp;<i class="fas fa-cloud-upload-alt"></i>
+            <button type="submit" form="externaltourform" class="btn btn-sm btn-primary2 btn-hover-scale">
+                Save Tour&nbsp;<i class="fas text-white fa-cloud-upload-alt"></i>
             </button>
         {% endif %}
     {% endif %}
@@ -275,43 +294,81 @@ External Tour
 
 <script>
     //set the variables which are gonna used in attachment.js file for fetching attachments against the owner
-    var attachmentUrl = '{{ url("activity:attachments") }}'
-    var attachementDatasource = 'jobneedattachment'
-    var attachmentOwner = '{{ externaltourform.instance.uuid }}'
-    var csrf = '{{ csrf_token }}'
-    var ownerName = "Jobneed"
-    var id = ""
-    var folderType = 'tour'
-    var isDefault= "False";
-    var docnumber=1;
+    var attachmentParams = {
+        attachmentUrl  : '{{ url("activity:attachments") }}',
+        attachmentOwner: '{{ externaltourform.instance.uuid }}',
+        csrf           : '{{ csrf_token }}',
+        ownername      : "Jobneed",
+        folderType     : 'externaltour',
+        media_url      : '{{ MEDIA_URL }}',
+        peopleid       : "{{ request.user.id }}"
+    }
 </script>
 <script src="{{ static('assets/js/local/attachment.js') }}" type="text/javascript"></script>
 <script>
 var asgdsites_table;
+var checklistdetails;
+var attachmentDetails;
+var ajaxData = {};
 var selected;
 var parentTable;
 var parent_id;
 var childTable;
 var childEditor;
 var parentEditor;
+var israndom = "{{ externaltourform.instance.other_info['is_randomized'] }}";
     function showHideSelectField(val) {
         if (val == "PEOPLE") {
             //$("#aatopdiv").show();
             $(".people").show();
+            $("#id_peopleradio").attr('checked', 'checked')
             $(".pgroup").hide();
+            $("#id_pgroup").val(1)
         } else {
             //$("#aatopdiv").hide();
             $(".pgroup").show();
+            $("#id_groupradio").attr('checked', 'checked')
             $(".people").hide();
+            $("#id_people").val(1)
         }
+    }
+
+    function showCpDetails(id){
+        $('#id_checklistdetails').modal('show')
+        ajaxData.jobneedid=id
+        ajaxData.action='checklist_details'
+        checklistdetails.ajax.reload()
+    }
+    function showAttachmentDetails(id, from){
+        
+        $('#id_attachmentdetails').modal('show')
+        ajaxData.id=id
+        ajaxData.action = from === 'jobneed' ? 'getAttachmentJobneed' : 'getAttachmentJND' 
+        attachmentDetails.ajax.reload()
     }
 
     function calculate_tour_details(data, routeFreq){
         d2ClearMarker()
         calculateAndDisplayRoute(data, routeFreq)
     }
+    //display readable form of gpslocation
+        $('#id_gpslocation').val("{{ externaltourform.instance.geojson['gpslocation'] }}")
+
 
     $(document).ready(() => {
+        // Disable checkboxes
+        $("input[type='checkbox']").prop("disabled", true);
+
+        // Disable text fields
+        $("input, textarea").prop("disabled", true);
+
+        // Disable select2 fields (assuming select2 has been initialized)
+        $(".django-select2, .form-select").select2({"disabled": 'readonly'})
+        
+        //disabled fields
+        if("{{ request.user.is_superuser }}" !== 'True'){
+            $("input, textarea, select").attr('disabled', "disabled")
+        }
         d2InitializeMap()
         //set ctzoffset
   	    $("#id_ctzoffset").val(-new Date().getTimezoneOffset())
@@ -320,9 +377,11 @@ var parentEditor;
         if ('{{externaltourform.instance.id}}' === 'None') {
             showHideSelectField('PEOPLE')
         }else{
-            var assignto = '{{externaltourform.instance.people}}' == ('None' || "") ? "GROUP" : "PEOPLE"
+            var assignto = '{{externaltourform.instance.people_id}}' == '1' ? "GROUP" : "PEOPLE"
             showHideSelectField(assignto)
         }
+        //display gpslocatoin in readable format
+        $('#id_gpslocation').val("{{externaltourform.instance.gpslocation.y}}, {{externaltourform.instance.gpslocation.x}}")
 
         //Datatable
         asgdsites_table = $("#external_tour").DataTable({
@@ -332,42 +391,163 @@ var parentEditor;
                 {data:"id", visible:false},
                 {data:"seqno", title:'Slno'},
                 {data:"plandatetime", title:'Plan Datetime'},
-                {data:"expirydatetime", title:'Expiry Datetime'},
+                {data:"expirydatetime", title:'Expiry Datetime', visible:false},
+                {data:"performedtime", title:'Performed Datetime'},
+                {data:"bu__solid", title:'Sol Id'},
                 {data:"bu__buname", title:'Checkpoint'},
                 {data:'qset__qsetname', title:'Checklist'},
-                {data:'gracetime', title:'Gracetime'},
+                {data:'gracetime', title:'Gracetime', visible:false},
                 {data:'jobstatus', title:'Status'},
-                {data:'distance', title:'Distance', defaultContent:null, render:function(data, type, row, meta){
-                        return data === null ? '--' : data
+                {data:'bu__gpslocation', visible:true, title:"GPS", render:function(data, type, row, meta){
+                        let coords = typeof data === 'string' && data.length > 0 ? JSON.parse(data): 'NONE'
+                        if(coords !== 'NONE'){
+                            let lat = coords['coordinates'][1]
+                            let lng = coords['coordinates'][0]
+                            return `<a href="https://www.google.com/maps?q=${lat},${lng}" target="_blank">${lat},${lng}</a>`
+                        }return coords
+                    }
+                },
+                {data:'distance', title:'Distance',  defaultContent:null, render:function(data, type, row, meta){
+                        return data === null ? '--' : data + ' km'
                     }
                 },
                 {data:'duration', title:'Duration', defaultContent:null, render:function(data, type, row, meta){
                         return data === null ? '--' : data
                     }
                 },
+                {title:'Attachments',data:null, defaultContent:null, render:function(data, type, row, meta){
+                        return `<a href="javascript:void(0)"  onClick='showAttachmentDetails(${row['id']}, "jobneed")'>View</i></a>`
+                    }
+                },
+                {title:'Details',data:null, defaultContent:null, render:function(data, type, row, meta){
+                        return  `<button class="btn btn-link p-0" onClick='showCpDetails(${row['id']})'>View Details</button>`
+                    }
+                }
             ],
+            ordering:false,
             deferRender: true,
             columnDefs:[
                 {targets:1, data:'seqno', render:function(data, type, row, meta){
-                        return parseInt(data) + 1;
+                        return parseInt(data)
                     }
                 },
+                {targets:2, render:function(data, type, row, meta){
+                    return convert_to_local(type, data, row)}
+                },
+                {targets:3, render:function(data, type, row, meta){
+                    return convert_to_local(type, data, row)}
+                },
+                {targets:4, render:function(data, type, row, meta){
+                    return data ? convert_to_local(type, data, row) : '--'
+                }}
             ],
 			responsive : true,
             dom: `<'row' <'col-sm-6 d-flex justify-content-start'f> <'col-sm-6 d-flex justify-content-end'B> >rt<'row'
 			 <'col-sm-6'l> <'col-sm-6'p><'col-sm-12 d-flex justify-content-center'i>>`,
             buttons:[],
+            createdRow:function(row, data, dataIndex){
+                        if(data['alerts'] === true){
+                            $(row).addClass('text-danger')
+                        }
+                    },
             initComplete: function( settings, json ) {
             if('{{ externaltourform.instance.id }}' !== 'None'){
-                $("#btnGetRoute").click()
+                data = asgdsites_table.rows().data().toArray() 
+                freq = "{{ externaltourform.instance.other_info['tour_frequency'] }}"
+                console.log(data, 'data')
+                calculate_tour_details(data, freq)
             }
         }
 
         })
 
+
         if('{{externaltourform.instance.id}}' !== 'None'){
             reCaclTime()
         }
+        $('#id_checklistdetails').on('shown.bs.modal', function (event) {
+            $.fn.dataTable.tables( {visible: true, api: true} ).columns.adjust();
+            $('#id_checklistdetails').modal({
+                keyboard: false
+            })
+            checklistdetails = $("#tabChecklistDetails").DataTable(
+            {
+                ajax:{
+                    url:`{{ url("schedhuler:jobneedexternaltours") }}`,
+                    data:function(d){
+                    return  $.extend(d, ajaxData);
+                    }
+                },
+                scrollY: 300,
+                responsive:true,
+                retrieve: true,
+                columns:[
+                    {data:'id', visible:false},
+                    {data:'question__quesname', title:'Question'},
+                    {data:'answertype', title:'Type'},
+                    {data:'min', title:'Min'},
+                    {data:'max', title:'Max'},
+                    {data:'options', title:'Options'},
+                    {data:'alerton', title:'Alert On'},
+                    {data:'answer', title:'Answer'},
+                    {data:'ismandatory', title:'Mandatory'},
+                    {data: null, title:'Attachments', render:function(data, type, row, meta){
+                        return `<a href="javascript:void(0)"  onClick='showAttachmentDetails(${row['id']}, "jnd")'>View</a>`
+                    }
+                    }
+                ],
+                ordering:false,
+                createdRow:function(row, data, dataIndex){
+                        if(data['alerts'] === true){
+                            $(row).addClass('text-danger')
+                        }
+                    },
+                deferRender: true,
+                scrollX: true,
+                dom: `<'row' <'col-sm-6 d-flex justify-content-start'f> <'col-sm-6 d-flex justify-content-end'B> >rt<'row'
+                <'col-sm-6'l> <'col-sm-6'p><'col-sm-12 d-flex justify-content-center'i>>`,
+                buttons:[],
+
+            })
+            
+        })
+        $('#id_attachmentdetails').on('shown.bs.modal', function (event) {
+            $.fn.dataTable.tables( {visible: true, api: true} ).columns.adjust();
+                $('#id_attachmentdetails').modal({
+                    keyboard: false
+                })
+                attachmentDetails = $("#tabAttachmentDetails").DataTable(
+                {
+                    ajax:{
+                        url:`{{ url("schedhuler:jobneedexternaltours") }}`,
+                        data:function(d){
+                        return  $.extend(d, ajaxData);
+                        }
+                    },
+                    retrieve: true,
+                    columns:[
+                        { data: "id", visible: false },
+                        {title:'SL No.', width:"5%", data:null, defaultContent:null, render:function (data, type, row, meta) { return meta.row  + 1; }},
+                        { data: "filepath",  width:"5%", title:'File', render:function (data, type, row, meta) { return `<img src="{{ MEDIA_URL }}${row.filepath.replace('youtility4_media/', "")}/${row.filename}" class="card-img-top" target="_blank" alt="" style="width: 30px;height: 30px;">`; }},
+                        { data: "filename",  title:'File Name' },
+                        { data: null, width:"5%", defaultContent:null, title:"Action", render:function(data, type, row, meta ){
+                        let file = `{{ MEDIA_URL }}${row.filepath.replace('youtility4_media/', "")}/${row.filename}`
+                        return `<a href="${file}" target="_blank" class=""><i class="ch4 fas fa-eye"></i></a>&nbsp;&nbsp;&nbsp;&nbsp;<a href="${file}" download="${row.filename}"><i class="ch4 fas fa-save"></i></a>`;
+                        } },
+                    ],
+                    ordering:false,
+                    deferRender: true,
+                    scrollX: true,
+                    dom: `<'row' <'col-sm-6 d-flex justify-content-start'f> <'col-sm-6 d-flex justify-content-end'B> >rt<'row'
+                    <'col-sm-6'l> <'col-sm-6'p><'col-sm-12 d-flex justify-content-center'i>>`,
+                    buttons:[],
+
+                }
+            )
+            
+        })
+
+        
 
     })
 </script>

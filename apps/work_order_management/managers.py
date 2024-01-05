@@ -1,0 +1,302 @@
+from django.db import models
+from django.db.models.functions import Concat, Cast
+from django.db.models import CharField, Value as V
+from django.db.models import Q, F, Count, Case, When
+from django.contrib.gis.db.models.functions import   AsGeoJSON
+from django.conf import settings
+from datetime import datetime, timedelta
+import logging
+import json
+from django.apps import apps
+logger = logging.getLogger('__main__')
+
+
+class VendorManager(models.Manager):
+    use_in_migrations = True
+    
+    def get_vendor_list(self, request, fields, related):
+        R , S = request.GET, request.session
+        if R.get('params'): P = json.loads(R.get('params', {}))
+        
+        qobjs =  self.select_related(*related).filter(
+            client_id = S['client_id'],
+            enable=True
+        ).values(*fields)
+        return qobjs or self.none()
+    
+    def get_vendors_for_mobile(self, request, clientid, mdtz, buid, ctzoffset):
+        if not isinstance(mdtz, datetime):
+            mdtz = datetime.strptime(mdtz, "%Y-%m-%d %H:%M:%S")
+        mdtz = mdtz - timedelta(minutes=ctzoffset)
+            
+        qset = self.filter(
+            Q(bu_id = buid) | Q(show_to_all_sites = True),
+            mdtz__gte = mdtz,
+            client_id = clientid, 
+            
+        ).values()
+        
+        return qset or self.none()
+    
+class ApproverManager(models.Manager):
+    use_in_migrations = True
+    
+    def get_approver_list(self, request, fields, related):
+        R,S  = request.GET, request.session
+        qobjs =  self.select_related(*related).filter(
+            bu_id = S['bu_id'],
+        ).values(*fields)
+        return qobjs or self.none()
+    
+    def get_approver_options_wp(self, request):
+        S = request.session
+        qset = self.annotate(
+            text = F('people__peoplename'),
+        ).filter(approverfor__contains = ['WORKPERMIT'], bu_id = S['bu_id']).values('id', 'text')
+        return qset or self.none()
+    
+    def get_approver_list_for_mobile(self, buid, clientid):
+        qset = self.select_related().filter(
+            Q(bu_id=buid) | Q(forallsites=True), client_id=clientid
+        ).annotate(
+            peoplecode=F('people__peoplecode'),
+            peoplename=F('people__peoplename')).values(
+                'id', 'cdtz', 'mdtz', 'cuser_id', 'muser_id', 'ctzoffset', 'bu_id',
+                'client_id', 'people_id', 'peoplename', 'peoplecode', 'forallsites',
+                'approverfor', 'sites'
+            )
+        if qset:
+            for obj in qset:
+                obj['approverfor'] = ','.join(obj['approverfor'] or "")
+                obj['sites'] = ','.join(obj['sites'] or "")
+        return qset or self.none()
+
+
+class WorkOrderManager(models.Manager):
+    use_in_migrations = True
+    
+    def get_workorder_list(self, request, fields, related):
+        from .models import Wom
+        S = request.session
+        P = json.loads(request.GET['params'])
+        qset = self.filter(
+            cdtz__date__gte=P['from'],
+            cdtz__date__lte=P['to'],
+            client_id=S['client_id'],
+            workpermit=Wom.WorkPermitStatus.NOTNEED
+        ).select_related(*related).values(
+            *fields
+        )
+        if P.get('status'):
+            qset = qset.filter(workstatus =P['status'])
+        return qset or self.none()
+    
+    def get_workpermitlist(self, request):
+        R, S = request.GET, request.session
+        P = json.loads(R.get('params', "{}"))
+        qobjs = self.select_related('cuser', 'bu', 'qset').filter(
+            ~Q(workpermit__in =  ['NOT_REQUIRED', 'NOTREQUIRED']),
+            parent_id = 1,
+            client_id = S['client_id'],
+            cdtz__date__gte = P['from'],
+            cdtz__date__lte = P['to'],
+        ).order_by('-other_data__wp_seqno').values('cdtz', 'other_data__wp_seqno', 'qset__qsetname', 'workpermit', 'ctzoffset',
+                 'workstatus', 'id', 'cuser__peoplename', 'bu__buname', 'bu__bucode')
+        return qobjs or self.none()
+         
+    def get_workpermit_details(self, request, wp_qset_id):
+        S = request.session
+        QuestionSet = apps.get_model('activity', 'QuestionSet')
+        wp_details = []
+        sections_qset = QuestionSet.objects.filter(parent_id = wp_qset_id).order_by('seqno')
+        for section in sections_qset:
+            sq = {
+                "section":section.qsetname,
+                "sectionID":section.seqno,
+                'questions':section.questionsetbelonging_set.values(
+                    'question__quesname', 'answertype', 'qset_id',
+                    'min', 'max', 'options', 'id', 'ismandatory').order_by('seqno')
+            }
+            wp_details.append(sq)
+        return wp_details or self.none()
+    
+    def get_return_wp_details(self, request):
+        S = request.session
+        QuestionSet = apps.get_model('activity', 'QuestionSet')
+        sections_qset = QuestionSet.objects.filter(~Q(parent_id = 1), parent__type='RETURN_WORK_PERMIT', client_id=S['client_id']).order_by('seqno')
+        rwp_details = []
+        for section in sections_qset:
+            sq={
+                "section":section.qsetname,
+                "sectionID":section.seqno,
+                'questions':section.questionsetbelonging_set.values(
+                    'question__quesname', 'answertype', 'qset_id',
+                    'min', 'max', 'options', 'id', 'ismandatory').order_by('seqno')
+            }
+            rwp_details.append(sq)
+        return rwp_details or self.none()
+            
+        
+    
+    def get_wp_answers(self, womid):
+        childwoms = self.filter(parent_id = womid).order_by('seqno')
+        logger.info(f"{childwoms = }")
+        wp_details = []
+        for childwom in childwoms:
+            sq = {
+                "section":childwom.description,
+                "sectionID":childwom.seqno,
+                'questions':childwom.womdetails_set.values(
+                    'question__quesname', 'answertype', 'answer', 'qset_id',
+                    'min', 'max', 'options', 'id', 'ismandatory').order_by('seqno')
+            }
+            wp_details.append(sq)
+        logger.info(f"{wp_details = }")
+        return wp_details or self.none()
+    
+
+    def get_approver_list(self, womid):
+        if womid == 'None':return []
+        obj = self.filter(
+            id = womid
+        ).values('other_data').first()
+        return obj['other_data']['wp_approvers'] or []
+    
+    
+    def get_wom_status_chart(self, request):
+        S,R = request.session, request.GET
+        qset = self.filter(
+            bu_id__in = S['assignedsites'],
+            client_id = S['client_id'],
+            cdtz__date__gte = R['from'],
+            cdtz__date__lte = R['upto'],
+            workpermit = 'NOT_REQUIRED'
+        )
+        assigned    = qset.filter(workstatus = 'ASSIGNED').count()
+        re_assigned = qset.filter(workstatus = 'RE_ASSIGNED').count()
+        completed   = qset.filter(workstatus = 'COMPLETED').count()
+        cancelled   = qset.filter(workstatus = 'CANCELLED').count()
+        inprogress  = qset.filter(workstatus = 'INPROGRESS').count()
+        closed      = qset.filter(workstatus = 'CLOSED').count()
+        
+        stats = [assigned, re_assigned, completed, inprogress,closed, cancelled]
+        return stats, sum(stats)
+    
+    
+    def get_events_for_calendar(self, request):
+        from apps.work_order_management.models import Wom
+        S,R = request.session, request.GET
+        
+        start_date = datetime.strptime(R['start'], "%Y-%m-%dT%H:%M:%S%z").date()
+        end_date = datetime.strptime(R['end'], "%Y-%m-%dT%H:%M:%S%z").date()
+
+        qset = self.annotate(
+            start=Cast(F('plandatetime'), output_field=CharField()),
+            end=Cast(F('expirydatetime'), output_field=CharField()),
+            title = Case(When(workpermit = 'NOT_REQUIRED', then = F('description') ), default=F('qset__qsetname'), output_field=CharField()),
+            color = Case(
+                When(workstatus__exact = Wom.Workstatus.CANCELLED, then = V('#727272')),
+                When(workstatus__exact = Wom.Workstatus.REASSIGNED, then= V( '#004679')),
+                When(workstatus__exact = Wom.Workstatus.INPROGRESS, then= V( '#b87707')),
+                When(workstatus__exact = Wom.Workstatus.CLOSED, then= V( '#13780e')),
+                When(workstatus__exact = Wom.Workstatus.COMPLETED, then=V('#0d96ab')),
+                When(workstatus__exact = Wom.Workstatus.ASSIGNED, then=V('#a14020')),
+                output_field=CharField()
+            )
+        ).filter(
+            cdtz__date__gte = start_date,
+            cdtz__date__lte = end_date,
+            bu_id = S['bu_id'],
+            client_id = S['client_id']
+        )
+        
+        if R['eventType'] == 'Work Orders':
+            qset = qset.filter(workpermit = Wom.WorkPermitStatus.NOTNEED)
+        else:
+            qset = qset.filter(~Q(workpermit = Wom.WorkPermitStatus.NOTNEED))
+        qset = qset.values('id', 'start', 'end', 'title','color')
+        return qset or self.none()
+    
+    
+    def get_attachments(self, id):
+        if qset := self.filter(id=id).values('uuid'):
+            if atts := self.get_atts(qset[0]['uuid']):
+                return atts or self.none()
+        return self.none()
+
+    
+    def get_atts(self, uuid):
+        from apps.activity.models import Attachment
+        if atts := Attachment.objects.annotate(
+            file = Concat(V(settings.MEDIA_URL, output_field=models.CharField()),
+                          F('filepath'),
+                          V('/'), Cast('filename', output_field=models.CharField())),
+            location = AsGeoJSON('gpslocation')
+            ).filter(owner = uuid).values(
+            'filepath', 'filename', 'attachmenttype', 'datetime', 'location', 'id', 'file'
+            ):return atts
+        return self.none()
+    
+    def get_wom_records_for_mobile(self, fromdate, todate, peopleid, workpermit, buid, clientid, parentid):
+        from apps.peoples.models import People
+        people = People.objects.get(id=peopleid)
+        workpermit_statuses = workpermit.replace(', ', ',').split(',')
+        fields = ['cuser_id', 'muser_id', 'cdtz', 'mdtz', 'ctzoffset','description', 'uuid', 'plandatetime',
+                  'expirydatetime', 'starttime', 'endtime', 'gpslocation', 'location_id', 'asset_id',
+                  'workstatus', 'workpermit', 'priority','parent_id', 'alerts', 'permitno', 'approverstatus', 
+                  'performedby','ismailsent', 'isdenied', 'client_id', 'bu_id', 'approvers', 'id']
+        
+        qset = self.select_related().annotate(
+            permitno = F('other_data__wp_seqno'),
+            approverstatus = F('other_data__wp_approvers')
+            ).filter(
+            Q(cuser_id = peopleid) | Q(muser_id=peopleid) | Q(approvers__contains = [people.peoplecode]),
+            cdtz__date__gte = fromdate,
+            cdtz__date__lte = todate,
+            workpermit__in = workpermit_statuses,
+            bu_id = buid,
+            client_id = clientid,
+            parent_id=parentid
+        ).values(*fields).order_by('-cdtz')
+        print(str(qset.query))
+        return qset or self.none()
+    
+    def wp_data_for_report(self, id):
+        site = self.filter(id=id).first().bu
+        wp_answers = self.get_wp_answers(id)
+        wp_info = wp_answers[0]
+        wp_answers.pop(0)
+        rwp_section = wp_answers.pop(-1)
+        wp_sections = wp_answers
+        return wp_info, wp_sections, rwp_section, site.buname
+        
+
+class WOMDetailsManager(models.Manager):
+    use_in_migrations = True
+    def get_wo_details(self, womid):
+        if womid in [None, 'None', '']: return self.none()
+        qset = self.filter(
+            wom_id = womid
+        ).select_related('question').values('question__quesname', 'answertype', 'min', 'max', 'id',
+            'options', 'alerton', 'ismandatory', 'seqno','answer', 'alerts').order_by('seqno')
+        return qset or self.none()
+    
+    def getAttachmentJND(self, id):
+        if qset := self.filter(id=id).values('uuid'):
+            if atts := self.get_atts(qset[0]['uuid']):
+                return atts or self.none()
+        return self.none()
+    
+    def get_atts(self, uuid):
+        from apps.activity.models import Attachment
+        from django.conf import settings
+        if atts := Attachment.objects.annotate(
+            file = Concat(V(settings.MEDIA_URL, output_field=models.CharField()), F('filepath'),
+                          V('/'), Cast('filename', output_field=models.CharField()))
+            ).filter(owner = uuid).values(
+            'filepath', 'filename', 'attachmenttype', 'datetime',  'id', 'file'
+            ):return atts
+        return self.none()
+    
+    
+    

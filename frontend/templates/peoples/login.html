@@ -25,7 +25,7 @@
         #loginbody {
             justify-content: center;
             background-color: rgba(255, 253, 253, 0.87);
-            border:1px solid #eaeced;
+            border: 1px solid #eaeced;
             width: 450px;
             height: 420px;
             display: flex;
@@ -37,7 +37,7 @@
             transition: box-shadow .4s ease;*/
         }
 
-        
+
         #id_username,
         #id_password,
         ::placeholder {
@@ -46,7 +46,7 @@
         }
 
 
-        
+
         #id_username,
         #id_password {
             margin: 2%;
@@ -55,7 +55,7 @@
             border-radius: 5px;
             border-style: solid;
             border-width: 1px;
-            border-color:#9da3a6;
+            border-color: #9da3a6;
         }
 
         .fields {
@@ -74,15 +74,14 @@
             width: 100%;
             min-height: 24px;
             padding: 13px;
-            background-color: #008fba;
+            background-color: #01569a;
             color: #fff;
             box-shadow: none;
             border-radius: 6px !important;
             border: none;
             cursor: pointer;
             transition: background-color .5s ease;
-            padding-inline:2%
-
+            padding-inline: 2%
         }
 
         .signinbtn:hover {
@@ -101,21 +100,22 @@
             box-shadow: none;
             padding: 0
         }
+
         .signinbtn {
             text-align: center;
-            text-align-last:center;
+            text-align-last: center;
             padding-bottom: 10px;
             font-size: 16px;
             height: 44px;
         }
 
         .site_logo img {
-            width: 200px;
-            height: 60px;
+            width: 185px;
+            height: 148px;
             border-radius: 6px;
-            margin-bottom: 10px;
+            margin-bottom: -53px;
             position: relative;
-            top:-8px
+            top: -20px
         }
 
         .loginerr {
@@ -159,8 +159,9 @@
             margin-right: 20px;
             color: #979491;
         }
+
         .alert.alert-danger.loginerr {
-            background-color:#ffe0e0;
+            background-color: #ffe0e0;
             border: 1px solid;
             padding: 2%;
             text-transform: capitalize;
@@ -173,11 +174,12 @@
 <body>
     <!------------------------------------------------- BEGIN BODY ----------------------------------------------------->
     <div class="login_body d-flex flex-column flex-sm-column" id="loginbody">
-        <div class="site_logo"><img class="dlogo" src="{{static('assets/media/images/logo-transparent.png')}}" alt="">
+        <div class="site_logo"><img class="dlogo" src="{{static('assets/media/logos/ytpl_transparent.png')}}" alt="">
         </div>
         <!----------------------------- BEGIN FORM ------------------------------>
         <form action="" method='post' class="col-12 col-sm-6 col-md-4">
             <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
+            <input type="hidden" name="timezone" id="timezone">
 
             <!------------BEGIN NON FIELD ERRORS -------------------->
             {% if loginform.non_field_errors() %}
@@ -187,6 +189,16 @@
             {% endif %}
             <!------------END NON FIELD ERRORS -------------------->
 
+            {% if messages %}
+            {% for msg in messages %}
+            <div class="{% if msg.tags %}{{ msg.tags }}{% endif %} alert-dismissible fade show" role="alert">
+                <strong>Message!</strong> {{msg}}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+            
+            {% endfor %}
+            {% endif %}
+
             <div class="fields d-flex flex-column m-0">
                 {% for field in loginform %}
                 {% for error in field.errors %}
@@ -194,7 +206,7 @@
                 <div class="alert alert-danger loginerr">{{error}}</div>
                 {% endfor %}
                 <!--FIELDS IN FORM-->
-    
+
                 {{ field }}
                 {% if loop.index == 2 %}
                 <span class="svg-icon svg-icon-2" id="p-viewer">
@@ -211,7 +223,7 @@
             </div>
         </form>
         <!----------------------------- END FORM ------------------------------>
-        <div class="copyright"> <span id="copyRightYear">2021</span> © Youtility Technologies Pvt. Ltd. </div>
+        <div class="copyright"> <span id="copyRightYear">{{ current_year }}</span> © Youtility Technologies Pvt. Ltd. </div>
     </div>
     <!-------------------------------------------- END BODY ---------------------------------------------------------------->
 
@@ -233,6 +245,10 @@
                 x.innerHTML = "visibility";
             }
         });
+        $(document).ready(() => {
+            $("#timezone").val(-new Date().getTimezoneOffset())
+        })
+    
     </script>
 
 </body>

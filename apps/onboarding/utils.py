@@ -14,10 +14,10 @@ def save_json_from_bu_prefsform(bt, buprefsform):
         for k, _ in bt.bupreferences.items():
             if k in ('validimei', 'validip', 'reliveronpeoplecount',
                      'pvideolength', 'usereliver', 'webcapability', 'mobilecapability',
-                     'reportcapability', 'portletcapability'):
+                     'reportcapability', 'portletcapability', 'ispermitneeded'):
                 bt.bupreferences[k] = buprefsform.cleaned_data.get(k)
     except Exception:
-        logger.error("save json from buprefsform... FAILED", exc_info = True)
+        logger.critical("save json from buprefsform... FAILED", exc_info = True)
         return False
     else:
         logger.info('save_json_from_bu_prefsform(bt, buprefsform) success')
@@ -37,11 +37,12 @@ def get_bu_prefform(bt):
                 'reliveronpeoplecount',
                 'pvideolength',
                 'userreliver',
+                'ispermitneeded'
             )
         }
 
     except Exception:
-        logger.error("get_bu_prefform... FAILED", exc_info = True)
+        logger.critical("get_bu_prefform... FAILED", exc_info = True)
     else:
         logger.info("get_bu_prefform success")
         return BuPrefForm(data = d)
@@ -55,9 +56,8 @@ def get_tatype_choices(superadmin = False):
 
 def update_children_tree(instance, newcode, newtype, whole = False):
     """Updates tree of child bu tree's"""
-    from apps.core.raw_queries import query
     try:
-        childs = Bt.objects.get_bu_list_ids(instance.id)
+        childs = Bt.objects.get_all_bu_of_client(instance.id)
         ic(instance.id, childs)
         ic(instance.bucode, newcode)
         if len(childs) > 1:
@@ -78,7 +78,7 @@ def update_children_tree(instance, newcode, newtype, whole = False):
                     bt.save()
                     ic(bt.bucode)
     except Exception:
-        logger.error(
+        logger.critical(
             "update_children_tree(instance, newcode, newtype)... FAILED", exc_info = True)
     else:
         logger.info('update_children_tree(instance, newcode, newtype) success')
@@ -95,8 +95,8 @@ def get_choice(li):
 def get_webcaps_choices():  # sourcery skip: merge-list-append
     '''Populates parent data in parent-multi-select field'''
     from apps.peoples.models import Capability
-    from ..core.raw_queries import query
-    parent_menus = Capability.objects.raw(query['get_web_caps_for_client'])
+    from ..core.raw_queries import get_query
+    parent_menus = Capability.objects.raw(get_query('get_web_caps_for_client'))
     for i in parent_menus:
         print(f'depth: {i.depth} tacode {i.tacode} path {i.path}')
     choices, temp = [], []
@@ -133,7 +133,7 @@ def get_bt_prefform(bt):
 
         return ClentForm(data = d)
     except Exception:
-        logger.error('get_bt_prefform(bt)... FAILED', exc_info = True)
+        logger.critical('get_bt_prefform(bt)... FAILED', exc_info = True)
     else:
         logger.info('get_bt_prefform success')
 
@@ -155,7 +155,7 @@ def create_bt_tree(bucode, indentifier, instance, parent = None):
                 instance.butree = ""
                 instance.butree += f"{parent.butree} > {indentifier.tacode} :: {bucode}"
     except Exception:
-        logger.error(f'Something went wrong while creating Bt tree for instance {instance.bucode}', exc_info = True)
+        logger.critical(f'Something went wrong while creating Bt tree for instance {instance.bucode}', exc_info = True)
 
         raise
     else:
@@ -195,7 +195,7 @@ def create_tenant(buname, bucode):
         _, _ = Tenant.objects.update_or_create(
             defaults={'tenantname':buname}, subdomain_prefix = bucode.lower())
     except Exception:
-        logger.error('Something went wrong while creating tenant for the client %s', (bucode), exc_info = True)
+        logger.critical('Something went wrong while creating tenant for the client %s', (bucode), exc_info = True)
         raise
     else:
         logger.info(
@@ -219,7 +219,7 @@ def create_default_admin_for_client(client):
                               isadmin = True)
         logger.info('Default user-admin created for the client... DONE')
     except Exception:
-        logger.error("Something went wrong while creating default user-admin for client... FAILED",
+        logger.critical("Something went wrong while creating default user-admin for client... FAILED",
                      exc_info = True)
         raise
 

@@ -1,9 +1,9 @@
 from datetime import datetime
 from urllib import request
 from django.db import models
-from django.db.models import Q, F
+from django.db.models import Q, F, ExpressionWrapper
 import apps.peoples.models as pm
-from django.db.models.functions import Concat
+from django.db.models.functions import Concat, Cast
 from django.db.models import Value as V
 from apps.core import utils
 
@@ -26,7 +26,7 @@ class BtManager(models.Manager):
                     return tuple(qset)
             return ""
 
-    def get_bu_list_ids(self, clientid, type='array'):
+    def get_all_bu_of_client(self, clientid, type='array'):
         """
         Returns all BU's on given client_id
         """
@@ -34,6 +34,14 @@ class BtManager(models.Manager):
         qset = self.raw(
             f"select fn_get_bulist({clientid}, false, true, '{type}'::text, null::{rtype}) as id;")
         return qset[0].id if qset else self.none()
+    
+    def get_all_sites_of_client(self, clientid):
+        """
+        Returns all sites of a given clientid
+        """
+        all_buids = self.get_all_bu_of_client(clientid)
+        return self.select_related().filter(id__in = all_buids, identifier__tacode = 'SITE') or self.none()
+    
 
     def find_site(self, clientid, sitecode):
         """
@@ -41,7 +49,7 @@ class BtManager(models.Manager):
         """
         qset = self.filter(
             Q(identifier__tacode = 'SITE') & Q(bucode = sitecode) 
-            & ~Q(parent__id = -1) & Q(id__in = self.get_bu_list_ids(clientid))
+            & ~Q(parent__id = -1) & Q(id__in = self.get_all_bu_of_client(clientid))
         )
         return qset[0] if qset else  self.none()
 
@@ -50,8 +58,7 @@ class BtManager(models.Manager):
         Return sitelist assigned to peopleid
         considering whether people is admin or not.
         """
-        ic(clientid, peopleid)
-        qset = self.raw("select fn_get_siteslist_web(%s, %s) as id", [clientid, peopleid])
+        qset = utils.runrawsql('select fn_get_siteslist_web(%s, %s)', [clientid, peopleid])
         return qset or self.none()
 
     def get_whole_tree(self, clientid):
@@ -62,7 +69,7 @@ class BtManager(models.Manager):
         rtype = 'bigint[]'
         qset_json = self.raw(
             f"select fn_get_bulist({clientid}, true, true, 'array'::text, null::{rtype}) as id;")
-        return json.loads(qset_json[0].id if qset_json else '{}')
+        return qset_json[0].id if qset_json else  []
 
     def getsitelist(self, clientid, peopleid):
         # check if people is admin or not
@@ -72,11 +79,11 @@ class BtManager(models.Manager):
             return self.none()
         else:
             if p.isadmin:
-                bulist = self.get_bu_list_ids(clientid)
+                bulist = self.get_all_bu_of_client(clientid)
                 bus = self.filter(id__in = bulist)
                 qset = bus.annotate(bu_id = F('id')).filter(identifier__tacode = 'SITE').values(
                     'bu_id', 'bucode', 'butype_id', 'enable', 'cdtz', 'mdtz', 'skipsiteaudit',
-                     'buname', 'cuser_id', 'muser_id', 'identifier_id'
+                     'buname', 'cuser_id', 'muser_id', 'identifier_id', 'bupreferences'
                 )
                 return qset or self.none()
             pass
@@ -84,14 +91,32 @@ class BtManager(models.Manager):
     def load_parent_choices(self, request):
         search_term = request.GET.get('search')
         parentid = -1 if request.GET.get('parentid') == 'None' else request.GET.get('parentid')
-        qset = self.filter(~Q(id=1), Q(id = parentid) | Q(parent_id=parentid)).distinct()
+        buids = utils.runrawsql("select fn_get_bulist(%s, true, true, 'array'::text, null::bigint[]) as buids", [parentid])
+        qset = self.filter(id__in=buids[0]['buids']).select_related('identifier', 'parent')
         qset = qset.filter(buname__icontains = search_term) if search_term else qset
-        qset = qset.annotate(text = Concat(F('buname'), V(" ("), F('identifier__tacode'), V(")"))).values('id', 'text')
+        qset = qset.annotate(
+            text = Concat(F('buname'), V(" ("), F('identifier__tacode'), V(")"))).exclude(
+                identifier__tacode = 'SITE').values('id', 'text')
         return qset or self.none()
+
+    def get_bus_idfs(self, R, request, idf = None):
+        S = request.session
+        
+        bu_ids = self.get_whole_tree(S['client_id'])
+        
+        fields = R.getlist('fields[]')
+        qset = self.filter(
+             ~Q(bucode__in=('NONE', 'SPS', 'YTPL')), identifier__tacode = idf, enable = True, id__in = bu_ids).select_related(
+                 'parent', 'identifier').annotate(buid = F('id')).values(*fields)
+        idfs = self.filter(
+             ~Q(identifier__tacode = 'NONE'), ~Q(bucode__in=('NONE', 'SPS', 'YTPL')),id__in = bu_ids ).order_by(
+                 'identifier__tacode').distinct(
+                     'identifier__tacode').values('identifier__tacode')
+        return qset, idfs
 
     def get_client_list(self, fields, related):
         qset = self.filter(
-            identifier__tacode = 'CLIENT', enable=True).select_related(*related).values(
+            identifier__tacode = 'CLIENT').select_related(*related).values(
                 *fields).order_by('-mdtz')
         return qset or self.none()
 
@@ -100,49 +125,81 @@ class BtManager(models.Manager):
         "handles post data submitted by editor in client form"
         R, S = request.POST, request.session
         r = {'enable':R['enable'] == '1'}
-        PostData = {'bucode':R['bucode'], 'buname':R['buname'], 'parent_id' : R['parent'], 'identifier_id':R['identifier'],
+        PostData = {'bucode':R['bucode'].upper(), 'buname':R['buname'], 'parent_id' : R['parent'], 'identifier_id':R['identifier'],
                     'enable':r['enable'],
                 'cuser':request.user, 'muser':request.user, 'cdtz':utils.getawaredatetime(datetime.now(), R['ctzoffset']),
                 'mdtz':utils.getawaredatetime(datetime.now(), R['ctzoffset'])}
         
         if R['action'] == 'create':
+            if self.filter(bucode=R['bucode'].upper(), parent_id = R['parent'] ).exists():
+                return {'data':list(self.none()), 'error':'Bu code already exists'}
             ID = self.create(**PostData).id
         
         elif R['action'] == 'edit':
             PostData.pop('cuser')
-            PostData.pop('mdtz')
+            PostData.pop('cdtz')
             updated = self.filter(pk=R['pk']).update(**PostData)
             ic(updated)
             if updated: ID = R['pk']
         else:
+            ic(R['pk'])
             self.filter(pk=R['pk']).delete()
-            return self.none()
+            return {'data':list(self.none())}
+        
+        qset = self.filter(id=ID).values('id', 'bucode', 'buname', 'identifier__tacode', 'identifier_id', 
+                 'parent__buname', 'parent_id', 'enable') or self.none()
+        return {'data':list(qset)}
+        
     
     def handle_adminspostdata(self, request):
+        # sourcery skip: use-named-expression
         "handles post data submitted by editor in client form"
         R, S = request.POST, request.session
         r = {'isadmin':R['isadmin'] == '1'}
-        PostData = {'peoplecode':R['peoplecode'], 'peoplename':R['peoplename'], 'bu_id' : R['site_id'], 'loginid':R['loginid'],
-                    'email':R['email'], 'gender':R['gender'],'mobno':R['mobno'], 'isadmin':r['isadmin'], 'dateofbirth':R['dateofbirth'],
+        PostData = {'peoplecode':R['peoplecode'].upper(), 'peoplename':R['peoplename'], 'bu_id' : 1, 'loginid':R['loginid'],
+                    'client_id':R['client_id'] , 'email':R['email'], 'gender':R['gender'],'mobno':R['mobno'], 'isadmin':r['isadmin'], 'dateofbirth':R['dateofbirth'],
                     'dateofjoin':R['dateofjoin'],
                 'cuser':request.user, 'muser':request.user, 'cdtz':utils.getawaredatetime(datetime.now(), R['ctzoffset']),
                 'mdtz':utils.getawaredatetime(datetime.now(), R['ctzoffset'])}
         
+        if not utils.verify_mobno(R['mobno']):
+            return {'data':list(self.none()),
+                    'fieldErrors':[{'name':'mobno', 'status':"Please Enter Correct Mobile Number!"}]}
+        if not utils.verify_emailaddr(R['email']):
+            return {'data':list(self.none()),
+                    'fieldErrors':[{'name':'email', 'status':"Please Enter Correct Email Address!"}]}
+        
         if R['action'] == 'create':
+            if pm.People.objects.filter(peoplecode=R['peoplecode'].upper(),  client_id = S['client_id']).exists():
+                return {'data':list(self.none()), 'error':'People code already exists'}
+            
+            if pm.People.objects.filter(loginid = R['loginid']).exists():
+                return {'data':list(self.none()), 'error':'Login id already exists'}
+            
+            if pm.People.objects.filter(email = R['email'], client_id = S['client_id']).exists():
+                return {'data':list(self.none()), 'error':'Email already exists'}
+            
             ID = pm.People.objects.create(**PostData).id
         
         elif R['action'] == 'edit':
             PostData.pop('cuser')
-            PostData.pop('mdtz')
+            PostData.pop('cdtz')
             updated = pm.People.objects.filter(pk=R['pk']).update(**PostData)
-            ic(updated)
             if updated: ID = R['pk']
         else:
             pm.People.objects.filter(pk=R['pk']).delete()
-            return self.none()
+            return {'data':list(self.none())}
         
-        return pm.People.objects.filter(id=ID).values('peoplecode', 'peoplename', 'loginid', 'email',
-        'isadmin', 'mobno', 'gender', 'dateofbirth', 'dateofjoin') or self.none()
+        qset = pm.People.objects.filter(id=ID).values(
+            'id', 'peoplecode', 'peoplename', 'loginid', 'email',
+        'isadmin', 'mobno', 'gender', 'dateofbirth', 'dateofjoin')
+        
+        if qset:
+            user = pm.People.objects.get(id=qset[0]['id'])
+            user.set_password(f'{qset[0]["loginid"]}@123')
+            user.save()
+        return {'data':list(qset)}
+        
 
     def get_listbus(self, request):
         "return list bus for client_form"
@@ -155,9 +212,12 @@ class BtManager(models.Manager):
 
     def get_listadmins(self, request):
         "return list admins for client_form"
-        if request.GET.get("id") == "None":
+        if request.GET.get("clientid") in ["None", None]:
             return self.none()
-        qset = pm.People.objects.filter(isadmin=True, client_id = request.GET.get('id')).exclude(peoplecode__in=['NONE', 'SUPERADMIN']).distinct().values(
+        qset = pm.People.objects.filter(
+            isadmin=True, client_id = request.GET.get('clientid'),
+            
+            ).exclude(peoplecode__in=['NONE', 'SUPERADMIN']).distinct().values(
             'peoplecode', 'peoplename', 'loginid', 'isadmin', 'mobno', 'email',
             'gender', 'id', 'dateofbirth', 'dateofjoin'
         ).order_by('-mdtz')
@@ -180,6 +240,25 @@ class BtManager(models.Manager):
                     bucode__in=['NONE', 'YTPL']).distinct().values(*fields)
             return qset or self.none()
         return self.none()
+    
+    def get_sample_data(self):
+        from datetime import timedelta
+        annotated_queryset =  self.annotate(
+            createdTime = ExpressionWrapper(
+                F('cdtz') + timedelta(minutes=330),
+                output_field=models.DateTimeField()
+            )
+        )
+        # Convert the DateTimeField to a string
+        annotated_queryset = annotated_queryset.annotate(
+            createdTimeStr=Cast(
+                F('createdTime'), output_field=models.CharField()
+            )
+        ).values(
+            "id", "solid", 'bucode', 'buname', 'identifier__tacode', 'ctzoffset',
+            'createdTimeStr', 'parent__bucode', 'enable'
+        ).order_by('id')
+        return annotated_queryset
 
     
 
@@ -200,10 +279,11 @@ class TypeAssistManager(models.Manager):
         """
         if not isinstance(mdtz, datetime):
             mdtz = datetime.strptime(mdtz, "%Y-%m-%d %H:%M:%S")
-
+        none_entry = self.filter(tacode = 'NONE').values(*self.fields)
         qset = self.select_related(*self.related).filter(
-            ~Q(id = 1) & Q(mdtz__gte = mdtz) & Q(client_id__in = [clientid])
-        ).values(*self.fields)
+            Q(mdtz__gte = mdtz) & (Q(client_id__in=[clientid]) | Q(cuser__is_superuser=True) | Q(cuser__peoplecode='NONE'))  & Q(enable=True)
+            ).values(*self.fields)
+        qset = qset.union(none_entry)
         return qset or None
     
     def load_identifiers(self, request):
@@ -211,7 +291,56 @@ class TypeAssistManager(models.Manager):
         qset = self.filter(tatype__tacode='BVIDENTIFIER').annotate(text = F('taname')).exclude(taname='Client').values('text', 'id').distinct()
         qset = qset.filter(taname__icontains = search_term, tatype__tacode='BVIDENTIFIER') if search_term else qset
         return qset or self.none()
+    
+    def get_escalationlevels(self, request):
+        R, S = request.GET, request.session
+        if R.get('id') in [None, "None", ""]:
+            return []
+        ic(R)
+        if qobj := self.filter(id=R['id']).first():
+            return list(qobj.esc_types.select_related('escalationtemplate', 'assignedperson', 'assignedgroup').values(
+                'assignedfor', 'assignedperson__peoplename', 'assignedperson__peoplecode', 
+                'assignedgroup__groupname', 'frequency', 'frequencyvalue', 'id', 'level',
+                'assignedperson_id', 'assignedgroup_id'
+            )) or []
+        return []
+    
+    def filter_for_dd_notifycategory_field(self, request, choices=False, sitewise=False):
+        S = request.session
+        qset = self.filter(
+            Q(bu_id__in = S['assignedsites'] + [1],) | Q(bu_id__isnull = True),
+            client_id__in = [S['client_id'], 1],
+            tatype__tacode = 'NOTIFYCATEGORY',
+            enable=True
+        )
+        ic(qset)
+        if sitewise:
+            qset = qset.filter(Q(bu_id__in = [S['bu_id'], 1]) | Q(bu_id__isnull=True))
+        if choices:
+            qset = qset.annotate(text = Concat(F('taname'), V(' ('), F('tacode'), V(')'))).values_list(
+                'id', 'text'
+            )
+        return qset or self.none()
+    
 
+    def get_choices_for_worktype(self, request):
+        S = request.session
+        qset = self.annotate(custom_field=V('', output_field=models.CharField())).filter(
+            tatype__tacode="WORKTYPE", client_id = S['client_id'], enable=True
+        ).select_related('tatype').values_list('id', 'tacode')
+         # add an extra choice with empty strings
+        qset = [('','')] + list(qset)
+        return qset or self.none()
+    
+    def get_asset_types_choices(self, request):
+        S = request.session
+        
+        qset = self.select_related('tatype').filter(
+            client_id = S['client_id'],
+            tatype__tacode = 'ASSETTYPE').values_list('id', 'tacode').distinct()
+        # add an extra choice with empty strings
+        qset = [('','')] + list(qset)
+        return qset
 
 
 class GeofenceManager(models.Manager):
@@ -222,7 +351,7 @@ class GeofenceManager(models.Manager):
 
     def get_geofence_list(self, fields, related, session):
         qset = self.select_related(*related).filter(
-            ~Q(gfcode='NONE'), enable = True, client_id = session['client_id'],
+             enable = True, client_id = session['client_id'],
         ).values(*fields)
         return qset or self.none()
 
@@ -244,3 +373,34 @@ class GeofenceManager(models.Manager):
                 obj['geofencecoords'] = geofencestring
             return qset
         return self.none()
+
+    def getPeoplesGeofence(self, request):
+        
+        searchterm = request.GET.get('search')
+        qset = pm.People.objects.filter(
+            client_id = request.session['client_id'],
+            enable=True, isverified=True,
+        )
+        
+        qset = qset.filter(peoplename__icontains = searchterm) if searchterm else qset
+        qset = qset.annotate(
+            text = Concat('peoplename', V(' ('), 'peoplecode', V(')'))
+        ).values('text', 'id').distinct()
+        return qset or self.none()  
+    
+    
+class ShiftManager(models.Manager):
+    use_in_migrations: True
+    
+    def shift_listview(self, request, related, fields):
+        S = request.session
+        return self.filter(
+            ~Q(shiftname='NONE'),
+            client_id = S['client_id'],
+            bu_id = S['bu_id'],
+        ).annotate(
+        dsgn = Concat(F('designation__taname'), V(' ('), F('designation__tacode'), V(')'))    
+        ).select_related('designation').values(
+            'id', 'shiftname', 'dsgn', 'starttime',
+            'endtime', 'nightshiftappicable'
+        ) or self.none()

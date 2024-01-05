@@ -2,11 +2,9 @@ from graphene_django.types import DjangoObjectType
 from typing import List
 import graphene
 from djantic import ModelSchema
-from pydantic import BaseModel,  validator
 from graphene_gis.scalars import  PointScalar
 from graphene_gis.converter import gis_converter  # noqa
 from datetime import datetime
-from enum import Enum
 from apps.attendance.models import (
     PeopleEventlog, Tracking, TestGeo
 )
@@ -74,6 +72,16 @@ class VerifyClientOutput(graphene.ObjectType):
     rc        = graphene.Int(default_value = 0)
     msg       = graphene.String()
     url = graphene.String(default_value = "")
+    
+class BasicOutput(graphene.ObjectType):
+    rc = graphene.Int(default_value=0)
+    msg = graphene.String()
+    email = graphene.String()
+    
+class DowntimeResponse(graphene.ObjectType):
+    message = graphene.String()
+    startDateTime = graphene.String(default_value="")
+    endDateTime = graphene.String(default_value="")
 
 class LoginResponseType(DjangoObjectType):
     tenantid = graphene.Int()
@@ -120,9 +128,10 @@ class PgroupType(DjangoObjectType):
 
 
 class AuthInput(graphene.InputObjectType):
-    loginid     = graphene.String(required = True)
-    password    = graphene.String(required = True)
-    deviceid    = graphene.String(required = True)
+    clientcode = graphene.String(required = True)
+    loginid    = graphene.String(required = True)
+    password   = graphene.String(required = True)
+    deviceid   = graphene.String(required = True)
 
 class AuthOutput(graphene.ObjectType):
     isauthenticated = graphene.Boolean()
@@ -187,6 +196,7 @@ class ServiceOutputType(graphene.ObjectType):
     msg       = graphene.String()
     recordcount  = graphene.Int()
     traceback = graphene.String(default_value = 'NA')
+    uuids = graphene.List(graphene.String, default_value = ())
 
 
 
@@ -205,141 +215,6 @@ class JobneedSchema(ModelSchema):
         model = Jobneed
         exclude = ['other_info', 'receivedonserver']
 
-
-class TemplateReportSchema(BaseModel):
-    parent: JobneedSchema
-    childs:List[JobneedSchema]
-
-class AnswerType(str, Enum):
-    CHECKBOX    = 'CHECKBOX'   
-    DATE        = 'DATE'       
-    DROPDOWN    = 'DROPDOWN'   
-    EMAILID     = 'EMAILID'    
-    MULTILINE   = 'MULTILINE'  
-    NUMERIC     = 'NUMERIC'    
-    SIGNATURE   = 'SIGNATURE'  
-    SINGLELINE  = 'SINGLELINE' 
-    TIME        = 'TIME'       
-    RATING      = 'RATING'     
-    BACKCAMERA  = 'BACKCAMERA' 
-    FRONTCAMERA = 'FRONTCAMERA'
-    PEOPLELIST  = 'PEOPLELIST' 
-    SITELIST    = 'SITELIST'   
-
-class Frequency(str, Enum):
-    NONE        = 'NONE'       
-    DAILY       = 'DAILY'      
-    WEEKLY      = 'WEEKLY'     
-    MONTHLY     = 'MONTHLY'    
-    BIMONTHLY   = 'BIMONTHLY'  
-    QUARTERLY   = 'QUARTERLY'  
-    HALFYEARLY  = 'HALFYEARLY' 
-    YEARLY      = 'YEARLY'     
-    FORTNIGHTLY = 'FORTNIGHTLY'
-
-class JobStatus(str, Enum):
-    ASSIGNED           = 'ASSIGNED'          
-    AUTOCLOSED         = 'AUTOCLOSED'        
-    COMPLETED          = 'COMPLETED'         
-    INPROGRESS         = 'INPROGRESS'        
-    PARTIALLYCOMPLETED = 'PARTIALLYCOMPLETED'
-    RESOLVED           = 'RESOLVED'          
-    OPEN               = 'OPEN'              
-    CANCELLED          = 'CANCELLED'         
-    ESCALATED          = 'ESCALATED'         
-    NEW                = 'NEW'               
-    MAINTENANCE        = 'MAINTENANCE'       
-    STANDBY            = 'STANDBY'           
-    WORKING            = 'WORKING'           
-    SCRAPPED           = 'SCRAPPED'          
-
-class JobIdentifier(str, Enum):
-    TASK             = 'TASK'            
-    TICKET           = 'TICKET'          
-    INTERNALTOUR     = 'INTERNALTOUR'    
-    EXTERNALTOUR     = 'EXTERNALTOUR'    
-    PPM              = 'PPM'             
-    OTHER            = 'OTHER'           
-    SITEREPORT       = 'SITEREPORT'      
-    INCIDENTREPORT   = 'INCIDENTREPORT'  
-    ASSETLOG         = 'ASSETLOG'        
-    ASSETMAINTENANCE = 'ASSETMAINTENANCE'
-
-class JobType(str, Enum):
-    SCHEDULE = 'SCHEDULE'
-    ADHOC    = 'ADHOC'
-
-class Scantype(str, Enum):
-    NONE    = 'NONE'
-    QR      = 'QR'
-    NFC     = 'NFC'
-    SKIP    = 'SKIP'
-    ENTERED = 'ENTERED'
-
-
-
-class DetailsSchema(BaseModel):
-    answer: str = 'NA'
-    answertype: AnswerType
-    uuid: str
-    jobneed_id: int
-    parent_id: int
-    seqno: int
-    question_id: int
-    options: str
-    min: float
-    max: float
-    alerton: str
-    ismandatory: bool = True
-    alerts: bool = False
-
-class ChildSchema(BaseModel):
-    details: List[DetailsSchema]
-    jobdesc: str
-    qset_id: int
-    seqno: int
-
-    @validator('jobdesc', allow_reuse = True)
-    def to_title_case(cls, v):
-        if v: return v.title()
-
-class ReportSchema(BaseModel):
-    child: List[ChildSchema]
-    asset_id: int
-    bu_id: int
-    cuser_id: int
-    expirydatetime: datetime
-    frequency: Frequency
-    gpslocation: str
-    gracetime: int
-    pgroup_id:int
-    identifier: JobIdentifier
-    jobdesc: str
-    job_id: int
-    jobstatus: JobStatus
-    jobtype: JobType
-    muser_id: int
-    othersite: str
-    parent_id: int
-    performedby_id: int
-    plandatetime: datetime
-    qset_id: int
-    scantype: Scantype
-
-    @validator('jobdesc', 'othersite', allow_reuse = True)
-    def to_title_case(cls, v):  # sourcery skip: instance-method-first-arg-name
-        if v: return v.title()
-
-    @validator('gpslocation', allow_reuse = True)
-    def check_gpslocation_format(cls, v):
-        # sourcery skip: inline-immediately-returned-variable, instance-method-first-arg-name
-        from django.contrib.gis.geos import GEOSGeometry
-        try:
-            lat, lng = v.split(',')
-            point = GEOSGeometry(f'SRID=4326;POINT({lng} {lat})')
-            return point
-        except Exception as e:
-            raise ValueError('unrecognized gpslocation format') from e
 
 class JobneedMdtzAfter(graphene.ObjectType):
     jobneedid         = graphene.Int()

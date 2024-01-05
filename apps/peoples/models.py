@@ -35,7 +35,12 @@ def peoplejson():
         "mlogsendsto"              : "",
         "user_type"                : "",
         "secondaryemails"          : [],
-        'secondarymobno'           : []
+        'secondarymobno'           : [],
+        'isemergencycontact'       : False,
+        'alertmails'               : False,
+        'currentaddress'          : "",
+        'permanentaddress'        : "",
+        "isworkpermit_approver":  False
     }
 
 def upload_peopleimg(instance, filename):
@@ -49,11 +54,12 @@ def upload_peopleimg(instance, filename):
         foldertype = 'people'
         basedir = fyear = fmonth = None
         basedir = "master"
-        filepath = join(basedir, foldertype, full_filename)
+        client = f'{instance.client.bucode}_{instance.client_id}'
+        filepath = join(basedir, client, foldertype, full_filename)
         filepath = str(filepath).lower()
         fullpath = filepath
     except Exception:
-        logger.error(
+        logger.critical(
             'upload_peopleimg(instance, filename)... FAILED', exc_info = True)
     else:
         logger.info('people image uploaded... DONE')
@@ -101,30 +107,32 @@ class People(AbstractBaseUser, PermissionsMixin, TenantAwareModel, BaseModel):
     peopleimg     = models.ImageField(_("peopleimg"), upload_to = upload_peopleimg, default="master/people/blank.png", null = True, blank = True)
     peoplecode    = models.CharField(_("Code"), max_length = 50)
     peoplename    = models.CharField(_("Name"), max_length = 120)
+    location      = models.ForeignKey("activity.Location",  verbose_name= _('Location'), on_delete=models.RESTRICT, null=True, blank=True)
     loginid       = models.CharField(_("Login Id"), max_length = 50, unique = True, null = True, blank = True)
-    isadmin       = models.BooleanField(_("Is Admin"), default = False)
+    isadmin       = models.BooleanField(_("Admin"), default = False)
     is_staff      = models.BooleanField(_('staff status'), default = False)
-    isverified    = models.BooleanField(_("Is Active"), default = False)
+    isverified    = models.BooleanField(_("Active"), default = False)
     enable        = models.BooleanField(_("Enable"), default = True)
-    department    = models.ForeignKey("onboarding.TypeAssist", null = True, blank = True,on_delete = models.RESTRICT, related_name='people_departments')
-    designation   = models.ForeignKey("onboarding.TypeAssist", null = True, blank = True,on_delete = models.RESTRICT, related_name='people_designations')
+    department    = models.ForeignKey("onboarding.TypeAssist", verbose_name='Department', null = True, blank = True,on_delete = models.RESTRICT, related_name='people_departments')
+    designation   = models.ForeignKey("onboarding.TypeAssist", verbose_name='Designation', null = True, blank = True,on_delete = models.RESTRICT, related_name='people_designations')
     peopletype    = models.ForeignKey("onboarding.TypeAssist", verbose_name="People Type",null = True, blank = True, on_delete = models.RESTRICT, related_name='people_types')
-    client        = models.ForeignKey("onboarding.Bt",  null = True, blank = True, on_delete = models.RESTRICT, related_name='people_clients')
-    bu            = models.ForeignKey("onboarding.Bt",  null = True, blank = True,on_delete = models.RESTRICT, related_name='people_bus')
+    worktype    = models.ForeignKey("onboarding.TypeAssist", verbose_name="Work Type",null = True, blank = True, on_delete = models.RESTRICT, related_name='work_types')
+    client        = models.ForeignKey("onboarding.Bt", verbose_name='Client',  null = True, blank = True, on_delete = models.RESTRICT, related_name='people_clients')
+    bu            = models.ForeignKey("onboarding.Bt",  verbose_name='Site', null = True, blank = True,on_delete = models.RESTRICT, related_name='people_bus')
     reportto      = models.ForeignKey("self", null = True, blank = True, on_delete = models.RESTRICT, related_name='children', verbose_name='Report to')
     deviceid      = models.CharField(_("Device Id"), max_length = 50, default='-1')
     email         = SecureString(_("Email"), max_length = 254)
     mobno         = SecureString(_("Mob No"), max_length = 254, null = True)
     gender        = models.CharField(_("Gender"), choices = Gender.choices, max_length = 15, null = True)
     dateofbirth   = models.DateField(_("Date of Birth"))
-    dateofjoin    = models.DateField(_("Date of Join"))
+    dateofjoin    = models.DateField(_("Date of Join"), null=True)
     dateofreport  = models.DateField(_("Date of Report"), null = True, blank = True)
     people_extras = models.JSONField(_("people_extras"), default = peoplejson, blank = True, encoder = DjangoJSONEncoder)
 
     objects = PeopleManager()
     USERNAME_FIELD = 'loginid'
     REQUIRED_FIELDS = ['peoplecode',  'peoplename', 'dateofbirth',
-                       'dateofjoin', 'email']
+                        'email']
 
     class Meta:
         db_table = 'people'
@@ -136,7 +144,7 @@ class People(AbstractBaseUser, PermissionsMixin, TenantAwareModel, BaseModel):
             models.UniqueConstraint(
                 fields=['loginid', 'bu'], name='people_loginid_bu_uk'),
             models.UniqueConstraint(
-                fields=['loginid', 'mobno', 'email'], name='loginid_mobno_email_uk'),
+                fields=['loginid', 'mobno', 'email', 'bu'], name='loginid_mobno_email_bu_uk'),
         ]
 
     def __str__(self) -> str:
@@ -144,6 +152,18 @@ class People(AbstractBaseUser, PermissionsMixin, TenantAwareModel, BaseModel):
 
     def get_absolute_wizard_url(self):
         return reverse("peoples:wiz_people_update", kwargs={"pk": self.pk})
+    
+
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+        from apps.core import utils
+        if self.department is None: self.department = utils.get_none_typeassist()
+        if self.designation is None: self.designation = utils.get_none_typeassist()
+        if self.peopletype is None: self.peopletype = utils.get_none_typeassist()
+        if self.worktype is None: self.worktype = utils.get_none_typeassist()
+        if self.reportto is None: self.reportto = utils.get_or_create_none_people()
+        
+    
 
 ############## Pgroup Table ###############
 class PermissionGroup(Group):
@@ -155,10 +175,11 @@ class PermissionGroup(Group):
 class Pgroup(BaseModel, TenantAwareModel):
     # id= models.BigIntegerField(_("Groupid"), primary_key = True, auto_created=)
     groupname  = models.CharField(_('Name'), max_length = 250)
+    grouplead = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.RESTRICT,  related_name="pgroup_groupleads")
     enable     = models.BooleanField(_('Enable'), default = True)
-    identifier = models.ForeignKey('onboarding.TypeAssist', null = True, blank = True, on_delete = models.RESTRICT, related_name="pgroup_idfs")
-    bu       = models.ForeignKey("onboarding.Bt", null = True, blank = True, on_delete = models.RESTRICT, related_name='pgroup_bus')
-    client   = models.ForeignKey('onboarding.Bt', null = True, blank = True, on_delete = models.RESTRICT, related_name='pgroup_clients')
+    identifier = models.ForeignKey('onboarding.TypeAssist', verbose_name='Identifier', null = True, blank = True, on_delete = models.RESTRICT, related_name="pgroup_idfs")
+    bu       = models.ForeignKey("onboarding.Bt", verbose_name='BV', null = True, blank = True, on_delete = models.RESTRICT, related_name='pgroup_bus')
+    client   = models.ForeignKey('onboarding.Bt', verbose_name='Client', null = True, blank = True, on_delete = models.RESTRICT, related_name='pgroup_clients')
 
     objects = PgroupManager()
 
@@ -166,10 +187,10 @@ class Pgroup(BaseModel, TenantAwareModel):
         db_table = 'pgroup'
         constraints = [
             models.UniqueConstraint(
-                fields=['groupname', 'identifier'],
+                fields=['groupname', 'identifier', 'client'],
                 name='pgroup_groupname_bu_client_identifier_key'),
             models.UniqueConstraint(
-                fields=['groupname', 'identifier'],
+                fields=['groupname', 'identifier', 'client'],
                 name='pgroup_groupname_bu_identifier_key')
         ]
         get_latest_by = ["mdtz", 'cdtz']
@@ -179,6 +200,7 @@ class Pgroup(BaseModel, TenantAwareModel):
 
     def get_absolute_wizard_url(self):
         return reverse("peoples:wiz_pgropup_update", kwargs={"pk": self.pk})
+    
 
 ############## Pgbelonging Table ###############
 class Pgbelonging(BaseModel, TenantAwareModel):
@@ -196,7 +218,7 @@ class Pgbelonging(BaseModel, TenantAwareModel):
         db_table = 'pgbelonging'
         constraints = [
             models.UniqueConstraint(
-                fields=['pgroup', 'people', 'assignsites'],
+                fields=['pgroup', 'people', 'assignsites', 'client'],
                 name='pgbelonging_pgroup_people_bu_assignsites_client')
         ]
         get_latest_by = ["mdtz", 'cdtz']
@@ -217,7 +239,7 @@ class Capability(BaseModel, TenantAwareModel):
     capsname = models.CharField(_('Capability'), max_length = 1000, default = None, blank = True, null = True)
     parent   = models.ForeignKey('self', on_delete = models.RESTRICT,  null = True, blank = True, related_name='children', verbose_name="Belongs_to")
     cfor     = models.CharField(_('Capability_for'), max_length = 10, default='WEB', choices = Cfor.choices)
-    client   = models.ForeignKey('onboarding.Bt',  null = True, blank = True, on_delete = models.RESTRICT)
+    client   = models.ForeignKey('onboarding.Bt', verbose_name='BV',  null = True, blank = True, on_delete = models.RESTRICT)
     enable   = models.BooleanField(_('Enable'), default = True)
 
     objects = CapabilityManager()
@@ -229,7 +251,7 @@ class Capability(BaseModel, TenantAwareModel):
         get_latest_by = ["mdtz", 'cdtz']
         constraints = [
             models.UniqueConstraint(
-                fields=['capscode', 'cfor'],
+                fields=['capscode', 'cfor', 'client'],
                 name="capability_caps_cfor_uk"), ]
 
     def __str__(self) -> str:

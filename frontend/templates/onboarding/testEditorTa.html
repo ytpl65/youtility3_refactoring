@@ -1,8 +1,8 @@
-{% extends "base_list.html" %}
+{% extends "globals/base_list.html" %}
 
 <!---- BEGIN CARD TITLE ------>
 {% block card_title %}
-Schedhuled Tasks
+Scheduled Tasks
 {% endblock card_title %}
 <!----- END CARD TITLE -------->
 
@@ -66,7 +66,7 @@ $('#editorTa').DataTable( {
         ],
         select: true,
         buttons: [
-            { extend: "create", editor: editor , className: "btn btn-sm btn-light-primary"},
+            { extend: "create", editor: editor },
             { extend: "edit",   editor: editor },
             { extend: "remove", editor: editor }
         ]

@@ -9,6 +9,7 @@ import apps.attendance.forms as atf
 import apps.attendance.models as atdm
 from .filters import AttendanceFilter
 import apps.peoples.utils as putils
+from apps.service.utils import save_linestring_and_update_pelrecord
 
 import logging
 from apps.core import utils
@@ -21,25 +22,44 @@ class Attendance(LoginRequiredMixin, View):
         'form_class': atf.AttendanceForm,
         'template_form': 'attendance/partials/partial_attendance_form.html',
         'template_list': 'attendance/attendance.html',
+        'template_list_sos': 'attendance/sos_list.html',
+        'template_list_site_diversions': 'attendance/site_diversions.html',
+        'template_list_sitecrisis': 'attendance/sitecrisis_list.html',
         'partial_form': 'attendance/partials/partial_attendance_form.html',
         'partial_list': 'attendance/partials/partial_attendance_list.html',
-        'related': ['people', 'client', 'bu', 'verifiedby', 'geofence', 'peventtype'],
+        'related': ['people', 'bu', 'verifiedby', 'peventtype', 'shift'],
         'model': atdm.PeopleEventlog,
         'filter': AttendanceFilter,
         'form_initials':{},
-        'fields': ['id', 'people__peoplename', 'verifiedby__peoplename', 'peventtype__tacode', 'bu__buname', 'datefor',
-                   'punchintime', 'punchouttime', 'facerecognition','shift__shiftname', 'ctzoffset']}
+        'fields': ['id', 'people__peoplename', 'people__peoplecode', 'verifiedby__peoplename', 'peventtype__taname','peventtype__tacode', 'bu__buname', 'datefor','uuid',
+                   'punchintime', 'punchouttime', 'facerecognitionin', 'facerecognitionout','shift__shiftname', 'ctzoffset', 'peventlogextras', 'sL', 'eL', 'people__location__locname']}
 
     def get(self, request, *args, **kwargs):
-        R, resp = request.GET, None
+        R, P, resp = request.GET, self.params, None
 
+        if R.get('template') == 'sos_template': return render(request, P['template_list_sos'])
+        if R.get('template') == 'site_diversions': return render(request, P['template_list_site_diversions'])
+        if R.get('template') == 'sitecrisis': return render(request, P['template_list_sitecrisis'])
+        
         if R.get('template'): return render(request, self.params['template_list'])
         # return attendance_list data
+        
+        if R.get('action') == 'sos_list_view':
+            objs = self.params['model'].objects.get_sos_listview(request)
+            return rp.JsonResponse({'data':list(objs)}, status=200)
+        
+        if R.get('action') == 'get_site_diversion_list':
+            objs = self.params['model'].objects.get_diversion_countorlist(request)
+            return rp.JsonResponse({'data':list(objs)}, status=200)
+        
+        if R.get('action') == 'get_sitecrisis_list':
+            objs = self.params['model'].objects.get_sitecrisis_countorlist(request)
+            return rp.JsonResponse({'data':list(objs)}, status=200)
+        
         if R.get('action', None) == 'list' or R.get('search_term'):
             d = {'list': "attd_list", 'filt_name': "attd_filter"}
             self.params.update(d)
-            objs = self.params['model'].objects.select_related(
-                *self.params['related']).values(*self.params['fields']).order_by('-mdtz')
+            objs = self.params['model'].objects.get_peopleevents_listview(P['related'], P['fields'], request)
             return rp.JsonResponse({'data':list(objs)}, status=200)
 
         # return attemdance_form empty
@@ -90,7 +110,7 @@ class Attendance(LoginRequiredMixin, View):
             putils.save_userinfo(attd, request.user, request.session, create)
             logger.info("attendance form saved")
             data = {'success': "Record has been saved successfully",
-                    'type': attd.peventtype}
+                    'type': attd.peventtype.tacode}
             return rp.JsonResponse(data, status = 200)
         except IntegrityError:
             return putils.handle_intergrity_error('Attendance')
@@ -101,9 +121,10 @@ class Conveyance(LoginRequiredMixin, View):
     model = atdm.PeopleEventlog,
     params = {
         'fields': [
-            'punch_intime', 'punch_outtime', 'bu__buname', 
+            'punchintime', 'punchouttime', 'bu__buname', 'ctzoffset',
             'bu__bucode', 'people__peoplename', 'people__peoplecode',
-            'transportmodes', 'distance', 'duration', 'expamt'],
+            'transportmodes', 'distance', 'duration', 'expamt', 'id', 
+            'start', 'end'],
         'template_list': 'attendance/travel_expense.html',
         'template_form': 'attendance/travel_expense_form.html',
         'related'      : ['bu', 'people'],
@@ -118,8 +139,8 @@ class Conveyance(LoginRequiredMixin, View):
 
         # then load the table with objects for table_view
         if R.get('action', None) == 'list' or R.get('search_term'):
-            objs = self.params['model'].objects.get_lastmonth_conveyance(R)
-            ic(utils.printsql(objs))
+            objs = self.params['model'].objects.get_lastmonth_conveyance(
+                request, self.params['fields'], self.params['related'] )
             resp = rp.JsonResponse(data = {'data':list(objs)})
 
         # return cap_form empty for creation
@@ -136,6 +157,7 @@ class Conveyance(LoginRequiredMixin, View):
         # return form with instance for update
         elif R.get('id', None):
             obj = utils.get_model_obj(int(R['id']), request, self.params)
+            save_linestring_and_update_pelrecord(obj)
             cxt = {'conveyanceform':self.params['form_class'](request = request, instance = obj),
                     'edit':True}
             resp = render(request, self.params['template_form'], context = cxt)
@@ -158,7 +180,6 @@ class Conveyance(LoginRequiredMixin, View):
                 create = False
             else:
                 form = self.params['form_class'](data, request = request)
-            ic(form.data)
             if form.is_valid():
                 resp = self.handle_valid_form(form, request, create)
             else:
@@ -180,6 +201,8 @@ class Conveyance(LoginRequiredMixin, View):
                 return rp.JsonResponse(data={'pk':cy.id}, status = 200)
         except IntegrityError:
             return handle_intergrity_error("conveyance")
+    
+   
 
 
 class GeofenceTracking(LoginRequiredMixin, View):
@@ -199,7 +222,6 @@ class GeofenceTracking(LoginRequiredMixin, View):
         # then load the table with objects for table_view
         if R.get('action', None) == 'list' or R.get('search_term'):
             total, filtered, objs = self.params['model'].objects.get_geofencetracking(request)
-            ic(utils.printsql(objs))
             return  rp.JsonResponse(data = {
                 'draw':R['draw'],
                 'data':list(objs),

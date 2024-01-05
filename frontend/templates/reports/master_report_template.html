@@ -1,4 +1,4 @@
-{% extends "base_form.html" %}
+{% extends "globals/base_form.html" %}
 
 <!---- BEGIN PAGE TITLE ---->
 {% block title %}
@@ -81,17 +81,17 @@ Incident Report Template Form
 {% block ajax_page_actions %}
     <div class="form-actions">
         {% if master_report_form.instance.id %}
-        <button type="submit" id="submitTour" form="master_report" class="btn btn-sm btn-primary btn-hover-scale">
-            Update Tour&nbsp;<i class="fas fa-cloud-upload-alt"></i>
+        <button type="submit" id="submitTour" form="master_report" class="btn btn-sm btn-primary2 btn-hover-scale">
+            Update Tour&nbsp;<i class="fas text-white fa-cloud-upload-alt"></i>
         </button>
 
         <button type="button" onclick="deleteMainJob(this)" data-id="{{ master_report_form.instance.id }}" id="deleteAttd"
             class="btn btn-sm btn-danger btn-hover-scale">
-            Delete&nbsp;<i class="fas fa-trash-alt"></i>
+            Delete&nbsp;<i class="fas text-white fa-trash-alt"></i>
         </button>
         {% else %}
-        <button type="submit" form="master_report" class="btn btn-sm btn-primary btn-hover-scale">
-            Save&nbsp;<i class="fas fa-cloud-upload-alt"></i>
+        <button type="submit" form="master_report" class="btn btn-sm btn-primary2 btn-hover-scale">
+            Save&nbsp;<i class="fas text-white fa-cloud-upload-alt"></i>
         </button>
         {% endif %}
     </div>
