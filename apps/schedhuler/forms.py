@@ -32,42 +32,23 @@ class Schd_I_TourJobForm(JobForm):
         self.request = kwargs.pop('request', None)
         S = self.request.session
         super().__init__(*args, **kwargs)
-        if self.instance.id:
-            self.fields['istimebound'].initial = self.instance.other_info['istimebound']
-            self.fields['isdynamic'].initial = self.instance.other_info['isdynamic']
-        if 'isdynamic' in self.data or (self.instance.id and  self.instance.other_info['isdynamic']):
-            if self.data.get('isdynamic') or (self.instance.id and self.instance.other_info['isdynamic']):
-                for field in ['planduration', 'gracetime', 'cron', 'fromdate', 'uptodate']:
-                    self.fields[field].required=False
+        self.set_initial_values()
+        self.set_required_false_for_dynamic()
+        self.set_display_none()
         self.fields['fromdate'].input_formats  = settings.DATETIME_INPUT_FORMATS
         self.fields['uptodate'].input_formats  = settings.DATETIME_INPUT_FORMATS
-        self.fields['identifier'].widget.attrs  = {"style": "display:none"}
-        self.fields['expirytime'].widget.attrs  = {"style": "display:none"}
-        self.fields['starttime'].widget.attrs   = {"style": "display:none"}
-        self.fields['endtime'].widget.attrs     = {"style": "display:none"}
-        self.fields['frequency'].widget.attrs   = {"style": "display:none"}
-        
-        #filters for dropdowm fields
-        self.fields['ticketcategory'].queryset = ob.TypeAssist.objects.filter_for_dd_notifycategory_field(self.request, sitewise=True)
-        self.fields['pgroup'].queryset = pm.Pgroup.objects.filter_for_dd_pgroup_field(self.request, sitewise=True)
-        self.fields['people'].queryset = pm.People.objects.filter_for_dd_people_field(self.request, sitewise=True)
+        self.set_options_for_dropdowns()
         utils.initailize_form_fields(self)
         
 
     def clean(self):
         super().clean()
         cd = self.cleaned_data
+        self.cleaned_data = self.check_nones(self.cleaned_data)
+        self.caluclate_planduration_gracetime(cd)
+        self.set_instance_data_for_dynamic()
         if cd['people'] is None and cd['pgroup'] is None:
             raise forms.ValidationError('Cannot be proceed assigned tour to either people or group.')
-        times_names = ['planduration', 'gracetime']
-        types_names = ['planduration_type',  'gracetime_type']
-        self.cleaned_data = self.check_nones(self.cleaned_data)
-        
-        times = [cd.get(time) for time in times_names]
-        types = [cd.get(type) for type in types_names]
-        if times and types:
-            for time, type, name in zip(times, types, times_names):
-                self.cleaned_data[name] = self.convertto_mins(type, time)
         if cd.get('fromdate') and cd.get('uptodate') and cd['fromdate'] > cd['uptodate']:
             raise forms.ValidationError({"uptodate":"Valid To cannot be less than Valid From."})
         if cd.get('isdynamic'):
@@ -75,9 +56,47 @@ class Schd_I_TourJobForm(JobForm):
             cd['uptodate'] = datetime(9999, 12, 30, 23, 59)
             cd['planduration'] = cd['gracetime'] = cd['expirytime'] = 0
         return cd
+    
+    def set_options_for_dropdowns(self):
+        self.fields['ticketcategory'].queryset = ob.TypeAssist.objects.filter_for_dd_notifycategory_field(self.request, sitewise=True)
+        self.fields['pgroup'].queryset = pm.Pgroup.objects.filter_for_dd_pgroup_field(self.request, sitewise=True)
+        self.fields['people'].queryset = pm.People.objects.filter_for_dd_people_field(self.request, sitewise=True)
+    
+    def set_display_none(self):
+        for field in ['identifier', 'expirytime', 'starttime', 'endtime', 'frequency']:
+            self.fields[field].widget.attrs = {"style": "display:none"}
+            
+    def set_initial_values(self):
+        if self.instance.id:
+            self.fields['istimebound'].initial = self.instance.other_info['istimebound']
+            self.fields['isdynamic'].initial = self.instance.other_info['isdynamic']
+
+    
+    def set_required_false_for_dynamic(self):
+        if 'isdynamic' in self.data or (self.instance.id and  self.instance.other_info['isdynamic']):
+            if self.data.get('isdynamic') or (self.instance.id and self.instance.other_info['isdynamic']):
+                for field in ['planduration', 'gracetime', 'cron', 'fromdate', 'uptodate']:
+                    self.fields[field].required=False
+    
+    def set_instance_data_for_dynamic(self):
+        if self.instance.id and self.instance.other_info['isdynamic']:
+            self.cleaned_data['fromdate'] = self.instance.fromdate
+            self.cleaned_data['uptodate'] = self.instance.uptodate
+            self.cleaned_data['planduration'] = self.instance.planduration
+            self.cleaned_data['gracetime'] = self.instance.gracetime
+            self.cleaned_data['istimebound'] = self.instance.other_info['istimebound']
+            self.cleaned_data['isdynamic'] = self.instance.other_info['isdynamic']
+    
+    def caluclate_planduration_gracetime(self, cd):
+        times_names = ['planduration', 'gracetime']
+        types_names = ['freq_duration',  'freq_duration2']
+        times = [cd.get(time) for time in times_names]
+        types = [cd.get(type) for type in types_names]
+        if times and types:
+            for time, type, name in zip(times, types, times_names):
+                self.cleaned_data[name] = self.convertto_mins(type, time)
         
     
-
     def clean_from_date(self):
         if val := self.cleaned_data.get('fromdate'):
             val =  ob_utils.to_utc(val)
