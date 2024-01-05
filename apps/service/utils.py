@@ -85,32 +85,20 @@ def get_or_create_dir(path):
 
 def get_json_data(file):
     import gzip
+    import json
     try:
-        # Check if the file is a BytesIO object
-        if not isinstance(file, BytesIO):
-            log.error("Uploaded file is not a BytesIO object.")
-            return None, None
-
-        # Open the file in binary mode
-        with gzip.GzipFile(fileobj=file) as f:
-            s = f.read().decode('utf-8', errors='ignore')
+        # ic((file, type(file))
+        with gzip.open(file, 'rb') as f:
+            s = f.read().decode('utf-8')
             s = s.replace("'", "")
-            if s.startswith('{'):
+            if isTrackingRecord := s.startswith('{'):
                 log.info("Tracking record found")
                 arr = s.split('?')
                 s = json.dumps(arr)
-            else:
-                log.warning("File does not start with '{'")
-                return None, None
+            return json.loads(s)
     except Exception as e:
         log.critical("File unzipping error", exc_info=True)
-        return None, None
-
-    try:
-        return json.loads(s), s
-    except json.JSONDecodeError:
-        log.error("Invalid JSON in file.")
-        return None, None
+    return None, None
 
 
 def get_model_or_form(tablename):

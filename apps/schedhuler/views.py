@@ -20,6 +20,7 @@ import logging
 from django.db.models.deletion import RestrictedError
 from django.urls import reverse
 import json
+from psycopg2.errors import UniqueViolation, NotNullViolation
 from django.contrib.gis.db.models.functions import  AsWKT, AsGeoJSON
 from django.utils.decorators import method_decorator
 from django.views.decorators.cache import cache_page
@@ -1391,6 +1392,7 @@ class InternalTourScheduling(LoginRequiredMixin, View):
     def post(self, request, *args, **kwargs):
         R, P = request.POST, self.params
         pk, data = request.POST.get('pk', None), QueryDict(request.POST.get('formData'))
+        ic(data, pk)
         if R.get('postType') == 'saveCheckpoint':
             data = P['model'].objects.handle_save_checkpoint_guardtour(request)
             return rp.JsonResponse(data, status = 200, safe=False)
@@ -1427,6 +1429,8 @@ class InternalTourScheduling(LoginRequiredMixin, View):
                 return rp.JsonResponse({'jobname': job.jobname,
                     'url': f'{reverse("schedhuler:schd_internal_tour")}?id={job.id}'},
                     status = 200)
+        except NotNullViolation as e:
+            log.error("Not null error catched")
         except IntegrityError as ex:
             return utils.handle_intergrity_error("Tour")
         except Exception as ex:
