@@ -24,7 +24,8 @@ from .types import ServiceOutputType
 from .validators import clean_record
 
 log = getLogger('mobile_service_log')   
-
+error_logger = getLogger("error_logger")
+err = error_logger.error
 from apps.work_order_management import utils as wutils
 
 
@@ -461,7 +462,7 @@ def perform_tasktourupdate(self, file, request=None, db='default', bg=False):
         log.error("Database Error", exc_info = True)
         rc, traceback, msg = 1, tb.format_exc(), Messages.UPLOAD_FAILED
     except Exception as e:
-        log.critical('Something went wrong', exc_info = True)
+        err('Something went wrong', exc_info = True)
         rc, traceback, msg = 1, tb.format_exc(), Messages.UPLOAD_FAILED
     results = ServiceOutputType(rc = rc, msg = msg, recordcount = recordcount, traceback = traceback)
     return results.__dict__ if bg else results
@@ -551,7 +552,7 @@ def perform_insertrecord(self, file, request = None, db='default', filebased = T
         log.warning('No records found for insertrecord service', exc_info=True)
         rc, traceback, msg = 1, tb.format_exc(), Messages.INSERT_FAILED
     except Exception as e:
-        log.critical("something went wrong!", exc_info = True)
+        err("something went wrong!", exc_info = True)
         traceback =  tb.format_exc()
     results = ServiceOutputType(rc = rc, recordcount = recordcount, msg = msg, traceback = traceback)
     return results.__dict__ if bg else results
@@ -671,7 +672,7 @@ def perform_reportmutation(self, file, db= 'default', bg=False):
         rc, traceback, msg = 1, tb.format_exc(), Messages.UPLOAD_FAILED
     except Exception as e:
         msg, traceback, rc = Messages.INSERT_FAILED, tb.format_exc(), 1
-        log.critical('something went wrong', exc_info = True)
+        err('something went wrong', exc_info = True)
     results = ServiceOutputType(rc = rc, recordcount = recordcount, msg = msg, traceback = traceback)
     return results.__dict__ if bg else results
 
@@ -720,7 +721,7 @@ def perform_adhocmutation(self, file, db='default', bg=False):  # sourcery skip:
         raise
     except Exception as e:
         rc, traceback = 1, tb.format_exc()
-        log.critical('something went wrong', exc_info = True)
+        err('something went wrong', exc_info = True)
     results = ServiceOutputType(rc = rc, recordcount = recordcount, msg = msg, traceback = traceback)
     return results.__dict__ if bg else results
 
@@ -752,7 +753,7 @@ def perform_uploadattachment(file,  record, biodata):
             log.info('file uploaded success')
     except Exception as e:
         rc, traceback, msg = 1, tb.format_exc(), Messages.UPLOAD_FAILED
-        log.critical('something went wrong', exc_info = True)
+        err('something went wrong', exc_info = True)
     try:
         if record.get('localfilepath'): record.pop('localfilepath')
         obj = insertrecord(record, 'attachment')
@@ -764,7 +765,7 @@ def perform_uploadattachment(file,  record, biodata):
             results = perform_facerecognition_bgt.delay(ownerid, peopleid, db)
             log.warning(f"face recognition status {results.state}")
     except Exception as e:
-        log.critical('something went wrong while perform_uploadattachment', exc_info = True)
+        err('something went wrong while perform_uploadattachment', exc_info = True)
     return ServiceOutputType(rc = rc, recordcount = recordcount, msg = msg, traceback = traceback)
 
 
