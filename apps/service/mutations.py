@@ -24,6 +24,8 @@ from graphql_jwt import ObtainJSONWebToken
 from apps.core import exceptions as excp
 
 log = getLogger('mobile_service_log')
+error_logger = getLogger("error_logger")
+err = error_logger.error
 
 
 class LoginUser(graphene.Mutation):
@@ -56,7 +58,7 @@ class LoginUser(graphene.Mutation):
             raise GraphQLError(exc) from exc
 
         except Exception as exc:
-            log.critical(exc, exc_info=True)
+            err(exc, exc_info=True)
             raise GraphQLError(exc) from exc
 
 
@@ -196,7 +198,7 @@ class UploadAttMutaion(graphene.Mutation):
 
     @classmethod
     def mutate(cls,root, info, file,  record, biodata):
-        log.error("\n\nupload-attachment mutations start [+]")
+        log.info("\n\nupload-attachment mutations start [+]")
         try:
             recordcount=0
             log.info(f"type of file is {type(file)}")
@@ -211,7 +213,7 @@ class UploadAttMutaion(graphene.Mutation):
                 o.recordcount = recordcount
                 return UploadAttMutaion(output = o)
         except Exception as e:
-            log.critical(f"Exception: {e}", exc_info=True)
+            err(f"Exception: {e}", exc_info=True)
             return UploadAttMutaion(output = ty.ServiceOutputType(rc = 1, recordcount = 0, msg = 'Upload Failed', traceback = tb.format_exc()))
 
 
@@ -270,7 +272,7 @@ class InsertJsonMutation(graphene.Mutation):
             uuids = insertrecord_json(jsondata, tablename)
             recordcount, msg, rc = 1, 'Inserted Successfully', 0
         except Exception as e:
-            log.critical('something went wrong', exc_info = True)
+            err('something went wrong', exc_info = True)
             msg, rc, traceback = 'Insert Failed!',1, tb.format_exc()
         
         o = ty.ServiceOutputType(rc = rc, recordcount = recordcount, msg = msg, traceback = traceback, uuids=uuids)
@@ -319,7 +321,7 @@ class SyncMutation(graphene.Mutation):
                     log.error(f"totalrecords is not matched with th actual totalrecords after extraction... {totalrecords} x {TR}")
                     raise excp.TotalRecordsMisMatchError
         except Exception:
-            log.critical("something went wrong!", exc_info = True)
+            err("something went wrong!", exc_info = True)
             return SyncMutation(rc = 1)
         else:
             return SyncMutation(rc = 0)

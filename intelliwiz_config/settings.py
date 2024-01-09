@@ -388,6 +388,13 @@ LOGGING_CONFIG_ = {
             'level': 'CRITICAL',
             'class': 'django.utils.log.AdminEmailHandler',
             'include_html': False,
+        },
+        'error_file_handler':{
+            'class': 'logging.handlers.RotatingFileHandler',
+            'filename':f'{env("LOG_ROOT")}/errors.log',
+            'maxBytes': 15728640,
+            'backupCount': 10,
+            'formatter': 'coloured',
         }
     },
     'loggers': { 
@@ -397,17 +404,17 @@ LOGGING_CONFIG_ = {
             'propagate': True 
         },
         'django': { 
-            'handlers': ['default', 'filelogs', 'mail_admins'],
+            'handlers': ['default', 'filelogs'],
             'level': 'INFO',
             'propagate': False
         },
         '__main__': {  # if __name__ == '__main__'
-            'handlers': ['default', 'filelogs', 'mail_admins'],
+            'handlers': ['default', 'filelogs'],
             'level': 'DEBUG',
             'propagate': False
         },
         'mobile_service_log':{
-            'handlers': ['default', 'serviceLogs', 'mail_admins'],
+            'handlers': ['default', 'serviceLogs'],
             'level': 'DEBUG',
             'propagate': False
         },               
@@ -415,7 +422,12 @@ LOGGING_CONFIG_ = {
             'handlers': ['default', 'reportslog'],
             'level': 'DEBUG',
             'propagate': False
-        }               
+        },
+        'error_logger':{
+            'handlers':['default', 'error_file_handler'],
+            'level':'ERROR',
+            'propagate': False
+        }
     }
 }
 
