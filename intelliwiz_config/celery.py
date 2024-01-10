@@ -6,7 +6,7 @@ from celery.schedules import crontab
 from django.conf import settings
 
 # Set the default Django settings module for the 'celery' program.
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'intelliwiz_config.settings.prod_settings')
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'intelliwiz_config.settings')
 
 app = Celery('intelliwiz_config')
 

@@ -13,9 +13,10 @@ def save_jsonform(peoplepref_form, p):
     try:
         logger.info('saving jsonform ...')
         ic(peoplepref_form.cleaned_data)
-        for k in ['blacklist', 'assignsitegroup', 'tempincludes', 'currentaddress', 'permanentaddress',
-                     'showalltemplates', 'showtemplatebasedonfilter', 'mobilecapability', 'isemergencycontact',
-                     'portletcapability', 'reportcapability', 'webcapability', 'isworkpermit_approver']:
+        for k in [
+            'blacklist', 'assignsitegroup', 'tempincludes', 'currentaddress', 'permanentaddress',
+            'showalltemplates', 'showtemplatebasedonfilter', 'mobilecapability', 'isemergencycontact',
+            'portletcapability', 'reportcapability', 'webcapability', 'isworkpermit_approver', 'alertmails']:
             p.people_extras[k] = peoplepref_form.cleaned_data.get(k)
     except Exception:
         logger.critical(
@@ -47,8 +48,8 @@ def get_people_prefform(people,  request):
                 'currentaddress',
                 'permanentaddress',
                 'isemergencycontact',
-                'isworkpermit_approver'
-                
+                'isworkpermit_approver',
+                'alertmails'
             )
         }
 
