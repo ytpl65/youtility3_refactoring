@@ -190,6 +190,7 @@ def update_record(details, jobneed_record, JnModel, JndModel):
             jobneed = jn_parent_serializer.save()
             if jobneed.jobstatus == 'COMPLETED' and jobneed.other_info['isdynamic'] and jobneed.parent_id == 1:
                 create_dynamic_job([jobneed.job_id])
+                log.info("Dynamic job created")
             jobneed.geojson['gpslocation'] = get_readable_addr_from_point(jobneed.gpslocation)
             jobneed.save()
             log.debug(f'after saving the record jobneed_id {jobneed.id} cdtz {jobneed.cdtz} mdtz = {jobneed.mdtz} starttime = {jobneed.starttime} endtime = {jobneed.endtime}')
