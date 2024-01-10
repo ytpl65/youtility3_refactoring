@@ -18,6 +18,7 @@ from apps.y_helpdesk.models import Ticket
 from background_tasks.tasks import alert_sendmail, send_email_notification_for_wp
 from intelliwiz_config.celery import app
 from apps.work_order_management.utils import save_approvers_injson
+from apps.schedhuler.utils import create_dynamic_job
 
 from .auth import Messages as AM
 from .types import ServiceOutputType
@@ -187,6 +188,8 @@ def update_record(details, jobneed_record, JnModel, JndModel):
         jn_parent_serializer = sz.JobneedSerializer(data = record, instance = instance)
         if jn_parent_serializer.is_valid():
             jobneed = jn_parent_serializer.save()
+            if jobneed.jobstatus == 'COMPLETED' and jobneed.other_info['isdynamic'] and jobneed.parent_id == 1:
+                create_dynamic_job([jobneed.job_id])
             jobneed.geojson['gpslocation'] = get_readable_addr_from_point(jobneed.gpslocation)
             jobneed.save()
             log.debug(f'after saving the record jobneed_id {jobneed.id} cdtz {jobneed.cdtz} mdtz = {jobneed.mdtz} starttime = {jobneed.starttime} endtime = {jobneed.endtime}')
@@ -514,7 +517,6 @@ def perform_insertrecord(self, file, request = None, db='default', filebased = T
     instance = None
     log.info(f"""perform_insertrecord(file = {file}, bg = {bg}, db = {db}, filebased = {filebased} {request = } { userid = } runnning in {'background' if bg else "foreground"})""")
     try:
-
         if bg:
             data = file
         else:
