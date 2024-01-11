@@ -88,6 +88,7 @@ def get_or_create_dir(path):
 def get_json_data(file):
     import gzip
     import json
+    jsonstring=None
     try:
         # ic((file, type(file))
         with gzip.open(file, 'rb') as f:
@@ -96,11 +97,13 @@ def get_json_data(file):
             if isTrackingRecord := s.startswith('{'):
                 log.info("Tracking record found")
                 arr = s.split('?')
-                s = json.dumps(arr)
-            return json.loads(s)
+                jsonstring = json.dumps(arr)
+            return json.loads(jsonstring)
+    except json.decoder.JSONDecodeError:
+        log.warning("It is not valid Json String \n %s"%(pformat(jsonstring)))
     except Exception as e:
         log.critical("File unzipping error", exc_info=True)
-    return None, None
+    return []
 
 
 def get_model_or_form(tablename):
