@@ -912,7 +912,7 @@ class JobneedManager(models.Manager):
             ~Q(identifier__in=['TICKET', 'EXTERNALTOUR']) &
             (Q(people_id=people_id) | Q(cuser_id=people_id) | Q(muser_id=people_id) | Q(pgroup_id__in=group_ids)) &
             (Q(plandatetime__date__range=[today, tomorrow]) | Q(plandatetime__lte=datetime.now(), expirydatetime__gte=datetime.now())) |
-            Q(other_info__isdynamic=True)
+            Q(other_info__isdynamic=True) & Q(client_id=client_id) & Q(bu_id=bu_id)
         )
 
         # Query for job needs with the constructed filters
