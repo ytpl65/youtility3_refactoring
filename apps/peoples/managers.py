@@ -110,7 +110,8 @@ class PeopleManager(BaseUserManager):
     
     def get_admin_emails(self, clientid):
         return self.filter(
-            Q(isadmin=True) & Q(client_id=clientid) & Q(isverified=True),
+            (Q(people_extras__alertmails=True) | Q(isadmin=True)) &
+            Q(client_id=clientid) & Q(isverified=True),
             enable=True
         ).values_list('email', flat=True) or self.none()
         
