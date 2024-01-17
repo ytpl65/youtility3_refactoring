@@ -1114,9 +1114,9 @@ class AssetManager(models.Manager):
         ).select_related(*related)
 
         if id:
-            qset = qset.filter(enable=True, identifier='CHECKPOINT',id=id).values(*fields)[0]
+            qset = qset.filter(identifier='CHECKPOINT',id=id).values(*fields)[0]
         else:
-            qset = qset.filter(enable=True, identifier='CHECKPOINT', bu_id=S['bu_id'], client_id = S['client_id']).values(*fields)
+            qset = qset.filter(identifier='CHECKPOINT', bu_id=S['bu_id'], client_id = S['client_id']).values(*fields)
         if(P not in ['null', None]):
             P = json.loads(P)
             qset = qset.filter(runningstatus = P['status'])
