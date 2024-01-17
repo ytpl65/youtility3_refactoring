@@ -181,7 +181,7 @@ def get_datetime_list(cron_exp, startdtz, enddtz, resp):
     else: resp = {"errors": "Unable to schedule task, check your 'Valid From' and 'Valid To'"}
 
     log.info("get_datetime_list(cron_exp, startdtz, enddtz) [end]")
-    return list(set(DT)), isValidCron, resp
+    return DT, isValidCron, resp
 
 
 def insert_into_jn_and_jnd(job, DT, resp):
