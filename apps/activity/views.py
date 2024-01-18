@@ -1165,7 +1165,6 @@ class AssetComparisionView(LoginRequiredMixin, View):
     
     def get(self, request, *args, **kwargs):
         R, S = request.GET, request.session
-        ic(R)
         if R.get('template'):
             cxt = {'asset_cmp_form': self.form(request=request)}
             return render(request, self.template, cxt)
@@ -1195,7 +1194,6 @@ class AssetComparisionView(LoginRequiredMixin, View):
                 bu_id = S['bu_id'],
                 answertype='NUMERIC',
                 qset_id=R.get('of_qset')).select_related('question').values('question_id', 'question__quesname').distinct()
-            ic(str(qset.query))
             return rp.JsonResponse(
                 data={'options':list(qset)}, status=200
             )

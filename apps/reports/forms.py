@@ -100,7 +100,8 @@ class ReportForm(forms.Form):
         ('DynamicDetailedTourSummary','Dynamic Detailed Tour Summary'),
         ('DynamicTourDetails','Dynamic Tour Details'),
         ('StaticTourDetails','Static Tour Details'),
-        ('SiteVisitReport','SiteVisitReport')
+        ('SiteVisitReport','SiteVisitReport'),
+        ('LogSheet','Log Sheet')
     ]
     download_or_send_options = [
         ('DOWNLOAD', 'Download'),
@@ -130,8 +131,8 @@ class ReportForm(forms.Form):
     fromdatetime    = forms.DateTimeField(label='From Date Time', required=False)
     uptodate        = forms.DateField(label='To Date', required=False)
     uptodatetime    = forms.DateTimeField(label='To Date Time', required=False)
-    asset           = forms.CharField(label="Asset", widget=s2forms.Select2Widget, required=False)
-    qset            = forms.CharField(label="Question Set", widget=s2forms.Select2Widget, required=False)
+    asset           = forms.ChoiceField(label="Asset", widget=s2forms.Select2Widget, required=False)
+    qset            = forms.ChoiceField(label="Question Set", widget=s2forms.Select2Widget, required=False)
     assettype       = forms.ChoiceField(label="Asset Type", widget=s2forms.Select2Widget, required=False)
     checkpoint      = forms.CharField(label='Checkpoint', widget=s2forms.Select2Widget, required=False)
     checkpoint_type = forms.CharField(label='Checkpoint Type', widget=s2forms.Select2Widget, required=False)
@@ -166,6 +167,8 @@ class ReportForm(forms.Form):
         self.fields['people'].choices = self.fields['mult_people'].choices = pm.People.objects.filter_for_dd_people_field(self.request, sitewise=True, choices=True)
         self.fields['assettype'].choices  = am.Asset.objects.asset_type_choices_for_report(self.request)
         self.fields['assetcategory'].choices = am.Asset.objects.asset_category_choices_for_report(self.request)
+        self.fields['asset'].choices = am.Asset.objects.asset_choices_for_report(self.request)
+        self.fields['qset'].choices = am.QuestionSet.objects.qset_choices_for_report(self.request)
         self.fields['fromdate'].initial = self.get_default_range_of_dates()[0]
         self.fields['uptodate'].initial = self.get_default_range_of_dates()[1]
         self.fields['cc'].choices = pm.People.objects.filter(isverified=True, client_id = S['client_id']).values_list('email', 'peoplename')

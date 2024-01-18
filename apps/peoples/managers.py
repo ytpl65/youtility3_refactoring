@@ -401,9 +401,7 @@ class PgroupManager(models.Manager):
         S = request.session
         qset = self.filter(
             (Q(groupname='NONE')| Q(enable=True) & Q(client_id = S['client_id']) & Q(bu_id__in = S['assignedsites']) & Q(identifier__tacode = 'PEOPLEGROUP'))
-        )
-        ic(qset)
-        
+        )        
         if sitewise:
             qset = qset.filter(bu_id = S['bu_id'])
         if choices:

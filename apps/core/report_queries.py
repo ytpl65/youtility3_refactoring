@@ -379,24 +379,32 @@ def get_query(query):
             '''
             WITH timezone_setting AS (
                 SELECT %s::text AS timezone
-            ),
+            )
 
             SELECT 
-                jnd.seqno AS "Sr.no",
-                q.quesname AS "Question",
-                qs.qsetname AS "Question Set",
-                jnd.answer AS "Answer",
-                jnd.cdtz AT TIME ZONE tz.timezone as "Created On"
+                jn.plandatetime as plandatetime,
+                jn.jobdesc AS section_name,
+                q.quesname AS question,
+                jnd.answer AS answers,
+                att.filename AS attachment,
+                jn.identifier AS identifier,
+                jn.seqno AS seqno
             FROM 
-                JobneedDetails jnd
-                INNER JOIN Question q ON jnd.question_id = q.id
-                INNER JOIN QuestionSet qs ON q.qset_id = qs.id
-                CROSS JOIN timezone_setting tz
+                jobneed AS jn
+            INNER JOIN 
+                jobneeddetails AS jnd ON jn.id = jnd.jobneed_id
+            INNER JOIN 
+                Question AS q ON jnd.question_id = q.id
+            LEFT JOIN 
+                Attachment AS att ON jn.uuid::text = att.owner AND (att.attachmenttype = 'ATTACHMENT' OR att.attachmenttype IS NULL)
+            CROSS JOIN 
+                timezone_setting AS tz
             WHERE
-                jnd.jobneed_id IN (SELECT unnest(string_to_array(%s, ',')::integer[]))
-                AND (jnd.cdtz AT TIME ZONE tz.timezone)::DATE BETWEEN %s AND %s
+                jn.identifier = 'SITEREPORT' AND
+                jn.bu_id IN (SELECT unnest(string_to_array(%s, ',')::integer[]))
+                AND (jn.cdtz AT TIME ZONE tz.timezone)::DATE = %s
             ORDER BY 
-                qs.qsetname, jnd.seqno;
+                jn.id, jnd.seqno;
             ''',
         'PeopleQR':
             '''
@@ -509,38 +517,44 @@ def get_query(query):
                 jn.bu_id IN (SELECT unnest(string_to_array(%s, ',')::integer[])) 
                 AND (jn.plandatetime AT TIME ZONE tz.timezone)::DATE BETWEEN %s AND %s
             ) as x
+            ''',
+            "LogSheet":
             '''
-            # "TourDetails":
-            # '''
-            # WITH timezone_setting AS (
-            #     SELECT %s ::text AS timezone
-            # )
+            WITH timezone_setting AS (
+                SELECT %s ::text AS timezone
+            )
 
-            # SELECT * 
-            # FROM (
-            #     SELECT
-			# 	jobneed.jobdesc as "Tour Name",
-			# 	Max(asset.assetname) AS "Checkpoint Name",
-			# 	(jobneed.plandatetime AT TIME ZONE tz.timezone)::timestamp as "Start Datetime",
-			# 	(jobneed.expirydatetime AT TIME ZONE tz.timezone)::timestamp as "End Datetime",
-			# 	jobneed.jobstatus as "Status",
-			# 	CASE
-			# 		WHEN jobneed.endtime IS NOT NULL THEN TO_CHAR(jobneed.endtime AT TIME ZONE tz.timezone, 'HH24:MI:SS')
-			# 		ELSE '--'
-			# 	END AS "Performed On"
-            #     	FROM jobneed
-            #     INNER JOIN bt bu ON bu.id=jobneed.bu_id
-			# 	INNER JOIN asset ON asset.id=jobneed.asset_id
-            #     CROSS JOIN timezone_setting tz
-            #     WHERE
-            #     jobneed.identifier='INTERNALTOUR'
-            #     AND jobneed.id <> 1
-            #     AND bu.id <> 1
-            #     AND jobneed.bu_id IN (SELECT unnest(string_to_array(%s, ',')::integer[]))  
-            #     AND (jobneed.plandatetime AT TIME ZONE tz.timezone)::DATE BETWEEN %s AND %s
-            #     GROUP BY bu.id, bu.buname,jobneed.jobdesc,tz.timezone,jobneed.expirydatetime,jobneed.plandatetime,jobneed.jobstatus,jobneed.endtime, (jobneed.plandatetime AT TIME ZONE tz.timezone)::DATE
-            #     ORDER BY bu.buname, (jobneed.plandatetime AT TIME ZONE tz.timezone)::DATE desc
-            # ) as x
+            SELECT * 
+            FROM (
+                select 
+                    qs.qsetname as "QuestionSetName",
+                    q.quesname as "QuestionName",
+                    jnd.answer as "Answer",
+                    a.assetname as "AssetName",
+                    typeassist.taname as "AssetType",
+                    starttime as "StartDateTime"
+                from jobneed jn
+                join
+                questionset qs on jn.qset_id = qs.id
+                join 
+                jobneeddetails jnd ON jnd.jobneed_id = jn.id
+                join  
+                question q ON q.id = jnd.question_id
+                join 
+                asset a ON a.id = jn.asset_id
+                join 
+                typeassist ON typeassist.id = a.type_id
+                join 
+                bt bu ON bu.id=jn.bu_id
+                cross join timezone_setting tz
+                WHERE starttime IS NOT NULL
+                AND jn.qset_id = %s 
+                AND jn.asset_id = %s
+                AND jn.bu_id IN (SELECT unnest(string_to_array(%s, ',')::integer[])) 
+                AND (jn.plandatetime AT TIME ZONE tz.timezone)::DATE BETWEEN %s AND %s
+                GROUP BY bu.id, bu.buname,jn.jobdesc,tz.timezone,qs.qsetname,jnd.answer,q.quesname,a.assetname,typeassist.taname,starttime,jn.expirydatetime,jn.plandatetime, (jn.plandatetime AT TIME ZONE tz.timezone)::DATE
+                ORDER BY bu.buname, (jn.plandatetime AT TIME ZONE tz.timezone)::DATE desc
+            ) as x
 
-            # '''
+            '''
     }.get(query)

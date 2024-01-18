@@ -12,6 +12,7 @@ from django.templatetags.static import static
 from weasyprint import HTML, CSS
 from weasyprint.text.fonts import FontConfiguration
 from django.urls import reverse
+from apps.onboarding import models as on
 from apps.activity  import models as am
 from apps.peoples import utils as putils
 from apps.core import utils
@@ -532,8 +533,41 @@ class DownloadReports(LoginRequiredMixin, View):
     
     def get(self, request, *args, **kwargs):
         R, P = request.GET, self.PARAMS
+        S = request.session
         if R.get('action') == 'form_behaviour':
             return self.form_behaviour(R)
+        
+        if R.get('action') == 'get_site' and R.get('of_site'):
+            qset = on.TypeAssist.objects.filter(
+                bu_id = R['of_site'],
+                tatype__tacode = 'ASSETTYPE'
+                ).values('id','taname').distinct()
+            return rp.JsonResponse(
+                data = {'options': list(qset)},status = 200
+            )
+
+        if R.get('action') == 'get_asset' and R.get('of_type'):
+            qset = am.Asset.objects.filter(
+                client_id=S['client_id'],
+                bu_id = S['bu_id'],
+                type_id=R['of_type']).values('id', 'assetname').distinct()
+            return rp.JsonResponse(
+                data={'options':list(qset)}, status=200
+            )
+        
+        if R.get('action') == 'get_qset' and R.get('of_asset'):
+            qset = am.QuestionSet.objects.filter(
+                client_id=S['client_id'],
+                bu_id = S['bu_id'],
+                type__in=['CHECKLIST', 'ASSETMAINTENANCE'],
+                parent_id=1,
+                enable=True,
+                assetincludes__contains=[R.get('of_asset')]).values('id', 'qsetname').distinct()
+            return rp.JsonResponse(
+                data={'options':list(qset)}, status=200
+            )
+    
+
         form = P['form'](request=request)
         cxt = {
             'form':form,
