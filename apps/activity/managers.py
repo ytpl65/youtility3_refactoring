@@ -49,7 +49,7 @@ class QuestionSetManager(models.Manager):
             if(obj.get('assetincludes') or obj.get('buincludes')):
                 obj['assetincludes'] = str(obj['assetincludes']).replace('[', '').replace(']', '').replace("'", "")
                 obj['buincludes'] = str(obj['buincludes']).replace('[', '').replace(']', '').replace("'", "")
-        return qset
+        return qset 
     
     def get_qset_with_questionscount(self, parentid):
         qset = self.annotate(qcount=Count('questionsetbelonging')).filter(
@@ -59,7 +59,6 @@ class QuestionSetManager(models.Manager):
     
     def handle_qsetpostdata(self, request):
         R, S = request.POST, request.session
-        ic(R)
         postdata = {'parent_id':R['parent_id'], 'ctzoffset':R['ctzoffset'], 'seqno':R['seqno'],
                     'qsetname':R['qsetname'], 'cuser':request.user, 'muser':request.user,
                     'cdtz':utils.getawaredatetime(datetime.now(), R['ctzoffset']),
@@ -158,6 +157,14 @@ class QuestionSetManager(models.Manager):
         qset = qset.annotate(
                 text = F('qsetname')).values(
                     'id', 'text')
+        return qset or self.none()
+    
+    def qset_choices_for_report(self, request):
+        S = request.session
+        qset = self.filter(
+            bu_id = S['bu_id'],
+            client_id = S['client_id']
+        ).values_list('id','qsetname')
         return qset or self.none()
         
     
@@ -333,7 +340,6 @@ class JobneedManager(models.Manager):
             qobjs = qobjs.filter(jobstatus = P['jobstatus'])
         if P.get('alerts') and P.get('alerts') == 'TASK':
             qobjs = qobjs.filter(alerts=True)
-        ic(str(qobjs.query))
         return qobjs or self.none()
 
     def get_assetmaintainance_list(self, request, related, fields):
@@ -529,7 +535,6 @@ class JobneedManager(models.Manager):
     
     def get_ext_checkpoints_jobneed(self, request, related, fields):
         fields+=['distance', 'duration', 'bu__gpslocation', 'performedtime', 'alerts']
-        ic(fields)
         qset  = self.annotate(
             distance=F('other_info__distance'),
             performedtime = F("endtime"),
@@ -590,7 +595,6 @@ class JobneedManager(models.Manager):
     def get_ppm_listview(self, request, fields, related):
         S, R = request.session, request.GET
         P = json.loads(R.get('params'))
-        ic(P)
 
         qobjs = self.select_related('people','bu', 'pgroup', 'client').annotate(
             assignedto = Case(
@@ -1092,6 +1096,14 @@ class AssetManager(models.Manager):
         ).select_related('category').values_list(
             'category_id', 'category__taname'
         ).distinct('category_id').order_by('category_id')
+        return qset or self.none()
+    
+    def asset_choices_for_report(self,request):
+        S = request.session
+        qset = self.filter(
+            bu_id = S['bu_id'],
+            client_id = S['client_id']
+        ).values_list('id','assetname')
         return qset or self.none()
 
 

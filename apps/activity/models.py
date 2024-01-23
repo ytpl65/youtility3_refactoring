@@ -670,7 +670,7 @@ class DeviceEventlog(BaseModel, models.Model):
     stepcount              = models.CharField(max_length = 55, default='No Steps')
 
     objects = DELManager()
-    class Meta(BaseModel.Meta):
+    class Meta(BaseModel.Meta): 
         db_table = 'deviceeventlog'
         get_latest_by = ["mdtz", 'cdtz']
     
