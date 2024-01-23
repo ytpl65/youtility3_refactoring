@@ -94,7 +94,7 @@ def get_json_data(file):
         with gzip.open(file, 'rb') as f:
             s = f.read().decode('utf-8')
             jsonstring = s.replace("'", "")
-            log.info("printing.................. s %s"%(s))
+            #log.info("printing.................. s %s"%(s))
             if isTrackingRecord := jsonstring.startswith('{'):
                 log.info("Tracking record found")
                 arr = jsonstring.split('?')
@@ -104,7 +104,7 @@ def get_json_data(file):
         log.warning("It is not valid Json String \n %s"%(pformat(jsonstring)))
     except Exception as e:
         log.critical("File unzipping error", exc_info=True)
-        print(f"Exception: {str(e)}")
+        #print(f"Exception: {str(e)}")
     return []
 
 
