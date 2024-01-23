@@ -317,10 +317,9 @@ def encrypt(data: bytes) -> bytes:
 
 
 def decrypt(obscured: bytes) -> bytes:
-    import zlib
+    from zlib import decompress 
     from base64 import urlsafe_b64decode as b64d
-    from base64 import urlsafe_b64encode as b64e
-    byte_val = zlib.decompress(b64d(obscured))
+    byte_val = decompress(b64d(obscured))
     return byte_val.decode('utf-8')
 
 def save_capsinfo_inside_session(people, request):
