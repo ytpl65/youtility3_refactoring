@@ -915,15 +915,15 @@ class JobneedManager(models.Manager):
             Q(client_id=client_id) &
             ~Q(identifier__in=['TICKET', 'EXTERNALTOUR']) &
             (Q(people_id=people_id) | Q(cuser_id=people_id) | Q(muser_id=people_id) | Q(pgroup_id__in=group_ids)) &
-            (Q(plandatetime__date__range=[today, tomorrow]) | Q(plandatetime__lte=datetime.now(), expirydatetime__gte=datetime.now())) |
-            Q(other_info__isdynamic=True) & Q(client_id=client_id) & Q(bu_id=bu_id)
+            (Q(plandatetime__date__range=[today, tomorrow]) | (Q(plandatetime__lte=datetime.now()) & Q(expirydatetime__gte=datetime.now()))) |
+            (Q(other_info__isdynamic=True) & Q(mdtz__date__range=[today, tomorrow])) & Q(client_id=client_id) & Q(bu_id=bu_id)
         )
 
         # Query for job needs with the constructed filters
         job_needs = self.annotate(
             istimebound = F('other_info__istimebound'),
             isdynamic=F('other_info__isdynamic')).filter(job_needs_filter).values(*fields)
-
+        ic(job_needs)
         return job_needs
 
     def get_external_tour_job_needs(self, people_id, bu_id, client_id):

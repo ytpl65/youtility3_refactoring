@@ -579,49 +579,6 @@ def tickethistory():
         'history':[]
     }
 
-class Device(BaseModel, TenantAwareModel):
-    # id     = models.BigIntegerField(_("Device Id"), primary_key = True)
-    devicecode    = models.CharField(max_length = 50)
-    devicename    = models.CharField(max_length = 50)
-    belongsTo     = models.ForeignKey('self', null = True, blank = True, on_delete = models.RESTRICT)
-    enable        = models.BooleanField(default = True)
-    runningStatus = models.ForeignKey("onboarding.TypeAssist", null = True, blank = True, on_delete = models.RESTRICT,related_name='device_status')
-    devicetype    = models.ForeignKey("onboarding.TypeAssist", null = True, blank = True, on_delete = models.RESTRICT, related_name='device_types')
-    devicedesc    = models.CharField(null = True, max_length = 50)
-    ipaddress     = models.CharField(null = True , blank = True, max_length = 100)
-    bu            = models.ForeignKey("onboarding.Bt", null = True,blank = True, on_delete = models.RESTRICT)
-
-    class Meta(BaseModel.Meta):
-        db_table = 'device'
-        get_latest_by = ["mdtz", 'cdtz']
-
-    def __str__(self):
-        return self.devicecode
-
-class Event(BaseModel, TenantAwareModel):
-    # id           = models.BigIntegerField(_("Event Id"), primary_key = True)
-    eventdesc     = models.CharField(max_length = 250, null = True, blank = True)
-    device        = models.ForeignKey("activity.Device", null = True, blank = True, on_delete = models.RESTRICT, related_name='event_device')
-    eventdatetime = models.DateTimeField(default = timezone.now)
-    eventtype     = models.ForeignKey("onboarding.TypeAssist", null = True, blank = True, on_delete = models.RESTRICT, related_name='event_types')
-    category      = models.IntegerField(null = True, blank = True)
-    source        = models.CharField(max_length = 100, null = True, blank = True)
-    note          = models.CharField(max_length = 100, null = True, blank = True)
-    starttime     = models.DateTimeField(editable = True, null = True, blank = True)
-    endtime       = models.DateTimeField(editable = True, null = True, blank = True)
-    bu            = models.ForeignKey("onboarding.Bt", null = True,blank = True, on_delete = models.RESTRICT)
-
-    class Meta(BaseModel.Meta):
-        db_table = 'event'
-        get_latest_by = ["cdtz", 'mdtz']
-
-    def __str__(self):
-        return self.eventdesc
-
-
-
-
-
 
 class DeviceEventlog(BaseModel, models.Model):
     class DeviceEvent(models.TextChoices):

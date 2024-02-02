@@ -226,7 +226,7 @@ class BtResource(resources.ModelResource):
         if om.Bt.objects.select_related().filter(
             bucode=row['Code*'], parent__bucode=row['Belongs To*'],
             identifier__tacode = row['Type*']).exists():
-            raise ValidationError(f"Record with these values already exist {', '.join(row.values())}")
+            raise ValidationError(f"Record with these values already exist {row.values()}")
         
         super().before_import_row(row, **kwargs)
 

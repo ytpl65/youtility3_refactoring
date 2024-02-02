@@ -1081,11 +1081,15 @@ def get_qobjs_dir_fields_start_length(R):
     return qobjs, dir,  fields, length, start
 
 
-def runrawsql(sql, args=None, db='default', named=False, count=False):
+def runrawsql(sql, args=None, db='default', named=False, count=False, named_params=False):
     "Runs raw sql return namedtuple or dict type results"
     from django.db import connections
     cursor = connections[db].cursor()
-    cursor.execute(sql, args)
+    if named_params:
+        sql = sql.format(**args)
+        cursor.execute(sql)
+    else:
+        cursor.execute(sql, args)
     if count:
         return cursor.rowcount
     else:

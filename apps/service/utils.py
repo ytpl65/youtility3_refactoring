@@ -104,7 +104,6 @@ def get_json_data(file):
         log.warning("It is not valid Json String \n %s"%(pformat(jsonstring)))
     except Exception as e:
         log.critical("File unzipping error", exc_info=True)
-        #print(f"Exception: {str(e)}")
     return []
 
 

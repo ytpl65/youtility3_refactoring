@@ -64,7 +64,13 @@ def bu_defaults():
         'address2':None,
         'permissibledistance': 0,
         'controlroom':[],
-        'ispermitneeded':False
+        'ispermitneeded':False,
+        'no_of_devices_allowed':0,
+        'devices_currently_added':0,
+        'startdate':'',
+        'enddate':'',
+        'onstop':'',
+        'onstopmessage':'',
     }
 
 class Bt(BaseModel, TenantAwareModel, HeirarchyModel):
@@ -233,3 +239,39 @@ class DownTimeHistory(BaseModel):
     
     def __str__(self):
         return self.reason
+
+class Device(BaseModel, TenantAwareModel):
+    # id     = models.BigIntegerField(_("Device Id"), primary_key = True)
+    handsetname = models.CharField(_("Handset Name"), max_length=100)
+    modelname = models.CharField(_("Model"), max_length=50)
+    dateregistered = models.DateField(_("Date Registered"), default=timezone.now)
+    lastcommunication = models.DateTimeField(_("Last Communication"), auto_now=False, auto_now_add=False)
+    imeino = models.CharField(_("IMEI No"), max_length=15, null=True, blank=True, unique=True)
+    lastloggedinuser = models.ForeignKey(settings.AUTH_USER_MODEL, verbose_name = _("Last Logged In User"), null = True, blank = True, on_delete = models.RESTRICT)
+    phoneno = models.CharField(_("Phone No"), max_length=15, null=True, blank=True)
+    isdeviceon = models.BooleanField(_("Is Device On"), default=True)
+    client = models.ForeignKey("onboarding.Bt", verbose_name = _("Client"), null = True, blank = True, on_delete = models.RESTRICT)
+    
+    
+    
+    class Meta(BaseModel.Meta):
+        db_table = 'device'
+        get_latest_by = ["mdtz", 'cdtz']
+
+    def __str__(self):
+        return self.handsetname
+
+
+class Subscription(BaseModel, TenantAwareModel):
+    class StatusChoices(models.TextChoices):
+        A  = ('Active', 'Active')
+        IA = ('In Active', 'In Active')
+
+    
+    startdate = models.DateField(_("Start Date"), auto_now=False, auto_now_add=False)
+    enddate = models.DateField(_("End Date"), auto_now=False, auto_now_add=False)
+    terminateddate = models.DateField(_("Terminated Date"), auto_now=False, auto_now_add=False)
+    reason = models.TextField(_("Reason"), null=True, blank=True)
+    status = models.CharField(_("Status"), max_length=50, choices=StatusChoices.choices, default=StatusChoices.A.value)
+    assignedhandset = models.ForeignKey(Device, verbose_name = _("Assigned Handset"), null = True, blank = True, on_delete = models.RESTRICT)
+    client = models.ForeignKey("onboarding.Bt", verbose_name = _("Client"), null = True, blank = True, on_delete = models.RESTRICT)

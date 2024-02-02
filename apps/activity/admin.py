@@ -242,7 +242,8 @@ class QuestionSetResource(resources.ModelResource):
         # unique record check
         if am.QuestionSet.objects.select_related().filter(
             qsetname=row['Question Set Name*'], type=row['QuestionSet Type*'],
-            client__bucode = row['Client*'], parent__qsetname = row['Belongs To*']).exists():
+            client__bucode = row['Client*'], parent__qsetname = row['Belongs To*'],
+            bu__bucode=row['Site*']).exists():
             raise ValidationError(f"Record with these values already exist {row.values()}")
 
             
@@ -386,7 +387,7 @@ class QuestionSetBelongingResource(resources.ModelResource):
         if am.QuestionSetBelonging.objects.select_related().filter(
             qset__qsetname=row['Question Set*'], question__quesname=row['Question Name*'],
             client__bucode=row['Client*'], bu__bucode=row['Site*']).exists():
-            raise ValidationError(f"Record with these values already exists: {', '.join(row.values())}")
+            raise ValidationError(f"Record with these values already exists: {row.values()}")
 
     def validate_options_values(self, row):
         if row['Answer Type*'] in ['CHECKBOX', 'DROPDOWN']:
@@ -410,7 +411,7 @@ class AssetResource(resources.ModelResource):
         default     = utils.get_or_create_none_bv
     )
     BV = fields.Field(
-        column_name       = 'BV*',
+        column_name       = 'Site*',
         attribute         = 'bu',
         widget            = BVForeignKeyWidget(om.Bt, 'bucode'),
         saves_null_values = True,
@@ -471,12 +472,32 @@ class AssetResource(resources.ModelResource):
     Identifier    = fields.Field(attribute='identifier', column_name='Identifier*', default='ASSET')
     ID            = fields.Field(attribute='id')
     ENABLE        = fields.Field(attribute='id', column_name='Enable')
-    is_critical   = fields.Field(attribute='iscritical', column_name='Is Critical', default=False)
+    is_critical   = fields.Field(attribute='iscritical', column_name='Is Critical', default=False, widget=wg.BooleanWidget())
+    is_meter      = fields.Field(column_name='Is Meter', widget=wg.BooleanWidget(),  default=False)
     Code          = fields.Field(attribute='assetcode', column_name='Code*')
     Name          = fields.Field(attribute='assetname', column_name='Name*')
     RunningStatus = fields.Field(attribute='runningstatus', column_name='Running Status*')
     Capacity      = fields.Field(widget=wg.DecimalWidget(), column_name='Capacity', attribute='capacity', default=0.0)
     GPS           = fields.Field(attribute='gpslocation', column_name='GPS Location')
+    is_nonengg_asset = fields.Field(column_name='Is Non Engg. Asset', default=False, widget=wg.BooleanWidget())
+    supplier  = fields.Field( column_name='Supplier', default="")
+    meter = fields.Field(column_name='Meter', default="")
+    model = fields.Field(column_name='Model', default="")
+    invoice_no = fields.Field(column_name='Invoice No', default="")
+    invoice_date = fields.Field(column_name='Invoice Date', default="")
+    service = fields.Field(column_name='Service', default="")
+    sfdate = fields.Field(column_name='Service From Date', default="")
+    stdate = fields.Field(column_name='Service To Date', default="")
+    yom = fields.Field(column_name='Year of Manufacture', default="")
+    msn = fields.Field(column_name='Manufactured Serial No', default="")
+    bill_val = fields.Field(column_name='Bill Value', default="")
+    bill_date = fields.Field(column_name='Bill Date', default="")
+    purchase_date = fields.Field(column_name='Purchase Date', default="")
+    inst_date = fields.Field(column_name='Installation Date', default="")
+    po_number = fields.Field(column_name='PO Number', default="")
+    far_asset_id = fields.Field(column_name='FAR Asset ID', default="")
+    
+    
     
     class Meta:
         model = am.Asset
@@ -485,14 +506,80 @@ class AssetResource(resources.ModelResource):
         report_skipped = True
         fields = ('ID', 'Code', 'Name',  'GPS', 'Identifier' 'is_critical',
                   'RunningStatus', 'Capacity', 'BelongsTo', 'Type', 'Client', 'BV',
-                  'Category', 'SubCategory', 'Brand', 'Unit', 'ServiceProvider')
+                  'Category', 'SubCategory', 'Brand', 'Unit', 'ServiceProvider',
+                  'ENABLE', 'is_critical', 'is_meter', 'is_nonengg_asset', 'supplier',
+                  'meter', 'model', 'invoice_no', 'invoice_date','service','sfdate',
+                  'stdate', 'yom','msn', 'bill_val', 'bill_date', 'purchase_date',
+                  'inst_date', 'po_number', 'far_asset_id'
+                  )
     
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.is_superuser = kwargs.pop('is_superuser', None)
         self.request = kwargs.pop('request', None)
     
+    
     def before_import_row(self, row, row_number=None, **kwargs):
+        self.validations(row)
+        self.initialize_attributes(row)
+    
+    def initialize_attributes(self, row):
+        attributes = [
+            ('_ismeter', 'Is Meter', False),
+            ('_is_nonengg_asset', 'Is Non Engg. Asset', False),
+            ('_supplier', 'Supplier', ''),
+            ('_meter', 'Meter', ''),
+            ('_model', 'Model', ''),
+            ('_invoice_no', 'Invoice No', ''),
+            ('_invoice_date', 'Invoice Date', ''),
+            ('_service', 'Service', ''),
+            ('_sfdate', 'Service From Date', ''),
+            ('_stdate', 'Service To Date', ''),
+            ('_yom', 'Year of Manufacture', ''),
+            ('_msn', 'Manufactured Serial No', ''),
+            ('_bill_val', 'Bill Value', 0.0),
+            ('_bill_date', 'Bill Date', ''),
+            ('_purchase_date', 'Purchase Date', ''),
+            ('_inst_date', 'Installation Date', ''),
+            ('_po_number', 'PO Number', ''),
+            ('_far_asset_id', 'FAR Asset ID', '')
+        ]
+
+        for attribute_name, key, default_value in attributes:
+            setattr(self, attribute_name, row.get(key, default_value))
+
+    
+    def before_save_instance(self, instance, using_transactions, dry_run=False):
+        asset_json = instance.asset_json
+
+        attributes = {
+            'ismeter': self._ismeter,
+            'tempcode': self._ismeter,  # I assume this is intentional, otherwise, replace with the correct value
+            'is_nonengg_asset': self._is_nonengg_asset,
+            'supplier': self._supplier,
+            'service': self._service,
+            'meter': self._meter,
+            'model': self._model,
+            'bill_val': self._bill_val,
+            'invoice_date': self._invoice_date,
+            'invoice_no': self._invoice_no,
+            'msn': self._msn,
+            'bill_date': self._bill_date,
+            'purchase_date': self._purchase_date,  # I assume this is intentional, otherwise, replace with the correct value
+            'inst_date': self._inst_date,
+            'sfdate': self._sfdate,
+            'stdate': self._po_number,
+            'yom': self._yom,
+            'po_number': self._po_number,
+            'far_asset_id': self._far_asset_id
+        }
+
+        for key, value in attributes.items():
+            asset_json[key] = value
+        instance.asset_json.update(asset_json)
+        utils.save_common_stuff(self.request, instance, self.is_superuser)
+        
+    def validations(self, row):
         row['Code*'] = clean_string(row.get('Code*'), code=True)
         row['Name*'] = clean_string(row.get('Name*'))
         row['GPS Location'] = clean_point_field(row.get('GPS Location'))
@@ -512,13 +599,26 @@ class AssetResource(resources.ModelResource):
         # unique record check
         if am.Asset.objects.select_related().filter(
             assetcode=row['Code*'],
+            bu__bucode=row['Site*'],
             client__bucode = row['Client*']).exists():
-            raise ValidationError(f"Record with these values already exist {', '.join(row.values())}")
-        super().before_import_row(row, row_number, **kwargs)
+            raise ValidationError(f"Record with these values already exist {row.values()}")
         
-    def before_save_instance(self, instance, using_transactions, dry_run=False):
-        utils.save_common_stuff(self.request, instance, self.is_superuser)
-    
+        if row.get('Service'):
+            obj = om.TypeAssist.objects.filter(
+                tacode=row['Service'], client__bucode=row['Client*']).first()
+            if not obj:
+                raise ValidationError(f"Service {row['Service']} does not exist")
+            else:
+                row['Service'] = obj.id
+        
+        if row.get('Meter'):
+            obj = om.TypeAssist.objects.filter(
+                tacode=row['Meter'], client__bucode=row['Client*']).first()
+            if not obj:
+                raise ValidationError(f"Meter {row['Meter']} does not exist")
+            else:
+                row['Meter'] = obj.id
+            
 
 
 class LocationResource(resources.ModelResource):
@@ -593,7 +693,7 @@ class LocationResource(resources.ModelResource):
         if am.Location.objects.select_related().filter(
             loccode=row['Code*'],
             client__bucode = row['Client*']).exists():
-            raise ValidationError(f"Record with these values already exist {', '.join(row.values())}")
+            raise ValidationError(f"Record with these values already exist {row.values()}")
         super().before_import_row(row, row_number, **kwargs)
         
     def before_save_instance(self, instance, using_transactions, dry_run=False):

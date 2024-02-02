@@ -522,9 +522,12 @@ HEADER_MAPPING  = {
     
     'ASSET':[
         'Code*', 'Name*', 'Running Status*', 'Identifier*','Is Critical',
-        'Client*', 'BV*', 'Capacity', 'BelongsTo*', 'Type',  'GPS Location',
+        'Client*', 'Site*', 'Capacity', 'BelongsTo*', 'Type',  'GPS Location',
         'Category', 'SubCategory', 'Brand', 'Unit', 'Service Provider',
-        'Enable'
+        'Enable', 'Is Meter', 'Is Non Engg. Asset', 'Meter', 'Model', 'Supplier',
+        'Invoice No', 'Invoice Date', 'Service', 'Service From Date', 'Service To Date',
+        'Year of Manufacture', 'Manufactured Serial No', 'Bill Value', 'Bill Date',
+        'Purchase Date', 'Installation Date', 'PO Number', 'FAR Asset ID'
     ],
     'GROUP':[
         'Group Name*', 'Type*', 'Client*', 'Site*', 'Enable'

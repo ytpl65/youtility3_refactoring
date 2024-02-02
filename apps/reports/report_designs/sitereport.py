@@ -10,7 +10,7 @@ class SiteReportFormat(BaseReportsExport):
     design_file = "reports/pdf_reports/sitereport.html"
     ytpl_applogo =  'frontend/static/assets/media/images/logo.png'
     report_name = 'SiteReport'
-    fields = ['fromdate*', 'uptodate*',  'sitegroup*', 'people']
+    fields = ['fromdatetime*', 'uptodatetime*',  'sitegroup*', 'people']
     unsupported_formats = ['None']
     
     def __init__(self, filename, client_id, request=None, context=None, data=None, additional_content=None, returnfile=False, formdata=None):
@@ -21,7 +21,6 @@ class SiteReportFormat(BaseReportsExport):
         context data is the info that is passed in templates
         used for pdf/html reports
         '''
-        routename = Pgroup.objects.get(id=self.formdata['sitegroup']).groupname
         self.set_args_required_for_query()
         self.context = {
             'base_path': settings.BASE_DIR,
@@ -29,16 +28,16 @@ class SiteReportFormat(BaseReportsExport):
             'report_title': self.report_title,
             'client_logo':self.get_client_logo(),
             'app_logo':self.ytpl_applogo,
-            'report_subtitle':f"Route Name: {routename}, From: {self.formdata.get('fromdate')} To {self.formdata.get('uptodate')}"
+            'report_subtitle':f"From: {self.formdata.get('fromdatetime')} To {self.formdata.get('uptodatetime')}"
         }
         
     def set_args_required_for_query(self):
         self.args = [
             get_timezone(self.formdata['ctzoffset']),
             self.client_id,
-            self.formdata['sitegroup'],
-            self.formdata['fromdate'].strftime('%d/%m/%Y'),
-            self.formdata['uptodate'].strftime('%d/%m/%Y'),    
+            ','.join(self.formdata['sitegroup']),
+            self.formdata['fromdatetime'].strftime('%d/%m/%Y %H:%M:%S'),
+            self.formdata['uptodatetime'].strftime('%d/%m/%Y %H:%M:%S'),
             ]
     
     def set_data(self):
@@ -51,7 +50,7 @@ class SiteReportFormat(BaseReportsExport):
         
     def set_additional_content(self):
         bt = Bt.objects.filter(id=self.client_id).values('id', 'buname').first()
-        self.additional_content = f"Client: {bt['buname']}; Report: {self.report_title}; From: {self.formdata['fromdate']} To: {self.formdata['uptodate']}"
+        self.additional_content = f"Client: {bt['buname']}; Report: {self.report_title}; From: {self.formdata['fromdatetime']} To: {self.formdata['uptodatetime']}"
         
 
     def excel_layout(self, worksheet, workbook, df, writer, output):

@@ -120,7 +120,7 @@ def get_query(query):
                 SELECT %s ::text AS timezone
             )
                 SELECT
---                 bu.id,
+                --bu.id,
 				client_table.buname AS "Client",
                 bu.buname as "Site",
 				jobneed.jobdesc as "Tour/Route",
@@ -296,7 +296,7 @@ def get_query(query):
                     AND parent_id = 1
                     AND client_id = %s
                     AND sgroup_id IN (SELECT unnest(string_to_array(%s, ',')::integer[]))
-                    AND (jobneed.plandatetime AT TIME ZONE tz.timezone)::DATE BETWEEN %s AND %s
+                    AND (jobneed.plandatetime AT TIME ZONE tz.timezone) BETWEEN %s AND %s
             )
 
             SELECT 
@@ -521,40 +521,115 @@ def get_query(query):
             "LogSheet":
             '''
             WITH timezone_setting AS (
-                SELECT %s ::text AS timezone
+                SELECT {timezone} ::text AS timezone
             )
 
-            SELECT * 
-            FROM (
+            select
+                jobneed.id,
+                (jobneed.plandatetime AT TIME ZONE tz.timezone) as "Plan Datetime",
+                jobneed.jobdesc,
+                case when (jobneed.people_id<>1 or jobneed.people_id is NULL) then people.peoplename else pgroup.groupname end as "Assigned To",
+                asset.assetname as "Asset",
+                permby.peoplename as "Performed By",
+                questionset.qsetname,
+                (jobneed.expirydatetime AT TIME ZONE tz.timezone) as expirydatetime,
+                jobneed.gracetime,
+                site.buname as site,
+                jobneed.scantype,
+                jobneed.receivedonserver,
+                jobneed.priority,
+                (jobneed.starttime AT TIME ZONE tz.timezone) as "Start Time",
+                (jobneed.endtime AT TIME ZONE tz.timezone) as "End Time",
+                jobneed.gpslocation,
+                jobneed.remarks,
+                jndls.seqno,
+                jndls.quesname,
+                CASE
+                    WHEN jndls.answer IS NOT NULL AND trim(jndls.answer) <> '' AND jndls.answertype = 'NUMERIC' THEN
+                        coalesce(round(jndls.answer::NUMERIC, 2), 0)::text
+                    WHEN trim(jndls.answer) = '' THEN
+                        'X0X'::text
+                    ELSE
+                        coalesce(jndls.answer, '0')::text
+                END AS answer
+            from jobneed
+            inner join asset on asset.id = jobneed.asset_id
+            inner join people on jobneed.people_id = people.id  
+            inner join pgroup on jobneed.pgroup_id = pgroup.id
+            inner join questionset on questionset.id = jobneed.qset_id
+            inner join bt site on site.id = jobneed.bu_id
+            inner join people permby on permby.id = jobneed.performedby_id
+            cross join timezone_setting tz
+            left join (
                 select 
-                    qs.qsetname as "QuestionSetName",
-                    q.quesname as "QuestionName",
-                    jnd.answer as "Answer",
-                    a.assetname as "AssetName",
-                    typeassist.taname as "AssetType",
-                    starttime as "StartDateTime"
-                from jobneed jn
-                join
-                questionset qs on jn.qset_id = qs.id
-                join 
-                jobneeddetails jnd ON jnd.jobneed_id = jn.id
-                join  
-                question q ON q.id = jnd.question_id
-                join 
-                asset a ON a.id = jn.asset_id
-                join 
-                typeassist ON typeassist.id = a.type_id
-                join 
-                bt bu ON bu.id=jn.bu_id
-                cross join timezone_setting tz
-                WHERE starttime IS NOT NULL
-                AND jn.qset_id = %s 
-                AND jn.asset_id = %s
-                AND jn.bu_id IN (SELECT unnest(string_to_array(%s, ',')::integer[])) 
-                AND (jn.plandatetime AT TIME ZONE tz.timezone)::DATE BETWEEN %s AND %s
-                GROUP BY bu.id, bu.buname,jn.jobdesc,tz.timezone,qs.qsetname,jnd.answer,q.quesname,a.assetname,typeassist.taname,starttime,jn.expirydatetime,jn.plandatetime, (jn.plandatetime AT TIME ZONE tz.timezone)::DATE
-                ORDER BY bu.buname, (jn.plandatetime AT TIME ZONE tz.timezone)::DATE desc
-            ) as x
-
+                    jndd.jobneed_id,
+                    q.quesname,
+                    jndd.answertype,
+                    jndd.seqno,
+                    jndd.answer,
+                    jndd.min,
+                    jndd.max,  
+                    initcap(case when jndd.alerts=true then 'YES' else 'NO' end) as alerts
+                from jobneeddetails jndd
+                inner join question q on jndd.question_id = q.id
+                
+            ) jndls on jndls.jobneed_id = jobneed.id
+            where 
+                1=1 
+                and jobneed.identifier = 'TASK' 
+                and jobneed.jobstatus = 'COMPLETED'
+                and jobneed.bu_id::text = {buid}
+                AND jobneed.qset_id={qsetid}
+                AND jobneed.asset_id={assetid}
+                AND coalesce(jndls.answer, '') <> ''
+            ''',
+            "LogBook-Q1":
+            '''
+            with timezone_setting as (
+                select {timezone} ::text as timezone
+            )
+            select
+                jobneed.id,
+                (jobneed.plandatetime AT TIME ZONE tz.timezone) as "Plan DateTime",
+                jobneed.jobdesc as "Description",
+                case when jobneed.people_id<> 1 then people.peoplename else pgroup.groupname end as "Assigned To",
+                jt.tacode as jobtype,
+                jstatus.tacode as "Status",
+                asset.assetname as "Asset",
+                permby.peoplename as "Performed By",
+                questionset.qsetname,
+                (jobneed.expirydatetime AT TIME ZONE tz.timezone) as expirydatetime,
+                jobneed.gracetime,
+                site.buname as site,
+                jobneed.scantype,
+                jobneed.receivedonserver,
+                jobneed.priority,
+                (jobneed.starttime AT TIME ZONE tz.timezone) as "Start Time" ,
+                (jobneed.endtime AT TIME ZONE tz.timezone) as "End Time",
+                jobneed.gpslocation,
+                jobneed.qset_id,
+                jobneed.remarks as "Remarks"
+            from jobneed jobneed
+            inner join asset on asset.id=jobneed.asset_id
+            cross join timezone_setting tz
+            inner join people on jobneed.people_id=people.id
+            inner join pgroup on jobneed.pgroup_id=pgroup.id
+            inner join questionset on questionset.id=jobneed.qset_id
+            inner join bu site on site.id=jobneed.bu_id
+            inner join people permby on permby.id=jobneed.performedby
+            where 1=1 
+            and identifier='TASK' and jobstatus='COMPLETED'
+            and jobneed.bu_id::text = {siteid} and jobneed.asset_id={assetid}
+            and jobneed.qset_id={qset_id} and
+            (jobneed.plandatetime  at time zone tz.timezone)::DATE between {fromdate} and {uptodate} 
+            ''',
+            'LogBook-Q2':
+            '''
+            select 
+            q.quesname, jndd.seqno, jndd.answer,
+            jndd.min, jndd.max, initcap(case when jndd.alerts=true then 'YES' else 'NO' end) as alerts
+            from jobneeddetails jndd
+            inner join question q on jndd.question_id=q.id
+            where  jobneedid={jobneedid} order by seqno
             '''
     }.get(query)

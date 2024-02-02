@@ -57,117 +57,120 @@ Client
 {% endblock nonfield_errors %}
 <!---------- END NON FIELD ERRORS --------->
 
+{% block card_tabs %}
+    <ul class="nav nav-tabs">
+        <li class="nav-item">
+            <a class="nav-link active" aria-current="page" href="#">Client Details</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" href="#">Device Limits</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" href="#">Device Lisenses</a>
+        </li>
+    </ul>
+{% endblock card_tabs %}
+
+
 
 <!-------------- BEGIN FORM ------------------->
 {% block form %}
-<form action="" method='post' id="id_clientform" enctype="multipart/form-data" >
+<form action="" method='post' class="client-details" id="id_clientform" enctype="multipart/form-data" >
     <!-------------------------- CSRF MIDDLEWARE TOKEN --------------------->
     <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
     <input type="hidden" name="{{ clientform.ctzoffset.name }}" id = "{{ clientform.ctzoffset.auto_id }}" value="-1">
-    <div class="mb-3 row g-3 gx-6">
-        <div class="col-md-6">
-            <div class="input-group mb-3">
-                <div class="col-md-4">
-                    {{ clientform.identifier.label_tag() }}
-                </div>
-                <div class="col-md-8">
-                    {{ clientform.identifier }}
-                </div>
-            </div>
-            <div class="input-group mb-3">
-                <div class="col-md-4">
-                    {{ clientform.bucode.label_tag() }}
-                </div>
-                <div class="col-md-8">
-                    {{ clientform.bucode }}
-                </div>
-            </div>
-            <div class="input-group mb-3">
-                <div class="col-md-4">
-                    {{ clientform.buname.label_tag() }}
-                </div>
-                <div class="col-md-8">
-                    {{ clientform.buname }}
-                </div>
-            </div>
-            <div class="input-group mb-3">
-                <div class="col-md-4">
-                    {{ clientprefsform.validimei.label_tag() }}
-                </div>
-                <div class="col-md-8">
-                    {{ clientprefsform.validimei }}
-                </div>
-            </div>
-            <div class="input-group mb-3">
-                <div class="col-md-4">
-                    {{ clientprefsform.validip.label_tag() }}
-                </div>
-                <div class="col-md-8">
-                    {{ clientprefsform.validip }}
-                </div>
-            </div>
-            <div class="input-group mb-3">
-                <div class="col-md-4">
-                    {{ clientprefsform.reliveronpeoplecount.label_tag() }}
-                </div>
-                <div class="col-md-8">
-                    {{ clientprefsform.reliveronpeoplecount }}
-                </div>
-            </div>
-            <div class="input-group mb-3">
-                <div class="col-md-4 pt-2">
-                    {{ clientprefsform.pvideolength.label_tag() }}
-                </div>
-                <div class="col-md-8 pe-2">
-                    {{ clientprefsform.pvideolength }}
-                </div>
-            </div>
+    <div class="row g-3">
+        <div class="col-md-5">
+            {{ clientform.identifier.label_tag() }}
+            {{ clientform.identifier }}
         </div>
-
-        <div class="col-md-2 offset-md-1 form-check form-switch form-check-solid">
-            <div class="input-group mb-6">
-                <label for="{{ clientform.gpsenable.id_for_label }}" 
-                class="form-check-label bool text-sm-right">{{ clientform.gpsenable }}&nbsp;&nbsp;{{ clientform.gpsenable.label }}</label>
-            </div><br>
-            <div class="input-group mb-6">
-                <label for="{{ clientform.skipsiteaudit.id_for_label }}" 
-                class="form-check-label bool text-sm-right">{{ clientform.skipsiteaudit }}&nbsp;&nbsp;{{ clientform.skipsiteaudit.label }}</label>
-            </div><br>
-            <div class="input-group mb-6">
-                <label for="{{ clientform.deviceevent.id_for_label }}" 
-                class="form-check-label bool text-sm-right">{{ clientform.deviceevent }}&nbsp;&nbsp;{{ clientform.deviceevent.label }}</label>
-            </div><br>
-            <div class="input-group mb-6">
-                <label for="{{ clientform.enablesleepingguard.id_for_label }}" 
-                class="form-check-label bool text-sm-right">{{ clientform.enablesleepingguard }}&nbsp;&nbsp;{{ clientform.enablesleepingguard.label }}</label>
-            </div><br>
-            <div class="input-group mb-6">
-                <label for="{{ clientform.enable.id_for_label }}" 
-                class="form-check-label bool text-sm-right">{{ clientform.enable }}&nbsp;&nbsp;{{ clientform.enable.label }}</label>
-            </div><br>
-            <div class="input-group mb-6">
-                <label for="{{ clientprefsform.usereliver.id_for_label }}" 
-                class="form-check-label bool text-sm-right">{{ clientprefsform.usereliver }}&nbsp;&nbsp;{{ clientprefsform.usereliver.label }}</label>
-            </div>
-            <div class="input-group mb-6">
-                <label for="{{ clientprefsform.ispermitneeded.id_for_label }}" 
-                class="form-check-label bool text-sm-right">{{ clientprefsform.ispermitneeded }}&nbsp;&nbsp;{{ clientprefsform.ispermitneeded.label }}</label>
-            </div>
+        <div class="col-md-5">
+            {{ clientform.identifier.label_tag() }}
+            {{ clientform.identifier }}
         </div>
-        <div class="col-sm-12 col-md-2">
+        <div class="col-md-5">
+            {{ clientform.bucode.label_tag() }}
+            {{ clientform.bucode }}
+        </div>
+        <div class="col-md-5">
+            {{ clientform.identifier.label_tag() }}
+            {{ clientform.identifier }}
+        </div>
+        <div class="col-md-5">
+            {{ clientform.buname.label_tag() }}
+            {{ clientform.buname }}
+        </div>
+        <div class="col-md-5">
+            {{ clientform.identifier.label_tag() }}
+            {{ clientform.identifier }}
+        </div>
+        <div class="col-md-5">
+            {{ clientprefsform.validimei.label_tag() }}
+            {{ clientprefsform.validimei }}
+        </div>
+        <div class="col-md-5">
+            {{ clientform.identifier.label_tag() }}
+            {{ clientform.identifier }}
+        </div>
+        <div class="col-md-5">
+            {{ clientprefsform.validip.label_tag() }}
+            {{ clientprefsform.validip }}
+        </div>
+        <div class="col-md-5">
+            {{ clientform.identifier.label_tag() }}
+            {{ clientform.identifier }}
+        </div>
+        <div class="col-md-5">
+            {{ clientprefsform.reliveronpeoplecount.label_tag() }}
+            {{ clientprefsform.reliveronpeoplecount }}
+        </div>
+        <div class="col-md-5">
+            {{ clientform.identifier.label_tag() }}
+            {{ clientform.identifier }}
+        </div>
+        <div class="col-md-5">
+            {{ clientprefsform.pvideolength.label_tag() }}
+            {{ clientprefsform.pvideolength }}
+        </div>
+        <div class="col-md-2">
             <label for="">Client Logo</label>
             <div class="h-200px w-200px dropzone" id="dropzone_file">
-
             </div>
         </div>
-
+        <div class="col-md-auto">
+            <label for="{{ clientform.gpsenable.id_for_label }}" 
+                class="form-check-label bool text-sm-right">{{ clientform.gpsenable }}&nbsp;&nbsp;{{ clientform.gpsenable.label }}</label>
+        </div>
+        <div class="col-md-auto">
+            <label for="{{ clientform.skipsiteaudit.id_for_label }}" 
+                class="form-check-label bool text-sm-right">{{ clientform.skipsiteaudit }}&nbsp;&nbsp;{{ clientform.skipsiteaudit.label }}</label>
+        </div>
+        <div class="col-md-auto">
+            <label for="{{ clientform.deviceevent.id_for_label }}" 
+                class="form-check-label bool text-sm-right">{{ clientform.deviceevent }}&nbsp;&nbsp;{{ clientform.deviceevent.label }}</label>
+        </div>
+        <div class="col-md-auto">
+            <label for="{{ clientform.enablesleepingguard.id_for_label }}" 
+                class="form-check-label bool text-sm-right">{{ clientform.enablesleepingguard }}&nbsp;&nbsp;{{ clientform.enablesleepingguard.label }}</label>
+        </div>
+        <div class="col-md-auto">
+            <label for="{{ clientform.enable.id_for_label }}" 
+                class="form-check-label bool text-sm-right">{{ clientform.enable }}&nbsp;&nbsp;{{ clientform.enable.label }}</label>
+        </div>
+        <div class="col-md-auto">
+            <label for="{{ clientprefsform.usereliver.id_for_label }}" 
+                class="form-check-label bool text-sm-right">{{ clientprefsform.usereliver }}&nbsp;&nbsp;{{ clientprefsform.usereliver.label }}</label>
+        </div>
+        <div class="col-md-auto">
+            <label for="{{ clientprefsform.ispermitneeded.id_for_label }}" 
+                class="form-check-label bool text-sm-right">{{ clientprefsform.ispermitneeded }}&nbsp;&nbsp;{{ clientprefsform.ispermitneeded.label }}</label>
+        </div>
     </div>
-    <hr>
 </form>
 {% endblock form %}
 
 {% block extras %}
-<div class="my-3 row g-3 gx-6">
+<div class="my-3 row g-3 gx-6 client-details">
     <div class="col-md-3 col-sm-3">
         <h4 style="color:#3a3b40de">Web Capability</h4>
         <!---- WEB CAPABILITY FIELD --->

@@ -21,34 +21,42 @@ log = get_task_logger('__main__')
 
 def create_dynamic_job(jobids=None):
     try:
-        jobs = am.Job.objects.filter(
-            ~Q(jobname='NONE'),
-            ~Q(asset__runningstatus = am.Asset.RunningStatus.SCRAPPED),
-            parent_id = 1,
-            enable = True,
-            other_info__isdynamic=True
-        ).select_related('asset').values(*utils.JobFields.fields)
-        if jobids:
-            jobs = jobs.filter(id__in = jobids)
-        for job in jobs:
-            asset = am.Asset.objects.get(id = job['asset_id'])
-            jobstatus = 'ASSIGNED'
-            jobtype = 'SCHEDULE'
-            people = job['people_id']
-            multiplication_factor = asset.asset_json['multifactor']
-            NONE_JN  = utils.get_or_create_none_jobneed()
-            NONE_P   = utils.get_or_create_none_people()
-            params = {
-                'm_factor':multiplication_factor,'jobtype':jobtype,
-                'jobstatus':jobstatus, 'NONE_JN':NONE_JN, 'NONE_P':NONE_P,
-                'jobdesc':job['jobname'], 'people':people,
-                'sgroup_id':job['sgroup_id'], 'qset_id':job['qset_id'],
-            }
-            with transaction.atomic(using=utils.get_current_db_name()):
-                jn = insert_into_jn_dynamic_for_parent(job, params)
-                insert_update_jobneeddetails(jn.id, job, parent = True)
-                resp = create_child_dynamic_tasks(job,people, jn.id, jobstatus, jobtype, jn.other_info)
-                return resp
+        # check if dynamic job already exist with the passed jobid
+        if am.Jobneed.objects.filter(
+            parent_id=1,
+            jobstatus='ASSIGNED',
+            job_id__in = jobids
+        ).exists():
+            pass
+        else:
+            jobs = am.Job.objects.filter(
+                ~Q(jobname='NONE'),
+                ~Q(asset__runningstatus = am.Asset.RunningStatus.SCRAPPED),
+                parent_id = 1,
+                enable = True,
+                other_info__isdynamic=True
+            ).select_related('asset').values(*utils.JobFields.fields)
+            if jobids:
+                jobs = jobs.filter(id__in = jobids)
+            for job in jobs:
+                asset = am.Asset.objects.get(id = job['asset_id'])
+                jobstatus = 'ASSIGNED'
+                jobtype = 'SCHEDULE'
+                people = job['people_id']
+                multiplication_factor = asset.asset_json['multifactor']
+                NONE_JN  = utils.get_or_create_none_jobneed()
+                NONE_P   = utils.get_or_create_none_people()
+                params = {
+                    'm_factor':multiplication_factor,'jobtype':jobtype,
+                    'jobstatus':jobstatus, 'NONE_JN':NONE_JN, 'NONE_P':NONE_P,
+                    'jobdesc':job['jobname'], 'people':people,
+                    'sgroup_id':job['sgroup_id'], 'qset_id':job['qset_id'],
+                }
+                with transaction.atomic(using=utils.get_current_db_name()):
+                    jn = insert_into_jn_dynamic_for_parent(job, params)
+                    insert_update_jobneeddetails(jn.id, job, parent = True)
+                    resp = create_child_dynamic_tasks(job,people, jn.id, jobstatus, jobtype, jn.other_info)
+                    return resp
     except Exception as e:
         log.error("something went wrong in dynamic tour scheduling", exc_info=True)
         return {"errors":"Something Went Wrong!"}
@@ -860,7 +868,8 @@ def  insert_into_jn_for_child(job, params, r):
                 gpslocation    = r['cplocation'], remarks           = '',
                 seqno          = params['idx'],              multifactor       = params['m_factor'],
                 performedby    = params['NONE_P'],           ctzoffset         = r['ctzoffset'],
-                people_id      = params['_people'],          other_info = params['parent_other_info']
+                people_id      = params['_people'],          other_info = params['parent_other_info'],
+                sgroup_id = job['sgroup_id']
             )
     except Exception:
         log.error("insert_into_jn_for_child[]", exc_info=True)

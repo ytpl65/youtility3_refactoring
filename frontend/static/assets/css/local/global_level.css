@@ -115,7 +115,7 @@ body[data-kt-aside-minimize="on"]>.menu-item {
 }
 
 html, body {
-    font-size: 14px!important;
+    font-size: 14px;
 }
 
 /* for form buttons */
@@ -281,9 +281,7 @@ input{
 th > input{
     height: 2.1rem;
 }
-.form-select{
-    line-height: 1.1rem;
-}
+
 .tagify__tag-text{
     color: rgba(0, 0, 0, 0.822);
     font-size: 1.0rem;

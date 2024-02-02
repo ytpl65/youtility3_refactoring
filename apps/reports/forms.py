@@ -126,7 +126,7 @@ class ReportForm(forms.Form):
     # data fields
     report_name     = forms.ChoiceField(label='Report Name', required=True, choices=report_templates, initial='TASK_SUMMARY')
     site            = forms.ChoiceField(label='Site', required = False, widget=s2forms.Select2Widget)
-    sitegroup       = forms.ChoiceField(label="Site Group", required=False, widget=s2forms.Select2Widget)
+    sitegroup       = forms.MultipleChoiceField(label="Site Group", required=False, widget=s2forms.Select2MultipleWidget)
     fromdate        = forms.DateField(label='From Date', required=False)
     fromdatetime    = forms.DateTimeField(label='From Date Time', required=False)
     uptodate        = forms.DateField(label='To Date', required=False)
@@ -185,18 +185,25 @@ class ReportForm(forms.Form):
 
     def clean(self):
         cd = super().clean()
-        ic(cd)
         if cd['report_name'] == 'SiteReport' and cd.get('people') in ["", None] and cd.get('sitegroup') in ["", None]:
             raise forms.ValidationError(
                 f"Both Site Group and People cannot be empty, when the report is {cd.get('report_name')}")
-                
-        if cd.get("fromdate") and cd.get('fromdate') > cd.get('uptodate'): self.add_error('fromdate', 'From date cannot be greater than To date')
-        if cd.get('uptodate') and cd.get('uptodate') > cd.get('fromdate') + timedelta(days=31):
-            err_msg = 'The difference between From date and To date should not be greater than 1 a month'
-            self.add_error('fromdate', err_msg)
-            self.add_error('uptodate', err_msg)
+        
+        self.validate_date_range(cd, 'fromdate', 'uptodate', 'From date cannot be greater than To date')
+        self.validate_date_range(cd, 'fromdatetime', 'uptodatetime', 'From datetime cannot be greater than To datetime')
+
         if cd.get('format') != 'pdf': self.cleaned_data['preview'] = "false"
         return cd
+
+    def validate_date_range(self, cd, field1, field2, error_msg):
+        date1 = cd.get(field1)
+        date2 = cd.get(field2)
+        
+        if date1 and date2 and date1 > date2:
+            raise forms.ValidationError(error_msg)
+
+        if date1 and date2 and (date2 - date1).days > 31:
+            raise forms.ValidationError('The difference between {} and {} should not be greater than 1 month'.format(field1, field2))
     
     
 

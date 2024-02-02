@@ -204,7 +204,7 @@ class PeopleResource(resources.ModelResource):
         if People.objects.select_related().filter(
             loginid=row['Login ID*'], peoplecode=row['Code*'],
             bu__bucode = row['Site*']).exists():
-            raise ValidationError(f"Record with the se values already exist {', '.join(row.values())}")
+            raise ValidationError(f"Record with the se values already exist {row.values()}")
     
 
 
@@ -291,8 +291,8 @@ class GroupResource(resources.ModelResource):
         # unique record check
         if Pgroup.objects.select_related().filter(
             groupname=row['Name*'], identifier__tacode=row['Type*'],
-            client__bucode = row['Client*']).exists():
-            raise ValidationError(f"Record with these values already exist {', '.join(row.values())}")
+            client__bucode = row['Client*'], bu__bucode=row['Site*']).exists():
+            raise ValidationError(f"Record with these values already exist {row.values()}")
         super().before_import_row(row, **kwargs)
 
     def before_save_instance(self, instance, using_transactions, dry_run=False):
@@ -383,13 +383,11 @@ class GroupBelongingResource(resources.ModelResource):
         if row.get('Of Site') in ['', 'NONE', None] and row.get('Of People') in ['', 'NONE', None]:
             raise ValidationError("Either Site or People should be set, both cannot be None")
         
-        ic(pm.Pgbelonging.objects.select_related().filter(
-            people__peoplecode=row['Of People'], pgroup__groupname=row['Group Name*'],
-            client__bucode = row['Client*'], assignsites__bucode = row['Site*']).exists())
         # unique record check
         if pm.Pgbelonging.objects.select_related().filter(
             people__peoplecode=row['Of People'], pgroup__groupname=row['Group Name*'],
-            client__bucode = row['Client*'], assignsites__bucode = row['Site*']).exists():
+            client__bucode = row['Client*'],
+            assignsites__bucode = row['Of Site'], bu__bucode=row['Site*']).exists():
             raise ValidationError(f"Record with these values already exist {row.values()}")
         super().before_import_row(row, **kwargs)
     
