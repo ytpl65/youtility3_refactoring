@@ -470,8 +470,11 @@ Internal Tour
                 {data:'qset__qsetname', title:'Checklist'},
                 {data:'gracetime', title:'Gracetime'},
                 {data:'jobstatus', title:'Status'},
-                {title:'Attachments',data:null, defaultContent:null, render:function(data, type, row, meta){
-                        return `<a href="javascript:void(0)"  onClick='showAttachmentDetails(${row['id']}, "jobneed")'>View</i></a>`
+                {title:'Attachments',data:'attachmentcount', defaultContent:null, render:function(data, type, row, meta){
+                    if(data>0){
+                        return `<a href="javascript:void(0)"  onClick='showAttachmentDetails(${row['id']}, "jobneed")'>${data}&nbsp;<i class="fas text-primary2 fs-3 fa-paperclip"></i></a>` }
+                    else {
+                        return 'N/A';}
                     }
                 },
                 {title:'Details',data:null, defaultContent:null, render:function(data, type, row, meta){

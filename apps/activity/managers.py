@@ -513,7 +513,7 @@ class JobneedManager(models.Manager):
             'parent', 'asset', 'qset').filter(parent_id = R['parent_id']).values(
                 'asset__assetname', 'asset__id', 'qset__id', 'ctzoffset',
                 'qset__qsetname', 'plandatetime', 'expirydatetime',
-                'gracetime', 'seqno', 'jobstatus', 'id'
+                'gracetime', 'seqno', 'jobstatus', 'id','attachmentcount'
             ).order_by('seqno')
 
         return qset or self.none()
@@ -534,7 +534,7 @@ class JobneedManager(models.Manager):
 
     
     def get_ext_checkpoints_jobneed(self, request, related, fields):
-        fields+=['distance', 'duration', 'bu__gpslocation', 'performedtime', 'alerts']
+        fields+=['distance', 'duration', 'bu__gpslocation', 'performedtime', 'alerts','attachmentcount']
         qset  = self.annotate(
             distance=F('other_info__distance'),
             performedtime = F("endtime"),
@@ -1371,7 +1371,7 @@ class JobneedDetailsManager(models.Manager):
         qset = self.filter(
             jobneed_id = taskid
         ).select_related('question').values('question__quesname', 'answertype', 'min', 'max', 'id',
-            'options', 'alerton', 'ismandatory', 'seqno','answer', 'alerts').order_by('seqno')
+            'options', 'alerton', 'ismandatory', 'seqno','answer', 'alerts','attachmentcount').order_by('seqno')
         return qset or self.none()
     
     def get_ppm_details(self, request):

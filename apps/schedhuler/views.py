@@ -1162,7 +1162,6 @@ class JobneedTasks(LoginRequiredMixin, View):
 
     def get(self, request, *args, **kwargs):
         R, P = request.GET, self.params
-        ic(R)
 
         # first load the template
         if R.get('template'): return render(request, P['template_path'])

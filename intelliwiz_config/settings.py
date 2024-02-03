@@ -9,7 +9,7 @@ https://docs.djangoproject.com/en/3.2/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/3.2/ref/settings/
 """
-
+    
 
 
 from pathlib import Path
@@ -219,7 +219,7 @@ SESSION_SAVE_EVERY_REQUEST = True
 
 # CELERY SETTINGS
 
-CELERY_BROKER_URL = env('CELERY_BROKER_URL')
+CELERY_BROKER_URL = env('CELERY_BROKER_URL')    
 CELERY_RESULT_BACKEND = env("CELERY_RESULT_BACKEND")
 CELERY_BEAT_SCHEDULER = env('CELERY_BEAT_SCHEDULER')
 CELERY_ACCEPT_CONTENT = ['application/json']
