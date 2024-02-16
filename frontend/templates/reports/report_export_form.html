@@ -403,6 +403,20 @@ Report Form
   $(document).ready(() => {
     //set ctzoffset
     $("#id_ctzoffset").val(-new Date().getTimezoneOffset())
+    //validator for form
+    const validator = new JustValidate('#report_form', { errorFieldCssClass: 'is-invalid'});
+
+    validator.addField("#id_format", [
+      {
+        rule:'required',
+      }
+    ])
+    validator.addField("#id_export_type", [{
+      rule:'required',
+    }])
+    validator.addField("#id_report_name", [{
+      rule:'required',
+    }])
     
     getFieldsFromServer()
 
@@ -436,11 +450,12 @@ Report Form
         }).done((data, status, xhr) => {
             $("#id_assettype").empty()
             $("#id_assettype").append(new Option("", "", false, false)) //first option is empty
-            console.log(data.options)
-            data.options.forEach((item) => {
-                var newOption = new Option(item.taname, item.id, false, false)
-                $("#id_assettype").append(newOption)
-            })
+            if(data.options){
+              data.options.forEach((item) => {
+                  var newOption = new Option(item.taname, item.id, false, false)
+                  $("#id_assettype").append(newOption)
+              })
+            }
         })
     })
 
@@ -454,11 +469,12 @@ Report Form
         }).done((data, status, xhr) => {
             $("#id_asset").empty()
             $("#id_asset").append(new Option("", "", false, false)) //first option is empty
-            console.log(data.options)
-            data.options.forEach((item) => {
-                var newOption = new Option(item.assetname, item.id, false, false)
-                $("#id_asset").append(newOption)
-            })
+            if(data.options){
+              data.options.forEach((item) => {
+                  var newOption = new Option(item.assetname, item.id, false, false)
+                  $("#id_asset").append(newOption)
+              })
+            }
         })
     })
 
@@ -572,6 +588,7 @@ Report Form
               
               if (fieldname.includes('*')) {
                   toggleRequiredAttribute(id, set = true);
+                  addValidationsToForm(id)
               }
           }
       }
@@ -589,6 +606,20 @@ Report Form
           });
       }
   }
+
+  function addValidationsToForm(id){
+      validator.addField('#'+id, [
+        { 
+          rule:'required'
+        }
+      ])
+  }
+
+  validator.onSuccess(e => {
+    var form = $("#report_form");
+    form.submit()
+  })
+
 
   function getFieldsFromServer(){
     let selected = $("#id_report_name").val()

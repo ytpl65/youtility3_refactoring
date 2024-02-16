@@ -120,10 +120,11 @@ class PeopleResource(resources.ModelResource):
 
     ID                 = fields.Field(attribute='id', column_name='ID')
     Code               = fields.Field(attribute='peoplecode', column_name='Code*')
+    userfor            = fields.Field(column_name='User For*', default='Mobile')
     deviceid           = fields.Field(attribute='deviceid', column_name='Device Id', default=-1)
     Name               = fields.Field(attribute='peoplename', column_name='Name*')
     LoginId            = fields.Field(attribute='loginid', column_name='Login ID*')
-    Password            = fields.Field(attribute='password', column_name='Password*')
+    Password           = fields.Field(attribute='password', column_name='Password*')
     MobNo              = fields.Field(attribute='mobno', column_name='Mob No*')
     Email              = fields.Field(attribute='email', column_name='Email*')
     Gender             = fields.Field(attribute='gender', column_name='Gender*')
@@ -147,7 +148,7 @@ class PeopleResource(resources.ModelResource):
             'ID', 'Code', 'Name', 'LoginId', 'Designation', 'Department', 'MobNo', 'Email', 'deviceid',
             'Site', 'DateOfJoin', 'date_of_release', 'DateOfBirth', 'Gender', 'PeopleType','WorkType', 'Enable',
             'Client', 'isemergencycontact', 'alertmails', 'mobilecaps', 'reportcaps', 'webcaps',
-            'portletcaps', 'blacklist', 'currentaddr', 'permanentaddr', 'Reportto', 'Password']
+            'portletcaps', 'blacklist', 'currentaddr', 'permanentaddr', 'Reportto', 'Password', 'userfor']
 
     def __init__(self, *args, **kwargs):
         super(PeopleResource, self).__init__(*args, **kwargs)
@@ -188,6 +189,7 @@ class PeopleResource(resources.ModelResource):
         if row['Code*'] in ['', None]: raise ValidationError("Code* is required field")
         if row['Employee Type*'] in ['', None]: raise ValidationError("Employee Type* is required field")
         if row['Name*'] in ['', None]: raise ValidationError("Name* is required field")
+        if row['User For*'] in ['', None]: raise ValidationError("User For* is required field")
         
         # code validation
         regex, value = "^[a-zA-Z0-9\-_]*$", row['Code*']

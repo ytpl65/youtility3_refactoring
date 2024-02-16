@@ -12,9 +12,13 @@ def save_json_from_bu_prefsform(bt, buprefsform):
     ic(buprefsform.cleaned_data)
     try:
         for k, _ in bt.bupreferences.items():
-            if k in ('validimei', 'validip', 'reliveronpeoplecount',
-                     'pvideolength', 'usereliver', 'webcapability', 'mobilecapability',
-                     'reportcapability', 'portletcapability', 'ispermitneeded'):
+            if k in (
+                'validimei', 'validip', 'reliveronpeoplecount',
+                'pvideolength', 'usereliver', 'webcapability', 'mobilecapability',
+                'reportcapability', 'portletcapability', 'ispermitneeded','startdate',
+                'enddate', 'onstop', 'onstopmessage', 'clienttimezone', 'billingtype',
+                'no_of_device_allowed', 'devices_currently_added', 'no_of_users_allowed_web',
+                'no_of_users_allowed_both', 'no_of_users_allowed_mob'):
                 bt.bupreferences[k] = buprefsform.cleaned_data.get(k)
     except Exception:
         logger.critical("save json from buprefsform... FAILED", exc_info = True)
@@ -23,29 +27,7 @@ def save_json_from_bu_prefsform(bt, buprefsform):
         logger.info('save_json_from_bu_prefsform(bt, buprefsform) success')
         return True
 
-# returns Bt json form
-def get_bu_prefform(bt):
-    from .forms import BuPrefForm
-    try:
-        d = {
-            k: v
-            for k, v in bt.bupreferences.items()
-            if k
-            in (
-                'validimei',
-                'validip',
-                'reliveronpeoplecount',
-                'pvideolength',
-                'userreliver',
-                'ispermitneeded'
-            )
-        }
 
-    except Exception:
-        logger.critical("get_bu_prefform... FAILED", exc_info = True)
-    else:
-        logger.info("get_bu_prefform success")
-        return BuPrefForm(data = d)
 
 def get_tatype_choices(superadmin = False):
 
@@ -128,6 +110,17 @@ def get_bt_prefform(bt):
                 'mobilecapability',
                 'portletcapability',
                 'reportcapability',
+                'no_of_devices_allowed',
+                'no_of_users_allowed_mob',
+                'no_of_users_allowed_web',
+                'no_of_users_allowed_both',
+                'devices_currently_added',
+                'startdate',
+                'enddate',
+                'onstop',
+                'onstopmessage',
+                'clienttimezone',
+                'billingtype'
             ]
         }
 

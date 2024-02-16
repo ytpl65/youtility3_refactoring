@@ -8,6 +8,8 @@ from apps.core import utils
 # from thirdparty apps and packages
 from icecream import ic
 from django_select2 import forms as s2forms
+from django.conf import settings
+
 # from this project
 import apps.onboarding.models as obm # onboarding-models
 from apps.peoples import models as pm # onboarding-utils
@@ -347,7 +349,7 @@ class BuPrefForm(forms.Form):
     tag                      = forms.CharField(max_length = 200, required = False)
     siteopentime             = forms.TimeField(required = False, label="Site Open Time")
     nearby_emergencycontacts = forms.CharField(max_length = 500, required = False)
-    ispermitneeded = forms.BooleanField(initial = False, required=False)
+    ispermitneeded           = forms.BooleanField(initial = False, required=False)
 
 
 
@@ -366,9 +368,27 @@ class BuPrefForm(forms.Form):
         return result
 
 class ClentForm(BuPrefForm):
+    BILLINGTYPES = [
+        ('', ""),
+        ('SITEBASED', 'Site Based'),
+        ('LICENSEBASED', 'Liscence Based'),
+        ('USERBASED', 'User Based'),
+    ]
     femalestrength = None
     guardstrenth = None
     malestrength = None
+    startdate = forms.DateField(label='Start Date', required=True, input_formats=settings.DATE_INPUT_FORMATS, widget=forms.DateInput)
+    enddate = forms.DateField(label='End Date', required=True, input_formats=settings.DATE_INPUT_FORMATS, widget=forms.DateInput)
+    onstop = forms.BooleanField(label='On Stop', required=False, initial=False)
+    onstopmessage = forms.CharField(widget=forms.Textarea(attrs={'rows':1}),label='On Stop Message', required=False)
+    clienttimezone = forms.ChoiceField(label="Time Zone", widget=s2forms.Select2Widget, choices=utils.generate_timezone_choices, required=True)
+    billingtype = forms.ChoiceField(label="Billing Type", widget=s2forms.Select2Widget, choices=BILLINGTYPES, initial='SITEBASED', required=True)
+    no_of_devices_allowed = forms.IntegerField(label="No of Devices Allowed", required=False, initial=0)
+    devices_currently_added = forms.IntegerField(label="No of Devices Currently Added", required=False, initial=0)
+    no_of_users_allowed_mob = forms.IntegerField(label="No of Users Allowed For Mobile", required=False, initial=0)
+    no_of_users_allowed_web = forms.IntegerField(label="No of Users Allowed For Web", required=False, initial=0)
+    no_of_users_allowed_both = forms.IntegerField(label="No of Users Allowed For Both", required=False, initial=0)
+    
 
     def __init__(self, *args, **kwargs):
         """Initializes form"""
@@ -393,6 +413,8 @@ class ClentForm(BuPrefForm):
         if cleaned_data.get('usereliver') and cleaned_data.get('reliveronpeoplecount') <= 0:
             ic(cleaned_data.get('usereliver'), cleaned_data.get('reliveronpeoplecount'))
             self.add_error('reliveronpeoplecount', "Reliver on people count should be greater than 0")
+            
+    
     
     
     def clean_validip(self):
@@ -431,6 +453,7 @@ class ImportForm(forms.Form):
         ('QUESTIONSETBELONGING', 'Question Set Belonging'),
         ('GROUP', 'Group'),
         ('GROUPBELONGING', 'Group Belongings'),
+        ('SCHEDULEDTASKS', 'Scheduled Tasks'),
     ]
     importfile = forms.FileField(required = True, label='Import File', max_length = 50, allow_empty_file = False)
     ctzoffset = forms.IntegerField()

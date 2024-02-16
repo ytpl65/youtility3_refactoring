@@ -178,15 +178,20 @@ function makeReadonlyFieldsUnderClass(className) {
   $("." + className + " select.django-select2").select2({ disabled: true });
 }
 
-function toggleRequiredAttribute(id, set = true) {
-  let label_field = `label[for='${id}']`;
-  let field = `#${id}`;
-  if (set) {
-    $(label_field).addClass("required");
-    $(field).attr("required", true);
+function toggleRequiredAttribute(fieldId, set = true) {
+  const field = document.getElementById(fieldId);
+  const label = document.querySelector(`label[for="${fieldId}"]`);
+
+  if (field && label) {
+    if (set) {
+      label.classList.add("required");
+      field.setAttribute("required", "");
+    } else {
+      label.classList.remove("required");
+      field.removeAttribute("required");
+    }
   } else {
-    $(label_field).removeClass("required");
-    $(field).attr("required", false);
+    console.warn(`Field or label with ID ${fieldId} not found.`);
   }
 }
 

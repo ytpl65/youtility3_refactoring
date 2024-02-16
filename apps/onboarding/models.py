@@ -4,7 +4,8 @@ from django.contrib.gis.db.models import PolygonField
 from django.db import models
 from apps.tenants.models import TenantAwareModel
 from apps.peoples.models import BaseModel
-from .managers import BtManager, TypeAssistManager, GeofenceManager, ShiftManager
+from .managers import (BtManager, TypeAssistManager, GeofenceManager,
+ShiftManager, DeviceManager, SubscriptionManger)
 from django.core.serializers.json import DjangoJSONEncoder
 from django.utils.translation import gettext_lazy as _
 from django.contrib.gis.db.models import PointField
@@ -43,34 +44,39 @@ class HeirarchyModel(models.Model):
 
 def bu_defaults():
     return {
-        "mobilecapability"       : [],
-        "validimei"              : "",
-        "webcapability"          : [],
-        "portletcapability"      : [],
-        "validip"                : "",
-        "reliveronpeoplecount"   : 0,
-        "reportcapability"       : [],
-        "usereliver"             : False,
-        "pvideolength"           : 10,
-        "guardstrenth"           : 0,
-        "malestrength"           : 0,
-        "femalestrength"         : 0,
-        "siteclosetime"          : "",
-        "tag"                    : "",
-        "siteopentime"           : "",
-        "nearbyemergencycontacts": [],
-        'maxadmins': 5,
-        'address':"",
-        'address2':None,
-        'permissibledistance': 0,
-        'controlroom':[],
-        'ispermitneeded':False,
-        'no_of_devices_allowed':0,
-        'devices_currently_added':0,
-        'startdate':'',
-        'enddate':'',
-        'onstop':'',
-        'onstopmessage':'',
+        "mobilecapability"        : [],
+        "validimei"               : "",
+        "webcapability"           : [],
+        "portletcapability"       : [],
+        "validip"                 : "",
+        "reliveronpeoplecount"    : 0,
+        "reportcapability"        : [],
+        "usereliver"              : False,
+        "pvideolength"            : 10,
+        "guardstrenth"            : 0,
+        "malestrength"            : 0,
+        "femalestrength"          : 0,
+        "siteclosetime"           : "",
+        "tag"                     : "",
+        "siteopentime"            : "",
+        "nearbyemergencycontacts" : [],
+        'maxadmins'               : 5,
+        'address'                 : "",
+        'address2'                : None,
+        'permissibledistance'     : 0,
+        'controlroom'             : [],
+        'ispermitneeded'          : False,
+        'no_of_devices_allowed'   : 0,
+        'no_of_users_allowed_mob' : 0,
+        'no_of_users_allowed_web' : 0,
+        'no_of_users_allowed_both': 0,
+        'devices_currently_added' : 0,
+        'startdate'               : '',
+        'enddate'                 : '',
+        'onstop'                  : '',
+        'onstopmessage'           : '',
+        'clienttimezone'          : "",
+        'billingtype'             : "",
     }
 
 class Bt(BaseModel, TenantAwareModel, HeirarchyModel):
@@ -254,6 +260,7 @@ class Device(BaseModel, TenantAwareModel):
     
     
     
+    objects = DeviceManager()
     class Meta(BaseModel.Meta):
         db_table = 'device'
         get_latest_by = ["mdtz", 'cdtz']
@@ -270,8 +277,18 @@ class Subscription(BaseModel, TenantAwareModel):
     
     startdate = models.DateField(_("Start Date"), auto_now=False, auto_now_add=False)
     enddate = models.DateField(_("End Date"), auto_now=False, auto_now_add=False)
-    terminateddate = models.DateField(_("Terminated Date"), auto_now=False, auto_now_add=False)
+    terminateddate = models.DateField(_("Terminated Date"), auto_now=False, null=True, auto_now_add=False)
     reason = models.TextField(_("Reason"), null=True, blank=True)
     status = models.CharField(_("Status"), max_length=50, choices=StatusChoices.choices, default=StatusChoices.A.value)
     assignedhandset = models.ForeignKey(Device, verbose_name = _("Assigned Handset"), null = True, blank = True, on_delete = models.RESTRICT)
     client = models.ForeignKey("onboarding.Bt", verbose_name = _("Client"), null = True, blank = True, on_delete = models.RESTRICT)
+    istemporary = models.BooleanField(_("Is Temporary"), default=False)
+    
+    objects = SubscriptionManger()
+    
+    class Meta(BaseModel.Meta):
+        db_table = 'subscription'
+        constraints = [
+            models.UniqueConstraint(
+                fields=['startdate', 'enddate', 'client'], name='startdate_enddate_client_uk')
+        ]

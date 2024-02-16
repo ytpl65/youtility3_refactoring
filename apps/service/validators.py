@@ -1,5 +1,7 @@
 from logging import getLogger
 from croniter import croniter, CroniterBadCronError
+from django.core.exceptions import ValidationError
+
 import re
 log = getLogger("mobile_service_log")
 def checkHex(s):
@@ -86,6 +88,8 @@ def clean_array_string(string, service=False):
 def validate_cron(cron):
     try:
         croniter(cron)
+        if cron.startswith("*"):
+                raise ValidationError(f"Warning: Scheduling every minute is not allowed!")
         return True
     except ValueError:
         return False

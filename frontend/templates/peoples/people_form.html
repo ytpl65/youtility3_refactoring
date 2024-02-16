@@ -373,6 +373,16 @@ People
                     <!----- END ERROR FIELD  ------->
                 </div>
                 <!--LABEL FIELD-->
+                <label class="required" for="id_dateofjoin">User For</label>
+                <!--INPUT GROUP-->
+                <div class="col-md-4">
+                    {{ pref_form.userfor }}
+                    <!--HELP TEXT-->
+                    <!----- BEGIN ERROR FIELD  ------->
+                    {{ pref_form.userfor.errors }}
+                    <!----- END ERROR FIELD  ------->
+                </div>
+                <!--LABEL FIELD-->
                 <!------------Checkboxes Rendering Last --------------------->
                 <div class="booleans col-md-6 d-flex justify-content-sm-between mt-5">
                     {% if request.user.isadmin %}
@@ -701,6 +711,8 @@ People
 	}
 </script>
 <script src="{{ static('assets/js/local/maps.js') }}"></script>
+<script src="{{ static('assets/js/just-validate.production.min.js') }}"></script>
+
 <script>
     //toggle eye icon to eye-slash icon on click
     function toggleIcon() {
@@ -718,6 +730,20 @@ People
 
     $(document).ready(function () {
         //onclick id_setgps_curr open popup open_map_curr 
+        const validator = new JustValidate('#id_peopleform', { errorFieldCssClass: 'is-invalid'});
+
+        //add formvalidation to required fields
+        $('#id_peopleform [required]').each(function() {
+            // Retrieve and check if the element has an ID
+            let fieldId = $(this).attr('id');
+            if (fieldId) {
+                // Add the field's ID to the array
+                validator.addField("#"+fieldId, [
+                    {rule:'required'}
+                ])
+            }
+        });
+
 		$("#id_setgps_curr").click(function(){
 			$("#open_map_curr").modal('show');
 			initMap("map2");
@@ -916,28 +942,30 @@ People
 
         //on form submit
         $("#id_peopleform").on('submit', function(e){
-            var form = $(this)
             e.preventDefault()
-            const params = {url: "{{ url('peoples:people') }}", modal:false}
-            const id = "{{ peopleform.instance.pk }}"
-            var formdata = new FormData();
-            formdata.append('formData', form.serialize())
-            var peopleimg = $("#id_peopleimg")[0].files[0]
-            formdata.append('peopleimg', peopleimg)
-            formdata.append('csrfmiddlewaretoken', '{{ csrf_token }}')
-            var payLoad = {formData:form.serialize(), csrfmiddlewaretoken: '{{ csrf_token }}'}//payload for post request
-            if(id != 'None'){
-                formdata.append('pk', id)
-				//var newPayLoad = {...payLoad, 'pk':id}
-				//payLoad = newPayLoad
-			}
-			fire_ajax_fileform_post(params, formdata)
-			.done((data, status, xhr) => { //function to submit post request
-                show_successful_save_alert(update= id != 'None' ? true : false)
-                window.setTimeout(function() {
-                    window.location.href = `{{ url('peoples:people') }}?id=${data.pk}`;
-                }, 2000);
-			})
+            validator.onSuccess((event) => {
+                var form = $(this)
+                const params = {url: "{{ url('peoples:people') }}", modal:false}
+                const id = "{{ peopleform.instance.pk }}"
+                var formdata = new FormData();
+                formdata.append('formData', form.serialize())
+                var peopleimg = $("#id_peopleimg")[0].files[0]
+                formdata.append('peopleimg', peopleimg)
+                formdata.append('csrfmiddlewaretoken', '{{ csrf_token }}')
+                var payLoad = {formData:form.serialize(), csrfmiddlewaretoken: '{{ csrf_token }}'}//payload for post request
+                if(id != 'None'){
+                    formdata.append('pk', id)
+                    //var newPayLoad = {...payLoad, 'pk':id}
+                    //payLoad = newPayLoad
+                }
+                fire_ajax_fileform_post(params, formdata)
+                .done((data, status, xhr) => { //function to submit post request
+                    show_successful_save_alert(update= id != 'None' ? true : false)
+                    window.setTimeout(function() {
+                        window.location.href = `{{ url('peoples:people') }}?id=${data.pk}`;
+                    }, 2000);
+                })
+            })
         })
 
         //on delete form

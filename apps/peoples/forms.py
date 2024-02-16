@@ -374,6 +374,14 @@ class PeopleExtrasForm(forms.Form):
 
     labels = {'mob': 'Mobile Capability', 'port': 'Portlet Capability',
               'report': 'Report Capability', 'web': 'Web Capability'}
+
+    USERFOR_CHOICES = [
+        ("", "Select User For"),
+        ("Mobile", 'Mobile'),
+        ("Web", 'Web'),
+        ("Both", 'Both'),
+    ]
+    
     andriodversion            = forms.CharField(max_length = 2, required = False, label='Andriod Version')
     appversion                = forms.CharField(max_length = 8, required = False, label='App Version')
     mobilecapability          = forms.MultipleChoiceField(required = False, label = labels['mob'], widget = s2forms.Select2MultipleWidget)
@@ -393,6 +401,7 @@ class PeopleExtrasForm(forms.Form):
     mlogsendsto               = forms.CharField(max_length = 25, required = False)
     currentaddress            = forms.CharField(required = False, widget=forms.Textarea(attrs={'rows': 2, 'cols': 15}))
     permanentaddress          = forms.CharField(required = False,  widget=forms.Textarea(attrs={'rows': 2, 'cols': 15}))
+    userfor                   = forms.ChoiceField(required = True, choices = USERFOR_CHOICES, label = 'User For', widget=s2forms.Select2Widget)
 
     
     def __init__(self, *args, **kwargs):
@@ -421,6 +430,19 @@ class PeopleExtrasForm(forms.Form):
         result = super().is_valid()
         utils.apply_error_classes(self)
         return result
+    
+    def clean(self):
+        cd = super().clean()
+        if cd.get('userfor') and cd['userfor'] !='':
+            client = om.Bt.objects.filter(id=self.request.session['client_id']).first()
+            preferences = client.bupreferences
+            if preferences['billingtype'] == 'USERBASED':
+                current_ppl_count = pm.People.objects.filter(client = client, people_extras__userfor=cd['userfor']).count()
+                mapping = {'Mobile':'no_of_users_allowed_mob', 'Both':'no_of_users_allowed_both', 'Web':'no_of_users_allowed_web'}
+                parameter = mapping.get(cd['userfor'])
+                allowed_count = preferences[parameter]
+                if current_ppl_count + 1 > int(allowed_count):
+                    raise forms.ValidationError(f'{cd["userfor"]} users limit exceeded {allowed_count}')
 
 
 

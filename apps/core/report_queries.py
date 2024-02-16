@@ -310,7 +310,7 @@ def get_query(query):
                 Max(butype.taname) AS butype,
                 jnd.starttime AT TIME ZONE tz.timezone AS starttime,
                 jnd.endtime AT TIME ZONE tz.timezone AS endtime,
-                jnd_p.ct_plandatetime AS "DATE OF VISIT",
+                jnd_p.ct_plandatetime::DATE AS "DATE OF VISIT",
                 Max(to_char(jnd_p.ct_plandatetime,'HH24:MI:SS')) AS "TIME OF VISIT",
                 Max(ST_X(ST_PointFromText(ST_AsText(jnd.gpslocation), 4326))) AS "LONGITUDE",
                 Max(ST_Y(ST_PointFromText(ST_AsText(jnd.gpslocation), 4326))) AS "LATITUDE",

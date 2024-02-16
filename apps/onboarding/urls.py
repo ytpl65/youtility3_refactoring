@@ -15,5 +15,6 @@ urlpatterns = [
     path('client/', views.Client.as_view(), name="client"),
     path('bu/', views.BtView.as_view(), name="bu"),
     path('rp_dashboard/', views.DashboardView.as_view(), name="rp_dashboard"),
-    path('fileUpload/', views.FileUpload.as_view(), name="file_upload")
+    path('fileUpload/', views.FileUpload.as_view(), name="file_upload"),
+    path('subscription/', views.LicenseSubscriptionView.as_view(), name="subscription")
 ]

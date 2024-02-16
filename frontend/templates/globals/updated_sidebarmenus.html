@@ -484,7 +484,7 @@
     </div>
 
 
-    <div data-kt-menu-trigger="click" id="REPORTS" class="menu-item menu-accordion" style="display:none;">
+    <div data-kt-menu-trigger="click" id="REPORTS" class="menu-item menu-accordion" style="display:;">
     <span class="menu-link">
       <span class="menu-icon">
         <!--begin::Svg Icon | path: icons/duotone/Communication/Group.svg-->
@@ -498,7 +498,7 @@
       <span class="menu-title">Reports</span>
       <span class="menu-arrow"></span>
     </span>
-    <div class="menu-sub menu-sub-accordion" kt-hidden-height="116" style="display: none; overflow: hidden;">
+    <div class="menu-sub menu-sub-accordion" kt-hidden-height="116" style="display: ; overflow: hidden;">
       <div class="menu-item" id="RP_DOWNLOAD">
         <a class="menu-link" href="{{ url('reports:exportreports') }}">
           <span class="menu-bullet">
@@ -557,14 +557,6 @@
                     <span class="menu-title">TypeAssist</span>
                 </a>
             </div>
-            {# <div class="menu-item" id="moblog">
-                <a class="menu-link" href="apps/customers/view.html">
-                    <span class="menu-bullet">
-                        <span class="bullet bullet-dot"></span>
-                    </span>
-                    <span class="menu-title">Mob Log</span>
-                </a>
-            </div> #}
         </div>
     </div>
     {% endif %}

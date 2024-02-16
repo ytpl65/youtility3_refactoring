@@ -12,7 +12,7 @@ from django.conf import settings
 from django.db import transaction
 from django.http.request import QueryDict
 from icecream import ic
-from .models import Shift,  TypeAssist, Bt, GeofenceMaster
+from .models import Shift,  TypeAssist, Bt, GeofenceMaster, Device, Subscription
 from apps.peoples.utils import save_userinfo
 from apps.core import utils
 import apps.onboarding.forms as obforms
@@ -20,6 +20,7 @@ import apps.peoples.utils as putils
 from apps.peoples import admin as people_admin
 from apps.onboarding import admin as ob_admin
 from apps.activity import admin as av_admin
+from apps.schedhuler import admin as sc_admin
 from django.db import IntegrityError
 import apps.activity.models as am
 import apps.attendance.models as atm
@@ -497,6 +498,7 @@ MODEL_RESOURCE_MAP = {
     'VENDOR'              : VendorResource,
     'QUESTIONSET'         : av_admin.QuestionSetResource,
     'QUESTIONSETBELONGING': av_admin.QuestionSetBelongingResource,
+    'SCHEDULEDTASKS': sc_admin.TaskResource,
 }
 
 # Header Mapping
@@ -505,7 +507,7 @@ HEADER_MAPPING  = {
         'Name*', 'Code*', 'Type*', 'Client*'],
     
     'PEOPLE': [
-        'Code*', 'Name*', 'Employee Type*', 'Login ID*', 'Password*', 'Gender*',
+        'Code*', 'Name*', 'User For*', 'Employee Type*', 'Login ID*', 'Password*', 'Gender*',
         'Mob No*', 'Email*', 'Date of Birth*', 'Date of Join*', 'Client*', 
         'Site*', 'Designation', 'Department', 'Work Type', 'Report To',
         'Date of Release', 'Device Id', 'Is Emergency Contact',
@@ -553,6 +555,12 @@ HEADER_MAPPING  = {
         'Question Name*', 'Question Set*', 'Client*', 'Site*', 'Answer Type*',
         'Seq No*', 'Is AVPT', 'Min', 'Max', 'Alert Above', 'Alert Below', 'Options',
         'Alert On', 'Is Mandatory', 'AVPT Type',
+    ],
+    'SCHEDULEDTASKS':[
+        'Name*', 'Description*', 'Scheduler*', 'Asset*', 'Question Set*', 'People*', 'Group Name*','Identifier*',
+        'Plan Duration*', 'Gracetime Before*', 'Gracetime After*', 'Notify Category*',
+        'From Date*', 'Upto Date*', 'Scan Type*', 'Client*', 'Site*',
+        'Priority*','Seq No', 'Start Time', 'End Time', 'Belongs To*'
     ]
 }
 
@@ -687,6 +695,10 @@ class Client(LoginRequiredMixin, View):
         if R.get('action') == 'loadIdentifiers':
             qset = TypeAssist.objects.load_identifiers(request)
             return rp.JsonResponse({'items': list(qset), 'total_count': len(qset)}, status=200)
+        
+        if R.get('action') == 'getCurrentlyActiveHandsets' and R.get('client_id') != 'None':
+            qset = Device.objects.get_currently_active_handsets(R['client_id'])
+            return rp.JsonResponse({'data': list(qset)}, status=200)
 
         if R.get('action') == 'loadParents':
             qset = Bt.objects.load_parent_choices(request)
@@ -715,10 +727,21 @@ class Client(LoginRequiredMixin, View):
 
     def post(self, request, *args, **kwargs):
         R, P = request.POST, self.params
+        ic(R)
         if R.get('bupostdata'):
             resp = P['model'].objects.handle_bupostdata(request)
             return rp.JsonResponse(resp, status=200)
 
+        if R.get('action') == 'saveDeviceLimits' and R.get('pk') !=None:
+            data = QueryDict(request.POST['formData'])
+            resp = P['model'].objects.handle_device_limits_post(data)
+            return rp.JsonResponse(resp, status=200)
+        
+        if R.get('action') == 'saveUserLimits' and R.get('pk') !=None:
+            data = QueryDict(request.POST['formData'])
+            resp = P['model'].objects.handle_user_limits_post(data)
+            return rp.JsonResponse(resp, status=200)
+        
         if R.get('adminspostdata'):
             resp = P['model'].objects.handle_adminspostdata(request)
             return rp.JsonResponse(resp, status=200)
@@ -872,57 +895,101 @@ class DashboardView(LoginRequiredMixin, View):
     def get_all_dashboard_counts(self, request, P):
         R, S = request.GET, request.session
         if R['from'] and R['upto']:
-            asset_chart_arr, asset_chart_total = am.Asset.objects.get_assetchart_data(
-                request)
-            alert_chart_arr, alert_chart_total = am.Jobneed.objects.get_alertchart_data(
-                request)
-            ticket_chart_arr, ticket_chart_total = Ticket.objects.get_ticket_stats_for_dashboard(
-                request)
-            wom_chart_arr, wom_chart_total = Wom.objects.get_wom_status_chart(
-                request)
             ppmtask_arr = am.Jobneed.objects.get_ppmchart_data(request)
             task_arr = am.Jobneed.objects.get_taskchart_data(request)
             tour_arr = am.Jobneed.objects.get_tourchart_data(request)
 
             return {
-                'counts': {
-                    'totalschd_tasks_count': task_arr[-1],
-                    'assigned_tasks_count': task_arr[0],
-                    'completed_tasks_count': task_arr[1],
-                    'autoclosed_tasks_count': task_arr[2],
-
-                    'totalschd_ppmtasks_count': ppmtask_arr[-1],
-                    'assigned_ppmtasks_count': ppmtask_arr[0],
-                    'completed_ppmtasks_count': ppmtask_arr[1],
-                    'autoclosed_ppmtasks_count': ppmtask_arr[2],
-
-                    'totalscheduled_tours_count': tour_arr[-1],
-                    'completed_tours_count': tour_arr[0],
-                    'inprogress_tours_count': tour_arr[1],
-                    'partiallycompleted_tours_count': tour_arr[2],
-
-                    'assetchartdata': asset_chart_arr,
-                    'alertchartdata': alert_chart_arr,
-                    'ticketchartdata': ticket_chart_arr,
-                    'womchartdata': wom_chart_arr,
-
-                    'assetchart_total_count': asset_chart_total,
-                    'alertchart_total_count': alert_chart_total,
-                    'ticketchart_total_count': ticket_chart_total,
-                    'wom_total_count': wom_chart_total,
-
-                    'sos_count': P['pel_model'].objects.get_sos_count_forcard(request),
-                    'IR_count': P['jn_model'].objects.get_ir_count_forcard(request),
-                    'FR_fail_count': P['pel_model'].objects.get_frfail_count_forcard(request),
-                    'route_count': P['jn_model'].objects.get_schdroutes_count_forcard(request),
-                    'diversion_count': P['pel_model'].objects.get_diversion_countorlist(request, count=True),
-                    'sitecrisis_count': P['pel_model'].objects.get_sitecrisis_countorlist(request, count=True),
-                    'dynamic_tour_count':P['jn_model'].objects.get_dynamic_tour_count(request)
-                }
+                'counts': dict(
+                    **self.task_portlet(task_arr),
+                    **self.tour_portlet(tour_arr),
+                    **self.ppm_portlet(ppmtask_arr),
+                    **self.other_counts(P, request),
+                    **self.other_chart_data(request)
+                )
             }
+    
+    def task_portlet(self, task_arr):
+        return {
+            'totalschd_tasks_count': task_arr[-1],
+            'assigned_tasks_count': task_arr[0],
+            'completed_tasks_count': task_arr[1],
+            'autoclosed_tasks_count': task_arr[2]}
+    
+    def tour_portlet(self, tour_arr):
+        return {
+            'totalscheduled_tours_count': tour_arr[-1],
+            'completed_tours_count': tour_arr[0],
+            'inprogress_tours_count': tour_arr[1],
+            'partiallycompleted_tours_count': tour_arr[2],
+        }
+    
+    def ppm_portlet(self, ppmtask_arr):
+        return {
+            'totalschd_ppmtasks_count': ppmtask_arr[-1],
+            'assigned_ppmtasks_count': ppmtask_arr[0],
+            'completed_ppmtasks_count': ppmtask_arr[1],
+            'autoclosed_ppmtasks_count': ppmtask_arr[2],
+        }
+    
+    def other_counts(self, P, request):
+        return {
+            'sos_count': P['pel_model'].objects.get_sos_count_forcard(request),
+            'IR_count': P['jn_model'].objects.get_ir_count_forcard(request),
+            'FR_fail_count': P['pel_model'].objects.get_frfail_count_forcard(request),
+            'route_count': P['jn_model'].objects.get_schdroutes_count_forcard(request),
+            'diversion_count': P['pel_model'].objects.get_diversion_countorlist(request, count=True),
+            'sitecrisis_count': P['pel_model'].objects.get_sitecrisis_countorlist(request, count=True),
+            'dynamic_tour_count':P['jn_model'].objects.get_dynamic_tour_count(request)
+        }
+    
+    def other_chart_data(self, request):
+        asset_chart_arr, asset_chart_total = am.Asset.objects.get_assetchart_data(
+                request)
+        alert_chart_arr, alert_chart_total = am.Jobneed.objects.get_alertchart_data(
+            request)
+        ticket_chart_arr, ticket_chart_total = Ticket.objects.get_ticket_stats_for_dashboard(
+            request)
+        wom_chart_arr, wom_chart_total = Wom.objects.get_wom_status_chart(
+            request)
+        return {
+            'assetchartdata': asset_chart_arr,
+            'alertchartdata': alert_chart_arr,
+            'ticketchartdata': ticket_chart_arr,
+            'womchartdata': wom_chart_arr,
+            'assetchart_total_count': asset_chart_total,
+            'alertchart_total_count': alert_chart_total,
+            'ticketchart_total_count': ticket_chart_total,
+            'wom_total_count': wom_chart_total,
+        }
+    
 
 
 class FileUpload(LoginRequiredMixin, View):
 
     def post(self, request, *args, **kwargs):
         pass
+
+
+class LicenseSubscriptionView(LoginRequiredMixin, View):
+    P = {
+        'model':Subscription
+    }
+    def get(self, request, *args, **kwargs):
+        R, P = request.GET, self.P
+        if R.get('action') == 'getLicenseList':
+            qset = P['model'].objects.get_license_list(R['client_id'])
+            return rp.JsonResponse({'data':list(qset)}, status=200)
+        
+        if R.get('action') == 'getTerminatedLicenseList':
+            qset = P['model'].objects.get_terminated_license_list(R['client_id'])
+            return rp.JsonResponse({'data':list(qset)}, status=200)
+        
+    
+    def post(self, request, *args, **kwargs):
+        R, P = request.POST, self.P
+        ic(R)
+        if R.get('subscriptionPostData'):
+            resp = P['model'].objects.handle_subscription_postdata(request)
+            return rp.JsonResponse(resp, status=200)
+        

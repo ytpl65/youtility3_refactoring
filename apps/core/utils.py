@@ -1669,3 +1669,25 @@ class Instructions(object):
             'Valid Time Format: $HH:MM:SS For example: 23:55:00&',
             'Valid Date Time Format: $YYYY-MM-DD HH:MM:SS For example: 1998-06-22 23:55:00&'
             ]
+
+def generate_timezone_choices():
+    from pytz import common_timezones
+    from pytz import timezone as pytimezone
+    from datetime import datetime
+    
+    utc = pytimezone('UTC')
+    now = datetime.now(utc)
+    print("&&&&&&&&&&&&&&",now)
+    choices = [('', "")]
+    
+    for tz_name in common_timezones:
+        tz = pytimezone(tz_name)
+        offset = now.astimezone(tz).strftime('%z')
+        offset_sign = '+' if offset[0] == '+' else '-'
+        offset_digits = int(offset.lstrip('+').lstrip('-')) # Remove the sign before converting to int
+        offset_hours = abs(int(offset_digits // 100)) # Integer division to get the hours
+        offset_minutes = offset_digits % 100 # Modulus to get the minutes
+        formatted_offset = f"UTC {offset_sign}{offset_hours:02d}:{offset_minutes:02d}"
+        choices.append((f"{tz_name} ({formatted_offset})", f"{tz_name} ({formatted_offset})"))
+    
+    return choices

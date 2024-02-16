@@ -260,6 +260,24 @@ class BtManager(models.Manager):
         ).order_by('id')
         return annotated_queryset
 
+    def handle_device_limits_post(self, data):
+        if data.get('client_id') and data['client_id'] != 'None':
+            if obj := self.filter(id=data['client_id']).first():
+                obj.bupreferences['no_of_devices_allowed'] = data['no_of_devices_allowed']
+                obj.save()
+                return {'msg':"Updated Successfully"}
+        return {"msg":"Something went wrong"}
+    
+    def handle_user_limits_post(self, data):
+        if data.get('client_id') and data['client_id'] != 'None':
+            if obj := self.filter(id=data['client_id']).first():
+                obj.bupreferences['no_of_users_allowed_web'] = data.get('no_of_users_allowed_web', 0)
+                obj.bupreferences['no_of_users_allowed_mob'] = data.get('no_of_users_allowed_mob', 0)
+                obj.bupreferences['no_of_users_allowed_both'] = data.get('no_of_users_allowed_both', 0)
+                obj.save()
+                return {'msg':"Updated Successfully"}
+        return {"msg":"Something went wrong"}
+
     
 
 
@@ -404,3 +422,71 @@ class ShiftManager(models.Manager):
             'id', 'shiftname', 'dsgn', 'starttime',
             'endtime', 'nightshiftappicable'
         ) or self.none()
+        
+
+class DeviceManager(models.Manager):
+    use_in_migrations=True
+    
+    def get_currently_active_handsets(self, client_id):
+        qset = self.filter(
+            client_id = client_id,
+        ).values("handsetname", "modelname", 'dateregistered', 'lastcommunication',
+                 'imeino', 'phoneno', 'lastloggedinuser', 'id')
+        return qset or self.none()
+    
+
+class SubscriptionManger(models.Manager):
+    use_in_migrations=True
+    
+    def handle_subscription_postdata(self, request):
+        S, R = request.session, request.POST
+        post_data = {
+            'startdate':R['startdate'],'enddate':R['enddate'],
+            'istemporary':R['istemporary'], 'client_id':R['client_id'],
+            'cuser':request.user, 'muser':request.user, 
+            'cdtz':utils.getawaredatetime(datetime.now(), S['ctzoffset']),
+            'mdtz':utils.getawaredatetime(datetime.now(), S['ctzoffset']),
+            'ctzoffset':S['ctzoffset']
+        }
+        if R['action'] == 'create':
+            if self.filter(
+                startdate=R['startdate'], enddate=R['enddate'],
+                client_id=R['client_id']).exists():
+                return {'data':list(self.none()), 'error':'Subscription already exists'}
+            ID = self.create(**post_data).id
+        elif R['action'] == 'edit':
+            post_data.pop('cuser')
+            post_data.pop('cdtz') 
+            updated = self.filter(pk=R['pk']).update(**post_data)
+            if updated: ID = R['pk']
+        else:
+            self.filter(pk=R['pk']).delete()
+            return {'data':[]}
+        if ID:
+            data = self.filter(id=ID).values(
+                'startdate', 'enddate', 'istemporary', 'id',
+                'cdtz', 'assignedhandset', 'status'
+            )
+            return {'data':list(data)}
+        return {'data':[], 'error':'Unable to save subscription'}
+
+    def get_license_list(self, client_id):
+        qset = self.filter(
+            client_id=client_id,
+            status=self.model.StatusChoices.A.value).values(
+            'id','startdate', 'enddate', 'istemporary',
+            'cdtz', 'status', 'assignedhandset'
+        )
+        return qset or self.none()
+    
+    def get_terminated_license_list(self, client_id):
+        qset = self.filter(
+            status=self.model.StatusChoices.IA.value,
+            client_id=client_id).values(
+            'id','terminateddate', 'enddate', 
+            'reason', 'assignedhandset'
+            )
+        return qset or self.none()
+            
+        
+        
