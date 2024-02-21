@@ -22,13 +22,15 @@ class SiteReportFormat(BaseReportsExport):
         used for pdf/html reports
         '''
         self.set_args_required_for_query()
+        fromdatetime = self.formdata['fromdatetime'].strftime('%d/%m/%Y %H:%M:%S'),
+        uptodatetime = self.formdata.get('uptodatetime').strftime('%d/%m/%Y %H:%M:%S')
         self.context = {
             'base_path': settings.BASE_DIR,
             'data' : runrawsql(get_query(self.report_name), args=self.args),
             'report_title': self.report_title,
             'client_logo':self.get_client_logo(),
             'app_logo':self.ytpl_applogo,
-            'report_subtitle':f"From: {self.formdata.get('fromdatetime')} To {self.formdata.get('uptodatetime')}"
+            'report_subtitle':f"From: {fromdatetime} To {uptodatetime}"
         }
         
     def set_args_required_for_query(self):

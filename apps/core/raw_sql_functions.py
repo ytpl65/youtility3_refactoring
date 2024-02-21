@@ -554,7 +554,7 @@ def get_sqlfunctions():
                             FROM asset a
                             LEFT JOIN asset l ON l.id= a.parent_id
                             LEFT JOIN bt sp ON a.servprov_id=sp.id
-                            WHERE a.mdtz >= _mdtz AND a.bu_id IN (_siteid) AND a.identifier <> 'NEA';
+                            WHERE a.mdtz >= _mdtz AND a.bu_id IN (_siteid) AND a.identifier <> 'NEA' and a.enable=true;
                         END;
                         $BODY$;
 

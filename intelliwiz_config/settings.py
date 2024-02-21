@@ -79,6 +79,7 @@ INSTALLED_APPS = [
     'apps.reminder',
     'apps.y_helpdesk',
     'apps.work_order_management',
+    'apps.clientbilling',
 
     # third-party apps
     'django_cleanup.apps.CleanupConfig'

@@ -199,15 +199,25 @@ def update_ticket_log(id, item, result):
     return result
 
 
+def check_for_checkpoints_status(obj, Jobneed):
+    for checkpoint in Jobneed.objects.filter(parent_id = obj.id, identifier__in = ['INTERNALTOUR','EXTERRNALTOUR']):
+        if checkpoint.jobstatus == 'ASSIGNED':
+            checkpoint.jobstatus = 'AUTOCLOSED'
+            checkpoint.other_info['autoclosed_by_server'] = True
+            checkpoint.save()
+
+
 def update_job_autoclose_status(record, resp):
     Jobneed = apps.get_model('activity', 'Jobneed')
     obj = Jobneed.objects.get(id=record['id'])
     obj.mdtz = datetime.now(timezone.utc)
-    obj.jobstatus = 'AUTOCLOSED'
-    obj.other_info['email_sent'] = record['ticketcategory__tacode'] == 'AUTOCLOSENOTIFY'
-    obj.other_info['ticket_generated'] = record['ticketcategory__tacode'] == 'RAISETICKETNOTIFY'
-    obj.other_info['autoclosed_by_server'] = True
-    obj.save()
+    if obj.jobstatus != 'PARTIALLYCOMPLETED':
+        obj.jobstatus = 'AUTOCLOSED'
+        obj.other_info['email_sent'] = record['ticketcategory__tacode'] == 'AUTOCLOSENOTIFY'
+        obj.other_info['ticket_generated'] = record['ticketcategory__tacode'] == 'RAISETICKETNOTIFY'
+        obj.other_info['autoclosed_by_server'] = True
+        obj.save()
+    check_for_checkpoints_status(obj, Jobneed)
     log.info(f'jobneed object with id = {record["id"]} is autoclosed {obj.jobstatus = } {obj.other_info["email_sent"] = } {obj.other_info["ticket_generated"] = } {obj.other_info["autoclosed_by_server"] = }')
     resp['id'].append(record['id'])
     return resp

@@ -684,7 +684,7 @@ class JobneedManager(models.Manager):
                **annotation
             ).filter(
                 ~Q(id=1),
-                ~Q(jobstatus__in = ['COMPLETED', 'PARTIALLYCOMPLETED']),
+                ~Q(jobstatus__in = ['COMPLETED']),
                 ~Q(other_info__autoclosed_by_server = True),
                 ~Q(Q(jobstatus = 'AUTOCLOSED') & Q(other_info__email_sent = True))|
                 ~Q(Q(jobstatus = 'AUTOCLOSED') & Q(other_info__ticket_generated = True)),
