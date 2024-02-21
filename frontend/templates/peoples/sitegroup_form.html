@@ -187,8 +187,6 @@ Site Group
                 autoCheckSitesWhichAreAssigned(all_sites, assigned_sites)
 			}
         })
-        
-        
     }
 
     function autoCheckSitesWhichAreAssigned(all_sites, assigned_sites){
@@ -246,12 +244,13 @@ Site Group
                 selector: 'tr'
             },
             dom :  `<'row' <'col-sm-6 d-flex justify-content-start'f> <'col-sm-6 d-flex justify-content-end'B> >rt<'row'
-			<'col-sm-6'l> <'col-sm-6'><'col-sm-12 d-flex justify-content-center'i>>`,
+			<'col-sm-6'l> <'col-sm-6'p><'col-sm-12 d-flex justify-content-center'i>>`,
             buttons:[
                 
                 dataTablesColumnVisibilityConfig(),
             ],
-            pageLength:25
+            pageLength:25,
+            lengthMenu: [14, 20, 50, 100, 500, 1000],
 
         })
         $("div.dtToolbar").html(``);
@@ -327,6 +326,11 @@ Site Group
                 ),
                 dataTablesColumnVisibilityConfig(),
             ],
+            initComplete:function(settings, json){
+                if("{{ sitegrpform.instance.id }}" != 'None'){
+                    loadAssignedSitesIfThereAny(tabAssigned_sites, "{{ sitegrpform.instance.id }}")
+                }
+            }
             
         })
 
@@ -336,7 +340,6 @@ Site Group
         
         if("{{ sitegrpform.instance.id }}" != 'None'){
             console.log('checkig...')
-            loadAssignedSitesIfThereAny(tabAssigned_sites, "{{ sitegrpform.instance.id }}")
         }else{
             $("#assigned_sites_wrapper .dt-button").addClass('disabled')
         }
@@ -353,7 +356,6 @@ Site Group
                     .remove()
                 .draw();
             }
-
         });
         //ON CLICK DELETE ALL ASSIGNED SITES
         $("#deleteAll").click(() => {
