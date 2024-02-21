@@ -688,7 +688,7 @@ class JobneedManager(models.Manager):
                 ~Q(other_info__autoclosed_by_server = True),
                 ~Q(Q(jobstatus = 'AUTOCLOSED') & Q(other_info__email_sent = True))|
                 ~Q(Q(jobstatus = 'AUTOCLOSED') & Q(other_info__ticket_generated = True)),
-                Q(parent_id = 1), Q(identifier__in = ['TASK', 'INTERNALTOUR', 'PPM', 'EXTERRNALTOUR', "SITEREPORT"]),
+                Q(parent_id = 1), Q(identifier__in = ['TASK', 'INTERNALTOUR', 'PPM', 'EXTERNALTOUR', "SITEREPORT"]),
                 expirydatetime__gte=datetime.now(timezone.utc) - timedelta(days=1),
                 expirydatetime__lte=datetime.now(timezone.utc),            
             )

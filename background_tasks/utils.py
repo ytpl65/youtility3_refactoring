@@ -200,7 +200,7 @@ def update_ticket_log(id, item, result):
 
 
 def check_for_checkpoints_status(obj, Jobneed):
-    for checkpoint in Jobneed.objects.filter(parent_id = obj.id, identifier__in = ['INTERNALTOUR','EXTERRNALTOUR']):
+    for checkpoint in Jobneed.objects.filter(parent_id = obj.id, identifier__in = ['INTERNALTOUR','EXTERNALTOUR']):
         if checkpoint.jobstatus == 'ASSIGNED':
             checkpoint.jobstatus = 'AUTOCLOSED'
             checkpoint.other_info['autoclosed_by_server'] = True
