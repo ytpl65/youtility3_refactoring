@@ -347,8 +347,12 @@ Task Form
                     {data:'alerton', title:'Alert On'},
                     {data:'answer', title:'Answer'},
                     {data:'ismandatory', title:'Mandatory'},
-                    {data: null, title:'Attachments', render:function(data, type, row, meta){
-                        return `<a href="javascript:void(0)"  onClick='showAttachmentDetails(${row['id']}, "jnd")'>View</a>`
+                    {data: 'attachmentcount', title:'Attachments', render:function(data, type, row, meta){
+                        if (data>0){
+                        return `<a href="javascript:void(0)"  onClick='showAttachmentDetails(${row['id']}, "jnd")'>${data}&nbsp;<i class="fas text-primary2 fs-3 fa-paperclip"></i></a>`}
+                        else {
+                            return 'N/A';
+                        }
                     }
                     },
                     {data:'alerts', title:'Alerts', visible:false},

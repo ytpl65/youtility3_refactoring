@@ -250,7 +250,7 @@ class Capability(BaseModel, TenantAwareModel):
         verbose_name = 'Capability'
         verbose_name_plural = 'Capabilities'
         get_latest_by = ["mdtz", 'cdtz']
-        constraints = [
+        constraints = [ 
             models.UniqueConstraint(
                 fields=['capscode', 'cfor', 'client'],
                 name="capability_caps_cfor_uk"), ]

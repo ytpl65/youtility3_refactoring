@@ -575,7 +575,6 @@ class MobileUserDetails(LoginRequiredMixin, View):
         # then load the table with objects for table_view
         if R.get('action', None) == 'list' or R.get('search_term'):
             total, filtered, objs = self.params['model'].objects.get_mobileuserlog(request)
-            ic(utils.printsql(objs))
             return  rp.JsonResponse(data = {
                 'draw':R['draw'],
                 'data':list(objs),
@@ -600,7 +599,6 @@ class PeopleNearAsset(LoginRequiredMixin, View):
         # then load the table with objects for table_view
         if R.get('action', None) == 'list' or R.get('search_term'):
             objs = self.params['model'].objects.get_peoplenearasset(request)
-            ic(utils.printsql(objs))
             return  rp.JsonResponse(data = {
                 'data':list(objs)}, safe = False)
             
@@ -742,7 +740,6 @@ class Asset(LoginRequiredMixin,View):
         # return qset_list data
         if R.get('action', None) == 'list':
             objs = P['model'].objects.get_assetlistview(P['related'], P['fields'], request)
-            ic(objs)
             return  rp.JsonResponse(data = {'data':list(objs)})
         
         # return questionset_form empty
@@ -772,7 +769,6 @@ class Asset(LoginRequiredMixin,View):
     def post(self, request, *args, **kwargs):
         resp, create = None, True
         data = QueryDict(request.POST['formData'])
-        ic(data)
         try:
             if pk := request.POST.get('pk', None):
                 msg, create = "asset_view", False  
@@ -780,12 +776,10 @@ class Asset(LoginRequiredMixin,View):
                 form = self.P['form'](data, request=request, instance = people)
             else:
                 form = self.P['form'](data, request = request)
-            ic(form.instance.id)
             jsonform = self.P['jsonform'](data, request=request)
             if form.is_valid() and jsonform.is_valid():
                 resp = self.handle_valid_form(form, jsonform, request, create)
             else:
-                ic(form.errors)
                 cxt = {'errors': form.errors}
                 if jsonform.errors:
                     cxt.update({'errors': jsonform.errors})
@@ -800,7 +794,6 @@ class Asset(LoginRequiredMixin,View):
         from apps.core.utils import handle_intergrity_error
         
         try:
-            ic(request.POST, request.FILES)
             asset = form.save(commit=False)
             asset.gpslocation = form.cleaned_data['gpslocation']
             asset.save()
@@ -860,7 +853,6 @@ class LocationView(LoginRequiredMixin, View):
     def post(self, request, *args, **kwargs):
         resp, create = None, True
         data = QueryDict(request.POST['formData'])
-        ic(data)
         try:
             if pk := request.POST.get('pk', None):
                 msg, create = "location_view", False
@@ -868,11 +860,9 @@ class LocationView(LoginRequiredMixin, View):
                 form = self.P['form'](data, request=request, instance = people)
             else:
                 form = self.P['form'](data, request = request)
-            ic(form.instance.id)
             if form.is_valid():
                 resp = self.handle_valid_form(form, request, create)
             else:
-                ic(form.errors)
                 cxt = {'errors': form.errors}
                 resp = utils.handle_invalid_form(request, self.P, cxt)
         except Exception:
@@ -885,7 +875,6 @@ class LocationView(LoginRequiredMixin, View):
         from apps.core.utils import handle_intergrity_error
         
         try:
-            ic(request.POST, request.FILES)
             location = form.save(commit=False)
             location.gpslocation = form.cleaned_data['gpslocation']
             location.save()
@@ -1064,7 +1053,6 @@ class PPMJobneedView(LoginRequiredMixin, View):
             if form.is_valid():
                 resp = self.handle_valid_form(form, request, create)
             else:
-                ic(form.errors)
                 cxt = {'errors': form.errors}
                 resp = utils.handle_invalid_form(request, self.P, cxt)
         except Exception:
@@ -1090,13 +1078,11 @@ class PPMJobneedView(LoginRequiredMixin, View):
         
         
 def testCalendar(request):
-    ic(request.GET, request.POST)
     R = request.GET
     start, end = R.get('start'), R.get('end')
     if start and end:
         start = datetime.strptime(start, '%Y-%m-%dT%H:%M:%S%z')
         end = datetime.strptime(end,  "%Y-%m-%dT%H:%M:%S%z")
-        ic(start, end)
         return rp.JsonResponse([], status=200, safe=False)
     return render(request, 'activity/testCalendar.html', {})
 
