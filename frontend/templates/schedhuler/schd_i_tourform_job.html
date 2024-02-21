@@ -299,6 +299,9 @@ Schedule Tour
         Save Tour&nbsp;<i class="fas text-white fa-cloud-upload-alt"></i>
     </button>
     {% endif %}
+    <button type="button" id="id_cleanrbtn" class="btn btn-sm btn-secondary btn-hover-scale">
+        Clear&nbsp;<i class="fas  fa-trash-alt"></i>
+    </button>
 </div>
 {% endblock ajax_page_actions %}
 
@@ -715,6 +718,11 @@ Schedule Tour
             enableTime: true,
             time_24hr: true,
             dateFormat: 'd-M-Y H:S'
+        })
+
+        //clear form
+        $("#id_cleanrbtn").click(() => {
+            location.href = "{{ url('schedhuler:schd_internal_tour') }}?action=form"
         })
     })
 </script>

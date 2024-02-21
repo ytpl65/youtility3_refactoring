@@ -312,7 +312,7 @@ table.dataTable.compact tbody th.select-checkbox::before{
 table.dataTable.compact tr.selected td.select-checkbox::after,
 table.dataTable.compact tr.selected th.select-checkbox::after {
 	
-	margin-top: -25px;
+	margin-top: -0px;
 }
 table.dataTable.display tbody tr.selected {
     color: black;
