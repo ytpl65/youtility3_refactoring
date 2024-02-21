@@ -181,6 +181,7 @@ Site Group
         .done((data, status, xhr) => {
             if(xhr.status === 200){
                 console.log(data['assigned_sites'])
+                let table = $("#assigned_sites").dataTable().api();
 				table.rows.add(data['assigned_sites']).draw()
                 var all_sites = tabAllsites.rows().data().toArray()
                 var assigned_sites = tabAssigned_sites.rows().data().toArray()
@@ -250,7 +251,12 @@ Site Group
                 dataTablesColumnVisibilityConfig(),
             ],
             pageLength:25,
-            lengthMenu: [14, 20, 50, 100, 500, 1000],
+            lengthMenu: [14, 25, 50, 100, 500, 1000],
+            initComplete:function(settings, json){
+                if("{{ sitegrpform.instance.id }}" != 'None'){
+                    loadAssignedSitesIfThereAny(tabAssigned_sites, "{{ sitegrpform.instance.id }}")
+                }
+            }
 
         })
         $("div.dtToolbar").html(``);
@@ -325,12 +331,7 @@ Site Group
                     mode = "portrait"
                 ),
                 dataTablesColumnVisibilityConfig(),
-            ],
-            initComplete:function(settings, json){
-                if("{{ sitegrpform.instance.id }}" != 'None'){
-                    loadAssignedSitesIfThereAny(tabAssigned_sites, "{{ sitegrpform.instance.id }}")
-                }
-            }
+            ]
             
         })
 
