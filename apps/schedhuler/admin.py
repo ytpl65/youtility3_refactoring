@@ -47,17 +47,19 @@ class TktCategoryFKW(wg.ForeignKeyWidget):
         
 class ParentFKW(wg.ForeignKeyWidget):
     def get_queryset(self, value, row, *args, **kwargs):
-        return am.Job.objects.select_related().filter(
+        qset = am.Job.objects.select_related().filter(
             (Q(client__bucode = row['Client*']) & Q(enable=True)) |
-            Q(jobname='NONE') 
+            Q(jobname='NONE'), identifier='INTERNALTOUR'
         )
+        print("possible job rows",qset.values_list("jobname", flat=True).order_by('-cdtz'))
+        return qset
 
 class BaseJobResource(resources.ModelResource):
     CLIENT      = fields.Field(attribute='client', column_name='Client*',widget=wg.ForeignKeyWidget(om.Bt, 'bucode'))
     SITE        = fields.Field(attribute='bu', column_name='Site*',widget=wg.ForeignKeyWidget(om.Bt, 'bucode'))
     NAME        = fields.Field(attribute='jobname', column_name='Name*')
     DESC        = fields.Field(attribute='jobdesc', column_name='Description*')
-    QSET        = fields.Field(attribute='qset', column_name='Question Set*', widget=QsetFKW(am.QuestionSet, 'qsetname'))
+    QSET        = fields.Field(attribute='qset', column_name='Question Set/Checklist*', widget=QsetFKW(am.QuestionSet, 'qsetname'))
     ASSET       = fields.Field(attribute='asset', column_name='Asset*', widget=AssetFKW(am.Asset, 'assetcode'))
     PARENT      = fields.Field(attribute='parent', column_name='Belongs To*', widget=ParentFKW(am.Job, 'jobname'), default='NONE')
     PDURATION   = fields.Field(attribute='planduration', column_name='Plan Duration*')
@@ -83,7 +85,7 @@ class BaseJobResource(resources.ModelResource):
 
 
 class TaskResource(BaseJobResource):
-    
+    IDF         = fields.Field(attribute='identifier', column_name='Identifier*', default='TASK')
     class Meta:
         model = Job
         skip_unchanged = True
@@ -110,9 +112,9 @@ class TaskResource(BaseJobResource):
         
     def check_required_fields(self, row):
         required_fields = [
-            'Name*', 'Description*', 'Identifier*', 'From Date*', 'Upto Date*', 'Scheduler*',
+            'Name*', 'Description*', 'From Date*', 'Upto Date*', 'Scheduler*',
             'Notify Category*', 'Plan Duration*', 'Gracetime Before*', 'Gracetime After*',
-            'Question Set*', 'Asset*', 'Priority*', 'People*', 'Group Name*', 'Belongs To*']
+            'Question Set/Checklist*', 'Asset*', 'Priority*', 'People*', 'Group Name*', 'Belongs To*']
         ic(row.get('Plan Duration*'))
         for field in required_fields:
             if not row.get(field):
@@ -132,7 +134,7 @@ class TaskResource(BaseJobResource):
     
     def unique_record_check(self, row):
         if Job.objects.filter(
-            jobname = row['Name*'], asset__assetcode = row['Asset*'], qset__qsetname = row['Question Set*'],
+            jobname = row['Name*'], asset__assetcode = row['Asset*'], qset__qsetname = row['Question Set/Checklist*'],
             identifier = 'TASK', client__bucode = row['Client*']
         ).exists():
             raise ValidationError('Record Already with these values are already exist')
@@ -143,7 +145,11 @@ class TaskResource(BaseJobResource):
 
 
 class TourResource(BaseJobResource):
-    EXPTIME=None
+    IDF         = fields.Field(attribute='identifier', column_name='Identifier*', default='INTERNALTOUR')
+    EXPTIME     = fields.Field(attribute='expirytime', column_name='Expiry Time*')
+    SEQNO       = fields.Field(attribute='seqno', column_name='Seq No*', default=-1)
+    GRACETIME   = fields.Field(attribute='gracetime', column_name='Gracetime*')
+
     class Meta:
         model=Job
         skip_unchanged=True
@@ -167,4 +173,32 @@ class TourResource(BaseJobResource):
         self.validate_row(row)
         self.unique_record_check(row)
         super().before_import_row(row, **kwargs)
+        
+    def check_required_fields(self, row):
+        required_fields = [
+            'Name*', 'Description*', 'From Date*', 'Upto Date*', 'Scheduler*',
+            'Notify Category*', 'Plan Duration*', 'Expiry Time*', 'Gracetime*', 'Seq No*',
+            'Question Set/Checklist*', 'Asset*', 'Priority*', 'People*', 'Group Name*', 'Belongs To*']
+        for field in required_fields:
+            if not row.get(field):
+                raise ValidationError({field: f"{field} is a required field"})
     
+    def validate_row(self, row):
+        row['Name*'] = clean_string(row['Name*'])
+        row['Description*'] = clean_string(row['Description*'])
+        row['Plan Duration*'] = int(row['Plan Duration*'])
+        row['Gracetime*'] = int(row['Gracetime*'])
+        row['Expiry Time*'] = int(row['Expiry Time*'])
+        row['Seq No*'] = int(row['Seq No*'])
+        # check valid cron
+        if not validate_cron(row['Scheduler*']):
+            raise ValidationError({
+                'Scheduler*': "Invalid value or Problematic Cron Expression for scheduler"
+            })
+    
+    def unique_record_check(self, row):
+        if Job.objects.filter(
+            jobname = row['Name*'], asset__assetcode = row['Asset*'], qset__qsetname = row['Question Set/Checklist*'],
+            identifier = 'INTERNALTOUR', client__bucode = row['Client*']
+        ).exists():
+            raise ValidationError('Record Already with these values are already exist')

@@ -573,7 +573,8 @@ class JobForm(forms.ModelForm):
             'qset'          : s2forms.Select2Widget,
             'people'        : s2forms.Select2Widget,
             'bu'            : s2forms.Select2Widget,
-            'cron':forms.TextInput(attrs={'style':'display:none'})
+            'cron':forms.TextInput(attrs={'style':'display:none'}),
+            'jobdesc':forms.Textarea(attrs={'rows':'5', 'placeholder':"What does this tour about?"})
         }
 
     def clean_from_date(self):

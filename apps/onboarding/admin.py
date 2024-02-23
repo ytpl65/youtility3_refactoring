@@ -172,16 +172,16 @@ class BtResource(resources.ModelResource):
         default=utils.get_or_create_none_people,
         widget = wg.ForeignKeyWidget(pm.People, 'peoplecode'))
     
-    ID   = fields.Field(attribute='id', column_name="ID")
-    Code = fields.Field(attribute='bucode', column_name='Code*')
-    Name = fields.Field(attribute='buname', column_name='Name*')
-    GPS = fields.Field(attribute='gpslocation', column_name='GPS Location', saves_null_values=True)
+    ID      = fields.Field(attribute='id', column_name="ID")
+    Code    = fields.Field(attribute='bucode', column_name='Code*')
+    Name    = fields.Field(attribute='buname', column_name='Name*')
+    GPS     = fields.Field(attribute='gpslocation', column_name='GPS Location', saves_null_values=True)
     Address = fields.Field(column_name='Address', widget=wg.CharWidget(), saves_null_values=True)
-    State = fields.Field(column_name='State', widget=wg.CharWidget(), saves_null_values=True)
-    City = fields.Field(column_name='City', widget=wg.CharWidget(), saves_null_values=True)
+    State   = fields.Field(column_name='State', widget=wg.CharWidget(), saves_null_values=True)
+    City    = fields.Field(column_name='City', widget=wg.CharWidget(), saves_null_values=True)
     Country = fields.Field(column_name='Country', widget=wg.CharWidget(), saves_null_values=True)
-    SOLID = fields.Field(attribute='solid', column_name='Sol Id', widget=wg.CharWidget())
-    Enable = fields.Field(attribute='enable', column_name='Enable', default=True)
+    SOLID   = fields.Field(attribute='solid', column_name='Sol Id', widget=wg.CharWidget())
+    Enable  = fields.Field(attribute='enable', column_name='Enable', default=True)
 
     class Meta:
         model = om.Bt

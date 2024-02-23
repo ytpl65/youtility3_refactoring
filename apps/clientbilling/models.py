@@ -1,6 +1,8 @@
 from django.db import models
 from apps.peoples.models import BaseModel
 from .managers import FeatureManager
+from django.utils.translation import gettext_lazy as _
+
 # Create your models here.
 
 
@@ -28,6 +30,17 @@ class Features(BaseModel):
     
     def __str__(self):
         return self.name
+    
+
+class Approvals(BaseModel):
+    class ApprovedChoices(models.TextChoices):
+        A = ('Approved', 'Approved')
+        P = ('Pending', 'Pending')
+        R = ('Rejected', 'Rejected')
+    feature = models.ForeignKey(Features, verbose_name=_("Feature"), on_delete=models.RESTRICT, null=True)
+    comment = models.TextField(_("Comment"),null=True)
+    approved = models.CharField(_("Approved"), max_length=50)
+    approvedon = models.DateTimeField(_("Approved On"), auto_now=False, auto_now_add=False)
     
 
 class Billing(BaseModel):

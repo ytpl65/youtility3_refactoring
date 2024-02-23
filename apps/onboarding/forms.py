@@ -454,6 +454,7 @@ class ImportForm(forms.Form):
         ('GROUP', 'Group'),
         ('GROUPBELONGING', 'Group Belongings'),
         ('SCHEDULEDTASKS', 'Scheduled Tasks'),
+        ('SCHEDULEDTOURS', 'Scheduled Tours'),
     ]
     importfile = forms.FileField(required = True, label='Import File', max_length = 50, allow_empty_file = False)
     ctzoffset = forms.IntegerField()

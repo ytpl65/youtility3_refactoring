@@ -291,14 +291,12 @@ Ticket {% if  ticketform.instance.id is not none  %}- {{ ticketform.instance.tic
                     .done((data, status, xhr) => {
                         Swal.fire(
                             `Ticket Form saved`,
-                            `Ticket Form with this name <strong>${data.jobdesc}</strong> has been saved successfully`,
                             'success'
                         ).then(function () {
                             location.href = `{{ url('helpdesk:ticket') }}?template=true`;
                         })
                     })
                     .fail((xhr, status, error) => {
-                        console.log(xhr)
                         if(!typeof(xhr.responseJSON.errors) === 'object'){
                             show_error_alert(xhr.responseJSON.errors, "Failed to save!")
                         }else{}

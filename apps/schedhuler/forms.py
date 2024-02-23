@@ -25,6 +25,7 @@ class Schd_I_TourJobForm(JobForm):
             'starttime':forms.TextInput(attrs={'style': 'display:none;'}),
             'endtime':forms.TextInput(attrs={'style': 'display:none;'}),
             'frequency':forms.TextInput(attrs={'style': 'display:none;'}),
+            
         })
 
     def __init__(self, *args, **kwargs):

@@ -3,7 +3,7 @@ from django.db import models
 from django.db.models import Q, F, Value as V
 from django.db.models.functions import Concat, Cast
 from django.contrib.gis.db.models.functions import  AsGeoJSON
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 from icecream import ic
 import logging
 log = logging.getLogger('django')

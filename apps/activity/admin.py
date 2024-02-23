@@ -232,6 +232,7 @@ class QuestionSetResource(resources.ModelResource):
             if field_value := row.get(field):
                 model = apps.get_model(app_name, model_name)
                 values = field_value.replace(" ", "").split(',')
+                print("&&&&&&&&&&", values)
                 count = model.objects.filter(**{f'{lookup_field}__in': values}).count()
                 ic(count, len(values), values, model, field_value)
                 if len(values) != count:

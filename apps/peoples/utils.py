@@ -160,7 +160,7 @@ def get_caps_from_db():
     from apps.peoples.models import Capability
     from apps.core.raw_queries import get_query
     web, mob, portlet, report = [], [], [], []
-    cache_ttl = 20
+    cache_ttl = 10
     web     = cache.get('webcaps')
     mob     = cache.get('mobcaps')
     portlet = cache.get('portletcaps')

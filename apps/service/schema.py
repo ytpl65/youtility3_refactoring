@@ -1,5 +1,4 @@
 import graphene
-from graphql_auth.schema import  MeQuery
 import graphql_jwt
 from graphql_jwt.decorators import login_required
 from graphene_django.debug import DjangoDebug
@@ -29,7 +28,7 @@ class Mutation(graphene.ObjectType):
     insert_json       = InsertJsonMutation.Field()
     refresh_token = graphql_jwt.Refresh.Field()
 
-class Query(MeQuery, ApiQuery,  graphene.ObjectType):
+class Query(ApiQuery,  graphene.ObjectType):
     PELog_by_id = graphene.Field(PELogType, id = graphene.Int())
     trackings   = graphene.List(TrackingType)
     testcases   = graphene.List(TestGeoType)

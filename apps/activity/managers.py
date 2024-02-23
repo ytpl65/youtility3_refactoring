@@ -1,5 +1,5 @@
 from django.db import models
-from django.utils.translation import ugettext as _
+from django.utils.translation import gettext as _
 from django.db.models.functions import Concat, Cast
 from django.db.models import CharField, Value as V, Subquery, OuterRef, Exists
 from django.db.models import Q, F, Count, Case, When, Func

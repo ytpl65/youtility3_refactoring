@@ -499,6 +499,7 @@ MODEL_RESOURCE_MAP = {
     'QUESTIONSET'         : av_admin.QuestionSetResource,
     'QUESTIONSETBELONGING': av_admin.QuestionSetBelongingResource,
     'SCHEDULEDTASKS': sc_admin.TaskResource,
+    'SCHEDULEDTOURS': sc_admin.TourResource,
 }
 
 # Header Mapping
@@ -557,10 +558,16 @@ HEADER_MAPPING  = {
         'Alert On', 'Is Mandatory', 'AVPT Type',
     ],
     'SCHEDULEDTASKS':[
-        'Name*', 'Description*', 'Scheduler*', 'Asset*', 'Question Set*', 'People*', 'Group Name*','Identifier*',
+        'Name*', 'Description*', 'Scheduler*', 'Asset*', 'Question Set/Checklist*', 'People*', 'Group Name*',
         'Plan Duration*', 'Gracetime Before*', 'Gracetime After*', 'Notify Category*',
         'From Date*', 'Upto Date*', 'Scan Type*', 'Client*', 'Site*',
         'Priority*','Seq No', 'Start Time', 'End Time', 'Belongs To*'
+    ],
+    'SCHEDULEDTOURS':[
+        'Name*', 'Description*', 'Scheduler*', 'Asset*', 'Question Set/Checklist*', 'People*', 'Group Name*',
+        'Plan Duration*', 'Gracetime*', 'Expiry Time*', 'Notify Category*',
+        'From Date*', 'Upto Date*', 'Scan Type*', 'Client*', 'Site*',
+        'Priority*','Seq No*', 'Start Time', 'End Time', 'Belongs To*'
     ]
 }
 

@@ -1623,12 +1623,13 @@ class Instructions(object):
     
     def get_insructions(self):
         general_instructions = self.get_general_instructions()
+        custom_instructions = self.get_custom_instructions()
         column_names = self.get_column_names()
         valid_choices = self.get_valid_choices_if_any()
         format_info = self.get_valid_format_info()
         
         return  {
-            'general_instructions': general_instructions,
+            'general_instructions': general_instructions + custom_instructions if custom_instructions else general_instructions,
             'column_names':"Columns: ${}&".format(', '.join(column_names)) ,
             'valid_choices':valid_choices,
             'format_info':format_info
@@ -1640,6 +1641,17 @@ class Instructions(object):
             "Make sure while filling data in file, your column header does not contain value other than columns mentioned below.",
             "The column names marker asterisk (*) are mandatory to fill"
         ]
+    
+    def get_custom_instructions(self):
+        ic(self.tablename)
+        return {
+            'SCHEDULEDTOURS':[
+                'Make sure you insert the tour details first then you insert its checkpoints.',
+                'The Primary data of a checkpoint consist of Seq No, Asset, Question Set/Checklist, Expiry Time',
+                'Once you entered the primary data of a checkpoint, for other columns you can copy it from tour details you have just entered',
+                'This way repeat the above 3 steps for other tour details and its checkpoints'
+            ]
+        }.get(self.tablename)
     
     
     def get_column_names(self):
@@ -1677,7 +1689,6 @@ def generate_timezone_choices():
     
     utc = pytimezone('UTC')
     now = datetime.now(utc)
-    print("&&&&&&&&&&&&&&",now)
     choices = [('', "")]
     
     for tz_name in common_timezones:
