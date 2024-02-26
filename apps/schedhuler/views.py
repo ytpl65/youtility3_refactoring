@@ -622,7 +622,7 @@ class Retrive_E_ToursJob(LoginRequiredMixin, View):
 @require_http_methods(["POST"])
 def run_internal_tour_scheduler(request):
     """Schedules an internal tour based on the POST request."""
-
+    ic(request.POST)
     job_id = request.POST.get('job_id')
     action = request.POST.get('action')
     checkpoints = json.loads(request.POST.get('checkpoints', '[]'))
@@ -648,6 +648,7 @@ def run_internal_tour_scheduler(request):
         _handle_random_external_tour(job, checkpoints, request)
 
     if job['other_info']['isdynamic']:
+        ic("Dynamic Job found")
         resp = sutils.create_dynamic_job([job['id']])
         resp = rp.JsonResponse(resp, status=200, safe=False)
     else:

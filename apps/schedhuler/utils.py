@@ -22,11 +22,11 @@ log = get_task_logger('__main__')
 def create_dynamic_job(jobids=None):
     try:
         # check if dynamic job already exist with the passed jobid
-        if am.Jobneed.objects.filter(
-            parent_id=1,
-            jobstatus='ASSIGNED',
-            job_id__in = jobids
-        ).exists():
+        
+        is_job_modified = am.Job.objects.filter(id__in = jobids, mdtz__gt = F('cdtz')).first() # the job is modified
+        dynamic_jobneed_exist = am.Jobneed.objects.filter(parent_id=1,jobstatus='ASSIGNED',job_id__in = jobids).exists() #dynamic job exist
+        
+        if not is_job_modified and dynamic_jobneed_exist:
             pass
         else:
             jobs = am.Job.objects.filter(
