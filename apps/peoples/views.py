@@ -42,7 +42,6 @@ class SignIn(View):
         'invalid-form': 'sign in form is not valid...',
         'critical-error': 'something went wrong please follow the traceback to fix it... '}
 
-    @never_cache
     def get(self, request, *args, **kwargs):
         logger.info('SignIn View')
         request.session.set_test_cookie()

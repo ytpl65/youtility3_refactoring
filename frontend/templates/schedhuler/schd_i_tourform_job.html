@@ -537,9 +537,13 @@ Schedule Tour
             ajax:{
                 url:"{{ url('schedhuler:schd_internal_tour') }}?action=loadTourCheckpoints&parentid={{ schdtourform.instance.id }}",
             },
+            scrollY: 150,
+            paging:false,
+            scrollCollapse: true,
+            pageLength:50,
+            responsive: true,
             order:[0, 'asc'],
             ordering:false,
-            responsive:true,
             dom:'Brt',
             columns:[
                 {title:'SNo.', data:"seqno"},
