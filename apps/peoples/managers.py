@@ -106,14 +106,14 @@ class PeopleManager(BaseUserManager):
             Q(Q(designation__tacode = 'SITEINCHARGE') | Q(worktype__tacode= 'SITEINCHARGE')) 
             & Q(isverified=True)).values_list(
                 'email', flat=True
-            ) or self.none()
+            ) or []
     
     def get_admin_emails(self, clientid):
         return self.filter(
             (Q(people_extras__alertmails=True) | Q(isadmin=True)) &
             Q(client_id=clientid) & Q(isverified=True),
             enable=True
-        ).values_list('email', flat=True) or self.none()
+        ).values_list('email', flat=True) or []
         
     def get_peoples_at_site(self, request):
         R = request.GET

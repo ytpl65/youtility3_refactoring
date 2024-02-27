@@ -113,8 +113,7 @@ def autoclose_job(jobneedid=None):
                         'jobdesc': rec['jobdesc']
                     }
 
-                    emails = utils.get_email_addresses([rec['people_id'], rec['cuser_id'], rec['muser_id']], [
-                                                       rec['pgroup_id']], [rec['bu_id']])
+                    emails = butils.get_email_recipients(rec['bu_id'], rec['client_id'])
                     resp['story'] += f"email recipents are as follows {emails}\n"
                     log.info(f"recipents are as follows...{emails}")
                     msg = EmailMessage()

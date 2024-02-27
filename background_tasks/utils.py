@@ -265,15 +265,17 @@ def create_ticket_for_autoclose(jobneedrecord, ticketdesc):
             "something went wrong in create_ticket_for_autoclose", exc_info=True)
 
 
-def get_email_recipients(jobneed):
+def get_email_recipients(buid, clientid=None):
     from apps.peoples.models import People
     from apps.onboarding.models import Bt
     
     #get email of siteincharge
-    siemails = People.objects.get_siteincharge_emails(jobneed.bu_id)
+    emaillist = People.objects.get_siteincharge_emails(buid)
     #get email of client admins
-    adm_emails = People.objects.get_admin_emails(jobneed.client_id)
-    return list(siemails) + list(adm_emails)
+    if clientid:
+        adm_emails = People.objects.get_admin_emails(clientid)
+        emaillist += adm_emails
+    return emaillist
 
 def get_context_for_mailtemplate(jobneed, subject):
     from apps.activity.models import JobneedDetails
@@ -320,7 +322,7 @@ def alert_observation(jobneed, atts=False):
         result = {'story':"", 'traceback':""}
         if jobneed.alerts:
             result['story'] += 'Sending Mail...'
-            recipents = get_email_recipients(jobneed)
+            recipents = get_email_recipients(jobneed.bu_id, jobneed.client_id)
             if jobneed.identifier == 'EXTERNALTOUR':
                 subject = f"[READINGS ALERT] Site with {jobneed.bu.buname} having checklist [{jobneed.qset.qsetname}] - readings out of range"
             elif jobneed.identifier == 'INTERNALTOUR':

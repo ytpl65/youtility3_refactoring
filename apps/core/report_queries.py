@@ -84,7 +84,7 @@ def get_query(query):
             jobneed.jobtype,
             jobneed.jobstatus as "Status",
             jobneed.asset_id,
-            jobneed.performedby_id as "Performed By",
+            performedpeople.peoplename as "Performed By",
             jobneed.qset_id as qsetname,
             (jobneed.expirydatetime AT TIME ZONE tz.timezone)  as "Expired Date Time" ,
             jobneed.gracetime as "Gracetime",
@@ -104,6 +104,7 @@ def get_query(query):
             INNER JOIN asset ON asset.id=jobneed.asset_id
             INNER JOIN questionset ON questionset.id=jobneed.qset_id
             INNER JOIN people on jobneed.people_id=people.id
+            INNER JOIN people performedpeople on jobneed.performedby_id=performedpeople.id
             inner join pgroup on pgroup.id=jobneed.pgroup_id
                 CROSS JOIN timezone_setting tz
                 WHERE jobneed.identifier='TASK' --AND jobneed.jobstatus='COMPLETED'
@@ -112,7 +113,6 @@ def get_query(query):
             AND jobneed.bu_id IN (SELECT unnest(string_to_array(%s, ',')::integer[]))  
             AND (jobneed.plandatetime AT TIME ZONE tz.timezone)::DATE BETWEEN %s AND %s
             ORDER BY bu.buname, (jobneed.plandatetime AT TIME ZONE tz.timezone)::DATE desc
-            
             ''',
         "ListOfTours":
             '''
