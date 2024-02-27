@@ -567,5 +567,52 @@
             </div>
         </div>
     </div>
+    <div data-kt-menu-trigger="click" class="menu-item menu-accordion" style="display:none;" id="superadmin">
+        <span class="menu-link">
+            <span class="menu-icon">
+                <!--begin::Svg Icon | path: icons/duotone/Communication/Group.svg-->
+                <span class="svg-icon svg-icon-2">
+                    <span class="material-icons">stars</span>
+                </span>
+                <!--end::Svg Icon-->
+            </span>
+            <span class="menu-title">Log Viewer</span>
+            <span class="menu-arrow text-white mb-1"></span>
+        </span>
+        <div class="menu-sub menu-sub-accordion" kt-hidden-height="116" style="display: none; overflow: hidden;">
+            <div class="menu-item" id="capability">
+                <a class="menu-link" href="{{ url('peoples:capability') }}?template=true">
+                    <span class="menu-bullet">
+                        <span class="bullet bullet-dot"></span>
+                    </span>
+                    <span class="menu-title">Capability</span>
+                </a>
+            </div>
+            <div class="menu-item" id="client">
+                <a class="menu-link" href="{{ url('onboarding:client') }}?template=true">
+                    <span class="menu-bullet">
+                        <span class="bullet bullet-dot"></span>
+                    </span>
+                    <span class="menu-title">Client</span>
+                </a>
+            </div>
+            <div class="menu-item" id="sptypeassist">
+                <a class="menu-link" href="{{ url('onboarding:super_typeassist') }}?template=true">
+                    <span class="menu-bullet">
+                        <span class="bullet bullet-dot"></span>
+                    </span>
+                    <span class="menu-title">TypeAssist</span>
+                </a>
+            </div>
+            <div class="menu-item" id="features">
+                <a class="menu-link" href="{{ url('clientbilling:features') }}?template=true">
+                    <span class="menu-bullet">
+                        <span class="bullet bullet-dot"></span>
+                    </span>
+                    <span class="menu-title">Features</span>
+                </a>
+            </div>
+        </div>
+    </div>
     {% endif %}
 </div>

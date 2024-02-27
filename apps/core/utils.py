@@ -1090,6 +1090,8 @@ def runrawsql(sql, args=None, db='default', named=False, count=False, named_para
         cursor.execute(sql)
     else:
         cursor.execute(sql, args)
+    querystring = str(cursor.query, encoding='utf-8')
+    logger.debug(f"\n\nSQL QUERY: {querystring}\n")
     if count:
         return cursor.rowcount
     else:

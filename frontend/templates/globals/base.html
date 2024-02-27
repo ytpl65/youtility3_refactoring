@@ -1,87 +1,74 @@
 <!doctype html>
 <html lang="en">
 <head>
+  <!-- Required Meta Tags -->
   <meta name="viewport" content="width = device-width, initial-scale = 1" />
   <meta content="text/html;charset = utf-8" http-equiv="Content-Type">
   
-  <!-- BEGIN PAGEL LEVEL FONTS & ICONS START -->
+  <!-- Google Fonts & Icons -->
   <link rel="preconnect" href="https://fonts.gstatic.com" type="text/css"/>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Poppins:300,400,500,600,700"  type="text/css"/>
   <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined" rel="stylesheet" type="text/css"/>
   <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet" type="text/css"/>
-  <!-- END PAGEL LEVEL FONTS & ICONS END -->
   
-  <!-- BEGIN GLOBAL STYLESHEETS BUNDLE (used by all pages) -->
+  <!-- Global CSS & ICONS -->
   <link href="{{ static('assets/plugins/global/plugins.bundle.css') }}" rel="stylesheet" type="text/css" />
   <link href="{{ static('assets/css/style.bundle.css') }}" rel="stylesheet" type="text/css" />
   <link rel="stylesheet" type="text/css" href="https://ajax.googleapis.com/ajax/libs/jqueryui/1.12.1/themes/ui-darkness/jquery-ui.css">
-
-
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.3/font/bootstrap-icons.css">
-  <link
-    rel="stylesheet"
-    href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" type="text/css"/>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.3/font/bootstrap-icons.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" type="text/css"/>
   <link rel="shortcut icon" type="image/jpg" href="{{ static('assets/media/images/favicon.ico') }}"/>
 
-  <!-- END GLOBAL STYLESHEETS BUNDLE (used by all pages) -->
-<link href="{{ static('assets/css/local/global_level.css') }}" rel="stylesheet" type="text/css" />
-  <!-- BEGIN PAGE LEVEL STYLESHEETS -->  
+  <!-- Our Custom Local CSS File -->
+  <link href="{{ static('assets/css/local/global_level.css') }}" rel="stylesheet" type="text/css" />
 
-<!----FOR BASE_LEVEL ---->
+  <!-- A Block Avaialble For Child Base Files to Override -->
   {%- block base_head -%}
 
   {% endblock base_head %}
-<!----END FOR BASE_LEVEL ---->
   
 
-  <!-- END PAGE LEVEL STYLESHEETS -->
-  
+  <!-- Page Title -->
   <title>
-
   {%- block title -%}
   
   {% endblock title %}
   </title>
-
-  {%- block wizard_head -%}
   
-  {% endblock wizard_head %}
-<!--PAGE LEVEL --->
-{%- block extra_css -%}
+  <!-- A Block Available to Add Custom CSS to the End Page --->
+  {%- block extra_css -%}
 
-{% endblock extra_css %}
-<!----END FOR PAGE_LEVEL ---->
-
-<style>
-  #loading-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0, 0, 0, 0.5);
-    z-index: 9999;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
+  {% endblock extra_css %}
   
-  #loading-spinner {
-    border: 8px solid #f3f3f3;
-    border-top: 8px solid #3498db;
-    border-radius: 50%;
-    width: 60px;
-    height: 60px;
-    animation: spin 2s linear infinite;
-  }
-  
-  @keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
-  }
-  
-
-</style>
+  <!--CSS Rules to this Page-->
+  <style>
+    #loading-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.5);
+      z-index: 9999;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    #loading-spinner {
+      border: 8px solid #f3f3f3;
+      border-top: 8px solid #3498db;
+      border-radius: 50%;
+      width: 60px;
+      height: 60px;
+      animation: spin 2s linear infinite;
+    }
+    
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+  </style>
 </head>
 
 <body id="kt_body"

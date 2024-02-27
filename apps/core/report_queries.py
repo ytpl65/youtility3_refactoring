@@ -144,7 +144,7 @@ def get_query(query):
             INNER JOIN asset ON asset.id=jobneed.asset_id
             INNER JOIN questionset ON questionset.id=jobneed.qset_id
             INNER JOIN people on jobneed.people_id=people.id
-            INNER JOIN people performedpeople on jobneed.performedby_id=people.id
+            INNER JOIN people performedpeople on jobneed.performedby_id=performedpeople.id
             inner join pgroup on pgroup.id=jobneed.pgroup_id
                 CROSS JOIN timezone_setting tz
                 WHERE jobneed.identifier='INTERNALTOUR'
