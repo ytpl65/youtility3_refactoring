@@ -21,7 +21,7 @@ class BillingForm(forms.ModelForm):
 
 class FeaturesForm(forms.ModelForm):
     required_css_class="required"
-    defaultprice = forms.IntegerField(label='Default Price', required=True, initial=0, help_text="Enter Default price in Rupees")
+    defaultprice = forms.IntegerField(label='Default Price (INR)', required=True, initial=0, help_text="Enter Default price in Rupees")
     class Meta:
         model = Features
         fields = (

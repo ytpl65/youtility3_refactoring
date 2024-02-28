@@ -648,7 +648,6 @@ def run_internal_tour_scheduler(request):
         _handle_random_external_tour(job, checkpoints, request)
 
     if job['other_info']['isdynamic']:
-        ic("Dynamic Job found")
         resp = sutils.create_dynamic_job([job['id']])
         resp = rp.JsonResponse(resp, status=200, safe=False)
     else:
@@ -1074,7 +1073,8 @@ class JobneedExternalTours(LoginRequiredMixin, View):
         'template_path': 'schedhuler/e_tourlist_jobneed.html',
         'template_form': 'schedhuler/e_tourform_jobneed.html',
         'fields'       : ['jobdesc', 'people__peoplename', 'pgroup__groupname', 'id', 'ctzoffset','bu__buname', 'bu__solid',
-            'plandatetime', 'expirydatetime', 'jobstatus', 'gracetime', 'performedby__peoplename', 'seqno', 'qset__qsetname'],
+            'plandatetime', 'expirydatetime', 'jobstatus', 'gracetime', 'performedby__peoplename', 'seqno', 'qset__qsetname',
+            'attachmentcount'],
         'related': ['pgroup',  'ticketcategory', 'asset', 'client',
              'job', 'qset', 'people', 'parent', 'bu'],
         'form_class': scd_forms.E_TourFormJobneed,

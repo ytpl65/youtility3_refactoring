@@ -39,8 +39,9 @@ class Approvals(BaseModel):
         R = ('Rejected', 'Rejected')
     feature = models.ForeignKey(Features, verbose_name=_("Feature"), on_delete=models.RESTRICT, null=True)
     comment = models.TextField(_("Comment"),null=True)
-    approved = models.CharField(_("Approved"), max_length=50)
+    approved = models.CharField(_("Approved"), max_length=50, choices=ApprovedChoices.choices)
     approvedon = models.DateTimeField(_("Approved On"), auto_now=False, auto_now_add=False)
+    lastrequested = models.DateTimeField(_("Last Requested"), auto_now=False, auto_now_add=False, null=True)
     
 
 class Billing(BaseModel):

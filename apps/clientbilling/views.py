@@ -27,6 +27,9 @@ class FeatureView(LoginRequiredMixin, View):
         if R.get('action') == 'list':
             qset = self.PARAMS['model'].objects.get_feature_list(request)
             return rp.JsonResponse(data={'data':list(qset)})
+        if R.get('action') == 'approved_feature_list':
+            qset = self.PARAMS['model'].objects.get_approvedfeature_list(request)
+            return rp.JsonResponse(data={'data':list(qset)})
         form = FeaturesForm()
         return render(request, self.PARAMS['template_path'], context={'form': form})
     

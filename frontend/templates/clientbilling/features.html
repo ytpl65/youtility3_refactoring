@@ -37,6 +37,18 @@ Features
 </ul>
 {% endblock card_tabs %}
 
+{% block popup_alerts %}
+{{ super()  }}
+{% call general_popup(popup_id='approvalprompt', title='Approval Prompt', size='md') %}
+<div class="modal-body">
+        <p>Total&nbsp;<span id="noOfFeatures"></span> Features are selected</p>
+        <textarea name="note" class="form-control" id="" cols="30" rows="3" placeholder="Any Message..?"></textarea>
+</div>
+<div class="modal-footer">
+    <button type="button" class="btn btn-primary2" data-bs-dismiss="modal">Submit</button>
+</div>
+{% endcall %}
+{% endblock %}
 
 {% block form %}
 <form action="" method="post" class="featureform" id="featureform">
@@ -72,6 +84,9 @@ Features
 
 <div class="d-none feature-list-tab">
     <table class="display cell-border compact hover" id="tabFeatures"></table>
+    <br><br>
+    <p class="ch4">Approved Features</p><br>
+    <table class="display cell-border compact hover" id="tabApprovedFeatures"></table>
 </div>
 {% endblock form %}
 
@@ -87,7 +102,7 @@ Features
     <script>
         var tabFeatures;
         //return datatable
-        function featureList() {
+        function featureListDataTable() {
             tabFeatures = $('#tabFeatures').DataTable({
                 ajax:{
                     url:"{{ url('clientbilling:features') }}?action=list",
@@ -99,6 +114,57 @@ Features
                     { data:"description", title:"Description" },
                     { data:"defaultprice", title:"Default Price" },
                     { data:"isactive", title:"Is Active" },
+                    {data:null, defaultContent: '', orderable:true, className: 'select-checkbox noVis', width: "2%"},
+                ],
+                select: {
+                    style:    'multi',
+                    selector: 'tr'
+                },
+                dom: `<'row' <'col-sm-6 d-flex justify-content-start'f> <'col-sm-6 d-flex justify-content-end'B> >rt<'row'
+                    <'col-sm-6'l> <'col-sm-6'p><'col-sm-12 d-flex justify-content-center'i>>`,
+                deferRender: true,
+                responsive: true,
+                ordering: false,
+                buttons:[
+                    {
+                        text:"Select All",
+                        action:function(e, dt, node, config){
+                            var selectedRows = tabFeatures.rows({selected: true}).count();
+                            if(selectedRows > 0) {
+                                // Deselect all selected rows
+                                node.text('Select All');
+                                tabFeatures.rows().deselect();
+                            } else {
+                                // Select all rows
+                                node.text('Deselect All');
+                                tabFeatures.rows().select();
+                            }
+                        }
+                    },
+                    {
+                        text:"Approval Prompt",
+                        action:function(e, dt, node, config){
+                            node.attr("data-bs-toggle", "modal");
+                            node.attr("data-bs-target", "#approvalprompt");
+                        }
+                    }
+                ]
+            })
+        }
+
+        function approvedFeaturesDataTable(){
+            tabApprovedFeatures = $("#tabApprovedFeatures").DataTable({
+                ajax:{
+                    url:"{{ url('clientbilling:features') }}?action=approved_feature_list",
+                },
+                retrieve:true,
+                columns:[
+                    { data:'id', 'defaultContent':'', visible:false },
+                    { data:'feature__name', title:"Name" },
+                    { data:"comment", title:"Comment" },
+                    { data:"approved", title:"Status", width:"8%" },
+                    { data:"approvedon", title:"Approved On" , width:"15%" },
+                    { data:"lastrequested", title:"Last Requested On",  width:"15%" },
                 ],
                 dom: `<'row' <'col-sm-6 d-flex justify-content-start'f> <'col-sm-6 d-flex justify-content-end'B> >rt<'row'
                     <'col-sm-6'l> <'col-sm-6'p><'col-sm-12 d-flex justify-content-center'i>>`,
@@ -112,7 +178,8 @@ Features
             'featurelist':{
                 formClass:".feature-list-tab",
                 initFunction:() => {
-                    featureList()
+                    featureListDataTable()
+                    approvedFeaturesDataTable()
                 }
             },
             'addfeature':{
@@ -169,10 +236,8 @@ Features
                         window.setTimeout(function () {
                             window.location.href = `${url}?id=${data.pk}`;
                         }, 2000);
-                    })
+                })
             })
-
-            
         })
 
 

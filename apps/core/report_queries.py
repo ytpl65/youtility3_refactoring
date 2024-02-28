@@ -285,7 +285,7 @@ def get_query(query):
                     asset_id AS ct_asset_id,
                     starttime AT TIME ZONE tz.timezone AS ct_starttime,
                     endtime AT TIME ZONE tz.timezone AS ct_endtime,
-                    performedby_id AS ct_performedby_id,
+                    performedby_id AT TIME ZONE tz.timezone AS ct_performedby_id,
                     plandatetime AT TIME ZONE tz.timezone AS ct_plandatetime
                 FROM 
                     jobneed
@@ -311,7 +311,7 @@ def get_query(query):
                 jnd.starttime AT TIME ZONE tz.timezone AS starttime,
                 jnd.endtime AT TIME ZONE tz.timezone AS endtime,
                 jnd_p.ct_plandatetime::DATE AS "DATE OF VISIT",
-                Max(to_char(jnd_p.ct_plandatetime,'HH24:MI:SS')) AS "TIME OF VISIT",
+                Max(to_char(jnd_p.ct_performedby_id,'HH24:MI:SS')) AS "TIME OF VISIT",
                 Max(ST_X(ST_PointFromText(ST_AsText(jnd.gpslocation), 4326))) AS "LONGITUDE",
                 Max(ST_Y(ST_PointFromText(ST_AsText(jnd.gpslocation), 4326))) AS "LATITUDE",
                 people.peoplecode AS "RP ID",
