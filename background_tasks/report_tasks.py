@@ -305,11 +305,12 @@ def check_time_of_report(filename):
    log.info('Time difference is more than 30 minutes. Returning False for file: %s', filename)
    return False, None
 
-def remove_reportfile(file, story):
+def remove_reportfile(file, story=None):
     try:
         os.remove(file)
         log.info(f"Successfully deleted file: {os.path.basename(file)}")
     except Exception as e:
-        story['errors'].append(str(e))
         log.critical(f"Error deleting file {os.path.basename(file)}: {e}")
-    return story
+        if story:
+            story['errors'].append(str(e))
+            return story

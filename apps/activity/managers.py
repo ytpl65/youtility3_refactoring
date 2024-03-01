@@ -537,7 +537,7 @@ class JobneedManager(models.Manager):
         fields+=['distance', 'duration', 'bu__gpslocation', 'performedtime', 'alerts','attachmentcount']
         qset  = self.annotate(
             distance=F('other_info__distance'),
-            performedtime = F("endtime"),
+            performedtime = F("starttime"),
             bu__gpslocation = AsGeoJSON('bu__gpslocation'),
             duration = V(None, output_field=models.CharField(null=True))).select_related(*related).filter(
             parent_id = request.GET['parent_id'],

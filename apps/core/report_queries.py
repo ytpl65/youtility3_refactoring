@@ -274,7 +274,7 @@ def get_query(query):
         'SiteReport':
             '''
             WITH timezone_setting AS (
-                SELECT %s::text AS timezone
+                SELECT '{timezone}' ::text AS timezone
             ),
             jnd_p AS (
                 SELECT 
@@ -285,7 +285,7 @@ def get_query(query):
                     asset_id AS ct_asset_id,
                     starttime AT TIME ZONE tz.timezone AS ct_starttime,
                     endtime AT TIME ZONE tz.timezone AS ct_endtime,
-                    performedby_id AT TIME ZONE tz.timezone AS ct_performedby_id,
+                    performedby_id AS ct_performedby_id,
                     plandatetime AT TIME ZONE tz.timezone AS ct_plandatetime
                 FROM 
                     jobneed
@@ -294,24 +294,23 @@ def get_query(query):
                 WHERE 
                     parent_id IS NOT NULL 
                     AND parent_id = 1
-                    AND client_id = %s
-                    AND sgroup_id IN (SELECT unnest(string_to_array(%s, ',')::integer[]))
-                    AND (jobneed.plandatetime AT TIME ZONE tz.timezone) BETWEEN %s AND %s
+                    AND client_id = {clientid}
+                    AND sgroup_id IN (SELECT unnest(string_to_array('{sgroupids}', ',')::integer[]))
+                    AND (jobneed.plandatetime AT TIME ZONE tz.timezone) BETWEEN '{from}' AND '{upto}'
             )
 
             SELECT 
-                jnd.jobdesc AS jobdesc,
+                --jnd.jobdesc AS jobdesc,
                 bt.solid as"SOL ID",
                 Max(pgroup.groupname) as "ROUTE NAME",
                 bt.bucode as "SITE CODE", 
                 bt.buname as "SITE NAME",
-                Max(qset.qsetname) AS qsetname,
-                Max(asset.assetname) AS assetname,
-                Max(butype.taname) AS butype,
-                jnd.starttime AT TIME ZONE tz.timezone AS starttime,
-                jnd.endtime AT TIME ZONE tz.timezone AS endtime,
-                jnd_p.ct_plandatetime::DATE AS "DATE OF VISIT",
-                Max(to_char(jnd_p.ct_performedby_id,'HH24:MI:SS')) AS "TIME OF VISIT",
+                --Max(qset.qsetname) AS qsetname,
+                --Max(asset.assetname) AS assetname,
+                --jnd.starttime AT TIME ZONE tz.timezone AS starttime,
+                --jnd.endtime AT TIME ZONE tz.timezone AS endtime,
+                (jnd.starttime AT TIME ZONE tz.timezone)::DATE AS "DATE OF VISIT",
+                Max(to_char((jnd.starttime AT TIME ZONE tz.timezone),'HH24:MI:SS')) AS "TIME OF VISIT",
                 Max(ST_X(ST_PointFromText(ST_AsText(jnd.gpslocation), 4326))) AS "LONGITUDE",
                 Max(ST_Y(ST_PointFromText(ST_AsText(jnd.gpslocation), 4326))) AS "LATITUDE",
                 people.peoplecode AS "RP ID",
@@ -321,7 +320,7 @@ def get_query(query):
                 Max(bt.bupreferences->'address2'->>'state') AS "STATE",
                 -- Add your CASE statements here for each condition 
                 -- Example:
-                Max(CASE WHEN upper(question.quesname)='FASCIA WORKING' THEN jnds.answer END) AS "FACIA WORKING",
+            Max(CASE WHEN upper(question.quesname)='FASCIA WORKING' THEN jnds.answer END) AS "FASCIA WORKING",
             Max(CASE WHEN upper(question.quesname)='LOLLY POP WORKING' THEN jnds.answer END) AS "LOLLY POP WORKING",
             Max(CASE WHEN upper(question.quesname)='ATM MACHINE COUNT' THEN jnds.answer END) AS "ATM MACHINE COUNT",
             Max(CASE WHEN upper(question.quesname)='AC IN ATM COOLING' THEN jnds.answer END) AS "AC IN ATM COOLING",
@@ -354,8 +353,6 @@ def get_query(query):
                 people ON people.id=jnd.performedby_id
             LEFT JOIN 
                 pgroup ON pgroup.id=jnd.sgroup_id
-            INNER JOIN 
-                typeassist AS butype ON butype.id=bt.butype_id
             CROSS JOIN 
                 timezone_setting tz
             WHERE 

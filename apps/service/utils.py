@@ -483,7 +483,7 @@ def save_journeypath_field(jobneed):
         from django.contrib.gis.geos import LineString
         from apps.attendance.models import Tracking
         try:
-            log.info("saving line string started")
+            log.info(f"saving line string started {jobneed['jobstatus']}")
             sitetour =  Jobneed.objects.get(uuid=jobneed.get('uuid'))
             between_latlngs = Tracking.objects.filter(reference = jobneed.get('uuid')).order_by('receiveddate')
             line = [[coord for coord in obj.gpslocation] for obj in between_latlngs]

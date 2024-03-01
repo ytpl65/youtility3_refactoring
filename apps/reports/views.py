@@ -575,34 +575,53 @@ class DownloadReports(LoginRequiredMixin, View):
         return render(request, P['template_form'], context=cxt)
     
     def post(self, request, *args, **kwargs):
-        form_data, P = request.POST, self.PARAMS
-        session = dict(request.session)
-        ic(form_data)
-        form = P['form'](data = form_data, request=request)
+        form = self.PARAMS['form'](data=request.POST, request=request)
         if not form.is_valid():
-            return render(request, P['template_form'], context={
-                'form':form})
+            return render(request, self.PARAMS['template_form'], {'form': form})
+
         log.info('form is valid')
         formdata = form.cleaned_data
-        log.info("Formdata submitted by user %s"%(pformat(formdata)))
-        return self.export_report(formdata, session, request, form)
-        
+        log.info(f"Formdata submitted by user: {pformat(formdata)}")
+
+        try:
+            return self.export_report(formdata, dict(request.session), request, form)
+        except Exception as e:
+            log.critical("Something went wrong while exporting report", exc_info=True)
+            messages.error(request, "Error while exporting report", 'alert-danger')
+        return render(request, self.PARAMS['template_form'], {'form': form})
+
     def export_report(self, formdata, session, request, form):
+        returnfile = formdata.get('export_type') == 'SEND'
         report_essentials = rutils.ReportEssentials(report_name=formdata['report_name'])
-        log.info("report essentials %s"%(report_essentials))
+        log.info(f"report essentials: {report_essentials}")
         ReportFormat = report_essentials.get_report_export_object()
-        report = ReportFormat(filename=formdata['report_name'], client_id=session['client_id'], formdata=formdata, request=request)
-        log.info("Report Format intialized, %s"%(report))
-        if response :=  report.execute():
-            return response
-        form.add_error(None, self.PARAMS['nodata'])
-        return render(request, self.PARAMS['template_form'], {'form':form})
+        report = ReportFormat(filename=formdata['report_name'], client_id=session['client_id'],
+                              formdata=formdata, request=request, returnfile=returnfile)
+        log.info(f"Report Format initialized, {report}")
         
-    
+        if response := report.execute():
+            if returnfile:
+                return self.process_sendingreport_on_email(response, formdata, request, form)
+            return response
+        
+        form.add_error(None, self.PARAMS['nodata'])
+        return render(request, self.PARAMS['template_form'], {'form': form})
+
+    def process_sendingreport_on_email(self, fileresponse, formdata, request, form):
+        try:
+            from background_tasks.report_tasks import save_report_to_tmp_folder
+            from background_tasks.tasks import send_generated_report_onfly_email
+            filepath = save_report_to_tmp_folder(filename=formdata['report_name'], ext=formdata['format'], report_output=fileresponse)
+            send_generated_report_onfly_email.delay(filepath, request.user.email, formdata['to_addr'], formdata['cc'], formdata['ctzoffset'])
+            messages.success(request, 'Report is successfully processed for sending on email', "alert-success")
+        except Exception as e:
+            messages.error(request, 'Something went wrong while sending report on email', "alert-danger")
+            log.critical("something went wrong while sending report on email", exc_info=True)
+        return render(request, self.PARAMS['template_form'], {'form': form})
+
     def form_behaviour(self, R):
         report_essentials = self.PARAMS['ReportEssentials'](report_name=R['report_name'])
         return rp.JsonResponse({'behaviour':report_essentials.behaviour_json})
-    
 
 class DesignReport(LoginRequiredMixin, View):
     # change this file according to your design

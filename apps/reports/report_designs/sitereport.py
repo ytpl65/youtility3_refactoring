@@ -22,32 +22,33 @@ class SiteReportFormat(BaseReportsExport):
         used for pdf/html reports
         '''
         self.set_args_required_for_query()
-        fromdatetime = self.formdata['fromdatetime'].strftime('%d/%m/%Y %H:%M:%S'),
+        fromdatetime = self.formdata.get('fromdatetime').strftime('%d/%m/%Y %H:%M:%S')
         uptodatetime = self.formdata.get('uptodatetime').strftime('%d/%m/%Y %H:%M:%S')
+        ic(fromdatetime, uptodatetime)
         self.context = {
             'base_path': settings.BASE_DIR,
-            'data' : runrawsql(get_query(self.report_name), args=self.args),
+            'data' : runrawsql(get_query(self.report_name), args=self.args, named_params=True),
             'report_title': self.report_title,
             'client_logo':self.get_client_logo(),
             'app_logo':self.ytpl_applogo,
-            'report_subtitle':f"From: {fromdatetime} To {uptodatetime}"
+            'report_subtitle':f"From: {fromdatetime}  To  {uptodatetime}"
         }
         
     def set_args_required_for_query(self):
-        self.args = [
-            get_timezone(self.formdata['ctzoffset']),
-            self.client_id,
-            ','.join(self.formdata['sitegroup']),
-            self.formdata['fromdatetime'].strftime('%d/%m/%Y %H:%M:%S'),
-            self.formdata['uptodatetime'].strftime('%d/%m/%Y %H:%M:%S'),
-            ]
+        self.args = {
+            'timezone':get_timezone(self.formdata['ctzoffset']),
+            'clientid':self.client_id,
+            'sgroupids':','.join(self.formdata['sitegroup']),
+            'from': self.formdata['fromdatetime'].strftime('%d/%m/%Y %H:%M:%S'),
+            'upto': self.formdata['uptodatetime'].strftime('%d/%m/%Y %H:%M:%S'),
+        }
     
     def set_data(self):
         '''
         setting the data which is shown on report
         '''
         self.set_args_required_for_query()
-        self.data = runrawsql(get_query(self.report_name), args=self.args)
+        self.data = runrawsql(get_query(self.report_name), args=self.args, named_params=True)
 
         
     def set_additional_content(self):

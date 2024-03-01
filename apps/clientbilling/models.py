@@ -32,7 +32,7 @@ class Features(BaseModel):
         return self.name
     
 
-class Approvals(BaseModel):
+class ApprovedFeature(BaseModel):
     class ApprovedChoices(models.TextChoices):
         A = ('Approved', 'Approved')
         P = ('Pending', 'Pending')
@@ -43,6 +43,13 @@ class Approvals(BaseModel):
     approvedon = models.DateTimeField(_("Approved On"), auto_now=False, auto_now_add=False)
     lastrequested = models.DateTimeField(_("Last Requested"), auto_now=False, auto_now_add=False, null=True)
     
+    class Meta(BaseModel.Meta):
+        db_table            = 'approvedfeatures'
+        verbose_name        = 'Approved Feature'
+        verbose_name_plural = 'Approved Features'
+    
+    def __str__(self):
+        return self.feature.name
 
 class Billing(BaseModel):
     '''

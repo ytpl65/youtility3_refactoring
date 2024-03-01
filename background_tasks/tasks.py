@@ -541,3 +541,26 @@ def send_generated_report_on_mail():
        log.critical("something went wrong", exc_info=True)
     story['end_time'] = timezone.now()
     return story
+
+@shared_task(bind=True, name="send_generated_report_onfly_email")
+def send_generated_report_onfly_email(self, filepath, fromemail, to, cc, ctzoffset):
+    story = {'msg':['send_generated_report_onfly_email [started]']}
+    try:
+        story['msg'].append(f'{filepath = } {fromemail = } {to = } {cc =}')
+        currenttime = timezone.now() + timedelta(minutes=int(ctzoffset))
+        msg = EmailMessage(
+            f"Your Requested report! on {currenttime.strftime('%d-%b-%Y %H:%M:%S')}",
+            from_email=fromemail,
+            to=to,
+            cc=cc
+        )
+        msg.attach_file(filepath)
+        msg.send()
+        story['msg'].append('Email Sent')
+        remove_reportfile(filepath, story)
+        story['msg'].append('send_generated_report_onfly_email [ended]')
+    except Exception  as e:
+        log.critical("something went wrong in bg task send_generated_report_onfly_email", exc_info=True)
+    return story
+        
+    
