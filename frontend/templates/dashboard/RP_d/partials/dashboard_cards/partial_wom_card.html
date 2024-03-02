@@ -40,6 +40,7 @@ localStorage.setItem('womstats_filter', JSON.stringify(filters))
 }
 }
 },
+colors: ['#2E93fA', '#66DA26', '#00BFA8', '#E91E63', '#A9A9A9', '#ECD302'],
 responsive: [{
 breakpoint: 480,
 options: {
@@ -53,18 +54,16 @@ offsetY: 0
 labels: ['Assigned', 'Re-Assigned', 'Completed', 'In Progress', 'Closed', 'Cancelled'],
 fill: {
 opacity: 1,
-colors: ['#FF5733', '#33FF57', '#3357FF', '#FF33F5', '#F5FF33', '#8867FF']
 },
 stroke: {
 width: 1,
-colors: ['#FF5733', '#33FF57', '#3357FF', '#FF33F5', '#F5FF33', '#8867FF']
+colors: undefined
 },
 yaxis: {
 show: false
 },
 legend: {
-position: 'bottom',
-colors:['#FF5733', '#33FF57', '#3357FF', '#FF33F5', '#F5FF33', '#8867FF']
+position: 'right',
 },
 plotOptions: {
 polarArea: {

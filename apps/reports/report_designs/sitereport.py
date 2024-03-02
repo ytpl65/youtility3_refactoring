@@ -33,6 +33,19 @@ class SiteReportFormat(BaseReportsExport):
             'app_logo':self.ytpl_applogo,
             'report_subtitle':f"From: {fromdatetime}  To  {uptodatetime}"
         }
+        return len(self.context['data']) > 0
+    
+    def excel_columns(self, df):
+        df = df[['ROUTE NAME', 'SOL ID', 'SITE CODE', 'SITE NAME', 'DATE OF VISIT',
+                 'TIME OF VISIT', 'LATITUDE', 'LONGITUDE', 'RP ID', 'RP OFFICER',
+                 'CONTACT', 'SITE ADDRESS', 'STATE', 'FASCIA WORKING',
+                 'LOLLY POP WORKING', 'ATM MACHINE COUNT', 'AC IN ATM COOLING', 
+                 'ATM BACK ROOM LOCKED', 'UPS ROOM BEHIND ATM LOBBY ALL SAFE', 
+                 'BRANCH SHUTTER DAMAGED', 'BRANCH PERIPHERY ROUND TAKEN', 
+                 'AC ODU AND COPPER PIPE INTACT', 'ANY WATER LOGGING OR FIRE IN VICINITY', 
+                 'FE AVAILABLE IN ATM LOBBY', 'DG DOOR LOCKED', 'DAMAGE TO ATM LOBBY', 
+                 'ANY OTHER OBSERVATION']]
+        return df
         
     def set_args_required_for_query(self):
         self.args = {
@@ -49,11 +62,14 @@ class SiteReportFormat(BaseReportsExport):
         '''
         self.set_args_required_for_query()
         self.data = runrawsql(get_query(self.report_name), args=self.args, named_params=True)
+        return len(self.data) > 0
 
         
     def set_additional_content(self):
         bt = Bt.objects.filter(id=self.client_id).values('id', 'buname').first()
-        self.additional_content = f"Client: {bt['buname']}; Report: {self.report_title}; From: {self.formdata['fromdatetime']} To: {self.formdata['uptodatetime']}"
+        fromdatetime = self.formdata.get('fromdatetime').strftime('%d/%m/%Y %H:%M:%S')
+        uptodatetime = self.formdata.get('uptodatetime').strftime('%d/%m/%Y %H:%M:%S')
+        self.additional_content = f"Client: {bt['buname']}; Report: {self.report_title}; From: {fromdatetime} To: {uptodatetime}"
         
 
     def excel_layout(self, worksheet, workbook, df, writer, output):
@@ -102,10 +118,13 @@ class SiteReportFormat(BaseReportsExport):
         export_format = self.formdata.get('format')
         # context needed for pdf, html
         if export_format in ['pdf', 'html']:
-            self.set_context_data()
+            has_data = self.set_context_data()
         else:
             self.set_additional_content()
-            self.set_data()
+            has_data = self.set_data()
+        
+        if not has_data:
+            return None
         
         # preview in pdf
         if self.formdata.get('preview') == 'true':

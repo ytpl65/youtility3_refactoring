@@ -603,8 +603,9 @@ class DownloadReports(LoginRequiredMixin, View):
             if returnfile:
                 return self.process_sendingreport_on_email(response, formdata, request, form)
             return response
-        
-        form.add_error(None, self.PARAMS['nodata'])
+        else:
+            log.info("No data found matching your report criteria")
+            form.add_error(None, self.PARAMS['nodata'])
         return render(request, self.PARAMS['template_form'], {'form': form})
 
     def process_sendingreport_on_email(self, fileresponse, formdata, request, form):

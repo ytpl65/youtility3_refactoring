@@ -63,6 +63,7 @@ var table= null
                 {data:'people__mobno', title:"People Contact"},
                 {data:'people__email', title:"People Email"},
                 {data:null, title:'Attachments', className:'noVis', render:function(data, type, row, meta){
+                    if(row.filepath == null) return 'N/A'
                     let file = `{{ MEDIA_URL }}${row.filepath.replace('youtility4_media/', "")}/${row.filename}`
                     return `<a href="${file}" target="_blank"><i class="fas fa-file-video text-primary fs-3"></i></a>`
                 }},
@@ -80,7 +81,10 @@ var table= null
                 }
                 }],
             order:[[0, 'desc']],
-            buttons:[]
+            buttons:[],
+            initComplete:function(settings, json){
+                console.log(json)
+            }
         })
 
          //add input field to the datatables dom

@@ -149,6 +149,12 @@ class PELManager(models.Manager):
             datefor__gte = pd1,
             datefor__lte = pd2
         ).count() or 0
+    
+    def get_sitecrisis_count_forcard(self, request):
+        R, S = request.GET, request.session
+        pd1 = R.get('from', datetime.now().date())
+        pd2 = R.get('upto', datetime.now().date())
+        return self.fetch_sitecrisis_events(pd1, pd2, S).count() or 0
 
     def get_frfail_count_forcard(self, request):
         R, S = request.GET, request.session
@@ -178,27 +184,38 @@ class PELManager(models.Manager):
         )
         return qset or self.none()
     
-    def get_sos_listview(self, request):
-        R, S = request.GET, request.session
-        P = json.loads(R['params'])
-        qset = self.filter(
-            bu_id__in = S['assignedsites'],
-            client_id = S['client_id'],
+    def fetch_sos_events(self, start_date, end_date, session):
+        return self.filter(
+            bu_id__in=session['assignedsites'],
+            client_id=session['client_id'],
             peventtype__tacode='SOS',
-            datefor__gte = P['from'],
-            datefor__lte = P['to']
-        ).select_related('people', 'bu', 'peventtype').values(
+            datefor__gte=start_date,
+            datefor__lte=end_date
+        ).select_related('peventtype').values(
             'id', 'ctzoffset', 'people__peoplename', 'cdtz', 'uuid',
             'people__peoplecode', 'people__mobno', 'people__email',
             'bu__buname'
         )
-        uuids = qset.annotate(owner_uuid = Cast('uuid', output_field=models.CharField())).values_list(
-            'owner_uuid', flat=True
-        )
+    
+    def fetch_attachments(self, uuids):
         from apps.activity.models import Attachment
-        att_qset = Attachment.objects.get_attforuuids(uuids).values('filepath', 'filename')
-        merged_qset = [{**obj1, **obj2} for obj1, obj2 in zip(qset, att_qset)]
-        return merged_qset or self.none()
+        attachments = Attachment.objects.get_attforuuids(uuids).values('owner', 'filepath', 'filename')
+        return {att['owner']: att for att in attachments}
+
+    def merge_with_attachments(self, events, attachments):
+        for event in events:
+            attachment = attachments.get(str(event['uuid']), {'filepath': None, 'filename': None})
+            yield {**event, **attachment}
+    
+    def get_sos_listview(self, request):
+        R, S = request.GET, request.session
+        P = json.loads(R['params'])
+        from_date, to_date = P['from'], P['to']
+        events = self.fetch_sos_events(from_date, to_date, request.session)
+        uuids = [event['uuid'] for event in events]
+        attachments = self.fetch_attachments(uuids)
+        merged_events = list(self.merge_with_attachments(events, attachments))
+        return merged_events or self.none()
     
     def get_people_event_log_punch_ins(self, datefor, buid, peopleid):
         type = ['MARK', 'MARKATTENDANCE'] if peopleid == -1 else ['SELF', 'SELFATTENDANCE']
@@ -249,37 +266,31 @@ class PELManager(models.Manager):
             tatype__tacode = 'SITECRISIS'
         ).select_related('tatype').values_list('tacode', flat=True)
         return qset or []
-    
-    def get_sitecrisis_countorlist(self, request, count=False):
-        R,S = request.GET, request.session
-        pd1 = R.get('from', datetime.now().date())
-        pd2 = R.get('upto', datetime.now().date())
-        
-        pel_qset = self.select_related('people', 'bu').filter(
+
+    def fetch_sitecrisis_events(self, start_date, end_date, session):
+        return self.filter(
             Q(startlocation__isnull=False),
-            peventtype__tacode__in=self.get_sitecrisis_types(),
-            datefor__gte = pd1,
-            datefor__lte = pd2,
-            bu_id__in = S['assignedsites']
-        ).annotate(
-        gps = AsGeoJSON('startlocation'),
-        )
-        
-        fields = [
+            datefor__gte=start_date,
+            datefor__lte=end_date,
+            bu_id__in=session['assignedsites'],
+            peventtype__tacode__in=self.get_sitecrisis_types()
+        ).select_related('peventtype').annotate(gps=AsGeoJSON('startlocation')).values(
             'people__peoplename','people__peoplecode', 'gps', 'reference',
             'cdtz' ,'bu__buname', 'bu__bucode', 'ctzoffset', 'people__mobno',
             'people__email', 'uuid',
-            'id']
-        pel_qset = pel_qset.values(*fields)
-        uuids = pel_qset.annotate(owner_uuid = Cast('uuid', output_field=models.CharField())).values_list(
-            'owner_uuid', flat=True
+            'id'
         )
-        ic(pel_qset)
-        from apps.activity.models import Attachment
-        att_qset = Attachment.objects.get_attforuuids(uuids).values('filepath', 'filename')
-        merged_qset = [{**obj1, **obj2} for obj1, obj2 in zip(pel_qset, att_qset)]
-        if count: return len(pel_qset) or 0
-        return merged_qset or []
+    
+    def get_sitecrisis_countorlist(self, request, count=False):
+        R, S = request.GET, request.session
+        P = json.loads(R['params'])
+        fromdate, upto = P['from'], P['to']
+        events = self.fetch_sitecrisis_events(fromdate, upto, S)
+        uuids = [event['uuid'] for event in events]
+        attachments = self.fetch_attachments(uuids)
+        merged_events = list(self.merge_with_attachments(events, attachments))
+        if count: return len(merged_events)
+        return merged_events or self.none()
 
     def get_sitevisited_log(self, clientid, peopleid, ctzoffset):
         seven_days_ago = (datetime.now() + timedelta(minutes=ctzoffset)) - timedelta(days=7)

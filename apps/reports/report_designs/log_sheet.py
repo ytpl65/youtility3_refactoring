@@ -38,6 +38,7 @@ class LogSheet(BaseReportsExport):
             'Asset_Questionset_name':f"Asset Name: {asset_name}   |   QuestionSet Name: {questionset_name}"
 
         }
+        return len(self.context['data']) > 0
 
 
 
@@ -59,6 +60,7 @@ class LogSheet(BaseReportsExport):
         '''
         self.set_args_required_for_query()
         self.data = runrawsql(get_query(self.report_name), args=self.args)
+        return len(self.data) > 0
 
 
     def set_additional_content(self):
@@ -118,10 +120,13 @@ class LogSheet(BaseReportsExport):
         export_format = self.formdata.get('format')
         # context needed for pdf, html
         if export_format in ['pdf', 'html']:
-            self.set_context_data()
+            has_data = self.set_context_data()
         else:
             self.set_additional_content()
-            self.set_data()
+            has_data = self.set_data()
+        
+        if not has_data:
+            return None
         
         # preview in pdf
         if self.formdata.get('preview') == 'true':

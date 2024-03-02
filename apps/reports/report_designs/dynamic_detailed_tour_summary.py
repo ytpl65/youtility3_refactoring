@@ -31,6 +31,7 @@ class DynamicDetailedTourSummaryReport(BaseReportsExport):
             'app_logo':self.ytpl_applogo,
             'report_subtitle':f"Site: {sitename}, From: {self.formdata.get('fromdate')} To {self.formdata.get('uptodate')}"
         }
+        return len(self.context['data']) > 0
     
     
     def set_args_required_for_query(self):
@@ -47,6 +48,7 @@ class DynamicDetailedTourSummaryReport(BaseReportsExport):
         '''
         self.set_args_required_for_query()
         self.data = runrawsql(get_query(self.report_name), args=self.args)
+        return len(self.data) > 0
         
     
     def set_additional_content(self):
@@ -113,10 +115,13 @@ class DynamicDetailedTourSummaryReport(BaseReportsExport):
         export_format = self.formdata.get('format')
         # context needed for pdf, html
         if export_format in ['pdf', 'html']:
-            self.set_context_data()
+            has_data = self.set_context_data()
         else:
             self.set_additional_content()
-            self.set_data()
+            has_data = self.set_data()
+        
+        if not has_data:
+            return None
         
         # preview in pdf
         if self.formdata.get('preview') == 'true':
