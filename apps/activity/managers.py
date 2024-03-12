@@ -20,7 +20,8 @@ class QuestionSetManager(models.Manager):
     use_in_migrations = True
     fields = ['id', 'cuser_id', 'muser_id', 'ctzoffset', 'bu_id', 'client_id', 'cdtz', 'mdtz',
               'parent_id', 'qsetname', 'enable', 'assetincludes', 'show_to_all_sites',
-              'buincludes', 'seqno', 'url', 'type' , 'tenant_id']
+              'buincludes', 'seqno', 'url', 'type' , 'tenant_id', 'site_grp_includes',
+              'site_type_includes']
     related = ['cuser', 'muser', 'client', 'bu', 'parent', 'asset', 'type']
 
     def get_template_list(self, bulist):
@@ -31,9 +32,16 @@ class QuestionSetManager(models.Manager):
                 return tuple(qset)
         return ""
 
-    def get_qset_modified_after(self, mdtz, buid, clientid):
+    def get_qset_modified_after(self, mdtz, buid, clientid, peopleid):
+        user = pm.People.objects.get(id = peopleid)
         qset = self.select_related(*self.related).filter(
-            Q(id = 1) | Q(mdtz__gte = mdtz) &  Q(bu_id = buid) | (Q(show_to_all_sites = True) & Q(client_id = clientid))  & Q(enable=True)).values(*self.fields).order_by('-mdtz')
+            Q(id=1) |
+            ((Q(client_id=clientid) & Q(enable=True)) &
+            ((Q(mdtz__gte=mdtz) & Q(bu_id=buid)) |
+            Q(show_to_all_sites=True) |
+            Q(site_grp_includes__contains=user.people_extras['assignsitegroup']) |
+            Q(id__in = user.people_extras['tempincludes'])))
+            ).values(*self.fields).order_by('-mdtz')
         qset = self.clean_fields(qset)
         return qset or None
 
@@ -46,8 +54,10 @@ class QuestionSetManager(models.Manager):
     
     def clean_fields(self, qset):
         for obj in qset:
-            if(obj.get('assetincludes') or obj.get('buincludes')):
+            if(obj.get('assetincludes') or obj.get('buincludes') or obj.get('site_grp_includes') or obj.get('site_type_includes')):
                 obj['assetincludes'] = str(obj['assetincludes']).replace('[', '').replace(']', '').replace("'", "")
+                obj['site_grp_includes'] = str(obj['site_grp_includes']).replace('[', '').replace(']', '').replace("'", "")
+                obj['site_type_includes'] = str(obj['site_type_includes']).replace('[', '').replace(']', '').replace("'", "")
                 obj['buincludes'] = str(obj['buincludes']).replace('[', '').replace(']', '').replace("'", "")
         return qset 
     
@@ -684,7 +694,7 @@ class JobneedManager(models.Manager):
                **annotation
             ).filter(
                 ~Q(id=1),
-                ~Q(jobstatus__in = ['COMPLETED']),
+                ~Q(jobstatus__in = ['COMPLETED', 'PARTIALLYCOMPLETED']),
                 ~Q(other_info__autoclosed_by_server = True),
                 ~Q(Q(jobstatus = 'AUTOCLOSED') & Q(other_info__email_sent = True))|
                 ~Q(Q(jobstatus = 'AUTOCLOSED') & Q(other_info__ticket_generated = True)),
@@ -927,35 +937,38 @@ class JobneedManager(models.Manager):
         return job_needs
 
     def get_external_tour_job_needs(self, people_id, bu_id, client_id):
-        from django.utils import timezone as dtimezone
-        # Get group IDs associated with the person
-        group_ids = pm.Pgbelonging.objects.filter(people_id=people_id).values_list('pgroup_id', flat=True)
-
-        # Current date and time
-        now = dtimezone.now()
-
-        # Query JobNeed model
-        job_needs = self.filter(
-            # Timezone offset and date computations
-            plandatetime__date__range=(now.date(), now.date() + timedelta(days=1)),
-            expirydatetime__gte=now,
-            # Filter by client, identifier, and people/groups
-            client_id=client_id,
-            identifier='EXTERNALTOUR',
-            pgroup_id__in=group_ids,
-        ).annotate(
-            # Using F expressions to handle timezone offset
-            adjusted_plandatetime=Func(F('plandatetime'), V(1), V('minute') * F('ctzoffset'), function='DATEADD'),
-        ).values(
+        fields = [
             'id', 'jobdesc', 'plandatetime', 'expirydatetime', 'gracetime', 'receivedonserver',
-            'starttime', 'endtime', 'gpslocation', 'remarks', 'cdtz', 'mdtz', 'pgroup_id',
-            'asset_id', 'cuser_id', 'frequency', 'job_id', 'jobstatus', 'jobtype', 'muser_id',
-            'performedby_id', 'priority', 'qset_id', 'scantype', 'people_id', 'attachmentcount',
-            'identifier', 'parent_id', 'bu_id', 'client_id', 'seqno', 'ticketcategory_id',
-            'ctzoffset', 'multifactor', 'uuid'
+            'starttime', 'endtime', 'gpslocation', 'remarks', 'cdtz', 'mdtz', 'pgroup_id', 
+            'asset_id', 'cuser_id', 'frequency', 'job_id', 'jobstatus', 'jobtype',
+            'muser_id', 'performedby_id', 'priority', 'qset_id','scantype', 'people_id',
+            'attachmentcount', 'identifier', 'parent_id', 'bu_id', 'client_id','seqno',
+            'ticketcategory_id', 'ctzoffset', 'uuid', 'multifactor'
+        ]
+        
+        # Retrieve group IDs from Pgbelonging
+        group_ids = pm.Pgbelonging.objects.filter(
+            people_id=people_id
+        ).exclude(
+            pgroup_id=-1
+        ).values_list('pgroup_id', flat=True)
+        # Construct the filter conditions for the job needs
+        today = datetime.now().date()
+        tomorrow = today + timedelta(days=1)
+        parentqset = self.filter(
+            (Q(plandatetime__date__range=[today, tomorrow]) | (Q(plandatetime__gte=datetime.now()) & Q(expirydatetime__lte=datetime.now()))) &
+            (Q(people_id=people_id) | Q(cuser_id=people_id) | Q(muser_id=people_id) | Q(pgroup_id__in=group_ids)),
+            parent_id=1,
+            client_id=client_id,
+            identifier='EXTERNALTOUR'
         )
-
-        return job_needs
+        parent_jobneed_ids = parentqset.values_list('id', flat=True)
+        child_checkpoints = self.filter(parent_id__in=parent_jobneed_ids)
+        totalqset = parentqset | child_checkpoints
+        totalqset = totalqset.values(*fields)
+        return totalqset
+        
+        
 
     def get_dynamic_tour_count(self, request):
         S = request.session

@@ -347,7 +347,7 @@ def perform_facerecognition_bgt(self, pel_uuid, peopleid, db='default'):
     return result
 
 
-@app.task(bind=True, default_retry_delay=300, max_retries=5, name="alert_sendmail()")
+@app.task(bind=True,  name="alert_sendmail()")
 def alert_sendmail(self, id, event, atts=False):
     '''
     takes uuid, ownername (which is the model name) and event (observation or deviation)

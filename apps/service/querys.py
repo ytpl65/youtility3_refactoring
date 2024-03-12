@@ -15,6 +15,7 @@ from datetime import datetime, timedelta
 from django.utils import timezone
 log = getLogger('mobile_service_log')
 import json
+from pprint import pformat
 from .types import (VerifyClientOutput, DowntimeResponse,
 TypeAssist, SelectOutputType, BasicOutput)
 
@@ -73,7 +74,8 @@ class Query(graphene.ObjectType):
                                           mdtz = graphene.String(required = True),
                                           ctzoffset = graphene.Int(required = True),
                                           buid = graphene.Int(required = True),
-                                          clientid = graphene.Int(required=True))   
+                                          clientid = graphene.Int(required=True),
+                                          peopleid = graphene.Int(required=True))
 
     get_qsetbelongingmodifiedafter = graphene.Field(SelectOutputType,
                                           mdtz = graphene.String(required = True),
@@ -248,16 +250,23 @@ class Query(graphene.ObjectType):
 
     @staticmethod
     def resolve_get_jobneedmodifiedafter(self, info, peopleid, buid, clientid):
-        log.info(f'\n\nrequest for jobneed-modified-after inputs: peopleid:{peopleid}, buid:{buid}, clientid:{clientid}')
-        data = Jobneed.objects.get_job_needs(peopleid, buid, clientid)
-        records, count, msg = utils.get_select_output(data)
-        log.info(f'{count} objects returned...')
-        return SelectOutputType(nrows = count,  records = records,msg = msg)
+        try:
+            log.info(f'\n\nrequest for jobneed-modified-after inputs: peopleid:{peopleid}, buid:{buid}, clientid:{clientid}')
+            data = Jobneed.objects.get_job_needs(peopleid, buid, clientid)
+            records, count, msg = utils.get_select_output(data)
+            log.info(f'{count} objects returned...')
+            return SelectOutputType(nrows = count,  records = records,msg = msg)
+        except Exception as e:
+            log.error("something went wrong", exc_info=True)
     
     @staticmethod
     def resolve_get_externaltourmodifiedafter(self, info, peopleid, buid, clientid):
         log.info(f'\n\nrequest for exttour-jobneed-modified-after inputs : peopleid:{peopleid}, buid:{buid}, clientid:{clientid}')
-        return get_externaltouremodifiedafter(peopleid, buid, clientid)
+        #return get_externaltouremodifiedafter(peopleid, buid, clientid)
+        data = Jobneed.objects.get_external_tours(peopleid, buid, clientid)
+        records, count, msg = utils.get_select_output(data)
+        log.info(f'{count} objects returned...')
+        return SelectOutputType(nrows = count,  records = records,msg = msg)
 
 
     @staticmethod
@@ -314,13 +323,16 @@ class Query(graphene.ObjectType):
         return SelectOutputType(nrows = count, records = records,msg = msg)
 
     @staticmethod
-    def resolve_get_qsetmodifiedafter(self, info, mdtz, ctzoffset, buid, clientid):
-        log.info(f'\n\nrequest for qset-modified-after inputs : mdtz:{mdtz}, ctzoffset:{ctzoffset}, buid:{buid} , clientid: {clientid}')
-        mdtzinput = utils.getawaredatetime(mdtz, ctzoffset)
-        data = QuestionSet.objects.get_qset_modified_after(mdtzinput, buid, clientid)
-        records, count, msg = utils.get_select_output(data)
-        log.info(f'{count} objects returned...')
-        return SelectOutputType(nrows = count, records = records,msg = msg)
+    def resolve_get_qsetmodifiedafter(self, info, mdtz, ctzoffset, buid, clientid, peopleid):
+        try:
+            log.info(f'\n\nrequest for qset-modified-after inputs : mdtz:{mdtz}, ctzoffset:{ctzoffset}, buid:{buid} , clientid: {clientid} , peopleid: {peopleid}')
+            mdtzinput = utils.getawaredatetime(mdtz, ctzoffset)
+            data = QuestionSet.objects.get_qset_modified_after(mdtzinput, buid, clientid, peopleid)
+            records, count, msg = utils.get_select_output(data)
+            log.info(f'{count} objects returned...')
+            return SelectOutputType(nrows = count, records = records,msg = msg)
+        except Exception as e:
+            log.error("something went wrong", exc_info=True)
 
 
     @staticmethod
@@ -337,6 +349,7 @@ class Query(graphene.ObjectType):
         log.info(f'\n\nrequest for pgbelonging-modified-after inputs : mdtz:{mdtz}, ctzoffset:{ctzoffset}, buid:{buid}, peopleid:{peopleid}')
         mdtzinput = utils.getawaredatetime(mdtz, ctzoffset)
         data = Pgbelonging.objects.get_modified_after(mdtzinput, peopleid, buid)
+        print(pformat(data))
         records, count, msg = utils.get_select_output(data)
         log.info(f'{count} objects returned...')
         return SelectOutputType(nrows = count, records = records,msg = msg)
