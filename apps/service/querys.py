@@ -263,7 +263,7 @@ class Query(graphene.ObjectType):
     def resolve_get_externaltourmodifiedafter(self, info, peopleid, buid, clientid):
         log.info(f'\n\nrequest for exttour-jobneed-modified-after inputs : peopleid:{peopleid}, buid:{buid}, clientid:{clientid}')
         #return get_externaltouremodifiedafter(peopleid, buid, clientid)
-        data = Jobneed.objects.get_external_tours(peopleid, buid, clientid)
+        data = Jobneed.objects.get_external_tour_job_needs(peopleid, buid, clientid)
         records, count, msg = utils.get_select_output(data)
         log.info(f'{count} objects returned...')
         return SelectOutputType(nrows = count,  records = records,msg = msg)
