@@ -386,7 +386,7 @@ LOGGING_CONFIG_ = {
         'mail_admins': {
             'level': 'CRITICAL',
             'class': 'django.utils.log.AdminEmailHandler',
-            'include_html': False,
+            'include_html': True,
         },
         'error_file_handler':{
             'class': 'logging.handlers.RotatingFileHandler',
@@ -413,12 +413,12 @@ LOGGING_CONFIG_ = {
             'propagate': False
         },
         'mobile_service_log':{
-            'handlers': ['default', 'serviceLogs'],
+            'handlers': ['default', 'serviceLogs', 'mail_admins'],
             'level': 'DEBUG',
             'propagate': False
         },               
         'reports':{
-            'handlers': ['default', 'reportslog'],
+            'handlers': ['default', 'reportslog', 'mail_admins'],
             'level': 'DEBUG',
             'propagate': False
         },
