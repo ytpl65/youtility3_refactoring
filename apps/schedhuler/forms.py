@@ -61,7 +61,7 @@ class Schd_I_TourJobForm(JobForm):
     def set_options_for_dropdowns(self):
         self.fields['ticketcategory'].queryset = ob.TypeAssist.objects.filter_for_dd_notifycategory_field(self.request, sitewise=True)
         self.fields['pgroup'].queryset = pm.Pgroup.objects.filter_for_dd_pgroup_field(self.request, sitewise=True)
-        self.fields['people'].queryset = pm.People.objects.filter_for_dd_people_field(self.request, sitewise=True)
+        self.fields['people'].queryset = pm.People.objects.filter_for_dd_people_field(self.request)
     
     def set_display_none(self):
         for field in ['identifier', 'expirytime', 'starttime', 'endtime', 'frequency']:
