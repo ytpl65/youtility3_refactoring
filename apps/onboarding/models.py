@@ -15,32 +15,7 @@ from django.utils import timezone
 import uuid
 # Create your models here.
 
-class HeirarchyModel(models.Model):
-    class Meta:
-        abstract = True
 
-    def get_all_children(self):
-        children = [self]
-        try:
-            child_list = self.children.all()
-        except AttributeError:
-            return children
-        for child in child_list:
-            children.extend(child.get_all_children())
-        return children
-
-    def get_all_parents(self):
-        parents = [self]
-        if self.parent is not None:
-            parent = self.parent
-            parents.extend(parent.get_all_parents())
-        return parents
-
-    def clean(self):
-        from django.core.exceptions import ValidationError
-        if self.parent in self.get_all_children():
-            raise ValidationError("A user cannot have itself \
-                    or one of its' children as parent.")
 
 def bu_defaults():
     return {
@@ -79,7 +54,7 @@ def bu_defaults():
         'billingtype'             : "",
     }
 
-class Bt(BaseModel, TenantAwareModel, HeirarchyModel):
+class Bt(BaseModel, TenantAwareModel):
     uuid = models.UUIDField(null=True)
     bucode              = models.CharField(_('Code'), max_length = 30)
     solid               = models.CharField(max_length=30, null=True, blank=True, verbose_name='Sol ID')
