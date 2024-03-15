@@ -26,6 +26,7 @@ def create_dynamic_job(jobids=None):
         is_job_modified = am.Job.objects.filter(id__in = jobids, mdtz__gt = F('cdtz')).first() # the job is modified
         dynamic_jobneed_exist = am.Jobneed.objects.filter(parent_id=1,jobstatus='ASSIGNED',job_id__in = jobids).exists() #dynamic job exist
         
+        log.info(f"is_job_modified: {is_job_modified} and dynamic_jobneed_exist: {dynamic_jobneed_exist}")
         if not is_job_modified and dynamic_jobneed_exist:
             pass
         else:

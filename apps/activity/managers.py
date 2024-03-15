@@ -933,7 +933,6 @@ class JobneedManager(models.Manager):
         job_needs = self.annotate(
             istimebound = F('other_info__istimebound'),
             isdynamic=F('other_info__isdynamic')).filter(job_needs_filter).values(*fields)
-        ic(job_needs)
         return job_needs
 
     def get_external_tour_job_needs(self, people_id, bu_id, client_id):
