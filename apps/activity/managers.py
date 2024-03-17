@@ -455,7 +455,7 @@ class JobneedManager(models.Manager):
             **assignedto,client_name=F('client__buname'),site_name=F('bu__buname'),
             no_of_checkpoints=Count('jobneed', distinct=True),
             completed=Count('jobneed', filter=Q(jobneed__jobstatus='COMPLETED'), distinct=True),
-            missed=Count('jobneed', filter=Q(jobneed__jobstatus='ASSIGNED'), distinct=True)
+            missed=Count('jobneed', filter=Q(jobneed__jobstatus__in=['ASSIGNED', 'AUTOCLOSED']), distinct=True)
             ).select_related(
                 *related).filter(
                     Q(Q(parent_id__in = [1, -1]) | Q(parent_id__isnull=True)),
