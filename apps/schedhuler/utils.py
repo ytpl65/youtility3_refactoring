@@ -286,7 +286,7 @@ def insert_into_jn_dynamic_for_parent(job, params):
             'pgroup_id' : job['pgroup_id'],
             'parent' : params['NONE_JN'],
         }
-    obj = am.Jobneed.objects.update_or_create(
+    obj = am.Jobneed.objects.create(
         job_id         = job['id'],
         jobtype        = params['jobtype'],
         **defaults
@@ -841,7 +841,7 @@ def insert_into_jnd(qsb, job, jnid, parent=False):
     qset = qsb if isinstance(qsb, QuerySet) else [qsb]
     for obj in qset:
         answer = 'NONE' if parent else None
-        am.JobneedDetails.objects.update_or_create(
+        am.JobneedDetails.objects.create(
             seqno      = obj.seqno,      question_id = obj.question_id,
             answertype = obj.answertype, max         = obj.max,
             min        = obj.min,        alerton     = obj.alerton,
@@ -855,7 +855,7 @@ def insert_into_jnd(qsb, job, jnid, parent=False):
 
 def  insert_into_jn_for_child(job, params, r):
     try:
-        jn, _ = am.Jobneed.objects.update_or_create(
+        jn = am.Jobneed.objects.create(
                 job_id         = job['id'],                  parent_id         = params['jnid'],
                 jobdesc        = params['_jobdesc'],         plandatetime      = params['pdtz'],
                 expirydatetime = params['edtz'],             gracetime         = job['gracetime'],
