@@ -23,7 +23,9 @@ ENVPATH = os.path.join(os.path.abspath('intelliwiz_config/envs'))
 environ.Env.read_env(os.path.join(ENVPATH, '.env.dev'), overwrite=True) #rename it '.env.prod' for production
 
 
-
+HOST = env('HOST')
+# GOOGLE MAP API KEY...
+GOOGLE_MAP_SECRET_KEY  = env('GOOGLE_MAP_SECRET_KEY')
 
 def check_path(path):
     path = Path(path)
@@ -441,9 +443,6 @@ logging.config.dictConfig(LOGGING_CONFIG_)
 # LOGIN URL NAME...
 LOGIN_URL = 'login'
 
-HOST = env('HOST')
-# GOOGLE MAP API KEY...
-GOOGLE_MAP_SECRET_KEY  = env('GOOGLE_MAP_SECRET_KEY')
 
 # DJANGO_IMPORT_EXPORT CONF...
 IMPORT_EXPORT_USE_TRANSACTIONS = True

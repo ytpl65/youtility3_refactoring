@@ -11,7 +11,7 @@ class StaticTourDetailReport(BaseReportsExport):
     ytpl_applogo =  'frontend/static/assets/media/images/logo.png'
     report_name = 'StaticTourDetails'
     unsupported_formats = ['None']
-    fields = ['site*', 'fromdate*', 'uptodate*']
+    fields = ['site*', 'fromdatetime*', 'uptodatetime*']
     
     def __init__(self, filename, client_id, request=None, context=None, data=None, additional_content=None, returnfile=False, formdata=None):
         super().__init__(filename, client_id, design_file=self.design_file, request=request, context=context, data=data, additional_content=additional_content, returnfile=returnfile, formdata=formdata)
@@ -136,7 +136,7 @@ class StaticTourDetailReport(BaseReportsExport):
             'report_title': self.report_title,
             'client_logo':self.get_client_logo(),
             'app_logo':self.ytpl_applogo,
-            'report_subtitle':f"Site: {sitename}, From: {self.formdata.get('fromdate')} To {self.formdata.get('uptodate')}"
+            'report_subtitle':f"Site: {sitename}, From: {self.formdata.get('fromdatetime').strftime('%d/%m/%Y %H:%M:%S')} To {self.formdata.get('uptodate').strftime('%d/%m/%Y %H:%M:%S')}"
         }
         return len(self.context['data']) > 0
         
@@ -144,8 +144,8 @@ class StaticTourDetailReport(BaseReportsExport):
         self.args = [
             get_timezone(self.formdata['ctzoffset']),
             self.formdata['site'],
-            self.formdata['fromdate'].strftime('%d/%m/%Y'),
-            self.formdata['uptodate'].strftime('%d/%m/%Y'),    
+            self.formdata['fromdatetime'],
+            self.formdata['uptodatetime'],    
             ]
     
     def set_data(self):
@@ -164,10 +164,11 @@ class StaticTourDetailReport(BaseReportsExport):
         
     def set_additional_content(self):
         bt = Bt.objects.filter(id=self.client_id).values('id', 'buname').first()
-        self.additional_content = f"Client: {bt['buname']}; Report: {self.report_title}; From: {self.formdata['fromdate']} To: {self.formdata['uptodate']}"
+        fromdatetime = self.formdata.get('fromdatetime').strftime('%d/%m/%Y %H:%M:%S')
+        uptodatetime = self.formdata.get('uptodatetime').strftime('%d/%m/%Y %H:%M:%S')
+        self.additional_content = f"Client: {bt['buname']}; Report: {self.report_title}; From: {fromdatetime} To: {uptodatetime}"
         
-        
-
+    
     def excel_layout(self, worksheet, workbook, df, writer, output):
         super().excel_layout(worksheet, workbook, df, writer, output)
 

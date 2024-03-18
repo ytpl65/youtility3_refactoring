@@ -10,7 +10,7 @@ class RP_SITEVISITREPORT(BaseReportsExport):
     design_file = "reports/pdf_reports/rp_sitevisitreport.html"
     ytpl_applogo =  'frontend/static/assets/media/images/logo.png'
     report_name = 'RP_SiteVisitReport'
-    fields = ['sitegroup*','fromdate*', 'uptodate*']
+    fields = ['sitegroup*','fromdatetime*', 'uptodatetime*']
     unsupported_formats = ['pdf','html','json','csv']
 
     def __init__(self, filename, client_id, request=None, context=None, data=None, additional_content=None, returnfile=False, formdata=None):
@@ -21,18 +21,16 @@ class RP_SITEVISITREPORT(BaseReportsExport):
         context data is the info that is passed in templates
         used for pdf/html reports
         '''
-        fromdate = self.formdata.get('fromdate')
-        uptodate = self.formdata.get('uptodate')
+        fromdatetime = self.formdata.get('fromdatetime').strftime('%d/%m/%Y %H:%M:%S')
+        uptodatetime = self.formdata.get('uptodatetime').strftime('%d/%m/%Y %H:%M:%S')
         self.set_args_required_for_query()
-
-
         self.context = { 
             'base_path':settings.BASE_DIR,
             'data': runrawsql(get_query(self.report_name),args= self.args, named_params=True),
             'report_title':self.report_title,
             'client_logo':self.get_client_logo(),
             'app_logo':self.ytpl_applogo,
-            'report_subtitle':f"From Date:{fromdate} To Date:{uptodate}"
+            'report_subtitle':f"From Date:{fromdatetime} To Date:{uptodatetime}"
         }
         return len(self.context['data'])>0
     
@@ -41,8 +39,8 @@ class RP_SITEVISITREPORT(BaseReportsExport):
         self.args = {
             'timezone':get_timezone(self.formdata['ctzoffset']),
             'sgroupids':','.join(self.formdata['sitegroup']),
-            'from':self.formdata['fromdate'].strftime('%d/%m/%Y'),
-            'upto':self.formdata['uptodate'].strftime('%d/%m/%Y')
+            'from':self.formdata['fromdatetime'].strftime('%d/%m/%Y %H:%M:%S'),
+            'upto':self.formdata['uptodatetime'].strftime('%d/%m/%Y %H:%M:%S')
         }
 
     def set_extra_data(self):
@@ -153,13 +151,12 @@ class RP_SITEVISITREPORT(BaseReportsExport):
 
         data3 = self.merge_data(self.data,Data2)
         self.data = data3
-        print(self.data)
         return len(self.data)>0 
     
     def set_additional_content(self):
-        fromdate = self.formdata.get('fromdate').strftime('%d/%m/%Y')
-        uptodate = self.formdata.get('uptodate').strftime('%d/%m/%Y')
-        self.additional_content = f"Report: {self.report_title}; From Date: {fromdate}; To Date: {uptodate}"
+        fromdatetime = self.formdata.get('fromdatetime').strftime('%d/%m/%Y %H:%M:%S')
+        uptodatetime = self.formdata.get('uptodatetime').strftime('%d/%m/%Y %H:%M:%S')
+        self.additional_content = f"Report: {self.report_title}; From Date: {fromdatetime}; To Date: {uptodatetime}"
 
     def excel_layout(self, worksheet, workbook, df, writer, output):
         super().excel_layout(worksheet, workbook, df, writer, output)

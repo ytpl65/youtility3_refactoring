@@ -27,6 +27,8 @@ class LogSheet(BaseReportsExport):
         sitename = Bt.objects.get(id=self.formdata['site']).buname
         asset_name = Asset.objects.get(id=self.formdata['asset']).assetname
         questionset_name = QuestionSet.objects.get(id= self.formdata['qset']).qsetname
+        fromdatetime = self.formdata.get('fromdatetime').strftime('%d/%m/%Y %H:%M:%S')
+        uptodatetime = self.formdata.get('uptodatetime').strftime('%d/%m/%Y %H:%M:%S')
         self.set_args_required_for_query()
 
         self.context = {
@@ -35,7 +37,7 @@ class LogSheet(BaseReportsExport):
             'report_title': self.report_title,
             'client_logo':self.get_client_logo(),
             'app_logo':self.ytpl_applogo,
-            'report_subtitle':f"Site: {sitename}, From date : {self.formdata.get('fromdate')}  To date :      {self.formdata.get('uptodate')}",
+            'report_subtitle':f"Site: {sitename}, From date : {fromdatetime}  To date :{uptodatetime}",
             'Asset_Questionset_name':f"Asset Name: {asset_name}   |   QuestionSet Name: {questionset_name}"
 
         }
@@ -49,18 +51,10 @@ class LogSheet(BaseReportsExport):
             'buid':self.formdata['site'],
             'qsetid':self.formdata['qset'],
             'assetid':self.formdata['asset'],
-            'from':self.formdata['fromdate'].strftime('%d/%m/%Y'),
-            'upto':self.formdata['uptodate'].strftime('%d/%m/%Y')
+            'from':self.formdata['fromdatetime'].strftime('%d/%m/%Y %H:%M:%S'),
+            'upto':self.formdata['uptodatetime'].strftime('%d/%m/%Y %H:%M:%S')
         }
             
-        # self.args =[
-        #     get_timezone(self.formdata['ctzoffset']),
-        #     self.formdata['qset'],
-        #     self.formdata['asset'],
-        #     self.formdata['site'],
-        #     self.formdata['fromdate'].strftime('%d/%m/%Y'),
-        #     self.formdata['uptodate'].strftime('%d/%m/%Y'),    
-        # ]
         print(self.args)
         
 
@@ -69,13 +63,15 @@ class LogSheet(BaseReportsExport):
         setting the data which is shown on report
         '''
         self.set_args_required_for_query()
-        self.data = runrawsql(get_query(self.report_name), args=self.args)
+        self.data = runrawsql(get_query(self.report_name), args=self.args, named_params=True)
         return len(self.data) > 0
 
 
     def set_additional_content(self):
         bt = Bt.objects.filter(id=self.client_id).values('id', 'buname').first()
-        self.additional_content = f"Client: {bt['buname']}; Report: {self.report_title}; From: {self.formdata['fromdate']} To: {self.formdata['uptodate']}"
+        fromdatetime = self.formdata.get('fromdatetime').strftime('%d/%m/%Y %H:%M:%S')
+        uptodatetime = self.formdata.get('uptodatetime').strftime('%d/%m/%Y %H:%M:%S')
+        self.additional_content = f"Client: {bt['buname']}; Report: {self.report_title}; From: {fromdatetime} To: {uptodatetime}"
 
     def excel_columns(self, df):
         df = df[['QuestionSetName','QuestionName','Answer','AssetName','AssetType'
