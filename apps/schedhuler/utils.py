@@ -26,6 +26,7 @@ def create_dynamic_job(jobids=None):
         is_job_modified = am.Job.objects.filter(id__in = jobids, mdtz__gt = F('cdtz')).first() # the job is modified
         dynamic_jobneed_exist = am.Jobneed.objects.filter(parent_id=1,jobstatus='ASSIGNED',job_id__in = jobids).exists() #dynamic job exist
         
+        log.info(f"is_job_modified: {is_job_modified} and dynamic_jobneed_exist: {dynamic_jobneed_exist}")
         if not is_job_modified and dynamic_jobneed_exist:
             pass
         else:
@@ -855,17 +856,17 @@ def insert_into_jnd(qsb, job, jnid, parent=False):
 def  insert_into_jn_for_child(job, params, r):
     try:
         jn = am.Jobneed.objects.create(
-                job_id         = job['id'],                     parent_id         = params['jnid'],
+                job_id         = job['id'],                  parent_id         = params['jnid'],
                 jobdesc        = params['_jobdesc'],         plandatetime      = params['pdtz'],
                 expirydatetime = params['edtz'],             gracetime         = job['gracetime'],
-                asset_id       = r['asset_id'],                 qset_id           = r['qset_id'],
-                pgroup_id      = job['pgroup_id'],              frequency         = 'NONE',
-                priority       = r['priority'],                 jobstatus         = params['_jobstatus'],
-                client_id      = r['client_id'],                jobtype           = params['_jobtype'],
-                scantype       = job['scantype'],               identifier        = job['identifier'],
-                cuser_id       = r['cuser_id'],                 muser_id          = r['muser_id'],
-                bu_id          = r['bu_id'],                    ticketcategory_id = r['ticketcategory_id'],
-                gpslocation    = r['cplocation'], remarks           = '',
+                asset_id       = r['asset_id'],              qset_id           = r['qset_id'],
+                pgroup_id      = job['pgroup_id'],           frequency         = 'NONE',
+                priority       = r['priority'],              jobstatus         = params['_jobstatus'],
+                client_id      = r['client_id'],             jobtype           = params['_jobtype'],
+                scantype       = job['scantype'],            identifier        = job['identifier'],
+                cuser_id       = r['cuser_id'],              muser_id          = r['muser_id'],
+                bu_id          = r['bu_id'],                 ticketcategory_id = r['ticketcategory_id'],
+                gpslocation    = r['cplocation'],            remarks           = '',
                 seqno          = params['idx'],              multifactor       = params['m_factor'],
                 performedby    = params['NONE_P'],           ctzoffset         = r['ctzoffset'],
                 people_id      = params['_people'],          other_info = params['parent_other_info'],

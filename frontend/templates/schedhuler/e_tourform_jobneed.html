@@ -430,6 +430,7 @@ var israndom = "{{ externaltourform.instance.other_info['is_randomized'] }}";
                     }
                 },
                 {title:'Attachments',data:'attachmentcount', defaultContent:null, render:function(data, type, row, meta){
+                    console.log(data)
                     if (data>0){
                         return `<a href="javascript:void(0)"  onClick='showAttachmentDetails(${row['id']}, "jobneed")'>${data}&nbsp;<i class="fas text-primary2 fs-3 fa-paperclip"></i></a>`}
                     else {

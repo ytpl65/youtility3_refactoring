@@ -999,7 +999,7 @@ class JobneedTours(LoginRequiredMixin, View):
         'template_path': 'schedhuler/i_tourlist_jobneed.html',
         'template_form': 'schedhuler/i_tourform_jobneed.html',
         'fields'       : ['jobdesc', 'people__peoplename', 'pgroup__groupname', 'id', 'ctzoffset', 'jobtype',
-            'plandatetime', 'expirydatetime', 'jobstatus', 'gracetime', 'performedby__peoplename', 'assignedto',
+            'plandatetime', 'expirydatetime', 'jobstatus', 'gracetime', 'performedby__peoplename', 'assignedto', 'other_info__isdynamic',
             'bu__buname', 'bu__bucode','client__buname','client_name','site_name','no_of_checkpoints','completed','missed','starttime','endtime' ],
         'related': ['pgroup',  'ticketcategory', 'asset', 'client',
                 'job', 'qset', 'people', 'parent', 'bu'],

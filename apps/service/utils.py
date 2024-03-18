@@ -161,7 +161,7 @@ def write_file_to_dir(filebuffer, uploadedfilepath):
     log.info(f"file saved to {path}")
 
 
-def insertrecord(record, tablename):
+def insert_or_update_record(record, tablename):
     try:
         if model := get_model_or_form(tablename):
             record = clean_record(record)
@@ -204,7 +204,6 @@ def update_record(details, jobneed_record, JnModel, JndModel):
             elif isJndUpdated := update_jobneeddetails(details, JndModel):
                 log.info('parent jobneed and its details are updated successully')
                 alert_sendmail.delay(jobneed.id, 'observation', atts=True)
-                alert_sendmail.delay(jobneed.id, 'deviation', atts=True)
                 return True
         else: 
             log.error(f"parent jobneed record has some errors\n{jn_parent_serializer.errors} ", exc_info = True )
@@ -477,30 +476,34 @@ def perform_tasktourupdate(self, file, request=None, db='default', bg=False):
 
 
 def save_journeypath_field(jobneed):
+    log.info(f"{jobneed['jobstatus']=} {jobneed['identifier']=} {jobneed['parent_id']=}")
     if jobneed.get('parent_id') == 1 \
     and jobneed.get('jobstatus') in ('COMPLETED', 'PARTIALLYCOMPLETED') \
-    and jobneed.get('identifier') == 'EXTERNALTOUR':
+    and jobneed.get('identifier') in ('EXTERNALTOUR', 'INTERNALTOUR'):
         from django.contrib.gis.geos import LineString
         from apps.attendance.models import Tracking
         try:
-            log.info(f"saving line string started {jobneed['jobstatus']}")
+            log.info(f"saving line string started all conditions met")
             sitetour =  Jobneed.objects.get(uuid=jobneed.get('uuid'))
             between_latlngs = Tracking.objects.filter(reference = jobneed.get('uuid')).order_by('receiveddate')
             line = [[coord for coord in obj.gpslocation] for obj in between_latlngs]
             if len(line) > 1:
+                log.info("between lat lngs found for the tour with uuid %s" % jobneed.get('uuid'))
                 ls = LineString(line, srid = 4326)
-                # transform spherical mercator projection system
                 ls.transform(4326)
                 sitetour.journeypath = ls
                 sitetour.save()
-                between_latlngs.delete()
+                info = between_latlngs.delete()
+                log.info(f"Between latlngs are deleted and their info is following\n {info}")
                 log.info("save linestring is saved..")
         except Exception as e:
             log.critical('ERROR while saving line string', exc_info = True)
             raise
         else:
             sitetour =  Jobneed.objects.get(uuid=jobneed.get('uuid'))
-            log.info(f"line string saved printing it {pformat(sitetour.journeypath)}")
+            log.info(f"line string saved printing it {pformat(sitetour.journeypath)} for the tour with uuid {jobneed.get('uuid')}")
+    else:
+        log.info(f"saving line string ended because conditions not met")
         
 
 @app.task(bind = True, default_retry_delay = 300, max_retries = 5, name = 'perform_insertrecord()')
@@ -533,7 +536,7 @@ def perform_insertrecord(self, file, request = None, db='default', filebased = T
             for record in data:
                 if record:
                     tablename = record.pop('tablename')
-                    obj = insertrecord(record, tablename)
+                    obj = insert_or_update_record(record, tablename)
                     user = get_user_instance(userid or request.user.id)
                     if tablename == 'ticket' and isinstance(obj, Ticket): utils.store_ticket_history(
                         instance = obj, request=request, user=user)
@@ -763,7 +766,7 @@ def perform_uploadattachment(file,  record, biodata):
         err('something went wrong', exc_info = True)
     try:
         if record.get('localfilepath'): record.pop('localfilepath')
-        obj = insertrecord(record, 'attachment')
+        obj = insert_or_update_record(record, 'attachment')
         log.info(f'Attachment record inserted: {obj.filepath}')
         
         eobj = log_event_info(onwername, ownerid)

@@ -162,7 +162,7 @@ class InsertRecord(graphene.Mutation):
     class Arguments:
         file = Upload(required = True)
 
-    @classmethod    
+    @classmethod
     def mutate(cls, root, info, file):
         log.warning("\n\ninsert-record mutations start [+]")
         db = cutils.get_current_db_name()
@@ -276,7 +276,7 @@ class InsertJsonMutation(graphene.Mutation):
             msg, rc, traceback = 'Insert Failed!',1, tb.format_exc()
         
         o = ty.ServiceOutputType(rc = rc, recordcount = recordcount, msg = msg, traceback = traceback, uuids=uuids)
-        log.info(f"\n\n\nResponse: {o.recordcount}, {o.msg}, {o.rc}, {o.traceback}")
+        log.info(f"\n\n\nResponse: {o.recordcount}, {o.msg}, {o.rc}, {o.traceback} {uuids=}")
         return InsertJsonMutation(output = o)
 
 
@@ -325,7 +325,3 @@ class SyncMutation(graphene.Mutation):
             return SyncMutation(rc = 1)
         else:
             return SyncMutation(rc = 0)
-
-
-
-

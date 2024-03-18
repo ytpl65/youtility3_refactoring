@@ -84,6 +84,7 @@ class Tracking(models.Model):
         NONE         = ('NONE', 'None')
         CONVEYANCE   = ('CONVEYANCE', 'Conveyance')
         EXTERNALTOUR = ('EXTERNALTOUR', 'External Tour')
+        INTERNALTOUR = ('INTERNALTOUR', 'Internal Tour')
         SITEVISIT    = ('SITEVISIT', 'Site Visit')
         TRACKING     = ('TRACKING', 'Tracking')
 

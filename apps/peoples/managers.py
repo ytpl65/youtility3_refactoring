@@ -236,7 +236,7 @@ class PgblngManager(models.Manager):
     def get_modified_after(self, mdtz, peopleid, buid):
         qset = self.select_related(
             *self.related).filter(
-                mdtz__gte = mdtz, people_id = peopleid, bu_id = buid).values(*self.fields).order_by('-mdtz')
+                Q(people_id = peopleid) | Q(bu_id = buid),  mdtz__gte = mdtz).values(*self.fields).order_by('-mdtz')
         return qset or self.none()
 
     def get_assigned_sitesto_sitegrp(self, id):

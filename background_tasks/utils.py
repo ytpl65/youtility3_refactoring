@@ -201,22 +201,26 @@ def update_ticket_log(id, item, result):
 
 def check_for_checkpoints_status(obj, Jobneed):
     for checkpoint in Jobneed.objects.filter(parent_id = obj.id, identifier__in = ['INTERNALTOUR','EXTERNALTOUR']):
+        log.info(f'checkpoint status {checkpoint.jobstatus = }')
         if checkpoint.jobstatus == 'ASSIGNED':
             checkpoint.jobstatus = 'AUTOCLOSED'
             checkpoint.other_info['autoclosed_by_server'] = True
             checkpoint.save()
+            log.info(f'checkpoint status after update {checkpoint.jobstatus = }')
 
 
 def update_job_autoclose_status(record, resp):
     Jobneed = apps.get_model('activity', 'Jobneed')
     obj = Jobneed.objects.get(id=record['id'])
     obj.mdtz = datetime.now(timezone.utc)
+    log.info(f'Before status update {obj.jobstatus = }')
     if obj.jobstatus != 'PARTIALLYCOMPLETED':
         obj.jobstatus = 'AUTOCLOSED'
         obj.other_info['email_sent'] = record['ticketcategory__tacode'] == 'AUTOCLOSENOTIFY'
         obj.other_info['ticket_generated'] = record['ticketcategory__tacode'] == 'RAISETICKETNOTIFY'
         obj.other_info['autoclosed_by_server'] = True
         obj.save()
+        log.info(f'After status update {obj.jobstatus = }')
     check_for_checkpoints_status(obj, Jobneed)
     log.info(f'jobneed object with id = {record["id"]} is autoclosed {obj.jobstatus = } {obj.other_info["email_sent"] = } {obj.other_info["ticket_generated"] = } {obj.other_info["autoclosed_by_server"] = }')
     resp['id'].append(record['id'])
@@ -320,7 +324,7 @@ def alert_observation(jobneed, atts=False):
 
     try:
         result = {'story':"", 'traceback':""}
-        if jobneed.alerts:
+        if jobneed.alerts and not jobneed.ismailsent:
             result['story'] += 'Sending Mail...'
             recipents = get_email_recipients(jobneed.bu_id, jobneed.client_id)
             if jobneed.identifier == 'EXTERNALTOUR':
@@ -346,6 +350,8 @@ def alert_observation(jobneed, atts=False):
             msg.send()
             log.info(f"Alert mail sent to {recipents} with subject {subject}")
             result['story'] += 'Mail sent'
+            jobneed.ismailsent=True
+            jobneed.save()
         else:
             result['story'] += "Alerts not found"
     except Exception as e:
