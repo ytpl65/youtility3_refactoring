@@ -52,17 +52,17 @@ class RP_SITEVISITREPORT(BaseReportsExport):
 
         site_times = defaultdict(list)
 
-        #Adding sitename as a key and value as a day and time in list of tuple. 
+        #Adding Site Name as a key and value as a day and time in list of tuple. 
         for entry in self.data:
             date = entry['endtime_day']
-            key = f"{entry['Sitename']}"
+            key = f"{entry['Site Name']}"
             site_times[key].append((entry['endtime_day'], entry['endtime_time']))
         # print(site_times)
 
         #defaultvalue for any key is dict and default value of any inner key id list 
         formatted_data = defaultdict(lambda: defaultdict(list))
 
-        #key(sitename) and times(day and time in list of tuple)
+        #key(Site Name) and times(day and time in list of tuple)
         for key, times in site_times.items():
             sorted_times = sorted(times, key=lambda x: (x[0], x[1]))
             # print(sorted_times) 
@@ -86,12 +86,12 @@ class RP_SITEVISITREPORT(BaseReportsExport):
 
         #created template with out dates
         template = {
-            'RouteName': route_name, 'State': state, 'solid': solid, 'Sitename': site_name, 'frequency': frequency,
+            'Route Name/Cluster': route_name, 'State': state, 'Sol Id': solid, 'Site Name': site_name, 'Date': frequency,
         }
         # print(template)
         #added dates in template with none values 
         for day in range(fromdate,uptodate+1):  
-            template[str(day)] = 'None'
+            template[str(day)] = 'N/A'
         # print(template)
         return template
 
@@ -100,7 +100,7 @@ class RP_SITEVISITREPORT(BaseReportsExport):
         
         data2_mapping = {}
         for entry in data2:
-            #iterating entry for sitename and times -> [{day,time}]
+            #iterating entry for Site Name and times -> [{day,time}]
             for site_name, times in entry.items():
                 #iterating times for timeinfo -> day and time  
                 for time_info in times:
@@ -112,7 +112,7 @@ class RP_SITEVISITREPORT(BaseReportsExport):
 
         #iterating on self.data to get entries
         for entry in data1:
-            site_name = entry['Sitename']
+            site_name = entry['Site Name']
             site_name_2 = f"{site_name}_" 
             
             if site_name_2 in data2_mapping:
@@ -122,7 +122,7 @@ class RP_SITEVISITREPORT(BaseReportsExport):
             
             #creating data as in required format for excel
             for name, frequency in site_names:
-                template = self.create_template(entry['RouteName'], entry['State'], entry['solid'], name, frequency)
+                template = self.create_template(entry['Route Name/Cluster'], entry['State'], entry['Sol Id'], name, frequency)
                 #name in data2_mapping
                 if name in data2_mapping:
                     #mapping available dates with their time
@@ -185,8 +185,9 @@ class RP_SITEVISITREPORT(BaseReportsExport):
         merge_format = workbook.add_format({
             'bg_color':'#E2F4FF',
         }) 
-
-        worksheet.merge_range("A1:F1",self.additional_content,merge_format)
+        worksheet.set_column(4, 4, 10)
+        worksheet.freeze_panes(0, 5)
+        worksheet.merge_range("A1:I1",self.additional_content,merge_format)
 
         writer.save()
 

@@ -636,10 +636,10 @@ def get_query(query):
                 select '{timezone}' ::text as timezone
             )
             select 
-                pg.groupname as "RouteName",
+                pg.groupname as "Route Name/Cluster",
                 bu.bupreferences->'address2'->>'state'AS "State",
-                solid,
-                bu.buname as "Sitename",
+                bu.solid as "Sol Id",
+                bu.buname as "Site Name",
                 TO_CHAR(jobneed.endtime, 'HH24:MI') AS endtime_time, 
                 EXTRACT(DAY FROM jobneed.endtime) AS endtime_day   
             from jobneed 
@@ -653,7 +653,7 @@ def get_query(query):
             AND parent.jobstatus = 'COMPLETED'
             AND jobneed.    sgroup_id IN (SELECT unnest(string_to_array('{sgroupids}', ',')::integer[]))
             AND (jobneed.plandatetime::date AT TIME ZONE tz.timezone) BETWEEN '{from}' AND '{upto}'
-            GROUP BY solid,bu.buname,"State",endtime_time,endtime_day,jobneed.plandatetime,pg.groupname,jobneed.id
+            GROUP BY bu.solid,bu.buname,"State",endtime_time,endtime_day,jobneed.plandatetime,pg.groupname,jobneed.id
             ORDER By bu.buname,endtime_day;
             '''
     }.get(query) 
