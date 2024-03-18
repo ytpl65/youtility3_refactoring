@@ -295,7 +295,6 @@ class ConfigSiteReportTemplate(LoginRequiredMixin, View):
 
     def get(self, request, *args, **kwargs):
         R, P = request.GET, self.params
-        ic(R)
         if R.get('template'):return render(request, P['template_list'])
 
         if R.get('action') == 'list':

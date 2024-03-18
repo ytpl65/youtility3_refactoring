@@ -1117,6 +1117,7 @@ class JobneedExternalTours(LoginRequiredMixin, View):
             checkpoints = self.get_checkpoints(P, obj = obj)
             cxt = {'externaltourform': form, 'edit': True,
                 'checkpoints': checkpoints}
+            print(checkpoints)
             return render(request, P['template_form'], context = cxt)
         
         
@@ -1130,10 +1131,10 @@ class JobneedExternalTours(LoginRequiredMixin, View):
             checkpoints = P['model'].objects.select_related(
                 'parent', 'asset', 'qset', 'pgroup',
                 'people', 'job', 'client', 'bu',
-                'ticketcategory'
-            ).annotate(bu__gpslocation=AsGeoJSON('bu__gpslocation')).filter(parent_id = obj.id).values(
+                'ticketcategory','gpslocation'
+            ).annotate(bu__gpslocation=AsGeoJSON('bu__gpslocation'),gps = AsGeoJSON('gpslocation')).filter(parent_id = obj.id).values(
                 'asset__assetname', 'asset__id', 'qset__id',
-                'qset__qsetname', 'plandatetime', 'expirydatetime', 'bu__gpslocation',
+                'qset__qsetname', 'plandatetime', 'expirydatetime', 'bu__gpslocation','gps',
                 'gracetime', 'seqno', 'jobstatus', 'id').order_by('seqno')
 
         except Exception:
@@ -1197,9 +1198,6 @@ class JobneedTasks(LoginRequiredMixin, View):
                     'edit':True}
             return render(request, P['template_form'], context = cxt)
 
-        
-
-
 class SchdTasks(LoginRequiredMixin, View):
     params={
         'model'        : am.Job,
@@ -1260,7 +1258,6 @@ class SchdTasks(LoginRequiredMixin, View):
         R = request.POST
         log.info('Task form submitted')
         data, create = QueryDict(R['formData']), True
-        ic(data)
         utils.display_post_data(data)
         if pk := R.get('pk', None):
             obj = utils.get_model_obj(pk, request, {'model': self.params['model']})

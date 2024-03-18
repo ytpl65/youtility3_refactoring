@@ -388,11 +388,11 @@ var israndom = "{{ externaltourform.instance.other_info['is_randomized'] }}";
             ajax:{
                 url:"{{ url('schedhuler:jobneedexternaltours') }}?action=checkpoints&parent_id={{ externaltourform.instance.id }}"},
             columns:[
-                {data:"id", visible:false},
+                {data:"id", title:'id',visible:false},
                 {data:"seqno", title:'Slno'},
                 {data:"plandatetime", title:'Plan Datetime'},
                 {data:"expirydatetime", title:'Expiry Datetime', visible:false},
-                {data:"performedtime", title:'Performed Datetime'},
+                {data:"performedtime", title:'Performed Datetime',visibile:false},
                 {data:"bu__solid", title:'Sol Id'},
                 {data:"bu__buname", title:'Checkpoint'},
                 {data:'qset__qsetname', title:'Checklist'},
@@ -407,6 +407,20 @@ var israndom = "{{ externaltourform.instance.other_info['is_randomized'] }}";
                         }return coords
                     }
                 },
+                {data:'gps', visible:false, title:"Performed At", render:function(data, type, row, meta){
+                    if (row.jobstatus == 'COMPLETED'){
+                        let coords = typeof data === 'string' && data.length > 0 ? JSON.parse(data): 'NONE'
+                        if(coords !== 'NONE'){
+                            let lat = coords['coordinates'][1]
+                            let lng = coords['coordinates'][0]
+                            return `<a href="https://www.google.com/maps?q=${lat},${lng}" target="_blank">${lat},${lng}</a>`
+                        }return coords
+                    }
+                    else{
+                        return '--';
+                    }
+                    }
+                },
                 {data:'distance', title:'Distance',  defaultContent:null, render:function(data, type, row, meta){
                         return data === null ? '--' : data + ' km'
                     }
@@ -415,7 +429,7 @@ var israndom = "{{ externaltourform.instance.other_info['is_randomized'] }}";
                         return data === null ? '--' : data
                     }
                 },
-                {title:'Attachments',data:'attachementcount', defaultContent:null, render:function(data, type, row, meta){
+                {title:'Attachments',data:'attachmentcount', defaultContent:null, render:function(data, type, row, meta){
                     if (data>0){
                         return `<a href="javascript:void(0)"  onClick='showAttachmentDetails(${row['id']}, "jobneed")'>${data}&nbsp;<i class="fas text-primary2 fs-3 fa-paperclip"></i></a>`}
                     else {
@@ -448,7 +462,7 @@ var israndom = "{{ externaltourform.instance.other_info['is_randomized'] }}";
 			responsive : true,
             dom: `<'row' <'col-sm-6 d-flex justify-content-start'f> <'col-sm-6 d-flex justify-content-end'B> >rt<'row'
 			 <'col-sm-6'l> <'col-sm-6'p><'col-sm-12 d-flex justify-content-center'i>>`,
-            buttons:[],
+            buttons:[dataTablesColumnVisibilityConfig()],
             createdRow:function(row, data, dataIndex){
                         if(data['alerts'] === true){
                             $(row).addClass('text-danger')

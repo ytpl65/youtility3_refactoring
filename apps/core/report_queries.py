@@ -518,7 +518,7 @@ def get_query(query):
             "LogSheet":
             '''
             WITH timezone_setting AS (
-                SELECT {timezone} ::text AS timezone
+                SELECT '{timezone}' ::text AS timezone
             )
 
             select
@@ -560,7 +560,7 @@ def get_query(query):
             left join (
                 select 
                     jndd.jobneed_id,
-                    q.quesname,
+                    q.quesname, 
                     jndd.answertype,
                     jndd.seqno,
                     jndd.answer,
@@ -575,9 +575,9 @@ def get_query(query):
                 1=1 
                 and jobneed.identifier = 'TASK' 
                 and jobneed.jobstatus = 'COMPLETED'
-                and jobneed.bu_id::text = {buid}
-                AND jobneed.qset_id={qsetid}
-                AND jobneed.asset_id={assetid}
+                and jobneed.bu_id::text = '{buid}'
+                AND jobneed.qset_id='{qsetid}'
+                AND jobneed.asset_id='{assetid}'
                 AND coalesce(jndls.answer, '') <> ''
             ''',
             "LogBook-Q1":
@@ -628,5 +628,32 @@ def get_query(query):
             from jobneeddetails jndd
             inner join question q on jndd.question_id=q.id
             where  jobneedid={jobneedid} order by seqno
+            ''',
+
+            "RP_SiteVisitReport":
+            ''' 
+            with timezone_setting as (
+                select '{timezone}' ::text as timezone
+            )
+            select 
+                pg.groupname as "RouteName",
+                bu.bupreferences->'address2'->>'state'AS "State",
+                solid,
+                bu.buname as "Sitename",
+                TO_CHAR(jobneed.endtime, 'HH24:MI') AS endtime_time, 
+                EXTRACT(DAY FROM jobneed.endtime) AS endtime_day   
+            from jobneed 
+            INNER JOIN bt bu ON bu.id=jobneed.bu_id 
+            INNER JOIN pgroup pg on pg.id = jobneed.sgroup_id
+            INNER JOIN jobneed parent on parent.id=jobneed.parent_id
+            CROSS JOIN 
+                timezone_setting AS tz
+            where parent.other_info->>'tour_frequency'='2'
+            AND jobneed.identifier = 'EXTERNALTOUR' 
+            AND parent.jobstatus = 'COMPLETED'
+            AND jobneed.    sgroup_id IN (SELECT unnest(string_to_array('{sgroupids}', ',')::integer[]))
+            AND (jobneed.plandatetime::date AT TIME ZONE tz.timezone) BETWEEN '{from}' AND '{upto}'
+            GROUP BY solid,bu.buname,"State",endtime_time,endtime_day,jobneed.plandatetime,pg.groupname,jobneed.id
+            ORDER By bu.buname,endtime_day;
             '''
-    }.get(query)
+    }.get(query) 

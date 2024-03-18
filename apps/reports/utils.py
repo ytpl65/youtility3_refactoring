@@ -156,10 +156,10 @@ class BaseReportsExport(WeasyTemplateResponseMixin):
         Override this method in inherited class
         '''
         return df
-    
+ 
     
     def set_data_excel(self, orm=False):
-        ic(self.data)
+
         df = pd.DataFrame(list(self.data))
         ic(df.shape)
         # Convert the Decimal objects to floats using the float() function
@@ -175,6 +175,7 @@ class BaseReportsExport(WeasyTemplateResponseMixin):
         else:
             df.to_excel(writer, index=False, sheet_name='Sheet1', startrow=2, header=False)
             worksheet = writer.sheets['Sheet1']
+
         return worksheet, workbook, df, writer, output
     
     def write_custom_mergerange(self, worksheet, workbook, custom_merge_ranges):
@@ -215,6 +216,7 @@ class ReportEssentials(object):
     StaticTourDetails          = 'StaticTourDetails'
     DynamicTourDetails         = 'DynamicTourDetails'
     LogSheet                   = 'LogSheet'
+    RP_SiteVisitReport         = 'RP_SiteVisitReport'
     
     def __init__(self, report_name):
         self.report_name = report_name
@@ -239,6 +241,7 @@ class ReportEssentials(object):
         from apps.reports.report_designs.static_tour_details import StaticTourDetailReport
         from apps.reports.report_designs.dynamic_detailed_tour_summary import DynamicDetailedTourSummaryReport
         from apps.reports.report_designs.log_sheet import LogSheet
+        from apps.reports.report_designs.RP_SiteVisitReport import RP_SITEVISITREPORT
         
 
         return {
@@ -259,7 +262,8 @@ class ReportEssentials(object):
             self.DynamicDetailedTourSummary:DynamicDetailedTourSummaryReport,
             self.StaticTourDetails:StaticTourDetailReport,
             self.DynamicTourDetails:DynamicTourDetailReport,
-            self.LogSheet:LogSheet
+            self.LogSheet:LogSheet,
+            self.RP_SiteVisitReport:RP_SITEVISITREPORT,
         }.get(self.report_name)
     
     @property

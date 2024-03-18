@@ -23,6 +23,10 @@ ENVPATH = os.path.join(os.path.abspath('intelliwiz_config/envs'))
 environ.Env.read_env(os.path.join(ENVPATH, '.env.dev'), overwrite=True) #rename it '.env.prod' for production
 
 
+HOST = env('HOST')
+# GOOGLE MAP API KEY...
+GOOGLE_MAP_SECRET_KEY  = env('GOOGLE_MAP_SECRET_KEY')
+
 def check_path(path):
     path = Path(path)
     if not os.path.exists(path):
@@ -482,8 +486,6 @@ DJANGO_SETTINGS_MODULE = 'intelliwiz_config.settings'
 # DJANGO TAGGIT CONF...
 TAGGIT_CASE_INSENSITIVE = True
 
-# GOOGLE MAP API KEY...
-GOOGLE_MAP_SECRET_KEY  = env('GOOGLE_MAP_SECRET_KEY')
 
 CSRF_COOKIE_SECURE=False
 SESSION_COOKIE_SECURE=False
@@ -501,7 +503,7 @@ NOTEBOOK_ARGUMENTS = [
 SITE_ID = 1
 JDBC_DRIVER_PATH = env('JDBC_DRIVER_PATH')
 
-HOST = env('HOST')
+
 
 
 

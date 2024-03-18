@@ -101,7 +101,8 @@ class ReportForm(forms.Form):
         ('DynamicTourDetails','Dynamic Tour Details'),
         ('StaticTourDetails','Static Tour Details'),
         ('SiteVisitReport','SiteVisitReport'),
-        ('LogSheet','Log Sheet')
+        ('LogSheet','Log Sheet'),
+        ('RP_SiteVisitReport','Route Plan Site Visit Report')
     ]
     download_or_send_options = [
         ('DOWNLOAD', 'Download'),

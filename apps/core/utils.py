@@ -211,7 +211,6 @@ def get_instance_for_update(postdata, params, msg, pk, kwargs=None):
     logger.info("%s", msg)
     obj = params['model'].objects.get(id=pk)
     logger.info(f"object retrieved '{obj}'")
-    ic(kwargs)
     return params['form_class'](postdata, instance=obj, **kwargs)
 
 

@@ -28,9 +28,10 @@ class LogSheet(BaseReportsExport):
         asset_name = Asset.objects.get(id=self.formdata['asset']).assetname
         questionset_name = QuestionSet.objects.get(id= self.formdata['qset']).qsetname
         self.set_args_required_for_query()
+
         self.context = {
             'base_path': settings.BASE_DIR,
-            'data' : runrawsql(get_query(self.report_name), args=self.args),
+            'data' : runrawsql(get_query(self.report_name), args=self.args, named_params=True),
             'report_title': self.report_title,
             'client_logo':self.get_client_logo(),
             'app_logo':self.ytpl_applogo,
@@ -43,14 +44,23 @@ class LogSheet(BaseReportsExport):
 
 
     def set_args_required_for_query(self):
-        self.args = [
-            get_timezone(self.formdata['ctzoffset']),
-            self.formdata['qset'],
-            self.formdata['asset'],
-            self.formdata['site'],
-            self.formdata['fromdate'].strftime('%d/%m/%Y'),
-            self.formdata['uptodate'].strftime('%d/%m/%Y'),    
-            ]
+        self.args = {
+            'timezone':get_timezone(self.formdata['ctzoffset']),
+            'buid':self.formdata['site'],
+            'qsetid':self.formdata['qset'],
+            'assetid':self.formdata['asset'],
+            'from':self.formdata['fromdate'].strftime('%d/%m/%Y'),
+            'upto':self.formdata['uptodate'].strftime('%d/%m/%Y')
+        }
+            
+        # self.args =[
+        #     get_timezone(self.formdata['ctzoffset']),
+        #     self.formdata['qset'],
+        #     self.formdata['asset'],
+        #     self.formdata['site'],
+        #     self.formdata['fromdate'].strftime('%d/%m/%Y'),
+        #     self.formdata['uptodate'].strftime('%d/%m/%Y'),    
+        # ]
         print(self.args)
         
 
