@@ -517,6 +517,8 @@ CLIENT_DOMAINS = {
     'D_SUKHI'    : 'demo.youtility.in',
     'D_CAPGEMINI': 'demo.youtility.in',
     'SUKHI'      : 'sg.youtility.in',
+    'D_TOURTRAX' : 'demo.youtility.in',
+    'WTC'        : "intelliwiz2.youtility.in"
 }
 
 BUCKET = 'prod-attachment-sukhi-group'
