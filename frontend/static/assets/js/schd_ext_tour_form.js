@@ -227,12 +227,38 @@ function d2DrawMarker(
       `https://chart.googleapis.com/chart?chst=d_map_spin&chld=0.8|0|${colorcode}|10|b|` +
       (idx+1),
   });
+
+  function convert_to_local(data) {
+    if (data) {
+      let datetime = moment(data, "YYYY-MM-DDTHH:mm:ss")
+        .add(row["ctzoffset"], "m")
+        .format("DD-MMM-YYYY HH:mm");
+      return data ? datetime : "-";
+    }
+    return data;
+  }
+
   google.maps.event.addListener(markerC, "click", function () {
     //var infoWindowHtml= '<h3 style="background-color: #FFF8C9;font-weight:bold;">' + row['buname'] + '</h3>';
+    var starttime = convert_to_local(row["performedtime"])
+    var endtime = convert_to_local(row["performedendtime"])
     var infoWindowHtml =
-      "<span style= 'font-weight: bold;font-size:16px'>" +
-      row["bu__buname"] +
-      "</span>";
+
+    "<table style='border: 1px solid black;'>" +
+    "<tr style='border: 1px solid black;'>" +
+    "<td style='font-weight: bold; font-size: 16px;'>Location:</td> " + "<td>" +
+    row["bu__buname"] + "</td>" + "</tr>" +
+    "<tr style='border: 1px solid black;'>" +
+    "<td style='font-weight: bold; font-size: 16px;'>Performed By:</td> " + "<td>" +
+    row["people__peoplename"] + "</td>" + "</tr>" +
+    "<tr style='border: 1px solid black;'>" +
+    "<td style='font-weight: bold; font-size: 16px;'>StartTime:</td> " + "<td>" +
+    starttime + "</td>" + "</tr>" +
+    "<tr style='border: 1px solid black;'>" +
+    "<td style='font-weight: bold; font-size: 16px;'>EndTime:</td> " + "<td>" +
+    endtime + "</td>" + "</tr>" +
+    "</table>";
+    
     d2infowindow.setContent(infoWindowHtml);
     d2infowindow.open(d2map, markerC);
   });

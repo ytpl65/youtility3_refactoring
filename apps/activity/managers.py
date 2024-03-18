@@ -544,10 +544,11 @@ class JobneedManager(models.Manager):
 
     
     def get_ext_checkpoints_jobneed(self, request, related, fields):
-        fields += ['distance', 'duration','bu__gpslocation', 'performedtime', 'alerts','attachmentcount','gps']
+        fields += ['distance', 'duration','bu__gpslocation', 'performedtime','performedendtime','alerts','attachmentcount','gps']
         qset  = self.annotate(
             distance=F('other_info__distance'),
             performedtime = F("starttime"),
+            performedendtime = F("endtime"),
             gps = AsGeoJSON('gpslocation'),
             bu__gpslocation = AsGeoJSON('bu__gpslocation'),
             duration = V(None, output_field=models.CharField(null=True))).select_related(*related).filter(
