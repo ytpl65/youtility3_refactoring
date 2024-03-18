@@ -601,7 +601,8 @@ class JobneedManager(models.Manager):
             client_id = S['client_id'],
             plandatetime__date__gte = pd1,
             plandatetime__date__lte = pd2,
-            identifier='EXTERNALTOUR'
+            identifier='EXTERNALTOUR',
+            job__enable=True
         ).count() or 0
     
     def get_ppm_listview(self, request, fields, related):
