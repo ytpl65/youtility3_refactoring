@@ -403,6 +403,7 @@ Report Form
   $(document).ready(() => {
     //set ctzoffset
     $("#id_ctzoffset").val(-new Date().getTimezoneOffset())
+
     //validator for form
     const validator = new JustValidate('#report_form', { errorFieldCssClass: 'is-invalid'});
 
@@ -420,9 +421,11 @@ Report Form
     
     getFieldsFromServer()
 
-    
-    //cron to readable format
+    emptyreportsdropdown()
 
+    InsertingReportsinDropdown()
+
+    //cron to readable format
     $("#btn_clear").click(() => {
       location.href = `${urlname}?template=true`
     })
@@ -629,7 +632,7 @@ Report Form
         url:urlname,
         data: {'action':'form_behaviour', 'report_name':selected}
       }).done((data, status, error) => {
-        if(selected === 'PeopleQR'){
+        if(selected === 'PEOPLEQR'){
           showHideSelectField('SITE')
         }
         dynamicFormBehaviour(data)
@@ -637,6 +640,26 @@ Report Form
     }
   }
 
+
+  function emptyreportsdropdown(){
+    var dropdown = document.querySelector('select[name="{{form.report_name.name}}"]');
+    while (dropdown.options.length > 0){
+      dropdown.remove(0); 
+    }
+  }
+
+  function InsertingReportsinDropdown(){
+    var SessionReports = session['client_reportcaps']
+    console.log(SessionReports)
+
+    for (var i = 0; i < SessionReports.length; i++) {
+        $('#id_report_name').append($('<option>', {
+            value: SessionReports[i][0],
+            text:SessionReports[i][0]
+        }));
+    }
+
+  }
 
     // Attach the event listeners
     $('#id_cc, #id_to_addr').on('select2:select select2:unselect', onSelectionChanged);

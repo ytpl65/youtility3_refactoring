@@ -11,7 +11,7 @@ class LogSheet(BaseReportsExport):
     report_title = "Log Sheet"
     design_file = "reports/pdf_reports/log_sheet.html"
     ytpl_applogo =  'frontend/static/assets/media/images/logo.png'
-    report_name = 'LogSheet'
+    report_name = 'LOGSHEET'
     fields = ['site*','assettype*','asset*','qset*','fromdate*', 'uptodate*']
     unsupported_formats = ['None']
 

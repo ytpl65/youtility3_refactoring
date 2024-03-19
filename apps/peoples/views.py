@@ -192,7 +192,7 @@ class Capability(LoginRequiredMixin, View):
             obj = utils.get_model_obj(int(R['id']), request, self.params)
             resp = utils.render_form_for_update(
                 request, self.params, "cap_form", obj)
-        print(f'return resp={resp}')
+        # print(f'return resp={resp}')
         return resp
 
     def post(self, request, *args, **kwargs):

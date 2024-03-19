@@ -9,7 +9,7 @@ class DynamicDetailedTourSummaryReport(BaseReportsExport):
     report_title = "Dynamic Detailed Tour Summary"
     design_file = "reports/pdf_reports/dynamic_detailed_tour_summary.html"
     ytpl_applogo =  'frontend/static/assets/media/images/logo.png'
-    report_name = 'DynamicDetailedTourSummary'
+    report_name = 'DYNAMICDETAILEDTOURSUMMARY'
     unsupported_formats = ['None']
     fields = ['site*', 'fromdatetime*', 'uptodatetime*']
     

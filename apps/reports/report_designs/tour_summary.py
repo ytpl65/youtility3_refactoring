@@ -9,7 +9,7 @@ class TourSummaryReport(BaseReportsExport):
     report_title = "Tour Summary"
     design_file = "reports/pdf_reports/tour_summary.html"
     ytpl_applogo =  'frontend/static/assets/media/images/logo.png'
-    report_name = 'TourSummary'
+    report_name = 'TOURSUMMARY'
     unsupported_formats = ['None']
     fields = ['site*', 'fromdatetime*', 'uptodatetime*']
     

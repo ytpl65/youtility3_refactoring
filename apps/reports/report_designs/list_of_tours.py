@@ -9,7 +9,7 @@ class ListofTourReport(BaseReportsExport):
     report_title = "List of Tour"
     design_file = "reports/pdf_reports/list_of_tours.html"
     ytpl_applogo =  'frontend/static/assets/media/images/logo.png'
-    report_name = 'ListOfTours'
+    report_name = 'LISTOFTOURS'
     unsupported_formats = ['None']
     fields = ['site*', 'fromdatetime*', 'uptodatetime*']
 

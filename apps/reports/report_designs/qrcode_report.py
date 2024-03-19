@@ -70,7 +70,7 @@ class QRCodeBaseReport(BaseReportsExport):
     
 
 class PeopleQR(QRCodeBaseReport):
-    report_name = 'PeopleQR'
+    report_name = 'PEOPLEQR'
     fields = ['site', 'mult_people', 'qrsize*', 'site_or_people*']
     unsupported_formats = ['xlsx', 'csv', 'json']
     
@@ -98,7 +98,7 @@ class PeopleQR(QRCodeBaseReport):
             'names_and_codes':self.peoplenames_and_codes})
     
 class AssetQR(QRCodeBaseReport):
-    report_name = 'AssetQR'
+    report_name = 'ASSETQR'
     fields = ['site*','assettype*','assetcategory', 'qrsize*']
     unsupported_formats = ['xlsx', 'csv', 'json']
     
@@ -132,7 +132,7 @@ class AssetQR(QRCodeBaseReport):
         
 
 class CheckpointQR(QRCodeBaseReport):
-    report_name = 'CheckpointQR'
+    report_name = 'CHECKPOINTQR'
     fields = ['site*','checkpoint_type*', 'qrsize*']
     unsupported_formats = ['xlsx', 'csv', 'json']
 

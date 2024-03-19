@@ -169,7 +169,6 @@ def get_caps_from_db():
     
     if not web:
         web = Capability.objects.get_caps(cfor=Capability.Cfor.WEB)
-        ic(web)
         cache.set('webcaps', web, cache_ttl)
     if not mob:
         mob = Capability.objects.get_caps(cfor=Capability.Cfor.MOB)

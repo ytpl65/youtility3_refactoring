@@ -9,7 +9,7 @@ class WorkOrderList(BaseReportsExport):
     report_title = "work_order_list"
     design_file = "reports/pdf_reports/work_order_list.html"
     ytpl_applogo =  'frontend/static/assets/media/images/logo.png'
-    report_name = 'WorkOrderList'
+    report_name = 'WORKORDERLIST'
     unsupported_formats = ['None']
     fields = ['site*', 'fromdatetime*', 'uptodatetime*']
 

@@ -9,7 +9,7 @@ class PPMSummaryReport(BaseReportsExport):
     report_title = "PPM Summary"
     design_file = "reports/pdf_reports/ppm_summary.html"
     ytpl_applogo = 'frontend/static/assets/media/images/logo.png'
-    report_name = 'PPMSummary'
+    report_name = 'PPMSUMMARY'
     unsupported_formats = ['None']
     fields = ['site*', 'fromdatetime*', 'uptodatetime*']
 

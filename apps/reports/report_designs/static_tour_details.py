@@ -9,7 +9,7 @@ class StaticTourDetailReport(BaseReportsExport):
     report_title = "Static Tour Details"
     design_file = "reports/pdf_reports/static_tour_details.html"
     ytpl_applogo =  'frontend/static/assets/media/images/logo.png'
-    report_name = 'StaticTourDetails'
+    report_name = 'STATICTOURDETAILS'
     unsupported_formats = ['None']
     fields = ['site*', 'fromdatetime*', 'uptodatetime*']
     

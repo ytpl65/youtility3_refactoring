@@ -9,7 +9,7 @@ class AssetwiseTaskStatus(BaseReportsExport):
     report_title = "Sitewise Task Status"
     design_file = "reports/pdf_reports/assetwise_task_status.html"
     ytpl_applogo =  'frontend/static/assets/media/images/logo.png'
-    report_name = 'Assetwisetaskstatus'
+    report_name = 'ASSETWISETASKSTATUS'
     fields = ['site*', "fromdatetime*", "uptodatetime*"]
     unsupported_formats = ['None']
 

@@ -1,6 +1,6 @@
 def get_query(query):
     return {
-        "TaskSummary": 
+        "TASKSUMMARY": 
             '''
             WITH timezone_setting AS (
             SELECT '{timezone}'::text AS timezone
@@ -32,7 +32,7 @@ def get_query(query):
             ORDER BY bu.buname, (jobneed.plandatetime AT TIME ZONE tz.timezone)::DATE desc
         ) as x
             ''',
-        "TourSummary":
+        "TOURSUMMARY":
             '''
             WITH timezone_setting AS (
                 SELECT '{timezone}' ::text AS timezone
@@ -65,7 +65,7 @@ def get_query(query):
                 ORDER BY bu.buname, (jobneed.plandatetime AT TIME ZONE tz.timezone)::DATE desc
             ) as x
             ''',
-        "ListOfTasks":
+        "LISTOFTASKS":
             '''
             WITH timezone_setting AS (
                 SELECT '{timezone}'::text AS timezone
@@ -115,7 +115,7 @@ def get_query(query):
             AND (jobneed.plandatetime AT TIME ZONE tz.timezone) BETWEEN '{from}' AND '{upto}'
             ORDER BY bu.buname, (jobneed.plandatetime AT TIME ZONE tz.timezone)::DATE desc
             ''',
-        "ListOfTours":
+        "LISTOFTOURS":
             '''
             WITH timezone_setting AS (
                 SELECT '{timezone}' ::text AS timezone
@@ -155,7 +155,7 @@ def get_query(query):
             AND (jobneed.plandatetime AT TIME ZONE tz.timezone) BETWEEN '{from}' AND '{upto}'
             ORDER BY bu.buname, (jobneed.plandatetime AT TIME ZONE tz.timezone)::DATE desc
             ''',
-        "PPMSummary":
+        "PPMSUMMARY":
             '''
             WITH timezone_setting AS (
                 SELECT '{timezone}' ::text AS timezone
@@ -194,7 +194,7 @@ def get_query(query):
             GROUP BY buname, assettype
 
             ''',
-        "ListOfTickets":
+        "LISTOFTICKETS":
             '''
             WITH timezone_setting AS (
                 SELECT '{timezone}' ::text AS timezone
@@ -245,7 +245,7 @@ def get_query(query):
                 AND NOT ((t.cuser_id = 1 or t.cuser_id IS NULL)  AND (t.muser_id = 1 or t.muser_id IS NULL))
                 AND (t.cdtz AT TIME ZONE tz.timezone) BETWEEN '{from}' AND '{upto}'
             ''',
-        "WorkOrderList":
+        "WORKORDERLIST":
             '''
             WITH timezone_setting AS (
                 SELECT '{timezone}' ::text AS timezone
@@ -272,7 +272,7 @@ def get_query(query):
             GROUP BY wom.id,bu.id, bu.buname, p.peoplename, v.name, tz.timezone,(wom.plandatetime AT TIME ZONE tz.timezone)::DATE
             ORDER BY bu.buname, (wom.plandatetime AT TIME ZONE tz.timezone)::DATE desc
             ''',
-        'SiteReport':
+        'SITEREPORT':
             '''
             WITH timezone_setting AS (
                 SELECT '{timezone}' ::text AS timezone
@@ -373,7 +373,7 @@ def get_query(query):
                 jnd_p.ct_plandatetime, 
                 tz.timezone;
             ''',
-        'SiteVisitReport':
+        'SITEVISITREPORT':
             '''
             WITH timezone_setting AS (
                 SELECT %s::text AS timezone
@@ -404,12 +404,12 @@ def get_query(query):
             ORDER BY 
                 jn.id, jnd.seqno;
             ''',
-        'PeopleQR':
+        'PEOPLEQR':
             '''
             select distinct people.peoplename, people.peoplecode from people
             where people.client_id = %s %s %s
             ''',
-        'Assetwisetaskstatus':
+        'ASSETWISETASKSTATUS':
             '''
             WITH timezone_setting AS (
                 SELECT '{timezone}'::text AS timezone
@@ -436,7 +436,7 @@ def get_query(query):
                 Asset.assetname,asset.id
             
             ''',
-            "StaticDetailedTourSummary":
+            "STATICDETAILEDTOURSUMMARY":
             '''
             WITH timezone_setting AS (
                 SELECT '{timezone}' ::text AS timezone
@@ -476,7 +476,7 @@ def get_query(query):
                 AND (jn.plandatetime AT TIME ZONE tz.timezone) BETWEEN '{from}' AND '{upto}'
             ) as x
             ''',
-            "DynamicDetailedTourSummary":
+            "DYNAMICDETAILEDTOURSUMMARY":
             '''
             WITH timezone_setting AS (
                 SELECT '{timezone}' ::text AS timezone
@@ -515,7 +515,7 @@ def get_query(query):
                 AND (jn.plandatetime AT TIME ZONE tz.timezone)::DATE BETWEEN '{from}' AND '{upto}'
             ) as x
             ''',
-            "LogSheet":
+            "LOGSHEET":
             '''
             WITH timezone_setting AS (
                 SELECT '{timezone}' ::text AS timezone
@@ -630,7 +630,7 @@ def get_query(query):
             where  jobneedid={jobneedid} order by seqno
             ''',
 
-            "RP_SiteVisitReport":
+            "RP_SITEVISITREPORT":
             ''' 
             with timezone_setting as (
                 select '{timezone}' ::text as timezone

@@ -9,7 +9,7 @@ class ListofTaskReport(BaseReportsExport):
     report_title = "List of Task"
     design_file = "reports/pdf_reports/list_of_task.html"
     ytpl_applogo =  'frontend/static/assets/media/images/logo.png'
-    report_name = 'ListOfTasks'
+    report_name = 'LISTOFTASKS'
     fields = ['site*', 'fromdatetime*', 'uptodatetime*', 'peoplegroup', 'people']
     unsupported_formats = ['None']
 

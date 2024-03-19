@@ -9,7 +9,7 @@ class RP_SITEVISITREPORT(BaseReportsExport):
     report_title = "RP Site Visit Report"
     design_file = "reports/pdf_reports/rp_sitevisitreport.html"
     ytpl_applogo =  'frontend/static/assets/media/images/logo.png'
-    report_name = 'RP_SiteVisitReport'
+    report_name = 'RP_SITEVISITREPORT'
     fields = ['sitegroup*','fromdatetime*', 'uptodatetime*']
     unsupported_formats = ['pdf','html','json','csv']
 

@@ -8,7 +8,7 @@ class TaskSummaryReport(BaseReportsExport):
     report_title = "Task Summary"
     design_file = "reports/pdf_reports/task_summary.html"
     ytpl_applogo =  'frontend/static/assets/media/images/logo.png'
-    report_name = 'TaskSummary'
+    report_name = 'TASKSUMMARY'
     unsupported_formats = ['None']
     fields = ['site*', 'fromdatetime*', 'uptodatetime*']
     

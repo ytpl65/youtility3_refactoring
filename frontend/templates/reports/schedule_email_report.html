@@ -348,7 +348,7 @@ Schedule Report Form
         //hide some report types which are not appropriate for scheduling
             $("#id_report_type option").each(function() {
                 const optionValue = $(this).val();
-                const report_types = ['PeopleQR', 'AssetQR', 'CheckpointQR' ]
+                const report_types = ['PEOPLEQR', 'ASSETQR', 'CHECKPOINTQR' ]
                 if (optionValue && report_types.includes(optionValue)) {
                     $(this).prop('disabled', true);
                 }
@@ -361,7 +361,7 @@ Schedule Report Form
                 url:"{{ url('reports:exportreports') }}",
                 data: {'action':'form_behaviour', 'report_name':selected}
             }).done((data, status, error) => {
-                if(selected === 'PeopleQR'){
+                if(selected === 'PEOPLEQR'){
                     showHideSelectField('SITE')
                 }
                 dynamicFormBehaviour(data)

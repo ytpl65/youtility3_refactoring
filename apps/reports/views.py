@@ -621,6 +621,7 @@ class DownloadReports(LoginRequiredMixin, View):
 
     def form_behaviour(self, R):
         report_essentials = self.PARAMS['ReportEssentials'](report_name=R['report_name'])
+        print(R['report_name'])
         return rp.JsonResponse({'behaviour':report_essentials.behaviour_json})
 
 class DesignReport(LoginRequiredMixin, View):

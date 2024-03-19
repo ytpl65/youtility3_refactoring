@@ -9,7 +9,7 @@ class ListofTicketReport(BaseReportsExport):
     report_title = "List of Ticket"
     design_file = "reports/pdf_reports/list_of_tickets.html"
     ytpl_applogo =  'frontend/static/assets/media/images/logo.png'
-    report_name = 'ListOfTickets'
+    report_name = 'LISTOFTICKETS'
     fields = ['fromdatetime*', 'uptodatetime*', 'people', 'ticketcategory']
     unsupported_formats = ['None']
 
