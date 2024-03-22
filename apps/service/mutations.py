@@ -142,13 +142,13 @@ class TaskTourUpdate(graphene.Mutation):
     """
     output = graphene.Field(ty.ServiceOutputType)
     class Arguments:
-        file = Upload()
+        records = graphene.List(graphene.String,required = True)
 
     @classmethod
-    def mutate(cls, root, info, file):
+    def mutate(cls, root, info, records):
         log.warning("\n\ntasktour-update mutations start [+]")
         db = cutils.get_current_db_name()
-        o = sutils.perform_tasktourupdate(file=file, request = info.context, db=db)
+        o = sutils.perform_tasktourupdate(records=records, request = info.context, db=db)
         log.info(f"Response: # records updated:{o.recordcount}, msg:{o.msg}, rc:{o.rc}, traceback:{o.traceback}")
         log.warning("tasktour-update mutations end [-]")
         return TaskTourUpdate(output = o)
@@ -160,13 +160,14 @@ class InsertRecord(graphene.Mutation):
     output = graphene.Field(ty.ServiceOutputType)
 
     class Arguments:
-        file = Upload(required = True)
+        records = graphene.List(graphene.String,required = True)
+
 
     @classmethod
-    def mutate(cls, root, info, file):
+    def mutate(cls, root, info, records):
         log.warning("\n\ninsert-record mutations start [+]")
         db = cutils.get_current_db_name()
-        o = sutils.perform_insertrecord(file=file, request = info.context, db=db)
+        o = sutils.perform_insertrecord(records=records, request = info.context, db=db)
         log.info(f"Response: # records updated:{o.recordcount}, msg:{o.msg}, rc:{o.rc}, traceback:{o.traceback}")
         log.warning("insert-record mutations end [-]")
         return InsertRecord(output = o)
@@ -177,13 +178,13 @@ class ReportMutation(graphene.Mutation):
     # msg = graphene.String()
     # ic(output)
     class Arguments:
-        file = Upload(required = True)
+        records = graphene.List(graphene.String,required = True)
 
     @classmethod
-    def mutate(cls, root, info, file):
+    def mutate(cls, root, info, records):
         log.warning("\n\nreport mutations start [+]")
         db=cutils.get_current_db_name()
-        o = sutils.perform_reportmutation(file=file, db=db)
+        o = sutils.perform_reportmutation(records=records, db=db)
         log.info(f"Response: {o.recordcount}, {o.msg}, {o.rc}, {o.traceback}")
         log.warning("report mutations end [-]")
         return ReportMutation(output = o)
@@ -239,12 +240,12 @@ class UploadFile(APIView):
 class AdhocMutation(graphene.Mutation):
     output = graphene.Field(ty.ServiceOutputType)
     class Arguments:
-        file = Upload(required = True)
+        records = graphene.List(graphene.String,required = True)
 
     @classmethod
-    def mutate(cls, root, info, file):
+    def mutate(cls, root, info, records):
         db = cutils.get_current_db_name()
-        o = sutils.perform_adhocmutation(file=file, db=db)
+        o = sutils.perform_adhocmutation(records=records, db=db)
         log.info(f"Response: {o.recordcount}, {o.msg}, {o.rc}, {o.traceback}")
         return AdhocMutation(output = o)
 
@@ -325,3 +326,13 @@ class SyncMutation(graphene.Mutation):
             return SyncMutation(rc = 1)
         else:
             return SyncMutation(rc = 0)
+
+
+class TestMutation(graphene.Mutation):
+    class Arguments:
+        name = graphene.String(required = True)
+    output = graphene.String()
+    
+    @classmethod
+    def mutate(cls, root, info, name):
+        return TestMutation(output = f'Hello {name}')

@@ -337,8 +337,7 @@ GRAPHENE = {
 from datetime import timedelta
 GRAPHQL_JWT = {
     "JWT_VERIFY_EXPIRATION": False,
-    #"JWT_EXPIRATION_DELTA": timedelta(minutes = mins),
-    "JWT_REFRESH_EXPIRATION_DELTA": timedelta(days = 7),
+    "JWT_REFRESH_EXPIRATION_DELTA": timedelta(days = 2),
     # optional
     "JWT_LONG_RUNNING_REFRESH_TOKEN": True,
 }
@@ -523,3 +522,10 @@ CLIENT_DOMAINS = {
 
 BUCKET = 'prod-attachment-sukhi-group'
 TEMP_REPORTS_GENERATED = env('TEMP_REPORTS_GENERATED')
+
+MQTT_CONFIG = {
+    'BROKER_ADDRESS':env('MQTT_BROKER_ADDRESS'),
+    'BROKER_PORT':env.int('MQTT_BROKER_PORT'),
+    'BROKER_USERNAME':env('MQTT_BROKER_USERNAME'),
+    'BROKER_PASSWORD':env('MQTT_BROKER_PASSWORD'),
+}

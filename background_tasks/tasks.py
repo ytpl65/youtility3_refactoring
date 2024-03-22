@@ -12,8 +12,7 @@ from pprint import pformat
 from django.db.models import Q
 from django.conf import settings
 from django.utils import timezone
-import requests
-import base64, os
+import base64, os, json
 from django.core.mail import EmailMessage
 from apps.reports.models import ScheduleReport
 from django.templatetags.static import static
@@ -563,4 +562,34 @@ def send_generated_report_onfly_email(self, filepath, fromemail, to, cc, ctzoffs
         log.critical("something went wrong in bg task send_generated_report_onfly_email", exc_info=True)
     return story
         
+@app.task(bind=True, default_retry_delay=300, max_retries=5, name="process_graphql_mutation_async")
+def process_graphql_mutation_async(self, payload):
+    """
+    Process the incoming payload containing a GraphQL mutation and file data.
+
+    Args:
+        payload (str): The JSON-encoded payload containing the mutation query and variables.
+
+    Returns:
+        str: The JSON-encoded response containing the mutation result or errors.
+    """
+    from apps.service.utils import execute_graphql_mutations
+    try:
+        post_data = json.loads(payload)
+        query = post_data.get('mutation')
+        variables = post_data.get('variables', {})
+        records = variables.get('records')
+
+        if records and query:
+            return execute_graphql_mutations(query, variables, records)
+        else:
+            log.warning("Invalid records or query in the payload.")
+            return json.dumps({'errors': ['No file data found']})
+    except Exception as e:
+        log.error(f"Error processing payload: {e}")
+        return json.dumps({'errors': [str(e)]})
     
+    
+@app.task(bind=True, name="say_hi")
+def say_hi(self, name):
+    return f"Hi {name}"

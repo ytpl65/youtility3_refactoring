@@ -6,7 +6,8 @@ from .mutations import (
   InsertRecord, AdhocMutation,
   LoginUser, LogoutUser,
   ReportMutation,  TaskTourUpdate,
-  UploadAttMutaion, SyncMutation, InsertJsonMutation
+  UploadAttMutaion, SyncMutation, InsertJsonMutation,
+  TestMutation
 )
 from .types import (
     PELogType, TrackingType, TestGeoType, 
@@ -27,6 +28,7 @@ class Mutation(graphene.ObjectType):
     adhoc_record      = AdhocMutation.Field()
     insert_json       = InsertJsonMutation.Field()
     refresh_token = graphql_jwt.Refresh.Field()
+    testmutation = TestMutation.Field()
 
 class Query(ApiQuery,  graphene.ObjectType):
     PELog_by_id = graphene.Field(PELogType, id = graphene.Int())
