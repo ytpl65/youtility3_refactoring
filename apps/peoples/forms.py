@@ -67,7 +67,6 @@ class LoginForm(forms.Form):
     
     def get_user(self, username):
         try:
-            ic(username)
             return pm.People.objects.get(Q(loginid = username) | Q(email = username) | Q(mobno = username))
         except pm.People.DoesNotExist as e:
             raise forms.ValidationError("Login credentials incorrect. Please check the Username or Password") from e

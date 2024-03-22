@@ -457,8 +457,8 @@ var israndom = "{{ externaltourform.instance.other_info['is_randomized'] }}";
                     return convert_to_local(type, data, row)}
                 },
                 {targets:4, render:function(data, type, row, meta){
-                    return data ? convert_to_local(type, data, row) : '--'
-                }}
+                    return data ? convert_to_local(type, data, row) : '--'}
+                }
             ],
 			responsive : true,
             dom: `<'row' <'col-sm-6 d-flex justify-content-start'f> <'col-sm-6 d-flex justify-content-end'B> >rt<'row'
@@ -565,9 +565,6 @@ var israndom = "{{ externaltourform.instance.other_info['is_randomized'] }}";
             )
             
         })
-
-        
-
     })
 </script>
 {% endblock extra_scripts %}

@@ -79,8 +79,8 @@ class RP_SITEVISITREPORT(BaseReportsExport):
 
     def create_template(self,route_name, state, solid, site_name, frequency):
 
-        fromdate = int(self.formdata.get('fromdate').strftime('%d'))
-        uptodate = int(self.formdata.get('uptodate').strftime('%d'))
+        fromdate = int(self.formdata.get('fromdatetime').strftime('%d'))
+        uptodate = int(self.formdata.get('uptodatetime').strftime('%d'))
 
         #created template with out dates
         template = {
@@ -89,7 +89,7 @@ class RP_SITEVISITREPORT(BaseReportsExport):
         # print(template)
         #added dates in template with none values 
         for day in range(fromdate,uptodate+1):  
-            template[str(day)] = 'N/A'
+            template[str(day)] = '--'
         # print(template)
         return template
 
@@ -147,16 +147,18 @@ class RP_SITEVISITREPORT(BaseReportsExport):
         self.data = runrawsql(get_query(self.report_name),args=self.args,named_params=True)
         # print(self.data)
         # print('query_data',self.data)
+        # print(self.data)
+        
         Data2 = self.set_extra_data()
-
         data3 = self.merge_data(self.data,Data2)
         self.data = data3
+        # ic(self.data)
         return len(self.data)>0 
     
     def set_additional_content(self):
         fromdatetime = self.formdata.get('fromdatetime').strftime('%d/%m/%Y %H:%M:%S')
         uptodatetime = self.formdata.get('uptodatetime').strftime('%d/%m/%Y %H:%M:%S')
-        self.additional_content = f"Report: {self.report_title}; From Date: {fromdatetime}; To Date: {uptodatetime}"
+        self.additional_content = f"Report: {self.report_title} - From Date: {fromdatetime} To Date: {uptodatetime}"
 
     def excel_layout(self, worksheet, workbook, df, writer, output):
         super().excel_layout(worksheet, workbook, df, writer, output)

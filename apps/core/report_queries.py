@@ -640,8 +640,8 @@ def get_query(query):
                 bu.bupreferences->'address2'->>'state'AS "State",
                 bu.solid as "Sol Id",
                 bu.buname as "Site Name",
-                TO_CHAR(jobneed.endtime, 'HH24:MI') AS endtime_time, 
-                EXTRACT(DAY FROM jobneed.endtime) AS endtime_day   
+                TO_CHAR(jobneed.starttime AT TIME ZONE tz.timezone, 'HH24:MI') AS endtime_time, 
+                EXTRACT(DAY FROM jobneed.starttime AT TIME ZONE tz.timezone) AS endtime_day
             from jobneed 
             INNER JOIN bt bu ON bu.id=jobneed.bu_id 
             INNER JOIN pgroup pg on pg.id = jobneed.sgroup_id
@@ -650,10 +650,11 @@ def get_query(query):
                 timezone_setting AS tz
             where parent.other_info->>'tour_frequency'='2'
             AND jobneed.identifier = 'EXTERNALTOUR' 
-            AND parent.jobstatus = 'COMPLETED'
+            AND jobneed.jobstatus = 'COMPLETED'
             AND jobneed.    sgroup_id IN (SELECT unnest(string_to_array('{sgroupids}', ',')::integer[]))
-            AND (jobneed.plandatetime::date AT TIME ZONE tz.timezone) BETWEEN '{from}' AND '{upto}'
+            AND (jobneed.starttime AT TIME ZONE tz.timezone) BETWEEN '{from}' AND '{upto}'
             GROUP BY bu.solid,bu.buname,"State",endtime_time,endtime_day,jobneed.plandatetime,pg.groupname,jobneed.id
             ORDER By bu.buname,endtime_day;
             '''
     }.get(query) 
+

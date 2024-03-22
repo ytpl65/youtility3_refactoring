@@ -211,7 +211,6 @@ def create_caps_choices_for_peopleform(client):
             portlet = Capability.objects.filter(
                 capscode__in = client.bupreferences['portletcapability'], cfor=Capability.Cfor.PORTLET, enable=True).values_list('capscode', 'capsname')
             cache.set('portletcaps', portlet, 30)
-            ic(portlet)
         if not report:
             report = Capability.objects.filter(
                 capscode__in = client.bupreferences['reportcapability'], cfor=Capability.Cfor.REPORT, enable=True).values_list('capscode', 'capsname')
@@ -264,7 +263,6 @@ def make_choices(caps_assigned, caps, fromclient=False):
                 parent_menus.append(menucode)
                 choices.append(choice)
     if choices:
-        ic(choices)
         logger.debug('choices are made and returned... DONE')
     return choices, parent_menus
 
@@ -294,7 +292,7 @@ def get_cap_choices_for_clientform(caps, cfor):
     logger.debug('collecting caps choices for client form...')
     for i in range(1, len(caps)):
         if caps[i].cfor == 'WEB':
-            ic(caps[i].capscode, caps[i].depth, caps[i].path, caps[i].parent_id)
+            # ic(caps[i].capscode, caps[i].depth, caps[i].path, caps[i].parent_id)
             if caps[i].depth in [3, 2]:
                 # print(caps[i].depth)
                 if caps[i-1].depth == 3 and caps[i].depth == 2 and caps[i-1].cfor == cfor:
@@ -390,7 +388,7 @@ def save_pgroupbelonging(pg, request):
     peoples = request.POST.getlist('peoples[]')
     S = request.session
     #delete old grouop info
-    ic(pm.Pgbelonging.objects.filter(pgroup = pg).delete())
+    # ic(pm.Pgbelonging.objects.filter(pgroup = pg).delete())
     if peoples:
         try:
             for i, item in enumerate(peoples):

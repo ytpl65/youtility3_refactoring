@@ -556,7 +556,6 @@ class JobneedManager(models.Manager):
             identifier = 'EXTERNALTOUR',
             job__enable=True
         ).order_by('seqno').values(*fields)
-        ic("checkpoints", qset)
         return qset or self.none()
     
     def getAttachmentJobneed(self, id):
@@ -726,10 +725,10 @@ class JobneedManager(models.Manager):
             plandatetime__date__lte = R['upto'],    
             client_id = S['client_id']
         ).values()
-        ic(total_schd.filter(jobstatus='ASSIGNED').count(),
-            total_schd.filter(jobstatus='COMPLETED').count(),
-            total_schd.filter(jobstatus='AUTOCLOSED').count(),
-            total_schd.count())
+        # ic(total_schd.filter(jobstatus='ASSIGNED').count(),
+        #     total_schd.filter(jobstatus='COMPLETED').count(),
+        #     total_schd.filter(jobstatus='AUTOCLOSED').count(),
+        #     total_schd.count())
         return [
             total_schd.filter(jobstatus='ASSIGNED').count(),
             total_schd.filter(jobstatus='COMPLETED').count(),
@@ -1331,7 +1330,7 @@ class JobneedDetailsManager(models.Manager):
     def get_jndmodifiedafter(self, jobneedid):
         if jobneedid:
             jobneedids = jobneedid.split(',')
-            ic(jobneedids)
+            # ic(jobneedids)
             qset = self.select_related(
                 *self.related).filter(
                 jobneed_id__in = jobneedids,
@@ -1420,7 +1419,7 @@ class JobneedDetailsManager(models.Manager):
             'asset_id', 'assetcode', 'questionname',
             'bu_id', 'buname', 'answer_as_float')
         
-        ic(str(qset.query))
+        # ic(str(qset.query))
         
         series = []
         from django.apps import apps
@@ -1432,7 +1431,7 @@ class JobneedDetailsManager(models.Manager):
                     'data':list(qset.filter(jobneed__asset_id=asset_id).values_list('starttime', 'answer_as_float'))
                 }
             )
-        ic(series)
+        # ic(series)
         return series
         
     def get_parameter_comparision(self, request, formData):
@@ -1462,7 +1461,7 @@ class JobneedDetailsManager(models.Manager):
             'asset_id', 'assetcode', 'questionname',
             'bu_id', 'buname', 'answer_as_float')
         
-        ic(str(qset.query))
+        # ic(str(qset.query))
         
         series = []
         from django.apps import apps
@@ -1474,7 +1473,7 @@ class JobneedDetailsManager(models.Manager):
                     'data':list(qset.filter(question_id=question_id).values_list('starttime', 'answer_as_float'))
                 }
             )
-        ic(series)
+        # ic(series)
         return series
         pass
 
@@ -1621,7 +1620,7 @@ class JobManager(models.Manager):
             'breaktime', 'deviation', 'fromdate', 'uptodate', 'gracetime',
             'expirytime', 'planduration','jobname', 'id', 'ctzoffset'
         ).order_by('-mdtz')
-        ic(utils.printsql(qset))
+        # ic(utils.printsql(qset))
         return qset or self.none()
 
     def get_sitecheckpoints_exttour(self, job, child_jobid = None):
@@ -1704,7 +1703,7 @@ class JobManager(models.Manager):
             enable=True
         ).values('id', 'jobname', 'asset__assetname', 'qset__qsetname', 'assignedto', 'bu__bucode',
                  'uptodate', 'planduration', 'gracetime', 'expirytime', 'fromdate', 'bu__buname')
-        ic(qset)
+        # ic(qset)
         return qset or self.none()
     
     def handle_save_checkpoint_guardtour(self, request):
@@ -1721,7 +1720,7 @@ class JobManager(models.Manager):
             'seqno':R['seqno'],
             'qsetname':R['qsetname']
         }
-        ic(R)
+        # ic(R)
         if not  R['action'] == 'remove':
             child_job = sutils.job_fields(parent_job, checkpoint)
         try:
@@ -1730,7 +1729,7 @@ class JobManager(models.Manager):
                     qset_id = checkpoint['qsetid'], asset_id = checkpoint['assetid'],
                     parent_id = parent_job['id']).exists():
                     return {'data':list(self.none()), 'error':'Warning: Record already added!'}
-                ic("creating checkpoint with following data:", child_job)
+                # ic("creating checkpoint with following data:", child_job)
                 ID = self.create(**child_job, cuser = request.user, muser = request.user,
                                  cdtz = cdtz, mdtz = mdtz).id
             elif R['action'] == 'edit':

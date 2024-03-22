@@ -425,6 +425,7 @@ Report Form
 
     InsertingReportsinDropdown()
 
+
     //cron to readable format
     $("#btn_clear").click(() => {
       location.href = `${urlname}?template=true`
@@ -650,7 +651,8 @@ Report Form
 
   function InsertingReportsinDropdown(){
     var SessionReports = session['client_reportcaps']
-    console.log(SessionReports)
+
+    SessionReports.unshift(['','Select Report']);
 
     for (var i = 0; i < SessionReports.length; i++) {
         $('#id_report_name').append($('<option>', {
