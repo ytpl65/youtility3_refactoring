@@ -107,7 +107,7 @@ class StaticTourDetailReport(BaseReportsExport):
                 parent_data['checkpoints'].append(child_data)
                 if child.jobstatus == 'COMPLETED':
                     passed_count += 1
-                elif child.jobstatus == 'ASSIGNED':
+                elif child.jobstatus == 'ASSIGNED' or 'AUTOCLOSED':
                     missed_count += 1
             total_checkpoints = len(checkpoints)
             parent_data['Count of Checkpoint'] = total_checkpoints
@@ -115,8 +115,10 @@ class StaticTourDetailReport(BaseReportsExport):
             parent_data['Missed Count'] = missed_count
 
             # Calculate ratios
-            parent_data['Passed Ratio'] = (passed_count / total_checkpoints * 100) if total_checkpoints > 0 else 0
-            parent_data['Missed Ratio'] = (missed_count / total_checkpoints * 100) if total_checkpoints > 0 else 0
+            completed_ratio = (passed_count / total_checkpoints * 100) if total_checkpoints > 0 else 0 
+            parent_data['Passed Ratio'] = str(completed_ratio) + '%'
+            missed_ratio = (missed_count / total_checkpoints * 100) if total_checkpoints > 0 else 0
+            parent_data['Missed Ratio'] = str(missed_ratio) + '%'
 
             excel_data.append(parent_data)
         return excel_data
@@ -136,7 +138,7 @@ class StaticTourDetailReport(BaseReportsExport):
             'report_title': self.report_title,
             'client_logo':self.get_client_logo(),
             'app_logo':self.ytpl_applogo,
-            'report_subtitle':f"Site: {sitename}, From: {self.formdata.get('fromdatetime').strftime('%d/%m/%Y %H:%M:%S')} To {self.formdata.get('uptodate').strftime('%d/%m/%Y %H:%M:%S')}"
+            'report_subtitle':f"Site: {sitename} From: {self.formdata.get('fromdatetime').strftime('%d/%m/%Y %H:%M:%S')} To {self.formdata.get('uptodate').strftime('%d/%m/%Y %H:%M:%S')}"
         }
         return len(self.context['data']) > 0
         
@@ -166,7 +168,7 @@ class StaticTourDetailReport(BaseReportsExport):
         bt = Bt.objects.filter(id=self.client_id).values('id', 'buname').first()
         fromdatetime = self.formdata.get('fromdatetime').strftime('%d/%m/%Y %H:%M:%S')
         uptodatetime = self.formdata.get('uptodatetime').strftime('%d/%m/%Y %H:%M:%S')
-        self.additional_content = f"Client: {bt['buname']}; Report: {self.report_title}; From: {fromdatetime} To: {uptodatetime}"
+        self.additional_content = f"Client: {bt['buname']} Report: {self.report_title} - From: {fromdatetime} To: {uptodatetime}"
         
     
     def excel_layout(self, worksheet, workbook, df, writer, output):
@@ -195,6 +197,7 @@ class StaticTourDetailReport(BaseReportsExport):
 
 
         row_num = 2
+        print(self.data)
         for tour in self.data:
             worksheet.autofit()
             worksheet.write_row(f'B{row_num}', headers, header_format)

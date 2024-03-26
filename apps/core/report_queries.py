@@ -457,7 +457,7 @@ def get_query(query):
                 type.taname as "Comments Type",
                 (SELECT COUNT(*) FROM jobneed AS jn_child WHERE jn_child.parent_id = jn.id) AS "No of Checkpoints",
                 (SELECT COUNT(*) FROM jobneed AS jn_child_completed WHERE jn_child_completed.parent_id = jn.id AND jn_child_completed.jobstatus = 'COMPLETED') AS "Completed",
-                (SELECT COUNT(*) FROM jobneed AS jn_child_missed WHERE jn_child_missed.parent_id = jn.id AND jn_child_missed.jobstatus = 'ASSIGNED') AS "Missed"
+                (SELECT COUNT(*) FROM jobneed AS jn_child_missed WHERE jn_child_missed.parent_id = jn.id AND (jn_child_missed.jobstatus = 'AUTOCLOSED' OR jn_child_missed.jobstatus ='ASSIGNED')) AS "Missed"
             FROM 
                 jobneed AS jn
             JOIN 
@@ -497,7 +497,7 @@ def get_query(query):
                 type.taname as "Comments Type",
                 (SELECT COUNT(*) FROM jobneed AS jn_child WHERE jn_child.parent_id = jn.id) AS "No of Checkpoints",
                 (SELECT COUNT(*) FROM jobneed AS jn_child_completed WHERE jn_child_completed.parent_id = jn.id AND jn_child_completed.jobstatus = 'COMPLETED') AS "Completed",
-                (SELECT COUNT(*) FROM jobneed AS jn_child_missed WHERE jn_child_missed.parent_id = jn.id AND jn_child_missed.jobstatus = 'ASSIGNED') AS "Missed"
+                (SELECT COUNT(*) FROM jobneed AS jn_child_missed WHERE jn_child_missed.parent_id = jn.id AND (jn_child_missed.jobstatus = 'AUTOCLOSED' OR jn_child_missed.jobstatus = 'ASSIGNED')) AS "Missed"
             FROM 
                 jobneed AS jn
             JOIN 

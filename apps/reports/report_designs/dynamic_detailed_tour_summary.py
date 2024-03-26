@@ -50,13 +50,17 @@ class DynamicDetailedTourSummaryReport(BaseReportsExport):
         '''
         self.set_args_required_for_query()
         self.data = runrawsql(get_query(self.report_name), args=self.args,named_params=True)
+        for i in self.data:
+            i['Start Time'] = i['Start Time'].strftime('%d/%m/%Y')
+            i['End Time'] = i['End Time'].strftime('%d/%m/%Y')
+            i['Percentage'] = str(i['Percentage']) + '%'
         return len(self.data) > 0
         
     def set_additional_content(self):
         bt = Bt.objects.filter(id=self.client_id).values('id', 'buname').first()
         fromdatetime = self.formdata.get('fromdatetime').strftime('%d/%m/%Y %H:%M:%S')
         uptodatetime = self.formdata.get('uptodatetime').strftime('%d/%m/%Y %H:%M:%S')
-        self.additional_content = f"Client: {bt['buname']}; Report: {self.report_title}; From: {fromdatetime} To: {uptodatetime}"
+        self.additional_content = f"Client: {bt['buname']} Report: {self.report_title} - From: {fromdatetime} To: {uptodatetime}"
 
     def excel_columns(self, df):
         df = df[['Client Name','Site Name','Description','Start Time','End Time','No of Checkpoints'

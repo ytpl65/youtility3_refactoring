@@ -50,6 +50,10 @@ class StaticDetailedTourSummaryReport(BaseReportsExport):
         '''
         self.set_args_required_for_query()
         self.data = runrawsql(get_query(self.report_name), args=self.args,named_params=True)
+        for i in self.data:
+            i['Start Time'] = i['Start Time'].strftime('%d/%m/%Y')
+            i['End Time'] = i['End Time'].strftime('%d/%m/%Y')
+            i['Percentage'] = str(i['Percentage']) + '%'
         return len(self.data) > 0
         
     
