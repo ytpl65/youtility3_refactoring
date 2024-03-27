@@ -655,6 +655,80 @@ def get_query(query):
             AND (jobneed.starttime AT TIME ZONE tz.timezone) BETWEEN '{from}' AND '{upto}'
             GROUP BY bu.solid,bu.buname,"State",endtime_time,endtime_day,jobneed.plandatetime,pg.groupname,jobneed.id
             ORDER By bu.buname,endtime_day;
+            ''',
+            "DYNAMICTOURLIST":
+            '''
+            WITH timezone_setting AS (
+                SELECT '{timezone}' ::text AS timezone
+            )
+                SELECT
+                --bu.id,
+				client_table.buname AS "Client",
+                bu.buname as "Site",
+				jobneed.jobdesc as "Tour/Route",
+                (jobneed.plandatetime AT TIME ZONE tz.timezone)::timestamp as "Planned Datetime",
+				(jobneed.expirydatetime AT TIME ZONE tz.timezone)::timestamp as "Expiry Datetime",
+            case
+                    when jobneed.people_id <> 1 then people.peoplename
+                    when jobneed.pgroup_id <> 1 then pgroup.groupname
+                    else 'NONE' end as "Assigned To",
+            jobneed.jobtype as "JobType",
+            jobneed.jobstatus as "Status",
+			(jobneed.endtime AT TIME ZONE tz.timezone)::timestamp as "Performed On",
+            performedpeople.peoplename as "Performed By"
+                FROM jobneed
+                INNER JOIN bt bu ON bu.id=jobneed.bu_id
+                INNER JOIN bt AS client_table ON jobneed.client_id = client_table.id
+            INNER JOIN asset ON asset.id=jobneed.asset_id
+            INNER JOIN questionset ON questionset.id=jobneed.qset_id
+            INNER JOIN people on jobneed.people_id=people.id
+            INNER JOIN people performedpeople on jobneed.performedby_id=performedpeople.id
+            inner join pgroup on pgroup.id=jobneed.pgroup_id
+                CROSS JOIN timezone_setting tz
+                WHERE jobneed.identifier='INTERNALTOUR'
+            AND jobneed.id <> 1 and jobneed.parent_id = 1
+            AND jobneed.other_info ->> 'istimebound' = 'false'
+            AND bu.id <> 1
+            AND jobneed.bu_id IN (SELECT unnest(string_to_array('{siteids}', ',')::integer[]))
+            AND (jobneed.plandatetime AT TIME ZONE tz.timezone) BETWEEN '{from}' AND '{upto}'
+            ORDER BY bu.buname, (jobneed.plandatetime AT TIME ZONE tz.timezone)::DATE desc
+            ''',
+            "STATICTOURLIST":
+            '''
+            WITH timezone_setting AS (
+                SELECT '{timezone}' ::text AS timezone
+            )
+                SELECT
+                --bu.id,
+				client_table.buname AS "Client",
+                bu.buname as "Site",
+				jobneed.jobdesc as "Tour/Route",
+                (jobneed.plandatetime AT TIME ZONE tz.timezone)::timestamp as "Planned Datetime",
+				(jobneed.expirydatetime AT TIME ZONE tz.timezone)::timestamp as "Expiry Datetime",
+            case
+                    when jobneed.people_id <> 1 then people.peoplename
+                    when jobneed.pgroup_id <> 1 then pgroup.groupname
+                    else 'NONE' end as "Assigned To",
+            jobneed.jobtype as "JobType",
+            jobneed.jobstatus as "Status",
+			(jobneed.endtime AT TIME ZONE tz.timezone)::timestamp as "Performed On",
+            performedpeople.peoplename as "Performed By"
+                FROM jobneed
+                INNER JOIN bt bu ON bu.id=jobneed.bu_id
+                INNER JOIN bt AS client_table ON jobneed.client_id = client_table.id
+            INNER JOIN asset ON asset.id=jobneed.asset_id
+            INNER JOIN questionset ON questionset.id=jobneed.qset_id
+            INNER JOIN people on jobneed.people_id=people.id
+            INNER JOIN people performedpeople on jobneed.performedby_id=performedpeople.id
+            inner join pgroup on pgroup.id=jobneed.pgroup_id
+                CROSS JOIN timezone_setting tz
+                WHERE jobneed.identifier='INTERNALTOUR'
+            AND jobneed.id <> 1 and jobneed.parent_id = 1
+            AND jobneed.other_info ->> 'istimebound' = 'true'
+            AND bu.id <> 1
+            AND jobneed.bu_id IN (SELECT unnest(string_to_array('{siteids}', ',')::integer[]))
+            AND (jobneed.plandatetime AT TIME ZONE tz.timezone) BETWEEN '{from}' AND '{upto}'
+            ORDER BY bu.buname, (jobneed.plandatetime AT TIME ZONE tz.timezone)::DATE desc
             '''
     }.get(query) 
 

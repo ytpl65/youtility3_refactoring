@@ -88,6 +88,8 @@ class ReportForm(forms.Form):
         ('TOURSUMMARY', 'Tour Summary'),
         ('LISTOFTASKS', 'List of Tasks'),
         ('LISTOFTOURS', 'List of Internal Tours'),
+        ('DYNAMICTOURLIST','Dynamic Tour List'),
+        ('STATICTOURLIST','Static Tour List'),
         ('PPMSUMMARY', 'PPM Summary'),
         ('LISTOFTICKETS', 'List of Tickets'),
         ('WORKORDERLIST', 'Work Order List'),

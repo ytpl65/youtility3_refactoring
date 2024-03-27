@@ -71,7 +71,7 @@ class QRCodeBaseReport(BaseReportsExport):
 
 class PeopleQR(QRCodeBaseReport):
     report_name = 'PEOPLEQR'
-    fields = ['site', 'mult_people', 'qrsize*', 'site_or_people*']
+    fields = ['site', 'mult_people', 'qrsize*', 'site_or_people']
     unsupported_formats = ['xlsx', 'csv', 'json']
     
     def set_data(self):
@@ -80,9 +80,12 @@ class PeopleQR(QRCodeBaseReport):
         peoples = self.formdata.get('mult_people')
         self.size = self.formdata.get('qrsize')
         filters = {'client_id':self.client_id}
-        if site:
+        site_or_people = self.formdata.get('site_or_people')
+        if site_or_people == 'SITE':
             filters.update({'bu_id':site})
         else:
+            peoples = ','.join(peoples)
+            print(peoples)
             filters.update({'id__in':peoples.split(',')})
         qset = People.objects.annotate(name = F('peoplename'),code = F('peoplecode')).filter(**filters).distinct().values("code", 'name').order_by('code')
         self.data = qset.values_list('code', flat=True)

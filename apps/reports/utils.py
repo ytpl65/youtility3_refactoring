@@ -202,6 +202,8 @@ class ReportEssentials(object):
     PPMSummary                 = 'PPMSUMMARY'
     SiteReport                 = 'SITEREPORT'
     ListOfTours                = 'LISTOFTOURS'
+    DynamicTourList            = 'DYNAMICTOURLIST'
+    StaticTourList            = 'STATICTOURLIST'
     WorkOrderList              = 'WORKORDERLIST'
     SiteVisitReport            = 'SITEVISITREPORT'
     PeopleQR                   = 'PEOPLEQR'
@@ -213,8 +215,6 @@ class ReportEssentials(object):
     StaticTourDetails          = 'STATICTOURDETAILS'
     DynamicTourDetails         = 'DYNAMICTOURDETAILS'
     DynamicDetailedTourSummary = 'DYNAMICDETAILEDTOURSUMMARY'
-    # StaticTourDetails          = 'StaticTourDetails'
-    # DynamicTourDetails         = 'DynamicTourDetails'
     LogSheet                   = 'LOGSHEET'
     RP_SiteVisitReport         = 'RP_SITEVISITREPORT'
     
@@ -242,6 +242,8 @@ class ReportEssentials(object):
         from apps.reports.report_designs.dynamic_detailed_tour_summary import DynamicDetailedTourSummaryReport
         from apps.reports.report_designs.log_sheet import LogSheet
         from apps.reports.report_designs.RP_SiteVisitReport import RP_SITEVISITREPORT
+        from apps.reports.report_designs.dynamic_tour_list import DynamicTourList
+        from apps.reports.report_designs.static_tour_list import StaticTourList
         
 
         return {
@@ -264,6 +266,8 @@ class ReportEssentials(object):
             self.DynamicTourDetails:DynamicTourDetailReport,
             self.LogSheet:LogSheet,
             self.RP_SiteVisitReport:RP_SITEVISITREPORT,
+            self.DynamicTourList:DynamicTourList,
+            self.StaticTourList:StaticTourList
         }.get(self.report_name)
     
     @property
