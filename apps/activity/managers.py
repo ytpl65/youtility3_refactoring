@@ -573,7 +573,7 @@ class JobneedManager(models.Manager):
                           V('/'), Cast('filename', output_field=models.CharField())),
             location = AsGeoJSON('gpslocation')
             ).filter(owner = uuid).values(
-            'filepath', 'filename', 'attachmenttype', 'datetime', 'location', 'id', 'file'
+            'filepath', 'filename', 'attachmenttype', 'datetime', 'location', 'id', 'file','ctzoffset'
             ):return atts
         return self.none()
 
@@ -1376,9 +1376,10 @@ class JobneedDetailsManager(models.Manager):
         from apps.activity.models import Attachment
         if atts := Attachment.objects.annotate(
             file = Concat(V(settings.MEDIA_URL, output_field=models.CharField()), F('filepath'),
-                          V('/'), Cast('filename', output_field=models.CharField()))
+                          V('/'), Cast('filename', output_field=models.CharField())),
+                          location = AsGeoJSON('gpslocation')
             ).filter(owner = uuid).values(
-            'filepath', 'filename', 'attachmenttype', 'datetime',  'id', 'file'
+            'filepath', 'filename', 'location','attachmenttype', 'datetime',  'id', 'file','ctzoffset'
             ):return atts
         return self.none()
     

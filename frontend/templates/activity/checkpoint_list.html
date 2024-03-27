@@ -230,7 +230,8 @@ if(filters && filters.AssetType === 1){
 					d.params = JSON.stringify(params)
 				}
 			},
-			pageLength:50,
+			lengthMenu: [250,500,750,1000],
+            pageLength: 500,
 			columns:[
 				{data:'id', visible:false, searchable:false, className:'noVis'},
 				{data:'assetcode', title:'Code'},

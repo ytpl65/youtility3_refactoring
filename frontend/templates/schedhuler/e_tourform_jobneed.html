@@ -441,7 +441,8 @@ var israndom = "{{ externaltourform.instance.other_info['is_randomized'] }}";
                 {title:'Details',data:null, defaultContent:null, render:function(data, type, row, meta){
                         return  `<button class="btn btn-link p-0" onClick='showCpDetails(${row['id']})'>View Details</button>`
                     }
-                }
+                },
+                {# {title:'ctzoffset' data:'ctzoffset',visible:false} #}
             ],
             ordering:false,
             deferRender: true,
@@ -546,9 +547,26 @@ var israndom = "{{ externaltourform.instance.other_info['is_randomized'] }}";
                     retrieve: true,
                     columns:[
                         { data: "id", visible: false },
-                        {title:'SL No.', width:"5%", data:null, defaultContent:null, render:function (data, type, row, meta) { return meta.row  + 1; }},
-                        { data: "filepath",  width:"5%", title:'File', render:function (data, type, row, meta) { return `<img src="{{ MEDIA_URL }}${row.filepath.replace('youtility4_media/', "")}/${row.filename}" class="card-img-top" target="_blank" alt="" style="width: 30px;height: 30px;">`; }},
+                        {title:'SL No.', width:"5%", data:null, defaultContent:null, render:function (data, type, row, meta) { return meta.row  + 1; }
+                        },
+                        { data: "filepath",  width:"5%", title:'File', render:function (data, type, row, meta) { return `<img src="{{ MEDIA_URL }}${row.filepath.replace('youtility4_media/', "")}/${row.filename}" class="card-img-top" target="_blank" alt="" style="width: 30px;height: 30px;">`; }
+                        },
                         { data: "filename",  title:'File Name' },
+                        {data:'location',title:"GPS Location", render:function(data, type, row, meta){
+                    if (row.filename !== 'NONE'){
+                        let coords = typeof data === 'string' && data.length > 0 ? JSON.parse(data): 'NONE'
+                        if(coords !== 'NONE'){
+                            let lat = coords['coordinates'][1]
+                            let lng = coords['coordinates'][0]
+                            return `<a href="https://www.google.com/maps?q=${lat},${lng}" target="_blank">${lat},${lng}</a>`
+                        }return coords
+                    }
+                    else{
+                        return '--';
+                    }
+                    }
+                },
+                        {data:"datetime",title:'Datetime'},
                         { data: null, width:"5%", defaultContent:null, title:"Action", render:function(data, type, row, meta ){
                         let file = `{{ MEDIA_URL }}${row.filepath.replace('youtility4_media/', "")}/${row.filename}`
                         return `<a href="${file}" target="_blank" class=""><i class="ch4 fas fa-eye"></i></a>&nbsp;&nbsp;&nbsp;&nbsp;<a href="${file}" download="${row.filename}"><i class="ch4 fas fa-save"></i></a>`;
@@ -556,10 +574,16 @@ var israndom = "{{ externaltourform.instance.other_info['is_randomized'] }}";
                     ],
                     ordering:false,
                     deferRender: true,
+                    columnDefs:[
+                        {targets:5,render:function(data,type,row,meta){
+                            return convert_to_local(type,data,row)}
+                            }
+                    ],
                     scrollX: true,
                     dom: `<'row' <'col-sm-6 d-flex justify-content-start'f> <'col-sm-6 d-flex justify-content-end'B> >rt<'row'
                     <'col-sm-6'l> <'col-sm-6'p><'col-sm-12 d-flex justify-content-center'i>>`,
                     buttons:[],
+
 
                 }
             )
