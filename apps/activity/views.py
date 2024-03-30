@@ -813,9 +813,7 @@ class Asset(LoginRequiredMixin,View):
         except IntegrityError:
             return handle_intergrity_error('Asset')
     
-
-        
-        
+    
 class LocationView(LoginRequiredMixin, View):
     P = {
         'template_form':'activity/location_form.html',
