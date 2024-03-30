@@ -836,7 +836,7 @@ class LocationForm(forms.ModelForm):
         self.fields['loccode'].widget.attrs = {'style':"text-transform:uppercase"}
         #filters for dropdown fields
         self.fields['parent'].queryset = am.Location.objects.filter(client_id = S['client_id'], bu_id = S['bu_id'])
-        self.fields['type'].queryset = om.TypeAssist.objects.filter(client_id = S['client_id'], tatype__tacode = 'LOCAIONTYPE')
+        self.fields['type'].queryset = om.TypeAssist.objects.filter(client_id = S['client_id'], tatype__tacode = 'LOCATIONTYPE')
         utils.initailize_form_fields(self)
         
         

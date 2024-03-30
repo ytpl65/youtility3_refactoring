@@ -536,10 +536,11 @@ class DownloadReports(LoginRequiredMixin, View):
         if R.get('action') == 'form_behaviour':
             return self.form_behaviour(R)
         
-        if R.get('action') == 'get_site' and R.get('of_site'):
+        if R.get('action') == 'get_site' and R.get('of_site') and R.get('of_type'):
             qset = on.TypeAssist.objects.filter(
                 bu_id = R['of_site'],
-                tatype__tacode = 'ASSETTYPE'
+                client_id = S['client_id'],
+                tatype__tacode = R['of_type']
                 ).values('id','taname').distinct()
             return rp.JsonResponse(
                 data = {'options': list(qset)},status = 200
@@ -550,10 +551,11 @@ class DownloadReports(LoginRequiredMixin, View):
                 client_id=S['client_id'],
                 bu_id = S['bu_id'],
                 type_id=R['of_type']).values('id', 'assetname').distinct()
+            print(qset)
             return rp.JsonResponse(
                 data={'options':list(qset)}, status=200
             )
-        
+
         if R.get('action') == 'get_qset' and R.get('of_asset'):
             qset = am.QuestionSet.objects.filter(
                 client_id=S['client_id'],

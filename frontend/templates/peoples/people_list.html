@@ -44,6 +44,12 @@ People
 				{data: 'enable', title: 'Enable'},
 				{data: 'email', title: 'Email'},
 				{data: 'mobno', title: 'Phone #'},
+				{data:null,title:'Qr Code',defaultContent:'print',render:function(data,type,row,meta){
+					let downloadUrl = `{{ url('peoples:people') }}?action=qrdownload&code=${encodeURIComponent(row['peoplecode'])}&name=${row['peoplename']}`
+                    return `<a href="${downloadUrl}" class="qr-download-link">Qr Download</a>`
+				}
+				}
+				
 				
 			],
 			order:[[1, 'asc'], [3, 'asc']],
@@ -57,10 +63,12 @@ People
 				{targets:2, data: 'peoplename', render:function(data, type, row, meta){
 					let updateUrl = "{{ url('peoples:people') }}"
 					return `<a href=${updateUrl}?id=${row['id']}>${data}</a>`
-				}},
+				}
+				},
 				{targets:[7,8], render:function(data, type, row, meta){
 					return data === true ? '<i class="bi bi-check-circle-fill text-success"></i>': '<i class="bi bi-x-circle-fill text-danger"></i>'				
-				}}
+				}
+				}
 			],
 			createdRow:function(row, data, dataIndex){
 				if(data['enable'] === false){

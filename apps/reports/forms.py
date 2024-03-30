@@ -97,6 +97,7 @@ class ReportForm(forms.Form):
         ('PEOPLEQR', 'People-QR'),
         ('ASSETQR', 'Asset-QR'),
         ('CHECKPOINTQR', 'Checkpoint-QR'),
+        ('LOCATIONQR','Location-QR'),
         ('ASSETWISETASKSTATUS','Assetwise Task Status'),
         ('STATICDETAILEDTOURSUMMARY','Static Detailed Tour Summary'),
         ('DYNAMICDETAILEDTOURSUMMARY','Dynamic Detailed Tour Summary'),
@@ -139,6 +140,7 @@ class ReportForm(forms.Form):
     assettype       = forms.ChoiceField(label="Asset Type", widget=s2forms.Select2Widget, required=False)
     checkpoint      = forms.CharField(label='Checkpoint', widget=s2forms.Select2Widget, required=False)
     checkpoint_type = forms.CharField(label='Checkpoint Type', widget=s2forms.Select2Widget, required=False)
+    location_type   = forms.CharField(label='Location Type', widget=s2forms.Select2Widget, required=False)
     ticketcategory  = forms.CharField(label='Ticket Category', widget=s2forms.Select2MultipleWidget, required=False)
     peoplegroup     = forms.ChoiceField(label="People Group", widget=s2forms.Select2Widget, required=False, choices=[])
     people          = forms.ChoiceField(label="People", widget=s2forms.Select2Widget, required=False, choices=[])
@@ -169,6 +171,7 @@ class ReportForm(forms.Form):
         self.fields['peoplegroup'].choices = pm.Pgroup.objects.filter_for_dd_pgroup_field(self.request, sitewise=True, choices=True)
         self.fields['people'].choices = self.fields['mult_people'].choices = pm.People.objects.filter_for_dd_people_field(self.request, sitewise=True, choices=True)
         self.fields['assettype'].choices  = am.Asset.objects.asset_type_choices_for_report(self.request)
+        self.fields['location_type'].choices  = am.Location.objects.location_type_choices_for_report(self.request)
         self.fields['assetcategory'].choices = am.Asset.objects.asset_category_choices_for_report(self.request)
         self.fields['asset'].choices = am.Asset.objects.asset_choices_for_report(self.request)
         self.fields['qset'].choices = am.QuestionSet.objects.qset_choices_for_report(self.request)

@@ -153,7 +153,7 @@ class BaseReportsExport(WeasyTemplateResponseMixin):
     
     def excel_columns(self, df):
         '''
-        Override this method in inherited class
+        Override this method in inherited classn
         '''
         return df
  
@@ -209,6 +209,7 @@ class ReportEssentials(object):
     PeopleQR                   = 'PEOPLEQR'
     AssetQR                    = 'ASSETQR'
     CheckpointQR               = 'CHECKPOINTQR'
+    LocationQR                 = 'LOCATIONQR'
     AssetwiseTaskStatus        = 'ASSETWISETASKSTATUS'
     StaticDetailedTourSummary  = 'STATICDETAILEDTOURSUMMARY'
     TourDetails                = 'TourDetails'
@@ -244,6 +245,7 @@ class ReportEssentials(object):
         from apps.reports.report_designs.RP_SiteVisitReport import RP_SITEVISITREPORT
         from apps.reports.report_designs.dynamic_tour_list import DynamicTourList
         from apps.reports.report_designs.static_tour_list import StaticTourList
+        from apps.reports.report_designs.qrcode_report import LocationQR
         
 
         return {
@@ -259,6 +261,7 @@ class ReportEssentials(object):
             self.PeopleQR:PeopleQR,
             self.AssetQR:AssetQR,
             self.CheckpointQR:CheckpointQR,
+            self.LocationQR:LocationQR,
             self.AssetwiseTaskStatus:AssetwiseTaskStatus,
             self.StaticDetailedTourSummary:StaticDetailedTourSummaryReport,
             self.DynamicDetailedTourSummary:DynamicDetailedTourSummaryReport,

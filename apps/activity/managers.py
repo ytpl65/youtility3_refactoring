@@ -1176,6 +1176,7 @@ class AssetManager(models.Manager):
         if(P not in ['null', None]):
             P = json.loads(P)
             qset = qset.filter(runningstatus = P['status'])
+        print(qset)
         return qset or self.none()
     
     
@@ -1836,6 +1837,16 @@ class LocationManager(models.Manager):
         qset = obj.asset_set.annotate(
             text = Concat(F('assetname'), V(' ('), F('assetcode'), V(')'), output_field=CharField())
         ).filter(bu_id = S['bu_id']).values('id', 'text')
+        return qset or self.none()
+    
+    def location_type_choices_for_report(self, request):
+        S = request.session
+        qset = self.filter(
+            bu_id = S['bu_id'],
+            client_id = S['client_id']
+        ).select_related('type').values_list(
+            'type_id', 'type__taname'
+        ).distinct('type_id').order_by('type_id')
         return qset or self.none()
     
     

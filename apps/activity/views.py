@@ -26,6 +26,7 @@ import apps.peoples.models as pm
 from apps.service.utils import get_model_or_form
 import logging
 import mimetypes
+import io
 
 from datetime import datetime, timedelta
 import pytz
@@ -354,6 +355,9 @@ class Checkpoint(LoginRequiredMixin, View):
         if R.get('action', None) == 'list':
             objs = P['model'].objects.get_checkpointlistview(request, P['related'], P['fields'])
             return  rp.JsonResponse(data = {'data':list(objs)})
+        
+        if R.get('action',None) == 'qrdownload' and R.get('code',None) and R.get('name',None):
+            return utils.download_qrcode(R['code'],R['name'],'CHECKPOINTQR',request.session,request)
 
         # return questionset_form empty
         if R.get('action', None) == 'form':
@@ -733,15 +737,18 @@ class Asset(LoginRequiredMixin,View):
     
     def get(self, request, *args, **kwargs):
         R, P = request.GET, self.P
-        
         # first load the template
         if R.get('template'): return render(request, P['template_list'])
         
         # return qset_list data
         if R.get('action', None) == 'list':
             objs = P['model'].objects.get_assetlistview(P['related'], P['fields'], request)
+            print(list(objs))
             return  rp.JsonResponse(data = {'data':list(objs)})
         
+        if R.get('action',None) == 'qrdownload' and R.get('code',None) and R.get('name', None):
+            return utils.download_qrcode(R['code'], R['name'], 'ASSETQR', request.session, request)
+            
         # return questionset_form empty
         if R.get('action', None) == 'form':
             cxt = {'assetform': P['form'](request=request),
@@ -805,6 +812,8 @@ class Asset(LoginRequiredMixin,View):
             return rp.JsonResponse(data, status = 200)
         except IntegrityError:
             return handle_intergrity_error('Asset')
+    
+
         
         
 class LocationView(LoginRequiredMixin, View):
@@ -828,6 +837,9 @@ class LocationView(LoginRequiredMixin, View):
         if R.get('action', None) == 'list':
             objs = P['model'].objects.get_locationlistview(P['related'], P['fields'], request)
             return  rp.JsonResponse(data = {'data':list(objs)})
+        
+        if R.get('action',None)=='qrdownload' and R.get('code',None) and R.get('name',None):
+            return utils.download_qrcode(R['code'],R['name'],'LOCATIONQR',request.session,request)
         
         # return questionset_form empty
         if R.get('action', None) == 'form':
