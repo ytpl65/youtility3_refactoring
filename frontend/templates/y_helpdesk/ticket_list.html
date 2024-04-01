@@ -76,7 +76,7 @@ tr{
                 { "data": "isescalated", title:'Escalated', width:"8%"},
                 { "data": "status", title:"Status", width:'8%' },
                 { "data": "cuser__peoplename", title:"Created By", width:"13%"},
-                { "data": "cuser__peoplecode",visible:false},
+                { "data": "cuser__peoplecode",title:'People code',visible:false},
                 {data:'ctzoffset', visible:false, className:'noVis'}
             ],
         columnDefs:[
@@ -85,13 +85,16 @@ tr{
 				},
                 {targets:[4], render:function(data, type, row, meta){
                     return `${data} (${row['bu__bucode']})`
-                }},
+                }
+                },
                 {targets:[0], render:function(data, type, row, meta){
                     return convert_to_local(type, data, row)
-                }},
+                }
+                },
                 {targets:[9], render:function(data, type, row, meta){
                     return `${data} (${row['cuser__peoplecode']})`
-                }},
+                }
+                },
                 {targets:8, data: 'runningstatus',  render:function(data, type, row, meta){
 					if(data === 'CANCELLED'){return `<span class="badge badge-danger">${data}</span>`}
 					if(data === 'ONHOLD'){return `<span class="badge badge-info">${data}</span>`}
@@ -100,7 +103,8 @@ tr{
 					if(data === 'RESOLVED'){return `<span class="badge badge-success">${data}</span>`}
 					if(data === 'CLOSED'){return `<span class="badge badge-secondary">${data}</span>`}
                     return data
-				}},
+				}
+                },
 			],
 			createdRow:function(row, data, dataIndex){
 				if(data['enable'] === false){

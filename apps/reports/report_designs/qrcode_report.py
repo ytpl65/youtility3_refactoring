@@ -146,7 +146,7 @@ class AssetQR(QRCodeBaseReport):
 
 class CheckpointQR(QRCodeBaseReport):
     report_name = 'CHECKPOINTQR'
-    fields = ['site*','checkpoint_type', 'qrsize*']
+    fields = ['site*','checkpoint_type*', 'qrsize*']
     unsupported_formats = ['xlsx', 'csv', 'json']
 
     def set_data(self):
@@ -183,7 +183,7 @@ class CheckpointQR(QRCodeBaseReport):
  
 class LocationQR(QRCodeBaseReport):
     report_name = 'LOCATIONQR'
-    fields = ['site*','location_type', 'qrsize*']
+    fields = ['site*','location_type*', 'qrsize*']
     unsupported_formats = ['xlsx', 'csv', 'json']
     
     def set_data(self):

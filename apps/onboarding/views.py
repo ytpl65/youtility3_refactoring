@@ -959,6 +959,7 @@ class DashboardView(LoginRequiredMixin, View):
             request)
         wom_chart_arr, wom_chart_total = Wom.objects.get_wom_status_chart(
             request)
+        print(ticket_chart_arr,ticket_chart_total)
         return {
             'assetchartdata': asset_chart_arr,
             'alertchartdata': alert_chart_arr,

@@ -32,6 +32,7 @@ class TicketManager(models.Manager):
     def get_tickets_listview(self, request):
         R, S = request.GET, request.session
         P = json.loads(R['params'])
+        print(P)
         qset = self.filter(
             cdtz__date__gte = P['from'],
             cdtz__date__lte = P['to'],
@@ -43,7 +44,7 @@ class TicketManager(models.Manager):
             'ticketsource', 'ticketcategory__taname'
         )
         if P.get('status') and P.get('status') != 'SYSTEMGENERATED':
-            qset = qset.filter(status =P['status'])
+            qset = qset.filter(status =P['status'],ticketsource = 'USERDEFINED')
         if P.get('status') == 'SYSTEMGENERATED':
             qset = qset.filter(ticketsource='SYSTEMGENERATED')
         return qset or self.none()
