@@ -61,8 +61,8 @@ Question Set List
 			ajax:{
 				url: "{{ url('activity:checklist') }}?action=list&type=CHECKLIST"
 			},
-			lengthMenu: [ 10, 20, 50,100 ],
-			pageLength:10,
+			lengthMenu: [250,500,750,1000],
+            pageLength: 500,
             deferRender: true,
 			{# scrollY: 300,
             scrollCollapse: true,
@@ -103,12 +103,12 @@ Question Set List
 			 "searchBuilder",
 			 dataTablesPDFConfig(
                     title = `Site: {{request.user.bu.buname}}\n Question Set List`,
-                    columns = [2,3,4,5,6,7],
+                    columns = ':visible',
                     filename="qset_list"
                 ),
                 dataTablesExcelConfig(
                     title = `Site: {{request.user.bu.buname}}\n Question Set List`,
-                    columns = [2,3,4,5,6,7],
+                    columns = ':visible',
                     filename="qset_list"
                 ),
                 dataTablesColumnVisibilityConfig(),

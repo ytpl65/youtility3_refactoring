@@ -43,7 +43,7 @@ class TicketManager(models.Manager):
             'ticketsource', 'ticketcategory__taname'
         )
         if P.get('status') and P.get('status') != 'SYSTEMGENERATED':
-            qset = qset.filter(status =P['status'])
+            qset = qset.filter(status =P['status'],ticketsource = 'USERDEFINED')
         if P.get('status') == 'SYSTEMGENERATED':
             qset = qset.filter(ticketsource='SYSTEMGENERATED')
         return qset or self.none()

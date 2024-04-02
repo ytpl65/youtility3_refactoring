@@ -84,25 +84,28 @@ class ReportForm(forms.Form):
     required_css_class = "required"
     report_templates = [
         ('', 'Select Report'),
-        ('TaskSummary', 'Task Summary'),
-        ('TourSummary', 'Tour Summary'),
-        ('ListOfTasks', 'List of Tasks'),
-        ('ListOfTours', 'List of Internal Tours'),
-        ('PPMSummary', 'PPM Summary'),
-        ('ListOfTickets', 'List of Tickets'),
-        ('WorkOrderList', 'Work Order List'),
-        ('SiteReport', 'Site Report'),
-        ('PeopleQR', 'People-QR'),
-        ('AssetQR', 'Asset-QR'),
-        ('CheckpointQR', 'Checkpoint-QR'),
-        ('AssetwiseTaskStatus','Assetwise Task Status'),
-        ('StaticDetailedTourSummary','Static Detailed Tour Summary'),
-        ('DynamicDetailedTourSummary','Dynamic Detailed Tour Summary'),
-        ('DynamicTourDetails','Dynamic Tour Details'),
-        ('StaticTourDetails','Static Tour Details'),
-        ('SiteVisitReport','SiteVisitReport'),
-        ('LogSheet','Log Sheet'),
-        ('RP_SiteVisitReport','Route Plan Site Visit Report')
+        ('TASKSUMMARY', 'Task Summary'),
+        ('TOURSUMMARY', 'Tour Summary'),
+        ('LISTOFTASKS', 'List of Tasks'),
+        ('LISTOFTOURS', 'List of Internal Tours'),
+        ('DYNAMICTOURLIST','Dynamic Tour List'),
+        ('STATICTOURLIST','Static Tour List'),
+        ('PPMSUMMARY', 'PPM Summary'),
+        ('LISTOFTICKETS', 'List of Tickets'),
+        ('WORKORDERLIST', 'Work Order List'),
+        ('SITEREPORT', 'Site Report'),
+        ('PEOPLEQR', 'People-QR'),
+        ('ASSETQR', 'Asset-QR'),
+        ('CHECKPOINTQR', 'Checkpoint-QR'),
+        ('LOCATIONQR','Location-QR'),
+        ('ASSETWISETASKSTATUS','Assetwise Task Status'),
+        ('STATICDETAILEDTOURSUMMARY','Static Detailed Tour Summary'),
+        ('DYNAMICDETAILEDTOURSUMMARY','Dynamic Detailed Tour Summary'),
+        ('DYNAMICTOURDETAILS','Dynamic Tour Details'),
+        ('STATICTOURDETAILS','Static Tour Details'),
+        ('SITEVISITREPORT','SiteVisitReport'),
+        ('LOGSHEET','Log Sheet'),
+        ('RP_SITEVISITREPORT','Route Plan Site Visit Report')
     ]
     download_or_send_options = [
         ('DOWNLOAD', 'Download'),
@@ -137,6 +140,7 @@ class ReportForm(forms.Form):
     assettype       = forms.ChoiceField(label="Asset Type", widget=s2forms.Select2Widget, required=False)
     checkpoint      = forms.CharField(label='Checkpoint', widget=s2forms.Select2Widget, required=False)
     checkpoint_type = forms.CharField(label='Checkpoint Type', widget=s2forms.Select2Widget, required=False)
+    location_type   = forms.CharField(label='Location Type', widget=s2forms.Select2Widget, required=False)
     ticketcategory  = forms.CharField(label='Ticket Category', widget=s2forms.Select2MultipleWidget, required=False)
     peoplegroup     = forms.ChoiceField(label="People Group", widget=s2forms.Select2Widget, required=False, choices=[])
     people          = forms.ChoiceField(label="People", widget=s2forms.Select2Widget, required=False, choices=[])
@@ -167,6 +171,7 @@ class ReportForm(forms.Form):
         self.fields['peoplegroup'].choices = pm.Pgroup.objects.filter_for_dd_pgroup_field(self.request, sitewise=True, choices=True)
         self.fields['people'].choices = self.fields['mult_people'].choices = pm.People.objects.filter_for_dd_people_field(self.request, sitewise=True, choices=True)
         self.fields['assettype'].choices  = am.Asset.objects.asset_type_choices_for_report(self.request)
+        self.fields['location_type'].choices  = am.Location.objects.location_type_choices_for_report(self.request)
         self.fields['assetcategory'].choices = am.Asset.objects.asset_category_choices_for_report(self.request)
         self.fields['asset'].choices = am.Asset.objects.asset_choices_for_report(self.request)
         self.fields['qset'].choices = am.QuestionSet.objects.qset_choices_for_report(self.request)
@@ -186,7 +191,7 @@ class ReportForm(forms.Form):
 
     def clean(self):
         cd = super().clean()
-        if cd['report_name'] == 'SiteReport' and cd.get('people') in ["", None] and cd.get('sitegroup') in ["", None]:
+        if cd['report_name'] == 'SITEREPORT' and cd.get('people') in ["", None] and cd.get('sitegroup') in ["", None]:
             raise forms.ValidationError(
                 f"Both Site Group and People cannot be empty, when the report is {cd.get('report_name')}")
         

@@ -70,19 +70,27 @@ class QRCodeBaseReport(BaseReportsExport):
     
 
 class PeopleQR(QRCodeBaseReport):
-    report_name = 'PeopleQR'
-    fields = ['site', 'mult_people', 'qrsize*', 'site_or_people*']
+    report_name = 'PEOPLEQR'
+    fields = ['site', 'mult_people', 'qrsize*', 'site_or_people']
     unsupported_formats = ['xlsx', 'csv', 'json']
     
     def set_data(self):
         from apps.peoples.models import People
+        print_single_qr = self.formdata.get('print_single_qr')
         site = self.formdata.get('site')
         peoples = self.formdata.get('mult_people')
         self.size = self.formdata.get('qrsize')
         filters = {'client_id':self.client_id}
-        if site:
+        site_or_people = self.formdata.get('site_or_people')
+        if print_single_qr:
+            self.data = [print_single_qr]
+            self.peoplenames_and_codes = [{'code':print_single_qr,'name':self.formdata['name']}]
+            return
+        if site_or_people == 'SITE':
             filters.update({'bu_id':site})
         else:
+            peoples = ','.join(peoples)
+            print(peoples)
             filters.update({'id__in':peoples.split(',')})
         qset = People.objects.annotate(name = F('peoplename'),code = F('peoplecode')).filter(**filters).distinct().values("code", 'name').order_by('code')
         self.data = qset.values_list('code', flat=True)
@@ -98,17 +106,22 @@ class PeopleQR(QRCodeBaseReport):
             'names_and_codes':self.peoplenames_and_codes})
     
 class AssetQR(QRCodeBaseReport):
-    report_name = 'AssetQR'
+    report_name = 'ASSETQR'
     fields = ['site*','assettype*','assetcategory', 'qrsize*']
     unsupported_formats = ['xlsx', 'csv', 'json']
     
     def set_data(self):
         from apps.activity.models import Asset
+        print_single_qr = self.formdata.get('print_single_qr')
         site = self.formdata.get('site')
         assettype = self.formdata.get('assettype')
         assetcategory = self.formdata.get('assetcategory')
         self.size = self.formdata.get('qrsize')
         filters = {'client_id':self.client_id}
+        if print_single_qr:
+            self.data = [print_single_qr]
+            self.assetcodes_and_names = [{'code':print_single_qr, 'name':self.formdata['name']}]
+            return
         if site:
             filters.update({'bu_id':site})
         if assettype:
@@ -132,16 +145,21 @@ class AssetQR(QRCodeBaseReport):
         
 
 class CheckpointQR(QRCodeBaseReport):
-    report_name = 'CheckpointQR'
+    report_name = 'CHECKPOINTQR'
     fields = ['site*','checkpoint_type*', 'qrsize*']
     unsupported_formats = ['xlsx', 'csv', 'json']
 
     def set_data(self):
         from apps.activity.models import Asset
+        print_single_qr = self.formdata.get('print_single_qr')
         site = self.formdata.get('site')
         checkpoint_type = self.formdata.get('checkpoint_type')
         self.size = self.formdata.get('qrsize')
         filters = {'client_id':self.client_id}
+        if print_single_qr:
+            self.data = [print_single_qr]
+            self.checkpointcodes_and_names = [{'code':print_single_qr,'name':self.formdata['name']}]
+            return
         if site:
             filters.update({'bu_id':site})
         if checkpoint_type:
@@ -163,3 +181,37 @@ class CheckpointQR(QRCodeBaseReport):
             'names_and_codes':self.checkpointcodes_and_names})  
 
  
+class LocationQR(QRCodeBaseReport):
+    report_name = 'LOCATIONQR'
+    fields = ['site*','location_type*', 'qrsize*']
+    unsupported_formats = ['xlsx', 'csv', 'json']
+    
+    def set_data(self):
+        from apps.activity.models import Location
+        print_single_qr = self.formdata.get('print_single_qr')
+        site = self.formdata.get('site')
+        locationtype = self.formdata.get('location_type')
+        self.size = self.formdata.get('qrsize')
+        filters = {'client_id':self.client_id}
+        if print_single_qr:
+            self.data = [print_single_qr]
+            self.locationcodes_and_names = [{'code':print_single_qr, 'name':self.formdata['name']}]
+            return
+        if site:
+            filters.update({'bu_id':site})
+        if locationtype:
+            filters.update({'type':locationtype})
+        qset = Location.objects.annotate(
+            code = F('loccode'),name = F('locname')
+        ).filter(**filters).distinct().values("code","name").order_by('code')
+        self.data = qset.values_list('code', flat=True)
+        self.locationcodes_and_names = qset
+    
+    def set_context_data(self):
+        super().set_context_data()
+        qr_code_images = self.generate_qr_code_images(self.data, size=self.size)
+        self.context.update({
+            'qr_type':'assets',
+            'qr_file_paths': qr_code_images,
+            'size':self.size,
+            'names_and_codes':self.locationcodes_and_names})

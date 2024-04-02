@@ -75,7 +75,7 @@ class TypeAssistForm(SuperTypeAssistForm):
         S = self.request.session
         super().__init__(*args, **kwargs)
         self.fields['enable'].initial = True
-        ic(obm.TypeAssist.objects.filter(enable = True, client_id__in =  [S['client_id'], 1]))
+        # ic(obm.TypeAssist.objects.filter(enable = True, client_id__in =  [S['client_id'], 1]))
         self.fields['tatype'].queryset = obm.TypeAssist.objects.filter((Q(cuser__is_superuser = True) | Q(client_id__in =  [S['client_id'], 1])), enable=True )
         utils.initailize_form_fields(self)
 
@@ -397,6 +397,8 @@ class ClentForm(BuPrefForm):
         utils.initailize_form_fields(self)
         web, mob, portlet, report = create_caps_choices_for_clientform()
         ic(web)
+        ic(mob)
+        ic(report)
         self.fields['webcapability'].choices = web
         self.fields['mobilecapability'].choices = mob
         self.fields['reportcapability'].choices = report

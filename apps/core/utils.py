@@ -1703,3 +1703,11 @@ def generate_timezone_choices():
         choices.append((f"{tz_name} ({formatted_offset})", f"{tz_name} ({formatted_offset})"))
     
     return choices
+
+def download_qrcode(code, name, report_name, session, request):
+    from apps.reports import utils as rutils
+    report_essentials = rutils.ReportEssentials(report_name=report_name)
+    ReportFormat = report_essentials.get_report_export_object()
+    report = ReportFormat(filename=report_name, client_id=session['client_id'],
+                              formdata={'print_single_qr':code, 'qrsize':200, 'name':name}, request=request, returnfile=False)
+    return report.execute()

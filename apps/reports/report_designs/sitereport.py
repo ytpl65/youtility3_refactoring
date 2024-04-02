@@ -9,7 +9,7 @@ class SiteReportFormat(BaseReportsExport):
     report_title = "Site Report"
     design_file = "reports/pdf_reports/sitereport.html"
     ytpl_applogo =  'frontend/static/assets/media/images/logo.png'
-    report_name = 'SiteReport'
+    report_name = 'SITEREPORT'
     fields = ['fromdatetime*', 'uptodatetime*',  'sitegroup*', 'people']
     unsupported_formats = ['None']
     
@@ -24,7 +24,6 @@ class SiteReportFormat(BaseReportsExport):
         self.set_args_required_for_query()
         fromdatetime = self.formdata.get('fromdatetime').strftime('%d/%m/%Y %H:%M:%S')
         uptodatetime = self.formdata.get('uptodatetime').strftime('%d/%m/%Y %H:%M:%S')
-        ic(fromdatetime, uptodatetime)
         self.context = {
             'base_path': settings.BASE_DIR,
             'data' : runrawsql(get_query(self.report_name), args=self.args, named_params=True),

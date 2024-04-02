@@ -192,7 +192,7 @@ class Capability(LoginRequiredMixin, View):
             obj = utils.get_model_obj(int(R['id']), request, self.params)
             resp = utils.render_form_for_update(
                 request, self.params, "cap_form", obj)
-        print(f'return resp={resp}')
+        # print(f'return resp={resp}')
         return resp
 
     def post(self, request, *args, **kwargs):
@@ -262,6 +262,9 @@ class PeopleView(LoginRequiredMixin, View):
             objs = self.params['model'].objects.people_list_view(
                 request, self.params['fields'], self.params['related'])
             return rp.JsonResponse(data={'data': list(objs)}, status=200)
+        
+        if R.get('action',None) == 'qrdownload' and R.get('code',None) and R.get('name',None):
+            return utils.download_qrcode(R['code'],R['name'],'PEOPLEQR',request.session,request)
 
         # return cap_form empty
         if R.get('action', None) == 'form':

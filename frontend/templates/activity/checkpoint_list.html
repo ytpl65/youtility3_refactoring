@@ -208,7 +208,6 @@ if(filters && filters.AssetType === 1){
 	
 	$(document).ready(function () {
 
-
 		new ClipboardJS('.btn-copy');
 		$("input").keypress(function(event) {
 			if (event.which == 13) {
@@ -230,7 +229,9 @@ if(filters && filters.AssetType === 1){
 					d.params = JSON.stringify(params)
 				}
 			},
-			pageLength:50,
+			deferRender:true,
+			lengthMenu: [250,500,750,1000],
+            pageLength: 500,
 			columns:[
 				{data:'id', visible:false, searchable:false, className:'noVis'},
 				{data:'assetcode', title:'Code'},
@@ -240,11 +241,18 @@ if(filters && filters.AssetType === 1){
 				{data:'runningstatus', title:'Status'},
 				{data:'enable', title:'Enable', render:function(data, type, row, meta){
 					return data === true ? '<i class="bi bi-check-circle-fill text-success"></i>': '<i class="bi bi-x-circle-fill text-danger"></i>'				
-				}},
+				}
+				},
 				{data:'gps', title:'GPS'},
 				{data:'identifier', visible:false, className:'noVis'},
 				{data:'bu__buname', title:"Site", visible:false},
 				{data:'bu__bucode', title:'Site Code', visible:false},
+				{data:null,title:'Qr Code', defaultContent: "Print", visible:false,render: function(data, type, row, meta) {
+                    let downloadUrl = `{{ url('activity:checkpoint') }}?action=qrdownload&code=${encodeURIComponent(row['assetcode'])}&name=${encodeURIComponent(row['assetname'])}`
+                    return `<a href="${downloadUrl}" class="qr-download-link" onclick="event.stopPropagation()" >Qr Download</a>`;
+                },
+				selectRow: true
+				}
 
 			],
 			responsive: true,
@@ -262,10 +270,12 @@ if(filters && filters.AssetType === 1){
 					if(data === 'SCRAPPED'){return `<span class="badge badge-secondary">${data}</span>`}
 					if(data === 'STANDBY'){return `<span class="badge badge-orange">${data}</span>`}
 					if(data === 'WORKING'){return `<span class="badge badge-success">${data}</span>`}
-				}},
+				}
+				},
 				{targets:[4,5], render:function(data, type, row, meta){
 					return data || 'NONE'
-				}}
+				}
+				}
 			],
             dom:`<'row' <'col-sm-6 d-flex justify-content-start'f> <'col-sm-6 d-flex justify-content-end'B> >rt<'row'
 			 <'col-sm-6'l> <'col-sm-6'p><'col-sm-12 d-flex justify-content-center'i>>`,
@@ -277,17 +287,17 @@ if(filters && filters.AssetType === 1){
 			},
 			buttons:[
 				"searchBuilder",
-                dataTablesPDFConfig(
+				dataTablesColumnVisibilityConfig(),
+                    dataTablesPDFConfig(
                     title = `Site: {{request.user.bu.buname}}\n Checkpoint List`,
-                    columns = [1,2,3,4,5,6,7,9,10],
+                    columns = ':visible',
 					filename = "checkpoint_list"
                 ),
-                dataTablesExcelConfig(
+                   dataTablesExcelConfig(
                     title = `Site: {{request.user.bu.buname}}\n Checkpoint List`,
-                    columns = [1,2,3,4,5,6,7,9,10],
+                    columns = ':visible',
 					filename = "checkpoint_list"
                 ),
-                dataTablesColumnVisibilityConfig(),
 
 				{
 					text     : `Add New &nbsp;<i class='fas fa-plus ch4'></i></a>`,
@@ -307,13 +317,11 @@ if(filters && filters.AssetType === 1){
 						})
 					}
 				},
-
 			],
 			select: {
                     style: 'single'
                 }
 		})
-
 
 
 		//submit form

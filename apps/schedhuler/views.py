@@ -974,7 +974,6 @@ class GetTaskFormJobneed(LoginRequiredMixin, View):
         try:
             obj = self.model.objects.get(id = parent_jobneed)
             form = self.form_class(instance = obj)
-            ic(form.data)
             log.info(f"object retrieved {obj.jobdesc}")
             cxt = {'taskformjobneed': form, 'edit': True}
             response = render(request, self.template_path, context = cxt)
@@ -1064,7 +1063,6 @@ class JobneedTours(LoginRequiredMixin, View):
         else:
             log.info("checkpoints retrieved returned success")
         return checkpoints
-
 
 
 class JobneedExternalTours(LoginRequiredMixin, View):

@@ -192,6 +192,16 @@ Report Form
           {{ form.checkpoint_type.errors }}
         </div>
       </div>
+      <!--LOCATION_TYPE-->
+      <div class= "input-group datafield d-none mb-3">
+        <div class="col-2">
+          {{form.location_type.label_tag()}}
+        </div>
+        <div class="col-5">
+          {{ form.location_type}}
+          {{form.location_type.errors}}
+        </div>
+      </div>
       <!--CHECKPOINT-->
       <div class="input-group datafield d-none mb-3">
         <div class="col-2">
@@ -403,6 +413,7 @@ Report Form
   $(document).ready(() => {
     //set ctzoffset
     $("#id_ctzoffset").val(-new Date().getTimezoneOffset())
+
     //validator for form
     const validator = new JustValidate('#report_form', { errorFieldCssClass: 'is-invalid'});
 
@@ -420,9 +431,12 @@ Report Form
     
     getFieldsFromServer()
 
-    
-    //cron to readable format
+    emptyreportsdropdown()
 
+    InsertingReportsinDropdown()
+
+
+    //cron to readable format
     $("#btn_clear").click(() => {
       location.href = `${urlname}?template=true`
     })
@@ -443,11 +457,12 @@ Report Form
     })
 
     // on change site selection
-    $("#id_site").change((e) => {
+    /*$("#id_site").change((e) => {
+      if ($('#id_report_name').val()==='ASSETQR'){
         //reset asset options
         fire_ajax_get({
             url:urlname,
-            data:{'action':"get_site", "of_site":$("#id_site").val()}
+            data:{'action':"get_site", "of_site":$("#id_site").val(),'of_type':'ASSETTYPE'}
         }).done((data, status, xhr) => {
             $("#id_assettype").empty()
             $("#id_assettype").append(new Option("", "", false, false)) //first option is empty
@@ -458,7 +473,76 @@ Report Form
               })
             }
         })
-    })
+      }
+      else if ($('#id_report_name').val()==='CHECKPOINTQR'){
+        //reset checkpoint options
+        fire_ajax_get({
+            url:urlname,
+            data:{'action':"get_site", "of_site":$("#id_site").val(),'of_type':'CHECKPOINTTYPE'}
+        }).done((data, status, xhr) => {
+            $("#id_checkpoint_type").empty()
+            $("#id_checkpoint_type").append(new Option("", "", false, false)) //first option is empty
+            if(data.options){
+              data.options.forEach((item) => {
+                  var newOption = new Option(item.taname, item.id, false, false)
+                  $("#id_checkpoint_type").append(newOption)
+              })
+            }
+        })
+      }
+      else if($('#id_report_name').val()=='LOCATIONQR') 
+      //reset checkpoint options
+        fire_ajax_get({
+            url:urlname,
+            data:{'action':"get_site", "of_site":$("#id_site").val(),'of_type':'LOCATIONTYPE'}
+        }).done((data, status, xhr) => {
+            $("#id_location_type").empty()
+            $("#id_location_type").append(new Option("", "", false, false)) //first option is empty
+            if(data.options){
+              data.options.forEach((item) => {
+                  var newOption = new Option(item.taname, item.id, false, false)
+                  $("#id_location_type").append(newOption)
+              })
+            }
+        })
+    })*/
+    //on change the site selection 
+    $("#id_site").change((e) => {
+    const reportName = $('#id_report_name').val();
+    let optionId = "";
+    let typeId = "";
+
+    switch (reportName) {
+        case 'ASSETQR':
+            optionId = "#id_assettype";
+            typeId = 'ASSETTYPE';
+            break;
+        case 'CHECKPOINTQR':
+            optionId = "#id_checkpoint_type";
+            typeId = 'CHECKPOINTTYPE';
+            break;
+        case 'LOCATIONQR':
+            optionId = "#id_location_type";
+            typeId = 'LOCATIONTYPE';
+            break;
+        default:
+            return; // No action for other reports
+    }
+
+    fire_ajax_get({
+        url: urlname,
+        data: { 'action': "get_site", "of_site": $("#id_site").val(), 'of_type': typeId }
+    }).done((data, status, xhr) => {
+        const $option = $(optionId).empty().append(new Option("", "", false, false)); // First option is empty
+
+        if (data.options) {
+            data.options.forEach((item) => {
+                const newOption = new Option(item.taname, item.id, false, false);
+                $option.append(newOption);
+            });
+        }
+      });
+    });
 
 
     // on change asset type
@@ -609,6 +693,7 @@ Report Form
   }
 
   function addValidationsToForm(id){
+    console.log(id)
       validator.addField('#'+id, [
         { 
           rule:'required'
@@ -629,7 +714,7 @@ Report Form
         url:urlname,
         data: {'action':'form_behaviour', 'report_name':selected}
       }).done((data, status, error) => {
-        if(selected === 'PeopleQR'){
+        if(selected === 'PEOPLEQR'){
           showHideSelectField('SITE')
         }
         dynamicFormBehaviour(data)
@@ -637,6 +722,27 @@ Report Form
     }
   }
 
+
+  function emptyreportsdropdown(){
+    var dropdown = document.querySelector('select[name="{{form.report_name.name}}"]');
+    while (dropdown.options.length > 0){
+      dropdown.remove(0); 
+    }
+  }
+
+  function InsertingReportsinDropdown(){
+    var SessionReports = session['client_reportcaps']
+
+    SessionReports.unshift(['','Select Report']);
+
+    for (var i = 0; i < SessionReports.length; i++) {
+        $('#id_report_name').append($('<option>', {
+            value: SessionReports[i][0],
+            text:SessionReports[i][0]
+        }));
+    }
+
+  }
 
     // Attach the event listeners
     $('#id_cc, #id_to_addr').on('select2:select select2:unselect', onSelectionChanged);
