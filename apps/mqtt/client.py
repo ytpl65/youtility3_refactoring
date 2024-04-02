@@ -8,6 +8,7 @@ from pprint import pformat
 log = logging.getLogger('mobile_service_log')
 from django.conf import settings
 from background_tasks.tasks import process_graphql_mutation_async
+from celery.result import AsyncResult
 MQTT_CONFIG = settings.MQTT_CONFIG 
 
 # MQTT broker settings
@@ -15,8 +16,17 @@ BROKER_ADDRESS = MQTT_CONFIG['BROKER_ADDRESS']
 BROKER_PORT = MQTT_CONFIG['BROKER_PORT']
 
 MUTATION_TOPIC = "graphql/mutation"
+MUTATION_STATUS_TOPIC = "graphql/mutation/status"
 RESPONSE_TOPIC = "response/acknowledgement"
-RESULT_TOPIC   = "response/result"
+STATUS_TOPIC   = "response/status"
+
+def get_task_status(item):
+    """
+    Get status of a task
+    """
+    status = AsyncResult(item.get('taskId')).status
+    item.update({'status':status})
+    return item
 
 
 class MqttClient:
@@ -39,22 +49,42 @@ class MqttClient:
         if rc == 0:
             print("Connected to MQTT Broker!")
             client.subscribe(MUTATION_TOPIC)
+            client.subscribe(MUTATION_STATUS_TOPIC)
         else:
             fail=f"Failed to connect, return code {rc}"
             print(fail)
 
     def on_message(self, client, userdata, msg):
-        # Process the received task
+        # Process the received message
         payload = msg.payload.decode()
         log.info("message: {} from MQTT broker on topic{} {}".format(msg.mid,msg.topic, "payload recieved" if payload else "payload not recieved"))
         log.info("processing started [+]")
+        
         if msg.topic == MUTATION_TOPIC:
-            log.info(f"Decoded Paylod:\n{pformat(json.loads(payload))}")
+            # process graphql mutations received on this topic
             result = process_graphql_mutation_async.delay(payload)
-            response = json.dumps({'task_id':result.task_id, 'status':result.state.lower()})
+            post_data = json.loads(payload)
+            print(f"{post_data.keys()}")
+            uuids, service_name = post_data.get('uuids', []), post_data.get('serviceName', "")
+            response = json.dumps(
+                {'task_id':result.task_id, 'status':result.state,
+                 'uuids':uuids, 'serviceName':service_name, 'payload':payload})
             log.info(f"Response published to {RESPONSE_TOPIC}: {response}")
-            log.info("processing completed [-]")
-            client.publish(RESPONSE_TOPIC, response) # Publish the response
+            client.publish(RESPONSE_TOPIC, response)
+        
+        if msg.topic == MUTATION_STATUS_TOPIC:
+            # enquire the status of tasks ids received on this topic
+            payload = json.loads(payload)
+            log.info(f"Received taskIds payload: {payload}")
+            taskids = payload.get('taskIds', [])
+            taskids_with_status = list(map(get_task_status, taskids))
+            response = json.dumps(taskids_with_status)
+            log.info(f"Response published to {STATUS_TOPIC}: {response}")
+            client.publish(STATUS_TOPIC, response)
+        log.info("processing completed [-]")
+
+            
+            
 
 
     def on_disconnect(self, client, userdata, disconnect_flags, rc, props):

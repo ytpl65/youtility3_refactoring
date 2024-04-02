@@ -23,6 +23,7 @@ from apps.schedhuler.utils import create_dynamic_job
 from .auth import Messages as AM
 from .types import ServiceOutputType
 from .validators import clean_record
+from io import BytesIO
 
 
 log = getLogger('mobile_service_log')   
@@ -152,10 +153,11 @@ def get_or_create_dir(path):
     else: created= False
     return created
 
-def write_file_to_dir(filebuffer, uploadedfilepath):
+def write_file_to_dir(filebytes, uploadedfilepath):
     from django.core.files.base import ContentFile
     from django.core.files.storage import default_storage
-    path = default_storage.save(uploadedfilepath, ContentFile(filebuffer.read()))
+    file_content = BytesIO(bytes(filebytes))
+    path = default_storage.save(uploadedfilepath, ContentFile(file_content.read()))
     log.info(f"file saved to {path}")
 
 
@@ -725,13 +727,13 @@ def perform_adhocmutation(self, records, db='default', bg=False):  # sourcery sk
     results = ServiceOutputType(rc = rc, recordcount = recordcount, msg = msg, traceback = traceback)
     return results.__dict__ if bg else results
 
-def perform_uploadattachment(file,  record, biodata):
+def perform_uploadattachment(bytes,  record, biodata):
     rc, traceback, resp = 1,  'NA', 0
     recordcount, msg = None, Messages.UPLOAD_FAILED
     # ic(file, tablename, record, type(record), biodata, type(biodata))
     
 
-    file_buffer = file
+    file_buffer = bytes
     filename    = biodata['filename']
     peopleid    = biodata['people_id']
     path        = biodata['path']
@@ -742,7 +744,7 @@ def perform_uploadattachment(file,  record, biodata):
     uploadfile  = f'{filepath}/{filename}'
     db          = utils.get_current_db_name()
     
-    log.info(f"file_buffer: '{file_buffer}' \n'onwername':{onwername}, \nownerid: '{ownerid}' \npeopleid: '{peopleid}' \npath: {path} \nhome_dir: '{home_dir}' \nfilepath: '{filepath}' \nuploadfile: '{uploadfile}'")
+    log.info(f"filebytes length: '{len(file_buffer)}' \n'onwername':{onwername}, \nownerid: '{ownerid}' \npeopleid: '{peopleid}' \npath: {path} \nhome_dir: '{home_dir}' \nfilepath: '{filepath}' \nuploadfile: '{uploadfile}'")
     try:
         with transaction.atomic(using = db):
             iscreated = get_or_create_dir(filepath)
@@ -778,7 +780,7 @@ def log_event_info(onwername, ownerid):
     return eobj
 
 
-def execute_graphql_mutations(mutation_query, variables, records):
+def execute_graphql_mutations(mutation_query, variables):
     from apps.service.schema import schema
 
 
@@ -792,8 +794,10 @@ def execute_graphql_mutations(mutation_query, variables, records):
         # Handle errors
         error_messages = [error.message for error in result.errors]
         log.error(f"Mutation errors: {pformat(error_messages)}")
-        return json.dumps({'errors': error_messages})
+        resp = json.dumps({'errors': error_messages})
+        raise Exception(f"GraphQL mutation failed with errors {resp}")
     else:
         # Handle success
         log.info(f"Mutation result: {result.data}")
-        return json.dumps({'data': result.data})
+        resp = json.dumps({'data': result.data})
+    return resp

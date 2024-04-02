@@ -193,26 +193,23 @@ class UploadAttMutaion(graphene.Mutation):
     output = graphene.Field(ty.ServiceOutputType)
 
     class Arguments:
-        file    = Upload(required = True)
-        biodata = graphene.List(graphene.String,required = True)
-        record  = graphene.List(graphene.String,required = True)
+        bytes    = graphene.List(graphene.Int, required=True)
+        biodata = graphene.String(required = True)
+        record  = graphene.String(required = True)
 
     @classmethod
-    def mutate(cls,root, info, file,  record, biodata):
+    def mutate(cls,root, info, bytes,  record, biodata):
         log.info("\n\nupload-attachment mutations start [+]")
         try:
             recordcount=0
-            log.info(f"type of file is {type(file)}")
-            with zipfile.ZipFile(file) as zref:
-                for file, rec, bd in zip(zref.filelist, record, biodata):
-                    log.info(f'file{type(file)} \nbiodata:{type(bd)} \nrecord:{type(rec)}')
-                    bd, rec = json.loads(bd), json.loads(rec)
-                    with zref.open(file) as fl:
-                        o = sutils.perform_uploadattachment(fl, rec, bd)
-                        recordcount += o.recordcount
-                    log.info(f"Response: {o.recordcount}, {o.msg}, {o.rc}, {o.traceback}")
-                o.recordcount = recordcount
-                return UploadAttMutaion(output = o)
+            log.info(f"type of file is {type(bytes)}")
+            record = json.loads(record)
+            biodata = json.loads(biodata)
+            o = sutils.perform_uploadattachment(bytes, record, biodata)
+            recordcount += o.recordcount
+            log.info(f"Response: {o.recordcount}, {o.msg}, {o.rc}, {o.traceback}")
+            o.recordcount = recordcount
+            return UploadAttMutaion(output = o)
         except Exception as e:
             err(f"Exception: {e}", exc_info=True)
             return UploadAttMutaion(output = ty.ServiceOutputType(rc = 1, recordcount = 0, msg = 'Upload Failed', traceback = tb.format_exc()))
