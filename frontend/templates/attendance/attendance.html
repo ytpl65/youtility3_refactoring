@@ -224,16 +224,19 @@ tr{
                 },
                 {targets:[6], render:function(data, type, row, meta){
                     return matchStatus(row, data)
-                }},
+                }
+                },
                 {targets:[4], render:function(data, type, row, meta){
                     return data === false ? '<span class="badge badge-danger">Not Matched</span>' : '<span class="badge badge-success">Matched</span>'
-                }},
+                }
+                },
                 {targets:12, render:function(data, type, row, meta){
                     return ['SELF', 'MARK'].includes(row['peventtype__tacode']) ? `<button type="button" class="btn p-0 btn-link" onClick="getFRStatus('${row['uuid']}');event.stopPropagation();">FR Status</button>` : '--'}
                 },
                 {targets:3,data:"people__peoplename", render:function(data, type, row, meta){
                     return data === 'NONE' ? 'Unknown' : `${data}`
-                }},
+                }
+                },
                 {targets:[5], render:function(data, type, row, meta){
                     let coords = typeof data === 'string' && data.length > 0 ? JSON.parse(data): 'NONE'
                     if(coords !== 'NONE'){
@@ -241,7 +244,8 @@ tr{
                             let lng = coords['coordinates'][0]
                             return `<a href="https://www.google.com/maps?q=${lat},${lng}" target="_blank">${lat},${lng}</a>`
                     }return coords
-                }},
+                }
+                },
                 {targets:[7], render:function(data, type, row, meta){
                     let coords = typeof data === 'string' && data.length > 0 ? JSON.parse(data): 'NONE'
                     if(coords !== 'NONE'){
@@ -249,18 +253,21 @@ tr{
                             let lng = coords['coordinates'][0]
                             return `<a href="https://www.google.com/maps?q=${lat},${lng}" target="_blank">${lat},${lng}</a>`
                     }return coords
-                }}
+                }
+                }
             ],
             buttons: [
                 "searchBuilder",
                 dataTablesPDFConfig(
-                    `Site: {{ request.user.bu.buname }}\nAttendance List`,
-                    [0,1,2,3,4,5,6,7,8,9,10,11,14],
-                    filename = "attendance_list"
+                    title = `Site: {{ request.user.bu.buname }}\nAttendance List`,
+                    columns = ':visible',
+                    filename = "attendance_list",
+                    pageSize = "A3",
+
                 ),
                 dataTablesExcelConfig(
-                    'Site: {{ request.user.bu.buname }}\nAttendance List',
-                    [0,1,2,3,4,5,6,7,8,9,10,11,14],
+                    title = 'Site: {{ request.user.bu.buname }}\nAttendance List',
+                    columns = ':visible',
                     filename = "attendance_list"
                 ),
                 dataTablesColumnVisibilityConfig(),

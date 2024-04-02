@@ -32,7 +32,6 @@ class TicketManager(models.Manager):
     def get_tickets_listview(self, request):
         R, S = request.GET, request.session
         P = json.loads(R['params'])
-        print(P)
         qset = self.filter(
             cdtz__date__gte = P['from'],
             cdtz__date__lte = P['to'],

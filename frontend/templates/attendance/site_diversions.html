@@ -95,10 +95,12 @@ Site Diversion List
                 {data: 'people__peoplename', title: 'Performed By'},
                 {data: 'start_gps', title: "Diversion Start At", render:function(data, type, row, meta){
                     return handleGPSLocation(data)
-                }},
+                }
+                },
                 {data: 'end_gps', title: "Diversion End At",  render:function(data, type, row, meta){
                     return handleGPSLocation(data)
-                }},
+                }
+                },
                 {data:'punchintime', title:"Start Time"},
                 {data:'punchouttime', title:"End Time"},
                 {data:'ctzoffset', visible:false, className:"noVis"},
@@ -108,13 +110,16 @@ Site Diversion List
                 {targets:2, data: 'jobdesc', render:function(data, type, row, meta){
                     let redirectUrl = "{{ url('schedhuler:jobneedexternaltours') }}" 
                     return `<a href="${redirectUrl}?id=${row['jobneed_id']}">${data}</a>`
-                }},
+                }
+                },
                 {targets:[6], render:function(data, type, row, meta){
                     return convert_to_local(type, data, row)
-                }},
+                }
+                },
                 {targets:[7], render:function(data, type, row, meta){
                     return convert_to_local(type, data, row)
-                }},
+                }
+                },
             ],
 
             order:[[6, 'desc']],
@@ -122,12 +127,12 @@ Site Diversion List
                 "searchBuilder",
                 dataTablesPDFConfig(
                     title = `Site: {{request.user.bu.buname}}\n Site Diversion List`,
-                    columns = [1,2,3,4,5,6,7],
+                    columns =':visible',
                     filename="sitediversion_list"
                 ),
                 dataTablesExcelConfig(
                     title = `Site: {{request.user.bu.buname}}\n Site Diversion List`,
-                    columns = [1,2,3,4,5,6,7],
+                    columns =':visible',
                     filename="sitediversion_list" 
                 ),
                 dataTablesColumnVisibilityConfig()

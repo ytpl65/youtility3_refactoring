@@ -77,17 +77,18 @@ People
 			},
 			buttons:[
 				"searchBuilder",
+				dataTablesColumnVisibilityConfig(),
                 dataTablesPDFConfig(
                     title = `Site: {{request.user.bu.buname}}\n People List`,
-                    columns = [1,2,3,4,5,6,7,8],
-					filename = 'people_list'
+                    columns = ':visible',
+					filename = 'people_list',
+					pageSize = "A3",
                 ),
                 dataTablesExcelConfig(
                     title = `Site: {{request.user.bu.buname}}\n People List`,
-                    columns = [1,2,3,4,5,6,7,8],
+                    columns = ':visible',
 					filename = 'people_list'
                 ),
-                dataTablesColumnVisibilityConfig(),
 				{
 					text     : `Add New &nbsp;<i class='fas fa-plus ch4'></i></a>`,
 					className: "btn btn-sm border border-primary btn-light-primary add_new_people",

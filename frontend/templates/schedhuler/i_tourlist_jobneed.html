@@ -95,14 +95,17 @@ Tour List
                 {data:"bu__buname", title:"Site"},
                 {data: 'jobdesc', title: 'Description', render:function(data, type, row, meta){
                     return `<a href="${urlname}?id=${row['id']}">${data}</a>`
-                }},
+                }
+                },
                 {data: 'plandatetime', title: "Plan DateTime", render:function(data, type, row, meta){
                     //return `<a href="${urlname}?id=${row['id']}">${data}</a>`
                     return `<a href="${urlname}?id=${row['id']}">${convert_to_local(type, data, row)}</a>`
-                }},
+                }
+                },
                 {data: 'expirydatetime', title: "Expiry Datetime", render:function(data, type, row, meta){
                     return `<a href="${urlname}?id=${row['id']}">${convert_to_local(type, data, row)}</a>`
-                }},
+                }
+                },
                 {data:"no_of_checkpoints", title:"Checkpoints/Assets"},
                 {data: 'jobstatus', title: 'Status'},
                 {data:"completed",title:"Completed"},
@@ -114,12 +117,14 @@ Tour List
                     }else{
                         return data
                     }
-                }},
+                }
+                },
                 {data: 'endtime', title: "Performed On", render:function(data, type, row, meta){
                     if (data === null) {return "--";} 
                     else { 
                     return `<a href="${urlname}?id=${row['id']}">${convert_to_local(type, data, row)}</a>`}
-                }},
+                }
+                },
                 {data: 'performedby__peoplename', title: 'Performed By'},
                 {# {data: 'gracetime', title: "Grace Time"}, #}
                 {data:"bu__bucode", title:"Site Code", visible:false},
@@ -131,13 +136,13 @@ Tour List
             buttons:[
                 "searchBuilder",
                 dataTablesPDFConfig(
-                    'Site: {{ request.user.bu.buname }}\nTour List',
-                    [1,2,3,4,5,6,7,8],
+                    title = 'Site: {{ request.user.bu.buname }}\nTour List',
+                    columns = ':visible',
                     filename="tour_list"
                 ),
                 dataTablesExcelConfig(
                     'Site: {{ request.user.bu.buname }}\nTour List',
-                    [1,2,3,4,5,6,7,8],
+                    columns = ':visible',
                     filename="tour_list"
                 ),
                 dataTablesColumnVisibilityConfig(),

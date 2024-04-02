@@ -76,10 +76,12 @@ $(document).ready(function(){
         columnDefs:[
             {targets:1, render:function(data, type, row, meta){
                     return convert_to_local(type, data, row)
-            }},
+            }
+            },
             {targets:3, render:function(data, type, row, meta){
                 return  `<a href="${urlname}?id=${row['id']}">${data}</a>`
-            }},
+            }
+            },
             {targets:4, render:function(data, type, row, meta){
                 if(data === 'APPROVED'){
                     return `<span class="badge fs-9 badge-success">${data}</span>`
@@ -88,27 +90,30 @@ $(document).ready(function(){
                 }else{
                     return `<span class="badge fs-9 badge-warning">${data}</span>`
                 }
-            }},
+            }
+            },
             {targets:5, render:function(data, type, row, meta){
                 if(data === 'ASSIGNED'){return `<span class="badge fs-9 badge-secondary">${data}</span>`}
                 else if (data === 'COMPLETED'){return `<span class="badge fs-9 badge-success">${data}</span>`}
-            }},
+            }
+            },
             {targets:7, render:function(data, type, row, meta){
                 if(row['workstatus'] == 'COMPLETED'){
                     return '<a href="#" class="edit-link">Report&nbsp;<i class="bi text-danger fs-5 bi-file-earmark-pdf-fill"></i></a>';
                 }return 'N/A'
-            }}
+            }
+            }
         ],
         buttons:[
             "searchBuilder",
                 dataTablesPDFConfig(
                     title = `Site: {{request.user.bu.buname}}\n Work Permit List`,
-                    columns = [1,2,3,4,5,6,7,8,9,10,11],    
+                    columns = ':visible',    
                     filename = "workpermit_list"
                 ),
                 dataTablesExcelConfig(
                     title = `Site: {{request.user.bu.buname}}\n Work Permit List`,
-                    columns = [1,2,3,4,5,6,7,8,9,10,11],
+                    columns = ':visible',
                     filename = "workpermit_list"
                 ),
                 dataTablesColumnVisibilityConfig(),

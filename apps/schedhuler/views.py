@@ -1065,7 +1065,6 @@ class JobneedTours(LoginRequiredMixin, View):
         return checkpoints
 
 
-
 class JobneedExternalTours(LoginRequiredMixin, View):
     params = {
         'model'        : am.Jobneed,

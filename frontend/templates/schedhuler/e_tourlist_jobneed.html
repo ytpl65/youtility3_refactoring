@@ -104,20 +104,24 @@ External Tour List
             columnDefs:[
                 {targets:[1], render:function(data, type, row, meta){
                   return `<a href="${urlname}?id=${row['id']}">${convert_to_local(type, data, row)}</a>`
-                }},
+                }
+                },
                 {targets:[7], render:function(data, type, row, meta){
                   return `<a href="${urlname}?id=${row['id']}">${convert_to_local(type, data, row)}</a>`
-                }},
+                }
+                },
                 {targets:[2], render:function(data, type, row, meta){
                    return `<a href="${urlname}?id=${row['id']}">${data}</a>`
-                }},
+                }
+                },
                 {targets:[4], render:function(data, type, row, meta){
                     if(data.includes('[GROUP]')){
                         return `<a href="javascript:void(0)"  onClick='showListOfPeoples(${row['id']}, "Jobneed")'>${data}</a>`
                     }else{
                         return data
                     }
-                }},
+                }
+                },
                 {targets:[8], render:function(data, type, row, meta){
                     let coords = parseGeoJson(data)
                     if(row['jobstatus'] !== 'ASSIGNED'){
@@ -126,19 +130,20 @@ External Tour List
                         return `<a href="{{ url('schedhuler:site_tour_tracking') }}?jobneed_id=${row['id']}" target='_blank'>View on map</a>`
                     }
                     return '--'
-                }}
+                }
+                }
             ],
             scrollCollapse: true,
             buttons:[
                 "searchBuilder",
                 dataTablesPDFConfig(
-                    'Site: {{ request.user.bu.buname }}\Route Plan List',
-                    [1,2,3,4,5,6,7],
+                     title = 'Site: {{ request.user.bu.buname }}\Route Plan List',
+                    columns = ':visible',
                     filename="routeplan_list"
                 ),
                 dataTablesExcelConfig(
-                    'Site: {{ request.user.bu.buname }}\Route Plan List',
-                    [1,2,3,4,5,6,7],
+                     title = 'Site: {{ request.user.bu.buname }}\Route Plan List',
+                    columns = ':visible',
                     filename = "routeplan_list"
                 ),
                 dataTablesColumnVisibilityConfig(),

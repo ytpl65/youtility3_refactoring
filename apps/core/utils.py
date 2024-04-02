@@ -226,7 +226,6 @@ def get_model_obj(pk, request, params):
         return handle_DoesNotExist(request)
     else:
         logger.info(f"object retrieved '{obj}'")
-        print(obj)
         return obj
 
 

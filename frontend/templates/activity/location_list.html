@@ -91,10 +91,12 @@ $(document).ready(function () {
 					if(data === 'SCRAPPED'){return `<span class="badge badge-secondary">${data}</span>`}
 					if(data === 'STANDBY'){return `<span class="badge badge-orange">${data}</span>`}
 					if(data === 'WORKING'){return `<span class="badge badge-success">${data}</span>`}
-				}},
+				}
+				},
 				{targets:3, render:function(data, type, row, meta){
 					return data || 'NONE'
-				}}
+				}
+				}
 
 			],
 			createdRow:function(row, data, dataIndex){
@@ -106,12 +108,12 @@ $(document).ready(function () {
 				"searchBuilder",
                 dataTablesPDFConfig(
                     title = `Site: {{request.user.bu.buname}}\n Location List`,
-                    columns = [1,2,3,4,5,6,7],
+                    columns = ':visible',
 					filename = 'location_list'
                 ),
                 dataTablesExcelConfig(
                     title = `Site: {{request.user.bu.buname}}\n Location List`,
-                    columns = [1,2,3,4,5,6,7],
+                    columns = ':visible',
 					filename = 'location_list'
                 ),
                 dataTablesColumnVisibilityConfig(),
