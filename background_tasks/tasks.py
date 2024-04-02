@@ -470,7 +470,7 @@ def move_media_to_cloud_storage():
     resp = {}
     try:
         log.info("move_media_to_cloud_storage execution started [+]")
-        directory_path = f'{settings.MEDIA_ROOT}/transactions/'
+        directory_path = f'{settings.MEDIA_ROOT}/transaction/'
         path_list = get_files(directory_path)
         move_files_to_GCS(path_list, settings.BUCKET)
         del_empty_dir(directory_path)
