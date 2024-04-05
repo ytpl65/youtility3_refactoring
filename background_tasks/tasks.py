@@ -563,4 +563,22 @@ def send_generated_report_onfly_email(self, filepath, fromemail, to, cc, ctzoffs
         log.critical("something went wrong in bg task send_generated_report_onfly_email", exc_info=True)
     return story
         
-    
+
+@app.task(bind=True, name="insert_json_records_bulk")
+def insert_json_records_async(self, records, tablename):
+    from apps.service.utils import get_model_or_form
+    from apps.service.validators import clean_record
+    if model := get_model_or_form(tablename):
+        log.info("processing bulk json records for insert/update")
+        for record in records:
+            record = json.loads(record)
+            record = json.loads(record)
+            record = clean_record(record)
+            log.info(f"processing record {pformat(record)}")
+            if model.objects.filter(uuid=record['uuid']).exists():
+                model.objects.filter(uuid=record['uuid']).update(**record)
+                log.info("record is already exist so updating it now..")
+            else:
+                log.info("record is not exist so creating new one..")
+                model.objects.create(**record)
+        return "Records inserted/updated successfully"
