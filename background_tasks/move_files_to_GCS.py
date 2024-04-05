@@ -43,6 +43,7 @@ def move_files_to_GCS(file_paths, bucket_name, target_dir="", test_env=False):
     '''
     log.info(f"Moving files to GCS bucket: {bucket_name}")
     try:
+        os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = f"{os.path.expanduser('~')}/service-account-file.json"
         client = storage.Client()
         bucket = client.get_bucket(bucket_name)
 
