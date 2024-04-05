@@ -23,8 +23,6 @@ ENVPATH = os.path.join(os.path.abspath('intelliwiz_config/envs'))
 environ.Env.read_env(os.path.join(ENVPATH, '.env.dev'), overwrite=True) #rename it '.env.prod' for production
 
 
-
-
 def check_path(path):
     path = Path(path)
     if not os.path.exists(path):
@@ -38,7 +36,6 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = env('SECRET_KEY')
 ENCRYPT_KEY = env('ENCRYPT_KEY')
-
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True    
 

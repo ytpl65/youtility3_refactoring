@@ -15,7 +15,7 @@ from apps.core import utils
 from apps.core import exceptions as excp
 from apps.service import serializers as sz
 from apps.y_helpdesk.models import Ticket
-from background_tasks.tasks import alert_sendmail, send_email_notification_for_wp
+from background_tasks.tasks import alert_sendmail, send_email_notification_for_wp, insert_json_records_async
 from intelliwiz_config.celery import app
 from apps.work_order_management.utils import save_approvers_injson
 from apps.schedhuler.utils import create_dynamic_job
@@ -60,15 +60,8 @@ def insertrecord_json(records, tablename):
                 record = json.loads(record)
                 record = json.loads(record)
                 record = clean_record(record)
-                log.info(f'record after cleaning\n {pformat(record)}')
-                if model.objects.filter(uuid=record['uuid']).exists():
-                    model.objects.filter(uuid=record['uuid']).update(**record)
-                    log.info("record is already exist so updating it now..")
-                    uuids.append(str(record['uuid']))
-                else:
-                    log.info("record is not exist so creating new one..")
-                    model.objects.create(**record)
-                    uuids.append(str(record['uuid']))
+                uuids.append(record['uuid'])
+            insert_json_records_async.delay(records, tablename)
     except IntegrityError as e:
         log.info(f"record already exist in {tablename}")
     except Exception as e:
@@ -506,7 +499,7 @@ def save_journeypath_field(jobneed):
         
 
 @app.task(bind = True, default_retry_delay = 300, max_retries = 5, name = 'perform_insertrecord()')
-def perform_insertrecord(self, records, request = None, db='default', filebased = True, bg=False, userid=None):
+def perform_insertrecord(self, records,  db='default', filebased = True, bg=False, userid=None):
     """
     Insert records in specified tablename.
 
@@ -522,7 +515,7 @@ def perform_insertrecord(self, records, request = None, db='default', filebased 
     rc, recordcount, traceback, msg = 1, 0, 'NA', Messages.INSERT_FAILED
     
     instance = None
-    log.info(f"""perform_insertrecord( records = {type(records)}, bg = {bg}, db = {db}, filebased = {filebased} {request = } { userid = } runnning in {'background' if bg else "foreground"})""")
+    log.info(f"""perform_insertrecord( records = {type(records)}, bg = {bg}, db = {db}, filebased = {filebased}  { userid = } runnning in {'background' if bg else "foreground"})""")
     try:
         data = [json.loads(record) for record in records]
         log.info(f'data = {pformat(data)} and length of data {len(data)}')
@@ -532,10 +525,11 @@ def perform_insertrecord(self, records, request = None, db='default', filebased 
             for record in data:
                 if record:
                     tablename = record.pop('tablename')
+                    userid = record.pop('people_id')
                     obj = insert_or_update_record(record, tablename)
-                    user = get_user_instance(userid or request.user.id)
+                    user = get_user_instance(userid)
                     if tablename == 'ticket' and isinstance(obj, Ticket): utils.store_ticket_history(
-                        instance = obj, request=request, user=user)
+                        instance = obj,  user=user)
                     if tablename == 'wom':
                         wutils.notify_wo_creation(id = obj.id)
                     allconditions = [

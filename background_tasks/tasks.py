@@ -578,10 +578,9 @@ def process_graphql_mutation_async(self, payload):
         post_data = json.loads(payload)
         query = post_data.get('mutation')
         variables = post_data.get('variables', {})
-        records = variables.get('records')
 
-        if records and query:
-            return execute_graphql_mutations(query, variables, records)
+        if query and variables:
+            return execute_graphql_mutations(query, variables)
         else:
             log.warning("Invalid records or query in the payload.")
             return json.dumps({'errors': ['No file data found']})
@@ -593,3 +592,23 @@ def process_graphql_mutation_async(self, payload):
 @app.task(bind=True, name="say_hi")
 def say_hi(self, name):
     return f"Hi {name}"
+
+
+@app.task(bind=True, name="insert_json_records_bulk")
+def insert_json_records_async(self, records, tablename):
+    from apps.service.utils import get_model_or_form
+    from apps.service.validators import clean_record
+    if model := get_model_or_form(tablename):
+        log.info("processing bulk json records for insert/update")
+        for record in records:
+            record = json.loads(record)
+            record = json.loads(record)
+            record = clean_record(record)
+            log.info(f"processing record {pformat(record)}")
+            if model.objects.filter(uuid=record['uuid']).exists():
+                model.objects.filter(uuid=record['uuid']).update(**record)
+                log.info("record is already exist so updating it now..")
+            else:
+                log.info("record is not exist so creating new one..")
+                model.objects.create(**record)
+        return "Records inserted/updated successfully"

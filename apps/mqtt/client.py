@@ -69,7 +69,7 @@ class MqttClient:
             response = json.dumps(
                 {'task_id':result.task_id, 'status':result.state,
                  'uuids':uuids, 'serviceName':service_name, 'payload':payload})
-            log.info(f"Response published to {RESPONSE_TOPIC}: {response}")
+            log.info(f"Response published to {RESPONSE_TOPIC} after accepting {service_name}")
             client.publish(RESPONSE_TOPIC, response)
         
         if msg.topic == MUTATION_STATUS_TOPIC:
