@@ -12,8 +12,7 @@ from pprint import pformat
 from django.db.models import Q
 from django.conf import settings
 from django.utils import timezone
-import requests
-import base64, os
+import base64, os, json
 from django.core.mail import EmailMessage
 from apps.reports.models import ScheduleReport
 from django.templatetags.static import static
