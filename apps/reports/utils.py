@@ -49,19 +49,22 @@ class BaseReportsExport(WeasyTemplateResponseMixin):
     
     
     def get_pdf_output(self):
-        log.info(f"pdf is executing {settings.HOST}")
-        html_string = render_to_string(self.design_file, context=self.context)
-        html = HTML(string=html_string, base_url=settings.HOST)
-        css_path = finders.find('assets/css/local/reports.css')
-        css = CSS(filename=css_path)
-        font_config = FontConfiguration()
-        pdf_output = html.write_pdf(stylesheets=[css], font_config=font_config, presentational_hints=True)
-        if self.returnfile: return pdf_output
-        response = HttpResponse(
-            pdf_output, content_type='application/pdf'
-        )
-        response['Content-Disposition'] = f'attachment; filename="{self.filename}.pdf"'
-        return response
+        try:
+            log.info(f"pdf is executing {settings.HOST}")
+            html_string = render_to_string(self.design_file, context=self.context)
+            html = HTML(string=html_string, base_url=settings.HOST)
+            css_path = finders.find('assets/css/local/reports.css')
+            css = CSS(filename=css_path)
+            font_config = FontConfiguration()
+            pdf_output = html.write_pdf(stylesheets=[css], font_config=font_config, presentational_hints=True)
+            if self.returnfile: return pdf_output
+            response = HttpResponse(
+                pdf_output, content_type='application/pdf'
+            )
+            response['Content-Disposition'] = f'attachment; filename="{self.filename}.pdf"'
+            return response
+        except Exception as e:
+            log.error("Error generating PDF", exc_info=True)
     
     
     def excel_layout(self, worksheet, workbook, df, writer, output):
