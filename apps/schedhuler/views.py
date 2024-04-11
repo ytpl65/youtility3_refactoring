@@ -1387,7 +1387,6 @@ class InternalTourScheduling(LoginRequiredMixin, View):
     def post(self, request, *args, **kwargs):
         R, P = request.POST, self.params
         pk, data = request.POST.get('pk', None), QueryDict(request.POST.get('formData'))
-        ic(data, pk)
         if R.get('postType') == 'saveCheckpoint':
             data = P['model'].objects.handle_save_checkpoint_guardtour(request)
             return rp.JsonResponse(data, status = 200, safe=False)
@@ -1547,7 +1546,6 @@ class ExternalTourScheduling(LoginRequiredMixin, View):
             if R['id'] == 'None': return rp.JsonResponse({'data':[]}, status = 200)
             job = am.Job.objects.filter(id = int(R['id'])).values(*utils.JobFields.fields)[0]
             objs = pm.Pgbelonging.objects.get_sitesfromgroup(job)
-            ic(objs)
             return rp.JsonResponse({'data':list(objs)}, status = 200)
 
         if R.get('action') == "forcegetfromgroup" and R.get('sgroup_id')!='None' and R.get('id')!='None':
@@ -1557,7 +1555,8 @@ class ExternalTourScheduling(LoginRequiredMixin, View):
         
         # return resp to load checklist
         if R.get('action') == "loadChecklist":
-            qset =  am.QuestionSet.objects.load_checklist()
+            qset =  am.QuestionSet.objects.load_checklist(request)
+            print('final qset',qset)
             return rp.JsonResponse({'items':list(qset), 'total_count':len(qset)}, status = 200)
         
         # return resp to delete request

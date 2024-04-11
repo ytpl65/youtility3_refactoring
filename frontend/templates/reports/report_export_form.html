@@ -84,6 +84,63 @@ Report Form
         </div>
       </div>
 
+      <!--Assetmult-->
+      <div class="input-group datafield mult_asset d-none mb-3">
+        <div class="col-2">
+          <label for={{ form.site_or_asset.id_for_label }} class="required">{{ form.site_or_asset.label }}:</label>
+        </div>
+        <div class="col-5" id=id_site_or_asset>
+          <div class="form-check form-check-inline">
+            <input type="radio" class="form-check-input" name={{ form.site_or_asset.name }} id="id_assetradio"
+              value="ASSET" onchange="showHideSelectField('ASSET')">
+            <label class="form-check-label" for="id_assetradio">Asset</label>
+          </div>
+          <div class="form-check form-check-inline">
+            <input type="radio" class="form-check-input" name={{ form.site_or_asset.name }} id="id_siteradio"
+              value="SITE" onchange="showHideSelectField('SITE')">
+            <label class="form-check-label" for="id_siteradio">Site</label>
+          </div>
+        </div>
+      </div>
+
+      <!--Checkpointmult-->
+      <div class="input-group datafield mult_checkpoint d-none mb-3">
+        <div class="col-2">
+          <label for={{ form.site_or_checkpoint.id_for_label }} class="required">{{ form.site_or_checkpoint.label }}:</label>
+        </div>
+        <div class="col-5" id=id_site_or_checkpoint>
+          <div class="form-check form-check-inline">
+            <input type="radio" class="form-check-input" name={{ form.site_or_checkpoint.name }} id="id_checkpointradio"
+              value="CHECKPOINT" onchange="showHideSelectField('CHECKPOINT')">
+            <label class="form-check-label" for="id_checkpointradio">Checkpoint</label>
+          </div>
+          <div class="form-check form-check-inline">
+            <input type="radio" class="form-check-input" name={{ form.site_or_checkpoint.name }} id="id_siteradio"
+              value="SITE" onchange="showHideSelectField('SITE')">
+            <label class="form-check-label" for="id_siteradio">Site</label>
+          </div>
+        </div>
+      </div>
+
+      <!--Locationmult-->
+      <div class="input-group datafield mult_location d-none mb-3">
+        <div class="col-2">
+          <label for={{ form.site_or_location.id_for_label }} class="required">{{ form.site_or_location.label }}:</label>
+        </div>
+        <div class="col-5" id=id_site_or_location>
+          <div class="form-check form-check-inline">
+            <input type="radio" class="form-check-input" name={{ form.site_or_location.name }} id="id_locationradio"
+              value="LOCATION" onchange="showHideSelectField('LOCATION')">
+            <label class="form-check-label" for="id_locationradio">Location</label>
+          </div>
+          <div class="form-check form-check-inline">
+            <input type="radio" class="form-check-input" name={{ form.site_or_location.name }} id="id_siteradio"
+              value="SITE" onchange="showHideSelectField('SITE')">
+            <label class="form-check-label" for="id_siteradio">Site</label>
+          </div>
+        </div>
+      </div>
+
       <!--SITE-->
       <div class="input-group datafield site d-none mb-3">
         <div class="col-2">
@@ -153,7 +210,8 @@ Report Form
           {{ form.mult_people.errors }}
         </div>
       </div>
-      <div class="input-group datafield d-none mb-3">
+      <!--AssetType-->
+      <div class="input-group datafield assettype d-none mb-3">
         <div class="col-2">
           {{ form.assettype.label_tag() }}
         </div>
@@ -172,6 +230,26 @@ Report Form
           {{ form.asset.errors }}
         </div>
       </div>
+      <!--MULTASSET-->
+      <div class="input-group datafield asset d-none mb-3">
+        <div class="col-2">
+          {{ form.mult_asset.label_tag() }}
+        </div>
+        <div class="col-5">
+          {{ form.mult_asset }}
+          {{ form.mult_asset.errors }}
+        </div>
+      </div>
+      <!--MULTLOCATION-->
+      <div class="input-group datafield location d-none mb-3">
+        <div class="col-2">
+          {{ form.mult_location.label_tag() }}
+        </div>
+        <div class="col-5">
+          {{ form.mult_location }}
+          {{ form.mult_location.errors }}
+        </div>
+      </div>
       <!--Qset-->
       <div class="input-group datafield d-none mb-3">
         <div class="col-2">
@@ -183,7 +261,7 @@ Report Form
         </div>
       </div>
       <!--CHECKPOINT_TYPE-->
-      <div class="input-group datafield d-none mb-3">
+      <div class="input-group datafield checkpointtype d-none mb-3">
         <div class="col-2">
           {{ form.checkpoint_type.label_tag() }}
         </div>
@@ -193,7 +271,7 @@ Report Form
         </div>
       </div>
       <!--LOCATION_TYPE-->
-      <div class= "input-group datafield d-none mb-3">
+      <div class= "input-group datafield locationtype d-none mb-3">
         <div class="col-2">
           {{form.location_type.label_tag()}}
         </div>
@@ -212,6 +290,16 @@ Report Form
           {{ form.checkpoint.errors }}
         </div>
       </div>
+      <!--MULTCHECKPOINT-->
+      <div class="input-group datafield checkpoint d-none mb-3">
+        <div class="col-2">
+          {{ form.mult_checkpoint.label_tag() }}
+        </div>
+        <div class="col-5">
+          {{ form.mult_checkpoint }}
+          {{ form.mult_checkpoint.errors }}
+        </div>
+      </div>
       <!--TICKETCATEGORY-->
       <div class="input-group datafield d-none mb-3">
         <div class="col-2">
@@ -228,7 +316,7 @@ Report Form
         </div>
       </div>
       <!--ASSETCATEGORY-->
-      <div class="input-group datafield d-none mb-3">
+      <div class="input-group datafield assetcategory d-none mb-3">
         <div class="col-2">
           {{ form.assetcategory.label_tag() }}
         </div>
@@ -383,6 +471,7 @@ Report Form
 <script>
   const urlname = "{{ url('reports:exportreports') }}"
 
+  //hideing and showing fields for Asset,Checkpoint,People and location Qr reports.
   function showHideSelectField(val) {
     if (val == "PEOPLE") {
       //$("#aatopdiv").show();
@@ -394,18 +483,63 @@ Report Form
       $("#id_site").val(1)
       toggleRequiredAttribute("id_mult_people")
       toggleRequiredAttribute("id_site", set = false)
+
+    } else if (val == "ASSET") {
+        if ($(".asset").is(":hidden")) {
+              $(".asset").show();
+          }
+        $("#id_assetradio").attr('checked', 'checked')
+        $(".site").hide();
+        $(".assetcategory").addClass('d-none');
+        $(".assettype").addClass('d-none');
+        //$("#id_site").val(1)
+        toggleRequiredAttribute("id_mult_asset")
+        toggleRequiredAttribute("id_site", set = false)
+
+    } else if (val == "CHECKPOINT") {
+        if ($(".checkpoint").is(":hidden")){
+              $(".checkpoint").show();
+        }
+      $("#id_checkpointradio").attr('checked','checked')
+      $(".site").hide();
+      $(".checkpointtype").addClass('d-none');
+      toggleRequiredAttribute("id_mult_checkpoint")
+      toggleRequiredAttribute("id_site",set = false)
+    } else if (val == "LOCATION"){
+        if ($(".location").is(":hidden")){
+          $(".location").show();
+        }
+      $("#id_locationradio").attr('checked','checked')
+      $(".site").hide();
+      $(".locationtype").addClass('d-none');
+      toggleRequiredAttribute("id_mult_location")
+      toggleRequiredAttribute("id_site",set = false)
     } else {
-      //$("#aatopdiv").hide();
       if ($(".site").is(":hidden")) {
-          $(".site").show();
+          $(".site").show();}
+      if ($(".mult_asset").is(":visible")){
+        $(".assetcategory").removeClass('d-none');
+        $(".assettype").removeClass('d-none')
+      }
+      if ($(".mult_checkpoint").is(":visible")){
+        $(".checkpointtype").removeClass('d-none');
+      }
+      if ($(".mult_location").is(":visible")){
+        $(".locationtype").removeClass('d-none');
       }
       $(".site").removeAttr("style");
-
       $("#id_siteradio").attr('checked', 'checked')
       $(".people").hide();
+      $(".asset").hide();
+      $(".checkpoint").hide();
+      $(".location").hide();
       $("#id_mult_people").val(1)
+      //$("#id_mult_asset").val(1)
       toggleRequiredAttribute("id_site")
       toggleRequiredAttribute("id_mult_people", set = false)
+      toggleRequiredAttribute("id_mult_asset", set = false)
+      toggleRequiredAttribute("id_mult_checkpoint",set = false)
+      toggleRequiredAttribute("id_mult_location",set = false)
     }
   }
   var formSaved = false;
@@ -456,56 +590,6 @@ Report Form
       closeOnSelect: false
     })
 
-    // on change site selection
-    /*$("#id_site").change((e) => {
-      if ($('#id_report_name').val()==='ASSETQR'){
-        //reset asset options
-        fire_ajax_get({
-            url:urlname,
-            data:{'action':"get_site", "of_site":$("#id_site").val(),'of_type':'ASSETTYPE'}
-        }).done((data, status, xhr) => {
-            $("#id_assettype").empty()
-            $("#id_assettype").append(new Option("", "", false, false)) //first option is empty
-            if(data.options){
-              data.options.forEach((item) => {
-                  var newOption = new Option(item.taname, item.id, false, false)
-                  $("#id_assettype").append(newOption)
-              })
-            }
-        })
-      }
-      else if ($('#id_report_name').val()==='CHECKPOINTQR'){
-        //reset checkpoint options
-        fire_ajax_get({
-            url:urlname,
-            data:{'action':"get_site", "of_site":$("#id_site").val(),'of_type':'CHECKPOINTTYPE'}
-        }).done((data, status, xhr) => {
-            $("#id_checkpoint_type").empty()
-            $("#id_checkpoint_type").append(new Option("", "", false, false)) //first option is empty
-            if(data.options){
-              data.options.forEach((item) => {
-                  var newOption = new Option(item.taname, item.id, false, false)
-                  $("#id_checkpoint_type").append(newOption)
-              })
-            }
-        })
-      }
-      else if($('#id_report_name').val()=='LOCATIONQR') 
-      //reset checkpoint options
-        fire_ajax_get({
-            url:urlname,
-            data:{'action':"get_site", "of_site":$("#id_site").val(),'of_type':'LOCATIONTYPE'}
-        }).done((data, status, xhr) => {
-            $("#id_location_type").empty()
-            $("#id_location_type").append(new Option("", "", false, false)) //first option is empty
-            if(data.options){
-              data.options.forEach((item) => {
-                  var newOption = new Option(item.taname, item.id, false, false)
-                  $("#id_location_type").append(newOption)
-              })
-            }
-        })
-    })*/
     //on change the site selection 
     $("#id_site").change((e) => {
     const reportName = $('#id_report_name').val();
@@ -572,7 +656,6 @@ Report Form
         }).done((data, status, xhr) => {
             $("#id_qset").empty()
             $("#id_qset").append(new Option("", "", false, false)) //first option is empty
-            console.log(data.options)
             data.options.forEach((item) => {
                 var newOption = new Option(item.qsetname, item.id, false, false)
                 $("#id_qset").append(newOption)
@@ -693,7 +776,6 @@ Report Form
   }
 
   function addValidationsToForm(id){
-    console.log(id)
       validator.addField('#'+id, [
         { 
           rule:'required'
@@ -707,6 +789,7 @@ Report Form
   })
 
 
+//loading fields according to report
   function getFieldsFromServer(){
     let selected = $("#id_report_name").val()
     if(!['', null, undefined].includes(selected)){
@@ -715,6 +798,15 @@ Report Form
         data: {'action':'form_behaviour', 'report_name':selected}
       }).done((data, status, error) => {
         if(selected === 'PEOPLEQR'){
+          showHideSelectField('SITE')
+        }
+        if(selected === 'ASSETQR'){
+          showHideSelectField('SITE')
+        }
+        if(selected === 'CHECKPOINTQR'){
+          showHideSelectField('SITE')
+        }
+        if(selected === 'LOCATIONQR'){
           showHideSelectField('SITE')
         }
         dynamicFormBehaviour(data)

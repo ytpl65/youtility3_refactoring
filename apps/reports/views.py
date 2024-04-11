@@ -330,7 +330,6 @@ class ConfigSiteReportTemplate(LoginRequiredMixin, View):
         try:
             data = QueryDict(request.POST['formData'])
             if pk := request.POST.get('pk', None):
-                ic(pk)
                 msg = "site report template updated successfully"
                 form = utils.get_instance_for_update(
                     data, P, msg, int(pk), {'request':request})
@@ -411,7 +410,6 @@ class ConfigIncidentReportTemplate(LoginRequiredMixin, View):
         try:
             data = QueryDict(request.POST['formData'])
             if pk := request.POST.get('pk', None):
-                ic(pk)
                 msg = "incident report template updated successfully"
                 form = utils.get_instance_for_update(
                     data, P, msg, int(pk), {'request':request})
@@ -551,7 +549,6 @@ class DownloadReports(LoginRequiredMixin, View):
                 client_id=S['client_id'],
                 bu_id = S['bu_id'],
                 type_id=R['of_type']).values('id', 'assetname').distinct()
-            print(qset)
             return rp.JsonResponse(
                 data={'options':list(qset)}, status=200
             )
@@ -579,7 +576,6 @@ class DownloadReports(LoginRequiredMixin, View):
         form = self.PARAMS['form'](data=request.POST, request=request)
         if not form.is_valid():
             return render(request, self.PARAMS['template_form'], {'form': form})
-
         log.info('form is valid')
         formdata = form.cleaned_data
         log.info(f"Formdata submitted by user: {pformat(formdata)}")
@@ -592,6 +588,7 @@ class DownloadReports(LoginRequiredMixin, View):
         return render(request, self.PARAMS['template_form'], {'form': form})
 
     def export_report(self, formdata, session, request, form):
+        print('export report called ')
         returnfile = formdata.get('export_type') == 'SEND'
         report_essentials = rutils.ReportEssentials(report_name=formdata['report_name'])
         log.info(f"report essentials: {report_essentials}")
@@ -622,8 +619,8 @@ class DownloadReports(LoginRequiredMixin, View):
         return render(request, self.PARAMS['template_form'], {'form': form})
 
     def form_behaviour(self, R):
+        print("form beahaviour called")
         report_essentials = self.PARAMS['ReportEssentials'](report_name=R['report_name'])
-        print(R['report_name'])
         return rp.JsonResponse({'behaviour':report_essentials.behaviour_json})
 
 class DesignReport(LoginRequiredMixin, View):

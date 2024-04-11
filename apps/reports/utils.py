@@ -161,11 +161,9 @@ class BaseReportsExport(WeasyTemplateResponseMixin):
     def set_data_excel(self, orm=False):
 
         df = pd.DataFrame(list(self.data))
-        ic(df.shape)
         # Convert the Decimal objects to floats using the float() function
         df = df.applymap(lambda x: float(x) if isinstance(x, Decimal) else x)
         df = self.excel_columns(df)
-        ic(df.shape)
         # Create a Pandas Excel writer using XlsxWriter as the engine and BytesIO as file-like object
         output = BytesIO()
         writer = pd.ExcelWriter(output, engine='xlsxwriter',  datetime_format='yyyy-mm-dd hh:mm:ss', date_format="mm dd yyyy",)

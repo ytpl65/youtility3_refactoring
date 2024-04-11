@@ -91,12 +91,16 @@ class QuestionSetManager(models.Manager):
             qcount=Count('questionsetbelonging')).values(
                 'id', 'qsetname', 'qcount', 'seqno') or self.none()
     
-    def load_checklist(self):
-        "Load Checklist for editor dropdown" 
-        qset = self.annotate(
+    def load_checklist(self,request):
+        "Load Checklist for editor dropdown"
+        R,S = request.GET, request.session
+        search_term = R.get('search')
+        qset = self.filter(Q(Q(client_id = S['client_id']),Q(enable=True)))
+        qset = qset.annotate(
             text = F('qsetname')).filter(
-                enable=True, type='CHECKLIST').values(
+                enable=True, type='RPCHECKLIST').values(
                     'id', 'text')
+        qset = qset.filter(qsetname__icontains = search_term) if search_term else qset
         if qset:
             for idx, q in enumerate(qset):
                 q.update({'slno':idx+1})
@@ -163,7 +167,7 @@ class QuestionSetManager(models.Manager):
         qset = self.filter(
             Q(Q(client_id = S['client_id']), Q(bu_id = S['bu_id']), Q(enable=True), Q(type=self.model.Type.CHECKLIST)) |
             Q(id=1))
-        qset = qset.filter(qsetname = search_term) if search_term else qset
+        qset = qset.filter(qsetname__icontains = search_term) if search_term else qset
         qset = qset.annotate(
                 text = F('qsetname')).values(
                     'id', 'text')
@@ -1112,16 +1116,21 @@ class AssetManager(models.Manager):
             'category_id', 'category__taname'
         ).distinct('category_id').order_by('category_id')
         return qset or self.none()
-    
-    def asset_choices_for_report(self,request):
+
+    def asset_choices_for_report(self,request,choices = False, sitewise= False, identifier = None):
         S = request.session
         qset = self.filter(
-            bu_id = S['bu_id'],
-            client_id = S['client_id']
-        ).values_list('id','assetname')
+            bu_id__in = S['assignedsites'],
+            client_id = S['client_id'],
+            enable = True,
+            identifier = identifier
+        )
+        if sitewise : 
+            qset = qset.filter(bu_id = S['bu_id'])
+        if choices:
+            qset = qset.annotate(text = Concat(F('assetname'),V('('),F('assetcode'),V(')'))).values_list('id','text')
         return qset or self.none()
-
-
+    
     def get_schedule_task_for_adhoc(self, params):
         qset = self.raw("select * from fn_get_schedule_for_adhoc")
         
@@ -1314,7 +1323,7 @@ class AssetManager(models.Manager):
         R, S = request.GET, request.session
         search_term = R.get('search')
         qset = self.filter(client_id = S['client_id'], bu_id = S['bu_id'], enable=True)
-        qset = qset.filter(assetname = search_term) if search_term else qset
+        qset = qset.filter(assetname__icontains = search_term) if search_term else qset
         qset = qset.annotate(
                 text = F('assetname')).values(
                     'id', 'text')
@@ -1847,6 +1856,19 @@ class LocationManager(models.Manager):
         ).select_related('type').values_list(
             'type_id', 'type__taname'
         ).distinct('type_id').order_by('type_id')
+        return qset or self.none()
+
+    def location_choices_for_report(self,request,choices = False, sitewise= False):
+        S = request.session 
+        qset = self.filter(
+            bu_id__in = S['assignedsites'],
+            client_id = S['client_id'],
+            enable = True
+        )
+        if sitewise : 
+            qset = qset.filter(bu_id = S['bu_id'])
+        if choices: 
+            qset = qset.annotate(text = Concat(F('locname'),V('('),F('loccode'),V(')'))).values_list('id','text')
         return qset or self.none()
     
     

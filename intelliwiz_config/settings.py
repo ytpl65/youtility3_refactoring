@@ -36,6 +36,22 @@ def check_path(path):
 # Build paths inside the project like this: BASE_DIR / 'subdir'.p
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+# Email Verification CONF...
+def verified_callback(user):
+    user.isverified = True
+    user.is_staff=True
+
+
+EMAIL_TOKEN_LIFE = 60**2
+EMAIL_VERIFIED_CALLBACK = verified_callback
+EMAIL_FROM_ADDRESS = env('EMAIL_FROM_ADDRESS')
+EMAIL_MAIL_SUBJECT = 'Confirm your email'
+EMAIL_MAIL_HTML = 'email.html'
+EMAIL_MAIL_PLAIN = 'mail_body.txt'
+
+EMAIL_PAGE_TEMPLATE = 'email_verify.html'
+EMAIL_PAGE_DOMAIN = env('EMAIL_PAGE_DOMAIN')
+EMAIL_MULTI_USER = True  # optional (defaults to False)
 
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = env('SECRET_KEY')
@@ -454,20 +470,9 @@ GRAPH_MODELS = {
   'group_models': True,
 }
 
-# Email Verification CONF...
-def verified_callback(user):
-    user.isverified = True
-    user.is_staff=True
 
-EMAIL_VERIFIED_CALLBACK = verified_callback
-EMAIL_FROM_ADDRESS = env('EMAIL_FROM_ADDRESS')
-EMAIL_MAIL_SUBJECT = 'Confirm your email'
-EMAIL_MAIL_HTML = 'email.html'
-EMAIL_MAIL_PLAIN = 'mail_body.txt'
-EMAIL_TOKEN_LIFE = 60**2
-EMAIL_PAGE_TEMPLATE = 'email_verify.html'
-EMAIL_PAGE_DOMAIN = env('EMAIL_PAGE_DOMAIN')
-EMAIL_MULTI_USER = True  # optional (defaults to False)
+
+
 
 
 # For Django Email Backend
