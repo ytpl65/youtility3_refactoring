@@ -268,7 +268,7 @@ class InsertJsonMutation(graphene.Mutation):
         uuids = []
         try:
             db = get_current_db_name()
-            log.info(f'=================== jsondata:============= \n{jsondata}')
+            log.info(f'=================== jsondata ============= \n{jsondata}')
             uuids = insertrecord_json(jsondata, tablename)
             recordcount, msg, rc = 1, 'Inserted Successfully', 0
         except Exception as e:

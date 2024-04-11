@@ -15,7 +15,7 @@ from apps.core import utils
 from apps.core import exceptions as excp
 from apps.service import serializers as sz
 from apps.y_helpdesk.models import Ticket
-from background_tasks.tasks import alert_sendmail, send_email_notification_for_wp
+from background_tasks.tasks import alert_sendmail, send_email_notification_for_wp, insert_json_records_async
 from intelliwiz_config.celery import app
 from apps.work_order_management.utils import save_approvers_injson
 from apps.schedhuler.utils import create_dynamic_job
@@ -58,15 +58,8 @@ def insertrecord_json(records, tablename):
                 record = json.loads(record)
                 record = json.loads(record)
                 record = clean_record(record)
-                log.info(f'record after cleaning\n {pformat(record)}')
-                if model.objects.filter(uuid=record['uuid']).exists():
-                    model.objects.filter(uuid=record['uuid']).update(**record)
-                    log.info("record is already exist so updating it now..")
-                    uuids.append(str(record['uuid']))
-                else:
-                    log.info("record is not exist so creating new one..")
-                    model.objects.create(**record)
-                    uuids.append(str(record['uuid']))
+                uuids.append(record['uuid'])
+            insert_json_records_async.delay(records, tablename)
     except IntegrityError as e:
         log.info(f"record already exist in {tablename}")
     except Exception as e:
@@ -157,7 +150,13 @@ def get_or_create_dir(path):
 def write_file_to_dir(filebuffer, uploadedfilepath):
     from django.core.files.base import ContentFile
     from django.core.files.storage import default_storage
-    path = default_storage.save(uploadedfilepath, ContentFile(filebuffer.read()))
+    if hasattr(filebuffer, 'read'):
+        # This assumes filebuffer is a file-like object (e.g., InMemoryUploadedFile), so we read its contents.
+        content = filebuffer.read()
+    else:
+        # In case filebuffer is directly bytes, it can be passed as is.
+        content = filebuffer
+    path = default_storage.save(uploadedfilepath, ContentFile(content))
     log.info(f"file saved to {path}")
 
 
@@ -734,6 +733,7 @@ def perform_adhocmutation(self, file, db='default', bg=False):  # sourcery skip:
         err('something went wrong', exc_info = True)
     results = ServiceOutputType(rc = rc, recordcount = recordcount, msg = msg, traceback = traceback)
     return results.__dict__ if bg else results
+
 
 def perform_uploadattachment(file,  record, biodata):
     rc, traceback, resp = 1,  'NA', 0
