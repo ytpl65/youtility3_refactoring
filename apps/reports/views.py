@@ -2,6 +2,7 @@ from asyncio.log import logger
 from pprint import pformat
 from django.shortcuts import redirect, render
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.auth.decorators import login_required
 from django.db import transaction
 from django.views.generic.base import View
 from django.contrib import messages
@@ -30,6 +31,9 @@ from apps.reports import utils as rutils
 from .models import ScheduleReport
 from django_weasyprint.views import WeasyTemplateView
 from django.db import IntegrityError
+from background_tasks.tasks import create_save_report_async
+from background_tasks.report_tasks import remove_reportfile
+from celery.result import AsyncResult
 import time, base64, sys, json
 log = logging.getLogger('__main__')
 
@@ -591,38 +595,68 @@ class DownloadReports(LoginRequiredMixin, View):
 
     def export_report(self, formdata, session, request, form):
         returnfile = formdata.get('export_type') == 'SEND'
-        report_essentials = rutils.ReportEssentials(report_name=formdata['report_name'])
-        log.info(f"report essentials: {report_essentials}")
-        ReportFormat = report_essentials.get_report_export_object()
-        report = ReportFormat(filename=formdata['report_name'], client_id=session['client_id'],
-                              formdata=formdata, request=request, returnfile=returnfile)
-        log.info(f"Report Format initialized, {report}")
-        
-        if response := report.execute():
-            if returnfile:
-                return self.process_sendingreport_on_email(response, formdata, request, form)
-            return response
+        if returnfile:
+            messages.success(
+                request,
+                "Report has been processed for sending on email. You will receive the report shortly.",
+                'alert-success')
         else:
-            log.info("No data found matching your report criteria")
-            form.add_error(None, self.PARAMS['nodata'])
-        return render(request, self.PARAMS['template_form'], {'form': form})
+            messages.success(request,
+                            "Report has been processed to download. Check status with 'Check Report Status' button",
+                            'alert-success')
+        task_id = create_save_report_async.delay(formdata, session['client_id'], request.user.email, request.user.id)
+        return render(request, self.PARAMS['template_form'], {'form': form, 'task_id':task_id})
 
-    def process_sendingreport_on_email(self, fileresponse, formdata, request, form):
-        try:
-            from background_tasks.report_tasks import save_report_to_tmp_folder
-            from background_tasks.tasks import send_generated_report_onfly_email
-            filepath = save_report_to_tmp_folder(filename=formdata['report_name'], ext=formdata['format'], report_output=fileresponse)
-            send_generated_report_onfly_email.delay(filepath, request.user.email, formdata['to_addr'], formdata['cc'], formdata['ctzoffset'])
-            messages.success(request, 'Report is successfully processed for sending on email', "alert-success")
-        except Exception as e:
-            messages.error(request, 'Something went wrong while sending report on email', "alert-danger")
-            log.critical("something went wrong while sending report on email", exc_info=True)
-        return render(request, self.PARAMS['template_form'], {'form': form})
+
 
     def form_behaviour(self, R):
         report_essentials = self.PARAMS['ReportEssentials'](report_name=R['report_name'])
         return rp.JsonResponse({'behaviour':report_essentials.behaviour_json})
 
+
+@login_required
+def return_status_of_report(request):
+    if request.method == 'GET':
+        form = rp_forms.ReportForm(request=request)
+        template = "reports/report_export_form.html"
+        cxt = {
+            'form':form,
+        }
+        R = request.GET
+        task = AsyncResult(R['task_id'])
+        if task.status == 'SUCCESS':
+            result = task.get()
+            if result['status'] == 200 and result.get('filepath'):
+                if not os.path.exists(result['filepath']):
+                    messages.error(request, "Report file not found on server", 'alert-danger')
+                    return render(request, template, cxt)
+                else:
+                    try:
+                        file = open(result['filepath'], 'rb')
+                        response = FileResponse(file)
+                        filename = result['filename']
+                        response['Content-Disposition'] = f'attachment; filename="{filename}"'
+                        return response
+                    finally:
+                        remove_reportfile(result['filepath'])
+            if result['status'] == 404:
+                messages.error(request,  result['message'], 'alert-danger')
+                return render(request, template, cxt)
+            if result['status'] == 500:
+                messages.error(request, result['message'], 'alert-danger')
+                return render(request, template, cxt)
+            if result['status'] == 201:
+                messages.success(request, result['message'], 'alert-success')
+                return render(request, template, cxt)
+        elif task.status == 'FAILURE':
+            messages.error(request, "Report generation failed. Please try again later.", 'alert-danger')
+            return render(request, template, cxt)
+        else:
+            messages.info(request, "Report is still in queue", 'alert-info')
+            return render(request, template, cxt)
+            
+                
+    
 class DesignReport(LoginRequiredMixin, View):
     # change this file according to your design
     design_file = "reports/pdf_reports/testdesign.html"

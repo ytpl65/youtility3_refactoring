@@ -371,11 +371,11 @@ def save_user_paswd(user):
 
 
 def display_user_session_info(session):
-    from pprint import pp
     from icecream import ic
-    pp('Following user data saved in sesion\n')
-    for key, value in session.items():
-        pp(f'session info:{key} => {value}')
+    from pprint import pformat
+    print('Following user data saved in sesion\n')
+    ic(pformat(dict(session)))
+    
 
 
 def get_choices_for_peoplevsgrp(request):

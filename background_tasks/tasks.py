@@ -5,7 +5,7 @@ from apps.core import utils
 from django.apps import apps
 from logging import getLogger
 from django.db import transaction
-from datetime import timedelta
+from datetime import timedelta, datetime
 import traceback as tb
 from apps.core.raw_queries import get_query
 from pprint import pformat
@@ -15,11 +15,13 @@ from django.utils import timezone
 import base64, os, json
 from django.core.mail import EmailMessage
 from apps.reports.models import ScheduleReport
+from apps.reports import utils as rutils
 from django.templatetags.static import static
 from .move_files_to_GCS import move_files_to_GCS, del_empty_dir, get_files
 from .report_tasks import (
     get_scheduled_reports_fromdb, generate_scheduled_report, handle_error,  
-    walk_directory, get_report_record, check_time_of_report, remove_reportfile)
+    walk_directory, get_report_record, check_time_of_report, 
+    remove_reportfile, save_report_to_tmp_folder)
 from io import BytesIO
 
 
@@ -612,3 +614,48 @@ def insert_json_records_async(self, records, tablename):
                 log.info("record is not exist so creating new one..")
                 model.objects.create(**record)
         return "Records inserted/updated successfully"
+    
+    
+    
+@app.task(bind=True, name="create_save_report_async")
+def create_save_report_async(self, formdata, client_id, user_email, user_id):
+    try:
+        returnfile = formdata.get('export_type') == 'SEND'
+        report_essentials = rutils.ReportEssentials(report_name=formdata['report_name'])
+        log.info(f"report essentials: {report_essentials}")
+        ReportFormat = report_essentials.get_report_export_object()
+        report = ReportFormat(filename=formdata['report_name'], client_id=client_id,
+                                formdata=formdata,  returnfile=True)
+        log.info(f"Report Format initialized, {report}")
+        
+        if response := report.execute():
+            if returnfile:
+                rutils.process_sendingreport_on_email(response, formdata, user_email)
+                return {"status": 201, "message": "Report generated successfully and email sent", 'alert':'alert-success'}
+            filepath = save_report_to_tmp_folder(formdata['report_name'], ext=formdata['format'], report_output=response, dir=f'{settings.ONDEMAND_REPORTS_GENERATED}/{user_id}')
+            log.info(f"Report saved at tmeporary location: {filepath}")
+            return {"filepath":filepath, 'filename':f'{formdata["report_name"]}.{formdata["format"]}', 'status':200, "message": "Report generated successfully", 'alert':'alert-success'}
+        else:
+            return {"status": 404, "message": "No data found matching your report criteria.\
+        Please check your entries and try generating the report again", 'alert':'alert-warning'}
+    except Exception as e:
+        log.error(f"Error generating report: {e}")
+        return {"status": 500, "message": "Internal Server Error", "alert":"alert-danger"}
+        
+            
+@app.task(bind=True, name="cleanup_reports_which_are_12hrs_old")
+def cleanup_reports_which_are_12hrs_old(self, dir_path,hours_old=12):
+    for root, dirs, files in os.walk(dir_path):
+        for filename in files:
+            file_path = os.path.join(root, filename)
+            threshold = datetime.now() - timedelta(hours=hours_old)
+            try:
+                if os.path.isfile(file_path):
+                    file_stats = os.stat(file_path)
+                    last_modified = datetime.fromtimestamp(file_stats.st_mtime)
+                    if last_modified < threshold:
+                        os.remove(file_path)
+                        log.info(f"Deleted file: {file_path} as it was older than {hours_old} hours")
+            except Exception as e:
+                log.error(f"Error deleting file {file_path}: {e}")
+        

@@ -316,7 +316,8 @@ INTERNAL_IPS = [
 AUTH_USER_MODEL = 'peoples.People'
 
 # AUTHENTICATIN BACKENDS CONF...
-AUTHENTICATION_BACKENDS = ["graphql_jwt.backends.JSONWebTokenBackend",
+AUTHENTICATION_BACKENDS = [
+"graphql_jwt.backends.JSONWebTokenBackend",
 'apps.peoples.backends.MultiAuthentcationBackend',
 'django.contrib.auth.backends.ModelBackend']
 
@@ -519,6 +520,7 @@ CLIENT_DOMAINS = {
 
 BUCKET = 'prod-attachment-sukhi-group'
 TEMP_REPORTS_GENERATED = env('TEMP_REPORTS_GENERATED')
+ONDEMAND_REPORTS_GENERATED = env('ONDEMAND_REPORTS_GENERATED')
 
 MQTT_CONFIG = {
     'BROKER_ADDRESS':env('MQTT_BROKER_ADDRESS'),
