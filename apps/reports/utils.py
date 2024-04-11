@@ -302,3 +302,12 @@ def create_report_history(
         traceback=traceback,
         export_type=export_type
     )
+    
+def process_sendingreport_on_email(fileresponse, formdata, email):
+    try:
+        from background_tasks.report_tasks import save_report_to_tmp_folder
+        from background_tasks.tasks import send_generated_report_onfly_email
+        filepath = save_report_to_tmp_folder(filename=formdata['report_name'], ext=formdata['format'], report_output=fileresponse)
+        send_generated_report_onfly_email.delay(filepath, email, formdata['to_addr'], formdata['cc'], formdata['ctzoffset'])
+    except Exception as e:
+        log.critical("something went wrong while sending report on email", exc_info=True)

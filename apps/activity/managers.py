@@ -703,6 +703,7 @@ class JobneedManager(models.Manager):
                 ~Q(id=1),
                 ~Q(jobstatus__in = ['COMPLETED', 'PARTIALLYCOMPLETED']),
                 ~Q(other_info__autoclosed_by_server = True),
+                ~Q(other_info__isdynamic = True),
                 ~Q(Q(jobstatus = 'AUTOCLOSED') & Q(other_info__email_sent = True))|
                 ~Q(Q(jobstatus = 'AUTOCLOSED') & Q(other_info__ticket_generated = True)),
                 Q(parent_id = 1), Q(identifier__in = ['TASK', 'INTERNALTOUR', 'PPM', 'EXTERNALTOUR', "SITEREPORT"]),

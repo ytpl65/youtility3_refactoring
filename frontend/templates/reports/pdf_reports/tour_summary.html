@@ -20,7 +20,13 @@
 </div>
 {% endblock header_center %}
 
-
+{% block inline_css %}
+<style>
+.totalrow > td{ 
+ color: aliceblue;
+}
+</style>
+{% endblock inline_css %}
 
 {% block table %}
 <table id="toursummary" style="width:100%">

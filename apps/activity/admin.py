@@ -11,7 +11,7 @@ from import_export.results import RowResult
 import re
 from django.core.exceptions import ValidationError
 from django.apps import apps
-from apps.peoples.admin import BVForeignKeyWidget
+from apps.core.widgets import BVForeignKeyWidget
 
 
 
