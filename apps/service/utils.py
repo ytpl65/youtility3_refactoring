@@ -23,8 +23,6 @@ from apps.schedhuler.utils import create_dynamic_job
 from .auth import Messages as AM
 from .types import ServiceOutputType
 from .validators import clean_record
-from io import BytesIO
-
 
 log = getLogger('mobile_service_log')   
 error_logger = getLogger("error_logger")
@@ -85,13 +83,16 @@ def get_json_data(file):
     import json
     jsonstring=None
     try:
-        s = file.read().decode('utf-8')
-        jsonstring = s.replace("'", "")
-        if isTrackingRecord := jsonstring.startswith('{'):
-            log.info("Tracking record found")
-            arr = jsonstring.split('?')
-            jsonstring = json.dumps(arr)
-        return json.loads(jsonstring)
+        # ic((file, type(file))
+        with gzip.open(file, 'rb') as f:
+            s = f.read().decode('utf-8')
+            jsonstring = s.replace("'", "")
+            #log.info("printing.................. s %s"%(s))
+            if isTrackingRecord := jsonstring.startswith('{'):
+                log.info("Tracking record found")
+                arr = jsonstring.split('?')
+                jsonstring = json.dumps(arr)
+            return json.loads(jsonstring)
     except json.decoder.JSONDecodeError:
         log.warning("It is not valid Json String \n %s"%(pformat(jsonstring)))
     except Exception as e:
@@ -434,22 +435,23 @@ def get_user_instance(id):
 
 
 @app.task(bind = True, default_retry_delay = 300, max_retries = 5, name = "perform_tasktourupdate()")
-def perform_tasktourupdate(self, records, request=None, db='default', bg=False):
+def perform_tasktourupdate(self, file, request=None, db='default', bg=False):
     rc, recordcount, traceback= 1, 0, 'NA'
     instance, msg = None, Messages.UPDATE_FAILED
 
     try:
+        log.info("%s" % pformat(file))
         log.info(
-            f"""perform_tasktourupdate(type of file = {type(records) }bg = {bg}, db = {db} runnning in {'background' if bg else "foreground"})"""
+            f"""perform_tasktourupdate(file = {file}, bg = {bg}, db = {db} runnning in {'background' if bg else "foreground"})"""
         )
-        data = [json.loads(record) for record in records]
+        data = file if bg else get_json_data(file)
         log.info(f'data: {pformat(data)}')
         if len(data) == 0: raise excp.NoRecordsFound
         log.info(f'total {len(data)} records found for task tour update')
-        for rec in data:
-            if rec:
-                details = rec.pop('details')
-                jobneed = rec
+        for record in data:
+            if record:
+                details = record.pop('details')
+                jobneed = record
                 with transaction.atomic(using = db):
                     if isupdated :=  update_record(details, jobneed, Jobneed, JobneedDetails):
                         recordcount += 1
@@ -504,7 +506,7 @@ def save_journeypath_field(jobneed):
         
 
 @app.task(bind = True, default_retry_delay = 300, max_retries = 5, name = 'perform_insertrecord()')
-def perform_insertrecord(self, records,  db='default', filebased = True, bg=False, userid=None):
+def perform_insertrecord(self, file, request = None, db='default', filebased = True, bg=False, userid=None):
     """
     Insert records in specified tablename.
 
@@ -520,9 +522,12 @@ def perform_insertrecord(self, records,  db='default', filebased = True, bg=Fals
     rc, recordcount, traceback, msg = 1, 0, 'NA', Messages.INSERT_FAILED
     
     instance = None
-    log.info(f"""perform_insertrecord( records = {type(records)}, bg = {bg}, db = {db}, filebased = {filebased}  { userid = } runnning in {'background' if bg else "foreground"})""")
+    log.info(f"""perform_insertrecord(file = {file}, bg = {bg}, db = {db}, filebased = {filebased} {request = } { userid = } runnning in {'background' if bg else "foreground"})""")
     try:
-        data = [json.loads(record) for record in records]
+        if bg:
+            data = file
+        else:
+            data = get_json_data(file) if filebased else [file]
         log.info(f'data = {pformat(data)} and length of data {len(data)}')
 
         if len(data) == 0: raise excp.NoRecordsFound
@@ -530,11 +535,10 @@ def perform_insertrecord(self, records,  db='default', filebased = True, bg=Fals
             for record in data:
                 if record:
                     tablename = record.pop('tablename')
-                    userid = record.pop('people_id')
                     obj = insert_or_update_record(record, tablename)
-                    user = get_user_instance(userid)
+                    user = get_user_instance(userid or request.user.id)
                     if tablename == 'ticket' and isinstance(obj, Ticket): utils.store_ticket_history(
-                        instance = obj,  user=user)
+                        instance = obj, request=request, user=user)
                     if tablename == 'wom':
                         wutils.notify_wo_creation(id = obj.id)
                     allconditions = [
@@ -635,14 +639,14 @@ def create_escalation_matrix_for_sitecrisis(ESM, user):
 
 
 @app.task(bind = True, default_retry_delay = 300, max_retries = 5,  name = 'perform_reportmutation')
-def perform_reportmutation(self, records, db= 'default', bg=False):
+def perform_reportmutation(self, file, db= 'default', bg=False):
     rc, recordcount, traceback, msg= 1, 0, 'NA', Messages.INSERT_FAILED
     instance = None
     try:
         log.info(
-            f"""perform_reportmutation(records = {type(records)}, bg = {bg}, db = {db}, runnning in {'background' if bg else "foreground"})"""
+            f"""perform_reportmutation(file = {file}, bg = {bg}, db = {db}, runnning in {'background' if bg else "foreground"})"""
         )
-        data = [json.loads(record) for record in records]
+        data = file if bg else get_json_data(file)
         log.info(f'data: {pformat(data)}')
         if len(data) == 0: raise excp.NoRecordsFound
         log.info(f"'data = {pformat(data)} {len(data)} Number of records found in the file")
@@ -683,13 +687,17 @@ def perform_reportmutation(self, records, db= 'default', bg=False):
 
 
 @app.task(bind = True, default_retry_delay = 300, max_retries = 5, name = 'perform_adhocmutation')
-def perform_adhocmutation(self, records, db='default', bg=False):  # sourcery skip: remove-empty-nested-block, remove-redundant-if, remove-redundant-pass
+def perform_adhocmutation(self, file, db='default', bg=False):  # sourcery skip: remove-empty-nested-block, remove-redundant-if, remove-redundant-pass
     rc, recordcount, traceback, msg= 1, 0, 'NA', Messages.INSERT_FAILED
     try:
         log.info(
-            f"""perform_adhocmutation(records = {records}, bg = {bg}, db = {db}, runnning in {'background' if bg else "foreground"})"""
+            f"""perform_adhocmutation(file = {file}, bg = {bg}, db = {db}, runnning in {'background' if bg else "foreground"})"""
         )
-        data = [json.loads(record) for record in records]
+        if bg:
+            data = file
+        elif not (data := get_json_data(file)):
+            raise excp.NoDataInTheFileError
+        log.info(f"'data = {pformat(data)} {len(data)} Number of records found in the file")
         for record in data:
             if record:
                 details = record.pop('details')
@@ -726,13 +734,14 @@ def perform_adhocmutation(self, records, db='default', bg=False):  # sourcery sk
     results = ServiceOutputType(rc = rc, recordcount = recordcount, msg = msg, traceback = traceback)
     return results.__dict__ if bg else results
 
-def perform_uploadattachment(bytes,  record, biodata):
+
+def perform_uploadattachment(file,  record, biodata):
     rc, traceback, resp = 1,  'NA', 0
     recordcount, msg = None, Messages.UPLOAD_FAILED
     # ic(file, tablename, record, type(record), biodata, type(biodata))
     
 
-    file_buffer = bytes
+    file_buffer = file
     filename    = biodata['filename']
     peopleid    = biodata['people_id']
     path        = biodata['path']
@@ -743,7 +752,7 @@ def perform_uploadattachment(bytes,  record, biodata):
     uploadfile  = f'{filepath}/{filename}'
     db          = utils.get_current_db_name()
     
-    log.info(f"filebytes length: '{len(file_buffer)}' \n'onwername':{onwername}, \nownerid: '{ownerid}' \npeopleid: '{peopleid}' \npath: {path} \nhome_dir: '{home_dir}' \nfilepath: '{filepath}' \nuploadfile: '{uploadfile}'")
+    log.info(f"file_buffer: '{file_buffer}' \n'onwername':{onwername}, \nownerid: '{ownerid}' \npeopleid: '{peopleid}' \npath: {path} \nhome_dir: '{home_dir}' \nfilepath: '{filepath}' \nuploadfile: '{uploadfile}'")
     try:
         with transaction.atomic(using = db):
             iscreated = get_or_create_dir(filepath)
@@ -777,26 +786,3 @@ def log_event_info(onwername, ownerid):
     log.info(f"object retrived of type {type(eobj)}")
     if hasattr(eobj, 'peventtype'): log.info(f'Event Type: {eobj.peventtype.tacode}')
     return eobj
-
-
-def execute_graphql_mutations(mutation_query, variables):
-    from apps.service.schema import schema
-
-
-    # Execute the GraphQL mutation with the file object
-    result = schema.execute(
-        mutation_query,
-        variable_values=variables
-    )
-
-    if result.errors:
-        # Handle errors
-        error_messages = [error.message for error in result.errors]
-        log.error(f"Mutation errors: {pformat(error_messages)}")
-        resp = json.dumps({'errors': error_messages})
-        raise Exception(f"GraphQL mutation failed with errors {resp}")
-    else:
-        # Handle success
-        log.info(f"Mutation result: {result.data}")
-        resp = json.dumps({'data': result.data})
-    return resp

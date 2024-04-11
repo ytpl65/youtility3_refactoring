@@ -563,37 +563,7 @@ def send_generated_report_onfly_email(self, filepath, fromemail, to, cc, ctzoffs
     except Exception  as e:
         log.critical("something went wrong in bg task send_generated_report_onfly_email", exc_info=True)
     return story
-        
-@app.task(bind=True, default_retry_delay=300, max_retries=5, name="process_graphql_mutation_async")
-def process_graphql_mutation_async(self, payload):
-    """
-    Process the incoming payload containing a GraphQL mutation and file data.
 
-    Args:
-        payload (str): The JSON-encoded payload containing the mutation query and variables.
-
-    Returns:
-        str: The JSON-encoded response containing the mutation result or errors.
-    """
-    from apps.service.utils import execute_graphql_mutations
-    try:
-        post_data = json.loads(payload)
-        query = post_data.get('mutation')
-        variables = post_data.get('variables', {})
-
-        if query and variables:
-            return execute_graphql_mutations(query, variables)
-        else:
-            log.warning("Invalid records or query in the payload.")
-            return json.dumps({'errors': ['No file data found']})
-    except Exception as e:
-        log.error(f"Error processing payload: {e}")
-        return json.dumps({'errors': [str(e)]})
-    
-    
-@app.task(bind=True, name="say_hi")
-def say_hi(self, name):
-    return f"Hi {name}"
 
 
 @app.task(bind=True, name="insert_json_records_bulk")
