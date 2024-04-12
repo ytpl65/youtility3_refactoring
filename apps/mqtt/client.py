@@ -22,10 +22,10 @@ MQTT_CONFIG = settings.MQTT_CONFIG
 BROKER_ADDRESS = MQTT_CONFIG['BROKER_ADDRESS']
 BROKER_PORT = MQTT_CONFIG['BROKER_PORT']
 
-MUTATION_TOPIC = "graphql/mutation"
+MUTATION_TOPIC        = "graphql/mutation"
 MUTATION_STATUS_TOPIC = "graphql/mutation/status"
-RESPONSE_TOPIC = "response/acknowledgement"
-STATUS_TOPIC   = "response/status"
+RESPONSE_TOPIC        = "response/acknowledgement"
+STATUS_TOPIC          = "response/status"
 
 def get_task_status(item):
     """
@@ -106,5 +106,6 @@ class MqttClient:
         
 
 if __name__ == '__main__':
-    pass
+    client = MqttClient()
+    client.loop_forever()
 
