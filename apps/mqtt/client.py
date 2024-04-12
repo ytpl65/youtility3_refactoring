@@ -1,3 +1,10 @@
+import os
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "intelliwiz_config.settings.py")
+os.environ["DJANGO_ALLOW_ASYNC_UNSAFE"] = "true"
+import django
+
+django.setup()
+
 from paho.mqtt import client as mqtt
 from base64 import b64decode
 from io import BytesIO
@@ -98,5 +105,6 @@ class MqttClient:
 
         
 
-
+if __name__ == '__main__':
+    pass
 
