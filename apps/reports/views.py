@@ -588,7 +588,6 @@ class DownloadReports(LoginRequiredMixin, View):
         return render(request, self.PARAMS['template_form'], {'form': form})
 
     def export_report(self, formdata, session, request, form):
-        print('export report called ')
         returnfile = formdata.get('export_type') == 'SEND'
         report_essentials = rutils.ReportEssentials(report_name=formdata['report_name'])
         log.info(f"report essentials: {report_essentials}")
@@ -619,7 +618,6 @@ class DownloadReports(LoginRequiredMixin, View):
         return render(request, self.PARAMS['template_form'], {'form': form})
 
     def form_behaviour(self, R):
-        print("form beahaviour called")
         report_essentials = self.PARAMS['ReportEssentials'](report_name=R['report_name'])
         return rp.JsonResponse({'behaviour':report_essentials.behaviour_json})
 

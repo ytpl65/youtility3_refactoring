@@ -162,7 +162,6 @@ class Update_I_TourFormJob(Schd_I_TourFormJob, View):
         response = None
         try:
             pk = kwargs.get('pk')
-            ic(pk)
             obj = self.model.objects.get(id = pk)
             log.info('object retrieved {}'.format(obj))
             form        = self.form_class(instance = obj, initial = self.initial)
@@ -452,7 +451,6 @@ class Schd_E_TourFormJob(LoginRequiredMixin, View):
         cxt = {'schdexternaltourform': self.form_class(
             request = request, initial = self.initial),
                'editsiteform':self.subform()}
-        print("$$44444", self.subform().as_p().split('\n'))
         return render(request, self.template_path, context = cxt)
 
     def post(self, request, *args, **kwargs):
@@ -1024,6 +1022,10 @@ class JobneedTours(LoginRequiredMixin, View):
             objs = am.JobneedDetails.objects.get_e_tour_checklist_details(R['jobneedid'])
             return rp.JsonResponse(data = {'data':list(objs)})
         
+        if R.get('action') == 'get_checkpointdetails':
+            qset = P['model'].objects.get_tourdetails(R)
+            return rp.JsonResponse({'data':list(qset)}, status = 200)
+        
         if R.get('action') == 'getAttachmentJobneed' and R.get('id'):
             att = P['model'].objects.getAttachmentJobneed(R['id'])
             return rp.JsonResponse(data = {'data':list(att)})
@@ -1115,7 +1117,6 @@ class JobneedExternalTours(LoginRequiredMixin, View):
             checkpoints = self.get_checkpoints(P, obj = obj)
             cxt = {'externaltourform': form, 'edit': True,
                 'checkpoints': checkpoints}
-            print(checkpoints)
             return render(request, P['template_form'], context = cxt)
         
         
@@ -1556,7 +1557,6 @@ class ExternalTourScheduling(LoginRequiredMixin, View):
         # return resp to load checklist
         if R.get('action') == "loadChecklist":
             qset =  am.QuestionSet.objects.load_checklist(request)
-            print('final qset',qset)
             return rp.JsonResponse({'items':list(qset), 'total_count':len(qset)}, status = 200)
         
         # return resp to delete request
@@ -1581,7 +1581,6 @@ class ExternalTourScheduling(LoginRequiredMixin, View):
         pk, R = request.POST.get('pk', None), request.POST
         formData = QueryDict(request.POST.get('formData'))
         try:
-            ic(formData)
             if R.get('postType') == 'saveCheckpoint':
                 data =  am.Job.objects.handle_save_checkpoint_sitetour(request)
                 return rp.JsonResponse(data, status = 200, safe=False)
@@ -1635,7 +1634,6 @@ class ExternalTourScheduling(LoginRequiredMixin, View):
             P['model'].objects.filter(parent_id = job['id']).delete()
             count=0
             for cp in checkpoints:
-                #ic(sutils.job_fields(job, cp, external=True))
                 obj = am.Job.objects.create(
                     **sutils.job_fields(job, cp, external=True))
                 putils.save_userinfo(obj, request.user, request.session, bu=cp['buid'])
@@ -1647,21 +1645,6 @@ class ExternalTourScheduling(LoginRequiredMixin, View):
         except Exception:
             log.critical("something went wrong...", exc_info=True)
             raise
-        
-
-class TourJobneedEditorView(LoginRequiredMixin, View):
-    params = {
-        'model':am.Jobneed,
-    }
-
-    def get(self, request, *args, **kwargs):
-        R, P = request.GET, self.params
-
-        if R.get('action') == 'get_tourdetails':
-            qset = P['model'].objects.get_tourdetails(R)
-            return rp.JsonResponse({'data':list(qset)}, status = 200)
-
-
 
 class JobneednJNDEditor(LoginRequiredMixin, View):
     params = {
@@ -1672,7 +1655,6 @@ class JobneednJNDEditor(LoginRequiredMixin, View):
     }
     def get(self, request, *args, **kwargs):
         R, P = request.GET, self.params
-        ic(R)
         if R.get('action') == 'get_jndofjobneed' and R.get('jobneedid'):
             objs = P['jnd'].objects.get_jndofjobneed(R)
             return rp.JsonResponse({'data':list(objs)}, status=200)
@@ -1680,7 +1662,6 @@ class JobneednJNDEditor(LoginRequiredMixin, View):
     
     def post(self, request, *args, **kwargs):
         R, P = request.POST, self.params
-        ic(R)
         if R.get('tourjobneed'):
             data = P['model'].objects.handle_jobneedpostdata(request)
             return rp.JsonResponse({'data':list(data)}, status = 200, safe=False)

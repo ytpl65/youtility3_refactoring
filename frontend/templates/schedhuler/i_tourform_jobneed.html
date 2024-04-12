@@ -197,8 +197,9 @@ Internal Tour
     <h4 class="card-title modal-heading">
         Tour Details &nbsp;<i class="fas text-white fs-3 text-primary fa-directions"></i>
     </h4><br>
-    <table id="internal_tour" class="display cell-border" style="width:100%">
-    </table><br>
+    <table id="internal_tour" class="display cell-border" style="width:100%"></table>
+    <table class="display cell-border  d-none" style="width:100%" id="AdhocChecklistDetails"></table>
+    <br>
     <h4 class="card-title modal-heading d-none">
         Tour Answers &nbsp;<i class="fas text-white fs-3 text-primary fa-directions"></i>
     </h4><br>
@@ -281,7 +282,6 @@ Internal Tour
     var parent_id = '{{ internaltourform.instance.id }}';
     var childTable;
     var childEditor;
-    var parentEditor;
     $('label').removeClass("col-form-label col-md-2 col-sm-2 text-sm-right")
 
     function hideAndShowFields(selected){
@@ -300,13 +300,18 @@ Internal Tour
         $('#id_checklistdetails').modal('show')
         ajaxData.jobneedid=id
         ajaxData.action='checklist_details'
+        if(typeof checklistdetails !== 'undefined' && checklistdetails.ajax) {
         checklistdetails.ajax.reload()
     }
+    }
+
     function showAttachmentDetails(id, from){
         $('#id_attachmentdetails').modal('show')
         ajaxData.id=id
         ajaxData.action = from === 'jobneed' ? 'getAttachmentJobneed' : 'getAttachmentJND' 
+        if(typeof attachmentDetails !== 'undefined' && attachmentDetails.ajax) {
         attachmentDetails.ajax.reload()
+    }
     }
 
     function appenAlerton(options){
@@ -382,130 +387,9 @@ Internal Tour
     //display readable form of gpslocation
     $('#id_gpslocation').val("{{ internaltourform.instance.geojson['gpslocation'] }}")
 
-    
-
-    $(document).ready(() => {
-        // Disable checkboxes
-        $("input[type='checkbox']").prop("disabled", true);
-
-        // Disable text fields
-        $("input, textarea").prop("disabled", true);
-
-        // Disable select2 fields (assuming select2 has been initialized)
-        $(".django-select2, .form-select").select2({"disabled": 'readonly'})
-        //set ctzoffset
-  	    $("#id_ctzoffset").val(-new Date().getTimezoneOffset())
-        
-        parentEditor = new $.fn.dataTable.Editor({
-            table: "#internal_tour",
-            ajax: {
-                url:"{{ url('schedhuler:jn_jnd_editor') }}",
-                data:function(d){
-                    let currentRow = getCurrentEditingRow(parentEditor, parentTable)
-                    console.log(currentRow)
-                    d.parent_id = '{{internaltourform.instance.id}}'
-                    d.tourjobneed = true
-                    d.csrfmiddlewaretoken = '{{ csrf_token }}'
-                    d.ctzoffset = $("#id_ctzoffset").val()
-                    d.pk = currentRow !== 'None' ? currentRow['id'] : currentRow
-                    console.log(d.pk)
-                    d.qset_id = $('#DTE_Field_qsetname').val()
-                    d.identifier = 'INTERNALTOUR'
-                    d.seqno = $('#DTE_Field_seqno').val()
-                    d.plandatetime = $('#DTE_Field_plandatetime').val()
-                    d.expirydatetime = $('#DTE_Field_expirydatetime').val()
-                    d.asset_id = $('#DTE_Field_asset_id').val()
-                    d.seqno = $('#DTE_Field_seqno').val()
-                    d.gracetime = $('#DTE_Field_seqno').val()
-                }
-            },
-            idSrc:  'id',
-            fields:[
-                {label: 'SL.No', name: "seqno", type:"text"},
-                {label: 'Plan Datetime', name: "plandatetime", type:'datetime', format:    'DD-MMM-YYYY HH:mm',},
-                {label: 'Expiry Datetime', name: "expirydatetime", type:'datetime', format:    'DD-MMM-YYYY HH:mm',},
-                {label: 'Checkpoint', name: "assetname"},
-                {label: 'Checklist', name: "qsetname"},
-                {label: 'gracetime', name: "gracetime"},              
-            ]
-        });
-
-        //PARENT EDITOR ON PRE-OPEN EVENT
-        parentEditor.on('preOpen', function(e, mode, action){
-            
-        })
-
-        //PARENT EDITOR ON OPEN EVENT
-        parentEditor.on('open', function(e, mode, action){
-            $(".DTE_Field").addClass('p-1') // add required classes
-            if(action == 'create'){
-                parentEditor.field('seqno').set(parentTable.data().count() + 1)
-            }
-            
-        })
-        
-        //PARENT EDITOR ON OPENED EVENT
-        parentEditor.on('opened', function(e, mode, action){
-            
-        })
-
-
-        //datatable configurations
-        parentTable = $('#internal_tour').DataTable({
-            ajax:{
-                url:`{{ url('schedhuler:jobneedtourseditor') }}?action=get_tourdetails&parent_id=${parent_id}`,
-
-            },
-            responsive: true,
-            dom:`<'row' <'col-sm-6 d-flex justify-content-start'f> <'col-sm-6 d-flex justify-content-end'B> >rt<'row'
-			 <'col-sm-6'l> <'col-sm-6'p><'col-sm-12 d-flex justify-content-center'i>>`,
-            ordering: true,
-            columns:[
-                {data:'id', visible:false},
-                {data:'seqno', title:'#'},
-                {data:'plandatetime', title:'PlanDatetime'},
-                {data:'expirydatetime', title:'Expiry Datetime'},
-                {data:'asset__assetname', title:'Asset/Checkpoint'},
-                {data:'qset__id', visible:false},
-                {data:'qset__qsetname', title:'Checklist'},
-                {data:'gracetime', title:'Gracetime'},
-                {data:'jobstatus', title:'Status'},
-                {title:'Attachments',data:'attachmentcount', defaultContent:null, render:function(data, type, row, meta){
-                    if(data>0){
-                        return `<a href="javascript:void(0)"  onClick='showAttachmentDetails(${row['id']}, "jobneed")'>${data}&nbsp;<i class="fas text-primary2 fs-3 fa-paperclip"></i></a>` }
-                    else {
-                        return 'N/A';}
-                    }
-                },
-                {title:'Details',data:null, defaultContent:null, render:function(data, type, row, meta){
-                        return  `<button class="btn btn-link p-0" onClick='showCpDetails(${row['id']})'>View Details</button>`
-                    }
-                },
-                {data:'ctzoffset', visible:false}
-
-            ],
-            ordering:false,
-            deferRender: true,
-            columnDefs:[
-                {targets:1, data:'seqno', render:function(data, type, row, meta){
-                        return parseInt(data)
-                    }
-                },
-                {targets:2, render:function(data, type, row, meta){
-                    return convert_to_local(type, data, row)}
-                },
-                {targets:3, render:function(data, type, row, meta){
-                    return convert_to_local(type, data, row)}
-                },
-            ],
-            buttons:[]
-        })
-        $('#id_checklistdetails').on('shown.bs.modal', function (event) {
-            $.fn.dataTable.tables( {visible: true, api: true} ).columns.adjust();
-            $('#id_checklistdetails').modal({
-                keyboard: false
-            })
-            checklistdetails = $("#tabChecklistDetails").DataTable(
+    //checklist_datatable
+    function checklist_details_datatable(id){
+                checklistdetails = $(id).DataTable(
             {
                 ajax:{
                     url:`{{ url("schedhuler:jobneedtours") }}`,
@@ -543,8 +427,94 @@ Internal Tour
                 dom: `<'row' <'col-sm-6 d-flex justify-content-start'f> <'col-sm-6 d-flex justify-content-end'B> >rt<'row'
                 <'col-sm-6'l> <'col-sm-6'p><'col-sm-12 d-flex justify-content-center'i>>`,
                 buttons:[],
-
             })
+            }
+    function checkpoint_details_datatable(){
+        parentTable = $('#internal_tour').DataTable({
+            ajax:{
+                url:`{{ url('schedhuler:jobneedtours') }}?action=get_checkpointdetails&parent_id=${parent_id}`,
+            },
+            responsive: true,
+            dom:`<'row' <'col-sm-6 d-flex justify-content-start'f> <'col-sm-6 d-flex justify-content-end'B> >rt<'row'
+			 <'col-sm-6'l> <'col-sm-6'p><'col-sm-12 d-flex justify-content-center'i>>`,
+            ordering: true,
+            columns:[
+                {data:'id', visible:false},
+                {data:'seqno', title:'#'},
+                {data:'plandatetime', title:'PlanDatetime'},
+                {data:'expirydatetime', title:'Expiry Datetime'},
+                {data:'asset__assetname', title:'Asset/Checkpoint'},
+                {data:'qset__id', visible:false},
+                {data:'qset__qsetname', title:'Checklist'},
+                {data:'gracetime', title:'Gracetime'},
+                {data:'jobstatus', title:'Status'},
+                {title:'Attachments',data:'attachmentcount', defaultContent:null, render:function(data, type, row, meta){
+                    if(data>0){
+                        return `<a href="javascript:void(0)"  onClick='showAttachmentDetails(${row['id']}, "jobneed")'>${data}&nbsp;<i class="fas text-primary2 fs-3 fa-paperclip"></i></a>` }
+                    else {
+                        return 'N/A';}
+                    }
+                },
+                {title:'Details',data:null, defaultContent:null, render:function(data, type, row, meta){
+                        return  `<button class="btn btn-link p-0" onClick='showCpDetails(${row['id']})'>View Details</button>`
+                    }
+                },
+                {data:'ctzoffset', visible:false}
+            ],
+            ordering:false,
+            deferRender: true,
+            columnDefs:[
+                {targets:1, data:'seqno', render:function(data, type, row, meta){
+                        return parseInt(data)
+                    }
+                },
+                {targets:2, render:function(data, type, row, meta){
+                    return convert_to_local(type, data, row)}
+                },
+                {targets:3, render:function(data, type, row, meta){
+                    return convert_to_local(type, data, row)}
+                },
+            ],
+            buttons:[]
+        })
+    }
+
+    
+
+    $(document).ready(() => {
+        // Disable checkboxes
+        $("input[type='checkbox']").prop("disabled", true);
+
+        // Disable text fields
+        $("input, textarea").prop("disabled", true);
+
+        // Disable select2 fields (assuming select2 has been initialized)
+        $(".django-select2, .form-select").select2({"disabled": 'readonly'})
+        //set ctzoffset
+  	    $("#id_ctzoffset").val(-new Date().getTimezoneOffset())
+
+        if ("{{ internaltourform.instance.jobtype }}"=='ADHOC') {
+            $('#internal_tour').addClass('d-none')
+            $('#AdhocChecklistDetails').removeClass('d-none')
+            id_table = '#AdhocChecklistDetails'
+            checklist_details_datatable(id_table)
+            ajaxData.jobneedid="{{internaltourform.instance.id}}"
+            ajaxData.action='checklist_details'
+            checklistdetails.ajax.reload()
+        } else {
+            $('#AdhocChecklistDetails').addClass('d-none')
+            //datatable configurations
+            checkpoint_details_datatable()
+            id_table = '#tabChecklistDetails'
+        }      
+
+        //checklist_modal
+        $('#id_checklistdetails').on('shown.bs.modal', function (event) {
+            $.fn.dataTable.tables( {visible: true, api: true} ).columns.adjust();
+            $('#id_checklistdetails').modal({
+                keyboard: false
+            })
+            checklist_details_datatable(id_table)
             
         })
         $('#id_attachmentdetails').on('shown.bs.modal', function (event) {
@@ -603,257 +573,8 @@ Internal Tour
 
                 }
             )
-            
+
         })
-
-        //editor of child tabble
-         /*childEditor = new $.fn.dataTable.Editor({
-            table: '#tabTouranswers',
-            ajax: {
-                url:"{{ url('schedhuler:jn_jnd_editor') }}",
-                data:function(d){
-                    var selected = parentTable.row( { selected: true } )
-                    if ( selected.any() ) {
-                        let currentRow = getCurrentEditingRow(childEditor, childTable)
-                        console.log(currentRow)
-                        d.parent_id = selected.data().id;
-                        d.csrfmiddlewaretoken = '{{ csrf_token }}'
-                        d.question = true
-                        d.alerton = JSON.stringify($("#DTE_Field_alerton").val())
-                        d.question_id = $("#DTE_Field_question").val()
-                        d.min = $("#DTE_Field_min").val()
-                        d.max = $("#DTE_Field_max").val()
-                        d.alertbelow = $("#DTE_Field_alertbelow").val()
-                        d.alertabove = $("#DTE_Field_alertabove").val()
-                        d.answertype = $("#DTE_Field_answertype").val()
-                        d.seqno = $("#DTE_Field_seqno").val()
-                        d.ismandatory = $("#DTE_Field_ismandatory").val()
-                        d.options = $("#DTE_Field_options").val()
-                        d.answer = $("#DTE_Field_answer").val()
-                        d.pk = currentRow !== 'None' ? currentRow['pk'] : currentRow
-                        d.ctzoffset = $("#id_ctzoffset").val()
-                    }
-                }
-            },
-            idSrc:  'pk',
-            fields:[
-                {data:'pk', type:'hidden', name:'pk', def:'None'},
-                {label:'SNo.', name:"seqno", type:'text', data:'seqno'},
-                {label: 'Question', name: 'question', type: 'select', data:'question'},
-                {label: 'Type', name: 'answertype', type: 'readonly', data:'answertype'},
-                {label: 'Min', name: 'min', type: 'text', def:null},
-                {label: 'Max', name: 'max', type: 'text', def:null},
-                {label: 'Alert below', name: 'alertbelow', type: 'text'},
-                {label: 'Alert above', name: 'alertabove', type: 'text'},
-                {label: 'Option', name: 'options', type:'text', fieldInfo:"Enter text ',' (comma) separated"},
-                {label: 'Alert On', name: 'alerton', type:'select'},
-                {label: 'Answer', name: 'answer', type:'text'},
-                {label: 'Mandatory', name: 'ismandatory', type: 'select', def:1,
-                options:   [
-                    { label: 'True', value: 1 },
-                    { label: 'False', value: 0 }
-                ]},
-            ],
-            formOptions:{
-                main:{
-                    onReturn:false
-                }
-            }
-        })
-
-        //CHILD EDITOR ON PRE-OPEN EVENT
-        childEditor.on('preOpen', function(e, mode, action){
-            
-        })
-
-        //CHILD EDITOR ON OPEN EVENT
-        childEditor.on('open', function(e, mode, action){
-            
-            // on change options set alerton
-            if(action === 'create' || action === 'edit'){
-                
-                $('[data-dte-e="form"]').attr('id', 'id_childform') // add id to form
-                $(".DTE_Field").addClass('p-1') // add css to form fields
-                $("#DTE_Field_alerton, #DTE_Field_question").addClass("form-control form-select") // add css to alerton form field
-
-                
-
-                // initialize select field question
-                init_select_field({
-                    url: "{{ url('reports:config_sitereport_template') }}?action=loadQuestions",
-                    id: "#DTE_Field_question",
-                    item: 'Questoins'
-                })
-                
-                // initialize select field alerton
-                init_select_field({
-                    id:'#DTE_Field_alerton',
-                    client:true,
-                    closeOnSelect:false,
-                    multiple:true
-                })
-
-                // on change question select field, autoselect type field
-                $("#DTE_Field_question.form-select").on("change", function () {
-                    var _selectedText = getSelectedValue("#DTE_Field_question");
-                    var selected = _selectedText.split(" | ")[1]
-                    //hide/show fields based on selected text..
-                    hideAndShowFields(selected)
-                    childEditor.field('answertype').val(selected)
-                })
-            }
-            
-            
-            if(action == "create"){
-                childEditor.field('seqno').set(childTable.data().count() + 1) //update seqno for new entry
-                clearForm(childEditor)
-            }
-            
-        })
-
-        // CHILD EDITOR ON OPENED EVENT
-        childEditor.on('opened', function(e, mode, action){
-            //get the data of rows in editing
-            //var data = getCurrentEditingRow(childEditor, childTable)
-            if(action == 'edit'){
-                initialize_form()
-            }
-            //if(action == "edit" && data !== 'None'){
-                //hide/show fields based on selected text..
-                //hideAndShowFields(data.answertype)
-            //}
-            $("#DTE_Field_options").on('change', function(){
-                var options  = $(this).val()
-                if(options.length > 0){
-                    appenAlerton(options.split(','))
-                }else{
-                    console.log('clear selection..........')
-                    clearSelection("#DTE_Field_alerton")
-                }
-            })
-        })
-
-        // CHILD EDITOR ON POSTCREATE
-        childEditor.on('postCreate', function(e, mode, action){
-            //update the count of section
-            rowData = parentTable.row({selected:true}).data()
-            rowData.count++
-            parentTable.row({selected:true}).data(rowData).draw()
-        })
-
-
-        //validations for child editor..
-        childEditor.on('preSubmit', function(e, o, action){
-            if(action !== 'remove' && this.field('answertype').val() == 'NUMERIC' ){
-                let min = this.field('min')
-                let max = this.field('max')
-                let alertbelow = this.field('alertbelow')
-                let alertabove = this.field('alertabove')
-                console.log(!min.isMultiValue(), isNaN(parseInt(min.val(), 10)) == NaN)
-
-                if(!(min.isMultiValue()) && isNaN(parseInt(min.val(), 10))) {min.error('value of min must be number')}
-                if(!(max.isMultiValue()) && isNaN(parseInt(max.val(), 10))) {max.error('value of max must be number')}
-                if(!(alertbelow.isMultiValue()) && isNaN(parseInt(alertbelow.val(), 10))) {alertbelow.error('value of alert below must be number')}
-                if(!(alertabove.isMultiValue()) && isNaN(parseInt(alertabove.val(), 10))) {alertabove.error('value of alert above must be number')}
-
-                if(!(min.isMultiValue() && max.isMultiValue()) && (parseInt(min.val(), 10) > parseInt(max.val(), 10)) ){
-                    min.error('Min value must be smaller than Max value')
-                }
-                if(!(min.isMultiValue() && alertbelow.isMultiValue()) && (parseInt(alertbelow.val(), 10) < parseInt(min.val(), 10)) ){
-                    alertbelow.error('Alert Below value must be greater than Min value')
-                }
-                if(!(max.isMultiValue() && alertabove.isMultiValue()) && (parseInt(alertabove.val(), 10)  > parseInt(max.val(), 10)) ){
-                    max.error('Alert Above value must be smaller than Max value')
-                }
-                if(!(alertbelow.isMultiValue() && alertabove.isMultiValue()) && (parseInt(alertbelow.val(), 10) > parseInt(alertabove.val(), 10)) ){
-                    alertabove.error('Alert Below value must be smaller than Alert Above value')
-                }
-                // If any error was reported, cancel the submission so it can be corrected
-                if ( this.inError() ) {
-                    return false;
-                }
-
-            }else if (this.field('answertype').val() == 'DROPDOWN' || this.field('answertype').val() == 'CHECKBOX'){
-                let alerton = this.field('alerton')
-                let options = this.field('options')
-                if(!options.isMultiValue() && !options.val()){options.error('options must be given')}
-                if ( this.inError() ) {
-                    return false;
-                }
-            }
-
-            
-        })
-
-        //report questoins
-        childTable =$("#tabTouranswers").DataTable({
-            ajax:{
-                url:"{{ url('schedhuler:jn_jnd_editor') }}?action=get_jndofjobneed",
-                type:'get',
-                data:function(d){
-                    var selected = parentTable.row( { selected: true } );
-                        if ( selected.any() ) {
-                        d.jobneedid = selected.data().id
-                        d.count = selected.data().count
-                    }
-
-                }
-            },
-            responsive:true,
-            ordering:false,
-            searching:false,
-            dom:`<'row' <'col-sm-6 d-flex justify-content-start'f> <'col-sm-6 d-flex justify-content-end'B> >rt<'row'
-            <'col-sm-6'l> <'col-sm-6'p><'col-sm-12 d-flex justify-content-center'i>>`,
-            columns:[
-                {data:'pk', defaultContent:null, visible:false},
-                {data:'ctzoffset', defaultContent:null, visible:false},
-                {title: "SNo", data:'seqno', render:function(data, type, row, meta){
-                    return meta.row + 1
-                }},
-                {title: "Question", data: 'quesname'},
-                {data: 'question_id', visible:false, defaultContent:null},
-                {title: "Question Type", data: 'answertype'},
-                {title: "Min", data: 'min', render:function(data, type, row, meta){
-                    return row['answertype'] !== 'NUMERIC' ? 'NA' : data
-                    
-                }},
-                {title: "Max", data: 'max', render:function(data, type, row, meta){
-                    return row['answertype'] !== 'NUMERIC'  ? 'NA' : data
-                }},
-                {title: "Option", data: 'options', render:function(data, type, row, meta){
-                    return row['answertype'] !== 'CHECKBOX' && row['answertype'] !== 'DROPDOWN' ? 'NA' : data
-                }},
-                {title: "Alert On", data: 'alerton', render:function(data, type, row, meta){
-                    return row['answertype'] == 'CHECKBOX' || row['answertype'] == 'DROPDOWN' || row['answertype'] == 'NUMERIC' ? data : 'NA'
-                }},
-                {title: "Mandatory", data: 'ismandatory'},
-                {title: "Answer", data: 'answer'},
-            ],
-            buttons:[
-                { extend: "create", editor: childEditor },
-                { extend: "edit",   editor: childEditor },
-                { extend: "remove", editor: childEditor }
-            ],
-            select: {
-                style: 'single'
-            }
-        })
-        $("#tabTouranswers_wrapper .buttons-create").addClass('disabled')//on page load disable new button of child table
-        $("#tabTouranswers_wrapper .buttons-create").attr({'data-toggle':"tooltip", 'data-placement':"top", 'title':"Select Section First"})
-        
-        parentTable.on( 'select', function () {
-            childTable.ajax.reload();
-            $("#tabTouranswers_wrapper .buttons-create").removeClass('disabled')
-            //childEditor
-            //    .field( 'users.site' )
-            //    .def( parentTable.row( { selected: true } ).data().id );
-        } );
-        
-        parentTable.on( 'deselect', function () {
-            childTable.ajax.reload();
-            $("#tabTouranswers_wrapper .buttons-create").addClass('disabled')
-            $("#tabTouranswers_wrapper .buttons-create").attr({'data-toggle':"tooltip", 'data-placement':"top", 'title':"Select Section First"})
-        } );*/
 
 
         //datetime widget configurations
