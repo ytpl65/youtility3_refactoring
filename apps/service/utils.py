@@ -146,11 +146,16 @@ def get_or_create_dir(path):
     else: created= False
     return created
 
-def write_file_to_dir(filebytes, uploadedfilepath):
+def write_file_to_dir(filebuffer, uploadedfilepath):
     from django.core.files.base import ContentFile
     from django.core.files.storage import default_storage
-    file_content = BytesIO(bytes(filebytes))
-    path = default_storage.save(uploadedfilepath, ContentFile(file_content.read()))
+    if hasattr(filebuffer, 'read'):
+        # This assumes filebuffer is a file-like object (e.g., InMemoryUploadedFile), so we read its contents.
+        content = filebuffer.read()
+    else:
+        # In case filebuffer is directly bytes, it can be passed as is.
+        content = filebuffer
+    path = default_storage.save(uploadedfilepath, ContentFile(content))
     log.info(f"file saved to {path}")
 
 
