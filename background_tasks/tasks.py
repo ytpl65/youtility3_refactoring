@@ -609,7 +609,7 @@ def create_save_report_async(self, formdata, client_id, user_email, user_id):
             return {"status": 404, "message": "No data found matching your report criteria.\
         Please check your entries and try generating the report again", 'alert':'alert-warning'}
     except Exception as e:
-        log.error(f"Error generating report: {e}")
+        log.error(f"Error generating report: {e}", exc_info=True)
         return {"status": 500, "message": "Internal Server Error", "alert":"alert-danger"}
         
             
