@@ -103,7 +103,6 @@ class MqttClient:
         self.client.loop_forever()
 
 
-        
 
 if __name__ == '__main__':
     client = MqttClient()
