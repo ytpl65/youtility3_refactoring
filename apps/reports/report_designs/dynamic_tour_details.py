@@ -31,8 +31,8 @@ class DynamicTourDetailReport(BaseReportsExport):
         # Fetch parent jobneeds
         parents = Jobneed.objects.filter(
             identifier=identifier,
-            plandatetime__date__gte=self.formdata['fromdate'],
-            plandatetime__date__lte=self.formdata['uptodate'],
+            plandatetime__gte=self.formdata['fromdatetime'],
+            plandatetime__lte=self.formdata['uptodatetime'],
             bu_id=self.formdata['site'],
             parent_id=1,
             other_info__istimebound=False
@@ -138,7 +138,7 @@ class DynamicTourDetailReport(BaseReportsExport):
             'report_title': self.report_title,
             'client_logo':self.get_client_logo(),
             'app_logo':self.ytpl_applogo,
-            'report_subtitle':f"Site: {sitename} From: {self.formdata.get('fromdatetime').strftime('%d/%m/%Y %H:%M:%S')} To {self.formdata.get('uptodate').strftime('%d/%m/%Y %H:%M:%S')}"
+            'report_subtitle':f"Site: {sitename} From: {self.formdata.get('fromdatetime').strftime('%d/%m/%Y %H:%M:%S')} To {self.formdata.get('uptodatetime').strftime('%d/%m/%Y %H:%M:%S')}"
         }
         return len(self.context['data']) > 0
         
