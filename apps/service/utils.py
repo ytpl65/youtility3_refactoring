@@ -726,13 +726,13 @@ def perform_adhocmutation(self, records, db='default', bg=False):  # sourcery sk
     results = ServiceOutputType(rc = rc, recordcount = recordcount, msg = msg, traceback = traceback)
     return results.__dict__ if bg else results
 
-def perform_uploadattachment(bytes,  record, biodata):
+def perform_uploadattachment(file,  record, biodata):
     rc, traceback, resp = 1,  'NA', 0
     recordcount, msg = None, Messages.UPLOAD_FAILED
     # ic(file, tablename, record, type(record), biodata, type(biodata))
     
 
-    file_buffer = bytes
+    file_buffer = file
     filename    = biodata['filename']
     peopleid    = biodata['people_id']
     path        = biodata['path']
@@ -743,7 +743,7 @@ def perform_uploadattachment(bytes,  record, biodata):
     uploadfile  = f'{filepath}/{filename}'
     db          = utils.get_current_db_name()
     
-    log.info(f"filebytes length: '{len(file_buffer)}' \n'onwername':{onwername}, \nownerid: '{ownerid}' \npeopleid: '{peopleid}' \npath: {path} \nhome_dir: '{home_dir}' \nfilepath: '{filepath}' \nuploadfile: '{uploadfile}'")
+    log.info(f"file_buffer: '{file_buffer}' \n'onwername':{onwername}, \nownerid: '{ownerid}' \npeopleid: '{peopleid}' \npath: {path} \nhome_dir: '{home_dir}' \nfilepath: '{filepath}' \nuploadfile: '{uploadfile}'")
     try:
         with transaction.atomic(using = db):
             iscreated = get_or_create_dir(filepath)
