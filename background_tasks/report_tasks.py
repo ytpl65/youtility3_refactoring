@@ -166,9 +166,9 @@ def execute_report(RE, report_type, client_id, formdata):
     return report_export.execute()
 
 
-def save_report_to_tmp_folder(filename, ext, report_output):
+def save_report_to_tmp_folder(filename, ext, report_output, dir=None):
     if report_output:
-        directory = settings.TEMP_REPORTS_GENERATED
+        directory = dir or settings.TEMP_REPORTS_GENERATED
         filepath = os.path.join(directory, f"{filename}.{ext}")
 
         if not os.path.exists(directory):

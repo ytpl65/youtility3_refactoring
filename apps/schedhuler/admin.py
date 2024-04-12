@@ -10,6 +10,7 @@ from django.core.exceptions import ValidationError
 from apps.peoples import models as pm
 from apps.onboarding import models as om
 from apps.activity import models as am
+from apps.core.widgets import BVForeignKeyWidget
 from datetime import time
 
 from apps.core import utils
@@ -56,12 +57,12 @@ class ParentFKW(wg.ForeignKeyWidget):
 
 class BaseJobResource(resources.ModelResource):
     CLIENT      = fields.Field(attribute='client', column_name='Client*',widget=wg.ForeignKeyWidget(om.Bt, 'bucode'))
-    SITE        = fields.Field(attribute='bu', column_name='Site*',widget=wg.ForeignKeyWidget(om.Bt, 'bucode'))
+    SITE        = fields.Field(attribute='bu', column_name='Site*',widget=BVForeignKeyWidget(om.Bt, 'bucode'))
     NAME        = fields.Field(attribute='jobname', column_name='Name*')
     DESC        = fields.Field(attribute='jobdesc', column_name='Description*')
     QSET        = fields.Field(attribute='qset', column_name='Question Set/Checklist*', widget=QsetFKW(am.QuestionSet, 'qsetname'))
     ASSET       = fields.Field(attribute='asset', column_name='Asset*', widget=AssetFKW(am.Asset, 'assetcode'))
-    PARENT      = fields.Field(attribute='parent', column_name='Belongs To*', widget=ParentFKW(am.Job, 'jobname'), default='NONE')
+    PARENT      = fields.Field(attribute='parent', column_name='Belongs To*', widget=wg.ForeignKeyWidget(am.Job, 'jobname'), default=utils.get_or_create_none_job)
     PDURATION   = fields.Field(attribute='planduration', column_name='Plan Duration*')
     GRACETIME   = fields.Field(attribute='gracetime', column_name='Gracetime Before*')
     EXPTIME     = fields.Field(attribute='expirytime', column_name='Gracetime After*')
@@ -78,6 +79,12 @@ class BaseJobResource(resources.ModelResource):
     ENDTIME     = fields.Field(attribute='endtime', column_name='End Time', default=time(0,0,0))
     SEQNO       = fields.Field(attribute='seqno', column_name='Seq No', default=-1)
     ID          = fields.Field(attribute='id', column_name='ID')
+    
+    class Meta:
+        model = Job
+        skip_unchanged = True
+        import_id_fields = ['ID']
+        report_skipped = True
     
 
     
@@ -144,25 +151,44 @@ class TaskResource(BaseJobResource):
 
 
 
-class TourResource(BaseJobResource):
+class TourResource(resources.ModelResource):
+    CLIENT      = fields.Field(attribute='client', column_name='Client*',widget=wg.ForeignKeyWidget(om.Bt, 'bucode'), default=utils.get_or_create_none_bv)
+    SITE        = fields.Field(attribute='bu', column_name='Site*',widget=BVForeignKeyWidget(om.Bt, 'bucode'))
+    NAME        = fields.Field(attribute='jobname', column_name='Name*')
+    DESC        = fields.Field(attribute='jobdesc', column_name='Description*')
+    QSET        = fields.Field(attribute='qset', column_name='Question Set/Checklist*', widget=QsetFKW(am.QuestionSet, 'qsetname'))
+    ASSET       = fields.Field(attribute='asset', column_name='Asset*', widget=AssetFKW(am.Asset, 'assetcode'))
+    PARENT      = fields.Field(attribute='parent', column_name='Belongs To*', widget=wg.ForeignKeyWidget(am.Job, 'jobname'), default=utils.get_or_create_none_job)
+    PDURATION   = fields.Field(attribute='planduration', column_name='Plan Duration*')
+    GRACETIME   = fields.Field(attribute='gracetime', column_name='Gracetime Before*')
+    EXPTIME     = fields.Field(attribute='expirytime', column_name='Gracetime After*')
+    CRON        = fields.Field(attribute='cron', column_name='Scheduler*')
+    FROMDATE    = fields.Field(attribute='fromdate', column_name='From Date*', widget=wg.DateWidget())
+    UPTODATE    = fields.Field(attribute='uptodate', column_name='Upto Date*', widget=wg.DateWidget())
+    SCANTYPE    = fields.Field(attribute='scantype', column_name='Scan Type*', default='QR')
+    TKTCATEGORY = fields.Field(attribute='ticketcategory', column_name='Notify Category*', widget=TktCategoryFKW(om.TypeAssist, 'tacode'), default=default_ta)
+    PRIORITY    = fields.Field(attribute='priority', column_name='Priority*', default='LOW')
+    PEOPLE      = fields.Field(attribute='people', column_name='People*', widget= PeopleFKW(pm.People, 'peoplecode'))
+    PGROUP      = fields.Field(attribute='pgroup', column_name='Group Name*', widget=PgroupFKW(pm.Pgroup, 'groupname'))
     IDF         = fields.Field(attribute='identifier', column_name='Identifier*', default='INTERNALTOUR')
-    EXPTIME     = fields.Field(attribute='expirytime', column_name='Expiry Time*')
-    SEQNO       = fields.Field(attribute='seqno', column_name='Seq No*', default=-1)
-    GRACETIME   = fields.Field(attribute='gracetime', column_name='Gracetime*')
+    STARTTIME   = fields.Field(attribute='starttime', column_name='Start Time', default=time(0,0,0))
+    ENDTIME     = fields.Field(attribute='endtime', column_name='End Time', default=time(0,0,0))
+    SEQNO       = fields.Field(attribute='seqno', column_name='Seq No', default=-1)
+    ID          = fields.Field(attribute='id', column_name='ID')
 
     class Meta:
-        model=Job
-        skip_unchanged=True
-        import_id_fields=['ID']
-        report_skipped=True
+        model = am.Job
+        skip_unchanged = True
+        import_id_fields = ['ID']
+        report_skipped = True
         fields = [
-            'CLIENT', 'SITE', 'NAME', 'DESC', 'QSET', 'PDURATION', 'GRACETIME',
+            'CLIENT', 'SITE', 'NAME', 'DESC', 'QSET', 'PDURATION', 'GRACETIME', 'EXPTIME',
             'CRON', 'FROMDATE', 'UPTODATE', 'SCANTYPE', 'TKTCATEGORY', 'PRIORITY', 'PEOPLE',
-            'PGROUP', 'IDF', 'STARTTIME', 'ENDTIME', 'SEQNO', 'PARENT'
+            'PGROUP', 'IDF', 'STARTTIME', 'ENDTIME', 'SEQNO', 'PARENT', 'ASSET'
         ]
     
     def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+        super(TourResource, self).__init__(*args, **kwargs)
         self.is_superuser = kwargs.pop('is_superuser', None)
         self.request = kwargs.pop('request', None)
         self.ctzoffset = kwargs.pop('ctzoffset', -1)
@@ -202,3 +228,6 @@ class TourResource(BaseJobResource):
             identifier = 'INTERNALTOUR', client__bucode = row['Client*']
         ).exists():
             raise ValidationError('Record Already with these values are already exist')
+    
+    def before_save_instance(self, instance, using_transactions, dry_run=False):
+        utils.save_common_stuff(self.request, instance, self.is_superuser)

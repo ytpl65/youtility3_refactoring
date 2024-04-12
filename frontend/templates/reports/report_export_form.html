@@ -458,8 +458,8 @@ Report Form
       Clear&nbsp;<i class="fas  fa-times"></i>
     </button>
 
-    <button type="button" id="btn_preview" class="btn btn-sm btn-primary2 btn-hover-scale">
-      Preview&nbsp;<i class="far text-white fa-file-pdf"></i>
+    <button type="button" id="btn_status" class="btn btn-sm btn-primary2 btn-hover-scale">
+      Check Report Status&nbsp;<i class="fas text-white fa-info-circle"></i>
     </button>
   </div>
 </form>
@@ -468,6 +468,16 @@ Report Form
 {% block extra_scripts %}
 {{ form.media.js }}
 <script src="{{ static('assets/js/just-validate.production.min.js') }}"></script>
+
+{% if task_id is defined %}
+  <script>
+  window.onload = function() {
+    // Store the task ID in local storage
+    localStorage.setItem('task_id', '{{ task_id }}');
+  };
+  </script>
+{% endif %}
+
 <script>
   const urlname = "{{ url('reports:exportreports') }}"
 
@@ -632,35 +642,40 @@ Report Form
     // on change asset type
     $("#id_assettype").change((e) => {
         //reset asset options
-        fire_ajax_get({
-            url:urlname,
-            data:{'action':"get_asset", "of_type":$("#id_assettype").val()}
-        }).done((data, status, xhr) => {
-            $("#id_asset").empty()
-            $("#id_asset").append(new Option("", "", false, false)) //first option is empty
-            if(data.options){
-              data.options.forEach((item) => {
-                  var newOption = new Option(item.assetname, item.id, false, false)
-                  $("#id_asset").append(newOption)
-              })
-            }
-        })
+        if($("#id_asset").is(':visible')){
+          fire_ajax_get({
+              url:urlname,
+              data:{'action':"get_asset", "of_type":$("#id_assettype").val()}
+          }).done((data, status, xhr) => {
+              $("#id_asset").empty()
+              $("#id_asset").append(new Option("", "", false, false)) //first option is empty
+              if(data.options){
+                data.options.forEach((item) => {
+                    var newOption = new Option(item.assetname, item.id, false, false)
+                    $("#id_asset").append(newOption)
+                })
+              }
+          })
+        }
     })
 
     // on change asset
     $("#id_asset").change((e) => {
         //reset qset options
-        fire_ajax_get({
-            url:urlname,
-            data:{'action':"get_qset", "of_asset":$("#id_asset").val()}
-        }).done((data, status, xhr) => {
-            $("#id_qset").empty()
-            $("#id_qset").append(new Option("", "", false, false)) //first option is empty
-            data.options.forEach((item) => {
-                var newOption = new Option(item.qsetname, item.id, false, false)
-                $("#id_qset").append(newOption)
-            })
-        })
+        if($("#id_qset").is(':visible')){
+          fire_ajax_get({
+              url:urlname,
+              data:{'action':"get_qset", "of_asset":$("#id_asset").val()}
+          }).done((data, status, xhr) => {
+              $("#id_qset").empty()
+              $("#id_qset").append(new Option("", "", false, false)) //first option is empty
+              console.log(data.options)
+              data.options.forEach((item) => {
+                  var newOption = new Option(item.qsetname, item.id, false, false)
+                  $("#id_qset").append(newOption)
+              })
+          })
+        }
     })
 
 
@@ -717,6 +732,19 @@ Report Form
       })
 
     })
+
+    $("#btn_status").click((e) => {
+      e.preventDefault();
+
+      // Grab the task_id from local storage
+      const taskId = localStorage.getItem('task_id');
+
+      if (taskId) {
+        window.location.href = `{{ url('reports:report_status') }}?task_id=${taskId}`;
+      } else {
+        console.error("No task_id found in local storage.");
+      }
+    });
 
     //if selected to dont show in cc
     function onSelectionChanged(e) {

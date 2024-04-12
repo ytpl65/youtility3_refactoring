@@ -3,6 +3,8 @@ from apps.onboarding.admin import BaseFieldSet2
 from apps.onboarding import models as om
 from apps.peoples import models as pm
 from import_export import widgets as wg
+from apps.core.widgets import(BVForeignKeyWidget, TypeAssistDepartmentFKW, TypeAssistDesignationFKW, 
+                              TypeAssistEmployeeTypeFKW, TypeAssistWorkTypeFKW)
 from import_export import resources, fields
 from import_export.admin import ImportExportModelAdmin
 from django.db.models import Q
@@ -19,36 +21,7 @@ def save_people_passwd(user):
     log.info('Password is created by system... DONE')
     paswd = f'{user.loginid}' if not user.password else user.password
     user.set_password(paswd)
-    
-class TypeAssistEmployeeTypeFKW(wg.ForeignKeyWidget):
-    def get_queryset(self, value, row, *args, **kwargs):
-        return self.model.objects.select_related().filter(
-            Q(client__bucode__exact=row["Client*"]),
-            tatype__tacode__exact = 'PEOPLETYPE'
-        )
-class TypeAssistWorkTypeFKW(wg.ForeignKeyWidget):
-    def get_queryset(self, value, row, *args, **kwargs):
-        return self.model.objects.select_related().filter(
-            Q(client__bucode__exact=row["Client*"]),
-            tatype__tacode__exact = 'WORKTYPE'
-        )
-class TypeAssistDepartmentFKW(wg.ForeignKeyWidget):
-    def get_queryset(self, value, row, *args, **kwargs):
-        return self.model.objects.select_related().filter(
-            Q(client__bucode__exact=row["Client*"]),
-            tatype__tacode__exact = 'DEPARTMENT'
-        )
-class TypeAssistDesignationFKW(wg.ForeignKeyWidget):
-    def get_queryset(self, value, row, *args, **kwargs):
-        return self.model.objects.select_related().filter(
-            Q(client__bucode__exact=row["Client*"]),
-            tatype__tacode__exact = 'DESIGNATION'
-        )
-class BVForeignKeyWidget(wg.ForeignKeyWidget):
-    def get_queryset(self, value, row, *args, **kwargs):
-        client = om.Bt.objects.filter(bucode=row['Client*']).first()
-        bu_ids = om.Bt.objects.get_whole_tree(client.id)
-        return self.model.objects.filter(id__in=bu_ids)
+ 
 
 def default_ta():
     return utils.get_or_create_none_typeassist()[0]

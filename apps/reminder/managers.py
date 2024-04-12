@@ -12,12 +12,12 @@ class ReminderManager(models.Manager):
         qset = self.select_related(
             'bt', 'job', 'asset', 'qset', 'pgroup', 'people'
         ).annotate(
-            rdate = F('reminderdate') + ExpressionWrapper(
-            timedelta(minutes=1) * Cast('ctzoffset', models.IntegerField()),
+            rdate=ExpressionWrapper(
+            F('reminderdate') + timedelta(minutes=1) * Cast('ctzoffset', models.IntegerField()),
             output_field=models.DateTimeField(),
         ),
-            pdate = F('plandatetime') + ExpressionWrapper(
-            timedelta(minutes=1) * Cast('ctzoffset', models.IntegerField()),
+        pdate=ExpressionWrapper(
+            F('plandatetime') + timedelta(minutes=1) * Cast('ctzoffset', models.IntegerField()),
             output_field=models.DateTimeField(),
         ),
         ).filter(
