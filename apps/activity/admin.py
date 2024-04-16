@@ -254,9 +254,10 @@ class QuestionSetResource(resources.ModelResource):
         
 class QsetFKW(wg.ForeignKeyWidget):
     def get_queryset(self, value, row, *args, **kwargs):
-        return self.model.objects.filter(
+        return self.model.objects.select_related('client', 'bu').filter(
             client__bucode__exact=row["Client*"],
-            enable=True            
+            bu__bucode__exact=row['Site*']
+            enable=True
         )
 
 class QuesFKW(wg.ForeignKeyWidget):
