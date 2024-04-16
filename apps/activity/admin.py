@@ -256,7 +256,7 @@ class QsetFKW(wg.ForeignKeyWidget):
     def get_queryset(self, value, row, *args, **kwargs):
         return self.model.objects.select_related('client', 'bu').filter(
             client__bucode__exact=row["Client*"],
-            bu__bucode__exact=row['Site*']
+            bu__bucode__exact=row['Site*'],
             enable=True
         )
 
