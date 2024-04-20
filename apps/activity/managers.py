@@ -1499,9 +1499,14 @@ class QsetBlngManager(models.Manager):
               'qset', 'cuser', 'muser']
 
     def get_modified_after(self ,mdtz, buid):
+        from .models import QuestionSet
+        # fetch site group ids which contains the buid
+        site_groups = pm.Pgbelonging.objects.filter(Q(people_id=1) | Q(people__isnull=True), assignsites_id=buid, ).values_list('pgroup_id', flat=True)
+        # fetch the qsets of the group ids
+        qset_ids = QuestionSet.objects.filter(site_grp_includes__contains=site_groups).values_list('id', flat=True)
         qset = self.select_related(
             *self.related).filter(
-                 mdtz__gte = mdtz, bu_id = buid).values(
+                (Q(bu_id = buid) | Q(qset_id__in=qset_ids)), mdtz__gte = mdtz).values(
                     *self.fields
                 )
         return qset or self.none()

@@ -383,21 +383,21 @@ LOGGING_CONFIG_ = {
         },
         'filelogs': {
             'class': 'logging.handlers.RotatingFileHandler',
-            'filename':f'{env("LOG_ROOT")}/youtility4.log',
+            'filename':f'{os.path.expanduser("~")}/youtility4_logs/youtility4.log',
             'maxBytes': 15728640,
             'backupCount': 10,
             'formatter': 'coloured',
         },
         'serviceLogs':{
             'class': 'logging.handlers.RotatingFileHandler',
-            'filename':f'{env("LOG_ROOT")}/mobileservice.log',
+            'filename':f'{os.path.expanduser("~")}/youtility4_logs/mobileservice.log',
             'maxBytes': 15728640,
             'backupCount': 10,
             'formatter': 'coloured',
         },
         'reportslog':{
             'class': 'logging.handlers.RotatingFileHandler',
-            'filename':f'{env("LOG_ROOT")}/reports.log',
+            'filename':f'{os.path.expanduser("~")}/youtility4_logs/reports.log',
             'maxBytes': 15728640,
             'backupCount': 10,
             'formatter': 'coloured',
@@ -409,7 +409,7 @@ LOGGING_CONFIG_ = {
         },
         'error_file_handler':{
             'class': 'logging.handlers.RotatingFileHandler',
-            'filename':f'{env("LOG_ROOT")}/errors.log',
+            'filename':f'{os.path.expanduser("~")}/youtility4_logs/errors.log',
             'maxBytes': 15728640,
             'backupCount': 10,
             'formatter': 'coloured',
@@ -449,10 +449,17 @@ LOGGING_CONFIG_ = {
     }
 }
 
-if not check_path(LOGGING_CONFIG_['handlers']['filelogs']['filename']):
-    raise ValueError(f"`{LOGGING_CONFIG_['handlers']['filelogs']['filename']}` not readable and writable")
-if not check_path(LOGGING_CONFIG_['handlers']['serviceLogs']['filename']):
-    raise ValueError(f"`{LOGGING_CONFIG_['handlers']['serviceLogs']['filename']}` not readable and writable")
+def check_and_correct_path(path):
+    if os.path.exists(path):
+        if os.path.isdir(path):
+            print(f"Path {path} is a directory, expected a file. Correcting...")
+            os.rmdir(path)  # Only works if the directory is empty
+            # You might need more complex handling if the directory is not empty
+
+# Example usage before setting up logging
+check_and_correct_path(LOGGING_CONFIG_['handlers']['filelogs']['filename'])
+check_and_correct_path(LOGGING_CONFIG_['handlers']['serviceLogs']['filename'])
+
 logging.config.dictConfig(LOGGING_CONFIG_)
 
 # LOGIN URL NAME...
