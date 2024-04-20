@@ -371,7 +371,6 @@ def display_user_session_info(session):
     from icecream import ic
     from pprint import pformat
     print('Following user data saved in sesion\n')
-    ic(pformat(dict(session)))
     
 
 

@@ -775,7 +775,8 @@ class ScheduleEmailReport(LoginRequiredMixin, View):
     
     def get(self, request, *args, **kwargs):
         R, S = request.GET, request.session
-        if R.get('template'): return render(request, self.P['template_list'])
+        if R.get('template'):
+            return render(request, self.P['template_list'])
         if R.get('id'):
             obj = utils.get_model_obj(R['id'], request, {'model': self.P['model']})
             params_initial = obj.report_params
@@ -785,6 +786,8 @@ class ScheduleEmailReport(LoginRequiredMixin, View):
             return render(request, self.P['template_form'], cxt)
         if R.get('action') == 'list':
             data = self.P['model'].objects.filter(bu_id=S['bu_id']).values()
+            print(data)
+            print(len(data))
             return rp.JsonResponse({'data':list(data)}, status=200)
         
         if R.get('action') == 'form':
