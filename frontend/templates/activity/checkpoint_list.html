@@ -243,13 +243,13 @@ if(filters && filters.AssetType === 1){
 					return data === true ? '<i class="bi bi-check-circle-fill text-success"></i>': '<i class="bi bi-x-circle-fill text-danger"></i>'				
 				}
 				},
-				{data:'gps', title:'GPS'},
+				{data:'gps', title:'GPS',visible:false},
 				{data:'identifier', visible:false, className:'noVis'},
 				{data:'bu__buname', title:"Site", visible:false},
 				{data:'bu__bucode', title:'Site Code', visible:false},
-				{data:null,title:'Qr Code', defaultContent: "Print", visible:false,render: function(data, type, row, meta) {
+				{data:null,title:'QR Code', defaultContent: "Print",render: function(data, type, row, meta) {
                     let downloadUrl = `{{ url('activity:checkpoint') }}?action=qrdownload&code=${encodeURIComponent(row['assetcode'])}&name=${encodeURIComponent(row['assetname'])}`
-                    return `<a href="${downloadUrl}" class="qr-download-link" onclick="event.stopPropagation()" >Qr Download</a>`;
+                    return `<a href="${downloadUrl}" class="qr-download-link" onclick="event.stopPropagation()" >QR Download</a>`;
                 },
 				selectRow: true
 				}

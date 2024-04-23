@@ -70,10 +70,15 @@ Buisiness View
 				{targets:3, data:'buname', render:function(data, type, row, meta){
 					return `<a href={{ url('onboarding:bu') }}?id=${row['id']}>${data}</a>`}
 				},
-				{targets:5, data:"enable", render:function(data, type, row, meta){
-					return data === true ? '<i class="bi bi-check-circle-fill text-success"></i>': '<i class="bi bi-x-circle-fill text-danger"></i>'				
-				}
-				}
+				
+				{targets:5,data:"enable",render:function(data,type,row,meta){
+					if(data === true){return '<i class="bi bi-check-circle-fill text-success"></i> Active';}
+					else if(data === false){return '<i class="bi bi-check-circle-fill text-success"></i> Inactive';}
+					else{return data.toString();}
+					}
+					}
+				
+				
 			],
 			createdRow:function(row, data, dataIndex){
 				if(data['enable'] === false){
@@ -85,12 +90,12 @@ Buisiness View
 			buttons:[
 				"searchBuilder",
                 dataTablesPDFConfig(
-                    title = `Site: {{request.user.bu.buname}}\n Task List`,
+                    title = `Site: {{request.user.bu.buname}}\n BV List`,
                     columns = ':visible',
 					filename = "bu_list"
                 ),
                 dataTablesExcelConfig(
-                    title = `Site: {{request.user.bu.buname}}\n Task List`,
+                    title = `Site: {{request.user.bu.buname}}\n BV List`,
                     columns = ':visible',
 					filename = "bu_list"
                 ),

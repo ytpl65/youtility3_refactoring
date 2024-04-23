@@ -1186,7 +1186,6 @@ class AssetManager(models.Manager):
         if(P not in ['null', None]):
             P = json.loads(P)
             qset = qset.filter(runningstatus = P['status'])
-        print(qset)
         return qset or self.none()
     
     
@@ -1637,7 +1636,6 @@ class JobManager(models.Manager):
             'breaktime', 'deviation', 'fromdate', 'uptodate', 'gracetime',
             'expirytime', 'planduration','jobname', 'id', 'ctzoffset'
         ).order_by('-mdtz')
-        # ic(utils.printsql(qset))
         return qset or self.none()
 
     def get_sitecheckpoints_exttour(self, job, child_jobid = None):
@@ -1720,7 +1718,6 @@ class JobManager(models.Manager):
             enable=True
         ).values('id', 'jobname', 'asset__assetname', 'qset__qsetname', 'assignedto', 'bu__bucode',
                  'uptodate', 'planduration', 'gracetime', 'expirytime', 'fromdate', 'bu__buname')
-        # ic(qset)
         return qset or self.none()
     
     def handle_save_checkpoint_guardtour(self, request):

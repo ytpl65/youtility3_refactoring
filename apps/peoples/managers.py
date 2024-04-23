@@ -188,7 +188,6 @@ class PeopleManager(BaseUserManager):
                 ~Q(peoplecode='NONE'), 
                 client_id = S['client_id']).select_related(*related).values(*fields).order_by('peoplename')
         else:
-            
             qset = self.filter(
                 ~Q(peoplecode='NONE'), 
                 client_id = S['client_id'],

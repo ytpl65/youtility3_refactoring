@@ -35,7 +35,7 @@ class TicketManager(models.Manager):
         qset = self.filter(
             cdtz__date__gte = P['from'],
             cdtz__date__lte = P['to'],
-            bu_id = S['bu_id'],
+            bu_id__in = S['assignedsites'],
             client_id = S['client_id']
         ).select_related(
             'assignedtopeople', 'assignedtogroup', 'bu', 'ticketcategory').values(
@@ -43,7 +43,7 @@ class TicketManager(models.Manager):
             'cuser__peoplename', 'cuser__peoplecode', 'ticketdesc', 'ctzoffset',
             'ticketsource', 'ticketcategory__taname'
         )
-        if P.get('status') and P.get('status') != 'SYSTEMGENERATED':
+        if P.get('status') != 'SYSTEMGENERATED':
             qset = qset.filter(status =P['status'],ticketsource = 'USERDEFINED')
         if P.get('status') == 'SYSTEMGENERATED':
             qset = qset.filter(ticketsource='SYSTEMGENERATED')
