@@ -587,7 +587,7 @@ def process_graphql_mutation_async(self, payload):
             log.warning("Invalid records or query in the payload.")
             return json.dumps({'errors': ['No file data found']})
     except Exception as e:
-        log.error(f"Error processing payload: {e}")
+        log.error(f"Error processing payload: {e}", exc_info=True)
         return json.dumps({'errors': [str(e)]})
     
     

@@ -156,7 +156,7 @@ class BaseReportsExport(WeasyTemplateResponseMixin):
     
     def excel_columns(self, df):
         '''
-        Override this method in inherited class
+        Override this method in inherited classn
         '''
         return df
  
@@ -164,11 +164,9 @@ class BaseReportsExport(WeasyTemplateResponseMixin):
     def set_data_excel(self, orm=False):
 
         df = pd.DataFrame(list(self.data))
-        ic(df.shape)
         # Convert the Decimal objects to floats using the float() function
         df = df.applymap(lambda x: float(x) if isinstance(x, Decimal) else x)
         df = self.excel_columns(df)
-        ic(df.shape)
         # Create a Pandas Excel writer using XlsxWriter as the engine and BytesIO as file-like object
         output = BytesIO()
         writer = pd.ExcelWriter(output, engine='xlsxwriter',  datetime_format='yyyy-mm-dd hh:mm:ss', date_format="mm dd yyyy",)
@@ -198,28 +196,29 @@ class ReportEssentials(object):
     '''
     
     # report_names
-    TaskSummary                = 'TaskSummary'
-    TourSummary                = 'TourSummary'
-    ListOfTasks                = 'ListOfTasks'
-    ListOfTickets              = 'ListOfTickets'
-    PPMSummary                 = 'PPMSummary'
-    SiteReport                 = 'SiteReport'
-    ListOfTours                = 'ListOfTours'
-    WorkOrderList              = 'WorkOrderList'
-    SiteVisitReport            = 'SiteVisitReport'
-    PeopleQR                   = 'PeopleQR'
-    AssetQR                    = 'AssetQR'
-    CheckpointQR               = 'CheckpointQR'
-    AssetwiseTaskStatus        = 'AssetwiseTaskStatus'
-    StaticDetailedTourSummary  = 'StaticDetailedTourSummary'
+    TaskSummary                = 'TASKSUMMARY'
+    TourSummary                = 'TOURSUMMARY'
+    ListOfTasks                = 'LISTOFTASKS'
+    ListOfTickets              = 'LISTOFTICKETS'
+    PPMSummary                 = 'PPMSUMMARY'
+    SiteReport                 = 'SITEREPORT'
+    ListOfTours                = 'LISTOFTOURS'
+    DynamicTourList            = 'DYNAMICTOURLIST'
+    StaticTourList            = 'STATICTOURLIST'
+    WorkOrderList              = 'WORKORDERLIST'
+    SiteVisitReport            = 'SITEVISITREPORT'
+    PeopleQR                   = 'PEOPLEQR'
+    AssetQR                    = 'ASSETQR'
+    CheckpointQR               = 'CHECKPOINTQR'
+    LocationQR                 = 'LOCATIONQR'
+    AssetwiseTaskStatus        = 'ASSETWISETASKSTATUS'
+    StaticDetailedTourSummary  = 'STATICDETAILEDTOURSUMMARY'
     TourDetails                = 'TourDetails'
-    StaticTourDetails          = 'StaticTourDetails'
-    DynamicTourDetails         = 'DynamicTourDetails'
-    DynamicDetailedTourSummary = 'DynamicDetailedTourSummary'
-    StaticTourDetails          = 'StaticTourDetails'
-    DynamicTourDetails         = 'DynamicTourDetails'
-    LogSheet                   = 'LogSheet'
-    RP_SiteVisitReport         = 'RP_SiteVisitReport'
+    StaticTourDetails          = 'STATICTOURDETAILS'
+    DynamicTourDetails         = 'DYNAMICTOURDETAILS'
+    DynamicDetailedTourSummary = 'DYNAMICDETAILEDTOURSUMMARY'
+    LogSheet                   = 'LOGSHEET'
+    RP_SiteVisitReport         = 'RP_SITEVISITREPORT'
     
     def __init__(self, report_name):
         self.report_name = report_name
@@ -245,6 +244,9 @@ class ReportEssentials(object):
         from apps.reports.report_designs.dynamic_detailed_tour_summary import DynamicDetailedTourSummaryReport
         from apps.reports.report_designs.log_sheet import LogSheet
         from apps.reports.report_designs.RP_SiteVisitReport import RP_SITEVISITREPORT
+        from apps.reports.report_designs.dynamic_tour_list import DynamicTourList
+        from apps.reports.report_designs.static_tour_list import StaticTourList
+        from apps.reports.report_designs.qrcode_report import LocationQR
         
 
         return {
@@ -260,6 +262,7 @@ class ReportEssentials(object):
             self.PeopleQR:PeopleQR,
             self.AssetQR:AssetQR,
             self.CheckpointQR:CheckpointQR,
+            self.LocationQR:LocationQR,
             self.AssetwiseTaskStatus:AssetwiseTaskStatus,
             self.StaticDetailedTourSummary:StaticDetailedTourSummaryReport,
             self.DynamicDetailedTourSummary:DynamicDetailedTourSummaryReport,
@@ -267,6 +270,8 @@ class ReportEssentials(object):
             self.DynamicTourDetails:DynamicTourDetailReport,
             self.LogSheet:LogSheet,
             self.RP_SiteVisitReport:RP_SITEVISITREPORT,
+            self.DynamicTourList:DynamicTourList,
+            self.StaticTourList:StaticTourList
         }.get(self.report_name)
     
     @property

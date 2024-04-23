@@ -1,5 +1,6 @@
 # Ignore all hidden files and folders, except for the `.git` folder.
 .
+.git-credential
 !.git
 
 # Ignore all virtual environment files and folders.
