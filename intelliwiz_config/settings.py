@@ -363,21 +363,21 @@ LOGGING_CONFIG_ = {
         },
         'filelogs': {
             'class': 'logging.handlers.RotatingFileHandler',
-            'filename':f'{env("LOG_ROOT")}/youtility4.log',
+            'filename':f'{os.path.expanduser("~")}/youtility4_logs/youtility4.log',
             'maxBytes': 15728640,
             'backupCount': 10,
             'formatter': 'coloured',
         },
         'serviceLogs':{
             'class': 'logging.handlers.RotatingFileHandler',
-            'filename':f'{env("LOG_ROOT")}/mobileservice.log',
+            'filename':f'{os.path.expanduser("~")}/youtility4_logs/mobileservice.log',
             'maxBytes': 15728640,
             'backupCount': 10,
             'formatter': 'coloured',
         },
         'reportslog':{
             'class': 'logging.handlers.RotatingFileHandler',
-            'filename':f'{env("LOG_ROOT")}/reports.log',
+            'filename':f'{os.path.expanduser("~")}/youtility4_logs/reports.log',
             'maxBytes': 15728640,
             'backupCount': 10,
             'formatter': 'coloured',
@@ -389,7 +389,7 @@ LOGGING_CONFIG_ = {
         },
         'error_file_handler':{
             'class': 'logging.handlers.RotatingFileHandler',
-            'filename':f'{env("LOG_ROOT")}/errors.log',
+            'filename':f'{os.path.expanduser("~")}/youtility4_logs/errors.log',
             'maxBytes': 15728640,
             'backupCount': 10,
             'formatter': 'coloured',

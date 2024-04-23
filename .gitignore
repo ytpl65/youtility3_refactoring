@@ -1,6 +1,8 @@
 # Ignore all hidden files and folders, except for the `.git` folder.
 .
 .git-credential
+.DJANGO_SECRET_KEY
+notebook_files/
 !.git
 
 # Ignore all virtual environment files and folders.
