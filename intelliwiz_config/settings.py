@@ -375,6 +375,20 @@ LOGGING_CONFIG_ = {
             'backupCount': 10,
             'formatter': 'coloured',
         },
+        'tracking_logs':{
+            'class': 'logging.handlers.RotatingFileHandler',
+            'filename':f'{os.path.expanduser("~")}/youtility4_logs/tracking.log',
+            'maxBytes': 15728640,
+            'backupCount': 10,
+            'formatter': 'coloured',
+        },
+        'message_qlogs':{
+            'class': 'logging.handlers.RotatingFileHandler',
+            'filename':f'{os.path.expanduser("~")}/youtility4_logs/message_q.log',
+            'maxBytes': 15728640,
+            'backupCount': 10,
+            'formatter': 'coloured',
+        },
         'reportslog':{
             'class': 'logging.handlers.RotatingFileHandler',
             'filename':f'{os.path.expanduser("~")}/youtility4_logs/reports.log',
@@ -414,6 +428,16 @@ LOGGING_CONFIG_ = {
         'mobile_service_log':{
             'handlers': ['default', 'serviceLogs', 'mail_admins'],
             'level': 'DEBUG',
+            'propagate': False
+        },               
+        'message_q':{
+            'handlers': ['default', 'message_qlogs', 'mail_admins'],
+            'level': 'INFO',
+            'propagate': False
+        },               
+        'tracking':{
+            'handlers': ['default', 'tracking_logs', 'mail_admins'],
+            'level': 'INFO',
             'propagate': False
         },               
         'reports':{

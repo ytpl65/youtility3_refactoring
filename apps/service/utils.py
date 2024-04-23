@@ -26,7 +26,8 @@ from .validators import clean_record
 from io import BytesIO
 
 
-log = getLogger('mobile_service_log')   
+log = getLogger('message_q')
+tlog = getLogger('tracking')
 error_logger = getLogger("error_logger")
 err = error_logger.error
 from apps.work_order_management import utils as wutils
@@ -63,9 +64,9 @@ def insertrecord_json(records, tablename):
                 uuids.append(record['uuid'])
             insert_json_records_async.delay(records, tablename)
     except IntegrityError as e:
-        log.info(f"record already exist in {tablename}")
+        tlog.info(f"record already exist in {tablename}")
     except Exception as e:
-        log.critical("something went wrong", exc_info=True)
+        tlog.critical("something went wrong", exc_info=True)
         raise e
     return uuids
 

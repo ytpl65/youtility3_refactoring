@@ -23,7 +23,8 @@ import traceback as tb
 from graphql_jwt import ObtainJSONWebToken
 from apps.core import exceptions as excp
 
-log = getLogger('mobile_service_log')
+log = getLogger('message_q')
+tlog = getLogger('tracking')
 error_logger = getLogger("error_logger")
 err = error_logger.error
 
@@ -260,13 +261,13 @@ class InsertJsonMutation(graphene.Mutation):
         from .utils import insertrecord_json
         from apps.core.utils import get_current_db_name
         import json
-        log.info('\n\n\ninsert jsondata mutations start[+]')
+        tlog.info('\n\n\ninsert jsondata mutations start[+]')
         rc, traceback, resp, recordcount = 1,  'NA', 0, 0
         msg = 'Insert Failed!'
         uuids = []
         try:
             db = get_current_db_name()
-            log.info(f'=================== jsondata:============= \n{jsondata}')
+            tlog.info(f'=================== jsondata:============= \n{jsondata}')
             uuids = insertrecord_json(jsondata, tablename)
             recordcount, msg, rc = 1, 'Inserted Successfully', 0
         except Exception as e:
@@ -274,7 +275,7 @@ class InsertJsonMutation(graphene.Mutation):
             msg, rc, traceback = 'Insert Failed!',1, tb.format_exc()
         
         o = ty.ServiceOutputType(rc = rc, recordcount = recordcount, msg = msg, traceback = traceback, uuids=uuids)
-        log.info(f"\n\n\nResponse: {o.recordcount}, {o.msg}, {o.rc}, {o.traceback} {uuids=}")
+        tlog.info(f"\n\n\nResponse: {o.recordcount}, {o.msg}, {o.rc}, {o.traceback} {uuids=}")
         return InsertJsonMutation(output = o)
 
 

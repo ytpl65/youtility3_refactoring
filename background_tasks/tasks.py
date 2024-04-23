@@ -25,7 +25,9 @@ from .report_tasks import (
 from io import BytesIO
 
 
-log = getLogger('mobile_service_log')
+mqlog = getLogger('message_q')
+dlog = getLogger('django')
+tlog = getLogger('tracking')
 
 @app.task(bind=True, default_retry_delay=300, max_retries=5, name='Send Ticket email')
 def send_ticket_email(self, ticket=None, id=None):
@@ -36,11 +38,11 @@ def send_ticket_email(self, ticket=None, id=None):
         if not ticket and id:
             ticket = Ticket.objects.get(id=id)
         if ticket:
-            log.info(f"ticket found with ticket id: {ticket.ticketno}")
-            log.info("ticket email sending start ")
+            dlog.info(f"ticket found with ticket id: {ticket.ticketno}")
+            dlog.info("ticket email sending start ")
             resp = {}
             emails = butils.get_email_recipents_for_ticket(ticket)
-            log.info(f"email addresses of recipents: {emails}")
+            dlog.info(f"email addresses of recipents: {emails}")
             updated_or_created = "Created" if ticket.cdtz == ticket.mdtz else "Updated"
             context = {
                 'subject': f"Ticket with #{ticket.ticketno} is {updated_or_created} at site: {ticket.bu.buname}",
@@ -55,7 +57,7 @@ def send_ticket_email(self, ticket=None, id=None):
                 "priority": ticket.priority,
                 'level': ticket.level
             }
-            log.info(f'context for email template: {context}')
+            dlog.info(f'context for email template: {context}')
             html_message = render_to_string('y_helpdesk/ticket_email.html', context)
             msg = EmailMessage()
             msg.body = html_message
@@ -64,11 +66,11 @@ def send_ticket_email(self, ticket=None, id=None):
             msg.from_email = settings.EMAIL_HOST_USER
             msg.content_subtype = 'html'
             msg.send()
-            log.info("ticket email sent")
+            dlog.info("ticket email sent")
         else:
-            log.info('ticket not found no emails will send')
+            dlog.info('ticket not found no emails will send')
     except Exception as e:
-        log.critical("Error while sending ticket email", exc_info=True)
+        dlog.critical("Error while sending ticket email", exc_info=True)
         resp['traceback'] = tb.format_exc()
     return resp
 
@@ -92,7 +94,7 @@ def autoclose_job(jobneedid=None):
 
                 if rec['ticketcategory__tacode'] in ['AUTOCLOSENOTIFY', 'RAISETICKETNOTIFY']:
 
-                    log.info("notifying through email...")
+                    dlog.info("notifying through email...")
                     pdate = rec["plandatetime"] + \
                         timedelta(minutes=rec['ctzoffset'])
                     pdate = pdate.strftime("%d-%b-%Y %H:%M")
@@ -116,7 +118,7 @@ def autoclose_job(jobneedid=None):
 
                     emails = butils.get_email_recipients(rec['bu_id'], rec['client_id'])
                     resp['story'] += f"email recipents are as follows {emails}\n"
-                    log.info(f"recipents are as follows...{emails}")
+                    dlog.info(f"recipents are as follows...{emails}")
                     msg = EmailMessage()
                     msg.subject = subject
                     msg.from_email = settings.EMAIL_HOST_USER
@@ -124,13 +126,13 @@ def autoclose_job(jobneedid=None):
                     msg.content_subtype = 'html'
 
                     if rec['ticketcategory__tacode'] == 'RAISETICKETNOTIFY':
-                        log.info("ticket needs to be generated")
+                        dlog.info("ticket needs to be generated")
                         context['show_ticket_body'] = True
                         jobdesc = f'AUTOCLOSED {"TOUR" if rec["identifier"] in  ["INTERNALTOUR", "EXTERNALTOUR"] else rec["identifier"] } planned on {pdate} not reported in time'
                         # DB OPERATION
                         ticket_data = butils.create_ticket_for_autoclose(
                             rec, jobdesc)
-                        log.info(f'{ticket_data}')
+                        dlog.info(f'{ticket_data}')
                         if esc := butils.get_escalation_of_ticket(ticket_data) and esc['frequencyvalue'] and esc['frequency']:
                             context['escalation'] = True
                             context['next_escalation'] = f"{esc['frequencyvalue']} {esc['frequency']}"
@@ -152,12 +154,12 @@ def autoclose_job(jobneedid=None):
                     resp['story'] += f"context in email template is {context}\n"
                     msg.body = html_message
                     msg.send()
-                    log.info(f"mail sent, record_id:{rec['id']}")
+                    dlog.info(f"mail sent, record_id:{rec['id']}")
                 resp = butils.update_job_autoclose_status(rec, resp)
 
     except Exception as e:
-        log.critical(f'context in the template:{context}', exc_info=True)
-        log.error(
+        dlog.critical(f'context in the template:{context}', exc_info=True)
+        dlog.error(
             "something went wrong while running autoclose_job()", exc_info=True)
         resp['traceback'] += f"{tb.format_exc()}"
     return resp
@@ -173,7 +175,7 @@ def ticket_escalation():
         # update ticket_history, assignments to people & groups, level, mdtz, modifiedon
         result = butils.update_ticket_data(tickets, result)
     except Exception as e:
-        log.critical("somwthing went wrong while ticket escalation", exc_info=True)
+        dlog.critical("somwthing went wrong while ticket escalation", exc_info=True)
         result['traceback'] = tb.format_exc()
     return result
 
@@ -188,7 +190,7 @@ def send_reminder_email():
     # get all reminders which are not sent
     reminders = Reminder.objects.get_all_due_reminders()
     resp['story'] += f"total due reminders are: {len(reminders)}\n"
-    log.info(f"total due reminders are {len(reminders)}")
+    dlog.info(f"total due reminders are {len(reminders)}")
     try:
         for rem in reminders:
             resp['story'] += f"processing reminder with id: {rem['id']}"
@@ -202,7 +204,7 @@ def send_reminder_email():
             html_message = render_to_string(
                 'activity/reminder_mail.html', context=context)
             resp['story'] += f"context in email template is {context}\n"
-            log.info(f"Sending reminder mail with subject {subject}")
+            dlog.info(f"Sending reminder mail with subject {subject}")
 
             msg = EmailMessage()
             msg.subject = subject
@@ -218,10 +220,10 @@ def send_reminder_email():
                 Reminder.objects.filter(id=rem['id']).update(
                     status="FAILED", mdtz=timezone.now())
             resp['id'].append(rem['id'])
-            log.info(
+            dlog.info(
                 f"Reminder mail sent to {recipents} with subject {subject}")
     except Exception as e:
-        log.critical("Error while sending reminder email", exc_info=True)
+        dlog.critical("Error while sending reminder email", exc_info=True)
         resp['traceback'] = tb.format_exc()
     return resp
 
@@ -255,16 +257,16 @@ def create_ppm_job(jobid=None):
             if not jobs:
                 msg = "No jobs found schedhuling terminated"
                 result['story'] += f"{msg}\n"
-                log.warning(f"{msg}", exc_info=True)
+                dlog.warning(f"{msg}", exc_info=True)
             total_jobs = len(jobs)
 
             if total_jobs > 0 and jobs is not None:
-                log.info("processing jobs started found:= '%s' jobs", (len(jobs)))
+                dlog.info("processing jobs started found:= '%s' jobs", (len(jobs)))
                 result['story'] += f"total jobs found {total_jobs}\n"
                 for job in jobs:
                     result['story'] += f'\nprocessing job with id: {job["id"]}'
                     startdtz, enddtz = calculate_startdtz_enddtz_for_ppm(job)
-                    log.debug(
+                    dlog.debug(
                         f"Jobs to be schedhuled from startdatetime {startdtz} to enddatetime {enddtz}")
                     DT, is_cron, resp = get_datetime_list(
                         job['cron'], startdtz, enddtz, resp)
@@ -272,7 +274,7 @@ def create_ppm_job(jobid=None):
                         resp = {
                             'msg': "Please check your Valid From and Valid To dates"}
                         continue
-                    log.debug(
+                    dlog.debug(
                         "Jobneed will going to create for all this datetimes\n %s", (pformat(get_readable_dates(DT))))
                     if not is_cron:
                         F[str(job['id'])] = {'cron': job['cron']}
@@ -289,13 +291,13 @@ def create_ppm_job(jobid=None):
                 create_ppm_reminder(d)
                 if F:
                     result['story'] += f'create_ppm_job failed job schedule list {pformat(F)}\n'
-                    log.info(
+                    dlog.info(
                         f"create_ppm_job Failed job schedule list:={pformat(F)}")
                     for key, value in list(F.items()):
-                        log.info(
+                        dlog.info(
                             f"create_ppm_job job_id: {key} | cron: {value}")
     except Exception as e:
-        log.critical("something went wrong create_ppm_job", exc_info=True)
+        dlog.critical("something went wrong create_ppm_job", exc_info=True)
         F[str(job['id'])] = {'tb': tb.format_exc()}
 
     return resp, F, d, result
@@ -307,7 +309,7 @@ def perform_facerecognition_bgt(self, pel_uuid, peopleid, db='default'):
     result = {'story': "perform_facerecognition_bgt()\n", "traceback": ""}
     result['story'] += f"inputs are {pel_uuid = } {peopleid = }, {db = }\n"
     try:
-        log.info("perform_facerecognition ...start [+]")
+        mqlog.info("perform_facerecognition ...start [+]")
         with transaction.atomic(using=utils.get_current_db_name()):
             utils.set_db_for_router(db)
             if pel_uuid not in [None, 'NONE', '', 1] and peopleid not in [None, 'NONE', 1, ""]:
@@ -321,26 +323,26 @@ def perform_facerecognition_bgt(self, pel_uuid, peopleid, db='default'):
                 default_peopleimg = static('assets/media/images/blank.png') if default_peopleimg.endswith('blank.png') else default_peopleimg  
                 if default_peopleimg and pel_att.people_event_pic:
                     images_info = f"default image path:{default_peopleimg} and uploaded file path:{pel_att.people_event_pic}"
-                    log.info(f'{images_info}')
+                    mqlog.info(f'{images_info}')
                     result['story'] += f'{images_info}\n'
                     from deepface import DeepFace
                     fr_results = DeepFace.verify(
                         img1_path=default_peopleimg, img2_path=pel_att.people_event_pic, enforce_detection=True, detector_backend='ssd')
-                    log.info(
+                    mqlog.info(
                         f"deepface verification completed and results are {fr_results}")
                     result[
                         'story'] += f"deepface verification completed and results are {fr_results}\n"
                     PeopleEventlog = apps.get_model(
                         'attendance', 'PeopleEventlog')
                     if PeopleEventlog.objects.update_fr_results(fr_results, pel_uuid, peopleid, db):
-                        log.info(
+                        mqlog.info(
                             "updation of fr_results in peopleeventlog is completed...")
     except ValueError as v:
-        log.error(
+        mqlog.error(
             "face recogntion image not found or face is not there...", exc_info=True)
         result['traceback'] += f'{tb.format_exc()}'
     except Exception as e:
-        log.critical(
+        mqlog.critical(
             "something went wrong! while performing face-recogntion in background", exc_info=True)
         result['traceback'] += f'{tb.format_exc()}'
         self.retry(e)
@@ -399,7 +401,7 @@ def send_report_on_email(self, formdata, json_report):
         email.send()
         jsonresp['story'] += "email sent"
     except Exception as e:
-        log.critical(
+        dlog.critical(
             "something went wrong while sending report on email", exc_info=True)
         jsonresp['traceback'] = tb.format_exc()
     return jsonresp
@@ -424,7 +426,7 @@ def create_report_history(self, formdata, userid, buid, EI):
         )
         jsonresp['story'] += f"A Report history object created with pk: {obj.pk}"
     except Exception as e:
-        log.critical(
+        dlog.critical(
             "something went wron while running create_report_history()", exc_info=True)
         jsonresp['traceback'] += tb.format_exc()
     return jsonresp
@@ -444,7 +446,7 @@ def send_email_notification_for_wp(self, womid, qsetid, approvers, client_id, bu
         if wp_details:
             qset = People.objects.filter(peoplecode__in = approvers)
             for p in qset.values('email', 'id'):
-                log.info(f"sending email to {p['email'] = }")
+                dlog.info(f"sending email to {p['email'] = }")
                 jsonresp['story'] += f"sending email to {p['email'] = }"
                 msg = EmailMessage()
                 msg.subject = f"Following Work Permit #{wp_obj.other_data['wp_seqno']} needs your action"
@@ -457,11 +459,11 @@ def send_email_notification_for_wp(self, womid, qsetid, approvers, client_id, bu
                 msg.body = html
                 msg.content_subtype = 'html'
                 msg.send()
-                log.info(f"email sent to {p['email'] = }")
+                dlog.info(f"email sent to {p['email'] = }")
                 jsonresp['story'] += f"email sent to {p['email'] = }"
         jsonresp['story'] += f"A Workpermit email sent of pk: {womid}"
     except Exception as e:
-        log.critical(
+        dlog.critical(
             "something went wron while running create_report_history()", exc_info=True)
         jsonresp['traceback'] += tb.format_exc()
     return jsonresp
@@ -470,14 +472,14 @@ def send_email_notification_for_wp(self, womid, qsetid, approvers, client_id, bu
 def move_media_to_cloud_storage():
     resp = {}
     try:
-        log.info("move_media_to_cloud_storage execution started [+]")
+        dlog.info("move_media_to_cloud_storage execution started [+]")
         directory_path = f'{settings.MEDIA_ROOT}/transactions/'
         path_list = get_files(directory_path)
         move_files_to_GCS(path_list, settings.BUCKET)
         del_empty_dir(directory_path)
         pass
     except Exception as exc:
-        log.critical(
+        dlog.critical(
             "something went wron while running create_report_history()", exc_info=True)
         resp['traceback'] = tb.format_exc() 
     else:
@@ -491,14 +493,14 @@ def create_scheduled_reports():
     resp = dict()
     try:
         data = get_scheduled_reports_fromdb()
-        log.info(f"Found {len(data)} for reports for generation in background")
+        dlog.info(f"Found {len(data)} for reports for generation in background")
         if data:
             for record in data:
                 state_map = generate_scheduled_report(record, state_map)
         resp['msg'] = f'Total {len(data)} report/reports processed at {timezone.now()}'
     except Exception as e:
         resp['traceback'] = tb.format_exc()
-        log.critical("Error while creating report:", exc_info=True)
+        dlog.critical("Error while creating report:", exc_info=True)
     state_map['processed'] = len(data)
     resp['state_map'] = state_map
     return resp
@@ -534,12 +536,12 @@ def send_generated_report_on_mail():
                     #file deletion
                     story = remove_reportfile(file, story)
                 else:
-                    log.info(f"No record found for file {os.path.basename(file)}")
+                    dlog.info(f"No record found for file {os.path.basename(file)}")
             else:
-                log.info("No files to send at this moment")
+                dlog.info("No files to send at this moment")
     except Exception as e:
        story['errors'].append(handle_error(e))
-       log.critical("something went wrong", exc_info=True)
+       dlog.critical("something went wrong", exc_info=True)
     story['end_time'] = timezone.now()
     return story
 
@@ -561,7 +563,7 @@ def send_generated_report_onfly_email(self, filepath, fromemail, to, cc, ctzoffs
         remove_reportfile(filepath, story)
         story['msg'].append('send_generated_report_onfly_email [ended]')
     except Exception  as e:
-        log.critical("something went wrong in bg task send_generated_report_onfly_email", exc_info=True)
+        dlog.critical("something went wrong in bg task send_generated_report_onfly_email", exc_info=True)
     return story
         
 @app.task(bind=True, default_retry_delay=300, max_retries=5, name="process_graphql_mutation_async")
@@ -584,10 +586,10 @@ def process_graphql_mutation_async(self, payload):
         if query and variables:
             return execute_graphql_mutations(query, variables)
         else:
-            log.warning("Invalid records or query in the payload.")
+            mqlog.warning("Invalid records or query in the payload.")
             return json.dumps({'errors': ['No file data found']})
     except Exception as e:
-        log.error(f"Error processing payload: {e}", exc_info=True)
+        mqlog.error(f"Error processing payload: {e}", exc_info=True)
         return json.dumps({'errors': [str(e)]})
     
     
@@ -601,17 +603,17 @@ def insert_json_records_async(self, records, tablename):
     from apps.service.utils import get_model_or_form
     from apps.service.validators import clean_record
     if model := get_model_or_form(tablename):
-        log.info("processing bulk json records for insert/update")
+        tlog.info("processing bulk json records for insert/update")
         for record in records:
             record = json.loads(record)
             record = json.loads(record)
             record = clean_record(record)
-            log.info(f"processing record {pformat(record)}")
+            tlog.info(f"processing record {pformat(record)}")
             if model.objects.filter(uuid=record['uuid']).exists():
                 model.objects.filter(uuid=record['uuid']).update(**record)
-                log.info("record is already exist so updating it now..")
+                tlog.info("record is already exist so updating it now..")
             else:
-                log.info("record is not exist so creating new one..")
+                tlog.info("record is not exist so creating new one..")
                 model.objects.create(**record)
         return "Records inserted/updated successfully"
     
@@ -622,24 +624,24 @@ def create_save_report_async(self, formdata, client_id, user_email, user_id):
     try:
         returnfile = formdata.get('export_type') == 'SEND'
         report_essentials = rutils.ReportEssentials(report_name=formdata['report_name'])
-        log.info(f"report essentials: {report_essentials}")
+        dlog.info(f"report essentials: {report_essentials}")
         ReportFormat = report_essentials.get_report_export_object()
         report = ReportFormat(filename=formdata['report_name'], client_id=client_id,
                                 formdata=formdata,  returnfile=True)
-        log.info(f"Report Format initialized, {report}")
+        dlog.info(f"Report Format initialized, {report}")
         
         if response := report.execute():
             if returnfile:
                 rutils.process_sendingreport_on_email(response, formdata, user_email)
                 return {"status": 201, "message": "Report generated successfully and email sent", 'alert':'alert-success'}
             filepath = save_report_to_tmp_folder(formdata['report_name'], ext=formdata['format'], report_output=response, dir=f'{settings.ONDEMAND_REPORTS_GENERATED}/{user_id}')
-            log.info(f"Report saved at tmeporary location: {filepath}")
+            dlog.info(f"Report saved at tmeporary location: {filepath}")
             return {"filepath":filepath, 'filename':f'{formdata["report_name"]}.{formdata["format"]}', 'status':200, "message": "Report generated successfully", 'alert':'alert-success'}
         else:
             return {"status": 404, "message": "No data found matching your report criteria.\
         Please check your entries and try generating the report again", 'alert':'alert-warning'}
     except Exception as e:
-        log.error(f"Error generating report: {e}")
+        dlog.error(f"Error generating report: {e}")
         return {"status": 500, "message": "Internal Server Error", "alert":"alert-danger"}
         
             
@@ -655,7 +657,7 @@ def cleanup_reports_which_are_12hrs_old(self, dir_path,hours_old=12):
                     last_modified = datetime.fromtimestamp(file_stats.st_mtime)
                     if last_modified < threshold:
                         os.remove(file_path)
-                        log.info(f"Deleted file: {file_path} as it was older than {hours_old} hours")
+                        dlog.info(f"Deleted file: {file_path} as it was older than {hours_old} hours")
             except Exception as e:
-                log.error(f"Error deleting file {file_path}: {e}")
+                dlog.error(f"Error deleting file {file_path}: {e}")
         
