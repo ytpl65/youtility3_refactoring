@@ -523,11 +523,11 @@ class JobneedManager(models.Manager):
         return qset or self.none()
 
     def get_tourdetails(self, R):
-        qset = self.select_related(
+        qset = self.annotate(gps = AsGeoJSON('gpslocation')).select_related(
             'parent', 'asset', 'qset').filter(parent_id = R['parent_id']).values(
                 'asset__assetname', 'asset__id', 'qset__id', 'ctzoffset',
                 'qset__qsetname', 'plandatetime', 'expirydatetime',
-                'gracetime', 'seqno', 'jobstatus', 'id','attachmentcount'
+                'gracetime', 'seqno', 'jobstatus', 'id','attachmentcount','gps'
             ).order_by('seqno')
 
         return qset or self.none()
@@ -544,8 +544,6 @@ class JobneedManager(models.Manager):
                     'cdtz':utils.getawaredatetime(datetime.now(), R['ctzoffset']),
                     'mdtz':utils.getawaredatetime(datetime.now(), R['ctzoffset']),
                     'type':R['type'], 'client_id':S['client_id'], 'bu_id':S['bu_id']}
-        
-
     
     def get_ext_checkpoints_jobneed(self, request, related, fields):
         fields += ['distance', 'duration','bu__gpslocation', 'performedtime','performedendtime','alerts','attachmentcount','gps']
@@ -663,7 +661,7 @@ class JobneedManager(models.Manager):
         ).values()
         return [
             total_schd.filter(jobstatus='COMPLETED').count(),
-            total_schd.filter(jobstatus='INPROGRESS').count(),
+            total_schd.filter(jobstatus='AUTOCLOSED').count(),
             total_schd.filter(jobstatus='PARTIALLYCOMPLETED').count(),
             total_schd.count(),
         ]
