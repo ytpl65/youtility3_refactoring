@@ -211,7 +211,7 @@ class PeopleForm(forms.ModelForm):
 
     def clean_peoplename(self):
         if value := self.cleaned_data.get('peoplename'):
-            regex = "^[a-zA-Z0-9\-_@#\(\|\)& ]*$"
+            regex = "^[a-zA-Z0-9\-_@#.\(\|\)& ]*$"
             if not re.match(regex, value):
                 raise forms.ValidationError(self.error_msg['invalid_name'])
         return value
