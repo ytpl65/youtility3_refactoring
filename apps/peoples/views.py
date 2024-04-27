@@ -367,12 +367,10 @@ class PeopleGroup(LoginRequiredMixin, View):
 
         # handle delete request
         elif R.get('action', None) == "delete" and R.get('id', None):
-            obj = utils.get_model_obj(R['id'], request, self.params)
-            pm.Pgbelonging.objects.filter(pgroup=obj).delete()
-            resp = utils.render_form_for_delete(request, self.params, False)
+            resp = utils.delete_pgroup_pgbelonging_data(request)
+      
 
-        # return form with instance
-        elif R.get('id', None):
+        elif R.get('id', None):                                                             
             obj = utils.get_model_obj(int(R['id']), request, self.params)
             peoples = pm.Pgbelonging.objects.filter(
                 pgroup=obj).values_list('people', flat=True)
