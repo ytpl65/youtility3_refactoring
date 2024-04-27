@@ -1094,7 +1094,7 @@ class JobneedExternalTours(LoginRequiredMixin, View):
             objs = P['model'].objects.get_externaltourlist_jobneed(request, P['related'], P['fields'])
             return rp.JsonResponse(data = {'data':list(objs)})
         
-        if R.get('action') == "checkpoints":
+        if R.get('action') == "checkpoints":    
             objs = P['model'].objects.get_ext_checkpoints_jobneed(request, P['related'], P['fields'])
             return rp.JsonResponse(data = {'data':list(objs)})
         
@@ -1111,7 +1111,7 @@ class JobneedExternalTours(LoginRequiredMixin, View):
             return rp.JsonResponse(data = {'data': list(att)})
         
         if R.get('id'):
-            obj = P['model'].objects.get(id = R['id'])
+            obj = P['model'].objects.get(id = R['id'])  
             form = P['form_class'](instance = obj, initial = P['initial'])
             log.info("object retrieved %s", (obj.jobdesc))
             checkpoints = self.get_checkpoints(P, obj = obj)
@@ -1119,8 +1119,6 @@ class JobneedExternalTours(LoginRequiredMixin, View):
                 'checkpoints': checkpoints}
             return render(request, P['template_form'], context = cxt)
         
-        
-    
     @staticmethod
     def get_checkpoints(P, obj):
         log.info("getting checkpoints for the internal tour [start]")
@@ -1332,9 +1330,7 @@ class InternalTourScheduling(LoginRequiredMixin, View):
             'priority'  : am.Job.Priority.LOW,
             'scantype'  : am.Job.Scantype.QR,
             'gracetime' : 0,
-            'planduration' : 0,
-            'fromdate'  : datetime.combine(date.today(), time(00, 00, 00)),
-            'uptodate'  : datetime.combine(date.today(), time(23, 00, 00)) + timedelta(days = 2),
+            'planduration' : 0
         },
         'fields'       : ['id', 'jobname', 'people__peoplename', 'pgroup__groupname', 'fromdate', 'uptodate',
                         'planduration', 'gracetime', 'expirytime', 'assignedto', 'bu__bucode', 'bu__buname',
@@ -1507,16 +1503,13 @@ class ExternalTourScheduling(LoginRequiredMixin, View):
             'seqno':-1,
             'identifier': am.Job.Identifier.EXTERNALTOUR,
             'scantype':am.Job.Scantype.QR,
-            'frequency':am.Job.Frequency.NONE,
             'starttime':time(00,00,00),
             'endtime':time(00,00,00),
             'priority':am.Job.Priority.HIGH,
             'expirytime':0,
-            'gracetime' : 5,
-            'planduration' : 5,
-            'pgroup':1,
-            'fromdate'  : datetime.combine(date.today(), time(00, 00, 00)),
-            'uptodate'  : datetime.combine(date.today(), time(23, 00, 00)) + timedelta(days = 2),
+            'gracetime' : 0,
+            'planduration' : 0,
+            'pgroup':1
         },
         'fields' : ['id', 'jobname', 'people__peoplename', 'pgroup__groupname', 'fromdate', 'uptodate',
                 'planduration', 'gracetime', 'expirytime', 'bu__buname', 'assignedto']

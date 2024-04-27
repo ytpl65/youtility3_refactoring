@@ -557,9 +557,9 @@ class ParameterMixin:
     header_mapping = HEADER_MAPPING
     
 class BulkImportData(LoginRequiredMixin,ParameterMixin, View):
-    
     def get(self, request, *args, **kwargs):
         R = request.GET
+
         if (R.get('action') == 'form'):
             self.remove_temp_file(request)
             inst = utils.Instructions(tablename='TYPEASSIST')

@@ -384,10 +384,10 @@ Internal Tour
         clearSelection("#DTE_Field_alerton")
         clearSelection("#DTE_Field_question")
     }
-    //display readable form of gpslocation
+    //display readable form of gpslocation 
     $('#id_gpslocation').val("{{ internaltourform.instance.geojson['gpslocation'] }}")
 
-    //checklist_datatable
+    //checklist_datatable_when_ExternalTour_type = 'ADHOC'
     function checklist_details_datatable(id){
                 checklistdetails = $(id).DataTable(
             {
@@ -412,7 +412,7 @@ Internal Tour
                         return `<a href="javascript:void(0)"  onClick='showAttachmentDetails(${row['id']}, "jnd")'>View</a>`
                     }
                     },
-                    {data:'alerts', visible:false},
+                    {data:'alerts', visible:false}
                 ],
                 createdRow:function(row, data, dataIndex){
                     if(data['alerts'] === true){
@@ -439,18 +439,18 @@ Internal Tour
 			 <'col-sm-6'l> <'col-sm-6'p><'col-sm-12 d-flex justify-content-center'i>>`,
             ordering: true,
             columns:[
-                {data:'id', visible:false},
-                {data:'seqno', title:'#'},
+                {data:'id', visible:false,className:'noVis'},
+                {data:'seqno', title:'#',className:'noVis'},
                 {data:'plandatetime', title:'PlanDatetime'},
                 {data:'expirydatetime', title:'Expiry Datetime'},
                 {data:'asset__assetname', title:'Asset/Checkpoint'},
-                {data:'qset__id', visible:false},
+                {data:'qset__id',title:'QuestionSet', className:'noVis',visible:false},
                 {data:'qset__qsetname', title:'Checklist'},
                 {data:'gracetime', title:'Gracetime'},
                 {data:'jobstatus', title:'Status'},
                 {title:'Attachments',data:'attachmentcount', defaultContent:null, render:function(data, type, row, meta){
                     if(data>0){
-                        return `<a href="javascript:void(0)"  onClick='showAttachmentDetails(${row['id']}, "jobneed")'>${data}&nbsp;<i class="fas text-primary2 fs-3 fa-paperclip"></i></a>` }
+                        return `<a href="javascript:void(0)"  onClick='showAttachmentDetails(${row['id']}, "jobneed")'>${data}&nbsp;<i class="fas text-primary2 fs-3 fa-paperclip"></i></a>`}
                     else {
                         return 'N/A';}
                     }
@@ -459,8 +459,22 @@ Internal Tour
                         return  `<button class="btn btn-link p-0" onClick='showCpDetails(${row['id']})'>View Details</button>`
                     }
                 },
-                {data:'ctzoffset', visible:false}
-            ],
+                {data:'ctzoffset', visible:false,className:'noVis'},
+                {data:'gps', visible:false, title:"Performed At", render:function(data, type, row, meta){
+                    if (row.jobstatus == 'COMPLETED'){
+                        let coords = typeof data === 'string' && data.length > 0 ? JSON.parse(data): 'NONE'
+                        if(coords !== 'NONE'){
+                            let lat = coords['coordinates'][1]
+                            let lng = coords['coordinates'][0]
+                            return `<a href="https://www.google.com/maps?q=${lat},${lng}" target="_blank">${lat},${lng}</a>`
+                        }return coords
+                    }
+                    else{
+                        return '--';
+                    }
+                    }
+                }
+                ],
             ordering:false,
             deferRender: true,
             columnDefs:[
@@ -475,7 +489,7 @@ Internal Tour
                     return convert_to_local(type, data, row)}
                 },
             ],
-            buttons:[]
+            buttons:[dataTablesColumnVisibilityConfig()]
         })
     }
 
