@@ -480,6 +480,7 @@ class SiteGroup(LoginRequiredMixin, View):
         if R.get('action', None) == "delete" and R.get('id', None):
             obj = utils.get_model_obj(R['id'], request, self.params)
             pm.Pgbelonging.objects.filter(pgroup_id=obj.id).delete()
+            obj.delete()
             return rp.JsonResponse(data=None, status=200, safe=False )
 
         # form with instance to load existing data
