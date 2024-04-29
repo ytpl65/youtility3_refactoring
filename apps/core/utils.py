@@ -18,7 +18,6 @@ from django.db.models import Q
 from django.http import JsonResponse
 from django.http import response as rp
 from django.template.loader import render_to_string
-from PIL import ImageFile
 from rest_framework.utils.encoders import JSONEncoder
 from django.conf import settings
 
@@ -47,6 +46,19 @@ class CustomJsonEncoderWithDistance(JSONEncoder):
             return obj.m
         return super(CustomJsonEncoderWithDistance, self).default(obj)
 
+
+class PSTFormatter(logging.Formatter):
+    def converter(self, timestamp):
+        from pytz import timezone
+        dt = datetime.fromtimestamp(timestamp)
+        return dt.astimezone(timezone('Asia/Kolkata'))
+
+    def formatTime(self, record, datefmt=None):
+        dt = self.converter(record.created)
+        if datefmt:
+            return dt.strftime(datefmt)
+        else:
+            return dt.isoformat()
 
 def cache_it(key, val, time=1*60):
     from django.core.cache import cache

@@ -204,7 +204,7 @@ class ReportEssentials(object):
     SiteReport                 = 'SITEREPORT'
     ListOfTours                = 'LISTOFTOURS'
     DynamicTourList            = 'DYNAMICTOURLIST'
-    StaticTourList            = 'STATICTOURLIST'
+    StaticTourList             = 'STATICTOURLIST'
     WorkOrderList              = 'WORKORDERLIST'
     SiteVisitReport            = 'SITEVISITREPORT'
     PeopleQR                   = 'PEOPLEQR'

@@ -12,7 +12,7 @@ from paho.mqtt.enums import CallbackAPIVersion
 import json
 import logging
 from pprint import pformat
-log = logging.getLogger('mobile_service_log')
+log = logging.getLogger('message_q')
 from django.conf import settings
 from background_tasks.tasks import process_graphql_mutation_async
 from celery.result import AsyncResult
@@ -25,6 +25,7 @@ BROKER_PORT = MQTT_CONFIG['BROKER_PORT']
 MUTATION_TOPIC        = "graphql/mutation"
 MUTATION_STATUS_TOPIC = "graphql/mutation/status"
 RESPONSE_TOPIC        = "response/acknowledgement"
+TESTMQ = "test/mq"
 STATUS_TOPIC          = "response/status"
 
 def get_task_status(item):
@@ -64,7 +65,7 @@ class MqttClient:
     def on_message(self, client, userdata, msg):
         # Process the received message
         payload = msg.payload.decode()
-        log.info("message: {} from MQTT broker on topic{} {}".format(msg.mid,msg.topic, "payload recieved" if payload else "payload not recieved"))
+        log.info("message: {} from MQTT broker on topic {} {}".format(msg.mid,msg.topic, "payload recieved" if payload else "payload not recieved"))
         log.info("processing started [+]")
         
         if msg.topic == MUTATION_TOPIC:
@@ -88,6 +89,10 @@ class MqttClient:
             response = json.dumps(taskids_with_status)
             log.info(f"Response published to {STATUS_TOPIC}: {response}")
             client.publish(STATUS_TOPIC, response)
+        
+        if msg.topic == TESTMQ:
+            log.info(f"Received test message: {payload}")
+            client.publish(RESPONSE_TOPIC, f"Hello from Paho Client: {payload}")
         log.info("processing completed [-]")
 
             

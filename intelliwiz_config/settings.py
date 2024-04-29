@@ -14,6 +14,8 @@ https://docs.djangoproject.com/en/3.2/ref/settings/
 
 from pathlib import Path
 import os
+import logging
+from datetime import datetime
 from pickle import TRUE
 
 import environ
@@ -353,6 +355,11 @@ LOGGING_CONFIG_ = {
             '()': 'colorlog.ColoredFormatter',
             'format': '%(log_color)s %(asctime)s  %(levelname)-10s  from method: %(funcName)-32s  << %(message)s >>'
         },
+        'verbose': {
+            'format': '%(asctime)s %(levelname)s: %(message)s',
+            'datefmt': '%Y-%m-%d %H:%M:%S %z',
+            '()': 'intelliwiz_config.custom_logging_formatter.PSTFormatter'  # Update path
+        }
     }, 
     'handlers': {
         'default': { 
@@ -366,35 +373,30 @@ LOGGING_CONFIG_ = {
             'filename':f'{os.path.expanduser("~")}/youtility4_logs/youtility4.log',
             'maxBytes': 15728640,
             'backupCount': 10,
-            'formatter': 'coloured',
         },
         'serviceLogs':{
             'class': 'logging.handlers.RotatingFileHandler',
             'filename':f'{os.path.expanduser("~")}/youtility4_logs/mobileservice.log',
             'maxBytes': 15728640,
             'backupCount': 10,
-            'formatter': 'coloured',
         },
         'tracking_logs':{
             'class': 'logging.handlers.RotatingFileHandler',
             'filename':f'{os.path.expanduser("~")}/youtility4_logs/tracking.log',
             'maxBytes': 15728640,
             'backupCount': 10,
-            'formatter': 'coloured',
         },
         'message_qlogs':{
             'class': 'logging.handlers.RotatingFileHandler',
             'filename':f'{os.path.expanduser("~")}/youtility4_logs/message_q.log',
             'maxBytes': 15728640,
             'backupCount': 10,
-            'formatter': 'coloured',
         },
         'reportslog':{
             'class': 'logging.handlers.RotatingFileHandler',
             'filename':f'{os.path.expanduser("~")}/youtility4_logs/reports.log',
             'maxBytes': 15728640,
             'backupCount': 10,
-            'formatter': 'coloured',
         },
         'mail_admins': {
             'level': 'CRITICAL',
@@ -406,7 +408,6 @@ LOGGING_CONFIG_ = {
             'filename':f'{os.path.expanduser("~")}/youtility4_logs/errors.log',
             'maxBytes': 15728640,
             'backupCount': 10,
-            'formatter': 'coloured',
         }
     },
     'loggers': { 

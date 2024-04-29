@@ -182,7 +182,6 @@ class PeopleManager(BaseUserManager):
 
     def people_list_view(self, request, fields, related):
         S  = request.session
-        ic(S['client_id'], S['assignedsites'])
         if request.user.isadmin:
             qset = self.filter(
                 ~Q(peoplecode='NONE'), 

@@ -179,14 +179,12 @@ class QuestionSetManager(models.Manager):
         
     
         
-
 class QuestionManager(models.Manager):
     use_in_migrations = True
     fields = ['id', 'quesname', 'options', 'min', 'max', 'alerton', 'answertype', 'muser_id', 'cdtz', 'mdtz',
             'client_id', 'isworkflow', 'enable', 'category_id', 'cuser_id', 'unit_id' , 'tenant_id', 'ctzoffset']
     related = ['client', 'muser', 'cuser', 'category', 'unit']
     
-
     
     def hrd(self): #hrd: human readable data 
         # Create a list of When conditions for each AnswerType choice
