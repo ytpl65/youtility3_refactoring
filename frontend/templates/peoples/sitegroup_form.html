@@ -384,13 +384,15 @@ Site Group
             showCancelButton: true,
             confirmButtonText: 'Submit'
             }).then((res) => {
-                fire_ajax_form_post(params, payLoad)
+                if (res.isConfirmed){
+                 fire_ajax_form_post(params, payLoad)
                 .done((data, status, xhr) => { //function to submit post request
                     show_successful_save_alert(update = isupdate)
                     window.setTimeout(function() {
                     window.location.href = `{{ url('peoples:sitegroup') }}?id=${data.pk}`;
                 }, 2000);
-                })
+                })   
+                }
             })
 			
 		})
