@@ -386,6 +386,7 @@ class PeopleGroup(LoginRequiredMixin, View):
         try:
             data = QueryDict(request.POST['formData'])
             if pk := request.POST.get('pk', None):
+                pm.Pgbelonging.objects.filter(pgroup_id=int(pk)).delete()
                 msg = "pgroup_view"
                 form = utils.get_instance_for_update(
                     data, self.params, msg, int(pk), kwargs={'request': request})
