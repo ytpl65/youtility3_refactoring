@@ -242,7 +242,6 @@ class TaskFormJobneed(I_TourFormJobneed):
         self.fields['jobdesc'].required = True
         utils.initailize_form_fields(self)
         if not self.instance.id:
-            ic('iside')
             self.fields['asset'].queryset = am.Asset.objects.filter(identifier__in = ['Asset', 'Smartplace'])
             self.fields['qset'].queryset = am.QuestionSet.objects.filter(type = ['QUESTIONSET'])
 

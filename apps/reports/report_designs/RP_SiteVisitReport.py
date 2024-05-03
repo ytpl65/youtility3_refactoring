@@ -4,8 +4,12 @@ from apps.core.report_queries import get_query
 from apps.onboarding.models import Bt
 from apps.peoples.models import Pgroup
 from django.conf import settings
+import logging 
+logger = logging.getLogger('django')
+
 
 class RP_SITEVISITREPORT(BaseReportsExport):
+
     report_title = "RP Site Visit Report"
     design_file = "reports/pdf_reports/rp_sitevisitreport.html"
     ytpl_applogo =  'frontend/static/assets/media/images/logo.png'
@@ -47,7 +51,6 @@ class RP_SITEVISITREPORT(BaseReportsExport):
         from decimal import Decimal
         from collections import defaultdict
         self.data = runrawsql(get_query(self.report_name),args=self.args,named_params=True)
-
         site_times = defaultdict(list)
 
         #Adding Site Name as a key and value as a day and time in list of tuple. 
@@ -55,7 +58,6 @@ class RP_SITEVISITREPORT(BaseReportsExport):
             date = entry['endtime_day']
             key = f"{entry['Site Name']}"
             site_times[key].append((entry['endtime_day'], entry['endtime_time']))
-        # print(site_times)
 
         #defaultvalue for any key is dict and default value of any inner key id list 
         formatted_data = defaultdict(lambda: defaultdict(list))
@@ -63,18 +65,15 @@ class RP_SITEVISITREPORT(BaseReportsExport):
         #key(Site Name) and times(day and time in list of tuple)
         for key, times in site_times.items():
             sorted_times = sorted(times, key=lambda x: (x[0], x[1]))
-            # print(sorted_times) 
             for i, (day, time) in enumerate(sorted_times):
+                if time == 'Not Performed':
+                    time = '--'
                 if i % 2 == 0:
-                    formatted_data[key][day].append(time)
-                else:
-
                     formatted_data[f"{key}_"][day].append(time)
-        # print(formatted_data)
+                else:
+                    formatted_data[key][day].append(time)
 
         Data2 = [{site: [{str(day): time[0]} for day, time in times.items()]} for site, times in formatted_data.items()]
-        # print(Data2)
-
         return Data2
 
     def create_template(self,route_name, state, solid, site_name, frequency):
@@ -86,14 +85,11 @@ class RP_SITEVISITREPORT(BaseReportsExport):
         template = {
             'Route Name/Cluster': route_name, 'State': state, 'Sol Id': solid, 'Site Name': site_name, 'Date': frequency,
         }
-        # print(template)
-        #added dates in template with none values 
         for day in range(fromdate,uptodate+1):  
             template[str(day)] = '--'
-        # print(template)
         return template
 
-    def merge_data(self,data1, data2):  
+    def merge_data(self,data1, data2):      
         data3 = []
         
         data2_mapping = {}
@@ -126,7 +122,6 @@ class RP_SITEVISITREPORT(BaseReportsExport):
                     #mapping available dates with their time
                     for day, time in data2_mapping[name].items():
                         template[str(day)] = time
-                # print(template)
                 data3.append(template)
 
         #Removing all the duplicate datas from data3
@@ -145,14 +140,9 @@ class RP_SITEVISITREPORT(BaseReportsExport):
         '''
         self.set_args_required_for_query()
         self.data = runrawsql(get_query(self.report_name),args=self.args,named_params=True)
-        # print(self.data)
-        # print('query_data',self.data)
-        # print(self.data)
-        
         Data2 = self.set_extra_data()
         data3 = self.merge_data(self.data,Data2)
         self.data = data3
-        # ic(self.data)
         return len(self.data)>0 
     
     def set_additional_content(self):

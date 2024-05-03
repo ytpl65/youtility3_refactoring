@@ -99,7 +99,6 @@ Client
                     {{ clientprefsform.startdate.label_tag() }}
                     {{ clientprefsform.startdate }}
                 </div>
-
                 <div class="col-md-6">
                     {{ clientform.bucode.label_tag() }}
                     {{ clientform.bucode }}
@@ -128,9 +127,9 @@ Client
                 </div>
                 <div class="col-md-6">
                     {{ clientprefsform.validip.label_tag() }}
-                    {{ clientprefsform.validip }}
+                    {{ clientprefsform.validip }}   
                 </div>
-                <div class="col-md-6">
+                <div class="col-md-6 d-none">
                     {{ clientprefsform.clienttimezone.label_tag() }}
                     {{ clientprefsform.clienttimezone }}
                 </div>
@@ -797,7 +796,7 @@ Client
                 { data: 'buname', title: 'Name' },
                 { data: 'identifier__tacode', title: 'Type' },
                 { data: 'identifier_id', visible: false, defaulContent: null },
-                { data: 'parent__buname', title: 'Belongs to' },
+                { data: 'parent__buname', title: 'Belongs to' },    
                 { data: 'parent_id', visible: false, defaulContent: null },
                 {
                     data: 'enable', title: 'Enable', render: function (data, type, row, meta) {
@@ -855,8 +854,8 @@ Client
                 { label: 'Email', name: 'email', data: 'email' },
                 { label: 'Login ID', name: 'loginid', data: 'loginid' },
                 { label: 'Mobile', name: 'mobno', data: 'mobno', fieldInfo: "Enter country code followed by 10 digit mobile no, For eg: +91xxxxxxxxxx" },
-                { label: 'Date Of Birth', name: 'dateofbirth', data: 'dateofbirth', type: 'datetime', fieldInfo: "Select or Enter date of birth in yyyy-mm-dd format" },
-                { label: 'Date Of Join', name: 'dateofjoin', data: 'dateofjoin', type: 'datetime' },
+                { label: 'Date Of Birth', name: 'dateofbirth', data: 'dateofbirth', type: 'text', fieldInfo: "Select or Enter date of birth in yyyy-mm-dd format" },
+                { label: 'Date Of Join', name: 'dateofjoin', data: 'dateofjoin', type: 'text' },
                 {
                     label: 'Admin', name: 'isadmin', data: 'isadmin', type: 'select', def: 1, readonly: true,
                     options: [

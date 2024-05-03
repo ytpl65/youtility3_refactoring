@@ -176,38 +176,27 @@ People Groups
 	}); //END document.ready()
 
 	//delete ajax request 
-	function isPgroupDeleted(id){
-		console.log("id ", id)
-		const params = {url:`${urlname}?action=delete&id=${id}`, beforeSend:function(){}}
-		fire_ajax_get(params)
-		.done((data, status, xhr) => {
-			if(!xhr.status === 200){
-				return false
-			}
-			return true
-		})
-		.fail((xhr, status, error) => {
-			show_error_alert('Something went wrong!') //defined in custom.js
-			return false
-		})
-	}
-
-	//delete pgorup 
 	function deletePgroup(elemt){
-		var id = $(elemt).attr("data-id");
+		var id = $(elemt).attr("data-id")
 		show_alert_before_delete(viewname)
 		.then((result) => {
-			if(result.isConfirmed){ //delete requested by user
-				status = isPgroupDeleted(id) //fire's request
-				console.log("status ", status)
-				if(status){
-					show_successful_delete_alert() //defined in customjs
-					$(modal_id).modal("hide")
-					//delete row from table
-					table.row('.selected').remove().draw();
-				}else{
-					show_error_alert( 'Something went wrong!');
-				}
+			if(result.isConfirmed){
+				const params = {url:`${urlname}?action=delete&id=${id}`,beforeSend:function(){}}
+				fire_ajax_get(params)
+				.done((data,status,xhr) => {
+					if(!xhr.status === 200){
+						show_error_alert('Something went Wrong!');
+					}
+					else{
+						show_successful_delete_alert()
+						$(modal_id).modal("hide")
+						table.row('.selected').remove().draw();
+					}
+				})
+				.fail((xhr,status,error) => {
+					console.log(xhr)
+					show_error_alert(xhr.responseJSON.errors)
+				})
 			}
 		})
 	}

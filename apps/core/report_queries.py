@@ -640,8 +640,9 @@ def get_query(query):
                 bu.bupreferences->'address2'->>'state'AS "State",
                 bu.solid as "Sol Id",
                 bu.buname as "Site Name",
-                TO_CHAR(jobneed.starttime AT TIME ZONE tz.timezone, 'HH24:MI') AS endtime_time, 
-                EXTRACT(DAY FROM jobneed.starttime AT TIME ZONE tz.timezone) AS endtime_day
+                CASE WHEN jobneed.starttime IS NULL THEN 'Not Performed' 
+                 ELSE TO_CHAR(jobneed.starttime AT TIME ZONE tz.timezone, 'HH24:MI') END AS endtime_time, 
+                EXTRACT(DAY FROM parent.plandatetime AT TIME ZONE tz.timezone) AS endtime_day
             from jobneed 
             INNER JOIN bt bu ON bu.id=jobneed.bu_id 
             INNER JOIN pgroup pg on pg.id = jobneed.sgroup_id
@@ -650,9 +651,9 @@ def get_query(query):
                 timezone_setting AS tz
             where parent.other_info->>'tour_frequency'='2'
             AND jobneed.identifier = 'EXTERNALTOUR' 
-            AND jobneed.jobstatus = 'COMPLETED'
-            AND jobneed.    sgroup_id IN (SELECT unnest(string_to_array('{sgroupids}', ',')::integer[]))
-            AND (jobneed.starttime AT TIME ZONE tz.timezone) BETWEEN '{from}' AND '{upto}'
+            AND jobneed.parent_id <> 1
+            AND jobneed.sgroup_id IN (SELECT unnest(string_to_array('{sgroupids}', ',')::integer[]))
+            AND (parent.plandatetime AT TIME ZONE tz.timezone) BETWEEN '{from}' AND '{upto}'
             GROUP BY bu.solid,bu.buname,"State",endtime_time,endtime_day,jobneed.plandatetime,pg.groupname,jobneed.id
             ORDER By bu.buname,endtime_day;
             ''',
@@ -729,6 +730,38 @@ def get_query(query):
             AND jobneed.bu_id IN (SELECT unnest(string_to_array('{siteids}', ',')::integer[]))
             AND (jobneed.plandatetime AT TIME ZONE tz.timezone) BETWEEN '{from}' AND '{upto}'
             ORDER BY bu.buname, (jobneed.plandatetime AT TIME ZONE tz.timezone)::DATE desc
+            ''',
+            'People_Attendance_Summary':
+            '''
+            WITH timezone_setting as ( 
+                SELECT '{timezone}' ::text as timezone 
+            ) 
+                SELECT
+                deptype.taname AS department,
+                desgtype.taname AS designation,
+                p.peoplename AS peoplename,
+                p.peoplecode AS peoplecode,
+                EXTRACT(DAY FROM pel.datefor) AS day,
+                TO_CHAR(pel.datefor, 'Day') AS day_of_week,
+                CONCAT(EXTRACT(HOUR FROM pel.punchintime AT TIME ZONE tz.timezone), ':', EXTRACT(MINUTE FROM pel.punchintime AT TIME ZONE tz.timezone)) AS punch_intime,
+                CONCAT(EXTRACT(HOUR FROM pel.punchouttime AT TIME ZONE tz.timezone), ':', EXTRACT(MINUTE FROM pel.punchouttime AT TIME ZONE tz.timezone)) AS punch_outimetime,
+                CONCAT(
+                TRUNC((EXTRACT(EPOCH FROM pel.punchouttime AT TIME ZONE tz.timezone) - EXTRACT(EPOCH FROM pel.punchintime AT TIME ZONE tz.timezone)) / 3600),
+                ':',
+                EXTRACT(MINUTE FROM (pel.punchouttime AT TIME ZONE tz.timezone - pel.punchintime AT TIME ZONE tz.timezone))
+            ) AS totaltime
+            FROM 
+                peopleeventlog pel
+            INNER JOIN people p ON pel.people_id = p.id
+            INNER JOIN typeassist desgtype ON p.designation_id = desgtype.id
+            INNER JOIN typeassist deptype ON p.department_id = deptype.id
+            CROSS JOIN timezone_setting tz
+            WHERE
+                pel.bu_id IN (SELECT unnest(string_to_array('{siteids}', ',')::integer[])) AND
+                (pel.datefor AT TIME ZONE tz.timezone) BETWEEN '{from}' AND '{upto}' AND
+                (pel.punchouttime AT TIME ZONE tz.timezone)::date = pel.datefor AND 
+            ORDER BY 
+                pel.datefor;
             '''
     }.get(query) 
 

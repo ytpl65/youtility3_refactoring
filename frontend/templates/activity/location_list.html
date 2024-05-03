@@ -66,12 +66,13 @@ $(document).ready(function () {
 				}
 				},
 				{data:'bu__bucode', title:'Site Code', visible:false},
-				{data:'bu__buname', title:'Site'},
-				{data:null,title:'Qr Code', defaultContent: "Print", render: function(data, type, row, meta) {
+				{data:'bu__buname', title:'Site',visible:false},
+				{data:null,title:'QR Code', defaultContent: "Print", render: function(data, type, row, meta) {
                     let downloadUrl = `{{ url('activity:location') }}?action=qrdownload&code=${encodeURIComponent(row['loccode'])}&name=${row['locname']}`
-                    return `<a href="${downloadUrl}" class="qr-download-link">Qr Download</a>`
+                    return `<a href="${downloadUrl}" class="qr-download-link">QR Download</a>`
                 }
-				}
+				},
+				{data:'gps',title:'GPS',visible:false},
 			],
 			order:[[1, 'asc']],
 			deferRender:true,

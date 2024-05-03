@@ -381,7 +381,7 @@ class ClentForm(BuPrefForm):
     enddate = forms.DateField(label='End Date', required=True, input_formats=settings.DATE_INPUT_FORMATS, widget=forms.DateInput)
     onstop = forms.BooleanField(label='On Stop', required=False, initial=False)
     onstopmessage = forms.CharField(widget=forms.Textarea(attrs={'rows':1}),label='On Stop Message', required=False)
-    clienttimezone = forms.ChoiceField(label="Time Zone", widget=s2forms.Select2Widget, choices=utils.generate_timezone_choices, required=True)
+    clienttimezone = forms.ChoiceField(label="Time Zone", widget=s2forms.Select2Widget, choices=utils.generate_timezone_choices, required=False)
     billingtype = forms.ChoiceField(label="Billing Type", widget=s2forms.Select2Widget, choices=BILLINGTYPES, initial='SITEBASED', required=True)
     no_of_devices_allowed = forms.IntegerField(label="No of Devices Allowed", required=False, initial=0)
     devices_currently_added = forms.IntegerField(label="No of Devices Currently Added", required=False, initial=0)

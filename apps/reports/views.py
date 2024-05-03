@@ -775,7 +775,9 @@ class ScheduleEmailReport(LoginRequiredMixin, View):
     
     def get(self, request, *args, **kwargs):
         R, S = request.GET, request.session
-        if R.get('template'): return render(request, self.P['template_list'])
+        if R.get('template'):
+            return render(request, self.P['template_list'])
+        
         if R.get('id'):
             obj = utils.get_model_obj(R['id'], request, {'model': self.P['model']})
             params_initial = obj.report_params
@@ -783,8 +785,11 @@ class ScheduleEmailReport(LoginRequiredMixin, View):
                 'form':self.P['form_class'](instance=obj, request = request),
                 'popup_form':self.P['popup_form'](request=request, initial=params_initial)}
             return render(request, self.P['template_form'], cxt)
+        
         if R.get('action') == 'list':
             data = self.P['model'].objects.filter(bu_id=S['bu_id']).values()
+            print(data)
+            print(len(data))
             return rp.JsonResponse({'data':list(data)}, status=200)
         
         if R.get('action') == 'form':
@@ -792,7 +797,6 @@ class ScheduleEmailReport(LoginRequiredMixin, View):
             form2 = self.P['popup_form'](request=request)
             cxt = {'form':form, 'popup_form': form2}
             return render(request, self.P['template_form'], context=cxt)
-        
         
     
     def post(self, request, *args, **kwargs):

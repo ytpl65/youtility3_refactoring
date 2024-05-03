@@ -12,7 +12,6 @@ tr{
     font-size: 12px;
 }
 </style>
-</style>
 {% endblock extra_css %}
 
 <!------------------------------------ BEGIN PAGE BREADCUMBS ------------------------------------>
@@ -50,28 +49,33 @@ var urlname = "{{ url('reports:schedule_email_report') }}"
                 {data:'id', className:'noVis', visible:false},
                 {data:'report_type', title:'Report Type'},
                 {data:'report_name', title:'Report Name', render:function(data, type, row, meta){
-                    return `<a href="${urlname}?id=${row['id']}">${data}</a>`
-                }},
+                    return `<a href="${urlname}?id=${row['id']}">${data}</a>`   
+                }
+                },
                 {data:'report_sendtime', title:'Send time'},
                 {data:'enable', title:'Enable', render:function(data, type, row, meta){
                     if(data){return "Yes"}
                     return "No"
-                }},
+                }
+                },
                 {data:'cron', title:'Frequecy', render:function(data, type, row, meta){
                     if(data){
                         return cronstrue.toString(data)
                     }return 'NA'
-                }},
+                }
+                },
                 {data:'to_addr', title:'Email-To', render:function(data, type, row, meta){
                     if(data){
                         return data.join([separator = ', '])
                     }return "NA"
-                }},
+                }
+                },
                 {data:'cc', title:'Email-CC', render:function(data, type, row, meta){
                     if(data){
                         return data.join([separator = ', '])
                     }return "NA"
-                }},
+                }
+                },
                 
             ],
             buttons:[

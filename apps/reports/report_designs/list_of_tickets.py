@@ -10,7 +10,7 @@ class ListofTicketReport(BaseReportsExport):
     design_file = "reports/pdf_reports/list_of_tickets.html"
     ytpl_applogo =  'frontend/static/assets/media/images/logo.png'
     report_name = 'LISTOFTICKETS'
-    fields = ['fromdatetime*', 'uptodatetime*', 'people', 'ticketcategory']
+    fields = ['fromdatetime*', 'uptodatetime*', 'site*', 'ticketcategory']
     unsupported_formats = ['None']
 
     def __init__(self, filename, client_id, request=None, context=None, data=None, additional_content=None, returnfile=False, formdata=None):

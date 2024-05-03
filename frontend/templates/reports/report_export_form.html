@@ -669,7 +669,6 @@ Report Form
           }).done((data, status, xhr) => {
               $("#id_qset").empty()
               $("#id_qset").append(new Option("", "", false, false)) //first option is empty
-              console.log(data.options)
               data.options.forEach((item) => {
                   var newOption = new Option(item.qsetname, item.id, false, false)
                   $("#id_qset").append(newOption)

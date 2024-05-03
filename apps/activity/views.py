@@ -743,7 +743,6 @@ class Asset(LoginRequiredMixin,View):
         # return qset_list data
         if R.get('action', None) == 'list':
             objs = P['model'].objects.get_assetlistview(P['related'], P['fields'], request)
-            print(list(objs))
             return  rp.JsonResponse(data = {'data':list(objs)})
         
         if R.get('action',None) == 'qrdownload' and R.get('code',None) and R.get('name', None):

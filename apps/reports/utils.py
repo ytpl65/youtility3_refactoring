@@ -194,7 +194,6 @@ class ReportEssentials(object):
     Report Essentials are the details
     requred by ReportExport functioning.
     '''
-    
     # report_names
     TaskSummary                = 'TASKSUMMARY'
     TourSummary                = 'TOURSUMMARY'

@@ -47,7 +47,9 @@ Site Groups
                     title: "Group Name" 
                 },
                 {data: 'enable', title: 'Enable', orderable:false, render:function(data, type, row, meta){
-					return data === true ? '<i class="bi bi-check-circle-fill text-success"></i>': '<i class="bi bi-x-circle-fill text-danger"></i>'				
+                    if (data === true){ return '<i class="bi bi-check-circle-fill text-success"></i> Active'}
+                    else if(data === false){ return '<i class="bi bi-x-circle-fill text-danger"></i> Inactive'}
+                    else{ return data.toString() }				
 				}
                 }
             ],
@@ -57,6 +59,16 @@ Site Groups
 				}
 			},
             buttons:[
+                dataTablesPDFConfig(
+                    title = `Site: {{request.user.bu.buname}}\n Site Group List`,
+                    columns = ':visible',
+					filename = "SiteGroup_list"
+                ),
+                dataTablesExcelConfig(
+                    title = `Site: {{request.user.bu.buname}}\n Site Group List`,
+                    columns = ':visible',
+					filename = "SiteGroup_list"
+                ),
                 {
                     text     : `Add New &nbsp;<i class='fas fa-plus ch4'></i></a>`,
 					className: "btn btn-sm border border-primary btn-light-primary add_new_sitegroup",
