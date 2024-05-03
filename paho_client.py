@@ -24,7 +24,7 @@ BROKER_PORT = MQTT_CONFIG['BROKER_PORT']
 
 MUTATION_TOPIC        = "graphql/mutation"
 MUTATION_STATUS_TOPIC = "graphql/mutation/status"
-RESPONSE_TOPIC        = "response/acknowledgement"
+RESPONSE_TOPIC        = "response"
 TESTMQ = "test/mq"
 STATUS_TOPIC          = "response/status"
 
@@ -50,7 +50,7 @@ class MqttClient:
         self.client.on_connect = self.on_connect
         self.client.on_message = self.on_message
         self.client.on_disconnect = self.on_disconnect
-
+      
 
     # MQTT client callback functions
     def on_connect(self, client, userdata, flags, rc, props):
@@ -64,12 +64,13 @@ class MqttClient:
 
     def on_message(self, client, userdata, msg):
         # Process the received message
+        log.info(f"Received message: {msg.payload}")
         payload = msg.payload.decode()
         log.info("message: {} from MQTT broker on topic {} {}".format(msg.mid,msg.topic, "payload recieved" if payload else "payload not recieved"))
         log.info("processing started [+]")
         
         if msg.topic == MUTATION_TOPIC:
-            # process graphql mutations received on this topic
+            # process graphql mutations received on this topicMUTATION_TOPIC
             result = process_graphql_mutation_async.delay(payload)
             post_data = json.loads(payload)
             print(f"{post_data.keys()}")
@@ -78,7 +79,7 @@ class MqttClient:
                 {'task_id':result.task_id, 'status':result.state,
                  'uuids':uuids, 'serviceName':service_name, 'payload':payload})
             log.info(f"Response published to {RESPONSE_TOPIC} after accepting {service_name}")
-            client.publish(RESPONSE_TOPIC, response)
+            client.publish(RESPONSE_TOPIC, response, qos=2)
         
         if msg.topic == MUTATION_STATUS_TOPIC:
             # enquire the status of tasks ids received on this topic
@@ -88,15 +89,13 @@ class MqttClient:
             taskids_with_status = list(map(get_task_status, taskids))
             response = json.dumps(taskids_with_status)
             log.info(f"Response published to {STATUS_TOPIC}: {response}")
-            client.publish(STATUS_TOPIC, response)
+            client.publish(STATUS_TOPIC, response, qos=2)
         
         if msg.topic == TESTMQ:
             log.info(f"Received test message: {payload}")
             client.publish(RESPONSE_TOPIC, f"Hello from Paho Client: {payload}")
         log.info("processing completed [-]")
 
-            
-            
 
 
     def on_disconnect(self, client, userdata, disconnect_flags, rc, props):
