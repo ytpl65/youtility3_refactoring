@@ -25,7 +25,8 @@ BROKER_PORT = MQTT_CONFIG['BROKER_PORT']
 MUTATION_TOPIC        = "graphql/mutation"
 MUTATION_STATUS_TOPIC = "graphql/mutation/status"
 RESPONSE_TOPIC        = "response"
-TESTMQ = "test/mq"
+TESTMQ = "post"
+TESTPUBMQ = "received"
 STATUS_TOPIC          = "response/status"
 
 def get_task_status(item):
@@ -58,6 +59,7 @@ class MqttClient:
             print("Connected to MQTT Broker!")
             client.subscribe(MUTATION_TOPIC)
             client.subscribe(MUTATION_STATUS_TOPIC)
+            client.subscribe(TESTMQ)
         else:
             fail=f"Failed to connect, return code {rc}"
             print(fail)
@@ -93,7 +95,7 @@ class MqttClient:
         
         if msg.topic == TESTMQ:
             log.info(f"Received test message: {payload}")
-            client.publish(RESPONSE_TOPIC, f"Hello from Paho Client: {payload}")
+            client.publish(TESTPUBMQ, f"Server Published a Response")
         log.info("processing completed [-]")
 
 
@@ -112,4 +114,3 @@ class MqttClient:
 if __name__ == '__main__':
     client = MqttClient()
     client.loop_forever()
-
