@@ -125,9 +125,14 @@ Site Group
                     <th>Code</th>
                     <th>Sol ID</th>
                     <th id="deleteAll"><i class="fas text-light fa-trash-alt"></i></th>
+                    <th>GPS</th>
                 </tr>
             </thead>
         </table>
+        <br>
+        <div class="row googleMaps">
+            <div id="d2Map" style="width:100%;height:400px;background:#f1f1f1"></div>
+        </div>
     </div>
 </div>
 </div>
@@ -135,7 +140,12 @@ Site Group
 
 {% block extra_scripts %}
 {{ sitegrpform.media.js }}
+<script type="text/javascript" src="https://maps.googleapis.com/maps/api/js?key=AIzaSyC3PUZCB7u2PiV8whHeAshweOPIK_d690o&libraries=places"></script>
+<script src="{{ static('assets/js/overlapping_marker_spiderfier.js') }}" type="text/javascript"></script>
 <script src="{{ static('assets/plugins/custom/DataTables/datatables.min.js') }}" type="text/javascript"></script>
+<script src="{{ static('assets/js/schd_ext_tour_form.js') }}" type="text/javascript"></script>
+
+
 <script>
     var tabAllsites;
     var tabAssigned_sites;
@@ -161,7 +171,8 @@ Site Group
 
     //delete ajax request 
 	function isSiteGrpDeleted(id){ 
-		const params = {url:`${urlname}?action=delete&id=${id}`, 'beforeSend':function () {}}
+		const params = {url:`${urlname}?action=delete&id=${id}`, 'beforeSend':function () {}
+        }
 		fire_ajax_get(params)
 		.done((data, status, xhr) => {
 			if(!xhr.status === 200){
@@ -176,13 +187,13 @@ Site Group
 	}
 
     function loadAssignedSitesIfThereAny(table, id){
-        const params = {url:`${urlname}?action=loadSites&id=${id}`, 'beforeSend':function(){}}
+        const params = {url:`${urlname}?action=loadSites&id=${id}`, 'beforeSend':function(){}
+        }
         fire_ajax_get(params)
         .done((data, status, xhr) => {
             if(xhr.status === 200){
-                console.log(data['assigned_sites'])
                 let table = $("#assigned_sites").dataTable().api();
-				table.rows.add(data['assigned_sites']).draw()
+				//table.rows.add(data['assigned_sites']).draw()
                 var all_sites = tabAllsites.rows().data().toArray()
                 var assigned_sites = tabAssigned_sites.rows().data().toArray()
                 autoCheckSitesWhichAreAssigned(all_sites, assigned_sites)
@@ -194,7 +205,7 @@ Site Group
         
         for(let i = 0; i<all_sites.length; i++){
             for(let j = 0; j<assigned_sites.length; j++){
-                console.log(all_sites[i]['buname'] === assigned_sites[j]['buname'] && all_sites[i]['bucode'] === assigned_sites[j]['bucode'])
+                /*console.log(all_sites[i]['buname'] === assigned_sites[j]['buname'] && all_sites[i]['bucode'] === assigned_sites[j]['bucode'])*/
                 if(all_sites[i]['buname'] === assigned_sites[j]['buname'] && all_sites[i]['bucode'] === assigned_sites[j]['bucode']){
                     tabAllsites.row(i).select()
                 }
@@ -202,7 +213,88 @@ Site Group
         }
     }
 
-    
+//map functions
+    var directionService = new google.maps.DirectionsService();
+    const infoWindow = new google.maps.InfoWindow();
+    const mapBounds = new google.maps.LatLngBounds();
+
+    //returns assgined sites starts initializing map
+    function get_assigned_sites_data(table, id){
+        const params = {url:`${urlname}?action=loadSites&id=${id}`, 'beforeSend':function(){}
+        }
+        fire_ajax_get(params)
+        .done((data, status, xhr) => {
+            if(xhr.status === 200){
+                let table = $("#assigned_sites").dataTable().api();
+				table.rows.add(data['assigned_sites']).draw()
+                var assigned_sites = tabAssigned_sites.rows().data().toArray()
+                let uniqueData = assigned_sites.filter((obj, index, self) =>
+                    index === self.findIndex((t) => (
+                        t.buname === obj.buname && 
+                        t.bucode === obj.bucode &&
+                        t.buid === obj.buid &&
+                        t.solid === obj.solid &&
+                        t.gpslocation === obj.gpslocation
+                    ))
+                );
+                plotLocationsOnMap(assigned_sites)
+			}
+        })
+    }
+
+    //clear exisiting plotings 
+    function clearMarkerAndPolyline() {
+        for (var i = 0; i < d2markersArray.length; i++) {
+            d2markersArray[i].setMap(null);
+        }
+        d2markersArray = [];
+    }
+
+    //clear exisiting plotings 
+    function d2ClearMarker() {
+        clearMarkerAndPolyline();
+        for (var i = 0; i < d2markersArray.length; i++) {
+            d2markersArray[i].setMap(null);
+        }
+        d2markersArray = [];
+    }
+
+    //Extracts latitudes and longitudes data 
+    function getLatLngFromGPSData(gpsLocationData) {
+        if (typeof gpsLocationData === 'string' && gpsLocationData.length > 0) {
+            const coords = JSON.parse(gpsLocationData)["coordinates"];
+            if (coords) {
+            return new google.maps.LatLng(coords[1], coords[0]); 
+            }
+        }
+        return null; 
+    }
+
+    //plots LatLng data into map
+    function plotLocationsOnMap(assignedSites) {
+        d2ClearMarker();
+        assignedSites.forEach(site => {
+            const latLng = getLatLngFromGPSData(site.gpslocation);
+            if (latLng) {
+            const marker = new google.maps.Marker({
+                position: latLng,
+                map: d2map, 
+                title: site.buname 
+            });
+            d2markersArray.push(marker); 
+
+            mapBounds.extend(latLng);
+
+            google.maps.event.addListener(marker, 'click', function() {
+                const siteName = this.title; 
+                infoWindow.setContent("Site Name: " + siteName);
+                infoWindow.open(d2map, this);
+            });
+            }
+        });
+        d2map.fitBounds(mapBounds);
+    }
+
 
     $(document).ready(() => {
         //onclick cleart the form
@@ -213,6 +305,9 @@ Site Group
         //set ctzoffset
         $("#id_ctzoffset").val(-new Date().getTimezoneOffset())
 
+        //This function in js file resposible to render the map. 
+        d2InitializeMap()
+
         tabAllsites = $("#all_sites").DataTable({
             ajax:{
                 url: "{{ url('peoples:sitegroup') }}?action=allsites",
@@ -222,7 +317,7 @@ Site Group
                     d.pk = $("#id_pk").val();
                 },
                 dataSrc:function(resp){
-                    console.log(resp, typeof resp)
+                    /*console.log(resp, typeof resp)*/
                     populate_buidentifier(resp, '#custom_butype');
                     return resp['data']
                 }
@@ -300,7 +395,8 @@ Site Group
             columns:[
                 {data: 'buid', visible:false, orderable:false, className:"noVis",defaultContent: "", render:function(data, type, full, meta){
                     return data == undefined ? "" :data
-                }},
+                }
+                },
                 {data: 'buname', title: 'Site Name'},
                 {data: 'bucode', title: 'Code', visible:false},
                 {data: 'solid', title: 'Sol Id', visible:false},
@@ -315,7 +411,16 @@ Site Group
                 orderable:false,
                 className: "remove text-center noVis",
                 targets:12,
-                width: "5%"}
+                width: "5%"},                
+                {data:'gpslocation',title:'GPS',visible:false, render:function(data, type, row, meta){
+                        let coords = typeof data === 'string' && data.length > 0 ? JSON.parse(data): 'NONE'
+                        if(coords !== 'NONE'){
+                            let lat = coords['coordinates'][1]
+                            let lng = coords['coordinates'][0]
+                            return `<a href="https://www.google.com/maps?q=${lat},${lng}" target="_blank">${lat},${lng}</a>`
+                        }return coords
+                    }
+                    }
             ],
             buttons:[
                 dataTablesPDFConfig(
@@ -331,7 +436,13 @@ Site Group
                     mode = "portrait"
                 ),
                 dataTablesColumnVisibilityConfig(),
-            ]
+            ],
+            initComplete:function(settings, json){
+            if("{{ sitegrpform.instance.id }}" !== 'None'){
+                get_assigned_sites_data(tabAssigned_sites, "{{ sitegrpform.instance.id }}")
+            }
+            }
+
             
         })
 
@@ -403,7 +514,6 @@ Site Group
 		.then((result) => {
 			if(result.isConfirmed){ //delete requested by user
 				status = isSiteGrpDeleted(id) //fire's request
-				console.log("status ", status)
 				if(status){
 					show_successful_delete_alert() //defined in customjs
                     location.href = "{{ url('peoples:sitegroup') }}?action=form"

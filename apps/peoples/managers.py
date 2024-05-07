@@ -243,8 +243,9 @@ class PgblngManager(models.Manager):
             buname = F('assignsites__buname'),
             bucode = F('assignsites__bucode'),
             buid = F('assignsites__id'),
-            solid = F('assignsites__solid')
-        ).values('buname', 'buid', 'solid', 'bucode')
+            solid = F('assignsites__solid'),
+            gpslocation = AsGeoJSON('assignsites__gpslocation')
+        ).values('buname', 'buid', 'solid', 'bucode','gpslocation')
         return qset or self.none()
     
     def get_sitesfromgroup(self, job, force=False):

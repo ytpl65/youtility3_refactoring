@@ -456,7 +456,6 @@ class SiteGroup(LoginRequiredMixin, View):
         if R.get('action', None) == 'allsites':
             objs, idfs = Bt.objects.get_bus_idfs(
                 R, request=request, idf=R['sel_butype'])
-
             resp = rp.JsonResponse(data={
                 'data': list(objs),
                 'idfs': list(idfs)
