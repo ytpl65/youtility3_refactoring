@@ -253,6 +253,7 @@ class ShiftView(LoginRequiredMixin, View):
         if R.get('action', None) == 'list':
             objs = self.params['model'].objects.shift_listview(
                 request, P['related'], P['fields'])
+            print(objs)
             resp = rp.JsonResponse(data={
                 'data': list(objs),
             }, status=200, safe=False)
@@ -466,6 +467,7 @@ class FileRemovalResponse(rp.FileResponse):
 
 # Mapping Constants
 MODEL_RESOURCE_MAP = {
+    # 'MODELNAME'         : 'RESOURCE(ADMIN CLASS for the model which is used to validate and give error messages for importing data )'
     'TYPEASSIST'          : ob_admin.TaResource,
     'BU'                  : ob_admin.BtResource,
     'QUESTION'            : av_admin.QuestionResource,
@@ -477,8 +479,8 @@ MODEL_RESOURCE_MAP = {
     'VENDOR'              : VendorResource,
     'QUESTIONSET'         : av_admin.QuestionSetResource,
     'QUESTIONSETBELONGING': av_admin.QuestionSetBelongingResource,
-    'SCHEDULEDTASKS': sc_admin.TaskResource,
-    'SCHEDULEDTOURS': sc_admin.TourResource,
+    'SCHEDULEDTASKS'      : sc_admin.TaskResource,
+    'SCHEDULEDTOURS'      : sc_admin.TourResource,
 }
 
 # Header Mapping
@@ -495,8 +497,8 @@ HEADER_MAPPING  = {
         'Current Address', 'Blacklist',  'Alert Mails'],
     
     'BU': [
-        'Code*', 'Name*', 'Belongs To*', 'Site Type', 'Type*', \
-        'Site Manager*', 'Sol Id', 'Enable', 'GPS Location', 'Address', 'State', 'Country', 'City'],
+        'Code*', 'Name*', 'Belongs To*', 'Type*', 'Site Type', \
+        'Site Manager', 'Sol Id', 'Enable', 'GPS Location', 'Address', 'State', 'Country', 'City'],
     
     'QUESTION':[
         'Question Name*','Answer Type*', 'Min', 'Max','Alert Above', 'Alert Below', 'Is WorkFlow',
@@ -561,9 +563,15 @@ class BulkImportData(LoginRequiredMixin,ParameterMixin, View):
         R = request.GET
 
         if (R.get('action') == 'form'):
+            #removes the temp file created in the last import
             self.remove_temp_file(request)
+            #creating instance of instructions
             inst = utils.Instructions(tablename='TYPEASSIST')
+            '''getting the instructions from the instance and here json.dumps 
+            is used to convert the python dictionary to json.'''
             instructions = json.dumps(inst.get_insructions())
+            #(cxt) is a dictionary that holds data that will be passed to the template for rendering
+            #importform is the form that will be rendered in the template with initial table value as TYPEASSIST
             cxt = {'importform': self.form(initial={'table': "TYPEASSIST"}), 'instructions':instructions}
             return render(request, self.template, cxt)
         
