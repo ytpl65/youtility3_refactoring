@@ -196,7 +196,9 @@ function calculateDistanceDuration(response, data) {
   return optimizedPoints;
 }
 
+
 function d2DrawMarker(
+  
   row,
   idx,
   routeFreq = 1,
@@ -205,6 +207,7 @@ function d2DrawMarker(
   no = null,
   left = null
 ) {
+  
   var latlng = JSON.parse(row["bu__gpslocation"])["coordinates"];
   if (end && routeFreq > 1) {
     var max = idx + 1;
@@ -347,7 +350,6 @@ function ManageFrequenciedRoutes(data, routeFreq) {
 
 function reloadAssignedSitesTable(data) {
   asgdsites_table.rows().remove().draw();
-  console.log(data, "data")
   asgdsites_table.rows.add(data).draw();
 }
 

@@ -558,6 +558,7 @@ class JobneedManager(models.Manager):
             identifier = 'EXTERNALTOUR',
             job__enable=True
         ).order_by('seqno').values(*fields)
+        # print('External Tour',qset)
         return qset or self.none()
     
     def getAttachmentJobneed(self, id):
