@@ -29,6 +29,10 @@ from apps.peoples import models as pm
 from apps.work_order_management.models  import Wom
 from apps.tenants.models import Tenant
 from apps.core import exceptions as excp
+from icecream import ic
+from django.db import transaction
+from django.db.models import RestrictedError
+
 
 logger = logging.getLogger('__main__')
 dbg = logging.getLogger('__main__').debug
@@ -120,6 +124,29 @@ def render_form_for_update(request, params, formname, obj, extra_cxt=None, FORM=
         data = {'html_form': html}
         return rp.JsonResponse(data, status=200)
     except params['model'].DoesNotExist:
+        return handle_DoesNotExist(request)
+    except Exception:
+        return handle_Exception(request)
+
+
+def delete_pgroup_pgbelonging_data(request):
+    try:
+        pk = request.GET.get('id')
+        if not pk:
+            return handle_Exception(request)
+        pgroup_obj = pm.Pgroup.objects.filter(id=pk).first()
+        print()
+        with transaction.atomic():
+            pgbelonging_savepoint = transaction.savepoint()
+            try:
+                pm.Pgbelonging.objects.select_related("pgroup").filter(pgroup=pgroup_obj).delete()
+                pgroup_obj.delete()
+            except RestrictedError:
+                transaction.savepoint_rollback(pgbelonging_savepoint)
+                return handle_RestrictedError(request)
+            transaction.savepoint_commit(pgbelonging_savepoint)
+        return JsonResponse({},status=200)
+    except pm.Pgroup.DoesNotExist:
         return handle_DoesNotExist(request)
     except Exception:
         return handle_Exception(request)

@@ -67,7 +67,7 @@ Site Group
             Clear&nbsp;<i class="fas  fa-times-circle"></i>
         </button>
 
-        <button type="button" onclick="isSiteGrpDeleted({{ sitegrpform.instance.id }})" data-id="{{ sitegrpform.instance.id }}" id="deleteAttd"
+        <button type="button" onclick="deleteSiteGroup()" data-id="{{ sitegrpform.instance.id }}" id="deleteAttd"
             class="btn btn-sm btn-danger btn-hover-scale">
             Delete&nbsp;<i class="fas text-white fa-trash-alt"></i>
         </button>
@@ -495,20 +495,22 @@ Site Group
             showCancelButton: true,
             confirmButtonText: 'Submit'
             }).then((res) => {
-                fire_ajax_form_post(params, payLoad)
+                if (res.isConfirmed){
+                 fire_ajax_form_post(params, payLoad)
                 .done((data, status, xhr) => { //function to submit post request
                     show_successful_save_alert(update = isupdate)
                     window.setTimeout(function() {
                     window.location.href = `{{ url('peoples:sitegroup') }}?id=${data.pk}`;
                 }, 2000);
-                })
+                })   
+                }
             })
 			
 		})
     })
 
     //delete sitegroup 
-	function deleteSiteGroup(elemt){
+	function deleteSiteGroup(){
 		var id = $("#id_pk").val()
 		show_alert_before_delete('Site Group')
 		.then((result) => {

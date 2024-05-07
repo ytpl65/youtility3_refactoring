@@ -367,12 +367,10 @@ class PeopleGroup(LoginRequiredMixin, View):
 
         # handle delete request
         elif R.get('action', None) == "delete" and R.get('id', None):
-            obj = utils.get_model_obj(R['id'], request, self.params)
-            pm.Pgbelonging.objects.filter(pgroup=obj).delete()
-            resp = utils.render_form_for_delete(request, self.params, False)
+            resp = utils.delete_pgroup_pgbelonging_data(request)
+      
 
-        # return form with instance
-        elif R.get('id', None):
+        elif R.get('id', None):                                                             
             obj = utils.get_model_obj(int(R['id']), request, self.params)
             peoples = pm.Pgbelonging.objects.filter(
                 pgroup=obj).values_list('people', flat=True)
@@ -388,6 +386,7 @@ class PeopleGroup(LoginRequiredMixin, View):
         try:
             data = QueryDict(request.POST['formData'])
             if pk := request.POST.get('pk', None):
+                pm.Pgbelonging.objects.filter(pgroup_id=int(pk)).delete()
                 msg = "pgroup_view"
                 form = utils.get_instance_for_update(
                     data, self.params, msg, int(pk), kwargs={'request': request})
@@ -480,6 +479,7 @@ class SiteGroup(LoginRequiredMixin, View):
         if R.get('action', None) == "delete" and R.get('id', None):
             obj = utils.get_model_obj(R['id'], request, self.params)
             pm.Pgbelonging.objects.filter(pgroup_id=obj.id).delete()
+            obj.delete()
             return rp.JsonResponse(data=None, status=200, safe=False )
 
         # form with instance to load existing data

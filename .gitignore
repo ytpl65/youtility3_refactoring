@@ -1,7 +1,7 @@
 # Ignore all hidden files and folders, except for the `.git` folder.
 .
 !.git
-
+.git-credential
 # Ignore all virtual environment files and folders.
 .venv/
 .vscode/
