@@ -101,9 +101,7 @@ class BtManager(models.Manager):
 
     def get_bus_idfs(self, R, request, idf = None):
         S = request.session
-        
         bu_ids = self.get_whole_tree(S['client_id'])
-        
         fields = R.getlist('fields[]')
         qset = self.filter(
              ~Q(bucode__in=('NONE', 'SPS', 'YTPL')), identifier__tacode = idf, enable = True, id__in = bu_ids).select_related(
@@ -420,7 +418,7 @@ class ShiftManager(models.Manager):
         dsgn = Concat(F('designation__taname'), V(' ('), F('designation__tacode'), V(')'))    
         ).select_related('designation').values(
             'id', 'shiftname', 'dsgn', 'starttime',
-            'endtime', 'nightshiftappicable'
+            'endtime', 'nightshiftappicable','bu__buname','bu__bucode'
         ) or self.none()
         
 
