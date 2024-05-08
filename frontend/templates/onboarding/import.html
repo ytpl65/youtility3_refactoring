@@ -50,7 +50,7 @@
 {% block pagebreadcumb %}
 <!--will call parent contents -->
 {{ super() }}
-<li class="breadcrumb-item pe-3"><a href="{{ url('home') }}?template=true" class="pe-3">Home</a></li>
+{# <li class="breadcrumb-item pe-3"><a href="{{ url('home') }}?template=true" class="pe-3">Home</a></li> #}
 <li class="breadcrumb-item pe-3"><a href="javascript:void(0)" class="pe-3">Import Export</a></li>
 {% endblock pagebreadcumb %}
 <!-------------------------- END PAGE BREADCUMB ------------------------->
@@ -124,24 +124,33 @@ Import Data
 
     function getFormData(){
         var fd = new FormData();
+        console.log('called function',fd)
         fd.append('table', $("#id_table").val())
         const input = $('#id_importfile')[0].files[0] //document.querySelector('#id_importfile');
         fd.append('importfile', input);
         fd.append('csrfmiddlewaretoken', '{{ csrf_token }}');
         return fd
     }
+
+    //change  table from dropdown updates instruction accroding to table
     function showInstructionsList(instructions){
+        //This line clears any existing content inside the HTML element with id "instructions"
         $("#instructions").html("")
         for (var key in instructions){
+            //append values of instructions in html according to table
             if(instructions.hasOwnProperty(key)){
                 if(typeof instructions[key] === "string"){
                     let value = instructions[key]
+                    //console.log('value',value)
                     value = value.replace("$", `<div class="text-primary2 bg-light">`)
                     value = value.replace("&", "<div>")
+                    console.log('finaly value', value)
                     $("#instructions").append(`<li class="list-group-item">${value}</li>`)
                 }
+                //appends lables of the instructions in html
                 else if(typeof instructions[key] ==="object" && instructions[key].length > 0){
                     instructions[key].forEach((str) => {
+                        console.log('string in object condition :-',str)
                         str = str.replace("$", `<div class="text-primary2 bg-light">`)
                         str = str.replace("&", "<div>")
                         $("#instructions").append(`<li class="list-group-item">${str}</li>`)
@@ -232,10 +241,13 @@ Import Data
         //set ctzoffset
         $("#id_ctzoffset").val(-new Date().getTimezoneOffset())
 
-        //on click download template
+        /*Clicking the "Download Template" button triggers an 
+        AJAX request to download a template file for the selected table.*/
         $('#btn_download').click(() => {
             let table = $("#id_table").val();
+            console.log('download table',table)
             let url = `${urlname}?action=downloadTemplate&template=${table}`;
+            console.log('download url',url)
 
             fetch(url, {
                 method: 'GET'
@@ -256,9 +268,9 @@ Import Data
         });
 
 
-
-        //submit form with data-file
-        // Function to handle button click
+        /*Clicking the "Import Data" button prompts the user for 
+        confirmation before submitting the form with the selected file.*/
+        // Function to handle button click, submit form with data-file
         $("#btn_importdata").click((e) => {
             var fd = getFormData();
             const params = {
@@ -310,6 +322,10 @@ Import Data
             instructions = JSON.parse(`{{ instructions }}`)
             showInstructionsList(instructions)
         }
+
+
+        /* As the table selection changes, an AJAX request fetches instructions
+         specific to the chosen table and dynamically updates the instruction list.*/
         $("#id_table").on('change', (e) => {
             fire_ajax_get({
                 url:"{{ url('onboarding:import') }}",
