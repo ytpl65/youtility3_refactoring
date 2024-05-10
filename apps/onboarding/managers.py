@@ -2,6 +2,7 @@ from datetime import datetime
 from urllib import request
 from django.db import models
 from django.db.models import Q, F, ExpressionWrapper
+from django.contrib.gis.db.models.functions import  AsGeoJSON
 import apps.peoples.models as pm
 from django.db.models.functions import Concat, Cast
 from django.db.models import Value as V
@@ -105,7 +106,7 @@ class BtManager(models.Manager):
         fields = R.getlist('fields[]')
         qset = self.filter(
              ~Q(bucode__in=('NONE', 'SPS', 'YTPL')), identifier__tacode = idf, enable = True, id__in = bu_ids).select_related(
-                 'parent', 'identifier').annotate(buid = F('id')).values(*fields)
+                 'parent', 'identifier').annotate(buid = F('id'), gps = AsGeoJSON('gpslocation')).values(*fields)
         idfs = self.filter(
              ~Q(identifier__tacode = 'NONE'), ~Q(bucode__in=('NONE', 'SPS', 'YTPL')),id__in = bu_ids ).order_by(
                  'identifier__tacode').distinct(

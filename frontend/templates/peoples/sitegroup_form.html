@@ -115,6 +115,10 @@ Site Group
         <h3 class="card-title">
             Assigned Sites &nbsp;<i class="fas text-white ch4 fa-sm fa-paste"></i>
         </h3>
+        <div class = 'd-none' id="distance_duration_button">
+            <p>Total Distance: <span id="total_distance_display"></span></p>
+            <p>Total Duration: <span id="total_duration_display"></span></p>
+        </div>
     </div>
     <div class="card-body">
         <table id="assigned_sites"class="display cel-border compact hover nowrap">
@@ -125,7 +129,6 @@ Site Group
                     <th>Code</th>
                     <th>Sol ID</th>
                     <th id="deleteAll"><i class="fas text-light fa-trash-alt"></i></th>
-                    <th>GPS</th>
                 </tr>
             </thead>
         </table>
@@ -140,10 +143,11 @@ Site Group
 
 {% block extra_scripts %}
 {{ sitegrpform.media.js }}
-<script type="text/javascript" src="https://maps.googleapis.com/maps/api/js?key=AIzaSyC3PUZCB7u2PiV8whHeAshweOPIK_d690o&libraries=places"></script>
+<script type="text/javascript" src="https://maps.googleapis.com/maps/api/js?key=AIzaSyC3PUZCB7u2PiV8whHeAshweOPIK_d690o&libraries=places&loading=async"></script>
 <script src="{{ static('assets/js/overlapping_marker_spiderfier.js') }}" type="text/javascript"></script>
 <script src="{{ static('assets/plugins/custom/DataTables/datatables.min.js') }}" type="text/javascript"></script>
-<script src="{{ static('assets/js/schd_ext_tour_form.js') }}" type="text/javascript"></script>
+<script src="{{ static('assets/js/sitegrp_map.js') }}" type="text/javascript"></script>
+
 
 
 <script>
@@ -213,89 +217,6 @@ Site Group
         }
     }
 
-//map functions
-    var directionService = new google.maps.DirectionsService();
-    const infoWindow = new google.maps.InfoWindow();
-    const mapBounds = new google.maps.LatLngBounds();
-
-    //returns assgined sites starts initializing map
-    function get_assigned_sites_data(table, id){
-        const params = {url:`${urlname}?action=loadSites&id=${id}`, 'beforeSend':function(){}
-        }
-        fire_ajax_get(params)
-        .done((data, status, xhr) => {
-            if(xhr.status === 200){
-                let table = $("#assigned_sites").dataTable().api();
-				table.rows.add(data['assigned_sites']).draw()
-                var assigned_sites = tabAssigned_sites.rows().data().toArray()
-                let uniqueData = assigned_sites.filter((obj, index, self) =>
-                    index === self.findIndex((t) => (
-                        t.buname === obj.buname && 
-                        t.bucode === obj.bucode &&
-                        t.buid === obj.buid &&
-                        t.solid === obj.solid &&
-                        t.gpslocation === obj.gpslocation
-                    ))
-                );
-                plotLocationsOnMap(assigned_sites)
-			}
-        })
-    }
-
-    //clear exisiting plotings 
-    function clearMarkerAndPolyline() {
-        for (var i = 0; i < d2markersArray.length; i++) {
-            d2markersArray[i].setMap(null);
-        }
-        d2markersArray = [];
-    }
-
-    //clear exisiting plotings 
-    function d2ClearMarker() {
-        clearMarkerAndPolyline();
-        for (var i = 0; i < d2markersArray.length; i++) {
-            d2markersArray[i].setMap(null);
-        }
-        d2markersArray = [];
-    }
-
-    //Extracts latitudes and longitudes data 
-    function getLatLngFromGPSData(gpsLocationData) {
-        if (typeof gpsLocationData === 'string' && gpsLocationData.length > 0) {
-            const coords = JSON.parse(gpsLocationData)["coordinates"];
-            if (coords) {
-            return new google.maps.LatLng(coords[1], coords[0]); 
-            }
-        }
-        return null; 
-    }
-
-    //plots LatLng data into map
-    function plotLocationsOnMap(assignedSites) {
-        d2ClearMarker();
-        assignedSites.forEach(site => {
-            const latLng = getLatLngFromGPSData(site.gpslocation);
-            if (latLng) {
-            const marker = new google.maps.Marker({
-                position: latLng,
-                map: d2map, 
-                title: site.buname 
-            });
-            d2markersArray.push(marker); 
-
-            mapBounds.extend(latLng);
-
-            google.maps.event.addListener(marker, 'click', function() {
-                const siteName = this.title; 
-                infoWindow.setContent("Site Name: " + siteName);
-                infoWindow.open(d2map, this);
-            });
-            }
-        });
-        d2map.fitBounds(mapBounds);
-    }
-
-
     $(document).ready(() => {
         //onclick cleart the form
         $("#clearForm").click(() => {
@@ -313,7 +234,7 @@ Site Group
                 url: "{{ url('peoples:sitegroup') }}?action=allsites",
                 data:function ( d ) {
                     d.sel_butype = current_sel_butype;
-                    d.fields = ['buid', 'buname', 'parent__buname', 'bucode', 'identifier__tacode', 'solid'];
+                    d.fields = ['buid', 'buname', 'parent__buname', 'bucode', 'identifier__tacode', 'solid','gps'];
                     d.pk = $("#id_pk").val();
                 },
                 dataSrc:function(resp){
@@ -375,15 +296,15 @@ Site Group
             }
         });
         
-        
-        
         //populate_buidentifier(tabAllsites, '#custom_butype');
 
         //ON CLICK GRAB SELECTED AND POPULATE RIGHT TABLE
         $("#btn_assign_sites").click(() => {
             var selected_sites = tabAllsites.rows({'selected':true}).data().toArray()
+            console.log(selected_sites)
             tabAssigned_sites.rows().remove().draw()
             tabAssigned_sites.rows.add(selected_sites).draw()
+
         })
 
         tabAssigned_sites = $("#assigned_sites").DataTable({
@@ -411,16 +332,7 @@ Site Group
                 orderable:false,
                 className: "remove text-center noVis",
                 targets:12,
-                width: "5%"},                
-                {data:'gpslocation',title:'GPS',visible:false, render:function(data, type, row, meta){
-                        let coords = typeof data === 'string' && data.length > 0 ? JSON.parse(data): 'NONE'
-                        if(coords !== 'NONE'){
-                            let lat = coords['coordinates'][1]
-                            let lng = coords['coordinates'][0]
-                            return `<a href="https://www.google.com/maps?q=${lat},${lng}" target="_blank">${lat},${lng}</a>`
-                        }return coords
-                    }
-                    }
+                width: "5%"}
             ],
             buttons:[
                 dataTablesPDFConfig(
@@ -436,19 +348,23 @@ Site Group
                     mode = "portrait"
                 ),
                 dataTablesColumnVisibilityConfig(),
+                {
+                    text: 'Distance/Duration', 
+                    className: 'my-custom-button',
+                    action: function (e, dt, node, config) {
+                        calculate_distance_and_time(tabAssigned_sites,false,handleDistanceAndTimeData)
+                        plotLocationsOnMap(tabAssigned_sites)
+                    }
+                }
             ],
             initComplete:function(settings, json){
             if("{{ sitegrpform.instance.id }}" !== 'None'){
                 get_assigned_sites_data(tabAssigned_sites, "{{ sitegrpform.instance.id }}")
             }
-            }
-
-            
+            }        
         })
-
         //reduce size of search bar
         $(".dataTables_filter label > input").css('width', '16rem')
-
         
         if("{{ sitegrpform.instance.id }}" != 'None'){
             console.log('checkig...')
@@ -526,5 +442,6 @@ Site Group
 			}
 		})
 	}
+
 </script>
 {% endblock extra_scripts %}
