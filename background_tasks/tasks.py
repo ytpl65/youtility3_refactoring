@@ -584,13 +584,15 @@ def process_graphql_mutation_async(self, payload):
         variables = post_data.get('variables', {})
 
         if query and variables:
-            return execute_graphql_mutations(query, variables)
+            resp = execute_graphql_mutations(query, variables)
         else:
             mqlog.warning("Invalid records or query in the payload.")
-            return json.dumps({'errors': ['No file data found']})
+            resp = json.dumps({'errors': ['No file data found']})
     except Exception as e:
         mqlog.error(f"Error processing payload: {e}", exc_info=True)
-        return json.dumps({'errors': [str(e)]})
+        resp = json.dumps({'errors': [str(e)]})
+        raise e
+    return resp
     
     
 @app.task(bind=True, name="say_hi")
@@ -661,3 +663,30 @@ def cleanup_reports_which_are_12hrs_old(self, dir_path,hours_old=12):
             except Exception as e:
                 dlog.error(f"Error deleting file {file_path}: {e}")
         
+
+@app.task(bind=True, default_retry_delay=300, max_retries=5, name="process_graphql_download_async")
+def process_graphql_download_async(self, payload):
+    """
+    Process the incoming payload containing a GraphQL download and file data.
+
+    Args:
+        payload (str): The JSON-encoded payload containing the mutation query and variables.
+
+    Returns:
+        str: The JSON-encoded response containing the mutation result or errors.
+    """
+    from apps.service.utils import execute_graphql_mutations
+    try:
+        post_data = json.loads(payload)
+        query = post_data.get('query')
+
+        if query:
+            resp = execute_graphql_mutations(query, download=True)
+        else:
+            mqlog.warning("Invalid records or query in the payload.")
+            resp = json.dumps({'errors': ['No file data found']})
+    except Exception as e:
+        mqlog.error(f"Error processing payload: {e}", exc_info=True)
+        resp = json.dumps({'errors': [str(e)]})
+        raise e
+    return resp

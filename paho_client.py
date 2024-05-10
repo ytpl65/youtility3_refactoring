@@ -14,7 +14,7 @@ import logging
 from pprint import pformat
 log = logging.getLogger('message_q')
 from django.conf import settings
-from background_tasks.tasks import process_graphql_mutation_async
+from background_tasks.tasks import process_graphql_mutation_async, process_graphql_download_async
 from celery.result import AsyncResult
 MQTT_CONFIG = settings.MQTT_CONFIG 
 
@@ -24,10 +24,16 @@ BROKER_PORT = MQTT_CONFIG['BROKER_PORT']
 
 MUTATION_TOPIC        = "graphql/mutation"
 MUTATION_STATUS_TOPIC = "graphql/mutation/status"
+GRAPHQL_DOWNLOAD      = "graphql/download"
+
+
 RESPONSE_TOPIC        = "response"
+RESPONSE_DOWNLOAD        = "response/download"
+STATUS_TOPIC          = "response/status"
+
 TESTMQ = "post"
 TESTPUBMQ = "received"
-STATUS_TOPIC          = "response/status"
+
 
 def get_task_status(item):
     """
@@ -60,6 +66,7 @@ class MqttClient:
             client.subscribe(MUTATION_TOPIC)
             client.subscribe(MUTATION_STATUS_TOPIC)
             client.subscribe(TESTMQ)
+            client.subscribe(GRAPHQL_DOWNLOAD)
         else:
             fail=f"Failed to connect, return code {rc}"
             print(fail)
@@ -70,6 +77,16 @@ class MqttClient:
         payload = msg.payload.decode()
         log.info("message: {} from MQTT broker on topic {} {}".format(msg.mid,msg.topic, "payload recieved" if payload else "payload not recieved"))
         log.info("processing started [+]")
+
+        if msg.topic == GRAPHQL_DOWNLOAD:
+            result = process_graphql_download_async(payload)
+            post_data = json.loads(payload)
+            service_name = post_data.get('serviceName')
+            response = {'payload':result['data'], 'serviceName':service_name,
+                        'tableName':post_data.get('tableName', ""), 'service':post_data.get('service')}
+            response = json.dumps(response)
+            log.info(f"Response published to {RESPONSE_DOWNLOAD} after accepting {service_name}")
+            client.publish(RESPONSE_DOWNLOAD, response, qos=2)
         
         if msg.topic == MUTATION_TOPIC:
             # process graphql mutations received on this topicMUTATION_TOPIC

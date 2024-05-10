@@ -371,7 +371,6 @@ class Query(graphene.ObjectType):
             data[i]['bupreferences'] = json.dumps(data[i]['bupreferences'])
         records, count, msg = utils.get_select_output(data)
         log.info(f'{count} objects returned...')
-        log.info(f'data:{data}')
         return SelectOutputType(nrows = count, records = records,msg = msg)
 
     @staticmethod

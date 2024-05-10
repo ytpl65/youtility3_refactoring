@@ -1,4 +1,4 @@
-import json
+import json, base64, binascii
 import traceback as tb
 from logging import getLogger
 from pprint import pformat
@@ -153,9 +153,9 @@ def write_file_to_dir(filebuffer, uploadedfilepath):
     if hasattr(filebuffer, 'read'):
         # This assumes filebuffer is a file-like object (e.g., InMemoryUploadedFile), so we read its contents.
         content = filebuffer.read()
-    else:
-        # In case filebuffer is directly bytes, it can be passed as is.
-        content = filebuffer
+    elif isinstance(filebuffer, list):  # Check if filebuffer is a list of integers (bytes)
+        # Convert list of integers to bytes
+        content = bytes(filebuffer)
     path = default_storage.save(uploadedfilepath, ContentFile(content))
     log.info(f"file saved to {path}")
 
@@ -744,7 +744,7 @@ def perform_uploadattachment(file,  record, biodata):
     uploadfile  = f'{filepath}/{filename}'
     db          = utils.get_current_db_name()
     
-    log.info(f"file_buffer: '{file_buffer}' \n'onwername':{onwername}, \nownerid: '{ownerid}' \npeopleid: '{peopleid}' \npath: {path} \nhome_dir: '{home_dir}' \nfilepath: '{filepath}' \nuploadfile: '{uploadfile}'")
+    log.info(f"Length file_buffer: '{len(file_buffer)}' \n'onwername':{onwername}, \nownerid: '{ownerid}' \npeopleid: '{peopleid}' \npath: {path} \nhome_dir: '{home_dir}' \nfilepath: '{filepath}' \nuploadfile: '{uploadfile}'")
     try:
         with transaction.atomic(using = db):
             iscreated = get_or_create_dir(filepath)
@@ -780,7 +780,7 @@ def log_event_info(onwername, ownerid):
     return eobj
 
 
-def execute_graphql_mutations(mutation_query, variables):
+def execute_graphql_mutations(mutation_query, variables=dict(), download=False):
     from apps.service.schema import schema
 
 
@@ -790,14 +790,18 @@ def execute_graphql_mutations(mutation_query, variables):
         variable_values=variables
     )
 
+    log.info(f"Mutation query: {mutation_query}")
     if result.errors:
         # Handle errors
         error_messages = [error.message for error in result.errors]
-        log.error(f"Mutation errors: {pformat(error_messages)}")
+        log.error(f"Mutation errors: {pformat(error_messages)}", exc_info=True)
         resp = json.dumps({'errors': error_messages})
         raise Exception(f"GraphQL mutation failed with errors {resp}")
     else:
+        if download:
+            resp = {'data': result.data}
+        else:
+            resp = json.dumps({'data': result.data})
         # Handle success
         log.info(f"Mutation result: {result.data}")
-        resp = json.dumps({'data': result.data})
     return resp
