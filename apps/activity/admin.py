@@ -75,13 +75,20 @@ class QuestionResource(resources.ModelResource):
         self.clean_question_name_and_answer_type(row)
         self.clean_numeric_and_rating_fields(row)
         self.validate_numeric_values(row)
+        self.check_answertype_fields(row)
         self.validate_options_values(row)
         self.set_alert_on_value(row)
         self.check_unique_record(row)
         super().before_import_row(row, **kwargs)
+
+
+    def check_answertype_fields(self,row):
+        Authorized_AnswerTypes = ["DATE","DROPDOWN","EMAILID","MULTILINE","NUMERIC","SIGNATURE","SINGLELINE","TIME","RATING","PEOPLELIST","SITELIST","METERREADING"]
+        Answer_type_val = row.get('Answer Type*')
+        if Answer_type_val not in Authorized_AnswerTypes:
+            raise ValidationError({Answer_type_val:f"{Answer_type_val} is a not a valid Answertype.Please select a valid AnswerType."})
     
     def check_required_fields(self, row):
-        ic(row)
         required_fields = ['Answer Type*', 'Question Name*',  'Client*']
         for field in required_fields:
             if row.get(field) in ['', None]:
@@ -194,7 +201,7 @@ class QuestionSetResource(resources.ModelResource):
         model = am.QuestionSet
         skip_unchanged = True
         import_id_fields = ['ID']
-        report_skipped = True
+        report_skipped = True 
         fields = ['Question Set Name*', 'ASSETINCLUDES', 'SITEINCLUDES', 'SITEGRPINCLUDES', 'SITETYPEINCLUDES', 
                   'SHOWTOALLSITES', 'URL', 'BV', 'CLIENT', 'Type', 'BelongsTo', 'SEQNO']
 
@@ -215,10 +222,10 @@ class QuestionSetResource(resources.ModelResource):
             if not row.get(field):
                 raise ValidationError({field: f"{field} is a required field"})
 
-        optional_fields = ['Site Group Includes', 'Site Includes', 'Asset Includes', 'Site Type Includes']
+        ''' optional_fields = ['Site Group Includes', 'Site Includes', 'Asset Includes', 'Site Type Includes']
         if all(not row.get(field) for field in optional_fields):
             raise ValidationError("You should provide a value for at least one field from the following: "
-                                "'Site Group Includes', 'Site Includes', 'Asset Includes', 'Site Type Includes'")
+                                "'Site Group Includes', 'Site Includes', 'Asset Includes', 'Site Type Includes'") '''
         
     def validate_row(self, row):
         models_mapping = {
@@ -234,7 +241,6 @@ class QuestionSetResource(resources.ModelResource):
                 values = field_value.replace(" ", "").split(',')
                 print("&&&&&&&&&&", values)
                 count = model.objects.filter(**{f'{lookup_field}__in': values}).count()
-                ic(count, len(values), values, model, field_value)
                 if len(values) != count:
                     raise ValidationError({field: f"Some of the values specified in {field} do not exist in the system"})
                 row[field] = values
@@ -457,7 +463,7 @@ class AssetResource(resources.ModelResource):
     )
 
     BelongsTo = fields.Field(
-        column_name       = 'Belongs To*',
+        column_name       = 'Belongs To',
         attribute         = 'parent',
         widget            = wg.ForeignKeyWidget(am.Asset, 'tacode'),
         saves_null_values = True,
@@ -639,7 +645,7 @@ class LocationResource(resources.ModelResource):
     )
     
     PARENT = fields.Field(
-        column_name       = 'Belongs To*',
+        column_name       = 'Belongs To',
         attribute         = 'parent',
         widget            = wg.ForeignKeyWidget(am.Location, 'loccode'),
         saves_null_values = True,
