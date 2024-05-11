@@ -506,7 +506,7 @@ HEADER_MAPPING  = {
     
     'ASSET':[
         'Code*', 'Name*', 'Running Status*', 'Identifier*','Is Critical',
-        'Client*', 'Site*', 'Capacity', 'BelongsTo*', 'Type',  'GPS Location',
+        'Client*', 'Site*', 'Capacity', 'BelongsTo', 'Type',  'GPS Location',
         'Category', 'SubCategory', 'Brand', 'Unit', 'Service Provider',
         'Enable', 'Is Meter', 'Is Non Engg. Asset', 'Meter', 'Model', 'Supplier',
         'Invoice No', 'Invoice Date', 'Service', 'Service From Date', 'Service To Date',
@@ -525,7 +525,7 @@ HEADER_MAPPING  = {
         'Mob No*', 'Site*', 'Client*', 'GPS Location', 'Enable'
     ],
     'LOCATION':[
-        'Code*', 'Name*', 'Type*', 'Status*', 'Is Critical', 'Belongs To*',
+        'Code*', 'Name*', 'Type*', 'Status*', 'Is Critical', 'Belongs To',
         'Site*', 'Client*', 'GPS Location', 'Enable'
     ],
     'QUESTIONSET':[
