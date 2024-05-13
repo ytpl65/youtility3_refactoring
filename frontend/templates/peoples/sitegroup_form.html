@@ -322,11 +322,7 @@ Site Group
                 {data: 'bucode', title: 'Code', visible:false},
                 {data: 'solid', title: 'Sol Id', visible:false},
                 {data:function(row, type, val, meta){
-                        if(row['13'] != null){
-                            return ""
-                        }else{
                             return '<a href="#" onClick="return false;"><i class="fas text-white text-dark fa-trash-alt fs-3"></i></a>'
-                        }
                     },
                 defaultContent: '',
                 orderable:false,
