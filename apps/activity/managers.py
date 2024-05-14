@@ -201,9 +201,10 @@ class QuestionManager(models.Manager):
             )
         )
     
-    def get_questions_modified_after(self, mdtz):
+    def get_questions_modified_after(self, mdtz, clientid):
         mdtzinput = datetime.strptime(mdtz, "%Y-%m-%d %H:%M:%S")
-        qset = self.select_related(*self.related).filter( mdtz__gte = mdtzinput, enable=True).values(*self.fields).order_by('-mdtz')
+        qset = self.select_related(*self.related).filter(
+             mdtz__gte = mdtzinput, enable=True, client_id=clientid).values(*self.fields).order_by('-mdtz')
         return qset or None
 
     def questions_of_client(self, request, RGet):

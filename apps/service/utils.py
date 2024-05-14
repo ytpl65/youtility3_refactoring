@@ -802,6 +802,4 @@ def execute_graphql_mutations(mutation_query, variables=dict(), download=False):
             resp = {'data': result.data}
         else:
             resp = json.dumps({'data': result.data})
-        # Handle success
-        log.info(f"Mutation result: {result.data}")
     return resp
