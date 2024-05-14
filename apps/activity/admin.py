@@ -214,7 +214,17 @@ class QuestionSetResource(resources.ModelResource):
         self.check_required_fields(row)
         self.validate_row(row)
         self.unique_record_check(row)
+        self.verify_valid_questionset_type(row)
         super().before_import_row(row, **kwargs)
+
+    def verify_valid_questionset_type(self,row):
+        Authorized_Questionset_type = ['CHECKLIST','RPCHECKLIST','INCIDENTREPORT',
+                                       'SITEREPORT','WORKPERMIT','RETURN_WORK_PERMIT',
+                                       'KPITEMPLATE','SCRAPPEDTEMPLATE','ASSETAUDIT',
+                                       'ASSETMAINTENANCE','WORK_ORDER']
+        questionset_type = row.get('QuestionSet Type*')
+        if questionset_type not in Authorized_Questionset_type:
+            raise ValidationError({questionset_type:f"{questionset_type} is not a valid Questionset Type. Please select a valid QuestionSet."})
 
     def check_required_fields(self, row):
         required_fields = ['QuestionSet Type*', 'Question Set Name*']
