@@ -573,7 +573,7 @@ Report Form
       rule:'required',
     }])
     
-    getFieldsFromServer()
+    //getFieldsFromServer()
 
     emptyreportsdropdown()
 
@@ -771,6 +771,7 @@ Report Form
   function dynamicFormBehaviour(data) {
       $('.datafield').addClass('d-none')
       const { fields, unsupported_formats } = data.behaviour;
+      console.log(fields)
 
       // Function to toggle visibility and required attribute
       function toggleFieldBehavior(fieldname) {
@@ -782,7 +783,7 @@ Report Form
               closestInputGroup.toggleClass("d-none");
               
               if (fieldname.includes('*')) {
-                  toggleRequiredAttribute(id, set = true);
+                  toggleRequiredAttribute(id, set = true);  
                   addValidationsToForm(id)
               }
           }
@@ -795,6 +796,7 @@ Report Form
       if (unsupported_formats[0] !== 'None') {
           $("#id_format option").each(function() {
               const optionValue = $(this).val();
+              console.log(optionValue)
               if (optionValue && unsupported_formats.includes(optionValue)) {
                   $(this).prop('disabled', true);
               }
@@ -819,6 +821,7 @@ Report Form
 //loading fields according to report
   function getFieldsFromServer(){
     let selected = $("#id_report_name").val()
+    console.log(selected)
     if(!['', null, undefined].includes(selected)){
       fire_ajax_get({
         url:urlname,
@@ -836,6 +839,8 @@ Report Form
         if(selected === 'LOCATIONQR'){
           showHideSelectField('SITE')
         }
+        console.log(data)
+        //changes the form behaviour according to the fields in data.
         dynamicFormBehaviour(data)
       })
     }
