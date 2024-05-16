@@ -540,7 +540,21 @@ class AssetResource(resources.ModelResource):
     def before_import_row(self, row, row_number=None, **kwargs):
         self.validations(row)
         self.initialize_attributes(row)
-    
+        self.validating_identifier(row)
+        self.validating_running_status(row)
+
+    def validating_identifier(self,row):
+        asset_identifier = row.get('Identifier*')
+        valid_idetifier_values = ['NONE','ASSET','CHECKPOINT','NEA']
+        if asset_identifier not in valid_idetifier_values:
+            raise ValidationError({asset_identifier:f"{asset_identifier} is not a valid identifier. please select a valid identifier from {valid_idetifier_values}"})
+        
+    def validating_running_status(self,row):
+        running_status = row.get('Running Status*')
+        valid_running_status = ['MAINTENANCE','STANDBY','WORKING','SCRAPPED']
+        if running_status not in valid_running_status:
+            raise ValidationError({'running_status':f'{running_status} is not a valid running status. Please select a valid running status from {valid_running_status}.'})
+
     def initialize_attributes(self, row):
         attributes = [
             ('_ismeter', 'Is Meter', False),
@@ -661,7 +675,8 @@ class LocationResource(resources.ModelResource):
         saves_null_values = True,
         default=utils.get_or_create_none_location
     )
-    
+
+    #django validates this field and throws error if the value is not valid 
     Type = fields.Field(
         column_name       = 'Type*',
         attribute         = 'type',
@@ -689,6 +704,12 @@ class LocationResource(resources.ModelResource):
         super().__init__(*args, **kwargs)
         self.is_superuser = kwargs.pop('is_superuser', None)
         self.request = kwargs.pop('request', None)
+
+    def check_valid_status(self, row):
+        status = row.get('Status*')
+        valid_status = ['MAINTENANCE', 'STANDBY','WORKING','SCRAPPED']
+        if status not in valid_status:
+            raise ValidationError({status:f"{status} is not a valid status. Please select a valid status from {valid_status}"})
     
     def before_import_row(self, row, row_number=None, **kwargs):
         row['Code*'] = clean_string(row.get('Code*'), code=True)
@@ -700,6 +721,9 @@ class LocationResource(resources.ModelResource):
         if row.get('Name*') in  ['', None]:raise ValidationError("Name* is required field")
         if row.get('Type*') in  ['', None]:raise ValidationError("Type* is required field")
         if row.get('Status*') in  ['', None]:raise ValidationError("Status* is required field")
+
+        #status validation
+        self.check_valid_status(row)
         
         # code validation
         regex, value = "^[a-zA-Z0-9\-_]*$", row['Code*']
