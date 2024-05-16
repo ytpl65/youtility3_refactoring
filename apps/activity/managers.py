@@ -1805,7 +1805,7 @@ class LocationManager(models.Manager):
     def get_locationlistview(self, related, fields, request):
         S = request.session
         P = request.GET['params']
-        qset = self.filter(
+        qset = self.annotate(gps=AsGeoJSON('gpslocation')).filter(
             ~Q(loccode='NONE'),
             bu_id = S['bu_id'],
             client_id = S['client_id'],
