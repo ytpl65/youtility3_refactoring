@@ -54,7 +54,7 @@
 <!--------- BEGIN EXTRA SCRIPTS ----------------------------->
 {% block extra_scripts %}
 <script
-      src="https://maps.googleapis.com/maps/api/js?key=AIzaSyC3PUZCB7u2PiV8whHeAshweOPIK_d690o&libraries=places&v=weekly"
+      src="https://maps.googleapis.com/maps/api/js?key=AIzaSyC3PUZCB7u2PiV8whHeAshweOPIK_d690o&libraries=places&v=weekly&loading=async"
       defer
     ></script>
 
@@ -243,7 +243,18 @@ if(filters && filters.AssetType === 1){
 					return data === true ? '<i class="bi bi-check-circle-fill text-success"></i>': '<i class="bi bi-x-circle-fill text-danger"></i>'				
 				}
 				},
-				{data:'gps', title:'GPS',visible:false},
+				{data: 'gps', visible: true, title: "GPS", render: function (data, type, row, meta) {
+                    if (typeof data === 'string' && data.length > 0) {
+                        let coords = data.match(/POINT\(([^ ]+) ([^ ]+)\)/);
+                        if (coords) {
+                            let lng = coords[1];
+                            let lat = coords[2];
+                            return `<a href="https://www.google.com/maps?q=${lat},${lng}" target="_blank">${lat},${lng}</a>`;
+                        }
+                    }
+                    return 'NONE';
+                }
+           		},
 				{data:'identifier', visible:false, className:'noVis'},
 				{data:'bu__buname', title:"Site", visible:false},
 				{data:'bu__bucode', title:'Site Code', visible:false},
@@ -252,7 +263,8 @@ if(filters && filters.AssetType === 1){
                     return `<a href="${downloadUrl}" class="qr-download-link" onclick="event.stopPropagation()" >QR Download</a>`;
                 },
 				selectRow: true
-				}
+				},
+				
 
 			],
 			responsive: true,
