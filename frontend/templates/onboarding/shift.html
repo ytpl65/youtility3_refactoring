@@ -169,7 +169,7 @@ Shift List
 	//delete ajax request 
 	function isShiftDeleted(id){
 		console.log("id ", id)
-		const params = {url:`${urlname}?action=delete&id=${id}`, 'beforeSend':function () {}}
+		const params = {url:`${urlname}?action=delete&id=${id}`, 'beforeSend':function () {} }
 		fire_ajax_get(params)
 		.done((data, status, xhr) => {
 			if(!xhr.status === 200){

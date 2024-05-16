@@ -181,7 +181,7 @@ People Groups
 		show_alert_before_delete(viewname)
 		.then((result) => {
 			if(result.isConfirmed){
-				const params = {url:`${urlname}?action=delete&id=${id}`,beforeSend:function(){}}
+				const params = {url:`${urlname}?action=delete&id=${id}`,beforeSend:function(){} }
 				fire_ajax_get(params)
 				.done((data,status,xhr) => {
 					if(!xhr.status === 200){
