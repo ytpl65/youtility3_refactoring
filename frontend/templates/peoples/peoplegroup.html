@@ -155,23 +155,25 @@ People Groups
 		})
 
 		//update row (form-view)
-		$('#pgroup_table tbody').on('click', 'tr', function(e){
-			var d = table.row( this ).data();
-			e.preventDefault();
-			var id = d.id
-			if (!(id)){ return }
-			const params = {
-				'modal_id'    : modal_id,
-				'url'         : `${urlname}?id=${id}`,
-				'beforeSend'  : BeforeSend }
-			fire_ajax_get(params)
-			.done((data, status, xhr) => {
-				$(modalcontent_id).attr('data-form', 'update')
-				$(`${modal_id} .modal-content`).html(data.html_form)
-			})
-			.fail((xhr, status, error) => {
-				show_error_alert('Something went wrong!') //defined in custom.js
-			})
+		table.on('select',function(e,dt,type,indexes){
+			if(type === 'row'){
+				var id=table.rows(indexes).data().pluck('id')[0]
+				if (!id){return}
+				e.preventDefault();
+				const params = {
+					'modal_id':modal_id,
+					'url':`${urlname}?id=${id}`,
+					beforeSend: BeforeSend
+				}
+				fire_ajax_get(params)
+				.done((data,status,xhr)=>{
+					$(modalcontent_id).attr('data-form','update')
+					$(`${modal_id} .modal-content`).html(data.html_form)
+				})
+				.fail((xhr,status,error) => {
+					show_error_alert('Something went wrong!')
+				})
+			}
 		})
 	}); //END document.ready()
 
