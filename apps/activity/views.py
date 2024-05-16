@@ -821,7 +821,7 @@ class LocationView(LoginRequiredMixin, View):
         'form':af.LocationForm,
         'related':['parent', 'bu'],
         'fields':['id', 'loccode', 'locname', 'parent__locname',
-                  'locstatus', 'enable', 'bu__bucode', 'bu__buname']
+                  'locstatus', 'enable', 'bu__bucode', 'bu__buname','gps']
     }
     
     def get(self, request, *args, **kwargs):

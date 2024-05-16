@@ -144,10 +144,10 @@
         const alertUser = () => {
             Swal.fire(nightShiftAlert).then((res) => {
                 if (res.isConfirmed) {
-                    $("#id_nightshift_appicable").prop('checked', true)
+                    $("#id_nightshiftappicable").prop('checked', true)
                 } else {
                     $("#id_starttime, #id_endtime, #id_shiftduration").val("")
-                    $("#id_nightshift_appicable").prop('checked', false)
+                    $("#id_nightshiftappicable").prop('checked', false)
                 }
             })
             nightshiftWarn=true;
@@ -162,7 +162,7 @@
                 duration = 1440 + duration
                 nightshiftWarn === false ? alertUser() : {}
             } else {
-                $("#id_nightshift_appicable").prop('checked', false)
+                $("#id_nightshiftappicable").prop('checked', false)
             }
             var totalhrs = formatMins(duration)
             console.log("totalhrs", totalhrs)
