@@ -74,7 +74,15 @@ $(document).ready(function () {
                     return `<a href="${downloadUrl}" class="qr-download-link">QR Download</a>`
                 }
 				},
-				{data:'gps',title:'GPS',visible:false}
+				{data:'gps', visible:true, title:"GPS", render:function(data, type, row, meta){
+                        let coords = typeof data === 'string' && data.length > 0 ? JSON.parse(data): 'NONE'
+                        if(coords !== 'NONE'){
+                            let lat = coords['coordinates'][1]
+                            let lng = coords['coordinates'][0]
+                            return `<a href="https://www.google.com/maps?q=${lat},${lng}" target="_blank">${lat},${lng}</a>`
+                        }return coords
+                    }
+                }
 
 			],
 			order:[[1, 'asc']],
