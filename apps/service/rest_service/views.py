@@ -9,17 +9,14 @@ from apps.attendance.models import PeopleEventlog
 from datetime import datetime
 
 
-def get_queryset(model, request):
-    """
-    Helper function to filter queryset based
-    on 'last_update' query parameter
-    """
+def get_queryset(model, request, related_fields=list):
     last_update = request.query_params.get("last_update")
     if last_update:
         last_update = datetime.strptime(last_update, "%Y-%m-%dT%H:%M:%S.%fZ")
-        return model.objects.filter(mdtz__gt=last_update)
+        queryset = model.objects.filter(mdtz__gt=last_update)
     else:
-        return model.objects.all()
+        queryset = model.objects.all()
+    return queryset
 
 
 class PeopleViewset(viewsets.ReadOnlyModelViewSet):
@@ -28,7 +25,6 @@ class PeopleViewset(viewsets.ReadOnlyModelViewSet):
     """
 
     def list(self, request):
-        # Filtering based on 'last_update' query parameter
         queryset = get_queryset(people_models.People, request)
         serializer = ytpl_serializers.PeopleSerializer(queryset, many=True)
         return Response(serializer.data)
@@ -140,12 +136,12 @@ class JobViewset(viewsets.ReadOnlyModelViewSet):
     API endpoint that allows Job to be viewed.
     """
 
-    def list(self, request):
+    async def list(self, request):
         queryset = get_queryset(act_models.Job, request)
         serializer = ytpl_serializers.JobSerializer(queryset, many=True)
         return Response(serializer.data)
 
-    def retrieve(self, request, *args, **kwargs):
+    async def retrieve(self, request, *args, **kwargs):
         job = get_object_or_404(act_models.Job, pk=kwargs["pk"])
         serializer = ytpl_serializers.JobSerializer(job)
         return Response(serializer.data)
@@ -156,12 +152,12 @@ class JobneedViewset(viewsets.ReadOnlyModelViewSet):
     API endpoint that allows Jobneed to be viewed.
     """
 
-    def list(self, request):
+    async def list(self, request):
         queryset = get_queryset(act_models.Jobneed, request)
         serializer = ytpl_serializers.JobneedSerializer(queryset, many=True)
         return Response(serializer.data)
 
-    def retrieve(self, request, *args, **kwargs):
+    async def retrieve(self, request, *args, **kwargs):
         jobneed = get_object_or_404(act_models.Jobneed, pk=kwargs["pk"])
         serializer = ytpl_serializers.JobneedSerializer(jobneed)
         return Response(serializer.data)
