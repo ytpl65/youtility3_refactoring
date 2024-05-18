@@ -46,7 +46,7 @@ People
 				{data: 'mobno', title: 'Phone #'},
 				{data:null,title:'Qr Code',defaultContent:'print',render:function(data,type,row,meta){
 					let downloadUrl = `{{ url('peoples:people') }}?action=qrdownload&code=${encodeURIComponent(row['peoplecode'])}&name=${row['peoplename']}`
-                    return `<a href="${downloadUrl}" class="qr-download-link">Qr Download</a>`
+                    return `<a href="${downloadUrl}" class="qr-download-link">QR Download</a>`
 				}
 				}	
 			],
