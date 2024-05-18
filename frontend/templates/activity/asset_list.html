@@ -74,7 +74,7 @@ $(document).ready(function () {
                     return `<a href="${downloadUrl}" class="qr-download-link">QR Download</a>`
                 }
 				},
-				{data:'gps', visible:true, title:"GPS", render:function(data, type, row, meta){
+				{data:'gps', visible:false, title:"GPS", render:function(data, type, row, meta){
                         let coords = typeof data === 'string' && data.length > 0 ? JSON.parse(data): 'NONE'
                         if(coords !== 'NONE'){
                             let lat = coords['coordinates'][1]

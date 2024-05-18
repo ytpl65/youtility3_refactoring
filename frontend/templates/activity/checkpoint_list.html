@@ -243,7 +243,7 @@ if(filters && filters.AssetType === 1){
 					return data === true ? '<i class="bi bi-check-circle-fill text-success"></i>': '<i class="bi bi-x-circle-fill text-danger"></i>'				
 				}
 				},
-				{data: 'gps', visible: true, title: "GPS", render: function (data, type, row, meta) {
+				{data: 'gps', visible: false, title: "GPS", render: function (data, type, row, meta) {
                     if (typeof data === 'string' && data.length > 0) {
                         let coords = data.match(/POINT\(([^ ]+) ([^ ]+)\)/);
                         if (coords) {
