@@ -292,6 +292,12 @@ Work Permit Form
         $("#load_questions").click((e) => {
             let qsetid = $("#id_qset").val()
             let approvers = $("#id_approvers").val()
+
+            if(qsetid.length == 0){
+                display_field_error('qset','Select Permit to Work')
+                return
+            }
+
             if(approvers.length == 0){
                 display_field_error('approvers', 'At least one approver needed!')
                 return
