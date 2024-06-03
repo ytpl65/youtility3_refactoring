@@ -115,14 +115,15 @@ tr{
         }
         return null
     }
-
+    
     function getFRStatus(data){
+        console.log("data",data['default_img_path'],data['default_img_path'].length)
         fire_ajax_get({url:`{{ url('activity:previewImage') }}?action=getFRStatus&uuid=${data}`,})
         .done((data, status, xhr) => {
             const NA = "Information not available"
-            const filepathIN = data['attd_in_out'].length ? `{{MEDIA_URL}}${data['attd_in_out'][0]['filepath'].replace('youtility4_media/', '')}/${data['attd_in_out'][0]['filename']}` : "{{ static('assets/media/images/blank.png') }}"
+            const filepathIN = data['attd_in_out'].length > 1 ? `{{MEDIA_URL}}${data['attd_in_out'][0]['filepath'].replace('youtility4_media/', '')}/${data['attd_in_out'][0]['filename']}` : "{{ static('assets/media/images/blank.png') }}"
             const filepathOUT = data['attd_in_out'].length > 1 ? `{{MEDIA_URL}}${data['attd_in_out'][1]['filepath'].replace('youtility4_media/', '')}/${data['attd_in_out'][1]['filename']}` : "{{ static('assets/media/images/blank.png') }}"
-            const defaultIMG =  data['default_img_path'].length ? `{{MEDIA_URL}}${data['default_img_path'][0]['peopleimg'].replace('youtility4_media/', '')}` : "{{ static('assets/media/images/blank.png') }}"
+            const defaultIMG =  data['default_img_path'].length > 1 ? `{{MEDIA_URL}}${data['default_img_path'][0]['peopleimg'].replace('youtility4_media/', '')}` : "{{ static('assets/media/images/blank.png') }}"
             
             $("#attd_in_img").attr('src', filepathIN)
             $("#attd_out_img").attr('src', filepathOUT)
