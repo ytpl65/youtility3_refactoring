@@ -337,12 +337,16 @@ class Query(graphene.ObjectType):
 
     @staticmethod
     def resolve_get_qsetbelongingmodifiedafter(self, info, mdtz, ctzoffset, buid):
-        log.info(f'\n\nrequest for qsetbelonging-modified-after inputs : mdtz:{mdtz}, ctzoffset:{ctzoffset}, buid:{buid}')
-        mdtzinput = utils.getawaredatetime(mdtz, ctzoffset)
-        data = QuestionSetBelonging.objects.get_modified_after(mdtzinput, buid)
-        records, count, msg = utils.get_select_output(data)
-        log.info(f'{count} objects returned...')
-        return SelectOutputType(nrows = count, records = records,msg = msg)
+        try:
+            log.info(f'\n\nrequest for qsetbelonging-modified-after inputs : mdtz:{mdtz}, ctzoffset:{ctzoffset}, buid:{buid}')
+            mdtzinput = utils.getawaredatetime(mdtz, ctzoffset)
+            data = QuestionSetBelonging.objects.get_modified_after(mdtzinput, buid)
+            records, count, msg = utils.get_select_output(data)
+            log.info(f'{count} objects returned...')
+            return SelectOutputType(nrows = count, records = records,msg = msg)
+        except Exception as e:
+            log.error("something went wrong", exc_info=True)
+    
 
     @staticmethod
     def resolve_get_pgbelongingmodifiedafter(self, info, mdtz, ctzoffset, buid, peopleid):

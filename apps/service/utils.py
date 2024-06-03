@@ -531,9 +531,8 @@ def perform_insertrecord(self, records,  db='default', filebased = True, bg=Fals
             for record in data:
                 if record:
                     tablename = record.pop('tablename')
-                    userid = record.pop('people_id')
                     obj = insert_or_update_record(record, tablename)
-                    user = get_user_instance(userid)
+                    user = get_user_instance(record.get('people_id'))
                     if tablename == 'ticket' and isinstance(obj, Ticket): utils.store_ticket_history(
                         instance = obj,  user=user)
                     if tablename == 'wom':

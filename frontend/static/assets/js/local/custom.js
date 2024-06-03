@@ -206,6 +206,7 @@ function getDropzoneObject() {
     accept: function (file, done) {
       console.log(file, done);
     },
+    action:"bla.html"
   });
 }
 

@@ -37,9 +37,15 @@ class ShiftSerializer(serializers.ModelSerializer):
 
 
 class TypeAssistSerializer(serializers.ModelSerializer):
+    tatype_id = serializers.PrimaryKeyRelatedField(source='tatype', read_only=True)
+    bu_id = serializers.PrimaryKeyRelatedField(source='bu', read_only=True)
+    client_id = serializers.PrimaryKeyRelatedField(source='client', read_only=True)
+    cuser_id = serializers.PrimaryKeyRelatedField(source='cuser', read_only=True)
+    muser_id = serializers.PrimaryKeyRelatedField(source='muser', read_only=True)
+
     class Meta:
         model = TypeAssist
-        fields = "__all__"
+        exclude = ['tenant', 'bu', 'client', 'cuser', 'muser', 'tatype']
 
 
 class PgbelongingSerializer(serializers.ModelSerializer):

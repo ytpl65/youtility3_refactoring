@@ -355,15 +355,10 @@ LOGGING_CONFIG_ = {
             '()': 'colorlog.ColoredFormatter',
             'format': '%(log_color)s %(asctime)s  %(levelname)-10s  from method: %(funcName)-32s  << %(message)s >>'
         },
-        'verbose': {
-            'format': '%(asctime)s %(levelname)s: %(message)s',
-            'datefmt': '%Y-%m-%d %H:%M:%S %z',
-            '()': 'intelliwiz_config.custom_logging_formatter.PSTFormatter'  # Update path
-        }
     }, 
     'handlers': {
         'default': { 
-            #'level': 'INFO',
+            'level': 'INFO',
             'formatter': 'coloured',
             'class': 'logging.StreamHandler', 
             'stream': 'ext://sys.stdout',  # Default is stderr

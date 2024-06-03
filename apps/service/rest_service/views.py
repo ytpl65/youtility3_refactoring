@@ -136,12 +136,12 @@ class JobViewset(viewsets.ReadOnlyModelViewSet):
     API endpoint that allows Job to be viewed.
     """
 
-    async def list(self, request):
+    def list(self, request):
         queryset = get_queryset(act_models.Job, request)
         serializer = ytpl_serializers.JobSerializer(queryset, many=True)
         return Response(serializer.data)
 
-    async def retrieve(self, request, *args, **kwargs):
+    def retrieve(self, request, *args, **kwargs):
         job = get_object_or_404(act_models.Job, pk=kwargs["pk"])
         serializer = ytpl_serializers.JobSerializer(job)
         return Response(serializer.data)
@@ -152,12 +152,12 @@ class JobneedViewset(viewsets.ReadOnlyModelViewSet):
     API endpoint that allows Jobneed to be viewed.
     """
 
-    async def list(self, request):
+    def list(self, request):
         queryset = get_queryset(act_models.Jobneed, request)
         serializer = ytpl_serializers.JobneedSerializer(queryset, many=True)
         return Response(serializer.data)
 
-    async def retrieve(self, request, *args, **kwargs):
+    def retrieve(self, request, *args, **kwargs):
         jobneed = get_object_or_404(act_models.Jobneed, pk=kwargs["pk"])
         serializer = ytpl_serializers.JobneedSerializer(jobneed)
         return Response(serializer.data)

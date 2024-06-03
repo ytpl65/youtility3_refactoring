@@ -1472,9 +1472,7 @@ class JobneedDetailsManager(models.Manager):
                     'data':list(qset.filter(question_id=question_id).values_list('starttime', 'answer_as_float'))
                 }
             )
-        ic(series)
         return series
-        pass
 
 
 class QsetBlngManager(models.Manager):
