@@ -29,7 +29,7 @@ def default_ta():
 # Register your models here
 class PeopleResource(resources.ModelResource):
     Client = fields.Field(
-        column_name='Client*',
+        column_name='Client*',  
         attribute='client',
         widget = wg.ForeignKeyWidget(om.Bt, 'bucode'),
         default=utils.get_or_create_none_bv
@@ -103,7 +103,7 @@ class PeopleResource(resources.ModelResource):
     Gender             = fields.Field(attribute='gender', column_name='Gender*')
     Enable             = fields.Field(widget=wg.BooleanWidget(), attribute='enable', default=True)
     isemergencycontact = fields.Field(widget=wg.BooleanWidget(), default=False, column_name='Emergency Contact')
-    alertmails         = fields.Field(default=False, column_name='Alert Emails')
+    alertmails         = fields.Field(default=False,  column_name='Alert Emails')
     mobilecaps         = fields.Field(default='NONE', column_name='Mobile Capability')
     reportcaps         = fields.Field(default='NONE', column_name='Report Capability')
     webcaps            = fields.Field(default='NONE', column_name='Web Capability')
@@ -272,13 +272,6 @@ class GroupResource(resources.ModelResource):
 
     def before_save_instance(self, instance, using_transactions, dry_run=False):
         utils.save_common_stuff(self.request, instance, self.is_superuser)
-
-
-
-
-
-
-
 
 
 

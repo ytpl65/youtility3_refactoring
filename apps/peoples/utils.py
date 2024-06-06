@@ -12,7 +12,6 @@ dbg = logging.getLogger('__main__').debug
 def save_jsonform(peoplepref_form, p):
     try:
         logger.info('saving jsonform ...')
-        ic(peoplepref_form.cleaned_data)
         for k in [
             'blacklist', 'assignsitegroup', 'tempincludes', 'currentaddress', 'permanentaddress',
             'showalltemplates', 'showtemplatebasedonfilter', 'mobilecapability', 'isemergencycontact',
