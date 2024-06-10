@@ -1061,7 +1061,7 @@ class AttachmentManager(models.Manager):
                 'id', 'peopleimg', 'cdtz', 'cuser__peoplename', 'mdtz', 'muser__peoplename', 'ctzoffset') if eventlogqset else self.none()
         log.info(defaultimgqset)
 
-        return {'attd_in_out': list(attqset), 'eventlog_in_out': list(eventlogqset), 'default_img_path': list(defaultimgqset)}
+        return {'attachment_in_out': list(attqset), 'eventlog_in_out': list(eventlogqset), 'default_people_data': list(defaultimgqset)}
     
 
     def get_attachements_for_mob(self, ownerid):
