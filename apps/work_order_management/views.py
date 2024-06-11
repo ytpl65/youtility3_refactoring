@@ -290,7 +290,7 @@ class ReplyWorkOrder(View):
                 else:
                     alerts = False
                 
-                wod = WomDetails.objects.create(
+                wod, _ = WomDetails.objects.update_or_create(
                     seqno       = qsb_obj.seqno,
                     question_id = qsb_obj.question_id,
                     answertype  = qsb_obj.answertype,
@@ -324,7 +324,6 @@ class ReplyWorkOrder(View):
         return Attachment.objects.create(
             filepath = filepath, filename = filename, 
             size = file.size, owner = wod.uuid,
-            bu_id = wod.bu_id,
             cuser_id = 1, muser_id = 1, cdtz = timezone.now(),
             mdtz = timezone.now(), ctzoffset = wod.ctzoffset, 
             attachmenttype = Attachment.AttachmentType.ATMT,

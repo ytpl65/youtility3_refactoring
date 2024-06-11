@@ -14,6 +14,8 @@ https://docs.djangoproject.com/en/3.2/ref/settings/
 
 from pathlib import Path
 import os
+import logging
+from datetime import datetime
 from pickle import TRUE
 
 import environ
@@ -376,7 +378,7 @@ LOGGING_CONFIG_ = {
     }, 
     'handlers': {
         'default': { 
-            #'level': 'INFO',
+            'level': 'INFO',
             'formatter': 'coloured',
             'class': 'logging.StreamHandler', 
             'stream': 'ext://sys.stdout',  # Default is stderr
@@ -386,21 +388,30 @@ LOGGING_CONFIG_ = {
             'filename':f'{os.path.expanduser("~")}/youtility4_logs/youtility4.log',
             'maxBytes': 15728640,
             'backupCount': 10,
-            'formatter': 'coloured',
         },
         'serviceLogs':{
             'class': 'logging.handlers.RotatingFileHandler',
             'filename':f'{os.path.expanduser("~")}/youtility4_logs/mobileservice.log',
             'maxBytes': 15728640,
             'backupCount': 10,
-            'formatter': 'coloured',
+        },
+        'tracking_logs':{
+            'class': 'logging.handlers.RotatingFileHandler',
+            'filename':f'{os.path.expanduser("~")}/youtility4_logs/tracking.log',
+            'maxBytes': 15728640,
+            'backupCount': 10,
+        },
+        'message_qlogs':{
+            'class': 'logging.handlers.RotatingFileHandler',
+            'filename':f'{os.path.expanduser("~")}/youtility4_logs/message_q.log',
+            'maxBytes': 15728640,
+            'backupCount': 10,
         },
         'reportslog':{
             'class': 'logging.handlers.RotatingFileHandler',
             'filename':f'{os.path.expanduser("~")}/youtility4_logs/reports.log',
             'maxBytes': 15728640,
             'backupCount': 10,
-            'formatter': 'coloured',
         },
         'mail_admins': {
             'level': 'CRITICAL',
@@ -412,7 +423,6 @@ LOGGING_CONFIG_ = {
             'filename':f'{os.path.expanduser("~")}/youtility4_logs/errors.log',
             'maxBytes': 15728640,
             'backupCount': 10,
-            'formatter': 'coloured',
         }
     },
     'loggers': { 
@@ -434,6 +444,16 @@ LOGGING_CONFIG_ = {
         'mobile_service_log':{
             'handlers': ['default', 'serviceLogs', 'mail_admins'],
             'level': 'DEBUG',
+            'propagate': False
+        },               
+        'message_q':{
+            'handlers': ['default', 'message_qlogs', 'mail_admins'],
+            'level': 'INFO',
+            'propagate': False
+        },               
+        'tracking':{
+            'handlers': ['default', 'tracking_logs', 'mail_admins'],
+            'level': 'INFO',
             'propagate': False
         },               
         'reports':{
