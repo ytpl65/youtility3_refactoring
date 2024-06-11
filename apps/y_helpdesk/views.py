@@ -24,9 +24,7 @@ class EscalationMatrix(LoginRequiredMixin, View):
     }
     
     def get(self, request, *args, **kwargs):
-        R, P = request.GET, self.P
-        ic(R, "GET")
-        
+        R, P = request.GET, self.P        
         
         if R.get('action') == 'form':
             cxt = {'escform':P['form'](request=request)}

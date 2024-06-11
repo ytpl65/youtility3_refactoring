@@ -334,7 +334,6 @@ class ConfigSiteReportTemplate(LoginRequiredMixin, View):
         try:
             data = QueryDict(request.POST['formData'])
             if pk := request.POST.get('pk', None):
-                ic(pk)
                 msg = "site report template updated successfully"
                 form = utils.get_instance_for_update(
                     data, P, msg, int(pk), {'request':request})
@@ -415,7 +414,6 @@ class ConfigIncidentReportTemplate(LoginRequiredMixin, View):
         try:
             data = QueryDict(request.POST['formData'])
             if pk := request.POST.get('pk', None):
-                ic(pk)
                 msg = "incident report template updated successfully"
                 form = utils.get_instance_for_update(
                     data, P, msg, int(pk), {'request':request})
@@ -540,10 +538,11 @@ class DownloadReports(LoginRequiredMixin, View):
         if R.get('action') == 'form_behaviour':
             return self.form_behaviour(R)
         
-        if R.get('action') == 'get_site' and R.get('of_site'):
+        if R.get('action') == 'get_site' and R.get('of_site') and R.get('of_type'):
             qset = on.TypeAssist.objects.filter(
                 bu_id = R['of_site'],
-                tatype__tacode = 'ASSETTYPE'
+                client_id = S['client_id'],
+                tatype__tacode = R['of_type']
                 ).values('id','taname').distinct()
             return rp.JsonResponse(
                 data = {'options': list(qset)},status = 200
@@ -557,7 +556,7 @@ class DownloadReports(LoginRequiredMixin, View):
             return rp.JsonResponse(
                 data={'options':list(qset)}, status=200
             )
-        
+
         if R.get('action') == 'get_qset' and R.get('of_asset'):
             qset = am.QuestionSet.objects.filter(
                 client_id=S['client_id'],
@@ -581,7 +580,6 @@ class DownloadReports(LoginRequiredMixin, View):
         form = self.PARAMS['form'](data=request.POST, request=request)
         if not form.is_valid():
             return render(request, self.PARAMS['template_form'], {'form': form})
-
         log.info('form is valid')
         formdata = form.cleaned_data
         log.info(f"Formdata submitted by user: {pformat(formdata)}")
@@ -777,7 +775,9 @@ class ScheduleEmailReport(LoginRequiredMixin, View):
     
     def get(self, request, *args, **kwargs):
         R, S = request.GET, request.session
-        if R.get('template'): return render(request, self.P['template_list'])
+        if R.get('template'):
+            return render(request, self.P['template_list'])
+        
         if R.get('id'):
             obj = utils.get_model_obj(R['id'], request, {'model': self.P['model']})
             params_initial = obj.report_params
@@ -785,8 +785,11 @@ class ScheduleEmailReport(LoginRequiredMixin, View):
                 'form':self.P['form_class'](instance=obj, request = request),
                 'popup_form':self.P['popup_form'](request=request, initial=params_initial)}
             return render(request, self.P['template_form'], cxt)
+        
         if R.get('action') == 'list':
             data = self.P['model'].objects.filter(bu_id=S['bu_id']).values()
+            print(data)
+            print(len(data))
             return rp.JsonResponse({'data':list(data)}, status=200)
         
         if R.get('action') == 'form':
@@ -794,7 +797,6 @@ class ScheduleEmailReport(LoginRequiredMixin, View):
             form2 = self.P['popup_form'](request=request)
             cxt = {'form':form, 'popup_form': form2}
             return render(request, self.P['template_form'], context=cxt)
-        
         
     
     def post(self, request, *args, **kwargs):

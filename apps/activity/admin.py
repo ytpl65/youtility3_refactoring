@@ -75,13 +75,20 @@ class QuestionResource(resources.ModelResource):
         self.clean_question_name_and_answer_type(row)
         self.clean_numeric_and_rating_fields(row)
         self.validate_numeric_values(row)
+        self.check_answertype_fields(row)
         self.validate_options_values(row)
         self.set_alert_on_value(row)
         self.check_unique_record(row)
         super().before_import_row(row, **kwargs)
+
+
+    def check_answertype_fields(self,row):
+        Authorized_AnswerTypes = ["DATE","DROPDOWN","EMAILID","MULTILINE","NUMERIC","SIGNATURE","SINGLELINE","TIME","RATING","PEOPLELIST","SITELIST","METERREADING"]
+        Answer_type_val = row.get('Answer Type*')
+        if Answer_type_val not in Authorized_AnswerTypes:
+            raise ValidationError({Answer_type_val:f"{Answer_type_val} is a not a valid Answertype.Please select a valid AnswerType."})
     
     def check_required_fields(self, row):
-        ic(row)
         required_fields = ['Answer Type*', 'Question Name*',  'Client*']
         for field in required_fields:
             if row.get(field) in ['', None]:
@@ -194,7 +201,7 @@ class QuestionSetResource(resources.ModelResource):
         model = am.QuestionSet
         skip_unchanged = True
         import_id_fields = ['ID']
-        report_skipped = True
+        report_skipped = True 
         fields = ['Question Set Name*', 'ASSETINCLUDES', 'SITEINCLUDES', 'SITEGRPINCLUDES', 'SITETYPEINCLUDES', 
                   'SHOWTOALLSITES', 'URL', 'BV', 'CLIENT', 'Type', 'BelongsTo', 'SEQNO']
 
@@ -207,7 +214,17 @@ class QuestionSetResource(resources.ModelResource):
         self.check_required_fields(row)
         self.validate_row(row)
         self.unique_record_check(row)
+        self.verify_valid_questionset_type(row)
         super().before_import_row(row, **kwargs)
+
+    def verify_valid_questionset_type(self,row):
+        Authorized_Questionset_type = ['CHECKLIST','RPCHECKLIST','INCIDENTREPORT',
+                                       'SITEREPORT','WORKPERMIT','RETURN_WORK_PERMIT',
+                                       'KPITEMPLATE','SCRAPPEDTEMPLATE','ASSETAUDIT',
+                                       'ASSETMAINTENANCE','WORK_ORDER']
+        questionset_type = row.get('QuestionSet Type*')
+        if questionset_type not in Authorized_Questionset_type:
+            raise ValidationError({questionset_type:f"{questionset_type} is not a valid Questionset Type. Please select a valid QuestionSet."})
 
     def check_required_fields(self, row):
         required_fields = ['QuestionSet Type*', 'Question Set Name*']
@@ -215,10 +232,10 @@ class QuestionSetResource(resources.ModelResource):
             if not row.get(field):
                 raise ValidationError({field: f"{field} is a required field"})
 
-        optional_fields = ['Site Group Includes', 'Site Includes', 'Asset Includes', 'Site Type Includes']
+        ''' optional_fields = ['Site Group Includes', 'Site Includes', 'Asset Includes', 'Site Type Includes']
         if all(not row.get(field) for field in optional_fields):
             raise ValidationError("You should provide a value for at least one field from the following: "
-                                "'Site Group Includes', 'Site Includes', 'Asset Includes', 'Site Type Includes'")
+                                "'Site Group Includes', 'Site Includes', 'Asset Includes', 'Site Type Includes'") '''
         
     def validate_row(self, row):
         models_mapping = {
@@ -234,7 +251,6 @@ class QuestionSetResource(resources.ModelResource):
                 values = field_value.replace(" ", "").split(',')
                 print("&&&&&&&&&&", values)
                 count = model.objects.filter(**{f'{lookup_field}__in': values}).count()
-                ic(count, len(values), values, model, field_value)
                 if len(values) != count:
                     raise ValidationError({field: f"Some of the values specified in {field} do not exist in the system"})
                 row[field] = values
@@ -254,9 +270,10 @@ class QuestionSetResource(resources.ModelResource):
         
 class QsetFKW(wg.ForeignKeyWidget):
     def get_queryset(self, value, row, *args, **kwargs):
-        return self.model.objects.filter(
+        return self.model.objects.select_related('client', 'bu').filter(
             client__bucode__exact=row["Client*"],
-            enable=True            
+            bu__bucode__exact=row['Site*'],
+            enable=True
         )
 
 class QuesFKW(wg.ForeignKeyWidget):
@@ -456,7 +473,7 @@ class AssetResource(resources.ModelResource):
     )
 
     BelongsTo = fields.Field(
-        column_name       = 'Belongs To*',
+        column_name       = 'Belongs To',
         attribute         = 'parent',
         widget            = wg.ForeignKeyWidget(am.Asset, 'tacode'),
         saves_null_values = True,
@@ -523,7 +540,21 @@ class AssetResource(resources.ModelResource):
     def before_import_row(self, row, row_number=None, **kwargs):
         self.validations(row)
         self.initialize_attributes(row)
-    
+        self.validating_identifier(row)
+        self.validating_running_status(row)
+
+    def validating_identifier(self,row):
+        asset_identifier = row.get('Identifier*')
+        valid_idetifier_values = ['NONE','ASSET','CHECKPOINT','NEA']
+        if asset_identifier not in valid_idetifier_values:
+            raise ValidationError({asset_identifier:f"{asset_identifier} is not a valid identifier. please select a valid identifier from {valid_idetifier_values}"})
+        
+    def validating_running_status(self,row):
+        running_status = row.get('Running Status*')
+        valid_running_status = ['MAINTENANCE','STANDBY','WORKING','SCRAPPED']
+        if running_status not in valid_running_status:
+            raise ValidationError({'running_status':f'{running_status} is not a valid running status. Please select a valid running status from {valid_running_status}.'})
+
     def initialize_attributes(self, row):
         attributes = [
             ('_ismeter', 'Is Meter', False),
@@ -638,13 +669,14 @@ class LocationResource(resources.ModelResource):
     )
     
     PARENT = fields.Field(
-        column_name       = 'Belongs To*',
+        column_name       = 'Belongs To',
         attribute         = 'parent',
         widget            = wg.ForeignKeyWidget(am.Location, 'loccode'),
         saves_null_values = True,
         default=utils.get_or_create_none_location
     )
-    
+
+    #django validates this field and throws error if the value is not valid 
     Type = fields.Field(
         column_name       = 'Type*',
         attribute         = 'type',
@@ -672,6 +704,12 @@ class LocationResource(resources.ModelResource):
         super().__init__(*args, **kwargs)
         self.is_superuser = kwargs.pop('is_superuser', None)
         self.request = kwargs.pop('request', None)
+
+    def check_valid_status(self, row):
+        status = row.get('Status*')
+        valid_status = ['MAINTENANCE', 'STANDBY','WORKING','SCRAPPED']
+        if status not in valid_status:
+            raise ValidationError({status:f"{status} is not a valid status. Please select a valid status from {valid_status}"})
     
     def before_import_row(self, row, row_number=None, **kwargs):
         row['Code*'] = clean_string(row.get('Code*'), code=True)
@@ -683,6 +721,9 @@ class LocationResource(resources.ModelResource):
         if row.get('Name*') in  ['', None]:raise ValidationError("Name* is required field")
         if row.get('Type*') in  ['', None]:raise ValidationError("Type* is required field")
         if row.get('Status*') in  ['', None]:raise ValidationError("Status* is required field")
+
+        #status validation
+        self.check_valid_status(row)
         
         # code validation
         regex, value = "^[a-zA-Z0-9\-_]*$", row['Code*']

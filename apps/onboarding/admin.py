@@ -63,7 +63,9 @@ class BaseFieldSet2:
         saves_null_values = True
     )
 
-
+''''TaResource class provides functionalities for importing and validating data 
+related to the om.TypeAssist model in a Django application. It ensures data integrity 
+by cleaning, validating, and checking for uniqueness before saving the imported data.'''
 class TaResource(resources.ModelResource):
     CLIENT = fields.Field(
         column_name='Client*',
@@ -97,20 +99,26 @@ class TaResource(resources.ModelResource):
         self.request = kwargs.pop('request', None)
     
     def before_import_row(self, row, row_number, **kwargs):
+
+        '''cleaning in sence Handles empty string,Removes extra spaces, 
+        Converts to uppercase and replaces spaces with underscores (if code is True)'''
         row['Code*'] = clean_string(row.get('Code*', 'NONE'), code=True)
         row['Name*'] = clean_string(row.get('Name*', "NONE"))
-        # check required fields
+
+        # Validates that required fields (Code*, Type*, and Name*) are not empty.
         if row['Code*'] in ['', None]: raise ValidationError("Code* is required field")
         if row['Type*'] in ['', None]: raise ValidationError("Type* is required field")
         if row['Name*'] in ['', None]: raise ValidationError("Name* is required field")
         
-        # code validation
+        ''' Validates the format of the Code* field using a regular expression.
+         It ensures no spaces and only allows alphanumeric characters, underscores, and hyphens.'''
         regex, value = "^[a-zA-Z0-9\-_]*$", row['Code*']
         if " " in value: raise ValidationError("Please enter text without any spaces")
         if  not re.match(regex, value):
             raise ValidationError("Please enter valid text avoid any special characters except [_, -]")
 
-        # unique record check
+        '''Checks for uniqueness of the record based on a combination of Code*, Type*, 
+        and CLIENT* fields. It raises an error if a duplicate record is found.'''
         if om.TypeAssist.objects.select_related().filter(
             tacode=row['Code*'], tatype__tacode=row['Type*'],
             client__bucode = row['Client*']).exists():
@@ -119,7 +127,10 @@ class TaResource(resources.ModelResource):
 
         super().before_import_row(row, **kwargs)
 
+    #saving the instance before saving it to the database
     def before_save_instance(self, instance, using_transactions, dry_run=False):
+        '''inserts data into the instance object before saving it to 
+        the database of cuser, muser, cdtz, and mdtz fields.'''
         utils.save_common_stuff(self.request, instance, self.is_superuser)
         
     

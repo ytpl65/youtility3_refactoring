@@ -573,8 +573,8 @@ class JobForm(forms.ModelForm):
             'qset'          : s2forms.Select2Widget,
             'people'        : s2forms.Select2Widget,
             'bu'            : s2forms.Select2Widget,
-            'cron':forms.TextInput(attrs={'style':'display:none'}),
-            'jobdesc':forms.Textarea(attrs={'rows':'5', 'placeholder':"What does this tour about?"})
+            'cron'          :forms.TextInput(attrs={'style':'display:none'}),
+            'jobdesc'       :forms.Textarea(attrs={'rows':'5', 'placeholder':"What does this tour about?"})
         }
 
     def clean_from_date(self):
@@ -589,17 +589,14 @@ class JobForm(forms.ModelForm):
     @staticmethod
     def _extracted_from_clean_upto_date_3(val):
         val = utils.to_utc(val)
-        ic('cleaned')
         return val
 
     @staticmethod
     def clean_slno():
-        ic('cleaned')
         return -1
 
     def clean(self):
         cd = super().clean()
-        ic('cleaned')
         self.instance.jobdesc = f'{cd.get("bu")} - {cd.get("jobname")}'
 
 class JobNeedForm(forms.ModelForm):
@@ -836,7 +833,7 @@ class LocationForm(forms.ModelForm):
         self.fields['loccode'].widget.attrs = {'style':"text-transform:uppercase"}
         #filters for dropdown fields
         self.fields['parent'].queryset = am.Location.objects.filter(client_id = S['client_id'], bu_id = S['bu_id'])
-        self.fields['type'].queryset = om.TypeAssist.objects.filter(client_id = S['client_id'], tatype__tacode = 'LOCAIONTYPE')
+        self.fields['type'].queryset = om.TypeAssist.objects.filter(client_id = S['client_id'], tatype__tacode = 'LOCATIONTYPE')
         utils.initailize_form_fields(self)
         
         

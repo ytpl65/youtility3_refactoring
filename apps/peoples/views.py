@@ -51,10 +51,8 @@ class SignIn(View):
     def post(self, request, *args, **kwargs):
         from .utils import display_user_session_info
         form, response = LoginForm(request.POST), None
-        ic(request.POST)
         logger.info('form submitted')
         try:
-            ic(request.session.test_cookie_worked())
             if not request.session.test_cookie_worked():
                 logger.warning(
                     'cookies are not enabled in user browser', exc_info = True)
@@ -192,7 +190,7 @@ class Capability(LoginRequiredMixin, View):
             obj = utils.get_model_obj(int(R['id']), request, self.params)
             resp = utils.render_form_for_update(
                 request, self.params, "cap_form", obj)
-        print(f'return resp={resp}')
+        # print(f'return resp={resp}')
         return resp
 
     def post(self, request, *args, **kwargs):
@@ -262,6 +260,9 @@ class PeopleView(LoginRequiredMixin, View):
             objs = self.params['model'].objects.people_list_view(
                 request, self.params['fields'], self.params['related'])
             return rp.JsonResponse(data={'data': list(objs)}, status=200)
+        
+        if R.get('action',None) == 'qrdownload' and R.get('code',None) and R.get('name',None):
+            return utils.download_qrcode(R['code'],R['name'],'PEOPLEQR',request.session,request)
 
         # return cap_form empty
         if R.get('action', None) == 'form':
@@ -290,10 +291,8 @@ class PeopleView(LoginRequiredMixin, View):
     def post(self, request, *args, **kwargs):
         resp, create = None, True
         data = QueryDict(request.POST['formData'])
-        ic(data)
         try:
             if pk := request.POST.get('pk', None):
-                ic("got pk")
                 msg, create = "people_view", False
                 people = utils.get_model_obj(pk, request,  self.params)
                 form = self.params['form_class'](
@@ -318,7 +317,6 @@ class PeopleView(LoginRequiredMixin, View):
         from apps.core.utils import handle_intergrity_error
 
         try:
-            ic(request.POST, request.FILES)
             people = form.save()
             if request.FILES.get('peopleimg'):
                 people.peopleimg = request.FILES['peopleimg']
@@ -363,23 +361,19 @@ class PeopleGroup(LoginRequiredMixin, View):
 
         # return form empty
         if R.get('action', None) == 'form':
-            ic('fksnfksnfkjsdkjfsjdfkamsdfkmaskf')
             cxt = {'pgroup_form': self.params['form_class'](request=request),
                    'msg': "create people group requested"}
             resp = utils.render_form(request, self.params, cxt)
 
         # handle delete request
         elif R.get('action', None) == "delete" and R.get('id', None):
-            obj = utils.get_model_obj(R['id'], request, self.params)
-            pm.Pgbelonging.objects.filter(pgroup=obj).delete()
-            resp = utils.render_form_for_delete(request, self.params, False)
+            resp = utils.delete_pgroup_pgbelonging_data(request)
+      
 
-        # return form with instance
-        elif R.get('id', None):
+        elif R.get('id', None):                                                             
             obj = utils.get_model_obj(int(R['id']), request, self.params)
             peoples = pm.Pgbelonging.objects.filter(
                 pgroup=obj).values_list('people', flat=True)
-            ic(peoples)
             FORM = self.params['form_class'](request=request, instance=obj, initial={
                                              'peoples': list(peoples)})
             resp = utils.render_form_for_update(
@@ -392,6 +386,7 @@ class PeopleGroup(LoginRequiredMixin, View):
         try:
             data = QueryDict(request.POST['formData'])
             if pk := request.POST.get('pk', None):
+                pm.Pgbelonging.objects.filter(pgroup_id=int(pk)).delete()
                 msg = "pgroup_view"
                 form = utils.get_instance_for_update(
                     data, self.params, msg, int(pk), kwargs={'request': request})
@@ -460,7 +455,6 @@ class SiteGroup(LoginRequiredMixin, View):
         if R.get('action', None) == 'allsites':
             objs, idfs = Bt.objects.get_bus_idfs(
                 R, request=request, idf=R['sel_butype'])
-
             resp = rp.JsonResponse(data={
                 'data': list(objs),
                 'idfs': list(idfs)
@@ -469,7 +463,6 @@ class SiteGroup(LoginRequiredMixin, View):
 
         if R.get('action') == "loadSites":
             data = Pgbelonging.objects.get_assigned_sitesto_sitegrp(R['id'])
-            print(data)
             resp = rp.JsonResponse(data={
                 'assigned_sites': list(data),
             })
@@ -484,9 +477,9 @@ class SiteGroup(LoginRequiredMixin, View):
 
         # handle delete request
         if R.get('action', None) == "delete" and R.get('id', None):
-            ic('here')
             obj = utils.get_model_obj(R['id'], request, self.params)
             pm.Pgbelonging.objects.filter(pgroup_id=obj.id).delete()
+            obj.delete()
             return rp.JsonResponse(data=None, status=200, safe=False )
 
         # form with instance to load existing data
@@ -494,7 +487,6 @@ class SiteGroup(LoginRequiredMixin, View):
             obj = utils.get_model_obj(int(R['id']), request, self.params)
             sites = pm.Pgbelonging.objects.filter(
                 pgroup=obj).values_list('assignsites', flat=True)
-            ic(sites)
             cxt = {'sitegrpform': self.params['form_class'](request=request, instance=obj),
                    'assignedsites': sites}
             resp = render(request, self.params['template_form'], context=cxt)
@@ -541,7 +533,6 @@ class SiteGroup(LoginRequiredMixin, View):
     @staticmethod
     def resest_assignedsites(pg):
         pm.Pgbelonging.objects.filter(pgroup_id=pg.id).delete()
-        ic('reset successfully')
 
     def save_assignedSites(self, pg, sitesArray, request):
         S = request.session
@@ -567,13 +558,11 @@ class NoSite(View):
     def post(self, request):
         form = pf.NoSiteForm(request.POST, session=request.session)
         if form.is_valid():
-            ic(request.session['bu_id'])
             bu_id = form.cleaned_data['site']
             bu = Bt.objects.get(id=bu_id)
             request.session['bu_id'] = bu_id
             request.session['sitename'] = bu.buname
             pm.People.objects.filter(id=request.user.id).update(bu_id=bu_id)
-            ic(request.session['bu_id'])
             return redirect('onboarding:rp_dashboard')
 
 
@@ -581,6 +570,7 @@ def verifyemail(request):
     logger.info('verify email requested for user id %s',
                 request.GET.get('userid'))
     user = People.objects.get(id=request.GET.get('userid'))
+    print(user)
     try:
         send_email(user)
         messages.success(

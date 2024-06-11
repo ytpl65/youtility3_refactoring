@@ -75,7 +75,7 @@ class TypeAssistForm(SuperTypeAssistForm):
         S = self.request.session
         super().__init__(*args, **kwargs)
         self.fields['enable'].initial = True
-        ic(obm.TypeAssist.objects.filter(enable = True, client_id__in =  [S['client_id'], 1]))
+        # ic(obm.TypeAssist.objects.filter(enable = True, client_id__in =  [S['client_id'], 1]))
         self.fields['tatype'].queryset = obm.TypeAssist.objects.filter((Q(cuser__is_superuser = True) | Q(client_id__in =  [S['client_id'], 1])), enable=True )
         utils.initailize_form_fields(self)
 
@@ -381,7 +381,7 @@ class ClentForm(BuPrefForm):
     enddate = forms.DateField(label='End Date', required=True, input_formats=settings.DATE_INPUT_FORMATS, widget=forms.DateInput)
     onstop = forms.BooleanField(label='On Stop', required=False, initial=False)
     onstopmessage = forms.CharField(widget=forms.Textarea(attrs={'rows':1}),label='On Stop Message', required=False)
-    clienttimezone = forms.ChoiceField(label="Time Zone", widget=s2forms.Select2Widget, choices=utils.generate_timezone_choices, required=True)
+    clienttimezone = forms.ChoiceField(label="Time Zone", widget=s2forms.Select2Widget, choices=utils.generate_timezone_choices, required=False)
     billingtype = forms.ChoiceField(label="Billing Type", widget=s2forms.Select2Widget, choices=BILLINGTYPES, initial='SITEBASED', required=True)
     no_of_devices_allowed = forms.IntegerField(label="No of Devices Allowed", required=False, initial=0)
     devices_currently_added = forms.IntegerField(label="No of Devices Currently Added", required=False, initial=0)
@@ -397,6 +397,8 @@ class ClentForm(BuPrefForm):
         utils.initailize_form_fields(self)
         web, mob, portlet, report = create_caps_choices_for_clientform()
         ic(web)
+        ic(mob)
+        ic(report)
         self.fields['webcapability'].choices = web
         self.fields['mobilecapability'].choices = mob
         self.fields['reportcapability'].choices = report

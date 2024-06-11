@@ -129,7 +129,7 @@ External Tour
             <div class="input-group mb-3">
                 <div class="col-md-4">
                     {{ externaltourform.priority.label_tag() }}
-                </div>
+                </div>  
                 <div class="col-md-8">
                     {{ externaltourform.priority }}
                 </div>
@@ -287,8 +287,8 @@ External Tour
     var _fduration   = '--';
     var _fdistance   = '--';
 
-</script>
-<script type="text/javascript" src="https://maps.googleapis.com/maps/api/js?key=AIzaSyC3PUZCB7u2PiV8whHeAshweOPIK_d690o&libraries=places"></script>
+</script>   
+<script type="text/javascript" src="https://maps.googleapis.com/maps/api/js?key=AIzaSyC3PUZCB7u2PiV8whHeAshweOPIK_d690o&libraries=places&loading=async"></script>
 <script src="{{ static('assets/js/overlapping_marker_spiderfier.js') }}" type="text/javascript"></script>
 <script src="{{ static('assets/js/schd_ext_tour_form.js') }}" type="text/javascript"></script>
 
@@ -339,6 +339,7 @@ var israndom = "{{ externaltourform.instance.other_info['is_randomized'] }}";
         ajaxData.action='checklist_details'
         checklistdetails.ajax.reload()
     }
+
     function showAttachmentDetails(id, from){
         
         $('#id_attachmentdetails').modal('show')
@@ -348,11 +349,13 @@ var israndom = "{{ externaltourform.instance.other_info['is_randomized'] }}";
     }
 
     function calculate_tour_details(data, routeFreq){
+        console.log('tour_details',data)
+        console.log('route frequency',routeFreq)
         d2ClearMarker()
         calculateAndDisplayRoute(data, routeFreq)
     }
     //display readable form of gpslocation
-        $('#id_gpslocation').val("{{ externaltourform.instance.geojson['gpslocation'] }}")
+    $('#id_gpslocation').val("{{ externaltourform.instance.geojson['gpslocation'] }}")
 
 
     $(document).ready(() => {
@@ -369,7 +372,10 @@ var israndom = "{{ externaltourform.instance.other_info['is_randomized'] }}";
         if("{{ request.user.is_superuser }}" !== 'True'){
             $("input, textarea, select").attr('disabled', "disabled")
         }
+
+        //This function in js file resposible to render the map. 
         d2InitializeMap()
+
         //set ctzoffset
   	    $("#id_ctzoffset").val(-new Date().getTimezoneOffset())
 
@@ -430,7 +436,6 @@ var israndom = "{{ externaltourform.instance.other_info['is_randomized'] }}";
                     }
                 },
                 {title:'Attachments',data:'attachmentcount', defaultContent:null, render:function(data, type, row, meta){
-                    console.log(data)
                     if (data>0){
                         return `<a href="javascript:void(0)"  onClick='showAttachmentDetails(${row['id']}, "jobneed")'>${data}&nbsp;<i class="fas text-primary2 fs-3 fa-paperclip"></i></a>`}
                     else {
@@ -441,7 +446,8 @@ var israndom = "{{ externaltourform.instance.other_info['is_randomized'] }}";
                 {title:'Details',data:null, defaultContent:null, render:function(data, type, row, meta){
                         return  `<button class="btn btn-link p-0" onClick='showCpDetails(${row['id']})'>View Details</button>`
                     }
-                }
+                },
+                /*{title:'ctzoffset' data:'ctzoffset',visible:false}*/
             ],
             ordering:false,
             deferRender: true,
@@ -457,8 +463,8 @@ var israndom = "{{ externaltourform.instance.other_info['is_randomized'] }}";
                     return convert_to_local(type, data, row)}
                 },
                 {targets:4, render:function(data, type, row, meta){
-                    return data ? convert_to_local(type, data, row) : '--'
-                }}
+                    return data ? convert_to_local(type, data, row) : '--'}
+                }
             ],
 			responsive : true,
             dom: `<'row' <'col-sm-6 d-flex justify-content-start'f> <'col-sm-6 d-flex justify-content-end'B> >rt<'row'
@@ -471,9 +477,9 @@ var israndom = "{{ externaltourform.instance.other_info['is_randomized'] }}";
                     },
             initComplete: function( settings, json ) {
             if('{{ externaltourform.instance.id }}' !== 'None'){
-                data = asgdsites_table.rows().data().toArray() 
+                console.log('initcomplete function',asgdsites_table.rows().data().toArray())
+                data = asgdsites_table.rows().data().toArray()
                 freq = "{{ externaltourform.instance.other_info['tour_frequency'] }}"
-                console.log(data, 'data')
                 calculate_tour_details(data, freq)
             }
         }
@@ -546,9 +552,26 @@ var israndom = "{{ externaltourform.instance.other_info['is_randomized'] }}";
                     retrieve: true,
                     columns:[
                         { data: "id", visible: false },
-                        {title:'SL No.', width:"5%", data:null, defaultContent:null, render:function (data, type, row, meta) { return meta.row  + 1; }},
-                        { data: "filepath",  width:"5%", title:'File', render:function (data, type, row, meta) { return `<img src="{{ MEDIA_URL }}${row.filepath.replace('youtility4_media/', "")}/${row.filename}" class="card-img-top" target="_blank" alt="" style="width: 30px;height: 30px;">`; }},
+                        {title:'SL No.', width:"5%", data:null, defaultContent:null, render:function (data, type, row, meta) { return meta.row  + 1; }
+                        },
+                        { data: "filepath",  width:"5%", title:'File', render:function (data, type, row, meta) { return `<img src="{{ MEDIA_URL }}${row.filepath.replace('youtility4_media/', "")}/${row.filename}" class="card-img-top" target="_blank" alt="" style="width: 30px;height: 30px;">`; }
+                        },
                         { data: "filename",  title:'File Name' },
+                        {data:'location',title:"GPS Location", render:function(data, type, row, meta){
+                    if (row.filename !== 'NONE'){
+                        let coords = typeof data === 'string' && data.length > 0 ? JSON.parse(data): 'NONE'
+                        if(coords !== 'NONE'){
+                            let lat = coords['coordinates'][1]
+                            let lng = coords['coordinates'][0]
+                            return `<a href="https://www.google.com/maps?q=${lat},${lng}" target="_blank">${lat},${lng}</a>`
+                        }return coords
+                    }
+                    else{
+                        return '--';
+                    }
+                    }
+                },
+                        {data:"datetime",title:'Datetime'},
                         { data: null, width:"5%", defaultContent:null, title:"Action", render:function(data, type, row, meta ){
                         let file = `{{ MEDIA_URL }}${row.filepath.replace('youtility4_media/', "")}/${row.filename}`
                         return `<a href="${file}" target="_blank" class=""><i class="ch4 fas fa-eye"></i></a>&nbsp;&nbsp;&nbsp;&nbsp;<a href="${file}" download="${row.filename}"><i class="ch4 fas fa-save"></i></a>`;
@@ -556,18 +579,21 @@ var israndom = "{{ externaltourform.instance.other_info['is_randomized'] }}";
                     ],
                     ordering:false,
                     deferRender: true,
+                    columnDefs:[
+                        {targets:5,render:function(data,type,row,meta){
+                            return convert_to_local(type,data,row)}
+                            }
+                    ],
                     scrollX: true,
                     dom: `<'row' <'col-sm-6 d-flex justify-content-start'f> <'col-sm-6 d-flex justify-content-end'B> >rt<'row'
                     <'col-sm-6'l> <'col-sm-6'p><'col-sm-12 d-flex justify-content-center'i>>`,
                     buttons:[],
 
+
                 }
             )
             
         })
-
-        
-
     })
 </script>
 {% endblock extra_scripts %}

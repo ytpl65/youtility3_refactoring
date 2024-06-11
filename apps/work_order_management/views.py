@@ -340,7 +340,8 @@ class WorkPermit(LoginRequiredMixin, View):
         'model':Wom,
         'form':WorkPermitForm,
         'related':['qset', 'cuser', 'bu'],
-        'fields':['cdtz', 'id', 'other_data__wp_seqno', 'qset__qsetname', 'workpermit', 'cuser__peoplename', 'bu__bucode', 'bu__buname']
+        'fields':['cdtz', 'id', 'other_data__wp_seqno', 'qset__qsetname', 'workpermit', 'cuser__peoplename', 'bu__bucode', 'bu__buname'],
+        'valid_workpermit':','.join(['Cold Work Permit','Hot Work Permit','Height Work Permit','Confined Space Work Permit','Electrical Work Permit'])
     }
     
     def get(self, request, *args, **kwargs):
@@ -369,7 +370,7 @@ class WorkPermit(LoginRequiredMixin, View):
 
         if action == 'form':
             import uuid
-            cxt = {'wpform': P['form'](request=request), 'msg': "create workpermit requested", 'ownerid': uuid.uuid4()}
+            cxt = {'wpform': P['form'](request=request), 'msg': "create workpermit requested", 'ownerid': uuid.uuid4(),'valid_workpermit':self.params['valid_workpermit']}
             return render(request, P['template_form'], cxt)
 
         if action == 'approver_list':
@@ -380,7 +381,7 @@ class WorkPermit(LoginRequiredMixin, View):
             import uuid
             wp_details = Wom.objects.get_workpermit_details(request, R['qsetid'])
             form = P['form'](request=request, initial={'qset': R['qsetid'], 'approvers': R['approvers'].split(',')})
-            context = {"wp_details": wp_details, 'wpform': form, 'ownerid': uuid.uuid4()}
+            context = {"wp_details": wp_details, 'wpform': form, 'ownerid': uuid.uuid4(),'valid_workpermit':self.params['valid_workpermit']}
             return render(request, P['template_form'], context=context)
 
         if action == 'get_answers_of_template' and R.get('qsetid') and R.get('womid'):
@@ -399,7 +400,7 @@ class WorkPermit(LoginRequiredMixin, View):
             # get work permit questionnaire
             obj = utils.get_model_obj(int(R['id']), request, P)
             wp_answers = Wom.objects.get_wp_answers(obj.id)
-            cxt = {'wpform': P['form'](request=request, instance=obj), 'ownerid': obj.uuid, 'wp_details': wp_answers}
+            cxt = {'wpform': P['form'](request=request, instance=obj), 'ownerid': obj.uuid, 'wp_details': wp_answers,'valid_workpermit':self.params['valid_workpermit']}
             if obj.workpermit == Wom.WorkPermitStatus.APPROVED and obj.workstatus != Wom.Workstatus.COMPLETED:
                 rwp_details = Wom.objects.get_return_wp_details(request)
                 log.info(f"return work permit details are as follows: {rwp_details}")

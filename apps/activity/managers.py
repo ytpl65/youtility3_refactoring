@@ -91,12 +91,16 @@ class QuestionSetManager(models.Manager):
             qcount=Count('questionsetbelonging')).values(
                 'id', 'qsetname', 'qcount', 'seqno') or self.none()
     
-    def load_checklist(self):
-        "Load Checklist for editor dropdown" 
-        qset = self.annotate(
+    def load_checklist(self,request):
+        "Load Checklist for editor dropdown"
+        R,S = request.GET, request.session
+        search_term = R.get('search')
+        qset = self.filter(Q(Q(client_id = S['client_id']),Q(enable=True)))
+        qset = qset.annotate(
             text = F('qsetname')).filter(
-                enable=True, type='CHECKLIST').values(
+                enable=True, type='RPCHECKLIST').values(
                     'id', 'text')
+        qset = qset.filter(qsetname__icontains = search_term) if search_term else qset
         if qset:
             for idx, q in enumerate(qset):
                 q.update({'slno':idx+1})
@@ -163,7 +167,7 @@ class QuestionSetManager(models.Manager):
         qset = self.filter(
             Q(Q(client_id = S['client_id']), Q(bu_id = S['bu_id']), Q(enable=True), Q(type=self.model.Type.CHECKLIST)) |
             Q(id=1))
-        qset = qset.filter(qsetname = search_term) if search_term else qset
+        qset = qset.filter(qsetname__icontains = search_term) if search_term else qset
         qset = qset.annotate(
                 text = F('qsetname')).values(
                     'id', 'text')
@@ -518,11 +522,11 @@ class JobneedManager(models.Manager):
         return qset or self.none()
 
     def get_tourdetails(self, R):
-        qset = self.select_related(
+        qset = self.annotate(gps = AsGeoJSON('gpslocation')).select_related(
             'parent', 'asset', 'qset').filter(parent_id = R['parent_id']).values(
                 'asset__assetname', 'asset__id', 'qset__id', 'ctzoffset',
                 'qset__qsetname', 'plandatetime', 'expirydatetime',
-                'gracetime', 'seqno', 'jobstatus', 'id','attachmentcount'
+                'gracetime', 'seqno', 'jobstatus', 'id','attachmentcount','gps'
             ).order_by('seqno')
 
         return qset or self.none()
@@ -539,14 +543,13 @@ class JobneedManager(models.Manager):
                     'cdtz':utils.getawaredatetime(datetime.now(), R['ctzoffset']),
                     'mdtz':utils.getawaredatetime(datetime.now(), R['ctzoffset']),
                     'type':R['type'], 'client_id':S['client_id'], 'bu_id':S['bu_id']}
-        
-
     
     def get_ext_checkpoints_jobneed(self, request, related, fields):
-        fields += ['distance', 'duration','bu__gpslocation', 'performedtime', 'alerts','attachmentcount','gps']
+        fields += ['distance', 'duration','bu__gpslocation', 'performedtime','performedendtime','alerts','attachmentcount','gps']
         qset  = self.annotate(
             distance=F('other_info__distance'),
             performedtime = F("starttime"),
+            performedendtime = F("endtime"),
             gps = AsGeoJSON('gpslocation'),
             bu__gpslocation = AsGeoJSON('bu__gpslocation'),
             duration = V(None, output_field=models.CharField(null=True))).select_related(*related).filter(
@@ -554,7 +557,7 @@ class JobneedManager(models.Manager):
             identifier = 'EXTERNALTOUR',
             job__enable=True
         ).order_by('seqno').values(*fields)
-        ic("checkpoints", qset)
+        # print('External Tour',qset)
         return qset or self.none()
     
     def getAttachmentJobneed(self, id):
@@ -572,7 +575,7 @@ class JobneedManager(models.Manager):
                           V('/'), Cast('filename', output_field=models.CharField())),
             location = AsGeoJSON('gpslocation')
             ).filter(owner = uuid).values(
-            'filepath', 'filename', 'attachmenttype', 'datetime', 'location', 'id', 'file'
+            'filepath', 'filename', 'attachmenttype', 'datetime', 'location', 'id', 'file','ctzoffset'
             ):return atts
         return self.none()
 
@@ -600,7 +603,8 @@ class JobneedManager(models.Manager):
             client_id = S['client_id'],
             plandatetime__date__gte = pd1,
             plandatetime__date__lte = pd2,
-            identifier='EXTERNALTOUR'
+            identifier='EXTERNALTOUR',
+            job__enable=True
         ).count() or 0
     
     def get_ppm_listview(self, request, fields, related):
@@ -657,7 +661,7 @@ class JobneedManager(models.Manager):
         ).values()
         return [
             total_schd.filter(jobstatus='COMPLETED').count(),
-            total_schd.filter(jobstatus='INPROGRESS').count(),
+            total_schd.filter(jobstatus='AUTOCLOSED').count(),
             total_schd.filter(jobstatus='PARTIALLYCOMPLETED').count(),
             total_schd.count(),
         ]
@@ -724,10 +728,10 @@ class JobneedManager(models.Manager):
             plandatetime__date__lte = R['upto'],    
             client_id = S['client_id']
         ).values()
-        ic(total_schd.filter(jobstatus='ASSIGNED').count(),
-            total_schd.filter(jobstatus='COMPLETED').count(),
-            total_schd.filter(jobstatus='AUTOCLOSED').count(),
-            total_schd.count())
+        # ic(total_schd.filter(jobstatus='ASSIGNED').count(),
+        #     total_schd.filter(jobstatus='COMPLETED').count(),
+        #     total_schd.filter(jobstatus='AUTOCLOSED').count(),
+        #     total_schd.count())
         return [
             total_schd.filter(jobstatus='ASSIGNED').count(),
             total_schd.filter(jobstatus='COMPLETED').count(),
@@ -1111,16 +1115,21 @@ class AssetManager(models.Manager):
             'category_id', 'category__taname'
         ).distinct('category_id').order_by('category_id')
         return qset or self.none()
-    
-    def asset_choices_for_report(self,request):
+
+    def asset_choices_for_report(self,request,choices = False, sitewise= False, identifier = None):
         S = request.session
         qset = self.filter(
-            bu_id = S['bu_id'],
-            client_id = S['client_id']
-        ).values_list('id','assetname')
+            bu_id__in = S['assignedsites'],
+            client_id = S['client_id'],
+            enable = True,
+            identifier = identifier
+        )
+        if sitewise : 
+            qset = qset.filter(bu_id = S['bu_id'])
+        if choices:
+            qset = qset.annotate(text = Concat(F('assetname'),V('('),F('assetcode'),V(')'))).values_list('id','text')
         return qset or self.none()
-
-
+    
     def get_schedule_task_for_adhoc(self, params):
         qset = self.raw("select * from fn_get_schedule_for_adhoc")
         
@@ -1312,7 +1321,7 @@ class AssetManager(models.Manager):
         R, S = request.GET, request.session
         search_term = R.get('search')
         qset = self.filter(client_id = S['client_id'], bu_id = S['bu_id'], enable=True)
-        qset = qset.filter(assetname = search_term) if search_term else qset
+        qset = qset.filter(assetname__icontains = search_term) if search_term else qset
         qset = qset.annotate(
                 text = F('assetname')).values(
                     'id', 'text')
@@ -1329,7 +1338,7 @@ class JobneedDetailsManager(models.Manager):
     def get_jndmodifiedafter(self, jobneedid):
         if jobneedid:
             jobneedids = jobneedid.split(',')
-            ic(jobneedids)
+            # ic(jobneedids)
             qset = self.select_related(
                 *self.related).filter(
                 jobneed_id__in = jobneedids,
@@ -1375,9 +1384,10 @@ class JobneedDetailsManager(models.Manager):
         from apps.activity.models import Attachment
         if atts := Attachment.objects.annotate(
             file = Concat(V(settings.MEDIA_URL, output_field=models.CharField()), F('filepath'),
-                          V('/'), Cast('filename', output_field=models.CharField()))
+                          V('/'), Cast('filename', output_field=models.CharField())),
+                          location = AsGeoJSON('gpslocation')
             ).filter(owner = uuid).values(
-            'filepath', 'filename', 'attachmenttype', 'datetime',  'id', 'file'
+            'filepath', 'filename', 'location','attachmenttype', 'datetime',  'id', 'file','ctzoffset'
             ):return atts
         return self.none()
     
@@ -1418,7 +1428,7 @@ class JobneedDetailsManager(models.Manager):
             'asset_id', 'assetcode', 'questionname',
             'bu_id', 'buname', 'answer_as_float')
         
-        ic(str(qset.query))
+        # ic(str(qset.query))
         
         series = []
         from django.apps import apps
@@ -1430,7 +1440,7 @@ class JobneedDetailsManager(models.Manager):
                     'data':list(qset.filter(jobneed__asset_id=asset_id).values_list('starttime', 'answer_as_float'))
                 }
             )
-        ic(series)
+        # ic(series)
         return series
         
     def get_parameter_comparision(self, request, formData):
@@ -1460,7 +1470,7 @@ class JobneedDetailsManager(models.Manager):
             'asset_id', 'assetcode', 'questionname',
             'bu_id', 'buname', 'answer_as_float')
         
-        ic(str(qset.query))
+        # ic(str(qset.query))
         
         series = []
         from django.apps import apps
@@ -1472,6 +1482,7 @@ class JobneedDetailsManager(models.Manager):
                     'data':list(qset.filter(question_id=question_id).values_list('starttime', 'answer_as_float'))
                 }
             )
+        # ic(series)
         return series
 
 
@@ -1484,9 +1495,14 @@ class QsetBlngManager(models.Manager):
               'qset', 'cuser', 'muser']
 
     def get_modified_after(self ,mdtz, buid):
+        from .models import QuestionSet
+        # fetch site group ids which contains the buid
+        site_groups = pm.Pgbelonging.objects.filter(Q(people_id=1) | Q(people__isnull=True), assignsites_id=buid, ).values_list('pgroup_id', flat=True)
+        # fetch the qsets of the group ids
+        qset_ids = QuestionSet.objects.filter(site_grp_includes__contains=site_groups).values_list('id', flat=True)
         qset = self.select_related(
             *self.related).filter(
-                 mdtz__gte = mdtz, bu_id = buid).values(
+                (Q(bu_id = buid) | Q(qset_id__in=qset_ids)), mdtz__gte = mdtz).values(
                     *self.fields
                 )
         return qset or self.none()
@@ -1617,7 +1633,6 @@ class JobManager(models.Manager):
             'breaktime', 'deviation', 'fromdate', 'uptodate', 'gracetime',
             'expirytime', 'planduration','jobname', 'id', 'ctzoffset'
         ).order_by('-mdtz')
-        ic(utils.printsql(qset))
         return qset or self.none()
 
     def get_sitecheckpoints_exttour(self, job, child_jobid = None):
@@ -1700,7 +1715,6 @@ class JobManager(models.Manager):
             enable=True
         ).values('id', 'jobname', 'asset__assetname', 'qset__qsetname', 'assignedto', 'bu__bucode',
                  'uptodate', 'planduration', 'gracetime', 'expirytime', 'fromdate', 'bu__buname')
-        ic(qset)
         return qset or self.none()
     
     def handle_save_checkpoint_guardtour(self, request):
@@ -1717,7 +1731,7 @@ class JobManager(models.Manager):
             'seqno':R['seqno'],
             'qsetname':R['qsetname']
         }
-        ic(R)
+        # ic(R)
         if not  R['action'] == 'remove':
             child_job = sutils.job_fields(parent_job, checkpoint)
         try:
@@ -1726,7 +1740,7 @@ class JobManager(models.Manager):
                     qset_id = checkpoint['qsetid'], asset_id = checkpoint['assetid'],
                     parent_id = parent_job['id']).exists():
                     return {'data':list(self.none()), 'error':'Warning: Record already added!'}
-                ic("creating checkpoint with following data:", child_job)
+                # ic("creating checkpoint with following data:", child_job)
                 ID = self.create(**child_job, cuser = request.user, muser = request.user,
                                  cdtz = cdtz, mdtz = mdtz).id
             elif R['action'] == 'edit':
@@ -1789,7 +1803,7 @@ class LocationManager(models.Manager):
     def get_locationlistview(self, related, fields, request):
         S = request.session
         P = request.GET['params']
-        qset = self.filter(
+        qset = self.annotate(gps=AsGeoJSON('gpslocation')).filter(
             ~Q(loccode='NONE'),
             bu_id = S['bu_id'],
             client_id = S['client_id'],
@@ -1832,6 +1846,29 @@ class LocationManager(models.Manager):
         qset = obj.asset_set.annotate(
             text = Concat(F('assetname'), V(' ('), F('assetcode'), V(')'), output_field=CharField())
         ).filter(bu_id = S['bu_id']).values('id', 'text')
+        return qset or self.none()
+    
+    def location_type_choices_for_report(self, request):
+        S = request.session
+        qset = self.filter(
+            bu_id = S['bu_id'],
+            client_id = S['client_id']
+        ).select_related('type').values_list(
+            'type_id', 'type__taname'
+        ).distinct('type_id').order_by('type_id')
+        return qset or self.none()
+
+    def location_choices_for_report(self,request,choices = False, sitewise= False):
+        S = request.session 
+        qset = self.filter(
+            bu_id__in = S['assignedsites'],
+            client_id = S['client_id'],
+            enable = True
+        )
+        if sitewise : 
+            qset = qset.filter(bu_id = S['bu_id'])
+        if choices: 
+            qset = qset.annotate(text = Concat(F('locname'),V('('),F('loccode'),V(')'))).values_list('id','text')
         return qset or self.none()
     
     

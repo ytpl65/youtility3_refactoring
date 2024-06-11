@@ -107,29 +107,35 @@ function dataTablesPDFConfig(
   title,
   columns,
   filename,
+  pageSize = "A4",
   mode = "landscape",
-  moreConfig = {}
+  moreConfig = {},
+
 ) {
   return {
-    extend: "pdfHtml5",
-    text: '<i class="bi text-danger fs-5 bi-file-earmark-pdf-fill"></i>',
-    titleAttr: "PDF",
-    exportOptions: { 
-      modifier: {
-        page: "all",
-      },
-      columns: columns,
-    },
-    header: true,
-    title: title,
-    filename: filename,
-    orientation: mode,
-    customize: function (doc) {
-      doc.defaultStyle.fontSize = 7;
-      doc.styles.tableHeader.fontSize = 7;
-      doc.content[1].table.widths = 
-        Array(doc.content[1].table.body[0].length + 1).join('*').split('');
-    },
+    extend: 'pdfHtml5',
+                        title:title,
+						text: '<i class="bi text-danger fs-5 bi-file-earmark-pdf-fill"></i>',
+    					titleAttr: "PDF",
+                        exportOptions: {
+                            columns: columns
+                        },
+                        filename: filename,
+						orientation: mode,
+            pageSize: pageSize,
+						customize: function (doc) {
+							doc.defaultStyle.fontSize = 7;
+							doc.styles.tableHeader.fontSize = 8;
+              // Set table widths
+              doc.content[1].table.widths = Array(doc.content[1].table.body[0].length).fill('*');
+
+              doc.content[1].table.headerRows = 1; // Ensure only the first row is considered as headers
+              doc.content[1].table.body.forEach(function(row) {
+                row.forEach(function(cell) {
+                  cell.alignment = 'center';
+        });
+      });
+            },
     ...moreConfig,
   };
 }

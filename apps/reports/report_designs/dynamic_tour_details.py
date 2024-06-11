@@ -10,9 +10,9 @@ class DynamicTourDetailReport(BaseReportsExport):
     report_title = "Dynamic Tour Details"
     design_file = "reports/pdf_reports/dynamic_tour_details.html"
     ytpl_applogo =  'frontend/static/assets/media/images/logo.png'
-    report_name = 'DynamicTourDetails'
+    report_name = 'DYNAMICTOURDETAILS'
     unsupported_formats = ['None']
-    fields = ['site*', 'fromdate*', 'uptodate*']
+    fields = ['site*', 'fromdatetime*', 'uptodatetime*']
     
     def __init__(self, filename, client_id, request=None, context=None, data=None, additional_content=None, returnfile=False, formdata=None):
         super().__init__(filename, client_id, design_file=self.design_file, request=request, context=context, data=data, additional_content=additional_content, returnfile=returnfile, formdata=formdata)
@@ -27,12 +27,14 @@ class DynamicTourDetailReport(BaseReportsExport):
         # Given values
         identifier = 'INTERNALTOUR'
         time_bound = False
+        print(self.formdata['fromdatetime'])
+        print(self.formdata['uptodatetime'])
 
         # Fetch parent jobneeds
         parents = Jobneed.objects.filter(
             identifier=identifier,
-            plandatetime__date__gte=self.formdata['fromdate'],
-            plandatetime__date__lte=self.formdata['uptodate'],
+            plandatetime__gte=self.formdata['fromdatetime'],
+            plandatetime__lte=self.formdata['uptodatetime'],
             bu_id=self.formdata['site'],
             parent_id=1,
             other_info__istimebound=False
@@ -107,7 +109,7 @@ class DynamicTourDetailReport(BaseReportsExport):
                 parent_data['checkpoints'].append(child_data)
                 if child.jobstatus == 'COMPLETED':
                     passed_count += 1
-                elif child.jobstatus == 'ASSIGNED':
+                elif child.jobstatus == 'ASSIGNED' or 'AUTOCLOSED':
                     missed_count += 1
             total_checkpoints = len(checkpoints)
             parent_data['Count of Checkpoint'] = total_checkpoints
@@ -115,8 +117,10 @@ class DynamicTourDetailReport(BaseReportsExport):
             parent_data['Missed Count'] = missed_count
 
             # Calculate ratios
-            parent_data['Passed Ratio'] = (passed_count / total_checkpoints * 100) if total_checkpoints > 0 else 0
-            parent_data['Missed Ratio'] = (missed_count / total_checkpoints * 100) if total_checkpoints > 0 else 0
+            completed_ratio = (passed_count/total_checkpoints * 100) if total_checkpoints > 0 else 0 
+            parent_data['Passed Ratio'] = str(completed_ratio) + '%'
+            missed_ratio = (missed_count/total_checkpoints*100) if total_checkpoints > 0 else 0
+            parent_data['Missed Ratio'] = str(missed_ratio) + '%'
 
             excel_data.append(parent_data)
         return excel_data
@@ -136,16 +140,17 @@ class DynamicTourDetailReport(BaseReportsExport):
             'report_title': self.report_title,
             'client_logo':self.get_client_logo(),
             'app_logo':self.ytpl_applogo,
-            'report_subtitle':f"Site: {sitename}, From: {self.formdata.get('fromdate')} To {self.formdata.get('uptodate')}"
+            'report_subtitle':f"Site: {sitename} From: {self.formdata.get('fromdatetime').strftime('%d/%m/%Y %H:%M:%S')} To {self.formdata.get('uptodatetime').strftime('%d/%m/%Y %H:%M:%S')}"
         }
         return len(self.context['data']) > 0
         
     def set_args_required_for_query(self):
+        
         self.args = [
             get_timezone(self.formdata['ctzoffset']),
             self.formdata['site'],
-            self.formdata['fromdate'].strftime('%d/%m/%Y'),
-            self.formdata['uptodate'].strftime('%d/%m/%Y'),    
+            self.formdata['fromdatetime'],
+            self.formdata['uptodatetime']    
             ]
     
     def set_data(self):
@@ -163,7 +168,9 @@ class DynamicTourDetailReport(BaseReportsExport):
         
     def set_additional_content(self):
         bt = Bt.objects.filter(id=self.client_id).values('id', 'buname').first()
-        self.additional_content = f"Client: {bt['buname']}; Report: {self.report_title}; From: {self.formdata['fromdate']} To: {self.formdata['uptodate']}"
+        fromdatetime = self.formdata.get('fromdatetime').strftime('%d/%m/%Y %H:%M:%S')
+        uptodatetime = self.formdata.get('uptodatetime').strftime('%d/%m/%Y %H:%M:%S')
+        self.additional_content = f"Client: {bt['buname']}; Report: {self.report_title}; From: {fromdatetime} To: {uptodatetime}"
 
     def excel_layout(self, worksheet, workbook, df, writer, output):
         super().excel_layout(worksheet, workbook, df, writer, output)

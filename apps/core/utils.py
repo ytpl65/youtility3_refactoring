@@ -28,6 +28,10 @@ from apps.peoples import models as pm
 from apps.work_order_management.models  import Wom
 from apps.tenants.models import Tenant
 from apps.core import exceptions as excp
+from icecream import ic
+from django.db import transaction
+from django.db.models import RestrictedError
+
 
 logger = logging.getLogger('__main__')
 dbg = logging.getLogger('__main__').debug
@@ -132,6 +136,29 @@ def render_form_for_update(request, params, formname, obj, extra_cxt=None, FORM=
         data = {'html_form': html}
         return rp.JsonResponse(data, status=200)
     except params['model'].DoesNotExist:
+        return handle_DoesNotExist(request)
+    except Exception:
+        return handle_Exception(request)
+
+
+def delete_pgroup_pgbelonging_data(request):
+    try:
+        pk = request.GET.get('id')
+        if not pk:
+            return handle_Exception(request)
+        pgroup_obj = pm.Pgroup.objects.filter(id=pk).first()
+        print()
+        with transaction.atomic():
+            pgbelonging_savepoint = transaction.savepoint()
+            try:
+                pm.Pgbelonging.objects.select_related("pgroup").filter(pgroup=pgroup_obj).delete()
+                pgroup_obj.delete()
+            except RestrictedError:
+                transaction.savepoint_rollback(pgbelonging_savepoint)
+                return handle_RestrictedError(request)
+            transaction.savepoint_commit(pgbelonging_savepoint)
+        return JsonResponse({},status=200)
+    except pm.Pgroup.DoesNotExist:
         return handle_DoesNotExist(request)
     except Exception:
         return handle_Exception(request)
@@ -1004,11 +1031,8 @@ def clean_record(record):
 
     for k, v in record.items():
         if k in ['gpslocation', 'startlocation', 'endlocation']:
-            ic(v, type(v))
             v = v.split(',')
-            ic(v)
             p = f'POINT({v[1]} {v[0]})'
-            ic(p)
             record[k] = GEOSGeometry(p, srid=4326)
     return record
 
@@ -1609,15 +1633,22 @@ def get_changed_keys(dict1, dict2):
 
     return changed_keys
 
-class Instructions(object): 
+class Instructions(object):
+
+    #constructor for the class
     def __init__(self, tablename):
+        '''Imported MODEL_RESOURCE_MAP(which is a dictionary containing model and resource mapping(used to validate import data)) 
+        and HEADER_MAPPING(which is a dictionary containing tablename and column names mapping)'''
         from apps.onboarding.views import MODEL_RESOURCE_MAP, HEADER_MAPPING
         
-        if tablename is None: raise ValueError("The tablename argument is required")
+        # Check if tablename is provided initializing the class
+        if tablename is None: 
+            raise ValueError("The tablename argument is required")
         self.tablename = tablename
         self.model_source_map = MODEL_RESOURCE_MAP
         self.header_mapping = HEADER_MAPPING
-        
+
+    #Helper function for get_valid_choices_if_any() which returns the valid choices for the given choice field 
     def field_choices_map(self, choice_field):
         from django.apps import apps
         Question             = apps.get_model("activity", 'Question')
@@ -1633,14 +1664,15 @@ class Instructions(object):
             'Type*' : ['SITEGROUP', 'PEOPLEGROUP'],
             'QuestionSet Type*' : [choice[0] for choice in QuestionSet.Type.choices],
         }.get(choice_field)
-    
+
+    #function is for getting the instructions for the given tablename 
     def get_insructions(self):
         general_instructions = self.get_general_instructions()
         custom_instructions = self.get_custom_instructions()
         column_names = self.get_column_names()
         valid_choices = self.get_valid_choices_if_any()
         format_info = self.get_valid_format_info()
-        
+
         return  {
             'general_instructions': general_instructions + custom_instructions if custom_instructions else general_instructions,
             'column_names':"Columns: ${}&".format(', '.join(column_names)) ,
@@ -1648,6 +1680,7 @@ class Instructions(object):
             'format_info':format_info
         }
     
+    #list returning general instructions which is common for all the tables
     def get_general_instructions(self):
         return [
             "Make sure you correctly selected the type of data that you wanna import in bulk. before clicking 'download'",
@@ -1655,8 +1688,8 @@ class Instructions(object):
             "The column names marker asterisk (*) are mandatory to fill"
         ]
     
+    #list returning custom instructions for the given tablename
     def get_custom_instructions(self):
-        ic(self.tablename)
         return {
             'SCHEDULEDTOURS':[
                 'Make sure you insert the tour details first then you insert its checkpoints.',
@@ -1666,11 +1699,11 @@ class Instructions(object):
             ]
         }.get(self.tablename)
     
-    
+    #list returning column names for the given tablename
     def get_column_names(self):
         return self.header_mapping.get(self.tablename)
         
-    
+    #list returning valid choices for the given tablename
     def get_valid_choices_if_any(self):
         table_choice_field_map = {
             "QUESTION": ['Answer Type*', 'AVPT Type'],
@@ -1681,18 +1714,20 @@ class Instructions(object):
             }
         if self.tablename in table_choice_field_map:
             valid_choices = []
+            #table_choice_field_map.get(self.tablename) will return the list of choice fields for the given tablename
             for choice_field in table_choice_field_map.get(self.tablename):
                 instruction_str = f'Valid values for column: {choice_field} ${", ".join(self.field_choices_map(choice_field))}&'
                 valid_choices.append(instruction_str)
             return valid_choices
         return []
     
+    #list returning valid format info for the given tablename
     def get_valid_format_info(self):
         return [
-            'Valid Date Format: $YYYY-MM-DD For example: 1998-06-22&',
+            'Valid Date Format: $YYYY-MM-DD, Example Date Format: 1998-06-22&',
             'Valid Mobile No Format: $[ country code ][ rest of number ] For example: 910123456789&' ,
-            'Valid Time Format: $HH:MM:SS For example: 23:55:00&',
-            'Valid Date Time Format: $YYYY-MM-DD HH:MM:SS For example: 1998-06-22 23:55:00&'
+            'Valid Time Format: $HH:MM:SS, Example Time Format: 23:55:00&',
+            'Valid Date Time Format: $YYYY-MM-DD HH:MM:SS, Example DateTime Format: 1998-06-22 23:55:00&'
             ]
 
 def generate_timezone_choices():
@@ -1715,3 +1750,11 @@ def generate_timezone_choices():
         choices.append((f"{tz_name} ({formatted_offset})", f"{tz_name} ({formatted_offset})"))
     
     return choices
+
+def download_qrcode(code, name, report_name, session, request):
+    from apps.reports import utils as rutils
+    report_essentials = rutils.ReportEssentials(report_name=report_name)
+    ReportFormat = report_essentials.get_report_export_object()
+    report = ReportFormat(filename=report_name, client_id=session['client_id'],
+                              formdata={'print_single_qr':code, 'qrsize':200, 'name':name}, request=request, returnfile=False)
+    return report.execute()

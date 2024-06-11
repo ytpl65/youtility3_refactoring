@@ -187,7 +187,6 @@ class PeopleManager(BaseUserManager):
                 ~Q(peoplecode='NONE'), 
                 client_id = S['client_id']).select_related(*related).values(*fields).order_by('peoplename')
         else:
-            
             qset = self.filter(
                 ~Q(peoplecode='NONE'), 
                 client_id = S['client_id'],
@@ -243,8 +242,9 @@ class PgblngManager(models.Manager):
             buname = F('assignsites__buname'),
             bucode = F('assignsites__bucode'),
             buid = F('assignsites__id'),
-            solid = F('assignsites__solid')
-        ).values('buname', 'buid', 'solid', 'bucode')
+            solid = F('assignsites__solid'),
+            gps = AsGeoJSON('assignsites__gpslocation')
+        ).values('buname', 'buid', 'solid', 'bucode','gps')
         return qset or self.none()
     
     def get_sitesfromgroup(self, job, force=False):

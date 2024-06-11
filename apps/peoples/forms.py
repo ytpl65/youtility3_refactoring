@@ -67,7 +67,6 @@ class LoginForm(forms.Form):
     
     def get_user(self, username):
         try:
-            ic(username)
             return pm.People.objects.get(Q(loginid = username) | Q(email = username) | Q(mobno = username))
         except pm.People.DoesNotExist as e:
             raise forms.ValidationError("Login credentials incorrect. Please check the Username or Password") from e
@@ -212,7 +211,7 @@ class PeopleForm(forms.ModelForm):
 
     def clean_peoplename(self):
         if value := self.cleaned_data.get('peoplename'):
-            regex = "^[a-zA-Z0-9\-_@#\(\|\)& ]*$"
+            regex = "^[a-zA-Z0-9\-_@#.\(\|\)& ]*$"
             if not re.match(regex, value):
                 raise forms.ValidationError(self.error_msg['invalid_name'])
         return value

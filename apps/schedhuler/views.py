@@ -162,7 +162,6 @@ class Update_I_TourFormJob(Schd_I_TourFormJob, View):
         response = None
         try:
             pk = kwargs.get('pk')
-            ic(pk)
             obj = self.model.objects.get(id = pk)
             log.info('object retrieved {}'.format(obj))
             form        = self.form_class(instance = obj, initial = self.initial)
@@ -452,7 +451,6 @@ class Schd_E_TourFormJob(LoginRequiredMixin, View):
         cxt = {'schdexternaltourform': self.form_class(
             request = request, initial = self.initial),
                'editsiteform':self.subform()}
-        print("$$44444", self.subform().as_p().split('\n'))
         return render(request, self.template_path, context = cxt)
 
     def post(self, request, *args, **kwargs):
@@ -974,7 +972,6 @@ class GetTaskFormJobneed(LoginRequiredMixin, View):
         try:
             obj = self.model.objects.get(id = parent_jobneed)
             form = self.form_class(instance = obj)
-            ic(form.data)
             log.info(f"object retrieved {obj.jobdesc}")
             cxt = {'taskformjobneed': form, 'edit': True}
             response = render(request, self.template_path, context = cxt)
@@ -1025,6 +1022,10 @@ class JobneedTours(LoginRequiredMixin, View):
             objs = am.JobneedDetails.objects.get_e_tour_checklist_details(R['jobneedid'])
             return rp.JsonResponse(data = {'data':list(objs)})
         
+        if R.get('action') == 'get_checkpointdetails':
+            qset = P['model'].objects.get_tourdetails(R)
+            return rp.JsonResponse({'data':list(qset)}, status = 200)
+        
         if R.get('action') == 'getAttachmentJobneed' and R.get('id'):
             att = P['model'].objects.getAttachmentJobneed(R['id'])
             return rp.JsonResponse(data = {'data':list(att)})
@@ -1066,7 +1067,6 @@ class JobneedTours(LoginRequiredMixin, View):
         return checkpoints
 
 
-
 class JobneedExternalTours(LoginRequiredMixin, View):
     params = {
         'model'        : am.Jobneed,
@@ -1094,7 +1094,7 @@ class JobneedExternalTours(LoginRequiredMixin, View):
             objs = P['model'].objects.get_externaltourlist_jobneed(request, P['related'], P['fields'])
             return rp.JsonResponse(data = {'data':list(objs)})
         
-        if R.get('action') == "checkpoints":
+        if R.get('action') == "checkpoints":    
             objs = P['model'].objects.get_ext_checkpoints_jobneed(request, P['related'], P['fields'])
             return rp.JsonResponse(data = {'data':list(objs)})
         
@@ -1111,17 +1111,14 @@ class JobneedExternalTours(LoginRequiredMixin, View):
             return rp.JsonResponse(data = {'data': list(att)})
         
         if R.get('id'):
-            obj = P['model'].objects.get(id = R['id'])
+            obj = P['model'].objects.get(id = R['id'])  
             form = P['form_class'](instance = obj, initial = P['initial'])
             log.info("object retrieved %s", (obj.jobdesc))
             checkpoints = self.get_checkpoints(P, obj = obj)
             cxt = {'externaltourform': form, 'edit': True,
                 'checkpoints': checkpoints}
-            print(checkpoints)
             return render(request, P['template_form'], context = cxt)
         
-        
-    
     @staticmethod
     def get_checkpoints(P, obj):
         log.info("getting checkpoints for the internal tour [start]")
@@ -1333,9 +1330,7 @@ class InternalTourScheduling(LoginRequiredMixin, View):
             'priority'  : am.Job.Priority.LOW,
             'scantype'  : am.Job.Scantype.QR,
             'gracetime' : 0,
-            'planduration' : 0,
-            'fromdate'  : datetime.combine(date.today(), time(00, 00, 00)),
-            'uptodate'  : datetime.combine(date.today(), time(23, 00, 00)) + timedelta(days = 2),
+            'planduration' : 0
         },
         'fields'       : ['id', 'jobname', 'people__peoplename', 'pgroup__groupname', 'fromdate', 'uptodate',
                         'planduration', 'gracetime', 'expirytime', 'assignedto', 'bu__bucode', 'bu__buname',
@@ -1389,7 +1384,6 @@ class InternalTourScheduling(LoginRequiredMixin, View):
     def post(self, request, *args, **kwargs):
         R, P = request.POST, self.params
         pk, data = request.POST.get('pk', None), QueryDict(request.POST.get('formData'))
-        ic(data, pk)
         if R.get('postType') == 'saveCheckpoint':
             data = P['model'].objects.handle_save_checkpoint_guardtour(request)
             return rp.JsonResponse(data, status = 200, safe=False)
@@ -1509,16 +1503,13 @@ class ExternalTourScheduling(LoginRequiredMixin, View):
             'seqno':-1,
             'identifier': am.Job.Identifier.EXTERNALTOUR,
             'scantype':am.Job.Scantype.QR,
-            'frequency':am.Job.Frequency.NONE,
             'starttime':time(00,00,00),
             'endtime':time(00,00,00),
             'priority':am.Job.Priority.HIGH,
             'expirytime':0,
-            'gracetime' : 5,
-            'planduration' : 5,
-            'pgroup':1,
-            'fromdate'  : datetime.combine(date.today(), time(00, 00, 00)),
-            'uptodate'  : datetime.combine(date.today(), time(23, 00, 00)) + timedelta(days = 2),
+            'gracetime' : 0,
+            'planduration' : 0,
+            'pgroup':1
         },
         'fields' : ['id', 'jobname', 'people__peoplename', 'pgroup__groupname', 'fromdate', 'uptodate',
                 'planduration', 'gracetime', 'expirytime', 'bu__buname', 'assignedto']
@@ -1549,7 +1540,6 @@ class ExternalTourScheduling(LoginRequiredMixin, View):
             if R['id'] == 'None': return rp.JsonResponse({'data':[]}, status = 200)
             job = am.Job.objects.filter(id = int(R['id'])).values(*utils.JobFields.fields)[0]
             objs = pm.Pgbelonging.objects.get_sitesfromgroup(job)
-            ic(objs)
             return rp.JsonResponse({'data':list(objs)}, status = 200)
 
         if R.get('action') == "forcegetfromgroup" and R.get('sgroup_id')!='None' and R.get('id')!='None':
@@ -1559,7 +1549,7 @@ class ExternalTourScheduling(LoginRequiredMixin, View):
         
         # return resp to load checklist
         if R.get('action') == "loadChecklist":
-            qset =  am.QuestionSet.objects.load_checklist()
+            qset =  am.QuestionSet.objects.load_checklist(request)
             return rp.JsonResponse({'items':list(qset), 'total_count':len(qset)}, status = 200)
         
         # return resp to delete request
@@ -1584,7 +1574,6 @@ class ExternalTourScheduling(LoginRequiredMixin, View):
         pk, R = request.POST.get('pk', None), request.POST
         formData = QueryDict(request.POST.get('formData'))
         try:
-            ic(formData)
             if R.get('postType') == 'saveCheckpoint':
                 data =  am.Job.objects.handle_save_checkpoint_sitetour(request)
                 return rp.JsonResponse(data, status = 200, safe=False)
@@ -1638,7 +1627,6 @@ class ExternalTourScheduling(LoginRequiredMixin, View):
             P['model'].objects.filter(parent_id = job['id']).delete()
             count=0
             for cp in checkpoints:
-                #ic(sutils.job_fields(job, cp, external=True))
                 obj = am.Job.objects.create(
                     **sutils.job_fields(job, cp, external=True))
                 putils.save_userinfo(obj, request.user, request.session, bu=cp['buid'])
@@ -1650,21 +1638,6 @@ class ExternalTourScheduling(LoginRequiredMixin, View):
         except Exception:
             log.critical("something went wrong...", exc_info=True)
             raise
-        
-
-class TourJobneedEditorView(LoginRequiredMixin, View):
-    params = {
-        'model':am.Jobneed,
-    }
-
-    def get(self, request, *args, **kwargs):
-        R, P = request.GET, self.params
-
-        if R.get('action') == 'get_tourdetails':
-            qset = P['model'].objects.get_tourdetails(R)
-            return rp.JsonResponse({'data':list(qset)}, status = 200)
-
-
 
 class JobneednJNDEditor(LoginRequiredMixin, View):
     params = {
@@ -1675,7 +1648,6 @@ class JobneednJNDEditor(LoginRequiredMixin, View):
     }
     def get(self, request, *args, **kwargs):
         R, P = request.GET, self.params
-        ic(R)
         if R.get('action') == 'get_jndofjobneed' and R.get('jobneedid'):
             objs = P['jnd'].objects.get_jndofjobneed(R)
             return rp.JsonResponse({'data':list(objs)}, status=200)
@@ -1683,7 +1655,6 @@ class JobneednJNDEditor(LoginRequiredMixin, View):
     
     def post(self, request, *args, **kwargs):
         R, P = request.POST, self.params
-        ic(R)
         if R.get('tourjobneed'):
             data = P['model'].objects.handle_jobneedpostdata(request)
             return rp.JsonResponse({'data':list(data)}, status = 200, safe=False)

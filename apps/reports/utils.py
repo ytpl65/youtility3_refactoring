@@ -156,7 +156,7 @@ class BaseReportsExport(WeasyTemplateResponseMixin):
     
     def excel_columns(self, df):
         '''
-        Override this method in inherited classn
+        Override this method in inherited class
         '''
         return df
  
@@ -194,7 +194,6 @@ class ReportEssentials(object):
     Report Essentials are the details
     requred by ReportExport functioning.
     '''
-    
     # report_names
     TaskSummary                = 'TASKSUMMARY'
     TourSummary                = 'TOURSUMMARY'
@@ -204,7 +203,7 @@ class ReportEssentials(object):
     SiteReport                 = 'SITEREPORT'
     ListOfTours                = 'LISTOFTOURS'
     DynamicTourList            = 'DYNAMICTOURLIST'
-    StaticTourList             = 'STATICTOURLIST'
+    StaticTourList            = 'STATICTOURLIST'
     WorkOrderList              = 'WORKORDERLIST'
     SiteVisitReport            = 'SITEVISITREPORT'
     PeopleQR                   = 'PEOPLEQR'

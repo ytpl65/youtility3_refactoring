@@ -278,8 +278,3 @@ class Capability(BaseModel, TenantAwareModel):
             parents.extend(parent.get_all_parents())
         return parents
 
-    def clean(self):
-        from django.core.exceptions import ValidationError
-        if self.parent in self.get_all_children():
-            raise ValidationError("A capability cannot have itself \
-                    or one of its' children as parent.")

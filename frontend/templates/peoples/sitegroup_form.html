@@ -67,7 +67,7 @@ Site Group
             Clear&nbsp;<i class="fas  fa-times-circle"></i>
         </button>
 
-        <button type="button" onclick="isSiteGrpDeleted({{ sitegrpform.instance.id }})" data-id="{{ sitegrpform.instance.id }}" id="deleteAttd"
+        <button type="button" onclick="deleteSiteGroup()" data-id="{{ sitegrpform.instance.id }}" id="deleteAttd"
             class="btn btn-sm btn-danger btn-hover-scale">
             Delete&nbsp;<i class="fas text-white fa-trash-alt"></i>
         </button>
@@ -115,6 +115,10 @@ Site Group
         <h3 class="card-title">
             Assigned Sites &nbsp;<i class="fas text-white ch4 fa-sm fa-paste"></i>
         </h3>
+        <div class = 'd-none' id="distance_duration_button">
+            <p>Total Distance: <span id="total_distance_display"></span></p>
+            <p>Total Duration: <span id="total_duration_display"></span></p>
+        </div>
     </div>
     <div class="card-body">
         <table id="assigned_sites"class="display cel-border compact hover nowrap">
@@ -128,6 +132,10 @@ Site Group
                 </tr>
             </thead>
         </table>
+        <br>
+        <div class="row googleMaps">
+            <div id="d2Map" style="width:100%;height:400px;background:#f1f1f1"></div>
+        </div>
     </div>
 </div>
 </div>
@@ -135,7 +143,13 @@ Site Group
 
 {% block extra_scripts %}
 {{ sitegrpform.media.js }}
+<script type="text/javascript" src="https://maps.googleapis.com/maps/api/js?key=AIzaSyC3PUZCB7u2PiV8whHeAshweOPIK_d690o&libraries=places&loading=async"></script>
+<script src="{{ static('assets/js/overlapping_marker_spiderfier.js') }}" type="text/javascript"></script>
 <script src="{{ static('assets/plugins/custom/DataTables/datatables.min.js') }}" type="text/javascript"></script>
+<script src="{{ static('assets/js/sitegrp_map.js') }}" type="text/javascript"></script>
+
+
+
 <script>
     var tabAllsites;
     var tabAssigned_sites;
@@ -161,7 +175,8 @@ Site Group
 
     //delete ajax request 
 	function isSiteGrpDeleted(id){ 
-		const params = {url:`${urlname}?action=delete&id=${id}`, 'beforeSend':function () {}}
+		const params = {url:`${urlname}?action=delete&id=${id}`, 'beforeSend':function () {}
+        }
 		fire_ajax_get(params)
 		.done((data, status, xhr) => {
 			if(!xhr.status === 200){
@@ -176,13 +191,13 @@ Site Group
 	}
 
     function loadAssignedSitesIfThereAny(table, id){
-        const params = {url:`${urlname}?action=loadSites&id=${id}`, 'beforeSend':function(){}}
+        const params = {url:`${urlname}?action=loadSites&id=${id}`, 'beforeSend':function(){}
+        }
         fire_ajax_get(params)
         .done((data, status, xhr) => {
             if(xhr.status === 200){
-                console.log(data['assigned_sites'])
                 let table = $("#assigned_sites").dataTable().api();
-				table.rows.add(data['assigned_sites']).draw()
+				//table.rows.add(data['assigned_sites']).draw()
                 var all_sites = tabAllsites.rows().data().toArray()
                 var assigned_sites = tabAssigned_sites.rows().data().toArray()
                 autoCheckSitesWhichAreAssigned(all_sites, assigned_sites)
@@ -194,15 +209,13 @@ Site Group
         
         for(let i = 0; i<all_sites.length; i++){
             for(let j = 0; j<assigned_sites.length; j++){
-                console.log(all_sites[i]['buname'] === assigned_sites[j]['buname'] && all_sites[i]['bucode'] === assigned_sites[j]['bucode'])
+                /*console.log(all_sites[i]['buname'] === assigned_sites[j]['buname'] && all_sites[i]['bucode'] === assigned_sites[j]['bucode'])*/
                 if(all_sites[i]['buname'] === assigned_sites[j]['buname'] && all_sites[i]['bucode'] === assigned_sites[j]['bucode']){
                     tabAllsites.row(i).select()
                 }
             }
         }
     }
-
-    
 
     $(document).ready(() => {
         //onclick cleart the form
@@ -213,16 +226,19 @@ Site Group
         //set ctzoffset
         $("#id_ctzoffset").val(-new Date().getTimezoneOffset())
 
+        //This function in js file resposible to render the map. 
+        d2InitializeMap()
+
         tabAllsites = $("#all_sites").DataTable({
             ajax:{
                 url: "{{ url('peoples:sitegroup') }}?action=allsites",
                 data:function ( d ) {
                     d.sel_butype = current_sel_butype;
-                    d.fields = ['buid', 'buname', 'parent__buname', 'bucode', 'identifier__tacode', 'solid'];
+                    d.fields = ['buid', 'buname', 'parent__buname', 'bucode', 'identifier__tacode', 'solid','gps'];
                     d.pk = $("#id_pk").val();
                 },
                 dataSrc:function(resp){
-                    console.log(resp, typeof resp)
+                    /*console.log(resp, typeof resp)*/
                     populate_buidentifier(resp, '#custom_butype');
                     return resp['data']
                 }
@@ -280,15 +296,15 @@ Site Group
             }
         });
         
-        
-        
         //populate_buidentifier(tabAllsites, '#custom_butype');
 
         //ON CLICK GRAB SELECTED AND POPULATE RIGHT TABLE
         $("#btn_assign_sites").click(() => {
             var selected_sites = tabAllsites.rows({'selected':true}).data().toArray()
+            console.log(selected_sites)
             tabAssigned_sites.rows().remove().draw()
             tabAssigned_sites.rows.add(selected_sites).draw()
+
         })
 
         tabAssigned_sites = $("#assigned_sites").DataTable({
@@ -300,16 +316,13 @@ Site Group
             columns:[
                 {data: 'buid', visible:false, orderable:false, className:"noVis",defaultContent: "", render:function(data, type, full, meta){
                     return data == undefined ? "" :data
-                }},
+                }
+                },
                 {data: 'buname', title: 'Site Name'},
                 {data: 'bucode', title: 'Code', visible:false},
                 {data: 'solid', title: 'Sol Id', visible:false},
                 {data:function(row, type, val, meta){
-                        if(row['13'] != null){
-                            return ""
-                        }else{
                             return '<a href="#" onClick="return false;"><i class="fas text-white text-dark fa-trash-alt fs-3"></i></a>'
-                        }
                     },
                 defaultContent: '',
                 orderable:false,
@@ -331,13 +344,23 @@ Site Group
                     mode = "portrait"
                 ),
                 dataTablesColumnVisibilityConfig(),
-            ]
-            
+                {
+                    text: 'Map View Button', 
+                    className: 'my-custom-button',
+                    action: function (e, dt, node, config) {
+                        calculate_distance_and_time(tabAssigned_sites,false,handleDistanceAndTimeData)
+                        plotLocationsOnMap(tabAssigned_sites)
+                    }
+                }
+            ],
+            initComplete:function(settings, json){
+            if("{{ sitegrpform.instance.id }}" !== 'None'){
+                get_assigned_sites_data(tabAssigned_sites, "{{ sitegrpform.instance.id }}")
+            }
+            }        
         })
-
         //reduce size of search bar
         $(".dataTables_filter label > input").css('width', '16rem')
-
         
         if("{{ sitegrpform.instance.id }}" != 'None'){
             console.log('checkig...')
@@ -384,26 +407,27 @@ Site Group
             showCancelButton: true,
             confirmButtonText: 'Submit'
             }).then((res) => {
-                fire_ajax_form_post(params, payLoad)
+                if (res.isConfirmed){
+                 fire_ajax_form_post(params, payLoad)
                 .done((data, status, xhr) => { //function to submit post request
                     show_successful_save_alert(update = isupdate)
                     window.setTimeout(function() {
                     window.location.href = `{{ url('peoples:sitegroup') }}?id=${data.pk}`;
                 }, 2000);
-                })
+                })   
+                }
             })
 			
 		})
     })
 
     //delete sitegroup 
-	function deleteSiteGroup(elemt){
+	function deleteSiteGroup(){
 		var id = $("#id_pk").val()
 		show_alert_before_delete('Site Group')
 		.then((result) => {
 			if(result.isConfirmed){ //delete requested by user
 				status = isSiteGrpDeleted(id) //fire's request
-				console.log("status ", status)
 				if(status){
 					show_successful_delete_alert() //defined in customjs
                     location.href = "{{ url('peoples:sitegroup') }}?action=form"
@@ -414,5 +438,6 @@ Site Group
 			}
 		})
 	}
+
 </script>
 {% endblock extra_scripts %}

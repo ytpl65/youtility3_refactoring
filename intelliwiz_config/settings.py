@@ -25,6 +25,10 @@ ENVPATH = os.path.join(os.path.abspath('intelliwiz_config/envs'))
 environ.Env.read_env(os.path.join(ENVPATH, '.env.dev'), overwrite=True) #rename it '.env.prod' for production
 
 
+HOST = env('HOST')
+# GOOGLE MAP API KEY...
+GOOGLE_MAP_SECRET_KEY  = env('GOOGLE_MAP_SECRET_KEY')
+
 def check_path(path):
     path = Path(path)
     if not os.path.exists(path):
@@ -34,6 +38,22 @@ def check_path(path):
 # Build paths inside the project like this: BASE_DIR / 'subdir'.p
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+# Email Verification CONF...
+def verified_callback(user):
+    user.isverified = True
+    user.is_staff=True
+
+
+EMAIL_TOKEN_LIFE = 60**2
+EMAIL_VERIFIED_CALLBACK = verified_callback
+EMAIL_FROM_ADDRESS = env('EMAIL_FROM_ADDRESS')
+EMAIL_MAIL_SUBJECT = 'Confirm your email'
+EMAIL_MAIL_HTML = 'email.html'
+EMAIL_MAIL_PLAIN = 'mail_body.txt'
+
+EMAIL_PAGE_TEMPLATE = 'email_verify.html'
+EMAIL_PAGE_DOMAIN = env('EMAIL_PAGE_DOMAIN')
+EMAIL_MULTI_USER = True  # optional (defaults to False)
 
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = env('SECRET_KEY')
@@ -41,7 +61,7 @@ ENCRYPT_KEY = env('ENCRYPT_KEY')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True    
 
-ALLOWED_HOSTS = ['.localhost', 'demo.youtility.in', 'redmine.youtility.in', '192.168.1.254' , '127.0.0.1']
+ALLOWED_HOSTS = ['.localhost', 'demo.youtility.in', 'redmine.youtility.in', '192.168.1.254' , '127.0.0.1','192.168.1.33']
 
 # Application definition
 
@@ -449,18 +469,22 @@ LOGGING_CONFIG_ = {
     }
 }
 
-if not check_path(LOGGING_CONFIG_['handlers']['filelogs']['filename']):
-    raise ValueError(f"`{LOGGING_CONFIG_['handlers']['filelogs']['filename']}` not readable and writable")
-if not check_path(LOGGING_CONFIG_['handlers']['serviceLogs']['filename']):
-    raise ValueError(f"`{LOGGING_CONFIG_['handlers']['serviceLogs']['filename']}` not readable and writable")
+def check_and_correct_path(path):
+    if os.path.exists(path):
+        if os.path.isdir(path):
+            print(f"Path {path} is a directory, expected a file. Correcting...")
+            os.rmdir(path)  # Only works if the directory is empty
+            # You might need more complex handling if the directory is not empty
+
+# Example usage before setting up logging
+check_and_correct_path(LOGGING_CONFIG_['handlers']['filelogs']['filename'])
+check_and_correct_path(LOGGING_CONFIG_['handlers']['serviceLogs']['filename'])
+
 logging.config.dictConfig(LOGGING_CONFIG_)
 
 # LOGIN URL NAME...
 LOGIN_URL = 'login'
 
-HOST = env('HOST')
-# GOOGLE MAP API KEY...
-GOOGLE_MAP_SECRET_KEY  = env('GOOGLE_MAP_SECRET_KEY')
 
 # DJANGO_IMPORT_EXPORT CONF...
 IMPORT_EXPORT_USE_TRANSACTIONS = True
@@ -472,20 +496,9 @@ GRAPH_MODELS = {
   'group_models': True,
 }
 
-# Email Verification CONF...
-def verified_callback(user):
-    user.isverified = True
-    user.is_staff=True
 
-EMAIL_VERIFIED_CALLBACK = verified_callback
-EMAIL_FROM_ADDRESS = env('EMAIL_FROM_ADDRESS')
-EMAIL_MAIL_SUBJECT = 'Confirm your email'
-EMAIL_MAIL_HTML = 'email.html'
-EMAIL_MAIL_PLAIN = 'mail_body.txt'
-EMAIL_TOKEN_LIFE = 60**2
-EMAIL_PAGE_TEMPLATE = 'email_verify.html'
-EMAIL_PAGE_DOMAIN = env('EMAIL_PAGE_DOMAIN')
-EMAIL_MULTI_USER = True  # optional (defaults to False)
+
+
 
 
 # For Django Email Backend

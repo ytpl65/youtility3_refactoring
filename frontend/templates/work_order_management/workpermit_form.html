@@ -290,8 +290,27 @@ Work Permit Form
 
         //load the questionaire of selected template
         $("#load_questions").click((e) => {
-            let qsetid = $("#id_qset").val()
-            let approvers = $("#id_approvers").val()
+            var validWorkpermit = '{{ valid_workpermit }}'
+            var qsetid = $("#id_qset").val()
+            var approvers = $("#id_approvers").val()
+            var workpermitname = $("#select2-id_qset-container").attr('title')
+
+            if (!validWorkpermit.includes(workpermitname)){
+                Swal.fire({
+                    icon:'warning',
+                    title:'Invalid Workpermit Selected',
+                    showConfirmButton: true,
+                    timer:3000
+                })
+                return
+            }
+            
+            console.log(workpermitname,approvers,qsetid)
+            if(qsetid.length == 0){
+                display_field_error('qset','Select Permit to Work')
+                return
+            }
+
             if(approvers.length == 0){
                 display_field_error('approvers', 'At least one approver needed!')
                 return

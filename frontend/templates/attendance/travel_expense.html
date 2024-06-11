@@ -79,9 +79,12 @@ $(document).ready(() => {
                 }
         },
         deferRender: true,
-        scrollY: 300,
-        scrollCollapse: true,
-        scrollX:true,
+        //scrollY: 300,
+        //scrollCollapse: true,
+        //scrollX:true,
+        lengthMenu: [250,500,750,1000],
+        pageLength: 500,
+        responsive:true,
         dom: `<'row' <'col-sm-6 d-flex justify-content-start'<'customfields'>f> <'col-sm-6 d-flex justify-content-end'B> >rt<'row'
             <'col-sm-6'l> <'col-sm-6'p><'col-sm-12 d-flex justify-content-center'i>>`,
         columns:[
@@ -90,10 +93,12 @@ $(document).ready(() => {
                 return `<p data-placement="top" data-toggle="tooltip"  
                 data-bs-placement="right"  class="pe-auto"
                 title=${row['bu__bucode']}>${row['bu__buname']}</p>`;
-            }}, //1
+            }
+            }, //1
             {data: 'people__peoplename', title: 'People', render:function ( data, type, row, meta ) {
                 return `<a href=${formUrl}?id=${row['id']}>${data}</a>`
-            }}, //2
+            }
+            }, //2
             {data: 'people__peoplecode', title:"People Code", visible:false, searchable:false, orderable:false }, //3
             {data: 'bu__bucode', visible:false, title:"Bu Code", searchable:false, orderable:false }, //4
             
@@ -145,12 +150,12 @@ $(document).ready(() => {
         "searchBuilder",
         dataTablesPDFConfig(
             title = `Site: {{request.user.bu.buname}}\n Travel Expense List`,
-            columns = [1,2,3,4,5,6,7,8,9,10,11,12],
+            columns = ':visible',
             filename = 'conveyance_list'
         ),
         dataTablesExcelConfig(
             title = `Site: {{request.user.bu.buname}}\n Travel Expense List`,
-            columns = [1,2,3,4,5,6,7,8,9,10,11,12],
+            columns = ':visible',
             filename = 'conveyance_list'
         ),
         dataTablesColumnVisibilityConfig(),

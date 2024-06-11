@@ -5,33 +5,33 @@ from logging import  getLogger
 log = getLogger('mobile_service_log')
 
 
-def getCreationDate(path):
-    return datetime.fromtimestamp(os.path.getmtime(path))
 
 def get_files(path, skipDays=60):
     '''
-    Generates a list of files in the given path that are older than
+    Optimized function to generate a list of files in the given path that are older than
     a specified number of days. The function walks through directories, 
-    checks file creation dates, and appends older files to a list.
+    checks file modification dates against a skip timestamp, and appends older files to a list.
     '''
     log.info(f"Scanning for files older than {skipDays} days in {path}")
-    try:
-        skipDate = datetime.now() - timedelta(days=int(skipDays))
-        old_files = []
+    old_files = []
+    skipTimestamp = (datetime.now() - timedelta(days=skipDays)).timestamp()
 
+    try:
         for root, _, files in os.walk(path):
             for file in files:
                 file_path = os.path.join(root, file)
-                if getCreationDate(file_path) < skipDate:
-                    old_files.append(file_path)
-                    log.debug(f"Old file found: {file_path}")
+                try:
+                    if os.path.getmtime(file_path) < skipTimestamp:
+                        old_files.append(file_path)
+                        log.debug(f"Old file found: {file_path}")
+                except Exception as e:
+                    log.error(f"Error processing file {file_path}: {e}", exc_info=True)
 
         log.info(f"Found {len(old_files)} old files in {path}")
-        return old_files
-
     except Exception as e:
         log.error(f"Error in get_files: {e}", exc_info=True)
-        return []
+
+    return old_files
     
 
 def move_files_to_GCS(file_paths, bucket_name, target_dir="", test_env=False):
@@ -43,14 +43,14 @@ def move_files_to_GCS(file_paths, bucket_name, target_dir="", test_env=False):
     '''
     log.info(f"Moving files to GCS bucket: {bucket_name}")
     try:
+        os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = f"{os.path.expanduser('~')}/service-account-file.json"
         client = storage.Client()
         bucket = client.get_bucket(bucket_name)
 
         for file_path in file_paths:
             try:
-                file_creation_date = getCreationDate(file_path)
-                blob_name = file_path.replace(target_dir, "") if target_dir else file_path
-
+                # Efficient blob name generation
+                blob_name = file_path.replace(target_dir, "", 1)  # Ensure only the first instance is replaced
                 if test_env:
                     blob_name = blob_name.replace("youtility4_media", "youtility2_test")
 
@@ -59,12 +59,10 @@ def move_files_to_GCS(file_paths, bucket_name, target_dir="", test_env=False):
 
                 if blob.exists() and not test_env:
                     os.remove(file_path)
-                    log.info(f"File {file_path} moved to GCS and deleted locally")
+                    log.debug(f"File {file_path} moved to GCS and deleted locally")  # Consider log level
 
-                log.info(f"File {file_path} moved to GCS as {blob_name} on {file_creation_date}")
             except Exception as e:
                 log.error(f"Error moving file {file_path}: {e}", exc_info=True)
-
     except Exception as e:
         log.error(f"Error in move_files_to_GCS: {e}", exc_info=True)
         

@@ -33,7 +33,8 @@ $(document).ready(function(){
         ajax:{
             url: '{{ url("activity:peoplenearasset") }}?action=list',
         },
-        pageLength:50,
+        pageLength:500,
+        lengthMenu:[250,500,750,1000],
         columns     : [
             { "data": "id", visible:false },
             { "data": "assetcode" , title: "Code"},
@@ -49,7 +50,8 @@ $(document).ready(function(){
             render:function(data, type, row, meta){
                 var url= "{{ url('activity:peoplenearasset') }}?template=true&id=" + row['id'];
                 return `<a href=${url}>${data}</a>`
-            }}
+            }
+            }
         ],
         dom:`<'row' <'col-sm-6 d-flex justify-content-start'f> <'col-sm-6 d-flex justify-content-end'B> >rt<'row'
                 <'col-sm-6'l> <'col-sm-6'p><'col-sm-12 d-flex justify-content-center'i>>`,

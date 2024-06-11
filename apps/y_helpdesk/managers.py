@@ -35,7 +35,8 @@ class TicketManager(models.Manager):
         qset = self.filter(
             cdtz__date__gte = P['from'],
             cdtz__date__lte = P['to'],
-            bu_id = S['bu_id'],
+            bu_id__in = S['assignedsites'],
+            client_id = S['client_id']
         ).select_related(
             'assignedtopeople', 'assignedtogroup', 'bu', 'ticketcategory').values(
             'id','ticketno', 'cdtz', 'bu__buname', 'status', 'bu__bucode', 'isescalated',
@@ -43,8 +44,8 @@ class TicketManager(models.Manager):
             'ticketsource', 'ticketcategory__taname'
         )
         if P.get('status') and P.get('status') != 'SYSTEMGENERATED':
-            qset = qset.filter(status =P['status'])
-        if P.get('status') == 'SYSTEMGENERATED':
+            qset = qset.filter(status =P['status'],ticketsource = 'USERDEFINED')
+        if P.get('status') and P.get('status') == 'SYSTEMGENERATED':
             qset = qset.filter(ticketsource='SYSTEMGENERATED')
         return qset or self.none()
         
@@ -80,7 +81,7 @@ class TicketManager(models.Manager):
             bu_id__in = S['assignedsites'],
             cdtz__date__gte = R['from'],
             cdtz__date__lte = R['upto'],
-            client_id = S['client_id'],
+            client_id = S['client_id']
         )
         user_generated = qset.filter(ticketsource = 'USERDEFINED')
         sys_generated = qset.filter(ticketsource = 'SYSTEMGENERATED')
@@ -121,7 +122,6 @@ class TicketManager(models.Manager):
         qset = qset.values('id', 'start', 'end', 'title','color')
         return qset or self.none()
 
-
 class ESCManager(models.Manager):
     use_in_migrations=True
     
@@ -136,7 +136,6 @@ class ESCManager(models.Manager):
     def handle_reminder_config_postdata(self,request):
         
         P, S = request.POST, request.session
-        ic(P)
         cdtz = datetime.now(tz = timezone.utc)
         mdtz = datetime.now(tz = timezone.utc)
         ppmjob = TypeAssist.objects.get(tatype__tacode='ESCALATIONTEMPLATE', tacode="JOB")
@@ -163,7 +162,6 @@ class ESCManager(models.Manager):
         else:
             self.filter(pk = P['pk']).delete()
             return {'data':list(self.none()),}
-        ic(ID)
         qset = self.filter(pk = ID).values('notify', 'frequency', 'frequencyvalue', 'id')
         return {'data':list(qset)}
     
@@ -185,7 +183,6 @@ class ESCManager(models.Manager):
     def handle_esclevel_form_postdata(self,request):
         
         P, S = request.POST, request.session
-        ic(P)
         cdtz = datetime.now(tz = timezone.utc)
         mdtz = datetime.now(tz = timezone.utc)
         PostData = {
@@ -212,12 +209,10 @@ class ESCManager(models.Manager):
         else:
             self.filter(pk = P['pk']).delete()
             return {'data':list(self.none()),}
-        ic(ID)
         qset = self.filter(pk = ID).values(
             'assignedfor', 'assignedperson__peoplename', 'assignedperson__peoplecode', 
             'assignedgroup__groupname', 'frequency', 'frequencyvalue', 'id', 'level',
             'assignedperson_id', 'assignedgroup_id')
-        ic(qset)
         return {'data':list(qset)}
     
             

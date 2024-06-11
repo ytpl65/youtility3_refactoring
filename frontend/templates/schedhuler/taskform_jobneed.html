@@ -215,10 +215,10 @@ Task Form
 <div class="row">
     <div class="card">
         <div class="card-header ps-0 mb-0">
-            <h4 class="ch4">Task Details&nbsp;<i class="fas text-white fa-layer-group ch4"></i></h4>
+            <h4 class="card-title modal-heading">Task Details&nbsp;<i class="fas text-white fa-layer-group ch4"></i></h4>
         </div>
         <div class="card-body pt-0">
-            <table id="task_details" class="display cell-border compact hover nowrap"></table>
+            <table id="task_details" class="display cell-border" style="width:100%"></table>
         </div>
     </div>
 
@@ -370,7 +370,7 @@ Task Form
             dom: `<'row' <'col-sm-6 d-flex justify-content-start'f> <'col-sm-6 d-flex justify-content-end'B> >rt<'row'
             <'col-sm-6'l> <'col-sm-6'p><'col-sm-12 d-flex justify-content-center'i>>`,
             buttons:[],
-        })
+        })  
 
         $('#id_attachmentdetails').on('shown.bs.modal', function (event) {
             $.fn.dataTable.tables( {visible: true, api: true} ).columns.adjust();
@@ -388,8 +388,10 @@ Task Form
                     retrieve: true,
                     columns:[
                         { data: "id", visible: false },
-                        {title:'SL No.', width:"5%", data:null, defaultContent:null, render:function (data, type, row, meta) { return meta.row  + 1; }},
-                        { data: "filepath",  width:"5%", title:'File', render:function (data, type, row, meta) { return `<img src="{{ MEDIA_URL }}${row.filepath.replace('youtility4_media/', "")}/${row.filename}" class="card-img-top" target="_blank" alt="" style="width: 30px;height: 30px;">`; }},
+                        {title:'SL No.', width:"5%", data:null, defaultContent:null, render:function (data, type, row, meta) { return meta.row  + 1; }
+                        },
+                        { data: "filepath",  width:"5%", title:'File', render:function (data, type, row, meta) { return `<img src="{{ MEDIA_URL }}${row.filepath.replace('youtility4_media/', "")}/${row.filename}" class="card-img-top" target="_blank" alt="" style="width: 30px;height: 30px;">`; }
+                        },
                         { data: "filename",  title:'File Name' },
                         { data: null, width:"5%", defaultContent:null, title:"Action", render:function(data, type, row, meta ){
                         let file = `{{ MEDIA_URL }}${row.filepath.replace('youtility4_media/', "")}/${row.filename}`

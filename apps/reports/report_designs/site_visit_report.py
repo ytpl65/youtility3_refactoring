@@ -9,7 +9,7 @@ class SiteVisitReport(BaseReportsExport):
     report_title = "Site Visit Report"
     design_file = "reports/pdf_reports/site_visit_report.html"
     ytpl_applogo =  'frontend/static/assets/media/images/logo.png'
-    report_name = 'SiteVisitReport'
+    report_name = 'SITEVISITREPORT'
 
     def __init__(self, filename, client_id, request=None, context=None, data=None, additional_content=None, returnfile=False, formdata=None):
         super().__init__(filename, client_id, design_file=self.design_file, request=request, context=context, data=data, additional_content=additional_content, returnfile=returnfile, formdata=formdata)

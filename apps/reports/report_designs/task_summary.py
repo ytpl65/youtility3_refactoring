@@ -8,9 +8,9 @@ class TaskSummaryReport(BaseReportsExport):
     report_title = "Task Summary"
     design_file = "reports/pdf_reports/task_summary.html"
     ytpl_applogo =  'frontend/static/assets/media/images/logo.png'
-    report_name = 'TaskSummary'
+    report_name = 'TASKSUMMARY'
     unsupported_formats = ['None']
-    fields = ['site*', 'fromdate*', 'uptodate*']
+    fields = ['site*', 'fromdatetime*', 'uptodatetime*']
     
     def __init__(self, filename, client_id, request=None, context=None, data=None, additional_content=None, returnfile=False, formdata=None):
         super().__init__(filename, client_id, design_file=self.design_file, request=request, context=context, data=data, additional_content=additional_content, returnfile=returnfile, formdata=formdata)
@@ -22,30 +22,33 @@ class TaskSummaryReport(BaseReportsExport):
         '''
         sitename = Bt.objects.get(id=self.formdata['site']).buname
         self.set_args_required_for_query()
+        fromdatetime = self.formdata.get('fromdatetime').strftime('%d/%m/%Y %H:%M:%S')
+        uptodatetime = self.formdata.get('uptodatetime').strftime('%d/%m/%Y %H:%M:%S')
         self.context = {
             'base_path': settings.BASE_DIR,
-            'data' : runrawsql(get_query(self.report_name), args=self.args),
+            'data' : runrawsql(get_query(self.report_name), args=self.args,named_params=True),
             'report_title': self.report_title,
             'client_logo':self.get_client_logo(),
             'app_logo':self.ytpl_applogo,
-            'report_subtitle':f"Site: {sitename}, From: {self.formdata.get('fromdate')} To {self.formdata.get('uptodate')}"
+            'report_subtitle':f"Site: {sitename}, From: {fromdatetime} To {uptodatetime}"
         }
         return len(self.context['data']) > 0
         
     def set_args_required_for_query(self):
-        self.args = [
-            get_timezone(self.formdata['ctzoffset']),
-            self.formdata['site'],
-            self.formdata['fromdate'].strftime('%d/%m/%Y'),
-            self.formdata['uptodate'].strftime('%d/%m/%Y'),    
-            ]
+        self.args = {
+                    'timezone':get_timezone(self.formdata['ctzoffset']),
+                    'siteids':','.join(self.formdata['site']),
+                    'from':self.formdata['fromdatetime'].strftime('%d/%m/%Y %H:%M:%S'),
+                    'upto':self.formdata['uptodatetime'].strftime('%d/%m/%Y %H:%M:%S'),
+                }   
+   
     
     def set_data(self):
         '''
         setting the data which is shown on report
         '''
         self.set_args_required_for_query()
-        self.data = runrawsql(get_query(self.report_name), args=self.args)
+        self.data = runrawsql(get_query(self.report_name), args=self.args, named_params=True)
         return len(self.data) > 0
 
     def excel_columns(self,df):
@@ -57,7 +60,9 @@ class TaskSummaryReport(BaseReportsExport):
         
     def set_additional_content(self):
         bt = Bt.objects.filter(id=self.client_id).values('id', 'buname').first()
-        self.additional_content = f"Client: {bt['buname']}; Report: {self.report_title}; From: {self.formdata['fromdate']} To: {self.formdata['uptodate']}"
+        fromdatetime = self.formdata.get('fromdatetime').strftime('%d/%m/%Y %H:%M:%S')
+        uptodatetime = self.formdata.get('uptodatetime').strftime('%d/%m/%Y %H:%M:%S')
+        self.additional_content = f"Client: {bt['buname']}; Report: {self.report_title}; From: {fromdatetime} To: {uptodatetime}"
         
 
     def excel_layout(self, worksheet, workbook, df, writer, output):

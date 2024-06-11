@@ -60,9 +60,7 @@ def handle_pop_forms(request):
         'ta_form': obforms.TypeAssistForm,
     }
     form = form_dict[form_name](request.POST, request=request)
-    ic(request.POST)
     if not form.is_valid():
-        ic(form.errors)
         return rp.JsonResponse({'saved': False, 'errors': form.errors})
     ta = form.save(commit=False)
     ta.enable = True
@@ -92,13 +90,11 @@ class SuperTypeAssist(LoginRequiredMixin, View):
 
     def get(self, request, *args, **kwargs):
         R, resp = request.GET, None
-        ic(R)
         # first load the template
         if R.get('template'):
             return render(request, self.params['template_list'])
         # then load the table with objects for table_view
         if R.get('action') == 'list':
-            ic(self.params)
             objs = self.params['model'].objects.select_related(
                 *self.params['related']).filter(
                 ~Q(tacode='NONE'), enable=True
@@ -111,7 +107,6 @@ class SuperTypeAssist(LoginRequiredMixin, View):
             resp = utils.render_form(request, self.params, cxt)
 
         elif R.get('action', None) == "delete" and R.get('id', None):
-            print(f'resp={resp}')
             resp = utils.render_form_for_delete(request, self.params, True)
 
         elif R.get('id', None):
@@ -128,7 +123,6 @@ class SuperTypeAssist(LoginRequiredMixin, View):
             print(request.POST)
             data = QueryDict(request.POST['formData'])
             pk = request.POST.get('pk', None)
-            print(pk, type(pk))
             if pk:
                 msg = "supertypeassist_view"
                 form = utils.get_instance_for_update(
@@ -175,13 +169,11 @@ class TypeAssistView(LoginRequiredMixin, View):
 
     def get(self, request, *args, **kwargs):
         R, S, resp = request.GET, request.session, None
-        ic(R)
         # first load the template
         if R.get('template'):
             return render(request, self.params['template_list'])
         # then load the table with objects for table_view
         if R.get('action') == 'list':
-            ic(self.params)
             objs = self.params['model'].objects.select_related(
                 *self.params['related']).filter(
                     ~Q(tacode='NONE'), ~Q(tatype__tacode='NONE'), Q(client_id=S['client_id']) | Q(cuser_id=1), enable=True,
@@ -194,24 +186,20 @@ class TypeAssistView(LoginRequiredMixin, View):
             resp = utils.render_form(request, self.params, cxt)
 
         elif R.get('action', None) == "delete" and R.get('id', None):
-            print(f'resp={resp}')
             resp = utils.render_form_for_delete(request, self.params, True)
 
         elif R.get('id', None):
             obj = utils.get_model_obj(int(R['id']), request, self.params)
             resp = utils.render_form_for_update(
                 request, self.params, "ta_form", obj)
-        print(f'return resp={resp}')
         return resp
 
     def post(self, request, *args, **kwargs):
         resp, create = None, True
         R = request.POST
         try:
-            print(request.POST)
             data = QueryDict(request.POST['formData'])
             pk = request.POST.get('pk', None)
-            print(pk, type(pk))
             if pk:
                 msg = "typeassist_view"
                 form = utils.get_instance_for_update(
@@ -265,6 +253,7 @@ class ShiftView(LoginRequiredMixin, View):
         if R.get('action', None) == 'list':
             objs = self.params['model'].objects.shift_listview(
                 request, P['related'], P['fields'])
+            print(objs)
             resp = rp.JsonResponse(data={
                 'data': list(objs),
             }, status=200, safe=False)
@@ -275,22 +264,18 @@ class ShiftView(LoginRequiredMixin, View):
             resp = utils.render_form(request, self.params, cxt)
 
         elif R.get('action', None) == "delete" and R.get('id', None):
-            print(f'resp={resp}')
             resp = utils.render_form_for_delete(request, self.params, False)
         elif R.get('id', None):
             obj = utils.get_model_obj(int(R['id']), request, self.params)
             resp = utils.render_form_for_update(
                 request, self.params, "shift_form", obj)
-        print(f'return resp={resp}')
         return resp
 
     def post(self, request, *args, **kwargs):
         resp, create = None, True
         try:
-            print(request.POST)
             data = QueryDict(request.POST['formData'])
             pk = request.POST.get('pk', None)
-            print(pk, type(pk))
             if pk:
                 msg = "shift_view"
                 form = utils.get_instance_for_update(
@@ -337,7 +322,6 @@ class EditorTa(LoginRequiredMixin, View):
 
     def post(self, request, *args, **kwargs):
         R = request.POST
-        ic(pformat(request.POST, compact=True))
         objs = self.model.objects.select_related(
             *self.related).filter(
         ).values(*self.fields)
@@ -370,7 +354,6 @@ class GeoFence(LoginRequiredMixin, View):
     def get(self, request, *args, **kwargs):
         R = request.GET
         params = self.params
-        ic(R)
         # first load the template
         if R.get('template'):
             return render(request, self.params['template_list'])
@@ -450,10 +433,7 @@ class GeoFence(LoginRequiredMixin, View):
             from django.contrib.gis.geos import LinearRing, Polygon
             import json
             geofencedata = json.loads(geofence)
-            ic(geofencedata)
-            ic(type(geofencedata))
             coords = [(i['lng'], i['lat']) for i in geofencedata]
-            ic(coords)
             pg = Polygon(LinearRing(coords, srid=4326), srid=4326)
             gf.geofence = pg
             gf.save()
@@ -487,6 +467,7 @@ class FileRemovalResponse(rp.FileResponse):
 
 # Mapping Constants
 MODEL_RESOURCE_MAP = {
+    # 'MODELNAME'         : 'RESOURCE(ADMIN CLASS for the model which is used to validate and give error messages for importing data )'
     'TYPEASSIST'          : ob_admin.TaResource,
     'BU'                  : ob_admin.BtResource,
     'QUESTION'            : av_admin.QuestionResource,
@@ -498,8 +479,8 @@ MODEL_RESOURCE_MAP = {
     'VENDOR'              : VendorResource,
     'QUESTIONSET'         : av_admin.QuestionSetResource,
     'QUESTIONSETBELONGING': av_admin.QuestionSetBelongingResource,
-    'SCHEDULEDTASKS': sc_admin.TaskResource,
-    'SCHEDULEDTOURS': sc_admin.TourResource,
+    'SCHEDULEDTASKS'      : sc_admin.TaskResource,
+    'SCHEDULEDTOURS'      : sc_admin.TourResource,
 }
 
 # Header Mapping
@@ -516,8 +497,8 @@ HEADER_MAPPING  = {
         'Current Address', 'Blacklist',  'Alert Mails'],
     
     'BU': [
-        'Code*', 'Name*', 'Belongs To*', 'Site Type', 'Type*', \
-        'Site Manager*', 'Sol Id', 'Enable', 'GPS Location', 'Address', 'State', 'Country', 'City'],
+        'Code*', 'Name*', 'Belongs To*', 'Type*', 'Site Type', \
+        'Site Manager', 'Sol Id', 'Enable', 'GPS Location', 'Address', 'State', 'Country', 'City'],
     
     'QUESTION':[
         'Question Name*','Answer Type*', 'Min', 'Max','Alert Above', 'Alert Below', 'Is WorkFlow',
@@ -525,7 +506,7 @@ HEADER_MAPPING  = {
     
     'ASSET':[
         'Code*', 'Name*', 'Running Status*', 'Identifier*','Is Critical',
-        'Client*', 'Site*', 'Capacity', 'BelongsTo*', 'Type',  'GPS Location',
+        'Client*', 'Site*', 'Capacity', 'BelongsTo', 'Type',  'GPS Location',
         'Category', 'SubCategory', 'Brand', 'Unit', 'Service Provider',
         'Enable', 'Is Meter', 'Is Non Engg. Asset', 'Meter', 'Model', 'Supplier',
         'Invoice No', 'Invoice Date', 'Service', 'Service From Date', 'Service To Date',
@@ -544,7 +525,7 @@ HEADER_MAPPING  = {
         'Mob No*', 'Site*', 'Client*', 'GPS Location', 'Enable'
     ],
     'LOCATION':[
-        'Code*', 'Name*', 'Type*', 'Status*', 'Is Critical', 'Belongs To*',
+        'Code*', 'Name*', 'Type*', 'Status*', 'Is Critical', 'Belongs To',
         'Site*', 'Client*', 'GPS Location', 'Enable'
     ],
     'QUESTIONSET':[
@@ -578,22 +559,25 @@ class ParameterMixin:
     header_mapping = HEADER_MAPPING
     
 class BulkImportData(LoginRequiredMixin,ParameterMixin, View):
-    
     def get(self, request, *args, **kwargs):
         R = request.GET
-        ic(self.form)
+
         if (R.get('action') == 'form'):
+            #removes the temp file created in the last import
             self.remove_temp_file(request)
+            #creating instance of instructions
             inst = utils.Instructions(tablename='TYPEASSIST')
+            '''getting the instructions from the instance and here json.dumps 
+            is used to convert the python dictionary to json.'''
             instructions = json.dumps(inst.get_insructions())
-            ic(instructions)
+            #(cxt) is a dictionary that holds data that will be passed to the template for rendering
+            #importform is the form that will be rendered in the template with initial table value as TYPEASSIST
             cxt = {'importform': self.form(initial={'table': "TYPEASSIST"}), 'instructions':instructions}
             return render(request, self.template, cxt)
         
         if R.get('action') == 'getInstructions':
             inst = utils.Instructions(tablename=R.get('tablename'))
             instructions = inst.get_insructions()
-            ic(instructions)
             return rp.JsonResponse({'instructions':instructions}, status=200)
 
         if (request.GET.get('action') == 'downloadTemplate') and request.GET.get('template'):
@@ -605,19 +589,16 @@ class BulkImportData(LoginRequiredMixin,ParameterMixin, View):
             buffer = BytesIO()
             df.to_excel(buffer, index=False, engine='openpyxl')
             buffer.seek(0)
-            ic(R['template'], columns)
             return rp.FileResponse(
                 buffer, as_attachment=True, filename=f'{R["template"]}.xlsx'
             )
 
     def post(self, request, *args, **kwargs):
         R = request.POST
-        ic(R)
         form = self.form(R, request.FILES)
         if not form.is_valid() and R['action'] != 'confirmImport':
             return rp.JsonResponse({'errors': form.errors}, status=404)
         res, dataset = self.get_resource_and_dataset(request, form)
-        ic(res, dataset)
         if R.get('action') == 'confirmImport':
             results = res.import_data(dataset = dataset, dry_run = False, raise_errors = False)
             return rp.JsonResponse({'totalrows':results.total_rows}, status = 200)
@@ -649,7 +630,6 @@ class BulkImportData(LoginRequiredMixin,ParameterMixin, View):
         return res, dataset
 
     def get_readable_error(self, error):
-        ic(dir(error))
         if(isinstance(error, ObjectDoesNotExist)):
             return "Related values does not exist, please check your data."
         if(isinstance(error, IntegrityError)):
@@ -734,7 +714,6 @@ class Client(LoginRequiredMixin, View):
 
     def post(self, request, *args, **kwargs):
         R, P = request.POST, self.params
-        ic(R)
         if R.get('bupostdata'):
             resp = P['model'].objects.handle_bupostdata(request)
             return rp.JsonResponse(resp, status=200)
@@ -995,7 +974,6 @@ class LicenseSubscriptionView(LoginRequiredMixin, View):
     
     def post(self, request, *args, **kwargs):
         R, P = request.POST, self.P
-        ic(R)
         if R.get('subscriptionPostData'):
             resp = P['model'].objects.handle_subscription_postdata(request)
             return rp.JsonResponse(resp, status=200)

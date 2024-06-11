@@ -4,7 +4,7 @@
 .DJANGO_SECRET_KEY
 notebook_files/
 !.git
-
+.git-credential
 # Ignore all virtual environment files and folders.
 .venv/
 .vscode/

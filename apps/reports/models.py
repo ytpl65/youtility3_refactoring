@@ -46,20 +46,28 @@ def report_params_json():
 class ScheduleReport(BaseModel):
     REPORT_TEMPLATES = [
         ('', 'Select Report'),
-        ('TaskSummary', 'Task Summary'),
-        ('TourSummary', 'Tour Summary'),
-        ('ListOfTasks', 'List of Tasks'),
-        ('ListOfTours', 'List of Internal Tours'),
-        ('PPMSummary', 'PPM Summary'),
-        ('ListOfTickets', 'List of Tickets'),
-        ('WorkOrderList', 'Work Order List'),
-        ('SiteReport', 'Site Report'),
+        ('TASKSUMMARY', 'Task Summary'),
+        ('TOURSUMMARY', 'Tour Summary'),
+        ('LISTOFTASKS', 'List of Tasks'),
+        ('LISTOFTOURS', 'List of Internal Tours'),
+        ('PPMSUMMARY', 'PPM Summary'),
+        ('LISTOFTICKETS', 'List of Tickets'),
+        ('WORKORDERLIST', 'Work Order List'),
+        ('SITEVISITREPORT','Site Visit Report'),
+        ('SITEREPORT', 'Site Report'),
         ('PeopleQR', 'People-QR'),
-        ('AssetQR', 'Asset-QR'),
-        ('CheckpointQR', 'Checkpoint-QR'),
-        ('AssetwiseTaskStatus','Assetwise Task Status'),
-        ('DetailedTourSummary','Detailed Tour Summary')
-    ]
+        ('ASSETQR', 'Asset-QR'),
+        ('CHECKPOINTQR', 'Checkpoint-QR'),
+        ('ASSETWISETASKSTATUS','Assetwise Task Status'),
+        ('DetailedTourSummary','Detailed Tour Summary'),
+        ('STATICDETAILEDTOURSUMMARY','Static Detailed Tour Summary'),
+        ('DYNAMICDETAILEDTOURSUMMARY','Dynamic Detailed Tour Summary'),
+        ('DYNAMICTOURDETAILS','Dynamic Tour Details'),
+        ('STATICTOURDETAILS','Static Tour Details'),
+        ('RP_SITEVISITREPORT','RP Site Visit Report'),
+        ('LOGSHEET','Log Sheet')
+
+        ]
     
     WORKINGDAYS = [
         ('5', 'Monday - Friday'),

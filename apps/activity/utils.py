@@ -329,3 +329,33 @@ def get_asset_jsonform(people, request):
     else:
         log.info('people prefform (json form) retrieved... DONE')
         return AssetExtrasForm(data=d, request=request)
+    
+import qrcode
+from qrcode.image.svg import SvgImage
+import os, io, base64
+from django.http import FileResponse
+
+
+def generate_qr_code_images(data, size=1):
+        def generate_qr_code_image(data):
+            qr = qrcode.QRCode(
+                version=1,
+                error_correction=qrcode.constants.ERROR_CORRECT_L,
+                box_size=size,
+                border=4
+            )
+            qr.add_data(data)
+            qr.make(fit=True)
+            qr_code_img = qr.make_image(image_factory=SvgImage, fill_color="black", back_color="white")
+
+            # Convert the SVG image to bytes
+            img_bytes = io.BytesIO()
+            qr_code_img.save(img_bytes)
+            img_bytes.seek(0)
+
+            # Encode image to base64 string
+            img_base64 = base64.b64encode(img_bytes.getvalue()).decode('utf-8')
+            return f"data:image/svg+xml;base64,{img_base64}"
+
+        qr_code_images = [generate_qr_code_image(data)]
+        return qr_code_images
