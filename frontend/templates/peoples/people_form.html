@@ -732,6 +732,17 @@ style="background-image: url({% if peopleform.instance.peopleimg.name.endswith('
         //onclick id_setgps_curr open popup open_map_curr 
         const validator = new JustValidate('#id_peopleform', { errorFieldCssClass: 'is-invalid'});
 
+        /* hides isadmin check when userfor field is mobile*/
+        $('#id_userfor').change(function(){
+            if ($(this).val() == 'Mobile') {
+                $('#label_isadmin').hide()
+                $('#id_isadmin').prop('checked', false)
+            } else {
+                $('#label_isadmin').show()
+            }
+        }
+        )
+
         //add formvalidation to required fields
         $('#id_peopleform [required]').each(function() {
             // Retrieve and check if the element has an ID
