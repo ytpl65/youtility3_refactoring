@@ -200,7 +200,6 @@ class PeopleForm(forms.ModelForm):
             return value.upper()
 
     def clean_loginid(self):
-        ic('cleaning')
         if value := self.cleaned_data.get('loginid'):
             if " " in value:
                 raise forms.ValidationError(self.error_msg['invalid_id2'])

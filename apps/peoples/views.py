@@ -274,7 +274,6 @@ class PeopleView(LoginRequiredMixin, View):
 
         # handle delete request
         elif R.get('action', None) == "delete" and R.get('id', None):
-            print(f'resp={resp}')
             resp = utils.render_form_for_delete(request, self.params, True)
 
         # return form with instance
