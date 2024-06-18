@@ -140,6 +140,7 @@ class PeopleResource(resources.ModelResource):
         self._currentaddr        = row.get('Current Address', "")
         self._permanentaddr      = row.get('Permanent Address', "")
         self._isemergencycontact = row.get('Emergency Contact') or False
+        row['Mob No*'] = str(row['Mob No*'])
 
     def before_save_instance(self, instance, using_transactions, dry_run):
         instance.email        = instance.email.lower()
@@ -170,6 +171,10 @@ class PeopleResource(resources.ModelResource):
         if  not re.match(regex, value):
             raise ValidationError("Please enter valid text avoid any special characters except [_, -]")
         
+
+        # mob no validation
+        if not utils.verify_mobno(str(row.get('Mob No*', -1))): raise ValidationError("Mob No* is not valid")
+
         # mob no validation
         if not utils.verify_mobno(str(row.get('Mob No*', -1))):
             raise ValidationError("Mob No* is not valid")
