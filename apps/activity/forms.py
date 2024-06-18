@@ -794,8 +794,8 @@ class AssetExtrasForm(forms.Form):
         self.request = kwargs.pop('request')
         S = self.request.session
         super().__init__(*args, **kwargs)
-        self.fields['service'].choices = om.TypeAssist.objects.filter(client_id = S['client_id'], tacode__in = ['SERVICE_TYPE','ASSETSERVICE', 'ASSET_SERVICE' 'SERVICETYPE']).values_list('id', 'tacode')
-        self.fields['meter'].choices = om.TypeAssist.objects.filter(client_id = S['client_id'], tacode__in = ['ASSETMETER', 'ASSET_METER']).values_list('id', 'tacode')  
+        self.fields['service'].choices = om.TypeAssist.objects.select_related('tatype').filter(client_id = S['client_id'], tatype__tacode__in = ['SERVICE_TYPE','ASSETSERVICE', 'ASSET_SERVICE' 'SERVICETYPE']).values_list('id', 'tacode')
+        self.fields['meter'].choices = om.TypeAssist.objects.select_related('tatype').filter(client_id = S['client_id'], tatype__tacode__in = ['ASSETMETER', 'ASSET_METER']).values_list('id', 'tacode')  
         utils.initailize_form_fields(self)
     
     def clean(self):
