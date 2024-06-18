@@ -7,7 +7,7 @@ class TypeAssistEmployeeTypeFKW(wg.ForeignKeyWidget):
     def get_queryset(self, value, row, *args, **kwargs):
         return self.model.objects.select_related().filter(
             Q(client__bucode__exact=row["Client*"]),
-            tatype__tacode__exact = 'PEOPLETYPE'
+            Q(tatype__tacode__exact = 'PEOPLETYPE')| Q(tatype__tacode__exact='NONE'), 
         )
 class TypeAssistWorkTypeFKW(wg.ForeignKeyWidget):
     def get_queryset(self, value, row, *args, **kwargs):
