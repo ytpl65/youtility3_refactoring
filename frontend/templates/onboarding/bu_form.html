@@ -298,6 +298,8 @@ Business-View
 <!---------------- END FORM PAGE ACTIONS ----------->
 
 <!--------------- BEGIN PAGE-LEVEL EXTRA SCRIPTS --------------->
+{{ load_google_maps() }}
+
 {% block extra_scripts %}
 {{ buform.media.js }}
 <script>
