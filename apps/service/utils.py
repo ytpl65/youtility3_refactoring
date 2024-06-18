@@ -1,4 +1,4 @@
-import json
+import json, base64, binascii
 import traceback as tb
 from logging import getLogger
 from pprint import pformat
@@ -23,8 +23,12 @@ from apps.schedhuler.utils import create_dynamic_job
 from .auth import Messages as AM
 from .types import ServiceOutputType
 from .validators import clean_record
+from io import BytesIO
 
-log = getLogger('mobile_service_log')   
+
+
+log = getLogger('message_q')
+tlog = getLogger('tracking')
 error_logger = getLogger("error_logger")
 err = error_logger.error
 from apps.work_order_management import utils as wutils
@@ -61,9 +65,9 @@ def insertrecord_json(records, tablename):
                 uuids.append(record['uuid'])
             insert_json_records_async.delay(records, tablename)
     except IntegrityError as e:
-        log.info(f"record already exist in {tablename}")
+        tlog.info(f"record already exist in {tablename}")
     except Exception as e:
-        log.critical("something went wrong", exc_info=True)
+        tlog.critical("something went wrong", exc_info=True)
         raise e
     return uuids
 
@@ -153,9 +157,9 @@ def write_file_to_dir(filebuffer, uploadedfilepath):
     if hasattr(filebuffer, 'read'):
         # This assumes filebuffer is a file-like object (e.g., InMemoryUploadedFile), so we read its contents.
         content = filebuffer.read()
-    else:
-        # In case filebuffer is directly bytes, it can be passed as is.
-        content = filebuffer
+    elif isinstance(filebuffer, list):  # Check if filebuffer is a list of integers (bytes)
+        # Convert list of integers to bytes
+        content = bytes(filebuffer)
     path = default_storage.save(uploadedfilepath, ContentFile(content))
     log.info(f"file saved to {path}")
 
@@ -468,7 +472,7 @@ def perform_tasktourupdate(self, file, request=None, db='default', bg=False):
         log.error("Database Error", exc_info = True)
         rc, traceback, msg = 1, tb.format_exc(), Messages.UPLOAD_FAILED
     except Exception as e:
-        err('Something went wrong', exc_info = True)
+        log.error('Something went wrong', exc_info = True)
         rc, traceback, msg = 1, tb.format_exc(), Messages.UPLOAD_FAILED
     results = ServiceOutputType(rc = rc, msg = msg, recordcount = recordcount, traceback = traceback)
     return results.__dict__ if bg else results
@@ -536,7 +540,7 @@ def perform_insertrecord(self, file, request = None, db='default', filebased = T
                 if record:
                     tablename = record.pop('tablename')
                     obj = insert_or_update_record(record, tablename)
-                    user = get_user_instance(userid or request.user.id)
+                    user = get_user_instance(record.get('people_id'))
                     if tablename == 'ticket' and isinstance(obj, Ticket): utils.store_ticket_history(
                         instance = obj, request=request, user=user)
                     if tablename == 'wom':
@@ -561,7 +565,7 @@ def perform_insertrecord(self, file, request = None, db='default', filebased = T
         log.warning('No records found for insertrecord service', exc_info=True)
         rc, traceback, msg = 1, tb.format_exc(), Messages.INSERT_FAILED
     except Exception as e:
-        err("something went wrong!", exc_info = True)
+        log.error("something went wrong!", exc_info = True)
         traceback =  tb.format_exc()
     results = ServiceOutputType(rc = rc, recordcount = recordcount, msg = msg, traceback = traceback)
     return results.__dict__ if bg else results
@@ -681,7 +685,7 @@ def perform_reportmutation(self, file, db= 'default', bg=False):
         rc, traceback, msg = 1, tb.format_exc(), Messages.UPLOAD_FAILED
     except Exception as e:
         msg, traceback, rc = Messages.INSERT_FAILED, tb.format_exc(), 1
-        err('something went wrong', exc_info = True)
+        log.error('something went wrong', exc_info = True)
     results = ServiceOutputType(rc = rc, recordcount = recordcount, msg = msg, traceback = traceback)
     return results.__dict__ if bg else results
 
@@ -730,10 +734,9 @@ def perform_adhocmutation(self, file, db='default', bg=False):  # sourcery skip:
         raise
     except Exception as e:
         rc, traceback = 1, tb.format_exc()
-        err('something went wrong', exc_info = True)
+        log.error('something went wrong', exc_info = True)
     results = ServiceOutputType(rc = rc, recordcount = recordcount, msg = msg, traceback = traceback)
     return results.__dict__ if bg else results
-
 
 def perform_uploadattachment(file,  record, biodata):
     rc, traceback, resp = 1,  'NA', 0
@@ -752,7 +755,7 @@ def perform_uploadattachment(file,  record, biodata):
     uploadfile  = f'{filepath}/{filename}'
     db          = utils.get_current_db_name()
     
-    log.info(f"file_buffer: '{file_buffer}' \n'onwername':{onwername}, \nownerid: '{ownerid}' \npeopleid: '{peopleid}' \npath: {path} \nhome_dir: '{home_dir}' \nfilepath: '{filepath}' \nuploadfile: '{uploadfile}'")
+    log.info(f"Length file_buffer: '{len(file_buffer)}' \n'onwername':{onwername}, \nownerid: '{ownerid}' \npeopleid: '{peopleid}' \npath: {path} \nhome_dir: '{home_dir}' \nfilepath: '{filepath}' \nuploadfile: '{uploadfile}'")
     try:
         with transaction.atomic(using = db):
             iscreated = get_or_create_dir(filepath)
@@ -763,7 +766,7 @@ def perform_uploadattachment(file,  record, biodata):
             log.info('file uploaded success')
     except Exception as e:
         rc, traceback, msg = 1, tb.format_exc(), Messages.UPLOAD_FAILED
-        err('something went wrong', exc_info = True)
+        log.error('something went wrong', exc_info = True)
     try:
         if record.get('localfilepath'): record.pop('localfilepath')
         obj = insert_or_update_record(record, 'attachment')
@@ -775,7 +778,7 @@ def perform_uploadattachment(file,  record, biodata):
             results = perform_facerecognition_bgt.delay(ownerid, peopleid, db)
             log.warning(f"face recognition status {results.state}")
     except Exception as e:
-        err('something went wrong while perform_uploadattachment', exc_info = True)
+        log.error('something went wrong while perform_uploadattachment', exc_info = True)
     return ServiceOutputType(rc = rc, recordcount = recordcount, msg = msg, traceback = traceback)
 
 
@@ -786,3 +789,28 @@ def log_event_info(onwername, ownerid):
     log.info(f"object retrived of type {type(eobj)}")
     if hasattr(eobj, 'peventtype'): log.info(f'Event Type: {eobj.peventtype.tacode}')
     return eobj
+
+
+def execute_graphql_mutations(mutation_query, variables=dict(), download=False):
+    from apps.service.schema import schema
+
+
+    # Execute the GraphQL mutation with the file object
+    result = schema.execute(
+        mutation_query,
+        variable_values=variables
+    )
+
+    log.info(f"Mutation query: {mutation_query}")
+    if result.errors:
+        # Handle errors
+        error_messages = [error.message for error in result.errors]
+        log.error(f"Mutation errors: {pformat(error_messages)}", exc_info=True)
+        resp = json.dumps({'errors': error_messages})
+        raise Exception(f"GraphQL mutation failed with errors {resp}")
+    else:
+        if download:
+            resp = {'data': result.data}
+        else:
+            resp = json.dumps({'data': result.data})
+    return resp

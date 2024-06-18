@@ -1,3 +1,10 @@
+import os
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "intelliwiz_config.settings.py")
+os.environ["DJANGO_ALLOW_ASYNC_UNSAFE"] = "true"
+import django
+
+django.setup()
+
 from paho.mqtt import client as mqtt
 from base64 import b64decode
 from io import BytesIO
@@ -15,10 +22,10 @@ MQTT_CONFIG = settings.MQTT_CONFIG
 BROKER_ADDRESS = MQTT_CONFIG['BROKER_ADDRESS']
 BROKER_PORT = MQTT_CONFIG['BROKER_PORT']
 
-MUTATION_TOPIC = "graphql/mutation"
+MUTATION_TOPIC        = "graphql/mutation"
 MUTATION_STATUS_TOPIC = "graphql/mutation/status"
-RESPONSE_TOPIC = "response/acknowledgement"
-STATUS_TOPIC   = "response/status"
+RESPONSE_TOPIC        = "response/acknowledgement"
+STATUS_TOPIC          = "response/status"
 
 def get_task_status(item):
     """
@@ -96,7 +103,8 @@ class MqttClient:
         self.client.loop_forever()
 
 
-        
 
-
+if __name__ == '__main__':
+    client = MqttClient()
+    client.loop_forever()
 

@@ -3,15 +3,14 @@ from apps.core import utils
 from apps.activity.models import JobneedDetails, Question, QuestionSet, QuestionSetBelonging, Location, Attachment, Jobneed
 from apps.work_order_management.models import Vendor, Approver, Wom
 from apps.y_helpdesk.models import Ticket
-from apps.onboarding.models import GeofenceMaster, Bt, DownTimeHistory
+from apps.onboarding.models import GeofenceMaster, DownTimeHistory
 from apps.peoples.models import Pgbelonging, Pgroup, People
 from apps.attendance.models import PeopleEventlog
 from django.db import connections
-from django.db.models import Q
 from apps.work_order_management.utils import check_all_approved, reject_workpermit
 from collections import namedtuple
 from logging import getLogger
-from datetime import datetime, timedelta
+from contextlib import closing
 from django.utils import timezone
 log = getLogger('mobile_service_log')
 import json
@@ -63,7 +62,8 @@ class Query(graphene.ObjectType):
 
     get_questionsmodifiedafter = graphene.Field(SelectOutputType, 
                                                mdtz = graphene.String(required = True),
-                                               ctzoffset = graphene.Int(required = True))
+                                               ctzoffset = graphene.Int(required = True), 
+                                               clientid=graphene.Int(required=True))
 
     get_people_event_log_punch_ins = graphene.Field(SelectOutputType,
                                                     datefor = graphene.String(required=True),
@@ -314,10 +314,10 @@ class Query(graphene.ObjectType):
         return SelectOutputType(nrows = count, records = records,msg = msg)
 
     @staticmethod
-    def resolve_get_questionsmodifiedafter(self, info, mdtz, ctzoffset):
-        log.info(f'\n\nrequest for questions-modified-after inputs : mdtz:{mdtz}, ctzoffset:{ctzoffset}')
+    def resolve_get_questionsmodifiedafter(self, info, mdtz, ctzoffset, clientid):
+        log.info(f'\n\nrequest for questions-modified-after inputs : mdtz:{mdtz}, ctzoffset:{ctzoffset} clientid {clientid}')
         mdtzinput = utils.getawaredatetime(mdtz, ctzoffset)
-        data =  Question.objects.get_questions_modified_after(mdtz)
+        data =  Question.objects.get_questions_modified_after(mdtz, clientid)
         records, count, msg = utils.get_select_output(data)
         log.info(f'{count} objects returned...')
         return SelectOutputType(nrows = count, records = records,msg = msg)
@@ -337,12 +337,16 @@ class Query(graphene.ObjectType):
 
     @staticmethod
     def resolve_get_qsetbelongingmodifiedafter(self, info, mdtz, ctzoffset, buid):
-        log.info(f'\n\nrequest for qsetbelonging-modified-after inputs : mdtz:{mdtz}, ctzoffset:{ctzoffset}, buid:{buid}')
-        mdtzinput = utils.getawaredatetime(mdtz, ctzoffset)
-        data = QuestionSetBelonging.objects.get_modified_after(mdtzinput, buid)
-        records, count, msg = utils.get_select_output(data)
-        log.info(f'{count} objects returned...')
-        return SelectOutputType(nrows = count, records = records,msg = msg)
+        try:
+            log.info(f'\n\nrequest for qsetbelonging-modified-after inputs : mdtz:{mdtz}, ctzoffset:{ctzoffset}, buid:{buid}')
+            mdtzinput = utils.getawaredatetime(mdtz, ctzoffset)
+            data = QuestionSetBelonging.objects.get_modified_after(mdtzinput, buid)
+            records, count, msg = utils.get_select_output(data)
+            log.info(f'{count} objects returned...')
+            return SelectOutputType(nrows = count, records = records,msg = msg)
+        except Exception as e:
+            log.error("something went wrong", exc_info=True)
+    
 
     @staticmethod
     def resolve_get_pgbelongingmodifiedafter(self, info, mdtz, ctzoffset, buid, peopleid):
@@ -371,7 +375,6 @@ class Query(graphene.ObjectType):
             data[i]['bupreferences'] = json.dumps(data[i]['bupreferences'])
         records, count, msg = utils.get_select_output(data)
         log.info(f'{count} objects returned...')
-        log.info(f'data:{data}')
         return SelectOutputType(nrows = count, records = records,msg = msg)
 
     @staticmethod
@@ -443,25 +446,33 @@ class Query(graphene.ObjectType):
         log.info(f'total {count} objects returned')
         return SelectOutputType(nrows = count, records = records,msg = msg)
 
-def get_db_rows(sql, args = None):
-    import json
-    cursor = connections[utils.get_current_db_name()].cursor()
+def get_db_rows(sql, args=None):
+    try:
+        # Define the batch size for fetchmany
+        batch_size = 100  # Adjust this based on your needs and memory constraints
 
-    cursor.execute(sql, args)
-    print(dir(cursor))
-    columns = [col[0] for col in cursor.description]
-    type_filter = ([desc[1] for desc in cursor.description])
-    RowType = namedtuple('Row', columns)
-    data = [
-        RowType(*row)._asdict()
-        for row in cursor.fetchall() ]
+        # Using context manager to handle the cursor
+        with closing(connections[utils.get_current_db_name()].cursor()) as cursor:
+            cursor.execute(sql, args)
+            columns = [col[0] for col in cursor.description]
+            RowType = namedtuple('Row', columns)
 
-    cursor.close()
-    data_json = json.dumps(data, default = str)
-    msg = f"Total {len(data)} records fetched successfully!"
-    count = len(data)
-    log.info(f'{count} objects returned...')
-    return SelectOutputType(records = data_json, msg = msg, nrows = count)
+            # Initialize an empty list to collect all rows
+            data = []
+            while True:
+                batch = cursor.fetchmany(batch_size)
+                if not batch:
+                    break
+                data.extend([RowType(*row)._asdict() for row in batch])
+
+        # Convert the list of dictionaries to JSON
+        data_json = json.dumps(data, default=str)
+        count = len(data)
+        log.info(f'{count} objects returned...')
+        return SelectOutputType(records=data_json, msg=f"Total {count} records fetched successfully!", nrows=count)
+    except Exception as e:
+        log.error("Failed to fetch data", exc_info=True)
+        # Optionally re-raise or handle the error appropriately
 
 def get_jobneedmodifiedafter(peopleid, siteid, clientid):
     return get_db_rows("select * from fun_getjobneed(%s, %s, %s)", args=[peopleid, siteid, clientid])

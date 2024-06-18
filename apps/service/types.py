@@ -250,17 +250,9 @@ class SelectOutputType(graphene.ObjectType):
     ncols    = graphene.Int()
     msg     = graphene.String()
     rc      = graphene.Int(default_value = 0)
-    msg     = graphene.String()
     records = graphene.JSONString()
 
 class UploadAttType(graphene.InputObjectType):
-    # columns  = graphene.String()
-    # values   = graphene.String()
-    # image    = Upload()
-    # path = graphene.String(required = False)
-    # pelogid  = graphene.Int()
-    # peopleid = graphene.Int()
-    # filename = graphene.String()
     record = graphene.JSONString(required = True)
     tablname = graphene.String(required = True)
     file = Upload() 

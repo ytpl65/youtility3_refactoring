@@ -23,7 +23,8 @@ import traceback as tb
 from graphql_jwt import ObtainJSONWebToken
 from apps.core import exceptions as excp
 
-log = getLogger('mobile_service_log')
+log = getLogger('message_q')
+tlog = getLogger('tracking')
 error_logger = getLogger("error_logger")
 err = error_logger.error
 
@@ -142,13 +143,13 @@ class TaskTourUpdate(graphene.Mutation):
     """
     output = graphene.Field(ty.ServiceOutputType)
     class Arguments:
-        file = Upload()
+        records = graphene.List(graphene.String,required = True)
 
     @classmethod
-    def mutate(cls, root, info, file):
+    def mutate(cls, root, info, records):
         log.warning("\n\ntasktour-update mutations start [+]")
         db = cutils.get_current_db_name()
-        o = sutils.perform_tasktourupdate(file=file, request = info.context, db=db)
+        o = sutils.perform_tasktourupdate(records=records, request = info.context, db=db)
         log.info(f"Response: # records updated:{o.recordcount}, msg:{o.msg}, rc:{o.rc}, traceback:{o.traceback}")
         log.warning("tasktour-update mutations end [-]")
         return TaskTourUpdate(output = o)
@@ -160,13 +161,14 @@ class InsertRecord(graphene.Mutation):
     output = graphene.Field(ty.ServiceOutputType)
 
     class Arguments:
-        file = Upload(required = True)
+        records = graphene.List(graphene.String,required = True)
+
 
     @classmethod
-    def mutate(cls, root, info, file):
+    def mutate(cls, root, info, records):
         log.warning("\n\ninsert-record mutations start [+]")
         db = cutils.get_current_db_name()
-        o = sutils.perform_insertrecord(file=file, request = info.context, db=db)
+        o = sutils.perform_insertrecord(records=records, db=db)
         log.info(f"Response: # records updated:{o.recordcount}, msg:{o.msg}, rc:{o.rc}, traceback:{o.traceback}")
         log.warning("insert-record mutations end [-]")
         return InsertRecord(output = o)
@@ -177,13 +179,13 @@ class ReportMutation(graphene.Mutation):
     # msg = graphene.String()
     # ic(output)
     class Arguments:
-        file = Upload(required = True)
+        records = graphene.List(graphene.String,required = True)
 
     @classmethod
-    def mutate(cls, root, info, file):
+    def mutate(cls, root, info, records):
         log.warning("\n\nreport mutations start [+]")
         db=cutils.get_current_db_name()
-        o = sutils.perform_reportmutation(file=file, db=db)
+        o = sutils.perform_reportmutation(records=records, db=db)
         log.info(f"Response: {o.recordcount}, {o.msg}, {o.rc}, {o.traceback}")
         log.warning("report mutations end [-]")
         return ReportMutation(output = o)
@@ -192,26 +194,23 @@ class UploadAttMutaion(graphene.Mutation):
     output = graphene.Field(ty.ServiceOutputType)
 
     class Arguments:
-        file    = Upload(required = True)
-        biodata = graphene.List(graphene.String,required = True)
-        record  = graphene.List(graphene.String,required = True)
+        bytes    = graphene.List(graphene.Int, required=True)
+        biodata = graphene.String(required = True)
+        record  = graphene.String(required = True)
 
     @classmethod
-    def mutate(cls,root, info, file,  record, biodata):
+    def mutate(cls,root, info, bytes,  record, biodata):
         log.info("\n\nupload-attachment mutations start [+]")
         try:
             recordcount=0
-            log.info(f"type of file is {type(file)}")
-            with zipfile.ZipFile(file) as zref:
-                for file, rec, bd in zip(zref.filelist, record, biodata):
-                    log.info(f'file{type(file)} \nbiodata:{type(bd)} \nrecord:{type(rec)}')
-                    bd, rec = json.loads(bd), json.loads(rec)
-                    with zref.open(file) as fl:
-                        o = sutils.perform_uploadattachment(fl, rec, bd)
-                        recordcount += o.recordcount
-                    log.info(f"Response: {o.recordcount}, {o.msg}, {o.rc}, {o.traceback}")
-                o.recordcount = recordcount
-                return UploadAttMutaion(output = o)
+            log.info(f"type of file is {type(bytes)}")
+            record = json.loads(record)
+            biodata = json.loads(biodata)
+            o = sutils.perform_uploadattachment(bytes, record, biodata)
+            recordcount += o.recordcount
+            log.info(f"Response: {o.recordcount}, {o.msg}, {o.rc}, {o.traceback}")
+            o.recordcount = recordcount
+            return UploadAttMutaion(output = o)
         except Exception as e:
             err(f"Exception: {e}", exc_info=True)
             return UploadAttMutaion(output = ty.ServiceOutputType(rc = 1, recordcount = 0, msg = 'Upload Failed', traceback = tb.format_exc()))
@@ -239,12 +238,12 @@ class UploadFile(APIView):
 class AdhocMutation(graphene.Mutation):
     output = graphene.Field(ty.ServiceOutputType)
     class Arguments:
-        file = Upload(required = True)
+        records = graphene.List(graphene.String,required = True)
 
     @classmethod
-    def mutate(cls, root, info, file):
+    def mutate(cls, root, info, records):
         db = cutils.get_current_db_name()
-        o = sutils.perform_adhocmutation(file=file, db=db)
+        o = sutils.perform_adhocmutation(records=records, db=db)
         log.info(f"Response: {o.recordcount}, {o.msg}, {o.rc}, {o.traceback}")
         return AdhocMutation(output = o)
 
@@ -262,13 +261,13 @@ class InsertJsonMutation(graphene.Mutation):
         from .utils import insertrecord_json
         from apps.core.utils import get_current_db_name
         import json
-        log.info('\n\n\ninsert jsondata mutations start[+]')
+        tlog.info('\n\n\ninsert jsondata mutations start[+]')
         rc, traceback, resp, recordcount = 1,  'NA', 0, 0
         msg = 'Insert Failed!'
         uuids = []
         try:
             db = get_current_db_name()
-            log.info(f'=================== jsondata ============= \n{jsondata}')
+            tlog.info(f'=================== jsondata:============= \n{jsondata}')
             uuids = insertrecord_json(jsondata, tablename)
             recordcount, msg, rc = 1, 'Inserted Successfully', 0
         except Exception as e:
@@ -276,7 +275,7 @@ class InsertJsonMutation(graphene.Mutation):
             msg, rc, traceback = 'Insert Failed!',1, tb.format_exc()
         
         o = ty.ServiceOutputType(rc = rc, recordcount = recordcount, msg = msg, traceback = traceback, uuids=uuids)
-        log.info(f"\n\n\nResponse: {o.recordcount}, {o.msg}, {o.rc}, {o.traceback} {uuids=}")
+        tlog.info(f"\n\n\nResponse: {o.recordcount}, {o.msg}, {o.rc}, {o.traceback} {uuids=}")
         return InsertJsonMutation(output = o)
 
 
@@ -325,3 +324,13 @@ class SyncMutation(graphene.Mutation):
             return SyncMutation(rc = 1)
         else:
             return SyncMutation(rc = 0)
+
+
+class TestMutation(graphene.Mutation):
+    class Arguments:
+        name = graphene.String(required = True)
+    output = graphene.String()
+    
+    @classmethod
+    def mutate(cls, root, info, name):
+        return TestMutation(output = f'Hello {name}')

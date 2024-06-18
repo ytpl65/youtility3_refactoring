@@ -2,6 +2,9 @@ from apps.core.exceptions import (
     NoClientPeopleError,MultiDevicesError, NotRegisteredError,
     WrongCredsError, NoSiteError, NotBelongsToClientError)
 from apps.peoples.models import People
+from logging import getLogger
+log = getLogger('mobile_service_log')
+
 class Messages:
     AUTHFAILED     = "Authentication Failed "
     AUTHSUCCESS    = "Authentication Successfull"
@@ -37,6 +40,7 @@ def auth_check(info, input, returnUser, uclientip = None):
     from django.contrib.auth import authenticate
     from graphql.error import GraphQLError
     try:
+        log.info(f"Authenticating {input.loginid} for {input.clientcode}")
         if valid_user := People.objects.select_related('client').filter(loginid = input.loginid, client__bucode = input.clientcode).exists():
             user = authenticate(
                 info.context,
