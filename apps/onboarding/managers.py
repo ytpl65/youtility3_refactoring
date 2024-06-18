@@ -138,10 +138,8 @@ class BtManager(models.Manager):
             PostData.pop('cuser')
             PostData.pop('cdtz')
             updated = self.filter(pk=R['pk']).update(**PostData)
-            ic(updated)
             if updated: ID = R['pk']
         else:
-            ic(R['pk'])
             self.filter(pk=R['pk']).delete()
             return {'data':list(self.none())}
         
@@ -270,9 +268,9 @@ class BtManager(models.Manager):
     def handle_user_limits_post(self, data):
         if data.get('client_id') and data['client_id'] != 'None':
             if obj := self.filter(id=data['client_id']).first():
-                obj.bupreferences['no_of_users_allowed_web'] = data.get('no_of_users_allowed_web', 0)
-                obj.bupreferences['no_of_users_allowed_mob'] = data.get('no_of_users_allowed_mob', 0)
-                obj.bupreferences['no_of_users_allowed_both'] = data.get('no_of_users_allowed_both', 0)
+                obj.bupreferences['no_of_users_allowed_web'] = data['no_of_users_allowed_web']
+                obj.bupreferences['no_of_users_allowed_mob'] = data['no_of_users_allowed_mob']
+                obj.bupreferences['no_of_users_allowed_both'] = data['no_of_users_allowed_both']
                 obj.save()
                 return {'msg':"Updated Successfully"}
         return {"msg":"Something went wrong"}
@@ -313,7 +311,6 @@ class TypeAssistManager(models.Manager):
         R, S = request.GET, request.session
         if R.get('id') in [None, "None", ""]:
             return []
-        ic(R)
         if qobj := self.filter(id=R['id']).first():
             return list(qobj.esc_types.select_related('escalationtemplate', 'assignedperson', 'assignedgroup').values(
                 'assignedfor', 'assignedperson__peoplename', 'assignedperson__peoplecode', 
@@ -330,7 +327,6 @@ class TypeAssistManager(models.Manager):
             tatype__tacode = 'NOTIFYCATEGORY',
             enable=True
         )
-        ic(qset)
         if sitewise:
             qset = qset.filter(Q(bu_id__in = [S['bu_id'], 1]) | Q(bu_id__isnull=True))
         if choices:
