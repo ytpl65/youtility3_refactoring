@@ -298,9 +298,10 @@ Business-View
 <!---------------- END FORM PAGE ACTIONS ----------->
 
 <!--------------- BEGIN PAGE-LEVEL EXTRA SCRIPTS --------------->
-{{ load_google_maps() }}
 
 {% block extra_scripts %}
+<script type="text/javascript" src="https://maps.googleapis.com/maps/api/js?key=AIzaSyC3PUZCB7u2PiV8whHeAshweOPIK_d690o&libraries=places&loading=async"></script>
+
 {{ buform.media.js }}
 <script>
 	var map, userMarker, currinfowindow, currAddr;
