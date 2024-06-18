@@ -1639,8 +1639,7 @@ class Instructions(object):
     def __init__(self, tablename):
         '''Imported MODEL_RESOURCE_MAP(which is a dictionary containing model and resource mapping(used to validate import data)) 
         and HEADER_MAPPING(which is a dictionary containing tablename and column names mapping)'''
-        from apps.onboarding.views import MODEL_RESOURCE_MAP, HEADER_MAPPING
-        
+        from apps.onboarding.views import MODEL_RESOURCE_MAP
         # Check if tablename is provided initializing the class
         if tablename is None: 
             raise ValueError("The tablename argument is required")
@@ -1758,3 +1757,159 @@ def download_qrcode(code, name, report_name, session, request):
     report = ReportFormat(filename=report_name, client_id=session['client_id'],
                               formdata={'print_single_qr':code, 'qrsize':200, 'name':name}, request=request, returnfile=False)
     return report.execute()
+
+# Header Mapping
+HEADER_MAPPING  = {
+    'TYPEASSIST': [
+        'Name*', 'Code*', 'Type*', 'Client*'],
+    
+    'PEOPLE': [
+        'Code*', 'Name*', 'User For*', 'Employee Type*', 'Login ID*', 'Password*', 'Gender*',
+        'Mob No*', 'Email*', 'Date of Birth*', 'Date of Join*', 'Client*', 
+        'Site*', 'Designation', 'Department', 'Work Type', 'Report To',
+        'Date of Release', 'Device Id', 'Is Emergency Contact',
+        'Mobile Capability', 'Report Capability', 'Web Capability', 'Portlet Capability',
+        'Current Address', 'Blacklist',  'Alert Mails'],
+    
+    'BU': [
+        'Code*', 'Name*', 'Belongs To*', 'Type*', 'Site Type', \
+        'Site Manager', 'Sol Id', 'Enable', 'GPS Location', 'Address', 'State', 'Country', 'City'],
+    
+    'QUESTION':[
+        'Question Name*','Answer Type*', 'Min', 'Max','Alert Above', 'Alert Below', 'Is WorkFlow',
+        'Options', 'Alert On', 'Enable', 'Is AVPT' ,'AVPT Type','Client*', 'Unit', 'Category'],
+    
+    'ASSET':[
+        'Code*', 'Name*', 'Running Status*', 'Identifier*','Is Critical',
+        'Client*', 'Site*', 'Capacity', 'BelongsTo', 'Type',  'GPS Location',
+        'Category', 'SubCategory', 'Brand', 'Unit', 'Service Provider',
+        'Enable', 'Is Meter', 'Is Non Engg. Asset', 'Meter', 'Model', 'Supplier',
+        'Invoice No', 'Invoice Date', 'Service', 'Service From Date', 'Service To Date',
+        'Year of Manufacture', 'Manufactured Serial No', 'Bill Value', 'Bill Date',
+        'Purchase Date', 'Installation Date', 'PO Number', 'FAR Asset ID'
+    ],
+    'GROUP':[
+        'Group Name*', 'Type*', 'Client*', 'Site*', 'Enable'
+    ],
+    'GROUPBELONGING':[
+      'Group Name*', 'Of People', "Of Site", 'Client*', 'Site*'  
+    ],
+
+    'VENDOR':[
+        'Code*', 'Name*', 'Type*', 'Address*', 'Email*', 'Applicable to All Sites',
+        'Mob No*', 'Site*', 'Client*', 'GPS Location', 'Enable'
+    ],
+    'LOCATION':[
+        'Code*', 'Name*', 'Type*', 'Status*', 'Is Critical', 'Belongs To',
+        'Site*', 'Client*', 'GPS Location', 'Enable'
+    ],
+    'QUESTIONSET':[
+        'Seq No*', 'Question Set Name*', 'Belongs To*', 'QuestionSet Type*', 'Asset Includes', 'Site Includes', 'Site*',
+        'Client*', 'Site Group Includes', 'Site Type Includes', 'Show To All Sites', 
+        'URL'
+    ],
+    'QUESTIONSETBELONGING':[
+        'Question Name*', 'Question Set*', 'Client*', 'Site*', 'Answer Type*',
+        'Seq No*', 'Is AVPT', 'Min', 'Max', 'Alert Above', 'Alert Below', 'Options',
+        'Alert On', 'Is Mandatory', 'AVPT Type',
+    ],
+    'SCHEDULEDTASKS':[
+        'Name*', 'Description*', 'Scheduler*', 'Asset*', 'Question Set/Checklist*', 'People*', 'Group Name*',
+        'Plan Duration*', 'Gracetime Before*', 'Gracetime After*', 'Notify Category*',
+        'From Date*', 'Upto Date*', 'Scan Type*', 'Client*', 'Site*',
+        'Priority*','Seq No', 'Start Time', 'End Time', 'Belongs To*'
+    ],
+    'SCHEDULEDTOURS':[
+        'Name*', 'Description*', 'Scheduler*', 'Asset*', 'Question Set/Checklist*', 'People*', 'Group Name*',
+        'Plan Duration*', 'Gracetime*', 'Expiry Time*', 'Notify Category*',
+        'From Date*', 'Upto Date*', 'Scan Type*', 'Client*', 'Site*',
+        'Priority*','Seq No*', 'Start Time', 'End Time', 'Belongs To*'
+    ]
+}
+
+Example_data = {
+    'TYPEASSIST': [('Reception Area','RECEPTION' , 'LOCATIONTYPE', 'CLIENT_A'),
+                   ('Bank','BANK','SITETYPE','CLIENT_B'),
+                   ('Manager','MANAGER','DESIGNATIONTYPE','CLIENT_C')],
+            'BU': [('MUM001','Site A','NONE','BRANCH','BANK','John Doe','123','TRUE','19.05,73.51','123 main street, xyz city','California','USA','Valparaíso'),
+                   ('MUM002','Site B','MUM001','ZONE','OFFICE','Jane Smith','456','FALSE','19.05,73.51','124 main street, xyz city','New York','Canada','Hobart'),
+                   ('MUM003','Site C','NONE','SITE','SUPERMARKET','Ming Yang','789','TRUE','19.05,73.51','125 main street, xyz city','california','USA','Manarola')],
+      'LOCATION': [('LOC001','Location A','GROUNDFLOOR','WORKING','TRUE','NONE','SITE_A','CLIENT_A','19.05,73.51','TRUE'),
+                    ('LOC002','Location B','MAINENTRANCE','SCRAPPED','FALSE','MUM001','SITE_B','CLIENT_A','19.05,73.52','FALSE'),
+                    ('LOC003','Location C','FIRSTFLOOR','RUNNING','TRUE','NONE','SITE_C','CLIENT_A','19.05,73.53','TRUE')],
+        'ASSET' : [('ASSET01','Asset A','STANDBY','ASSET','TRUE','CLIENT_A','SITE_A','0.01','NONE','ELECTRICAL','19.05,73.51','NONE','NONE','BRAND_A','NONE','CLINET_A','TRUE',
+                    'FALSE','TRUE','NONE','NONE','NONE','NONE','2024-04-13','NONE','NONE','NONE','NONE','NONE','NONE','NONE','NONE','NONE','NONE','NONE'),
+                    ('ASSET02','Asset B','RUNNING','ASSET','FALSE','CLIENT_B','SITE_B','0.02','NONE','MECHANICAL','19.05,73.52','NONE','NONE','BRAND_B','NONE','CLINET_A','TRUE',
+                    'FALSE','TRUE','NONE','NONE','NONE','NONE','2024-04-13','NONE','NONE','NONE','NONE','NONE','NONE','NONE','NONE','NONE','NONE','NONE'),
+                    ('ASSET03','Asset C','STANDBY','ASSET','TRUE','CLIENT_C','SITE_C','0.03','NONE','ELECTRICAL','19.05,73.53','NONE','NONE','BRAND_C','NONE','CLINET_A','TRUE',
+                    'FALSE','TRUE','NONE','NONE','NONE','NONE','2024-04-13','NONE','NONE','NONE','NONE','NONE','NONE','NONE','NONE','NONE','NONE','NONE')],
+        'VENDOR': [('VENDOR_A','Vendor A','ELECTRICAL','123 main street, xyz city','XYZ@gmail.com','TRUE','1234567891','SITE_A','CLIENT_A','19.05,73.51','TRUE'),
+                   ('VENDOR_B','Vendor B','MECHANICAL','124 main street, xyz city','XYZ@gmail.com','FALSE','1478529630','SITE_B','CLIENT_B','19.05,73.51','FALSE'),
+                   ('VENDOR_C','Vendor C','ELECTRICAL','125 main street, xyz city','XYZ@gmail.com','TRUE','3698521470','SITE_C','CLIENT_C','19.05,73.51','TRUE')],
+        'PEOPLE':[('PERSON_A','Person A','Web','STAFF','A123','XYZ','M','911234567891','abc@gmail.com','yyyy-mm-dd','yyyy-mm-dd','CLIENT_A','SITE_A',
+                    'MANAGER','HR','NONE','NONE','yyyy-mm-dd','513bb5f9c78c9117','TRUE',"SELFATTENDANCE, TICKET,INCIDENTREPORT,SOS,SITECRISIS,TOUR",'NONE',	
+                    'TR_SS_SITEVISIT,DASHBOARD,TR_SS_SITEVISIT,TR_SS_CONVEYANCE,TR_GEOFENCETRACKING','NONE','123 main street, xyz city','FALSE','TRUE'),
+                   ('PERSON_B','Person B','Mobile','SECURITY','B456','XYZ','F','913698521477','abc@gmail.com','yyyy-mm-dd','yyyy-mm-dd','CLIENT_B','SITE_B',	
+                    'SUPERVISOR','TRAINING','NONE','NONE','yyyy-mm-dd','513bb5f9c78c9118','FALSE','NONE','NONE','NONE','NONE','124 main street, xyz city','FALSE','FALSE'),
+                    ('PERSON_C','Person C','NONE','NONE','C8910','XYZ','O','912587891463','abc@gmail.com','yyyy-mm-dd','yyyy-mm-dd','CLIENT_C','SITE_C','NONE',
+                        'NONE','NONE','NONE','yyyy-mm-dd','513bb5f9c78c9119','TRUE','NONE','NONE','NONE','NONE','125 main street, xyz city', 'FALSE','TRUE')],
+       'QUESTION': [('Are s/staff found with correct accessories / pressed uniform?','MULTILINE','NONE','NONE','NONE','NONE','TRUE','','','TRUE','TRUE','NONE','CLIENT_A','NONE','NONE'),
+                    ('Electic Meter box is ok?','DROPDOWN','NONE','NONE','NONE','NONE','FALSE','No, Yes, N/A','','TRUE','TRUE','NONE','CLIENT_B','NONE','NONE'),
+                    ('All lights working','DROPDOWN','NONE','NONE','NONE','NONE','TRUE','No, Yes, N/A','','TRUE','TRUE','NONE','CLIENT_C', 'NONE','NONE')],
+    'QUESTIONSET': [('1','Question Set A','NONE','CHECKLIST','ADMINBACK,CMRC','MUM001,MUM003','SITE_A','CLIENT_A','Group A,Group B','BANK,OFFICE','TRUE','NONE'),
+                    ('1','Question Set B','Question Set A','INCIDENTREPORT',	'NONE',	'NONE',	'SITE_B','CLIENT_B','NONE','NONE','FALSE','NONE'),
+                    ('1','Question Set C','Question Set A','WORKPERMIT','NONE','NONE','SITE_C','CLIENT_C','NONE','NONE','TRUE','NONE')],
+    'QUESTIONSETBELONGING':[('Are s/staff found with correct accessories / pressed uniform?','Question Set A','CLIENT_A','SITE_A','MULTILINE',
+                             '1','FALSE','NONE','NONE','NONE','NONE','NONE','NONE','TRUE','FRONTCAMPIC'),
+                             ('Electic Meter box is ok?','Question Set B','CLIENT_B','SITE_B','DROPDOWN','5','FALSE','NONE','NONE','NONE','NONE','No, Yes, N/A','NONE',	'FALSE','AUDIO'),
+                             ('All lights working','Question Set C','CLIENT_C','SITE_C','DROPDOWN','3','TRUE','NONE','NONE','NONE','NONE','No, Yes, N/A','NONE','TRUE','NONE')],
+         'GROUP': [('Group A','PEOPLEGROUP','CLIENT_A','SITE_A','TRUE'),
+                    ('Group B','SITEGROUP','CLIENT_B','SITE_B','FALSE'),
+                    ('Group C','PEOPLEGROUP','CLIENT_C','SITE_C','TRUE')],
+    'GROUPBELONGING':[('Group A','Person A','NONE','CLIENT_A','Yout_logged_in_site'),
+                      ('Group B','Person B','NONE','CLIENT_B','SITE_A'),
+                      ('Group C','Person C','NONE','CLIENT_C','SITE_B')],
+    'SCHEDULEDTASKS':[('Task A','Task A Inspection','0 20 * * *','ASSETA','Questionset A','PERSON_A','GROUP_A','15','5','5','RAISETICKETNOTIFY','YYYY-MM-DD HH:MM:SS',
+                        'YYYY-MM-DD HH:MM:SS','NFC','CLIENT_A','SITE_A','HIGH','1','NONE','NONE','NONE'),
+                        ('Task B','Task B Daily Reading','1 20 * * *','ASSETB','Checklist B','PERSON_B','GROUP_B','18','5','5','AUTOCLOSEDNOTIFY','2023-06-07 12:00:00',	
+                        '2023-06-07 16:00:00','QR','CLIENT_B','SITE_B','LOW','6','NONE','NONE','Task A Inspection'),
+                        ('Task C','Task C Inspection','2 20 * * *','ASSETC','Questionset C','PERSON_C','GROUP_C','20','5','5','NONE','2024-02-04 23:00:00',
+                        '2024-02-04 23:55:00','SKIP','CLIENT_C','SITE_C','MEDIUM','3','NONE','NONE','Task A Inspection')],
+    'SCHEDULEDTOURS':[('TOUR A','Inspection Tour A','55 11,16 * * *','ASSET_A','Questionset A','PERSON_A','GROUP_A','15','5','5',
+                       'RAISETICKETNOTIFY','YYYY-MM-DD HH:MM:SS','YYYY-MM-DD HH:MM:SS','NFC','CLIENT_A','SITE_A','HIGH','1','NONE','NONE','NONE'),
+                       ('TOUR B','Inspection Tour B','56 11,16 * * *','ASSET_B','Checklist B','PERSON_B','GROUP_B','18','5','5',
+                        'AUTOCLOSEDNOTIFY','2023-06-07 12:00:00','2023-06-07 16:00:00','QR','CLIENT_B','SITE_B','LOW','6','NONE','NONE','Task A Inspection'),
+                        ('TOUR C','Inspection Tour C','57 11,16 * * *','ASSET_C','Questionset C','PERSON_C','GROUP_C','20','5','5','NONE','2024-02-04 23:00:00',
+                         '2024-02-04 23:55:00','SKIP','CLIENT_C','SITE_C','MEDIUM','3','NONE','NONE','Task A Inspection')]}
+
+def excel_file_creation(R):
+    import pandas as pd
+    from io import BytesIO
+    columns = HEADER_MAPPING.get(R['template'])
+    data_ex = Example_data.get(R['template'])
+    
+    df = pd.DataFrame(data_ex, columns=columns)
+    main_header = pd.DataFrame([columns], columns=columns)
+    empty_row = pd.DataFrame([[''] * len(df.columns)], columns=df.columns)
+    buffer = BytesIO()
+    
+    with pd.ExcelWriter(buffer, engine='xlsxwriter') as writer:
+        df.to_excel(writer, index=False, header=True, startrow=2)
+        empty_row.to_excel(writer, index=False, header=False, startrow=len(df) + 3)
+        main_header = pd.DataFrame([columns], columns=columns)
+        main_header.to_excel(writer, index=False, header=False, startrow=len(df) + 6)
+        workbook = writer.book
+        worksheet = writer.sheets['Sheet1']
+        bold_format = workbook.add_format({'bold': True,'border':1})
+        for col_num, value in enumerate(columns):
+            worksheet.write(len(df) + 6, col_num, value, bold_format)
+        merge_format = workbook.add_format({
+                    'bg_color': '#E2F4FF','border':1
+                })
+        Text_for_sample_data = "[ Refernce Data ] Take the Reference of the below data to fill data in correct format :-"
+        Text_for_actual_data = "[ Actual Data ] Start filling data below the following headers :-"
+        worksheet.merge_range("A2:D2",Text_for_sample_data, merge_format)
+        worksheet.merge_range("A9:D9",Text_for_actual_data, merge_format)
+
+    buffer.seek(0)
+    return buffer

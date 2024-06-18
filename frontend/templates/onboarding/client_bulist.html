@@ -49,9 +49,12 @@ Client Lists
                     title: "Code" 
                 },
                 {data: 'buname', title: 'Name', orderable:false},
-                {data: 'enable', title: 'Enable', orderable:false, render:function(data, type, row, meta){
-					return data === true ? '<i class="bi bi-check-circle-fill text-success"></i>': '<i class="bi bi-x-circle-fill text-danger"></i>'				
-				}}
+                {data:'enable', title:'Enable',orderable:false,render: function(data,type,row,meta){
+                    if(data === true){return '<i class="bi bi-check-circle-fill text-success"></i> Active'}
+                    else if(data === false){return '<i class= "bi bi-x-circle-fill text-danger"></i> Inactive'}
+                    else{return data.toString()}
+                    }
+                }
             ],
             createdRow:function(row, data, dataIndex){
 				if(data['enable'] === false){

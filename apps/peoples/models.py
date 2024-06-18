@@ -117,7 +117,7 @@ class People(AbstractBaseUser, PermissionsMixin, TenantAwareModel, BaseModel):
     department    = models.ForeignKey("onboarding.TypeAssist", verbose_name='Department', null = True, blank = True,on_delete = models.RESTRICT, related_name='people_departments')
     designation   = models.ForeignKey("onboarding.TypeAssist", verbose_name='Designation', null = True, blank = True,on_delete = models.RESTRICT, related_name='people_designations')
     peopletype    = models.ForeignKey("onboarding.TypeAssist", verbose_name="People Type",null = True, blank = True, on_delete = models.RESTRICT, related_name='people_types')
-    worktype    = models.ForeignKey("onboarding.TypeAssist", verbose_name="Work Type",null = True, blank = True, on_delete = models.RESTRICT, related_name='work_types')
+    worktype      = models.ForeignKey("onboarding.TypeAssist", verbose_name="Work Type",null = True, blank = True, on_delete = models.RESTRICT, related_name='work_types')
     client        = models.ForeignKey("onboarding.Bt", verbose_name='Client',  null = True, blank = True, on_delete = models.RESTRICT, related_name='people_clients')
     bu            = models.ForeignKey("onboarding.Bt",  verbose_name='Site', null = True, blank = True,on_delete = models.RESTRICT, related_name='people_bus')
     reportto      = models.ForeignKey("self", null = True, blank = True, on_delete = models.RESTRICT, related_name='children', verbose_name='Report to')

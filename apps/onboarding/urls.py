@@ -4,7 +4,7 @@ from apps.onboarding import views
 
 app_name = 'onboarding'
 urlpatterns = [
-    path('client_form/get_caps/',    views.get_caps,                  name="get_caps"),
+    path('client_form/get_caps/',    views.get_caps,name="get_caps"),
     path('pop-up/ta/', views.handle_pop_forms, name="ta_popup"),
     path('typeassist/', views.TypeAssistView.as_view(), name="typeassist"),
     path('super_typeassist/', views.SuperTypeAssist.as_view(), name="super_typeassist"),
