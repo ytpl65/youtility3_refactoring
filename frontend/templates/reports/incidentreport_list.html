@@ -21,7 +21,6 @@ Incident Report List
 {% block table %}
 <table id="incidentreport_table" class="display compact cell-border" style="width:100%">
 </table>
-
 {% endblock table %}
 <!-------------------------------------------- END TABLE ------------------------------------------->
 
@@ -40,7 +39,7 @@ Incident Report List
 {{ load_google_maps() }}
 
 <script>
-var   table      = null;
+var table = null;
 var lat, lng, addr;
 var map;
 const geocoder = new google.maps.Geocoder();

@@ -1494,17 +1494,29 @@ class QsetBlngManager(models.Manager):
     related = ['client', 'bu',  'question', 
               'qset', 'cuser', 'muser']
 
-    def get_modified_after(self ,mdtz, buid):
+    def get_modified_after(self, mdtz, buid):
         from .models import QuestionSet
-        # fetch site group ids which contains the buid
-        site_groups = pm.Pgbelonging.objects.filter(Q(people_id=1) | Q(people__isnull=True), assignsites_id=buid, ).values_list('pgroup_id', flat=True)
-        # fetch the qsets of the group ids
-        qset_ids = QuestionSet.objects.filter(site_grp_includes__contains=site_groups).values_list('id', flat=True)
-        qset = self.select_related(
-            *self.related).filter(
-                (Q(bu_id = buid) | Q(qset_id__in=qset_ids)), mdtz__gte = mdtz).values(
-                    *self.fields
-                )
+        
+        # Fetch site group ids which contains the buid
+        site_groups = pm.Pgbelonging.objects.filter(
+            Q(people_id=1) | Q(people__isnull=True),
+            assignsites_id=buid
+        ).values_list('pgroup_id', flat=True)
+        
+        # Convert site_groups to a list
+        site_groups_list = list(site_groups)
+        
+        # Fetch the qsets of the group ids
+        qset_ids = QuestionSet.objects.filter(
+            site_grp_includes__overlap=site_groups_list
+        ).values_list('id', flat=True)
+        
+        # Main query
+        qset = self.select_related(*self.related).filter(
+            (Q(bu_id=buid) | Q(qset_id__in=qset_ids)),
+            mdtz__gte=mdtz
+        ).values(*self.fields)
+        
         return qset or self.none()
     
     def handle_questionpostdata(self, request):
