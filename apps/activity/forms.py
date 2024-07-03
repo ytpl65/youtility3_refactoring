@@ -25,7 +25,7 @@ class QuestionForm(forms.ModelForm):
         attrs={'step': "0.01"}), required = False, label='Alert Below')
     alertabove = forms.CharField(widget = forms.NumberInput(
         attrs={'step': "0.01"}), required = False, label='Alert Above')
-    options = forms.CharField(max_length=100, required=False, label='Options', widget=forms.TextInput(attrs={'placeholder': 'Enter options separated by comma (,)'}))
+    options = forms.CharField(max_length=2000, required=False, label='Options', widget=forms.TextInput(attrs={'placeholder': 'Enter options separated by comma (,)'}))
 
     class Meta:
         model = am.Question
@@ -77,7 +77,7 @@ class QuestionForm(forms.ModelForm):
             cleaned_data['min'] = cleaned_data['max'] = None
             cleaned_data['alertbelow'] = cleaned_data['alertabove'] = None
             cleaned_data['alerton'] = cleaned_data['options'] = None
-        if data.get('answertype') in  ['CHECKBOX', 'DROPDOWN']:
+        if data.get('answertype') in  ['CHECKBOX', 'DROPDOWN', 'MULTISELECT']:
             cleaned_data['min'] = cleaned_data['max'] = None
             cleaned_data['alertbelow'] = cleaned_data['alertabove'] = None
         if data.get('answertype') in ['NUMERIC', 'RATING']:
@@ -163,7 +163,7 @@ class QsetBelongingForm(forms.ModelForm):
         attrs={'step': "0.01"}), required = False, label='Alert Below')
     alertabove = forms.CharField(widget = forms.NumberInput(
         attrs={'step': "0.01"}), required = False, label='Alert Above')
-    options = forms.CharField(max_length=100, required=False, label='Options', widget=forms.TextInput(attrs= {'placeholder':'Enter options separated by comma ","'}))
+    options = forms.CharField(max_length=2000, required=False, label='Options', widget=forms.TextInput(attrs= {'placeholder':'Enter options separated by comma ","'}))
 
 
     class Meta:

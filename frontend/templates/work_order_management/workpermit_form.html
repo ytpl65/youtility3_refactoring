@@ -326,19 +326,20 @@ Work Permit Form
         //submit workpermit form
         $("#wpform").submit((e) => {
             e.preventDefault()
-            // 'this' refers to the form element
-            if (!$("#wp_details_form").get(0).checkValidity()) {
+
+            const wpDetailsForm = $("#wp_details_form").get(0);
+            if (wpDetailsForm && !wpDetailsForm.checkValidity()) {
                 // If the form is invalid, stop here
-                $("#wp_details_form").get(0).reportValidity();
+                wpDetailsForm.reportValidity();
                 return false;
             }
-
+                
             console.log("this is also submitted")
-            var form = $(this)
             const params = {
-                url: $(form).attr("action"),
+                url: $("#wpform").attr("action"),
                 modal: false
             }
+            console.log("Paramas",params)
             var payLoad = {
                 formData: $("#wpform").serialize(),
                 workpermitdetails : $("#wp_details_form").serialize(),

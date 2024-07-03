@@ -7,6 +7,7 @@ from django.conf import settings
 from datetime import datetime, timedelta
 import logging
 import json
+from apps.peoples.models import People
 from django.apps import apps
 logger = logging.getLogger('__main__')
 
@@ -139,6 +140,7 @@ class WorkOrderManager(models.Manager):
         
     
     def get_wp_answers(self, womid):
+        print("WOM ID",womid)
         childwoms = self.filter(parent_id = womid).order_by('seqno')
         logger.info(f"{childwoms = }")
         wp_details = []
@@ -264,12 +266,158 @@ class WorkOrderManager(models.Manager):
     def wp_data_for_report(self, id):
         site = self.filter(id=id).first().bu
         wp_answers = self.get_wp_answers(id)
-        wp_info = wp_answers[0]
-        wp_answers.pop(0)
-        rwp_section = wp_answers.pop(-1)
-        wp_sections = wp_answers
-        return wp_info, wp_sections, rwp_section, site.buname
+        data = self.get_wp_sections_answers(wp_answers)
+        return data
         
+    def convert_the_queryset_to_list(self,workpermit_sections):
+        questions = workpermit_sections.get('questions')
+        questions_in_list = list(questions.values('question__quesname','answer'))
+        workpermit_sections.pop('questions')
+        workpermit_sections['questions'] = questions_in_list
+        return workpermit_sections
+
+    def extract_question_from_general_details(self,new_general_details):
+
+        print("General Deatils", new_general_details)
+        permit_initiated_by  = None 
+        permit_authorized_by = None 
+        workpermit           = None
+        permit_valid_upto    = None
+        permit_valid_from    = None
+        
+        for question in new_general_details['questions']:
+            if question['question__quesname'] == 'Permit Initiated by':
+                permit_initiated_by = question['answer']
+            if question['question__quesname'] == 'Permit Authorized by':
+                permit_authorized_by = question['answer']
+            if question['question__quesname'] == 'Type of permit':
+                workpermit = question['answer']
+            if question['question__quesname'] == 'Permit valid from':
+                permit_valid_from = question['answer']
+            if question['question__quesname'] == 'Permit valid upto':
+                permit_valid_upto =  question['answer']
+            
+        # permit_authorized_by = permit_authorized_by.split(',')
+        # print("Permit Authorized ",permit_authorized_by)
+        # authorized_people_name = []
+        # for code in permit_authorized_by:
+        #     try:
+        #         people = People.objects.get(peoplecode=code)
+        #         authorized_people_name.append(people.peoplename)
+        #         print(authorized_people_name)
+        #     except People.DoesNotExist:
+        #         print("Error")
+        
+        data = {
+                'permit_initiated_by':permit_initiated_by,
+                'permit_authorized_by':permit_authorized_by,
+                'workpermit':workpermit,
+                'permit_valid_from':permit_valid_from,
+                'permit_valid_upto':permit_valid_upto
+            }
+        return data
+
+    def extract_questions_from_section_one(self,new_section_details_one):
+        name_of_supervisor = None
+        name_of_persons_involved = None 
+        other_control_measures = None 
+        debris_cleared = None 
+        department = None 
+        area_building = None
+        location = None
+        job_description = None
+        employees_contractors = None
+        workmen_fitness = None
+        print("Section One",new_section_details_one)
+        for question in new_section_details_one['questions']:
+            if question['question__quesname'] == 'Name of the Supervisors/Incharge':
+                name_of_supervisor = question['answer']
+            if question['question__quesname'] == 'Name of the persons involved':
+                name_of_persons_involved = question['answer']
+            if question['question__quesname'] == 'Debris Cleared and kept out':
+                debris_cleared = question['answer']
+            if question['question__quesname'] == 'Any Other or additional control measures if required':
+                other_control_measures = question['answer']
+            if question['question__quesname'] == 'Department':
+                department = question['answer']
+            if question['question__quesname'] == 'Area/Building':
+                area_building = question['answer']
+            if question['question__quesname'] == 'Location':
+                location = question['answer']
+            if question['question__quesname'] == 'Job Description':
+                job_description = question['answer']
+            if question['question__quesname'] == "Name of the Employees/Contractor's":
+                employees_contractors = question['answer']
+            if question['question__quesname'] == "Workmen Fitness":
+                workmen_fitness = question['answer']
+                print("workmen_fitness",workmen_fitness)
+
+            section_data = {
+                'name_of_supervisor':name_of_supervisor,
+                'name_of_persons_involved':name_of_persons_involved,
+                'debris_cleared':debris_cleared,
+                'other_control_measures':other_control_measures,
+                'department':department,
+                'area_building':area_building,
+                'location':location,
+                'job_description':job_description,
+                'employees_contractors':employees_contractors,
+                'workmen_fitness':workmen_fitness
+            }
+        return section_data
+    
+
+    def get_wp_sections_answers(self,wp_answers):
+        general_details = wp_answers[0]
+        section_details_one = wp_answers[1]
+        section_details_two = wp_answers[2]
+        section_details_three = wp_answers[3]
+
+        new_general_details = self.convert_the_queryset_to_list(general_details)
+        new_section_details_one = self.convert_the_queryset_to_list(section_details_one)
+        new_section_details_two = self.convert_the_queryset_to_list(section_details_two)
+        new_section_details_three = self.convert_the_queryset_to_list(section_details_three)
+        
+        general_details_data = self.extract_question_from_general_details(new_general_details)
+        section_one_data = self.extract_questions_from_section_one(new_section_details_one)
+        name_of_supervisor = section_one_data['name_of_supervisor']
+        name_of_persons_involved = section_one_data['name_of_persons_involved']
+        department = section_one_data['department']
+        area_building = section_one_data['area_building']
+        location = section_one_data['location']
+        job_description = section_one_data['job_description']
+        employees_contractors = section_one_data['employees_contractors']
+        workmen_fitness = section_one_data['workmen_fitness']
+        other_control_measures = section_one_data['other_control_measures']
+        debris_cleared = section_one_data['debris_cleared']
+        permit_authorized_by = general_details_data['permit_authorized_by']
+        permit_initiated_by = general_details_data['permit_initiated_by']
+        workpermit = general_details_data['workpermit']
+        permit_valid_from = general_details_data['permit_valid_from']
+        permit_valid_upto = general_details_data['permit_valid_upto']
+
+        data = {
+            'department':department,
+            'area_building':area_building,
+            'location':location,
+            'job_description':job_description,
+            'employees_contractors':employees_contractors,
+            'workmen_fitness':workmen_fitness,
+            'permit_authorized_by':permit_authorized_by,
+            'permit_initiated_by':permit_initiated_by,
+            'name_of_supervisor':name_of_supervisor,
+            'name_of_persons_involved':name_of_persons_involved,
+            'other_control_measures':other_control_measures,
+            'debris_cleared':debris_cleared,
+            'new_section_details_two':new_section_details_two['questions'],
+            'new_section_details_three':new_section_details_three['questions'],
+            'workpermit':workpermit,
+            'permit_valid_from':permit_valid_from,
+            'permit_valid_upto':permit_valid_upto
+        }
+
+        return data
+    
 
 class WOMDetailsManager(models.Manager):
     use_in_migrations = True

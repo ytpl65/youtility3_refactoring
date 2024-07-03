@@ -17,7 +17,7 @@
             }
 
             @page {
-                size: legal;
+                size: A4;
 
                 @bottom-left: {
                     content: ""
@@ -26,6 +26,10 @@
                 @bottom-right: {
                     content: ""
                 }
+            }
+
+            .new-page{
+                page-break-before: always;
             }
 
             span,
@@ -114,43 +118,11 @@
 
                 {% endblock rwp_section %}
             </div>
-            <div class="notes">
-                {% block notes %}
-                <hr>
-                <p class="b-200 ul-text">Note:</p>
-                <div>
-                    <p class="italic-ft">(A)&nbsp;This Supervisor must check that the work has been completed as
-                        required and that the
-                        area has been made safe before signing off the permit.</p>
-                </div>
-                <div>
-                    <p class="italic-ft">(B)&nbsp;The vendor should inform the site engineer about the work status. The
-                        site engineer
-                        will check the work
-                        and close the work permit in the system.</p>
-                </div>
-                <div>
-                    <p class="italic-ft">(C)&nbsp;The requester must ensure that the e copy of this work permit must be
-                        available with
-                        personal working at all the time in premises.</p>
-                </div>
-                <div>
-                    <p class="italic-ft">(D)&nbsp;EMERGENCY CONTACT NUMBER: 1800 267 4001.</p>
-                </div>
-                {% endblock notes %}
-            </div>
-            <div>
-                {% block note_to_contractor %}
-                <p class="ul-text" style="font-style:italic;">Note to Contractor:</p>
-                <p class="italic-ft" style="font-style:italic;">It is the responsibility of the contractor to ensure the safety and health of its
-                    employees at all times.
-                    This hazard analysis and work permit are provided as a courtesy and may not necessarily reflect all
-                    the hazards associated with the proposed work.</p>
-                {% endblock note_to_contractor %}
 
-            </div>
             <div>
+                {% block static_content %}
 
+                {% endblock static_content %}
             </div>
         </main>
         <footer>

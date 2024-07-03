@@ -16,6 +16,8 @@ from apps.work_order_management.utils import check_all_approved, reject_workperm
 import logging
 from django.utils import timezone
 from apps.reports import utils as rutils
+from apps.work_order_management import utils as wom_utils
+
 logger = logging.getLogger('__main__')
 log = logger
 # Create your views here.
@@ -341,7 +343,7 @@ class WorkPermit(LoginRequiredMixin, View):
         'form':WorkPermitForm,
         'related':['qset', 'cuser', 'bu'],
         'fields':['cdtz', 'id', 'other_data__wp_seqno', 'qset__qsetname', 'workpermit', 'cuser__peoplename', 'bu__bucode', 'bu__buname'],
-        'valid_workpermit':','.join(['Cold Work Permit','Hot Work Permit','Height Work Permit','Confined Space Work Permit','Electrical Work Permit'])
+        'valid_workpermit':','.join(['Cold Work Permit','Hot Work Permit','Height Work Permit','Confined Space Work Permit','Electrical Work Permit','General Work Permit'])
     }
     
     def get(self, request, *args, **kwargs):
@@ -380,8 +382,10 @@ class WorkPermit(LoginRequiredMixin, View):
         if R.get('qsetid'):
             import uuid
             wp_details = Wom.objects.get_workpermit_details(request, R['qsetid'])
+            approver_codes = R['approvers'].split(',')
+            approvers = wom_utils.get_approvers(approver_codes)
             form = P['form'](request=request, initial={'qset': R['qsetid'], 'approvers': R['approvers'].split(',')})
-            context = {"wp_details": wp_details, 'wpform': form, 'ownerid': uuid.uuid4(),'valid_workpermit':self.params['valid_workpermit']}
+            context = {"wp_details": wp_details, 'wpform': form, 'ownerid': uuid.uuid4(),'valid_workpermit':self.params['valid_workpermit'],'approvers':approvers}
             return render(request, P['template_form'], context=context)
 
         if action == 'get_answers_of_template' and R.get('qsetid') and R.get('womid'):
@@ -400,7 +404,9 @@ class WorkPermit(LoginRequiredMixin, View):
             # get work permit questionnaire
             obj = utils.get_model_obj(int(R['id']), request, P)
             wp_answers = Wom.objects.get_wp_answers(obj.id)
-            cxt = {'wpform': P['form'](request=request, instance=obj), 'ownerid': obj.uuid, 'wp_details': wp_answers,'valid_workpermit':self.params['valid_workpermit']}
+            approver_codes = wom_utils.extract_data(wp_answers).split(',')
+            approvers = wom_utils.get_approvers(approver_codes)
+            cxt = {'wpform': P['form'](request=request, instance=obj), 'ownerid': obj.uuid, 'wp_details': wp_answers,'valid_workpermit':self.params['valid_workpermit'],'approvers':approvers}
             if obj.workpermit == Wom.WorkPermitStatus.APPROVED and obj.workstatus != Wom.Workstatus.COMPLETED:
                 rwp_details = Wom.objects.get_return_wp_details(request)
                 log.info(f"return work permit details are as follows: {rwp_details}")
@@ -501,7 +507,19 @@ class WorkPermit(LoginRequiredMixin, View):
                 qset_id = ids[1]
                 qsb_obj = QuestionSetBelonging.objects.filter(id = qsb_id).first()
                 if qsb_obj.answertype in ['CHECKBOX', 'DROPDOWN']:
-                    alerts = v in qsb_obj.alerton
+                    alerts = (qsb_obj.alerton and v in qsb_obj.alerton) or False
+                    # alerts = v in qsb_obj.alerton
+                elif qsb_obj.answertype == 'MULTISELECT':
+                    selected_values = formdata.getlist(k)
+                    if selected_values:
+                        if qsb_obj.alerton:
+                            alerts = any(value in qsb_obj.alerton for value in selected_values)
+                        else:
+                            alerts = False
+                        v = ','.join(selected_values)
+                    else:
+                        alerts = False
+                        v = ''
                 elif qsb_obj.answertype in  ['NUMERIC'] and len(qsb_obj.alerton) > 0:
                     alerton = qsb_obj.alerton.replace('>', '').replace('<', '').split(',')
                     if len(alerton) > 1:
@@ -537,27 +555,23 @@ class WorkPermit(LoginRequiredMixin, View):
                     **data
                 )
                 log.info(f"wom detail is created for the for the child wom: {childwom.description}")
+
     
     def getReportFormatBasedOnWorkpermitType(self, R):
         from apps.reports.report_designs import workpermit as wp
         return {
-            'Cold Work Permit':wp.ColdWorkPermit,
-            'Hot Work Permit':wp.HotWorkPermit,
-            'Height Work Permit':wp.HeightWorkPermit,
-            'Confined Space Work Permit':wp.ConfinedSpaceWorkPermit,
-            'Electrical Work Permit':wp.ElectricalWorkPermit
+            'General Work Permit':wp.GeneralWorkPermit
         }.get(R['qset__qsetname'])
     
     
     def send_report(self, R, request):
         ReportFormat = self.getReportFormatBasedOnWorkpermitType(R)
+        print("R",R)
         report = ReportFormat(
             filename=R['qset__qsetname'], client_id=request.session['client_id'], formdata=R, request=request)
         return report.execute()
         
-
-            
-
+    
 class ReplyWorkPermit(View):
     P = {
         'email_template': "work_order_management/workpermit_server_reply.html",

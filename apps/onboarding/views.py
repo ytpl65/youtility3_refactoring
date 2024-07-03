@@ -31,7 +31,10 @@ from django.core.exceptions import ObjectDoesNotExist
 from pprint import pformat
 import uuid
 import json
+import requests
 from tablib import Dataset
+
+from apps.onboarding.utils import is_bulk_image_data_correct,save_correct_image,extract_file_id,get_file_metadata
 CACHE_TTL = getattr(settings, 'CACHE_TTL', DEFAULT_TIMEOUT)
 logger = logging.getLogger('django')
 
@@ -557,12 +560,12 @@ class ParameterMixin:
     form = obforms.ImportForm
     template = 'onboarding/import.html'
     header_mapping = HEADER_MAPPING
-    
 class BulkImportData(LoginRequiredMixin,ParameterMixin, View):
     def get(self, request, *args, **kwargs):
         R = request.GET
 
         if (R.get('action') == 'form'):
+
             #removes the temp file created in the last import
             self.remove_temp_file(request)
             #creating instance of instructions
@@ -576,8 +579,11 @@ class BulkImportData(LoginRequiredMixin,ParameterMixin, View):
             return render(request, self.template, cxt)
         
         if R.get('action') == 'getInstructions':
+            print("Here I am ")
             inst = utils.Instructions(tablename=R.get('tablename'))
+            print("Inst",inst)
             instructions = inst.get_insructions()
+            print("Instructions:",instructions)
             return rp.JsonResponse({'instructions':instructions}, status=200)
 
         if (request.GET.get('action') == 'downloadTemplate') and request.GET.get('template'):
@@ -592,25 +598,56 @@ class BulkImportData(LoginRequiredMixin,ParameterMixin, View):
             return rp.FileResponse(
                 buffer, as_attachment=True, filename=f'{R["template"]}.xlsx'
             )
-
+    
     def post(self, request, *args, **kwargs):
         R = request.POST
         form = self.form(R, request.FILES)
-        if not form.is_valid() and R['action'] != 'confirmImport':
-            return rp.JsonResponse({'errors': form.errors}, status=404)
-        res, dataset = self.get_resource_and_dataset(request, form)
-        if R.get('action') == 'confirmImport':
-            results = res.import_data(dataset = dataset, dry_run = False, raise_errors = False)
-            return rp.JsonResponse({'totalrows':results.total_rows}, status = 200)
+        table_name = R['table']
+        if table_name == 'BULKIMPORTIMAGE':
+            if R.get('action','') != 'confirmImport':
+                google_drive_link = R['google_drive_link']
+                response = requests.head(google_drive_link,allow_redirects=True)
+                if response.status_code == 200:
+                    status,image_data = self.upload_bulk_image_format(R)
+                    if not status:
+                        cxt = {'image_data': image_data,'status':status,'image_flag':True}
+                        return render(request,'onboarding/imported_data.html',cxt)
+                    cxt = {'image_data':image_data, 'status':status,'image_flag':True}
+                    return render(request,'onboarding/imported_data.html',cxt)
+                else:
+                    return rp.JsonResponse({'error':'Google Drive Link is not Accessible'})
+            else:
+                correct_image_data = R['correct_image_data']
+                correct_image_data = json.loads(correct_image_data.replace("'",'"'))
+                save_correct_image(correct_image_data)
+                return rp.JsonResponse({'totalrows':len(correct_image_data)},status=200)
         else:
-            try:
-                results = res.import_data(
-                    dataset=dataset, dry_run=True, raise_errors=False, use_transactions=True)
-                return render(request, 'onboarding/imported_data.html', {'result':results})
-            except Exception as e:
-                logger.critical("error", exc_info=True)
-                return rp.JsonResponse({"error": "something went wrong!"}, status=500)
+            if not form.is_valid() and R['action'] != 'confirmImport':
+                return rp.JsonResponse({'errors': form.errors}, status=404)
+            res, dataset = self.get_resource_and_dataset(request, form)
+            if R.get('action') == 'confirmImport':
+                results = res.import_data(dataset = dataset, dry_run = False, raise_errors = False)
+                return rp.JsonResponse({'totalrows':results.total_rows}, status = 200)
+            else:
+                try:
+                    results = res.import_data(
+                        dataset=dataset, dry_run=True, raise_errors=False, use_transactions=True)
+                    return render(request, 'onboarding/imported_data.html', {'result':results,'image_data':[],'image_flag':False})
+                except Exception as e:
+                    logger.critical("error", exc_info=True)
+                    return rp.JsonResponse({"error": "something went wrong!"}, status=500)
     
+    def upload_bulk_image_format(self,R):
+        google_drive_link = R['google_drive_link']
+        file_id = extract_file_id(google_drive_link)
+        images_bulk_data = get_file_metadata(file_id)
+        is_coorect, correct_image_data, incorrect_image_data = is_bulk_image_data_correct(images_bulk_data['files'])
+        if not is_coorect:
+            return False,incorrect_image_data
+        print("Uploading")
+        return True,correct_image_data
+        
+
     def get_resource_and_dataset(self, request, form):
         table = form.cleaned_data.get('table')
         if request.POST.get('action') == 'confirmImport':
@@ -724,6 +761,7 @@ class Client(LoginRequiredMixin, View):
             return rp.JsonResponse(resp, status=200)
         
         if R.get('action') == 'saveUserLimits' and R.get('pk') !=None:
+            print("user Limits")
             data = QueryDict(request.POST['formData'])
             resp = P['model'].objects.handle_user_limits_post(data)
             return rp.JsonResponse(resp, status=200)

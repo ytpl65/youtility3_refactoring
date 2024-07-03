@@ -83,7 +83,7 @@ class QuestionResource(resources.ModelResource):
 
 
     def check_answertype_fields(self,row):
-        Authorized_AnswerTypes = ["DATE","DROPDOWN","EMAILID","MULTILINE","NUMERIC","SIGNATURE","SINGLELINE","TIME","RATING","PEOPLELIST","SITELIST","METERREADING"]
+        Authorized_AnswerTypes = ["DATE","CHECKBOX","MULTISELECT","DROPDOWN","EMAILID","MULTILINE","NUMERIC","SIGNATURE","SINGLELINE","TIME","RATING","PEOPLELIST","SITELIST","METERREADING"]
         Answer_type_val = row.get('Answer Type*')
         if Answer_type_val not in Authorized_AnswerTypes:
             raise ValidationError({Answer_type_val:f"{Answer_type_val} is a not a valid Answertype.Please select a valid AnswerType."})

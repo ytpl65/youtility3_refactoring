@@ -174,7 +174,7 @@ class WomDetails(BaseModel, TenantAwareModel):
     answer          = models.CharField(_("Answer"), max_length = 250, default="", null = True)
     isavpt          = models.BooleanField(_("Attachement Required"), default = False)
     avpttype        = models.CharField(_("Attachment Type"), max_length = 50, choices = AvptType.choices, null=True, blank=True)
-    options         = models.CharField( _("Option"), max_length = 200, null = True, blank = True)
+    options         = models.CharField( _("Option"), max_length = 2000, null = True, blank = True)
     min             = models.DecimalField(_("Min"), max_digits = 18,  decimal_places = 4, null = True)
     max             = models.DecimalField(_("Max"), max_digits = 18, decimal_places = 4, null = True)
     alerton         = models.CharField( _("Alert On"), null = True, blank = True, max_length = 50)
