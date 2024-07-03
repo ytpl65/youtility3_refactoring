@@ -156,7 +156,7 @@ class BaseReportsExport(WeasyTemplateResponseMixin):
     
     def excel_columns(self, df):
         '''
-        Override this method in inherited classn
+        Override this method in inherited class
         '''
         return df
  

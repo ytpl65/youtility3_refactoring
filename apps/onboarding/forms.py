@@ -291,16 +291,6 @@ class ShiftForm(forms.ModelForm):
 
 
 
-
-
-
-
-        
-
-
-
-
-
 class GeoFenceForm(forms.ModelForm):
     required_css_class = 'required'
     class Meta:

@@ -115,14 +115,27 @@ class TaskResource(BaseJobResource):
         self.check_required_fields(row)
         self.validate_row(row)
         self.unique_record_check(row)
+        self.check_valid_scantype(row)
+        self.check_valid_priority(row)
         super().before_import_row(row, **kwargs)
+
+    def check_valid_scantype(self,row):
+        valid_scantypes = ['QR','NFC','SKIP','ENTERED']
+        scan_type = row.get('Scan Type*')
+        if scan_type not in valid_scantypes:
+            raise ValidationError({'Scan Type*': f"Invalid Scan Type {scan_type}, select a valid one from {valid_scantypes}"})
+        
+    def check_valid_priority(self,row):
+        valid_priorities = ['LOW','MEDIUM','HIGH']
+        priority = row.get('Priority*')
+        if priority not in valid_priorities:
+            raise ValidationError({'Priority*': f"Invalid Priority {priority}, select a valid one from {valid_priorities}"})
         
     def check_required_fields(self, row):
         required_fields = [
             'Name*', 'Description*', 'From Date*', 'Upto Date*', 'Scheduler*',
             'Notify Category*', 'Plan Duration*', 'Gracetime Before*', 'Gracetime After*',
             'Question Set/Checklist*', 'Asset*', 'Priority*', 'People*', 'Group Name*', 'Belongs To*']
-        ic(row.get('Plan Duration*'))
         for field in required_fields:
             if not row.get(field):
                 raise ValidationError({field: f"{field} is a required field"})

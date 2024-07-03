@@ -4,6 +4,8 @@ from django.db.models import Q
 import re
 import os
 import requests
+import pandas as pd
+from tablib import Dataset
 import logging
 from intelliwiz_config.settings import BULK_IMPORT_GOOGLE_DRIVE_API_KEY as api_key
 from apps.onboarding.models import Bt, TypeAssist
@@ -16,12 +18,28 @@ def save_json_from_bu_prefsform(bt, buprefsform):
     try:
         for k, _ in bt.bupreferences.items():
             if k in (
-                'validimei', 'validip', 'reliveronpeoplecount',
-                'pvideolength', 'usereliver', 'webcapability', 'mobilecapability',
-                'reportcapability', 'portletcapability', 'ispermitneeded','startdate',
-                'enddate', 'onstop', 'onstopmessage', 'clienttimezone', 'billingtype',
-                'no_of_device_allowed', 'devices_currently_added', 'no_of_users_allowed_web',
-                'no_of_users_allowed_both', 'no_of_users_allowed_mob'):
+                "validimei",
+                "validip",
+                "reliveronpeoplecount",
+                "pvideolength",
+                "usereliver",
+                "webcapability",
+                "mobilecapability",
+                "reportcapability",
+                "portletcapability",
+                "ispermitneeded",
+                "startdate",
+                "enddate",
+                "onstop",
+                "onstopmessage",
+                "clienttimezone",
+                "billingtype",
+                "no_of_device_allowed",
+                "devices_currently_added",
+                "no_of_users_allowed_web",
+                "no_of_users_allowed_both",
+                "no_of_users_allowed_mob",
+            ):
                 bt.bupreferences[k] = buprefsform.cleaned_data.get(k)
     except Exception:
         logger.critical("save json from buprefsform... FAILED", exc_info = True)
@@ -209,11 +227,16 @@ def create_default_admin_for_client(client):
         logger.info(
             'Creating default user for the client: %s ...STARTED', (client.bucode))
 
-        People.objects.create(peoplecode = peoplecode,
-                              peoplename = peoplename, dateofbirth = dob,
-                              dateofjoin = doj, mobno = mobno, email = email,
-                              isadmin = True)
-        logger.info('Default user-admin created for the client... DONE')
+        People.objects.create(
+            peoplecode=peoplecode,
+            peoplename=peoplename,
+            dateofbirth=dob,
+            dateofjoin=doj,
+            mobno=mobno,
+            email=email,
+            isadmin=True,
+        )
+        logger.info("Default user-admin created for the client... DONE")
     except Exception:
         logger.critical("Something went wrong while creating default user-admin for client... FAILED",
                      exc_info = True)
@@ -331,3 +354,31 @@ def download_image(image_id,image_name):
     else:
         raise Exception("Failed to download Image")
     
+def get_resource_and_dataset(request, form, mode_resource_map):
+    table = form.cleaned_data.get("table")
+
+    if request.POST.get("action") == "confirmImport":
+        tempfile = request.session["temp_file_name"]
+        with open(tempfile, "rb") as file:
+            df = pd.read_excel(file, skiprows=9)
+    else:
+        file = request.FILES["importfile"]
+        df = pd.read_excel(file, skiprows=9)
+        # save to temp storage
+        import tempfile
+
+        with tempfile.NamedTemporaryFile(delete=False) as tf:
+            for chunk in file.chunks():
+                tf.write(chunk)
+            request.session["temp_file_name"] = tf.name
+    # Replace NaN with None
+    df = df.applymap(lambda x: None if pd.isna(x) else x)
+    # Convert the DataFrame to a Dataset
+    dataset = Dataset()
+    dataset.headers = df.columns.tolist()
+    for row in df.itertuples(index=False, name=None):
+        dataset.append(row)
+    res = mode_resource_map[table](
+        request=request, ctzoffset=form.cleaned_data.get("ctzoffset")
+    )
+    return res, dataset

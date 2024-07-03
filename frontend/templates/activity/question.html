@@ -42,12 +42,10 @@ Question List
         if(add){
             $(`#${id}`).attr("required", true)
             $(`label[for='${id}']`).addClass("required")
-            console.log("added")
             
         }else{
             $(`#${id}`).removeAttr("required")
             $(`label[for='${id}']`).removeClass("required")
-            console.log("removed")
         }
     }
 	
@@ -158,14 +156,12 @@ Question List
 			}
 		})
 		if($("#id_isavpt").is(':checked')){
-            console.log("added")
             handleReqAttribute("id_avpttype", true)
         }else{handleReqAttribute("id_avpttype", false)}
 
 
 		//submit form
 		$(modal_id).on('submit', formid, function(e) {
-			console.log("worked...")
 			var form = $(this);
 			e.preventDefault()
 			if(quesValidator){
@@ -180,7 +176,6 @@ Question List
 						}
 						fire_ajax_form_post(params, payLoad)
 						.done((data, status, xhr) => { //function to submit post request
-							console.log("data ", data)
 							$("#modal-ques").modal("hide");
 							if(id!=='None'){
 								table.row('.selected').data(data.row).draw()
@@ -200,7 +195,6 @@ Question List
 
 	//delete ajax request 
 	function isQuesDeleted(id) {
-		console.log("id ", id)
 		const params = {
 			url: `${urlname}?action=delete&id=${id}`
 		}
@@ -224,7 +218,6 @@ Question List
 			.then((result) => {
 				if (result.isConfirmed) { //delete requested by user
 					status = isQuesDeleted(id) //fire's request
-					console.log("status ", status)
 					if (status) {
 						show_successful_delete_alert() //defined in customjs
 						$(modal_id).modal("hide")
