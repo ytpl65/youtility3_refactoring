@@ -17,6 +17,8 @@ from django.core.mail import EmailMessage
 from apps.reports.models import ScheduleReport
 from apps.reports import utils as rutils
 from django.templatetags.static import static
+
+
 from .move_files_to_GCS import move_files_to_GCS, del_empty_dir, get_files
 from .report_tasks import (
     get_scheduled_reports_fromdb, generate_scheduled_report, handle_error,  
@@ -433,7 +435,7 @@ def create_report_history(self, formdata, userid, buid, EI):
 
 
 @shared_task(bind=True, name="Create Workpermit email notification")
-def send_email_notification_for_wp(self, womid, qsetid, approvers, client_id, bu_id):
+def send_email_notification_for_wp(self, womid, qsetid, approvers, client_id, bu_id,workpermit_attachment):
     jsonresp = {'story': "", "traceback": ""}
     try:
         from django.apps import apps
@@ -445,19 +447,22 @@ def send_email_notification_for_wp(self, womid, qsetid, approvers, client_id, bu
         jsonresp['story'] += f"\n{wp_details}"
         if wp_details:
             qset = People.objects.filter(peoplecode__in = approvers)
+            dlog.info("Qset: ",qset)
             for p in qset.values('email', 'id'):
                 dlog.info(f"sending email to {p['email'] = }")
                 jsonresp['story'] += f"sending email to {p['email'] = }"
                 msg = EmailMessage()
-                msg.subject = f"Following Work Permit #{wp_obj.other_data['wp_seqno']} needs your action"
+                msg.subject = f"General Work Permit #{wp_obj.other_data['wp_seqno']} needs your approval"
                 msg.to = [p['email']]
                 msg.from_email = settings.EMAIL_HOST_USER
-                cxt = {'sections': wp_details, 'peopleid':p['id'],
+                cxt = {'sections': wp_details[1], 'peopleid':p['id'],
                     "HOST": settings.HOST, "workpermitid": womid}
                 html = render_to_string(
                     'work_order_management/workpermit_approver_action.html', context=cxt)
                 msg.body = html
+                # msg.attach_file(workpermit_attachment,mimetype='application/pdf')
                 msg.content_subtype = 'html'
+                msg.attach_file(workpermit_attachment, mimetype='application/pdf')
                 msg.send()
                 dlog.info(f"email sent to {p['email'] = }")
                 jsonresp['story'] += f"email sent to {p['email'] = }"
@@ -467,6 +472,39 @@ def send_email_notification_for_wp(self, womid, qsetid, approvers, client_id, bu
             "something went wron while running create_report_history()", exc_info=True)
         jsonresp['traceback'] += tb.format_exc()
     return jsonresp
+
+
+
+@shared_task(bind=True, name="Create Workpermit email notification for vendor and security")
+def send_email_notification_for_vendor_and_security(self,wom_id,workpermit_attachment):
+    jsonresp = {'story':"", 'traceback':""}
+    try:
+        from apps.work_order_management.models import Wom,WomDetails
+        from django.template.loader import render_to_string
+        wom = Wom.objects.filter(parent_id=wom_id)
+        wom_detail = wom[4].id
+        wom_detail_email_section = WomDetails.objects.filter(wom_id=wom_detail)
+        wp_details = Wom.objects.get_wp_answers(wom_id)
+        dlog.info(f"WP Details: ",wp_details)
+        for email in wom_detail_email_section:
+            dlog.info(f"email: {email.answer}")
+            msg = EmailMessage()
+            msg.subject = f"General Work Permit #{wp_details[0]}"
+            msg.to = [email.answer]
+            msg.from_email = settings.EMAIL_HOST_USER
+            cxt = {'sections': wp_details[1],"HOST": settings.HOST, "workpermitid": wom_id}
+            html = render_to_string(
+                'work_order_management/workpermit_vendor.html', context=cxt)
+            msg.body = html
+            msg.content_subtype = 'html'
+            msg.attach_file(workpermit_attachment, mimetype='application/pdf')
+            msg.send()
+            dlog.info(f"email sent to {email.answer}")
+    except Exception as e:
+        dlog.critical("something went wrong while sending email to vendor and security", exc_info=True)
+        jsonresp['traceback'] += tb.format_exc()
+    return jsonresp
+
 
 @shared_task(name="upload-old-files-to-cloud-storage")
 def move_media_to_cloud_storage():
@@ -643,7 +681,7 @@ def create_save_report_async(self, formdata, client_id, user_email, user_id):
             return {"status": 404, "message": "No data found matching your report criteria.\
         Please check your entries and try generating the report again", 'alert':'alert-warning'}
     except Exception as e:
-        dlog.error(f"Error generating report: {e}", exc_info=True)
+        dlog.error(f"Error generating report: {e}")
         return {"status": 500, "message": "Internal Server Error", "alert":"alert-danger"}
         
             

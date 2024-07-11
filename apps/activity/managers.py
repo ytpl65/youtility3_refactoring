@@ -183,14 +183,12 @@ class QuestionSetManager(models.Manager):
         
     
         
-
 class QuestionManager(models.Manager):
     use_in_migrations = True
     fields = ['id', 'quesname', 'options', 'min', 'max', 'alerton', 'answertype', 'muser_id', 'cdtz', 'mdtz',
             'client_id', 'isworkflow', 'enable', 'category_id', 'cuser_id', 'unit_id' , 'tenant_id', 'ctzoffset']
     related = ['client', 'muser', 'cuser', 'category', 'unit']
     
-
     
     def hrd(self): #hrd: human readable data 
         # Create a list of When conditions for each AnswerType choice
@@ -207,9 +205,10 @@ class QuestionManager(models.Manager):
             )
         )
     
-    def get_questions_modified_after(self, mdtz):
+    def get_questions_modified_after(self, mdtz, clientid):
         mdtzinput = datetime.strptime(mdtz, "%Y-%m-%d %H:%M:%S")
-        qset = self.select_related(*self.related).filter( mdtz__gte = mdtzinput, enable=True).values(*self.fields).order_by('-mdtz')
+        qset = self.select_related(*self.related).filter(
+             mdtz__gte = mdtzinput, enable=True, client_id=clientid).values(*self.fields).order_by('-mdtz')
         return qset or None
 
     def questions_of_client(self, request, RGet):
@@ -1065,6 +1064,7 @@ class AttachmentManager(models.Manager):
             id=eventlogqset[0]['people_id']).values(
                 'id', 'peopleimg', 'cdtz', 'cuser__peoplename', 'mdtz', 'muser__peoplename', 'ctzoffset') if eventlogqset else self.none()
         log.info(defaultimgqset)
+
         return {'attachment_in_out': list(attqset), 'eventlog_in_out': list(eventlogqset), 'default_people_data': list(defaultimgqset)}
     
 
@@ -1484,7 +1484,6 @@ class JobneedDetailsManager(models.Manager):
             )
         # ic(series)
         return series
-        pass
 
 
 class QsetBlngManager(models.Manager):
@@ -1495,17 +1494,29 @@ class QsetBlngManager(models.Manager):
     related = ['client', 'bu',  'question', 
               'qset', 'cuser', 'muser']
 
-    def get_modified_after(self ,mdtz, buid):
+    def get_modified_after(self, mdtz, buid):
         from .models import QuestionSet
-        # fetch site group ids which contains the buid
-        site_groups = pm.Pgbelonging.objects.filter(Q(people_id=1) | Q(people__isnull=True), assignsites_id=buid, ).values_list('pgroup_id', flat=True)
-        # fetch the qsets of the group ids
-        qset_ids = QuestionSet.objects.filter(site_grp_includes__contains=site_groups).values_list('id', flat=True)
-        qset = self.select_related(
-            *self.related).filter(
-                (Q(bu_id = buid) | Q(qset_id__in=qset_ids)), mdtz__gte = mdtz).values(
-                    *self.fields
-                )
+        
+        # Fetch site group ids which contains the buid
+        site_groups = pm.Pgbelonging.objects.filter(
+            Q(people_id=1) | Q(people__isnull=True),
+            assignsites_id=buid
+        ).values_list('pgroup_id', flat=True)
+        
+        # Convert site_groups to a list
+        site_groups_list = list(site_groups)
+        
+        # Fetch the qsets of the group ids
+        qset_ids = QuestionSet.objects.filter(
+            site_grp_includes__overlap=site_groups_list
+        ).values_list('id', flat=True)
+        
+        # Main query
+        qset = self.select_related(*self.related).filter(
+            (Q(bu_id=buid) | Q(qset_id__in=qset_ids)),
+            mdtz__gte=mdtz
+        ).values(*self.fields)
+        
         return qset or self.none()
     
     def handle_questionpostdata(self, request):

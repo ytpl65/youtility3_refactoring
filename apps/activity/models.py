@@ -31,6 +31,7 @@ class Question(BaseModel, TenantAwareModel):
         PEOPLELIST  = "PEOPLELIST" , _("People List")
         SITELIST    = "SITELIST"   , _("Site List")
         METERREADING = "METERREADING", _("Meter Reading")
+        MULTISELECT  = "MULTISELECT", _("Multi Select")
     
     class AvptType(models.TextChoices):
         NONE  = "NONE",  _('NONE')
@@ -148,6 +149,7 @@ class QuestionSetBelonging(BaseModel, TenantAwareModel):
         PEOPLELIST  = "PEOPLELIST" , _("People List")
         SITELIST    = "SITELIST"   , _("Site List")
         NONE        = ("NONE", "NONE")
+        MULTISELECT  = "MULTISELECT", _("Multi Select")
         
     class AvptType(models.TextChoices):
         BACKCAMPIC  = "BACKCAMPIC",  _('Back Camera Pic')
@@ -167,7 +169,7 @@ class QuestionSetBelonging(BaseModel, TenantAwareModel):
     max               = models.DecimalField(_("Max"), null = True, max_digits = 18, decimal_places = 2, default = 0.00)
     min               = models.DecimalField(_("Min"), null = True, max_digits = 18, decimal_places = 2, default = 0.00)
     alerton           = models.CharField(_("Alert on"), null = True, blank = True, max_length = 300)
-    options           = models.CharField(_("Option"), max_length = 200, null = True, blank = True)
+    options           = models.CharField(_("Option"), max_length = 2000, null = True, blank = True)
     client            = models.ForeignKey("onboarding.Bt", verbose_name = _("Client"), on_delete = models.RESTRICT, null = True, blank = True, related_name='qsetbelong_client')
     alertmails_sendto = models.JSONField( _("Alert mails send to"), encoder = DjangoJSONEncoder, default = alertmails_sendto)
     bu                = models.ForeignKey("onboarding.Bt", verbose_name = _("Site"), on_delete = models.RESTRICT, null = True, blank = True, related_name='qsetbelong_bu')
@@ -513,6 +515,7 @@ class JobneedDetails(BaseModel, TenantAwareModel):
         SITELIST    = ("SITELIST", "Site List")
         NONE        = ("NONE", "NONE")
         METERREADING = "METERREADING", _("Meter Reading")
+        MULTISELECT  = "MULTISELECT", _("Multi Select")
         
     
     class AvptType(models.TextChoices):
@@ -529,7 +532,7 @@ class JobneedDetails(BaseModel, TenantAwareModel):
     answer          = models.CharField(_("Answer"), max_length = 250, default="", null = True)
     isavpt          = models.BooleanField(_("Attachement Required"), default = False)
     avpttype        = models.CharField(_("Attachment Type"), max_length = 50, choices = AvptType.choices, null=True, blank=True)
-    options         = models.CharField( _("Option"), max_length = 200, null = True, blank = True)
+    options         = models.CharField( _("Option"), max_length = 2000, null = True, blank = True)
     min             = models.DecimalField(_("Min"), max_digits = 18,  decimal_places = 4, null = True)
     max             = models.DecimalField(_("Max"), max_digits = 18, decimal_places = 4, null = True)
     alerton         = models.CharField( _("Alert On"), null = True, blank = True, max_length = 50)

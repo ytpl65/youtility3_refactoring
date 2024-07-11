@@ -132,7 +132,6 @@ Work Permit Form
 {% endblock form %}
 
 
-
 {% block extras %}
 {% if wp_details is defined %}
 <div class="approvers py-4 my-4 d-none">
@@ -163,8 +162,10 @@ Work Permit Form
     <div class="d-flex justify-content-between align-items-center mb-3">
         <div class="d-flex justify-content-between">
             <h3 class="">Return Work Permit Details&nbsp;</h3>
-            <button type = "submit" href="javascript:void(0)" form = "rwp_details_form" id="submit_rwp" style="border: none; background: none; text-decoration: underline; cursor: pointer; color: blue;" ><strong>Submit</strong></a>
-        </div>
+            <button type="submit" href="javascript:void(0)" form="rwp_details_form"  id="submit_rwp" class="btn btn-sm btn-success">
+                 Submit  
+            </button>
+            </div>
         
         <div class="d-flex">
             <a href="#" class="open-wpd" data-bs-toggle="tooltip" data-bs-placement="top" title="open all sections"><i
@@ -268,12 +269,12 @@ Work Permit Form
         $("#btn_clear").click((e) => {
             location.href = `${urlname}?action=form`
         })
-
+        /*
         let now = new Date();
-
+        
         // Set start of day (00:00)
-        let startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0);
-
+        //let startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0);
+        let startOfDay = new Date();
         // Set end of day (23:59)
         let endOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59);
 
@@ -287,13 +288,79 @@ Work Permit Form
         })
 
         //$(".datetimes").removeAttr('readonly', true)
+        */
+        // Function to initialize date pickers with specific configurations
+        function initializeDatePicker(config, labelText) {
+            document.querySelectorAll('.input-group').forEach(group => {
+                const input = group.querySelector('input.datetimes');
+                const label = group.querySelector('.input-group-text');
+                if (input && label && !input.classList.contains('flatpickr-input') && label.textContent.includes(labelText)) {
+                    flatpickr(input, config);
+                }
+            });
+        }
 
+        // Get current date and time
+        let now = new Date();
+        let startOfDay = now;
+        let endOfDay = new Date(startOfDay.getTime() + (24 * 60 * 60 * 1000));
+
+        // Configuration for wp_section (Permit valid from)
+        let wpConfig = {
+            enableTime: true,
+            time_24hr: true,
+            dateFormat: 'd-M-Y H:i',
+            minDate: startOfDay,
+            maxDate: endOfDay
+        };
+
+        // Configuration for rwp_section (PERMIT RETURNED AT)
+        let rwpConfig = {
+            enableTime: true,
+            time_24hr: true,
+            dateFormat: 'd-M-Y H:i',
+            minDate: new Date(startOfDay.getTime() - (2 * 24 * 60 * 60 * 1000)),
+            maxDate: new Date(startOfDay.getTime() + (24 * 60 * 60 * 1000))
+        };
+
+        // Initialize date pickers
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeDatePicker(wpConfig, "Permit valid from");
+            initializeDatePicker(wpConfig, "Permit valid upto");
+            initializeDatePicker(rwpConfig, "PERMIT RETURNED AT");
+            initializeDatePicker(rwpConfig, "WORK CHECKED AT");
+        });
+
+        // Function to initialize any missed date pickers
+        function initializeMissedDatePickers() {
+            document.querySelectorAll('.input-group').forEach(group => {
+                const input = group.querySelector('input.datetimes');
+                const label = group.querySelector('.input-group-text');
+                if (input && label && !input.classList.contains('flatpickr-input')) {
+                    if (label.textContent.includes("Permit valid from")) {
+                        flatpickr(input, wpConfig);
+                    } else if (label.textContent.includes("Permit valid upto")){
+                        flatpickr(input, wpConfig);
+                    } else if (label.textContent.includes("PERMIT RETURNED AT")) {
+                        flatpickr(input, rwpConfig);
+                    } else if (label.textContent.includes("WORK CHECKED AT")){
+                        flatpickr(input, rwpConfig);
+                    }
+                }
+            });
+        }
+
+        // Call this function after a short delay to catch any elements that might have been missed
+        setTimeout(initializeMissedDatePickers, 100);
+
+        
         //load the questionaire of selected template
         $("#load_questions").click((e) => {
             var validWorkpermit = '{{ valid_workpermit }}'
             var qsetid = $("#id_qset").val()
             var approvers = $("#id_approvers").val()
             var workpermitname = $("#select2-id_qset-container").attr('title')
+            var vendor = $("#id_vendor").val()
 
             if (!validWorkpermit.includes(workpermitname)){
                 Swal.fire({
@@ -315,35 +382,45 @@ Work Permit Form
                 display_field_error('approvers', 'At least one approver needed!')
                 return
             }
-            location.href = `${urlname}?qsetid=${qsetid}&approvers=${approvers}`
+            location.href = `${urlname}?qsetid=${qsetid}&approvers=${approvers}&vendor=${vendor}`
         })
 
 
-
+        //hide load questionaire button if qset is selected
+        if($("#id_qset").val().length > 0){
+            $("#load_questions").addClass('d-none')
+        }
         //set seqno once loaded
+        
         $("#id_seqno").val("{{ wpform.instance.other_data['wp_seqno'] }}")
 
         //submit workpermit form
         $("#wpform").submit((e) => {
             e.preventDefault()
-            // 'this' refers to the form element
-            if (!$("#wp_details_form").get(0).checkValidity()) {
+
+            const wpDetailsForm = $("#wp_details_form").get(0);
+            if (wpDetailsForm && !wpDetailsForm.checkValidity()) {
                 // If the form is invalid, stop here
-                $("#wp_details_form").get(0).reportValidity();
+                wpDetailsForm.reportValidity();
                 return false;
             }
 
             console.log("this is also submitted")
-            var form = $(this)
             const params = {
-                url: $(form).attr("action"),
+                url: $("#wpform").attr("action"),
                 modal: false
             }
+            console.log("Paramas",params)
+            var element = document.getElementById("select2-id_qset-container");
+            var text = element.textContent
+            console.log("Text :",text)
             var payLoad = {
                 formData: $("#wpform").serialize(),
                 workpermitdetails : $("#wp_details_form").serialize(),
                 csrfmiddlewaretoken: '{{ csrf_token }}',
-                'uuid': "{{ ownerid }}"
+                'uuid': "{{ ownerid }}",
+                'permit_name': text,
+                'submit_button_flow':true
             }
             submit_form_alert().then((res) => {
                 if (res.isConfirmed) {

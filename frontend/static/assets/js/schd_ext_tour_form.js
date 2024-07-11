@@ -222,13 +222,19 @@ function d2DrawMarker(
   var infoWindowHtml = "";
   const status_color_code = {'ASSIGNED':"00bfff", 'AUTOCLOSED':"FB6D3E", 'COMPLETED':"7AD308"}
   let colorcode = status_color_code[row['jobstatus']] ?  status_color_code[row['jobstatus']] : '00bfff'
-  var markerC = new google.maps.Marker({
+  const position = { lat: latlng[1], lng: latlng[0] };
+  const pin = new google.maps.marker.PinElement({
+    glyph: `${idx + 1}`,
+    scale: 1.5,
+    background: `#${colorcode}`,
+    borderColor: "#FFFFFF",
+  });
+  var markerC = new google.maps.marker.AdvancedMarkerElement({
     map: d2map,
     title: row["bu__buname"],
-    position: new google.maps.LatLng(latlng[1], latlng[0]),
-    icon:
-      `https://chart.googleapis.com/chart?chst=d_map_spin&chld=0.8|0|${colorcode}|10|b|` +
-      (idx+1),
+    position: position, 
+    content: pin.element,
+    gmpClickable: true,
   });
 
   function convert_to_local(data) {
@@ -266,7 +272,8 @@ function d2DrawMarker(
     d2infowindow.open(d2map, markerC);
   });
   d2oms.addMarker(markerC);
-  d2bounds.extend(markerC.getPosition());
+  console.log(markerC.position)
+  d2bounds.extend(markerC.position);
   //add to array
   d2markersArray.push(markerC);
   //set map zoom
@@ -358,6 +365,7 @@ function d2InitializeMap() {
     zoom: 2,
     center: new google.maps.LatLng(23.248917, 77.651367), //locations[0],
     mapTypeId: google.maps.MapTypeId.ROADMAP,
+    mapId : "DEMO_MAP_ID", // Map ID is required for advanced markers.
   });
   d2oms = new OverlappingMarkerSpiderfier(d2map, {
     markersWontMove: true,
@@ -369,6 +377,28 @@ function d2InitializeMap() {
   d2geocoder = new google.maps.Geocoder();
   directionsRenderer.setMap(d2map);
 }
+// initMap is now async
+
+// async function initMap() {
+//     // Request libraries when needed, not in the script tag.
+//     const { Map } = await google.maps.importLibrary("maps");
+//     // Short namespaces can be used.
+//     d2map = new Map(document.getElementById("d2Map"), {
+//       zoom: 2,
+//       center: new google.maps.LatLng(23.248917, 77.651367), //locations[0],
+//       mapTypeId: google.maps.MapTypeId.ROADMAP,
+//     });
+//     d2oms = new OverlappingMarkerSpiderfier(d2map, {
+//       markersWontMove: true,
+//       markersWontHide: true,
+//       keepSpiderfied: true,
+//       nearbyDistance: 10,
+//       legWeight: 5,
+//     });
+//     d2geocoder = new google.maps.Geocoder();
+//     directionsRenderer.setMap(d2map);
+// }
+
 
 function reCaclTime() {
   var params = {

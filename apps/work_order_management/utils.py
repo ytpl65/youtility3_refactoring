@@ -5,8 +5,10 @@ from datetime import timedelta
 log = get_task_logger('mobile_service_log')
 from django.template.loader import render_to_string 
 from django.conf import settings
-
-
+from apps.peoples.models import People
+import os
+import PyPDF2
+from apps.reports.report_designs.workpermit import GeneralWorkPermit
 def check_attachments_if_any(wo):
     from apps.activity.models import Attachment
     return Attachment.objects.get_att_given_owner(wo.uuid)
@@ -79,3 +81,19 @@ def save_approvers_injson(wp):
     wp.save()
     log.info("saving approvers ended")
     return wp
+
+def get_approvers(approver_codes):
+    approvers = []
+    for code in approver_codes:
+        try:
+            people = People.objects.get(peoplecode = code)
+            approvers.append({'peoplename': people.peoplename})
+        except People.DoesNotExist:
+            approvers.append({'peoplecode': code, 'peoplename': code})
+    return approvers
+
+def extract_data(wp_answers):
+        for section in wp_answers:
+            for question in section['questions']:
+                if question['question__quesname'] == 'Permit Authorized by':
+                    return question['answer']

@@ -52,13 +52,13 @@ $(document).ready(function(){
                 d.params = JSON.stringify(params)
             }
         },
-        pageLength:50,
+        pageLength:500,
         ordering:false,
         deferRender:true,
         responsive:true,
-        scrollY: 300,
-        scrollCollapse:true,
-        lengthMenu:[[10,20,30], [10,20,30]],
+        //scrollY: 300,
+        //scrollCollapse:true,
+        lengthMenu:[250,500,750,1000],
         dom:`<'row' <'col-sm-6 d-flex justify-content-start'<'customfields'>f> <'col-sm-6 d-flex justify-content-end'B> >rt<'row'
             <'col-sm-6'l> <'col-sm-6'p><'col-sm-12 d-flex justify-content-center'i>>`,
         columns:[
@@ -69,7 +69,7 @@ $(document).ready(function(){
             {title:'Approval', data:'workpermit'},
             {title:'Status', data:'workstatus'},
             {title:'Site', data:'bu__buname'},
-            {title:'Action', data:null, defaultContent:"N/A"},
+            {title:'Action', data:null, defaultContent:'<a href="#" class="edit-link">Report&nbsp;<i class="bi text-danger fs-5 bi-file-earmark-pdf-fill"></i></a>'},
             {title:'Site Code', data:'bu__bucode', visible:false},
             {visible:false, data:"ctzoffset", className:'noVis'}
         ],
@@ -97,12 +97,12 @@ $(document).ready(function(){
                 else if (data === 'COMPLETED'){return `<span class="badge fs-9 badge-success">${data}</span>`}
             }
             },
-            {targets:7, render:function(data, type, row, meta){
-                if(row['workstatus'] == 'COMPLETED'){
-                    return '<a href="#" class="edit-link">Report&nbsp;<i class="bi text-danger fs-5 bi-file-earmark-pdf-fill"></i></a>';
-                }return 'N/A'
-            }
-            }
+            //{targets:7, render:function(data, type, row, meta){
+            //    if(row['workstatus'] == 'COMPLETED'){
+            //        return '<a href="#" class="edit-link">Report&nbsp;<i class="bi text-danger fs-5 bi-file-earmark-pdf-fill"></i></a>';
+            //    }return 'N/A'
+            //}
+            //}
         ],
         buttons:[
             "searchBuilder",
@@ -135,12 +135,18 @@ $(document).ready(function(){
         reloadTable(table, filters)
     })
     $('.btn').removeClass('dt-button')
+    //hide add new wp button if user is not wp approver
+    if(session['is_wp_approver'] === true){
+        $(".add_new_wp").addClass('d-none')
+    }
 
     if(session['is_workpermit_approver'] === true){
         $(".add_new").hide()
     }
     $('#wp_list tbody').on('click', '.edit-link', function () {
     var data = table.row($(this).parents('tr')).data();
+    data['submit_button_flow'] = false
+    console.log("Data: ",data);
     $.ajax({
         url: '{{ url("work_order_management:work_permit") }}?action=printReport',
         type: 'GET',
@@ -149,11 +155,26 @@ $(document).ready(function(){
           responseType: 'blob'
         },
         success: function (response) {
+            //Working code
+            /*
             var blob = new Blob([response], { type: 'application/pdf' });
             var objectUrl = URL.createObjectURL(blob);
             window.open(objectUrl, "_blank");
             URL.revokeObjectURL(objectUrl);
-
+            */
+            //New Code added
+            var permitname = data['qset__qsetname']
+            var seqno    = data['other_data__wp_seqno']
+            var filename = permitname + "_" + seqno
+            var blob = new Blob([response], { type: 'application/pdf' });
+            var link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = filename; // You can set a default name or get it from the server
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(link.href);
+            
             /*// Open a new tab
             var newTab = window.open();
 

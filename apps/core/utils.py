@@ -31,7 +31,7 @@ from apps.core import exceptions as excp
 from icecream import ic
 from django.db import transaction
 from django.db.models import RestrictedError
-
+from apps.work_order_management.models import Approver
 
 logger = logging.getLogger('__main__')
 dbg = logging.getLogger('__main__').debug
@@ -411,6 +411,11 @@ def save_user_session(request, people, ctzoffset=None):
         request.session['sitecode'] = request.user.bu.bucode
         request.session['google_maps_secret_key'] = settings.GOOGLE_MAP_SECRET_KEY
         request.session['is_workpermit_approver'] = request.user.people_extras['isworkpermit_approver']
+        # Check if the user is an approver
+        client_id = request.user.client.id
+        site_id = request.user.bu.id
+        is_approver = Approver.objects.filter(client_id=client_id, people_id=request.user,approverfor__contains = ['WORKPERMIT']).exists()
+        request.session['is_wp_approver'] = is_approver
     except ObjectDoesNotExist:
         logger.error('object not found...', exc_info=True)
         raise
@@ -744,7 +749,7 @@ def get_or_create_none_wom():
     obj, _ = Wom.objects.get_or_create(
         description= "NONE", expirydatetime= date, plandatetime =  date,
         defaults={
-            'worlpermit':Wom.WorkPermitStatus.NOTNEED,
+            'workpermit':Wom.WorkPermitStatus.NOTNEED,
             'attachmentcount':0, 'priority':Wom.Priority.LOW,
         }
     )
@@ -820,6 +825,7 @@ def create_none_entries():
         get_or_create_none_question()
         get_or_create_none_qsetblng()
         get_or_create_none_gf()
+        get_or_create_none_wom()
         logger.debug("NONE entries are successfully inserted...")
     except Exception as e:
         logger.error('create none entries', exc_info=True)
@@ -1572,7 +1578,7 @@ def create_user():
     user.set_password('testpassword')
     user.save()
     return user
-    
+
 
 
 def basic_user_setup():
@@ -1666,19 +1672,40 @@ class Instructions(object):
 
     #function is for getting the instructions for the given tablename 
     def get_insructions(self):
-        general_instructions = self.get_general_instructions()
-        custom_instructions = self.get_custom_instructions()
-        column_names = self.get_column_names()
-        valid_choices = self.get_valid_choices_if_any()
-        format_info = self.get_valid_format_info()
-
-        return  {
-            'general_instructions': general_instructions + custom_instructions if custom_instructions else general_instructions,
-            'column_names':"Columns: ${}&".format(', '.join(column_names)) ,
-            'valid_choices':valid_choices,
-            'format_info':format_info
-        }
+        if self.tablename != 'BULKIMPORTIMAGE':
+            general_instructions = self.get_general_instructions()
+            custom_instructions = self.get_custom_instructions()
+            column_names = self.get_column_names()
+            valid_choices = self.get_valid_choices_if_any()
+            format_info = self.get_valid_format_info()
+            return  {
+                'general_instructions': general_instructions + custom_instructions if custom_instructions else general_instructions,
+                'column_names':"Columns: ${}&".format(', '.join(column_names)) ,
+                'valid_choices':valid_choices,
+                'format_info':format_info
+            }
+        else:
+            bulk_import_image_instructions = self.get_bulk_import_image_instructions()
+            return {
+                'general_instructions':bulk_import_image_instructions
+            }
+        
+    def get_bulk_import_image_instructions(self):
+        """
+        This functions return instrucitons for bulk import of people image
+        Args:
+            None
+        Return:
+            array: This is array of inistructions for bulk import of Image
+        """
+        return [
+            "Share the Google Drive link that contains all the images of people.",
+            "Ensure the image name matches the people code.",
+            "Uploaded images should be in JPEG or PNG format.",
+            "Image size should be less than 300KB."
+        ]
     
+
     #list returning general instructions which is common for all the tables
     def get_general_instructions(self):
         return [

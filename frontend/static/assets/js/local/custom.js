@@ -1758,7 +1758,8 @@ function getCurrentEditingRow(editor, table) {
 function hideAndShowFields(selected, editor) {
   if (typeof selected !== "undefined") {
     if (
-      selected === "DROPDOWN" ||
+      selected === "DROPDOWN" || 
+      selected === "MULTISELECT" || 
       (selected === "CHECKBOX" && typeof selected !== "undefined")
     ) {
       editor
