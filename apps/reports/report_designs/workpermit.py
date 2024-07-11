@@ -6,25 +6,34 @@ from apps.work_order_management.models import Wom
 from django.conf import settings
 from django.http.response import JsonResponse
 
+import logging
+logger = logging.getLogger('__main__')
+log = logger
 
 class GeneralWorkPermit(BaseReportsExport):
     report_title = 'GENERAL PERMIT TO WORK AND ENTRY'
     design_file  = "reports/pdf_reports/general_permit_to_work_and_entry.html"
     report_name  = "GeneralPermitToWorkAndEntry"
     
-    def __init__(self, filename, client_id, request=None, context=None, data=None, additional_content=None, returnfile=False, formdata=None):
-        super().__init__(filename, client_id, design_file=self.design_file, request=request, context=context, data=data, additional_content=additional_content, returnfile=returnfile, formdata=formdata)
+    def __init__(self, filename, client_id=None, request=None, context=None, data=None, additional_content=None, returnfile=False, formdata=None):
+        super().__init__(filename, client_id=client_id, design_file=self.design_file, request=request, context=context, data=data, additional_content=additional_content, returnfile=returnfile, formdata=formdata)
 
-
+    
     def set_context_data(self):
-        wp_answers_data = Wom.objects.wp_data_for_report(self.formdata.get('id'))
-        name_of_persons_involved = wp_answers_data['name_of_persons_involved'].split('\r\n')[0].split(" ")
+        log.info("Form Data: %s",self.formdata)
+        approval_status = self.formdata.get('workpermit','')
+        log.info("Approval Status: %s",approval_status)
+        wp_answers_data,permit_no = Wom.objects.wp_data_for_report(self.formdata.get('id'),approval_status)
+        name_of_persons_involved = wp_answers_data['name_of_persons_involved'].split(',')
         name_of_persons_involved = [ x for x in name_of_persons_involved if len(x)!=0 ]
-        print("Name of Person Involved",name_of_persons_involved)
+        name_of_supervisor = wp_answers_data['name_of_supervisor'].split(',')
+        name_of_supervisor = [ x for x in name_of_supervisor if len(x)!=0 ]
+        sitename = self.formdata.get('sitename','')
+        print("Permit Authorized by in context: ",wp_answers_data['permit_authorized_by'])
         self.context = {
             'permit_authorized_by':wp_answers_data['permit_authorized_by'],
             'permit_initiated_by':wp_answers_data['permit_initiated_by'],
-            'name_of_supervisor':wp_answers_data['name_of_supervisor'],
+            'name_of_supervisor':name_of_supervisor,
             'name_of_persons_involved':name_of_persons_involved,
             'other_control_measures':wp_answers_data['other_control_measures'],
             'debris_cleared':wp_answers_data['debris_cleared'],
@@ -40,9 +49,16 @@ class GeneralWorkPermit(BaseReportsExport):
             'department':wp_answers_data['department'],
             'workpermit':wp_answers_data['workpermit'],
             'permit_valid_from':wp_answers_data['permit_valid_from'],
-            'permit_valid_upto':wp_answers_data['permit_valid_upto']
-        }
+            'permit_valid_upto':wp_answers_data['permit_valid_upto'],
+            'permit_no':permit_no,
+            'sitename':sitename,
+            'permit_returned_at':wp_answers_data['permit_returned_at'],
+            'work_checked_at':wp_answers_data['work_checked_at'],
+            'name_of_requester':wp_answers_data['name_of_requester'],
 
+        }
+        log.info("Context Data: %s",self.context)
+        self.permit_no = permit_no    
     def set_args_required_for_query(self):
         self.args = [
             get_timezone(self.formdata['ctzoffset']),

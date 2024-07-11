@@ -6,7 +6,9 @@ log = get_task_logger('mobile_service_log')
 from django.template.loader import render_to_string 
 from django.conf import settings
 from apps.peoples.models import People
-
+import os
+import PyPDF2
+from apps.reports.report_designs.workpermit import GeneralWorkPermit
 def check_attachments_if_any(wo):
     from apps.activity.models import Attachment
     return Attachment.objects.get_att_given_owner(wo.uuid)

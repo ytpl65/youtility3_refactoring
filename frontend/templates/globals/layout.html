@@ -413,7 +413,7 @@
           {% else %}
           {% set options = question['options'].split(',') %}
           {% for opt in options %}
-            <option value="{{ opt }}" {% if 'answer' in question and opt in question['answer'].split(',') %} selected {% endif %}>{{ opt }}
+            <option value="{{ opt }}" {% if 'answer' in question and opt in question['answer'].split(',') %} selected {% elif opt == ' N/A' and 'answer' not in question %} selected {% endif %}>{{ opt }}
             </option>
           {% endfor %}
           {% endif %}

@@ -134,8 +134,7 @@ class WorkPermitForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         utils.initailize_form_fields(self)
         self.fields['approvers'].choices = Approver.objects.get_approver_options_wp(self.request).values_list('people__peoplecode', 'people__peoplename')
-        self.fields['qset'].queryset = am.QuestionSet.objects.filter(
-            type='WORKPERMIT', client_id = S['client_id'], bu_id = S['bu_id'], enable=True, parent_id=1)
+        self.fields['qset'].queryset = am.QuestionSet.objects.filter(type='WORKPERMIT',client_id=S['client_id'],enable=True,parent_id=1).filter(Q(bu_id=S['bu_id']) | Q(buincludes__contains=[str(S['bu_id'])]) | Q(show_to_all_sites=True))
         self.fields['vendor'].queryset = Vendor.objects.filter(Q(bu_id = S['bu_id']) | Q(Q(show_to_all_sites = True) & Q(client_id=S['client_id'])))
         
         

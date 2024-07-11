@@ -31,7 +31,7 @@ from apps.core import exceptions as excp
 from icecream import ic
 from django.db import transaction
 from django.db.models import RestrictedError
-
+from apps.work_order_management.models import Approver
 
 logger = logging.getLogger('__main__')
 dbg = logging.getLogger('__main__').debug
@@ -411,6 +411,11 @@ def save_user_session(request, people, ctzoffset=None):
         request.session['sitecode'] = request.user.bu.bucode
         request.session['google_maps_secret_key'] = settings.GOOGLE_MAP_SECRET_KEY
         request.session['is_workpermit_approver'] = request.user.people_extras['isworkpermit_approver']
+        # Check if the user is an approver
+        client_id = request.user.client.id
+        site_id = request.user.bu.id
+        is_approver = Approver.objects.filter(client_id=client_id, people_id=request.user,approverfor__contains = ['WORKPERMIT']).exists()
+        request.session['is_wp_approver'] = is_approver
     except ObjectDoesNotExist:
         logger.error('object not found...', exc_info=True)
         raise

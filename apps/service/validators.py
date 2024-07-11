@@ -62,6 +62,8 @@ def clean_record(record):
             record[k] = clean_code(v)
         elif k in ['approvers', 'categories', 'transportmodes', 'approverfor', 'sites']:
             record[k] = clean_array_string(v, service=True)
+        elif k in ['answer']:
+            record[k] = v.replace('["', "").replace('"]',"")
     return record
 
 

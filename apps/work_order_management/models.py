@@ -158,6 +158,7 @@ class WomDetails(BaseModel, TenantAwareModel):
         PEOPLELIST  = ("PEOPLELIST", "People List")
         SITELIST    = ("SITELIST", "Site List")
         NONE        = ("NONE", "NONE")
+        MULTISELECT = ("MULTISELECT", "Multi Select")
     
     class AvptType(models.TextChoices):
         BACKCAMPIC    = "BACKCAMPIC"   , _('Back Camera Pic')
