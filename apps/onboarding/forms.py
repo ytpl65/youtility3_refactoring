@@ -291,16 +291,6 @@ class ShiftForm(forms.ModelForm):
 
 
 
-
-
-
-
-        
-
-
-
-
-
 class GeoFenceForm(forms.ModelForm):
     required_css_class = 'required'
     class Meta:
@@ -457,6 +447,7 @@ class ImportForm(forms.Form):
         ('GROUPBELONGING', 'Group Belongings'),
         ('SCHEDULEDTASKS', 'Scheduled Tasks'),
         ('SCHEDULEDTOURS', 'Scheduled Tours'),
+        ('BULKIMPORTIMAGE','Bulk Import Image')
     ]
     importfile = forms.FileField(required = True, label='Import File', max_length = 50, allow_empty_file = False)
     ctzoffset = forms.IntegerField()

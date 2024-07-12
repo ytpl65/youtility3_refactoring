@@ -400,17 +400,23 @@
     {% set name = question['id']|string + '_' + question['qset_id']|string %}
     <div class="col-sm-6 mb-3">
       <!-- [ Your answer field code here ] -->
-      {% if question['answertype'] in ['DROPDOWN', 'CHECKBOX'] %}
-      <div class="input-group-sm input-group {{ formsection }}">
+        {% if question['answertype'] in ['DROPDOWN', 'CHECKBOX','MULTISELECT'] %}
+       <div class="input-group-sm input-group {{ formsection }}">
         <label class="input-group-text" for="inputGroupSelect01">{{ question['question__quesname'] }}</label>
-        <select name="{{ name }}" {% if question['ismandatory'] %} required {% endif %} id="{{ fieldID }}_field"
+        <select name="{{ name }}" {% if question['answertype'] == 'MULTISELECT'%} multiple {% endif %} {% if question['ismandatory'] %} required {% endif %} id="{{ fieldID }}_field"
           class="form-select">
           <option value="">select from menu</option>
+          {% if question['question__quesname'] == 'Permit Authorized by' and question['answertype'] == 'MULTISELECT' %}
+            {% for approver in approvers %}
+              <option value="{{ approver.peoplename }}" {% if 'answer' in question and approver.peoplename in question['answer'].split(',') %} selected {% endif %}>{{ approver.peoplename }}</option>
+            {% endfor %}
+          {% else %}
           {% set options = question['options'].split(',') %}
           {% for opt in options %}
-            <option value="{{ opt }}" {% if 'answer' in question and opt==question['answer'] %} selected {% endif %}>{{ opt }}
+            <option value="{{ opt }}" {% if 'answer' in question and opt in question['answer'].split(',') %} selected {% elif opt == ' N/A' and 'answer' not in question %} selected {% endif %}>{{ opt }}
             </option>
           {% endfor %}
+          {% endif %}
         </select>
       </div>
       {% elif question['answertype'] == 'TIME' or question['answertype'] == 'DATE' %}

@@ -8,127 +8,191 @@
 {% endblock pagebreadcumb %}
 
 {% block table %}
-    {% if result %}
-        
+    {% if image_flag %}
+        {% if status is defined and not status %}
+            <h2 class="invalid_rows">Some rows failed to validate</h2>
+            <p>Please correct these errors in your data where possible, then reuploaded</p>
+            <table id="import_table">
+                <thead>
+                    <tr>
+                        <th>Image Name</th>
+                        <th>Error</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in image_data %}
+                        <tr>
+                            <td>{{ row['name'] }}</td>
+                            <td>
+                                <ol>
+                                    {% if 'name_error' in row %}
+                                        <li>{{ row['name_error'] }}</li>
+                                    {% endif %}
+                                    {% if 'format_error' in row %}
+                                        <li>{{ row['format_error'] }}</li>
+                                    {% endif %}
+                                    {% if 'size_error' in row %}
+                                        <li>{{ row['size_error'] }}</li>
+                                    {% endif %}
+                                </ol>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% elif status is defined and status %}
+            <h2>The following data is going to be imported upon clicking on confirm Import Button</h2>
+            <table id="import_table">
+                <thead>
+                    <tr>
+                        <th>Image Name</th>
+                        <th>Image Size(KB)</th>
+                        <th>Image Format</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in image_data %}
+                        <tr>
+                            <td>{{ row['name'] }}</td>
+                            <td>{{ row['size'] }}</td>
+                            <td>{{ row['mimeType'] }}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% endif %}
+    {% else %}
         {% if result.has_errors() %}
             {% block errors %}
                 <h2>Errors</h2>
                 <ul>
-                    {% for error in result.base_errors  %}
-                    <li>
-                    {{ error.error }}
-                    <div class="traceback">{{ error.traceback|linebreaks }}</div>
-                    </li>
-                    {% endfor %}
-                    {% for line, errors in result.row_errors() %}
+                    {% for error in result.base_errors %}
+                        <li>
+                            {{ error.error }}
+                            <div class="traceback">
+                                {{ error.traceback|linebreaks }}
+                            </div>
+                        </li>
+                        {% endfor %}
                     {% for error in errors %}
                         <li>
-                        Line number: {{ line }} - {{ error.error }}
-                        <div><code>{{ error.row.values()}}</code></div>
-                        <div class="traceback">{{ error.traceback|linebreaks }}</div>
+                            Line number: {{ line }} - {{ error.error }}
+                            <div>
+                                <code>
+                                    {{ error.row.values() }}
+                                </code>
+                            </div>
+                            <div class="traceback">
+                                {{ error.traceback|linebreaks }}
+                            </div>
                         </li>
-                    {% endfor %}
                     {% endfor %}
                 </ul>
             {% endblock %}
-        {% elif result.has_validation_errors()  %}
+        {% elif result.has_validation_errors() %}
             {% block validation_errors %}
-                <h2 class="invalid_rows">Some rows failed to validate</h2>
-
-                <p>Please correct these errors in your data where possible, then reupload it using the form above.</p>
-
+                <h2>Some rows failed to validate</h2>
+                <p>Please correct these errors in your data where possible, then reupload again</p>
                 <table id="import_table" class="import-preview">
                     <thead>
-                    <tr>
-                        <th>Row</th>
-                        <th>Errors</th>
-                        {% for field in result.diff_headers %}
-                        <th>{{ field }}</th>
-                        {% endfor %}
-                    </tr>
+                        <tr>
+                            <th>Row</th>
+                            <th>Errors</th>
+                            {% for field in result.diff_headers %}
+                                <th>
+                                    {{ field }}
+                                </th>
+                            {% endfor %}
+                        </tr>
                     </thead>
                     <tbody>
-                    {% for row in result.invalid_rows %}            
-                    <tr>
-                        <td>{{ row.number }} </td>
-                        <td class="errors">
-                        <span class="validation-error-count">{{ row.error_count }}</span>
-                        <div class="validation-error-container">
-                            <ul class="validation-error-list">
-                            {% for field_name, error_list in row.field_specific_errors.items() %}
-                                <li>
-                                    <span class="validation-error-field-label">{{ field_name }}</span>
-                                    <ul>
-                                    {% for error in error_list %}
-                                        <li>{{ error }}</li>
-                                    {% endfor %}
-                                    </ul>
-                                </li>
-                            {% endfor %}
-                            {% if row.non_field_specific_errors %}
-                                <li>
-                                <span class="validation-error-field-label">Non field specific</span>
-                                <ul>
-                                    {% for error in row.non_field_specific_errors %}
-                                    <li>{{ error }}</li>
-                                    {% endfor %}
-                                </ul>
-                                </li>
-                            {% endif %}
-                            </ul>
-                        </div>
-                        </td>
-                        {% for field in row.values %}
-                        <td>{{ field }}</td>
+                        {% for row in result.invalid_rows %}
+                            <tr>
+                                <td>{{ row.number }}</td>
+                                <td class="errors">
+                                    <span class="validation-error-count">
+                                        {{ row.error.count }}
+                                    </span>
+                                    <div class="validation-error-container">
+                                        <ul class="validation-error-list"> 
+                                            {% for field_name, error_list in row.field_specific_errors.items() %}
+                                                <li>
+                                                    <span class="validation-error-field-label">
+                                                        {{ field_name }}
+                                                    </span>
+                                                    <ul>
+                                                        {% for error in error_list %}
+                                                            <li>{{ error }}</li>
+                                                        {% endfor %}
+                                                    </ul>
+                                                </li>
+                                            {% endfor%}
+                                            {% if row.non_field_specific_errors %}
+                                                <li>
+                                                    <span class="validation-error-field-label">
+                                                        Non field specific
+                                                    </span>
+                                                    <ul>
+                                                        {% for error in row.non_field_specific_errors %}
+                                                        <li>{{ error }}</li>
+                                                        {% endfor %}
+                                                    </ul>
+                                                </li>
+                                            {% endif %}
+                                        </ul>
+                                    </div>
+                                </td>
+                                {% for field in row.values %}
+                                    <td>{{ field }}</td>
+                                {% endfor %}
+                            </tr>
                         {% endfor %}
-                    </tr>
-                    {% endfor %}
                     </tbody>
                 </table>
             {% endblock %}
         {% else %}
             {% block preview %}
                 <h2>Preview</h2>
-
                 <table id="import_table" class="import-preview display cell-bordered compact">
                     <thead>
-                    <tr>
-                        <th></th>
-                        {% for field in result.diff_headers %}
-                        <th>{{ field }}</th>
-                        {% endfor %}
-                    </tr>
+                        <tr>
+                            <th></th>
+                            {% for field in result.diff_headers %}
+                                <th>{{ field }}</th>
+                            {% endfor %}
+                        </tr>
                     </thead>
                     {% for row in result.valid_rows() %}
-                    <tr class="{{ row.import_type }}">
-                        <td class="import-type">
-                        {% if row.import_type == 'new' %}
-                            New
-                        {% elif row.import_type == 'skip' %}
-                            Skipped
-                        {% elif row.import_type == 'delete' %}
-                            Delete
-                        {% elif row.import_type == 'update' %}
-                            Update
-                        {% endif %}
-                        </td>
-                        {% for field in row.diff %}
-                        <td>{{ field }}</td>
-                        {% endfor %}
-                    </tr>
+                        <tr class="{{ row.import_type }}">
+                            <td class="import-type">
+                            {% if row.import_type == 'new' %}
+                                New
+                            {% elif row.import_type == 'skip' %}
+                                Skipped
+                            {% elif row.import_type == 'delete' %}
+                                Delete
+                            {% elif row.import_type == 'update' %}
+                                Update
+                            {% endif %}
+                            </td>
+                            {% for field in row.diff %}
+                            <td>{{ field }}</td>
+                            {% endfor %}
+                        </tr>
                     {% endfor %}
                 </table>
             {% endblock %}
         {% endif %}
     {% endif %}
-{% endblock table %}
+{% endblock %}
 
 {% block extra_scripts %}
 <script>
 var table= null
 function ConfirmImport(){
     fd = new FormData()
-    fd.append('action', 'confirmImport') 
+    fd.append('action', 'confirmImport')
+    fd.append('correct_image_data', "{{ image_data }} ");
     fd.append('csrfmiddlewaretoken', '{{ csrf_token }}');
     fd.append('table', localStorage.getItem('table'))
     $.ajax({
@@ -158,7 +222,6 @@ function onClickConfirmButton(){
     }
 }
 
-
 $(document).ready(() => {
     table = $("#import_table").DataTable({
         deferRenderer:true,
@@ -179,10 +242,6 @@ $(document).ready(() => {
     if($("h2.invalid_rows").is(':visible')){
         $(".confirm_import").hide()
     }
-
-
-
-
 })
 
 </script>

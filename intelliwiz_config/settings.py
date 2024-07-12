@@ -29,6 +29,10 @@ HOST = env('HOST')
 # GOOGLE MAP API KEY...
 GOOGLE_MAP_SECRET_KEY  = env('GOOGLE_MAP_SECRET_KEY')
 
+
+#BULK IMPORT API KEY...
+BULK_IMPORT_GOOGLE_DRIVE_API_KEY = env('BULK_IMPORT_GOOGLE_DRIVE_API_KEY')
+
 def check_path(path):
     path = Path(path)
     if not os.path.exists(path):

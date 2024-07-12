@@ -17,6 +17,7 @@ from apps.peoples.utils import save_userinfo
 from apps.core import utils
 import apps.onboarding.forms as obforms
 import apps.peoples.utils as putils
+import apps.onboarding.utils as obutils
 from apps.peoples import admin as people_admin
 from apps.onboarding import admin as ob_admin
 from apps.activity import admin as av_admin
@@ -31,7 +32,10 @@ from django.core.exceptions import ObjectDoesNotExist
 from pprint import pformat
 import uuid
 import json
+import requests
 from tablib import Dataset
+
+from apps.onboarding.utils import is_bulk_image_data_correct,save_correct_image,extract_file_id,get_file_metadata
 CACHE_TTL = getattr(settings, 'CACHE_TTL', DEFAULT_TIMEOUT)
 logger = logging.getLogger('django')
 
@@ -483,134 +487,92 @@ MODEL_RESOURCE_MAP = {
     'SCHEDULEDTOURS'      : sc_admin.TourResource,
 }
 
-# Header Mapping
-HEADER_MAPPING  = {
-    'TYPEASSIST': [
-        'Name*', 'Code*', 'Type*', 'Client*'],
-    
-    'PEOPLE': [
-        'Code*', 'Name*', 'User For*', 'Employee Type*', 'Login ID*', 'Password*', 'Gender*',
-        'Mob No*', 'Email*', 'Date of Birth*', 'Date of Join*', 'Client*', 
-        'Site*', 'Designation', 'Department', 'Work Type', 'Report To',
-        'Date of Release', 'Device Id', 'Is Emergency Contact',
-        'Mobile Capability', 'Report Capability', 'Web Capability', 'Portlet Capability',
-        'Current Address', 'Blacklist',  'Alert Mails'],
-    
-    'BU': [
-        'Code*', 'Name*', 'Belongs To*', 'Type*', 'Site Type', \
-        'Site Manager', 'Sol Id', 'Enable', 'GPS Location', 'Address', 'State', 'Country', 'City'],
-    
-    'QUESTION':[
-        'Question Name*','Answer Type*', 'Min', 'Max','Alert Above', 'Alert Below', 'Is WorkFlow',
-        'Options', 'Alert On', 'Enable', 'Is AVPT' ,'AVPT Type','Client*', 'Unit', 'Category'],
-    
-    'ASSET':[
-        'Code*', 'Name*', 'Running Status*', 'Identifier*','Is Critical',
-        'Client*', 'Site*', 'Capacity', 'BelongsTo', 'Type',  'GPS Location',
-        'Category', 'SubCategory', 'Brand', 'Unit', 'Service Provider',
-        'Enable', 'Is Meter', 'Is Non Engg. Asset', 'Meter', 'Model', 'Supplier',
-        'Invoice No', 'Invoice Date', 'Service', 'Service From Date', 'Service To Date',
-        'Year of Manufacture', 'Manufactured Serial No', 'Bill Value', 'Bill Date',
-        'Purchase Date', 'Installation Date', 'PO Number', 'FAR Asset ID'
-    ],
-    'GROUP':[
-        'Group Name*', 'Type*', 'Client*', 'Site*', 'Enable'
-    ],
-    'GROUPBELONGING':[
-      'Group Name*', 'Of People', "Of Site", 'Client*', 'Site*'  
-    ],
-
-    'VENDOR':[
-        'Code*', 'Name*', 'Type*', 'Address*', 'Email*', 'Applicable to All Sites',
-        'Mob No*', 'Site*', 'Client*', 'GPS Location', 'Enable'
-    ],
-    'LOCATION':[
-        'Code*', 'Name*', 'Type*', 'Status*', 'Is Critical', 'Belongs To',
-        'Site*', 'Client*', 'GPS Location', 'Enable'
-    ],
-    'QUESTIONSET':[
-        'Seq No', 'Question Set Name*', 'Belongs To*', 'QuestionSet Type*', 'Asset Includes', 'Site Includes', 'Site*',
-        'Client*', 'Site Group Includes', 'Site Type Includes', 'Show To All Sites', 
-        'URL'
-    ],
-    'QUESTIONSETBELONGING':[
-        'Question Name*', 'Question Set*', 'Client*', 'Site*', 'Answer Type*',
-        'Seq No*', 'Is AVPT', 'Min', 'Max', 'Alert Above', 'Alert Below', 'Options',
-        'Alert On', 'Is Mandatory', 'AVPT Type',
-    ],
-    'SCHEDULEDTASKS':[
-        'Name*', 'Description*', 'Scheduler*', 'Asset*', 'Question Set/Checklist*', 'People*', 'Group Name*',
-        'Plan Duration*', 'Gracetime Before*', 'Gracetime After*', 'Notify Category*',
-        'From Date*', 'Upto Date*', 'Scan Type*', 'Client*', 'Site*',
-        'Priority*','Seq No', 'Start Time', 'End Time', 'Belongs To*'
-    ],
-    'SCHEDULEDTOURS':[
-        'Name*', 'Description*', 'Scheduler*', 'Asset*', 'Question Set/Checklist*', 'People*', 'Group Name*',
-        'Plan Duration*', 'Gracetime*', 'Expiry Time*', 'Notify Category*',
-        'From Date*', 'Upto Date*', 'Scan Type*', 'Client*', 'Site*',
-        'Priority*','Seq No*', 'Start Time', 'End Time', 'Belongs To*'
-    ]
-}
 
 class ParameterMixin:
     mode_resource_map = MODEL_RESOURCE_MAP
     form = obforms.ImportForm
     template = 'onboarding/import.html'
-    header_mapping = HEADER_MAPPING
+    #header_mapping = HEADER_MAPPING
     
 class BulkImportData(LoginRequiredMixin,ParameterMixin, View):
     def get(self, request, *args, **kwargs):
         R = request.GET
 
         if (R.get('action') == 'form'):
+
             #removes the temp file created in the last import
             self.remove_temp_file(request)
-            #creating instance of instructions
             inst = utils.Instructions(tablename='TYPEASSIST')
             '''getting the instructions from the instance and here json.dumps 
             is used to convert the python dictionary to json.'''
             instructions = json.dumps(inst.get_insructions())
-            #(cxt) is a dictionary that holds data that will be passed to the template for rendering
-            #importform is the form that will be rendered in the template with initial table value as TYPEASSIST
             cxt = {'importform': self.form(initial={'table': "TYPEASSIST"}), 'instructions':instructions}
             return render(request, self.template, cxt)
         
         if R.get('action') == 'getInstructions':
+            print("Here I am ")
             inst = utils.Instructions(tablename=R.get('tablename'))
+            print("Inst",inst)
             instructions = inst.get_insructions()
+            print("Instructions:",instructions)
             return rp.JsonResponse({'instructions':instructions}, status=200)
 
         if (request.GET.get('action') == 'downloadTemplate') and request.GET.get('template'):
-            import pandas as pd
-            from io import BytesIO
-            columns = self.header_mapping.get(R['template'])
-            df = pd.DataFrame(columns=columns)
-            # Write DataFrame to an in-memory BytesIO object
-            buffer = BytesIO()
-            df.to_excel(buffer, index=False, engine='openpyxl')
-            buffer.seek(0)
+            buffer = utils.excel_file_creation(R)
             return rp.FileResponse(
                 buffer, as_attachment=True, filename=f'{R["template"]}.xlsx'
             )
-
+    
     def post(self, request, *args, **kwargs):
         R = request.POST
         form = self.form(R, request.FILES)
-        if not form.is_valid() and R['action'] != 'confirmImport':
-            return rp.JsonResponse({'errors': form.errors}, status=404)
-        res, dataset = self.get_resource_and_dataset(request, form)
-        if R.get('action') == 'confirmImport':
-            results = res.import_data(dataset = dataset, dry_run = False, raise_errors = False)
-            return rp.JsonResponse({'totalrows':results.total_rows}, status = 200)
+        table_name = R['table']
+        if table_name == 'BULKIMPORTIMAGE':
+            if R.get('action','') != 'confirmImport':
+                google_drive_link = R['google_drive_link']
+                response = requests.head(google_drive_link,allow_redirects=True)
+                if response.status_code == 200:
+                    status,image_data = self.upload_bulk_image_format(R)
+                    if not status:
+                        cxt = {'image_data': image_data,'status':status,'image_flag':True}
+                        return render(request,'onboarding/imported_data.html',cxt)
+                    cxt = {'image_data':image_data, 'status':status,'image_flag':True}
+                    return render(request,'onboarding/imported_data.html',cxt)
+                else:
+                    return rp.JsonResponse({'error':'Google Drive Link is not Accessible'})
+            else:
+                correct_image_data = R['correct_image_data']
+                correct_image_data = json.loads(correct_image_data.replace("'",'"'))
+                save_correct_image(correct_image_data)
+                return rp.JsonResponse({'totalrows':len(correct_image_data)},status=200)
         else:
-            try:
-                results = res.import_data(
-                    dataset=dataset, dry_run=True, raise_errors=False, use_transactions=True)
-                return render(request, 'onboarding/imported_data.html', {'result':results})
-            except Exception as e:
-                logger.critical("error", exc_info=True)
-                return rp.JsonResponse({"error": "something went wrong!"}, status=500)
+            if not form.is_valid() and R['action'] != 'confirmImport':
+                return rp.JsonResponse({'errors': form.errors}, status=404)
+            
+            res, dataset = obutils.get_resource_and_dataset(request, form,self.mode_resource_map)
+            if R.get('action') == 'confirmImport':
+                results = res.import_data(dataset = dataset, dry_run = False, raise_errors = False)
+                return rp.JsonResponse({'totalrows':results.total_rows}, status = 200)
+            else:
+                try:
+                    results = res.import_data(
+                        dataset=dataset, dry_run=True, raise_errors=False, use_transactions=True)
+                    return render(request, 'onboarding/imported_data.html', {'result':results,'image_data':[],'image_flag':False})
+                except Exception as e:
+                    logger.critical("error", exc_info=True)
+                    return rp.JsonResponse({"error": "something went wrong!"}, status=500)
     
+    def upload_bulk_image_format(self,R):
+        google_drive_link = R['google_drive_link']
+        file_id = extract_file_id(google_drive_link)
+        images_bulk_data = get_file_metadata(file_id)
+        is_coorect, correct_image_data, incorrect_image_data = is_bulk_image_data_correct(images_bulk_data['files'])
+        if not is_coorect:
+            return False,incorrect_image_data
+        print("Uploading")
+        return True,correct_image_data
+        
+
     def get_resource_and_dataset(self, request, form):
         table = form.cleaned_data.get('table')
         if request.POST.get('action') == 'confirmImport':
@@ -724,6 +686,7 @@ class Client(LoginRequiredMixin, View):
             return rp.JsonResponse(resp, status=200)
         
         if R.get('action') == 'saveUserLimits' and R.get('pk') !=None:
+            print("user Limits")
             data = QueryDict(request.POST['formData'])
             resp = P['model'].objects.handle_user_limits_post(data)
             return rp.JsonResponse(resp, status=200)

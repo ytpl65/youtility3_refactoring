@@ -25,7 +25,7 @@ class QuestionForm(forms.ModelForm):
         attrs={'step': "0.01"}), required = False, label='Alert Below')
     alertabove = forms.CharField(widget = forms.NumberInput(
         attrs={'step': "0.01"}), required = False, label='Alert Above')
-    options = forms.CharField(max_length=100, required=False, label='Options', widget=forms.TextInput(attrs={'placeholder': 'Enter options separated by comma (,)'}))
+    options = forms.CharField(max_length=2000, required=False, label='Options', widget=forms.TextInput(attrs={'placeholder': 'Enter options separated by comma (,)'}))
 
     class Meta:
         model = am.Question
@@ -77,7 +77,7 @@ class QuestionForm(forms.ModelForm):
             cleaned_data['min'] = cleaned_data['max'] = None
             cleaned_data['alertbelow'] = cleaned_data['alertabove'] = None
             cleaned_data['alerton'] = cleaned_data['options'] = None
-        if data.get('answertype') in  ['CHECKBOX', 'DROPDOWN']:
+        if data.get('answertype') in  ['CHECKBOX', 'DROPDOWN', 'MULTISELECT']:
             cleaned_data['min'] = cleaned_data['max'] = None
             cleaned_data['alertbelow'] = cleaned_data['alertabove'] = None
         if data.get('answertype') in ['NUMERIC', 'RATING']:
@@ -163,7 +163,7 @@ class QsetBelongingForm(forms.ModelForm):
         attrs={'step': "0.01"}), required = False, label='Alert Below')
     alertabove = forms.CharField(widget = forms.NumberInput(
         attrs={'step': "0.01"}), required = False, label='Alert Above')
-    options = forms.CharField(max_length=100, required=False, label='Options', widget=forms.TextInput(attrs= {'placeholder':'Enter options separated by comma ","'}))
+    options = forms.CharField(max_length=2000, required=False, label='Options', widget=forms.TextInput(attrs= {'placeholder':'Enter options separated by comma ","'}))
 
 
     class Meta:
@@ -794,8 +794,8 @@ class AssetExtrasForm(forms.Form):
         self.request = kwargs.pop('request')
         S = self.request.session
         super().__init__(*args, **kwargs)
-        self.fields['service'].choices = om.TypeAssist.objects.filter(client_id = S['client_id'], tacode__in = ['SERVICE_TYPE','ASSETSERVICE', 'ASSET_SERVICE' 'SERVICETYPE']).values_list('id', 'tacode')
-        self.fields['meter'].choices = om.TypeAssist.objects.filter(client_id = S['client_id'], tacode__in = ['ASSETMETER', 'ASSET_METER']).values_list('id', 'tacode')  
+        self.fields['service'].choices = om.TypeAssist.objects.select_related('tatype').filter(client_id = S['client_id'], tatype__tacode__in = ['SERVICE_TYPE','ASSETSERVICE', 'ASSET_SERVICE' 'SERVICETYPE']).values_list('id', 'tacode')
+        self.fields['meter'].choices = om.TypeAssist.objects.select_related('tatype').filter(client_id = S['client_id'], tatype__tacode__in = ['ASSETMETER', 'ASSET_METER']).values_list('id', 'tacode')  
         utils.initailize_form_fields(self)
     
     def clean(self):

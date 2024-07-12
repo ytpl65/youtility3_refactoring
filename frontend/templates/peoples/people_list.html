@@ -40,13 +40,13 @@ People
 				{data: 'department__taname', title: 'Department', visible:false},
 				{data: 'peopletype__taname', title: 'Employee Type', visible:false},
 				{data: 'bu__buname', title: 'Site', },
-				{data: 'isadmin', title: 'Admin', visible:false, className:'noVis'},
+				{data: 'isadmin', title: 'Admin', visible:false},
 				{data: 'enable', title: 'Enable'},
 				{data: 'email', title: 'Email'},
 				{data: 'mobno', title: 'Phone #'},
 				{data:null,title:'Qr Code',defaultContent:'print',render:function(data,type,row,meta){
 					let downloadUrl = `{{ url('peoples:people') }}?action=qrdownload&code=${encodeURIComponent(row['peoplecode'])}&name=${row['peoplename']}`
-                    return `<a href="${downloadUrl}" class="qr-download-link">Qr Download</a>`
+                    return `<a href="${downloadUrl}" class="qr-download-link">QR Download</a>`
 				}
 				}	
 			],

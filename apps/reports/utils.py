@@ -16,7 +16,7 @@ from .models import ReportHistory
 import logging, json
 from decimal import Decimal
 log = logging.getLogger('__main__')
-
+import os
 
 
 
@@ -46,10 +46,12 @@ class BaseReportsExport(WeasyTemplateResponseMixin):
         self.returnfile = returnfile
         
     
-    
-    
     def get_pdf_output(self):
         try:
+            print("Form Data: ", self.formdata)
+            is_submit_button_flow = self.formdata.get('submit_button_flow', False)
+            workpermit_file_name  = self.formdata.get('filename','Work Permit')
+            print("Is Submit Button Flow: ", is_submit_button_flow)
             log.info(f"pdf is executing {settings.HOST}")
             html_string = render_to_string(self.design_file, context=self.context)
             html = HTML(string=html_string, base_url=settings.HOST)
@@ -57,14 +59,29 @@ class BaseReportsExport(WeasyTemplateResponseMixin):
             css = CSS(filename=css_path)
             font_config = FontConfiguration()
             pdf_output = html.write_pdf(stylesheets=[css], font_config=font_config, presentational_hints=True)
-            if self.returnfile: return pdf_output
-            response = HttpResponse(
-                pdf_output, content_type='application/pdf'
-            )
-            response['Content-Disposition'] = f'attachment; filename="{self.filename}.pdf"'
-            return response
+            workpermit_path = self.write_temporary_pdf(pdf_output,workpermit_file_name)
+            if is_submit_button_flow == 'false':    
+                print("Hello Creating throught this")
+                if self.returnfile: return pdf_output
+                response = HttpResponse(
+                    pdf_output, content_type='application/pdf'
+                )
+                response['Content-Disposition'] = f'attachment; filename="{self.filename}.pdf"'
+                return response
+            else:
+                print("Creating through this")
+                return workpermit_path
         except Exception as e:
             log.error("Error generating PDF", exc_info=True)
+
+    def write_temporary_pdf(self, pdf_output,workpermit_file_name):
+        file_path = f'/home/redmine/tmp_workpermit_report/{workpermit_file_name}_{self.permit_no}.pdf'
+        os.makedirs(os.path.dirname(file_path), exist_ok=True)
+
+        with open(file_path, 'wb') as f:
+            f.write(pdf_output)
+        
+        return file_path
     
     
     def excel_layout(self, worksheet, workbook, df, writer, output):

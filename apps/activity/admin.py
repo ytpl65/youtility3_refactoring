@@ -9,6 +9,7 @@ from apps.core import utils
 from apps.service.validators import clean_code, clean_string, clean_point_field
 from import_export.results import RowResult
 import re
+from math import isnan
 from django.core.exceptions import ValidationError
 from django.apps import apps
 from apps.core.widgets import BVForeignKeyWidget
@@ -83,7 +84,7 @@ class QuestionResource(resources.ModelResource):
 
 
     def check_answertype_fields(self,row):
-        Authorized_AnswerTypes = ["DATE","DROPDOWN","EMAILID","MULTILINE","NUMERIC","SIGNATURE","SINGLELINE","TIME","RATING","PEOPLELIST","SITELIST","METERREADING"]
+        Authorized_AnswerTypes = ["DATE","CHECKBOX","MULTISELECT","DROPDOWN","EMAILID","MULTILINE","NUMERIC","SIGNATURE","SINGLELINE","TIME","RATING","PEOPLELIST","SITELIST","METERREADING"]
         Answer_type_val = row.get('Answer Type*')
         if Answer_type_val not in Authorized_AnswerTypes:
             raise ValidationError({Answer_type_val:f"{Answer_type_val} is a not a valid Answertype.Please select a valid AnswerType."})
@@ -187,7 +188,7 @@ class QuestionSetResource(resources.ModelResource):
         widget = wg.ForeignKeyWidget(am.QuestionSet, 'qsetname'))
     
     ID               = fields.Field(attribute='id', column_name='ID')
-    SEQNO            = fields.Field(attribute='seqno', column_name="Seq No")
+    SEQNO            = fields.Field(attribute='seqno', column_name="Seq No*",default=-1)
     QSETNAME         = fields.Field(attribute='qsetname', column_name='Question Set Name*')
     Type             = fields.Field(attribute='type', column_name='QuestionSet Type*')
     ASSETINCLUDES    = fields.Field(attribute='assetincludes', column_name='Asset Includes', default=[])
@@ -227,7 +228,7 @@ class QuestionSetResource(resources.ModelResource):
             raise ValidationError({questionset_type:f"{questionset_type} is not a valid Questionset Type. Please select a valid QuestionSet."})
 
     def check_required_fields(self, row):
-        required_fields = ['QuestionSet Type*', 'Question Set Name*']
+        required_fields = ['QuestionSet Type*', 'Question Set Name*','Seq No*']
         for field in required_fields:
             if not row.get(field):
                 raise ValidationError({field: f"{field} is a required field"})
@@ -354,7 +355,14 @@ class QuestionSetBelongingResource(resources.ModelResource):
         self.validate_options_values(row)
         self.set_alert_on_value(row)
         self.check_unique_record(row)
+        self.check_AVPT_fields(row)
         super().before_import_row(row, **kwargs)
+
+    def check_AVPT_fields(self, row):
+        valid_avpt = ['BACKCAMPIC','FRONTCAMPIC','AUDIO','VIDEO','NONE']
+        avpt_type = row.get('AVPT Type')
+        if avpt_type in valid_avpt:
+            raise ValidationError({avpt_type:f"{avpt_type} is not a valid AVPT Type. Please select a valid AVPT Type from {valid_avpt}"})
 
     def check_required_fields(self, row):
         required_fields = ['Answer Type*', 'Question Name*', 'Question Set*', 'Client*', 'Site*']
@@ -520,16 +528,16 @@ class AssetResource(resources.ModelResource):
     class Meta:
         model = am.Asset
         skip_unchanged = True
-        import_id_fields = ('ID', 'Code', 'Name', 'Client')
+        import_id_fields = ['ID']
         report_skipped = True
-        fields = ('ID', 'Code', 'Name',  'GPS', 'Identifier' 'is_critical',
+        fields = ['ID', 'Code', 'Name',  'GPS', 'Identifier' 'is_critical',
                   'RunningStatus', 'Capacity', 'BelongsTo', 'Type', 'Client', 'BV',
                   'Category', 'SubCategory', 'Brand', 'Unit', 'ServiceProvider',
                   'ENABLE', 'is_critical', 'is_meter', 'is_nonengg_asset', 'supplier',
                   'meter', 'model', 'invoice_no', 'invoice_date','service','sfdate',
                   'stdate', 'yom','msn', 'bill_val', 'bill_date', 'purchase_date',
                   'inst_date', 'po_number', 'far_asset_id'
-                  )
+        ]
     
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -636,20 +644,32 @@ class AssetResource(resources.ModelResource):
             raise ValidationError(f"Record with these values already exist {row.values()}")
         
         if row.get('Service'):
-            obj = om.TypeAssist.objects.filter(
-                tacode=row['Service'], client__bucode=row['Client*']).first()
-            if not obj:
-                raise ValidationError(f"Service {row['Service']} does not exist")
-            else:
+            if row.get('Service') == 'NONE':
+                obj = utils.get_or_create_none_typeassist()
                 row['Service'] = obj.id
+            
+            if isnan(row.get('Service')):
+                row['Service'] = ""
+            else:
+                obj = om.TypeAssist.objects.select_related('tatype').filter(
+                    tatype__tacode__in = ['SERVICE_TYPE','ASSETSERVICE', 'ASSET_SERVICE' 'SERVICETYPE'],
+                    tacode=row['Service'], client__bucode=row['Client*']).first()
+                row['Service'] = obj.id
+                if not obj:
+                    raise ValidationError(f"Service {row['Service']} does not exist")
         
         if row.get('Meter'):
-            obj = om.TypeAssist.objects.filter(
-                tacode=row['Meter'], client__bucode=row['Client*']).first()
-            if not obj:
-                raise ValidationError(f"Meter {row['Meter']} does not exist")
-            else:
+            if row.get('Meter') == 'NONE':
+                obj = utils.get_or_create_none_typeassist()
                 row['Meter'] = obj.id
+            if isnan(row.get('Meter')):
+                row['Meter'] = ""
+            else:
+                obj = om.TypeAssist.objects.select_related('tatype').filter(
+                    tatype__tacode=row['ASSETMETER', 'ASSET_METER'], client__bucode=row['Client*']).first()
+                row['Meter'] = obj.id
+                if not obj:
+                    raise ValidationError(f"Meter {row['Meter']} does not exist")
             
 
 

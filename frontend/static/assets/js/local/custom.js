@@ -766,6 +766,8 @@ function fire_ajax_fileform_post(params, payload) {
     contentType: false,
   }).fail((xhr, status, error) => {
     console.log("xhr", xhr);
+    console.log('payload', payload)
+    console.log('params', params)
     if (
       typeof xhr.responseJSON.errors === "object" ||
       typeof xhr.responseJSON.errors === "string"
@@ -773,6 +775,7 @@ function fire_ajax_fileform_post(params, payload) {
       if (params.modal === true) {
         display_modelform_errors(xhr.responseJSON.errors);
       } else {
+        console.log("not modal")
         display_form_errors(xhr.responseJSON.errors);
       }
     }
@@ -1755,7 +1758,8 @@ function getCurrentEditingRow(editor, table) {
 function hideAndShowFields(selected, editor) {
   if (typeof selected !== "undefined") {
     if (
-      selected === "DROPDOWN" ||
+      selected === "DROPDOWN" || 
+      selected === "MULTISELECT" || 
       (selected === "CHECKBOX" && typeof selected !== "undefined")
     ) {
       editor

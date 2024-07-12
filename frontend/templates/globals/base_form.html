@@ -329,12 +329,8 @@
 {% endcall %}
 {% endblock popup_alerts %}
 
-
-
 {% block base_script %}
-<script
-    src="https://maps.googleapis.com/maps/api/js?key=AIzaSyC3PUZCB7u2PiV8whHeAshweOPIK_d690o&libraries=places&v=weekly"
-    defer></script>
+<script type="text/javascript" src="https://maps.googleapis.com/maps/api/js?key=AIzaSyC3PUZCB7u2PiV8whHeAshweOPIK_d690o&libraries=places&loading=async"></script>
 {% endblock base_script %}
 <!-------- Begin For Page Level ------->
 {%- block extra_scripts -%}

@@ -80,25 +80,35 @@ Import Data
             <input type="hidden" name="ctzoffset" id="id_ctzoffset" value=-1>
 
             <div class="row mb-3">
-                <div class="col-md-3 mb-3">
+                
+                <div class="col-md-3 mb-3 mainlabel">
                     {{ importform.table.label_tag() }}
                 </div>
-                <div class="col-md-9 mb-3">
+                <div class="col-md-9 mb-3 input_type">
                     {{ importform.table }}
                 </div>
-                <div class="col-md-3 mb-3">
+                <div class="col-md-3 mb-3 label">
                     <label for="">Download Template:</label>
                 </div> 
-                <div class="col-md-9 mb-3">
+                <div class="col-md-9 mb-3 download-template">
                     <button type="button"  class="btn btn-sm btn-secondary" id="btn_download">download</button>
                 </div>
-                <div class="col-md-3 mb-3">
+                <div class="col-md-3 mb-3 label">
                     {{ importform.importfile.label_tag() }}
                 </div>
-                <div class="col-md-9 mb-3 fv-row">
+                <div class="col-md-9 mb-3 fv-row file_uplod">
                     {{ importform.importfile }}
                     <div class="text-muted">Max file size is 700kb</div>
                 </div>
+
+                <!-- Bulk Import html -->
+                <div class="col-md-3 mb-3 import-image-label d-none">
+                    <label for="google_drive_link">Upload Google Drive Link:</label>
+                </div>
+               <div class="col-md-9 mb-3 f import-text-input d-none">
+                    <input type="text" name="google_drive_link" id="google_drive_link" class="form-control" placeholder="Enter Google Drive Link">
+                </div>
+
             </div>
             <button type="button" class="btn btn-sm btn-primary2" id="btn_importdata">Import Data</button>
         </form>
@@ -141,16 +151,13 @@ Import Data
             if(instructions.hasOwnProperty(key)){
                 if(typeof instructions[key] === "string"){
                     let value = instructions[key]
-                    //console.log('value',value)
                     value = value.replace("$", `<div class="text-primary2 bg-light">`)
                     value = value.replace("&", "<div>")
-                    console.log('finaly value', value)
                     $("#instructions").append(`<li class="list-group-item">${value}</li>`)
                 }
                 //appends lables of the instructions in html
                 else if(typeof instructions[key] ==="object" && instructions[key].length > 0){
                     instructions[key].forEach((str) => {
-                        console.log('string in object condition :-',str)
                         str = str.replace("$", `<div class="text-primary2 bg-light">`)
                         str = str.replace("&", "<div>")
                         $("#instructions").append(`<li class="list-group-item">${str}</li>`)
@@ -240,6 +247,16 @@ Import Data
     $(document).ready(function () {
         //set ctzoffset
         $("#id_ctzoffset").val(-new Date().getTimezoneOffset())
+        $('#id_table').on('change', function() {
+            let type_of_data = $('#id_table').val();
+            if (type_of_data === 'BULKIMPORTIMAGE') {
+                $('.download-template, .file_uplod, .label').hide();
+                $('.import-image-label, .import-text-input').removeClass('d-none');
+            } else {
+                $('.download-template, .file_uplod, .label').show();
+                $('.import-image-label, .import-text-input').addClass('d-none');
+            }
+            });
 
         /*Clicking the "Download Template" button triggers an 
         AJAX request to download a template file for the selected table.*/
@@ -291,6 +308,7 @@ Import Data
                 }
             });
         });
+
 
         /////////////////// form validations ///////////////////
         FormValidation.formValidation(
