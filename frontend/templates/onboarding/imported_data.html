@@ -6,62 +6,8 @@
 {% block pagebreadcumb %}
 <li class="breadcrumb-item pe-3"><a href="javascript:void(0)" class="pe-3">Import Data</a></li>
 {% endblock pagebreadcumb %}
-
 {% block table %}
-    {% if image_flag %}
-        {% if status is defined and not status %}
-            <h2 class="invalid_rows">Some rows failed to validate</h2>
-            <p>Please correct these errors in your data where possible, then reuploaded</p>
-            <table id="import_table">
-                <thead>
-                    <tr>
-                        <th>Image Name</th>
-                        <th>Error</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for row in image_data %}
-                        <tr>
-                            <td>{{ row['name'] }}</td>
-                            <td>
-                                <ol>
-                                    {% if 'name_error' in row %}
-                                        <li>{{ row['name_error'] }}</li>
-                                    {% endif %}
-                                    {% if 'format_error' in row %}
-                                        <li>{{ row['format_error'] }}</li>
-                                    {% endif %}
-                                    {% if 'size_error' in row %}
-                                        <li>{{ row['size_error'] }}</li>
-                                    {% endif %}
-                                </ol>
-                            </td>
-                        </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        {% elif status is defined and status %}
-            <h2>The following data is going to be imported upon clicking on confirm Import Button</h2>
-            <table id="import_table">
-                <thead>
-                    <tr>
-                        <th>Image Name</th>
-                        <th>Image Size(KB)</th>
-                        <th>Image Format</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for row in image_data %}
-                        <tr>
-                            <td>{{ row['name'] }}</td>
-                            <td>{{ row['size'] }}</td>
-                            <td>{{ row['mimeType'] }}</td>
-                        </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        {% endif %}
-    {% else %}
+    {% if result %}
         {% if result.has_errors() %}
             {% block errors %}
                 <h2>Errors</h2>
@@ -74,6 +20,7 @@
                             </div>
                         </li>
                         {% endfor %}
+                        {% for line, errors in result.row_errors() %}
                     {% for error in errors %}
                         <li>
                             Line number: {{ line }} - {{ error.error }}
@@ -86,6 +33,7 @@
                                 {{ error.traceback|linebreaks }}
                             </div>
                         </li>
+                    {% endfor %}
                     {% endfor %}
                 </ul>
             {% endblock %}
@@ -111,7 +59,7 @@
                                 <td>{{ row.number }}</td>
                                 <td class="errors">
                                     <span class="validation-error-count">
-                                        {{ row.error.count }}
+                                        {{ row.error_count }}
                                     </span>
                                     <div class="validation-error-container">
                                         <ul class="validation-error-list"> 
@@ -192,7 +140,6 @@ var table= null
 function ConfirmImport(){
     fd = new FormData()
     fd.append('action', 'confirmImport')
-    fd.append('correct_image_data', "{{ image_data }} ");
     fd.append('csrfmiddlewaretoken', '{{ csrf_token }}');
     fd.append('table', localStorage.getItem('table'))
     $.ajax({

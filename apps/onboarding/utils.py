@@ -246,113 +246,113 @@ def create_default_admin_for_client(client):
 # Bulk Import Image
 # api_key = 'AIzaSyCeionNj4VHSf5RFzvu2VYNYB7Zh1H7MX4'
 
-def extract_file_id(drive_link):
-    """Extract the file ID from the Google Drive link."""
-    match = re.search(r'/folders/([a-zA-Z0-9-_]+)',drive_link)
-    print(match)
-    if match:
-        return match.group(1)
-    else:
-        raise ValueError("Invalid Google Drive file link.")
+# def extract_file_id(drive_link):
+#     """Extract the file ID from the Google Drive link."""
+#     match = re.search(r'/folders/([a-zA-Z0-9-_]+)',drive_link)
+#     print(match)
+#     if match:
+#         return match.group(1)
+#     else:
+#         raise ValueError("Invalid Google Drive file link.")
 
-def get_file_metadata(file_id):
-    print(file_id)
-    """Get metadata for a specific Google Drive file."""
-    url = f"https://www.googleapis.com/drive/v3/files?q='{file_id}'+in+parents&key={api_key}&fields=files(id,name,mimeType,size)"
-    response = requests.get(url)
-    if response.status_code == 200:
-        return response.json()
-    else:
-        raise Exception(f"Failed to get file metadata: {response.content}")
+# def get_file_metadata(file_id):
+#     print(file_id)
+#     """Get metadata for a specific Google Drive file."""
+#     url = f"https://www.googleapis.com/drive/v3/files?q='{file_id}'+in+parents&key={api_key}&fields=files(id,name,mimeType,size)"
+#     response = requests.get(url)
+#     if response.status_code == 200:
+#         return response.json()
+#     else:
+#         raise Exception(f"Failed to get file metadata: {response.content}")
     
-def check_if_name_is_correct(image_name):
-    image_name = image_name.split('.')[0]
-    regex = re.compile('^[a-zA-Z0-9_#\-\(\)]*$')
-    val = re.match(regex,image_name)
-    if val:
-        return [True," "] 
-    return [False, "Name format is not Correct"]
+# def check_if_name_is_correct(image_name):
+#     image_name = image_name.split('.')[0]
+#     regex = re.compile('^[a-zA-Z0-9_#\-\(\)]*$')
+#     val = re.match(regex,image_name)
+#     if val:
+#         return [True," "] 
+#     return [False, "Name format is not Correct"]
 
-def check_if_size_of_image_is_correct(image_size):
-    if image_size >= 300:
-        return [False," Image size is greater than 300KB"] 
-    return [True, " "]
+# def check_if_size_of_image_is_correct(image_size):
+#     if image_size >= 300:
+#         return [False," Image size is greater than 300KB"] 
+#     return [True, " "]
 
-def check_if_image_format_is_correct(image_format):
-    if image_format not in ['image/png','image/jpeg','image/jpg']:
-        return [False,"Image format is not correct"]
-    return [True," "]
+# def check_if_image_format_is_correct(image_format):
+#     if image_format not in ['image/png','image/jpeg','image/jpg']:
+#         return [False,"Image format is not correct"]
+#     return [True," "]
 
-def convert_image_size_to_kb(image_size):
-    return int(image_size)//1024
+# def convert_image_size_to_kb(image_size):
+#     return int(image_size)//1024
 
-def is_bulk_image_data_correct(data):
-    incorrect_image_data = []
-    correct_image_data = []
-    for image_data in data:
-        image_name = image_data.get('name','')
-        image_size = convert_image_size_to_kb(image_data.get('size',0))
-        image_data['size'] = image_size
-        image_format = image_data.get('mimeType','')
-        is_image_name_correct = check_if_name_is_correct(image_name=image_name)
-        is_image_size_correct = check_if_size_of_image_is_correct(image_size=image_size)
-        is_image_format_correct = check_if_image_format_is_correct(image_format=image_format)
+# def is_bulk_image_data_correct(data):
+#     incorrect_image_data = []
+#     correct_image_data = []
+#     for image_data in data:
+#         image_name = image_data.get('name','')
+#         image_size = convert_image_size_to_kb(image_data.get('size',0))
+#         image_data['size'] = image_size
+#         image_format = image_data.get('mimeType','')
+#         is_image_name_correct = check_if_name_is_correct(image_name=image_name)
+#         is_image_size_correct = check_if_size_of_image_is_correct(image_size=image_size)
+#         is_image_format_correct = check_if_image_format_is_correct(image_format=image_format)
 
-        is_data_correct = True
-        if not is_image_name_correct[0]:
-            image_data['name_error'] = is_image_name_correct[1]
-            is_data_correct = False
-        if not is_image_format_correct[0]:
-            image_data['format_error'] = is_image_format_correct[1]
-            is_data_correct = False
-        if not is_image_size_correct[0]:
-            image_data['size_error'] = is_image_size_correct[1]
-            is_data_correct = False
-        if is_data_correct:
-            correct_image_data.append(image_data)
-        else:
-            incorrect_image_data.append(image_data)    
-    if len(incorrect_image_data) > 0:
-        return False, correct_image_data, incorrect_image_data
-    return True, correct_image_data, incorrect_image_data
-
-
-def save_correct_image(correct_image_data):
-    for image_data in correct_image_data:
-        try:        
-            image_id = image_data['id']
-            image_name = image_data['name']
-            file_path = download_image(image_id,image_name)
-            db_image_path = "/".join(file_path.split('/')[4:])
-            save_image_in_db(db_image_path, image_name)
-        except Exception as e:
-            print(f"Failed to save Image {image_name}: {e}")
+#         is_data_correct = True
+#         if not is_image_name_correct[0]:
+#             image_data['name_error'] = is_image_name_correct[1]
+#             is_data_correct = False
+#         if not is_image_format_correct[0]:
+#             image_data['format_error'] = is_image_format_correct[1]
+#             is_data_correct = False
+#         if not is_image_size_correct[0]:
+#             image_data['size_error'] = is_image_size_correct[1]
+#             is_data_correct = False
+#         if is_data_correct:
+#             correct_image_data.append(image_data)
+#         else:
+#             incorrect_image_data.append(image_data)    
+#     if len(incorrect_image_data) > 0:
+#         return False, correct_image_data, incorrect_image_data
+#     return True, correct_image_data, incorrect_image_data
 
 
-def save_image_in_db(image_path, image_name):
-    image_name = image_name.split('.')[0]
-    people = People.objects.get(peoplecode=image_name)
-    people.peopleimg = image_path
-    people.save()
+# def save_correct_image(correct_image_data):
+#     for image_data in correct_image_data:
+#         try:        
+#             image_id = image_data['id']
+#             image_name = image_data['name']
+#             file_path = download_image(image_id,image_name)
+#             db_image_path = "/".join(file_path.split('/')[4:])
+#             save_image_in_db(db_image_path, image_name)
+#         except Exception as e:
+#             print(f"Failed to save Image {image_name}: {e}")
 
 
-def get_upload_file_path(image_name):
-    base_path = '/var/tmp/youtility4_media/master/sukhi_4/people'
-    return os.path.join(base_path,image_name)
+# def save_image_in_db(image_path, image_name):
+#     image_name = image_name.split('.')[0]
+#     people = People.objects.get(peoplecode=image_name)
+#     people.peopleimg = image_path
+#     people.save()
+
+
+# def get_upload_file_path(image_name):
+#     base_path = '/var/tmp/youtility4_media/master/sukhi_4/people'
+#     return os.path.join(base_path,image_name)
 
 
 
-def download_image(image_id,image_name):
-    url = f"https://www.googleapis.com/drive/v3/files/{image_id}?alt=media&key={api_key}"
-    response = requests.get(url)
-    if response.status_code == 200:
-        file_path = get_upload_file_path(image_name)
-        with open(file_path, 'wb') as file:
-            file.write(response.content)
-        print(f"File Downloaded and saved to location {file_path}")
-        return file_path
-    else:
-        raise Exception("Failed to download Image")
+# def download_image(image_id,image_name):
+#     url = f"https://www.googleapis.com/drive/v3/files/{image_id}?alt=media&key={api_key}"
+#     response = requests.get(url)
+#     if response.status_code == 200:
+#         file_path = get_upload_file_path(image_name)
+#         with open(file_path, 'wb') as file:
+#             file.write(response.content)
+#         print(f"File Downloaded and saved to location {file_path}")
+#         return file_path
+#     else:
+#         raise Exception("Failed to download Image")
     
 def get_resource_and_dataset(request, form, mode_resource_map):
     table = form.cleaned_data.get("table")
