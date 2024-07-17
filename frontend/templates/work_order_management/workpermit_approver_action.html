@@ -6,6 +6,7 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
+        /*
         table {
             border-collapse: collapse;
             table-layout: auto;
@@ -51,34 +52,62 @@
         .fw-bold {
             font-weight: bold;
         }
+        */
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            border: 1px solid #dddddd;
+            text-align: left;
+            padding: 8px;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
     </style>
 </head>
 
 <body>
         
+        <table>
+        <tr>
+            <th>Permit Name</th>
+            <td>{{ permit_name }}</td>
+        </tr>
+        <tr>
+            <th>Site Name</th>
+            <td>{{ sitename }}</td>
+        </tr>
+        <tr>
+            <th>Status</th>
+            <td>{{ status }}</td>
+        </tr>
+        <tr>
+            <th>Permit Number</th>
+            <td>{{ permit_no }}</td>
+        </tr>
+        </table>
         <br>
-
-
         If the work permit details meet your requirements, please proceed with approve it with the
         <a style="margin-right:20px" class="ybtn-success"
-        href="{{ HOST }}{{ url('work_order_management:reply_workpermit') }}?action=accepted&womid={{workpermitid}}&peopleid={{ peopleid }}"
+        href="{{ HOST }}{{ url('work_order_management:reply_workpermit') }}?action=accepted&womid={{workpermitid}}&peopleid={{ peopleid }}&sitename={{ sitename }}"
         target="_blank">
         <button style="color: black; background-color:green">
             Approve, it
         </button>
-        
-    </a><br>
-        
+        </a>
+        <br>
         <hr>
-        
         Conversely, if any information doesn't meet your requirements you can reject it with
         <a class="ybtn-warn"
         href="{{ HOST }}{{ url('work_order_management:reply_workpermit') }}?action=rejected&womid={{workpermitid}}&peopleid={{ peopleid }}"
         target="_blank">
         <button style="color:black;background-color:red">Reject, it</button>
-    </a>
+        </a>
     
-    <hr>
+        <hr>
 
 </body>
 

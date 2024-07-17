@@ -176,3 +176,32 @@ class ApproverForm(forms.ModelForm):
         if cd ['sites'] not in (None, ""):
             self.cleaned_data['forallsites'] = False
         return self.cleaned_data
+    
+
+
+
+class SlaForm(forms.ModelForm):
+    required_css_class = "required"
+    seqno = forms.IntegerField(label="Seq. Number", required=False, widget=forms.TextInput(attrs={'readonly':True}))
+    approvers = forms.MultipleChoiceField(widget=s2forms.Select2MultipleWidget, label="Approvers")
+    class Meta:
+        model = Wom
+        fields = ['qset', 'seqno', 'ctzoffset', 'workpermit', 'performedby', 'parent', 'approvers', 'vendor','identifier']
+        labels={
+            'qset':'SLA',
+            'seqno':'Seq No',
+        }
+        widgets = {
+            'wptype':s2forms.Select2Widget
+            
+        }
+    
+    def __init__(self, *args, **kwargs):
+        self.request = kwargs.pop('request')
+        S = self.request.session
+        super().__init__(*args, **kwargs)
+        utils.initailize_form_fields(self)
+        self.fields['approvers'].choices = Approver.objects.get_approver_options_sla(self.request).values_list('people__peoplecode', 'people__peoplename')
+        self.fields['qset'].queryset = am.QuestionSet.objects.filter(type='SLA_TEMPLATE',client_id=S['client_id'],enable=True,parent_id=1).filter(Q(bu_id=S['bu_id']) | Q(buincludes__contains=[str(S['bu_id'])]) | Q(show_to_all_sites=True))
+        self.fields['vendor'].queryset = Vendor.objects.filter(Q(bu_id = S['bu_id']) | Q(Q(show_to_all_sites = True) & Q(client_id=S['client_id'])))
+

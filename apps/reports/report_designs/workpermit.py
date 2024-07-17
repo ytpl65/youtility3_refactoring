@@ -28,8 +28,7 @@ class GeneralWorkPermit(BaseReportsExport):
         name_of_persons_involved = [ x for x in name_of_persons_involved if len(x)!=0 ]
         name_of_supervisor = wp_answers_data['name_of_supervisor'].split(',')
         name_of_supervisor = [ x for x in name_of_supervisor if len(x)!=0 ]
-        sitename = self.formdata.get('sitename','')
-        print("Permit Authorized by in context: ",wp_answers_data['permit_authorized_by'])
+        sitename = self.formdata.get('bu__buname','')
         self.context = {
             'permit_authorized_by':wp_answers_data['permit_authorized_by'],
             'permit_initiated_by':wp_answers_data['permit_initiated_by'],

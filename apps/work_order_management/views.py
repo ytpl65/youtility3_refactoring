@@ -2,7 +2,7 @@ from django.shortcuts import render
 from django.db import IntegrityError, transaction
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.views.generic.base import View
-from .forms import VendorForm, WorkOrderForm, WorkPermitForm, ApproverForm
+from .forms import VendorForm, WorkOrderForm, WorkPermitForm, ApproverForm,SlaForm
 from .models import Vendor, Wom, WomDetails, Approver
 from apps.peoples.models import People
 from apps.activity.models import QuestionSetBelonging, QuestionSet
@@ -373,7 +373,8 @@ class WorkPermit(LoginRequiredMixin, View):
             if is_all_approved := check_all_approved(wom.uuid, request.user.peoplecode):
                 Wom.objects.filter(id=R['womid']).update(workpermit=Wom.WorkPermitStatus.APPROVED.value)
                 if is_all_approved:
-                    send_email_notification_for_vendor_and_security.delay(R['womid'],workpermit_attachment)
+                    workpermit_status = 'APPROVED'
+                    send_email_notification_for_vendor_and_security.delay(R['womid'],workpermit_attachment,sitename,workpermit_status)
             return rp.JsonResponse(data={'status': 'Approved'}, status=200)
         
         if action == 'reject_wp' and R.get('womid'):
@@ -383,10 +384,11 @@ class WorkPermit(LoginRequiredMixin, View):
             return rp.JsonResponse(data={'status': 'Approved'}, status=200)
 
         if action == 'form':
+            print("Here I am in form view")
             import uuid
             cxt = {'wpform': P['form'](request=request), 'msg': "create workpermit requested", 'ownerid': uuid.uuid4(),'valid_workpermit':self.params['valid_workpermit']}
             return render(request, P['template_form'], cxt)
-
+        
         if action == 'approver_list':
             objs = Wom.objects.get_approver_list(R['womid'])
             return rp.JsonResponse({'data': objs}, status=200)
@@ -419,8 +421,6 @@ class WorkPermit(LoginRequiredMixin, View):
             # get work permit questionnaire
             obj = utils.get_model_obj(int(R['id']), request, P)
             wp_answers = Wom.objects.get_wp_answers(obj.id)
-            log.info(f"work permit answers are as follows: {wp_answers[1]}")
-            log.info(f"work permit status is {P['form'](request=request, instance=obj)}")
             cxt = {'wpform': P['form'](request=request, instance=obj), 'ownerid': obj.uuid, 'wp_details': wp_answers[1],'valid_workpermit':self.params['valid_workpermit']}
             if obj.workpermit == Wom.WorkPermitStatus.APPROVED and obj.workstatus != Wom.Workstatus.COMPLETED:
                 rwp_details = Wom.objects.get_return_wp_details(request)
@@ -453,6 +453,7 @@ class WorkPermit(LoginRequiredMixin, View):
                 create = False
             else:
                 data = QueryDict(R['formData']).copy()
+                print("Data: ",data)
                 form = self.params['form'](data, request = request)
                 create=True
             if form.is_valid():
@@ -476,11 +477,12 @@ class WorkPermit(LoginRequiredMixin, View):
         self.create_workpermit_details(request.POST, workpermit, request, formdata)
         print("Session",S)
         wom = Wom.objects.get(id = workpermit.id)
-        sitename = Bt.objects.model(id=wom.bu_id).buname
-        workpermit_obj = GeneralWorkPermit(filename=R['permit_name'], client_id=S['client_id'], formdata={'id':workpermit.id,'sitename':sitename,'submit_button_flow':R['submit_button_flow'],'filename':R['permit_name'],'site_name':S['sitename'],'workpermit':wom.workpermit})
+        sitename = S.get('sitename','demo')
+        workpermit_obj = GeneralWorkPermit(filename=R['permit_name'], client_id=S['client_id'], formdata={'id':workpermit.id,'bu__buname':sitename,'submit_button_flow':R['submit_button_flow'],'filename':R['permit_name'],'site_name':S['sitename'],'workpermit':wom.workpermit})
         workpermit_attachment = workpermit_obj.execute()
         print("Workpermit Path: ",workpermit_attachment)
-        send_email_notification_for_wp.delay(workpermit.id, workpermit.qset_id, workpermit.approvers, S['client_id'], S['bu_id'],workpermit_attachment)
+        workpermit_status = 'PENDING'
+        send_email_notification_for_wp.delay(workpermit.id, workpermit.qset_id, workpermit.approvers, S['client_id'], S['bu_id'],workpermit_attachment,sitename,workpermit_status)
 
         return rp.JsonResponse({'pk':workpermit.id})
 
@@ -608,22 +610,24 @@ class ReplyWorkPermit(View):
         R, P = request.GET, self.P
         S = request.session
         if R.get('action') == "accepted" and R.get('womid') and R.get('peopleid'):
-            log.info("work permit accepted")
             is_submit_button_flow='true'
             permit_name = 'General Work Permit'
             wom = Wom.objects.get(id = R['womid'])
             wp = Wom.objects.filter(id = R['womid']).first()
             p = People.objects.filter(id = R['peopleid']).first()
+            log.info("R:%s",R)
             if is_all_approved := check_all_approved(wp.uuid, p.peoplecode):
                 if Wom.WorkPermitStatus.APPROVED != Wom.objects.get(id = R['womid']).workpermit:
-                    print("Already Approved")
                     Wom.objects.filter(id = R['womid']).update(workpermit = Wom.WorkPermitStatus.APPROVED.value)
                     if is_all_approved:
-                        wom = Wom.objects.get(id = R['womid'])
-                        sitename = Bt.objects.model(id=wom.bu_id).buname
-                        workpermit_obj = GeneralWorkPermit(filename=permit_name, formdata={'id':R['womid'],'sitename':sitename,'submit_button_flow':is_submit_button_flow,'filename':permit_name,'workpermit':wom.workpermit})
+                        wom_id = R['womid']
+                        wom = Wom.objects.get(id = wom_id)
+                        sitename = Bt.objects.get(id=wom.bu_id).buname
+                        log.info("Inside of the if sitename %s",sitename)
+                        workpermit_obj = GeneralWorkPermit(filename=permit_name, formdata={'id':R['womid'],'bu__buname':sitename,'submit_button_flow':is_submit_button_flow,'filename':permit_name,'workpermit':wom.workpermit})
                         workpermit_attachment = workpermit_obj.execute()
-                        send_email_notification_for_vendor_and_security.delay(R['womid'],workpermit_attachment)
+                        workpermit_status = 'APPROVED'
+                        send_email_notification_for_vendor_and_security.delay(R['womid'],workpermit_attachment,sitename,workpermit_status)
                 else:
                     return render(request, P['email_template'], context={'alreadyapproved':True})
             cxt = {'status': Wom.WorkPermitStatus.APPROVED.value, 'action_acknowledged':True, 'seqno':wp.other_data['wp_seqno']}
@@ -717,4 +721,82 @@ class ApproverView(LoginRequiredMixin, View):
             return rp.JsonResponse(data, status = 200)
         except (IntegrityError, pg_errs.UniqueViolation):
             return utils.handle_intergrity_error('Question')
+
+class SLA_View(LoginRequiredMixin, View):
+
+
+
+    params = {
+        'template_form': 'work_order_management/sla_form.html',
+        'template_list': 'work_order_management/sla_list.html',
+        'model'        : Wom,
+        'form'         : SlaForm,
+        'template_form': 'work_order_management/sla_form.html',
+        'template_list': 'work_order_management/sla_list.html',
+    }
+
+    def get(self, request, *args, **kwargs):
+        R, P = request.GET, self.params
+        action = R.get('action')
+        if R.get('template'):
+            return render(request,P['template_list'])
         
+        if action == 'list':
+            objs = self.params['model'].objects.get_slalist(request)
+            return rp.JsonResponse(data = {'data':list(objs)},safe = False)
+
+        if action == 'approver_list':
+            objs = Wom.objects.get_approver_list(R['womid'])
+            return rp.JsonResponse({'data': objs}, status=200)
+        
+        if action == 'form':
+            import uuid
+            cxt = {
+                'slaform': P['form'](request = request),
+                'msg': "create sla requested",
+                'ownerid':uuid.uuid4()
+            }
+            return render(request, P['template_form'], cxt)
+        
+        if 'id' in R:
+            obj = utils.get_model_obj(int(R['id']), request, P)
+            sla_answer = Wom.objects.get_wp_answers(obj.id)
+            wom_utils.get_overall_score(obj.id)
+            cxt = {'slaform':P['form'](request=request, instance=obj), 'ownerid':obj.uuid,'sla_details':sla_answer[1]}
+            return render(request, P['template_form'], cxt)
+        
+        if R.get('qsetid'):
+            import uuid
+            wp_details = Wom.objects.get_workpermit_details(request, R['qsetid'])
+            approver_codes = R['approvers'].split(',')
+            approvers = wom_utils.get_approvers(approver_codes)
+            form = P['form'](request=request, initial={'qset': R['qsetid'], 'approvers': R['approvers'].split(','),'vendor':R['vendor']})
+            context = {"sla_details": wp_details, 'slaform': form, 'ownerid': uuid.uuid4(),'approvers':approvers}
+            return render(request, P['template_form'], context=context)
+        
+
+
+    def post(self,request,*args,**kwargs):
+        R, P = request.POST, self.params
+
+        try:
+            if pk := R.get('pk', None):
+                data = QueryDict(R['formData']).copy()
+                wp = utils.get_model_obj(pk, request, P)
+                form = self.params['form'](
+                    data, instance = wp, request = request)
+                create = False
+            else:
+                data = QueryDict(R['formData']).copy()
+                form = self.params['form'](data, request = request)
+                create=True
+            if form.is_valid():
+                print("Here I am going after submission")
+                resp = wom_utils.handle_valid_form(form, R, request, create)
+            else:
+                cxt = {'errors': form.errors}
+                resp = utils.handle_invalid_form(request, self.params, cxt)
+        except Exception as e:
+            resp = utils.handle_Exception(request)
+        return resp
+

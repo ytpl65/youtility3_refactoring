@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="{{ static('assets/css/local/reports.css') }}?v=2" rel="stylesheet" type="text/css" />
+    <title>Service level Agreement</title>
+    <style>
+        @page {
+            size: A4 landscape;
+            margin: 1cm;
+        }
+    </style>
+    {% block inline_css %}
+    {% endblock %}
+</head>
+<body>
+    <div>
+        {% block static_content %}
+        
+        {% endblock %}
+    </div>
+</body>
+</html>

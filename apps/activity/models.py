@@ -39,7 +39,7 @@ class Question(BaseModel, TenantAwareModel):
         FRONTCAMPIC = "FRONTCAMPIC", _('Front Camera Pic')
         AUDIO       = "AUDIO",       _('Audio')
         VIDEO       = "VIDEO",       _("Video")
-
+    
     quesname   = models.CharField(_("Name"), max_length = 500)
     options    = models.TextField(_('Options'), max_length = 2000, null = True)
     min        = models.DecimalField(_("Min"), null = True, blank = True, max_digits = 18, decimal_places = 2, default = 0.00)
@@ -92,8 +92,8 @@ class QuestionSet(BaseModel, TenantAwareModel):
         ASSETAUDIT               = "ASSETAUDIT",          _('Asset Audit')
         ASSETMAINTENANCE         = "ASSETMAINTENANCE",    _('Asset Maintenance')
         WORKORDER                = "WORK_ORDER",          _('Work Order')
-        
-
+        SLA_TEMPLATE             = "SLA_TEMPLATE",        _('Service Level Agreement')
+    
     qsetname           = models.CharField(_("QuestionSet Name"), max_length = 200)
     enable             = models.BooleanField(_("Enable"), default = True)
     assetincludes      = ArrayField(models.CharField(max_length = 50, blank = True), null = True, blank = True, verbose_name= _("Asset Includes"))
@@ -222,7 +222,7 @@ class Job(BaseModel, TenantAwareModel):
         ASSETLOG         = ("ASSETLOG",	"Asset Log")
         ASSETMAINTENANCE = ("ASSETMAINTENANCE",	"Asset Maintenance")
         GEOFENCE         = ('GEOFENCE', 'Geofence')
-
+    
     class Priority(models.TextChoices):
         HIGH   = "HIGH" , _('High')
         LOW    = "LOW"  , _('Low')

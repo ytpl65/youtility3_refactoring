@@ -1,0 +1,131 @@
+{% extends "globals/base_list.html" %}
+
+<!---- BEGIN CARD TITLE ------>
+{% block card_title %}
+SLA List
+{% endblock card_title %}
+<!----- END CARD TITLE -------->
+
+{% block extra_css %}
+{% endblock extra_css %}
+
+<!------------------------------------ BEGIN PAGE BREADCUMBS ------------------------------------>
+{% block pagebreadcumb %}
+{{ super() }}
+<li class="breadcrumb-item pe-3"><a href="javascript:void(0)" class="pe-3">SLA List</a></li>
+{% endblock pagebreadcumb %}
+<!------------------------------------- END PAGE BREADCUMBS ------------------------------------->
+
+{% block table %}
+<table id="sla_list" class="display compact cell-border" style="width:100%">
+</table>
+{% endblock table %}
+
+
+{% block extra_scripts %}
+<script>
+var params = null
+    var from_pd = moment().subtract(7, 'days').format('YYYY-MM-DD');
+    var to_pd = moment().format('YYYY-MM-DD')
+    params = {from:from_pd, to:to_pd}
+
+    var table_filters = localStorage.getItem('slastats_filter') ? localStorage.getItem('slastats_filter') : localStorage.getItem('alertsFilters')
+
+    if(table_filters){
+        params = JSON.parse(table_filters)
+        localStorage.clear()
+    }
+    function reloadTable(table, filters){
+        params = filters
+        table.ajax.reload()
+    }
+
+$(document).ready(function(){
+    urlname = "{{ url('work_order_management:sla')}}"
+
+    table = $("#sla_list").DataTable({
+        ajax:{
+            url:'{{ url("work_order_management:sla") }}?action=list',
+            data:function(d){
+                d.params = JSON.stringify(params)
+            }
+        },
+        pageLenght:500,
+        ordering:false, 
+        deferRender:true,
+        lenghtMenu:[250,500,750,1000],
+        dom:`<'row' <'col-sm-6 d-flex justify-content-start'<'customfields'>f> <'col-sm-6 d-flex justify-content-end'B> >rt<'row'
+            <'col-sm-6'l> <'col-sm-6'p><'col-sm-12 d-flex justify-content-center'i>>`,
+        columns:[
+            { data:'id', visible:false, searchable:false, className:'noVis'},
+            {title:'Plandatetime', data:'cdtz'},
+            {title:'Report No', data:'other_data__wp_seqno', width:"10%"},
+            {title:'Vendor Performance Template', data:'qset__qsetname'},
+            {title:'Vendor Name', data:'vendor__name'},
+            {title:'Approval', data:'workpermit'},
+            {title:'Status', data:'workstatus'},
+            {title:'Site', data:'bu__buname'},
+            {title:'Action', data:null, defaultContent:'<a href="#" class="edit-link">Report&nbsp;<i class="bi text-danger fs-5 bi-file-earmark-pdf-fill"></i></a>'},
+            {title:'Site Code', data:'bu__bucode', visible:false},
+            {visible:false, data:"ctzoffset", className:'noVis'}
+        ],
+        columnDefs:[
+        {targets:1, render:function(data, type, row, meta){
+                    return convert_to_local(type, data, row)
+            }
+            },
+        {targets:3, render:function(data, type, row, meta){
+                return  `<a href="${urlname}?id=${row['id']}">${data}</a>`
+            }
+        },
+
+        {
+            targets:5, render:function(data, type, row, meta){
+                if(data === 'APPRPVED'){
+                    return `<span class="badge fs-9 badge-success">${data}</span>`
+                }else if (data === 'REJECTED'){
+                    return `<span class="badge fs-9 badge-danger">${data}</span>`
+                }else{
+                    return `<span class="badge fs-9 badge-warning">${data}</span>`
+                }
+            }
+        },
+        {
+            targets:6,render:function(data,type,row,meta){
+                if(data === 'ASSIGNED'){
+                    return `<span class="badge fs-9 badge-secondary">${data}</span>`
+                }
+                else if (data === 'COMPLETED'){
+                    return `<span class="badge fs-9 badge-success">${data}</span>`
+            }
+        }
+        }     
+        ],
+        buttons:[
+            "searchBuilder",
+                dataTablesPDFConfig(
+                    title = '',
+                    columns = '',    
+                    filename = ""
+                ),
+                dataTablesExcelConfig(
+                    title = '',
+                    columns = '',
+                    filename = ""
+                ),
+                dataTablesColumnVisibilityConfig(),
+            {
+                text     : `Add New &nbsp;<i class='fas fa-plus ch4'></i></a>`,
+					className: "btn btn-sm border border-primary btn-light-primary add_new_wp",
+                action:function(e, dt, node, config){
+                    location.href = '{{ url("work_order_management:sla") }}?action=form'
+                }
+            }
+        ]
+    })
+})
+
+
+
+</script>
+{% endblock extra_scripts%}

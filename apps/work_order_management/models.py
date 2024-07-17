@@ -27,7 +27,8 @@ def other_data():
         'token_expiration':5, #min
         'reply_from_vendor':"",
         'wp_seqno':0,
-        'wp_approvers':[]
+        'wp_approvers':[],
+        'section_weightage':0,
     }
     
 def wo_history_json():
@@ -58,6 +59,12 @@ class Wom(BaseModel, TenantAwareModel):
         HIGH   = ('HIGH', 'High')
         LOW    = ('LOW', 'Low')
         MEDIUM = ('MEDIUM', 'Medium')
+
+    class Identifier(models.TextChoices):
+        WO = ('WO', 'Work Order')
+        WP = ('WP', 'Work Permit')
+        SLA = ('SLA', 'Service Level Agreement')
+
     
     uuid            = models.UUIDField(unique = True, editable = True, blank = True, default = uuid.uuid4)
     description     = models.CharField(_("Job Description"), max_length = 200)
@@ -88,6 +95,7 @@ class Wom(BaseModel, TenantAwareModel):
     attachmentcount = models.IntegerField(_('Attachment Count'), default = 0)
     categories      = ArrayField(models.CharField(max_length = 50, blank = True, default=""), default = list)
     wo_history      = models.JSONField(encoder=DjangoJSONEncoder, default=wo_history_json)
+    identifier      = models.CharField(_("Identifier"), max_length=50, choices=Identifier.choices, null=True, blank=True)
     
     objects = WorkOrderManager()
     

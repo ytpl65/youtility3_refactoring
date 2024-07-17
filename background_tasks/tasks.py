@@ -435,7 +435,7 @@ def create_report_history(self, formdata, userid, buid, EI):
 
 
 @shared_task(bind=True, name="Create Workpermit email notification")
-def send_email_notification_for_wp(self, womid, qsetid, approvers, client_id, bu_id,workpermit_attachment):
+def send_email_notification_for_wp(self, womid, qsetid, approvers, client_id, bu_id,workpermit_attachment,sitename,workpermit_status):
     jsonresp = {'story': "", "traceback": ""}
     try:
         from django.apps import apps
@@ -456,7 +456,7 @@ def send_email_notification_for_wp(self, womid, qsetid, approvers, client_id, bu
                 msg.to = [p['email']]
                 msg.from_email = settings.EMAIL_HOST_USER
                 cxt = {'sections': wp_details[1], 'peopleid':p['id'],
-                    "HOST": settings.HOST, "workpermitid": womid}
+                    "HOST": settings.HOST, "workpermitid": womid,'sitename':sitename,'status':workpermit_status,'permit_no':wp_obj.other_data['wp_seqno'],'permit_name':'General Work Permit'}
                 html = render_to_string(
                     'work_order_management/workpermit_approver_action.html', context=cxt)
                 msg.body = html
@@ -476,7 +476,7 @@ def send_email_notification_for_wp(self, womid, qsetid, approvers, client_id, bu
 
 
 @shared_task(bind=True, name="Create Workpermit email notification for vendor and security")
-def send_email_notification_for_vendor_and_security(self,wom_id,workpermit_attachment):
+def send_email_notification_for_vendor_and_security(self,wom_id,workpermit_attachment,sitename,workpermit_status):
     jsonresp = {'story':"", 'traceback':""}
     try:
         from apps.work_order_management.models import Wom,WomDetails
@@ -492,7 +492,7 @@ def send_email_notification_for_vendor_and_security(self,wom_id,workpermit_attac
             msg.subject = f"General Work Permit #{wp_details[0]}"
             msg.to = [email.answer]
             msg.from_email = settings.EMAIL_HOST_USER
-            cxt = {'sections': wp_details[1],"HOST": settings.HOST, "workpermitid": wom_id}
+            cxt = {'sections': wp_details[1],"HOST": settings.HOST, "workpermitid": wom_id,'permit_name':'General Work Permit','sitename':sitename,'permit_no':wp_details[0],'status':workpermit_status}
             html = render_to_string(
                 'work_order_management/workpermit_vendor.html', context=cxt)
             msg.body = html

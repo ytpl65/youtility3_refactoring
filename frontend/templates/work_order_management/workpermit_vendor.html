@@ -6,6 +6,7 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
+        /*
         table {
             border-collapse: collapse;
             table-layout: auto;
@@ -51,29 +52,43 @@
         .fw-bold {
             font-weight: bold;
         }
+
+        */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            border: 1px solid #dddddd;
+            text-align: left;
+            padding: 8px;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
     </style>
 </head>
 
 <body>
-    <h1>Check the attachment</h1>
-        <!-- <table>
-            <tbody>
-                {% for section in sections %}
-                <tr>
-                    <td colspan="3" class="bgy fw-bold text-center">{{section['sectionID']}}. {{ section['section'] }}</td>
-                </tr>
-                {% for question in section['questions'] %}
-                <tr>
-                    <td width="5%" class="fw-bold bgy">{{ loop.index }}</td>
-                    <td class="fw-bold bgy">{{ question['question__quesname'] }}</td>
-                    <td>{{ question['answer'] }}</td>
-                </tr>
-                {% endfor %}
-                {% endfor %}
-            </tbody>
-        </table>
-        <br> -->
-
+    <table>
+        <tr>
+            <th>Permit Name</th>
+            <td>{{ permit_name }}</td>
+        </tr>
+        <tr>
+            <th>Site Name</th>
+            <td>{{ sitename }}</td>
+        </tr>
+        <tr>
+            <th>Status</th>
+            <td>{{ status }}</td>
+        </tr>
+        <tr>
+            <th>Permit Number</th>
+            <td>{{ permit_no }}</td>
+        </tr>
+    </table>
+    <br>
 </body>
 
 </html>

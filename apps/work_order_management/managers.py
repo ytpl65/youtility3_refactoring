@@ -56,6 +56,13 @@ class ApproverManager(models.Manager):
         ).filter(approverfor__contains = ['WORKPERMIT'], bu_id = S['bu_id']).values('id', 'text')
         return qset or self.none()
     
+    def get_approver_options_sla(self,request):
+        S = request.session
+        qset = self.annotate(
+            text = F('people__peoplename'),
+        ).filter(approverfor__contains = ['SLA_TEMPLATE'], bu_id = S['bu_id']).values('id', 'text')
+        return qset or self.none()
+    
     def get_approver_list_for_mobile(self, buid, clientid):
         qset = self.select_related().filter(
             Q(bu_id=buid) | Q(forallsites=True), client_id=clientid
@@ -95,8 +102,10 @@ class WorkOrderManager(models.Manager):
     def get_workpermitlist(self, request):
         R, S = request.GET, request.session
         P = json.loads(R.get('params', "{}"))
+        print("P: ",P)
         qobjs = self.select_related('cuser', 'bu', 'qset').filter(
             ~Q(workpermit__in =  ['NOT_REQUIRED', 'NOTREQUIRED']),
+            ~Q(identifier = 'SLA'),
             parent_id = 1,
             client_id = S['client_id'],
             bu_id = S['bu_id'],
@@ -104,8 +113,26 @@ class WorkOrderManager(models.Manager):
             cdtz__date__lte = P['to'],
         ).order_by('-other_data__wp_seqno').values('cdtz', 'other_data__wp_seqno', 'qset__qsetname', 'workpermit', 'ctzoffset',
                  'workstatus', 'id', 'cuser__peoplename', 'bu__buname', 'bu__bucode')
+        
+        print("Qobjs: ",qobjs)
         return qobjs or self.none()
          
+
+    def get_slalist(self,request):
+        R,S = request.GET, request.session
+        P = json.loads(R.get('params', "{}"))
+        print("P: ",P)
+        qobjs = self.select_related('cuser', 'bu', 'qset','vendor').filter(
+            identifier = 'SLA',
+            client_id = S['client_id'],
+            bu_id = S['bu_id'],
+            cdtz__date__gte = P['from'],
+            cdtz__date__lte = P['to'],
+        ).order_by('-other_data__wp_seqno').values('cdtz', 'other_data__wp_seqno', 'qset__qsetname', 'workpermit', 'ctzoffset',
+                 'workstatus', 'id', 'cuser__peoplename', 'bu__buname', 'bu__bucode','vendor__name')
+        print("Qobjs: ",qobjs)
+        return qobjs or self.none()
+
     def get_workpermit_details(self, request, wp_qset_id):
         S = request.session
         QuestionSet = apps.get_model('activity', 'QuestionSet')
@@ -270,6 +297,17 @@ class WorkOrderManager(models.Manager):
         data = self.get_wp_sections_answers(wp_answers[1],id,approval_status)
         logger.info(f"{data = }")
         return data,permit_no
+    
+
+
+    def sla_data_for_report(self,id,approval):
+        sla_report_answers = self.get_sla_report_answers(id)
+        data = self.get_sla_sections_answers(sla_report_answers[1],id,approval)
+
+
+
+    def get_sla_report_answers(self,report_answer,id,approval):
+        pass 
         
     def convert_the_queryset_to_list(self,workpermit_sections):
         questions = workpermit_sections.get('questions')
@@ -430,10 +468,6 @@ class WorkOrderManager(models.Manager):
     
 
     def get_wp_sections_answers(self,wp_answers,id,approval_status):
-        print("Len of wp_answers: ",len(wp_answers))
-        print("WP Answers: ",wp_answers)
-        log.info("WP Answers: %s",wp_answers)
-        log.info("Len of Answer",len(wp_answers))
         general_details = wp_answers[0]
         section_details_one = wp_answers[1]
         section_details_two = wp_answers[2]
