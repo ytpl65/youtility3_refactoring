@@ -93,7 +93,7 @@ class QuestionSet(BaseModel, TenantAwareModel):
         ASSETMAINTENANCE         = "ASSETMAINTENANCE",    _('Asset Maintenance')
         WORKORDER                = "WORK_ORDER",          _('Work Order')
         SLA_TEMPLATE             = "SLA_TEMPLATE",        _('Service Level Agreement')
-    
+
     qsetname           = models.CharField(_("QuestionSet Name"), max_length = 200)
     enable             = models.BooleanField(_("Enable"), default = True)
     assetincludes      = ArrayField(models.CharField(max_length = 50, blank = True), null = True, blank = True, verbose_name= _("Asset Includes"))

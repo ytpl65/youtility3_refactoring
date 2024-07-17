@@ -440,16 +440,7 @@ class PeopleExtrasForm(forms.Form):
                 parameter = mapping.get(cd['userfor'])
                 allowed_count = preferences[parameter]
                 if allowed_count and current_ppl_count + 1 > int(allowed_count):
-                    raise forms.ValidationError(f'{cd["userfor"]} users limit exceeded {allowed_count}')
-            if preferences['billingtype'] == 'USERBASED':
-                current_ppl_count = pm.People.objects.filter(client = client, people_extras__userfor=cd['userfor']).count()
-                mapping = {'Mobile':'no_of_users_allowed_mob', 'Both':'no_of_users_allowed_both', 'Web':'no_of_users_allowed_web'}
-                parameter = mapping.get(cd['userfor'])
-                allowed_count = preferences[parameter]
-                if allowed_count and current_ppl_count + 1 > int(allowed_count):
-                    raise forms.ValidationError(f'{cd["userfor"]} users limit exceeded {allowed_count}')
-
-
+                    raise forms.ValidationError(f'{cd["userfor"]} users limit exceeded {allowed_count} and curent people count is {current_ppl_count}')
 
 class PeopleGrpAllocation(forms.Form):
     people = forms.ChoiceField(required = True, widget = s2forms.Select2Widget)

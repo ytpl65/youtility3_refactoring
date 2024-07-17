@@ -35,7 +35,7 @@ import json
 import requests
 from tablib import Dataset
 
-from apps.onboarding.utils import is_bulk_image_data_correct,save_correct_image,extract_file_id,get_file_metadata
+# from apps.onboarding.utils import is_bulk_image_data_correct,save_correct_image,extract_file_id,get_file_metadata
 CACHE_TTL = getattr(settings, 'CACHE_TTL', DEFAULT_TIMEOUT)
 logger = logging.getLogger('django')
 
@@ -526,70 +526,50 @@ class BulkImportData(LoginRequiredMixin,ParameterMixin, View):
     def post(self, request, *args, **kwargs):
         R = request.POST
         form = self.form(R, request.FILES)
-        table_name = R['table']
-        if table_name == 'BULKIMPORTIMAGE':
-            if R.get('action','') != 'confirmImport':
-                google_drive_link = R['google_drive_link']
-                response = requests.head(google_drive_link,allow_redirects=True)
-                if response.status_code == 200:
-                    status,image_data = self.upload_bulk_image_format(R)
-                    if not status:
-                        cxt = {'image_data': image_data,'status':status,'image_flag':True}
-                        return render(request,'onboarding/imported_data.html',cxt)
-                    cxt = {'image_data':image_data, 'status':status,'image_flag':True}
-                    return render(request,'onboarding/imported_data.html',cxt)
-                else:
-                    return rp.JsonResponse({'error':'Google Drive Link is not Accessible'})
-            else:
-                correct_image_data = R['correct_image_data']
-                correct_image_data = json.loads(correct_image_data.replace("'",'"'))
-                save_correct_image(correct_image_data)
-                return rp.JsonResponse({'totalrows':len(correct_image_data)},status=200)
+        if not form.is_valid() and R['action'] != 'confirmImport':
+            return rp.JsonResponse({'errors': form.errors}, status=404)
+        res, dataset = obutils.get_resource_and_dataset(request, form,self.mode_resource_map)
+        if R.get('action') == 'confirmImport':
+            results = res.import_data(dataset = dataset, dry_run = False, raise_errors = False)
+            return rp.JsonResponse({'totalrows':results.total_rows}, status = 200)
         else:
-            if not form.is_valid() and R['action'] != 'confirmImport':
-                return rp.JsonResponse({'errors': form.errors}, status=404)
-            
-            res, dataset = obutils.get_resource_and_dataset(request, form,self.mode_resource_map)
-            if R.get('action') == 'confirmImport':
-                results = res.import_data(dataset = dataset, dry_run = False, raise_errors = False)
-                return rp.JsonResponse({'totalrows':results.total_rows}, status = 200)
-            else:
-                try:
-                    results = res.import_data(
-                        dataset=dataset, dry_run=True, raise_errors=False, use_transactions=True)
-                    return render(request, 'onboarding/imported_data.html', {'result':results,'image_data':[],'image_flag':False})
-                except Exception as e:
-                    logger.critical("error", exc_info=True)
-                    return rp.JsonResponse({"error": "something went wrong!"}, status=500)
+            try:
+                results = res.import_data(
+                    dataset=dataset, dry_run=True, raise_errors=False, use_transactions=True)
+                return render(request, 'onboarding/imported_data.html', {'result':results})
+            except Exception as e:
+                logger.critical("error", exc_info=True)
+                return rp.JsonResponse({"error": "something went wrong!"}, status=500)
     
-    def upload_bulk_image_format(self,R):
-        google_drive_link = R['google_drive_link']
-        file_id = extract_file_id(google_drive_link)
-        images_bulk_data = get_file_metadata(file_id)
-        is_coorect, correct_image_data, incorrect_image_data = is_bulk_image_data_correct(images_bulk_data['files'])
-        if not is_coorect:
-            return False,incorrect_image_data
-        print("Uploading")
-        return True,correct_image_data
+    # def upload_bulk_image_format(self,R):
+    #     google_drive_link = R['google_drive_link']
+    #     file_id = extract_file_id(google_drive_link)
+    #     images_bulk_data = get_file_metadata(file_id)
+    #     is_coorect, correct_image_data, incorrect_image_data = is_bulk_image_data_correct(images_bulk_data['files'])
+    #     if not is_coorect:
+    #         return False,incorrect_image_data
+    #     print("Uploading")
+    #     return True,correct_image_data
         
 
-    def get_resource_and_dataset(self, request, form):
-        table = form.cleaned_data.get('table')
-        if request.POST.get('action') == 'confirmImport':
-            tempfile = request.session['temp_file_name']
-            with open(tempfile, 'rb') as file:
-                dataset = Dataset().load(file)
-        else:
-            file = request.FILES['importfile']
-            dataset = Dataset().load(file)
-            #save to temp storage
-            import tempfile
-            with tempfile.NamedTemporaryFile(delete=False) as tf:
-                for chunk in file.chunks():
-                    tf.write(chunk)
-                request.session['temp_file_name'] = tf.name
-        res = self.mode_resource_map[table](request=request, ctzoffset = form.cleaned_data.get('ctzoffset'))
-        return res, dataset
+    # def get_resource_and_dataset(self, request, form):
+    #     table = form.cleaned_data.get('table')
+    #     if request.POST.get('action') == 'confirmImport':
+    #         tempfile = request.session['temp_file_name']
+    #         with open(tempfile, 'rb') as file:
+    #             dataset = Dataset().load(file)
+    #     else:
+    #         file = request.FILES['importfile']
+    #         dataset = Dataset().load(file)
+    #         # print('dataset',dataset)
+    #         #save to temp storage
+    #         import tempfile
+    #         with tempfile.NamedTemporaryFile(delete=False) as tf:
+    #             for chunk in file.chunks():
+    #                 tf.write(chunk)
+    #             request.session['temp_file_name'] = tf.name
+    #     res = self.mode_resource_map[table](request=request, ctzoffset = form.cleaned_data.get('ctzoffset'))
+    #     return res, dataset
 
     def get_readable_error(self, error):
         if(isinstance(error, ObjectDoesNotExist)):
