@@ -592,7 +592,6 @@ class WorkPermit(LoginRequiredMixin, View):
     
     def send_report(self, R, request):
         ReportFormat = self.getReportFormatBasedOnWorkpermitType(R)
-        # print("R",R)
         print("R: ",R)
         print("Request: ",request)
         report = ReportFormat(
@@ -749,6 +748,10 @@ class SLA_View(LoginRequiredMixin, View):
             objs = Wom.objects.get_approver_list(R['womid'])
             return rp.JsonResponse({'data': objs}, status=200)
         
+        if action == 'printReport':
+            print("Here I am in print report")
+            return self.send_report(R, request)
+        
         if action == 'form':
             import uuid
             cxt = {
@@ -774,7 +777,11 @@ class SLA_View(LoginRequiredMixin, View):
             context = {"sla_details": wp_details, 'slaform': form, 'ownerid': uuid.uuid4(),'approvers':approvers}
             return render(request, P['template_form'], context=context)
         
-
+    def send_report(self, R, request):
+        from apps.reports.report_designs import service_level_agreement as sla
+        report = sla.ServiceLevelAgreement(filename=R['qset__qsetname'], client_id=request.session['client_id'], formdata=R, request=request)
+        print("Report: ",report)
+        return report.execute()
 
     def post(self,request,*args,**kwargs):
         R, P = request.POST, self.params

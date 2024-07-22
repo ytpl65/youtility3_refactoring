@@ -114,10 +114,11 @@ def handle_valid_form(form, R, request, create):
     sla = save_approvers_injson(sla)
     formdata = QueryDict(request.POST['sladetails']).copy()
     print("Form data:" ,formdata )
-    save_overall_score_data(formdata)
+    overall_score = get_overall_score(sla.id)
+    print("Overall Score",overall_score)
+    sla.other_data['overall_score'] = overall_score
     create_sla_details(request.POST, sla, request, formdata)
     return rp.JsonResponse({'pk':sla.id})
-
 
 
 def create_sla_details(R,wom,request,formdata):
@@ -233,20 +234,5 @@ def create_child_wom(wom, qset_id):
     
 
 def get_overall_score(id):
-    overall_final_score = 0
-    childwom = Wom.objects.filter(parent_id = id)
-    print("Child wom",childwom)
-    for child in childwom:
-        section_weightage = child.other_data['section_weightage']
-        answer = 0
-        child_womdetails = WomDetails.objects.filter(wom_id = child.id)
-        print("Child Wom Details",child_womdetails)
-        total_child_womdetails = len(child_womdetails)
-        for detail in child_womdetails:
-            answer+=int(detail.answer)
-        section_average_answer = answer/total_child_womdetails
-        print("Section Average Answer",section_average_answer)
-        weighted_answer =  section_average_answer*section_weightage
-        print("Weighted Answer",weighted_answer,section_average_answer,section_weightage)
-        overall_final_score+=weighted_answer
-    print(overall_final_score)
+    sla_answers_data,overall_score,question_ans,all_average_score,remarks = Wom.objects.sla_data_for_report(id)
+    return overall_score

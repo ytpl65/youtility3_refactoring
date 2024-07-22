@@ -93,7 +93,7 @@ p {
               <th>
                 WORK SAFETY
               </th>
-              <th>
+              <th>  
                 20%
               </th>
               <th>
@@ -117,84 +117,98 @@ p {
             </tr>
             <tr>
                 <td>Appropriate PPE Usage at site</td>
-                <td>10</td>
+                <td>{{ question_answer['Appropriate PPE Usage at site'] }} </td>
                 <td>Workmanship quality</td>
-                <td>10</td>
+                <td>{{ question_answer['Workmanship quality'] }}</td>
                 <td>Preventive maintenance Schedule</td>
-                <td>10</td>
+                <td>{{ question_answer['Preventive maintenance schedule']}}</td>
                 <td>WCP/ESI/PF coverage for employees Deployed for attending Site AMC Related work</td>
-                <td>10</td>
+                <td>{{ question_answer['WCP/ESI/PF coverage for employees Deployed for attending site AMC related work']}}</td>
             </tr>
             <tr>
                 <td>Adherence of work Process</td>
-                <td>10</td>
+                <td>{{ question_answer['Adherence of work Process']}}</td>
                 <td>Preventive maintenance quality</td>
-                <td>10</td>
+                <td>{{ question_answer['Preventive maintenance quality']}}</td>
                 <td>Reduction of Breakdowns</td>
-                <td>10</td>
+                <td>{{ question_answer['Reduction of breakdowns']}}</td>
                 <td>Timely submission of Invoices with required Relevant documents</td>
-                <td>10</td>
+                <td>{{ question_answer['Timely submission of invoices with required relevant documents']}}</td>
             </tr>
             <tr>
                 <td>Grooming and Knowledge</td>
-                <td>10</td>
-                <td>Adherence to SLA</td>
-                <td>10</td>
+                <td>{{ question_answer['Grooming and Knowledge']}}</td>
+                <td>Adherence of SLA</td>
+                <td>{{ question_answer['Adherence of SLA']}}</td>
                 <td>Inventory Management</td>
-                <td>10</td>
+                <td>{{ question_answer['Inventory Management']}}</td>
                 <td>Environmental ethos</td>
-                <td>10</td>
+                <td>{{ question_answer['Environmental ethos']}}</td>
+            </tr>
+            <tr>
+                <td></td>
+                <td></td>
+                <td>Timely submission of RCA</td>
+                <td>{{ question_answer['Timely submission of RCA']}}</td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
             </tr>
             <tr>
                 <th>Average score</th>
-                <td>10.00</td>
+                <td>{{ average_score[0] }}</td>
                 <th>Average score</th>
-                <td>9.25</td>
+                <td>{{ average_score[1] }}</td>
                 <th>Average score</th>
-                <td>10.00</td>
+                <td>{{ average_score[2] }}</td>
                 <th>Average score</th>
-                <td>10.00</td>
+                <td>{{ average_score[3] }}</td>
             </tr>
             
             <tr>
               <td colspan="8"></td>
             </tr>
             <tr>
-                <th colspan="2">DOCUMENTATION/RECORD</th>
-                <th colspan="2">ORGANISATION RESPONSIVENESS</th>
-                <th colspan="2">TECHNOLOGY DESIGN</th>
-                <th colspan="2">CPI</th>
+                <th>DOCUMENTATION/RECORD</th>
+                <th>10%</th>
+                <th>ORGANISATION RESPONSIVENESS</th>
+                <th>5%</th>
+                <th>TECHNOLOGY DESIGN</th>
+                <th>5%</th>
+                <th>CPI</th>
+                <th>5%</th>
             </tr>
             <tr>
                 <td>Timely submission of Service reports</td>
-                <td>10</td>
+                <td>{{ question_answer['Timely submission of service reports']}}</td>
                 <td>Communications</td>
-                <td>10</td>
+                <td>{{ question_answer['Communications']}}</td>
                 <td>Innovative new products</td>
-                <td>10</td>
+                <td>{{ question_answer['Innovative new products']}}</td>
                 <td>Continuous process improvement</td>
-                <td>10</td>
+                <td>{{ question_answer['Continuous process improvement']}}</td>
             </tr>
             <tr>
                 <td>Equipment History - Record of alteration, breakdown, addition, Preventive maintenance and modifications</td>
-                <td>10</td>
+                <td>{{ question_answer['Equipment History – Record of altration, breakdown, addition, preventive maintenance and modifications.']}}</td>
                 <td>Receptiveness to new ideas</td>
-                <td>10</td>
+                <td>{{ question_answer['Receptiveness to new ideas']}}</td>
                 <td>Technology level</td>
-                <td>10</td>
+                <td>{{ question_answer['Technology level'] }}</td>
                 <td></td>
                 <td></td>
                 
             </tr>
             <tr>
                 <th>Average score</th>
-                <td>10.00</td>
+                <td>{{ average_score[4] }}</td>
                 <th>Average score</th>
-                <td>10.00</td>
+                <td>{{ average_score[5] }}</td>
                 <th>Average score</th>
-                <td>10.00</td>
+                <td>{{ average_score[6] }}</td>
                 <th>Average score</th>
-                <td>10.00</td>
+                <td>{{ average_score[7] }}</td>
             </tr>
             <tr>
               <td colspan="8">
@@ -203,7 +217,7 @@ p {
             </tr>
             <tr>
                 <th>OVERALL SCORE</th>
-                <th>98.5%</th>
+                <th>{{ overall_score }}%</th>
             </tr>
         </tbody>
     </table>
@@ -218,7 +232,7 @@ p {
 <br>
 <br>
 
-  <p><b>Score is low because of:-</b></p>
+  <p><b>Score is low because of:- {{ remarks[0]}} </b></p>
 </div>
 
 {% endblock static_content %}

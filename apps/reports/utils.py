@@ -77,7 +77,7 @@ class BaseReportsExport(WeasyTemplateResponseMixin):
     def write_temporary_pdf(self, pdf_output,workpermit_file_name):
 
         # file_path = f'/home/redmine/tmp_workpermit_report/{workpermit_file_name}_{self.permit_no}.pdf'
-        file_path = f'/home/redmine/tmp_workpermit_report/{workpermit_file_name}.pdf'
+        file_path = f'/home/manohar/Manohar/youtility-stagging/temp_workpermit_report/{workpermit_file_name}.pdf'
         os.makedirs(os.path.dirname(file_path), exist_ok=True)
 
         with open(file_path, 'wb') as f:

@@ -71,41 +71,5 @@ class GeneralWorkPermit(BaseReportsExport):
         return self.get_pdf_output()
 
 
-# class GeneralPermitToWorkAndEntry(GeneralWorkPermit):
-#     report_title = 'GENERAL PERMIT TO WORK AND ENTRY'
-#     design_file  = "reports/pdf_reports/general_permit_to_work_and_entry.html"
-#     report_name  = "GeneralPermitToWorkAndEntry"
-
-
-
-# class ColdWorkPermit(WorkPermit):
-#     report_title = 'COLD WORK PERMIT'
-#     design_file = "reports/pdf_reports/cold_workpermit.html"
-#     ytpl_applogo =  'frontend/static/assets/media/images/logo.png'
-#     report_name = 'ColdWorkPermit'
-    
-# class HotWorkPermit(WorkPermit):
-#     report_title = 'HOT WORK PERMIT'
-#     design_file = "reports/pdf_reports/hot_workpermit.html"
-#     ytpl_applogo =  'frontend/static/assets/media/images/logo.png'
-#     report_name = 'HotWorkPermit'
-
-# class HeightWorkPermit(WorkPermit):
-#     report_title = 'HEIGHT WORK PERMIT'
-#     design_file = "reports/pdf_reports/height_workpermit.html"
-#     ytpl_applogo =  'frontend/static/assets/media/images/logo.png'
-#     report_name = 'HeightWorkPermit'
-
-# class ConfinedSpaceWorkPermit(WorkPermit):
-#     report_title = 'CONFINED SPACE WORK PERMIT'
-#     design_file = "reports/pdf_reports/confined_space_workpermit.html"
-#     ytpl_applogo =  'frontend/static/assets/media/images/logo.png'
-#     report_name = 'ConfinedSpaceWorkPermit'
-
-# class ElectricalWorkPermit(WorkPermit):
-#     report_title = 'ELECTRICAL WORK PERMIT'
-#     design_file = "reports/pdf_reports/electrical_workpermit.html"
-#     ytpl_applogo =  'frontend/static/assets/media/images/logo.png'
-#     report_name = 'ElectricalWorkPermit'
 
     

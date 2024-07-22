@@ -102,7 +102,6 @@ class WorkOrderManager(models.Manager):
     def get_workpermitlist(self, request):
         R, S = request.GET, request.session
         P = json.loads(R.get('params', "{}"))
-        print("P: ",P)
         qobjs = self.select_related('cuser', 'bu', 'qset').filter(
             ~Q(workpermit__in =  ['NOT_REQUIRED', 'NOTREQUIRED']),
             ~Q(identifier = 'SLA'),
@@ -114,14 +113,12 @@ class WorkOrderManager(models.Manager):
         ).order_by('-other_data__wp_seqno').values('cdtz', 'other_data__wp_seqno', 'qset__qsetname', 'workpermit', 'ctzoffset',
                  'workstatus', 'id', 'cuser__peoplename', 'bu__buname', 'bu__bucode')
         
-        print("Qobjs: ",qobjs)
         return qobjs or self.none()
          
 
     def get_slalist(self,request):
         R,S = request.GET, request.session
         P = json.loads(R.get('params', "{}"))
-        print("P: ",P)
         qobjs = self.select_related('cuser', 'bu', 'qset','vendor').filter(
             identifier = 'SLA',
             client_id = S['client_id'],
@@ -130,7 +127,6 @@ class WorkOrderManager(models.Manager):
             cdtz__date__lte = P['to'],
         ).order_by('-other_data__wp_seqno').values('cdtz', 'other_data__wp_seqno', 'qset__qsetname', 'workpermit', 'ctzoffset',
                  'workstatus', 'id', 'cuser__peoplename', 'bu__buname', 'bu__bucode','vendor__name')
-        print("Qobjs: ",qobjs)
         return qobjs or self.none()
 
     def get_workpermit_details(self, request, wp_qset_id):
@@ -298,17 +294,52 @@ class WorkOrderManager(models.Manager):
         logger.info(f"{data = }")
         return data,permit_no
     
+    def get_sla_answers(self,slaid):
+        child_slarecords = self.filter(parent_id = slaid).order_by('seqno')
+        # work_permit_no = childwoms[0].other_data['wp_seqno']
+        sla_details = []
+        overall_score = []
+        all_questions = []
+        all_answers = []
+        all_average_score = []
+        remarks = []
+        for child_sla in child_slarecords:
+            section_weight = child_sla.other_data['section_weightage']
+            ans = []
+            answers = child_sla.womdetails_set.values('answer')
+            for answer in answers:
+                if answer['answer'].isdigit():
+                    all_answers.append(int(answer['answer']))
+                    ans.append(int(answer['answer']))
+                else:
+                    remarks.append(answer['answer'])
+            questions = child_sla.womdetails_set.values('question__quesname')
+            for que in questions:
+                all_questions.append(que['question__quesname'])
+            if sum(ans)== 0 or len(ans)== 0:
+                pass
+            else:
+                average_score = sum(ans)/len(ans)
+            all_average_score.append(round(average_score,1))
+            score = average_score * section_weight
+            overall_score.append(score)
+            sq = {
+                "section":child_sla.description,
+                "sectionID":child_sla.seqno,
+                "section_weightage":child_sla.other_data['section_weightage']
+            }
+            sla_details.append(sq)
 
-
-    def sla_data_for_report(self,id,approval):
-        sla_report_answers = self.get_sla_report_answers(id)
-        data = self.get_sla_sections_answers(sla_report_answers[1],id,approval)
-
-
-
-    def get_sla_report_answers(self,report_answer,id,approval):
-        pass 
+        question_ans = dict(zip(all_questions,all_answers))
+        final_overall_score = sum(overall_score) * 10
+        rounded_overall_score = round(final_overall_score,2)
         
+        return sla_details,rounded_overall_score,question_ans,all_average_score,remarks or self.none()
+
+    def sla_data_for_report(self,id):
+        sla_answers,overall_score,question_ans,all_average_score,remarks = self.get_sla_answers(id)
+        return sla_answers,overall_score,question_ans,all_average_score,remarks
+
     def convert_the_queryset_to_list(self,workpermit_sections):
         questions = workpermit_sections.get('questions')
         questions_in_list = list(questions.values('question__quesname','answer'))

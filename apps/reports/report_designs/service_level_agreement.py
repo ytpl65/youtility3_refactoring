@@ -24,10 +24,17 @@ class ServiceLevelAgreement(BaseReportsExport):
     
     def set_context_data(self):
         log.info("Form Data: %s", self.formdata)
-        # sla_answers_data, sla_no = Wom.objects.wp_data_for_report(self.formdata.get('id'))
+        sla_answers_data,overall_score,question_ans,all_average_score,remarks = Wom.objects.sla_data_for_report(self.formdata.get('id'))
+        
 
         self.context = {
-                'data':'Data'
+                'question_answer': question_ans,
+                'sla_answer_data': sla_answers_data,
+                'overall_score':overall_score,
+                'average_score':all_average_score,
+                'remarks':remarks,
+
+
         }
     
     def execute(self):

@@ -29,6 +29,7 @@ def other_data():
         'wp_seqno':0,
         'wp_approvers':[],
         'section_weightage':0,
+        'overall_score':0
     }
     
 def wo_history_json():

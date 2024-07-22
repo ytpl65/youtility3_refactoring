@@ -302,7 +302,47 @@ SLA Form
         // Call this function after a short delay to catch any elements that might have been missed
         setTimeout(initializeMissedDatePickers, 100);
 
-        
+        //valiating form fields
+        function validateNumericInputs() {
+            clearValidationErrors();
+            const numericInputs = document.querySelectorAll('.sla_section input[type="text"]');
+            let isValid = true;
+
+            numericInputs.forEach(input => {
+                const value = parseFloat(input.value);
+                const min = 1;
+                const max = 10;
+                const label = input.closest('.input-group').querySelector('.input-group-text').textContent;
+                
+
+                if (isNaN(value)) {
+                    showValidationError(input, `Please enter a valid score for ${label}.`);
+                    isValid = false;
+                } if (value > max || value < min) {
+                    console.log('else if statement :- ',value, min, max)
+                    showValidationError(input, `Value must be between ${min} and ${max}.`);
+                    isValid = false;}
+            });
+
+            return isValid;
+        }
+
+        function showValidationError(element, message) {
+            let errorElement = element.nextElementSibling;
+            if (!errorElement || !errorElement.classList.contains('error-message')) {
+                errorElement = document.createElement('div');
+                errorElement.classList.add('error-message', 'text-danger', 'mt-1');
+                element.parentNode.insertBefore(errorElement, element.nextSibling);
+            }
+            errorElement.textContent = message;
+            element.classList.add('is-invalid');
+        }
+
+        function clearValidationErrors() {
+            document.querySelectorAll('.error-message').forEach(el => el.remove());
+            document.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
+        }
+
         //load the questionaire of selected template
         $("#load_questions").click((e) => {
             var qsetid = $("#id_qset").val()
@@ -338,6 +378,10 @@ SLA Form
         $("#slaform").submit((e) => {
             console.log('on click submit ')
             e.preventDefault()
+
+            if (!validateNumericInputs()) {
+                return;
+            }
 
             const slaDetailsform = $("#sla_details_form").get(0);
             if (slaDetailsform && !slaDetailsform.checkValidity()) {
