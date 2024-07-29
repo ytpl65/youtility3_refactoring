@@ -18,19 +18,21 @@ class VendorForm(forms.ModelForm):
     class Meta:
         model = Vendor
         fields = ['code', 'name', 'address', 'mobno', 'type', 'show_to_all_sites',
-                  'email', 'ctzoffset', 'enable', 'address']
+                  'email', 'ctzoffset', 'enable', 'address','description']
         labels = {
             'code':"Code",
             'name':"Name",
             'address':"Address",
             'mobno':"Mob no",
-            'email':"Email"
+            'email':"Email",
+            'description':"Description",
         }
         widgets = {
             'name':forms.TextInput(attrs={'placeholder':'Enter Name...'}),
             'address':forms.Textarea(attrs={'rows':4}),
             'code':forms.TextInput(attrs={'style': "text-transform: uppercase;", 'placeholder':"Enter characters without spaces..."}),
-            'type':s2forms.Select2Widget
+            'type':s2forms.Select2Widget,
+            'description':forms.Textarea(attrs={'rows':4, 'placeholder':"Enter detailed description of vendor..."}),
         }
     
     def __init__(self, *args, **kwargs):

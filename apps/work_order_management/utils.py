@@ -11,6 +11,10 @@ from apps.peoples import utils as putils
 from apps.activity.models import QuestionSetBelonging,QuestionSet
 from apps.work_order_management.models import WomDetails
 from django.http import response as rp
+from background_tasks.tasks import send_email_notification_for_sla_report
+import logging
+logger = logging.getLogger('__main__')
+log = logger
 import os
 from apps.reports.report_designs.workpermit import GeneralWorkPermit
 def check_attachments_if_any(wo):
@@ -61,12 +65,16 @@ def notify_wo_creation(id):
 def check_all_approved(womuuid, usercode):
     w = Wom.objects.filter(uuid = womuuid).first()
     all_approved = True
+    log.info(f"{usercode}, {womuuid}")
     for approver in w.other_data['wp_approvers']:
+        log.info(f"Approver {approver}")
         if approver['name'] == usercode:
             approver['status'] = 'APPROVED'
+            log.info(f"approver {usercode} has approved with status code {approver['status']}")
         if approver['status'] != 'APPROVED':
             all_approved = False
     w.save()
+    log.info(f"all approved status is {all_approved}")
     return all_approved
     
 def reject_workpermit(womuuid, usercode):
@@ -118,6 +126,9 @@ def handle_valid_form(form, R, request, create):
     print("Overall Score",overall_score)
     sla.other_data['overall_score'] = overall_score
     create_sla_details(request.POST, sla, request, formdata)
+    sitename = S.get('sitename')
+    send_email_notification_for_sla_report.delay(sla.id,sitename)
+    print("sla:", sla)
     return rp.JsonResponse({'pk':sla.id})
 
 

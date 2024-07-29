@@ -103,7 +103,7 @@ class WorkOrderManager(models.Manager):
         R, S = request.GET, request.session
         P = json.loads(R.get('params', "{}"))
         qobjs = self.select_related('cuser', 'bu', 'qset').filter(
-            ~Q(workpermit__in =  ['NOT_REQUIRED', 'NOTREQUIRED']),
+           ~Q(workpermit__in =  ['NOT_REQUIRED', 'NOTREQUIRED']),
             ~Q(identifier = 'SLA'),
             parent_id = 1,
             client_id = S['client_id'],
@@ -111,8 +111,8 @@ class WorkOrderManager(models.Manager):
             cdtz__date__gte = P['from'],
             cdtz__date__lte = P['to'],
         ).order_by('-other_data__wp_seqno').values('cdtz', 'other_data__wp_seqno', 'qset__qsetname', 'workpermit', 'ctzoffset',
-                 'workstatus', 'id', 'cuser__peoplename', 'bu__buname', 'bu__bucode')
-        
+                 'workstatus', 'id', 'cuser__peoplename', 'bu__buname', 'bu__bucode','identifier')
+        print("qobjs",qobjs)
         return qobjs or self.none()
          
 
@@ -126,7 +126,7 @@ class WorkOrderManager(models.Manager):
             cdtz__date__gte = P['from'],
             cdtz__date__lte = P['to'],
         ).order_by('-other_data__wp_seqno').values('cdtz', 'other_data__wp_seqno', 'qset__qsetname', 'workpermit', 'ctzoffset',
-                 'workstatus', 'id', 'cuser__peoplename', 'bu__buname', 'bu__bucode','vendor__name')
+                 'workstatus', 'id', 'cuser__peoplename', 'bu__buname', 'bu__bucode','vendor__name','other_data__overall_score','other_data__remarks')
         return qobjs or self.none()
 
     def get_workpermit_details(self, request, wp_qset_id):
@@ -320,8 +320,10 @@ class WorkOrderManager(models.Manager):
                 pass
             else:
                 average_score = sum(ans)/len(ans)
+                print("Average Score",average_score)
             all_average_score.append(round(average_score,1))
             score = average_score * section_weight
+            print("Score",score)
             overall_score.append(score)
             sq = {
                 "section":child_sla.description,
@@ -329,15 +331,22 @@ class WorkOrderManager(models.Manager):
                 "section_weightage":child_sla.other_data['section_weightage']
             }
             sla_details.append(sq)
-
+        overall_score = sum(overall_score)-0.5
         question_ans = dict(zip(all_questions,all_answers))
-        final_overall_score = sum(overall_score) * 10
+        final_overall_score = overall_score * 10
         rounded_overall_score = round(final_overall_score,2)
-        
+        wom_ele = self.model.objects.get(id=slaid)
+        wom_ele.other_data['overall_score'] = rounded_overall_score
+        wom_ele.other_data['remarks'] = len(remarks)>0 and remarks[0] or ''
+        wom_ele.save()
         return sla_details,rounded_overall_score,question_ans,all_average_score,remarks or self.none()
 
     def sla_data_for_report(self,id):
+        from apps.work_order_management.models import Wom
+        print("ID",id)  
+        # id = Wom.objects.get(uuid=id).id
         sla_answers,overall_score,question_ans,all_average_score,remarks = self.get_sla_answers(id)
+        print("Remark ",remarks)
         return sla_answers,overall_score,question_ans,all_average_score,remarks
 
     def convert_the_queryset_to_list(self,workpermit_sections):

@@ -409,6 +409,7 @@ def send_report_on_email(self, formdata, json_report):
     return jsonresp
 
 
+
 @shared_task(bind=True, name="Create report history")
 def create_report_history(self, formdata, userid, buid, EI):
     jsonresp = {'story': "", "traceback": ""}
@@ -505,6 +506,36 @@ def send_email_notification_for_vendor_and_security(self,wom_id,workpermit_attac
         jsonresp['traceback'] += tb.format_exc()
     return jsonresp
 
+@shared_task(bind=True, name="Create SLA email notification for vendor")
+def send_email_notification_for_sla_vendor(self,wom_id,report_attachment,sitename):
+    jsonresp = {'story':"", 'traceback':""}
+    try:
+        from apps.work_order_management.models import Wom,WomDetails
+        from apps.work_order_management.models import Vendor
+        from django.template.loader import render_to_string
+        wom = Wom.objects.filter(uuid=wom_id)
+        vendor_email = Vendor.objects.get(id=wom[0].vendor_id)
+        msg = EmailMessage()
+        sla_seqno = wom[0].other_data['wp_seqno']
+        msg.subject = f" {sitename} Vendor Performance #{sla_seqno}"
+        msg.to = [vendor_email.email]
+        msg.from_email = settings.EMAIL_HOST_USER
+        cxt = {
+            'sla_report_no':sla_seqno,
+            'sitename':sitename,
+            'report_name':'Service Level Agreement',
+        }
+        html = render_to_string(
+            'work_order_management/sla_vendor.html', context=cxt)
+        msg.body = html
+        msg.content_subtype = 'html'
+        msg.attach_file(report_attachment, mimetype='application/pdf')
+        msg.send()
+        dlog.info(f"email sent to {vendor_email.email}")
+    except Exception as e:
+        dlog.critical("something went wrong while sending email to vendor and security", exc_info=True)
+        jsonresp['traceback'] += tb.format_exc()
+    return jsonresp
 
 @shared_task(name="upload-old-files-to-cloud-storage")
 def move_media_to_cloud_storage():
@@ -728,3 +759,58 @@ def process_graphql_download_async(self, payload):
         resp = json.dumps({'errors': [str(e)]})
         raise e
     return resp
+
+
+@shared_task(bind=True, name="send_email_notification_for_sla_report")
+def send_email_notification_for_sla_report(self,slaid,sitename):
+    jsonresp = {'story': "", "traceback": ""}
+    try:
+        from django.apps import apps
+        from django.template.loader import render_to_string
+        from apps.reports.report_designs.service_level_agreement import ServiceLevelAgreement
+        from apps.work_order_management.models import Vendor
+        from dateutil.relativedelta import relativedelta
+        from datetime import datetime
+        Wom = apps.get_model('work_order_management', 'Wom')
+        People = apps.get_model('peoples', 'People')
+        sla_details,rounded_overall_score,question_ans,all_average_score,remarks = Wom.objects.get_sla_answers(slaid)
+        sla_record = Wom.objects.filter(id=slaid)[0]
+        approvers = sla_record.approvers 
+        status = sla_record.workpermit
+        jsonresp['story'] += f"\n{sla_details}"
+        report_no = sla_record.other_data['wp_seqno']
+        uuid = sla_record.uuid
+        month = (datetime.now() - relativedelta(months=1)).strftime('%B')
+        current_year = datetime.now().year
+        sla_report_obj = ServiceLevelAgreement(filename='Service Level Agreement', formdata={'id':slaid,'bu__buname':sitename,'submit_button_flow':'true','filename':'Service Level Agreement','workpermit':sla_record.workpermit})
+        attachment = sla_report_obj.execute()
+        vendor_id = sla_record.vendor_id
+        vendor_name = Vendor.objects.get(id=vendor_id).name
+        if sla_details:
+            qset = People.objects.filter(peoplecode__in = approvers)
+            dlog.info("Qset: ",qset)
+            for p in qset.values('email', 'id'):
+                dlog.info(f"sending email to {p['email'] = }")
+                jsonresp['story'] += f"sending email to {p['email'] = }"
+                msg = EmailMessage()
+                msg.subject = f"{sitename} Vendor Performance {vendor_name} of {month}-{current_year}"
+                msg.to = [p['email']]
+                msg.from_email = settings.EMAIL_HOST_USER
+                cxt = {'sections': sla_details, 'peopleid':p['id'],
+                    "HOST": settings.HOST, "slaid": slaid,'sitename':sitename,'rounded_overall_score':rounded_overall_score,
+                    'peopleid':p['id'],'reportid':uuid,'report_name':'Vendor Performance','report_no':report_no,'status':status,
+                    'vendorname':vendor_name
+                    }
+                html = render_to_string(
+                    'work_order_management/sla_report_approver_action.html', context=cxt)
+                msg.body = html
+                msg.content_subtype = 'html'
+                msg.attach_file(attachment, mimetype='application/pdf')
+                msg.send()
+                dlog.info(f"email sent to {p['email'] = }")
+                jsonresp['story'] += f"email sent to {p['email'] = }"
+            jsonresp['story'] += f"A Workpermit email sent of pk: {slaid}"
+    except Exception as e:
+        dlog.critical("something went wrong while runing sending email to approvers", exc_info=True)
+        jsonresp['traceback'] += tb.format_exc()
+    return jsonresp
