@@ -7,12 +7,6 @@ var d2markersArray = [];
 var _shiftMinute = 0;
 var d2siteMarkersArray = [];
 var d2markerCluster = undefined;
-var directionsRenderer = new google.maps.DirectionsRenderer({
-  suppressMarkers: true,
-});
-var directionService = new google.maps.DirectionsService();
-var d2bounds = new google.maps.LatLngBounds();
-var d2infowindow = new google.maps.InfoWindow({ content: "", maxWidth: 350 });
 var d2PolyLine = undefined;
 
 function reversedFpoints(DDE, data, breaktime) {
@@ -80,6 +74,7 @@ function updateAssignedSitesTable(btime, checkListId, checkListName) {
 }
 
 function calculateAndDisplayRoute(data, routeFreq, optimize=false) {
+  var directionService = new google.maps.DirectionsService();
   if (data.length > 1) {
     directionService.route(
       getDirectionConfig(data, optimize),
@@ -144,6 +139,9 @@ function getDirectionConfig(data, optimize) {
 }
 
 function calculateLatLngPoints(response, data, routeFreq) {
+  var directionsRenderer = new google.maps.DirectionsRenderer({
+    suppressMarkers: true,
+  });
   var optimizedPoints = [];
   directionsRenderer.setDirections(response);
   var waypoint_order = response.routes[0].waypoint_order;
@@ -248,6 +246,7 @@ function d2DrawMarker(
   }
 
   google.maps.event.addListener(markerC, "click", function () {
+    var d2infowindow = new google.maps.InfoWindow({ content: "", maxWidth: 350 });
     //var infoWindowHtml= '<h3 style="background-color: #FFF8C9;font-weight:bold;">' + row['buname'] + '</h3>';
     var starttime = convert_to_local(row["performedtime"])
     var endtime = convert_to_local(row["performedendtime"])
@@ -272,12 +271,12 @@ function d2DrawMarker(
     d2infowindow.open(d2map, markerC);
   });
   d2oms.addMarker(markerC);
-  console.log(markerC.position)
+  var d2bounds = new google.maps.LatLngBounds();
   d2bounds.extend(markerC.position);
   //add to array
   d2markersArray.push(markerC);
   //set map zoom
-  //d2map.setZoom(20);
+  //d2map.setZoom(12);
   d2map.fitBounds(d2bounds);
 }
 
@@ -298,6 +297,7 @@ function secondsToString(seconds) {
 }
 
 function hitGmapsService(config) {
+  var directionService = new google.maps.DirectionsService();
   var result = {};
   directionService.route(config, function (response, status) {
     result["response"] = response;
@@ -361,8 +361,11 @@ function reloadAssignedSitesTable(data) {
 }
 
 function d2InitializeMap() {
+  var directionsRenderer = new google.maps.DirectionsRenderer({
+    suppressMarkers: true,
+  });
   d2map = new google.maps.Map(document.getElementById("d2Map"), {
-    zoom: 2,
+    zoom: 3,
     center: new google.maps.LatLng(23.248917, 77.651367), //locations[0],
     mapTypeId: google.maps.MapTypeId.ROADMAP,
     mapId : "DEMO_MAP_ID", // Map ID is required for advanced markers.
@@ -377,27 +380,6 @@ function d2InitializeMap() {
   d2geocoder = new google.maps.Geocoder();
   directionsRenderer.setMap(d2map);
 }
-// initMap is now async
-
-// async function initMap() {
-//     // Request libraries when needed, not in the script tag.
-//     const { Map } = await google.maps.importLibrary("maps");
-//     // Short namespaces can be used.
-//     d2map = new Map(document.getElementById("d2Map"), {
-//       zoom: 2,
-//       center: new google.maps.LatLng(23.248917, 77.651367), //locations[0],
-//       mapTypeId: google.maps.MapTypeId.ROADMAP,
-//     });
-//     d2oms = new OverlappingMarkerSpiderfier(d2map, {
-//       markersWontMove: true,
-//       markersWontHide: true,
-//       keepSpiderfied: true,
-//       nearbyDistance: 10,
-//       legWeight: 5,
-//     });
-//     d2geocoder = new google.maps.Geocoder();
-//     directionsRenderer.setMap(d2map);
-// }
 
 
 function reCaclTime() {

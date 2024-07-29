@@ -177,7 +177,7 @@ class QuestionSetResource(resources.ModelResource):
     BV = fields.Field(
         column_name='Site*',
         attribute='bu',
-        widget = BVForeignKeyWidget(om.Bt, 'bucode'),
+        widget = wg.ForeignKeyWidget(om.Bt, 'bucode'),
         default=utils.get_or_create_none_bv
     )
     
@@ -311,7 +311,7 @@ class QuestionSetBelongingResource(resources.ModelResource):
     BV = fields.Field(
         column_name='Site*',
         attribute='bu',
-        widget = BVForeignKeyWidget(om.Bt, 'bucode'),
+        widget = wg.ForeignKeyWidget(om.Bt, 'bucode'),
         default=utils.get_or_create_none_bv
     )
     
@@ -439,7 +439,7 @@ class AssetResource(resources.ModelResource):
     BV = fields.Field(
         column_name       = 'Site*',
         attribute         = 'bu',
-        widget            = BVForeignKeyWidget(om.Bt, 'bucode'),
+        widget            = wg.ForeignKeyWidget(om.Bt, 'bucode'),
         saves_null_values = True,
         default           = utils.get_or_create_none_bv
     )
@@ -683,7 +683,7 @@ class LocationResource(resources.ModelResource):
     BV = fields.Field(
         column_name       = 'Site*',
         attribute         = 'bu',
-        widget            = BVForeignKeyWidget(om.Bt, 'bucode'),
+        widget            = wg.ForeignKeyWidget(om.Bt, 'bucode'),
         saves_null_values = True,
         default           = utils.get_or_create_none_bv
     )

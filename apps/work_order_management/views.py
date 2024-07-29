@@ -384,7 +384,6 @@ class WorkPermit(LoginRequiredMixin, View):
             return rp.JsonResponse(data={'status': 'Approved'}, status=200)
 
         if action == 'form':
-            print("Here I am in form view")
             import uuid
             cxt = {'wpform': P['form'](request=request), 'msg': "create workpermit requested", 'ownerid': uuid.uuid4(),'valid_workpermit':self.params['valid_workpermit']}
             return render(request, P['template_form'], cxt)
@@ -445,7 +444,6 @@ class WorkPermit(LoginRequiredMixin, View):
                 wom.save()
                 return rp.JsonResponse({'pk':wom.id})
             if pk := R.get('pk', None):
-                log.info("Here I am going after submission")
                 data = QueryDict(R['formData']).copy()
                 wp = utils.get_model_obj(pk, request, P)
                 form = self.params['form'](
@@ -453,11 +451,9 @@ class WorkPermit(LoginRequiredMixin, View):
                 create = False
             else:
                 data = QueryDict(R['formData']).copy()
-                print("Data: ",data)
                 form = self.params['form'](data, request = request)
                 create=True
             if form.is_valid():
-                print("Here I am going after submission")
                 resp = self.handle_valid_form(form, R, request, create)
             else:
                 cxt = {'errors': form.errors}
@@ -749,7 +745,6 @@ class SLA_View(LoginRequiredMixin, View):
             return rp.JsonResponse({'data': objs}, status=200)
         
         if action == 'printReport':
-            print("Here I am in print report")
             return self.send_report(R, request)
         
         if action == 'form':
@@ -798,7 +793,6 @@ class SLA_View(LoginRequiredMixin, View):
                 form = self.params['form'](data, request = request)
                 create=True
             if form.is_valid():
-                print("Here I am going after submission")
                 resp = wom_utils.handle_valid_form(form, R, request, create)
             else:
                 cxt = {'errors': form.errors}
