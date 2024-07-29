@@ -84,7 +84,14 @@ class VendorResource(resources.ModelResource):
             raise ValidationError("Please enter valid text avoid any special characters except [_, -]")
         
         # mob no validation
-        if not utils.verify_mobno(str(row.get('Mob No*', -1))): raise ValidationError("Mob No* is not valid")
+        # if not utils.verify_mobno(str(row.get('Mob No*', -1))): raise ValidationError("Mob No* is not valid")
+
+        # mob no validation
+        if not utils.verify_mobno(str(row.get('Mob No*', -1))):
+            raise ValidationError("Mob No* is not valid")
+        else: 
+            mob_no = str(row['Mob No*'])
+            row['Mob No*'] = mob_no if '+' in mob_no else f'+{mob_no}'
         
         # unique record check
         if wom.Vendor.objects.select_related().filter(
