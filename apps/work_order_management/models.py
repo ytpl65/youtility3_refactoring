@@ -29,7 +29,8 @@ def other_data():
         'wp_seqno':0,
         'wp_approvers':[],
         'section_weightage':0,
-        'overall_score':0
+        'overall_score':0,
+        'remarks':"",
     }
     
 def wo_history_json():
@@ -132,7 +133,7 @@ class Vendor(BaseModel, TenantAwareModel):
     client      = models.ForeignKey("onboarding.Bt", verbose_name = _("Client"), on_delete= models.RESTRICT, null = True, blank = True, related_name='vendor_clients')
     bu          = models.ForeignKey("onboarding.Bt", verbose_name = _("Site"), on_delete = models.RESTRICT, null = True, blank = True, related_name='vendor_bus')
     show_to_all_sites = models.BooleanField(_("Applicable to all sites"), default=False)
-    
+    description = models.TextField(_("Description"), max_length=500, null=True, blank=True)
     objects = VendorManager()
     class Meta(BaseModel.Meta):
         db_table = "vendor"

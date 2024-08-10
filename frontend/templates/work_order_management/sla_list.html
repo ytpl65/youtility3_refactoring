@@ -58,16 +58,20 @@ $(document).ready(function(){
             <'col-sm-6'l> <'col-sm-6'p><'col-sm-12 d-flex justify-content-center'i>>`,
         columns:[
             { data:'id', visible:false, searchable:false, className:'noVis'},
-            {title:'Plandatetime', data:'cdtz'},
+            {title:'Datetime', data:'cdtz'},
             {title:'Report No', data:'other_data__wp_seqno', width:"10%"},
             {title:'Vendor Performance Template', data:'qset__qsetname'},
+
             {title:'Vendor Name', data:'vendor__name'},
             {title:'Approval', data:'workpermit'},
             {title:'Status', data:'workstatus'},
             {title:'Site', data:'bu__buname'},
+            {title:'Overall Score',data:'other_data__overall_score',visible:false},
+             {title:'Remarks',data:'other_data__remarks',visible:false},
             {title:'Action', data:null, defaultContent:'<a href="#" class="edit-link">Report&nbsp;<i class="bi text-danger fs-5 bi-file-earmark-pdf-fill"></i></a>'},
             {title:'Site Code', data:'bu__bucode', visible:false},
-            {visible:false, data:"ctzoffset", className:'noVis'}
+            {visible:false, data:"ctzoffset", className:'noVis'},
+           
         ],
         columnDefs:[
         {targets:1, render:function(data, type, row, meta){
@@ -81,7 +85,7 @@ $(document).ready(function(){
 
         {
             targets:5, render:function(data, type, row, meta){
-                if(data === 'APPRPVED'){
+                if(data === 'APPROVED'){
                     return `<span class="badge fs-9 badge-success">${data}</span>`
                 }else if (data === 'REJECTED'){
                     return `<span class="badge fs-9 badge-danger">${data}</span>`
@@ -109,9 +113,9 @@ $(document).ready(function(){
                     filename = ""
                 ),
                 dataTablesExcelConfig(
-                    title = '',
-                    columns = '',
-                    filename = ""
+                    title = 'Vendor Performance Report',
+                    columns = ':visible',
+                    filename = "Vendor Performance Report"
                 ),
                 dataTablesColumnVisibilityConfig(),
             {
@@ -126,6 +130,7 @@ $(document).ready(function(){
     $('#sla_list tbody').on('click', '.edit-link', function () {
     var data = table.row($(this).parents('tr')).data();
     data['submit_button_flow'] = false
+    data['filename']='sla_report'
     console.log("Data: ",data);
     $.ajax({
         url: '{{ url("work_order_management:sla") }}?action=printReport',
@@ -135,10 +140,14 @@ $(document).ready(function(){
           responseType: 'blob'
         },
         success: function (response) {
+            var reportname = data['qset__qsetname']
+            var seqno    = data['other_data__wp_seqno']
+            var site_name    = data['bu__buname']
+            var filename = `${reportname}_${site_name}_${seqno}.pdf`
             var blob = new Blob([response], { type: 'application/pdf' });
             var link = document.createElement('a');
             link.href = URL.createObjectURL(blob);
-            link.download = 'filename'; // You can set a default name or get it from the server
+            link.download = filename; // You can set a default name or get it from the server
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);

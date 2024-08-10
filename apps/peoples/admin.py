@@ -37,7 +37,7 @@ class PeopleResource(resources.ModelResource):
     BV = fields.Field(
         column_name='Site*',
         attribute='bu',
-        widget = BVForeignKeyWidget(om.Bt, 'bucode'),
+        widget = wg.ForeignKeyWidget(om.Bt, 'bucode'),
         saves_null_values = True,
         default=utils.get_or_create_none_bv
     )
@@ -172,13 +172,13 @@ class PeopleResource(resources.ModelResource):
             raise ValidationError("Please enter valid text avoid any special characters except [_, -]")
         
 
-        # mob no validation
-        if not utils.verify_mobno(str(row.get('Mob No*', -1))): raise ValidationError("Mob No* is not valid")
 
         # mob no validation
         if not utils.verify_mobno(str(row.get('Mob No*', -1))):
             raise ValidationError("Mob No* is not valid")
-        else: row['Mob No*'] = row['Mob No*'] if '+' in row['Mob No*'] else f'+{row["Mob No*"]}'
+        else: 
+            mob_no = str(row['Mob No*'])
+            row['Mob No*'] = mob_no if '+' in mob_no else f'+{mob_no}'
         
         # unique record check
         if People.objects.select_related().filter(

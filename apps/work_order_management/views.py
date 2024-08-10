@@ -6,7 +6,7 @@ from .forms import VendorForm, WorkOrderForm, WorkPermitForm, ApproverForm,SlaFo
 from .models import Vendor, Wom, WomDetails, Approver
 from apps.peoples.models import People
 from apps.activity.models import QuestionSetBelonging, QuestionSet
-from background_tasks.tasks import send_email_notification_for_wp,send_email_notification_for_vendor_and_security
+from background_tasks.tasks import send_email_notification_for_sla_vendor,send_email_notification_for_wp,send_email_notification_for_vendor_and_security
 from django.http import Http404, QueryDict, response as rp, HttpResponse
 from apps.core  import utils
 from apps.peoples import utils as putils
@@ -18,6 +18,7 @@ from django.utils import timezone
 from apps.reports import utils as rutils
 from apps.work_order_management import utils as wom_utils
 from apps.reports.report_designs.workpermit import GeneralWorkPermit
+from apps.reports.report_designs.service_level_agreement import ServiceLevelAgreement
 from apps.onboarding.models import TypeAssist,Bt
 
 logger = logging.getLogger('__main__')
@@ -176,7 +177,6 @@ class WorkOrderView(LoginRequiredMixin, View):
             if form.is_valid():
                 resp = self.handle_valid_form(form,  request, create)
             else:
-                ic(form.cleaned_data, form.data, form.errors)
                 cxt = {'errors': form.errors}
                 resp = utils.handle_invalid_form(request, self.params, cxt)
         except Exception:
@@ -345,7 +345,6 @@ class WorkPermit(LoginRequiredMixin, View):
         'form':WorkPermitForm,
         'related':['qset', 'cuser', 'bu'],
         'fields':['cdtz', 'id', 'other_data__wp_seqno', 'qset__qsetname', 'workpermit', 'cuser__peoplename', 'bu__bucode', 'bu__buname'],
-        # 'valid_workpermit':','.join(['Cold Work Permit','Hot Work Permit','Height Work Permit','Confined Space Work Permit','Electrical Work Permit','General Work Permit'])
         'valid_workpermit':','.join(['General Work Permit'])
 
     }
@@ -384,7 +383,6 @@ class WorkPermit(LoginRequiredMixin, View):
             return rp.JsonResponse(data={'status': 'Approved'}, status=200)
 
         if action == 'form':
-            print("Here I am in form view")
             import uuid
             cxt = {'wpform': P['form'](request=request), 'msg': "create workpermit requested", 'ownerid': uuid.uuid4(),'valid_workpermit':self.params['valid_workpermit']}
             return render(request, P['template_form'], cxt)
@@ -445,7 +443,6 @@ class WorkPermit(LoginRequiredMixin, View):
                 wom.save()
                 return rp.JsonResponse({'pk':wom.id})
             if pk := R.get('pk', None):
-                log.info("Here I am going after submission")
                 data = QueryDict(R['formData']).copy()
                 wp = utils.get_model_obj(pk, request, P)
                 form = self.params['form'](
@@ -453,11 +450,9 @@ class WorkPermit(LoginRequiredMixin, View):
                 create = False
             else:
                 data = QueryDict(R['formData']).copy()
-                print("Data: ",data)
                 form = self.params['form'](data, request = request)
                 create=True
             if form.is_valid():
-                print("Here I am going after submission")
                 resp = self.handle_valid_form(form, R, request, create)
             else:
                 cxt = {'errors': form.errors}
@@ -647,6 +642,57 @@ class ReplyWorkPermit(View):
             return render(request, P['email_template'], context=cxt)
         
         
+class ReplySla(View):
+    P = {
+        'email_template': "work_order_management/sla_server_reply.html",
+        'model':Wom,
+    }
+
+    def get(self,request,*args,**kwargs):
+        R,P = request.GET, self.P
+        S = request.session
+        if R.get('action') == 'accepted' and R.get('womid') and R.get('peopleid'):
+            log.info("Service level agreement report accepted")
+            log.info("R:%s",R)
+            log.info("Workpermit value",Wom.objects.get(uuid = R['womid']).workpermit)
+            p = People.objects.filter(id = R['peopleid']).first()
+            if is_all_approved := check_all_approved(R['womid'], p.peoplecode):
+                log.info("Inside of the if")
+                if Wom.WorkPermitStatus.APPROVED.value != Wom.objects.get(uuid = R['womid']).workpermit:
+                    Wom.objects.filter(uuid = R['womid']).update(workpermit = Wom.WorkPermitStatus.APPROVED.value)
+                    log.info("Inside of the second if")
+                    if is_all_approved:
+                        log.info("Inside of the third if")
+                        wom_id = R['womid']
+                        wom = Wom.objects.get(uuid = wom_id)
+                        sitename = Bt.objects.get(id=wom.bu_id).buname
+                        id = wom.id
+                        sla_report_obj = ServiceLevelAgreement(filename='Service Level Agreement', formdata={'id':id,'bu__buname':sitename,'submit_button_flow':'true','filename':'Service Level Agreement','workpermit':wom.workpermit})
+                        workpermit_attachment = sla_report_obj.execute()
+                        send_email_notification_for_sla_vendor.delay(R['womid'],workpermit_attachment,sitename)
+                else:
+                    log.info("Else case")
+                    return render(request, P['email_template'], context={'alreadyapproved':True})
+            cxt = {
+                'status': Wom.WorkPermitStatus.APPROVED.value,
+                'action_acknowledged':True,
+                'seqno':Wom.objects.get(uuid = R['womid']).other_data['wp_seqno']
+            }
+            log.info("is approved",is_all_approved)
+            log.info("Service level agreement report accepted through email")
+            return render(request, P['email_template'], context=cxt)
+        elif R.get('action') == 'rejected' and R.get('womid') and R.get('peopleid'):
+            wp = Wom.objects.filter(uuid = R['womid']).first()
+            if wp.workpermit == Wom.WorkPermitStatus.APPROVED:
+                return render(request, P['email_template'], context={'alreadyapproved':True})
+            p = People.objects.filter(id = R['peopleid']).first()
+            wp.workpermit = Wom.WorkPermitStatus.REJECTED.value
+            wp.save()
+            reject_workpermit(wp.uuid, p.peoplecode)
+            cxt = {'status': Wom.WorkPermitStatus.REJECTED.value, 'action_acknowledged':True, 'seqno':wp.other_data['wp_seqno']}
+            log.info('work permit rejected through email')
+            return render(request, P['email_template'], context=cxt)
+
 
 class ApproverView(LoginRequiredMixin, View):
     params = {
@@ -722,9 +768,6 @@ class ApproverView(LoginRequiredMixin, View):
             return utils.handle_intergrity_error('Question')
 
 class SLA_View(LoginRequiredMixin, View):
-
-
-
     params = {
         'template_form': 'work_order_management/sla_form.html',
         'template_list': 'work_order_management/sla_list.html',
@@ -749,7 +792,6 @@ class SLA_View(LoginRequiredMixin, View):
             return rp.JsonResponse({'data': objs}, status=200)
         
         if action == 'printReport':
-            print("Here I am in print report")
             return self.send_report(R, request)
         
         if action == 'form':
@@ -798,7 +840,6 @@ class SLA_View(LoginRequiredMixin, View):
                 form = self.params['form'](data, request = request)
                 create=True
             if form.is_valid():
-                print("Here I am going after submission")
                 resp = wom_utils.handle_valid_form(form, R, request, create)
             else:
                 cxt = {'errors': form.errors}
