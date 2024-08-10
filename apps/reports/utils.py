@@ -329,3 +329,17 @@ def process_sendingreport_on_email(fileresponse, formdata, email):
         send_generated_report_onfly_email.delay(filepath, email, formdata['to_addr'], formdata['cc'], formdata['ctzoffset'])
     except Exception as e:
         log.critical("something went wrong while sending report on email", exc_info=True)
+
+def find_file(file_name, search_path='/'):
+    for root, dirs, files in os.walk(search_path):
+        if file_name in files:
+            # Construct the full path to the file
+            file_path = os.path.join(root, file_name)
+            return file_path
+    # If file is not found
+    return None
+
+def trim_filename_from_path(file_path):
+    filename = os.path.basename(file_path)  # Get the filename from the path
+    trimmed_path = file_path[:-len(filename)]  # Remove the filename from the path
+    return trimmed_path

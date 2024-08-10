@@ -105,3 +105,34 @@ class ScheduleReport(BaseModel):
                 name="cron_report_type_workindays_report_params_uk"
             )
         ]
+
+class GeneratePDF(BaseModel):
+    class AdditionalFilter(models.TextChoices):
+        CUSTOMER   = ('CUSTOMER', 'Customer')
+        SITE       = ('SITE', 'Site')
+        
+    # class NumberOfPeriod(models.TextChoices):
+    #     ONE        = ('ONE', 'One')
+    #     MULTIPLE   = ('MULTIPLE', 'Multiple')
+    
+    class Company(models.TextChoices):
+        SPS        = ('SPS', 'SPS')
+        SFS        = ('SFS', 'SFS')
+        TARGET     = ('TARGET', 'TARGET')
+        
+    company = models.CharField('Company', choices = Company.choices, null=True, max_length = 60)
+    additional_filter = models.CharField('Additional Filter', choices = AdditionalFilter.choices, max_length = 60)
+    customer = models.CharField(max_length=255, null=True, blank=True, default=None)
+    site = models.CharField(max_length=255, null=True, blank=True,default=None)
+    # number_of_period = models.CharField('Number Of Period', choices = NumberOfPeriod.choices,  max_length = 60)
+    period_from = models.CharField(max_length=255, null=True, default=None, blank=True)
+    # period_to = models.CharField(max_length=255, null=True, default=None, blank=True)
+    
+    class Meta(BaseModel.Meta):
+        db_table = 'generatepdf'
+    
+    @classmethod
+    def get_solo(cls):
+        """Get the single instance of the model, creating one if it doesn't exist."""
+        obj, created = cls.objects.get_or_create(pk=1)  # Use a constant primary key
+        return obj

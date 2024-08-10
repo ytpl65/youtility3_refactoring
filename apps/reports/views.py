@@ -28,15 +28,16 @@ from django.urls import reverse_lazy
 from django.conf import settings
 import pandas as pd, xlsxwriter
 from apps.reports import utils as rutils
-from .models import ScheduleReport
+from .models import ScheduleReport, GeneratePDF
 from django_weasyprint.views import WeasyTemplateView
 from django.db import IntegrityError
 from background_tasks.tasks import create_save_report_async
 from background_tasks.report_tasks import remove_reportfile
 from celery.result import AsyncResult
-import time, base64, sys, json
+import time, base64, sys, json, os
+from frappeclient import FrappeClient
+from django.views.decorators.csrf import csrf_exempt
 log = logging.getLogger('__main__')
-
 # Create your views here.
 
 class RetriveSiteReports(LoginRequiredMixin, View):
@@ -823,3 +824,174 @@ class ScheduleEmailReport(LoginRequiredMixin, View):
             log.info("Integrity error occured")
             cxt = {'errors': "Scheduled report with these criteria is already exist"}
             return utils.handle_invalid_form(request, self.P, cxt)
+        
+class GeneratePdf(LoginRequiredMixin, View):
+    PARAMS = {
+        'template_form':"reports/generate_pdf/generate_pdf_file.html",
+        'form':rp_forms.GeneratePDFForm,
+    }
+    def get(self, request, *args, **kwargs):
+        import uuid
+        P = self.PARAMS
+        form = P['form'](request=request)
+        cxt = {
+            'form':form,
+            'ownerid' : uuid.uuid4()
+        }
+        return render(request, P['template_form'], context=cxt)
+    
+    def post(self, request, *args, **kwargs):
+        try:
+            data = json.loads(request.body)
+            file_name = data['file_name']
+            file_path = rutils.find_file(data['file_name'])
+            if file_path:
+                uan_list= getAllUAN(data['company'], data['customer'], data['site'], data['period_from'])
+                input_pdf_path = file_path
+                output_pdf_path = rutils.trim_filename_from_path(input_pdf_path) + 'downloaded_file.pdf'
+                if len(uan_list) != 0 :
+                    highlight_text_in_pdf(input_pdf_path, output_pdf_path, uan_list)
+                
+                    # Generate a response with the PDF file
+                    with open(output_pdf_path, 'rb') as pdf:
+                        pdf_content = pdf.read()
+                    response = HttpResponse(pdf_content, content_type='application/pdf')
+                    response['Content-Disposition'] = f'attachment; filename="Highlighted-{file_name}.pdf"'
+                    os.remove(output_pdf_path)
+                    return response
+                return HttpResponse("UAN Not Found", status=404)
+
+        except json.JSONDecodeError:
+            return JsonResponse({'error': 'Invalid JSON'}, status=400)
+
+
+@csrf_exempt
+def get_data(request):
+    try:
+        data = json.loads(request.body.decode('utf-8'))
+        if data:
+            customer = getCustomer(data['company'])
+            period   = getPeriod(data['company'])
+            if 'customer_code' in data:
+                site     = getCustomersSites(data['company'],data['customer_code'])
+                return JsonResponse({'success': True, 'data': [{"name": ""}] + site})
+            return JsonResponse({'success': True, 'data': [{"customer_code": "", "name": ""}] + customer, "period": [{'end_date': "", "name": None, "start_date": ""}] + period })
+        else:
+            return JsonResponse({'success': False})
+    except json.JSONDecodeError:
+        return JsonResponse({'error': 'Invalid JSON'}, status=400)
+    
+
+def getClient(company):
+    client= None
+    server_url= None
+    secerate_key= None
+    api_key= None
+    if company == 'SPS':
+        server_url = 'http://leave.spsindia.com:8007'
+        secerate_key= 'c7047cc28b4a14e'
+        api_key= '3a6bfc7224a228c'
+        client = FrappeClient(server_url, api_key=api_key, api_secret=secerate_key)
+    elif company == 'SFS':
+        server_url = 'http://leave.spsindia.com:8008'
+        secerate_key= 'c7047cc28b4a14e'
+        api_key= '3a6bfc7224a228c'
+        client = FrappeClient(server_url, api_key=api_key, api_secret=secerate_key)
+    elif company == 'SFS':
+        server_url = 'http://leave.spsindia.com:8002'
+        secerate_key= 'c7047cc28b4a14e'
+        api_key= '3a6bfc7224a228c'
+    else:
+        return None
+    client = FrappeClient(server_url, api_key=api_key, api_secret=secerate_key)
+    return client
+
+def getCustomer(company):
+    filters= {'disabled': 0}
+    fields= ['name', 'customer_code']
+    frappe_data = get_frappe_data(company, 'Customer', filters, fields)
+    return frappe_data
+
+def getPeriod(company):
+    filters= {'status': 'Active'}
+    fields= ['name', 'start_date', 'end_date']
+    frappe_data = get_frappe_data(company, 'Salary Payroll Period', filters, fields)
+    return frappe_data
+
+def getCustomersSites(company, customer_code):
+    filters= {'status': 'Active', 'business_unit': customer_code, 'bu_type': 'Site'}
+    fields= ['name', 'bu_name']
+    frappe_data = get_frappe_data(company, 'Business Unit', filters, fields)
+    return frappe_data
+    # if client:
+    #     sites = client.get_list('Salary Payroll Period', filters=filters, fields=fields)
+    #     print("!!!!!!",sites)
+    #     return sites
+
+def getAllUAN(company, customer_code, site_code, periods):
+    if site_code:
+        filters= {'customer_code': customer_code, 'site': site_code, 'period': ['in', periods]}
+    else:
+        filters= {'customer_code': customer_code, 'period': ['in', periods]}
+    fields= ['emp_id']
+    client= getClient(company)
+    processed_payroll_emp_list = client.get_list('Processed Payroll', filters=filters, fields=fields) or []
+    difference_processed_payroll_emp_list = client.get_list('Difference Processed Payroll', filters=filters, fields=fields) or []
+    emp_id_list= []
+    if processed_payroll_emp_list or difference_processed_payroll_emp_list:
+        for row in processed_payroll_emp_list + difference_processed_payroll_emp_list:
+            emp_id_list.append(row["emp_id"])
+    filters= {'name': ['in', emp_id_list]}
+    fields= ['uan_number']
+    uan_data= client.get_list('Employee', filters=filters, fields=fields) or []
+    return [uan_detail['uan_number'] for uan_detail in uan_data]
+
+
+def highlight_text_in_pdf(input_pdf_path, output_pdf_path, texts_to_highlight):
+    import fitz  # PyMuPDF        
+    # Open the PDF
+    document = fitz.open(input_pdf_path)
+    pages_to_keep = []
+
+    for page_num in range(document.page_count):
+        page = document[page_num]
+        page_has_highlight = False
+        for text in texts_to_highlight:
+            text_instances = page.search_for(text)
+            if text_instances:
+                page_has_highlight = True
+                for inst in text_instances:
+                    highlight = page.add_highlight_annot(inst)
+                    highlight.update()
+        if page_has_highlight:
+            pages_to_keep.append(page_num)
+
+    # Create a new document with only the pages that have highlights
+    new_document = fitz.open()
+    for page_num in pages_to_keep:
+        new_document.insert_pdf(document, from_page=page_num, to_page=page_num)
+
+    # Save the updated PDF
+    new_document.save(output_pdf_path)
+
+
+# # Example usage
+# input_pdf_path = '/home/vivek/vivek/highlight_pdf/ECR PF_ICICI_APR 2024THTHA0011774000.pdf'
+# output_pdf_path = '/home/vivek/vivek/highlight_pdf/ECR PF_ICICI_APR 2024THTHA0011774000_test1.pdf'
+# text_to_highlight = ['101196185843', '101267881769']
+
+# highlight_text_in_pdf(input_pdf_path, output_pdf_path, text_to_highlight)
+
+def get_frappe_data(company, document_type, filters, fields):
+    client= getClient(company)
+    all_frappe_data= []
+    if client:
+        start = 0
+        limit = 100
+        while True:
+            frappe_data = client.get_list(document_type, filters=filters, fields=fields, limit_start=start, limit_page_length=limit)
+            if not frappe_data:
+                break
+            all_frappe_data.extend(frappe_data)
+            start += limit
+        return all_frappe_data

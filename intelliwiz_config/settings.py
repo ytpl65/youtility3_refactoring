@@ -65,7 +65,7 @@ ENCRYPT_KEY = env('ENCRYPT_KEY')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True    
 
-ALLOWED_HOSTS = ['.localhost', 'demo.youtility.in', 'redmine.youtility.in', '192.168.1.254' , '127.0.0.1','192.168.1.33']
+ALLOWED_HOSTS = ['.localhost', 'demo.youtility.in', 'redmine.youtility.in', '192.168.1.254' , '127.0.0.1','192.168.1.33','192.168.1.107']
 
 # Application definition
 
