@@ -73,6 +73,7 @@ class QuestionResource(resources.ModelResource):
     
     def before_import_row(self, row, row_number, **kwargs):
         self.check_required_fields(row)
+        self.handle_nan_values(row)
         self.clean_question_name_and_answer_type(row)
         self.clean_numeric_and_rating_fields(row)
         self.validate_numeric_values(row)
@@ -114,6 +115,12 @@ class QuestionResource(resources.ModelResource):
             row[field] = float(value)
         elif field in ['Min', 'Max']: raise ValidationError(
             {field : f"{field} is required when Answer Type* is {row['Answer Type*']}"})
+        
+    def handle_nan_values(self, row):
+        values = ['Min', 'Max', 'Alert Below', 'Alert Above']
+        for val in values:
+            if isnan(row.get(val)):
+                row[val] = None
 
     def validate_numeric_values(self, row):
         min_value = row.get('Min')
@@ -146,7 +153,8 @@ class QuestionResource(resources.ModelResource):
         if am.Question.objects.select_related().filter(
             quesname=row['Question Name*'], answertype=row['Answer Type*'],
             client__bucode=row['Client*']).exists():
-            raise ValidationError(f"Record with these values already exists: {', '.join(row.values())}")
+            values = [str(value) if value is not None else '' for value in row.values()]
+            raise ValidationError(f"Record with these values already exists: {', '.join(values)}")
 
 
 
@@ -250,7 +258,6 @@ class QuestionSetResource(resources.ModelResource):
             if field_value := row.get(field):
                 model = apps.get_model(app_name, model_name)
                 values = field_value.replace(" ", "").split(',')
-                print("&&&&&&&&&&", values)
                 count = model.objects.filter(**{f'{lookup_field}__in': values}).count()
                 if len(values) != count:
                     raise ValidationError({field: f"Some of the values specified in {field} do not exist in the system"})
@@ -361,8 +368,9 @@ class QuestionSetBelongingResource(resources.ModelResource):
     def check_AVPT_fields(self, row):
         valid_avpt = ['BACKCAMPIC','FRONTCAMPIC','AUDIO','VIDEO','NONE']
         avpt_type = row.get('AVPT Type')
-        if avpt_type in valid_avpt:
-            raise ValidationError({avpt_type:f"{avpt_type} is not a valid AVPT Type. Please select a valid AVPT Type from {valid_avpt}"})
+        if avpt_type and avpt_type != 'NONE':
+            if avpt_type not in valid_avpt:
+                raise ValidationError({avpt_type:f"{avpt_type} is not a valid AVPT Type. Please select a valid AVPT Type from {valid_avpt}"})
 
     def check_required_fields(self, row):
         required_fields = ['Answer Type*', 'Question Name*', 'Question Set*', 'Client*', 'Site*']
@@ -586,7 +594,10 @@ class AssetResource(resources.ModelResource):
         ]
 
         for attribute_name, key, default_value in attributes:
-            setattr(self, attribute_name, row.get(key, default_value))
+            value = row.get(key, default_value)
+            if isinstance(value, float) and isnan(value):
+                value = None
+            setattr(self, attribute_name, value)
 
     
     def before_save_instance(self, instance, using_transactions, dry_run=False):

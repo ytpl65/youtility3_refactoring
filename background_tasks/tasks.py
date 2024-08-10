@@ -523,7 +523,7 @@ def send_email_notification_for_sla_vendor(self,wom_id,report_attachment,sitenam
         cxt = {
             'sla_report_no':sla_seqno,
             'sitename':sitename,
-            'report_name':'Service Level Agreement',
+            'report_name':'Vendor Performance Report',
         }
         html = render_to_string(
             'work_order_management/sla_vendor.html', context=cxt)

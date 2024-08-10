@@ -140,6 +140,7 @@ class PeopleResource(resources.ModelResource):
         self._currentaddr        = row.get('Current Address', "")
         self._permanentaddr      = row.get('Permanent Address', "")
         self._isemergencycontact = row.get('Emergency Contact') or False
+        self._userfor            = row.get('User For*') or 'Mobile'
         row['Mob No*'] = str(row['Mob No*'])
 
     def before_save_instance(self, instance, using_transactions, dry_run):
@@ -153,6 +154,7 @@ class PeopleResource(resources.ModelResource):
         instance.people_extras['alertmails']         = self._alertmails
         instance.people_extras['currentaddress']     = clean_string(self._currentaddr)
         instance.people_extras['permanentaddress']   = clean_string(self._permanentaddr)
+        instance.people_extras['userfor']          = self._userfor
         utils.save_common_stuff(self.request, instance)
         save_people_passwd(instance)
     

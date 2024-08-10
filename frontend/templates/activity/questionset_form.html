@@ -431,8 +431,10 @@ Question Set
         //on submit form post request
         $("#id_qsetform").submit((e) => {
             e.preventDefault()
-            var form = $(this);
-            const params   = { url: $(form).attr("action"), modal: false }
+            var form = $("#id_qsetform");
+            let formAction = form.attr("action")
+            const params   = { url: formAction, modal: false }
+            console.log("Params: ",params)
             const id = $("#pk").val() //form instance id
             var   payLoad  = {formData:$("#id_qsetform").serialize(), csrfmiddlewaretoken: '{{ csrf_token }}'} 
             if(id != 'None'){

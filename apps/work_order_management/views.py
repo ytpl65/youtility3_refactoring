@@ -681,6 +681,7 @@ class ReplySla(View):
             log.info("is approved",is_all_approved)
             log.info("Service level agreement report accepted through email")
             return render(request, P['email_template'], context=cxt)
+        
         elif R.get('action') == 'rejected' and R.get('womid') and R.get('peopleid'):
             wp = Wom.objects.filter(uuid = R['womid']).first()
             if wp.workpermit == Wom.WorkPermitStatus.APPROVED:
@@ -780,6 +781,7 @@ class SLA_View(LoginRequiredMixin, View):
     def get(self, request, *args, **kwargs):
         R, P = request.GET, self.params
         action = R.get('action')
+        print("Action: ",action,R)
         if R.get('template'):
             return render(request,P['template_list'])
         
@@ -793,6 +795,30 @@ class SLA_View(LoginRequiredMixin, View):
         
         if action == 'printReport':
             return self.send_report(R, request)
+        
+        if action == 'approve_sla' and R.get('slaid'):
+            print("SLA Approve")
+            S = request.session 
+            wom = P['model'].objects.get(id = R['slaid'])
+            sla_obj = ServiceLevelAgreement(filename='Vendor Performance Report', client_id=S['client_id'], formdata={'id':R['slaid'],'bu__buname':S['sitename'],'submit_button_flow':'true','filename':'Service Level Agreement','workpermit':wom.workpermit})
+            sla_attachment = sla_obj.execute()
+            print("SLA Attachment: ",sla_attachment)
+            if is_all_approved := check_all_approved(wom.uuid, request.user.peoplecode):
+                Wom.objects.filter(id=R['slaid']).update(workpermit=Wom.WorkPermitStatus.APPROVED.value)
+                if is_all_approved:
+                    workpermit_status = 'APPROVED'
+                    sla_uuid = wom.uuid
+                    send_email_notification_for_sla_vendor.delay(sla_uuid,sla_attachment,S['sitename'])
+            return rp.JsonResponse(data={'status': 'Approved'}, status=200)
+        
+
+        if action == 'reject_sla' and R.get('slaid'):
+            wom = P['model'].objects.get(id = R['slaid'])
+            if wom.workpermit == Wom.WorkPermitStatus.APPROVED:
+                return HttpResponse("The work order is already approved")
+            Wom.objects.filter(id = R['slaid']).update(workpermit = Wom.WorkPermitStatus.REJECTED.value)
+            reject_workpermit(wom.uuid, request.user.peoplecode)
+            return rp.JsonResponse(data={'status': 'Rejected'}, status=200)
         
         if action == 'form':
             import uuid
