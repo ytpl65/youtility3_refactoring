@@ -18,4 +18,5 @@ urlpatterns = [
     path('schedule-email-report/',     views.ScheduleEmailReport.as_view(),            name='schedule_email_report'),
     path('generatepdf/',               views.GeneratePdf.as_view(),                    name="generatepdf"),
     path('generatepdf-getdata/',       views.get_data,                                 name='generatepdf-getdata'),
+    path('upload-pdf/',                views.upload_pdf,                               name='upload-pdf'),
 ]

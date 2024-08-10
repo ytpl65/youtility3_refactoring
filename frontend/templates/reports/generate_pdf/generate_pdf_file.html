@@ -19,7 +19,7 @@ Generate PDF Form
 
 {% block form %}     
  
-<form action="{{ url('reports:generatepdf') }}" class="validate" method="post"
+<form action="{{ url('reports:generatepdf') }}" class="validate" method="post" enctype="multipart/form-data"
   id="generate_pdf_form">
   <!-- ------------------------ CSRF MIDDLEWARE TOKEN ------------------ -->
   <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
@@ -118,7 +118,24 @@ Generate PDF Form
 <script src="{{ static('assets/js/just-validate.production.min.js') }}"></script>
     <script>
     $(document).ready(function(){
+      let dropzoneInitialized = false;
       
+          setUpDropzone({
+            foldertype:"tmp_generated_pdf",
+            ownername:'generated_pdf',
+            attachmenttype:"ATTACHMENT",
+            uploadUrl:"{{ url('reports:upload-pdf') }}",
+            ctzoffset:-1,
+            csrftoken:"{{ csrf_token }}",
+            formId:"#dropzone_file",
+            peopleid:"{{ request.user.id }}",
+            ownerid:"{{ ownerid }}",
+            create_or_update:'{{ form.instance.id }}' == 'None' ? "create" : "update",
+            media_url:"{{ MEDIA_URL }}",
+            acceptedFiles:"application/pdf",
+          })
+
+
       $("#id_company").on('change', function() {
       var selectedCompanyValue = $('#id_company').val()
       function callPythonMethod(selectedCompanyValue) {
@@ -176,7 +193,6 @@ Generate PDF Form
       }
       callPythonMethod(selectedCompanyValue)
       })
-  
       
       $("#id_customer").on('change', function() {
         var selectedCompanyValue = $('#id_company').val()
@@ -228,21 +244,6 @@ Generate PDF Form
         requiredOnLabel(document.querySelector('label[for="id_site"]'));
         requiredOnLabel(document.querySelector('label[for="id_period_from"]'));
         requiredOnLabel(document.querySelector('label[for="id_period_to"]'));
-        
-        setUpDropzone({
-            foldertype:"workorder",
-            ownername:'Wom',
-            attachmenttype:"ATTACHMENT",
-            uploadUrl:"{{ url('activity:attachments') }}",
-            ctzoffset:-1,
-            csrftoken:"{{ csrf_token }}",
-            formId:"#dropzone_file",
-            peopleid:"{{ request.user.id }}",
-            ownerid:"{{ ownerid }}",
-            create_or_update:'{{ form.instance.id }}' == 'None' ? "create" : "update",
-            media_url:"{{ MEDIA_URL }}",
-            acceptedFiles:"application/pdf",
-          })
 
         $('#id_company').change(function() {
           if ($(this).val() !== '') {
@@ -329,6 +330,21 @@ Generate PDF Form
         //on form submit
         $("#submit").on('click', function(e){
 
+         /* setUpDropzone({
+            foldertype:"workorder",
+            ownername:'Wom',
+            attachmenttype:"ATTACHMENT",
+            uploadUrl:"{{ url('reports:generatepdf') }}",
+            ctzoffset:-1,
+            csrftoken:"{{ csrf_token }}",
+            formId:"#dropzone_file",
+            peopleid:"{{ request.user.id }}",
+            ownerid:"{{ ownerid }}",
+            create_or_update:'{{ form.instance.id }}' == 'None' ? "create" : "update",
+            media_url:"{{ MEDIA_URL }}",
+            acceptedFiles:"application/pdf",
+          })*/
+
           hideShowError('#id_additional_filter', error_additional_filter, 'Additional Filter is required.')
           
           //hideShowError('#id_number_of_period', error_number_of_period, 'Number of Period is required.')
@@ -364,7 +380,7 @@ Generate PDF Form
             site: $('#id_site').val(),
             period_from: $('#id_period_from').val(),
             //period_to: $('#id_period_to').val(),
-            file_name: filename 
+            file_name: session._auth_user_id + "-" + filename 
           }
           if ($('#id_additional_filter').val() && $('#id_company').val() && $('#id_customer').val(), $('#id_period_from').val()){ //&& $('#id_number_of_period').val() commented
             const csrfToken = $('input[name="csrfmiddlewaretoken"]').val();

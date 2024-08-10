@@ -37,6 +37,8 @@ from celery.result import AsyncResult
 import time, base64, sys, json, os
 from frappeclient import FrappeClient
 from django.views.decorators.csrf import csrf_exempt
+from datetime import datetime
+from dateutil import parser
 log = logging.getLogger('__main__')
 # Create your views here.
 
@@ -858,6 +860,7 @@ class GeneratePdf(LoginRequiredMixin, View):
                     response = HttpResponse(pdf_content, content_type='application/pdf')
                     response['Content-Disposition'] = f'attachment; filename="Highlighted-{file_name}.pdf"'
                     os.remove(output_pdf_path)
+                    os.remove(input_pdf_path)
                     return response
                 return HttpResponse("UAN Not Found", status=404)
 
@@ -995,3 +998,26 @@ def get_frappe_data(company, document_type, filters, fields):
             all_frappe_data.extend(frappe_data)
             start += limit
         return all_frappe_data
+    
+def upload_pdf(request):
+    if 'img' not in request.FILES:
+        return
+    people_id = request.POST['peopleid']
+    home_dir = settings.MEDIA_ROOT
+    foldertype = request.POST["foldertype"]
+    filename = people_id + "-" + os.path.splitext(request.FILES['img'].name)[0] + os.path.splitext(request.FILES['img'].name)[1]
+    fullpath = f'{home_dir}/{foldertype}/'
+    if not os.path.exists(fullpath):    
+        os.makedirs(fullpath)
+    fileurl = f'{fullpath}{filename}'
+    try:
+        if not os.path.exists(fileurl):
+            with open(fileurl, 'wb') as temp_file:
+                temp_file.write(request.FILES['img'].read())
+                temp_file.close()
+    except Exception as e:
+        logger.critical(e, exc_info=True)
+        return False, None, None
+    # return True, filename, fullpath
+    response = {"filename": filename, "fullpath": fullpath}
+    return HttpResponse(response, status=200)
