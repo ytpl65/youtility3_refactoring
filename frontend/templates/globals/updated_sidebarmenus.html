@@ -1,6 +1,6 @@
 <div class="menu menu-column menu-title-gray-800 menu-state-title-primary menu-state-icon-primary menu-state-bullet-primary menu-arrow text-white mb-1-gray-500"
     id="kt_aside_menu" data-kt-menu="true">
-
+    {% if request.session._auth_user_id not in ["1063","1064"] %}
     <!---DASHBOARD--->
     <div class="menu-item" id="DASHBOARD" style="display:none;">
         <a class="menu-link" href="{{ url('onboarding:rp_dashboard') }}">
@@ -521,14 +521,15 @@
           <span class="menu-bullet">
             <span class="bullet bullet-dot"></span>
           </span>
-          <span class="menu-title">Schedule Report</span>
+          <span class="menu-title">Schedule Report </span>
         </a>
       </div>
     </div>
   </div>
+  
     {% if request.user.is_superuser %}
 
-
+    
     <div data-kt-menu-trigger="click" class="menu-item menu-accordion" style="display:none;" id="superadmin">
         <span class="menu-link">
             <span class="menu-icon">
@@ -623,5 +624,23 @@
             </div>
         </div>
     </div> #}
+    {% endif %}
+    {% else %}
+   
+    <div class="menu-item" id="DASHBOARD" style="">
+        <a class="menu-link" href="/reports/generatepdf/">
+            <span class="menu-icon">
+                <!--begin::Svg Icon | path: icons/duotone/Communication/Group.svg-->
+                <span class="svg-icon svg-icon-2">
+                    <span class="material-symbols-outlined">
+                        picture_as_pdf
+                    </span>
+                  </span>
+                <!--end::Svg Icon-->
+            </span>
+            <span class="menu-title">Generate PDF</span>
+        </a>
+    </div>
+    
     {% endif %}
 </div>
