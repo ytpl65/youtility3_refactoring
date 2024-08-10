@@ -860,7 +860,6 @@ class GeneratePdf(LoginRequiredMixin, View):
                     response = HttpResponse(pdf_content, content_type='application/pdf')
                     response['Content-Disposition'] = f'attachment; filename="Highlighted-{file_name}.pdf"'
                     os.remove(output_pdf_path)
-                    os.remove(input_pdf_path)
                     return response
                 return HttpResponse("UAN Not Found", status=404)
 
