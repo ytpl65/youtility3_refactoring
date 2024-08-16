@@ -1,6 +1,6 @@
 <div class="menu menu-column menu-title-gray-800 menu-state-title-primary menu-state-icon-primary menu-state-bullet-primary menu-arrow text-white mb-1-gray-500"
     id="kt_aside_menu" data-kt-menu="true">
-    {% if request.session._auth_user_id not in ["1063","1064"] %}
+    {% if request.session.sitecode not in ["SPSESIC"] %}
     <!---DASHBOARD--->
     <div class="menu-item" id="DASHBOARD" style="display:none;">
         <a class="menu-link" href="{{ url('onboarding:rp_dashboard') }}">

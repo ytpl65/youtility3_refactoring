@@ -76,7 +76,7 @@ class SignIn(View):
                     display_user_session_info(request.session)
                     logger.info(f"User logged in {request.user.peoplecode}")
                     if request.session.get('bu_id') in [1, None]: return redirect('peoples:no_site')
-                    if request.session.get('_auth_user_id') not in ["1063","1064"]:
+                    if request.session.get('sitecode') not in ["SPSESIC"]:
                         response = redirect('onboarding:wizard_delete') if request.session.get('wizard_data') else redirect('onboarding:rp_dashboard')
                     else:
                         response = redirect('reports:generatepdf')
