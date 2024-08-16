@@ -951,11 +951,16 @@ def getAllUAN(company, customer_code, site_code, periods):
 
 def highlight_text_in_pdf(input_pdf_path, output_pdf_path, texts_to_highlight):
     import fitz  # PyMuPDF        
+
     # Open the PDF
     document = fitz.open(input_pdf_path)
     pages_to_keep = []
 
-    for page_num in range(document.page_count):
+    # Always keep the first page
+    if document.page_count > 0:
+        pages_to_keep.append(0)
+
+    for page_num in range(1, document.page_count):  # Start from page 1
         page = document[page_num]
         page_has_highlight = False
         for text in texts_to_highlight:
