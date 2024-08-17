@@ -297,13 +297,13 @@ class GeneratePDFForm(forms.ModelForm):
     required_css_class = "required"
     class Meta:
         model = GeneratePDF
-        fields = ["additional_filter","customer","site","period_from","company"] #period_to & number_of_period
+        fields = ["additional_filter","customer","site","period_from","company","document_type"] #period_to & number_of_period
 
     # data fields
     customer              = forms.ChoiceField(label='Customer', required=True)
-    site                  = forms.ChoiceField(label='Site', required=True)
-    period_from           = forms.ChoiceField(label='Period From', required=True)
-    # period_to             = forms.ChoiceField(label='Period To', required=True)
+    site                  = forms.ChoiceField(label='Site', required=True) 
+    period_from           = forms.MultipleChoiceField(label="Period", widget=s2forms.Select2MultipleWidget, required=True)
+    # period_to           = forms.ChoiceField(label='Period To', required=True)
 
     def __init__(self, *args, **kwargs):
         self.request = kwargs.pop('request', None)

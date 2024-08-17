@@ -119,7 +119,12 @@ class GeneratePDF(BaseModel):
         SPS        = ('SPS', 'SPS')
         SFS        = ('SFS', 'SFS')
         TARGET     = ('TARGET', 'TARGET')
-        
+    
+    class DocumentType(models.TextChoices):
+        PF        = ('PF', 'PF')
+        ESIC      = ('ESIC', 'ESIC')
+
+    document_type = models.CharField('Document Type', choices = DocumentType.choices, null=True, max_length = 60)    
     company = models.CharField('Company', choices = Company.choices, null=True, max_length = 60)
     additional_filter = models.CharField('Additional Filter', choices = AdditionalFilter.choices, max_length = 60)
     customer = models.CharField(max_length=255, null=True, blank=True, default=None)

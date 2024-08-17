@@ -39,6 +39,7 @@ from frappeclient import FrappeClient
 from django.views.decorators.csrf import csrf_exempt
 from datetime import datetime
 from dateutil import parser
+import fitz  # PyMuPDF
 log = logging.getLogger('__main__')
 # Create your views here.
 
@@ -848,7 +849,10 @@ class GeneratePdf(LoginRequiredMixin, View):
             file_name = data['file_name']
             file_path = rutils.find_file(data['file_name'])
             if file_path:
-                uan_list= getAllUAN(data['company'], data['customer'], data['site'], data['period_from'])
+                if data["document_type"] == 'PF':
+                    uan_list= getAllUAN(data['company'], data['customer'], data['site'], data['period_from'])[0]
+                else:
+                    uan_list= getAllUAN(data['company'], data['customer'], data['site'], data['period_from'])[1]
                 input_pdf_path = file_path
                 output_pdf_path = rutils.trim_filename_from_path(input_pdf_path) + 'downloaded_file.pdf'
                 if len(uan_list) != 0 :
@@ -944,43 +948,57 @@ def getAllUAN(company, customer_code, site_code, periods):
         for row in processed_payroll_emp_list + difference_processed_payroll_emp_list:
             emp_id_list.append(row["emp_id"])
     filters= {'name': ['in', emp_id_list]}
-    fields= ['uan_number']
+    fields= ['uan_number', "esi_number"]
     uan_data= client.get_list('Employee', filters=filters, fields=fields) or []
-    return [uan_detail['uan_number'] for uan_detail in uan_data]
+    return [uan_detail['uan_number'].strip() if uan_detail['uan_number'] else None for uan_detail in uan_data], [uan_detail['esi_number'].strip() if uan_detail['esi_number'] else None for uan_detail in uan_data]
 
 
-def highlight_text_in_pdf(input_pdf_path, output_pdf_path, texts_to_highlight):
-    import fitz  # PyMuPDF        
-
+def highlight_text_in_pdf(input_pdf_path, output_pdf_path, texts_to_highlight):        
     # Open the PDF
     document = fitz.open(input_pdf_path)
     pages_to_keep = []
 
-    # Always keep the first page
+    # Check and highlight text on the first page
     if document.page_count > 0:
+        first_page = document[0]
+        first_page_has_highlight = False
+
+        for text in texts_to_highlight:
+            if text:
+                text_instances = first_page.search_for(text)
+                if text_instances:
+                    first_page_has_highlight = True
+                    for inst in text_instances:
+                        highlight = first_page.add_highlight_annot(inst)
+                        highlight.update()
+        
+        # Always keep the first page
         pages_to_keep.append(0)
 
+    # Check and highlight text on subsequent pages
     for page_num in range(1, document.page_count):  # Start from page 1
         page = document[page_num]
         page_has_highlight = False
         for text in texts_to_highlight:
-            text_instances = page.search_for(text)
-            if text_instances:
-                page_has_highlight = True
-                for inst in text_instances:
-                    highlight = page.add_highlight_annot(inst)
-                    highlight.update()
+            if text:
+                text_instances = page.search_for(text)
+                if text_instances:
+                    page_has_highlight = True
+                    for inst in text_instances:
+                        highlight = page.add_highlight_annot(inst)
+                        highlight.update()
         if page_has_highlight:
             pages_to_keep.append(page_num)
 
-    # Create a new document with only the pages that have highlights
+    # Create a new document with all pages to be kept
     new_document = fitz.open()
     for page_num in pages_to_keep:
         new_document.insert_pdf(document, from_page=page_num, to_page=page_num)
 
     # Save the updated PDF
     new_document.save(output_pdf_path)
-
+    new_document.close()
+    document.close()
 
 # # Example usage
 # input_pdf_path = '/home/vivek/vivek/highlight_pdf/ECR PF_ICICI_APR 2024THTHA0011774000.pdf'
