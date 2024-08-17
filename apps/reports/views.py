@@ -935,21 +935,22 @@ def getCustomersSites(company, customer_code):
     #     return sites
 
 def getAllUAN(company, customer_code, site_code, periods):
+    filters= None
     if site_code:
         filters= {'customer_code': customer_code, 'site': site_code, 'period': ['in', periods]}
     else:
         filters= {'customer_code': customer_code, 'period': ['in', periods]}
     fields= ['emp_id']
     client= getClient(company)
-    processed_payroll_emp_list = client.get_list('Processed Payroll', filters=filters, fields=fields) or []
-    difference_processed_payroll_emp_list = client.get_list('Difference Processed Payroll', filters=filters, fields=fields) or []
+    processed_payroll_emp_list = get_frappe_data(company, 'Processed Payroll', filters, fields) or []
+    difference_processed_payroll_emp_list = get_frappe_data(company, 'Difference Processed Payroll', filters, fields) or []
     emp_id_list= []
     if processed_payroll_emp_list or difference_processed_payroll_emp_list:
         for row in processed_payroll_emp_list + difference_processed_payroll_emp_list:
             emp_id_list.append(row["emp_id"])
     filters= {'name': ['in', emp_id_list]}
     fields= ['uan_number', "esi_number"]
-    uan_data= client.get_list('Employee', filters=filters, fields=fields) or []
+    uan_data= get_frappe_data(company, 'Employee', filters, fields) or []
     return [uan_detail['uan_number'].strip() if uan_detail['uan_number'] else None for uan_detail in uan_data], [uan_detail['esi_number'].strip() if uan_detail['esi_number'] else None for uan_detail in uan_data]
 
 
