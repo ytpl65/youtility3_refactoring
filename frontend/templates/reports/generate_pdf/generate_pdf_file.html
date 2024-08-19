@@ -224,14 +224,14 @@ Generate PDF Form
               var $dropdown = $('#id_site');
               $dropdown.empty();
               var Array = Object.values(data);
-              if (Array[1]) {
-                $.each(Array[1], function(index, site) {
-                    $dropdown.append($('<option></option>').attr('value', site.name).text(site.name+ ' - ' + site.bu_name));
-                });
-              } else {
-                $dropdown.append($('<option></option>').attr('value', '').text('')); // Add empty option
-              }
-                
+                if (Array[1]) {
+                  $.each(Array[1], function(index, site) {
+                      $dropdown.append($('<option></option>').attr('value', site.name).text(site.name+ ' - ' + site.bu_name));
+                  });
+                } else {
+                  $dropdown.append($('<option></option>').attr('value', '').text('')); // Add empty option
+                }
+              
             },
             error: function(xhr, status, error) {
                 console.error('AJAX request failed:', status, error);
@@ -279,8 +279,6 @@ Generate PDF Form
 
         $('#id_additional_filter').change(function() {
           if ($(this).val() === 'CUSTOMER') {
-            var siteElement = document.getElementById('id_site');
-            siteElement.value = ''
             customer.classList.remove('d-none');
             site.classList.add('d-none');
             error_additional_filter.classList.add('d-none')
@@ -396,8 +394,28 @@ Generate PDF Form
               errorMessage.textContent = 'Please Select the File';
               errorMessage.style.color = 'red';
           }
-          
+
           e.preventDefault()
+          
+          function downloadedFileName(){
+            if ($('#id_document_type').val() == 'PF'){
+              if ($('#id_site').find('option:selected').text() != ' - '){
+                return "ECR_" + $('#id_site').find('option:selected').text().split(' - ')[1].trim() + ".pdf"
+              }
+              else{
+                return "ECR_" + $('#id_customer').find('option:selected').text().split(' - ')[1].trim() + ".pdf"
+              }
+            }
+            else{
+              if ($('#id_site').find('option:selected').text() != ' - '){
+                return "MCR_" + $('#id_site').find('option:selected').text().split(' - ')[1].trim() + ".pdf"
+              }
+              else{
+                return "MCR_" + $('#id_customer').find('option:selected').text().split(' - ')[1].trim() + ".pdf"
+              }
+            }
+          }
+
           const formData = {
             document_type: $('#id_document_type').val(), 
             company: $('#id_company').val(),
@@ -428,7 +446,7 @@ Generate PDF Form
                   var link = document.createElement('a');
                   link.href = URL.createObjectURL(blob);
                   //window.open(link.href, "_blank");
-                  link.download = "Highlighted-" + filename + '.pdf';
+                  link.download = downloadedFileName();
                   document.body.appendChild(link);
                   link.click();
                   document.body.removeChild(link);

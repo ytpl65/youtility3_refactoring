@@ -880,7 +880,7 @@ def get_data(request):
             period   = getPeriod(data['company'])
             if 'customer_code' in data:
                 site     = getCustomersSites(data['company'],data['customer_code'])
-                return JsonResponse({'success': True, 'data': [{"name": ""}] + site})
+                return JsonResponse({'success': True, 'data': [{"name": "", "bu_name": ""}] + site})
             return JsonResponse({'success': True, 'data': [{"customer_code": "", "name": ""}] + customer, "period": [{'end_date': "", "name": None, "start_date": ""}] + period })
         else:
             return JsonResponse({'success': False})
@@ -1028,6 +1028,7 @@ def upload_pdf(request):
     people_id = request.POST['peopleid']
     home_dir = settings.MEDIA_ROOT
     foldertype = request.POST["foldertype"]
+    
     filename = people_id + "-" + os.path.splitext(request.FILES['img'].name)[0] + os.path.splitext(request.FILES['img'].name)[1]
     fullpath = f'{home_dir}/{foldertype}/'
     if not os.path.exists(fullpath):    
