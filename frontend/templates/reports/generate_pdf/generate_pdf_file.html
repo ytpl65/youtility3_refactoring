@@ -400,18 +400,18 @@ Generate PDF Form
           function downloadedFileName(){
             if ($('#id_document_type').val() == 'PF'){
               if ($('#id_site').find('option:selected').text() != ' - '){
-                return "ECR_" + $('#id_site').find('option:selected').text().split(' - ')[1].trim() + ".pdf"
+                return "ECR PF_" + $('#id_site').find('option:selected').text().split(' - ')[1].trim() + ".pdf"
               }
               else{
-                return "ECR_" + $('#id_customer').find('option:selected').text().split(' - ')[1].trim() + ".pdf"
+                return "ECR PF_" + $('#id_customer').find('option:selected').text().split(' - ')[1].trim() + ".pdf"
               }
             }
             else{
               if ($('#id_site').find('option:selected').text() != ' - '){
-                return "MCR_" + $('#id_site').find('option:selected').text().split(' - ')[1].trim() + ".pdf"
+                return "MCR ESIC_" + $('#id_site').find('option:selected').text().split(' - ')[1].trim() + ".pdf"
               }
               else{
-                return "MCR_" + $('#id_customer').find('option:selected').text().split(' - ')[1].trim() + ".pdf"
+                return "MCR ESIC_" + $('#id_customer').find('option:selected').text().split(' - ')[1].trim() + ".pdf"
               }
             }
           }
