@@ -11,6 +11,7 @@ import apps.onboarding.models as om
 from apps.core import utils
 from django.core.exceptions import ValidationError
 import re
+from math import isnan
 
 class BaseResource(resources.ModelResource):
     CLIENT = fields.Field(
@@ -249,7 +250,11 @@ class BtResource(resources.ModelResource):
             'city':self._city, 'country':self._country,
             'state':self._state, 'formattedAddress':self._address,
             'latlng':self._latlng}
-        instance.solid = int(self._solid) if self._solid else None
+        if self._solid and not (isinstance(self._solid, float) and isnan(self._solid)):
+            instance.solid = int(self._solid)
+        else:
+            instance.solid = None
+            
         utils.save_common_stuff(self.request, instance)
 
     def get_queryset(self):
