@@ -414,9 +414,7 @@ class WorkPermit(LoginRequiredMixin, View):
             return self.send_report(R, request)
 
         if 'id' in R:
-            print("After Submission Here I am")
             log.info("In this view")
-            print("R:  ",R)
             # get work permit questionnaire
             obj = utils.get_model_obj(int(R['id']), request, P)
             wp_answers = Wom.objects.get_wp_answers(obj.id)
@@ -471,12 +469,10 @@ class WorkPermit(LoginRequiredMixin, View):
         workpermit = save_approvers_injson(workpermit)
         formdata = QueryDict(request.POST['workpermitdetails']).copy()
         self.create_workpermit_details(request.POST, workpermit, request, formdata)
-        print("Session",S)
         wom = Wom.objects.get(id = workpermit.id)
         sitename = S.get('sitename','demo')
         workpermit_obj = GeneralWorkPermit(filename=R['permit_name'], client_id=S['client_id'], formdata={'id':workpermit.id,'bu__buname':sitename,'submit_button_flow':R['submit_button_flow'],'filename':R['permit_name'],'site_name':S['sitename'],'workpermit':wom.workpermit})
         workpermit_attachment = workpermit_obj.execute()
-        print("Workpermit Path: ",workpermit_attachment)
         workpermit_status = 'PENDING'
         send_email_notification_for_wp.delay(workpermit.id, workpermit.qset_id, workpermit.approvers, S['client_id'], S['bu_id'],workpermit_attachment,sitename,workpermit_status)
 
@@ -588,8 +584,6 @@ class WorkPermit(LoginRequiredMixin, View):
     
     def send_report(self, R, request):
         ReportFormat = self.getReportFormatBasedOnWorkpermitType(R)
-        print("R: ",R)
-        print("Request: ",request)
         report = ReportFormat(
             filename=R['qset__qsetname'], client_id=request.session['client_id'], formdata=R, request=request)
         return report.execute()
@@ -775,7 +769,6 @@ class SLA_View(LoginRequiredMixin, View):
     def send_report(self, R, request):
         from apps.reports.report_designs import service_level_agreement as sla
         report = sla.ServiceLevelAgreement(filename=R['qset__qsetname'], client_id=request.session['client_id'], formdata=R, request=request)
-        print("Report: ",report)
         return report.execute()
 
     def post(self,request,*args,**kwargs):

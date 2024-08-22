@@ -697,7 +697,6 @@ class SwitchSite(LoginRequiredMixin, View):
         req_buid= request.POST["buid"]
         resp = {}
         if req_buid !=" ":
-            print(" iff  req_buid", req_buid )
             sites = obm.Bt.objects.filter(id=req_buid).values('id', 'bucode','buname', 'enable')[:1]
             if len(sites) > 0:
                 if sites[0]['enable'] == True:
