@@ -642,6 +642,7 @@ class Attachments(LoginRequiredMixin, View):
     
     def post(self, request, *args, **kwargs):
         R, P = request.POST, self.params
+        print("R",R)
         if 'img' in request.FILES:
             isUploaded, filename, filepath = utils.upload(request)
             filepath = filepath.replace(settings.MEDIA_ROOT, "")

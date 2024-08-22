@@ -1665,7 +1665,7 @@ function setUpDropzone(params) {
     addRemoveLinks: true,
     resizeWidth: params.width || null,
     resizeHeight: params.height || null,
-    accepedFiles: ["mp4", "png", "jpeg", "jpg", "xlsx", "xlx", "pdf"],
+    acceptedFiles: params.hasOwnProperty('acceptedFiles') ? params.acceptedFiles : ".mp4,.png,.jpeg,.jpg,.xlsx,.xls,.pdf",
   });
 
   myDropzone.on("sending", function (file, xhr, formData) {
@@ -1681,6 +1681,7 @@ function setUpDropzone(params) {
   // Handle file upload
   myDropzone.on("success", function (file, response) {
     file.id = response.id;
+    return file.upload.filename
   });
 
   //handle remove item

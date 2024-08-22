@@ -16,4 +16,7 @@ urlpatterns = [
     path('get_report_status/',         views.return_status_of_report,                name='report_status'),
     path('design/',                    views.DesignReport.as_view(),                   name='design'),
     path('schedule-email-report/',     views.ScheduleEmailReport.as_view(),            name='schedule_email_report'),
+    path('generatepdf/',               views.GeneratePdf.as_view(),                    name="generatepdf"),
+    path('generatepdf-getdata/',       views.get_data,                                 name='generatepdf-getdata'),
+    path('upload-pdf/',                views.upload_pdf,                               name='upload-pdf'),
 ]

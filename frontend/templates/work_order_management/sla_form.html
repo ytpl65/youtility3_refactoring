@@ -48,7 +48,7 @@ SLA Form
                 Attachments&nbsp;<i class="fas text-dark fa-paperclip"></i>
             </button>
         </div>
-    </div>
+    </div>  
     {% else %}
     <button type="button"  id="load_questions" class="btn btn-sm btn-primary2">
         Load Questionaire &nbsp;<i class="bi text-white bi-cloud-download"></i>
@@ -407,6 +407,7 @@ SLA Form
                 'permit_name': text,
                 'submit_button_flow':true
             }
+
             submit_form_alert().then((res) => {
                 if (res.isConfirmed) {
                     fire_ajax_form_post(params, payLoad)
@@ -426,18 +427,18 @@ SLA Form
             })
         })
 
-        $(".approve-wp").click((e) => {
+        $(".approve-sla").click((e) => {
             //appprove workpermit
-            submit_form_alert(text=null, title = 'Approve Work Permit!').then((res) => {
+            submit_form_alert(text=null, title = 'Vendor Performance Report !').then((res) => {
                 if(res.isConfirmed){
-                    let womid = "{{ slaform.instance.id }}"
+                    let slaid = "{{ slaform.instance.id }}"
                     fire_ajax_get({
-                        url:`${urlname}?action=approve_wp&womid=${womid}`,
+                        url:`${urlname}?action=approve_sla&slaid=${slaid}`,
                     }).done((data, status, xhr) => {
 
                         Swal.fire({
                             icon: 'success',
-                            title: 'Work Permit has been approved',
+                            title: 'Vendor Performance Report has been approved',
                             showConfirmButton: false,
                             timer: 1500
                         })
@@ -450,18 +451,18 @@ SLA Form
             })
         })
         
-        $(".reject-wp").click((e) => {
+        $(".reject-sla").click((e) => {
             //appprove workpermit
-            submit_form_alert(text=null, title = 'Reject Work Permit!').then((res) => {
+            submit_form_alert(text=null, title = 'Reject Vendor Performance Report!').then((res) => {
                 if(res.isConfirmed){
                     let womid = "{{ slaform.instance.id }}"
                     fire_ajax_get({
-                        url:`${urlname}?action=reject_wp&womid=${womid}`,
+                        url:`${urlname}?action=reject_sla&slaid=${womid}`,
                     }).done((data, status, xhr) => {
 
                         Swal.fire({
                             icon: 'success',
-                            title: 'Work Permit has been rejected',
+                            title: 'Vendor Performance Report has been rejected',
                             showConfirmButton: false,
                             timer: 1500
                         })

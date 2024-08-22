@@ -7,7 +7,7 @@ from django_select2 import forms as s2forms
 from django.db.models import Q
 from datetime import datetime, timedelta
 from django.conf import settings
-from apps.reports.models import ScheduleReport
+from apps.reports.models import ScheduleReport, GeneratePDF
 from enum import Enum
 
 class MasterReportTemplate(forms.ModelForm):
@@ -293,6 +293,27 @@ class EmailReportForm(forms.ModelForm):
             return self.CronType.WORKINGDAYS.value
     
 
-        
-        
-    
+class GeneratePDFForm(forms.ModelForm):
+    required_css_class = "required"
+    class Meta:
+        model = GeneratePDF
+        fields = ["additional_filter","customer","site","period_from","company","document_type"] #period_to & number_of_period
+
+    # data fields
+    customer              = forms.ChoiceField(label='Customer', required=True)
+    site                  = forms.ChoiceField(label='Site', required=True) 
+    period_from           = forms.MultipleChoiceField(label="Period", widget=s2forms.Select2MultipleWidget, required=True)
+    # period_to           = forms.ChoiceField(label='Period To', required=True)
+
+    def __init__(self, *args, **kwargs):
+        self.request = kwargs.pop('request', None)
+        super().__init__(*args, **kwargs)
+        if not self.fields['customer'].initial:
+            self.fields['customer'].required = False
+        if not self.fields['site'].initial:
+            self.fields['site'].required = False
+        if not self.fields['period_from'].initial:
+            self.fields['period_from'].required = False
+        # if not self.fields['period_to'].initial:
+        #     self.fields['period_to'].required = False
+        utils.initailize_form_fields(self)

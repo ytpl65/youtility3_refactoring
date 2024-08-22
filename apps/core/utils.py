@@ -1261,6 +1261,7 @@ def orderedRandom(arr, k):
 
 def upload(request, vendor=False):
     logger.info(f"{request.POST = }")
+    activity_name = None
     S = request.session
     if 'img' not in request.FILES:
         return
@@ -1269,7 +1270,8 @@ def upload(request, vendor=False):
         tabletype, activity_name = "transaction", foldertype.upper()
     if foldertype in ['people', 'client']:
         tabletype, activity_name = "master", foldertype.upper()
-    logger.info(f"Floder type: {foldertype} and activity Name: {activity_name}")
+    if activity_name :
+        logger.info(f"Floder type: {foldertype} and activity Name: {activity_name}")
 
     home_dir = settings.MEDIA_ROOT
     fextension = os.path.splitext(request.FILES['img'].name)[1]
@@ -1284,10 +1286,10 @@ def upload(request, vendor=False):
         
     else:
         fullpath = f'{home_dir}/master/{S["clientcode"]}_{S["client_id"]}/{foldertype}/'
-    
+    print("Full Path",fullpath)
     logger.info(f'{fullpath = }')
 
-
+    
     if not os.path.exists(fullpath):    
         os.makedirs(fullpath)
     fileurl = f'{fullpath}{filename}'
