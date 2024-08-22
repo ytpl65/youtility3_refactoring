@@ -1,0 +1,368 @@
+{% extends "globals/base_form.html" %}
+
+{% block extras_css %}
+{{ shift_form.media.css }}
+<link  href="{{ static('assets/plugins/custom/DataTables/datatables.min.css') }}" rel="stylesheet" type="text/css"/>
+<link  href="{{ static('assets/plugins/custom/Editor-2.0.8/css/editor.dataTables.min.css') }}" rel="stylesheet" type="text/css"/>
+
+{% endblock extras_css %}
+
+<!------ BEGIN FORM TITLE ------->
+{% block form_title %}
+Shift Form
+{% endblock form_title %}
+<!------ END FORM TITLE -------->
+
+{% block pagebreadcumb %}
+{{ super() }}
+<li class="breadcrumb-item pe-3"><a href="{{ url('onboarding:shift') }}?template=true" class="pe-3">Shift List</a></li>
+<li class="breadcrumb-item pe-3"><a href="javascript:void(0)" class="pe-3">Shift Form</a></li>
+{% endblock pagebreadcumb %}
+
+{% block nonfield_errors %}
+<div class="alert alert-danger" id="nonfield_errors" role="alert" style="display:none">
+    <strong>Error: </strong> <span></span>
+</div>
+{% endblock nonfield_errors %}
+
+{% block form %}
+<form action="" method="post" id="shiftform">
+    <input type="hidden" name="pk" id="pk" value="{{ shift_form.instance.pk }}">
+    <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
+    <input type="hidden" name="{{ shift_form.ctzoffset.name }}" id="{{ shift_form.ctzoffset.auto_id }}" value="-1">
+    <div class="row">
+        <div class="col-md-6">
+            <div class="input-group mb-3">
+                <div class="col-md-4">
+                    {{ shift_form.shiftname.label_tag() }}
+                </div>
+                <div class="col-md-8">
+                    {{ shift_form.shiftname }}
+                </div>
+            </div>
+            <div class="input-group mb-3">
+                <div class="col-md-4">
+                    {{ shift_form.starttime.label_tag() }}
+                </div>
+                <div class="col-md-8">
+                    {{ shift_form.starttime }}
+                </div>
+            </div>
+            <div class="input-group mb-3">
+                <div class="col-md-4">
+                    {{ shift_form.endtime.label_tag() }}
+                </div>
+                <div class="col-md-8">
+                    {{ shift_form.endtime }}
+                </div>
+            </div>
+            <div class="d-flex">
+                <div class="input-group form-check form-switch form-check-solid mb-6">
+                    <label for="{{ shift_form.nightshiftappicable.id_for_label }}" 
+                    class="form-check-label bool text-sm-right">{{ shift_form.nightshiftappicable }}&nbsp;&nbsp;{{ shift_form.nightshiftappicable.label }}</label>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="input-group mb-3">
+                <div class="col-md-4">
+                    {{ shift_form.shiftduration.label_tag() }}
+                </div>
+                <div class="col-md-8">
+                    {{ shift_form.shiftduration }}
+                </div>
+            </div>
+            <div class="input-group mb-3">
+                <div class="col-md-4">
+                    {{ shift_form.captchafreq.label_tag() }}
+                </div>
+                <div class="col-md-8">
+                    {{ shift_form.captchafreq }}
+                </div>
+            </div>
+            <div class="input-group mb-3">
+                <div class="col-md-4">
+                        {{ shift_form.designation.label_tag() }}
+                    </div>
+                    <div class="col-md-8">
+                        {{ shift_form.designation }}
+                </div>
+            </div>
+            <div class="input-group mb-3">
+                <div class="col-md-4">
+                    {{ shift_form.peoplecount.label_tag() }}
+                </div>
+                <div class="col-md-8">
+                    {{ shift_form.peoplecount }}
+                </div>
+            </div>
+        </div>
+    </div>
+</form>
+{% endblock form %}
+
+{% block extras %}
+<div class="row">
+  <div class="card">
+    <div class="card-header ps-0 mb-0">
+      <h4 class="ch4">Shift People Count :-&nbsp;<i class="fas text-white fa-layer-group ch4"></i></h4>
+    </div>
+    <div class="card-body pt-0">
+      <table id="People_count_details" class="display cell-border compact hover nowrap"></table>
+    </div>
+  </div>
+</div>
+{% endblock extras %}
+
+{% block ajax_page_actions %}
+<div class="form-actions">
+    <button type="submit" form="shiftform" class="btn btn-sm btn-primary2 btn-hover-scale">
+        {% if shift_form.instance.id %}
+        Update
+        {% else %}
+        Save
+        {% endif %}
+        &nbsp;<i class="fas text-white fa-cloud-upload-alt"></i>
+    </button>
+    
+    <button type="button" id="btn_clear"
+        class="btn btn-sm btn-secondary btn-hover-scale">
+        Clear&nbsp;<i class="fas fa-times"></i>
+    </button>
+    {% if shift_form.instance.id %}
+    <button type="button" onclick="deleteShift(this)" data-id="{{ shift_form.instance.id }}" id="id_deleteShift"
+        class="btn btn-sm btn-danger btn-hover-scale">
+        Delete&nbsp;<i class="fas text-white fa-trash-alt"></i>
+    </button>
+    {% endif %}
+</div>
+{% endblock ajax_page_actions %}
+
+{% block extra_scripts %}
+{{ shift_form.media.js }}
+<script src="{{ static('assets/plugins/custom/DataTables/datatables.min.js') }}" type="text/javascript"></script>
+<script src="{{ static('assets/plugins/custom/DataTables/Select-1.3.4/js/dataTables.select.min.js') }}" type="text/javascript"></script>
+<script src="{{ static('assets/plugins/custom/Editor-2.0.8/js/dataTables.editor.min.js') }}" type="text/javascript"></script>
+<script src="{{ static('assets/plugins/custom/Editor-2.0.8/js/editor.select2.js') }}" type="text/javascript"></script>
+<script>
+
+    var listdesginations_editor;
+    var tablist_designations; 
+
+    function getCurrentEditingRow(editor, table) {
+        var rowModifier = editor.modifier();
+        return rowModifier ? table.row(rowModifier).data() : 'None'
+    }   
+
+    function formatMins(duration){
+        return Math.floor(duration / 60) + 'Hrs, ' + duration % 60 + "min";
+    }
+
+    //format mins to readable format
+    var val = $("#id_shiftduration").val()
+    if (val != "") {
+        let mins = parseInt(val, 10);
+        $("#id_shiftduration").val(formatMins(mins))
+    }
+    var nightshiftWarn = false;
+
+    function deleteShift(elem) {
+        var id = $(elem).attr("data-id");
+        var viewname = 'Shift Form';
+        show_alert_before_delete(viewname)
+        .then((result) => {
+            if (result.isConfirmed) {
+                let urlname = "{{ url('onboarding:shift') }}";
+                const params = {url: urlname + '?action=delete&id=' + id}
+                fire_ajax_get(params)
+                .done((data, status, xhr) => {
+                    show_successful_delete_alert();
+                    window.setTimeout(function() {
+                        window.location.href = "{{ url('onboarding:shift') }}?template=true";
+                    }, 2000);
+                })
+                .fail((xhr, status, error) => {
+                    let err = typeof xhr.responseJSON.errors == 'string' ? xhr.responseJSON.errors : 'Something went wrong!';
+                    show_error_alert(err);
+                });
+            }
+        });
+    }
+
+    var editor;
+    var table;
+
+    function editorFieldsConfig() {
+        return [
+            { label: "Designation", name: "designation" },
+            { label: "People count", name: "people_count", type: "number" }
+        ];
+    }
+
+    function tableColumnsConfig() {
+        return [
+            {data: 'designation', title: 'Designation'},
+            {data: 'people_count', title: 'People Count'}
+        ];
+    }
+
+
+
+    $(document).ready(function() {
+
+        // Set ctzoffset
+        $("#id_ctzoffset").val(-new Date().getTimezoneOffset());
+
+        //hide the delete button when instance is not saved yet.
+        if ('{{shift_form.instance.id}}' == 'None') {
+            $("#btn_del").hide()
+        }
+        //adding time widget to starttime and endtime
+        $('#id_starttime, #id_endtime').flatpickr({
+            enableTime: true,
+            noCalendar: true,
+            dateFormat: "H:i",
+            time_24hr: true,
+            //llowInput = true
+        })
+        //hide next btn if instance is not saved yet
+        if (session['wizard_data'] && session['wizard_data']['shiftids'].length == 0) {
+            $('#next_btn').hide()
+        }
+
+        //alert user about night shift
+         const nightShiftAlert = {
+            title: "Night shift alert",
+            text: `According to Start time & End Time do you want to create a 'Night Shift',
+                then the checkbox 'Night Shift Applicable will be enabled by default'`,
+            icon: "warning",
+            showCancelButton: true,
+            confirmButtonText: 'Go for it!',
+            allowOutsideClick: false
+        }
+        const alertUser = () => {
+            Swal.fire(nightShiftAlert).then((res) => {
+                if (res.isConfirmed) {
+                    $("#id_nightshiftappicable").prop('checked', true)
+                } else {
+                    $("#id_starttime, #id_endtime, #id_shiftduration").val("")
+                    $("#id_nightshiftappicable").prop('checked', false)
+                }
+            })
+            nightshiftWarn=true;
+        }
+
+        //total shift duration
+        $("#id_starttime, #id_endtime").change(() => {
+            var st = moment($("#id_starttime").val(), "HH:mm")
+            var et = moment($("#id_endtime").val(), "HH:mm")
+            var duration = moment.duration(et.diff(st)).asMinutes()
+            if (duration < 0) {
+                duration = 1440 + duration
+                nightshiftWarn === false ? alertUser() : {}
+            } else {
+                $("#id_nightshiftappicable").prop('checked', false)
+            }
+            var totalhrs = formatMins(duration)
+            if (totalhrs !== 'NaNHrs, NaNmin') {
+                $("#id_shiftduration").val(totalhrs)
+            }
+        })
+
+        // Hide delete button when instance is not saved yet
+        if ('{{shift_form.instance.id}}' == 'None') {
+            $("#id_deleteShift").hide();
+        }
+
+        // Clear form
+        $("#btn_clear").click(() => {
+            location.href = "{{ url('onboarding:shift') }}?action=form";
+        });
+
+        // Form submission
+        $("#shiftform").on('submit', function(e) {
+            var form = $(this);
+            e.preventDefault();
+            const params = {url: "{{ url('onboarding:shift') }}", modal: false};
+            const id = "{{ shift_form.instance.pk }}";
+
+            var formData = form.serialize();
+
+            var payLoad = {
+                formData: formData,
+                csrfmiddlewaretoken: '{{ csrf_token }}'
+            };
+
+            if (id != 'None') {
+                payLoad.pk = id;
+            }
+            fire_ajax_form_post(params, payLoad)
+            .done((data, status, xhr) => {
+                show_successful_save_alert(update = id != 'None' ? true : false);
+                window.setTimeout(function() {var url = "{{ url('onboarding:shift') }}";
+                url += "?id=" + data.row.id;window.location.href = url;}, 2000);
+            });
+        });
+
+
+
+
+        var editor = new $.fn.dataTable.Editor({
+                ajax: {
+                    url:"{{ url('onboarding:shift') }}",
+                    data: function(d) {
+                        d.actiond = 'edit_shift_data';
+                        d.shift_id = "{{shift_form.instance.id}}";
+                        d.csrfmiddlewaretoken = '{{ csrf_token }}';}
+                },
+                table: "#People_count_details",
+                fields: [
+                    
+                    { label: "Designation", name: "designation" },
+                    { label: "People count", name: "people_count"},
+                ]
+            });
+
+        editor.on('open', function(e, mode, action){
+            console.log('editor opened',action)
+        })
+        
+
+        editor.on('opened', function(e, moed, action){
+            $('.DTED_Lightbox_Content').draggable()
+        })
+        
+        
+        var table = $('#People_count_details').DataTable({
+            ajax:{
+                url:"{{ url('onboarding:shift') }}",
+                data: function(d){
+                    d.action = 'get_shift_data';
+                    d.shift_id = "{{shift_form.instance.id}}";  
+                }
+            },
+            columns:[
+                {data:'designation',title:'Designation'},
+                {data:'count',title:'People Count'},
+            ],  
+            deferRender:true,
+			responsive:true,
+            dom:`<'row' <'col-sm-6 d-flex justify-content-start'f> <'col-sm-6 d-flex justify-content-end'B> >rt<'row'
+			 <'col-sm-6'l> <'col-sm-6'p><'col-sm-12 d-flex justify-content-center'i>>`,
+            columnDefs:[ ],
+            select: true,
+            buttons: [
+                    {text:'<i class="fas text-white fa-sync-alt text-dark"></i>', titleAttr:'Refresh Data', className:'refreshBtn disabled'},
+                    { extend: "create", editor: editor },
+                    { extend: "edit", editor: editor },
+                    { extend: "remove", editor: editor }
+                ],
+            select:{
+                style: 'single',
+            }
+
+        });
+
+    });
+</script>
+{% endblock extra_scripts %}

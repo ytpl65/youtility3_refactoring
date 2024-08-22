@@ -100,6 +100,12 @@ class Bt(BaseModel, TenantAwareModel):
         if self.siteincharge is None: self.siteincharge= utils.get_or_create_none_people()
         if self.butype is None: self.butype = utils.get_none_typeassist()
 
+def shiftdata_json():
+    return{
+        'gracetime':"",
+        'people_count':[]
+    }
+
 class Shift(BaseModel, TenantAwareModel):
     bu                  = models.ForeignKey('Bt', verbose_name='Buisiness View', null = True, on_delete = models.RESTRICT, related_name="shift_bu")
     client              = models.ForeignKey('Bt', verbose_name='Buisiness View', null = True, on_delete = models.RESTRICT, related_name="shift_client")
@@ -112,6 +118,8 @@ class Shift(BaseModel, TenantAwareModel):
     nightshiftappicable = models.BooleanField(default = True, verbose_name="Night Shift Applicable")
     captchafreq         = models.IntegerField(default = 10, null = True)
     enable              = models.BooleanField(verbose_name='Enable', default = True)
+    shift_data          = models.JSONField( encoder = DjangoJSONEncoder, blank = True, null = True, default = shiftdata_json)
+
 
     objects = ShiftManager()
     class Meta(BaseModel.Meta):

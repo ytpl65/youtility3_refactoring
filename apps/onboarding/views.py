@@ -72,7 +72,6 @@ def handle_pop_forms(request):
     save_userinfo(ta, request.user, request.session)
     if request.session.get('wizard_data'):
         request.session['wizard_data']['taids'].append(ta.id)
-        print(ta.id)
     return rp.JsonResponse({'saved': True, 'id': ta.id, 'tacode': ta.tacode})
 
 # -------------------- END Client View Classes ------------------------------#
@@ -117,21 +116,18 @@ class SuperTypeAssist(LoginRequiredMixin, View):
             obj = utils.get_model_obj(int(R['id']), request, self.params)
             resp = utils.render_form_for_update(
                 request, self.params, "ta_form", obj)
-        print(f'return resp={resp}')
         return resp
 
     def post(self, request, *args, **kwargs):
         resp, create = None, True
         R = request.POST
         try:
-            print(request.POST)
             data = QueryDict(request.POST['formData'])
             pk = request.POST.get('pk', None)
             if pk:
                 msg = "supertypeassist_view"
                 form = utils.get_instance_for_update(
                     data, self.params, msg, int(pk), {'request': request})
-                print(form.data)
                 create = False
             else:
                 form = self.params['form_class'](data, request=request)
@@ -208,7 +204,6 @@ class TypeAssistView(LoginRequiredMixin, View):
                 msg = "typeassist_view"
                 form = utils.get_instance_for_update(
                     data, self.params, msg, int(pk), {'request': request})
-                print(form.data)
                 create = False
             else:
                 form = self.params['form_class'](data, request=request)
@@ -240,16 +235,16 @@ class ShiftView(LoginRequiredMixin, View):
     params = {
         'form_class': obforms.ShiftForm,
         'template_form': 'onboarding/partials/partial_shiftform.html',
+        'shift_form':'onboarding/shift_form.html',
         'template_list': 'onboarding/shift.html',
         'related': ['parent',  'cuser', 'muser', 'bu'],
         'model': Shift,
         'fields': ['id', 'shiftname', 'starttime', 'endtime', 'nightshiftappicable',
-                   'bu__bucode', 'bu__buname'],
+                   'bu__bucode', 'bu__buname','designation','peoplecount'],
         'form_initials': {}}
 
     def get(self, request, *args, **kwargs):
         R, resp, P = request.GET, None, self.params
-
         # first load the template
         if R.get('template'):
             return render(request, self.params['template_list'])
@@ -257,28 +252,44 @@ class ShiftView(LoginRequiredMixin, View):
         if R.get('action', None) == 'list':
             objs = self.params['model'].objects.shift_listview(
                 request, P['related'], P['fields'])
-            print(objs)
             resp = rp.JsonResponse(data={
                 'data': list(objs),
             }, status=200, safe=False)
 
         elif R.get('action', None) == 'form':
+            form_instance = self.params['form_class'](request=request)
+            designation_choices = {str(key): value for key, value in form_instance.fields['designation'].choices}
             cxt = {'shift_form': self.params['form_class'](request=request),
                    'msg': "create shift requested"}
-            resp = utils.render_form(request, self.params, cxt)
+            cxt['designation_choices'] = json.dumps(designation_choices)
+            resp = render(request, P['shift_form'], cxt)
 
         elif R.get('action', None) == "delete" and R.get('id', None):
             resp = utils.render_form_for_delete(request, self.params, False)
+
+        elif R.get('action') == "get_shift_data" and R.get('shift_id'):
+            obj = utils.get_model_obj(int(R['shift_id']), request, self.params)
+            data = obj.shift_data.get('count_details')
+            data = {'data': {'designation': list(data.keys())[0], 'count':list(data.values())[0]}}
+            print('data',data)
+            return rp.JsonResponse(data=data, status=200, safe=False)
+            
         elif R.get('id', None):
             obj = utils.get_model_obj(int(R['id']), request, self.params)
-            resp = utils.render_form_for_update(
-                request, self.params, "shift_form", obj)
+            cxt = {'shift_form':P['form_class'](instance=obj, request=request),
+                   'msg': "update shift requested"}
+            resp = render(request, P['shift_form'], context = cxt)
+        
         return resp
 
     def post(self, request, *args, **kwargs):
         resp, create = None, True
         try:
+            if request.POST.get('actiond') == 'edit_shift_data':
+                return self.handle_shift_data_edit(request)
+            print('post',request.POST)
             data = QueryDict(request.POST['formData'])
+            print(data)
             pk = request.POST.get('pk', None)
             if pk:
                 msg = "shift_view"
@@ -302,6 +313,7 @@ class ShiftView(LoginRequiredMixin, View):
         from apps.core.utils import handle_intergrity_error
         try:
             shift = form.save()
+
             shift.bu_id = int(request.session['client_id'])
             putils.save_userinfo(shift, request.user,
                                  request.session, create=create)
@@ -311,6 +323,35 @@ class ShiftView(LoginRequiredMixin, View):
             return rp.JsonResponse(data, status=200)
         except IntegrityError:
             return handle_intergrity_error("Shift")
+        
+    def handle_shift_data_edit(self, request):  
+        shift_id = request.POST.get('shift_id')
+        shift = utils.get_model_obj(int(shift_id), request, self.params)
+        data = request.POST.dict()
+        action = data.get('action')
+
+        if not shift.shift_data:
+            shift.shift_data = {'people_count': []}
+
+        new_data = {
+            data.get('data[0][designation]') : data.get('data[0][people_count]')
+        }
+
+        if action == 'create':
+            if 'count_details' in shift.shift_data:
+                shift.shift_data['count_details'].update(new_data)
+            else: 
+                shift.shift_data['count_details'] = new_data
+
+        elif action == 'edit':
+            index = next((index for (index, d) in enumerate(shift.shift_data['count_details']) if d["designation"] == new_data["designation"]), None)
+            if index is not None:
+                shift.shift_data['gracetime'][index] = new_data
+        elif action == 'remove':
+            shift.shift_data['count_details'] = [d for d in shift.shift_data['count_details'] if d['designation'] != new_data['designation']]
+
+        shift.save()
+        return rp.JsonResponse({'status': 'success'}, status=200)
 
 
 class EditorTa(LoginRequiredMixin, View):
@@ -510,11 +551,8 @@ class BulkImportData(LoginRequiredMixin,ParameterMixin, View):
             return render(request, self.template, cxt)
         
         if R.get('action') == 'getInstructions':
-            print("Here I am ")
             inst = utils.Instructions(tablename=R.get('tablename'))
-            print("Inst",inst)
             instructions = inst.get_insructions()
-            print("Instructions:",instructions)
             return rp.JsonResponse({'instructions':instructions}, status=200)
 
         if (request.GET.get('action') == 'downloadTemplate') and request.GET.get('template'):
