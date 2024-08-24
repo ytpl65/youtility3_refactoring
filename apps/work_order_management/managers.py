@@ -356,49 +356,6 @@ class WorkOrderManager(models.Manager):
         workpermit_sections['questions'] = questions_in_list
         return workpermit_sections
 
-    # def extract_question_from_general_details(self,new_general_details):
-
-    #     print("General Deatils", new_general_details)
-    #     permit_initiated_by  = None 
-    #     permit_authorized_by = None 
-    #     workpermit           = None
-    #     permit_valid_upto    = None
-    #     permit_valid_from    = None
-        
-    #     for question in new_general_details['questions']:
-    #         print("Questions",question)
-    #         if question['question__quesname'] == 'Permit Initiated by':
-    #             permit_initiated_by = question['answer']
-    #         if question['question__quesname'] == 'Permit Authorized by':
-    #             permit_authorized_by = question['answer']
-    #         if question['question__quesname'] == 'Type of permit':
-    #             workpermit = question['answer']
-    #             print("Work Permit: ",workpermit)
-    #         if question['question__quesname'] == 'Permit valid from':
-    #             permit_valid_from = question['answer']
-    #         if question['question__quesname'] == 'Permit valid upto':
-    #             permit_valid_upto =  question['answer']
-            
-    #     # permit_authorized_by = permit_authorized_by.split(',')
-    #     # print("Permit Authorized ",permit_authorized_by)
-    #     # authorized_people_name = []
-    #     # for code in permit_authorized_by:
-    #     #     try:
-    #     #         people = People.objects.get(peoplecode=code)
-    #     #         authorized_people_name.append(people.peoplename)
-    #     #         print(authorized_people_name)
-    #     #     except People.DoesNotExist:
-    #     #         print("Error")
-        
-    #     data = {
-    #             'permit_initiated_by':permit_initiated_by,
-    #             'permit_authorized_by':permit_authorized_by,
-    #             'workpermit':workpermit,
-    #             'permit_valid_from':permit_valid_from,
-    #             'permit_valid_upto':permit_valid_upto
-    #         }
-    #     return data
-
     def extract_question_from_general_details(self, new_general_details,id,approval_status):
         permit_initiated_by = "" 
         permit_authorized_by = "" 

@@ -240,7 +240,7 @@ class ShiftForm(forms.ModelForm):
     class Meta:
         model = obm.Shift
         fields = ['shiftname', 'starttime', 'endtime', 'ctzoffset',
-        'nightshiftappicable', 'shiftduration', 'designation', 'captchafreq', 'peoplecount', ]
+        'nightshiftappicable', 'shiftduration', 'designation', 'captchafreq', 'peoplecount','shift_data' ]
         labels={
             'shiftname'  : 'Shift Name',
             'starttime'  : 'Start Time',
@@ -248,6 +248,7 @@ class ShiftForm(forms.ModelForm):
             'captchafreq': 'Captcha Frequency',
             'designation': "Designation",
             'peoplecount': "People Count",
+            'shift_data' : "Shift Data",
         }
         widgets ={
             'shiftname':forms.TextInput(attrs={'placeholder': "Enter shift name"}),
@@ -262,7 +263,7 @@ class ShiftForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         self.fields['nightshiftappicable'].initial = False
         
-        self.fields['designation'].queryset = obm.TypeAssist.objects.filter(tatype__tacode='DESIGNATION', client_id__in = [S['client_id'], 1])
+        self.fields['designation'].queryset = obm.TypeAssist.objects.filter(tatype__tacode='DESIGNATION',bu_id__in = [S['bu_id'],1], client_id__in = [S['client_id'], 1])
         utils.initailize_form_fields(self)
 
     def clean_shiftname(self):

@@ -254,6 +254,7 @@ class BtResource(resources.ModelResource):
             instance.solid = int(self._solid)
         else:
             instance.solid = None
+            
         utils.save_common_stuff(self.request, instance)
 
     def get_queryset(self):
