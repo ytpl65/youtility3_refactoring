@@ -1,11 +1,11 @@
 {% extends "globals/base_form.html" %}
 
-{% block extras_css %}
+{% block extra_css %}
 {{ shift_form.media.css }}
 <link  href="{{ static('assets/plugins/custom/DataTables/datatables.min.css') }}" rel="stylesheet" type="text/css"/>
 <link  href="{{ static('assets/plugins/custom/Editor-2.0.8/css/editor.dataTables.min.css') }}" rel="stylesheet" type="text/css"/>
+{% endblock extra_css %}
 
-{% endblock extras_css %}
 
 <!------ BEGIN FORM TITLE ------->
 {% block form_title %}
@@ -13,17 +13,20 @@ Shift Form
 {% endblock form_title %}
 <!------ END FORM TITLE -------->
 
+
 {% block pagebreadcumb %}
 {{ super() }}
 <li class="breadcrumb-item pe-3"><a href="{{ url('onboarding:shift') }}?template=true" class="pe-3">Shift List</a></li>
 <li class="breadcrumb-item pe-3"><a href="javascript:void(0)" class="pe-3">Shift Form</a></li>
 {% endblock pagebreadcumb %}
 
+
 {% block nonfield_errors %}
 <div class="alert alert-danger" id="nonfield_errors" role="alert" style="display:none">
     <strong>Error: </strong> <span></span>
 </div>
 {% endblock nonfield_errors %}
+
 
 {% block form %}
 <form action="" method="post" id="shiftform">
@@ -80,7 +83,7 @@ Shift Form
                     {{ shift_form.captchafreq }}
                 </div>
             </div>
-            <div class="input-group mb-3">
+            <div class="input-group mb-3 d-none">
                 <div class="col-md-4">
                         {{ shift_form.designation.label_tag() }}
                     </div>
@@ -102,16 +105,18 @@ Shift Form
 {% endblock form %}
 
 {% block extras %}
+{% if shift_form.instance.id %}
 <div class="row">
   <div class="card">
     <div class="card-header ps-0 mb-0">
-      <h4 class="ch4">Shift People Count :-&nbsp;<i class="fas text-white fa-layer-group ch4"></i></h4>
+      <h4 class="ch4">Designation Count :-&nbsp;<i class="fas text-white fa-layer-group ch4"></i></h4>
     </div>
     <div class="card-body pt-0">
       <table id="People_count_details" class="display cell-border compact hover nowrap"></table>
     </div>
   </div>
 </div>
+{% endif%}
 {% endblock extras %}
 
 {% block ajax_page_actions %}
@@ -146,8 +151,11 @@ Shift Form
 <script src="{{ static('assets/plugins/custom/Editor-2.0.8/js/editor.select2.js') }}" type="text/javascript"></script>
 <script>
 
-    var listdesginations_editor;
-    var tablist_designations; 
+    //format mins to readable format
+    var val = $("#id_shiftduration").val()
+    var nightshiftWarn = false;
+    var editor;
+    var table;
 
     function getCurrentEditingRow(editor, table) {
         var rowModifier = editor.modifier();
@@ -158,13 +166,10 @@ Shift Form
         return Math.floor(duration / 60) + 'Hrs, ' + duration % 60 + "min";
     }
 
-    //format mins to readable format
-    var val = $("#id_shiftduration").val()
     if (val != "") {
         let mins = parseInt(val, 10);
         $("#id_shiftduration").val(formatMins(mins))
     }
-    var nightshiftWarn = false;
 
     function deleteShift(elem) {
         var id = $(elem).attr("data-id");
@@ -189,24 +194,6 @@ Shift Form
         });
     }
 
-    var editor;
-    var table;
-
-    function editorFieldsConfig() {
-        return [
-            { label: "Designation", name: "designation" },
-            { label: "People count", name: "people_count", type: "number" }
-        ];
-    }
-
-    function tableColumnsConfig() {
-        return [
-            {data: 'designation', title: 'Designation'},
-            {data: 'people_count', title: 'People Count'}
-        ];
-    }
-
-
 
     $(document).ready(function() {
 
@@ -217,6 +204,7 @@ Shift Form
         if ('{{shift_form.instance.id}}' == 'None') {
             $("#btn_del").hide()
         }
+
         //adding time widget to starttime and endtime
         $('#id_starttime, #id_endtime').flatpickr({
             enableTime: true,
@@ -225,13 +213,14 @@ Shift Form
             time_24hr: true,
             //llowInput = true
         })
+
         //hide next btn if instance is not saved yet
         if (session['wizard_data'] && session['wizard_data']['shiftids'].length == 0) {
             $('#next_btn').hide()
         }
 
         //alert user about night shift
-         const nightShiftAlert = {
+        const nightShiftAlert = {  
             title: "Night shift alert",
             text: `According to Start time & End Time do you want to create a 'Night Shift',
                 then the checkbox 'Night Shift Applicable will be enabled by default'`,
@@ -240,6 +229,7 @@ Shift Form
             confirmButtonText: 'Go for it!',
             allowOutsideClick: false
         }
+
         const alertUser = () => {
             Swal.fire(nightShiftAlert).then((res) => {
                 if (res.isConfirmed) {
@@ -304,9 +294,7 @@ Shift Form
             });
         });
 
-
-
-
+        // Desingation count table editor
         var editor = new $.fn.dataTable.Editor({
                 ajax: {
                     url:"{{ url('onboarding:shift') }}",
@@ -317,22 +305,67 @@ Shift Form
                 },
                 table: "#People_count_details",
                 fields: [
-                    
-                    { label: "Designation", name: "designation" },
-                    { label: "People count", name: "people_count"},
-                ]
+                    {label: "id",name : "id",type: "hidden"},
+                    { label: "Designation", name: "designation" , type: "select"},
+                    { label: "People count", name: "count"},
+                ],
+                idSrc : 'id'
             });
 
-        editor.on('open', function(e, mode, action){
-            console.log('editor opened',action)
-        })
+
+        editor.on('open', function(e, mode, action) {
+            console.log('editor opened', action);
+        
+            $("#DTE_Field_designation").addClass("form-control form-select")
+            $("#DTE_Field_count").attr("type", "number").addClass("form-control");
+
+            if (action == 'create' || action == 'edit') {
+            // fectching designation choices from form instance
+            var designation_choices = [];
+            $("#id_designation option").each(function() {
+                var value = $(this).text();
+                var label = $(this).text();
+                if (value) { 
+                    designation_choices.push({label: label, value: value});
+                }
+            });
+            console.log('designation choices :- ',designation_choices);
+            // showing the drop down data from list of dictionary value 
+            editor.field('designation').update(designation_choices);
+            }
+
+        });
+
+        editor.on('preSubmit', function(e, data, action) {
+            let totalCount = calculateTotalPeopleCount();
+            if (action === 'create' || action === 'edit') {
+                // Add or subtract the count value from the new/edited row
+                const rowCount = parseInt(data.data[Object.keys(data.data)[0]].count || 0);
+                if (action === 'edit') {
+                    // If editing, subtract the old value first
+                    const currentRowData = getCurrentEditingRow(editor, table);
+                    totalCount -= parseInt(currentRowData.count || 0);
+                }
+                totalCount += rowCount;
+            }
+
+            if (action === 'remove') {
+
+            }
+
+            if (!validatePeopleCount(totalCount)) {
+                this.error('count', 'The total people count exceeds the allowed number of people for this shift.');
+                return false;
+            }
+        });
+
         
 
         editor.on('opened', function(e, moed, action){
             $('.DTED_Lightbox_Content').draggable()
         })
         
-        
+        //Designation count table
         var table = $('#People_count_details').DataTable({
             ajax:{
                 url:"{{ url('onboarding:shift') }}",
@@ -347,12 +380,13 @@ Shift Form
             ],  
             deferRender:true,
 			responsive:true,
+            select:true,
             dom:`<'row' <'col-sm-6 d-flex justify-content-start'f> <'col-sm-6 d-flex justify-content-end'B> >rt<'row'
 			 <'col-sm-6'l> <'col-sm-6'p><'col-sm-12 d-flex justify-content-center'i>>`,
             columnDefs:[ ],
             select: true,
             buttons: [
-                    {text:'<i class="fas text-white fa-sync-alt text-dark"></i>', titleAttr:'Refresh Data', className:'refreshBtn disabled'},
+                    {text:'<i class="fas text-white fa-sync-alt text-dark"></i>', titleAttr:'Refresh Data', className:'refreshBtn'},
                     { extend: "create", editor: editor },
                     { extend: "edit", editor: editor },
                     { extend: "remove", editor: editor }
@@ -363,6 +397,26 @@ Shift Form
 
         });
 
-    });
+        $('.refreshBtn').click(() => {
+                table.ajax.reload();
+            })
+
+
+    function calculateTotalPeopleCount() {
+        let total = 0;
+        table.rows().every(function() {
+            let data = this.data();
+            total += parseInt(data.count || 0);
+        });
+        return total;
+    }
+
+    function validatePeopleCount(totalCount) {
+        const formPeopleCount = parseInt($("#id_peoplecount").val() || 0);
+        return totalCount <= formPeopleCount;
+    }
+
+        });
+        
 </script>
 {% endblock extra_scripts %}

@@ -103,7 +103,7 @@ class Bt(BaseModel, TenantAwareModel):
 def shiftdata_json():
     return{
         'gracetime':"",
-        'people_count':[]
+        'designation_details':[]
     }
 
 class Shift(BaseModel, TenantAwareModel):
