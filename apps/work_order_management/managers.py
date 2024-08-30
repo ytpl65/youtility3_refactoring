@@ -53,8 +53,18 @@ class ApproverManager(models.Manager):
         S = request.session
         qset = self.annotate(
             text = F('people__peoplename'),
-        ).filter(approverfor__contains = ['WORKPERMIT'], bu_id = S['bu_id']).values('id', 'text')
+        ).filter(approverfor__contains = ['WORKPERMIT'], bu_id = S['bu_id'],identifier='APPROVER').values('id', 'text')
+        print("Approver: ",qset)
         return qset or self.none()
+    
+    def get_verifier_options_wp(self,request):
+        S = request.session
+        qset = self.annotate(
+            text = F('people__peoplename'),
+        ).filter(approverfor__contains = ['WORKPERMIT'], bu_id = S['bu_id'],identifier='VERIFIER').values('id', 'text')
+        print("Verifier: ",qset)
+        return qset or self.none()
+
     
     def get_approver_options_sla(self,request):
         S = request.session
@@ -163,9 +173,24 @@ class WorkOrderManager(models.Manager):
             
         
     
+    # def get_wp_answers(self, womid):
+    #     childwoms = self.filter(parent_id = womid).order_by('seqno')
+    #     work_permit_no = childwoms[0].other_data['wp_seqno']
+    #     logger.info(f"{childwoms = }")
+    #     wp_details = []
+    #     for childwom in childwoms:
+    #         sq = {
+    #             "section":childwom.description,
+    #             "sectionID":childwom.seqno,
+    #             'questions':childwom.womdetails_set.values(
+    #                 'question__quesname', 'answertype', 'answer', 'qset_id',
+    #                 'min', 'max', 'options', 'id', 'ismandatory').order_by('seqno')
+    #         }
+    #         wp_details.append(sq)
+    #     return [work_permit_no,wp_details or self.none()]
+
     def get_wp_answers(self, womid):
         childwoms = self.filter(parent_id = womid).order_by('seqno')
-        work_permit_no = childwoms[0].other_data['wp_seqno']
         logger.info(f"{childwoms = }")
         wp_details = []
         for childwom in childwoms:
@@ -177,7 +202,8 @@ class WorkOrderManager(models.Manager):
                     'min', 'max', 'options', 'id', 'ismandatory').order_by('seqno')
             }
             wp_details.append(sq)
-        return [work_permit_no,wp_details or self.none()]
+        logger.info(f"{wp_details = }")
+        return wp_details or self.none()
     
 
     def get_approver_list(self, womid):
@@ -286,13 +312,22 @@ class WorkOrderManager(models.Manager):
         print(str(qset.query))
         return qset or self.none()
     
-    def wp_data_for_report(self, id,approval_status):
-        # site = self.filter(id=id).first().bu
+    # def wp_data_for_report(self, id,approval_status):
+    #     # site = self.filter(id=id).first().bu
+    #     wp_answers = self.get_wp_answers(id)
+    #     permit_no = wp_answers[0]
+    #     data = self.get_wp_sections_answers(wp_answers[1],id,approval_status)
+    #     logger.info(f"{data = }")
+    #     return data,permit_no
+
+    def wp_data_for_report(self, id):
+        site = self.filter(id=id).first().bu
         wp_answers = self.get_wp_answers(id)
-        permit_no = wp_answers[0]
-        data = self.get_wp_sections_answers(wp_answers[1],id,approval_status)
-        logger.info(f"{data = }")
-        return data,permit_no
+        wp_info = wp_answers[0]
+        wp_answers.pop(0)
+        rwp_section = wp_answers.pop(-1)
+        wp_sections = wp_answers
+        return wp_info, wp_sections, rwp_section, site.buname
     
     def get_sla_answers(self,slaid):
         child_slarecords = self.filter(parent_id = slaid).order_by('seqno')

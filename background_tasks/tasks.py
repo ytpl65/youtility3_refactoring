@@ -18,6 +18,9 @@ from apps.reports.models import ScheduleReport
 from apps.reports import utils as rutils
 from django.templatetags.static import static
 
+import logging
+
+log = logging.getLogger('__main__')
 
 from .move_files_to_GCS import move_files_to_GCS, del_empty_dir, get_files
 from .report_tasks import (
@@ -436,7 +439,7 @@ def create_report_history(self, formdata, userid, buid, EI):
 
 
 @shared_task(bind=True, name="Create Workpermit email notification")
-def send_email_notification_for_wp(self, womid, qsetid, approvers, client_id, bu_id,workpermit_attachment,sitename,workpermit_status):
+def send_email_notification_for_wp(self, womid, qsetid, approvers, client_id, bu_id,sitename,workpermit_status):
     jsonresp = {'story': "", "traceback": ""}
     try:
         from django.apps import apps
@@ -463,7 +466,7 @@ def send_email_notification_for_wp(self, womid, qsetid, approvers, client_id, bu
                 msg.body = html
                 # msg.attach_file(workpermit_attachment,mimetype='application/pdf')
                 msg.content_subtype = 'html'
-                msg.attach_file(workpermit_attachment, mimetype='application/pdf')
+                #msg.attach_file(workpermit_attachment, mimetype='application/pdf')
                 msg.send()
                 dlog.info(f"email sent to {p['email'] = }")
                 jsonresp['story'] += f"email sent to {p['email'] = }"
@@ -477,7 +480,7 @@ def send_email_notification_for_wp(self, womid, qsetid, approvers, client_id, bu
 
 
 @shared_task(bind=True, name="Create Workpermit email notification for vendor and security")
-def send_email_notification_for_vendor_and_security(self,wom_id,workpermit_attachment,sitename,workpermit_status):
+def send_email_notification_for_vendor_and_security(self,wom_id,sitename,workpermit_status):
     jsonresp = {'story':"", 'traceback':""}
     try:
         from apps.work_order_management.models import Wom,WomDetails
@@ -498,7 +501,7 @@ def send_email_notification_for_vendor_and_security(self,wom_id,workpermit_attac
                 'work_order_management/workpermit_vendor.html', context=cxt)
             msg.body = html
             msg.content_subtype = 'html'
-            msg.attach_file(workpermit_attachment, mimetype='application/pdf')
+            #msg.attach_file(workpermit_attachment, mimetype='application/pdf')
             msg.send()
             dlog.info(f"email sent to {email.answer}")
     except Exception as e:
@@ -702,6 +705,7 @@ def create_save_report_async(self, formdata, client_id, user_email, user_id):
         dlog.info(f"Report Format initialized, {report}")
         
         if response := report.execute():
+            log.info("Response:  %s %s", response, type(response))
             if returnfile:
                 rutils.process_sendingreport_on_email(response, formdata, user_email)
                 return {"status": 201, "message": "Report generated successfully and email sent", 'alert':'alert-success'}

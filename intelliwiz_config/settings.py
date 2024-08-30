@@ -65,7 +65,7 @@ ENCRYPT_KEY = env('ENCRYPT_KEY')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True    
 
-ALLOWED_HOSTS = ['.localhost', 'demo.youtility.in', 'redmine.youtility.in', '192.168.1.254' , '127.0.0.1','192.168.1.33','192.168.1.107']
+ALLOWED_HOSTS = ['.localhost', 'demo.youtility.in', 'redmine.youtility.in', '192.168.1.254' , '127.0.0.1','192.168.1.33','192.168.1.107','103.253.200.161']
 
 # Application definition
 
@@ -320,7 +320,10 @@ DATE_INPUT_FORMATS = [
 
 STATIC_URL = '/static/'
 STATIC_ROOT =  env("STATIC_ROOT")
+
 STATICFILES_DIRS = [os.path.join(BASE_DIR, 'frontend/static')]
+
+print(STATICFILES_DIRS)
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/3.2/ref/settings/# default-auto-field
@@ -331,16 +334,8 @@ DATABASE_ROUTERS = ['apps.tenants.middlewares.TenantDbRouter']
 
 # Media Files
 
-INTERNAL_IPS = [
-    # ...
-    '127.0.0.1',
-    '192.168.1.254',
-    # ...
-]
 
-# USER MODEL
 AUTH_USER_MODEL = 'peoples.People'
-
 # AUTHENTICATIN BACKENDS CONF...
 AUTHENTICATION_BACKENDS = [
 "graphql_jwt.backends.JSONWebTokenBackend",
@@ -368,6 +363,8 @@ GRAPHQL_JWT = {
 
 ADMINS = [('wed_dev', "naveen.sargam@youtility.in")]
 
+LOGGER_PATH = '/home/redmine'
+
 # LOGGING CONF...
 import logging.config
 LOGGING_CONFIG = None
@@ -389,31 +386,31 @@ LOGGING_CONFIG_ = {
         },
         'filelogs': {
             'class': 'logging.handlers.RotatingFileHandler',
-            'filename':f'{os.path.expanduser("~")}/youtility4_logs/youtility4.log',
+            'filename':f'{LOGGER_PATH}/youtility4_logs/youtility4.log',
             'maxBytes': 15728640,
             'backupCount': 10,
         },
         'serviceLogs':{
             'class': 'logging.handlers.RotatingFileHandler',
-            'filename':f'{os.path.expanduser("~")}/youtility4_logs/mobileservice.log',
+            'filename':f'{LOGGER_PATH}/youtility4_logs/mobileservice.log',
             'maxBytes': 15728640,
             'backupCount': 10,
         },
         'tracking_logs':{
             'class': 'logging.handlers.RotatingFileHandler',
-            'filename':f'{os.path.expanduser("~")}/youtility4_logs/tracking.log',
+            'filename':f'{LOGGER_PATH}/youtility4_logs/tracking.log',
             'maxBytes': 15728640,
             'backupCount': 10,
         },
         'message_qlogs':{
             'class': 'logging.handlers.RotatingFileHandler',
-            'filename':f'{os.path.expanduser("~")}/youtility4_logs/message_q.log',
+            'filename':f'{LOGGER_PATH}/youtility4_logs/message_q.log',
             'maxBytes': 15728640,
             'backupCount': 10,
         },
         'reportslog':{
             'class': 'logging.handlers.RotatingFileHandler',
-            'filename':f'{os.path.expanduser("~")}/youtility4_logs/reports.log',
+            'filename':f'{LOGGER_PATH}/youtility4_logs/reports.log',
             'maxBytes': 15728640,
             'backupCount': 10,
         },
@@ -424,7 +421,7 @@ LOGGING_CONFIG_ = {
         },
         'error_file_handler':{
             'class': 'logging.handlers.RotatingFileHandler',
-            'filename':f'{os.path.expanduser("~")}/youtility4_logs/errors.log',
+            'filename':f'{LOGGER_PATH}/youtility4_logs/errors.log',
             'maxBytes': 15728640,
             'backupCount': 10,
         }

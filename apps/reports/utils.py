@@ -44,14 +44,10 @@ class BaseReportsExport(WeasyTemplateResponseMixin):
         self.additional_content=additional_content
         self.filename = filename
         self.returnfile = returnfile
-        
+    
     
     def get_pdf_output(self):
         try:
-            print("Form Data: ", self.formdata)
-            is_submit_button_flow = self.formdata.get('submit_button_flow', False)
-            workpermit_file_name  = self.formdata.get('filename','Work Permit')
-            print("Is Submit Button Flow: ", is_submit_button_flow)
             log.info(f"pdf is executing {settings.HOST}")
             html_string = render_to_string(self.design_file, context=self.context)
             html = HTML(string=html_string, base_url=settings.HOST)
@@ -59,20 +55,44 @@ class BaseReportsExport(WeasyTemplateResponseMixin):
             css = CSS(filename=css_path)
             font_config = FontConfiguration()
             pdf_output = html.write_pdf(stylesheets=[css], font_config=font_config, presentational_hints=True)
-            workpermit_path = self.write_temporary_pdf(pdf_output,workpermit_file_name)
-            if is_submit_button_flow == 'false':    
-                print("Hello Creating throught this")
-                if self.returnfile: return pdf_output
-                response = HttpResponse(
-                    pdf_output, content_type='application/pdf'
-                )
-                response['Content-Disposition'] = f'attachment; filename="{self.filename}.pdf"'
-                return response
-            else:
-                print("Creating through this")
-                return workpermit_path
+            if self.returnfile: return pdf_output
+            response = HttpResponse(
+                pdf_output, content_type='application/pdf'
+            )
+            response['Content-Disposition'] = f'attachment; filename="{self.filename}.pdf"'
+            return response
         except Exception as e:
-            log.error("Error generating PDF", exc_info=True)
+            log.error("Error generating PDF", exc_info=True)        
+        
+    # def get_pdf_output(self):
+    #     try:
+    #         print("Form Data: ", self.formdata)
+    #         is_submit_button_flow = self.formdata.get('submit_button_flow', False)
+    #         workpermit_file_name  = self.formdata.get('filename','Work Permit')
+    #         log.info("Submit button flow, workpermit filenam %s %s",is_submit_button_flow,workpermit_file_name)
+    #         print("Is Submit Button Flow: ", is_submit_button_flow)
+    #         log.info(f"pdf is executing {settings.HOST}")
+    #         html_string = render_to_string(self.design_file, context=self.context)
+    #         html = HTML(string=html_string, base_url=settings.HOST)
+    #         css_path = finders.find('assets/css/local/reports.css')
+    #         css = CSS(filename=css_path)
+    #         font_config = FontConfiguration()
+    #         pdf_output = html.write_pdf(stylesheets=[css], font_config=font_config, presentational_hints=True)
+    #         workpermit_path = self.write_temporary_pdf(pdf_output,workpermit_file_name)
+    #         log.info("Workpermit Path: %s",workpermit_path)
+    #         if is_submit_button_flow == 'false':    
+    #             print("Hello Creating throught this")
+    #             if self.returnfile: return pdf_output
+    #             response = HttpResponse(
+    #                 pdf_output, content_type='application/pdf'
+    #             )
+    #             response['Content-Disposition'] = f'attachment; filename="{self.filename}.pdf"'
+    #             return response
+    #         else:
+    #             print("Creating through this")
+    #             return workpermit_path
+    #     except Exception as e:
+    #         log.error("Error generating PDF", exc_info=True)
 
     def write_temporary_pdf(self, pdf_output,workpermit_file_name):
 
@@ -163,11 +183,19 @@ class BaseReportsExport(WeasyTemplateResponseMixin):
     def get_client_logo(self):
         bt = Bt.objects.get(id=self.client_id)
         uuid, buname = bt.uuid, bt.buname
+        log.info("UUID: %s",uuid)
         att = Attachment.objects.get_att_given_owner(uuid)
+        log.info("Attachment: %s ", att)
+        
+        print("Attachment: ",att)
+        filepath =  att[0]['filepath'][1:]
+        log.info("File path: ",filepath)
         if att:
-            clientlogo_filepath = settings.MEDIA_URL + att[0]['filepath'] + att[0]['filename']
+            clientlogo_filepath = settings.MEDIA_URL + filepath + att[0]['filename']
         else:
             clientlogo_filepath = buname
+        log.info("Client Logo Path: %s",clientlogo_filepath)
+        print("Client Logo Path: ",clientlogo_filepath)
         return clientlogo_filepath
     
     

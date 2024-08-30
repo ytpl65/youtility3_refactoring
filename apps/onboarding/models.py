@@ -76,7 +76,7 @@ class Bt(BaseModel, TenantAwareModel):
     gpslocation         = PointField(_('GPS Location'),null = True, blank = True, geography = True, srid = 4326)
     isvendor            = models.BooleanField(_("Vendor"), default = False)
     isserviceprovider   = models.BooleanField(_("ServiceProvider"), default = False)
-
+    
     objects = BtManager()
 
     class Meta(BaseModel.Meta):
